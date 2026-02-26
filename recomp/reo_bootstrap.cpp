@@ -15,6 +15,7 @@
 
 #include "ps2_runtime.h"
 #include "ps2_recompiled_functions.h"
+#include "game_overrides.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -139,6 +140,13 @@ int main(int argc, char* argv[]) {
     printf("[BOOT] Registering recompiled functions...\n");
     registerAllFunctions(runtime);
     printf("[BOOT] All functions registered.\n");
+
+    // Re-apply game overrides AFTER function registration.
+    // loadELF() applies them first, but registerAllFunctions() overwrites
+    // our custom handlers with the generated stubs. This second pass ensures
+    // our overrides take precedence over generated code.
+    printf("[BOOT] Applying game overrides (post-registration)...\n");
+    ps2_game_overrides::applyMatching(runtime, elf_path, g.entry_point);
 
     // Begin execution
     printf("[BOOT] Starting execution at entry point 0x%08X...\n", g.entry_point);

@@ -184,16 +184,30 @@ cmake --build build --config Release
 
 ### Current Status
 
-The recompilation pipeline is **working for both games**:
+The recompilation pipeline is **working for both games** and the game loop is running:
 
 | | File #1 | File #2 |
 |---|---|---|
 | ISO extraction | all files extracted | all files extracted |
 | ELF analysis | 3,461 functions | 3,525 functions |
 | MIPS → C++ | 3,209 → 3,829 files (66 MB) | 3,525 → 3,892 files (68 MB) |
-| Build | compiles clean | compiles clean |
+| Build | compiles clean (3,830 files) | compiles clean (3,892 files) |
+| Boot | main loop running | pending |
 
-Next: bridge the recompiled code to the runtime HAL
+**File #1 boot progress:**
+- ELF loads, entry point executes, main loop enters
+- Game update function (sub_001BAA00 → sub_001BAEC0) completes successfully
+- GPU engaged (raylib window active, NVIDIA overlay visible)
+- 80+ function overrides bound (GS, pad, network, audio, VSync, threads)
+- 4 critical HLE overrides: DMA slot allocator, GIF packet builder, GS VRAM allocator, mid-function entry point
+
+**Resolved issues:**
+- Infinite DMA slot busy-wait (sub_001AF7A0) — PS2 waits for hardware; HLE clears slots
+- Infinite GIF tag processing loop (sub_001071D8) — bypassed via caller override
+- 6MB memset at address 0 (sub_001AF710) — uninitialized heap; replaced with bump allocator
+- Stack corruption from null allocator return — bump allocator at 0x600000+ provides valid addresses
+
+Next: render first frame, resolve remaining stub functions
 
 ## Roadmap
 
@@ -204,8 +218,9 @@ Next: bridge the recompiled code to the runtime HAL
 - [x] Dual-game build system (reo_recomp + reo_recomp_file2)
 - [x] Game selection via --game flag and auto-detected data paths
 - [x] Basic memory map and CPU context runtime (32MB RAM, MMIO, scratchpad)
-- [ ] Bridge recompiled code to REO runtime (connect PS2Recomp output to our HAL)
-- [ ] Boot to black screen (proof of life)
+- [x] Bridge recompiled code to REO runtime (80+ override bindings)
+- [x] Boot to main loop (game update function executing, GPU active)
+- [ ] Render first frame (proof of life)
 
 ### Phase 2 — See Something
 - [ ] GS renderer (Vulkan) — render the first frame

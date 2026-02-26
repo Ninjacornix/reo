@@ -24,11 +24,14 @@
 
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
+#include "ps2_stubs.h"
 #include "game_overrides.h"
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <iomanip>
+#include <chrono>
+#include <thread>
 
 // ═══════════════════════════════════════════════════════════════════════
 // Custom RecompiledFunction handlers for RE Outbreak
@@ -310,13 +313,69 @@ static void reo_sd_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) 
     ctx->pc = getRegU32(ctx, 31);
 }
 
+// ── Frame timing / VSync ─────────────────────────────────────────────
+// sub_001D6720: VSync frame check. On PS2 this reads a VBlank counter
+// at 0x3445E8 (incremented by hardware interrupt). We simulate it
+// with host frame timing and integrate with raylib's event loop.
+static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    using clock = std::chrono::steady_clock;
+    static auto lastFrame = clock::now();
+    static uint32_t frameCount = 0;
+
+    // Target: 60fps (16.67ms per frame)
+    constexpr auto frameDuration = std::chrono::microseconds(16667);
+    auto now = clock::now();
+    auto elapsed = now - lastFrame;
+
+    if (elapsed < frameDuration) {
+        std::this_thread::sleep_for(frameDuration - elapsed);
+    }
+    lastFrame = clock::now();
+    frameCount++;
+
+    // Update the VBlank counter in guest memory so other code that reads it works.
+    // Counter at 0x3445E8 — the game XORs it with 3 and checks if result < 1.
+    // XOR(3,3) = 0, SLTU(0,1) = 1 → "frame ready". So write 3.
+    uint32_t counterAddr = 0x3445E8u & PS2_RAM_MASK;
+    if (counterAddr + 4 <= PS2_RAM_SIZE) {
+        WRITE32(counterAddr, 3);
+    }
+
+    // Log first few frames
+    static int logCount = 0;
+    if (logCount < 3) {
+        printf("[REO] Frame %u (VSync check passed)\n", frameCount);
+        logCount++;
+    }
+
+    // Return 1 (frame ready)
+    setReturnU32(ctx, 1);
+    ctx->pc = getRegU32(ctx, 31);
+}
+
+// ── Thread entry stubs ───────────────────────────────────────────────
+// Thread entry points that the recompiler merged into other functions.
+// The thread system needs them registered as separate functions.
+
+// SIO/pad polling thread at 0x115320 — merged into sub_001152C0.
+// This thread normally polls pad/SIO events in a loop. Since we handle
+// pad input via our reo_pad_read override, this thread can just sleep.
+static void reo_sio_thread(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    // Thread entry — just exit (pad input handled by our reo_pad_read override)
+    setReturnU32(ctx, 0);
+    ctx->pc = 0; // signal thread exit
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Address binding helpers
 // ═══════════════════════════════════════════════════════════════════════
 
 static void bind(PS2Runtime& runtime, uint32_t addr,
                  PS2Runtime::RecompiledFunction fn, const char* name) {
+    // Register in BOTH the function table (for indirect jumps/dispatch loop)
+    // and the stub override registry (for direct calls from generated code).
     runtime.registerFunction(addr, fn);
+    ps2_stubs::registerStubOverride(addr, fn);
     printf("[REO]   0x%08X -> %s\n", addr, name);
 }
 
@@ -374,6 +433,17 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     // ── Pad (controller) ─────────────────────────────────────────────
     bind(runtime, 0x100B70, reo_pad_port_open,     "scePadPortOpen");
     bind(runtime, 0x1D8560, reo_pad_read,          "scePadRead");
+
+    // ── Thread entry points (merged by recompiler) ──────────────────
+    // These are thread entry points that the recompiler merged into
+    // larger functions. Register them so StartThread can find them.
+    bind(runtime, 0x115320, reo_sio_thread,         "SIO/pad polling thread");
+
+    // ── Frame timing / VSync ──────────────────────────────────────────
+    // sub_001D6720 is the VSync frame check in the main loop.
+    // Without this override, the game busy-waits forever reading a
+    // VBlank counter that never changes (no GS hardware).
+    bind(runtime, 0x1D6720, reo_frame_check,        "VSync frame check (main loop)");
 
     // ── GS sync / render ─────────────────────────────────────────────
     bind(runtime, 0x1F73B0, reo_gs_sync,           "sceGsSyncPath (render)");
@@ -435,7 +505,7 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     bind(runtime, 0x112708, reo_ret0, "gs_0x112708");
     bind(runtime, 0x112B98, reo_ret0, "gs_0x112B98");
     bind(runtime, 0x113010, reo_ret0, "gs_0x113010");
-    bind(runtime, 0x1133F0, reo_ret0, "gs_0x1133F0");
+    bind(runtime, 0x1133F0, reo_ret1, "gs_0x1133F0 (sync/poll)");
     bind(runtime, 0x113488, reo_ret0, "gs_0x113488");
     bind(runtime, 0x113988, reo_ret0, "gs_0x113988");
     bind(runtime, 0x113BA8, reo_ret0, "gs_0x113BA8");
