@@ -434,6 +434,13 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     bind(runtime, 0x100B70, reo_pad_port_open,     "scePadPortOpen");
     bind(runtime, 0x1D8560, reo_pad_read,          "scePadRead");
 
+    // ── Mid-function entry points (unreachable in recompiled code) ──
+    // These addresses fall inside larger recompiled functions but are
+    // called via indirect dispatch. The recompiler puts them after a
+    // return statement so they're dead code. We register them as stubs.
+    bind(runtime, 0x10A9D8, reo_ret0,              "mid_entry_0x10A9D8 (in sub_0010A8C8)");
+    bind(runtime, 0x1AC640, reo_ret0,              "mid_entry_0x1AC640 (in sub_001AC630)");
+
     // ── Thread entry points (merged by recompiler) ──────────────────
     // These are thread entry points that the recompiler merged into
     // larger functions. Register them so StartThread can find them.

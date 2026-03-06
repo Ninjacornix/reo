@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.20)
 project(reo_recomp CXX)
 
 # PS2Recomp paths (shared between both targets)
-set(PS2RECOMP_DIR "${CMAKE_SOURCE_DIR}/../third_party/PS2Recomp")
+set(PS2RECOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/PS2Recomp")
 set(PS2RECOMP_BUILD "${PS2RECOMP_DIR}/out/build")
 
 set(PS2RECOMP_INCLUDES
