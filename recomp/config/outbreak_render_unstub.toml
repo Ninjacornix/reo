@@ -100,7 +100,7 @@ skip = [
   "sub_0012AB88",
   "sub_0012B638",
   "sub_0012BF98",
-  "sub_0012C040",
+  # "sub_0012C040",  # UN-STUBBED: rendering callee (called 8x from 0x15FA68)
   "sub_0012C918",
   "sub_0012C930",
   "sub_0012DA50",
@@ -230,10 +230,10 @@ skip = [
   # "sub_0018D470",  # UN-STUBBED: rendering callee
   "sub_00192710",
   "sub_00192B70",
-  "sub_00193E20",
+  # "sub_00193E20",  # UN-STUBBED: rendering callee (called from 0x1A0CBC)
   "sub_00197490",
-  "sub_00197780",
-  "sub_00197900",
+  # "sub_00197780",  # UN-STUBBED: rendering callee (called from 0x196E3C)
+  # "sub_00197900",  # UN-STUBBED: rendering callee (called from 0x196AF4)
   # "sub_00197BB0",  # UN-STUBBED: geometry/vertex
   # "sub_001982D0",  # UN-STUBBED: color/lighting
   # "sub_00198390",  # UN-STUBBED: geometry/vertex
