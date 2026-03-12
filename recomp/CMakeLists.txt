@@ -4,7 +4,7 @@
 #   reo_recomp       — RE Outbreak File #1 (SLUS-20765, 3,209 functions)
 #   reo_recomp_file2 — RE Outbreak File #2 (SLUS-20984, 3,525 functions)
 #
-# Both share the bootstrap, overrides, and link against PS2Recomp runtime.
+# Both share the bootstrap, overrides, runtime HLE, and link against PS2Recomp runtime.
 
 cmake_minimum_required(VERSION 3.20)
 project(reo_recomp CXX)
@@ -12,6 +12,9 @@ project(reo_recomp CXX)
 # PS2Recomp paths (shared between both targets)
 set(PS2RECOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/PS2Recomp")
 set(PS2RECOMP_BUILD "${PS2RECOMP_DIR}/out/build")
+
+# REO runtime sources (hardware emulation subsystems)
+set(REO_RUNTIME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../runtime")
 
 set(PS2RECOMP_INCLUDES
     "${PS2RECOMP_DIR}/ps2xRuntime/include"
@@ -29,6 +32,12 @@ set(PS2RECOMP_LIBS
     "${PS2RECOMP_BUILD}/_deps/libdwarf-build/src/lib/libdwarf/Release/dwarf.lib"
 )
 
+# REO runtime HLE sources — compiled into each recomp target
+set(REO_RUNTIME_SOURCES
+    "${REO_RUNTIME_DIR}/gs/gs_renderer.cpp"
+    "${REO_RUNTIME_DIR}/vu/vu_interpreter.cpp"
+)
+
 # Helper function to set up a recomp target
 function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
     file(GLOB RECOMP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}/*.cpp")
@@ -41,15 +50,34 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         return()
     endif()
 
+    # Overlay functions (runtime-loaded code dumped from PCSX2)
+    set(OVERLAY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_overlay")
+    if(EXISTS "${OVERLAY_DIR}")
+        file(GLOB OVERLAY_SOURCES "${OVERLAY_DIR}/*.cpp")
+        list(LENGTH OVERLAY_SOURCES OVERLAY_COUNT)
+        if(OVERLAY_COUNT GREATER 0)
+            message(STATUS "REO [${TARGET_NAME}]: Found ${OVERLAY_COUNT} overlay source files")
+        endif()
+    else()
+        set(OVERLAY_SOURCES "")
+    endif()
+
     add_executable(${TARGET_NAME}
         reo_bootstrap.cpp
         overrides/reo_override.cpp
+        overrides/reo_hw_bridge.cpp
+        overrides/reo_trace_logger.cpp
+        ${REO_RUNTIME_SOURCES}
         ${RECOMP_SOURCES}
+        ${OVERLAY_SOURCES}
     )
 
     target_include_directories(${TARGET_NAME} PRIVATE
         ${PS2RECOMP_INCLUDES}
         "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/config/output_overlay"
+        "${CMAKE_CURRENT_SOURCE_DIR}/overrides"
+        "${CMAKE_CURRENT_SOURCE_DIR}/.."
     )
 
     target_link_libraries(${TARGET_NAME} PRIVATE ${PS2RECOMP_LIBS})
@@ -66,7 +94,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         target_compile_options(${TARGET_NAME} PRIVATE
             /W0           # Disable warnings for generated code
             /bigobj       # Generated files can be large
-            /MP           # Parallel compilation (use all cores)
+            /MP4          # Parallel compilation (limit to 4 cores to avoid OOM)
             /O2           # Optimize
         )
     endif()

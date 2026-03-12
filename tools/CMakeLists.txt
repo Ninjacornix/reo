@@ -1,2 +1,3 @@
 add_subdirectory(iso_extract)
 add_subdirectory(elf_analyze)
+add_subdirectory(gs_dump_replay)

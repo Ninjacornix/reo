@@ -28,6 +28,9 @@ namespace fs = std::filesystem;
 // The active build target (file1 or file2) provides the implementation.
 extern void registerAllFunctions(PS2Runtime& runtime);
 
+// Overlay function registration — runtime-loaded code dumped from PCSX2
+extern void registerOverlayFunctions(PS2Runtime& runtime);
+
 struct GameDef {
     const char* name;
     const char* elf_name;
@@ -139,6 +142,8 @@ int main(int argc, char* argv[]) {
     // Register all recompiled functions
     printf("[BOOT] Registering recompiled functions...\n");
     registerAllFunctions(runtime);
+    printf("[BOOT] Registering overlay functions (runtime-loaded code)...\n");
+    registerOverlayFunctions(runtime);
     printf("[BOOT] All functions registered.\n");
 
     // Re-apply game overrides AFTER function registration.

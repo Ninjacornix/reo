@@ -27,7 +27,7 @@ static LRESULT CALLBACK gs_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 
 // ── Init / Shutdown ─────────────────────────────────────────────────
 
-bool GSRenderer::init(int width, int height, bool fullscreen) {
+bool GSRenderer::init(int width, int height, bool fullscreen, bool headless) {
     m_width = width;
     m_height = height;
     m_fullscreen = fullscreen;
@@ -48,14 +48,18 @@ bool GSRenderer::init(int width, int height, bool fullscreen) {
     m_draw.vtx_count = 0;
     m_draw.vtx_kick = 3; // Triangle by default
 
-    // Create Win32 window
-    if (!create_window()) {
-        printf("[GS] Warning: Could not create window, running headless\n");
+    if (!headless) {
+        // Create Win32 window
+        if (!create_window()) {
+            printf("[GS] Warning: Could not create window, running headless\n");
+        }
     }
 
-    printf("[GS] Renderer initialized: %dx%d %s\n",
-           width, height, fullscreen ? "fullscreen" : "windowed");
-    printf("[GS] Backend: Software rasterizer → GDI blit\n");
+    printf("[GS] Renderer initialized: %dx%d %s%s\n",
+           width, height, fullscreen ? "fullscreen" : "windowed",
+           headless ? " (headless)" : "");
+    printf("[GS] Backend: Software rasterizer%s\n",
+           headless ? " (framebuffer only)" : " → GDI blit");
 
     return true;
 }

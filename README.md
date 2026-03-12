@@ -91,18 +91,21 @@ reo/
 ├── game_data/               # Extracted File #1 data (SLUS_207.65 + assets)
 ├── game_data_file2/         # Extracted File #2 data (SLUS_209.84 + assets)
 │
-├── tools/                   # Build-time tools
+├── tools/                   # Build-time and debug tools
 │   ├── iso_extract/         # Extract game files from ISO/BIN
 │   ├── elf_analyze/         # ELF analysis and symbol extraction
-│   └── vu_disasm/           # VU microcode disassembler
+│   ├── vu_disasm/           # VU microcode disassembler
+│   ├── gs_dump_replay/      # GS dump replay tool (validates renderer)
+│   └── ps2_debug/           # PCSX2 Pine IPC scripts (overlay dump, GS capture)
 │
 ├── recomp/                  # Static recompilation layer
 │   ├── config/
 │   │   ├── outbreak.toml        # PS2Recomp config — File #1
 │   │   ├── outbreak_file2.toml  # PS2Recomp config — File #2
-│   │   ├── output/              # 3,829 recompiled C++ files (File #1)
-│   │   └── output_file2/        # 3,892 recompiled C++ files (File #2)
-│   ├── overrides/           # Game-specific function overrides (both games)
+│   │   ├── output/              # 3,830 recompiled C++ files (File #1)
+│   │   ├── output_file2/        # 3,892 recompiled C++ files (File #2)
+│   │   └── output_overlay/      # 95 runtime overlay functions (0x370000+)
+│   ├── overrides/           # Game-specific overrides + hardware bridge
 │   └── patches/             # Binary patches and fixups
 │
 ├── runtime/                 # Hardware Abstraction Layer
@@ -184,30 +187,41 @@ cmake --build build --config Release
 
 ### Current Status
 
-The recompilation pipeline is **working for both games** and the game loop is running:
+The recompilation pipeline is **working for both games**. File #1 boots to its main loop with the full rendering pipeline un-stubbed and a hardware bridge connecting recompiled code to native subsystems.
 
 | | File #1 | File #2 |
 |---|---|---|
 | ISO extraction | all files extracted | all files extracted |
 | ELF analysis | 3,461 functions | 3,525 functions |
-| MIPS → C++ | 3,209 → 3,829 files (66 MB) | 3,525 → 3,892 files (68 MB) |
-| Build | compiles clean (3,830 files) | compiles clean (3,892 files) |
+| MIPS → C++ | 3,209 → 3,830 files (66 MB) | 3,525 → 3,892 files (68 MB) |
+| Runtime overlays | 95 functions (0x370000+) | pending |
+| Build | compiles clean (3,923 files) | compiles clean (3,892 files) |
 | Boot | main loop running | pending |
 
 **File #1 boot progress:**
 - ELF loads, entry point executes, main loop enters
 - Game update function (sub_001BAA00 → sub_001BAEC0) completes successfully
-- GPU engaged (raylib window active, NVIDIA overlay visible)
-- 80+ function overrides bound (GS, pad, network, audio, VSync, threads)
-- 4 critical HLE overrides: DMA slot allocator, GIF packet builder, GS VRAM allocator, mid-function entry point
+- 82+ function overrides bound (GS, pad, network, audio, VSync, threads, DMA)
+- Hardware bridge wired: DMA GIF/VIF → GSRenderer, GS register writes, VU0/VU1 microcode
+- 95 runtime overlay functions captured from PCSX2 and integrated (game-loaded code at 0x370000+)
+- 13 core rendering functions un-stubbed (DMA flush, GIF submission, geometry pipeline)
+- Binary trace logger integrated for DMA/GIF/VU/GS event capture
 
 **Resolved issues:**
 - Infinite DMA slot busy-wait (sub_001AF7A0) — PS2 waits for hardware; HLE clears slots
 - Infinite GIF tag processing loop (sub_001071D8) — bypassed via caller override
 - 6MB memset at address 0 (sub_001AF710) — uninitialized heap; replaced with bump allocator
 - Stack corruption from null allocator return — bump allocator at 0x600000+ provides valid addresses
+- Runtime overlay dispatch failures — 95 functions captured via PCSX2 Pine IPC and recompiled
+- Monster function (sub_0037E920, 2.3M lines) — stubbed; needs manual split
 
-Next: render first frame, resolve remaining stub functions
+**Debug tools:**
+- `reo-gs-replay` — replays PCSX2 GS dumps through REO's GS renderer, validates rendering independently
+- `reo-gs-gen-test` — generates synthetic GS test dumps (triangle + sprite primitives)
+- Binary trace logger — records DMA/GIF/VU/GS events at runtime (`REO_TRACE=1`)
+- PCSX2 Pine IPC scripts — dump overlays, capture GS state, trace execution from live PCSX2
+
+Next: get DMA packets flowing through the hardware bridge → render first frame
 
 ## Roadmap
 
@@ -218,8 +232,12 @@ Next: render first frame, resolve remaining stub functions
 - [x] Dual-game build system (reo_recomp + reo_recomp_file2)
 - [x] Game selection via --game flag and auto-detected data paths
 - [x] Basic memory map and CPU context runtime (32MB RAM, MMIO, scratchpad)
-- [x] Bridge recompiled code to REO runtime (80+ override bindings)
-- [x] Boot to main loop (game update function executing, GPU active)
+- [x] Bridge recompiled code to REO runtime (82+ override bindings)
+- [x] Boot to main loop (game update function executing)
+- [x] Runtime overlay capture — 95 functions from PCSX2 Pine IPC
+- [x] Hardware bridge (DMA/GIF/VU/GS interception layer)
+- [x] Un-stub rendering pipeline (13 core functions)
+- [x] Debug tooling (GS dump replay, binary trace logger, PCSX2 IPC scripts)
 - [ ] Render first frame (proof of life)
 
 ### Phase 2 — See Something

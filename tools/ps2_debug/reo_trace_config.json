@@ -1,0 +1,29 @@
+{
+    "game": "RE Outbreak File #1",
+    "game_id": "SLUS-20765",
+    "duration": 30,
+    "output_dir": "trace_output",
+    "ram_dump": {
+        "regions": [
+            {"name": "code",   "start": "0x100000", "end": "0x260000", "desc": "ELF code segment"},
+            {"name": "heap",   "start": "0x260000", "end": "0x370000", "desc": "Stack/heap region"},
+            {"name": "bss",    "start": "0x370000", "end": "0x570000", "desc": "BSS (uninit data, overlays?)"},
+            {"name": "bump",   "start": "0x600000", "end": "0x800000", "desc": "Bump allocator region"}
+        ]
+    },
+    "watches": [
+        {"addr": "0x3445E8", "name": "vblank_counter",  "desc": "VBlank counter (XOR 3, check < 1)"},
+        {"addr": "0x2B8DD0", "name": "dma_slot_0_flag", "desc": "DMA slot 0 flag"},
+        {"addr": "0x2B8DD4", "name": "dma_slot_0_ptr",  "desc": "DMA slot 0 pointer"},
+        {"addr": "0x2B8E08", "name": "gs_buf_slot",     "desc": "GS buffer slot tracking"},
+        {"addr": "0x2999D0", "name": "heap_struct",      "desc": "Heap allocator struct"},
+        {"addr": "0x2999D4", "name": "heap_free_ptr",    "desc": "Heap free list pointer"}
+    ],
+    "dma_channels": ["GIF", "VIF1"],
+    "snapshots": {
+        "region_start": "0x100000",
+        "region_end": "0x370000",
+        "interval": 5,
+        "count": 6
+    }
+}

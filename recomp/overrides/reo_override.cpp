@@ -26,12 +26,16 @@
 #include "ps2_runtime_macros.h"
 #include "ps2_stubs.h"
 #include "game_overrides.h"
+#include "reo_hw_bridge.h"
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 #include <thread>
+
+// Hardware bridge instance — lives for the duration of the program
+static ReoHwBridge g_hwBridge;
 
 // ═══════════════════════════════════════════════════════════════════════
 // Custom RecompiledFunction handlers for RE Outbreak
@@ -58,6 +62,57 @@ static void reo_ret0_log(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime)
         logCount++;
     }
     setReturnU32(ctx, 0);
+    ctx->pc = getRegU32(ctx, 31);
+}
+
+// ── DMA channel init (likely sceDmaGetChan or sceDmaReset) ────────────
+// Returns a "DMA channel handle" — the KSEG1 address of the channel registers.
+// The game passes channel offsets like 0x8000 (VIF0), 0x9000 (VIF1), 0x9100, etc.
+static void reo_dma_chan_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    uint32_t chanId = getRegU32(ctx, 4); // a0 = channel offset/ID
+    // Return the DMA channel register base address (KSEG1 mapped)
+    // 0x10000000 + offset → gives 0x10008000 for VIF0, 0x10009000 for VIF1, etc.
+    uint32_t chanBase = 0x10000000 | chanId;
+    static int logCount = 0;
+    if (logCount < 20) {
+        printf("[REO-DMA] chan_init(0x%X) → base=0x%08X\n", chanId, chanBase);
+        logCount++;
+    }
+    setReturnU32(ctx, chanBase);
+    ctx->pc = getRegU32(ctx, 31);
+}
+
+// ── Display buffer init (likely display alloc/setup, 640x448) ──────────
+static void reo_display_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    uint32_t width = getRegU32(ctx, 4);
+    uint32_t height = getRegU32(ctx, 5);
+    printf("[REO-DISP] display_init(%u x %u) → success\n", width, height);
+    setReturnU32(ctx, 1); // Non-zero = success
+    ctx->pc = getRegU32(ctx, 31);
+}
+
+// ── DMA channel poll — always return "complete" (status 3) ────────────
+// sub_00128B18 is a DMA status poll. Callers busy-wait until it returns 3.
+// Without real DMA hardware, we return 3 immediately.
+static void reo_dma_poll_complete(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    static int logCount = 0;
+    if (logCount < 10) {
+        printf("[REO-DMA] poll_complete(chan=%u) → 3\n", getRegU32(ctx, 4));
+        logCount++;
+    }
+    setReturnU32(ctx, 3);
+    ctx->pc = getRegU32(ctx, 31);
+}
+
+// ── Generic "return 1" with logging ────────────────────────────────────
+static void reo_ret1_log(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    static int logCount = 0;
+    if (logCount < 30) {
+        printf("[REO-STUB] ret1 at pc=0x%08X a0=0x%X a1=0x%X\n",
+               ctx->pc, getRegU32(ctx, 4), getRegU32(ctx, 5));
+        logCount++;
+    }
+    setReturnU32(ctx, 1);
     ctx->pc = getRegU32(ctx, 31);
 }
 
@@ -413,6 +468,12 @@ static bool bindNamed(PS2Runtime& runtime, uint32_t addr, const char* name) {
 static void applyOutbreakOverrides(PS2Runtime& runtime) {
     printf("[REO] Applying RE Outbreak File #1 overrides (SLUS-20765, NTSC-U v2.00)\n");
 
+    // ── Initialize hardware bridge (GS renderer, VU interpreters) ────
+    if (!g_hwBridge.init(runtime)) {
+        printf("[REO] WARNING: Hardware bridge failed to initialize!\n");
+        printf("[REO] Rendering will not work. Continuing with stubs only.\n");
+    }
+
     // ── Boot sequence: GS init ───────────────────────────────────────
     bind(runtime, 0x11D6D0, reo_gs_reset_graph,   "sceGsResetGraph (init)");
     bind(runtime, 0x11DDE8, reo_gs_put_disp_env,  "sceGsPutDispEnv");
@@ -440,6 +501,22 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     // return statement so they're dead code. We register them as stubs.
     bind(runtime, 0x10A9D8, reo_ret0,              "mid_entry_0x10A9D8 (in sub_0010A8C8)");
     bind(runtime, 0x1AC640, reo_ret0,              "mid_entry_0x1AC640 (in sub_001AC630)");
+    bind(runtime, 0x1395C8, reo_ret0,              "mid_entry_0x1395C8 (in sub_00139568)");
+
+    // ── Critical DMA/display init stubs ─────────────────────────────────
+    // These are PS2 SDK functions the recompiler couldn't decompile.
+    // Without them, DMA channels never initialize and rendering never starts.
+    bind(runtime, 0x138208, reo_dma_chan_init,     "sceDmaGetChan/Reset (DMA channel init)");
+    bind(runtime, 0x128B18, reo_dma_poll_complete, "DMA channel status poll (return complete)");
+    bind(runtime, 0x19F380, reo_display_init,      "display buffer init (640x448)");
+    bind(runtime, 0x136A80, reo_ret1_log,          "gfx_init_0x136A80");
+    bind(runtime, 0x13ADF0, reo_ret1_log,          "gfx_init_0x13ADF0");
+    bind(runtime, 0x13AE10, reo_ret1_log,          "gfx_obj_init_0x13AE10");
+    bind(runtime, 0x12B638, reo_ret1_log,          "render_init_0x12B638");
+    bind(runtime, 0x13CB30, reo_ret1_log,          "render_init_0x13CB30");
+    bind(runtime, 0x15E6A0, reo_ret1_log,          "hw_init_0x15E6A0");
+    bind(runtime, 0x12A1E8, reo_ret1_log,          "hw_init_0x12A1E8");
+    bind(runtime, 0x128860, reo_ret1_log,          "hw_init_0x128860");
 
     // ── Thread entry points (merged by recompiler) ──────────────────
     // These are thread entry points that the recompiler merged into
@@ -471,10 +548,11 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
 
     // ── Early init stubs (0x100xxx) ──────────────────────────────────
     bind(runtime, 0x100218, reo_ret0_log,          "crt0_exit/main_return");
-    bind(runtime, 0x100590, reo_ret0,             "early_init_0x100590");
+    // 0x100590 and 0x100838: UN-STUBBED — needed for DMA submission pipeline
+    // bind(runtime, 0x100590, reo_ret0,             "early_init_0x100590");
     bind(runtime, 0x100648, reo_ret0,             "early_init_0x100648");
     bind(runtime, 0x1007C0, reo_ret0,             "early_init_0x1007C0");
-    bind(runtime, 0x100838, reo_ret0,             "dma_flush_0x100838");
+    // bind(runtime, 0x100838, reo_ret0,             "dma_flush_0x100838");
     bind(runtime, 0x100E88, reo_ret0,             "init_0x100E88");
     bind(runtime, 0x1010A8, reo_ret0,             "init_0x1010A8");
 

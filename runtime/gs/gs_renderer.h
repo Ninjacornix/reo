@@ -92,8 +92,13 @@ public:
     GSRenderer() = default;
     ~GSRenderer() = default;
 
-    bool init(int width, int height, bool fullscreen);
+    bool init(int width, int height, bool fullscreen, bool headless = false);
     void shutdown();
+
+    // Access the raw framebuffer (RGBA8888, width * height pixels)
+    const uint32_t* framebuffer() const { return m_framebuffer; }
+    int fb_width() const { return m_width; }
+    int fb_height() const { return m_height; }
 
     // GS register access (from MMIO at 0x12000000)
     uint64_t read_register(uint32_t offset);
