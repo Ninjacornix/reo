@@ -82,6 +82,183 @@ static void reo_dma_chan_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* run
     ctx->pc = getRegU32(ctx, 31);
 }
 
+// ── Rendering subsystem initialization ──────────────────────────────
+// The original game initializes the rendering subsystem through several
+// PS2 SDK functions that the recompiler couldn't decompile (0x13AE10,
+// 0x136A80, 0x13CB30, etc.). These set up:
+//   - DMA channel pointers in the rendering state block
+//   - Double-buffered display list buffers (512KB each)
+//   - Rendering state flags
+// We manually initialize all of these.
+//
+// Rendering state block (in BSS at ~0x29F5D0-0x29FE00):
+//   0x29F5F0  - display list channel index (used by sub_0018D470)
+//   0x29F6F0  - display list entry struct base
+//   0x29F704  - display list head pointers [2] (double-buffered)
+//   0x29FDB0  - rendering state flag (0=init, 1=active, 2=flush)
+//   0x29FDB4  - double buffer index (0 or 1)
+//   0x29FDB8  - current display list write pointer
+//   0x29FDBC  - current display list end pointer
+//   0x29FDC0  - current display list base pointer
+//   0x29FDC4  - display list buffer base addresses [2]
+//   0x29FD74  - DMA channel pointer table
+static void reo_gfx_obj_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    constexpr uint32_t RAM_MASK = 0x1FFFFFF;
+
+    // ── DMA channel pointers ──
+    constexpr uint32_t GIF_DMA_BASE  = 0x1000A000;
+    constexpr uint32_t VIF1_DMA_BASE = 0x10009000;
+    constexpr uint32_t CHAN_TABLE_ADDR = 0x29FD74;
+
+    auto write32 = [&](uint32_t addr, uint32_t val) {
+        *reinterpret_cast<uint32_t*>(rdram + (addr & RAM_MASK)) = val;
+    };
+    auto read32 = [&](uint32_t addr) -> uint32_t {
+        return *reinterpret_cast<uint32_t*>(rdram + (addr & RAM_MASK));
+    };
+
+    // Write GIF channel pointer to table entry 0
+    write32(CHAN_TABLE_ADDR,     GIF_DMA_BASE);
+    write32(CHAN_TABLE_ADDR + 4, VIF1_DMA_BASE);
+
+    // ── Display list buffers ──
+    // Allocate two 512KB buffers in the bump allocator range (0x600000+)
+    // These buffers hold the per-frame GIF command lists that sub_0018D470 processes
+    constexpr uint32_t DL_BUF_SIZE = 0x80000; // 512KB per buffer
+    constexpr uint32_t DL_BUF0_ADDR = 0x700000; // display list buffer 0
+    constexpr uint32_t DL_BUF1_ADDR = 0x780000; // display list buffer 1
+
+    write32(0x29FDC4,     DL_BUF0_ADDR); // buffer base [0]
+    write32(0x29FDC4 + 4, DL_BUF1_ADDR); // buffer base [1]
+
+    // Initialize the double-buffer index to 0
+    write32(0x29FDB4, 0);
+
+    // Set up initial rendering pointers for buffer 0
+    write32(0x29FDB8, DL_BUF0_ADDR);                // write pointer = start of buffer
+    write32(0x29FDC0, DL_BUF0_ADDR);                // base pointer
+    write32(0x29FDBC, DL_BUF0_ADDR + DL_BUF_SIZE);  // end pointer
+
+    // Initialize the display list entry struct at 0x29F6F0.
+    // The GIF tag processor (sub_0018D470) reads entry[12] as the data buffer
+    // address (passed through pool_resolve). Each entry is indexed by dbIdx*4.
+    //   entry[0] @ 0x29F6F0: dbIdx=0 entry base
+    //   entry[1] @ 0x29F6F4: dbIdx=1 entry base
+    //   entry[0]+12 = 0x29F6FC: data buffer ptr for buf[0]
+    //   entry[1]+12 = 0x29F700: data buffer ptr for buf[1]
+    write32(0x29F6FC, DL_BUF0_ADDR);  // entry[0] data buffer = buf[0]
+    write32(0x29F700, DL_BUF1_ADDR);  // entry[1] data buffer = buf[1]
+
+    // Write end-of-list markers at the start of each buffer
+    constexpr uint32_t DL_END_TAG = 0xF0000002;
+    write32(DL_BUF0_ADDR, DL_END_TAG);
+    write32(DL_BUF1_ADDR, DL_END_TAG);
+
+    printf("[REO-GFX] gfx_obj_init:\n");
+    printf("[REO-GFX]   GIF DMA base=0x%08X at table[0]=0x%08X\n", GIF_DMA_BASE, CHAN_TABLE_ADDR);
+    printf("[REO-GFX]   DL buf[0]=0x%08X buf[1]=0x%08X (512KB each)\n", DL_BUF0_ADDR, DL_BUF1_ADDR);
+    printf("[REO-GFX]   DB index=0, write_ptr=0x%08X, end=0x%08X\n", DL_BUF0_ADDR, DL_BUF0_ADDR + DL_BUF_SIZE);
+
+    setReturnU32(ctx, 1);
+    ctx->pc = getRegU32(ctx, 31);
+}
+
+// ── Video mode initialization (sub_0013ADF0) ──────────────────────────
+// Called from sub_00131088 with args (a0=width, a1=height, a2=psm, a3=fbw).
+// When args are all 0, uses NTSC defaults.
+// Populates the rendering state block at 0x29F--- that sub_001A0920 reads
+// to build per-frame GS register setup GIF packets.
+//
+// State block layout (inputs to sub_001A0920):
+//   0x29FED0  - render height (448 for NTSC)
+//   0x29FED8  - render width (640)
+//   0x29FD50  - packed RGBA/display mode (byte-swapped into GS BGCOLOR)
+//   0x29FD54  - FBP (frame buffer base pointer, 2048-byte pages)
+//   0x29FD58  - FBW (frame buffer width, 64-pixel units)
+//   0x29FDF0  - PMODE register value (64-bit)
+//   0x29FE08  - SMODE2 register value (64-bit)
+//   0x29FDD0  - DISPFB1 register value (64-bit)
+//   0x29FDD8  - DISPLAY1 register value (64-bit)
+//   0x29FDE0  - DISPFB2 register value (64-bit)
+//   0x29FDE8  - DISPLAY2 register value (64-bit)
+static void reo_video_mode_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    constexpr uint32_t RAM_MASK = 0x1FFFFFF;
+
+    auto write32 = [&](uint32_t addr, uint32_t val) {
+        *reinterpret_cast<uint32_t*>(rdram + (addr & RAM_MASK)) = val;
+    };
+    auto write64 = [&](uint32_t addr, uint64_t val) {
+        *reinterpret_cast<uint64_t*>(rdram + (addr & RAM_MASK)) = val;
+    };
+
+    // Use args or defaults for NTSC 640x448 interlaced
+    uint32_t width  = getRegU32(ctx, 4);
+    uint32_t height = getRegU32(ctx, 5);
+    uint32_t psm    = getRegU32(ctx, 6);
+    uint32_t fbw    = getRegU32(ctx, 7);
+
+    if (width == 0)  width  = 640;
+    if (height == 0) height = 448;
+    if (fbw == 0)    fbw    = width / 64;  // 10 for 640
+
+    // Scalar rendering parameters
+    write32(0x29FED0, height);           // render height
+    write32(0x29FED8, width);            // render width
+    write32(0x29FD50, 0x00800000);       // packed display mode (non-zero)
+    write32(0x29FD54, 0);                // FBP = page 0
+    write32(0x29FD58, fbw);              // FBW = 10
+
+    // GS privileged register values for NTSC 640x448 interlaced frame mode
+    // PMODE: EN2=1, CRTMD=1, MMOD=1, AMOD=1 → single circuit 2
+    write64(0x29FDF0, 0x0000000000000066ULL);
+
+    // SMODE2: INT=1, FFMD=1 (frame mode interlace)
+    write64(0x29FE08, 0x0000000000000003ULL);
+
+    // DISPFB1: FBP=0, FBW=10, PSM=0 (PSMCT32), DBX=0, DBY=0
+    // DISPFB = FBP | (FBW << 9) | (PSM << 15) | (DBX << 32) | (DBY << 43)
+    uint64_t dispfb = (uint64_t)fbw << 9;  // 10 << 9 = 0x1400
+    write64(0x29FDD0, dispfb);  // DISPFB1
+    write64(0x29FDE0, dispfb);  // DISPFB2
+
+    // DISPLAY1/2: DX=636, DY=50, MAGH=3, MAGV=0, DW=2559, DH=447
+    // DISPLAY = DX | (DY << 12) | (MAGH << 23) | (MAGV << 27) | (DW << 32) | (DH << 44)
+    uint64_t dx = 636, dy = 50, magh = 3, magv = 0;
+    uint64_t dw = (uint64_t)width * (magh + 1) - 1;  // 2559
+    uint64_t dh = (uint64_t)height - 1;               // 447
+    uint64_t display = dx | (dy << 12) | (magh << 23) | (magv << 27)
+                     | (dw << 32) | (dh << 44);
+    write64(0x29FDD8, display);  // DISPLAY1
+    write64(0x29FDE8, display);  // DISPLAY2
+
+    printf("[REO-VIDMODE] video_mode_init: %ux%u PSM=%u FBW=%u\n", width, height, psm, fbw);
+    printf("[REO-VIDMODE]   PMODE=0x%016llX SMODE2=0x%016llX\n",
+           0x0000000000000066ULL, 0x0000000000000003ULL);
+    printf("[REO-VIDMODE]   DISPFB=0x%016llX DISPLAY=0x%016llX\n", dispfb, display);
+
+    setReturnU32(ctx, 1);
+    ctx->pc = getRegU32(ctx, 31);
+}
+
+// ── Pool address resolver passthrough ───────────────────────────────
+// sub_0018DCA0 and sub_0018DC90 are trampolines into the memory pool
+// system (entry_1a0d70 → entry_1a1330, entry_1a0d80 → entry_1a1370).
+// On the real PS2, the heap allocator returns pool handles that these
+// functions resolve to actual addresses. Our bump allocator (reo_gfx_obj_init)
+// returns raw usable addresses, so pool resolution should be identity (return a0).
+// Without this, the pool struct at 0x2AFDF0 is uninitialized → lookup returns 0
+// → wrPtr (0x29FDB8) gets set to 0 → display list entries are empty → no rendering.
+static void reo_pool_resolve(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    uint32_t addr = getRegU32(ctx, 4);
+    static int logCount = 0;
+    if (logCount < 10) {
+        printf("[REO-POOL] resolve(0x%08X) → passthrough\n", addr);
+        logCount++;
+    }
+    setReturnU32(ctx, addr);
+    ctx->pc = getRegU32(ctx, 31);
+}
+
 // ── Display buffer init (likely display alloc/setup, 640x448) ──────────
 static void reo_display_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     uint32_t width = getRegU32(ctx, 4);
@@ -510,13 +687,19 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     bind(runtime, 0x128B18, reo_dma_poll_complete, "DMA channel status poll (return complete)");
     bind(runtime, 0x19F380, reo_display_init,      "display buffer init (640x448)");
     bind(runtime, 0x136A80, reo_ret1_log,          "gfx_init_0x136A80");
-    bind(runtime, 0x13ADF0, reo_ret1_log,          "gfx_init_0x13ADF0");
-    bind(runtime, 0x13AE10, reo_ret1_log,          "gfx_obj_init_0x13AE10");
+    bind(runtime, 0x13ADF0, reo_video_mode_init,    "video mode init (NTSC 640x448)");
+    bind(runtime, 0x13AE10, reo_gfx_obj_init,      "gfx_obj_init (GIF DMA table init)");
     bind(runtime, 0x12B638, reo_ret1_log,          "render_init_0x12B638");
     bind(runtime, 0x13CB30, reo_ret1_log,          "render_init_0x13CB30");
     bind(runtime, 0x15E6A0, reo_ret1_log,          "hw_init_0x15E6A0");
     bind(runtime, 0x12A1E8, reo_ret1_log,          "hw_init_0x12A1E8");
     bind(runtime, 0x128860, reo_ret1_log,          "hw_init_0x128860");
+
+    // ── Pool address resolvers (critical for display list pointers) ──
+    // These translate bump-allocator addresses through the memory pool system.
+    // Since our allocator returns raw addresses, we bypass pool lookup entirely.
+    bind(runtime, 0x18DCA0, reo_pool_resolve,      "pool_resolve (sub_0018DCA0, 21 callers)");
+    bind(runtime, 0x18DC90, reo_pool_resolve,      "pool_resolve (sub_0018DC90, 8 callers)");
 
     // ── Thread entry points (merged by recompiler) ──────────────────
     // These are thread entry points that the recompiler merged into

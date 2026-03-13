@@ -226,7 +226,7 @@ skip = [
   "sub_0018C5F0",
   "sub_0018C8C0",
   "sub_0018CD00",
-  "sub_0018CFB0",
+  # "sub_0018CFB0",  # UN-STUBBED: SIMD function, called from rendering path
   # "sub_0018D470",  # UN-STUBBED: rendering callee
   "sub_00192710",
   "sub_00192B70",
@@ -1444,7 +1444,7 @@ critical = [
   "sub_00186EF0", # Contains heavy loops
   "sub_00188938", # Contains heavy loops
   "sub_0018A260", # Contains heavy loops
-  "sub_0018CFB0", # Uses SIMD instructions
+  # "sub_0018CFB0", # UN-STUBBED: Uses SIMD instructions
   # "sub_0018D470",  # UN-STUBBED: rendering callee # Uses SIMD instructions
   "sub_0018E230", # Uses SIMD instructions
   "sub_0018F1E0", # Uses SIMD instructions

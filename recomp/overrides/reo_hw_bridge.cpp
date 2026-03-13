@@ -168,26 +168,88 @@ void ReoHwBridge::onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc,
                 self->m_gs->submit_path3(rdram + phys, bytes);
             }
         } else {
-            // Chain mode: follow DMA tags from tadr
-            uint32_t physTag = tadr & PS2_RAM_MASK;
-            if (physTag + 16 <= PS2_RAM_SIZE) {
+            // Source chain mode: follow DMA tags from tadr until END/REFE
+            uint32_t curTag = tadr;
+            int chainDepth = 0;
+            constexpr int MAX_CHAIN = 256;
+            while (chainDepth < MAX_CHAIN) {
+                uint32_t physTag = curTag & PS2_RAM_MASK;
+                if (physTag + 16 > PS2_RAM_SIZE) break;
+
                 uint64_t tag;
                 memcpy(&tag, rdram + physTag, sizeof(tag));
                 uint16_t tagQwc = (uint16_t)(tag & 0xFFFF);
-                uint32_t addr = (uint32_t)((tag >> 32) & 0x7FFFFFF0);
-                uint32_t phys = addr & PS2_RAM_MASK;
-                uint32_t bytes = tagQwc * 16;
-                if (phys + bytes <= PS2_RAM_SIZE && bytes > 0) {
-                    REO_TRACE_DMA_GIF(addr, tagQwc, rdram + phys, bytes);
-                    self->m_gs->submit_path3(rdram + phys, bytes);
+                uint32_t tagId  = (uint32_t)((tag >> 28) & 0x7);
+                uint32_t tagAddr = (uint32_t)((tag >> 32) & 0x7FFFFFFF);
+                // Upper 64 bits of tag QW can be data (TTE mode)
+
+                static int chainLog = 0;
+                if (chainLog < 30) {
+                    printf("[HW-BRIDGE] GIF chain[%d]: tag@0x%08X id=%u qwc=%u addr=0x%08X\n",
+                           chainDepth, curTag, tagId, tagQwc, tagAddr);
+                    chainLog++;
                 }
+
+                if (tagQwc > 0) {
+                    uint32_t dataAddr;
+                    if (tagId == 0 || tagId == 3 || tagId == 4) {
+                        // REFE/REF/REFS: data at tagAddr
+                        dataAddr = tagAddr;
+                    } else {
+                        // CNT/NEXT/CALL/RET/END: data follows inline
+                        dataAddr = curTag + 16;
+                    }
+                    uint32_t phys = dataAddr & PS2_RAM_MASK;
+                    uint32_t bytes = tagQwc * 16;
+                    if (phys + bytes <= PS2_RAM_SIZE) {
+                        REO_TRACE_DMA_GIF(dataAddr, tagQwc, rdram + phys, bytes);
+                        self->m_gs->submit_path3(rdram + phys, bytes);
+                    }
+                }
+
+                // Advance to next tag based on ID
+                if (tagId == 7) {
+                    // END — stop chain
+                    break;
+                } else if (tagId == 0) {
+                    // REFE — normally "reference end" but RE Outbreak uses
+                    // a sentinel REFE/QWC=0 at display list buffer start.
+                    // The ADDR field (masked to RAM) points to the real chain.
+                    if (tagQwc == 0 && chainDepth == 0) {
+                        uint32_t nextAddr = tagAddr & PS2_RAM_MASK;
+                        if (nextAddr + 16 <= PS2_RAM_SIZE && nextAddr != 0) {
+                            static int skipLog = 0;
+                            if (skipLog < 10) {
+                                printf("[HW-BRIDGE] GIF: skipping sentinel REFE/QWC=0, chain continues at 0x%08X\n", nextAddr);
+                                skipLog++;
+                            }
+                            curTag = nextAddr;
+                            chainDepth++;
+                            continue;
+                        }
+                    }
+                    break;
+                } else if (tagId == 1) {
+                    // CNT — next tag is after this tag + data
+                    curTag = curTag + 16 + tagQwc * 16;
+                } else if (tagId == 2) {
+                    // NEXT — next tag at tagAddr
+                    curTag = tagAddr;
+                } else if (tagId == 3 || tagId == 4) {
+                    // REF/REFS — next tag follows this one
+                    curTag = curTag + 16;
+                } else {
+                    // CALL/RET — not supported yet, break
+                    break;
+                }
+                chainDepth++;
             }
         }
 
         static int logCount = 0;
         if (logCount < 8) {
-            printf("[HW-BRIDGE] GIF DMA: madr=0x%08X qwc=%u (total packets: %llu)\n",
-                   madr, qwc, (unsigned long long)self->m_gifPackets);
+            printf("[HW-BRIDGE] GIF DMA: madr=0x%08X qwc=%u tadr=0x%08X (total packets: %llu)\n",
+                   madr, qwc, tadr, (unsigned long long)self->m_gifPackets);
             logCount++;
         }
         break;
