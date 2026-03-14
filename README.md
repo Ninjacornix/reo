@@ -225,7 +225,7 @@ The recompilation pipeline is **working for both games**. File #1 boots to its m
 - Binary trace logger — records DMA/GIF/VU/GS events at runtime (`REO_TRACE=1`)
 - PCSX2 Pine IPC scripts — dump overlays, capture GS state, trace execution from live PCSX2
 
-Next: verify GS renderer produces pixel output from GIF data (proof of life)
+**Proof of life achieved (2025-03-13):** Debug overlay (color-cycling bar + "REO" text + frame counter) renders on top of the live GS framebuffer, confirming the full pipeline works end-to-end: recompiled MIPS code → GIF DMA → GS software rasterizer → raylib window. Game currently draws black screen clears (no disc assets loaded yet). Next: hook disc I/O to load game assets from extracted data.
 
 ## Roadmap
 
@@ -243,10 +243,11 @@ Next: verify GS renderer produces pixel output from GIF data (proof of life)
 - [x] Un-stub rendering pipeline (13 core functions)
 - [x] Debug tooling (GS dump replay, binary trace logger, PCSX2 IPC scripts)
 - [x] GIF DMA pipeline flowing (display list → tag commit → DMA chain → GSRenderer)
-- [ ] Render first frame (proof of life)
+- [x] Render first frame (proof of life — debug overlay on live GS framebuffer)
 
 ### Phase 2 — See Something
-- [ ] GS renderer (Vulkan) — render the first frame
+- [ ] Disc I/O hooks — load game assets from extracted data
+- [ ] GS renderer (Vulkan) — upgrade from software rasterizer
 - [ ] VU microcode translation for geometry
 - [ ] Texture loading (TIM2/SLD)
 - [ ] SPU2 audio mixer — hear the first sound

@@ -138,6 +138,7 @@ private:
     void rasterize_triangle(const GSVertex& v0, const GSVertex& v1, const GSVertex& v2);
     void rasterize_sprite(const GSVertex& v0, const GSVertex& v1);
     void plot_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+    void dump_framebuffer_bmp(const char* path);
 
     // Win32 window management
     bool create_window();

@@ -306,9 +306,76 @@ const uint32_t* ReoHwBridge::getFramebuffer(int* width, int* height, void* user)
     auto* self = static_cast<ReoHwBridge*>(user);
     if (!self->m_gs) return nullptr;
 
-    *width = self->m_gs->fb_width();
-    *height = self->m_gs->fb_height();
-    return self->m_gs->framebuffer();
+    int w = self->m_gs->fb_width();
+    int h = self->m_gs->fb_height();
+    *width = w;
+    *height = h;
+
+    const uint32_t* src = self->m_gs->framebuffer();
+    if (!src) return nullptr;
+
+    // Overlay buffer: copy framebuffer and draw debug info on top
+    static uint32_t* overlay = nullptr;
+    static int overlay_size = 0;
+    if (!overlay || overlay_size != w * h) {
+        delete[] overlay;
+        overlay = new uint32_t[w * h];
+        overlay_size = w * h;
+    }
+    memcpy(overlay, src, w * h * sizeof(uint32_t));
+
+    // Debug overlay: colored bar + "REO" text + frame counter
+    static int frame_counter = 0;
+    frame_counter++;
+
+    // Color cycling bar at top (2 rows)
+    uint8_t r = (uint8_t)((frame_counter * 3) & 0xFF);
+    uint8_t g = (uint8_t)((frame_counter * 5 + 85) & 0xFF);
+    uint8_t b = (uint8_t)((frame_counter * 7 + 170) & 0xFF);
+    uint32_t bar_color = 0xFF000000 | ((uint32_t)b << 16) | ((uint32_t)g << 8) | r;
+    for (int y = 0; y < 2 && y < h; y++)
+        for (int x = 0; x < w; x++)
+            overlay[y * w + x] = bar_color;
+
+    // Simple bitmap font for "REO" + frame number
+    static const uint8_t font_R[] = {0x7C,0x42,0x42,0x7C,0x48,0x44,0x42};
+    static const uint8_t font_E[] = {0x7E,0x40,0x40,0x7C,0x40,0x40,0x7E};
+    static const uint8_t font_O[] = {0x3C,0x42,0x42,0x42,0x42,0x42,0x3C};
+    static const uint8_t font_digits[][7] = {
+        {0x3C,0x42,0x42,0x42,0x42,0x42,0x3C},
+        {0x08,0x18,0x08,0x08,0x08,0x08,0x1C},
+        {0x3C,0x42,0x02,0x1C,0x20,0x40,0x7E},
+        {0x3C,0x42,0x02,0x1C,0x02,0x42,0x3C},
+        {0x04,0x0C,0x14,0x24,0x7E,0x04,0x04},
+        {0x7E,0x40,0x7C,0x02,0x02,0x42,0x3C},
+        {0x3C,0x40,0x7C,0x42,0x42,0x42,0x3C},
+        {0x7E,0x02,0x04,0x08,0x10,0x10,0x10},
+        {0x3C,0x42,0x42,0x3C,0x42,0x42,0x3C},
+        {0x3C,0x42,0x42,0x3E,0x02,0x42,0x3C},
+    };
+    auto draw_glyph = [&](const uint8_t* glyph, int cx, int cy, uint32_t color) {
+        for (int row = 0; row < 7; row++)
+            for (int col = 0; col < 7; col++)
+                if (glyph[row] & (0x80 >> col)) {
+                    int px = cx + col, py = cy + row;
+                    if (px >= 0 && px < w && py >= 0 && py < h)
+                        overlay[py * w + px] = color;
+                }
+    };
+    uint32_t white = 0xFFFFFFFF;
+    draw_glyph(font_R, 4, 3, white);
+    draw_glyph(font_E, 12, 3, white);
+    draw_glyph(font_O, 20, 3, white);
+
+    // Frame number
+    int fc = frame_counter;
+    int digits[8]; int nd = 0;
+    if (fc == 0) digits[nd++] = 0;
+    else while (fc > 0 && nd < 8) { digits[nd++] = fc % 10; fc /= 10; }
+    for (int i = 0; i < nd; i++)
+        draw_glyph(font_digits[digits[nd - 1 - i]], 32 + i * 8, 3, white);
+
+    return overlay;
 }
 
 // ── VIF1 DMA processing ────────────────────────────────────────────

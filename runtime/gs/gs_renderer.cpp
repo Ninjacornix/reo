@@ -38,9 +38,11 @@ bool GSRenderer::init(int width, int height, bool fullscreen, bool headless) {
     // GS CSR defaults (revision ID for late-model PS2)
     m_regs[GS_CSR >> 4] = 0x55;
 
-    // Allocate software framebuffer
+    // Allocate software framebuffer (magenta = visible proof of life if GIF clears it)
     m_framebuffer = new uint32_t[width * height];
-    memset(m_framebuffer, 0, width * height * sizeof(uint32_t));
+    for (int i = 0; i < width * height; i++) {
+        m_framebuffer[i] = 0xFFFF00FF; // Magenta (ABGR)
+    }
 
     // Initialize drawing state
     m_draw.scissor_x1 = width - 1;
@@ -198,9 +200,26 @@ GIFTag GSRenderer::parse_gif_tag(const uint8_t* data) {
 void GSRenderer::process_gif_packet(const uint8_t* data, uint32_t size) {
     uint32_t offset = 0;
 
+    static uint64_t totalPackets = 0;
+    static uint64_t totalTags = 0;
+    totalPackets++;
+
     while (offset + 16 <= size) {
         GIFTag tag = parse_gif_tag(data + offset);
         offset += 16; // Skip the tag itself
+        totalTags++;
+
+        static int tagLog = 0;
+        if (tagLog < 50) {
+            uint64_t lo = *(const uint64_t*)(data + offset - 16);
+            uint64_t hi = *(const uint64_t*)(data + offset - 8);
+            printf("[GS-GIF] tag #%llu: nloop=%u nreg=%u flg=%u eop=%d pre=%d prim=0x%X regs=0x%llX raw=[0x%llX 0x%llX] (pkt#%llu, %u bytes remain)\n",
+                   (unsigned long long)totalTags, tag.nloop, tag.nreg, tag.flg,
+                   tag.eop ? 1 : 0, tag.pre ? 1 : 0, tag.prim,
+                   (unsigned long long)tag.regs, (unsigned long long)lo, (unsigned long long)hi,
+                   (unsigned long long)totalPackets, size - offset);
+            tagLog++;
+        }
 
         if (tag.nloop == 0) {
             if (tag.eop) break;
@@ -216,9 +235,24 @@ void GSRenderer::process_gif_packet(const uint8_t* data, uint32_t size) {
         case 0: // PACKED mode
         {
             uint32_t data_size = tag.nloop * tag.nreg * 16;
-            if (offset + data_size > size) return;
-            process_packed_data(tag, data + offset);
-            offset += data_size;
+            uint32_t available = size - offset;
+            if (data_size > available) {
+                // Process what we have — some games send short packets
+                if (available >= 16) {
+                    GIFTag adjusted = tag;
+                    uint32_t total_regs = available / 16;
+                    adjusted.nloop = total_regs / adjusted.nreg;
+                    if (adjusted.nloop == 0 && total_regs > 0) {
+                        adjusted.nloop = 1;
+                        adjusted.nreg = (uint8_t)total_regs;
+                    }
+                    process_packed_data(adjusted, data + offset);
+                }
+                offset = size;
+            } else {
+                process_packed_data(tag, data + offset);
+                offset += data_size;
+            }
             break;
         }
         case 1: // REGLIST mode
@@ -226,15 +260,29 @@ void GSRenderer::process_gif_packet(const uint8_t* data, uint32_t size) {
             uint32_t data_size = tag.nloop * tag.nreg * 8;
             // Align to 16 bytes
             data_size = (data_size + 15) & ~15;
-            if (offset + data_size > size) return;
-            process_reglist_data(tag, data + offset);
-            offset += data_size;
+            uint32_t available = size - offset;
+            if (data_size > available) {
+                if (available >= 8) {
+                    GIFTag adjusted = tag;
+                    uint32_t total_regs = available / 8;
+                    adjusted.nloop = total_regs / adjusted.nreg;
+                    if (adjusted.nloop == 0 && total_regs > 0) {
+                        adjusted.nloop = 1;
+                        adjusted.nreg = (uint8_t)total_regs;
+                    }
+                    process_reglist_data(adjusted, data + offset);
+                }
+                offset = size;
+            } else {
+                process_reglist_data(tag, data + offset);
+                offset += data_size;
+            }
             break;
         }
         case 2: // IMAGE mode (direct VRAM transfer)
         {
             uint32_t data_size = tag.nloop * 16;
-            if (offset + data_size > size) return;
+            if (offset + data_size > size) data_size = size - offset;
             // Copy image data to VRAM at current transfer address
             // For now, skip image uploads
             offset += data_size;
@@ -375,6 +423,12 @@ void GSRenderer::process_reglist_data(const GIFTag& tag, const uint8_t* data) {
 // ── Internal register writes ────────────────────────────────────────
 
 void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
+    static int regLog = 0;
+    if (regLog < 50) {
+        printf("[GS-REG] write reg=0x%02X val=0x%llX\n", reg, (unsigned long long)value);
+        regLog++;
+    }
+
     switch (reg) {
     case GIF_REG_PRIM: {
         // PRIM register: primitive type and drawing attributes
@@ -417,6 +471,83 @@ void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
         m_draw.frame_psm = (uint32_t)((value >> 24) & 0x3F);
         break;
     }
+    case 0x01: { // RGBAQ (via A+D)
+        m_draw.r = value & 0xFF;
+        m_draw.g = (value >> 8) & 0xFF;
+        m_draw.b = (value >> 16) & 0xFF;
+        m_draw.a = (value >> 24) & 0xFF;
+        // Q is in bits 63:32
+        uint32_t q_bits = (uint32_t)(value >> 32);
+        memcpy(&m_draw.q, &q_bits, 4);
+        if (m_draw.q == 0.0f) m_draw.q = 1.0f;
+        break;
+    }
+    case 0x02: { // ST (via A+D)
+        uint32_t s_bits = (uint32_t)(value & 0xFFFFFFFF);
+        uint32_t t_bits = (uint32_t)(value >> 32);
+        memcpy(&m_draw.s, &s_bits, 4);
+        memcpy(&m_draw.t, &t_bits, 4);
+        break;
+    }
+    case 0x03: { // UV (via A+D)
+        uint32_t u = value & 0x3FFF;
+        uint32_t v = (value >> 16) & 0x3FFF;
+        m_draw.s = (float)u / 16.0f;
+        m_draw.t = (float)v / 16.0f;
+        break;
+    }
+    case 0x04: { // XYZF2 (via A+D, with drawing kick)
+        GSVertex vtx;
+        vtx.x = (float)(value & 0xFFFF) / 16.0f;
+        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f;
+        vtx.z = (float)((value >> 32) & 0xFFFFFF) / (float)0xFFFFFF;
+        vtx.r = m_draw.r; vtx.g = m_draw.g; vtx.b = m_draw.b; vtx.a = m_draw.a;
+        vtx.s = m_draw.s; vtx.t = m_draw.t; vtx.q = m_draw.q;
+        vtx.fog = (float)((value >> 56) & 0xFF) / 255.0f;
+        vtx.drawing_kick = true;
+        submit_vertex(vtx);
+        break;
+    }
+    case 0x05: { // XYZ2 (via A+D, with drawing kick)
+        GSVertex vtx;
+        vtx.x = (float)(value & 0xFFFF) / 16.0f;
+        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f;
+        vtx.z = (float)((value >> 32) & 0xFFFFFFFF) / (float)0xFFFFFFFF;
+        vtx.r = m_draw.r; vtx.g = m_draw.g; vtx.b = m_draw.b; vtx.a = m_draw.a;
+        vtx.s = m_draw.s; vtx.t = m_draw.t; vtx.q = m_draw.q;
+        vtx.fog = m_draw.fog_val;
+        vtx.drawing_kick = true;
+        submit_vertex(vtx);
+        break;
+    }
+    case 0x0C: { // XYZF3 (via A+D, no drawing kick)
+        GSVertex vtx;
+        vtx.x = (float)(value & 0xFFFF) / 16.0f;
+        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f;
+        vtx.z = (float)((value >> 32) & 0xFFFFFF) / (float)0xFFFFFF;
+        vtx.r = m_draw.r; vtx.g = m_draw.g; vtx.b = m_draw.b; vtx.a = m_draw.a;
+        vtx.s = m_draw.s; vtx.t = m_draw.t; vtx.q = m_draw.q;
+        vtx.fog = (float)((value >> 56) & 0xFF) / 255.0f;
+        vtx.drawing_kick = false;
+        submit_vertex(vtx);
+        break;
+    }
+    case 0x0D: { // XYZ3 (via A+D, no drawing kick)
+        GSVertex vtx;
+        vtx.x = (float)(value & 0xFFFF) / 16.0f;
+        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f;
+        vtx.z = (float)((value >> 32) & 0xFFFFFFFF) / (float)0xFFFFFFFF;
+        vtx.r = m_draw.r; vtx.g = m_draw.g; vtx.b = m_draw.b; vtx.a = m_draw.a;
+        vtx.s = m_draw.s; vtx.t = m_draw.t; vtx.q = m_draw.q;
+        vtx.fog = m_draw.fog_val;
+        vtx.drawing_kick = false;
+        submit_vertex(vtx);
+        break;
+    }
+    case 0x0A: { // FOG (via A+D)
+        m_draw.fog_val = (float)((value >> 56) & 0xFF) / 255.0f;
+        break;
+    }
     default:
         break;
     }
@@ -439,6 +570,15 @@ void GSRenderer::submit_vertex(const GSVertex& vtx) {
 
 void GSRenderer::kick_primitive() {
     if (!m_framebuffer) return;
+
+    static uint64_t kickCount = 0;
+    kickCount++;
+    static int kickLog = 0;
+    if (kickLog < 20) {
+        printf("[GS-DRAW] kick #%llu: prim=%d vtx_count=%d\n",
+               (unsigned long long)kickCount, (int)m_draw.prim_type, m_draw.vtx_count);
+        kickLog++;
+    }
 
     switch (m_draw.prim_type) {
     case GSPrimType::Triangle: {
@@ -597,6 +737,51 @@ void GSRenderer::submit_path3(const void* data, uint32_t size) {
     // PATH3: GIF DMA → GS
     if (size < 16) return;
     process_gif_packet((const uint8_t*)data, size);
+
+    // Dump framebuffer to BMP after a few submissions for proof of life
+    static int dumpCount = 0;
+    if (dumpCount < 5 && m_framebuffer) {
+        dumpCount++;
+        if (dumpCount == 3) {
+            dump_framebuffer_bmp("reo_fb_dump.bmp");
+        }
+    }
+}
+
+// Placed here to keep it inside the reo namespace
+
+void GSRenderer::dump_framebuffer_bmp(const char* path) {
+    if (!m_framebuffer) return;
+
+    FILE* f = fopen(path, "wb");
+    if (!f) { printf("[GS] Failed to write %s\n", path); return; }
+
+    // BMP header
+    uint32_t imgSize = m_width * m_height * 4;
+    uint32_t fileSize = 54 + imgSize;
+    uint8_t header[54] = {};
+    header[0] = 'B'; header[1] = 'M';
+    *(uint32_t*)(header + 2) = fileSize;
+    *(uint32_t*)(header + 10) = 54;
+    *(uint32_t*)(header + 14) = 40;
+    *(int32_t*)(header + 18) = m_width;
+    *(int32_t*)(header + 22) = -m_height; // Top-down
+    *(uint16_t*)(header + 26) = 1;
+    *(uint16_t*)(header + 28) = 32;
+    fwrite(header, 1, 54, f);
+
+    // Write BGRA pixels (BMP uses BGRA order, our framebuffer is ABGR / RGBA)
+    for (int i = 0; i < m_width * m_height; i++) {
+        uint32_t px = m_framebuffer[i];
+        uint8_t r = px & 0xFF;
+        uint8_t g = (px >> 8) & 0xFF;
+        uint8_t b = (px >> 16) & 0xFF;
+        uint8_t a = (px >> 24) & 0xFF;
+        uint8_t bgra[4] = { b, g, r, a };
+        fwrite(bgra, 1, 4, f);
+    }
+    fclose(f);
+    printf("[GS] Framebuffer dumped to %s (%dx%d)\n", path, m_width, m_height);
 }
 
 // ── Frame control ───────────────────────────────────────────────────

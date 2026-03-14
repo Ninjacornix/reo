@@ -505,7 +505,17 @@ static void reo_pad_get_state(uint8_t* rdram, R5900Context* ctx, PS2Runtime* run
 
 // scePadRead — read controller state into buffer
 // The variant at 0x1D8560 takes multiple pointer args for multi-port reads
+//
+// PS2 DualShock2 button bitmask (0 = pressed, 1 = released):
+//   buf[2] high: L2=0, R2=1, L1=2, R1=3, Triangle=4, Circle=5, Cross=6, Square=7
+//   buf[3] low:  Select=0, L3=1, R3=2, START=3, Up=4, Right=5, Down=6, Left=7
 static void reo_pad_read(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    static int callCount = 0;
+    callCount++;
+    if (callCount <= 5 || callCount % 100 == 0) {
+        printf("[PAD] reo_pad_read call #%d\n", callCount);
+    }
+
     uint32_t bufAddr = getRegU32(ctx, 6); // $a2 = buffer
     if (bufAddr != 0 && (bufAddr & PS2_RAM_MASK) + 32 <= PS2_RAM_SIZE) {
         uint8_t* buf = rdram + (bufAddr & PS2_RAM_MASK);
@@ -518,6 +528,26 @@ static void reo_pad_read(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime)
         buf[5] = 0x80; // RY centered
         buf[6] = 0x80; // LX centered
         buf[7] = 0x80; // LY centered
+
+        // After ~3 seconds of frames (~180 calls at 60fps), press START
+        // to advance past title/logo screens
+        if (callCount >= 180 && callCount <= 240) {
+            buf[3] &= ~(1 << 3); // START pressed (bit 3 = 0)
+            static int logOnce = 0;
+            if (logOnce < 3) {
+                printf("[PAD] Simulating START press (call %d)\n", callCount);
+                logOnce++;
+            }
+        }
+        // Also try Cross (confirm) after START
+        if (callCount >= 300 && callCount <= 360) {
+            buf[2] &= ~(1 << 6); // Cross pressed (bit 6 = 0)
+            static int logOnce2 = 0;
+            if (logOnce2 < 3) {
+                printf("[PAD] Simulating Cross press (call %d)\n", callCount);
+                logOnce2++;
+            }
+        }
     }
     setReturnU32(ctx, 32);
     ctx->pc = getRegU32(ctx, 31);
