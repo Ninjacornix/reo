@@ -149,6 +149,19 @@ static void reo_gfx_obj_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runt
     write32(0x29F6FC, DL_BUF0_ADDR);  // entry[0] data buffer = buf[0]
     write32(0x29F700, DL_BUF1_ADDR);  // entry[1] data buffer = buf[1]
 
+    // Tag entry counts at 0x29F704/0x29F708 (per-buffer, indexed by dbIdx).
+    // sub_0018CFB0 increments these as it writes tag entries to the buffer.
+    // sub_0018D470 checks if non-zero to decide whether to process tags.
+    // Start at 0 — CFB0 will set them when A0920 commits GS setup data.
+    write32(0x29F704, 0);  // entry_count[0] = 0
+    write32(0x29F708, 0);  // entry_count[1] = 0
+
+    // Tag write indices at 0x29F70C/0x29F710 (per-buffer, indexed by dbIdx).
+    // CFB0 writes tag entries at buf_ptr + write_idx*4 and increments write_idx.
+    // Must be 0 initially so first tag entry goes to buffer offset 0.
+    write32(0x29F70C, 0);  // write_idx[0] = 0
+    write32(0x29F710, 0);  // write_idx[1] = 0
+
     // Write end-of-list markers at the start of each buffer
     constexpr uint32_t DL_END_TAG = 0xF0000002;
     write32(DL_BUF0_ADDR, DL_END_TAG);

@@ -199,12 +199,14 @@ The recompilation pipeline is **working for both games**. File #1 boots to its m
 | Boot | main loop running | pending |
 
 **File #1 boot progress:**
-- ELF loads, entry point executes, main loop enters
+- ELF loads, entry point executes, main loop enters and runs continuously
 - Game update function (sub_001BAA00 → sub_001BAEC0) completes successfully
 - 82+ function overrides bound (GS, pad, network, audio, VSync, threads, DMA)
 - Hardware bridge wired: DMA GIF/VIF → GSRenderer, GS register writes, VU0/VU1 microcode
 - 95 runtime overlay functions captured from PCSX2 and integrated (game-loaded code at 0x370000+)
 - 13 core rendering functions un-stubbed (DMA flush, GIF submission, geometry pipeline)
+- **GIF DMA pipeline fully operational** — display list double-buffering, tag array commit/reset, DMA source chain traversal all working
+- GIF data reaches GSRenderer via submit_path3() every frame (3-7 chain entries per frame, growing as rendering subsystem produces more data)
 - Binary trace logger integrated for DMA/GIF/VU/GS event capture
 
 **Resolved issues:**
@@ -214,6 +216,8 @@ The recompilation pipeline is **working for both games**. File #1 boots to its m
 - Stack corruption from null allocator return — bump allocator at 0x600000+ provides valid addresses
 - Runtime overlay dispatch failures — 95 functions captured via PCSX2 Pine IPC and recompiled
 - Monster function (sub_0037E920, 2.3M lines) — stubbed; needs manual split
+- Tag array 8-byte shift per frame (sub_0018DD40) — entry_count/write_idx not reset on buffer reuse; fixed with counter reset in buffer setup
+- GIF DMA chain traversal failures — REFE sentinel handling, address masking, and tag ID parsing fixed in hardware bridge
 
 **Debug tools:**
 - `reo-gs-replay` — replays PCSX2 GS dumps through REO's GS renderer, validates rendering independently
@@ -221,7 +225,7 @@ The recompilation pipeline is **working for both games**. File #1 boots to its m
 - Binary trace logger — records DMA/GIF/VU/GS events at runtime (`REO_TRACE=1`)
 - PCSX2 Pine IPC scripts — dump overlays, capture GS state, trace execution from live PCSX2
 
-Next: get DMA packets flowing through the hardware bridge → render first frame
+Next: verify GS renderer produces pixel output from GIF data (proof of life)
 
 ## Roadmap
 
@@ -238,6 +242,7 @@ Next: get DMA packets flowing through the hardware bridge → render first frame
 - [x] Hardware bridge (DMA/GIF/VU/GS interception layer)
 - [x] Un-stub rendering pipeline (13 core functions)
 - [x] Debug tooling (GS dump replay, binary trace logger, PCSX2 IPC scripts)
+- [x] GIF DMA pipeline flowing (display list → tag commit → DMA chain → GSRenderer)
 - [ ] Render first frame (proof of life)
 
 ### Phase 2 — See Something
