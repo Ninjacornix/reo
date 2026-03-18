@@ -187,7 +187,7 @@ cmake --build build --config Release
 
 ### Current Status
 
-The recompilation pipeline is **working for both games**. File #1 boots to its main loop with the full rendering pipeline un-stubbed and a hardware bridge connecting recompiled code to native subsystems.
+The recompilation pipeline is **working for both games**. File #1 boots to its main loop with the full rendering pipeline active, hardware bridge connecting recompiled code to native subsystems, live controller input, and disc I/O infrastructure wired.
 
 | | File #1 | File #2 |
 |---|---|---|
@@ -196,36 +196,44 @@ The recompilation pipeline is **working for both games**. File #1 boots to its m
 | MIPS → C++ | 3,209 → 3,830 files (66 MB) | 3,525 → 3,892 files (68 MB) |
 | Runtime overlays | 95 functions (0x370000+) | pending |
 | Build | compiles clean (3,923 files) | compiles clean (3,892 files) |
-| Boot | main loop running | pending |
+| Boot | main loop running, GIF pipeline active | pending |
 
 **File #1 boot progress:**
-- ELF loads, entry point executes, main loop enters and runs continuously
-- Game update function (sub_001BAA00 → sub_001BAEC0) completes successfully
-- 82+ function overrides bound (GS, pad, network, audio, VSync, threads, DMA)
-- Hardware bridge wired: DMA GIF/VIF → GSRenderer, GS register writes, VU0/VU1 microcode
-- 95 runtime overlay functions captured from PCSX2 and integrated (game-loaded code at 0x370000+)
-- 13 core rendering functions un-stubbed (DMA flush, GIF submission, geometry pipeline)
+- ELF loads, entry point executes, main loop enters and runs continuously at 60fps
+- 82+ function overrides bound (GS, pad, network, audio, VSync, threads, DMA, SIF)
+- Hardware bridge wired: DMA GIF/VIF → GSRenderer, GS register writes, VU0/VU1 microcode, SIF RPC → CDVD/PADMAN/MCSERV/LIBSD, Input polling, CDVD filesystem
+- **Live controller input** — XInput controllers and keyboard (WASD/Enter/Space) wired to game's pad buffer via reo::Input, polled each frame
+- **SIF RPC bridge** — PS2Recomp's SifCallRpc dispatches unhandled RPCs to REO's CDVD, PADMAN, MCSERV, and LIBSD handlers via onSifRpc callback in HwBridgeVtable
+- **CDVD filesystem** — 85 game files mapped from extracted game_data/ directory, handles cdReadFile/cdSearchFile/cdGetDiskType
+- **SIF module loading** — SifLoadModule returns success for IOP address loads; SifDmaStat check fixed to enable IOP init
 - **GIF DMA pipeline fully operational** — display list double-buffering, tag array commit/reset, DMA source chain traversal all working
-- GIF data reaches GSRenderer via submit_path3() every frame (3-7 chain entries per frame, growing as rendering subsystem produces more data)
-- Binary trace logger integrated for DMA/GIF/VU/GS event capture
+- GIF data reaches GSRenderer via submit_path3() every frame
+- 95 runtime overlay functions captured from PCSX2 and integrated
+- 13 core rendering functions un-stubbed
+- Binary trace logger + PCSX2 Pine IPC debug tools
 
 **Resolved issues:**
+- SIF DMA status check (sub_0011D9C8) returning 0 — skipped all SifLoadModule calls; overridden to return 1
+- SifLoadModule (sub_0011D970) returning -1 for IOP address loads — now HLE'd to return success
+- Memcpy counter wrap in sub_001AF5D0 (0 → 0xFFFFFFFF infinite loop) — safety check added
+- IOP task completion wait (sub_001CD080) infinite busy-loop — bypassed for single-threaded recomp
 - Infinite DMA slot busy-wait (sub_001AF7A0) — PS2 waits for hardware; HLE clears slots
 - Infinite GIF tag processing loop (sub_001071D8) — bypassed via caller override
 - 6MB memset at address 0 (sub_001AF710) — uninitialized heap; replaced with bump allocator
-- Stack corruption from null allocator return — bump allocator at 0x600000+ provides valid addresses
 - Runtime overlay dispatch failures — 95 functions captured via PCSX2 Pine IPC and recompiled
-- Monster function (sub_0037E920, 2.3M lines) — stubbed; needs manual split
-- Tag array 8-byte shift per frame (sub_0018DD40) — entry_count/write_idx not reset on buffer reuse; fixed with counter reset in buffer setup
-- GIF DMA chain traversal failures — REFE sentinel handling, address masking, and tag ID parsing fixed in hardware bridge
+- Tag array 8-byte shift per frame (sub_0018DD40) — entry_count/write_idx not reset on buffer reuse
+- GIF DMA chain traversal failures — REFE sentinel handling, address masking, tag ID parsing
+
+**Current blocker — disc I/O data delivery:**
+The game's file loading pipeline requires IOP-driven async data delivery through indirect function dispatch (function pointer tables populated by IOP callbacks). Since the IOP never runs in static recompilation, the callbacks never fire and the game's data loading handler (entry_1d2280) is never triggered through normal code flow. The SIF RPC bridge is wired but the game never calls SifBindRpc/SifCallRpc because the IOP callback system doesn't populate the indirect dispatch table. PCSX2 state snapshot injection shows the game CAN process injected data (task table populates, GIF DMA activity increases), confirming the rendering pipeline works — the gap is in the data delivery mechanism.
 
 **Debug tools:**
-- `reo-gs-replay` — replays PCSX2 GS dumps through REO's GS renderer, validates rendering independently
-- `reo-gs-gen-test` — generates synthetic GS test dumps (triangle + sprite primitives)
-- Binary trace logger — records DMA/GIF/VU/GS events at runtime (`REO_TRACE=1`)
-- PCSX2 Pine IPC scripts — dump overlays, capture GS state, trace execution from live PCSX2
+- `reo-gs-replay` — replays PCSX2 GS dumps through REO's GS renderer
+- `reo-gs-gen-test` — generates synthetic GS test dumps
+- Binary trace logger — records DMA/GIF/VU/GS events (`REO_TRACE=1`)
+- PCSX2 Pine IPC scripts — dump overlays, capture GS state, dump task tables (`dump_task_table.py`)
 
-**Proof of life achieved (2025-03-13):** Debug overlay (color-cycling bar + "REO" text + frame counter) renders on top of the live GS framebuffer, confirming the full pipeline works end-to-end: recompiled MIPS code → GIF DMA → GS software rasterizer → raylib window. Game currently draws black screen clears (no disc assets loaded yet). Next: hook disc I/O to load game assets from extracted data.
+**Proof of life achieved (2025-03-13):** Debug overlay renders on live GS framebuffer. Full pipeline confirmed: recompiled MIPS → GIF DMA → GS software rasterizer → raylib window.
 
 ## Roadmap
 
@@ -245,17 +253,19 @@ The recompilation pipeline is **working for both games**. File #1 boots to its m
 - [x] GIF DMA pipeline flowing (display list → tag commit → DMA chain → GSRenderer)
 - [x] Render first frame (proof of life — debug overlay on live GS framebuffer)
 
-### Phase 2 — See Something
-- [ ] Disc I/O hooks — load game assets from extracted data
+### Phase 2 — See Something (Current)
+- [x] Input system — XInput controllers + keyboard mapped to DualShock 2
+- [x] SIF RPC bridge — PS2Recomp dispatches to CDVD/PADMAN/MCSERV/LIBSD handlers
+- [x] CDVD filesystem — game files mapped from extracted data
+- [x] SIF module loading — SifLoadModule HLE for IOP address loads
+- [ ] Disc I/O data delivery — connect IOP async pipeline to CDVD reads (current blocker)
 - [ ] GS renderer (Vulkan) — upgrade from software rasterizer
 - [ ] VU microcode translation for geometry
 - [ ] Texture loading (TIM2/SLD)
 - [ ] SPU2 audio mixer — hear the first sound
-- [ ] IOP HLE — filesystem, memory card, timing
 
 ### Phase 3 — Play Something
 - [ ] Full game boot to main menu
-- [ ] Input system (controller + keyboard)
 - [ ] Sofdec FMV playback
 - [ ] Save/load system (memory card → local files)
 - [ ] Single-player gameplay loop

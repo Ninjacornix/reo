@@ -39,8 +39,11 @@
 #include "reo_trace_logger.h"
 #include "runtime/gs/gs_renderer.h"
 #include "runtime/vu/vu_interpreter.h"
+#include "runtime/input/input.h"
+#include "runtime/cdvd/cdvd.h"
 #include <cstdio>
 #include <cstring>
+#include <vector>
 
 ReoHwBridge* ReoHwBridge::s_instance = nullptr;
 
@@ -101,6 +104,17 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
         gs->submit_path1(data, max_size);
     }, m_gs);
 
+    // Initialize input system
+    m_input = new reo::Input();
+    m_input->init();
+
+    // Initialize CDVD filesystem (reads from game_data/)
+    auto cdRoot = PS2Runtime::getIoPaths().cdRoot;
+    if (!cdRoot.empty()) {
+        m_cdvd = new reo::CDVD(cdRoot);
+        printf("[HW-BRIDGE] CDVD initialized: %s\n", cdRoot.string().c_str());
+    }
+
     // Register callbacks with PS2Memory
     PS2Memory::HwBridgeCallbacks memCb;
     memCb.onDmaStart = &ReoHwBridge::onDmaStart;
@@ -112,6 +126,7 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
     PS2Runtime::HwBridgeVtable rtVt;
     rtVt.onVuStart = &ReoHwBridge::onVuStart;
     rtVt.getFramebuffer = &ReoHwBridge::getFramebuffer;
+    rtVt.onSifRpc = &ReoHwBridge::onSifRpc;
     rtVt.user = this;
     runtime.setHwBridgeVt(rtVt);
 
@@ -140,6 +155,8 @@ void ReoHwBridge::shutdown() {
                (unsigned long long)m_gsRegWrites);
     }
 
+    delete m_cdvd; m_cdvd = nullptr;
+    if (m_input) { m_input->shutdown(); delete m_input; m_input = nullptr; }
     delete m_vu1; m_vu1 = nullptr;
     delete m_vu0; m_vu0 = nullptr;
     if (m_gs) { m_gs->shutdown(); delete m_gs; m_gs = nullptr; }
@@ -657,4 +674,239 @@ void ReoHwBridge::executeVu(int unit, uint32_t addr, uint8_t* rdram, R5900Contex
                unit, addr, (unsigned long long)counter);
         logCount++;
     }
+}
+
+// ── SIF RPC callback: handle IOP module calls ───────────────────────
+
+// SIF RPC module IDs (PS2 IOP modules)
+static constexpr uint32_t SIF_PADMAN  = 0x80000100;
+static constexpr uint32_t SIF_MCSERV  = 0x80000400;
+static constexpr uint32_t SIF_CDVD    = 0x80000592;
+static constexpr uint32_t SIF_LIBSD   = 0x80000701;
+
+// Helper: read a uint32 from rdram
+static inline uint32_t rdramRead32(const uint8_t* rdram, uint32_t addr) {
+    uint32_t phys = addr & PS2_RAM_MASK;
+    if (phys + 4 > PS2_RAM_SIZE) return 0;
+    uint32_t v;
+    memcpy(&v, rdram + phys, 4);
+    return v;
+}
+
+// Helper: write a uint32 to rdram
+static inline void rdramWrite32(uint8_t* rdram, uint32_t addr, uint32_t val) {
+    uint32_t phys = addr & PS2_RAM_MASK;
+    if (phys + 4 > PS2_RAM_SIZE) return;
+    memcpy(rdram + phys, &val, 4);
+}
+
+bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
+                            uint32_t sendBuf, uint32_t sendSize,
+                            uint32_t recvBuf, uint32_t recvSize,
+                            uint8_t* rdram, void* user) {
+    auto* self = static_cast<ReoHwBridge*>(user);
+
+    switch (sid) {
+    case SIF_CDVD: {
+        static int cdvdLog = 0;
+        if (cdvdLog < 50) {
+            printf("[HW-BRIDGE:CDVD] rpc func=%u send=0x%08X recv=0x%08X\n",
+                   rpcNum, sendBuf, recvBuf);
+            cdvdLog++;
+        }
+
+        switch (rpcNum) {
+        case 0: // cdInit
+            printf("[HW-BRIDGE:CDVD] cdInit\n");
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 1);
+            return true;
+
+        case 1: { // cdRead (sector-based)
+            if (!sendBuf) return true;
+            uint32_t lba = rdramRead32(rdram, sendBuf);
+            uint32_t sectors = rdramRead32(rdram, sendBuf + 4);
+            uint32_t bufAddr = rdramRead32(rdram, sendBuf + 8);
+            printf("[HW-BRIDGE:CDVD] cdRead: LBA=%u sectors=%u buf=0x%08X\n",
+                   lba, sectors, bufAddr);
+            // TODO: Raw sector reads need ISO layout table
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 1);
+            return true;
+        }
+
+        case 2: // cdStop
+        case 3: // cdPause
+        case 4: // cdGetToc
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 1);
+            return true;
+
+        case 5: { // cdReadFile — read file by PS2 path
+            if (!sendBuf || !recvBuf || !self->m_cdvd) break;
+
+            // Detect send buffer format: path string or structured data
+            uint32_t sendPhys = sendBuf & PS2_RAM_MASK;
+            if (sendPhys >= PS2_RAM_SIZE) break;
+            const uint8_t* sendPtr = rdram + sendPhys;
+
+            std::string ps2_path;
+            uint32_t destAddr = 0;
+
+            // Check if first bytes look like a path string
+            if (sendPtr[0] == 'c' || sendPtr[0] == 'C' ||
+                sendPtr[0] == '\\' || sendPtr[0] == '/') {
+                ps2_path = (const char*)sendPtr;
+                destAddr = rdramRead32(rdram, sendBuf + 256); // dest after path
+                if (destAddr == 0) destAddr = recvBuf;
+            } else {
+                // Structured: {sectors, dest_addr, path...} or similar
+                destAddr = rdramRead32(rdram, sendBuf + 4);
+                uint32_t pathPhys = (sendBuf + 8) & PS2_RAM_MASK;
+                if (pathPhys < PS2_RAM_SIZE) {
+                    ps2_path = (const char*)(rdram + pathPhys);
+                }
+                if (destAddr == 0) destAddr = recvBuf;
+            }
+
+            if (!ps2_path.empty()) {
+                printf("[HW-BRIDGE:CDVD] cdReadFile: %s → dest=0x%08X\n",
+                       ps2_path.c_str(), destAddr);
+
+                std::vector<uint8_t> data;
+                if (self->m_cdvd->read_file(ps2_path, data)) {
+                    uint32_t destPhys = destAddr & PS2_RAM_MASK;
+                    if (destPhys + data.size() <= PS2_RAM_SIZE) {
+                        memcpy(rdram + destPhys, data.data(), data.size());
+                        printf("[HW-BRIDGE:CDVD] Loaded %zu bytes\n", data.size());
+                    }
+                    rdramWrite32(rdram, recvBuf, (uint32_t)data.size());
+                } else {
+                    printf("[HW-BRIDGE:CDVD] File not found: %s\n", ps2_path.c_str());
+                    rdramWrite32(rdram, recvBuf, 0);
+                }
+            }
+            return true;
+        }
+
+        case 6: { // cdSearchFile — check if file exists, return size
+            if (!sendBuf || !recvBuf || !self->m_cdvd) break;
+
+            uint32_t sendPhys = sendBuf & PS2_RAM_MASK;
+            if (sendPhys >= PS2_RAM_SIZE) break;
+            std::string ps2_path = (const char*)(rdram + sendPhys);
+
+            printf("[HW-BRIDGE:CDVD] cdSearchFile: %s\n", ps2_path.c_str());
+
+            if (self->m_cdvd->file_exists(ps2_path)) {
+                uint32_t size = self->m_cdvd->file_size(ps2_path);
+                rdramWrite32(rdram, recvBuf + 0, 1);     // LBA (fake)
+                rdramWrite32(rdram, recvBuf + 4, size);   // File size
+                rdramWrite32(rdram, recvBuf + 8, 0);      // Date
+                printf("[HW-BRIDGE:CDVD] Found: size=%u\n", size);
+            } else {
+                rdramWrite32(rdram, recvBuf + 0, 0);
+                rdramWrite32(rdram, recvBuf + 4, 0);
+                printf("[HW-BRIDGE:CDVD] Not found\n");
+            }
+            return true;
+        }
+
+        case 7: // cdGetDiskType — PS2DVD
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 0x14);
+            return true;
+
+        case 12: // cdStatus — ready
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 0x0A);
+            return true;
+
+        default:
+            printf("[HW-BRIDGE:CDVD] unhandled func=%u\n", rpcNum);
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 0);
+            return true;
+        }
+        break;
+    }
+
+    case SIF_PADMAN: {
+        // Pad input — return stable state, actual input handled by reo_pad_read override
+        static int padLog = 0;
+        if (padLog < 10) {
+            printf("[HW-BRIDGE:PAD] rpc func=%u\n", rpcNum);
+            padLog++;
+        }
+        switch (rpcNum) {
+        case 0: // padInit
+        case 2: // padPortOpen
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 1);
+            return true;
+        case 3: // padGetState → STABLE
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 6);
+            return true;
+        case 4: { // padRead
+            if (recvBuf && recvSize >= 32) {
+                // Fill with default pad state (all released, analog centered)
+                uint32_t recvPhys = recvBuf & PS2_RAM_MASK;
+                if (recvPhys + 32 <= PS2_RAM_SIZE) {
+                    uint8_t* buf = rdram + recvPhys;
+                    memset(buf, 0, 32);
+                    buf[0] = 0x00; // success
+                    buf[1] = 0x79; // DualShock2
+                    buf[2] = 0xFF; // buttons high (released)
+                    buf[3] = 0xFF; // buttons low (released)
+                    buf[4] = 0x80; // RX
+                    buf[5] = 0x80; // RY
+                    buf[6] = 0x80; // LX
+                    buf[7] = 0x80; // LY
+
+                    // Read live input if available
+                    if (self->m_input) {
+                        const reo::DualShock2State& pad = self->m_input->get_pad(0);
+                        buf[2] = (uint8_t)(pad.buttons >> 8);
+                        buf[3] = (uint8_t)(pad.buttons & 0xFF);
+                        buf[4] = pad.right_x;
+                        buf[5] = pad.right_y;
+                        buf[6] = pad.left_x;
+                        buf[7] = pad.left_y;
+                        memcpy(buf + 8, pad.pressure, 12);
+                    }
+                }
+            }
+            return true;
+        }
+        default:
+            if (recvBuf) rdramWrite32(rdram, recvBuf, 0);
+            return true;
+        }
+    }
+
+    case SIF_MCSERV: {
+        // Memory card — stub for now
+        static int mcLog = 0;
+        if (mcLog < 10) {
+            printf("[HW-BRIDGE:MC] rpc func=%u\n", rpcNum);
+            mcLog++;
+        }
+        if (recvBuf) rdramWrite32(rdram, recvBuf, 0);
+        return true;
+    }
+
+    case SIF_LIBSD: {
+        // Sound driver — stub
+        static int sdLog = 0;
+        if (sdLog < 10) {
+            printf("[HW-BRIDGE:SD] rpc func=%u\n", rpcNum);
+            sdLog++;
+        }
+        if (recvBuf) rdramWrite32(rdram, recvBuf, 0);
+        return true;
+    }
+
+    default: {
+        static int unknownLog = 0;
+        if (unknownLog < 20) {
+            printf("[HW-BRIDGE:SIF] unhandled sid=0x%08X func=%u\n", sid, rpcNum);
+            unknownLog++;
+        }
+        return false; // Not handled — let PS2Recomp deal with it
+    }
+    }
+    return false;
 }

@@ -27,6 +27,7 @@
 #include "ps2_stubs.h"
 #include "game_overrides.h"
 #include "reo_hw_bridge.h"
+#include "runtime/input/input.h"
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -449,6 +450,18 @@ static void reo_gs_sync(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) 
     ctx->pc = getRegU32(ctx, 31);
 }
 
+// ── SIF/IOP init ─────────────────────────────────────────────────────
+
+// sub_0011D9C8 — SIF DMA status check (gates IOP module loading)
+// On real PS2, reads SIF control register bits 13-15.
+// Returns 1 if SIF is ready (bits clear), 0 if not ready.
+// We always return 1 to allow IOP module loading to proceed.
+static void reo_sif_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    printf("[REO] SIF check (sub_0011D9C8) → returning 1 (ready)\n");
+    setReturnU32(ctx, 1);
+    ctx->pc = getRegU32(ctx, 31);
+}
+
 // ── CD/DVD ────────────────────────────────────────────────────────────
 
 // sceCdInit — initialize CDVD subsystem
@@ -512,7 +525,7 @@ static void reo_pad_get_state(uint8_t* rdram, R5900Context* ctx, PS2Runtime* run
 static void reo_pad_read(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     static int callCount = 0;
     callCount++;
-    if (callCount <= 5 || callCount % 100 == 0) {
+    if (callCount <= 5 || callCount % 300 == 0) {
         printf("[PAD] reo_pad_read call #%d\n", callCount);
     }
 
@@ -522,31 +535,38 @@ static void reo_pad_read(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime)
         memset(buf, 0, 32);
         buf[0] = 0x00; // success
         buf[1] = 0x79; // mode: DualShock2 (analog + pressure)
-        buf[2] = 0xFF; // buttons high (all released)
-        buf[3] = 0xFF; // buttons low (all released)
-        buf[4] = 0x80; // RX centered
-        buf[5] = 0x80; // RY centered
-        buf[6] = 0x80; // LX centered
-        buf[7] = 0x80; // LY centered
 
-        // After ~3 seconds of frames (~180 calls at 60fps), press START
-        // to advance past title/logo screens
-        if (callCount >= 180 && callCount <= 240) {
-            buf[3] &= ~(1 << 3); // START pressed (bit 3 = 0)
-            static int logOnce = 0;
-            if (logOnce < 3) {
-                printf("[PAD] Simulating START press (call %d)\n", callCount);
-                logOnce++;
+        // Read live input from the hardware bridge's Input system
+        auto* bridge = ReoHwBridge::instance();
+        reo::Input* input = bridge ? bridge->input() : nullptr;
+        if (input) {
+            const reo::DualShock2State& pad = input->get_pad(0);
+            buf[2] = (uint8_t)(pad.buttons >> 8);   // buttons high byte
+            buf[3] = (uint8_t)(pad.buttons & 0xFF);  // buttons low byte
+            buf[4] = pad.right_x;
+            buf[5] = pad.right_y;
+            buf[6] = pad.left_x;
+            buf[7] = pad.left_y;
+            // Pressure data (bytes 8-19)
+            memcpy(buf + 8, pad.pressure, 12);
+
+            // Log when buttons are pressed
+            if (pad.buttons != 0xFFFF) {
+                static int pressLog = 0;
+                if (pressLog < 20) {
+                    printf("[PAD] buttons=0x%04X LX=%02X LY=%02X RX=%02X RY=%02X\n",
+                           pad.buttons, pad.left_x, pad.left_y, pad.right_x, pad.right_y);
+                    pressLog++;
+                }
             }
-        }
-        // Also try Cross (confirm) after START
-        if (callCount >= 300 && callCount <= 360) {
-            buf[2] &= ~(1 << 6); // Cross pressed (bit 6 = 0)
-            static int logOnce2 = 0;
-            if (logOnce2 < 3) {
-                printf("[PAD] Simulating Cross press (call %d)\n", callCount);
-                logOnce2++;
-            }
+        } else {
+            // Fallback: all released
+            buf[2] = 0xFF;
+            buf[3] = 0xFF;
+            buf[4] = 0x80; // RX centered
+            buf[5] = 0x80; // RY centered
+            buf[6] = 0x80; // LX centered
+            buf[7] = 0x80; // LY centered
         }
     }
     setReturnU32(ctx, 32);
@@ -588,6 +608,52 @@ static void reo_sd_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) 
     ctx->pc = getRegU32(ctx, 31);
 }
 
+// ── Diagnostics ──────────────────────────────────────────────────────
+// Dump game state info once per second to diagnose why no data loads
+static void dump_game_state(uint8_t* rdram) {
+    static int dumpCount = 0;
+    static auto lastDump = std::chrono::steady_clock::now();
+    auto now = std::chrono::steady_clock::now();
+    if (dumpCount > 0 && std::chrono::duration_cast<std::chrono::seconds>(now - lastDump).count() < 2) return;
+    lastDump = now;
+    if (dumpCount >= 10) return;
+    dumpCount++;
+
+    // Task table at 0x341640 (256 entries, 16 bytes each)
+    // Entry: [0]=active flag, [4]=callback_id, [8]=param1, [12]=param2
+    int activeCount = 0;
+    for (int i = 0; i < 256; i++) {
+        uint32_t addr = (0x341640 + i * 16) & PS2_RAM_MASK;
+        if (addr + 16 > PS2_RAM_SIZE) break;
+        uint32_t flag;
+        memcpy(&flag, rdram + addr, 4);
+        if (flag != 0) {
+            uint32_t cbId, p1, p2;
+            memcpy(&cbId, rdram + addr + 4, 4);
+            memcpy(&p1, rdram + addr + 8, 4);
+            memcpy(&p2, rdram + addr + 12, 4);
+            if (activeCount < 10)
+                printf("[DIAG] task[%d]: flag=0x%X cb=0x%08X p1=0x%08X p2=0x%08X\n",
+                       i, flag, cbId, p1, p2);
+            activeCount++;
+        }
+    }
+    printf("[DIAG] Task table: %d active entries (of 256)\n", activeCount);
+    fflush(stdout);
+
+    // Game state variables
+    auto rd32 = [&](uint32_t a) -> uint32_t {
+        uint32_t p = a & PS2_RAM_MASK;
+        if (p + 4 > PS2_RAM_SIZE) return 0;
+        uint32_t v; memcpy(&v, rdram + p, 4); return v;
+    };
+    printf("[DIAG] state@0x2B0EC0=%u @0x29FA10=%u @0x29FDB4=%u @0x3445E8=%u\n",
+           rd32(0x2B0EC0), rd32(0x29FA10), rd32(0x29FDB4), rd32(0x3445E8));
+    printf("[DIAG] init@0x344000=%u @0x344004=%u @0x344008=%u @0x34400C=%u\n",
+           rd32(0x344000), rd32(0x344004), rd32(0x344008), rd32(0x34400C));
+    fflush(stdout);
+}
+
 // ── Frame timing / VSync ─────────────────────────────────────────────
 // sub_001D6720: VSync frame check. On PS2 this reads a VBlank counter
 // at 0x3445E8 (incremented by hardware interrupt). We simulate it
@@ -607,6 +673,16 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
     }
     lastFrame = clock::now();
     frameCount++;
+
+    // Poll input devices each frame
+    auto* bridge = ReoHwBridge::instance();
+    if (bridge && bridge->input()) {
+        bridge->input()->update();
+    }
+
+    // Periodic game state diagnostics
+    { static int dg = 0; if (dg == 0) { printf("[DIAG-TEST] about to call dump_game_state\n"); fflush(stdout); dg = 1; } }
+    dump_game_state(rdram);
 
     // Update the VBlank counter in guest memory so other code that reads it works.
     // Counter at 0x3445E8 — the game XORs it with 3 and checks if result < 1.
@@ -700,6 +776,9 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     bind(runtime, 0x11DF60, reo_gs_reset_path,     "sceGsResetPath");
     bind(runtime, 0x11E1A0, reo_gs_sync_path,      "sceGsSyncPath");
     bind(runtime, 0x118110, reo_gs_reset_graph,    "sceGsResetGraph (alt)");
+
+    // ── Boot sequence: SIF/IOP init ─────────────────────────────────
+    bind(runtime, 0x11D9C8, reo_sif_check,          "SIF DMA status check (enable IOP loading)");
 
     // ── Boot sequence: CDVD init ─────────────────────────────────────
     bind(runtime, 0x11CF08, reo_cd_init,           "sceCdInit");

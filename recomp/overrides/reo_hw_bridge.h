@@ -28,6 +28,8 @@
 namespace reo {
     class GSRenderer;
     class VUInterpreter;
+    class Input;
+    class CDVD;
 }
 
 class ReoHwBridge {
@@ -60,6 +62,12 @@ private:
     // PS2Runtime callback: get rendered framebuffer
     static const uint32_t* getFramebuffer(int* width, int* height, void* user);
 
+    // PS2Runtime callback: unhandled SIF RPC
+    static bool onSifRpc(uint32_t sid, uint32_t rpcNum,
+                         uint32_t sendBuf, uint32_t sendSize,
+                         uint32_t recvBuf, uint32_t recvSize,
+                         uint8_t* rdram, void* user);
+
     // Process VIF1 DMA data stream (extract UNPACK, MSCAL, DIRECT commands)
     void processVif1Dma(uint32_t madr, uint32_t qwc, const uint8_t* rdram);
 
@@ -76,6 +84,13 @@ private:
     reo::GSRenderer* m_gs = nullptr;
     reo::VUInterpreter* m_vu0 = nullptr;
     reo::VUInterpreter* m_vu1 = nullptr;
+    reo::Input* m_input = nullptr;
+    reo::CDVD* m_cdvd = nullptr;
+
+public:
+    // Input access for pad overrides
+    reo::Input* input() { return m_input; }
+private:
 
     // Statistics
     uint64_t m_gifPackets = 0;

@@ -36,6 +36,8 @@ set(PS2RECOMP_LIBS
 set(REO_RUNTIME_SOURCES
     "${REO_RUNTIME_DIR}/gs/gs_renderer.cpp"
     "${REO_RUNTIME_DIR}/vu/vu_interpreter.cpp"
+    "${REO_RUNTIME_DIR}/input/input.cpp"
+    "${REO_RUNTIME_DIR}/cdvd/cdvd.cpp"
 )
 
 # Helper function to set up a recomp target
@@ -103,6 +105,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         _CRT_SECURE_NO_WARNINGS
         NOMINMAX
         WIN32_LEAN_AND_MEAN
+        REO_PLATFORM_WINDOWS
         ${GAME_DEFINE}
     )
 endfunction()
