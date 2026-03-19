@@ -69,6 +69,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         overrides/reo_override.cpp
         overrides/reo_hw_bridge.cpp
         overrides/reo_trace_logger.cpp
+        overrides/reo_netbio.cpp
         ${REO_RUNTIME_SOURCES}
         ${RECOMP_SOURCES}
         ${OVERLAY_SOURCES}
