@@ -187,6 +187,18 @@ private:
         int vtx_kick = 0;  // How many vertices needed to complete a primitive
     } m_draw;
 
+    // VRAM transfer state (BITBLTBUF/TRXPOS/TRXREG/TRXDIR)
+    struct {
+        uint32_t dbp = 0;    // Dest base pointer (bytes)
+        uint32_t dbw = 0;    // Dest buffer width (pixels)
+        uint32_t dpsm = 0;   // Dest pixel storage mode
+        int dsax = 0;        // Dest X position
+        int dsay = 0;        // Dest Y position
+        int rrw = 0;         // Transfer width
+        int rrh = 0;         // Transfer height
+        int dir = 0;         // Direction (0=host→local)
+    } m_transfer;
+
     // Win32 handles
     void* m_hwnd = nullptr;       // HWND
     void* m_hdc = nullptr;        // HDC (for GDI blitting)

@@ -283,8 +283,22 @@ void GSRenderer::process_gif_packet(const uint8_t* data, uint32_t size) {
         {
             uint32_t data_size = tag.nloop * 16;
             if (offset + data_size > size) data_size = size - offset;
-            // Copy image data to VRAM at current transfer address
-            // For now, skip image uploads
+
+            // Copy pixel data to GS VRAM
+            if (m_transfer.dir == 0 && m_transfer.rrw > 0 && m_transfer.rrh > 0) {
+                uint32_t dest = m_transfer.dbp + m_transfer.dsay * m_transfer.dbw * 4
+                              + m_transfer.dsax * 4;
+                uint32_t copy_size = std::min(data_size, (uint32_t)(sizeof(m_vram) - dest));
+                if (dest < sizeof(m_vram) && copy_size > 0) {
+                    memcpy(m_vram + dest, data + offset, copy_size);
+                    static int imgLog = 0;
+                    if (imgLog < 5) {
+                        printf("[GS] IMAGE upload: %u bytes to VRAM@0x%X (%dx%d)\n",
+                               copy_size, dest, m_transfer.rrw, m_transfer.rrh);
+                        imgLog++;
+                    }
+                }
+            }
             offset += data_size;
             break;
         }
@@ -463,6 +477,26 @@ void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
         m_draw.scissor_x1 = (int)((value >> 16) & 0x7FF);
         m_draw.scissor_y0 = (int)((value >> 32) & 0x7FF);
         m_draw.scissor_y1 = (int)((value >> 48) & 0x7FF);
+        break;
+    }
+    case 0x50: { // BITBLTBUF — transfer destination setup
+        m_transfer.dbp = (uint32_t)((value >> 32) & 0x3FFF) * 64; // Dest base ptr (in bytes)
+        m_transfer.dbw = (uint32_t)((value >> 48) & 0x3F) * 64;   // Dest buffer width (pixels)
+        m_transfer.dpsm = (uint32_t)((value >> 56) & 0x3F);       // Dest pixel format
+        break;
+    }
+    case 0x51: { // TRXPOS — transfer position
+        m_transfer.dsax = (int)((value >> 32) & 0x7FF);
+        m_transfer.dsay = (int)((value >> 48) & 0x7FF);
+        break;
+    }
+    case 0x52: { // TRXREG — transfer size
+        m_transfer.rrw = (int)(value & 0xFFF);
+        m_transfer.rrh = (int)((value >> 32) & 0xFFF);
+        break;
+    }
+    case 0x53: { // TRXDIR — transfer direction
+        m_transfer.dir = (int)(value & 0x3);
         break;
     }
     case 0x4C: { // FRAME_1
@@ -669,10 +703,53 @@ void GSRenderer::rasterize_sprite(const GSVertex& v0, const GSVertex& v1) {
     int x1 = std::min((int)v1.x, m_draw.scissor_x1);
     int y1 = std::min((int)v1.y, m_draw.scissor_y1);
 
-    // Use v1's color (PS2 convention: sprite uses second vertex color)
-    for (int y = y0; y <= y1; y++) {
-        for (int x = x0; x <= x1; x++) {
-            plot_pixel(x, y, v1.r, v1.g, v1.b, v1.a);
+    if (m_draw.texture) {
+        // Textured sprite: sample from VRAM
+        // TEX0 register has texture base, width, format
+        uint64_t tex0 = m_regs[0x06];
+        uint32_t tbp0 = (uint32_t)(tex0 & 0x3FFF) * 64;  // Texture base (bytes)
+        uint32_t tbw = (uint32_t)((tex0 >> 14) & 0x3F) * 64; // Tex buffer width (pixels)
+        uint32_t tw = 1 << ((tex0 >> 26) & 0xF); // Texture width
+        uint32_t th = 1 << ((tex0 >> 30) & 0xF); // Texture height
+        if (tw == 0) tw = 1;
+        if (th == 0) th = 1;
+        if (tbw == 0) tbw = tw;
+
+        float u0 = v0.s, v0t = v0.t;
+        float u1 = v1.s, v1t = v1.t;
+
+        int sx = x1 - x0;
+        int sy = y1 - y0;
+        if (sx <= 0 || sy <= 0) return;
+
+        for (int y = y0; y <= y1; y++) {
+            float ft = (sy > 0) ? (float)(y - y0) / (float)sy : 0;
+            for (int x = x0; x <= x1; x++) {
+                float fs = (sx > 0) ? (float)(x - x0) / (float)sx : 0;
+                int tu = (int)(u0 + fs * (u1 - u0)) & (tw - 1);
+                int tv = (int)(v0t + ft * (v1t - v0t)) & (th - 1);
+
+                // Sample PSMCT32 texture from VRAM
+                uint32_t vram_off = tbp0 + (tv * tbw + tu) * 4;
+                if (vram_off + 4 <= sizeof(m_vram)) {
+                    uint8_t r = m_vram[vram_off];
+                    uint8_t g = m_vram[vram_off + 1];
+                    uint8_t b = m_vram[vram_off + 2];
+                    uint8_t a = m_vram[vram_off + 3];
+                    // Modulate with vertex color
+                    r = (uint8_t)((r * v1.r) >> 7);
+                    g = (uint8_t)((g * v1.g) >> 7);
+                    b = (uint8_t)((b * v1.b) >> 7);
+                    plot_pixel(x, y, r, g, b, a);
+                }
+            }
+        }
+    } else {
+        // Flat colored sprite
+        for (int y = y0; y <= y1; y++) {
+            for (int x = x0; x <= x1; x++) {
+                plot_pixel(x, y, v1.r, v1.g, v1.b, v1.a);
+            }
         }
     }
 }
