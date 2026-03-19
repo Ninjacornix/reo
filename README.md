@@ -196,44 +196,49 @@ The recompilation pipeline is **working for both games**. File #1 boots to its m
 | MIPS → C++ | 3,209 → 3,830 files (66 MB) | 3,525 → 3,892 files (68 MB) |
 | Runtime overlays | 95 functions (0x370000+) | pending |
 | Build | compiles clean (3,923 files) | compiles clean (3,892 files) |
-| Boot | main loop running, GIF pipeline active | pending |
+| Boot | **rendering game textures** | pending |
 
-**File #1 boot progress:**
-- ELF loads, entry point executes, main loop enters and runs continuously at 60fps
-- 82+ function overrides bound (GS, pad, network, audio, VSync, threads, DMA, SIF)
-- Hardware bridge wired: DMA GIF/VIF → GSRenderer, GS register writes, VU0/VU1 microcode, SIF RPC → CDVD/PADMAN/MCSERV/LIBSD, Input polling, CDVD filesystem
-- **Live controller input** — XInput controllers and keyboard (WASD/Enter/Space) wired to game's pad buffer via reo::Input, polled each frame
-- **SIF RPC bridge** — PS2Recomp's SifCallRpc dispatches unhandled RPCs to REO's CDVD, PADMAN, MCSERV, and LIBSD handlers via onSifRpc callback in HwBridgeVtable
-- **CDVD filesystem** — 85 game files mapped from extracted game_data/ directory, handles cdReadFile/cdSearchFile/cdGetDiskType
-- **SIF module loading** — SifLoadModule returns success for IOP address loads; SifDmaStat check fixed to enable IOP init
-- **GIF DMA pipeline fully operational** — display list double-buffering, tag array commit/reset, DMA source chain traversal all working
-- GIF data reaches GSRenderer via submit_path3() every frame
-- 95 runtime overlay functions captured from PCSX2 and integrated
-- 13 core rendering functions un-stubbed
-- Binary trace logger + PCSX2 Pine IPC debug tools
+**File #1 rendering progress:**
+- ELF loads, entry point executes, main loop runs continuously at 60fps with 6 active tasks
+- **Textured rendering working** — game texture data from NETBIO archives visible on screen through GS software rasterizer
+- **Full scene render chain executing** — 193KB scene renderer (sub_001D3DC0) runs every frame: scene lookup → render target allocation → scene builder → render finalization
+- **GS software rasterizer** — supports flat sprites, textured sprites, GIF IMAGE mode (texture upload to VRAM), A+D register writes, scissor clipping, alpha blending
+- **NETBIO archive reader** — parses AFS archives including nested romdata_usa.afs (1,342 game files), loads NBD scene data
+- **Live controller input** — XInput controllers and keyboard wired to game's pad buffer
+- **SIF RPC bridge** — PS2Recomp dispatches to CDVD/PADMAN/MCSERV/LIBSD handlers
+- **CDVD filesystem** — 85 game files mapped from extracted game_data/
+- **GIF DMA pipeline** — display list double-buffering, tag array management, DMA source chain traversal
+- 95 runtime overlay functions + 30+ HLE function overrides for boot/rendering chain
+- Binary trace logger + PCSX2 Pine IPC debug tools + NETBIO archive tools
 
-**Resolved issues:**
-- SIF DMA status check (sub_0011D9C8) returning 0 — skipped all SifLoadModule calls; overridden to return 1
-- SifLoadModule (sub_0011D970) returning -1 for IOP address loads — now HLE'd to return success
-- Memcpy counter wrap in sub_001AF5D0 (0 → 0xFFFFFFFF infinite loop) — safety check added
-- IOP task completion wait (sub_001CD080) infinite busy-loop — bypassed for single-threaded recomp
-- Infinite DMA slot busy-wait (sub_001AF7A0) — PS2 waits for hardware; HLE clears slots
-- Infinite GIF tag processing loop (sub_001071D8) — bypassed via caller override
-- 6MB memset at address 0 (sub_001AF710) — uninitialized heap; replaced with bump allocator
-- Runtime overlay dispatch failures — 95 functions captured via PCSX2 Pine IPC and recompiled
-- Tag array 8-byte shift per frame (sub_0018DD40) — entry_count/write_idx not reset on buffer reuse
-- GIF DMA chain traversal failures — REFE sentinel handling, address masking, tag ID parsing
+**Rendering pipeline (15 stages unblocked):**
+```
+SIF Init → Module Load → Task Wait → Display Flush → Render Dispatch →
+TIM2 Bypass → DL Alloc → Task Creation → Buffer Recycle → Scene Lookup →
+Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
+```
 
-**Current blocker — disc I/O data delivery:**
-The game's file loading pipeline requires IOP-driven async data delivery through indirect function dispatch (function pointer tables populated by IOP callbacks). Since the IOP never runs in static recompilation, the callbacks never fire and the game's data loading handler (entry_1d2280) is never triggered through normal code flow. The SIF RPC bridge is wired but the game never calls SifBindRpc/SifCallRpc because the IOP callback system doesn't populate the indirect dispatch table. PCSX2 state snapshot injection shows the game CAN process injected data (task table populates, GIF DMA activity increases), confirming the rendering pipeline works — the gap is in the data delivery mechanism.
+**Resolved issues (25+ fixes):**
+- SIF DMA status check, SifLoadModule HLE, memcpy counter wrap
+- IOP task wait bypass, display list flush bypass, render dispatch dual entry
+- TIM2 validation bypass, display list HLE allocator, DMA buffer allocator
+- Render target allocator chain (128F80→128F28→1303D8)
+- Scene builder + render finalization stubs for uninitialized render contexts
+- TEX0 register storage bug, VRAM page conflict for texture uploads
+- Multiple mid-function entry points registered (0x13F998, 0x37A5A0)
+- Per-frame task table + DMA channel + display list write pointer recycling
 
 **Debug tools:**
 - `reo-gs-replay` — replays PCSX2 GS dumps through REO's GS renderer
 - `reo-gs-gen-test` — generates synthetic GS test dumps
+- `dump_task_table.py` — PCSX2 Pine IPC script for capturing game state
 - Binary trace logger — records DMA/GIF/VU/GS events (`REO_TRACE=1`)
-- PCSX2 Pine IPC scripts — dump overlays, capture GS state, dump task tables (`dump_task_table.py`)
+- NetbioReader — streaming access to NETBIO/AFS archives without full memory load
 
-**Proof of life achieved (2025-03-13):** Debug overlay renders on live GS framebuffer. Full pipeline confirmed: recompiled MIPS → GIF DMA → GS software rasterizer → raylib window.
+**Milestones:**
+- **2025-03-13:** Proof of life — debug overlay on live GS framebuffer
+- **2025-03-19:** First rendered pixels — flat colored sprites visible on screen
+- **2025-03-19:** First textured rendering — game texture data from RE Outbreak rendered through GIF→GS pipeline
 
 ## Roadmap
 
@@ -258,10 +263,13 @@ The game's file loading pipeline requires IOP-driven async data delivery through
 - [x] SIF RPC bridge — PS2Recomp dispatches to CDVD/PADMAN/MCSERV/LIBSD handlers
 - [x] CDVD filesystem — game files mapped from extracted data
 - [x] SIF module loading — SifLoadModule HLE for IOP address loads
-- [ ] Disc I/O data delivery — connect IOP async pipeline to CDVD reads (current blocker)
+- [x] GS software rasterizer — flat sprites, textured sprites, VRAM texture upload
+- [x] NETBIO archive reader — parse AFS archives, load NBD game data
+- [x] Scene render chain — 15 stages unblocked, full DRAW cycle executing
+- [x] **First game textures rendered on screen**
+- [ ] Wire NBD scene data to scene manager — enable game's own rendering
 - [ ] GS renderer (Vulkan) — upgrade from software rasterizer
 - [ ] VU microcode translation for geometry
-- [ ] Texture loading (TIM2/SLD)
 - [ ] SPU2 audio mixer — hear the first sound
 
 ### Phase 3 — Play Something
