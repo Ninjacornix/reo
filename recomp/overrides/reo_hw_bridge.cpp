@@ -910,3 +910,16 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
     }
     return false;
 }
+
+// Direct GIF PATH3 submission — bypasses DMA, sends GIF data straight to GS
+void reo_gs_submit_path3_direct(const void* data, uint32_t bytes) {
+    auto* self = ReoHwBridge::s_instance;
+    if (self && self->m_gs) {
+        self->m_gs->submit_path3(data, bytes);
+        static int logC = 0;
+        if (logC < 5) {
+            printf("[HW-BRIDGE] Direct GIF submit: %u bytes\n", bytes);
+            logC++;
+        }
+    }
+}

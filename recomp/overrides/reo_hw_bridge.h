@@ -100,4 +100,6 @@ private:
     uint64_t m_gsRegWrites = 0;
 
     static ReoHwBridge* s_instance;
+
+    friend void reo_gs_submit_path3_direct(const void* data, uint32_t bytes);
 };
