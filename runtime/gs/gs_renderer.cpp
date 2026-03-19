@@ -437,6 +437,9 @@ void GSRenderer::process_reglist_data(const GIFTag& tag, const uint8_t* data) {
 // ── Internal register writes ────────────────────────────────────────
 
 void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
+    // Store raw register value for texture lookups etc.
+    if (reg < 128) m_regs[reg] = value;
+
     static int regLog = 0;
     if (regLog < 50) {
         printf("[GS-REG] write reg=0x%02X val=0x%llX\n", reg, (unsigned long long)value);
@@ -705,8 +708,15 @@ void GSRenderer::rasterize_sprite(const GSVertex& v0, const GSVertex& v1) {
 
     if (m_draw.texture) {
         // Textured sprite: sample from VRAM
-        // TEX0 register has texture base, width, format
         uint64_t tex0 = m_regs[0x06];
+        static int texLog = 0;
+        if (texLog < 5) {
+            printf("[GS-SPRITE] Textured: (%d,%d)-(%d,%d) TEX0=0x%016llX UV=(%.1f,%.1f)-(%.1f,%.1f)\n",
+                   x0, y0, x1, y1, (unsigned long long)tex0,
+                   v0.s, v0.t, v1.s, v1.t);
+            fflush(stdout);
+            texLog++;
+        }
         uint32_t tbp0 = (uint32_t)(tex0 & 0x3FFF) * 64;  // Texture base (bytes)
         uint32_t tbw = (uint32_t)((tex0 >> 14) & 0x3F) * 64; // Tex buffer width (pixels)
         uint32_t tw = 1 << ((tex0 >> 26) & 0xF); // Texture width
