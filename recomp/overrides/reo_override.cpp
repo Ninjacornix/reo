@@ -802,6 +802,7 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     bind(runtime, 0x1AC640, reo_ret0,              "mid_entry_0x1AC640 (in sub_001AC630)");
     bind(runtime, 0x1395C8, reo_ret0,              "mid_entry_0x1395C8 (in sub_00139568)");
     bind(runtime, 0x13F998, reo_ret0,              "mid_entry_0x13F998 (in sub_0013F8A8, render)");
+    bind(runtime, 0x37A5A0, reo_ret0,              "overlay_0x37A5A0 (missing overlay func)");
 
     // ── Critical DMA/display init stubs ─────────────────────────────────
     // These are PS2 SDK functions the recompiler couldn't decompile.
