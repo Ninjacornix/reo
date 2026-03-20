@@ -4,6 +4,9 @@
 
 No emulator. No compromises. Just Raccoon City, running natively on your PC — alone or online.
 
+![RE Outbreak Title Screen](docs/title_screen.png)
+*RE Outbreak title screen rendering natively on Windows 11 — no emulator*
+
 > **Fan project.** Not affiliated with Capcom, Sony, or obsrv.org. You need legally owned copies of the games.
 
 ---
@@ -238,7 +241,8 @@ Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
 **Milestones:**
 - **2025-03-13:** Proof of life — debug overlay on live GS framebuffer
 - **2025-03-19:** First rendered pixels — flat colored sprites visible on screen
-- **2025-03-19:** First textured rendering — game texture data from RE Outbreak rendered through GIF→GS pipeline
+- **2025-03-19:** First textured rendering — game texture data rendered through GIF→GS pipeline
+- **2025-03-20:** **Title screen rendered** — RE Outbreak title screen with correct colors displayed natively on Windows, including the eye graphic, "RESIDENT EVIL OUTBREAK" logo, and "PRESS START BUTTON" text
 
 ## Roadmap
 
@@ -267,7 +271,9 @@ Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
 - [x] NETBIO archive reader — parse AFS archives, load NBD game data
 - [x] Scene render chain — 15 stages unblocked, full DRAW cycle executing
 - [x] **First game textures rendered on screen**
+- [x] **Title screen rendered with correct colors**
 - [ ] Wire NBD scene data to scene manager — enable game's own rendering
+- [ ] GS dump replay — replay PCSX2 GS dumps through REO's renderer
 - [ ] GS renderer (Vulkan) — upgrade from software rasterizer
 - [ ] VU microcode translation for geometry
 - [ ] SPU2 audio mixer — hear the first sound

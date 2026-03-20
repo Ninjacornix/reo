@@ -97,6 +97,7 @@ public:
 
     // Access the raw framebuffer (RGBA8888, width * height pixels)
     const uint32_t* framebuffer() const { return m_framebuffer; }
+    uint32_t* framebuffer_mut() { return m_framebuffer; }
     int fb_width() const { return m_width; }
     int fb_height() const { return m_height; }
 

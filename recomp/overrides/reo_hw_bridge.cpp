@@ -911,6 +911,23 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
     return false;
 }
 
+// Write directly to the GS renderer's framebuffer (bypasses GIF entirely)
+void reo_gs_write_framebuffer(const uint32_t* pixels, int width, int height) {
+    auto* self = ReoHwBridge::s_instance;
+    if (self && self->m_gs) {
+        uint32_t* fb = self->m_gs->framebuffer_mut();
+        if (fb) {
+            int fbW = self->m_gs->fb_width();
+            int fbH = self->m_gs->fb_height();
+            int copyW = std::min(width, fbW);
+            int copyH = std::min(height, fbH);
+            for (int y = 0; y < copyH; y++) {
+                memcpy(fb + y * fbW, pixels + y * width, copyW * 4);
+            }
+        }
+    }
+}
+
 // Direct GIF PATH3 submission — bypasses DMA, sends GIF data straight to GS
 void reo_gs_submit_path3_direct(const void* data, uint32_t bytes) {
     auto* self = ReoHwBridge::s_instance;

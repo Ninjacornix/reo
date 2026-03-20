@@ -102,4 +102,5 @@ private:
     static ReoHwBridge* s_instance;
 
     friend void reo_gs_submit_path3_direct(const void* data, uint32_t bytes);
+    friend void reo_gs_write_framebuffer(const uint32_t* pixels, int width, int height);
 };
