@@ -146,19 +146,10 @@ void GSRenderer::write_register(uint32_t offset, uint64_t value) {
         }
         break;
 
-    case GS_BGCOLOR: {
-        uint8_t r = value & 0xFF;
-        uint8_t g = (value >> 8) & 0xFF;
-        uint8_t b = (value >> 16) & 0xFF;
-        // Fill framebuffer with background color
-        if (m_framebuffer) {
-            uint32_t color = (0xFF << 24) | (b << 16) | (g << 8) | r;
-            for (int i = 0; i < m_width * m_height; i++) {
-                m_framebuffer[i] = color;
-            }
-        }
+    case GS_BGCOLOR:
+        // BGCOLOR is the GS background color shown when no display circuit is active.
+        // It does NOT clear the drawing framebuffer — the game clears by drawing sprites.
         break;
-    }
 
     case GS_DISPFB1:
     case GS_DISPFB2: {
@@ -284,19 +275,43 @@ void GSRenderer::process_gif_packet(const uint8_t* data, uint32_t size) {
             uint32_t data_size = tag.nloop * 16;
             if (offset + data_size > size) data_size = size - offset;
 
-            // Copy pixel data to GS VRAM
+            // Write pixel data to GS VRAM using swizzled addressing
             if (m_transfer.dir == 0 && m_transfer.rrw > 0 && m_transfer.rrh > 0) {
-                uint32_t dest = m_transfer.dbp + m_transfer.dsay * m_transfer.dbw * 4
-                              + m_transfer.dsax * 4;
-                uint32_t copy_size = std::min(data_size, (uint32_t)(sizeof(m_vram) - dest));
-                if (dest < sizeof(m_vram) && copy_size > 0) {
-                    memcpy(m_vram + dest, data + offset, copy_size);
-                    static int imgLog = 0;
-                    if (imgLog < 5) {
-                        printf("[GS] IMAGE upload: %u bytes to VRAM@0x%X (%dx%d)\n",
-                               copy_size, dest, m_transfer.rrw, m_transfer.rrh);
-                        imgLog++;
+                const uint32_t* src32 = (const uint32_t*)(data + offset);
+                uint32_t* vram32 = (uint32_t*)m_vram;
+                int num_pixels = data_size / 4;
+                int pixel_idx = 0;
+
+                // dbp/dbw are already in GS register units (64-byte blocks / 64-pixel widths)
+                uint32_t dbp_blocks = m_transfer.dbp / 64;  // Convert byte offset back to block units
+                uint32_t dbw_pages = m_transfer.dbw / 64;   // Convert pixel width back to page units
+
+                if (m_transfer.dpsm == 0) { // PSMCT32 — swizzled write
+                    for (int py = 0; py < m_transfer.rrh && pixel_idx < num_pixels; py++) {
+                        for (int px = 0; px < m_transfer.rrw && pixel_idx < num_pixels; px++) {
+                            int x = m_transfer.dsax + px;
+                            int y = m_transfer.dsay + py;
+                            uint32_t word_addr = gs_pixel_addr32(x, y, dbp_blocks, dbw_pages);
+                            vram32[word_addr] = src32[pixel_idx++];
+                        }
                     }
+                } else {
+                    // Non-PSMCT32: linear fallback
+                    uint32_t dest = m_transfer.dbp + m_transfer.dsay * m_transfer.dbw * 4
+                                  + m_transfer.dsax * 4;
+                    uint32_t copy_size = std::min(data_size, (uint32_t)(sizeof(m_vram) - dest));
+                    if (dest < sizeof(m_vram) && copy_size > 0) {
+                        memcpy(m_vram + dest, data + offset, copy_size);
+                    }
+                }
+
+                static int imgLog = 0;
+                if (imgLog < 5) {
+                    printf("[GS] IMAGE upload: %u bytes to VRAM dbp=%u dbw=%u at (%d,%d) %dx%d\n",
+                           data_size, dbp_blocks, dbw_pages,
+                           m_transfer.dsax, m_transfer.dsay,
+                           m_transfer.rrw, m_transfer.rrh);
+                    imgLog++;
                 }
             }
             offset += data_size;
@@ -360,8 +375,8 @@ void GSRenderer::process_packed_data(const GIFTag& tag, const uint8_t* data) {
                 uint8_t fog = qw[11];
 
                 GSVertex vtx;
-                vtx.x = (float)(raw_x & 0xFFFF) / 16.0f;
-                vtx.y = (float)(raw_y & 0xFFFF) / 16.0f;
+                vtx.x = (float)(raw_x & 0xFFFF) / 16.0f - m_draw.offset_x;
+                vtx.y = (float)(raw_y & 0xFFFF) / 16.0f - m_draw.offset_y;
                 vtx.z = (float)raw_z / (float)0xFFFFFF;
                 vtx.r = m_draw.r;
                 vtx.g = m_draw.g;
@@ -383,8 +398,8 @@ void GSRenderer::process_packed_data(const GIFTag& tag, const uint8_t* data) {
                 uint32_t raw_z = *(const uint32_t*)(qw + 8);
 
                 GSVertex vtx;
-                vtx.x = (float)(raw_x & 0xFFFF) / 16.0f;
-                vtx.y = (float)(raw_y & 0xFFFF) / 16.0f;
+                vtx.x = (float)(raw_x & 0xFFFF) / 16.0f - m_draw.offset_x;
+                vtx.y = (float)(raw_y & 0xFFFF) / 16.0f - m_draw.offset_y;
                 vtx.z = (float)raw_z / (float)0xFFFFFFFF;
                 vtx.r = m_draw.r;
                 vtx.g = m_draw.g;
@@ -471,8 +486,14 @@ void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
         break;
     }
     case 0x18: { // XYOFFSET_1 — Drawing offset
-        // Contains the offset applied to vertex coordinates
-        // We handle this implicitly through the coordinate system
+        // OFX: bits 0-15 (16.4 fixed point), OFY: bits 32-47 (16.4 fixed point)
+        m_draw.offset_x = (float)(value & 0xFFFF) / 16.0f;
+        m_draw.offset_y = (float)((value >> 32) & 0xFFFF) / 16.0f;
+        break;
+    }
+    case 0x19: { // XYOFFSET_2 — Drawing offset (context 2, treat same)
+        m_draw.offset_x = (float)(value & 0xFFFF) / 16.0f;
+        m_draw.offset_y = (float)((value >> 32) & 0xFFFF) / 16.0f;
         break;
     }
     case 0x40: { // SCISSOR_1
@@ -535,8 +556,8 @@ void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
     }
     case 0x04: { // XYZF2 (via A+D, with drawing kick)
         GSVertex vtx;
-        vtx.x = (float)(value & 0xFFFF) / 16.0f;
-        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f;
+        vtx.x = (float)(value & 0xFFFF) / 16.0f - m_draw.offset_x;
+        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f - m_draw.offset_y;
         vtx.z = (float)((value >> 32) & 0xFFFFFF) / (float)0xFFFFFF;
         vtx.r = m_draw.r; vtx.g = m_draw.g; vtx.b = m_draw.b; vtx.a = m_draw.a;
         vtx.s = m_draw.s; vtx.t = m_draw.t; vtx.q = m_draw.q;
@@ -547,8 +568,8 @@ void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
     }
     case 0x05: { // XYZ2 (via A+D, with drawing kick)
         GSVertex vtx;
-        vtx.x = (float)(value & 0xFFFF) / 16.0f;
-        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f;
+        vtx.x = (float)(value & 0xFFFF) / 16.0f - m_draw.offset_x;
+        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f - m_draw.offset_y;
         vtx.z = (float)((value >> 32) & 0xFFFFFFFF) / (float)0xFFFFFFFF;
         vtx.r = m_draw.r; vtx.g = m_draw.g; vtx.b = m_draw.b; vtx.a = m_draw.a;
         vtx.s = m_draw.s; vtx.t = m_draw.t; vtx.q = m_draw.q;
@@ -559,8 +580,8 @@ void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
     }
     case 0x0C: { // XYZF3 (via A+D, no drawing kick)
         GSVertex vtx;
-        vtx.x = (float)(value & 0xFFFF) / 16.0f;
-        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f;
+        vtx.x = (float)(value & 0xFFFF) / 16.0f - m_draw.offset_x;
+        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f - m_draw.offset_y;
         vtx.z = (float)((value >> 32) & 0xFFFFFF) / (float)0xFFFFFF;
         vtx.r = m_draw.r; vtx.g = m_draw.g; vtx.b = m_draw.b; vtx.a = m_draw.a;
         vtx.s = m_draw.s; vtx.t = m_draw.t; vtx.q = m_draw.q;
@@ -571,14 +592,28 @@ void GSRenderer::write_internal_reg(uint8_t reg, uint64_t value) {
     }
     case 0x0D: { // XYZ3 (via A+D, no drawing kick)
         GSVertex vtx;
-        vtx.x = (float)(value & 0xFFFF) / 16.0f;
-        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f;
+        vtx.x = (float)(value & 0xFFFF) / 16.0f - m_draw.offset_x;
+        vtx.y = (float)((value >> 16) & 0xFFFF) / 16.0f - m_draw.offset_y;
         vtx.z = (float)((value >> 32) & 0xFFFFFFFF) / (float)0xFFFFFFFF;
         vtx.r = m_draw.r; vtx.g = m_draw.g; vtx.b = m_draw.b; vtx.a = m_draw.a;
         vtx.s = m_draw.s; vtx.t = m_draw.t; vtx.q = m_draw.q;
         vtx.fog = m_draw.fog_val;
         vtx.drawing_kick = false;
         submit_vertex(vtx);
+        break;
+    }
+    case 0x47: { // TEST_1 — pixel test control
+        m_draw.alpha_test_enable = value & 1;
+        m_draw.alpha_test_method = (value >> 1) & 7;
+        m_draw.alpha_test_ref = (value >> 4) & 0xFF;
+        m_draw.alpha_test_fail = (value >> 12) & 3;
+        break;
+    }
+    case 0x48: { // TEST_2 — same as TEST_1 for context 2
+        m_draw.alpha_test_enable = value & 1;
+        m_draw.alpha_test_method = (value >> 1) & 7;
+        m_draw.alpha_test_ref = (value >> 4) & 0xFF;
+        m_draw.alpha_test_fail = (value >> 12) & 3;
         break;
     }
     case 0x0A: { // FOG (via A+D)
@@ -677,6 +712,26 @@ void GSRenderer::plot_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8
     if (x < 0 || x >= m_width || y < 0 || y >= m_height)
         return;
 
+    // Alpha test (TEST_1 register)
+    if (m_draw.alpha_test_enable) {
+        bool pass = false;
+        switch (m_draw.alpha_test_method) {
+        case 0: pass = false; break;          // NEVER
+        case 1: pass = true; break;           // ALWAYS
+        case 2: pass = (a < m_draw.alpha_test_ref); break;   // LESS
+        case 3: pass = (a <= m_draw.alpha_test_ref); break;  // LEQUAL
+        case 4: pass = (a == m_draw.alpha_test_ref); break;  // EQUAL
+        case 5: pass = (a >= m_draw.alpha_test_ref); break;  // GEQUAL
+        case 6: pass = (a > m_draw.alpha_test_ref); break;   // GREATER
+        case 7: pass = (a != m_draw.alpha_test_ref); break;  // NOTEQUAL
+        }
+        if (!pass) {
+            if (m_draw.alpha_test_fail == 0) return; // KEEP: don't write pixel
+            // FB_ONLY, ZB_ONLY, RGB_ONLY not fully implemented yet
+            if (m_draw.alpha_test_fail == 2) return; // ZB_ONLY: skip framebuffer
+        }
+    }
+
     uint32_t color = ((uint32_t)a << 24) | ((uint32_t)b << 16) | ((uint32_t)g << 8) | r;
 
     if (m_draw.alpha_blend && a < 255) {
@@ -717,13 +772,14 @@ void GSRenderer::rasterize_sprite(const GSVertex& v0, const GSVertex& v1) {
             fflush(stdout);
             texLog++;
         }
-        uint32_t tbp0 = (uint32_t)(tex0 & 0x3FFF) * 64;  // Texture base (bytes)
-        uint32_t tbw = (uint32_t)((tex0 >> 14) & 0x3F) * 64; // Tex buffer width (pixels)
+        uint32_t tbp0 = (uint32_t)(tex0 & 0x3FFF);  // Texture base (64-byte block units)
+        uint32_t tbw = (uint32_t)((tex0 >> 14) & 0x3F); // Tex buffer width (64-pixel units)
         uint32_t tw = 1 << ((tex0 >> 26) & 0xF); // Texture width
         uint32_t th = 1 << ((tex0 >> 30) & 0xF); // Texture height
+        uint32_t psm = (uint32_t)((tex0 >> 20) & 0x3F);
         if (tw == 0) tw = 1;
         if (th == 0) th = 1;
-        if (tbw == 0) tbw = tw;
+        if (tbw == 0) tbw = 1;
 
         float u0 = v0.s, v0t = v0.t;
         float u1 = v1.s, v1t = v1.t;
@@ -732,6 +788,8 @@ void GSRenderer::rasterize_sprite(const GSVertex& v0, const GSVertex& v1) {
         int sy = y1 - y0;
         if (sx <= 0 || sy <= 0) return;
 
+        const uint32_t* vram32 = (const uint32_t*)m_vram;
+
         for (int y = y0; y <= y1; y++) {
             float ft = (sy > 0) ? (float)(y - y0) / (float)sy : 0;
             for (int x = x0; x <= x1; x++) {
@@ -739,19 +797,52 @@ void GSRenderer::rasterize_sprite(const GSVertex& v0, const GSVertex& v1) {
                 int tu = (int)(u0 + fs * (u1 - u0)) & (tw - 1);
                 int tv = (int)(v0t + ft * (v1t - v0t)) & (th - 1);
 
-                // Sample PSMCT32 texture from VRAM
-                uint32_t vram_off = tbp0 + (tv * tbw + tu) * 4;
-                if (vram_off + 4 <= sizeof(m_vram)) {
-                    uint8_t r = m_vram[vram_off];
-                    uint8_t g = m_vram[vram_off + 1];
-                    uint8_t b = m_vram[vram_off + 2];
-                    uint8_t a = m_vram[vram_off + 3];
-                    // Modulate with vertex color
-                    r = (uint8_t)((r * v1.r) >> 7);
-                    g = (uint8_t)((g * v1.g) >> 7);
-                    b = (uint8_t)((b * v1.b) >> 7);
-                    plot_pixel(x, y, r, g, b, a);
+                // Sample texture from VRAM using swizzled addressing
+                uint32_t pixel;
+                if (psm == 0) { // PSMCT32
+                    uint32_t word_addr = gs_pixel_addr32(tu, tv, tbp0, tbw);
+                    pixel = vram32[word_addr];
+                } else if (psm == 0x13) { // PSMT8 — 8-bit indexed with CLUT
+                    // Fetch palette index from VRAM
+                    uint32_t byte_addr = gs_pixel_addr8(tu, tv, tbp0, tbw);
+                    uint8_t index = m_vram[byte_addr];
+
+                    // CLUT lookup: CBP (bits 37-50 of TEX0) in 64-byte block units
+                    uint32_t cbp = (uint32_t)((tex0 >> 37) & 0x3FFF);
+                    // CLUT stores 256 RGBA entries at CBP*64 bytes in VRAM
+                    // CSM=0 (storage mode 1): CLUT entries are swizzled in 2x8 blocks
+                    // For simplicity, read linearly — works for CSM1 with CSA=0
+                    uint32_t clut_byte_off = cbp * 64 + index * 4;
+                    if (clut_byte_off + 4 <= sizeof(m_vram))
+                        memcpy(&pixel, m_vram + clut_byte_off, 4);
+                    else
+                        pixel = 0;
+                } else if (psm == 0x14) { // PSMT4 — 4-bit indexed with CLUT
+                    // Fetch 4-bit index from VRAM (2 pixels per byte)
+                    uint32_t byte_addr = gs_pixel_addr8(tu / 2, tv, tbp0, tbw);
+                    uint8_t byte_val = m_vram[byte_addr];
+                    uint8_t index = (tu & 1) ? (byte_val >> 4) : (byte_val & 0xF);
+
+                    uint32_t cbp = (uint32_t)((tex0 >> 37) & 0x3FFF);
+                    uint32_t clut_byte_off = cbp * 64 + index * 4;
+                    if (clut_byte_off + 4 <= sizeof(m_vram))
+                        memcpy(&pixel, m_vram + clut_byte_off, 4);
+                    else
+                        pixel = 0;
+                } else {
+                    pixel = 0xFF808080; // Unsupported PSM — show grey
                 }
+
+                uint8_t r = pixel & 0xFF;
+                uint8_t g = (pixel >> 8) & 0xFF;
+                uint8_t b = (pixel >> 16) & 0xFF;
+                uint8_t a = (pixel >> 24) & 0xFF;
+
+                // Modulate with vertex color
+                r = (uint8_t)((r * v1.r) >> 7);
+                g = (uint8_t)((g * v1.g) >> 7);
+                b = (uint8_t)((b * v1.b) >> 7);
+                plot_pixel(x, y, r, g, b, a);
             }
         }
     } else {

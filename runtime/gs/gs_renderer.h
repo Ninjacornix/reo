@@ -5,6 +5,99 @@
 
 namespace reo {
 
+// ── PS2 GS PSMCT32 VRAM Swizzle Tables ────────────────────────────
+// The GS stores pixels in a block-swizzled layout, not linearly.
+// Pages = 64x32 pixels (8192 bytes), Blocks = 8x8 pixels (256 bytes)
+
+// Block layout within a page (4 rows x 8 cols = 32 blocks)
+static const uint8_t gs_blockTable32[4][8] = {
+    {  0,  1,  4,  5, 16, 17, 20, 21 },
+    {  2,  3,  6,  7, 18, 19, 22, 23 },
+    {  8,  9, 12, 13, 24, 25, 28, 29 },
+    { 10, 11, 14, 15, 26, 27, 30, 31 }
+};
+
+// Pixel layout within an 8x8 block (word index 0-63)
+static const uint8_t gs_columnTable32[8][8] = {
+    {  0,  1,  4,  5,  8,  9, 12, 13 },
+    {  2,  3,  6,  7, 10, 11, 14, 15 },
+    { 16, 17, 20, 21, 24, 25, 28, 29 },
+    { 18, 19, 22, 23, 26, 27, 30, 31 },
+    { 32, 33, 36, 37, 40, 41, 44, 45 },
+    { 34, 35, 38, 39, 42, 43, 46, 47 },
+    { 48, 49, 52, 53, 56, 57, 60, 61 },
+    { 50, 51, 54, 55, 58, 59, 62, 63 }
+};
+
+// Get VRAM word address for pixel (x,y) in PSMCT32 format
+// bp = base pointer in 64-byte block units, bw = buffer width in 64-pixel units
+inline uint32_t gs_pixel_addr32(int x, int y, uint32_t bp, uint32_t bw) {
+    uint32_t block = bp
+        + (y & ~0x1F) * bw
+        + ((x >> 1) & ~0x1F)
+        + gs_blockTable32[(y >> 3) & 3][(x >> 3) & 7];
+    return ((block << 6) + gs_columnTable32[y & 7][x & 7]) & (1024 * 1024 - 1);
+}
+
+// Deswizzle PSMCT32 VRAM region to linear pixel buffer
+inline void gs_psmct32_deswizzle(const uint32_t* vram, uint32_t* out,
+                                  uint32_t bp, uint32_t bw, int w, int h) {
+    for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++)
+            out[y * w + x] = vram[gs_pixel_addr32(x, y, bp, bw)];
+}
+
+// Swizzle linear pixels into PSMCT32 VRAM
+inline void gs_psmct32_swizzle(uint32_t* vram, const uint32_t* src,
+                                uint32_t bp, uint32_t bw, int w, int h) {
+    for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++)
+            vram[gs_pixel_addr32(x, y, bp, bw)] = src[y * w + x];
+}
+
+// ── PS2 GS PSMT8 (8-bit indexed) VRAM Swizzle Tables ──────────────
+// PSMT8 uses 16x4 pixel blocks (64 bytes each), different layout from PSMCT32
+
+// Block layout within a page (8 rows x 4 cols = 32 blocks)
+static const uint8_t gs_blockTable8[8][4] = {
+    {  0,  1,  4,  5 },
+    {  2,  3,  6,  7 },
+    {  8,  9, 12, 13 },
+    { 10, 11, 14, 15 },
+    { 16, 17, 20, 21 },
+    { 18, 19, 22, 23 },
+    { 24, 25, 28, 29 },
+    { 26, 27, 30, 31 }
+};
+
+// Pixel layout within a 16x4 block (byte index 0-63)
+static const uint8_t gs_columnTable8[4][16] = {
+    {  0,  4,  8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 },
+    {  1,  5,  9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57, 61 },
+    {  2,  6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62 },
+    {  3,  7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63 }
+};
+
+// Get VRAM byte address for pixel (x,y) in PSMT8 format
+// bp = base pointer in 64-byte block units, bw = buffer width in 64-pixel units
+inline uint32_t gs_pixel_addr8(int x, int y, uint32_t bp, uint32_t bw) {
+    // PSMT8: pages are 128x64 pixels, blocks are 16x4 pixels
+    uint32_t page_x = x / 128;
+    uint32_t page_y = y / 64;
+    uint32_t page = bp / 32 + page_y * bw + page_x;
+
+    uint32_t px = x - page_x * 128;
+    uint32_t py = y - page_y * 64;
+
+    uint32_t block_x = px / 16;
+    uint32_t block_y = py / 4;
+    uint32_t block = gs_blockTable8[block_y & 7][block_x & 3];
+
+    uint32_t col = gs_columnTable8[py & 3][px & 15];
+
+    return ((page * 32 + block) * 64 + col) & (4 * 1024 * 1024 - 1);
+}
+
 /*
  * Graphics Synthesizer Renderer
  *
@@ -101,6 +194,11 @@ public:
     int fb_width() const { return m_width; }
     int fb_height() const { return m_height; }
 
+    // Access VRAM (4MB, same as PS2 GS)
+    uint8_t* vram() { return m_vram; }
+    const uint8_t* vram() const { return m_vram; }
+    static constexpr uint32_t VRAM_SIZE = 4 * 1024 * 1024;
+
     // GS register access (from MMIO at 0x12000000)
     uint64_t read_register(uint32_t offset);
     void write_register(uint32_t offset, uint64_t value);
@@ -121,15 +219,15 @@ public:
 
     const char* backend_name() const;
 
+    // Register write handling (from GIF A+D or direct register writes)
+    void write_internal_reg(uint8_t reg, uint64_t value);
+
 private:
     // GIF packet parsing
     GIFTag parse_gif_tag(const uint8_t* data);
     void process_gif_packet(const uint8_t* data, uint32_t size);
     void process_packed_data(const GIFTag& tag, const uint8_t* data);
     void process_reglist_data(const GIFTag& tag, const uint8_t* data);
-
-    // Register write handling (from GIF A+D or direct register writes)
-    void write_internal_reg(uint8_t reg, uint64_t value);
 
     // Vertex / primitive submission
     void submit_vertex(const GSVertex& vtx);
@@ -173,10 +271,26 @@ private:
         float s = 0, t = 0, q = 1.0f;
         float fog_val = 0;
 
+        // XY offset (subtracted from vertex coordinates)
+        float offset_x = 0;
+        float offset_y = 0;
+
+        // Texture state
+        uint32_t tex_base = 0;       // TEX0 base pointer in VRAM (bytes)
+        uint32_t tex_width = 0;      // Texture buffer width (pixels)
+        uint32_t tex_w = 0;          // Texture width (pixels)
+        uint32_t tex_h = 0;          // Texture height (pixels)
+
         // Frame buffer settings
         uint32_t frame_base = 0;     // VRAM base pointer for framebuffer
         uint32_t frame_width = 640;  // Framebuffer width in pixels
         uint32_t frame_psm = 0;     // Pixel storage mode
+
+        // Alpha test (TEST_1 register)
+        bool alpha_test_enable = false;
+        uint8_t alpha_test_method = 1;   // 0=NEVER 1=ALWAYS 2=LESS 3=LEQUAL 4=EQUAL 5=GEQUAL 6=GREATER 7=NOTEQUAL
+        uint8_t alpha_test_ref = 0;
+        uint8_t alpha_test_fail = 0;     // 0=KEEP 1=FB_ONLY 2=ZB_ONLY 3=RGB_ONLY
 
         // Scissor
         int scissor_x0 = 0, scissor_y0 = 0;

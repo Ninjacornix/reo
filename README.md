@@ -205,7 +205,7 @@ The recompilation pipeline is **working for both games**. File #1 boots to its m
 - ELF loads, entry point executes, main loop runs continuously at 60fps with 6 active tasks
 - **Textured rendering working** — game texture data from NETBIO archives visible on screen through GS software rasterizer
 - **Full scene render chain executing** — 193KB scene renderer (sub_001D3DC0) runs every frame: scene lookup → render target allocation → scene builder → render finalization
-- **GS software rasterizer** — supports flat sprites, textured sprites, GIF IMAGE mode (texture upload to VRAM), A+D register writes, scissor clipping, alpha blending
+- **GS software rasterizer** — supports flat sprites, textured sprites (PSMCT32 + PSMT8 indexed), GIF IMAGE mode (swizzled VRAM upload), A+D register writes, XYOFFSET, scissor clipping, alpha test (TEST_1), alpha blending, PSMCT32 VRAM swizzle tables
 - **NETBIO archive reader** — parses AFS archives including nested romdata_usa.afs (1,342 game files), loads NBD scene data
 - **Live controller input** — XInput controllers and keyboard wired to game's pad buffer
 - **SIF RPC bridge** — PS2Recomp dispatches to CDVD/PADMAN/MCSERV/LIBSD handlers
@@ -243,6 +243,7 @@ Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
 - **2025-03-19:** First rendered pixels — flat colored sprites visible on screen
 - **2025-03-19:** First textured rendering — game texture data rendered through GIF→GS pipeline
 - **2025-03-20:** **Title screen rendered** — RE Outbreak title screen with correct colors displayed natively on Windows, including the eye graphic, "RESIDENT EVIL OUTBREAK" logo, and "PRESS START BUTTON" text
+- **2025-03-21:** **GS dump replay working** — PCSX2 GS dumps replayed through REO's software rasterizer with correct output. Title screen and in-game demo scenes render pixel-accurate with PSMCT32 textures, PSMT8 indexed textures, GS VRAM swizzle tables, XYOFFSET coordinate correction, and TEST_1 alpha test support
 
 ## Roadmap
 
@@ -273,7 +274,7 @@ Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
 - [x] **First game textures rendered on screen**
 - [x] **Title screen rendered with correct colors**
 - [ ] Wire NBD scene data to scene manager — enable game's own rendering
-- [ ] GS dump replay — replay PCSX2 GS dumps through REO's renderer
+- [x] GS dump replay — replay PCSX2 GS dumps through REO's renderer (title + demo scenes verified)
 - [ ] GS renderer (Vulkan) — upgrade from software rasterizer
 - [ ] VU microcode translation for geometry
 - [ ] SPU2 audio mixer — hear the first sound
