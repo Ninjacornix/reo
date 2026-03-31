@@ -3,10 +3,26 @@
 #include <cstring>
 #include <cmath>
 #include <algorithm>
+#include <chrono>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
+// stb_image_write is already compiled in raylib — just declare what we need
+extern "C" int stbi_write_png(const char *filename, int w, int h, int comp,
+                               const void *data, int stride_in_bytes);
+
+// ── Screenshot + Toast state ────────────────────────────────────────
+
+#define TOAST_DURATION_MS  2500
+#define TOAST_FADE_MS       500
+#define TOAST_PADDING       8
+
+static bool     s_screenshot_requested = false;
+static int      s_screenshot_counter   = 0;
+static char     s_toast_msg[256]       = {0};
+static uint32_t s_toast_start          = 0;
 
 namespace reo {
 
@@ -19,6 +35,10 @@ static LRESULT CALLBACK gs_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         PostQuitMessage(0);
         return 0;
     case WM_DESTROY:
+        return 0;
+    case WM_KEYDOWN:
+        if (wp == VK_F12)
+            s_screenshot_requested = true;
         return 0;
     }
     return DefWindowProcA(hwnd, msg, wp, lp);
@@ -984,7 +1004,193 @@ void GSRenderer::end_frame() {
     m_vsync_flag = true;
 }
 
+void GSRenderer::take_screenshot() {
+    if (!m_framebuffer) return;
+
+    char filename[512];
+    snprintf(filename, sizeof(filename), "screenshot_%04d.png",
+             s_screenshot_counter++);
+
+    // Convert framebuffer from internal RGBA to standard RGBA for stb
+    // Our format: R=bits0-7, G=bits8-15, B=bits16-23, A=bits24-31
+    int pixels = m_width * m_height;
+    uint8_t* rgba = (uint8_t*)malloc(pixels * 4);
+    if (!rgba) return;
+
+    for (int i = 0; i < pixels; i++) {
+        uint32_t px = m_framebuffer[i];
+        rgba[i * 4 + 0] = (px >>  0) & 0xFF; // R
+        rgba[i * 4 + 1] = (px >>  8) & 0xFF; // G
+        rgba[i * 4 + 2] = (px >> 16) & 0xFF; // B
+        rgba[i * 4 + 3] = 255;                // A (force opaque)
+    }
+
+    stbi_write_png(filename, m_width, m_height, 4, rgba, m_width * 4);
+    free(rgba);
+
+    printf("Screenshot saved: %s\n", filename);
+    fflush(stdout);
+
+    // Show toast
+    snprintf(s_toast_msg, sizeof(s_toast_msg), "%s", filename);
+    s_toast_start = (uint32_t)(std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count());
+}
+
+void GSRenderer::draw_toast() {
+    draw_toast_to(m_framebuffer, m_width, m_height);
+}
+
+void GSRenderer::draw_toast_to(uint32_t* buf, int buf_w, int buf_h) {
+    if (!buf || s_toast_msg[0] == '\0') return;
+
+    uint32_t now = (uint32_t)(std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count());
+    uint32_t elapsed = now - s_toast_start;
+
+    if (elapsed >= (uint32_t)TOAST_DURATION_MS) {
+        s_toast_msg[0] = '\0';
+        return;
+    }
+
+    // Compute alpha (fade out in last TOAST_FADE_MS)
+    float alpha = 1.0f;
+    if (elapsed > (uint32_t)(TOAST_DURATION_MS - TOAST_FADE_MS)) {
+        alpha = (float)(TOAST_DURATION_MS - elapsed) / (float)TOAST_FADE_MS;
+    }
+
+    // Draw toast directly into framebuffer (bottom-right corner)
+    // Simple bitmap text rendering — no font library needed
+    const char* msg = s_toast_msg;
+    int msg_len = (int)strlen(msg);
+    int char_w = 6, char_h = 10;
+    int text_w = msg_len * char_w;
+    int box_w = text_w + TOAST_PADDING * 2;
+    int box_h = char_h + TOAST_PADDING * 2;
+    int box_x = buf_w - box_w - TOAST_PADDING;
+    int box_y = buf_h - box_h - TOAST_PADDING;
+
+    if (box_x < 0) box_x = 0;
+
+    uint8_t bg_alpha = (uint8_t)(180 * alpha);
+    uint8_t fg_alpha = (uint8_t)(255 * alpha);
+
+    // Draw background box
+    for (int y = box_y; y < box_y + box_h && y < buf_h; y++) {
+        for (int x = box_x; x < box_x + box_w && x < buf_w; x++) {
+            if (x < 0 || y < 0) continue;
+            uint32_t& px = buf[y * buf_w + x];
+            // Alpha blend: dst = src * alpha + dst * (1 - alpha)
+            uint8_t dr = (px >> 0) & 0xFF;
+            uint8_t dg = (px >> 8) & 0xFF;
+            uint8_t db = (px >> 16) & 0xFF;
+            float a = bg_alpha / 255.0f;
+            dr = (uint8_t)(dr * (1.0f - a));
+            dg = (uint8_t)(dg * (1.0f - a));
+            db = (uint8_t)(db * (1.0f - a));
+            px = dr | (dg << 8) | (db << 16) | 0xFF000000;
+        }
+    }
+
+    // Simple 5x7 bitmap font for toast text
+    // Each character is 5 columns x 7 rows, packed as 5 bytes (1 byte per column)
+    static const uint8_t font_5x7[][5] = {
+        // ' ' (space)
+        {0x00, 0x00, 0x00, 0x00, 0x00},
+        // '0'-'9'
+        {0x3E, 0x51, 0x49, 0x45, 0x3E}, // 0
+        {0x00, 0x42, 0x7F, 0x40, 0x00}, // 1
+        {0x42, 0x61, 0x51, 0x49, 0x46}, // 2
+        {0x21, 0x41, 0x45, 0x4B, 0x31}, // 3
+        {0x18, 0x14, 0x12, 0x7F, 0x10}, // 4
+        {0x27, 0x45, 0x45, 0x45, 0x39}, // 5
+        {0x3C, 0x4A, 0x49, 0x49, 0x30}, // 6
+        {0x01, 0x71, 0x09, 0x05, 0x03}, // 7
+        {0x36, 0x49, 0x49, 0x49, 0x36}, // 8
+        {0x06, 0x49, 0x49, 0x29, 0x1E}, // 9
+        // '.', '_', 'a'-'z' (lowercase)
+        {0x00, 0x60, 0x60, 0x00, 0x00}, // . (11)
+        {0x40, 0x40, 0x40, 0x40, 0x40}, // _ (12)
+        {0x20, 0x54, 0x54, 0x54, 0x78}, // a (13)
+        {0x7F, 0x48, 0x44, 0x44, 0x38}, // b
+        {0x38, 0x44, 0x44, 0x44, 0x20}, // c
+        {0x38, 0x44, 0x44, 0x48, 0x7F}, // d
+        {0x38, 0x54, 0x54, 0x54, 0x18}, // e
+        {0x08, 0x7E, 0x09, 0x01, 0x02}, // f
+        {0x0C, 0x52, 0x52, 0x52, 0x3E}, // g
+        {0x7F, 0x08, 0x04, 0x04, 0x78}, // h
+        {0x00, 0x44, 0x7D, 0x40, 0x00}, // i
+        {0x20, 0x40, 0x44, 0x3D, 0x00}, // j
+        {0x7F, 0x10, 0x28, 0x44, 0x00}, // k
+        {0x00, 0x41, 0x7F, 0x40, 0x00}, // l
+        {0x7C, 0x04, 0x18, 0x04, 0x78}, // m
+        {0x7C, 0x08, 0x04, 0x04, 0x78}, // n
+        {0x38, 0x44, 0x44, 0x44, 0x38}, // o
+        {0x7C, 0x14, 0x14, 0x14, 0x08}, // p
+        {0x08, 0x14, 0x14, 0x18, 0x7C}, // q
+        {0x7C, 0x08, 0x04, 0x04, 0x08}, // r
+        {0x48, 0x54, 0x54, 0x54, 0x20}, // s
+        {0x04, 0x3F, 0x44, 0x40, 0x20}, // t
+        {0x3C, 0x40, 0x40, 0x20, 0x7C}, // u
+        {0x1C, 0x20, 0x40, 0x20, 0x1C}, // v
+        {0x3C, 0x40, 0x30, 0x40, 0x3C}, // w
+        {0x44, 0x28, 0x10, 0x28, 0x44}, // x
+        {0x0C, 0x50, 0x50, 0x50, 0x3C}, // y
+        {0x44, 0x64, 0x54, 0x4C, 0x44}, // z (38)
+    };
+
+    auto get_glyph = [&](char c) -> const uint8_t* {
+        if (c == ' ') return font_5x7[0];
+        if (c >= '0' && c <= '9') return font_5x7[1 + (c - '0')];
+        if (c == '.') return font_5x7[11];
+        if (c == '_') return font_5x7[12];
+        if (c >= 'a' && c <= 'z') return font_5x7[13 + (c - 'a')];
+        if (c >= 'A' && c <= 'Z') return font_5x7[13 + (c - 'A')]; // uppercase→lowercase
+        return font_5x7[0]; // space for unknown
+    };
+
+    int tx = box_x + TOAST_PADDING;
+    int ty = box_y + TOAST_PADDING;
+    for (int ci = 0; ci < msg_len; ci++) {
+        const uint8_t* glyph = get_glyph(msg[ci]);
+        for (int col = 0; col < 5; col++) {
+            uint8_t bits = glyph[col];
+            for (int row = 0; row < 7; row++) {
+                if (bits & (1 << row)) {
+                    int px = tx + col;
+                    int py = ty + row + 1; // +1 for vertical centering
+                    if (px >= 0 && px < buf_w && py >= 0 && py < buf_h) {
+                        buf[py * buf_w + px] =
+                            fg_alpha | (fg_alpha << 8) | (fg_alpha << 16) | 0xFF000000;
+                    }
+                }
+            }
+        }
+        tx += char_w;
+    }
+}
+
 void GSRenderer::present() {
+    // Poll F12 globally (works even in headless mode / when raylib has focus)
+#ifdef _WIN32
+    {
+        static bool f12_was_down = false;
+        bool f12_down = (GetAsyncKeyState(VK_F12) & 0x8000) != 0;
+        if (f12_down && !f12_was_down)
+            s_screenshot_requested = true;
+        f12_was_down = f12_down;
+    }
+#endif
+
+    // Process screenshot request
+    if (s_screenshot_requested) {
+        s_screenshot_requested = false;
+        take_screenshot();
+    }
+
+    // Draw toast overlay into framebuffer
+    draw_toast();
+
     blit_framebuffer();
 }
 

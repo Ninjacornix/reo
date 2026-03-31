@@ -1,6 +1,7 @@
 add_library(reo_game STATIC
     formats/nbd_parser.cpp
     formats/amo_parser.cpp
+    formats/nbd_renderer.cpp
     formats/rdt_parser.cpp
     formats/afs_archive.cpp
 )

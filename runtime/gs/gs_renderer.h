@@ -213,6 +213,12 @@ public:
     void end_frame();
     void present();
 
+    // Screenshot (F12) — saves PNG + shows toast
+    void take_screenshot();
+    void draw_toast();
+    // Draw toast into an external pixel buffer (for overlay compositing)
+    void draw_toast_to(uint32_t* buf, int buf_w, int buf_h);
+
     // Vsync signal for timing
     bool vsync_triggered() const { return m_vsync_flag; }
     void clear_vsync() { m_vsync_flag = false; }

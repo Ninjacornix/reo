@@ -2,23 +2,29 @@
 
 #include <cstdint>
 #include <vector>
-#include <string>
 
 namespace reo {
 
 /*
  * AMO (Animated Model Object) Parser
  *
- * AMO files contain 3D model data for RE Outbreak:
- * - Vertices (XYZ float positions)
- * - Normals
- * - Texture coordinates (UV)
- * - Vertex colors
- * - Skeletal bone weights
- * - Triangle strip indices
- * - Material tables
+ * AMO format uses flag-tagged data arrays. Each array has a 12-byte header:
+ *   [flags:4][count:4][size:4]
+ * The size field includes the 12-byte header of the NEXT array (except for the last).
  *
- * Based on Outbreak Research documentation.
+ * Known flag types (bits 23:16 of flags word):
+ *   0x02 - Root descriptor (16 bytes)
+ *   0x03 - Bone hierarchy (groups of parent indices)
+ *   0x04 - Triangle strip indices (count-prefixed groups)
+ *   0x05 - Mesh descriptor
+ *   0x06 - Material indices per face (uint32)
+ *   0x07 - Vertex positions (float3, 12 bytes each)
+ *   0x08 - Vertex normals (float3, 12 bytes each)
+ *   0x0A - Texture coordinates (float2, 8 bytes each)
+ *   0x0B - Vertex weights/colors (16 bytes each)
+ *   0x0C - Bone skinning data (12 bytes each)
+ *   0x10 - Mesh group descriptors
+ *   0x13 - Material properties (ambient/diffuse/specular)
  */
 
 struct AmoVertex {
@@ -33,31 +39,26 @@ struct AmoTexCoord {
     float u, v;
 };
 
-struct AmoVertexColor {
-    uint8_t r, g, b, a;
+struct AmoTriStrip {
+    std::vector<uint32_t> indices;
 };
 
 struct AmoMaterial {
-    uint32_t texture_index;
-    uint32_t flags;
     float ambient[4];
     float diffuse[4];
+    float specular[4];
 };
 
-struct AmoMesh {
-    std::vector<AmoVertex> vertices;
-    std::vector<AmoNormal> normals;
+struct AmoModel {
+    std::vector<AmoVertex>   vertices;
+    std::vector<AmoNormal>   normals;
     std::vector<AmoTexCoord> texcoords;
-    std::vector<AmoVertexColor> colors;
-    std::vector<uint16_t> indices;  // Triangle strip indices
-    int material_index;
-};
+    std::vector<AmoTriStrip> strips;
+    std::vector<AmoMaterial> materials;
 
-struct AmoBone {
-    uint32_t parent;
-    float position[3];
-    float rotation[4]; // Quaternion
-    float scale[3];
+    // Bounding box (computed from vertices)
+    float bbox_min[3];
+    float bbox_max[3];
 };
 
 class AmoParser {
@@ -66,14 +67,20 @@ public:
 
     bool parse(const uint8_t* data, uint32_t size);
 
-    const std::vector<AmoMesh>& meshes() const { return m_meshes; }
-    const std::vector<AmoMaterial>& materials() const { return m_materials; }
-    const std::vector<AmoBone>& bones() const { return m_bones; }
+    const AmoModel& model() const { return m_model; }
 
 private:
-    std::vector<AmoMesh> m_meshes;
-    std::vector<AmoMaterial> m_materials;
-    std::vector<AmoBone> m_bones;
+    // Find a data array by flag type. Returns offset to data (after header), or -1.
+    int find_array(const uint8_t* data, uint32_t size, uint8_t flag_type,
+                   uint32_t& out_count, uint32_t& out_data_size) const;
+
+    bool parse_vertices(const uint8_t* data, uint32_t size);
+    bool parse_normals(const uint8_t* data, uint32_t size);
+    bool parse_texcoords(const uint8_t* data, uint32_t size);
+    bool parse_strips(const uint8_t* data, uint32_t size);
+    bool parse_materials(const uint8_t* data, uint32_t size);
+
+    AmoModel m_model;
 };
 
 } // namespace reo

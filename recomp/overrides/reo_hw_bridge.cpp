@@ -44,6 +44,9 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 ReoHwBridge* ReoHwBridge::s_instance = nullptr;
 
@@ -391,6 +394,23 @@ const uint32_t* ReoHwBridge::getFramebuffer(int* width, int* height, void* user)
     else while (fc > 0 && nd < 8) { digits[nd++] = fc % 10; fc /= 10; }
     for (int i = 0; i < nd; i++)
         draw_glyph(font_digits[digits[nd - 1 - i]], 32 + i * 8, 3, white);
+
+    // F12 screenshot: capture GS framebuffer (clean, no overlay), then show toast
+#ifdef _WIN32
+    {
+        static bool f12_was_down = false;
+        bool f12_down = (GetAsyncKeyState(VK_F12) & 0x8000) != 0;
+        if (f12_down && !f12_was_down && self->m_gs) {
+            self->m_gs->take_screenshot();
+        }
+        f12_was_down = f12_down;
+    }
+#endif
+
+    // Draw toast notification into overlay (bottom-right)
+    if (self->m_gs) {
+        self->m_gs->draw_toast_to(overlay, w, h);
+    }
 
     return overlay;
 }

@@ -70,6 +70,9 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         overrides/reo_hw_bridge.cpp
         overrides/reo_trace_logger.cpp
         overrides/reo_netbio.cpp
+        "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_parser.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/amo_parser.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_renderer.cpp"
         ${REO_RUNTIME_SOURCES}
         ${RECOMP_SOURCES}
         ${OVERLAY_SOURCES}
@@ -81,6 +84,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         "${CMAKE_CURRENT_SOURCE_DIR}/config/output_overlay"
         "${CMAKE_CURRENT_SOURCE_DIR}/overrides"
         "${CMAKE_CURRENT_SOURCE_DIR}/.."
+        "${CMAKE_CURRENT_SOURCE_DIR}/../game"
     )
 
     target_link_libraries(${TARGET_NAME} PRIVATE ${PS2RECOMP_LIBS})

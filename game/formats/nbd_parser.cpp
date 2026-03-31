@@ -11,42 +11,58 @@ bool NbdParser::parse(const std::string& path) {
 
     auto size = file.tellg();
     file.seekg(0);
-    std::vector<uint8_t> data((size_t)size);
-    file.read((char*)data.data(), size);
+    m_owned_data.resize((size_t)size);
+    file.read((char*)m_owned_data.data(), size);
 
-    return parse(data.data(), (uint32_t)data.size());
+    m_data = m_owned_data.data();
+    m_size = (uint32_t)m_owned_data.size();
+    return parse_directory();
 }
 
 bool NbdParser::parse(const uint8_t* data, uint32_t size) {
+    m_owned_data.clear();
+    m_data = data;
+    m_size = size;
+    return parse_directory();
+}
+
+bool NbdParser::parse_directory() {
     m_chunks.clear();
 
-    if (size < 8) return false;
+    if (!m_data || m_size < 16) return false;
 
-    // NBD format is chunk-based
-    // Each chunk has a type header followed by size and data
-    // The exact format varies — this is a basic scanner
-
+    // Chunk directory at offset 0: [type:4][offset:4][size:4][count:4] per entry
+    // Terminated by all-zero entry (typically at offset 0x30)
     uint32_t pos = 0;
-    while (pos + 8 <= size) {
-        uint32_t chunk_type = *(uint32_t*)(data + pos);
-        uint32_t chunk_size = *(uint32_t*)(data + pos + 4);
+    while (pos + 16 <= m_size) {
+        uint32_t type, offset, size, count;
+        memcpy(&type, m_data + pos, 4);
+        memcpy(&offset, m_data + pos + 4, 4);
+        memcpy(&size, m_data + pos + 8, 4);
+        memcpy(&count, m_data + pos + 12, 4);
 
-        if (chunk_size == 0 || pos + 8 + chunk_size > size) break;
+        // End of directory: all-zero entry
+        if (type == 0 && offset == 0) break;
 
-        NbdChunk chunk;
-        chunk.type = chunk_type;
-        chunk.offset = pos;
-        chunk.size = chunk_size;
-        chunk.data.assign(data + pos + 8, data + pos + 8 + chunk_size);
+        // Validate offset + size fits within file
+        if (offset < m_size && offset + size <= m_size) {
+            NbdChunk chunk;
+            chunk.type = type;
+            chunk.offset = offset;
+            chunk.size = size;
+            chunk.count = count;
+            m_chunks.push_back(chunk);
 
-        m_chunks.push_back(std::move(chunk));
-        pos += 8 + chunk_size;
+            char type_str[5] = {};
+            memcpy(type_str, &type, 4);
+            printf("[NBD] Chunk: %s  offset=0x%06X  size=0x%06X  count=%u\n",
+                   type_str, offset, size, count);
+        }
 
-        // Align to 16 bytes (PS2 DMA alignment)
-        pos = (pos + 15) & ~15;
+        pos += 16;
     }
 
-    printf("[NBD] Parsed %d chunks\n", (int)m_chunks.size());
+    printf("[NBD] Parsed %d chunks from %u bytes\n", (int)m_chunks.size(), m_size);
     return !m_chunks.empty();
 }
 

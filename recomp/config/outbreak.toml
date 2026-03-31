@@ -259,7 +259,7 @@ skip = [
   "sub_001BCF60",
   "sub_001BD0B0",
   "sub_001C8850",
-  "sub_001CB8F0",
+  # "sub_001CB8F0",  # UNSTUBBED: demo scene state machine
   "sub_001CBD00",
   "sub_001CBDF0",
   "sub_001CC5B0",
