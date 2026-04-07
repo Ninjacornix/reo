@@ -41,6 +41,7 @@ struct AmoTexCoord {
 
 struct AmoTriStrip {
     std::vector<uint32_t> indices;
+    int material_index = -1; // Index into materials array (-1 = none)
 };
 
 struct AmoMaterial {

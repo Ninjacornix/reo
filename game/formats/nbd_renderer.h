@@ -56,9 +56,10 @@ private:
     Tim2Loader m_tim2;
     bool m_loaded = false;
 
-    // Camera
-    float m_cam_x = 0, m_cam_y = 80, m_cam_z = 0;
-    float m_scale = 2.0f;
+    // Camera (perspective)
+    float m_cam_x = 0, m_cam_y = 80, m_cam_z = 200;
+    float m_scale = 2.0f; // Legacy, unused with perspective
+    float m_fov = 60.0f;  // Field of view in degrees
 
     // Loaded textures (decoded from TEX chunk)
     std::vector<Tim2Texture> m_textures;
