@@ -44,8 +44,12 @@ private:
     // Build GIF A+D packet for triangle rendering
     void build_triangle_packet(const AmoModel& model);
 
-    // Upload a texture to GS VRAM (via GIF IMAGE mode)
-    void upload_texture_to_vram(const Tim2Texture& tex, int slot);
+    // Upload all loaded textures to GS VRAM
+    void upload_textures_to_vram();
+
+    // Build GS TEX0 register value
+    static uint64_t build_tex0(uint32_t tbp, uint32_t tbw, uint32_t psm,
+                               uint32_t width, uint32_t height, uint32_t cbp);
 
     NbdParser m_nbd;
     AmoParser m_amo;

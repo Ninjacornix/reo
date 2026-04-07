@@ -888,6 +888,15 @@ void GSRenderer::rasterize_triangle(const GSVertex& v0, const GSVertex& v1, cons
 
     float inv_area = 1.0f / area;
 
+    // Texture state (if TME enabled)
+    uint64_t tex0 = m_regs[0x06];
+    uint32_t tbp0 = (uint32_t)(tex0 & 0x3FFF);
+    uint32_t tbw = (uint32_t)((tex0 >> 14) & 0x3F);
+    uint32_t psm = (uint32_t)((tex0 >> 20) & 0x3F);
+    uint32_t tw = 1 << ((tex0 >> 26) & 0xF);
+    uint32_t th = 1 << ((tex0 >> 30) & 0xF);
+    const uint32_t* vram32 = (const uint32_t*)m_vram;
+
     for (int y = miny; y <= maxy; y++) {
         for (int x = minx; x <= maxx; x++) {
             float px = (float)x + 0.5f;
@@ -908,8 +917,60 @@ void GSRenderer::rasterize_triangle(const GSVertex& v0, const GSVertex& v1, cons
                 b = (uint8_t)std::clamp((int)(w0 * v0.b + w1 * v1.b + w2 * v2.b), 0, 255);
                 a = (uint8_t)std::clamp((int)(w0 * v0.a + w1 * v1.a + w2 * v2.a), 0, 255);
             } else {
-                // Flat shading: use first vertex color
                 r = v0.r; g = v0.g; b = v0.b; a = v0.a;
+            }
+
+            // Texture sampling (if TME enabled in PRIM)
+            if (m_draw.texture && tw > 0 && th > 0) {
+                // Interpolate texture coordinates
+                float s = w0 * v0.s + w1 * v1.s + w2 * v2.s;
+                float t = w0 * v0.t + w1 * v1.t + w2 * v2.t;
+
+                // Convert ST to pixel coordinates (ST are 0..1 or 0..texsize depending on context)
+                // For DECAL/MODULATE mode, ST are normalized (0..1 range)
+                int tu = (int)(s * tw) % (int)tw;
+                int tv = (int)(t * th) % (int)th;
+                if (tu < 0) tu += tw;
+                if (tv < 0) tv += th;
+
+                uint32_t pixel;
+                if (psm == 0) { // PSMCT32
+                    uint32_t word_addr = gs_pixel_addr32(tu, tv, tbp0, tbw);
+                    pixel = vram32[word_addr];
+                } else if (psm == 0x13) { // PSMT8
+                    uint32_t byte_addr = gs_pixel_addr8(tu, tv, tbp0, tbw);
+                    uint8_t index = m_vram[byte_addr];
+                    uint32_t cbp = (uint32_t)((tex0 >> 37) & 0x3FFF);
+                    uint32_t clut_byte_off = cbp * 64 + index * 4;
+                    if (clut_byte_off + 4 <= sizeof(m_vram))
+                        memcpy(&pixel, m_vram + clut_byte_off, 4);
+                    else
+                        pixel = 0;
+                } else if (psm == 0x14) { // PSMT4
+                    uint32_t byte_addr = gs_pixel_addr8(tu / 2, tv, tbp0, tbw);
+                    uint8_t byte_val = m_vram[byte_addr];
+                    uint8_t index = (tu & 1) ? (byte_val >> 4) : (byte_val & 0xF);
+                    uint32_t cbp = (uint32_t)((tex0 >> 37) & 0x3FFF);
+                    uint32_t clut_byte_off = cbp * 64 + index * 4;
+                    if (clut_byte_off + 4 <= sizeof(m_vram))
+                        memcpy(&pixel, m_vram + clut_byte_off, 4);
+                    else
+                        pixel = 0;
+                } else {
+                    pixel = 0xFF808080;
+                }
+
+                uint8_t tr = pixel & 0xFF;
+                uint8_t tg = (pixel >> 8) & 0xFF;
+                uint8_t tb = (pixel >> 16) & 0xFF;
+                uint8_t ta = (pixel >> 24) & 0xFF;
+
+                // Modulate: vertex color × texture (PS2 GS TFX=0)
+                r = (uint8_t)((r * tr) >> 7);
+                g = (uint8_t)((g * tg) >> 7);
+                b = (uint8_t)((b * tb) >> 7);
+                // PS2 alpha: 0x80 = fully opaque
+                a = (ta >= 0x80) ? a : (uint8_t)((a * ta) >> 7);
             }
 
             plot_pixel(x, y, r, g, b, a);

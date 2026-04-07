@@ -960,3 +960,13 @@ void reo_gs_submit_path3_direct(const void* data, uint32_t bytes) {
         }
     }
 }
+
+// Direct VRAM access — upload pixel/CLUT data to GS VRAM at byte offset
+uint8_t* reo_gs_vram() {
+    auto* self = ReoHwBridge::s_instance;
+    return (self && self->m_gs) ? self->m_gs->vram() : nullptr;
+}
+
+uint32_t reo_gs_vram_size() {
+    return reo::GSRenderer::VRAM_SIZE;
+}
