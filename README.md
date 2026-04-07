@@ -244,6 +244,9 @@ Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
 - **2025-03-19:** First textured rendering — game texture data rendered through GIF→GS pipeline
 - **2025-03-20:** **Title screen rendered** — RE Outbreak title screen with correct colors displayed natively on Windows, including the eye graphic, "RESIDENT EVIL OUTBREAK" logo, and "PRESS START BUTTON" text
 - **2025-03-21:** **GS dump replay working** — PCSX2 GS dumps replayed through REO's software rasterizer with correct output. Title screen and in-game demo scenes render pixel-accurate with PSMCT32 textures, PSMT8 indexed textures, GS VRAM swizzle tables, XYOFFSET coordinate correction, and TEST_1 alpha test support
+- **2025-03-28:** **NBD geometry parsing** — reverse-engineered NBD/AMO binary format, rendering 3D game models (rooms + characters) from NETBIO archives with triangle strip support
+- **2025-04-07:** **TEX chunk decompression** — reverse-engineered RE Outbreak's custom OB-LZ77 compression, all game textures (256x256 IDX8 with CLUT) decompress and decode correctly
+- **2025-04-07:** **PS2Recomp upstream sync** — synced with latest PS2Recomp runtime + applied 5 critical codegen fixes (VU0 dest-mask, divide-by-zero, 64-bit branches) from community contributor jlsandri
 
 ## Roadmap
 
@@ -273,8 +276,11 @@ Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
 - [x] Scene render chain — 15 stages unblocked, full DRAW cycle executing
 - [x] **First game textures rendered on screen**
 - [x] **Title screen rendered with correct colors**
-- [ ] Wire NBD scene data to scene manager — enable game's own rendering
+- [x] NBD/AMO geometry parser — reverse-engineered binary format, room + character models
+- [x] TEX chunk decompression — OB-LZ77 custom compression, TIM2 texture decoding (IDX8/IDX4/RGBA32)
 - [x] GS dump replay — replay PCSX2 GS dumps through REO's renderer (title + demo scenes verified)
+- [ ] Upload decoded textures to GS VRAM — textured 3D model rendering
+- [ ] Wire NBD scene data to scene manager — enable game's own rendering
 - [ ] GS renderer (Vulkan) — upgrade from software rasterizer
 - [ ] VU microcode translation for geometry
 - [ ] SPU2 audio mixer — hear the first sound
@@ -307,6 +313,8 @@ Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
 - [obsrv-pack](https://github.com/adrianopteodoro/obsrv-pack) — Open source server bundle
 - [Outbreak Research](https://outbreak-research.github.io/Documentation/) — File format documentation
 - [REOF2](https://github.com/caprado/REOF2) — RE Outbreak File #2 decompilation (reference)
+- [libthanatos](https://github.com/Fothsid/libthanatos) — RE Outbreak NBD/TEX parser + OB-LZ77 compression (reference)
+- [OBTool](https://github.com/Fothsid/OBTool) — RE Outbreak modding tool, TIM2 texture handling (reference)
 - [ghidra-emotionengine-reloaded](https://github.com/chaoticgd/ghidra-emotionengine-reloaded) — PS2 Ghidra plugin
 - [PS2Tek](https://psi-rockin.github.io/ps2tek/) — PS2 hardware documentation
 - [Copetti PS2 Architecture](https://www.copetti.org/writings/consoles/playstation-2/) — Architecture deep-dive

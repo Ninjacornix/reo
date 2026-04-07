@@ -12,10 +12,33 @@ namespace reo {
 bool NbdRenderer::load(const uint8_t* nbd_data, uint32_t nbd_size) {
     m_loaded = false;
     m_gif_packet.clear();
+    m_textures.clear();
+    m_tex_packets.clear();
 
     if (!m_nbd.parse(nbd_data, nbd_size)) {
         printf("[NBD-RENDER] Failed to parse NBD data\n");
         return false;
+    }
+
+    // Extract and decompress textures from TEX chunk
+    auto tex_indices = m_nbd.find_chunks(NBD_TYPE_TEX);
+    if (!tex_indices.empty()) {
+        auto tex_entries = m_nbd.extract_textures(tex_indices[0]);
+        printf("[NBD-RENDER] Extracted %d compressed textures\n", (int)tex_entries.size());
+
+        for (auto& entry : tex_entries) {
+            Tim2Loader loader;
+            if (loader.load(entry.tim2.data(), (uint32_t)entry.tim2.size())) {
+                for (int i = 0; i < loader.texture_count(); i++) {
+                    m_textures.push_back(loader.texture(i));
+                    printf("[NBD-RENDER] Texture %d: %dx%d type=%d globalId=%d\n",
+                           (int)m_textures.size() - 1,
+                           m_textures.back().width, m_textures.back().height,
+                           m_textures.back().image_type,
+                           m_textures.back().global_tex_id);
+                }
+            }
+        }
     }
 
     // Find AMO chunk
@@ -49,7 +72,8 @@ bool NbdRenderer::load(const uint8_t* nbd_data, uint32_t nbd_size) {
     build_triangle_packet(mdl);
     m_loaded = true;
 
-    printf("[NBD-RENDER] Ready: %d triangles, scale=%.2f\n",
+    printf("[NBD-RENDER] Ready: %d textures, %d triangles, scale=%.2f\n",
+           (int)m_textures.size(),
            (int)(m_gif_packet.size() / 16 / 4), m_scale); // rough estimate
     return true;
 }
@@ -84,6 +108,8 @@ enum GSReg : uint64_t {
     GS_RGBAQ   = 0x01,
     GS_ST      = 0x02,
     GS_XYZ2    = 0x05,
+    GS_TEX0_1  = 0x06,
+    GS_TEX1_1  = 0x14,
     GS_XYOFFSET_1 = 0x18,
     GS_SCISSOR_1  = 0x40,
     GS_TEST_1  = 0x47,
@@ -102,29 +128,28 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
 
     if (model.vertices.empty() || model.strips.empty()) return;
 
-    const float screen_cx = 320.0f; // Center of 640-wide screen
-    const float screen_cy = 224.0f; // Center of 448-tall screen
+    const float screen_cx = 320.0f;
+    const float screen_cy = 224.0f;
 
-    // Count total triangles for packet sizing
+    // Count total triangles
     int total_tris = 0;
     for (auto& s : model.strips) {
         total_tris += std::max(0, (int)s.indices.size() - 2);
     }
     if (total_tris == 0) return;
 
-    // Emit setup packet: FRAME, ZBUF, SCISSOR, XYOFFSET, TEST
-    // GIF tag: NLOOP=6, EOP=0, FLG=PACKED(0), NREG=1, REG=A+D(0x0E)
+    // Emit setup packet: FRAME, ZBUF, SCISSOR, XYOFFSET, TEST, PRIM
     {
         uint64_t tag_lo = 6 | (0ULL << 15); // NLOOP=6, no EOP
         tag_lo |= (1ULL << 60); // NREG=1
         uint64_t tag_hi = 0x0E; // A+D
         emit_qw(m_gif_packet, tag_lo, tag_hi);
 
-        // FRAME_1: FBP=0 (page 0), FBW=10 (640/64), PSM=0 (PSMCT32), FBMSK=0
+        // FRAME_1: FBP=0, FBW=10 (640/64), PSM=0 (PSMCT32)
         uint64_t frame = 0 | (10ULL << 16) | (0ULL << 24);
         emit_qw(m_gif_packet, frame, GS_FRAME_1);
 
-        // ZBUF_1: ZBP=0x88 (after framebuffer), PSM=0, ZMSK=0
+        // ZBUF_1: ZBP=0x88, PSM=0, ZMSK=0
         uint64_t zbuf = 0x88 | (0ULL << 24) | (0ULL << 32);
         emit_qw(m_gif_packet, zbuf, GS_ZBUF_1);
 
@@ -132,34 +157,27 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
         uint64_t scissor = 0 | (639ULL << 16) | (0ULL << 32) | (447ULL << 48);
         emit_qw(m_gif_packet, scissor, GS_SCISSOR_1);
 
-        // XYOFFSET_1: offset = (0,0) in 4-bit fixed point
-        uint64_t xyoffset = 0;
-        emit_qw(m_gif_packet, xyoffset, GS_XYOFFSET_1);
+        // XYOFFSET_1: 0,0
+        emit_qw(m_gif_packet, 0, GS_XYOFFSET_1);
 
-        // TEST_1: enable Z test, method=GREATER_EQUAL(2), no alpha test
-        uint64_t test = (0ULL) | (2ULL << 17); // ZTE=1 at bit 16, ZTST=2 at bits 17-18
-        test |= (1ULL << 16); // ZTE enable
+        // TEST_1: ZTE=1, ZTST=GREATER_EQUAL(2)
+        uint64_t test = (1ULL << 16) | (2ULL << 17);
         emit_qw(m_gif_packet, test, GS_TEST_1);
 
         // PRIM: TRIANGLE with Gouraud shading
-        uint64_t prim = PRIM_TRIANGLE | (1ULL << 3); // IIP=1 (Gouraud)
+        uint64_t prim = PRIM_TRIANGLE | (1ULL << 3); // IIP=1
         emit_qw(m_gif_packet, prim, GS_PRIM);
     }
-
-    // Emit triangles from triangle strips
-    // Each triangle = 3 vertices, each vertex needs RGBAQ + XYZ2
-    // GIF tag per batch: NLOOP=tri_count*3, NREG=2, REGS=RGBAQ,XYZ2
-    // Max NLOOP = 0x7FFF, so batch in groups
 
     // Simple directional lighting
     float light_dir[3] = { 0.3f, 0.7f, 0.6f };
     float len = sqrtf(light_dir[0]*light_dir[0] + light_dir[1]*light_dir[1] + light_dir[2]*light_dir[2]);
     light_dir[0] /= len; light_dir[1] /= len; light_dir[2] /= len;
 
-    // Collect all triangles first
+    // Collect all triangles
     struct ScreenTri {
         int16_t x[3], y[3];
-        uint32_t z[3]; // Z for depth buffer (larger = further)
+        uint32_t z[3];
         uint8_t r[3], g[3], b[3];
     };
     std::vector<ScreenTri> tris;
@@ -171,16 +189,13 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
             uint32_t i1 = strip.indices[i + 1];
             uint32_t i2 = strip.indices[i + 2];
 
-            // Skip degenerate triangles
             if (i0 == i1 || i1 == i2 || i0 == i2) continue;
-
-            // Flip winding for odd triangles (triangle strip convention)
             if (i & 1) std::swap(i1, i2);
 
             if (i0 >= model.vertices.size() || i1 >= model.vertices.size() ||
                 i2 >= model.vertices.size()) continue;
 
-            // Skip long-edge triangles (seam/connection tris that look like artifacts)
+            // Skip long-edge triangles (seam artifacts)
             {
                 auto& v0 = model.vertices[i0];
                 auto& v1 = model.vertices[i1];
@@ -190,7 +205,7 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
                     return dx*dx + dy*dy + dz*dz;
                 };
                 float max_edge2 = std::max({dist2(v0,v1), dist2(v1,v2), dist2(v0,v2)});
-                if (max_edge2 > 15.0f * 15.0f) continue; // Skip edges > 15 units
+                if (max_edge2 > 15.0f * 15.0f) continue;
             }
 
             ScreenTri tri;
@@ -199,17 +214,14 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
             for (int v = 0; v < 3; v++) {
                 auto& vert = model.vertices[idx[v]];
 
-                // Simple orthographic projection: X→screen X, Y→screen Y (inverted)
                 float sx = (vert.x - m_cam_x) * m_scale + screen_cx;
                 float sy = screen_cy - (vert.y - m_cam_y) * m_scale;
 
-                // GS uses 4-bit subpixel fixed point
                 tri.x[v] = (int16_t)(sx * 16.0f);
                 tri.y[v] = (int16_t)(sy * 16.0f);
                 tri.z[v] = (uint32_t)((vert.z - m_cam_z) * 1000.0f + 0x7FFFFF);
 
-                // Lighting
-                float shade = 0.3f; // ambient
+                float shade = 0.3f;
                 if (idx[v] < model.normals.size()) {
                     auto& n = model.normals[idx[v]];
                     float dot = n.nx * light_dir[0] + n.ny * light_dir[1] + n.nz * light_dir[2];
@@ -226,7 +238,7 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
         }
     }
 
-    // Emit in batches (max ~5000 tris per GIF tag due to NLOOP limit)
+    // Emit in batches
     const int MAX_BATCH = 5000;
     int remaining = (int)tris.size();
     int offset = 0;
@@ -235,31 +247,27 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
         int batch = std::min(remaining, MAX_BATCH);
         bool is_last = (remaining - batch <= 0);
 
-        // GIF tag: NLOOP = batch*3 (3 vertices per tri),
-        // FLG=PACKED(0), NREG=2, REGS=[RGBAQ, XYZ2]
         uint64_t nloop = (uint64_t)batch * 3;
         uint64_t tag_lo = nloop;
         if (is_last) tag_lo |= (1ULL << 15); // EOP
         tag_lo |= (2ULL << 60); // NREG=2
-        uint64_t tag_hi = 0x51; // REG: RGBAQ(1), XYZ2(5) → 0x51
+        uint64_t tag_hi = 0x51; // RGBAQ(1), XYZ2(5)
         emit_qw(m_gif_packet, tag_lo, tag_hi);
 
         for (int t = 0; t < batch; t++) {
             auto& tri = tris[offset + t];
             for (int v = 0; v < 3; v++) {
-                // PACKED RGBAQ: R at byte[0], G at byte[4], B at byte[8], A at byte[12]
-                // Each component is in the low byte of its 32-bit field
+                // PACKED RGBAQ
                 uint8_t qw_rgbaq[16] = {};
                 qw_rgbaq[0] = tri.r[v];
                 qw_rgbaq[4] = tri.g[v];
                 qw_rgbaq[8] = tri.b[v];
-                qw_rgbaq[12] = 0x80; // Alpha
+                qw_rgbaq[12] = 0x80;
                 size_t off_r = m_gif_packet.size();
                 m_gif_packet.resize(off_r + 16);
                 memcpy(m_gif_packet.data() + off_r, qw_rgbaq, 16);
 
-                // PACKED XYZ2: X at dword[0], Y at dword[1], Z at dword[2]
-                // X and Y are 12.4 fixed point (value * 16) in lower 16 bits
+                // PACKED XYZ2
                 uint32_t px = (uint32_t)(uint16_t)tri.x[v];
                 uint32_t py = (uint32_t)(uint16_t)tri.y[v];
                 uint32_t pz = tri.z[v];
@@ -279,6 +287,14 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
 
     printf("[NBD-RENDER] Built GIF packet: %d triangles, %zu bytes\n",
            (int)tris.size(), m_gif_packet.size());
+}
+
+void NbdRenderer::upload_texture_to_vram(const Tim2Texture& tex, int slot) {
+    // TODO: Build GIF IMAGE mode packet to upload decoded RGBA texture to GS VRAM
+    // This would use GS BITBLTBUF + TRXPOS + TRXREG + TRXDIR registers
+    // followed by IMAGE data transfer
+    printf("[NBD-RENDER] Texture upload slot %d: %dx%d (not yet implemented)\n",
+           slot, tex.width, tex.height);
 }
 
 } // namespace reo

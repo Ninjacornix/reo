@@ -1,4 +1,5 @@
 #include "nbd_parser.h"
+#include "tim2/tim2_loader.h"
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -73,6 +74,48 @@ std::vector<int> NbdParser::find_chunks(uint32_t type) const {
             result.push_back(i);
         }
     }
+    return result;
+}
+
+std::vector<NbdTexEntry> NbdParser::extract_textures(int chunk_index) const {
+    std::vector<NbdTexEntry> result;
+
+    if (chunk_index < 0 || chunk_index >= (int)m_chunks.size()) return result;
+    const auto& c = m_chunks[chunk_index];
+    if (c.type != NBD_TYPE_TEX) return result;
+
+    const uint8_t* chunk_data = m_data + c.offset;
+    uint32_t chunk_size = c.size;
+    uint32_t tex_count = c.count;
+
+    // TEX chunk format: [compressed_size:4][compressed_data] × tex_count
+    uint32_t pos = 0;
+    for (uint32_t i = 0; i < tex_count; i++) {
+        if (pos + 4 > chunk_size) break;
+
+        uint32_t comp_size;
+        memcpy(&comp_size, chunk_data + pos, 4);
+
+        if (pos + 4 + comp_size > chunk_size) {
+            printf("[NBD] TEX[%u]: compressed size 0x%X exceeds chunk bounds\n", i, comp_size);
+            break;
+        }
+
+        NbdTexEntry entry;
+        entry.compressed_size = comp_size;
+        entry.tim2 = Tim2Loader::decompress_ob_lz77(chunk_data + pos + 4, comp_size);
+
+        if (!entry.tim2.empty()) {
+            printf("[NBD] TEX[%u]: %u bytes compressed → %zu bytes decompressed\n",
+                   i, comp_size, entry.tim2.size());
+            result.push_back(std::move(entry));
+        } else {
+            printf("[NBD] TEX[%u]: decompression failed\n", i);
+        }
+
+        pos += 4 + comp_size;
+    }
+
     return result;
 }
 

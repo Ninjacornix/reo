@@ -18,6 +18,7 @@ set(REO_RUNTIME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../runtime")
 
 set(PS2RECOMP_INCLUDES
     "${PS2RECOMP_DIR}/ps2xRuntime/include"
+    "${PS2RECOMP_DIR}/ps2xRuntime/src/lib/Kernel"
     "${PS2RECOMP_DIR}/ps2xRecomp/include"
     "${PS2RECOMP_BUILD}/_deps/elfio-src/include"
     "${PS2RECOMP_BUILD}/_deps/fmt-src/include"
@@ -73,6 +74,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_parser.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/amo_parser.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_renderer.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../media/tim2/tim2_loader.cpp"
         ${REO_RUNTIME_SOURCES}
         ${RECOMP_SOURCES}
         ${OVERLAY_SOURCES}
@@ -85,6 +87,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         "${CMAKE_CURRENT_SOURCE_DIR}/overrides"
         "${CMAKE_CURRENT_SOURCE_DIR}/.."
         "${CMAKE_CURRENT_SOURCE_DIR}/../game"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../media"
     )
 
     target_link_libraries(${TARGET_NAME} PRIVATE ${PS2RECOMP_LIBS})
