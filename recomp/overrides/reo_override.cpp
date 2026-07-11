@@ -768,11 +768,15 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
         if (lc == 0) { lc = 1; memcpy(rdram + loopAddr, &lc, 4); }
     }
 
+    // REO_NATURAL: when set, disable the PCSX2 snapshot injection + forced
+    // demo so we observe where the game's OWN code stalls (diagnostic mode).
+    static const bool reoNatural = (std::getenv("REO_NATURAL") != nullptr);
+
     // ── Snapshot injection (frame 5) ────────────────────────────
     // Load PCSX2 binary snapshots into guest RAM to bootstrap game state.
     // Without these, the game loops in GsSetCrt initialization forever.
     static bool snapshotLoaded = false;
-    if (!snapshotLoaded && frameCount == 5) {
+    if (!reoNatural && !snapshotLoaded && frameCount == 5) {
         snapshotLoaded = true;
         auto wr32 = [&](uint32_t a, uint32_t v) {
             uint32_t p = a & PS2_RAM_MASK;
@@ -872,7 +876,7 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
     // The game's title screen timer never advances because the coroutine
     // dispatch in sub_001CC260 doesn't reach the continuation code.
     static bool demoTriggered = false;
-    if (!demoTriggered && frameCount >= 900) {
+    if (!reoNatural && !demoTriggered && frameCount >= 900) {
         demoTriggered = true;
         printf("[REO] Triggering demo mode at frame %u...\n", frameCount);
         fflush(stdout);
