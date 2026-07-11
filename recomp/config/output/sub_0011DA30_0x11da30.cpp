@@ -37,8 +37,6 @@ void sub_0011DA30_0x11da30(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x11DA48u) { return; }
     ctx->pc = 0x11DA48u;
-    printf("[SIF-INIT] sub_0011DA30: D9C8 returned v0=%d (0=skip SIF init, 1=proceed)\n", GPR_S32(ctx, 2));
-    fflush(stdout);
     // 0x11da48: 0x1040001e
     ctx->pc = 0x11DA48u;
     {

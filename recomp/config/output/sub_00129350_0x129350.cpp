@@ -9,7 +9,6 @@
 // Function: sub_00129350
 // Address: 0x129350 - 0x129408
 void sub_00129350_0x129350(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    setReturnU32(ctx, 0); ctx->pc = getRegU32(ctx, 31); return;
 
     ctx->pc = 0x129350u;
 

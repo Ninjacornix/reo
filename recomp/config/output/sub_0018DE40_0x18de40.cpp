@@ -9,54 +9,6 @@
 // Function: sub_0018DE40
 // Address: 0x18de40 - 0x18e1b0
 void sub_0018DE40_0x18de40(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // REO Override: Simplified display list entry allocation.
-    // The full function has a complex chain of resource validation calls
-    // (1A52D0, 19CB30, 18DC50, etc.) that fail because various PS2 hardware
-    // state isn't properly initialized. We simplify to:
-    // 1. Find free DMA channel (19D120)
-    // 2. Allocate display list space (1A5280)
-    // 3. Return the channel index as the allocation handle
-    {
-        // Find free channel
-        extern void sub_0019D120_0x19d120(uint8_t*, R5900Context*, PS2Runtime*);
-        R5900Context tmp = *ctx;
-        sub_0019D120_0x19d120(rdram, &tmp, runtime);
-        uint32_t channelIdx = getRegU32(&tmp, 2); // v0
-
-        if (channelIdx == 0 || channelIdx > 256) {
-            setReturnU32(ctx, 0);
-            ctx->pc = getRegU32(ctx, 31);
-            return;
-        }
-
-        // Allocate display list space
-        extern void sub_001A5280_0x1a5280(uint8_t*, R5900Context*, PS2Runtime*);
-        tmp = *ctx;
-        SET_GPR_U32(&tmp, 4, GPR_U32(ctx, 4)); // pass original a0
-        sub_001A5280_0x1a5280(rdram, &tmp, runtime);
-        uint32_t allocResult = getRegU32(&tmp, 2); // v0
-
-        if (allocResult == 0) {
-            setReturnU32(ctx, 0);
-            ctx->pc = getRegU32(ctx, 31);
-            return;
-        }
-
-        // Build handle: (1 << 16) | channelIdx
-        uint32_t handle = (1 << 16) | (channelIdx & 0xFFFF);
-
-        static int logC = 0;
-        if (logC < 20) {
-            printf("[18DE40-HLE] chan=%u alloc=0x%X → handle=0x%08X\n",
-                   channelIdx, allocResult, handle);
-            fflush(stdout);
-            logC++;
-        }
-
-        setReturnU32(ctx, handle);
-        ctx->pc = getRegU32(ctx, 31);
-        return;
-    }
 
     ctx->pc = 0x18de40u;
 
@@ -110,7 +62,6 @@ void sub_0018DE40_0x18de40(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_0019D120_0x19d120(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x18DE7Cu; }
     }
-    { static int lc=0; if(lc<30) { printf("[18DE40] after 19D120: v0=0x%X pc=0x%X\n", GPR_U32(ctx,2), ctx->pc); fflush(stdout); lc++; }}
     if (ctx->pc != 0x18DE7Cu) { return; }
     ctx->pc = 0x18DE7Cu;
     // 0x18de7c: 0xafa200ac
@@ -151,7 +102,6 @@ void sub_0018DE40_0x18de40(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001A5280_0x1a5280(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x18DEA8u; }
     }
-    { static int lc=0; if(lc<30) { printf("[18DE40] after 1A5280: v0=0x%X a0=0x%X r22=0x%X pc=0x%X\n", GPR_U32(ctx,2), GPR_U32(ctx,4), GPR_U32(ctx,22), ctx->pc); fflush(stdout); lc++; }}
     if (ctx->pc != 0x18DEA8u) { return; }
     ctx->pc = 0x18DEA8u;
     // 0x18dea8: 0xafa200a8

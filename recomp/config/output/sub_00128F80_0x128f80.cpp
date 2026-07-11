@@ -30,7 +30,6 @@ void sub_00128F80_0x128f80(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_00128F28_0x128f28(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x128F94u; }
     }
-    { static int lc=0; if(lc<5) { printf("[128F80] 128F28 returned v0=0x%08X\n", GPR_U32(ctx,2)); fflush(stdout); lc++; }}
     if (ctx->pc != 0x128F94u) { return; }
     ctx->pc = 0x128F94u;
     // 0x128f94: 0x40802d
@@ -60,7 +59,6 @@ void sub_00128F80_0x128f80(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001303D8_0x1303d8(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x128FACu; }
     }
-    { static int lc=0; if(lc<5) { printf("[128F80] 1303D8 returned v0=0x%08X (DMA buf)\n", GPR_U32(ctx,2)); fflush(stdout); lc++; }}
     if (ctx->pc != 0x128FACu) { return; }
     ctx->pc = 0x128FACu;
     // 0x128fac: 0x24030001

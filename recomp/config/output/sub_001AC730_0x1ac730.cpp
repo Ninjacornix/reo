@@ -9,8 +9,6 @@
 // Function: sub_001AC730
 // Address: 0x1ac730 - 0x1ac7f0
 void sub_001AC730_0x1ac730(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // REO: Stub render finalization (crashes with uninitialized render ctx)
-    setReturnU32(ctx, 0); ctx->pc = getRegU32(ctx, 31); return;
 
     ctx->pc = 0x1ac730u;
 

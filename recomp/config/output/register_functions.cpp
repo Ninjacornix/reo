@@ -2705,7 +2705,6 @@ void registerAllFunctions(PS2Runtime& runtime) {
     runtime.registerFunction(0x1ab860, sub_001AB860_0x1ab860);
     runtime.registerFunction(0x1abb60, sub_001ABB60_0x1abb60);
     runtime.registerFunction(0x1ac630, sub_001AC630_0x1ac630);
-    runtime.registerFunction(0x1ac640, sub_001AC640_0x1ac640);
     runtime.registerFunction(0x1ac650, sub_001AC650_0x1ac650);
     runtime.registerFunction(0x1ac6d0, entry_1ac6d0_0x1ac710);
     runtime.registerFunction(0x1ac710, sub_001AC710_0x1ac710);
@@ -3161,6 +3160,7 @@ void registerAllFunctions(PS2Runtime& runtime) {
     runtime.registerFunction(0x1cb7b0, sub_001CB7B0_0x1cb7b0);
     runtime.registerFunction(0x1cb800, sub_001CB800_0x1cb800);
     runtime.registerFunction(0x1cb8c0, sub_001CB8C0_0x1cb8c0);
+    runtime.registerFunction(0x1cb8f0, sub_001CB8F0_0x1cb8f0);
     runtime.registerFunction(0x1cbb60, sub_001CBB60_0x1cbb60);
     runtime.registerFunction(0x1cbbc0, sub_001CBBC0_0x1cbbc0);
     runtime.registerFunction(0x1cbc60, sub_001CBC60_0x1cbc60);
@@ -3825,7 +3825,6 @@ void registerAllFunctions(PS2Runtime& runtime) {
     runtime.registerFunction(0x1bcf60, sub_001BCF60_0x1bcf60);
     runtime.registerFunction(0x1bd0b0, sub_001BD0B0_0x1bd0b0);
     runtime.registerFunction(0x1c8850, sub_001C8850_0x1c8850);
-    runtime.registerFunction(0x1cb8f0, sub_001CB8F0_0x1cb8f0);
     runtime.registerFunction(0x1cbd00, sub_001CBD00_0x1cbd00);
     runtime.registerFunction(0x1cbdf0, sub_001CBDF0_0x1cbdf0);
     runtime.registerFunction(0x1cc5b0, sub_001CC5B0_0x1cc5b0);

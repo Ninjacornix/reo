@@ -158,18 +158,6 @@ label_1af64c:
     ctx->pc = 0x1af650u;
     SET_GPR_U32(ctx, 6, SUB32(GPR_U32(ctx, 5), GPR_U32(ctx, 3)));
 label_1af654:
-    // REO safety: detect counter wrap (0 → 0xFFFFFFFF) that causes infinite loop
-    if (GPR_U32(ctx, 7) > 0x100000) {
-        static int warnCount = 0;
-        if (warnCount < 5) {
-            printf("[REO] AF5D0: memcpy counter r7=0x%08X looks wrapped, skipping loop\n", GPR_U32(ctx, 7));
-            fflush(stdout);
-            warnCount++;
-        }
-        SET_GPR_U32(ctx, 7, 0);
-        ctx->pc = 0x1AF670u;
-        goto label_1af670;
-    }
     // 0x1af654: 0x94c30000
     ctx->pc = 0x1af654u;
     SET_GPR_U32(ctx, 3, (uint16_t)READ16(ADD32(GPR_U32(ctx, 6), 0)));
@@ -195,7 +183,6 @@ label_1af654:
         }
     }
     ctx->pc = 0x1AF670u;
-label_1af670:
     // 0x1af670: 0x10000005
     ctx->pc = 0x1AF670u;
     {

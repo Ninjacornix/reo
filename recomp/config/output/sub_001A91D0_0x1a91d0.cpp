@@ -5,7 +5,6 @@
 
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
-#include <cstdio>
 
 // Function: sub_001A91D0
 // Address: 0x1a91d0 - 0x1a9400
@@ -52,7 +51,6 @@ void sub_001A91D0_0x1a91d0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_00101E18_0x101e18(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1A91F0u; }
     }
-    printf("[INIT] After sub_00101E18: pc=0x%08X (expect 0x1A91F0)\n", ctx->pc); fflush(stdout);
     if (ctx->pc != 0x1A91F0u) { return; }
     ctx->pc = 0x1A91F0u;
     // 0x1a91f0: 0xc0408d4
@@ -64,7 +62,6 @@ void sub_001A91D0_0x1a91d0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_00102350_0x102350(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1A91F8u; }
     }
-    printf("[INIT] After sub_00102350: pc=0x%08X (expect 0x1A91F8)\n", ctx->pc); fflush(stdout);
     if (ctx->pc != 0x1A91F8u) { return; }
     ctx->pc = 0x1A91F8u;
     // 0x1a91f8: 0xc0449c2
@@ -152,7 +149,6 @@ label_1a9220:
         sub_001137A0_0x1137a0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1A9248u; }
     }
-    { static int c = 0; if (c < 3) { printf("[INIT] After sub_001137A0 (iter %d): pc=0x%08X (expect 0x1A9248)\n", c, ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1A9248u) { return; }
     ctx->pc = 0x1A9248u;
     // 0x1a9248: 0xc045228
@@ -166,7 +162,6 @@ label_1a9220:
         sub_001148A0_0x1148a0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1A9250u; }
     }
-    { static int c = 0; if (c < 3) { printf("[INIT] After sub_001148A0 (iter %d): pc=0x%08X (expect 0x1A9250)\n", c, ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1A9250u) { return; }
     ctx->pc = 0x1A9250u;
     // 0x1a9250: 0x27a40020
@@ -219,7 +214,6 @@ label_1a9220:
         }
     }
     ctx->pc = 0x1A9278u;
-    printf("[INIT-D] First loop complete (16 iterations done)\n"); fflush(stdout);
     // 0x1a9278: 0x202d
     ctx->pc = 0x1a9278u;
     SET_GPR_U64(ctx, 4, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
@@ -240,9 +234,8 @@ label_1a9220:
         sub_00112568_0x112568(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1A928Cu; }
     }
-    if (ctx->pc != 0x1A928Cu) { printf("[INIT-D] BAIL after sub_00112568 (pc=0x%08X)\n", ctx->pc); fflush(stdout); return; }
+    if (ctx->pc != 0x1A928Cu) { return; }
     ctx->pc = 0x1A928Cu;
-    printf("[INIT-D] After sub_00112568 (CreateThread), entering sub_001133F0 loop (20 iters)\n"); fflush(stdout);
     // 0x1a928c: 0x802d
     ctx->pc = 0x1a928cu;
     SET_GPR_U64(ctx, 16, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
@@ -345,7 +338,6 @@ label_1a9290:
     WRITE16(ADD32(GPR_U32(ctx, 29), 184), (uint16_t)GPR_U32(ctx, 2));
 label_1a92f8:
     // 0x1a92f8: 0xc044cfc
-    { static int c = 0; if (c < 3) { printf("[INIT-D] VSync wait loop (label_1a92f8) iter %d\n", c); fflush(stdout); } c++; }
     ctx->pc = 0x1A92F8u;
     SET_GPR_U32(ctx, 31, 0x1A9300u);
     ctx->pc = 0x1A92FCu;
@@ -356,18 +348,18 @@ label_1a92f8:
         sub_001133F0_0x1133f0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1A9300u; }
     }
-    if (ctx->pc != 0x1A9300u) { printf("[INIT-D] BAIL in VSync wait (pc=0x%08X)\n", ctx->pc); fflush(stdout); return; }
+    if (ctx->pc != 0x1A9300u) { return; }
     ctx->pc = 0x1A9300u;
-    // 0x1a9300: 0x2102b  -- v0 = (0 < v0) i.e. v0 != 0
+    // 0x1a9300: 0x2102b
     ctx->pc = 0x1a9300u;
     SET_GPR_U32(ctx, 2, SLTU32(GPR_U32(ctx, 0), GPR_U32(ctx, 2)));
-    // 0x1a9304: 0x38420001  -- v0 = v0 ^ 1  (invert: loop while v0 was 0)
+    // 0x1a9304: 0x38420001
     ctx->pc = 0x1a9304u;
     SET_GPR_U32(ctx, 2, XOR32(GPR_U32(ctx, 2), 1));
     // 0x1a9308: 0x0
     ctx->pc = 0x1a9308u;
     // NOP
-    // 0x1a930c: 0x1440fffa  -- branch if v0 != 0 (loop while sub_001133F0 returned 0)
+    // 0x1a930c: 0x1440fffa
     ctx->pc = 0x1A930Cu;
     {
         const bool branch_taken_0x1a930c = (GPR_U32(ctx, 2) != GPR_U32(ctx, 0));

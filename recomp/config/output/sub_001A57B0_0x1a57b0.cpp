@@ -9,22 +9,6 @@
 // Function: sub_001A57B0
 // Address: 0x1a57b0 - 0x1a5850
 void sub_001A57B0_0x1a57b0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // REO Override: TIM2 header validation. The game checks if the buffer
-    // contains a valid TIM2 texture header before allocating a display list
-    // entry. With PCSX2 snapshot data (already decoded), the raw pixel data
-    // doesn't have TIM2 headers. Return 1 (valid) to allow rendering to proceed.
-    static int logC = 0;
-    if (logC < 5) {
-        uint32_t addr = GPR_U32(ctx, 4);
-        uint32_t phys = addr & PS2_RAM_MASK;
-        uint8_t b0 = (phys < PS2_RAM_SIZE) ? rdram[phys] : 0;
-        printf("[REO] TIM2 check bypassed (addr=0x%08X byte0=0x%02X)\n", addr, b0);
-        fflush(stdout);
-        logC++;
-    }
-    setReturnU32(ctx, 1);
-    ctx->pc = getRegU32(ctx, 31);
-    return;
 
     ctx->pc = 0x1a57b0u;
 

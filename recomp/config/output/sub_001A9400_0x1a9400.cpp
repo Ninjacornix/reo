@@ -62,8 +62,6 @@ label_1a9424:
     // 0x1a9424: 0xc06ea80
     ctx->pc = 0x1A9424u;
     SET_GPR_U32(ctx, 31, 0x1A942Cu);
-    // Ensure loop counter non-zero
-    { uint32_t one = 1; memcpy(rdram + (0x316598u & 0x1FFFFFFu), &one, 4); }
     ctx->pc = 0x1BAA00u;
     {
         const uint32_t __entryPc = ctx->pc;

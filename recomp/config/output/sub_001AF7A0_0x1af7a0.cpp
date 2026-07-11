@@ -101,16 +101,29 @@ label_1af7ec:
     }
     ctx->pc = 0x1AF7F4u;
 label_1af7f4:
-    // HLE: All 8 DMA/GIF slots full — clear slot 0 instead of spinning
-    // (On real PS2, DMA hardware would free slots asynchronously)
+    // 0x1af7f4: 0x0
+    ctx->pc = 0x1af7f4u;
+    // NOP
+    // 0x1af7f8: 0x0
+    ctx->pc = 0x1af7f8u;
+    // NOP
+    // 0x1af7fc: 0x0
+    ctx->pc = 0x1af7fcu;
+    // NOP
+    // 0x1af800: 0x0
+    ctx->pc = 0x1af800u;
+    // NOP
+    // 0x1af804: 0x0
+    ctx->pc = 0x1af804u;
+    // NOP
+    // 0x1af808: 0x1000fffa
+    ctx->pc = 0x1AF808u;
     {
-        uint32_t arrayBase = ADD32(((uint32_t)44 << 16), 4294938192); // 0x2B8DD0
-        WRITE32(arrayBase, 0); // Clear slot 0 to free it
-        SET_GPR_S32(ctx, 17, 0); // s1 = 0 (slot index)
-        SET_GPR_U32(ctx, 16, arrayBase); // s0 = array base
-        SET_GPR_U64(ctx, 4, (uint64_t)GPR_U64(ctx, 18) + (uint64_t)GPR_U64(ctx, 0)); // a0 = s2
-        ctx->pc = 0x1AF810u;
-        goto label_1af810;
+        const bool branch_taken_0x1af808 = (GPR_U32(ctx, 0) == GPR_U32(ctx, 0));
+        if (branch_taken_0x1af808) {
+            ctx->pc = 0x1AF7F4u;
+            goto label_1af7f4;
+        }
     }
     ctx->pc = 0x1AF810u;
 label_1af810:

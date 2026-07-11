@@ -9,7 +9,6 @@
 // Function: sub_001D1FC0
 // Address: 0x1d1fc0 - 0x1d2170
 void sub_001D1FC0_0x1d1fc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    { static int c = 0; if (c < 10) { printf("[D1FC0] entered (call %d)\n", c); fflush(stdout); c++; } }
 
     ctx->pc = 0x1d1fc0u;
 
@@ -36,7 +35,6 @@ void sub_001D1FC0_0x1d1fc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001CD250_0x1cd250(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D1FD8u; }
     }
-    { static int c = 0; if (c < 10) { printf("[D1FC0] after CD250, pc=0x%08X v0=%d\n", ctx->pc, GPR_S32(ctx, 2)); fflush(stdout); c++; } }
     if (ctx->pc != 0x1D1FD8u) { return; }
     ctx->pc = 0x1D1FD8u;
     // 0x1d1fd8: 0x14400017
@@ -77,7 +75,6 @@ void sub_001D1FC0_0x1d1fc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_0010AFC0_0x10afc0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D1FFCu; }
     }
-    { static int c = 0; if (c < 10) { printf("[D1FC0] after 10AFC0(memcpy1), pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1D1FFCu) { return; }
     ctx->pc = 0x1D1FFCu;
     // 0x1d1ffc: 0x3c010032
@@ -103,7 +100,6 @@ void sub_001D1FC0_0x1d1fc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001CC8F0_0x1cc8f0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D2014u; }
     }
-    { static int c = 0; if (c < 10) { printf("[D1FC0] after CC8F0(1), pc=0x%08X v0=%d\n", ctx->pc, GPR_S32(ctx, 2)); fflush(stdout); c++; } }
     if (ctx->pc != 0x1D2014u) { return; }
     ctx->pc = 0x1D2014u;
     // 0x1d2014: 0x10400008
@@ -129,7 +125,6 @@ void sub_001D1FC0_0x1d1fc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001AF5D0_0x1af5d0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D2024u; }
     }
-    { static int c = 0; if (c < 10) { printf("[D1FC0] after AF5D0(1), pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1D2024u) { return; }
     ctx->pc = 0x1D2024u;
     // 0x1d2024: 0x3c02001e
@@ -137,13 +132,7 @@ void sub_001D1FC0_0x1d1fc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     SET_GPR_U32(ctx, 2, ((uint32_t)30 << 16));
     // 0x1d2028: 0x202d
     ctx->pc = 0x1d2028u;
-    // REO: Set a0=1 instead of 0 to trigger data processing path in CCB90.
-    // Original code sets a0=0 (poll mode), but the data processing happens
-    // when entry_1d2280 calls CCB90 with a0=1-6 (via IOP callbacks).
-    // Since IOP callbacks never fire, we substitute here.
-    { static int callN = 0; callN++;
-      SET_GPR_U64(ctx, 4, (callN <= 6) ? (uint64_t)callN : 0);
-    }
+    SET_GPR_U64(ctx, 4, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
     // 0x1d202c: 0x34422740
     ctx->pc = 0x1d202cu;
     SET_GPR_U32(ctx, 2, OR32(GPR_U32(ctx, 2), 10048));
@@ -158,7 +147,6 @@ void sub_001D1FC0_0x1d1fc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001CCB90_0x1ccb90(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D2038u; }
     }
-    { static int c = 0; if (c < 10) { printf("[D1FC0] after CCB90(1), pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1D2038u) { return; }
     ctx->pc = 0x1D2038u;
 label_1d2038:
@@ -261,7 +249,6 @@ label_1d2038:
         sub_001CC8F0_0x1cc8f0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D209Cu; }
     }
-    { static int c = 0; if (c < 10) { printf("[D1FC0] after CC8F0(2), pc=0x%08X v0=%d\n", ctx->pc, GPR_S32(ctx, 2)); fflush(stdout); c++; } }
     if (ctx->pc != 0x1D209Cu) { return; }
     ctx->pc = 0x1D209Cu;
     // 0x1d209c: 0x1040002c

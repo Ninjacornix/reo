@@ -9,15 +9,6 @@
 // Function: sub_0013F8A8
 // Address: 0x13f8a8 - 0x13f9f0
 void sub_0013F8A8_0x13f8a8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    { static int lc=0; if(lc<5) {
-        printf("[13F8A8] enter: a0=0x%08X a1=0x%08X a2=0x%08X\n",
-               GPR_U32(ctx,4), GPR_U32(ctx,5), GPR_U32(ctx,6));
-        // Check what's at 0x224C64
-        uint32_t tbl = 0x224C64 & PS2_RAM_MASK;
-        uint32_t val; memcpy(&val, rdram+tbl, 4);
-        printf("[13F8A8] render_table[0] @0x224C64 = 0x%08X\n", val);
-        fflush(stdout); lc++;
-    }}
 
     ctx->pc = 0x13f8a8u;
 

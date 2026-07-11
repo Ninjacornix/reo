@@ -48,15 +48,6 @@ void sub_001DB0B8_0x1db0b8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     // 0x1db0e4: 0x8c640520
     ctx->pc = 0x1db0e4u;
     SET_GPR_U32(ctx, 4, READ32(ADD32(GPR_U32(ctx, 3), 1312)));
-
-    { static int db_log = 0; if (db_log < 3) {
-        printf("[DB0B8] scene_struct=0x%08X, field[0x520]=0x%08X, flags=0x%04X\n",
-               GPR_U32(ctx, 3), GPR_U32(ctx, 4), (uint16_t)READ16(ADD32(GPR_U32(ctx, 30), 4)));
-        printf("[DB0B8]   calling sub_001F2028(a0=0x%08X, a1=sp+12, a2=0x%04X, a3=1, t0=1)\n",
-               GPR_U32(ctx, 4), GPR_U32(ctx, 2));
-        db_log++; fflush(stdout);
-    }}
-
     // 0x1db0e8: 0x40302d
     ctx->pc = 0x1db0e8u;
     SET_GPR_U64(ctx, 6, (uint64_t)GPR_U64(ctx, 2) + (uint64_t)GPR_U64(ctx, 0));
@@ -77,12 +68,6 @@ void sub_001DB0B8_0x1db0b8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1DB0FCu) { return; }
     ctx->pc = 0x1DB0FCu;
-
-    { static int db_log2 = 0; if (db_log2 < 3) {
-        printf("[DB0B8] sub_001F2028 returned v0=0x%08X\n", GPR_U32(ctx, 2));
-        db_log2++; fflush(stdout);
-    }}
-
     // 0x1db0fc: 0xafc20008
     ctx->pc = 0x1db0fcu;
     WRITE32(ADD32(GPR_U32(ctx, 30), 8), GPR_U32(ctx, 2));

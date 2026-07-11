@@ -9,18 +9,6 @@
 // Function: sub_001CD080
 // Address: 0x1cd080 - 0x1cd1c0
 void sub_001CD080_0x1cd080(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // REO Override: This function busy-waits for IOP-driven task callbacks to
-    // complete. In static recomp with no IOP, the callbacks never fire, causing
-    // an infinite loop. Return immediately.
-    static int logC = 0;
-    if (logC < 10) {
-        printf("[REO] CD080: task wait bypassed (a0=%d a1=%d)\n",
-               GPR_S32(ctx, 4), GPR_S32(ctx, 5));
-        fflush(stdout);
-        logC++;
-    }
-    ctx->pc = GPR_U32(ctx, 31);
-    return;
 
     ctx->pc = 0x1cd080u;
 

@@ -5,7 +5,6 @@
 
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
-#include <cstdio>
 
 // Function: sub_001BAEC0
 // Address: 0x1baec0 - 0x1bb110
@@ -19,8 +18,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     // 0x1baec4: 0xffbf0000
     ctx->pc = 0x1baec4u;
     WRITE64(ADD32(GPR_U32(ctx, 29), 0), GPR_U64(ctx, 31));
-    { static int c=0; if(c<2){uint32_t __ra_addr=GPR_U32(ctx,29); printf("[BAEC0] ENTRY: sp=0x%08X ra_val=0x%08X\n", __ra_addr, READ32(__ra_addr));fflush(stdout);c++;} }
-    static uint32_t __saved_sp = 0; __saved_sp = GPR_U32(ctx, 29);
     // 0x1baec8: 0xc06a470
     ctx->pc = 0x1BAEC8u;
     SET_GPR_U32(ctx, 31, 0x1BAED0u);
@@ -34,7 +31,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BAED0u) { return; }
     ctx->pc = 0x1BAED0u;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after sub_001A91C0! sp=0x%08X val=0x%08X\n",__saved_sp,rv);fflush(stdout);}c++;} }
     // 0x1baed0: 0x3c010032
     ctx->pc = 0x1baed0u;
     SET_GPR_U32(ctx, 1, ((uint32_t)50 << 16));
@@ -51,7 +47,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BAEDCu) { return; }
     ctx->pc = 0x1BAEDCu;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after sub_001B0A80! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1baedc: 0xc06baf8
     ctx->pc = 0x1BAEDCu;
     SET_GPR_U32(ctx, 31, 0x1BAEE4u);
@@ -108,7 +103,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BAF04u) { return; }
     ctx->pc = 0x1BAF04u;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after sub_001AF7A0! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1baf04: 0xc06bdc4
     ctx->pc = 0x1BAF04u;
     SET_GPR_U32(ctx, 31, 0x1BAF0Cu);
@@ -122,7 +116,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BAF0Cu) { return; }
     ctx->pc = 0x1BAF0Cu;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after sub_001AF710! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1baf0c: 0x3c010032
     ctx->pc = 0x1baf0cu;
     SET_GPR_U32(ctx, 1, ((uint32_t)50 << 16));
@@ -143,7 +136,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     SET_GPR_U32(ctx, 31, 0x1BAF28u);
     ctx->pc = 0x1BAF24u;
     SET_GPR_U32(ctx, 6, ((uint32_t)92 << 16));
-    { static int c=0; if(c<2){printf("[BAEC0] memset: dst=0x%08X val=0x%08X size=0x%08X (stack_ra=0x%08X)\n", GPR_U32(ctx,4), GPR_U32(ctx,5), GPR_U32(ctx,6), READ32(__saved_sp));fflush(stdout);c++;} }
     ctx->pc = 0x107C68u;
     {
         const uint32_t __entryPc = ctx->pc;
@@ -208,7 +200,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BAF60u) { return; }
     ctx->pc = 0x1BAF60u;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after 1st AF970! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1baf60: 0x3c010032
     ctx->pc = 0x1baf60u;
     SET_GPR_U32(ctx, 1, ((uint32_t)50 << 16));
@@ -231,7 +222,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BAF74u) { return; }
     ctx->pc = 0x1BAF74u;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after sub_001A0D00! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1baf74: 0xc06be5c
     ctx->pc = 0x1BAF74u;
     SET_GPR_U32(ctx, 31, 0x1BAF7Cu);
@@ -501,7 +491,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BB058u) { return; }
     ctx->pc = 0x1BB058u;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after 14x AF970! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1bb058: 0x3c010032
     ctx->pc = 0x1bb058u;
     SET_GPR_U32(ctx, 1, ((uint32_t)50 << 16));
@@ -584,7 +573,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BB0BCu) { return; }
     ctx->pc = 0x1BB0BCu;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after sub_00106EE0! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1bb0bc: 0x2443003f
     ctx->pc = 0x1bb0bcu;
     SET_GPR_S32(ctx, 3, ADD32(GPR_U32(ctx, 2), 63));
@@ -631,7 +619,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BB0F0u) { return; }
     ctx->pc = 0x1BB0F0u;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after sub_001AEF00! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1bb0f0: 0xc06ecac
     ctx->pc = 0x1BB0F0u;
     SET_GPR_U32(ctx, 31, 0x1BB0F8u);
@@ -643,7 +630,6 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BB0F8u) { return; }
     ctx->pc = 0x1BB0F8u;
-    { static int c=0; if(c<2){uint32_t rv=READ32(__saved_sp); if(rv!=0x1BAA50){printf("[BAEC0] RA CORRUPT after sub_001BB2B0! val=0x%08X\n",rv);fflush(stdout);}c++;} }
     // 0x1bb0f8: 0xc07dc58
     ctx->pc = 0x1BB0F8u;
     SET_GPR_U32(ctx, 31, 0x1BB100u);
@@ -655,9 +641,7 @@ void sub_001BAEC0_0x1baec0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     }
     if (ctx->pc != 0x1BB100u) { return; }
     ctx->pc = 0x1BB100u;
-    { static int c=0; if(c<2){printf("[BAEC0] After sub_001F7160: OK — returning\n");fflush(stdout);c++;} }
     // 0x1bb100: 0xdfbf0000
-    { static int c=0; if(c<2){printf("[BAEC0] EXIT: sp=0x%08X saved_ra_at_sp0=0x%08X%08X\n", GPR_U32(ctx,29), READ32(ADD32(GPR_U32(ctx,29),4)), READ32(ADD32(GPR_U32(ctx,29),0)));fflush(stdout);c++;} }
     ctx->pc = 0x1bb100u;
     SET_GPR_U64(ctx, 31, READ64(ADD32(GPR_U32(ctx, 29), 0)));
     // 0x1bb104: 0x3e00008

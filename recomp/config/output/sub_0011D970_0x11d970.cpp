@@ -9,28 +9,6 @@
 // Function: sub_0011D970
 // Address: 0x11d970 - 0x11d9b8
 void sub_0011D970_0x11d970(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    {
-        // Log SifLoadModule calls — a0=path/addr, a1=argc, a2=args
-        uint32_t pathAddr = GPR_U32(ctx, 4);
-        uint32_t pathPhys = pathAddr & PS2_RAM_MASK;
-        static int moduleId = 100;
-
-        // IOP address loads (a0 has high bit set) aren't string paths
-        if (pathAddr & 0x80000000) {
-            printf("[SIF-LOAD] SifLoadModule(IOP addr 0x%08X) → id=%d (HLE)\n", pathAddr, moduleId);
-            fflush(stdout);
-            setReturnS32(ctx, moduleId++);
-            ctx->pc = getRegU32(ctx, 31);
-            return;
-        }
-
-        const char* pathStr = (pathPhys < PS2_RAM_SIZE) ? (const char*)(rdram + pathPhys) : "(null)";
-        printf("[SIF-LOAD] SifLoadModule('%s') a0=0x%08X → id=%d (HLE)\n", pathStr, pathAddr, moduleId);
-        fflush(stdout);
-        setReturnS32(ctx, moduleId++);
-        ctx->pc = getRegU32(ctx, 31);
-        return;
-    }
 
     ctx->pc = 0x11d970u;
 

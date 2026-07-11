@@ -9,15 +9,6 @@
 // Function: entry_1d2280
 // Address: 0x1d2280 - 0x1d25b0
 void entry_1d2280_0x1d25b0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    printf("[E1D2280] ENTER pc=0x%08X a0=0x%08X ra=0x%08X\n", ctx->pc, GPR_U32(ctx, 4), GPR_U32(ctx, 31));
-    fflush(stdout);
-
-    // Allow entry at 0x1D22B0 (the render dispatch function)
-    if (ctx->pc == 0x1D22B0u) {
-        printf("[E1D2280] Entering at 0x1D22B0 (render dispatch path)\n");
-        fflush(stdout);
-        goto label_1d22b0;
-    }
 
     ctx->pc = 0x1d2280u;
 
@@ -46,20 +37,17 @@ void entry_1d2280_0x1d25b0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     // 0x1d2294: 0xc06372c
     ctx->pc = 0x1D2294u;
     SET_GPR_U32(ctx, 31, 0x1D229Cu);
-    printf("[E1D2280] calling 18DCB0...\n"); fflush(stdout);
     ctx->pc = 0x18DCB0u;
     {
         const uint32_t __entryPc = ctx->pc;
         sub_0018DCB0_0x18dcb0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D229Cu; }
     }
-    printf("[E1D2280] after 18DCB0, pc=0x%08X\n", ctx->pc); fflush(stdout);
     if (ctx->pc != 0x1D229Cu) { return; }
     ctx->pc = 0x1D229Cu;
     // 0x1d229c: 0xdfbf0000
     ctx->pc = 0x1d229cu;
     SET_GPR_U64(ctx, 31, READ64(ADD32(GPR_U32(ctx, 29), 0)));
-    printf("[E1D2280] returning to ra=0x%08X\n", GPR_U32(ctx, 31)); fflush(stdout);
     // 0x1d22a0: 0x3e00008
     ctx->pc = 0x1D22A0u;
     {
@@ -89,7 +77,6 @@ void entry_1d2280_0x1d25b0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     ctx->pc = 0x1d22acu;
     // NOP
     // 0x1d22b0: 0x27bdfeb0
-label_1d22b0:
     ctx->pc = 0x1d22b0u;
     SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 4294966960));
     // 0x1d22b4: 0x3c050025
@@ -139,7 +126,6 @@ label_1d22b0:
         sub_0010AFC0_0x10afc0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D22ECu; }
     }
-    printf("[E1D2280] after memcpy pc=0x%08X\n", ctx->pc); fflush(stdout);
     if (ctx->pc != 0x1D22ECu) { return; }
     ctx->pc = 0x1D22ECu;
     // 0x1d22ec: 0x27a40050
@@ -162,7 +148,6 @@ label_1d22b0:
         sub_001CC8F0_0x1cc8f0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D2300u; }
     }
-    printf("[E1D2280] after CC8F0(1) pc=0x%08X v0=%d\n", ctx->pc, GPR_S32(ctx, 2)); fflush(stdout);
     if (ctx->pc != 0x1D2300u) { return; }
     ctx->pc = 0x1D2300u;
     // 0x1d2300: 0x10400016
@@ -188,7 +173,6 @@ label_1d22b0:
         sub_001AF5D0_0x1af5d0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D2310u; }
     }
-    printf("[E1D2280] after AF5D0(1) pc=0x%08X\n", ctx->pc); fflush(stdout);
     if (ctx->pc != 0x1D2310u) { return; }
     ctx->pc = 0x1D2310u;
     // 0x1d2310: 0x802d
@@ -233,7 +217,6 @@ label_1d2314:
         sub_001CCB90_0x1ccb90(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D2340u; }
     }
-    printf("[E1D2280] after CCB90(1) pc=0x%08X\n", ctx->pc); fflush(stdout);
     if (ctx->pc != 0x1D2340u) { return; }
     ctx->pc = 0x1D2340u;
     // 0x1d2340: 0xc073494

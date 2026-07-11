@@ -9,15 +9,6 @@
 // Function: sub_0011D9C8
 // Address: 0x11d9c8 - 0x11da30
 void sub_0011D9C8_0x11d9c8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // REO Override: Always return 1 (SIF ready) to allow IOP module loading.
-    // Original function reads SIF control register via SifDmaStat syscall and
-    // checks bits 13-15. When those bits are set, it returns 0, skipping all
-    // SifLoadModule calls and preventing the game from loading any disc data.
-    printf("[REO] SIF DMA status check → 1 (SIF ready, proceed with IOP loading)\n");
-    fflush(stdout);
-    setReturnU32(ctx, 1);
-    ctx->pc = getRegU32(ctx, 31);
-    return;
 
     ctx->pc = 0x11d9c8u;
 

@@ -9,7 +9,6 @@
 // Function: sub_001BCCB0
 // Address: 0x1bccb0 - 0x1bcd30
 void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    { static int c = 0; if (c < 10) { printf("[BCCB0] entered (call %d)\n", c); fflush(stdout); c++; } }
 
     ctx->pc = 0x1bccb0u;
 
@@ -28,7 +27,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001B22C0_0x1b22c0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCCC0u; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after B22C0, pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCCC0u) { return; }
     ctx->pc = 0x1BCCC0u;
     // 0x1bccc0: 0xc06c8d0
@@ -40,7 +38,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001B2340_0x1b2340(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCCC8u; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after B2340, pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCCC8u) { return; }
     ctx->pc = 0x1BCCC8u;
     // 0x1bccc8: 0xc06bda8
@@ -54,7 +51,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001AF6A0_0x1af6a0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCCD0u; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after AF6A0, pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCCD0u) { return; }
     ctx->pc = 0x1BCCD0u;
     // 0x1bccd0: 0xc06bc30
@@ -68,7 +64,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001AF0C0_0x1af0c0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCCD8u; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after AF0C0, pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCCD8u) { return; }
     ctx->pc = 0x1BCCD8u;
     // 0x1bccd8: 0x3c04001c
@@ -88,7 +83,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001B7EE0_0x1b7ee0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCCE8u; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after B7EE0(1), pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCCE8u) { return; }
     ctx->pc = 0x1BCCE8u;
     // 0x1bcce8: 0x3c04001c
@@ -108,7 +102,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001B7EE0_0x1b7ee0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCCF8u; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after B7EE0(2), pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCCF8u) { return; }
     ctx->pc = 0x1BCCF8u;
     // 0x1bccf8: 0x3c010032
@@ -125,7 +118,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001D3B90_0x1d3b90(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCD04u; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after D3B90, pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCD04u) { return; }
     ctx->pc = 0x1BCD04u;
     // 0x1bcd04: 0xc0747f0
@@ -137,7 +129,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001D1FC0_0x1d1fc0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCD0Cu; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after D1FC0, pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCD0Cu) { return; }
     ctx->pc = 0x1BCD0Cu;
     // 0x1bcd0c: 0xc06cf64
@@ -149,7 +140,6 @@ void sub_001BCCB0_0x1bccb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001B3D90_0x1b3d90(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1BCD14u; }
     }
-    { static int c = 0; if (c < 10) { printf("[BCCB0] after B3D90, pc=0x%08X\n", ctx->pc); fflush(stdout); c++; } }
     if (ctx->pc != 0x1BCD14u) { return; }
     ctx->pc = 0x1BCD14u;
     // 0x1bcd14: 0xdfbf0000

@@ -9,9 +9,6 @@
 // Function: sub_00129D48
 // Address: 0x129d48 - 0x129d78
 void sub_00129D48_0x129d48(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // Return incrementing counter to exit the D3DC0 loop (loops while v0 != 3)
-    { static int callN = 0; setReturnU32(ctx, callN++ % 4); }
-    ctx->pc = getRegU32(ctx, 31); return;
 
     ctx->pc = 0x129d48u;
 

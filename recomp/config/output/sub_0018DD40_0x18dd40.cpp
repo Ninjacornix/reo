@@ -9,7 +9,6 @@
 // Function: sub_0018DD40
 // Address: 0x18dd40 - 0x18ddd0
 void sub_0018DD40_0x18dd40(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    { static int c = 0; if (c < 20) { uint32_t state = READ32(0x29FDB0); uint32_t dbIdx = READ32(0x29FDB4); uint32_t buf0 = READ32(0x29FDC4); uint32_t buf1 = READ32(0x29FDC8); printf("[18DD40] buffer_setup: state=%u dbIdx=%u buf[0]=0x%X buf[1]=0x%X wrPtr=0x%X\n", state, dbIdx, buf0, buf1, READ32(0x29FDB8)); fflush(stdout); c++; } }
 
     ctx->pc = 0x18dd40u;
 
@@ -135,16 +134,6 @@ label_18dd78:
     // 0x18ddbc: 0xac23fdbc
     ctx->pc = 0x18ddbcu;
     WRITE32(ADD32(GPR_U32(ctx, 1), 4294966716), GPR_U32(ctx, 3));
-    // REO FIX: Reset tag entry count and write index for this buffer.
-    // sub_0018CFB0 writes tag entries at buf_ptr + write_idx*4 and increments
-    // both entry_count[dbIdx] and write_idx[dbIdx]. Without reset, the write
-    // position shifts right by 8 bytes each time a buffer is reused, causing
-    // the GIF tag processor (sub_0018D470) to find data at the wrong offset.
-    {
-        uint32_t dbIdx = READ32(0x29FDB4);
-        WRITE32(0x29F704 + dbIdx * 4, 0);  // entry_count[dbIdx] = 0
-        WRITE32(0x29F70C + dbIdx * 4, 0);  // write_idx[dbIdx] = 0
-    }
     // 0x18ddc0: 0xdfbf0000
     ctx->pc = 0x18ddc0u;
     SET_GPR_U64(ctx, 31, READ64(ADD32(GPR_U32(ctx, 29), 0)));

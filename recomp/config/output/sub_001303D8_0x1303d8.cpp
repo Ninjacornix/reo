@@ -9,44 +9,6 @@
 // Function: sub_001303D8
 // Address: 0x1303d8 - 0x130420
 void sub_001303D8_0x1303d8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // REO HLE: DMA buffer allocator. Allocates QWC quadwords of DMA command
-    // buffer space. The original function uses a complex pool manager that
-    // fails because the display list write pointer system isn't fully initialized.
-    // We allocate from a dedicated region in guest memory.
-    {
-        static uint32_t dmaPoolBase = 0xD80000;
-        static uint32_t dmaPoolOffset = 0;
-        uint32_t qwc = GPR_U32(ctx, 5); // a1 = requested size in QWC
-        if (qwc == 0) qwc = 256; // default
-
-        uint32_t bytes = qwc * 16;
-        uint32_t bufAddr = dmaPoolBase + dmaPoolOffset;
-        dmaPoolOffset = (dmaPoolOffset + bytes + 0xFF) & ~0xFF; // Align to 256
-        if (dmaPoolOffset > 0x200000) dmaPoolOffset = 0; // Wrap at 2MB
-
-        uint32_t bufPhys = bufAddr & PS2_RAM_MASK;
-        if (bufPhys + bytes <= PS2_RAM_SIZE) {
-            memset(rdram + bufPhys, 0, bytes);
-
-            // Initialize with a minimal DMA END tag so the chain terminates cleanly
-            // DMA tag format: [63:32]=ADDR, [31:28]=ID, [27:26]=IRQ/PCE, [15:0]=QWC
-            // ID=7 (END), QWC=0 → terminates the chain immediately
-            uint64_t endTag = (7ULL << 28); // ID=END, QWC=0
-            memcpy(rdram + bufPhys, &endTag, 8);
-
-            static int logC = 0;
-            if (logC < 10) {
-                printf("[1303D8-HLE] Allocated DMA buffer: %u QWC at 0x%08X (with END tag)\n", qwc, bufAddr);
-                fflush(stdout);
-                logC++;
-            }
-            setReturnU32(ctx, bufAddr);
-        } else {
-            setReturnU32(ctx, 0);
-        }
-        ctx->pc = getRegU32(ctx, 31);
-        return;
-    }
 
     ctx->pc = 0x1303d8u;
 

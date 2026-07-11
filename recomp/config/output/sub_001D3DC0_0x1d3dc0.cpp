@@ -9,10 +9,6 @@
 // Function: sub_001D3DC0
 // Address: 0x1d3dc0 - 0x1d4ca0
 void sub_001D3DC0_0x1d3dc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    { static int lc = 0; if (lc < 5) {
-        printf("[D3DC0] entered a0=0x%08X a1=0x%08X\n", GPR_U32(ctx, 4), GPR_U32(ctx, 5));
-        fflush(stdout); lc++;
-    }}
 
     ctx->pc = 0x1d3dc0u;
 
@@ -86,12 +82,6 @@ label_1d3dc0:
     }
     if (ctx->pc != 0x1D3E00u) { return; }
     ctx->pc = 0x1D3E00u;
-    { static int lc = 0; if (lc < 10) {
-        printf("[D3DC0] AB310 returned v0=0x%08X (%d) → %s\n",
-               GPR_U32(ctx, 2), GPR_S32(ctx, 2),
-               GPR_S32(ctx, 2) < 0 ? "SKIP (no scene)" : "RENDER");
-        fflush(stdout); lc++;
-    }}
     // 0x1d3e00: 0x40282d
     ctx->pc = 0x1d3e00u;
     SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 2) + (uint64_t)GPR_U64(ctx, 0));
@@ -123,11 +113,6 @@ label_1d3dc0:
     }
     if (ctx->pc != 0x1D3E18u) { return; }
     ctx->pc = 0x1D3E18u;
-    { static int lc = 0; if (lc < 10) {
-        printf("[D3DC0] 129240 returned v0=0x%08X → %s\n", GPR_U32(ctx, 2),
-               GPR_U32(ctx, 2) == 0 ? "SKIP (no render target)" : "DRAW");
-        fflush(stdout); lc++;
-    }}
     // 0x1d3e18: 0x40802d
     ctx->pc = 0x1d3e18u;
     SET_GPR_U64(ctx, 16, (uint64_t)GPR_U64(ctx, 2) + (uint64_t)GPR_U64(ctx, 0));
@@ -146,14 +131,12 @@ label_1d3dc0:
     // 0x1d3e24: 0xc04a702
     ctx->pc = 0x1D3E24u;
     SET_GPR_U32(ctx, 31, 0x1D3E2Cu);
-    { static int lc=0; if(lc<5) { printf("[D3DC0] Calling 129C08(r16=0x%08X)...\n", GPR_U32(ctx, 16)); fflush(stdout); lc++; } }
     ctx->pc = 0x129C08u;
     {
         const uint32_t __entryPc = ctx->pc;
         sub_00129C08_0x129c08(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D3E2Cu; }
     }
-    { static int lc=0; if(lc<5) { printf("[D3DC0] 129C08 returned v0=0x%08X → 1297A0 gets a1=%d\n", GPR_U32(ctx,2), GPR_S32(ctx,2)); fflush(stdout); lc++; } }
     if (ctx->pc != 0x1D3E2Cu) { return; }
     ctx->pc = 0x1D3E2Cu;
     // 0x1d3e2c: 0x40282d
@@ -162,7 +145,6 @@ label_1d3dc0:
     // 0x1d3e30: 0x200202d
     ctx->pc = 0x1d3e30u;
     SET_GPR_U64(ctx, 4, (uint64_t)GPR_U64(ctx, 16) + (uint64_t)GPR_U64(ctx, 0));
-    printf("[D3DC0] Calling 1297A0...\n"); fflush(stdout);
     // 0x1d3e34: 0xc04a5e8
     ctx->pc = 0x1D3E34u;
     SET_GPR_U32(ctx, 31, 0x1D3E3Cu);
@@ -230,14 +212,12 @@ label_1d3e3c:
     SET_GPR_U32(ctx, 31, 0x1D3E6Cu);
     ctx->pc = 0x1D3E68u;
     SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 18) + (uint64_t)GPR_U64(ctx, 0));
-    printf("[D3DC0] Calling AC730...\n"); fflush(stdout);
     ctx->pc = 0x1AC730u;
     {
         const uint32_t __entryPc = ctx->pc;
         sub_001AC730_0x1ac730(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1D3E6Cu; }
     }
-    printf("[D3DC0] AC730 returned pc=0x%08X\n", ctx->pc); fflush(stdout);
     if (ctx->pc != 0x1D3E6Cu) { return; }
     ctx->pc = 0x1D3E6Cu;
 label_1d3e6c:

@@ -9,66 +9,6 @@
 // Function: sub_00129168
 // Address: 0x129168 - 0x129240
 void sub_00129168_0x129168(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // HLE: Initialize the render context's DMA buffer with GIF commands.
-    // The real function sets up DMA command headers; we write minimal GIF
-    // data so that 129C08 → 130E40 finds something to process.
-    {
-        // Get the render context pointer (a0) and its DMA buffer at ctx[4]
-        uint32_t ctxAddr = GPR_U32(ctx, 4);
-        uint32_t ctxPhys = ctxAddr & PS2_RAM_MASK;
-        if (ctxPhys + 68 <= PS2_RAM_SIZE) {
-            uint32_t dmaBuf;
-            memcpy(&dmaBuf, rdram + ctxPhys + 4, 4);
-            uint32_t dmaPhys = dmaBuf & PS2_RAM_MASK;
-
-            if (dmaBuf != 0 && dmaPhys + 256 <= PS2_RAM_SIZE) {
-                // Write a minimal DMA chain with one GIF packet
-                // DMA tag: CNT, QWC=3 (3 quadwords of GIF data)
-                uint64_t dmaTag = 3 | (1ULL << 28); // QWC=3, ID=CNT
-                memcpy(rdram + dmaPhys, &dmaTag, 8);
-                memset(rdram + dmaPhys + 8, 0, 8); // upper tag QW
-
-                // GIF tag at +16: NLOOP=2, EOP=1, NREG=1, A+D
-                uint64_t gifLo = 2 | (1ULL << 15) | (1ULL << 60);
-                uint64_t gifHi = 0x0E;
-                memcpy(rdram + dmaPhys + 16, &gifLo, 8);
-                memcpy(rdram + dmaPhys + 24, &gifHi, 8);
-
-                // A+D reg write 1: TEXFLUSH (harmless register)
-                uint64_t val = 0, reg = 0x3F;
-                memcpy(rdram + dmaPhys + 32, &val, 8);
-                memcpy(rdram + dmaPhys + 40, &reg, 8);
-
-                // A+D reg write 2: NOP (register 0x7F = unused)
-                val = 0; reg = 0x7F;
-                memcpy(rdram + dmaPhys + 48, &val, 8);
-                memcpy(rdram + dmaPhys + 56, &reg, 8);
-
-                // DMA END tag at +64
-                uint64_t endTag = (7ULL << 28); // ID=END, QWC=0
-                memcpy(rdram + dmaPhys + 64, &endTag, 8);
-                memset(rdram + dmaPhys + 72, 0, 8);
-
-                // Set ctx[12] (write position) to indicate data is present
-                uint32_t writePos = dmaBuf + 64; // point past the data
-                memcpy(rdram + ctxPhys + 12, &writePos, 4);
-
-                // Keep ctx[8] = 0 (entry_129610 checks this:
-                // if ctx[8] != 0 → cleanup path, if ctx[8] == 0 → render path)
-
-                static int lc = 0;
-                if (lc < 5) {
-                    printf("[129168-HLE] Wrote GIF commands to DMA buf 0x%08X, ctx[12]=0x%08X\n",
-                           dmaBuf, writePos);
-                    fflush(stdout);
-                    lc++;
-                }
-            }
-        }
-        setReturnU32(ctx, 0);
-        ctx->pc = getRegU32(ctx, 31);
-        return;
-    }
 
     ctx->pc = 0x129168u;
 

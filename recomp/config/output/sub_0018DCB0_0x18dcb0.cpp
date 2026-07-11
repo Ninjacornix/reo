@@ -9,32 +9,6 @@
 // Function: sub_0018DCB0
 // Address: 0x18dcb0 - 0x18dce0
 void sub_0018DCB0_0x18dcb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    // REO Override: This is the display list flush + VSync wrapper.
-    // D6C0 (flush) hangs because it loops waiting for DMA completion flags
-    // that never get set in single-threaded recomp. We call the GIF tag
-    // processor directly and skip the wait loops.
-    static int logC = 0;
-    if (logC < 5) {
-        printf("[REO] 18DCB0: display flush bypassed (ra=0x%08X)\n", GPR_U32(ctx, 31));
-        fflush(stdout);
-        logC++;
-    }
-
-    // Just call the GIF tag processor directly for the current display list
-    extern void sub_0018D470_0x18d470(uint8_t*, R5900Context*, PS2Runtime*);
-    extern void sub_0018DD40_0x18dd40(uint8_t*, R5900Context*, PS2Runtime*);
-    {
-        R5900Context tmp = *ctx;
-        sub_0018D470_0x18d470(rdram, &tmp, runtime);
-    }
-    // Swap display list buffers
-    {
-        R5900Context tmp = *ctx;
-        sub_0018DD40_0x18dd40(rdram, &tmp, runtime);
-    }
-    // Return to caller
-    ctx->pc = GPR_U32(ctx, 31);
-    return;
 
     ctx->pc = 0x18dcb0u;
 
