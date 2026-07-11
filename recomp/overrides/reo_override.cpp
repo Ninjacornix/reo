@@ -996,6 +996,14 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         printf("[REO] Rendering will not work. Continuing with stubs only.\n");
     }
 
+    // REO_NO_OVERRIDES: skip all function bindings so the game runs its own
+    // (now-real) recompiled functions instead of these stub-era overrides.
+    // The bindings shadowed real code back when functions were stubbed.
+    if (std::getenv("REO_NO_OVERRIDES")) {
+        printf("[REO] REO_NO_OVERRIDES set: skipping function bindings (pure self-exec)\n");
+        return;
+    }
+
     // ── Boot sequence: GS init ───────────────────────────────────────
     bind(runtime, 0x11D6D0, reo_gs_reset_graph,   "sceGsResetGraph (init)");
     bind(runtime, 0x11DDE8, reo_gs_put_disp_env,  "sceGsPutDispEnv");
