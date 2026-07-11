@@ -190,7 +190,7 @@ void sub_00177CB0_0x177cb0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     ctx->pc = 0x177D88u;
     SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 16));
     ctx->pc = 0x178440u;
-    entry_178440_0x178910(rdram, ctx, runtime); return;
+    entry_178440_0x1785a0(rdram, ctx, runtime); return;
     ctx->pc = 0x177D8Cu;
     // 0x177d8c: 0x0
     ctx->pc = 0x177d8cu;

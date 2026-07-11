@@ -26,7 +26,7 @@ void sub_00133428_0x133428(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     ctx->pc = 0x133438u;
     SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 16));
     ctx->pc = 0x126FD8u;
-    entry_126fd8_0x1276d8(rdram, ctx, runtime); return;
+    entry_126fd8_0x127158(rdram, ctx, runtime); return;
     ctx->pc = 0x13343Cu;
     // 0x13343c: 0x0
     ctx->pc = 0x13343cu;

@@ -1,12 +1,699 @@
+#include "ps2_runtime_macros.h"
 #include "ps2_runtime.h"
+#include "ps2_recompiled_functions.h"
+#include "ps2_recompiled_stubs.h"
+
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+// Function: sub_00197490
+// Address: 0x197490 - 0x197780
 void sub_00197490_0x197490(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
-    const uint32_t __entryPc = ctx->pc;
-    ps2_stubs::TODO_NAMED("sub_00197490", rdram, ctx, runtime); 
-    if (ctx->pc == __entryPc)
+
+    ctx->pc = 0x197490u;
+
+    // 0x197490: 0x27bdffa0
+    ctx->pc = 0x197490u;
+    SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 4294967200));
+    // 0x197494: 0xffbf0050
+    ctx->pc = 0x197494u;
+    WRITE64(ADD32(GPR_U32(ctx, 29), 80), GPR_U64(ctx, 31));
+    // 0x197498: 0x7fb40040
+    ctx->pc = 0x197498u;
+    WRITE128(ADD32(GPR_U32(ctx, 29), 64), GPR_VEC(ctx, 20));
+    // 0x19749c: 0x7fb30030
+    ctx->pc = 0x19749cu;
+    WRITE128(ADD32(GPR_U32(ctx, 29), 48), GPR_VEC(ctx, 19));
+    // 0x1974a0: 0x80a02d
+    ctx->pc = 0x1974a0u;
+    SET_GPR_U64(ctx, 20, (uint64_t)GPR_U64(ctx, 4) + (uint64_t)GPR_U64(ctx, 0));
+    // 0x1974a4: 0x7fb20020
+    ctx->pc = 0x1974a4u;
+    WRITE128(ADD32(GPR_U32(ctx, 29), 32), GPR_VEC(ctx, 18));
+    // 0x1974a8: 0xa0982d
+    ctx->pc = 0x1974a8u;
+    SET_GPR_U64(ctx, 19, (uint64_t)GPR_U64(ctx, 5) + (uint64_t)GPR_U64(ctx, 0));
+    // 0x1974ac: 0x7fb10010
+    ctx->pc = 0x1974acu;
+    WRITE128(ADD32(GPR_U32(ctx, 29), 16), GPR_VEC(ctx, 17));
+    // 0x1974b0: 0x100902d
+    ctx->pc = 0x1974b0u;
+    SET_GPR_U64(ctx, 18, (uint64_t)GPR_U64(ctx, 8) + (uint64_t)GPR_U64(ctx, 0));
+    // 0x1974b4: 0x6810002
+    ctx->pc = 0x1974B4u;
     {
-        ctx->pc = getRegU32(ctx, 31);
+        const bool branch_taken_0x1974b4 = (GPR_S32(ctx, 20) >= 0);
+        ctx->pc = 0x1974B8u;
+        WRITE128(ADD32(GPR_U32(ctx, 29), 0), GPR_VEC(ctx, 16));
+        if (branch_taken_0x1974b4) {
+            ctx->pc = 0x1974C0u;
+            goto label_1974c0;
+        }
     }
+    ctx->pc = 0x1974BCu;
+    // 0x1974bc: 0xa02d
+    ctx->pc = 0x1974bcu;
+    SET_GPR_U64(ctx, 20, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
+label_1974c0:
+    // 0x1974c0: 0x3c01002a
+    ctx->pc = 0x1974c0u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1974c4: 0x2861021
+    ctx->pc = 0x1974c4u;
+    SET_GPR_U32(ctx, 2, ADD32(GPR_U32(ctx, 20), GPR_U32(ctx, 6)));
+    // 0x1974c8: 0x8c23fed8
+    ctx->pc = 0x1974c8u;
+    SET_GPR_U32(ctx, 3, READ32(ADD32(GPR_U32(ctx, 1), 4294967000)));
+    // 0x1974cc: 0x62082a
+    ctx->pc = 0x1974ccu;
+    SET_GPR_U32(ctx, 1, SLT32(GPR_S32(ctx, 3), GPR_S32(ctx, 2)));
+    // 0x1974d0: 0x10200003
+    ctx->pc = 0x1974D0u;
+    {
+        const bool branch_taken_0x1974d0 = (GPR_U32(ctx, 1) == GPR_U32(ctx, 0));
+        ctx->pc = 0x1974D4u;
+        SET_GPR_U32(ctx, 2, ADD32(GPR_U32(ctx, 20), GPR_U32(ctx, 6)));
+        if (branch_taken_0x1974d0) {
+            ctx->pc = 0x1974E0u;
+            goto label_1974e0;
+        }
+    }
+    ctx->pc = 0x1974D8u;
+    // 0x1974d8: 0x743023
+    ctx->pc = 0x1974d8u;
+    SET_GPR_U32(ctx, 6, SUB32(GPR_U32(ctx, 3), GPR_U32(ctx, 20)));
+    // 0x1974dc: 0x2861021
+    ctx->pc = 0x1974dcu;
+    SET_GPR_U32(ctx, 2, ADD32(GPR_U32(ctx, 20), GPR_U32(ctx, 6)));
+label_1974e0:
+    // 0x1974e0: 0x6610002
+    ctx->pc = 0x1974E0u;
+    {
+        const bool branch_taken_0x1974e0 = (GPR_S32(ctx, 19) >= 0);
+        ctx->pc = 0x1974E4u;
+        SET_GPR_S32(ctx, 17, ADD32(GPR_U32(ctx, 2), 4294967295));
+        if (branch_taken_0x1974e0) {
+            ctx->pc = 0x1974ECu;
+            goto label_1974ec;
+        }
+    }
+    ctx->pc = 0x1974E8u;
+    // 0x1974e8: 0x982d
+    ctx->pc = 0x1974e8u;
+    SET_GPR_U64(ctx, 19, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
+label_1974ec:
+    // 0x1974ec: 0x3c01002a
+    ctx->pc = 0x1974ecu;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1974f0: 0x2671021
+    ctx->pc = 0x1974f0u;
+    SET_GPR_U32(ctx, 2, ADD32(GPR_U32(ctx, 19), GPR_U32(ctx, 7)));
+    // 0x1974f4: 0x8c23fed0
+    ctx->pc = 0x1974f4u;
+    SET_GPR_U32(ctx, 3, READ32(ADD32(GPR_U32(ctx, 1), 4294966992)));
+    // 0x1974f8: 0x62082a
+    ctx->pc = 0x1974f8u;
+    SET_GPR_U32(ctx, 1, SLT32(GPR_S32(ctx, 3), GPR_S32(ctx, 2)));
+    // 0x1974fc: 0x10200002
+    ctx->pc = 0x1974FCu;
+    {
+        const bool branch_taken_0x1974fc = (GPR_U32(ctx, 1) == GPR_U32(ctx, 0));
+        if (branch_taken_0x1974fc) {
+            ctx->pc = 0x197508u;
+            goto label_197508;
+        }
+    }
+    ctx->pc = 0x197504u;
+    // 0x197504: 0x733823
+    ctx->pc = 0x197504u;
+    SET_GPR_U32(ctx, 7, SUB32(GPR_U32(ctx, 3), GPR_U32(ctx, 19)));
+label_197508:
+    // 0x197508: 0x2671821
+    ctx->pc = 0x197508u;
+    SET_GPR_U32(ctx, 3, ADD32(GPR_U32(ctx, 19), GPR_U32(ctx, 7)));
+    // 0x19750c: 0x24020002
+    ctx->pc = 0x19750cu;
+    SET_GPR_S32(ctx, 2, ADD32(GPR_U32(ctx, 0), 2));
+    // 0x197510: 0x12420006
+    ctx->pc = 0x197510u;
+    {
+        const bool branch_taken_0x197510 = (GPR_U32(ctx, 18) == GPR_U32(ctx, 2));
+        ctx->pc = 0x197514u;
+        SET_GPR_S32(ctx, 16, ADD32(GPR_U32(ctx, 3), 4294967295));
+        if (branch_taken_0x197510) {
+            ctx->pc = 0x19752Cu;
+            goto label_19752c;
+        }
+    }
+    ctx->pc = 0x197518u;
+    // 0x197518: 0x24040030
+    ctx->pc = 0x197518u;
+    SET_GPR_S32(ctx, 4, ADD32(GPR_U32(ctx, 0), 48));
+    // 0x19751c: 0xc063774
+    ctx->pc = 0x19751Cu;
+    SET_GPR_U32(ctx, 31, 0x197524u);
+    ctx->pc = 0x197520u;
+    SET_GPR_S32(ctx, 5, ADD32(GPR_U32(ctx, 0), 16));
+    ctx->pc = 0x18DDD0u;
+    {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0018DDD0_0x18ddd0(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x197524u; }
+    }
+    if (ctx->pc != 0x197524u) { return; }
+    ctx->pc = 0x197524u;
+    // 0x197524: 0x10000005
+    ctx->pc = 0x197524u;
+    {
+        const bool branch_taken_0x197524 = (GPR_U32(ctx, 0) == GPR_U32(ctx, 0));
+        ctx->pc = 0x197528u;
+        SET_GPR_S32(ctx, 7, ADD32(GPR_U32(ctx, 0), 2));
+        if (branch_taken_0x197524) {
+            ctx->pc = 0x19753Cu;
+            goto label_19753c;
+        }
+    }
+    ctx->pc = 0x19752Cu;
+label_19752c:
+    // 0x19752c: 0x24040040
+    ctx->pc = 0x19752cu;
+    SET_GPR_S32(ctx, 4, ADD32(GPR_U32(ctx, 0), 64));
+    // 0x197530: 0xc063774
+    ctx->pc = 0x197530u;
+    SET_GPR_U32(ctx, 31, 0x197538u);
+    ctx->pc = 0x197534u;
+    SET_GPR_S32(ctx, 5, ADD32(GPR_U32(ctx, 0), 16));
+    ctx->pc = 0x18DDD0u;
+    {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0018DDD0_0x18ddd0(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x197538u; }
+    }
+    if (ctx->pc != 0x197538u) { return; }
+    ctx->pc = 0x197538u;
+    // 0x197538: 0x24070003
+    ctx->pc = 0x197538u;
+    SET_GPR_S32(ctx, 7, ADD32(GPR_U32(ctx, 0), 3));
+label_19753c:
+    // 0x19753c: 0x3c047000
+    ctx->pc = 0x19753cu;
+    SET_GPR_U32(ctx, 4, ((uint32_t)28672 << 16));
+    // 0x197540: 0x3c038000
+    ctx->pc = 0x197540u;
+    SET_GPR_U32(ctx, 3, ((uint32_t)32768 << 16));
+    // 0x197544: 0xe42021
+    ctx->pc = 0x197544u;
+    SET_GPR_U32(ctx, 4, ADD32(GPR_U32(ctx, 7), GPR_U32(ctx, 4)));
+    // 0x197548: 0x3c051300
+    ctx->pc = 0x197548u;
+    SET_GPR_U32(ctx, 5, ((uint32_t)4864 << 16));
+    // 0x19754c: 0x832025
+    ctx->pc = 0x19754cu;
+    SET_GPR_U32(ctx, 4, OR32(GPR_U32(ctx, 4), GPR_U32(ctx, 3)));
+    // 0x197550: 0x4303c
+    ctx->pc = 0x197550u;
+    SET_GPR_U64(ctx, 6, GPR_U64(ctx, 4) << (32 + 0));
+    // 0x197554: 0x3c035000
+    ctx->pc = 0x197554u;
+    SET_GPR_U32(ctx, 3, ((uint32_t)20480 << 16));
+    // 0x197558: 0x6303e
+    ctx->pc = 0x197558u;
+    SET_GPR_U64(ctx, 6, GPR_U64(ctx, 6) >> (32 + 0));
+    // 0x19755c: 0xe32025
+    ctx->pc = 0x19755cu;
+    SET_GPR_U32(ctx, 4, OR32(GPR_U32(ctx, 7), GPR_U32(ctx, 3)));
+    // 0x197560: 0xfc460000
+    ctx->pc = 0x197560u;
+    WRITE64(ADD32(GPR_U32(ctx, 2), 0), GPR_U64(ctx, 6));
+    // 0x197564: 0x24e3ffff
+    ctx->pc = 0x197564u;
+    SET_GPR_S32(ctx, 3, ADD32(GPR_U32(ctx, 7), 4294967295));
+    // 0x197568: 0xac450008
+    ctx->pc = 0x197568u;
+    WRITE32(ADD32(GPR_U32(ctx, 2), 8), GPR_U32(ctx, 5));
+    // 0x19756c: 0x3283c
+    ctx->pc = 0x19756cu;
+    SET_GPR_U64(ctx, 5, GPR_U64(ctx, 3) << (32 + 0));
+    // 0x197570: 0xac44000c
+    ctx->pc = 0x197570u;
+    WRITE32(ADD32(GPR_U32(ctx, 2), 12), GPR_U32(ctx, 4));
+    // 0x197574: 0x3c031000
+    ctx->pc = 0x197574u;
+    SET_GPR_U32(ctx, 3, ((uint32_t)4096 << 16));
+    // 0x197578: 0x5283e
+    ctx->pc = 0x197578u;
+    SET_GPR_U64(ctx, 5, GPR_U64(ctx, 5) >> (32 + 0));
+    // 0x19757c: 0x3203c
+    ctx->pc = 0x19757cu;
+    SET_GPR_U64(ctx, 4, GPR_U64(ctx, 3) << (32 + 0));
+    // 0x197580: 0x34038000
+    ctx->pc = 0x197580u;
+    SET_GPR_U32(ctx, 3, OR32(GPR_U32(ctx, 0), 32768));
+    // 0x197584: 0x641825
+    ctx->pc = 0x197584u;
+    SET_GPR_U32(ctx, 3, OR32(GPR_U32(ctx, 3), GPR_U32(ctx, 4)));
+    // 0x197588: 0xa32825
+    ctx->pc = 0x197588u;
+    SET_GPR_U32(ctx, 5, OR32(GPR_U32(ctx, 5), GPR_U32(ctx, 3)));
+    // 0x19758c: 0x2404000e
+    ctx->pc = 0x19758cu;
+    SET_GPR_S32(ctx, 4, ADD32(GPR_U32(ctx, 0), 14));
+    // 0x197590: 0xfc450010
+    ctx->pc = 0x197590u;
+    WRITE64(ADD32(GPR_U32(ctx, 2), 16), GPR_U64(ctx, 5));
+    // 0x197594: 0x24030002
+    ctx->pc = 0x197594u;
+    SET_GPR_S32(ctx, 3, ADD32(GPR_U32(ctx, 0), 2));
+    // 0x197598: 0x1243003e
+    ctx->pc = 0x197598u;
+    {
+        const bool branch_taken_0x197598 = (GPR_U32(ctx, 18) == GPR_U32(ctx, 3));
+        ctx->pc = 0x19759Cu;
+        WRITE64(ADD32(GPR_U32(ctx, 2), 24), GPR_U64(ctx, 4));
+        if (branch_taken_0x197598) {
+            ctx->pc = 0x197694u;
+            goto label_197694;
+        }
+    }
+    ctx->pc = 0x1975A0u;
+    // 0x1975a0: 0x24030001
+    ctx->pc = 0x1975a0u;
+    SET_GPR_S32(ctx, 3, ADD32(GPR_U32(ctx, 0), 1));
+    // 0x1975a4: 0x12430020
+    ctx->pc = 0x1975A4u;
+    {
+        const bool branch_taken_0x1975a4 = (GPR_U32(ctx, 18) == GPR_U32(ctx, 3));
+        ctx->pc = 0x1975A8u;
+        SET_GPR_U64(ctx, 3, GPR_U64(ctx, 19) << (32 + 0));
+        if (branch_taken_0x1975a4) {
+            ctx->pc = 0x197628u;
+            goto label_197628;
+        }
+    }
+    ctx->pc = 0x1975ACu;
+    // 0x1975ac: 0x12400003
+    ctx->pc = 0x1975ACu;
+    {
+        const bool branch_taken_0x1975ac = (GPR_U32(ctx, 18) == GPR_U32(ctx, 0));
+        ctx->pc = 0x1975B0u;
+        SET_GPR_U64(ctx, 3, GPR_U64(ctx, 19) << (32 + 0));
+        if (branch_taken_0x1975ac) {
+            ctx->pc = 0x1975BCu;
+            goto label_1975bc;
+        }
+    }
+    ctx->pc = 0x1975B4u;
+    // 0x1975b4: 0x10000060
+    ctx->pc = 0x1975B4u;
+    {
+        const bool branch_taken_0x1975b4 = (GPR_U32(ctx, 0) == GPR_U32(ctx, 0));
+        ctx->pc = 0x1975B8u;
+        SET_GPR_U64(ctx, 5, GPR_U64(ctx, 2) << (32 + 4));
+        if (branch_taken_0x1975b4) {
+            ctx->pc = 0x197738u;
+            goto label_197738;
+        }
+    }
+    ctx->pc = 0x1975BCu;
+label_1975bc:
+    // 0x1975bc: 0x3c01002a
+    ctx->pc = 0x1975bcu;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1975c0: 0x3183f
+    ctx->pc = 0x1975c0u;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x1975c4: 0xac34fdf8
+    ctx->pc = 0x1975c4u;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966776), GPR_U32(ctx, 20));
+    // 0x1975c8: 0x3283c
+    ctx->pc = 0x1975c8u;
+    SET_GPR_U64(ctx, 5, GPR_U64(ctx, 3) << (32 + 0));
+    // 0x1975cc: 0x3c01002a
+    ctx->pc = 0x1975ccu;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1975d0: 0x11183c
+    ctx->pc = 0x1975d0u;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 17) << (32 + 0));
+    // 0x1975d4: 0xac33fdfc
+    ctx->pc = 0x1975d4u;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966780), GPR_U32(ctx, 19));
+    // 0x1975d8: 0x3183f
+    ctx->pc = 0x1975d8u;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x1975dc: 0x14303c
+    ctx->pc = 0x1975dcu;
+    SET_GPR_U64(ctx, 6, GPR_U64(ctx, 20) << (32 + 0));
+    // 0x1975e0: 0x3c01002a
+    ctx->pc = 0x1975e0u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1975e4: 0x32438
+    ctx->pc = 0x1975e4u;
+    SET_GPR_U64(ctx, 4, GPR_U64(ctx, 3) << 16);
+    // 0x1975e8: 0x6303f
+    ctx->pc = 0x1975e8u;
+    SET_GPR_S64(ctx, 6, GPR_S64(ctx, 6) >> (32 + 0));
+    // 0x1975ec: 0xac31fe00
+    ctx->pc = 0x1975ecu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966784), GPR_U32(ctx, 17));
+    // 0x1975f0: 0x10183c
+    ctx->pc = 0x1975f0u;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 16) << (32 + 0));
+    // 0x1975f4: 0x3c01002a
+    ctx->pc = 0x1975f4u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1975f8: 0xc43025
+    ctx->pc = 0x1975f8u;
+    SET_GPR_U32(ctx, 6, OR32(GPR_U32(ctx, 6), GPR_U32(ctx, 4)));
+    // 0x1975fc: 0x3183f
+    ctx->pc = 0x1975fcu;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x197600: 0xac30fe04
+    ctx->pc = 0x197600u;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966788), GPR_U32(ctx, 16));
+    // 0x197604: 0x3243c
+    ctx->pc = 0x197604u;
+    SET_GPR_U64(ctx, 4, GPR_U64(ctx, 3) << (32 + 16));
+    // 0x197608: 0xa62825
+    ctx->pc = 0x197608u;
+    SET_GPR_U32(ctx, 5, OR32(GPR_U32(ctx, 5), GPR_U32(ctx, 6)));
+    // 0x19760c: 0x3c01002a
+    ctx->pc = 0x19760cu;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x197610: 0x852025
+    ctx->pc = 0x197610u;
+    SET_GPR_U32(ctx, 4, OR32(GPR_U32(ctx, 4), GPR_U32(ctx, 5)));
+    // 0x197614: 0x24030040
+    ctx->pc = 0x197614u;
+    SET_GPR_S32(ctx, 3, ADD32(GPR_U32(ctx, 0), 64));
+    // 0x197618: 0xfc24fdf0
+    ctx->pc = 0x197618u;
+    WRITE64(ADD32(GPR_U32(ctx, 1), 4294966768), GPR_U64(ctx, 4));
+    // 0x19761c: 0xfc440020
+    ctx->pc = 0x19761cu;
+    WRITE64(ADD32(GPR_U32(ctx, 2), 32), GPR_U64(ctx, 4));
+    // 0x197620: 0x10000044
+    ctx->pc = 0x197620u;
+    {
+        const bool branch_taken_0x197620 = (GPR_U32(ctx, 0) == GPR_U32(ctx, 0));
+        ctx->pc = 0x197624u;
+        WRITE64(ADD32(GPR_U32(ctx, 2), 40), GPR_U64(ctx, 3));
+        if (branch_taken_0x197620) {
+            ctx->pc = 0x197734u;
+            goto label_197734;
+        }
+    }
+    ctx->pc = 0x197628u;
+label_197628:
+    // 0x197628: 0x3c01002a
+    ctx->pc = 0x197628u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x19762c: 0x3183f
+    ctx->pc = 0x19762cu;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x197630: 0xac34fe10
+    ctx->pc = 0x197630u;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966800), GPR_U32(ctx, 20));
+    // 0x197634: 0x3283c
+    ctx->pc = 0x197634u;
+    SET_GPR_U64(ctx, 5, GPR_U64(ctx, 3) << (32 + 0));
+    // 0x197638: 0x3c01002a
+    ctx->pc = 0x197638u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x19763c: 0x11183c
+    ctx->pc = 0x19763cu;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 17) << (32 + 0));
+    // 0x197640: 0xac33fe14
+    ctx->pc = 0x197640u;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966804), GPR_U32(ctx, 19));
+    // 0x197644: 0x3183f
+    ctx->pc = 0x197644u;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x197648: 0x14303c
+    ctx->pc = 0x197648u;
+    SET_GPR_U64(ctx, 6, GPR_U64(ctx, 20) << (32 + 0));
+    // 0x19764c: 0x3c01002a
+    ctx->pc = 0x19764cu;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x197650: 0x32438
+    ctx->pc = 0x197650u;
+    SET_GPR_U64(ctx, 4, GPR_U64(ctx, 3) << 16);
+    // 0x197654: 0x6303f
+    ctx->pc = 0x197654u;
+    SET_GPR_S64(ctx, 6, GPR_S64(ctx, 6) >> (32 + 0));
+    // 0x197658: 0xac31fe18
+    ctx->pc = 0x197658u;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966808), GPR_U32(ctx, 17));
+    // 0x19765c: 0x10183c
+    ctx->pc = 0x19765cu;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 16) << (32 + 0));
+    // 0x197660: 0x3c01002a
+    ctx->pc = 0x197660u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x197664: 0xc43025
+    ctx->pc = 0x197664u;
+    SET_GPR_U32(ctx, 6, OR32(GPR_U32(ctx, 6), GPR_U32(ctx, 4)));
+    // 0x197668: 0x3183f
+    ctx->pc = 0x197668u;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x19766c: 0xac30fe1c
+    ctx->pc = 0x19766cu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966812), GPR_U32(ctx, 16));
+    // 0x197670: 0x3243c
+    ctx->pc = 0x197670u;
+    SET_GPR_U64(ctx, 4, GPR_U64(ctx, 3) << (32 + 16));
+    // 0x197674: 0xa62825
+    ctx->pc = 0x197674u;
+    SET_GPR_U32(ctx, 5, OR32(GPR_U32(ctx, 5), GPR_U32(ctx, 6)));
+    // 0x197678: 0x3c01002a
+    ctx->pc = 0x197678u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x19767c: 0x852025
+    ctx->pc = 0x19767cu;
+    SET_GPR_U32(ctx, 4, OR32(GPR_U32(ctx, 4), GPR_U32(ctx, 5)));
+    // 0x197680: 0x24030041
+    ctx->pc = 0x197680u;
+    SET_GPR_S32(ctx, 3, ADD32(GPR_U32(ctx, 0), 65));
+    // 0x197684: 0xfc24fe08
+    ctx->pc = 0x197684u;
+    WRITE64(ADD32(GPR_U32(ctx, 1), 4294966792), GPR_U64(ctx, 4));
+    // 0x197688: 0xfc440020
+    ctx->pc = 0x197688u;
+    WRITE64(ADD32(GPR_U32(ctx, 2), 32), GPR_U64(ctx, 4));
+    // 0x19768c: 0x10000029
+    ctx->pc = 0x19768Cu;
+    {
+        const bool branch_taken_0x19768c = (GPR_U32(ctx, 0) == GPR_U32(ctx, 0));
+        ctx->pc = 0x197690u;
+        WRITE64(ADD32(GPR_U32(ctx, 2), 40), GPR_U64(ctx, 3));
+        if (branch_taken_0x19768c) {
+            ctx->pc = 0x197734u;
+            goto label_197734;
+        }
+    }
+    ctx->pc = 0x197694u;
+label_197694:
+    // 0x197694: 0x3c01002a
+    ctx->pc = 0x197694u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x197698: 0x11183c
+    ctx->pc = 0x197698u;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 17) << (32 + 0));
+    // 0x19769c: 0xac34fdf8
+    ctx->pc = 0x19769cu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966776), GPR_U32(ctx, 20));
+    // 0x1976a0: 0x14203c
+    ctx->pc = 0x1976a0u;
+    SET_GPR_U64(ctx, 4, GPR_U64(ctx, 20) << (32 + 0));
+    // 0x1976a4: 0x3c01002a
+    ctx->pc = 0x1976a4u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1976a8: 0x3183f
+    ctx->pc = 0x1976a8u;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x1976ac: 0xac34fe10
+    ctx->pc = 0x1976acu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966800), GPR_U32(ctx, 20));
+    // 0x1976b0: 0x4203f
+    ctx->pc = 0x1976b0u;
+    SET_GPR_S64(ctx, 4, GPR_S64(ctx, 4) >> (32 + 0));
+    // 0x1976b4: 0x3c01002a
+    ctx->pc = 0x1976b4u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1976b8: 0x31c38
+    ctx->pc = 0x1976b8u;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 3) << 16);
+    // 0x1976bc: 0xac33fdfc
+    ctx->pc = 0x1976bcu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966780), GPR_U32(ctx, 19));
+    // 0x1976c0: 0x832025
+    ctx->pc = 0x1976c0u;
+    SET_GPR_U32(ctx, 4, OR32(GPR_U32(ctx, 4), GPR_U32(ctx, 3)));
+    // 0x1976c4: 0x3c01002a
+    ctx->pc = 0x1976c4u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1976c8: 0x13183c
+    ctx->pc = 0x1976c8u;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 19) << (32 + 0));
+    // 0x1976cc: 0xac31fe00
+    ctx->pc = 0x1976ccu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966784), GPR_U32(ctx, 17));
+    // 0x1976d0: 0x3183f
+    ctx->pc = 0x1976d0u;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x1976d4: 0x3c01002a
+    ctx->pc = 0x1976d4u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1976d8: 0x3183c
+    ctx->pc = 0x1976d8u;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 3) << (32 + 0));
+    // 0x1976dc: 0xac31fe18
+    ctx->pc = 0x1976dcu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966808), GPR_U32(ctx, 17));
+    // 0x1976e0: 0x642825
+    ctx->pc = 0x1976e0u;
+    SET_GPR_U32(ctx, 5, OR32(GPR_U32(ctx, 3), GPR_U32(ctx, 4)));
+    // 0x1976e4: 0x3c01002a
+    ctx->pc = 0x1976e4u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1976e8: 0x10183c
+    ctx->pc = 0x1976e8u;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 16) << (32 + 0));
+    // 0x1976ec: 0xac33fe14
+    ctx->pc = 0x1976ecu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966804), GPR_U32(ctx, 19));
+    // 0x1976f0: 0x3183f
+    ctx->pc = 0x1976f0u;
+    SET_GPR_S64(ctx, 3, GPR_S64(ctx, 3) >> (32 + 0));
+    // 0x1976f4: 0x3c01002a
+    ctx->pc = 0x1976f4u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x1976f8: 0x31c3c
+    ctx->pc = 0x1976f8u;
+    SET_GPR_U64(ctx, 3, GPR_U64(ctx, 3) << (32 + 16));
+    // 0x1976fc: 0xac30fe04
+    ctx->pc = 0x1976fcu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966788), GPR_U32(ctx, 16));
+    // 0x197700: 0x652825
+    ctx->pc = 0x197700u;
+    SET_GPR_U32(ctx, 5, OR32(GPR_U32(ctx, 3), GPR_U32(ctx, 5)));
+    // 0x197704: 0x3c01002a
+    ctx->pc = 0x197704u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x197708: 0x24040040
+    ctx->pc = 0x197708u;
+    SET_GPR_S32(ctx, 4, ADD32(GPR_U32(ctx, 0), 64));
+    // 0x19770c: 0xac30fe1c
+    ctx->pc = 0x19770cu;
+    WRITE32(ADD32(GPR_U32(ctx, 1), 4294966812), GPR_U32(ctx, 16));
+    // 0x197710: 0x24030041
+    ctx->pc = 0x197710u;
+    SET_GPR_S32(ctx, 3, ADD32(GPR_U32(ctx, 0), 65));
+    // 0x197714: 0x3c01002a
+    ctx->pc = 0x197714u;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x197718: 0xfc25fdf0
+    ctx->pc = 0x197718u;
+    WRITE64(ADD32(GPR_U32(ctx, 1), 4294966768), GPR_U64(ctx, 5));
+    // 0x19771c: 0x3c01002a
+    ctx->pc = 0x19771cu;
+    SET_GPR_U32(ctx, 1, ((uint32_t)42 << 16));
+    // 0x197720: 0xfc25fe08
+    ctx->pc = 0x197720u;
+    WRITE64(ADD32(GPR_U32(ctx, 1), 4294966792), GPR_U64(ctx, 5));
+    // 0x197724: 0xfc450020
+    ctx->pc = 0x197724u;
+    WRITE64(ADD32(GPR_U32(ctx, 2), 32), GPR_U64(ctx, 5));
+    // 0x197728: 0xfc440028
+    ctx->pc = 0x197728u;
+    WRITE64(ADD32(GPR_U32(ctx, 2), 40), GPR_U64(ctx, 4));
+    // 0x19772c: 0xfc450030
+    ctx->pc = 0x19772cu;
+    WRITE64(ADD32(GPR_U32(ctx, 2), 48), GPR_U64(ctx, 5));
+    // 0x197730: 0xfc430038
+    ctx->pc = 0x197730u;
+    WRITE64(ADD32(GPR_U32(ctx, 2), 56), GPR_U64(ctx, 3));
+label_197734:
+    // 0x197734: 0x2293c
+    ctx->pc = 0x197734u;
+    SET_GPR_U64(ctx, 5, GPR_U64(ctx, 2) << (32 + 4));
+label_197738:
+    // 0x197738: 0x3c07002a
+    ctx->pc = 0x197738u;
+    SET_GPR_U32(ctx, 7, ((uint32_t)42 << 16));
+    // 0x19773c: 0x5293e
+    ctx->pc = 0x19773cu;
+    SET_GPR_U64(ctx, 5, GPR_U64(ctx, 5) >> (32 + 4));
+    // 0x197740: 0x40302d
+    ctx->pc = 0x197740u;
+    SET_GPR_U64(ctx, 6, (uint64_t)GPR_U64(ctx, 2) + (uint64_t)GPR_U64(ctx, 0));
+    // 0x197744: 0x202d
+    ctx->pc = 0x197744u;
+    SET_GPR_U64(ctx, 4, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
+    // 0x197748: 0xc0633ec
+    ctx->pc = 0x197748u;
+    SET_GPR_U32(ctx, 31, 0x197750u);
+    ctx->pc = 0x19774Cu;
+    SET_GPR_S32(ctx, 7, ADD32(GPR_U32(ctx, 7), 4294964976));
+    ctx->pc = 0x18CFB0u;
+    {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0018CFB0_0x18cfb0(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x197750u; }
+    }
+    if (ctx->pc != 0x197750u) { return; }
+    ctx->pc = 0x197750u;
+    // 0x197750: 0xdfbf0050
+    ctx->pc = 0x197750u;
+    SET_GPR_U64(ctx, 31, READ64(ADD32(GPR_U32(ctx, 29), 80)));
+    // 0x197754: 0x24020001
+    ctx->pc = 0x197754u;
+    SET_GPR_S32(ctx, 2, ADD32(GPR_U32(ctx, 0), 1));
+    // 0x197758: 0x7bb40040
+    ctx->pc = 0x197758u;
+    SET_GPR_VEC(ctx, 20, READ128(ADD32(GPR_U32(ctx, 29), 64)));
+    // 0x19775c: 0x7bb30030
+    ctx->pc = 0x19775cu;
+    SET_GPR_VEC(ctx, 19, READ128(ADD32(GPR_U32(ctx, 29), 48)));
+    // 0x197760: 0x7bb20020
+    ctx->pc = 0x197760u;
+    SET_GPR_VEC(ctx, 18, READ128(ADD32(GPR_U32(ctx, 29), 32)));
+    // 0x197764: 0x7bb10010
+    ctx->pc = 0x197764u;
+    SET_GPR_VEC(ctx, 17, READ128(ADD32(GPR_U32(ctx, 29), 16)));
+    // 0x197768: 0x7bb00000
+    ctx->pc = 0x197768u;
+    SET_GPR_VEC(ctx, 16, READ128(ADD32(GPR_U32(ctx, 29), 0)));
+    // 0x19776c: 0x3e00008
+    ctx->pc = 0x19776Cu;
+    {
+        uint32_t jumpTarget = GPR_U32(ctx, 31);
+        ctx->pc = 0x197770u;
+        SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 96));
+        ctx->pc = jumpTarget;
+        switch (jumpTarget) {
+            case 0x1974C0u: goto label_1974c0;
+            case 0x1974E0u: goto label_1974e0;
+            case 0x1974ECu: goto label_1974ec;
+            case 0x197508u: goto label_197508;
+            case 0x19752Cu: goto label_19752c;
+            case 0x19753Cu: goto label_19753c;
+            case 0x1975BCu: goto label_1975bc;
+            case 0x197628u: goto label_197628;
+            case 0x197694u: goto label_197694;
+            case 0x197734u: goto label_197734;
+            case 0x197738u: goto label_197738;
+            default: break;
+        }
+        return;
+    }
+    ctx->pc = 0x197774u;
+    // 0x197774: 0x0
+    ctx->pc = 0x197774u;
+    // NOP
+    // 0x197778: 0x0
+    ctx->pc = 0x197778u;
+    // NOP
+    // 0x19777c: 0x0
+    ctx->pc = 0x19777cu;
+    // NOP
 }
