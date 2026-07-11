@@ -60,6 +60,7 @@ static void print_banner(const GameDef& g) {
 }
 
 int main(int argc, char* argv[]) {
+    setvbuf(stdout, nullptr, _IONBF, 0);  // unbuffered: pinpoint crash location
     // Defaults — selected game determines paths
     int game_idx = -1;  // -1 = auto-detect from build target
     std::string elf_path;
