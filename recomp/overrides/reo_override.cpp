@@ -37,6 +37,10 @@
 extern void sub_00114420_0x114420(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_00114440_0x114440(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_001CB8F0_0x1cb8f0(uint8_t*, R5900Context*, PS2Runtime*);
+
+// Runtime SIF RPC HLE handlers (defined in the runtime lib)
+namespace ps2_stubs { void sceSifBindRpc(uint8_t*, R5900Context*, PS2Runtime*); }
+namespace ps2_syscalls { void sceSifCallRpc(uint8_t*, R5900Context*, PS2Runtime*); }
 #include <iomanip>
 #include <chrono>
 #include <thread>
@@ -1003,6 +1007,14 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         printf("[REO] REO_NO_OVERRIDES set: skipping function bindings (pure self-exec)\n");
         return;
     }
+
+    // ── SIF RPC: route game's raw libsif to runtime's real HLE ───────
+    // Game's sceSifBindRpc (0x117080) / sceSifCallRpc (0x117818) do raw SBUS
+    // RPC the runtime doesn't emulate. Skipped in TOML → stubs → these
+    // bindings (via fixed TODO_NAMED dispatch) route to the runtime HLE,
+    // which services the RPC and signals the completion semaphore.
+    bind(runtime, 0x117080, ps2_stubs::sceSifBindRpc, "sceSifBindRpc (HLE)");
+    bind(runtime, 0x117818, ps2_syscalls::sceSifCallRpc, "sceSifCallRpc (HLE)");
 
     // ── Boot sequence: GS init ───────────────────────────────────────
     bind(runtime, 0x11D6D0, reo_gs_reset_graph,   "sceGsResetGraph (init)");
