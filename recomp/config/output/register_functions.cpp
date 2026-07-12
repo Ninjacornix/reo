@@ -340,14 +340,12 @@ void registerAllFunctions(PS2Runtime& runtime) {
     runtime.registerFunction(0x116e08, sub_00116E08_0x116e08);
     runtime.registerFunction(0x116e48, sub_00116E48_0x116e48);
     runtime.registerFunction(0x116fd0, sub_00116FD0_0x116fd0);
-    runtime.registerFunction(0x117080, sub_00117080_0x117080);
     runtime.registerFunction(0x117220, sub_00117220_0x117220);
     runtime.registerFunction(0x117248, sub_00117248_0x117248);
     runtime.registerFunction(0x1172f0, sub_001172F0_0x1172f0);
     runtime.registerFunction(0x117310, sub_00117310_0x117310);
     runtime.registerFunction(0x117340, sub_00117340_0x117340);
     runtime.registerFunction(0x1176b8, sub_001176B8_0x1176b8);
-    runtime.registerFunction(0x117818, sub_00117818_0x117818);
     runtime.registerFunction(0x1179e8, sub_001179E8_0x1179e8);
     runtime.registerFunction(0x117be0, sub_00117BE0_0x117be0);
     runtime.registerFunction(0x117c20, sub_00117C20_0x117c20);
@@ -3849,5 +3847,7 @@ void registerAllFunctions(PS2Runtime& runtime) {
     // Register system call stubs
 
     // Register library stubs
+    runtime.registerFunction(0x117080, sub_00117080_0x117080);
+    runtime.registerFunction(0x117818, sub_00117818_0x117818);
     runtime.registerFunction(0x1f73b0, sub_001F73B0_0x1f73b0);
 }

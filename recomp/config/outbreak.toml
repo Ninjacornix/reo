@@ -25,6 +25,8 @@ stubs = [
 
 # Functions to skip (these will not be recompiled)
 skip = [
+  "sub_00117080",
+  "sub_00117818",
   "sub_001F73B0",
   # "sub_001CB8F0",  # UNSTUBBED: demo scene state machine
 ]
