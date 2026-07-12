@@ -1013,8 +1013,10 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     // RPC the runtime doesn't emulate. Skipped in TOML → stubs → these
     // bindings (via fixed TODO_NAMED dispatch) route to the runtime HLE,
     // which services the RPC and signals the completion semaphore.
-    bind(runtime, 0x117080, ps2_stubs::sceSifBindRpc, "sceSifBindRpc (HLE)");
-    bind(runtime, 0x117818, ps2_syscalls::sceSifCallRpc, "sceSifCallRpc (HLE)");
+    // 0x117818 = sceSifBindRpc: the game polls client->server (offset 36)
+    // until non-zero; SifBindRpc sets it. 0x117080 = the RPC init/handshake.
+    bind(runtime, 0x117818, ps2_stubs::sceSifBindRpc, "sceSifBindRpc (HLE)");
+    bind(runtime, 0x117080, ps2_stubs::sceSifBindRpc, "sceSifInitRpc->bind (HLE)");
 
     // ── Boot sequence: GS init ───────────────────────────────────────
     bind(runtime, 0x11D6D0, reo_gs_reset_graph,   "sceGsResetGraph (init)");
