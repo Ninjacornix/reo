@@ -190,7 +190,17 @@ cmake --build build --config Release
 
 ### Current Status
 
-The recompilation pipeline is **working for both games**. File #1 boots to its main loop with the full rendering pipeline active, hardware bridge connecting recompiled code to native subsystems, live controller input, and disc I/O infrastructure wired.
+> **⭐ Self-execution milestone (2026-07, branch `pivot-selfexec`).** The earlier "rendering" milestones below were a **puppet** — an 8MB PCSX2 memory snapshot injected each frame plus hand-authored render replay, because ~105 of the game's own functions (entry point, init chain, GIF processor) were stubbed out (the recompiler couldn't translate their PS2 SIMD/MMI instructions). The April upstream PS2Recomp SIMD-codegen fixes changed that: **the recompiler now translates 100% of RE Outbreak into native code**, so the injection scaffold was removed and the game now **runs its own recompiled engine natively — 0 runtime stubs hit** — self-executing through its real boot sequence instead of being spoon-fed.
+>
+> **What now works under self-execution:**
+> - Real `GsSetCrt`, its own DMA/GIF pipeline (32× 256KB PATH3 transfers), GS register writes — no injection.
+> - **Frame pacing via real hardware emulation** — INTC_STAT vblank bit + GS_CSR FIELD toggle added to the runtime, so the game's own busy-wait loops advance.
+> - **SIF RPC through real HLE** — the game's raw-libsif bind/call routed to the runtime's `sceSifBindRpc`/`sceSifCallRpc` (fixed a runtime bug where stub-override bindings never fired on direct calls), so RPC completion semaphores signal correctly.
+> - **~10 boot gates cleared** with legitimate emulation (vblank, GS field, SIF registers, RPC transport, bind, boot-status flags) — the game advances measurably through boot each fix.
+>
+> **Current frontier:** the game is deep in IOP/SIF **module + resource initialization** (blocked at a resource-pool allocator whose pool is populated from data loaded via IOP file/module services). Reaching the title screen requires implementing the **IOP-HLE file/module subsystem** for the game's raw-libsif path — bounded, multi-session work, best accelerated with a PCSX2 boot/SIF-RPC trace. **Not yet at the title screen or gameplay under self-execution** (the puppet build on `main` still renders the title screen for reference). Method + exact hand-off state documented for continuation.
+
+The recompilation pipeline is **working for both games**. On `main`, File #1 boots to its main loop with the full (puppet) rendering pipeline active, hardware bridge connecting recompiled code to native subsystems, live controller input, and disc I/O infrastructure wired.
 
 | | File #1 | File #2 |
 |---|---|---|
@@ -247,6 +257,9 @@ Render Target → DMA Buffer → Scene DRAW → Scene Builder → GIF→GS ✅
 - **2025-03-28:** **NBD geometry parsing** — reverse-engineered NBD/AMO binary format, rendering 3D game models (rooms + characters) from NETBIO archives with triangle strip support
 - **2025-04-07:** **TEX chunk decompression** — reverse-engineered RE Outbreak's custom OB-LZ77 compression, all game textures (256x256 IDX8 with CLUT) decompress and decode correctly
 - **2025-04-07:** **PS2Recomp upstream sync** — synced with latest PS2Recomp runtime + applied 5 critical codegen fixes (VU0 dest-mask, divide-by-zero, 64-bit branches) from community contributor jlsandri
+- **2026-07-11:** **Self-execution — 100% native recompilation** — un-skipped all SIMD-gated functions; the recompiler now translates the entire game to native code (1 stub for a recompiler-runaway function). Removed the PCSX2-snapshot puppet; the game runs its own engine, 0 runtime stubs, self-driving its real `GsSetCrt` + GIF/GS pipeline.
+- **2026-07-11:** **Boot frame-pacing emulated** — INTC_STAT vblank bit + GS_CSR FIELD toggle in the runtime; the game's own vblank/field busy-waits now advance.
+- **2026-07-12:** **SIF RPC via real HLE** — routed the game's raw-libsif RPC to the runtime's real bind/call handlers (fixed `TODO_NAMED` never dispatching stub overrides on direct calls; corrected a bind/call mis-binding). RPC completion semaphores signal; game advances into IOP module/resource init — the current frontier.
 
 ## Roadmap
 
