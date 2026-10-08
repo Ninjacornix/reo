@@ -16,6 +16,15 @@ set(PS2RECOMP_BUILD "${PS2RECOMP_DIR}/out/build")
 # REO runtime sources (hardware emulation subsystems)
 set(REO_RUNTIME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../runtime")
 
+# Build-speed knobs for the ~3,900 generated sources (see docs/BASELINE.md).
+# Hand-written sources always use /O2; only generated/overlay code uses REO_RECOMP_OPT.
+set(REO_RECOMP_OPT "/O2" CACHE STRING "MSVC optimization flag for generated recompiled code (/O2, /O1, /Od)")
+option(REO_RECOMP_PCH "Precompile the runtime headers shared by all generated sources" ON)
+# Escape hatch: generated files compiled with /Od regardless of REO_RECOMP_OPT, for
+# pathological translation units. Runtime cost: the listed functions are unoptimized.
+set(REO_RECOMP_OD_SOURCES "" CACHE STRING
+    "Semicolon-separated generated file names to compile with /Od (empty = none)")
+
 set(PS2RECOMP_INCLUDES
     "${PS2RECOMP_DIR}/ps2xRuntime/include"
     "${PS2RECOMP_DIR}/ps2xRuntime/src/lib/Kernel"
@@ -65,7 +74,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         set(OVERLAY_SOURCES "")
     endif()
 
-    add_executable(${TARGET_NAME}
+    set(_reo_handwritten_sources
         reo_bootstrap.cpp
         overrides/reo_override.cpp
         overrides/reo_hw_bridge.cpp
@@ -76,6 +85,10 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_renderer.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../media/tim2/tim2_loader.cpp"
         ${REO_RUNTIME_SOURCES}
+    )
+
+    add_executable(${TARGET_NAME}
+        ${_reo_handwritten_sources}
         ${RECOMP_SOURCES}
         ${OVERLAY_SOURCES}
     )
@@ -104,9 +117,43 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         target_compile_options(${TARGET_NAME} PRIVATE
             /W0           # Disable warnings for generated code
             /bigobj       # Generated files can be large
-            /MP4          # Parallel compilation (limit to 4 cores to avoid OOM)
-            /O2           # Optimize
         )
+        if(CMAKE_GENERATOR MATCHES "Visual Studio")
+            # Parallel compilation (limit to 4 cores to avoid OOM); Ninja uses -j instead
+            target_compile_options(${TARGET_NAME} PRIVATE /MP4)
+        endif()
+        set_source_files_properties(${RECOMP_SOURCES} ${OVERLAY_SOURCES}
+            TARGET_DIRECTORY ${TARGET_NAME}
+            PROPERTIES COMPILE_OPTIONS "${REO_RECOMP_OPT}")
+        foreach(_od_name IN LISTS REO_RECOMP_OD_SOURCES)
+            foreach(_src IN LISTS RECOMP_SOURCES OVERLAY_SOURCES)
+                get_filename_component(_src_name "${_src}" NAME)
+                if(_src_name STREQUAL _od_name)
+                    set_source_files_properties("${_src}"
+                        TARGET_DIRECTORY ${TARGET_NAME}
+                        PROPERTIES COMPILE_OPTIONS "/Od")
+                    message(STATUS "REO [${TARGET_NAME}]: ${_od_name} compiled with /Od")
+                endif()
+            endforeach()
+        endforeach()
+        set_source_files_properties(${_reo_handwritten_sources}
+            TARGET_DIRECTORY ${TARGET_NAME}
+            PROPERTIES COMPILE_OPTIONS "/O2")
+    endif()
+
+    if(REO_RECOMP_PCH)
+        # Same include order as the generated files' preamble.
+        target_precompile_headers(${TARGET_NAME} PRIVATE
+            "<ps2_runtime_macros.h>"
+            "<ps2_runtime.h>"
+            "<ps2_recompiled_functions.h>"
+            "<ps2_recompiled_stubs.h>"
+            "<ps2_syscalls.h>"
+            "<ps2_stubs.h>"
+        )
+        set_source_files_properties(${_reo_handwritten_sources}
+            TARGET_DIRECTORY ${TARGET_NAME}
+            PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
     endif()
 
     target_compile_definitions(${TARGET_NAME} PRIVATE

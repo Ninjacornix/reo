@@ -10,6 +10,7 @@
 
 # Build output
 build/
+build-*/
 out/
 cmake-build-*/
 *.o
@@ -65,6 +66,7 @@ game_data_file2/
 game_data_ntsc/
 
 # ISO archives and disc images
+iso/
 resident-evil-outbreak-file-2/
 resident-evil-outbreak-file-2.zip
 *.cue
