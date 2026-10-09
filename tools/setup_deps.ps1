@@ -55,10 +55,16 @@ Ensure-Checkout $ELFIO_REPO $elfio $ELFIO_PIN
 
 # REO-local PS2Recomp patches (the pinned fork is upstream-owned). Idempotent.
 foreach ($patch in Get-ChildItem (Join-Path $Root 'third_party\patches\ps2recomp') -Filter *.patch -ErrorAction SilentlyContinue | Sort-Object Name) {
-    git -C $ps2 apply --reverse --check $patch.FullName 2>$null
-    if ($LASTEXITCODE -eq 0) { Write-Host "[setup] already applied: $($patch.Name)"; continue }
-    git -C $ps2 apply $patch.FullName
-    if ($LASTEXITCODE) { throw "patch failed: $($patch.Name)" }
+    # PS 5.1 turns native stderr into terminating errors under 'Stop'; the reverse
+    # check is *expected* to fail on an unpatched tree, so rely on exit codes here.
+    $ErrorActionPreference = 'Continue'
+    git -C $ps2 apply --reverse --check $patch.FullName 2>&1 | Out-Null
+    $alreadyApplied = ($LASTEXITCODE -eq 0)
+    if (-not $alreadyApplied) { git -C $ps2 apply $patch.FullName 2>&1 | Write-Host }
+    $applyCode = $LASTEXITCODE
+    $ErrorActionPreference = 'Stop'
+    if ($alreadyApplied) { Write-Host "[setup] already applied: $($patch.Name)"; continue }
+    if ($applyCode) { throw "patch failed: $($patch.Name)" }
     Write-Host "[setup] applied: $($patch.Name)"
 }
 
