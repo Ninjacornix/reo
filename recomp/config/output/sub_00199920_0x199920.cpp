@@ -258,7 +258,7 @@ void sub_00199920_0x199920(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     ctx->vu0_acc = PS2_VADD(ctx->vu0_vf[8], ctx->vu0_vf[7]);
     // 0x199a5c: 0x4bc04a8b  vmaddw.xyz  $vf10, $vf9, $vf0w
     ctx->pc = 0x199a5cu;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[9], _mm_shuffle_ps(ctx->vu0_vf[0], ctx->vu0_vf[0], _MM_SHUFFLE(3,3,3,3))); __m128 res = PS2_VADD(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[10] = _mm_blendv_ps(ctx->vu0_vf[10], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[9], _mm_shuffle_ps(ctx->vu0_vf[0], ctx->vu0_vf[0], _MM_SHUFFLE(3,3,3,3))); __m128 res = PS2_VADD(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[10] = _mm_blendv_ps(ctx->vu0_vf[10], res, _mm_castsi128_ps(mask)); }
     // 0x199a60: 0xf8840000  sqc2        $vf4, 0x0($a0)
     ctx->pc = 0x199a60u;
     WRITE128(ADD32(GPR_U32(ctx, 4), 0), _mm_castps_si128(ctx->vu0_vf[4]));
