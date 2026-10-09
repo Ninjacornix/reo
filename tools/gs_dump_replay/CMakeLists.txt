@@ -1,5 +1,6 @@
 add_executable(reo-gs-replay
     main.cpp
+    stb_image_write_impl.c
     ${CMAKE_SOURCE_DIR}/runtime/gs/gs_renderer.cpp
 )
 
