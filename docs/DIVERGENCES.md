@@ -279,10 +279,33 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 ### Also in this round
 - `tools/ghidra_fill_gaps.py` re-run: 72 more functions (map 5,658). `0x13A180`, a pointer-called function (ra `0x136FD0`) previously refused by Ghidra, now exists. 6 gaps remain.
 
-## Open (as of D15)
-- **Main-thread jump to PC `0x1`** after state `0x316598` becomes 1: `0x1416e8` (`a0 = 1; j 0x141640`) → `0x141640` calls the callback at `*0x2649e8` (`0x12a9f0`, the game's "leave critical section": GetThreadId/ChangeThreadPriority, Refer/Suspend/ResumeThread). Afterwards `ra = 1`, `sp = 0x1FFEFC0` (0x141640's frame). The generated code for the tail call and the `jalr` was checked and is correct; no syscall changes `ra/sp`. Next: trace `ra` across `0x12a9f0`'s callees.
-- Runtime `SuspendThread` on *another* thread only sets status; the host thread keeps running guest code (no real suspension). The game's critical section relies on it (`0x12b158`).
-- Thread 2 (libkernel request server `0x115320`, an endless `WaitSema` loop) is reported as "returned (pc=0x0)" in some runs.
+## D16: no EE thread-priority scheduling (time-slicing instead) — FIXED
+
+- Evidence: CRI ADX (`ADXPS2 Ver 2.45`, setup `0x12B638`) implements its lock by raising the caller to priority 1 and resuming a priority-8 busy thread (thread 4, `0x12ABA0`). Lower-priority ADX threads (5/6/7 at 16/18/25; main at 24) therefore cannot run inside the lock. The runtime released the guest lock after every dispatched step and every 64–100 loop back-edges, so any woken thread ran inside main's critical section (owner tid at `0x217D74` flipped 1→6→5 while the nest count at `0x210480` interleaved).
+- Fix (patch 0012, `ps2_guest_sched.h`): EE kernel semantics on the guest-execution lock. A thread keeps the CPU across steps and yields only when it blocks, is suspended, or a strictly higher-priority thread (or an interrupt/alarm worker) is waiting. Back-edge preemption now fires only in that case.
+- `SuspendThread(other)` really stops the target; `ChangeThreadPriority` returns the **previous** priority (ADX stores it at `0x217D70` and restores it on unlock; with `KE_OK` (0) main stayed at priority 1 forever).
+- Lock-order fix: every blocking syscall re-took the guest lock while still holding its host mutex (sema/thread/vsync), a deadlock against a running thread needing that mutex. Now `waitReleasingGuest()` drops the mutex first and re-checks the predicate.
+- Verified: ADX lock owners now change in clean sequence; the saved priorities are 24/16/18 as ADX expects.
+
+## D17: jump to PC 0x1 — vsync flag registration not one-shot — FIXED (root cause)
+
+- libgraph's wait-vsync (`0x114B40`) calls `SetVSyncFlag(&flag, &count)` on **its own stack frame**, spins until `flag != 0` and returns without unregistering. The runtime kept the registration forever and wrote `1` to that dead stack slot on every vblank.
+- Found with a hardware watchpoint (`REO_HW_WATCH`, below) on guest `0x1FFEF90`: the write came from `ps2_syscalls::interruptWorkerMain → writeGuestU32NoThrow`. That slot was `0x1CC260`'s saved `ra` (`0x1AC670`), which became `1`, so its `jr ra` jumped to `0x1`. Earlier hypotheses (D13/D14 layout overlaps, scheduling) were real bugs but not this one.
+- Fix (patch 0012): a vsync registration is consumed on delivery. Verified: no jump to `0x1` in 60 s runs.
+
+## D18: interrupt/alarm handlers ran in parallel with guest threads — FIXED
+
+- On hardware a handler runs atomically while the interrupted thread is paused. The runtime ran INTC/DMAC handlers and alarm callbacks lock-free on worker threads, in parallel with guest code, which breaks LIFO lock nesting (e.g. CRI SVM locks).
+- Fix (patch 0012): handlers take the guest-execution lock. The scheduler treats waiting workers as more urgent than any guest thread, so a spinning thread yields at its next preemption point (which is what the old lock-free design was protecting).
+
+## D19: diagnostics added this round
+- `REO_HW_WATCH=<guest addr>` (`reo_bootstrap.cpp`): x64 debug-register write watchpoint on the host bytes backing a guest word, armed on all threads. It prints each new value plus the writer's host stack as exe RVAs (resolve with a `/MAP` link of the same objects).
+- `[hot-ra]` heartbeat line: histogram of the main thread's `$ra` next to the PC histogram (shows callers of hot leaf functions).
+- Temporary instrumentation of generated files was used and reverted (byte-identical to generated output).
+
+## Open (as of D19)
+- **Next blocker:** CRI ADX file access fails. Every frame the game reports `E9040832:'adxf' is NULL.(ADXF_GetStat)`: an `ADXF_Open` returned NULL, so the game polls a NULL handle and stays in error reporting (`0x1280D0 → 0x141800`, string formatting). State `0x316598` stays 0. Next: find the `ADXF_Open` call, its path/partition, and which HLE (CDVD/FILEIO/DTX streaming) it depends on.
+- Runtime `[StartThread] id=2 returned` (libkernel request-server thread) still to check under the new scheduler.
 
 ## Open (as of D11, superseded where noted)
 - CRI middleware: `[EE-TTY] DTX_Create: can't create DTX of server` / `E0100302: SJX_Init can't create DTX`, IOP server `0x90000200` (unhandled, func 2). The runtime has a configurable "DTX compat" layer to investigate.

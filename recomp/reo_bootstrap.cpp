@@ -95,6 +95,80 @@ static LONG WINAPI reoCrashFilter(EXCEPTION_POINTERS* ep) {
     fflush(stderr);
     return EXCEPTION_CONTINUE_SEARCH;
 }
+
+// REO_HW_WATCH=<guest addr>: x64 debug-register write watchpoint on the host bytes that
+// back a guest RAM word, armed on every thread of the process. Each write prints the
+// new value and the writer's host stack (exe RVAs; resolve with a /MAP link). Diagnostic
+// only: finds host code (HLE/runtime) that corrupts guest memory.
+#include <tlhelp32.h>
+#include <atomic>
+#include <thread>
+static uintptr_t g_watchHost = 0;
+static uint32_t g_watchGuest = 0;
+static std::atomic<int> g_watchHits{0};
+
+static void reoPrintStack(CONTEXT c) {
+    const DWORD64 base = reinterpret_cast<DWORD64>(GetModuleHandleW(nullptr));
+    for (int i = 0; i < 24 && c.Rip; ++i) {
+        fprintf(stderr, " 0x%llX", static_cast<unsigned long long>(c.Rip >= base ? c.Rip - base : c.Rip));
+        DWORD64 imageBase = 0;
+        PRUNTIME_FUNCTION fn = RtlLookupFunctionEntry(c.Rip, &imageBase, nullptr);
+        if (fn) {
+            PVOID handlerData = nullptr; DWORD64 establisher = 0;
+            RtlVirtualUnwind(UNW_FLAG_NHANDLER, imageBase, c.Rip, fn, &c, &handlerData, &establisher, nullptr);
+        } else {
+            c.Rip = *reinterpret_cast<DWORD64*>(c.Rsp);
+            c.Rsp += 8;
+        }
+    }
+}
+
+static LONG CALLBACK reoWatchHandler(EXCEPTION_POINTERS* ep) {
+    if (ep->ExceptionRecord->ExceptionCode != EXCEPTION_SINGLE_STEP || !(ep->ContextRecord->Dr6 & 1u))
+        return EXCEPTION_CONTINUE_SEARCH;
+    ep->ContextRecord->Dr6 = 0;
+    if (g_watchHits.fetch_add(1) < 400) {
+        uint32_t v = 0;
+        std::memcpy(&v, reinterpret_cast<const void*>(g_watchHost), 4);
+        fprintf(stderr, "[HW-WATCH] guest 0x%x = 0x%x tid=%lu stack:", g_watchGuest, v, GetCurrentThreadId());
+        reoPrintStack(*ep->ContextRecord);
+        fprintf(stderr, "\n");
+    }
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static void reoArmWatchOnAllThreads() {
+    const DWORD self = GetCurrentThreadId();
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    if (snap == INVALID_HANDLE_VALUE) return;
+    THREADENTRY32 te{}; te.dwSize = sizeof(te);
+    for (BOOL ok = Thread32First(snap, &te); ok; ok = Thread32Next(snap, &te)) {
+        if (te.th32OwnerProcessID != GetCurrentProcessId() || te.th32ThreadID == self) continue;
+        HANDLE th = OpenThread(THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME, FALSE, te.th32ThreadID);
+        if (!th) continue;
+        if (SuspendThread(th) != (DWORD)-1) {
+            CONTEXT c{}; c.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+            if (GetThreadContext(th, &c) && c.Dr0 != g_watchHost) {
+                c.Dr0 = g_watchHost;
+                c.Dr7 = (c.Dr7 & ~0xF0003ull) | 1ull | (1ull << 16) | (3ull << 18); // L0, write, 4 bytes
+                SetThreadContext(th, &c);
+            }
+            ResumeThread(th);
+        }
+        CloseHandle(th);
+    }
+    CloseHandle(snap);
+}
+
+static void reoStartHwWatch(uint8_t* rdram) {
+    const char* e = std::getenv("REO_HW_WATCH");
+    if (!e || !rdram) return;
+    g_watchGuest = static_cast<uint32_t>(std::strtoul(e, nullptr, 0)) & 0x01FFFFFCu;
+    g_watchHost = reinterpret_cast<uintptr_t>(rdram + g_watchGuest);
+    AddVectoredExceptionHandler(1, reoWatchHandler);
+    fprintf(stderr, "[HW-WATCH] armed on guest 0x%x\n", g_watchGuest);
+    std::thread([] { for (;;) { reoArmWatchOnAllThreads(); Sleep(50); } }).detach();
+}
 #endif
 
 int main(int argc, char* argv[]) {
@@ -207,6 +281,9 @@ int main(int argc, char* argv[]) {
     printf("[BOOT] Starting execution at entry point 0x%08X...\n", g.entry_point);
     printf("[BOOT] ========================================\n\n");
 
+#ifdef _WIN32
+    reoStartHwWatch(runtime.memory().getRDRAM());
+#endif
     runtime.run();
 
     printf("\n[BOOT] ========================================\n");
