@@ -114,3 +114,41 @@ Result: **PASS** for D2 (`fioInit` completes once, matching PCSX2's state; the g
 
 ### Next (D3)
 FILEIO open of `cdrom0:\IOP\MODULES\DRIVE.DAT;1`. Request layout to decode: word0 `0x0B`, `0x01FEFE50` (EE address), `4`, `1`, `0`, path at +0x14. After the call the EE blocks on semaphore 11 (`ra 0x118c68`). It is presumably signaled by the fileio cmd handlers registered in `fioInit` (`0x80000011` at `0x118268`, `0x80000013` at `0x118758`) when the IOP reports completion. Implement open/read/lseek/close against the disc (reo `CDVD` maps 85 disc files) and the completion signal, verified against PCSX2 (`DRIVE.DAT` contents/size and the reply layout).
+
+---
+
+## D3: FILEIO open/lseek/read/close unserved — FIXED (HLE); first disc file loads
+
+Date: 2026-10-09. Category: **IOP SIF/HLE** (missing FILEIO operations).
+
+### Protocol (EE side, Ghidra; confidence: probable — consistent with every observed request)
+EE fileio requests (`0x118A70` open, plus siblings) use a common header in the send buffer at `0x25CA40`: `+0` completion semaphore (created per call), `+4` EE address of the 4-byte result, `+8` result size, then arguments. The RPC reply `recv[0] != 0` means "accepted". The EE then `WaitSema`s. On hardware the IOP completes via cmd `0x80000011` (handler `0x118268`: copy payload to the EE address, then `iSignalSema`).
+
+| fno | op | arguments (after +0xC) |
+|---|---|---|
+| 0x0 | open | +0xC flags, +0x10 mode, +0x14 path (≤0x400) |
+| 0x1 | close | +0xC fd |
+| 0x2 | read | +0xC fd, +0x10 EE buffer, +0x14 size |
+| 0x4 | lseek | +0xC fd, +0x10 offset, +0x14 whence |
+
+### Fix
+- PS2Recomp patch `0003`: public `ps2_syscalls::hleSignalSema(id)` (wraps the runtime's `signalRpcCompletionSema`) so host-side IOP servers can complete async requests.
+- `reo_hw_bridge`: FILEIO open (disc files via `reo::CDVD::resolve_path`, read-only; non-`O_RDONLY` → -30), lseek (`_fseeki64`), read (bounds-checked direct write into EE RAM), close. Up to 32 fds; results are written to the EE result address, then the semaphore is signaled. Errors use negative errno-style values.
+
+HLE status: the read path skips the hardware's aligned-DMA + head/tail cmd split and writes the final bytes directly. Equivalent end state for the EE buffer, but the cmd `0x80000011` handler bookkeeping is not exercised. Validation: sizes match the disc file; the game proceeds to the next stage. Byte-level comparison with PCSX2 memory: TODO.
+
+### Observed (after)
+Run `build-ninja\smoke\20261009-130227-natural-d3c`:
+```
+open  "cdrom0:\IOP\MODULES\DRIVE.DAT;1" -> fd 0
+lseek fd=0 (SEEK_END) -> 356544
+lseek fd=0 (SEEK_SET) -> 0
+read  fd=0 buf=0x01000000 size=356544 -> 356544
+close fd=0 -> 0
+[HW-BRIDGE:SIF] unhandled sid=0x80000003 func=1      (SIFHEAP: IOP heap alloc)
+[HW-BRIDGE:SIF] unhandled sid=0x80000006 func=255    (LOADFILE: init)
+```
+Afterwards the game polls (hot PCs `0x11be..`–`0x11c1..`) rather than blocking. Result: **PASS** for D3.
+
+### Next (D4)
+IOP heap (`0x80000003`) + LOADFILE (`0x80000006`): `DRIVE.DAT` (356,544 bytes, now at EE `0x01000000`) is most likely a bundle of IRX modules for `SifLoadModuleBuffer`-style loading. Decode the requests and replies against PCSX2, and record which modules the game loads and the results/IDs it expects.

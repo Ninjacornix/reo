@@ -24,6 +24,7 @@
 #pragma once
 
 #include "ps2_runtime.h"
+#include <cstdio>
 
 namespace reo {
     class GSRenderer;
@@ -86,6 +87,10 @@ private:
     reo::VUInterpreter* m_vu1 = nullptr;
     reo::Input* m_input = nullptr;
     reo::CDVD* m_cdvd = nullptr;
+
+    // HLE FILEIO server (sid 0x80000001): IOP-side descriptors for disc files.
+    static constexpr int kMaxFioFds = 32;
+    std::FILE* m_fioFds[kMaxFioFds] = {};
 
 public:
     // Input access for pad overrides

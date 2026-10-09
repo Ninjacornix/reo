@@ -44,6 +44,9 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
+#include <string>
+
+namespace ps2_syscalls { bool hleSignalSema(uint32_t semaId); }
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -762,6 +765,92 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
                 // in 0x1189A8), word1 == 2.
                 rdramWrite32(rdram, recvBuf, 0x30303832u); // "2800"
                 if (recvSize >= 8) rdramWrite32(rdram, recvBuf + 4, 2u);
+            } else if (rpcNum == 0x0 && sendBuf && sendSize >= 0x18 && self && self->m_cdvd) {
+                // open. Request (EE fio_open 0x118A70): +0 completion sema, +4 EE
+                // result address, +8 result size, +0xC flags, +0x10 mode, +0x14 path.
+                // recv[0] != 0 = accepted; the result is delivered asynchronously
+                // (IOP: cmd 0x80000011 -> copy to EE address, iSignalSema).
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const uint32_t flags   = rdramRead32(rdram, sendBuf + 0xC);
+                std::string path;
+                for (uint32_t i = 0x14; i < std::min<uint32_t>(sendSize, 0x14 + 0x400); ++i) {
+                    const char ch = (char)rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    if (!ch) break;
+                    path.push_back(ch);
+                }
+                int32_t result = -2; // ENOENT
+                if ((flags & 0x3) != 0x1) {
+                    result = -30;    // EROFS: only O_RDONLY on the disc
+                } else if (self->m_cdvd->file_exists(path)) {
+                    FILE* f = _wfopen(self->m_cdvd->resolve_path(path).c_str(), L"rb");
+                    if (f) {
+                        int fd = 0;
+                        while (fd < kMaxFioFds && self->m_fioFds[fd]) ++fd;
+                        if (fd < kMaxFioFds) { self->m_fioFds[fd] = f; result = fd; }
+                        else { fclose(f); result = -24; } // EMFILE
+                    }
+                }
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u); // accepted
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] open \"%s\" flags=0x%X -> %d (sema %u %s)\n",
+                        path.c_str(), flags, result, sema, sig ? "signaled" : "NOT signaled");
+            } else if (rpcNum == 0x2 && sendBuf && sendSize >= 0x18 && self) {
+                // read: +0xC fd, +0x10 EE buffer, +0x14 size. On hardware the IOP DMAs
+                // the aligned part to the EE buffer and sends unaligned head/tail bytes
+                // via cmd 0x80000011; the HLE writes the bytes directly (same end state).
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const int32_t  fd      = (int32_t)rdramRead32(rdram, sendBuf + 0xC);
+                const uint32_t buf     = rdramRead32(rdram, sendBuf + 0x10);
+                const int32_t  size    = (int32_t)rdramRead32(rdram, sendBuf + 0x14);
+                std::FILE* f = (fd >= 0 && fd < kMaxFioFds) ? self->m_fioFds[fd] : nullptr;
+                const uint32_t phys = buf & PS2_RAM_MASK;
+                int32_t result = -9; // EBADF
+                if (f && size < 0) {
+                    result = -22; // EINVAL
+                } else if (f && (uint64_t)phys + (uint32_t)size > PS2_RAM_SIZE) {
+                    result = -14; // EFAULT
+                } else if (f) {
+                    result = (int32_t)fread(rdram + phys, 1, (size_t)size, f);
+                }
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u); // accepted
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] read fd=%d buf=0x%08X size=%d -> %d (sema %u %s)\n",
+                        fd, buf, size, result, sema, sig ? "signaled" : "NOT signaled");
+            } else if ((rpcNum == 0x1 || rpcNum == 0x4) && sendBuf && sendSize >= 0x10 && self) {
+                // close (1): +0xC fd.  lseek (4): +0xC fd, +0x10 offset, +0x14 whence.
+                // Same async completion as open: result to +4, signal sema at +0.
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const int32_t  fd      = (int32_t)rdramRead32(rdram, sendBuf + 0xC);
+                std::FILE* f = (fd >= 0 && fd < kMaxFioFds) ? self->m_fioFds[fd] : nullptr;
+                int32_t result = -9; // EBADF
+                if (f && rpcNum == 0x1) {
+                    fclose(f);
+                    self->m_fioFds[fd] = nullptr;
+                    result = 0;
+                } else if (f && rpcNum == 0x4 && sendSize >= 0x18) {
+                    const int32_t off    = (int32_t)rdramRead32(rdram, sendBuf + 0x10);
+                    const int32_t whence = (int32_t)rdramRead32(rdram, sendBuf + 0x14);
+                    if (whence >= 0 && whence <= 2 && _fseeki64(f, off, whence) == 0) {
+                        const long long pos = _ftelli64(f);
+                        result = (pos >= 0 && pos <= 0x7FFFFFFF) ? (int32_t)pos : -22; // EINVAL
+                    } else {
+                        result = -22;
+                    }
+                }
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u); // accepted
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] %s fd=%d -> %d (sema %u %s)\n",
+                        rpcNum == 0x1 ? "close" : "lseek", fd, result, sema,
+                        sig ? "signaled" : "NOT signaled");
             } else {
                 rdramWrite32(rdram, recvBuf, 0xFFFFFFFFu);
             }

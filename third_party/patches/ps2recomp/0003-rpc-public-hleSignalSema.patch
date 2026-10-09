@@ -1,0 +1,30 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+index 177c81a..3088d0f 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1155,6 +1155,13 @@ namespace ps2_syscalls
+         setReturnS32(ctx, moduleId);
+     }
+ 
++    // Signal an EE semaphore from host-side HLE code (e.g. an IOP server
++    // completing an async request, as the IOP would via iSignalSema).
++    bool hleSignalSema(uint32_t semaId)
++    {
++        return signalRpcCompletionSema(semaId);
++    }
++
+     void SifInitRpc(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
+         std::scoped_lock lock(g_rpc_mutex, g_dtx_rpc_mutex);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
+index a968a75..57b69d8 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
+@@ -6,6 +6,7 @@ namespace ps2_syscalls
+ {
+     void SifStopModule(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void SifLoadModule(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
++    bool hleSignalSema(uint32_t semaId);
+     void SifInitRpc(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void SifBindRpc(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void SifCallRpc(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
