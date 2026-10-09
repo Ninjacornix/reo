@@ -49,6 +49,7 @@ try {
         $env:REO_TRACE = '1'
         $env:REO_TRACE_FILE = Join-Path $OutDir 'trace.bin'
     }
+    $env:REO_ISO = $Iso  # raw sector access for the CDVD HLE (reo::CDVD)
     foreach ($p in $envPairs) { Set-Item -Path "Env:$($p[0])" -Value $p[1] }
 
     # Working directory = $OutDir so ./saves (memory card) stays inside the run folder.
@@ -82,7 +83,7 @@ try {
         $code = 1
     }
 } finally {
-    Remove-Item Env:REO_TRACE, Env:REO_TRACE_FILE -ErrorAction SilentlyContinue
+    Remove-Item Env:REO_TRACE, Env:REO_TRACE_FILE, Env:REO_ISO -ErrorAction SilentlyContinue
     foreach ($p in $envPairs) { Remove-Item -Path "Env:$($p[0])" -ErrorAction SilentlyContinue }
     Dismount-DiskImage -ImagePath $Iso | Out-Null
 }

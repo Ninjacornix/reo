@@ -1,0 +1,16 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
+index ec9bc62..ab55f9b 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
+@@ -377,7 +377,10 @@ namespace ps2_syscalls
+         if (sema->count > 0)
+         {
+             sema->count--;
+-            setReturnS32(ctx, KE_OK);
++            // The EE kernel returns the semaphore id on success: libcdvd (SLUS-20765
++            // sceCdSearchFile 0x100838) proceeds only if PollSema(id) == id, so KE_OK (0)
++            // made every disc search fail without an RPC.
++            setReturnS32(ctx, sid);
+             return;
+         }
+ 
