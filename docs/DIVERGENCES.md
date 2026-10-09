@@ -61,3 +61,56 @@ Result: **PASS** for the D1 exit criterion (leave `SifIopSync`). The game is not
 
 ### Next (D2 candidate)
 Identify the RPC loop: which server IDs and function numbers the game calls repeatedly around `0x1188a8`/`0x114644`, and what replies it expects. Likely IOP module loading (`DNAS280.IMG` IOPRP and the modules from `cdrom0:\IOP\MODULES\`) via the loadfile RPC. Reference: PCSX2 with PINE (verified working), US BIOS `scph39001.bin`. Compare the RPC sequence and the first differing reply.
+
+---
+
+## D2: SIF RPC mis-bound; FILEIO unserved; boot loops in `fioInit` — FIXED (HLE), next blocker found
+
+Date: 2026-10-09. Category: **bad HLE override** + **IOP SIF/HLE** (missing IOP server).
+
+### Observed (before)
+After D1, run `…-natural-iopreboot`: the hot PCs cycle through `0x1188a8` (inside `0x1187A0`), `0x117080`/`0x117818` and the semaphore syscalls `0x114644`/`0x114664`. About 128 `WaitSema`/`SignalSema` pairs on mutex semaphores 8/9. No `[SifCallRpc]`/`[sceSifSendCmd]` HLE log line at all.
+
+### Analysis (Ghidra + PCSX2/PINE reference; confidence: **confirmed**)
+
+| Address | Name | Evidence |
+|---|---|---|
+| `0x00117080` | `SifInitRpc(mode)` | Sets the init flag `0x209D50`, calls `SifInitCmd` (`0x116920`), and builds the RPC packet pool at `0x25C9C0` (table at +0x4, **count 0x20 at +0x8**). Registers cmd handlers `0x80000008/9/A/C`, then the MSCOM handshake (`0x80000002`). |
+| `0x00117248` | `_rpc_get_packet` | Scans the pool; returns NULL when count == 0. |
+| `0x001179E8` | `SifCallRpc` | Gets a packet (returns **-1** if NULL), then sends `SIF_CMD_RPC_CALL` `0x8000000A` via the game's `SifSendCmd` (`0x116e08`) and waits on a semaphore for the IOP reply. |
+| `0x001187A0` | `fioInit` (EE fileio client) | `SifInitRpc`; adds cmd handlers `0x80000011`/`0x80000013`; `SifBindRpc(client, 0x80000001 /*FILEIO*/)`; clears a 0x200-byte table (the hot `0x1188a8`); `SifCallRpc(fno 0xFF, send 8, recv 8)`. Stores reply word0 at `0x25E168`; sets `0x209DE0 = (word1 == 2)`. |
+| `0x001189A8` | fileio version check | `memcmp` of the reply word0 against `"2800"` (`0x209D2C`, the tail of `"PsIIlibkernl2800"` at `0x209D20`) |
+
+**PCSX2 reference** (2.2.0, same ISO, read over PINE while running):
+- `0x25C9C8` (pool count) = **32**
+- `0x25E168` = **`"2800"`**
+- `0x209DE0` = **1** (reply word1 == 2)
+- `0x209DDC` = 1
+
+In reo:
+- **Upstream bound `0x117080` to `sceSifBindRpc`** (comment "the RPC init/handshake"). The pool was never initialized, so `SifCallRpc` returned -1 and `fioInit` retried forever.
+- Even with a pool, the game's raw SIF command transport is not emulated.
+- The runtime's IOP HLE serves only the sound driver and `libsd`. The runtime never called `HwBridgeVtable::onSifRpc`, so reo's bridge servers (CDVD/PAD/MC) were dead code, and **no FILEIO server existed**.
+
+### Fix
+- `recomp/overrides/reo_override.cpp`: `0x117080` → `ps2_syscalls::SifInitRpc` (HLE); `0x1179E8` → `ps2_syscalls::sceSifCallRpc` (HLE). The libsif RPC family (init/bind/call) now consistently uses the runtime HLE.
+- `recomp/config/outbreak.toml`: `sub_001179E8` added to `skip` so direct calls hit the stub and its binding. `sub_001179E8_0x1179e8.cpp` is replaced with the pinned recompiler's stub output; headers are unchanged (the declaration already exists in `ps2_recompiled_functions.h`).
+- `third_party/patches/ps2recomp/0002-…`: the runtime `SifCallRpc` falls back to `HwBridgeVtable::onSifRpc` when its own IOP HLE does not handle a server.
+- `recomp/overrides/reo_hw_bridge.cpp`: new FILEIO server (`0x80000001`). `fno 0xFF` replies `{"2800", 2}` (matches PCSX2). Every call is logged with hex + text; other functions return -1 (no fake success).
+
+HLE status: FILEIO init only. Open/read/etc. are **not implemented**; they fail explicitly.
+
+### Observed (after)
+Run `build-ninja\smoke\20261009-125501-natural-d2b` (`REO_NATURAL=1`, 60 s):
+```
+[SifInitRpc] Initialized
+[SifCallRpc] sid=0x80000592 rpcNum=0x0 → [HW-BRIDGE:CDVD] cdInit          (bridge reachable)
+[SifCallRpc] sid=0x80000001 rpcNum=0xff → [HW-BRIDGE:FIO] fno=0xFF       (once; version check passes)
+[HW-BRIDGE:FIO] fno=0x0 send=0x0025CA40/1048 recv=0x0025D680/4 data=[0B 00 00 00 50 FE FE 01 04 00 00 00 01 00 00 00 00 00 00 00 …]
+                "cdrom0:\IOP\MODULES\DRIVE.DAT;1"
+[CreateSema] id=11 init=0 … [WaitSema:block] tid=1 sid=11 pc=0x114664 ra=0x118c68
+```
+Result: **PASS** for D2 (`fioInit` completes once, matching PCSX2's state; the game proceeds to its first file open).
+
+### Next (D3)
+FILEIO open of `cdrom0:\IOP\MODULES\DRIVE.DAT;1`. Request layout to decode: word0 `0x0B`, `0x01FEFE50` (EE address), `4`, `1`, `0`, path at +0x14. After the call the EE blocks on semaphore 11 (`ra 0x118c68`). It is presumably signaled by the fileio cmd handlers registered in `fioInit` (`0x80000011` at `0x118268`, `0x80000013` at `0x118758`) when the IOP reports completion. Implement open/read/lseek/close against the disc (reo `CDVD` maps 85 disc files) and the completion signal, verified against PCSX2 (`DRIVE.DAT` contents/size and the reply layout).
