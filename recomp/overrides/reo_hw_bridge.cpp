@@ -905,6 +905,75 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
         return true;
     }
 
+    // ── cdvdfsv (IOP CD/DVD file server) used by the game's libcdvd ──────────
+    // Layouts per Play! (jpd002/Play-, Source/iop/Iop_Cdvdfsv.cpp). Reads are completed
+    // synchronously (the runtime then runs any end callback), so libcdvd's sceCdSync
+    // sees them done. Sector data comes from the disc image (reo::CDVD, REO_ISO).
+    case 0x80000593: { // S-commands
+        static int sLog = 0;
+        if (sLog++ < 40) fprintf(stderr, "[HW-BRIDGE:CDS] fn=0x%x\n", rpcNum);
+        uint32_t r0 = 1, r1 = 0;
+        switch (rpcNum) {
+        case 0x03: r0 = 0x14; break;   // GetDiskType: PS2 DVD
+        case 0x04: r0 = 0; break;      // GetError: none
+        case 0x0C: r0 = 0x0A; break;   // Status: paused
+        case 0x05: r0 = 1; r1 = 0; break; // TrayReq: no tray change
+        default: r0 = 1; break;        // 0x16 Break, 0x22 SetMediaMode, 0x27 DualInfo...
+        }
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, r0);
+        if (recvBuf && recvSize >= 8) rdramWrite32(rdram, recvBuf + 4, r1);
+        return true;
+    }
+    case 0x80000595: { // N-commands
+        static int nLog = 0;
+        const uint32_t a0 = sendBuf ? rdramRead32(rdram, sendBuf + 0) : 0;
+        const uint32_t a1 = sendBuf ? rdramRead32(rdram, sendBuf + 4) : 0;
+        const uint32_t a2 = sendBuf ? rdramRead32(rdram, sendBuf + 8) : 0;
+        if (rpcNum == 0x01) { // Read {sector, count, dst, mode}
+            const uint32_t dst = a2 & PS2_RAM_MASK;
+            bool ok = false;
+            if (self && self->m_cdvd && a1 != 0 && a1 <= 0x4000 &&
+                static_cast<uint64_t>(dst) + static_cast<uint64_t>(a1) * 2048u <= PS2_RAM_SIZE)
+                ok = self->m_cdvd->read_sectors(a0, a1, rdram + dst);
+            if (nLog++ < 60)
+                fprintf(stderr, "[HW-BRIDGE:CDN] read lsn=%u n=%u dst=0x%08X -> %s\n", a0, a1, a2, ok ? "ok" : "FAIL");
+            if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, 0);
+            return true;
+        }
+        if (nLog++ < 60) fprintf(stderr, "[HW-BRIDGE:CDN] fn=0x%x args=%08X %08X %08X\n", rpcNum, a0, a1, a2);
+        uint32_t r0 = 1;
+        if (rpcNum == 0x0E) r0 = 2; // NDiskReady: ready
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, r0);
+        return true;
+    }
+    case 0x80000596: // SetPowerOffCallback etc.
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, 1);
+        return true;
+    case 0x80000597: { // SearchFile: path at +0x24 (+0x20 for 0x124-byte packets)
+        const uint32_t pathOff = (sendSize == 0x124) ? 0x20u : 0x24u;
+        std::string path;
+        if (sendBuf) {
+            for (uint32_t i = 0; i < 0x100; ++i) {
+                const uint32_t a = (sendBuf + pathOff + i) & PS2_RAM_MASK;
+                if (a >= PS2_RAM_SIZE || rdram[a] == 0) break;
+                path.push_back(static_cast<char>(rdram[a]));
+            }
+        }
+        uint32_t lba = 0, size = 0;
+        const bool found = self && self->m_cdvd && !path.empty() && self->m_cdvd->search_file(path, lba, size);
+        if (found && sendBuf) {
+            rdramWrite32(rdram, sendBuf + 0, lba);   // sceCdlFILE.lsn
+            rdramWrite32(rdram, sendBuf + 4, size);  // sceCdlFILE.size
+        }
+        fprintf(stderr, "[HW-BRIDGE:CDSEARCH] \"%s\" -> %s lsn=%u size=%u\n", path.c_str(),
+                found ? "found" : "NOT FOUND", lba, size);
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, found ? 1u : 0u);
+        return true;
+    }
+    case 0x8000059A: case 0x8000059C: // DiskReady: 2 = ready
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, 2);
+        return true;
+
     case SIF_CDVD: {
         static int cdvdLog = 0;
         if (cdvdLog < 50) {
