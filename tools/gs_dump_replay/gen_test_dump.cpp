@@ -81,6 +81,10 @@ int main(int argc, char* argv[]) {
     write_u32(0xDEADBEEF);  // CRC (dummy)
     write_u32(0);            // state_size = 0 (no frozen state)
 
+    // GS privileged register block (8192 bytes) follows the state in PCSX2 dumps;
+    // reo-gs-replay reads it before the records. All zero = replay defaults.
+    for (int i = 0; i < 8192 / 8; ++i) write_u64(0);
+
     // ── Record 1: Set up registers via PATH3 A+D mode ─────
     // GIF tag: nloop=4 (4 register writes), flg=0 (PACKED), nreg=1, reg=AD(0xE)
     write_u8(0);  // type = Transfer

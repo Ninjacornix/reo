@@ -97,6 +97,12 @@ void ReoTraceLogger::write_event(uint8_t type, const void* payload, uint32_t pay
     if (payload && payload_size > 0) {
         fwrite(payload, 1, payload_size, m_file);
     }
+
+    // The runtime is usually terminated rather than shut down cleanly; flush
+    // periodically so a killed or crashed run still leaves a usable trace.
+    if ((seq & 0xFF) == 0xFF) {
+        fflush(m_file);
+    }
 }
 
 // ── Event loggers ───────────────────────────────────────────────────

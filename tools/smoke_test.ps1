@@ -66,9 +66,14 @@ try {
     $exited = $proc.WaitForExit($Seconds * 1000)
     $elapsed = [math]::Round($sw.Elapsed.TotalSeconds, 1)
     if (-not $exited) {
-        Stop-Process -Id $proc.Id -Force
-        $proc.WaitForExit()
-        $result = "RUNNING at timeout (${Seconds}s), killed"
+        # Ask the window to close first so the runtime shuts down (flushes traces/logs).
+        $how = 'closed'
+        if (-not ($proc.CloseMainWindow() -and $proc.WaitForExit(10000))) {
+            Stop-Process -Id $proc.Id -Force
+            $proc.WaitForExit()
+            $how = 'killed'
+        }
+        $result = "RUNNING at timeout (${Seconds}s), $how"
         $code = 0
     } else {
         $result = ('EXITED after {0}s, code {1} (0x{1:X8})' -f $elapsed, $proc.ExitCode)
