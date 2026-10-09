@@ -80,6 +80,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         overrides/reo_hw_bridge.cpp
         overrides/reo_trace_logger.cpp
         overrides/reo_netbio.cpp
+        overrides/reo_extra_functions.cpp
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_parser.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/amo_parser.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_renderer.cpp"
