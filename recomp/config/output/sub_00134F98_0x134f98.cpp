@@ -6,20 +6,31 @@
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+#ifdef PS2_FUNCTION_LOG_TRACKER
+#include "ps2_log.h"
+#endif
+
 // Function: sub_00134F98
 // Address: 0x134f98 - 0x134fa0
 void sub_00134F98_0x134f98(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
+#ifdef PS2_FUNCTION_LOG_TRACKER
+    PS_LOG_ENTRY("sub_00134F98_0x134f98");
+#endif
 
     ctx->pc = 0x134f98u;
 
-    // 0x134f98: 0x3e00008
+    // 0x134f98: 0x3e00008  jr          $ra
     ctx->pc = 0x134F98u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = 0x134F9Cu;
-        SET_GPR_U32(ctx, 2, READ32(ADD32(GPR_U32(ctx, 4), 12)));
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x134F98u;
+            // 0x134f9c: 0x8c82000c  lw          $v0, 0xC($a0) (Delay Slot)
+        SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 12)));
+        ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         return;
     }
     ctx->pc = 0x134FA0u;
+    ctx->pc = GPR_U32(ctx, 31); return;
 }

@@ -6,40 +6,47 @@
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+#ifdef PS2_FUNCTION_LOG_TRACKER
+#include "ps2_log.h"
+#endif
+
 // Function: sub_001EA000
 // Address: 0x1ea000 - 0x1ea02c
 void sub_001EA000_0x1ea000(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
+#ifdef PS2_FUNCTION_LOG_TRACKER
+    PS_LOG_ENTRY("sub_001EA000_0x1ea000");
+#endif
 
     ctx->pc = 0x1ea000u;
 
-    // 0x1ea000: 0x27bdffe0
+    // 0x1ea000: 0x27bdffe0  addiu       $sp, $sp, -0x20
     ctx->pc = 0x1ea000u;
-    SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 4294967264));
-    // 0x1ea004: 0xffbe0010
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 4294967264));
+    // 0x1ea004: 0xffbe0010  sd          $fp, 0x10($sp)
     ctx->pc = 0x1ea004u;
     WRITE64(ADD32(GPR_U32(ctx, 29), 16), GPR_U64(ctx, 30));
-    // 0x1ea008: 0x3a0f02d
+    // 0x1ea008: 0x3a0f02d  daddu       $fp, $sp, $zero
     ctx->pc = 0x1ea008u;
     SET_GPR_U64(ctx, 30, (uint64_t)GPR_U64(ctx, 29) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1ea00c: 0x40024800
+    // 0x1ea00c: 0x40024800  mfc0        $v0, Count
     ctx->pc = 0x1ea00cu;
-    SET_GPR_U32(ctx, 2, ctx->cop0_count);
-    // 0x1ea010: 0xafc20000
+    SET_GPR_S32(ctx, 2, (int32_t)ctx->cop0_count);
+    // 0x1ea010: 0xafc20000  sw          $v0, 0x0($fp)
     ctx->pc = 0x1ea010u;
     WRITE32(ADD32(GPR_U32(ctx, 30), 0), GPR_U32(ctx, 2));
-    // 0x1ea014: 0x8fc20000
+    // 0x1ea014: 0x8fc20000  lw          $v0, 0x0($fp)
     ctx->pc = 0x1ea014u;
-    SET_GPR_U32(ctx, 2, READ32(ADD32(GPR_U32(ctx, 30), 0)));
-    // 0x1ea018: 0x3c0e82d
+    SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 30), 0)));
+    // 0x1ea018: 0x3c0e82d  daddu       $sp, $fp, $zero
     ctx->pc = 0x1ea018u;
     SET_GPR_U64(ctx, 29, (uint64_t)GPR_U64(ctx, 30) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1ea01c: 0xdfbe0010
+    // 0x1ea01c: 0xdfbe0010  ld          $fp, 0x10($sp)
     ctx->pc = 0x1ea01cu;
     SET_GPR_U64(ctx, 30, READ64(ADD32(GPR_U32(ctx, 29), 16)));
-    // 0x1ea020: 0x27bd0020
+    // 0x1ea020: 0x27bd0020  addiu       $sp, $sp, 0x20
     ctx->pc = 0x1ea020u;
-    SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 32));
-    // 0x1ea024: 0x3e00008
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 32));
+    // 0x1ea024: 0x3e00008  jr          $ra
     ctx->pc = 0x1EA024u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
@@ -47,4 +54,5 @@ void sub_001EA000_0x1ea000(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         return;
     }
     ctx->pc = 0x1EA02Cu;
+    ctx->pc = GPR_U32(ctx, 31); return;
 }

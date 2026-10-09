@@ -6,19 +6,26 @@
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+#ifdef PS2_FUNCTION_LOG_TRACKER
+#include "ps2_log.h"
+#endif
+
 // Function: sub_0011DD80
 // Address: 0x11dd80 - 0x11dd90
 void sub_0011DD80_0x11dd80(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
+#ifdef PS2_FUNCTION_LOG_TRACKER
+    PS_LOG_ENTRY("sub_0011DD80_0x11dd80");
+#endif
 
     ctx->pc = 0x11dd80u;
 
-    // 0x11dd80: 0x24030074
+    // 0x11dd80: 0x24030074  addiu       $v1, $zero, 0x74
     ctx->pc = 0x11dd80u;
-    SET_GPR_S32(ctx, 3, ADD32(GPR_U32(ctx, 0), 116));
-    // 0x11dd84: 0xc
+    SET_GPR_S32(ctx, 3, (int32_t)ADD32(GPR_U32(ctx, 0), 116));
+    // 0x11dd84: 0xc  syscall     0
     ctx->pc = 0x11dd84u;
     runtime->handleSyscall(rdram, ctx, 0x0u);
-    // 0x11dd88: 0x3e00008
+    // 0x11dd88: 0x3e00008  jr          $ra
     ctx->pc = 0x11DD88u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
@@ -26,4 +33,5 @@ void sub_0011DD80_0x11dd80(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         return;
     }
     ctx->pc = 0x11DD90u;
+    ctx->pc = GPR_U32(ctx, 31); return;
 }

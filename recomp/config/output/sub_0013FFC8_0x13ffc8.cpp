@@ -6,42 +6,56 @@
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+#ifdef PS2_FUNCTION_LOG_TRACKER
+#include "ps2_log.h"
+#endif
+
 // Function: sub_0013FFC8
 // Address: 0x13ffc8 - 0x13ffe8
 void sub_0013FFC8_0x13ffc8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
+#ifdef PS2_FUNCTION_LOG_TRACKER
+    PS_LOG_ENTRY("sub_0013FFC8_0x13ffc8");
+#endif
 
     ctx->pc = 0x13ffc8u;
 
-    // 0x13ffc8: 0x3e00008
+    // 0x13ffc8: 0x3e00008  jr          $ra
     ctx->pc = 0x13FFC8u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = 0x13FFCCu;
-        SET_GPR_U32(ctx, 2, READ32(ADD32(GPR_U32(ctx, 4), 36)));
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x13FFC8u;
+            // 0x13ffcc: 0x8c820024  lw          $v0, 0x24($a0) (Delay Slot)
+        SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 36)));
+        ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         return;
     }
     ctx->pc = 0x13FFD0u;
-    // 0x13ffd0: 0x52840
+    // 0x13ffd0: 0x52840  sll         $a1, $a1, 1
     ctx->pc = 0x13ffd0u;
-    SET_GPR_U32(ctx, 5, SLL32(GPR_U32(ctx, 5), 1));
-    // 0x13ffd4: 0xa62821
+    SET_GPR_S32(ctx, 5, (int32_t)SLL32(GPR_U32(ctx, 5), 1));
+    // 0x13ffd4: 0xa62821  addu        $a1, $a1, $a2
     ctx->pc = 0x13ffd4u;
-    SET_GPR_U32(ctx, 5, ADD32(GPR_U32(ctx, 5), GPR_U32(ctx, 6)));
-    // 0x13ffd8: 0x52880
+    SET_GPR_S32(ctx, 5, (int32_t)ADD32(GPR_U32(ctx, 5), GPR_U32(ctx, 6)));
+    // 0x13ffd8: 0x52880  sll         $a1, $a1, 2
     ctx->pc = 0x13ffd8u;
-    SET_GPR_U32(ctx, 5, SLL32(GPR_U32(ctx, 5), 2));
-    // 0x13ffdc: 0xa42821
+    SET_GPR_S32(ctx, 5, (int32_t)SLL32(GPR_U32(ctx, 5), 2));
+    // 0x13ffdc: 0xa42821  addu        $a1, $a1, $a0
     ctx->pc = 0x13ffdcu;
-    SET_GPR_U32(ctx, 5, ADD32(GPR_U32(ctx, 5), GPR_U32(ctx, 4)));
-    // 0x13ffe0: 0x3e00008
+    SET_GPR_S32(ctx, 5, (int32_t)ADD32(GPR_U32(ctx, 5), GPR_U32(ctx, 4)));
+    // 0x13ffe0: 0x3e00008  jr          $ra
     ctx->pc = 0x13FFE0u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = 0x13FFE4u;
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x13FFE0u;
+            // 0x13ffe4: 0xaca70028  sw          $a3, 0x28($a1) (Delay Slot)
         WRITE32(ADD32(GPR_U32(ctx, 5), 40), GPR_U32(ctx, 7));
+        ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         return;
     }
     ctx->pc = 0x13FFE8u;
+    ctx->pc = GPR_U32(ctx, 31); return;
 }

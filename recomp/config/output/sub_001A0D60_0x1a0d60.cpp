@@ -6,49 +6,81 @@
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+#ifdef PS2_FUNCTION_LOG_TRACKER
+#include "ps2_log.h"
+#endif
+
 // Function: sub_001A0D60
 // Address: 0x1a0d60 - 0x1a0d90
 void sub_001A0D60_0x1a0d60(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
+#ifdef PS2_FUNCTION_LOG_TRACKER
+    PS_LOG_ENTRY("sub_001A0D60_0x1a0d60");
+#endif
 
     ctx->pc = 0x1a0d60u;
 
-    // 0x1a0d60: 0x80282d
+    // 0x1a0d60: 0x80282d  daddu       $a1, $a0, $zero
     ctx->pc = 0x1a0d60u;
     SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 4) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1a0d64: 0x3c04002b
+    // 0x1a0d64: 0x3c04002b  lui         $a0, 0x2B
     ctx->pc = 0x1a0d64u;
-    SET_GPR_U32(ctx, 4, ((uint32_t)43 << 16));
-    // 0x1a0d68: 0x806849c
+    SET_GPR_S32(ctx, 4, (int32_t)((uint32_t)43 << 16));
+    // 0x1a0d68: 0x806849c  j           func_1A1270
     ctx->pc = 0x1A0D68u;
     ctx->pc = 0x1A0D6Cu;
-    SET_GPR_S32(ctx, 4, ADD32(GPR_U32(ctx, 4), 4294967024));
+    ctx->in_delay_slot = true; ctx->branch_pc = 0x1A0D68u;
+            // 0x1a0d6c: 0x2484fef0  addiu       $a0, $a0, -0x110 (Delay Slot)
+        SET_GPR_S32(ctx, 4, (int32_t)ADD32(GPR_U32(ctx, 4), 4294967024));
+        ctx->in_delay_slot = false;
     ctx->pc = 0x1A1270u;
-    entry_1a1270_0x1a1330(rdram, ctx, runtime); return;
+    if (runtime->hasFunction(0x1A1270u)) {
+        auto targetFn = runtime->lookupFunction(0x1A1270u);
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_001A1270_0x1a1270(rdram, ctx, runtime); return;
+    }
     ctx->pc = 0x1A0D70u;
-    // 0x1a0d70: 0x80282d
+    // 0x1a0d70: 0x80282d  daddu       $a1, $a0, $zero
     ctx->pc = 0x1a0d70u;
     SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 4) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1a0d74: 0x3c04002b
+    // 0x1a0d74: 0x3c04002b  lui         $a0, 0x2B
     ctx->pc = 0x1a0d74u;
-    SET_GPR_U32(ctx, 4, ((uint32_t)43 << 16));
-    // 0x1a0d78: 0x80684cc
+    SET_GPR_S32(ctx, 4, (int32_t)((uint32_t)43 << 16));
+    // 0x1a0d78: 0x80684cc  j           func_1A1330
     ctx->pc = 0x1A0D78u;
     ctx->pc = 0x1A0D7Cu;
-    SET_GPR_S32(ctx, 4, ADD32(GPR_U32(ctx, 4), 4294967024));
+    ctx->in_delay_slot = true; ctx->branch_pc = 0x1A0D78u;
+            // 0x1a0d7c: 0x2484fef0  addiu       $a0, $a0, -0x110 (Delay Slot)
+        SET_GPR_S32(ctx, 4, (int32_t)ADD32(GPR_U32(ctx, 4), 4294967024));
+        ctx->in_delay_slot = false;
     ctx->pc = 0x1A1330u;
-    entry_1a1330_0x1a1370(rdram, ctx, runtime); return;
+    if (runtime->hasFunction(0x1A1330u)) {
+        auto targetFn = runtime->lookupFunction(0x1A1330u);
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_001A1330_0x1a1330(rdram, ctx, runtime); return;
+    }
     ctx->pc = 0x1A0D80u;
-    // 0x1a0d80: 0x80282d
+    // 0x1a0d80: 0x80282d  daddu       $a1, $a0, $zero
     ctx->pc = 0x1a0d80u;
     SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 4) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1a0d84: 0x3c04002b
+    // 0x1a0d84: 0x3c04002b  lui         $a0, 0x2B
     ctx->pc = 0x1a0d84u;
-    SET_GPR_U32(ctx, 4, ((uint32_t)43 << 16));
-    // 0x1a0d88: 0x80684dc
+    SET_GPR_S32(ctx, 4, (int32_t)((uint32_t)43 << 16));
+    // 0x1a0d88: 0x80684dc  j           func_1A1370
     ctx->pc = 0x1A0D88u;
     ctx->pc = 0x1A0D8Cu;
-    SET_GPR_S32(ctx, 4, ADD32(GPR_U32(ctx, 4), 4294967024));
+    ctx->in_delay_slot = true; ctx->branch_pc = 0x1A0D88u;
+            // 0x1a0d8c: 0x2484fef0  addiu       $a0, $a0, -0x110 (Delay Slot)
+        SET_GPR_S32(ctx, 4, (int32_t)ADD32(GPR_U32(ctx, 4), 4294967024));
+        ctx->in_delay_slot = false;
     ctx->pc = 0x1A1370u;
-    entry_1a1370_0x1a13f0(rdram, ctx, runtime); return;
+    if (runtime->hasFunction(0x1A1370u)) {
+        auto targetFn = runtime->lookupFunction(0x1A1370u);
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_001A1370_0x1a1370(rdram, ctx, runtime); return;
+    }
     ctx->pc = 0x1A0D90u;
+    ctx->pc = GPR_U32(ctx, 31); return;
 }

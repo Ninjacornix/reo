@@ -6,37 +6,44 @@
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+#ifdef PS2_FUNCTION_LOG_TRACKER
+#include "ps2_log.h"
+#endif
+
 // Function: sub_001F1B34
 // Address: 0x1f1b34 - 0x1f1b84
 void sub_001F1B34_0x1f1b34(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
+#ifdef PS2_FUNCTION_LOG_TRACKER
+    PS_LOG_ENTRY("sub_001F1B34_0x1f1b34");
+#endif
 
     ctx->pc = 0x1f1b34u;
 
-    // 0x1f1b34: 0x27bdfff0
+    // 0x1f1b34: 0x27bdfff0  addiu       $sp, $sp, -0x10
     ctx->pc = 0x1f1b34u;
-    SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 4294967280));
-    // 0x1f1b38: 0xffbe0000
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 4294967280));
+    // 0x1f1b38: 0xffbe0000  sd          $fp, 0x0($sp)
     ctx->pc = 0x1f1b38u;
     WRITE64(ADD32(GPR_U32(ctx, 29), 0), GPR_U64(ctx, 30));
-    // 0x1f1b3c: 0x3a0f02d
+    // 0x1f1b3c: 0x3a0f02d  daddu       $fp, $sp, $zero
     ctx->pc = 0x1f1b3cu;
     SET_GPR_U64(ctx, 30, (uint64_t)GPR_U64(ctx, 29) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1f1b40: 0x80102d
+    // 0x1f1b40: 0x80102d  daddu       $v0, $a0, $zero
     ctx->pc = 0x1f1b40u;
     SET_GPR_U64(ctx, 2, (uint64_t)GPR_U64(ctx, 4) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1f1b44: 0x94420008
+    // 0x1f1b44: 0x94420008  lhu         $v0, 0x8($v0)
     ctx->pc = 0x1f1b44u;
     SET_GPR_U32(ctx, 2, (uint16_t)READ16(ADD32(GPR_U32(ctx, 2), 8)));
-    // 0x1f1b48: 0x3c0e82d
+    // 0x1f1b48: 0x3c0e82d  daddu       $sp, $fp, $zero
     ctx->pc = 0x1f1b48u;
     SET_GPR_U64(ctx, 29, (uint64_t)GPR_U64(ctx, 30) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1f1b4c: 0xdfbe0000
+    // 0x1f1b4c: 0xdfbe0000  ld          $fp, 0x0($sp)
     ctx->pc = 0x1f1b4cu;
     SET_GPR_U64(ctx, 30, READ64(ADD32(GPR_U32(ctx, 29), 0)));
-    // 0x1f1b50: 0x27bd0010
+    // 0x1f1b50: 0x27bd0010  addiu       $sp, $sp, 0x10
     ctx->pc = 0x1f1b50u;
-    SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 16));
-    // 0x1f1b54: 0x3e00008
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
+    // 0x1f1b54: 0x3e00008  jr          $ra
     ctx->pc = 0x1F1B54u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
@@ -44,31 +51,31 @@ void sub_001F1B34_0x1f1b34(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         return;
     }
     ctx->pc = 0x1F1B5Cu;
-    // 0x1f1b5c: 0x27bdfff0
+    // 0x1f1b5c: 0x27bdfff0  addiu       $sp, $sp, -0x10
     ctx->pc = 0x1f1b5cu;
-    SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 4294967280));
-    // 0x1f1b60: 0xffbe0000
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 4294967280));
+    // 0x1f1b60: 0xffbe0000  sd          $fp, 0x0($sp)
     ctx->pc = 0x1f1b60u;
     WRITE64(ADD32(GPR_U32(ctx, 29), 0), GPR_U64(ctx, 30));
-    // 0x1f1b64: 0x3a0f02d
+    // 0x1f1b64: 0x3a0f02d  daddu       $fp, $sp, $zero
     ctx->pc = 0x1f1b64u;
     SET_GPR_U64(ctx, 30, (uint64_t)GPR_U64(ctx, 29) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1f1b68: 0x80102d
+    // 0x1f1b68: 0x80102d  daddu       $v0, $a0, $zero
     ctx->pc = 0x1f1b68u;
     SET_GPR_U64(ctx, 2, (uint64_t)GPR_U64(ctx, 4) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1f1b6c: 0x8c420004
+    // 0x1f1b6c: 0x8c420004  lw          $v0, 0x4($v0)
     ctx->pc = 0x1f1b6cu;
-    SET_GPR_U32(ctx, 2, READ32(ADD32(GPR_U32(ctx, 2), 4)));
-    // 0x1f1b70: 0x3c0e82d
+    SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 2), 4)));
+    // 0x1f1b70: 0x3c0e82d  daddu       $sp, $fp, $zero
     ctx->pc = 0x1f1b70u;
     SET_GPR_U64(ctx, 29, (uint64_t)GPR_U64(ctx, 30) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x1f1b74: 0xdfbe0000
+    // 0x1f1b74: 0xdfbe0000  ld          $fp, 0x0($sp)
     ctx->pc = 0x1f1b74u;
     SET_GPR_U64(ctx, 30, READ64(ADD32(GPR_U32(ctx, 29), 0)));
-    // 0x1f1b78: 0x27bd0010
+    // 0x1f1b78: 0x27bd0010  addiu       $sp, $sp, 0x10
     ctx->pc = 0x1f1b78u;
-    SET_GPR_S32(ctx, 29, ADD32(GPR_U32(ctx, 29), 16));
-    // 0x1f1b7c: 0x3e00008
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
+    // 0x1f1b7c: 0x3e00008  jr          $ra
     ctx->pc = 0x1F1B7Cu;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
@@ -76,4 +83,5 @@ void sub_001F1B34_0x1f1b34(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         return;
     }
     ctx->pc = 0x1F1B84u;
+    ctx->pc = GPR_U32(ctx, 31); return;
 }

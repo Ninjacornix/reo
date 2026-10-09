@@ -6,13 +6,20 @@
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+#ifdef PS2_FUNCTION_LOG_TRACKER
+#include "ps2_log.h"
+#endif
+
 // Function: sub_00132FE0
 // Address: 0x132fe0 - 0x132fe8
 void sub_00132FE0_0x132fe0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
+#ifdef PS2_FUNCTION_LOG_TRACKER
+    PS_LOG_ENTRY("sub_00132FE0_0x132fe0");
+#endif
 
     ctx->pc = 0x132fe0u;
 
-    // 0x132fe0: 0x3e00008
+    // 0x132fe0: 0x3e00008  jr          $ra
     ctx->pc = 0x132FE0u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
@@ -20,4 +27,5 @@ void sub_00132FE0_0x132fe0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         return;
     }
     ctx->pc = 0x132FE8u;
+    ctx->pc = GPR_U32(ctx, 31); return;
 }

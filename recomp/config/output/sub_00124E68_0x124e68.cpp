@@ -6,30 +6,58 @@
 #include "ps2_syscalls.h"
 #include "ps2_stubs.h"
 
+#ifdef PS2_FUNCTION_LOG_TRACKER
+#include "ps2_log.h"
+#endif
+
 // Function: sub_00124E68
 // Address: 0x124e68 - 0x124e78
 void sub_00124E68_0x124e68(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
+#ifdef PS2_FUNCTION_LOG_TRACKER
+    PS_LOG_ENTRY("sub_00124E68_0x124e68");
+#endif
+
+    switch (ctx->pc) {
+        case 0x124e70u: goto label_124e70;
+        default: break;
+    }
 
     ctx->pc = 0x124e68u;
 
-    // 0x124e68: 0x3e00008
+    // 0x124e68: 0x3e00008  jr          $ra
     ctx->pc = 0x124E68u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = 0x124E6Cu;
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x124E68u;
+            // 0x124e6c: 0x84820098  lh          $v0, 0x98($a0) (Delay Slot)
         SET_GPR_S32(ctx, 2, (int16_t)READ16(ADD32(GPR_U32(ctx, 4), 152)));
+        ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
+        switch (jumpTarget) {
+            case 0x124E70u: goto label_124e70;
+            default: break;
+        }
         return;
     }
     ctx->pc = 0x124E70u;
-    // 0x124e70: 0x3e00008
+label_124e70:
+    // 0x124e70: 0x3e00008  jr          $ra
     ctx->pc = 0x124E70u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = 0x124E74u;
-        SET_GPR_U32(ctx, 2, READ32(ADD32(GPR_U32(ctx, 4), 20)));
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x124E70u;
+            // 0x124e74: 0x8c820014  lw          $v0, 0x14($a0) (Delay Slot)
+        SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 20)));
+        ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
+        switch (jumpTarget) {
+            case 0x124E70u: goto label_124e70;
+            default: break;
+        }
         return;
     }
     ctx->pc = 0x124E78u;
+    ctx->pc = GPR_U32(ctx, 31); return;
 }
