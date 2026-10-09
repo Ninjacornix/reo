@@ -6,7 +6,7 @@
 input = "game_data/SLUS_207.65"
 
 # Path to Ghidra exported function map (optional CSV)
-ghidra_output = ""
+ghidra_output = "recomp/config/outbreak_ghidra_functions.csv"  # Ghidra R5900 function map (tools/ghidra_export_functions.py)
 
 # Path to output directory
 output = "recomp/config/output/"
