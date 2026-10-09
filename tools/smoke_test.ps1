@@ -1,7 +1,9 @@
 # REO File #1 smoke run against a user-owned ISO (never copied or committed).
 #
 #   powershell -ExecutionPolicy Bypass -File tools\smoke_test.ps1 -Iso <path.iso> [-Seconds 60] [-Trace]
+#       [-Env REO_NATURAL=1,REO_HEADLESS=1] [-Label natural]
 #
+# -Env sets extra environment variables for the run only (recorded in summary.txt).
 # Mounts the ISO read-only, runs reo_recomp with --data <drive>:\ for a fixed time,
 # captures stdout/stderr under build\smoke\<timestamp>\, then kills the process and unmounts.
 # Exit code: 0 = still running at timeout (no crash), 1 = exited/crashed early, 2 = setup error.
@@ -10,7 +12,9 @@ param(
     [Parameter(Mandatory)][string]$Iso,
     [int]$Seconds = 60,
     [string]$Elf = 'game_data\SLUS_207.65',
-    [switch]$Trace
+    [switch]$Trace,
+    [string[]]$Env = @(),
+    [string]$Label = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,7 +27,13 @@ $Iso  = (Resolve-Path $Iso).Path
 
 foreach ($p in @($Exe, $Elf)) { if (-not (Test-Path $p)) { Write-Error "missing: $p"; exit 2 } }
 
-$OutDir = Join-Path (Split-Path -Parent (Split-Path -Parent $Exe)) ("smoke\" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$runName = (Get-Date -Format 'yyyyMMdd-HHmmss') + $(if ($Label) { "-$Label" } else { '' })
+$OutDir = Join-Path (Split-Path -Parent (Split-Path -Parent $Exe)) ("smoke\" + $runName)
+$envPairs = foreach ($kv in $Env) {
+    $k, $v = $kv -split '=', 2
+    if (-not $k -or $null -eq $v) { Write-Error "bad -Env entry '$kv' (want NAME=VALUE)"; exit 2 }
+    ,@($k, $v)
+}
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 $stdout = Join-Path $OutDir 'stdout.log'
 $stderr = Join-Path $OutDir 'stderr.log'
@@ -37,9 +47,17 @@ try {
         $env:REO_TRACE = '1'
         $env:REO_TRACE_FILE = Join-Path $OutDir 'trace.bin'
     }
+    foreach ($p in $envPairs) { Set-Item -Path "Env:$($p[0])" -Value $p[1] }
 
     # Working directory = $OutDir so ./saves (memory card) stays inside the run folder.
-    $runArgs = @('--game', 'file1', '--elf', "`"$Elf`"", '--data', "${drive}:\")
+    # Boot the ELF from the disc root when present: the HW bridge's CDVD maps the ELF's
+    # directory (captured inside loadELF), so this makes it see the whole disc.
+    $discElf = "${drive}:\" + (Split-Path -Leaf $Elf)
+    if (Test-Path $discElf) {
+        if ((Get-FileHash $discElf).Hash -ne (Get-FileHash $Elf).Hash) { Write-Error "ELF on disc differs from $Elf"; exit 2 }
+        $runElf = $discElf
+    } else { $runElf = $Elf }
+    $runArgs = @('--game', 'file1', '--elf', "`"$runElf`"", '--data', "${drive}:\")
     $sw = [Diagnostics.Stopwatch]::StartNew()
     $proc = Start-Process -FilePath $Exe -ArgumentList $runArgs -WorkingDirectory $OutDir `
         -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -WindowStyle Normal
@@ -58,6 +76,7 @@ try {
     }
 } finally {
     Remove-Item Env:REO_TRACE, Env:REO_TRACE_FILE -ErrorAction SilentlyContinue
+    foreach ($p in $envPairs) { Remove-Item -Path "Env:$($p[0])" -ErrorAction SilentlyContinue }
     Dismount-DiskImage -ImagePath $Iso | Out-Null
 }
 
@@ -66,6 +85,8 @@ $summary = @(
     "exe:     $Exe",
     "elf:     $Elf",
     "iso:     $Iso",
+    "env:     $($Env -join ' ')$(if ($Trace) { ' REO_TRACE=1' })",
+    "commit:  $(git -C $Root rev-parse --short HEAD) ($(git -C $Root branch --show-current))$(if (git -C $Root status --porcelain --untracked-files=no) { ' +dirty' })",
     "stdout:  $((Get-Item $stdout).Length) bytes",
     "stderr:  $((Get-Item $stderr).Length) bytes"
 )

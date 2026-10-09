@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 
 $PS2RECOMP_REPO = 'https://github.com/sp00nznet/PS2Recomp.git'
-$PS2RECOMP_PIN  = '5a778f7103445eb92554dd1a3315cd40861dde1c'   # gitlink in third_party/PS2Recomp
+$PS2RECOMP_PIN  = 'c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f'   # gitlink in third_party/PS2Recomp
 $ELFIO_REPO     = 'https://github.com/serge1/ELFIO.git'
 $ELFIO_PIN      = '7d30a22fc5aac06adfe7887ae57f3701b6b5f913'   # GIT_SHALLOW + commit pin fails in FetchContent
 

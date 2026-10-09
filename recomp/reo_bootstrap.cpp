@@ -139,6 +139,14 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "[BOOT] Failed to load ELF: %s\n", elf_path.c_str());
         return 1;
     }
+    // loadELF() -> configureIoPathsFromElf() resets host/cd/mc roots to the ELF's
+    // directory; restore --data and ./saves. (The HW bridge's CDVD already captured
+    // its root during loadELF, so it still uses the ELF directory.)
+    PS2Runtime::setIoPaths(paths);
+    printf("[BOOT] I/O roots: cd=%s host=%s mc=%s\n",
+           PS2Runtime::getIoPaths().cdRoot.string().c_str(),
+           PS2Runtime::getIoPaths().hostRoot.string().c_str(),
+           PS2Runtime::getIoPaths().mcRoot.string().c_str());
 
     // Register all recompiled functions
     printf("[BOOT] Registering recompiled functions...\n");
