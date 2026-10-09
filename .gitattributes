@@ -1,1 +1,2 @@
 *.patch -text
+recomp/config/*.csv -text
