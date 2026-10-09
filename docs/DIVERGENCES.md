@@ -202,3 +202,48 @@ Category: **recompilation coverage**. Confidence: confirmed.
 
 ### Recommended next step
 Regenerate `recomp/config/output/` with the pinned `ps2_recomp` using `ghidra_output` (a full Ghidra function-map CSV). This registers all known entries and brings the pinned codegen everywhere: resume entries, 64-bit branch compares, no all-labels jr switches. Preconditions: keep the 3 HLE-skipped libsif functions + `sub_001F73B0` (runaway) in `skip`, carry over the one remaining hand edit (`entry_1cb9a0` printf; inventory first), full rebuild (~1–2 h), re-run D1–D6 checks.
+
+---
+
+## D7: full regeneration with a Ghidra function map (branch `m1/ghidra-regen`)
+
+Category: **recompilation coverage + codegen correctness**. Supersedes the per-function extraction in D6.
+
+- `tools/ghidra_export_functions.py` exports Ghidra's function list (R5900 language) via ghidra-mcp HTTP (read-only) into `recomp/config/outbreak_ghidra_functions.csv`, which `outbreak.toml` feeds to `ps2_recomp` as `ghidra_output`. Names use the `sub_XXXXXXXX` convention so hand-written code keeps linking.
+- **Pitfall found:** 16 Ghidra functions have non-contiguous bodies (shared tails). Using `body_end` produced overlapping functions up to 114 KB long → generated files up to 178 MB (1.5 GB total). Fix: clamp each end to the next function's start → 75 MB total, largest file 1 MB.
+- **Coverage:** 4,824 → 20,122 registered entries, including resume entries for mid-function return addresses (e.g. `0x1351F0`), which the old codegen could not resume at. The pinned codegen also brings 64-bit branch compares everywhere.
+- Regeneration is deterministic (in-place output == scratch output, byte-identical).
+
+## D8: VU0 macro-mode multiply-accumulate translations wrong (PS2Recomp codegen) — FIXED
+
+Category: **recompiler codegen**. Confidence: confirmed against the VU instruction set semantics.
+
+- Compile error: generated code used `PS2_VOPMUL`, which the runtime never defined.
+- An audit of all 30 VU0 ACC-related translators against the rule "only the A-forms (ADDA/SUBA/MADDA/MSUBA/MULA/OPMULA) write ACC, under the dest mask; vd-forms never write ACC" found:
+  - `VMULA` used the outer product; `VMSUB` used the outer product and wrote ACC; `VOPMSUB` used an element-wise product and wrote ACC (patch 0007; `PS2_VOPMUL = a.yzx * b.zxy`).
+  - `MADD`, `MADDx/y/z/w`, `MADDq/i`, `MSUBx/y/z/w`, `MSUBq/i` overwrote ACC: **222 call sites** in the game's matrix/vector code (patch 0008).
+  - 19 A-forms wrote ACC without the dest mask (patch 0009).
+- After the fixes: 0 violations. Only the files using these instructions changed (4 + 41 + 41).
+- Validation status: semantic (spec + audit). No bit-level comparison against PCSX2 VU0 yet; that is the next step if 3D math diverges.
+
+## D9: stub-era overrides intercept direct calls in the new codegen — FIXED
+
+- With regenerated code, reo's `bind()` overrides also catch direct calls. Upstream's 80 stub-era bindings then shadowed real code, e.g. `0x107D28`/`0x107DA8` = malloc lock/unlock bound to `reo_ret0`. Boot stalled in `_malloc_r` with the sbrk pointer zeroed.
+- Fix: in `REO_NATURAL`/`REO_NO_OVERRIDES` only the libsif HLE bindings (D2) apply.
+- Result: boot again matches PCSX2 (sbrk pointer `0x01FBC000`), 1 IOP reboot, no "function not found" at `0x131070`.
+
+## D10: DECI2 debug channel unrouted; `libdbc` version check — FIXED (HLE)
+
+- Syscall `0x7C` (`Deci2Call`) was not dispatched. The game's TTY writer `0x115BE8` sends via `sceDeci2ReqSend`, then loops on `sceDeci2Poll` until a "write done" event that no host delivers. Patch 0010: dispatch `0x7C`; `kputs` and `ReqSend` payloads print as `[EE-TTY]`; `ReqSend` fails (retail behaviour, no host), so the writer returns.
+- The game's own TTY then reported `libdbc: Module version mismatch`. `libdbc` init (`0x188938`) binds `dbcman` servers `0x80001300/0x8000131B/0x8000131C` and needs `(version >> 8) == 3` from rpc `0x80001363` (`0x1888E0`). The bridge answers `0x0300` (minor unverified); other dbcman calls are logged and answered with zeros.
+
+## D11: undefined pointer-only functions (Ghidra gaps) — FIXED (pending build verification)
+
+- The next run hit `Function at address 0x139810 not found` (ra `0x13547c`): a 24-byte gap between Ghidra functions.
+- `tools/ghidra_fill_gaps.py` scans the ELF for non-zero code between mapped functions and has Ghidra create functions there, iterating until convergence. 8 rounds created **748 functions** (map: 5,586 functions, 20,832 registered entries). 21 gaps remain (creation rejected; likely data or switch-case tails: `0x102bf0, 0x12b5d0, 0x12fb98, 0x134db8, 0x13a058, 0x13a078, 0x13a180, 0x13eba8, 0x13f0f0, 0x13f1e0, 0x147e38, 0x148078, 0x15cc80, 0x164410, 0x164580, 0x164820, 0x176c78, 0x191660, 0x197480, 0x1b2120`, …).
+- `recomp/CMakeLists.txt` globs now use `CONFIGURE_DEPENDS` (new generated files were not picked up without a reconfigure).
+
+## Open (as of D11)
+- CRI middleware: `[EE-TTY] DTX_Create: can't create DTX of server` / `E0100302: SJX_Init can't create DTX`, IOP server `0x90000200` (unhandled, func 2). The runtime has a configurable "DTX compat" layer to investigate.
+- Unhandled sid `0x00000001` func 16 (sound-driver state sid in the runtime's table).
+- Hot loop at `0x141380` with `st@2B0EC0=1` after the above.
