@@ -528,7 +528,8 @@ void ReoHwBridge::processVifCommands(const uint8_t* data, uint32_t size, const u
 
         case 0x14: // MSCAL — Start VU1 microprogram at immediate * 8
         {
-            uint32_t vuAddr = (uint32_t)immediate * 8;
+            // VU1 TPC is 11 bits: the address wraps (PCSX2 vu1ExecMicro: addr & 0x7FF, << 3).
+            uint32_t vuAddr = ((uint32_t)immediate & 0x7FFu) * 8;
             pos += 4;
 
             m_vu1Runs++;
@@ -545,7 +546,8 @@ void ReoHwBridge::processVifCommands(const uint8_t* data, uint32_t size, const u
         }
         case 0x15: // MSCALF
         {
-            uint32_t vuAddr = (uint32_t)immediate * 8;
+            // VU1 TPC is 11 bits: the address wraps (PCSX2 vu1ExecMicro: addr & 0x7FF, << 3).
+            uint32_t vuAddr = ((uint32_t)immediate & 0x7FFu) * 8;
             pos += 4;
 
             m_vu1Runs++;

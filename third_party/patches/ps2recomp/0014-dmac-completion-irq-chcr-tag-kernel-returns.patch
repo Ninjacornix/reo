@@ -1,0 +1,174 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index 30cb1d3..61a6d2f 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -21,6 +21,8 @@ namespace ps2_syscalls
+         std::atomic<bool> g_irq_worker_running{false};
+         uint32_t g_enabled_intc_mask = 0xFFFFFFFFu;
+         uint32_t g_enabled_dmac_mask = 0xFFFFFFFFu;
++        std::atomic<uint32_t> g_pending_dmac_mask{0u};
++        uint8_t *g_irq_worker_rdram = nullptr;
+         uint64_t g_vsync_tick_counter = 0u;
+         VSyncFlagRegistration g_vsync_registration{};
+     }
+@@ -321,13 +323,27 @@ namespace ps2_syscalls
+         {
+             {
+                 std::unique_lock<std::mutex> lock(g_irq_worker_mutex);
+-                if (g_irq_worker_cv.wait_until(lock, nextTick, []()
+-                                               { return g_irq_worker_stop.load(std::memory_order_acquire); }))
++                g_irq_worker_cv.wait_until(lock, nextTick, []()
++                                           { return g_irq_worker_stop.load(std::memory_order_acquire) ||
++                                                    g_pending_dmac_mask.load(std::memory_order_acquire) != 0u; });
++                if (g_irq_worker_stop.load(std::memory_order_acquire))
+                 {
+                     break;
+                 }
+             }
+ 
++            // DMA completion interrupts (D_STAT CIS): run the game's DMAC handlers.
++            for (uint32_t pending = g_pending_dmac_mask.exchange(0u, std::memory_order_acq_rel); pending != 0u;
++                 pending &= pending - 1u)
++            {
++                uint32_t channel = 0u;
++                while (((pending >> channel) & 1u) == 0u)
++                {
++                    ++channel;
++                }
++                dispatchDmacHandlersForCause(rdram, runtime, channel);
++            }
++
+             const auto now = clock::now();
+             int ticksToProcess = 0;
+             while (now >= nextTick && ticksToProcess < kMaxCatchupTicks)
+@@ -359,6 +375,15 @@ namespace ps2_syscalls
+         g_irq_worker_cv.notify_all();
+     }
+ 
++    void raiseDmacCompletion(uint32_t channel)
++    {
++        if (channel >= 32u)
++            return;
++        g_pending_dmac_mask.fetch_or(1u << channel, std::memory_order_acq_rel);
++        std::lock_guard<std::mutex> lock(g_irq_worker_mutex);
++        g_irq_worker_cv.notify_all();
++    }
++
+     static void ensureInterruptWorkerRunning(uint8_t *rdram, PS2Runtime *runtime)
+     {
+         if (!rdram || !runtime)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
+index eb9ba5f..3d48998 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
+@@ -27,6 +27,9 @@ namespace ps2_syscalls
+     }
+ 
+     void dispatchDmacHandlersForCause(uint8_t *rdram, PS2Runtime *runtime, uint32_t cause);
++    // A DMA channel finished a transfer: its DMAC handlers run on the interrupt worker
++    // (asynchronously, as on hardware -- not inside the guest's CHCR write).
++    void raiseDmacCompletion(uint32_t channel);
+     void EnsureVSyncWorkerRunning(uint8_t *rdram, PS2Runtime *runtime);
+     uint64_t GetCurrentVSyncTick();
+     void stopInterruptWorker();
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
+index ab55f9b..dd0b488 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
+@@ -265,7 +265,8 @@ namespace ps2_syscalls
+                                             << std::endl);
+         }
+ 
+-        setReturnS32(ctx, ret);
++        // EE kernel: the semaphore id on success (Play! PS2OS.cpp; cf. PollSema).
++        setReturnS32(ctx, (ret == KE_OK) ? sid : ret);
+     }
+ 
+     void iSignalSema(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+@@ -360,7 +361,7 @@ namespace ps2_syscalls
+         }
+         lock.unlock();
+         waitWhileSuspended(info, runtime);
+-        setReturnS32(ctx, ret);
++        setReturnS32(ctx, (ret == 0) ? sid : ret); // sema id on success (EE kernel)
+     }
+ 
+     void PollSema(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+index afd03e7..f1c7ee4 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -650,7 +650,7 @@ namespace ps2_syscalls
+             info->status = THS_RUN;
+         }
+ 
+-        setReturnS32(ctx, KE_OK);
++        setReturnS32(ctx, tid); // EE kernel returns the thread id (Play! PS2OS.cpp)
+     }
+ 
+     void ResumeThread(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+@@ -693,7 +693,7 @@ namespace ps2_syscalls
+             }
+         }
+         info->cv.notify_all();
+-        setReturnS32(ctx, KE_OK);
++        setReturnS32(ctx, tid); // EE kernel returns the thread id (Play! PS2OS.cpp)
+     }
+ 
+     void GetThreadId(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+index ab79b17..9793364 100644
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -1,6 +1,7 @@
+ #include <mutex>
+ #include "runtime/ps2_memory.h"
+ #include "ps2_log.h"
++#include "Kernel/Syscalls/Interrupt.h"
+ #include <atomic>
+ #include <iostream>
+ #include <cstring>
+@@ -885,6 +886,9 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+ 
+                 uint32_t chcr = value;
+                 uint32_t mode = (chcr >> 2) & 0x3;
++                // CHCR[31:16] (TAG) holds bits 31:16 of the last DMAtag read; its bit 31 is
++                // the tag's IRQ flag, which DMAC end handlers test (SLUS-20765 0x18D160).
++                uint32_t lastTagUpper = value & 0xFFFF0000u;
+ 
+                 if (mode == 0 && qwc > 0)
+                 {
+@@ -979,6 +983,7 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+                         uint16_t tagQwc = static_cast<uint16_t>(tag & 0xFFFF);
+                         uint32_t id = static_cast<uint32_t>((tag >> 28) & 0x7);
+                         const bool irq = ((tag >> 31) & 0x1ull) != 0ull;
++                        lastTagUpper = static_cast<uint32_t>(tag) & 0xFFFF0000u;
+                         uint32_t addr = static_cast<uint32_t>((tag >> 32) & 0x7FFFFFFF);
+                         ++tagsProcessed;
+ 
+@@ -1104,6 +1109,17 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+                 {
+                     processPendingTransfers();
+                 }
++                if (autoProcessTransfers)
++                {
++                    // Transfer done: STR clear, TAG = last tag's upper half.
++                    m_ioRegisters[channelBase] = (value & 0xFEFFu) | lastTagUpper;
++                }
++                if (channelBase == 0x10009000u)
++                {
++                    // VIF1 transfers complete at kick (also chains that queued nothing):
++                    // signal the channel so the game's DMAC handler releases its packet.
++                    ps2_syscalls::raiseDmacCompletion(1u);
++                }
+             }
+         }
+         return true;
+@@ -1237,6 +1253,7 @@ void PS2Memory::processPendingTransfers()
+         raiseDStatChannel(2u); // GIF channel
+         m_ioRegisters[GIF_CHANNEL + 0x00] &= ~0x100u;
+         m_ioRegisters[GIF_CHANNEL + 0x20] = 0;
++        ps2_syscalls::raiseDmacCompletion(2u);
+     }
+     if (hadVif1)
+     {
