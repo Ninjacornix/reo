@@ -217,8 +217,20 @@ Run modes on this branch (environment variables, read by `reo_override.cpp` / ru
 | PCSX2 2.2.0 + PINE (`tools/ps2_debug/pine_client.py`) | **PASS** | `connect` OK on 28011; `title`=`Resident Evil - Outbreak`, `game_id`=`SLUS-20765`, `status`=0 (running); 64 bytes at `0x100008` read over PINE are identical to the ELF file. `version()` returns a truncated string (`PCSX2 v2.`): minor parsing bug in `pine_client.py`. |
 | PCSX2 config | changed | `EnablePINE = true`; `Renderer = 14` (Vulkan) → `-1` (Automatic) because `vulkan-1.dll` is absent and GS failed to open. Backup: `Documents\PCSX2\inis\PCSX2.ini.bak-before-pine`. |
 | PCSX2 BIOS | note | Configured `scph10000.bin` (Japan v1.00). `scph39001.bin` (US) is available and is the better reference for an NTSC-U game in Milestone 1 traces. |
-| `REO_TRACE` | TODO | |
-| `reo-gs-replay` / `reo-gs-gen-test` | TODO | |
+| `REO_TRACE` | **PASS** (after fix) | It was 0 bytes because the `FILE*` buffer is lost when the runtime is terminated. Now flushes every 256 events, and `smoke_test.ps1` closes the window before killing. Run `build-ninja\smoke\20261009-123*-trace2`: `REOT` v1 header; 47 events with contiguous seq 0–46, no trailing bytes; 36 `EVT_DMA_GIF` (= heartbeat `dma=36`) + 11 `EVT_GS_REG_WRITE` (PMODE, SMODE2, DISPFB2, DISPLAY2, BGCOLOR, CSR). |
+| `reo-gs-replay` / `reo-gs-gen-test` | **PASS** (after 2 fixes) | (1) The replay tool failed to link (`LNK2019 stbi_write_png`, which raylib provides only inside `reo_recomp`); it now compiles the vendored `stb_image_write`. (2) The generator omitted the 8,192-byte GS register block that the reader (and PCSX2 dumps) expect, so 0 frames were replayed. Now the synthetic dump replays to 2 frames. Frame 1: red triangle 37,500 px + green 151×151 sprite on magenta (`0xFFFF00FF`, the renderer's deliberate "undrawn VRAM" fill). Frame 2: white triangle 63,000 px on blue `#2828b4`. |
+
+### Clean-checkout reproduction — PASS
+
+```powershell
+git clone --branch baseline/pivot-selfexec <repo> C:\Users\Ninjacornix\reoclean
+powershell -ExecutionPolicy Bypass -File C:\Users\Ninjacornix\reoclean\tools\setup_deps.ps1
+```
+Exit 0 in 341 s. It fetched PS2Recomp `c46d1c7` and ELFIO `7d30a22` and applied patch 0001 (working-tree diff byte-identical to the dev tree). It built `ps2_runtime.lib` / `ps2_recomp.exe` / `ps2_analyzer.exe` and configured `build-ninja` with 3,842 + 96 sources. The full `reo_recomp` compile was not repeated (about 1–2 h; proven in the dev tree).
+
+Found by this test and fixed:
+- `setup_deps.ps1` aborted on its own "already applied?" probe: Windows PowerShell 5.1 turns redirected native stderr into a terminating error under `Stop`.
+- **Keep the checkout path short.** A clone at a ~120-character temp path failed CMake's compiler detection with "The system cannot find the path specified" (MAX_PATH 260) inside PS2Recomp's try-compile directories. `C:\Users\<name>\<repo>` works.
 
 ## Pivot runs (2026-10-09, `build-ninja`, Ninja `-j4`, 0 failures)
 
@@ -235,5 +247,5 @@ The `[hot]` heartbeat (live-PC histogram, tasks, dma/gif counters, once per 60 t
 ## Open items
 
 - [x] Pivot build; smoke runs in default and `REO_NATURAL=1` modes.
-- [ ] Verify `REO_TRACE` and `gs_dump_replay`.
+- [x] Verify `REO_TRACE` and `gs_dump_replay`.
 - [ ] Inventory hand-edits in `main`'s `recomp/config/output/` (moot on the pivot branch if its output is clean recompiler output; verify).
