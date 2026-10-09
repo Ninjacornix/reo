@@ -77,6 +77,11 @@ label_13f868:
     ctx->pc = 0x13F888u;
     {
         const bool branch_taken_0x13f888 = (GPR_U64(ctx, 2) != GPR_U64(ctx, 0));
+        ctx->pc = 0x13F88Cu;
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x13F888u;
+            // 0x13f88c: 0xac620000  sw          $v0, 0x0($v1) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 3), 0), GPR_U32(ctx, 2));
+        ctx->in_delay_slot = false;
         if (branch_taken_0x13f888) {
             ctx->pc = 0x13F898u;
             goto label_13f898;

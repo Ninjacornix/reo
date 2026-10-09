@@ -538,9 +538,9 @@ label_12a300:
     // 0x12a310: 0x302d  daddu       $a2, $zero, $zero
     ctx->pc = 0x12a310u;
     SET_GPR_U64(ctx, 6, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x12a314: 0x0  nop
+    // 0x12a314: 0xac62f3c0  sw          $v0, -0xC40($v1)
     ctx->pc = 0x12a314u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 3), 4294964160), GPR_U32(ctx, 2));
 label_12a318:
     // 0x12a318: 0xc0506c4  jal         func_141B10
     ctx->pc = 0x12A318u;
@@ -578,6 +578,11 @@ label_12a320:
     // 0x12a334: 0xc04ca2a  jal         func_1328A8
     ctx->pc = 0x12A334u;
     SET_GPR_U32(ctx, 31, 0x12A33Cu);
+    ctx->pc = 0x12A338u;
+    ctx->in_delay_slot = true; ctx->branch_pc = 0x12A334u;
+            // 0x12a338: 0xac400000  sw          $zero, 0x0($v0) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 2), 0), GPR_U32(ctx, 0));
+        ctx->in_delay_slot = false;
     ctx->pc = 0x1328A8u;
     if (runtime->hasFunction(0x1328A8u)) {
         auto targetFn = runtime->lookupFunction(0x1328A8u);

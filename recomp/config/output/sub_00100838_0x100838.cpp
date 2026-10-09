@@ -164,9 +164,9 @@ label_100884:
     // 0x1008a0: 0x3c050026  lui         $a1, 0x26
     ctx->pc = 0x1008a0u;
     SET_GPR_S32(ctx, 5, (int32_t)((uint32_t)38 << 16));
-    // 0x1008a4: 0x0  nop
+    // 0x1008a4: 0xacc3791c  sw          $v1, 0x791C($a2)
     ctx->pc = 0x1008a4u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 6), 31004), GPR_U32(ctx, 3));
     // 0x1008a8: 0xc045148  jal         func_114520
     ctx->pc = 0x1008A8u;
     SET_GPR_U32(ctx, 31, 0x1008B0u);

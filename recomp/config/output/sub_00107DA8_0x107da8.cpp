@@ -67,9 +67,9 @@ void sub_00107DA8_0x107da8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     // 0x107dd8: 0x2403ffff  addiu       $v1, $zero, -0x1
     ctx->pc = 0x107dd8u;
     SET_GPR_S32(ctx, 3, (int32_t)ADD32(GPR_U32(ctx, 0), 4294967295));
-    // 0x107ddc: 0x0  nop
+    // 0x107ddc: 0xaca39c58  sw          $v1, -0x63A8($a1)
     ctx->pc = 0x107ddcu;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 5), 4294941784), GPR_U32(ctx, 3));
     // 0x107de0: 0x8045190  j           func_114640
     ctx->pc = 0x107DE0u;
     ctx->pc = 0x107DE4u;

@@ -487,9 +487,9 @@ label_12a0a8:
     // 0x12a148: 0x24420001  addiu       $v0, $v0, 0x1
     ctx->pc = 0x12a148u;
     SET_GPR_S32(ctx, 2, (int32_t)ADD32(GPR_U32(ctx, 2), 1));
-    // 0x12a14c: 0x0  nop
+    // 0x12a14c: 0xac620000  sw          $v0, 0x0($v1)
     ctx->pc = 0x12a14cu;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 3), 0), GPR_U32(ctx, 2));
     // 0x12a150: 0x804cb02  j           func_132C08
     ctx->pc = 0x12A150u;
     ctx->pc = 0x12A154u;

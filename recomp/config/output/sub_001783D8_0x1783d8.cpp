@@ -510,9 +510,9 @@ label_178558:
     // 0x17855c: 0x3a0282d  daddu       $a1, $sp, $zero
     ctx->pc = 0x17855cu;
     SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 29) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x178560: 0x0  nop
+    // 0x178560: 0xae020000  sw          $v0, 0x0($s0)
     ctx->pc = 0x178560u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 16), 0), GPR_U32(ctx, 2));
     // 0x178564: 0xc042bf0  jal         func_10AFC0
     ctx->pc = 0x178564u;
     SET_GPR_U32(ctx, 31, 0x17856Cu);

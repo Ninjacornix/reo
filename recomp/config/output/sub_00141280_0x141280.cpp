@@ -165,6 +165,11 @@ label_1412d8:
     ctx->pc = 0x1412F0u;
     {
         const bool branch_taken_0x1412f0 = (GPR_U64(ctx, 3) != GPR_U64(ctx, 0));
+        ctx->pc = 0x1412F4u;
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x1412F0u;
+            // 0x1412f4: 0xae309a80  sw          $s0, -0x6580($s1) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 17), 4294941312), GPR_U32(ctx, 16));
+        ctx->in_delay_slot = false;
         if (branch_taken_0x1412f0) {
             ctx->pc = 0x141338u;
             goto label_141338;
@@ -298,9 +303,9 @@ label_141338:
     // 0x141358: 0x40302d  daddu       $a2, $v0, $zero
     ctx->pc = 0x141358u;
     SET_GPR_U64(ctx, 6, (uint64_t)GPR_U64(ctx, 2) + (uint64_t)GPR_U64(ctx, 0));
-    // 0x14135c: 0x0  nop
+    // 0x14135c: 0xad029a88  sw          $v0, -0x6578($t0)
     ctx->pc = 0x14135cu;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 8), 4294941320), GPR_U32(ctx, 2));
     // 0x141360: 0xc04e3de  jal         func_138F78
     ctx->pc = 0x141360u;
     SET_GPR_U32(ctx, 31, 0x141368u);

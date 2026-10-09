@@ -61,6 +61,11 @@ void sub_0012C078_0x12c078(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     // 0x12c098: 0xc04cb02  jal         func_132C08
     ctx->pc = 0x12C098u;
     SET_GPR_U32(ctx, 31, 0x12C0A0u);
+    ctx->pc = 0x12C09Cu;
+    ctx->in_delay_slot = true; ctx->branch_pc = 0x12C098u;
+            // 0x12c09c: 0xae020000  sw          $v0, 0x0($s0) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 16), 0), GPR_U32(ctx, 2));
+        ctx->in_delay_slot = false;
     ctx->pc = 0x132C08u;
     if (runtime->hasFunction(0x132C08u)) {
         auto targetFn = runtime->lookupFunction(0x132C08u);

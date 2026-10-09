@@ -361,9 +361,9 @@ label_15e760:
     // 0x15e770: 0x44816000  mtc1        $at, $f12
     ctx->pc = 0x15e770u;
     { uint32_t bits = GPR_U32(ctx, 1); std::memcpy(&ctx->f[12], &bits, sizeof(bits)); }
-    // 0x15e774: 0x0  nop
+    // 0x15e774: 0xac400000  sw          $zero, 0x0($v0)
     ctx->pc = 0x15e774u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 2), 0), GPR_U32(ctx, 0));
     // 0x15e778: 0xc04462e  jal         func_1118B8
     ctx->pc = 0x15E778u;
     SET_GPR_U32(ctx, 31, 0x15E780u);
@@ -510,6 +510,11 @@ label_15e7b4:
     // 0x15e7c0: 0xc057a66  jal         func_15E998
     ctx->pc = 0x15E7C0u;
     SET_GPR_U32(ctx, 31, 0x15E7C8u);
+    ctx->pc = 0x15E7C4u;
+    ctx->in_delay_slot = true; ctx->branch_pc = 0x15E7C0u;
+            // 0x15e7c4: 0xac43de54  sw          $v1, -0x21AC($v0) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 2), 4294958676), GPR_U32(ctx, 3));
+        ctx->in_delay_slot = false;
     ctx->pc = 0x15E998u;
     if (runtime->hasFunction(0x15E998u)) {
         auto targetFn = runtime->lookupFunction(0x15E998u);

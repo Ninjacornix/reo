@@ -502,6 +502,11 @@ label_1a7f20:
     ctx->pc = 0x1A7F20u;
     {
         const bool branch_taken_0x1a7f20 = (GPR_U64(ctx, 0) == GPR_U64(ctx, 0));
+        ctx->pc = 0x1A7F24u;
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x1A7F20u;
+            // 0x1a7f24: 0xac200a60  sw          $zero, 0xA60($at) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 1), 2656), GPR_U32(ctx, 0));
+        ctx->in_delay_slot = false;
         if (branch_taken_0x1a7f20) {
             ctx->pc = 0x1A7F30u;
             goto label_1a7f30;

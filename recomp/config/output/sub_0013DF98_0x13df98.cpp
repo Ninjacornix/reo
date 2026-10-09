@@ -1673,9 +1673,9 @@ label_13e454:
     // 0x13e47c: 0x24420040  addiu       $v0, $v0, 0x40
     ctx->pc = 0x13e47cu;
     SET_GPR_S32(ctx, 2, (int32_t)ADD32(GPR_U32(ctx, 2), 64));
-    // 0x13e480: 0x0  nop
+    // 0x13e480: 0xae020000  sw          $v0, 0x0($s0)
     ctx->pc = 0x13e480u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 16), 0), GPR_U32(ctx, 2));
     // 0x13e484: 0xc046e2c  jal         func_11B8B0
     ctx->pc = 0x13E484u;
     SET_GPR_U32(ctx, 31, 0x13E48Cu);

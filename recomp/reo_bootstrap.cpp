@@ -160,6 +160,38 @@ static void reoArmWatchOnAllThreads() {
     CloseHandle(snap);
 }
 
+// REO_STACKDUMP_AT=<seconds>: after that long, print every thread's host stack (exe
+// RVAs) once -- for diagnosing hangs/deadlocks without a debugger.
+static void reoStartStackDump() {
+    const char* e = std::getenv("REO_STACKDUMP_AT");
+    if (!e) return;
+    const unsigned secs = static_cast<unsigned>(std::strtoul(e, nullptr, 0));
+    std::thread([secs] {
+        Sleep(secs * 1000u);
+        const DWORD self = GetCurrentThreadId();
+        HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+        if (snap == INVALID_HANDLE_VALUE) return;
+        THREADENTRY32 te{}; te.dwSize = sizeof(te);
+        for (BOOL ok = Thread32First(snap, &te); ok; ok = Thread32Next(snap, &te)) {
+            if (te.th32OwnerProcessID != GetCurrentProcessId() || te.th32ThreadID == self) continue;
+            HANDLE th = OpenThread(THREAD_GET_CONTEXT | THREAD_SUSPEND_RESUME, FALSE, te.th32ThreadID);
+            if (!th) continue;
+            if (SuspendThread(th) != (DWORD)-1) {
+                CONTEXT c{}; c.ContextFlags = CONTEXT_FULL;
+                if (GetThreadContext(th, &c)) {
+                    fprintf(stderr, "[STACKDUMP] tid=%lu stack:", te.th32ThreadID);
+                    reoPrintStack(c);
+                    fprintf(stderr, "\n");
+                }
+                ResumeThread(th);
+            }
+            CloseHandle(th);
+        }
+        CloseHandle(snap);
+        fflush(stderr);
+    }).detach();
+}
+
 static void reoStartHwWatch(uint8_t* rdram) {
     const char* e = std::getenv("REO_HW_WATCH");
     if (!e || !rdram) return;
@@ -283,6 +315,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef _WIN32
     reoStartHwWatch(runtime.memory().getRDRAM());
+    reoStartStackDump();
 #endif
     runtime.run();
 

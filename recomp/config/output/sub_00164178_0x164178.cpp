@@ -144,6 +144,11 @@ label_1641c0:
     // 0x1641c4: 0xc0590b2  jal         func_1642C8
     ctx->pc = 0x1641C4u;
     SET_GPR_U32(ctx, 31, 0x1641CCu);
+    ctx->pc = 0x1641C8u;
+    ctx->in_delay_slot = true; ctx->branch_pc = 0x1641C4u;
+            // 0x1641c8: 0xac50ef60  sw          $s0, -0x10A0($v0) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 2), 4294963040), GPR_U32(ctx, 16));
+        ctx->in_delay_slot = false;
     ctx->pc = 0x1642C8u;
     if (runtime->hasFunction(0x1642C8u)) {
         auto targetFn = runtime->lookupFunction(0x1642C8u);

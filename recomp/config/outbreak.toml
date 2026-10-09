@@ -1055,49 +1055,10 @@ entries = [
 # Patches to apply during recompilation
 [patches]
 # Individual instruction patches
+# (42 ElfAnalyzer "potential self-modifying code" nops removed: every one was an ordinary
+#  store to game data -- e.g. 0x128A04 ADXF temp-buffer pointer, 0x12B744 ADX thread
+#  priority, 0x1003AC libcdvd state; see docs/DIVERGENCES.md D20.)
 instructions = [
-  { address = "0x1003ac", value = "0x0" },  # Potential self-modifying code
-  { address = "0x1008a4", value = "0x0" },  # Potential self-modifying code
-  { address = "0x100be0", value = "0x0" },  # Potential self-modifying code
-  { address = "0x100ef8", value = "0x0" },  # Potential self-modifying code
-  { address = "0x107d6c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x107ddc", value = "0x0" },  # Potential self-modifying code
-  { address = "0x1280c0", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12842c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x128a04", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12a14c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12a314", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12a338", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12a3b8", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12ac50", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12b72c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12b744", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12b81c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12c030", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12c09c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12c2d4", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12c2ec", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12c3a4", value = "0x0" },  # Potential self-modifying code
-  { address = "0x12c418", value = "0x0" },  # Potential self-modifying code
-  { address = "0x134630", value = "0x0" },  # Potential self-modifying code
-  { address = "0x138dcc", value = "0x0" },  # Potential self-modifying code
-  { address = "0x13e480", value = "0x0" },  # Potential self-modifying code
-  { address = "0x13e714", value = "0x0" },  # Potential self-modifying code
-  { address = "0x13e724", value = "0x0" },  # Potential self-modifying code
-  { address = "0x13f88c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x1412f4", value = "0x0" },  # Potential self-modifying code
-  { address = "0x14135c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x15e774", value = "0x0" },  # Potential self-modifying code
-  { address = "0x15e7c4", value = "0x0" },  # Potential self-modifying code
-  { address = "0x15e9ec", value = "0x0" },  # Potential self-modifying code
-  { address = "0x1641c8", value = "0x0" },  # Potential self-modifying code
-  { address = "0x178560", value = "0x0" },  # Potential self-modifying code
-  { address = "0x17cec8", value = "0x0" },  # Potential self-modifying code
-  { address = "0x192c38", value = "0x0" },  # Potential self-modifying code
-  { address = "0x1a7f24", value = "0x0" },  # Potential self-modifying code
-  { address = "0x1bb27c", value = "0x0" },  # Potential self-modifying code
-  { address = "0x1cba34", value = "0x0" },  # Potential self-modifying code
-  { address = "0x1d86e4", value = "0x0" },  # Potential self-modifying code
 ]
 
 # Performance critical functions (may need manual optimization)

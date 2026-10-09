@@ -98,6 +98,11 @@ label_107d40:
     ctx->pc = 0x107D68u;
     {
         const bool branch_taken_0x107d68 = (GPR_U64(ctx, 0) == GPR_U64(ctx, 0));
+        ctx->pc = 0x107D6Cu;
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x107D68u;
+            // 0x107d6c: 0xac820000  sw          $v0, 0x0($a0) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 4), 0), GPR_U32(ctx, 2));
+        ctx->in_delay_slot = false;
         if (branch_taken_0x107d68) {
             ctx->pc = 0x107D90u;
             goto label_107d90;

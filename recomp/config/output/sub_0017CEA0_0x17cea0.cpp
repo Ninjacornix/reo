@@ -85,9 +85,9 @@ label_17cec4:
     // 0x17cec4: 0x24030008  addiu       $v1, $zero, 0x8
     ctx->pc = 0x17cec4u;
     SET_GPR_S32(ctx, 3, (int32_t)ADD32(GPR_U32(ctx, 0), 8));
-    // 0x17cec8: 0x0  nop
+    // 0x17cec8: 0xae030004  sw          $v1, 0x4($s0)
     ctx->pc = 0x17cec8u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 16), 4), GPR_U32(ctx, 3));
     // 0x17cecc: 0xc05f482  jal         func_17D208
     ctx->pc = 0x17CECCu;
     SET_GPR_U32(ctx, 31, 0x17CED4u);

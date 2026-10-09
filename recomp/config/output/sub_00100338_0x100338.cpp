@@ -142,9 +142,9 @@ label_100390:
     // 0x1003a8: 0xae807958  sw          $zero, 0x7958($s4)
     ctx->pc = 0x1003a8u;
     WRITE32(ADD32(GPR_U32(ctx, 20), 31064), GPR_U32(ctx, 0));
-    // 0x1003ac: 0x0  nop
+    // 0x1003ac: 0xac407914  sw          $zero, 0x7914($v0)
     ctx->pc = 0x1003acu;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 2), 30996), GPR_U32(ctx, 0));
     // 0x1003b0: 0xc045118  jal         func_114460
     ctx->pc = 0x1003B0u;
     SET_GPR_U32(ctx, 31, 0x1003B8u);

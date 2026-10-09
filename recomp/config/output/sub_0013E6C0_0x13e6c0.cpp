@@ -136,9 +136,9 @@ label_13e700:
     }
     ctx->pc = 0x13E714u;
 label_13e714:
-    // 0x13e714: 0x0  nop
+    // 0x13e714: 0xae200000  sw          $zero, 0x0($s1)
     ctx->pc = 0x13e714u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 17), 0), GPR_U32(ctx, 0));
     // 0x13e718: 0xc046e86  jal         func_11BA18
     ctx->pc = 0x13E718u;
     SET_GPR_U32(ctx, 31, 0x13E720u);
@@ -165,6 +165,11 @@ label_13e720:
     // 0x13e720: 0xc04f790  jal         func_13DE40
     ctx->pc = 0x13E720u;
     SET_GPR_U32(ctx, 31, 0x13E728u);
+    ctx->pc = 0x13E724u;
+    ctx->in_delay_slot = true; ctx->branch_pc = 0x13E720u;
+            // 0x13e724: 0xae000000  sw          $zero, 0x0($s0) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 16), 0), GPR_U32(ctx, 0));
+        ctx->in_delay_slot = false;
     ctx->pc = 0x13DE40u;
     if (runtime->hasFunction(0x13DE40u)) {
         auto targetFn = runtime->lookupFunction(0x13DE40u);

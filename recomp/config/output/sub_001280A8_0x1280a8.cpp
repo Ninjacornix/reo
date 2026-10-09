@@ -37,9 +37,9 @@ void sub_001280A8_0x1280a8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     // 0x1280bc: 0xdfbf0000  ld          $ra, 0x0($sp)
     ctx->pc = 0x1280bcu;
     SET_GPR_U64(ctx, 31, READ64(ADD32(GPR_U32(ctx, 29), 0)));
-    // 0x1280c0: 0x0  nop
+    // 0x1280c0: 0xac65c7b4  sw          $a1, -0x384C($v1)
     ctx->pc = 0x1280c0u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 3), 4294952884), GPR_U32(ctx, 5));
     // 0x1280c4: 0x805076c  j           func_141DB0
     ctx->pc = 0x1280C4u;
     ctx->pc = 0x1280C8u;

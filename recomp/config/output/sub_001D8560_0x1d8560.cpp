@@ -439,9 +439,9 @@ label_1d86d0:
     // 0x1d86e0: 0x118c3f  dsra32      $s1, $s1, 16
     ctx->pc = 0x1d86e0u;
     SET_GPR_S64(ctx, 17, GPR_S64(ctx, 17) >> (32 + 16));
-    // 0x1d86e4: 0x0  nop
+    // 0x1d86e4: 0xac2269f0  sw          $v0, 0x69F0($at)
     ctx->pc = 0x1d86e4u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 1), 27120), GPR_U32(ctx, 2));
 label_1d86e8:
     // 0x1d86e8: 0xc075e3c  jal         func_1D78F0
     ctx->pc = 0x1D86E8u;

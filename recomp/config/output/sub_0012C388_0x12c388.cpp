@@ -55,6 +55,11 @@ void sub_0012C388_0x12c388(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     ctx->pc = 0x12C3A0u;
     {
         const bool branch_taken_0x12c3a0 = (GPR_U64(ctx, 2) != GPR_U64(ctx, 0));
+        ctx->pc = 0x12C3A4u;
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x12C3A0u;
+            // 0x12c3a4: 0xac620000  sw          $v0, 0x0($v1) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 3), 0), GPR_U32(ctx, 2));
+        ctx->in_delay_slot = false;
         if (branch_taken_0x12c3a0) {
             ctx->pc = 0x12C428u;
             goto label_12c428;
@@ -280,9 +285,9 @@ label_12c410:
     // 0x12c414: 0xdfbf0000  ld          $ra, 0x0($sp)
     ctx->pc = 0x12c414u;
     SET_GPR_U64(ctx, 31, READ64(ADD32(GPR_U32(ctx, 29), 0)));
-    // 0x12c418: 0x0  nop
+    // 0x12c418: 0xac400458  sw          $zero, 0x458($v0)
     ctx->pc = 0x12c418u;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 2), 1112), GPR_U32(ctx, 0));
     // 0x12c41c: 0x805084e  j           func_142138
     ctx->pc = 0x12C41Cu;
     ctx->pc = 0x12C420u;

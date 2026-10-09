@@ -53,6 +53,11 @@ void sub_0012B800_0x12b800(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     ctx->pc = 0x12B818u;
     {
         const bool branch_taken_0x12b818 = (GPR_U64(ctx, 2) != GPR_U64(ctx, 0));
+        ctx->pc = 0x12B81Cu;
+        ctx->in_delay_slot = true; ctx->branch_pc = 0x12B818u;
+            // 0x12b81c: 0xac620000  sw          $v0, 0x0($v1) (Delay Slot)
+        WRITE32(ADD32(GPR_U32(ctx, 3), 0), GPR_U32(ctx, 2));
+        ctx->in_delay_slot = false;
         if (branch_taken_0x12b818) {
             ctx->pc = 0x12B888u;
             goto label_12b888;

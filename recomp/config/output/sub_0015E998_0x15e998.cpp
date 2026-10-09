@@ -122,9 +122,9 @@ label_15e9b8:
         }
     }
     ctx->pc = 0x15E9ECu;
-    // 0x15e9ec: 0x0  nop
+    // 0x15e9ec: 0xac400000  sw          $zero, 0x0($v0)
     ctx->pc = 0x15e9ecu;
-    // NOP
+    WRITE32(ADD32(GPR_U32(ctx, 2), 0), GPR_U32(ctx, 0));
     // 0x15e9f0: 0x80579a8  j           func_15E6A0
     ctx->pc = 0x15E9F0u;
     ctx->pc = 0x15E9F4u;
