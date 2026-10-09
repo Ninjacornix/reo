@@ -8,19 +8,21 @@
 
 Upstream README (https://github.com/sp00nznet/reo) claims, as of the April 7, 2025 milestone: File #1 static recompilation and runtime build, main loop, visible title/textures, XInput input, GIF→GS software rendering, GS dump replay, NBD/AMO parsing, NETBIO archives, TEX decompression, ~95 overlay functions and a number of HLE overrides. It describes File #2 recompilation as building but not booting. **These are not independently validated in your fork.** Start by recording a new baseline.
 
-## Milestone 0 — Licensing, reproducibility and instrumentation
+## Milestone 0 — Licensing, reproducibility and instrumentation — `DONE` (2026-10-09)
+
+Evidence: `docs/BASELINE.md`. Baseline branch `baseline/pivot-selfexec` (upstream `pivot-selfexec` + local fixes); `main` audited separately (its title screen was a PCSX2-snapshot "puppet").
 
 **Tasks**
 
-- [ ] Record fork commit, OS, compiler/toolchain versions, CMake options, SDK and dependency revisions.
-- [ ] Verify README file tree against source and inventory actual CMake targets and tooling.
-- [ ] Build from clean checkout; document failing commands and missing pieces.
-- [ ] Reproduce File #1 run using *user-owned* data; capture logs, screenshot/recording, timing.
-- [ ] Confirm whether `REO_TRACE=1`, PCSX2 Pine utilities and GS replay work as described.
-- [ ] Add reproducible smoke-test command or script that never requires committing ISO content.
-- [ ] Create `docs/BASELINE.md` with machine, game revision/hash, latest build status, observed behavior and evidence links.
+- [x] Record fork commit, OS, compiler/toolchain versions, CMake options, SDK and dependency revisions.
+- [x] Verify README file tree against source and inventory actual CMake targets and tooling.
+- [x] Build from clean checkout; document failing commands and missing pieces. *(`tools/setup_deps.ps1` on a fresh clone; keep the path short (MAX_PATH).)*
+- [x] Reproduce File #1 run using *user-owned* data; capture logs, screenshot/recording, timing. *(`tools/smoke_test.ps1`; logs + `[hot]` heartbeat + framebuffer dump under `build-ninja/smoke/`.)*
+- [x] Confirm whether `REO_TRACE=1`, PCSX2 Pine utilities and GS replay work as described. *(Trace was empty and GS replay failed to link/parse; both fixed and verified. PINE verified against the running game.)*
+- [x] Add reproducible smoke-test command or script that never requires committing ISO content.
+- [x] Create `docs/BASELINE.md` with machine, game revision/hash, latest build status, observed behavior and evidence links.
 
-**Exit:** another developer can build the same revision and reproduce the same observable failure/success. If game data is unavailable, mark run tests `BLOCKED` rather than pretending they pass.
+**Exit:** another developer can build the same revision and reproduce the same observable failure/success. If game data is unavailable, mark run tests `BLOCKED` rather than pretending they pass. — **Met (2026-10-09):** a clean checkout reproduces the pinned deps + patches; observable state: boots under self-execution, passes `SifIopSync` (D1), then loops in SIF RPC; no title screen yet.
 
 ## Milestone 1 — First divergent game state (highest immediate priority)
 
