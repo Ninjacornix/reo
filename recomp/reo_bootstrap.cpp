@@ -59,7 +59,48 @@ static void print_banner(const GameDef& g) {
     printf("\n");
 }
 
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+// Crash diagnostics: on an unhandled exception print the code, fault address and the
+// unwound host call stack as RVAs of reo_recomp.exe (resolve with a /MAP link, see
+// docs/DIVERGENCES.md D15). Read-only; does not change execution.
+static LONG WINAPI reoCrashFilter(EXCEPTION_POINTERS* ep) {
+    const DWORD64 base = reinterpret_cast<DWORD64>(GetModuleHandleW(nullptr));
+    CONTEXT c = *ep->ContextRecord;
+    fprintf(stderr, "\n[CRASH] code=0x%08lX addr=%p rva=0x%llX tid=%lu",
+            ep->ExceptionRecord->ExceptionCode, ep->ExceptionRecord->ExceptionAddress,
+            static_cast<unsigned long long>(c.Rip - base), GetCurrentThreadId());
+    if (ep->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
+        ep->ExceptionRecord->NumberParameters >= 2)
+        fprintf(stderr, " %s 0x%llX", ep->ExceptionRecord->ExceptionInformation[0] ? "write" : "read",
+                static_cast<unsigned long long>(ep->ExceptionRecord->ExceptionInformation[1]));
+    fprintf(stderr, "\n[CRASH] stack (exe RVAs):");
+    for (int i = 0; i < 48 && c.Rip; ++i) {
+        DWORD64 imageBase = 0;
+        fprintf(stderr, " 0x%llX", static_cast<unsigned long long>(c.Rip >= base ? c.Rip - base : c.Rip));
+        PRUNTIME_FUNCTION fn = RtlLookupFunctionEntry(c.Rip, &imageBase, nullptr);
+        if (fn) {
+            PVOID handlerData = nullptr; DWORD64 establisher = 0;
+            RtlVirtualUnwind(UNW_FLAG_NHANDLER, imageBase, c.Rip, fn, &c, &handlerData, &establisher, nullptr);
+        } else {
+            c.Rip = *reinterpret_cast<DWORD64*>(c.Rsp);
+            c.Rsp += 8;
+        }
+    }
+    fprintf(stderr, "\n");
+    fflush(stderr);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
+
 int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    SetUnhandledExceptionFilter(reoCrashFilter);
+#endif
     setvbuf(stdout, nullptr, _IONBF, 0);  // unbuffered: pinpoint crash location
     // Defaults — selected game determines paths
     int game_idx = -1;  // -1 = auto-detect from build target

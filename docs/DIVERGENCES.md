@@ -243,7 +243,48 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - `tools/ghidra_fill_gaps.py` scans the ELF for non-zero code between mapped functions and has Ghidra create functions there, iterating until convergence. 8 rounds created **748 functions** (map: 5,586 functions, 20,832 registered entries). 21 gaps remain (creation rejected; likely data or switch-case tails: `0x102bf0, 0x12b5d0, 0x12fb98, 0x134db8, 0x13a058, 0x13a078, 0x13a180, 0x13eba8, 0x13f0f0, 0x13f1e0, 0x147e38, 0x148078, 0x15cc80, 0x164410, 0x164580, 0x164820, 0x176c78, 0x191660, 0x197480, 0x1b2120`, …).
 - `recomp/CMakeLists.txt` globs now use `CONFIGURE_DEPENDS` (new generated files were not picked up without a reconfigure).
 
-## Open (as of D11)
+## D12: CRI DTX/SJX/PS2RNA server (sid 0x90000200) — runtime emulation enabled
+
+- `DTX_Init` (EE `0x1392F8`) binds sid `0x90000200` (read from `0x21C414`); `DTX_Create` (`0x138DE8`) calls fn 2 and needs a non-zero remote handle, then the SJX/PS2RNA URPC commands `0x400-0x4FF` follow (`SJX_CREATE` `0x400`, `SJRMT_UNI_CREATE` `0x422`, `PS2RNA_REINIT` `0x40A`, ...).
+- PS2Recomp already emulates this protocol (written for Code: Veronica X) once a `PS2DtxCompatLayout` names the sid. `reo_override.cpp` now configures `rpcSid = 0x90000200` with no guest URPC tables, so the runtime's fallback emulation is used. An init-only stub in `reo_hw_bridge` was tried first and removed, because the bridge runs before the runtime emulation and shadowed it.
+- Handle range `urpcObjBase/Limit = 0x1E0000-0x1EFF00` (opaque ids, never dereferenced). Without it every SJX/SJRMT create returned handle 1 (5 streams aliased).
+- Result: `DTX_Create`, `SJUNI_CreateRmt` and the PS2RNA IOP allocations succeed; **state machine `0x316598` becomes 1 for the first time**.
+- Validation: init path only. Audio data flow is not verified.
+
+## D13: runtime HLE pools inside the game heap — FIXED (pending run)
+
+- PS2Recomp keeps its own guest-RAM pools at `0x01F00000-0x01F31000` (RPC packets, zeroed on every RPC; RPC server slots, which also hold the DTX remote handle `0x1F10580`; TLS; boot-mode data). They assumed `kGuestHeapHardLimit = 0x01F00000`.
+- Patch 0005 (D5) correctly lets `SetupHeap(-1)` run the user heap up to the main stack, as on PCSX2 (sbrk reaches `0x01FBC000`). From then on the pools overlapped live game heap.
+- Fix (runtime, patch 0011): the pools move to the EE kernel region `0x00010000-0x00041000`. A scan of SLUS-20765 for kernel-RAM references finds real use only at `0x74000-0x77000` (libkernel patches copied to `0x80074000/75000/76000`); the other low hits are constants.
+- Confirmed by construction (address ranges), not by an observed symptom. The jump to PC `0x1` it was suspected of causing persists (see Open).
+
+## D14: async callback stacks overlapped the main stack — FIXED (by construction)
+
+- Interrupt, alarm and GS-vsync callbacks get 16 KB stacks carved downward from `m_asyncCallbackStackTop = PS2_RAM_SIZE`. The first vblank handler therefore ran at `sp = 0x1FFFFF0`, over `0x1FFC000-0x1FFFFF0`, which is where patch 0005 places the main thread's stack (`0x1FF0000-0x1FFF000`).
+- Fix (patch 0011): carve them from `0x00042000-0x00070000` (on hardware, handlers run on the kernel stack in kernel RAM), below the libkernel patch area. Exhaustion is now logged (`[asyncStack] region exhausted`) instead of silently falling back to the top of RAM.
+
+## D15: intermittent host crash (heap corruption) — race on PS2Memory::m_ioRegisters — FIXED (probable)
+
+- Symptom: about half of the natural runs died with an access violation after ~10 s (Application event log: `reo_recomp.exe` RVA `0x2a052e3`). A new crash handler (`reo_bootstrap.cpp`, unhandled-exception filter) prints the fault plus the unwound stack as exe RVAs, which a `/MAP` link resolves. Result: `unordered_map<uint32_t,uint32_t>::operator[]` in `PS2Runtime::run()` (`s_pcHist`, a map only that thread touches), reading `0xFFFFFFFFFFFFFFFF`. So the host heap was being corrupted elsewhere.
+- Cause found by review: `PS2Memory::m_ioRegisters` (an `unordered_map`) is mutated without any lock from the guest threads, the interrupt/vsync worker (which by design runs **without** the guest-execution lock) and DMA processing. Concurrent inserts and rehashes corrupt the heap.
+- Fix (patch 0011): a recursive mutex in `ps2_memory.cpp` around `read64/write8/write16/writeIORegister/readIORegister/processPendingTransfers`, with no header change, so no full rebuild was needed.
+- Evidence: before the fix, 2 of 4 natural runs crashed; after it, 0 of 3 (45 s each), with no deadlock and identical end state. An ASan build of all hand-written code (`-DREO_ASAN=ON`, runtime from `out/build-asan`) reported nothing in 2×60 s. Status: probable; recheck if the crash recurs.
+
+## Tooling fixes in this round
+- `tools/smoke_test.ps1`: a single `-Env NAME=VALUE` was unrolled by PowerShell into two strings, so **the variable was never set**. Every single-entry run (e.g. `-Env 'REO_NATURAL=1'`) silently ran the stub-override mode. Fixed with `@(...)`. An apparent timing-dependent "malloc stall" turned out to be this artifact; multi-entry runs were unaffected.
+- `REO_ASAN` CMake option (default OFF): instruments only hand-written sources (`/fsanitize=address`, STL annotations disabled to mix with uninstrumented objects). It needs `clang_rt.asan_dynamic-x86_64.dll` next to the exe. Toggling it recompiles about 14 files.
+- Runtime syscall guard: any syscall that returns with a changed `$ra`/`$sp` is logged (`[syscall:ra/sp changed]`). None observed so far.
+
+
+### Also in this round
+- `tools/ghidra_fill_gaps.py` re-run: 72 more functions (map 5,658). `0x13A180`, a pointer-called function (ra `0x136FD0`) previously refused by Ghidra, now exists. 6 gaps remain.
+
+## Open (as of D15)
+- **Main-thread jump to PC `0x1`** after state `0x316598` becomes 1: `0x1416e8` (`a0 = 1; j 0x141640`) → `0x141640` calls the callback at `*0x2649e8` (`0x12a9f0`, the game's "leave critical section": GetThreadId/ChangeThreadPriority, Refer/Suspend/ResumeThread). Afterwards `ra = 1`, `sp = 0x1FFEFC0` (0x141640's frame). The generated code for the tail call and the `jalr` was checked and is correct; no syscall changes `ra/sp`. Next: trace `ra` across `0x12a9f0`'s callees.
+- Runtime `SuspendThread` on *another* thread only sets status; the host thread keeps running guest code (no real suspension). The game's critical section relies on it (`0x12b158`).
+- Thread 2 (libkernel request server `0x115320`, an endless `WaitSema` loop) is reported as "returned (pc=0x0)" in some runs.
+
+## Open (as of D11, superseded where noted)
 - CRI middleware: `[EE-TTY] DTX_Create: can't create DTX of server` / `E0100302: SJX_Init can't create DTX`, IOP server `0x90000200` (unhandled, func 2). The runtime has a configurable "DTX compat" layer to investigate.
 - Unhandled sid `0x00000001` func 16 (sound-driver state sid in the runtime's table).
 - Hot loop at `0x141380` with `st@2B0EC0=1` after the above.

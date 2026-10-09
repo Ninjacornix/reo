@@ -1,0 +1,187 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
+index fac2c0e..848b6d0 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
+@@ -532,21 +532,26 @@ inline std::filesystem::path g_host_cwd;
+ inline std::filesystem::path g_cdrom_cwd;
+ inline std::string g_ps2_cwd_device = "host0";
+ 
++// HLE-kernel pools (RPC packets/servers, TLS, boot-mode data) live in the EE kernel
++// region 0x00010000-0x00041000: the BIOS kernel owns 0x0-0x7FFFF on hardware, so games
++// never touch it. They used to sit at 0x01F00000-0x01F31000, inside the user heap a
++// game reaches when SetupHeap(-1) runs it up to the main stack (SLUS-20765 sbrk ends at
++// 0x01FBC000 on PCSX2): every RPC zeroed a 64-byte slot of live game heap.
+ static constexpr uint32_t kRpcPacketSize = 64;
+-static constexpr uint32_t kRpcPacketPoolBase = 0x01F00000;
++static constexpr uint32_t kRpcPacketPoolBase = 0x00010000;
+ static constexpr uint32_t kRpcPacketPoolBytes = 0x00010000;
+ static constexpr uint32_t kRpcPacketPoolCount = kRpcPacketPoolBytes / kRpcPacketSize;
+-static constexpr uint32_t kRpcServerPoolBase = 0x01F10000;
++static constexpr uint32_t kRpcServerPoolBase = 0x00020000;
+ static constexpr uint32_t kRpcServerPoolBytes = 0x00010000;
+ static constexpr uint32_t kRpcServerStride = 0x80;
+ static constexpr uint32_t kRpcServerPoolCount = kRpcServerPoolBytes / kRpcServerStride;
+ 
+-static constexpr uint32_t kTlsPoolBase = 0x01F20000;
++static constexpr uint32_t kTlsPoolBase = 0x00030000;
+ static constexpr uint32_t kTlsPoolBytes = 0x00010000;
+ static constexpr uint32_t kTlsBlockSize = 0x100;
+ static constexpr uint32_t kTlsPoolCount = kTlsPoolBytes / kTlsBlockSize;
+ 
+-static constexpr uint32_t kBootModePoolBase = 0x01F30000;
++static constexpr uint32_t kBootModePoolBase = 0x00040000;
+ static constexpr uint32_t kBootModePoolBytes = 0x00001000;
+ 
+ static constexpr uint32_t kSifRpcModeNowait = 0x01;
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+index 06c503d..ab79b17 100644
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -1,3 +1,4 @@
++#include <mutex>
+ #include "runtime/ps2_memory.h"
+ #include "ps2_log.h"
+ #include <atomic>
+@@ -143,6 +144,11 @@ PS2Memory::~PS2Memory()
+     }
+ }
+ 
++// m_ioRegisters (std::unordered_map) is read and written from the guest threads, the
++// interrupt/vsync worker and DMA processing. Unsynchronized inserts/rehashes corrupted the
++// host heap (intermittent AV in an unrelated map). Recursive: these paths nest.
++static std::recursive_mutex g_ioRegMutex;
++
+ bool PS2Memory::initialize(size_t ramSize)
+ {
+     auto cleanup = [this]()
+@@ -430,6 +436,7 @@ uint32_t PS2Memory::read32(uint32_t address)
+ 
+ uint64_t PS2Memory::read64(uint32_t address)
+ {
++    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
+     if (address & 7)
+     {
+         throw std::runtime_error("Unaligned 64-bit read at address: 0x" + std::to_string(address));
+@@ -492,6 +499,7 @@ __m128i PS2Memory::read128(uint32_t address)
+ 
+ void PS2Memory::write8(uint32_t address, uint8_t value)
+ {
++    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
+     const bool scratch = isScratchpad(address);
+     uint32_t physAddr = translateAddress(address);
+ 
+@@ -516,6 +524,7 @@ void PS2Memory::write8(uint32_t address, uint8_t value)
+ 
+ void PS2Memory::write16(uint32_t address, uint16_t value)
+ {
++    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
+     if (address & 1)
+     {
+         throw std::runtime_error("Unaligned 16-bit write at address: 0x" + std::to_string(address));
+@@ -693,6 +702,7 @@ void PS2Memory::write128(uint32_t address, __m128i value)
+ 
+ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+ {
++    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
+     if (address == 0x1000F000u) // INTC_STAT: write-1-to-clear
+     {
+         m_intcStat.fetch_and(~value, std::memory_order_relaxed);
+@@ -1116,6 +1126,7 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+ 
+ void PS2Memory::processPendingTransfers()
+ {
++    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
+     const bool hadGif = !m_pendingGifTransfers.empty();
+     for (size_t idx = 0; idx < m_pendingGifTransfers.size(); ++idx)
+     {
+@@ -1315,6 +1326,7 @@ int PS2Memory::pollDmaRegisters()
+ 
+ uint32_t PS2Memory::readIORegister(uint32_t address)
+ {
++    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
+     if (address == 0x1000F000u) // INTC_STAT
+     {
+         return m_intcStat.load(std::memory_order_relaxed);
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index b699316..e06db14 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -88,6 +88,14 @@ namespace
+     constexpr uint32_t kGuestHeapDefaultAlignment = 16u;
+     constexpr uint32_t kGuestHeapSafetyPad = 0x1000u;
+     constexpr uint32_t kGuestHeapHardLimit = 0x01F00000u;
++    // Async callback stacks (INTC/DMAC handlers, alarms, GS vsync callbacks) are carved
++    // downward from here. On hardware handlers run on the kernel stack in kernel RAM; the
++    // EE kernel region 0x00042000-0x00070000 (above the HLE pools in State.h) is not used
++    // by games. Carving from the top of RAM overlapped the main thread's stack once
++    // SetupThread places it at the top (SLUS-20765: vblank handler frames overwrote the
++    // main thread's saved ra -> jump to 0x1).
++    constexpr uint32_t kAsyncCallbackStackFloor = 0x00042000u;
++    constexpr uint32_t kAsyncCallbackStackTop = 0x00070000u; // SLUS-20765 installs kernel patches at 0x74000-0x77000
+ 
+     constexpr uint32_t COP0_CAUSE_EXCCODE_MASK = 0x0000007Cu;
+     constexpr uint32_t COP0_CAUSE_BD = 0x80000000u;
+@@ -574,8 +582,8 @@ PS2Runtime::PS2Runtime()
+     m_guestHeapLimit = std::min(kGuestHeapHardLimit, PS2_RAM_SIZE);
+     m_guestHeapSuggestedBase = kGuestHeapDefaultBase;
+     m_guestHeapConfigured = false;
+-    m_asyncCallbackStackFloor = std::min(kGuestHeapHardLimit, PS2_RAM_SIZE);
+-    m_asyncCallbackStackTop = PS2_RAM_SIZE;
++    m_asyncCallbackStackFloor = kAsyncCallbackStackFloor;
++    m_asyncCallbackStackTop = kAsyncCallbackStackTop;
+ }
+ 
+ PS2Runtime::~PS2Runtime()
+@@ -913,9 +921,8 @@ bool PS2Runtime::loadELF(const std::string &elfPath)
+     }
+     {
+         std::lock_guard<std::mutex> lock(m_asyncCallbackStackMutex);
+-        const uint32_t hardLimit = std::min(kGuestHeapHardLimit, PS2_RAM_SIZE);
+-        m_asyncCallbackStackFloor = std::min(std::max(hardLimit, suggestedHeapBase), PS2_RAM_SIZE);
+-        m_asyncCallbackStackTop = PS2_RAM_SIZE;
++        m_asyncCallbackStackFloor = kAsyncCallbackStackFloor;
++        m_asyncCallbackStackTop = kAsyncCallbackStackTop;
+     }
+ 
+     LoadedModule module;
+@@ -1202,6 +1209,30 @@ void PS2Runtime::handleSyscall(uint8_t *rdram, R5900Context *ctx, uint32_t encod
+                                  "This breaks the atomic basic block model and is structurally unsupported by the emulator.");
+     }
+ 
++    // Diagnostic: a syscall must not change the caller's $ra/$sp (only $v0/$v1 and the
++    // documented outputs). Log any that does; silent otherwise.
++    struct RaSpGuard
++    {
++        R5900Context *c;
++        uint32_t num, ra, sp, pc;
++        int exceptions;
++        ~RaSpGuard()
++        {
++            if (std::uncaught_exceptions() > exceptions)
++                return;
++            const uint32_t ra2 = static_cast<uint32_t>(_mm_extract_epi32(c->r[31], 0)), sp2 = static_cast<uint32_t>(_mm_extract_epi32(c->r[29], 0));
++            if (ra2 != ra || sp2 != sp)
++            {
++                static std::atomic<uint32_t> logs{0};
++                if (logs.fetch_add(1) < 32u)
++                    std::cerr << "[syscall:ra/sp changed] num=0x" << std::hex << num << " pc=0x" << pc
++                              << " ra 0x" << ra << "->0x" << ra2 << " sp 0x" << sp << "->0x" << sp2
++                              << std::dec << std::endl;
++            }
++        }
++    } raSpGuard{ctx, encodedSyscallId ? encodedSyscallId : static_cast<uint32_t>(_mm_extract_epi32(ctx->r[3], 0)), static_cast<uint32_t>(_mm_extract_epi32(ctx->r[31], 0)),
++                static_cast<uint32_t>(_mm_extract_epi32(ctx->r[29], 0)), ctx->pc, std::uncaught_exceptions()};
++
+     // Try immediate first
+     if (encodedSyscallId != 0 && ps2_syscalls::dispatchNumericSyscall(encodedSyscallId, rdram, ctx, this))
+     {
+@@ -1741,6 +1772,9 @@ uint32_t PS2Runtime::reserveAsyncCallbackStack(uint32_t size, uint32_t alignment
+     base &= ~(normalizedAlignment - 1u);
+     if (base < m_asyncCallbackStackFloor || base >= top)
+     {
++        // Callers then fall back to the top of RAM, which overlaps the main stack.
++        std::cerr << "[asyncStack] region exhausted (size 0x" << std::hex << allocSize
++                  << ", top 0x" << top << ", floor 0x" << m_asyncCallbackStackFloor << std::dec << ")" << std::endl;
+         return 0u;
+     }
+ 
