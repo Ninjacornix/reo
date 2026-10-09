@@ -1,0 +1,51 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index e8d9526..b699316 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -2093,6 +2093,46 @@ void PS2Runtime::run()
+             tick++;
+             static std::unordered_map<uint32_t, uint32_t> s_pcHist;
+             s_pcHist[m_cpuContext.pc]++;  // sample live PC each tick
++            // REO_PEEK=0xADDR[,0xADDR...]: watch guest words every tick and print a
++            // line whenever any of them changes (with the live PC at that moment).
++            {
++                static const std::vector<uint32_t> s_peek = []() {
++                    std::vector<uint32_t> v;
++                    if (const char *e = std::getenv("REO_PEEK"))
++                    {
++                        std::string s(e);
++                        size_t p = 0;
++                        while (p < s.size() && v.size() < 16)
++                        {
++                            const size_t q = s.find(',', p);
++                            v.push_back(static_cast<uint32_t>(std::strtoul(s.substr(p, q - p).c_str(), nullptr, 0)));
++                            p = (q == std::string::npos) ? s.size() : q + 1;
++                        }
++                    }
++                    return v;
++                }();
++                static std::vector<uint32_t> s_last;
++                if (!s_peek.empty())
++                {
++                    const uint8_t *rd = m_memory.getRDRAM();
++                    std::vector<uint32_t> cur;
++                    cur.reserve(s_peek.size());
++                    for (uint32_t a : s_peek)
++                    {
++                        uint32_t val = 0;
++                        std::memcpy(&val, rd + (a & 0x1FFFFFFu), 4);
++                        cur.push_back(val);
++                    }
++                    if (cur != s_last)
++                    {
++                        std::cerr << "[peek] tick=" << std::dec << tick << " pc=0x" << std::hex << m_cpuContext.pc;
++                        for (size_t i = 0; i < s_peek.size(); ++i)
++                            std::cerr << " [0x" << s_peek[i] << "]=0x" << cur[i];
++                        std::cerr << std::dec << std::endl;
++                        s_last = std::move(cur);
++                    }
++                }
++            }
+             if ((tick % 60) == 0)
+             {
+                 uint8_t *rd = m_memory.getRDRAM();

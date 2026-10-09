@@ -47,6 +47,7 @@
 #include <string>
 
 namespace ps2_syscalls { bool hleSignalSema(uint32_t semaId); }
+namespace ps2_stubs { uint32_t hleIopRebootCount(); }
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -730,6 +731,18 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
                             uint8_t* rdram, void* user) {
     auto* self = static_cast<ReoHwBridge*>(user);
 
+    // An IOP reboot (SIF_CMD_RESET, D1) wipes IOP memory: reset IOP-resident HLE
+    // state (heap, open files) when the runtime's reboot count changes.
+    if (self) {
+        const uint32_t boots = ps2_stubs::hleIopRebootCount();
+        if (boots != self->m_iopBootSeen) {
+            self->m_iopBootSeen = boots;
+            self->m_iopHeapNext = kIopHeapBase;
+            for (auto& f : self->m_fioFds) { if (f) { fclose(f); f = nullptr; } }
+            fprintf(stderr, "[HW-BRIDGE:IOP] reboot #%u: HLE IOP heap and fds reset\n", boots);
+        }
+    }
+
     switch (sid) {
     case SIF_FILEIO: {
         // HLE FILEIO server (IOP fileio.irx). D2 discovery stage: only fno 0xFF
@@ -822,6 +835,27 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
                 const bool sig = ps2_syscalls::hleSignalSema(sema);
                 fprintf(stderr, "[HW-BRIDGE:FIO] read fd=%d buf=0x%08X size=%d -> %d (sema %u %s)\n",
                         fd, buf, size, result, sema, sig ? "signaled" : "NOT signaled");
+            } else if (rpcNum == 0x17 && sendBuf && sendSize >= 0x81C) {
+                // devctl (EE client 0x11B248): +0xC device name, +0x40C input,
+                // +0x80C cmd, +0x810 in len, +0x814 out buf, +0x818 out len.
+                // No HDD/network devices are emulated: fail with ENODEV like a PS2
+                // without the device, completing the async request.
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const uint32_t cmd     = rdramRead32(rdram, sendBuf + 0x80C);
+                std::string dev;
+                for (uint32_t i = 0xC; i < 0xC + 0x40; ++i) {
+                    const char ch = (char)rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    if (!ch) break;
+                    dev.push_back(ch);
+                }
+                const int32_t result = -19; // ENODEV
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u); // accepted
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] devctl \"%s\" cmd=0x%X -> %d (no device; sema %u %s)\n",
+                        dev.c_str(), cmd, result, sema, sig ? "signaled" : "NOT signaled");
             } else if ((rpcNum == 0x1 || rpcNum == 0x4) && sendBuf && sendSize >= 0x10 && self) {
                 // close (1): +0xC fd.  lseek (4): +0xC fd, +0x10 offset, +0x14 whence.
                 // Same async completion as open: result to +4, signal sema at +0.
@@ -851,6 +885,19 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
                 fprintf(stderr, "[HW-BRIDGE:FIO] %s fd=%d -> %d (sema %u %s)\n",
                         rpcNum == 0x1 ? "close" : "lseek", fd, result, sema,
                         sig ? "signaled" : "NOT signaled");
+            } else if (rpcNum != 0xFF && sendBuf && sendSize >= 0xC) {
+                // Any other fileio op uses the same async header (+0 sema, +4 result
+                // addr, +8 result size). Complete it with an error so the EE never
+                // waits forever, and log it as unimplemented.
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const int32_t result = -48; // unsupported
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u);
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] ** UNIMPLEMENTED fno=0x%X -> %d (sema %u %s)\n",
+                        rpcNum, result, sema, sig ? "signaled" : "NOT signaled");
             } else {
                 rdramWrite32(rdram, recvBuf, 0xFFFFFFFFu);
             }
@@ -1048,6 +1095,91 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
         }
         if (recvBuf) rdramWrite32(rdram, recvBuf, 0);
         return true;
+    }
+
+    case 0x80000003:   // SIFHEAP (IOP heap)
+    case 0x80000006: { // LOADFILE
+        static int hlLog = 0;
+        const bool isHeap = (sid == 0x80000003);
+        if (hlLog < 120) {
+            char hex[3 * 48 + 1] = {0};
+            if (sendBuf && sendSize) {
+                const uint32_t n = std::min<uint32_t>(sendSize, 48);
+                for (uint32_t i = 0; i < n; ++i)
+                    snprintf(hex + i * 3, 4, "%02X ", rdram[(sendBuf + i) & PS2_RAM_MASK]);
+            }
+            fprintf(stderr, "[HW-BRIDGE:%s] fno=0x%X send=0x%08X/%u recv=0x%08X/%u data=[%s]\n",
+                    isHeap ? "HEAP" : "LOADFILE", rpcNum, sendBuf, sendSize, recvBuf, recvSize, hex);
+            hlLog++;
+        }
+        if (!recvBuf || recvSize < 4) return false;
+
+        if (isHeap) {
+            if (!self) return false;
+            // HLE IOP heap. The runtime's sceSifSetDma aliases IOP destinations onto
+            // EE RAM, so allocations come from IOP 0x88000-0xFFFFF, an EE range that
+            // PCSX2 shows unused by this game (D4). Exhaustion fails loudly (0).
+            uint32_t& heapNext = self->m_iopHeapNext;
+            constexpr uint32_t kHeapEnd = 0x00100000u;
+            if (rpcNum == 0x1 && sendBuf && sendSize >= 4) {           // alloc(size)
+                const uint32_t size = rdramRead32(rdram, sendBuf);
+                const uint32_t aligned = (size + 0xFFu) & ~0xFFu;
+                uint32_t addr = 0u;
+                if (size && heapNext + aligned <= kHeapEnd) { addr = heapNext; heapNext += aligned; }
+                rdramWrite32(rdram, recvBuf, addr);
+                fprintf(stderr, "[HW-BRIDGE:HEAP] alloc %u -> 0x%08X%s\n", size, addr,
+                        addr ? "" : "  ** HLE IOP heap exhausted; needs a real IOP RAM model **");
+                return true;
+            }
+            if (rpcNum == 0x2) {                                        // free(addr)
+                rdramWrite32(rdram, recvBuf, 0u);
+                return true;
+            }
+            return false;
+        }
+
+        // LOADFILE
+        if (rpcNum == 0xFF) {                                           // init / version
+            rdramWrite32(rdram, recvBuf, 0x30303832u); // "2800", verified against PCSX2 (D4)
+            return true;
+        }
+        if ((rpcNum == 0x6 || rpcNum == 0x0) && sendBuf && sendSize >= 8) {
+            // 6 = load module from IOP buffer: +0 IOP addr, +4 arg length, args at +0x104.
+            // 0 = load module by path: path string at +0x8 (layout probable; logged).
+            // HLE: modules are not executed (their services are emulated by HLE
+            // servers); return a fresh id and RESIDENT_END (0).
+            static int32_t nextModId = 0x10;
+            const uint32_t argLen = rdramRead32(rdram, sendBuf + 4);
+            std::string args;
+            for (uint32_t i = 0; i < std::min<uint32_t>(argLen, 0xFC) && sendSize >= 0x104 + argLen; ++i) {
+                const char ch = (char)rdram[(sendBuf + 0x104 + i) & PS2_RAM_MASK];
+                args.push_back(ch ? ch : ' ');
+            }
+            std::string what;
+            if (rpcNum == 0x6) {
+                // Best effort: IRX module name from the .iopmod-style header if present.
+                const uint32_t iopAddr = rdramRead32(rdram, sendBuf);
+                char hdr[5] = {0};
+                for (int i = 0; i < 4; ++i) hdr[i] = (char)rdram[(iopAddr + i) & PS2_RAM_MASK];
+                char buf[64];
+                snprintf(buf, sizeof buf, "buffer@IOP 0x%08X (magic %02X%02X%02X%02X)", iopAddr,
+                         (uint8_t)hdr[0], (uint8_t)hdr[1], (uint8_t)hdr[2], (uint8_t)hdr[3]);
+                what = buf;
+            } else {
+                for (uint32_t i = 8; i < std::min<uint32_t>(sendSize, 8 + 0x100); ++i) {
+                    const char ch = (char)rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    if (!ch) break;
+                    what.push_back(ch);
+                }
+            }
+            const int32_t id = nextModId++;
+            rdramWrite32(rdram, recvBuf, (uint32_t)id);
+            if (recvSize >= 8) rdramWrite32(rdram, recvBuf + 4, 0u);
+            fprintf(stderr, "[HW-BRIDGE:LOADFILE] load %s args=\"%s\" -> id %d (HLE, not executed)\n",
+                    what.c_str(), args.c_str(), id);
+            return true;
+        }
+        return false;
     }
 
     default: {

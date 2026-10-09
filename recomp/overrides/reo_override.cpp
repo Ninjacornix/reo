@@ -42,6 +42,7 @@ extern void sub_001CB8F0_0x1cb8f0(uint8_t*, R5900Context*, PS2Runtime*);
 namespace ps2_stubs { void sceSifBindRpc(uint8_t*, R5900Context*, PS2Runtime*); }
 namespace ps2_syscalls { void sceSifCallRpc(uint8_t*, R5900Context*, PS2Runtime*); }
 namespace ps2_syscalls { void SifInitRpc(uint8_t*, R5900Context*, PS2Runtime*); }
+extern void sub_00115F30_0x115f30(uint8_t*, R5900Context*, PS2Runtime*); // reo_extra_functions.cpp
 #include <iomanip>
 #include <chrono>
 #include <thread>
@@ -1000,6 +1001,10 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         printf("[REO] WARNING: Hardware bridge failed to initialize!\n");
         printf("[REO] Rendering will not work. Continuing with stubs only.\n");
     }
+
+    // Function entries the static recompiler missed (reo_extra_functions.cpp, D6).
+    // Not HLE overrides: registered in every mode, including REO_NO_OVERRIDES.
+    runtime.registerFunction(0x115F30, sub_00115F30_0x115f30);
 
     // REO_NO_OVERRIDES: skip all function bindings so the game runs its own
     // (now-real) recompiled functions instead of these stub-era overrides.

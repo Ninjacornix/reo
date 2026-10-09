@@ -1,0 +1,31 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
+index 500485e..996ef7b 100644
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
+@@ -469,6 +469,14 @@ namespace ps2_stubs
+         setReturnS32(ctx, 0);
+     }
+ 
++    // Number of HLE IOP reboots started so far (SIF_CMD_RESET seen). Host-side IOP
++    // servers compare it to reset IOP-resident state (heap, fds, modules).
++    uint32_t hleIopRebootCount()
++    {
++        std::lock_guard<std::mutex> lock(g_sifCmdStateMutex);
++        return g_iopRebootCount;
++    }
++
+     void sceSifGetReg(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
+         const uint32_t reg = getRegU32(ctx, 4);
+diff --git a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.h b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.h
+index 7d7f35c..80235b4 100644
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.h
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.h
+@@ -23,6 +23,7 @@ namespace ps2_stubs
+     void sceSifGetIopAddr(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void sceSifGetNextRequest(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void sceSifGetOtherData(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
++    uint32_t hleIopRebootCount();
+     void sceSifGetReg(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void sceSifGetSreg(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void sceSifInitCmd(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);

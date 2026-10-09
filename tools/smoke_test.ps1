@@ -1,9 +1,10 @@
 # REO File #1 smoke run against a user-owned ISO (never copied or committed).
 #
 #   powershell -ExecutionPolicy Bypass -File tools\smoke_test.ps1 -Iso <path.iso> [-Seconds 60] [-Trace]
-#       [-Env REO_NATURAL=1,REO_HEADLESS=1] [-Label natural]
+#       [-Env 'REO_NATURAL=1;REO_PEEK=0x209D34,0x316598'] [-Label natural]
 #
 # -Env sets extra environment variables for the run only (recorded in summary.txt).
+# Separate entries with ';' (values may contain commas).
 # Mounts the ISO read-only, runs reo_recomp with --data <drive>:\ for a fixed time,
 # captures stdout/stderr under build\smoke\<timestamp>\, then kills the process and unmounts.
 # Exit code: 0 = still running at timeout (no crash), 1 = exited/crashed early, 2 = setup error.
@@ -29,7 +30,7 @@ foreach ($p in @($Exe, $Elf)) { if (-not (Test-Path $p)) { Write-Error "missing:
 
 $runName = (Get-Date -Format 'yyyyMMdd-HHmmss') + $(if ($Label) { "-$Label" } else { '' })
 $OutDir = Join-Path (Split-Path -Parent (Split-Path -Parent $Exe)) ("smoke\" + $runName)
-$envPairs = foreach ($kv in $Env) {
+$envPairs = foreach ($kv in ($Env | ForEach-Object { $_ -split ';' } | Where-Object { $_ })) {
     $k, $v = $kv -split '=', 2
     if (-not $k -or $null -eq $v) { Write-Error "bad -Env entry '$kv' (want NAME=VALUE)"; exit 2 }
     ,@($k, $v)

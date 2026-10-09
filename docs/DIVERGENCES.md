@@ -152,3 +152,53 @@ Afterwards the game polls (hot PCs `0x11be..`–`0x11c1..`) rather than blocking
 
 ### Next (D4)
 IOP heap (`0x80000003`) + LOADFILE (`0x80000006`): `DRIVE.DAT` (356,544 bytes, now at EE `0x01000000`) is most likely a bundle of IRX modules for `SifLoadModuleBuffer`-style loading. Decode the requests and replies against PCSX2, and record which modules the game loads and the results/IDs it expects.
+
+---
+
+## D4: IOP heap + LOADFILE unserved; HDD probe hung; reboots leaked IOP state — FIXED (HLE)
+
+Date: 2026-10-09. Category: **IOP SIF/HLE**.
+
+### Analysis (Ghidra + PCSX2/PINE; confidence: confirmed for the replies, probable for request layouts)
+- `0x1AB560` = game IOP init: `sceSifRebootIop("…DNAS280.IMG")` (`0x11CCA8`) + `SifIopSync`. Reads `DRIVE.DAT` into EE `0x01000000`, `SifAllocIopHeap` (`0x11B8B0`), DMAs it to IOP, waits on `SifDmaStat`. Relocates the archive table (magic `"MUU-"`, 11 entries), then loads each module via `SifLoadModuleBuffer` (`0x11BF40` → LOADFILE fno 6) and frees the heap. Then HDD setup (`0x1BCF60`) and path loads (`0x18D770`).
+- LOADFILE init check `0x11BE78` compares the reply word with `"2800"` (like FILEIO).
+- PCSX2 reference: LOADFILE init reply `"2800"`; a later heap alloc returned IOP `0x00081200`; last module reply id `0x29`, result 2.
+- EE `0x88000–0xFFFFF` is unused in PCSX2 (`0x80000–0x87FFF` holds data). The runtime's `sceSifSetDma` aliases IOP destinations onto EE RAM, so the HLE IOP heap lives there.
+- `devctl("hdd0:", HDIOC_STATUS 0x4807)` (FILEIO fno 0x17, client `0x11B248`, request 0x81C bytes) waited forever because unknown fnos were "accepted" but never completed.
+
+### Fix (`reo_hw_bridge`, PS2Recomp patch 0004)
+- SIFHEAP `0x80000003`: alloc (bump allocator, IOP `0x88000–0xFFFFF`, fails loudly when exhausted), free (accepted).
+- LOADFILE `0x80000006`: init `"2800"`; fno 6 (buffer) and fno 0 (path) return fresh ids, result 0 (`RESIDENT_END`). Modules are **not executed**; their services are HLE servers.
+- FILEIO: devctl → `-ENODEV` (no HDD/network device); any other fno completes with -48 + sema signal (logged `** UNIMPLEMENTED`).
+- Patch 0004 exposes `ps2_stubs::hleIopRebootCount()`; the bridge resets the HLE heap and open fds on every IOP reboot.
+
+### Observed (after)
+Every IOP boot cycle completes: 11 `DRIVE.DAT` modules (ELF magic at the aliased heap addresses, proving the DMA), `ATAD/HDD/PFS.IRX`, HDD probe → -19, `pfs0:` fno 0x14 → -48, `NETBIO00.DAT` opened + sized (907,040,768 bytes), `USBD/USBKB.IRX`. But the game then **restarted from the ELF entry** repeatedly (see D5/D6).
+
+---
+
+## D5: EE heap limit and main stack placement wrong in runtime — FIXED
+
+Category: **runtime kernel HLE**. Confidence: confirmed.
+
+- Entry `0x100008`: `SetupThread(gp 0x261CF0, stack -1, size 0x10000)`, `SetupHeap(0x8AA380, -1)`.
+- `0x114D20` = `sbrk`: `if (EndOfHeap() < heap_ptr(0x209D34) + incr) { errno = ENOMEM; return -1; }`. `0x106EE0` = `malloc` (newlib: lock / `_malloc_r` `0x1071D8` / unlock), extend-top `0x106F80`.
+- `0x19F430` mallocs `0x160003F` (22 MB) and fails boot if NULL.
+- Runtime bugs: `EndOfHeap` returned the runtime allocator's *current* end (≈ heap base), not the limit. `SetupThread(stack=-1)` returned `sp = RAM - size` (the stack bottom), so the stack grew down into the heap. The runtime's own `guestMalloc` (HLE stubs, auto thread stacks) shared the game's heap range.
+- PCSX2 reference: the game's final `sbrk` pointer is `0x01FBC000` (23.07 of 23.27 MB used; 208 KB free below the stack at `0x1FF0000`). Stack activity is at `0x1FFD000–0x1FFEFFF`, nothing above `0x1FFF000`.
+- Fix (patch 0005): stack `[RAM-size, RAM)` with `sp = RAM - 0x1000`; `SetupHeap(base, -1)` → user heap `[base, stackBottom - 128 KB)`, runtime reserve `[stackBottom - 128 KB, stackBottom)`; `EndOfHeap` returns the user limit.
+- Verified: after D6, reo's `sbrk` pointer reaches **`0x01FBC000`, identical to PCSX2**.
+
+## D6: function-pointer-only functions not recompiled → silent restart — PARTIAL (1 of many)
+
+Category: **recompilation coverage**. Confidence: confirmed.
+
+- `REO_PEEK` change-log (patch 0006, new tool) showed `malloc` succeeding at tick 134 and the init marker `0x29FDAC` being cleared at tick 151. The log between them:
+  `Function at address 0x115f30 not found` → `[dispatch:first-bad-pc] bad=0x115f30 ra=0x1167b0` → `[dispatch:recover-pc] … fallback=0x100008`. The runtime "recovers" by **restarting at the ELF entry**: BSS is cleared but the `sbrk` pointer (in .data) survives, so every restart's 22 MB malloc fails → endless reboot loop.
+- `0x115F30` is a putchar-style console function referenced only as data (function pointer stored by `0x116848`). The analyzer merged it into `sub_00115EF0` (`0x115EF0–0x116018`), so no entry was registered.
+- Fix: `recomp/overrides/reo_extra_functions.cpp` holds the recompiler's own code for `0x115F30–0x115FE0`, extracted verbatim from `sub_00115EF0`. It gets a new entry header; 4 jr-switch cases for labels outside the range were dropped (default path returns to the dispatcher). It is registered via `registerFunction` in every mode.
+- Result (run `…-natural-d6a`): **no restart loop** (1 IOP reset, 1 SetupHeap), `sbrk` = `0x01FBC000` (= PCSX2), console output path runs. Next stop: indirect call to **`0x131070`** (same class), then a resume at `0x1351F0` (mid-function return address, unsupported by old codegen).
+- **Scale:** Ghidra (R5900 language) lists **4,824** function starts in the main ELF; **1,082** have no registered recompiled entry (e.g. `0x115F30`, `0x131070`). Per-function extraction does not scale.
+
+### Recommended next step
+Regenerate `recomp/config/output/` with the pinned `ps2_recomp` using `ghidra_output` (a full Ghidra function-map CSV). This registers all known entries and brings the pinned codegen everywhere: resume entries, 64-bit branch compares, no all-labels jr switches. Preconditions: keep the 3 HLE-skipped libsif functions + `sub_001F73B0` (runaway) in `skip`, carry over the one remaining hand edit (`entry_1cb9a0` printf; inventory first), full rebuild (~1–2 h), re-run D1–D6 checks.
