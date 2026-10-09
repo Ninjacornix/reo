@@ -102,6 +102,7 @@ public:
 private:
 
     // Statistics
+    bool m_bridgeGfx = false;  // REO_GFX=bridge: use the bridge VIF1/VU1/GS path
     uint64_t m_gifPackets = 0;
     uint64_t m_vif1Dmas = 0;
     uint64_t m_vu0Runs = 0;
