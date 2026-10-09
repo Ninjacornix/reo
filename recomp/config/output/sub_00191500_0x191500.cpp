@@ -218,10 +218,10 @@ void sub_00191500_0x191500(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     { __m128 res = PS2_VMUL(ctx->vu0_vf[5], _mm_set1_ps(ctx->vu0_q)); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); }
     // 0x1915f4: 0x4bc522fe  vopmula.xyz $ACC, $vf4, $vf5
     ctx->pc = 0x1915f4u;
-    ctx->vu0_acc = PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[5]);
+    { __m128 res = PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[5]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_acc = _mm_blendv_ps(ctx->vu0_acc, res, _mm_castsi128_ps(mask)); }
     // 0x1915f8: 0x4bc429ae  vopmsub.xyz $vf6, $vf5, $vf4
     ctx->pc = 0x1915f8u;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[5], ctx->vu0_vf[4]); __m128 res = PS2_VSUB(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[6] = _mm_blendv_ps(ctx->vu0_vf[6], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 res = PS2_VSUB(ctx->vu0_acc, PS2_VOPMUL(ctx->vu0_vf[5], ctx->vu0_vf[4])); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[6] = _mm_blendv_ps(ctx->vu0_vf[6], res, _mm_castsi128_ps(mask)); }
     // 0x1915fc: 0x4bc6322a  vmul.xyz    $vf8, $vf6, $vf6
     ctx->pc = 0x1915fcu;
     { __m128 res = PS2_VMUL(ctx->vu0_vf[6], ctx->vu0_vf[6]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[8] = PS2_VBLEND(ctx->vu0_vf[8], res, _mm_castsi128_ps(mask)); }
@@ -242,10 +242,10 @@ void sub_00191500_0x191500(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     { __m128 res = PS2_VMUL(ctx->vu0_vf[6], _mm_set1_ps(ctx->vu0_q)); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[6] = _mm_blendv_ps(ctx->vu0_vf[6], res, _mm_castsi128_ps(mask)); }
     // 0x191614: 0x4bc432fe  vopmula.xyz $ACC, $vf6, $vf4
     ctx->pc = 0x191614u;
-    ctx->vu0_acc = PS2_VOPMUL(ctx->vu0_vf[6], ctx->vu0_vf[4]);
+    { __m128 res = PS2_VOPMUL(ctx->vu0_vf[6], ctx->vu0_vf[4]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_acc = _mm_blendv_ps(ctx->vu0_acc, res, _mm_castsi128_ps(mask)); }
     // 0x191618: 0x4bc6216e  vopmsub.xyz $vf5, $vf4, $vf6
     ctx->pc = 0x191618u;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[4], ctx->vu0_vf[6]); __m128 res = PS2_VSUB(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 res = PS2_VSUB(ctx->vu0_acc, PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[6])); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); }
     // 0x19161c: 0xf8840000  sqc2        $vf4, 0x0($a0)
     ctx->pc = 0x19161cu;
     WRITE128(ADD32(GPR_U32(ctx, 4), 0), _mm_castps_si128(ctx->vu0_vf[4]));
@@ -393,10 +393,10 @@ void sub_00191500_0x191500(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     { __m128 res = PS2_VMUL(ctx->vu0_vf[5], _mm_set1_ps(ctx->vu0_q)); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); }
     // 0x1916d4: 0x4bc42afe  vopmula.xyz $ACC, $vf5, $vf4
     ctx->pc = 0x1916d4u;
-    ctx->vu0_acc = PS2_VOPMUL(ctx->vu0_vf[5], ctx->vu0_vf[4]);
+    { __m128 res = PS2_VOPMUL(ctx->vu0_vf[5], ctx->vu0_vf[4]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_acc = _mm_blendv_ps(ctx->vu0_acc, res, _mm_castsi128_ps(mask)); }
     // 0x1916d8: 0x4bc5216e  vopmsub.xyz $vf5, $vf4, $vf5
     ctx->pc = 0x1916d8u;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[4], ctx->vu0_vf[5]); __m128 res = PS2_VSUB(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 res = PS2_VSUB(ctx->vu0_acc, PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[5])); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); }
     // 0x1916dc: 0x4bc52a2a  vmul.xyz    $vf8, $vf5, $vf5
     ctx->pc = 0x1916dcu;
     { __m128 res = PS2_VMUL(ctx->vu0_vf[5], ctx->vu0_vf[5]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[8] = PS2_VBLEND(ctx->vu0_vf[8], res, _mm_castsi128_ps(mask)); }
@@ -417,10 +417,10 @@ void sub_00191500_0x191500(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     { __m128 res = PS2_VMUL(ctx->vu0_vf[5], _mm_set1_ps(ctx->vu0_q)); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); }
     // 0x1916f4: 0x4bc522fe  vopmula.xyz $ACC, $vf4, $vf5
     ctx->pc = 0x1916f4u;
-    ctx->vu0_acc = PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[5]);
+    { __m128 res = PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[5]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_acc = _mm_blendv_ps(ctx->vu0_acc, res, _mm_castsi128_ps(mask)); }
     // 0x1916f8: 0x4bc429ae  vopmsub.xyz $vf6, $vf5, $vf4
     ctx->pc = 0x1916f8u;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[5], ctx->vu0_vf[4]); __m128 res = PS2_VSUB(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[6] = _mm_blendv_ps(ctx->vu0_vf[6], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 res = PS2_VSUB(ctx->vu0_acc, PS2_VOPMUL(ctx->vu0_vf[5], ctx->vu0_vf[4])); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[6] = _mm_blendv_ps(ctx->vu0_vf[6], res, _mm_castsi128_ps(mask)); }
     // 0x1916fc: 0xf8840000  sqc2        $vf4, 0x0($a0)
     ctx->pc = 0x1916fcu;
     WRITE128(ADD32(GPR_U32(ctx, 4), 0), _mm_castps_si128(ctx->vu0_vf[4]));
@@ -568,10 +568,10 @@ void sub_00191500_0x191500(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     { __m128 res = PS2_VMUL(ctx->vu0_vf[5], _mm_set1_ps(ctx->vu0_q)); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); }
     // 0x1917b4: 0x4bc42afe  vopmula.xyz $ACC, $vf5, $vf4
     ctx->pc = 0x1917b4u;
-    ctx->vu0_acc = PS2_VOPMUL(ctx->vu0_vf[5], ctx->vu0_vf[4]);
+    { __m128 res = PS2_VOPMUL(ctx->vu0_vf[5], ctx->vu0_vf[4]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_acc = _mm_blendv_ps(ctx->vu0_acc, res, _mm_castsi128_ps(mask)); }
     // 0x1917b8: 0x4bc5212e  vopmsub.xyz $vf4, $vf4, $vf5
     ctx->pc = 0x1917b8u;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[4], ctx->vu0_vf[5]); __m128 res = PS2_VSUB(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[4] = _mm_blendv_ps(ctx->vu0_vf[4], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 res = PS2_VSUB(ctx->vu0_acc, PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[5])); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[4] = _mm_blendv_ps(ctx->vu0_vf[4], res, _mm_castsi128_ps(mask)); }
     // 0x1917bc: 0x4bc4222a  vmul.xyz    $vf8, $vf4, $vf4
     ctx->pc = 0x1917bcu;
     { __m128 res = PS2_VMUL(ctx->vu0_vf[4], ctx->vu0_vf[4]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[8] = PS2_VBLEND(ctx->vu0_vf[8], res, _mm_castsi128_ps(mask)); }
@@ -592,10 +592,10 @@ void sub_00191500_0x191500(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     { __m128 res = PS2_VMUL(ctx->vu0_vf[4], _mm_set1_ps(ctx->vu0_q)); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[4] = _mm_blendv_ps(ctx->vu0_vf[4], res, _mm_castsi128_ps(mask)); }
     // 0x1917d4: 0x4bc522fe  vopmula.xyz $ACC, $vf4, $vf5
     ctx->pc = 0x1917d4u;
-    ctx->vu0_acc = PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[5]);
+    { __m128 res = PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[5]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_acc = _mm_blendv_ps(ctx->vu0_acc, res, _mm_castsi128_ps(mask)); }
     // 0x1917d8: 0x4bc429ae  vopmsub.xyz $vf6, $vf5, $vf4
     ctx->pc = 0x1917d8u;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[5], ctx->vu0_vf[4]); __m128 res = PS2_VSUB(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[6] = _mm_blendv_ps(ctx->vu0_vf[6], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 res = PS2_VSUB(ctx->vu0_acc, PS2_VOPMUL(ctx->vu0_vf[5], ctx->vu0_vf[4])); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[6] = _mm_blendv_ps(ctx->vu0_vf[6], res, _mm_castsi128_ps(mask)); }
     // 0x1917dc: 0xf8840000  sqc2        $vf4, 0x0($a0)
     ctx->pc = 0x1917dcu;
     WRITE128(ADD32(GPR_U32(ctx, 4), 0), _mm_castps_si128(ctx->vu0_vf[4]));
@@ -743,10 +743,10 @@ void sub_00191500_0x191500(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     { __m128 res = PS2_VMUL(ctx->vu0_vf[6], _mm_set1_ps(ctx->vu0_q)); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[6] = _mm_blendv_ps(ctx->vu0_vf[6], res, _mm_castsi128_ps(mask)); }
     // 0x191894: 0x4bc622fe  vopmula.xyz $ACC, $vf4, $vf6
     ctx->pc = 0x191894u;
-    ctx->vu0_acc = PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[6]);
+    { __m128 res = PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[6]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_acc = _mm_blendv_ps(ctx->vu0_acc, res, _mm_castsi128_ps(mask)); }
     // 0x191898: 0x4bc4312e  vopmsub.xyz $vf4, $vf6, $vf4
     ctx->pc = 0x191898u;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[6], ctx->vu0_vf[4]); __m128 res = PS2_VSUB(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[4] = _mm_blendv_ps(ctx->vu0_vf[4], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 res = PS2_VSUB(ctx->vu0_acc, PS2_VOPMUL(ctx->vu0_vf[6], ctx->vu0_vf[4])); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[4] = _mm_blendv_ps(ctx->vu0_vf[4], res, _mm_castsi128_ps(mask)); }
     // 0x19189c: 0x4bc4222a  vmul.xyz    $vf8, $vf4, $vf4
     ctx->pc = 0x19189cu;
     { __m128 res = PS2_VMUL(ctx->vu0_vf[4], ctx->vu0_vf[4]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[8] = PS2_VBLEND(ctx->vu0_vf[8], res, _mm_castsi128_ps(mask)); }
@@ -767,10 +767,10 @@ void sub_00191500_0x191500(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     { __m128 res = PS2_VMUL(ctx->vu0_vf[4], _mm_set1_ps(ctx->vu0_q)); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[4] = _mm_blendv_ps(ctx->vu0_vf[4], res, _mm_castsi128_ps(mask)); }
     // 0x1918b4: 0x4bc432fe  vopmula.xyz $ACC, $vf6, $vf4
     ctx->pc = 0x1918b4u;
-    ctx->vu0_acc = PS2_VOPMUL(ctx->vu0_vf[6], ctx->vu0_vf[4]);
+    { __m128 res = PS2_VOPMUL(ctx->vu0_vf[6], ctx->vu0_vf[4]); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_acc = _mm_blendv_ps(ctx->vu0_acc, res, _mm_castsi128_ps(mask)); }
     // 0x1918b8: 0x4bc6216e  vopmsub.xyz $vf5, $vf4, $vf6
     ctx->pc = 0x1918b8u;
-    { __m128 mul_res = PS2_VMUL(ctx->vu0_vf[4], ctx->vu0_vf[6]); __m128 res = PS2_VSUB(ctx->vu0_acc, mul_res); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); ctx->vu0_acc = res; }
+    { __m128 res = PS2_VSUB(ctx->vu0_acc, PS2_VOPMUL(ctx->vu0_vf[4], ctx->vu0_vf[6])); __m128i mask = _mm_set_epi32(0, -1, -1, -1); ctx->vu0_vf[5] = _mm_blendv_ps(ctx->vu0_vf[5], res, _mm_castsi128_ps(mask)); }
     // 0x1918bc: 0xf8840000  sqc2        $vf4, 0x0($a0)
     ctx->pc = 0x1918bcu;
     WRITE128(ADD32(GPR_U32(ctx, 4), 0), _mm_castps_si128(ctx->vu0_vf[4]));
