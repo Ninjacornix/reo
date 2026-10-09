@@ -43,6 +43,12 @@
 #include "runtime/cdvd/cdvd.h"
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <algorithm>
+#include <chrono>
+#include <atomic>
+#include <mutex>
+#include <thread>
 #include <vector>
 #include <string>
 
@@ -737,6 +743,148 @@ static inline void rdramWrite32(uint8_t* rdram, uint32_t addr, uint32_t val) {
     memcpy(rdram + phys, &val, 4);
 }
 
+
+// ── libpad2 / dbcman pad data (IOP side) ────────────────────────────────
+// SLUS-20765 uses libpad2 on libdbc. scePad2CreateSocket (EE 0x180378) hands dbcman an
+// EE buffer of two 0x80-byte records; the IOP keeps refreshing them and the EE picks the
+// record with the larger sequence word (+0x7C) (EE 0x180970). Record layout as read by
+// scePad2GetState/GetButtonProfile/Read (EE 0x180680/0x1805B0/0x1804D8):
+//   +0 state (0 none, 1 stable/readable, 2/3 busy executing a command)  +2 data length  +3 profile length
+//   +4 valid word  +0x1C data bytes then profile bytes  +0x7C sequence
+// Profile = 40-bit mask of libpad2 button ids (0..15 digital, packed LSB-first; 0x10..0x1F
+// and 0x23..0x26 8-bit). Records are built exactly as the disc's DualShock2 driver
+// ds2u_s1 (IOP/MODULES/DRIVE.DAT module 3, FUN_00001170) builds them for a pad in
+// digital mode (SIO id 0x41): +1 = 6, +2 = 2, +3 = 4, profile F9 FF 00 00 (no L3/R3), and
+// the raw active-low SIO bytes b0 (SELECT L3 R3 START UP RIGHT DOWN LEFT) and
+// b1 (L2 R2 L1 R1 TRIANGLE CIRCLE CROSS SQUARE) repacked in button-id order:
+//   d0 = (b0 & 1) | ((b0 & 0xF8) >> 2) | (b1 << 6)   d1 = b1 >> 2
+// Input: REO_PAD_SCRIPT="<sec>:<BTN>[+<BTN>][:<holdSec>],..." (seconds since start,
+// default hold 0.2 s) for reproducible headless runs.
+namespace {
+struct Pad2Feeder {
+    std::mutex m;
+    std::vector<uint32_t> sockets;   // EE record-pair buffers
+    uint32_t workAddr = 0;           // sceDbcSetWorkAddr area: per-port connection words
+    uint32_t nextSocketId = 0;
+    uint8_t* rdram = nullptr;
+    bool started = false;
+    std::atomic<bool> stop{false};
+    std::thread thread;
+    struct Press { double t, hold; uint16_t mask; };
+    std::vector<Press> script;
+    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+};
+Pad2Feeder g_pad2;
+
+uint16_t pad2ButtonBit(const std::string& n) {
+    static const char* names[16] = {"SELECT","L3","R3","START","UP","RIGHT","DOWN","LEFT",
+                                    "L2","R2","L1","R1","TRIANGLE","CIRCLE","CROSS","SQUARE"};
+    for (int i = 0; i < 16; ++i) if (n == names[i]) return (uint16_t)(1u << i);
+    return 0;
+}
+
+void pad2ParseScript() {
+    const char* e = std::getenv("REO_PAD_SCRIPT");
+    if (!e) return;
+    std::string all(e), item;
+    size_t p = 0;
+    while (p <= all.size()) {
+        size_t q = all.find(',', p);
+        item = all.substr(p, q == std::string::npos ? std::string::npos : q - p);
+        p = (q == std::string::npos) ? all.size() + 1 : q + 1;
+        size_t c1 = item.find(':');
+        if (c1 == std::string::npos) continue;
+        size_t c2 = item.find(':', c1 + 1);
+        Pad2Feeder::Press pr{std::atof(item.substr(0, c1).c_str()),
+                             c2 == std::string::npos ? 0.2 : std::atof(item.substr(c2 + 1).c_str()), 0};
+        std::string btns = item.substr(c1 + 1, c2 == std::string::npos ? std::string::npos : c2 - c1 - 1);
+        size_t b = 0;
+        while (b <= btns.size()) {
+            size_t pl = btns.find('+', b);
+            pr.mask |= pad2ButtonBit(btns.substr(b, pl == std::string::npos ? std::string::npos : pl - b));
+            b = (pl == std::string::npos) ? btns.size() + 1 : pl + 1;
+        }
+        if (pr.mask) g_pad2.script.push_back(pr);
+    }
+    fprintf(stderr, "[PAD2] script: %zu presses\n", g_pad2.script.size());
+}
+
+void pad2FeederLoop() {
+    uint32_t frame = 0;
+    while (!g_pad2.stop.load()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        const double now = std::chrono::duration<double>(std::chrono::steady_clock::now() - g_pad2.t0).count();
+        uint16_t pressed = 0;
+        for (const auto& pr : g_pad2.script)
+            if (now >= pr.t && now < pr.t + pr.hold) pressed |= pr.mask;
+        const uint16_t data = (uint16_t)~pressed;   // active-low
+        std::vector<uint32_t> socks;
+        uint8_t* rd = nullptr;
+        uint32_t work = 0;
+        { std::lock_guard<std::mutex> l(g_pad2.m); socks = g_pad2.sockets; rd = g_pad2.rdram; work = g_pad2.workAddr; }
+        if (!rd) continue;
+        // sceDbcGetDepNumber (EE 0x188D90) requires the port's word in the work area to be 1.
+        if (work && (work & PS2_RAM_MASK) + 4 <= PS2_RAM_SIZE) {
+            const uint32_t connected = 1;
+            memcpy(rd + (work & PS2_RAM_MASK), &connected, 4);   // port 0
+        }
+        ++frame;
+        for (uint32_t base : socks) {
+            const uint32_t b0 = base & PS2_RAM_MASK, b1 = (base + 0x80) & PS2_RAM_MASK;
+            if (b1 + 0x80 > PS2_RAM_SIZE) continue;
+            uint32_t s0, s1;
+            memcpy(&s0, rd + b0 + 0x7C, 4); memcpy(&s1, rd + b1 + 0x7C, 4);
+            uint8_t* rec = rd + ((s0 <= s1) ? b0 : b1);
+            rec[0] = 1;  // libpad2 state: 0 none, 1 stable/readable, 2/3 busy (game 0x1A6760)
+            rec[1] = 6; rec[2] = 2; rec[3] = 4;
+            const uint32_t valid = 1; memcpy(rec + 4, &valid, 4);
+            const uint8_t sb0 = (uint8_t)(data & 0xFF), sb1 = (uint8_t)(data >> 8);
+            rec[0x1C] = (uint8_t)((sb0 & 1u) | ((sb0 & 0xF8u) >> 2) | (sb1 << 6));
+            rec[0x1D] = (uint8_t)(sb1 >> 2);
+            rec[0x1E] = 0xF9; rec[0x1F] = 0xFF; rec[0x20] = 0x00; rec[0x21] = 0x00;
+            std::atomic_thread_fence(std::memory_order_release);
+            const uint32_t seq = std::max(s0, s1) + 1;
+            memcpy(rec + 0x7C, &seq, 4);   // publish last
+        }
+    }
+}
+
+// dbcman sockets are generic devices: class 1 = pad (libpad2, EE 0x180378), class 2 =
+// memory card (libmc2, EE 0x187970). Only pad sockets get pad records.
+uint32_t pad2RegisterSocket(uint8_t* rdram, uint32_t eeBuf, uint32_t devClass) {
+    std::lock_guard<std::mutex> l(g_pad2.m);
+    g_pad2.rdram = rdram;
+    const uint32_t id = g_pad2.nextSocketId++;
+    if (devClass == 1u &&
+        std::find(g_pad2.sockets.begin(), g_pad2.sockets.end(), eeBuf) == g_pad2.sockets.end())
+        g_pad2.sockets.push_back(eeBuf);
+    fprintf(stderr, "[PAD2] dbc socket %u class %u buffer 0x%08X%s\n", id, devClass, eeBuf,
+            devClass == 1u ? " (pad)" : "");
+    if (devClass != 1u)
+        return id;
+    if (!g_pad2.started) {
+        g_pad2.started = true;
+        pad2ParseScript();
+        g_pad2.thread = std::thread(pad2FeederLoop);
+    }
+    return id;
+}
+
+void pad2SetWorkAddr(uint8_t* rdram, uint32_t addr) {
+    std::lock_guard<std::mutex> l(g_pad2.m);
+    g_pad2.rdram = rdram;
+    g_pad2.workAddr = addr;
+    fprintf(stderr, "[PAD2] dbc work area 0x%08X\n", addr);
+}
+} // namespace
+
+// Stop the pad feeder before guest RAM goes away (reo_bootstrap.cpp, after runtime.run()).
+void reoPad2Stop() {
+    g_pad2.stop = true;
+    if (g_pad2.thread.joinable())
+        g_pad2.thread.join();
+}
+
 bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
                             uint32_t sendBuf, uint32_t sendSize,
                             uint32_t recvBuf, uint32_t recvSize,
@@ -1197,10 +1345,20 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
                     sid, rpcNum, sendBuf, sendSize, recvBuf, recvSize, hex);
             dbcLog++;
         }
+        // sceDbcCreateSocket (EE 0x188C30): EE record buffer at +0x28 (+0x80 at +0x2C);
+        // the reply's socket id at +0x24 is 0 (single pad socket).
+        uint32_t socketId = 0;
+        if (rpcNum == 0x80001301u && sendBuf && sendSize >= 0x30)
+            socketId = pad2RegisterSocket(rdram, rdramRead32(rdram, sendBuf + 0x28),
+                                          rdramRead32(rdram, sendBuf + 4));
+        // sceDbcSetWorkAddr (EE 0x188BC0): EE area at +4 receives per-port connection words.
+        if (rpcNum == 0x80001304u && sendBuf && sendSize >= 8)
+            pad2SetWorkAddr(rdram, rdramRead32(rdram, sendBuf + 4));
         if (recvBuf && recvSize >= 4) {
             for (uint32_t off = 0; off + 4 <= recvSize && off < 0x40; off += 4)
                 rdramWrite32(rdram, recvBuf + off, 0);
             if (rpcNum == 0x80001363u) rdramWrite32(rdram, recvBuf, 0x0300u); // dbcman 3.0
+            if (rpcNum == 0x80001301u && recvSize >= 0x28) rdramWrite32(rdram, recvBuf + 0x24, socketId);
         }
         return true;
     }

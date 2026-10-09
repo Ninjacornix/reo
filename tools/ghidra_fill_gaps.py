@@ -8,9 +8,14 @@ POST /create_function) to create a function at each gap's first instruction, re-
 the map, and repeats until it converges. MODIFIES the Ghidra program (save it after).
 
     MSYS_NO_PATHCONV=1 python tools/ghidra_fill_gaps.py recomp/config/outbreak_ghidra_functions.csv
+    # overlays (tools/overlay_extract.py):
+    MSYS_NO_PATHCONV=1 python tools/ghidra_fill_gaps.py <map.csv> --elf <ovl.elf> --program /ovl/ovl1.elf
 """
 import csv, json, struct, subprocess, sys, urllib.request, os
-ELF = 'game_data/SLUS_207.65'
+def _opt(name, default):
+    return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
+ELF = _opt('--elf', 'game_data/SLUS_207.65')
+PROGRAM = _opt('--program', '/ps2/SLUS_207.65')
 MAP = sys.argv[1]
 elf = open(ELF, 'rb').read()
 phoff = struct.unpack_from('<I', elf, 28)[0]; phnum = struct.unpack_from('<H', elf, 44)[0]
@@ -24,7 +29,7 @@ def rd(a):
     return None
 def export():
     env = dict(os.environ, MSYS_NO_PATHCONV='1')
-    subprocess.run([sys.executable, '-I', 'tools/ghidra_export_functions.py', '--program', '/ps2/SLUS_207.65', '--out', MAP], check=True, env=env, capture_output=True)
+    subprocess.run([sys.executable, '-I', 'tools/ghidra_export_functions.py', '--program', PROGRAM, '--out', MAP], check=True, env=env, capture_output=True)
 def gaps():
     rows = sorted((int(r['start'], 16), int(r['end'], 16)) for r in csv.DictReader(open(MAP)))
     out = []
@@ -36,8 +41,8 @@ def gaps():
                     out.append(a); break
     return out
 def create(addr):
-    body = json.dumps({'address': f'0x{addr:08X}', 'disassemble_first': 'true', 'program': '/ps2/SLUS_207.65'}).encode()
-    req = urllib.request.Request('http://127.0.0.1:8089/create_function?program=/ps2/SLUS_207.65', data=body, headers={'Content-Type': 'application/json'}, method='POST')
+    body = json.dumps({'address': f'0x{addr:08X}', 'disassemble_first': 'true', 'program': PROGRAM}).encode()
+    req = urllib.request.Request('http://127.0.0.1:8089/create_function?program=' + PROGRAM, data=body, headers={'Content-Type': 'application/json'}, method='POST')
     try:
         return json.load(urllib.request.urlopen(req, timeout=120))
     except Exception as e:

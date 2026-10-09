@@ -31,6 +31,10 @@ extern void registerAllFunctions(PS2Runtime& runtime);
 
 // Overlay function registration — runtime-loaded code dumped from PCSX2
 extern void registerOverlayFunctions(PS2Runtime& runtime);
+#ifdef REO_HAVE_OVL
+extern void reoRegisterOverlays(PS2Runtime& runtime);   // recomp/config/output_ovl (BIN/*.DAT)
+#endif
+extern void reoPad2Stop();                               // overrides/reo_hw_bridge.cpp
 
 struct GameDef {
     const char* name;
@@ -129,8 +133,10 @@ static LONG CALLBACK reoWatchHandler(EXCEPTION_POINTERS* ep) {
         return EXCEPTION_CONTINUE_SEARCH;
     ep->ContextRecord->Dr6 = 0;
     if (g_watchHits.fetch_add(1) < 400) {
+        // In read/write mode, touching the watched word here would re-trigger the watch.
+        static const bool rw = std::getenv("REO_HW_WATCH_RW") != nullptr;
         uint32_t v = 0;
-        std::memcpy(&v, reinterpret_cast<const void*>(g_watchHost), 4);
+        if (!rw) std::memcpy(&v, reinterpret_cast<const void*>(g_watchHost), 4);
         fprintf(stderr, "[HW-WATCH] guest 0x%x = 0x%x tid=%lu stack:", g_watchGuest, v, GetCurrentThreadId());
         reoPrintStack(*ep->ContextRecord);
         fprintf(stderr, "\n");
@@ -151,7 +157,9 @@ static void reoArmWatchOnAllThreads() {
             CONTEXT c{}; c.ContextFlags = CONTEXT_DEBUG_REGISTERS;
             if (GetThreadContext(th, &c) && c.Dr0 != g_watchHost) {
                 c.Dr0 = g_watchHost;
-                c.Dr7 = (c.Dr7 & ~0xF0003ull) | 1ull | (1ull << 16) | (3ull << 18); // L0, write, 4 bytes
+                // L0, 4 bytes; RW = write (01) or read/write (11) with REO_HW_WATCH_RW=1.
+                static const bool rw = std::getenv("REO_HW_WATCH_RW") != nullptr;
+                c.Dr7 = (c.Dr7 & ~0xF0003ull) | 1ull | ((rw ? 3ull : 1ull) << 16) | (3ull << 18);
                 SetThreadContext(th, &c);
             }
             ResumeThread(th);
@@ -240,6 +248,12 @@ static void reoStartShots(PS2Runtime* runtime) {
                     char vn[64]; snprintf(vn, sizeof(vn), "vram_%u.bin", t);
                     if (FILE* vf = fopen(vn, "wb")) { fwrite(vram, 1, PS2_GS_VRAM_SIZE, vf); fclose(vf); }
                 }
+                // REO_SHOT_RAM=1: also dump EE RAM (32 MB per shot).
+                static const bool dumpRam = std::getenv("REO_SHOT_RAM") != nullptr;
+                if (const uint8_t* ram = dumpRam ? runtime->memory().getRDRAM() : nullptr) {
+                    char rn[64]; snprintf(rn, sizeof(rn), "eeram_%u.bin", t);
+                    if (FILE* rf = fopen(rn, "wb")) { fwrite(ram, 1, PS2_RAM_SIZE, rf); fclose(rf); }
+                }
                 fprintf(stderr, "[SHOT] gs pmode=%llx smode2=%llx dispfb1=%llx display1=%llx dispfb2=%llx display2=%llx bgcolor=%llx\n",
                         (unsigned long long)g.pmode, (unsigned long long)g.smode2, (unsigned long long)g.dispfb1,
                         (unsigned long long)g.display1, (unsigned long long)g.dispfb2, (unsigned long long)g.display2,
@@ -259,7 +273,10 @@ static void reoStartHwWatch(uint8_t* rdram) {
     g_watchHost = reinterpret_cast<uintptr_t>(rdram + g_watchGuest);
     AddVectoredExceptionHandler(1, reoWatchHandler);
     fprintf(stderr, "[HW-WATCH] armed on guest 0x%x\n", g_watchGuest);
-    std::thread([] { for (;;) { reoArmWatchOnAllThreads(); Sleep(50); } }).detach();
+    // REO_HW_WATCH_AFTER=<seconds>: arm late, so boot-time accesses don't use up the hit budget.
+    const char* after = std::getenv("REO_HW_WATCH_AFTER");
+    const DWORD delayMs = after ? static_cast<DWORD>(std::strtoul(after, nullptr, 0) * 1000u) : 0;
+    std::thread([delayMs] { Sleep(delayMs); for (;;) { reoArmWatchOnAllThreads(); Sleep(50); } }).detach();
 }
 #endif
 
@@ -360,6 +377,9 @@ int main(int argc, char* argv[]) {
     registerAllFunctions(runtime);
     printf("[BOOT] Registering overlay functions (runtime-loaded code)...\n");
     registerOverlayFunctions(runtime);
+#ifdef REO_HAVE_OVL
+    reoRegisterOverlays(runtime);
+#endif
     printf("[BOOT] All functions registered.\n");
 
     // Re-apply game overrides AFTER function registration.
@@ -379,6 +399,7 @@ int main(int argc, char* argv[]) {
     reoStartShots(&runtime);
 #endif
     runtime.run();
+    reoPad2Stop();   // feeder writes guest RAM; stop it before the runtime is destroyed
 
     printf("\n[BOOT] ========================================\n");
     printf("[BOOT] Execution ended.\n");

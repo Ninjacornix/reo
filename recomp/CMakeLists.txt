@@ -84,6 +84,17 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         set(OVERLAY_SOURCES "")
     endif()
 
+    # Code overlays extracted from the user's ISO and recompiled per overlay
+    # (tools/overlay_extract.py, tools/overlay_recomp.py); dispatched by resident overlay id.
+    set(OVL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_ovl")
+    if(EXISTS "${OVL_DIR}/register_overlays.cpp")
+        file(GLOB OVL_SOURCES CONFIGURE_DEPENDS "${OVL_DIR}/*.cpp" "${OVL_DIR}/*/*.cpp")
+        list(LENGTH OVL_SOURCES OVL_COUNT)
+        message(STATUS "REO [${TARGET_NAME}]: Found ${OVL_COUNT} per-overlay source files")
+        list(APPEND OVERLAY_SOURCES ${OVL_SOURCES})
+        set(REO_HAVE_OVL ON)
+    endif()
+
     set(_reo_handwritten_sources
         reo_bootstrap.cpp
         overrides/reo_override.cpp
@@ -172,6 +183,9 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
     endif()
 
+    if(REO_HAVE_OVL)
+        target_compile_definitions(${TARGET_NAME} PRIVATE REO_HAVE_OVL=1)
+    endif()
     target_compile_definitions(${TARGET_NAME} PRIVATE
         _CRT_SECURE_NO_WARNINGS
         NOMINMAX
