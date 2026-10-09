@@ -53,6 +53,15 @@ $elfio = Join-Path $Root 'deps\elfio'
 Ensure-Checkout $PS2RECOMP_REPO $ps2 $PS2RECOMP_PIN
 Ensure-Checkout $ELFIO_REPO $elfio $ELFIO_PIN
 
+# REO-local PS2Recomp patches (the pinned fork is upstream-owned). Idempotent.
+foreach ($patch in Get-ChildItem (Join-Path $Root 'third_party\patches\ps2recomp') -Filter *.patch -ErrorAction SilentlyContinue | Sort-Object Name) {
+    git -C $ps2 apply --reverse --check $patch.FullName 2>$null
+    if ($LASTEXITCODE -eq 0) { Write-Host "[setup] already applied: $($patch.Name)"; continue }
+    git -C $ps2 apply $patch.FullName
+    if ($LASTEXITCODE) { throw "patch failed: $($patch.Name)" }
+    Write-Host "[setup] applied: $($patch.Name)"
+}
+
 & $cmake -S $ps2 -B "$ps2\out\build" -G 'Visual Studio 17 2022' -A x64 "-DFETCHCONTENT_SOURCE_DIR_ELFIO=$($elfio -replace '\\','/')"
 if ($LASTEXITCODE) { throw 'PS2Recomp configure failed' }
 & $cmake --build "$ps2\out\build" --config Release --target ps2_runtime ps2_recomp ps2_analyzer -- /m

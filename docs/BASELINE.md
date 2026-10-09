@@ -220,8 +220,20 @@ Run modes on this branch (environment variables, read by `reo_override.cpp` / ru
 | `REO_TRACE` | TODO | |
 | `reo-gs-replay` / `reo-gs-gen-test` | TODO | |
 
+## Pivot runs (2026-10-09, `build-ninja`, Ninja `-j4`, 0 failures)
+
+| Run | Mode | Result | Key evidence |
+|---|---|---|---|
+| `20261009-120933-default` | default (snapshot injection on) | **crash** at 9.8 s, `0xC0000005` | Reaches GIF DMA (36 transfers) and the `SifIopSync` poll. The crash only occurs with the injection scaffold. |
+| `20261009-121008-natural` | `REO_NATURAL=1` | alive at 60 s, **hung** from tick ≈150 in `SifIopSync` (`0x11cc58`) polling SMFLAG = `0x20000` | see `docs/DIVERGENCES.md` D1 |
+| `20261009-122735-natural-iopreboot` | `REO_NATURAL=1` + patch 0001 | alive at 60 s; **past `SifIopSync`**; repeated SIF RPC cycles (`0x1188a8`, `0x114644`, sema 8/9) | D1 fixed; D2 candidate |
+
+The `[hot]` heartbeat (live-PC histogram, tasks, dma/gif counters, once per 60 ticks) is active in this build. The CDVD bridge now maps the disc (`Mapped 85 files from D:\`). Saves go to the run folder.
+
+**Default mode is not a useful baseline.** Its crash comes from upstream's PCSX2-snapshot injection at frame 5. All further work uses `REO_NATURAL=1`.
+
 ## Open items
 
-- [ ] Pivot build; smoke runs in default and `REO_NATURAL=1` modes.
+- [x] Pivot build; smoke runs in default and `REO_NATURAL=1` modes.
 - [ ] Verify `REO_TRACE` and `gs_dump_replay`.
 - [ ] Inventory hand-edits in `main`'s `recomp/config/output/` (moot on the pivot branch if its output is clean recompiler output; verify).
