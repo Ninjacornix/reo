@@ -109,7 +109,18 @@ Interpretation:
 
 Same treatment for `sub_001401F8` (`0x1401f8`–`0x1407e0`, 378 labels): 15 indirect-jump switches, 5,670 cases and about 5,800 `goto`s in 8,104 lines. Memory was fine (about 1 GB), but `/O2` ran for more than 42 CPU-minutes without finishing. It is replaced with the pinned output (2,682 lines), which compiles in seconds. Not `printf`-instrumented. Normalized diff: 971 lines.
 
-**Root cause, both files:** the old codegen emitted a full all-labels `switch` at every `jr`. Any other generated function with many labels and many `jr` sites has the same compile-time and code-size problem. These two were the only ones that blocked the build.
+On `baseline/pivot-selfexec`, three more functions upstream un-skipped (generated in upstream `4f8d9cb`, no hand edits) stalled with the same pattern: two passed 30 CPU-minutes at `/O2`, and all 4 job slots sat blocked for about 20 minutes. They are replaced with pinned-recompiler output (config: this branch's `outbreak.toml`):
+
+| File | committed (lines / cases) | regenerated (lines / cases) |
+|---|---|---|
+| `sub_00123DB0` | 9,774 / 7,110 | 2,798 / 653 |
+| `sub_00125C30` | 8,397 / 5,544 | 2,871 / 574 |
+| `sub_00133490` | 7,022 / 4,300 | 3,090 / 694 |
+| `sub_001F65D0` | 13,500 / 8,880 (a 12-line stub on `main`; never compiled before) | 5,137 / 1,311 (swapped pre-emptively) |
+
+Heavy files identical to `main` (e.g. `sub_0013ED28`, 5,434 cases) compiled on `main` and are left untouched even when they take more than 30 CPU-minutes.
+
+**Root cause, all five files:** the old codegen emitted a full all-labels `switch` at every `jr`. Any other generated function with many labels and many `jr` sites has the same compile-time and code-size problem. These two were the only ones that blocked the build.
 
 ## REO build — DONE (2026-10-09 01:20)
 
@@ -177,9 +188,40 @@ Secondary observation: `[CDVD] Mapped 1 files from …\game_data` means the reo 
 
 `sp00nznet/reo` branch `pivot-selfexec` (`92a9bc3`, 2026-07-15) is 13 commits ahead of `main`. It recompiles 100% of the game (1 stub), un-skips 105 SIMD functions, fixes SIF RPC/boot-status gates, and pins PS2Recomp `c46d1c7` (includes `7d1da29`). Per the ROADMAP branch strategy ("merge upstream selectively"), it is evaluated as the new baseline on branch `baseline/pivot-selfexec`; see that branch's copy of this file.
 
+## Baseline switch → `baseline/pivot-selfexec` (2026-10-09)
+
+Branch `baseline/pivot-selfexec` = upstream `pivot-selfexec` `92a9bc3` + the audit commits from `audit/main-baseline`. `main` is left untouched.
+
+Reasons (evidence above and in upstream's README on that branch):
+- Upstream states that `main`'s title-screen "rendering" was a **puppet**: an 8 MB PCSX2 RAM snapshot injected at frame 5, plus a forced demo at frame 900 (`reo_frame_check` in `recomp/overrides/reo_override.cpp`). `main` therefore cannot be a baseline for real game behaviour.
+- `pivot-selfexec` recompiles 100% of the game (only `sub_001F73B0` stubbed; `skip` list 252 → 4 entries). It contains the `TODO_NAMED` override-dispatch fix (PS2Recomp `7d1da29`) that `main` crashes on, and the INTC/GS-field/SIF boot-gate work. Upstream's documented frontier is IOP/SIF module + resource init, before the title screen.
+- PS2Recomp pin: `c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f` (sp00nznet fork; `.gitmodules` now present). `ps2xRecomp/` is unchanged from `5a778f7`, so the two regenerated files remain consistent with the pinned codegen.
+- The pivot branch still had the old 147k-line `sub_001DFDA8` and 8k-line `sub_001401F8`; the regeneration commit is carried over.
+
+Run modes on this branch (environment variables, read by `reo_override.cpp` / runtime):
+
+| Variable | Effect |
+|---|---|
+| `REO_NATURAL` | disable snapshot injection + forced demo (self-execution) |
+| `REO_NO_OVERRIDES` | skip all `bind()` overrides, including the SIF RPC HLE routing |
+| `REO_HEADLESS` | runtime: no GL window |
+
+### I/O path defect (fixed in `recomp/reo_bootstrap.cpp`)
+
+`PS2Runtime::loadELF()` → `configureIoPathsFromElf()` overwrites `cdRoot`/`hostRoot`/`mcRoot` with the ELF's directory, so `--data` and `./saves` were ignored. The bootstrap now re-applies its paths after `loadELF()` and prints `[BOOT] I/O roots: …`. The HW bridge's CDVD captures its root inside `loadELF`, so `tools/smoke_test.ps1` boots the ELF from the mounted disc root after verifying it hashes equal to `game_data/SLUS_207.65`.
+
+## Tooling checks
+
+| Tool | Status | Evidence |
+|---|---|---|
+| PCSX2 2.2.0 + PINE (`tools/ps2_debug/pine_client.py`) | **PASS** | `connect` OK on 28011; `title`=`Resident Evil - Outbreak`, `game_id`=`SLUS-20765`, `status`=0 (running); 64 bytes at `0x100008` read over PINE are identical to the ELF file. `version()` returns a truncated string (`PCSX2 v2.`): minor parsing bug in `pine_client.py`. |
+| PCSX2 config | changed | `EnablePINE = true`; `Renderer = 14` (Vulkan) → `-1` (Automatic) because `vulkan-1.dll` is absent and GS failed to open. Backup: `Documents\PCSX2\inis\PCSX2.ini.bak-before-pine`. |
+| PCSX2 BIOS | note | Configured `scph10000.bin` (Japan v1.00). `scph39001.bin` (US) is available and is the better reference for an NTSC-U game in Milestone 1 traces. |
+| `REO_TRACE` | TODO | |
+| `reo-gs-replay` / `reo-gs-gen-test` | TODO | |
+
 ## Open items
 
-- [ ] Finish build; record warnings/errors and time.
-- [ ] Smoke run; record boot log, first visible frame, hang/crash point.
-- [ ] Verify `REO_TRACE`, `gs_dump_replay`, and PCSX2 PINE scripts (`tools/ps2_debug`, PINE must be enabled in PCSX2).
-- [ ] Inventory hand-edits in `recomp/config/output/` (diff against regenerated output at the old codegen revision if recoverable).
+- [ ] Pivot build; smoke runs in default and `REO_NATURAL=1` modes.
+- [ ] Verify `REO_TRACE` and `gs_dump_replay`.
+- [ ] Inventory hand-edits in `main`'s `recomp/config/output/` (moot on the pivot branch if its output is clean recompiler output; verify).
