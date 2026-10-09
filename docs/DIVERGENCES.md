@@ -348,11 +348,58 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 
 - ASan (`REO_ASAN`): use-after-free between `s_pcHist.clear()` and the next `operator[]`, both in `PS2Runtime::run()`. It is the same site as the earlier intermittent AV. The diagnostic histograms are now fixed-size, heap-free tables. No crash in 60-90 s runs since.
 
+## D28: controller input — libpad2 records over dbcman (HLE) — IMPLEMENTED (scripted)
+
+- The game uses libpad2/libdbc, not libpad. `scePad2CreateSocket` (EE `0x180378`) asks dbcman (RPC `0x80001301`) for a socket and hands it an EE buffer of two 0x80-byte records. The IOP refreshes these records and the EE reads the one with the higher sequence word at `+0x7C`. `sceDbcSetWorkAddr` (RPC `0x80001304`) supplies the per-port "connected" words that `sceDbcGetDepNumber` checks.
+- dbcman sockets are device-generic. Class 1 is the pad (libpad2). Class 2 is the memory card (libmc2, EE `0x187970`, buffer `0x28D980`), so it must not receive pad records.
+- The record format was taken from the disc's own DualShock2 driver `ds2u_s1` (`IOP/MODULES/DRIVE.DAT`, module 3, `FUN_00001170`, imported into Ghidra as `/iop/03_pdman.irx`). In digital mode (SIO id `0x41`) the driver writes:
+  - `+1 = 6`, `+2 = 2` (data length), `+3 = 4` (profile length);
+  - profile `F9 FF 00 00` (no L3/R3);
+  - the raw active-low SIO bytes repacked in button-id order: `d0 = (b0&1) | ((b0&0xF8)>>2) | (b1<<6)`, `d1 = b1>>2`.
+  An earlier guess (raw bytes with profile `FF FF 00 00`) delivered input but scrambled the meaning of the buttons.
+- Evidence chain: pad struct `0x2B0A10` → action word `0x2B0A38` (mapping table `0x2B0900`, copied from `0x2310D0`) → key struct `[0x2AFFA8]` → per-player `0x324300` → system keys `0x324210/18/28` (`sub_001B0DB0`). The memory-card manager (`sub_001C2940`, state struct `[0x326F10]`, substate handler `FUN_001C2D00` case 3) reads the trigger word: `0x10` confirms, `0x4` moves the cursor to YES and `0x8` moves it back. Readers were found with `REO_HW_WATCH` + `REO_HW_WATCH_RW=1` + `REO_HW_WATCH_AFTER`.
+- Observed: `REO_PAD_SCRIPT=21:LEFT,24:CROSS` gives LEFT → `0x4` and CROSS → `0x10`. The manager substate goes 3 → 4 and the boot sequence continues (Sofdec/ADX, ACCESS AVE-TCP and "Play online with SNAP" screens captured).
+- Not yet: live keyboard/gamepad input (the same feeder can take it), analog/DualShock2 mode (`0x79`, 18 raw bytes), and libmc2 (no card is reported; there is no memory-card HLE).
+
+## D29: code overlays (BIN/*.DAT) were not recompiled — IN PROGRESS
+
+- After the logos the game loads `BIN\1.DAT` ("demo.bin") to `0x570000` and calls `0x57F1F0`. That address isn't in the function table, so the dispatcher fell back to `ra` and the screen stayed black. Only `0.DAT` (`0x370000`, "submain.bin") existed, as an old PCSX2 dump.
+- Nine overlays exist. Each has an `MWo3` header: +4 id, +8 load base, +0xC text size, +0x10 data size, a name at +0x1C, and 0x80 bytes in total.
+  - `0.DAT` → `0x370000`.
+  - `1/2/3.DAT` → `0x570000` (same address).
+  - `4/5/6.DAT` → `0x6E0000`, uncompressed.
+  - `8/9.DAT` → `0x810000`.
+- Files that start with `02 00` are LZ-compressed and decompressed in place by the game. The format was derived by comparing `0.DAT` with the game-decompressed image in an EE RAM dump: 16-bit control words consumed MSB first; literal halfwords; tokens copying `T>>11` halfwords from `T&0x7FF` halfwords back, where 0 means an extended count in the next halfword and distance 0 ends the stream. `tools/overlay_extract.py` reproduces `0.DAT`'s 64,832 text bytes exactly as they sit in EE RAM.
+- Pipeline:
+  1. `tools/overlay_extract.py`: image plus an EE ELF wrapper.
+  2. Ghidra import (`/ovl/ovl<n>.elf`) and `tools/ghidra_fill_gaps.py --elf/--program`.
+  3. `tools/overlay_recomp.py`: `o<n>_` names, generated into `recomp/config/output_ovl/o<n>/`.
+  4. PS2Recomp `registerOverlayFunction(base, 'MWo3', 4, id, addr, fn)`: lookups in a slot range use the overlay id resident at `base+4` (patch 0016). Slots can overlap (2.DAT covers `0x570000`–`0x708540`, which includes the `0x6E0000` slot), so a miss continues to the next slot.
+- Generated code (about 11,700 files, 237 MB) is not committed. It is regenerated from the user's ISO with the committed maps in `recomp/config/overlay_maps/`: `overlay_extract.py <iso> <dir>`, then `overlay_recomp.py <dir> <ps2_recomp.exe> --maps recomp/config/overlay_maps 0 1 2 3 4 5 6 8 9`.
+- `REO_OVL_SKIP=o0,o5` leaves the listed overlays unregistered (diagnostic).
+- Observed with only 1.DAT recompiled (plus the old 0.DAT dump):
+  - CAPCOM logo (55 s) and content warning (50 s);
+  - START → main menu (SINGLE PLAY / NETWORK PLAY / COLLECTION / CHARACTER LOG / OPTIONS / HDD INSTALL) at 68 s;
+  - START → SCENARIO submenu at 78 s.
+  The menu backgrounds were black.
+- With all overlays the game stops at a black screen after the CAPCOM logo. This is not an overlay bug. The old 0.DAT dump lacked `0x37A9B0/0x37AF90/0x37B150`, so the movie start was silently skipped ("Function ... not found"). The new o0 runs it, and the game reaches the MPEG player → D30.
+
+## D30: IPU (MPEG decoder) not emulated — OPEN, current blocker
+
+- Stack dump at 75 s (`REO_STACKDUMP_AT`): a guest thread holds the guest lock in `sub_00145B58` → `0x1458D8` → `0x1453C0`. That is the libmpeg IPU path: it writes `IPU_CMD` and polls `IPU_CMD` bit 63 (busy) / `IPU_CTRL` bit 14. The main thread spins in `sub_0012AA60` waiting for worker flag `0x210484`; the workers wait for the lock.
+- PS2Recomp only stores IPU register values (`ps2_memory.cpp` `0x10002000..0x10002030`); nothing decodes. The intro movies and the menu's movie background need a real IPU (BDEC/IDEC/VDEC/FDEC/SETIQ/SETVQ/CSC, IPU0/IPU1 DMA channels 3/4).
+- Plan: port an existing open-source IPU implementation behind the IPU registers and DMA channels 3/4, rather than skipping movies (skipping would be a synthetic bypass).
+
 ## Milestone-1 checkpoint (observed)
 
 - `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.
 
-## Open (as of D27)
+## Open (as of D30)
+- IPU / MPEG movies (D30): current blocker after the CAPCOM logo.
+- Live keyboard/gamepad input into the libpad2 feeder (D28). `runtime/input` exists, but it only feeds the unused `padman` HLE path.
+- Memory card: the game uses libmc2 over dbcman socket class 2 (not `mcserv`); no card is reported. Answering the prompt with YES continues without saving.
+
+## Open (as of D27, superseded)
 - Memory card: no `mcserv` HLE. The game reports no card and waits for YES/NO; input or a memory-card HLE is needed to proceed toward the title screen.
 - VU1 microprograms: none were started yet (path1 = 0); the next screens with 3D/VU1 rendering will exercise upstream `ps2_vu1.cpp`.
 

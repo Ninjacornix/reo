@@ -1,0 +1,109 @@
+diff --git a/ps2xRuntime/include/ps2_runtime.h b/ps2xRuntime/include/ps2_runtime.h
+index deb1ef7..a77fa16 100644
+--- a/ps2xRuntime/include/ps2_runtime.h
++++ b/ps2xRuntime/include/ps2_runtime.h
+@@ -481,6 +481,11 @@ public:
+     };
+ 
+     void registerFunction(uint32_t address, RecompiledFunction func);
++    // Code overlays that share a load address (game-specific loaders): functions are
++    // registered per (slot base, overlay id); lookups in [base, end) use the id word the
++    // resident image holds at base + idOffset, after checking the magic word at base.
++    void registerOverlayFunction(uint32_t base, uint32_t magic, uint32_t idOffset, uint32_t overlayId,
++                                 uint32_t address, RecompiledFunction func);
+     RecompiledFunction lookupFunction(uint32_t address);
+     bool hasFunction(uint32_t address) const;
+ 
+@@ -654,6 +659,16 @@ private:
+     uint32_t m_asyncCallbackStackTop = PS2_RAM_SIZE;
+ 
+     std::unordered_map<uint32_t, RecompiledFunction> m_functionTable;
++    struct OverlaySlot
++    {
++        uint32_t base = 0;
++        uint32_t end = 0;
++        uint32_t magic = 0;
++        uint32_t idOffset = 0;
++        std::unordered_map<uint64_t, RecompiledFunction> functions; // (id << 32) | address
++    };
++    std::vector<OverlaySlot> m_overlaySlots;
++    const RecompiledFunction *findOverlayFunction(uint32_t address) const;
+     std::atomic<bool> m_stopRequested{false};
+ 
+     // TODO remove this later
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index b80154f..072343d 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1119,8 +1119,61 @@ void PS2Runtime::registerFunction(uint32_t address, RecompiledFunction func)
+     m_functionTable[address] = func;
+ }
+ 
++void PS2Runtime::registerOverlayFunction(uint32_t base, uint32_t magic, uint32_t idOffset, uint32_t overlayId,
++                                         uint32_t address, RecompiledFunction func)
++{
++    OverlaySlot *slot = nullptr;
++    for (auto &s : m_overlaySlots)
++    {
++        if (s.base == base)
++        {
++            slot = &s;
++            break;
++        }
++    }
++    if (!slot)
++    {
++        m_overlaySlots.push_back(OverlaySlot{});
++        slot = &m_overlaySlots.back();
++        slot->base = base;
++        slot->end = base;
++        slot->magic = magic;
++        slot->idOffset = idOffset;
++    }
++    if (address + 4u > slot->end)
++        slot->end = address + 4u;
++    slot->functions[(static_cast<uint64_t>(overlayId) << 32) | address] = func;
++}
++
++const PS2Runtime::RecompiledFunction *PS2Runtime::findOverlayFunction(uint32_t address) const
++{
++    if (m_overlaySlots.empty())
++        return nullptr;
++    const uint8_t *rdram = const_cast<PS2Memory &>(m_memory).getRDRAM();
++    if (!rdram)
++        return nullptr;
++    for (const auto &s : m_overlaySlots)
++    {
++        if (address < s.base || address >= s.end)
++            continue;
++        uint32_t magic = 0, id = 0;
++        std::memcpy(&magic, rdram + (s.base & PS2_RAM_MASK), 4);
++        if (magic != s.magic)
++            continue;
++        std::memcpy(&id, rdram + ((s.base + s.idOffset) & PS2_RAM_MASK), 4);
++        auto it = s.functions.find((static_cast<uint64_t>(id) << 32) | address);
++        if (it != s.functions.end())
++            return &it->second;
++        // Slot ranges can overlap (a large overlay at one base covers another base);
++        // keep looking: the address may belong to the overlay resident in a later slot.
++    }
++    return nullptr;
++}
++
+ bool PS2Runtime::hasFunction(uint32_t address) const
+ {
++    if (findOverlayFunction(address))
++        return true;
+     auto it = m_functionTable.find(address);
+     if (it != m_functionTable.end())
+     {
+@@ -1134,6 +1187,9 @@ PS2Runtime::RecompiledFunction PS2Runtime::lookupFunction(uint32_t address)
+ {
+     pushDispatchPc(address);
+ 
++    if (const RecompiledFunction *ovl = findOverlayFunction(address))
++        return *ovl;
++
+     auto it = m_functionTable.find(address);
+     if (it != m_functionTable.end())
+     {
