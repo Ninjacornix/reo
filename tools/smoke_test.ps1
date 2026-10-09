@@ -30,11 +30,12 @@ foreach ($p in @($Exe, $Elf)) { if (-not (Test-Path $p)) { Write-Error "missing:
 
 $runName = (Get-Date -Format 'yyyyMMdd-HHmmss') + $(if ($Label) { "-$Label" } else { '' })
 $OutDir = Join-Path (Split-Path -Parent (Split-Path -Parent $Exe)) ("smoke\" + $runName)
-$envPairs = foreach ($kv in ($Env | ForEach-Object { $_ -split ';' } | Where-Object { $_ })) {
+# @(...) keeps a single NAME=VALUE pair as a list of pairs (PowerShell unrolls a lone pair).
+$envPairs = @(foreach ($kv in ($Env | ForEach-Object { $_ -split ';' } | Where-Object { $_ })) {
     $k, $v = $kv -split '=', 2
     if (-not $k -or $null -eq $v) { Write-Error "bad -Env entry '$kv' (want NAME=VALUE)"; exit 2 }
     ,@($k, $v)
-}
+})
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 $stdout = Join-Path $OutDir 'stdout.log'
 $stderr = Join-Path $OutDir 'stderr.log'

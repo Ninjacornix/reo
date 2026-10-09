@@ -25,6 +25,7 @@
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
 #include "ps2_stubs.h"
+#include "ps2_syscalls.h"
 #include "game_overrides.h"
 #include "reo_hw_bridge.h"
 #include "runtime/input/input.h"
@@ -1016,6 +1017,18 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     // runtime HLE consistently: init + bind + call.
     bind(runtime, 0x117080, ps2_syscalls::SifInitRpc, "SifInitRpc (HLE)");
     bind(runtime, 0x1179E8, ps2_syscalls::sceSifCallRpc, "SifCallRpc (HLE)");
+
+    // CRI DTX server (EE DTX_Init 0x1392F8 binds sid 0x90000200, read from 0x21C414).
+    // Hand it to the runtime's DTX compat emulation: create (fn 2) + URPC 0x400-0x4FF
+    // (SJRMT/PS2RNA). No guest URPC tables configured -> runtime fallback emulation.
+    // Validation: init path only (DTX_Create / SJUNI_CreateRmt); audio data unverified.
+    {
+        PS2DtxCompatLayout dtx{};
+        dtx.rpcSid = 0x90000200u;
+        dtx.urpcObjBase = 0x001E0000u;   // opaque SJ/RNA handles (IOP-like ids, never dereferenced)
+        dtx.urpcObjLimit = 0x001EFF00u;
+        ps2_syscalls::setDtxCompatLayout(dtx);
+    }
 
     // Self-execution (REO_NATURAL) / REO_NO_OVERRIDES: only the libsif HLE routes above.
     // Everything below is a stub-era override that shadows real recompiled code; with

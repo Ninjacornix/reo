@@ -34,8 +34,18 @@ set(PS2RECOMP_INCLUDES
     "${PS2RECOMP_BUILD}/_deps/raylib-src/src"
 )
 
+# Diagnostics: AddressSanitizer on hand-written code only (reo sources + the PS2Recomp
+# runtime built in out/build-asan with /fsanitize=address); generated code is untouched,
+# so toggling it recompiles only the hand-written files.
+option(REO_ASAN "Instrument hand-written sources and link the ASan ps2_runtime (out/build-asan)" OFF)
+if(REO_ASAN)
+    set(_reo_ps2_runtime_lib "${PS2RECOMP_DIR}/out/build-asan/ps2xRuntime/Release/ps2_runtime.lib")
+else()
+    set(_reo_ps2_runtime_lib "${PS2RECOMP_BUILD}/ps2xRuntime/Release/ps2_runtime.lib")
+endif()
+
 set(PS2RECOMP_LIBS
-    "${PS2RECOMP_BUILD}/ps2xRuntime/Release/ps2_runtime.lib"
+    "${_reo_ps2_runtime_lib}"
     "${PS2RECOMP_BUILD}/_deps/raylib-build/raylib/Release/raylib.lib"
     "${PS2RECOMP_BUILD}/_deps/raylib-build/raylib/external/glfw/src/glfw.dir/Release/glfw.lib"
     "${PS2RECOMP_BUILD}/_deps/fmt-build/Release/fmt.lib"
@@ -136,9 +146,15 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
                 endif()
             endforeach()
         endforeach()
+        if(REO_ASAN)
+            set(_reo_handwritten_opts "/O2;/fsanitize=address;/Zi;/D_DISABLE_STRING_ANNOTATION;/D_DISABLE_VECTOR_ANNOTATION")
+            target_link_options(${TARGET_NAME} PRIVATE /DEBUG /INFERASANLIBS /INCREMENTAL:NO)
+        else()
+            set(_reo_handwritten_opts "/O2")
+        endif()
         set_source_files_properties(${_reo_handwritten_sources}
             TARGET_DIRECTORY ${TARGET_NAME}
-            PROPERTIES COMPILE_OPTIONS "/O2")
+            PROPERTIES COMPILE_OPTIONS "${_reo_handwritten_opts}")
     endif()
 
     if(REO_RECOMP_PCH)
