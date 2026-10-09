@@ -17,11 +17,6 @@ void sub_001BA740_0x1ba740(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_001BA740_0x1ba740");
 #endif
 
-    switch (ctx->pc) {
-        case 0x1ba790u: goto label_1ba790;
-        default: break;
-    }
-
     ctx->pc = 0x1ba740u;
 
     // 0x1ba740: 0x41840  sll         $v1, $a0, 1
@@ -106,7 +101,6 @@ label_1ba788:
         switch (jumpTarget) {
             case 0x1BA784u: goto label_1ba784;
             case 0x1BA788u: goto label_1ba788;
-            case 0x1BA790u: goto label_1ba790;
             case 0x1BA7DCu: goto label_1ba7dc;
             case 0x1BA834u: goto label_1ba834;
             default: break;
@@ -114,7 +108,6 @@ label_1ba788:
         return;
     }
     ctx->pc = 0x1BA790u;
-label_1ba790:
     // 0x1ba790: 0x3c010032  lui         $at, 0x32
     ctx->pc = 0x1ba790u;
     SET_GPR_S32(ctx, 1, (int32_t)((uint32_t)50 << 16));
@@ -208,7 +201,6 @@ label_1ba7dc:
         switch (jumpTarget) {
             case 0x1BA784u: goto label_1ba784;
             case 0x1BA788u: goto label_1ba788;
-            case 0x1BA790u: goto label_1ba790;
             case 0x1BA7DCu: goto label_1ba7dc;
             case 0x1BA834u: goto label_1ba834;
             default: break;
@@ -303,7 +295,6 @@ label_1ba834:
         switch (jumpTarget) {
             case 0x1BA784u: goto label_1ba784;
             case 0x1BA788u: goto label_1ba788;
-            case 0x1BA790u: goto label_1ba790;
             case 0x1BA7DCu: goto label_1ba7dc;
             case 0x1BA834u: goto label_1ba834;
             default: break;

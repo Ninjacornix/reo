@@ -589,10 +589,15 @@ label_1608a0:
         SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 29) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
     ctx->pc = 0x164580u;
-    {
+    if (runtime->hasFunction(0x164580u)) {
         auto targetFn = runtime->lookupFunction(0x164580u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x160928u; }
+        if (ctx->pc != 0x160928u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_00164580_0x164580(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x160928u; }
         if (ctx->pc != 0x160928u) { return; }
     }

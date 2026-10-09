@@ -17,11 +17,6 @@ void sub_00124E40_0x124e40(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_00124E40_0x124e40");
 #endif
 
-    switch (ctx->pc) {
-        case 0x124e60u: goto label_124e60;
-        default: break;
-    }
-
     ctx->pc = 0x124e40u;
 
     // 0x124e40: 0xac86007c  sw          $a2, 0x7C($a0)
@@ -37,10 +32,6 @@ void sub_00124E40_0x124e40(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         WRITE32(ADD32(GPR_U32(ctx, 4), 120), GPR_U32(ctx, 5));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x124E60u: goto label_124e60;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x124E4Cu;
@@ -60,17 +51,12 @@ void sub_00124E40_0x124e40(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         WRITE32(ADD32(GPR_U32(ctx, 4), 128), GPR_U32(ctx, 5));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x124E60u: goto label_124e60;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x124E5Cu;
     // 0x124e5c: 0x0  nop
     ctx->pc = 0x124e5cu;
     // NOP
-label_124e60:
     // 0x124e60: 0x3e00008  jr          $ra
     ctx->pc = 0x124E60u;
     {
@@ -81,10 +67,6 @@ label_124e60:
         SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 60)));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x124E60u: goto label_124e60;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x124E68u;

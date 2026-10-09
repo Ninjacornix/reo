@@ -17,14 +17,6 @@ void sub_0017D468_0x17d468(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_0017D468_0x17d468");
 #endif
 
-    switch (ctx->pc) {
-        case 0x17d470u: goto label_17d470;
-        case 0x17d478u: goto label_17d478;
-        case 0x17d480u: goto label_17d480;
-        case 0x17d488u: goto label_17d488;
-        default: break;
-    }
-
     ctx->pc = 0x17d468u;
 
     // 0x17d468: 0x3e00008  jr          $ra
@@ -37,17 +29,9 @@ void sub_0017D468_0x17d468(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 52)));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x17D470u: goto label_17d470;
-            case 0x17D478u: goto label_17d478;
-            case 0x17D480u: goto label_17d480;
-            case 0x17D488u: goto label_17d488;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x17D470u;
-label_17d470:
     // 0x17d470: 0x3e00008  jr          $ra
     ctx->pc = 0x17D470u;
     {
@@ -58,17 +42,9 @@ label_17d470:
         WRITE32(ADD32(GPR_U32(ctx, 4), 100), GPR_U32(ctx, 5));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x17D470u: goto label_17d470;
-            case 0x17D478u: goto label_17d478;
-            case 0x17D480u: goto label_17d480;
-            case 0x17D488u: goto label_17d488;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x17D478u;
-label_17d478:
     // 0x17d478: 0x3e00008  jr          $ra
     ctx->pc = 0x17D478u;
     {
@@ -79,17 +55,9 @@ label_17d478:
         SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 100)));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x17D470u: goto label_17d470;
-            case 0x17D478u: goto label_17d478;
-            case 0x17D480u: goto label_17d480;
-            case 0x17D488u: goto label_17d488;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x17D480u;
-label_17d480:
     // 0x17d480: 0x3e00008  jr          $ra
     ctx->pc = 0x17D480u;
     {
@@ -100,17 +68,9 @@ label_17d480:
         WRITE32(ADD32(GPR_U32(ctx, 4), 104), GPR_U32(ctx, 5));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x17D470u: goto label_17d470;
-            case 0x17D478u: goto label_17d478;
-            case 0x17D480u: goto label_17d480;
-            case 0x17D488u: goto label_17d488;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x17D488u;
-label_17d488:
     // 0x17d488: 0x3e00008  jr          $ra
     ctx->pc = 0x17D488u;
     {
@@ -121,13 +81,6 @@ label_17d488:
         SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 104)));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x17D470u: goto label_17d470;
-            case 0x17D478u: goto label_17d478;
-            case 0x17D480u: goto label_17d480;
-            case 0x17D488u: goto label_17d488;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x17D490u;

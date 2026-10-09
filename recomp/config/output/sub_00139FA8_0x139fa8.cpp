@@ -20,8 +20,6 @@ void sub_00139FA8_0x139fa8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     switch (ctx->pc) {
         case 0x139fc4u: goto label_139fc4;
         case 0x13a004u: goto label_13a004;
-        case 0x13a058u: goto label_13a058;
-        case 0x13a078u: goto label_13a078;
         case 0x13a0a4u: goto label_13a0a4;
         case 0x13a0c4u: goto label_13a0c4;
         case 0x13a0ccu: goto label_13a0cc;
@@ -124,9 +122,7 @@ label_139fd4:
             case 0x13A004u: goto label_13a004;
             case 0x13A010u: goto label_13a010;
             case 0x13A028u: goto label_13a028;
-            case 0x13A058u: goto label_13a058;
             case 0x13A070u: goto label_13a070;
-            case 0x13A078u: goto label_13a078;
             case 0x13A0A4u: goto label_13a0a4;
             case 0x13A0C4u: goto label_13a0c4;
             case 0x13A0CCu: goto label_13a0cc;
@@ -158,9 +154,7 @@ label_139fd4:
             case 0x13A004u: goto label_13a004;
             case 0x13A010u: goto label_13a010;
             case 0x13A028u: goto label_13a028;
-            case 0x13A058u: goto label_13a058;
             case 0x13A070u: goto label_13a070;
-            case 0x13A078u: goto label_13a078;
             case 0x13A0A4u: goto label_13a0a4;
             case 0x13A0C4u: goto label_13a0c4;
             case 0x13A0CCu: goto label_13a0cc;
@@ -289,9 +283,7 @@ label_13a028:
             case 0x13A004u: goto label_13a004;
             case 0x13A010u: goto label_13a010;
             case 0x13A028u: goto label_13a028;
-            case 0x13A058u: goto label_13a058;
             case 0x13A070u: goto label_13a070;
-            case 0x13A078u: goto label_13a078;
             case 0x13A0A4u: goto label_13a0a4;
             case 0x13A0C4u: goto label_13a0c4;
             case 0x13A0CCu: goto label_13a0cc;
@@ -329,9 +321,7 @@ label_13a028:
             case 0x13A004u: goto label_13a004;
             case 0x13A010u: goto label_13a010;
             case 0x13A028u: goto label_13a028;
-            case 0x13A058u: goto label_13a058;
             case 0x13A070u: goto label_13a070;
-            case 0x13A078u: goto label_13a078;
             case 0x13A0A4u: goto label_13a0a4;
             case 0x13A0C4u: goto label_13a0c4;
             case 0x13A0CCu: goto label_13a0cc;
@@ -369,9 +359,7 @@ label_13a028:
             case 0x13A004u: goto label_13a004;
             case 0x13A010u: goto label_13a010;
             case 0x13A028u: goto label_13a028;
-            case 0x13A058u: goto label_13a058;
             case 0x13A070u: goto label_13a070;
-            case 0x13A078u: goto label_13a078;
             case 0x13A0A4u: goto label_13a0a4;
             case 0x13A0C4u: goto label_13a0c4;
             case 0x13A0CCu: goto label_13a0cc;
@@ -389,7 +377,6 @@ label_13a028:
     // 0x13a054: 0x0  nop
     ctx->pc = 0x13a054u;
     // NOP
-label_13a058:
     // 0x13a058: 0x3c020022  lui         $v0, 0x22
     ctx->pc = 0x13a058u;
     SET_GPR_S32(ctx, 2, (int32_t)((uint32_t)34 << 16));
@@ -430,9 +417,7 @@ label_13a070:
             case 0x13A004u: goto label_13a004;
             case 0x13A010u: goto label_13a010;
             case 0x13A028u: goto label_13a028;
-            case 0x13A058u: goto label_13a058;
             case 0x13A070u: goto label_13a070;
-            case 0x13A078u: goto label_13a078;
             case 0x13A0A4u: goto label_13a0a4;
             case 0x13A0C4u: goto label_13a0c4;
             case 0x13A0CCu: goto label_13a0cc;
@@ -447,7 +432,6 @@ label_13a070:
         return;
     }
     ctx->pc = 0x13A078u;
-label_13a078:
     // 0x13a078: 0x3c030022  lui         $v1, 0x22
     ctx->pc = 0x13a078u;
     SET_GPR_S32(ctx, 3, (int32_t)((uint32_t)34 << 16));
@@ -468,9 +452,7 @@ label_13a078:
             case 0x13A004u: goto label_13a004;
             case 0x13A010u: goto label_13a010;
             case 0x13A028u: goto label_13a028;
-            case 0x13A058u: goto label_13a058;
             case 0x13A070u: goto label_13a070;
-            case 0x13A078u: goto label_13a078;
             case 0x13A0A4u: goto label_13a0a4;
             case 0x13A0C4u: goto label_13a0c4;
             case 0x13A0CCu: goto label_13a0cc;
@@ -777,9 +759,7 @@ label_13a11c:
             case 0x13A004u: goto label_13a004;
             case 0x13A010u: goto label_13a010;
             case 0x13A028u: goto label_13a028;
-            case 0x13A058u: goto label_13a058;
             case 0x13A070u: goto label_13a070;
-            case 0x13A078u: goto label_13a078;
             case 0x13A0A4u: goto label_13a0a4;
             case 0x13A0C4u: goto label_13a0c4;
             case 0x13A0CCu: goto label_13a0cc;

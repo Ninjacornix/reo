@@ -17,12 +17,6 @@ void sub_0012C8D8_0x12c8d8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_0012C8D8_0x12c8d8");
 #endif
 
-    switch (ctx->pc) {
-        case 0x12c8e8u: goto label_12c8e8;
-        case 0x12c8f0u: goto label_12c8f0;
-        default: break;
-    }
-
     ctx->pc = 0x12c8d8u;
 
     // 0x12c8d8: 0x3e00008  jr          $ra
@@ -30,11 +24,6 @@ void sub_0012C8D8_0x12c8d8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x12C8E8u: goto label_12c8e8;
-            case 0x12C8F0u: goto label_12c8f0;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x12C8E0u;
@@ -43,29 +32,17 @@ void sub_0012C8D8_0x12c8d8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x12C8E8u: goto label_12c8e8;
-            case 0x12C8F0u: goto label_12c8f0;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x12C8E8u;
-label_12c8e8:
     // 0x12c8e8: 0x3e00008  jr          $ra
     ctx->pc = 0x12C8E8u;
     {
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x12C8E8u: goto label_12c8e8;
-            case 0x12C8F0u: goto label_12c8f0;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x12C8F0u;
-label_12c8f0:
     // 0x12c8f0: 0x3e00008  jr          $ra
     ctx->pc = 0x12C8F0u;
     {
@@ -76,11 +53,6 @@ label_12c8f0:
         SET_GPR_U64(ctx, 2, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x12C8E8u: goto label_12c8e8;
-            case 0x12C8F0u: goto label_12c8f0;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x12C8F8u;

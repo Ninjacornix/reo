@@ -19,7 +19,6 @@ void sub_00164418_0x164418(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
 
     switch (ctx->pc) {
         case 0x164438u: goto label_164438;
-        case 0x164448u: goto label_164448;
         case 0x164474u: goto label_164474;
         case 0x164494u: goto label_164494;
         case 0x1644a0u: goto label_1644a0;
@@ -44,7 +43,6 @@ void sub_00164418_0x164418(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         switch (jumpTarget) {
             case 0x164438u: goto label_164438;
             case 0x16443Cu: goto label_16443c;
-            case 0x164448u: goto label_164448;
             case 0x164474u: goto label_164474;
             case 0x164480u: goto label_164480;
             case 0x164494u: goto label_164494;
@@ -118,7 +116,6 @@ label_16443c:
         switch (jumpTarget) {
             case 0x164438u: goto label_164438;
             case 0x16443Cu: goto label_16443c;
-            case 0x164448u: goto label_164448;
             case 0x164474u: goto label_164474;
             case 0x164480u: goto label_164480;
             case 0x164494u: goto label_164494;
@@ -133,7 +130,6 @@ label_16443c:
         return;
     }
     ctx->pc = 0x164448u;
-label_164448:
     // 0x164448: 0x3e00008  jr          $ra
     ctx->pc = 0x164448u;
     {
@@ -147,7 +143,6 @@ label_164448:
         switch (jumpTarget) {
             case 0x164438u: goto label_164438;
             case 0x16443Cu: goto label_16443c;
-            case 0x164448u: goto label_164448;
             case 0x164474u: goto label_164474;
             case 0x164480u: goto label_164480;
             case 0x164494u: goto label_164494;
@@ -407,7 +402,6 @@ label_1644dc:
         switch (jumpTarget) {
             case 0x164438u: goto label_164438;
             case 0x16443Cu: goto label_16443c;
-            case 0x164448u: goto label_164448;
             case 0x164474u: goto label_164474;
             case 0x164480u: goto label_164480;
             case 0x164494u: goto label_164494;
@@ -465,7 +459,6 @@ label_164500:
         switch (jumpTarget) {
             case 0x164438u: goto label_164438;
             case 0x16443Cu: goto label_16443c;
-            case 0x164448u: goto label_164448;
             case 0x164474u: goto label_164474;
             case 0x164480u: goto label_164480;
             case 0x164494u: goto label_164494;

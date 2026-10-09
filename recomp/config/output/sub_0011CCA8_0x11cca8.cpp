@@ -722,10 +722,15 @@ label_11ce78:
         SET_GPR_S32(ctx, 5, (int32_t)ADD32(GPR_U32(ctx, 5), 4294956352));
         ctx->in_delay_slot = false;
     ctx->pc = 0x1142E0u;
-    {
+    if (runtime->hasFunction(0x1142E0u)) {
         auto targetFn = runtime->lookupFunction(0x1142E0u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x11CE88u; }
+        if (ctx->pc != 0x11CE88u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_001142E0_0x1142e0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x11CE88u; }
         if (ctx->pc != 0x11CE88u) { return; }
     }

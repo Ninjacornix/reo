@@ -179,10 +179,15 @@ label_13b650:
     ctx->pc = 0x13B650u;
     SET_GPR_U32(ctx, 31, 0x13B658u);
     ctx->pc = 0x13B5B0u;
-    {
+    if (runtime->hasFunction(0x13B5B0u)) {
         auto targetFn = runtime->lookupFunction(0x13B5B0u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x13B658u; }
+        if (ctx->pc != 0x13B658u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0013B5B0_0x13b5b0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x13B658u; }
         if (ctx->pc != 0x13B658u) { return; }
     }

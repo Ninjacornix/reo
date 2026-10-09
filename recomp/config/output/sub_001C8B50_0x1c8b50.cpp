@@ -18,7 +18,6 @@ void sub_001C8B50_0x1c8b50(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
 #endif
 
     switch (ctx->pc) {
-        case 0x1c8b80u: goto label_1c8b80;
         case 0x1c8bacu: goto label_1c8bac;
         default: break;
     }
@@ -70,7 +69,6 @@ void sub_001C8B50_0x1c8b50(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_001C8C20_0x1c8c20(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x1C8B80u;
-label_1c8b80:
     // 0x1c8b80: 0x27bdfff0  addiu       $sp, $sp, -0x10
     ctx->pc = 0x1c8b80u;
     SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 4294967280));
@@ -144,7 +142,6 @@ label_1c8bac:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x1C8B80u: goto label_1c8b80;
             case 0x1C8BACu: goto label_1c8bac;
             default: break;
         }

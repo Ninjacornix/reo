@@ -27,7 +27,6 @@ void sub_001469A8_0x1469a8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         case 0x146b68u: goto label_146b68;
         case 0x146b78u: goto label_146b78;
         case 0x146ba0u: goto label_146ba0;
-        case 0x146c38u: goto label_146c38;
         default: break;
     }
 
@@ -758,14 +757,12 @@ label_146c08:
             case 0x146BD4u: goto label_146bd4;
             case 0x146BDCu: goto label_146bdc;
             case 0x146C08u: goto label_146c08;
-            case 0x146C38u: goto label_146c38;
             case 0x146C58u: goto label_146c58;
             default: break;
         }
         return;
     }
     ctx->pc = 0x146C38u;
-label_146c38:
     // 0x146c38: 0x8c820008  lw          $v0, 0x8($a0)
     ctx->pc = 0x146c38u;
     SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 8)));
@@ -831,7 +828,6 @@ label_146c58:
             case 0x146BD4u: goto label_146bd4;
             case 0x146BDCu: goto label_146bdc;
             case 0x146C08u: goto label_146c08;
-            case 0x146C38u: goto label_146c38;
             case 0x146C58u: goto label_146c58;
             default: break;
         }

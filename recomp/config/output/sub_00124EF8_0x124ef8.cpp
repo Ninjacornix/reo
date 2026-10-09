@@ -17,16 +17,6 @@ void sub_00124EF8_0x124ef8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_00124EF8_0x124ef8");
 #endif
 
-    switch (ctx->pc) {
-        case 0x124f00u: goto label_124f00;
-        case 0x124f08u: goto label_124f08;
-        case 0x124f10u: goto label_124f10;
-        case 0x124f18u: goto label_124f18;
-        case 0x124f38u: goto label_124f38;
-        case 0x124f40u: goto label_124f40;
-        default: break;
-    }
-
     ctx->pc = 0x124ef8u;
 
     // 0x124ef8: 0x3e00008  jr          $ra
@@ -40,19 +30,12 @@ void sub_00124EF8_0x124ef8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F00u: goto label_124f00;
-            case 0x124F08u: goto label_124f08;
-            case 0x124F10u: goto label_124f10;
-            case 0x124F18u: goto label_124f18;
             case 0x124F2Cu: goto label_124f2c;
-            case 0x124F38u: goto label_124f38;
-            case 0x124F40u: goto label_124f40;
             default: break;
         }
         return;
     }
     ctx->pc = 0x124F00u;
-label_124f00:
     // 0x124f00: 0x3e00008  jr          $ra
     ctx->pc = 0x124F00u;
     {
@@ -64,19 +47,12 @@ label_124f00:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F00u: goto label_124f00;
-            case 0x124F08u: goto label_124f08;
-            case 0x124F10u: goto label_124f10;
-            case 0x124F18u: goto label_124f18;
             case 0x124F2Cu: goto label_124f2c;
-            case 0x124F38u: goto label_124f38;
-            case 0x124F40u: goto label_124f40;
             default: break;
         }
         return;
     }
     ctx->pc = 0x124F08u;
-label_124f08:
     // 0x124f08: 0x3e00008  jr          $ra
     ctx->pc = 0x124F08u;
     {
@@ -88,19 +64,12 @@ label_124f08:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F00u: goto label_124f00;
-            case 0x124F08u: goto label_124f08;
-            case 0x124F10u: goto label_124f10;
-            case 0x124F18u: goto label_124f18;
             case 0x124F2Cu: goto label_124f2c;
-            case 0x124F38u: goto label_124f38;
-            case 0x124F40u: goto label_124f40;
             default: break;
         }
         return;
     }
     ctx->pc = 0x124F10u;
-label_124f10:
     // 0x124f10: 0x3e00008  jr          $ra
     ctx->pc = 0x124F10u;
     {
@@ -112,19 +81,12 @@ label_124f10:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F00u: goto label_124f00;
-            case 0x124F08u: goto label_124f08;
-            case 0x124F10u: goto label_124f10;
-            case 0x124F18u: goto label_124f18;
             case 0x124F2Cu: goto label_124f2c;
-            case 0x124F38u: goto label_124f38;
-            case 0x124F40u: goto label_124f40;
             default: break;
         }
         return;
     }
     ctx->pc = 0x124F18u;
-label_124f18:
     // 0x124f18: 0x3e00008  jr          $ra
     ctx->pc = 0x124F18u;
     {
@@ -136,13 +98,7 @@ label_124f18:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F00u: goto label_124f00;
-            case 0x124F08u: goto label_124f08;
-            case 0x124F10u: goto label_124f10;
-            case 0x124F18u: goto label_124f18;
             case 0x124F2Cu: goto label_124f2c;
-            case 0x124F38u: goto label_124f38;
-            case 0x124F40u: goto label_124f40;
             default: break;
         }
         return;
@@ -173,13 +129,7 @@ label_124f2c:
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F00u: goto label_124f00;
-            case 0x124F08u: goto label_124f08;
-            case 0x124F10u: goto label_124f10;
-            case 0x124F18u: goto label_124f18;
             case 0x124F2Cu: goto label_124f2c;
-            case 0x124F38u: goto label_124f38;
-            case 0x124F40u: goto label_124f40;
             default: break;
         }
         return;
@@ -188,7 +138,6 @@ label_124f2c:
     // 0x124f34: 0x0  nop
     ctx->pc = 0x124f34u;
     // NOP
-label_124f38:
     // 0x124f38: 0x3e00008  jr          $ra
     ctx->pc = 0x124F38u;
     {
@@ -200,19 +149,12 @@ label_124f38:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F00u: goto label_124f00;
-            case 0x124F08u: goto label_124f08;
-            case 0x124F10u: goto label_124f10;
-            case 0x124F18u: goto label_124f18;
             case 0x124F2Cu: goto label_124f2c;
-            case 0x124F38u: goto label_124f38;
-            case 0x124F40u: goto label_124f40;
             default: break;
         }
         return;
     }
     ctx->pc = 0x124F40u;
-label_124f40:
     // 0x124f40: 0x3e00008  jr          $ra
     ctx->pc = 0x124F40u;
     {
@@ -224,13 +166,7 @@ label_124f40:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F00u: goto label_124f00;
-            case 0x124F08u: goto label_124f08;
-            case 0x124F10u: goto label_124f10;
-            case 0x124F18u: goto label_124f18;
             case 0x124F2Cu: goto label_124f2c;
-            case 0x124F38u: goto label_124f38;
-            case 0x124F40u: goto label_124f40;
             default: break;
         }
         return;

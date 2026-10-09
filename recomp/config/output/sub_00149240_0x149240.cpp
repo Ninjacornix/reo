@@ -19,10 +19,6 @@ void sub_00149240_0x149240(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
 
     switch (ctx->pc) {
         case 0x149250u: goto label_149250;
-        case 0x149260u: goto label_149260;
-        case 0x149268u: goto label_149268;
-        case 0x149270u: goto label_149270;
-        case 0x149280u: goto label_149280;
         default: break;
     }
 
@@ -70,16 +66,11 @@ label_149250:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x149250u: goto label_149250;
-            case 0x149260u: goto label_149260;
-            case 0x149268u: goto label_149268;
-            case 0x149270u: goto label_149270;
-            case 0x149280u: goto label_149280;
             default: break;
         }
         return;
     }
     ctx->pc = 0x149260u;
-label_149260:
     // 0x149260: 0x3e00008  jr          $ra
     ctx->pc = 0x149260u;
     {
@@ -87,16 +78,11 @@ label_149260:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x149250u: goto label_149250;
-            case 0x149260u: goto label_149260;
-            case 0x149268u: goto label_149268;
-            case 0x149270u: goto label_149270;
-            case 0x149280u: goto label_149280;
             default: break;
         }
         return;
     }
     ctx->pc = 0x149268u;
-label_149268:
     // 0x149268: 0x3e00008  jr          $ra
     ctx->pc = 0x149268u;
     {
@@ -104,16 +90,11 @@ label_149268:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x149250u: goto label_149250;
-            case 0x149260u: goto label_149260;
-            case 0x149268u: goto label_149268;
-            case 0x149270u: goto label_149270;
-            case 0x149280u: goto label_149280;
             default: break;
         }
         return;
     }
     ctx->pc = 0x149270u;
-label_149270:
     // 0x149270: 0x3e00008  jr          $ra
     ctx->pc = 0x149270u;
     {
@@ -121,10 +102,6 @@ label_149270:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x149250u: goto label_149250;
-            case 0x149260u: goto label_149260;
-            case 0x149268u: goto label_149268;
-            case 0x149270u: goto label_149270;
-            case 0x149280u: goto label_149280;
             default: break;
         }
         return;
@@ -137,16 +114,11 @@ label_149270:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x149250u: goto label_149250;
-            case 0x149260u: goto label_149260;
-            case 0x149268u: goto label_149268;
-            case 0x149270u: goto label_149270;
-            case 0x149280u: goto label_149280;
             default: break;
         }
         return;
     }
     ctx->pc = 0x149280u;
-label_149280:
     // 0x149280: 0x3e00008  jr          $ra
     ctx->pc = 0x149280u;
     {
@@ -154,10 +126,6 @@ label_149280:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x149250u: goto label_149250;
-            case 0x149260u: goto label_149260;
-            case 0x149268u: goto label_149268;
-            case 0x149270u: goto label_149270;
-            case 0x149280u: goto label_149280;
             default: break;
         }
         return;

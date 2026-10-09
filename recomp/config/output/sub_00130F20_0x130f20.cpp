@@ -22,7 +22,6 @@ void sub_00130F20_0x130f20(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         case 0x130f58u: goto label_130f58;
         case 0x130f70u: goto label_130f70;
         case 0x130f7cu: goto label_130f7c;
-        case 0x130fe0u: goto label_130fe0;
         default: break;
     }
 
@@ -100,7 +99,6 @@ label_130f44:
             case 0x130F58u: goto label_130f58;
             case 0x130F70u: goto label_130f70;
             case 0x130F7Cu: goto label_130f7c;
-            case 0x130FE0u: goto label_130fe0;
             default: break;
         }
         {
@@ -145,7 +143,6 @@ label_130f58:
             case 0x130F58u: goto label_130f58;
             case 0x130F70u: goto label_130f70;
             case 0x130F7Cu: goto label_130f7c;
-            case 0x130FE0u: goto label_130fe0;
             default: break;
         }
         {
@@ -221,7 +218,6 @@ label_130f7c:
             case 0x130F58u: goto label_130f58;
             case 0x130F70u: goto label_130f70;
             case 0x130F7Cu: goto label_130f7c;
-            case 0x130FE0u: goto label_130fe0;
             default: break;
         }
         return;
@@ -245,7 +241,6 @@ label_130f7c:
             case 0x130F58u: goto label_130f58;
             case 0x130F70u: goto label_130f70;
             case 0x130F7Cu: goto label_130f7c;
-            case 0x130FE0u: goto label_130fe0;
             default: break;
         }
         return;
@@ -305,7 +300,6 @@ label_130f7c:
             case 0x130F58u: goto label_130f58;
             case 0x130F70u: goto label_130f70;
             case 0x130F7Cu: goto label_130f7c;
-            case 0x130FE0u: goto label_130fe0;
             default: break;
         }
         return;
@@ -314,7 +308,6 @@ label_130f7c:
     // 0x130fdc: 0x0  nop
     ctx->pc = 0x130fdcu;
     // NOP
-label_130fe0:
     // 0x130fe0: 0x3e00008  jr          $ra
     ctx->pc = 0x130FE0u;
     {
@@ -330,7 +323,6 @@ label_130fe0:
             case 0x130F58u: goto label_130f58;
             case 0x130F70u: goto label_130f70;
             case 0x130F7Cu: goto label_130f7c;
-            case 0x130FE0u: goto label_130fe0;
             default: break;
         }
         return;

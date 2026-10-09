@@ -126,10 +126,15 @@ label_11dc8c:
         SET_GPR_S32(ctx, 7, (int32_t)ADD32(GPR_U32(ctx, 7), 4));
         ctx->in_delay_slot = false;
     ctx->pc = 0x114270u;
-    {
+    if (runtime->hasFunction(0x114270u)) {
         auto targetFn = runtime->lookupFunction(0x114270u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x11DCA8u; }
+        if (ctx->pc != 0x11DCA8u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_00114270_0x114270(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x11DCA8u; }
         if (ctx->pc != 0x11DCA8u) { return; }
     }

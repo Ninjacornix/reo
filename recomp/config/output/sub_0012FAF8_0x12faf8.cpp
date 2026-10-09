@@ -17,11 +17,6 @@ void sub_0012FAF8_0x12faf8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_0012FAF8_0x12faf8");
 #endif
 
-    switch (ctx->pc) {
-        case 0x12fb00u: goto label_12fb00;
-        default: break;
-    }
-
     ctx->pc = 0x12faf8u;
 
     // 0x12faf8: 0x3e00008  jr          $ra
@@ -34,14 +29,9 @@ void sub_0012FAF8_0x12faf8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         WRITE32(ADD32(GPR_U32(ctx, 4), 92), GPR_U32(ctx, 5));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x12FB00u: goto label_12fb00;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x12FB00u;
-label_12fb00:
     // 0x12fb00: 0x3e00008  jr          $ra
     ctx->pc = 0x12FB00u;
     {
@@ -52,10 +42,6 @@ label_12fb00:
         WRITE32(ADD32(GPR_U32(ctx, 4), 72), GPR_U32(ctx, 5));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x12FB00u: goto label_12fb00;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x12FB08u;

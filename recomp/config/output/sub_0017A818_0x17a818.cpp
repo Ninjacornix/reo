@@ -185,10 +185,15 @@ label_17a884:
         WRITE32(ADD32(GPR_U32(ctx, 16), 72), GPR_U32(ctx, 2));
         ctx->in_delay_slot = false;
     ctx->pc = 0x17D518u;
-    {
+    if (runtime->hasFunction(0x17D518u)) {
         auto targetFn = runtime->lookupFunction(0x17D518u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x17A8A8u; }
+        if (ctx->pc != 0x17A8A8u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0017D518_0x17d518(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x17A8A8u; }
         if (ctx->pc != 0x17A8A8u) { return; }
     }
@@ -267,10 +272,15 @@ label_17a8cc:
         SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 18) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
     ctx->pc = 0x17D518u;
-    {
+    if (runtime->hasFunction(0x17D518u)) {
         auto targetFn = runtime->lookupFunction(0x17D518u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x17A8D8u; }
+        if (ctx->pc != 0x17A8D8u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0017D518_0x17d518(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x17A8D8u; }
         if (ctx->pc != 0x17A8D8u) { return; }
     }
@@ -288,10 +298,15 @@ label_17a8d8:
         SET_GPR_U64(ctx, 5, (uint64_t)GPR_U64(ctx, 17) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
     ctx->pc = 0x17D490u;
-    {
+    if (runtime->hasFunction(0x17D490u)) {
         auto targetFn = runtime->lookupFunction(0x17D490u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x17A8E4u; }
+        if (ctx->pc != 0x17A8E4u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0017D490_0x17d490(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x17A8E4u; }
         if (ctx->pc != 0x17A8E4u) { return; }
     }

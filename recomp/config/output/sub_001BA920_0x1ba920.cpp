@@ -267,11 +267,11 @@ label_1ba9d8:
         SET_GPR_U64(ctx, 4, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
     ctx->pc = 0x1BA790u;
-    {
+    if (runtime->hasFunction(0x1BA790u)) {
         auto targetFn = runtime->lookupFunction(0x1BA790u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_001BA790_0x1ba790(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x1BA9FCu;
     // 0x1ba9fc: 0x0  nop

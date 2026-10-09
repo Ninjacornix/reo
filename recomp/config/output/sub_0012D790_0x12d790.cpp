@@ -39,11 +39,11 @@ void sub_0012D790_0x12d790(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x124E70u;
-    {
+    if (runtime->hasFunction(0x124E70u)) {
         auto targetFn = runtime->lookupFunction(0x124E70u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00124E70_0x124e70(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x12D7A8u;
     ctx->pc = GPR_U32(ctx, 31); return;

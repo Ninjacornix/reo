@@ -507,11 +507,11 @@ label_1312a8:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x13A058u;
-    {
+    if (runtime->hasFunction(0x13A058u)) {
         auto targetFn = runtime->lookupFunction(0x13A058u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_0013A058_0x13a058(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x1312ECu;
     // 0x1312ec: 0x0  nop
@@ -534,11 +534,11 @@ label_1312a8:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x13A078u;
-    {
+    if (runtime->hasFunction(0x13A078u)) {
         auto targetFn = runtime->lookupFunction(0x13A078u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_0013A078_0x13a078(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x131304u;
     // 0x131304: 0x0  nop

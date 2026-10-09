@@ -17,11 +17,6 @@ void sub_001226C0_0x1226c0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_001226C0_0x1226c0");
 #endif
 
-    switch (ctx->pc) {
-        case 0x1226d8u: goto label_1226d8;
-        default: break;
-    }
-
     ctx->pc = 0x1226c0u;
 
     // 0x1226c0: 0x27bdfff0  addiu       $sp, $sp, -0x10
@@ -51,7 +46,6 @@ void sub_001226C0_0x1226c0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     // 0x1226d4: 0x0  nop
     ctx->pc = 0x1226d4u;
     // NOP
-label_1226d8:
     // 0x1226d8: 0x27bdfff0  addiu       $sp, $sp, -0x10
     ctx->pc = 0x1226d8u;
     SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 4294967280));

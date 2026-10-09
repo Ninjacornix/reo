@@ -18,7 +18,6 @@ void sub_0017D268_0x17d268(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
 #endif
 
     switch (ctx->pc) {
-        case 0x17d280u: goto label_17d280;
         case 0x17d2b4u: goto label_17d2b4;
         default: break;
     }
@@ -45,7 +44,6 @@ void sub_0017D268_0x17d268(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x17D280u: goto label_17d280;
             case 0x17D2B4u: goto label_17d2b4;
             default: break;
         }
@@ -55,7 +53,6 @@ void sub_0017D268_0x17d268(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     // 0x17d27c: 0x0  nop
     ctx->pc = 0x17d27cu;
     // NOP
-label_17d280:
     // 0x17d280: 0x3e00008  jr          $ra
     ctx->pc = 0x17D280u;
     {
@@ -67,7 +64,6 @@ label_17d280:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x17D280u: goto label_17d280;
             case 0x17D2B4u: goto label_17d2b4;
             default: break;
         }
@@ -153,7 +149,6 @@ label_17d2b4:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x17D280u: goto label_17d280;
             case 0x17D2B4u: goto label_17d2b4;
             default: break;
         }
@@ -180,7 +175,6 @@ label_17d2b4:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x17D280u: goto label_17d280;
             case 0x17D2B4u: goto label_17d2b4;
             default: break;
         }

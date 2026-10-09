@@ -26,7 +26,6 @@ void sub_00147AD8_0x147ad8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         case 0x147c54u: goto label_147c54;
         case 0x147c5cu: goto label_147c5c;
         case 0x147cacu: goto label_147cac;
-        case 0x147ce8u: goto label_147ce8;
         case 0x147d1cu: goto label_147d1c;
         default: break;
     }
@@ -597,7 +596,6 @@ label_147cc8:
             case 0x147C5Cu: goto label_147c5c;
             case 0x147CACu: goto label_147cac;
             case 0x147CC8u: goto label_147cc8;
-            case 0x147CE8u: goto label_147ce8;
             case 0x147D1Cu: goto label_147d1c;
             default: break;
         }
@@ -607,7 +605,6 @@ label_147cc8:
     // 0x147ce4: 0x0  nop
     ctx->pc = 0x147ce4u;
     // NOP
-label_147ce8:
     // 0x147ce8: 0x3e00008  jr          $ra
     ctx->pc = 0x147CE8u;
     {
@@ -629,7 +626,6 @@ label_147ce8:
             case 0x147C5Cu: goto label_147c5c;
             case 0x147CACu: goto label_147cac;
             case 0x147CC8u: goto label_147cc8;
-            case 0x147CE8u: goto label_147ce8;
             case 0x147D1Cu: goto label_147d1c;
             default: break;
         }
@@ -713,7 +709,6 @@ label_147d1c:
             case 0x147C5Cu: goto label_147c5c;
             case 0x147CACu: goto label_147cac;
             case 0x147CC8u: goto label_147cc8;
-            case 0x147CE8u: goto label_147ce8;
             case 0x147D1Cu: goto label_147d1c;
             default: break;
         }

@@ -2021,11 +2021,11 @@ label_1b3390:
     // 0x1b33a0: 0x806315c  j           func_18C570
     ctx->pc = 0x1B33A0u;
     ctx->pc = 0x18C570u;
-    {
+    if (runtime->hasFunction(0x18C570u)) {
         auto targetFn = runtime->lookupFunction(0x18C570u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_0018C570_0x18c570(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x1B33A8u;
     // 0x1b33a8: 0x0  nop

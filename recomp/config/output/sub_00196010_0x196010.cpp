@@ -5606,10 +5606,15 @@ label_1971a8:
     ctx->pc = 0x1971A8u;
     SET_GPR_U32(ctx, 31, 0x1971B0u);
     ctx->pc = 0x197480u;
-    {
+    if (runtime->hasFunction(0x197480u)) {
         auto targetFn = runtime->lookupFunction(0x197480u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x1971B0u; }
+        if (ctx->pc != 0x1971B0u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_00197480_0x197480(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1971B0u; }
         if (ctx->pc != 0x1971B0u) { return; }
     }

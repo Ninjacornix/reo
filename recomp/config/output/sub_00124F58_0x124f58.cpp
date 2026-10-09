@@ -18,7 +18,6 @@ void sub_00124F58_0x124f58(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
 #endif
 
     switch (ctx->pc) {
-        case 0x124f68u: goto label_124f68;
         case 0x124f90u: goto label_124f90;
         case 0x124fd0u: goto label_124fd0;
         case 0x125010u: goto label_125010;
@@ -46,7 +45,6 @@ void sub_00124F58_0x124f58(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F68u: goto label_124f68;
             case 0x124F90u: goto label_124f90;
             case 0x124FD0u: goto label_124fd0;
             case 0x125010u: goto label_125010;
@@ -57,7 +55,6 @@ void sub_00124F58_0x124f58(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         return;
     }
     ctx->pc = 0x124F68u;
-label_124f68:
     // 0x124f68: 0x3e00008  jr          $ra
     ctx->pc = 0x124F68u;
     {
@@ -69,7 +66,6 @@ label_124f68:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F68u: goto label_124f68;
             case 0x124F90u: goto label_124f90;
             case 0x124FD0u: goto label_124fd0;
             case 0x125010u: goto label_125010;
@@ -342,7 +338,6 @@ label_125028:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124F68u: goto label_124f68;
             case 0x124F90u: goto label_124f90;
             case 0x124FD0u: goto label_124fd0;
             case 0x125010u: goto label_125010;

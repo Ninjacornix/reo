@@ -22,7 +22,6 @@ void sub_0018C4A0_0x18c4a0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         case 0x18c51cu: goto label_18c51c;
         case 0x18c530u: goto label_18c530;
         case 0x18c540u: goto label_18c540;
-        case 0x18c570u: goto label_18c570;
         default: break;
     }
 
@@ -307,7 +306,6 @@ label_18c55c:
             case 0x18C540u: goto label_18c540;
             case 0x18C558u: goto label_18c558;
             case 0x18C55Cu: goto label_18c55c;
-            case 0x18C570u: goto label_18c570;
             case 0x18C58Cu: goto label_18c58c;
             case 0x18C5A8u: goto label_18c5a8;
             case 0x18C5E8u: goto label_18c5e8;
@@ -322,7 +320,6 @@ label_18c55c:
     // 0x18c56c: 0x0  nop
     ctx->pc = 0x18c56cu;
     // NOP
-label_18c570:
     // 0x18c570: 0x1080001d  beqz        $a0, . + 4 + (0x1D << 2)
     ctx->pc = 0x18C570u;
     {
@@ -468,7 +465,6 @@ label_18c5e8:
             case 0x18C540u: goto label_18c540;
             case 0x18C558u: goto label_18c558;
             case 0x18C55Cu: goto label_18c55c;
-            case 0x18C570u: goto label_18c570;
             case 0x18C58Cu: goto label_18c58c;
             case 0x18C5A8u: goto label_18c5a8;
             case 0x18C5E8u: goto label_18c5e8;

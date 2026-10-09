@@ -17,11 +17,6 @@ void sub_00177E38_0x177e38(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_00177E38_0x177e38");
 #endif
 
-    switch (ctx->pc) {
-        case 0x177e48u: goto label_177e48;
-        default: break;
-    }
-
     ctx->pc = 0x177e38u;
 
     // 0x177e38: 0x5ca00001  bgtzl       $a1, . + 4 + (0x1 << 2)
@@ -47,13 +42,11 @@ label_177e40:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x177E40u: goto label_177e40;
-            case 0x177E48u: goto label_177e48;
             default: break;
         }
         return;
     }
     ctx->pc = 0x177E48u;
-label_177e48:
     // 0x177e48: 0x3e00008  jr          $ra
     ctx->pc = 0x177E48u;
     {
@@ -66,7 +59,6 @@ label_177e48:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x177E40u: goto label_177e40;
-            case 0x177E48u: goto label_177e48;
             default: break;
         }
         return;

@@ -17,11 +17,6 @@ void sub_00124E68_0x124e68(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_00124E68_0x124e68");
 #endif
 
-    switch (ctx->pc) {
-        case 0x124e70u: goto label_124e70;
-        default: break;
-    }
-
     ctx->pc = 0x124e68u;
 
     // 0x124e68: 0x3e00008  jr          $ra
@@ -34,14 +29,9 @@ void sub_00124E68_0x124e68(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 2, (int16_t)READ16(ADD32(GPR_U32(ctx, 4), 152)));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x124E70u: goto label_124e70;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x124E70u;
-label_124e70:
     // 0x124e70: 0x3e00008  jr          $ra
     ctx->pc = 0x124E70u;
     {
@@ -52,10 +42,6 @@ label_124e70:
         SET_GPR_S32(ctx, 2, (int32_t)READ32(ADD32(GPR_U32(ctx, 4), 20)));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x124E70u: goto label_124e70;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x124E78u;

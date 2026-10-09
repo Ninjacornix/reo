@@ -17,11 +17,6 @@ void sub_0017D448_0x17d448(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_0017D448_0x17d448");
 #endif
 
-    switch (ctx->pc) {
-        case 0x17d460u: goto label_17d460;
-        default: break;
-    }
-
     ctx->pc = 0x17d448u;
 
     // 0x17d448: 0x27bdfff0  addiu       $sp, $sp, -0x10
@@ -51,7 +46,6 @@ void sub_0017D448_0x17d448(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         sub_0017A7F8_0x17a7f8(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x17D460u;
-label_17d460:
     // 0x17d460: 0x3e00008  jr          $ra
     ctx->pc = 0x17D460u;
     {
@@ -62,10 +56,6 @@ label_17d460:
         WRITE32(ADD32(GPR_U32(ctx, 4), 52), GPR_U32(ctx, 5));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x17D460u: goto label_17d460;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x17D468u;

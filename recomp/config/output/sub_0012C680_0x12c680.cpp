@@ -154,11 +154,11 @@ label_12c6a4:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x13EBA8u;
-    {
+    if (runtime->hasFunction(0x13EBA8u)) {
         auto targetFn = runtime->lookupFunction(0x13EBA8u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_0013EBA8_0x13eba8(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x12C6E4u;
     // 0x12c6e4: 0x0  nop

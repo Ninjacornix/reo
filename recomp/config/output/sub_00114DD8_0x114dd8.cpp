@@ -17,11 +17,6 @@ void sub_00114DD8_0x114dd8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_00114DD8_0x114dd8");
 #endif
 
-    switch (ctx->pc) {
-        case 0x114df0u: goto label_114df0;
-        default: break;
-    }
-
     ctx->pc = 0x114dd8u;
 
     // 0x114dd8: 0x24022000  addiu       $v0, $zero, 0x2000
@@ -43,17 +38,12 @@ void sub_00114DD8_0x114dd8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_U64(ctx, 2, (uint64_t)GPR_U64(ctx, 0) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x114DF0u: goto label_114df0;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x114DECu;
     // 0x114dec: 0x0  nop
     ctx->pc = 0x114decu;
     // NOP
-label_114df0:
     // 0x114df0: 0x3e00008  jr          $ra
     ctx->pc = 0x114DF0u;
     {
@@ -64,10 +54,6 @@ label_114df0:
         SET_GPR_S32(ctx, 2, (int32_t)ADD32(GPR_U32(ctx, 0), 1));
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
-        switch (jumpTarget) {
-            case 0x114DF0u: goto label_114df0;
-            default: break;
-        }
         return;
     }
     ctx->pc = 0x114DF8u;

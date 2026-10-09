@@ -21,7 +21,6 @@ void sub_0012D950_0x12d950(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         case 0x12d970u: goto label_12d970;
         case 0x12d998u: goto label_12d998;
         case 0x12d9d0u: goto label_12d9d0;
-        case 0x12da10u: goto label_12da10;
         default: break;
     }
 
@@ -176,7 +175,6 @@ label_12d9a4:
             case 0x12D9A4u: goto label_12d9a4;
             case 0x12D9D0u: goto label_12d9d0;
             case 0x12DA00u: goto label_12da00;
-            case 0x12DA10u: goto label_12da10;
             default: break;
         }
         return;
@@ -276,11 +274,11 @@ label_12d9d0:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x124F68u;
-    {
+    if (runtime->hasFunction(0x124F68u)) {
         auto targetFn = runtime->lookupFunction(0x124F68u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00124F68_0x124f68(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x12DA00u;
 label_12da00:
@@ -307,13 +305,11 @@ label_12da00:
             case 0x12D9A4u: goto label_12d9a4;
             case 0x12D9D0u: goto label_12d9d0;
             case 0x12DA00u: goto label_12da00;
-            case 0x12DA10u: goto label_12da10;
             default: break;
         }
         return;
     }
     ctx->pc = 0x12DA10u;
-label_12da10:
     // 0x12da10: 0x3e00008  jr          $ra
     ctx->pc = 0x12DA10u;
     {
@@ -331,7 +327,6 @@ label_12da10:
             case 0x12D9A4u: goto label_12d9a4;
             case 0x12D9D0u: goto label_12d9d0;
             case 0x12DA00u: goto label_12da00;
-            case 0x12DA10u: goto label_12da10;
             default: break;
         }
         return;
@@ -357,11 +352,11 @@ label_12da10:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x124E80u;
-    {
+    if (runtime->hasFunction(0x124E80u)) {
         auto targetFn = runtime->lookupFunction(0x124E80u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00124E80_0x124e80(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x12DA30u;
     ctx->pc = GPR_U32(ctx, 31); return;

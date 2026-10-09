@@ -207,11 +207,11 @@ label_1616fc:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 48));
         ctx->in_delay_slot = false;
     ctx->pc = 0x17D280u;
-    {
+    if (runtime->hasFunction(0x17D280u)) {
         auto targetFn = runtime->lookupFunction(0x17D280u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_0017D280_0x17d280(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x161720u;
     ctx->pc = GPR_U32(ctx, 31); return;

@@ -30,8 +30,6 @@ void sub_001C82D0_0x1c82d0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         case 0x1c83d4u: goto label_1c83d4;
         case 0x1c83f8u: goto label_1c83f8;
         case 0x1c8400u: goto label_1c8400;
-        case 0x1c8420u: goto label_1c8420;
-        case 0x1c8430u: goto label_1c8430;
         default: break;
     }
 
@@ -210,8 +208,6 @@ label_1c8320:
             case 0x1C83D4u: goto label_1c83d4;
             case 0x1C83F8u: goto label_1c83f8;
             case 0x1C8400u: goto label_1c8400;
-            case 0x1C8420u: goto label_1c8420;
-            case 0x1C8430u: goto label_1c8430;
             default: break;
         }
         return;
@@ -531,8 +527,6 @@ label_1c8400:
             case 0x1C83D4u: goto label_1c83d4;
             case 0x1C83F8u: goto label_1c83f8;
             case 0x1C8400u: goto label_1c8400;
-            case 0x1C8420u: goto label_1c8420;
-            case 0x1C8430u: goto label_1c8430;
             default: break;
         }
         return;
@@ -544,7 +538,6 @@ label_1c8400:
     // 0x1c841c: 0x0  nop
     ctx->pc = 0x1c841cu;
     // NOP
-label_1c8420:
     // 0x1c8420: 0x3e00008  jr          $ra
     ctx->pc = 0x1C8420u;
     {
@@ -564,8 +557,6 @@ label_1c8420:
             case 0x1C83D4u: goto label_1c83d4;
             case 0x1C83F8u: goto label_1c83f8;
             case 0x1C8400u: goto label_1c8400;
-            case 0x1C8420u: goto label_1c8420;
-            case 0x1C8430u: goto label_1c8430;
             default: break;
         }
         return;
@@ -577,15 +568,14 @@ label_1c8420:
     // 0x1c842c: 0x0  nop
     ctx->pc = 0x1c842cu;
     // NOP
-label_1c8430:
     // 0x1c8430: 0x80722e0  j           func_1C8B80
     ctx->pc = 0x1C8430u;
     ctx->pc = 0x1C8B80u;
-    {
+    if (runtime->hasFunction(0x1C8B80u)) {
         auto targetFn = runtime->lookupFunction(0x1C8B80u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_001C8B80_0x1c8b80(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x1C8438u;
     // 0x1c8438: 0x0  nop

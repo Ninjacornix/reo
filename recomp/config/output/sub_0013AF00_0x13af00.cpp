@@ -69,11 +69,11 @@ void sub_0013AF00_0x13af00(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x138278u;
-    {
+    if (runtime->hasFunction(0x138278u)) {
         auto targetFn = runtime->lookupFunction(0x138278u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00138278_0x138278(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x13AF2Cu;
     // 0x13af2c: 0x0  nop
@@ -123,11 +123,11 @@ void sub_0013AF00_0x13af00(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x1382E0u;
-    {
+    if (runtime->hasFunction(0x1382E0u)) {
         auto targetFn = runtime->lookupFunction(0x1382E0u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_001382E0_0x1382e0(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x13AF5Cu;
     // 0x13af5c: 0x0  nop

@@ -75,11 +75,11 @@ void sub_0017AD58_0x17ad58(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x149270u;
-    {
+    if (runtime->hasFunction(0x149270u)) {
         auto targetFn = runtime->lookupFunction(0x149270u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00149270_0x149270(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x17AD88u;
 label_17ad88:
@@ -91,11 +91,11 @@ label_17ad88:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x149268u;
-    {
+    if (runtime->hasFunction(0x149268u)) {
         auto targetFn = runtime->lookupFunction(0x149268u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00149268_0x149268(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x17AD90u;
 label_17ad90:
@@ -122,11 +122,11 @@ label_17ad90:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x149270u;
-    {
+    if (runtime->hasFunction(0x149270u)) {
         auto targetFn = runtime->lookupFunction(0x149270u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00149270_0x149270(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x17ADA0u;
 label_17ada0:
@@ -138,11 +138,11 @@ label_17ada0:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x149268u;
-    {
+    if (runtime->hasFunction(0x149268u)) {
         auto targetFn = runtime->lookupFunction(0x149268u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00149268_0x149268(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x17ADA8u;
     ctx->pc = GPR_U32(ctx, 31); return;

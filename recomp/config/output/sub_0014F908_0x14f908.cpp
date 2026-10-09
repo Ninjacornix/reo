@@ -75,10 +75,8 @@ void sub_0014F908_0x14f908(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         case 0x14fe1cu: goto label_14fe1c;
         case 0x14fe2cu: goto label_14fe2c;
         case 0x14fe34u: goto label_14fe34;
-        case 0x14fe88u: goto label_14fe88;
         case 0x14fea8u: goto label_14fea8;
         case 0x14ff08u: goto label_14ff08;
-        case 0x14ff48u: goto label_14ff48;
         default: break;
     }
 
@@ -1274,10 +1272,8 @@ label_14fba8:
             case 0x14FE1Cu: goto label_14fe1c;
             case 0x14FE2Cu: goto label_14fe2c;
             case 0x14FE34u: goto label_14fe34;
-            case 0x14FE88u: goto label_14fe88;
             case 0x14FEA8u: goto label_14fea8;
             case 0x14FF08u: goto label_14ff08;
-            case 0x14FF48u: goto label_14ff48;
             default: break;
         }
         return;
@@ -2325,10 +2321,8 @@ label_14fe34:
             case 0x14FE1Cu: goto label_14fe1c;
             case 0x14FE2Cu: goto label_14fe2c;
             case 0x14FE34u: goto label_14fe34;
-            case 0x14FE88u: goto label_14fe88;
             case 0x14FEA8u: goto label_14fea8;
             case 0x14FF08u: goto label_14ff08;
-            case 0x14FF48u: goto label_14ff48;
             default: break;
         }
         return;
@@ -2337,7 +2331,6 @@ label_14fe34:
     // 0x14fe84: 0x0  nop
     ctx->pc = 0x14fe84u;
     // NOP
-label_14fe88:
     // 0x14fe88: 0x3e00008  jr          $ra
     ctx->pc = 0x14FE88u;
     {
@@ -2411,10 +2404,8 @@ label_14fe88:
             case 0x14FE1Cu: goto label_14fe1c;
             case 0x14FE2Cu: goto label_14fe2c;
             case 0x14FE34u: goto label_14fe34;
-            case 0x14FE88u: goto label_14fe88;
             case 0x14FEA8u: goto label_14fea8;
             case 0x14FF08u: goto label_14ff08;
-            case 0x14FF48u: goto label_14ff48;
             default: break;
         }
         return;
@@ -2596,10 +2587,8 @@ label_14fea8:
             case 0x14FE1Cu: goto label_14fe1c;
             case 0x14FE2Cu: goto label_14fe2c;
             case 0x14FE34u: goto label_14fe34;
-            case 0x14FE88u: goto label_14fe88;
             case 0x14FEA8u: goto label_14fea8;
             case 0x14FF08u: goto label_14ff08;
-            case 0x14FF48u: goto label_14ff48;
             default: break;
         }
         return;
@@ -2733,10 +2722,8 @@ label_14ff08:
             case 0x14FE1Cu: goto label_14fe1c;
             case 0x14FE2Cu: goto label_14fe2c;
             case 0x14FE34u: goto label_14fe34;
-            case 0x14FE88u: goto label_14fe88;
             case 0x14FEA8u: goto label_14fea8;
             case 0x14FF08u: goto label_14ff08;
-            case 0x14FF48u: goto label_14ff48;
             default: break;
         }
         return;
@@ -2745,7 +2732,6 @@ label_14ff08:
     // 0x14ff44: 0x0  nop
     ctx->pc = 0x14ff44u;
     // NOP
-label_14ff48:
     // 0x14ff48: 0x3e00008  jr          $ra
     ctx->pc = 0x14FF48u;
     {
@@ -2819,10 +2805,8 @@ label_14ff48:
             case 0x14FE1Cu: goto label_14fe1c;
             case 0x14FE2Cu: goto label_14fe2c;
             case 0x14FE34u: goto label_14fe34;
-            case 0x14FE88u: goto label_14fe88;
             case 0x14FEA8u: goto label_14fea8;
             case 0x14FF08u: goto label_14ff08;
-            case 0x14FF48u: goto label_14ff48;
             default: break;
         }
         return;

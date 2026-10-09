@@ -161,11 +161,11 @@ label_12fd1c:
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 32));
         ctx->in_delay_slot = false;
     ctx->pc = 0x12FB00u;
-    {
+    if (runtime->hasFunction(0x12FB00u)) {
         auto targetFn = runtime->lookupFunction(0x12FB00u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_0012FB00_0x12fb00(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x12FD3Cu;
     // 0x12fd3c: 0x0  nop

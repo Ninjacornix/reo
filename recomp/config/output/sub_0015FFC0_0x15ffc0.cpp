@@ -18,7 +18,6 @@ void sub_0015FFC0_0x15ffc0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
 #endif
 
     switch (ctx->pc) {
-        case 0x15ffe0u: goto label_15ffe0;
         case 0x16000cu: goto label_16000c;
         case 0x160074u: goto label_160074;
         case 0x160088u: goto label_160088;
@@ -81,7 +80,6 @@ label_15ffcc:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -165,7 +163,6 @@ label_15ffcc:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -233,7 +230,6 @@ label_15ffcc:
         return;
     }
     ctx->pc = 0x15FFE0u;
-label_15ffe0:
     // 0x15ffe0: 0x3e00008  jr          $ra
     ctx->pc = 0x15FFE0u;
     {
@@ -247,7 +243,6 @@ label_15ffe0:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -328,7 +323,6 @@ label_15ffe0:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -724,7 +718,6 @@ label_1600dc:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -1187,7 +1180,6 @@ label_160218:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -1504,7 +1496,6 @@ label_1602b4:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -1736,7 +1727,6 @@ label_160320:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -1929,7 +1919,6 @@ label_160374:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -2057,7 +2046,6 @@ label_16039c:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -2365,7 +2353,6 @@ label_16044c:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -2683,7 +2670,6 @@ label_160520:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -2990,7 +2976,6 @@ label_1605ec:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -3306,7 +3291,6 @@ label_1606c8:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;
@@ -3442,7 +3426,6 @@ label_160700:
         switch (jumpTarget) {
             case 0x15FFC0u: goto label_15ffc0;
             case 0x15FFCCu: goto label_15ffcc;
-            case 0x15FFE0u: goto label_15ffe0;
             case 0x16000Cu: goto label_16000c;
             case 0x160040u: goto label_160040;
             case 0x160074u: goto label_160074;

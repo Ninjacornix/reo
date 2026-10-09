@@ -17,14 +17,6 @@ void sub_0017D390_0x17d390(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_0017D390_0x17d390");
 #endif
 
-    switch (ctx->pc) {
-        case 0x17d3c0u: goto label_17d3c0;
-        case 0x17d3c8u: goto label_17d3c8;
-        case 0x17d3d0u: goto label_17d3d0;
-        case 0x17d3d8u: goto label_17d3d8;
-        default: break;
-    }
-
     ctx->pc = 0x17d390u;
 
     // 0x17d390: 0x24840014  addiu       $a0, $a0, 0x14
@@ -66,10 +58,6 @@ void sub_0017D390_0x17d390(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x17D3B0u: goto label_17d3b0;
-            case 0x17D3C0u: goto label_17d3c0;
-            case 0x17D3C8u: goto label_17d3c8;
-            case 0x17D3D0u: goto label_17d3d0;
-            case 0x17D3D8u: goto label_17d3d8;
             default: break;
         }
         return;
@@ -94,16 +82,11 @@ label_17d3b0:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x17D3B0u: goto label_17d3b0;
-            case 0x17D3C0u: goto label_17d3c0;
-            case 0x17D3C8u: goto label_17d3c8;
-            case 0x17D3D0u: goto label_17d3d0;
-            case 0x17D3D8u: goto label_17d3d8;
             default: break;
         }
         return;
     }
     ctx->pc = 0x17D3C0u;
-label_17d3c0:
     // 0x17d3c0: 0x3e00008  jr          $ra
     ctx->pc = 0x17D3C0u;
     {
@@ -116,16 +99,11 @@ label_17d3c0:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x17D3B0u: goto label_17d3b0;
-            case 0x17D3C0u: goto label_17d3c0;
-            case 0x17D3C8u: goto label_17d3c8;
-            case 0x17D3D0u: goto label_17d3d0;
-            case 0x17D3D8u: goto label_17d3d8;
             default: break;
         }
         return;
     }
     ctx->pc = 0x17D3C8u;
-label_17d3c8:
     // 0x17d3c8: 0x3e00008  jr          $ra
     ctx->pc = 0x17D3C8u;
     {
@@ -138,16 +116,11 @@ label_17d3c8:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x17D3B0u: goto label_17d3b0;
-            case 0x17D3C0u: goto label_17d3c0;
-            case 0x17D3C8u: goto label_17d3c8;
-            case 0x17D3D0u: goto label_17d3d0;
-            case 0x17D3D8u: goto label_17d3d8;
             default: break;
         }
         return;
     }
     ctx->pc = 0x17D3D0u;
-label_17d3d0:
     // 0x17d3d0: 0x3e00008  jr          $ra
     ctx->pc = 0x17D3D0u;
     {
@@ -160,16 +133,11 @@ label_17d3d0:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x17D3B0u: goto label_17d3b0;
-            case 0x17D3C0u: goto label_17d3c0;
-            case 0x17D3C8u: goto label_17d3c8;
-            case 0x17D3D0u: goto label_17d3d0;
-            case 0x17D3D8u: goto label_17d3d8;
             default: break;
         }
         return;
     }
     ctx->pc = 0x17D3D8u;
-label_17d3d8:
     // 0x17d3d8: 0x3e00008  jr          $ra
     ctx->pc = 0x17D3D8u;
     {
@@ -182,10 +150,6 @@ label_17d3d8:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x17D3B0u: goto label_17d3b0;
-            case 0x17D3C0u: goto label_17d3c0;
-            case 0x17D3C8u: goto label_17d3c8;
-            case 0x17D3D0u: goto label_17d3d0;
-            case 0x17D3D8u: goto label_17d3d8;
             default: break;
         }
         return;

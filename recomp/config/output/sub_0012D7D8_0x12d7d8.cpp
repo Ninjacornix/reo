@@ -39,11 +39,11 @@ void sub_0012D7D8_0x12d7d8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x124EE8u;
-    {
+    if (runtime->hasFunction(0x124EE8u)) {
         auto targetFn = runtime->lookupFunction(0x124EE8u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00124EE8_0x124ee8(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x12D7F0u;
     // 0x12d7f0: 0x27bdfff0  addiu       $sp, $sp, -0x10
@@ -66,11 +66,11 @@ void sub_0012D7D8_0x12d7d8(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x124EF0u;
-    {
+    if (runtime->hasFunction(0x124EF0u)) {
         auto targetFn = runtime->lookupFunction(0x124EF0u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00124EF0_0x124ef0(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x12D808u;
     ctx->pc = GPR_U32(ctx, 31); return;

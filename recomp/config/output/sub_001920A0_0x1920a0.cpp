@@ -158,11 +158,11 @@ label_1920e8:
     // 0x192100: 0x80489b6  j           func_1226D8
     ctx->pc = 0x192100u;
     ctx->pc = 0x1226D8u;
-    {
+    if (runtime->hasFunction(0x1226D8u)) {
         auto targetFn = runtime->lookupFunction(0x1226D8u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_001226D8_0x1226d8(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x192108u;
     // 0x192108: 0x0  nop
@@ -237,10 +237,15 @@ label_192138:
     ctx->pc = 0x19214Cu;
     SET_GPR_U32(ctx, 31, 0x192154u);
     ctx->pc = 0x192170u;
-    {
+    if (runtime->hasFunction(0x192170u)) {
         auto targetFn = runtime->lookupFunction(0x192170u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x192154u; }
+        if (ctx->pc != 0x192154u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_00192170_0x192170(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x192154u; }
         if (ctx->pc != 0x192154u) { return; }
     }

@@ -1001,14 +1001,6 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         printf("[REO] Rendering will not work. Continuing with stubs only.\n");
     }
 
-    // REO_NO_OVERRIDES: skip all function bindings so the game runs its own
-    // (now-real) recompiled functions instead of these stub-era overrides.
-    // The bindings shadowed real code back when functions were stubbed.
-    if (std::getenv("REO_NO_OVERRIDES")) {
-        printf("[REO] REO_NO_OVERRIDES set: skipping function bindings (pure self-exec)\n");
-        return;
-    }
-
     // ── SIF RPC: route game's raw libsif to runtime's real HLE ───────
     // Game's sceSifBindRpc (0x117080) / sceSifCallRpc (0x117818) do raw SBUS
     // RPC the runtime doesn't emulate. Skipped in TOML → stubs → these
@@ -1024,6 +1016,15 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     // runtime HLE consistently: init + bind + call.
     bind(runtime, 0x117080, ps2_syscalls::SifInitRpc, "SifInitRpc (HLE)");
     bind(runtime, 0x1179E8, ps2_syscalls::sceSifCallRpc, "SifCallRpc (HLE)");
+
+    // Self-execution (REO_NATURAL) / REO_NO_OVERRIDES: only the libsif HLE routes above.
+    // Everything below is a stub-era override that shadows real recompiled code; with
+    // the regenerated output (Ghidra map, pinned codegen) bindings also intercept direct
+    // calls (e.g. 0x107D28/0x107DA8 are malloc lock/unlock, bound to reo_ret0).
+    if (std::getenv("REO_NATURAL") || std::getenv("REO_NO_OVERRIDES")) {
+        printf("[REO] self-execution: libsif HLE bindings only; stub-era overrides skipped\n");
+        return;
+    }
 
     // ── Boot sequence: GS init ───────────────────────────────────────
     bind(runtime, 0x11D6D0, reo_gs_reset_graph,   "sceGsResetGraph (init)");

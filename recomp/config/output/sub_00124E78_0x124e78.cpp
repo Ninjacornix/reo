@@ -17,13 +17,6 @@ void sub_00124E78_0x124e78(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_00124E78_0x124e78");
 #endif
 
-    switch (ctx->pc) {
-        case 0x124e80u: goto label_124e80;
-        case 0x124ee8u: goto label_124ee8;
-        case 0x124ef0u: goto label_124ef0;
-        default: break;
-    }
-
     ctx->pc = 0x124e78u;
 
     // 0x124e78: 0x3e00008  jr          $ra
@@ -37,17 +30,13 @@ void sub_00124E78_0x124e78(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124E80u: goto label_124e80;
             case 0x124EC0u: goto label_124ec0;
             case 0x124EE0u: goto label_124ee0;
-            case 0x124EE8u: goto label_124ee8;
-            case 0x124EF0u: goto label_124ef0;
             default: break;
         }
         return;
     }
     ctx->pc = 0x124E80u;
-label_124e80:
     // 0x124e80: 0x3e00008  jr          $ra
     ctx->pc = 0x124E80u;
     {
@@ -59,11 +48,8 @@ label_124e80:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124E80u: goto label_124e80;
             case 0x124EC0u: goto label_124ec0;
             case 0x124EE0u: goto label_124ee0;
-            case 0x124EE8u: goto label_124ee8;
-            case 0x124EF0u: goto label_124ef0;
             default: break;
         }
         return;
@@ -143,11 +129,8 @@ label_124e80:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124E80u: goto label_124e80;
             case 0x124EC0u: goto label_124ec0;
             case 0x124EE0u: goto label_124ee0;
-            case 0x124EE8u: goto label_124ee8;
-            case 0x124EF0u: goto label_124ef0;
             default: break;
         }
         return;
@@ -192,11 +175,8 @@ label_124ec0:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124E80u: goto label_124e80;
             case 0x124EC0u: goto label_124ec0;
             case 0x124EE0u: goto label_124ee0;
-            case 0x124EE8u: goto label_124ee8;
-            case 0x124EF0u: goto label_124ef0;
             default: break;
         }
         return;
@@ -209,17 +189,13 @@ label_124ee0:
         uint32_t jumpTarget = GPR_U32(ctx, 31);
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124E80u: goto label_124e80;
             case 0x124EC0u: goto label_124ec0;
             case 0x124EE0u: goto label_124ee0;
-            case 0x124EE8u: goto label_124ee8;
-            case 0x124EF0u: goto label_124ef0;
             default: break;
         }
         return;
     }
     ctx->pc = 0x124EE8u;
-label_124ee8:
     // 0x124ee8: 0x3e00008  jr          $ra
     ctx->pc = 0x124EE8u;
     {
@@ -231,17 +207,13 @@ label_124ee8:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124E80u: goto label_124e80;
             case 0x124EC0u: goto label_124ec0;
             case 0x124EE0u: goto label_124ee0;
-            case 0x124EE8u: goto label_124ee8;
-            case 0x124EF0u: goto label_124ef0;
             default: break;
         }
         return;
     }
     ctx->pc = 0x124EF0u;
-label_124ef0:
     // 0x124ef0: 0x3e00008  jr          $ra
     ctx->pc = 0x124EF0u;
     {
@@ -253,11 +225,8 @@ label_124ef0:
         ctx->in_delay_slot = false;
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
-            case 0x124E80u: goto label_124e80;
             case 0x124EC0u: goto label_124ec0;
             case 0x124EE0u: goto label_124ee0;
-            case 0x124EE8u: goto label_124ee8;
-            case 0x124EF0u: goto label_124ef0;
             default: break;
         }
         return;

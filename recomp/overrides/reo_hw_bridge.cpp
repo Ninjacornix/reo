@@ -1097,6 +1097,33 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
         return true;
     }
 
+    case 0x80001300:   // dbcman (libdbc: pad/multitap data buffer control)
+    case 0x8000131B:
+    case 0x8000131C: {
+        // libdbc init (EE 0x188938) binds these three servers and requires the
+        // version returned by rpc 0x80001363 (EE 0x1888E0) to satisfy (v >> 8) == 3
+        // ("libdbc.a = 3.0"). Minor version unverified. Other calls are logged and
+        // answered with zeroed success until their semantics are needed.
+        static int dbcLog = 0;
+        if (dbcLog < 80) {
+            char hex[3 * 32 + 1] = {0};
+            if (sendBuf && sendSize) {
+                const uint32_t n = std::min<uint32_t>(sendSize, 32);
+                for (uint32_t i = 0; i < n; ++i)
+                    snprintf(hex + i * 3, 4, "%02X ", rdram[(sendBuf + i) & PS2_RAM_MASK]);
+            }
+            fprintf(stderr, "[HW-BRIDGE:DBC] sid=0x%08X rpc=0x%X send=0x%08X/%u recv=0x%08X/%u data=[%s]\n",
+                    sid, rpcNum, sendBuf, sendSize, recvBuf, recvSize, hex);
+            dbcLog++;
+        }
+        if (recvBuf && recvSize >= 4) {
+            for (uint32_t off = 0; off + 4 <= recvSize && off < 0x40; off += 4)
+                rdramWrite32(rdram, recvBuf + off, 0);
+            if (rpcNum == 0x80001363u) rdramWrite32(rdram, recvBuf, 0x0300u); // dbcman 3.0
+        }
+        return true;
+    }
+
     case 0x80000003:   // SIFHEAP (IOP heap)
     case 0x80000006: { // LOADFILE
         static int hlLog = 0;

@@ -55,10 +55,15 @@ void sub_001921F0_0x1921f0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 4, (int32_t)ADD32(GPR_U32(ctx, 29), 28));
         ctx->in_delay_slot = false;
     ctx->pc = 0x10A2F0u;
-    {
+    if (runtime->hasFunction(0x10A2F0u)) {
         auto targetFn = runtime->lookupFunction(0x10A2F0u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x192210u; }
+        if (ctx->pc != 0x192210u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0010A2F0_0x10a2f0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x192210u; }
         if (ctx->pc != 0x192210u) { return; }
     }

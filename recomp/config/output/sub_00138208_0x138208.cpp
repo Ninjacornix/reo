@@ -17,12 +17,6 @@ void sub_00138208_0x138208(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
     PS_LOG_ENTRY("sub_00138208_0x138208");
 #endif
 
-    switch (ctx->pc) {
-        case 0x138278u: goto label_138278;
-        case 0x1382e0u: goto label_1382e0;
-        default: break;
-    }
-
     ctx->pc = 0x138208u;
 
     // 0x138208: 0x3c030022  lui         $v1, 0x22
@@ -55,9 +49,7 @@ void sub_00138208_0x138208(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x138268u: goto label_138268;
-            case 0x138278u: goto label_138278;
             case 0x1382D0u: goto label_1382d0;
-            case 0x1382E0u: goto label_1382e0;
             default: break;
         }
         return;
@@ -81,9 +73,7 @@ void sub_00138208_0x138208(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x138268u: goto label_138268;
-            case 0x138278u: goto label_138278;
             case 0x1382D0u: goto label_1382d0;
-            case 0x1382E0u: goto label_1382e0;
             default: break;
         }
         return;
@@ -159,9 +149,7 @@ label_138268:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x138268u: goto label_138268;
-            case 0x138278u: goto label_138278;
             case 0x1382D0u: goto label_1382d0;
-            case 0x1382E0u: goto label_1382e0;
             default: break;
         }
         return;
@@ -170,7 +158,6 @@ label_138268:
     // 0x138274: 0x0  nop
     ctx->pc = 0x138274u;
     // NOP
-label_138278:
     // 0x138278: 0x3c030022  lui         $v1, 0x22
     ctx->pc = 0x138278u;
     SET_GPR_S32(ctx, 3, (int32_t)((uint32_t)34 << 16));
@@ -186,9 +173,7 @@ label_138278:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x138268u: goto label_138268;
-            case 0x138278u: goto label_138278;
             case 0x1382D0u: goto label_1382d0;
-            case 0x1382E0u: goto label_1382e0;
             default: break;
         }
         return;
@@ -285,9 +270,7 @@ label_1382d0:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x138268u: goto label_138268;
-            case 0x138278u: goto label_138278;
             case 0x1382D0u: goto label_1382d0;
-            case 0x1382E0u: goto label_1382e0;
             default: break;
         }
         return;
@@ -296,7 +279,6 @@ label_1382d0:
     // 0x1382dc: 0x0  nop
     ctx->pc = 0x1382dcu;
     // NOP
-label_1382e0:
     // 0x1382e0: 0x3c030022  lui         $v1, 0x22
     ctx->pc = 0x1382e0u;
     SET_GPR_S32(ctx, 3, (int32_t)((uint32_t)34 << 16));
@@ -312,9 +294,7 @@ label_1382e0:
         ctx->pc = jumpTarget;
         switch (jumpTarget) {
             case 0x138268u: goto label_138268;
-            case 0x138278u: goto label_138278;
             case 0x1382D0u: goto label_1382d0;
-            case 0x1382E0u: goto label_1382e0;
             default: break;
         }
         return;

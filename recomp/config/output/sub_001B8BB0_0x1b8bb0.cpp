@@ -996,10 +996,15 @@ label_1b8e18:
         SET_GPR_U64(ctx, 4, (uint64_t)GPR_U64(ctx, 19) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
     ctx->pc = 0x1B8F40u;
-    {
+    if (runtime->hasFunction(0x1B8F40u)) {
         auto targetFn = runtime->lookupFunction(0x1B8F40u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x1B8E28u; }
+        if (ctx->pc != 0x1B8E28u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_001B8F40_0x1b8f40(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x1B8E28u; }
         if (ctx->pc != 0x1B8E28u) { return; }
     }

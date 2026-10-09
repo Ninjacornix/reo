@@ -177,10 +177,15 @@ label_139a98:
     ctx->pc = 0x139A98u;
     SET_GPR_U32(ctx, 31, 0x139AA0u);
     ctx->pc = 0x1399F8u;
-    {
+    if (runtime->hasFunction(0x1399F8u)) {
         auto targetFn = runtime->lookupFunction(0x1399F8u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x139AA0u; }
+        if (ctx->pc != 0x139AA0u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_001399F8_0x1399f8(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x139AA0u; }
         if (ctx->pc != 0x139AA0u) { return; }
     }

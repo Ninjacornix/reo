@@ -357,10 +357,15 @@ label_1314c8:
         SET_GPR_U64(ctx, 4, (uint64_t)GPR_U64(ctx, 16) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
     ctx->pc = 0x13F1E0u;
-    {
+    if (runtime->hasFunction(0x13F1E0u)) {
         auto targetFn = runtime->lookupFunction(0x13F1E0u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x131510u; }
+        if (ctx->pc != 0x131510u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0013F1E0_0x13f1e0(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x131510u; }
         if (ctx->pc != 0x131510u) { return; }
     }
@@ -381,10 +386,15 @@ label_131510:
         SET_GPR_U64(ctx, 17, (uint64_t)GPR_U64(ctx, 2) + (uint64_t)GPR_U64(ctx, 0));
         ctx->in_delay_slot = false;
     ctx->pc = 0x13F1C8u;
-    {
+    if (runtime->hasFunction(0x13F1C8u)) {
         auto targetFn = runtime->lookupFunction(0x13F1C8u);
         const uint32_t __entryPc = ctx->pc;
         targetFn(rdram, ctx, runtime);
+        if (ctx->pc == __entryPc) { ctx->pc = 0x131520u; }
+        if (ctx->pc != 0x131520u) { return; }
+    } else {
+        const uint32_t __entryPc = ctx->pc;
+        sub_0013F1C8_0x13f1c8(rdram, ctx, runtime);
         if (ctx->pc == __entryPc) { ctx->pc = 0x131520u; }
         if (ctx->pc != 0x131520u) { return; }
     }

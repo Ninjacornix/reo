@@ -11,7 +11,7 @@
 #endif
 
 // Function: sub_00129FD0
-// Address: 0x129fd0 - 0x12a008
+// Address: 0x129fd0 - 0x12a004
 void sub_00129FD0_0x129fd0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtime) {
 #ifdef PS2_FUNCTION_LOG_TRACKER
     PS_LOG_ENTRY("sub_00129FD0_0x129fd0");
@@ -69,11 +69,11 @@ void sub_00129FD0_0x129fd0(uint8_t* rdram, R5900Context* ctx, PS2Runtime *runtim
         SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 16));
         ctx->in_delay_slot = false;
     ctx->pc = 0x130FE0u;
-    {
+    if (runtime->hasFunction(0x130FE0u)) {
         auto targetFn = runtime->lookupFunction(0x130FE0u);
-        const uint32_t __entryPc = ctx->pc;
-        targetFn(rdram, ctx, runtime);
-        return;
+        targetFn(rdram, ctx, runtime); return;
+    } else {
+        sub_00130FE0_0x130fe0(rdram, ctx, runtime); return;
     }
     ctx->pc = 0x129FF8u;
 label_129ff8:
@@ -97,8 +97,5 @@ label_129ff8:
         return;
     }
     ctx->pc = 0x12A004u;
-    // 0x12a004: 0x0  nop
-    ctx->pc = 0x12a004u;
-    // NOP
     ctx->pc = GPR_U32(ctx, 31); return;
 }
