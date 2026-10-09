@@ -52,7 +52,7 @@ set(REO_RUNTIME_SOURCES
 
 # Helper function to set up a recomp target
 function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
-    file(GLOB RECOMP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}/*.cpp")
+    file(GLOB RECOMP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}/*.cpp")
     list(LENGTH RECOMP_SOURCES RECOMP_COUNT)
     message(STATUS "REO [${TARGET_NAME}]: Found ${RECOMP_COUNT} recompiled source files in ${OUTPUT_DIR}")
 
@@ -65,7 +65,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
     # Overlay functions (runtime-loaded code dumped from PCSX2)
     set(OVERLAY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_overlay")
     if(EXISTS "${OVERLAY_DIR}")
-        file(GLOB OVERLAY_SOURCES "${OVERLAY_DIR}/*.cpp")
+        file(GLOB OVERLAY_SOURCES CONFIGURE_DEPENDS "${OVERLAY_DIR}/*.cpp")
         list(LENGTH OVERLAY_SOURCES OVERLAY_COUNT)
         if(OVERLAY_COUNT GREATER 0)
             message(STATUS "REO [${TARGET_NAME}]: Found ${OVERLAY_COUNT} overlay source files")
