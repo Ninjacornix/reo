@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -192,6 +193,65 @@ static void reoStartStackDump() {
     }).detach();
 }
 
+// REO_SHOT_AT=<s>[,<s>...]: write shot_<s>.bmp (the frame the runtime presents) at those
+// times -- visual checks without access to the window.
+static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint32_t w, uint32_t h) {
+    FILE* f = fopen(path, "wb");
+    if (!f) return;
+    const uint32_t rowBytes = w * 4u, dataBytes = rowBytes * h, fileBytes = 54u + dataBytes;
+    uint8_t hdr[54] = {'B', 'M'};
+    auto put32 = [&](int o, uint32_t v) { memcpy(hdr + o, &v, 4); };
+    put32(2, fileBytes); put32(10, 54); put32(14, 40); put32(18, w); put32(22, h);
+    hdr[26] = 1; hdr[28] = 32; put32(34, dataBytes);
+    fwrite(hdr, 1, 54, f);
+    std::vector<uint8_t> row(rowBytes);
+    for (uint32_t y = 0; y < h; ++y) {
+        const uint8_t* src = rgba.data() + static_cast<size_t>(h - 1 - y) * rowBytes;
+        for (uint32_t x = 0; x < w; ++x) {
+            row[x * 4 + 0] = src[x * 4 + 2]; row[x * 4 + 1] = src[x * 4 + 1];
+            row[x * 4 + 2] = src[x * 4 + 0]; row[x * 4 + 3] = 255;
+        }
+        fwrite(row.data(), 1, rowBytes, f);
+    }
+    fclose(f);
+}
+
+static void reoStartShots(PS2Runtime* runtime) {
+    const char* e = std::getenv("REO_SHOT_AT");
+    if (!e || !runtime) return;
+    std::vector<unsigned> times;
+    for (const char* q = e; *q;) {
+        char* end = nullptr;
+        times.push_back(static_cast<unsigned>(std::strtoul(q, &end, 0)));
+        if (!end || end == q) break;
+        q = (*end == ',') ? end + 1 : end;
+    }
+    std::thread([runtime, times] {
+        unsigned elapsed = 0;
+        for (unsigned t : times) {
+            if (t > elapsed) { Sleep((t - elapsed) * 1000u); elapsed = t; }
+            std::vector<uint8_t> px; uint32_t w = 0, h = 0;
+            if (runtime->gs().copyLatchedHostPresentationFrame(px, w, h) && w && h && px.size() >= size_t(w) * h * 4) {
+                char name[64]; snprintf(name, sizeof(name), "shot_%u.bmp", t);
+                reoWriteBmp(name, px, w, h);
+                // Alongside: raw GS VRAM + display registers, for offline analysis.
+                const auto& g = runtime->memory().gs();
+                if (const uint8_t* vram = runtime->memory().getGSVRAM()) {
+                    char vn[64]; snprintf(vn, sizeof(vn), "vram_%u.bin", t);
+                    if (FILE* vf = fopen(vn, "wb")) { fwrite(vram, 1, PS2_GS_VRAM_SIZE, vf); fclose(vf); }
+                }
+                fprintf(stderr, "[SHOT] gs pmode=%llx smode2=%llx dispfb1=%llx display1=%llx dispfb2=%llx display2=%llx bgcolor=%llx\n",
+                        (unsigned long long)g.pmode, (unsigned long long)g.smode2, (unsigned long long)g.dispfb1,
+                        (unsigned long long)g.display1, (unsigned long long)g.dispfb2, (unsigned long long)g.display2,
+                        (unsigned long long)g.bgcolor);
+                fprintf(stderr, "[SHOT] %s %ux%u" "\n", name, w, h);
+            } else {
+                fprintf(stderr, "[SHOT] t=%u: no presented frame" "\n", t);
+            }
+        }
+    }).detach();
+}
+
 static void reoStartHwWatch(uint8_t* rdram) {
     const char* e = std::getenv("REO_HW_WATCH");
     if (!e || !rdram) return;
@@ -316,6 +376,7 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
     reoStartHwWatch(runtime.memory().getRDRAM());
     reoStartStackDump();
+    reoStartShots(&runtime);
 #endif
     runtime.run();
 

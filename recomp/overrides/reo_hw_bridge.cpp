@@ -122,17 +122,27 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
         printf("[HW-BRIDGE] CDVD initialized: %s\n", cdRoot.string().c_str());
     }
 
-    // Register callbacks with PS2Memory
-    PS2Memory::HwBridgeCallbacks memCb;
-    memCb.onDmaStart = &ReoHwBridge::onDmaStart;
-    memCb.onGsRegWrite = &ReoHwBridge::onGsRegWrite;
-    memCb.user = this;
-    runtime.memory().setHwBridge(memCb);
+    // Graphics pipeline. Default "upstream": PS2Recomp's own VIF1 -> VU1 -> GIF arbiter
+    // -> GS -> presentation path (its VU1 decodes per PCSX2's VUops tables). The bridge's
+    // duplicate VIF1/VU1/GS path (REO_GFX=bridge) mis-decodes VU lower instructions and is
+    // kept only for comparison (docs/DIVERGENCES.md D24).
+    const char* gfx = std::getenv("REO_GFX");
+    m_bridgeGfx = gfx && std::strcmp(gfx, "bridge") == 0;
+    printf("[HW-BRIDGE] graphics pipeline: %s\n", m_bridgeGfx ? "bridge (reo VU1/GS)" : "upstream (PS2Recomp VIF1/VU1/GS)");
+
+    if (m_bridgeGfx) {
+        // Register callbacks with PS2Memory
+        PS2Memory::HwBridgeCallbacks memCb;
+        memCb.onDmaStart = &ReoHwBridge::onDmaStart;
+        memCb.onGsRegWrite = &ReoHwBridge::onGsRegWrite;
+        memCb.user = this;
+        runtime.memory().setHwBridge(memCb);
+    }
 
     // Register callbacks with PS2Runtime
     PS2Runtime::HwBridgeVtable rtVt;
-    rtVt.onVuStart = &ReoHwBridge::onVuStart;
-    rtVt.getFramebuffer = &ReoHwBridge::getFramebuffer;
+    rtVt.onVuStart = &ReoHwBridge::onVuStart;  // VU0 VCALLMS (upstream only stubs VU0 micro)
+    rtVt.getFramebuffer = m_bridgeGfx ? &ReoHwBridge::getFramebuffer : nullptr;
     rtVt.onSifRpc = &ReoHwBridge::onSifRpc;
     rtVt.user = this;
     runtime.setHwBridgeVt(rtVt);

@@ -329,9 +329,32 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 ## Diagnostics added
 - `REO_STACKDUMP_AT=<s>`: after N seconds, every thread's host stack (exe RVAs). It showed the apparent "hang" was the interrupt worker running VIF1/VU1 work, not a deadlock.
 
-## Open (as of D23)
-- reo VU1 interpreter: microprograms run to an invalid PC (`0xFFFFF510`) -> VU1-generated GS packets are missing.
-- Frame rate: the main loop waits on packet buffers while VU1 work fails, so frames progress slowly.
+## D24: graphics now run on the upstream PS2Recomp pipeline (VIF1 → VU1 → GIF → GS)
+
+- Research: the PS2Recomp submodule already has `ps2_vif1_interpreter.cpp`, `ps2_vu1.cpp`, `ps2_gif_arbiter.cpp`, `ps2_gs_gpu.cpp` and `ps2_gs_rasterizer.cpp`. reo's bridge ran a second, duplicate VIF1/VU1/GS path, and the window showed that one. reo's VU interpreter decodes lower instructions with the wrong opcode map and immediate bits (checked against PCSX2 `VUops.cpp`: `0x20` B, `0x24` JR, `0x28` IBEQ, imm11 in bits 10:0, VU1 targets `& 0x3FFF`). Upstream's `ps2_vu1.cpp` matches PCSX2.
+- reo bridge: `REO_GFX` selects the pipeline (default `upstream`; `bridge` keeps the old path for comparison). In upstream mode the bridge registers no DMA/GS hooks and no framebuffer provider. VU0 `VCALLMS` stays on the bridge.
+- Upstream VIF1 `MSCAL`: `addr & 0x7FF` (PCSX2 `vu1ExecMicro`).
+
+## D25: VIF DMAtag upper halves dropped for REF/REFE/REFS — FIXED
+
+- With `CHCR.TTE` the upper 64 bits (two VIFcodes) of **every** VIF DMAtag go to the VIF. The chain flattener added them only for cnt/next/call/ret/end. For texture uploads the `DIRECTHL` in a REF tag was lost and the image payload parsed as VIFcodes (an independent Python VIF parser over `REO_VIF1_DUMP` buffers showed `DIRECTHL 7` = A+D + IMAGE(nloop 4) followed by bare CLUT data).
+
+## D26: GIF IMAGE transfers were not a stream — FIXED
+
+- An IMAGE tag's NLOOP data may arrive in later packets (separate REF tags, later DIRECTs). The GS parsed every packet independently, so `processImageData` ran ~400k times with 0 bytes and uploads were applied to the previous transfer (e.g. 108 KB into the 8x2 CLUT rect). Now the remaining IMAGE byte count carries over to the next packet. Upstream's VIF-side workaround (treating the VIF stream after a short DIRECT as image data) is removed: with D25 the continuation arrives in later DIRECTs.
+- Found via heartbeat counters (`path1/2/3`, `gsPkts`, `prims`, `img/bytes`, `px/sc/at`), per-primitive TEX0 logging, and glyph texel sampling (every texel was the same `0x13000000` before the fix).
+
+## D27: heartbeat crash (heap use-after-free in `run()`) — FIXED
+
+- ASan (`REO_ASAN`): use-after-free between `s_pcHist.clear()` and the next `operator[]`, both in `PS2Runtime::run()`. It is the same site as the earlier intermittent AV. The diagnostic histograms are now fixed-size, heap-free tables. No crash in 60-90 s runs since.
+
+## Milestone-1 checkpoint (observed)
+
+- `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.
+
+## Open (as of D27)
+- Memory card: no `mcserv` HLE. The game reports no card and waits for YES/NO; input or a memory-card HLE is needed to proceed toward the title screen.
+- VU1 microprograms: none were started yet (path1 = 0); the next screens with 3D/VU1 rendering will exercise upstream `ps2_vu1.cpp`.
 
 ## Open (as of D11, superseded where noted)
 - CRI middleware: `[EE-TTY] DTX_Create: can't create DTX of server` / `E0100302: SJX_Init can't create DTX`, IOP server `0x90000200` (unhandled, func 2). The runtime has a configurable "DTX compat" layer to investigate.
