@@ -699,6 +699,7 @@ void ReoHwBridge::executeVu(int unit, uint32_t addr, uint8_t* rdram, R5900Contex
 // ── SIF RPC callback: handle IOP module calls ───────────────────────
 
 // SIF RPC module IDs (PS2 IOP modules)
+static constexpr uint32_t SIF_FILEIO  = 0x80000001;
 static constexpr uint32_t SIF_PADMAN  = 0x80000100;
 static constexpr uint32_t SIF_MCSERV  = 0x80000400;
 static constexpr uint32_t SIF_CDVD    = 0x80000592;
@@ -727,6 +728,47 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
     auto* self = static_cast<ReoHwBridge*>(user);
 
     switch (sid) {
+    case SIF_FILEIO: {
+        // HLE FILEIO server (IOP fileio.irx). D2 discovery stage: only fno 0xFF
+        // (init, issued by the EE fioInit at 0x1187A0) is answered (see below);
+        // every call is logged so the next missing operation is visible. Other
+        // functions fail explicitly (-1) rather than faking success.
+        static int fioLog = 0;
+        if (fioLog < 200) {
+            char hex[3 * 32 + 1] = {0};
+            char text[64 + 1] = {0};
+            if (sendBuf && sendSize) {
+                const uint32_t n = std::min<uint32_t>(sendSize, 32);
+                for (uint32_t i = 0; i < n; ++i) {
+                    const uint8_t b = rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    snprintf(hex + i * 3, 4, "%02X ", b);
+                }
+                const uint32_t m = std::min<uint32_t>(sendSize, 64);
+                for (uint32_t i = 0; i < m; ++i) {
+                    const uint8_t b = rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    text[i] = (b >= 0x20 && b < 0x7F) ? (char)b : '.';
+                }
+            }
+            fprintf(stderr, "[HW-BRIDGE:FIO] fno=0x%X send=0x%08X/%u recv=0x%08X/%u data=[%s] \"%s\"\n",
+                    rpcNum, sendBuf, sendSize, recvBuf, recvSize, hex, text);
+            fioLog++;
+        }
+        if (recvBuf && recvSize >= 4) {
+            for (uint32_t off = 0; off + 4 <= recvSize && off < 0x40; off += 4)
+                rdramWrite32(rdram, recvBuf + off, 0);
+            if (rpcNum == 0xFF) {
+                // Init reply, verified against PCSX2 (PINE, 2026-10-09): word0 is the
+                // IOP fileio version "2800" (EE checks it against "PsIIlibkernl2800"
+                // in 0x1189A8), word1 == 2.
+                rdramWrite32(rdram, recvBuf, 0x30303832u); // "2800"
+                if (recvSize >= 8) rdramWrite32(rdram, recvBuf + 4, 2u);
+            } else {
+                rdramWrite32(rdram, recvBuf, 0xFFFFFFFFu);
+            }
+        }
+        return true;
+    }
+
     case SIF_CDVD: {
         static int cdvdLog = 0;
         if (cdvdLog < 50) {

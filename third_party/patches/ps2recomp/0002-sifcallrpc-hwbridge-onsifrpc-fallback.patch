@@ -1,0 +1,24 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+index f9f26ea..177c81a 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1505,6 +1505,19 @@ namespace ps2_syscalls
+             }
+         }
+ 
++        // Game hardware bridge (HwBridgeVtable::onSifRpc) as a fallback for IOP
++        // servers the runtime does not implement (e.g. FILEIO, CDVD, PAD, MC).
++        // The vtable member existed but was never invoked.
++        if (!handled && runtime && runtime->hwBridgeVt().onSifRpc)
++        {
++            const auto &vt = runtime->hwBridgeVt();
++            if (vt.onSifRpc(sid, rpcNum, sendBuf, sendSize, recvBuf, recvSize, rdram, vt.user))
++            {
++                handled = true;
++                resultPtr = recvBuf;
++            }
++        }
++
+         const bool isDtxUrpc = dtxCompat.isUrpcRpc(sid, rpcNum);
+         uint32_t dtxUrpcCommand = isDtxUrpc ? (rpcNum & 0xFFu) : 0u;
+         uint32_t dtxUrpcFn = 0;

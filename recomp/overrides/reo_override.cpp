@@ -41,6 +41,7 @@ extern void sub_001CB8F0_0x1cb8f0(uint8_t*, R5900Context*, PS2Runtime*);
 // Runtime SIF RPC HLE handlers (defined in the runtime lib)
 namespace ps2_stubs { void sceSifBindRpc(uint8_t*, R5900Context*, PS2Runtime*); }
 namespace ps2_syscalls { void sceSifCallRpc(uint8_t*, R5900Context*, PS2Runtime*); }
+namespace ps2_syscalls { void SifInitRpc(uint8_t*, R5900Context*, PS2Runtime*); }
 #include <iomanip>
 #include <chrono>
 #include <thread>
@@ -1016,7 +1017,13 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     // 0x117818 = sceSifBindRpc: the game polls client->server (offset 36)
     // until non-zero; SifBindRpc sets it. 0x117080 = the RPC init/handshake.
     bind(runtime, 0x117818, ps2_stubs::sceSifBindRpc, "sceSifBindRpc (HLE)");
-    bind(runtime, 0x117080, ps2_stubs::sceSifBindRpc, "sceSifInitRpc->bind (HLE)");
+    // D2 (docs/DIVERGENCES.md): 0x117080 is SifInitRpc (inits the RPC packet pool
+    // at 0x25C9C0, SifInitCmd, MSCOM handshake), not a bind. It was bound to
+    // sceSifBindRpc; the game's own SifCallRpc (0x1179E8) then found no packets
+    // and returned -1 forever (fioInit retry loop). Route the RPC family to the
+    // runtime HLE consistently: init + bind + call.
+    bind(runtime, 0x117080, ps2_syscalls::SifInitRpc, "SifInitRpc (HLE)");
+    bind(runtime, 0x1179E8, ps2_syscalls::sceSifCallRpc, "SifCallRpc (HLE)");
 
     // ── Boot sequence: GS init ───────────────────────────────────────
     bind(runtime, 0x11D6D0, reo_gs_reset_graph,   "sceGsResetGraph (init)");
