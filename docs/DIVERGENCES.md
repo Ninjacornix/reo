@@ -516,6 +516,25 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - **Cause:** the VBlank flip code calls `iFlushCache(0)` via the stub at `0x1148d0` (`li v1,-0x68; syscall`). The dispatcher had no case for `-0x68`. It then tried `$v0` (which held 1) and dispatched syscall 1, `ResetEE`. Its HLE is a no-op, so the effect was log noise; any other unknown syscall could have run an arbitrary call the same way.
 - **Fix:** `-0x68` maps to `FlushCache`. Any remaining `$v0` fallback is logged (`[syscall] unknown $v1=...`); none seen since.
 
+## D39: ~23 s "freeze" on the Sofdec/ADX logo screen (GS worker backlog) — FIXED (patch 0022)
+
+- **Symptom (user):** the window froze on the Sofdec/ADX logo, then jumped ahead to the menu. In every run one heartbeat took 23–31 s.
+- **Cause:** with the GS worker (D37), a GIF DMA "completes" as soon as it is queued. The logo screens draw heavy fades (up to ~144 M untextured and ~76 M alpha-blended pixels per heartbeat), so the game queued ~23 s of drawing ahead. Present drains the queue, so the window waited on a stale frame while the game moved on. Stack samples during the stall: GS worker 100% busy in `drawSprite`/`sampleTexture`/`lookupCLUT`; all game threads idle.
+- **Fixes:**
+  - **Pacing:** a GS submission waits until the GS has executed everything queued before the previous vblank, so it never lags more than ~1 frame. Real hardware cannot run ahead either.
+  - **Fast paths cover alpha blending:** same A/B/C/D/FIX/PABE arithmetic as `writePixel`.
+  - **Per-sprite palette cache:** `lookupCLUT` once per index instead of per texel sample, only when the frame cannot overwrite the palette.
+  - **Row-band parallel drawing** of sprites of 32k+ pixels on a small worker pool. Bit-identical: one write per pixel, and blending reads only its own destination. Textured sprites go parallel only without texture/frame overlap. `REO_GS_NO_PARALLEL=1` disables it.
+- **Verification:** `tools/gs_fastpath_check` draws 4,000 randomized sprites (blend modes, alpha test, FBA, FBMSK, PABE, CT32/24/T8 textures, point/bilinear, 1:1 forward/reverse and scaled, small and up to 600×450). VRAM hash is identical across fast parallel, fast sequential and generic paths.
+- **Result:** longest logo-phase heartbeat 23 s → ~2.5 s; the logo screens are still slower than real time (low fps during fades).
+
+## D40: presentation cadence and purple first frame — FIXED (patch 0022)
+
+- **Stutter:** the window loop used raylib's 60 fps limiter and latched whatever the registers and VRAM held when it woke. Against the game's own vblank clock, an image was shown for 1 or 3 window frames about once a second (`[present]` histogram).
+- **Fix:** at each vblank the interrupt worker snapshots the display registers (PMODE, SMODE2, DISPFB1/2, DISPLAY1/2, BGCOLOR) and the GS queue position. The window loop presents once per snapshot, drained only up to that point, with raylib's limiter off. This matches hardware scanout.
+- **Note:** the title screen's scan-line overlay changes every field (60 Hz) while its movie changes at 30 Hz, so consecutive vblanks legitimately differ (`REO_PRESENT_DUMP_AT=<s>` dumps 4 consecutive presents).
+- **Purple first frame:** the placeholder before the first latched frame was `MAGENTA`; it is now black.
+
 ## Milestone-1 checkpoint (observed)
 
 - `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.

@@ -1,0 +1,651 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index 30e7002..b245544 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -7,6 +7,8 @@
+ #include <cstdlib>
+ #include <cstring>
+ 
++void ps2GsMarkVsync(); // ps2_gs_gpu.cpp: GS worker pacing (D39)
++
+ namespace ps2_syscalls
+ {
+     // [perf] heartbeat: DMA completions raised / delivered to a game handler, per channel.
+@@ -444,6 +446,7 @@ namespace ps2_syscalls
+             {
+                 continue;
+             }
++            ps2GsMarkVsync();
+ 
+             for (int i = 0; i < ticksToProcess; ++i)
+             {
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+index d94e5bc..8caa5cb 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -40,11 +40,23 @@ namespace
+         size_t queuedBytes = 0;
+         uint64_t enqueued = 0;  // items ever queued
+         uint64_t completed = 0; // items ever executed
++        uint64_t vsyncMark = 0; // `enqueued` at the latest vblank
++        uint64_t prevVsyncMark = 0; // `enqueued` at the vblank before that
++        // Display state captured at the latest vblank (D40): present shows exactly this
++        // state instead of whatever the registers/queue hold when the window loop wakes.
++        struct
++        {
++            bool valid = false;
++            uint64_t pmode, smode2, dispfb1, dispfb2, display1, display2, bgcolor;
++            uint64_t mark;
++        } vblankDisplay;
+         bool busy = false;
+         bool started = false;
+     };
+ 
+     GsAsync g_gsAsync;
++    GSRegisters *g_gsPrivRegs = nullptr; // set by GS::init; read at vblank (D40)
++    std::atomic<uint64_t> g_vblankSeq{0u}; // display snapshots taken so far
+     thread_local bool t_isGsWorker = false;
+     constexpr size_t kGsQueueMaxBytes = 64u * 1024u * 1024u;
+ 
+@@ -96,7 +108,12 @@ namespace
+             g_gsAsync.started = true;
+             std::thread(gsWorkerMain, gs).detach();
+         }
+-        g_gsAsync.drained.wait(lock, [] { return g_gsAsync.queuedBytes < kGsQueueMaxBytes; });
++        // Pacing: the GS may lag at most about one frame. A real EE cannot run ahead of the
++        // GS because the game waits for GS completion; without this the guest queued ~23 s
++        // of logo drawing and present (which drains) froze on a stale frame (D39).
++        g_gsAsync.drained.wait(lock, [] {
++            return g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= g_gsAsync.prevVsyncMark;
++        });
+         g_gsAsync.queuedBytes += item.data.size();
+         ++g_gsAsync.enqueued;
+         g_gsAsync.queue.push_back(std::move(item));
+@@ -105,6 +122,37 @@ namespace
+         return true;
+     }
+ 
++    // Called once per vblank (interrupt worker): moves the pacing marks.
++    void gsMarkVsyncImpl()
++    {
++        std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        g_gsAsync.prevVsyncMark = g_gsAsync.vsyncMark;
++        g_gsAsync.vsyncMark = g_gsAsync.enqueued;
++        if (g_gsPrivRegs)
++        {
++            auto &vb = g_gsAsync.vblankDisplay;
++            vb.pmode = g_gsPrivRegs->pmode;
++            vb.smode2 = g_gsPrivRegs->smode2;
++            vb.dispfb1 = g_gsPrivRegs->dispfb1;
++            vb.dispfb2 = g_gsPrivRegs->dispfb2;
++            vb.display1 = g_gsPrivRegs->display1;
++            vb.display2 = g_gsPrivRegs->display2;
++            vb.bgcolor = g_gsPrivRegs->bgcolor;
++            vb.mark = g_gsAsync.enqueued;
++            vb.valid = true;
++            g_vblankSeq.fetch_add(1u, std::memory_order_release);
++        }
++    }
++
++    // Waits until the first `target` queued GS calls have executed.
++    void gsDrainTo(uint64_t target)
++    {
++        if (t_isGsWorker || !gsThreadEnabled())
++            return;
++        std::unique_lock<std::mutex> lock(g_gsAsync.m);
++        g_gsAsync.drained.wait(lock, [target] { return g_gsAsync.completed >= target; });
++    }
++
+     // Waits until every GS call queued before this point has been executed (not until the
+     // queue is empty: producers keep adding, which could starve a reader such as present).
+     void gsDrain()
+@@ -648,6 +696,7 @@ void GS::init(uint8_t *vram, uint32_t vramSize, GSRegisters *privRegs)
+     m_vram = vram;
+     m_vramSize = vramSize;
+     m_privRegs = privRegs;
++    g_gsPrivRegs = privRegs;
+     reset();
+ }
+ 
+@@ -902,8 +951,32 @@ bool GS::copyFrameToHostRgbaUnlocked(const GSFrameReg &frame,
+ 
+ void GS::latchHostPresentationFrame()
+ {
+-    gsDrain();
++    // Present the display state captured at the latest vblank (D40), drained only up to
++    // the GS calls queued before that vblank. Falls back to the live registers.
++    uint64_t vbPmode = 0, vbSmode2 = 0, vbDispfb1 = 0, vbDispfb2 = 0, vbDisplay1 = 0, vbDisplay2 = 0, vbBgcolor = 0;
++    bool vbValid = false;
++    uint64_t vbMark = 0;
++    {
++        std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        const auto &vb = g_gsAsync.vblankDisplay;
++        if (vb.valid)
++        {
++            vbValid = true;
++            vbPmode = vb.pmode; vbSmode2 = vb.smode2; vbDispfb1 = vb.dispfb1; vbDispfb2 = vb.dispfb2;
++            vbDisplay1 = vb.display1; vbDisplay2 = vb.display2; vbBgcolor = vb.bgcolor; vbMark = vb.mark;
++        }
++    }
++    if (vbValid)
++        gsDrainTo(vbMark);
++    else
++        gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
++    if (!vbValid && m_privRegs)
++    {
++        vbPmode = m_privRegs->pmode; vbSmode2 = m_privRegs->smode2; vbDispfb1 = m_privRegs->dispfb1;
++        vbDispfb2 = m_privRegs->dispfb2; vbDisplay1 = m_privRegs->display1; vbDisplay2 = m_privRegs->display2;
++        vbBgcolor = m_privRegs->bgcolor;
++    }
+ 
+     if (!m_privRegs || !m_vram || m_vramSize == 0u)
+     {
+@@ -917,28 +990,28 @@ void GS::latchHostPresentationFrame()
+         return;
+     }
+ 
+-    const GSPmodeState pmode = decodePmode(m_privRegs->pmode);
+-    const GSSmode2State smode2 = decodeSMode2(m_privRegs->smode2);
++    const GSPmodeState pmode = decodePmode(vbPmode);
++    const GSSmode2State smode2 = decodeSMode2(vbSmode2);
+     // Field-mode "bob" (show only the current field's lines, doubled) alternates the picture
+     // by one line every vsync on a progressive host display. Games that render full-height
+     // frames look correct (and stable) without it, so it is opt-in: REO_FIELD_BOB=1.
+     static const bool s_fieldBob = std::getenv("REO_FIELD_BOB") != nullptr;
+     const bool applyFieldMode = s_fieldBob && smode2.interlaced && !smode2.frameMode;
+     const bool oddField = (ps2_syscalls::GetCurrentVSyncTick() & 1ull) != 0ull;
+-    const GSFrameReg displayFrame1 = decodeDisplayFrame(m_privRegs->dispfb1);
+-    const GSFrameReg displayFrame2 = decodeDisplayFrame(m_privRegs->dispfb2);
+-    const GSDisplayReadOrigin displayOrigin1 = decodeDisplayReadOrigin(m_privRegs->dispfb1);
+-    const GSDisplayReadOrigin displayOrigin2 = decodeDisplayReadOrigin(m_privRegs->dispfb2);
++    const GSFrameReg displayFrame1 = decodeDisplayFrame(vbDispfb1);
++    const GSFrameReg displayFrame2 = decodeDisplayFrame(vbDispfb2);
++    const GSDisplayReadOrigin displayOrigin1 = decodeDisplayReadOrigin(vbDispfb1);
++    const GSDisplayReadOrigin displayOrigin2 = decodeDisplayReadOrigin(vbDispfb2);
+ 
+     uint32_t width1 = 0u;
+     uint32_t height1 = 0u;
+     uint32_t width2 = 0u;
+     uint32_t height2 = 0u;
+-    decodeDisplaySize(m_privRegs->display1, width1, height1);
+-    decodeDisplaySize(m_privRegs->display2, width2, height2);
++    decodeDisplaySize(vbDisplay1, width1, height1);
++    decodeDisplaySize(vbDisplay2, width2, height2);
+ 
+-    const bool validCrt1 = pmode.enableCrt1 && hasDisplaySetup(m_privRegs->display1, displayFrame1);
+-    const bool validCrt2 = pmode.enableCrt2 && hasDisplaySetup(m_privRegs->display2, displayFrame2);
++    const bool validCrt1 = pmode.enableCrt1 && hasDisplaySetup(vbDisplay1, displayFrame1);
++    const bool validCrt2 = pmode.enableCrt2 && hasDisplaySetup(vbDisplay2, displayFrame2);
+ 
+     auto copyDisplaySource = [&](const GSFrameReg &displayFrame,
+                                  const GSDisplayReadOrigin &displayOrigin,
+@@ -1056,9 +1129,9 @@ void GS::latchHostPresentationFrame()
+         {
+             const uint32_t width = std::max(width1, width2);
+             const uint32_t height = std::max(height1, height2);
+-            const uint8_t bgR = static_cast<uint8_t>(m_privRegs->bgcolor & 0xFFu);
+-            const uint8_t bgG = static_cast<uint8_t>((m_privRegs->bgcolor >> 8) & 0xFFu);
+-            const uint8_t bgB = static_cast<uint8_t>((m_privRegs->bgcolor >> 16) & 0xFFu);
++            const uint8_t bgR = static_cast<uint8_t>(vbBgcolor & 0xFFu);
++            const uint8_t bgG = static_cast<uint8_t>((vbBgcolor >> 8) & 0xFFu);
++            const uint8_t bgB = static_cast<uint8_t>((vbBgcolor >> 16) & 0xFFu);
+             const uint8_t bgA = pmode.alp;
+ 
+             std::vector<uint8_t> merged(kHostFrameWidth * kHostFrameHeight * 4u, 0u);
+@@ -1239,6 +1312,11 @@ bool GS::copyLatchedHostPresentationFrame(std::vector<uint8_t> &outPixels,
+     return true;
+ }
+ 
++// Interrupt worker hook (declared extern in Kernel/Syscalls/Interrupt.cpp).
++void ps2GsMarkVsync() { gsMarkVsyncImpl(); }
++// Present loop (ps2_runtime.cpp): number of vblank display snapshots taken.
++uint64_t ps2GsVblankSeq() { return g_vblankSeq.load(std::memory_order_acquire); }
++
+ void GS::processGIFPacket(const uint8_t *data, uint32_t sizeBytes)
+ {
+     if (data && sizeBytes >= 16 && gsThreadEnabled() && !t_isGsWorker)
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+index b603568..de798e1 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -8,6 +8,116 @@
+ #include "ps2_log.h"
+ #include <atomic>
+ #include <cstdlib>
++#include <algorithm>
++#include <condition_variable>
++#include <functional>
++#include <mutex>
++#include <thread>
++#include <vector>
++
++namespace
++{
++    // Per-sprite palette cache (drawSprite): lookupCLUT() decoded once per index instead of
++    // per texel sample. Only enabled when the sprite cannot overwrite the palette in VRAM.
++    struct ClutCache
++    {
++        bool valid = false;
++        uint32_t table[256];
++    };
++    thread_local ClutCache t_clutCache;
++
++    struct ClutCacheScope
++    {
++        ~ClutCacheScope() { t_clutCache.valid = false; }
++    };
++
++    // Row-band parallelism for large sprites (D39). Every pixel of a sprite is written once
++    // and blending reads only that pixel's own destination, so splitting rows across
++    // threads gives bit-identical results (callers exclude texture/frame overlap).
++    class RowPool
++    {
++    public:
++        static RowPool &get()
++        {
++            static RowPool pool;
++            return pool;
++        }
++
++        // Runs fn(yBegin, yEnd) over [y0, y1] in bands; returns when all bands are done.
++        void run(int y0, int y1, const std::function<void(int, int)> &fn)
++        {
++            if (m_threads.empty() || y1 - y0 < 16)
++            {
++                fn(y0, y1);
++                return;
++            }
++            std::lock_guard<std::mutex> runLock(m_runMutex);
++            {
++                std::lock_guard<std::mutex> lock(m_m);
++                m_fn = &fn;
++                m_next.store(y0);
++                m_end = y1;
++                m_band = std::max(4, (y1 - y0 + 1) / static_cast<int>(4 * (m_threads.size() + 1)));
++                m_pending = static_cast<int>(m_threads.size());
++                ++m_generation;
++            }
++            m_cv.notify_all();
++            work();
++            std::unique_lock<std::mutex> lock(m_m);
++            m_doneCv.wait(lock, [this] { return m_pending == 0; });
++            m_fn = nullptr;
++        }
++
++    private:
++        RowPool()
++        {
++            static const bool off = std::getenv("REO_GS_NO_PARALLEL") != nullptr;
++            const unsigned hw = std::thread::hardware_concurrency();
++            const unsigned n = off ? 0u : std::min(6u, hw > 4u ? hw / 2u : 1u);
++            for (unsigned i = 0; i < n; ++i)
++                m_threads.emplace_back([this] { workerMain(); });
++            for (auto &t : m_threads)
++                t.detach();
++        }
++
++        void work()
++        {
++            for (;;)
++            {
++                const int b = m_next.fetch_add(m_band);
++                if (b > m_end)
++                    return;
++                (*m_fn)(b, std::min(m_end, b + m_band - 1));
++            }
++        }
++
++        void workerMain()
++        {
++            uint64_t seen = 0;
++            for (;;)
++            {
++                {
++                    std::unique_lock<std::mutex> lock(m_m);
++                    m_cv.wait(lock, [&] { return m_generation != seen; });
++                    seen = m_generation;
++                }
++                work();
++                std::lock_guard<std::mutex> lock(m_m);
++                if (--m_pending == 0)
++                    m_doneCv.notify_all();
++            }
++        }
++
++        std::vector<std::thread> m_threads;
++        std::mutex m_runMutex, m_m;
++        std::condition_variable m_cv, m_doneCv;
++        const std::function<void(int, int)> *m_fn = nullptr;
++        std::atomic<int> m_next{0};
++        int m_end = 0, m_band = 1, m_pending = 0;
++        uint64_t m_generation = 0;
++    };
++}
++
+ #include <atomic>
+ #include <algorithm>
+ #include <cmath>
+@@ -674,6 +784,8 @@ uint32_t GSRasterizer::sampleTexture(GS *gs, float s, float t, float q, uint16_t
+         if (tex.psm == GS_PSM_T4)
+         {
+             uint32_t idx = readTexelPSMT4(gs, tex.tbp0, tex.tbw, sampleU, sampleV);
++            if (t_clutCache.valid)
++                return t_clutCache.table[idx & 0xFFu];
+             return lookupCLUT(gs, static_cast<uint8_t>(idx), tex.cbp, tex.cpsm, tex.csm, tex.csa, tex.psm);
+         }
+ 
+@@ -685,6 +797,8 @@ uint32_t GSRasterizer::sampleTexture(GS *gs, float s, float t, float q, uint16_t
+             if (off >= gs->m_vramSize)
+                 return 0xFFFF00FFu;
+             uint8_t idx = gs->m_vram[off];
++            if (t_clutCache.valid)
++                return t_clutCache.table[idx];
+             return lookupCLUT(gs, idx, tex.cbp, tex.cpsm, tex.csm, tex.csa, tex.psm);
+         }
+ 
+@@ -743,7 +857,8 @@ namespace
+     // frame buffer (drawSprite fast paths). Same alpha test, FBA, FBMSK and AFAIL=RGB_ONLY
+     // handling; returns false when the alpha test discards the pixel.
+     inline bool writeNoBlend32(uint8_t *vram, uint32_t vramSize, const GSContext &ctx, uint32_t fbBlock, uint32_t widthBlocks,
+-                               int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
++                               int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a,
++                               bool abe = false, bool pabe = false)
+     {
+         const AlphaTestResult alphaTest = classifyAlphaTest(ctx.test, a);
+         if (!alphaTest.writeFramebuffer)
+@@ -751,6 +866,23 @@ namespace
+         const uint32_t off = GSPSMCT32::addrPSMCT32(fbBlock, widthBlocks, static_cast<uint32_t>(x), static_cast<uint32_t>(y));
+         if (off + 4u > vramSize)
+             return true;
++        if (abe && !(pabe && (a & 0x80u) == 0u))
++        {
++            // Same arithmetic as writePixel()'s PRIM.ABE block for a 32-bit frame.
++            uint32_t existing;
++            std::memcpy(&existing, vram + off, 4);
++            const int dr = existing & 0xFF, dg = (existing >> 8) & 0xFF, db = (existing >> 16) & 0xFF,
++                      da = (existing >> 24) & 0xFF;
++            const uint64_t alphaReg = ctx.alpha;
++            const uint8_t asel = alphaReg & 3, bsel = (alphaReg >> 2) & 3, csel = (alphaReg >> 4) & 3,
++                          dsel = (alphaReg >> 6) & 3;
++            const int fix = static_cast<int>((alphaReg >> 32) & 0xFF);
++            auto pick = [](uint8_t sel, int cs, int cd) -> int { return sel == 0 ? cs : (sel == 1 ? cd : 0); };
++            const int cAlpha = (csel == 0) ? a : (csel == 1) ? da : fix;
++            r = clampU8(((pick(asel, r, dr) - pick(bsel, r, dr)) * cAlpha >> 7) + pick(dsel, r, dr));
++            g = clampU8(((pick(asel, g, dg) - pick(bsel, g, dg)) * cAlpha >> 7) + pick(dsel, g, dg));
++            b = clampU8(((pick(asel, b, db) - pick(bsel, b, db)) * cAlpha >> 7) + pick(dsel, b, db));
++        }
+         if (!alphaTest.preserveDestinationAlpha && (ctx.fba & 0x1ull) != 0ull && ctx.frame.psm != GS_PSM_CT24)
+             a = static_cast<uint8_t>(a | 0x80u);
+         uint32_t pixel = static_cast<uint32_t>(r) | (static_cast<uint32_t>(g) << 8) |
+@@ -854,22 +986,34 @@ void GSRasterizer::drawSprite(GS *gs)
+ 
+     uint8_t r = v1.r, g = v1.g, b = v1.b, a = v1.a;
+ 
+-    // Fast paths (same results as the generic loops below): no blending, 32/24-bit frame.
++    // Fast paths (same results as the generic loops below): 32/24-bit frame, with or without
++    // alpha blending (writeNoBlend32 applies writePixel's ABE arithmetic when asked).
+     static const bool s_noFast = std::getenv("REO_GS_NO_FASTPATH") != nullptr;
+-    const bool fastFrame = !s_noFast && !gs->m_prim.abe &&
+-                           (ctx.frame.psm == GS_PSM_CT32 || ctx.frame.psm == GS_PSM_CT24);
++    const bool fastFrame = !s_noFast && (ctx.frame.psm == GS_PSM_CT32 || ctx.frame.psm == GS_PSM_CT24);
++    const bool fastAbe = gs->m_prim.abe != 0;
++    const bool fastPabe = gs->m_pabe;
+     const uint32_t fbBlock = GSInternal::framePageBaseToBlock(ctx.frame.fbp);
+     const uint32_t fbWidthBlocks = (ctx.frame.fbw != 0u) ? ctx.frame.fbw : 1u;
+     const uint32_t spritePixels = static_cast<uint32_t>((drawX1 - drawX0 + 1) * (drawY1 - drawY0 + 1));
+ 
+     if (fastFrame && !gs->m_prim.tme)
+     {
+-        uint32_t discarded = 0;
+-        for (int y = drawY0; y <= drawY1; ++y)
+-            for (int x = drawX0; x <= drawX1; ++x)
+-                discarded += writeNoBlend32(gs->m_vram, gs->m_vramSize, ctx, fbBlock, fbWidthBlocks, x, y, r, g, b, a) ? 0u : 1u;
++        std::atomic<uint32_t> discarded{0u};
++        uint8_t *vram = gs->m_vram;
++        const uint32_t vramSize = gs->m_vramSize;
++        auto band = [&](int yb, int ye) {
++            uint32_t local = 0;
++            for (int y = yb; y <= ye; ++y)
++                for (int x = drawX0; x <= drawX1; ++x)
++                    local += writeNoBlend32(vram, vramSize, ctx, fbBlock, fbWidthBlocks, x, y, r, g, b, a, fastAbe, fastPabe) ? 0u : 1u;
++            discarded.fetch_add(local, std::memory_order_relaxed);
++        };
++        if (spritePixels >= 32768u)
++            RowPool::get().run(drawY0, drawY1, band);
++        else
++            band(drawY0, drawY1);
+         g_pxCalls.fetch_add(spritePixels, std::memory_order_relaxed);
+-        g_pxAlpha.fetch_add(discarded, std::memory_order_relaxed);
++        g_pxAlpha.fetch_add(discarded.load(), std::memory_order_relaxed);
+         return;
+     }
+ 
+@@ -887,8 +1031,12 @@ void GSRasterizer::drawSprite(GS *gs)
+             const auto &tex = ctx.tex0;
+             const int texW = 1 << tex.tw, texH = 1 << tex.th;
+             const uint32_t tbw = tex.tbw ? tex.tbw : 1u;
++            std::atomic<uint32_t> discardedAll{0u};
++            uint8_t *vram = gs->m_vram;
++            const uint32_t vramSize = gs->m_vramSize;
++            auto band = [&](int yb, int ye) {
+             uint32_t discarded = 0;
+-            for (int y = drawY0; y <= drawY1; ++y)
++            for (int y = yb; y <= ye; ++y)
+             {
+                 const int ky = y - unclippedY0;
+                 const int tv = clampInt(vv1 >= vv0 ? vv0 + ky : vv0 - ky - 1, 0, texH - 1);
+@@ -898,23 +1046,55 @@ void GSRasterizer::drawSprite(GS *gs)
+                     const int tu = clampInt(u1 >= u0 ? u0 + kx : u0 - kx - 1, 0, texW - 1);
+                     const uint32_t off = GSPSMCT32::addrPSMCT32(tex.tbp0, tbw, static_cast<uint32_t>(tu), static_cast<uint32_t>(tv));
+                     uint32_t texel = 0xFFFF00FFu; // readTexelPSMCT32's out-of-range value
+-                    if (off + 4u <= gs->m_vramSize)
+-                        std::memcpy(&texel, gs->m_vram + off, 4);
++                    if (off + 4u <= vramSize)
++                        std::memcpy(&texel, vram + off, 4);
+                     texel = applyTexa(gs->m_texa, tex.psm, texel);
+                     const TextureCombineResult color = combineTexture(tex, r, g, b, a,
+                                                                       static_cast<uint8_t>(texel & 0xFF),
+                                                                       static_cast<uint8_t>((texel >> 8) & 0xFF),
+                                                                       static_cast<uint8_t>((texel >> 16) & 0xFF),
+                                                                       static_cast<uint8_t>((texel >> 24) & 0xFF));
+-                    discarded += writeNoBlend32(gs->m_vram, gs->m_vramSize, ctx, fbBlock, fbWidthBlocks, x, y, color.r, color.g, color.b, color.a) ? 0u : 1u;
++                    discarded += writeNoBlend32(vram, vramSize, ctx, fbBlock, fbWidthBlocks, x, y, color.r, color.g, color.b, color.a, fastAbe, fastPabe) ? 0u : 1u;
+                 }
+             }
++            discardedAll.fetch_add(discarded, std::memory_order_relaxed);
++            };
++            // Parallel only when the texture cannot alias the frame (conservative page ranges):
++            // a self-overlapping copy must keep the sequential read/write order.
++            const uint64_t fbStart = static_cast<uint64_t>(ctx.frame.fbp) * 8192u;
++            const uint64_t fbEnd = fbStart + static_cast<uint64_t>(fbWidthBlocks) * 8192u * (static_cast<uint64_t>(drawY1) / 32u + 1u);
++            const uint64_t txStart = static_cast<uint64_t>(tex.tbp0) * 256u;
++            const uint64_t txEnd = txStart + static_cast<uint64_t>(tbw) * 8192u * (static_cast<uint64_t>(texH) / 32u + 1u);
++            if (spritePixels >= 32768u && (txEnd <= fbStart || txStart >= fbEnd))
++                RowPool::get().run(drawY0, drawY1, band);
++            else
++                band(drawY0, drawY1);
+             g_pxCalls.fetch_add(spritePixels, std::memory_order_relaxed);
+-            g_pxAlpha.fetch_add(discarded, std::memory_order_relaxed);
++            g_pxAlpha.fetch_add(discardedAll.load(), std::memory_order_relaxed);
+             return;
+         }
+     }
+ 
++    ClutCacheScope clutScope;
++    if (gs->m_prim.tme && (ctx.tex0.psm == GS_PSM_T8 || ctx.tex0.psm == GS_PSM_T4) && !s_noFast)
++    {
++        // Frame bytes this sprite can touch (whole page rows of the frame, conservative)
++        // vs. the palette's bytes (generous 16 KB from CBP).
++        const uint64_t fbStart = static_cast<uint64_t>(ctx.frame.fbp) * 8192u;
++        const uint64_t fbEnd = fbStart + static_cast<uint64_t>(fbWidthBlocks) * 8192u *
++                                             (static_cast<uint64_t>(drawY1) / 32u + 1u);
++        const uint64_t clutStart = static_cast<uint64_t>(ctx.tex0.cbp) * 256u;
++        const uint64_t clutEnd = clutStart + 16384u;
++        if (clutEnd <= fbStart || clutStart >= fbEnd)
++        {
++            const uint32_t entries = (ctx.tex0.psm == GS_PSM_T8) ? 256u : 16u;
++            for (uint32_t i = 0; i < entries; ++i)
++                t_clutCache.table[i] = lookupCLUT(gs, static_cast<uint8_t>(i), ctx.tex0.cbp, ctx.tex0.cpsm,
++                                                  ctx.tex0.csm, ctx.tex0.csa, ctx.tex0.psm);
++            t_clutCache.valid = true;
++        }
++    }
++
+     if (gs->m_prim.tme)
+     {
+         const auto &tex = ctx.tex0;
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index c15ab96..c5e051c 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -98,6 +98,7 @@ uint32_t ps2GsDebugImageBytes();
+ extern std::atomic<uint32_t> g_pxCalls, g_pxScissor, g_pxAlpha;
+ 
+ extern std::atomic<uint64_t> g_dbgSpritePx[6];
++uint64_t ps2GsVblankSeq(); // ps2_gs_gpu.cpp: vblank display snapshots taken (D40)
+ namespace ps2_syscalls
+ {
+     extern std::atomic<uint32_t> g_dbgDmacRaised[16];
+@@ -690,6 +691,8 @@ PS2Runtime::GuestExecutionReleaseScope::~GuestExecutionReleaseScope()
+     }
+ }
+ 
++std::atomic<uint32_t> g_presentRunHist[8]; // [present] heartbeat (see UploadFrame)
++
+ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint32_t &outHeight)
+ {
+     // If the hardware bridge provides a rendered framebuffer, use it
+@@ -722,10 +725,12 @@ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint
+     static uint32_t s_lastHeight = 0u;
+ 
+     const uint64_t currentTick = ps2_syscalls::GetCurrentVSyncTick();
+-    if (!s_hasLatchedInitialFrame || currentTick != s_lastPresentationTick)
++    static uint64_t s_lastVblankSeq = ~0ull;
++    if (!s_hasLatchedInitialFrame || currentTick != s_lastPresentationTick || ps2GsVblankSeq() != s_lastVblankSeq)
+     {
+         rt->gs().latchHostPresentationFrame();
+         s_lastPresentationTick = currentTick;
++        s_lastVblankSeq = ps2GsVblankSeq();
+         s_hasLatchedInitialFrame = true;
+     }
+ 
+@@ -742,7 +747,7 @@ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint
+                                                    &sourceFbp,
+                                                    &usedPreferredDisplaySource))
+     {
+-        Image blank = GenImageColor(FB_WIDTH, FB_HEIGHT, MAGENTA);
++        Image blank = GenImageColor(FB_WIDTH, FB_HEIGHT, BLACK); // no frame latched yet (was MAGENTA: purple first frame)
+         UpdateTexture(tex, blank.data);
+         UnloadImage(blank);
+         outWidth = FB_WIDTH;
+@@ -822,6 +827,62 @@ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint
+     }
+ 
+     UpdateTexture(tex, uploadBuffer.data());
++    {
++        // [present] heartbeat: how many window frames each distinct image stayed on screen
++        // (a 29.97 fps movie on a 60 Hz present should be all 2s; 1s/3s are stutter).
++        uint64_t h = 1469598103934665603ull;
++        for (size_t i = 0; i < scratch.size(); i += 4093u)
++            h = (h ^ scratch[i]) * 1099511628211ull;
++        // REO_PRESENT_DUMP_AT=<host s>: write the next 4 presented frames (consecutive
++        // vblank snapshots) to present_<n>.bmp, to inspect field/flip behaviour (D40).
++        {
++            static const double s_dumpAt = []() {
++                const char *e = std::getenv("REO_PRESENT_DUMP_AT");
++                return e ? std::atof(e) : -1.0;
++            }();
++            static const auto s_start = std::chrono::steady_clock::now();
++            static int s_dumped = 0;
++            if (s_dumpAt >= 0.0 && s_dumped < 4 &&
++                std::chrono::duration<double>(std::chrono::steady_clock::now() - s_start).count() >= s_dumpAt)
++            {
++                char name[64];
++                std::snprintf(name, sizeof(name), "present_%d.bmp", s_dumped);
++                if (FILE *f = std::fopen(name, "wb"))
++                {
++                    const uint32_t rowBytes = width * 4u, dataBytes = rowBytes * height;
++                    uint8_t hdr[54] = {'B', 'M'};
++                    auto put32 = [&](int o, uint32_t v) { std::memcpy(hdr + o, &v, 4); };
++                    put32(2, 54u + dataBytes); put32(10, 54); put32(14, 40); put32(18, width);
++                    put32(22, static_cast<uint32_t>(-static_cast<int32_t>(height)));
++                    hdr[26] = 1; hdr[28] = 32; put32(34, dataBytes);
++                    std::fwrite(hdr, 1, 54, f);
++                    for (uint32_t y = 0; y < height; ++y)
++                        for (uint32_t x = 0; x < width; ++x)
++                        {
++                            const uint8_t *px = scratch.data() + (static_cast<size_t>(y) * width + x) * 4u;
++                            const uint8_t bgra[4] = {px[2], px[1], px[0], 255};
++                            std::fwrite(bgra, 1, 4, f);
++                        }
++                    std::fclose(f);
++                }
++                std::fprintf(stderr, "[present-dump] %s %ux%u tick=%llu displayFbp=%u sourceFbp=%u preferred=%d\n", name, width, height,
++                             static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()), displayFbp, sourceFbp,
++                             usedPreferredDisplaySource ? 1 : 0);
++                ++s_dumped;
++            }
++        }
++        static uint64_t s_lastHash = 0;
++        static uint32_t s_run = 0;
++        if (h == s_lastHash)
++            ++s_run;
++        else
++        {
++            if (s_run >= 1u)
++                g_presentRunHist[std::min<uint32_t>(s_run, 7u)].fetch_add(1u, std::memory_order_relaxed);
++            s_lastHash = h;
++            s_run = 1u;
++        }
++    }
+     outWidth = width;
+     outHeight = height;
+ }
+@@ -953,7 +1014,10 @@ bool PS2Runtime::initialize(const char *title)
+             InitWindow(HOST_WINDOW_WIDTH + (panel ? kDebugPanelWidth : 0), HOST_WINDOW_HEIGHT, title);
+             InitAudioDevice();
+             m_audioBackend.setAudioReady(IsAudioDeviceReady());
+-            SetTargetFPS(60);
++            // Presentation is paced by the guest vsync clock in run() (one present per
++            // vblank); raylib's own limiter beat against it and showed a movie frame for 1 or
++            // 3 window frames about once a second (D40).
++            SetTargetFPS(0);
+         }
+ #endif
+ 
+@@ -2660,6 +2724,16 @@ void PS2Runtime::run()
+                         std::cerr << (i ? "/" : " ") << (v - s_lastSpr[i]) / 1000;
+                         s_lastSpr[i] = v;
+                     }
++                    {
++                        static uint32_t s_lastRuns[8] = {};
++                        std::cerr << " present-runs(1..7+):";
++                        for (int i = 1; i < 8; ++i)
++                        {
++                            const uint32_t v = g_presentRunHist[i].load();
++                            std::cerr << (i > 1 ? "/" : " ") << (v - s_lastRuns[i]);
++                            s_lastRuns[i] = v;
++                        }
++                    }
+                     std::cerr << std::endl;
+                     s_lastNs = nowHost;
+                     s_lastCsc = csc;
+@@ -2682,6 +2756,17 @@ void PS2Runtime::run()
+             continue;
+         }
+ 
++        // One present per guest vblank (D40): wait until the vsync tick advances (bounded so
++        // the window stays responsive when the guest clock is not running).
++        {
++            static uint64_t s_presentedSeq = 0;
++            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
++            while (ps2GsVblankSeq() == s_presentedSeq &&
++                   std::chrono::steady_clock::now() < deadline && !isStopRequested())
++                std::this_thread::sleep_for(std::chrono::microseconds(500));
++            s_presentedSeq = ps2GsVblankSeq();
++        }
++
+         uint32_t presentWidth = FB_WIDTH;
+         uint32_t presentHeight = DEFAULT_DISPLAY_HEIGHT;
+         UploadFrame(frameTex, this, presentWidth, presentHeight);

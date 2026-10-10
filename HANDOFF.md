@@ -1,6 +1,6 @@
 # Handoff: REO (Resident Evil Outbreak File #1 → native Windows)
 
-Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D38 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
+Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D40 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
 
 ## Where things stand
 
@@ -60,18 +60,20 @@ tools\smoke_test.ps1 -Iso "iso\Resident Evil - Outbreak (v2.00).iso" -Seconds 13
 
 ## Suggested next steps
 
-1. **Confirm with the user** that the FMV speed and stability are acceptable before Milestone 2.
-2. **Audio:** check whether the movie's audio track plays and stays in sync (not yet verified).
-3. **GS worker hardening:** worker shutdown on exit; watch for any GS state read that bypasses the drain (privileged CSR reads go through the shared register struct and are not drained).
-4. **Menu input (M2, after approval).** Script CROSS on SINGLE PLAY, then follow the next screen transition.
-5. **Regression fixture.** Add a unit test for the thread wake/suspend state machine (D34).
-6. **Housekeeping.** Fold `extra_functions.csv` into the main map at the next full regeneration.
+User-reported problems still open (user rule: no Milestone 2 until they are solved):
+1. **Movie/menu audio is silent** (demonstration video has no music). Not investigated yet: check the IOP sound driver HLE / SPU2 / audio backend.
+2. **Dragging the window stops rendering** until released; the game keeps running underneath. The raylib/GLFW window loop is blocked in the Win32 modal move loop. Fix: render from a timer during WM_ENTERSIZEMOVE…WM_EXITSIZEMOVE, or move rendering to its own thread.
+3. **Logo fades still run below real time** (D39: ~2.5 s worst heartbeat). Remaining cost: per-pixel swizzle addressing in fills and the scaled-bilinear path.
+4. **Scenario select (SINGLE PLAY) lags.** Not profiled yet; use the `[perf]` sprite mix plus `REO_STACKDUMP_*`.
+5. Done in patch 0022: logo freeze (D39), movie stutter / presentation cadence and purple first frame (D40). Confirm with the user.
 
 ## New switches (2026-10-10)
 
 - `REO_TURBO=<2..16>`, `REO_TURBO_UNTIL=<guest addr>`: test-only vblank fast-forward (boot logos); returns to normal speed when the word becomes nonzero.
 - `REO_GS_NO_FASTPATH=1`: disables the D37 sprite fast paths (A/B checks).
 - `REO_GS_THREAD=0`: runs the GS synchronously instead of on the worker thread (default on).
+- `REO_GS_NO_PARALLEL=1`: no row-band parallel sprite drawing. `tools/gs_fastpath_check/run.bat` verifies fast vs generic GS output.
+- `REO_PRESENT_DUMP_AT=<s>`: dump 4 consecutive presented frames (present_N.bmp).
 - `REO_STACKDUMP_AT=<s>` with `REO_STACKDUMP_N=<n>`: n host stack samples 20 ms apart. Symbolize them with a `/MAP` link of the same objects.
 - `REO_SPR_LOG=1`, `REO_IPU_LOG=1`, `REO_MPEG_PIC_LOG=1` (Codex), `REO_SFD_DIAG=1`: movie path diagnostics.
 - Self-tests: `tools/ipu_selftest/run.bat` (all pass), `tools/runtime_selftest/run.bat` (26/26).
