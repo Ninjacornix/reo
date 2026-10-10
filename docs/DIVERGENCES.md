@@ -501,6 +501,20 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
   - The main thread blocks on GS `m_stateMutex` while holding the guest and IO locks (~8% of samples; likely contention with present).
   - A GS worker thread (MTGS-style) would remove GS work from the guest CPU entirely.
 - **Test-only:** `REO_TURBO=<factor>` speeds the vblank clock (boot logos); `REO_TURBO_UNTIL=0x22F18C` returns to normal speed when the Sofdec decoder exists.
+- **GS worker thread (patch 0021) — full speed reached.**
+  - `GS::processGIFPacket`/`writeRegister` now queue their input; a worker thread replays them in order. Readers (present/latch, store-image readback, framebuffer clears, display queries, reset) first wait for everything queued before them. GS processing only calls `raiseIntcInterrupt`/`GetCurrentVSyncTick`, so these waits cannot deadlock.
+  - Main thread's guest-CPU time: ~400 → ~75 ms/s.
+  - **Movie: 29.1–29.3 fps average** over the whole playback (steady 30–32 frames per heartbeat). The streams declare 29.97 fps.
+  - First movie frame at ~46 s with no fast-forward (was ~58 s).
+  - The main menu is reached in all runs (`gt-a`, `gt-b`, `gt-def`, `gst3`); identical frames across runs where the movie phase matched.
+  - Default on; `REO_GS_THREAD=0` restores synchronous GS.
+- **Also:** DMA completions on channels with no enabled game handler no longer wake the interrupt worker (~25k/s during the movie; the pending bit is still latched for the next tick).
+
+## D38: unknown syscall fell back to $v0 and ran ResetEE — FIXED (patch 0021)
+
+- **Symptom:** `ResetEE` called repeatedly from interrupt context (`pc=0x1148d4`, `ra=0x1a0454`), even though nothing in the binary calls the `ResetEE` stub.
+- **Cause:** the VBlank flip code calls `iFlushCache(0)` via the stub at `0x1148d0` (`li v1,-0x68; syscall`). The dispatcher had no case for `-0x68`. It then tried `$v0` (which held 1) and dispatched syscall 1, `ResetEE`. Its HLE is a no-op, so the effect was log noise; any other unknown syscall could have run an arbitrary call the same way.
+- **Fix:** `-0x68` maps to `FlushCache`. Any remaining `$v0` fallback is logged (`[syscall] unknown $v1=...`); none seen since.
 
 ## Milestone-1 checkpoint (observed)
 

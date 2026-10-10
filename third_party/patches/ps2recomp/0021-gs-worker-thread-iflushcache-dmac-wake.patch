@@ -1,0 +1,332 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Dispatcher.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Dispatcher.cpp
+index 1aaa39f..43418da 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Dispatcher.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Dispatcher.cpp
+@@ -253,6 +253,9 @@ namespace ps2_syscalls
+         case 0x64:
+             FlushCache(rdram, ctx, runtime);
+             return true;
++        case static_cast<uint32_t>(-0x68): // iFlushCache (interrupt context); was misrouted
++            FlushCache(rdram, ctx, runtime);  // through the $v0 fallback to ResetEE (D38)
++            return true;
+         case 0x70:
+             GsGetIMR(rdram, ctx, runtime);
+             return true;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index 2d77de8..30e7002 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -9,6 +9,10 @@
+ 
+ namespace ps2_syscalls
+ {
++    // [perf] heartbeat: DMA completions raised / delivered to a game handler, per channel.
++    std::atomic<uint32_t> g_dbgDmacRaised[16];
++    std::atomic<uint32_t> g_dbgDmacHandled[16];
++
+     namespace interrupt_state
+     {
+         constexpr uint32_t kIntcVblankStart = 2u;
+@@ -255,6 +259,8 @@ namespace ps2_syscalls
+             std::sort(handlers.begin(), handlers.end(), [](const IrqHandlerInfo &a, const IrqHandlerInfo &b)
+                       { return a.order < b.order; });
+         }
++        if (!handlers.empty() && cause < 16u)
++            g_dbgDmacHandled[cause].fetch_add(1u, std::memory_order_relaxed);
+ 
+         for (const IrqHandlerInfo &info : handlers)
+         {
+@@ -471,7 +477,30 @@ namespace ps2_syscalls
+     {
+         if (channel >= 32u)
+             return;
++        if (channel < 16u)
++            g_dbgDmacRaised[channel].fetch_add(1u, std::memory_order_relaxed);
+         g_pending_dmac_mask.fetch_or(1u << channel, std::memory_order_acq_rel);
++        // Only wake the interrupt worker when an enabled handler exists for the channel (the
++        // same test dispatch applies); the pending bit is still latched for the next tick.
++        // libmpeg completes IPU/SPR DMAs ~25k times/s with these channels disabled (D37).
++        {
++            std::lock_guard<std::mutex> handlerLock(g_irq_handler_mutex);
++            bool deliverable = false;
++            if ((g_enabled_dmac_mask & (1u << channel)) != 0u)
++            {
++                for (const auto &[id, info] : g_dmacHandlers)
++                {
++                    (void)id;
++                    if (info.enabled && info.cause == channel && info.handler != 0u)
++                    {
++                        deliverable = true;
++                        break;
++                    }
++                }
++            }
++            if (!deliverable)
++                return; // dispatch would find no handler: nothing to run now
++        }
+         std::lock_guard<std::mutex> lock(g_irq_worker_mutex);
+         g_irq_worker_cv.notify_all();
+     }
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+index 1aa9e52..d94e5bc 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -8,6 +8,114 @@
+ #include "ps2_syscalls.h"
+ #include "Kernel/Syscalls/Interrupt.h"
+ #include "runtime/ps2_memory.h"
++#include <condition_variable>
++#include <deque>
++#include <thread>
++
++// ---------------------------------------------------------------------------------------
++// GS worker thread (default; REO_GS_THREAD=0 disables), in the spirit of PCSX2's MTGS. On the PS2
++// the GS draws in parallel with the EE; here processGIFPacket()/writeRegister() normally
++// run on the guest thread that kicked the DMA, holding the guest CPU and IO locks while
++// rasterizing (D37). With the worker, those calls copy their input into an ordered queue
++// and return; the worker replays them through the same methods. Every other public entry
++// point that reads or mutates GS state outside that stream drains the queue first.
++// GS processing only calls out to raiseIntcInterrupt()/GetCurrentVSyncTick(), so a drain
++// cannot deadlock against the guest or IO locks its caller may hold.
++namespace
++{
++    struct GsQueueItem
++    {
++        bool isPacket = true;
++        uint8_t reg = 0;
++        uint64_t value = 0;
++        std::vector<uint8_t> data;
++    };
++
++    struct GsAsync
++    {
++        std::mutex m;
++        std::condition_variable work;    // worker: items available
++        std::condition_variable drained; // producers/drainers: queue shrank or emptied
++        std::deque<GsQueueItem> queue;
++        size_t queuedBytes = 0;
++        uint64_t enqueued = 0;  // items ever queued
++        uint64_t completed = 0; // items ever executed
++        bool busy = false;
++        bool started = false;
++    };
++
++    GsAsync g_gsAsync;
++    thread_local bool t_isGsWorker = false;
++    constexpr size_t kGsQueueMaxBytes = 64u * 1024u * 1024u;
++
++    bool gsThreadEnabled()
++    {
++        // On by default; REO_GS_THREAD=0 runs the GS synchronously on the kicking thread.
++        static const bool on = []() {
++            const char *e = std::getenv("REO_GS_THREAD");
++            return !(e && e[0] == '0');
++        }();
++        return on;
++    }
++
++    void gsWorkerMain(GS *gs)
++    {
++        t_isGsWorker = true;
++        for (;;)
++        {
++            GsQueueItem item;
++            {
++                std::unique_lock<std::mutex> lock(g_gsAsync.m);
++                g_gsAsync.work.wait(lock, [] { return !g_gsAsync.queue.empty(); });
++                item = std::move(g_gsAsync.queue.front());
++                g_gsAsync.queue.pop_front();
++                g_gsAsync.busy = true;
++            }
++            if (item.isPacket)
++                gs->processGIFPacket(item.data.data(), static_cast<uint32_t>(item.data.size()));
++            else
++                gs->writeRegister(item.reg, item.value);
++            {
++                std::lock_guard<std::mutex> lock(g_gsAsync.m);
++                g_gsAsync.busy = false;
++                g_gsAsync.queuedBytes -= item.data.size();
++                ++g_gsAsync.completed;
++            }
++            g_gsAsync.drained.notify_all();
++        }
++    }
++
++    // Queues the call for the worker; false = run it synchronously (disabled / on worker).
++    bool gsEnqueue(GS *gs, GsQueueItem &&item)
++    {
++        if (t_isGsWorker || !gsThreadEnabled())
++            return false;
++        std::unique_lock<std::mutex> lock(g_gsAsync.m);
++        if (!g_gsAsync.started)
++        {
++            g_gsAsync.started = true;
++            std::thread(gsWorkerMain, gs).detach();
++        }
++        g_gsAsync.drained.wait(lock, [] { return g_gsAsync.queuedBytes < kGsQueueMaxBytes; });
++        g_gsAsync.queuedBytes += item.data.size();
++        ++g_gsAsync.enqueued;
++        g_gsAsync.queue.push_back(std::move(item));
++        lock.unlock();
++        g_gsAsync.work.notify_one();
++        return true;
++    }
++
++    // Waits until every GS call queued before this point has been executed (not until the
++    // queue is empty: producers keep adding, which could starve a reader such as present).
++    void gsDrain()
++    {
++        if (t_isGsWorker || !gsThreadEnabled())
++            return;
++        std::unique_lock<std::mutex> lock(g_gsAsync.m);
++        const uint64_t target = g_gsAsync.enqueued;
++        g_gsAsync.drained.wait(lock, [target] { return g_gsAsync.completed >= target; });
++    }
++}
+ #include <atomic>
+ #include <cstdlib>
+ #include <algorithm>
+@@ -545,6 +653,7 @@ void GS::init(uint8_t *vram, uint32_t vramSize, GSRegisters *privRegs)
+ 
+ void GS::reset()
+ {
++    gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     std::memset(m_ctx, 0, sizeof(m_ctx));
+     m_prim = {};
+@@ -608,6 +717,7 @@ void GS::snapshotVRAM()
+ 
+ const uint8_t *GS::lockDisplaySnapshot(uint32_t &outSize)
+ {
++    gsDrain();
+     m_snapshotMutex.lock();
+     if (m_displaySnapshot.empty())
+     {
+@@ -621,6 +731,7 @@ const uint8_t *GS::lockDisplaySnapshot(uint32_t &outSize)
+ 
+ bool GS::getPreferredDisplaySource(GSFrameReg &outSource, uint32_t &outDestFbp) const
+ {
++    gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (!m_hasPreferredDisplaySource)
+     {
+@@ -641,11 +752,13 @@ void GS::unlockDisplaySnapshot()
+ 
+ uint32_t GS::getLastDisplayBaseBytes() const
+ {
++    gsDrain();
+     return m_lastDisplayBaseBytes;
+ }
+ 
+ void GS::refreshDisplaySnapshot()
+ {
++    gsDrain();
+     snapshotVRAM();
+ }
+ 
+@@ -789,6 +902,7 @@ bool GS::copyFrameToHostRgbaUnlocked(const GSFrameReg &frame,
+ 
+ void GS::latchHostPresentationFrame()
+ {
++    gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+ 
+     if (!m_privRegs || !m_vram || m_vramSize == 0u)
+@@ -1127,6 +1241,14 @@ bool GS::copyLatchedHostPresentationFrame(std::vector<uint8_t> &outPixels,
+ 
+ void GS::processGIFPacket(const uint8_t *data, uint32_t sizeBytes)
+ {
++    if (data && sizeBytes >= 16 && gsThreadEnabled() && !t_isGsWorker)
++    {
++        GsQueueItem item;
++        item.isPacket = true;
++        item.data.assign(data, data + sizeBytes);
++        if (gsEnqueue(this, std::move(item)))
++            return;
++    }
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (!data || sizeBytes < 16 || !m_vram)
+         return;
+@@ -1433,6 +1555,15 @@ void GS::writeRegisterPacked(uint8_t regDesc, uint64_t lo, uint64_t hi)
+ 
+ void GS::writeRegister(uint8_t regAddr, uint64_t value)
+ {
++    if (gsThreadEnabled() && !t_isGsWorker)
++    {
++        GsQueueItem item;
++        item.isPacket = false;
++        item.reg = regAddr;
++        item.value = value;
++        if (gsEnqueue(this, std::move(item)))
++            return;
++    }
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     const bool interestingReg =
+         regAddr == GS_REG_PRIM ||
+@@ -2364,18 +2495,21 @@ void GS::performLocalToHostToBuffer()
+ 
+ bool GS::clearFramebufferContext(uint32_t contextIndex, uint32_t rgba)
+ {
++    gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     return clearFramebufferRect(m_vram, m_vramSize, m_ctx[(contextIndex != 0u) ? 1 : 0], rgba);
+ }
+ 
+ bool GS::clearActiveFramebuffer(uint32_t rgba)
+ {
++    gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     return clearFramebufferRect(m_vram, m_vramSize, activeContext(), rgba);
+ }
+ 
+ uint32_t GS::consumeLocalToHostBytes(uint8_t *dst, uint32_t maxBytes)
+ {
++    gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (!dst || maxBytes == 0)
+         return 0;
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index d252263..c15ab96 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -98,6 +98,11 @@ uint32_t ps2GsDebugImageBytes();
+ extern std::atomic<uint32_t> g_pxCalls, g_pxScissor, g_pxAlpha;
+ 
+ extern std::atomic<uint64_t> g_dbgSpritePx[6];
++namespace ps2_syscalls
++{
++    extern std::atomic<uint32_t> g_dbgDmacRaised[16];
++    extern std::atomic<uint32_t> g_dbgDmacHandled[16];
++}
+ namespace ps2_ipu
+ {
+     extern std::atomic<uint32_t> g_dbgCsc;
+@@ -1619,6 +1624,12 @@ void PS2Runtime::handleSyscall(uint8_t *rdram, R5900Context *ctx, uint32_t encod
+     if (syscallFromV0 != syscallFromV1 &&
+         ps2_syscalls::dispatchNumericSyscall(syscallFromV0, rdram, ctx, this))
+     {
++        // The EE ABI passes the number in $v1; reaching here means $v1 held an unknown
++        // syscall and an unrelated $v0 value was dispatched instead (D38). Make it visible.
++        static std::atomic<uint32_t> s_v0Fallbacks{0u};
++        if (s_v0Fallbacks.fetch_add(1u, std::memory_order_relaxed) < 16u)
++            std::fprintf(stderr, "[syscall] unknown $v1=0x%x at pc=0x%x ra=0x%x; dispatched $v0=0x%x instead\n",
++                         syscallFromV1, ctx->pc, getRegU32(ctx, 31), syscallFromV0);
+         return;
+     }
+ 
+@@ -2632,6 +2643,15 @@ void PS2Runtime::run()
+                         s_lastOwn[t] = own;
+                         s_lastWait[t] = wait;
+                     }
++                    static uint32_t s_lastRaised[16] = {}, s_lastHandled[16] = {};
++                    std::cerr << " dmac raised/handled:";
++                    for (int ch : {0, 1, 2, 3, 4, 8, 9})
++                    {
++                        const uint32_t ra = ps2_syscalls::g_dbgDmacRaised[ch].load(), ha = ps2_syscalls::g_dbgDmacHandled[ch].load();
++                        std::cerr << " ch" << ch << "=" << (ra - s_lastRaised[ch]) << "/" << (ha - s_lastHandled[ch]);
++                        s_lastRaised[ch] = ra;
++                        s_lastHandled[ch] = ha;
++                    }
+                     static uint64_t s_lastSpr[6] = {};
+                     std::cerr << " sprKpx(untex/pt/bil/pt1:1/bil1:1/abe):";
+                     for (int i = 0; i < 6; ++i)
