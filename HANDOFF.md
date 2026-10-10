@@ -61,6 +61,10 @@ tools\smoke_test.ps1 -Iso "iso\Resident Evil - Outbreak (v2.00).iso" -Seconds 13
 1. **Green movie.** Compare the IPU command stream and the output-FIFO/DMA ch3 destination with PCSX2:
    - In ours, run with `REO_IPU_LOG=1` and `REO_SFD_DIAG=1`.
    - In PCSX2, PINE-read the decoder's picture-buffer addresses and check that they become non-zero.
+   - Web research (2026-10-10) found nothing specific to this game's FMVs.
+   - The one lead was the PCSX2 "IPU1 TIE" bug (Elvandia Story: black FMV with audio). Our toIPU chain already stops on a tag with the IRQ bit set when CHCR.TIE is set (`ipu/ps2_ipu.cpp`, `if (irq && (chcr & 0x80u))`). Still unverified: whether the matching DMAC channel-4 interrupt is raised at that stop.
+   - Uniform green is what all-zero YCbCr data looks like after conversion to RGB, so the output buffers are never written.
+   - Best references: the PCSX2 sources `IPU.cpp`/`IPUdma.cpp` (read only, as a reference) and live PINE comparison.
 2. **Menu input.** Script CROSS on SINGLE PLAY, then follow the next screen transition (M2).
 3. **Regression fixture.** Add a unit test for the thread wake/suspend state machine (the D34 regression).
 4. **Housekeeping.** Fold `extra_functions.csv` into the main map at the next full regeneration.
