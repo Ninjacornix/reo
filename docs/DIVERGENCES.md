@@ -535,6 +535,21 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - **Note:** the title screen's scan-line overlay changes every field (60 Hz) while its movie changes at 30 Hz, so consecutive vblanks legitimately differ (`REO_PRESENT_DUMP_AT=<s>` dumps 4 consecutive presents).
 - **Purple first frame:** the placeholder before the first latched frame was `MAGENTA`; it is now black.
 
+## D41: flicker / "dithering" and flashing memory-card text: present showed the buffer being redrawn — FIXED (patch 0023)
+
+- **Symptom (user):** text on the memory-card screen flashed between white and dark; the title flickered.
+- **Evidence:** dumps of consecutive presents (`REO_PRESENT_DUMP_AT`) showed the same display buffer (`fbp 112`) with text in one vblank and cleared in the next.
+- **Cause:** D40's snapshot was taken at vblank **before** the game's VBLANK handler (`FUN_0019f600` → `FUN_001a0350`) flipped DISPFB. Present therefore showed the old front buffer, which the game had already started clearing and redrawing.
+- **Fix:** take the display snapshot right after the VBLANK_START handlers (`ps2GsSnapshotDisplay`). Raw consecutive presents of the memory-card screen are now identical; buffers alternate cleanly at 30 fps.
+- **Movie cadence:** ~29–30 frames shown for exactly 2 vblanks per second, ~1 shown for 1, none for 3.
+- **Blend deinterlacing:** opt-in only (`REO_DEINTERLACE=1`); it greyed the text.
+
+## D42: dragging/resizing the window froze the picture — FIXED (patch 0023)
+
+- **Cause:** Windows runs a modal loop inside `DispatchMessage` while a window is dragged, so the raylib/GLFW loop stopped presenting. The game itself kept running.
+- **Fix:** `Kernel/Host/Win32ModalRender.cpp` subclasses the window procedure. Between `WM_ENTERSIZEMOVE` and `WM_EXITSIZEMOVE` a 10 ms timer draws and swaps the current frame. It deliberately does not call `EndDrawing`, whose event poll would steal the modal loop's mouse messages.
+- **Measured:** 310 frames drawn during an 8.6 s modal move (16 ms timer; now 10 ms). The heartbeat's `modalPresents` counts these frames.
+
 ## Milestone-1 checkpoint (observed)
 
 - `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.
