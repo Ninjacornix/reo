@@ -384,11 +384,59 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
   The menu backgrounds were black.
 - With all overlays the game stops at a black screen after the CAPCOM logo. This is not an overlay bug. The old 0.DAT dump lacked `0x37A9B0/0x37AF90/0x37B150`, so the movie start was silently skipped ("Function ... not found"). The new o0 runs it, and the game reaches the MPEG player → D30.
 
-## D30: IPU (MPEG decoder) not emulated — OPEN, current blocker
+## D30: IPU (MPEG decoder) — IMPLEMENTED; picture output OPEN
 
 - Stack dump at 75 s (`REO_STACKDUMP_AT`): a guest thread holds the guest lock in `sub_00145B58` → `0x1458D8` → `0x1453C0`. That is the libmpeg IPU path: it writes `IPU_CMD` and polls `IPU_CMD` bit 63 (busy) / `IPU_CTRL` bit 14. The main thread spins in `sub_0012AA60` waiting for worker flag `0x210484`; the workers wait for the lock.
 - PS2Recomp only stores IPU register values (`ps2_memory.cpp` `0x10002000..0x10002030`); nothing decodes. The intro movies and the menu's movie background need a real IPU (BDEC/IDEC/VDEC/FDEC/SETIQ/SETVQ/CSC, IPU0/IPU1 DMA channels 3/4).
-- Plan: port an existing open-source IPU implementation behind the IPU registers and DMA channels 3/4, rather than skipping movies (skipping would be a synthetic bypass).
+- Commands used by the game's libmpeg (found by scanning the ELF for stores to `0x10002000`):
+  - BCLR, FDEC (`0x4…`), VDEC (`0x3…`), SETIQ (`0x50000000/0x58000000`), SETVQ, SETTH;
+  - BDEC (`0x2…`, built in `sub_00144A08`), CSC (`0x7…`, including `0x700003FF`).
+  - No IDEC or PACK.
+- Implemented in PS2Recomp `ps2xRuntime/src/lib/ipu/` (PS2Recomp patch 0017), written from ISO/IEC 13818-2 rather than vendored:
+  - an IN FIFO filled lazily from DMA channel 4 (normal and source-chain tags);
+  - transactional commands that roll back and retry when input runs dry;
+  - an OUT FIFO drained through DMA channel 3, with `D_STAT` and DMAC IRQ on completion;
+  - BUSY held while more than 8 quadwords of output are pending;
+  - VLC lookup tables (B.1–B.4, B.9–B.15);
+  - dequantisation with MPEG-1 oddification or MPEG-2 mismatch control, zigzag or alternate scan, and the linear or non-linear quantiser scale;
+  - a double-precision IDCT;
+  - BT.601 CSC to RGB32 or RGB16 (with dithering and alpha thresholds).
+  - Copying Play!'s IPU source in was blocked by the session's auto-mode policy; its tables served only as a test oracle.
+- Verification:
+  - Every VLC table is prefix-free with the expected Kraft sum, and all entries match an independent implementation's tables (offline script).
+  - `tools/ipu_selftest/run.bat` runs hand-built bitstreams through a fake DMA host, all PASS:
+    - BDEC intra DC (Y/Cb/Cr 138/125/133);
+    - BDEC non-intra AC (horizontal cosine: 4 4 2 1 −1 −2 −4 −4, rows equal);
+    - FDEC peek;
+    - VDEC MBAI `011` → `0x00030002` with BP=3;
+    - CSC grey → 130/130/130;
+    - DMA3/DMA4 completion.
+- In-game:
+  - libmpeg/Sofdec initialisation (SETIQ ×2, SETVQ, SETTH, BCLR) is accepted.
+  - One run decoded 2,600 macroblocks (BDEC/VDEC/FDEC/CSC) without VLC errors.
+  - Another reached presentation, but the frames are solid green: the colour conversion received all-zero macroblocks. The BDEC → RAM → CSC data path is still to be checked.
+
+## D31: GS SIGNAL/FINISH events never raised the GS interrupt — FIXED
+
+- Intermittent freeze on the SNAP logo. The main thread spins in `FUN_0018d650` until the frame-busy flag `0x29F704[cur^1]` clears. In its GS path (`FUN_0018d470` case 2) the game unmasks FINISH (`GS_CSR = 2`, `GS_IMR` bit 9 = 0), and its GS interrupt handler clears the flag.
+- PS2Recomp set `GS_CSR.FINISH`/`SIGNAL` but never raised INTC line 0, so frames that completed through that path never finished.
+- Fix (patch 0017): `ps2_syscalls::raiseIntcInterrupt(cause)`. The interrupt worker latches `INTC_STAT` and runs the INTC handlers. GS FINISH/SIGNAL raise cause 0 unless masked by `GS_IMR` bits 9/8.
+- Observed: 3 of 3 runs pass the SNAP screen (it froze intermittently before).
+
+## D32: movie routines merged into one Ghidra function — FIXED (extra unit)
+
+- The game called eight libmpeg per-macroblock routines through the pointer table at `0x22A6B8`: `0x1431D8`, `0x143250`, `0x143470`, `0x143520`, `0x1437D0`, `0x143870`, `0x143AE8`, `0x143BC0`. Ghidra had merged them into `sub_00142FB8`, giving about 3,700 "Function not found" warnings and a black screen.
+- `recomp/config/extra_functions.csv` plus `tools/extra_recomp.py` compile them into `recomp/config/output_extra/` (`x_` names, own header), registered after the main table. This avoids regenerating the main output, whose shared header would force a full rebuild. To be folded into the main map at the next full regeneration.
+
+## D33: Sofdec intro movie stalls (intermittent) — OPEN, current blocker
+
+- Symptom: black screen after the CAPCOM logo; main thread at `0x12AAC0` (server handshake).
+- Mechanism (RAM dump at 70 s plus Ghidra):
+  - Server group 6 (`0x264820`, worker thread 7, `0x12AE50`) runs only the Sofdec decode server `sub_00163E20`. It ran 3.2 million passes, always "busy".
+  - Busy because MPEG decoder handle `0xDE6E20` (table `0x22F18C`) sits in state 1 with a pending request (`+0x44`) and input state `+0x4C = 1`.
+  - The player start (`FUN_0015efb8` → `0x15EE48`) sets the input state to 3. The decoder's state 4 handler (`FUN_00172b68` → `FUN_00173130`) then resets it to 1 via `FUN_00173c10` when one of four end-of-playback checks fires: stop time, end flags, input EOF, or play time past the stream length (`0x1731A0`/`0x173210`/`0x1732D8`/`0x173330`).
+  - Hypothesis: Sofdec's playback clock (audio/vsync time source) gives a wrong time, so playback "ends" at once.
+- Ruled out: CRI errors (`REO_CRI_ERRLOG=1` logs none), missing CD data (the movie is read from NETBIO01 into the player work area), and the IPU (only init commands reach it in failing runs).
 
 ## Milestone-1 checkpoint (observed)
 
