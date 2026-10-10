@@ -1,6 +1,6 @@
 # Handoff: REO (Resident Evil Outbreak File #1 → native Windows)
 
-Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D43 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
+Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D44 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
 
 ## Where things stand
 
@@ -68,7 +68,7 @@ User-reported problems still open (user rule: no Milestone 2 until they are solv
 2. Done (D42): rendering continues while dragging (Win32 modal timer).
 3. Done (D43): logo fades run in real time.
 4. **Scenario select (SINGLE PLAY) lags.** Not profiled yet; use the `[perf]` sprite mix plus `REO_STACKDUMP_*`.
-5. Done in patches 0022/0023: logo freeze (D39), presentation cadence and purple first frame (D40), flashing memory-card text / flicker (D41), drag rendering (D42). Confirm with the user.
+5. Done in patch 0026: transition flicker / hitches (D44). Done in patches 0022/0023: logo freeze (D39), presentation cadence and purple first frame (D40), flashing memory-card text / flicker (D41), drag rendering (D42). Confirm with the user.
 
 ## New switches (2026-10-10)
 

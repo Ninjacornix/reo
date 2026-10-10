@@ -557,6 +557,18 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - **Fix:** that path also draws large sprites (32k+ px) in row bands on the worker pool. It uses the same no-overlap rule (texture vs. frame and palette vs. frame page ranges), and band threads get a copy of the sprite's palette cache. `tools/gs_fastpath_check` still produces identical VRAM.
 - **Result:** every logo-phase heartbeat is now ~1.03–1.05 s (real time; before up to 2.5–3.7 s). Fades show a steady 2-vblank (30 fps) cadence.
 
+## D44: flicker and hitches at menu / video transitions — FIXED (patch 0026)
+
+- **Symptom (user):** brief flicker when switching menus or leaving the movie; slow at the start of a transition (e.g. Circle out of a menu), then normal.
+- **Measured** with `REO_PRESENT_LOG=<from>,<to>`: one line per present (snapshot sequence, swap time, tick, buffers, brightness, hash).
+- **Causes and fixes:**
+  1. **Flash of a half-drawn frame:** upstream's latch replaced an all-black FBP-0 display with a drawing context's frame, i.e. the buffer being drawn during fades. Now opt-in (`REO_BLACK_FRAME_FALLBACK=1`).
+  2. **GS pacing slack:** with one frame of slack, a heavy frame made the game thread wait while holding the guest lock, delaying the VBLANK handler. Now two frames.
+  3. **Once-per-second hitch from the diagnostics heartbeat:** dozens of unbuffered `std::cerr` writes stalled the present thread ~50 ms (3 snapshots skipped). The heartbeat now writes to a local buffer and outputs once. Redirecting `std::cerr` itself raced with other threads and hung, so it is not used.
+  4. **Present jitter:** the present loop polled with 500 µs sleeps, which Windows rounds up, so presents alternated ~10/23 ms. It now waits on a condition variable signalled by each vblank snapshot.
+- **Result:** 2,097 of 2,100 presents show exactly one new snapshot; present interval median 17 ms (p10 15, p90 18). No single-frame brightness outliers or wrong-source frames.
+- **Remaining:** the slow VBLANK dispatches seen (`[vblank-slow]`) happen during boot loading only.
+
 ## Milestone-1 checkpoint (observed)
 
 - `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.
