@@ -462,6 +462,46 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - Fix (patch 0018): at guest preemption checkpoints on the interrupt worker, pending DMAC interrupts are delivered nested (`serviceNestedDmac`), on a separate handler stack. Using the same stack overwrote the interrupted handler's frame and broke VBLANK wake-ups.
 - Observed: no SNAP freeze in 2/2 clean runs plus 6/6 instrumented runs. The memory-card prompt and logos work.
 
+## D36: sound-driver RPC HLE zeroed EE RAM over the game's code — FIXED (Codex session, patch 0020)
+
+- **Symptom:** the title movie rendered as uniform green.
+- **Cause:** libmpeg's write-back (`FUN_00142fb8`, store loop at `0x143F28`) clamps 16-bit samples with a constant at `0x143F70` (`0x00FF` lanes). The runtime's sound-driver HLE (`RPC.cpp::checkSoundDriverMemoryUnlocked`) allocated and zeroed its synthetic IOP-side state at `0x120000`–`0x17D000` **in EE RAM**, which wiped that constant (and other game code/data). Every pixel was then clamped to 0, and CSC turns all-zero YCbCr into green.
+- **Evidence:**
+  - A hardware write watch on `0x143F70` caught the zeroing from `rpcZeroRdram` during sound init (guest PC `0x1179E8`).
+  - In PCSX2 (PINE) the constant stays intact and the picture buffers are nonzero.
+- **Fix:** sound-driver state and transfers use IOP RAM (`getIOPRAM()`), with bounds and ownership checks. Codex's details are in `HANDOFF_CODEX_M1_VIDEO.md`.
+- **Related, in the same patch:**
+  - Scratchpad DMA channels 8/9 are implemented (normal and chain mode, completion interrupt); libmpeg uses `toSPR` chains for motion-compensation reference blocks.
+  - Tag extraction is corrected for SPR and IPU DMA.
+  - IPU BDEC now publishes the coded-block pattern.
+- **Possibly related:** the earlier sporadic `ResetEE` calls (from interrupt context, `pc=0x1148d4 ra=0x1a0454`; `ResetEE` has no callers in the binary) appeared while this corruption was live. Recheck now that it is fixed.
+
+## D37: title movie at ~10 fps: software GS ran under the guest CPU lock — IMPROVED (patch 0020)
+
+- **Measurement:** the new `[perf]` heartbeat line gives host ms per 60 vsyncs, movie frames (CSC) and macroblocks (BDEC), each guest thread's CPU hold/wait time, and sprite pixels by kind. Profiling uses `REO_STACKDUMP_AT` with `REO_STACKDUMP_N` and the symbolized link map.
+- **Before:**
+  - ~10 movie frames/s.
+  - The main thread held the CPU ~650–790 ms/s, of which ~3/4 was software GS drawing (`drawSprite` → `writePixel` per pixel), inside a DMA-start store at `0x1033e8`.
+  - The Sofdec worker (thread 7, priority 25) waited ~700–800 ms/s for the CPU.
+  - GS load: ~14–20 M untextured px/s (clears) plus ~7 M 1:1 textured px/s (movie blit); 6–12 M bilinear 1:1 px/s during the logos.
+- **Fix:** `drawSprite` fast paths for frames without blending in PSMCT32/24:
+  - untextured fills;
+  - FST 1:1 PSMCT32/24 textured sprites, point or bilinear (at 1:1 the bilinear weights are exactly 0).
+  Both reproduce `writePixel` exactly (alpha test, AFAIL, FBA, FBMSK). `REO_GS_NO_FASTPATH=1` restores the generic path.
+- **Verified:**
+  - Five static screens (memory card, logos, notices) are hash-identical with and without the fast path (runs `gs3-fast`/`gs3-slow`).
+  - Fast-only frames are clean fade frames.
+- **After:**
+  - **~17–23 movie frames/s**.
+  - Main thread ~310–450 ms/s; decoder ~600 ms/s.
+  - The movie is reached at ~43 s host time with `REO_TURBO`, versus ~58 s.
+- **Remaining:**
+  - Untextured fills still cost a swizzle address per pixel.
+  - The decoder needs ~30 ms of CPU per frame (IPU emulation plus libmpeg) and still waits ~450 ms/s.
+  - The main thread blocks on GS `m_stateMutex` while holding the guest and IO locks (~8% of samples; likely contention with present).
+  - A GS worker thread (MTGS-style) would remove GS work from the guest CPU entirely.
+- **Test-only:** `REO_TURBO=<factor>` speeds the vblank clock (boot logos); `REO_TURBO_UNTIL=0x22F18C` returns to normal speed when the Sofdec decoder exists.
+
 ## Milestone-1 checkpoint (observed)
 
 - `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.

@@ -1,0 +1,1231 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
+index 996ef7b..50984e0 100644
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
+@@ -441,7 +441,12 @@ namespace ps2_stubs
+ 
+         ps2_syscalls::prepareSoundDriverStatusTransfer(rdram, srcAddr, size);
+ 
+-        if (!copyGuestByteRange(rdram, dstAddr, srcAddr, size))
++        uint8_t *iopSource = nullptr;
++        const bool soundSource = ps2_syscalls::resolveSoundDriverIopTransfer(runtime, srcAddr, size, iopSource);
++        const bool copied = soundSource
++            ? (iopSource && canCopyGuestByteRange(rdram, dstAddr, srcAddr, size))
++            : copyGuestByteRange(rdram, dstAddr, srcAddr, size);
++        if (!copied)
+         {
+             static uint32_t warnCount = 0;
+             if (warnCount < 32u)
+@@ -456,6 +461,14 @@ namespace ps2_stubs
+             return;
+         }
+ 
++        if (soundSource)
++        {
++            for (uint32_t i = 0u; i < size; ++i)
++            {
++                *getMemPtr(rdram, dstAddr + i) = iopSource[i];
++            }
++        }
++
+         // SifRpcReceiveData_t keeps src/dest/size at offsets 0x10/0x14/0x18.
+         if (uint8_t *rd = getMemPtr(rdram, rdAddr))
+         {
+@@ -685,7 +698,9 @@ namespace ps2_stubs
+                 ok = false;
+                 break;
+             }
+-            if (!canCopyGuestByteRange(rdram, xfer.dest, xfer.src, sizeBytes))
++            uint8_t *iopDest = nullptr;
++            const bool soundDest = ps2_syscalls::resolveSoundDriverIopTransfer(runtime, xfer.dest, sizeBytes, iopDest);
++            if ((soundDest && !iopDest) || !canCopyGuestByteRange(rdram, xfer.dest, xfer.src, sizeBytes))
+             {
+                 ok = false;
+                 break;
+@@ -699,7 +714,18 @@ namespace ps2_stubs
+             for (uint32_t i = 0; i < pendingCount; ++i)
+             {
+                 const Ps2SifDmaTransfer &xfer = pending[i];
+-                if (!copyGuestByteRange(rdram, xfer.dest, xfer.src, static_cast<uint32_t>(xfer.size)))
++                const uint32_t sizeBytes = static_cast<uint32_t>(xfer.size);
++                uint8_t *iopDest = nullptr;
++                const bool soundDest = ps2_syscalls::resolveSoundDriverIopTransfer(runtime, xfer.dest, sizeBytes, iopDest);
++                if (soundDest && iopDest)
++                {
++                    for (uint32_t j = 0u; j < sizeBytes; ++j)
++                    {
++                        iopDest[j] = *getConstMemPtr(rdram, xfer.src + j);
++                    }
++                }
++                if ((soundDest && !iopDest) ||
++                    (!soundDest && !copyGuestByteRange(rdram, xfer.dest, xfer.src, sizeBytes)))
+                 {
+                     ok = false;
+                     break;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index 697ccc0..2d77de8 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -2,6 +2,10 @@
+ #include "Interrupt.h"
+ #include "ps2_log.h"
+ #include "Stubs/GS.h"
++#include <algorithm>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
+ 
+ namespace ps2_syscalls
+ {
+@@ -399,12 +403,36 @@ namespace ps2_syscalls
+                 dispatchIntcHandlersForCause(rdram, runtime, cause);
+             }
+ 
++            // Test-only fast-forward (REO_TURBO=<factor>): shorter vblank period, e.g. to get
++            // through timed boot logos. REO_TURBO_UNTIL=<guest addr> returns to normal speed
++            // once that guest word becomes nonzero. Game state is not modified.
++            static const int s_turbo = []() {
++                const char *e = std::getenv("REO_TURBO");
++                const int f = e ? std::atoi(e) : 1;
++                return f > 1 ? std::min(f, 16) : 1;
++            }();
++            static const uint32_t s_turboUntil = []() {
++                const char *e = std::getenv("REO_TURBO_UNTIL");
++                return e ? static_cast<uint32_t>(std::strtoul(e, nullptr, 0)) : 0u;
++            }();
++            static bool s_turboOn = s_turbo > 1;
++            if (s_turboOn && s_turboUntil != 0u && rdram)
++            {
++                uint32_t w = 0;
++                std::memcpy(&w, rdram + (s_turboUntil & 0x1FFFFFCu), 4);
++                if (w != 0u)
++                {
++                    s_turboOn = false;
++                    std::fprintf(stderr, "[turbo] guest 0x%x became nonzero: normal speed\n", s_turboUntil);
++                }
++            }
++            const auto period = s_turboOn ? kVblankPeriod / s_turbo : kVblankPeriod;
+             const auto now = clock::now();
+             int ticksToProcess = 0;
+             while (now >= nextTick && ticksToProcess < kMaxCatchupTicks)
+             {
+                 ++ticksToProcess;
+-                nextTick += kVblankPeriod;
++                nextTick += period;
+             }
+             if (ticksToProcess == 0)
+             {
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+index 3088d0f..03d881f 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -17,6 +17,8 @@ namespace ps2_syscalls
+         constexpr uint32_t kSoundDriverStatusAlignment = 0x100u;
+         constexpr uint32_t kSoundDriverAddrTableAlignment = 0x100u;
+         constexpr uint32_t kSoundDriverStorageAlignment = 0x1000u;
++        // Sound RPC addresses belong to the IOP, not the EE executable/heap.
++        uint8_t *g_soundDriverIopRam = nullptr;
+         constexpr uint32_t kSoundDriverGuestPoolBase = 0x00120000u;
+         constexpr uint32_t kSoundDriverGuestPoolLimit = 0x00200000u;
+ 
+@@ -141,6 +143,7 @@ namespace ps2_syscalls
+         {
+             const PS2SoundDriverCompatLayout compat = g_soundDriverCompatLayout;
+             g_soundDriverRpcState = {};
++            g_soundDriverIopRam = nullptr;
+             g_soundDriverCompatLayout = compat;
+         }
+ 
+@@ -162,6 +165,11 @@ namespace ps2_syscalls
+             }
+ 
+             adoptSoundDriverRuntimeUnlocked(runtime);
++            g_soundDriverIopRam = runtime->memory().getIOPRAM();
++            if (!g_soundDriverIopRam)
++            {
++                return false;
++            }
+ 
+             if (g_soundDriverRpcState.statusAddr == 0u)
+             {
+@@ -197,14 +205,14 @@ namespace ps2_syscalls
+ 
+             if (!g_soundDriverRpcState.initialized)
+             {
+-                rpcZeroRdram(rdram, g_soundDriverRpcState.statusAddr, kSoundDriverStatusSize);
+-                rpcZeroRdram(rdram,
++                rpcZeroRdram(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr, kSoundDriverStatusSize);
++                rpcZeroRdram(g_soundDriverIopRam,
+                              g_soundDriverRpcState.addrTableAddr,
+                              kSoundDriverAddrTableEntries * sizeof(uint32_t));
+-                rpcZeroRdram(rdram, g_soundDriverRpcState.storageBaseAddr, g_soundDriverRpcState.storageSize);
+-                (void)writeGuestU32(rdram, g_soundDriverRpcState.addrTableAddr + (0u * sizeof(uint32_t)), g_soundDriverRpcState.hdBaseAddr);
+-                (void)writeGuestU32(rdram, g_soundDriverRpcState.addrTableAddr + (1u * sizeof(uint32_t)), g_soundDriverRpcState.sqBaseAddr);
+-                (void)writeGuestU32(rdram, g_soundDriverRpcState.addrTableAddr + (2u * sizeof(uint32_t)), g_soundDriverRpcState.dataBaseAddr);
++                rpcZeroRdram(g_soundDriverIopRam, g_soundDriverRpcState.storageBaseAddr, g_soundDriverRpcState.storageSize);
++                (void)writeGuestU32(g_soundDriverIopRam, g_soundDriverRpcState.addrTableAddr + (0u * sizeof(uint32_t)), g_soundDriverRpcState.hdBaseAddr);
++                (void)writeGuestU32(g_soundDriverIopRam, g_soundDriverRpcState.addrTableAddr + (1u * sizeof(uint32_t)), g_soundDriverRpcState.sqBaseAddr);
++                (void)writeGuestU32(g_soundDriverIopRam, g_soundDriverRpcState.addrTableAddr + (2u * sizeof(uint32_t)), g_soundDriverRpcState.dataBaseAddr);
+                 g_soundDriverRpcState.initialized = true;
+             }
+ 
+@@ -279,7 +287,7 @@ namespace ps2_syscalls
+ 
+             const uint8_t *selectedSe = getConstMemPtr(rdram, seBase);
+             const uint8_t *selectedMidi = getConstMemPtr(rdram, midiBase);
+-            uint8_t *status = getMemPtr(rdram, g_soundDriverRpcState.statusAddr);
++            uint8_t *status = getMemPtr(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr);
+             if (!selectedSe || !selectedMidi || !status)
+             {
+                 return;
+@@ -290,7 +298,7 @@ namespace ps2_syscalls
+                 for (uint32_t slot = 0u; slot < slotCount; ++slot)
+                 {
+                     int16_t liveValue = 0;
+-                    if (!readGuestS16(rdram,
++                    if (!readGuestS16(g_soundDriverIopRam,
+                                       g_soundDriverRpcState.statusAddr + statusOffset + (slot * sizeof(int16_t)),
+                                       liveValue))
+                     {
+@@ -309,7 +317,7 @@ namespace ps2_syscalls
+                         continue;
+                     }
+ 
+-                    (void)writeGuestS16(rdram,
++                    (void)writeGuestS16(g_soundDriverIopRam,
+                                         g_soundDriverRpcState.statusAddr + statusOffset + (slot * sizeof(int16_t)),
+                                         compatValue);
+                 }
+@@ -414,18 +422,18 @@ namespace ps2_syscalls
+             {
+                 const uint32_t port = cmd[1] & 0x0Fu;
+                 uint16_t midiInfo = 0u;
+-                (void)readGuestU16(rdram, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
++                (void)readGuestU16(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
+                 midiInfo = static_cast<uint16_t>(midiInfo | static_cast<uint16_t>(1u << port));
+-                (void)writeGuestU16(rdram, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
++                (void)writeGuestU16(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
+                 break;
+             }
+             case 0x21u: // SdrBgmStop
+             {
+                 const uint32_t port = cmd[1] & 0x0Fu;
+                 uint16_t midiInfo = 0u;
+-                (void)readGuestU16(rdram, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
++                (void)readGuestU16(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
+                 midiInfo = static_cast<uint16_t>(midiInfo & ~static_cast<uint16_t>(1u << port));
+-                (void)writeGuestU16(rdram, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
++                (void)writeGuestU16(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
+                 break;
+             }
+             case 0x28u: // SdrHDDataSet
+@@ -436,7 +444,7 @@ namespace ps2_syscalls
+                 {
+                     const int16_t checksum =
+                         soundDriverCheckValue(rdram, compat.primaryMidiCheckAddr, compat.fallbackMidiCheckAddr, port, 4u);
+-                    (void)writeGuestS16(rdram,
++                    (void)writeGuestS16(g_soundDriverIopRam,
+                                         g_soundDriverRpcState.statusAddr + kSoundDriverMidiSumOffset + (port * sizeof(int16_t)),
+                                         checksum);
+                 }
+@@ -450,14 +458,14 @@ namespace ps2_syscalls
+                 {
+                     const int16_t checksum =
+                         soundDriverCheckValue(rdram, compat.primarySeCheckAddr, compat.fallbackSeCheckAddr, port, 5u);
+-                    (void)writeGuestS16(rdram,
++                    (void)writeGuestS16(g_soundDriverIopRam,
+                                         g_soundDriverRpcState.statusAddr + kSoundDriverSeSumOffset + (port * sizeof(int16_t)),
+                                         checksum);
+                 }
+                 break;
+             }
+             case 0x10u: // SdrSeAllStop
+-                rpcZeroRdram(rdram, g_soundDriverRpcState.statusAddr + kSoundDriverSeInfoOffset, 6u * sizeof(uint16_t));
++                rpcZeroRdram(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverSeInfoOffset, 6u * sizeof(uint16_t));
+                 break;
+             default:
+                 break;
+@@ -1070,6 +1078,31 @@ namespace ps2_syscalls
+         resetDtxRpcStateUnlocked();
+     }
+ 
++    bool resolveSoundDriverIopTransfer(PS2Runtime *runtime, uint32_t addr, uint32_t size, uint8_t *&ptr)
++    {
++        ptr = nullptr;
++        std::lock_guard<std::mutex> lock(g_rpc_mutex);
++        if (!runtime || g_soundDriverRpcState.statusAddr == 0u ||
++            g_soundDriverRpcState.ownerRuntime != reinterpret_cast<uintptr_t>(runtime))
++        {
++            return false;
++        }
++        const uint64_t begin = g_soundDriverRpcState.statusAddr;
++        const uint64_t end = static_cast<uint64_t>(g_soundDriverRpcState.storageBaseAddr) +
++                             g_soundDriverRpcState.storageSize;
++        const uint64_t transferEnd = static_cast<uint64_t>(addr) + size;
++        if (addr >= end || transferEnd <= begin)
++        {
++            return false;
++        }
++        // An overlapping but incomplete range must not fall back to EE memory.
++        if (addr >= begin && transferEnd <= end && g_soundDriverIopRam)
++        {
++            ptr = g_soundDriverIopRam + addr;
++        }
++        return true;
++    }
++
+     void prepareSoundDriverStatusTransfer(uint8_t *rdram, uint32_t srcAddr, uint32_t size)
+     {
+         std::lock_guard<std::mutex> lock(g_rpc_mutex);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
+index 57b69d8..4c68b15 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
+@@ -22,6 +22,8 @@ namespace ps2_syscalls
+                                      uint32_t recvBuf, uint32_t recvSize,
+                                      uint32_t &resultPtr,
+                                      bool &signalNowaitCompletion);
++    // True means the address overlaps the sound IOP arena; null ptr means invalid bounds.
++    bool resolveSoundDriverIopTransfer(PS2Runtime *runtime, uint32_t addr, uint32_t size, uint8_t *&ptr);
+     void prepareSoundDriverStatusTransfer(uint8_t *rdram, uint32_t srcAddr, uint32_t size);
+     void finalizeSoundDriverStatusTransfer(uint8_t *rdram, uint32_t srcAddr, uint32_t dstAddr, uint32_t size);
+     void sceSifCallRpc(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+index 80e6c4f..2aa0fec 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -110,7 +110,29 @@ namespace ps2_syscalls
+ 
+     void ResetEE(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
+-        std::cerr << "Syscall: ResetEE - requesting runtime stop" << std::endl;
++        // SLUS-20765 never calls ResetEE (stub 0x114210 has no callers): arriving here means a
++        // bad indirect jump. Log who got here (first few times).
++        static std::atomic<int> s_resets{0};
++        const int nreset = s_resets.fetch_add(1);
++        if (nreset < 8)
++        {
++            const uint32_t sp = getRegU32(ctx, 29);
++            std::fprintf(stderr, "[ResetEE] #%d tid=%d pc=0x%x ra=0x%x sp=0x%x a0=0x%x v0=0x%x t9=0x%x\n", nreset, g_currentThreadId,
++                         ctx->pc, getRegU32(ctx, 31), sp, getRegU32(ctx, 4), getRegU32(ctx, 2), getRegU32(ctx, 25));
++            if (const uint8_t *st = getConstMemPtr(rdram, sp))
++            {
++                std::fprintf(stderr, "[ResetEE]   stack:");
++                for (int i = 0; i < 32; ++i)
++                {
++                    uint32_t w = 0;
++                    std::memcpy(&w, st + i * 4, 4);
++                    std::fprintf(stderr, " %08x", w);
++                }
++                std::fprintf(stderr, "\n");
++            }
++        }
++        if (nreset < 3)
++            std::cerr << "Syscall: ResetEE - requesting runtime stop" << std::endl;
+         // runtime->requestStop();
+         setReturnS32(ctx, KE_OK);
+     }
+diff --git a/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp b/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
+index d2fedbd..6b29eb1 100644
+--- a/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
++++ b/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
+@@ -12,6 +12,7 @@
+ //    while more than 8 quadwords of output are pending (the hardware OUT FIFO size).
+ // REO_IPU_LOG=1 logs commands.
+ #include "ipu/ps2_ipu.h"
++#include <atomic>
+ #include "ipu/ps2_ipu_vlc.h"
+ 
+ #include <algorithm>
+@@ -24,6 +25,9 @@
+ 
+ namespace ps2_ipu
+ {
++    // Heartbeat diagnostics: commands issued (CSC = one converted movie frame).
++    std::atomic<uint32_t> g_dbgCsc{0u};
++    std::atomic<uint32_t> g_dbgBdec{0u};
+     namespace
+     {
+         using namespace ps2_ipu_vlc;
+@@ -71,6 +75,7 @@ namespace ps2_ipu
+         std::vector<uint8_t> g_out;  // OUT FIFO bytes
+         uint32_t g_ctrl = 0;
+         uint32_t g_cmdCode = 0;
++        uint32_t g_cmdSerial = 0; // diagnostics: increments per command write
+         bool g_cmdPending = false;
+         uint32_t g_lastCmd = 0xFFFFFFFFu;
+         uint32_t g_result = 0;
+@@ -243,7 +248,7 @@ namespace ps2_ipu
+                 const uint32_t id = static_cast<uint32_t>((tag >> 28) & 7u);
+                 const bool irq = ((tag >> 31) & 1u) != 0;
+                 const uint32_t addr = static_cast<uint32_t>(tag >> 32) & 0xFFFFFFF0u;
+-                wr(D4, (chcr & 0xFFFFu) | (static_cast<uint32_t>(tag >> 16) & 0xFFFF0000u));
++                wr(D4, (chcr & 0xFFFFu) | (static_cast<uint32_t>(tag) & 0xFFFF0000u));
+                 uint32_t madr = tadr + 16u, ntadr = tadr + 16u;
+                 switch (id)
+                 {
+@@ -275,6 +280,21 @@ namespace ps2_ipu
+             if (!d4Prepare())
+                 return false;
+             const uint32_t madr = rd(D4 + 0x10);
++            static uint32_t s_cscLoggedFor = 0xFFFFFFFFu;
++            static int s_cscLogs = 0;
++            if (g_log && g_cmdPending && (g_cmdCode >> 28) == 7u && s_cscLoggedFor != g_cmdSerial && s_cscLogs < 50)
++            {
++                s_cscLoggedFor = g_cmdSerial;
++                ++s_cscLogs;
++                const uint32_t bytes = (g_cmdCode & 0x7FFu) * 384u;
++                const uint8_t *p = g_host.mem ? g_host.mem(madr, bytes) : nullptr;
++                size_t nz = 0;
++                if (p)
++                    for (uint32_t i = 0; i < bytes; ++i)
++                        nz += p[i] != 0;
++                std::fprintf(stderr, "[IPU] CSC input madr 0x%08X qwc %u: %zu of %u bytes nonzero (chcr 0x%08X)\n",
++                             madr, rd(D4 + 0x20) & 0xFFFFu, nz, bytes, rd(D4));
++            }
+             const uint8_t *src = g_host.mem ? g_host.mem(madr, 16) : nullptr;
+             if (!src)
+             {
+@@ -619,6 +639,7 @@ namespace ps2_ipu
+                     cbp = static_cast<uint8_t>(decode(kCbp, kCbpLut).value);
+                 int16_t raw16[384];
+                 decodeMacroblock(raw16, mbi, dcr, dt, qsc, cbp);
++                g_ctrl = (g_ctrl & ~0x3F00u) | (static_cast<uint32_t>(cbp) << 8);
+                 appendRaw16(raw16, out);
+                 break;
+             }
+@@ -700,7 +721,7 @@ namespace ps2_ipu
+             g_cmdPending = false;
+             g_lastCmd = 0xFFFFFFFFu;
+             g_result = 0;
+-            g_ctrl &= ~(CTRL_ECD | CTRL_SCD);
++            g_ctrl &= ~(CTRL_ECD | CTRL_SCD | 0x3F00u);
+             g_inWordAcc = 0;
+         }
+ 
+@@ -720,6 +741,20 @@ namespace ps2_ipu
+                     {
+                         runCommand(out);
+                         g_cmdPending = false;
++                        if (g_log)
++                        {
++                            static int s_outLogs = 0;
++                            const uint32_t op = g_cmdCode >> 28;
++                            if ((op == 2u || op == 7u) && s_outLogs++ < 400)
++                            {
++                                size_t nz = 0;
++                                for (uint8_t b : out)
++                                    nz += b != 0;
++                                std::fprintf(stderr, "[IPU] OUT cmd 0x%08X: %zu B, %zu nonzero, ch3 madr 0x%08X qwc %u str %u\n",
++                                             g_cmdCode, out.size(), nz, rd(D3 + 0x10), rd(D3 + 0x20) & 0xFFFFu,
++                                             (rd(D3) & CHCR_STR) ? 1u : 0u);
++                            }
++                        }
+                         g_out.insert(g_out.end(), out.begin(), out.end());
+                         dropConsumed();
+                         continue;
+@@ -804,7 +839,7 @@ namespace ps2_ipu
+         {
+             const FifoState s = fifoState();
+             const uint32_t ofc = std::min<uint32_t>(static_cast<uint32_t>(g_out.size() / 16), 8u);
+-            return (g_ctrl & 0x3FFFC000u) | (busy() ? 0x80000000u : 0u) | (ofc << 4) | s.ifc;
++            return (g_ctrl & 0x3FFFFF00u) | (busy() ? 0x80000000u : 0u) | (ofc << 4) | s.ifc;
+         }
+         case IPU_BP:
+         {
+@@ -836,6 +871,11 @@ namespace ps2_ipu
+         switch (a)
+         {
+         case IPU_CMD:
++            ++g_cmdSerial;
++            if ((v >> 28) == 7u)
++                g_dbgCsc.fetch_add(1u, std::memory_order_relaxed);
++            else if ((v >> 28) == 2u)
++                g_dbgBdec.fetch_add(1u, std::memory_order_relaxed);
+             if (g_log)
+                 std::fprintf(stderr, "[IPU] CMD 0x%08X (ctrl 0x%08X, in %zu B bp %lld, out %zu B)\n", v, g_ctrl,
+                              g_in.size(), static_cast<long long>(g_bitPos), g_out.size());
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+index e22af57..b603568 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -7,6 +7,8 @@
+ #include "runtime/ps2_gs_psmt8.h"
+ #include "ps2_log.h"
+ #include <atomic>
++#include <cstdlib>
++#include <atomic>
+ #include <algorithm>
+ #include <cmath>
+ #include <cstdio>
+@@ -735,6 +737,43 @@ uint32_t GSRasterizer::sampleTexture(GS *gs, float s, float t, float q, uint16_t
+            (static_cast<uint32_t>(a) << 24);
+ }
+ 
++namespace
++{
++    // writePixel() for a pixel already inside the scissor, PRIM.ABE = 0 and a PSMCT32/24
++    // frame buffer (drawSprite fast paths). Same alpha test, FBA, FBMSK and AFAIL=RGB_ONLY
++    // handling; returns false when the alpha test discards the pixel.
++    inline bool writeNoBlend32(uint8_t *vram, uint32_t vramSize, const GSContext &ctx, uint32_t fbBlock, uint32_t widthBlocks,
++                               int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
++    {
++        const AlphaTestResult alphaTest = classifyAlphaTest(ctx.test, a);
++        if (!alphaTest.writeFramebuffer)
++            return false;
++        const uint32_t off = GSPSMCT32::addrPSMCT32(fbBlock, widthBlocks, static_cast<uint32_t>(x), static_cast<uint32_t>(y));
++        if (off + 4u > vramSize)
++            return true;
++        if (!alphaTest.preserveDestinationAlpha && (ctx.fba & 0x1ull) != 0ull && ctx.frame.psm != GS_PSM_CT24)
++            a = static_cast<uint8_t>(a | 0x80u);
++        uint32_t pixel = static_cast<uint32_t>(r) | (static_cast<uint32_t>(g) << 8) |
++                         (static_cast<uint32_t>(b) << 16) | (static_cast<uint32_t>(a) << 24);
++        const uint32_t mask = ctx.frame.fbmsk;
++        if (mask != 0u || alphaTest.preserveDestinationAlpha)
++        {
++            uint32_t existing;
++            std::memcpy(&existing, vram + off, 4);
++            if (mask != 0u)
++                pixel = (pixel & ~mask) | (existing & mask);
++            if (alphaTest.preserveDestinationAlpha)
++                pixel = (pixel & 0x00FFFFFFu) | (existing & 0xFF000000u);
++        }
++        std::memcpy(vram + off, &pixel, 4);
++        return true;
++    }
++}
++
++// [perf] heartbeat: sprite pixels: [0] untextured, [1] point, [2] bilinear, [3] point 1:1,
++// [4] bilinear 1:1, [5] alpha-blended (any).
++std::atomic<uint64_t> g_dbgSpritePx[6];
++
+ void GSRasterizer::drawSprite(GS *gs)
+ {
+     const GSVertex &v0 = gs->m_vtxQueue[0];
+@@ -796,8 +835,86 @@ void GSRasterizer::drawSprite(GS *gs)
+         gs->m_hasPreferredDisplaySource = true;
+     }
+ 
++    {
++        // [perf] heartbeat: sprite pixels by kind.
++        const uint64_t px = static_cast<uint64_t>(drawX1 - drawX0 + 1) * static_cast<uint64_t>(drawY1 - drawY0 + 1);
++        if (!gs->m_prim.tme)
++            g_dbgSpritePx[0].fetch_add(px, std::memory_order_relaxed);
++        else
++        {
++            const bool linear = tex1UsesLinearFilter(ctx.tex1);
++            const bool oneToOne = gs->m_prim.fst &&
++                                  std::abs(static_cast<int>(v1.u >> 4) - static_cast<int>(v0.u >> 4)) == spanX &&
++                                  std::abs(static_cast<int>(v1.v >> 4) - static_cast<int>(v0.v >> 4)) == spanY;
++            g_dbgSpritePx[1 + (linear ? 1 : 0) + (oneToOne ? 2 : 0)].fetch_add(px, std::memory_order_relaxed);
++        }
++        if (gs->m_prim.abe)
++            g_dbgSpritePx[5].fetch_add(px, std::memory_order_relaxed);
++    }
++
+     uint8_t r = v1.r, g = v1.g, b = v1.b, a = v1.a;
+ 
++    // Fast paths (same results as the generic loops below): no blending, 32/24-bit frame.
++    static const bool s_noFast = std::getenv("REO_GS_NO_FASTPATH") != nullptr;
++    const bool fastFrame = !s_noFast && !gs->m_prim.abe &&
++                           (ctx.frame.psm == GS_PSM_CT32 || ctx.frame.psm == GS_PSM_CT24);
++    const uint32_t fbBlock = GSInternal::framePageBaseToBlock(ctx.frame.fbp);
++    const uint32_t fbWidthBlocks = (ctx.frame.fbw != 0u) ? ctx.frame.fbw : 1u;
++    const uint32_t spritePixels = static_cast<uint32_t>((drawX1 - drawX0 + 1) * (drawY1 - drawY0 + 1));
++
++    if (fastFrame && !gs->m_prim.tme)
++    {
++        uint32_t discarded = 0;
++        for (int y = drawY0; y <= drawY1; ++y)
++            for (int x = drawX0; x <= drawX1; ++x)
++                discarded += writeNoBlend32(gs->m_vram, gs->m_vramSize, ctx, fbBlock, fbWidthBlocks, x, y, r, g, b, a) ? 0u : 1u;
++        g_pxCalls.fetch_add(spritePixels, std::memory_order_relaxed);
++        g_pxAlpha.fetch_add(discarded, std::memory_order_relaxed);
++        return;
++    }
++
++    if (fastFrame && gs->m_prim.tme && gs->m_prim.fst &&
++        (ctx.tex0.psm == GS_PSM_CT32 || ctx.tex0.psm == GS_PSM_CT24))
++    {
++        // FST 1:1 texel mapping: the generic loop samples u0 + k (or u0 - k - 1 when the
++        // sprite maps U/V in reverse), clamped to the texture; reproduce that in integers.
++        // Bilinear filtering is included: at 1:1 every sample lands on a texel centre, so the
++        // generic path's weights are exactly 0 and lerpChannel() returns that texel.
++        const int u0 = static_cast<int>(v0.u >> 4), u1 = static_cast<int>(v1.u >> 4);
++        const int vv0 = static_cast<int>(v0.v >> 4), vv1 = static_cast<int>(v1.v >> 4);
++        if (std::abs(u1 - u0) == spanX && std::abs(vv1 - vv0) == spanY)
++        {
++            const auto &tex = ctx.tex0;
++            const int texW = 1 << tex.tw, texH = 1 << tex.th;
++            const uint32_t tbw = tex.tbw ? tex.tbw : 1u;
++            uint32_t discarded = 0;
++            for (int y = drawY0; y <= drawY1; ++y)
++            {
++                const int ky = y - unclippedY0;
++                const int tv = clampInt(vv1 >= vv0 ? vv0 + ky : vv0 - ky - 1, 0, texH - 1);
++                for (int x = drawX0; x <= drawX1; ++x)
++                {
++                    const int kx = x - unclippedX0;
++                    const int tu = clampInt(u1 >= u0 ? u0 + kx : u0 - kx - 1, 0, texW - 1);
++                    const uint32_t off = GSPSMCT32::addrPSMCT32(tex.tbp0, tbw, static_cast<uint32_t>(tu), static_cast<uint32_t>(tv));
++                    uint32_t texel = 0xFFFF00FFu; // readTexelPSMCT32's out-of-range value
++                    if (off + 4u <= gs->m_vramSize)
++                        std::memcpy(&texel, gs->m_vram + off, 4);
++                    texel = applyTexa(gs->m_texa, tex.psm, texel);
++                    const TextureCombineResult color = combineTexture(tex, r, g, b, a,
++                                                                      static_cast<uint8_t>(texel & 0xFF),
++                                                                      static_cast<uint8_t>((texel >> 8) & 0xFF),
++                                                                      static_cast<uint8_t>((texel >> 16) & 0xFF),
++                                                                      static_cast<uint8_t>((texel >> 24) & 0xFF));
++                    discarded += writeNoBlend32(gs->m_vram, gs->m_vramSize, ctx, fbBlock, fbWidthBlocks, x, y, color.r, color.g, color.b, color.a) ? 0u : 1u;
++                }
++            }
++            g_pxCalls.fetch_add(spritePixels, std::memory_order_relaxed);
++            g_pxAlpha.fetch_add(discarded, std::memory_order_relaxed);
++            return;
++        }
++    }
++
+     if (gs->m_prim.tme)
+     {
+         const auto &tex = ctx.tex0;
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+index 4d921a9..d1d0a8b 100644
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -6,6 +6,8 @@
+ #include <atomic>
+ #include <iostream>
+ #include <cstring>
++#include <cstdio>
++#include <cstdlib>
+ #include <stdexcept>
+ #include <algorithm>
+ #include <string>
+@@ -911,6 +913,116 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+                 m_hwBridge.onDmaStart(channelBase, madr, qwc, tadr, m_rdram, m_hwBridge.user);
+             }
+ 
++            if ((channelBase == 0x1000D000u || channelBase == 0x1000D400u) && m_rdram && m_scratchpad)
++            {
++                // Scratchpad DMA: channel 8 fromSPR (SPR -> RAM), channel 9 toSPR (RAM -> SPR).
++                // Normal and chain modes, completed at kick. CRI uses these channels
++                // to save and restore its scratchpad working area.
++                const bool fromSpr = channelBase == 0x1000D000u;
++                const uint32_t chan = fromSpr ? 8u : 9u;
++                uint32_t sadr = m_ioRegisters[channelBase + 0x80] & (PS2_SCRATCHPAD_SIZE - 16u);
++                uint32_t curMadr = madr;
++                uint32_t curTadr = tadr;
++                uint32_t lastTagUpper = value & 0xFFFF0000u;
++                auto ramPtr = [&](uint32_t a, uint32_t bytes) -> uint8_t *
++                {
++                    const uint32_t off = a & 0x1FFFFFF0u;
++                    return (off + bytes <= PS2_RAM_SIZE) ? m_rdram + off : nullptr;
++                };
++                auto copyQw = [&](uint32_t ramAddr, uint32_t count)
++                {
++                    for (uint32_t i = 0; i < count; ++i)
++                    {
++                        uint8_t *ram = ramPtr(ramAddr + i * 16u, 16u);
++                        uint8_t *spr = m_scratchpad + sadr;
++                        if (ram)
++                        {
++                            if (fromSpr)
++                                std::memcpy(ram, spr, 16);
++                            else
++                                std::memcpy(spr, ram, 16);
++                        }
++                        sadr = (sadr + 16u) & (PS2_SCRATCHPAD_SIZE - 16u);
++                    }
++                };
++                const uint32_t mode = (value >> 2) & 3u;
++                uint32_t totalQw = 0;
++                if (qwc & 0xFFFFu)
++                {
++                    copyQw(curMadr, qwc & 0xFFFFu);
++                    curMadr += (qwc & 0xFFFFu) * 16u;
++                    totalQw += qwc & 0xFFFFu;
++                }
++                if (mode == 1u)
++                {
++                    for (int guard = 0; guard < 4096; ++guard)
++                    {
++                        uint64_t tag = 0;
++                        if (fromSpr)
++                        {
++                            // Destination chain: tags come from the SPR stream.
++                            std::memcpy(&tag, m_scratchpad + sadr, 8);
++                            sadr = (sadr + 16u) & (PS2_SCRATCHPAD_SIZE - 16u);
++                        }
++                        else
++                        {
++                            const uint8_t *t = ramPtr(curTadr, 16u);
++                            if (!t)
++                                break;
++                            std::memcpy(&tag, t, 8);
++                        }
++                        const uint32_t tq = static_cast<uint32_t>(tag & 0xFFFFu);
++                        const uint32_t id = static_cast<uint32_t>((tag >> 28) & 7u);
++                        const bool irq = ((tag >> 31) & 1u) != 0u;
++                        const uint32_t addr = static_cast<uint32_t>(tag >> 32) & 0xFFFFFFF0u;
++                        lastTagUpper = static_cast<uint32_t>(tag) & 0xFFFF0000u;
++                        bool end = false;
++                        if (fromSpr)
++                        {
++                            // dest chain ids: 0 cnts, 1 cnt, 7 end (data to ADDR)
++                            copyQw(addr, tq);
++                            curMadr = addr + tq * 16u;
++                            end = (id == 7u);
++                        }
++                        else
++                        {
++                            uint32_t data = curTadr + 16u;
++                            switch (id)
++                            {
++                            case 0: data = addr; end = true; break;              // refe
++                            case 1: curTadr = data + tq * 16u; break;             // cnt
++                            case 2: curTadr = addr; break;                        // next
++                            case 3: case 4: data = addr; curTadr += 16u; break;   // ref, refs
++                            default: end = true; break;                           // call/ret/end
++                            }
++                            copyQw(data, tq);
++                            curMadr = data + tq * 16u;
++                        }
++                        totalQw += tq;
++                        if (end || (irq && (value & 0x80u)))
++                            break;
++                    }
++                }
++                m_ioRegisters[channelBase + 0x10] = curMadr;
++                m_ioRegisters[channelBase + 0x20] = 0u;
++                m_ioRegisters[channelBase + 0x30] = curTadr;
++                m_ioRegisters[channelBase + 0x80] = sadr;
++                m_ioRegisters[channelBase] = (value & 0xFEFFu) | lastTagUpper;
++                static const bool s_sprLog = std::getenv("REO_SPR_LOG") != nullptr;
++                static std::atomic<int> s_sprLogs[2]{};
++                if (s_sprLog && (qwc & 0xFFFFu) != 1024u && s_sprLogs[fromSpr ? 0 : 1].fetch_add(1) < 300)
++                    std::fprintf(stderr, "[SPR-DMA] ch%u mode %u madr 0x%08X qwc %u tadr 0x%08X sadr 0x%04X -> %u qw\n",
++                                 chan, mode, madr, qwc & 0xFFFFu, tadr, m_ioRegisters[channelBase + 0x80], totalQw);
++                constexpr uint32_t D_STAT = 0x1000E010u;
++                uint32_t dstat = m_ioRegisters.count(D_STAT) ? m_ioRegisters[D_STAT] : 0u;
++                dstat |= (1u << chan);
++                if (((dstat & 0x3FFu) & ((dstat >> 16) & 0x3FFu)) != 0u)
++                    dstat |= (1u << 31);
++                m_ioRegisters[D_STAT] = dstat;
++                ps2_syscalls::raiseDmacCompletion(chan);
++                return true;
++            }
++
+             if (channelBase == 0x1000B000u || channelBase == 0x1000B400u)
+             {
+                 ps2_ipu::dmaKick(channelBase); // IPU FROM/TO channels (ipu/ps2_ipu.cpp)
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index e5ddf3f..d252263 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -97,6 +97,12 @@ uint32_t ps2GsDebugImageRejected();
+ uint32_t ps2GsDebugImageBytes();
+ extern std::atomic<uint32_t> g_pxCalls, g_pxScissor, g_pxAlpha;
+ 
++extern std::atomic<uint64_t> g_dbgSpritePx[6];
++namespace ps2_ipu
++{
++    extern std::atomic<uint32_t> g_dbgCsc;
++    extern std::atomic<uint32_t> g_dbgBdec;
++}
+ namespace ps2_sched
+ {
+     namespace
+@@ -128,6 +134,13 @@ namespace ps2_sched
+     std::atomic<uint32_t> g_spinYields{0u};
+     std::atomic<R5900Context *> g_threadCtx[256];
+     std::atomic<uint32_t> g_acquires[256];
++    // Heartbeat: host time each guest thread spent holding / waiting for the CPU.
++    std::atomic<int64_t> g_ownNs[256];
++    std::atomic<int64_t> g_waitNs[256];
++    namespace
++    {
++        thread_local int64_t t_ownStart = 0;
++    }
+     namespace
+     {
+         constexpr uint32_t kSpinChecksBeforeRotate = 2048u; // x64 back-edges ~ 131k iterations
+@@ -275,6 +288,7 @@ namespace ps2_sched
+             g_waitingWorkers.fetch_sub(1, std::memory_order_acq_rel);
+             return;
+         }
++        const int64_t waitStart = nowNs();
+         g_waiting[tid].store(1u, std::memory_order_release);
+         g_waitingGuests.fetch_add(1, std::memory_order_acq_rel);
+         static const bool s_rotate = std::getenv("REO_SPIN_ROTATE") != nullptr;
+@@ -310,9 +324,19 @@ namespace ps2_sched
+             g_ownerSinceNs.store(nowNs(), std::memory_order_relaxed);
+         }
+         g_acquires[tid].fetch_add(1u, std::memory_order_relaxed);
++        t_ownStart = nowNs();
++        g_waitNs[tid].fetch_add(t_ownStart - waitStart, std::memory_order_relaxed);
+     }
+ 
+-    void released() { notifyAll(); }
++    void released()
++    {
++        if (validTid(t_tid) && t_ownStart != 0)
++        {
++            g_ownNs[t_tid].fetch_add(nowNs() - t_ownStart, std::memory_order_relaxed);
++            t_ownStart = 0;
++        }
++        notifyAll();
++    }
+ }
+ 
+ namespace
+@@ -2589,6 +2613,38 @@ void PS2Runtime::run()
+                         std::cerr << " pc" << t << "=0x" << std::hex << c->pc << "/ra=0x"
+                                   << static_cast<uint32_t>(_mm_extract_epi32(c->r[31], 0)) << std::dec
+                           << std::endl;
++                {
++                    // [perf]: per heartbeat (60 vsync ticks), host ms elapsed, movie frames (CSC)
++                    // and macroblocks (BDEC), and host ms each guest thread held / waited for the CPU.
++                    static int64_t s_lastNs = 0;
++                    static uint32_t s_lastCsc = 0, s_lastBdec = 0;
++                    static int64_t s_lastOwn[8] = {}, s_lastWait[8] = {};
++                    const int64_t nowHost = std::chrono::duration_cast<std::chrono::nanoseconds>(
++                                                std::chrono::steady_clock::now().time_since_epoch())
++                                                .count();
++                    const uint32_t csc = ps2_ipu::g_dbgCsc.load(), bdec = ps2_ipu::g_dbgBdec.load();
++                    std::cerr << "[perf] tick=" << tick << " hostms=" << (s_lastNs ? (nowHost - s_lastNs) / 1000000 : 0)
++                              << " csc=" << (csc - s_lastCsc) << " bdec=" << (bdec - s_lastBdec) << " own/wait ms:";
++                    for (int t : {1, 5, 6, 7})
++                    {
++                        const int64_t own = ps2_sched::g_ownNs[t].load(), wait = ps2_sched::g_waitNs[t].load();
++                        std::cerr << " t" << t << "=" << (own - s_lastOwn[t]) / 1000000 << "/" << (wait - s_lastWait[t]) / 1000000;
++                        s_lastOwn[t] = own;
++                        s_lastWait[t] = wait;
++                    }
++                    static uint64_t s_lastSpr[6] = {};
++                    std::cerr << " sprKpx(untex/pt/bil/pt1:1/bil1:1/abe):";
++                    for (int i = 0; i < 6; ++i)
++                    {
++                        const uint64_t v = g_dbgSpritePx[i].load();
++                        std::cerr << (i ? "/" : " ") << (v - s_lastSpr[i]) / 1000;
++                        s_lastSpr[i] = v;
++                    }
++                    std::cerr << std::endl;
++                    s_lastNs = nowHost;
++                    s_lastCsc = csc;
++                    s_lastBdec = bdec;
++                }
+                 s_pcHist.clear();
+                 const auto r = s_raHist.sorted();
+                 std::cerr << "[hot-ra]";
+diff --git a/ps2xTest/src/ps2_memory_tests.cpp b/ps2xTest/src/ps2_memory_tests.cpp
+index 8edcfc9..010dd9e 100644
+--- a/ps2xTest/src/ps2_memory_tests.cpp
++++ b/ps2xTest/src/ps2_memory_tests.cpp
+@@ -76,8 +76,152 @@ namespace
+     }
+ }
+ 
++void register_ps2_spr_dma_tests()
++{
++    MiniTest::Case("PS2SprDma", [](TestCase &tc)
++    {
++        tc.Run("normal toSPR copies across scratchpad wrap and completes", [](TestCase &t)
++        {
++            PS2Memory mem;
++            t.IsTrue(mem.initialize(), "PS2Memory initialize should succeed");
++            constexpr uint32_t kChannel = 0x1000D400u;
++            constexpr uint32_t kDStat = 0x1000E010u;
++            constexpr uint32_t kSource = 0x00025000u;
++            constexpr uint32_t kStart = PS2_SCRATCHPAD_SIZE - 16u;
++            constexpr uint32_t kQwc = 3u;
++            constexpr uint32_t kStatus = 1u << 9;
++            constexpr uint32_t kMask = 1u << 25;
++            uint8_t *const ram = mem.getRDRAM();
++            uint8_t *const spr = mem.getScratchpad();
++            std::memset(spr, 0xA5, PS2_SCRATCHPAD_SIZE);
++            for (uint32_t i = 0u; i < kQwc * 16u; ++i)
++                ram[kSource + i] = static_cast<uint8_t>(0x30u + i);
++            t.IsTrue(mem.writeIORegister(kDStat, kMask), "toSPR interrupt mask should be enabled");
++            mem.writeIORegister(kChannel + 0x10u, kSource);
++            mem.writeIORegister(kChannel + 0x20u, kQwc);
++            mem.writeIORegister(kChannel + 0x80u, kStart);
++            t.IsTrue(mem.writeIORegister(kChannel, 0x101u), "normal toSPR DMA should start");
++            bool payloadMatches = true;
++            for (uint32_t i = 0u; i < kQwc * 16u; ++i)
++                payloadMatches = payloadMatches &&
++                    spr[(kStart + i) & (PS2_SCRATCHPAD_SIZE - 1u)] == ram[kSource + i];
++            t.IsTrue(payloadMatches, "toSPR payload should wrap from scratchpad tail to start");
++            t.Equals(static_cast<uint32_t>(spr[32u]), 0xA5u, "toSPR should preserve the byte after its payload");
++            t.Equals(mem.readIORegister(kChannel + 0x10u), kSource + kQwc * 16u, "toSPR MADR should advance by transferred bytes");
++            t.Equals(mem.readIORegister(kChannel + 0x80u), 32u, "toSPR SADR should wrap after transferred bytes");
++            t.Equals(mem.readIORegister(kChannel + 0x20u), 0u, "toSPR completion should clear QWC");
++            t.Equals(mem.readIORegister(kChannel) & 0x1FFu, 1u, "toSPR completion should clear STR and preserve DIR");
++            t.Equals(mem.readIORegister(kDStat), kMask | kStatus | 0x80000000u, "toSPR completion should set channel status and masked summary");
++            t.Equals(mem.dmaStartCount(), 1ull, "toSPR should count one DMA start");
++            mem.writeIORegister(kDStat, kStatus);
++            t.Equals(mem.readIORegister(kDStat), kMask, "acknowledging toSPR completion should clear status and summary");
++        });
++
++        tc.Run("normal fromSPR copies across scratchpad wrap and completes", [](TestCase &t)
++        {
++            PS2Memory mem;
++            t.IsTrue(mem.initialize(), "PS2Memory initialize should succeed");
++            constexpr uint32_t kChannel = 0x1000D000u;
++            constexpr uint32_t kDStat = 0x1000E010u;
++            constexpr uint32_t kDestination = 0x00026000u;
++            constexpr uint32_t kStart = PS2_SCRATCHPAD_SIZE - 16u;
++            constexpr uint32_t kQwc = 3u;
++            uint8_t *const ram = mem.getRDRAM();
++            uint8_t *const spr = mem.getScratchpad();
++            std::memset(ram + kDestination - 1u, 0xA5, kQwc * 16u + 2u);
++            for (uint32_t i = 0u; i < kQwc * 16u; ++i)
++                spr[(kStart + i) & (PS2_SCRATCHPAD_SIZE - 1u)] = static_cast<uint8_t>(0x80u + i);
++            mem.writeIORegister(kChannel + 0x10u, 0x20000000u | kDestination);
++            mem.writeIORegister(kChannel + 0x20u, kQwc);
++            mem.writeIORegister(kChannel + 0x80u, kStart);
++            t.IsTrue(mem.writeIORegister(kChannel, 0x100u), "normal fromSPR DMA should start");
++            bool payloadMatches = true;
++            for (uint32_t i = 0u; i < kQwc * 16u; ++i)
++                payloadMatches = payloadMatches && ram[kDestination + i] == static_cast<uint8_t>(0x80u + i);
++            t.IsTrue(payloadMatches, "fromSPR should read wrapped scratchpad bytes into aliased EE RAM");
++            t.Equals(static_cast<uint32_t>(ram[kDestination - 1u]), 0xA5u, "fromSPR should preserve the byte before its destination");
++            t.Equals(static_cast<uint32_t>(ram[kDestination + kQwc * 16u]), 0xA5u, "fromSPR should preserve the byte after its destination");
++            t.Equals(mem.readIORegister(kChannel + 0x10u), (0x20000000u | kDestination) + kQwc * 16u, "fromSPR MADR should advance with its alias intact");
++            t.Equals(mem.readIORegister(kChannel + 0x80u), 32u, "fromSPR SADR should wrap after transferred bytes");
++            t.Equals(mem.readIORegister(kChannel + 0x20u), 0u, "fromSPR completion should clear QWC");
++            t.Equals(mem.readIORegister(kChannel) & 0x100u, 0u, "fromSPR completion should clear STR");
++            t.Equals(mem.readIORegister(kDStat), 1u << 8, "unmasked fromSPR completion should set only channel status");
++            t.Equals(mem.dmaStartCount(), 1ull, "fromSPR should count one DMA start");
++        });
++
++        tc.Run("toSPR source END chain preserves tag ID and IRQ in CHCR", [](TestCase &t)
++        {
++            PS2Memory mem;
++            t.IsTrue(mem.initialize(), "PS2Memory initialize should succeed");
++            constexpr uint32_t kChannel = 0x1000D400u;
++            constexpr uint32_t kTagAddress = 0x00027000u;
++            constexpr uint32_t kIgnoredAddress = 0x00034560u;
++            constexpr uint32_t kQwc = 2u;
++            constexpr uint32_t kStart = PS2_SCRATCHPAD_SIZE - 16u;
++            uint8_t *const ram = mem.getRDRAM();
++            uint8_t *const spr = mem.getScratchpad();
++            const uint64_t tag = makeDmaTag(kQwc, 7u, kIgnoredAddress, true);
++            writeDmaTag(ram, kTagAddress, tag);
++            std::memset(ram + kIgnoredAddress, 0xA5, kQwc * 16u);
++            for (uint32_t i = 0u; i < kQwc * 16u; ++i)
++                ram[kTagAddress + 16u + i] = static_cast<uint8_t>(0x50u + i);
++            mem.writeIORegister(kChannel + 0x20u, 0u);
++            mem.writeIORegister(kChannel + 0x30u, kTagAddress);
++            mem.writeIORegister(kChannel + 0x80u, kStart);
++            t.IsTrue(mem.writeIORegister(kChannel, 0x185u), "toSPR chain with TIE should start");
++            bool payloadMatches = true;
++            for (uint32_t i = 0u; i < kQwc * 16u; ++i)
++                payloadMatches = payloadMatches && spr[(kStart + i) & (PS2_SCRATCHPAD_SIZE - 1u)] == static_cast<uint8_t>(0x50u + i);
++            t.IsTrue(payloadMatches, "END payload should follow the tag rather than use ADDR");
++            t.Equals(mem.readIORegister(kChannel) & 0xFFFF0000u, 0xF0000000u, "CHCR TAG must reflect END ID and IRQ from tag bits31:16, not ADDR");
++            t.Equals(mem.readIORegister(kChannel) & 0x1FFu, 0x85u, "chain completion should preserve MOD DIR TIE and clear STR");
++            t.Equals(mem.readIORegister(kChannel + 0x10u), kTagAddress + 16u + kQwc * 16u, "chain MADR should advance past END payload");
++            t.Equals(mem.readIORegister(kChannel + 0x80u), 16u, "END payload should wrap SADR");
++            t.Equals(mem.readIORegister(kChannel + 0x20u), 0u, "END chain completion should clear QWC");
++            t.Equals(mem.readIORegister(0x1000E010u) & (1u << 9), 1u << 9, "END chain completion should set toSPR status");
++        });
++
++        tc.Run("toSPR source chain stops on IRQ only with TIE enabled", [](TestCase &t)
++        {
++            constexpr uint32_t kChannel = 0x1000D400u;
++            constexpr uint32_t kFirstTag = 0x00028000u;
++            constexpr uint32_t kSecondTag = kFirstTag + 32u;
++            for (const bool tie : {false, true})
++            {
++                PS2Memory mem;
++                t.IsTrue(mem.initialize(), "PS2Memory initialize should succeed");
++                uint8_t *const ram = mem.getRDRAM();
++                uint8_t *const spr = mem.getScratchpad();
++                std::memset(spr, 0xA5, 48u);
++                writeDmaTag(ram, kFirstTag, makeDmaTag(1u, 1u, 0u, true));
++                writeDmaTag(ram, kSecondTag, makeDmaTag(1u, 7u, 0u));
++                std::memset(ram + kFirstTag + 16u, 0x31, 16u);
++                std::memset(ram + kSecondTag + 16u, 0x72, 16u);
++                mem.writeIORegister(kChannel + 0x20u, 0u);
++                mem.writeIORegister(kChannel + 0x30u, kFirstTag);
++                mem.writeIORegister(kChannel + 0x80u, 0u);
++                mem.writeIORegister(kChannel, 0x105u | (tie ? 0x80u : 0u));
++                bool firstMatches = true;
++                bool secondMatches = true;
++                for (uint32_t i = 0u; i < 16u; ++i)
++                {
++                    firstMatches = firstMatches && spr[i] == 0x31u;
++                    secondMatches = secondMatches && spr[16u + i] == (tie ? 0xA5u : 0x72u);
++                }
++                t.IsTrue(firstMatches, "IRQ-tagged CNT payload should always transfer");
++                t.IsTrue(secondMatches, "TIE should control whether the following END payload transfers");
++                t.Equals(mem.readIORegister(kChannel) & 0xFFFF0000u, tie ? 0x90000000u : 0x70000000u, "CHCR TAG should retain the tag that terminated the chain");
++                t.Equals(mem.readIORegister(kChannel + 0x80u), tie ? 16u : 32u, "SADR should reflect the number of transferred qwords");
++                t.Equals(mem.readIORegister(kChannel) & 0x100u, 0u, "IRQ and END termination should both clear STR");
++                t.Equals(mem.readIORegister(kChannel + 0x20u), 0u, "IRQ and END termination should both clear QWC");
++            }
++        });
++    });
++}
++
+ void register_ps2_memory_tests()
+ {
++    register_ps2_spr_dma_tests();
+     MiniTest::Case("PS2Memory", [](TestCase &tc)
+     {
+         tc.Run("uncached aliases map to same RDRAM bytes", [](TestCase &t)
+diff --git a/ps2xTest/src/ps2_sif_dma_tests.cpp b/ps2xTest/src/ps2_sif_dma_tests.cpp
+index 7a573b7..3146523 100644
+--- a/ps2xTest/src/ps2_sif_dma_tests.cpp
++++ b/ps2xTest/src/ps2_sif_dma_tests.cpp
+@@ -2,6 +2,8 @@
+ #include "ps2_runtime.h"
+ #include "ps2_syscalls.h"
+ #include "ps2_stubs.h"
++#include "runtime/ps2_iop.h"
++#include "../../ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h"
+ 
+ #include <array>
+ #include <cstdint>
+@@ -29,6 +31,7 @@ namespace
+             ps2_syscalls::resetSoundDriverRpcState();
+             ps2_syscalls::clearSoundDriverCompatLayout();
+             ps2_syscalls::clearDtxCompatLayout();
++            runtime.memory().initialize();
+             std::memset(&ctx, 0, sizeof(ctx));
+         }
+     };
+@@ -127,8 +130,140 @@ namespace
+     }
+ }
+ 
++void register_ps2_sound_driver_isolation_tests()
++{
++    MiniTest::Case("PS2SoundDriverIsolation", [](TestCase &tc)
++    {
++        tc.Run("sound-driver IOP state and transfers preserve EE code and constants", [](TestCase &t)
++        {
++            TestEnv env;
++            // Synthetic EE sentinels spanning the former HLE arena, including the MPEG clamp table.
++            constexpr std::array<uint32_t, 4> sentinels{0x00120000u, 0x00121000u, 0x00143F70u, 0x0017CFF0u};
++            constexpr uint32_t replyAddr = 0x00025000u, rdAddr = 0x00025100u, statusCopy = 0x00025200u;
++            constexpr uint32_t tableCopy = 0x00025300u, upload = 0x00025400u, descAddr = 0x00025500u;
++            constexpr uint32_t roundTrip = 0x00025600u;
++            std::array<std::array<uint8_t, 16>, sentinels.size()> expected{};
++            for (size_t i = 0; i < sentinels.size(); ++i)
++            {
++                for (size_t j = 0; j < expected[i].size(); ++j)
++                    expected[i][j] = static_cast<uint8_t>(0x40u + i * 16u + j);
++                std::memcpy(env.rdram.data() + sentinels[i], expected[i].data(), expected[i].size());
++            }
++            auto checkSentinels = [&]()
++            {
++                for (size_t i = 0; i < sentinels.size(); ++i)
++                    t.IsTrue(std::memcmp(env.rdram.data() + sentinels[i], expected[i].data(), expected[i].size()) == 0,
++                             "sound-driver HLE must preserve unrelated EE code/constants");
++            };
++            auto request = [&](uint32_t rpcNum) -> uint32_t
++            {
++                uint32_t resultPtr = 0u;
++                bool signalCompletion = false;
++                const bool handled = ps2_syscalls::handleSoundDriverRpcService(
++                    env.rdram.data(), &env.runtime, IOP_SID_SNDDRV_STATE, rpcNum,
++                    0u, 0u, replyAddr, sizeof(uint32_t), resultPtr, signalCompletion);
++                t.IsTrue(handled, "sound-driver state RPC should remain available");
++                t.Equals(resultPtr, replyAddr, "sound-driver state RPC should return the supplied reply buffer");
++                t.IsTrue(signalCompletion, "sound-driver state RPC should signal completion");
++                return readGuestU32(env.rdram.data(), replyAddr);
++            };
++            auto readIop = [&](uint32_t src, uint32_t dest, uint32_t size)
++            {
++                std::memset(env.rdram.data() + dest, 0xEE, size);
++                setRegU32(env.ctx, 4, rdAddr);
++                setRegU32(env.ctx, 5, src);
++                setRegU32(env.ctx, 6, dest);
++                setRegU32(env.ctx, 7, size);
++                ps2_stubs::sceSifGetOtherData(env.rdram.data(), &env.ctx, &env.runtime);
++                t.Equals(getRegS32(env.ctx, 2), 0, "IOP-to-EE sound transfer should succeed");
++            };
++            const uint32_t statusAddr = request(IOP_RPC_SNDDRV_GET_STATUS_ADDR);
++            t.IsTrue(statusAddr > 0u && uint64_t(statusAddr) + 0x42u <= 0x00200000u,
++                     "sound-driver status address must fit IOP RAM");
++            checkSentinels();
++            readIop(statusAddr, statusCopy, 0x42u);
++            std::array<uint8_t, 0x42> zeroStatus{};
++            t.IsTrue(std::memcmp(env.rdram.data() + statusCopy, zeroStatus.data(), zeroStatus.size()) == 0,
++                     "initial sound status should be readable through SIF");
++
++            const uint32_t tableAddr = request(IOP_RPC_SNDDRV_GET_ADDR_TABLE);
++            t.IsTrue(tableAddr > 0u && uint64_t(tableAddr) + 64u <= 0x00200000u,
++                     "sound-driver address table must fit IOP RAM");
++            readIop(tableAddr, tableCopy, 64u);
++            const uint32_t hd = readGuestU32(env.rdram.data(), tableCopy);
++            const uint32_t sq = readGuestU32(env.rdram.data(), tableCopy + 4u);
++            const uint32_t data = readGuestU32(env.rdram.data(), tableCopy + 8u);
++            const bool hdValid = hd > 0u && uint64_t(hd) + 0x4000u <= 0x00200000u;
++            t.IsTrue(hdValid, "HD buffer must fit IOP RAM");
++            t.IsTrue(sq > hd && uint64_t(sq) + 0x18000u <= 0x00200000u, "SQ buffer must fit IOP RAM");
++            t.IsTrue(data > sq && uint64_t(data) + 0x40000u <= 0x00200000u, "sound data buffer must fit IOP RAM");
++            if (hdValid)
++            {
++                std::array<uint8_t, 16> payload{};
++                payload.fill(0xA7u);
++                std::memcpy(env.rdram.data() + upload, payload.data(), payload.size());
++                const Ps2SifDmaTransfer desc{upload, hd, static_cast<int32_t>(payload.size()), 0};
++                std::memcpy(env.rdram.data() + descAddr, &desc, sizeof(desc));
++                setRegU32(env.ctx, 4, descAddr);
++                setRegU32(env.ctx, 5, 1u);
++                ps2_stubs::sceSifSetDma(env.rdram.data(), &env.ctx, &env.runtime);
++                t.IsTrue(getRegS32(env.ctx, 2) > 0, "EE-to-IOP sound upload should succeed");
++                t.IsTrue(std::memcmp(env.runtime.memory().getIOPRAM() + hd, payload.data(), payload.size()) == 0,
++                         "sound upload must write IOP backing, not EE memory at the same address");
++                readIop(hd, roundTrip, static_cast<uint32_t>(payload.size()));
++                t.IsTrue(std::memcmp(env.rdram.data() + roundTrip, payload.data(), payload.size()) == 0,
++                         "uploaded sound payload should round-trip through SIF");
++                // Transfers crossing either edge of the owned arena must fail without selecting EE fallback.
++                const uint32_t arenaEnd = data + 0x40000u;
++                if (statusAddr >= 8u && data > sq && uint64_t(arenaEnd) + 8u <= 0x00200000u)
++                {
++                    for (const uint32_t crossing : {statusAddr - 8u, arenaEnd - 8u})
++                    {
++                        std::array<uint8_t, 16> originalEe{}, originalIop{}, untouched{};
++                        std::memcpy(originalEe.data(), env.rdram.data() + crossing, originalEe.size());
++                        std::memcpy(originalIop.data(), env.runtime.memory().getIOPRAM() + crossing, originalIop.size());
++                        untouched.fill(0xCCu);
++                        std::memcpy(env.rdram.data() + roundTrip, untouched.data(), untouched.size());
++                        setRegU32(env.ctx, 4, rdAddr);
++                        setRegU32(env.ctx, 5, crossing);
++                        setRegU32(env.ctx, 6, roundTrip);
++                        setRegU32(env.ctx, 7, static_cast<uint32_t>(untouched.size()));
++                        ps2_stubs::sceSifGetOtherData(env.rdram.data(), &env.ctx, &env.runtime);
++                        t.Equals(getRegS32(env.ctx, 2), -1, "cross-boundary IOP read must be rejected");
++                        t.IsTrue(std::memcmp(env.rdram.data() + roundTrip, untouched.data(), untouched.size()) == 0,
++                                 "rejected IOP read must preserve its EE destination");
++
++                        const Ps2SifDmaTransfer invalid{upload, crossing, static_cast<int32_t>(payload.size()), 0};
++                        std::memcpy(env.rdram.data() + descAddr, &invalid, sizeof(invalid));
++                        setRegU32(env.ctx, 4, descAddr);
++                        setRegU32(env.ctx, 5, 1u);
++                        ps2_stubs::sceSifSetDma(env.rdram.data(), &env.ctx, &env.runtime);
++                        t.Equals(getRegS32(env.ctx, 2), 0, "cross-boundary sound upload must be rejected");
++                        t.IsTrue(std::memcmp(env.rdram.data() + crossing, originalEe.data(), originalEe.size()) == 0,
++                                 "rejected sound upload must preserve EE memory at the same address");
++                        t.IsTrue(std::memcmp(env.runtime.memory().getIOPRAM() + crossing, originalIop.data(), originalIop.size()) == 0,
++                                 "rejected sound upload must preserve IOP memory without partial writes");
++                    }
++                }
++                // Reinitialization retains known IOP pointers: a stale pointer must never select EE memory.
++                ps2_syscalls::SifInitRpc(env.rdram.data(), &env.ctx, &env.runtime);
++                readIop(hd, roundTrip, static_cast<uint32_t>(payload.size()));
++                t.IsTrue(std::memcmp(env.rdram.data() + roundTrip, payload.data(), payload.size()) == 0,
++                         "known sound pointer remains IOP-backed after SifInitRpc before a new state RPC");
++                checkSentinels();
++            }
++            t.Equals(request(IOP_RPC_SNDDRV_GET_STATUS_ADDR), statusAddr,
++                     "sound-driver status address should remain stable across repeated calls");
++            checkSentinels();
++            ps2_syscalls::resetSoundDriverRpcState();
++            request(IOP_RPC_SNDDRV_GET_STATUS_ADDR);
++            checkSentinels();
++        });
++    });
++}
+ void register_ps2_sif_dma_tests()
+ {
++    register_ps2_sound_driver_isolation_tests();
+     MiniTest::Case("PS2SifDma", [](TestCase &tc)
+     {
+         tc.Run("sceSifSetDma copies payload and sceSifDmaStat reports complete", [](TestCase &t)
+@@ -638,7 +773,7 @@ void register_ps2_sif_dma_tests()
+                 return ::getRegU32(&env.ctx, 2);
+             };
+ 
+-            t.Equals(getReg(0x4u), 0x00020000u, "SIF boot status register should expose ready bit by default");
++            t.Equals(getReg(0x4u) & 0x00060000u, 0x00060000u, "SIF boot status register should expose CMDINIT and BOOTEND by default");
+             t.Equals(getReg(0x80000000u), 0u, "SIF main-address register should default to zero");
+             t.Equals(getReg(0x80000001u), 0u, "SIF sub-address register should default to zero");
+             t.Equals(getReg(0x80000002u), 0u, "SIF mscom register should default to zero");
+@@ -666,7 +801,7 @@ void register_ps2_sif_dma_tests()
+                 return ::getRegU32(&env.ctx, 2);
+             };
+ 
+-            t.Equals(getReg(0x4u), 0x00020000u, "sceSifExitCmd should restore the boot-ready status bit");
++            t.Equals(getReg(0x4u) & 0x00060000u, 0x00060000u, "sceSifExitCmd should restore CMDINIT and BOOTEND");
+             t.Equals(getReg(0x80000002u), 0u, "sceSifExitCmd should clear transient mscom state");
+         });
+ 
+@@ -799,8 +934,8 @@ void register_ps2_sif_dma_tests()
+             std::memset(env.rdram.data() + kDstAddr, 0, kSize);
+             std::memset(env.rdram.data() + kRdAddr, 0, sizeof(SifRpcReceiveData));
+ 
+-            writeGuestS16(env.rdram.data(), kSrcAddr + kSeSumOffset + (kBank * 2u), static_cast<int16_t>(0x1357));
+-            writeGuestS16(env.rdram.data(), kSrcAddr + kMidiSumOffset + (kBank * 2u), static_cast<int16_t>(0x2468));
++            writeGuestS16(env.runtime.memory().getIOPRAM(), kSrcAddr + kSeSumOffset + (kBank * 2u), static_cast<int16_t>(0x1357));
++            writeGuestS16(env.runtime.memory().getIOPRAM(), kSrcAddr + kMidiSumOffset + (kBank * 2u), static_cast<int16_t>(0x2468));
+ 
+             writeGuestS16(env.rdram.data(), kPrimarySeCheckAddr + (kBank * 2u), static_cast<int16_t>(0x7B7B));
+             writeGuestS16(env.rdram.data(), kPrimaryMidiCheckAddr + (kBank * 2u), static_cast<int16_t>(0x6A6A));
+@@ -864,8 +999,8 @@ void register_ps2_sif_dma_tests()
+             std::memset(env.rdram.data() + kDstAddr, 0, kSize);
+             std::memset(env.rdram.data() + kRdAddr, 0, sizeof(SifRpcReceiveData));
+ 
+-            writeGuestS16(env.rdram.data(), kSrcAddr + kSeSumOffset + (kLiveBank * 2u), static_cast<int16_t>(0x1111));
+-            writeGuestS16(env.rdram.data(), kSrcAddr + kMidiSumOffset + (kLiveBank * 2u), static_cast<int16_t>(0x2222));
++            writeGuestS16(env.runtime.memory().getIOPRAM(), kSrcAddr + kSeSumOffset + (kLiveBank * 2u), static_cast<int16_t>(0x1111));
++            writeGuestS16(env.runtime.memory().getIOPRAM(), kSrcAddr + kMidiSumOffset + (kLiveBank * 2u), static_cast<int16_t>(0x2222));
+ 
+             writeGuestS16(env.rdram.data(), kPrimarySeCheckAddr + (kPendingBank * 2u), static_cast<int16_t>(0x3333));
+             writeGuestS16(env.rdram.data(), kPrimaryMidiCheckAddr + (kPendingBank * 2u), static_cast<int16_t>(0x4444));
+diff --git a/ps2xTest/src/ps2_sif_rpc_tests.cpp b/ps2xTest/src/ps2_sif_rpc_tests.cpp
+index 612bcbb..99a7108 100644
+--- a/ps2xTest/src/ps2_sif_rpc_tests.cpp
++++ b/ps2xTest/src/ps2_sif_rpc_tests.cpp
+@@ -92,6 +92,7 @@ namespace
+             ps2_syscalls::resetSoundDriverRpcState();
+             ps2_syscalls::clearSoundDriverCompatLayout();
+             ps2_syscalls::clearDtxCompatLayout();
++            runtime.memory().initialize();
+             std::memset(&ctx, 0, sizeof(ctx));
+         }
+     };
+@@ -261,7 +262,7 @@ void register_ps2_sif_rpc_tests()
+ 
+             const SifRpcClientData clientBeforeRegister = readGuestStruct<SifRpcClientData>(env.rdram.data(), kClientAddr);
+             t.IsTrue(clientBeforeRegister.server != 0u, "bind should allocate placeholder server when sid is missing");
+-            t.IsTrue(clientBeforeRegister.server >= 0x01F10000u && clientBeforeRegister.server < 0x01F20000u,
++            t.IsTrue(clientBeforeRegister.server >= 0x00020000u && clientBeforeRegister.server < 0x00030000u,
+                      "placeholder server should come from rpc server pool");
+             t.Equals(clientBeforeRegister.buf, 0u, "placeholder server starts with empty buf");
+             t.Equals(clientBeforeRegister.cbuf, 0u, "placeholder server starts with empty cbuf");
+@@ -379,7 +380,7 @@ void register_ps2_sif_rpc_tests()
+ 
+             setRegU32(env.ctx, 4, static_cast<uint32_t>(semaId));
+             PollSema(env.rdram.data(), &env.ctx, &env.runtime);
+-            t.Equals(getRegS32(env.ctx, 2), KE_OK, "nowait rpc should signal completion sema");
++            t.Equals(getRegS32(env.ctx, 2), semaId, "nowait rpc should signal completion sema");
+ 
+             std::memset(env.rdram.data() + kRecvAddr, 0, 16u);
+             setRegU32(env.ctx, 4, kClientAddr);
+@@ -399,7 +400,7 @@ void register_ps2_sif_rpc_tests()
+ 
+             setRegU32(env.ctx, 4, static_cast<uint32_t>(semaId));
+             PollSema(env.rdram.data(), &env.ctx, &env.runtime);
+-            t.Equals(getRegS32(env.ctx, 2), KE_OK, "each nowait rpc should signal completion sema");
++            t.Equals(getRegS32(env.ctx, 2), semaId, "each nowait rpc should signal completion sema");
+ 
+             std::memset(env.rdram.data() + kRecvAddr, 0, 16u);
+             setRegU32(env.ctx, 4, kClientAddr);
+@@ -473,9 +474,9 @@ void register_ps2_sif_rpc_tests()
+             t.IsTrue(addrTableAddr > 0u && addrTableAddr < 0x00200000u,
+                      "rpc 0x13 should return a low guest address like an IOP pointer");
+ 
+-            const uint32_t hdBaseAddr = readGuestStruct<uint32_t>(env.rdram.data(), addrTableAddr + 0u);
+-            const uint32_t sqBaseAddr = readGuestStruct<uint32_t>(env.rdram.data(), addrTableAddr + 4u);
+-            const uint32_t dataBaseAddr = readGuestStruct<uint32_t>(env.rdram.data(), addrTableAddr + 8u);
++            const uint32_t hdBaseAddr = readGuestStruct<uint32_t>(env.runtime.memory().getIOPRAM(), addrTableAddr + 0u);
++            const uint32_t sqBaseAddr = readGuestStruct<uint32_t>(env.runtime.memory().getIOPRAM(), addrTableAddr + 4u);
++            const uint32_t dataBaseAddr = readGuestStruct<uint32_t>(env.runtime.memory().getIOPRAM(), addrTableAddr + 8u);
+             t.IsTrue(hdBaseAddr > 0u && hdBaseAddr < 0x00200000u,
+                      "sound-driver hd base should stay in low guest address space");
+             t.IsTrue(sqBaseAddr > hdBaseAddr && sqBaseAddr < 0x00200000u,

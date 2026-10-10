@@ -1078,8 +1078,50 @@ void sub_0012B0D8_0x12b0d8(uint8_t*, R5900Context*, PS2Runtime*);
 static void reo_sfd_srvwake(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015FA50_0x15fa50>(r, c, p, "srv-wake(main)"); }
 static void reo_sfd_decstep(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_001725E0_0x1725e0>(r, c, p, "dec-step"); }
 static void reo_sfd_srvsleep(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0012B0D8_0x12b0d8>(r, c, p, "srv-sleep"); }
+void sub_00142FB8_0x142fb8(uint8_t*, R5900Context*, PS2Runtime*);
+// REO_SFD_DIAG: libmpeg macroblock write-back (clamp+pack into the picture buffer).
+static void reo_mpeg_writeback(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    const uint32_t a0 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[4], 0));
+    const uint32_t a1 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[5], 0));
+    auto rd = [&](uint32_t a) { uint32_t v = 0; std::memcpy(&v, rdram + (a & 0x1FFFFFFu), 4); return v; };
+    const uint32_t slot = a0 + a1 * 0x140u;
+    const uint32_t dst = rd(slot + 0x6d0), work = rd(a0 + 0x834), pred = rd(slot + 0x5ac);
+    const uint32_t f6d8 = rd(slot + 0x6d8), f6e4 = rd(slot + 0x6e4), f6e0 = rd(slot + 0x6e0), n6d4 = rd(slot + 0x6d4);
+    size_t srcNz = 0;
+    for (uint32_t i = 0; i < 768; i += 4)
+        srcNz += runtime->Load32(rdram, ctx, (f6d8 ? pred : work) + i) != 0;
+    sub_00142FB8_0x142fb8(rdram, ctx, runtime);
+    static std::atomic<int> n{0};
+    const int k = n.fetch_add(1);
+    if (k < 40 || (k % 5000) == 0) {
+        size_t nz = 0;
+        for (uint32_t i = 0; i < 384; ++i) nz += rdram[(dst + i) & 0x1FFFFFFu] != 0;
+        fprintf(stderr, "[MPEG-WB] #%d a0=0x%x buf=%u dst=0x%x work=0x%x pred=0x%x 6d8=%u 6e4=%u 6e0=%u n6d4=%u src %zu/192 words nonzero -> %zu/384 nonzero pc=0x%x\n",
+                k, a0, a1, dst, work, pred, f6d8, f6e4, f6e0, n6d4, srcNz, nz, ctx->pc);
+    }
+}
 static void reo_sfd_valid(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015FFC0_0x15ffc0>(r, c, p, "ply-valid"); }
 static void reo_sfd_seamless(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_001625D0_0x1625d0>(r, c, p, "ply-start-seamless"); }
+
+// Opt-in read-only evidence for the libmpeg scratchpad -> packed-picture path.
+void sub_00142FB8_0x142fb8(uint8_t*, R5900Context*, PS2Runtime*);
+static void reo_mpeg_picture_trace(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    static std::atomic<unsigned> count{0};
+    const unsigned n = count.fetch_add(1);
+    const uint32_t h = GPR_U32(c, 4), slot = GPR_U32(c, 5);
+    const uint32_t ra = GPR_U32(c, 31), pc = c->pc;
+    auto word = [&](uint32_t a) { return p->Load32(r, c, a); };
+    uint32_t src = 0, dst = 0;
+    if (n < 80 && slot < 2 && pc == 0x142fb8u) {
+        const uint32_t b = h + slot * 0x140u;
+        src = word(b + 0x5acu); dst = word(b + 0x6d0u);
+        std::fprintf(stderr, "[MPEG-PIC] #%u h=%08x slot=%u src=%08x dst=%08x flags=%u,%u aux=%08x src0=%08x clamp=%08x ra=%08x\n",
+                     n, h, slot, src, dst, word(b+0x6d8u), word(b+0x6e4u), word(h+0x834u), word(src), word(0x143f70u), ra);
+    }
+    sub_00142FB8_0x142fb8(r, c, p);
+    if (src && dst)
+        std::fprintf(stderr, "[MPEG-PIC] #%u returned pc=%08x dst0=%08x src0=%08x\n", n, c->pc, word(dst), word(src));
+}
 
 static void bind(PS2Runtime& runtime, uint32_t addr,
                  PS2Runtime::RecompiledFunction fn, const char* name) {
@@ -1181,7 +1223,10 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         bind(runtime, 0x1725E0, reo_sfd_decstep, "Sofdec decoder step (trace)");
         bind(runtime, 0x12B0D8, reo_sfd_srvsleep, "CRI server sleep (trace)");
         bind(runtime, 0x164038, reo_sfd_server, "Sofdec server (trace)");
+        bind(runtime, 0x142FB8, reo_mpeg_writeback, "libmpeg macroblock write-back (trace)");
     }
+    if (std::getenv("REO_MPEG_PIC_LOG"))
+        bind(runtime, 0x142FB8, reo_mpeg_picture_trace, "libmpeg packed picture (trace)");
     if (std::getenv("REO_CRILOCK_DIAG")) {
         bind(runtime, 0x12A968, reo_cri_lock, "CRI lock (trace)");
         bind(runtime, 0x12A9F0, reo_cri_unlock, "CRI unlock (trace)");
