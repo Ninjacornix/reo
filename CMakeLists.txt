@@ -1,6 +1,24 @@
 cmake_minimum_required(VERSION 3.20)
 project(reo VERSION 0.2.0 LANGUAGES C CXX)
 
+# Compiler cache: recompiling identical inputs (regenerated code, reverted changes, branch
+# switches, rebuilds forced by build-setting mistakes) is served from the cache.
+# sccache cannot cache MSVC precompiled-header compiles, so the PCH is off while it is on.
+option(REO_USE_SCCACHE "Use sccache as the C/C++ compiler launcher when found" ON)
+if(REO_USE_SCCACHE)
+    find_program(REO_SCCACHE sccache
+        HINTS "$ENV{LOCALAPPDATA}/Microsoft/WinGet/Links"
+              "$ENV{LOCALAPPDATA}/Microsoft/WinGet/Packages/Mozilla.sccache_Microsoft.Winget.Source_8wekyb3d8bbwe/sccache-v0.18.0-x86_64-pc-windows-msvc")
+    if(REO_SCCACHE)
+        set(CMAKE_C_COMPILER_LAUNCHER "${REO_SCCACHE}")
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${REO_SCCACHE}")
+        set(REO_RECOMP_PCH OFF CACHE BOOL "Precompile the runtime headers shared by all generated sources" FORCE)
+        message(STATUS "REO: compiler cache ${REO_SCCACHE} (PCH off)")
+    else()
+        message(STATUS "REO: sccache not found; building without a compiler cache")
+    endif()
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

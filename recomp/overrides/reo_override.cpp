@@ -31,6 +31,7 @@
 #include "runtime/input/input.h"
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <iostream>
 #include "reo_netbio.h"
 
@@ -953,6 +954,29 @@ static void reo_sio_thread(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtim
 // Address binding helpers
 // ═══════════════════════════════════════════════════════════════════════
 
+// REO_CRI_ERRLOG=1: CRI middleware error reporter (0x163750, "Exxxxxx ..." format + arg).
+// CRI hands errors to a game callback, not the console; log them, then run the original.
+void sub_00163750_0x163750(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
+static void reo_cri_error_log(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    auto guestStr = [&](uint32_t a) {
+        std::string out;
+        for (uint32_t i = 0; i < 160; ++i) {
+            const uint32_t p = (a + i) & 0x1FFFFFFu;
+            if (!a || rdram[p] == 0) break;
+            out.push_back(static_cast<char>(rdram[p]));
+        }
+        return out;
+    };
+    const uint32_t a0 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[4], 0));
+    const uint32_t a1 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[5], 0));
+    const uint32_t ra = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[31], 0));
+    static int n = 0;
+    if (n++ < 200)
+        fprintf(stderr, "[CRI-ERR] %s | %s (ra=0x%x)\n", guestStr(a0).c_str(),
+                (a1 > 0x100000u && a1 < 0x2000000u) ? guestStr(a1).c_str() : "", ra);
+    sub_00163750_0x163750(rdram, ctx, runtime);
+}
+
 static void bind(PS2Runtime& runtime, uint32_t addr,
                  PS2Runtime::RecompiledFunction fn, const char* name) {
     // Register in BOTH the function table (for indirect jumps/dispatch loop)
@@ -1029,6 +1053,9 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         dtx.urpcObjLimit = 0x001EFF00u;
         ps2_syscalls::setDtxCompatLayout(dtx);
     }
+
+    if (std::getenv("REO_CRI_ERRLOG"))
+        bind(runtime, 0x163750, reo_cri_error_log, "CRI error reporter (log)");
 
     // Self-execution (REO_NATURAL) / REO_NO_OVERRIDES: only the libsif HLE routes above.
     // Everything below is a stub-era override that shadows real recompiled code; with

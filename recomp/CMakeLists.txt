@@ -20,6 +20,12 @@ set(REO_RUNTIME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../runtime")
 # Hand-written sources always use /O2; only generated/overlay code uses REO_RECOMP_OPT.
 set(REO_RECOMP_OPT "/O2" CACHE STRING "MSVC optimization flag for generated recompiled code (/O2, /O1, /Od)")
 option(REO_RECOMP_PCH "Precompile the runtime headers shared by all generated sources" ON)
+# Unity build (as upstream PS2Recomp's runner does): generated sources are compiled in
+# batches, so the shared runtime headers are parsed once per batch instead of per file.
+# Batch 8 keeps a compiler process around 0.5-1 GB. Hand-written sources are never merged.
+option(REO_UNITY_BUILD "Compile generated sources as unity batches" ON)
+set(REO_UNITY_BATCH 8 CACHE STRING "Generated sources per unity batch")
+set(REO_UNITY_MAX_FILE 500000 CACHE STRING "Generated sources larger than this (bytes) are not merged")
 # Escape hatch: generated files compiled with /Od regardless of REO_RECOMP_OPT, for
 # pathological translation units. Runtime cost: the listed functions are unoptimized.
 set(REO_RECOMP_OD_SOURCES "" CACHE STRING
@@ -86,6 +92,14 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     # Code overlays extracted from the user's ISO and recompiled per overlay
     # (tools/overlay_extract.py, tools/overlay_recomp.py); dispatched by resident overlay id.
+    # Extra main-ELF entry points the Ghidra map merged into neighbours (tools/extra_recomp.py).
+    set(EXTRA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_extra")
+    if(EXISTS "${EXTRA_DIR}/register_extra.cpp")
+        file(GLOB EXTRA_SOURCES CONFIGURE_DEPENDS "${EXTRA_DIR}/*.cpp")
+        list(APPEND OVERLAY_SOURCES ${EXTRA_SOURCES})
+        set(REO_HAVE_EXTRA ON)
+    endif()
+
     set(OVL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_ovl")
     if(EXISTS "${OVL_DIR}/register_overlays.cpp")
         file(GLOB OVL_SOURCES CONFIGURE_DEPENDS "${OVL_DIR}/*.cpp" "${OVL_DIR}/*/*.cpp")
@@ -143,9 +157,9 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             # Parallel compilation (limit to 4 cores to avoid OOM); Ninja uses -j instead
             target_compile_options(${TARGET_NAME} PRIVATE /MP4)
         endif()
-        set_source_files_properties(${RECOMP_SOURCES} ${OVERLAY_SOURCES}
-            TARGET_DIRECTORY ${TARGET_NAME}
-            PROPERTIES COMPILE_OPTIONS "${REO_RECOMP_OPT}")
+        # Target-wide (not per source): CMake never merges sources that carry their own
+        # COMPILE_OPTIONS into unity batches. Hand-written sources override it below.
+        target_compile_options(${TARGET_NAME} PRIVATE ${REO_RECOMP_OPT})
         foreach(_od_name IN LISTS REO_RECOMP_OD_SOURCES)
             foreach(_src IN LISTS RECOMP_SOURCES OVERLAY_SOURCES)
                 get_filename_component(_src_name "${_src}" NAME)
@@ -185,6 +199,36 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     if(REO_HAVE_OVL)
         target_compile_definitions(${TARGET_NAME} PRIVATE REO_HAVE_OVL=1)
+    endif()
+    if(REO_HAVE_EXTRA)
+        # Only the bootstrap needs it; a target-wide define would rebuild every source.
+        set_property(SOURCE reo_bootstrap.cpp TARGET_DIRECTORY ${TARGET_NAME}
+                     APPEND PROPERTY COMPILE_DEFINITIONS REO_HAVE_EXTRA=1)
+    endif()
+
+    if(REO_UNITY_BUILD)
+        set_target_properties(${TARGET_NAME} PROPERTIES
+            UNITY_BUILD ON
+            UNITY_BUILD_BATCH_SIZE ${REO_UNITY_BATCH})
+        set_source_files_properties(${_reo_handwritten_sources}
+            TARGET_DIRECTORY ${TARGET_NAME}
+            PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+        # Very large generated functions compile alone: merged, they spike a compiler
+        # process to several GB.
+        set(_reo_big_sources "")
+        foreach(_src IN LISTS RECOMP_SOURCES OVERLAY_SOURCES)
+            file(SIZE "${_src}" _sz)
+            if(_sz GREATER ${REO_UNITY_MAX_FILE})
+                list(APPEND _reo_big_sources "${_src}")
+            endif()
+        endforeach()
+        list(LENGTH _reo_big_sources _reo_big_count)
+        message(STATUS "REO [${TARGET_NAME}]: ${_reo_big_count} generated sources > ${REO_UNITY_MAX_FILE} bytes compile outside unity batches")
+        if(_reo_big_sources)
+            set_source_files_properties(${_reo_big_sources}
+                TARGET_DIRECTORY ${TARGET_NAME}
+                PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+        endif()
     endif()
     target_compile_definitions(${TARGET_NAME} PRIVATE
         _CRT_SECURE_NO_WARNINGS

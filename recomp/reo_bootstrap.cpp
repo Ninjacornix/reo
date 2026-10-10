@@ -14,6 +14,7 @@
  */
 
 #include "ps2_runtime.h"
+#include "ps2_debug_panel.h"
 #include "ps2_recompiled_functions.h"
 #include "game_overrides.h"
 #include <cstdio>
@@ -34,7 +35,11 @@ extern void registerOverlayFunctions(PS2Runtime& runtime);
 #ifdef REO_HAVE_OVL
 extern void reoRegisterOverlays(PS2Runtime& runtime);   // recomp/config/output_ovl (BIN/*.DAT)
 #endif
+#ifdef REO_HAVE_EXTRA
+extern void reoRegisterExtraFunctions(PS2Runtime& runtime);  // recomp/config/output_extra
+#endif
 extern void reoPad2Stop();                               // overrides/reo_hw_bridge.cpp
+extern void reoDebugPanelText(std::string& out);         // overrides/reo_hw_bridge.cpp, see ps2_debug_panel.h
 
 struct GameDef {
     const char* name;
@@ -380,6 +385,9 @@ int main(int argc, char* argv[]) {
 #ifdef REO_HAVE_OVL
     reoRegisterOverlays(runtime);
 #endif
+#ifdef REO_HAVE_EXTRA
+    reoRegisterExtraFunctions(runtime);
+#endif
     printf("[BOOT] All functions registered.\n");
 
     // Re-apply game overrides AFTER function registration.
@@ -398,6 +406,7 @@ int main(int argc, char* argv[]) {
     reoStartStackDump();
     reoStartShots(&runtime);
 #endif
+    ps2SetDebugPanelProvider(reoDebugPanelText);
     runtime.run();
     reoPad2Stop();   // feeder writes guest RAM; stop it before the runtime is destroyed
 

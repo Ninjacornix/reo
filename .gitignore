@@ -94,3 +94,4 @@ reo_fb_dump.bmp
 # Recompiled code overlays: generated locally from the user's ISO
 # (tools/overlay_extract.py + tools/overlay_recomp.py --maps recomp/config/overlay_maps)
 recomp/config/output_ovl/
+recomp/config/output_extra/

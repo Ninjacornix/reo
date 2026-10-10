@@ -772,6 +772,7 @@ struct Pad2Feeder {
     std::thread thread;
     struct Press { double t, hold; uint16_t mask; };
     std::vector<Press> script;
+    std::atomic<uint16_t> lastPressed{0};   // for the debug panel
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
 };
 Pad2Feeder g_pad2;
@@ -817,6 +818,23 @@ void pad2FeederLoop() {
         uint16_t pressed = 0;
         for (const auto& pr : g_pad2.script)
             if (now >= pr.t && now < pr.t + pr.hold) pressed |= pr.mask;
+        // Live input (runtime/input: keyboard and XInput, same bit order), only while this
+        // process owns the foreground window so typing elsewhere does not press buttons.
+        if (ReoHwBridge* br = ReoHwBridge::instance()) {
+            if (reo::Input* in = br->input()) {
+                bool focused = true;
+#ifdef _WIN32
+                DWORD pid = 0;
+                if (HWND fg = GetForegroundWindow()) GetWindowThreadProcessId(fg, &pid);
+                focused = (pid == GetCurrentProcessId());
+#endif
+                if (focused) {
+                    in->update();
+                    pressed |= (uint16_t)~in->get_pad(0).buttons;
+                }
+            }
+        }
+        g_pad2.lastPressed = pressed;
         const uint16_t data = (uint16_t)~pressed;   // active-low
         std::vector<uint32_t> socks;
         uint8_t* rd = nullptr;
@@ -877,6 +895,44 @@ void pad2SetWorkAddr(uint8_t* rdram, uint32_t addr) {
     fprintf(stderr, "[PAD2] dbc work area 0x%08X\n", addr);
 }
 } // namespace
+
+// Debug-panel lines (PS2Runtime::setDebugPanelProvider, installed by reo_bootstrap.cpp).
+void reoDebugPanelText(std::string& out) {
+    static const char* names[16] = {"SELECT","L3","R3","START","UP","RIGHT","DOWN","LEFT",
+                                    "L2","R2","L1","R1","TRI","CIRCLE","CROSS","SQUARE"};
+    const uint16_t p = g_pad2.lastPressed.load();
+    out += "pad:";
+    if (!p) out += " -";
+    for (int i = 0; i < 16; ++i)
+        if (p & (1u << i)) { out += ' '; out += names[i]; }
+    out += '\n';
+    char line[128];
+    uint8_t* rd = nullptr;
+    size_t sockets = 0;
+    { std::lock_guard<std::mutex> l(g_pad2.m); rd = g_pad2.rdram; sockets = g_pad2.sockets.size(); }
+    std::snprintf(line, sizeof(line), "pad sockets %zu  script presses %zu",
+                  sockets, g_pad2.script.size());
+    out += line; out += '\n';
+    if (rd) {
+        uint32_t keys = 0;
+        std::memcpy(&keys, rd + 0x324218, 4);   // system keys (held), sub_001B0DB0
+        std::snprintf(line, sizeof(line), "game pad state %u  sys keys %04X", rd[0x2B0A10], keys & 0xFFFF);
+        out += line; out += '\n';
+        // Resident code overlays (MWo3 header: +4 id, +0x1C name), see tools/overlay_extract.py.
+        for (uint32_t base : {0x370000u, 0x570000u, 0x6E0000u, 0x810000u}) {
+            if (std::memcmp(rd + base, "MWo3", 4) != 0) continue;
+            uint32_t id = 0;
+            std::memcpy(&id, rd + base + 4, 4);
+            char name[17] = {};
+            std::memcpy(name, rd + base + 0x1C, 16);
+            std::snprintf(line, sizeof(line), "ovl %06X: id %u %s", base, id, name);
+            out += line; out += '\n';
+        }
+    }
+    out += "keys: WASD dpad  Space X  E O\n"
+           "      Q []  R /\\  Enter START\n"
+           "      Bksp SELECT  1/2 L1/R1  3/4 L2/R2\n";
+}
 
 // Stop the pad feeder before guest RAM goes away (reo_bootstrap.cpp, after runtime.run()).
 void reoPad2Stop() {
@@ -1071,7 +1127,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
     // sees them done. Sector data comes from the disc image (reo::CDVD, REO_ISO).
     case 0x80000593: { // S-commands
         static int sLog = 0;
-        if (sLog++ < 40) fprintf(stderr, "[HW-BRIDGE:CDS] fn=0x%x\n", rpcNum);
+        static const bool cdLogAll = std::getenv("REO_CD_LOG") != nullptr; // unlimited CD RPC log
+        if (cdLogAll || sLog++ < 40) fprintf(stderr, "[HW-BRIDGE:CDS] fn=0x%x\n", rpcNum);
         uint32_t r0 = 1, r1 = 0;
         switch (rpcNum) {
         case 0x03: r0 = 0x14; break;   // GetDiskType: PS2 DVD
@@ -1095,12 +1152,14 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
             if (self && self->m_cdvd && a1 != 0 && a1 <= 0x4000 &&
                 static_cast<uint64_t>(dst) + static_cast<uint64_t>(a1) * 2048u <= PS2_RAM_SIZE)
                 ok = self->m_cdvd->read_sectors(a0, a1, rdram + dst);
-            if (nLog++ < 60)
+            static const bool cdLogAllN = std::getenv("REO_CD_LOG") != nullptr;
+            if (cdLogAllN || nLog++ < 60)
                 fprintf(stderr, "[HW-BRIDGE:CDN] read lsn=%u n=%u dst=0x%08X -> %s\n", a0, a1, a2, ok ? "ok" : "FAIL");
             if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, 0);
             return true;
         }
-        if (nLog++ < 60) fprintf(stderr, "[HW-BRIDGE:CDN] fn=0x%x args=%08X %08X %08X\n", rpcNum, a0, a1, a2);
+        static const bool cdLogAllF = std::getenv("REO_CD_LOG") != nullptr;
+        if (cdLogAllF || nLog++ < 60) fprintf(stderr, "[HW-BRIDGE:CDN] fn=0x%x args=%08X %08X %08X\n", rpcNum, a0, a1, a2);
         uint32_t r0 = 1;
         if (rpcNum == 0x0E) r0 = 2; // NDiskReady: ready
         if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, r0);
