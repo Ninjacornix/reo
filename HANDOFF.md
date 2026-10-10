@@ -75,4 +75,7 @@ tools\smoke_test.ps1 -Iso "iso\Resident Evil - Outbreak (v2.00).iso" -Seconds 13
 - `REO_GS_NO_FASTPATH=1`: disables the D37 sprite fast paths (A/B checks).
 - `REO_STACKDUMP_AT=<s>` with `REO_STACKDUMP_N=<n>`: n host stack samples 20 ms apart. Symbolize them with a `/MAP` link of the same objects.
 - `REO_SPR_LOG=1`, `REO_IPU_LOG=1`, `REO_MPEG_PIC_LOG=1` (Codex), `REO_SFD_DIAG=1`: movie path diagnostics.
-- Self-tests: `tools\ipu_selftestun.bat` (all pass), `toolsuntime_selftestun.bat` (26/26).
+- Self-tests: `tools/ipu_selftest/run.bat` (all pass), `tools/runtime_selftest/run.bat` (26/26).
+un.bat` (all pass), `tools
+untime_selftest
+un.bat` (26/26).
