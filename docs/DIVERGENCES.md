@@ -427,6 +427,7 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 
 - The game called eight libmpeg per-macroblock routines through the pointer table at `0x22A6B8`: `0x1431D8`, `0x143250`, `0x143470`, `0x143520`, `0x1437D0`, `0x143870`, `0x143AE8`, `0x143BC0`. Ghidra had merged them into `sub_00142FB8`, giving about 3,700 "Function not found" warnings and a black screen.
 - `recomp/config/extra_functions.csv` plus `tools/extra_recomp.py` compile them into `recomp/config/output_extra/` (`x_` names, own header), registered after the main table. This avoids regenerating the main output, whose shared header would force a full rebuild. To be folded into the main map at the next full regeneration.
+- 2026-10-10: the table holds **16** routines; the other 8 (`0x1432E8`, `0x1433A0`, `0x1435D8`, `0x1436D0`, `0x143920`, `0x143A00`, `0x143C90`, `0x143DB0`, each after a `jr ra`) were still inside the D32 ranges. That caused about 2,500 warnings per run once the movie started. The CSV now lists all 16, and run `mv-a` logs 0 warnings and still reaches the menu. The title movie is still uniform green, so these routines were not the cause.
 
 ## D33: Sofdec intro movie stalls (intermittent) — superseded by D34
 
