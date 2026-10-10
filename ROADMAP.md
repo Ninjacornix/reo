@@ -38,7 +38,7 @@ Evidence: `docs/DIVERGENCES.md` → "Milestone-1 checkpoint — main menu reache
 **Exit:** observed menu transition and stable task progression after pressing Start, with a repeatable trace/checkpoint. — **Met (2026-10-10):** Start on the title screen reaches the main menu (SINGLE PLAY … HDD INSTALL) in 5 of 5 runs, frame hash `2cf69504`, with the frame loop alive through 125 s.
 
 **Known gaps carried into M2:**
-- The title movie shows uniform green: picture buffers are never decoded. There are 8 missing CRI mid-function entry points (`0x1432e8` …) and the IPU data path is unverified.
+- The title movie decodes correctly (D36) but plays at ~17–23 fps; the streams declare 29.97 fps (MPEG sequence headers on the disc, 512×448 title movies and 512×320 cutscenes). Full-speed FMV is a Milestone 3 item; see D37 and `HANDOFF.md`.
 - Menu selection input is untested.
 
 ## Milestone 2 — Reach one scenario room (vertical slice)
