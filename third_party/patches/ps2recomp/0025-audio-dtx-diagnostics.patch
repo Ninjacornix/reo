@@ -1,0 +1,101 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+index 03d881f..43e5c0f 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -699,6 +699,7 @@ namespace ps2_syscalls
+             return true;
+         }
+ 
++        std::atomic<uint64_t> g_dbgRnaConsumedBytes{0}; // [perf] PCM bytes "played" by PS2RNA
+         void dtxAppendToSjrmtData(uint8_t *rdram, DtxSjrmtState &state, uint32_t srcDataAddr, uint32_t requestedLen)
+         {
+             if (!rdram)
+@@ -738,6 +739,21 @@ namespace ps2_syscalls
+             }
+ 
+             const uint32_t consumed = std::min(cap, state.dataBytes);
++            g_dbgRnaConsumedBytes.fetch_add(consumed, std::memory_order_relaxed);
++            {
++                static auto s_last = std::chrono::steady_clock::now();
++                static uint64_t s_lastBytes = 0;
++                const auto now = std::chrono::steady_clock::now();
++                if (now - s_last >= std::chrono::seconds(1))
++                {
++                    const uint64_t b = g_dbgRnaConsumedBytes.load();
++                    std::fprintf(stderr, "[PS2RNA-rate] %llu bytes/s consumed\n",
++                                 static_cast<unsigned long long>((b - s_lastBytes) * 1000ull /
++                                     static_cast<uint64_t>(std::max<int64_t>(1, std::chrono::duration_cast<std::chrono::milliseconds>(now - s_last).count()))));
++                    s_last = now;
++                    s_lastBytes = b;
++                }
++            }
+             state.readPos = (state.readPos + consumed) % cap;
+             state.dataBytes -= consumed;
+             state.roomBytes = std::min(cap, state.roomBytes + consumed);
+@@ -769,6 +785,10 @@ namespace ps2_syscalls
+                     dtxConsumeSjrmtDataLocked(it->second);
+                 };
+ 
++                static std::atomic<int> s_rnaLogs{0};
++                if (s_rnaLogs.fetch_add(1) < 6)
++                    std::fprintf(stderr, "[PS2RNA] handle=0x%x ch=%u sfreq=%u vol=0x%x sj0=0x%x sj1=0x%x\n", rna.handle,
++                                 rna.channelCount, rna.sampleFreq, rna.volume, rna.sjHandle0, rna.sjHandle1);
+                 consumeHandle(rna.sjHandle0);
+                 consumeHandle(rna.sjHandle1);
+             }
+@@ -817,6 +837,12 @@ namespace ps2_syscalls
+                 std::memcpy(&chunkDataAddr, cmdPtr + 8u, sizeof(chunkDataAddr));
+                 std::memcpy(&chunkLen, cmdPtr + 12u, sizeof(chunkLen));
+ 
++                {
++                    static std::atomic<int> s_sjxLogs{0};
++                    if (s_sjxLogs.fetch_add(1) < 40)
++                        std::fprintf(stderr, "[SJX-cmd] cmd=%u line=%u xid=%u sjx=0x%x data=0x%x len=0x%x known=%d\n", cmdNo, cmdLine, cmdXid,
++                                     sjxHandle, chunkDataAddr, chunkLen, g_dtx_sjx_by_handle.count(sjxHandle) ? 1 : 0);
++                }
+                 if (cmdNo != 0u || chunkLen == 0u)
+                 {
+                     continue;
+@@ -895,6 +921,12 @@ namespace ps2_syscalls
+                 std::memcpy(&rnaHandle, cmdPtr + 4u, sizeof(rnaHandle));
+                 std::memcpy(&arg1, cmdPtr + 8u, sizeof(arg1));
+                 std::memcpy(&arg2, cmdPtr + 12u, sizeof(arg2));
++                {
++                    static std::atomic<int> s_rnaCmdLogs{0};
++                    if (s_rnaCmdLogs.fetch_add(1) < 40)
++                        std::fprintf(stderr, "[PS2RNA-cmd] cmd=%u handle=0x%x arg1=0x%x arg2=0x%x known=%d\n", cmdNo, rnaHandle, arg1, arg2,
++                                     g_dtx_ps2rna_by_handle.count(rnaHandle) ? 1 : 0);
++                }
+ 
+                 auto it = g_dtx_ps2rna_by_handle.find(rnaHandle);
+                 if (it == g_dtx_ps2rna_by_handle.end())
+@@ -1013,6 +1045,29 @@ namespace ps2_syscalls
+ 
+         (void)writeGuestU32(rdram, footerTicketAddr, ticketNo + 1u);
+ 
++        {
++            // REO_DTX_DUMP=1: hex-dump the first non-empty DTX packets of each channel.
++            static const bool s_dump = std::getenv("REO_DTX_DUMP") != nullptr;
++            static std::atomic<int> s_dumps[2]{};
++            const uint8_t *pk = getConstMemPtr(rdram, matched.eeWorkAddr);
++            if (s_dump && pk && matched.dtxId < 2u)
++            {
++                bool any = false;
++                for (uint32_t i = 0; i < 64u; ++i)
++                    any |= pk[i] != 0u;
++                if (any && s_dumps[matched.dtxId].fetch_add(1) < 6)
++                {
++                    std::fprintf(stderr, "[DTX-dump] id=%u ee=0x%x:", matched.dtxId, matched.eeWorkAddr);
++                    for (uint32_t i = 0; i < 96u; i += 4u)
++                    {
++                        uint32_t w;
++                        std::memcpy(&w, pk + i, 4);
++                        std::fprintf(stderr, " %08x", w);
++                    }
++                    std::fprintf(stderr, "\n");
++                }
++            }
++        }
+         if (matched.dtxId == 0u)
+         {
+             dtxApplySjxPayload(rdram, matched);

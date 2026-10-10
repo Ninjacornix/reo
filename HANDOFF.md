@@ -61,7 +61,10 @@ tools\smoke_test.ps1 -Iso "iso\Resident Evil - Outbreak (v2.00).iso" -Seconds 13
 ## Suggested next steps
 
 User-reported problems still open (user rule: no Milestone 2 until they are solved):
-1. **Movie/menu audio is silent** (demonstration video has no music). Not investigated yet: check the IOP sound driver HLE / SPU2 / audio backend.
+1. **Movie/menu audio is silent** (in progress, 2026-10-11). Findings:
+   - CRI audio output goes EE → DTX mailboxes (`sceSifSetDma` to IOP work areas 0xdf140/0xf4040, 0x880-byte packets) → SJX (stream transfer, DTX id 0) → SJRMT ring buffers → PS2RNA output (DTX id 1). Upstream emulates this in `Kernel/Syscalls/RPC.cpp`; its PS2RNA "playback" only discards data, so audio would also need a host output path (raylib `InitAudioDevice` is already initialised).
+   - In practice the game creates 3 PS2RNA streams (2 stereo, 1 mono) and 5 SJX/SJRMT pairs, then the DTX mailboxes run only 8 rounds each during startup with **empty packets** and go silent. No SJX data or PS2RNA START command is ever sent; no CRI errors (`REO_CRI_ERRLOG`).
+   - Next: trace the EE-side ADXT/PS2RNA server (why it never streams). Diagnostics: `[PS2RNA-cmd]`, `[SJX-cmd]`, `[PS2RNA]`, `[PS2RNA-rate]` lines, `REO_DTX_DUMP=1` (packet hex dumps).
 2. Done (D42): rendering continues while dragging (Win32 modal timer).
 3. Done (D43): logo fades run in real time.
 4. **Scenario select (SINGLE PLAY) lags.** Not profiled yet; use the `[perf]` sprite mix plus `REO_STACKDUMP_*`.
