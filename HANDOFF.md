@@ -1,12 +1,13 @@
 # Handoff: REO (Resident Evil Outbreak File #1 → native Windows)
 
-Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D37 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
+Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D38 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
 
 ## Where things stand
 
 - **Milestone 1 is done.** With real Start presses and no bypasses, the game goes: memory-card prompt → logos → content warning → title movie → **main menu** (SINGLE PLAY … HDD INSTALL). This held in 5 of 5 runs (frame hash `2cf69504`). The checkpoint table and exact command are in `docs/DIVERGENCES.md`.
 - **The title movie plays with real images** and the main menu shows over it. The green was D36: sound-driver HLE zeroed EE RAM over the game's code (fixed by Codex, patch 0020).
-- **The movie runs at ~17–23 fps** (full speed is ~30) after the GS sprite fast path (D37); it was ~10. The `[perf]` heartbeat line shows frames/s and per-thread CPU time.
+- **The movie runs at full speed (~29.2 fps average; the streams declare 29.97)** with the GS worker thread (D37, patch 0021). The stray `ResetEE` calls are fixed (D38). The `[perf]` heartbeat line shows frames/s and per-thread CPU time.
+- **User rule:** do not start Milestone 2 until the user agrees that the M1-era problems are solved.
 - **Next milestone (M2):** menu selection input (untested), then load one File #1 scenario.
 
 ## Build
@@ -59,20 +60,18 @@ tools\smoke_test.ps1 -Iso "iso\Resident Evil - Outbreak (v2.00).iso" -Seconds 13
 
 ## Suggested next steps
 
-1. **Movie speed (D37).** Measure with the `[perf]` line, using `REO_TURBO=8;REO_TURBO_UNTIL=0x22F18C` to skip the boot logos. Options, by expected payoff:
-   - Run the GS on a worker thread (queue GIF packets, MTGS-style) so drawing stops holding the guest CPU and IO locks; sync on GS register reads and readback.
-   - Profile the decoder thread (~30 ms CPU per frame): IPU VLC/IDCT emulation, the libmpeg recompiled code, and scheduler hand-offs per macroblock.
-   - Fix the main thread blocking on GS `m_stateMutex` (present-thread contention) while it holds the guest lock.
-   - Fill sprites per page or block instead of a swizzle address per pixel.
-2. **`ResetEE` from interrupt context** (D36 note): recheck now that the RAM corruption is fixed.
-3. **Menu input.** Script CROSS on SINGLE PLAY, then follow the next screen transition (M2).
-4. **Regression fixture.** Add a unit test for the thread wake/suspend state machine (the D34 regression).
-5. **Housekeeping.** Fold `extra_functions.csv` into the main map at the next full regeneration.
+1. **Confirm with the user** that the FMV speed and stability are acceptable before Milestone 2.
+2. **Audio:** check whether the movie's audio track plays and stays in sync (not yet verified).
+3. **GS worker hardening:** worker shutdown on exit; watch for any GS state read that bypasses the drain (privileged CSR reads go through the shared register struct and are not drained).
+4. **Menu input (M2, after approval).** Script CROSS on SINGLE PLAY, then follow the next screen transition.
+5. **Regression fixture.** Add a unit test for the thread wake/suspend state machine (D34).
+6. **Housekeeping.** Fold `extra_functions.csv` into the main map at the next full regeneration.
 
 ## New switches (2026-10-10)
 
 - `REO_TURBO=<2..16>`, `REO_TURBO_UNTIL=<guest addr>`: test-only vblank fast-forward (boot logos); returns to normal speed when the word becomes nonzero.
 - `REO_GS_NO_FASTPATH=1`: disables the D37 sprite fast paths (A/B checks).
+- `REO_GS_THREAD=0`: runs the GS synchronously instead of on the worker thread (default on).
 - `REO_STACKDUMP_AT=<s>` with `REO_STACKDUMP_N=<n>`: n host stack samples 20 ms apart. Symbolize them with a `/MAP` link of the same objects.
 - `REO_SPR_LOG=1`, `REO_IPU_LOG=1`, `REO_MPEG_PIC_LOG=1` (Codex), `REO_SFD_DIAG=1`: movie path diagnostics.
 - Self-tests: `tools/ipu_selftest/run.bat` (all pass), `tools/runtime_selftest/run.bat` (26/26).
