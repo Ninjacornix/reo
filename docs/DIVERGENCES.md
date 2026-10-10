@@ -428,32 +428,32 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - The game called eight libmpeg per-macroblock routines through the pointer table at `0x22A6B8`: `0x1431D8`, `0x143250`, `0x143470`, `0x143520`, `0x1437D0`, `0x143870`, `0x143AE8`, `0x143BC0`. Ghidra had merged them into `sub_00142FB8`, giving about 3,700 "Function not found" warnings and a black screen.
 - `recomp/config/extra_functions.csv` plus `tools/extra_recomp.py` compile them into `recomp/config/output_extra/` (`x_` names, own header), registered after the main table. This avoids regenerating the main output, whose shared header would force a full rebuild. To be folded into the main map at the next full regeneration.
 
-## D33: Sofdec intro movie stalls (intermittent) — OPEN, current blocker
+## D33: Sofdec intro movie stalls (intermittent) — superseded by D34
 
 - Symptom: black screen after the CAPCOM logo; main thread at `0x12AAC0` (server handshake).
-- Mechanism (RAM dump at 70 s plus Ghidra):
-  - Server group 6 (`0x264820`, worker thread 7, `0x12AE50`) runs only the Sofdec decode server `sub_00163E20`. It ran 3.2 million passes, always "busy".
-  - Busy because MPEG decoder handle `0xDE6E20` (table `0x22F18C`) sits in state 1 with a pending request (`+0x44`) and input state `+0x4C = 1`.
-  - The player start (`FUN_0015efb8` → `0x15EE48`) sets the input state to 3. The decoder's state 4 handler (`FUN_00172b68` → `FUN_00173130`) then resets it to 1 via `FUN_00173c10` when one of four end-of-playback checks fires: stop time, end flags, input EOF, or play time past the stream length (`0x1731A0`/`0x173210`/`0x1732D8`/`0x173330`).
-  - Hypothesis: Sofdec's playback clock (audio/vsync time source) gives a wrong time, so playback "ends" at once.
-- Ruled out: CRI errors (`REO_CRI_ERRLOG=1` logs none), missing CD data (the movie is read from NETBIO01 into the player work area), and the IPU (only init commands reach it in failing runs).
+- The "busy" decoder (`0xDE6E20` in state 1 with a pending request) and the end-of-playback hypothesis below were consequences of D34, not its cause.
+- Original notes: server group 6 (`0x264820`, worker thread 7, `0x12AE50`) runs only the Sofdec decode server `sub_00163E20`, which reported "busy" for millions of passes. The end-of-playback checks are `0x1731A0`/`0x173210`/`0x1732D8`/`0x173330`.
 
-## D34: CRI server handshake under the global priority lock — OPEN, current blocker
+## D34: WakeupThread queued a wakeup for a sleeping+suspended thread instead of releasing it — FIXED
 
-- D33 refined: the Sofdec decoder is never started. The player's seamless start (`0x1625D0` → `0x15F270`) first runs `0x15F2F0`, which pauses decoding and runs one server-group-6 pass synchronously (`FUN_001637e8` → `FUN_0012aa60`). That handshake unwinds (preemption, `PC != RA`) and never returns.
-- `FUN_0012aa60`:
-  - raises the server thread (thread 7, priority 25) to `DAT_00210460 = 1`;
-  - wakes/resumes it in a loop until it clears `0x210484`;
-  - restores its priority.
-  The main thread enters it while holding CRI's global lock `FUN_0012a968`/`FUN_0012a9f0`. That lock is a count at `0x210480` with one global saved priority at `0x217D70`. It raises the owner to priority 1, resumes helper `DAT_002104d8` on 0→1 and suspends it on 1→0.
-- With strict EE priority semantics (no equal-priority preemption; Play! `PS2OS.cpp` behaves the same), main and thread 7 both sit at priority 1 and main spins. That is reproducible 2/2 (`base-a`/`base-b`).
-- An equal-priority rotation heuristic got the movie running briefly, but corrupts the lock's single saved priority: thread 7 ends at priority 1 permanently and starves main. Kept opt-in only (`REO_SPIN_ROTATE=1`).
-- Next: ground truth from PCSX2 (installed at `C:/Users/Ninjacornix/ps2`), via Pine IPC or a debugger, at this handshake. Questions: the main priority, whether thread 7 runs, and the value of `DAT_002104d8`.
-- Diagnostics:
-  - `REO_SFD_DIAG` (Sofdec lifecycle and end checks);
-  - `REO_CRILOCK_DIAG` (heavy, distorts timing);
-  - `REO_THREAD_LOG` (priority changes, thread erasures);
-  - heartbeat `spinY`, `acq1/5/6/7`, `t1`/`t7` (priority/suspended/waiting), `ww`.
+- **Symptom:** black/green screen after the content warning; main at `0x12AAC0` inside CRI's server handshake `FUN_0012aa60`. Before 0019 it reproduced in every clean run (2/2 `base-a`/`base-b`).
+- **Mechanism (raw disassembly, not just decompiler output):**
+  - The player's seamless start (`0x1625D0` → `0x15F270` → `0x15F2F0` → `FUN_001643b0`) closes the Sofdec decode gate (`0x22DE58+0x24`). It then runs one server-group-6 pass synchronously through `FUN_0012ab38` → `FUN_0012aa60(worker 7, 25)`.
+  - `FUN_0012aa60` sets `0x210484 = 1` and raises worker 7 to priority 1. It then loops: `ReferThreadStatus`, then `WakeupThread` if the status is WAIT(4)/WAITSUSPEND(0xC), then `ResumeThread` if the status is SUSPEND(8)/WAITSUSPEND, until `0x210484 == 0`.
+  - The worker loop (`0x12AE50`) runs a pass. If `0x210484 == 1` it clears the flag and **sleeps** (`0x12AED8`). Otherwise it loops again without sleeping while the pass reports busy. With the gate closed, the freshly created decoder (state 1, request pending) is always busy.
+  - Worker 7 sleeps while suspended (WAITSUSPEND). Our `WakeupThread` released only status WAIT, so for WAITSUSPEND it *queued* a wakeup count. That stale count made the worker's handshake `SleepThread` return immediately. The worker then spun busy at priority 1 and starved main (priority 24), so main never saw the cleared flag.
+- **Reference (PCSX2 2.x, same ISO, PINE probe `pcsx2_sfd_probe.py`):**
+  - The same decoder address `0xDE6E20` is created with `+0x44=1, +0x48=1`.
+  - The pause's pass returns while the decoder is still pending: pass counter `0x22A610` 1647 → 1648, then player state `+0x13C = 2`.
+  - The next pass steps the decoder (`+0x44=0, +0x48=2`, counter 1649).
+  - The worker does not spin: about one pass per sample.
+- **Fix (PS2Recomp patch 0019):** `WakeupThread`/`iWakeupThread` release a sleeper whose status is WAIT *or* WAITSUSPEND; it becomes SUSPEND, as on the EE kernel.
+- **Also in 0019 (opt-in, not needed for the checkpoint):** `REO_IMMEDIATE_SWITCH=1` makes WakeupThread, ResumeThread and ChangeThreadPriority hand the CPU to a newly ready thread of strictly higher priority before returning. PS2Tek documents this as "forces a thread reschedule". The A/B run `rs-noswitch` reached the menu without it.
+- **Earlier wrong turn:** I first assumed equal-priority starvation under the CRI lock. The heartbeat (`t1=24`) disproved it. The `REO_SPIN_ROTATE` heuristic remains opt-in and should not be used.
+- **Diagnostics:**
+  - `REO_SFD_DIAG` (Sofdec lifecycle, server pass, decoder step, server sleep/wake);
+  - `REO_THREAD_LOG` (priority changes, thread erasures, `[THOP]` wake/resume/suspend/sleep of thread 7);
+  - heartbeat `pc5/6/7` (live PC of the CRI threads; `[hot]` samples only the main thread's context).
 
 ## D35: DMAC interrupts could not be delivered while an INTC handler busy-waited — FIXED
 
@@ -464,6 +464,26 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 ## Milestone-1 checkpoint (observed)
 
 - `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.
+
+## Milestone-1 checkpoint — main menu reached (2026-10-10)
+
+- **Commit:** this commit (base `3ac9e61`) with PS2Recomp patches 0001–0019. ISO: `Resident Evil - Outbreak (v2.00).iso`, SLUS-20765 (sha256 prefix `69ae2c48e6f01e26`). Windows 11, MSVC 19.43, Ninja Release build.
+- **Command:**
+  ```
+  tools\smoke_test.ps1 -Iso <iso> -Seconds 130 -Label m1-a -Env 'REO_NATURAL=1;REO_PAD_SCRIPT=21:LEFT:0.5,24:CROSS:0.5,85:START:0.3,88:START:0.3,...,112:START:0.3;REO_SHOT_AT=80,100,115,125'
+  ```
+  The script presses Start every 3 s from 85 s to 112 s. LEFT+CROSS answers the memory-card prompt.
+
+| run | 80 s | 100 s | 115 s | 125 s | main at end |
+|---|---|---|---|---|---|
+| m1-a | `618d8e04` movie (green) | `2cf69504` **main menu** | `2cf69504` | `2cf69504` | frame loop `0x1033e8` |
+| m1-b | `618d8e04` | `2cf69504` **main menu** | `2cf69504` | `2cf69504` | frame loop `0x1033e8` |
+| rs-a, rs-b, rs-noswitch | same | same | same | same | same |
+
+- **Main menu frame:** SINGLE PLAY / NETWORK PLAY / COLLECTION / CHARACTER LOG / OPTIONS / HDD INSTALL plus the Capcom copyright lines, over the title movie.
+- **With two Start presses only (100 s and 110 s):** 2 of 3 runs reached the menu (`ws-a`, `ws-c`). In the others the presses landed during a title-movie cross-fade; that is input timing, not a hang.
+- **Not yet correct:** the title movie shows a uniform green frame (picture buffers never written). Each run logs about 2,500 `Function at address ... not found` warnings for eight mid-function CRI entry points: `0x1432e8`, `0x1433a0`, `0x1435d8`, `0x1436d0`, `0x143920`, `0x143a00`, `0x143c90`, `0x143db0`. They are next to the D32 extra functions and are the first candidates for the movie path.
+- **Menu input:** selecting a menu entry has not been tested yet; that is the start of Milestone 2.
 
 ## Open (as of D30)
 - IPU / MPEG movies (D30): current blocker after the CAPCOM logo.
