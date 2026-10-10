@@ -1,0 +1,16 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index faddb4f..5a6fad5 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -928,6 +928,11 @@ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint
+                     hh = (hh ^ scratch[i] ^ (scratch[i + 1] << 8) ^ (scratch[i + 2] << 16)) * 1099511628211ull;
+                 }
+                 const size_t n = std::max<size_t>(1, scratch.size() / (4u * 7u));
++                static uint32_t s_lastPkts = 0, s_lastPrims = 0;
++                const uint32_t pkts = ps2GsDebugGifPackets(), prims = ps2GsDebugVertexKicks();
++                std::fprintf(stderr, "[present-gs] dpkts=%u dprims=%u\n", pkts - s_lastPkts, prims - s_lastPrims);
++                s_lastPkts = pkts;
++                s_lastPrims = prims;
+                 std::fprintf(stderr, "[present] seq=%llu swapus=%lld t=%.3f tick=%llu fbp=%u src=%u pref=%d %ux%u luma=%llu hash=%08llx\n",
+                              static_cast<unsigned long long>(ps2GsVblankSeq()), static_cast<long long>(g_lastSwapUs.load()), t,
+                              static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()), displayFbp, sourceFbp,
