@@ -1,0 +1,40 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+index de798e1..4892669 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -1130,7 +1130,22 @@ void GSRasterizer::drawSprite(GS *gs)
+         if (spriteH < 1.0f)
+             spriteH = 1.0f;
+ 
+-        for (int y = drawY0; y <= drawY1; ++y)
++        // Row bands in parallel for large sprites (D43), same rules as the fast paths: every
++        // pixel is computed independently; only when the texture cannot alias the frame.
++        // Band threads get a copy of this sprite's palette cache (thread_local).
++        const ClutCache clutCopy = t_clutCache;
++        const uint32_t genericPixels = static_cast<uint32_t>((drawX1 - drawX0 + 1) * (drawY1 - drawY0 + 1));
++        const uint32_t texTbw = tex.tbw ? tex.tbw : 1u;
++        const uint64_t gFbStart = static_cast<uint64_t>(ctx.frame.fbp) * 8192u;
++        const uint64_t gFbEnd = gFbStart + static_cast<uint64_t>(fbWidthBlocks) * 8192u * (static_cast<uint64_t>(drawY1) / 32u + 1u);
++        const uint64_t gTxStart = static_cast<uint64_t>(tex.tbp0) * 256u;
++        const uint64_t gTxEnd = gTxStart + static_cast<uint64_t>(texTbw) * 8192u * (static_cast<uint64_t>(texH) / 32u + 1u);
++        const bool gClutApart = (tex.psm != GS_PSM_T8 && tex.psm != GS_PSM_T4) ||
++                                (static_cast<uint64_t>(tex.cbp) * 256u + 16384u <= gFbStart ||
++                                 static_cast<uint64_t>(tex.cbp) * 256u >= gFbEnd);
++        auto genericBand = [&](int yb, int ye) {
++        t_clutCache = clutCopy;
++        for (int y = yb; y <= ye; ++y)
+         {
+             float ty = (static_cast<float>(y - unclippedY0) + 0.5f) / spriteH;
+             float texVf = v0f + (v1f - v0f) * ty;
+@@ -1163,6 +1178,11 @@ void GSRasterizer::drawSprite(GS *gs)
+                 writePixel(gs, x, y, color.r, color.g, color.b, color.a);
+             }
+         }
++        };
++        if (!s_noFast && genericPixels >= 32768u && gClutApart && (gTxEnd <= gFbStart || gTxStart >= gFbEnd))
++            RowPool::get().run(drawY0, drawY1, genericBand);
++        else
++            genericBand(drawY0, drawY1);
+     }
+     else
+     {
