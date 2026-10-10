@@ -180,8 +180,13 @@ static void reoStartStackDump() {
     const char* e = std::getenv("REO_STACKDUMP_AT");
     if (!e) return;
     const unsigned secs = static_cast<unsigned>(std::strtoul(e, nullptr, 0));
-    std::thread([secs] {
+    // REO_STACKDUMP_N=<n>: take n samples 20 ms apart (a poor man's profiler).
+    const char* ne = std::getenv("REO_STACKDUMP_N");
+    const unsigned samples = ne ? static_cast<unsigned>(std::strtoul(ne, nullptr, 0)) : 1u;
+    std::thread([secs, samples] {
         Sleep(secs * 1000u);
+      for (unsigned sample = 0; sample < samples; ++sample) {
+        if (sample) Sleep(20);
         const DWORD self = GetCurrentThreadId();
         HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
         if (snap == INVALID_HANDLE_VALUE) return;
@@ -191,18 +196,35 @@ static void reoStartStackDump() {
             HANDLE th = OpenThread(THREAD_GET_CONTEXT | THREAD_SUSPEND_RESUME, FALSE, te.th32ThreadID);
             if (!th) continue;
             if (SuspendThread(th) != (DWORD)-1) {
+                // Walk while suspended, print after resuming: printing while the target is
+                // suspended stalls whenever it holds the stderr lock.
+                DWORD64 frames[24]; int nframes = 0;
                 CONTEXT c{}; c.ContextFlags = CONTEXT_FULL;
                 if (GetThreadContext(th, &c)) {
-                    fprintf(stderr, "[STACKDUMP] tid=%lu stack:", te.th32ThreadID);
-                    reoPrintStack(c);
-                    fprintf(stderr, "\n");
+                    const DWORD64 base = reinterpret_cast<DWORD64>(GetModuleHandleW(nullptr));
+                    for (; nframes < 24 && c.Rip; ++nframes) {
+                        frames[nframes] = c.Rip >= base ? c.Rip - base : c.Rip;
+                        DWORD64 imageBase = 0;
+                        PRUNTIME_FUNCTION fn = RtlLookupFunctionEntry(c.Rip, &imageBase, nullptr);
+                        if (!fn) { ++nframes; break; }
+                        PVOID handlerData = nullptr; DWORD64 establisher = 0;
+                        RtlVirtualUnwind(UNW_FLAG_NHANDLER, imageBase, c.Rip, fn, &c, &handlerData, &establisher, nullptr);
+                    }
                 }
                 ResumeThread(th);
+                if (nframes) {
+                    char line[1024];
+                    int len = snprintf(line, sizeof(line), "[STACKDUMP] tid=%lu stack:", te.th32ThreadID);
+                    for (int i = 0; i < nframes && len < 1000; ++i)
+                        len += snprintf(line + len, sizeof(line) - len, " 0x%llX", static_cast<unsigned long long>(frames[i]));
+                    fprintf(stderr, "%s\n", line);
+                }
             }
             CloseHandle(th);
         }
         CloseHandle(snap);
         fflush(stderr);
+      }
     }).detach();
 }
 

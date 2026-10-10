@@ -15,13 +15,15 @@ param(
     [string]$Elf = 'game_data\SLUS_207.65',
     [switch]$Trace,
     [string[]]$Env = @(),
-    [string]$Label = ''
+    [string]$Label = '',
+    [string]$ExePath = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $Exe  = @('build-ninja\recomp\reo_recomp.exe', 'build\recomp\Release\reo_recomp.exe') |
     ForEach-Object { Join-Path $Root $_ } | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($ExePath) { $Exe = (Resolve-Path (Join-Path $Root $ExePath)).Path }
 if (-not $Exe) { Write-Error 'reo_recomp.exe not found in build-ninja\ or build\'; exit 2 }
 $Elf  = Join-Path $Root $Elf
 $Iso  = (Resolve-Path $Iso).Path
@@ -63,7 +65,7 @@ try {
     $runArgs = @('--game', 'file1', '--elf', "`"$runElf`"", '--data', "${drive}:\")
     $sw = [Diagnostics.Stopwatch]::StartNew()
     $proc = Start-Process -FilePath $Exe -ArgumentList $runArgs -WorkingDirectory $OutDir `
-        -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -WindowStyle Normal
+        -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -WindowStyle Hidden
     $null = $proc.Handle   # cache the handle so ExitCode is populated after exit
 
     $exited = $proc.WaitForExit($Seconds * 1000)

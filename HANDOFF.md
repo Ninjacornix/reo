@@ -1,11 +1,12 @@
 # Handoff: REO (Resident Evil Outbreak File #1 → native Windows)
 
-Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D35 plus the "Milestone-1 checkpoint" sections) first.
+Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D37 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
 
 ## Where things stand
 
 - **Milestone 1 is done.** With real Start presses and no bypasses, the game goes: memory-card prompt → logos → content warning → title movie → **main menu** (SINGLE PLAY … HDD INSTALL). This held in 5 of 5 runs (frame hash `2cf69504`). The checkpoint table and exact command are in `docs/DIVERGENCES.md`.
-- **The title movie renders uniform green.** The Sofdec decoder runs, but its picture buffers are never written. All 16 libmpeg macroblock routines are now present (warnings dropped to 0), so the cause is further down: the IPU data path (`ps2xRuntime/src/lib/ipu/`, DMA channels 3/4) or what Sofdec does with IPU output.
+- **The title movie plays with real images** and the main menu shows over it. The green was D36: sound-driver HLE zeroed EE RAM over the game's code (fixed by Codex, patch 0020).
+- **The movie runs at ~17–23 fps** (full speed is ~30) after the GS sprite fast path (D37); it was ~10. The `[perf]` heartbeat line shows frames/s and per-thread CPU time.
 - **Next milestone (M2):** menu selection input (untested), then load one File #1 scenario.
 
 ## Build
@@ -58,13 +59,20 @@ tools\smoke_test.ps1 -Iso "iso\Resident Evil - Outbreak (v2.00).iso" -Seconds 13
 
 ## Suggested next steps
 
-1. **Green movie.** Compare the IPU command stream and the output-FIFO/DMA ch3 destination with PCSX2:
-   - In ours, run with `REO_IPU_LOG=1` and `REO_SFD_DIAG=1`.
-   - In PCSX2, PINE-read the decoder's picture-buffer addresses and check that they become non-zero.
-   - Web research (2026-10-10) found nothing specific to this game's FMVs.
-   - The one lead was the PCSX2 "IPU1 TIE" bug (Elvandia Story: black FMV with audio). Our toIPU chain already stops on a tag with the IRQ bit set when CHCR.TIE is set (`ipu/ps2_ipu.cpp`, `if (irq && (chcr & 0x80u))`). Still unverified: whether the matching DMAC channel-4 interrupt is raised at that stop.
-   - Uniform green is what all-zero YCbCr data looks like after conversion to RGB, so the output buffers are never written.
-   - Best references: the PCSX2 sources `IPU.cpp`/`IPUdma.cpp` (read only, as a reference) and live PINE comparison.
-2. **Menu input.** Script CROSS on SINGLE PLAY, then follow the next screen transition (M2).
-3. **Regression fixture.** Add a unit test for the thread wake/suspend state machine (the D34 regression).
-4. **Housekeeping.** Fold `extra_functions.csv` into the main map at the next full regeneration.
+1. **Movie speed (D37).** Measure with the `[perf]` line, using `REO_TURBO=8;REO_TURBO_UNTIL=0x22F18C` to skip the boot logos. Options, by expected payoff:
+   - Run the GS on a worker thread (queue GIF packets, MTGS-style) so drawing stops holding the guest CPU and IO locks; sync on GS register reads and readback.
+   - Profile the decoder thread (~30 ms CPU per frame): IPU VLC/IDCT emulation, the libmpeg recompiled code, and scheduler hand-offs per macroblock.
+   - Fix the main thread blocking on GS `m_stateMutex` (present-thread contention) while it holds the guest lock.
+   - Fill sprites per page or block instead of a swizzle address per pixel.
+2. **`ResetEE` from interrupt context** (D36 note): recheck now that the RAM corruption is fixed.
+3. **Menu input.** Script CROSS on SINGLE PLAY, then follow the next screen transition (M2).
+4. **Regression fixture.** Add a unit test for the thread wake/suspend state machine (the D34 regression).
+5. **Housekeeping.** Fold `extra_functions.csv` into the main map at the next full regeneration.
+
+## New switches (2026-10-10)
+
+- `REO_TURBO=<2..16>`, `REO_TURBO_UNTIL=<guest addr>`: test-only vblank fast-forward (boot logos); returns to normal speed when the word becomes nonzero.
+- `REO_GS_NO_FASTPATH=1`: disables the D37 sprite fast paths (A/B checks).
+- `REO_STACKDUMP_AT=<s>` with `REO_STACKDUMP_N=<n>`: n host stack samples 20 ms apart. Symbolize them with a `/MAP` link of the same objects.
+- `REO_SPR_LOG=1`, `REO_IPU_LOG=1`, `REO_MPEG_PIC_LOG=1` (Codex), `REO_SFD_DIAG=1`: movie path diagnostics.
+- Self-tests: `tools\ipu_selftestun.bat` (all pass), `toolsuntime_selftestun.bat` (26/26).
