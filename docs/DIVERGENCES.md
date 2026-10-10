@@ -550,6 +550,13 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - **Fix:** `Kernel/Host/Win32ModalRender.cpp` subclasses the window procedure. Between `WM_ENTERSIZEMOVE` and `WM_EXITSIZEMOVE` a 10 ms timer draws and swaps the current frame. It deliberately does not call `EndDrawing`, whose event poll would steal the modal loop's mouse messages.
 - **Measured:** 310 frames drawn during an 8.6 s modal move (16 ms timer; now 10 ms). The heartbeat's `modalPresents` counts these frames.
 
+## D43: logo fades choppy (GS below real time) — FIXED (patch 0024)
+
+- **Symptom (user):** some logo fade-outs were choppy; the logo phase ran at low fps.
+- **Profile:** about half of the GS worker's samples were idle. The busy half was dominated by the **generic scaled sprite path** (bilinear `sampleTexture`/`lerpChannel`, `writePixel`) of zooming and fading logos, which ran on one thread.
+- **Fix:** that path also draws large sprites (32k+ px) in row bands on the worker pool. It uses the same no-overlap rule (texture vs. frame and palette vs. frame page ranges), and band threads get a copy of the sprite's palette cache. `tools/gs_fastpath_check` still produces identical VRAM.
+- **Result:** every logo-phase heartbeat is now ~1.03–1.05 s (real time; before up to 2.5–3.7 s). Fades show a steady 2-vblank (30 fps) cadence.
+
 ## Milestone-1 checkpoint (observed)
 
 - `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.

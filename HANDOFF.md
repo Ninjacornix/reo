@@ -1,6 +1,6 @@
 # Handoff: REO (Resident Evil Outbreak File #1 → native Windows)
 
-Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D42 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
+Last updated 2026-10-10, branch `m1/ghidra-regen`. Read `CLAUDE.md`, `ROADMAP.md`, and `docs/DIVERGENCES.md` (D28–D43 plus the "Milestone-1 checkpoint" sections) and `HANDOFF_CODEX_M1_VIDEO.md` first.
 
 ## Where things stand
 
@@ -63,7 +63,7 @@ tools\smoke_test.ps1 -Iso "iso\Resident Evil - Outbreak (v2.00).iso" -Seconds 13
 User-reported problems still open (user rule: no Milestone 2 until they are solved):
 1. **Movie/menu audio is silent** (demonstration video has no music). Not investigated yet: check the IOP sound driver HLE / SPU2 / audio backend.
 2. Done (D42): rendering continues while dragging (Win32 modal timer).
-3. **Logo fades still run below real time** (D39: ~2.5 s worst heartbeat). Remaining cost: per-pixel swizzle addressing in fills and the scaled-bilinear path.
+3. Done (D43): logo fades run in real time.
 4. **Scenario select (SINGLE PLAY) lags.** Not profiled yet; use the `[perf]` sprite mix plus `REO_STACKDUMP_*`.
 5. Done in patches 0022/0023: logo freeze (D39), presentation cadence and purple first frame (D40), flashing memory-card text / flicker (D41), drag rendering (D42). Confirm with the user.
 
