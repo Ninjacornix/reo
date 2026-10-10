@@ -1006,14 +1006,17 @@ void sub_001735B0_0x1735b0(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_0015EFB8_0x15efb8(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_00172278_0x172278(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_00173C10_0x173c10(uint8_t*, R5900Context*, PS2Runtime*);
+static std::atomic<bool> g_sfdArmed{false}; // set once a Sofdec decoder exists
 template <void (*Orig)(uint8_t*, R5900Context*, PS2Runtime*)>
 static void reo_sfd_trace(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime, const char* name) {
     const uint32_t a0 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[4], 0));
     const uint32_t ra = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[31], 0));
     Orig(rdram, ctx, runtime);
     const uint32_t v0 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[2], 0));
-    static int n = 0;
-    if (n++ < 200)
+    static int n = 0, armedN = 0;
+    if (Orig == &sub_001735B0_0x1735b0)
+        g_sfdArmed = true;
+    if (g_sfdArmed ? armedN++ < 400 : n++ < 200)
         fprintf(stderr, "[SFD] %s(a0=0x%x) ra=0x%x -> v0=0x%x pc=0x%x%s vsync=%llu\n", name, a0, ra, v0, ctx->pc,
                 ctx->pc == ra ? "" : " (PC != RA)",
                 static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()));
@@ -1067,6 +1070,14 @@ static void reo_cri_lock_trace(uint8_t* rdram, R5900Context* ctx, PS2Runtime* ru
 }
 static void reo_cri_lock(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_cri_lock_trace<sub_0012A968_0x12a968>(r, c, p, "lock"); }
 static void reo_cri_unlock(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_cri_lock_trace<sub_0012A9F0_0x12a9f0>(r, c, p, "unlock"); }
+void sub_0015FA50_0x15fa50(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_00164038_0x164038(uint8_t*, R5900Context*, PS2Runtime*);
+static void reo_sfd_server(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_00164038_0x164038>(r, c, p, "sfd-server"); }
+void sub_001725E0_0x1725e0(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_0012B0D8_0x12b0d8(uint8_t*, R5900Context*, PS2Runtime*);
+static void reo_sfd_srvwake(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015FA50_0x15fa50>(r, c, p, "srv-wake(main)"); }
+static void reo_sfd_decstep(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_001725E0_0x1725e0>(r, c, p, "dec-step"); }
+static void reo_sfd_srvsleep(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0012B0D8_0x12b0d8>(r, c, p, "srv-sleep"); }
 static void reo_sfd_valid(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015FFC0_0x15ffc0>(r, c, p, "ply-valid"); }
 static void reo_sfd_seamless(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_001625D0_0x1625d0>(r, c, p, "ply-start-seamless"); }
 
@@ -1166,6 +1177,10 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         bind(runtime, 0x15F270, reo_sfd_15f270, "Sofdec start entry (trace)");
         bind(runtime, 0x15FFC0, reo_sfd_valid, "Sofdec handle valid (trace)");
         bind(runtime, 0x15F2F0, reo_sfd_15f2f0, "Sofdec 0x15f2f0 (trace)");
+        bind(runtime, 0x15FA50, reo_sfd_srvwake, "CRI server wake from main (trace)");
+        bind(runtime, 0x1725E0, reo_sfd_decstep, "Sofdec decoder step (trace)");
+        bind(runtime, 0x12B0D8, reo_sfd_srvsleep, "CRI server sleep (trace)");
+        bind(runtime, 0x164038, reo_sfd_server, "Sofdec server (trace)");
     }
     if (std::getenv("REO_CRILOCK_DIAG")) {
         bind(runtime, 0x12A968, reo_cri_lock, "CRI lock (trace)");

@@ -24,16 +24,22 @@ Evidence: `docs/BASELINE.md`. Baseline branch `baseline/pivot-selfexec` (upstrea
 
 **Exit:** another developer can build the same revision and reproduce the same observable failure/success. If game data is unavailable, mark run tests `BLOCKED` rather than pretending they pass. — **Met (2026-10-09):** a clean checkout reproduces the pinned deps + patches; observable state: boots under self-execution, passes `SifIopSync` (D1), then loops in SIF RPC; no title screen yet.
 
-## Milestone 1 — First divergent game state (highest immediate priority)
+## Milestone 1 — First divergent game state — `DONE` (2026-10-10)
 
-- [ ] Establish a deterministic PCSX2 comparison point: startup, title input, menu transition.
-- [ ] Capture REO trace and PCSX2 equivalent task/memory/register state for the same checkpoint.
-- [ ] Record *first* divergence, not just last visible symptom, in `docs/DIVERGENCES.md`.
-- [ ] Categorize fault: recompilation/control flow; unknown overlay; IOP SIF/CDVD; GS/VU/DMA; scheduler/timing; file/archive parsing; bad HLE override.
-- [ ] Propose one minimal correction and regression fixture; re-run both sides.
-- [ ] Repeat until menu input causes the correct state transition without synthetic bypasses.
+Evidence: `docs/DIVERGENCES.md` → "Milestone-1 checkpoint — main menu reached" (runs `m1-a`, `m1-b`, `rs-a`, `rs-b`, `rs-noswitch`). D28–D35 record the divergences fixed along the way.
 
-**Exit:** observed menu transition and stable task progression after pressing Start, with a repeatable trace/checkpoint.
+- [x] Establish a deterministic PCSX2 comparison point: startup, title input, menu transition. *(PINE probes of CRI/Sofdec state at the title-movie start; PCSX2 at `C:/Users/Ninjacornix/ps2`.)*
+- [x] Capture REO trace and PCSX2 equivalent task/memory/register state for the same checkpoint. *(`REO_SFD_DIAG`/`REO_THREAD_LOG`/`REO_PEEK` vs. the PCSX2 probe of decoder `0xDE6E20`, gate, handshake flag and pass counter.)*
+- [x] Record *first* divergence, not just last visible symptom, in `docs/DIVERGENCES.md`. *(D34: `WakeupThread` on a WAITSUSPEND sleeper.)*
+- [x] Categorize fault. *(Scheduler/kernel HLE: D34, D35. Interrupt delivery: GS FINISH/SIGNAL. Recompilation: D32 merged functions. IPU: D30.)*
+- [x] Propose one minimal correction and re-run both sides. *(Patch 0019, A/B run `rs-noswitch`.)* A unit-level regression fixture for the thread state machine is still TODO; the smoke checkpoint is the regression test for now.
+- [x] Repeat until menu input causes the correct state transition without synthetic bypasses. *(Real Start presses through the libpad2 path. No bypasses: `REO_NATURAL=1`, no pad/state pokes.)*
+
+**Exit:** observed menu transition and stable task progression after pressing Start, with a repeatable trace/checkpoint. — **Met (2026-10-10):** Start on the title screen reaches the main menu (SINGLE PLAY … HDD INSTALL) in 5 of 5 runs, frame hash `2cf69504`, with the frame loop alive through 125 s.
+
+**Known gaps carried into M2:**
+- The title movie shows uniform green: picture buffers are never decoded. There are 8 missing CRI mid-function entry points (`0x1432e8` …) and the IPU data path is unverified.
+- Menu selection input is untested.
 
 ## Milestone 2 — Reach one scenario room (vertical slice)
 
