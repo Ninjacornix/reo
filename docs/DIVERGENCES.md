@@ -438,6 +438,29 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
   - Hypothesis: Sofdec's playback clock (audio/vsync time source) gives a wrong time, so playback "ends" at once.
 - Ruled out: CRI errors (`REO_CRI_ERRLOG=1` logs none), missing CD data (the movie is read from NETBIO01 into the player work area), and the IPU (only init commands reach it in failing runs).
 
+## D34: CRI server handshake under the global priority lock — OPEN, current blocker
+
+- D33 refined: the Sofdec decoder is never started. The player's seamless start (`0x1625D0` → `0x15F270`) first runs `0x15F2F0`, which pauses decoding and runs one server-group-6 pass synchronously (`FUN_001637e8` → `FUN_0012aa60`). That handshake unwinds (preemption, `PC != RA`) and never returns.
+- `FUN_0012aa60`:
+  - raises the server thread (thread 7, priority 25) to `DAT_00210460 = 1`;
+  - wakes/resumes it in a loop until it clears `0x210484`;
+  - restores its priority.
+  The main thread enters it while holding CRI's global lock `FUN_0012a968`/`FUN_0012a9f0`. That lock is a count at `0x210480` with one global saved priority at `0x217D70`. It raises the owner to priority 1, resumes helper `DAT_002104d8` on 0→1 and suspends it on 1→0.
+- With strict EE priority semantics (no equal-priority preemption; Play! `PS2OS.cpp` behaves the same), main and thread 7 both sit at priority 1 and main spins. That is reproducible 2/2 (`base-a`/`base-b`).
+- An equal-priority rotation heuristic got the movie running briefly, but corrupts the lock's single saved priority: thread 7 ends at priority 1 permanently and starves main. Kept opt-in only (`REO_SPIN_ROTATE=1`).
+- Next: ground truth from PCSX2 (installed at `C:/Users/Ninjacornix/ps2`), via Pine IPC or a debugger, at this handshake. Questions: the main priority, whether thread 7 runs, and the value of `DAT_002104d8`.
+- Diagnostics:
+  - `REO_SFD_DIAG` (Sofdec lifecycle and end checks);
+  - `REO_CRILOCK_DIAG` (heavy, distorts timing);
+  - `REO_THREAD_LOG` (priority changes, thread erasures);
+  - heartbeat `spinY`, `acq1/5/6/7`, `t1`/`t7` (priority/suspended/waiting), `ww`.
+
+## D35: DMAC interrupts could not be delivered while an INTC handler busy-waited — FIXED
+
+- SNAP-logo freeze, second cause. The VBLANK handler `FUN_0019f600` → `FUN_001a0350` (frame flip) → `FUN_0018d650` busy-waits for the frame-busy flag `0x29F704`, which the DMAC completion handler clears. The EE takes INTC (INT0) and DMAC (INT1) on separate lines. PS2Recomp's single interrupt worker could not deliver the DMAC interrupt while the VBLANK handler spun.
+- Fix (patch 0018): at guest preemption checkpoints on the interrupt worker, pending DMAC interrupts are delivered nested (`serviceNestedDmac`), on a separate handler stack. Using the same stack overwrote the interrupted handler's frame and broke VBLANK wake-ups.
+- Observed: no SNAP freeze in 2/2 clean runs plus 6/6 instrumented runs. The memory-card prompt and logos work.
+
 ## Milestone-1 checkpoint (observed)
 
 - `REO_SHOT_AT` frame captures (512x448, the frame the runtime presents) at 15/30/58 s show the game's **memory-card check screen**: "memory card (8MB) (for PlayStation(R)2) cannot be found in MEMORY CARD slot 1 ... Start the game without saving? YES/NO" (text, colours and highlight correct). It's the first rendered game screen.
