@@ -1,0 +1,294 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+new file mode 100644
+index 0000000..c07ce1b
+--- /dev/null
++++ b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+@@ -0,0 +1,60 @@
++// Keeps the game window rendering while Windows runs its modal move/resize loop (D42).
++// Dragging or resizing a window makes DispatchMessage() block inside DefWindowProc until
++// the mouse is released, so the raylib/GLFW main loop stops presenting. A subclassed
++// window procedure starts a timer on WM_ENTERSIZEMOVE; each WM_TIMER calls back into the
++// runtime to draw and swap one frame (without polling events, which would steal the
++// modal loop's mouse messages). Kept separate from ps2_runtime.cpp: windows.h clashes
++// with raylib's names.
++#ifdef _WIN32
++#define WIN32_LEAN_AND_MEAN
++#define NOMINMAX
++#include <windows.h>
++
++namespace
++{
++    constexpr UINT_PTR kModalTimerId = 0x52454F31u; // 'REO1'
++    WNDPROC g_prevProc = nullptr;
++    void (*g_render)() = nullptr;
++    bool g_inRender = false;
++
++    LRESULT CALLBACK modalAwareProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
++    {
++        switch (msg)
++        {
++        case WM_ENTERSIZEMOVE:
++            SetTimer(hwnd, kModalTimerId, USER_TIMER_MINIMUM, nullptr); // 10 ms
++            break;
++        case WM_EXITSIZEMOVE:
++            KillTimer(hwnd, kModalTimerId);
++            break;
++        case WM_TIMER:
++            if (wParam == kModalTimerId)
++            {
++                if (g_render && !g_inRender)
++                {
++                    g_inRender = true;
++                    g_render();
++                    g_inRender = false;
++                }
++                return 0;
++            }
++            break;
++        default:
++            break;
++        }
++        return CallWindowProcW(g_prevProc, hwnd, msg, wParam, lParam);
++    }
++}
++
++void ps2InstallModalRender(void *nativeWindow, void (*render)())
++{
++    HWND hwnd = static_cast<HWND>(nativeWindow);
++    if (!hwnd || g_prevProc)
++        return;
++    g_render = render;
++    g_prevProc = reinterpret_cast<WNDPROC>(
++        SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&modalAwareProc)));
++}
++#else
++void ps2InstallModalRender(void *, void (*)()) {}
++#endif
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index b245544..ea3e909 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -7,7 +7,8 @@
+ #include <cstdlib>
+ #include <cstring>
+ 
+-void ps2GsMarkVsync(); // ps2_gs_gpu.cpp: GS worker pacing (D39)
++void ps2GsMarkVsync();       // ps2_gs_gpu.cpp: GS worker pacing (D39)
++void ps2GsSnapshotDisplay(); // ps2_gs_gpu.cpp: post-flip display snapshot for present (D41)
+ 
+ namespace ps2_syscalls
+ {
+@@ -457,6 +458,7 @@ namespace ps2_syscalls
+                 runtime->memory().raiseIntc(kIntcVblankStart);
+                 runtime->memory().gsFieldTick(); // toggle GS_CSR FIELD + VSINT
+                 dispatchIntcHandlersForCause(rdram, runtime, kIntcVblankStart);
++                ps2GsSnapshotDisplay(); // after the game's VBLANK handler flipped DISPFB
+                 std::this_thread::sleep_for(std::chrono::microseconds(500));
+                 runtime->memory().raiseIntc(kIntcVblankEnd);
+                 dispatchIntcHandlersForCause(rdram, runtime, kIntcVblankEnd);
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+index 8caa5cb..609d3f9 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -128,6 +128,14 @@ namespace
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         g_gsAsync.prevVsyncMark = g_gsAsync.vsyncMark;
+         g_gsAsync.vsyncMark = g_gsAsync.enqueued;
++    }
++
++    // Called after the game's VBLANK_START handlers ran (they flip DISPFB): captures the
++    // display registers and the GS queue position for present (D40/D41). Taking it before
++    // the handlers showed the pre-flip buffer while the game was already redrawing it.
++    void gsSnapshotDisplayImpl()
++    {
++        std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         if (g_gsPrivRegs)
+         {
+             auto &vb = g_gsAsync.vblankDisplay;
+@@ -1312,8 +1320,9 @@ bool GS::copyLatchedHostPresentationFrame(std::vector<uint8_t> &outPixels,
+     return true;
+ }
+ 
+-// Interrupt worker hook (declared extern in Kernel/Syscalls/Interrupt.cpp).
++// Interrupt worker hooks (declared extern in Kernel/Syscalls/Interrupt.cpp).
+ void ps2GsMarkVsync() { gsMarkVsyncImpl(); }
++void ps2GsSnapshotDisplay() { gsSnapshotDisplayImpl(); }
+ // Present loop (ps2_runtime.cpp): number of vblank display snapshots taken.
+ uint64_t ps2GsVblankSeq() { return g_vblankSeq.load(std::memory_order_acquire); }
+ 
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index c5e051c..c608ed6 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -13,6 +13,8 @@
+ #include "Kernel/Stubs/MPEG.h"
+ #include "ps2_host_backend.h"
+ #include "ps2_guest_sched.h"
++#include "rlgl.h"
++#include <functional>
+ #include <condition_variable>
+ #include <mutex>
+ 
+@@ -99,6 +101,7 @@ extern std::atomic<uint32_t> g_pxCalls, g_pxScissor, g_pxAlpha;
+ 
+ extern std::atomic<uint64_t> g_dbgSpritePx[6];
+ uint64_t ps2GsVblankSeq(); // ps2_gs_gpu.cpp: vblank display snapshots taken (D40)
++void ps2InstallModalRender(void *nativeWindow, void (*render)()); // Kernel/Host/Win32ModalRender.cpp (D42)
+ namespace ps2_syscalls
+ {
+     extern std::atomic<uint32_t> g_dbgDmacRaised[16];
+@@ -692,6 +695,7 @@ PS2Runtime::GuestExecutionReleaseScope::~GuestExecutionReleaseScope()
+ }
+ 
+ std::atomic<uint32_t> g_presentRunHist[8]; // [present] heartbeat (see UploadFrame)
++std::atomic<uint32_t> g_modalPresents{0u}; // frames drawn from the Win32 modal timer (D42)
+ 
+ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint32_t &outHeight)
+ {
+@@ -826,6 +830,33 @@ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint
+         }
+     }
+ 
++    {
++        // Deinterlace (D41): with SMODE2.INT the game alternates field content every vblank
++        // (half-line offsets, per-field effects, flashing text). A TV integrates consecutive
++        // fields; REO_DEINTERLACE=1 presents the average of this and the previous field.
++        // Opt-in: the field alternation users saw was a present race (D41, fixed by taking
++        // the display snapshot after the VBLANK handler's flip); blending would only grey
++        // out genuine 60 Hz effects.
++        static const bool s_deinterlace = []() {
++            const char *e = std::getenv("REO_DEINTERLACE");
++            return e && e[0] == '1';
++        }();
++        static std::vector<uint8_t> s_prevField;
++        const bool interlaced = (rt->memory().gs().smode2 & 1ull) != 0ull;
++        if (s_deinterlace && interlaced && s_prevField.size() == uploadBuffer.size())
++        {
++            for (size_t i = 0; i < uploadBuffer.size(); ++i)
++            {
++                const uint8_t cur = uploadBuffer[i];
++                uploadBuffer[i] = static_cast<uint8_t>((cur + s_prevField[i] + 1u) >> 1);
++                s_prevField[i] = cur;
++            }
++        }
++        else
++        {
++            s_prevField = uploadBuffer;
++        }
++    }
+     UpdateTexture(tex, uploadBuffer.data());
+     {
+         // [present] heartbeat: how many window frames each distinct image stayed on screen
+@@ -2557,6 +2588,64 @@ void PS2Runtime::run()
+         UnloadImage(blank);
+     }
+ 
++    // Draws the current frame (normal loop) or, from the Win32 modal move/resize timer,
++    // draws and swaps without polling events (D42).
++    std::function<void(bool)> presentFrame = [&](bool modal)
++    {
++        uint32_t presentWidth = FB_WIDTH;
++        uint32_t presentHeight = DEFAULT_DISPLAY_HEIGHT;
++        UploadFrame(frameTex, this, presentWidth, presentHeight);
++
++        static bool s_panelOn = []
++        {
++            const char *e = std::getenv("REO_DEBUG_PANEL");
++            return !(e && e[0] == '0');
++        }();
++        if (IsKeyPressed(KEY_F1))
++            s_panelOn = !s_panelOn;
++        const int panelWidth = s_panelOn ? kDebugPanelWidth : 0;
++
++        BeginDrawing();
++        ClearBackground(BLACK);
++        const float srcWidth = static_cast<float>(std::max<uint32_t>(1u, presentWidth));
++        const float srcHeight = static_cast<float>(std::max<uint32_t>(1u, presentHeight));
++        const float screenWidth = static_cast<float>(std::max(1, GetScreenWidth() - panelWidth));
++        const float screenHeight = static_cast<float>(GetScreenHeight());
++        const float scale = std::min(screenWidth / srcWidth, screenHeight / srcHeight);
++        const float dstWidth = srcWidth * scale;
++        const float dstHeight = srcHeight * scale;
++        const Rectangle srcRect{0.0f, 0.0f, srcWidth, srcHeight};
++        const Rectangle dstRect{
++            (screenWidth - dstWidth) * 0.5f,
++            (screenHeight - dstHeight) * 0.5f,
++            dstWidth,
++            dstHeight};
++        DrawTexturePro(frameTex, srcRect, dstRect, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
++        if (panelWidth > 0)
++            ps2DrawDebugPanel(*this, static_cast<int>(screenWidth), panelWidth, presentWidth, presentHeight);
++        if (modal)
++        {
++            // Inside Windows' modal move/resize loop: draw and swap only. EndDrawing()
++            // would poll events and steal the modal loop's mouse messages (D42).
++            rlDrawRenderBatchActive();
++            SwapScreenBuffer();
++        }
++        else
++        {
++            EndDrawing();
++        }
++    };
++    static std::function<void(bool)> *s_presentFrame = nullptr;
++    s_presentFrame = &presentFrame;
++    if (!reoHeadless)
++        ps2InstallModalRender(GetWindowHandle(), []() {
++            if (s_presentFrame)
++            {
++                g_modalPresents.fetch_add(1u, std::memory_order_relaxed);
++                (*s_presentFrame)(true);
++            }
++        });
++
+     g_activeThreads.store(1, std::memory_order_relaxed);
+     std::atomic<bool> gameThreadFinished{false};
+ 
+@@ -2726,6 +2815,7 @@ void PS2Runtime::run()
+                     }
+                     {
+                         static uint32_t s_lastRuns[8] = {};
++                        std::cerr << " modalPresents=" << g_modalPresents.load();
+                         std::cerr << " present-runs(1..7+):";
+                         for (int i = 1; i < 8; ++i)
+                         {
+@@ -2767,38 +2857,7 @@ void PS2Runtime::run()
+             s_presentedSeq = ps2GsVblankSeq();
+         }
+ 
+-        uint32_t presentWidth = FB_WIDTH;
+-        uint32_t presentHeight = DEFAULT_DISPLAY_HEIGHT;
+-        UploadFrame(frameTex, this, presentWidth, presentHeight);
+-
+-        static bool s_panelOn = []
+-        {
+-            const char *e = std::getenv("REO_DEBUG_PANEL");
+-            return !(e && e[0] == '0');
+-        }();
+-        if (IsKeyPressed(KEY_F1))
+-            s_panelOn = !s_panelOn;
+-        const int panelWidth = s_panelOn ? kDebugPanelWidth : 0;
+-
+-        BeginDrawing();
+-        ClearBackground(BLACK);
+-        const float srcWidth = static_cast<float>(std::max<uint32_t>(1u, presentWidth));
+-        const float srcHeight = static_cast<float>(std::max<uint32_t>(1u, presentHeight));
+-        const float screenWidth = static_cast<float>(std::max(1, GetScreenWidth() - panelWidth));
+-        const float screenHeight = static_cast<float>(GetScreenHeight());
+-        const float scale = std::min(screenWidth / srcWidth, screenHeight / srcHeight);
+-        const float dstWidth = srcWidth * scale;
+-        const float dstHeight = srcHeight * scale;
+-        const Rectangle srcRect{0.0f, 0.0f, srcWidth, srcHeight};
+-        const Rectangle dstRect{
+-            (screenWidth - dstWidth) * 0.5f,
+-            (screenHeight - dstHeight) * 0.5f,
+-            dstWidth,
+-            dstHeight};
+-        DrawTexturePro(frameTex, srcRect, dstRect, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
+-        if (panelWidth > 0)
+-            ps2DrawDebugPanel(*this, static_cast<int>(screenWidth), panelWidth, presentWidth, presentHeight);
+-        EndDrawing();
++        presentFrame(false);
+ 
+         if (WindowShouldClose())
+         {
