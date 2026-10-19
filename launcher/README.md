@@ -1,6 +1,9 @@
-# Launcher
+> The precompiled v1.0.0 download has been withdrawn. The local-build installer
+> is in development; packaging a compiled game executable is disabled. The
+> packaged-install instructions below describe the earlier development package,
+> not a currently available public release.
 
-![RE: Outbreak launcher](../docs/images/launcher-play.png)
+# Launcher
 
 The Windows package includes the prebuilt game, controller adapter, shaders and
 .NET runtime. Open `Outbreak.Launcher.exe`, select **Game files**, and choose your
@@ -50,8 +53,6 @@ Check for updates uses [GitHub Releases](https://github.com/Ninjacornix/reo/rele
 
 ## Online settings
 
-![Launcher Co-op settings](../docs/images/launcher-online.png)
-
 Online launch is off by default. In **Co-op**, enter the compatible openSNAP server's numeric IPv4 address and your existing account username, then enable **Launch in online mode**. The global play button changes to **Play online**. Invalid settings prevent an online launch; incomplete online fields do not affect offline play. Settings apply to the next launch and are disabled while the launcher owns a running game.
 
 The username follows the current server's registration rules: 4–10 ASCII letters, digits or underscores, with no leading, trailing or consecutive underscores. Choose **Edit Account** in the game to apply the launcher username through the original account flow; an older stored ID is not silently replaced by choosing Go Online. Account selection does not authenticate the user. Enter the password in the game's own login screen; passwords are neither stored nor exported by the launcher. The session receipt records online/offline mode, server and account username without claiming a connection succeeded.
@@ -94,51 +95,7 @@ The selected ISO is imported once without mounting. The original ISO stays avail
 
 ## Artwork and validation
 
-Game cards and faded backgrounds use publisher cover art, downloaded once from Wikimedia and cached under `%LOCALAPPDATA%/OutbreakRecomp/launcher/artwork`. Cached images work offline; when artwork is unavailable, the interface keeps a plain background and empty cover slots. Switching games crossfades the background and respects Windows reduced-motion settings. Downloads run in the background without delaying startup or game launch.
-
-Publisher covers remain the property of their rights holders. Full cover downloads stay in the local cache and are not embedded in executable or release resources. Documentation screenshots show the launcher with these covers; the artwork within those screenshots is not GPL. See [asset provenance and image sources](Assets/PROVENANCE.md).
-
-```powershell
-& ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --self-test
-```
-
-The checks cover input parsing, mapping, device selection, configuration/save isolation, log reading and the native adapter. Passing them is not a gameplay, audio or performance certification.
-
-### Cheats
-
-The Cheats page includes **Full health**, **No infection**, and **Infinite ammunition** for File #1 NTSC-U v2.00. Turn on **Enable cheats** and select the options you want; changes apply on the next launch. No file import is required. Full health refills a living character to their own maximum; it does not resurrect dead characters. Infinite ammunition refills carried firearms to their original capacity. These options affect the controlled character, not teammates.
-
-Optional PCSX2 `.pnach` import is under **Custom cheats**. Files are copied into the launcher's per-game cheats folder; **Reload** picks up edits. Disabling a cheat does not undo changes already saved to a memory card.
-
-For File #1 NTSC-U v2.00, supported lines are `patch=<place>,EE,<address>,<type>,<value>`, with hexadecimal addresses/values, `byte`, `short`, `word`, `double`, and RAW `extended` direct-write types 0/1/2. Groups (`[name]`), descriptions and comments are supported. Places 0 and 3 apply at boot; 1 applies at the original game frame service; 2 applies at both. Settings cannot be changed during a running session.
-
-This is a data-cheat subset, not PCSX2's full patch engine: IOP, conditional/pointer/encrypted codes, instruction patches, overlay-bank writes, and emulator-setting directives are rejected. An unsupported line disables its entire group, avoiding partial application. Supported data banks are `0x00370000..0x0056FFFF` and `0x00900000..0x01FCFFFF`. The built-in options use verified game-data fields instead of PS2 instruction patches. Custom codes must match the exact disc version.
-
-Format reference: [PCSX2 writing patches](https://pcsx2.net/docs/advanced/writing-patches/). This implementation is original and does not embed PCSX2 code or third-party cheat collections.
-
-File #2 remains a selectable placeholder; its native build, import, play and cheats are unavailable in this release.
-
-### Picture size
-
-Graphics separates **Aspect ratio** (4:3 original / 16:9) from **Screen fit**:
-
-- **Fit (centered):** largest picture at the selected ratio, with black borders as needed.
-- **Native size (centered):** preserves source pixel height with corrected TV proportions; shrinks to fit small windows.
-- **Stretch to window:** fills the window regardless of ratio.
-- **Fill (crop edges):** fills the window at the selected ratio, cropping excess at the edges.
-
-These options apply to all game screens and movies on the GPU, including FXAA/SMAA. 16:9 reshapes the original picture; it does not patch the camera for additional widescreen visibility. Window resolution and borderless fullscreen remain independent. Existing settings default to 4:3 Fit.
-
-### Updates
-
-The launcher checks the latest stable GitHub Release on startup. If an update is available, click **Install v...** to download, verify, install and restart. A running game must be closed first. Settings, imported disc data, cheats and memory cards remain in Local AppData; unknown files in the installation are preserved. Packaged files are backed up, and a failed replacement rolls back. Update receipts and the previous files are retained under the launcher's `updates` folder.
-
-Source checkouts check for releases but open the release page instead of overwriting the repository. The installation folder must be writable. Drafts, prereleases and older/same versions are skipped. A tag alone is not a GitHub Release; a Windows release asset must be uploaded.
-
-For maintainers, package with the same version as the new release tag:
-
-```powershell
-./launcher/package.ps1 -Version 0.2.0 -Output ./dist/RE-Outbreak-v0.2.0-Windows-x64 -Zip
-```
-
-Upload `RE-Outbreak-v0.2.0-Windows-x64.zip` and its generated `.zip.sha256` alongside release tag `v0.2.0`. GitHub's asset SHA-256 digest is preferred; the matching checksum asset is the fallback. The archive includes the complete self-contained launcher, native game and shaders, `distribution.json` with `version`/`updateFormat`, and the per-file `package-manifest.json`. The updater checks both the archive digest and its full inventory before modifying the installation.
+Game cards and faded backgrounds are plain by default. Users can optionally
+provide their own local cover images; the launcher no longer downloads them.
+These local files are neither embedded in the launcher nor distributed with the
+source. See [asset provenance](Assets/PROVENANCE.md).

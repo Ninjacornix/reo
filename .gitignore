@@ -111,3 +111,9 @@ desktop.ini
 /tools/parallel_gs_backend/movie_runtime/original_player_caller.cpp
 /tools/parallel_gs_backend/movie_runtime/original_transport_*.cpp
 *.bundle
+
+# Instruction-derived GPU sources and documentation captures are local only.
+/tools/parallel_gs_backend/resident_geometry/upstream/shaders/
+/docs/images/
+/tools/ps2_debug/*.bin
+/launcher/tools/package-legacy-local.ps1

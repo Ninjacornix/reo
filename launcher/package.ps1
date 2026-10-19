@@ -7,6 +7,8 @@ param(
     [switch]$Zip
 )
 $ErrorActionPreference = 'Stop'
+throw 'Publishing precompiled game executables is disabled. Use the local-build-kit packaging path after its source and toolchain audit. Legacy packages remain local only.'
+
 if ($Version -notmatch '^v?\d+\.\d+(\.\d+)?$') { throw 'Use a stable release version, for example 0.2.0.' }
 $Version = $Version.TrimStart('v')
 $repo = Split-Path -Parent $PSScriptRoot

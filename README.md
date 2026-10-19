@@ -2,15 +2,9 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**v1.0.0 prerelease** · [Changelog](CHANGELOG.md)
+**Source preview ? local-build installer in development** · [Changelog](CHANGELOG.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
-
-![RE: Outbreak launcher](docs/images/launcher-play.png)
-
-The screenshot shows the current launcher with official game covers. Cover art
-belongs to Capcom and is not covered by this project's GPL license; see
-[artwork sources and attribution](launcher/Assets/PROVENANCE.md).
 
 ## Status
 
@@ -23,42 +17,26 @@ belongs to Capcom and is not covered by this project's GPL license; see
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
 
-## Download and first launch
+## Installation status
 
-This is a **prerelease**, not a finished v1.0 release. Expect rendering glitches,
-performance dips and cutscene/audio issues. File #2 is a placeholder.
+The precompiled v1.0.0 prerelease has been withdrawn. There is currently no public
+playable Windows download. The previous executable included game-derived code;
+we are changing installation so that this code is generated locally from each
+user's ISO rather than distributed by this project.
 
-1. Open the [v1.0.0 prerelease](https://github.com/Ninjacornix/reo/releases/tag/v1.0.0).
-   Under **Assets**, download **RE-Outbreak-v1.0.0-Windows-x64.zip**.
-   GitHub's **Source code** archives are for developers and do not contain the game executable.
-2. Extract the entire ZIP to a writable folder, such as `C:\Games\RE-Outbreak`.
-   Do not run the launcher from inside the ZIP. Keep its files and subfolders together.
-3. Put your own **Resident Evil Outbreak NTSC-U v2.00 ISO (SLUS-20765)** anywhere
-   on your PC, for example `D:\Games\PS2\Outbreak.iso`. There is no required ISO
-   folder or filename. Other regions/revisions and File #2 are not supported by this package.
-4. Open **Outbreak.Launcher.exe**, select **Game files**, and choose that ISO.
-   The launcher checks the disc and imports its files once. Allow about **5 GB of
-   additional free space** on the Windows user-profile drive for the import.
-5. Select **Outbreak / File #1** in **Play**, choose your input device under
-   **Controls**, then click **Play**. Keep the launcher open for controller input.
+The intended setup is: download the independent launcher/runtime and build tools,
+select your **Outbreak NTSC-U v2.00 ISO (SLUS-20765)** in **Game files**, then wait
+for local generation and compilation. The result will be cached in Local AppData;
+later launches will reuse it. This installation path is under implementation and
+must not be described as ready until a clean first-run build passes.
 
-**Keep the ISO at the selected location after importing.** The game still reads
-sectors from it. If you move it, choose its new location in **Game files**.
-No mounting, BIOS, compiler, SDK or separate .NET installation is required.
-Use 64-bit Windows with a Vulkan-capable GPU and an up-to-date graphics driver.
+Keep your ISO anywhere on your PC; no special filename or folder is required.
+The launcher already imports game data without mounting the ISO. Keep the ISO
+available afterward because the game still performs direct sector reads.
 
-Settings, imports, memory cards and logs are stored under
-`%LOCALAPPDATA%\OutbreakRecomp\launcher`. Use **Save games** to select a card or
-back it up; save/load happens inside the game. **Ctrl+Enter** toggles fullscreen;
-**Alt+F4** closes the game. Debug output is available in **Log**.
-
-The included **Check for updates** currently follows stable GitHub releases;
-it does not install prereleases. Download prerelease updates manually and
-extract them into a new folder. Your Local AppData saves remain separate.
-
-For source builds, see [Building on Windows](docs/BUILDING.md). The downloadable
-Windows package already contains the native game and does not compile anything
-on the player's PC.
+For development builds, see [Building on Windows](docs/BUILDING.md). Existing
+local executables and generated sources are preserved for development and are
+not public release assets. File #2 remains unsupported.
 
 ## Online co-op
 

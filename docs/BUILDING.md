@@ -1,3 +1,7 @@
+> The precompiled prerelease has been withdrawn. Legacy native packaging is
+> disabled while the local-build installer is implemented. Generated game code,
+> instruction-derived GPU shader outputs and game captures stay local.
+
 # Building on Windows
 
 Use a short checkout path, such as `C:\dev\reo`. Full recompilation is expensive; updating the launcher does not require rebuilding the game.
