@@ -51,11 +51,28 @@ $licenseSources = @(
     @('raylib', (Join-Path $repo 'third_party/PS2Recomp/out/build/_deps/raylib-src')),
     @('fmt', (Join-Path $repo 'third_party/PS2Recomp/out/build/_deps/fmt-src')),
     @('ELFIO', (Join-Path $repo 'third_party/PS2Recomp/out/build/_deps/elfio-src')),
+    @('libdwarf', (Join-Path $repo 'third_party/PS2Recomp/out/build/_deps/libdwarf-src')),
+    @('GLFW', (Join-Path $repo 'third_party/PS2Recomp/out/build/_deps/raylib-src/src/external/glfw')),
     @('Granite', (Join-Path $repo 'build-ninja/parallel-gs-source/Granite'))
 )
+$graniteThirdParty = Join-Path $repo 'build-ninja/parallel-gs-source/Granite/third_party'
+if (Test-Path -LiteralPath $graniteThirdParty) {
+    foreach ($folder in (Get-ChildItem -LiteralPath $graniteThirdParty -Directory)) {
+        $licenseSources += ,@(('Granite-' + $folder.Name), $folder.FullName)
+    }
+}
+# Use the versions actually published, rather than a different installed .NET SDK.
+$runtimeConfig = Get-Content -LiteralPath (Join-Path $Output 'Outbreak.Launcher.runtimeconfig.json') -Raw | ConvertFrom-Json
+foreach ($framework in $runtimeConfig.runtimeOptions.includedFrameworks) {
+    $packageId = $framework.name.ToLowerInvariant() + '.runtime.win-x64'
+    $nugetRoot = if ($env:NUGET_PACKAGES) { $env:NUGET_PACKAGES } else { Join-Path $env:USERPROFILE '.nuget/packages' }
+    $packageFolder = Join-Path $nugetRoot ($packageId + '/' + $framework.version)
+    if (!(Test-Path -LiteralPath $packageFolder)) { throw "Missing runtime license package: $packageId $($framework.version)" }
+    $licenseSources += ,@($framework.name, $packageFolder)
+}
 foreach ($pair in $licenseSources) {
     if (Test-Path -LiteralPath $pair[1]) {
-        Get-ChildItem -LiteralPath $pair[1] -File | Where-Object { $_.Name -match '^(LICENSE|COPYING|NOTICE)' } | ForEach-Object {
+        Get-ChildItem -LiteralPath $pair[1] -File | Where-Object { $_.Name -match '^(LICENSE|COPYING|NOTICE|THIRD-PARTY-NOTICES)' } | ForEach-Object {
             Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $licenses ($pair[0] + '-' + $_.Name)) -Force
         }
     }
