@@ -1,0 +1,47 @@
+name: Linux portable foundations
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'linux/**'
+    paths:
+      - 'launcher/linux/**'
+      - 'tools/local_build/**'
+      - 'tools/parallel_gs_backend/pipeline_cache_store.h'
+      - 'tools/parallel_gs_backend/cache_check.cpp'
+      - '.github/workflows/linux-portable.yml'
+  pull_request:
+    paths:
+      - 'launcher/linux/**'
+      - 'tools/local_build/**'
+      - 'tools/parallel_gs_backend/pipeline_cache_store.h'
+      - 'tools/parallel_gs_backend/cache_check.cpp'
+      - '.github/workflows/linux-portable.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  native-foundations:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install test-only build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm python3-venv libegl1 libxkbcommon0 libopengl0
+          python3 -m venv /tmp/reo-tests
+          /tmp/reo-tests/bin/pip install -r launcher/linux/requirements-build.txt
+      - name: Native compiler, ISO and cache verification
+        run: /tmp/reo-tests/bin/python -m unittest discover -s tools/local_build -p 'test_*.py' -v
+      - name: Offscreen native launcher
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: /tmp/reo-tests/bin/python -m unittest discover -s launcher/linux -p 'test_ui.py' -v
+      - name: Native pipeline cache codec and atomic IO
+        run: |
+          clang++ -std=c++17 -O2 -pthread tools/parallel_gs_backend/cache_check.cpp -o /tmp/reo-cache-check
+          /tmp/reo-cache-check /tmp/reo-native-cache-output
+      - name: Publication source audit
+        run: /tmp/reo-tests/bin/python tools/publication_audit.py
