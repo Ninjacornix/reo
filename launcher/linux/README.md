@@ -56,6 +56,11 @@ uses the existing local plan's units/source groups, authored source replacements
 independent library hashes, output copies and explicit compile/link flags. Do not
 translate `.lib` names to `.a` or reuse Windows objects.
 
+Run `tools/local_build/seal_linux.py --kit PATH` only after auditing that native
+kit. Linux CRT startup objects belong under the audited `toolchain/` inventory;
+game objects never do. Compiler/Python source and licence material belongs in the
+independent SDK source archive too.
+
 Persistent data follows XDG locations under `OutbreakRecomp`. It is kept outside
 the read-only AppImage; replacing the AppImage must not replace saves or imports.
 

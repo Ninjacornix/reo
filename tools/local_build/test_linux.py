@@ -99,6 +99,18 @@ class LinuxPortableTests(unittest.TestCase):
         self.assertEqual(env["REO_BRIGHTNESS"], "1.10")
         self.assertEqual(env["REO_GAMMA"], "1.20")
 
+    def test_display_defaults_and_invalid_values_match_windows(self):
+        defaults = game_environment(self.root / "owned.iso", {})
+        self.assertEqual((defaults["REO_WINDOW_WIDTH"], defaults["REO_WINDOW_HEIGHT"]), ("1024", "768"))
+        invalid = game_environment(self.root / "owned.iso", {"ScreenFit": "invalid", "AspectRatio": "invalid",
+            "Anisotropy": 3, "Gamma": float("nan"), "Brightness": 200, "AntiAliasing": False})
+        self.assertEqual(invalid["REO_DISPLAY_FIT"], "fit")
+        self.assertEqual(invalid["REO_DISPLAY_ASPECT"], "4:3")
+        self.assertEqual(invalid["REO_TEXTURE_ANISOTROPY"], "1")
+        self.assertEqual(invalid["REO_GAMMA"], "1.00")
+        self.assertEqual(invalid["REO_BRIGHTNESS"], "1.50")
+        self.assertEqual(invalid["REO_POST_AA"], "off")
+
     @unittest.skipUnless(sys.platform == "linux", "Native compile/link/cache integration runs on Linux CI")
     def test_real_native_compilation_archive_link_and_cache(self):
         compiler, archiver = shutil.which("clang++"), shutil.which("llvm-ar")
