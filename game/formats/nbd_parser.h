@@ -30,20 +30,20 @@ constexpr uint32_t NBD_TYPE_AMO = 0x004F4D41; // "AMO\0"
 constexpr uint32_t NBD_TYPE_AHI = 0x00494841; // "AHI\0"
 
 struct NbdChunk {
-    uint32_t type;      // Chunk type (TEX/AMO/AHI)
-    uint32_t offset;    // Offset within NBD file to chunk data
-    uint32_t size;      // Chunk data size in bytes
-    uint32_t count;     // Sub-item count (e.g. number of textures)
+    uint32_t type;   // Chunk type (TEX/AMO/AHI)
+    uint32_t offset; // Offset within NBD file to chunk data
+    uint32_t size;   // Chunk data size in bytes
+    uint32_t count;  // Sub-item count (e.g. number of textures)
 };
 
 // A single decompressed TIM2 blob from a TEX chunk
 struct NbdTexEntry {
-    uint32_t compressed_size;     // Size in the TEX chunk
-    std::vector<uint8_t> tim2;    // Decompressed TIM2 file data
+    uint32_t compressed_size;  // Size in the TEX chunk
+    std::vector<uint8_t> tim2; // Decompressed TIM2 file data
 };
 
 class NbdParser {
-public:
+  public:
     NbdParser() = default;
 
     // Parse from memory buffer
@@ -52,8 +52,12 @@ public:
     // Parse from file
     bool parse(const std::string& path);
 
-    int chunk_count() const { return (int)m_chunks.size(); }
-    const NbdChunk& chunk(int index) const { return m_chunks[index]; }
+    int chunk_count() const {
+        return (int)m_chunks.size();
+    }
+    const NbdChunk& chunk(int index) const {
+        return m_chunks[index];
+    }
 
     // Find chunks by type. Returns indices into chunk array.
     std::vector<int> find_chunks(uint32_t type) const;
@@ -61,7 +65,8 @@ public:
     // Get pointer to chunk data within the original buffer.
     // Caller must ensure the original buffer outlives the returned pointer.
     const uint8_t* chunk_data(int index) const {
-        if (index < 0 || index >= (int)m_chunks.size() || !m_data) return nullptr;
+        if (index < 0 || index >= (int)m_chunks.size() || !m_data)
+            return nullptr;
         return m_data + m_chunks[index].offset;
     }
 
@@ -70,10 +75,14 @@ public:
     std::vector<NbdTexEntry> extract_textures(int chunk_index) const;
 
     // Access the full NBD buffer
-    const uint8_t* data() const { return m_data; }
-    uint32_t data_size() const { return m_size; }
+    const uint8_t* data() const {
+        return m_data;
+    }
+    uint32_t data_size() const {
+        return m_size;
+    }
 
-private:
+  private:
     bool parse_directory();
 
     std::vector<NbdChunk> m_chunks;

@@ -26,8 +26,8 @@ bool SofdecDecoder::open(const std::string& path) {
     m_finished = false;
     m_position = 0;
 
-    printf("[SFD] Opened: %s (%dx%d @ %dfps)\n",
-           path.c_str(), m_video_width, m_video_height, m_video_fps);
+    printf("[SFD] Opened: %s (%dx%d @ %dfps)\n", path.c_str(), m_video_width, m_video_height,
+           m_video_fps);
     return true;
 }
 
@@ -41,12 +41,13 @@ void SofdecDecoder::close() {
 bool SofdecDecoder::parse_sfd_header() {
     // SFD files are MPEG Program Streams
     // Look for MPEG-PS pack start code: 0x000001BA
-    if (m_data.size() < 12) return false;
+    if (m_data.size() < 12)
+        return false;
 
     // Check for MPEG-PS start code
     if (m_data[0] == 0x00 && m_data[1] == 0x00 && m_data[2] == 0x01 && m_data[3] == 0xBA) {
         // MPEG-2 PS
-        m_video_width = 512;   // Default for PS2 FMVs, actual size in sequence header
+        m_video_width = 512; // Default for PS2 FMVs, actual size in sequence header
         m_video_height = 448;
         m_video_fps = 30;
         return true;
@@ -67,7 +68,8 @@ bool SofdecDecoder::parse_sfd_header() {
 }
 
 bool SofdecDecoder::decode_video_frame(uint8_t* rgba_output, int* width, int* height) {
-    if (!m_open || m_finished) return false;
+    if (!m_open || m_finished)
+        return false;
 
     // TODO: Demux MPEG-PS to extract video packets
     // TODO: Decode MPEG-1/2 video frame

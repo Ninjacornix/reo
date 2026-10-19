@@ -9,9 +9,9 @@ void LobbyClient::refresh() {
 }
 
 bool LobbyClient::create(const std::string& name, const std::string& scenario,
-                          const std::string& difficulty, int max_players) {
-    printf("[LOBBY] Creating room: %s (%s / %s / %d players)\n",
-           name.c_str(), scenario.c_str(), difficulty.c_str(), max_players);
+                         const std::string& difficulty, int max_players) {
+    printf("[LOBBY] Creating room: %s (%s / %s / %d players)\n", name.c_str(), scenario.c_str(),
+           difficulty.c_str(), max_players);
     // TODO: Send create room request
     return true;
 }

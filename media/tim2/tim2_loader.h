@@ -28,13 +28,13 @@ namespace reo {
 struct Tim2Texture {
     uint32_t width;
     uint32_t height;
-    uint8_t  pixel_format;   // PS2 GS pixel storage format (imageFormat field)
-    uint8_t  image_type;     // 1=RGB16, 2=RGB24, 3=RGBA32, 4=IDX4, 5=IDX8
-    uint8_t  clut_type;      // CLUT format flags (bit 0x80 = CSM2/no rearrangement)
-    uint8_t  mipmap_count;
-    bool     has_clut;       // Has color lookup table (palette)
-    uint16_t clut_colors;    // Number of CLUT entries
-    uint16_t global_tex_id;  // RE Outbreak extension (globalTextureId)
+    uint8_t pixel_format; // PS2 GS pixel storage format (imageFormat field)
+    uint8_t image_type;   // 1=RGB16, 2=RGB24, 3=RGBA32, 4=IDX4, 5=IDX8
+    uint8_t clut_type;    // CLUT format flags (bit 0x80 = CSM2/no rearrangement)
+    uint8_t mipmap_count;
+    bool has_clut;          // Has color lookup table (palette)
+    uint16_t clut_colors;   // Number of CLUT entries
+    uint16_t global_tex_id; // RE Outbreak extension (globalTextureId)
 
     // GS register values (from TIM2 header)
     uint64_t gs_tex0;
@@ -50,7 +50,7 @@ struct Tim2Texture {
 };
 
 class Tim2Loader {
-public:
+  public:
     Tim2Loader() = default;
 
     // Load from file
@@ -60,8 +60,12 @@ public:
     bool load(const uint8_t* data, uint32_t size);
 
     // Get loaded textures
-    int texture_count() const { return (int)m_textures.size(); }
-    const Tim2Texture& texture(int index) const { return m_textures[index]; }
+    int texture_count() const {
+        return (int)m_textures.size();
+    }
+    const Tim2Texture& texture(int index) const {
+        return m_textures[index];
+    }
 
     // OB LZ77 decompression (RE Outbreak's custom 16-bit word compression)
     // Returns decompressed data, or empty vector on failure.
@@ -71,7 +75,7 @@ public:
     static bool decompress_lzss(const uint8_t* input, uint32_t input_size,
                                 std::vector<uint8_t>& output);
 
-private:
+  private:
     bool parse_tim2(const uint8_t* data, uint32_t size);
     bool decode_texture(const uint8_t* hdr, uint32_t total_size, Tim2Texture& tex);
     void rearrange_clut(uint8_t* clut, int color_count);

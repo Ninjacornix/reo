@@ -6,29 +6,37 @@
 namespace reo {
 
 Memory::~Memory() {
-    if (m_main_ram)   free(m_main_ram);
-    if (m_iop_ram)    free(m_iop_ram);
-    if (m_scratchpad) free(m_scratchpad);
-    if (m_bios_rom)   free(m_bios_rom);
-    if (m_vu0_code)   free(m_vu0_code);
-    if (m_vu0_data)   free(m_vu0_data);
-    if (m_vu1_code)   free(m_vu1_code);
-    if (m_vu1_data)   free(m_vu1_data);
+    if (m_main_ram)
+        free(m_main_ram);
+    if (m_iop_ram)
+        free(m_iop_ram);
+    if (m_scratchpad)
+        free(m_scratchpad);
+    if (m_bios_rom)
+        free(m_bios_rom);
+    if (m_vu0_code)
+        free(m_vu0_code);
+    if (m_vu0_data)
+        free(m_vu0_data);
+    if (m_vu1_code)
+        free(m_vu1_code);
+    if (m_vu1_data)
+        free(m_vu1_data);
 }
 
 bool Memory::init() {
     // Allocate aligned memory regions
-    m_main_ram   = (uint8_t*)calloc(1, EE_MAIN_RAM_SIZE);
-    m_iop_ram    = (uint8_t*)calloc(1, EE_IOP_RAM_SIZE);
+    m_main_ram = (uint8_t*)calloc(1, EE_MAIN_RAM_SIZE);
+    m_iop_ram = (uint8_t*)calloc(1, EE_IOP_RAM_SIZE);
     m_scratchpad = (uint8_t*)calloc(1, EE_SCRATCHPAD_SIZE);
-    m_bios_rom   = (uint8_t*)calloc(1, EE_BIOS_SIZE);
-    m_vu0_code   = (uint8_t*)calloc(1, 4096);
-    m_vu0_data   = (uint8_t*)calloc(1, 4096);
-    m_vu1_code   = (uint8_t*)calloc(1, 16384);
-    m_vu1_data   = (uint8_t*)calloc(1, 16384);
+    m_bios_rom = (uint8_t*)calloc(1, EE_BIOS_SIZE);
+    m_vu0_code = (uint8_t*)calloc(1, 4096);
+    m_vu0_data = (uint8_t*)calloc(1, 4096);
+    m_vu1_code = (uint8_t*)calloc(1, 16384);
+    m_vu1_data = (uint8_t*)calloc(1, 16384);
 
-    if (!m_main_ram || !m_iop_ram || !m_scratchpad || !m_bios_rom ||
-        !m_vu0_code || !m_vu0_data || !m_vu1_code || !m_vu1_data) {
+    if (!m_main_ram || !m_iop_ram || !m_scratchpad || !m_bios_rom || !m_vu0_code || !m_vu0_data ||
+        !m_vu1_code || !m_vu1_data) {
         fprintf(stderr, "[MEM] Failed to allocate PS2 memory regions\n");
         return false;
     }
@@ -60,7 +68,7 @@ uint32_t Memory::translate_address(uint32_t vaddr) const {
 
     // Scratchpad at 0x70000000
     if (vaddr >= EE_SCRATCHPAD_BASE && vaddr < EE_SCRATCHPAD_BASE + EE_SCRATCHPAD_SIZE) {
-        return vaddr;  // Keep as-is, handled specially
+        return vaddr; // Keep as-is, handled specially
     }
 
     // Uncached accelerated mirror at 0x30000000
@@ -175,7 +183,8 @@ void Memory::write32(uint32_t vaddr, uint32_t value) {
 
 uint8_t Memory::read8(uint32_t vaddr) {
     uint8_t* ptr = get_pointer(vaddr);
-    if (ptr) return *ptr;
+    if (ptr)
+        return *ptr;
     return (uint8_t)read32(vaddr & ~3) >> ((vaddr & 3) * 8);
 }
 
@@ -216,26 +225,38 @@ void Memory::read128(uint32_t vaddr, void* out) {
 
 void Memory::write8(uint32_t vaddr, uint8_t value) {
     uint8_t* ptr = get_pointer(vaddr);
-    if (ptr) { *ptr = value; return; }
+    if (ptr) {
+        *ptr = value;
+        return;
+    }
     fprintf(stderr, "[MEM] Unhandled write8 at 0x%08X = 0x%02X\n", vaddr, value);
 }
 
 void Memory::write16(uint32_t vaddr, uint16_t value) {
     uint8_t* ptr = get_pointer(vaddr);
-    if (ptr) { memcpy(ptr, &value, sizeof(value)); return; }
+    if (ptr) {
+        memcpy(ptr, &value, sizeof(value));
+        return;
+    }
     fprintf(stderr, "[MEM] Unhandled write16 at 0x%08X = 0x%04X\n", vaddr, value);
 }
 
 void Memory::write64(uint32_t vaddr, uint64_t value) {
     uint8_t* ptr = get_pointer(vaddr);
-    if (ptr) { memcpy(ptr, &value, sizeof(value)); return; }
+    if (ptr) {
+        memcpy(ptr, &value, sizeof(value));
+        return;
+    }
     write32(vaddr, (uint32_t)value);
     write32(vaddr + 4, (uint32_t)(value >> 32));
 }
 
 void Memory::write128(uint32_t vaddr, const void* data) {
     uint8_t* ptr = get_pointer(vaddr);
-    if (ptr) { memcpy(ptr, data, 16); return; }
+    if (ptr) {
+        memcpy(ptr, data, 16);
+        return;
+    }
     const uint32_t* d = (const uint32_t*)data;
     write32(vaddr, d[0]);
     write32(vaddr + 4, d[1]);

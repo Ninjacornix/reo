@@ -19,44 +19,45 @@ namespace reo {
 
 // PS2 button bit positions (in the 16-bit digital buttons field)
 enum PS2Button : uint16_t {
-    PS2_SELECT   = 0x0001,
-    PS2_L3       = 0x0002,
-    PS2_R3       = 0x0004,
-    PS2_START    = 0x0008,
-    PS2_UP       = 0x0010,
-    PS2_RIGHT    = 0x0020,
-    PS2_DOWN     = 0x0040,
-    PS2_LEFT     = 0x0080,
-    PS2_L2       = 0x0100,
-    PS2_R2       = 0x0200,
-    PS2_L1       = 0x0400,
-    PS2_R1       = 0x0800,
+    PS2_SELECT = 0x0001,
+    PS2_L3 = 0x0002,
+    PS2_R3 = 0x0004,
+    PS2_START = 0x0008,
+    PS2_UP = 0x0010,
+    PS2_RIGHT = 0x0020,
+    PS2_DOWN = 0x0040,
+    PS2_LEFT = 0x0080,
+    PS2_L2 = 0x0100,
+    PS2_R2 = 0x0200,
+    PS2_L1 = 0x0400,
+    PS2_R1 = 0x0800,
     PS2_TRIANGLE = 0x1000,
-    PS2_CIRCLE   = 0x2000,
-    PS2_CROSS    = 0x4000,
-    PS2_SQUARE   = 0x8000,
+    PS2_CIRCLE = 0x2000,
+    PS2_CROSS = 0x4000,
+    PS2_SQUARE = 0x8000,
 };
 
 struct DualShock2State {
-    uint16_t buttons;       // Bit field (0 = pressed, PS2 convention)
-    uint8_t  right_x;       // Right stick X (0x80 = center)
-    uint8_t  right_y;       // Right stick Y (0x80 = center)
-    uint8_t  left_x;        // Left stick X (0x80 = center)
-    uint8_t  left_y;        // Left stick Y (0x80 = center)
-    uint8_t  pressure[12];  // Pressure for: Right,Left,Up,Down,Tri,Circle,Cross,Square,L1,R1,L2,R2
+    uint16_t buttons;     // Bit field (0 = pressed, PS2 convention)
+    uint8_t right_x;      // Right stick X (0x80 = center)
+    uint8_t right_y;      // Right stick Y (0x80 = center)
+    uint8_t left_x;       // Left stick X (0x80 = center)
+    uint8_t left_y;       // Left stick Y (0x80 = center)
+    uint8_t pressure[12]; // Pressure for: Right,Left,Up,Down,Tri,Circle,Cross,Square,L1,R1,L2,R2
 
     void reset() {
-        buttons = 0xFFFF;  // All released (0 = pressed)
+        buttons = 0xFFFF; // All released (0 = pressed)
         right_x = 0x80;
         right_y = 0x80;
         left_x = 0x80;
         left_y = 0x80;
-        for (int i = 0; i < 12; i++) pressure[i] = 0;
+        for (int i = 0; i < 12; i++)
+            pressure[i] = 0;
     }
 };
 
 class Input {
-public:
+  public:
     Input() = default;
 
     bool init();
@@ -73,7 +74,7 @@ public:
     // Keyboard mappings (default: WASD + arrow keys + typical bindings)
     // TODO: Configurable key mapping
 
-private:
+  private:
     void update_xinput(int port);
     void update_keyboard();
 

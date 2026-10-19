@@ -15,7 +15,7 @@ namespace reo {
  */
 
 class Timer {
-public:
+  public:
     Timer() = default;
 
     void init();
@@ -34,10 +34,14 @@ public:
     void end_frame();
     void wait_for_vsync(int target_fps = 60);
 
-    double frame_time_ms() const { return m_frame_time_ms; }
-    double fps() const { return m_fps; }
+    double frame_time_ms() const {
+        return m_frame_time_ms;
+    }
+    double fps() const {
+        return m_fps;
+    }
 
-private:
+  private:
     uint64_t m_start_ticks = 0;
     uint64_t m_freq = 0;
     uint64_t m_frame_start = 0;

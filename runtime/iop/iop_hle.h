@@ -32,25 +32,30 @@ class CDVD;
  */
 
 // SIF RPC module IDs (for EE→IOP calls)
-constexpr uint32_t SIF_PADMAN    = 0x80000100;
-constexpr uint32_t SIF_MCSERV    = 0x80000400;
-constexpr uint32_t SIF_CDVD      = 0x80000592;
-constexpr uint32_t SIF_LIBSD     = 0x80000701;
-constexpr uint32_t SIF_INET      = 0x80000A01;
-constexpr uint32_t SIF_NETCNF    = 0x80000A02;
+constexpr uint32_t SIF_PADMAN = 0x80000100;
+constexpr uint32_t SIF_MCSERV = 0x80000400;
+constexpr uint32_t SIF_CDVD = 0x80000592;
+constexpr uint32_t SIF_LIBSD = 0x80000701;
+constexpr uint32_t SIF_INET = 0x80000A01;
+constexpr uint32_t SIF_NETCNF = 0x80000A02;
 
 class IopHLE {
-public:
+  public:
     explicit IopHLE(Memory& ee_memory);
 
     // Attach subsystem references (called during boot)
-    void set_input(Input* input) { m_input = input; }
-    void set_spu2(SPU2* spu2)   { m_spu2 = spu2; }
-    void set_cdvd(CDVD* cdvd)   { m_cdvd = cdvd; }
+    void set_input(Input* input) {
+        m_input = input;
+    }
+    void set_spu2(SPU2* spu2) {
+        m_spu2 = spu2;
+    }
+    void set_cdvd(CDVD* cdvd) {
+        m_cdvd = cdvd;
+    }
 
     // SIF RPC call from EE
-    void sif_rpc_call(uint32_t module_id, uint32_t func_id,
-                      uint32_t send_buf, uint32_t send_size,
+    void sif_rpc_call(uint32_t module_id, uint32_t func_id, uint32_t send_buf, uint32_t send_size,
                       uint32_t recv_buf, uint32_t recv_size);
 
     // SIF DMA between EE and IOP
@@ -60,7 +65,7 @@ public:
     // Module loading (games request specific IRX modules)
     int load_module(const std::string& name);
 
-private:
+  private:
     // HLE implementations of IOP modules
     void hle_padman(uint32_t func, uint32_t send, uint32_t recv);
     void hle_mcserv(uint32_t func, uint32_t send, uint32_t recv);

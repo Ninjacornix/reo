@@ -17,7 +17,7 @@ namespace reo {
  */
 
 class CDVD {
-public:
+  public:
     explicit CDVD(const std::filesystem::path& game_data_root);
     ~CDVD();
     CDVD(const CDVD&) = delete;
@@ -34,7 +34,9 @@ public:
     // start sector and byte size, as sceCdSearchFile reports them.
     bool search_file(const std::string& ps2_path, uint32_t& lba, uint32_t& size);
 
-    bool has_image() const { return m_image != nullptr; }
+    bool has_image() const {
+        return m_image != nullptr;
+    }
 
     // Check if a file exists on the virtual disc
     bool file_exists(const std::string& ps2_path) const;
@@ -45,11 +47,11 @@ public:
     // Translate PS2 path to local filesystem path
     std::filesystem::path resolve_path(const std::string& ps2_path) const;
 
-private:
+  private:
     std::filesystem::path m_root;
     std::unordered_map<std::string, std::filesystem::path> m_file_map;
 
-    void* m_image = nullptr;          // FILE* (ISO) or HANDLE (raw volume)
+    void* m_image = nullptr; // FILE* (ISO) or HANDLE (raw volume)
     bool m_imageIsVolume = false;
     uint64_t m_imageSize = 0;
 

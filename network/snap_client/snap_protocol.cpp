@@ -66,7 +66,8 @@ bool SnapProtocol::connect(const std::string& host, int port) {
     m_state = SnapState::Authenticating;
     printf("[NET] Connected to %s:%d\n", host.c_str(), port);
 
-    if (m_on_connected) m_on_connected();
+    if (m_on_connected)
+        m_on_connected();
     return true;
 #else
     fprintf(stderr, "[NET] Network not implemented on this platform\n");
@@ -103,9 +104,8 @@ void SnapProtocol::request_room_list() {
 }
 
 bool SnapProtocol::create_room(const std::string& name, const std::string& scenario,
-                                int max_players) {
-    printf("[NET] Creating room: %s (%s, max %d)\n",
-           name.c_str(), scenario.c_str(), max_players);
+                               int max_players) {
+    printf("[NET] Creating room: %s (%s, max %d)\n", name.c_str(), scenario.c_str(), max_players);
     // TODO: Send room creation packet
     m_state = SnapState::InRoom;
     return true;
@@ -135,7 +135,8 @@ void SnapProtocol::send_chat(const std::string& message) {
 }
 
 void SnapProtocol::update() {
-    if (m_state == SnapState::Disconnected || m_state == SnapState::Error) return;
+    if (m_state == SnapState::Disconnected || m_state == SnapState::Error)
+        return;
 
     // TODO: Poll socket for incoming packets and dispatch
     SnapPacketHeader header;
@@ -148,7 +149,8 @@ void SnapProtocol::update() {
 
 void SnapProtocol::send_packet(uint16_t type, const void* data, uint32_t size) {
 #ifdef REO_PLATFORM_WINDOWS
-    if (m_socket == INVALID_SOCKET) return;
+    if (m_socket == INVALID_SOCKET)
+        return;
 
     SnapPacketHeader header;
     header.length = (uint16_t)(sizeof(header) + size);
@@ -165,12 +167,15 @@ void SnapProtocol::send_packet(uint16_t type, const void* data, uint32_t size) {
 
 bool SnapProtocol::recv_packet(SnapPacketHeader& header, std::vector<uint8_t>& data) {
 #ifdef REO_PLATFORM_WINDOWS
-    if (m_socket == INVALID_SOCKET) return false;
+    if (m_socket == INVALID_SOCKET)
+        return false;
 
     int received = recv((SOCKET)m_socket, (char*)&header, sizeof(header), MSG_PEEK);
-    if (received <= 0) return false;
+    if (received <= 0)
+        return false;
 
-    if (received < (int)sizeof(header)) return false;
+    if (received < (int)sizeof(header))
+        return false;
 
     // Read full header
     recv((SOCKET)m_socket, (char*)&header, sizeof(header), 0);
@@ -188,10 +193,10 @@ bool SnapProtocol::recv_packet(SnapPacketHeader& header, std::vector<uint8_t>& d
 #endif
 }
 
-void SnapProtocol::handle_packet(const SnapPacketHeader& header,
-                                  const uint8_t* data, uint32_t size) {
-    printf("[NET] Received packet: type=0x%04X seq=%u size=%u\n",
-           header.type, header.sequence, size);
+void SnapProtocol::handle_packet(const SnapPacketHeader& header, const uint8_t* data,
+                                 uint32_t size) {
+    printf("[NET] Received packet: type=0x%04X seq=%u size=%u\n", header.type, header.sequence,
+           size);
 
     // TODO: Dispatch based on packet type
     // Types will be reverse-engineered from obsrv.org server code

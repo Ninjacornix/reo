@@ -1,0 +1,27 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.{cmd,bat}]
+end_of_line = crlf
+
+[*.md]
+trim_trailing_whitespace = false
+
+[**/third_party/**]
+generated_code = true
+
+[**/recomp/config/output*/**]
+generated_code = true
+
+[**/obj/**]
+charset = unset
+generated_code = true

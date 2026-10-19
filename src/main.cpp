@@ -1,10 +1,4 @@
-/*
- * REO - Resident Evil Outbreak: Recompiled
- *
- * Static recompilation of RE Outbreak (PS2) for native Windows.
- * Fan project. Not affiliated with Capcom or Sony.
- */
-
+// REO native runtime scaffold.
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -94,8 +88,8 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "[BOOT] Failed to initialize GS renderer.\n");
         return 1;
     }
-    printf("[BOOT] GS Renderer: %s (%dx%d)\n",
-           gs.backend_name(), config.window_width, config.window_height);
+    printf("[BOOT] GS Renderer: %s (%dx%d)\n", gs.backend_name(), config.window_width,
+           config.window_height);
 
     // Initialize SPU2 audio
     reo::SPU2 spu2;
@@ -137,8 +131,8 @@ int main(int argc, char* argv[]) {
 
         reo::SnapProtocol snap;
         if (snap.connect(config.server_address, config.server_port)) {
-            printf("[BOOT] Connected to %s:%d\n",
-                   config.server_address.c_str(), config.server_port);
+            printf("[BOOT] Connected to %s:%d\n", config.server_address.c_str(),
+                   config.server_port);
         } else {
             printf("[BOOT] Network: Could not connect (offline mode)\n");
         }
@@ -149,10 +143,12 @@ int main(int argc, char* argv[]) {
     reo::VUInterpreter vu1(1, memory.vu1_code(), 16384, memory.vu1_data(), 16384);
 
     // Wire VU1 XGKICK → GS PATH1 (geometry submission pipeline)
-    vu1.set_xgkick_callback([](const void* data, uint32_t max_size, void* user) {
-        auto* gs_ptr = (reo::GSRenderer*)user;
-        gs_ptr->submit_path1(data, max_size);
-    }, &gs);
+    vu1.set_xgkick_callback(
+        [](const void* data, uint32_t max_size, void* user) {
+            auto* gs_ptr = (reo::GSRenderer*)user;
+            gs_ptr->submit_path1(data, max_size);
+        },
+        &gs);
     printf("[BOOT] VU0/VU1: Interpreter mode ready (VU1→GS PATH1 wired)\n");
 
     // Initialize kernel thread/semaphore system
@@ -161,7 +157,7 @@ int main(int argc, char* argv[]) {
 
     printf("\n[BOOT] All subsystems initialized. Loading game...\n\n");
 
-    // ── Load ELF into guest memory ──────────────────────────────────
+    // Load ELF into guest memory
     {
         FILE* f = fopen(elf_path.string().c_str(), "rb");
         if (!f) {
@@ -191,8 +187,8 @@ int main(int argc, char* argv[]) {
         }
 
         // Parse ELF32 program headers to load segments into guest memory
-        uint32_t phoff = *(uint32_t*)(ehdr + 28);  // e_phoff
-        uint16_t phnum = *(uint16_t*)(ehdr + 44);  // e_phnum
+        uint32_t phoff = *(uint32_t*)(ehdr + 28);     // e_phoff
+        uint16_t phnum = *(uint16_t*)(ehdr + 44);     // e_phnum
         uint16_t phentsize = *(uint16_t*)(ehdr + 42); // e_phentsize
 
         printf("[BOOT] ELF: %d program headers at offset 0x%X\n", phnum, phoff);
@@ -202,13 +198,14 @@ int main(int argc, char* argv[]) {
             fseek(f, phoff + i * phentsize, SEEK_SET);
             fread(phdr, 1, 32, f);
 
-            uint32_t p_type   = *(uint32_t*)(phdr + 0);
+            uint32_t p_type = *(uint32_t*)(phdr + 0);
             uint32_t p_offset = *(uint32_t*)(phdr + 4);
-            uint32_t p_vaddr  = *(uint32_t*)(phdr + 8);
+            uint32_t p_vaddr = *(uint32_t*)(phdr + 8);
             uint32_t p_filesz = *(uint32_t*)(phdr + 16);
-            uint32_t p_memsz  = *(uint32_t*)(phdr + 20);
+            uint32_t p_memsz = *(uint32_t*)(phdr + 20);
 
-            if (p_type != 1) continue; // PT_LOAD only
+            if (p_type != 1)
+                continue; // PT_LOAD only
 
             uint8_t* dest = memory.get_pointer(p_vaddr);
             if (!dest) {
@@ -225,8 +222,8 @@ int main(int argc, char* argv[]) {
             fseek(f, p_offset, SEEK_SET);
             size_t read = fread(dest, 1, p_filesz, f);
 
-            printf("[BOOT] ELF: LOAD 0x%08X - 0x%08X (%u bytes from file, %u in memory)\n",
-                   p_vaddr, p_vaddr + p_memsz, p_filesz, p_memsz);
+            printf("[BOOT] ELF: LOAD 0x%08X - 0x%08X (%u bytes from file, %u in memory)\n", p_vaddr,
+                   p_vaddr + p_memsz, p_filesz, p_memsz);
         }
 
         fclose(f);
@@ -240,7 +237,7 @@ int main(int argc, char* argv[]) {
     printf("[BOOT] EE entry point: 0x%08X\n", cpu.pc);
     printf("[BOOT] Starting game execution...\n\n");
 
-    // ── Main game loop ──────────────────────────────────────────────
+    // Main game loop
     bool running = true;
     uint32_t frame_count = 0;
 
@@ -251,14 +248,14 @@ int main(int argc, char* argv[]) {
     while (running) {
         timer.begin_frame();
 
-        // ── 1. Poll input ───────────────────────────────────────────
+        // 1. Poll input
         input.update();
 
         // Write pad state to the memory location the game reads from
         // (the IOP HLE padman handler will provide this via SIF RPC)
         const auto& pad = input.get_pad(0);
 
-        // ── 2. Execute recompiled EE code ───────────────────────────
+        // 2. Execute recompiled EE code
         // The recompiled code is linked separately in reo_recomp/reo_recomp_file2.
         // Here in the HAL runtime, we execute the entry point and dispatch
         // syscalls. The recompiled executable drives the game logic.
@@ -276,7 +273,7 @@ int main(int argc, char* argv[]) {
             memory.write32(kern.vsync_flag_addr2, 1); // vsync occurred
         }
 
-        // ── 3. Process VU microprograms ─────────────────────────────
+        // 3. Process VU microprograms
         // VU1 programs are submitted by the game and run asynchronously.
         // If VU1 was started (by the recompiled code writing to VIF1),
         // execute it now.
@@ -284,7 +281,7 @@ int main(int argc, char* argv[]) {
             vu1.run(65536);
         }
 
-        // ── 4. GS rendering ────────────────────────────────────────
+        // 4. GS rendering
         gs.begin_frame();
         // Geometry submission happens via VU1 XGKICK → PATH1,
         // or via GIF DMA → PATH3. The GS renderer accumulates draw
@@ -292,14 +289,14 @@ int main(int argc, char* argv[]) {
         gs.end_frame();
         gs.present();
 
-        // ── 5. Mix SPU2 audio ───────────────────────────────────────
+        // 5. Mix SPU2 audio
         spu2.process_keys();
         spu2.mix_samples(audio_buffer, AUDIO_SAMPLES_PER_FRAME);
 
-        // ── 6. Handle network events ────────────────────────────────
+        // 6. Handle network events
         // (handled by the snap protocol client if online)
 
-        // ── 7. Frame timing / vsync ─────────────────────────────────
+        // 7. Frame timing / vsync
         timer.end_frame();
         timer.wait_for_vsync(60);
 
@@ -307,8 +304,8 @@ int main(int argc, char* argv[]) {
 
         // Print status periodically
         if (frame_count % 300 == 0) {
-            printf("[MAIN] Frame %u | %.1f FPS | %.2f ms/frame\n",
-                   frame_count, timer.fps(), timer.frame_time_ms());
+            printf("[MAIN] Frame %u | %.1f FPS | %.2f ms/frame\n", frame_count, timer.fps(),
+                   timer.frame_time_ms());
         }
 
         // Check for exit condition (ESC key via GetAsyncKeyState)
