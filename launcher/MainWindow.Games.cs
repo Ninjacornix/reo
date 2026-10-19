@@ -85,7 +85,9 @@ public partial class MainWindow {
                 (System.Windows.Media.Brush)FindResource(selected ? "Accent" : "Line");
             ((TextBlock)FindName("GameStatus" + n)).Text =
                 id == "file2" ? "Coming later. Native build not yet available."
-                : !File.Exists(settings.GetExe(id)) ? "Not included in this build."
+                : !(AppLayout.Packaged(root) ? LocalGameBuild.Available(root)
+                                             : File.Exists(settings.GetExe(id)))
+                    ? "Local build kit not installed."
                 : settings.FilesPresent(root, id)
                     ? DiscImport.Ready(settings, id) ? "Ready to play." : "ISO ready to import."
                     : "Game files not configured.";

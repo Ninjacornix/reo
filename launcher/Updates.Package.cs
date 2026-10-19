@@ -59,11 +59,12 @@ public static partial class Updates {
                 !d.TryGetProperty("platform", out _) || !d.TryGetProperty("source", out _) ||
                 !d.TryGetProperty("version", out _))
                 throw new IOException("Update package identity is incomplete.");
-            if (d.GetProperty("format").GetInt32() != 1 ||
+            if (d.GetProperty("format").GetInt32() != 2 ||
                 d.GetProperty("platform").GetString() != "win-x64" ||
                 d.GetProperty("source").GetString() != Repository ||
                 ParseVersion(d.GetProperty("version").GetString() ?? "") != expected ||
-                !d.TryGetProperty("updateFormat", out var format) || format.GetInt32() != 1)
+                !d.TryGetProperty("updateFormat", out var format) || format.GetInt32() != 2 ||
+                !d.TryGetProperty("installMode", out var mode) || mode.GetString() != "local-build")
                 throw new IOException(
                     "The release package is not a matching RE: Outbreak Windows update.");
         }
@@ -72,9 +73,15 @@ public static partial class Updates {
         foreach (string required in new[] { "distribution.json", "Outbreak.Launcher.exe",
                                             "Outbreak.Launcher.dll", "Outbreak.Launcher.deps.json",
                                             "Outbreak.Launcher.runtimeconfig.json", "coreclr.dll",
-                                            "hostfxr.dll", "games/file1/reo_recomp.exe" })
+                                            "hostfxr.dll", "build-kit/build-kit.json" })
             if (!names.Contains(required))
                 throw new IOException("Update package is incomplete: " + required);
+        if (names.Any(name => name.StartsWith("games/", StringComparison.OrdinalIgnoreCase) ||
+                              Path.GetFileName(name).Equals("reo_recomp.exe",
+                                                            StringComparison.OrdinalIgnoreCase) ||
+                              Path.GetFileName(name).Equals("reo_launcher_game.exe",
+                                                            StringComparison.OrdinalIgnoreCase)))
+            throw new IOException("Updates must not contain a precompiled game executable.");
         foreach (var file in files) {
             cancel.ThrowIfCancellationRequested();
             string path = SafePath(root, file.Path);

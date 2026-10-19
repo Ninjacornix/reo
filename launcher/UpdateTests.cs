@@ -19,12 +19,12 @@ static class UpdateTests {
                     : new HttpResponseMessage(HttpStatusCode.NotFound));
         }
     }
-    static void Fixture(string root, string version, bool obsolete = false) {
+    static void Fixture(string root, string version, bool obsolete = false, bool legacy = false) {
         Directory.CreateDirectory(root);
         foreach (string relative in new[] { "Outbreak.Launcher.exe", "Outbreak.Launcher.dll",
                                             "Outbreak.Launcher.deps.json",
                                             "Outbreak.Launcher.runtimeconfig.json", "coreclr.dll",
-                                            "hostfxr.dll", "games/file1/reo_recomp.exe",
+                                            "hostfxr.dll", "build-kit/build-kit.json",
                                             "new-file.txt" }) {
             string path = Updates.SafePath(root, relative);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -34,9 +34,11 @@ static class UpdateTests {
             File.WriteAllText(Path.Combine(root, "obsolete.txt"), "old managed file");
             File.WriteAllText(Path.Combine(root, "modified-old.txt"), "old managed file");
         }
-        File.WriteAllText(Path.Combine(root, "distribution.json"), JsonSerializer.Serialize(new {
-            format = 1, updateFormat = 1, version, platform = "win-x64", source = Updates.Repository
-        }));
+        File.WriteAllText(Path.Combine(root, "distribution.json"),
+                          JsonSerializer.Serialize(
+                              new { format = legacy ? 1 : 2, updateFormat = legacy ? 1 : 2,
+                                    installMode = legacy ? "precompiled" : "local-build", version,
+                                    platform = "win-x64", source = Updates.Repository }));
         var files =
             Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
                 .Select(p => new PackageFile(Path.GetRelativePath(root, p).Replace('\\', '/'),
@@ -72,6 +74,10 @@ static class UpdateTests {
             string source = Path.Combine(root, "new"), target = Path.Combine(root, "installed");
             Fixture(source, "0.2.0");
             Fixture(target, "0.1.0", true);
+            string legacy = Path.Combine(root, "legacy-precompiled");
+            Fixture(legacy, "0.2.0", legacy: true);
+            Refuses(() => Updates.Validate(legacy, Updates.ParseVersion("0.2.0")),
+                    "Precompiled-game distribution format is refused");
             string malformed = Path.Combine(root, "malformed");
             Directory.CreateDirectory(malformed);
             File.WriteAllText(Path.Combine(malformed, "package-manifest.json"), "[null]");

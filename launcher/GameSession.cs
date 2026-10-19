@@ -26,7 +26,7 @@ public sealed class GameSession {
         var selectedGame = settings.Game;
         if (selectedGame.Id != "file1")
             throw new IOException("File #2 is not available in this release.");
-        if (!File.Exists(sourceExe))
+        if (!AppLayout.Packaged(root) && !File.Exists(sourceExe))
             throw new FileNotFoundException(
                 "This game build is missing. Extract the complete release archive.");
         if (!File.Exists(iso))
@@ -35,6 +35,8 @@ public sealed class GameSession {
             iso, selectedGame, DiscImport.ExpectedElf(settings, root), importProgress, cancel);
         cancel.ThrowIfCancellationRequested();
         settings.SetImport(Imported.Root);
+        if (AppLayout.Packaged(root))
+            sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel);
         string discRoot = Path.Combine(Imported.Root, "data"), discElf = Imported.Elf;
         string proxy = Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll");
         if (!File.Exists(proxy))
@@ -244,7 +246,7 @@ public sealed class GameSession {
     // Drain pipes independently of the UI: native window messages can wait on the game.
     internal static async Task Pump(StreamReader input, StreamWriter output) {
         using (output) {
-            string? line;
+            string ? line;
             while ((line = await input.ReadLineAsync().ConfigureAwait(false)) != null)
                 await output.WriteLineAsync(line).ConfigureAwait(false);
         }

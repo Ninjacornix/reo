@@ -13,8 +13,12 @@ public partial class MainWindow {
             target.Text = ready ? yes : no;
             target.Foreground = (Brush)FindResource(ready ? "Ink" : "Muted");
         }
-        Row(ReadyBuild, File.Exists(settings.GetExe()), "Game installed",
-            "This game build is not included in the installation");
+        bool packaged = AppLayout.Packaged(root);
+        Row(ReadyBuild, packaged ? LocalGameBuild.Available(root) : File.Exists(settings.GetExe()),
+            packaged ? File.Exists(settings.GetExe()) ? "Local game build cached"
+                                                      : "Local build kit installed"
+                     : "Local developer build available",
+            "Compatible local build kit is not installed");
         Row(ReadyFiles, DiscImport.Ready(settings), "Game data imported",
             settings.Game.Id == "file2"      ? "Disc import will be available with File #2 support"
             : File.Exists(settings.GetIso()) ? "ISO selected; import on first launch"

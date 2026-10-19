@@ -30,8 +30,12 @@ def main():
             findings.append({"path": name, "reason": "excluded publication path"})
         file = ROOT / name
         if file.is_file() and file.suffix in {".cpp", ".h", ".hpp", ".glsl", ".comp", ".patch"}:
-            if OPCODE.search(file.read_text(errors="replace")):
+            text = file.read_text(errors="replace")
+            if OPCODE.search(text):
                 findings.append({"path": name, "reason": "instruction-by-instruction source requires review"})
+            rows = re.findall(r"(?m)^\+?\s*\{0x[\da-f]+u,0x[\da-f]+u,0x[\da-f]+u\}", text)
+            if len(rows) > 16 and re.search(r"\b(?:pc,word,entry|entry,pc,word)\b", text):
+                findings.append({"path": name, "reason": "raw instruction witness table requires local generation"})
     if args.history:
         objects = subprocess.check_output(["git", "rev-list", "--objects", "--all"], cwd=ROOT).decode()
         for row in objects.splitlines():

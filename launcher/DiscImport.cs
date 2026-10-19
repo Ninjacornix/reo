@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 
 namespace Outbreak.Launcher;
-public record ImportProgress(long Completed, long Total, string File) {
+public record ImportProgress(long Completed, long Total, string File, string Stage = "Importing") {
     public double Percent => Total == 0 ? 0 : Completed * 100.0 / Total;
 }
 public record ImportedDisc(string Root, string Elf, int Files, long Bytes, bool Reused);

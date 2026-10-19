@@ -35,3 +35,13 @@ Keep the dependency's license and attribution. Do not run checkout/reset over so
 `parallel-gs/` contains graphics dependency patches. The ordinary setup script does **not** apply this series or build its full GPU dependency graph. A GPU build must use the matching source revision, libraries and patch series. Do not assume that the PS2Recomp setup also configures paraLLEl-GS.
 
 Some current GPU integration paths remain local experiments; see [the build guide](../../docs/BUILDING.md). Changes still present only in a local dependency tree need a reproducible patch before release.
+
+The runtime witness catalogues contain addresses only in published metadata.
+After extracting your own supported ELF, generate their instruction words locally:
+
+```powershell
+python tools/local_build/generate_catalogues.py --elf game_data/SLUS_207.65 --manifest recomp/config/local_source_catalogues.json --output third_party/PS2Recomp/ps2xRuntime/src/lib/local_source_catalogues
+```
+
+Do this after applying the runtime patch series and before compiling affected
+runtime sources. These generated `.inc` files must remain local.

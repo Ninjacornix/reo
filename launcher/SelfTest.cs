@@ -51,6 +51,7 @@ static class SelfTest {
         DiscImportTests.Run(Check);
         OnlineOptionsTests.Run(Check);
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
+        Task.Run(() => LocalGameBuildTests.Run(Check)).GetAwaiter().GetResult();
         string pipeName = "reo-log-check-" + Guid.NewGuid().ToString("N"),
                pipeOutput = Path.GetTempFileName();
         using (var pipeReader = new NamedPipeServerStream(

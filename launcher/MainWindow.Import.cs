@@ -14,8 +14,8 @@ public partial class MainWindow {
             if (importCancellation != source)
                 return;
             DiscProgress.Value = value.Percent;
-            ImportState.Text = $"Importing {value.Percent:0}% - {value.File}";
-            Status.Text = $"Importing game data - {value.Percent:0}%";
+            ImportState.Text = $"{value.Stage} {value.Percent:0}% - {value.File}";
+            Status.Text = $"{value.Stage} - {value.Percent:0}%";
         });
     }
     void EndDiscImport() {
@@ -46,8 +46,9 @@ public partial class MainWindow {
     async Task ImportSelectedDisc() {
         if (updating || game.Running || launching || backingUp)
             return;
-        if (!File.Exists(settings.GetExe())) {
-            Status.Text = "This game's native build is not included in the installation.";
+        if (AppLayout.Packaged(root) ? !LocalGameBuild.Available(root)
+                                     : !File.Exists(settings.GetExe())) {
+            Status.Text = "This installation is missing its compatible local build kit.";
             return;
         }
         launching = true;
@@ -58,6 +59,8 @@ public partial class MainWindow {
                                                    DiscImport.ExpectedElf(settings, root), progress,
                                                    importCancellation!.Token);
             settings.SetImport(imported.Root);
+            if (AppLayout.Packaged(root))
+                await LocalGameBuild.Ensure(root, imported, progress, importCancellation!.Token);
             settings.Save();
             Status.Text = imported.Reused ? "Game data is already imported."
                                           : "Game imported. Ready to play.";
