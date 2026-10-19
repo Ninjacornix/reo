@@ -96,7 +96,7 @@ if ($LASTEXITCODE) { throw 'Corresponding project source archive failed.' }
 @{ format=2; updateFormat=2; installMode='local-build'; version=$Version; platform='win-x64';
    source='https://github.com/Ninjacornix/reo'; prerelease=$true; revision=(& git -C $repo rev-parse HEAD).Trim();
    kitSha256=$kitHash } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $Output 'distribution.json') -Encoding UTF8
-'PRERELEASE: First setup generates and compiles the game from your own ISO. Compiler setup may be required. No game executable or assets are included.' |
+'PRERELEASE: Extract this entire folder and run Outbreak.Launcher.exe. Select your own supported ISO under Game files. First setup generates and compiles the game locally using the bundled portable tools. No installer, BIOS, game executable or game assets are included. Keep the ISO available for later launches.' |
     Set-Content -LiteralPath (Join-Path $Output 'Read me.txt') -Encoding UTF8
 $files = @(Get-ChildItem -LiteralPath $Output -File -Recurse | ForEach-Object {
     @{path=$_.FullName.Substring($Output.Length+1).Replace('\','/');bytes=$_.Length;

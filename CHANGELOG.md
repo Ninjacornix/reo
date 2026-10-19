@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Prepare v1.0.1 metadata and GitHub prerelease update discovery, preserving
+  the stable update channel for stable installations.
+- Align portable packaging/setup instructions, add a release notes template,
+  and preserve existing dependency files during setup.
 - Portable first-run build tooling generates game code from the user's ISO;
   a public playable package is still pending completion of that build.
 - Launcher-managed local server hosting, account creation and automatic native

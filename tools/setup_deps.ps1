@@ -1,5 +1,5 @@
 # Fetch and build the pinned PS2Recomp revision, then configure REO.
-# See docs/BASELINE.md for why each pin/workaround exists.
+# See docs/BUILDING.md and third_party/patches/README.md for the dependency workflow.
 #
 #   powershell -ExecutionPolicy Bypass -File tools\setup_deps.ps1 [-Build] [-Jobs 6]
 #
@@ -27,13 +27,19 @@ function Find-VS {
 
 function Ensure-Checkout($repo, $dir, $pin) {
     if (-not (Test-Path (Join-Path $dir '.git'))) {
-        if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }   # empty gitlink placeholder
+        if ((Test-Path $dir) -and (Get-ChildItem -LiteralPath $dir -Force | Select-Object -First 1)) {
+            throw "Dependency directory is not an empty checkout placeholder: $dir. Existing files were preserved."
+        }
         git clone $repo $dir
         if ($LASTEXITCODE) { throw "clone failed: $repo" }
     }
     $head = git -C $dir rev-parse HEAD
+    if ($LASTEXITCODE) { throw "Cannot inspect dependency revision in $dir" }
     if ($head -ne $pin) {
+        $dirty = git -C $dir status --porcelain --untracked-files=normal
+        if ($LASTEXITCODE -or $dirty) { throw "Preserve the modified dependency checkout at $dir before changing revisions." }
         git -C $dir fetch $repo $pin
+        if ($LASTEXITCODE) { throw "fetch $pin failed in $dir" }
         git -C $dir checkout --detach $pin
         if ($LASTEXITCODE) { throw "checkout $pin failed in $dir" }
     }

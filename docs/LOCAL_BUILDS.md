@@ -14,11 +14,12 @@ without a Windows installer or system toolchain installation. Independent build
 tools may be unpacked into a private cache on first use. Later launches reuse
 verified cached outputs without compiling.
 
-This release path is not complete. The current development worker still requires
-an existing Microsoft C++ Build Tools 2022 installation and Windows SDK; the
-launcher never installs them. Replacing that requirement with a verified portable
-compiler and compatible headers/libraries is a release prerequisite. A portable
-launcher alone does not satisfy the complete first-run requirement.
+The portable Windows exporter and compiler worker now support the pinned
+LLVM/MinGW UCRT toolchain. Independent libraries and the recompiler are built with
+that same toolchain; MSVC C++ archives are not reused. The full first-run game
+compilation is still in progress, so no replacement package is published yet.
+Legacy MSVC development kits continue to require existing Microsoft tools; the
+launcher never installs them.
 
 ## Maintainer workflow
 
@@ -32,6 +33,10 @@ clean-clone release pipeline. Preserve these inputs when preparing a kit.
 2. Include exact independent dependency source/licence trees with
    `export_sdk_sources.py`. Audit any precompiled library before declaring it an
    independent upstream input.
+   For Windows, build independent components with
+   `tools/local_build/windows_sdk/CMakeLists.txt`, then run
+   `export_portable_windows.py` with the pinned toolchain archive, MinGW libraries
+   and matching recompiler. Preserve the `.cfg` compiler files and runtime DLLs.
 3. Seal a fresh kit with `seal_kit.py` and the pinned Python embeddable ZIP.
    The manifest hashes every input and selects the local generation/compiler worker.
 4. Test with a verified disc import in a new private workspace. Compile every
@@ -41,6 +46,10 @@ clean-clone release pipeline. Preserve these inputs when preparing a kit.
 5. Package the independent kit and self-contained launcher only after those checks.
    Do not copy `reo_recomp.exe`, game objects, translated game shaders, extracted
    assets, developer caches, save data or local artwork into a public package.
+
+See [prerelease preparation](PRERELEASE.md) for artifact naming, source notices
+and publication steps. Packaging a source snapshot is separate from producing a
+playable download; do not label an unfinished platform as a release asset.
 
 The Co-op hosting component is exported separately with
 `tools/local_build/export_server.py --checkout PINNED_OPENSNAP --python-zip PYTHON_ZIP --output NEW_DIRECTORY`.

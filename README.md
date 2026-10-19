@@ -37,6 +37,9 @@ available afterward because the game still performs direct sector reads.
 For development builds, see [Building on Windows](docs/BUILDING.md). Existing
 local executables and generated sources are preserved for development and are
 not public release assets. File #2 remains unsupported.
+Maintainers can follow [prerelease preparation](docs/PRERELEASE.md) for the
+repository and package requirements. Native Linux support is in development;
+no playable Linux package is currently available.
 
 ## Online co-op
 

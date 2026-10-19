@@ -20,6 +20,16 @@ SCPH-*
 *.NVM
 *.sfd
 *.adx
+*.ps2
+*.p2s
+*.psu
+*.mcd
+*.db
+*.sqlite
+*.sqlite3
+*.credential
+*.pfx
+*.p12
 *.irx
 *.gs
 *.dmp

@@ -10,8 +10,9 @@ the game. Other executable revisions are rejected before import. A Vulkan-capabl
 GPU driver is required. File #2 remains a placeholder.
 
 The planned release is portable: open the launcher EXE and select an ISO, with no
-Windows installer. Portable compiler integration is still pending; development
-build kits currently require existing Microsoft C++ tools and a Windows SDK.
+Windows installer. Portable LLVM/MinGW integration is implemented, with full
+first-run compilation still in progress. Legacy development kits require
+existing Microsoft C++ tools and a Windows SDK.
 The launcher does not install system tools. The first compilation takes time;
 later launches reuse verified completed outputs.
 The final game executable, extracted assets and generated instruction code stay

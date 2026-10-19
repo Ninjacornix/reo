@@ -20,7 +20,7 @@ public record UpdatePlan(string Work, string Source, string Target, string Versi
 public static partial class Updates {
     public const string Repository = "https://github.com/Ninjacornix/reo";
     public const string LatestApi = "https://api.github.com/repos/Ninjacornix/reo/releases/latest";
-    public const string DefaultVersion = "1.0.0";
+    public const string DefaultVersion = "1.0.1";
     public static readonly JsonSerializerOptions Json =
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
     public static string Home => Path.Combine(Settings.Home, "updates");
@@ -66,10 +66,12 @@ public static partial class Updates {
                             uri.AbsolutePath.StartsWith("/Ninjacornix/reo/releases/download/",
                                                         StringComparison.OrdinalIgnoreCase);
     static bool Hash(string? hash) => hash != null && Regex.IsMatch(hash, @"\A[0-9a-fA-F]{64}\z");
-    public static LauncherRelease? ParseRelease(string json, Version installed) {
+    public static LauncherRelease? ParseRelease(string json, Version installed,
+                                                bool includePrereleases = false) {
         using var doc = JsonDocument.Parse(json);
         var r = doc.RootElement;
-        if (r.GetProperty("draft").GetBoolean() || r.GetProperty("prerelease").GetBoolean())
+        if (r.GetProperty("draft").GetBoolean() ||
+            (!includePrereleases && r.GetProperty("prerelease").GetBoolean()))
             return null;
         string tag = r.GetProperty("tag_name").GetString() ?? "";
         var version = ParseVersion(tag);
@@ -115,19 +117,48 @@ public static partial class Updates {
                                   "cannot be installed automatically.");
         return new(tag, version, package, checksum);
     }
+    public static bool PrereleaseChannel(string root) {
+        if (!AppLayout.Packaged(root))
+            return true;
+        using var document =
+            JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "distribution.json")));
+        return document.RootElement.TryGetProperty("prerelease", out var value) &&
+               value.ValueKind == JsonValueKind.True;
+    }
     public static async Task<LauncherRelease?> Check(HttpClient client, Version installed,
-                                                     CancellationToken cancel) {
+                                                     CancellationToken cancel,
+                                                     bool includePrereleases = false) {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         timeout.CancelAfter(TimeSpan.FromSeconds(20));
-        using var response = await client.GetAsync(LatestApi, timeout.Token).ConfigureAwait(false);
+        string endpoint = includePrereleases
+                              ? "https://api.github.com/repos/Ninjacornix/reo/releases?per_page=100"
+                              : LatestApi;
+        using var response = await client.GetAsync(endpoint, timeout.Token).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
             return null;
         if (response.StatusCode == HttpStatusCode.Forbidden || (int)response.StatusCode == 429)
             throw new IOException("GitHub's request limit was reached. Try again later.");
         response.EnsureSuccessStatusCode();
-        return ParseRelease(
-            await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false),
-            installed);
+        string json = await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false);
+        if (!includePrereleases)
+            return ParseRelease(json, installed);
+        using var releases = JsonDocument.Parse(json);
+        LauncherRelease? newest = null;
+        foreach (var release in releases.RootElement.EnumerateArray()) {
+            // Source-only releases are not installable launcher updates.
+            if (!release.GetProperty("assets").EnumerateArray().Any(a => {
+                    string name = a.GetProperty("name").GetString() ?? "";
+                    return name.StartsWith("RE-Outbreak-", StringComparison.OrdinalIgnoreCase) &&
+                           name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                           (name.Contains("Windows-x64", StringComparison.OrdinalIgnoreCase) ||
+                            name.Contains("win-x64", StringComparison.OrdinalIgnoreCase));
+                }))
+                continue;
+            var candidate = ParseRelease(release.GetRawText(), installed, true);
+            if (candidate != null && (newest == null || candidate.Version > newest.Version))
+                newest = candidate;
+        }
+        return newest;
     }
     public static string Sha(string file) {
         using var stream = File.OpenRead(file);

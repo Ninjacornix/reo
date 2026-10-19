@@ -12,6 +12,12 @@ This fork's original contributions are provided under **GPL-3.0-only**; see [LIC
 
 Downloaded dependencies, including ELFIO, fmt, rabbitizer, toml11, raylib, Granite and Vulkan components, carry their own notices. Binary distributors must include the notices and corresponding source required by the exact components they build. This table is not a substitute for auditing a particular binary's dependency set.
 
+The portable Windows build tools use LLVM/MinGW. Compiler, C/C++ runtime and
+Windows header/import-library components retain their respective upstream
+licences. Preserve the pinned toolchain's licence files and matching independent
+dependency source archive when distributing the package; do not treat those
+components as covered solely by this project's GPL grant.
+
 Resident Evil, Outbreak and related game content belong to their respective owners. This project is unofficial and is not endorsed by Capcom or Sony. The source distribution excludes discs, BIOS, extracted assets, generated game code, save data and gameplay captures. Publisher artwork and game-derived documentation captures are not distributed. Users supply their own game data locally.
 
 Ignoring or untracking files does not remove them from old commits. Review the complete history before making an existing development repository public; publishing a clean source snapshot avoids carrying private development history into a new repository.

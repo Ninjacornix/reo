@@ -1,5 +1,5 @@
 > The precompiled prerelease has been withdrawn. Legacy native packaging is
-> disabled while the local-build installer is implemented. Generated game code,
+> disabled while the portable local-build package is completed. Generated game code,
 > instruction-derived GPU shader outputs and game captures stay local.
 
 # Building on Windows
@@ -23,10 +23,11 @@ and compiles game code locally from each player's ISO, with a resumable cache.
 The exporter and compiler are under `tools/local_build/`; validation is still in
 progress. Do not publish a kit before a clean first-run build and room route pass.
 
-Compiler tools are discovered locally. On PCs without them, the launcher offers
-Microsoft's signed Build Tools installer; users review its terms and installation
-choices. The first compilation takes substantially longer than later cached launches.
-No compiler, SDK libraries or generated game objects are distributed.
+Development MSVC kits require existing Visual Studio C++ tools. The portable
+release path instead bundles a pinned LLVM/MinGW toolchain and independent
+headers/libraries; it does not install system tools. The first compilation takes
+substantially longer than later cached launches. Generated game objects are
+never distributed.
 
 See [local build kits](LOCAL_BUILDS.md) for the maintainer workflow.
 
@@ -36,7 +37,8 @@ See [local build kits](LOCAL_BUILDS.md) for the maintainer workflow.
 
 An unbundled source build requires the .NET 8 Desktop Runtime when the SDK is
 absent. Keep its output directory together, including the input adapter,
-shaders and license notices. There is no ISO mount helper or custom app icon.
+shaders and license notices. ISO mounting is not needed. Launcher and game-window
+icons are original project artwork.
 
 ## Native game
 
@@ -56,10 +58,11 @@ The ordinary target is `reo_recomp`; `reo` is the older scaffold. Experimental G
 
 Use the launcher for normal interactive play. Its settings are under `%LOCALAPPDATA%\OutbreakRecomp\launcher`, and its save folders are `build-ninja/play/saves` and `build-ninja/play-file2/saves`.
 
-Online development additionally uses a separately installed openSNAP server;
-see [networking](NETWORKING.md) and the [server patch](../network/server/README.md).
-The launcher does not install or start this server. Game authentication and
-room management still use the original game protocol and menus.
+The launcher can start the separately licensed portable openSNAP component using
+**Host server**. Source developers must first export that component; see
+[local builds](LOCAL_BUILDS.md) and [networking](NETWORKING.md). Account creation
+and credential entry are handled by the launcher, while authentication and room
+management retain the original game protocol and menus.
 
 ### Formatting and documentation captures
 
@@ -78,3 +81,6 @@ Updates use distribution format 2 (`installMode: local-build`) and carry the
 independent build kit rather than a game executable. Old format-1 packages are
 refused by the updater. Source archives are not installable updates. Publication
 remains disabled until a complete kit has passed first-run and gameplay validation.
+Prerelease installations also discover newer GitHub prereleases; stable
+installations remain on stable releases. Tags use numeric versions such as
+`v1.0.1`, with GitHub's prerelease flag indicating preview status.
