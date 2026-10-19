@@ -85,8 +85,9 @@ foreach ($file in $serverManifest.files) {
 }
 Copy-Item -LiteralPath (Join-Path $Server 'server-manifest.json') -Destination $serverTarget
 Copy-Item -LiteralPath (Join-Path $repo 'README.md') -Destination $Output
-Copy-Item -LiteralPath (Join-Path $repo 'LICENSES') -Destination $Output -Recurse
 $licenses = Join-Path $Output 'LICENSES'
+New-Item -ItemType Directory -Path $licenses -Force | Out-Null
+Get-ChildItem -LiteralPath (Join-Path $repo 'LICENSES') | Copy-Item -Destination $licenses -Recurse -Force
 $runtimeConfig = Get-Content -LiteralPath (Join-Path $Output 'Outbreak.Launcher.runtimeconfig.json') -Raw | ConvertFrom-Json
 $nuget = if ($env:NUGET_PACKAGES) { $env:NUGET_PACKAGES } else { Join-Path $env:USERPROFILE '.nuget/packages' }
 foreach ($framework in $runtimeConfig.runtimeOptions.includedFrameworks) {
