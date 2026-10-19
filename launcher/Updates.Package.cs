@@ -35,7 +35,7 @@ public static partial class Updates {
         var list = JsonSerializer.Deserialize<List<PackageFile>>(
                        File.ReadAllText(Path.Combine(root, "package-manifest.json")), Json) ??
                    throw new IOException("Missing package inventory.");
-        if (list.Count == 0 || list.Count > 10000)
+        if (list.Count == 0 || list.Count > MaxPackageEntries)
             throw new IOException("Invalid package inventory size.");
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         long total = 0;
@@ -95,7 +95,7 @@ public static partial class Updates {
                                  CancellationToken cancel = default) {
         Directory.CreateDirectory(destination);
         using var archive = ZipFile.OpenRead(zip);
-        if (archive.Entries.Count > 10000)
+        if (archive.Entries.Count > MaxPackageEntries)
             throw new IOException("Update archive has too many entries.");
         var roots =
             archive.Entries

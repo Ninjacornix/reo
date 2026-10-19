@@ -1,13 +1,14 @@
 # Changelog
 
-## Unreleased
+## v1.0.1 prerelease — 2026-10-20
 
 - Prepare v1.0.1 metadata and GitHub prerelease update discovery, preserving
   the stable update channel for stable installations.
 - Align portable packaging/setup instructions, add a release notes template,
   and preserve existing dependency files during setup.
-- Portable first-run build tooling generates game code from the user's ISO;
-  a public playable package is still pending completion of that build.
+- Portable first-run build tooling generates game code from the user's ISO.
+  All 2,381 units compiled and linked; the package is a build-only preview
+  without a repeated packaged setup/gameplay run.
 - Launcher-managed local server hosting, account creation and automatic native
   login, with user-scoped credential storage.
 - GPU movie decoding enabled for normal launches and co-op playtests.

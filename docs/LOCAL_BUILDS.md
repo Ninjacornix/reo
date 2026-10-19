@@ -1,7 +1,7 @@
 # Local build distribution
 
-The precompiled v1.0.0 prerelease has been withdrawn. A replacement downloadable
-game is not yet available. Local build-kit verification is in progress.
+The precompiled v1.0.0 prerelease is withdrawn. The v1.0.1 portable prerelease
+instead generates game code locally and is published as a build-only preview.
 
 The public package contains the launcher, independent recompiler, source metadata,
 authored runtime sources and independent upstream libraries. The user's verified
@@ -17,7 +17,8 @@ verified cached outputs without compiling.
 The portable Windows exporter and compiler worker now support the pinned
 LLVM/MinGW UCRT toolchain. Independent libraries and the recompiler are built with
 that same toolchain; MSVC C++ archives are not reused. The full first-run game
-compilation is still in progress, so no replacement package is published yet.
+compilation has completed successfully. The sealed launcher's end-to-end setup
+and room route were not rerun for this build-only prerelease.
 Legacy MSVC development kits continue to require existing Microsoft tools; the
 launcher never installs them.
 
@@ -46,6 +47,13 @@ clean-clone release pipeline. Preserve these inputs when preparing a kit.
 5. Package the independent kit and self-contained launcher only after those checks.
    Do not copy `reo_recomp.exe`, game objects, translated game shaders, extracted
    assets, developer caches, save data or local artwork into a public package.
+
+An explicitly requested **build-only prerelease** may use
+`package-local.ps1 -BuildOnlyPrerelease` without another room run. It still
+requires a completed build, verified correspondence between compiled and sealed
+inputs, a matching manifest hash and all source/licence inventory checks.
+Record `roomRoutePassed=false` and disclose the omitted validation in the
+release notes; do not turn an omitted run into a passing result.
 
 See [prerelease preparation](PRERELEASE.md) for artifact naming, source notices
 and publication steps. Packaging a source snapshot is separate from producing a

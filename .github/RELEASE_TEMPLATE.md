@@ -4,6 +4,10 @@ Experimental Windows x64 preview for **Resident Evil Outbreak NTSC-U v2.00
 (SLUS-20765)**. File #2 and native Linux gameplay are not supported release
 targets yet.
 
+**Build-only preview:** all 2,381 portable compilation units and linking
+completed successfully. The sealed package's first-run launcher flow and
+gameplay were not rerun. This is an experimental preview, not a stability claim.
+
 ## Setup
 
 1. Download the Windows x64 ZIP and extract the entire folder.

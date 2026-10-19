@@ -25,6 +25,7 @@ public static partial class Updates {
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
     public static string Home => Path.Combine(Settings.Home, "updates");
     const long MaxZip = 1024L * 1024 * 1024, MaxExpanded = 3L * 1024 * 1024 * 1024;
+    const int MaxPackageEntries = 25000;
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     static extern uint GetLongPathNameW(string path, StringBuilder result, uint capacity);
     public static string CanonicalDirectory(string path) {

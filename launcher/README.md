@@ -1,7 +1,8 @@
 # Launcher
 
-The precompiled v1.0.0 download has been withdrawn. Local build-kit validation is
-in progress; no replacement playable public download is available yet.
+The precompiled v1.0.0 download is withdrawn. The v1.0.1 portable prerelease
+generates the game locally and is a build-only preview: portable compilation
+completed, but packaged setup and gameplay have not been rerun.
 
 The replacement package contains independent tools and runtime inputs. Select your
 own NTSC-U v2.00 / SLUS-20765 ISO under **Game files**. The launcher imports game
@@ -10,8 +11,8 @@ the game. Other executable revisions are rejected before import. A Vulkan-capabl
 GPU driver is required. File #2 remains a placeholder.
 
 The planned release is portable: open the launcher EXE and select an ISO, with no
-Windows installer. Portable LLVM/MinGW integration is implemented, with full
-first-run compilation still in progress. Legacy development kits require
+Windows installer. Portable LLVM/MinGW integration and full compilation are
+complete. Legacy development kits require
 existing Microsoft C++ tools and a Windows SDK.
 The launcher does not install system tools. The first compilation takes time;
 later launches reuse verified completed outputs.

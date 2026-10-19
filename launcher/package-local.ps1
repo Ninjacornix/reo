@@ -4,7 +4,8 @@ param(
     [Parameter(Mandatory=$true)][string]$ValidationReport,
     [Parameter(Mandatory=$true)][string]$Output,
     [string]$Version = '1.0.1',
-    [switch]$Zip
+    [switch]$Zip,
+    [switch]$BuildOnlyPrerelease
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -29,8 +30,14 @@ $manifestFile = Join-Path $Kit 'build-kit.json'
 $manifest = Get-Content -LiteralPath $manifestFile -Raw | ConvertFrom-Json
 $proof = Get-Content -LiteralPath $ValidationReport -Raw | ConvertFrom-Json
 $kitHash = (Get-FileHash -LiteralPath $manifestFile -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($proof.format -ne 1 -or !$proof.localBuildPassed -or !$proof.roomRoutePassed -or $proof.kitSha256 -ne $kitHash) {
-    throw 'A passing first-run build and room-route report for this exact sealed kit is required.'
+if ($proof.format -ne 1 -or !$proof.localBuildPassed -or $proof.kitSha256 -ne $kitHash) {
+    throw 'A completed local-build report bound to this sealed kit is required.'
+}
+if (!$proof.roomRoutePassed -and !$BuildOnlyPrerelease) {
+    throw 'A passing room-route report is required unless explicitly packaging a build-only prerelease.'
+}
+if ($BuildOnlyPrerelease -and !$proof.inputIntegrityVerified) {
+    throw 'Build-only packaging still requires verified correspondence with the compiled inputs.'
 }
 if ($manifest.format -ne 1 -or $manifest.architecture -ne 'win-x64') { throw 'Unsupported build kit.' }
 if ($manifest.toolchain -eq 'msvc') {
@@ -95,7 +102,11 @@ New-Item -ItemType Directory -Path $sourceOffer | Out-Null
 if ($LASTEXITCODE) { throw 'Corresponding project source archive failed.' }
 @{ format=2; updateFormat=2; installMode='local-build'; version=$Version; platform='win-x64';
    source='https://github.com/Ninjacornix/reo'; prerelease=$true; revision=(& git -C $repo rev-parse HEAD).Trim();
-   kitSha256=$kitHash } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $Output 'distribution.json') -Encoding UTF8
+   kitSha256=$kitHash;
+   validation=@{ localBuildPassed=$true; roomRoutePassed=[bool]$proof.roomRoutePassed;
+                 sealedDriverExecuted=[bool]$proof.sealedDriverExecuted;
+                 buildOnlyPrerelease=[bool]$BuildOnlyPrerelease } } |
+    ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $Output 'distribution.json') -Encoding UTF8
 'PRERELEASE: Extract this entire folder and run Outbreak.Launcher.exe. Select your own supported ISO under Game files. First setup generates and compiles the game locally using the bundled portable tools. No installer, BIOS, game executable or game assets are included. Keep the ISO available for later launches.' |
     Set-Content -LiteralPath (Join-Path $Output 'Read me.txt') -Encoding UTF8
 $files = @(Get-ChildItem -LiteralPath $Output -File -Recurse | ForEach-Object {

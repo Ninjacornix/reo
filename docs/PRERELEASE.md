@@ -40,10 +40,12 @@ Do not include a prebuilt game executable, game objects, generated game bodies
 or shaders, extracted assets, memory cards, developer caches or captures.
 
 Follow [local build kits](LOCAL_BUILDS.md) to export the independent inputs and
-seal their manifest. The packager requires the completed build/room-route record
-for that exact kit; existing developer runs do not substitute for that record.
-The portable first-run compilation is still in progress. Do not publish an
-unfinished kit as a playable download or fabricate the required receipt.
+seal their manifest. Normally the packager requires completed build/room-route
+records for that exact kit. For v1.0.1, the user requested no further gameplay
+runs: `-BuildOnlyPrerelease` admits a completed build with independently verified
+input correspondence, records the absent gameplay validation in distribution
+metadata and requires the omission to be stated in release notes. Portable
+compilation has completed. Do not fabricate a packaged setup or room-route pass.
 
 Package from a committed source revision:
 
@@ -51,7 +53,8 @@ Package from a committed source revision:
 powershell -NoProfile -ExecutionPolicy Bypass -File launcher/package-local.ps1 `
   -Kit '<sealed independent kit>' -Server '<portable server component>' `
   -ValidationReport '<matching kit receipt.json>' `
-  -Output 'dist/RE-Outbreak-v1.0.1-Windows-x64' -Version 1.0.1 -Zip
+  -Output 'dist/RE-Outbreak-v1.0.1-Windows-x64' -Version 1.0.1 -Zip `
+  -BuildOnlyPrerelease
 ```
 
 The resulting artifacts are `RE-Outbreak-v1.0.1-Windows-x64.zip` and its

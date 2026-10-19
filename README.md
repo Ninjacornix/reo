@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**Source preview - portable local-build package in development** | [Changelog](CHANGELOG.md)
+**v1.0.1 portable prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Changelog](CHANGELOG.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -17,18 +17,22 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
 
-## Installation status
+## Windows prerelease
 
-The precompiled v1.0.0 prerelease has been withdrawn. There is currently no public
-playable Windows download. The previous executable included game-derived code;
-we are changing installation so that this code is generated locally from each
-user's ISO rather than distributed by this project.
+Download the **v1.0.1 Windows x64 prerelease** from
+[GitHub Releases](https://github.com/Ninjacornix/reo/releases). Extract the entire
+ZIP and open `Outbreak.Launcher.exe`. No Windows installer, BIOS or system
+compiler installation is required. Use a Vulkan-capable GPU driver.
 
-The intended setup is: download the independent launcher/runtime and build tools,
-select your **Outbreak NTSC-U v2.00 ISO (SLUS-20765)** in **Game files**, then wait
-for local generation and compilation. The result will be cached in Local AppData;
-later launches will reuse it. This installation path is under implementation and
-must not be described as ready until a clean first-run build passes.
+Select your **Outbreak NTSC-U v2.00 ISO (SLUS-20765)** in **Game files**, then
+allow the first local generation and compilation to finish. This can take a long
+time; progress appears in the launcher. The result is cached in Local AppData,
+so later launches reuse it. No game executable or assets are included.
+
+This is a **build-only preview**: the complete portable compilation succeeded,
+but the sealed package's launcher-to-gameplay flow has not been rerun. Setup,
+rendering, performance and audio may still have problems. The previous v1.0.0
+game-binary package remains withdrawn.
 
 Keep your ISO anywhere on your PC; no special filename or folder is required.
 The launcher already imports game data without mounting the ISO. Keep the ISO
@@ -56,7 +60,7 @@ To host, enable **Host server**. The launcher starts the services and displays
 **Friends connect to** with a copy button once they are listening. Use the
 suggested LAN address for the same network, or enter a reachable VPN/public IPv4
 before starting. Friends enter that address in their own launchers. The server
-component will be included in the portable package; there is no manual Python
+component is included in the portable package; there is no manual Python
 installation step for players.
 
 Internet hosting still requires a reachable server and firewall/router rules:
