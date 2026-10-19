@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased
+## v1.0.0 prerelease — 2026-10-19
 
+- Downloadable Windows x64 package; official cover art and current launcher screenshots.
+- Main README includes first-run ISO and co-op joining/hosting instructions.
 - One-time ISO import without mounting and self-contained Windows packaging.
 - Fullscreen switching, aspect/fit modes, texture and anisotropic filtering,
   FXAA/SMAA, brightness/gamma preview and direct logo skipping to PRESS START.

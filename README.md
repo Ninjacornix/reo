@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**Developer preview** · [Changelog](CHANGELOG.md)
+**v1.0.0 prerelease** · [Changelog](CHANGELOG.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -17,27 +17,152 @@ belongs to Capcom and is not covered by this project's GPL license; see
 - **Outbreak: File #1:** boots into menus and gameplay. Rendering, performance and cutscene/audio synchronization are still under development.
 - **Outbreak: File #2:** configuration and a launcher entry exist; gameplay is not validated.
 - **Launcher:** one-time ISO import without mounting, packaged native game, fullscreen and aspect controls, bilinear/anisotropic filtering, FXAA/SMAA, brightness/gamma, intro skipping, controller remapping, selectable memory cards, cheats, logs and GitHub release updates.
-- **Online co-op:** four native clients have authenticated, joined one room, reached gameplay and replicated movement through a separate openSNAP server. The launcher saves the server address and existing account username; passwords remain in-game. This is local validation, not a completed Internet-play certification. See [networking](docs/NETWORKING.md).
+- **Online co-op:** four native clients have authenticated, joined one room, reached gameplay and replicated movement through a separate openSNAP server. The launcher saves the server address and existing account username; passwords remain in-game. This is local validation; Internet play is not yet validated. Setup is below.
 - **Room management and hosting:** room creation/joining still use the original game menus. Launcher room settings, automatic server hosting and NAT traversal are not implemented.
 - **Mods:** placeholder. **Cheats:** built-in health, infection and ammunition options plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
 
-## Getting started
+## Download and first launch
 
-For a Windows runtime package, extract the archive and open
-`Outbreak.Launcher.exe`. In **Game files**, choose your own ISO. The launcher
-validates the disc version, imports it once, and runs the included native game.
-Users do not need a compiler, SDK, separate ELF, mounted drive or .NET installation.
-Keep the ISO available for direct sector reads. File #1 currently supports the
-NTSC-U v2.00 disc (SLUS-20765); File #2 is not included in the runtime package.
+This is a **prerelease**, not a finished v1.0 release. Expect rendering glitches,
+performance dips and cutscene/audio issues. File #2 is a placeholder.
 
-For source builds, see [Building on Windows](docs/BUILDING.md). Open
-`StartLauncher.cmd` after building. Maintainers can create a self-contained local
-package with `launcher/package.ps1 -Zip`; this does not publish a GitHub release.
-Keep the launcher open while playing so its input adapter remains connected.
+1. Open the [v1.0.0 prerelease](https://github.com/Ninjacornix/reo/releases/tag/v1.0.0).
+   Under **Assets**, download **RE-Outbreak-v1.0.0-Windows-x64.zip**.
+   GitHub's **Source code** archives are for developers and do not contain the game executable.
+2. Extract the entire ZIP to a writable folder, such as `C:\Games\RE-Outbreak`.
+   Do not run the launcher from inside the ZIP. Keep its files and subfolders together.
+3. Put your own **Resident Evil Outbreak NTSC-U v2.00 ISO (SLUS-20765)** anywhere
+   on your PC, for example `D:\Games\PS2\Outbreak.iso`. There is no required ISO
+   folder or filename. Other regions/revisions and File #2 are not supported by this package.
+4. Open **Outbreak.Launcher.exe**, select **Game files**, and choose that ISO.
+   The launcher checks the disc and imports its files once. Allow about **5 GB of
+   additional free space** on the Windows user-profile drive for the import.
+5. Select **Outbreak / File #1** in **Play**, choose your input device under
+   **Controls**, then click **Play**. Keep the launcher open for controller input.
 
-See the [launcher guide](launcher/README.md) for settings and save locations. Games launched through it do not open a terminal window; debug output remains available in **Log**.
+**Keep the ISO at the selected location after importing.** The game still reads
+sectors from it. If you move it, choose its new location in **Game files**.
+No mounting, BIOS, compiler, SDK or separate .NET installation is required.
+Use 64-bit Windows with a Vulkan-capable GPU and an up-to-date graphics driver.
+
+Settings, imports, memory cards and logs are stored under
+`%LOCALAPPDATA%\OutbreakRecomp\launcher`. Use **Save games** to select a card or
+back it up; save/load happens inside the game. **Ctrl+Enter** toggles fullscreen;
+**Alt+F4** closes the game. Debug output is available in **Log**.
+
+The included **Check for updates** currently follows stable GitHub releases;
+it does not install prereleases. Download prerelease updates manually and
+extract them into a new folder. Your Local AppData saves remain separate.
+
+For source builds, see [Building on Windows](docs/BUILDING.md). The downloadable
+Windows package already contains the native game and does not compile anything
+on the player's PC.
+
+## Online co-op
+
+Co-op is experimental. Four native clients have authenticated, joined one room,
+started a scenario and replicated movement on a local server. Item sharing,
+door/room transitions, reconnects and LAN/Internet play are not fully validated.
+Do not treat this prerelease as finished online support.
+
+### Join a server and play with friends
+
+1. Get the **IPv4 address** of a compatible openSNAP server and create an account
+   on that server. The launcher does not create accounts or start a server.
+2. In the launcher's **Co-op** page, enter the server IPv4 address and your existing
+   account username, then enable **Launch in online mode**. Usernames use 4–10
+   ASCII letters, digits or underscores; avoid leading, trailing or repeated underscores.
+3. Launch File #1 and use the game's original online/account menus. Choose
+   **Edit Account** to apply the launcher username and enter your password in-game.
+   An account already saved on the memory card is not silently replaced by the launcher.
+4. Meet in the same area/room. One player creates the room and selects the
+   scenario/settings in-game; the others join it. The host starts the scenario
+   when everyone is ready. Up to **four players** can join.
+
+There is no automatic matchmaking, launcher Create/Join form, integrated VPN,
+server hosting or automatic port forwarding yet. Creating an in-game room does
+not host the separate network server. Each player needs their own game data
+and an account on the same server.
+
+### Host your own server
+
+The server is **openSNAP**, a separate Python project licensed under AGPL-3.0.
+It is not bundled in the Windows download. For the tested revision and this
+project's File #1 current-room fix, run from a source checkout:
+
+```powershell
+git clone https://github.com/GrenderG/openSNAP.git build/server/openSNAP
+git -C build/server/openSNAP checkout --detach f9af55491718a043923225a0895fe60eab76fd7c
+$outbreakPatch = (Resolve-Path 'network/server/patches/0001-outbreak-current-room-query.patch').Path
+git -C build/server/openSNAP apply --check $outbreakPatch
+git -C build/server/openSNAP apply $outbreakPatch
+Push-Location build/server/openSNAP
+python -m venv .venv
+& .venv/Scripts/python.exe -m pip install -r requirements.txt
+& .venv/Scripts/python.exe -m unittest tests.test_outbreak_plugin tests.test_outbreak2_plugin
+Pop-Location
+```
+
+Use Python 3.11 or newer. In the cloned server folder, copy `.env.dist` to `.env`
+and set the following values, replacing `192.168.1.50` with the address clients
+will use (LAN IPv4 for LAN play, public IPv4 for Internet hosting):
+
+```dotenv
+OPENSNAP_GAME_PLUGIN=outbreak
+OPENSNAP_WEB_GAME_PLUGIN=outbreak
+OPENSNAP_BOOTSTRAP_HOST=0.0.0.0
+OPENSNAP_GAME_HOST=0.0.0.0
+OPENSNAP_CAPCOM_APP_HOST=0.0.0.0
+OPENSNAP_WEB_HOST=0.0.0.0
+OPENSNAP_BOOTSTRAP_ADVERTISE_HOST=192.168.1.50
+OPENSNAP_GAME_ADVERTISE_HOST=192.168.1.50
+OPENSNAP_GAME_SERVER_MAP={"outbreak":"192.168.1.50:9091"}
+OPENSNAP_STORAGE_BACKEND=sqlite
+OPENSNAP_SQLITE_PATH=opensnap.db
+```
+
+Run these commands in **four separate terminals**, all opened in the same
+server folder so they share `.env` and the SQLite account database:
+
+```powershell
+& .venv/Scripts/python.exe run.py bootstrap
+& .venv/Scripts/python.exe run.py game
+& .venv/Scripts/python.exe run.py app capcom
+& .venv/Scripts/python.exe run.py web
+```
+
+Leave all four services running. Create accounts through the game's original
+registration/account portal. The native launcher maps the original service
+hostnames to your chosen IPv4, so a separate DNS service or Sony DNAS setup
+is not required for this native build. Keep the database private and use
+passwords unique to this test server.
+
+`OPENSNAP_GAME_SERVER_MAP` must advertise an endpoint clients can reach.
+An advertised `127.0.0.1` works only for clients on that same PC. This project's
+development server is loopback-only, not a ready-made Internet configuration.
+
+| Service | Default port to allow on the server |
+| --- | --- |
+| Bootstrap login | UDP 9090 |
+| Game and room traffic | UDP 9091 |
+| Capcom application service | TCP 10127 |
+| Account/signup pages, when used | TCP 80 |
+
+**Same LAN:** bind the server to a reachable interface, allow the services in
+Windows Firewall, advertise the server PC's LAN IPv4 address and have everyone
+enter that address in the launcher. Router port forwarding is unnecessary on
+the same LAN.
+
+**Internet:** forward the ports above from your router to the server PC and
+advertise your reachable public IPv4 address. Friends enter that public address;
+joining clients normally do not need to forward ports. Forwarding alone does
+not fix an incorrect advertised address. Behind carrier-grade NAT, ordinary
+port forwarding may not be available; a reachable hosted server or a shared
+private VPN is an alternative. For a VPN, bind/advertise the server's VPN IPv4
+address and have friends connect to it. Neither WAN nor VPN deployment has been
+validated by this project's local four-player test. No public server is supplied.
 
 ## Source layout
 

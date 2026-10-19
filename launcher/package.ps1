@@ -1,8 +1,9 @@
 param(
     [string]$NativeExe = '',
-    [string]$Version = '0.1.0',
+    [string]$Version = '1.0.0',
     [string]$Output = '',
     [switch]$SkipBuild,
+    [switch]$Prerelease,
     [switch]$Zip
 )
 $ErrorActionPreference = 'Stop'
@@ -63,7 +64,7 @@ $parallelLicense = Join-Path $repo 'build-ninja/parallel-gs-source/COPYING.LGPLv
 if (Test-Path -LiteralPath $parallelLicense) { Copy-Item -LiteralPath $parallelLicense -Destination (Join-Path $licenses 'parallel-gs-LGPLv3.txt') }
 $revision = (& git -C $repo rev-parse HEAD).Trim()
 $dirty = [bool](& git -C $repo status --porcelain)
-@{format=1;updateFormat=1;version=$Version;platform='win-x64';source='https://github.com/Ninjacornix/reo';revision=$revision;development=$dirty;
+@{format=1;updateFormat=1;version=$Version;platform='win-x64';source='https://github.com/Ninjacornix/reo';revision=$revision;development=$dirty;prerelease=[bool]$Prerelease;
     games=@(@{id='file1';executable='games/file1/reo_recomp.exe';elf='SLUS_207.65';elfSha256='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';nativeSha256=(Get-FileHash -LiteralPath (Join-Path $game 'reo_recomp.exe') -Algorithm SHA256).Hash.ToLowerInvariant()})} |
     ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $Output 'distribution.json') -Encoding UTF8
 @'
@@ -79,8 +80,10 @@ File #2 gameplay is not included in this package.
 
 Project/source: https://github.com/Ninjacornix/reo
 See LICENSE, NOTICE.md, LICENSES and the included .NET third-party notices.
-This local package does not upload or publish anything.
+Online setup and known limits are in README.md.
 '@ | Set-Content -LiteralPath (Join-Path $Output 'Read me.txt') -Encoding UTF8
+Copy-Item -LiteralPath (Join-Path $repo 'README.md') -Destination (Join-Path $Output 'README.md')
+if ($Prerelease) { 'PRERELEASE: Graphics, performance, audio and online play remain experimental.' | Set-Content -LiteralPath (Join-Path $Output 'PRERELEASE.txt') -Encoding UTF8 }
 $files = @(Get-ChildItem -LiteralPath $Output -File -Recurse | ForEach-Object {
     @{path=$_.FullName.Substring($Output.Length+1).Replace('\','/');bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}
 })
