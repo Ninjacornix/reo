@@ -1,0 +1,19 @@
+diff --git a/ps2xRecomp/src/lib/elf_parser.cpp b/ps2xRecomp/src/lib/elf_parser.cpp
+--- a/ps2xRecomp/src/lib/elf_parser.cpp
++++ b/ps2xRecomp/src/lib/elf_parser.cpp
+@@ -1020,8 +1020,14 @@
+                 func.isStub = false;
+                 func.isSkipped = false;
+ 
++                if (mapStarts.insert(start).second)
++                {
++                    // An explicit map range replaces a discovery heuristic at
++                    // this address, even when both names are auto-generated.
++                    std::erase_if(m_extraFunctions, [start](const Function &existing)
++                                  { return existing.start == start; });
++                }
+                 m_extraFunctions.push_back(std::move(func));
+-                mapStarts.insert(start);
+                 count++;
+             }
+             catch (...)

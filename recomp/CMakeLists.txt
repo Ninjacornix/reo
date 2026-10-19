@@ -46,6 +46,35 @@ set(REO_VULKAN_LOADER_FILE "" CACHE FILEPATH "Optional existing Vulkan loader to
 
 set(REO_VU_SPECIALIZED_SOURCE "" CACHE FILEPATH "Optional locally generated VU programs; game bytes remain outside the runtime")
 
+# Vulkan SDK shader tools. Any installed SDK at or above the minimum works; its location comes from the
+# VULKAN_SDK variable set by the LunarG installer (or PATH). 1.4.321 is the oldest SDK this project has been
+# built with (1.4.363 also verified); lower REO_VULKAN_SDK_MIN only to try an older, untested SDK.
+set(REO_VULKAN_SDK_MIN "1.4.321" CACHE STRING "Minimum Vulkan SDK version for shader compilation")
+if(NOT Vulkan_FOUND)
+    find_package(Vulkan QUIET)
+endif()
+set(_reo_vulkan_bin "")
+if(Vulkan_INCLUDE_DIRS)
+    get_filename_component(_reo_vulkan_bin "${Vulkan_INCLUDE_DIRS}/../Bin" ABSOLUTE)
+endif()
+find_program(REO_GLSLANG_VALIDATOR NAMES glslangValidator
+    HINTS "${_reo_vulkan_bin}" "$ENV{VULKAN_SDK}/Bin" "$ENV{VULKAN_SDK}/bin")
+find_program(REO_SPIRV_VAL NAMES spirv-val
+    HINTS "${_reo_vulkan_bin}" "$ENV{VULKAN_SDK}/Bin" "$ENV{VULKAN_SDK}/bin")
+macro(reo_require_vulkan_shader_tools)
+    if(NOT REO_GLSLANG_VALIDATOR OR NOT REO_SPIRV_VAL)
+        message(FATAL_ERROR "glslangValidator/spirv-val not found. Install the Vulkan SDK ${REO_VULKAN_SDK_MIN} or newer "
+                            "(its installer sets VULKAN_SDK), or set REO_GLSLANG_VALIDATOR and REO_SPIRV_VAL.")
+    endif()
+    if(NOT Vulkan_VERSION)
+        message(FATAL_ERROR "Vulkan SDK version could not be determined; install the Vulkan SDK ${REO_VULKAN_SDK_MIN} or newer.")
+    endif()
+    if(Vulkan_VERSION VERSION_LESS REO_VULKAN_SDK_MIN)
+        message(FATAL_ERROR "Vulkan SDK ${Vulkan_VERSION} is older than the required ${REO_VULKAN_SDK_MIN}. "
+                            "Install a newer SDK, or set -DREO_VULKAN_SDK_MIN to try an older one (untested).")
+    endif()
+endmacro()
+
 set(REO_VU_WHOLE_SOURCE "" CACHE FILEPATH "Optional locally generated whole-program VU AOT (tools/vu_whole_aot); game bytes stay in ignored output")
 
 set(REO_VU_NATIVE_GEOMETRY_SOURCE "" CACHE FILEPATH "Optional File #1 native geometry factory; requires exact generated VU identities")
@@ -127,6 +156,7 @@ if(REO_BUILD_GPU_GS)
         "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/volk"
         "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/khronos/vulkan-headers/include")
     target_compile_features(reo_parallel_gs_resident_native PRIVATE cxx_std_17)
+    reo_require_vulkan_shader_tools()
     set(_aniso_source "${_reo_native_gs_dir}/shaders")
     set(_aniso_output "${CMAKE_CURRENT_BINARY_DIR}/anisotropic-shaders")
     file(GLOB _aniso_includes "${REO_PARALLEL_GS_SOURCE}/gs/shaders/*.h")
@@ -134,8 +164,8 @@ if(REO_BUILD_GPU_GS)
         COMMAND ${CMAKE_COMMAND}
             "-DUPSTREAM=${REO_PARALLEL_GS_SOURCE}/gs/shaders"
             "-DOUT=${_aniso_output}"
-            "-DGLSLANG=C:/VulkanSDK/1.4.321.1/Bin/glslangValidator.exe"
-            "-DVALIDATOR=C:/VulkanSDK/1.4.321.1/Bin/spirv-val.exe"
+            "-DGLSLANG=${REO_GLSLANG_VALIDATOR}"
+            "-DVALIDATOR=${REO_SPIRV_VAL}"
             -P "${_aniso_source}/BuildAnisotropic.cmake"
         DEPENDS "${_aniso_source}/BuildAnisotropic.cmake" "${_aniso_source}/anisotropic.glsl"
             "${REO_PARALLEL_GS_SOURCE}/gs/shaders/ubershader.comp" ${_aniso_includes}
@@ -723,6 +753,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
         if(WIN32)
 
+        reo_require_vulkan_shader_tools()
         set(_present_source "${CMAKE_CURRENT_SOURCE_DIR}/../tools/parallel_gs_backend")
 
         set(_present_output "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}-present-shaders")
@@ -737,11 +768,11 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${_present_output}"
 
-                COMMAND "C:/VulkanSDK/1.4.321.1/Bin/glslangValidator.exe" -V --target-env vulkan1.2 -S ${_present_kind}
+                COMMAND "${REO_GLSLANG_VALIDATOR}" -V --target-env vulkan1.2 -S ${_present_kind}
 
                         -o "${_present_output}/${_present_stage}.spv" "${_present_source}/${_present_stage}"
 
-                COMMAND "C:/VulkanSDK/1.4.321.1/Bin/spirv-val.exe" --target-env vulkan1.2 "${_present_output}/${_present_stage}.spv"
+                COMMAND "${REO_SPIRV_VAL}" --target-env vulkan1.2 "${_present_output}/${_present_stage}.spv"
 
                 DEPENDS "${_present_source}/${_present_stage}" "${_present_source}/present_color.glsl" "${_present_source}/present_layout.glsl" "${_present_source}/smaa/upstream/SMAA.hlsl" VERBATIM)
 

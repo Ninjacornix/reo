@@ -190,7 +190,7 @@ class Service {
     }
     Path metadata(int port, const Path& p) const {
         Path result = roots_[port] / ".reo-meta";
-        for (auto& component : p.lexically_relative(roots_[port])) {
+        for (const auto& component : p.lexically_relative(roots_[port])) {
             std::string encoded;
             for (unsigned char c : component.string()) {
                 static const char hex[] = "0123456789abcdef";
@@ -215,9 +215,14 @@ class Service {
         if (stored)
             stored.read(reinterpret_cast<char*>(e.data()), e.size());
         if (!stored) {
+#if defined(_MSC_VER)
             auto timestamp = std::chrono::clock_cast<std::chrono::system_clock>(
                 std::filesystem::last_write_time(p));
-            auto now = std::chrono::system_clock::to_time_t(timestamp);
+#else
+            auto timestamp = std::chrono::file_clock::to_sys(std::filesystem::last_write_time(p));
+#endif
+            auto now = std::chrono::system_clock::to_time_t(
+                std::chrono::time_point_cast<std::chrono::system_clock::duration>(timestamp));
             std::tm tm{};
 #ifdef _WIN32
             localtime_s(&tm, &now);

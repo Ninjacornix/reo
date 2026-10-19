@@ -11,6 +11,11 @@ import coop_playtest as harness
 
 
 ROOT = 0x6D8DB0
+# Local test pacing: the driver reads the original menu state before every press, so it only needs
+# a short settle time, not a fixed long delay between inputs.
+PRESS_GAP = 0.35
+STABLE_FOR = 0.12
+BUSY_RETRY = 0.3
 
 
 class GuestRam:
@@ -163,6 +168,10 @@ def plan(number, snapshot, context, *, goal, host_waiting):
     if snapshot["chat"]:
         return "wait", None, "original-chat-or-modal-active"
     if state in (6, 14):
+        # Right after login this transient state appears before Server Select settles: wait ~15 s first.
+        context["outsideCount"] = context.get("outsideCount", 0) + 1
+        if context["outsideCount"] < 150:
+            return "wait", None, "await-post-login-transition"
         return "refuse", None, "disconnect-or-post-start-ui-is-outside-this-driver"
     if goal == "shared-area" and state == 3 and sub == 0 and menu == 1 and phase == 0:
         return "done", None, "original-room-list-reached"
@@ -291,7 +300,7 @@ def drive(folder, record, *, goal="shared-area", timeout=240, press_limit=100,
                 if kind == "wait":
                     row["status"] = "waiting"
                     continue
-                if monotonic() < next_action[number] or monotonic() - context["stableSince"] < 0.25:
+                if monotonic() < next_action[number] or monotonic() - context["stableSince"] < STABLE_FOR:
                     continue
                 identity = identities[number]
                 expected = {k: identity[k] for k in ("pid", "image", "creationFileTime")}
@@ -310,7 +319,7 @@ def drive(folder, record, *, goal="shared-area", timeout=240, press_limit=100,
                         queued = queue_writer(Path(player["keyboardFile"]), value, True)
                     except ValueError as error:
                         if str(error).startswith(("Keyboard consumer has not acknowledged", "Keyboard reports are still pending", "Another keyboard writer owns")):
-                            next_action[number] = monotonic() + 0.5
+                            next_action[number] = monotonic() + BUSY_RETRY
                             continue
                         row["status"] = "failed"
                         row["reason"] = "private-keyboard-queue-error"
@@ -318,7 +327,7 @@ def drive(folder, record, *, goal="shared-area", timeout=240, press_limit=100,
                     context["titleQueued"] = True
                     row["titleSequence"] = queued["sequence"]
                 row["status"] = "steering"
-                next_action[number] = monotonic() + 0.8
+                next_action[number] = monotonic() + PRESS_GAP
                 result["events"].append({"elapsedSeconds": monotonic() - started, "player": number,
                                          "action": kind, "value": value, "reason": reason})
             harness.save(receipt_path, result)

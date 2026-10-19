@@ -50,6 +50,8 @@ static class SelfTest {
         }
         DiscImportTests.Run(Check);
         OnlineOptionsTests.Run(Check);
+        GameImageCacheTests.Run(Check);
+        Task.Run(() => AutomaticAccountTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => LocalGameBuildTests.Run(Check)).GetAwaiter().GetResult();
         string pipeName = "reo-log-check-" + Guid.NewGuid().ToString("N"),
@@ -261,7 +263,7 @@ static class SelfTest {
         Check(DisplayOptions.Size(-5) == DisplayOptions.Sizes[0] &&
                   DisplayOptions.Size(99) == DisplayOptions.Sizes[^1],
               "Invalid resolution settings are bounded");
-        var graphics = new Settings { Fullscreen = true, WindowSize = 4, SkipIntros = true,
+        var graphics = new Settings { Fullscreen = true, WindowSize = 4,
                                       TextureLinear = true, AntiAliasing = true };
         var graphicsRoundtrip =
             JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(graphics))!;
@@ -272,9 +274,36 @@ static class SelfTest {
               "Anisotropic filtering persists supported levels and defaults invalid/old settings " +
                   "to off");
         Check(graphicsRoundtrip.Fullscreen && graphicsRoundtrip.WindowSize == 4 &&
-                  graphicsRoundtrip.SkipIntros && graphicsRoundtrip.TextureLinear &&
+                  graphicsRoundtrip.TextureLinear &&
                   graphicsRoundtrip.AntiAliasing,
               "Display and startup preferences survive serialization");
+        {
+            var kind = (string a, string adapter) =>
+                HostNetworking.Classify(System.Net.IPAddress.Parse(a), adapter);
+            Check(kind("192.168.1.20", "Ethernet") == HostNetworking.AddressKind.Home &&
+                      kind("10.0.0.5", "Wi-Fi") == HostNetworking.AddressKind.Home &&
+                      kind("172.16.4.1", "Ethernet") == HostNetworking.AddressKind.Home &&
+                      kind("172.32.0.1", "Ethernet") == HostNetworking.AddressKind.Public &&
+                      kind("100.101.102.103", "Tailscale") == HostNetworking.AddressKind.Vpn &&
+                      kind("25.1.2.3", "Hamachi") == HostNetworking.AddressKind.Vpn &&
+                      kind("8.8.8.8", "Ethernet") == HostNetworking.AddressKind.Public,
+                  "Hosting addresses are classified as home network, VPN or internet");
+            Check(HostNetworking.IsVirtualAdapter("vEthernet (WSL (Hyper-V firewall))") &&
+                      HostNetworking.IsVirtualAdapter("VirtualBox Host-Only Ethernet Adapter") &&
+                      !HostNetworking.IsVirtualAdapter("Ethernet Realtek PCIe GbE") &&
+                      !HostNetworking.IsVirtualAdapter("Hamachi LogMeIn Hamachi Virtual Ethernet"),
+                  "Virtual machine adapters are not offered as hosting addresses");
+            Check(HostNetworking.BehindAnotherNat("100.70.1.2") && HostNetworking.BehindAnotherNat("192.168.0.1") &&
+                      !HostNetworking.BehindAnotherNat("93.184.216.34") && !HostNetworking.BehindAnotherNat(null),
+                  "A router with a non-public internet address is reported as behind another network");
+            Check(HostNetworking.Ports.Select(p => p.Number + p.Protocol).SequenceEqual(
+                      new[] { "80TCP", "10127TCP", "9090UDP", "9091UDP" }) &&
+                      HostNetworking.PortList.Contains("9091 UDP"),
+                  "Hosting lists the four fixed server ports");
+            var forward = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(new Settings { AutoForward = true }))!;
+            Check(forward.AutoForward && !new Settings().AutoForward,
+                  "Automatic router forwarding is opt-in and persists");
+        }
         var colorSettings =
             JsonSerializer.Deserialize<Settings>("{\"Brightness\":125,\"Gamma\":1.25}")!;
         Check(colorSettings.Brightness == 125 && colorSettings.Gamma == 1.25,

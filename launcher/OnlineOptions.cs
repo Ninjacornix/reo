@@ -8,6 +8,9 @@ using System.Text.RegularExpressions;
 namespace Outbreak.Launcher;
 
 public static partial class OnlineOptions {
+    public static bool Configured(Settings settings) => settings.Game.Id == "file1" &&
+                                                        TryHost(settings.CoopHost, out _) &&
+                                                        ValidUsername(settings.AccountUsername);
     public const int MinUsernameLength = 4;
     public const int MaxUsernameLength = 10;
     public const string HostProfileMarker = "REO native host profile provider v1";
@@ -40,7 +43,8 @@ public static partial class OnlineOptions {
     }
 
     public static string? Error(Settings settings) {
-        if (!settings.OnlineLaunch)
+        if (string.IsNullOrWhiteSpace(settings.CoopHost) &&
+            string.IsNullOrWhiteSpace(settings.AccountUsername))
             return null;
         if (settings.Game.Id != "file1")
             return "Online play is available for File #1 only.";
@@ -53,17 +57,16 @@ public static partial class OnlineOptions {
     }
 
     public static Dictionary<string, string> LaunchEnvironment(Settings settings) {
-        if (!settings.OnlineLaunch)
+        if (!Configured(settings))
             return new();
-        if (Error(settings) is string error)
-            throw new IOException(error);
         TryHost(settings.CoopHost, out string host);
         return new() { ["REO_COOP_HOST"] = host, ["REO_COOP_PLATFORM_AUTH"] = "native",
-                       ["REO_COOP_USERNAME"] = settings.AccountUsername };
+                       ["REO_COOP_USERNAME"] = settings.AccountUsername,
+                       ["REO_COOP_AUTO_ACCOUNT"] = "1" };
     }
 
     public static string PrepareMemoryCard(Settings settings, string folder, FileStream? lease) {
-        if (!settings.OnlineLaunch)
+        if (!Configured(settings))
             return "offline";
         string card = Path.GetFullPath(folder);
         string lockPath = card.TrimEnd(Path.DirectorySeparatorChar) + ".reo-lock";

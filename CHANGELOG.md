@@ -1,6 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- Portable first-run build tooling generates game code from the user's ISO;
+  a public playable package is still pending completion of that build.
+- Launcher-managed local server hosting, account creation and automatic native
+  login, with user-scoped credential storage.
+- GPU movie decoding enabled for normal launches and co-op playtests.
+- Faster isolated login/lobby/scenario drivers; two clients reached the first
+  room in the latest local retest. Further network behavior remains experimental.
+- Original application icons and immutable per-runtime launcher caches.
+- Native Linux launcher and Vulkan portability foundations, not a playable
+  Linux release.
+
 ## v1.0.0 prerelease — 2026-10-19
+
+Withdrawn: the former downloadable game executable contained game-derived code.
+The following describes the historical package, not a currently available download.
 
 - Downloadable Windows x64 package; official cover art and current launcher screenshots.
 - Main README includes first-run ISO and co-op joining/hosting instructions.

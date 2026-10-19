@@ -7,6 +7,12 @@ public partial class App : Application {
     protected override async void OnStartup(StartupEventArgs e) {
         base.OnStartup(e);
         try {
+            int hostTest = Array.IndexOf(e.Args, "--test-coop-host");
+            if (hostTest >= 0 && hostTest + 2 < e.Args.Length) {
+                await HostedServerTests.Run(AppLayout.FindRoot(AppContext.BaseDirectory),
+                    e.Args[hostTest + 1], e.Args[hostTest + 2]);
+                Shutdown(); return;
+            }
             int fixture = Array.IndexOf(e.Args, "--test-update");
             if (fixture >= 0 && fixture + 1 < e.Args.Length) {
                 string target =
@@ -97,7 +103,7 @@ public partial class App : Application {
         } catch (Exception error) {
             Directory.CreateDirectory(Settings.Home);
             File.WriteAllText(Path.Combine(Settings.Home, "launcher-error.log"), error.ToString());
-            if (!e.Args.Contains("--self-test") && !e.Args.Contains("--import-iso") &&
+            if (!e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") && !e.Args.Contains("--import-iso") &&
                 !e.Args.Contains("--test-update") && !e.Args.Contains("--check-updates"))
                 MessageBox.Show(error.Message, "RE: Outbreak");
             Shutdown(1);

@@ -1,22 +1,21 @@
-> The precompiled v1.0.0 download has been withdrawn. The local-build installer
-> is in development; packaging a compiled game executable is disabled. The
-> packaged-install instructions below describe the earlier development package,
-> not a currently available public release.
-
 # Launcher
 
-The Windows package includes the prebuilt game, controller adapter, shaders and
-.NET runtime. Open `Outbreak.Launcher.exe`, select **Game files**, and choose your
-own ISO. No compiler, SDK, separate ELF, mounted drive or .NET installation is
-needed. File #1 currently supports **NTSC-U v2.00 / SLUS-20765**; other executable
-revisions are rejected before import. A Vulkan-capable GPU driver is required.
+The precompiled v1.0.0 download has been withdrawn. Local build-kit validation is
+in progress; no replacement playable public download is available yet.
 
-The first import extracts files to `%LOCALAPPDATA%\OutbreakRecomp\launcher\imports`.
-It shows progress, supports cancellation, and publishes the cache only after all
-files have been written. The tested disc imports 85 files / 4.27 GB. Later starts
-reuse the cache; missing/truncated files and changed ELF data trigger repair.
-Keep the ISO at the selected location: sector-based reads still use it directly.
-A `.pak` replacement for sector reads is not part of this implementation.
+The replacement package contains independent tools and runtime inputs. Select your
+own NTSC-U v2.00 / SLUS-20765 ISO under **Game files**. The launcher imports game
+files without mounting, generates native sources locally, then compiles and caches
+the game. Other executable revisions are rejected before import. A Vulkan-capable
+GPU driver is required. File #2 remains a placeholder.
+
+The planned release is portable: open the launcher EXE and select an ISO, with no
+Windows installer. Portable compiler integration is still pending; development
+build kits currently require existing Microsoft C++ tools and a Windows SDK.
+The launcher does not install system tools. The first compilation takes time;
+later launches reuse verified completed outputs.
+The final game executable, extracted assets and generated instruction code stay
+in Local AppData. Keep the ISO available for direct sector reads.
 
 Developers can build the launcher with .NET 8 SDK and Visual Studio C++ tools:
 
@@ -25,61 +24,91 @@ powershell -NoProfile -ExecutionPolicy Bypass -File launcher/build.ps1
 ```
 
 Open `StartLauncher.cmd` in a source checkout. **Developer options** in Game files
-allows selecting an alternate native build; it is hidden in packaged installs.
-To create a self-contained package from an already-built native executable:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File launcher/package.ps1 -Zip
-```
-
-The packaging command is for maintainers. It never rebuilds the native game,
-imports a disc, uploads a release, or includes local ISO/cache/save data. It bundles
-app-local Microsoft C++ runtime DLLs and records the source revision, dirty state
-and file hashes. Publish the matching source and required dependency notices with
-release builds. The normal launcher never invokes build tools.
+allows selecting an existing local native build; it is hidden in packaged installs.
+The ordinary package script rejects precompiled-game distribution. Maintainer
+build-kit instructions are in [local builds](../docs/LOCAL_BUILDS.md).
 
 ## Pages
 
-- **Play:** select File #1 or File #2 and inspect local game files, saves, GPU and input device. Choose your ISO; the installed native build is selected automatically. File #2 gameplay is not included in the current package.
-- **Graphics:** window resolution, borderless fullscreen, image scaling, 3D texture filtering, anisotropic filtering (Off/2×/4×/8×/16×), FXAA or SMAA, brightness, gamma, async geometry and experimental GPU movie decoding. Changes apply next launch.
+- **Play:** select File #1 or File #2 and inspect local game files, saves, GPU and input device. Choose your ISO; the verified local game build is selected automatically. File #2 gameplay is not included in the current package.
+- **Graphics:** window resolution, borderless fullscreen, image scaling, 3D texture filtering, anisotropic filtering (Off/2Ã—/4Ã—/8Ã—/16Ã—), FXAA or SMAA, brightness, gamma, async geometry and experimental GPU movie decoding. Changes apply next launch.
 - **Controls:** choose keyboard, DualSense or Xbox/XInput; remap buttons and keys; adjust dead zones and stick options. USB DualSense is physically tested; Xbox and Bluetooth have parser/simulated coverage. Rumble and adaptive triggers are unsupported.
 - **Save games:** open the selected game's memory-card folder or create a ZIP backup while the game is closed. Save/load itself remains in the game.
 - **Log:** read session debug/output logs, with optional follow mode.
-- **Co-op:** configure a numeric IPv4 server address and existing account username, then opt in to online launch. This uses the original game's server/login path, not account-free peer-to-peer networking.
+- **Co-op:** username, server address, automatic account/login plumbing, server hosting and a copyable address for friends. The new game-to-lobby flow is still being validated.
 - **Cheats:** built-in gameplay toggles and optional compatible PCSX2 data cheats.
 - **Mods:** placeholder.
 
 Check for updates uses [GitHub Releases](https://github.com/Ninjacornix/reo/releases). Packaged installations can download, verify and install newer releases; source checkouts open the release page. See [Updates](#updates).
 
-## Online settings
+## Co-op
 
-Online launch is off by default. In **Co-op**, enter the compatible openSNAP server's numeric IPv4 address and your existing account username, then enable **Launch in online mode**. The global play button changes to **Play online**. Invalid settings prevent an online launch; incomplete online fields do not affect offline play. Settings apply to the next launch and are disabled while the launcher owns a running game.
+Use the ordinary **Play** button for both offline and network play. In **Co-op**,
+enter a server IPv4 address and a username (4-10 letters, numbers or single inner
+underscores). Press Enter or leave the username field to create or reuse the
+account on the selected server. The status below confirms readiness. Login uses
+that saved account when the native game enters Network. There is no separate
+online launch mode, and incomplete network settings do not prevent offline play.
 
-The username follows the current server's registration rules: 4–10 ASCII letters, digits or underscores, with no leading, trailing or consecutive underscores. Choose **Edit Account** in the game to apply the launcher username through the original account flow; an older stored ID is not silently replaced by choosing Go Online. Account selection does not authenticate the user. Enter the password in the game's own login screen; passwords are neither stored nor exported by the launcher. The session receipt records online/offline mode, server and account username without claiming a connection succeeded.
+The launcher generates a server-specific password, saves it with Windows DPAPI
+for the current Windows user before registration, and uses the server's existing
+signup/login endpoint. It does not claim existing names or override server
+admission. An already-owned username requires choosing another name. Passwords
+are not settings, process arguments, environment variables or game-log entries.
+The original password editor receives a bounded, generation-checked native
+credential handoff, removed after acknowledgement. Pending private session files
+are removed when the game closes.
+Keep launcher account data if you want to reuse the same account in future.
 
-Online mode exports `REO_COOP_HOST`, `REO_COOP_PLATFORM_AUTH=native` and `REO_COOP_USERNAME`. Offline mode exports none of them. No server is bundled or started by this page. A separately running compatible server and registered account are required. Four native clients have completed local authentication, room entry, the scenario introduction and movement replication. Item sharing, door transitions, reconnects and LAN/WAN behavior remain unverified.
+Enable **Host server** to start the four required services without a terminal or
+Python installation. Choose the LAN/VPN/public address to advertise before
+starting. Once the services are listening, **Friends connect to** shows a copyable
+address. Changing that field requires stopping the server first. Stopping hosting
+or closing the launcher stops only its owned server processes; existing services
+on occupied ports are refused and preserved. Persistent server data is separate
+from the portable application under Local AppData.
 
-Room names, passwords, scenario rules and joining are still handled in the
-original game menus. Launcher Create/Join room forms and automatic server
-hosting are planned, not available controls. See [connection and hosting
-requirements](../docs/NETWORKING.md#connecting-with-friends), including which
-ports a host needs and the private-VPN alternative.
+The portable server component includes pinned openSNAP source, the current-room
+patch, its AGPL licence, Python and dependencies. The native game/runtime remains
+a separate process.
 
-On an online launch, while holding the selected memory-card lease, the launcher creates `BWNETCNF/BWNETDCNF` only when `BWNETCNF` does not already exist. It contains the original project text `REO native host profile provider v1`, allowing the original profile browser to discover the native host-profile provider. It contains no Sony network-configuration bytes. Existing profile directories/files are preserved, write failures prevent launch with an explicit error, and offline launches do not add this marker. Failed creation removes only its newly created directory if it is still empty; an already-existing empty profile folder is preserved and reported as unusable. The original game remains responsible for its normal `BASLUSNET` save flow.
+Helping friends reach you (all optional; nothing happens without a click):
+
+- **Pick one of your addresses** lists this PC's addresses, labelled *home network*
+  (friends in the same house), *VPN* (Tailscale, ZeroTier, Hamachi — works over the
+  internet without port forwarding) or *internet*. Virtual-machine/WSL adapters are
+  hidden because friends cannot reach them.
+- **Find my internet address** asks `api.ipify.org` for the address the internet sees.
+- **Ports friends need** lists the four fixed ports: TCP 80 (account sign-up),
+  TCP 10127 (game app server), UDP 9090 (login), UDP 9091 (game server). For internet
+  play without a VPN, forward them to this PC in your router.
+- **Open these ports on my router automatically (UPnP)** asks the router to forward
+  them while the server runs and removes the forwarding when hosting stops or the
+  launcher closes. Many routers have UPnP off; the launcher then says so. If the
+  router itself reports a private internet address, your provider uses carrier-grade
+  NAT and forwarding cannot work: use a VPN address instead.
+- **Allow through Windows Firewall** adds two inbound rules for exactly these ports
+  ("RE Outbreak Recomp server (TCP)/(UDP)") after Windows' administrator prompt.
+
+Some providers block incoming port 80, which account sign-up needs.
+
+These new controls require the updated native account hooks. Portable server
+startup, real signup/login checks and the native credential handshake have passed
+isolated integration checks. An automated native game run also authenticated and
+reached server selection without manual credential entry. Previous four-client
+gameplay checks used the manual account flow; the new flow has not repeated them. Room creation/joining and scenario choices still use the original game menus.
 
 ## Display and startup
 
-Developer checkouts need a current native build for these settings. Packaged installs already include it.
+Developer checkouts need a current native build for these settings. Packaged installs generate it locally from the supported disc.
 
 Window resolutions range from 1024 x 768 to 3840 x 2160. Borderless fullscreen uses the monitor's desktop resolution. The original 4:3 picture is preserved with black borders when needed; these output sizes do not increase internal rendering resolution or texture detail.
 
 Image scaling chooses nearest or bilinear sampling of the final image. The separate 3D texture-filter option enables bilinear sampling for triangles while preserving the game's sprite and framebuffer-feedback sampling. Anti-aliasing offers Off, FXAA and SMAA 1x High. SMAA uses the upstream edge-detection, blend-weight and neighbourhood passes with matching lookup textures, after scaling; it has no temporal history. Brightness and gamma are applied once after AA. All options run on the GPU and apply on the next launch.
 
-Anisotropic filtering improves perspective 3D textures viewed at oblique angles. Choose Off, 2×, 4×, 8× or 16×; 8× is a useful starting point. It includes bilinear texture filtering for eligible draws, independently of the Original/Bilinear option. Sprites, fixed-UV triangles, GS region/cropped textures, render-target arrays and framebuffer-feedback sampling retain their original paths. Filtering uses Vulkan hardware samplers with explicit GPU texture gradients; levels are capped to the device limit, with bilinear fallback on unsupported hardware. Higher settings cost more GPU time. Existing settings default to Off.
+Anisotropic filtering improves perspective 3D textures viewed at oblique angles. Choose Off, 2Ã—, 4Ã—, 8Ã— or 16Ã—; 8Ã— is a useful starting point. It includes bilinear texture filtering for eligible draws, independently of the Original/Bilinear option. Sprites, fixed-UV triangles, GS region/cropped textures, render-target arrays and framebuffer-feedback sampling retain their original paths. Filtering uses Vulkan hardware samplers with explicit GPU texture gradients; levels are capped to the device limit, with bilinear fallback on unsupported hardware. Higher settings cost more GPU time. Existing settings default to Off.
 
 Brightness (50-150%) and gamma (0.50-2.00) use the same adjustment curve in the immediate GPU preview and the game's GPU presentation pass. Reset restores 100% / 1.00. Settings apply to the game on its next launch; neutral values preserve the original image. The room preview is a local screenshot at `%LOCALAPPDATA%\OutbreakRecomp\launcher\room-preview.png`, not a bundled game asset. It is outside the repository and release resources.
-
-For File #1, **Skip intros** bypasses the logo display and lets the original frontend run its cleanup before opening the title video with PRESS START. It does not press Start, bypass memory-card decisions, or remove game initialization. File #2 intro skipping is not implemented.
 
 ## Files and input
 
@@ -89,7 +118,7 @@ Press **Ctrl+Enter** in the game to toggle borderless fullscreen. **Alt+F4** clo
 
 Keep the launcher open while playing. It minimizes if closed during a game, preserving the input connection. Only the selected input source controls player 1. Keyboard input is accepted while the launcher or its game is in the foreground. Device changes and bindings apply live; graphics settings apply next launch.
 
-The launcher copies and verifies the selected executable in its own cache, installs its input adapter beside that copy, and leaves the source build untouched. The game opens without a console; stdout/stderr go to session logs. No custom app or game-window icons are supplied.
+The launcher copies and verifies the selected executable and dependencies in an immutable cache, installs its input adapter beside that copy, and leaves the source build untouched. The game opens without a console; stdout/stderr go to session logs. Original project icons identify the launcher and game window.
 
 The selected ISO is imported once without mounting. The original ISO stays available for direct sector reads; the supported ELF identity is checked before import. Required presentation shaders are copied from the selected native build. GPU-resident VU ownership is disabled in this launcher configuration because it conflicts with the async worker.
 

@@ -1,6 +1,6 @@
 @echo off
 setlocal
-call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" >nul 2>nul
+call "%~dp0..\vcvars64.bat"
 if errorlevel 1 exit /b 1
 cd /d "%~dp0\..\.."
 if not exist build-ninja\ee-count-check mkdir build-ninja\ee-count-check

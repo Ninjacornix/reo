@@ -7,6 +7,7 @@
 #include "ps2_runtime_macros.h"
 #include "reo_hw_bridge.h"
 #include "../../network/native/ee_count_clock.h"
+#include "../../network/native/automatic_account.h"
 #include <cstdlib>
 #include <cstring>
 #include <atomic>
@@ -39,6 +40,8 @@ void o3_00603320_0x603320(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime
 void o3_005F74E0_0x5f74e0(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
 void o3_005F74F0_0x5f74f0(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
 void o3_00609750_0x609750(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
+void o3_005F8280_0x5f8280(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
+void o3_005809B0_0x5809b0(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
 void o3_0058BF10_0x58bf10(uint8_t*, R5900Context*, PS2Runtime*);
 void o3_0059FB00_0x59fb00(uint8_t*, R5900Context*, PS2Runtime*);
 void o3_00599110_0x599110(uint8_t*, R5900Context*, PS2Runtime*);
@@ -52,6 +55,18 @@ void sub_001C8850_0x1c8850(uint8_t*, R5900Context*, PS2Runtime*);
 
 namespace reo_missing_entries {
 namespace {
+void nativeNetworkDisplay(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    namespace account = reo_network::automatic_account;
+    const unsigned step = READ8(0x6DF150);
+    static unsigned previousStep = ~0u;
+    // This callback belongs only to the verified netwk overlay. It runs after
+    // Network is selected, including the fresh-card NET-file creation prompt.
+    if (account::enabled() && (!account::armed.load() ||
+        (step == 2 && previousStep != 2 && account::completed.load())))
+        account::arm();
+    previousStep = step;
+    o3_005F8280_0x5f8280(rdram, ctx, runtime);
+}
 void nativeNetworkSeconds(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     const char* host = std::getenv("REO_COOP_HOST");
     const char* mode = std::getenv("REO_COOP_PLATFORM_AUTH");
@@ -168,6 +183,33 @@ bool runAccountHelper(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime, ui
     return false;
 }
 
+void nativePasswordPoll(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    namespace account = reo_network::automatic_account;
+    const uint32_t work = READ32(0x6436D0);
+    if (account::enabled() && GPR_U32(ctx, 31) == 0x608B60 && GPR_U32(ctx, 4) == 0x6DF110 &&
+        READ8(0x6DF150) == 46 && READ8(0x6DF151) == 11 && work >= 0x100000 &&
+        work <= 0x2000000 - 0x700 && READ8(work + 0x28) == 1 && READ8(work + 0x21) == 5 &&
+        READ16(work + 0x3E) == 15 && READ8(0x6436C8) == 0) {
+        std::array<char, 16> password{};
+        if (account::credential(password)) {
+            const R5900Context caller = *ctx;
+            // Supply the native credential as the original editor's initial text,
+            // then invoke its ordinary Enter handler. Account authentication is untouched.
+            for (unsigned i = 0; i < password.size(); ++i) WRITE8(0x6DF110 + i, uint8_t(password[i]));
+            SET_GPR_U32(ctx, 5, 5); SET_GPR_U32(ctx, 6, 15); SET_GPR_U32(ctx, 7, 0x6DF110);
+            bool applied = runAccountHelper(rdram, ctx, runtime, 0x5805A0, 0);
+            if (applied) applied = runAccountHelper(rdram, ctx, runtime, 0x5816A0, 0);
+            *ctx = caller;
+            volatile char* clear = password.data();
+            for (unsigned i = 0; i < password.size(); ++i) clear[i] = 0;
+            if (!applied) return;
+            account::inputApplied();
+            std::fprintf(stderr, "\n[COOP-AUTO] native-password-applied %u\n", account::generation.load());
+        }
+    }
+    o3_005809B0_0x5809b0(rdram, ctx, runtime);
+}
+
 void nativeAccountPoll(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     const char* mode = std::getenv("REO_COOP_PLATFORM_AUTH");
     const char* username = std::getenv("REO_COOP_USERNAME");
@@ -179,7 +221,9 @@ void nativeAccountPoll(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
         return address >= 0x100000 && address <= 0x2000000 - bytes;
     };
     if (host && *host && mode && std::strcmp(mode, "native") == 0 &&
-        validAccountUsername(username) && GPR_U32(ctx, 31) == 0x60841C && READ8(0x6DF150) == 45 &&
+        validAccountUsername(username) &&
+        (!reo_network::automatic_account::enabled() || reo_network::automatic_account::accountReady()) &&
+        GPR_U32(ctx, 31) == 0x60841C && READ8(0x6DF150) == 45 &&
         READ8(0x6DF151) == 3 && inRam(browser, 0x50000) && inRam(nested, 0x60000) &&
         inRam(display, 4) && READ8(nested + 1) == 1) {
         const uint32_t stack = GPR_U32(ctx, 29);
@@ -248,6 +292,7 @@ void nativePlatformStep(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) 
         ctx->pc = GPR_U32(ctx, 31);
         return;
     }
+    reo_network::automatic_account::arm();
     static bool reported = false;
     if (!reported) {
         std::fprintf(stderr, "[COOP-NATIVE-PLATFORM] Console DNAS is not used in native mode; "
@@ -274,6 +319,8 @@ void sub_001B7890(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
 
 // Call after all generated (and overlay) registration.
 void install(PS2Runtime& runtime) {
+    runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x5F8280u, nativeNetworkDisplay);
+    runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x5809B0u, nativePasswordPoll);
     runtime.registerFunction(0x1C8850, nativeNetworkSeconds);
     runtime.registerFunction(0x1EA000, nativeNetworkCount);
     runtime.registerFunction(0x1F3BCC, traceSnapPacket<0x1F3BCC, sub_001F3BCC_0x1f3bcc>);

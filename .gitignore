@@ -1,4 +1,5 @@
 # User-owned game data and captures
+/network-server/
 /iso/
 /extracted/
 /game_data*/
@@ -85,6 +86,7 @@ venv/
 *.suo
 *.user
 *.sln.docstates
+*_wpftmp.csproj
 CMakeSettings.json
 .env
 .env.*

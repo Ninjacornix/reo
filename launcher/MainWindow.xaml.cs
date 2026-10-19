@@ -36,8 +36,6 @@ public partial class MainWindow : Window {
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
         AsyncVif.IsChecked = settings.AsyncVif;
-        GpuMovies.IsChecked = settings.GpuMovies;
-        SkipIntros.IsChecked = settings.SkipIntros;
         InitializeOnline();
         TextureFilter.SelectedIndex = settings.TextureLinear ? 1 : 0;
         AnisotropicFilter.SelectedIndex =
@@ -63,6 +61,10 @@ public partial class MainWindow : Window {
         };
         Closed += (_, _) => {
             timer.Stop();
+            accountPreparation?.Cancel();
+            hostedServer.Dispose();
+            if (portsForwarded)
+                HostNetworking.ClosePorts().Wait(TimeSpan.FromSeconds(5)); // do not leave router ports open
             controller.Dispose();
         };
         Loaded += OnLoaded;
@@ -96,7 +98,7 @@ public partial class MainWindow : Window {
             name switch { "Graphics" => ("Graphics", "Display and image settings."),
                           "Controller" => ("Controls", "Devices and bindings."),
                           "Saves" => ("Save games", "Memory cards and backups."),
-                          "Coop" => ("Co-op", "Server and account settings."),
+                          "Coop" => ("Co-op", "Choose Network in the game to connect."),
                           "Setup" => ("Game files", "Import your game disc."),
                           "Logs" => ("Log", "Game debug and output."),
                           "Mods" => ("Mods", "Game modifications."),
@@ -125,8 +127,6 @@ public partial class MainWindow : Window {
         UpdateScreenFitHint();
         settings.Fullscreen = Fullscreen.IsChecked == true;
         settings.AsyncVif = AsyncVif.IsChecked == true;
-        settings.GpuMovies = GpuMovies.IsChecked == true;
-        settings.SkipIntros = SkipIntros.IsChecked == true;
         settings.TextureLinear = TextureFilter.SelectedIndex == 1;
         settings.Anisotropy =
             new[] { 1, 2, 4, 8, 16 }[Math.Clamp(AnisotropicFilter.SelectedIndex, 0, 4)];
@@ -169,6 +169,8 @@ public partial class MainWindow : Window {
             UpdateSaves();
         }
         previousRunning = running;
+        if (game.NetworkStatus != null)
+            Status.Text = game.NetworkStatus;
     }
     async void LaunchGame(object sender, RoutedEventArgs e) {
         if (updating || updateRestarting || launching || game.Running || backingUp)
@@ -304,6 +306,8 @@ public partial class MainWindow : Window {
         if (!args.Any(a => a.StartsWith("--test-") || a is "--smoke-launch" or "--screenshot" or
                                                            "--probe-controller"))
             _ = CheckUpdates(true);
+        if (settings.HostServer && args.Length == 0)
+            await StartHostedServer();
         int screenshot = Array.IndexOf(args, "--screenshot");
         int probe = Array.IndexOf(args, "--probe-controller");
         int page = Array.IndexOf(args, "--page");
@@ -340,7 +344,7 @@ public partial class MainWindow : Window {
                 initialized = false;
                 CoopHost.Text = "";
                 AccountUsername.Text = "";
-                OnlineLaunch.IsChecked = false;
+                HostServer.IsChecked = false;
                 PlayNetworkSummary.Text = "Offline";
                 LaunchButton.Content = "Play";
                 initialized = true;
@@ -399,7 +403,6 @@ public partial class MainWindow : Window {
             snapshot.SelectedGame = "file1";
             snapshot.Exe = Path.GetFullPath(args[smoke + 1]);
             snapshot.DualSense = true;
-            snapshot.GpuMovies = false;
             bool displayTest = args.Contains("--display-test");
             if (displayTest) {
                 snapshot.AspectRatio = args.Contains("--test-16x9") ? "16:9" : "4:3";
@@ -411,7 +414,6 @@ public partial class MainWindow : Window {
                 snapshot.WindowSize = args.Contains("--test-1080p")  ? 4
                                       : args.Contains("--test-720p") ? 3
                                                                      : 0;
-                snapshot.SkipIntros = args.Contains("--test-skip-intros");
                 snapshot.TextureLinear = args.Contains("--test-linear-textures");
                 snapshot.Anisotropy = args.Contains("--test-anisotropic") ? 16 : 1;
                 snapshot.LinearFilter = !args.Contains("--test-nearest");
@@ -430,6 +432,16 @@ public partial class MainWindow : Window {
                                             : args.Contains("--test-character") ? "character"
                                                                                 : "title"
                                           : null;
+            if (args.Contains("--test-auto-network")) {
+                snapshot.HostServer = false;
+                snapshot.Fullscreen = false;
+                snapshot.WindowSize = 0;
+                snapshot.CoopHost = "127.0.0.1";
+                snapshot.AccountUsername = "auto" + System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999);
+                snapshot.MemoryCardFile1 = Path.Combine(Settings.Home, "test-cards", "auto-network-" + Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(snapshot.MemoryCardFile1);
+                diagnosticRoute = "network-auto";
+            }
             if (args.Contains("--test-builtin-cheats")) {
                 snapshot.CheatsEnabled = true;
                 snapshot.EnabledCheats = Cheats.Builtins("file1").Select(g => g.Id).ToList();
@@ -453,7 +465,8 @@ public partial class MainWindow : Window {
                     File.Delete(testCheatFile);
             }
             previousRunning = true;
-            await Task.Delay(args.Contains("--test-quick-display") ? 25000
+            await Task.Delay(args.Contains("--test-auto-network") ? 240000
+                             : args.Contains("--test-quick-display") ? 25000
                              : args.Contains("--test-room")        ? 180000
                              : args.Contains("--test-memory-card") ? 300000
                              : displayTest ? args.Contains("--test-character") ? 110000 : 65000

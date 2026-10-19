@@ -25,13 +25,12 @@ static class OnlineOptionsTests {
             check(!OnlineOptions.TryHost(host, out _), "Invalid server endpoint rejected: " + host);
         var offline = new Settings { CoopHost = "bad", AccountUsername = "bad" };
         check(
-            OnlineOptions.Error(offline) == null &&
+            OnlineOptions.Error(offline) != null &&
                 OnlineOptions.LaunchEnvironment(offline).Count == 0,
             "Offline launch ignores unfinished online settings and exports no network environment");
-        var online = new Settings { OnlineLaunch = true, CoopHost = "127.000.000.001",
-                                    AccountUsername = "reo01" };
+        var online = new Settings { CoopHost = "127.000.000.001", AccountUsername = "reo01" };
         var env = OnlineOptions.LaunchEnvironment(online);
-        check(env.Count == 3 && env["REO_COOP_HOST"] == "127.0.0.1" &&
+        check(env.Count == 4 && env["REO_COOP_HOST"] == "127.0.0.1" &&
                   env["REO_COOP_PLATFORM_AUTH"] == "native" && env["REO_COOP_USERNAME"] == "reo01",
               "Online launch selects genuine native platform authentication and configured " +
                   "account/server");
@@ -39,18 +38,11 @@ static class OnlineOptionsTests {
                   !env.ContainsKey("REO_TEST_ROUTE"),
               "Online options export neither a password nor diagnostic automation");
         var persisted = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(online))!;
-        check(persisted.OnlineLaunch && persisted.CoopHost == online.CoopHost &&
-                  persisted.AccountUsername == "reo01",
+        check(persisted.CoopHost == online.CoopHost && persisted.AccountUsername == "reo01",
               "Online configuration persists with settings");
         online.CoopHost = "not-a-server";
-        bool invalidRefused = false;
-        try {
-            OnlineOptions.LaunchEnvironment(online);
-        } catch (System.IO.IOException) {
-            invalidRefused = true;
-        }
-        check(invalidRefused,
-              "Invalid online configuration cannot launch through GameSession validation");
+        check(OnlineOptions.LaunchEnvironment(online).Count == 0,
+              "Incomplete network settings leave normal Play available offline");
         online.SelectedGame = "file2";
         check(OnlineOptions.Error(online)?.Contains("File #1", StringComparison.Ordinal) == true,
               "File #2 remains unsupported online");
@@ -62,7 +54,7 @@ static class OnlineOptionsTests {
             Path.Combine(Path.GetTempPath(), "reo-online-card-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(fixture);
         try {
-            var online = new Settings { OnlineLaunch = true };
+            var online = new Settings { CoopHost = "127.0.0.1", AccountUsername = "reo01" };
             string absent = Path.Combine(fixture, "offline-absent");
             check(OnlineOptions.PrepareMemoryCard(new Settings(), absent, null) == "offline" &&
                       !Directory.Exists(absent),

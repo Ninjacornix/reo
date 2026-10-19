@@ -38,6 +38,7 @@
 #include "reo_hw_bridge.h"
 #include "network/native/netcnf_profile.h"
 #include "network/native/private_usb_keyboard.h"
+#include "network/native/automatic_account.h"
 #include "reo_trace_logger.h"
 #include "runtime/gs/gs_renderer.h"
 #include "runtime/vu/vu_interpreter.h"
@@ -900,6 +901,67 @@ void pad2ParseScript() {
     fprintf(stderr, "[PAD2] script: %zu presses\n", g_pad2.script.size());
 }
 
+uint16_t pad2AutomaticAccount(uint8_t* rd, double now) {
+    namespace account = reo_network::automatic_account;
+    if (!rd || !account::enabled() || !account::armed.load()) return 0;
+    static account::Flow flow;
+    static unsigned generation = 0;
+    static double nextStatusRead = 0;
+    static std::string status;
+    const unsigned attempt = account::generation.load();
+    if (generation != attempt) {
+        generation = attempt; flow = {}; status.clear(); nextStatusRead = 0;
+    }
+    if (now >= nextStatusRead) {
+        status = account::status();
+        nextStatusRead = now + .25;
+    }
+    const auto suffix = " " + std::to_string(attempt);
+    if (status == "error" + suffix) account::completed.store(true);
+    if (status != "ready" + suffix && status != "typed" + suffix) return 0;
+    const auto byte = [rd](uint32_t address) {
+        return reo_source_instrumentation::bankRead(rd, rd + address);
+    };
+    const auto word = [rd](uint32_t address) {
+        uint32_t value = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &value, rd + address, sizeof(value));
+        return value;
+    };
+    account::Menu menu;
+    menu.step = byte(0x6DF150); menu.substep = byte(0x6DF151);
+    menu.cursor = int16_t(word(0x6DF158)); menu.delay = int16_t(word(0x6DF154));
+    menu.upperDelay = int16_t(word(0x6DF154) >> 16);
+    menu.choice = byte(0x6DF179);
+    if (menu.step == 6 && word(0x69BCD8) == 5) {
+        const uint32_t profile = word(0x69BCC0);
+        if (profile >= 0x100000 && profile <= PS2_RAM_SIZE - 0x50) {
+            menu.profileStage = byte(profile + 0x20);
+            menu.profileCursor = byte(profile + 0x10);
+            menu.profileReady = byte(profile + 0x4C) == 1 && byte(profile + 0x24) > 0;
+        }
+    }
+    const uint32_t keyboard = word(0x6436D0);
+    menu.keyboardValid = keyboard >= 0x100000 && keyboard <= PS2_RAM_SIZE - 0x700;
+    if (menu.keyboardValid) {
+        menu.keyboardActive = byte(keyboard + 0x28) == 1;
+        menu.keyboardDone = byte(keyboard + 0x36) != 0;
+    }
+    menu.keyboardDelay = byte(0x6436C8);
+    menu.passwordPresent = byte(0x8A64E0) != 0;
+    const auto decision = flow.tick(menu, now, true, status == "typed" + suffix);
+    if (decision.requestPassword) std::fprintf(stderr, "\n[COOP-AUTO] password-ready %u\n", attempt);
+    if (decision.submitted) {
+        account::completed.store(true);
+        std::fprintf(stderr, "[COOP-AUTO] login-submitted %u\n", attempt);
+    }
+    switch (decision.button) {
+        case account::Button::Confirm: return pad2ButtonBit("CROSS");
+        case account::Button::Up: return pad2ButtonBit("UP");
+        case account::Button::Down: return pad2ButtonBit("DOWN");
+        default: return 0;
+    }
+}
+
 // Test-only route through original guest handlers. These reads observe menu state;
 // the only output is ordinary pad input, never a guest state/PC write.
 uint16_t pad2TestRoute(uint8_t* rd, double now) {
@@ -923,6 +985,8 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
             return 7;
         if (std::strcmp(e, "network-login") == 0)
             return 8;
+        if (std::strcmp(e, "network-auto") == 0)
+            return 9;
         fprintf(stderr, "[TEST-ROUTE] invalid REO_TEST_ROUTE=%s; disabled\n", e);
         return 0;
     }();
@@ -1026,10 +1090,22 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
     } else
         button = 0;
     if (target >= 6 && networkSelected) {
+        if (target == 9 && reo_network::automatic_account::armed.load()) {
+            std::fprintf(stderr, "[TEST-ROUTE] native network reached; account provider takes over\n");
+            done = true;
+            return 0;
+        }
         const auto byte = [rd](uint32_t address) {
             return reo_source_instrumentation::bankRead(rd, rd + address);
         };
         const uint8_t step = byte(0x6DF150), substep = byte(0x6DF151);
+        static uint32_t lastNetworkState = ~0u;
+        const uint32_t networkState = uint32_t(step) | uint32_t(substep) << 8;
+        if (networkState != lastNetworkState) {
+            std::fprintf(stderr, "[TEST-ROUTE] network t=%.3f step=%u substep=%u cursor=%d choice=%u\n",
+                now, unsigned(step), unsigned(substep), int(int16_t(word(0x6DF158))), unsigned(byte(0x6DF179)));
+            lastNetworkState = networkState;
+        }
         if (target == 6 && profileChosen && (step == 7 || step == 31 || step == 33)) {
             fprintf(stderr,
                     "[TEST-ROUTE] original network connection phase reached t=%.3f step=%u; "
@@ -1048,7 +1124,7 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
         }
         if (step == 1 && substep == 1 && int16_t(word(0x6DF154) >> 16) <= 0)
             button = pad2ButtonBit("CROSS");
-        else if (step == 2 && substep == 4 && int16_t(word(0x6DF154) >> 16) <= 0)
+        else if (step == 2 && (substep == 4 || substep == 21) && int16_t(word(0x6DF154) >> 16) <= 0)
             button = pad2ButtonBit(byte(0x6DF179) ? "UP" : "CROSS");
         else if ((step == 3 || step == 4) && substep == 2 && int16_t(word(0x6DF154)) == 0)
             button = pad2ButtonBit(int16_t(word(0x6DF158)) == 0 ? "CROSS" : "UP");
@@ -2123,6 +2199,7 @@ void pad2FeederLoop() {
                 routeRam = g_pad2.rdram;
             }
             pressed |= pad2TestRoute(routeRam, now);
+            pressed |= pad2AutomaticAccount(routeRam, now);
             // Live input (runtime/input: keyboard and XInput, same bit order), only while this
             // process owns the foreground window so typing elsewhere does not press buttons.
             if (ReoHwBridge* br = ReoHwBridge::instance()) {

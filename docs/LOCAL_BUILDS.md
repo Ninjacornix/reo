@@ -9,11 +9,16 @@ disc supplies main/overlay instructions and VU microprogram images. The final
 executable, instrumentation copies, instruction witnesses and VU translations are
 generated and compiled in Local AppData, then cached outside the installation.
 
-The first setup needs Microsoft C++ Build Tools 2022 and a Windows SDK. The
-launcher reuses a compatible installation or offers Microsoft's signed installer.
-Installation remains interactive; the launcher does not silently accept licence
-terms or reboot Windows. Python is bundled as the pinned official embeddable
-distribution. Later launches reuse verified cached outputs without compiling.
+The Windows release must be portable: open the launcher EXE and select an ISO,
+without a Windows installer or system toolchain installation. Independent build
+tools may be unpacked into a private cache on first use. Later launches reuse
+verified cached outputs without compiling.
+
+This release path is not complete. The current development worker still requires
+an existing Microsoft C++ Build Tools 2022 installation and Windows SDK; the
+launcher never installs them. Replacing that requirement with a verified portable
+compiler and compatible headers/libraries is a release prerequisite. A portable
+launcher alone does not satisfy the complete first-run requirement.
 
 ## Maintainer workflow
 
@@ -37,6 +42,15 @@ clean-clone release pipeline. Preserve these inputs when preparing a kit.
    Do not copy `reo_recomp.exe`, game objects, translated game shaders, extracted
    assets, developer caches, save data or local artwork into a public package.
 
+The Co-op hosting component is exported separately with
+`tools/local_build/export_server.py --checkout PINNED_OPENSNAP --python-zip PYTHON_ZIP --output NEW_DIRECTORY`.
+Use native Windows x64 Python 3.12 for that exporter. It produces a portable
+Python/server component with the patched AGPL source, dependency sources/notices,
+and a hashed `server-manifest.json`. Pass it as `-Server` to
+`launcher/package-local.ps1`; never copy a running server's virtual environment,
+database or developer `.env`. The launcher owns service startup/stop and keeps
+persistent hosting data outside the portable application.
+
 Runtime and graphics-backend translation units that include local instruction
 witnesses are compiled locally too. Whole-program and specialized VU optimizations
 are reconstructed from the verified ELF, preserving their exact image identities.
@@ -46,6 +60,23 @@ currently loaded, disc-derived overlay; an unresolved adapter fails explicitly.
 Build logs and reusable object receipts stay in the private workspace. A cache key
 includes the build-kit manifest, supported ELF hash and architecture. Completed
 files are hashed and admitted only after the complete pipeline succeeds.
+
+## Linux
+
+Native Linux implementation has started in [launcher/linux](../launcher/linux/README.md),
+but no playable Linux release is available. The disc extraction,
+function metadata, source recipes and VU reconstruction are shared Python tools.
+A Linux kit must supply its own native recompiler, runtime/dependency libraries,
+Clang build worker and platform-specific manifest. It must generate the same game
+code from the same supported disc; no Windows SDK libraries or game objects should
+be bundled as a shortcut.
+
+The Windows launcher is WPF; the new Linux frontend uses Qt. Windows-only input,
+display, movie decoding and thread/scheduler paths also
+need Linux implementations and gameplay validation. Running under Wine/Proton
+would be a separate compatibility target, not evidence of a native Linux port.
+No Linux download should be offered until the same installation and room-route
+checks pass on Linux hardware.
 
 ## Publication checks
 

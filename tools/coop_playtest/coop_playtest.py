@@ -801,7 +801,7 @@ def environment(record, player, extra):
                REO_LAUNCHER_PAD_MAP=player["map"], REO_NATURAL="1", REO_TURBO="1",
                REO_GS_BACKEND="parallel", REO_GS_THREAD="1", REO_GS_GPU_PRESENT="1",
                REO_GS_DISPATCH_PACE="2", REO_GS_SPRITE_DEPTH_PARALLEL="1",
-               REO_VIF1_ASYNC="1", REO_VIF1_GPU_RESIDENT="0", REO_SKIP_INTROS="1",
+               REO_VIF1_ASYNC="1", REO_VIF1_GPU_RESIDENT="0", REO_GPU_MOVIE="1",
                REO_WINDOW_WIDTH="640", REO_WINDOW_HEIGHT="480", REO_POST_AA="off")
     if player.get("keyboardFile"):
         env["REO_COOP_KEYBOARD_FILE"] = player["keyboardFile"]
@@ -832,6 +832,15 @@ def run(args):
         if config.get("players"):
             extra.update(config["players"][i].get("environment", {}))
         launches.append(environment(record, player, extra))
+    # Online clients: write the same network-profile marker the launcher writes (launcher
+    # OnlineOptions.PrepareMemoryCard), or a fresh card stops at "Select Network Configuration".
+    # An existing BWNETCNF folder is left untouched.
+    for player, env in zip(record["players"], launches):
+        if env.get("REO_COOP_HOST") and env.get("REO_COOP_PLATFORM_AUTH") == "native":
+            profile = Path(player["card"]) / "BWNETCNF"
+            if not profile.exists():
+                profile.mkdir()
+                (profile / "BWNETDCNF").write_bytes(b"REO native host profile provider v1")
     processes, publishers, handles = [], [], []
     receipt = {"startedUtc": utc(), "players": [], "coopVerdict": "not-tested",
                "networkConfig": config, "errors": []}
@@ -949,6 +958,9 @@ def main():
     p.add_argument("--goal", choices=("shared-area", "waiting-room"), default="shared-area")
     p.add_argument("--timeout", type=float, default=240)
     p.add_argument("--press-limit", type=int, default=100)
+    p = sub.add_parser("drive-start", help="Host starts the scenario; all players skip cutscenes until gameplay")
+    p.add_argument("--session", required=True)
+    p.add_argument("--timeout", type=float, default=240)
     p = sub.add_parser("snapshot-actors")
     p.add_argument("--session", required=True)
     p.add_argument("--label", required=True)
@@ -977,6 +989,13 @@ def main():
     if args.command == "snapshot-actors":
         import actor_snapshot
         print(json.dumps(actor_snapshot.snapshot_actors(folder, record, args.label), indent=2))
+        return
+    if args.command == "drive-start":
+        import start_driver
+        result = start_driver.drive(folder, record, timeout=args.timeout)
+        print(json.dumps(result, indent=2))
+        if not result.get("allInGameplay"):
+            raise SystemExit(2)
         return
     if args.command == "drive-lobby":
         import lobby_driver

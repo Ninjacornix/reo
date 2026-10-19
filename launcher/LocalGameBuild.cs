@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Outbreak.Launcher;
 
@@ -138,20 +139,22 @@ public static class LocalGameBuild {
         if (Ready(ready, hash, kit))
             return executable;
         // Never compile from a modified input or reuse a partly verified tool installation.
+        int verified = 0;
         foreach (var file in kit.Files) {
             cancel.ThrowIfCancellationRequested();
             if (Sha(Inside(kitFolder, file.Path)) != file.Sha256)
                 throw new IOException("Build-kit file verification failed: " + file.Path);
+            if (++verified % 100 == 0 || verified == kit.Files.Length)
+                progress?.Report(
+                    new(verified, kit.Files.Length, "Checking build files", "First-run setup"));
         }
         if (hash != Sha(Path.Combine(kitFolder, ManifestName)))
             throw new IOException("The build kit changed during validation.");
         if (kit.Toolchain == "msvc") {
-            if (!kit.Files.Any(file => file.Path == "tools/local_build/setup_compiler.ps1"))
-                throw new IOException("The build kit is missing its verified compiler setup.");
             progress?.Report(
                 new(0, kit.Steps.Length, "Checking compiler tools", "First-run setup"));
-            await CompilerSetup.Ensure(kitFolder, cache, cancel).ConfigureAwait(false);
-        } else if (kit.Toolchain != null)
+            await CompilerSetup.Ensure(cancel).ConfigureAwait(false);
+        } else if (kit.Toolchain != null && kit.Toolchain != "llvm-mingw")
             throw new IOException("The build kit requests an unsupported compiler toolchain.");
         string work = Path.Combine(cache, "work");
         string output = Path.Combine(work, "output");
@@ -184,10 +187,21 @@ public static class LocalGameBuild {
             };
             foreach (string arg in step.Arguments)
                 start.ArgumentList.Add(Expand(arg));
-            int code = runner != null
-                           ? await runner(start, cancel).ConfigureAwait(false)
-                           : await Run(start, Path.Combine(cache, $"step-{i:D3}.log"), cancel)
-                                 .ConfigureAwait(false);
+            int code =
+                runner != null
+                    ? await runner(start, cancel).ConfigureAwait(false)
+                    : await Run(start, Path.Combine(cache, $"step-{i:D3}.log"), cancel, line => {
+                          var count = Regex.Match(line, @"^Compiled (\d+)/(\d+)");
+                          if (count.Success)
+                              progress?.Report(new(long.Parse(count.Groups[1].Value),
+                                                   long.Parse(count.Groups[2].Value),
+                                                   "Building your game", "Compiling native code"));
+                          else if (line.StartsWith("Generating ", StringComparison.Ordinal))
+                              progress?.Report(
+                                  new(0, 0, "Reading game instructions", "Generating native code"));
+                          else if (line.StartsWith("Linking ", StringComparison.Ordinal))
+                              progress?.Report(new(0, 0, "Finishing your game build", "Linking"));
+                      }).ConfigureAwait(false);
             if (code != 0)
                 throw new IOException($"Local build failed during {step.Name} (exit {code}). " +
                                       "The completed game was not replaced. Build logs: " + cache);
@@ -235,7 +249,8 @@ public static class LocalGameBuild {
         return reader.ReadUInt32() == 0x00004550 && reader.ReadUInt16() == 0x8664;
     }
 
-    static async Task<int> Run(ProcessStartInfo start, string log, CancellationToken cancel) {
+    static async Task<int> Run(ProcessStartInfo start, string log, CancellationToken cancel,
+                               Action<string>? report = null) {
         using var process =
             Process.Start(start) ?? throw new IOException("Cannot start build tool.");
         using var writer = new StreamWriter(log, append: false);
@@ -248,6 +263,7 @@ public static class LocalGameBuild {
                 } finally {
                     gate.Release();
                 }
+                report?.Invoke(line);
             }
         }
         Task stdout = Drain(process.StandardOutput), stderr = Drain(process.StandardError);

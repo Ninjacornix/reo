@@ -1,5 +1,4 @@
 #if defined(REO_GAME_FILE1)
-#include "overrides/reo_startup_options.h"
 #include "overrides/reo_cheats.h"
 #endif
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)
@@ -1171,8 +1170,6 @@ int main(int argc, char* argv[]) {
 
     ps2_game_overrides::applyMatching(runtime, elf_path, g.entry_point);
 #if defined(REO_GAME_FILE1)
-    if (g.serial == "SLUS-20765")
-        reo_startup::install(runtime);
     if (g.serial == "SLUS-20765")
         reo::mc2::install(runtime);
 #endif

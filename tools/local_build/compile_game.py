@@ -23,6 +23,51 @@ def digest(path):
         return hashlib.file_digest(f, "sha256").hexdigest()
 
 
+def portable_flags(options):
+    result = []
+    for option in options:
+        if option.startswith(("/D", "/I")):
+            result.append("-" + option[1:])
+        elif option == "/Od":
+            result.append("-O0")
+        elif option == "/arch:AVX":
+            result.append("-mavx")
+        elif option == "/arch:AVX2":
+            result.append("-mavx2")
+        elif option == "/fp:precise":
+            result.extend(["-fno-fast-math", "-ffp-contract=off"])
+        else:
+            raise ValueError("Unsupported portable compile flag: " + option)
+    return result
+
+
+def response_text(arguments, portable=False):
+    if portable:
+        return "\n".join(json.dumps(str(arg).replace("\\", "/")) for arg in arguments)
+    return "\n".join(subprocess.list2cmdline([str(arg)]) for arg in arguments)
+
+
+def portable_environment(kit, plan):
+    tools = []
+    for key in ("compiler", "archiver", "resourceCompiler"):
+        relative = plan[key]
+        if not relative.startswith("{kit}/"):
+            raise ValueError("A portable tool must be bundled in the build kit")
+        path = (kit / relative.removeprefix("{kit}/")).resolve()
+        if not path.is_relative_to(kit) or not path.is_file():
+            raise ValueError("Portable tool escapes its verified build kit")
+        tools.append(path)
+    env = {k: v for k, v in os.environ.items()
+           if k.upper() not in {"INCLUDE", "LIB", "LIBPATH", "CL", "_CL_", "CPATH",
+                                "C_INCLUDE_PATH", "CPLUS_INCLUDE_PATH", "LIBRARY_PATH"}}
+    system_root = next((v for k, v in env.items() if k.upper() == "SYSTEMROOT"), None)
+    if not system_root:
+        raise RuntimeError("The Windows system directory is unavailable")
+    system = Path(system_root)
+    env["PATH"] = os.pathsep.join(map(str, (tools[0].parent, system / "System32", system)))
+    return env, tools
+
+
 def msvc_environment():
     vswhere = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Microsoft Visual Studio/Installer/vswhere.exe"
     if not vswhere.is_file():
@@ -39,8 +84,13 @@ def msvc_environment():
         batch = Path(f.name)
         f.write(b'@echo off\r\ncall "%~1" >nul\r\nif errorlevel 1 exit /b 1\r\nset\r\n')
     try:
-        result = subprocess.check_output(["cmd.exe", "/d", "/c", str(batch), str(vcvars)],
-                                         text=True, errors="replace")
+        capture_env = dict(os.environ)
+        capture_env["REO_BUILD_CAPTURE_SCRIPT"] = str(batch)
+        capture_env["REO_BUILD_VCVARS_SCRIPT"] = str(vcvars)
+        command = 'cmd.exe /d /u /s /c ""%REO_BUILD_CAPTURE_SCRIPT%" "%REO_BUILD_VCVARS_SCRIPT%""'
+        result = subprocess.check_output(command,
+            executable=str(Path(os.environ["SystemRoot"]) / "System32/cmd.exe"),
+            env=capture_env, encoding="utf-16-le", errors="strict")
     finally:
         batch.unlink()
     env = dict(os.environ)
@@ -49,15 +99,22 @@ def msvc_environment():
             key, value = row.split("=", 1)
             env[key] = value
     toolroot = Path(env["VCToolsInstallDir"]) / "bin/Hostx64/x64"
+    env.pop("REO_BUILD_CAPTURE_SCRIPT", None)
+    env.pop("REO_BUILD_VCVARS_SCRIPT", None)
     return env, toolroot / "cl.exe", toolroot / "link.exe"
 
 
-def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.json"):
+def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.json", preflight=False):
     kit, generated, work, output = map(lambda p: Path(p).resolve(), (kit, generated, work, output))
     plan = json.loads((kit / plan_name).read_text())
     if plan.get("format") != 1 or not plan.get("runtimeAbi") or not (plan.get("units") or plan.get("sourceGroups")):
         raise ValueError("Invalid local compilation plan")
-    env, compiler, linker = msvc_environment()
+    portable = plan.get("toolchain") == "llvm-mingw"
+    if portable:
+        env, (compiler, archiver, resource_compiler) = portable_environment(kit, plan)
+        linker = compiler
+    else:
+        env, compiler, linker = msvc_environment()
     values = {"{kit}": str(kit), "{generated}": str(generated), "{work}": str(work),
               "{output}": str(output)}
 
@@ -77,23 +134,29 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         return path
 
     units = list(plan.get("units", []))
-    for group in plan.get("sourceGroups", []):
+    for group in ([] if preflight else plan.get("sourceGroups", [])):
         parent = Path(expand(group["root"])).resolve()
         if not parent.is_relative_to(generated):
             raise ValueError("Generated source group escapes the private generation directory")
-        batch, size, index = [], 0, 0
+        batch, size, index, includes = [], 0, 0, []
+        replacements = plan.get("generatedSourceOverrides", {})
         for file in sorted(parent.glob(group["pattern"])):
-            if not file.is_file() or file.suffix != ".cpp":
+            if not file.is_file() or file.suffix != ".cpp" or file.name in group.get("exclude", []):
                 continue
             if batch and (len(batch) >= group.get("batch", 8) or size + file.stat().st_size > 500000):
                 units.append({"id": group["id"] + str(index), "sources": batch,
-                              "options": group.get("options", [])})
-                batch, size, index = [], 0, index + 1
-            batch.append(str(file))
+                              "options": group.get("options", []) + includes, "generated": True})
+                batch, size, index, includes = [], 0, index + 1, []
+            replacement = replacements.get(file.relative_to(generated).as_posix())
+            batch.append(expand(replacement) if replacement else str(file))
+            if replacement:
+                flag = "/I" + str(file.parent)
+                if flag not in includes:
+                    includes.append(flag)
             size += file.stat().st_size
         if batch:
             units.append({"id": group["id"] + str(index), "sources": batch,
-                          "options": group.get("options", [])})
+                          "options": group.get("options", []) + includes, "generated": True})
         if not batch and index == 0:
             raise ValueError("Generated source group is empty")
 
@@ -109,7 +172,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
             if p.is_file() and p.suffix in {".h", ".hpp", ".inl", ".inc"}:
                 header_hash.update(str(p.relative_to(parent)).encode())
                 header_hash.update(bytes.fromhex(digest(p)))
-    base = json.dumps({"abi": plan["runtimeAbi"], "compiler": digest(compiler),
+    base = json.dumps({"abi": plan["runtimeAbi"], "compiler": digest(compiler), "worker": digest(Path(__file__)),
                        "headers": header_hash.hexdigest(), "plan": digest(kit / plan_name)}, sort_keys=True)
     common = [expand(flag) for flag in plan.get("compileOptions", [])]
     names = set()
@@ -120,11 +183,45 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         if not unit.get("sources"):
             raise ValueError("Empty compile unit")
 
+    portable_defaults = ["-O2", "-DNDEBUG", "-std=c++20", "-msse4.1", "-fms-extensions",
+                         "-fno-fast-math", "-ffp-contract=off", "-fno-strict-aliasing", "-fwrapv"]
+    precompiled = {}
+    if portable and not preflight:
+        pch_root = work / "precompiled-headers"
+        pch_root.mkdir(exist_ok=True)
+        preamble = '#include "ps2_runtime_macros.h"\n#include "ps2_runtime.h"\n#include "source_instruction_access.hpp"\n'
+        for unit in units:
+            if not unit.get("generated"):
+                continue
+            options = common + [expand(o) for o in unit.get("options", [])]
+            key = hashlib.sha256((base + json.dumps(options) + preamble).encode()).hexdigest()
+            unit["pch"] = key
+            if key in precompiled:
+                continue
+            header, pch, receipt = (pch_root / (key + suffix) for suffix in (".hpp", ".pch", ".json"))
+            valid = False
+            if pch.is_file() and receipt.is_file():
+                try:
+                    valid = json.loads(receipt.read_text()).get("sha256") == digest(pch)
+                except (OSError, ValueError):
+                    pass
+            if not valid:
+                header.write_text(preamble, encoding="utf-8")
+                pending = pch.with_suffix(".pending.pch")
+                print("Precompiling shared guest headers", flush=True)
+                with (logs / (key + "-pch.log")).open("wb") as log:
+                    subprocess.run([str(compiler), *portable_defaults, *portable_flags(options),
+                                    "-x", "c++-header", str(header), "-o", str(pending)], env=env,
+                                   stdout=log, stderr=subprocess.STDOUT, check=True)
+                pending.replace(pch)
+                receipt.write_text(json.dumps({"sha256": digest(pch)}))
+            precompiled[key] = pch
+
     def compile_unit(unit):
         name = unit["id"]
         sources = [source_file(p) for p in unit["sources"]]
         options = common + [expand(o) for o in unit.get("options", [])]
-        signature = hashlib.sha256((base + json.dumps(options) +
+        signature = hashlib.sha256((base + json.dumps(options) + unit.get("pch", "") +
             "".join(str(p) + digest(p) for p in sources)).encode()).hexdigest()
         obj, receipt = objects / (name + ".obj"), objects / (name + ".json")
         if obj.exists() and receipt.exists():
@@ -133,12 +230,16 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
                 return obj, True
         source = objects / (name + ".cpp")
         # Includes preserve each generated function's original header search base.
-        source.write_text("\n".join('#include ' + json.dumps(str(p).replace("\\", "/"))
-                                     for p in sources) + "\n")
+        source.write_text("\n".join('#include ' + json.dumps(str(p).replace("\\", "/"), ensure_ascii=False)
+                                     for p in sources) + "\n", encoding="utf-8")
         pending = objects / (name + ".pending.obj")
         command = [str(compiler), "/nologo", "/c", "/TP", "/O2", "/Ob2", "/MD",
-                   "/DNDEBUG", "/EHsc", "/std:c++20", "/bigobj", "/fp:precise",
+                   "/DNDEBUG", "/EHsc", "/std:c++20", "/bigobj", "/fp:precise", "/utf-8",
                    *options, "/Fo" + str(pending), str(source)]
+        if portable:
+            pch = ["-include-pch", str(precompiled[unit["pch"]])] if unit.get("pch") else []
+            command = [str(compiler), "-c", *portable_defaults,
+                       *portable_flags(options), *pch, "-o", str(pending), str(source)]
         with (logs / (name + ".log")).open("wb") as log:
             result = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
         if result.returncode:
@@ -149,13 +250,20 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         temporary.replace(receipt)
         return obj, False
 
-    completed, reused = {}, 0
+    completed, reused, failures = {}, 0, []
     jobs = max(1, min(jobs, 4))
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         futures = {pool.submit(compile_unit, unit): unit for unit in units}
         try:
             for future in as_completed(futures):
-                obj, cached = future.result()
+                try:
+                    obj, cached = future.result()
+                except Exception as error:
+                    if not preflight:
+                        raise
+                    failures.append(str(error))
+                    print(str(error), flush=True)
+                    continue
                 completed[futures[future]["id"]] = obj
                 reused += cached
                 print(f"Compiled {len(completed)}/{len(futures)} ({reused} cached)", flush=True)
@@ -163,6 +271,11 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
             for future in futures:
                 future.cancel()
             raise
+    if preflight:
+        if failures:
+            raise RuntimeError(f"Portable preflight failed in {len(failures)} units; see {logs}")
+        print(f"Preflight compiled {len(completed)} runtime units; no game was linked", flush=True)
+        return
     link_inputs = []
     for item in plan.get("independentInputs", []):
         path = source_file(item["path"])
@@ -179,16 +292,39 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
     for name, members in archives.items():
         target = objects / (name + ".lib")
         response = objects / (name + ".rsp")
-        response.write_text("\n".join(subprocess.list2cmdline([str(p)]) for p in members))
+        response.write_text(response_text(members, portable),
+                            encoding="utf-8" if portable else "utf-16")
         with (logs / (name + "-archive.log")).open("wb") as log:
-            subprocess.run([str(linker.parent / "lib.exe"), "/NOLOGO", "/OUT:" + str(target), "@" + str(response)],
+            command = ([str(archiver), "rcs", str(target), "@" + str(response)] if portable else
+                       [str(linker.parent / "lib.exe"), "/NOLOGO", "/OUT:" + str(target), "@" + str(response)])
+            subprocess.run(command,
                            env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
         archive_inputs.append(str(target))
     args = [str(completed[u["id"]]) for u in units if not u.get("archive")] + archive_inputs + link_inputs
     args += [expand(arg) for arg in plan.get("linkOptions", [])]
     args += ["/NOLOGO", "/INCREMENTAL:NO", "/OUT:" + str(output / "reo_recomp.exe")]
+    if portable:
+        libraries = []
+        for value in plan.get("linkOptions", []):
+            if value.lower().endswith(".lib") and "/" not in value and "\\" not in value:
+                libraries.append("-l" + value[:-4].lower())
+            elif value not in {"/MACHINE:X64", "/SUBSYSTEM:CONSOLE"} and not value.startswith("/MANIFEST"):
+                raise ValueError("Unsupported portable linker option: " + value)
+        resources = []
+        for n, entry in enumerate(plan.get("resources", [])):
+            resource = source_file(entry)
+            target = objects / ("resource" + str(n) + ".obj")
+            with (logs / ("resource" + str(n) + ".log")).open("wb") as log:
+                subprocess.run([str(resource_compiler), "-I", str(resource.parent), "-i", str(resource),
+                                "-O", "coff", "-o", str(target)], env=env, stdout=log,
+                               stderr=subprocess.STDOUT, check=True)
+            resources.append(str(target))
+        args = [str(completed[u["id"]]) for u in units if not u.get("archive")]
+        args += resources + ["-Wl,--start-group", *archive_inputs, *link_inputs,
+                             *libraries, "-Wl,--end-group", "-mwindows", "-o", str(output / "reo_recomp.exe")]
     response = work / "local-game-link.rsp"
-    response.write_text("\n".join(subprocess.list2cmdline([arg]) for arg in args), encoding="utf-8")
+    response.write_text(response_text(args, portable),
+                        encoding="utf-8" if portable else "utf-16")
     print("Linking locally generated game", flush=True)
     with (logs / "link.log").open("wb") as log:
         subprocess.run([str(linker), "@" + str(response)], env=env, stdout=log,
@@ -201,7 +337,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         target = output / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
-    if plan.get("copyLocalCrt"):
+    if plan.get("copyLocalCrt") and not portable:
         crt = Path(env["VCToolsRedistDir"]) / "x64/Microsoft.VC143.CRT"
         for name in ["msvcp140.dll", "msvcp140_atomic_wait.dll", "vcruntime140.dll", "vcruntime140_1.dll"]:
             shutil.copyfile(crt / name, output / name)
@@ -215,8 +351,9 @@ def main():
     parser.add_argument("--work", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--jobs", type=int, default=2)
+    parser.add_argument("--preflight", action="store_true", help="Check all runtime units without compiling game groups or linking")
     args = parser.parse_args()
-    compile_plan(args.kit, args.generated, args.work, args.output, args.jobs)
+    compile_plan(args.kit, args.generated, args.work, args.output, args.jobs, preflight=args.preflight)
 
 
 if __name__ == "__main__":

@@ -22,11 +22,22 @@ class ResidentSmaa {
 
     Vulkan::Program* load(const char* name, const std::vector<uint32_t>& vertex,
                           unsigned textures) {
+#if defined(_WIN32)
         wchar_t executable[32768];
         DWORD length = GetModuleFileNameW(nullptr, executable, 32768);
         if (!length || length == 32768)
             throw std::runtime_error("SMAA executable path unavailable");
         auto path = std::filesystem::path(executable).parent_path() / "reo-gpu-present" / name;
+#elif defined(__linux__)
+        std::error_code error;
+        const auto executable = std::filesystem::read_symlink("/proc/self/exe", error);
+        if (error)
+            throw std::runtime_error("SMAA executable path unavailable");
+        auto path = executable.parent_path() / "reo-gpu-present" / name;
+#else
+        throw std::runtime_error("SMAA shader location is unsupported on this platform");
+        std::filesystem::path path;
+#endif
         std::ifstream file(path, std::ios::binary | std::ios::ate);
         if (!file)
             throw std::runtime_error(std::string("Missing SMAA shader: ") + name);

@@ -32,7 +32,7 @@ def arguments(command):
         ctypes.windll.kernel32.LocalFree(ctypes.cast(values, ctypes.c_void_p))
 
 
-def export(root, build, dependency, destination):
+def export(root, build, dependency, destination, recompiler, recipe_plan=None):
     root, build, dependency, destination = [Path(p).resolve() for p in (root, build, dependency, destination)]
     if destination.exists():
         raise FileExistsError("Build kit outputs are immutable; choose a fresh directory")
@@ -53,6 +53,8 @@ def export(root, build, dependency, destination):
         if Path(name).suffix in {".h", ".hpp", ".inl", ".inc"}:
             if "resident_geometry/upstream/shaders/" not in name and not name.endswith("/queue_control_body.inc"):
                 copy(root / name, "source/" + name)
+    # New authored account plumbing is also needed in development exports before commit.
+    copy(root / "network/native/automatic_account.h", "source/network/native/automatic_account.h")
     for part in ["ps2xRuntime", "ps2xRecomp/include"]:
         for file in (dependency / part).rglob("*"):
             if file.is_file() and file.suffix in {".h", ".hpp", ".inl", ".inc"} and "local_source_catalogues" not in file.parts:
@@ -65,6 +67,13 @@ def export(root, build, dependency, destination):
         for file in parent.rglob("*"):
             if file.is_file() and file.suffix in {".h", ".hpp", ".inl", ".inc"}:
                 copy(file, "source/" + file.relative_to(root).as_posix())
+    for file in (root / "deps/elfio/elfio").rglob("*.hpp"):
+        copy(file, "source/third_party/PS2Recomp/out/build/_deps/elfio-src/include/elfio/" +
+             file.relative_to(root / "deps/elfio/elfio").as_posix())
+    # Generic upstream-derived sampler shader, compiled independently of game
+    # instructions; the backend's include directory points here in the graph.
+    for file in (build / "recomp/anisotropic-shaders").glob("*.hpp"):
+        copy(file, "source/" + file.relative_to(root).as_posix())
 
     def relocate(path):
         absolute = Path(path).resolve()
@@ -155,6 +164,20 @@ def export(root, build, dependency, destination):
                   ("overlay", "output_ovl", "**/*.cpp", 8),
                   ("extra", "output_extra", "*.cpp", 8),
                   ("legacy", "output_overlay", "*.cpp", 1)]]
+    cache = (build / "CMakeCache.txt").read_text()
+    match = re.search(r"(?m)^REO_RECOMP_OD_SOURCES:STRING=(.*)$", cache)
+    od_names = match[1].split(";") if match and match[1] else []
+    if od_names:
+        for group in groups:
+            group["exclude"] = od_names
+        old_generated = json.loads((build / "public-safety/current-generated-sources.json").read_text())
+        for n, name in enumerate(od_names):
+            paths = [Path(p) for p in old_generated if Path(p).name == name]
+            if len(paths) != 1:
+                raise ValueError("Per-function compiler exception cannot be mapped exactly")
+            relative = paths[0].relative_to(root / "recomp/config").as_posix()
+            units.append({"id": "originalOd" + str(n), "sources": ["{generated}/" + relative],
+                          "options": generated_options + ["/Od"]})
     # Link only independent upstream libraries; Microsoft SDK libs are resolved
     # from the user's toolchain and never copied into the distribution.
     ninja = (build / "build.ninja").read_text()
@@ -181,28 +204,39 @@ def export(root, build, dependency, destination):
                         "destination": "reo-gpu-present/" + source.name})
     plan = {"format": 1, "runtimeAbi": "outbreak-local-1", "units": units, "sourceGroups": groups,
             "compileOptions": ["/I{work}/project/tools/vu_whole_aot", "/I{generated}/output", "/I{generated}/output_overlay",
+                               "/I{work}/project/third_party/PS2Recomp/ps2xRuntime/src/lib",
                                "/I{generated}/vu/specialized", "/I{generated}/vu/whole"],
             "independentInputs": independent,
             "linkOptions": ["/MACHINE:X64", "/SUBSYSTEM:CONSOLE", "/MANIFEST:EMBED",
                             "/MANIFESTINPUT:{kit}/tools/native.manifest", *system],
             "copyOutputs": shaders, "copyLocalCrt": True}
+    source_recipes = json.loads(Path(recipe_plan or root / "recomp/config/local_source_recipes.json").read_text())
+    plan["generatedSourceOverrides"] = {
+        row["source"]: "{work}/project/" + row["destination"] for row in source_recipes["recipes"]
+        if row["destination"].startswith("generated-overrides/")}
     (destination / "compile-plan.json").write_text(json.dumps(plan, indent=2) + "\n")
     for source in (root / "recomp/config").glob("*.json"):
         if source.name.startswith("local_"):
             copy(source, "metadata/" + source.name)
-    for source in [root / "recomp/config/outbreak_ghidra_functions.csv", root / "recomp/config/extra_functions.csv"]:
+    (destination / "metadata/local_source_recipes.json").write_text(json.dumps(source_recipes, indent=2))
+    for source in [root / "recomp/config/outbreak_ghidra_functions.csv", root / "recomp/config/extra_functions.csv",
+                   root / "recomp/config/outbreak.toml"]:
         copy(source, "metadata/" + source.name)
     for source in (root / "recomp/config/overlay_maps").glob("*.csv"):
         copy(source, "metadata/overlay_maps/" + source.name)
     for parent in [root / "tools/local_build", root / "tools/vu_whole_aot"]:
         for source in parent.glob("*.py"):
             copy(source, "tools/" + parent.name + "/" + source.name)
-    copy(root / "tools/local_build/setup_compiler.ps1", "tools/local_build/setup_compiler.ps1")
     copy(root / "tools/overlay_extract.py", "tools/overlay_extract.py")
     copy(root / "launcher/native.manifest", "tools/native.manifest")
+    for source, name in [(root / "launcher/Assets/game-icon.rc", "game-icon.rc"),
+                         (root / "launcher/Assets/app-icon.ico", "app-icon.ico"),
+                         (root / "launcher/native.manifest", "native.manifest")]:
+        copy(source, "resources/" + name)
     copy(root / "tools/vu_whole_aot/vu_math_helpers.h", "source/tools/vu_whole_aot/vu_math_helpers.h")
     copy(root / "tools/vu_whole_aot/vu_math_helpers.h", "tools/vu_whole_aot/vu_math_helpers.h")
-    copy(root / "third_party/PS2Recomp/out/build/ps2xRecomp/Release/ps2_recomp.exe", "tools/ps2_recomp.exe")
+    copy(root / "tools/vu_whole_aot/vu_specialized_helpers.h", "source/tools/vu_whole_aot/vu_specialized_helpers.h")
+    copy(recompiler, "tools/ps2_recomp.exe")
     for source in [root / "LICENSE", root / "NOTICE.md", root / "THIRD_PARTY_NOTICES.md"]:
         if source.exists():
             copy(source, "notices/" + source.name)
@@ -226,5 +260,9 @@ if __name__ == "__main__":
     parser.add_argument("--build", type=Path, required=True)
     parser.add_argument("--dependency", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--recompiler", type=Path, required=True,
+                        help="Fresh independent compiler built from the exported patched dependency revision")
+    parser.add_argument("--recipe-plan", type=Path,
+                        help="Instrumentation recipes verified against this recompiler's fresh output")
     args = parser.parse_args()
-    export(args.root, args.build, args.dependency, args.output)
+    export(args.root, args.build, args.dependency, args.output, args.recompiler, args.recipe_plan)

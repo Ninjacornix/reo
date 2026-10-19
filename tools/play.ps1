@@ -1,13 +1,11 @@
 # Play the native build interactively (no time limit).
-#   powershell -ExecutionPolicy Bypass -File tools\play.ps1 [-Iso <owned ISO>] [-SkipIntro] [-ToMainMenu | -ToScenario] [-GpuPresent] [-AsyncVif]
+#   powershell -ExecutionPolicy Bypass -File tools\play.ps1 [-Iso <owned ISO>] [-ToMainMenu | -ToScenario] [-GpuPresent] [-AsyncVif]
 # Mounts the ISO read-only, runs build-ninja\recomp\reo_recomp.exe until you close the
 # window, then unmounts. Saves (memory card) go to build-ninja\play\saves.
 # Test routes use normal-speed startup and pad input at observed guest states.
-# -SkipIntro / -FastBoot are retained as legacy parameters; acceleration is disabled.
 param(
     [string]$Iso = 'iso\Resident Evil - Outbreak (v2.00).iso',
     [string]$Elf = 'game_data\SLUS_207.65',
-    [Alias('FastBoot')][switch]$SkipIntro,
     [switch]$ToMainMenu,
     [switch]$ToScenario,
     [switch]$GpuPresent,
@@ -51,6 +49,8 @@ try {
         $env:REO_GS_GPU_PRESENT = '1'
         $env:REO_GS_BACKEND = 'parallel'
         $env:REO_GS_THREAD = '1'
+        # Movies decode on the GPU (the CPU decoder cannot keep 30 fps; the launcher has no CPU option).
+        $env:REO_GPU_MOVIE = '1'
     }
     $env:REO_NATURAL = '1'
     $env:REO_ISO = $Iso

@@ -5,6 +5,8 @@
 #if defined(_WIN32)
 #include "resident_dxgi_presenter1c.h"
 #include "movie_runtime/movie_owner_service_fwd.h"
+#elif defined(REO_LINUX_XLIB_PRESENT)
+#include "linux/resident_xlib_presenter.h"
 #endif
 #include "resident_owner_images.h"
 #include "stream_helpers.h"
@@ -13,7 +15,6 @@
 #include "resident_clear_context.hpp"
 #include <fstream>
 #include <deque>
-#include <intrin.h>
 #include <cstddef>
 #include "context.hpp"
 #include "device.hpp"
@@ -58,6 +59,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
     bool movieEnabled_ = false;
 #if defined(_WIN32)
     std::unique_ptr<reo_gpu_present::ResidentDxgiPresenter> presenter_;
+#elif defined(REO_LINUX_XLIB_PRESENT)
+    std::unique_ptr<reo_gpu_present::ResidentXlibPresenter> presenter_;
 #endif
     reo_gpu_present::ResidentOwnerImages displayImages_;
     uint64_t normalDownloads_ = 0, outputReadbacks_ = 0;
@@ -459,7 +462,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
 
   public:
     reo_parallel_backend::ResidentDiagnostics diagnostics() const {
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
         const uint64_t presented = presenter_ ? presenter_->submittedFrames() : 0;
 #else
         const uint64_t presented = 0;
@@ -515,7 +518,17 @@ class ParallelBackend final : public Backend, private SignalInterface {
             CONTEXT_CREATION_ENABLE_PUSH_DESCRIPTOR_BIT |
             CONTEXT_CREATION_ENABLE_DESCRIPTOR_HEAP_BIT |
             (config_.descriptorBuffer ? CONTEXT_CREATION_ENABLE_DESCRIPTOR_BUFFER_BIT : 0);
-        if (!context_->init_instance_and_device(nullptr, 0, nullptr, 0, flags)) {
+        bool initialized = false;
+#if defined(REO_LINUX_XLIB_PRESENT)
+        if (config_.residentPresentation) {
+            const char* instanceExtensions[] = {"VK_KHR_surface", "VK_KHR_xlib_surface"};
+            const char* deviceExtensions[] = {"VK_KHR_swapchain"};
+            initialized = context_->init_instance_and_device(instanceExtensions, 2,
+                                                              deviceExtensions, 1, flags);
+        } else
+#endif
+            initialized = context_->init_instance_and_device(nullptr, 0, nullptr, 0, flags);
+        if (!initialized) {
             error = "Vulkan device initialization failed";
             close();
             return false;
@@ -524,7 +537,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         device_->set_context(*context_);
         device_->init_frame_contexts(4);
         initializePipelineCache();
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
         if (config_.residentPresentation) {
             displayImages_.beginSession();
             if (!config_.presentationTarget || !config_.presentationEpochCurrent ||
@@ -533,7 +546,11 @@ class ParallelBackend final : public Backend, private SignalInterface {
                 close();
                 return false;
             }
+#if defined(_WIN32)
             presenter_ = std::make_unique<reo_gpu_present::ResidentDxgiPresenter>(
+#else
+            presenter_ = std::make_unique<reo_gpu_present::ResidentXlibPresenter>(
+#endif
                 *device_, config_.presentationVertex, config_.presentationFragment);
         }
 #else
@@ -606,7 +623,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         fifo_.clear();
         observer_.reset();
         displayImages_.shutdown();
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
         if (presenter_ && config_.residentStoppedDiagnostic)
             try {
                 config_.residentStoppedDiagnostic(displayImages_.liveImages(),
@@ -658,7 +675,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         gifHalted_ = false;
         heldWork_.clear();
         displayImages_.retireEpoch();
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
         if (presenter_)
             presenter_->retireSource();
 #endif
@@ -899,7 +916,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         info.anti_blur = config_.antiBlur;
         gs_->flush();
         auto scanout = gs_->vsync(info);
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
         if (presenter_ && scanout.image) {
             if (!config_.presentationEpochCurrent(capture.epoch))
                 return {};
@@ -907,8 +924,12 @@ class ParallelBackend final : public Backend, private SignalInterface {
             Vulkan::Fence complete;
             const bool visible = target.hwnd && target.width && target.height;
             if (visible) {
+#if defined(_WIN32)
                 presenter_->attach(reinterpret_cast<HWND>(target.hwnd), target.width,
                                    target.height);
+#else
+                presenter_->attach(target.hwnd, target.width, target.height);
+#endif
                 if (!config_.presentationEpochCurrent(capture.epoch))
                     return {};
                 complete = presenter_->present(scanout.image, false, target.linear);

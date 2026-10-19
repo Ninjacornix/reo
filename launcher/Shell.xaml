@@ -1,4 +1,4 @@
-<Window x:Class="Outbreak.Launcher.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Outbreak.Launcher" Title="RE: Outbreak" Width="1120" Height="790" MinWidth="980" MinHeight="690" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" Background="#121415" FontFamily="Segoe UI" FontSize="14" WindowStartupLocation="CenterScreen">
+<Window x:Class="Outbreak.Launcher.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Outbreak.Launcher" Title="RE: Outbreak" Icon="Assets/app-icon.ico" Width="1120" Height="790" MinWidth="980" MinHeight="690" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" Background="#121415" FontFamily="Segoe UI" FontSize="14" WindowStartupLocation="CenterScreen">
  <Grid>
   <Grid.ColumnDefinitions><ColumnDefinition Width="210"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
   <Grid Grid.Column="1" IsHitTestVisible="False" ClipToBounds="True">
@@ -75,7 +75,6 @@
         <StackPanel Margin="0,15,0,0"><TextBlock Text="Input device" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayInputSummary" Margin="0,6,0,0"/></StackPanel>
         <StackPanel Margin="0,15,0,0"><TextBlock Text="Play mode" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayNetworkSummary" Margin="0,6,0,0"/></StackPanel>
        </StackPanel>
-       <CheckBox x:Name="SkipIntros" Content="Skip intros" Click="SaveSettings"/>
        <TextBlock Text="Stop at the title video and PRESS START." Style="{StaticResource Hint}" Margin="30,0,0,8"/>
         </StackPanel>
        </Grid>
@@ -112,7 +111,6 @@
        <TextBlock Text="Gameplay" Style="{StaticResource Section}"/>
        <TextBlock Text="Original game timing"/><TextBlock Text="30 game updates / 60 display refreshes" Style="{StaticResource Hint}" Margin="0,6,0,14"/>
        <CheckBox x:Name="AsyncVif" Content="Parallel geometry worker" Click="SaveSettings"/>
-       <CheckBox x:Name="GpuMovies" Content="GPU movie decoding (experimental)" Click="SaveSettings"/>
        <TextBlock Text="Changes apply on the next launch." Style="{StaticResource Hint}" Margin="0,14,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageController" Visibility="Collapsed">
@@ -148,15 +146,30 @@
       <StackPanel x:Name="PageCoop" Visibility="Collapsed">
        <TextBlock x:Name="CoopUnavailable" Text="Online play is available for File #1 only." Style="{StaticResource Hint}" Margin="0,0,0,16" Visibility="Collapsed"/>
        <StackPanel x:Name="CoopControls" MaxWidth="460" HorizontalAlignment="Left">
-        <CheckBox x:Name="OnlineLaunch" Content="Launch in online mode" Click="OnlineSettingChanged" Margin="0,4,0,24"/>
+        <CheckBox x:Name="HostServer" Content="Host server" Click="OnlineSettingChanged" Margin="0,4,0,24"/>
+        <StackPanel x:Name="HostOptions" Visibility="Collapsed" Margin="0,0,0,22">
+         <Label Content="Address for friends" Target="{Binding ElementName=HostAddress}" Padding="0" Foreground="{StaticResource Ink}"/>
+         <TextBox x:Name="HostAddress" Width="400" HorizontalAlignment="Left" MaxLength="15" TextChanged="OnlineSettingChanged" Margin="0,8,0,8"/>
+         <TextBlock Text="Pick one of your addresses:" Style="{StaticResource Hint}"/>
+         <WrapPanel x:Name="DetectedAddresses" Margin="0,4,0,8"/>
+         <WrapPanel Margin="0,0,0,8"><Button x:Name="PublicAddressButton" Content="Find my internet address" Click="FindPublicAddress" Margin="0,0,10,0"/><TextBlock x:Name="PublicAddressStatus" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="250" Style="{StaticResource Hint}"/></WrapPanel>
+         <TextBlock Style="{StaticResource Hint}" TextWrapping="Wrap" Text="Same house: share your home network address. Over the internet: share your internet address and open the ports below, or use a VPN address (Tailscale, ZeroTier), which needs no port forwarding."/>
+         <TextBlock Text="Ports friends need" Foreground="{StaticResource Ink}" Margin="0,16,0,4"/>
+         <TextBlock x:Name="PortList" Style="{StaticResource Hint}" TextWrapping="Wrap"/>
+         <CheckBox x:Name="AutoForward" Content="Open these ports on my router automatically (UPnP)" Click="OnlineSettingChanged" Margin="0,10,0,6"/>
+         <WrapPanel Margin="0,0,0,4"><Button x:Name="FirewallButton" Content="Allow through Windows Firewall" Click="AllowFirewall" Margin="0,0,10,0"/><TextBlock x:Name="FirewallStatus" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="230" Style="{StaticResource Hint}"/></WrapPanel>
+         <TextBlock x:Name="ReachStatus" TextWrapping="Wrap" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
+         <TextBlock x:Name="HostStatus" Text="Server stopped" TextWrapping="Wrap" Margin="0,12,0,8"/>
+         <WrapPanel><Button x:Name="StartServerButton" Content="Start server" Click="StartServerClicked" Margin="0,0,10,0"/><Button x:Name="CopyServerButton" Content="Copy address" Click="CopyServerAddress" IsEnabled="False"/></WrapPanel>
+        </StackPanel>
         <Label Content="Server IPv4 address" Target="{Binding ElementName=CoopHost}" Padding="0" Foreground="{StaticResource Ink}"/>
-        <TextBox x:Name="CoopHost" Width="400" HorizontalAlignment="Left" MaxLength="17" TextChanged="OnlineSettingChanged" Margin="0,8,0,6" AutomationProperties.Name="Server IPv4 address"/>
+        <TextBox x:Name="CoopHost" LostKeyboardFocus="AccountConfirmed" KeyDown="AccountKeyDown" Width="400" HorizontalAlignment="Left" MaxLength="17" TextChanged="OnlineSettingChanged" Margin="0,8,0,6" AutomationProperties.Name="Server IPv4 address"/>
         <TextBlock Text="Address of your compatible openSNAP server." Style="{StaticResource Hint}" Margin="0,0,0,22"/>
-        <Label Content="Account username" Target="{Binding ElementName=AccountUsername}" Padding="0" Foreground="{StaticResource Ink}"/>
-        <TextBox x:Name="AccountUsername" Width="400" HorizontalAlignment="Left" TextChanged="OnlineSettingChanged" Margin="0,8,0,6" AutomationProperties.Name="Account username"/>
-        <TextBlock Text="4–10 letters, numbers or underscores. Apply through Edit Account in the game." Style="{StaticResource Hint}" Margin="0,0,0,22"/>
-        <TextBlock x:Name="CoopValidation" TextWrapping="Wrap" Margin="0,0,0,18" Visibility="Collapsed"/>
-        <TextBlock Text="A running server and an existing account are required. Enter your password in the game's login screen." Style="{StaticResource Hint}" TextWrapping="Wrap"/>
+        <Label Content="Username" Target="{Binding ElementName=AccountUsername}" Padding="0" Foreground="{StaticResource Ink}"/>
+        <WrapPanel Margin="0,8,0,6"><TextBox x:Name="AccountUsername" LostKeyboardFocus="AccountConfirmed" KeyDown="AccountKeyDown" Width="270" HorizontalAlignment="Left" TextChanged="OnlineSettingChanged" Margin="0,0,10,0" AutomationProperties.Name="Account username"/><Button x:Name="CreateAccountButton" Content="Create account" Click="CreateAccountClicked" AutomationProperties.Name="Create account"/></WrapPanel>
+        <TextBlock Text="4-10 letters, numbers or underscores. Then press Create account. No password needed; the launcher handles it." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,22"/>
+        <TextBlock x:Name="AccountStatus" TextWrapping="Wrap" Margin="0,0,0,18"/><TextBlock x:Name="CoopValidation" TextWrapping="Wrap" Margin="0,0,0,18" Visibility="Collapsed"/>
+        <TextBlock Text="Your account is created here. Login is automatic when you enter Network. Hosting starts a server for this session; friends use your reachable address." Style="{StaticResource Hint}" TextWrapping="Wrap"/>
        </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageMods" Visibility="Collapsed">

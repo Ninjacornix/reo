@@ -1,0 +1,66 @@
+diff --git a/ps2xRuntime/src/lib/vu_program_collection.cpp b/ps2xRuntime/src/lib/vu_program_collection.cpp
+--- a/ps2xRuntime/src/lib/vu_program_collection.cpp
++++ b/ps2xRuntime/src/lib/vu_program_collection.cpp
+@@ -62,7 +62,7 @@
+ }
+ uint64_t number(const char* name,uint64_t fallback,uint64_t maximum) {
+     const char* value=std::getenv(name);
+-    return std::min(maximum,value?std::strtoull(value,nullptr,0):fallback);
++    return std::min<uint64_t>(maximum,value?std::strtoull(value,nullptr,0):fallback);
+ }
+ struct Configuration {
+     bool enabled=false;
+--- a/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp
++++ b/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp
+@@ -19,6 +19,10 @@
+ #include <chrono>
+ #include <algorithm>
+ #include <unordered_map>
++#if defined(__linux__)
++#include <execinfo.h>
++#include <dlfcn.h>
++#endif
+ 
+ namespace reo_resident_live {
+ namespace {
+@@ -271,8 +275,8 @@
+                 "[GPU-REJECT] effect kindWords=%08x %08x %08x %08x q0=%08x %08x %08x %08x capacityPush=%u\n",
+                 static_cast<unsigned long long>(record.ordinal),
+                 park,record.push[4],record.push[0],record.push[2],record.push[3],stateWords[6],
+-                static_cast<unsigned long long>(program?program->bindingId:0u),imageDigest,
+-                captureDigest(record.state.data(),StateBytes)^captureDigest(record.data.data(),DataBytes),
++                static_cast<unsigned long long>(program?program->bindingId:0u),static_cast<unsigned long long>(imageDigest),
++                static_cast<unsigned long long>(captureDigest(record.state.data(),StateBytes)^captureDigest(record.data.data(),DataBytes)),
+                 stateWords[0],stateWords[1],stateWords[2],stateWords[3],stateWords[4],stateWords[5],stateWords[6],stateWords[7],
+                 record.echo[0],record.echo[1],record.echo[2],record.echo[3],
+                 record.echo[4],record.echo[5],record.echo[6],record.echo[7],record.push[5]);
+@@ -1230,8 +1234,10 @@
+     try {const uint32_t value=memory.readIORegister(address);fixtureRawPeek=previous;return value;}
+     catch(...) {fixtureRawPeek=previous;throw;}
+ }
++#if defined(_WIN32)
+ extern "C" __declspec(dllimport) unsigned short __stdcall RtlCaptureStackBackTrace(unsigned long,unsigned long,void**,unsigned long*);
+ extern "C" __declspec(dllimport) void* __stdcall GetModuleHandleW(const wchar_t*);
++#endif
+ namespace async_probe {
+ std::atomic<uint64_t> kicks{0},processNs{0},overlapNs{0},gapNs{0};
+ std::atomic<int64_t> pendingEndNs{0},pendingProcessNs{0};
+@@ -1243,8 +1249,17 @@
+     {   // One host backtrace per second for the first post-kick access: names the guest function (link map RVAs).
+         static std::atomic<int64_t> lastTrace{0};const int64_t t=nowNs();int64_t prev=lastTrace.load();
+         if(t-prev>1000000000&&lastTrace.compare_exchange_strong(prev,t)){
+-            void* frames[24];const unsigned n=RtlCaptureStackBackTrace(0,24,frames,nullptr);
++            void* frames[24];
++#if defined(_WIN32)
++            const unsigned n=RtlCaptureStackBackTrace(0,24,frames,nullptr);
+             const auto base=reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
++#elif defined(__linux__)
++            const unsigned n=static_cast<unsigned>(::backtrace(frames,24));
++            Dl_info executable{};
++            const auto base=(n&&::dladdr(frames[0],&executable))?reinterpret_cast<uintptr_t>(executable.dli_fbase):uintptr_t(0);
++#else
++            const unsigned n=0;const uintptr_t base=0;
++#endif
+             std::fprintf(stderr,"[ASYNC-PROBE] first-after-kick %s %08x stack:",write?"W":"R",address);
+             for(unsigned i=0;i<n;++i)std::fprintf(stderr," 0x%llX",(unsigned long long)(reinterpret_cast<uintptr_t>(frames[i])-base));
+             std::fprintf(stderr,"\n");}

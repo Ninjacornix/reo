@@ -26,7 +26,8 @@ def stage(work, name, inputs, action, outputs):
     expected = {str(p): sha(p) for p in inputs}
     if receipt.exists():
         record = json.loads(receipt.read_text())
-        if record.get("inputs") == expected and record.get("outputs") and all(Path(p).is_file() and sha(p) == digest
+        recorded_inputs = record.get("inputs", {})
+        if all(recorded_inputs.get(p) == digest for p, digest in expected.items()) and record.get("outputs") and all(Path(p).is_file() and sha(p) == digest
                                                    for p, digest in record.get("outputs", {}).items()):
             print("Reusing " + name, flush=True)
             return
@@ -43,10 +44,23 @@ def stage(work, name, inputs, action, outputs):
 def build(kit, disc, work, output, jobs):
     kit, disc, work, output = [Path(p).resolve() for p in (kit, disc, work, output)]
     work.mkdir(parents=True, exist_ok=True)
-    env, _, _ = msvc_environment()
-    crt = Path(env["VCToolsRedistDir"]) / "x64/Microsoft.VC143.CRT"
-    # Resolve the independent recompiler's CRT from the user's toolchain.
-    os.environ["PATH"] = str(crt) + os.pathsep + os.environ.get("PATH", "")
+    if sys.platform == "linux":
+        from compile_linux import compile_plan as compile_native
+        recompiler = kit / "tools/ps2_recomp"
+    elif sys.platform == "win32":
+        compile_native = compile_plan
+        recompiler = kit / "tools/ps2_recomp.exe"
+        plan = json.loads((kit / "compile-plan.json").read_text())
+        if plan.get("toolchain") == "llvm-mingw":
+            from compile_game import portable_environment
+            env, _ = portable_environment(kit, plan)
+            os.environ["PATH"] = str(recompiler.parent) + os.pathsep + env["PATH"]
+        else:
+            env, _, _ = msvc_environment()
+            crt = Path(env["VCToolsRedistDir"]) / "x64/Microsoft.VC143.CRT"
+            os.environ["PATH"] = str(crt) + os.pathsep + os.environ.get("PATH", "")
+    else:
+        raise RuntimeError("No native build worker for this operating system")
     project = work / "project"
     project.mkdir(exist_ok=True)
     print("Preparing independent runtime sources", flush=True)
@@ -55,7 +69,8 @@ def build(kit, disc, work, output, jobs):
     generated = project / "recomp/config"
     elf = disc / "SLUS_207.65"
     script = Path(__file__).parent
-    metadata_files = [p for p in sorted(metadata.rglob("*")) if p.is_file() and p.name != "local_queue_control.json"]
+    metadata_files = [p for p in sorted(metadata.rglob("*")) if p.is_file() and p.name not in
+                      {"local_queue_control.json", "local_source_recipes.json", "local_vu_images.json"}]
 
     def game_generation():
         if generated.exists():
@@ -65,9 +80,9 @@ def build(kit, disc, work, output, jobs):
             while generated.with_name("config.interrupted" + str(n)).exists():
                 n += 1
             generated.rename(generated.with_name("config.interrupted" + str(n)))
-        generate(kit / "tools/ps2_recomp.exe", disc, metadata, generated)
+        generate(recompiler, disc, metadata, generated)
 
-    stage(work, "generate", [elf, kit / "tools/ps2_recomp.exe", script / "generate_game.py",
+    stage(work, "generate", [elf, recompiler, script / "generate_game.py",
                             script / "generate_support.py", *metadata_files], game_generation,
           lambda: [p for folder in ["output", "output_ovl", "output_extra", "output_overlay", "local_source_catalogues"]
                    for p in (generated / folder).rglob("*") if p.is_file()])
@@ -93,7 +108,7 @@ def build(kit, disc, work, output, jobs):
                        kit / "tools/vu_whole_aot/generate.py", kit / "tools/vu_whole_aot/decode.py"],
           generate_vu, lambda: [p for p in vu.rglob("*") if p.is_file()])
     print("Compiling the game locally (the first build can take a while)", flush=True)
-    compile_plan(kit, generated, work, output, jobs)
+    compile_native(kit, generated, work, output, jobs)
 
 
 if __name__ == "__main__":

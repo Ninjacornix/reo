@@ -18,9 +18,9 @@ public sealed partial class Settings {
     public string ResolvedFit => ScreenFit is "stretch" or "center" or "fill" ? ScreenFit : "fit";
     public bool LinearFilter { get; set; } = true;
     public bool AsyncVif { get; set; } = true;
-    public bool GpuMovies { get; set; }
-    public bool SkipIntros { get; set; }
-    public bool OnlineLaunch { get; set; }
+    public bool HostServer { get; set; }
+    public string HostAddress { get; set; } = "";
+    public bool AutoForward { get; set; }
     public string CoopHost { get; set; } = "";
     public string AccountUsername { get; set; } = "";
     public bool TextureLinear { get; set; }

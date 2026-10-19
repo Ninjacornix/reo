@@ -2,11 +2,13 @@
 server fields around the title-movie start. Usage: python -I pcsx2_sfd_probe.py <iso> <seconds> <out>"""
 import os, subprocess, sys, time
 
-sys.path.insert(0, r"C:\Users\Ninjacornix\reo\tools\ps2_debug")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pine_client import PineClient  # noqa: E402
 
 iso, secs, out = sys.argv[1], float(sys.argv[2]), sys.argv[3]
-exe = r"C:\Users\Ninjacornix\ps2\pcsx2-qt.exe"
+exe = os.environ.get("PCSX2_EXE")  # path to pcsx2-qt executable
+if not exe:
+    sys.exit("Set PCSX2_EXE to the pcsx2-qt executable")
 proc = subprocess.Popen([exe, "-fastboot", "--", iso])
 log = open(out, "w")
 

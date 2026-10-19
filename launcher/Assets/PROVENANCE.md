@@ -1,5 +1,10 @@
 # Launcher artwork
 
+`app-icon.svg`, `app-icon.png` and `app-icon.ico` are original project artwork,
+licensed under GPL-3.0-only. They depict a generic open doorway and contain no
+publisher logos or game assets. Regenerate the raster sizes with
+`tools/build_app_icon.ps1`.
+
 No publisher artwork, game screenshots or game-derived previews are included in
 this source tree or release resources. The interface uses a plain background.
 The launcher does not automatically download cover artwork.

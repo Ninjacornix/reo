@@ -60,7 +60,7 @@ def emit_specialized(recipe, images, output):
     output.mkdir()
     source = ['// Generated locally from a verified user-owned ELF; do not distribute.',
               '#include "reo_vu_specialized_generated.h"', '#include "vu_specialized_route.h"',
-              '#include "vu_math_helpers.h"', '#include <array>', 'namespace {']
+              '#include "vu_specialized_helpers.h"', '#include <array>', 'namespace {']
     programs = []
     for n, program in enumerate(recipe["specialized"]):
         code = images[program["sha256"]]

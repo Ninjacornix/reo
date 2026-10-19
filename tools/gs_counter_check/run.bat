@@ -5,7 +5,9 @@ set "TASK_RT=%TASK_ROOT%\third_party\PS2Recomp\ps2xRuntime"
 set "TASK_BUILD=%TASK_ROOT%\third_party\PS2Recomp\out\build"
 set "TASK_OUT=%TASK_ROOT%\build-ninja\gs_counter_check"
 if not "%~1"=="" set "TASK_OUT=%TASK_OUT%-%~1"
-set "TASK_PY=C:\Users\Ninjacornix\ghidra-mcp\.venv\Scripts\python.exe"
+rem Python interpreter: REO_PYTHON if set, otherwise python on PATH.
+set "TASK_PY=python"
+if defined REO_PYTHON set "TASK_PY=%REO_PYTHON%"
 set "TASK_VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 for /f "usebackq delims=" %%V in (`"%TASK_VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "TASK_VS_ROOT=%%V"
 if not defined TASK_VS_ROOT exit /b 1

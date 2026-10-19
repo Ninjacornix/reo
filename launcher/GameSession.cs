@@ -9,6 +9,7 @@ public sealed class GameSession {
     public Process? Process { get; private set; }
     public string? Logs { get; private set; }
     public ImportedDisc? Imported { get; private set; }
+    public string? NetworkStatus { get; private set; }
     public bool Running => Process is { HasExited : false };
     public static string SaveFolder(string root, string game = "file1") =>
         AppLayout.Packaged(root)
@@ -22,6 +23,7 @@ public sealed class GameSession {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
+        NetworkStatus = null;
         string sourceExe = settings.GetExe(), iso = settings.GetIso();
         var selectedGame = settings.Game;
         if (selectedGame.Id != "file1")
@@ -42,62 +44,29 @@ public sealed class GameSession {
         if (!File.Exists(proxy))
             throw new FileNotFoundException("The installation is missing its controller adapter. " +
                                             "Extract the complete release archive.");
-        string hash;
-        string cached = Path.Combine(Settings.Home, "game-cache");
-        Directory.CreateDirectory(cached);
-        // Only launcher-owned copies are replaced. Never place the adapter next
-        // to Claude's executable, load a changing in-place build, or alter sources.
-        string image = Path.Combine(cached, "reo_launcher_game.exe");
-        hash = await Task.Run(() => {
-            using var source = new FileStream(sourceExe, FileMode.Open, FileAccess.Read,
-                                              FileShare.ReadWrite | FileShare.Delete);
-            using var copy = new FileStream(image + ".tmp", FileMode.Create, FileAccess.Write);
-            source.CopyTo(copy);
-            copy.Flush();
-            source.Position = 0;
-            return Convert.ToHexString(SHA256.HashData(source)).ToLowerInvariant();
-        });
-        using (var check = File.OpenRead(
-                   image +
-                   ".tmp")) if (Convert.ToHexString(SHA256.HashData(check)).ToLowerInvariant() !=
-                                hash) throw new IOException("Executable copy failed verification.");
-        File.Move(image + ".tmp", image, true);
-        string shaderSource =
-            Path.Combine(Path.GetDirectoryName(Path.GetFullPath(sourceExe))!, "reo-gpu-present");
-        string shaderTarget = Path.Combine(cached, "reo-gpu-present");
-        Directory.CreateDirectory(shaderTarget);
-        foreach (string file in new[] { "present_opaque.vert.spv", "present_native.frag.spv" }) {
-            string input = Path.Combine(shaderSource, file);
-            if (!File.Exists(input))
-                throw new FileNotFoundException(
-                    "The selected build is missing its reo-gpu-present shaders: " + file);
-            File.Copy(input, Path.Combine(shaderTarget, file), true);
-        }
-        foreach (string file in new[] { "present_smaa_edge.frag.spv",
-                                        "present_smaa_weights.frag.spv",
-                                        "present_smaa_blend.frag.spv" }) {
-            string input = Path.Combine(shaderSource, file);
-            if (File.Exists(input))
-                File.Copy(input, Path.Combine(shaderTarget, file), true);
-            else if (settings.ResolvedAntiAliasing == "smaa")
-                throw new FileNotFoundException("The selected build is missing its SMAA shaders: " +
-                                                file);
+        var runtimeFiles = new List<GameImageCache.Input> {
+            new(sourceExe, "reo_launcher_game.exe"), new(proxy, "XINPUT1_4.dll")
+        };
+        string sourceFolder = Path.GetDirectoryName(Path.GetFullPath(sourceExe))!;
+        string shaderSource = Path.Combine(sourceFolder, "reo-gpu-present");
+        foreach (string shader in new[] { "present_opaque.vert.spv", "present_native.frag.spv",
+            "present_smaa_edge.frag.spv", "present_smaa_weights.frag.spv", "present_smaa_blend.frag.spv" }) {
+            string input = Path.Combine(shaderSource, shader);
+            if (File.Exists(input)) runtimeFiles.Add(new(input, "reo-gpu-present/" + shader));
+            else if (!shader.StartsWith("present_smaa_") || settings.ResolvedAntiAliasing == "smaa")
+                throw new FileNotFoundException("The selected build is missing its presentation shader: " + shader);
         }
         foreach (string dependency in new[] { "msvcp140.dll", "msvcp140_atomic_wait.dll",
-                                              "vcruntime140.dll", "vcruntime140_1.dll" }) {
-            string input =
-                Path.Combine(Path.GetDirectoryName(Path.GetFullPath(sourceExe))!, dependency);
-            if (File.Exists(input))
-                File.Copy(input, Path.Combine(cached, dependency), true);
+            "vcruntime140.dll", "vcruntime140_1.dll", "libc++.dll", "libunwind.dll", "libwinpthread-1.dll" }) {
+            string input = Path.Combine(sourceFolder, dependency);
+            if (File.Exists(input)) runtimeFiles.Add(new(input, dependency));
         }
-        string vulkanLoader =
-            Path.Combine(Path.GetDirectoryName(Path.GetFullPath(sourceExe))!, "vulkan-1.dll");
-        if (File.Exists(vulkanLoader))
-            File.Copy(vulkanLoader, Path.Combine(cached, "vulkan-1.dll"), true);
-        string cachedProxy = Path.Combine(cached, "XINPUT1_4.dll");
-        File.Copy(proxy, cachedProxy, true);
-        Logs =
-            Path.Combine(Settings.Home, "sessions", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
+        string vulkanLoader = Path.Combine(sourceFolder, "vulkan-1.dll");
+        if (File.Exists(vulkanLoader)) runtimeFiles.Add(new(vulkanLoader, "vulkan-1.dll"));
+        var cached = await Task.Run(() => GameImageCache.Prepare(
+            Path.Combine(Settings.Home, "game-cache"), runtimeFiles, cancel), cancel);
+        string image = cached.Image, hash = cached.Sha256;
+        Logs = Path.Combine(Settings.Home, "sessions", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
         Directory.CreateDirectory(Logs);
         Directory.CreateDirectory(SaveFolder(root, selectedGame.Id));
         Directory.CreateDirectory(AppLayout.Work(root, selectedGame.Id));
@@ -113,6 +82,13 @@ public sealed class GameSession {
                      .ToArray())
             start.Environment.Remove(key);
         void Set(string key, string value) => start.Environment[key] = value;
+        bool automaticAccount = onlineEnvironment.Count > 0 &&
+                                await Task.Run(() => SupportsAutomaticAccount(image), cancel);
+        if (onlineEnvironment.Count > 0 && !automaticAccount) {
+            onlineEnvironment.Remove("REO_COOP_AUTO_ACCOUNT");
+            NetworkStatus =
+                "This older game build uses manual network login. Automatic login needs the updated game build.";
+        }
         foreach (var pair in onlineEnvironment)
             Set(pair.Key, pair.Value);
         string cheatFile = Cheats.Export(settings, Logs);
@@ -142,8 +118,6 @@ public sealed class GameSession {
                 .ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         Set("REO_GAMMA",
             settings.Gamma.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
-        if (settings.SkipIntros)
-            Set("REO_SKIP_INTROS", "1");
         if (diagnosticRoute != null) {
             Set("REO_TEST_ROUTE", diagnosticRoute);
             if (settings.CheatsEnabled)
@@ -156,10 +130,9 @@ public sealed class GameSession {
             Set("REO_GAME_CLOCK_SECONDS", "300");
             Set("REO_GAME_CLOCK_FILE", Path.Combine(Logs, "clock.csv"));
         }
-        // GPU movie request uses presence semantics in some paths: leave unset
-        // for CPU, never set the misleading string "0".
-        if (settings.GpuMovies)
-            Set("REO_GPU_MOVIE", "1");
+        // Movies always decode on the GPU: the CPU decoder cannot keep 30 fps, so
+        // cutscene video falls behind its audio. There is no CPU option.
+        Set("REO_GPU_MOVIE", "1");
         controller.Select(
             controller.SelectedDevice.Id); // pin the chosen source across hotplug events
         controller.SessionEnabled = true;
@@ -183,21 +156,27 @@ public sealed class GameSession {
         }
         var stdout = new StreamWriter(Path.Combine(Logs, "stdout.log")) { AutoFlush = true };
         var stderr = new StreamWriter(Path.Combine(Logs, "stderr.log")) { AutoFlush = true };
+        AutomaticAccount? account = null;
         Process = new Process { StartInfo = start };
         try {
+            account = automaticAccount ? new AutomaticAccount(Settings.Home, settings,
+                                                              text => NetworkStatus = text)
+                                       : null;
+            account?.Bind(start);
             cancel.ThrowIfCancellationRequested();
             if (!Process.Start())
                 throw new IOException("Windows could not start the game.");
         } catch {
+            account?.Dispose();
             cardLease.Dispose();
             stdout.Dispose();
             stderr.Dispose();
             throw;
         }
-        _ = RecordExit(Process, Logs, cardLease);
+        _ = RecordExit(Process, Logs, cardLease, account);
         controller.GameProcessId = Process.Id;
         _ = Pump(Process.StandardOutput, stdout);
-        _ = Pump(Process.StandardError, stderr);
+        _ = Pump(Process.StandardError, stderr, account == null ? null : account.Observe);
         await File.WriteAllTextAsync(
             Path.Combine(Logs, "launch.json"),
             JsonSerializer.Serialize(
@@ -208,12 +187,11 @@ public sealed class GameSession {
                       sha256 = hash,
                       iso,
                       discRoot,
-                      online = settings.OnlineLaunch,
+                      networkConfigured = OnlineOptions.Configured(settings),
                       server = onlineEnvironment.GetValueOrDefault("REO_COOP_HOST"),
                       accountUsername = onlineEnvironment.GetValueOrDefault("REO_COOP_USERNAME"),
                       networkProfileMarker,
                       inputDevice = controller.SelectedDevice.Name,
-                      gpuMovies = settings.GpuMovies,
                       fullscreen = settings.Fullscreen,
                       resolution = DisplayOptions.Size(settings.WindowSize),
                       linearScaling = settings.LinearFilter,
@@ -224,7 +202,6 @@ public sealed class GameSession {
                       antiAliasing = settings.ResolvedAntiAliasing,
                       brightness = settings.Brightness,
                       gamma = settings.Gamma,
-                      skipIntros = settings.SkipIntros,
                       memoryCard = cardFolder,
                       importedData = discRoot,
                       importReused = Imported.Reused,
@@ -233,10 +210,13 @@ public sealed class GameSession {
                 new JsonSerializerOptions { WriteIndented = true }));
         _ = ApplyWindow(Process, settings);
     }
-    static async Task RecordExit(Process process, string logs, FileStream cardLease) {
+    async Task RecordExit(Process process, string logs, FileStream cardLease,
+                          AutomaticAccount? account) {
         try {
             await process.WaitForExitAsync();
         } finally {
+            account?.Dispose();
+            NetworkStatus = null;
             cardLease.Dispose();
         }
         await File.WriteAllTextAsync(Path.Combine(logs, "exit.json"), JsonSerializer.Serialize(new {
@@ -244,11 +224,28 @@ public sealed class GameSession {
         }));
     }
     // Drain pipes independently of the UI: native window messages can wait on the game.
-    internal static async Task Pump(StreamReader input, StreamWriter output) {
+    internal static bool SupportsAutomaticAccount(string image) {
+        byte[] marker = System.Text.Encoding.ASCII.GetBytes("[COOP-AUTO] native-password-applied %u");
+        byte[] buffer = new byte[1024 * 1024 + marker.Length];
+        using var source = File.OpenRead(image);
+        int retained = 0, read;
+        while ((read = source.Read(buffer, retained, buffer.Length - retained)) > 0) {
+            int length = retained + read;
+            if (buffer.AsSpan(0, length).IndexOf(marker) >= 0)
+                return true;
+            retained = Math.Min(marker.Length - 1, length);
+            buffer.AsSpan(length - retained, retained).CopyTo(buffer);
+        }
+        return false;
+    }
+    internal static async Task Pump(StreamReader input, StreamWriter output,
+                                    Action<string>? observe = null) {
         using (output) {
-            string ? line;
-            while ((line = await input.ReadLineAsync().ConfigureAwait(false)) != null)
+            string? line;
+            while ((line = await input.ReadLineAsync().ConfigureAwait(false)) != null) {
                 await output.WriteLineAsync(line).ConfigureAwait(false);
+                observe?.Invoke(line);
+            }
         }
     }
     static async Task ApplyWindow(Process process, Settings settings) {
@@ -258,6 +255,7 @@ public sealed class GameSession {
             nint hwnd = process.MainWindowHandle;
             if (hwnd == 0)
                 continue;
+            _ = GameWindowIcon.Apply(process, hwnd);
             if (settings.Fullscreen) {
                 long style = GetWindowLongPtr(hwnd, -16).ToInt64() & ~0x00CF0000L;
                 SetWindowLongPtr(hwnd, -16, new nint(style));

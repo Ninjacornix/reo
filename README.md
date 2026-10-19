@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**Source preview - local-build installer in development** Â· [Changelog](CHANGELOG.md)
+**Source preview - portable local-build package in development** | [Changelog](CHANGELOG.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -10,9 +10,9 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 
 - **Outbreak: File #1:** boots into menus and gameplay. Rendering, performance and cutscene/audio synchronization are still under development.
 - **Outbreak: File #2:** configuration and a launcher entry exist; gameplay is not validated.
-- **Launcher:** one-time ISO import without mounting, ISO-derived local build, fullscreen and aspect controls, bilinear/anisotropic filtering, FXAA/SMAA, brightness/gamma, intro skipping, controller remapping, selectable memory cards, cheats, logs and GitHub release updates.
-- **Online co-op:** four native clients have authenticated, joined one room, reached gameplay and replicated movement through a separate openSNAP server. The launcher saves the server address and existing account username; passwords remain in-game. This is local validation; Internet play is not yet validated. Setup is below.
-- **Room management and hosting:** room creation/joining still use the original game menus. Launcher room settings, automatic server hosting and NAT traversal are not implemented.
+- **Launcher:** one-time ISO import without mounting, ISO-derived local build, fullscreen and aspect controls, bilinear/anisotropic filtering, FXAA/SMAA, brightness/gamma, controller remapping, selectable memory cards, cheats, logs and GitHub release updates.
+- **Online co-op:** launcher server hosting and automatic account/login integration are in development. Four native clients previously completed local multiplayer checks; see below for current limits.
+- **Room management:** room creation and joining use the original game menus.
 - **Mods:** placeholder. **Cheats:** built-in health, infection and ammunition options plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
@@ -40,107 +40,32 @@ not public release assets. File #2 remains unsupported.
 
 ## Online co-op
 
-Co-op is experimental. Four native clients have authenticated, joined one room,
-started a scenario and replicated movement on a local server. Item sharing,
-door/room transitions, reconnects and LAN/Internet play are not fully validated.
-Do not treat this prerelease as finished online support.
+In **Co-op**, enter a server IPv4 address and choose a username. Press Enter or
+leave the username field to create the account; its status appears below. Use
+**Play** as usual, then choose **Network** in the game. The launcher enters the
+saved credentials automatically;
+there is no separate online launch mode. If the name already belongs to someone
+else, choose another username. Automatic provisioning and native login have
+been checked separately. The latest two-client retest also reached the first
+room through the ordinary login route with disposable test accounts.
 
-### Join a server and play with friends
+To host, enable **Host server**. The launcher starts the services and displays
+**Friends connect to** with a copy button once they are listening. Use the
+suggested LAN address for the same network, or enter a reachable VPN/public IPv4
+before starting. Friends enter that address in their own launchers. The server
+component will be included in the portable package; there is no manual Python
+installation step for players.
 
-1. Get the **IPv4 address** of a compatible openSNAP server and create an account
-   on that server. The launcher does not create accounts or start a server.
-2. In the launcher's **Co-op** page, enter the server IPv4 address and your existing
-   account username, then enable **Launch in online mode**. Usernames use 4â€“10
-   ASCII letters, digits or underscores; avoid leading, trailing or repeated underscores.
-3. Launch File #1 and use the game's original online/account menus. Choose
-   **Edit Account** to apply the launcher username and enter your password in-game.
-   An account already saved on the memory card is not silently replaced by the launcher.
-4. Meet in the same area/room. One player creates the room and selects the
-   scenario/settings in-game; the others join it. The host starts the scenario
-   when everyone is ready. Up to **four players** can join.
+Internet hosting still requires a reachable server and firewall/router rules:
+UDP **9090/9091** and TCP **10127/80**. Optional UPnP and Windows Firewall helpers
+are implemented but have not been validated for Internet play. A built-in VPN
+is not provided. A LAN address is not an Internet address.
 
-There is no automatic matchmaking, launcher Create/Join form, integrated VPN,
-server hosting or automatic port forwarding yet. Creating an in-game room does
-not host the separate network server. Each player needs their own game data
-and an account on the same server.
-
-### Host your own server
-
-The server is **openSNAP**, a separate Python project licensed under AGPL-3.0.
-It is not bundled in the Windows download. For the tested revision and this
-project's File #1 current-room fix, run from a source checkout:
-
-```powershell
-git clone https://github.com/GrenderG/openSNAP.git build/server/openSNAP
-git -C build/server/openSNAP checkout --detach f9af55491718a043923225a0895fe60eab76fd7c
-$outbreakPatch = (Resolve-Path 'network/server/patches/0001-outbreak-current-room-query.patch').Path
-git -C build/server/openSNAP apply --check $outbreakPatch
-git -C build/server/openSNAP apply $outbreakPatch
-Push-Location build/server/openSNAP
-python -m venv .venv
-& .venv/Scripts/python.exe -m pip install -r requirements.txt
-& .venv/Scripts/python.exe -m unittest tests.test_outbreak_plugin tests.test_outbreak2_plugin
-Pop-Location
-```
-
-Use Python 3.11 or newer. In the cloned server folder, copy `.env.dist` to `.env`
-and set the following values, replacing `192.168.1.50` with the address clients
-will use (LAN IPv4 for LAN play, public IPv4 for Internet hosting):
-
-```dotenv
-OPENSNAP_GAME_PLUGIN=outbreak
-OPENSNAP_WEB_GAME_PLUGIN=outbreak
-OPENSNAP_BOOTSTRAP_HOST=0.0.0.0
-OPENSNAP_GAME_HOST=0.0.0.0
-OPENSNAP_CAPCOM_APP_HOST=0.0.0.0
-OPENSNAP_WEB_HOST=0.0.0.0
-OPENSNAP_BOOTSTRAP_ADVERTISE_HOST=192.168.1.50
-OPENSNAP_GAME_ADVERTISE_HOST=192.168.1.50
-OPENSNAP_GAME_SERVER_MAP={"outbreak":"192.168.1.50:9091"}
-OPENSNAP_STORAGE_BACKEND=sqlite
-OPENSNAP_SQLITE_PATH=opensnap.db
-```
-
-Run these commands in **four separate terminals**, all opened in the same
-server folder so they share `.env` and the SQLite account database:
-
-```powershell
-& .venv/Scripts/python.exe run.py bootstrap
-& .venv/Scripts/python.exe run.py game
-& .venv/Scripts/python.exe run.py app capcom
-& .venv/Scripts/python.exe run.py web
-```
-
-Leave all four services running. Create accounts through the game's original
-registration/account portal. The native launcher maps the original service
-hostnames to your chosen IPv4, so a separate DNS service or Sony DNAS setup
-is not required for this native build. Keep the database private and use
-passwords unique to this test server.
-
-`OPENSNAP_GAME_SERVER_MAP` must advertise an endpoint clients can reach.
-An advertised `127.0.0.1` works only for clients on that same PC. This project's
-development server is loopback-only, not a ready-made Internet configuration.
-
-| Service | Default port to allow on the server |
-| --- | --- |
-| Bootstrap login | UDP 9090 |
-| Game and room traffic | UDP 9091 |
-| Capcom application service | TCP 10127 |
-| Account/signup pages, when used | TCP 80 |
-
-**Same LAN:** bind the server to a reachable interface, allow the services in
-Windows Firewall, advertise the server PC's LAN IPv4 address and have everyone
-enter that address in the launcher. Router port forwarding is unnecessary on
-the same LAN.
-
-**Internet:** forward the ports above from your router to the server PC and
-advertise your reachable public IPv4 address. Friends enter that public address;
-joining clients normally do not need to forward ports. Forwarding alone does
-not fix an incorrect advertised address. Behind carrier-grade NAT, ordinary
-port forwarding may not be available; a reachable hosted server or a shared
-private VPN is an alternative. For a VPN, bind/advertise the server's VPN IPv4
-address and have friends connect to it. Neither WAN nor VPN deployment has been
-validated by this project's local four-player test. No public server is supplied.
+Create or join rooms and choose the scenario inside the game. Up to four native
+clients have authenticated, entered a room and replicated movement in local
+checks. The new automatic account/hosting flow, reconnects, item sharing, room
+transitions and LAN/Internet play are not yet fully validated. Co-op remains
+experimental.
 
 ## Source layout
 

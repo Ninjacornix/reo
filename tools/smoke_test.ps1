@@ -17,7 +17,6 @@ param(
     [string[]]$Env = @(),
     [string]$Label = '',
     [string]$ExePath = '',
-    [Alias('FastBoot')][switch]$SkipIntro,
     [switch]$ToMainMenu,
     [switch]$ToScenario
 )
@@ -49,8 +48,7 @@ if ($ToMainMenu -or $ToScenario) {
     $envPairs += ,@('REO_NATURAL', '1')
     $envPairs += ,@('REO_TEST_ROUTE', $(if ($ToScenario) { 'scenario' } else { 'main-menu' }))
 }
-# Normal-speed startup also overrides inherited test turbo. Legacy -SkipIntro
-# remains accepted so existing callers do not fail; it no longer accelerates.
+# Normal-speed startup also overrides inherited test turbo.
 $envPairs += ,@('REO_TURBO', '1')
 $envPairs += ,@('REO_TURBO_UNTIL', '')
 $savedEnvironment = @{}

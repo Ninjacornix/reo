@@ -38,8 +38,12 @@ class LobbyTests(unittest.TestCase):
 
     def test_ambiguous_server_map_and_poststart_are_refused(self):
         self.assertEqual(self.plan(snapshot(mainMode=7, serverRows=[dict(mode=1), dict(mode=1)]))[0], "refuse")
-        self.assertEqual(self.plan(snapshot(state=14))[0], "refuse")
-        self.assertEqual(self.plan(snapshot(state=6))[0], "refuse")
+        # Post-login transition gets a grace period before the driver gives up.
+        for state in (14, 6):
+            context = {}
+            self.assertEqual(self.plan(snapshot(state=state), context=context)[0], "wait")
+            context["outsideCount"] = 149
+            self.assertEqual(self.plan(snapshot(state=state), context=context)[0], "refuse")
         self.assertEqual(self.plan(snapshot(chat=True))[0], "wait")
 
     def test_title_requires_actual_initialization_warmup(self):

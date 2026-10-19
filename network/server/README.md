@@ -1,4 +1,17 @@
-# Optional Outbreak server patch
+# Portable Outbreak server component
+
+Players use **Co-op → Host server** in the launcher. It starts the required
+services and shows a copyable address for friends; no manual Python setup is
+needed in the portable package. Router/firewall configuration is still necessary
+for Internet hosting. The following commands are maintainer instructions.
+
+`tools/local_build/export_server.py` exports the pinned server plus this patch,
+official embeddable Python and pinned dependencies into a new immutable component
+directory. It includes the full patched server source, dependency source archives
+and notices, verifies Python/dependency digests, checks portable imports, and seals
+`server-manifest.json`. `launcher/package-local.ps1 -Server PATH` verifies and
+copies that component into the portable release. No account database, credentials
+or developer virtual environment is packaged.
 
 The native clients can use [openSNAP](https://github.com/GrenderG/openSNAP), a
 separate server project. This directory contains one patch against upstream
@@ -7,9 +20,8 @@ revision `f9af55491718a043923225a0895fe60eab76fd7c`.
 openSNAP and this server patch are licensed under the **GNU Affero General
 Public License, version 3**, as provided by the upstream
 [LICENSE](https://github.com/GrenderG/openSNAP/blob/f9af55491718a043923225a0895fe60eab76fd7c/LICENSE).
-The patch is for that separately installed server; it does not become part of
-the native runtime. No server binary, account database or credentials are
-included here.
+The server executes separately from the native runtime. Server/vendor binaries,
+account databases and credentials are not committed to this repository.
 
 ## Apply and test
 

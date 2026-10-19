@@ -49,9 +49,9 @@ def seal(kit, python_zip):
         if item["path"].endswith(".lib") and libraries.get(item["path"]) != item["sha256"]:
             raise ValueError("Undeclared precompiled library in the build kit")
     record = {"format": 1, "runtimeAbi": plan["runtimeAbi"], "architecture": "win-x64",
-              "toolchain": "msvc", "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+              "toolchain": plan.get("toolchain", "msvc"), "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
               "files": files, "outputs": outputs, "steps": [{"name": "Generate and compile from your disc",
-                  "tool": "tools/python/python.exe", "arguments": ["-B", "-u", "{kit}/tools/local_build/build_game.py",
+                  "tool": "tools/python/python.exe", "arguments": ["-B", "-u", "-X", "utf8", "{kit}/tools/local_build/build_game.py",
                       "--kit", "{kit}", "--disc", "{disc}", "--work", "{work}", "--output", "{output}",
                       "--jobs", "{jobs}"]}]}
     (kit / "build-kit.json").write_text(json.dumps(record, indent=2) + "\n")

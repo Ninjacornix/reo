@@ -57,6 +57,8 @@ def main():
     parser.add_argument("--source-root", required=True, type=Path)
     parser.add_argument("--generated", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--preserve-generated", action="store_true",
+                        help="Retain existing authored fixes/registrations in generated translation units")
     args = parser.parse_args()
     records = []
     for unit in json.loads(args.inventory.read_text()):
@@ -76,6 +78,19 @@ def main():
             result = recipe(base.read_text(), source)
             result.update(source=relative, destination=target.relative_to(args.source_root).as_posix())
             records.append(result)
+    if args.preserve_generated:
+        for folder, pattern in [("output", "*.cpp"), ("output_ovl", "**/*.cpp"), ("output_extra", "*.cpp")]:
+            for target in sorted((args.source_root / "recomp/config" / folder).glob(pattern)):
+                relative = target.relative_to(args.source_root / "recomp/config").as_posix()
+                base = args.generated / relative
+                if not base.exists():
+                    raise ValueError("An existing game source was not regenerated: " + relative)
+                before, after = base.read_text(), target.read_text()
+                if normalized(before) == normalized(after):
+                    continue
+                result = recipe(before, after)
+                result.update(source=relative, destination="generated-overrides/" + relative)
+                records.append(result)
     args.output.write_text(json.dumps({"format": 1,
         "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
         "recipes": records}, indent=2) + "\n")

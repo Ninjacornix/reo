@@ -97,7 +97,17 @@ python tools/coop_playtest/coop_playtest.py drive-lobby --session build-ninja/co
 
 `shared-area` stops on the original area-01 room list. `waiting-room` creates the dummy room `cooptest` with four places, holds guests outside the area until the host room exists, and selects the native-tested Mark/Jim/George options for players 2–4. It reads RAM through a read-only handle with ELF signature and process identity checks; input is ordinary private pad/USB reports. Unknown UI states wait until the bounded timeout, ambiguous room/server records are refused, and existing title text is preserved. The title keyboard must expose its real initialization delay before typing. Each goal writes a new exclusive receipt; an interrupted goal is not silently replayed.
 
-The driver never presses host Start. UI member counts alone do not prove server membership: receipts explicitly retain `serverMembershipVerified=false`, `hostStartSent=false` and `coopVerdict=not-tested`. Actual fresh server roster/query receipts must be checked separately before starting gameplay. This driver has mock/source tests; no live automation run is implied by those checks.
+The lobby driver never presses host Start. UI member counts alone do not prove server membership: its receipts retain `serverMembershipVerified=false`, `hostStartSent=false` and `coopVerdict=not-tested`.
+
+Once all players are in the waiting room, start the scenario and skip the opening movies through ordinary pad input:
+
+```powershell
+python tools/coop_playtest/coop_playtest.py drive-start --session build-ninja/coop-playtest/run001 --timeout 300
+```
+
+This sends the host's START SCENARIO selection, then Start on each client until the original gameplay state remains stable for two seconds. It stops sending Start in gameplay so it does not open the pause menu. The exclusive `drive-start.json` records input times and each client's observed gameplay entry. `allInGameplay=true` is a loading/UI result, not proof of synchronized movement.
+
+A two-client live retest on 2026-10-19 reached the shared waiting room in 13.5 seconds of lobby driving and first-room gameplay on both clients about 20 seconds after starting. No fatal native diagnostics were recorded. Credentials were supplied by the disposable USB-password driver; launcher provisioning and automatic native login have separate evidence. Private logs, screenshots and identities remain under ignored `build-ninja/coop-playtest/hostjoin005/`. A follow-up session was interrupted and is not a passing result.
 
 `stop` records a separately owned stop request after checking the identity on the terminating handle. The supervisor recognizes only confirmed termination with the same PID, image, creation time and requested exit code as `operator-stopped`; a different crash code or any fatal native diagnostic remains a failure. Previous immutable run receipts are not rewritten to change historical classification.
 

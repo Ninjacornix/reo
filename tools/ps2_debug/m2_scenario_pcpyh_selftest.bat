@@ -6,7 +6,7 @@ set "TASK_BUILD=%TASK_ROOT%\third_party\PS2Recomp\out\build"
 set "TASK_OUT=%TASK_ROOT%\build-ninja\m2-scenario\pcpyh-selftest"
 "%TASK_ROOT%\build-ninja\av-sync-analysis-venv\Scripts\python.exe" -X utf8 "%~dp0m2_scenario_pcpyh_repair.py" --emit-test "%TASK_OUT%\pcpyh_emitted.inc"
 if errorlevel 1 exit /b 1
-call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" >nul 2>nul
+call "%~dp0..\vcvars64.bat"
 if errorlevel 1 exit /b 1
 cl /nologo /MD /EHsc /O2 /std:c++20 /D_CRT_SECURE_NO_WARNINGS /DNOMINMAX ^
  /I "%TASK_RT%\include" /I "%TASK_ROOT%\recomp\config\output" /I "%TASK_OUT%" ^

@@ -5,7 +5,7 @@ set "TASK_RT=%TASK_ROOT%\third_party\PS2Recomp\ps2xRuntime"
 set "TASK_BUILD=%TASK_ROOT%\third_party\PS2Recomp\out\build"
 set "TASK_OUT=%TASK_ROOT%\build-ninja\m2-scenario\math\selftest"
 if not exist "%TASK_OUT%" mkdir "%TASK_OUT%"
-call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" >nul 2>nul
+call "%~dp0..\vcvars64.bat"
 if errorlevel 1 exit /b 1
 cl /nologo /MD /EHsc /O2 /std:c++20 /D_CRT_SECURE_NO_WARNINGS /DNOMINMAX ^
  /I "%TASK_RT%\include" /I "%TASK_ROOT%\recomp\config\output" ^

@@ -31,6 +31,29 @@ def sha(path):
         return hashlib.file_digest(source, "sha256").hexdigest()
 
 
+def validate_mapped_ranges(output, function_map, skip=()):
+    """Reject discovery ranges that overrule the explicit function map."""
+    sources = {}
+    for source in Path(output).glob("*.cpp"):
+        match = re.search(r"_0x([0-9a-fA-F]+)\.cpp$", source.name)
+        if match:
+            sources[int(match[1], 16)] = source
+    with Path(function_map).open(newline="") as stream:
+        for row in csv.DictReader(stream):
+            if row["name"] in skip:
+                continue
+            start, end = int(row["start"], 16), int(row["end"], 16)
+            source = sources.get(start)
+            if source is None:
+                raise ValueError(f"Recompiler omitted mapped function {row['name']}")
+            with source.open(encoding="utf-8") as text:
+                header = text.read(8192)
+            actual = re.search(r"// Address: (0x[0-9a-fA-F]+) - (0x[0-9a-fA-F]+)", header)
+            if actual is None or (int(actual[1], 16), int(actual[2], 16)) != (start, end):
+                raise ValueError(f"Recompiler ignored mapped bounds for {row['name']}; "
+                                 "rebuild the patched recompiler before compiling game sources")
+
+
 def generate(recompiler, disc, metadata, destination):
     recompiler, disc, metadata, destination = map(Path, (recompiler, disc, metadata, destination))
     elf = disc / "SLUS_207.65"
@@ -52,11 +75,15 @@ def generate(recompiler, disc, metadata, destination):
         # TOML strings are escaped using JSON's compatible basic-string syntax.
         quote = lambda p: json.dumps(str(Path(p).resolve()).replace("\\", "/"))
         config = work / (name + ".toml")
+        policy = ""
+        if name == "main":
+            original = (metadata / "outbreak.toml").read_text()
+            policy = original[original.index("[mmio]"):]
         config.write_text("[general]\ninput = " + quote(image) + "\nghidra_output = " +
                           quote(function_map) + "\noutput = " + quote(output) +
                           "\nsingle_file_output = false\npatch_syscalls = false\n" +
                           "patch_cop0 = true\npatch_cache = true\nstubs = []\nskip = " +
-                          json.dumps(list(skip)) + "\n")
+                          json.dumps(list(skip)) + "\n" + policy)
         print("Generating " + name, flush=True)
         with (logs / (name + ".log")).open("wb") as log:
             subprocess.run([str(recompiler.resolve()), str(config)], check=True,
@@ -65,6 +92,8 @@ def generate(recompiler, disc, metadata, destination):
     main = staging / "output"
     invoke("main", elf, metadata / "outbreak_ghidra_functions.csv", main,
            ("sub_00117080", "sub_00117818", "sub_001179E8"))
+    validate_mapped_ranges(main, metadata / "outbreak_ghidra_functions.csv",
+                           ("sub_00117080", "sub_00117818", "sub_001179E8"))
 
     with (metadata / "extra_functions.csv").open(newline="") as f:
         extra_rows = list(csv.DictReader(f))

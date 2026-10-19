@@ -75,7 +75,6 @@ public partial class MainWindow {
         IsoPath.Text = settings.GetIso();
         ElfPath.Text = settings.GetElf(root);
         bool present = settings.Game.Id == "file1" && settings.FilesPresent(root);
-        SkipIntros.IsEnabled = settings.Game.Id == "file1";
         SelectedGameLabel.Text = settings.Game.Name;
         RefreshBackdrop();
         foreach (int n in new[] { 1, 2 }) {
@@ -100,7 +99,7 @@ public partial class MainWindow {
                 select, (selected ? "Selected: " : "Select: ") + GameDefinition.Find(id).Name);
             ((Button)FindName("ConfigureGame" + n)).IsEnabled = !game.Running && !launching;
         }
-        LaunchButton.IsEnabled = present && OnlineOptions.Error(settings) == null && !updating &&
+        LaunchButton.IsEnabled = present && !updating &&
                                  !updateRestarting && !game.Running && !launching && !backingUp;
         RefreshOnlineUi();
         PlayDisplaySummary.Text =

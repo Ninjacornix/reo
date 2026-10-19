@@ -1,6 +1,7 @@
 #!/bin/bash
 # usage: rna_dump.sh <pid>   -- dump PS2RNA records and their SJ objects (read-only)
-P="C:/Users/Ninjacornix/ghidra-mcp/.venv/Scripts/python.exe"; G=/c/Users/Ninjacornix/reo/tools/guest_peek.py; E=/c/Users/Ninjacornix/reo/game_data/SLUS_207.65
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+P="${REO_PYTHON:-python}"; G="$ROOT/tools/guest_peek.py"; E="$ROOT/game_data/SLUS_207.65"
 pid=$1
 out=$("$P" -I $G $pid $E 223880:384)
 echo "$out"

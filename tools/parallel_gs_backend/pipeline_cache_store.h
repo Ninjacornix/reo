@@ -1,15 +1,24 @@
 #pragma once
-// Private Windows cache IO and bounded codec. Never stores GS/VU/VRAM state.
+// Private host cache IO and bounded codec. Never stores GS/VU/VRAM state.
 #include <algorithm>
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <cstdlib>
 #include <filesystem>
 #include <string>
 #include <vector>
+#if defined(_WIN32)
 #include <windows.h>
+#else
+#include <cerrno>
+#include <chrono>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 namespace reo_parallel_backend::cache_store {
 constexpr size_t MaxPayload = 256u * 1024u * 1024u, HeaderBytes = 80;
 constexpr std::array<uint8_t, 16> Magic = {'R', 'E', 'O', 'P', 'G', 'S', 'C', 'A',
@@ -139,6 +148,7 @@ inline std::vector<uint8_t> decode(const std::vector<uint8_t>& file, const Ident
     return payload;
 }
 inline std::filesystem::path defaultPath(const Identity& id) {
+#if defined(_WIN32)
     std::wstring local(32768, L'\0');
     const DWORD length =
         GetEnvironmentVariableW(L"LOCALAPPDATA", local.data(), DWORD(local.size()));
@@ -154,10 +164,31 @@ inline std::filesystem::path defaultPath(const Identity& id) {
     return std::filesystem::path(local) / L"REO" / L"parallel-gs" /
            (std::to_wstring(id.vendor) + L"-" + std::to_wstring(id.device) + L"-" + uuid + L"-" +
             std::to_wstring(id.format) + L"-" + std::to_wstring(id.flags) + L".cache");
+#else
+    const char* cache = std::getenv("XDG_CACHE_HOME");
+    const char* home = std::getenv("HOME");
+    std::filesystem::path local;
+    if (cache && std::filesystem::path(cache).is_absolute())
+        local = cache;
+    else if (home && std::filesystem::path(home).is_absolute())
+        local = std::filesystem::path(home) / ".cache";
+    else
+        return {};
+    constexpr char hex[] = "0123456789abcdef";
+    std::string uuid;
+    for (auto b : id.uuid) {
+        uuid += hex[b >> 4];
+        uuid += hex[b & 15];
+    }
+    return local / "REO" / "parallel-gs" /
+           (std::to_string(id.vendor) + "-" + std::to_string(id.device) + "-" + uuid + "-" +
+            std::to_string(id.format) + "-" + std::to_string(id.flags) + ".cache");
+#endif
 }
 inline std::vector<uint8_t> load(const std::filesystem::path& path, const Identity& id) {
     if (path.empty())
         return {};
+#if defined(_WIN32)
     const HANDLE handle = CreateFileW(path.c_str(), GENERIC_READ,
                                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                       nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -178,6 +209,32 @@ inline std::vector<uint8_t> load(const std::filesystem::path& path, const Identi
     const bool okay = ReadFile(handle, file.data(), DWORD(file.size()), &received, nullptr) &&
                       received == file.size();
     return okay ? decode(file, id) : std::vector<uint8_t>{};
+#else
+    const int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+    if (fd < 0)
+        return {};
+    struct Close {
+        int fd;
+        ~Close() {
+            ::close(fd);
+        }
+    } close{fd};
+    struct stat size{};
+    if (::fstat(fd, &size) != 0 || !S_ISREG(size.st_mode) || size.st_size < off_t(HeaderBytes) ||
+        size.st_size > off_t(HeaderBytes + MaxPayload))
+        return {};
+    std::vector<uint8_t> file(size_t(size.st_size));
+    size_t received = 0;
+    while (received < file.size()) {
+        const auto count = ::read(fd, file.data() + received, file.size() - received);
+        if (count < 0 && errno == EINTR)
+            continue;
+        if (count <= 0)
+            return {};
+        received += size_t(count);
+    }
+    return decode(file, id);
+#endif
 }
 inline bool save(const std::filesystem::path& path, const std::vector<uint8_t>& payload,
                  const Identity& id) {
@@ -195,6 +252,7 @@ inline bool save(const std::filesystem::path& path, const std::vector<uint8_t>& 
         return false;
     static std::atomic<uint64_t> sequence{0};
     auto temp = absolute;
+#if defined(_WIN32)
     temp += L".tmp." + std::to_wstring(GetCurrentProcessId()) + L"." +
             std::to_wstring(GetTickCount64()) + L"." +
             std::to_wstring(sequence.fetch_add(1, std::memory_order_relaxed));
@@ -217,5 +275,34 @@ inline bool save(const std::filesystem::path& path, const std::vector<uint8_t>& 
     if (!okay)
         DeleteFileW(temp.c_str()); // Exact unique file created by CREATE_NEW above.
     return okay;
+#else
+    temp += ".tmp." + std::to_string(::getpid()) + "." +
+            std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "." +
+            std::to_string(sequence.fetch_add(1, std::memory_order_relaxed));
+    const int fd = ::open(temp.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+    if (fd < 0)
+        return false;
+    size_t written = 0;
+    bool okay = true;
+    while (written < file.size()) {
+        const auto count = ::write(fd, file.data() + written, file.size() - written);
+        if (count < 0 && errno == EINTR)
+            continue;
+        if (count <= 0) {
+            okay = false;
+            break;
+        }
+        written += size_t(count);
+    }
+    if (okay)
+        okay = ::fsync(fd) == 0;
+    if (::close(fd) != 0)
+        okay = false;
+    if (okay)
+        okay = ::rename(temp.c_str(), absolute.c_str()) == 0;
+    if (!okay)
+        ::unlink(temp.c_str()); // Exact file created exclusively by this invocation.
+    return okay;
+#endif
 }
 } // namespace reo_parallel_backend::cache_store
