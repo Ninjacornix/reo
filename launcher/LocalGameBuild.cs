@@ -60,7 +60,7 @@ public static class LocalGameBuild {
         return result;
     }
 
-    static LocalBuildKit ReadKit(string folder, string expectedElf) {
+    static LocalBuildKit ReadKit(string folder, string expectedElf, CancellationToken cancel) {
         var kit = JsonSerializer.Deserialize<LocalBuildKit>(
                       File.ReadAllText(Path.Combine(folder, ManifestName)), Json) ??
                   throw new IOException("The local build kit is invalid.");
@@ -73,6 +73,7 @@ public static class LocalGameBuild {
             throw new IOException("The local build kit is incompatible with this launcher.");
         var unique = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var file in kit.Files) {
+            cancel.ThrowIfCancellationRequested();
             _ = Inside(folder, file.Path);
             if (!unique.Add(file.Path) || file.Sha256?.Length != 64 ||
                 !file.Sha256.All(Uri.IsHexDigit))
@@ -110,11 +111,15 @@ public static class LocalGameBuild {
         }
     }
 
-    public static Task<string>
-    Ensure(string root, ImportedDisc disc, IProgress<ImportProgress>? progress = null,
-           CancellationToken cancel = default, string? home = null,
-           Func<ProcessStartInfo, CancellationToken, Task<int>>? runner = null) =>
-        EnsureVerified(root, disc, DiscImport.FirstElfSha256, progress, cancel, home, runner);
+    public static Task<string> Ensure(string root, ImportedDisc disc,
+                                      IProgress<ImportProgress>? progress = null,
+                                      CancellationToken cancel = default, string? home = null,
+                                      Func<ProcessStartInfo, CancellationToken, Task<int>>? runner =
+                                          null) => Task.Run(async () => {
+        return await EnsureVerified(root, disc, DiscImport.FirstElfSha256, progress, cancel, home,
+                                    runner)
+            .ConfigureAwait(false);
+    }, cancel);
 
     internal static async Task<string>
     EnsureVerified(string root, ImportedDisc disc, string expectedElf,
@@ -126,7 +131,8 @@ public static class LocalGameBuild {
             throw new IOException(
                 "This installation has no local build kit. The precompiled " +
                 "game download was withdrawn; a compatible build kit is required.");
-        var kit = ReadKit(kitFolder, expectedElf);
+        progress?.Report(new(0, 0, "Checking local build files", "Preparing game"));
+        var kit = ReadKit(kitFolder, expectedElf, cancel);
         string hash = Sha(Path.Combine(kitFolder, ManifestName));
         if (Sha(disc.Elf) != kit.ElfSha256)
             throw new IOException("The imported ELF does not match this build kit.");

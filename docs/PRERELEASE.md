@@ -1,5 +1,10 @@
 # Portable prerelease preparation
 
+**Current status:** the bulky v1.0.1 download is withdrawn. The next package is
+being simplified around the [end-user requirements](../REQUIREMENTS.md), with
+no automatic dependency downloads. The v1.0.1 packaging details below describe
+the previous bundle and must not be reused as the smaller replacement unchanged.
+
 The next version is **v1.0.1**, marked **prerelease** on GitHub. The withdrawn
 v1.0.0 package must not be restored or reused. This guide covers the repository
 and distribution as a whole; multiplayer is an experimental feature, not a

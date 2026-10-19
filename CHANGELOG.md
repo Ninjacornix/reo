@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — v1.0.2
+
+- Move local-build verification and cached-output hashing off the launcher UI
+  thread so setup does not block rendering or cancellation.
+- Document end-user dependencies for a smaller package without automatic
+  dependency downloads.
+- Withdraw the oversized v1.0.1 download while replacement packaging is prepared.
+
 ## v1.0.1 prerelease — 2026-10-20
 
 - Prepare v1.0.1 metadata and GitHub prerelease update discovery, preserving

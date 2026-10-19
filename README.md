@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**v1.0.1 portable prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Changelog](CHANGELOG.md)
+**Smaller prerelease in preparation** | [Requirements](REQUIREMENTS.md) | [Changelog](CHANGELOG.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -19,10 +19,11 @@ GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 beh
 
 ## Windows prerelease
 
-Download the **v1.0.1 Windows x64 prerelease** from
-[GitHub Releases](https://github.com/Ninjacornix/reo/releases). Extract the entire
-ZIP and open `Outbreak.Launcher.exe`. No Windows installer, BIOS or system
-compiler installation is required. Use a Vulkan-capable GPU driver.
+The bulky **v1.0.1** download has been withdrawn while packaging is simplified
+and an import/setup UI freeze is fixed. A replacement download is not published
+yet. The smaller package will list dependencies for users to install rather
+than include the full .NET runtime and compiler in the launcher folder. See
+[end-user requirements](REQUIREMENTS.md).
 
 Select your **Outbreak NTSC-U v2.00 ISO (SLUS-20765)** in **Game files**, then
 allow the first local generation and compilation to finish. This can take a long
