@@ -15,14 +15,17 @@ int AmoParser::find_array(const uint8_t* data, uint32_t size, uint8_t flag_type,
     for (uint32_t off = 0; off + 12 <= size; off += 4) {
         uint32_t flags;
         memcpy(&flags, data + off, 4);
-        if (flags != target_flags) continue;
+        if (flags != target_flags)
+            continue;
 
         uint32_t count, array_size;
         memcpy(&count, data + off + 4, 4);
         memcpy(&array_size, data + off + 8, 4);
 
-        if (count == 0 || count > 100000) continue;
-        if (array_size == 0 || array_size > size) continue;
+        if (count == 0 || count > 100000)
+            continue;
+        if (array_size == 0 || array_size > size)
+            continue;
 
         // Data size = array_size - 12 (next header), except possibly the last array
         uint32_t data_bytes = (array_size > 12) ? array_size - 12 : array_size;
@@ -45,7 +48,8 @@ int AmoParser::find_array(const uint8_t* data, uint32_t size, uint8_t flag_type,
 bool AmoParser::parse(const uint8_t* data, uint32_t size) {
     m_model = AmoModel{};
 
-    if (size < 16) return false;
+    if (size < 16)
+        return false;
 
     // AMO main header: [version:4][num_parts:4][total_size:4][flags:4]
     uint32_t version, num_parts, total_size;
@@ -53,8 +57,7 @@ bool AmoParser::parse(const uint8_t* data, uint32_t size) {
     memcpy(&num_parts, data + 4, 4);
     memcpy(&total_size, data + 8, 4);
 
-    printf("[AMO] Parsing: version=%u, parts=%u, size=%u bytes\n",
-           version, num_parts, total_size);
+    printf("[AMO] Parsing: version=%u, parts=%u, size=%u bytes\n", version, num_parts, total_size);
 
     parse_vertices(data, size);
     parse_normals(data, size);
@@ -80,11 +83,11 @@ bool AmoParser::parse(const uint8_t* data, uint32_t size) {
     }
 
     printf("[AMO] Loaded: %d vertices, %d normals, %d UVs, %d strips (%d triangles)\n",
-           (int)m_model.vertices.size(), (int)m_model.normals.size(),
-           (int)m_model.texcoords.size(), (int)m_model.strips.size(), total_tris);
-    printf("[AMO] Bounds: (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f)\n",
-           m_model.bbox_min[0], m_model.bbox_min[1], m_model.bbox_min[2],
-           m_model.bbox_max[0], m_model.bbox_max[1], m_model.bbox_max[2]);
+           (int)m_model.vertices.size(), (int)m_model.normals.size(), (int)m_model.texcoords.size(),
+           (int)m_model.strips.size(), total_tris);
+    printf("[AMO] Bounds: (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f)\n", m_model.bbox_min[0],
+           m_model.bbox_min[1], m_model.bbox_min[2], m_model.bbox_max[0], m_model.bbox_max[1],
+           m_model.bbox_max[2]);
 
     return !m_model.vertices.empty() && !m_model.strips.empty();
 }
@@ -92,7 +95,8 @@ bool AmoParser::parse(const uint8_t* data, uint32_t size) {
 bool AmoParser::parse_vertices(const uint8_t* data, uint32_t size) {
     uint32_t count, data_size;
     int off = find_array(data, size, 0x07, count, data_size);
-    if (off < 0) return false;
+    if (off < 0)
+        return false;
 
     uint32_t vert_count = data_size / 12;
     m_model.vertices.resize(vert_count);
@@ -103,7 +107,8 @@ bool AmoParser::parse_vertices(const uint8_t* data, uint32_t size) {
 bool AmoParser::parse_normals(const uint8_t* data, uint32_t size) {
     uint32_t count, data_size;
     int off = find_array(data, size, 0x08, count, data_size);
-    if (off < 0) return false;
+    if (off < 0)
+        return false;
 
     uint32_t norm_count = data_size / 12;
     m_model.normals.resize(norm_count);
@@ -114,7 +119,8 @@ bool AmoParser::parse_normals(const uint8_t* data, uint32_t size) {
 bool AmoParser::parse_texcoords(const uint8_t* data, uint32_t size) {
     uint32_t count, data_size;
     int off = find_array(data, size, 0x0A, count, data_size);
-    if (off < 0) return false;
+    if (off < 0)
+        return false;
 
     uint32_t uv_count = data_size / 8;
     m_model.texcoords.resize(uv_count);
@@ -125,7 +131,8 @@ bool AmoParser::parse_texcoords(const uint8_t* data, uint32_t size) {
 bool AmoParser::parse_strips(const uint8_t* data, uint32_t size) {
     uint32_t count, data_size;
     int off = find_array(data, size, 0x04, count, data_size);
-    if (off < 0) return false;
+    if (off < 0)
+        return false;
 
     // Triangle strips: count-prefixed groups of uint32 vertex indices
     // [strip_length:4][idx0:4][idx1:4]...[idxN:4]
@@ -137,8 +144,10 @@ bool AmoParser::parse_strips(const uint8_t* data, uint32_t size) {
         memcpy(&strip_len, p, 4);
         p += 4;
 
-        if (strip_len == 0 || strip_len > 10000) break;
-        if (p + strip_len * 4 > end) break;
+        if (strip_len == 0 || strip_len > 10000)
+            break;
+        if (p + strip_len * 4 > end)
+            break;
 
         AmoTriStrip strip;
         strip.indices.resize(strip_len);
@@ -154,7 +163,8 @@ bool AmoParser::parse_strips(const uint8_t* data, uint32_t size) {
 bool AmoParser::parse_materials(const uint8_t* data, uint32_t size) {
     uint32_t count, data_size;
     int off = find_array(data, size, 0x13, count, data_size);
-    if (off < 0) return false;
+    if (off < 0)
+        return false;
 
     // Material data: starts with ambient[4], diffuse[4], specular[4] as floats
     if (data_size >= 48) {

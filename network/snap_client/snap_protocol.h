@@ -29,21 +29,13 @@ namespace reo {
  */
 
 // Connection states
-enum class SnapState {
-    Disconnected,
-    Connecting,
-    Authenticating,
-    InLobby,
-    InRoom,
-    InGame,
-    Error
-};
+enum class SnapState { Disconnected, Connecting, Authenticating, InLobby, InRoom, InGame, Error };
 
 // Packet header (tentative — based on server code analysis)
 struct SnapPacketHeader {
-    uint16_t length;    // Total packet length including header
-    uint16_t type;      // Packet type ID
-    uint32_t sequence;  // Sequence number
+    uint16_t length;   // Total packet length including header
+    uint16_t type;     // Packet type ID
+    uint32_t sequence; // Sequence number
 };
 
 // Lobby entry
@@ -63,7 +55,7 @@ using OnLobbyUpdate = std::function<void(const std::vector<LobbyRoom>& rooms)>;
 using OnGameData = std::function<void(const uint8_t* data, uint32_t size)>;
 
 class SnapProtocol {
-public:
+  public:
     SnapProtocol() = default;
     ~SnapProtocol();
 
@@ -87,15 +79,25 @@ public:
     // Process incoming packets (call from main loop)
     void update();
 
-    SnapState state() const { return m_state; }
+    SnapState state() const {
+        return m_state;
+    }
 
     // Event callbacks
-    void on_connected(OnConnected cb) { m_on_connected = cb; }
-    void on_disconnected(OnDisconnected cb) { m_on_disconnected = cb; }
-    void on_lobby_update(OnLobbyUpdate cb) { m_on_lobby_update = cb; }
-    void on_game_data(OnGameData cb) { m_on_game_data = cb; }
+    void on_connected(OnConnected cb) {
+        m_on_connected = cb;
+    }
+    void on_disconnected(OnDisconnected cb) {
+        m_on_disconnected = cb;
+    }
+    void on_lobby_update(OnLobbyUpdate cb) {
+        m_on_lobby_update = cb;
+    }
+    void on_game_data(OnGameData cb) {
+        m_on_game_data = cb;
+    }
 
-private:
+  private:
     void send_packet(uint16_t type, const void* data, uint32_t size);
     bool recv_packet(SnapPacketHeader& header, std::vector<uint8_t>& data);
     void handle_packet(const SnapPacketHeader& header, const uint8_t* data, uint32_t size);
@@ -103,7 +105,7 @@ private:
     SnapState m_state = SnapState::Disconnected;
 
 #ifdef REO_PLATFORM_WINDOWS
-    uintptr_t m_socket = ~(uintptr_t)0;  // INVALID_SOCKET
+    uintptr_t m_socket = ~(uintptr_t)0; // INVALID_SOCKET
 #endif
 
     uint32_t m_sequence = 0;

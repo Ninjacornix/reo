@@ -23,21 +23,21 @@ namespace reo {
 
 struct AdxHeader {
     uint16_t data_offset;
-    uint8_t  encoding_type;  // 3 = standard ADX, 4 = AHX
-    uint8_t  block_size;     // Usually 18
-    uint8_t  sample_bits;    // Usually 4
-    uint8_t  channel_count;
+    uint8_t encoding_type; // 3 = standard ADX, 4 = AHX
+    uint8_t block_size;    // Usually 18
+    uint8_t sample_bits;   // Usually 4
+    uint8_t channel_count;
     uint32_t sample_rate;
     uint32_t total_samples;
     uint16_t highpass_freq;
-    uint8_t  version;        // 3 or 4
-    bool     has_loop;
+    uint8_t version; // 3 or 4
+    bool has_loop;
     uint32_t loop_start;
     uint32_t loop_end;
 };
 
 class AdxDecoder {
-public:
+  public:
     AdxDecoder() = default;
 
     bool open(const std::string& path);
@@ -52,22 +52,26 @@ public:
     // Reset to beginning
     void reset();
 
-    const AdxHeader& header() const { return m_header; }
-    bool is_open() const { return m_open; }
+    const AdxHeader& header() const {
+        return m_header;
+    }
+    bool is_open() const {
+        return m_open;
+    }
 
-private:
+  private:
     bool parse_header();
     int16_t decode_sample(int channel, int32_t nibble);
 
     AdxHeader m_header = {};
     std::vector<uint8_t> m_data;
-    uint32_t m_position = 0;  // Current byte position in data
+    uint32_t m_position = 0; // Current byte position in data
     bool m_open = false;
 
     // ADPCM state per channel
     struct ChannelState {
-        int32_t prev[2];  // Previous 2 samples
-        int32_t coef[2];  // Predictor coefficients
+        int32_t prev[2]; // Previous 2 samples
+        int32_t coef[2]; // Predictor coefficients
     };
     ChannelState m_channels[2] = {};
 };

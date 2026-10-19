@@ -17,49 +17,46 @@ namespace reo {
  * focused on threading, memory allocation, TLB, DMA, and semaphores.
  */
 
-// ── Thread management ───────────────────────────────────────────────
-
+// Thread management
 enum class ThreadStatus {
     Free,
-    Dormant,    // Created but not started
-    Running,    // Currently executing
-    Ready,      // Runnable, waiting for CPU
-    Waiting,    // Blocked (sleep, semaphore, etc.)
+    Dormant, // Created but not started
+    Running, // Currently executing
+    Ready,   // Runnable, waiting for CPU
+    Waiting, // Blocked (sleep, semaphore, etc.)
 };
 
 struct EEThread {
     int id = -1;
     ThreadStatus status = ThreadStatus::Free;
-    uint32_t entry_pc = 0;       // Thread function address
-    uint32_t stack_ptr = 0;      // Stack pointer ($sp)
-    uint32_t gp = 0;             // Global pointer ($gp)
-    uint32_t arg = 0;            // Argument passed to thread start
-    int priority = 0;            // Lower = higher priority
-    int wakeup_count = 0;        // Pending wakeups (WakeupThread increments)
-    int wait_sema_id = -1;       // Semaphore this thread is waiting on (-1 = none)
+    uint32_t entry_pc = 0;  // Thread function address
+    uint32_t stack_ptr = 0; // Stack pointer ($sp)
+    uint32_t gp = 0;        // Global pointer ($gp)
+    uint32_t arg = 0;       // Argument passed to thread start
+    int priority = 0;       // Lower = higher priority
+    int wakeup_count = 0;   // Pending wakeups (WakeupThread increments)
+    int wait_sema_id = -1;  // Semaphore this thread is waiting on (-1 = none)
 };
 
 constexpr int MAX_EE_THREADS = 64;
 
-// ── Semaphore management ────────────────────────────────────────────
-
+// Semaphore management
 struct EESemaphore {
     int id = -1;
     bool active = false;
-    int count = 0;           // Current count
-    int max_count = 1;       // Maximum count
-    int init_count = 0;      // Initial count
-    int wait_threads = 0;    // Number of threads waiting
+    int count = 0;        // Current count
+    int max_count = 1;    // Maximum count
+    int init_count = 0;   // Initial count
+    int wait_threads = 0; // Number of threads waiting
 };
 
 constexpr int MAX_EE_SEMAS = 128;
 
-// ── Kernel state ────────────────────────────────────────────────────
-
+// Kernel state
 struct KernelState {
     EEThread threads[MAX_EE_THREADS] = {};
     EESemaphore semaphores[MAX_EE_SEMAS] = {};
-    int current_thread = 0;  // Currently running thread ID
+    int current_thread = 0; // Currently running thread ID
     int next_thread_id = 1;
     int next_sema_id = 1;
 
@@ -88,12 +85,10 @@ struct KernelState {
 // Global kernel state
 KernelState& get_kernel();
 
-// ── Syscall dispatch ────────────────────────────────────────────────
-
+// Syscall dispatch
 void handle_syscall(EEContext* ctx, uint32_t code);
 
-// ── Individual handlers ─────────────────────────────────────────────
-
+// Individual handlers
 void hle_SetGsCrt(EEContext* ctx);
 void hle_GsPutIMR(EEContext* ctx);
 void hle_SetVSyncFlag(EEContext* ctx);

@@ -8,7 +8,8 @@ namespace reo {
 
 bool Tim2Loader::load(const std::string& path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file) return false;
+    if (!file)
+        return false;
 
     auto size = file.tellg();
     file.seekg(0);
@@ -24,7 +25,8 @@ bool Tim2Loader::load(const uint8_t* data, uint32_t size) {
 }
 
 bool Tim2Loader::parse_tim2(const uint8_t* data, uint32_t size) {
-    if (size < 16) return false;
+    if (size < 16)
+        return false;
 
     // TIM2 signature: "TIM2" (0x54494D32)
     if (data[0] != 'T' || data[1] != 'I' || data[2] != 'M' || data[3] != '2') {
@@ -41,18 +43,20 @@ bool Tim2Loader::parse_tim2(const uint8_t* data, uint32_t size) {
     uint16_t global_tex_id;
     memcpy(&global_tex_id, data + 8, 2);
 
-    printf("[TIM2] Version %d, alignment=%d, %d texture(s), globalTexId=%u\n",
-           version, alignment, tex_count, global_tex_id);
+    printf("[TIM2] Version %d, alignment=%d, %d texture(s), globalTexId=%u\n", version, alignment,
+           tex_count, global_tex_id);
 
     uint32_t hdr_size = alignment ? 0x80 : 16;
     uint32_t offset = hdr_size;
 
     for (int i = 0; i < tex_count && offset < size; i++) {
-        if (offset + 48 > size) break;
+        if (offset + 48 > size)
+            break;
 
         uint32_t total_size;
         memcpy(&total_size, data + offset, 4);
-        if (total_size == 0 || offset + total_size > size) break;
+        if (total_size == 0 || offset + total_size > size)
+            break;
 
         Tim2Texture tex{};
         tex.global_tex_id = global_tex_id;
@@ -104,9 +108,8 @@ bool Tim2Loader::decode_texture(const uint8_t* hdr, uint32_t total_size, Tim2Tex
 
     const char* type_names[] = {"?", "RGB16", "RGB24", "RGBA32", "IDX4", "IDX8"};
     const char* type_name = (tex.image_type <= 5) ? type_names[tex.image_type] : "UNK";
-    printf("[TIM2] Texture: %dx%d type=%s(%d) clut=0x%02X colors=%d\n",
-           tex.width, tex.height, type_name, tex.image_type,
-           tex.clut_type, clut_colors);
+    printf("[TIM2] Texture: %dx%d type=%s(%d) clut=0x%02X colors=%d\n", tex.width, tex.height,
+           type_name, tex.image_type, tex.clut_type, clut_colors);
 
     // Extract pixel data
     const uint8_t* pixel_data = hdr + header_size;
@@ -131,8 +134,10 @@ bool Tim2Loader::decode_texture(const uint8_t* hdr, uint32_t total_size, Tim2Tex
 
     switch (tex.image_type) {
         case 5: { // IDX8 - 8-bit indexed
-            if (tex.pixel_data.size() < tex.width * tex.height) break;
-            if (tex.clut_data.size() < (size_t)clut_colors * 4) break;
+            if (tex.pixel_data.size() < tex.width * tex.height)
+                break;
+            if (tex.clut_data.size() < (size_t)clut_colors * 4)
+                break;
 
             for (uint32_t i = 0; i < tex.width * tex.height; i++) {
                 uint8_t idx = tex.pixel_data[i];
@@ -155,8 +160,10 @@ bool Tim2Loader::decode_texture(const uint8_t* hdr, uint32_t total_size, Tim2Tex
             break;
         }
         case 4: { // IDX4 - 4-bit indexed
-            if (tex.pixel_data.size() < (tex.width * tex.height + 1) / 2) break;
-            if (tex.clut_data.size() < (size_t)clut_colors * 4) break;
+            if (tex.pixel_data.size() < (tex.width * tex.height + 1) / 2)
+                break;
+            if (tex.clut_data.size() < (size_t)clut_colors * 4)
+                break;
 
             for (uint32_t i = 0; i < tex.width * tex.height; i++) {
                 uint8_t byte = tex.pixel_data[i / 2];
@@ -173,7 +180,8 @@ bool Tim2Loader::decode_texture(const uint8_t* hdr, uint32_t total_size, Tim2Tex
             break;
         }
         case 3: { // RGBA32
-            if (tex.pixel_data.size() < tex.width * tex.height * 4) break;
+            if (tex.pixel_data.size() < tex.width * tex.height * 4)
+                break;
             for (uint32_t i = 0; i < tex.width * tex.height; i++) {
                 tex.rgba_data[i * 4 + 0] = tex.pixel_data[i * 4 + 0];
                 tex.rgba_data[i * 4 + 1] = tex.pixel_data[i * 4 + 1];
@@ -184,7 +192,8 @@ bool Tim2Loader::decode_texture(const uint8_t* hdr, uint32_t total_size, Tim2Tex
             break;
         }
         case 2: { // RGB24
-            if (tex.pixel_data.size() < tex.width * tex.height * 3) break;
+            if (tex.pixel_data.size() < tex.width * tex.height * 3)
+                break;
             for (uint32_t i = 0; i < tex.width * tex.height; i++) {
                 tex.rgba_data[i * 4 + 0] = tex.pixel_data[i * 3 + 0];
                 tex.rgba_data[i * 4 + 1] = tex.pixel_data[i * 3 + 1];
@@ -194,12 +203,13 @@ bool Tim2Loader::decode_texture(const uint8_t* hdr, uint32_t total_size, Tim2Tex
             break;
         }
         case 1: { // RGB16 (ABGR1555)
-            if (tex.pixel_data.size() < tex.width * tex.height * 2) break;
+            if (tex.pixel_data.size() < tex.width * tex.height * 2)
+                break;
             for (uint32_t i = 0; i < tex.width * tex.height; i++) {
                 uint16_t px;
                 memcpy(&px, tex.pixel_data.data() + i * 2, 2);
-                tex.rgba_data[i * 4 + 0] = ((px >>  0) & 0x1F) << 3; // R
-                tex.rgba_data[i * 4 + 1] = ((px >>  5) & 0x1F) << 3; // G
+                tex.rgba_data[i * 4 + 0] = ((px >> 0) & 0x1F) << 3;  // R
+                tex.rgba_data[i * 4 + 1] = ((px >> 5) & 0x1F) << 3;  // G
                 tex.rgba_data[i * 4 + 2] = ((px >> 10) & 0x1F) << 3; // B
                 tex.rgba_data[i * 4 + 3] = (px & 0x8000) ? 255 : 0;  // A
             }
@@ -223,7 +233,8 @@ void Tim2Loader::rearrange_clut(uint8_t* clut, int color_count) {
     // CSM1 CLUT rearrangement for PSMT8 (256-color palettes)
     // Within each 32-entry block, swap entries 8-15 with entries 16-23
     // This matches PS2 GS hardware CLUT storage order
-    if (color_count < 32) return;
+    if (color_count < 32)
+        return;
 
     uint8_t temp[4];
     int blocks = color_count / 32;
@@ -243,7 +254,8 @@ void Tim2Loader::rearrange_clut(uint8_t* clut, int color_count) {
 // RE Outbreak custom 16-bit word LZ77 decompression
 // Based on OBSld::decompress() from libthanatos/REOF2
 std::vector<uint8_t> Tim2Loader::decompress_ob_lz77(const uint8_t* input, uint32_t input_size) {
-    if (input_size < 2) return {};
+    if (input_size < 2)
+        return {};
 
     // Work in 16-bit words
     uint32_t word_count = input_size / 2;
@@ -259,13 +271,14 @@ std::vector<uint8_t> Tim2Loader::decompress_ob_lz77(const uint8_t* input, uint32
         uint16_t ctrl = words[pos++];
 
         for (int bit = 15; bit >= 0; bit--) {
-            if (pos >= word_count) break;
+            if (pos >= word_count)
+                break;
 
             if (ctrl & (1 << bit)) {
                 // Compressed token
                 uint16_t mode = words[pos++];
-                uint32_t count = mode >> 11;       // top 5 bits
-                uint32_t offset = mode & 0x7FF;    // bottom 11 bits
+                uint32_t count = mode >> 11;    // top 5 bits
+                uint32_t offset = mode & 0x7FF; // bottom 11 bits
 
                 if (count == 0 && offset == 0) {
                     // Termination sentinel
@@ -274,7 +287,8 @@ std::vector<uint8_t> Tim2Loader::decompress_ob_lz77(const uint8_t* input, uint32
 
                 if (count == 0) {
                     // Extended count from next word
-                    if (pos >= word_count) goto done;
+                    if (pos >= word_count)
+                        goto done;
                     count = words[pos++];
                 }
 
@@ -310,7 +324,7 @@ done:
 
 // Legacy LZSS (standard 4KB sliding window) — kept for compatibility
 bool Tim2Loader::decompress_lzss(const uint8_t* input, uint32_t input_size,
-                                  std::vector<uint8_t>& output) {
+                                 std::vector<uint8_t>& output) {
     output.clear();
     output.reserve(input_size * 4);
 
@@ -330,7 +344,8 @@ bool Tim2Loader::decompress_lzss(const uint8_t* input, uint32_t input_size,
                 window[win_pos] = byte;
                 win_pos = (win_pos + 1) & 0xFFF;
             } else {
-                if (pos + 1 >= input_size) break;
+                if (pos + 1 >= input_size)
+                    break;
 
                 uint8_t lo = input[pos++];
                 uint8_t hi = input[pos++];

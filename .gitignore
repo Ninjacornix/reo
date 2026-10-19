@@ -1,17 +1,49 @@
-# Game files - DO NOT COMMIT (legally owned copies only)
+# User-owned game data and captures
+/iso/
+/extracted/
+/game_data*/
+/resident-evil-outbreak-file-2/
 *.iso
 *.ISO
 *.bin
 *.BIN
-*.MEC
-*.NVM
 *.elf
 *.ELF
+*.cue
+*.CUE
+*.zip
+*.7z
+*.torrent
+SCPH-*
+*.MEC
+*.NVM
+*.sfd
+*.adx
+*.irx
+*.gs
+*.dmp
+*.wav
+/saves/
+/gs_frames/
+/reo_fb_dump.bmp
+/docs/title_screen.png
+/tools/ps2_debug/overlay_dumps/
 
-# Build output
-build/
-out/
-cmake-build-*/
+# Recompiled game code is generated locally
+/recomp_output/
+/recomp/config/output*/
+*.recomp.cpp
+
+# Build products and downloaded dependencies
+/build/
+/build-*/
+/out/
+/cmake-build-*/
+/deps/
+/third_party/build/
+**/bin/
+**/obj/
+**/artifacts/
 *.o
 *.obj
 *.exe
@@ -23,8 +55,30 @@ cmake-build-*/
 *.pdb
 *.ilk
 *.exp
+*.spv
+*.cache
+/build_*.txt
 
-# IDE
+# Local agent notes and investigation receipts
+**/[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.md
+/.claude/
+/.codex/
+/.opencode/
+/CLAUDE.md
+/REVERSE_ENGINEERING.md
+/ROADMAP.md
+/docs/BASELINE.md
+/docs/M2_*.md
+/launcher/DESIGN.md
+
+# Development environments and scratch files
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .vs/
 .vscode/
 .idea/
@@ -32,58 +86,14 @@ cmake-build-*/
 *.user
 *.sln.docstates
 CMakeSettings.json
-
-# PS2Recomp output
-recomp_output/
-*.recomp.cpp
-
-# Extracted game data (generated from ISO)
-extracted/
-game_data/
-game_data_file2/
-
-# Dependencies (fetched by build)
-deps/
-third_party/build/
-
-# OS
-Thumbs.db
-.DS_Store
-desktop.ini
-
-# Misc
+.env
+.env.*
+!.env.example
 *.log
 *.tmp
 *.swp
 *.swo
 *~
-recomp/config/output/
-recomp/config/output_file2/
-third_party/PS2Recomp/
-game_data/
-game_data_file2/
-game_data_ntsc/
-
-# ISO archives and disc images
-resident-evil-outbreak-file-2/
-resident-evil-outbreak-file-2.zip
-*.cue
-*.CUE
-*.torrent
-
-# BIOS files
-SCPH-*
-
-# Save data
-saves/
-
-# Build artifacts and temp files
-tools/ps2_debug/overlay_dumps/output/
-tools/ps2_debug/__pycache__/
-recomp/config/output_render_unstub/
-build_*.txt
-gs_frames/
-*.gs
-
-# Claude local settings
-.claude/
+Thumbs.db
+.DS_Store
+desktop.ini

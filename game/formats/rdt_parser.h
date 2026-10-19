@@ -52,17 +52,25 @@ struct RdtEnemySpawn {
 };
 
 class RdtParser {
-public:
+  public:
     RdtParser() = default;
 
     bool parse(const uint8_t* data, uint32_t size);
 
-    const std::vector<RdtCamera>& cameras() const { return m_cameras; }
-    const std::vector<RdtDoor>& doors() const { return m_doors; }
-    const std::vector<RdtItem>& items() const { return m_items; }
-    const std::vector<RdtEnemySpawn>& enemy_spawns() const { return m_enemy_spawns; }
+    const std::vector<RdtCamera>& cameras() const {
+        return m_cameras;
+    }
+    const std::vector<RdtDoor>& doors() const {
+        return m_doors;
+    }
+    const std::vector<RdtItem>& items() const {
+        return m_items;
+    }
+    const std::vector<RdtEnemySpawn>& enemy_spawns() const {
+        return m_enemy_spawns;
+    }
 
-private:
+  private:
     std::vector<RdtCamera> m_cameras;
     std::vector<RdtDoor> m_doors;
     std::vector<RdtItem> m_items;

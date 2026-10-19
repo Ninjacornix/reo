@@ -1,0 +1,335 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index ea3e909..f0fb396 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -1,5 +1,6 @@
+ #include "Common.h"
+ #include "Interrupt.h"
++#include "../../ps2_guest_sched.h"
+ #include "ps2_log.h"
+ #include "Stubs/GS.h"
+ #include <algorithm>
+@@ -457,7 +458,17 @@ namespace ps2_syscalls
+                 // MMIO polling (0x1000F000 & 4) for frame pacing.
+                 runtime->memory().raiseIntc(kIntcVblankStart);
+                 runtime->memory().gsFieldTick(); // toggle GS_CSR FIELD + VSINT
++                const auto vbStart = std::chrono::steady_clock::now();
+                 dispatchIntcHandlersForCause(rdram, runtime, kIntcVblankStart);
++                {
++                    // [vblank-slow]: VBLANK_START dispatch that took > 8 ms (it needs the guest
++                    // lock); reports the guest thread that last owned the CPU (D44).
++                    const auto us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - vbStart).count();
++                    static std::atomic<int> s_slowLogs{0};
++                    if (us > 8000 && s_slowLogs.fetch_add(1) < 200)
++                        std::fprintf(stderr, "[vblank-slow] %lld us, lastOwner=%d tick=%llu catchup=%d\n", static_cast<long long>(us),
++                                     ps2_sched::debugLastOwner(), static_cast<unsigned long long>(tickValue), ticksToProcess);
++                }
+                 ps2GsSnapshotDisplay(); // after the game's VBLANK handler flipped DISPFB
+                 std::this_thread::sleep_for(std::chrono::microseconds(500));
+                 runtime->memory().raiseIntc(kIntcVblankEnd);
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+index 609d3f9..b6e00a7 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -42,6 +42,7 @@ namespace
+         uint64_t completed = 0; // items ever executed
+         uint64_t vsyncMark = 0; // `enqueued` at the latest vblank
+         uint64_t prevVsyncMark = 0; // `enqueued` at the vblank before that
++        uint64_t prev2VsyncMark = 0; // and the one before that (pacing slack, D44)
+         // Display state captured at the latest vblank (D40): present shows exactly this
+         // state instead of whatever the registers/queue hold when the window loop wakes.
+         struct
+@@ -57,6 +58,8 @@ namespace
+     GsAsync g_gsAsync;
+     GSRegisters *g_gsPrivRegs = nullptr; // set by GS::init; read at vblank (D40)
+     std::atomic<uint64_t> g_vblankSeq{0u}; // display snapshots taken so far
++    std::mutex g_vblankWaitMutex;
++    std::condition_variable g_vblankCv; // present loop wakes on each snapshot (D44)
+     thread_local bool t_isGsWorker = false;
+     constexpr size_t kGsQueueMaxBytes = 64u * 1024u * 1024u;
+ 
+@@ -112,7 +115,9 @@ namespace
+         // GS because the game waits for GS completion; without this the guest queued ~23 s
+         // of logo drawing and present (which drains) froze on a stale frame (D39).
+         g_gsAsync.drained.wait(lock, [] {
+-            return g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= g_gsAsync.prevVsyncMark;
++            // Two frames of slack (D44): with one, a heavy frame made the game thread wait
++            // while holding the guest lock, delaying the VBLANK handler (present hitches).
++            return g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= g_gsAsync.prev2VsyncMark;
+         });
+         g_gsAsync.queuedBytes += item.data.size();
+         ++g_gsAsync.enqueued;
+@@ -126,6 +131,7 @@ namespace
+     void gsMarkVsyncImpl()
+     {
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        g_gsAsync.prev2VsyncMark = g_gsAsync.prevVsyncMark;
+         g_gsAsync.prevVsyncMark = g_gsAsync.vsyncMark;
+         g_gsAsync.vsyncMark = g_gsAsync.enqueued;
+     }
+@@ -149,6 +155,10 @@ namespace
+             vb.mark = g_gsAsync.enqueued;
+             vb.valid = true;
+             g_vblankSeq.fetch_add(1u, std::memory_order_release);
++            {
++                std::lock_guard<std::mutex> waitLock(g_vblankWaitMutex);
++            }
++            g_vblankCv.notify_all();
+         }
+     }
+ 
+@@ -1069,7 +1079,11 @@ void GS::latchHostPresentationFrame()
+             return false;
+         }
+ 
+-        if (!usedPreferred && displayFrame.fbp == 0u && countNonBlackPixels(scratch, width, height) == 0u)
++        // Upstream fallback: a black FBP-0 display is replaced by a drawing context's frame.
++        // During fades that is the buffer being drawn, so a half-drawn frame flashed in at
++        // transitions (D44). Opt-in only (REO_BLACK_FRAME_FALLBACK=1).
++        static const bool s_blackFallback = std::getenv("REO_BLACK_FRAME_FALLBACK") != nullptr;
++        if (s_blackFallback && !usedPreferred && displayFrame.fbp == 0u && countNonBlackPixels(scratch, width, height) == 0u)
+         {
+             for (int contextIndex = 0; contextIndex < 2; ++contextIndex)
+             {
+@@ -1325,6 +1339,15 @@ void ps2GsMarkVsync() { gsMarkVsyncImpl(); }
+ void ps2GsSnapshotDisplay() { gsSnapshotDisplayImpl(); }
+ // Present loop (ps2_runtime.cpp): number of vblank display snapshots taken.
+ uint64_t ps2GsVblankSeq() { return g_vblankSeq.load(std::memory_order_acquire); }
++// Blocks until a snapshot newer than `seenSeq` exists or `timeoutMs` passes (D44); waking on
++// a condition variable avoids the coarse Windows sleep granularity that made presents jitter.
++uint64_t ps2GsWaitVblank(uint64_t seenSeq, int timeoutMs)
++{
++    std::unique_lock<std::mutex> lock(g_vblankWaitMutex);
++    g_vblankCv.wait_for(lock, std::chrono::milliseconds(timeoutMs),
++                        [seenSeq] { return g_vblankSeq.load(std::memory_order_acquire) != seenSeq; });
++    return g_vblankSeq.load(std::memory_order_acquire);
++}
+ 
+ void GS::processGIFPacket(const uint8_t *data, uint32_t sizeBytes)
+ {
+diff --git a/ps2xRuntime/src/lib/ps2_guest_sched.h b/ps2xRuntime/src/lib/ps2_guest_sched.h
+index df56048..cb44537 100644
+--- a/ps2xRuntime/src/lib/ps2_guest_sched.h
++++ b/ps2xRuntime/src/lib/ps2_guest_sched.h
+@@ -27,6 +27,8 @@ namespace ps2_sched
+     bool mustYield(int tid);
+     // Long busy-wait: also yield to equal-priority waiters (see ps2_runtime.cpp).
+     bool spinYield(int tid);
++    // Diagnostics: guest thread that most recently owned the CPU.
++    int debugLastOwner();
+ 
+     // EE kernel: a syscall that makes a thread of strictly higher priority ready
+     // (WakeupThread, ResumeThread, ChangeThreadPriority) switches to it before returning.
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index c608ed6..faddb4f 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -101,6 +101,7 @@ extern std::atomic<uint32_t> g_pxCalls, g_pxScissor, g_pxAlpha;
+ 
+ extern std::atomic<uint64_t> g_dbgSpritePx[6];
+ uint64_t ps2GsVblankSeq(); // ps2_gs_gpu.cpp: vblank display snapshots taken (D40)
++uint64_t ps2GsWaitVblank(uint64_t seenSeq, int timeoutMs); // ps2_gs_gpu.cpp (D44)
+ void ps2InstallModalRender(void *nativeWindow, void (*render)()); // Kernel/Host/Win32ModalRender.cpp (D42)
+ namespace ps2_syscalls
+ {
+@@ -209,6 +210,7 @@ namespace ps2_sched
+                std::to_string(g_waiting[tid].load());
+     }
+     int debugWaitingWorkers() { return g_waitingWorkers.load(); }
++    int debugLastOwner() { return g_lastGuestOwner.load(); }
+     int currentThread() { return t_tid; }
+ 
+     void setPriority(int tid, int priority)
+@@ -696,6 +698,7 @@ PS2Runtime::GuestExecutionReleaseScope::~GuestExecutionReleaseScope()
+ 
+ std::atomic<uint32_t> g_presentRunHist[8]; // [present] heartbeat (see UploadFrame)
+ std::atomic<uint32_t> g_modalPresents{0u}; // frames drawn from the Win32 modal timer (D42)
++std::atomic<int64_t> g_lastSwapUs{0}; // [present] log: duration of the last EndDrawing (swap)
+ 
+ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint32_t &outHeight)
+ {
+@@ -902,6 +905,36 @@ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint
+                 ++s_dumped;
+             }
+         }
++        // REO_PRESENT_LOG=<from s>,<to s>: one line per present (tick, buffers, brightness,
++        // hash) to find single-frame flicker at transitions (D44).
++        {
++            static double s_logFrom = -1.0, s_logTo = -1.0;
++            static bool s_parsed = false;
++            if (!s_parsed)
++            {
++                s_parsed = true;
++                if (const char *e = std::getenv("REO_PRESENT_LOG"))
++                    std::sscanf(e, "%lf,%lf", &s_logFrom, &s_logTo);
++            }
++            static const auto s_t0 = std::chrono::steady_clock::now();
++            const double t = std::chrono::duration<double>(std::chrono::steady_clock::now() - s_t0).count();
++            if (s_logFrom >= 0.0 && t >= s_logFrom && t <= s_logTo)
++            {
++                uint64_t sum = 0;
++                uint64_t hh = 1469598103934665603ull;
++                for (size_t i = 0; i + 3 < scratch.size(); i += 4u * 7u)
++                {
++                    sum += scratch[i] + scratch[i + 1] + scratch[i + 2];
++                    hh = (hh ^ scratch[i] ^ (scratch[i + 1] << 8) ^ (scratch[i + 2] << 16)) * 1099511628211ull;
++                }
++                const size_t n = std::max<size_t>(1, scratch.size() / (4u * 7u));
++                std::fprintf(stderr, "[present] seq=%llu swapus=%lld t=%.3f tick=%llu fbp=%u src=%u pref=%d %ux%u luma=%llu hash=%08llx\n",
++                             static_cast<unsigned long long>(ps2GsVblankSeq()), static_cast<long long>(g_lastSwapUs.load()), t,
++                             static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()), displayFbp, sourceFbp,
++                             usedPreferredDisplaySource ? 1 : 0, width, height,
++                             static_cast<unsigned long long>(sum / (3u * n)), static_cast<unsigned long long>(hh & 0xFFFFFFFFull));
++            }
++        }
+         static uint64_t s_lastHash = 0;
+         static uint32_t s_run = 0;
+         if (h == s_lastHash)
+@@ -2632,7 +2665,9 @@ void PS2Runtime::run()
+         }
+         else
+         {
++            const auto swapStart = std::chrono::steady_clock::now();
+             EndDrawing();
++            g_lastSwapUs.store(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - swapStart).count());
+         }
+     };
+     static std::function<void(bool)> *s_presentFrame = nullptr;
+@@ -2676,6 +2711,11 @@ void PS2Runtime::run()
+     while (!isStopRequested() && g_activeThreads.load(std::memory_order_relaxed) > 0)
+     {
+ #ifdef REO_DIAG_LOGS
++        // Heartbeat output is collected in a local buffer and written once: std::cerr is
++        // unbuffered, and dozens of small writes per heartbeat stalled this (present) thread
++        // ~50 ms once a second (D44). Only this block writes to the buffer (redirecting
++        // std::cerr itself raced with other threads and hung).
++        std::ostringstream heartbeatOut;
+         {
+             tick++;
+             // Heap-free histograms (fixed open-addressing tables) of the live PC and its caller.
+@@ -2734,10 +2774,10 @@ void PS2Runtime::run()
+                     }
+                     if (cur != s_last)
+                     {
+-                        std::cerr << "[peek] tick=" << std::dec << tick << " pc=0x" << std::hex << m_cpuContext.pc;
++                        heartbeatOut << "[peek] tick=" << std::dec << tick << " pc=0x" << std::hex << m_cpuContext.pc;
+                         for (size_t i = 0; i < s_peek.size(); ++i)
+-                            std::cerr << " [0x" << s_peek[i] << "]=0x" << cur[i];
+-                        std::cerr << std::dec << std::endl;
++                            heartbeatOut << " [0x" << s_peek[i] << "]=0x" << cur[i];
++                        heartbeatOut << std::dec << std::endl;
+                         s_last = std::move(cur);
+                     }
+                 }
+@@ -2751,10 +2791,10 @@ void PS2Runtime::run()
+                 for (int i = 0; i < 256; ++i) if (rd32(0x341640u + i * 16u)) ++tasks;
+ 
+                 const auto v = s_pcHist.sorted();
+-                std::cerr << "[hot] tick=" << std::dec << tick << " top:";
++                heartbeatOut << "[hot] tick=" << std::dec << tick << " top:";
+                 for (size_t i = 0; i < 10 && i < v.size(); ++i)
+-                    std::cerr << " 0x" << std::hex << v[i].first << "(" << std::dec << v[i].second << ")";
+-                std::cerr << std::hex
++                    heartbeatOut << " 0x" << std::hex << v[i].first << "(" << std::dec << v[i].second << ")";
++                heartbeatOut << std::hex
+                           << " | tasks=" << std::dec << tasks
+                           << " loop@316598=" << rd32(0x316598u)
+                           << " vblank@3445E8=" << rd32(0x3445E8u)
+@@ -2774,7 +2814,7 @@ void PS2Runtime::run()
+                           << " ww=" << ps2_sched::debugWaitingWorkers();
+                 for (int t : {5, 6, 7})
+                     if (R5900Context *c = ps2_sched::g_threadCtx[t].load())
+-                        std::cerr << " pc" << t << "=0x" << std::hex << c->pc << "/ra=0x"
++                        heartbeatOut << " pc" << t << "=0x" << std::hex << c->pc << "/ra=0x"
+                                   << static_cast<uint32_t>(_mm_extract_epi32(c->r[31], 0)) << std::dec
+                           << std::endl;
+                 {
+@@ -2787,57 +2827,62 @@ void PS2Runtime::run()
+                                                 std::chrono::steady_clock::now().time_since_epoch())
+                                                 .count();
+                     const uint32_t csc = ps2_ipu::g_dbgCsc.load(), bdec = ps2_ipu::g_dbgBdec.load();
+-                    std::cerr << "[perf] tick=" << tick << " hostms=" << (s_lastNs ? (nowHost - s_lastNs) / 1000000 : 0)
++                    heartbeatOut << "[perf] tick=" << tick << " hostms=" << (s_lastNs ? (nowHost - s_lastNs) / 1000000 : 0)
+                               << " csc=" << (csc - s_lastCsc) << " bdec=" << (bdec - s_lastBdec) << " own/wait ms:";
+                     for (int t : {1, 5, 6, 7})
+                     {
+                         const int64_t own = ps2_sched::g_ownNs[t].load(), wait = ps2_sched::g_waitNs[t].load();
+-                        std::cerr << " t" << t << "=" << (own - s_lastOwn[t]) / 1000000 << "/" << (wait - s_lastWait[t]) / 1000000;
++                        heartbeatOut << " t" << t << "=" << (own - s_lastOwn[t]) / 1000000 << "/" << (wait - s_lastWait[t]) / 1000000;
+                         s_lastOwn[t] = own;
+                         s_lastWait[t] = wait;
+                     }
+                     static uint32_t s_lastRaised[16] = {}, s_lastHandled[16] = {};
+-                    std::cerr << " dmac raised/handled:";
++                    heartbeatOut << " dmac raised/handled:";
+                     for (int ch : {0, 1, 2, 3, 4, 8, 9})
+                     {
+                         const uint32_t ra = ps2_syscalls::g_dbgDmacRaised[ch].load(), ha = ps2_syscalls::g_dbgDmacHandled[ch].load();
+-                        std::cerr << " ch" << ch << "=" << (ra - s_lastRaised[ch]) << "/" << (ha - s_lastHandled[ch]);
++                        heartbeatOut << " ch" << ch << "=" << (ra - s_lastRaised[ch]) << "/" << (ha - s_lastHandled[ch]);
+                         s_lastRaised[ch] = ra;
+                         s_lastHandled[ch] = ha;
+                     }
+                     static uint64_t s_lastSpr[6] = {};
+-                    std::cerr << " sprKpx(untex/pt/bil/pt1:1/bil1:1/abe):";
++                    heartbeatOut << " sprKpx(untex/pt/bil/pt1:1/bil1:1/abe):";
+                     for (int i = 0; i < 6; ++i)
+                     {
+                         const uint64_t v = g_dbgSpritePx[i].load();
+-                        std::cerr << (i ? "/" : " ") << (v - s_lastSpr[i]) / 1000;
++                        heartbeatOut << (i ? "/" : " ") << (v - s_lastSpr[i]) / 1000;
+                         s_lastSpr[i] = v;
+                     }
+                     {
+                         static uint32_t s_lastRuns[8] = {};
+-                        std::cerr << " modalPresents=" << g_modalPresents.load();
+-                        std::cerr << " present-runs(1..7+):";
++                        heartbeatOut << " modalPresents=" << g_modalPresents.load();
++                        heartbeatOut << " present-runs(1..7+):";
+                         for (int i = 1; i < 8; ++i)
+                         {
+                             const uint32_t v = g_presentRunHist[i].load();
+-                            std::cerr << (i > 1 ? "/" : " ") << (v - s_lastRuns[i]);
++                            heartbeatOut << (i > 1 ? "/" : " ") << (v - s_lastRuns[i]);
+                             s_lastRuns[i] = v;
+                         }
+                     }
+-                    std::cerr << std::endl;
++                    heartbeatOut << std::endl;
+                     s_lastNs = nowHost;
+                     s_lastCsc = csc;
+                     s_lastBdec = bdec;
+                 }
+                 s_pcHist.clear();
+                 const auto r = s_raHist.sorted();
+-                std::cerr << "[hot-ra]";
++                heartbeatOut << "[hot-ra]";
+                 for (size_t i = 0; i < 6 && i < r.size(); ++i)
+-                    std::cerr << " 0x" << std::hex << r[i].first << "(" << std::dec << r[i].second << ")";
+-                std::cerr << std::endl;
++                    heartbeatOut << " 0x" << std::hex << r[i].first << "(" << std::dec << r[i].second << ")";
++                heartbeatOut << std::endl;
+                 s_raHist.clear();
+             }
+         }
++        {
++            const std::string text = heartbeatOut.str();
++            if (!text.empty())
++                std::fwrite(text.data(), 1, text.size(), stderr);
++        }
+ #endif
+         if (reoHeadless)
+         {
+@@ -2850,11 +2895,7 @@ void PS2Runtime::run()
+         // the window stays responsive when the guest clock is not running).
+         {
+             static uint64_t s_presentedSeq = 0;
+-            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
+-            while (ps2GsVblankSeq() == s_presentedSeq &&
+-                   std::chrono::steady_clock::now() < deadline && !isStopRequested())
+-                std::this_thread::sleep_for(std::chrono::microseconds(500));
+-            s_presentedSeq = ps2GsVblankSeq();
++            s_presentedSeq = ps2GsWaitVblank(s_presentedSeq, 50);
+         }
+ 
+         presentFrame(false);

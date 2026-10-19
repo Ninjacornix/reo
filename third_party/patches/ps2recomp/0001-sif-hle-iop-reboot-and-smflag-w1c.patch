@@ -1,0 +1,83 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
+index a22fe60..500485e 100644
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
+@@ -69,6 +69,18 @@ namespace ps2_stubs
+         constexpr uint32_t kSifRegMsCom = 0x80000002u;
+         constexpr uint32_t kSifBootReadyMask = 0x00020000u;
+ 
++        // SMFLAG (SIF reg 4, SBUS_F230) status bits set by the IOP.
++        constexpr uint32_t kSifStatSifInit = 0x00010000u;
++        constexpr uint32_t kSifStatCmdInit = 0x00020000u;
++        constexpr uint32_t kSifStatBootEnd = 0x00040000u;
++        // SIF_CMD_RESET: EE asks the IOP to reboot (SifIopReset). The packet
++        // header's command id sits at +0x08; the reset arg string at +0x18.
++        constexpr uint32_t kSifCmdResetIop = 0x80000003u;
++        // Set when a reset packet is DMA'd; the HLE "IOP" finishes rebooting
++        // when the EE next polls SMFLAG (after SifIopReset's own clears).
++        bool g_iopRebootPending = false;
++        uint32_t g_iopRebootCount = 0u;
++
+         void seedDefaultSifRegsLocked()
+         {
+             g_sifRegs.clear();
+@@ -464,6 +476,15 @@ namespace ps2_stubs
+         bool shouldLog = false;
+         {
+             std::lock_guard<std::mutex> lock(g_sifCmdStateMutex);
++            if (reg == kSifRegBootStatus && g_iopRebootPending)
++            {
++                // HLE IOP reboot completes: sifman/sifcmd init + module load done.
++                g_iopRebootPending = false;
++                g_sifRegs[kSifRegBootStatus] |= kSifStatSifInit | kSifStatCmdInit | kSifStatBootEnd;
++                std::cerr << "[SIF] IOP reboot #" << g_iopRebootCount
++                          << " complete: SMFLAG |= SIFINIT|CMDINIT|BOOTEND -> 0x" << std::hex
++                          << g_sifRegs[kSifRegBootStatus] << std::dec << std::endl;
++            }
+             auto it = g_sifRegs.find(reg);
+             if (it != g_sifRegs.end())
+             {
+@@ -681,6 +702,32 @@ namespace ps2_stubs
+                     xfer.src,
+                     xfer.dest,
+                     static_cast<uint32_t>(xfer.size));
++
++                // Detect SIF_CMD_RESET (SifIopReset) and start an HLE IOP reboot.
++                if (xfer.size >= 0x18)
++                {
++                    const uint8_t *pkt = getConstMemPtr(rdram, xfer.src);
++                    uint32_t cid = 0u;
++                    if (pkt)
++                    {
++                        std::memcpy(&cid, pkt + 8, sizeof(cid));
++                    }
++                    if (cid == kSifCmdResetIop)
++                    {
++                        std::string arg;
++                        if (xfer.size >= 0x19)
++                        {
++                            const uint32_t maxLen = std::min<uint32_t>(static_cast<uint32_t>(xfer.size) - 0x18u, 0x50u);
++                            const char *s = reinterpret_cast<const char *>(pkt + 0x18);
++                            arg.assign(s, strnlen(s, maxLen));
++                        }
++                        std::lock_guard<std::mutex> lock(g_sifCmdStateMutex);
++                        g_iopRebootPending = true;
++                        ++g_iopRebootCount;
++                        std::cerr << "[SIF] IOP reset command #" << g_iopRebootCount
++                                  << " (SIF_CMD_RESET) arg='" << arg << "'" << std::endl;
++                    }
++                }
+             }
+         }
+ 
+@@ -721,7 +768,9 @@ namespace ps2_stubs
+             {
+                 prev = it->second;
+             }
+-            g_sifRegs[reg] = value;
++            // EE writes to SMFLAG (SBUS_F230) clear the written bits; only the IOP
++            // sets them (PCSX2 HwWrite.cpp: psHu32(SBUS_F230) &= ~value).
++            g_sifRegs[reg] = (reg == kSifRegBootStatus) ? (prev & ~value) : value;
+             shouldLog = shouldTraceSifReg(reg) && g_sifSetRegLogCount < 128u;
+             if (shouldLog)
+             {

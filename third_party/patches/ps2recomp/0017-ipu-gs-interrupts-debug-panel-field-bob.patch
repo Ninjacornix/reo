@@ -1,0 +1,1463 @@
+diff --git a/ps2xRuntime/CMakeLists.txt b/ps2xRuntime/CMakeLists.txt
+index ddaf5fa..d559b4d 100644
+--- a/ps2xRuntime/CMakeLists.txt
++++ b/ps2xRuntime/CMakeLists.txt
+@@ -182,6 +182,13 @@ file(GLOB_RECURSE KERNEL_SRC_FILES CONFIGURE_DEPENDS
+     "${CMAKE_CURRENT_SOURCE_DIR}/src/lib/Kernel/*.cpp"
+ )
+ 
++# IPU (MPEG decoder): src/lib/ipu
++file(GLOB IPU_SRC_FILES CONFIGURE_DEPENDS
++    "${CMAKE_CURRENT_SOURCE_DIR}/src/lib/ipu/*.cpp"
++)
++target_sources(ps2_runtime PRIVATE ${IPU_SRC_FILES})
++target_include_directories(ps2_runtime PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/lib")
++
+ target_sources(ps2_runtime PRIVATE
+     ${KERNEL_SRC_FILES}
+ )
+diff --git a/ps2xRuntime/include/ps2_debug_panel.h b/ps2xRuntime/include/ps2_debug_panel.h
+new file mode 100644
+index 0000000..bdb7a6e
+--- /dev/null
++++ b/ps2xRuntime/include/ps2_debug_panel.h
+@@ -0,0 +1,8 @@
++#pragma once
++#include <functional>
++#include <string>
++
++// Host debug side panel drawn next to the game picture (F1 toggles; REO_DEBUG_PANEL=0
++// disables it). The provider appends game-specific lines (each ending in a newline);
++// it runs on the presentation thread once per host frame.
++void ps2SetDebugPanelProvider(std::function<void(std::string &)> provider);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index 61a6d2f..cb09de5 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -22,6 +22,7 @@ namespace ps2_syscalls
+         uint32_t g_enabled_intc_mask = 0xFFFFFFFFu;
+         uint32_t g_enabled_dmac_mask = 0xFFFFFFFFu;
+         std::atomic<uint32_t> g_pending_dmac_mask{0u};
++        std::atomic<uint32_t> g_pending_intc_mask{0u};
+         uint8_t *g_irq_worker_rdram = nullptr;
+         uint64_t g_vsync_tick_counter = 0u;
+         VSyncFlagRegistration g_vsync_registration{};
+@@ -325,7 +326,8 @@ namespace ps2_syscalls
+                 std::unique_lock<std::mutex> lock(g_irq_worker_mutex);
+                 g_irq_worker_cv.wait_until(lock, nextTick, []()
+                                            { return g_irq_worker_stop.load(std::memory_order_acquire) ||
+-                                                    g_pending_dmac_mask.load(std::memory_order_acquire) != 0u; });
++                                                    g_pending_dmac_mask.load(std::memory_order_acquire) != 0u ||
++                                                    g_pending_intc_mask.load(std::memory_order_acquire) != 0u; });
+                 if (g_irq_worker_stop.load(std::memory_order_acquire))
+                 {
+                     break;
+@@ -344,6 +346,19 @@ namespace ps2_syscalls
+                 dispatchDmacHandlersForCause(rdram, runtime, channel);
+             }
+ 
++            // Asynchronous INTC causes (GS SIGNAL/FINISH, ...): latch INTC_STAT, run handlers.
++            for (uint32_t pending = g_pending_intc_mask.exchange(0u, std::memory_order_acq_rel); pending != 0u;
++                 pending &= pending - 1u)
++            {
++                uint32_t cause = 0u;
++                while (((pending >> cause) & 1u) == 0u)
++                {
++                    ++cause;
++                }
++                runtime->memory().raiseIntc(cause);
++                dispatchIntcHandlersForCause(rdram, runtime, cause);
++            }
++
+             const auto now = clock::now();
+             int ticksToProcess = 0;
+             while (now >= nextTick && ticksToProcess < kMaxCatchupTicks)
+@@ -375,6 +390,15 @@ namespace ps2_syscalls
+         g_irq_worker_cv.notify_all();
+     }
+ 
++    void raiseIntcInterrupt(uint32_t cause)
++    {
++        if (cause >= 32u)
++            return;
++        g_pending_intc_mask.fetch_or(1u << cause, std::memory_order_acq_rel);
++        std::lock_guard<std::mutex> lock(g_irq_worker_mutex);
++        g_irq_worker_cv.notify_all();
++    }
++
+     void raiseDmacCompletion(uint32_t channel)
+     {
+         if (channel >= 32u)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
+index 3d48998..700e6b5 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
+@@ -30,6 +30,9 @@ namespace ps2_syscalls
+     // A DMA channel finished a transfer: its DMAC handlers run on the interrupt worker
+     // (asynchronously, as on hardware -- not inside the guest's CHCR write).
+     void raiseDmacCompletion(uint32_t channel);
++    // Asynchronous INTC interrupt (e.g. GS SIGNAL/FINISH): latched in INTC_STAT and
++    // the game's INTC handlers for `cause` run on the interrupt worker.
++    void raiseIntcInterrupt(uint32_t cause);
+     void EnsureVSyncWorkerRunning(uint8_t *rdram, PS2Runtime *runtime);
+     uint64_t GetCurrentVSyncTick();
+     void stopInterruptWorker();
+diff --git a/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp b/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
+new file mode 100644
+index 0000000..d2fedbd
+--- /dev/null
++++ b/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
+@@ -0,0 +1,877 @@
++// PS2 IPU (MPEG-2 macroblock decoder), written for PS2Recomp from the MPEG-2 specification
++// (ISO/IEC 13818-2) and the documented IPU register/command interface.
++//
++// Model:
++//  - IN FIFO: stream bytes in memory order, read MSB first. It is filled lazily from DMA
++//    channel 4 (TO_IPU): commands pull more quadwords when they need bits, and idle top-up
++//    keeps up to 8 quadwords buffered, like the hardware FIFO.
++//  - Commands run to completion transactionally: if the input runs dry, the bit position
++//    and DC predictors roll back and the command retries when more data arrives (next
++//    channel-4 kick). Output is committed only when a command completes.
++//  - OUT FIFO: drained to RAM through DMA channel 3 (FROM_IPU) while it runs. BUSY stays set
++//    while more than 8 quadwords of output are pending (the hardware OUT FIFO size).
++// REO_IPU_LOG=1 logs commands.
++#include "ipu/ps2_ipu.h"
++#include "ipu/ps2_ipu_vlc.h"
++
++#include <algorithm>
++#include <array>
++#include <cmath>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <vector>
++
++namespace ps2_ipu
++{
++    namespace
++    {
++        using namespace ps2_ipu_vlc;
++
++        constexpr uint32_t IPU_CMD = 0x10002000u;
++        constexpr uint32_t IPU_CTRL = 0x10002010u;
++        constexpr uint32_t IPU_BP = 0x10002020u;
++        constexpr uint32_t IPU_TOP = 0x10002030u;
++        constexpr uint32_t IPU_OUT_FIFO = 0x10007000u;
++        constexpr uint32_t IPU_IN_FIFO = 0x10007010u;
++        constexpr uint32_t D3 = 0x1000B000u; // FROM_IPU
++        constexpr uint32_t D4 = 0x1000B400u; // TO_IPU
++        constexpr uint32_t CHCR_STR = 0x100u;
++
++        constexpr uint32_t CTRL_ECD = 1u << 14;
++        constexpr uint32_t CTRL_SCD = 1u << 15;
++        constexpr uint32_t CTRL_RST = 1u << 30;
++
++        enum Cmd : uint32_t
++        {
++            BCLR = 0,
++            IDEC = 1,
++            BDEC = 2,
++            VDEC = 3,
++            FDEC = 4,
++            SETIQ = 5,
++            SETVQ = 6,
++            CSC = 7,
++            PACK = 8,
++            SETTH = 9,
++        };
++
++        struct NeedData
++        {
++        };
++        struct VlcError
++        {
++        };
++
++        Host g_host;
++        bool g_log = std::getenv("REO_IPU_LOG") != nullptr;
++
++        std::vector<uint8_t> g_in;   // IN FIFO bytes
++        int64_t g_bitPos = 0;        // bit position from the start of g_in
++        std::vector<uint8_t> g_out;  // OUT FIFO bytes
++        uint32_t g_ctrl = 0;
++        uint32_t g_cmdCode = 0;
++        bool g_cmdPending = false;
++        uint32_t g_lastCmd = 0xFFFFFFFFu;
++        uint32_t g_result = 0;
++        int32_t g_dc[3] = {128, 128, 128};
++        uint8_t g_iqIntra[64];       // natural order
++        uint8_t g_iqNonIntra[64];
++        uint16_t g_vqclut[16] = {};
++        uint32_t g_th0 = 0, g_th1 = 0;
++        uint32_t g_inWordAcc = 0;    // IN FIFO 32-bit writes accumulate into quadwords
++        uint8_t g_inWordBuf[16];
++
++        // ---- DMA channel 4 (TO_IPU) chain state ----
++        bool g_d4End = false;
++        uint32_t g_d4Stack[2];
++        int g_d4Sp = 0;
++
++        const uint8_t kZigZag[64] = {
++            0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5,
++            12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6, 7, 14, 21, 28,
++            35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
++            58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63};
++        const uint8_t kAlternate[64] = {
++            0, 8, 16, 24, 1, 9, 2, 10, 17, 25, 32, 40, 48, 56, 57, 49,
++            41, 33, 26, 18, 3, 11, 4, 12, 19, 27, 34, 42, 50, 58, 35, 43,
++            51, 59, 20, 28, 5, 13, 6, 14, 21, 29, 36, 44, 52, 60, 37, 45,
++            53, 61, 22, 30, 7, 15, 23, 31, 38, 46, 54, 62, 39, 47, 55, 63};
++        const uint8_t kNonLinearQ[32] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22,
++                                         24, 28, 32, 36, 40, 44, 48, 52, 56, 64, 72, 80, 88, 96, 104, 112};
++        // Default intra quantiser matrix (13818-2 6.3.11), natural order.
++        const uint8_t kDefaultIntra[64] = {
++            8, 16, 19, 22, 26, 27, 29, 34, 16, 16, 22, 24, 27, 29, 34, 37,
++            19, 22, 26, 27, 29, 34, 34, 38, 22, 22, 26, 27, 29, 34, 37, 40,
++            22, 26, 27, 29, 32, 35, 40, 48, 26, 27, 29, 32, 35, 40, 48, 58,
++            26, 27, 29, 34, 38, 46, 56, 69, 27, 29, 35, 38, 46, 56, 69, 83};
++
++        // ---- VLC lookup (16-bit window -> entry index, -1 none) ----
++        struct Lut
++        {
++            std::vector<int16_t> idx;
++            int maxLen = 0;
++        };
++
++        template <typename E>
++        Lut buildLut(const E *e, size_t n)
++        {
++            Lut l;
++            l.idx.assign(65536, -1);
++            for (size_t i = 0; i < n; ++i)
++            {
++                const int len = e[i].len;
++                l.maxLen = std::max(l.maxLen, len);
++                const uint32_t first = static_cast<uint32_t>(e[i].code) << (16 - len);
++                const uint32_t count = 1u << (16 - len);
++                for (uint32_t k = 0; k < count; ++k)
++                    l.idx[first + k] = static_cast<int16_t>(i);
++            }
++            return l;
++        }
++
++#define REO_IPU_LUT(tab) static const Lut tab##Lut = buildLut(tab, sizeof(tab) / sizeof(tab[0]))
++
++        // ---- bit reader over the IN FIFO ----
++        int64_t availBits() { return static_cast<int64_t>(g_in.size()) * 8 - g_bitPos; }
++
++        bool pullQwFromDma4();
++
++        void ensure(int64_t bits)
++        {
++            while (availBits() < bits)
++            {
++                if (!pullQwFromDma4())
++                    throw NeedData{};
++            }
++        }
++
++        // Peek up to 32 bits MSB first; bits past the end of the FIFO read as zero.
++        uint32_t peekPadded(int n)
++        {
++            uint32_t v = 0;
++            for (int i = 0; i < n; ++i)
++            {
++                const int64_t p = g_bitPos + i;
++                uint32_t bit = 0;
++                if (p >= 0 && p < static_cast<int64_t>(g_in.size()) * 8)
++                    bit = (g_in[static_cast<size_t>(p >> 3)] >> (7 - (p & 7))) & 1u;
++                v = (v << 1) | bit;
++            }
++            return v;
++        }
++
++        uint32_t getBits(int n)
++        {
++            if (n == 0)
++                return 0;
++            ensure(n);
++            const uint32_t v = peekPadded(n);
++            g_bitPos += n;
++            return v;
++        }
++
++        void advance(int n)
++        {
++            ensure(n);
++            g_bitPos += n;
++        }
++
++        // Decode one symbol: pulls data until the code is complete (prefix-free argument:
++        // a match whose length fits in the available bits is the real code).
++        template <typename E>
++        const E &decode(const E *tab, const Lut &lut)
++        {
++            for (;;)
++            {
++                const int64_t have = availBits();
++                const uint32_t w = peekPadded(16);
++                const int16_t i = lut.idx[w];
++                if (i >= 0 && tab[i].len <= have)
++                {
++                    g_bitPos += tab[i].len;
++                    return tab[i];
++                }
++                if (have >= lut.maxLen)
++                    throw VlcError{};
++                if (!pullQwFromDma4())
++                    throw NeedData{};
++            }
++        }
++
++        // ---- DMA ----
++        uint32_t rd(uint32_t a) { return g_host.readIo ? g_host.readIo(a) : 0u; }
++        void wr(uint32_t a, uint32_t v)
++        {
++            if (g_host.writeIo)
++                g_host.writeIo(a, v);
++        }
++
++        void d4Complete()
++        {
++            wr(D4, rd(D4) & ~CHCR_STR);
++            if (g_host.dmaComplete)
++                g_host.dmaComplete(4);
++        }
++
++        // Make channel 4 point at a transfer with QWC > 0; false when the channel is idle/done.
++        bool d4Prepare()
++        {
++            for (int guard = 0; guard < 4096; ++guard)
++            {
++                const uint32_t chcr = rd(D4);
++                if (!(chcr & CHCR_STR))
++                    return false;
++                if (rd(D4 + 0x20) & 0xFFFFu)
++                    return true;
++                const uint32_t mode = (chcr >> 2) & 3u;
++                if (mode != 1u || g_d4End)
++                {
++                    d4Complete();
++                    return false;
++                }
++                const uint32_t tadr = rd(D4 + 0x30);
++                const uint8_t *t = g_host.mem ? g_host.mem(tadr, 16) : nullptr;
++                if (!t)
++                {
++                    d4Complete();
++                    return false;
++                }
++                uint64_t tag;
++                std::memcpy(&tag, t, 8);
++                const uint32_t qwc = static_cast<uint32_t>(tag & 0xFFFFu);
++                const uint32_t id = static_cast<uint32_t>((tag >> 28) & 7u);
++                const bool irq = ((tag >> 31) & 1u) != 0;
++                const uint32_t addr = static_cast<uint32_t>(tag >> 32) & 0xFFFFFFF0u;
++                wr(D4, (chcr & 0xFFFFu) | (static_cast<uint32_t>(tag >> 16) & 0xFFFF0000u));
++                uint32_t madr = tadr + 16u, ntadr = tadr + 16u;
++                switch (id)
++                {
++                case 0: madr = addr; g_d4End = true; break;                 // refe
++                case 1: ntadr = madr + qwc * 16u; break;                     // cnt
++                case 2: ntadr = addr; break;                                 // next
++                case 3: case 4: madr = addr; break;                          // ref, refs
++                case 5:                                                      // call
++                    if (g_d4Sp < 2) g_d4Stack[g_d4Sp++] = madr + qwc * 16u;
++                    ntadr = addr;
++                    break;
++                case 6:                                                      // ret
++                    if (g_d4Sp > 0) ntadr = g_d4Stack[--g_d4Sp];
++                    else g_d4End = true;
++                    break;
++                default: g_d4End = true; break;                              // end
++                }
++                if (irq && (chcr & 0x80u))
++                    g_d4End = true;
++                wr(D4 + 0x10, madr);
++                wr(D4 + 0x20, qwc);
++                wr(D4 + 0x30, ntadr);
++            }
++            return false;
++        }
++
++        bool pullQwFromDma4()
++        {
++            if (!d4Prepare())
++                return false;
++            const uint32_t madr = rd(D4 + 0x10);
++            const uint8_t *src = g_host.mem ? g_host.mem(madr, 16) : nullptr;
++            if (!src)
++            {
++                d4Complete();
++                return false;
++            }
++            g_in.insert(g_in.end(), src, src + 16);
++            wr(D4 + 0x10, madr + 16u);
++            const uint32_t q = (rd(D4 + 0x20) & 0xFFFFu) - 1u;
++            wr(D4 + 0x20, q);
++            if (q == 0)
++            {
++                const uint32_t mode = (rd(D4) >> 2) & 3u;
++                if (mode != 1u || g_d4End)
++                    d4Complete();
++            }
++            return true;
++        }
++
++        void dropConsumed()
++        {
++            const int64_t q = std::min<int64_t>(g_bitPos / 128, static_cast<int64_t>(g_in.size() / 16));
++            if (q > 0)
++            {
++                g_in.erase(g_in.begin(), g_in.begin() + q * 16);
++                g_bitPos -= q * 128;
++            }
++        }
++
++        void drainOut()
++        {
++            while (g_out.size() >= 16)
++            {
++                const uint32_t chcr = rd(D3);
++                if (!(chcr & CHCR_STR))
++                    return;
++                uint32_t qwc = rd(D3 + 0x20) & 0xFFFFu;
++                if (qwc == 0)
++                {
++                    wr(D3, chcr & ~CHCR_STR);
++                    if (g_host.dmaComplete)
++                        g_host.dmaComplete(3);
++                    return;
++                }
++                const uint32_t n = std::min<uint32_t>(qwc, static_cast<uint32_t>(g_out.size() / 16));
++                const uint32_t madr = rd(D3 + 0x10);
++                uint8_t *dst = g_host.mem ? g_host.mem(madr, n * 16u) : nullptr;
++                if (dst)
++                    std::memcpy(dst, g_out.data(), n * 16u);
++                g_out.erase(g_out.begin(), g_out.begin() + n * 16u);
++                wr(D3 + 0x10, madr + n * 16u);
++                qwc -= n;
++                wr(D3 + 0x20, qwc);
++                if (qwc == 0)
++                {
++                    wr(D3, rd(D3) & ~CHCR_STR);
++                    if (g_host.dmaComplete)
++                        g_host.dmaComplete(3);
++                }
++            }
++        }
++
++        // ---- decoding helpers ----
++        bool isMpeg1() { return (g_ctrl & (1u << 23)) != 0; }
++        bool isNonLinearQ() { return (g_ctrl & (1u << 22)) != 0; }
++        bool isIntraVlc1() { return (g_ctrl & (1u << 21)) != 0; }
++        bool isAlternateScan() { return (g_ctrl & (1u << 20)) != 0; }
++        uint32_t dcPrecision() { return (g_ctrl >> 16) & 3u; }
++        uint32_t pictureType() { return (g_ctrl >> 24) & 7u; }
++
++        int32_t signExtendDc(uint32_t v, int size)
++        {
++            if (size == 0)
++                return 0;
++            if (v & (1u << (size - 1)))
++                return static_cast<int32_t>(v);
++            return static_cast<int32_t>(v) - ((1 << size) - 1);
++        }
++
++        // Reads one block's coefficients in scan order into qf[64]. Returns false if VLC error.
++        void readBlock(int16_t *qf, int block, bool intra)
++        {
++            REO_IPU_LUT(kDcSizeLuma);
++            REO_IPU_LUT(kDcSizeChroma);
++            REO_IPU_LUT(kDct0);
++            REO_IPU_LUT(kDct1);
++            std::memset(qf, 0, 64 * sizeof(int16_t));
++            int i = 0;
++            if (intra)
++            {
++                const int cc = (block < 4) ? 0 : (block - 3);
++                const Vlc &s = (cc == 0) ? decode(kDcSizeLuma, kDcSizeLumaLut) : decode(kDcSizeChroma, kDcSizeChromaLut);
++                const int size = s.value;
++                const int32_t diff = signExtendDc(getBits(size), size);
++                g_dc[cc] += diff;
++                qf[0] = static_cast<int16_t>(g_dc[cc]);
++                i = 1;
++            }
++            const bool table1 = intra && isIntraVlc1() && !isMpeg1();
++            bool first = !intra;
++            for (;;)
++            {
++                int run, level;
++                if (first)
++                {
++                    first = false;
++                    ensure(1);
++                    if (peekPadded(1) == 1u)
++                    {
++                        // '1s' at the first coefficient of a non-intra block: run 0, level 1.
++                        advance(1);
++                        run = 0;
++                        level = getBits(1) ? -1 : 1;
++                        goto store;
++                    }
++                }
++                {
++                    const DctVlc &e = table1 ? decode(kDct1, kDct1Lut) : decode(kDct0, kDct0Lut);
++                    if (e.special == 1)
++                        break; // EOB
++                    if (e.special == 2)
++                    {
++                        run = static_cast<int>(getBits(6));
++                        if (isMpeg1())
++                        {
++                            int l = static_cast<int>(getBits(8));
++                            if (l == 0)
++                                l = static_cast<int>(getBits(8));
++                            else if (l == 128)
++                                l = static_cast<int>(getBits(8)) - 256;
++                            else if (l > 128)
++                                l -= 256;
++                            level = l;
++                        }
++                        else
++                        {
++                            int l = static_cast<int>(getBits(12));
++                            if (l & 0x800)
++                                l -= 0x1000;
++                            level = l;
++                        }
++                    }
++                    else
++                    {
++                        run = e.run;
++                        level = getBits(1) ? -e.level : e.level;
++                    }
++                }
++            store:
++                i += run;
++                if (i > 63)
++                    throw VlcError{};
++                qf[i] = static_cast<int16_t>(level);
++                ++i;
++            }
++        }
++
++        void dequantise(const int16_t *qfScan, int32_t *f, bool intra, uint32_t qsc)
++        {
++            const uint8_t *scan = isAlternateScan() ? kAlternate : kZigZag;
++            const uint8_t *w = intra ? g_iqIntra : g_iqNonIntra;
++            const int qs = isNonLinearQ() ? kNonLinearQ[qsc & 31u] : static_cast<int>(2u * (qsc & 31u));
++            std::fill(f, f + 64, 0);
++            int32_t sum = 0;
++            for (int i = 0; i < 64; ++i)
++            {
++                const int n = scan[i];
++                const int32_t q = qfScan[i];
++                int32_t v;
++                if (intra && i == 0)
++                    v = q * (8 >> dcPrecision());
++                else if (q == 0)
++                    v = 0;
++                else if (intra)
++                    v = (2 * q * w[n] * qs) / 32;
++                else
++                    v = ((2 * q + (q > 0 ? 1 : -1)) * w[n] * qs) / 32;
++                if (isMpeg1() && !(intra && i == 0) && v != 0 && (v & 1) == 0)
++                    v -= (v > 0) ? 1 : -1; // MPEG-1 oddification
++                v = std::clamp<int32_t>(v, -2048, 2047);
++                f[n] = v;
++                sum += v;
++            }
++            if (!isMpeg1() && (sum & 1) == 0)
++                f[63] ^= 1; // MPEG-2 mismatch control
++        }
++
++        void idct(const int32_t *in, int16_t *out)
++        {
++            static double c[8][8];
++            static bool init = false;
++            if (!init)
++            {
++                for (int x = 0; x < 8; ++x)
++                    for (int u = 0; u < 8; ++u)
++                        c[x][u] = (u == 0 ? std::sqrt(0.125) : 0.5) * std::cos((2 * x + 1) * u * 3.14159265358979323846 / 16.0);
++                init = true;
++            }
++            double tmp[64];
++            for (int y = 0; y < 8; ++y)       // rows: horizontal transform
++                for (int x = 0; x < 8; ++x)
++                {
++                    double s = 0;
++                    for (int u = 0; u < 8; ++u)
++                        s += c[x][u] * in[y * 8 + u];
++                    tmp[y * 8 + x] = s;
++                }
++            for (int x = 0; x < 8; ++x)       // columns
++                for (int y = 0; y < 8; ++y)
++                {
++                    double s = 0;
++                    for (int v = 0; v < 8; ++v)
++                        s += c[y][v] * tmp[v * 8 + x];
++                    const long r = std::lround(s);
++                    out[y * 8 + x] = static_cast<int16_t>(std::clamp<long>(r, -256, 255));
++                }
++        }
++
++        // One macroblock: 6 blocks after IDCT, as RAW16 in output order (Y 16x16, Cb, Cr).
++        void decodeMacroblock(int16_t *raw16, bool intra, bool dcr, bool fieldDct, uint32_t qsc, uint8_t cbp)
++        {
++            if (dcr)
++            {
++                const int32_t reset = 1 << (7 + dcPrecision());
++                g_dc[0] = g_dc[1] = g_dc[2] = reset;
++            }
++            int16_t blocks[6][64];
++            for (int b = 0; b < 6; ++b)
++            {
++                if (!(cbp & (1u << (5 - b))))
++                {
++                    std::memset(blocks[b], 0, sizeof(blocks[b]));
++                    continue;
++                }
++                int16_t qf[64];
++                int32_t f[64];
++                readBlock(qf, b, intra);
++                dequantise(qf, f, intra, qsc);
++                idct(f, blocks[b]);
++            }
++            for (int y = 0; y < 16; ++y)
++            {
++                int b0, row;
++                if (fieldDct)
++                {
++                    b0 = (y & 1) ? 2 : 0; // odd lines from blocks 2/3
++                    row = y >> 1;
++                }
++                else
++                {
++                    b0 = (y < 8) ? 0 : 2;
++                    row = y & 7;
++                }
++                std::memcpy(raw16 + y * 16, blocks[b0] + row * 8, 16);
++                std::memcpy(raw16 + y * 16 + 8, blocks[b0 + 1] + row * 8, 16);
++            }
++            std::memcpy(raw16 + 256, blocks[4], 128);
++            std::memcpy(raw16 + 320, blocks[5], 128);
++        }
++
++        void cscMacroblock(const uint8_t *in384, bool rgb16, bool dither, std::vector<uint8_t> &out)
++        {
++            const uint8_t *py = in384, *pcb = in384 + 256, *pcr = in384 + 320;
++            static const int kDither[4][4] = {{-4, 0, -3, 1}, {2, -2, 3, -1}, {-3, 1, -4, 0}, {3, -1, 2, -2}};
++            for (int y = 0; y < 16; ++y)
++                for (int x = 0; x < 16; ++x)
++                {
++                    const int Y = py[y * 16 + x] - 16;
++                    const int cb = pcb[(y >> 1) * 8 + (x >> 1)] - 128;
++                    const int cr = pcr[(y >> 1) * 8 + (x >> 1)] - 128;
++                    // ITU-R BT.601 (studio swing): 1.164, 1.596, 0.391, 0.813, 2.018 in 1/128ths.
++                    int r = (0x95 * Y + 0xCC * cr) >> 7;
++                    int g = (0x95 * Y - 0x32 * cb - 0x68 * cr) >> 7;
++                    int b = (0x95 * Y + 0x102 * cb) >> 7;
++                    r = std::clamp(r, 0, 255);
++                    g = std::clamp(g, 0, 255);
++                    b = std::clamp(b, 0, 255);
++                    const uint32_t th0 = g_th0 & 0x1FFu, th1 = g_th1 & 0x1FFu;
++                    uint32_t a;
++                    if (static_cast<uint32_t>(r) < th0 && static_cast<uint32_t>(g) < th0 && static_cast<uint32_t>(b) < th0)
++                        a = 0;
++                    else if (static_cast<uint32_t>(r) < th1 && static_cast<uint32_t>(g) < th1 && static_cast<uint32_t>(b) < th1)
++                        a = 0x40;
++                    else
++                        a = 0x80;
++                    if (rgb16)
++                    {
++                        if (dither)
++                        {
++                            const int d = kDither[y & 3][x & 3];
++                            r = std::clamp(r + d, 0, 255);
++                            g = std::clamp(g + d, 0, 255);
++                            b = std::clamp(b + d, 0, 255);
++                        }
++                        const uint16_t p = static_cast<uint16_t>((r >> 3) | ((g >> 3) << 5) | ((b >> 3) << 10) | (a ? 0x8000u : 0u));
++                        out.push_back(static_cast<uint8_t>(p));
++                        out.push_back(static_cast<uint8_t>(p >> 8));
++                    }
++                    else
++                    {
++                        out.push_back(static_cast<uint8_t>(r));
++                        out.push_back(static_cast<uint8_t>(g));
++                        out.push_back(static_cast<uint8_t>(b));
++                        out.push_back(static_cast<uint8_t>(a));
++                    }
++                }
++        }
++
++        void appendRaw16(const int16_t *raw16, std::vector<uint8_t> &out)
++        {
++            const uint8_t *p = reinterpret_cast<const uint8_t *>(raw16);
++            out.insert(out.end(), p, p + 768);
++        }
++
++        // Runs the pending command; throws NeedData / VlcError. Output goes to `out`.
++        void runCommand(std::vector<uint8_t> &out)
++        {
++            REO_IPU_LUT(kMbai);
++            REO_IPU_LUT(kMbTypeI);
++            REO_IPU_LUT(kMbTypeP);
++            REO_IPU_LUT(kMbTypeB);
++            REO_IPU_LUT(kMbTypeD);
++            REO_IPU_LUT(kMotionCode);
++            REO_IPU_LUT(kDmVector);
++            REO_IPU_LUT(kCbp);
++            const uint32_t code = g_cmdCode;
++            const uint32_t cmd = code >> 28;
++            const int fb = static_cast<int>(code & 0x3Fu);
++            switch (cmd)
++            {
++            case BCLR:
++                g_in.clear();
++                g_bitPos = code & 0x7Fu;
++                break;
++            case BDEC:
++            {
++                advance(fb);
++                const bool mbi = (code >> 27) & 1u, dcr = (code >> 26) & 1u, dt = (code >> 25) & 1u;
++                const uint32_t qsc = (code >> 16) & 31u;
++                uint8_t cbp = 0x3F;
++                if (!mbi)
++                    cbp = static_cast<uint8_t>(decode(kCbp, kCbpLut).value);
++                int16_t raw16[384];
++                decodeMacroblock(raw16, mbi, dcr, dt, qsc, cbp);
++                appendRaw16(raw16, out);
++                break;
++            }
++            case VDEC:
++            {
++                advance(fb);
++                const uint32_t tbl = (code >> 26) & 3u;
++                const Vlc *e = nullptr;
++                switch (tbl)
++                {
++                case 0: e = &decode(kMbai, kMbaiLut); break;
++                case 1:
++                    switch (pictureType())
++                    {
++                    case 1: e = &decode(kMbTypeI, kMbTypeILut); break;
++                    case 2: e = &decode(kMbTypeP, kMbTypePLut); break;
++                    case 3: e = &decode(kMbTypeB, kMbTypeBLut); break;
++                    default: e = &decode(kMbTypeD, kMbTypeDLut); break;
++                    }
++                    break;
++                case 2: e = &decode(kMotionCode, kMotionCodeLut); break;
++                default: e = &decode(kDmVector, kDmVectorLut); break;
++                }
++                g_result = (static_cast<uint32_t>(e->len) << 16) | (static_cast<uint16_t>(e->value));
++                break;
++            }
++            case FDEC:
++                advance(fb);
++                ensure(32);
++                g_result = peekPadded(32);
++                break;
++            case SETIQ:
++            {
++                advance(fb);
++                uint8_t *m = ((code >> 27) & 1u) ? g_iqNonIntra : g_iqIntra;
++                uint8_t tmp[64];
++                for (int i = 0; i < 64; ++i)
++                    tmp[i] = static_cast<uint8_t>(getBits(8));
++                for (int i = 0; i < 64; ++i)
++                    m[kZigZag[i]] = tmp[i];
++                break;
++            }
++            case SETVQ:
++                advance(fb);
++                for (int i = 0; i < 16; ++i)
++                {
++                    const uint32_t lo = getBits(8), hi = getBits(8);
++                    g_vqclut[i] = static_cast<uint16_t>(lo | (hi << 8));
++                }
++                break;
++            case CSC:
++            {
++                const uint32_t mbc = code & 0x7FFu;
++                const bool ofm = (code >> 27) & 1u, dte = (code >> 26) & 1u;
++                for (uint32_t m = 0; m < mbc; ++m)
++                {
++                    uint8_t mb[384];
++                    for (int i = 0; i < 384; ++i)
++                        mb[i] = static_cast<uint8_t>(getBits(8));
++                    cscMacroblock(mb, ofm, dte, out);
++                }
++                break;
++            }
++            case SETTH:
++                g_th0 = code & 0x1FFu;
++                g_th1 = (code >> 16) & 0x1FFu;
++                break;
++            default:
++                std::fprintf(stderr, "[IPU] unimplemented command %u (0x%08X)\n", cmd, code);
++                break;
++            }
++        }
++
++        void reset()
++        {
++            g_in.clear();
++            g_bitPos = 0;
++            g_out.clear();
++            g_cmdPending = false;
++            g_lastCmd = 0xFFFFFFFFu;
++            g_result = 0;
++            g_ctrl &= ~(CTRL_ECD | CTRL_SCD);
++            g_inWordAcc = 0;
++        }
++
++        bool busy() { return g_cmdPending || g_out.size() > 8u * 16u; }
++
++        void pump()
++        {
++            for (int guard = 0; guard < 100000; ++guard)
++            {
++                drainOut();
++                if (g_cmdPending && g_out.size() <= 8u * 16u)
++                {
++                    const int64_t bit0 = g_bitPos;
++                    const int32_t dc0[3] = {g_dc[0], g_dc[1], g_dc[2]};
++                    std::vector<uint8_t> out;
++                    try
++                    {
++                        runCommand(out);
++                        g_cmdPending = false;
++                        g_out.insert(g_out.end(), out.begin(), out.end());
++                        dropConsumed();
++                        continue;
++                    }
++                    catch (const NeedData &)
++                    {
++                        g_bitPos = bit0;
++                        std::memcpy(g_dc, dc0, sizeof(g_dc));
++                    }
++                    catch (const VlcError &)
++                    {
++                        g_cmdPending = false;
++                        g_ctrl |= CTRL_ECD;
++                        if (g_log)
++                            std::fprintf(stderr, "[IPU] VLC error in 0x%08X\n", g_cmdCode);
++                        dropConsumed();
++                    }
++                }
++                // Idle top-up: the hardware keeps pulling channel 4 into its 8-qword FIFO.
++                if (!g_cmdPending && g_in.size() < 8u * 16u + static_cast<size_t>((g_bitPos / 128) * 16))
++                {
++                    if (pullQwFromDma4())
++                        continue;
++                }
++                break;
++            }
++            drainOut();
++        }
++
++        struct FifoState
++        {
++            uint32_t bp, ifc, fp;
++        };
++        FifoState fifoState()
++        {
++            FifoState s{};
++            const uint32_t qw = static_cast<uint32_t>(g_in.size() / 16);
++            s.bp = static_cast<uint32_t>(g_bitPos & 127);
++            const uint32_t consumedQw = static_cast<uint32_t>(g_bitPos / 128);
++            uint32_t ifc = qw > consumedQw ? qw - consumedQw : 0u;
++            if (s.bp != 0 && ifc != 0)
++            {
++                s.fp = 1;
++                --ifc;
++            }
++            s.ifc = std::min<uint32_t>(ifc, 8u);
++            return s;
++        }
++
++        uint32_t peekTop()
++        {
++            const int64_t have = availBits();
++            if (have <= 0)
++                return 0;
++            const int n = static_cast<int>(std::min<int64_t>(32, have));
++            return peekPadded(n) << (32 - n);
++        }
++    } // namespace
++
++    void setHost(const Host &host)
++    {
++        g_host = host;
++        std::memcpy(g_iqIntra, kDefaultIntra, 64);
++        std::memset(g_iqNonIntra, 16, 64);
++    }
++
++    bool isIpuRegister(uint32_t a)
++    {
++        return (a >= IPU_CMD && a < IPU_TOP + 0x10u) || (a >= IPU_OUT_FIFO && a < IPU_IN_FIFO + 0x10u);
++    }
++
++    uint32_t read32(uint32_t a)
++    {
++        pump();
++        switch (a)
++        {
++        case IPU_CMD:
++            return (g_lastCmd == VDEC || g_lastCmd == FDEC) ? g_result : peekTop();
++        case IPU_CMD + 4:
++            return busy() ? 0x80000000u : 0u;
++        case IPU_CTRL:
++        {
++            const FifoState s = fifoState();
++            const uint32_t ofc = std::min<uint32_t>(static_cast<uint32_t>(g_out.size() / 16), 8u);
++            return (g_ctrl & 0x3FFFC000u) | (busy() ? 0x80000000u : 0u) | (ofc << 4) | s.ifc;
++        }
++        case IPU_BP:
++        {
++            const FifoState s = fifoState();
++            return (s.fp << 16) | (s.ifc << 8) | s.bp;
++        }
++        case IPU_TOP:
++            return busy() ? 0u : peekTop();
++        case IPU_TOP + 4:
++            return (busy() || availBits() < 32) ? 0x80000000u : 0u;
++        default:
++            break;
++        }
++        if (a >= IPU_OUT_FIFO && a < IPU_OUT_FIFO + 0x10u)
++        {
++            uint32_t v = 0;
++            if (g_out.size() >= 4)
++            {
++                std::memcpy(&v, g_out.data(), 4);
++                g_out.erase(g_out.begin(), g_out.begin() + 4);
++            }
++            return v;
++        }
++        return 0;
++    }
++
++    void write32(uint32_t a, uint32_t v)
++    {
++        switch (a)
++        {
++        case IPU_CMD:
++            if (g_log)
++                std::fprintf(stderr, "[IPU] CMD 0x%08X (ctrl 0x%08X, in %zu B bp %lld, out %zu B)\n", v, g_ctrl,
++                             g_in.size(), static_cast<long long>(g_bitPos), g_out.size());
++            g_ctrl &= ~(CTRL_ECD | CTRL_SCD);
++            g_cmdCode = v;
++            g_lastCmd = v >> 28;
++            g_cmdPending = true;
++            pump();
++            return;
++        case IPU_CTRL:
++            if (v & CTRL_RST)
++                reset();
++            g_ctrl = (g_ctrl & ~0x3FFF0000u) | (v & 0x3FFF0000u);
++            return;
++        default:
++            break;
++        }
++        if (a >= IPU_IN_FIFO && a < IPU_IN_FIFO + 0x10u)
++        {
++            std::memcpy(g_inWordBuf + (a & 0xCu), &v, 4);
++            if ((a & 0xCu) == 0xCu)
++            {
++                g_in.insert(g_in.end(), g_inWordBuf, g_inWordBuf + 16);
++                pump();
++            }
++        }
++    }
++
++    void dmaKick(uint32_t channelBase)
++    {
++        if (channelBase == D4)
++        {
++            // Chain mode transfers any loaded QWC first, then follows the tag at TADR.
++            g_d4End = false;
++            g_d4Sp = 0;
++        }
++        pump();
++    }
++}
+diff --git a/ps2xRuntime/src/lib/ipu/ps2_ipu.h b/ps2xRuntime/src/lib/ipu/ps2_ipu.h
+new file mode 100644
+index 0000000..f394b26
+--- /dev/null
++++ b/ps2xRuntime/src/lib/ipu/ps2_ipu.h
+@@ -0,0 +1,25 @@
++// PS2 IPU (image processing unit: MPEG-2 macroblock decoder) for PS2Recomp.
++// Internal to ps2_memory.cpp: registers 0x10002000..0x1000203C, FIFOs 0x10007000/0x10007010,
++// DMA channel 3 (FROM_IPU, 0x1000B000) and channel 4 (TO_IPU, 0x1000B400).
++#pragma once
++#include <cstdint>
++#include <functional>
++
++namespace ps2_ipu
++{
++    // Host hooks provided by PS2Memory. Called with the IO register mutex held.
++    struct Host
++    {
++        std::function<uint32_t(uint32_t)> readIo;            // DMA channel registers
++        std::function<void(uint32_t, uint32_t)> writeIo;
++        std::function<uint8_t *(uint32_t, uint32_t)> mem;     // guest addr (RAM or SPR) -> host ptr, size
++        std::function<void(uint32_t)> dmaComplete;            // channel 3/4 finished (D_STAT + IRQ)
++    };
++
++    void setHost(const Host &host);
++    bool isIpuRegister(uint32_t address);
++    uint32_t read32(uint32_t address);
++    void write32(uint32_t address, uint32_t value);
++    // CHCR STR set on channel 3 (0x1000B000) or 4 (0x1000B400).
++    void dmaKick(uint32_t channelBase);
++}
+diff --git a/ps2xRuntime/src/lib/ipu/ps2_ipu_vlc.h b/ps2xRuntime/src/lib/ipu/ps2_ipu_vlc.h
+new file mode 100644
+index 0000000..dda8fbc
+--- /dev/null
++++ b/ps2xRuntime/src/lib/ipu/ps2_ipu_vlc.h
+@@ -0,0 +1,168 @@
++// MPEG-2 variable-length code tables used by the PS2 IPU (ISO/IEC 13818-2 Annex B).
++// Written from the specification. Each entry: code bits (MSB first), code length, value.
++// Checked offline: every table is prefix-free with the expected Kraft sum, and all entries
++// match an independent implementation's tables (reo docs/DIVERGENCES.md, D30).
++#pragma once
++#include <cstdint>
++
++namespace ps2_ipu_vlc
++{
++    struct Vlc
++    {
++        uint16_t code;
++        uint8_t len;
++        int16_t value;
++    };
++
++    // B.1 macroblock_address_increment. 0x22 = stuffing, 0x23 = escape (IPU VDEC convention).
++    static const Vlc kMbai[] = {
++        {0x1, 1, 1}, {0x3, 3, 2}, {0x2, 3, 3}, {0x3, 4, 4}, {0x2, 4, 5}, {0x3, 5, 6}, {0x2, 5, 7},
++        {0x7, 7, 8}, {0x6, 7, 9}, {0xB, 8, 10}, {0xA, 8, 11}, {0x9, 8, 12}, {0x8, 8, 13},
++        {0x7, 8, 14}, {0x6, 8, 15}, {0x17, 10, 16}, {0x16, 10, 17}, {0x15, 10, 18}, {0x14, 10, 19},
++        {0x13, 10, 20}, {0x12, 10, 21}, {0x23, 11, 22}, {0x22, 11, 23}, {0x21, 11, 24},
++        {0x20, 11, 25}, {0x1F, 11, 26}, {0x1E, 11, 27}, {0x1D, 11, 28}, {0x1C, 11, 29},
++        {0x1B, 11, 30}, {0x1A, 11, 31}, {0x19, 11, 32}, {0x18, 11, 33},
++        {0xF, 11, 0x22},  // macroblock_stuffing (MPEG-1)
++        {0x8, 11, 0x23},  // macroblock_escape
++    };
++
++    // macroblock_type flags: quant 0x10, motion_forward 0x08, motion_backward 0x04,
++    // pattern 0x02, intra 0x01. B.2 (I), B.3 (P), B.4 (B), D pictures: '1' = intra.
++    static const Vlc kMbTypeI[] = {{0x1, 1, 0x01}, {0x1, 2, 0x11}};
++    static const Vlc kMbTypeP[] = {
++        {0x1, 1, 0x0A}, {0x1, 2, 0x02}, {0x1, 3, 0x08}, {0x3, 5, 0x01},
++        {0x2, 5, 0x1A}, {0x1, 5, 0x12}, {0x1, 6, 0x11},
++    };
++    static const Vlc kMbTypeB[] = {
++        {0x2, 2, 0x0C}, {0x3, 2, 0x0E}, {0x2, 3, 0x04}, {0x3, 3, 0x06}, {0x2, 4, 0x08},
++        {0x3, 4, 0x0A}, {0x3, 5, 0x01}, {0x2, 5, 0x1E}, {0x3, 6, 0x1A}, {0x2, 6, 0x16},
++        {0x1, 6, 0x11},
++    };
++    static const Vlc kMbTypeD[] = {{0x1, 1, 0x01}};
++
++    // B.10 motion_code (value -16..16).
++    static const Vlc kMotionCode[] = {
++        {0x1, 1, 0},
++        {0x2, 3, 1}, {0x3, 3, -1}, {0x2, 4, 2}, {0x3, 4, -2}, {0x2, 5, 3}, {0x3, 5, -3},
++        {0x6, 7, 4}, {0x7, 7, -4}, {0xA, 8, 5}, {0xB, 8, -5}, {0x8, 8, 6}, {0x9, 8, -6},
++        {0x6, 8, 7}, {0x7, 8, -7}, {0x16, 10, 8}, {0x17, 10, -8}, {0x14, 10, 9}, {0x15, 10, -9},
++        {0x12, 10, 10}, {0x13, 10, -10}, {0x22, 11, 11}, {0x23, 11, -11}, {0x20, 11, 12},
++        {0x21, 11, -12}, {0x1E, 11, 13}, {0x1F, 11, -13}, {0x1C, 11, 14}, {0x1D, 11, -14},
++        {0x1A, 11, 15}, {0x1B, 11, -15}, {0x18, 11, 16}, {0x19, 11, -16},
++    };
++
++    // B.11 dmvector.
++    static const Vlc kDmVector[] = {{0x0, 1, 0}, {0x2, 2, 1}, {0x3, 2, -1}};
++
++    // B.9 coded_block_pattern (value = cbp, 6 bits for 4:2:0).
++    static const Vlc kCbp[] = {
++        {0x7, 3, 60},
++        {0xD, 4, 4}, {0xC, 4, 8}, {0xB, 4, 16}, {0xA, 4, 32},
++        {0x13, 5, 12}, {0x12, 5, 48}, {0x11, 5, 20}, {0x10, 5, 40}, {0xF, 5, 28}, {0xE, 5, 44},
++        {0xD, 5, 52}, {0xC, 5, 56}, {0xB, 5, 1}, {0xA, 5, 61}, {0x9, 5, 2}, {0x8, 5, 62},
++        {0xF, 6, 24}, {0xE, 6, 36}, {0xD, 6, 3}, {0xC, 6, 63},
++        {0x17, 7, 5}, {0x16, 7, 9}, {0x15, 7, 17}, {0x14, 7, 33}, {0x13, 7, 6}, {0x12, 7, 10},
++        {0x11, 7, 18}, {0x10, 7, 34},
++        {0x1F, 8, 7}, {0x1E, 8, 11}, {0x1D, 8, 19}, {0x1C, 8, 35}, {0x1B, 8, 13}, {0x1A, 8, 49},
++        {0x19, 8, 21}, {0x18, 8, 41}, {0x17, 8, 14}, {0x16, 8, 50}, {0x15, 8, 22}, {0x14, 8, 42},
++        {0x13, 8, 15}, {0x12, 8, 51}, {0x11, 8, 23}, {0x10, 8, 43}, {0xF, 8, 25}, {0xE, 8, 37},
++        {0xD, 8, 26}, {0xC, 8, 38}, {0xB, 8, 29}, {0xA, 8, 45}, {0x9, 8, 53}, {0x8, 8, 57},
++        {0x7, 8, 30}, {0x6, 8, 46}, {0x5, 8, 54}, {0x4, 8, 58},
++        {0x7, 9, 31}, {0x6, 9, 47}, {0x5, 9, 55}, {0x4, 9, 59}, {0x3, 9, 27}, {0x2, 9, 39},
++        {0x1, 9, 0},  // MPEG-2 cbp 0 (4:2:0 only allowed in some profiles)
++    };
++
++    // B.12 / B.13 dct_dc_size_luminance / chrominance (value = size).
++    static const Vlc kDcSizeLuma[] = {
++        {0x4, 3, 0}, {0x0, 2, 1}, {0x1, 2, 2}, {0x5, 3, 3}, {0x6, 3, 4}, {0xE, 4, 5},
++        {0x1E, 5, 6}, {0x3E, 6, 7}, {0x7E, 7, 8}, {0xFE, 8, 9}, {0x1FE, 9, 10}, {0x1FF, 9, 11},
++    };
++    static const Vlc kDcSizeChroma[] = {
++        {0x0, 2, 0}, {0x1, 2, 1}, {0x2, 2, 2}, {0x6, 3, 3}, {0xE, 4, 4}, {0x1E, 5, 5},
++        {0x3E, 6, 6}, {0x7E, 7, 7}, {0xFE, 8, 8}, {0x1FE, 9, 9}, {0x3FE, 10, 10}, {0x3FF, 10, 11},
++    };
++
++    // DCT coefficients, B.14 (table zero) and B.15 (table one). Codes exclude the sign bit.
++    // value = (run << 8) | level; special: kEob, kEscape.
++    static constexpr int16_t kEob = -1;
++    static constexpr int16_t kEscape = -2;
++    struct DctVlc
++    {
++        uint16_t code;
++        uint8_t len;
++        uint8_t run;
++        uint8_t level;  // 0 = EOB/escape marker (see special)
++        int8_t special; // 0 normal, 1 EOB, 2 escape
++    };
++
++    // B.14 without the first-coefficient '1s' form (handled by the decoder) and with EOB '10'.
++    static const DctVlc kDct0[] = {
++        {0x2, 2, 0, 0, 1},                                                // EOB
++        {0x3, 2, 0, 1, 0},                                                // 11s (not first)
++        {0x3, 3, 1, 1, 0}, {0x4, 4, 0, 2, 0}, {0x5, 4, 2, 1, 0}, {0x5, 5, 0, 3, 0},
++        {0x7, 5, 3, 1, 0}, {0x6, 5, 4, 1, 0}, {0x6, 6, 1, 2, 0}, {0x7, 6, 5, 1, 0},
++        {0x5, 6, 6, 1, 0}, {0x4, 6, 7, 1, 0}, {0x6, 7, 0, 4, 0}, {0x4, 7, 2, 2, 0},
++        {0x7, 7, 8, 1, 0}, {0x5, 7, 9, 1, 0},
++        {0x1, 6, 0, 0, 2},                                                // escape
++        {0x26, 8, 0, 5, 0}, {0x21, 8, 0, 6, 0}, {0x25, 8, 1, 3, 0}, {0x24, 8, 3, 2, 0},
++        {0x27, 8, 10, 1, 0}, {0x23, 8, 11, 1, 0}, {0x22, 8, 12, 1, 0}, {0x20, 8, 13, 1, 0},
++        {0xA, 10, 0, 7, 0}, {0xC, 10, 1, 4, 0}, {0xB, 10, 2, 3, 0}, {0xF, 10, 4, 2, 0},
++        {0x9, 10, 5, 2, 0}, {0xE, 10, 14, 1, 0}, {0xD, 10, 15, 1, 0}, {0x8, 10, 16, 1, 0},
++        {0x1D, 12, 0, 8, 0}, {0x18, 12, 0, 9, 0}, {0x13, 12, 0, 10, 0}, {0x10, 12, 0, 11, 0},
++        {0x1B, 12, 1, 5, 0}, {0x14, 12, 2, 4, 0}, {0x1C, 12, 3, 3, 0}, {0x12, 12, 4, 3, 0},
++        {0x1E, 12, 6, 2, 0}, {0x15, 12, 7, 2, 0}, {0x11, 12, 8, 2, 0}, {0x1F, 12, 17, 1, 0},
++        {0x1A, 12, 18, 1, 0}, {0x19, 12, 19, 1, 0}, {0x17, 12, 20, 1, 0}, {0x16, 12, 21, 1, 0},
++        {0x1A, 13, 0, 12, 0}, {0x19, 13, 0, 13, 0}, {0x18, 13, 0, 14, 0}, {0x17, 13, 0, 15, 0},
++        {0x16, 13, 1, 6, 0}, {0x15, 13, 1, 7, 0}, {0x14, 13, 2, 5, 0}, {0x13, 13, 3, 4, 0},
++        {0x12, 13, 5, 3, 0}, {0x11, 13, 9, 2, 0}, {0x10, 13, 10, 2, 0}, {0x1F, 13, 22, 1, 0},
++        {0x1E, 13, 23, 1, 0}, {0x1D, 13, 24, 1, 0}, {0x1C, 13, 25, 1, 0}, {0x1B, 13, 26, 1, 0},
++        {0x1F, 14, 0, 16, 0}, {0x1E, 14, 0, 17, 0}, {0x1D, 14, 0, 18, 0}, {0x1C, 14, 0, 19, 0},
++        {0x1B, 14, 0, 20, 0}, {0x1A, 14, 0, 21, 0}, {0x19, 14, 0, 22, 0}, {0x18, 14, 0, 23, 0},
++        {0x17, 14, 0, 24, 0}, {0x16, 14, 0, 25, 0}, {0x15, 14, 0, 26, 0}, {0x14, 14, 0, 27, 0},
++        {0x13, 14, 0, 28, 0}, {0x12, 14, 0, 29, 0}, {0x11, 14, 0, 30, 0}, {0x10, 14, 0, 31, 0},
++        {0x18, 15, 0, 32, 0}, {0x17, 15, 0, 33, 0}, {0x16, 15, 0, 34, 0}, {0x15, 15, 0, 35, 0},
++        {0x14, 15, 0, 36, 0}, {0x13, 15, 0, 37, 0}, {0x12, 15, 0, 38, 0}, {0x11, 15, 0, 39, 0},
++        {0x10, 15, 0, 40, 0}, {0x1F, 15, 1, 8, 0}, {0x1E, 15, 1, 9, 0}, {0x1D, 15, 1, 10, 0},
++        {0x1C, 15, 1, 11, 0}, {0x1B, 15, 1, 12, 0}, {0x1A, 15, 1, 13, 0}, {0x19, 15, 1, 14, 0},
++        {0x13, 16, 1, 15, 0}, {0x12, 16, 1, 16, 0}, {0x11, 16, 1, 17, 0}, {0x10, 16, 1, 18, 0},
++        {0x14, 16, 6, 3, 0}, {0x1A, 16, 11, 2, 0}, {0x19, 16, 12, 2, 0}, {0x18, 16, 13, 2, 0},
++        {0x17, 16, 14, 2, 0}, {0x16, 16, 15, 2, 0}, {0x15, 16, 16, 2, 0}, {0x1F, 16, 27, 1, 0},
++        {0x1E, 16, 28, 1, 0}, {0x1D, 16, 29, 1, 0}, {0x1C, 16, 30, 1, 0}, {0x1B, 16, 31, 1, 0},
++    };
++
++    // B.15 (intra_vlc_format = 1). EOB '0110', escape '000001'.
++    static const DctVlc kDct1[] = {
++        {0x6, 4, 0, 0, 1},  // EOB
++        {0x1, 6, 0, 0, 2},  // escape
++        {0x2, 2, 0, 1, 0}, {0x2, 3, 1, 1, 0}, {0x6, 3, 0, 2, 0}, {0x5, 5, 2, 1, 0},
++        {0x7, 4, 0, 3, 0}, {0x7, 5, 3, 1, 0}, {0x6, 6, 4, 1, 0}, {0x6, 5, 1, 2, 0},
++        {0x7, 6, 5, 1, 0}, {0x6, 7, 6, 1, 0}, {0x4, 7, 7, 1, 0}, {0x1C, 5, 0, 4, 0},
++        {0x7, 7, 2, 2, 0}, {0x5, 7, 8, 1, 0}, {0x78, 7, 9, 1, 0}, {0x1D, 5, 0, 5, 0},
++        {0x5, 6, 0, 6, 0}, {0x79, 7, 1, 3, 0}, {0x26, 8, 3, 2, 0}, {0x7A, 7, 10, 1, 0},
++        {0x21, 8, 11, 1, 0}, {0x25, 8, 12, 1, 0}, {0x24, 8, 13, 1, 0}, {0x4, 6, 0, 7, 0},
++        {0x27, 8, 1, 4, 0}, {0xFC, 8, 2, 3, 0}, {0xFD, 8, 4, 2, 0}, {0x4, 9, 5, 2, 0},
++        {0x5, 9, 14, 1, 0}, {0x7, 9, 15, 1, 0}, {0xD, 10, 16, 1, 0}, {0x7B, 7, 0, 8, 0},
++        {0x7C, 7, 0, 9, 0}, {0x23, 8, 0, 10, 0}, {0x22, 8, 0, 11, 0}, {0x20, 8, 1, 5, 0},
++        {0xC, 10, 2, 4, 0},
++        {0xFA, 8, 0, 12, 0}, {0xFB, 8, 0, 13, 0}, {0xFE, 8, 0, 14, 0}, {0xFF, 8, 0, 15, 0},
++        // 12..16-bit codes: same as B.14, minus run/levels that have shorter codes above
++        {0x1C, 12, 3, 3, 0}, {0x12, 12, 4, 3, 0},
++        {0x1E, 12, 6, 2, 0}, {0x15, 12, 7, 2, 0}, {0x11, 12, 8, 2, 0}, {0x1F, 12, 17, 1, 0},
++        {0x1A, 12, 18, 1, 0}, {0x19, 12, 19, 1, 0}, {0x17, 12, 20, 1, 0}, {0x16, 12, 21, 1, 0},
++        {0x16, 13, 1, 6, 0}, {0x15, 13, 1, 7, 0}, {0x14, 13, 2, 5, 0}, {0x13, 13, 3, 4, 0},
++        {0x12, 13, 5, 3, 0}, {0x11, 13, 9, 2, 0}, {0x10, 13, 10, 2, 0}, {0x1F, 13, 22, 1, 0},
++        {0x1E, 13, 23, 1, 0}, {0x1D, 13, 24, 1, 0}, {0x1C, 13, 25, 1, 0}, {0x1B, 13, 26, 1, 0},
++        {0x1F, 14, 0, 16, 0}, {0x1E, 14, 0, 17, 0}, {0x1D, 14, 0, 18, 0}, {0x1C, 14, 0, 19, 0},
++        {0x1B, 14, 0, 20, 0}, {0x1A, 14, 0, 21, 0}, {0x19, 14, 0, 22, 0}, {0x18, 14, 0, 23, 0},
++        {0x17, 14, 0, 24, 0}, {0x16, 14, 0, 25, 0}, {0x15, 14, 0, 26, 0}, {0x14, 14, 0, 27, 0},
++        {0x13, 14, 0, 28, 0}, {0x12, 14, 0, 29, 0}, {0x11, 14, 0, 30, 0}, {0x10, 14, 0, 31, 0},
++        {0x18, 15, 0, 32, 0}, {0x17, 15, 0, 33, 0}, {0x16, 15, 0, 34, 0}, {0x15, 15, 0, 35, 0},
++        {0x14, 15, 0, 36, 0}, {0x13, 15, 0, 37, 0}, {0x12, 15, 0, 38, 0}, {0x11, 15, 0, 39, 0},
++        {0x10, 15, 0, 40, 0}, {0x1F, 15, 1, 8, 0}, {0x1E, 15, 1, 9, 0}, {0x1D, 15, 1, 10, 0},
++        {0x1C, 15, 1, 11, 0}, {0x1B, 15, 1, 12, 0}, {0x1A, 15, 1, 13, 0}, {0x19, 15, 1, 14, 0},
++        {0x13, 16, 1, 15, 0}, {0x12, 16, 1, 16, 0}, {0x11, 16, 1, 17, 0}, {0x10, 16, 1, 18, 0},
++        {0x14, 16, 6, 3, 0}, {0x1A, 16, 11, 2, 0}, {0x19, 16, 12, 2, 0}, {0x18, 16, 13, 2, 0},
++        {0x17, 16, 14, 2, 0}, {0x16, 16, 15, 2, 0}, {0x15, 16, 16, 2, 0}, {0x1F, 16, 27, 1, 0},
++        {0x1E, 16, 28, 1, 0}, {0x1D, 16, 29, 1, 0}, {0x1C, 16, 30, 1, 0}, {0x1B, 16, 31, 1, 0},
++    };
++}
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+index e6f2b77..1aa9e52 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -6,8 +6,10 @@
+ #include "runtime/ps2_gs_psmt8.h"
+ #include "ps2_log.h"
+ #include "ps2_syscalls.h"
++#include "Kernel/Syscalls/Interrupt.h"
+ #include "runtime/ps2_memory.h"
+ #include <atomic>
++#include <cstdlib>
+ #include <algorithm>
+ #include <cmath>
+ #include <cstdio>
+@@ -803,7 +805,11 @@ void GS::latchHostPresentationFrame()
+ 
+     const GSPmodeState pmode = decodePmode(m_privRegs->pmode);
+     const GSSmode2State smode2 = decodeSMode2(m_privRegs->smode2);
+-    const bool applyFieldMode = smode2.interlaced && !smode2.frameMode;
++    // Field-mode "bob" (show only the current field's lines, doubled) alternates the picture
++    // by one line every vsync on a progressive host display. Games that render full-height
++    // frames look correct (and stable) without it, so it is opt-in: REO_FIELD_BOB=1.
++    static const bool s_fieldBob = std::getenv("REO_FIELD_BOB") != nullptr;
++    const bool applyFieldMode = s_fieldBob && smode2.interlaced && !smode2.frameMode;
+     const bool oddField = (ps2_syscalls::GetCurrentVSyncTick() & 1ull) != 0ull;
+     const GSFrameReg displayFrame1 = decodeDisplayFrame(m_privRegs->dispfb1);
+     const GSFrameReg displayFrame2 = decodeDisplayFrame(m_privRegs->dispfb2);
+@@ -1799,13 +1805,23 @@ void GS::writeRegister(uint8_t regAddr, uint64_t value)
+             lo = (lo & ~mask) | (id & mask);
+             m_privRegs->siglblid = (m_privRegs->siglblid & 0xFFFFFFFF00000000ULL) | lo;
+             m_privRegs->csr |= 0x1;
++            // SIGNAL event: GS interrupt (INTC line 0) unless IMR.SIGMSK (bit 8) masks it.
++            if (!(m_privRegs->imr & (1ull << 8)))
++                ps2_syscalls::raiseIntcInterrupt(0u);
+         }
+         break;
+     }
+     case GS_REG_FINISH:
+     {
+         if (m_privRegs)
++        {
+             m_privRegs->csr |= 0x2;
++            // FINISH event: GS interrupt (INTC line 0) unless IMR.FINISHMSK (bit 9) masks it.
++            // SLUS-20765 waits for its GS handler to clear the frame-busy flag 0x29F704
++            // (FUN_0018d470 case 2 -> FUN_0018d650); without the interrupt it froze.
++            if (!(m_privRegs->imr & (1ull << 9)))
++                ps2_syscalls::raiseIntcInterrupt(0u);
++        }
+         break;
+     }
+     case GS_REG_LABEL:
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+index 843ba7f..4d921a9 100644
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -1,5 +1,6 @@
+ #include <mutex>
+ #include "runtime/ps2_memory.h"
++#include "ipu/ps2_ipu.h"
+ #include "ps2_log.h"
+ #include "Kernel/Syscalls/Interrupt.h"
+ #include <atomic>
+@@ -192,6 +193,37 @@ bool PS2Memory::initialize(size_t ramSize)
+         std::memset(m_scratchpad, 0, PS2_SCRATCHPAD_SIZE);
+         ps2SetScratchpadHostPtr(m_scratchpad);
+ 
++        {
++            ps2_ipu::Host ipuHost;
++            ipuHost.readIo = [this](uint32_t a) -> uint32_t
++            {
++                auto it = m_ioRegisters.find(a);
++                return it != m_ioRegisters.end() ? it->second : 0u;
++            };
++            ipuHost.writeIo = [this](uint32_t a, uint32_t v) { m_ioRegisters[a] = v; };
++            ipuHost.mem = [this](uint32_t addr, uint32_t size) -> uint8_t *
++            {
++                if (addr & 0x80000000u) // DMA address in scratchpad
++                {
++                    const uint32_t off = addr & (PS2_SCRATCHPAD_SIZE - 1u);
++                    return (off + size <= PS2_SCRATCHPAD_SIZE) ? m_scratchpad + off : nullptr;
++                }
++                const uint32_t off = addr & 0x1FFFFFFFu;
++                return (off + size <= PS2_RAM_SIZE) ? m_rdram + off : nullptr;
++            };
++            ipuHost.dmaComplete = [this](uint32_t channel)
++            {
++                constexpr uint32_t D_STAT = 0x1000E010u;
++                uint32_t dstat = m_ioRegisters.count(D_STAT) ? m_ioRegisters[D_STAT] : 0u;
++                dstat |= (1u << channel);
++                if (((dstat & 0x3FFu) & ((dstat >> 16) & 0x3FFu)) != 0u)
++                    dstat |= (1u << 31);
++                m_ioRegisters[D_STAT] = dstat;
++                ps2_syscalls::raiseDmacCompletion(channel);
++            };
++            ps2_ipu::setHost(ipuHost);
++        }
++
+         // Initialize EE TLB entries (R5900 has 48 entries).
+         m_tlbEntries.assign(48, TLBEntry{0, 0, 0, false});
+ 
+@@ -465,6 +497,12 @@ uint64_t PS2Memory::read64(uint32_t address)
+     // to avoid any side-effects from read32 handlers.
+     if (address >= PS2_IO_BASE && address < (PS2_IO_BASE + PS2_IO_SIZE))
+     {
++        if (ps2_ipu::isIpuRegister(address))
++        {
++            const uint32_t ipuLo = ps2_ipu::read32(address);
++            const uint32_t ipuHi = ps2_ipu::read32(address + 4u);
++            return static_cast<uint64_t>(ipuLo) | (static_cast<uint64_t>(ipuHi) << 32);
++        }
+         uint32_t lo = m_ioRegisters.count(address) ? m_ioRegisters[address] : 0u;
+         uint32_t hi = m_ioRegisters.count(address + 4) ? m_ioRegisters[address + 4] : 0u;
+         return static_cast<uint64_t>(lo) | (static_cast<uint64_t>(hi) << 32);
+@@ -737,6 +775,12 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+         return true;
+     }
+ 
++    if (ps2_ipu::isIpuRegister(address))
++    {
++        ps2_ipu::write32(address, value);
++        return true;
++    }
++
+     if (address >= 0x10002000 && address <= 0x10002030)
+     {
+         if (address == 0x10002010)
+@@ -867,6 +911,12 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+                 m_hwBridge.onDmaStart(channelBase, madr, qwc, tadr, m_rdram, m_hwBridge.user);
+             }
+ 
++            if (channelBase == 0x1000B000u || channelBase == 0x1000B400u)
++            {
++                ps2_ipu::dmaKick(channelBase); // IPU FROM/TO channels (ipu/ps2_ipu.cpp)
++                return true;
++            }
++
+             if ((channelBase == 0x1000A000 || channelBase == 0x10009000) && m_gsVRAM)
+             {
+                 auto enqueueTransfer = [&](uint32_t srcAddr, uint32_t qwCount)
+@@ -1364,6 +1414,10 @@ int PS2Memory::pollDmaRegisters()
+ uint32_t PS2Memory::readIORegister(uint32_t address)
+ {
+     std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
++    if (ps2_ipu::isIpuRegister(address))
++    {
++        return ps2_ipu::read32(address);
++    }
+     if (address == 0x1000F000u) // INTC_STAT
+     {
+         return m_intcStat.load(std::memory_order_relaxed);
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index 072343d..2b5a199 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1,4 +1,5 @@
+ #include "ps2_runtime.h"
++#include "ps2_debug_panel.h"
+ #include "ps2_log.h"
+ #include "ps2_stubs.h"
+ #include "ps2_syscalls.h"
+@@ -49,6 +50,7 @@ static constexpr int HOST_WINDOW_HEIGHT = 544;
+ static constexpr int HOST_WINDOW_WIDTH = FB_WIDTH;
+ static constexpr int HOST_WINDOW_HEIGHT = DEFAULT_DISPLAY_HEIGHT;
+ #endif
++static constexpr int kDebugPanelWidth = 340;
+ struct ElfHeader
+ {
+     uint32_t magic;
+@@ -806,7 +808,9 @@ bool PS2Runtime::initialize(const char *title)
+         else
+         {
+             SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+-            InitWindow(HOST_WINDOW_WIDTH, HOST_WINDOW_HEIGHT, title);
++            const char *panelEnv = std::getenv("REO_DEBUG_PANEL");
++            const bool panel = !(panelEnv && panelEnv[0] == '0');
++            InitWindow(HOST_WINDOW_WIDTH + (panel ? kDebugPanelWidth : 0), HOST_WINDOW_HEIGHT, title);
+             InitAudioDevice();
+             m_audioBackend.setAudioReady(IsAudioDeviceReady());
+             SetTargetFPS(60);
+@@ -1145,6 +1149,59 @@ void PS2Runtime::registerOverlayFunction(uint32_t base, uint32_t magic, uint32_t
+     slot->functions[(static_cast<uint64_t>(overlayId) << 32) | address] = func;
+ }
+ 
++uint32_t ps2GsDebugGifPackets();
++uint32_t ps2GsDebugVertexKicks();
++
++// Host debug side panel (ps2_debug_panel.h). Kept out of PS2Runtime so its layout
++// (compiled into every generated function) does not change.
++static std::function<void(std::string &)> g_debugPanelProvider;
++
++void ps2SetDebugPanelProvider(std::function<void(std::string &)> provider)
++{
++    g_debugPanelProvider = std::move(provider);
++}
++
++static void ps2DrawDebugPanel(PS2Runtime &rt, int x0, int width, uint32_t presentWidth, uint32_t presentHeight)
++{
++    std::string text;
++    char line[160];
++    auto add = [&](const char *fmt, auto... args)
++    {
++        std::snprintf(line, sizeof(line), fmt, args...);
++        text += line;
++        text += '\n';
++    };
++    add("FPS %d   vsync %llu", GetFPS(), static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()));
++    add("dma %llu  gif %llu", static_cast<unsigned long long>(rt.memory().dmaStartCount()),
++        static_cast<unsigned long long>(rt.memory().gifCopyCount()));
++    add("gsPkts %u  prims %u", ps2GsDebugGifPackets(), ps2GsDebugVertexKicks());
++    {
++        const GSRegisters &pr = rt.memory().gs();
++        add("PMODE %04llx SMODE2 %llx", static_cast<unsigned long long>(pr.pmode & 0xFFFF),
++            static_cast<unsigned long long>(pr.smode2));
++        add("DISPFB1 %llx", static_cast<unsigned long long>(pr.dispfb1));
++        add("DISPLAY1 %llx", static_cast<unsigned long long>(pr.display1));
++    }
++    add("present %ux%u", presentWidth, presentHeight);
++    if (g_debugPanelProvider)
++        g_debugPanelProvider(text);
++    text += "\n[F1] hide panel";
++
++    DrawRectangle(x0, 0, width, GetScreenHeight(), Color{24, 24, 32, 255});
++    int y = 8;
++    size_t start = 0;
++    while (start <= text.size())
++    {
++        size_t end = text.find('\n', start);
++        if (end == std::string::npos)
++            end = text.size();
++        const std::string l = text.substr(start, end - start);
++        DrawText(l.c_str(), x0 + 8, y, 16, Color{200, 220, 200, 255});
++        y += 19;
++        start = end + 1;
++    }
++}
++
+ const PS2Runtime::RecompiledFunction *PS2Runtime::findOverlayFunction(uint32_t address) const
+ {
+     if (m_overlaySlots.empty())
+@@ -2431,11 +2488,20 @@ void PS2Runtime::run()
+         uint32_t presentHeight = DEFAULT_DISPLAY_HEIGHT;
+         UploadFrame(frameTex, this, presentWidth, presentHeight);
+ 
++        static bool s_panelOn = []
++        {
++            const char *e = std::getenv("REO_DEBUG_PANEL");
++            return !(e && e[0] == '0');
++        }();
++        if (IsKeyPressed(KEY_F1))
++            s_panelOn = !s_panelOn;
++        const int panelWidth = s_panelOn ? kDebugPanelWidth : 0;
++
+         BeginDrawing();
+         ClearBackground(BLACK);
+         const float srcWidth = static_cast<float>(std::max<uint32_t>(1u, presentWidth));
+         const float srcHeight = static_cast<float>(std::max<uint32_t>(1u, presentHeight));
+-        const float screenWidth = static_cast<float>(GetScreenWidth());
++        const float screenWidth = static_cast<float>(std::max(1, GetScreenWidth() - panelWidth));
+         const float screenHeight = static_cast<float>(GetScreenHeight());
+         const float scale = std::min(screenWidth / srcWidth, screenHeight / srcHeight);
+         const float dstWidth = srcWidth * scale;
+@@ -2447,6 +2513,8 @@ void PS2Runtime::run()
+             dstWidth,
+             dstHeight};
+         DrawTexturePro(frameTex, srcRect, dstRect, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
++        if (panelWidth > 0)
++            ps2DrawDebugPanel(*this, static_cast<int>(screenWidth), panelWidth, presentWidth, presentHeight);
+         EndDrawing();
+ 
+         if (WindowShouldClose())

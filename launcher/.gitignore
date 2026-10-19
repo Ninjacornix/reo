@@ -1,0 +1,7 @@
+bin/
+obj/
+artifacts/
+native/*.obj
+native/*.lib
+native/*.exp
+native/*.dll

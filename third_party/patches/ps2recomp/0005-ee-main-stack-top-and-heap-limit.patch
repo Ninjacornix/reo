@@ -1,0 +1,92 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp
+index 0752220..2f3ed33 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp
+@@ -520,6 +520,17 @@ namespace ps2_syscalls
+         setReturnS32(ctx, 0);
+     }
+ 
++    // Main-thread stack bottom (set by SetupThread with stack == -1) and the user
++    // heap limit EndOfHeap reports (set by SetupHeap with size == -1). 0 = unset.
++    static uint32_t g_mainStackBottom = 0u;
++    static uint32_t g_userHeapLimit = 0u;
++    // Top-of-RAM stack: PCSX2 (real BIOS) shows no stack use above RAM - 0x1000.
++    static constexpr uint32_t kMainStackTopReserve = 0x1000u;
++    // Window just below the main stack kept for the runtime's own guestMalloc (HLE
++    // stubs, auto thread stacks) so it never overlaps the game's sbrk heap. SLUS-20765
++    // leaves 208 KB free below the stack on PCSX2; 128 KB keeps an 80 KB margin.
++    static constexpr uint32_t kRuntimeHeapReserve = 0x20000u;
++
+     // 0x3C SetupThread
+     // args: $a0 = gp, $a1 = stack, $a2 = stack_size, $a3 = args, $t0 = root_func
+     void SetupThread(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+@@ -537,22 +548,16 @@ namespace ps2_syscalls
+         uint32_t sp = currentSp;
+         if (stack == 0xFFFFFFFFu)
+         {
+-            if (stackSizeSigned > 0)
+-            {
+-                const uint32_t requestedSize = static_cast<uint32_t>(stackSizeSigned);
+-                if (requestedSize < PS2_RAM_SIZE)
+-                {
+-                    sp = PS2_RAM_SIZE - requestedSize;
+-                }
+-                else
+-                {
+-                    sp = PS2_RAM_SIZE;
+-                }
+-            }
+-            else
++            // Stack occupies [RAM - size, RAM); sp starts near the top and grows
++            // down (previously sp = RAM - size, i.e. the stack grew into the heap).
++            uint32_t requestedSize = (stackSizeSigned > 0) ? static_cast<uint32_t>(stackSizeSigned) : 0u;
++            if (requestedSize >= PS2_RAM_SIZE)
+             {
+-                sp = PS2_RAM_SIZE;
++                requestedSize = 0u;
+             }
++            g_mainStackBottom = PS2_RAM_SIZE - requestedSize;
++            sp = (requestedSize > 2u * kMainStackTopReserve) ? (PS2_RAM_SIZE - kMainStackTopReserve)
++                                                             : PS2_RAM_SIZE;
+         }
+         else if (stack != 0u)
+         {
+@@ -576,6 +581,24 @@ namespace ps2_syscalls
+         const uint32_t heapBase = getRegU32(ctx, 4); // $a0
+         const uint32_t heapSize = getRegU32(ctx, 5); // $a1 (optional size)
+ 
++        if (runtime && heapSize == 0xFFFFFFFFu && heapBase < PS2_RAM_SIZE)
++        {
++            // size -1: heap runs up to the main stack (kernel behaviour). The game's
++            // sbrk checks EndOfHeap(); the runtime's own allocator gets a reserved
++            // window directly below the stack so the two never overlap.
++            const uint32_t stackBottom = g_mainStackBottom ? g_mainStackBottom : PS2_RAM_SIZE;
++            if (stackBottom > heapBase + kRuntimeHeapReserve)
++            {
++                g_userHeapLimit = stackBottom - kRuntimeHeapReserve;
++                runtime->configureGuestHeap(g_userHeapLimit, stackBottom);
++                std::cerr << "[SetupHeap] user heap 0x" << std::hex << heapBase << "-0x" << g_userHeapLimit
++                          << ", runtime reserve 0x" << g_userHeapLimit << "-0x" << stackBottom
++                          << std::dec << std::endl;
++                setReturnU32(ctx, heapBase);
++                return;
++            }
++        }
++
+         if (runtime)
+         {
+             uint32_t heapLimit = PS2_RAM_SIZE;
+@@ -595,6 +618,13 @@ namespace ps2_syscalls
+     // 0x3E EndOfHeap: commonly returns current heap end; keep it stable for now.
+     void EndOfHeap(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
++        // The kernel returns the heap's upper limit; newlib-style sbrk (SLUS-20765
++        // 0x114D20) fails with ENOMEM when heap_ptr + incr exceeds it.
++        if (g_userHeapLimit != 0u)
++        {
++            setReturnU32(ctx, g_userHeapLimit);
++            return;
++        }
+         if (runtime)
+         {
+             setReturnU32(ctx, runtime->guestHeapEnd());

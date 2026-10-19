@@ -1,0 +1,331 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index cb09de5..697ccc0 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -78,17 +78,30 @@ namespace ps2_syscalls
+         return value;
+     }
+ 
++    // Nesting depth of DMAC delivery inside a busy-waiting handler (serviceNestedDmac).
++    thread_local int t_nestedDmacDepth = 0;
++
+     static uint32_t getAsyncHandlerStackTop(PS2Runtime *runtime)
+     {
+         constexpr uint32_t kAsyncHandlerStackSize = 0x4000u;
+         thread_local PS2Runtime *s_cachedRuntime = nullptr;
+         thread_local uint32_t s_cachedStackTop = 0u;
++        thread_local uint32_t s_nestedStackTop = 0u;
+ 
+         if (runtime == nullptr)
+         {
+             return PS2_RAM_SIZE - 0x10u;
+         }
+ 
++        // A nested handler must not reuse the interrupted handler's stack.
++        if (t_nestedDmacDepth > 0)
++        {
++            if (s_nestedStackTop == 0u)
++                s_nestedStackTop = runtime->reserveAsyncCallbackStack(kAsyncHandlerStackSize, 16u);
++            if (s_nestedStackTop != 0u)
++                return s_nestedStackTop;
++        }
++
+         if (s_cachedRuntime != runtime || s_cachedStackTop == 0u)
+         {
+             s_cachedRuntime = runtime;
+@@ -313,9 +326,36 @@ namespace ps2_syscalls
+         return tickValue;
+     }
+ 
++    // True on the interrupt worker thread.
++    thread_local bool t_isIrqWorker = false;
++
++    // The EE takes INTC (INT0) and DMAC (INT1) on separate lines. SLUS-20765's VBLANK
++    // handler (FUN_0019f600 -> FUN_001a0350 -> FUN_0018d650) busy-waits for a frame-busy flag
++    // that its DMAC completion handler clears. With one worker delivering every interrupt in
++    // sequence, a DMA completing just after VBLANK began could never be delivered (D35).
++    bool serviceNestedDmac(uint8_t *rdram, PS2Runtime *runtime)
++    {
++        if (!t_isIrqWorker || t_nestedDmacDepth > 0 || !rdram || !runtime)
++            return false;
++        uint32_t pending = g_pending_dmac_mask.exchange(0u, std::memory_order_acq_rel);
++        if (pending == 0u)
++            return false;
++        ++t_nestedDmacDepth;
++        for (; pending != 0u; pending &= pending - 1u)
++        {
++            uint32_t channel = 0u;
++            while (((pending >> channel) & 1u) == 0u)
++                ++channel;
++            dispatchDmacHandlersForCause(rdram, runtime, channel);
++        }
++        --t_nestedDmacDepth;
++        return true;
++    }
++
+     static void interruptWorkerMain(uint8_t *rdram, PS2Runtime *runtime)
+     {
+         g_currentThreadId = -1;
++        t_isIrqWorker = true;
+ 
+         using clock = std::chrono::steady_clock;
+         auto nextTick = clock::now() + kVblankPeriod;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
+index 700e6b5..da2abb6 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h
+@@ -33,6 +33,9 @@ namespace ps2_syscalls
+     // Asynchronous INTC interrupt (e.g. GS SIGNAL/FINISH): latched in INTC_STAT and
+     // the game's INTC handlers for `cause` run on the interrupt worker.
+     void raiseIntcInterrupt(uint32_t cause);
++    // Called at guest preemption checkpoints: on the interrupt worker (an INTC handler is
++    // busy-waiting), deliver pending DMAC interrupts nested. Returns true if any ran.
++    bool serviceNestedDmac(uint8_t *rdram, PS2Runtime *runtime);
+     void EnsureVSyncWorkerRunning(uint8_t *rdram, PS2Runtime *runtime);
+     uint64_t GetCurrentVSyncTick();
+     void stopInterruptWorker();
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+index f1c7ee4..7c76550 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -1,3 +1,5 @@
++#include <cstdio>
++#include <cstdlib>
+ #include "Common.h"
+ #include "Thread.h"
+ #include "../../ps2_guest_sched.h"
+@@ -241,6 +243,8 @@ namespace ps2_syscalls
+             std::lock_guard<std::mutex> lock(g_thread_map_mutex);
+             g_threads.erase(tid);
+         }
++        if (std::getenv("REO_THREAD_LOG"))
++            std::fprintf(stderr, "[DeleteThread] by %d: thread %d erased (ra=0x%x)\n", g_currentThreadId, tid, getRegU32(ctx, 31));
+ 
+         {
+             std::lock_guard<std::mutex> lock(g_exit_handler_mutex);
+@@ -568,6 +572,8 @@ namespace ps2_syscalls
+             std::lock_guard<std::mutex> lock(g_thread_map_mutex);
+             g_threads.erase(tid);
+         }
++        if (std::getenv("REO_THREAD_LOG"))
++            std::fprintf(stderr, "[ExitDeleteThread] thread %d erased (pc=0x%x ra=0x%x)\n", tid, ctx->pc, getRegU32(ctx, 31));
+         throw ThreadExitException();
+     }
+ 
+@@ -953,8 +959,12 @@ namespace ps2_syscalls
+             tid = g_currentThreadId;
+ 
+         auto info = (tid == g_currentThreadId) ? ensureCurrentThreadInfo(ctx) : lookupThreadInfo(tid);
++        static const bool s_logErr = std::getenv("REO_THREAD_LOG") != nullptr;
+         if (!info)
+         {
++            if (s_logErr)
++                std::fprintf(stderr, "[ChangeThreadPriority] by %d: thread %d -> %d FAILED unknown thid (ra=0x%x)\n",
++                             g_currentThreadId, tid, newPrio, getRegU32(ctx, 31));
+             setReturnS32(ctx, KE_UNKNOWN_THID);
+             return;
+         }
+@@ -963,6 +973,9 @@ namespace ps2_syscalls
+             std::lock_guard<std::mutex> lock(info->m);
+             if (info->status == THS_DORMANT)
+             {
++                if (s_logErr)
++                    std::fprintf(stderr, "[ChangeThreadPriority] by %d: thread %d -> %d FAILED dormant (ra=0x%x)\n",
++                                 g_currentThreadId, tid, newPrio, getRegU32(ctx, 31));
+                 setReturnS32(ctx, KE_DORMANT);
+                 return;
+             }
+@@ -981,6 +994,14 @@ namespace ps2_syscalls
+             info->currentPriority = newPrio;
+         }
+         ps2_sched::setPriority(tid, newPrio);
++        {
++            static const bool s_log = std::getenv("REO_THREAD_LOG") != nullptr;
++            static std::atomic<int> s_count{0};
++            // Cross-thread changes always; self-changes (CRI's priority "lock") capped.
++            if (s_log && (tid != g_currentThreadId || s_count.fetch_add(1) < 100))
++                std::fprintf(stderr, "[ChangeThreadPriority] by %d: thread %d %d -> %d (ra=0x%x)\n", g_currentThreadId, tid,
++                             oldPrio, newPrio, getRegU32(ctx, 31));
++        }
+ 
+         setReturnS32(ctx, oldPrio);
+     }
+diff --git a/ps2xRuntime/src/lib/ps2_guest_sched.h b/ps2xRuntime/src/lib/ps2_guest_sched.h
+index 365d28e..c7615a2 100644
+--- a/ps2xRuntime/src/lib/ps2_guest_sched.h
++++ b/ps2xRuntime/src/lib/ps2_guest_sched.h
+@@ -25,4 +25,6 @@ namespace ps2_sched
+     // True when `tid` must give up the CPU now (suspended, or a higher-priority
+     // thread / non-guest worker is waiting for the lock).
+     bool mustYield(int tid);
++    // Long busy-wait: also yield to equal-priority waiters (see ps2_runtime.cpp).
++    bool spinYield(int tid);
+ }
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index 2b5a199..f3fcea5 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1,5 +1,6 @@
+ #include "ps2_runtime.h"
+ #include "ps2_debug_panel.h"
++#include "Kernel/Syscalls/Interrupt.h"
+ #include "ps2_log.h"
+ #include "ps2_stubs.h"
+ #include "ps2_syscalls.h"
+@@ -107,6 +108,28 @@ namespace ps2_sched
+         std::atomic<int> g_waitingGuests{0};
+         std::atomic<int> g_waitingWorkers{0}; // non-guest host threads waiting for the lock
+         thread_local int t_tid = -1;
++        // Long busy-waits (see spinYield): preemption checks since this thread last
++        // acquired the CPU, and whether it last gave the CPU up because of spinning.
++        thread_local uint32_t t_spinChecks = 0u;
++        thread_local bool t_spinYielded = false;
++        std::atomic<int> g_lastGuestOwner{-1}; // spin count survives re-acquires (syscalls) until another guest runs
++        // When the current owner took the CPU over from another guest thread (host clock).
++        std::atomic<int64_t> g_ownerSinceNs{0};
++        constexpr int64_t kRotateAfterNs = 2'000'000; // equal-priority rotation after 2 ms
++
++        int64_t nowNs()
++        {
++            return std::chrono::duration_cast<std::chrono::nanoseconds>(
++                       std::chrono::steady_clock::now().time_since_epoch())
++                .count();
++        }
++    }
++    // Heartbeat diagnostics: spin rotations, and CPU acquisitions per guest thread.
++    std::atomic<uint32_t> g_spinYields{0u};
++    std::atomic<uint32_t> g_acquires[256];
++    namespace
++    {
++        constexpr uint32_t kSpinChecksBeforeRotate = 2048u; // x64 back-edges ~ 131k iterations
+         std::mutex g_wakeMutex;
+         std::condition_variable g_wake;
+ 
+@@ -118,6 +141,22 @@ namespace ps2_sched
+             g_wake.notify_all();
+         }
+ 
++        // Another runnable guest thread of the same or higher priority is waiting.
++        bool equalOrHigherWaiter(int tid)
++        {
++            if (g_waitingGuests.load(std::memory_order_acquire) == 0)
++                return false;
++            const int mine = g_priority[tid].load(std::memory_order_relaxed);
++            for (int i = 0; i < kMaxTid; ++i)
++            {
++                if (i != tid && g_waiting[i].load(std::memory_order_relaxed) &&
++                    !g_suspended[i].load(std::memory_order_relaxed) &&
++                    g_priority[i].load(std::memory_order_relaxed) <= mine)
++                    return true;
++            }
++            return false;
++        }
++
+         // Another eligible waiter must run before `tid`.
+         bool higherWaiter(int tid)
+         {
+@@ -138,6 +177,15 @@ namespace ps2_sched
+     }
+ 
+     void setCurrentThread(int tid) { t_tid = validTid(tid) ? tid : -1; }
++    // Heartbeat: "prio/suspended/waiting" for a guest thread.
++    std::string debugState(int tid)
++    {
++        if (!validTid(tid))
++            return "-";
++        return std::to_string(g_priority[tid].load()) + "/" + std::to_string(g_suspended[tid].load()) + "/" +
++               std::to_string(g_waiting[tid].load());
++    }
++    int debugWaitingWorkers() { return g_waitingWorkers.load(); }
+     int currentThread() { return t_tid; }
+ 
+     void setPriority(int tid, int priority)
+@@ -164,6 +212,30 @@ namespace ps2_sched
+         notifyAll();
+     }
+ 
++    // A guest thread that keeps busy-waiting without blocking also lets equal-priority
++    // waiters run. The EE kernel does not time-slice, but games busy-wait on work done by
++    // an equal-priority thread they just woke (SLUS-20765: CRI's server handshake
++    // FUN_0012aa60 spins at priority 1 for worker 7 raised to 1, D34); on hardware such a
++    // loop exits through its iteration limit, here it would starve the worker for minutes.
++    bool spinYield(int tid)
++    {
++        // Opt-in (REO_SPIN_ROTATE=1): rotating equal priorities breaks CRI's global priority
++        // lock (FUN_0012a968/0x12a9f0 save one priority globally), see D34.
++        static const bool s_enabled = std::getenv("REO_SPIN_ROTATE") != nullptr;
++        if (!s_enabled || !validTid(tid))
++            return false;
++        ++t_spinChecks;
++        if (nowNs() - g_ownerSinceNs.load(std::memory_order_relaxed) < kRotateAfterNs &&
++            t_spinChecks < kSpinChecksBeforeRotate)
++            return false;
++        if (!equalOrHigherWaiter(tid))
++            return false;
++        t_spinChecks = 0u;
++        t_spinYielded = true;
++        g_spinYields.fetch_add(1u, std::memory_order_relaxed);
++        return true;
++    }
++
+     bool mustYield(int tid)
+     {
+         if (!validTid(tid))
+@@ -187,6 +259,21 @@ namespace ps2_sched
+         }
+         g_waiting[tid].store(1u, std::memory_order_release);
+         g_waitingGuests.fetch_add(1, std::memory_order_acq_rel);
++        static const bool s_rotate = std::getenv("REO_SPIN_ROTATE") != nullptr;
++        if (s_rotate && !t_spinYielded && g_lastGuestOwner.load(std::memory_order_relaxed) == tid &&
++            nowNs() - g_ownerSinceNs.load(std::memory_order_relaxed) >= kRotateAfterNs &&
++            equalOrHigherWaiter(tid))
++        {
++            t_spinYielded = true; // held the CPU too long across syscalls: rotate
++            g_spinYields.fetch_add(1u, std::memory_order_relaxed);
++        }
++        if (t_spinYielded)
++        {
++            // Gave the CPU up for spinning: let the waiting thread take it first.
++            t_spinYielded = false;
++            notifyAll();
++            std::this_thread::sleep_for(std::chrono::microseconds(200));
++        }
+         for (;;)
+         {
+             mutex.lock();
+@@ -199,6 +286,12 @@ namespace ps2_sched
+         }
+         g_waitingGuests.fetch_sub(1, std::memory_order_acq_rel);
+         g_waiting[tid].store(0u, std::memory_order_release);
++        if (g_lastGuestOwner.exchange(tid, std::memory_order_acq_rel) != tid)
++        {
++            t_spinChecks = 0u;
++            g_ownerSinceNs.store(nowNs(), std::memory_order_relaxed);
++        }
++        g_acquires[tid].fetch_add(1u, std::memory_order_relaxed);
+     }
+ 
+     void released() { notifyAll(); }
+@@ -2164,7 +2257,9 @@ bool PS2Runtime::shouldPreemptGuestExecution()
+         return false;
+     }
+     s_backEdgeCounter = 0u;
+-    return ps2_sched::mustYield(ps2_sched::currentThread());
++    ps2_syscalls::serviceNestedDmac(m_memory.getRDRAM(), this);
++    const int tid = ps2_sched::currentThread();
++    return ps2_sched::mustYield(tid) || ps2_sched::spinYield(tid);
+ }
+ 
+ uint8_t PS2Runtime::Load8(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr)
+@@ -2466,6 +2561,11 @@ void PS2Runtime::run()
+                           << " img=" << ps2GsDebugImageCalls() << "/rej=" << ps2GsDebugImageRejected()
+                           << "/bytes=" << ps2GsDebugImageBytes()
+                           << " px=" << g_pxCalls.load() << "/sc=" << g_pxScissor.load() << "/at=" << g_pxAlpha.load()
++                          << " spinY=" << ps2_sched::g_spinYields.load() << " acq1/5/6/7=" << ps2_sched::g_acquires[1].load()
++                          << "/" << ps2_sched::g_acquires[5].load() << "/" << ps2_sched::g_acquires[6].load()
++                          << "/" << ps2_sched::g_acquires[7].load()
++                          << " t1=" << ps2_sched::debugState(1) << " t7=" << ps2_sched::debugState(7)
++                          << " ww=" << ps2_sched::debugWaitingWorkers()
+                           << std::endl;
+                 s_pcHist.clear();
+                 const auto r = s_raHist.sorted();

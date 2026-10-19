@@ -1,0 +1,10 @@
+third_party/**
+deps/**
+build*/**
+out/**
+recomp/config/output*/**
+runtime/gs/stb_image_write.h
+tools/parallel_gs_backend/resident_gs/**
+launcher/bin/**
+launcher/obj/**
+launcher/artifacts/**

@@ -1,0 +1,218 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+index 7c76550..80e6c4f 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -2,8 +2,45 @@
+ #include <cstdlib>
+ #include "Common.h"
+ #include "Thread.h"
++#include "Interrupt.h"
+ #include "../../ps2_guest_sched.h"
+ 
++namespace ps2_sched
++{
++    // Heartbeat diagnostics: live guest context of each running guest thread.
++    extern std::atomic<R5900Context *> g_threadCtx[256];
++}
++
++namespace
++{
++    // REO_THREAD_LOG: wake/resume/suspend/sleep operations on threads 4..8 (CRI servers, D34).
++    void logThreadOp(const char *op, int target, int status, int wakeups, int suspends, uint32_t ra)
++    {
++        static const bool s_log = std::getenv("REO_THREAD_LOG") != nullptr;
++        static std::atomic<int> s_n{0};
++        if (!s_log || target < 7 || target > 7 || s_n.fetch_add(1) > 20000)
++            return;
++        std::fprintf(stderr, "[THOP] %s by %d: t%d status=%d wake=%d susp=%d ra=0x%x vsync=%llu\n", op,
++                     g_currentThreadId, target, status, wakeups, suspends, ra,
++                     static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()));
++    }
++
++    // EE kernel rescheduling on WakeupThread/ResumeThread/ChangeThreadPriority: when the
++    // call leaves a thread of strictly higher priority ready, it runs before the caller
++    // continues; by default the runtime switches only at the caller's next preemption
++    // point. Opt-in (REO_IMMEDIATE_SWITCH=1): the M1 checkpoint does not need it once
++    // WakeupThread releases WAITSUSPEND sleepers (D34), so it stays off until validated.
++    void switchIfOutranked(PS2Runtime *runtime, int target, bool targetReady)
++    {
++        static const bool s_on = std::getenv("REO_IMMEDIATE_SWITCH") != nullptr;
++        const int self = ps2_sched::currentThread();
++        if (!s_on || !targetReady || !runtime || self < 0 || !ps2_sched::outranks(target, self))
++            return;
++        ps2_sched::awaitQueued(target, 20000);
++        PS2Runtime::GuestExecutionReleaseScope yieldCpu(runtime);
++    }
++}
++
+ namespace ps2_syscalls
+ {
+     static void applySuspendStatusLocked(ThreadInfo &info)
+@@ -343,6 +380,12 @@ namespace ps2_syscalls
+             }
+             R5900Context threadCtxCopy{};
+             R5900Context *threadCtx = &threadCtxCopy;
++            struct CtxReg
++            {
++                int t;
++                CtxReg(int t_, R5900Context *c) : t(t_) { if (t >= 0 && t < 256) ps2_sched::g_threadCtx[t].store(c); }
++                ~CtxReg() { if (t >= 0 && t < 256) ps2_sched::g_threadCtx[t].store(nullptr); }
++            } ctxReg(tid, threadCtx);
+ 
+             {
+                 std::lock_guard<std::mutex> lock(info->m);
+@@ -640,6 +683,7 @@ namespace ps2_syscalls
+             }
+             info->suspendCount++;
+             applySuspendStatusLocked(*info);
++            logThreadOp("Suspend", tid, info->status, info->wakeupCount, info->suspendCount, getRegU32(ctx, 31));
+         }
+         ps2_sched::setSuspended(tid, true);
+         info->cv.notify_all();
+@@ -661,6 +705,7 @@ namespace ps2_syscalls
+ 
+     void ResumeThread(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
++        bool resumedReady = false;
+         int tid = static_cast<int>(getRegU32(ctx, 4));
+         if (tid == 0)
+             tid = g_currentThreadId;
+@@ -697,9 +742,12 @@ namespace ps2_syscalls
+                     info->status = (tid == g_currentThreadId) ? THS_RUN : THS_READY;
+                 }
+             }
++            resumedReady = info->status == THS_READY;
++            logThreadOp("Resume", tid, info->status, info->wakeupCount, info->suspendCount, getRegU32(ctx, 31));
+         }
+         info->cv.notify_all();
+         setReturnS32(ctx, tid); // EE kernel returns the thread id (Play! PS2OS.cpp)
++        switchIfOutranked(runtime, tid, resumedReady);
+     }
+ 
+     void GetThreadId(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+@@ -765,6 +813,7 @@ namespace ps2_syscalls
+ 
+         int ret = 0;
+         std::unique_lock<std::mutex> lock(info->m);
++        logThreadOp("Sleep", g_currentThreadId, info->status, info->wakeupCount, info->suspendCount, getRegU32(ctx, 31));
+ 
+         if (info->wakeupCount > 0)
+         {
+@@ -861,7 +910,10 @@ namespace ps2_syscalls
+                 setReturnS32(ctx, KE_DORMANT);
+                 return;
+             }
+-            if (info->status == THS_WAIT && info->waitType == TSW_SLEEP)
++            // A sleeping thread that is also suspended (WAITSUSPEND) has its sleep released
++            // too and stays SUSPEND (EE kernel); queueing a wakeup count instead made its
++            // next SleepThread return at once (CRI server handshake, D34).
++            if ((info->status == THS_WAIT || info->status == THS_WAITSUSPEND) && info->waitType == TSW_SLEEP)
+             {
+                 if (info->suspendCount > 0)
+                 {
+@@ -882,6 +934,7 @@ namespace ps2_syscalls
+             }
+             newWakeupCount = info->wakeupCount;
+             statusAfter = info->status;
++            logThreadOp("Wakeup", tid, info->status, info->wakeupCount, info->suspendCount, getRegU32(ctx, 31));
+         }
+ 
+         static std::atomic<uint32_t> s_wakeupLogs{0};
+@@ -895,6 +948,7 @@ namespace ps2_syscalls
+                                               << std::endl);
+         }
+         setReturnS32(ctx, KE_OK);
++        switchIfOutranked(runtime, tid, statusAfter == THS_READY);
+     }
+ 
+     void iWakeupThread(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+@@ -951,6 +1005,7 @@ namespace ps2_syscalls
+ 
+     void ChangeThreadPriority(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
++        bool priorityTargetReady = false;
+         int tid = static_cast<int>(getRegU32(ctx, 4));
+         int newPrio = static_cast<int>(getRegU32(ctx, 5));
+         int oldPrio = 0;
+@@ -992,6 +1047,7 @@ namespace ps2_syscalls
+ 
+             oldPrio = info->currentPriority;
+             info->currentPriority = newPrio;
++            priorityTargetReady = info->status == THS_READY;
+         }
+         ps2_sched::setPriority(tid, newPrio);
+         {
+@@ -1004,6 +1060,7 @@ namespace ps2_syscalls
+         }
+ 
+         setReturnS32(ctx, oldPrio);
++        switchIfOutranked(runtime, tid, priorityTargetReady);
+     }
+ 
+     void iChangeThreadPriority(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+diff --git a/ps2xRuntime/src/lib/ps2_guest_sched.h b/ps2xRuntime/src/lib/ps2_guest_sched.h
+index c7615a2..df56048 100644
+--- a/ps2xRuntime/src/lib/ps2_guest_sched.h
++++ b/ps2xRuntime/src/lib/ps2_guest_sched.h
+@@ -27,4 +27,12 @@ namespace ps2_sched
+     bool mustYield(int tid);
+     // Long busy-wait: also yield to equal-priority waiters (see ps2_runtime.cpp).
+     bool spinYield(int tid);
++
++    // EE kernel: a syscall that makes a thread of strictly higher priority ready
++    // (WakeupThread, ResumeThread, ChangeThreadPriority) switches to it before returning.
++    // outranks: `target` is not suspended and has a higher priority than `self`.
++    bool outranks(int target, int self);
++    // Waits (bounded) until `target`'s host thread queues for the CPU, so the caller's
++    // release/re-acquire hands the CPU to it.
++    void awaitQueued(int target, int timeoutUs);
+ }
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index f3fcea5..e5ddf3f 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -126,6 +126,7 @@ namespace ps2_sched
+     }
+     // Heartbeat diagnostics: spin rotations, and CPU acquisitions per guest thread.
+     std::atomic<uint32_t> g_spinYields{0u};
++    std::atomic<R5900Context *> g_threadCtx[256];
+     std::atomic<uint32_t> g_acquires[256];
+     namespace
+     {
+@@ -236,6 +237,23 @@ namespace ps2_sched
+         return true;
+     }
+ 
++    bool outranks(int target, int self)
++    {
++        if (!validTid(target) || !validTid(self) || target == self)
++            return false;
++        return !g_suspended[target].load(std::memory_order_acquire) &&
++               g_priority[target].load(std::memory_order_relaxed) < g_priority[self].load(std::memory_order_relaxed);
++    }
++
++    void awaitQueued(int target, int timeoutUs)
++    {
++        if (!validTid(target))
++            return;
++        const int64_t deadline = nowNs() + static_cast<int64_t>(timeoutUs) * 1000;
++        while (!g_waiting[target].load(std::memory_order_acquire) && nowNs() < deadline)
++            std::this_thread::yield();
++    }
++
+     bool mustYield(int tid)
+     {
+         if (!validTid(tid))
+@@ -2565,7 +2583,11 @@ void PS2Runtime::run()
+                           << "/" << ps2_sched::g_acquires[5].load() << "/" << ps2_sched::g_acquires[6].load()
+                           << "/" << ps2_sched::g_acquires[7].load()
+                           << " t1=" << ps2_sched::debugState(1) << " t7=" << ps2_sched::debugState(7)
+-                          << " ww=" << ps2_sched::debugWaitingWorkers()
++                          << " ww=" << ps2_sched::debugWaitingWorkers();
++                for (int t : {5, 6, 7})
++                    if (R5900Context *c = ps2_sched::g_threadCtx[t].load())
++                        std::cerr << " pc" << t << "=0x" << std::hex << c->pc << "/ra=0x"
++                                  << static_cast<uint32_t>(_mm_extract_epi32(c->r[31], 0)) << std::dec
+                           << std::endl;
+                 s_pcHist.clear();
+                 const auto r = s_raHist.sorted();

@@ -1,0 +1,315 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp b/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
+index 3f5f292..2a012eb 100644
+--- a/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
++++ b/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
+@@ -42,12 +42,16 @@ bool GifArbiter::isImagePacket(const uint8_t *data, uint32_t sizeBytes)
+     return flg == 2u;
+ }
+ 
++// Whole-run GIF submissions per path (diagnostic heartbeat, ps2_runtime.cpp).
++std::atomic<uint32_t> g_gifSubmitsByPath[4];
++
+ void GifArbiter::submit(GifPathId pathId, const uint8_t *data, uint32_t sizeBytes, bool path2DirectHl)
+ {
+     if (!data || sizeBytes < 16 || !m_processFn)
+         return;
+ 
+     const uint32_t debugIndex = s_debugGifArbiterSubmitCount.fetch_add(1, std::memory_order_relaxed);
++    g_gifSubmitsByPath[static_cast<uint32_t>(pathId) & 3u].fetch_add(1, std::memory_order_relaxed);
+     if (debugIndex < 96u)
+     {
+         uint64_t tagLo = 0;
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+index b02ecae..e6f2b77 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -513,6 +513,19 @@ namespace
+     }
+ }
+ 
++// Diagnostic heartbeat accessors (ps2_runtime.cpp).
++// GIF IMAGE data still owed by the last IMAGE tag. The GIF is a stream: a tag's NLOOP
++// quadwords may arrive in later packets (separate DMA REF tags, later VIF1 DIRECTs).
++static uint32_t s_gifPendingImageBytes = 0u;
++static std::atomic<uint32_t> g_gsPacketsAccepted{0};
++static std::atomic<uint32_t> g_gsPrimitivesDrawn{0};
++static std::atomic<uint32_t> g_gsImageCalls{0}, g_gsImageRejected{0}, g_gsImageBytes{0};
++uint32_t ps2GsDebugImageCalls() { return g_gsImageCalls.load(); }
++uint32_t ps2GsDebugImageRejected() { return g_gsImageRejected.load(); }
++uint32_t ps2GsDebugImageBytes() { return g_gsImageBytes.load(); }
++uint32_t ps2GsDebugGifPackets() { return g_gsPacketsAccepted.load(std::memory_order_relaxed); }
++uint32_t ps2GsDebugVertexKicks() { return g_gsPrimitivesDrawn.load(std::memory_order_relaxed); }
++
+ using namespace GSInternal;
+ 
+ GS::GS()
+@@ -1111,6 +1124,20 @@ void GS::processGIFPacket(const uint8_t *data, uint32_t sizeBytes)
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (!data || sizeBytes < 16 || !m_vram)
+         return;
++    g_gsPacketsAccepted.fetch_add(1, std::memory_order_relaxed);
++
++    if (s_gifPendingImageBytes != 0u)
++    {
++        const uint32_t take = std::min(s_gifPendingImageBytes, sizeBytes);
++        processImageData(data, take);
++        s_gifPendingImageBytes -= take;
++        if (take >= sizeBytes)
++            return;
++        data += take;
++        sizeBytes -= take;
++        if (sizeBytes < 16)
++            return;
++    }
+ 
+     PS2_IF_AGRESSIVE_LOGS({
+         const uint32_t packetIndex = s_debugGifPacketCount.fetch_add(1, std::memory_order_relaxed);
+@@ -1203,8 +1230,12 @@ void GS::processGIFPacket(const uint8_t *data, uint32_t sizeBytes)
+         {
+             uint32_t imageBytes = nloop * 16;
+             if (offset + imageBytes > sizeBytes)
++            {
++                s_gifPendingImageBytes = offset + imageBytes - sizeBytes; // rest arrives later
+                 imageBytes = sizeBytes - offset;
+-            processImageData(data + offset, imageBytes);
++            }
++            if (imageBytes != 0u)
++                processImageData(data + offset, imageBytes);
+             offset += imageBytes;
+         }
+     }
+@@ -1973,6 +2004,7 @@ void GS::vertexKick(bool drawing)
+     if (m_vtxCount < needed)
+         return;
+ 
++    g_gsPrimitivesDrawn.fetch_add(1, std::memory_order_relaxed);
+     m_rasterizer.drawPrimitive(this);
+ 
+     switch (m_prim.type)
+@@ -2004,8 +2036,13 @@ void GS::vertexKick(bool drawing)
+ 
+ void GS::processImageData(const uint8_t *data, uint32_t sizeBytes)
+ {
++    g_gsImageCalls.fetch_add(1, std::memory_order_relaxed);
+     if (m_trxdir != 0 || !m_vram)
++    {
++        g_gsImageRejected.fetch_add(1, std::memory_order_relaxed);
+         return;
++    }
++    g_gsImageBytes.fetch_add(sizeBytes, std::memory_order_relaxed);
+ 
+     uint32_t dbp = m_bitbltbuf.dbp;
+     uint8_t dbw = m_bitbltbuf.dbw;
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+index de26dc6..e22af57 100644
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -387,16 +387,25 @@ void GSRasterizer::drawPrimitive(GS *gs)
+     }
+ }
+ 
++// Pixel outcome counters for the [hot] heartbeat (diagnostic).
++std::atomic<uint32_t> g_pxCalls{0}, g_pxScissor{0}, g_pxAlpha{0};
+ void GSRasterizer::writePixel(GS *gs, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+ {
++    g_pxCalls.fetch_add(1, std::memory_order_relaxed);
+     const auto &ctx = gs->activeContext();
+     if (x < ctx.scissor.x0 || x > ctx.scissor.x1 ||
+         y < ctx.scissor.y0 || y > ctx.scissor.y1)
++    {
++        g_pxScissor.fetch_add(1, std::memory_order_relaxed);
+         return;
++    }
+ 
+     const AlphaTestResult alphaTest = classifyAlphaTest(ctx.test, a);
+     if (!alphaTest.writeFramebuffer)
++    {
++        g_pxAlpha.fetch_add(1, std::memory_order_relaxed);
+         return;
++    }
+ 
+     const uint32_t widthBlocks = (ctx.frame.fbw != 0u) ? ctx.frame.fbw : 1u;
+     const uint32_t bytesPerPixel =
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+index 9793364..843ba7f 100644
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -947,6 +947,20 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+                         chainBuf.insert(chainBuf.end(), localBase + tagPhys + 8u, localBase + tagPhys + 16u);
+                         appendData(localTagAddr + 16u, qwCount);
+                     };
++                    // With CHCR.TTE the upper 64 bits of *every* VIF DMAtag (two VIFcodes) go to the
++                    // VIF before the tag's data -- including REF/REFE/REFS tags, whose data lives
++                    // elsewhere, and tags with QWC=0. (SLUS-20765 texture uploads: DIRECTHL in a
++                    // REF tag precedes the image data; dropping it misparsed the stream.)
++                    const bool vifTte = (channelBase == 0x10009000u) && ((value & 0x40u) != 0u);
++                    auto appendVifTagUpper = [&](uint32_t localTagAddr)
++                    {
++                        const bool tagScratch = isScratchpad(localTagAddr);
++                        const uint32_t tagPhys = translateAddress(localTagAddr);
++                        const uint8_t *localBase = tagScratch ? m_scratchpad : m_rdram;
++                        const uint32_t localMax = tagScratch ? PS2_SCRATCHPAD_SIZE : PS2_RAM_SIZE;
++                        if (tagPhys + 16u <= localMax)
++                            chainBuf.insert(chainBuf.end(), localBase + tagPhys + 8u, localBase + tagPhys + 16u);
++                    };
+ 
+                     int tagsProcessed = 0;
+ 
+@@ -1055,7 +1069,13 @@ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+                             break;
+                         }
+ 
+-                        if (hasPayload)
++                        if (vifTte && id <= 7u)
++                        {
++                            appendVifTagUpper(currentTagAddr);
++                            if (hasPayload)
++                                appendData(dataAddr, tagQwc);
++                        }
++                        else if (hasPayload)
+                         {
+                             const bool compactVif1LocalPayload =
+                                 (channelBase == 0x10009000u) &&
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index ca160a0..b80154f 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -86,6 +86,14 @@ struct ProgramHeader
+ };
+ 
+ 
++extern std::atomic<uint32_t> g_gifSubmitsByPath[4];
++uint32_t ps2GsDebugGifPackets();
++uint32_t ps2GsDebugVertexKicks();
++uint32_t ps2GsDebugImageCalls();
++uint32_t ps2GsDebugImageRejected();
++uint32_t ps2GsDebugImageBytes();
++extern std::atomic<uint32_t> g_pxCalls, g_pxScissor, g_pxAlpha;
++
+ namespace ps2_sched
+ {
+     namespace
+@@ -2256,10 +2264,30 @@ void PS2Runtime::run()
+ #ifdef REO_DIAG_LOGS
+         {
+             tick++;
+-            static std::unordered_map<uint32_t, uint32_t> s_pcHist;
+-            s_pcHist[m_cpuContext.pc]++;  // sample live PC each tick
+-            static std::unordered_map<uint32_t, uint32_t> s_raHist;
+-            s_raHist[static_cast<uint32_t>(_mm_extract_epi32(m_cpuContext.r[31], 0))]++; // and its caller
++            // Heap-free histograms (fixed open-addressing tables) of the live PC and its caller.
++            struct HotHist
++            {
++                std::array<uint32_t, 256> key{}, count{};
++                void add(uint32_t k)
++                {
++                    for (uint32_t i = 0, h = (k * 2654435761u) >> 24; i < 256u; ++i, h = (h + 1u) & 255u)
++                    {
++                        if (count[h] == 0u || key[h] == k) { key[h] = k; ++count[h]; return; }
++                    }
++                }
++                std::vector<std::pair<uint32_t, uint32_t>> sorted() const
++                {
++                    std::vector<std::pair<uint32_t, uint32_t>> v;
++                    for (size_t i = 0; i < 256u; ++i)
++                        if (count[i]) v.emplace_back(key[i], count[i]);
++                    std::sort(v.begin(), v.end(), [](auto &a, auto &b) { return a.second > b.second; });
++                    return v;
++                }
++                void clear() { count.fill(0u); }
++            };
++            static HotHist s_pcHist, s_raHist;
++            s_pcHist.add(m_cpuContext.pc);
++            s_raHist.add(static_cast<uint32_t>(_mm_extract_epi32(m_cpuContext.r[31], 0)));
+             // REO_PEEK=0xADDR[,0xADDR...]: watch guest words every tick and print a
+             // line whenever any of them changes (with the live PC at that moment).
+             {
+@@ -2308,8 +2336,7 @@ void PS2Runtime::run()
+                 int tasks = 0;
+                 for (int i = 0; i < 256; ++i) if (rd32(0x341640u + i * 16u)) ++tasks;
+ 
+-                std::vector<std::pair<uint32_t, uint32_t>> v(s_pcHist.begin(), s_pcHist.end());
+-                std::sort(v.begin(), v.end(), [](auto &a, auto &b) { return a.second > b.second; });
++                const auto v = s_pcHist.sorted();
+                 std::cerr << "[hot] tick=" << std::dec << tick << " top:";
+                 for (size_t i = 0; i < 10 && i < v.size(); ++i)
+                     std::cerr << " 0x" << std::hex << v[i].first << "(" << std::dec << v[i].second << ")";
+@@ -2320,10 +2347,15 @@ void PS2Runtime::run()
+                           << " st@2B0EC0=" << rd32(0x2B0EC0u)
+                           << " dma=" << m_memory.dmaStartCount()
+                           << " gif=" << m_memory.gifCopyCount()
++                          << " path1/2/3=" << g_gifSubmitsByPath[1].load() << "/" << g_gifSubmitsByPath[2].load()
++                          << "/" << g_gifSubmitsByPath[3].load()
++                          << " gsPkts=" << ps2GsDebugGifPackets() << " prims=" << ps2GsDebugVertexKicks()
++                          << " img=" << ps2GsDebugImageCalls() << "/rej=" << ps2GsDebugImageRejected()
++                          << "/bytes=" << ps2GsDebugImageBytes()
++                          << " px=" << g_pxCalls.load() << "/sc=" << g_pxScissor.load() << "/at=" << g_pxAlpha.load()
+                           << std::endl;
+                 s_pcHist.clear();
+-                std::vector<std::pair<uint32_t, uint32_t>> r(s_raHist.begin(), s_raHist.end());
+-                std::sort(r.begin(), r.end(), [](auto &a, auto &b) { return a.second > b.second; });
++                const auto r = s_raHist.sorted();
+                 std::cerr << "[hot-ra]";
+                 for (size_t i = 0; i < 6 && i < r.size(); ++i)
+                     std::cerr << " 0x" << std::hex << r[i].first << "(" << std::dec << r[i].second << ")";
+diff --git a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+index e478fa4..a2c9e3c 100644
+--- a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
++++ b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+@@ -1,3 +1,5 @@
++#include <cstdlib>
++#include <cstdio>
+ // Based on Blackline Interactive implementation
+ #include "runtime/ps2_memory.h"
+ #include <atomic>
+@@ -65,6 +67,20 @@ void PS2Memory::processVIF1Data(uint32_t srcPhys, uint32_t sizeBytes)
+ 
+ void PS2Memory::processVIF1Data(const uint8_t *data, uint32_t sizeBytes)
+ {
++    {   // Diagnostic: REO_VIF1_DUMP=<n> writes the first n VIF1 buffers to vif1_NNNN.bin
++        static const int s_dumpMax = []() { const char *e = std::getenv("REO_VIF1_DUMP"); return e ? std::atoi(e) : 0; }();
++        static std::atomic<int> s_dumped{0};
++        if (s_dumpMax > 0 && data && sizeBytes)
++        {
++            const int idx = s_dumped.fetch_add(1);
++            if (idx < s_dumpMax)
++            {
++                char name[64];
++                std::snprintf(name, sizeof(name), "vif1_%04d.bin", idx);
++                if (FILE *f = std::fopen(name, "wb")) { std::fwrite(data, 1, sizeBytes, f); std::fclose(f); }
++            }
++        }
++    }
+     if (!data || !m_gsVRAM || sizeBytes == 0u)
+         return;
+ 
+@@ -196,7 +212,8 @@ void PS2Memory::processVIF1Data(const uint8_t *data, uint32_t sizeBytes)
+             vif1_regs.itops = vif1_regs.itop & 0x3FFu;
+             vif1_regs.stat ^= (1u << 7); // toggle DBF
+             recomputeVif1Tops();
+-            uint32_t startPC = (uint32_t)imm * 8u;
++            // VU1 TPC is 11 bits (PCSX2 vu1ExecMicro: addr & 0x7FF, << 3).
++            uint32_t startPC = ((uint32_t)imm & 0x7FFu) * 8u;
+             const uint32_t kickIndex = s_debugVu1KickCount.fetch_add(1, std::memory_order_relaxed);
+             if (kickIndex < 48u)
+             {
+@@ -289,16 +306,9 @@ void PS2Memory::processVIF1Data(const uint8_t *data, uint32_t sizeBytes)
+                 const bool directHl = (opcode == VIF_DIRECTHL);
+                 submitGifPacket(GifPathId::Path2, data + pos, qwCount * 16, true, directHl);
+ 
+-                const uint32_t imageQw = gifImageQwcFromTag(data + pos, qwCount * 16u);
+-                if (imageQw != 0u)
+-                {
+-                    const uint32_t inlineImageQw = (qwCount > 0u) ? (qwCount - 1u) : 0u;
+-                    if (imageQw > inlineImageQw)
+-                    {
+-                        m_vif1PendingPath2ImageQwc = imageQw - inlineImageQw;
+-                        m_vif1PendingPath2DirectHl = directHl;
+-                    }
+-                }
++                // An IMAGE tag longer than this DIRECT continues in later DIRECTs; the GS keeps
++                // the GIF transfer state (ps2_gs_gpu.cpp). The VIF stream after DIRECT data is
++                // VIFcodes again, not image data.
+             }
+ 
+             pos += qwCount * 16;

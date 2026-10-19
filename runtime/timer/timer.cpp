@@ -68,7 +68,8 @@ void Timer::wait_for_vsync(int target_fps) {
         uint64_t frame_ticks = now.QuadPart - m_frame_start;
         double elapsed_ms = (double)frame_ticks * 1000.0 / (double)m_freq;
 
-        if (elapsed_ms >= target_ms) break;
+        if (elapsed_ms >= target_ms)
+            break;
 
         // Sleep for most of the remaining time to save CPU
         double remaining = target_ms - elapsed_ms;

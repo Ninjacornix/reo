@@ -1,0 +1,13 @@
+*.patch -text
+recomp/config/*.csv -text
+*.cpp text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.cs text eol=lf
+*.xaml text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf

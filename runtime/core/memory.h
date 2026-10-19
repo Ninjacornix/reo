@@ -31,7 +31,7 @@ using MmioReadHandler = std::function<uint32_t(uint32_t addr)>;
 using MmioWriteHandler = std::function<void(uint32_t addr, uint32_t value)>;
 
 class Memory {
-public:
+  public:
     Memory() = default;
     ~Memory();
 
@@ -39,11 +39,11 @@ public:
     void reset();
 
     // Physical memory access (for recompiled code)
-    uint8_t  read8(uint32_t vaddr);
+    uint8_t read8(uint32_t vaddr);
     uint16_t read16(uint32_t vaddr);
     uint32_t read32(uint32_t vaddr);
     uint64_t read64(uint32_t vaddr);
-    void     read128(uint32_t vaddr, void* out);
+    void read128(uint32_t vaddr, void* out);
 
     void write8(uint32_t vaddr, uint8_t value);
     void write16(uint32_t vaddr, uint16_t value);
@@ -61,26 +61,42 @@ public:
     void register_mmio_write(uint32_t base, uint32_t size, MmioWriteHandler handler);
 
     // Raw region access
-    uint8_t* main_ram()    { return m_main_ram; }
-    uint8_t* iop_ram()     { return m_iop_ram; }
-    uint8_t* scratchpad()  { return m_scratchpad; }
-    uint8_t* bios_rom()    { return m_bios_rom; }
-    uint8_t* vu0_code()    { return m_vu0_code; }
-    uint8_t* vu0_data()    { return m_vu0_data; }
-    uint8_t* vu1_code()    { return m_vu1_code; }
-    uint8_t* vu1_data()    { return m_vu1_data; }
+    uint8_t* main_ram() {
+        return m_main_ram;
+    }
+    uint8_t* iop_ram() {
+        return m_iop_ram;
+    }
+    uint8_t* scratchpad() {
+        return m_scratchpad;
+    }
+    uint8_t* bios_rom() {
+        return m_bios_rom;
+    }
+    uint8_t* vu0_code() {
+        return m_vu0_code;
+    }
+    uint8_t* vu0_data() {
+        return m_vu0_data;
+    }
+    uint8_t* vu1_code() {
+        return m_vu1_code;
+    }
+    uint8_t* vu1_data() {
+        return m_vu1_data;
+    }
 
-private:
+  private:
     uint32_t translate_address(uint32_t vaddr) const;
 
-    uint8_t* m_main_ram   = nullptr;  // 32 MB
-    uint8_t* m_iop_ram    = nullptr;  // 2 MB
-    uint8_t* m_scratchpad = nullptr;  // 16 KB
-    uint8_t* m_bios_rom   = nullptr;  // 4 MB
-    uint8_t* m_vu0_code   = nullptr;  // 4 KB
-    uint8_t* m_vu0_data   = nullptr;  // 4 KB
-    uint8_t* m_vu1_code   = nullptr;  // 16 KB
-    uint8_t* m_vu1_data   = nullptr;  // 16 KB
+    uint8_t* m_main_ram = nullptr;   // 32 MB
+    uint8_t* m_iop_ram = nullptr;    // 2 MB
+    uint8_t* m_scratchpad = nullptr; // 16 KB
+    uint8_t* m_bios_rom = nullptr;   // 4 MB
+    uint8_t* m_vu0_code = nullptr;   // 4 KB
+    uint8_t* m_vu0_data = nullptr;   // 4 KB
+    uint8_t* m_vu1_code = nullptr;   // 16 KB
+    uint8_t* m_vu1_data = nullptr;   // 16 KB
 
     struct MmioRegion {
         uint32_t base;

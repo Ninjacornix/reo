@@ -43,7 +43,17 @@
 #include "runtime/cdvd/cdvd.h"
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <algorithm>
+#include <chrono>
+#include <atomic>
+#include <mutex>
+#include <thread>
 #include <vector>
+#include <string>
+
+namespace ps2_syscalls { bool hleSignalSema(uint32_t semaId); }
+namespace ps2_stubs { uint32_t hleIopRebootCount(); }
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -118,17 +128,27 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
         printf("[HW-BRIDGE] CDVD initialized: %s\n", cdRoot.string().c_str());
     }
 
-    // Register callbacks with PS2Memory
-    PS2Memory::HwBridgeCallbacks memCb;
-    memCb.onDmaStart = &ReoHwBridge::onDmaStart;
-    memCb.onGsRegWrite = &ReoHwBridge::onGsRegWrite;
-    memCb.user = this;
-    runtime.memory().setHwBridge(memCb);
+    // Graphics pipeline. Default "upstream": PS2Recomp's own VIF1 -> VU1 -> GIF arbiter
+    // -> GS -> presentation path (its VU1 decodes per PCSX2's VUops tables). The bridge's
+    // duplicate VIF1/VU1/GS path (REO_GFX=bridge) mis-decodes VU lower instructions and is
+    // kept only for comparison (docs/DIVERGENCES.md D24).
+    const char* gfx = std::getenv("REO_GFX");
+    m_bridgeGfx = gfx && std::strcmp(gfx, "bridge") == 0;
+    printf("[HW-BRIDGE] graphics pipeline: %s\n", m_bridgeGfx ? "bridge (reo VU1/GS)" : "upstream (PS2Recomp VIF1/VU1/GS)");
+
+    if (m_bridgeGfx) {
+        // Register callbacks with PS2Memory
+        PS2Memory::HwBridgeCallbacks memCb;
+        memCb.onDmaStart = &ReoHwBridge::onDmaStart;
+        memCb.onGsRegWrite = &ReoHwBridge::onGsRegWrite;
+        memCb.user = this;
+        runtime.memory().setHwBridge(memCb);
+    }
 
     // Register callbacks with PS2Runtime
     PS2Runtime::HwBridgeVtable rtVt;
-    rtVt.onVuStart = &ReoHwBridge::onVuStart;
-    rtVt.getFramebuffer = &ReoHwBridge::getFramebuffer;
+    rtVt.onVuStart = &ReoHwBridge::onVuStart;  // VU0 VCALLMS (upstream only stubs VU0 micro)
+    rtVt.getFramebuffer = m_bridgeGfx ? &ReoHwBridge::getFramebuffer : nullptr;
     rtVt.onSifRpc = &ReoHwBridge::onSifRpc;
     rtVt.user = this;
     runtime.setHwBridgeVt(rtVt);
@@ -524,7 +544,8 @@ void ReoHwBridge::processVifCommands(const uint8_t* data, uint32_t size, const u
 
         case 0x14: // MSCAL — Start VU1 microprogram at immediate * 8
         {
-            uint32_t vuAddr = (uint32_t)immediate * 8;
+            // VU1 TPC is 11 bits: the address wraps (PCSX2 vu1ExecMicro: addr & 0x7FF, << 3).
+            uint32_t vuAddr = ((uint32_t)immediate & 0x7FFu) * 8;
             pos += 4;
 
             m_vu1Runs++;
@@ -541,7 +562,8 @@ void ReoHwBridge::processVifCommands(const uint8_t* data, uint32_t size, const u
         }
         case 0x15: // MSCALF
         {
-            uint32_t vuAddr = (uint32_t)immediate * 8;
+            // VU1 TPC is 11 bits: the address wraps (PCSX2 vu1ExecMicro: addr & 0x7FF, << 3).
+            uint32_t vuAddr = ((uint32_t)immediate & 0x7FFu) * 8;
             pos += 4;
 
             m_vu1Runs++;
@@ -699,6 +721,7 @@ void ReoHwBridge::executeVu(int unit, uint32_t addr, uint8_t* rdram, R5900Contex
 // ── SIF RPC callback: handle IOP module calls ───────────────────────
 
 // SIF RPC module IDs (PS2 IOP modules)
+static constexpr uint32_t SIF_FILEIO  = 0x80000001;
 static constexpr uint32_t SIF_PADMAN  = 0x80000100;
 static constexpr uint32_t SIF_MCSERV  = 0x80000400;
 static constexpr uint32_t SIF_CDVD    = 0x80000592;
@@ -720,13 +743,456 @@ static inline void rdramWrite32(uint8_t* rdram, uint32_t addr, uint32_t val) {
     memcpy(rdram + phys, &val, 4);
 }
 
+
+// ── libpad2 / dbcman pad data (IOP side) ────────────────────────────────
+// SLUS-20765 uses libpad2 on libdbc. scePad2CreateSocket (EE 0x180378) hands dbcman an
+// EE buffer of two 0x80-byte records; the IOP keeps refreshing them and the EE picks the
+// record with the larger sequence word (+0x7C) (EE 0x180970). Record layout as read by
+// scePad2GetState/GetButtonProfile/Read (EE 0x180680/0x1805B0/0x1804D8):
+//   +0 state (0 none, 1 stable/readable, 2/3 busy executing a command)  +2 data length  +3 profile length
+//   +4 valid word  +0x1C data bytes then profile bytes  +0x7C sequence
+// Profile = 40-bit mask of libpad2 button ids (0..15 digital, packed LSB-first; 0x10..0x1F
+// and 0x23..0x26 8-bit). Records are built exactly as the disc's DualShock2 driver
+// ds2u_s1 (IOP/MODULES/DRIVE.DAT module 3, FUN_00001170) builds them for a pad in
+// digital mode (SIO id 0x41): +1 = 6, +2 = 2, +3 = 4, profile F9 FF 00 00 (no L3/R3), and
+// the raw active-low SIO bytes b0 (SELECT L3 R3 START UP RIGHT DOWN LEFT) and
+// b1 (L2 R2 L1 R1 TRIANGLE CIRCLE CROSS SQUARE) repacked in button-id order:
+//   d0 = (b0 & 1) | ((b0 & 0xF8) >> 2) | (b1 << 6)   d1 = b1 >> 2
+// Input: REO_PAD_SCRIPT="<sec>:<BTN>[+<BTN>][:<holdSec>],..." (seconds since start,
+// default hold 0.2 s) for reproducible headless runs.
+namespace {
+struct Pad2Feeder {
+    std::mutex m;
+    std::vector<uint32_t> sockets;   // EE record-pair buffers
+    uint32_t workAddr = 0;           // sceDbcSetWorkAddr area: per-port connection words
+    uint32_t nextSocketId = 0;
+    uint8_t* rdram = nullptr;
+    bool started = false;
+    std::atomic<bool> stop{false};
+    std::thread thread;
+    struct Press { double t, hold; uint16_t mask; };
+    std::vector<Press> script;
+    std::atomic<uint16_t> lastPressed{0};   // for the debug panel
+    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+};
+Pad2Feeder g_pad2;
+
+uint16_t pad2ButtonBit(const std::string& n) {
+    static const char* names[16] = {"SELECT","L3","R3","START","UP","RIGHT","DOWN","LEFT",
+                                    "L2","R2","L1","R1","TRIANGLE","CIRCLE","CROSS","SQUARE"};
+    for (int i = 0; i < 16; ++i) if (n == names[i]) return (uint16_t)(1u << i);
+    return 0;
+}
+
+void pad2ParseScript() {
+    const char* e = std::getenv("REO_PAD_SCRIPT");
+    if (!e) return;
+    std::string all(e), item;
+    size_t p = 0;
+    while (p <= all.size()) {
+        size_t q = all.find(',', p);
+        item = all.substr(p, q == std::string::npos ? std::string::npos : q - p);
+        p = (q == std::string::npos) ? all.size() + 1 : q + 1;
+        size_t c1 = item.find(':');
+        if (c1 == std::string::npos) continue;
+        size_t c2 = item.find(':', c1 + 1);
+        Pad2Feeder::Press pr{std::atof(item.substr(0, c1).c_str()),
+                             c2 == std::string::npos ? 0.2 : std::atof(item.substr(c2 + 1).c_str()), 0};
+        std::string btns = item.substr(c1 + 1, c2 == std::string::npos ? std::string::npos : c2 - c1 - 1);
+        size_t b = 0;
+        while (b <= btns.size()) {
+            size_t pl = btns.find('+', b);
+            pr.mask |= pad2ButtonBit(btns.substr(b, pl == std::string::npos ? std::string::npos : pl - b));
+            b = (pl == std::string::npos) ? btns.size() + 1 : pl + 1;
+        }
+        if (pr.mask) g_pad2.script.push_back(pr);
+    }
+    fprintf(stderr, "[PAD2] script: %zu presses\n", g_pad2.script.size());
+}
+
+void pad2FeederLoop() {
+    uint32_t frame = 0;
+    while (!g_pad2.stop.load()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        const double now = std::chrono::duration<double>(std::chrono::steady_clock::now() - g_pad2.t0).count();
+        uint16_t pressed = 0;
+        for (const auto& pr : g_pad2.script)
+            if (now >= pr.t && now < pr.t + pr.hold) pressed |= pr.mask;
+        // Live input (runtime/input: keyboard and XInput, same bit order), only while this
+        // process owns the foreground window so typing elsewhere does not press buttons.
+        if (ReoHwBridge* br = ReoHwBridge::instance()) {
+            if (reo::Input* in = br->input()) {
+                bool focused = true;
+#ifdef _WIN32
+                DWORD pid = 0;
+                if (HWND fg = GetForegroundWindow()) GetWindowThreadProcessId(fg, &pid);
+                focused = (pid == GetCurrentProcessId());
+#endif
+                if (focused) {
+                    in->update();
+                    pressed |= (uint16_t)~in->get_pad(0).buttons;
+                }
+            }
+        }
+        g_pad2.lastPressed = pressed;
+        const uint16_t data = (uint16_t)~pressed;   // active-low
+        std::vector<uint32_t> socks;
+        uint8_t* rd = nullptr;
+        uint32_t work = 0;
+        { std::lock_guard<std::mutex> l(g_pad2.m); socks = g_pad2.sockets; rd = g_pad2.rdram; work = g_pad2.workAddr; }
+        if (!rd) continue;
+        // sceDbcGetDepNumber (EE 0x188D90) requires the port's word in the work area to be 1.
+        if (work && (work & PS2_RAM_MASK) + 4 <= PS2_RAM_SIZE) {
+            const uint32_t connected = 1;
+            memcpy(rd + (work & PS2_RAM_MASK), &connected, 4);   // port 0
+        }
+        ++frame;
+        for (uint32_t base : socks) {
+            const uint32_t b0 = base & PS2_RAM_MASK, b1 = (base + 0x80) & PS2_RAM_MASK;
+            if (b1 + 0x80 > PS2_RAM_SIZE) continue;
+            uint32_t s0, s1;
+            memcpy(&s0, rd + b0 + 0x7C, 4); memcpy(&s1, rd + b1 + 0x7C, 4);
+            uint8_t* rec = rd + ((s0 <= s1) ? b0 : b1);
+            rec[0] = 1;  // libpad2 state: 0 none, 1 stable/readable, 2/3 busy (game 0x1A6760)
+            rec[1] = 6; rec[2] = 2; rec[3] = 4;
+            const uint32_t valid = 1; memcpy(rec + 4, &valid, 4);
+            const uint8_t sb0 = (uint8_t)(data & 0xFF), sb1 = (uint8_t)(data >> 8);
+            rec[0x1C] = (uint8_t)((sb0 & 1u) | ((sb0 & 0xF8u) >> 2) | (sb1 << 6));
+            rec[0x1D] = (uint8_t)(sb1 >> 2);
+            rec[0x1E] = 0xF9; rec[0x1F] = 0xFF; rec[0x20] = 0x00; rec[0x21] = 0x00;
+            std::atomic_thread_fence(std::memory_order_release);
+            const uint32_t seq = std::max(s0, s1) + 1;
+            memcpy(rec + 0x7C, &seq, 4);   // publish last
+        }
+    }
+}
+
+// dbcman sockets are generic devices: class 1 = pad (libpad2, EE 0x180378), class 2 =
+// memory card (libmc2, EE 0x187970). Only pad sockets get pad records.
+uint32_t pad2RegisterSocket(uint8_t* rdram, uint32_t eeBuf, uint32_t devClass) {
+    std::lock_guard<std::mutex> l(g_pad2.m);
+    g_pad2.rdram = rdram;
+    const uint32_t id = g_pad2.nextSocketId++;
+    if (devClass == 1u &&
+        std::find(g_pad2.sockets.begin(), g_pad2.sockets.end(), eeBuf) == g_pad2.sockets.end())
+        g_pad2.sockets.push_back(eeBuf);
+    fprintf(stderr, "[PAD2] dbc socket %u class %u buffer 0x%08X%s\n", id, devClass, eeBuf,
+            devClass == 1u ? " (pad)" : "");
+    if (devClass != 1u)
+        return id;
+    if (!g_pad2.started) {
+        g_pad2.started = true;
+        pad2ParseScript();
+        g_pad2.thread = std::thread(pad2FeederLoop);
+    }
+    return id;
+}
+
+void pad2SetWorkAddr(uint8_t* rdram, uint32_t addr) {
+    std::lock_guard<std::mutex> l(g_pad2.m);
+    g_pad2.rdram = rdram;
+    g_pad2.workAddr = addr;
+    fprintf(stderr, "[PAD2] dbc work area 0x%08X\n", addr);
+}
+} // namespace
+
+// Debug-panel lines (PS2Runtime::setDebugPanelProvider, installed by reo_bootstrap.cpp).
+void reoDebugPanelText(std::string& out) {
+    static const char* names[16] = {"SELECT","L3","R3","START","UP","RIGHT","DOWN","LEFT",
+                                    "L2","R2","L1","R1","TRI","CIRCLE","CROSS","SQUARE"};
+    const uint16_t p = g_pad2.lastPressed.load();
+    out += "pad:";
+    if (!p) out += " -";
+    for (int i = 0; i < 16; ++i)
+        if (p & (1u << i)) { out += ' '; out += names[i]; }
+    out += '\n';
+    char line[128];
+    uint8_t* rd = nullptr;
+    size_t sockets = 0;
+    { std::lock_guard<std::mutex> l(g_pad2.m); rd = g_pad2.rdram; sockets = g_pad2.sockets.size(); }
+    std::snprintf(line, sizeof(line), "pad sockets %zu  script presses %zu",
+                  sockets, g_pad2.script.size());
+    out += line; out += '\n';
+    if (rd) {
+        uint32_t keys = 0;
+        std::memcpy(&keys, rd + 0x324218, 4);   // system keys (held), sub_001B0DB0
+        std::snprintf(line, sizeof(line), "game pad state %u  sys keys %04X", rd[0x2B0A10], keys & 0xFFFF);
+        out += line; out += '\n';
+        // Resident code overlays (MWo3 header: +4 id, +0x1C name), see tools/overlay_extract.py.
+        for (uint32_t base : {0x370000u, 0x570000u, 0x6E0000u, 0x810000u}) {
+            if (std::memcmp(rd + base, "MWo3", 4) != 0) continue;
+            uint32_t id = 0;
+            std::memcpy(&id, rd + base + 4, 4);
+            char name[17] = {};
+            std::memcpy(name, rd + base + 0x1C, 16);
+            std::snprintf(line, sizeof(line), "ovl %06X: id %u %s", base, id, name);
+            out += line; out += '\n';
+        }
+    }
+    out += "keys: WASD dpad  Space X  E O\n"
+           "      Q []  R /\\  Enter START\n"
+           "      Bksp SELECT  1/2 L1/R1  3/4 L2/R2\n";
+}
+
+// Stop the pad feeder before guest RAM goes away (reo_bootstrap.cpp, after runtime.run()).
+void reoPad2Stop() {
+    g_pad2.stop = true;
+    if (g_pad2.thread.joinable())
+        g_pad2.thread.join();
+}
+
 bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
                             uint32_t sendBuf, uint32_t sendSize,
                             uint32_t recvBuf, uint32_t recvSize,
                             uint8_t* rdram, void* user) {
     auto* self = static_cast<ReoHwBridge*>(user);
 
+    // An IOP reboot (SIF_CMD_RESET, D1) wipes IOP memory: reset IOP-resident HLE
+    // state (heap, open files) when the runtime's reboot count changes.
+    if (self) {
+        const uint32_t boots = ps2_stubs::hleIopRebootCount();
+        if (boots != self->m_iopBootSeen) {
+            self->m_iopBootSeen = boots;
+            self->m_iopHeapNext = kIopHeapBase;
+            for (auto& f : self->m_fioFds) { if (f) { fclose(f); f = nullptr; } }
+            fprintf(stderr, "[HW-BRIDGE:IOP] reboot #%u: HLE IOP heap and fds reset\n", boots);
+        }
+    }
+
     switch (sid) {
+    case SIF_FILEIO: {
+        // HLE FILEIO server (IOP fileio.irx). D2 discovery stage: only fno 0xFF
+        // (init, issued by the EE fioInit at 0x1187A0) is answered (see below);
+        // every call is logged so the next missing operation is visible. Other
+        // functions fail explicitly (-1) rather than faking success.
+        static int fioLog = 0;
+        if (fioLog < 200) {
+            char hex[3 * 32 + 1] = {0};
+            char text[64 + 1] = {0};
+            if (sendBuf && sendSize) {
+                const uint32_t n = std::min<uint32_t>(sendSize, 32);
+                for (uint32_t i = 0; i < n; ++i) {
+                    const uint8_t b = rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    snprintf(hex + i * 3, 4, "%02X ", b);
+                }
+                const uint32_t m = std::min<uint32_t>(sendSize, 64);
+                for (uint32_t i = 0; i < m; ++i) {
+                    const uint8_t b = rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    text[i] = (b >= 0x20 && b < 0x7F) ? (char)b : '.';
+                }
+            }
+            fprintf(stderr, "[HW-BRIDGE:FIO] fno=0x%X send=0x%08X/%u recv=0x%08X/%u data=[%s] \"%s\"\n",
+                    rpcNum, sendBuf, sendSize, recvBuf, recvSize, hex, text);
+            fioLog++;
+        }
+        if (recvBuf && recvSize >= 4) {
+            for (uint32_t off = 0; off + 4 <= recvSize && off < 0x40; off += 4)
+                rdramWrite32(rdram, recvBuf + off, 0);
+            if (rpcNum == 0xFF) {
+                // Init reply, verified against PCSX2 (PINE, 2026-10-09): word0 is the
+                // IOP fileio version "2800" (EE checks it against "PsIIlibkernl2800"
+                // in 0x1189A8), word1 == 2.
+                rdramWrite32(rdram, recvBuf, 0x30303832u); // "2800"
+                if (recvSize >= 8) rdramWrite32(rdram, recvBuf + 4, 2u);
+            } else if (rpcNum == 0x0 && sendBuf && sendSize >= 0x18 && self && self->m_cdvd) {
+                // open. Request (EE fio_open 0x118A70): +0 completion sema, +4 EE
+                // result address, +8 result size, +0xC flags, +0x10 mode, +0x14 path.
+                // recv[0] != 0 = accepted; the result is delivered asynchronously
+                // (IOP: cmd 0x80000011 -> copy to EE address, iSignalSema).
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const uint32_t flags   = rdramRead32(rdram, sendBuf + 0xC);
+                std::string path;
+                for (uint32_t i = 0x14; i < std::min<uint32_t>(sendSize, 0x14 + 0x400); ++i) {
+                    const char ch = (char)rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    if (!ch) break;
+                    path.push_back(ch);
+                }
+                int32_t result = -2; // ENOENT
+                if ((flags & 0x3) != 0x1) {
+                    result = -30;    // EROFS: only O_RDONLY on the disc
+                } else if (self->m_cdvd->file_exists(path)) {
+                    FILE* f = _wfopen(self->m_cdvd->resolve_path(path).c_str(), L"rb");
+                    if (f) {
+                        int fd = 0;
+                        while (fd < kMaxFioFds && self->m_fioFds[fd]) ++fd;
+                        if (fd < kMaxFioFds) { self->m_fioFds[fd] = f; result = fd; }
+                        else { fclose(f); result = -24; } // EMFILE
+                    }
+                }
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u); // accepted
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] open \"%s\" flags=0x%X -> %d (sema %u %s)\n",
+                        path.c_str(), flags, result, sema, sig ? "signaled" : "NOT signaled");
+            } else if (rpcNum == 0x2 && sendBuf && sendSize >= 0x18 && self) {
+                // read: +0xC fd, +0x10 EE buffer, +0x14 size. On hardware the IOP DMAs
+                // the aligned part to the EE buffer and sends unaligned head/tail bytes
+                // via cmd 0x80000011; the HLE writes the bytes directly (same end state).
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const int32_t  fd      = (int32_t)rdramRead32(rdram, sendBuf + 0xC);
+                const uint32_t buf     = rdramRead32(rdram, sendBuf + 0x10);
+                const int32_t  size    = (int32_t)rdramRead32(rdram, sendBuf + 0x14);
+                std::FILE* f = (fd >= 0 && fd < kMaxFioFds) ? self->m_fioFds[fd] : nullptr;
+                const uint32_t phys = buf & PS2_RAM_MASK;
+                int32_t result = -9; // EBADF
+                if (f && size < 0) {
+                    result = -22; // EINVAL
+                } else if (f && (uint64_t)phys + (uint32_t)size > PS2_RAM_SIZE) {
+                    result = -14; // EFAULT
+                } else if (f) {
+                    result = (int32_t)fread(rdram + phys, 1, (size_t)size, f);
+                }
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u); // accepted
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] read fd=%d buf=0x%08X size=%d -> %d (sema %u %s)\n",
+                        fd, buf, size, result, sema, sig ? "signaled" : "NOT signaled");
+            } else if (rpcNum == 0x17 && sendBuf && sendSize >= 0x81C) {
+                // devctl (EE client 0x11B248): +0xC device name, +0x40C input,
+                // +0x80C cmd, +0x810 in len, +0x814 out buf, +0x818 out len.
+                // No HDD/network devices are emulated: fail with ENODEV like a PS2
+                // without the device, completing the async request.
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const uint32_t cmd     = rdramRead32(rdram, sendBuf + 0x80C);
+                std::string dev;
+                for (uint32_t i = 0xC; i < 0xC + 0x40; ++i) {
+                    const char ch = (char)rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    if (!ch) break;
+                    dev.push_back(ch);
+                }
+                const int32_t result = -19; // ENODEV
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u); // accepted
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] devctl \"%s\" cmd=0x%X -> %d (no device; sema %u %s)\n",
+                        dev.c_str(), cmd, result, sema, sig ? "signaled" : "NOT signaled");
+            } else if ((rpcNum == 0x1 || rpcNum == 0x4) && sendBuf && sendSize >= 0x10 && self) {
+                // close (1): +0xC fd.  lseek (4): +0xC fd, +0x10 offset, +0x14 whence.
+                // Same async completion as open: result to +4, signal sema at +0.
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const int32_t  fd      = (int32_t)rdramRead32(rdram, sendBuf + 0xC);
+                std::FILE* f = (fd >= 0 && fd < kMaxFioFds) ? self->m_fioFds[fd] : nullptr;
+                int32_t result = -9; // EBADF
+                if (f && rpcNum == 0x1) {
+                    fclose(f);
+                    self->m_fioFds[fd] = nullptr;
+                    result = 0;
+                } else if (f && rpcNum == 0x4 && sendSize >= 0x18) {
+                    const int32_t off    = (int32_t)rdramRead32(rdram, sendBuf + 0x10);
+                    const int32_t whence = (int32_t)rdramRead32(rdram, sendBuf + 0x14);
+                    if (whence >= 0 && whence <= 2 && _fseeki64(f, off, whence) == 0) {
+                        const long long pos = _ftelli64(f);
+                        result = (pos >= 0 && pos <= 0x7FFFFFFF) ? (int32_t)pos : -22; // EINVAL
+                    } else {
+                        result = -22;
+                    }
+                }
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u); // accepted
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] %s fd=%d -> %d (sema %u %s)\n",
+                        rpcNum == 0x1 ? "close" : "lseek", fd, result, sema,
+                        sig ? "signaled" : "NOT signaled");
+            } else if (rpcNum != 0xFF && sendBuf && sendSize >= 0xC) {
+                // Any other fileio op uses the same async header (+0 sema, +4 result
+                // addr, +8 result size). Complete it with an error so the EE never
+                // waits forever, and log it as unimplemented.
+                const uint32_t sema    = rdramRead32(rdram, sendBuf + 0x0);
+                const uint32_t resAddr = rdramRead32(rdram, sendBuf + 0x4);
+                const uint32_t resSize = rdramRead32(rdram, sendBuf + 0x8);
+                const int32_t result = -48; // unsupported
+                if (resAddr && resSize >= 4) rdramWrite32(rdram, resAddr, (uint32_t)result);
+                rdramWrite32(rdram, recvBuf, 1u);
+                const bool sig = ps2_syscalls::hleSignalSema(sema);
+                fprintf(stderr, "[HW-BRIDGE:FIO] ** UNIMPLEMENTED fno=0x%X -> %d (sema %u %s)\n",
+                        rpcNum, result, sema, sig ? "signaled" : "NOT signaled");
+            } else {
+                rdramWrite32(rdram, recvBuf, 0xFFFFFFFFu);
+            }
+        }
+        return true;
+    }
+
+    // ── cdvdfsv (IOP CD/DVD file server) used by the game's libcdvd ──────────
+    // Layouts per Play! (jpd002/Play-, Source/iop/Iop_Cdvdfsv.cpp). Reads are completed
+    // synchronously (the runtime then runs any end callback), so libcdvd's sceCdSync
+    // sees them done. Sector data comes from the disc image (reo::CDVD, REO_ISO).
+    case 0x80000593: { // S-commands
+        static int sLog = 0;
+        static const bool cdLogAll = std::getenv("REO_CD_LOG") != nullptr; // unlimited CD RPC log
+        if (cdLogAll || sLog++ < 40) fprintf(stderr, "[HW-BRIDGE:CDS] fn=0x%x\n", rpcNum);
+        uint32_t r0 = 1, r1 = 0;
+        switch (rpcNum) {
+        case 0x03: r0 = 0x14; break;   // GetDiskType: PS2 DVD
+        case 0x04: r0 = 0; break;      // GetError: none
+        case 0x0C: r0 = 0x0A; break;   // Status: paused
+        case 0x05: r0 = 1; r1 = 0; break; // TrayReq: no tray change
+        default: r0 = 1; break;        // 0x16 Break, 0x22 SetMediaMode, 0x27 DualInfo...
+        }
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, r0);
+        if (recvBuf && recvSize >= 8) rdramWrite32(rdram, recvBuf + 4, r1);
+        return true;
+    }
+    case 0x80000595: { // N-commands
+        static int nLog = 0;
+        const uint32_t a0 = sendBuf ? rdramRead32(rdram, sendBuf + 0) : 0;
+        const uint32_t a1 = sendBuf ? rdramRead32(rdram, sendBuf + 4) : 0;
+        const uint32_t a2 = sendBuf ? rdramRead32(rdram, sendBuf + 8) : 0;
+        if (rpcNum == 0x01) { // Read {sector, count, dst, mode}
+            const uint32_t dst = a2 & PS2_RAM_MASK;
+            bool ok = false;
+            if (self && self->m_cdvd && a1 != 0 && a1 <= 0x4000 &&
+                static_cast<uint64_t>(dst) + static_cast<uint64_t>(a1) * 2048u <= PS2_RAM_SIZE)
+                ok = self->m_cdvd->read_sectors(a0, a1, rdram + dst);
+            static const bool cdLogAllN = std::getenv("REO_CD_LOG") != nullptr;
+            if (cdLogAllN || nLog++ < 60)
+                fprintf(stderr, "[HW-BRIDGE:CDN] read lsn=%u n=%u dst=0x%08X -> %s\n", a0, a1, a2, ok ? "ok" : "FAIL");
+            if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, 0);
+            return true;
+        }
+        static const bool cdLogAllF = std::getenv("REO_CD_LOG") != nullptr;
+        if (cdLogAllF || nLog++ < 60) fprintf(stderr, "[HW-BRIDGE:CDN] fn=0x%x args=%08X %08X %08X\n", rpcNum, a0, a1, a2);
+        uint32_t r0 = 1;
+        if (rpcNum == 0x0E) r0 = 2; // NDiskReady: ready
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, r0);
+        return true;
+    }
+    case 0x80000596: // SetPowerOffCallback etc.
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, 1);
+        return true;
+    case 0x80000597: { // SearchFile: path at +0x24 (+0x20 for 0x124-byte packets)
+        const uint32_t pathOff = (sendSize == 0x124) ? 0x20u : 0x24u;
+        std::string path;
+        if (sendBuf) {
+            for (uint32_t i = 0; i < 0x100; ++i) {
+                const uint32_t a = (sendBuf + pathOff + i) & PS2_RAM_MASK;
+                if (a >= PS2_RAM_SIZE || rdram[a] == 0) break;
+                path.push_back(static_cast<char>(rdram[a]));
+            }
+        }
+        uint32_t lba = 0, size = 0;
+        const bool found = self && self->m_cdvd && !path.empty() && self->m_cdvd->search_file(path, lba, size);
+        if (found && sendBuf) {
+            rdramWrite32(rdram, sendBuf + 0, lba);   // sceCdlFILE.lsn
+            rdramWrite32(rdram, sendBuf + 4, size);  // sceCdlFILE.size
+        }
+        fprintf(stderr, "[HW-BRIDGE:CDSEARCH] \"%s\" -> %s lsn=%u size=%u\n", path.c_str(),
+                found ? "found" : "NOT FOUND", lba, size);
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, found ? 1u : 0u);
+        return true;
+    }
+    case 0x8000059A: case 0x8000059C: // DiskReady: 2 = ready
+        if (recvBuf && recvSize >= 4) rdramWrite32(rdram, recvBuf, 2);
+        return true;
+
     case SIF_CDVD: {
         static int cdvdLog = 0;
         if (cdvdLog < 50) {
@@ -917,6 +1383,128 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum,
         }
         if (recvBuf) rdramWrite32(rdram, recvBuf, 0);
         return true;
+    }
+
+    case 0x80001300:   // dbcman (libdbc: pad/multitap data buffer control)
+    case 0x8000131B:
+    case 0x8000131C: {
+        // libdbc init (EE 0x188938) binds these three servers and requires the
+        // version returned by rpc 0x80001363 (EE 0x1888E0) to satisfy (v >> 8) == 3
+        // ("libdbc.a = 3.0"). Minor version unverified. Other calls are logged and
+        // answered with zeroed success until their semantics are needed.
+        static int dbcLog = 0;
+        if (dbcLog < 80) {
+            char hex[3 * 32 + 1] = {0};
+            if (sendBuf && sendSize) {
+                const uint32_t n = std::min<uint32_t>(sendSize, 32);
+                for (uint32_t i = 0; i < n; ++i)
+                    snprintf(hex + i * 3, 4, "%02X ", rdram[(sendBuf + i) & PS2_RAM_MASK]);
+            }
+            fprintf(stderr, "[HW-BRIDGE:DBC] sid=0x%08X rpc=0x%X send=0x%08X/%u recv=0x%08X/%u data=[%s]\n",
+                    sid, rpcNum, sendBuf, sendSize, recvBuf, recvSize, hex);
+            dbcLog++;
+        }
+        // sceDbcCreateSocket (EE 0x188C30): EE record buffer at +0x28 (+0x80 at +0x2C);
+        // the reply's socket id at +0x24 is 0 (single pad socket).
+        uint32_t socketId = 0;
+        if (rpcNum == 0x80001301u && sendBuf && sendSize >= 0x30)
+            socketId = pad2RegisterSocket(rdram, rdramRead32(rdram, sendBuf + 0x28),
+                                          rdramRead32(rdram, sendBuf + 4));
+        // sceDbcSetWorkAddr (EE 0x188BC0): EE area at +4 receives per-port connection words.
+        if (rpcNum == 0x80001304u && sendBuf && sendSize >= 8)
+            pad2SetWorkAddr(rdram, rdramRead32(rdram, sendBuf + 4));
+        if (recvBuf && recvSize >= 4) {
+            for (uint32_t off = 0; off + 4 <= recvSize && off < 0x40; off += 4)
+                rdramWrite32(rdram, recvBuf + off, 0);
+            if (rpcNum == 0x80001363u) rdramWrite32(rdram, recvBuf, 0x0300u); // dbcman 3.0
+            if (rpcNum == 0x80001301u && recvSize >= 0x28) rdramWrite32(rdram, recvBuf + 0x24, socketId);
+        }
+        return true;
+    }
+
+    case 0x80000003:   // SIFHEAP (IOP heap)
+    case 0x80000006: { // LOADFILE
+        static int hlLog = 0;
+        const bool isHeap = (sid == 0x80000003);
+        if (hlLog < 120) {
+            char hex[3 * 48 + 1] = {0};
+            if (sendBuf && sendSize) {
+                const uint32_t n = std::min<uint32_t>(sendSize, 48);
+                for (uint32_t i = 0; i < n; ++i)
+                    snprintf(hex + i * 3, 4, "%02X ", rdram[(sendBuf + i) & PS2_RAM_MASK]);
+            }
+            fprintf(stderr, "[HW-BRIDGE:%s] fno=0x%X send=0x%08X/%u recv=0x%08X/%u data=[%s]\n",
+                    isHeap ? "HEAP" : "LOADFILE", rpcNum, sendBuf, sendSize, recvBuf, recvSize, hex);
+            hlLog++;
+        }
+        if (!recvBuf || recvSize < 4) return false;
+
+        if (isHeap) {
+            if (!self) return false;
+            // HLE IOP heap. The runtime's sceSifSetDma aliases IOP destinations onto
+            // EE RAM, so allocations come from IOP 0x88000-0xFFFFF, an EE range that
+            // PCSX2 shows unused by this game (D4). Exhaustion fails loudly (0).
+            uint32_t& heapNext = self->m_iopHeapNext;
+            constexpr uint32_t kHeapEnd = 0x00100000u;
+            if (rpcNum == 0x1 && sendBuf && sendSize >= 4) {           // alloc(size)
+                const uint32_t size = rdramRead32(rdram, sendBuf);
+                const uint32_t aligned = (size + 0xFFu) & ~0xFFu;
+                uint32_t addr = 0u;
+                if (size && heapNext + aligned <= kHeapEnd) { addr = heapNext; heapNext += aligned; }
+                rdramWrite32(rdram, recvBuf, addr);
+                fprintf(stderr, "[HW-BRIDGE:HEAP] alloc %u -> 0x%08X%s\n", size, addr,
+                        addr ? "" : "  ** HLE IOP heap exhausted; needs a real IOP RAM model **");
+                return true;
+            }
+            if (rpcNum == 0x2) {                                        // free(addr)
+                rdramWrite32(rdram, recvBuf, 0u);
+                return true;
+            }
+            return false;
+        }
+
+        // LOADFILE
+        if (rpcNum == 0xFF) {                                           // init / version
+            rdramWrite32(rdram, recvBuf, 0x30303832u); // "2800", verified against PCSX2 (D4)
+            return true;
+        }
+        if ((rpcNum == 0x6 || rpcNum == 0x0) && sendBuf && sendSize >= 8) {
+            // 6 = load module from IOP buffer: +0 IOP addr, +4 arg length, args at +0x104.
+            // 0 = load module by path: path string at +0x8 (layout probable; logged).
+            // HLE: modules are not executed (their services are emulated by HLE
+            // servers); return a fresh id and RESIDENT_END (0).
+            static int32_t nextModId = 0x10;
+            const uint32_t argLen = rdramRead32(rdram, sendBuf + 4);
+            std::string args;
+            for (uint32_t i = 0; i < std::min<uint32_t>(argLen, 0xFC) && sendSize >= 0x104 + argLen; ++i) {
+                const char ch = (char)rdram[(sendBuf + 0x104 + i) & PS2_RAM_MASK];
+                args.push_back(ch ? ch : ' ');
+            }
+            std::string what;
+            if (rpcNum == 0x6) {
+                // Best effort: IRX module name from the .iopmod-style header if present.
+                const uint32_t iopAddr = rdramRead32(rdram, sendBuf);
+                char hdr[5] = {0};
+                for (int i = 0; i < 4; ++i) hdr[i] = (char)rdram[(iopAddr + i) & PS2_RAM_MASK];
+                char buf[64];
+                snprintf(buf, sizeof buf, "buffer@IOP 0x%08X (magic %02X%02X%02X%02X)", iopAddr,
+                         (uint8_t)hdr[0], (uint8_t)hdr[1], (uint8_t)hdr[2], (uint8_t)hdr[3]);
+                what = buf;
+            } else {
+                for (uint32_t i = 8; i < std::min<uint32_t>(sendSize, 8 + 0x100); ++i) {
+                    const char ch = (char)rdram[(sendBuf + i) & PS2_RAM_MASK];
+                    if (!ch) break;
+                    what.push_back(ch);
+                }
+            }
+            const int32_t id = nextModId++;
+            rdramWrite32(rdram, recvBuf, (uint32_t)id);
+            if (recvSize >= 8) rdramWrite32(rdram, recvBuf + 4, 0u);
+            fprintf(stderr, "[HW-BRIDGE:LOADFILE] load %s args=\"%s\" -> id %d (HLE, not executed)\n",
+                    what.c_str(), args.c_str(), id);
+            return true;
+        }
+        return false;
     }
 
     default: {

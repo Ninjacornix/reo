@@ -24,6 +24,7 @@
 #pragma once
 
 #include "ps2_runtime.h"
+#include <cstdio>
 
 namespace reo {
     class GSRenderer;
@@ -87,12 +88,21 @@ private:
     reo::Input* m_input = nullptr;
     reo::CDVD* m_cdvd = nullptr;
 
+    // HLE FILEIO server (sid 0x80000001): IOP-side descriptors for disc files.
+    static constexpr int kMaxFioFds = 32;
+    std::FILE* m_fioFds[kMaxFioFds] = {};
+    // HLE IOP heap (bump allocator, reset on IOP reboot; see onSifRpc).
+    static constexpr uint32_t kIopHeapBase = 0x00088000u;
+    uint32_t m_iopHeapNext = kIopHeapBase;
+    uint32_t m_iopBootSeen = 0;
+
 public:
     // Input access for pad overrides
     reo::Input* input() { return m_input; }
 private:
 
     // Statistics
+    bool m_bridgeGfx = false;  // REO_GFX=bridge: use the bridge VIF1/VU1/GS path
     uint64_t m_gifPackets = 0;
     uint64_t m_vif1Dmas = 0;
     uint64_t m_vu0Runs = 0;
