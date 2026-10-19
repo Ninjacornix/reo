@@ -21,7 +21,7 @@ namespace reo {
  */
 
 class DnasBypass {
-public:
+  public:
     // Apply the bypass — call once during initialization
     static void apply();
 

@@ -32,20 +32,20 @@ namespace reo {
 
 // VU instruction types
 enum class VUPipeline {
-    Upper,  // FMAC operations (runs every cycle)
-    Lower   // Integer ops, branches, memory access (paired with upper)
+    Upper, // FMAC operations (runs every cycle)
+    Lower  // Integer ops, branches, memory access (paired with upper)
 };
 
 struct VUState {
-    VF128 vf[32];       // Vector float registers
-    uint16_t vi[16];    // Integer registers
-    float acc[4];       // Accumulator (xyzw)
-    float q;            // Division/sqrt result
-    float p;            // EFU result (VU1 only)
-    float i_reg;        // I register (immediate from upper LOI)
-    uint32_t pc;        // Micro program counter
-    bool running;       // Currently executing
-    int stall_cycles;   // Pipeline stall counter
+    VF128 vf[32];     // Vector float registers
+    uint16_t vi[16];  // Integer registers
+    float acc[4];     // Accumulator (xyzw)
+    float q;          // Division/sqrt result
+    float p;          // EFU result (VU1 only)
+    float i_reg;      // I register (immediate from upper LOI)
+    uint32_t pc;      // Micro program counter
+    bool running;     // Currently executing
+    int stall_cycles; // Pipeline stall counter
 
     // Branch delay slot
     bool delay_slot;
@@ -56,9 +56,12 @@ struct VUState {
     uint16_t clip_flag; // Clipping flags (6 judgement results, shifted)
 
     void reset() {
-        for (int i = 0; i < 32; i++) vf[i].clear();
-        for (int i = 0; i < 16; i++) vi[i] = 0;
-        for (int i = 0; i < 4; i++) acc[i] = 0.0f;
+        for (int i = 0; i < 32; i++)
+            vf[i].clear();
+        for (int i = 0; i < 16; i++)
+            vi[i] = 0;
+        for (int i = 0; i < 4; i++)
+            acc[i] = 0.0f;
         q = 0.0f;
         p = 0.0f;
         i_reg = 0.0f;
@@ -73,9 +76,9 @@ struct VUState {
 };
 
 class VUInterpreter {
-public:
-    VUInterpreter(int unit_id, uint8_t* code_mem, uint32_t code_size,
-                  uint8_t* data_mem, uint32_t data_size);
+  public:
+    VUInterpreter(int unit_id, uint8_t* code_mem, uint32_t code_size, uint8_t* data_mem,
+                  uint32_t data_size);
 
     void reset();
 
@@ -88,19 +91,25 @@ public:
     // Run until program ends (STOP instruction or timeout)
     void run(int max_cycles = 65536);
 
-    bool is_running() const { return m_state.running; }
+    bool is_running() const {
+        return m_state.running;
+    }
 
-    VUState& state() { return m_state; }
-    const VUState& state() const { return m_state; }
+    VUState& state() {
+        return m_state;
+    }
+    const VUState& state() const {
+        return m_state;
+    }
 
     // XGKICK callback — called when VU1 submits a GIF packet via PATH1
-    using XgkickCallback = void(*)(const void* data, uint32_t max_size, void* user);
+    using XgkickCallback = void (*)(const void* data, uint32_t max_size, void* user);
     void set_xgkick_callback(XgkickCallback cb, void* user) {
         m_xgkick_cb = cb;
         m_xgkick_user = user;
     }
 
-private:
+  private:
     void execute_upper(uint32_t instruction);
     void execute_lower(uint32_t instruction);
 

@@ -8,7 +8,8 @@ namespace reo {
 
 bool AdxDecoder::open(const std::string& path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file) return false;
+    if (!file)
+        return false;
 
     auto size = file.tellg();
     file.seekg(0);
@@ -19,7 +20,8 @@ bool AdxDecoder::open(const std::string& path) {
 }
 
 bool AdxDecoder::open(const uint8_t* data, uint32_t size) {
-    if (size < 4) return false;
+    if (size < 4)
+        return false;
 
     m_data.assign(data, data + size);
 
@@ -34,7 +36,8 @@ bool AdxDecoder::open(const uint8_t* data, uint32_t size) {
 }
 
 bool AdxDecoder::parse_header() {
-    if (m_data.size() < 6) return false;
+    if (m_data.size() < 6)
+        return false;
 
     // ADX signature: 0x80 0x00
     if (m_data[0] != 0x80 || m_data[1] != 0x00) {
@@ -54,10 +57,9 @@ bool AdxDecoder::parse_header() {
     m_header.block_size = m_data[5];
     m_header.sample_bits = m_data[6];
     m_header.channel_count = m_data[7];
-    m_header.sample_rate = (m_data[8] << 24) | (m_data[9] << 16) |
-                           (m_data[10] << 8) | m_data[11];
-    m_header.total_samples = (m_data[12] << 24) | (m_data[13] << 16) |
-                             (m_data[14] << 8) | m_data[15];
+    m_header.sample_rate = (m_data[8] << 24) | (m_data[9] << 16) | (m_data[10] << 8) | m_data[11];
+    m_header.total_samples =
+        (m_data[12] << 24) | (m_data[13] << 16) | (m_data[14] << 8) | m_data[15];
     m_header.highpass_freq = (m_data[16] << 8) | m_data[17];
     m_header.version = m_data[18];
 
@@ -73,10 +75,8 @@ bool AdxDecoder::parse_header() {
     m_channels[1].coef[0] = m_channels[0].coef[0];
     m_channels[1].coef[1] = m_channels[0].coef[1];
 
-    printf("[ADX] %dHz %dch %d samples (%s)\n",
-           m_header.sample_rate, m_header.channel_count,
-           m_header.total_samples,
-           m_header.encoding_type == 3 ? "ADX" : "AHX");
+    printf("[ADX] %dHz %dch %d samples (%s)\n", m_header.sample_rate, m_header.channel_count,
+           m_header.total_samples, m_header.encoding_type == 3 ? "ADX" : "AHX");
 
     return true;
 }
@@ -96,14 +96,17 @@ void AdxDecoder::seek(uint32_t sample) {
 
 int16_t AdxDecoder::decode_sample(int channel, int32_t nibble) {
     // Sign-extend 4-bit nibble
-    if (nibble > 7) nibble -= 16;
+    if (nibble > 7)
+        nibble -= 16;
 
     auto& ch = m_channels[channel];
     int32_t sample = nibble + ((ch.coef[0] * ch.prev[0] + ch.coef[1] * ch.prev[1]) >> 12);
 
     // Clamp
-    if (sample > 32767) sample = 32767;
-    if (sample < -32768) sample = -32768;
+    if (sample > 32767)
+        sample = 32767;
+    if (sample < -32768)
+        sample = -32768;
 
     ch.prev[1] = ch.prev[0];
     ch.prev[0] = sample;
@@ -112,12 +115,15 @@ int16_t AdxDecoder::decode_sample(int channel, int32_t nibble) {
 }
 
 int AdxDecoder::decode(int16_t* output, int max_samples) {
-    if (!m_open) return 0;
+    if (!m_open)
+        return 0;
 
     int samples_decoded = 0;
 
     while (samples_decoded < max_samples && m_position + m_header.block_size <= m_data.size()) {
-        for (int ch = 0; ch < m_header.channel_count && m_position + m_header.block_size <= m_data.size(); ch++) {
+        for (int ch = 0;
+             ch < m_header.channel_count && m_position + m_header.block_size <= m_data.size();
+             ch++) {
             const uint8_t* block = m_data.data() + m_position;
 
             // First 2 bytes: scale (big-endian)

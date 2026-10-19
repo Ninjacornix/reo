@@ -51,8 +51,8 @@ struct AmoMaterial {
 };
 
 struct AmoModel {
-    std::vector<AmoVertex>   vertices;
-    std::vector<AmoNormal>   normals;
+    std::vector<AmoVertex> vertices;
+    std::vector<AmoNormal> normals;
     std::vector<AmoTexCoord> texcoords;
     std::vector<AmoTriStrip> strips;
     std::vector<AmoMaterial> materials;
@@ -63,17 +63,19 @@ struct AmoModel {
 };
 
 class AmoParser {
-public:
+  public:
     AmoParser() = default;
 
     bool parse(const uint8_t* data, uint32_t size);
 
-    const AmoModel& model() const { return m_model; }
+    const AmoModel& model() const {
+        return m_model;
+    }
 
-private:
+  private:
     // Find a data array by flag type. Returns offset to data (after header), or -1.
-    int find_array(const uint8_t* data, uint32_t size, uint8_t flag_type,
-                   uint32_t& out_count, uint32_t& out_data_size) const;
+    int find_array(const uint8_t* data, uint32_t size, uint8_t flag_type, uint32_t& out_count,
+                   uint32_t& out_data_size) const;
 
     bool parse_vertices(const uint8_t* data, uint32_t size);
     bool parse_normals(const uint8_t* data, uint32_t size);

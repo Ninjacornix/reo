@@ -18,7 +18,7 @@ namespace reo {
  * Now supports textured rendering using TIM2 textures from TEX chunks.
  */
 class NbdRenderer {
-public:
+  public:
     NbdRenderer() = default;
 
     // Parse NBD data from a memory buffer and prepare for rendering.
@@ -31,16 +31,22 @@ public:
     // Set a simple camera transform (orthographic projection for now)
     void set_camera(float cx, float cy, float cz, float scale);
 
-    bool loaded() const { return m_loaded; }
-    const AmoModel& model() const { return m_amo.model(); }
+    bool loaded() const {
+        return m_loaded;
+    }
+    const AmoModel& model() const {
+        return m_amo.model();
+    }
 
     // Access loaded textures
-    int texture_count() const { return (int)m_textures.size(); }
+    int texture_count() const {
+        return (int)m_textures.size();
+    }
     const Tim2Texture* texture(int index) const {
         return (index >= 0 && index < (int)m_textures.size()) ? &m_textures[index] : nullptr;
     }
 
-private:
+  private:
     // Build GIF A+D packet for triangle rendering
     void build_triangle_packet(const AmoModel& model);
 
@@ -48,8 +54,8 @@ private:
     void upload_textures_to_vram();
 
     // Build GS TEX0 register value
-    static uint64_t build_tex0(uint32_t tbp, uint32_t tbw, uint32_t psm,
-                               uint32_t width, uint32_t height, uint32_t cbp);
+    static uint64_t build_tex0(uint32_t tbp, uint32_t tbw, uint32_t psm, uint32_t width,
+                               uint32_t height, uint32_t cbp);
 
     NbdParser m_nbd;
     AmoParser m_amo;
@@ -65,7 +71,7 @@ private:
     std::vector<Tim2Texture> m_textures;
 
     // Pre-built GIF packets
-    std::vector<uint8_t> m_gif_packet;           // Geometry
+    std::vector<uint8_t> m_gif_packet;               // Geometry
     std::vector<std::vector<uint8_t>> m_tex_packets; // Texture uploads
 };
 

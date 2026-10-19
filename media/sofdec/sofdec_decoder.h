@@ -21,7 +21,7 @@ namespace reo {
  */
 
 class SofdecDecoder {
-public:
+  public:
     SofdecDecoder() = default;
 
     bool open(const std::string& path);
@@ -36,14 +36,24 @@ public:
     // Seek to timestamp (milliseconds)
     void seek(uint32_t ms);
 
-    bool is_open() const { return m_open; }
-    bool is_finished() const { return m_finished; }
+    bool is_open() const {
+        return m_open;
+    }
+    bool is_finished() const {
+        return m_finished;
+    }
 
-    int video_width() const { return m_video_width; }
-    int video_height() const { return m_video_height; }
-    int video_fps() const { return m_video_fps; }
+    int video_width() const {
+        return m_video_width;
+    }
+    int video_height() const {
+        return m_video_height;
+    }
+    int video_fps() const {
+        return m_video_fps;
+    }
 
-private:
+  private:
     bool parse_sfd_header();
     bool demux_next_packet();
 

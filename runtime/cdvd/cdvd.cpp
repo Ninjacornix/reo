@@ -15,17 +15,19 @@ namespace reo {
 
 namespace fs = std::filesystem;
 
-CDVD::CDVD(const fs::path& game_data_root)
-    : m_root(game_data_root)
-{
+CDVD::CDVD(const fs::path& game_data_root) : m_root(game_data_root) {
     build_file_map();
     open_image();
 }
 
 CDVD::~CDVD() {
-    if (!m_image) return;
+    if (!m_image)
+        return;
 #ifdef _WIN32
-    if (m_imageIsVolume) { CloseHandle(static_cast<HANDLE>(m_image)); return; }
+    if (m_imageIsVolume) {
+        CloseHandle(static_cast<HANDLE>(m_image));
+        return;
+    }
 #endif
     fclose(static_cast<FILE*>(m_image));
 }
@@ -64,8 +66,7 @@ void CDVD::open_image() {
 
 void CDVD::build_file_map() {
     if (!fs::exists(m_root)) {
-        fprintf(stderr, "[CDVD] Game data root does not exist: %s\n",
-                m_root.string().c_str());
+        fprintf(stderr, "[CDVD] Game data root does not exist: %s\n", m_root.string().c_str());
         return;
     }
 
@@ -92,11 +93,10 @@ std::string CDVD::normalize_ps2_path(const std::string& path) const {
     std::string normalized = path;
 
     // Strip cdrom prefix
-    const char* prefixes[] = { "cdrom0:\\", "cdrom0:", "cdrom:\\", "cdrom:", "host:" };
+    const char* prefixes[] = {"cdrom0:\\", "cdrom0:", "cdrom:\\", "cdrom:", "host:"};
     for (auto prefix : prefixes) {
         size_t plen = strlen(prefix);
-        if (normalized.size() >= plen &&
-            _strnicmp(normalized.c_str(), prefix, plen) == 0) {
+        if (normalized.size() >= plen && _strnicmp(normalized.c_str(), prefix, plen) == 0) {
             normalized = normalized.substr(plen);
             break;
         }
@@ -146,20 +146,27 @@ bool CDVD::read_file(const std::string& ps2_path, std::vector<uint8_t>& out) {
 }
 
 bool CDVD::read_sectors(uint32_t lba, uint32_t count, void* buffer) {
-    if (!m_image || !buffer || count == 0) return false;
+    if (!m_image || !buffer || count == 0)
+        return false;
     const uint64_t off = static_cast<uint64_t>(lba) * 2048u;
     const uint64_t len = static_cast<uint64_t>(count) * 2048u;
-    if (len > 0x2000000u || (m_imageSize != ~0ull && off + len > m_imageSize)) return false;
+    if (len > 0x2000000u || (m_imageSize != ~0ull && off + len > m_imageSize))
+        return false;
 #ifdef _WIN32
     if (m_imageIsVolume) {
-        LARGE_INTEGER li; li.QuadPart = static_cast<LONGLONG>(off);
-        if (!SetFilePointerEx(static_cast<HANDLE>(m_image), li, nullptr, FILE_BEGIN)) return false;
+        LARGE_INTEGER li;
+        li.QuadPart = static_cast<LONGLONG>(off);
+        if (!SetFilePointerEx(static_cast<HANDLE>(m_image), li, nullptr, FILE_BEGIN))
+            return false;
         DWORD got = 0;
-        return ReadFile(static_cast<HANDLE>(m_image), buffer, static_cast<DWORD>(len), &got, nullptr) && got == len;
+        return ReadFile(static_cast<HANDLE>(m_image), buffer, static_cast<DWORD>(len), &got,
+                        nullptr) &&
+               got == len;
     }
 #endif
     FILE* f = static_cast<FILE*>(m_image);
-    if (_fseeki64(f, static_cast<long long>(off), SEEK_SET) != 0) return false;
+    if (_fseeki64(f, static_cast<long long>(off), SEEK_SET) != 0)
+        return false;
     return fread(buffer, 1, static_cast<size_t>(len), f) == len;
 }
 
@@ -167,20 +174,29 @@ bool CDVD::search_file(const std::string& ps2_path, uint32_t& lba, uint32_t& siz
     // Path components, upper-case, without "cdrom0:" and ";version".
     std::string p = ps2_path;
     const size_t colon = p.find(':');
-    if (colon != std::string::npos) p = p.substr(colon + 1);
+    if (colon != std::string::npos)
+        p = p.substr(colon + 1);
     std::vector<std::string> parts;
     std::string cur;
     for (char ch : p) {
-        if (ch == '\\' || ch == '/') { if (!cur.empty()) parts.push_back(cur); cur.clear(); }
-        else cur.push_back(static_cast<char>(toupper(static_cast<unsigned char>(ch))));
+        if (ch == '\\' || ch == '/') {
+            if (!cur.empty())
+                parts.push_back(cur);
+            cur.clear();
+        } else
+            cur.push_back(static_cast<char>(toupper(static_cast<unsigned char>(ch))));
     }
-    if (!cur.empty()) parts.push_back(cur);
-    if (parts.empty()) return false;
+    if (!cur.empty())
+        parts.push_back(cur);
+    if (parts.empty())
+        return false;
     const size_t semi = parts.back().find(';');
-    if (semi != std::string::npos) parts.back().resize(semi);
+    if (semi != std::string::npos)
+        parts.back().resize(semi);
 
     std::vector<uint8_t> sec(2048);
-    if (!read_sectors(16, 1, sec.data()) || sec[0] != 1 || memcmp(&sec[1], "CD001", 5) != 0) return false;
+    if (!read_sectors(16, 1, sec.data()) || sec[0] != 1 || memcmp(&sec[1], "CD001", 5) != 0)
+        return false;
     uint32_t dirLba = 0, dirSize = 0;
     memcpy(&dirLba, &sec[156 + 2], 4);
     memcpy(&dirSize, &sec[156 + 10], 4);
@@ -190,19 +206,24 @@ bool CDVD::search_file(const std::string& ps2_path, uint32_t& lba, uint32_t& siz
         bool found = false;
         const uint32_t nsec = (dirSize + 2047u) / 2048u;
         std::vector<uint8_t> dir(static_cast<size_t>(nsec) * 2048u);
-        if (nsec == 0 || nsec > 4096 || !read_sectors(dirLba, nsec, dir.data())) return false;
+        if (nsec == 0 || nsec > 4096 || !read_sectors(dirLba, nsec, dir.data()))
+            return false;
         for (uint32_t s0 = 0; s0 < nsec && !found; ++s0) {
             uint32_t o = s0 * 2048u;
             const uint32_t end = o + 2048u;
             while (o + 33 < end) {
                 const uint8_t rl = dir[o];
-                if (rl == 0) break; // rest of this sector unused
+                if (rl == 0)
+                    break; // rest of this sector unused
                 const uint8_t nl = dir[o + 32];
-                if (o + 33u + nl > end) break;
+                if (o + 33u + nl > end)
+                    break;
                 std::string name(reinterpret_cast<const char*>(&dir[o + 33]), nl);
                 const size_t sv = name.find(';');
-                if (sv != std::string::npos) name.resize(sv);
-                for (auto& ch : name) ch = static_cast<char>(toupper(static_cast<unsigned char>(ch)));
+                if (sv != std::string::npos)
+                    name.resize(sv);
+                for (auto& ch : name)
+                    ch = static_cast<char>(toupper(static_cast<unsigned char>(ch)));
                 const bool isDir = (dir[o + 25] & 2u) != 0;
                 if (name == parts[i] && isDir != last) {
                     memcpy(&dirLba, &dir[o + 2], 4);
@@ -213,7 +234,8 @@ bool CDVD::search_file(const std::string& ps2_path, uint32_t& lba, uint32_t& siz
                 o += rl;
             }
         }
-        if (!found) return false;
+        if (!found)
+            return false;
     }
     lba = dirLba;
     size = dirSize;
@@ -226,7 +248,8 @@ bool CDVD::file_exists(const std::string& ps2_path) const {
 
 uint32_t CDVD::file_size(const std::string& ps2_path) const {
     fs::path local = resolve_path(ps2_path);
-    if (local.empty()) return 0;
+    if (local.empty())
+        return 0;
     return (uint32_t)fs::file_size(local);
 }
 

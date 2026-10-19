@@ -11,15 +11,15 @@ namespace reo {
 
 // Which game to run
 enum class GameTitle {
-    Outbreak,   // RE Outbreak File #1 (SLUS-20765)
-    File2,      // RE Outbreak File #2 (SLUS-20984)
+    Outbreak, // RE Outbreak File #1 (SLUS-20765)
+    File2,    // RE Outbreak File #2 (SLUS-20984)
 };
 
 struct GameInfo {
     GameTitle title;
     const char* display_name;
-    const char* elf_name;       // e.g. "SLUS_207.65" or "SLUS_209.84"
-    const char* serial;         // e.g. "SLUS-20765"
+    const char* elf_name; // e.g. "SLUS_207.65" or "SLUS_209.84"
+    const char* serial;   // e.g. "SLUS-20765"
     uint32_t entry_point;
     const char* default_data_path;
 };
@@ -32,7 +32,7 @@ struct Config {
     GameTitle game = GameTitle::Outbreak;
 
     // Paths (auto-set from game selection if not overridden)
-    std::string game_data_path;  // empty = use default for selected game
+    std::string game_data_path; // empty = use default for selected game
     std::string save_path = "saves";
 
     // Display
@@ -59,7 +59,9 @@ struct Config {
     bool save() const;
 
     // Resolved game info (set after load())
-    const GameInfo& game_info() const { return get_game_info(game); }
+    const GameInfo& game_info() const {
+        return get_game_info(game);
+    }
 };
 
 } // namespace reo

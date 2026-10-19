@@ -15,7 +15,7 @@ extern uint32_t reo_gs_vram_size();
 namespace reo {
 
 // VRAM layout for NbdRenderer textures
-static constexpr uint32_t TEX_VRAM_START_BLOCK = 10240; // ~2.5MB into VRAM
+static constexpr uint32_t TEX_VRAM_START_BLOCK = 10240;  // ~2.5MB into VRAM
 static constexpr uint32_t CLUT_VRAM_START_BLOCK = 14336; // ~3.5MB into VRAM
 
 bool NbdRenderer::load(const uint8_t* nbd_data, uint32_t nbd_size) {
@@ -54,7 +54,8 @@ bool NbdRenderer::load(const uint8_t* nbd_data, uint32_t nbd_size) {
 
     const auto& amo_chunk = m_nbd.chunk(amo_indices[0]);
     const uint8_t* amo_data = m_nbd.chunk_data(amo_indices[0]);
-    if (!amo_data) return false;
+    if (!amo_data)
+        return false;
 
     if (!m_amo.parse(amo_data, amo_chunk.size)) {
         printf("[NBD-RENDER] Failed to parse AMO data\n");
@@ -77,13 +78,14 @@ bool NbdRenderer::load(const uint8_t* nbd_data, uint32_t nbd_size) {
     m_loaded = true;
 
     printf("[NBD-RENDER] Ready: %d textures, %d verts, cam=(%.1f,%.1f,%.1f)\n",
-           (int)m_textures.size(), (int)mdl.vertices.size(),
-           m_cam_x, m_cam_y, m_cam_z);
+           (int)m_textures.size(), (int)mdl.vertices.size(), m_cam_x, m_cam_y, m_cam_z);
     return true;
 }
 
 void NbdRenderer::set_camera(float cx, float cy, float cz, float scale) {
-    m_cam_x = cx; m_cam_y = cy; m_cam_z = cz;
+    m_cam_x = cx;
+    m_cam_y = cy;
+    m_cam_z = cz;
     m_scale = scale;
     if (m_loaded) {
         m_gif_packet.clear();
@@ -92,7 +94,8 @@ void NbdRenderer::set_camera(float cx, float cy, float cz, float scale) {
 }
 
 void NbdRenderer::render() {
-    if (!m_loaded || m_gif_packet.empty()) return;
+    if (!m_loaded || m_gif_packet.empty())
+        return;
     reo_gs_submit_path3_direct(m_gif_packet.data(), (uint32_t)m_gif_packet.size());
 }
 
@@ -104,22 +107,23 @@ static void emit_qw(std::vector<uint8_t>& pkt, uint64_t lo, uint64_t hi) {
 }
 
 enum GSReg : uint64_t {
-    GS_PRIM       = 0x00,
-    GS_RGBAQ      = 0x01,
-    GS_ST         = 0x02,
-    GS_XYZ2       = 0x05,
-    GS_TEX0_1     = 0x06,
-    GS_TEX1_1     = 0x14,
+    GS_PRIM = 0x00,
+    GS_RGBAQ = 0x01,
+    GS_ST = 0x02,
+    GS_XYZ2 = 0x05,
+    GS_TEX0_1 = 0x06,
+    GS_TEX1_1 = 0x14,
     GS_XYOFFSET_1 = 0x18,
-    GS_SCISSOR_1  = 0x40,
-    GS_TEST_1     = 0x47,
-    GS_FRAME_1    = 0x4C,
-    GS_ZBUF_1     = 0x4E,
+    GS_SCISSOR_1 = 0x40,
+    GS_TEST_1 = 0x47,
+    GS_FRAME_1 = 0x4C,
+    GS_ZBUF_1 = 0x4E,
 };
 
 void NbdRenderer::upload_textures_to_vram() {
     uint8_t* vram = reo_gs_vram();
-    if (!vram) return;
+    if (!vram)
+        return;
     uint32_t vram_size = reo_gs_vram_size();
 
     uint32_t tex_block = TEX_VRAM_START_BLOCK;
@@ -127,18 +131,22 @@ void NbdRenderer::upload_textures_to_vram() {
 
     for (int i = 0; i < (int)m_textures.size(); i++) {
         auto& tex = m_textures[i];
-        if (tex.image_type != 5 || tex.pixel_data.empty()) continue;
+        if (tex.image_type != 5 || tex.pixel_data.empty())
+            continue;
 
         uint32_t tbw = tex.width / 64;
-        if (tbw == 0) tbw = 1;
+        if (tbw == 0)
+            tbw = 1;
 
         // Upload PSMT8 pixel data with swizzled addressing
         for (uint32_t y = 0; y < tex.height; y++) {
             for (uint32_t x = 0; x < tex.width; x++) {
                 uint32_t src_idx = y * tex.width + x;
-                if (src_idx >= tex.pixel_data.size()) break;
+                if (src_idx >= tex.pixel_data.size())
+                    break;
                 uint32_t addr = gs_pixel_addr8(x, y, tex_block, tbw);
-                if (addr < vram_size) vram[addr] = tex.pixel_data[src_idx];
+                if (addr < vram_size)
+                    vram[addr] = tex.pixel_data[src_idx];
             }
         }
 
@@ -150,23 +158,25 @@ void NbdRenderer::upload_textures_to_vram() {
 
         tex.gs_tex0 = build_tex0(tex_block, tbw, 0x13, tex.width, tex.height, clut_block);
 
-        printf("[NBD-RENDER] Uploaded tex %d: %dx%d → VRAM blk %u, CLUT %u\n",
-               i, tex.width, tex.height, tex_block, clut_block);
+        printf("[NBD-RENDER] Uploaded tex %d: %dx%d → VRAM blk %u, CLUT %u\n", i, tex.width,
+               tex.height, tex_block, clut_block);
 
         tex_block += (tex.width * tex.height) / 64 + 1;
         clut_block += 16;
     }
 }
 
-uint64_t NbdRenderer::build_tex0(uint32_t tbp, uint32_t tbw, uint32_t psm,
-                                  uint32_t width, uint32_t height, uint32_t cbp) {
+uint64_t NbdRenderer::build_tex0(uint32_t tbp, uint32_t tbw, uint32_t psm, uint32_t width,
+                                 uint32_t height, uint32_t cbp) {
     uint64_t tex0 = 0;
     tex0 |= (uint64_t)(tbp & 0x3FFF);
     tex0 |= (uint64_t)(tbw & 0x3F) << 14;
     tex0 |= (uint64_t)(psm & 0x3F) << 20;
     uint32_t tw = 0, th = 0;
-    for (uint32_t w = width; w > 1; w >>= 1) tw++;
-    for (uint32_t h = height; h > 1; h >>= 1) th++;
+    for (uint32_t w = width; w > 1; w >>= 1)
+        tw++;
+    for (uint32_t h = height; h > 1; h >>= 1)
+        th++;
     tex0 |= (uint64_t)(tw & 0xF) << 26;
     tex0 |= (uint64_t)(th & 0xF) << 30;
     tex0 |= (uint64_t)1 << 34; // TCC=1
@@ -175,29 +185,35 @@ uint64_t NbdRenderer::build_tex0(uint32_t tbp, uint32_t tbw, uint32_t psm,
     return tex0;
 }
 
-// ── Perspective projection helpers ──────────────────────────────────
+// Perspective projection helpers
+struct Vec3 {
+    float x, y, z;
+};
 
-struct Vec3 { float x, y, z; };
-
-static Vec3 v3sub(Vec3 a, Vec3 b) { return {a.x-b.x, a.y-b.y, a.z-b.z}; }
-static float v3dot(Vec3 a, Vec3 b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+static Vec3 v3sub(Vec3 a, Vec3 b) {
+    return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+static float v3dot(Vec3 a, Vec3 b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
 static Vec3 v3cross(Vec3 a, Vec3 b) {
-    return {a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x};
+    return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
 }
 static Vec3 v3norm(Vec3 v) {
-    float l = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (l < 1e-8f) return {0,0,1};
-    return {v.x/l, v.y/l, v.z/l};
+    float l = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (l < 1e-8f)
+        return {0, 0, 1};
+    return {v.x / l, v.y / l, v.z / l};
 }
 
 // Project world point to screen using perspective camera
 // Returns false if point is behind camera
 static bool project(Vec3 pos, Vec3 cam_pos, Vec3 cam_fwd, Vec3 cam_right, Vec3 cam_up,
-                    float fov_rad, float aspect, float near_z,
-                    float& sx, float& sy, float& sz) {
+                    float fov_rad, float aspect, float near_z, float& sx, float& sy, float& sz) {
     Vec3 local = v3sub(pos, cam_pos);
     float z = v3dot(local, cam_fwd);
-    if (z < near_z) return false;
+    if (z < near_z)
+        return false;
 
     float x = v3dot(local, cam_right);
     float y = v3dot(local, cam_up);
@@ -215,7 +231,8 @@ static bool project(Vec3 pos, Vec3 cam_pos, Vec3 cam_fwd, Vec3 cam_right, Vec3 c
 
 void NbdRenderer::build_triangle_packet(const AmoModel& model) {
     m_gif_packet.clear();
-    if (model.vertices.empty() || model.strips.empty()) return;
+    if (model.vertices.empty() || model.strips.empty())
+        return;
 
     bool has_textures = !m_textures.empty();
     bool has_uvs = !model.texcoords.empty();
@@ -223,11 +240,9 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
 
     // Camera setup — look toward model center
     const auto& mdl = model;
-    Vec3 target = {
-        (mdl.bbox_min[0] + mdl.bbox_max[0]) * 0.5f,
-        (mdl.bbox_min[1] + mdl.bbox_max[1]) * 0.5f,
-        (mdl.bbox_min[2] + mdl.bbox_max[2]) * 0.5f
-    };
+    Vec3 target = {(mdl.bbox_min[0] + mdl.bbox_max[0]) * 0.5f,
+                   (mdl.bbox_min[1] + mdl.bbox_max[1]) * 0.5f,
+                   (mdl.bbox_min[2] + mdl.bbox_max[2]) * 0.5f};
     Vec3 cam_pos = {m_cam_x, m_cam_y, m_cam_z};
     Vec3 cam_fwd = v3norm(v3sub(target, cam_pos));
     Vec3 world_up = {0, 1, 0};
@@ -239,9 +254,12 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
     float near_z = 0.1f;
 
     // Directional lighting
-    float light_dir[3] = { 0.3f, 0.7f, 0.6f };
-    float len = sqrtf(light_dir[0]*light_dir[0] + light_dir[1]*light_dir[1] + light_dir[2]*light_dir[2]);
-    light_dir[0] /= len; light_dir[1] /= len; light_dir[2] /= len;
+    float light_dir[3] = {0.3f, 0.7f, 0.6f};
+    float len = sqrtf(light_dir[0] * light_dir[0] + light_dir[1] * light_dir[1] +
+                      light_dir[2] * light_dir[2]);
+    light_dir[0] /= len;
+    light_dir[1] /= len;
+    light_dir[2] /= len;
 
     // Count and collect triangles
     struct ScreenTri {
@@ -258,11 +276,14 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
             uint32_t i1 = strip.indices[i + 1];
             uint32_t i2 = strip.indices[i + 2];
 
-            if (i0 == i1 || i1 == i2 || i0 == i2) continue;
-            if (i & 1) std::swap(i1, i2);
+            if (i0 == i1 || i1 == i2 || i0 == i2)
+                continue;
+            if (i & 1)
+                std::swap(i1, i2);
 
             if (i0 >= model.vertices.size() || i1 >= model.vertices.size() ||
-                i2 >= model.vertices.size()) continue;
+                i2 >= model.vertices.size())
+                continue;
 
             // Skip long-edge triangles (seam artifacts)
             {
@@ -270,15 +291,16 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
                 auto& vb = model.vertices[i1];
                 auto& vc = model.vertices[i2];
                 auto dist2 = [](const AmoVertex& a, const AmoVertex& b) {
-                    float dx = a.x-b.x, dy = a.y-b.y, dz = a.z-b.z;
-                    return dx*dx + dy*dy + dz*dz;
+                    float dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+                    return dx * dx + dy * dy + dz * dz;
                 };
-                float max_edge2 = std::max({dist2(va,vb), dist2(vb,vc), dist2(va,vc)});
-                if (max_edge2 > 15.0f * 15.0f) continue;
+                float max_edge2 = std::max({dist2(va, vb), dist2(vb, vc), dist2(va, vc)});
+                if (max_edge2 > 15.0f * 15.0f)
+                    continue;
             }
 
             ScreenTri tri;
-            uint32_t idx[3] = { i0, i1, i2 };
+            uint32_t idx[3] = {i0, i1, i2};
             bool visible = true;
 
             for (int v = 0; v < 3; v++) {
@@ -286,8 +308,8 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
                 Vec3 pos = {vert.x, vert.y, vert.z};
 
                 float sx, sy, sz;
-                if (!project(pos, cam_pos, cam_fwd, cam_right, cam_up,
-                             fov_rad, aspect, near_z, sx, sy, sz)) {
+                if (!project(pos, cam_pos, cam_fwd, cam_right, cam_up, fov_rad, aspect, near_z, sx,
+                             sy, sz)) {
                     visible = false;
                     break;
                 }
@@ -302,7 +324,8 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
                 if (idx[v] < model.normals.size()) {
                     auto& n = model.normals[idx[v]];
                     float dot = n.nx * light_dir[0] + n.ny * light_dir[1] + n.nz * light_dir[2];
-                    if (dot > 0) shade += dot * 0.7f;
+                    if (dot > 0)
+                        shade += dot * 0.7f;
                 }
                 shade = std::min(shade, 1.0f);
 
@@ -322,11 +345,13 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
                 }
             }
 
-            if (visible) tris.push_back(tri);
+            if (visible)
+                tris.push_back(tri);
         }
     }
 
-    if (tris.empty()) return;
+    if (tris.empty())
+        return;
 
     // Emit GS setup registers
     {
@@ -353,7 +378,8 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
 
         // PRIM: TRIANGLE + Gouraud + texture
         uint64_t prim = 3 | (1ULL << 3); // TRIANGLE + IIP
-        if (textured) prim |= (1ULL << 4); // TME
+        if (textured)
+            prim |= (1ULL << 4); // TME
         emit_qw(m_gif_packet, prim, GS_PRIM);
     }
 
@@ -369,7 +395,8 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
 
         uint64_t nloop = (uint64_t)batch * 3;
         uint64_t tag_lo = nloop;
-        if (is_last) tag_lo |= (1ULL << 15);
+        if (is_last)
+            tag_lo |= (1ULL << 15);
         tag_lo |= ((uint64_t)regs_per_vert << 60);
 
         uint64_t tag_hi = textured ? 0x512ULL : 0x51ULL;
@@ -391,8 +418,10 @@ void NbdRenderer::build_triangle_packet(const AmoModel& model) {
 
                 {
                     uint8_t qw[16] = {};
-                    qw[0] = tri.r[v]; qw[4] = tri.g[v];
-                    qw[8] = tri.b[v]; qw[12] = 0x80;
+                    qw[0] = tri.r[v];
+                    qw[4] = tri.g[v];
+                    qw[8] = tri.b[v];
+                    qw[12] = 0x80;
                     size_t p = m_gif_packet.size();
                     m_gif_packet.resize(p + 16);
                     memcpy(m_gif_packet.data() + p, qw, 16);

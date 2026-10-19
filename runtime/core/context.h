@@ -26,7 +26,7 @@ namespace reo {
 
 struct EEContext {
     // General purpose registers (128-bit for MMI support)
-    GPR128 gpr[32];  // $zero(0) through $ra(31)
+    GPR128 gpr[32]; // $zero(0) through $ra(31)
 
     // Multiply/divide result registers (128-bit for MMI)
     GPR128 hi;
@@ -47,15 +47,15 @@ struct EEContext {
 
     // COP1 (FPU) registers
     float fpr[32];
-    uint32_t fcr0;   // FPU implementation register
-    uint32_t fcr31;  // FPU control/status register
+    uint32_t fcr0;  // FPU implementation register
+    uint32_t fcr31; // FPU control/status register
 
     // COP2 (VU0 macro mode) registers
-    VF128 vf[32];      // 32 x 128-bit vector float registers
-    uint16_t vi[16];   // 16 x 16-bit vector integer registers
-    float vu0_acc[4];  // VU0 accumulator (xyzw)
-    float vu0_q;       // VU0 Q register (division result)
-    float vu0_p;       // VU0 P register (EFU result, VU0 doesn't have EFU but the field is here)
+    VF128 vf[32];     // 32 x 128-bit vector float registers
+    uint16_t vi[16];  // 16 x 16-bit vector integer registers
+    float vu0_acc[4]; // VU0 accumulator (xyzw)
+    float vu0_q;      // VU0 Q register (division result)
+    float vu0_p;      // VU0 P register (EFU result, VU0 doesn't have EFU but the field is here)
 
     // Memory reference (for load/store instructions)
     Memory& memory;
@@ -65,7 +65,8 @@ struct EEContext {
     }
 
     void reset() {
-        for (int i = 0; i < 32; i++) gpr[i].clear();
+        for (int i = 0; i < 32; i++)
+            gpr[i].clear();
         hi.clear();
         lo.clear();
         sa = 0;
@@ -77,31 +78,33 @@ struct EEContext {
         cop0_count = 0;
         cop0_compare = 0;
 
-        for (int i = 0; i < 32; i++) fpr[i] = 0.0f;
-        fcr0 = 0x2E00;  // R5900 FPU implementation ID
+        for (int i = 0; i < 32; i++)
+            fpr[i] = 0.0f;
+        fcr0 = 0x2E00; // R5900 FPU implementation ID
         fcr31 = 0;
 
-        for (int i = 0; i < 32; i++) vf[i].clear();
-        for (int i = 0; i < 16; i++) vi[i] = 0;
-        for (int i = 0; i < 4; i++) vu0_acc[i] = 0.0f;
+        for (int i = 0; i < 32; i++)
+            vf[i].clear();
+        for (int i = 0; i < 16; i++)
+            vi[i] = 0;
+        for (int i = 0; i < 4; i++)
+            vu0_acc[i] = 0.0f;
         vu0_q = 0.0f;
         vu0_p = 0.0f;
     }
 
     // Register names for debugging
     static const char* gpr_name(int reg) {
-        static const char* names[] = {
-            "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
-            "t0",   "t1", "t2", "t3", "t4", "t5", "t6", "t7",
-            "s0",   "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-            "t8",   "t9", "k0", "k1", "gp", "sp", "fp", "ra"
-        };
+        static const char* names[] = {"zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+                                      "t0",   "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+                                      "s0",   "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+                                      "t8",   "t9", "k0", "k1", "gp", "sp", "fp", "ra"};
         return (reg >= 0 && reg < 32) ? names[reg] : "??";
     }
 };
 
 // Function signature for recompiled code
 // Each recompiled MIPS function takes the CPU context
-using RecompiledFunc = void(*)(EEContext* ctx);
+using RecompiledFunc = void (*)(EEContext* ctx);
 
 } // namespace reo
