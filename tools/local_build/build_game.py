@@ -1,0 +1,105 @@
+"""First-run worker: derive, instrument and compile a private game from its ISO import."""
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import os
+
+from compile_game import compile_plan, msvc_environment
+from generate_game import generate
+from reconstruct_vu import reconstruct
+from source_recipes import apply_plan
+from generate_queue_control import generate as generate_queue_control
+
+
+def sha(path):
+    with Path(path).open("rb") as f:
+        return hashlib.file_digest(f, "sha256").hexdigest()
+
+
+def stage(work, name, inputs, action, outputs):
+    receipt = work / (name + ".json")
+    expected = {str(p): sha(p) for p in inputs}
+    if receipt.exists():
+        record = json.loads(receipt.read_text())
+        if record.get("inputs") == expected and record.get("outputs") and all(Path(p).is_file() and sha(p) == digest
+                                                   for p, digest in record.get("outputs", {}).items()):
+            print("Reusing " + name, flush=True)
+            return
+    # Never overlay a failed generation with a new one or delete its diagnostics.
+    action()
+    record = {"inputs": expected, "outputs": {str(p): sha(p) for p in outputs()}}
+    if not record["outputs"]:
+        raise ValueError("Build stage produced no verified output")
+    temporary = receipt.with_suffix(".pending")
+    temporary.write_text(json.dumps(record, indent=2))
+    temporary.replace(receipt)
+
+
+def build(kit, disc, work, output, jobs):
+    kit, disc, work, output = [Path(p).resolve() for p in (kit, disc, work, output)]
+    work.mkdir(parents=True, exist_ok=True)
+    env, _, _ = msvc_environment()
+    crt = Path(env["VCToolsRedistDir"]) / "x64/Microsoft.VC143.CRT"
+    # Resolve the independent recompiler's CRT from the user's toolchain.
+    os.environ["PATH"] = str(crt) + os.pathsep + os.environ.get("PATH", "")
+    project = work / "project"
+    project.mkdir(exist_ok=True)
+    print("Preparing independent runtime sources", flush=True)
+    shutil.copytree(kit / "source", project, dirs_exist_ok=True)
+    metadata = kit / "metadata"
+    generated = project / "recomp/config"
+    elf = disc / "SLUS_207.65"
+    script = Path(__file__).parent
+    metadata_files = [p for p in sorted(metadata.rglob("*")) if p.is_file() and p.name != "local_queue_control.json"]
+
+    def game_generation():
+        if generated.exists():
+            # This happens only after interruption/corruption of a previous
+            # stage. Keep its files under an unused diagnostic name.
+            n = 0
+            while generated.with_name("config.interrupted" + str(n)).exists():
+                n += 1
+            generated.rename(generated.with_name("config.interrupted" + str(n)))
+        generate(kit / "tools/ps2_recomp.exe", disc, metadata, generated)
+
+    stage(work, "generate", [elf, kit / "tools/ps2_recomp.exe", script / "generate_game.py",
+                            script / "generate_support.py", *metadata_files], game_generation,
+          lambda: [p for folder in ["output", "output_ovl", "output_extra", "output_overlay", "local_source_catalogues"]
+                   for p in (generated / folder).rglob("*") if p.is_file()])
+    print("Reconstructing local instrumentation and VU optimizations", flush=True)
+    apply_plan(elf, generated, metadata / "local_source_recipes.json", project)
+    generate_queue_control(elf, metadata / "local_queue_control.json",
+                           project / "tools/parallel_gs_backend/resident_geometry/upstream/queue_control_body.inc")
+    catalogue_target = project / "third_party/PS2Recomp/ps2xRuntime/src/lib/local_source_catalogues"
+    shutil.copytree(generated / "local_source_catalogues", catalogue_target, dirs_exist_ok=True)
+    vu = generated / "vu"
+
+    def generate_vu():
+        if vu.exists():
+            n = 0
+            while vu.with_name("vu.interrupted" + str(n)).exists():
+                n += 1
+            vu.rename(vu.with_name("vu.interrupted" + str(n)))
+        reconstruct(elf, metadata / "local_vu_images.json", vu)
+        subprocess.run([sys.executable, str(kit / "tools/vu_whole_aot/generate.py"),
+                        "--collection", str(vu), "--out", str(vu / "whole")], check=True)
+
+    stage(work, "vu", [elf, metadata / "local_vu_images.json", script / "reconstruct_vu.py",
+                       kit / "tools/vu_whole_aot/generate.py", kit / "tools/vu_whole_aot/decode.py"],
+          generate_vu, lambda: [p for p in vu.rglob("*") if p.is_file()])
+    print("Compiling the game locally (the first build can take a while)", flush=True)
+    compile_plan(kit, generated, work, output, jobs)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ["kit", "disc", "work", "output"]:
+        parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--jobs", type=int, default=2)
+    args = parser.parse_args()
+    build(args.kit, args.disc, args.work, args.output, args.jobs)

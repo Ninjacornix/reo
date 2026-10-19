@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**Source preview ? local-build installer in development** · [Changelog](CHANGELOG.md)
+**Source preview - local-build installer in development** Â· [Changelog](CHANGELOG.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -10,7 +10,7 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 
 - **Outbreak: File #1:** boots into menus and gameplay. Rendering, performance and cutscene/audio synchronization are still under development.
 - **Outbreak: File #2:** configuration and a launcher entry exist; gameplay is not validated.
-- **Launcher:** one-time ISO import without mounting, packaged native game, fullscreen and aspect controls, bilinear/anisotropic filtering, FXAA/SMAA, brightness/gamma, intro skipping, controller remapping, selectable memory cards, cheats, logs and GitHub release updates.
+- **Launcher:** one-time ISO import without mounting, ISO-derived local build, fullscreen and aspect controls, bilinear/anisotropic filtering, FXAA/SMAA, brightness/gamma, intro skipping, controller remapping, selectable memory cards, cheats, logs and GitHub release updates.
 - **Online co-op:** four native clients have authenticated, joined one room, reached gameplay and replicated movement through a separate openSNAP server. The launcher saves the server address and existing account username; passwords remain in-game. This is local validation; Internet play is not yet validated. Setup is below.
 - **Room management and hosting:** room creation/joining still use the original game menus. Launcher room settings, automatic server hosting and NAT traversal are not implemented.
 - **Mods:** placeholder. **Cheats:** built-in health, infection and ammunition options plus a supported subset of PCSX2 data cheats.
@@ -50,7 +50,7 @@ Do not treat this prerelease as finished online support.
 1. Get the **IPv4 address** of a compatible openSNAP server and create an account
    on that server. The launcher does not create accounts or start a server.
 2. In the launcher's **Co-op** page, enter the server IPv4 address and your existing
-   account username, then enable **Launch in online mode**. Usernames use 4–10
+   account username, then enable **Launch in online mode**. Usernames use 4â€“10
    ASCII letters, digits or underscores; avoid leading, trailing or repeated underscores.
 3. Launch File #1 and use the game's original online/account menus. Choose
    **Edit Account** to apply the launcher username and enter your password in-game.

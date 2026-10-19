@@ -1,0 +1,181 @@
+{
+  "format": 1,
+  "groups": [
+    {
+      "destination": "dnas_tail_aot/reo_dnas_tail_aot.inc",
+      "overlay": 4,
+      "functions": [
+        {
+          "name": "dnas_tail_error",
+          "start": "0x7507b0",
+          "end": "0x7507bc",
+          "size": "12"
+        },
+        {
+          "name": "dnas_tail_normal",
+          "start": "0x7507c0",
+          "end": "0x7507c8",
+          "size": "8"
+        },
+        {
+          "name": "dnas_tail_alternate",
+          "start": "0x7507d0",
+          "end": "0x7507d8",
+          "size": "8"
+        },
+        {
+          "name": "dnas_tail_state",
+          "start": "0x7507e0",
+          "end": "0x750f78",
+          "size": "1944"
+        }
+      ],
+      "registrationNamespace": "reo_dnas_tail_aot"
+    },
+    {
+      "destination": "native_network/reo_free_mode_callback.inc",
+      "overlay": 3,
+      "functions": [
+        {
+          "name": "coop_free_mode_callback",
+          "start": "0x57b690",
+          "end": "0x57b6f8",
+          "size": "104"
+        }
+      ]
+    },
+    {
+      "destination": "native_network/reo_lobby_choice_callback.inc",
+      "overlay": 3,
+      "functions": [
+        {
+          "name": "coop_lobby_choice_callback",
+          "start": "0x585930",
+          "end": "0x58597c",
+          "size": "76"
+        }
+      ]
+    },
+    {
+      "destination": "native_network/reo_lobby_profile_callback.inc",
+      "overlay": 3,
+      "functions": [
+        {
+          "name": "coop_lobby_profile_callback",
+          "start": "0x57a6a0",
+          "end": "0x57a724",
+          "size": "132"
+        }
+      ]
+    },
+    {
+      "destination": "native_network/reo_lobby_state_callback.inc",
+      "overlay": 3,
+      "functions": [
+        {
+          "name": "coop_lobby_state_callback",
+          "start": "0x57a730",
+          "end": "0x57a790",
+          "size": "96"
+        }
+      ]
+    },
+    {
+      "destination": "native_network/reo_slot_query.inc",
+      "overlay": 8,
+      "functions": [
+        {
+          "name": "coop_slot_query",
+          "start": "0x814370",
+          "end": "0x814420",
+          "size": "176"
+        }
+      ]
+    },
+    {
+      "destination": "native_network/reo_verified_callbacks.inc",
+      "overlay": 3,
+      "functions": [
+        {
+          "name": "coop_verified_callback_0058BFF0",
+          "start": "0x58bff0",
+          "end": "0x58c034",
+          "size": "68"
+        },
+        {
+          "name": "coop_verified_callback_0058C040",
+          "start": "0x58c040",
+          "end": "0x58c068",
+          "size": "40"
+        },
+        {
+          "name": "coop_verified_callback_0058C070",
+          "start": "0x58c070",
+          "end": "0x58c14c",
+          "size": "220"
+        },
+        {
+          "name": "coop_verified_callback_0058C150",
+          "start": "0x58c150",
+          "end": "0x58c168",
+          "size": "24"
+        },
+        {
+          "name": "coop_verified_callback_0058C170",
+          "start": "0x58c170",
+          "end": "0x58c188",
+          "size": "24"
+        },
+        {
+          "name": "coop_verified_callback_0058C190",
+          "start": "0x58c190",
+          "end": "0x58c1a8",
+          "size": "24"
+        },
+        {
+          "name": "coop_verified_callback_0058C1B0",
+          "start": "0x58c1b0",
+          "end": "0x58c1c8",
+          "size": "24"
+        },
+        {
+          "name": "coop_verified_callback_0058C340",
+          "start": "0x58c340",
+          "end": "0x58c36c",
+          "size": "44"
+        },
+        {
+          "name": "coop_verified_callback_0058C370",
+          "start": "0x58c370",
+          "end": "0x58c398",
+          "size": "40"
+        },
+        {
+          "name": "coop_verified_callback_0058C3A0",
+          "start": "0x58c3a0",
+          "end": "0x58c3ec",
+          "size": "76"
+        },
+        {
+          "name": "coop_verified_callback_0058CD20",
+          "start": "0x58cd20",
+          "end": "0x58cda8",
+          "size": "136"
+        },
+        {
+          "name": "coop_verified_callback_00590F50",
+          "start": "0x590f50",
+          "end": "0x59179c",
+          "size": "2124"
+        },
+        {
+          "name": "coop_verified_callback_005917A0",
+          "start": "0x5917a0",
+          "end": "0x5917bc",
+          "size": "28"
+        }
+      ],
+      "registrationNamespace": "reo_verified_callback_cluster"
+    }
+  ]
+}

@@ -20,6 +20,7 @@ import tempfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from overlay_extract import decompress, wrap_elf
 from generate_catalogues import generate as generate_catalogues
+from generate_support import generate_support
 
 ELF_SHA256 = "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
 MAGIC = 0x336F574D
@@ -64,6 +65,43 @@ def generate(recompiler, disc, metadata, destination):
     main = staging / "output"
     invoke("main", elf, metadata / "outbreak_ghidra_functions.csv", main,
            ("sub_00117080", "sub_00117818", "sub_001179E8"))
+
+    with (metadata / "extra_functions.csv").open(newline="") as f:
+        extra_rows = list(csv.DictReader(f))
+    for row in extra_rows:
+        row["name"] = "x_" + re.sub(r"^(sub|FUN)_", "", row["name"])
+    extra_map = work / "extra.csv"
+    with extra_map.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["name", "start", "end", "size"])
+        writer.writeheader()
+        writer.writerows(extra_rows)
+    extra_image = bytearray(elf.read_bytes())
+    struct.pack_into("<I", extra_image, 24, int(extra_rows[0]["start"], 16))
+    extra_elf = work / "extra.elf"
+    extra_elf.write_bytes(extra_image)
+    all_extra = work / "extra_all"
+    invoke("extra", extra_elf, extra_map, all_extra)
+    extra = staging / "output_extra"
+    extra.mkdir()
+    ranges = [(int(row["start"], 16), int(row["end"], 16)) for row in extra_rows]
+    inside_extra = lambda address: any(start <= address < end for start, end in ranges)
+    registrations = re.findall(r"runtime\.registerFunction\((0x[\da-fA-F]+), (\w+)\);",
+                                (all_extra / "register_functions.cpp").read_text())
+    kept = {name for address, name in registrations if inside_extra(int(address, 16))}
+    (extra / "extra_functions.h").write_text((all_extra / "ps2_recompiled_functions.h").read_text()
+        .replace("PS2_RECOMPILED_FUNCTIONS_H", "REO_EXTRA_FUNCTIONS_H"))
+    (extra / "ps2_recompiled_stubs.h").write_text((all_extra / "ps2_recompiled_stubs.h").read_text())
+    for file in all_extra.glob("*.cpp"):
+        if file.name == "register_functions.cpp":
+            continue
+        if any(file.name.startswith(name.rsplit("_0x", 1)[0]) for name in kept):
+            (extra / file.name).write_text(file.read_text().replace('"ps2_recompiled_functions.h"',
+                                                                  '"extra_functions.h"'))
+    (extra / "register_extra.cpp").write_text(
+        '#include "ps2_runtime.h"\n#include "extra_functions.h"\n' +
+        "void reoRegisterExtraFunctions(PS2Runtime& runtime) {\n" +
+        "\n".join(f"    runtime.registerFunction({pc}u, {name});" for pc, name in registrations
+                   if inside_extra(int(pc, 16))) + "\n}\n")
 
     overlays = staging / "output_ovl"
     overlays.mkdir()
@@ -122,6 +160,7 @@ def generate(recompiler, disc, metadata, destination):
         "\n".join(f"void reoRegisterOverlay_{tag}(PS2Runtime&);" for tag in tags) +
         "\nvoid reoRegisterOverlays(PS2Runtime& runtime) {\n" +
         "\n".join(f"    reoRegisterOverlay_{tag}(runtime);" for tag in tags) + "\n}\n")
+    generate_support(staging, metadata, invoke)
     catalogue_count = generate_catalogues(elf, metadata / "local_source_catalogues.json",
                                           staging / "local_source_catalogues")
     sources = list(staging.rglob("*.cpp"))

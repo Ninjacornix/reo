@@ -18,13 +18,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File launcher/build.ps1
 
 Open `StartLauncher.cmd`. The source checkout needs an already-built native executable. In **Game files**, choose your ISO; the launcher extracts its ELF and assets automatically without mounting. The native executable override is under **Developer options**. File #2 is not validated.
 
-For end users, create a package after building the native game:
+Public game executables are no longer packaged. The replacement build kit generates
+and compiles game code locally from each player's ISO, with a resumable cache.
+The exporter and compiler are under `tools/local_build/`; validation is still in
+progress. Do not publish a kit before a clean first-run build and room route pass.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File launcher/package.ps1 -Zip
-```
+Compiler tools are discovered locally. On PCs without them, the launcher offers
+Microsoft's signed Build Tools installer; users review its terms and installation
+choices. The first compilation takes substantially longer than later cached launches.
+No compiler, SDK libraries or generated game objects are distributed.
 
-The self-contained package includes the native game, controller adapter, presentation shaders, .NET runtime and app-local Microsoft C++ runtime. It runs outside the checkout and writes imports, saves and logs to Local AppData. It does not include the user's ISO, extracted game files or saves. The player provides only the supported ISO. Native builds are not regenerated on the player's machine.
+See [local build kits](LOCAL_BUILDS.md) for the maintainer workflow.
 
 ```powershell
 & ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --self-test
@@ -65,18 +69,12 @@ respects `.clang-format-ignore`: dependencies and generated game code retain
 their original formatting. Shader assets and hash-pinned catalogues are kept
 unchanged; Python, PowerShell, Markdown and XAML are not clang-format inputs.
 
-After building the launcher, capture its real interface with the same cover art used during normal launch:
-
-```powershell
-& ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --screenshot "$PWD/docs/images/launcher-play.png" --public-preview
-```
-
-Add `--page Coop` to capture the Co-op page. Screenshot mode closes its own
-window after capture and does not start a game. Screenshot mode waits for cover
-loading and hides the local save path. `--public-preview` also clears visible
-account/server fields without saving those changes. Attribute any publisher
-artwork shown in published captures; keep credentials and gameplay captures out.
+Documentation screenshots must use the launcher's plain background and must not
+include publisher artwork or game captures. Private screenshot paths stay ignored.
 
 ### Updater-compatible Windows releases
 
-Build a complete Windows package with `launcher/package.ps1 -Version <release-version> -Output dist/RE-Outbreak-v<release-version>-Windows-x64 -Zip`. The version must match the GitHub release tag (for example `0.2.0` / `v0.2.0`). Upload the ZIP and generated `.zip.sha256` to the published stable GitHub Release. Do not upload just the launcher executable: native runtime/shaders and the self-contained .NET files must stay together. Source archives are not installable updates. See [launcher update instructions](../launcher/README.md#updates).
+Updates use distribution format 2 (`installMode: local-build`) and carry the
+independent build kit rather than a game executable. Old format-1 packages are
+refused by the updater. Source archives are not installable updates. Publication
+remains disabled until a complete kit has passed first-run and gameplay validation.

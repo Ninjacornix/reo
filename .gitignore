@@ -117,3 +117,4 @@ desktop.ini
 /docs/images/
 /tools/ps2_debug/*.bin
 /launcher/tools/package-legacy-local.ps1
+/tools/parallel_gs_backend/resident_geometry/upstream/queue_control_body.inc

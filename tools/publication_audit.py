@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PRIVATE = re.compile(
     r"(?:^recomp/config/output[^/]*(?:/|$)|"
     r"^tools/parallel_gs_backend/resident_geometry/upstream/shaders/|"
+    r"^tools/parallel_gs_backend/resident_geometry/upstream/queue_control_body\.inc$|"
     r"^docs/images/|^docs/title_screen\.png$|"
     r"(?:^|/)[Hh][Aa][Nn][Dd][Oo][Ff][Ff][^/]*\.md$|"
     r"\.(?:iso|elf|bin|exe|dll|obj|lib|pdb|dmp|sfd|adx|irx|ps2|db)$)",
@@ -29,7 +30,7 @@ def main():
         if PRIVATE.search(name):
             findings.append({"path": name, "reason": "excluded publication path"})
         file = ROOT / name
-        if file.is_file() and file.suffix in {".cpp", ".h", ".hpp", ".glsl", ".comp", ".patch"}:
+        if file.is_file() and file.suffix in {".cpp", ".h", ".hpp", ".inc", ".inl", ".glsl", ".comp", ".patch"}:
             text = file.read_text(errors="replace")
             if OPCODE.search(text):
                 findings.append({"path": name, "reason": "instruction-by-instruction source requires review"})

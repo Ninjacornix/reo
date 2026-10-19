@@ -10,7 +10,8 @@ namespace Outbreak.Launcher;
 public record BuildKitFile(string Path, string Sha256);
 public record LocalBuildStep(string Name, string Tool, string[] Arguments);
 public record LocalBuildKit(int Format, string RuntimeAbi, string Architecture, string ElfSha256,
-                            BuildKitFile[] Files, LocalBuildStep[] Steps, string[] Outputs);
+                            BuildKitFile[] Files, LocalBuildStep[] Steps, string[] Outputs,
+                            string? Toolchain = null);
 public record LocalBuildReceipt(int Format, string KitSha256, string ElfSha256, string Architecture,
                                 BuildKitFile[] Outputs);
 
@@ -144,6 +145,14 @@ public static class LocalGameBuild {
         }
         if (hash != Sha(Path.Combine(kitFolder, ManifestName)))
             throw new IOException("The build kit changed during validation.");
+        if (kit.Toolchain == "msvc") {
+            if (!kit.Files.Any(file => file.Path == "tools/local_build/setup_compiler.ps1"))
+                throw new IOException("The build kit is missing its verified compiler setup.");
+            progress?.Report(
+                new(0, kit.Steps.Length, "Checking compiler tools", "First-run setup"));
+            await CompilerSetup.Ensure(kitFolder, cache, cancel).ConfigureAwait(false);
+        } else if (kit.Toolchain != null)
+            throw new IOException("The build kit requests an unsupported compiler toolchain.");
         string work = Path.Combine(cache, "work");
         string output = Path.Combine(work, "output");
         Directory.CreateDirectory(work);
