@@ -110,7 +110,8 @@ int main(int argc, char** argv) try {
     CHECK(save(path, q, id));
     CHECK(load(path, id) == q);
     CHECK(load(path, changed).empty());
-    // Refuse atomic replacement while another process pins the old pathname.
+    // Win32 sharing locks reject replacement; POSIX readers retain the old inode.
+#if defined(_WIN32)
     const HANDLE locked = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
                                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     CHECK(locked != INVALID_HANDLE_VALUE);
@@ -118,6 +119,16 @@ int main(int argc, char** argv) try {
     CloseHandle(locked);
     CHECK(!replaced);
     CHECK(load(path, id) == q);
+#else
+    const int locked = ::open(path.c_str(), O_RDONLY | O_CLOEXEC);
+    CHECK(locked >= 0);
+    CHECK(save(path, p, id));
+    CHECK(load(path, id) == p);
+    std::vector<uint8_t> prior(encode(q, id).size());
+    CHECK(::read(locked, prior.data(), prior.size()) == ssize_t(prior.size()));
+    CHECK(decode(prior, id) == q);
+    CHECK(::close(locked) == 0);
+#endif
     for (const auto& entry : std::filesystem::directory_iterator(directory))
         CHECK(entry.path().filename().wstring().find(L".tmp.") == std::wstring::npos);
     bool first = false, second = false;
@@ -130,6 +141,7 @@ int main(int argc, char** argv) try {
     CHECK(final == p || final == q);
     // Size cap checked from file metadata before any large payload allocation.
     const auto huge = directory / L"oversized.cache";
+#if defined(_WIN32)
     const HANDLE file = CreateFileW(huge.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW,
                                     FILE_ATTRIBUTE_NORMAL, nullptr);
     CHECK(file != INVALID_HANDLE_VALUE);
@@ -138,6 +150,15 @@ int main(int argc, char** argv) try {
     const bool sized = SetFilePointerEx(file, end, nullptr, FILE_BEGIN) && SetEndOfFile(file);
     CloseHandle(file);
     CHECK(sized);
+#else
+    const int file = ::open(huge.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+    CHECK(file >= 0);
+    CHECK(::ftruncate(file, off_t(MaxPayload + HeaderBytes + 1)) == 0);
+    CHECK(::close(file) == 0);
+    const auto symlink = directory / "symlink.cache";
+    std::filesystem::create_symlink(path, symlink);
+    CHECK(load(symlink, id).empty());
+#endif
     CHECK(load(huge, id).empty());
     const auto stable1 = defaultPath(id), stable2 = defaultPath(id);
     CHECK(stable1 == stable2);
