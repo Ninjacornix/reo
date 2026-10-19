@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Windows;
+using System.Diagnostics;
 
 namespace Outbreak.Launcher;
 public partial class MainWindow {
@@ -10,10 +11,35 @@ public partial class MainWindow {
         importCancellation = source;
         DiscProgress.Value = 0;
         ImportActivity.Visibility = Visibility.Visible;
+        var elapsed = Stopwatch.StartNew();
+        var stageClock = Stopwatch.StartNew();
+        string stage = "";
+        long total = -1;
+        long stageStart = 0;
+        static string Duration(TimeSpan time) =>
+            time.TotalHours >= 1 ? $"{(int)time.TotalHours}h {time.Minutes:00}m"
+                                 : $"{(int)time.TotalMinutes}m {time.Seconds:00}s";
         return new Progress<ImportProgress>(value => {
             if (importCancellation != source)
                 return;
             DiscProgress.Value = value.Percent;
+            DiscProgress.IsIndeterminate = value.Total <= 0;
+            if (stage != value.Stage || total != value.Total) {
+                stage = value.Stage;
+                total = value.Total;
+                stageStart = value.Completed;
+                stageClock.Restart();
+            }
+            string eta = "estimating...";
+            if (value.Total > 0 && value.Completed >= value.Total)
+                eta = "done";
+            else if (value.Completed > stageStart && value.Total > value.Completed &&
+                     stageClock.Elapsed.TotalSeconds >= 3) {
+                double seconds = stageClock.Elapsed.TotalSeconds * (value.Total - value.Completed) /
+                                 (value.Completed - stageStart);
+                eta = "about " + Duration(TimeSpan.FromSeconds(Math.Min(seconds, 7 * 86400)));
+            }
+            ImportTiming.Text = $"Elapsed {Duration(elapsed.Elapsed)} · Stage ETA {eta}";
             ImportState.Text = $"{value.Stage} {value.Percent:0}% - {value.File}";
             Status.Text = $"{value.Stage} - {value.Percent:0}%";
         });
@@ -22,6 +48,7 @@ public partial class MainWindow {
         importCancellation?.Dispose();
         importCancellation = null;
         ImportActivity.Visibility = Visibility.Collapsed;
+        DiscProgress.IsIndeterminate = false;
         RefreshImportUi();
         if (closeAfterImport && !game.Running)
             Close();

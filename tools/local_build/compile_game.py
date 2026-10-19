@@ -47,16 +47,34 @@ def response_text(arguments, portable=False):
     return "\n".join(subprocess.list2cmdline([str(arg)]) for arg in arguments)
 
 
+def portable_root(kit, plan):
+    if not plan.get("externalToolchain"):
+        return kit / "toolchain"
+    location = os.environ.get("REO_LLVM_MINGW", "")
+    if not location:
+        raise RuntimeError("Install LLVM/MinGW UCRT 20251216 and set REO_LLVM_MINGW to its extracted folder. See REQUIREMENTS.md.")
+    return Path(location).resolve()
+
+
 def portable_environment(kit, plan):
     tools = []
     for key in ("compiler", "archiver", "resourceCompiler"):
         relative = plan[key]
         if not relative.startswith("{kit}/"):
             raise ValueError("A portable tool must be bundled in the build kit")
-        path = (kit / relative.removeprefix("{kit}/")).resolve()
-        if not path.is_relative_to(kit) or not path.is_file():
+        parent = kit
+        if plan.get("externalToolchain"):
+            parent = portable_root(kit, plan)
+            if not relative.startswith("{kit}/toolchain/"):
+                raise ValueError("External compiler path is outside the declared toolchain")
+            path = (parent / relative.removeprefix("{kit}/toolchain/")).resolve()
+        else:
+            path = (kit / relative.removeprefix("{kit}/")).resolve()
+        if not path.is_relative_to(parent) or not path.is_file():
             raise ValueError("Portable tool escapes its verified build kit")
         tools.append(path)
+    if plan.get("externalToolchain") and digest(tools[0]) != plan.get("externalCompilerSha256"):
+        raise ValueError("Install the exact LLVM/MinGW UCRT 20251216 x86-64 toolchain listed in REQUIREMENTS.md")
     env = {k: v for k, v in os.environ.items()
            if k.upper() not in {"INCLUDE", "LIB", "LIBPATH", "CL", "_CL_", "CPATH",
                                 "C_INCLUDE_PATH", "CPLUS_INCLUDE_PATH", "LIBRARY_PATH"}}
@@ -115,8 +133,9 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         linker = compiler
     else:
         env, compiler, linker = msvc_environment()
-    values = {"{kit}": str(kit), "{generated}": str(generated), "{work}": str(work),
-              "{output}": str(output)}
+    values = {"{kit}/toolchain": str(portable_root(kit, plan))} if portable else {}
+    values.update({"{kit}": str(kit), "{generated}": str(generated), "{work}": str(work),
+                   "{output}": str(output)})
 
     def expand(value):
         for name, replacement in values.items():
@@ -127,7 +146,8 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
 
     def source_file(value):
         path = Path(expand(value)).resolve()
-        if not any(path.is_relative_to(parent) for parent in (kit, generated, work)):
+        allowed = (kit, generated, work) + ((portable_root(kit, plan),) if portable and plan.get("externalToolchain") else ())
+        if not any(path.is_relative_to(parent) for parent in allowed):
             raise ValueError("Source input escapes the build kit/private workspace")
         if not path.is_file():
             raise FileNotFoundError(path)

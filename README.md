@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**Smaller prerelease in preparation** | [Requirements](REQUIREMENTS.md) | [Changelog](CHANGELOG.md)
+**v1.0.2 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -19,19 +19,19 @@ GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 beh
 
 ## Windows prerelease
 
-The bulky **v1.0.1** download has been withdrawn while packaging is simplified
-and an import/setup UI freeze is fixed. A replacement download is not published
-yet. The smaller package will list dependencies for users to install rather
-than include the full .NET runtime and compiler in the launcher folder. See
-[end-user requirements](REQUIREMENTS.md).
+Download **RE-Outbreak-v1.0.2-Windows-x64.zip** from
+[GitHub Releases](https://github.com/Ninjacornix/reo/releases). Install the
+[requirements](REQUIREMENTS.md), extract the ZIP, and open `Outbreak.Launcher.exe`.
+The launcher folder no longer includes the .NET runtime, language folders or a
+compiler installation. The oversized v1.0.1 bundle is withdrawn.
 
 Select your **Outbreak NTSC-U v2.00 ISO (SLUS-20765)** in **Game files**, then
 allow the first local generation and compilation to finish. This can take a long
 time; progress appears in the launcher. The result is cached in Local AppData,
 so later launches reuse it. No game executable or assets are included.
 
-This is a **build-only preview**: the complete portable compilation succeeded,
-but the sealed package's launcher-to-gameplay flow has not been rerun. Setup,
+This is an **experimental preview**: the reference native compilation succeeded,
+but the new external-toolchain setup and launcher-to-gameplay flow have not been rerun. Setup,
 rendering, performance and audio may still have problems. The previous v1.0.0
 game-binary package remains withdrawn.
 
@@ -61,8 +61,8 @@ To host, enable **Host server**. The launcher starts the services and displays
 **Friends connect to** with a copy button once they are listening. Use the
 suggested LAN address for the same network, or enter a reachable VPN/public IPv4
 before starting. Friends enter that address in their own launchers. The server
-component is included in the portable package; there is no manual Python
-installation step for players.
+component is a separate optional **Server.zip** asset. Extract it beside the
+launcher when hosting; ordinary players do not need it or a Python installation.
 
 Internet hosting still requires a reachable server and firewall/router rules:
 UDP **9090/9091** and TCP **10127/80**. Optional UPnP and Windows Firewall helpers

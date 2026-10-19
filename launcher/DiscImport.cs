@@ -144,7 +144,7 @@ public static class DiscImport {
                             reportClock.Restart();
                         }
                     }, hash);
-                    stream.Flush(true);
+                    stream.Flush();
                 }
                 files.Add(new(entry.Name, entry.Length,
                               Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant()));

@@ -11,7 +11,7 @@ public sealed class DiscImage : IDisposable {
     public IReadOnlyList<DiscEntry> Entries => entries;
     public DiscImage(string filename) {
         image = new(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024,
-                    FileOptions.RandomAccess);
+                    FileOptions.SequentialScan);
         try {
             ReadIndex();
         } catch {

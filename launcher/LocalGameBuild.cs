@@ -17,17 +17,19 @@ public record LocalBuildReceipt(int Format, string KitSha256, string ElfSha256, 
                                 BuildKitFile[] Outputs);
 
 // A kit contains independent tools/runtime inputs; the final game is built only in user storage.
-public static class LocalGameBuild {
+public static partial class LocalGameBuild {
     public const string ManifestName = "build-kit.json";
     static readonly JsonSerializerOptions Json =
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
-    static string KitFolder(string root) => Path.Combine(root, "build-kit");
+    static string KitFolder(string root) => PayloadFolder(root);
     public static bool Available(string root) => File.Exists(Path.Combine(KitFolder(root),
-                                                                          ManifestName));
+                                                                          ManifestName)) ||
+                                                 HasPayload(root);
 
     public static string TargetPath(string root, string game = "file1", string? home = null) {
         string manifest = Path.Combine(KitFolder(root), ManifestName);
-        string kitHash = File.Exists(manifest) ? Sha(manifest) : "missing-build-kit";
+        string kitHash =
+            PayloadIdentity(root) ?? (File.Exists(manifest) ? Sha(manifest) : "missing-build-kit");
         string identity = Convert
                               .ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
                                   kitHash + "\n" + DiscImport.FirstElfSha256 + "\nwin-x64")))
@@ -116,6 +118,7 @@ public static class LocalGameBuild {
                                       CancellationToken cancel = default, string? home = null,
                                       Func<ProcessStartInfo, CancellationToken, Task<int>>? runner =
                                           null) => Task.Run(async () => {
+        ExpandPayload(root, progress, cancel);
         return await EnsureVerified(root, disc, DiscImport.FirstElfSha256, progress, cancel, home,
                                     runner)
             .ConfigureAwait(false);
@@ -144,6 +147,21 @@ public static class LocalGameBuild {
                                          FileAccess.ReadWrite, FileShare.None);
         if (Ready(ready, hash, kit))
             return executable;
+        if (File.Exists(Path.Combine(kitFolder, "compile-plan.json"))) {
+            using var plan = JsonDocument.Parse(
+                File.ReadAllText(Path.Combine(kitFolder, "compile-plan.json")));
+            if (plan.RootElement.TryGetProperty("externalToolchain", out var external) &&
+                external.GetBoolean()) {
+                string? compilerFolder = Environment.GetEnvironmentVariable("REO_LLVM_MINGW") ??
+                                         Environment.GetEnvironmentVariable(
+                                             "REO_LLVM_MINGW", EnvironmentVariableTarget.User);
+                if (string.IsNullOrWhiteSpace(compilerFolder) ||
+                    !File.Exists(
+                        Path.Combine(compilerFolder, "bin", "x86_64-w64-mingw32-clang++.exe")))
+                    throw new IOException(
+                        "Install LLVM/MinGW UCRT 20251216 and set REO_LLVM_MINGW to its folder. See REQUIREMENTS.md beside the launcher.");
+            }
+        }
         // Never compile from a modified input or reuse a partly verified tool installation.
         int verified = 0;
         foreach (var file in kit.Files) {
@@ -193,6 +211,11 @@ public static class LocalGameBuild {
             };
             foreach (string arg in step.Arguments)
                 start.ArgumentList.Add(Expand(arg));
+            string? externalCompiler = Environment.GetEnvironmentVariable("REO_LLVM_MINGW") ??
+                                       Environment.GetEnvironmentVariable(
+                                           "REO_LLVM_MINGW", EnvironmentVariableTarget.User);
+            if (!string.IsNullOrWhiteSpace(externalCompiler))
+                start.Environment["REO_LLVM_MINGW"] = externalCompiler;
             int code =
                 runner != null
                     ? await runner(start, cancel).ConfigureAwait(false)

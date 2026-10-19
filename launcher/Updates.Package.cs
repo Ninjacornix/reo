@@ -52,9 +52,12 @@ public static partial class Updates {
     }
     public static List<PackageFile> Validate(string root, Version expected,
                                              CancellationToken cancel = default) {
+        bool compact = false;
         using (var doc =
                    JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "distribution.json")))) {
             var d = doc.RootElement;
+            compact = d.TryGetProperty("layout", out var layout) &&
+                      layout.GetString() == "framework-dependent-single-file";
             if (d.ValueKind != JsonValueKind.Object || !d.TryGetProperty("format", out _) ||
                 !d.TryGetProperty("platform", out _) || !d.TryGetProperty("source", out _) ||
                 !d.TryGetProperty("version", out _))
@@ -70,10 +73,18 @@ public static partial class Updates {
         }
         var files = Inventory(root);
         var names = files.Select(f => f.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        foreach (string required in new[] { "distribution.json", "Outbreak.Launcher.exe",
-                                            "Outbreak.Launcher.dll", "Outbreak.Launcher.deps.json",
-                                            "Outbreak.Launcher.runtimeconfig.json", "coreclr.dll",
-                                            "hostfxr.dll", "build-kit/build-kit.json" })
+        string[] requiredFiles =
+            compact ? new[] { "distribution.json", "Outbreak.Launcher.exe", "build-inputs.zip",
+                              "XINPUT1_4.dll", "REQUIREMENTS.md" }
+                    : new[] { "distribution.json",
+                              "Outbreak.Launcher.exe",
+                              "Outbreak.Launcher.dll",
+                              "Outbreak.Launcher.deps.json",
+                              "Outbreak.Launcher.runtimeconfig.json",
+                              "coreclr.dll",
+                              "hostfxr.dll",
+                              "build-kit/build-kit.json" };
+        foreach (string required in requiredFiles)
             if (!names.Contains(required))
                 throw new IOException("Update package is incomplete: " + required);
         if (names.Any(name => name.StartsWith("games/", StringComparison.OrdinalIgnoreCase) ||

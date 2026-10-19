@@ -1,8 +1,8 @@
 # Launcher
 
-The precompiled v1.0.0 download is withdrawn. The v1.0.1 portable prerelease
-generates the game locally and is a build-only preview: portable compilation
-completed, but packaged setup and gameplay have not been rerun.
+The v1.0.0 and oversized v1.0.1 downloads are withdrawn. v1.0.2 uses a smaller
+framework-dependent launcher and separately installed requirements. See
+[requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
 
 The replacement package contains independent tools and runtime inputs. Select your
 own NTSC-U v2.00 / SLUS-20765 ISO under **Game files**. The launcher imports game
@@ -10,10 +10,11 @@ files without mounting, generates native sources locally, then compiles and cach
 the game. Other executable revisions are rejected before import. A Vulkan-capable
 GPU driver is required. File #2 remains a placeholder.
 
-The planned release is portable: open the launcher EXE and select an ISO, with no
-Windows installer. Portable LLVM/MinGW integration and full compilation are
-complete. Legacy development kits require
-existing Microsoft C++ tools and a Windows SDK.
+The application is portable; system dependencies are installed separately.
+Install .NET 8 Desktop Runtime and the pinned LLVM/MinGW compiler, then select an
+ISO. Required generation inputs are bundled compressed and unpack into the user
+cache. The full compiler and .NET runtime are not inside the launcher folder.
+Legacy development kits require existing Microsoft C++ tools and a Windows SDK.
 The launcher does not install system tools. The first compilation takes time;
 later launches reuse verified completed outputs.
 The final game executable, extracted assets and generated instruction code stay

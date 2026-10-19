@@ -1,11 +1,15 @@
 # Changelog
 
-## Unreleased — v1.0.2
+## v1.0.2 prerelease — 2026-10-20
 
 - Move local-build verification and cached-output hashing off the launcher UI
   thread so setup does not block rendering or cancellation.
 - Document end-user dependencies for a smaller package without automatic
   dependency downloads.
+- Publish a framework-dependent single-file launcher, compressed first-run
+  inputs, and separate optional hosting/dependency-source assets.
+- Add elapsed time and approximate stage ETAs; use sequential ISO reads and
+  buffered writes without a forced disk flush after every extracted file.
 - Withdraw the oversized v1.0.1 download while replacement packaging is prepared.
 
 ## v1.0.1 prerelease — 2026-10-20

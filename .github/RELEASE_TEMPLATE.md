@@ -1,41 +1,38 @@
-# RE: Outbreak v1.0.1 prerelease
+# RE: Outbreak v1.0.2 prerelease
 
-Experimental Windows x64 preview for **Resident Evil Outbreak NTSC-U v2.00
-(SLUS-20765)**. File #2 and native Linux gameplay are not supported release
-targets yet.
+Smaller Windows x64 launcher package. The oversized v1.0.1 bundle is withdrawn.
 
-**Build-only preview:** all 2,381 portable compilation units and linking
-completed successfully. The sealed package's first-run launcher flow and
-gameplay were not rerun. This is an experimental preview, not a stability claim.
+## Install
 
-## Setup
+1. Install **.NET 8 Desktop Runtime (x64)** and your GPU vendor's Vulkan driver.
+2. Install/extract the exact **LLVM/MinGW UCRT 20251216 x86-64** toolchain and set
+   **REO_LLVM_MINGW** to its folder. See REQUIREMENTS.md in the ZIP or repository.
+3. Download **RE-Outbreak-v1.0.2-Windows-x64.zip**, extract, and run Outbreak.Launcher.exe.
+4. Select your own **NTSC-U v2.00 ISO (SLUS-20765)**. The first local compilation
+   is substantial; elapsed time and an approximate current-stage ETA are shown.
+   Later launches reuse the completed cache. Keep the ISO available.
 
-1. Download the Windows x64 ZIP and extract the entire folder.
-2. Open `Outbreak.Launcher.exe` and select your own ISO in **Game files**.
-3. Allow the one-time local generation and compilation to finish. Progress is
-   shown in the launcher; later launches reuse the cache.
-4. Keep the ISO available for later launches. No BIOS, ISO mounting, Windows
-   installer or system compiler installation is required.
+The launcher does not download or install system dependencies. No BIOS is needed.
 
-Use a Vulkan-capable GPU driver. Do not download a source-code archive expecting
-a ready-to-run launcher. The ZIP has a separate SHA-256 checksum asset.
+## Other downloads
 
-## Included
+- **Server.zip**: optional, only for hosting. Extract beside the launcher to get
+  the network-server folder. Joining another host does not require it.
+- **Dependency-Sources.zip**: corresponding dependency sources for developers and
+  redistribution; ordinary players do not need this asset.
+- SHA-256 checksum files accompany the ZIPs.
 
-- Portable launcher and independent local-build tools; no game executable or
-  game assets are distributed.
-- Display, filtering and antialiasing controls, controller configuration,
-  memory-card selection, supported cheats, logs and package updates.
-- Experimental native networking with launcher server hosting and account setup.
-- Corresponding project/dependency sources and licence notices.
+## Changes
 
-## Known limitations
+- Framework-dependent single-file launcher: no bundled .NET runtime or language folders.
+- No compiler installation inside the application. Required build inputs remain
+  compressed until first setup and are extracted into Local AppData.
+- Setup verification runs off the UI thread. Sequential ISO reads and buffered
+  writes remove per-file forced disk flushes.
+- Elapsed time, approximate stage ETA, and cancellable setup progress.
 
-Rendering, performance and movie/audio synchronization remain experimental.
-Networking is still under development; reconnects, transitions and Internet
-hosting are not established as fully supported. Room creation remains in-game.
-Each player must provide their own supported ISO. There is no built-in VPN.
-
-User settings, imported game data, generated code, saves and local caches remain
-outside the portable installation. Report issues with the version, GPU/driver
-and relevant redacted launcher logs; do not upload game files or credentials.
+Experimental: the reference game build compiled all 2,381 units successfully;
+this revised external-toolchain setup has not had a full game rebuild or gameplay
+rerun. Rendering, performance, audio and networking still have limitations.
+File #2 and native Linux are not release targets yet. No game executable or
+assets are included; game code is generated locally from the user's ISO.

@@ -194,7 +194,7 @@
        <TextBox x:Name="IsoPath" IsReadOnly="True" Margin="0,8,0,8"/>
        <WrapPanel><Button x:Name="ChooseIsoButton" Content="Choose ISO" Tag="iso" Click="BrowseFile" Margin="0,0,10,0"/><Button x:Name="ImportDiscButton" Content="Import" Click="ImportDisc"/></WrapPanel>
        <TextBlock x:Name="ImportState" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,18,0,10"/>
-       <StackPanel x:Name="ImportActivity" Visibility="Collapsed"><ProgressBar x:Name="DiscProgress" Minimum="0" Maximum="100" Height="5" Foreground="{StaticResource Accent}"/><Button Content="Cancel import" Click="CancelImport" HorizontalAlignment="Left" Margin="0,12,0,0"/></StackPanel>
+       <StackPanel x:Name="ImportActivity" Visibility="Collapsed"><ProgressBar x:Name="DiscProgress" Minimum="0" Maximum="100" Height="5" Foreground="{StaticResource Accent}"/><TextBlock x:Name="ImportTiming" Style="{StaticResource Hint}" Margin="0,8,0,0"/><Button Content="Cancel setup" Click="CancelImport" HorizontalAlignment="Left" Margin="0,12,0,0"/></StackPanel>
        <Expander x:Name="DeveloperFiles" Header="Developer options" Foreground="{StaticResource Muted}" Margin="0,30,0,0">
         <StackPanel Margin="0,16,0,0">
          <TextBlock Text="Native executable"/><TextBox x:Name="ExePath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="exe" Click="BrowseFile" HorizontalAlignment="Left"/>

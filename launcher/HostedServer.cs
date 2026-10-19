@@ -169,7 +169,8 @@ internal sealed class HostedServer : IDisposable {
             if (File.Exists(python) && File.Exists(Path.Combine(source, "run.py")))
                 return (python, source);
         }
-        throw new IOException("This development package is missing its portable server component.");
+        throw new IOException(
+            "Hosting files are not installed. Extract the optional Server.zip from this release beside the launcher. Joining another server does not require it.");
     }
     public void Dispose() {
         startup?.Cancel();
@@ -186,8 +187,10 @@ internal sealed class HostedServer : IDisposable {
             }
         }
         processes.Clear();
-        try { Task.WaitAll(pumps.ToArray(), 2000); }
-        catch (AggregateException) { }
+        try {
+            Task.WaitAll(pumps.ToArray(), 2000);
+        } catch (AggregateException) {
+        }
         pumps.Clear();
         lease?.Dispose();
         lease = null;
