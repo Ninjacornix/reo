@@ -1,37 +1,35 @@
-# Original launcher artwork
+# Launcher artwork and documentation images
 
-SPDX-License-Identifier: GPL-3.0-only
+## Official game covers (not GPL)
 
-The four edition PNGs are original procedural artwork for this launcher. The artwork uses geometric shapes and gradients. It contains no game screenshots, cover scans, official logos, extracted textures, font outlines, or external image inputs.
+The launcher uses the original North American covers of Resident Evil Outbreak
+and Resident Evil Outbreak File #2. Artwork belongs to Capcom and its respective
+rights holders. It is not covered by this project's GPL license, and its display
+does not imply endorsement. Wikimedia identifies these as non-free cover art;
+availability there does not grant a general redistribution license.
 
-Editable sources:
+Sources used by `GameArtwork.cs`:
 
-- `../tools/New-Artwork.ps1`: generates both background and poster variants.
+- File #1: https://en.wikipedia.org/wiki/File:Re_outbreak_a.jpg
+  Image: https://upload.wikimedia.org/wikipedia/en/a/ad/Re_outbreak_a.jpg
+- File #2: https://en.wikipedia.org/wiki/File:Resident_Evil_Outbreak_File_2.jpg
+  Image: https://upload.wikimedia.org/wikipedia/en/9/9c/Resident_Evil_Outbreak_File_2.jpg
 
-These sources and their generated artwork are distributed under GNU GPL version 3 only. The complete license is in `LICENSE.txt`. This asset notice does not change licenses on other repository components.
-
-The build embeds only these original PNG resources. Publisher cover art is fetched separately for local display, not embedded in the executable or included in release archives. Downloads are cached in `%LOCALAPPDATA%/OutbreakRecomp/launcher/artwork`; an unavailable network leaves the original illustrations visible. Existing cached covers work offline.
-
-## Publisher cover art (not GPL)
-
-Resident Evil Outbreak covers belong to Capcom and their respective rights holders. They are not licensed by this project's GPL grant. Their display does not imply endorsement. Do not copy the local cache into source or release archives without the necessary rights.
-
-Cover sources used by `GameArtwork.cs`:
-
-- File #1: https://en.wikipedia.org/wiki/File:Re_outbreak_a.jpg — image https://upload.wikimedia.org/wikipedia/en/a/ad/Re_outbreak_a.jpg
-- File #2: https://en.wikipedia.org/wiki/File:Resident_Evil_Outbreak_File_2.jpg — image https://upload.wikimedia.org/wikipedia/en/9/9c/Resident_Evil_Outbreak_File_2.jpg
-
-Each game's cover is used on its card and as its faded background. Image requests go directly to Wikimedia's image host; no ISO, save data, settings or telemetry are sent. Availability of these images online is not a redistribution license.
-
-The game names shown in the interface identify the supported games. They do not imply endorsement by their publisher. This provenance covers the launcher artwork, not a legal review of the game recompiler, dependencies, executable, or game data.
-
-The brightness/gamma room preview is loaded separately from the user's local launcher settings directory. It is game-derived local material, is not covered by this original-artwork grant, and is not embedded or distributed with the launcher.
-
+Downloads go directly to Wikimedia and are cached under
+`%LOCALAPPDATA%/OutbreakRecomp/launcher/artwork`. No ISO, save, account information
+or telemetry is sent. Cached covers work offline. Without available cover art,
+the UI uses a plain background and empty cover slots. Procedural replacement
+illustrations have been removed. Full cover images are not embedded in the
+executable or bundled in release archives.
 
 ## Documentation screenshots
 
-`docs/images/launcher.png` and `docs/images/launcher-coop.png` are captures of
-this project's launcher with `--screenshot --original-artwork`. They show the
-original procedural fallback artwork, not downloaded publisher covers or
-gameplay. The interface and original artwork retain this project's GPL-3.0-only
-license. Capture commands are documented in `docs/BUILDING.md`.
+`docs/images/launcher-play.png` and `docs/images/launcher-online.png` are actual
+captures of the current launcher displaying these official covers. These images
+illustrate the launcher and identify the supported games. The cover artwork
+visible in them remains the property of its rights holders and is not GPL.
+The surrounding original interface is GPL-3.0-only. Capture commands are in
+`docs/BUILDING.md`. Screenshots contain no gameplay, account credentials or saves.
+
+The brightness/gamma room preview is loaded from the user's local settings
+folder. It is game-derived material and is neither embedded nor distributed.

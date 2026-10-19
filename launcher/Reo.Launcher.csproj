@@ -15,9 +15,7 @@
     <Content Include="../NOTICE.md" Link="NOTICE.md" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../LICENSES/REO-upstream-MIT.txt" Link="LICENSES/REO-upstream-MIT.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../LICENSES/SMAA-MIT.txt" Link="LICENSES/SMAA-MIT.txt" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Assets/LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets/PROVENANCE.md" CopyToOutputDirectory="PreserveNewest" />
-    <Resource Include="Assets/*.png" />
     <Resource Include="artifacts/shaders/ColorPreview.ps" Link="Shaders/ColorPreview.ps" />
   </ItemGroup>
 </Project>

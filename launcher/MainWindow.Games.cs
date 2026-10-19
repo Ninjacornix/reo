@@ -11,8 +11,6 @@ public partial class MainWindow {
     bool backdropTransition;
     readonly Dictionary<string, BitmapImage> gameArtwork = new();
     async Task LoadArtworkAsync() {
-        if (args.Contains("--screenshot") && args.Contains("--original-artwork"))
-            return;
         await Task.WhenAll(Enumerable.Range(1, 2).Select(async edition => {
             var image = await GameArtwork.FetchAsync(edition);
             if (image == null || !IsLoaded)
@@ -31,9 +29,7 @@ public partial class MainWindow {
             return;
         bool first = backdropGame.Length == 0;
         backdropGame = settings.Game.Id;
-        string artwork =
-            backdropGame == "file2" ? "edition2-background.png" : "edition1-background.png";
-        var next = cover ?? new BitmapImage(new Uri("pack://application:,,,/Assets/" + artwork));
+        var next = cover;
         if (first || !SystemParameters.ClientAreaAnimation) {
             Backdrop.Source = next;
             return;

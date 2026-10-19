@@ -61,16 +61,17 @@ respects `.clang-format-ignore`: dependencies and generated game code retain
 their original formatting. Shader assets and hash-pinned catalogues are kept
 unchanged; Python, PowerShell, Markdown and XAML are not clang-format inputs.
 
-After building the launcher, capture its real interface without publisher art:
+After building the launcher, capture its real interface with the same cover art used during normal launch:
 
 ```powershell
-& ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --screenshot "$PWD/docs/images/launcher.png" --original-artwork
+& ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --screenshot "$PWD/docs/images/launcher-play.png" --public-preview
 ```
 
 Add `--page Coop` to capture the Co-op page. Screenshot mode closes its own
-window after capture and does not start a game. `--original-artwork` also hides
-the local save path in the capture. Keep game previews, local paths,
-credentials and downloaded cover art out of published documentation images.
+window after capture and does not start a game. Screenshot mode waits for cover
+loading and hides the local save path. `--public-preview` also clears visible
+account/server fields without saving those changes. Attribute any publisher
+artwork shown in published captures; keep credentials and gameplay captures out.
 
 ### Updater-compatible Windows releases
 

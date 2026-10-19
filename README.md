@@ -4,12 +4,13 @@ An experimental native Windows port of Resident Evil Outbreak, built with static
 
 **Developer preview** · [Changelog](CHANGELOG.md)
 
-This is an unofficial fan project. You must provide your own legally obtained game data. Game files, generated game code and proprietary artwork are not included.
+This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
-![RE: Outbreak launcher](docs/images/launcher.png)
+![RE: Outbreak launcher](docs/images/launcher-play.png)
 
-The screenshot uses the launcher's original fallback artwork. Publisher covers
-are downloaded separately for local use and are not included in the repository.
+The screenshot shows the current launcher with official game covers. Cover art
+belongs to Capcom and is not covered by this project's GPL license; see
+[artwork sources and attribution](launcher/Assets/PROVENANCE.md).
 
 ## Status
 

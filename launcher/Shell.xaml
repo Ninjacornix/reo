@@ -3,7 +3,7 @@
   <Grid.ColumnDefinitions><ColumnDefinition Width="210"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
   <Grid Grid.Column="1" IsHitTestVisible="False" ClipToBounds="True">
    <Grid x:Name="ArtworkLayer" Opacity="0.46">
-    <Image x:Name="Backdrop" Source="Assets/edition1-background.png" Stretch="UniformToFill" HorizontalAlignment="Right" Width="610"/>
+    <Image x:Name="Backdrop" Stretch="UniformToFill" HorizontalAlignment="Right" Width="610"/>
     <Image x:Name="OutgoingBackdrop" Stretch="UniformToFill" HorizontalAlignment="Right" Width="610" Opacity="0"/>
    </Grid>
    <Rectangle><Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#FF121415" Offset="0"/><GradientStop Color="#F4121415" Offset="0.30"/><GradientStop Color="#60121415" Offset="1"/></LinearGradientBrush></Rectangle.Fill></Rectangle>
@@ -40,7 +40,7 @@
         <Border x:Name="GameCard1" Grid.Column="0" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
          <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
-           <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster1" Source="Assets/edition1-poster.png" Width="86" Height="128" Stretch="UniformToFill"/></Border>
+           <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster1" Width="86" Height="128" Stretch="UniformToFill"/></Border>
            <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #1" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/></StackPanel>
           </Grid>
           <TextBlock x:Name="GameStatus1" Grid.Row="1" Style="{StaticResource Hint}" MinHeight="20" Margin="0,18,0,16"/>
@@ -50,7 +50,7 @@
         <Border x:Name="GameCard2" Grid.Column="2" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
          <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
-           <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster2" Source="Assets/edition2-poster.png" Width="86" Height="128" Stretch="UniformToFill"/></Border>
+           <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster2" Width="86" Height="128" Stretch="UniformToFill"/></Border>
            <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #2" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/></StackPanel>
           </Grid>
           <TextBlock x:Name="GameStatus2" Grid.Row="1" Style="{StaticResource Hint}" MinHeight="20" Margin="0,18,0,16"/>

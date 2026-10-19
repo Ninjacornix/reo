@@ -332,9 +332,19 @@ public partial class MainWindow : Window {
                 ShowBindings(this, new());
             if (args.Contains("--preview-sticks"))
                 ShowInputLayout(this, new());
+            // Capture the same artwork used by the live launcher, without private paths.
+            await LoadArtworkAsync();
             await Task.Delay(1500);
-            if (args.Contains("--original-artwork"))
-                ReadySavePath.Visibility = Visibility.Collapsed;
+            ReadySavePath.Visibility = Visibility.Collapsed;
+            if (args.Contains("--public-preview")) {
+                initialized = false;
+                CoopHost.Text = "";
+                AccountUsername.Text = "";
+                OnlineLaunch.IsChecked = false;
+                PlayNetworkSummary.Text = "Offline";
+                LaunchButton.Content = "Play";
+                initialized = true;
+            }
             if (args.Contains("--preview-color")) {
                 initialized = false;
                 if (args.Contains("--preview-bright")) {

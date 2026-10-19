@@ -1,6 +1,6 @@
 # Launcher
 
-![RE: Outbreak launcher](../docs/images/launcher.png)
+![RE: Outbreak launcher](../docs/images/launcher-play.png)
 
 The Windows package includes the prebuilt game, controller adapter, shaders and
 .NET runtime. Open `Outbreak.Launcher.exe`, select **Game files**, and choose your
@@ -50,7 +50,7 @@ Check for updates uses [GitHub Releases](https://github.com/Ninjacornix/reo/rele
 
 ## Online settings
 
-![Launcher Co-op settings](../docs/images/launcher-coop.png)
+![Launcher Co-op settings](../docs/images/launcher-online.png)
 
 Online launch is off by default. In **Co-op**, enter the compatible openSNAP server's numeric IPv4 address and your existing account username, then enable **Launch in online mode**. The global play button changes to **Play online**. Invalid settings prevent an online launch; incomplete online fields do not affect offline play. Settings apply to the next launch and are disabled while the launcher owns a running game.
 
@@ -94,9 +94,9 @@ The selected ISO is imported once without mounting. The original ISO stays avail
 
 ## Artwork and validation
 
-Game cards and faded backgrounds use publisher cover art, downloaded once from Wikimedia and cached under `%LOCALAPPDATA%/OutbreakRecomp/launcher/artwork`. Cached images work offline; download failures leave the original procedural illustrations visible. Switching games crossfades the background and respects Windows reduced-motion settings. Downloads run in the background without delaying startup or game launch.
+Game cards and faded backgrounds use publisher cover art, downloaded once from Wikimedia and cached under `%LOCALAPPDATA%/OutbreakRecomp/launcher/artwork`. Cached images work offline; when artwork is unavailable, the interface keeps a plain background and empty cover slots. Switching games crossfades the background and respects Windows reduced-motion settings. Downloads run in the background without delaying startup or game launch.
 
-Publisher covers remain the property of their rights holders and are excluded from source and release archives. The embedded fallback illustrations are original GPL-3.0-only graphics, regenerated with `tools/New-Artwork.ps1`. See [asset provenance and image sources](Assets/PROVENANCE.md).
+Publisher covers remain the property of their rights holders. Full cover downloads stay in the local cache and are not embedded in executable or release resources. Documentation screenshots show the launcher with these covers; the artwork within those screenshots is not GPL. See [asset provenance and image sources](Assets/PROVENANCE.md).
 
 ```powershell
 & ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --self-test
