@@ -1,0 +1,74 @@
+#version 450
+// Bounded variable-count strip. All unused native slots are GPU-initialized to degenerate triangles. No host geometry, clipping, per-mesh readback or GIF parsing.
+layout(local_size_x=1) in;
+struct ProjectedVertex { vec4 posed; vec4 screen; vec4 clip; vec4 normal; uvec4 xyz; uvec4 stq; uvec4 rgba; uvec4 metadata; };
+layout(set=0,binding=0,std430) readonly buffer Vertices { ProjectedVertex v[]; };
+layout(set=0,binding=1,std430) readonly buffer History { uvec4 h[]; };
+layout(set=0,binding=2,std430) readonly buffer Parameters { uvec4 limits; ivec4 offsetScissorLo; ivec4 scissorHi; uint material[6]; } p;
+layout(set=0,binding=3,std430) writeonly buffer Positions { uint positions[]; };
+layout(set=0,binding=4,std430) writeonly buffer Attributes { uint attributes[]; };
+layout(set=0,binding=5,std430) writeonly buffer Primitives { uint primitives[]; };
+layout(set=0,binding=6,std430) buffer Diagnostics { uint diagnostics[]; };
+layout(set=0,binding=7,std430) readonly buffer JobCompletion {uint completion[];};
+layout(set=0,binding=8,std430) buffer GlobalCompletion {uint globalCompletion[];};
+uint pack16(int lo,int hi) { return (uint(lo)&65535u)|((uint(hi)&65535u)<<16); }
+void main() {
+    uvec4 st[3],rgba[3],xyz[3];
+    uint count=0u,emitted=0u,adcSkipped=0u,bbSkipped=0u,status=0u;
+    if(p.limits.x==0u || p.limits.x>256u || p.limits.z<p.limits.x || p.limits.z>256u) { diagnostics[0]=1u;return; }
+    // No CPU primitive-count readback: dispatch capacity includes initialized
+    // dead triangles. Pinned triangle_setup rejects equal positions with empty BB.
+    for(uint slot=0u;slot<p.limits.z;++slot) {
+        for(uint j=0u;j<12u;++j) positions[slot*12u+j]=0u;
+        for(uint j=0u;j<18u;++j) attributes[slot*18u+j]=0u;
+        primitives[slot*8u]=0u;primitives[slot*8u+1u]=0xffffffffu;
+        for(uint j=0u;j<6u;++j) primitives[slot*8u+2u+j]=p.material[j];
+    }
+    // Actual output count and verified event kind stay on the GPU. p.limits.x
+    // is a capacity bound, never a CPU-read count from a clipped output tag.
+    uint liveCount=completion[2],effectError=diagnostics[0],effectKind=diagnostics[1];
+    // Dead capacity is initialized before examining per-job completion.
+    // Failed/control-only jobs cannot consume stale vertex/history bytes.
+    if(completion[0]!=0u || completion[8]!=0u || globalCompletion[8]!=0u ||
+       effectError!=0u || effectKind!=1u || liveCount>p.limits.x || liveCount>p.limits.z ||
+       completion[5]==0u || (completion[7]!=0u&&completion[7]!=4u)) {
+        diagnostics[0]=8u;diagnostics[1]=0u;diagnostics[2]=0u;diagnostics[3]=0u;return;
+    }
+    for(uint record=0u;record<liveCount+2u;++record) {
+        uvec4 s,r,x;
+        if(record<2u) { s=h[record*3u];r=h[record*3u+1u];x=h[record*3u+2u]; }
+        else { uint i=record-2u;s=v[i].stq;r=v[i].rgba;x=v[i].xyz;if(v[i].metadata.x!=0u) status|=2u; }
+        if(count==3u) { st[0]=st[1];st[1]=st[2];rgba[0]=rgba[1];rgba[1]=rgba[2];xyz[0]=xyz[1];xyz[1]=xyz[2];count=2u; }
+        st[count]=s;rgba[count]=r;xyz[count]=x;++count;
+        if(count<3u) continue;
+        if((x.w&0x8000u)!=0u) { ++adcSkipped;continue; }
+        ivec2 pp[3];
+        for(uint j=0u;j<3u;++j) pp[j]=ivec2(xyz[2u-j].xy&uvec2(65535u))-p.offsetScissorLo.xy;
+        ivec2 lo=min(min(pp[0],pp[1]),pp[2]),hi=max(max(pp[0],pp[1]),pp[2]);
+        hi=(hi-ivec2(1))>>4;lo=(lo+ivec2(15))>>4;
+        lo=max(lo,p.offsetScissorLo.zw);hi=min(hi,p.scissorHi.xy);
+        if(hi.x<lo.x || hi.y<lo.y) { ++bbSkipped;continue; }
+        if(emitted>=p.limits.z) { status|=4u;continue; }
+        for(uint j=0u;j<3u;++j) {
+            uint q=2u-j,b=(emitted*3u+j)*4u,a=(emitted*3u+j)*6u;
+            positions[b]=uint(pp[j].x);positions[b+1u]=uint(pp[j].y);positions[b+2u]=(xyz[q].z>>4u)&0xffffffu;positions[b+3u]=0u;
+            attributes[a]=st[q].x;attributes[a+1u]=st[q].y;attributes[a+2u]=st[q].z;
+            attributes[a+3u]=(rgba[q].x&255u)|((rgba[q].y&255u)<<8u)|((rgba[q].z&255u)<<16u)|((rgba[q].w&255u)<<24u);
+            attributes[a+4u]=floatBitsToUint(float((xyz[q].w>>4u)&255u));attributes[a+5u]=0u;
+        }
+        uint b=emitted*8u;primitives[b]=pack16(lo.x,lo.y);primitives[b+1u]=pack16(hi.x,hi.y);
+        for(uint j=0u;j<6u;++j) primitives[b+2u+j]=p.material[j];
+        ++emitted;
+    }
+    // p.limits.y is reserved. Emitted count stays resident in diagnostics.
+    // Normal consumer draws bounded initialized capacity, not a CPU-read count.
+    if(status!=0u) {
+        // An expansion error also becomes sticky for subsequent jobs.
+        globalCompletion[8]=11u;emitted=0u;
+        for(uint slot=0u;slot<p.limits.z;++slot) {
+            for(uint j=0u;j<12u;++j) positions[slot*12u+j]=0u;
+            primitives[slot*8u]=0u;primitives[slot*8u+1u]=0xffffffffu;
+        }
+    }
+    diagnostics[0]=status;diagnostics[1]=emitted;diagnostics[2]=adcSkipped;diagnostics[3]=bbSkipped;
+}

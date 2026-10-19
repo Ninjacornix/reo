@@ -1,0 +1,104 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -19,6 +19,64 @@
+ {
+     std::atomic<uint32_t> s_debugVu1XgkickCount{0};
+     std::atomic<uint32_t> s_debugVu1RunCount{0};
++
++    // Opt-in timing of a complete synchronous call, without instruction logging.
++    struct VuRunTiming
++    {
++        using Clock = std::chrono::steady_clock;
++        struct Config { bool enabled=false; double after=0, until=0; uint32_t limit=64; int64_t minUs=10000; };
++        static const Config& config()
++        {
++            static const Config value=[] {
++                Config c;
++                const char* at=std::getenv("REO_VU1_TIMING_AT");
++                if(!at || !*at) return c;
++                const char* dump=std::getenv("REO_VU1_DUMP");
++                if(dump && *dump) return c; // Keep file-capture overhead out of this measurement.
++                c.enabled=true;c.after=std::max(0.0,std::atof(at));
++                if(const char* v=std::getenv("REO_VU1_TIMING_UNTIL")) c.until=std::max(0.0,std::atof(v));
++                if(const char* v=std::getenv("REO_VU1_TIMING_LIMIT")) c.limit=std::min(512ul,std::strtoul(v,nullptr,10));
++                if(const char* v=std::getenv("REO_VU1_TIMING_MIN_US")) c.minUs=std::max<int64_t>(0,std::strtoll(v,nullptr,10));
++                return c;
++            }();
++            return value;
++        }
++        static std::atomic<uint32_t>& records() { static std::atomic<uint32_t> count{0};return count; }
++        Clock::time_point started{};
++        double elapsed=0;
++        uint32_t startPC=0,startKicks=0;
++        bool active=false;
++        explicit VuRunTiming(uint32_t pc)
++        {
++            const auto& c=config();
++            if(!c.enabled || !c.limit || records().load(std::memory_order_relaxed)>=c.limit) return;
++            static const auto epoch=[] {
++                const auto value=Clock::now();
++                const auto ns=std::chrono::duration_cast<std::chrono::nanoseconds>(value.time_since_epoch()).count();
++                const auto& settings=config();
++                std::fprintf(stderr,"[VU1-TIMING-CONFIG] epoch_ns=%lld after=%.6f until=%.6f limit=%u min_us=%lld\n",
++                    static_cast<long long>(ns),settings.after,settings.until,settings.limit,static_cast<long long>(settings.minUs));
++                return value;
++            }();
++            started=Clock::now();elapsed=std::chrono::duration<double>(started-epoch).count();
++            if(elapsed<c.after || (c.until>0 && elapsed>c.until)) return;
++            active=true;startPC=pc;startKicks=s_debugVu1XgkickCount.load(std::memory_order_relaxed);
++        }
++        void finish(uint32_t cycles,uint32_t maxCycles,const VU1State& state,bool ended,bool bounds) const
++        {
++            if(!active) return;
++            const auto& c=config();
++            const auto us=std::chrono::duration_cast<std::chrono::microseconds>(Clock::now()-started).count();
++            const bool exhausted=!ended && !bounds && cycles==maxCycles;
++            if(us<c.minUs && !(exhausted && maxCycles>=65536u)) return;
++            const uint32_t index=records().fetch_add(1,std::memory_order_relaxed);
++            if(index>=c.limit) return;
++            const uint32_t kicks=s_debugVu1XgkickCount.load(std::memory_order_relaxed)-startKicks;
++            std::fprintf(stderr,"[VU1-TIMING] n=%u elapsed=%.6f wall_us=%lld cycles=%u max_cycles=%u start_pc=%04x end_pc=%04x ended=%u ebit=%u exhausted=%u stop=%s xgkick=%u\n",
++                index,elapsed,static_cast<long long>(us),cycles,maxCycles,startPC,state.pc,unsigned(ended),unsigned(state.ebit),unsigned(exhausted),
++                ended?"e_delay":bounds?"code_bounds":"max_cycles",kicks);
++        }
++    };
+ 
+     // Opt-in original-input capture. Files are bounded independently of a corrupt
+     // interpreter's computed GIF length, and are never submitted to the GS.
+@@ -212,13 +270,19 @@
+                          uint8_t *vuData, uint32_t dataSize,
+                          GS &gs, PS2Memory *memory, uint32_t maxCycles)
+ {
++    VuRunTiming timing(m_state.pc);
+     VuCapture capture(vuCode, codeSize, vuData, dataSize, m_state, memory, maxCycles);
+     bool branchPending = false;
+     uint32_t branchTarget = 0;
+-    for (uint32_t cycle = 0; cycle < maxCycles; ++cycle)
++    bool ended=false,bounds=false;
++    uint32_t cycle=0;
++    for (; cycle < maxCycles; ++cycle)
+     {
+         if (m_state.pc + 8 > codeSize)
++        {
++            bounds=true;
+             break;
++        }
+ 
+         uint32_t lower, upper;
+         std::memcpy(&lower, vuCode + m_state.pc, 4);
+@@ -260,12 +324,14 @@
+         {
+             // A branch in the final E delay pair leaves its target as resume PC.
+             if (branchPending) m_state.pc = branchTarget;
++            ended=true;
+             break;
+         }
+ 
+         if (eBit)
+             m_state.ebit = true;
+     }
++    timing.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds);
+ }
+ 
+ // ============================================================================

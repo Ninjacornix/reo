@@ -50,8 +50,10 @@ bool NetbioReader::open(const char* path) {
             name[32] = '\0';
             // Trim
             for (int j = 31; j >= 0; j--) {
-                if (name[j] == '\0' || name[j] == ' ') name[j] = '\0';
-                else break;
+                if (name[j] == '\0' || name[j] == ' ')
+                    name[j] = '\0';
+                else
+                    break;
             }
             if (strlen(name) > 0) {
                 strncpy(m_entries[i].name, name, 32);
@@ -74,7 +76,8 @@ void NetbioReader::close() {
 }
 
 uint32_t NetbioReader::read_file(int index, void* buffer, uint32_t max_size) {
-    if (!m_file || index < 0 || index >= (int)m_entries.size()) return 0;
+    if (!m_file || index < 0 || index >= (int)m_entries.size())
+        return 0;
 
     const auto& e = m_entries[index];
     uint32_t read_size = std::min(e.size, max_size);
@@ -83,8 +86,9 @@ uint32_t NetbioReader::read_file(int index, void* buffer, uint32_t max_size) {
 }
 
 uint32_t NetbioReader::read_file_to_ram(int index, uint8_t* rdram, uint32_t dest_addr,
-                                         uint32_t ram_size) {
-    if (!m_file || index < 0 || index >= (int)m_entries.size()) return 0;
+                                        uint32_t ram_size) {
+    if (!m_file || index < 0 || index >= (int)m_entries.size())
+        return 0;
 
     const auto& e = m_entries[index];
     uint32_t phys = dest_addr & 0x1FFFFFF;
@@ -94,20 +98,21 @@ uint32_t NetbioReader::read_file_to_ram(int index, uint8_t* rdram, uint32_t dest
     fseek(m_file, m_base_offset + e.offset, SEEK_SET);
     uint32_t actual = (uint32_t)fread(rdram + phys, 1, read_size, m_file);
 
-    printf("[NETBIO] Loaded [%d] '%s' (%u bytes) → 0x%08X\n",
-           index, e.name, actual, dest_addr);
+    printf("[NETBIO] Loaded [%d] '%s' (%u bytes) → 0x%08X\n", index, e.name, actual, dest_addr);
     return actual;
 }
 
 int NetbioReader::find_file(const char* name) const {
     for (int i = 0; i < (int)m_entries.size(); i++) {
-        if (_stricmp(m_entries[i].name, name) == 0) return i;
+        if (_stricmp(m_entries[i].name, name) == 0)
+            return i;
     }
     return -1;
 }
 
 int NetbioReader::parse_inner_afs(int netbio_index, std::vector<NetbioEntry>& inner_entries) {
-    if (!m_file || netbio_index < 0 || netbio_index >= (int)m_entries.size()) return 0;
+    if (!m_file || netbio_index < 0 || netbio_index >= (int)m_entries.size())
+        return 0;
 
     const auto& outer = m_entries[netbio_index];
     uint32_t base = m_base_offset + outer.offset;
@@ -116,11 +121,13 @@ int NetbioReader::parse_inner_afs(int netbio_index, std::vector<NetbioEntry>& in
     fseek(m_file, base, SEEK_SET);
     char sig[4];
     fread(sig, 1, 4, m_file);
-    if (sig[0] != 'A' || sig[1] != 'F' || sig[2] != 'S') return 0;
+    if (sig[0] != 'A' || sig[1] != 'F' || sig[2] != 'S')
+        return 0;
 
     uint32_t count;
     fread(&count, 4, 1, m_file);
-    if (count > 65536) return 0;
+    if (count > 65536)
+        return 0;
 
     inner_entries.resize(count);
     for (uint32_t i = 0; i < count; i++) {
@@ -142,8 +149,10 @@ int NetbioReader::parse_inner_afs(int netbio_index, std::vector<NetbioEntry>& in
             fread(name, 1, 32, m_file);
             name[32] = '\0';
             for (int j = 31; j >= 0; j--) {
-                if (name[j] == '\0' || name[j] == ' ') name[j] = '\0';
-                else break;
+                if (name[j] == '\0' || name[j] == ' ')
+                    name[j] = '\0';
+                else
+                    break;
             }
             if (strlen(name) > 0) {
                 strncpy(inner_entries[i].name, name, 32);

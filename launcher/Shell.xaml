@@ -2,7 +2,7 @@
  <Grid>
   <Grid.ColumnDefinitions><ColumnDefinition Width="210"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
   <Grid Grid.Column="1" IsHitTestVisible="False" ClipToBounds="True">
-   <Grid x:Name="ArtworkLayer" Opacity="0.26">
+   <Grid x:Name="ArtworkLayer" Opacity="0.46">
     <Image x:Name="Backdrop" Source="Assets/edition1-background.png" Stretch="UniformToFill" HorizontalAlignment="Right" Width="610"/>
     <Image x:Name="OutgoingBackdrop" Stretch="UniformToFill" HorizontalAlignment="Right" Width="610" Opacity="0"/>
    </Grid>
@@ -17,13 +17,16 @@
      <Button x:Name="NavGraphics" Tag="Graphics" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Graphics" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavController" Tag="Controller" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Controls" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSaves" Tag="Saves" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Save games" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
-     <Button x:Name="NavCoop" Tag="Coop" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="P2P co-op" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
+     <Button x:Name="NavCoop" Tag="Coop" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Co-op" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavMods" Tag="Mods" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Mods" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavCheats" Tag="Cheats" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Cheats" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSetup" Tag="Setup" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Game files" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavLogs" Tag="Logs" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Log" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
     </StackPanel>
-    <StackPanel Grid.Row="2"><TextBlock x:Name="PadBadge" Text="Checking input" Style="{StaticResource Hint}" Margin="12,0,0,14"/><Button Content="Check for updates" Click="CheckForUpdates" ToolTip="Open GitHub Releases" FontSize="13" HorizontalContentAlignment="Left"/></StackPanel>
+    <StackPanel Grid.Row="2"><TextBlock x:Name="PadBadge" Text="Checking input" Style="{StaticResource Hint}" Margin="12,0,0,14"/><Button x:Name="UpdateButton" Content="Check for updates" Click="CheckForUpdates" ToolTip="Check GitHub Releases and install a newer Windows package" FontSize="13" HorizontalContentAlignment="Left"/>
+     <TextBlock x:Name="UpdateState" Style="{StaticResource Hint}" FontSize="11" TextWrapping="Wrap" Margin="10,8,0,0"/>
+     <ProgressBar x:Name="UpdateProgress" Visibility="Collapsed" Height="4" Minimum="0" Maximum="100" Margin="10,8,0,0" Foreground="{StaticResource Accent}"/>
+     <Button x:Name="UpdateCancel" Content="Cancel download" Click="CancelUpdate" Visibility="Collapsed" FontSize="12" Margin="0,8,0,0"/></StackPanel>
    </Grid>
   </Border>
   <Grid Grid.Column="1" Margin="34,29,34,24">
@@ -37,7 +40,7 @@
         <Border x:Name="GameCard1" Grid.Column="0" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
          <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
-           <Border CornerRadius="3" ClipToBounds="True"><Image Source="Assets/edition1-poster.png" Width="86" Height="128" Stretch="UniformToFill"/></Border>
+           <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster1" Source="Assets/edition1-poster.png" Width="86" Height="128" Stretch="UniformToFill"/></Border>
            <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #1" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/></StackPanel>
           </Grid>
           <TextBlock x:Name="GameStatus1" Grid.Row="1" Style="{StaticResource Hint}" MinHeight="20" Margin="0,18,0,16"/>
@@ -47,7 +50,7 @@
         <Border x:Name="GameCard2" Grid.Column="2" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
          <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
-           <Border CornerRadius="3" ClipToBounds="True"><Image Source="Assets/edition2-poster.png" Width="86" Height="128" Stretch="UniformToFill"/></Border>
+           <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster2" Source="Assets/edition2-poster.png" Width="86" Height="128" Stretch="UniformToFill"/></Border>
            <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #2" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/></StackPanel>
           </Grid>
           <TextBlock x:Name="GameStatus2" Grid.Row="1" Style="{StaticResource Hint}" MinHeight="20" Margin="0,18,0,16"/>
@@ -70,19 +73,42 @@
        <StackPanel Margin="0,0,0,14">
         <StackPanel><TextBlock Text="Display" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayDisplaySummary" Margin="0,6,0,0"/></StackPanel>
         <StackPanel Margin="0,15,0,0"><TextBlock Text="Input device" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayInputSummary" Margin="0,6,0,0"/></StackPanel>
+        <StackPanel Margin="0,15,0,0"><TextBlock Text="Play mode" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayNetworkSummary" Margin="0,6,0,0"/></StackPanel>
        </StackPanel>
-       <CheckBox Content="Skip intros" IsEnabled="False" ToolTip="Intro skipping is not available in the current game build."/>
-       <TextBlock Text="Intro skipping is not available in this build." Style="{StaticResource Hint}" Margin="30,0,0,8"/>
+       <CheckBox x:Name="SkipIntros" Content="Skip intros" Click="SaveSettings"/>
+       <TextBlock Text="Stop at the title video and PRESS START." Style="{StaticResource Hint}" Margin="30,0,0,8"/>
         </StackPanel>
        </Grid>
        <TextBlock x:Name="SessionSummary" Visibility="Collapsed"/>
       </StackPanel>
       <StackPanel x:Name="PageGraphics" Visibility="Collapsed">
        <TextBlock Text="Display" Style="{StaticResource Section}"/>
-       <Grid Margin="0,4,0,16"><TextBlock Text="Window size" VerticalAlignment="Center"/><ComboBox x:Name="WindowSize" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="1024 x 768"/><ComboBoxItem Content="1280 x 960"/><ComboBoxItem Content="1600 x 1200"/></ComboBox></Grid>
-       <CheckBox x:Name="Fullscreen" Content="Borderless fullscreen" Click="SaveSettings"/>
-
-       <Grid Margin="0,24,0,16"><TextBlock Text="Image filtering" VerticalAlignment="Center"/><ComboBox x:Name="Filter" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Bilinear"/><ComboBoxItem Content="Nearest"/></ComboBox></Grid>
+       <CheckBox x:Name="Fullscreen" Content="Borderless fullscreen" Click="SaveSettings" ToolTip="Ctrl+Enter toggles fullscreen in game. Alt+F4 closes the game."/>
+       <Grid Margin="0,14,0,16"><TextBlock Text="Window resolution" VerticalAlignment="Center"/><ComboBox x:Name="WindowSize" HorizontalAlignment="Right" DisplayMemberPath="Name" SelectionChanged="SettingChanged"/></Grid>
+       <TextBlock Text="Fullscreen uses the monitor's desktop resolution." Style="{StaticResource Hint}" Margin="0,0,0,18"/>
+       <Grid Margin="0,4,0,16"><TextBlock Text="Aspect ratio" VerticalAlignment="Center"/><ComboBox x:Name="AspectRatio" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="4:3 (original)"/><ComboBoxItem Content="16:9"/></ComboBox></Grid>
+       <Grid Margin="0,4,0,16"><TextBlock Text="Screen fit" VerticalAlignment="Center"/><ComboBox x:Name="ScreenFit" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Fit (centered)"/><ComboBoxItem Content="Native size (centered)"/><ComboBoxItem Content="Stretch to window"/><ComboBoxItem Content="Fill (crop edges)"/></ComboBox></Grid>
+       <TextBlock x:Name="ScreenFitHint" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,18"/>
+       <Grid Margin="0,4,0,16"><TextBlock Text="Image scaling" VerticalAlignment="Center"/><ComboBox x:Name="Filter" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Bilinear"/><ComboBoxItem Content="Nearest"/></ComboBox></Grid>
+       <Grid Margin="0,4,0,16"><TextBlock Text="Texture filtering (3D)" VerticalAlignment="Center"/><ComboBox x:Name="TextureFilter" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Original"/><ComboBoxItem Content="Bilinear"/></ComboBox></Grid>
+       <Grid Margin="0,4,0,16"><TextBlock Text="Anisotropic filtering" VerticalAlignment="Center"/><ComboBox x:Name="AnisotropicFilter" HorizontalAlignment="Right" SelectionChanged="SettingChanged" ToolTip="Improves 3D textures viewed at an angle. Includes bilinear filtering; higher levels cost more GPU time."><ComboBoxItem Content="Off"/><ComboBoxItem Content="2×"/><ComboBoxItem Content="4×"/><ComboBoxItem Content="8×"/><ComboBoxItem Content="16×"/></ComboBox></Grid>
+       <Grid Margin="0,4,0,16"><TextBlock Text="Anti-aliasing" VerticalAlignment="Center"/><ComboBox x:Name="AntiAlias" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Off"/><ComboBoxItem Content="FXAA"/><ComboBoxItem Content="SMAA"/></ComboBox></Grid>
+       <TextBlock Text="FXAA and SMAA smooth edges on the GPU. They do not increase texture detail." Style="{StaticResource Hint}" Margin="0,0,0,12"/>
+       <Grid Margin="0,22,0,12"><TextBlock Text="Brightness and gamma" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/><Button Content="Reset" Click="ResetColor" HorizontalAlignment="Right" Padding="14,6"/></Grid>
+       <Border Background="#080A0A" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" ClipToBounds="True" Margin="0,0,0,18">
+        <Grid Height="320"><Image x:Name="RoomPreview" Stretch="Uniform"/><TextBlock x:Name="PreviewEmpty" Text="Room preview unavailable" Style="{StaticResource Hint}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Grid>
+       </Border>
+       <Grid Margin="0,0,0,12">
+        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="28"/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <StackPanel>
+         <Grid><TextBlock Text="Brightness"/><TextBlock x:Name="BrightnessValue" Text="100%" HorizontalAlignment="Right"/></Grid>
+         <Slider x:Name="Brightness" Minimum="50" Maximum="150" Value="100" SmallChange="1" LargeChange="10" ValueChanged="ColorChanged" Margin="0,8,0,0" AutomationProperties.Name="Brightness"/>
+        </StackPanel>
+        <StackPanel Grid.Column="2">
+         <Grid><TextBlock Text="Gamma"/><TextBlock x:Name="GammaValue" Text="1.00" HorizontalAlignment="Right"/></Grid>
+         <Slider x:Name="Gamma" Minimum="0.5" Maximum="2" Value="1" SmallChange="0.01" LargeChange="0.1" ValueChanged="ColorChanged" Margin="0,8,0,0" AutomationProperties.Name="Gamma"/>
+        </StackPanel>
+       </Grid>
        <TextBlock Text="Gameplay" Style="{StaticResource Section}"/>
        <TextBlock Text="Original game timing"/><TextBlock Text="30 game updates / 60 display refreshes" Style="{StaticResource Hint}" Margin="0,6,0,14"/>
        <CheckBox x:Name="AsyncVif" Content="Parallel geometry worker" Click="SaveSettings"/>
@@ -108,23 +134,60 @@
        </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageSaves" Visibility="Collapsed">
-       <TextBlock Text="Memory cards" FontSize="20"/><TextBlock x:Name="SaveCount" Margin="0,14,0,20" Style="{StaticResource Hint}"/>
-       <WrapPanel><Button Content="Open save folder" Click="OpenSaves" Margin="0,0,10,10"/><Button x:Name="BackupButton" Content="Back up saves" Click="BackupSaves" Margin="0,0,0,10"/></WrapPanel>
-       <TextBlock Text="Save and load in the game. Close the game before backing up." Style="{StaticResource Hint}" Margin="0,12,0,0"/>
+       <TextBlock Text="Memory card - Slot 1" FontSize="20"/>
+       <StackPanel x:Name="CardControls" Margin="0,18,0,0">
+        <ComboBox x:Name="CardSelection" SelectionChanged="CardChanged"/>
+        <TextBlock x:Name="CardPath" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,18"/>
+        <TextBlock Text="New card name" Margin="0,0,0,8"/>
+        <WrapPanel><TextBox x:Name="NewCardName" Width="250" Margin="0,0,10,10" ToolTip="New memory card name"/><Button Content="Create card" Click="CreateCard" Margin="0,0,10,10"/><Button Content="Use existing folder" Click="BrowseCard" Margin="0,0,0,10"/></WrapPanel>
+       </StackPanel>
+       <TextBlock x:Name="SaveCount" Margin="0,10,0,20" Style="{StaticResource Hint}"/>
+       <WrapPanel><Button Content="Open card folder" Click="OpenSaves" Margin="0,0,10,10"/><Button x:Name="BackupButton" Content="Back up card" Click="BackupSaves" Margin="0,0,0,10"/></WrapPanel>
+       <TextBlock Text="8 MB PS2 card. Save and load from the game. Raw .ps2 images are not supported." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,12,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageCoop" Visibility="Collapsed">
-       <TextBlock Text="Not available in this build." Style="{StaticResource Hint}" Margin="0,8,0,20"/><WrapPanel><Button Content="Host game" IsEnabled="False" Margin="0,0,12,0"/><Button Content="Join game" IsEnabled="False"/></WrapPanel>
+       <TextBlock x:Name="CoopUnavailable" Text="Online play is available for File #1 only." Style="{StaticResource Hint}" Margin="0,0,0,16" Visibility="Collapsed"/>
+       <StackPanel x:Name="CoopControls" MaxWidth="460" HorizontalAlignment="Left">
+        <CheckBox x:Name="OnlineLaunch" Content="Launch in online mode" Click="OnlineSettingChanged" Margin="0,4,0,24"/>
+        <Label Content="Server IPv4 address" Target="{Binding ElementName=CoopHost}" Padding="0" Foreground="{StaticResource Ink}"/>
+        <TextBox x:Name="CoopHost" Width="400" HorizontalAlignment="Left" MaxLength="17" TextChanged="OnlineSettingChanged" Margin="0,8,0,6" AutomationProperties.Name="Server IPv4 address"/>
+        <TextBlock Text="Address of your compatible openSNAP server." Style="{StaticResource Hint}" Margin="0,0,0,22"/>
+        <Label Content="Account username" Target="{Binding ElementName=AccountUsername}" Padding="0" Foreground="{StaticResource Ink}"/>
+        <TextBox x:Name="AccountUsername" Width="400" HorizontalAlignment="Left" TextChanged="OnlineSettingChanged" Margin="0,8,0,6" AutomationProperties.Name="Account username"/>
+        <TextBlock Text="4–10 letters, numbers or underscores. Apply through Edit Account in the game." Style="{StaticResource Hint}" Margin="0,0,0,22"/>
+        <TextBlock x:Name="CoopValidation" TextWrapping="Wrap" Margin="0,0,0,18" Visibility="Collapsed"/>
+        <TextBlock Text="A running server and an existing account are required. Enter your password in the game's login screen." Style="{StaticResource Hint}" TextWrapping="Wrap"/>
+       </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageMods" Visibility="Collapsed">
        <TextBlock Text="Mod support is not available in this build." Style="{StaticResource Hint}" Margin="0,8,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageCheats" Visibility="Collapsed">
-       <TextBlock Text="Cheat support is not available in this build." Style="{StaticResource Hint}" Margin="0,8,0,0"/>
+       <TextBlock x:Name="CheatGame" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+       <TextBlock x:Name="CheatHelp" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,20"/>
+       <StackPanel x:Name="CheatControls">
+        <CheckBox x:Name="EnableCheats" Content="Enable cheats" Click="CheatToggled" Margin="0,0,0,20"/>
+        <StackPanel x:Name="CheatList"/>
+        <Expander Header="Custom cheats" Margin="0,24,0,0" Foreground="{StaticResource Muted}">
+         <StackPanel Margin="0,16,0,0">
+          <WrapPanel><Button Content="Import .pnach" Click="ImportCheats" Margin="0,0,10,0"/><Button Content="Open cheats folder" Click="OpenCheatFolder" Margin="0,0,10,0"/><Button Content="Reload" Click="ReloadCheats"/></WrapPanel>
+          <TextBlock Text="Optional PCSX2 files for NTSC-U v2.00. EE data writes and RAW 0/1/2 codes are supported." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,12,0,0"/>
+         </StackPanel>
+        </Expander>
+       </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageSetup" Visibility="Collapsed">
-       <TextBlock Text="Native executable"/><TextBox x:Name="ExePath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="exe" Click="BrowseFile" HorizontalAlignment="Left"/>
-       <TextBlock Text="Disc image (.iso)" Margin="0,23,0,0"/><TextBox x:Name="IsoPath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="iso" Click="BrowseFile" HorizontalAlignment="Left"/>
-       <TextBlock Text="Game ELF" Margin="0,23,0,0"/><TextBox x:Name="ElfPath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="elf" Click="BrowseFile" HorizontalAlignment="Left"/>
+       <TextBlock Text="Disc image (.iso)"/>
+       <TextBox x:Name="IsoPath" IsReadOnly="True" Margin="0,8,0,8"/>
+       <WrapPanel><Button x:Name="ChooseIsoButton" Content="Choose ISO" Tag="iso" Click="BrowseFile" Margin="0,0,10,0"/><Button x:Name="ImportDiscButton" Content="Import" Click="ImportDisc"/></WrapPanel>
+       <TextBlock x:Name="ImportState" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,18,0,10"/>
+       <StackPanel x:Name="ImportActivity" Visibility="Collapsed"><ProgressBar x:Name="DiscProgress" Minimum="0" Maximum="100" Height="5" Foreground="{StaticResource Accent}"/><Button Content="Cancel import" Click="CancelImport" HorizontalAlignment="Left" Margin="0,12,0,0"/></StackPanel>
+       <Expander x:Name="DeveloperFiles" Header="Developer options" Foreground="{StaticResource Muted}" Margin="0,30,0,0">
+        <StackPanel Margin="0,16,0,0">
+         <TextBlock Text="Native executable"/><TextBox x:Name="ExePath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="exe" Click="BrowseFile" HorizontalAlignment="Left"/>
+         <TextBlock Text="Reference ELF (File #2 development)" Margin="0,23,0,0"/><TextBox x:Name="ElfPath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="elf" Click="BrowseFile" HorizontalAlignment="Left"/>
+        </StackPanel>
+       </Expander>
       </StackPanel>
      </Grid>
     </ScrollViewer>

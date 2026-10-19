@@ -1,0 +1,24 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -1440,15 +1440,11 @@
+                 }
+                 else
+                 {
+-                    const float invQ0 = 1.0f / fabsQ(v0.q);
+-                    const float invQ1 = 1.0f / fabsQ(v1.q);
+-                    const float invQ2 = 1.0f / fabsQ(v2.q);
+-                    const float sOverQ = (v0.s * invQ0) * w0 + (v1.s * invQ1) * w1 + (v2.s * invQ2) * w2;
+-                    const float tOverQ = (v0.t * invQ0) * w0 + (v1.t * invQ1) * w1 + (v2.t * invQ2) * w2;
+-                    const float invQ = invQ0 * w0 + invQ1 * w1 + invQ2 * w2;
+-                    iq = (std::fabs(invQ) > 1.0e-8f) ? (1.0f / invQ) : 1.0f;
+-                    is = sOverQ * iq;
+-                    it = tOverQ * iq;
++                    // GS receives S, T and Q separately. Interpolate them in
++                    // screen space, then let sampleTexture divide S/T by Q.
++                    is = v0.s * w0 + v1.s * w1 + v2.s * w2;
++                    it = v0.t * w0 + v1.t * w1 + v2.t * w2;
++                    iq = v0.q * w0 + v1.q * w1 + v2.q * w2;
+                     iu = 0;
+                     iv = 0;
+                 }

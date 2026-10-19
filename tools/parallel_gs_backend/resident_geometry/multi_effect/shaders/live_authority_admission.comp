@@ -1,0 +1,27 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+layout(local_size_x=64) in;
+#include "live_authority_common.glsl"
+void main(){uint lane=gl_LocalInvocationIndex;
+ if(lane==0u){cert[11]=0u;uint reason=0u;
+  if(results[0]!=0u)reason|=1u;
+  if(completion[8]!=0u)reason|=2u;
+  if(cert[0]!=0u)reason|=4u;
+  if(cert[1]!=1u)reason|=8u;
+  if(cert[8]!=1u)reason|=16u;
+  if(cert[9]!=0u)reason|=32u;
+  if(tape[0]!=0u)reason|=64u;
+  if(tape[1]!=0x53543532u||tape[2]!=1u)reason|=128u;
+  if(tape[5]!=1u)reason|=256u;
+  if(tape[20]!=0u)reason|=512u;
+  if(tape[21]!=cert[4]||tape[22]!=cert[5])reason|=1024u;
+  if(cert[3]!=tape[6])reason|=2048u;
+  if(cert[6]!=0x53544331u||cert[7]!=1u)reason|=4096u;
+  if(state[384u+151u]!=tape[11])reason|=8192u;
+  if((state[384u+155u]&255u)!=1u)reason|=16384u;
+  cert[12]=reason;admitted=uint(reason==0u);}
+ barrier();
+ if(admitted!=0u){for(uint w=lane;w<158u;w+=64u)if(authorityState[w]!=state[w])refuse(88u);
+  for(uint w=lane;w<4096u;w+=64u)if(authorityData[w]!=data[w])refuse(88u);}
+ barrier();if(lane==0u){if(admitted==0u)refuse(87u);cert[11]=uint(admitted!=0u&&results[0]==0u&&completion[8]==0u);}
+}

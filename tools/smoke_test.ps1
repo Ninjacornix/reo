@@ -7,7 +7,7 @@
 # Separate entries with ';' (values may contain commas).
 # Mounts the ISO read-only, runs reo_recomp with --data <drive>:\ for a fixed time,
 # captures stdout/stderr under build\smoke\<timestamp>\, then kills the process and unmounts.
-# Exit code: 0 = still running at timeout (no crash), 1 = exited/crashed early, 2 = setup error.
+# Exit code: 0 = running at timeout and closed cleanly, 1 = early exit/crash/forced kill, 2 = setup error.
 
 param(
     [Parameter(Mandatory)][string]$Iso,
@@ -16,10 +16,14 @@ param(
     [switch]$Trace,
     [string[]]$Env = @(),
     [string]$Label = '',
-    [string]$ExePath = ''
+    [string]$ExePath = '',
+    [Alias('FastBoot')][switch]$SkipIntro,
+    [switch]$ToMainMenu,
+    [switch]$ToScenario
 )
 
 $ErrorActionPreference = 'Stop'
+if ($ToMainMenu -and $ToScenario) { throw 'Choose either -ToMainMenu or -ToScenario.' }
 $Root = Split-Path -Parent $PSScriptRoot
 $Exe  = @('build-ninja\recomp\reo_recomp.exe', 'build\recomp\Release\reo_recomp.exe') |
     ForEach-Object { Join-Path $Root $_ } | Where-Object { Test-Path $_ } | Select-Object -First 1
@@ -38,6 +42,23 @@ $envPairs = @(foreach ($kv in ($Env | ForEach-Object { $_ -split ';' } | Where-O
     if (-not $k -or $null -eq $v) { Write-Error "bad -Env entry '$kv' (want NAME=VALUE)"; exit 2 }
     ,@($k, $v)
 })
+if ($ToMainMenu -or $ToScenario) {
+    if ($env:REO_PAD_SCRIPT -or @($envPairs | Where-Object { $_[0] -in @('REO_PAD_SCRIPT', 'REO_TEST_ROUTE') }).Count) {
+        throw 'State-driven route switches cannot be combined with REO_PAD_SCRIPT or an explicit REO_TEST_ROUTE.'
+    }
+    $envPairs += ,@('REO_NATURAL', '1')
+    $envPairs += ,@('REO_TEST_ROUTE', $(if ($ToScenario) { 'scenario' } else { 'main-menu' }))
+}
+# Normal-speed startup also overrides inherited test turbo. Legacy -SkipIntro
+# remains accepted so existing callers do not fail; it no longer accelerates.
+$envPairs += ,@('REO_TURBO', '1')
+$envPairs += ,@('REO_TURBO_UNTIL', '')
+$savedEnvironment = @{}
+foreach ($key in @('REO_TRACE', 'REO_TRACE_FILE', 'REO_ISO') + @($envPairs | ForEach-Object { $_[0] })) {
+    if (-not $savedEnvironment.ContainsKey($key)) {
+        $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable($key, 'Process')
+    }
+}
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 $stdout = Join-Path $OutDir 'stdout.log'
 $stderr = Join-Path $OutDir 'stderr.log'
@@ -78,15 +99,16 @@ try {
             $proc.WaitForExit()
             $how = 'killed'
         }
-        $result = "RUNNING at timeout (${Seconds}s), $how"
-        $code = 0
+        $result = "RUNNING at timeout (${Seconds}s), $how, exit code $($proc.ExitCode)"
+        $code = if ($how -eq 'closed' -and $proc.ExitCode -eq 0) { 0 } else { 1 }
     } else {
         $result = ('EXITED after {0}s, code {1} (0x{1:X8})' -f $elapsed, $proc.ExitCode)
         $code = 1
     }
 } finally {
-    Remove-Item Env:REO_TRACE, Env:REO_TRACE_FILE, Env:REO_ISO -ErrorAction SilentlyContinue
-    foreach ($p in $envPairs) { Remove-Item -Path "Env:$($p[0])" -ErrorAction SilentlyContinue }
+    foreach ($key in $savedEnvironment.Keys) {
+        [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key], 'Process')
+    }
     Dismount-DiskImage -ImagePath $Iso | Out-Null
 }
 
@@ -95,7 +117,7 @@ $summary = @(
     "exe:     $Exe",
     "elf:     $Elf",
     "iso:     $Iso",
-    "env:     $($Env -join ' ')$(if ($Trace) { ' REO_TRACE=1' })",
+    "env:     $(@($envPairs | ForEach-Object { $_[0] + '=' + $_[1] }) -join ' ')$(if ($Trace) { ' REO_TRACE=1' })",
     "commit:  $(git -C $Root rev-parse --short HEAD) ($(git -C $Root branch --show-current))$(if (git -C $Root status --porcelain --untracked-files=no) { ' +dirty' })",
     "stdout:  $((Get-Item $stdout).Length) bytes",
     "stderr:  $((Get-Item $stderr).Length) bytes"

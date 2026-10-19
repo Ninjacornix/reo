@@ -1,0 +1,470 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -1423,6 +1423,8 @@
+     reset();
+ }
+ 
++void ps2GsTriangleBatchBarrier(GS*);
++
+ void GS::init(uint8_t *vram, uint32_t vramSize, GSRegisters *privRegs)
+ {
+     // A new session cannot reuse a detached worker still bound to old RAM.
+@@ -1455,6 +1457,7 @@
+ 
+ void GS::reset()
+ {
++    ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     {
+@@ -1517,6 +1520,7 @@
+ 
+ void GS::snapshotVRAM()
+ {
++    ps2GsTriangleBatchBarrier(this);
+     std::lock_guard<std::recursive_mutex> stateLock(m_stateMutex);
+     if (ps2GsWorkerStopRequested()) return;
+     if (!m_vram || m_vramSize == 0)
+@@ -1569,6 +1573,7 @@
+ 
+ void GS::refreshDisplaySnapshot()
+ {
++    ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     snapshotVRAM();
+ }
+@@ -1717,6 +1722,7 @@
+ 
+ void GS::latchHostPresentationFrame()
+ {
++    ps2GsTriangleBatchBarrier(this);
+     if (ps2GsWorkerStopRequested()) return;
+     // In async mode the ordered GS marker owns the capture. The window uses the
+     // latest completed immutable image, without waiting for this frame's drawing.
+@@ -2256,6 +2262,20 @@
+     return g_vblankSeq.load(std::memory_order_acquire);
+ }
+ 
++void ps2GsTriangleBatchBegin(GS*);
++void ps2GsTriangleBatchEnd(GS*);
++void ps2GsTriangleBatchBarrier(GS*);
++namespace {
++struct GsTrianglePacketScope {
++    GS* gs;
++    explicit GsTrianglePacketScope(GS* value):gs(value){ps2GsTriangleBatchBegin(gs);}
++    ~GsTrianglePacketScope(){ps2GsTriangleBatchEnd(gs);}
++};
++bool batchVertexRegister(uint8_t reg) {
++    return reg==GS_REG_RGBAQ||reg==GS_REG_ST||reg==GS_REG_UV||reg==GS_REG_XYZF2||
++           reg==GS_REG_XYZ2||reg==GS_REG_FOG||reg==GS_REG_XYZF3||reg==GS_REG_XYZ3;
++}
++}
+ void GS::processGIFPacket(const uint8_t *data, uint32_t sizeBytes)
+ {
+     if (ps2GsWorkerStopRequested()) return;
+@@ -2270,6 +2290,7 @@
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (!data || sizeBytes < 16 || !m_vram)
+         return;
++    const GsTrianglePacketScope trianglePacket(this);
+     g_gsPacketsAccepted.fetch_add(1, std::memory_order_relaxed);
+ 
+     if (s_gifPendingImageBytes != 0u)
+@@ -2398,6 +2419,8 @@
+         auto &probe = PublicationProbe::get();
+         probe.packedRegisters[regDesc] = {lo, hi}; probe.packedRegisterSeen[regDesc] = true;
+     }
++    if(regDesc!=1&&regDesc!=2&&regDesc!=3&&regDesc!=4&&regDesc!=5&&regDesc!=0xA&&regDesc!=0xC&&regDesc!=0xD)
++        ps2GsTriangleBatchBarrier(this);
+     switch (regDesc)
+     {
+     case 0x00:
+@@ -2593,6 +2616,7 @@
+             return;
+     }
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
++    if(!batchVertexRegister(regAddr))ps2GsTriangleBatchBarrier(this);
+     if (publicationProbeEnabled() && t_isGsWorker)
+     {
+         auto &probe = PublicationProbe::get();
+@@ -3027,6 +3051,7 @@
+ 
+ void GS::performLocalToLocalTransfer()
+ {
++    ps2GsTriangleBatchBarrier(this);
+     if (ps2GsWorkerStopRequested()) return;
+     if (!m_vram)
+         return;
+@@ -3222,6 +3247,7 @@
+ 
+ void GS::processImageData(const uint8_t *data, uint32_t sizeBytes)
+ {
++    ps2GsTriangleBatchBarrier(this);
+     if (ps2GsWorkerStopRequested()) return;
+     g_gsImageCalls.fetch_add(1, std::memory_order_relaxed);
+     if (m_trxdir != 0 || !m_vram)
+@@ -3420,6 +3446,7 @@
+ 
+ void GS::performLocalToHostToBuffer()
+ {
++    ps2GsTriangleBatchBarrier(this);
+     if (ps2GsWorkerStopRequested()) return;
+     m_localToHostBuffer.clear();
+     m_localToHostReadPos = 0;
+@@ -3544,6 +3571,7 @@
+ 
+ bool GS::clearFramebufferContext(uint32_t contextIndex, uint32_t rgba)
+ {
++    ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (ps2GsWorkerStopRequested()) return false;
+@@ -3552,6 +3580,7 @@
+ 
+ bool GS::clearActiveFramebuffer(uint32_t rgba)
+ {
++    ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (ps2GsWorkerStopRequested()) return false;
+@@ -3560,6 +3589,7 @@
+ 
+ uint32_t GS::consumeLocalToHostBytes(uint8_t *dst, uint32_t maxBytes)
+ {
++    ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (!dst || maxBytes == 0)
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -19,11 +19,65 @@
+ #include <vector>
+ #include <utility>
+ #include <optional>
++#include <climits>
+ 
+ bool ps2GsWorkerStopRequested(); // Explicit teardown only; normal draws are unchanged.
+ 
+ namespace
+ {
++    // Experimental packet-local ordered primitive metadata. No live ABI change.
++    struct TriangleBatchState {
++        GS* owner=nullptr;
++        unsigned depth=0,count=0;
++        std::array<std::array<GSVertex,3>,64> triangles{};
++        std::function<void()> render;
++    };
++    thread_local TriangleBatchState t_triangleBatch;
++    thread_local const GSVertex* t_batchVertices=nullptr;
++    thread_local bool t_batchRowClip=false;
++    thread_local int t_batchY0=0,t_batchY1=0;
++    std::atomic<uint64_t> s_batchParallel{0},s_batchParallelTriangles{0},s_batchSerialTriangles{0};
++    // Isolated deterministic cancellation oracle. Set only before/after joined
++    // packets; zero in benchmarks. No per-pixel instrumentation is introduced.
++    uint64_t s_batchTestRowLimit=0;
++    std::atomic<uint64_t> s_batchTestRows{0};
++    std::atomic<bool> s_batchTestCancelled{false};
++    bool triangleBatchTestCancelRow() {
++        if(!s_batchTestRowLimit)return false;
++        if(s_batchTestCancelled.load(std::memory_order_relaxed))return true;
++        if(s_batchTestRows.fetch_add(1,std::memory_order_relaxed)>=s_batchTestRowLimit) {
++            s_batchTestCancelled.store(true,std::memory_order_relaxed);return true;
++        }
++        return false;
++    }
++    bool triangleBatchEnabled() {
++        static const bool enabled=[] {
++            const char* value=std::getenv("REO_GS_TRI_BATCH");
++            return value&&std::atoi(value)!=0&&
++                !std::getenv("REO_GS_TRI_PROBE_AT")&&!std::getenv("REO_GS_PIPELINE_AT");
++        }();
++        return enabled;
++    }
++    void flushTriangleBatch(GS* gs) {
++        auto& b=t_triangleBatch;
++        if(b.owner!=gs||!b.count)return;
++        // Copy the callback, not GS/state. It remains valid through joined work.
++        auto render=b.render;
++        if(!ps2GsWorkerStopRequested()&&render)render();
++        b.count=0;b.render={};
++    }
++    struct BatchTriangleScope {
++        const GSVertex* previous=t_batchVertices;
++        bool oldClip=t_batchRowClip;
++        int oldY0=t_batchY0,oldY1=t_batchY1;
++        BatchTriangleScope(const GSVertex* vertices,bool clip,int y0,int y1) {
++            t_batchVertices=vertices;t_batchRowClip=clip;t_batchY0=y0;t_batchY1=y1;
++        }
++        ~BatchTriangleScope() {
++            t_batchVertices=previous;t_batchRowClip=oldClip;t_batchY0=oldY0;t_batchY1=oldY1;
++        }
++    };
++
+     struct TriangleProbeCounts
+     {
+         uint64_t covered = 0, shaded = 0, dateRejected = 0, zRejected = 0;
+@@ -892,6 +946,116 @@
+         }
+         return true;
+     }
++    bool triangleBatchSafe(const GSContext &ctx, const GSPrimReg &prim,
++                              const GSVertex *vertices, const GSTexClutReg &texclut, uint32_t vramSize,
++                              int minX, int minY, int maxX, int maxY)
++    {
++        for (unsigned i = 0; i < 3u; ++i)
++            if (!std::isfinite(vertices[i].x) || !std::isfinite(vertices[i].y) ||
++                std::fabs(vertices[i].x) > 1048576.0f ||
++                std::fabs(vertices[i].y) > 1048576.0f) return false;
++        const uint64_t width = ctx.frame.fbw ? ctx.frame.fbw : 1u;
++        if (minX < 0 || minY < 0 || maxX < minX || maxY < minY ||
++            ctx.frame.fbw == 0u || uint64_t(maxX) >= width * 64u ||
++            (ctx.frame.psm != GS_PSM_CT32 && ctx.frame.psm != GS_PSM_CT24) ||
++            !vramSize || (vramSize % 8192u) != 0u)
++            return false;
++
++        const auto outputRange = [&](uint64_t base) {
++            return TriangleByteRange{
++                (base + uint64_t(minY / 32) * width + uint64_t(minX / 64)) * 8192u,
++                (base + uint64_t(maxY / 32) * width + uint64_t(maxX / 64) + 1u) * 8192u};
++        };
++        const TriangleByteRange frame = outputRange(ctx.frame.fbp);
++        if (frame.end > vramSize) return false;
++        TriangleByteRange depth;
++        if ((ctx.test & (1ull << 16)) != 0u)
++        {
++            const unsigned format = unsigned((ctx.zbuf >> 24) & 15u);
++            const unsigned test = unsigned((ctx.test >> 17) & 3u);
++            if (format > 1u || test == 0u) return false;
++            if (test > 1u || (ctx.zbuf & (1ull << 32)) == 0u)
++            {
++                depth = outputRange(ctx.zbuf & 511u);
++                // Z addressing wraps at VRAM size. Reject it here rather than
++                // permitting two output rows to wrap onto the same pixel.
++                if (depth.end > vramSize || frame.overlaps(depth)) return false;
++            }
++        }
++
++        const auto apartFromOutputs = [&](TriangleByteRange read) {
++            return read.end <= vramSize && !read.overlaps(frame) && !read.overlaps(depth);
++        };
++        if (!prim.tme) return true;
++        const auto &tex = ctx.tex0;
++        if (tex.tw > 15u || tex.th > 15u) return false;
++
++        // Accepted barycentric weights are >=-1e-4 and sum to one. Bounds
++        // below include extra rounding/extrapolation margin and reject float
++        // to integer overflow without changing the serial sampler's math.
++        const auto &a = vertices[0], &b = vertices[1], &c = vertices[2];
++        if (prim.fst)
++        {
++            const auto fixedSafe = [](uint16_t a, uint16_t b, uint16_t c) {
++                const double low = std::min({a, b, c}), high = std::max({a, b, c});
++                const double margin = (high - low) * 0.0004 + 0.05;
++                return low - margin > -1.0 && high + margin < 65536.0;
++            };
++            if (!fixedSafe(a.u, b.u, c.u) || !fixedSafe(a.v, b.v, c.v)) return false;
++        }
++        else
++        {
++            double maxS = 0, maxT = 0, maxQ = 0, minQ = 1.0e300;
++            const bool positive = a.q > 0;
++            for (const GSVertex *v : {&a, &b, &c})
++            {
++                if (!std::isfinite(v->s) || !std::isfinite(v->t) || !std::isfinite(v->q) ||
++                    (v->q > 0) != positive) return false;
++                maxS = std::max(maxS, double(std::fabs(v->s)));
++                maxT = std::max(maxT, double(std::fabs(v->t)));
++                maxQ = std::max(maxQ, double(std::fabs(v->q)));
++                minQ = std::min(minQ, double(std::fabs(v->q)));
++            }
++            const double lowerQ = minQ - maxQ * 0.001;
++            if (maxS > 1.0e20 || maxT > 1.0e20 || maxQ > 1.0e20 || lowerQ <= 1.0e-8 || maxS * 1.001 * double(1u << tex.tw) / lowerQ >= 1.0e9 ||
++                maxT * 1.001 * double(1u << tex.th) / lowerQ >= 1.0e9) return false;
++        }
++
++        uint32_t pageWidth = 64, pageHeight = 32, stride = tex.tbw ? tex.tbw : 1u;
++        switch (tex.psm)
++        {
++        case GS_PSM_CT32: case GS_PSM_CT24: break;
++        case GS_PSM_CT16: case GS_PSM_CT16S: pageHeight = 64; break;
++        case GS_PSM_T8: pageWidth = 128; pageHeight = 64; stride = std::max(uint32_t(tex.tbw) >> 1u, 1u); break;
++        case GS_PSM_T4: pageWidth = 128; pageHeight = 128; stride = std::max(uint32_t(tex.tbw) >> 1u, 1u); break;
++        default: return false;
++        }
++        const auto u = triangleTextureDomain(ctx.clamp, false, tex.tw);
++        const auto v = triangleTextureDomain(ctx.clamp, true, tex.th);
++        const uint64_t basePage = tex.tbp0 >> 5u;
++        const TriangleByteRange texture{
++            (basePage + uint64_t(v.first / pageHeight) * stride + u.first / pageWidth) * 8192u,
++            (basePage + uint64_t(v.second / pageHeight) * stride + u.second / pageWidth + 1u +
++             ((tex.tbp0 & 31u) != 0u ? 1u : 0u)) * 8192u};
++        if (!apartFromOutputs(texture)) return false;
++
++        if (tex.psm == GS_PSM_T4 || tex.psm == GS_PSM_T8)
++        {
++            const bool sixteen = tex.cpsm == GS_PSM_CT16 || tex.cpsm == GS_PSM_CT16S;
++            if (!sixteen && tex.cpsm != GS_PSM_CT32 && tex.cpsm != GS_PSM_CT24) return false;
++            const uint32_t clutWidth = texclut.cbw ? texclut.cbw : 1u;
++            const uint32_t entries = tex.psm == GS_PSM_T4 ? 16u : 256u;
++            for (uint32_t i = 0; i < entries; ++i)
++            {
++                const uint32_t index = resolveClutIndex(uint8_t(i), tex.csm, tex.csa, tex.psm);
++                const uint32_t x = texclut.cou + (index & 15u), y = texclut.cov + (index >> 4u);
++                const uint64_t offset = sixteen ? addrPSMCT16Family(tex.cbp, clutWidth, tex.cpsm, x, y)
++                                                : GSPSMCT32::addrPSMCT32(tex.cbp, clutWidth, x, y);
++                if (!apartFromOutputs({offset, offset + (sixteen ? 2u : 4u)})) return false;
++            }
++        }
++        return true;
++    }
+ 
+     bool spriteTextureDepthParallelSafe(const GSContext &ctx, const GSTexClutReg &texclut,
+                                        uint32_t vramSize, int x0, int y0, int x1, int y1,
+@@ -963,9 +1127,33 @@
+     }
+ }
+ 
++
++void ps2GsTriangleBatchBegin(GS* gs) {
++    if(!triangleBatchEnabled())return;
++    auto& b=t_triangleBatch;
++    if(b.depth)flushTriangleBatch(b.owner);
++    else b.owner=gs;
++    ++b.depth;
++}
++void ps2GsTriangleBatchEnd(GS* gs) {
++    if(!triangleBatchEnabled())return;
++    auto& b=t_triangleBatch;
++    if(b.depth==1&&b.owner==gs)flushTriangleBatch(gs);
++    if(b.depth&&!--b.depth) {b.owner=nullptr;b.count=0;b.render={};}
++}
++void ps2GsTriangleBatchBarrier(GS* gs) {if(triangleBatchEnabled())flushTriangleBatch(gs);}
++uint64_t ps2GsTriangleBatchStat(unsigned index) {
++    return index==0?s_batchParallel.load():index==1?s_batchParallelTriangles.load():s_batchSerialTriangles.load();
++}
++void ps2GsTriangleBatchTestCancelAfterRows(uint64_t rows) {
++    s_batchTestRows=0;s_batchTestCancelled=false;s_batchTestRowLimit=rows;
++}
++
+ void GSRasterizer::drawPrimitive(GS *gs)
+ {
+     const PixelDepthScope primitiveDepth;
++    if(gs->m_prim.type!=GS_PRIM_TRIANGLE&&gs->m_prim.type!=GS_PRIM_TRISTRIP&&gs->m_prim.type!=GS_PRIM_TRIFAN)
++        ps2GsTriangleBatchBarrier(gs);
+     // Opt-in late original draw states. Record each distinct pipeline key once,
+     // bounded independently of primitive count, without pixel-loop logging.
+     static const char *pipelineAt = std::getenv("REO_GS_PIPELINE_AT");
+@@ -1121,7 +1309,64 @@
+     case GS_PRIM_TRIANGLE:
+     case GS_PRIM_TRISTRIP:
+     case GS_PRIM_TRIFAN:
+-        drawTriangle(gs);
++        if(triangleBatchEnabled()&&t_triangleBatch.owner==gs&&t_triangleBatch.depth==1) {
++            auto& b=t_triangleBatch;
++            if(b.count==b.triangles.size())flushTriangleBatch(gs);
++            if(!b.count) b.render=[this,gs] {
++                auto& batch=t_triangleBatch;
++                const unsigned count=batch.count;
++                const auto& context=gs->activeContext();
++                int x0=INT_MAX,y0=INT_MAX,x1=INT_MIN,y1=INT_MIN;
++                uint64_t work=0;
++                bool geometry=true;
++                std::array<std::pair<int,int>,64> rowBounds{};
++                const int ofx=context.xyoffset.ofx>>4,ofy=context.xyoffset.ofy>>4;
++                for(unsigned i=0;i<count;++i) {
++                    const auto& vertices=batch.triangles[i];
++                    for(const auto& v:vertices)
++                        if(!std::isfinite(v.x)||!std::isfinite(v.y)||
++                           std::fabs(v.x)>1048576.f||std::fabs(v.y)>1048576.f)geometry=false;
++                    if(!geometry)break;
++                    int ax=clampInt(int(std::floor(std::min({vertices[0].x,vertices[1].x,vertices[2].x})-float(ofx))),context.scissor.x0,context.scissor.x1);
++                    int bx=clampInt(int(std::ceil(std::max({vertices[0].x,vertices[1].x,vertices[2].x})-float(ofx))),context.scissor.x0,context.scissor.x1);
++                    int ay=clampInt(int(std::floor(std::min({vertices[0].y,vertices[1].y,vertices[2].y})-float(ofy))),context.scissor.y0,context.scissor.y1);
++                    int by=clampInt(int(std::ceil(std::max({vertices[0].y,vertices[1].y,vertices[2].y})-float(ofy))),context.scissor.y0,context.scissor.y1);
++                    rowBounds[i]={ay,by};
++                    x0=std::min(x0,ax);x1=std::max(x1,bx);y0=std::min(y0,ay);y1=std::max(y1,by);
++                    work+=uint64_t(bx-ax+1)*uint64_t(by-ay+1);
++                }
++                // One wake/join for enough real bbox work, never a sparse union alone.
++                bool parallel=geometry&&count>=8&&work>=4096&&y1-y0>=16;
++                if(parallel)for(unsigned i=0;i<count;++i)
++                    if(!triangleBatchSafe(context,gs->m_prim,batch.triangles[i].data(),gs->m_texclut,
++                                          gs->m_vramSize,x0,y0,x1,y1)) {parallel=false;break;}
++                if(parallel) {
++                    ++s_batchParallel;s_batchParallelTriangles.fetch_add(count,std::memory_order_relaxed);
++                    const auto bands=[&](int begin,int end) {
++                        const TriangleBandTlsScope tls(true,nullptr);
++                        // All triangles are visited in their original order in every
++                        // unique physical row domain. State remains worker-owned.
++                        for(unsigned i=0;i<count&&!ps2GsWorkerStopRequested();++i) {
++                            if(rowBounds[i].second<begin||rowBounds[i].first>end)continue;
++                            const PixelDepthScope primitiveDepth;
++                            const BatchTriangleScope scope(batch.triangles[i].data(),true,begin,end);
++                            drawTriangle(gs);
++                        }
++                    };
++                    RowPool::get().run(y0,y1,bands);
++                } else {
++                    s_batchSerialTriangles.fetch_add(count,std::memory_order_relaxed);
++                    for(unsigned i=0;i<count&&!ps2GsWorkerStopRequested();++i) {
++                        const PixelDepthScope primitiveDepth;
++                        const BatchTriangleScope scope(batch.triangles[i].data(),false,0,0);
++                        drawTriangle(gs);
++                    }
++                }
++            };
++            // Copy before strip/fan/ADC assembly consumes or replaces any vertex.
++            std::copy_n(gs->m_vtxQueue,3,b.triangles[b.count++].begin());
++        } else drawTriangle(gs);
++
+         break;
+     case GS_PRIM_LINE:
+     case GS_PRIM_LINESTRIP:
+@@ -2128,11 +2373,12 @@
+ 
+ void GSRasterizer::drawTriangle(GS *gs)
+ {
+-    const GSVertex &v0 = gs->m_vtxQueue[0];
+-    const GSVertex &v1 = gs->m_vtxQueue[1];
+-    const GSVertex &v2 = gs->m_vtxQueue[2];
++    const GSVertex* triangleVertices=t_batchVertices?t_batchVertices:gs->m_vtxQueue;
++    const GSVertex &v0 = triangleVertices[0];
++    const GSVertex &v1 = triangleVertices[1];
++    const GSVertex &v2 = triangleVertices[2];
+     const auto &ctx = gs->activeContext();
+-    TriangleProbe probe(ctx, gs->m_prim, gs->m_vtxQueue);
++    TriangleProbe probe(ctx, gs->m_prim, triangleVertices);
+     static const bool earlyTestsEnabled = [] {
+         const char *e = std::getenv("REO_GS_EARLY_TESTS");
+         return e && std::atoi(e) != 0;
+@@ -2180,8 +2426,8 @@
+         const char *e = std::getenv("REO_GS_TRI_PARALLEL");
+         return e && std::atoi(e) != 0;
+     }();
+-    const bool parallel = parallelEnabled && std::isfinite(denom) &&
+-        triangleParallelSafe(ctx, gs->m_prim, gs->m_vtxQueue, gs->m_texclut, gs->m_vramSize,
++    const bool parallel = !t_batchVertices && parallelEnabled && std::isfinite(denom) &&
++        triangleParallelSafe(ctx, gs->m_prim, triangleVertices, gs->m_texclut, gs->m_vramSize,
+                              minX, minY, maxX, maxY);
+     probe.parallel = parallel;
+     std::vector<TriangleProbeCounts> parallelCounts;
+@@ -2198,7 +2444,7 @@
+             bandPalette.emplace(ctx, gs->m_vramSize, true, minX, minY, maxX, maxY);
+         for (int y = yBegin; y <= yEnd; ++y)
+         {
+-            if (ps2GsWorkerStopRequested()) return;
++            if (ps2GsWorkerStopRequested() || triangleBatchTestCancelRow()) return;
+             float py = static_cast<float>(y) + 0.5f;
+             for (int x = minX; x <= maxX; ++x)
+             {
+@@ -2314,7 +2560,7 @@
+         }
+     }
+     else
+-        band(minY, maxY);
++        band(t_batchRowClip?std::max(minY,t_batchY0):minY, t_batchRowClip?std::min(maxY,t_batchY1):maxY);
+ }
+ 
+ void GSRasterizer::drawLine(GS *gs)

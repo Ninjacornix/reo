@@ -1,0 +1,1517 @@
+diff --git a/ps2xRuntime/CMakeLists.txt b/ps2xRuntime/CMakeLists.txt
+--- a/ps2xRuntime/CMakeLists.txt
++++ b/ps2xRuntime/CMakeLists.txt
+@@ -173,6 +173,9 @@
+ 
+ add_library(ps2_runtime STATIC
+     src/lib/gs_backend_route.cpp
++    src/lib/vu_specialized_route.cpp
++    src/lib/vif_launch_overhead.cpp
++    src/lib/vu_program_collection.cpp
+     src/lib/game_overrides.cpp
+     src/lib/ps2_gif_arbiter.cpp
+     src/lib/ps2_audio.cpp
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -1,3 +1,4 @@
++#include "../../../vblank_music_diag.h"
+ #include "CriAudio.h"
+ #include "ReoSoundBanks.h"
+ #include "ps2_host_backend.h"
+@@ -129,6 +130,7 @@
+         std::fprintf(stderr,"[CRI-AUDIO] frames=%llu signal=%llu underrun=%llu queuedSamples=%zu host=%d\n",
+           static_cast<unsigned long long>(outputFrames-lastFrames),static_cast<unsigned long long>(signalFrames-lastSignal),
+           static_cast<unsigned long long>(underrunFrames-lastUnderrun),queued,ready?1:0);
++        ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::AudioReport,outputFrames,signalFrames,underrunFrames);
+         lastReport=now;lastFrames=outputFrames;lastSignal=signalFrames;lastUnderrun=underrunFrames;
+         // This existing guest-side report path is never entered by the device
+         // callback. Per-voice counters distinguish missing PCM from valid silence.
+@@ -197,6 +199,7 @@
+         }
+     }
+     c.queued+=length;endByte=c.queued;
++    ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::PcmPush,key,length,c.queued,c.consumed,c.pcm.size(),outputFrames);
+     static const bool producerLog = std::getenv("REO_CRI_PRODUCER_LOG") != nullptr;
+     if (producerLog) {
+         const uint64_t now = clockNs();
+@@ -237,6 +240,7 @@
+             static_cast<unsigned long long>(v.startNs),c==channels.end()?0:c->second.pcm.size(),static_cast<unsigned long long>(v.startByte),
+             left,right,v.channels,v.frequency,v.volume,rightChannel==channels.end()?0:rightChannel->second.pcm.size());
+     }
++    if(playing!=v.playing) ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::Voice,voice,left,right,v.channels,v.frequency,playing?1u:0u,channels.find(left)==channels.end()?0u:channels.find(left)->second.consumed,outputFrames);
+     v.playing=playing;
+ }
+ uint64_t consumed(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -1,3 +1,4 @@
++#include "../../vblank_music_diag.h"
+ #include "gs_priv_atomic.h"
+ #include "Common.h"
+ #include "Interrupt.h"
+@@ -272,6 +273,7 @@
+                 ScopedIrqTiming irqTiming("INTC", info.handler, cause);
+                 PS2Runtime::GuestExecutionScope interruptExecution(runtime);
+                 irqTiming.acquired();
++                if(cause==kIntcVblankStart) ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::HandlerBegin,info.handler,cause);
+                 while (irqCtx.pc != 0u && runtime && !runtime->isStopRequested() &&
+                        (!t_isIrqWorker || !g_irq_worker_stop.load(std::memory_order_acquire)))
+                 {
+@@ -282,6 +284,7 @@
+                     }
+                     step(rdram, &irqCtx, runtime);
+                 }
++                if(cause==kIntcVblankStart) ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::HandlerEnd,info.handler,cause,irqCtx.pc);
+             }
+             catch (const ThreadExitException &)
+             {
+@@ -450,13 +453,17 @@
+         if (!rdram || !runtime) return;
+         // VBLANK measures admission and the entire atomic boundary. Nested INTC
+         // timings measure individual handlers, not a fresh admission wait.
++        ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::AdmissionBegin);
+         ScopedIrqTiming timing("VBLANK", 0u, kIntcVblankStart);
+         PS2Runtime::GuestExecutionScope execution(runtime);
+         timing.acquired();
++        ps2_vblank_music_diag::guestSnapshot(ps2_vblank_music_diag::Kind::Admitted,rdram);
+         if (runtime->isStopRequested()) return;
+         dispatchIntcHandlersForCause(rdram, runtime, kIntcVblankStart);
++        ps2_vblank_music_diag::guestSnapshot(ps2_vblank_music_diag::Kind::HandlersDone,rdram);
+         if (between) between(user); // Used only by the opt-in isolated fixture.
+         if (!runtime->isStopRequested()) ps2GsSnapshotDisplay();
++        ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::CaptureQueued);
+     }
+ 
+     // Private fixture entry: exercise the real handler registry, guest scheduler
+@@ -549,12 +556,21 @@
+             }
+             const auto period = s_turboOn ? kVblankPeriod / s_turbo : kVblankPeriod;
+             const auto now = clock::now();
++            const auto diagnosticFirstDeadline=nextTick;
+             int ticksToProcess = 0;
+             while (now >= nextTick && ticksToProcess < kMaxCatchupTicks)
+             {
+                 ++ticksToProcess;
+                 nextTick += period;
+             }
++            if(ps2_vblank_music_diag::enabled() && ticksToProcess) {
++                const auto periodNs=std::chrono::duration_cast<std::chrono::nanoseconds>(period).count();
++                const auto due=now>=diagnosticFirstDeadline ? uint64_t((now-diagnosticFirstDeadline)/period)+1u : 0u;
++                ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::TickPlan,
++                    uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(diagnosticFirstDeadline.time_since_epoch()).count()),
++                    uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(nextTick.time_since_epoch()).count()),
++                    uint64_t(periodNs),due,uint64_t(ticksToProcess));
++            }
+             if (ticksToProcess == 0)
+             {
+                 continue;
+@@ -564,10 +580,16 @@
+             for (int i = 0; i < ticksToProcess; ++i)
+             {
+                 const uint64_t tickValue = signalVSyncFlag(rdram);
++                ps2_vblank_music_diag::TickScope diagnosticTick(tickValue);
++                ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::Flag,tickValue);
+                 ps2_stubs::dispatchGsSyncVCallback(rdram, runtime, tickValue);
++                ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::GsCallbackDone,tickValue);
+                 // Latch INTC_STAT VBLANK_START bit — games busy-wait on it via
+                 // MMIO polling (0x1000F000 & 4) for frame pacing.
+-                runtime->memory().raiseIntc(kIntcVblankStart);
++                if(ps2_vblank_music_diag::enabled()) {
++                    const auto prior=runtime->memory().m_intcStat.fetch_or(1u<<kIntcVblankStart,std::memory_order_relaxed);
++                    ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::IntcLatch,kIntcVblankStart,prior,prior|(1u<<kIntcVblankStart));
++                } else runtime->memory().raiseIntc(kIntcVblankStart);
+                 gsPrivFieldTick(runtime->memory().gs()); // toggle GS_CSR FIELD + VSINT
+                 const auto vbStart = std::chrono::steady_clock::now();
+                 dispatchVblankStartAndCapture(rdram, runtime);
+@@ -594,7 +616,10 @@
+     {
+         if (cause >= 32u)
+             return;
+-        g_pending_intc_mask.fetch_or(1u << cause, std::memory_order_acq_rel);
++        if(ps2_vblank_music_diag::enabled()) {
++            const auto prior=g_pending_intc_mask.fetch_or(1u << cause,std::memory_order_acq_rel);
++            ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::AsyncIntcRaise,cause,prior);
++        } else g_pending_intc_mask.fetch_or(1u << cause, std::memory_order_acq_rel);
+         std::lock_guard<std::mutex> lock(g_irq_worker_mutex);
+         g_irq_worker_cv.notify_all();
+     }
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
+@@ -1,3 +1,4 @@
++#include "../../vblank_music_diag.h"
+ #include "Common.h"
+ #include "Interrupt.h"
+ #include "Lifecycle.h"
+@@ -22,6 +23,7 @@
+         if (g_alarm_worker.joinable())
+             throw std::logic_error("Previous alarm worker was not joined");
+         g_alarm_worker_stop.store(false, std::memory_order_release);
++        ps2_vblank_music_diag::begin();
+     }
+ 
+     void requestRuntimeWorkerStop()
+@@ -98,6 +100,7 @@
+     {
+         joinInterruptWorker();
+         joinAlarmWorker();
++        ps2_vblank_music_diag::flush(); // all guest producers joined by the existing caller
+         resetInterruptHandlerRegistry();
+         {
+             std::lock_guard<std::mutex> lock(g_irq_handler_mutex);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1,3 +1,4 @@
++#include "../../vblank_music_diag.h"
+ #include "Common.h"
+ #include "RPC.h"
+ #include "Helpers/CriAudio.h"
+@@ -647,8 +648,11 @@
+ 
+         void collectSjxReplies(uint8_t* rdram,const DtxTransferState& transfer) {
+             std::lock_guard<std::mutex> lock(g_dtx_rpc_mutex);
++            ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::SjxPoll,transfer.eeWorkAddr,g_pcmPending.size(),g_sjxReplies.size());
+             for(auto i=g_pcmPending.begin();i!=g_pcmPending.end();) {
+-                if(ps2_cri_audio::consumed(i->ring)<i->endByte) { ++i;continue; }
++                const auto diagnosticConsumed=ps2_cri_audio::consumed(i->ring);
++                if(diagnosticConsumed<i->endByte) { ++i;continue; }
++                ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::PcmRetire,i->ring,i->reply.length,i->endByte,diagnosticConsumed);
+                 auto ring=g_dtx_sjrmt_by_handle.find(i->ring);
+                 if(ring!=g_dtx_sjrmt_by_handle.end()) {
+                     auto& state=ring->second;
+@@ -664,6 +668,7 @@
+                 std::memcpy(getMemPtr(rdram,transfer.eeWorkAddr+16u+n*16u),&reply,sizeof(reply));
+             }
+             writeGuestU32(rdram,transfer.eeWorkAddr,count);
++            ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::SjxPublished,transfer.eeWorkAddr,count,g_pcmPending.size(),g_sjxReplies.size());
+         }
+ 
+         std::atomic<uint64_t> g_dbgRnaConsumedBytes{0}; // [perf] PCM bytes "played" by PS2RNA
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -1,3 +1,4 @@
++#include "../../vblank_music_diag.h"
+ #include <cstdio>
+ #include <cstdlib>
+ #include "Common.h"
+@@ -830,6 +831,7 @@
+         status->waitType = info->waitType;
+         status->waitId = info->waitId;
+         status->wakeupCount = info->wakeupCount;
++        if(ps2_vblank_music_diag::watchedThread(tid)) ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::ThreadStatus,tid,getRegU32(ctx,31),info->status,info->wakeupCount,info->waitType);
+         setReturnS32(ctx, KE_OK);
+     }
+ 
+@@ -852,6 +854,7 @@
+         int ret = 0;
+         std::unique_lock<std::mutex> lock(info->m);
+         logThreadOp("Sleep", g_currentThreadId, info->status, info->wakeupCount, info->suspendCount, getRegU32(ctx, 31));
++        if(ps2_vblank_music_diag::watchedThread(g_currentThreadId)) ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::SleepEnter,g_currentThreadId,getRegU32(ctx,31),info->status,info->wakeupCount,info->waitType);
+ 
+         if (info->wakeupCount > 0)
+         {
+@@ -913,8 +916,10 @@
+                                                   << std::endl);
+         }
+ 
++        if(ps2_vblank_music_diag::watchedThread(g_currentThreadId)) ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::SleepResolved,g_currentThreadId,getRegU32(ctx,31),ret,info->wakeupCount,info->status);
+         lock.unlock();
+         waitWhileSuspended(info, runtime);
++        if(ps2_vblank_music_diag::watchedThread(g_currentThreadId)) ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::SleepReturn,g_currentThreadId,getRegU32(ctx,31),ret);
+         setReturnS32(ctx, ret);
+     }
+ 
+@@ -989,6 +994,7 @@
+         // original CRI handshake (0x12BF98) compares this id before clearing
+         // its main-thread service request at 0x21049C.
+         setReturnS32(ctx, tid);
++        if(ps2_vblank_music_diag::watchedThread(tid)) ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::Wake,tid,getRegU32(ctx,31),statusAfter,newWakeupCount);
+         switchIfOutranked(runtime, tid, statusAfter == THS_READY);
+     }
+ 
+diff --git a/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp b/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
+--- a/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
++++ b/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
+@@ -1,3 +1,4 @@
++#include "vif_launch_overhead.h"
+ #include "gs_backend_route.h"
+ #include "runtime/ps2_gif_arbiter.h"
+ #include "ps2_log.h"
+@@ -72,13 +73,20 @@
+                                         << std::endl);
+     }
+ 
++    const bool overhead = vif_launch_overhead::active();
++    const auto allocationBegin = overhead ? vif_launch_overhead::Clock::now() : vif_launch_overhead::Clock::time_point{};
+     GifArbiterPacket pkt;
+     pkt.pathId = pathId;
+     pkt.path2DirectHl = (pathId == GifPathId::Path2) && path2DirectHl;
+     pkt.path3Image = (pathId == GifPathId::Path3) && isImagePacket(data, sizeBytes);
+     pkt.data.resize(sizeBytes);
++    if (overhead) vif_launch_overhead::recordStage(vif_launch_overhead::ArbiterAllocationZero, vif_launch_overhead::durationNs(allocationBegin), sizeBytes);
++    const auto copyBegin = overhead ? vif_launch_overhead::Clock::now() : vif_launch_overhead::Clock::time_point{};
+     std::memcpy(pkt.data.data(), data, sizeBytes);
++    if (overhead) vif_launch_overhead::recordStage(vif_launch_overhead::ArbiterCopy, vif_launch_overhead::durationNs(copyBegin), sizeBytes);
++    const auto pushBegin = overhead ? vif_launch_overhead::Clock::now() : vif_launch_overhead::Clock::time_point{};
+     m_queue.push_back(std::move(pkt));
++    if (overhead) vif_launch_overhead::recordStage(vif_launch_overhead::ArbiterPush, vif_launch_overhead::durationNs(pushBegin), 0);
+ }
+ 
+ void GifArbiter::drain()
+@@ -86,6 +94,8 @@
+     if (!m_processFn)
+         return;
+ 
++    const bool overhead = vif_launch_overhead::active();
++    const auto sortBegin = overhead ? vif_launch_overhead::Clock::now() : vif_launch_overhead::Clock::time_point{};
+     std::stable_sort(m_queue.begin(), m_queue.end(),
+                      [](const GifArbiterPacket &a, const GifArbiterPacket &b)
+                      {
+@@ -100,6 +110,7 @@
+                          return pathPriority(a.pathId) < pathPriority(b.pathId);
+                      });
+ 
++    if (overhead) vif_launch_overhead::recordStage(vif_launch_overhead::ArbiterSort, vif_launch_overhead::durationNs(sortBegin), 0);
+     for (size_t i = 0; i < m_queue.size(); ++i)
+     {
+         auto &pkt = m_queue[i];
+@@ -126,7 +137,9 @@
+                                                << std::endl);
+             }
+             gs_backend_bridge::PathScope pathScope(static_cast<uint8_t>(pkt.pathId));
++            const auto dispatchBegin = overhead ? vif_launch_overhead::Clock::now() : vif_launch_overhead::Clock::time_point{};
+             m_processFn(pkt.data.data(), static_cast<uint32_t>(pkt.data.size()));
++            if (overhead) vif_launch_overhead::recordStage(vif_launch_overhead::ArbiterDispatch, vif_launch_overhead::durationNs(dispatchBegin), pkt.data.size());
+         }
+     }
+     m_queue.clear();
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -1,3 +1,4 @@
++#include "vif_launch_overhead.h"
+ #include <cstdint>
+ void ps2GsRequestWorkerStop();
+ bool ps2VifKickVuProfileActive() noexcept;
+@@ -734,9 +735,12 @@
+         }
+         ++g_gsAsync.drawingSerial;
+         g_gsAsync.lastDrawingMark = g_gsAsync.enqueued;
++        const bool overhead = stageProfile && vif_launch_overhead::active();
++        const auto pushBegin = overhead ? vif_launch_overhead::Clock::now() : vif_launch_overhead::Clock::time_point{};
+         g_gsAsync.queue.push_back(std::move(item));
+         lock.unlock();
+         g_gsAsync.work.notify_one();
++        if (overhead) vif_launch_overhead::recordStage(vif_launch_overhead::GsPushNotify, vif_launch_overhead::durationNs(pushBegin), 0);
+         return true;
+     }
+ 
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1,3 +1,5 @@
++#include "vif_launch_overhead.h"
++#include <memory>
+ #include "gs_priv_atomic.h"
+ #include "ps2_runtime.h"
+ #include "ps2_debug_panel.h"
+@@ -1086,13 +1088,35 @@
+                                     { m_gs.processGIFPacket(data, size); });
+     m_memory.setGifArbiter(&m_gifArbiter);
+     m_memory.setVu1MscalCallback([this](uint32_t startPC, uint32_t itop)
+-                                 { m_vu1.execute(m_memory.getVU1Code(), PS2_VU1_CODE_SIZE,
+-                                                 m_memory.getVU1Data(), PS2_VU1_DATA_SIZE,
+-                                                 m_gs, &m_memory, startPC, itop, 65536); });
++                                 {
++                                     if (vif_launch_overhead::active()) {
++                                         vif_launch_overhead::LaunchScope launch(&m_memory, m_memory.getVU1Code(),
++                                             PS2_VU1_CODE_SIZE, startPC, 65536, itop);
++                                         m_vu1.execute(m_memory.getVU1Code(), PS2_VU1_CODE_SIZE,
++                                             m_memory.getVU1Data(), PS2_VU1_DATA_SIZE,
++                                             m_gs, &m_memory, startPC, itop, 65536);
++                                         launch.returned = true;
++                                     } else {
++                                         m_vu1.execute(m_memory.getVU1Code(), PS2_VU1_CODE_SIZE,
++                                             m_memory.getVU1Data(), PS2_VU1_DATA_SIZE,
++                                             m_gs, &m_memory, startPC, itop, 65536);
++                                     }
++                                 });
+     m_memory.setVu1MscntCallback([this](uint32_t itop)
+-                                 { m_vu1.resume(m_memory.getVU1Code(), PS2_VU1_CODE_SIZE,
+-                                                m_memory.getVU1Data(), PS2_VU1_DATA_SIZE,
+-                                                m_gs, &m_memory, itop, 65536); });
++                                 {
++                                     if (vif_launch_overhead::active()) {
++                                         vif_launch_overhead::LaunchScope launch(&m_memory, m_memory.getVU1Code(),
++                                             PS2_VU1_CODE_SIZE, m_vu1.state().pc, 65536, itop);
++                                         m_vu1.resume(m_memory.getVU1Code(), PS2_VU1_CODE_SIZE,
++                                             m_memory.getVU1Data(), PS2_VU1_DATA_SIZE,
++                                             m_gs, &m_memory, itop, 65536);
++                                         launch.returned = true;
++                                     } else {
++                                         m_vu1.resume(m_memory.getVU1Code(), PS2_VU1_CODE_SIZE,
++                                             m_memory.getVU1Data(), PS2_VU1_DATA_SIZE,
++                                             m_gs, &m_memory, itop, 65536);
++                                     }
++                                 });
+     m_iop.init(rdram);
+     m_iop.reset();
+     m_vu1.reset();
+@@ -2626,13 +2650,14 @@
+         uint64_t calls = 0, ns = 0, cycles = 0, capped = 0;
+         uint64_t stageNs[5]{}, stageCalls[5]{}, stageBytes[5]{};
+         uint64_t peakQueueBytes = 0;
++        uint64_t matchedLaunches = 0, matchedBlocks = 0, matchedPairs = 0;
+     };
+     thread_local VifKickVuWork* t_vifKickVuWork = nullptr;
+     struct VifKickWriteTiming
+     {
+         using Clock = std::chrono::steady_clock;
+         struct Config {
+-            bool enabled = false;
++            bool enabled = false, overhead = false;
+             double after = 0, until = 0;
+             int64_t minUs = 20000;
+             uint32_t limit = 64;
+@@ -2645,6 +2670,7 @@
+                 const char* at = std::getenv("REO_VIF_KICK_TIMING_AT");
+                 if (!at || !*at) return c;
+                 c.enabled = true;
++                if (const char* value = std::getenv("REO_VIF_LAUNCH_OVERHEAD")) c.overhead = std::strcmp(value, "1") == 0;
+                 c.after = std::max(0.0, std::atof(at));
+                 if (const char* v = std::getenv("REO_VIF_KICK_TIMING_UNTIL")) c.until = std::max(0.0, std::atof(v));
+                 if (const char* v = std::getenv("REO_VIF_KICK_TIMING_MIN_US")) c.minUs = std::max<int64_t>(0, std::strtoll(v, nullptr, 10));
+@@ -2664,6 +2690,7 @@
+         bool active = false;
+         VifKickVuWork work{};
+         VifKickVuWork* previousWork = nullptr;
++        std::unique_ptr<vif_launch_overhead::DmaScope> overhead;
+         VifKickWriteTiming(uint32_t address, uint32_t value, const R5900Context* ctx)
+         {
+             const auto& c = config(); // First Store32 arms the epoch, including boot writes.
+@@ -2675,6 +2702,10 @@
+             active = true;
+             previousWork = t_vifKickVuWork;
+             t_vifKickVuWork = &work;
++            if (c.overhead) {
++                try { overhead = std::make_unique<vif_launch_overhead::DmaScope>(); }
++                catch (...) {} // Optional diagnostic allocation cannot fail the guest write.
++            }
+             tid = ps2_sched::currentThread(); ioDepth = ps2IoRegLockDepth();
+             if (ctx) { pc = ctx->pc; ra = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[31], 0)); }
+         }
+@@ -2689,7 +2720,7 @@
+             const uint32_t n = records().fetch_add(1, std::memory_order_relaxed);
+             if (n >= c.limit) return;
+             const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(start.time_since_epoch()).count();
+-            std::fprintf(stderr, "[VIF-KICK-TIMING] n=%u elapsed=%.6f ns=%lld duration_us=%lld tid=%d pc=%08x ra=%08x io_depth=%u vu_calls=%llu vu_us=%llu vu_cycles=%llu vu_capped=%llu xgkick_calls=%llu xgkick_bytes=%llu xgkick_prep_us=%llu xgkick_submit_us=%llu vu_non_xgkick_us=%llu path1_copy_calls=%llu path1_copy_us=%llu path1_lock_us=%llu path1_queue_wait_us=%llu path1_peak_queue_bytes=%llu\n",
++            std::fprintf(stderr, "[VIF-KICK-TIMING] n=%u elapsed=%.6f ns=%lld duration_us=%lld tid=%d pc=%08x ra=%08x io_depth=%u vu_calls=%llu vu_us=%llu vu_cycles=%llu vu_capped=%llu xgkick_calls=%llu xgkick_bytes=%llu xgkick_prep_us=%llu xgkick_submit_us=%llu vu_non_xgkick_us=%llu path1_copy_calls=%llu path1_copy_us=%llu path1_lock_us=%llu path1_queue_wait_us=%llu path1_peak_queue_bytes=%llu vu_matched_launches=%llu vu_matched_blocks=%llu vu_matched_pairs=%llu\n",
+                 n, std::chrono::duration<double>(start-c.epoch).count(), static_cast<long long>(ns),
+                 static_cast<long long>(us), tid, pc, ra, ioDepth,
+                 static_cast<unsigned long long>(work.calls), static_cast<unsigned long long>(work.ns / 1000u),
+@@ -2699,7 +2730,11 @@
+                 static_cast<unsigned long long>((work.ns>=work.stageNs[0]+work.stageNs[1]?work.ns-work.stageNs[0]-work.stageNs[1]:0)/1000u),
+                 static_cast<unsigned long long>(work.stageCalls[2]), static_cast<unsigned long long>(work.stageNs[2]/1000u),
+                 static_cast<unsigned long long>(work.stageNs[3]/1000u), static_cast<unsigned long long>(work.stageNs[4]/1000u),
+-                static_cast<unsigned long long>(work.peakQueueBytes));
++                static_cast<unsigned long long>(work.peakQueueBytes),
++                static_cast<unsigned long long>(work.matchedLaunches),
++                static_cast<unsigned long long>(work.matchedBlocks),
++                static_cast<unsigned long long>(work.matchedPairs));
++            if (overhead) overhead->complete(n, uint64_t(ns), uint64_t(us));
+         }
+     };
+ 
+@@ -2730,14 +2765,26 @@
+ bool ps2VifKickVuProfileActive() noexcept { return t_vifKickVuWork != nullptr; }
+ void ps2VifKickVuProfileRecord(uint64_t ns, uint32_t cycles, bool capped) noexcept
+ {
++    vif_launch_overhead::recordVu(ns, cycles, capped);
+     if (auto* work = t_vifKickVuWork) {
+         ++work->calls; work->ns += ns; work->cycles += cycles; work->capped += unsigned(capped);
+     }
+ }
+ 
++// One record per run; no clocks, per-pair hooks, allocation or atomics.
++void ps2VifKickVuSpecializedRecord(bool selected, uint64_t blocks, uint64_t pairs) noexcept
++{
++    if (auto* work = t_vifKickVuWork) {
++        work->matchedLaunches += unsigned(selected);
++        work->matchedBlocks += blocks;
++        work->matchedPairs += pairs;
++    }
++}
++
+ // Private implementation-only hook. No clocks, allocation or logging here.
+ void ps2VifKickStageRecord(unsigned stage,uint64_t ns,uint64_t bytes,uint64_t queueBytes) noexcept
+ {
++    vif_launch_overhead::recordStage(stage, ns, bytes);
+     if(auto* work=t_vifKickVuWork;work && stage<5u) {
+         work->stageNs[stage]+=ns; ++work->stageCalls[stage]; work->stageBytes[stage]+=bytes;
+         work->peakQueueBytes=std::max(work->peakQueueBytes,queueBytes);
+diff --git a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+--- a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
++++ b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+@@ -1,3 +1,5 @@
++#include "vu_program_collection.h"
++#include "vif_launch_overhead.h"
+ #include <cstdlib>
+ #include <cstdio>
+ // Based on Blackline Interactive implementation
+@@ -254,7 +256,10 @@
+ {
+     if (!data || !m_gsVRAM || sizeBytes == 0u)
+         return;
++    const bool overhead = vif_launch_overhead::active();
++    vif_launch_overhead::ParseScope parseScope(overhead);
+     std::lock_guard<std::recursive_mutex> streamLock(s_vif1StreamMutex);
++    parseScope.lockAcquired();
+     VifDiagnosticCapture capture(*this, data, sizeBytes);
+     auto& stream = s_vif1Streams[this];
+     if (stream.rdram != m_rdram || (!stream.pending.empty() && vif1_regs.code != stream.pendingCode))
+@@ -338,6 +343,7 @@
+             break;
+         }
+ 
++        vif_launch_overhead::CommandScope commandScope(overhead, opcode);
+         const uint32_t opcodeIndex = s_debugVif1OpcodeCount.fetch_add(1, std::memory_order_relaxed);
+         if (opcodeIndex < 160u || capture.logCommand())
+         {
+@@ -495,6 +501,9 @@
+                     copied += copyBytes;
+                     destAddr = (destAddr + copyBytes) & (PS2_VU1_CODE_SIZE - 1u);
+                 }
++                vu_program_collection::recordMpg(this,m_vu1Code,PS2_VU1_CODE_SIZE,
++                    (uint32_t(imm)*8u)&(PS2_VU1_CODE_SIZE-1u),instructionCount,
++                    data+pos,mpgBytes);
+             }
+             pos += mpgBytes;
+             if (pos > sizeBytes)
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -1,4 +1,8 @@
+ #include "runtime/ps2_vu1.h"
++#include "vu_specialized_route.h"
++#include "vu_program_collection.h"
++#include "vif_launch_overhead.h"
++#include <stdexcept>
+ #include "runtime/ps2_gs_gpu.h"
+ #include "runtime/ps2_gif_arbiter.h"
+ #include "runtime/ps2_memory.h"
+@@ -23,6 +27,7 @@
+ bool ps2VifKickVuProfileActive() noexcept;
+ void ps2VifKickStageRecord(unsigned,uint64_t,uint64_t,uint64_t) noexcept;
+ void ps2VifKickVuProfileRecord(uint64_t ns, uint32_t cycles, bool capped) noexcept;
++void ps2VifKickVuSpecializedRecord(bool selected, uint64_t blocks, uint64_t pairs) noexcept;
+ 
+ namespace
+ {
+@@ -321,70 +326,168 @@
+                          uint8_t *vuData, uint32_t dataSize,
+                          GS &gs, PS2Memory *memory, uint32_t maxCycles)
+ {
++    {
++        vif_launch_overhead::ProgramObserverScope observation(vif_launch_overhead::active());
++        vu_program_collection::recordLaunch(memory, vuCode, codeSize, m_state.pc, maxCycles, m_state.itop);
++    }
+     VuRunTiming timing(m_state.pc);
+     VuCapture capture(vuCode, codeSize, vuData, dataSize, m_state, memory, maxCycles);
+     bool branchPending = false;
+     uint32_t branchTarget = 0;
+     bool ended=false,bounds=false;
+     uint32_t cycle=0;
+-    for (; cycle < maxCycles; ++cycle)
+-    {
+-        if (m_state.pc + 8 > codeSize)
+-        {
+-            bounds=true;
+-            break;
+-        }
+-
+-        uint32_t lower, upper;
+-        std::memcpy(&lower, vuCode + m_state.pc, 4);
+-        std::memcpy(&upper, vuCode + m_state.pc + 4, 4);
+-        capture.step(m_state, lower, upper);
+-
+-        bool eBit = (upper >> 30) & 1;
+-        const uint32_t instructionPC = m_state.pc;
+-        // The upper I flag makes the lower word a literal, not an instruction.
+-        // The paired upper operation consumes the previous value of I.
+-        // Actual upper NOP: secondary table row 11, column 3. Retain
+-        // I/E flags and all pair scheduling even when its handler is skipped.
+-        if ((upper & 0x7FFu) != 0x2FFu)
+-            execUpper(upper);
+-        if ((upper & 0x80000000u) != 0)
+-            std::memcpy(&m_state.i, &lower, 4);
+-        else if (lower != 0x8000033Cu)
+-            execLower(lower, vuData, dataSize, gs, memory, upper);
+-
+-        // execLower marks taken branches in bit31; real micro-PCs are 14 bits.
+-        // Apply a previous branch after this delay pair, including a new branch
+-        // in the delay slot, whose own target applies after the following pair.
+-        const bool newBranch = (m_state.pc & 0x80000000u) != 0;
+-        const uint32_t newTarget = m_state.pc & 0x3FFFu;
+-
+-        // Enforce VF0 invariant
+-        m_state.vf[0][0] = 0.0f;
+-        m_state.vf[0][1] = 0.0f;
+-        m_state.vf[0][2] = 0.0f;
+-        m_state.vf[0][3] = 1.0f;
+-        // Enforce VI0 invariant
+-        m_state.vi[0] = 0;
+-
+-        uint32_t nextPC = branchPending ? branchTarget : instructionPC + 8;
+-        if (nextPC >= codeSize)
+-            nextPC = 0;
+-        m_state.pc = nextPC;
+-        branchPending = newBranch;
+-        branchTarget = newTarget;
+-
+-        if (m_state.ebit)
+-        {
+-            // A branch in the final E delay pair leaves its target as resume PC.
+-            if (branchPending) m_state.pc = branchTarget;
+-            ended=true;
+-            break;
+-        }
+-
+-        if (eBit)
+-            m_state.ebit = true;
+-    }
++    uint64_t matchedBlocks=0, matchedPairs=0;
++    const auto* specializedProgram = vu_specialized::selectProgram(
++        vuCode, codeSize, vuData, dataSize, capture.active);
++    if (!specializedProgram)
++    {
++        for (; cycle < maxCycles; ++cycle)
++        {
++            if (m_state.pc + 8 > codeSize)
++            {
++                bounds=true;
++                break;
++            }
++
++            uint32_t lower, upper;
++            std::memcpy(&lower, vuCode + m_state.pc, 4);
++            std::memcpy(&upper, vuCode + m_state.pc + 4, 4);
++            capture.step(m_state, lower, upper);
++
++            bool eBit = (upper >> 30) & 1;
++            const uint32_t instructionPC = m_state.pc;
++            // The upper I flag makes the lower word a literal, not an instruction.
++            // The paired upper operation consumes the previous value of I.
++            // Actual upper NOP: secondary table row 11, column 3. Retain
++            // I/E flags and all pair scheduling even when its handler is skipped.
++            if ((upper & 0x7FFu) != 0x2FFu)
++                execUpper(upper);
++            if ((upper & 0x80000000u) != 0)
++                std::memcpy(&m_state.i, &lower, 4);
++            else if (lower != 0x8000033Cu)
++                execLower(lower, vuData, dataSize, gs, memory, upper);
++
++            // execLower marks taken branches in bit31; real micro-PCs are 14 bits.
++            // Apply a previous branch after this delay pair, including a new branch
++            // in the delay slot, whose own target applies after the following pair.
++            const bool newBranch = (m_state.pc & 0x80000000u) != 0;
++            const uint32_t newTarget = m_state.pc & 0x3FFFu;
++
++            // Enforce VF0 invariant
++            m_state.vf[0][0] = 0.0f;
++            m_state.vf[0][1] = 0.0f;
++            m_state.vf[0][2] = 0.0f;
++            m_state.vf[0][3] = 1.0f;
++            // Enforce VI0 invariant
++            m_state.vi[0] = 0;
++
++            uint32_t nextPC = branchPending ? branchTarget : instructionPC + 8;
++            if (nextPC >= codeSize)
++                nextPC = 0;
++            m_state.pc = nextPC;
++            branchPending = newBranch;
++            branchTarget = newTarget;
++
++            if (m_state.ebit)
++            {
++                // A branch in the final E delay pair leaves its target as resume PC.
++                if (branchPending) m_state.pc = branchTarget;
++                ended=true;
++                break;
++            }
++
++            if (eBit)
++                m_state.ebit = true;
++        }
++    }
++    else
++    {
++        vu_specialized::Invocation invocation{
++            m_state, vuData, dataSize, gs, memory, branchPending, branchTarget, maxCycles, this,
++            +[](void* interpreter, uint32_t upper) {
++                static_cast<VU1Interpreter*>(interpreter)->execUpper(upper);
++            },
++            +[](void* interpreter, uint32_t lower, uint8_t* data, uint32_t bytes,
++                GS& output, PS2Memory* owner, uint32_t upper) {
++                static_cast<VU1Interpreter*>(interpreter)->execLower(lower, data, bytes, output, owner, upper);
++            }
++        };
++        for (; cycle < maxCycles; ++cycle)
++        {
++            if (m_state.pc + 8 > codeSize)
++            {
++                bounds=true;
++                break;
++            }
++
++            // Nullable indexed lookup: no indirect call for generic PCs.
++            if (!branchPending && !m_state.ebit && m_state.pc < codeSize && !(m_state.pc & 7u))
++            {
++                const auto* block = specializedProgram->entryBlocks[m_state.pc >> 3];
++                if (block && maxCycles - cycle >= block->instructionPairs)
++                {
++                    invocation.remainingPairs = maxCycles - cycle;
++                    const uint32_t consumed = block->execute(invocation);
++                    if (consumed != block->instructionPairs)
++                        throw std::logic_error("VU specialized block violated complete-pair contract");
++                    ++matchedBlocks; matchedPairs += consumed;
++                    cycle += consumed - 1u;
++                    continue;
++                }
++            }
++
++            uint32_t lower, upper;
++            std::memcpy(&lower, vuCode + m_state.pc, 4);
++            std::memcpy(&upper, vuCode + m_state.pc + 4, 4);
++            capture.step(m_state, lower, upper);
++
++            bool eBit = (upper >> 30) & 1;
++            const uint32_t instructionPC = m_state.pc;
++            // The upper I flag makes the lower word a literal, not an instruction.
++            // The paired upper operation consumes the previous value of I.
++            // Actual upper NOP: secondary table row 11, column 3. Retain
++            // I/E flags and all pair scheduling even when its handler is skipped.
++            if ((upper & 0x7FFu) != 0x2FFu)
++                execUpper(upper);
++            if ((upper & 0x80000000u) != 0)
++                std::memcpy(&m_state.i, &lower, 4);
++            else if (lower != 0x8000033Cu)
++                execLower(lower, vuData, dataSize, gs, memory, upper);
++
++            // execLower marks taken branches in bit31; real micro-PCs are 14 bits.
++            // Apply a previous branch after this delay pair, including a new branch
++            // in the delay slot, whose own target applies after the following pair.
++            const bool newBranch = (m_state.pc & 0x80000000u) != 0;
++            const uint32_t newTarget = m_state.pc & 0x3FFFu;
++
++            // Enforce VF0 invariant
++            m_state.vf[0][0] = 0.0f;
++            m_state.vf[0][1] = 0.0f;
++            m_state.vf[0][2] = 0.0f;
++            m_state.vf[0][3] = 1.0f;
++            // Enforce VI0 invariant
++            m_state.vi[0] = 0;
++
++            uint32_t nextPC = branchPending ? branchTarget : instructionPC + 8;
++            if (nextPC >= codeSize)
++                nextPC = 0;
++            m_state.pc = nextPC;
++            branchPending = newBranch;
++            branchTarget = newTarget;
++
++            if (m_state.ebit)
++            {
++                // A branch in the final E delay pair leaves its target as resume PC.
++                if (branchPending) m_state.pc = branchTarget;
++                ended=true;
++                break;
++            }
++
++            if (eBit)
++                m_state.ebit = true;
++        }
++    }
++    if (timing.kickProfile) ps2VifKickVuSpecializedRecord(specializedProgram != nullptr, matchedBlocks, matchedPairs);
+     timing.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds);
+ }
+ 
+diff --git a/ps2xRuntime/src/lib/vblank_music_diag.h b/ps2xRuntime/src/lib/vblank_music_diag.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vblank_music_diag.h
+@@ -0,0 +1,128 @@
++#pragma once
++// Private, bounded, default-off diagnostic. Never replays an IRQ or wakes a guest.
++#include "ps2_guest_sched.h"
++#include <algorithm>
++#include <array>
++#include <atomic>
++#include <chrono>
++#include <cstdint>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++
++namespace ps2_vblank_music_diag {
++enum class Kind : uint32_t {
++    TickPlan=1, Flag=2, GsCallbackDone=3, IntcLatch=4, AdmissionBegin=5,
++    Admitted=6, HandlersDone=7, CaptureQueued=8, HandlerBegin=9, HandlerEnd=10,
++    ThreadStatus=11, Wake=12, SleepEnter=13, SleepResolved=14, SleepReturn=15,
++    SjxPoll=16, PcmRetire=17, SjxPublished=18, PcmPush=19, Voice=20,
++    AudioReport=21, AsyncIntcRaise=22
++};
++struct Config { bool enabled=false; double after=0, until=5; uint32_t limit=8192; };
++inline const Config& config() noexcept {
++    static const Config c=[] {
++        Config value;
++        const char* flag=std::getenv("REO_VBLANK_MUSIC_LOG");
++        if(!flag || std::strcmp(flag,"1")) return value;
++        value.enabled=true;
++        if(const char* s=std::getenv("REO_VBLANK_MUSIC_AT")) value.after=std::max(0.0,std::atof(s));
++        value.until=value.after+5;
++        if(const char* s=std::getenv("REO_VBLANK_MUSIC_UNTIL")) value.until=std::max(value.after,std::atof(s));
++        if(const char* s=std::getenv("REO_VBLANK_MUSIC_LIMIT"))
++            value.limit=uint32_t(std::min(16384ul,std::strtoul(s,nullptr,10)));
++        return value;
++    }();
++    return c;
++}
++inline bool enabled() noexcept {return config().enabled;}
++inline uint64_t nowNs() noexcept {
++    return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
++        std::chrono::steady_clock::now().time_since_epoch()).count());
++}
++struct Record {
++    uint64_t ns=0, irqTick=0, observedLatestTick=0;
++    uint32_t kind=0; int32_t tid=0; // zero-initialized bounded storage; populated rows carry the real ID
++    uint64_t a[8]{};
++};
++struct Slot { Record record{}; std::atomic<bool> ready{false}; };
++inline std::array<Slot,16384> records{};
++inline std::atomic<uint64_t> epochNs{0}, generation{0}, claimed{0}, latestTick{0};
++inline std::atomic<bool> closed{false};
++inline thread_local uint64_t currentIrqTick=0;
++// Coordinator must join all writers before begin() or flush(). No callback records.
++inline void begin() noexcept {
++    if(!enabled()) return;
++    for(auto& slot:records) slot.ready.store(false,std::memory_order_relaxed);
++    claimed.store(0,std::memory_order_relaxed); latestTick.store(0,std::memory_order_relaxed);
++    epochNs.store(nowNs(),std::memory_order_release);
++    generation.fetch_add(1,std::memory_order_relaxed); closed.store(false,std::memory_order_release);
++}
++struct TickScope {
++    uint64_t previous=0;
++    explicit TickScope(uint64_t tick) noexcept {
++        if(!enabled()) return;
++        previous=currentIrqTick; currentIrqTick=tick; latestTick.store(tick,std::memory_order_relaxed);
++    }
++    ~TickScope() { if(enabled()) currentIrqTick=previous; }
++};
++inline void note(Kind kind,uint64_t a0=0,uint64_t a1=0,uint64_t a2=0,uint64_t a3=0,
++                 uint64_t a4=0,uint64_t a5=0,uint64_t a6=0,uint64_t a7=0) noexcept {
++    const auto& c=config();
++    if(!c.enabled || !c.limit || closed.load(std::memory_order_acquire)) return;
++    const uint64_t epoch=epochNs.load(std::memory_order_acquire);
++    if(!epoch) return; // prepareRuntimeWorkers owns explicit arming.
++    const uint64_t ns=nowNs();
++    const double elapsed=double(ns-epoch)/1000000000.0;
++    if(elapsed<c.after || elapsed>c.until) return;
++    const uint64_t index=claimed.fetch_add(1,std::memory_order_relaxed);
++    if(index>=c.limit) return;
++    auto& slot=records[size_t(index)];
++    slot.record={ns,currentIrqTick,latestTick.load(std::memory_order_relaxed),
++                 uint32_t(kind),ps2_sched::currentThread(),{a0,a1,a2,a3,a4,a5,a6,a7}};
++    slot.ready.store(true,std::memory_order_release);
++}
++inline uint32_t read32(const uint8_t* ram,uint32_t address) noexcept {
++    uint32_t value;std::memcpy(&value,ram+address,4);return value;
++}
++inline uint64_t read64(const uint8_t* ram,uint32_t address) noexcept {
++    uint64_t value;std::memcpy(&value,ram+address,8);return value;
++}
++// Call only while the original guest-execution scope is held.
++inline void guestSnapshot(Kind kind,const uint8_t* ram) noexcept {
++    if(!enabled() || !ram) return;
++    const uint64_t busy=uint64_t(read32(ram,0x210488)) |
++        (uint64_t(read32(ram,0x210490))<<8) | (uint64_t(read32(ram,0x210494))<<16);
++    const uint64_t phaseRoom=uint64_t(ram[0x4BADD0]) |
++        (uint64_t(ram[0x4BADD1])<<8) | (uint64_t(read32(ram,0x3243DC)&0xFFFFu)<<16);
++    note(kind,read32(ram,0x20F3C4),read64(ram,0x2104B0),read64(ram,0x2104B8),
++         read64(ram,0x2104C0),busy,read32(ram,0x21055C),read32(ram,0x21049C),phaseRoom);
++}
++inline bool watchedThread(int tid) noexcept {return tid==1 || tid==5 || tid==6 || tid==7;}
++inline void flush() noexcept {
++    const auto& c=config();
++    if(!c.enabled || closed.exchange(true,std::memory_order_acq_rel)) return;
++    char name[96];std::snprintf(name,sizeof(name),"reo-vblank-music-%llu.jsonl",
++                              static_cast<unsigned long long>(generation.load()));
++    FILE* output=std::fopen(name,"wx");
++    if(!output) {std::fprintf(stderr,"[VBLANK-MUSIC] export failed (existing file or IO error): %s\n",name);return;}
++    const uint64_t count=claimed.load(std::memory_order_acquire);
++    std::fprintf(output,"{\"metadata\":true,\"epoch_ns\":%llu,\"after\":%.6f,\"until\":%.6f,\"limit\":%u,\"claimed\":%llu,\"dropped\":%llu}\n",
++        static_cast<unsigned long long>(epochNs.load()),c.after,c.until,c.limit,
++        static_cast<unsigned long long>(count),static_cast<unsigned long long>(count>c.limit?count-c.limit:0));
++    uint32_t unpublished=0;
++    for(uint64_t i=0;i<std::min<uint64_t>(count,c.limit);++i) {
++        auto& slot=records[size_t(i)];
++        if(!slot.ready.load(std::memory_order_acquire)) {++unpublished;continue;}
++        const auto& r=slot.record;
++        std::fprintf(output,"{\"slot\":%llu,\"ns\":%llu,\"kind\":%u,\"tid\":%d,\"irq_tick\":%llu,\"observed_latest_tick\":%llu,\"args\":[",
++            static_cast<unsigned long long>(i),static_cast<unsigned long long>(r.ns),r.kind,r.tid,
++            static_cast<unsigned long long>(r.irqTick),static_cast<unsigned long long>(r.observedLatestTick));
++        for(unsigned a=0;a<8;++a) std::fprintf(output,a?",%llu":"%llu",static_cast<unsigned long long>(r.a[a]));
++        std::fputs("]}\n",output);
++    }
++    std::fprintf(output,"{\"end\":true,\"unpublished\":%u}\n",unpublished);
++    const int result=std::fclose(output);
++    std::fprintf(stderr,"[VBLANK-MUSIC] export=%s claimed=%llu dropped=%llu unpublished=%u close=%d\n",name,
++        static_cast<unsigned long long>(count),static_cast<unsigned long long>(count>c.limit?count-c.limit:0),unpublished,result);
++}
++}
+diff --git a/ps2xRuntime/src/lib/vif_launch_overhead.cpp b/ps2xRuntime/src/lib/vif_launch_overhead.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vif_launch_overhead.cpp
+@@ -0,0 +1,168 @@
++#include "vif_launch_overhead.h"
++#include <algorithm>
++#include <atomic>
++#include <cstdio>
++#include <cstring>
++#include <memory>
++
++namespace vif_launch_overhead {
++namespace {
++struct ProgramWork {
++    bool identityKnown = false, overflow = false;
++    uint64_t firstPair = 0, shaPrefix = 0, generationMin = UINT64_MAX, generationMax = 0;
++    uint32_t codeBytes = 0, firstPc = 0, lastPc = 0;
++    uint64_t launches = 0, returned = 0, wrapperNs = 0, bodyNs = 0, programObserverNs = 0;
++    uint64_t pairs = 0, bodyCalls = 0, capped = 0;
++    std::array<uint64_t, StageCount> stageNs{}, stageCalls{}, stageBytes{};
++};
++struct Work {
++    Work* previous = nullptr;
++    LaunchScope* previousLaunch = nullptr;
++    std::array<ProgramWork, 16> programs{};
++    ProgramWork overflow{};
++    uint32_t used = 0;
++    uint64_t launchNs = 0, launches = 0, parserNs = 0, parserCalls = 0, streamLockNs = 0;
++    uint64_t setupNs = 0, identityProviderNs = 0;
++    std::array<uint64_t, 128> commandNs{}, commandCalls{}, commandLaunchNs{};
++    std::array<uint64_t, StageCount> stageNs{}, stageCalls{}, stageBytes{};
++};
++thread_local Work* currentWork = nullptr;
++thread_local LaunchScope* currentLaunch = nullptr;
++std::atomic<IdentityProvider> identityProvider{nullptr};
++
++void printProgram(const ProgramWork& p, uint32_t kick, uint64_t startNs) noexcept {
++    if (!p.launches) return;
++    const uint64_t nestedXg = p.stageNs[XgkickPrep] + p.stageNs[XgkickSubmit];
++    std::fprintf(stderr, "[VIF-LAUNCH-PROGRAM] kick_n=%u kick_ns=%llu overflow=%u identity_known=%u code_first_pair=%016llx sha256_prefix64=%016llx generation_min=%llu generation_max=%llu code_bytes=%u first_pc=%04x last_pc=%04x launches=%llu returned=%llu wrapper_ns=%llu vu_body_ns=%llu wrapper_outside_vu_ns=%llu code_observer_ns=%llu wrapper_other_ns=%llu vu_non_xgkick_ns=%llu actual_pairs=%llu vu_body_calls=%llu capped=%llu\n",
++        kick, static_cast<unsigned long long>(startNs), unsigned(p.overflow), unsigned(p.identityKnown),
++        static_cast<unsigned long long>(p.firstPair), static_cast<unsigned long long>(p.shaPrefix),
++        static_cast<unsigned long long>(p.identityKnown ? p.generationMin : 0),
++        static_cast<unsigned long long>(p.generationMax), p.codeBytes, p.firstPc, p.lastPc,
++        static_cast<unsigned long long>(p.launches), static_cast<unsigned long long>(p.returned),
++        static_cast<unsigned long long>(p.wrapperNs), static_cast<unsigned long long>(p.bodyNs),
++        static_cast<unsigned long long>(p.wrapperNs >= p.bodyNs ? p.wrapperNs - p.bodyNs : 0),
++        static_cast<unsigned long long>(p.programObserverNs),
++        static_cast<unsigned long long>(p.wrapperNs >= p.bodyNs + p.programObserverNs ? p.wrapperNs - p.bodyNs - p.programObserverNs : 0),
++        static_cast<unsigned long long>(p.bodyNs >= nestedXg ? p.bodyNs - nestedXg : 0),
++        static_cast<unsigned long long>(p.pairs), static_cast<unsigned long long>(p.bodyCalls),
++        static_cast<unsigned long long>(p.capped));
++    for (unsigned stage = 0; stage < StageCount; ++stage)
++        if (p.stageCalls[stage]) std::fprintf(stderr,
++            "[VIF-LAUNCH-STAGE] kick_n=%u identity_known=%u sha256_prefix64=%016llx code_first_pair=%016llx overflow=%u stage=%u calls=%llu ns=%llu bytes=%llu\n",
++            kick, unsigned(p.identityKnown), static_cast<unsigned long long>(p.shaPrefix),
++            static_cast<unsigned long long>(p.firstPair), unsigned(p.overflow), stage,
++            static_cast<unsigned long long>(p.stageCalls[stage]),
++            static_cast<unsigned long long>(p.stageNs[stage]), static_cast<unsigned long long>(p.stageBytes[stage]));
++}
++}
++
++void setIdentityProvider(IdentityProvider provider) noexcept { identityProvider.store(provider, std::memory_order_release); }
++bool active() noexcept { return currentWork != nullptr; }
++uint64_t nestedLaunchNs() noexcept { return currentWork ? currentWork->launchNs : 0; }
++
++DmaScope::DmaScope() {
++    const auto started = Clock::now();
++    auto work = std::make_unique<Work>();
++    work->previous = currentWork;
++    work->previousLaunch = currentLaunch;
++    work->setupNs = durationNs(started);
++    currentWork = work.get();
++    currentLaunch = nullptr;
++    impl_ = work.release();
++}
++DmaScope::~DmaScope() {
++    auto* work = static_cast<Work*>(impl_);
++    if (work) { currentWork = work->previous; currentLaunch = work->previousLaunch; delete work; }
++}
++void DmaScope::complete(uint32_t kick, uint64_t startNs, uint64_t wallUs) noexcept {
++    const auto* w = static_cast<const Work*>(impl_);
++    if (!w) return;
++    std::fprintf(stderr, "[VIF-LAUNCH-DMA] kick_n=%u kick_ns=%llu kick_wall_us=%llu launches=%llu programs=%u parser_calls=%llu parser_ns=%llu stream_lock_ns=%llu launch_wrapper_ns=%llu collector_setup_ns=%llu identity_provider_ns=%llu clock_overhead_subtracted=0\n",
++        kick, static_cast<unsigned long long>(startNs), static_cast<unsigned long long>(wallUs),
++        static_cast<unsigned long long>(w->launches), w->used,
++        static_cast<unsigned long long>(w->parserCalls), static_cast<unsigned long long>(w->parserNs),
++        static_cast<unsigned long long>(w->streamLockNs), static_cast<unsigned long long>(w->launchNs),
++        static_cast<unsigned long long>(w->setupNs), static_cast<unsigned long long>(w->identityProviderNs));
++    for (const auto& p : w->programs) printProgram(p, kick, startNs);
++    printProgram(w->overflow, kick, startNs);
++    for (unsigned stage = 0; stage < StageCount; ++stage) if (w->stageCalls[stage])
++        std::fprintf(stderr, "[VIF-LAUNCH-DMA-STAGE] kick_n=%u stage=%u calls=%llu ns=%llu bytes=%llu\n",
++            kick, stage, static_cast<unsigned long long>(w->stageCalls[stage]),
++            static_cast<unsigned long long>(w->stageNs[stage]), static_cast<unsigned long long>(w->stageBytes[stage]));
++    for (unsigned opcode = 0; opcode < 128; ++opcode) if (w->commandCalls[opcode])
++        std::fprintf(stderr, "[VIF-LAUNCH-COMMAND] kick_n=%u opcode=%02x calls=%llu ns=%llu nested_launch_ns=%llu outside_launch_ns=%llu\n",
++            kick, opcode, static_cast<unsigned long long>(w->commandCalls[opcode]),
++            static_cast<unsigned long long>(w->commandNs[opcode]),
++            static_cast<unsigned long long>(w->commandLaunchNs[opcode]),
++            static_cast<unsigned long long>(w->commandNs[opcode] >= w->commandLaunchNs[opcode] ?
++                w->commandNs[opcode] - w->commandLaunchNs[opcode] : 0));
++}
++
++LaunchScope::LaunchScope(const void* owner, const uint8_t* code, uint32_t bytes,
++    uint32_t pc, uint32_t budget, uint32_t top)
++    : memoryIdentity(owner), codeBytes(bytes), startPc(pc), maxPairs(budget), itop(top), started(Clock::now()) {
++    if (code && bytes >= sizeof(codeFirstPair)) std::memcpy(&codeFirstPair, code, sizeof(codeFirstPair));
++    previous = currentLaunch;
++    currentLaunch = this;
++}
++LaunchScope::~LaunchScope() {
++    const uint64_t wrapperNs = durationNs(started);
++    currentLaunch = previous;
++    auto* w = currentWork;
++    if (!w) return;
++    uint64_t generation = 0, hash = 0;
++    bool known = false;
++    if (const auto provider = identityProvider.load(std::memory_order_acquire)) {
++        const auto identityStart = Clock::now();
++        known = provider(memoryIdentity, generation, hash);
++        w->identityProviderNs += durationNs(identityStart);
++    }
++    ProgramWork* p = nullptr;
++    for (uint32_t i = 0; i < w->used; ++i) {
++        auto& candidate = w->programs[i];
++        if (candidate.identityKnown == known && candidate.codeBytes == codeBytes &&
++            (known ? candidate.shaPrefix == hash : candidate.firstPair == codeFirstPair)) { p = &candidate; break; }
++    }
++    if (!p && w->used < w->programs.size()) {
++        p = &w->programs[w->used++];
++        p->identityKnown = known; p->shaPrefix = hash; p->firstPair = codeFirstPair;
++        p->codeBytes = codeBytes; p->firstPc = startPc;
++    }
++    if (!p) { p = &w->overflow; p->overflow = true; }
++    ++p->launches; p->returned += unsigned(returned); p->wrapperNs += wrapperNs;
++    p->lastPc = startPc; p->bodyNs += bodyNs; p->pairs += pairs; p->bodyCalls += bodyCalls; p->capped += capped;
++    p->programObserverNs += programObserverNs;
++    if (known && !p->overflow) {
++        p->generationMin = std::min(p->generationMin, generation);
++        p->generationMax = std::max(p->generationMax, generation);
++    }
++    for (unsigned i = 0; i < StageCount; ++i) {
++        p->stageNs[i] += stageNs[i]; p->stageCalls[i] += stageCalls[i]; p->stageBytes[i] += stageBytes[i];
++    }
++    ++w->launches; w->launchNs += wrapperNs;
++}
++
++void recordStage(unsigned stage, uint64_t ns, uint64_t bytes) noexcept {
++    if (!currentWork || stage >= StageCount) return;
++    currentWork->stageNs[stage] += ns; ++currentWork->stageCalls[stage]; currentWork->stageBytes[stage] += bytes;
++    if (auto* launch = currentLaunch) {
++        launch->stageNs[stage] += ns; ++launch->stageCalls[stage]; launch->stageBytes[stage] += bytes;
++    }
++}
++void recordVu(uint64_t ns, uint32_t pairs, bool capped) noexcept {
++    if (auto* launch = currentLaunch) {
++        launch->bodyNs += ns; launch->pairs += pairs; ++launch->bodyCalls; launch->capped += unsigned(capped);
++    }
++}
++void recordProgramObserver(uint64_t ns) noexcept {
++    if (auto* launch = currentLaunch) launch->programObserverNs += ns;
++}
++void recordParse(uint64_t ns, uint64_t lockNs) noexcept {
++    if (auto* w = currentWork) { ++w->parserCalls; w->parserNs += ns; w->streamLockNs += lockNs; }
++}
++void recordCommand(uint8_t opcode, uint64_t ns, uint64_t nestedLaunch) noexcept {
++    if (auto* w = currentWork; w && opcode < 128u) {
++        ++w->commandCalls[opcode]; w->commandNs[opcode] += ns; w->commandLaunchNs[opcode] += nestedLaunch;
++    }
++}
++}
+diff --git a/ps2xRuntime/src/lib/vif_launch_overhead.h b/ps2xRuntime/src/lib/vif_launch_overhead.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vif_launch_overhead.h
+@@ -0,0 +1,91 @@
++#pragma once
++// Private, opt-in diagnostics. No public runtime header or class changes.
++#include <array>
++#include <chrono>
++#include <cstdint>
++
++namespace vif_launch_overhead {
++using Clock = std::chrono::steady_clock;
++using IdentityProvider = bool (*)(const void*, uint64_t& generation, uint64_t& sha256Prefix64) noexcept;
++void setIdentityProvider(IdentityProvider) noexcept;
++bool active() noexcept;
++constexpr unsigned StageCount = 11;
++enum Stage : unsigned {
++    XgkickPrep = 0, XgkickSubmit = 1, GsPacketAllocationCopy = 2,
++    GsQueueLock = 3, GsQueueWait = 4, ArbiterAllocationZero = 5,
++    ArbiterCopy = 6, ArbiterPush = 7, ArbiterSort = 8, ArbiterDispatch = 9, GsPushNotify = 10
++};
++void recordStage(unsigned, uint64_t ns, uint64_t bytes) noexcept;
++void recordVu(uint64_t ns, uint32_t pairs, bool capped) noexcept;
++void recordProgramObserver(uint64_t ns) noexcept;
++void recordParse(uint64_t ns, uint64_t lockNs) noexcept;
++void recordCommand(uint8_t opcode, uint64_t ns, uint64_t nestedLaunchNs) noexcept;
++uint64_t nestedLaunchNs() noexcept;
++
++class DmaScope {
++    void* impl_ = nullptr;
++public:
++    DmaScope(); // Construct only inside an already selected bounded kick.
++    ~DmaScope();
++    DmaScope(const DmaScope&) = delete;
++    DmaScope& operator=(const DmaScope&) = delete;
++    void complete(uint32_t kickNumber, uint64_t kickStartNs, uint64_t kickWallUs) noexcept;
++};
++
++class LaunchScope {
++public: // Implementation-only TLS accounting; not a runtime public class.
++    const void* memoryIdentity;
++    uint64_t codeFirstPair = 0;
++    uint32_t codeBytes, startPc, maxPairs, itop;
++    uint64_t bodyNs = 0, pairs = 0, bodyCalls = 0, capped = 0, programObserverNs = 0;
++    std::array<uint64_t, StageCount> stageNs{}, stageCalls{}, stageBytes{};
++    Clock::time_point started;
++    LaunchScope* previous = nullptr;
++    bool returned = false;
++    LaunchScope(const void*, const uint8_t* code, uint32_t codeBytes,
++        uint32_t startPc, uint32_t maxPairs, uint32_t itop);
++    ~LaunchScope();
++    LaunchScope(const LaunchScope&) = delete;
++    LaunchScope& operator=(const LaunchScope&) = delete;
++};
++
++inline uint64_t durationNs(Clock::time_point begin) noexcept {
++    return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - begin).count());
++}
++
++class ProgramObserverScope {
++    bool enabled_;
++    Clock::time_point started_{};
++public:
++    explicit ProgramObserverScope(bool enabled) : enabled_(enabled) {
++        if (enabled_) started_ = Clock::now();
++    }
++    ~ProgramObserverScope() { if (enabled_) recordProgramObserver(durationNs(started_)); }
++};
++
++class ParseScope {
++    bool enabled_;
++    Clock::time_point started_{};
++    uint64_t lockNs_ = 0;
++public:
++    explicit ParseScope(bool enabled) : enabled_(enabled) {
++        if (enabled_) started_ = Clock::now();
++    }
++    void lockAcquired() noexcept { if (enabled_) lockNs_ = durationNs(started_); }
++    ~ParseScope() { if (enabled_) recordParse(durationNs(started_), lockNs_); }
++};
++
++class CommandScope {
++    bool enabled_;
++    uint8_t opcode_;
++    Clock::time_point started_{};
++    uint64_t nestedBefore_ = 0;
++public:
++    CommandScope(bool enabled, uint8_t opcode) : enabled_(enabled), opcode_(opcode) {
++        if (enabled_) { nestedBefore_ = nestedLaunchNs(); started_ = Clock::now(); }
++    }
++    ~CommandScope() {
++        if (enabled_) recordCommand(opcode_, durationNs(started_), nestedLaunchNs() - nestedBefore_);
++    }
++};
++}
+diff --git a/ps2xRuntime/src/lib/vu_program_collection.cpp b/ps2xRuntime/src/lib/vu_program_collection.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vu_program_collection.cpp
+@@ -0,0 +1,191 @@
++#include "vu_program_collection.h"
++#include <algorithm>
++#include <array>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <filesystem>
++#include <fstream>
++#include <mutex>
++#include <string>
++#include <stdexcept>
++#include <utility>
++#include <unordered_map>
++#include <vector>
++
++namespace vu_program_collection {
++namespace {
++using Digest=std::array<uint8_t,32>;
++uint32_t rotate(uint32_t value,unsigned bits) {return (value>>bits)|(value<<(32-bits));}
++Digest sha256(const uint8_t* bytes,uint32_t size) {
++    static constexpr uint32_t constants[64]={
++        0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
++        0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
++        0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
++        0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
++        0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
++        0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
++        0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
++        0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2};
++    uint32_t state[8]={0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19};
++    const uint64_t total=((uint64_t(size)+9+63)/64)*64;
++    const uint64_t lengthBits=uint64_t(size)*8;
++    for(uint64_t base=0;base<total;base+=64) {
++        uint32_t words[64]{};
++        for(unsigned i=0;i<64;++i) {
++            const uint64_t offset=base+i;
++            uint8_t value=offset<size?bytes[offset]:offset==size?0x80:0;
++            if(offset>=total-8)value=uint8_t(lengthBits>>(8*(total-1-offset)));
++            words[i/4]|=uint32_t(value)<<(24-8*(i%4));
++        }
++        for(unsigned i=16;i<64;++i) {
++            const uint32_t a=words[i-15],b=words[i-2];
++            words[i]=words[i-16]+(rotate(a,7)^rotate(a,18)^(a>>3))+words[i-7]+(rotate(b,17)^rotate(b,19)^(b>>10));
++        }
++        uint32_t a=state[0],b=state[1],c=state[2],d=state[3],e=state[4],f=state[5],g=state[6],h=state[7];
++        for(unsigned i=0;i<64;++i) {
++            const uint32_t t1=h+(rotate(e,6)^rotate(e,11)^rotate(e,25))+((e&f)^(~e&g))+constants[i]+words[i];
++            const uint32_t t2=(rotate(a,2)^rotate(a,13)^rotate(a,22))+((a&b)^(a&c)^(b&c));
++            h=g;g=f;f=e;e=d+t1;d=c;c=b;b=a;a=t1+t2;
++        }
++        state[0]+=a;state[1]+=b;state[2]+=c;state[3]+=d;state[4]+=e;state[5]+=f;state[6]+=g;state[7]+=h;
++    }
++    Digest result{};
++    for(unsigned i=0;i<32;++i)result[i]=uint8_t(state[i/4]>>(24-8*(i%4)));
++    return result;
++}
++std::string hex(const Digest& digest) {
++    static constexpr char digits[]="0123456789abcdef";
++    std::string text(64,'0');
++    for(unsigned i=0;i<32;++i){text[i*2]=digits[digest[i]>>4];text[i*2+1]=digits[digest[i]&15];}
++    return text;
++}
++uint64_t number(const char* name,uint64_t fallback,uint64_t maximum) {
++    const char* value=std::getenv(name);
++    return std::min(maximum,value?std::strtoull(value,nullptr,0):fallback);
++}
++struct Configuration {
++    bool enabled=false;
++    std::filesystem::path directory;
++    uint64_t uploadLimit=16384,launchLimit=262144,imageLimit=1024,byteLimit=64*1024*1024;
++    Configuration() noexcept {
++        try {
++            const char* enabledText=std::getenv("REO_VU_PROGRAM_LOG");
++            const char* output=std::getenv("REO_VU_PROGRAM_DIR");
++            if(!enabledText||!std::strtoull(enabledText,nullptr,0)||!output||!*output)return;
++            directory=std::filesystem::path(output);
++            uploadLimit=number("REO_VU_PROGRAM_UPLOAD_LIMIT",uploadLimit,1048576);
++            launchLimit=number("REO_VU_PROGRAM_LAUNCH_LIMIT",launchLimit,1048576);
++            imageLimit=number("REO_VU_PROGRAM_IMAGE_LIMIT",imageLimit,4096);
++            byteLimit=number("REO_VU_PROGRAM_BYTE_LIMIT",byteLimit,256*1024*1024);
++            enabled=uploadLimit&&launchLimit&&imageLimit&&byteLimit;
++        } catch(...) {}
++    }
++};
++const Configuration& configuration(){static const Configuration config;return config;}
++struct Image {Digest digest{};std::string name;std::vector<uint8_t> code;};
++struct Memory {uint32_t id=0;uint64_t generation=0;size_t image=SIZE_MAX;};
++struct State {
++    std::mutex mutex;
++    bool opened=false,failed=false,stopped=false;
++    uint64_t bytes=0,uploads=0,launches=0,event=0;
++    std::ofstream output;
++    std::unordered_map<const void*,Memory> memories;
++    std::vector<Image> images;
++};
++State& state(){static State instance;return instance;}
++bool open(State& state,const Configuration& config) {
++    if(state.failed||state.stopped)return false;
++    if(state.opened)return true;
++    std::filesystem::create_directories(config.directory);
++    const auto log=config.directory/"events.jsonl";
++    if(std::filesystem::exists(log))throw std::runtime_error("collector output already exists");
++    state.output.open(log,std::ios::out|std::ios::binary);
++    if(!state.output)throw std::runtime_error("cannot open collector output");
++    state.opened=true;
++    state.output<<"{\"event\":\"configuration\",\"format\":1,\"classification\":\"diagnostic_observer_not_fps\",\"upload_limit\":"<<config.uploadLimit
++        <<",\"launch_limit\":"<<config.launchLimit<<",\"image_limit\":"<<config.imageLimit<<",\"byte_limit\":"<<config.byteLimit<<"}\n";
++    state.bytes=uint64_t(state.output.tellp());
++    return true;
++}
++void stop(State& state,const char* reason) {
++    if(!state.stopped){state.output<<"{\"event\":\"stopped\",\"reason\":\""<<reason<<"\",\"uploads\":"<<state.uploads<<",\"launches\":"<<state.launches<<"}\n";state.output.flush();state.stopped=true;}
++}
++void line(State& state,const Configuration& config,const std::string& text) {
++    if(state.bytes+text.size()+1>config.byteLimit){stop(state,"byte_limit");return;}
++    state.output<<text<<'\n';
++    if(!state.output)throw std::runtime_error("collector log write failed");
++    state.bytes+=text.size()+1;
++}
++size_t image(State& state,const Configuration& config,const uint8_t* code,uint32_t codeBytes) {
++    const auto digest=sha256(code,codeBytes);
++    for(size_t i=0;i<state.images.size();++i)
++        if(state.images[i].digest==digest&&state.images[i].code.size()==codeBytes&&std::memcmp(code,state.images[i].code.data(),codeBytes)==0)return i;
++    if(state.images.size()>=config.imageLimit){stop(state,"image_limit");return SIZE_MAX;}
++    if(state.bytes+codeBytes>config.byteLimit){stop(state,"byte_limit");return SIZE_MAX;}
++    Image entry{digest,"image-"+hex(digest)+".bin",std::vector<uint8_t>(code,code+codeBytes)};
++    const auto path=config.directory/entry.name;
++    if(std::filesystem::exists(path))throw std::runtime_error("collector image path already exists");
++    std::ofstream file(path,std::ios::binary);file.write(reinterpret_cast<const char*>(code),codeBytes);file.close();
++    if(!file)throw std::runtime_error("collector image write failed");
++    state.bytes+=codeBytes;
++    const size_t id=state.images.size();state.images.push_back(std::move(entry));
++    line(state,config,"{\"event\":\"image\",\"image\":"+std::to_string(id)+",\"sha256\":\""+hex(digest)+"\",\"bytes\":"+std::to_string(codeBytes)+",\"file\":\""+state.images.back().name+"\"}");
++    return id;
++}
++Memory& memory(State& state,const void* identity) {
++    auto [entry,inserted]=state.memories.try_emplace(identity);
++    if(inserted)entry->second.id=uint32_t(state.memories.size()-1);
++    return entry->second;
++}
++void fail() noexcept {
++    // No observer error changes guest execution or throws through runtime.
++    try {auto& s=state();std::lock_guard lock(s.mutex);if(!s.failed){s.failed=true;std::fprintf(stderr,"[VU-PROGRAM] collector disabled after I/O or allocation failure\n");}}catch(...){}
++}
++}
++void recordMpg(const void* identity,const uint8_t* code,uint32_t codeBytes,
++    uint32_t destination,uint32_t instructions,const uint8_t* payload,uint32_t payloadBytes) noexcept {
++    const auto& config=configuration();if(!config.enabled)return;
++    try {
++        auto& s=state();std::lock_guard lock(s.mutex);if(!open(s,config))return;
++        if(!code||!codeBytes||codeBytes>16384||!payload||!payloadBytes||payloadBytes>2048){stop(s,"invalid_span");return;}
++        if(s.uploads>=config.uploadLimit){stop(s,"upload_limit");return;}
++        auto& m=memory(s,identity);++m.generation;m.image=image(s,config,code,codeBytes);if(m.image==SIZE_MAX)return;
++        const auto event=s.event++;
++        line(s,config,"{\"event\":\"mpg\",\"sequence\":"+std::to_string(event)+",\"memory\":"+std::to_string(m.id)+",\"generation\":"+std::to_string(m.generation)
++            +",\"image\":"+std::to_string(m.image)+",\"sha256\":\""+hex(s.images[m.image].digest)+"\",\"destination_byte\":"+std::to_string(destination)
++            +",\"instructions\":"+std::to_string(instructions)+",\"payload_bytes\":"+std::to_string(payloadBytes)+",\"payload_sha256\":\""+hex(sha256(payload,payloadBytes))+"\"}");
++        ++s.uploads;s.output.flush();
++    }catch(...){fail();}
++}
++void recordLaunch(const void* identity,const uint8_t* code,uint32_t codeBytes,
++    uint32_t startPc,uint32_t maxPairs,uint32_t itop) noexcept {
++    const auto& config=configuration();if(!config.enabled)return;
++    try {
++        auto& s=state();std::lock_guard lock(s.mutex);if(!open(s,config))return;
++        if(!code||!codeBytes||codeBytes>16384){stop(s,"invalid_span");return;}
++        if(s.launches>=config.launchLimit){stop(s,"launch_limit");return;}
++        auto& m=memory(s,identity);
++        // Enabled-only full comparison also detects initialization/reset/non-MPG mutation.
++        if(m.image==SIZE_MAX||s.images[m.image].code.size()!=codeBytes||std::memcmp(code,s.images[m.image].code.data(),codeBytes)!=0) {
++            m.image=image(s,config,code,codeBytes);if(m.image==SIZE_MAX)return;
++            line(s,config,"{\"event\":\"entry_image_change\",\"memory\":"+std::to_string(m.id)+",\"generation\":"+std::to_string(m.generation)+",\"image\":"+std::to_string(m.image)+"}");
++        }
++        line(s,config,"{\"event\":\"launch\",\"sequence\":"+std::to_string(s.event++)+",\"memory\":"+std::to_string(m.id)+",\"generation\":"+std::to_string(m.generation)
++            +",\"image\":"+std::to_string(m.image)+",\"sha256\":\""+hex(s.images[m.image].digest)+"\",\"start_pc\":"+std::to_string(startPc)
++            +",\"max_pairs\":"+std::to_string(maxPairs)+",\"itop\":"+std::to_string(itop)+"}");
++        ++s.launches;if((s.launches&255)==0)s.output.flush();
++    }catch(...){fail();}
++}
++bool currentIdentity(const void* identity,uint64_t& generation,uint64_t& hash) noexcept {
++    if(!configuration().enabled)return false;
++    try {
++        auto& s=state();std::lock_guard lock(s.mutex);
++        const auto found=s.memories.find(identity);
++        if(found==s.memories.end()||found->second.image==SIZE_MAX||s.failed||s.stopped)return false;
++        generation=found->second.generation;hash=0;
++        for(unsigned i=0;i<8;++i)hash=(hash<<8)|s.images[found->second.image].digest[i];
++        return true;
++    }catch(...){return false;}
++}
++}
+diff --git a/ps2xRuntime/src/lib/vu_program_collection.h b/ps2xRuntime/src/lib/vu_program_collection.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vu_program_collection.h
+@@ -0,0 +1,12 @@
++#pragma once
++#include <cstdint>
++namespace vu_program_collection {
++void recordMpg(const void* memoryIdentity, const uint8_t* code, uint32_t codeBytes,
++    uint32_t destinationByte, uint32_t instructionCount,
++    const uint8_t* payload, uint32_t payloadBytes) noexcept;
++void recordLaunch(const void* memoryIdentity, const uint8_t* code, uint32_t codeBytes,
++    uint32_t startPc, uint32_t maxPairs, uint32_t itop) noexcept;
++// Diagnostic join key only: hash is the first64bits of the full SHA256 image ID.
++bool currentIdentity(const void* memoryIdentity, uint64_t& generation,
++    uint64_t& hash) noexcept;
++}
+diff --git a/ps2xRuntime/src/lib/vu_specialized_route.cpp b/ps2xRuntime/src/lib/vu_specialized_route.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vu_specialized_route.cpp
+@@ -0,0 +1,81 @@
++#include "vu_specialized_route.h"
++#include <atomic>
++#include <cstring>
++#include <limits>
++
++namespace vu_specialized {
++namespace {
++std::atomic<const ProgramTable*> publishedTable{nullptr};
++
++uint64_t firstPair(const uint8_t* code) noexcept {
++    uint64_t value;
++    std::memcpy(&value, code, sizeof(value));
++    return value;
++}
++
++bool disjoint(const uint8_t* a, uint32_t aBytes, const uint8_t* b, uint32_t bBytes) noexcept {
++    const uintptr_t x = reinterpret_cast<uintptr_t>(a);
++    const uintptr_t y = reinterpret_cast<uintptr_t>(b);
++    const uintptr_t max = std::numeric_limits<uintptr_t>::max();
++    if (!a || !b || x > max - aBytes || y > max - bBytes) return false;
++    return x + aBytes <= y || y + bBytes <= x;
++}
++}
++
++bool registerProgramTable(const ProgramTable* table) noexcept {
++    if (!table || !table->count) {
++        publishedTable.store(nullptr, std::memory_order_release);
++        return true;
++    }
++    if (!table->programs || table->count > 64u) return false;
++    for (uint32_t i = 0; i < table->count; ++i) {
++        const auto& p = table->programs[i];
++        if (!p.exactCodeImage || !p.entryBlocks || p.codeBytes < 8u ||
++            p.codeBytes > 16384u || (p.codeBytes & 7u) || !p.dataBytes || p.dataBytes > 16384u)
++            return false;
++        for (uint32_t j = 0; j < i; ++j)
++            if (firstPair(p.exactCodeImage) == firstPair(table->programs[j].exactCodeImage))
++                return false;
++        for (uint32_t entry = 0; entry < p.codeBytes / 8u; ++entry) {
++            const Block* block = p.entryBlocks[entry];
++            if (!block) continue;
++            if (!block->execute || !block->instructionPairs ||
++                block->instructionPairs > p.codeBytes / 8u - entry)
++                return false;
++            for (uint32_t pair = 0; pair < block->instructionPairs; ++pair) {
++                uint32_t lower, upper;
++                const auto* bytes = p.exactCodeImage + (entry + pair) * 8u;
++                std::memcpy(&lower, bytes, 4);
++                std::memcpy(&upper, bytes + 4, 4);
++                if (upper & 0x40000000u) return false;
++                if (!(upper & 0x80000000u) && ((lower >> 25) & 0x7Fu) == 0x40u &&
++                    (lower & 0x7FFu) == 0x6FCu)
++                    return false;
++            }
++        }
++    }
++    publishedTable.store(table, std::memory_order_release);
++    return true;
++}
++
++uint32_t registeredProgramCount() noexcept {
++    const ProgramTable* table = publishedTable.load(std::memory_order_acquire);
++    return table ? table->count : 0u;
++}
++
++const Program* selectProgram(const uint8_t* code, uint32_t codeBytes,
++    const uint8_t* data, uint32_t dataBytes, bool captureActive) noexcept {
++    const ProgramTable* table = publishedTable.load(std::memory_order_acquire);
++    if (!table || captureActive || codeBytes < 8u || !disjoint(code, codeBytes, data, dataBytes))
++        return nullptr;
++    const uint64_t prefix = firstPair(code);
++    for (uint32_t i = 0; i < table->count; ++i) {
++        const Program& p = table->programs[i];
++        if (p.codeBytes != codeBytes || p.dataBytes != dataBytes || firstPair(p.exactCodeImage) != prefix)
++            continue;
++        // First-pair uniqueness means at most one full comparison, once per run.
++        return std::memcmp(code, p.exactCodeImage, codeBytes) == 0 ? &p : nullptr;
++    }
++    return nullptr;
++}
++}
+diff --git a/ps2xRuntime/src/lib/vu_specialized_route.h b/ps2xRuntime/src/lib/vu_specialized_route.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vu_specialized_route.h
+@@ -0,0 +1,71 @@
++#pragma once
++// Private implementation API. No public VU class fields or headers change.
++#include <cstdint>
++
++struct VU1State;
++class GS;
++class PS2Memory;
++
++namespace vu_specialized {
++struct Invocation {
++    VU1State& state;
++    uint8_t* data;
++    uint32_t dataBytes;
++    GS& gs;
++    PS2Memory* memory; // May be null: original interpreter supports this.
++    bool& branchPending;
++    uint32_t& branchTarget;
++    uint32_t remainingPairs;
++    void* interpreter;
++    // Created inside VU1Interpreter::run to retain exact private C++ handlers.
++    void (*genericUpper)(void*, uint32_t upper);
++    void (*genericLower)(void*, uint32_t lower, uint8_t*, uint32_t, GS&, PS2Memory*, uint32_t upper);
++};
++
++// Adaptor for existing generated template<class Generic> block implementations.
++// A stack value, not std::function; no allocation or per-pair code comparison.
++struct GenericFallback {
++    Invocation& invocation;
++    void operator()(uint32_t lower, uint32_t upper, bool isUpper) const {
++        if (isUpper) invocation.genericUpper(invocation.interpreter, upper);
++        else invocation.genericLower(invocation.interpreter, lower,
++            invocation.data, invocation.dataBytes, invocation.gs, invocation.memory, upper);
++    }
++};
++
++struct Block {
++    uint32_t instructionPairs;
++    // Must complete exactly instructionPairs. No partial execution/refusal.
++    // Preserve original per-pair scheduling, zero-register invariants, PC,
++    // branchPending/branchTarget, arithmetic fallbacks and ordered side effects.
++    // Registered blocks contain no E pair or XGKICK; generic code handles them.
++    uint32_t (*execute)(Invocation&);
++};
++
++struct Program {
++    const uint8_t* exactCodeImage;
++    uint32_t codeBytes;
++    uint32_t dataBytes;
++    // Dense array of codeBytes/8 entries, null except complete block entries.
++    const Block* const* entryBlocks;
++};
++
++struct ProgramTable {
++    const Program* programs;
++    uint32_t count;
++};
++
++// Publish immutable caller-owned program/table/image storage before runtime init.
++// All storage, including replaced tables, must live until every VU call ends.
++// Duplicate first instruction-pair identities are rejected, avoiding ambiguous
++// matching and more than one complete image comparison per launch.
++// Null clears the registry. Failed validation leaves the prior table unchanged.
++bool registerProgramTable(const ProgramTable*) noexcept;
++uint32_t registeredProgramCount() noexcept;
++
++// One call per synchronous launch. Requires code stability for the whole launch,
++// including its generic XGKICK callbacks. Caller serializes concurrent/reentrant MPG writes; this API
++// creates no async VU/MPG lifetime protocol and never caches mutable code pointers.
++const Program* selectProgram(const uint8_t* code, uint32_t codeBytes,
++    const uint8_t* data, uint32_t dataBytes, bool captureActive) noexcept;
++}

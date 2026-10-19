@@ -1,0 +1,12 @@
+diff --git a/ps2xRuntime/src/lib/pose_origin_capture.cpp b/ps2xRuntime/src/lib/pose_origin_capture.cpp
+--- a/ps2xRuntime/src/lib/pose_origin_capture.cpp
++++ b/ps2xRuntime/src/lib/pose_origin_capture.cpp
+@@ -52,7 +52,7 @@
+   out.kind=kind;out.attempt=attempt;out.address=boundary->requestedAddress;out.value=boundary->requestedValue;std::memcpy(out.preDma,boundary->preDma,sizeof(out.preDma));
+   copy(out.ram,boundary->memory->getRDRAM(),PS2_RAM_SIZE);copy(out.spr,boundary->memory->getScratchpad(),PS2_SCRATCHPAD_SIZE);copy(out.ctx,boundary->context,sizeof(R5900Context));
+   copy(out.vifRegs,&boundary->memory->vif1_regs,sizeof(VIFRegisters));copy(out.initialVifRegs,stream->initialVifRegisters,sizeof(stream->initialVifRegisters));out.streamBytes=stream->bytes;out.carry=stream->carry;out.pendingCode=stream->pendingCode;out.parserCursor=stream->cursor?*stream->cursor:0;
+-  constexpr uint32_t MaxStream=1024u*1024u;const uint32_t save=stream->bytes<MaxStream?stream->bytes:MaxStream;out.streamTruncated=save!=stream->bytes;copy(out.vif,stream->data,save);
++  constexpr uint32_t MaxStream=8u*1024u*1024u;const uint32_t save=stream->bytes<MaxStream?stream->bytes:MaxStream;out.streamTruncated=save!=stream->bytes;copy(out.vif,stream->data,save);
+   copy(out.event,event,eventBytes);copy(out.state,state,stateBytes);copy(out.data,data,dataBytes);out.complete=true;
+  }catch(...){std::fputs("[POSE-ORIGIN] snapshot allocation failed; no retry\n",stderr);}
+ }

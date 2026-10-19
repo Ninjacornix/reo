@@ -1,0 +1,479 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -17,6 +17,8 @@
+ #include <mutex>
+ #include <thread>
+ #include <vector>
++#include <utility>
++#include <optional>
+ 
+ bool ps2GsWorkerStopRequested(); // Explicit teardown only; normal draws are unchanged.
+ 
+@@ -44,7 +46,7 @@
+         const GSVertex *vertices = nullptr;
+         unsigned index = 0, limit = 0, type = 0;
+         double elapsed = 0;
+-        bool active = false, textured = false;
++        bool active = false, textured = false, parallel = false;
+ 
+         TriangleProbe(const GSContext &ctx, const GSPrimReg &prim, const GSVertex *v)
+         {
+@@ -102,7 +104,7 @@
+             t_triangleProbe = previous;
+             const auto us = std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - started).count();
+             static TriangleProbeCounts total;
+-            static uint64_t totalUs = 0;
++            static uint64_t totalUs = 0, totalParallel = 0;
+ #define ADD_TRI_COUNT(field) total.field += counts.field
+             ADD_TRI_COUNT(covered); ADD_TRI_COUNT(shaded); ADD_TRI_COUNT(dateRejected); ADD_TRI_COUNT(zRejected);
+             ADD_TRI_COUNT(alphaNoFramebuffer); ADD_TRI_COUNT(boundsRejected); ADD_TRI_COUNT(invalidDepth);
+@@ -110,12 +112,13 @@
+             ADD_TRI_COUNT(earlyRejected);
+ #undef ADD_TRI_COUNT
+             totalUs += uint64_t(std::max<int64_t>(0, us));
++            totalParallel += unsigned(parallel);
+             // Every selected primitive contributes to totals. Detail for the
+             // first eight or slow triangles gives actual vertex provenance.
+             if (index <= 8 || us >= 10000)
+             {
+                 const auto &c = *context;
+-                std::fprintf(stderr, "[GS-TRI-PROBE] n=%u elapsed=%.6f us=%lld type=%u textured=%u covered=%llu shaded=%llu z_reject=%llu date_reject=%llu alpha_no_fb=%llu bounds_reject=%llu invalid_depth=%llu z_write=%llu fb_write=%llu fb_masked=%llu early_reject=%llu test=%llx zbuf=%llx frame=%x/%u/%x/%x tex=%x/%x tex1=%llx clamp=%llx alpha=%llx xyoffset=%u,%u scissor=%u,%u,%u,%u\n",
++                std::fprintf(stderr, "[GS-TRI-PROBE] n=%u elapsed=%.6f us=%lld type=%u textured=%u covered=%llu shaded=%llu z_reject=%llu date_reject=%llu alpha_no_fb=%llu bounds_reject=%llu invalid_depth=%llu z_write=%llu fb_write=%llu fb_masked=%llu early_reject=%llu test=%llx zbuf=%llx frame=%x/%u/%x/%x tex=%x/%x tex1=%llx clamp=%llx alpha=%llx xyoffset=%u,%u scissor=%u,%u,%u,%u parallel=%u\n",
+                     index, elapsed, static_cast<long long>(us), type, unsigned(textured),
+                     static_cast<unsigned long long>(counts.covered), static_cast<unsigned long long>(counts.shaded),
+                     static_cast<unsigned long long>(counts.zRejected), static_cast<unsigned long long>(counts.dateRejected),
+@@ -127,7 +130,7 @@
+                     c.frame.fbp, c.frame.fbw, unsigned(c.frame.psm), c.frame.fbmsk, c.tex0.tbp0, unsigned(c.tex0.psm),
+                     static_cast<unsigned long long>(c.tex1), static_cast<unsigned long long>(c.clamp),
+                     static_cast<unsigned long long>(c.alpha), c.xyoffset.ofx, c.xyoffset.ofy,
+-                    c.scissor.x0, c.scissor.y0, c.scissor.x1, c.scissor.y1);
++                    c.scissor.x0, c.scissor.y0, c.scissor.x1, c.scissor.y1, unsigned(parallel));
+                 for (unsigned i = 0; i < 3; ++i)
+                 {
+                     const auto &v = vertices[i];
+@@ -138,14 +141,14 @@
+             }
+             // Cumulative output is outside rasterization and has a finite
+             // budget even if the requested time window outlasts the game.
+-            std::fprintf(stderr, "[GS-TRI-TOTAL] n=%u limit=%u elapsed=%.6f us=%llu covered=%llu shaded=%llu z_reject=%llu date_reject=%llu alpha_no_fb=%llu bounds_reject=%llu invalid_depth=%llu z_write=%llu fb_write=%llu fb_masked=%llu early_reject=%llu\n",
++            std::fprintf(stderr, "[GS-TRI-TOTAL] n=%u limit=%u elapsed=%.6f us=%llu covered=%llu shaded=%llu z_reject=%llu date_reject=%llu alpha_no_fb=%llu bounds_reject=%llu invalid_depth=%llu z_write=%llu fb_write=%llu fb_masked=%llu early_reject=%llu parallel=%llu\n",
+                 index, limit, elapsed, static_cast<unsigned long long>(totalUs),
+                 static_cast<unsigned long long>(total.covered), static_cast<unsigned long long>(total.shaded),
+                 static_cast<unsigned long long>(total.zRejected), static_cast<unsigned long long>(total.dateRejected),
+                 static_cast<unsigned long long>(total.alphaNoFramebuffer), static_cast<unsigned long long>(total.boundsRejected),
+                 static_cast<unsigned long long>(total.invalidDepth), static_cast<unsigned long long>(total.depthWrites),
+                 static_cast<unsigned long long>(total.framebufferWrites), static_cast<unsigned long long>(total.framebufferMasked),
+-                static_cast<unsigned long long>(total.earlyRejected));
++                static_cast<unsigned long long>(total.earlyRejected), static_cast<unsigned long long>(totalParallel));
+         }
+     };
+ 
+@@ -284,6 +287,32 @@
+         ~ClutCacheScope() { t_clutCache.valid = false; }
+     };
+ 
++    // Sprite workers retain TLS between tasks. A triangle must not inherit a
++    // sprite's palette or decoded texture, and its depth/probe are band-local.
++    struct TriangleBandTlsScope
++    {
++        bool enabled;
++        uint32_t depth = 0;
++        bool clutValid = false;
++        const DecodedTexelCache *decoded = nullptr;
++        TriangleProbeCounts *probe = nullptr;
++        TrianglePaletteCache *palette = nullptr;
++        TriangleBandTlsScope(bool active, TriangleProbeCounts *counts) : enabled(active)
++        {
++            if (!enabled) return;
++            depth = t_pixelDepth; clutValid = t_clutCache.valid;
++            decoded = t_decodedTexels; probe = t_triangleProbe; palette = t_trianglePalette;
++            t_pixelDepth = 0; t_clutCache.valid = false;
++            t_decodedTexels = nullptr; t_triangleProbe = counts; t_trianglePalette = nullptr;
++        }
++        ~TriangleBandTlsScope()
++        {
++            if (!enabled) return;
++            t_pixelDepth = depth; t_clutCache.valid = clutValid;
++            t_decodedTexels = decoded; t_triangleProbe = probe; t_trianglePalette = palette;
++        }
++    };
++
+     // Row-band parallelism for large sprites (D39). Every pixel of a sprite is written once
+     // and blending reads only that pixel's own destination, so splitting rows across
+     // threads gives bit-identical results (callers exclude texture/frame overlap).
+@@ -706,6 +735,139 @@
+         // Region modes can address valid VRAM beyond TEX0.TW/TH. Existing
+         // sprite tile/page proofs cover only the declared texture rectangle.
+         return (clamp & 2u) == 0 && (clamp & 8u) == 0;
++    }
++
++    struct TriangleByteRange
++    {
++        uint64_t begin = 0, end = 0;
++        bool overlaps(const TriangleByteRange &other) const
++        {
++            return begin < other.end && other.begin < end;
++        }
++    };
++
++    // Complete output-coordinate domain after CLAMP, independent of the
++    // interpolated UV/STQ and including all four resolved bilinear taps.
++    std::pair<uint32_t, uint32_t> triangleTextureDomain(uint64_t clamp, bool vertical, uint8_t exponent)
++    {
++        const unsigned mode = unsigned((clamp >> (vertical ? 2 : 0)) & 3u);
++        const uint32_t minimum = uint32_t((clamp >> (vertical ? 24 : 4)) & 1023u);
++        const uint32_t maximum = uint32_t((clamp >> (vertical ? 34 : 14)) & 1023u);
++        if (mode < 2u) return {0u, (1u << exponent) - 1u};
++        if (mode == 2u) return {std::min(minimum, maximum), std::max(minimum, maximum)};
++        return {maximum, minimum | maximum};
++    }
++
++    bool triangleParallelSafe(const GSContext &ctx, const GSPrimReg &prim,
++                              const GSVertex *vertices, const GSTexClutReg &texclut, uint32_t vramSize,
++                              int minX, int minY, int maxX, int maxY)
++    {
++        for (unsigned i = 0; i < 3u; ++i)
++            if (!std::isfinite(vertices[i].x) || !std::isfinite(vertices[i].y) ||
++                std::fabs(vertices[i].x) > 1048576.0f ||
++                std::fabs(vertices[i].y) > 1048576.0f) return false;
++        const uint64_t width = ctx.frame.fbw ? ctx.frame.fbw : 1u;
++        if (minX < 0 || minY < 0 || maxX < minX || maxY < minY ||
++            uint64_t(maxX) >= width * 64u || maxY - minY < 16 ||
++            uint64_t(maxX - minX + 1) * uint64_t(maxY - minY + 1) < 32768u ||
++            (ctx.frame.psm != GS_PSM_CT32 && ctx.frame.psm != GS_PSM_CT24) ||
++            !vramSize || (vramSize % 8192u) != 0u)
++            return false;
++
++        const auto outputRange = [&](uint64_t base) {
++            return TriangleByteRange{
++                (base + uint64_t(minY / 32) * width + uint64_t(minX / 64)) * 8192u,
++                (base + uint64_t(maxY / 32) * width + uint64_t(maxX / 64) + 1u) * 8192u};
++        };
++        const TriangleByteRange frame = outputRange(ctx.frame.fbp);
++        if (frame.end > vramSize) return false;
++        TriangleByteRange depth;
++        if ((ctx.test & (1ull << 16)) != 0u)
++        {
++            const unsigned format = unsigned((ctx.zbuf >> 24) & 15u);
++            const unsigned test = unsigned((ctx.test >> 17) & 3u);
++            if (format > 1u || test == 0u) return false;
++            if (test > 1u || (ctx.zbuf & (1ull << 32)) == 0u)
++            {
++                depth = outputRange(ctx.zbuf & 511u);
++                // Z addressing wraps at VRAM size. Reject it here rather than
++                // permitting two output rows to wrap onto the same pixel.
++                if (depth.end > vramSize || frame.overlaps(depth)) return false;
++            }
++        }
++
++        const auto apartFromOutputs = [&](TriangleByteRange read) {
++            return read.end <= vramSize && !read.overlaps(frame) && !read.overlaps(depth);
++        };
++        if (!prim.tme) return true;
++        const auto &tex = ctx.tex0;
++        if (tex.tw > 15u || tex.th > 15u) return false;
++
++        // Accepted barycentric weights are >=-1e-4 and sum to one. Bounds
++        // below include extra rounding/extrapolation margin and reject float
++        // to integer overflow without changing the serial sampler's math.
++        const auto &a = vertices[0], &b = vertices[1], &c = vertices[2];
++        if (prim.fst)
++        {
++            const auto fixedSafe = [](uint16_t a, uint16_t b, uint16_t c) {
++                const double low = std::min({a, b, c}), high = std::max({a, b, c});
++                const double margin = (high - low) * 0.0004 + 0.05;
++                return low - margin > -1.0 && high + margin < 65536.0;
++            };
++            if (!fixedSafe(a.u, b.u, c.u) || !fixedSafe(a.v, b.v, c.v)) return false;
++        }
++        else
++        {
++            double maxS = 0, maxT = 0, maxQ = 0, minQ = 1.0e300;
++            const bool positive = a.q > 0;
++            for (const GSVertex *v : {&a, &b, &c})
++            {
++                if (!std::isfinite(v->s) || !std::isfinite(v->t) || !std::isfinite(v->q) ||
++                    (v->q > 0) != positive) return false;
++                maxS = std::max(maxS, double(std::fabs(v->s)));
++                maxT = std::max(maxT, double(std::fabs(v->t)));
++                maxQ = std::max(maxQ, double(std::fabs(v->q)));
++                minQ = std::min(minQ, double(std::fabs(v->q)));
++            }
++            const double lowerQ = minQ - maxQ * 0.001;
++            if (maxS > 1.0e20 || maxT > 1.0e20 || maxQ > 1.0e20 || lowerQ <= 1.0e-8 || maxS * 1.001 * double(1u << tex.tw) / lowerQ >= 1.0e9 ||
++                maxT * 1.001 * double(1u << tex.th) / lowerQ >= 1.0e9) return false;
++        }
++
++        uint32_t pageWidth = 64, pageHeight = 32, stride = tex.tbw ? tex.tbw : 1u;
++        switch (tex.psm)
++        {
++        case GS_PSM_CT32: case GS_PSM_CT24: break;
++        case GS_PSM_CT16: case GS_PSM_CT16S: pageHeight = 64; break;
++        case GS_PSM_T8: pageWidth = 128; pageHeight = 64; stride = std::max(uint32_t(tex.tbw) >> 1u, 1u); break;
++        case GS_PSM_T4: pageWidth = 128; pageHeight = 128; stride = std::max(uint32_t(tex.tbw) >> 1u, 1u); break;
++        default: return false;
++        }
++        const auto u = triangleTextureDomain(ctx.clamp, false, tex.tw);
++        const auto v = triangleTextureDomain(ctx.clamp, true, tex.th);
++        const uint64_t basePage = tex.tbp0 >> 5u;
++        const TriangleByteRange texture{
++            (basePage + uint64_t(v.first / pageHeight) * stride + u.first / pageWidth) * 8192u,
++            (basePage + uint64_t(v.second / pageHeight) * stride + u.second / pageWidth + 1u +
++             ((tex.tbp0 & 31u) != 0u ? 1u : 0u)) * 8192u};
++        if (!apartFromOutputs(texture)) return false;
++
++        if (tex.psm == GS_PSM_T4 || tex.psm == GS_PSM_T8)
++        {
++            const bool sixteen = tex.cpsm == GS_PSM_CT16 || tex.cpsm == GS_PSM_CT16S;
++            if (!sixteen && tex.cpsm != GS_PSM_CT32 && tex.cpsm != GS_PSM_CT24) return false;
++            const uint32_t clutWidth = texclut.cbw ? texclut.cbw : 1u;
++            const uint32_t entries = tex.psm == GS_PSM_T4 ? 16u : 256u;
++            for (uint32_t i = 0; i < entries; ++i)
++            {
++                const uint32_t index = resolveClutIndex(uint8_t(i), tex.csm, tex.csa, tex.psm);
++                const uint32_t x = texclut.cou + (index & 15u), y = texclut.cov + (index >> 4u);
++                const uint64_t offset = sixteen ? addrPSMCT16Family(tex.cbp, clutWidth, tex.cpsm, x, y)
++                                                : GSPSMCT32::addrPSMCT32(tex.cbp, clutWidth, x, y);
++                if (!apartFromOutputs({offset, offset + (sixteen ? 2u : 4u)})) return false;
++            }
++        }
++        return true;
+     }
+ 
+     uint8_t lerpChannel(uint8_t c00, uint8_t c10, uint8_t c01, uint8_t c11, float fx, float fy)
+@@ -1895,107 +2057,145 @@
+     TrianglePaletteScope paletteScope(ctx, gs->m_vramSize, paletteCacheEnabled && gs->m_prim.tme &&
+         (ctx.tex0.psm == GS_PSM_T4 || ctx.tex0.psm == GS_PSM_T8), minX, minY, maxX, maxY);
+ 
+-    for (int y = minY; y <= maxY; ++y)
+-    {
+-        if (ps2GsWorkerStopRequested()) return;
+-        float py = static_cast<float>(y) + 0.5f;
+-        for (int x = minX; x <= maxX; ++x)
+-        {
+-            float px = static_cast<float>(x) + 0.5f;
+-
+-            float w0 = (((fy1 - fy2) * (px - fx2) + (fx2 - fx1) * (py - fy2)) * winding) * invAbsDenom;
+-            float w1 = (((fy2 - fy0) * (px - fx2) + (fx0 - fx2) * (py - fy2)) * winding) * invAbsDenom;
+-            float w2 = 1.0f - w0 - w1;
+-
+-            if (w0 < -kEdgeEpsilon || w1 < -kEdgeEpsilon || w2 < -kEdgeEpsilon)
+-                continue;
+-
+-            if (probe.active) ++probe.counts.covered;
+-            if (earlyTests)
++    static const bool parallelEnabled = [] {
++        const char *e = std::getenv("REO_GS_TRI_PARALLEL");
++        return e && std::atoi(e) != 0;
++    }();
++    const bool parallel = parallelEnabled && std::isfinite(denom) &&
++        triangleParallelSafe(ctx, gs->m_prim, gs->m_vtxQueue, gs->m_texclut, gs->m_vramSize,
++                             minX, minY, maxX, maxY);
++    probe.parallel = parallel;
++    std::vector<TriangleProbeCounts> parallelCounts;
++    if (parallel && probe.active) parallelCounts.resize(size_t(maxY - minY + 1));
++    auto band = [&](int yBegin, int yEnd) {
++        TriangleProbeCounts *counts = probe.active
++            ? (parallel ? &parallelCounts[size_t(yBegin - minY)] : &probe.counts) : nullptr;
++        const TriangleBandTlsScope bandTls(parallel, counts);
++        std::optional<TrianglePaletteScope> bandPalette;
++        // Serial draws keep the outer per-triangle cache. Only a worker band
++        // constructs its own palette scope; disabled workers sample live VRAM.
++        if (parallel && paletteCacheEnabled && gs->m_prim.tme &&
++            (ctx.tex0.psm == GS_PSM_T4 || ctx.tex0.psm == GS_PSM_T8))
++            bandPalette.emplace(ctx, gs->m_vramSize, true, minX, minY, maxX, maxY);
++        for (int y = yBegin; y <= yEnd; ++y)
++        {
++            if (ps2GsWorkerStopRequested()) return;
++            float py = static_cast<float>(y) + 0.5f;
++            for (int x = minX; x <= maxX; ++x)
+             {
+-                t_pixelDepth = depthFromDouble(double(v0.z) + (double(v1.z) - v0.z) * w1 +
+-                                               (double(v2.z) - v0.z) * w2);
+-                const auto outcome = testTriangleBeforeShading(ctx, gs->m_vram, gs->m_vramSize, x, y, t_pixelDepth);
+-                if (outcome != EarlyTriangleResult::Survives)
++                float px = static_cast<float>(x) + 0.5f;
++
++                float w0 = (((fy1 - fy2) * (px - fx2) + (fx2 - fx1) * (py - fy2)) * winding) * invAbsDenom;
++                float w1 = (((fy2 - fy0) * (px - fx2) + (fx0 - fx2) * (py - fy2)) * winding) * invAbsDenom;
++                float w2 = 1.0f - w0 - w1;
++
++                if (w0 < -kEdgeEpsilon || w1 < -kEdgeEpsilon || w2 < -kEdgeEpsilon)
++                    continue;
++
++                if (counts) ++counts->covered;
++                if (earlyTests)
+                 {
+-                    if (probe.active)
++                    t_pixelDepth = depthFromDouble(double(v0.z) + (double(v1.z) - v0.z) * w1 +
++                                                   (double(v2.z) - v0.z) * w2);
++                    const auto outcome = testTriangleBeforeShading(ctx, gs->m_vram, gs->m_vramSize, x, y, t_pixelDepth);
++                    if (outcome != EarlyTriangleResult::Survives)
+                     {
+-                        ++probe.counts.earlyRejected;
+-                        if (outcome == EarlyTriangleResult::Date) ++probe.counts.dateRejected;
+-                        else if (outcome == EarlyTriangleResult::Depth) ++probe.counts.zRejected;
+-                        else if (outcome == EarlyTriangleResult::Bounds) ++probe.counts.boundsRejected;
+-                        else ++probe.counts.invalidDepth;
++                        if (counts)
++                        {
++                            ++counts->earlyRejected;
++                            if (outcome == EarlyTriangleResult::Date) ++counts->dateRejected;
++                            else if (outcome == EarlyTriangleResult::Depth) ++counts->zRejected;
++                            else if (outcome == EarlyTriangleResult::Bounds) ++counts->boundsRejected;
++                            else ++counts->invalidDepth;
++                        }
++                        continue;
+                     }
+-                    continue;
+                 }
+-            }
+-
+-            uint8_t r, g, b, a;
+-            if (gs->m_prim.iip)
+-            {
+-                r = clampU8(static_cast<int>(v0.r * w0 + v1.r * w1 + v2.r * w2));
+-                g = clampU8(static_cast<int>(v0.g * w0 + v1.g * w1 + v2.g * w2));
+-                b = clampU8(static_cast<int>(v0.b * w0 + v1.b * w1 + v2.b * w2));
+-                a = clampU8(static_cast<int>(v0.a * w0 + v1.a * w1 + v2.a * w2));
+-            }
+-            else
+-            {
+-                r = v2.r;
+-                g = v2.g;
+-                b = v2.b;
+-                a = v2.a;
+-            }
+-
+-            if (gs->m_prim.tme)
+-            {
+-                float is, it, iq;
+-                uint16_t iu, iv;
+-                if (gs->m_prim.fst)
++
++                uint8_t r, g, b, a;
++                if (gs->m_prim.iip)
+                 {
+-                    iu = static_cast<uint16_t>(v0.u * w0 + v1.u * w1 + v2.u * w2);
+-                    iv = static_cast<uint16_t>(v0.v * w0 + v1.v * w1 + v2.v * w2);
+-                    is = 0.0f;
+-                    it = 0.0f;
+-                    iq = 1.0f;
++                    r = clampU8(static_cast<int>(v0.r * w0 + v1.r * w1 + v2.r * w2));
++                    g = clampU8(static_cast<int>(v0.g * w0 + v1.g * w1 + v2.g * w2));
++                    b = clampU8(static_cast<int>(v0.b * w0 + v1.b * w1 + v2.b * w2));
++                    a = clampU8(static_cast<int>(v0.a * w0 + v1.a * w1 + v2.a * w2));
+                 }
+                 else
+                 {
+-                    // GS receives S, T and Q separately. Interpolate them in
+-                    // screen space, then let sampleTexture divide S/T by Q.
+-                    is = v0.s * w0 + v1.s * w1 + v2.s * w2;
+-                    it = v0.t * w0 + v1.t * w1 + v2.t * w2;
+-                    iq = v0.q * w0 + v1.q * w1 + v2.q * w2;
+-                    iu = 0;
+-                    iv = 0;
++                    r = v2.r;
++                    g = v2.g;
++                    b = v2.b;
++                    a = v2.a;
+                 }
+ 
+-                uint32_t texel = sampleTexture(gs, is, it, iq, iu, iv);
+-                if (probe.active) ++probe.counts.shaded;
+-
+-                uint8_t tr = static_cast<uint8_t>(texel & 0xFF);
+-                uint8_t tg = static_cast<uint8_t>((texel >> 8) & 0xFF);
+-                uint8_t tb = static_cast<uint8_t>((texel >> 16) & 0xFF);
+-                uint8_t ta = static_cast<uint8_t>((texel >> 24) & 0xFF);
+-
+-                const auto &tex = ctx.tex0;
+-                const uint8_t shadeR = r;
+-                const uint8_t shadeG = g;
+-                const uint8_t shadeB = b;
+-                const uint8_t shadeA = a;
+-                const TextureCombineResult color = combineTexture(tex, shadeR, shadeG, shadeB, shadeA, tr, tg, tb, ta);
+-
+-                r = color.r;
+-                g = color.g;
+-                b = color.b;
+-                a = color.a;
++                if (gs->m_prim.tme)
++                {
++                    float is, it, iq;
++                    uint16_t iu, iv;
++                    if (gs->m_prim.fst)
++                    {
++                        iu = static_cast<uint16_t>(v0.u * w0 + v1.u * w1 + v2.u * w2);
++                        iv = static_cast<uint16_t>(v0.v * w0 + v1.v * w1 + v2.v * w2);
++                        is = 0.0f;
++                        it = 0.0f;
++                        iq = 1.0f;
++                    }
++                    else
++                    {
++                        // GS receives S, T and Q separately. Interpolate them in
++                        // screen space, then let sampleTexture divide S/T by Q.
++                        is = v0.s * w0 + v1.s * w1 + v2.s * w2;
++                        it = v0.t * w0 + v1.t * w1 + v2.t * w2;
++                        iq = v0.q * w0 + v1.q * w1 + v2.q * w2;
++                        iu = 0;
++                        iv = 0;
++                    }
++
++                    uint32_t texel = sampleTexture(gs, is, it, iq, iu, iv);
++                    if (counts) ++counts->shaded;
++
++                    uint8_t tr = static_cast<uint8_t>(texel & 0xFF);
++                    uint8_t tg = static_cast<uint8_t>((texel >> 8) & 0xFF);
++                    uint8_t tb = static_cast<uint8_t>((texel >> 16) & 0xFF);
++                    uint8_t ta = static_cast<uint8_t>((texel >> 24) & 0xFF);
++
++                    const auto &tex = ctx.tex0;
++                    const uint8_t shadeR = r;
++                    const uint8_t shadeG = g;
++                    const uint8_t shadeB = b;
++                    const uint8_t shadeA = a;
++                    const TextureCombineResult color = combineTexture(tex, shadeR, shadeG, shadeB, shadeA, tr, tg, tb, ta);
++
++                    r = color.r;
++                    g = color.g;
++                    b = color.b;
++                    a = color.a;
++                }
++
++                if (!earlyTests)
++                    t_pixelDepth = depthFromDouble(double(v0.z) + (double(v1.z) - v0.z) * w1 +
++                                                   (double(v2.z) - v0.z) * w2);
++                writePixel(gs, x, y, r, g, b, a);
+             }
+-
+-            if (!earlyTests)
+-                t_pixelDepth = depthFromDouble(double(v0.z) + (double(v1.z) - v0.z) * w1 +
+-                                               (double(v2.z) - v0.z) * w2);
+-            writePixel(gs, x, y, r, g, b, a);
+-        }
+-    }
++        }
++    };
++    if (parallel)
++    {
++        RowPool::get().run(minY, maxY, band);
++        // Each band writes a unique slot; merge after all workers have joined
++        // this task, so neither diagnostics nor palette state race.
++        for (const auto &counts : parallelCounts)
++        {
++#define ADD_BAND_COUNT(field) probe.counts.field += counts.field
++            ADD_BAND_COUNT(covered); ADD_BAND_COUNT(shaded); ADD_BAND_COUNT(dateRejected); ADD_BAND_COUNT(zRejected);
++            ADD_BAND_COUNT(alphaNoFramebuffer); ADD_BAND_COUNT(boundsRejected); ADD_BAND_COUNT(invalidDepth);
++            ADD_BAND_COUNT(depthWrites); ADD_BAND_COUNT(framebufferWrites); ADD_BAND_COUNT(framebufferMasked);
++            ADD_BAND_COUNT(earlyRejected);
++#undef ADD_BAND_COUNT
++        }
++    }
++    else
++        band(minY, maxY);
+ }
+ 
+ void GSRasterizer::drawLine(GS *gs)

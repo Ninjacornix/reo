@@ -1,0 +1,48 @@
+diff --git a/ps2xRuntime/include/ps2_runtime_macros.h b/ps2xRuntime/include/ps2_runtime_macros.h
+--- a/ps2xRuntime/include/ps2_runtime_macros.h
++++ b/ps2xRuntime/include/ps2_runtime_macros.h
+@@ -4,6 +4,7 @@
+ #include <cmath>
+ #include <cstring>
+ #include <bit>
++#include "ps2_fpu_convert.h"
+ #if defined(_MSC_VER)
+ #include <intrin.h>
+ #elif defined(USE_SSE2NEON)
+@@ -570,7 +571,7 @@
+ #define FPU_FLOOR_W_S(a) ((int32_t)floorf((float)(a)))
+ #define FPU_CVT_S_W(a) ((float)(int32_t)(a))
+ #define FPU_CVT_S_L(a) ((float)(int64_t)(a))
+-#define FPU_CVT_W_S(a) ((int32_t)nearbyintf((float)(a)))
++#define FPU_CVT_W_S(a) Ps2FpuConvertWord((float)(a))
+ #define FPU_CVT_L_S(a) ((int64_t)(float)(a))
+ #define FPU_C_F_S(a, b) (0)
+ #define FPU_C_UN_S(a, b) (isnan((float)(a)) || isnan((float)(b)))
+diff --git a/ps2xRuntime/include/ps2_fpu_convert.h b/ps2xRuntime/include/ps2_fpu_convert.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/include/ps2_fpu_convert.h
+@@ -0,0 +1,23 @@
++#pragma once
++#include <bit>
++#include <cstdint>
++
++// Sony EE Core Instruction Set Manual v6.0, CVT.W.S page356:
++// fixed rounding toward zero; biased exponent >0x9d saturates by sign.
++// Exponent255 is a normalized guest encoding, not a host NaN exception.
++// No FP arithmetic, host rounding dependence, UB conversion or MXCSR writes.
++static inline int32_t Ps2FpuConvertWordBits(uint32_t raw) noexcept {
++    const uint32_t exponent = (raw >> 23) & 0xffu;
++    if (exponent > 0x9du)
++        return std::bit_cast<int32_t>((raw & 0x80000000u) ? 0x80000000u : 0x7fffffffu);
++    if (exponent < 127u)
++        return 0; // signed zero, exponent0 and finite magnitude below1.
++    const uint32_t power = exponent - 127u;
++    const uint32_t significand = (raw & 0x007fffffu) | 0x00800000u;
++    const uint32_t magnitude = power >= 23u ? significand << (power - 23u)
++                                           : significand >> (23u - power);
++    return std::bit_cast<int32_t>((raw & 0x80000000u) ? 0u - magnitude : magnitude);
++}
++static inline int32_t Ps2FpuConvertWord(float value) noexcept {
++    return Ps2FpuConvertWordBits(std::bit_cast<uint32_t>(value));
++}

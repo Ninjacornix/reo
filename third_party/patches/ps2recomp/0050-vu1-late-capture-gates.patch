@@ -1,0 +1,63 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -5,6 +5,7 @@
+ #include "ps2_log.h"
+ #include <atomic>
+ #include <algorithm>
++#include <chrono>
+ #include <cmath>
+ #include <cstdio>
+ #include <cstring>
+@@ -37,10 +38,50 @@
+         {
+             const char* dir = std::getenv("REO_VU1_DUMP");
+             if (!dir || !*dir) return;
+-            const uint32_t index = s_debugVu1RunCount.fetch_add(1, std::memory_order_relaxed);
+             uint32_t limit = 128;
+             if (const char* value = std::getenv("REO_VU1_DUMP_LIMIT"))
+                 limit = std::min(512ul, std::strtoul(value, nullptr, 10));
++            if (!limit) return;
++            // Observe original RAM only. As with VIF diagnostics, once the
++            // gate/time condition arms, later phase changes do not disarm it.
++            // No clocks/configuration are touched when DUMP is unset above.
++            static const auto first = std::chrono::steady_clock::now();
++            static const double afterSeconds = [] {
++                const char* value = std::getenv("REO_VU1_DUMP_AT");
++                return value ? std::max(0.0, std::atof(value)) : 0.0;
++            }();
++            static const bool hasGate = std::getenv("REO_VU1_DUMP_GATE") != nullptr;
++            static const uint32_t gate = [] {
++                const char* value = std::getenv("REO_VU1_DUMP_GATE");
++                return value ? static_cast<uint32_t>(std::strtoul(value, nullptr, 0)) : 0u;
++            }();
++            static const uint32_t gateMask = [] {
++                const char* value = std::getenv("REO_VU1_DUMP_MASK");
++                return value ? static_cast<uint32_t>(std::strtoul(value, nullptr, 0)) : 0xFFFFFFFFu;
++            }();
++            static const uint32_t gateValue = [] {
++                const char* value = std::getenv("REO_VU1_DUMP_VALUE");
++                return value ? static_cast<uint32_t>(std::strtoul(value, nullptr, 0)) : 0u;
++            }();
++            static std::atomic<bool> armed{false};
++            if (!armed.load(std::memory_order_relaxed))
++            {
++                if (afterSeconds > 0.0 &&
++                    std::chrono::duration<double>(std::chrono::steady_clock::now() - first).count() < afterSeconds)
++                    return;
++                if (hasGate)
++                {
++                    if (!memory || !memory->getRDRAM() || gate > PS2_RAM_SIZE - sizeof(uint32_t))
++                        return;
++                    uint32_t word = 0;
++                    std::memcpy(&word, memory->getRDRAM() + gate, sizeof(word));
++                    if ((word & gateMask) != (gateValue & gateMask))
++                        return;
++                }
++                armed.store(true, std::memory_order_relaxed);
++            }
++            // Pre-gate microprogram calls must not consume the bounded budget.
++            const uint32_t index = s_debugVu1RunCount.fetch_add(1, std::memory_order_relaxed);
+             if (index >= limit) return;
+             std::error_code error;
+             std::filesystem::create_directories(dir, error);

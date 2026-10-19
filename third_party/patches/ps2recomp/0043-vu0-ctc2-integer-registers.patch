@@ -1,0 +1,43 @@
+diff --git a/ps2xRecomp/src/lib/code_generator.cpp b/ps2xRecomp/src/lib/code_generator.cpp
+--- a/ps2xRecomp/src/lib/code_generator.cpp
++++ b/ps2xRecomp/src/lib/code_generator.cpp
+@@ -2336,6 +2336,11 @@
+             return fmt::format("ctx->vu0_vf[{}] = _mm_castsi128_ps(GPR_VEC(ctx, {}));", rd, rt);
+         case COP2_CTC2:
+         {
++            // Fs 0..15 select the integer VI registers; VI0 is immutable.
++            if (rd == 0)
++                return "// CTC2 VI0 is read-only";
++            if (rd < 16)
++                return fmt::format("ctx->vi[{}] = (uint16_t)GPR_U32(ctx, {});", rd, rt);
+             switch (rd) // Control register number is in rd
+             {
+             case VU0_CR_STATUS:
+diff --git a/ps2xTest/src/code_generator_tests.cpp b/ps2xTest/src/code_generator_tests.cpp
+--- a/ps2xTest/src/code_generator_tests.cpp
++++ b/ps2xTest/src/code_generator_tests.cpp
+@@ -611,6 +611,24 @@
+             }
+         });
+ 
++        tc.Run("R5900 CTC2 low selectors write VI and preserve VI0", [](TestCase &t) {
++            CodeGenerator gen({}, {});
++            for (unsigned selector=0; selector<16; ++selector) {
++                // Includes owned trig opcode 0x48C81000, CTC2 t0,VI2.
++                const uint32_t word=0x48C80000u | (selector<<11);
++                Instruction inst{};
++                inst.raw=word;inst.opcode=word>>26;inst.rs=(word>>21)&31;
++                inst.rt=(word>>16)&31;inst.rd=(word>>11)&31;
++                inst.sa=(word>>6)&31;inst.function=word&63;
++                const auto generated=gen.translateInstruction(inst);
++                const std::string expected=selector==0 ? "// CTC2 VI0 is read-only" :
++                    "ctx->vi["+std::to_string(selector)+"] = (uint16_t)GPR_U32(ctx, 8);";
++                t.Equals(generated,expected,"CTC2 Fs selects integer VI and uses encoded Rt");
++                t.IsTrue(generated.find("vu0_vpu_stat")==std::string::npos,
++                         "integer VI writes must not modify VPU_STAT");
++            }
++        });
++
+         tc.Run("FCR access uses CFC1/CTC1", [](TestCase &t) {
+             CodeGenerator gen({}, {});
+ 

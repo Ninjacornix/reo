@@ -1,0 +1,345 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -10,6 +10,7 @@
+ #include "runtime/ps2_memory.h"
+ #include <condition_variable>
+ #include <deque>
++#include <memory>
+ #include <thread>
+ 
+ // ---------------------------------------------------------------------------------------
+@@ -17,18 +18,27 @@
+ // the GS draws in parallel with the EE; here processGIFPacket()/writeRegister() normally
+ // run on the guest thread that kicked the DMA, holding the guest CPU and IO locks while
+ // rasterizing (D37). With the worker, those calls copy their input into an ordered queue
+-// and return; the worker replays them through the same methods. Every other public entry
+-// point that reads or mutates GS state outside that stream drains the queue first.
++// and return; the worker replays them through the same methods. State access outside that
++// stream drains first; host scanout instead reads an immutable frame published by the worker.
+ // GS processing only calls out to raiseIntcInterrupt()/GetCurrentVSyncTick(), so a drain
+ // cannot deadlock against the guest or IO locks its caller may hold.
+ namespace
+ {
++    struct GsDisplayCapture
++    {
++        bool valid = false;
++        uint64_t pmode = 0, smode2 = 0, dispfb1 = 0, dispfb2 = 0;
++        uint64_t display1 = 0, display2 = 0, bgcolor = 0, mark = 0, tick = 0;
++    };
++
+     struct GsQueueItem
+     {
+         bool isPacket = true;
++        bool isDisplayCapture = false;
+         uint8_t reg = 0;
+         uint64_t value = 0;
+         std::vector<uint8_t> data;
++        GsDisplayCapture display;
+     };
+ 
+     struct GsAsync
+@@ -45,22 +55,34 @@
+         uint64_t prev2VsyncMark = 0; // and the one before that (pacing slack, D44)
+         // Display state captured at the latest vblank (D40): present shows exactly this
+         // state instead of whatever the registers/queue hold when the window loop wakes.
+-        struct
+-        {
+-            bool valid = false;
+-            uint64_t pmode, smode2, dispfb1, dispfb2, display1, display2, bgcolor;
+-            uint64_t mark;
+-        } vblankDisplay;
++        GsDisplayCapture vblankDisplay;
++        GsDisplayCapture lastQueuedDisplay;
++        uint64_t drawingSerial = 0, lastCaptureDrawingSerial = 0;
++        uint64_t lastDrawingMark = 0;
+         bool busy = false;
+         bool started = false;
+     };
+ 
+     GsAsync g_gsAsync;
+     GSRegisters *g_gsPrivRegs = nullptr; // set by GS::init; read at vblank (D40)
++    GS *g_gsInstance = nullptr;
++    struct PublishedDisplayFrame
++    {
++        std::vector<uint8_t> pixels;
++        uint32_t width = 0, height = 0, displayFbp = 0, sourceFbp = 0;
++        bool preferred = false;
++        uint64_t tick = 0;
++    };
++    // Host presentation never takes the GS state lock or drains newer drawing.
++    // The worker publishes pixels belonging to an ordered post-flip marker.
++    std::mutex g_publishedDisplayMutex;
++    std::shared_ptr<const PublishedDisplayFrame> g_publishedDisplay;
+     std::atomic<uint64_t> g_vblankSeq{0u}; // display snapshots taken so far
+     std::mutex g_vblankWaitMutex;
+     std::condition_variable g_vblankCv; // present loop wakes on each snapshot (D44)
+     thread_local bool t_isGsWorker = false;
++    thread_local const GsDisplayCapture *t_displayCapture = nullptr;
++    thread_local uint64_t t_copiedFrameTick = 0;
+     constexpr size_t kGsQueueMaxBytes = 64u * 1024u * 1024u;
+ 
+     bool gsThreadEnabled()
+@@ -86,7 +108,19 @@
+                 g_gsAsync.queue.pop_front();
+                 g_gsAsync.busy = true;
+             }
+-            if (item.isPacket)
++            if (item.isDisplayCapture)
++            {
++                t_displayCapture = &item.display;
++                gs->latchHostPresentationFrame();
++                t_displayCapture = nullptr;
++                auto frame = std::make_shared<PublishedDisplayFrame>();
++                frame->tick = item.display.tick;
++                const bool valid = gs->copyLatchedHostPresentationFrame(frame->pixels, frame->width, frame->height,
++                                                                        &frame->displayFbp, &frame->sourceFbp, &frame->preferred);
++                std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
++                g_publishedDisplay = valid ? std::move(frame) : nullptr;
++            }
++            else if (item.isPacket)
+                 gs->processGIFPacket(item.data.data(), static_cast<uint32_t>(item.data.size()));
+             else
+                 gs->writeRegister(item.reg, item.value);
+@@ -114,13 +148,18 @@
+         // Pacing: the GS may lag at most about one frame. A real EE cannot run ahead of the
+         // GS because the game waits for GS completion; without this the guest queued ~23 s
+         // of logo drawing and present (which drains) froze on a stale frame (D39).
+-        g_gsAsync.drained.wait(lock, [] {
++        const uint64_t paceTarget = g_gsAsync.prev2VsyncMark;
++        g_gsAsync.drained.wait(lock, [paceTarget] {
+             // Two frames of slack (D44): with one, a heavy frame made the game thread wait
+             // while holding the guest lock, delaying the VBLANK handler (present hitches).
+-            return g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= g_gsAsync.prev2VsyncMark;
++            // IRQs keep advancing while this producer waits. Chasing a moving mark
++            // could starve the producer forever, particularly during turbo boot.
++            return g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= paceTarget;
+         });
+         g_gsAsync.queuedBytes += item.data.size();
+         ++g_gsAsync.enqueued;
++        ++g_gsAsync.drawingSerial;
++        g_gsAsync.lastDrawingMark = g_gsAsync.enqueued;
+         g_gsAsync.queue.push_back(std::move(item));
+         lock.unlock();
+         g_gsAsync.work.notify_one();
+@@ -133,7 +172,21 @@
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         g_gsAsync.prev2VsyncMark = g_gsAsync.prevVsyncMark;
+         g_gsAsync.prevVsyncMark = g_gsAsync.vsyncMark;
+-        g_gsAsync.vsyncMark = g_gsAsync.enqueued;
++        // Capture-only work must not advance the guest drawing pacing target.
++        // Physical queue positions still include captures for ordered drains.
++        g_gsAsync.vsyncMark = g_gsAsync.lastDrawingMark;
++    }
++
++    bool sameDisplayCapture(const GsDisplayCapture &a, const GsDisplayCapture &b)
++    {
++        // Tick only changes pixels for the optional field-bob mode. Otherwise
++        // identical registers and VRAM produce the same immutable scanout.
++        static const bool fieldBob = std::getenv("REO_FIELD_BOB") != nullptr;
++        const bool fieldParityMatters = fieldBob && (b.smode2 & 3u) == 1u;
++        return a.valid && a.pmode == b.pmode && a.smode2 == b.smode2 &&
++               a.dispfb1 == b.dispfb1 && a.dispfb2 == b.dispfb2 &&
++               a.display1 == b.display1 && a.display2 == b.display2 &&
++               a.bgcolor == b.bgcolor && (!fieldParityMatters || ((a.tick ^ b.tick) & 1u) == 0);
+     }
+ 
+     // Called after the game's VBLANK_START handlers ran (they flip DISPFB): captures the
+@@ -141,6 +194,7 @@
+     // the handlers showed the pre-flip buffer while the game was already redrawing it.
+     void gsSnapshotDisplayImpl()
+     {
++        const uint64_t captureTick = ps2_syscalls::GetCurrentVSyncTick();
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         if (g_gsPrivRegs)
+         {
+@@ -153,7 +207,40 @@
+             vb.display2 = g_gsPrivRegs->display2;
+             vb.bgcolor = g_gsPrivRegs->bgcolor;
+             vb.mark = g_gsAsync.enqueued;
++            vb.tick = captureTick;
+             vb.valid = true;
++            if (gsThreadEnabled() && g_gsInstance)
++            {
++                // Cheap interrupt-side marker: no rasterization, pixel copy, or drain
++                // while holding the guest CPU. Later drawing cannot pass this capture.
++                if (!g_gsAsync.started)
++                {
++                    g_gsAsync.started = true;
++                    std::thread(gsWorkerMain, g_gsInstance).detach();
++                }
++                const bool unchanged = g_gsAsync.lastCaptureDrawingSerial == g_gsAsync.drawingSerial &&
++                                       sameDisplayCapture(g_gsAsync.lastQueuedDisplay, vb);
++                if (!g_gsAsync.queue.empty() && g_gsAsync.queue.back().isDisplayCapture)
++                {
++                    // No intervening GS command: both markers see the same VRAM.
++                    // Keep the latest display state without creating another item.
++                    g_gsAsync.queue.back().display = vb;
++                    g_gsAsync.lastQueuedDisplay = vb;
++                    g_gsAsync.lastCaptureDrawingSerial = g_gsAsync.drawingSerial;
++                }
++                else if (!unchanged)
++                {
++                    GsQueueItem item;
++                    item.isPacket = false;
++                    item.isDisplayCapture = true;
++                    item.display = vb;
++                    ++g_gsAsync.enqueued;
++                    g_gsAsync.queue.push_back(std::move(item));
++                    g_gsAsync.lastQueuedDisplay = vb;
++                    g_gsAsync.lastCaptureDrawingSerial = g_gsAsync.drawingSerial;
++                    g_gsAsync.work.notify_one();
++                }
++            }
+             g_vblankSeq.fetch_add(1u, std::memory_order_release);
+             {
+                 std::lock_guard<std::mutex> waitLock(g_vblankWaitMutex);
+@@ -715,6 +802,7 @@
+     m_vramSize = vramSize;
+     m_privRegs = privRegs;
+     g_gsPrivRegs = privRegs;
++    g_gsInstance = this;
+     reset();
+ }
+ 
+@@ -722,6 +810,14 @@
+ {
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
++    {
++        std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
++        g_publishedDisplay.reset();
++    }
++    {
++        std::lock_guard<std::mutex> queueLock(g_gsAsync.m);
++        g_gsAsync.lastQueuedDisplay.valid = false;
++    }
+     std::memset(m_ctx, 0, sizeof(m_ctx));
+     m_prim = {};
+     m_curR = 0x80;
+@@ -969,11 +1065,23 @@
+ 
+ void GS::latchHostPresentationFrame()
+ {
+-    // Present the display state captured at the latest vblank (D40), drained only up to
+-    // the GS calls queued before that vblank. Falls back to the live registers.
++    // In async mode the ordered GS marker owns the capture. The window uses the
++    // latest completed immutable image, without waiting for this frame's drawing.
++    if (gsThreadEnabled() && !t_isGsWorker)
++        return;
++    // Worker captures the registers from its ordered marker. The synchronous diagnostic
++    // path retains its previous register-latch behavior and falls back to live registers.
+     uint64_t vbPmode = 0, vbSmode2 = 0, vbDispfb1 = 0, vbDispfb2 = 0, vbDisplay1 = 0, vbDisplay2 = 0, vbBgcolor = 0;
+     bool vbValid = false;
+     uint64_t vbMark = 0;
++    if (t_displayCapture)
++    {
++        const auto &vb = *t_displayCapture;
++        vbValid = vb.valid;
++        vbPmode = vb.pmode; vbSmode2 = vb.smode2; vbDispfb1 = vb.dispfb1; vbDispfb2 = vb.dispfb2;
++        vbDisplay1 = vb.display1; vbDisplay2 = vb.display2; vbBgcolor = vb.bgcolor; vbMark = vb.mark;
++    }
++    else
+     {
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         const auto &vb = g_gsAsync.vblankDisplay;
+@@ -1015,7 +1123,7 @@
+     // frames look correct (and stable) without it, so it is opt-in: REO_FIELD_BOB=1.
+     static const bool s_fieldBob = std::getenv("REO_FIELD_BOB") != nullptr;
+     const bool applyFieldMode = s_fieldBob && smode2.interlaced && !smode2.frameMode;
+-    const bool oddField = (ps2_syscalls::GetCurrentVSyncTick() & 1ull) != 0ull;
++    const bool oddField = ((t_displayCapture ? t_displayCapture->tick : ps2_syscalls::GetCurrentVSyncTick()) & 1ull) != 0ull;
+     const GSFrameReg displayFrame1 = decodeDisplayFrame(vbDispfb1);
+     const GSFrameReg displayFrame2 = decodeDisplayFrame(vbDispfb2);
+     const GSDisplayReadOrigin displayOrigin1 = decodeDisplayReadOrigin(vbDispfb1);
+@@ -1137,6 +1245,35 @@
+ 
+     if (validCrt1 && validCrt2)
+     {
++        // Both enabled CRTs often read the same surface. With no background
++        // blending, src RGB == dst RGB and the compositor's delta is exactly
++        // zero at every pixel, regardless of PMODE's alpha factor. A single
++        // conversion therefore produces the same opaque host pixels.
++        static const bool noPresentFastPath = std::getenv("REO_GS_NO_PRESENT_FASTPATH") != nullptr;
++        if (!noPresentFastPath && !pmode.slbg &&
++            displayFrame1.fbp == displayFrame2.fbp && displayFrame1.fbw == displayFrame2.fbw &&
++            displayFrame1.psm == displayFrame2.psm &&
++            displayOrigin1.x == displayOrigin2.x && displayOrigin1.y == displayOrigin2.y &&
++            width1 == width2 && height1 == height2)
++        {
++            GSFrameReg selectedFrame{};
++            std::vector<uint8_t> pixels;
++            bool usedPreferred = false;
++            if (copyDisplaySource(displayFrame1, displayOrigin1, width1, height1,
++                                  false, false, selectedFrame, pixels, usedPreferred))
++            {
++                if (applyFieldMode)
++                    applyFieldPresentation(pixels, width1, height1, oddField);
++                m_hostPresentationFrame.swap(pixels);
++                m_hostPresentationWidth = width1;
++                m_hostPresentationHeight = height1;
++                m_hostPresentationDisplayFbp = displayFrame1.fbp;
++                m_hostPresentationSourceFbp = selectedFrame.fbp;
++                m_hostPresentationUsedPreferred = false;
++                m_hasHostPresentationFrame = true;
++                return;
++            }
++        }
+         GSFrameReg selectedFrame1{};
+         GSFrameReg selectedFrame2{};
+         std::vector<uint8_t> rc1;
+@@ -1278,6 +1415,22 @@
+                                           uint32_t *outSourceFbp,
+                                           bool *outUsedPreferred) const
+ {
++    if (gsThreadEnabled() && !t_isGsWorker)
++    {
++        std::shared_ptr<const PublishedDisplayFrame> frame;
++        {
++            std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
++            frame = g_publishedDisplay;
++        }
++        outPixels = frame ? frame->pixels : std::vector<uint8_t>{};
++        t_copiedFrameTick = frame ? frame->tick : 0;
++        outWidth = frame ? frame->width : 0;
++        outHeight = frame ? frame->height : 0;
++        if (outDisplayFbp) *outDisplayFbp = frame ? frame->displayFbp : 0;
++        if (outSourceFbp) *outSourceFbp = frame ? frame->sourceFbp : 0;
++        if (outUsedPreferred) *outUsedPreferred = frame ? frame->preferred : false;
++        return frame && !frame->pixels.empty();
++    }
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+     if (!m_hasHostPresentationFrame || m_hostPresentationFrame.empty())
+     {
+@@ -1339,6 +1492,8 @@
+ void ps2GsSnapshotDisplay() { gsSnapshotDisplayImpl(); }
+ // Present loop (ps2_runtime.cpp): number of vblank display snapshots taken.
+ uint64_t ps2GsVblankSeq() { return g_vblankSeq.load(std::memory_order_acquire); }
++// Present diagnostics: provenance of the immutable frame copied by this thread.
++uint64_t ps2GsCopiedFrameTick() { return t_copiedFrameTick; }
+ // Blocks until a snapshot newer than `seenSeq` exists or `timeoutMs` passes (D44); waking on
+ // a condition variable avoids the coarse Windows sleep granularity that made presents jitter.
+ uint64_t ps2GsWaitVblank(uint64_t seenSeq, int timeoutMs)
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -102,6 +102,7 @@
+ 
+ extern std::atomic<uint64_t> g_dbgSpritePx[6];
+ uint64_t ps2GsVblankSeq(); // ps2_gs_gpu.cpp: vblank display snapshots taken (D40)
++uint64_t ps2GsCopiedFrameTick(); // Tick belonging to the immutable pixels copied on this host thread.
+ uint64_t ps2GsWaitVblank(uint64_t seenSeq, int timeoutMs); // ps2_gs_gpu.cpp (D44)
+ void ps2InstallModalRender(void *nativeWindow, void (*render)()); // Kernel/Host/Win32ModalRender.cpp (D42)
+ namespace ps2_syscalls
+@@ -919,9 +920,10 @@
+                 if (FILE *metadata = std::fopen("present_dump.jsonl", "ab"))
+                 {
+                     std::fprintf(metadata,
+-                                 "{\"image\":\"%s\",\"ns\":%lld,\"elapsed\":%.6f,\"tick\":%llu,\"observed_seq\":%llu,\"width\":%u,\"height\":%u,\"fbp\":%u,\"src\":%u,\"preferred\":%d}\n",
++                                 "{\"image\":\"%s\",\"ns\":%lld,\"elapsed\":%.6f,\"tick\":%llu,\"observed_seq\":%llu,\"frame_tick\":%llu,\"width\":%u,\"height\":%u,\"fbp\":%u,\"src\":%u,\"preferred\":%d}\n",
+                                  name, static_cast<long long>(captureNs), std::chrono::duration<double>(captureTime - s_start).count(),
+                                  static_cast<unsigned long long>(captureTick), static_cast<unsigned long long>(observedSeq),
++                                 static_cast<unsigned long long>(ps2GsCopiedFrameTick()),
+                                  width, height, displayFbp, sourceFbp, usedPreferredDisplaySource ? 1 : 0);
+                     std::fclose(metadata);
+                 }

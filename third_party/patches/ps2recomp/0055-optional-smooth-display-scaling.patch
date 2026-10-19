@@ -1,0 +1,32 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -2651,11 +2651,16 @@
+ 
+     // A blank image to use as a framebuffer
+     Texture2D frameTex{};
++    bool linearDisplay = [] {
++        const char *value = std::getenv("REO_DISPLAY_FILTER");
++        return value && std::strcmp(value, "linear") == 0;
++    }();
+     if (!reoHeadless)
+     {
+         Image blank = GenImageColor(FB_WIDTH, FB_HEIGHT, BLANK);
+         frameTex = LoadTextureFromImage(blank);
+         UnloadImage(blank);
++        SetTextureFilter(frameTex, linearDisplay ? TEXTURE_FILTER_BILINEAR : TEXTURE_FILTER_POINT);
+     }
+ 
+     // Draws the current frame (normal loop) or, from the Win32 modal move/resize timer,
+@@ -2665,6 +2670,11 @@
+         uint32_t presentWidth = FB_WIDTH;
+         uint32_t presentHeight = DEFAULT_DISPLAY_HEIGHT;
+         UploadFrame(frameTex, this, presentWidth, presentHeight);
++        if (!modal && IsKeyPressed(KEY_F2))
++        {
++            linearDisplay = !linearDisplay;
++            SetTextureFilter(frameTex, linearDisplay ? TEXTURE_FILTER_BILINEAR : TEXTURE_FILTER_POINT);
++        }
+ 
+         static bool s_panelOn = []
+         {

@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
-"""Format the project's handwritten core C/C++ and launcher adapter."""
+"""Format project-owned C/C++ and C# sources, respecting local exclusions."""
 
 from pathlib import Path
 import argparse
+import fnmatch
 import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-SCOPES = ("src", "runtime", "game", "media", "network", "launcher/native")
-EXCLUDED = {ROOT / "runtime/gs/stb_image_write.h"}
+EXTENSIONS = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx", ".inl", ".inc", ".cs"}
+
+
+def source_files():
+    paths = subprocess.check_output(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"], cwd=ROOT
+    ).decode().split("\0")
+    patterns = [line.strip() for line in (ROOT / ".clang-format-ignore").read_text().splitlines()
+                if line.strip() and not line.lstrip().startswith("#")]
+    return sorted(ROOT / name for name in set(paths)
+                  if name and (ROOT / name).is_file() and Path(name).suffix in EXTENSIONS
+                  and not any(fnmatch.fnmatchcase(name, pattern) for pattern in patterns))
 
 
 def main():
@@ -18,16 +29,16 @@ def main():
     formatter = shutil.which("clang-format")
     if not formatter:
         parser.error("clang-format is required (the current style is validated with LLVM 21)")
-    files = sorted(
-        path
-        for scope in SCOPES
-        for path in (ROOT / scope).rglob("*")
-        if path.suffix in {".c", ".cpp", ".h", ".hpp"} and path not in EXCLUDED
-    )
+    files = source_files()
     options = ["-i"] if args.write else ["--dry-run", "--Werror"]
-    result = subprocess.run([formatter, "--style=file", *options, *map(str, files)], cwd=ROOT)
-    print(f"{'Formatted' if args.write else 'Checked'} {len(files)} handwritten C/C++ files")
-    return result.returncode
+    status = 0
+    # Keep each invocation comfortably below Windows' command-line length limit.
+    for offset in range(0, len(files), 25):
+        result = subprocess.run([formatter, "--style=file", *options,
+                                 *map(str, files[offset:offset + 25])], cwd=ROOT)
+        status = status or result.returncode
+    print(f"{'Formatted' if args.write else 'Checked'} {len(files)} project-owned C/C++ and C# files")
+    return status
 
 
 if __name__ == "__main__":

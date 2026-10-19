@@ -1,0 +1,15 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -971,7 +971,10 @@
+                                               << " wakeupCount=" << newWakeupCount
+                                               << std::endl);
+         }
+-        setReturnS32(ctx, KE_OK);
++        // EE WakeupThread/iWakeupThread return the target id on success. The
++        // original CRI handshake (0x12BF98) compares this id before clearing
++        // its main-thread service request at 0x21049C.
++        setReturnS32(ctx, tid);
+         switchIfOutranked(runtime, tid, statusAfter == THS_READY);
+     }
+ 

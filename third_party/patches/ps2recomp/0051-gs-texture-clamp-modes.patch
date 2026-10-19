@@ -1,0 +1,104 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -402,6 +402,27 @@
+         const uint8_t mmag = static_cast<uint8_t>((tex1 >> 5) & 0x1u);
+         const uint8_t mmin = static_cast<uint8_t>((tex1 >> 6) & 0x7u);
+         return mmag != 0u || mmin == 1u || (mmin & 0x4u) != 0u;
++    }
++
++    int resolveTextureCoordinate(int coordinate, int size, uint64_t clamp, bool vertical)
++    {
++        const unsigned mode = unsigned((clamp >> (vertical ? 2 : 0)) & 3u);
++        const int minimum = int((clamp >> (vertical ? 24 : 4)) & 0x3FFu);
++        const int maximum = int((clamp >> (vertical ? 34 : 14)) & 0x3FFu);
++        switch (mode)
++        {
++        case 0: return int(uint32_t(coordinate) & uint32_t(size - 1)); // REPEAT
++        case 1: return clampInt(coordinate, 0, size - 1); // CLAMP
++        case 2: return std::min(std::max(coordinate, minimum), maximum); // REGION_CLAMP
++        default: return int((uint32_t(coordinate) & uint32_t(minimum)) | uint32_t(maximum)); // REGION_REPEAT
++        }
++    }
++
++    bool textureCoordinatesStayInDeclaredSize(uint64_t clamp)
++    {
++        // Region modes can address valid VRAM beyond TEX0.TW/TH. Existing
++        // sprite tile/page proofs cover only the declared texture rectangle.
++        return (clamp & 2u) == 0 && (clamp & 8u) == 0;
+     }
+ 
+     uint8_t lerpChannel(uint8_t c00, uint8_t c10, uint8_t c01, uint8_t c11, float fx, float fy)
+@@ -911,8 +932,8 @@
+ 
+     auto samplePoint = [&](int sampleU, int sampleV) -> uint32_t
+     {
+-        sampleU = clampInt(sampleU, 0, texW - 1);
+-        sampleV = clampInt(sampleV, 0, texH - 1);
++        sampleU = resolveTextureCoordinate(sampleU, texW, ctx.clamp, false);
++        sampleV = resolveTextureCoordinate(sampleV, texH, ctx.clamp, true);
+ 
+         if (t_decodedTexels)
+         {
+@@ -954,7 +975,7 @@
+ 
+     if (!tex1UsesLinearFilter(ctx.tex1))
+     {
+-        return samplePoint(static_cast<int>(texUf), static_cast<int>(texVf));
++        return samplePoint(static_cast<int>(std::floor(texUf)), static_cast<int>(std::floor(texVf)));
+     }
+ 
+     const float sampleU = texUf - 0.5f;
+@@ -1221,7 +1242,7 @@
+         (ctx.tex0.psm == GS_PSM_CT32 || ctx.tex0.psm == GS_PSM_CT24))
+     {
+         // FST 1:1 texel mapping: the generic loop samples u0 + k (or u0 - k - 1 when the
+-        // sprite maps U/V in reverse), clamped to the texture; reproduce that in integers.
++        // sprite maps U/V in reverse), with CLAMP applied to each tap.
+         // Bilinear filtering is included: at 1:1 every sample lands on a texel centre, so the
+         // generic path's weights are exactly 0 and lerpChannel() returns that texel.
+         const int u0 = static_cast<int>(v0.u >> 4), u1 = static_cast<int>(v1.u >> 4);
+@@ -1239,11 +1260,11 @@
+             for (int y = yb; y <= ye; ++y)
+             {
+                 const int ky = y - unclippedY0;
+-                const int tv = clampInt(vv1 >= vv0 ? vv0 + ky : vv0 - ky - 1, 0, texH - 1);
++                const int tv = resolveTextureCoordinate(vv1 >= vv0 ? vv0 + ky : vv0 - ky - 1, texH, ctx.clamp, true);
+                 for (int x = drawX0; x <= drawX1; ++x)
+                 {
+                     const int kx = x - unclippedX0;
+-                    const int tu = clampInt(u1 >= u0 ? u0 + kx : u0 - kx - 1, 0, texW - 1);
++                    const int tu = resolveTextureCoordinate(u1 >= u0 ? u0 + kx : u0 - kx - 1, texW, ctx.clamp, false);
+                     const uint32_t off = GSPSMCT32::addrPSMCT32(tex.tbp0, tbw, static_cast<uint32_t>(tu), static_cast<uint32_t>(tv));
+                     uint32_t texel = 0xFFFF00FFu; // readTexelPSMCT32's out-of-range value
+                     if (off + 4u <= vramSize)
+@@ -1265,7 +1286,8 @@
+             const uint64_t fbEnd = fbStart + static_cast<uint64_t>(fbWidthBlocks) * 8192u * (static_cast<uint64_t>(drawY1) / 32u + 1u);
+             const uint64_t txStart = static_cast<uint64_t>(tex.tbp0) * 256u;
+             const uint64_t txEnd = txStart + static_cast<uint64_t>(tbw) * 8192u * (static_cast<uint64_t>(texH) / 32u + 1u);
+-            if (spritePixels >= 32768u && (txEnd <= fbStart || txStart >= fbEnd))
++            if (spritePixels >= 32768u && textureCoordinatesStayInDeclaredSize(ctx.clamp) &&
++                (txEnd <= fbStart || txStart >= fbEnd))
+                 RowPool::get().run(drawY0, drawY1, band);
+             else
+                 band(drawY0, drawY1);
+@@ -1369,7 +1391,8 @@
+                                 spriteClutApart;
+         DecodedTexelCache decodedTexels;
+         static const bool noTexelCache = std::getenv("REO_GS_NO_TEXEL_CACHE") != nullptr;
+-        if (fastFrame && !noTexelCache && gs->m_prim.fst && genericPixels >= 1024u &&
++        if (fastFrame && !noTexelCache && textureCoordinatesStayInDeclaredSize(ctx.clamp) &&
++            gs->m_prim.fst && genericPixels >= 1024u &&
+             (tex.psm == GS_PSM_T8 || tex.psm == GS_PSM_T4) && t_clutCache.valid &&
+             static_cast<uint64_t>(drawX1) < static_cast<uint64_t>(fbWidthBlocks) * 64u &&
+             gClutApart && (gTxEnd <= gFbStart || gTxStart >= gFbEnd) &&
+@@ -1466,7 +1489,8 @@
+         if (fastFrame)
+             genericDiscarded.fetch_add(discarded, std::memory_order_relaxed);
+         };
+-        if (!s_noFast && !pixelDepthOrDate && genericPixels >= 32768u && gClutApart && (gTxEnd <= gFbStart || gTxStart >= gFbEnd))
++        if (!s_noFast && !pixelDepthOrDate && textureCoordinatesStayInDeclaredSize(ctx.clamp) &&
++            genericPixels >= 32768u && gClutApart && (gTxEnd <= gFbStart || gTxStart >= gFbEnd))
+             RowPool::get().run(drawY0, drawY1, genericBand);
+         else
+             genericBand(drawY0, drawY1);

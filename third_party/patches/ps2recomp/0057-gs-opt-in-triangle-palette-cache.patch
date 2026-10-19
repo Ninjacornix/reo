@@ -1,0 +1,137 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -188,6 +188,77 @@
+         uint32_t table[256];
+     };
+     thread_local ClutCache t_clutCache;
++
++    // A triangle can cache a palette entry only after proving its actual read
++    // span is outside every page its framebuffer/depth writes could touch.
++    // Index texels stay live; entries overlapping either output stay live too.
++    struct TrianglePaletteCache
++    {
++        uint32_t colors[256];
++        uint8_t states[256]; // 0 unknown, 1 live/aliased, 2 cached
++        uint64_t frameStart = 0, frameEnd = 0;
++        uint64_t depthStart = 0, depthEnd = 0;
++        uint32_t vramSize = 0;
++        bool depthWrites = false, allDepthPages = false;
++
++        bool apart(uint64_t offset, uint32_t bytes) const
++        {
++            const uint64_t end = offset + bytes;
++            if (end > vramSize || (offset < frameEnd && end > frameStart)) return false;
++            if (!depthWrites) return true;
++            if (allDepthPages) return false;
++            if (depthEnd <= vramSize)
++                return end <= depthStart || offset >= depthEnd;
++            // Depth writes wrap, unlike the framebuffer and CLUT reads.
++            return end <= depthStart && offset >= depthEnd - vramSize;
++        }
++    };
++    thread_local TrianglePaletteCache *t_trianglePalette = nullptr;
++
++    struct TrianglePaletteScope
++    {
++        TrianglePaletteCache cache;
++        TrianglePaletteCache *previous = t_trianglePalette;
++        TrianglePaletteScope(const GSContext &ctx, uint32_t vramSize, bool enabled,
++                             int minX, int minY, int maxX, int maxY)
++        {
++            if (!enabled) return;
++            std::fill_n(cache.states, 256, uint8_t(0));
++            cache.vramSize = vramSize;
++            const uint64_t width = ctx.frame.fbw ? ctx.frame.fbw : 1u;
++            const bool frame16 = ctx.frame.psm == GS_PSM_CT16 || ctx.frame.psm == GS_PSM_CT16S;
++            // Every swizzled byte in a page remains inside its 8192-byte page.
++            // Include the holes between rows/columns: this is a conservative
++            // superset, including widths smaller than the triangle's X range.
++            const uint64_t firstFramePage = ctx.frame.fbp + uint64_t(minY / (frame16 ? 64 : 32)) * width + minX / 64;
++            const uint64_t lastFramePage = ctx.frame.fbp + uint64_t(maxY / (frame16 ? 64 : 32)) * width + maxX / 64;
++            cache.frameStart = firstFramePage * 8192u;
++            cache.frameEnd = (lastFramePage + 1u) * 8192u;
++            if (!frame16 && ctx.frame.psm != GS_PSM_CT32 && ctx.frame.psm != GS_PSM_CT24)
++            {
++                cache.frameStart = 0;
++                cache.frameEnd = vramSize;
++            }
++            cache.depthWrites = (ctx.test & (1ull << 16)) != 0 && (ctx.zbuf & (1ull << 32)) == 0;
++            if (cache.depthWrites)
++            {
++                const unsigned format = unsigned((ctx.zbuf >> 24) & 15u);
++                const bool depth16 = format == 2u || format == 10u;
++                const uint64_t firstDepthPage = (ctx.zbuf & 0x1FFu) + uint64_t(minY / (depth16 ? 64 : 32)) * width + minX / 64;
++                const uint64_t lastDepthPage = (ctx.zbuf & 0x1FFu) + uint64_t(maxY / (depth16 ? 64 : 32)) * width + maxX / 64;
++                const uint64_t span = (lastDepthPage - firstDepthPage + 1u) * 8192u;
++                cache.allDepthPages = !vramSize || (vramSize % 8192u) != 0 || span >= vramSize ||
++                    (format != 0u && format != 1u && !depth16);
++                if (!cache.allDepthPages)
++                {
++                    cache.depthStart = (firstDepthPage * 8192u) % vramSize;
++                    cache.depthEnd = cache.depthStart + span;
++                }
++            }
++            t_trianglePalette = &cache;
++        }
++        ~TrianglePaletteScope() { t_trianglePalette = previous; }
++    };
+ 
+     struct DecodedTexelCache
+     {
+@@ -1087,6 +1158,9 @@
+                                   uint8_t csa,
+                                   uint8_t sourcePsm)
+ {
++    TrianglePaletteCache *const trianglePalette = t_trianglePalette;
++    if (trianglePalette && trianglePalette->states[index] == 2u)
++        return trianglePalette->colors[index];
+     const uint32_t clutIndex = resolveClutIndex(index, csm, csa, sourcePsm);
+     const uint32_t clutWidth = (gs->m_texclut.cbw != 0u) ? static_cast<uint32_t>(gs->m_texclut.cbw) : 1u;
+     const uint32_t clutX = static_cast<uint32_t>(gs->m_texclut.cou) + (clutIndex & 0x0Fu);
+@@ -1099,7 +1173,14 @@
+             return 0xFFFF00FFu;
+         uint32_t color;
+         std::memcpy(&color, gs->m_vram + off, 4);
+-        return applyTexa(gs->m_texa, cpsm, color);
++        color = applyTexa(gs->m_texa, cpsm, color);
++        if (trianglePalette && trianglePalette->states[index] == 0u)
++        {
++            const bool safe = trianglePalette->apart(off, 4u);
++            trianglePalette->states[index] = safe ? 2u : 1u;
++            if (safe) trianglePalette->colors[index] = color;
++        }
++        return color;
+     }
+ 
+     if (cpsm == GS_PSM_CT16 || cpsm == GS_PSM_CT16S)
+@@ -1109,7 +1190,14 @@
+             return 0xFFFF00FFu;
+         uint16_t c16;
+         std::memcpy(&c16, gs->m_vram + off, 2);
+-        return applyTexa(gs->m_texa, cpsm, decodePSMCT16(c16));
++        const uint32_t color = applyTexa(gs->m_texa, cpsm, decodePSMCT16(c16));
++        if (trianglePalette && trianglePalette->states[index] == 0u)
++        {
++            const bool safe = trianglePalette->apart(off, 2u);
++            trianglePalette->states[index] = safe ? 2u : 1u;
++            if (safe) trianglePalette->colors[index] = color;
++        }
++        return color;
+     }
+ 
+     return 0xFFFF00FFu;
+@@ -1757,6 +1845,13 @@
+     const float invAbsDenom = 1.0f / std::fabs(denom);
+     constexpr float kEdgeEpsilon = 1.0e-4f;
+ 
++    static const bool paletteCacheEnabled = [] {
++        const char *e = std::getenv("REO_GS_TRI_PALETTE_CACHE");
++        return e && std::atoi(e) != 0;
++    }();
++    TrianglePaletteScope paletteScope(ctx, gs->m_vramSize, paletteCacheEnabled && gs->m_prim.tme &&
++        (ctx.tex0.psm == GS_PSM_T4 || ctx.tex0.psm == GS_PSM_T8), minX, minY, maxX, maxY);
++
+     for (int y = minY; y <= maxY; ++y)
+     {
+         float py = static_cast<float>(y) + 0.5f;

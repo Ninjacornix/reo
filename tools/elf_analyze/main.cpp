@@ -20,12 +20,12 @@
 #include <algorithm>
 
 struct Elf32Header {
-    uint8_t  magic[4];
-    uint8_t  ei_class;
-    uint8_t  ei_data;
-    uint8_t  ei_version;
-    uint8_t  ei_osabi;
-    uint8_t  padding[8];
+    uint8_t magic[4];
+    uint8_t ei_class;
+    uint8_t ei_data;
+    uint8_t ei_version;
+    uint8_t ei_osabi;
+    uint8_t padding[8];
     uint16_t type;
     uint16_t machine;
     uint32_t version;
@@ -45,8 +45,8 @@ struct Elf32Symbol {
     uint32_t name;
     uint32_t value;
     uint32_t size;
-    uint8_t  info;
-    uint8_t  other;
+    uint8_t info;
+    uint8_t other;
     uint16_t shndx;
 };
 
@@ -106,15 +106,15 @@ int main(int argc, char* argv[]) {
 
     const Elf32Header* hdr = (const Elf32Header*)data.data();
 
-    if (hdr->magic[0] != 0x7F || hdr->magic[1] != 'E' ||
-        hdr->magic[2] != 'L' || hdr->magic[3] != 'F') {
+    if (hdr->magic[0] != 0x7F || hdr->magic[1] != 'E' || hdr->magic[2] != 'L' ||
+        hdr->magic[3] != 'F') {
         fprintf(stderr, "Not a valid ELF file\n");
         return 1;
     }
 
     printf("File:        %s\n", argv[1]);
-    printf("Size:        %llu bytes (%.1f MB)\n",
-           (unsigned long long)fsize, (double)fsize / 1048576.0);
+    printf("Size:        %llu bytes (%.1f MB)\n", (unsigned long long)fsize,
+           (double)fsize / 1048576.0);
     printf("Machine:     0x%04X\n", hdr->machine);
     printf("Entry:       0x%08X\n", hdr->entry);
     printf("Segments:    %d\n", hdr->phnum);
@@ -127,7 +127,8 @@ int main(int argc, char* argv[]) {
     // Find executable LOAD segments
     for (int i = 0; i < hdr->phnum; i++) {
         uint32_t ph_off = hdr->phoff + i * hdr->phentsize;
-        if (ph_off + 32 > data.size()) break;
+        if (ph_off + 32 > data.size())
+            break;
 
         uint32_t type = *(uint32_t*)(data.data() + ph_off);
         uint32_t offset = *(uint32_t*)(data.data() + ph_off + 4);
@@ -138,8 +139,8 @@ int main(int argc, char* argv[]) {
         if (type == 1 && (flags & 1)) { // PT_LOAD + PF_X
             if (offset + filesz <= data.size()) {
                 int funcs = count_functions_heuristic(data.data() + offset, filesz);
-                printf("  Segment at 0x%08X: ~%d functions (%.1f MB code)\n",
-                       vaddr, funcs, filesz / 1048576.0);
+                printf("  Segment at 0x%08X: ~%d functions (%.1f MB code)\n", vaddr, funcs,
+                       filesz / 1048576.0);
             }
         }
     }
@@ -161,10 +162,10 @@ int main(int argc, char* argv[]) {
 
         for (int i = 0; i < hdr->shnum; i++) {
             uint32_t sh_off = hdr->shoff + i * hdr->shentsize;
-            if (sh_off + sizeof(Elf32SectionHeader) > data.size()) break;
+            if (sh_off + sizeof(Elf32SectionHeader) > data.size())
+                break;
 
-            const Elf32SectionHeader* sh =
-                (const Elf32SectionHeader*)(data.data() + sh_off);
+            const Elf32SectionHeader* sh = (const Elf32SectionHeader*)(data.data() + sh_off);
 
             if (sh->type == 2) { // SHT_SYMTAB
                 printf("\nSymbol table found! (%u bytes)\n", sh->size);
@@ -191,17 +192,16 @@ int main(int argc, char* argv[]) {
                     // Count and list function symbols
                     for (uint32_t j = 0; j < num_syms; j++) {
                         uint32_t sym_off = sh->offset + j * sizeof(Elf32Symbol);
-                        if (sym_off + sizeof(Elf32Symbol) > data.size()) break;
+                        if (sym_off + sizeof(Elf32Symbol) > data.size())
+                            break;
 
-                        const Elf32Symbol* sym =
-                            (const Elf32Symbol*)(data.data() + sym_off);
+                        const Elf32Symbol* sym = (const Elf32Symbol*)(data.data() + sym_off);
 
                         uint8_t type = sym->info & 0x0F;
                         if (type == 2) { // STT_FUNC
                             func_count++;
                             if (func_count <= 20) { // Print first 20
-                                printf("    FUNC 0x%08X size=%u %s\n",
-                                       sym->value, sym->size,
+                                printf("    FUNC 0x%08X size=%u %s\n", sym->value, sym->size,
                                        sym_strtab + sym->name);
                             }
                         }

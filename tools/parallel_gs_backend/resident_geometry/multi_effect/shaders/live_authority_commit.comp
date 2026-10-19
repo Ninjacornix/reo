@@ -1,0 +1,15 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+layout(local_size_x=64) in;
+#include "live_authority_common.glsl"
+void main(){uint lane=gl_LocalInvocationIndex;
+ if(lane==0u)admitted=uint(results[0]==0u&&completion[8]==0u&&cert[0]==0u&&cert[1]==1u&&cert[11]==1u);
+ barrier();
+ if(admitted!=0u){for(uint w=lane;w<158u;w+=64u)authorityState[w]=state[384u+w];
+  for(uint w=lane;w<4096u;w+=64u)authorityData[w]=data[4096u+w];}
+ memoryBarrierBuffer();barrier();
+ if(lane==0u){if(admitted!=0u)cert[9]=1u;else atomicCompSwap(completion[8],0u,results[0]!=0u?results[0]:87u);
+  completion[0]=completion[8];completion[1]=tape[10];completion[2]=tape[11];completion[3]=0u;completion[4]=0u;
+  completion[5]=uint(admitted!=0u&&(tape[12]&255u)==1u);completion[6]=tape[6];completion[7]=0u;
+  completion[9]=tape[15];completion[10]=0u;completion[11]=0u;}
+}

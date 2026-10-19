@@ -1,0 +1,129 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -9,6 +9,7 @@
+ #include "runtime/ps2_memory.h"
+ #include "ps2_log.h"
+ #include <atomic>
++#include <array>
+ #include <algorithm>
+ #include <chrono>
+ #include <cmath>
+@@ -30,6 +31,7 @@
+ void ps2VifKickVuProfileRecord(uint64_t ns, uint32_t cycles, bool capped) noexcept;
+ void ps2VifKickVuSpecializedRecord(bool selected, uint64_t blocks, uint64_t pairs) noexcept;
+ void ps2VifKickVuNativeGeometryRecord(uint64_t loops,uint64_t vertices,uint64_t pairs) noexcept;
++void ps2VifKickVuNativeGeometryTimingRecord(uint64_t attempts,uint64_t ns) noexcept;
+ 
+ namespace
+ {
+@@ -149,11 +151,36 @@
+             if (FILE* out = std::fopen(path.string().c_str(), "wb"))
+             { std::fwrite(bytes, 1, size, out); std::fclose(out); }
+         }
++        // Optional immutable external image filter. Configuration/file IO occurs
++        // only after DUMP is enabled; no diagnostic image enters the GS/runtime.
++        static bool exactImageAllowed(const uint8_t* code,uint32_t codeSize)
++        {
++            struct Filter { bool configured=false,valid=false;std::array<uint8_t,16384> image{}; };
++            static const Filter filter=[] {
++                Filter result;
++                const char* path=std::getenv("REO_VU1_DUMP_CODE_IMAGE");
++                if(!path)return result; // Unset retains existing capture behavior.
++                result.configured=true;
++                if(*path)if(FILE* file=std::fopen(path,"rb")) {
++                    const size_t bytes=std::fread(result.image.data(),1,result.image.size(),file);
++                    const int trailing=std::fgetc(file);
++                    result.valid=bytes==result.image.size()&&trailing==EOF&&!std::ferror(file);
++                    if(std::fclose(file)!=0)result.valid=false;
++                }
++                if(!result.valid)
++                    std::fprintf(stderr,"[VU1-CAPTURE-FILTER] invalid configured image; capture disabled\n");
++                return result;
++            }();
++            return !filter.configured || (filter.valid&&code&&codeSize==filter.image.size()&&
++                std::memcmp(code,filter.image.data(),filter.image.size())==0);
++        }
+         VuCapture(uint8_t* code, uint32_t codeSize, uint8_t* data, uint32_t dataSize,
+                   const VU1State& state, PS2Memory* memory, uint32_t maxCycles)
+         {
+             const char* dir = std::getenv("REO_VU1_DUMP");
+             if (!dir || !*dir) return;
++            // Full image comparison precedes program/gate/bounded quota use.
++            if(!exactImageAllowed(code,codeSize))return;
+             // Character geometry (original descriptor 0x230640) uses a different
+             // microprogram from the static room. Filter before arming/budget so
+             // room draws cannot exhaust a requested weighted-program capture.
+@@ -340,6 +367,7 @@
+     uint32_t cycle=0;
+     uint64_t matchedBlocks=0, matchedPairs=0;
+     uint64_t nativeLoops=0,nativeVertices=0,nativePairs=0;
++    uint64_t nativeAttempts=0,nativeAttemptNs=0;
+     const auto* specializedProgram = vu_specialized::selectProgram(
+         vuCode, codeSize, vuData, dataSize, capture.active);
+     const auto* nativeProgram=vu_native_geometry::selectProgram(
+@@ -433,7 +461,14 @@
+                 if(loop && maxCycles-cycle>=loop->minPairs)
+                 {
+                     invocation.remainingPairs=maxCycles-cycle;
++                    std::chrono::steady_clock::time_point nativeStarted{};
++                    if(timing.kickProfile) nativeStarted=std::chrono::steady_clock::now();
+                     const auto result=loop->execute(invocation);
++                    if(timing.kickProfile) {
++                        ++nativeAttempts;
++                        nativeAttemptNs+=uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
++                            std::chrono::steady_clock::now()-nativeStarted).count());
++                    }
+                     if(result.pairs)
+                     {
+                         if(result.pairs>invocation.remainingPairs || !result.vertices ||
+@@ -519,6 +554,7 @@
+     }
+     if (timing.kickProfile) ps2VifKickVuSpecializedRecord(specializedProgram != nullptr, matchedBlocks, matchedPairs);
+     if(timing.kickProfile)ps2VifKickVuNativeGeometryRecord(nativeLoops,nativeVertices,nativePairs);
++    if(timing.kickProfile)ps2VifKickVuNativeGeometryTimingRecord(nativeAttempts,nativeAttemptNs);
+     timing.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds);
+ }
+ 
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -2652,6 +2652,7 @@
+         uint64_t peakQueueBytes = 0;
+         uint64_t matchedLaunches = 0, matchedBlocks = 0, matchedPairs = 0;
+         uint64_t nativeLoops=0,nativeVertices=0,nativePairs=0;
++        uint64_t nativeAttempts=0,nativeAttemptNs=0;
+     };
+     thread_local VifKickVuWork* t_vifKickVuWork = nullptr;
+     struct VifKickWriteTiming
+@@ -2721,7 +2722,7 @@
+             const uint32_t n = records().fetch_add(1, std::memory_order_relaxed);
+             if (n >= c.limit) return;
+             const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(start.time_since_epoch()).count();
+-            std::fprintf(stderr, "[VIF-KICK-TIMING] n=%u elapsed=%.6f ns=%lld duration_us=%lld tid=%d pc=%08x ra=%08x io_depth=%u vu_calls=%llu vu_us=%llu vu_cycles=%llu vu_capped=%llu xgkick_calls=%llu xgkick_bytes=%llu xgkick_prep_us=%llu xgkick_submit_us=%llu vu_non_xgkick_us=%llu path1_copy_calls=%llu path1_copy_us=%llu path1_lock_us=%llu path1_queue_wait_us=%llu path1_peak_queue_bytes=%llu vu_matched_launches=%llu vu_matched_blocks=%llu vu_matched_pairs=%llu vu_native_loops=%llu vu_native_vertices=%llu vu_native_pairs=%llu\n",
++            std::fprintf(stderr, "[VIF-KICK-TIMING] n=%u elapsed=%.6f ns=%lld duration_us=%lld tid=%d pc=%08x ra=%08x io_depth=%u vu_calls=%llu vu_us=%llu vu_cycles=%llu vu_capped=%llu xgkick_calls=%llu xgkick_bytes=%llu xgkick_prep_us=%llu xgkick_submit_us=%llu vu_non_xgkick_us=%llu path1_copy_calls=%llu path1_copy_us=%llu path1_lock_us=%llu path1_queue_wait_us=%llu path1_peak_queue_bytes=%llu vu_matched_launches=%llu vu_matched_blocks=%llu vu_matched_pairs=%llu vu_native_loops=%llu vu_native_vertices=%llu vu_native_pairs=%llu vu_native_attempts=%llu vu_native_attempt_us=%llu\n",
+                 n, std::chrono::duration<double>(start-c.epoch).count(), static_cast<long long>(ns),
+                 static_cast<long long>(us), tid, pc, ra, ioDepth,
+                 static_cast<unsigned long long>(work.calls), static_cast<unsigned long long>(work.ns / 1000u),
+@@ -2737,7 +2738,9 @@
+                 static_cast<unsigned long long>(work.matchedPairs),
+                 static_cast<unsigned long long>(work.nativeLoops),
+                 static_cast<unsigned long long>(work.nativeVertices),
+-                static_cast<unsigned long long>(work.nativePairs));
++                static_cast<unsigned long long>(work.nativePairs),
++                static_cast<unsigned long long>(work.nativeAttempts),
++                static_cast<unsigned long long>(work.nativeAttemptNs / 1000u));
+             if (overhead) overhead->complete(n, uint64_t(ns), uint64_t(us));
+         }
+     };
+@@ -2788,6 +2791,10 @@
+ // One native geometry record per completed VU run; no per-pair clocks/atomics.
+ void ps2VifKickVuNativeGeometryRecord(uint64_t loops,uint64_t vertices,uint64_t pairs) noexcept {
+     if(auto* work=t_vifKickVuWork){work->nativeLoops+=loops;work->nativeVertices+=vertices;work->nativePairs+=pairs;}
++}
++
++void ps2VifKickVuNativeGeometryTimingRecord(uint64_t attempts,uint64_t ns) noexcept {
++    if(auto* work=t_vifKickVuWork){work->nativeAttempts+=attempts;work->nativeAttemptNs+=ns;}
+ }
+ 
+ // Private implementation-only hook. No clocks, allocation or logging here.

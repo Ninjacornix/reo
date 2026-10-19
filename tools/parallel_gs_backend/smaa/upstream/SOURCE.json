@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/iryoku/smaa",
+  "revision": "71c806a838bdd7d517df19192a20f0c61b3ca29d",
+  "files": {
+    "SMAA.hlsl": "4db53d92ef0b45661f8450303589ffabce93c352cae4282a6f32dd2b80efbeb9",
+    "Textures/AreaTex.h": "1933bf43ce86ba71f7ed5f0fa94b148610c634dc3395b9bc67a817d51ee73af2",
+    "Textures/SearchTex.h": "1fac315ab5f87b60083c9b8387af17f056204d3d1bf21500f2acc5b3e8c1a37a",
+    "LICENSE.txt": "2b848b67ba50ac40b53e11cf1ccdaee2a190ca83b4652cba695a5f1ce81f52ae"
+  }
+}

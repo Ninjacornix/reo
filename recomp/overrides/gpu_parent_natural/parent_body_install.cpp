@@ -1,0 +1,26 @@
+#include "natural_dispatch.h"
+#include "ps2_recompiled_functions.h"
+bool ReoInstallConnectedParentBodies(PS2Runtime& runtime) {
+    static constexpr uint32_t parentPCs[]{0x19bbd0, 0x19bbfc, 0x19bcfc, 0x19bd2c, 0x19bd50,
+                                          0x19bd9c, 0x19bdb4, 0x19be54, 0x19be64};
+    static constexpr uint32_t aggregatePCs[]{
+        0x199d00, 0x199d0c, 0x19a06c, 0x19a114, 0x19a124, 0x19a12c, 0x19a18c, 0x19a234, 0x19a244,
+        0x19a2e8, 0x19a2f8, 0x19a300, 0x19a4ec, 0x19a5c4, 0x19a5d4, 0x19a5dc, 0x19a63c, 0x19a714,
+        0x19a724, 0x19a72c, 0x19a98c, 0x19aa64, 0x19aa74, 0x19aa84, 0x19b1ec, 0x19b2bc, 0x19b2ec,
+        0x19b31c, 0x19b340, 0x19b38c, 0x19b438, 0x19b448, 0x19b6ec, 0x19b7ec, 0x19b81c, 0x19b840,
+        0x19b88c, 0x19b938, 0x19b948, 0x19b9b0, 0x19bac4, 0x19bad4, 0x19badc, 0x19bb7c, 0x19bb8c,
+        0x19c0f0, 0x19c1cc, 0x19c1dc, 0x19c1ec, 0x19c214, 0x19c258, 0x19c26c, 0x19c2dc, 0x19c37c,
+        0x19c394, 0x19c430, 0x19c440, 0x19c484, 0x19c4ec, 0x19c5bc, 0x19c5ec, 0x19c610, 0x19c65c,
+        0x19c674, 0x19c714, 0x19c724, 0x19c78c, 0x19c864, 0x19c874, 0x19c87c, 0x19c88c};
+    for (auto pc : parentPCs)
+        if (runtime.lookupFunction(pc) != sub_0019BBD0_0x19bbd0)
+            return false;
+    for (auto pc : aggregatePCs)
+        if (runtime.lookupFunction(pc) != sub_00199D00_0x199d00)
+            return false;
+    for (auto pc : parentPCs)
+        runtime.registerFunction(pc, ReoNaturalParentBody);
+    for (auto pc : aggregatePCs)
+        runtime.registerFunction(pc, ReoNaturalAggregateBody);
+    return true; // Only wrapper registration; default-off selection unchanged.
+}

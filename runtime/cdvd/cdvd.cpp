@@ -33,17 +33,30 @@ CDVD::~CDVD() {
 }
 
 void CDVD::open_image() {
-    // Preferred: the ISO file itself.
-    if (const char* iso = std::getenv("REO_ISO")) {
-        FILE* f = fopen(iso, "rb");
+    // Read directly from the user's image; no mounted drive is required.
+#ifdef _WIN32
+    const wchar_t* iso = _wgetenv(L"REO_ISO");
+    FILE* f = iso && *iso ? _wfopen(iso, L"rb") : nullptr;
+    std::string label;
+    if (iso && *iso) {
+        const auto utf8 = fs::path(iso).u8string();
+        label.assign(reinterpret_cast<const char*>(utf8.data()), utf8.size());
+    }
+#else
+    const char* iso = std::getenv("REO_ISO");
+    FILE* f = iso && *iso ? fopen(iso, "rb") : nullptr;
+    std::string label = iso ? iso : "";
+#endif
+    if (!label.empty()) {
         if (f) {
             _fseeki64(f, 0, SEEK_END);
             m_imageSize = static_cast<uint64_t>(_ftelli64(f));
             m_image = f;
-            printf("[CDVD] Disc image: %s (%llu bytes)\n", iso, (unsigned long long)m_imageSize);
+            printf("[CDVD] Disc image: %s (%llu bytes)\n", label.c_str(),
+                   (unsigned long long)m_imageSize);
             return;
         }
-        fprintf(stderr, "[CDVD] REO_ISO not readable: %s\n", iso);
+        fprintf(stderr, "[CDVD] REO_ISO not readable: %s\n", label.c_str());
     }
 #ifdef _WIN32
     // Fallback: the data root is a mounted disc ("F:\\"): read its raw volume.

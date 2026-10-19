@@ -1,5 +1,7 @@
 # REO divergences (Milestone 1 log)
 
+**Milestone 1 COMPLETE (2026-10-11):** the user accepted synchronized, clean audio and confirmed menu responsiveness/fades with "Yes, close Milestone 1". Historical checkpoint statuses below are superseded by this acceptance and the final D52 entry.
+
 Each entry records the first observed divergence from real hardware/PCSX2 at a boot checkpoint, the evidence, the smallest fix, and its validation. Newest at the bottom.
 
 Game: `SLUS-20765` NTSC-U v2.00, ELF SHA-256 `06BD5FD7…B4CA46`. Branch `baseline/pivot-selfexec`. Run mode `REO_NATURAL=1` (no PCSX2 snapshot injection) unless stated.
@@ -557,7 +559,7 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - **Fix:** that path also draws large sprites (32k+ px) in row bands on the worker pool. It uses the same no-overlap rule (texture vs. frame and palette vs. frame page ranges), and band threads get a copy of the sprite's palette cache. `tools/gs_fastpath_check` still produces identical VRAM.
 - **Result:** every logo-phase heartbeat is now ~1.03–1.05 s (real time; before up to 2.5–3.7 s). Fades show a steady 2-vblank (30 fps) cadence.
 
-## D44: flicker and hitches at menu / video transitions — FIXED (patch 0026)
+## D44: flicker and hitches at menu / video transitions - FIXED (patch 0026)
 
 - **Symptom (user):** brief flicker when switching menus or leaving the movie; slow at the start of a transition (e.g. Circle out of a menu), then normal.
 - **Measured** with `REO_PRESENT_LOG=<from>,<to>`: one line per present (snapshot sequence, swap time, tick, buffers, brightness, hash).
@@ -568,6 +570,20 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
   4. **Present jitter:** the present loop polled with 500 µs sleeps, which Windows rounds up, so presents alternated ~10/23 ms. It now waits on a condition variable signalled by each vblank snapshot.
 - **Result:** 2,097 of 2,100 presents show exactly one new snapshot; present interval median 17 ms (p10 15, p90 18). No single-frame brightness outliers or wrong-source frames.
 - **Remaining:** the slow VBLANK dispatches seen (`[vblank-slow]`) happen during boot loading only.
+
+## D45: CRI DTX mailboxes stalled forever — SifInitRpc re-init wiped the emulated IOP-side DTX server — FIXED (patch 0028)
+
+- **Symptom (blocker for M1 audio):** both DTX mailboxes (ch0 SJX @ EE `0x229d40`, ch1 PS2RNA @ EE `0x223ec0`, 0x880-byte packets) ran only ~8–10 rounds during startup — all with empty packets — then went silent for the rest of the run. No SJX data and no PS2RNA START were ever sent; no CRI errors.
+- **Transport reverse-engineered (Ghidra, `/ps2/SLUS_207.65`):**
+  - `DTX_Create` `FUN_00138f78` builds 0x44-byte objects in the table at `0x21c430` (8 slots): +0x0C EE work, +0x14 uncached footer address (work+size−0x40 | 0x20000000), +0x18 IOP addr, +0x1C size, +0x20 send-cb, +0x28 recv-cb; the ADXT init (`FUN_0013e2b8`/`FUN_00141280`) installs the real callbacks (SJX fill `0x140fb8`, PS2RNA fill `0x13e000`).
+  - The pump `FUN_00139198` (driven by `FUN_00139568` from the CRI main `FUN_00132c08`, twice per pass via `FUN_001389d8`+`FUN_00141268`) waits for the **footer ticket word** (work+size−4, read through the uncached alias) to exceed the local ticket (+0x08) before it recycles a packet, and only sends while word0 byte2 (enabled) is set and gate `0x21c41c` is 1.
+  - The clock: the game's vblank handler `FUN_0019f600` → `FUN_001a9040` → `FUN_0012bdb8` wakes CRI threads 5/6 every vblank (thread 5 runs scheduler group 2 = the CRI audio main). Thread 5 sleeps via `SleepThread` between passes; its busy flag is `0x210488`, loop counter `0x2104b0`.
+- **Runtime evidence (`REO_PEEK`):** the vblank tick, thread 5, the scheduler and the DTX pump all kept running (pump counter +4/tick), but the objects stuck at word0 = `0x10101` (created + **in-flight** + enabled) with **local ticket == footer ticket** — i.e. the pump had queued the next packet (wrote the footer) but its `sceSifSetDma` never ACKed: no `[DTX_ACK]`, no `[DTX_MISS]`, no failure line.
+- **PCSX2 reference (PINE probe of the same globals):** on the real IOP the mailboxes cycle **continuously** — ~2 packets/vblank/channel (~120/s), footer = local+1, for the whole run. The native stall is a divergence, not CRI behavior.
+- **Root cause:** `SifInitRpc` (RPC.cpp) called `resetDtxRpcStateUnlocked()` on **every re-init**, wiping `g_dtx_transfer_by_id` (the DTX_CREATE-registered mailboxes) and all SJX/PS2RNA/SJRMT handles. The game re-calls `SifInitRpc` from 12 sites (e.g. file/movie init `FUN_001ab560`, twice) — each call after CRI init killed the transport. Afterwards every mailbox DMA silently no-oped because `noteDtxSifDmaTransfer`'s miss log is suppressed when `knownTransfers == 0`, so the footer ticket never advanced and the pump waited forever. On hardware an EE-side `sceSifInitRpc` re-call only refreshes the EE RPC layer; the IOP-side DTX server objects outlive it, and the guest never re-registers them.
+- **Fix (patch `0028-sifinitrpc-keep-dtx-server-state.patch`):** keep the DTX server state across `SifInitRpc` re-inits (log each re-init), and make a wiped table visible — `[DTX_MISS]` now also logs for DTX-shaped transfers (≥0x80 bytes, 64-byte aligned) when the transfer table is empty. The sound-driver state keeps its D36-tested lazy re-init.
+- **Result:** `[SifInitRpc] re-init` fires repeatedly and harmlessly; ACKs run to the 32-line cap; tickets advance for the whole run (final footer `0x580c` vs `0x15` before) at the PCSX2 cadence; `DTX_MISS` shows one benign line (the 0x570C0-byte overlay load).
+- **Remaining:** every mailbox packet is still **empty** (`REO_DTX_DUMP` produced no non-empty dumps; no `[SJX-cmd]`/`[PS2RNA-cmd]`). The transport is healthy but no audio data enters it: the SFD/game sound layer never queues SJX chunks or starts PS2RNA. Next: compare the SJX uni-stream byte counters (`0x21bc08` table, +0x3C per entry), PS2RNA play-switches (`0x223880`+0x24) and game stream states (`0x20f3c8`+1) against PCSX2 during the title-screen demo video (the user's audio repro: the demo plays with sound on real hardware).
 
 ## Milestone-1 checkpoint (observed)
 
@@ -606,3 +622,225 @@ Category: **recompiler codegen**. Confidence: confirmed against the VU instructi
 - CRI middleware: `[EE-TTY] DTX_Create: can't create DTX of server` / `E0100302: SJX_Init can't create DTX`, IOP server `0x90000200` (unhandled, func 2). The runtime has a configurable "DTX compat" layer to investigate.
 - Unhandled sid `0x00000001` func 16 (sound-driver state sid in the runtime's table).
 - Hot loop at `0x141380` with `st@2B0EC0=1` after the above.
+
+## D46: PRESS START BUTTON had zero opacity - FIXED (0029)
+
+Overlay 1 0x57FED0 calls guest sine 0x192190 -> 0x18F340 and submits the prompt through 0x5807C0 -> 0x1AB860. Fresh contexts left VF00.w=0, so the math produced zero opacity. Initialize VF00=(0,0,0,1) in fresh contexts. Screenshot 20261011-021422-codex-title-vf00-fix/shot_55.bmp shows the original prompt. Generated sine regression passes for 127 phase values. REO_TITLE_DIAG is read-only and opt-in.
+
+## D47: SJX chunk recycling and missing PCM output - FIXED (0030), audio accepted
+
+SJX_CREATE's fourth argument is the EE registration record. Callback 0x1410C8 dereferences reply field +4 as that record; returning an IOP SJX handle prevented chunk recycling after the initial batch. The EE has already decoded ADX into planar PCM16 at 48 kHz. Stream complete chunks to the host and delay replies until the callback consumes them. SJRMT's 0x100-byte work region describes the separate 0x4000-byte sample buffer. The user confirmed sound; full runs measured continuous host output with zero underruns. General SPU2 banks are outside this streaming fix. Prior empty-packet observations concern the title background, not the attract demo; SJUNI +0x3C is unreliable because of guest counter bookkeeping.
+
+## D48: loud distorted ADX predictor - FIXED (0031), PCM validated and audio accepted
+
+The user's loud/glitchy report reproduces with input PCM saturation despite zero host underruns. Native left RMS was 23,928. Original coefficient routine 0x126510 uses R5900 SQRT.S words 0x46160504 at 0x12652C and 0x460C0004 at 0x1265E8. R5900 reads Ft; the generator read Fs, taking square roots of stale f0 and yielding unstable coefficients 8554/-4465.
+
+Patch 0031 corrects the generator and adds opcode regression coverage. tools/repair_generated_sqrt.py refreshes only stale opcode-matched statements; no shared headers change. The generated coefficient arithmetic passes at 24, 44.1 and 48 kHz. Natural 105-second run 20261011-122151-codex-cri-sqrt-fix passes with zero host underruns. Eight seconds per channel (384,000 samples each) match an independent CRI-compatible decode exactly: zero mismatches; RMS left 4,624.017/right 4,210.887; clipped samples 1/0 (also in reference). No arbitrary gain reduction was used. The user subsequently accepts audio as synchronized and clean after 0033/0034; final menu/presentation acceptance remains.
+
+References: [PCSX2 SQRT_S](https://github.com/PCSX2/pcsx2/blob/master/pcsx2/FPU.cpp), [FFmpeg ADX decoder](https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/adxdec.c). Include original CRI scale+1 when comparing samples. PCM captures and extracted ADX are ignored and never committed.
+
+## D49: audio underrun recovery and device buffering (0032), completed with D50-D51
+
+A loaded timing test overlapped a build and PCSX2, producing 59,744 missing output frames. Resuming the old PCM left ~1.27 s permanent audio lag. Keep missed source-sample debt, skip late stereo pairs upon refill, count real skipped bytes toward SJX acknowledgements, preserve fractional rates and clear stale debt on pause. Focused checks pass 31/31, including deterministic starvation/recovery and 8 kHz phase. This loaded test does not establish the cause of the user's original small lag.
+
+PRIVATE raylib definitions request two 5 ms Windows device periods; this machine's WASAPI driver clamps to 960 frames / 20 ms, down from 1440 / 30 ms. No shared headers or generated target definitions change. Patch chain 0001..0032 applies and matches source. Isolated 185-second playback completes with zero underruns and skipped samples across both attract demos.
+
+User feedback after that build: audio is now ahead, probably by a fixed offset; the user requests an objective measurement. M1 stays OPEN. Compare timestamped latched presented frames with the original PS2demo03/04.sfd and consumed audio samples; raw decoder +F08/+F0C clock alone cannot establish the displayed frame. REO_CRI_SYNC_LOG records read-only timing evidence. Screenshot timestamps are added to the existing opt-in REO_SHOT_AT path. Assets and analysis output remain ignored.
+
+## D50: measured picture drift; IPU IDCT acceleration (0033), drift removed in measured run
+
+Timestamped presented-frame matching against the original PS2demo03.sfd reveals audio lead growing 368 -> 1333 ms over 16 checkpoints with zero underruns. Native video averages 28.0468 fps versus the source's 29.97. Motion-region correlation >=0.99757 distinguishes reference frames with high confidence. Host-latency estimate is explicitly 20 ms; uncertainty of a few device/frame intervals cannot explain ~1 second drift. Tool: tools/analyze_av_sync.py; ignored report: build-ninja/av-sync-battle-baseline.json.
+
+Patch 0033 vectorizes the IPU IDCT in independent SSE2 double lanes and replaces costly scalar lround calls with exact truncation/fractional tie tests, retaining accumulation order and scalar fallback. Full DC range, MPEG mismatch control, deterministic dense/sparse spectra and rounding-boundary probes pass: 28,192 blocks / 1,804,288 samples exactly equal the prior scalar definition. Transform benchmark improves ~6.44x; original IPU pipeline tests remain passing. Minimal rebuild/relink and chain 0001..0033 validation pass. Identical isolated post-fix run delivers 29.8976 fps with lead 346 -> 384 ms, instead of progressively reaching 1333 ms; correlation >=0.99755. Remaining startup offset is investigated in D51. M1 remains OPEN.
+
+## D51: IPU bit-reader cost held video behind at startup - FIXED (0034), audio accepted
+
+Original PCSX2 displayed-frame versus movie-clock matching measures roughly 83-116 ms battle presentation lag; decoded +F00/+F04 keeps up with the movie clock. This comparison does not measure reference speaker latency. Native 0033 still has approximately 0.38 s audio lead despite stable video rate. Patch 0034 replaces repeated per-bit extraction with a bounded byte window, preserving zero padding, bit order and negative-position fallback. 924,858 boundary comparisons exactly match the prior implementation, and the reader benchmark improves ~3.59x. Existing IPU pipeline/IDCT checks and build/relink pass; patch chain 0001..0034 applies and matches source.
+
+Isolated 105-second run 20261011-131311-codex-av-bitreader-measurement matches 15 battle frames with correlation >=0.99814. Estimated lead drops 187 -> 103 -> 43 -> 13 ms, then remains between -19 and +20.4 ms. Decoded picture time catches up to the original movie clock; no audio delay or guest timing override is added. Report: build-ninja/av-sync-battle-bitreader.json. Longer run 20261011-131710-codex-av-full-cycle passes with zero underruns/skips across 176 logged intervals. Sixteen matched battle checkpoints (correlation >=0.99778) show a startup peak of 231 ms, settling to 11-64 ms after the first four seconds; two hint checkpoints measure 48/60 ms (correlation >=0.99928). Device latency remains an explicit 20 ms estimate, not a speaker recording. The user confirms "Sounds synchronized and clean". Reports: build-ninja/av-sync-battle-full-cycle.json and av-sync-hint-full-cycle.json. All media and reports remain ignored. M1 is now COMPLETE following final presentation/menu acceptance.
+
+## D52: scenario responsiveness and Circle/title dark fade - reference verified
+
+Corrected ordinary input in native run `20261011-132431-codex-scenario-cross-measurement` reaches SCENARIO twice (shots 58/79). Menu/submenu heartbeat intervals remain 998-1002 ms with approximately 30 CSC frames and 60 vblanks per second. There is no measured CPU stall in this run after the IDCT/bit-reader fixes. Cross confirms SINGLE PLAY; Start does not. Pad-script and screenshot clocks have different origins.
+
+Visible PCSX2 evidence: `build-ninja/pcsx2-menu-fade-visible/timeline.jsonl`, `frame_*.png`, `comparison.png`. Foreground ownership is verified for every capture; ordinary WM_KEY input targets only the owned reference window. Read-only PINE samples frontend pointer 0x5D4898, state and timer. Cross at 60 s reaches steady SCENARIO at 60.707 s (state 0x020202). Circle at 65 s reaches steady main menu at 68.531 s (0x050501). Circle at 70 s reaches steady title at 72.767 s (0x030200). Screenshots show the original black transition followed by PRESS START over dark opening frames of the restarted title movie, matching the native sequence.
+
+Original overlay-1 routines 0x57F620 (main menu), 0x5811F0 (scenario submenu) and 0x580110 (title) implement deliberate stop/restart waits of 20/10/20 frames. No additional timing/fade override is justified. Earlier desktop-obscured / PrintWindow-black captures are invalid visual evidence. The owned reference exited and its INI was restored byte-for-byte. Technical comparison is complete. The user accepted menu responsiveness and fades with **"Yes, close Milestone 1"**; M1 is COMPLETE. Subsequent M2 work is recorded below.
+
+## D53: black screen after confirming SCENARIO - initial blocker fixed
+
+M2 baseline `20261011-135128-m2-scenario-baseline` stays black with PC/RA0x588338 consuming almost a full CPU second per second. The overlay sprite function0x588200 was truncated at0x588440 instead of its original0x588478 epilogue. Overlay MWo3 text/data sizes exclude the0x40-byte header; the old ELF wrapper omitted that header from its executable segment. Nine owned images confirm the same header size, and only this mapped function crosses the old executable boundary. Correct the wrapper and narrowly regenerate the original sprite plus the skipped saved-progress poll0x1F73B0, checking original instruction coverage and required continuation registration. No success stub or state jump replaces either function.
+
+Focused original-function checks PASS for packet submission, disabled draw path, RA/SP and saved-register restoration, and progress cold/cached/payload/busy/success/error behavior. Native `20261011-140113-m2-scenario-tail-fix` reaches original scenario, Kevin, difficulty and opening cinematic. The sustained initial black-screen loop is fixed; room loading/gameplay remains unverified. The ordinary-input testing helper reaches scenario selection at21.208s with accelerated boot, preserving guest initialization.
+
+## D54: idle character-select text loss and slow presentation - reproduced, fix under validation
+
+`20261011-140755-m2-character-text-perf-burst` captures190 frames over18.917s (~9.99fps), with header/name/detail losses while Kevin is idle. The original brief selection blink does not explain these losses. A production GS queue regression proves old display registers can be paired with newer VRAM after a later clear. Candidate ordered immutable pixel capture passes that regression, but full-game accelerated boot exposes excessive capture queueing and producer starvation; normal-speed validation also shows audio underruns. The rendering agent is bounding capture/pacing before acceptance. Host perf ticks count presentation iterations; actual guest VBLANK continues about60/sec, so a scheduler rewrite is not justified by that counter.
+
+## D55: missing menu effects and character voices - confirmed missing bank playback
+
+The former SOUND-DRIVER RPC path updated compatibility status but emitted no bank voices. Owned Tsnd/HSYN decompilation establishes actual SE framing, bank-load opcodes4D/4E, reversed SCEI tags, indexed program/sample metadata and a240Hz TQ timer. Captured original HD/BD/TQ banks and requests are available from `20261011-142604-m2-normal-boot-sound-capture`. Generic sequence/voice output is now connected to the existing CriAudio host callback; sample decoding/cache population happens outside the callback. Captured menu and stereo speech probes pass, including callback-size equality. Actual selected-character cue and native output quality remain to validate while rendering pressure is repaired. The accepted M1 CRI stream fix does not cover this path. No character-specific WAV fallback is used. Investigation: docs/M2_AUDIO_INVESTIGATION.md.
+
+## D56: original nonzero memset corruption falsely skips Kevin model loading
+
+PCPYH generated code sourced rs instead of rt. Original memset0x107C68 therefore produced zero aligned blocks for nonzero fill bytes, falsely marking Kevin's model cached. Correct the generator and exactly three original opcode-matched emitted expressions; no shared generated headers change. Original-memset4224-case regression and generator45/45 tests pass. Native `20261011-152531-m2-pcpyh-tile-room-validation` loads the same Kevin skeleton root0x4F8FB0 as PCSX2 and reaches gameplay phase2. The picture remains black because the separate VU interpreter submits malformed graphics packets. This resolves the demonstrated loading traversal stall, not the room-rendering milestone.
+
+D54 updated validation: bounded ordered capture plus drawing-only pacing, identical-CRT conversion and proven nonalias T8/T4 per-sprite tiles produce59.99 host presents/sec and29.63 decoded backdrop frames/sec in the latest stationary Kevin burst, with zero missing glyphs/underruns in120 captures. Generic/parallel/sequential4000-case comparisons remain byte-identical, including TEXCLUT.COV palette/frame feedback. Wider menu/logo checks remain pending.
+
+D55 updated validation: the actual Kevin confirm port12/seq8 request emits both original sample layers; independent captured-packet tests pass active/finished queries and callback-partition equality. Fully isolated character/opening playback has zero measured underruns. An earlier cutscene test overlapped compilation and is invalid as a clean audio control. First-room VU/GS overload currently causes a separate stall and must be fixed before overall quality acceptance.
+
+
+## D57: original VIF/VU instruction decoding submits false geometry ? corrected, bounded original-stream validation
+
+Original SQI81E4FB7D was decoded as XGKICK, while real XGKICK was decoded as another operation. Upper-I pairs also skipped or executed the wrong lower instruction. Faithful instruction tables, integer-register fields, immediate ordering and TOP/ITOP latches are corrected. Focused VU14/14 and VIF13/13 pass; original combined first256-callback replay emits228 EOP-complete packets/368832bytes, maximum2464bytes, each ending normally. Patches0040/0041 reproduce private runtime changes. Native reaches original phase2 and renders the room. This does not claim full VU pipeline parity. Corrected upstream VIF tests pass individually; the complete old memory suite has a separate detached-GS-worker lifetime defect.
+
+## D58: ADC vertices leave stale primitive history ? corrected
+
+Non-drawing vertices must consume list/strip/fan history even though they suppress rasterization. Former early return retained stale/nonadjacent vertices. Production regression fails all7 supported primitive histories before the fix and passes7/7 after, byte-identical to explicitly assembled valid geometry. Patch0042.
+
+## D59: CTC2 VI2 alias corrupts original trigonometric range reduction ? correction in progress
+
+Generator mistakes integerVI2 for VPU status. General low-VI selector emission is corrected (VI0 immutable, VI1..15 low16-bit writes). Original emitted single sine/cosine expressions18F37C/18F4AC are repaired; exact yaw wrappers3700C0/370100 recovered from owned overlay bytes. Original131086 angle cases pass unchanged0.003 tolerance; generator46/46 passes. Patch0043 plus reproducible original-generated repair tools. Reachable combined sine/cosine18F570 has the same originalPC18F5B0 bug, used by floor probes and world/skeletal transforms; its narrow correction and extended original-function regression are now being integrated.
+
+## D60: triangle STQ interpolation divides perspective coordinates before interpolation ? corrected
+
+Original varying-Q triangles need linearly interpolatedS,T,Q followed by a single divide. Former implementation interpolatedS/Q andT/Q, producing821/821 wrong interior pixels in each of3 cases. Corrected production regression passes all5 cases, preserving constant-Q/FST controls and both winding/sign cases. Patch0044 applies and matches normalized source exactly. No new backface-culling rule is introduced.
+
+## D61: GS pixel depth and destination-alpha tests are absent ? active rendering defect
+
+The former pixel writer stores ZBUF but has no depth read/compare/write, and ignores destination-alpha testing. Native room actors are fragmented with black/missing-looking surfaces. Faithful Z formats, TEST comparisons, ZMSK and alpha-fail write masks are being implemented and checked against original PS2/PCSX2 behavior. Do not treat this source diagnosis as a complete explanation of every black polygon. Native room audio also starves during rendering pressure; long wait signatures vary between runs and require separately correlated host stacks/queue evidence.
+
+
+D59 update: original combinedsine/cosine18F570 exactPC18F5B0 repaired;131072combined cases/262144lanes pass unchanged tolerance, alongside131086single cases. Low-VI audit accounts for23unique sites; remaining20contexthelper sites lackcurrentexecutionevidence and requireadditional CFC2/VUmemory work ifreached.
+
+D61 implementation update: productiondepth/DATE90/90, ADC7/7, STQ5/5, runtime31/31, immutablecapture and4000-case fast/generic tests all pass. Patch0045reproducesprivatechanges. Initial Z32fixtureaddress wasincorrect and repaired transparently; detailed independent swizzle derivation and alias/overflow coverage are in docs/M2_GS_DEPTH_INVESTIGATION.md. Nativepicture/audio/controlvalidation stillawaitscompleteexecutable rebuild. Fogomission and CT24destination-alpha blend factor are independentlyidentified gaps, withcurrentblack-polygoncausation unproven; do not claim everysurface isfixed.
+
+## D62: successful thread wake returns zero instead of target ID — corrected, native validation pending
+
+Original caller12BF98 clears audio-service pending21049C only when WakeupThread/iWakeupThread returns its target ID. Runtime formerly returned zero on success, leaving that handshake set. Correct only successful WakeupThread return; preserve error codes, suspension, wake counts and scheduling. Actual original-caller/kernel regression is28/34 before and34/34 after; broader runtime31/31 passes. Patch0049. This does not establish that long GS/IRQ backpressure or native audio starvation is resolved. See tools/thread_wakeup_check/README.md and docs/M2_AUDIO_INVESTIGATION.md.
+
+## D63: texture CLAMP modes ignored — corrected, native visual validation pending
+
+Actual room packets request repeat and use coordinates outside the texture range; former sampling always clamped to the edge. Patch0051 implements all four GS modes per tap, including sprite shortcuts. Region modes preserve sequential framebuffer/texture alias feedback. Old-library focused regression fails109/131; corrected and generic paths each pass131/131. Depth90, STQ5, ADC7, immutable scanout and4000-case fast/generic parity remain passing. The native build is linked; remaining dark patches and rendering stalls still require visual and timing evidence.
+
+## D64: reached character ERSQRT instruction missing — corrected, visual causation unproven
+
+Weighted character shader begins01E10003/000002FF, distinct from the static-world program previously captured.256 actual weighted traces execute lowerERSQRT selector7BD at PCs3A8/888 a total2851 times. The former decoder left P unchanged before later MFP use. Patch0056 implements the instruction;18 semantic checks and78 actual float32 ERSQRT/MFP results pass exactly. Both sampled output GIF packets remain byte-identical: point-light coefficients are zero in all161 identified Kevin captures. This corrects reached ISA behavior without establishing a dark-patch or flicker fix.
+
+## D65: transient black room windows and global green flash — investigation open
+
+The user reports black reflected-window frames, a disappearing ceiling lamp and brief whole-screen green tint. A600-frame native burst captures loss of lamp/mirror/ashtray detail in actual immutable CPU publication at102.746930s/tick9985/FBP0, followed by normal content on the same framebuffer. The actor/camera pose is unchanged. Sampled PCSX2 room lighting remains stable. No global-green candidate was captured. Both experimental triangle palette caching and early-depth rejection are disabled in this reproduction. Patch0060 adds matched publication/VRAM/command-history diagnostics; no causal calculation or fix is established yet.
+
+## D66: music stutters during graphics stalls — measured, unresolved
+
+Latest user correction identifies music as the stuttering sound and confirms other sounds are OK; this supersedes the earlier voice/effect attribution. Per-path counters in0059 distinguish stereo CRI starvation from independently continuing bank contributions, but individual asset identity remains unverified. The0062 state-only exemption fails and remains disabled. Normal-speed203549 with0064 safe dispatcher pacing fixes character-selection music: the user confirms it, and12 reports have zero starvation. Gameplay music remains unresolved:44.92% of contained active room CRI frames are missing,56.60% before pause. Main-guest CPU ownership is82.3% before pause; recorded IRQ admission has a161918us median despite handler holds no longer exceeding148us. Integrated0065 safe in-place backedge pacing and0066 VU NOP dispatch optimization have passed their independent controls; changed native validation is underway. Audio gain, clocks and M1 recovery remain unchanged.
+
+210014 update: selection remains clean (456960/456960 frames), while the active room still misses373312/935520 frames,39.904%. Main ownership is64.1%; IRQ admission median113715us/max137663us despite handler holds at most156us. Moving-room copied-publication markers change5.023/s and sampled images4.072/s. The route differs from203549, so this does not isolate a performance gain. Over25.689765 seconds, actual consumed PCM including catchup discard spans25.690000 seconds;479936 samples arrived too late to play. This supports burst lateness over the measured interval. Original ADX producer priority16 and variable chunk-drain semantics are verified; no priority/buffer/gain change is justified.0067 VIF copying and0068 packed VU math pass focused full-output comparisons; changed native assessment remains pending.
+
+Completed normal-speed221700 adds a whole-DMA measurement to D66:64 main-thread
+VIF writes at PC1033E8/RA18D57C take median113.34ms (maximum121.98ms).
+The63 completely bracketed outer VBlank admission waits overlap these writes
+by median99.68%;34 of36 selected late left-channel PCM gaps overlap a recorded
+write. Original IRQ/audio servers still run near60 calls/s, so a missing clock
+or permanently locked priority does not explain the starvation. Strict active
+room intervals miss406784/1118880 requested samples (36.356%). Selection and
+separate results-stream intervals remain clean. Safe boundary admission0069
+and atomic capture0070 have not solved the long synchronous write. The next
+bounded observer aggregates VU time/cycles inside the same write; worker
+ownership and exact-code compiled VU blocks are isolated candidates, not fixes
+already present in the native build.
+
+## D67: detached shutdown workers access destroyed runtime storage — corrected, native closure validated
+
+Closing193458 during GS backpressure detaches guest workers and ends with an access violation. Patch0061 signals and joins guest/IRQ/alarm/GS/raster workers before clearing registries or freeing storage, with loop/queue cancellation. Root bootstrap diagnostics also become joined and cancellable. Corrected Release runtime builds, five actual normal-return destruction/reinitialization passes succeed,31 runtime checks pass and4000 GS cases preserve full-VRAM parity. Native195738,200325 and201223 close normally with exit0 and activeThreads0, cancelling and joining future diagnostics, without an access violation or detach. This change does not resolve normal-playback rendering or audio stalls.
+
+## D68: post-quit movie never signals completion — repaired and validated on quit route
+
+210014 accepts original inventory/options/YES/quit actions, then remains black after PS2youdead.sfd. The file reader finishes and the owned asset contains its MPEG end marker, but seamless playback requires input EOF notification. Guest movie setup calls resident1627A8, which is absent from generated registration; logged recovery skips that call. Feed mode stays1 instead of transitioning to0 and arming pending EOF. A private entry bridge reproduces the original prologue and15FFC0 validation, then resumes existing generated1627BC code, preserving error and suspension paths. It writes no invented completion flags. Bounded default-off EOF observers are included for the next changed native run; frontend return is not yet proven.
+
+212955 validates the repair: feed0/pending1, original173F28 input EOF, PLAYEND3 and cleared movie object. Shots150/170 show the original YOU DIED results page waiting for ordinary Cross confirmation. The black movie-completion hang is resolved on this route; main-menu return and a separate skipped results-asset entry1D3BC0 remain follow-up work. Room music still misses33.696% of active frames and clean observed image changes stay about4/s. See HANDOFF_CODEX_M2.md for producer timing, observer exclusions and exact reproduction.
+
+Completed221700 validates the remaining return path. A faithful1D3BC0 entry
+loads the original results asset before resuming generated1D3C50; corrected
+test input waits for settled facing and ordinary message/options/results/card
+states. The original interaction message1C appears at102.270s, quit is accepted
+at118.370s, results Cross at136.846s, and known card-terminal acknowledgment plus
+ordinary LEFT/Cross chooses EXIT. Fresh overlay2/frontend57F1F0 mode1/sub5 is
+proved at142.922s; shot150 visibly shows SINGLE PLAY. The250s run exits0 with
+activeThreads0. This resolves the observed post-quit black return route;
+pickup and a room transition are not proved by this run.
+
+## D69: normal-speed logo fades lose parallel rendering — restored and user accepted
+
+The depth/DATE safety gate0045 disables the former sprite row-parallel path,
+and0051 conservatively excludes region CLAMP modes from its texture-page proof.
+Reached startup states include depth-writing clears (TEST3200F/30003) and
+depth-reading masked-GE T4/T8 textured logo sprites (TEST5000F), with T4 region2/2.
+Large sprites therefore use the full serial CPU sampler/writer after the
+correctness repairs, reducing native startup publication to16–22/s in most
+selected windows. Removing startup turbo does not affect this serial raster cost.
+
+0075/0076 restore opt-in row bands only with complete nonwrapping/disjoint FB/Z
+output proof and every CLAMP-resolved texture plus actual CLUT read outside
+both outputs. Original sampler order, raw sprite Z, alpha/depth operations,
+TLS isolation and joined primitive ordering remain.128 complete4MiB comparisons
+pass with435baseline/508candidate assertions and three partial-stop image
+oracles in each shared-worker control. The relevant textured draw benchmark
+improves3.91–3.94x. Corrected native224923 publishes55–57/s over most9–45s startup
+windows, shows the visible main menu at60/80s and closes normally at90s.
+On the explicitly requested unchanged-build rerun the user confirms: smooth
+normal-speed fade-in/fade-out. tools/play.ps1 now defaults the validated
+REO_GS_SPRITE_DEPTH_PARALLEL option to1 while honoring/restoring caller overrides.
+This resolves the logo regression; room music, slow simulation and rendering
+defects remain distinct open M2 work.
+
+## D70: native memory-card storage and host window shortcuts
+
+File #1 uses libmc2 through DBCMAN, rather than the older MCSERV RPC API. Its
+original request worker, semaphore and completion processing remain guest code;
+filesystem backends (183290, 184360, 184828, 185280, 1858C8, 185E40, 1860B0,
+186230, 186798, 1868C8, 186A88, plus explicit format/unformat) now use bounded
+folder-backed PS2 cards. Directory layout, libmc2 error codes and the 56-byte
+public / 512-byte internal directory entries were established from the owned
+SLUS-20765 ELF. The older MCSERV bridge now implements the PS2SDK wire contract
+instead of returning fabricated success. The selected root is passed through
+REO_MC0_ROOT and existing default saves remain in place. Raw .ps2 images and save
+states are not supported. File #2's libmc2 addresses are not mapped or validated.
+
+The game created BASLUS-20765NETBIO (261320 bytes), icon.sys and both icon files
+in an isolated selected card, reported successful saving, and read the entire
+system data back after process restart before reaching the main menu. Storage
+checks cover persistence, separate cards, capacity, traversal, directory
+continuation, read-only handles, rename and preservation before explicit format.
+Launcher card selections persist independently per game and are locked while a
+session uses them. Backups and readiness use the selected card.
+
+The host window uses Alt+F4/WM_CLOSE for exit; raylib's Escape exit key is disabled.
+Ctrl+Enter toggles borderless fullscreen and restores the previous placement.
+The input layer reserves Enter until release so this chord cannot press Start.
+The current integration patch 0093 carries these runtime window changes without
+an ABI change. The earlier focused 0094 is retained in `ps2recomp-history/`.
+
+## Native online networking
+
+With an explicit `REO_COOP_HOST` and native platform mode, SNIOPINT RPC calls use
+real Winsock TCP/UDP and the selected server's address. Console-only DNAS setup
+is omitted for this native backend; the original openSNAP account challenge and
+password verification remain server-controlled. Launcher username selection is
+an original account-editor result, not account creation or authentication.
+
+Two original SDK clock readers need advancing native time. The Count getter at
+1EA000 reads a 294.912 MHz, wrapping 32-bit counter derived from monotonic host
+time; the original SDK conversion and send delays remain intact. The accumulated
+seconds reader at 1C8850 otherwise reads a stored-only HBlank MMIO counter that
+never advances. Its native adapter returns real elapsed seconds in FPR0,
+preserves the original initialization/reset flag and accumulated offset, and
+updates the original seconds value. Neither adapter changes completion or
+readiness flags. Offline launches retain the original clock readers.
+
+Four isolated native clients completed authentication, room entry, the opening
+introduction and timed movement replication in a local loopback test. Packet
+delivery and read-only actor snapshots were checked separately. Item sharing,
+door transitions, reconnects, LAN/WAN behavior and sustained Internet play are
+not established by that test. See [networking](NETWORKING.md) for current setup
+and the separately licensed server roster patch.

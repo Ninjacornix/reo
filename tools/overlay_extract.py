@@ -10,7 +10,8 @@ BIN/0.DAT with the decompressed image in EE RAM; verify with --check):
   - control bit 1: little-endian token T; copy (T >> 11) halfwords from (T & 0x7FF)
     halfwords back (overlapping copies allowed). If T >> 11 is 0, the count is the
     next little-endian halfword (it does not use a control bit). Distance 0 ends the stream.
-Overlay image header ("MWo3"): +4 id, +8 load base, +0xC text size, +0x10 data size.
+Overlay image header ("MWo3"): 0x40 bytes; +4 id, +8 load base,
++0xC text size, +0x10 data size. Text/data sizes exclude the header.
 
 Usage: overlay_extract.py <iso> <out_dir> [--check <eeram.bin>]
 Outputs <out_dir>/<n>.bin (raw image) and <out_dir>/<n>.elf (the image wrapped as an EE
@@ -113,7 +114,7 @@ def main():
         ident, base, text, data = struct.unpack_from('<4I', img, 4)
         stem = name.split('.')[0]
         open(os.path.join(out_dir, stem + '.bin'), 'wb').write(img)
-        open(os.path.join(out_dir, stem + '.elf'), 'wb').write(wrap_elf(img, base, text))
+        open(os.path.join(out_dir, stem + '.elf'), 'wb').write(wrap_elf(img, base, text + 0x40))
         print('%-6s id=%-2d base=0x%06x text=0x%05x data=0x%05x image=%d %s' %
               (name, ident, base, text, data, len(img), 'lz' if compressed else 'raw'))
         if check and base == 0x370000:

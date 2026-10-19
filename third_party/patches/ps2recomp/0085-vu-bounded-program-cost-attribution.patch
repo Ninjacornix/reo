@@ -1,0 +1,250 @@
+diff --git a/ps2xRuntime/CMakeLists.txt b/ps2xRuntime/CMakeLists.txt
+--- a/ps2xRuntime/CMakeLists.txt
++++ b/ps2xRuntime/CMakeLists.txt
+@@ -175,6 +175,7 @@
+     src/lib/gs_backend_route.cpp
+     src/lib/vu_specialized_route.cpp
+     src/lib/vu_native_geometry_route.cpp
++    src/lib/vu_cost_attribution.cpp
+     src/lib/vif_launch_overhead.cpp
+     src/lib/vu_program_collection.cpp
+     src/lib/game_overrides.cpp
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -3,6 +3,7 @@
+ #include "vu_native_geometry_route.h"
+ #include "vu_program_collection.h"
+ #include "vif_launch_overhead.h"
++#include "vu_cost_attribution.h"
+ #include <stdexcept>
+ #include "runtime/ps2_gs_gpu.h"
+ #include "runtime/ps2_gif_arbiter.h"
+@@ -103,10 +104,17 @@
+         bool active=false;
+         bool kickProfile=false;
+         Clock::time_point kickStart{};
++        bool programCost=false;
++        uint32_t profileStartPC=0u;
++        vu_cost_attribution::Snapshot costStart{};
+         explicit VuRunTiming(uint32_t pc)
+         {
+             kickProfile=ps2VifKickVuProfileActive();
+-            if(kickProfile) kickStart=Clock::now();
++            if(kickProfile) {
++                kickStart=Clock::now();
++                programCost=vu_cost_attribution::active();
++                if(programCost){profileStartPC=pc;costStart=vu_cost_attribution::beginLaunch();}
++            }
+             const auto& c=config();
+             if(!c.enabled || !c.limit || records().load(std::memory_order_relaxed)>=c.limit) return;
+             static const auto epoch=[] {
+@@ -121,11 +129,16 @@
+             if(elapsed<c.after || (c.until>0 && elapsed>c.until)) return;
+             active=true;startPC=pc;startKicks=s_debugVu1XgkickCount.load(std::memory_order_relaxed);
+         }
+-        void finish(uint32_t cycles,uint32_t maxCycles,const VU1State& state,bool ended,bool bounds) const
+-        {
+-            if(kickProfile) ps2VifKickVuProfileRecord(
+-                uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now()-kickStart).count()),
+-                cycles,!ended && !bounds && cycles==maxCycles);
++        void finish(uint32_t cycles,uint32_t maxCycles,const VU1State& state,bool ended,bool bounds,
++            const vu_specialized::Program* selected,uint64_t unknownPrefix,uint64_t nativeNs,
++            uint64_t nativePairs,uint64_t matchedPairs,uint64_t nativeLoops,uint64_t attempts) const
++        {
++            if(kickProfile) {
++                const uint64_t wallNs=uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now()-kickStart).count());
++                ps2VifKickVuProfileRecord(wallNs,cycles,!ended && !bounds && cycles==maxCycles);
++                if(programCost)vu_cost_attribution::recordRun(selected,unknownPrefix,profileStartPC,costStart,
++                    wallNs,nativeNs,cycles,nativePairs,matchedPairs,nativeLoops,attempts);
++            }
+             if(!active) return;
+             const auto& c=config();
+             const auto us=std::chrono::duration_cast<std::chrono::microseconds>(Clock::now()-started).count();
+@@ -676,7 +689,11 @@
+     if (timing.kickProfile) ps2VifKickVuSpecializedRecord(specializedProgram != nullptr, matchedBlocks, matchedPairs);
+     if(timing.kickProfile)ps2VifKickVuNativeGeometryRecord(nativeLoops,nativeVertices,nativePairs);
+     if(timing.kickProfile)ps2VifKickVuNativeGeometryTimingRecord(nativeAttempts,nativeAttemptNs);
+-    timing.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds);
++    uint64_t unknownPrefix=0u;
++    if(timing.programCost && !specializedProgram && vuCode && codeSize>=8u)
++        std::memcpy(&unknownPrefix,vuCode,sizeof(unknownPrefix)); // Diagnostic bucket, never admission identity.
++    timing.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds,specializedProgram,
++        unknownPrefix,nativeAttemptNs,nativePairs,matchedPairs,nativeLoops,nativeAttempts);
+     capture.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds);
+ }
+ 
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1,4 +1,5 @@
+ #include "vif_launch_overhead.h"
++#include "vu_cost_attribution.h"
+ #include <memory>
+ #include "gs_priv_atomic.h"
+ #include "ps2_runtime.h"
+@@ -2659,7 +2660,7 @@
+     {
+         using Clock = std::chrono::steady_clock;
+         struct Config {
+-            bool enabled = false, overhead = false;
++            bool enabled = false, overhead = false, programCosts = false;
+             double after = 0, until = 0;
+             int64_t minUs = 20000;
+             uint32_t limit = 64;
+@@ -2672,6 +2673,7 @@
+                 const char* at = std::getenv("REO_VIF_KICK_TIMING_AT");
+                 if (!at || !*at) return c;
+                 c.enabled = true;
++                c.programCosts=vu_cost_attribution::configured();
+                 if (const char* value = std::getenv("REO_VIF_LAUNCH_OVERHEAD")) c.overhead = std::strcmp(value, "1") == 0;
+                 c.after = std::max(0.0, std::atof(at));
+                 if (const char* v = std::getenv("REO_VIF_KICK_TIMING_UNTIL")) c.until = std::max(0.0, std::atof(v));
+@@ -2693,6 +2695,7 @@
+         VifKickVuWork work{};
+         VifKickVuWork* previousWork = nullptr;
+         std::unique_ptr<vif_launch_overhead::DmaScope> overhead;
++        std::unique_ptr<vu_cost_attribution::DmaScope> programCosts;
+         VifKickWriteTiming(uint32_t address, uint32_t value, const R5900Context* ctx)
+         {
+             const auto& c = config(); // First Store32 arms the epoch, including boot writes.
+@@ -2704,6 +2707,10 @@
+             active = true;
+             previousWork = t_vifKickVuWork;
+             t_vifKickVuWork = &work;
++            if(c.programCosts) {
++                try { programCosts=std::make_unique<vu_cost_attribution::DmaScope>(true); }
++                catch (...) {} // Diagnostic allocation cannot fail the guest store.
++            }
+             if (c.overhead) {
+                 try { overhead = std::make_unique<vif_launch_overhead::DmaScope>(); }
+                 catch (...) {} // Optional diagnostic allocation cannot fail the guest write.
+@@ -2742,6 +2749,7 @@
+                 static_cast<unsigned long long>(work.nativeAttempts),
+                 static_cast<unsigned long long>(work.nativeAttemptNs / 1000u));
+             if (overhead) overhead->complete(n, uint64_t(ns), uint64_t(us));
++            if(programCosts)programCosts->complete(n);
+         }
+     };
+ 
+@@ -2801,6 +2809,7 @@
+ void ps2VifKickStageRecord(unsigned stage,uint64_t ns,uint64_t bytes,uint64_t queueBytes) noexcept
+ {
+     vif_launch_overhead::recordStage(stage, ns, bytes);
++    vu_cost_attribution::recordStage(stage,ns);
+     if(auto* work=t_vifKickVuWork;work && stage<5u) {
+         work->stageNs[stage]+=ns; ++work->stageCalls[stage]; work->stageBytes[stage]+=bytes;
+         work->peakQueueBytes=std::max(work->peakQueueBytes,queueBytes);
+diff --git a/ps2xRuntime/src/lib/vu_cost_attribution.h b/ps2xRuntime/src/lib/vu_cost_attribution.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vu_cost_attribution.h
+@@ -0,0 +1,27 @@
++#pragma once
++// Private opt-in bounded diagnostics; no public runtime class fields.
++#include <cstdint>
++namespace vu_specialized {struct Program;}
++namespace vu_cost_attribution {
++struct Snapshot {uint64_t prepNs=0u,submitNs=0u;};
++class DmaScope {
++ void* impl_=nullptr;
++public:
++ explicit DmaScope(bool boundedKickSelected) noexcept;
++ ~DmaScope() noexcept;
++ DmaScope(const DmaScope&)=delete;
++ DmaScope& operator=(const DmaScope&)=delete;
++ void complete(uint32_t kickNumber) noexcept;
++};
++bool configured() noexcept;
++bool active() noexcept;
++Snapshot beginLaunch() noexcept;
++// Feed ONLY already-measured existing stage0/1 deltas. No clocks here.
++void recordStage(unsigned stage,uint64_t ns) noexcept;
++// Use the EXISTING full-run clock result/nativeattempt duration, once per launch.
++// key is the exact legacy Program* selected by the real full-image selector;
++// unknown firstPair is a coarse bucket ONLY, never collision-free identity.
++void recordRun(const vu_specialized::Program* key,uint64_t unknownFirstPair,
++ uint32_t startPC,Snapshot begin,uint64_t wallNs,uint64_t nativeNs,uint32_t pairs,
++ uint64_t nativePairs,uint64_t matchedPairs,uint64_t nativeLoops,uint64_t attempts) noexcept;
++}
+diff --git a/ps2xRuntime/src/lib/vu_cost_attribution.cpp b/ps2xRuntime/src/lib/vu_cost_attribution.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vu_cost_attribution.cpp
+@@ -0,0 +1,76 @@
++#include "vu_cost_attribution.h"
++#include <array>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <new>
++namespace vu_cost_attribution {
++namespace {
++struct Bucket {
++ const vu_specialized::Program* key=nullptr;
++ uint64_t unknownFirstPair=0u;
++ uint32_t startPC=0u;
++ uint64_t calls=0u,wallNs=0u,prepNs=0u,submitNs=0u,nativeNs=0u;
++ uint64_t pairs=0u,nativePairs=0u,matchedPairs=0u,nativeLoops=0u,attempts=0u;
++};
++struct Work {
++ Work* previous=nullptr;
++ std::array<Bucket,64> buckets{};
++ uint32_t used=0u;
++ uint64_t prepNs=0u,submitNs=0u,droppedCalls=0u,droppedNs=0u,droppedPairs=0u,violations=0u;
++};
++thread_local Work* current=nullptr;
++}
++bool configured() noexcept {
++ static const bool setting=[]{const char* text=std::getenv("REO_VU_COST_ATTRIBUTION");return text&&std::strcmp(text,"1")==0;}();
++ return setting;
++}
++bool active() noexcept {return current!=nullptr;}
++DmaScope::DmaScope(bool selected) noexcept {
++ if(!selected||!configured())return;
++ if(auto* work=new(std::nothrow) Work) {work->previous=current;current=work;impl_=work;}
++}
++DmaScope::~DmaScope() noexcept {
++ if(auto* work=static_cast<Work*>(impl_)){current=work->previous;delete work;}
++}
++Snapshot beginLaunch() noexcept {return current?Snapshot{current->prepNs,current->submitNs}:Snapshot{};}
++void recordStage(unsigned stage,uint64_t ns) noexcept {
++ if(!current)return;
++ if(stage==0u)current->prepNs+=ns;
++ else if(stage==1u)current->submitNs+=ns;
++}
++void recordRun(const vu_specialized::Program* key,uint64_t prefix,uint32_t pc,
++ Snapshot begin,uint64_t wall,uint64_t native,uint32_t pairs,uint64_t nativePairs,
++ uint64_t matchedPairs,uint64_t loops,uint64_t attempts) noexcept {
++ auto* work=current;if(!work)return;
++ const uint64_t prep=work->prepNs-begin.prepNs,submit=work->submitNs-begin.submitNs;
++ if(prep>wall||submit>wall-prep||native>wall-prep-submit||nativePairs>matchedPairs||matchedPairs>pairs)
++  ++work->violations;
++ if(key)prefix=0u;
++ Bucket* bucket=nullptr;
++ for(uint32_t i=0u;i<work->used;++i)
++  if(work->buckets[i].key==key&&work->buckets[i].unknownFirstPair==prefix&&work->buckets[i].startPC==pc){bucket=&work->buckets[i];break;}
++ if(!bucket){
++  if(work->used==work->buckets.size()){++work->droppedCalls;work->droppedNs+=wall;work->droppedPairs+=pairs;return;}
++  bucket=&work->buckets[work->used++];bucket->key=key;bucket->unknownFirstPair=prefix;bucket->startPC=pc;
++ }
++ ++bucket->calls;bucket->wallNs+=wall;bucket->prepNs+=prep;bucket->submitNs+=submit;bucket->nativeNs+=native;
++ bucket->pairs+=pairs;bucket->nativePairs+=nativePairs;bucket->matchedPairs+=matchedPairs;bucket->nativeLoops+=loops;bucket->attempts+=attempts;
++}
++void DmaScope::complete(uint32_t number) noexcept {
++ const auto* work=static_cast<const Work*>(impl_);if(!work)return;
++ for(uint32_t i=0u;i<work->used;++i){const auto& b=work->buckets[i];
++  const bool valid=b.prepNs<=b.wallNs&&b.submitNs<=b.wallNs-b.prepNs&&b.nativeNs<=b.wallNs-b.prepNs-b.submitNs&&b.nativePairs<=b.matchedPairs&&b.matchedPairs<=b.pairs;
++  const uint64_t nonXg=valid?b.wallNs-b.prepNs-b.submitNs:0u;
++  const uint64_t residual=valid?nonXg-b.nativeNs:0u;
++  std::fprintf(stderr,"[VU-PROGRAM-COST] kick=%u known=%u key=%p unknown_first_pair=%016llx entry=%04x calls=%llu wall_ns=%llu prep_ns=%llu submit_ns=%llu native_ns=%llu non_xg_ns=%llu residual_ns=%llu pairs=%llu native_pairs=%llu fixed_pairs=%llu generic_pairs=%llu native_loops=%llu attempts=%llu valid=%u\n",
++   number,unsigned(b.key!=nullptr),static_cast<const void*>(b.key),static_cast<unsigned long long>(b.unknownFirstPair),b.startPC,
++   static_cast<unsigned long long>(b.calls),static_cast<unsigned long long>(b.wallNs),static_cast<unsigned long long>(b.prepNs),static_cast<unsigned long long>(b.submitNs),
++   static_cast<unsigned long long>(b.nativeNs),static_cast<unsigned long long>(nonXg),static_cast<unsigned long long>(residual),static_cast<unsigned long long>(b.pairs),
++   static_cast<unsigned long long>(b.nativePairs),static_cast<unsigned long long>(valid?b.matchedPairs-b.nativePairs:0u),static_cast<unsigned long long>(valid?b.pairs-b.matchedPairs:0u),
++   static_cast<unsigned long long>(b.nativeLoops),static_cast<unsigned long long>(b.attempts),unsigned(valid));
++ }
++ std::fprintf(stderr,"[VU-PROGRAM-COST-END] kick=%u buckets=%u dropped_calls=%llu dropped_ns=%llu dropped_pairs=%llu violations=%llu\n",number,work->used,
++  static_cast<unsigned long long>(work->droppedCalls),static_cast<unsigned long long>(work->droppedNs),static_cast<unsigned long long>(work->droppedPairs),static_cast<unsigned long long>(work->violations));
++}
++}

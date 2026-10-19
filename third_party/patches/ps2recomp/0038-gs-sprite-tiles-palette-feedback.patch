@@ -1,0 +1,262 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -7,6 +7,9 @@
+ #include "runtime/ps2_gs_psmt8.h"
+ #include "ps2_log.h"
+ #include <atomic>
++#include <array>
++#include <chrono>
++#include <cstdio>
+ #include <cstdlib>
+ #include <algorithm>
+ #include <condition_variable>
+@@ -25,6 +28,23 @@
+         uint32_t table[256];
+     };
+     thread_local ClutCache t_clutCache;
++
++    struct DecodedTexelCache
++    {
++        int x = 0, y = 0, width = 0, height = 0;
++        std::vector<uint32_t> pixels;
++    };
++    thread_local const DecodedTexelCache *t_decodedTexels = nullptr;
++
++    struct DecodedTexelScope
++    {
++        const DecodedTexelCache *previous;
++        explicit DecodedTexelScope(const DecodedTexelCache *cache) : previous(t_decodedTexels)
++        {
++            t_decodedTexels = cache;
++        }
++        ~DecodedTexelScope() { t_decodedTexels = previous; }
++    };
+ 
+     struct ClutCacheScope
+     {
+@@ -775,6 +795,14 @@
+         sampleU = clampInt(sampleU, 0, texW - 1);
+         sampleV = clampInt(sampleV, 0, texH - 1);
+ 
++        if (t_decodedTexels)
++        {
++            const auto &cache = *t_decodedTexels;
++            const int x = sampleU - cache.x, y = sampleV - cache.y;
++            if (x >= 0 && y >= 0 && x < cache.width && y < cache.height)
++                return cache.pixels[static_cast<size_t>(y) * cache.width + x];
++        }
++
+         if (tex.psm == GS_PSM_CT32 || tex.psm == GS_PSM_CT24)
+             return applyTexa(gs->m_texa, tex.psm, readTexelPSMCT32(gs, tex.tbp0, tex.tbw, sampleU, sampleV));
+ 
+@@ -900,6 +928,51 @@
+         std::memcpy(vram + off, &pixel, 4);
+         return true;
+     }
++
++    // Opt-in bounded samples for classifying large hot sprites. Uses no pixel-
++    // loop instrumentation and reports only a limited number after the chosen
++    // GS-clock offset, so menu/font traffic cannot produce an unbounded log.
++    struct SpriteProfile
++    {
++        using Clock = std::chrono::steady_clock;
++        Clock::time_point started{};
++        std::array<int, 14> state{};
++        unsigned index = 0;
++        bool active = false;
++
++        explicit SpriteProfile(const std::array<int, 14> &key)
++        {
++            static const char *atEnv = std::getenv("REO_SPR_PROFILE_AT");
++            static const bool enabled = atEnv != nullptr;
++            if (!enabled)
++                return;
++            static const auto epoch = Clock::now();
++            static const double at = std::max(0.0, std::strtod(atEnv, nullptr));
++            static const unsigned limit = [] {
++                const char *e = std::getenv("REO_SPR_PROFILE_COUNT");
++                return static_cast<unsigned>(std::clamp(e ? std::atoi(e) : 256, 1, 1024));
++            }();
++            static unsigned samples = 0;
++            if (samples >= limit || key[8] * key[9] < 4096)
++                return;
++            const auto now = Clock::now();
++            if (std::chrono::duration<double>(now - epoch).count() < at)
++                return;
++            active = true;
++            index = ++samples;
++            state = key;
++            started = now;
++        }
++        ~SpriteProfile()
++        {
++            if (!active)
++                return;
++            const auto us = std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - started).count();
++            std::fprintf(stderr, "[GS-SPR-PROFILE] n=%u us=%lld frame=%x tex=%x tme=%d fst=%d linear=%d abe=%d tfx=%d tcc=%d rect=%dx%d span=%dx%d uv_delta=%d,%d\n",
++                         index, static_cast<long long>(us), state[0], state[1], state[2], state[3], state[4], state[5],
++                         state[6], state[7], state[8], state[9], state[10], state[11], state[12], state[13]);
++        }
++    };
+ }
+ 
+ // [perf] heartbeat: sprite pixels: [0] untextured, [1] point, [2] bilinear, [3] point 1:1,
+@@ -995,6 +1068,11 @@
+     const uint32_t fbBlock = GSInternal::framePageBaseToBlock(ctx.frame.fbp);
+     const uint32_t fbWidthBlocks = (ctx.frame.fbw != 0u) ? ctx.frame.fbw : 1u;
+     const uint32_t spritePixels = static_cast<uint32_t>((drawX1 - drawX0 + 1) * (drawY1 - drawY0 + 1));
++    const SpriteProfile profile({ctx.frame.psm, ctx.tex0.psm, gs->m_prim.tme, gs->m_prim.fst,
++                                tex1UsesLinearFilter(ctx.tex1), gs->m_prim.abe, ctx.tex0.tfx, ctx.tex0.tcc,
++                                drawX1 - drawX0 + 1, drawY1 - drawY0 + 1, spanX, spanY,
++                                static_cast<int>(v1.u >> 4) - static_cast<int>(v0.u >> 4),
++                                static_cast<int>(v1.v >> 4) - static_cast<int>(v0.v >> 4)});
+ 
+     if (fastFrame && !gs->m_prim.tme)
+     {
+@@ -1076,6 +1154,7 @@
+     }
+ 
+     ClutCacheScope clutScope;
++    bool spriteClutApart = false;
+     if (gs->m_prim.tme && (ctx.tex0.psm == GS_PSM_T8 || ctx.tex0.psm == GS_PSM_T4) && !s_noFast)
+     {
+         // Frame bytes this sprite can touch (whole page rows of the frame, conservative)
+@@ -1085,13 +1164,37 @@
+                                              (static_cast<uint64_t>(drawY1) / 32u + 1u);
+         const uint64_t clutStart = static_cast<uint64_t>(ctx.tex0.cbp) * 256u;
+         const uint64_t clutEnd = clutStart + 16384u;
+-        if (clutEnd <= fbStart || clutStart >= fbEnd)
++        if ((clutEnd <= fbStart || clutStart >= fbEnd) &&
++            static_cast<uint64_t>(drawX1) < static_cast<uint64_t>(fbWidthBlocks) * 64u)
+         {
+             const uint32_t entries = (ctx.tex0.psm == GS_PSM_T8) ? 256u : 16u;
+-            for (uint32_t i = 0; i < entries; ++i)
+-                t_clutCache.table[i] = lookupCLUT(gs, static_cast<uint8_t>(i), ctx.tex0.cbp, ctx.tex0.cpsm,
+-                                                  ctx.tex0.csm, ctx.tex0.csa, ctx.tex0.psm);
+-            t_clutCache.valid = true;
++            const auto &tex = ctx.tex0;
++            const uint32_t clutWidth = gs->m_texclut.cbw ? gs->m_texclut.cbw : 1u;
++            spriteClutApart = true;
++            // CBP alone is insufficient: TEXCLUT stride/origin can move palette
++            // entries into the destination. Prove actual reads before caching
++            // the palette or allowing row workers to reorder live palette reads.
++            for (uint32_t i = 0; i < entries && spriteClutApart; ++i)
++            {
++                const uint32_t ci = resolveClutIndex(static_cast<uint8_t>(i), tex.csm, tex.csa, tex.psm);
++                const uint32_t cx = gs->m_texclut.cou + (ci & 0x0Fu), cy = gs->m_texclut.cov + (ci >> 4);
++                const bool clut16 = tex.cpsm == GS_PSM_CT16 || tex.cpsm == GS_PSM_CT16S;
++                if (!clut16 && tex.cpsm != GS_PSM_CT32 && tex.cpsm != GS_PSM_CT24)
++                {
++                    spriteClutApart = false;
++                    break;
++                }
++                const uint64_t off = clut16 ? addrPSMCT16Family(tex.cbp, clutWidth, tex.cpsm, cx, cy)
++                                            : GSPSMCT32::addrPSMCT32(tex.cbp, clutWidth, cx, cy);
++                spriteClutApart = off + (clut16 ? 2u : 4u) <= fbStart || off >= fbEnd;
++            }
++            if (spriteClutApart)
++            {
++                for (uint32_t i = 0; i < entries; ++i)
++                    t_clutCache.table[i] = lookupCLUT(gs, static_cast<uint8_t>(i), tex.cbp, tex.cpsm,
++                                                      tex.csm, tex.csa, tex.psm);
++                t_clutCache.valid = true;
++            }
+         }
+     }
+ 
+@@ -1141,10 +1244,62 @@
+         const uint64_t gTxStart = static_cast<uint64_t>(tex.tbp0) * 256u;
+         const uint64_t gTxEnd = gTxStart + static_cast<uint64_t>(texTbw) * 8192u * (static_cast<uint64_t>(texH) / 32u + 1u);
+         const bool gClutApart = (tex.psm != GS_PSM_T8 && tex.psm != GS_PSM_T4) ||
+-                                (static_cast<uint64_t>(tex.cbp) * 256u + 16384u <= gFbStart ||
+-                                 static_cast<uint64_t>(tex.cbp) * 256u >= gFbEnd);
++                                spriteClutApart;
++        DecodedTexelCache decodedTexels;
++        static const bool noTexelCache = std::getenv("REO_GS_NO_TEXEL_CACHE") != nullptr;
++        if (fastFrame && !noTexelCache && gs->m_prim.fst && genericPixels >= 1024u &&
++            (tex.psm == GS_PSM_T8 || tex.psm == GS_PSM_T4) && t_clutCache.valid &&
++            static_cast<uint64_t>(drawX1) < static_cast<uint64_t>(fbWidthBlocks) * 64u &&
++            gClutApart && (gTxEnd <= gFbStart || gTxStart >= gFbEnd) &&
++            (tex.psm != GS_PSM_T8 || tex.tbw != 0u))
++        {
++            // FST samples remain between endpoint UVs. Include the neighboring
++            // texels used by bilinear filtering, then clamp exactly as samplePoint.
++            const int u0 = static_cast<int>(v0.u >> 4), u1 = static_cast<int>(v1.u >> 4);
++            const int vv0 = static_cast<int>(v0.v >> 4), vv1 = static_cast<int>(v1.v >> 4);
++            decodedTexels.x = clampInt(std::min(u0, u1) - 1, 0, texW - 1);
++            decodedTexels.y = clampInt(std::min(vv0, vv1) - 1, 0, texH - 1);
++            decodedTexels.width = clampInt(std::max(u0, u1) + 1, 0, texW - 1) - decodedTexels.x + 1;
++            decodedTexels.height = clampInt(std::max(vv0, vv1) + 1, 0, texH - 1) - decodedTexels.y + 1;
++            const uint64_t area = static_cast<uint64_t>(decodedTexels.width) * decodedTexels.height;
++            if (area <= 65536u && area <= static_cast<uint64_t>(genericPixels) * 2u)
++            {
++                decodedTexels.pixels.resize(static_cast<size_t>(area));
++                bool actualTextureApart = true;
++                for (int y = 0; y < decodedTexels.height && actualTextureApart; ++y)
++                    for (int x = 0; x < decodedTexels.width && actualTextureApart; ++x)
++                    {
++                        const int u = decodedTexels.x + x, v = decodedTexels.y + y;
++                        uint32_t color;
++                        if (tex.psm == GS_PSM_T8)
++                        {
++                            const uint32_t off = GSPSMT8::addrPSMT8(tex.tbp0, tex.tbw,
++                                                                  static_cast<uint32_t>(u), static_cast<uint32_t>(v));
++                            actualTextureApart = static_cast<uint64_t>(off) + 1u <= gFbStart || off >= gFbEnd;
++                            color = off < gs->m_vramSize ? t_clutCache.table[gs->m_vram[off]] : 0xFFFF00FFu;
++                        }
++                        else
++                        {
++                            const uint32_t nibble = GSPSMT4::addrPSMT4(tex.tbp0, texTbw,
++                                                                      static_cast<uint32_t>(u), static_cast<uint32_t>(v));
++                            const uint32_t off = nibble >> 1;
++                            actualTextureApart = static_cast<uint64_t>(off) + 1u <= gFbStart || off >= gFbEnd;
++                            const uint32_t index = off < gs->m_vramSize ? (gs->m_vram[off] >> ((nibble & 1u) << 2)) & 0xFu : 0u;
++                            color = t_clutCache.table[index & 0xFFu];
++                        }
++                        decodedTexels.pixels[static_cast<size_t>(y) * decodedTexels.width + x] = color;
++                    }
++                if (!actualTextureApart)
++                    decodedTexels.pixels.clear();
++            }
++        }
++        std::atomic<uint32_t> genericDiscarded{0u};
++        uint8_t *const genericVram = gs->m_vram;
++        const uint32_t genericVramSize = gs->m_vramSize;
+         auto genericBand = [&](int yb, int ye) {
+         t_clutCache = clutCopy;
++        const DecodedTexelScope texelScope(decodedTexels.pixels.empty() ? nullptr : &decodedTexels);
++        uint32_t discarded = 0;
+         for (int y = yb; y <= ye; ++y)
+         {
+             float ty = (static_cast<float>(y - unclippedY0) + 0.5f) / spriteH;
+@@ -1175,14 +1330,28 @@
+                 uint8_t ta = static_cast<uint8_t>((texel >> 24) & 0xFF);
+ 
+                 const TextureCombineResult color = combineTexture(tex, r, g, b, a, tr, tg, tb, ta);
+-                writePixel(gs, x, y, color.r, color.g, color.b, color.a);
++                // Sampling and combination stay generic. For a CT32/24 target,
++                // use the existing identical pixel writer for this already-
++                // clipped sprite and aggregate diagnostics once per row band.
++                if (fastFrame)
++                    discarded += writeNoBlend32(genericVram, genericVramSize, ctx, fbBlock, fbWidthBlocks,
++                                                x, y, color.r, color.g, color.b, color.a, fastAbe, fastPabe) ? 0u : 1u;
++                else
++                    writePixel(gs, x, y, color.r, color.g, color.b, color.a);
+             }
+         }
++        if (fastFrame)
++            genericDiscarded.fetch_add(discarded, std::memory_order_relaxed);
+         };
+         if (!s_noFast && genericPixels >= 32768u && gClutApart && (gTxEnd <= gFbStart || gTxStart >= gFbEnd))
+             RowPool::get().run(drawY0, drawY1, genericBand);
+         else
+             genericBand(drawY0, drawY1);
++        if (fastFrame)
++        {
++            g_pxCalls.fetch_add(genericPixels, std::memory_order_relaxed);
++            g_pxAlpha.fetch_add(genericDiscarded.load(std::memory_order_relaxed), std::memory_order_relaxed);
++        }
+     }
+     else
+     {

@@ -1,0 +1,83 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -606,8 +606,8 @@
+                     if(result.pairs)
+                     {
+                         if(result.pairs>invocation.remainingPairs || !result.vertices ||
+-                           branchPending || m_state.ebit || branchTarget!=loop->lastPC ||
+-                           (m_state.pc!=loop->firstPC && m_state.pc!=loop->lastPC+8u))
++                           branchPending || m_state.ebit ||
++                           !vu_native_geometry::exitAllowed(*loop,m_state.pc,branchTarget))
+                             throw std::logic_error("VU native geometry loop violated complete-prefix contract");
+                         ++nativeLoops;nativeVertices+=result.vertices;nativePairs+=result.pairs;
+                         ++matchedBlocks;matchedPairs+=result.pairs;
+diff --git a/ps2xRuntime/src/lib/vu_native_geometry_route.h b/ps2xRuntime/src/lib/vu_native_geometry_route.h
+--- a/ps2xRuntime/src/lib/vu_native_geometry_route.h
++++ b/ps2xRuntime/src/lib/vu_native_geometry_route.h
+@@ -3,6 +3,8 @@
+ #include "vu_specialized_route.h"
+ namespace vu_native_geometry {
+ struct Result { uint32_t pairs=0,vertices=0; };
++struct Exit {uint32_t pc,target;};
++inline constexpr uint32_t maxLegalExits=16u;
+ struct DynamicLoop {
+     uint32_t firstPC,lastPC,minPairs; // Inclusive legal body span; no E or XGKICK.
+     // minPairs is a cheap admission-budget threshold, not a consumed-pair lower
+@@ -11,14 +13,32 @@
+     // iteration prefix with complete state/data/PC/branch residue and no callbacks.
+     // Must not consume E or XGKICK, exceed remainingPairs, or return pending E/branch.
+     Result (*execute)(vu_specialized::Invocation&);
++    // Optional borrowed immutable return metadata. Default aggregate fields keep
++    // every existing four-field initializer and strict complete-prefix behavior.
++    // When present, ONLY these (PC,branchTarget) pairs are legal positive exits.
++    // PC is any aligned position within this exact image; target stays in body.
++    // The game owner proves semantic exits; metadata grants no E/XGKICK callback.
++    const Exit* legalExits=nullptr;
++    uint32_t legalExitCount=0u;
+ };
++inline bool exitAllowed(const DynamicLoop& loop,uint32_t pc,uint32_t target) noexcept {
++    if(!loop.legalExitCount)
++        return !loop.legalExits && target==loop.lastPC &&
++            (pc==loop.firstPC||pc==loop.lastPC+8u);
++    if(!loop.legalExits||loop.legalExitCount>maxLegalExits)return false;
++    for(uint32_t i=0u;i<loop.legalExitCount;++i)
++        if(loop.legalExits[i].pc==pc&&loop.legalExits[i].target==target)return true;
++    return false;
++}
+ struct Program {
+     const vu_specialized::Program* legacyProgram;
+     const DynamicLoop* const* entryLoops; // codeBytes/8 entries, normally sparse.
+ };
+ struct ProgramTable {const Program* programs;uint32_t count;};
+ // Publish immutable caller-owned table/legacy program/images/entry arrays before
+-// runtime initialization. Every replaced object must live until all VU calls end.
++// runtime initialization. Every replaced object, including exit arrays, must live
++// until all VU calls end. Exits must be aligned/in-image, targets inside the body.
++// Invalid/duplicate/over-bound exits reject publication and retain the old table.
+ // Registration is not concurrent mutation permission. No hidden native defaults.
+ bool registerProgramTable(const ProgramTable*) noexcept;
+ uint32_t registeredProgramCount() noexcept;
+diff --git a/ps2xRuntime/src/lib/vu_native_geometry_route.cpp b/ps2xRuntime/src/lib/vu_native_geometry_route.cpp
+--- a/ps2xRuntime/src/lib/vu_native_geometry_route.cpp
++++ b/ps2xRuntime/src/lib/vu_native_geometry_route.cpp
+@@ -24,8 +24,18 @@
+         for(uint32_t entry=0;entry<legacy->codeBytes/8;++entry) {
+             const auto* loop=p.entryLoops[entry];if(!loop)continue;
+             if(!loop->execute||!loop->minPairs||loop->firstPC!=entry*8||
+-               (loop->lastPC&7u)||loop->lastPC<loop->firstPC||loop->lastPC+8>legacy->codeBytes||
++               (loop->lastPC&7u)||loop->lastPC<loop->firstPC||loop->lastPC>=legacy->codeBytes||
+                loop->minPairs>legacy->codeBytes/8)return false;
++            if((loop->legalExits==nullptr)!=(loop->legalExitCount==0u) ||
++               loop->legalExitCount>maxLegalExits)return false;
++            for(uint32_t i=0u;i<loop->legalExitCount;++i) {
++                const Exit& exit=loop->legalExits[i];
++                if((exit.pc&7u)||(exit.target&7u)||exit.pc>=legacy->codeBytes||
++                   exit.target<loop->firstPC||exit.target>loop->lastPC)return false;
++                for(uint32_t j=0u;j<i;++j)
++                    if(loop->legalExits[j].pc==exit.pc&&loop->legalExits[j].target==exit.target)
++                        return false;
++            }
+             for(uint32_t pc=loop->firstPC;pc<=loop->lastPC;pc+=8) {
+                 uint32_t lower,upper;std::memcpy(&lower,legacy->exactCodeImage+pc,4);
+                 std::memcpy(&upper,legacy->exactCodeImage+pc+4,4);

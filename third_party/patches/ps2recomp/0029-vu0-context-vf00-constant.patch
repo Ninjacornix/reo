@@ -1,0 +1,55 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -962,6 +962,9 @@
+ 
+     // R0 is always zero in MIPS
+     m_cpuContext.r[0] = _mm_set1_epi32(0);
++
++    // VU0 VF00 is a hardware constant (0, 0, 0, 1), not an all-zero vector.
++    m_cpuContext.vu0_vf[0] = _mm_set_ps(1.0f, 0.0f, 0.0f, 0.0f);
+ 
+     // Stack pointer (SP) and global pointer (GP) will be set by the loaded ELF
+ 
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -401,6 +401,8 @@
+                 ThreadNaming::SetCurrentThreadName(name);
+             }
+             R5900Context threadCtxCopy{};
++            // Each host-backed guest context must retain the VU0 VF00 constant.
++            threadCtxCopy.vu0_vf[0] = _mm_set_ps(1.0f, 0.0f, 0.0f, 0.0f);
+             R5900Context *threadCtx = &threadCtxCopy;
+             struct CtxReg
+             {
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -187,6 +187,7 @@
+             try
+             {
+                 R5900Context irqCtx{};
++                irqCtx.vu0_vf[0] = _mm_set_ps(1.0f, 0.0f, 0.0f, 0.0f);
+                 SET_GPR_U32(&irqCtx, 28, info.gp);
+                 SET_GPR_U32(&irqCtx, 29, getAsyncHandlerStackTop(runtime));
+                 SET_GPR_U32(&irqCtx, 31, 0u);
+@@ -276,6 +277,7 @@
+             try
+             {
+                 R5900Context irqCtx{};
++                irqCtx.vu0_vf[0] = _mm_set_ps(1.0f, 0.0f, 0.0f, 0.0f);
+                 SET_GPR_U32(&irqCtx, 28, info.gp);
+                 SET_GPR_U32(&irqCtx, 29, getAsyncHandlerStackTop(runtime));
+                 SET_GPR_U32(&irqCtx, 31, 0u);
+diff --git a/ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp b/ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp
+@@ -854,6 +854,7 @@
+         try
+         {
+             R5900Context callbackCtx{};
++            callbackCtx.vu0_vf[0] = _mm_set_ps(1.0f, 0.0f, 0.0f, 0.0f);
+             SET_GPR_U32(&callbackCtx, 28, gp);
+             SET_GPR_U32(&callbackCtx, 29, (callbackStackTop != 0u) ? callbackStackTop : (PS2_RAM_SIZE - 0x10u));
+             SET_GPR_U32(&callbackCtx, 31, 0u);

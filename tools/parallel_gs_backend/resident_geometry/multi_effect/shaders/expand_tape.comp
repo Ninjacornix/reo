@@ -1,0 +1,37 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+layout(local_size_x=64) in;
+#include "consumer_common.glsl"
+uint pack16(int low,int high){return (uint(low)&65535u)|((uint(high)&65535u)<<16u);}
+void main(){
+ uint slot=gl_GlobalInvocationID.x;if(slot>=p.limits.y)return;
+ dead(slot);
+ if(consumer[0]!=0u||results[0]!=0u||consumer[8]!=1u||slot>=consumer[2])return;
+ uint low=0u,high=consumer[3];
+ // Upper bound over monotonic primitive ends skips zero-loop PRE descriptors.
+ while(low<high){uint middle=(low+high)>>1u;
+  uint end=consumer[PrefixBase+middle*2u]+consumer[PrefixBase+middle*2u+1u];
+  if(end>slot)high=middle;else low=middle+1u;
+ }
+ if(low>=consumer[3]){fail(85u);return;}
+ uint e=low,within=slot-consumer[PrefixBase+e*2u],base=descriptor(e,4u),kind=descriptor(e,6u);
+ if(kind!=1u&&kind!=2u&&kind!=4u){fail(85u);return;}
+ // Each PRE/packet owns its assembly. Fans retain anchor0; strips slide.
+ uint vertex[3]=uint[3](within+2u,within+1u,kind==1u?0u:within);
+ uvec4 st[3],rgba[3],xyz[3];ivec2 pp[3];
+ for(uint j=0u;j<3u;++j){uint row=(base+vertex[j])*8u;st[j]=native[row+5u];rgba[j]=native[row+6u];xyz[j]=native[row+4u];
+  pp[j]=ivec2(xyz[j].xy&uvec2(65535u))-p.offsetScissorLo.xy;}
+ // Original queue maintenance still occurs for ADC-skipped vertices: indexing
+ // uses the packet ordinal rather than compacting surviving geometry.
+ if((xyz[0].w&0x8000u)!=0u)return;
+ ivec2 lo=min(min(pp[0],pp[1]),pp[2]),hi=max(max(pp[0],pp[1]),pp[2]);
+ hi=(hi-ivec2(1))>>4;lo=(lo+ivec2(15))>>4;lo=max(lo,p.offsetScissorLo.zw);hi=min(hi,p.scissorHi.xy);
+ if(hi.x<lo.x||hi.y<lo.y)return;
+ for(uint j=0u;j<3u;++j){uint b=(slot*3u+j)*4u,a=(slot*3u+j)*6u;
+  positions[b]=uint(pp[j].x);positions[b+1u]=uint(pp[j].y);positions[b+2u]=(xyz[j].z>>4u)&0xffffffu;positions[b+3u]=0u;
+  attributes[a]=st[j].x;attributes[a+1u]=st[j].y;attributes[a+2u]=st[j].z;
+  attributes[a+3u]=(rgba[j].x&255u)|((rgba[j].y&255u)<<8u)|((rgba[j].z&255u)<<16u)|((rgba[j].w&255u)<<24u);
+  attributes[a+4u]=floatBitsToUint(float((xyz[j].w>>4u)&255u));attributes[a+5u]=0u;
+ }
+ primitives[slot*8u]=pack16(lo.x,lo.y);primitives[slot*8u+1u]=pack16(hi.x,hi.y);
+}

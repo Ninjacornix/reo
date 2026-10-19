@@ -1,0 +1,575 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+--- a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
++++ b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+@@ -3,7 +3,10 @@
+ // Based on Blackline Interactive implementation
+ #include "runtime/ps2_memory.h"
+ #include <atomic>
++#include <chrono>
+ #include <cstring>
++#include <mutex>
++#include <unordered_map>
+ #include "ps2_log.h"
+ 
+ enum VIFCmd : uint8_t
+@@ -36,6 +39,188 @@
+     std::atomic<uint32_t> s_debugVif1OpcodeCount{0};
+     constexpr uint8_t kGifFmtImage = 2u;
+ 
++    struct Vif1StreamState
++    {
++        const uint8_t* rdram = nullptr;
++        uint32_t pendingCode = 0;
++        std::vector<uint8_t> pending;
++    };
++    std::recursive_mutex s_vif1StreamMutex;
++    std::unordered_map<PS2Memory*, Vif1StreamState> s_vif1Streams;
++
++    uint32_t vif1PayloadBytes(uint8_t opcode, uint8_t num, uint16_t imm, uint32_t cycle)
++    {
++        if (opcode == VIF_STMASK) return 4u;
++        if (opcode == VIF_STROW || opcode == VIF_STCOL) return 16u;
++        if (opcode == VIF_MPG) return (num ? num : 256u) * 8u;
++        if (opcode == VIF_DIRECT || opcode == VIF_DIRECTHL) return (imm ? imm : 65536u) * 16u;
++        if ((opcode & 0x60u) != 0x60u) return 0u;
++        const uint32_t vn = (opcode >> 2) & 3u, vl = opcode & 3u;
++        const uint32_t bits = vl == 0 ? 32u : vl == 2 ? 8u : 16u;
++        const uint32_t vectorBytes = vn == 3 && vl == 3 ? 2u : ((vn + 1u) * bits + 7u) / 8u;
++        // Keep the existing zero-cycle behavior while correcting stream carry.
++        const uint32_t cl = (cycle & 255u) ? (cycle & 255u) : 1u;
++        const uint32_t wl = ((cycle >> 8) & 255u) ? ((cycle >> 8) & 255u) : 1u;
++        const uint32_t writes = num ? num : 256u;
++        const uint32_t sources = cl >= wl ? writes : (writes / wl) * cl + std::min(writes % wl, cl);
++        return (sources * vectorBytes + 3u) & ~3u;
++    }
++
++    uint64_t vifDiagnosticHash(const uint8_t* data, uint32_t bytes)
++    {
++        uint64_t hash = 14695981039346656037ull;
++        if (data)
++            for (uint32_t i = 0; i < bytes; ++i)
++                hash = (hash ^ data[i]) * 1099511628211ull;
++        return hash;
++    }
++
++    struct VifDiagnosticConfig
++    {
++        uint32_t count = 0, gate = 0, mask = 0xFFFFFFFFu, value = 0;
++        uint64_t byteBudget = 16u * 1024u * 1024u;
++        double afterSeconds = 0;
++        bool hasGate = false;
++
++        VifDiagnosticConfig()
++        {
++            auto number = [](const char* name, uint64_t fallback)
++            {
++                const char* text = std::getenv(name);
++                return text ? std::strtoull(text, nullptr, 0) : fallback;
++            };
++            count = static_cast<uint32_t>(std::min<uint64_t>(512u,
++                number("REO_VIF1_DUMP_COUNT", number("REO_VIF1_DUMP", 0))));
++            byteBudget = std::min<uint64_t>(64u * 1024u * 1024u,
++                number("REO_VIF1_DUMP_BYTES", byteBudget));
++            gate = static_cast<uint32_t>(number("REO_VIF1_DUMP_GATE", 0));
++            mask = static_cast<uint32_t>(number("REO_VIF1_DUMP_MASK", mask));
++            value = static_cast<uint32_t>(number("REO_VIF1_DUMP_VALUE", 0));
++            hasGate = std::getenv("REO_VIF1_DUMP_GATE") != nullptr;
++            if (const char* text = std::getenv("REO_VIF1_DUMP_AT"))
++                afterSeconds = std::max(0.0, std::atof(text));
++        }
++    };
++
++    struct VifDiagnosticState
++    {
++        const VifDiagnosticConfig config;
++        std::chrono::steady_clock::time_point first = std::chrono::steady_clock::now();
++        bool armed = false;
++        uint32_t nextIndex = 0, loggedCommands = 0;
++        uint64_t writtenBytes = 0;
++    };
++
++    void vifDiagnosticRegisters(FILE* file, const VIFRegisters& regs)
++    {
++        std::fprintf(file, "{\"stat\":%u,\"cycle\":%u,\"mode\":%u,\"num\":%u,"
++            "\"mask\":%u,\"code\":%u,\"itops\":%u,\"base\":%u,\"ofst\":%u,"
++            "\"tops\":%u,\"itop\":%u,\"top\":%u,"
++            "\"row\":[%u,%u,%u,%u],\"col\":[%u,%u,%u,%u]}",
++            regs.stat, regs.cycle, regs.mode, regs.num, regs.mask, regs.code,
++            regs.itops, regs.base, regs.ofst, regs.tops, regs.itop, regs.top,
++            regs.row[0], regs.row[1], regs.row[2], regs.row[3],
++            regs.col[0], regs.col[1], regs.col[2], regs.col[3]);
++    }
++
++    // Capture the actual incoming stream boundaries. Arming observes RAM only;
++    // it never scans GIF/UNPACK payload bytes as if they were VIF commands.
++    struct VifDiagnosticCapture
++    {
++        PS2Memory& memory;
++        VifDiagnosticState& state;
++        VIFRegisters before{};
++        uint32_t index = 0, bytes = 0;
++        uint64_t dataHash = 0, codeHash = 0, vuDataHash = 0;
++        double elapsed = 0;
++        uint32_t retainedBytes = 0, carryBytes = 0;
++        bool active = false, completeFile = false;
++
++        VifDiagnosticCapture(PS2Memory& owner, const uint8_t* data, uint32_t size)
++            : memory(owner), state([]() -> VifDiagnosticState&
++              { static VifDiagnosticState diagnostic; return diagnostic; }())
++        {
++            const auto& config = state.config;
++            if (!config.count || state.nextIndex >= config.count)
++                return;
++            elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - state.first).count();
++            if (!state.armed)
++            {
++                if (elapsed < config.afterSeconds)
++                    return;
++                uint32_t gateWord = 0;
++                if (config.hasGate)
++                {
++                    if (!memory.getRDRAM() || config.gate > PS2_RAM_SIZE - 4u)
++                        return;
++                    std::memcpy(&gateWord, memory.getRDRAM() + config.gate, sizeof(gateWord));
++                    if ((gateWord & config.mask) != (config.value & config.mask))
++                        return;
++                }
++                state.armed = true;
++                auto snapshot = [&](const char* path, const uint8_t* source, uint32_t length)
++                {
++                    if (!source || length > config.byteBudget - state.writtenBytes)
++                        return;
++                    if (FILE* file = std::fopen(path, "wb"))
++                    {
++                        state.writtenBytes += std::fwrite(source, 1, length, file);
++                        std::fclose(file);
++                    }
++                };
++                snapshot("vif1_initial_code.bin", memory.getVU1Code(), PS2_VU1_CODE_SIZE);
++                snapshot("vif1_initial_data.bin", memory.getVU1Data(), PS2_VU1_DATA_SIZE);
++                snapshot("vif1_initial_regs.bin", reinterpret_cast<const uint8_t*>(&memory.vif1_regs), sizeof(VIFRegisters));
++                std::fprintf(stderr, "[VIF1-DUMP] armed elapsed=%.6f gate=0x%x word=0x%x count=%u budget=%llu\n",
++                    elapsed, config.gate, gateWord, config.count, static_cast<unsigned long long>(config.byteBudget));
++            }
++            active = true;
++            index = state.nextIndex++;
++            bytes = size;
++            before = memory.vif1_regs;
++            dataHash = vifDiagnosticHash(data, size);
++            codeHash = vifDiagnosticHash(memory.getVU1Code(), PS2_VU1_CODE_SIZE);
++            vuDataHash = vifDiagnosticHash(memory.getVU1Data(), PS2_VU1_DATA_SIZE);
++            if (size <= config.byteBudget - state.writtenBytes)
++            {
++                char path[64];
++                std::snprintf(path, sizeof(path), "vif1_%04u.bin", index);
++                if (FILE* file = std::fopen(path, "wb"))
++                {
++                    const size_t written = std::fwrite(data, 1, size, file);
++                    state.writtenBytes += written;
++                    completeFile = written == size;
++                    std::fclose(file);
++                }
++            }
++        }
++
++        bool logCommand() { return active && state.loggedCommands++ < 2048u; }
++
++        ~VifDiagnosticCapture()
++        {
++            if (!active)
++                return;
++            if (FILE* file = std::fopen("vif1_buffers.jsonl", index ? "a" : "w"))
++            {
++                std::fprintf(file, "{\"index\":%u,\"bytes\":%u,\"elapsed\":%.9f,\"complete_file\":%s,"
++                    "\"input_fnv\":\"%016llx\",\"code_before_fnv\":\"%016llx\","
++                    "\"data_before_fnv\":\"%016llx\",\"before\":",
++                    index, bytes, elapsed, completeFile ? "true" : "false",
++                    static_cast<unsigned long long>(dataHash), static_cast<unsigned long long>(codeHash),
++                    static_cast<unsigned long long>(vuDataHash));
++                vifDiagnosticRegisters(file, before);
++                std::fprintf(file, ",\"after\":");
++                vifDiagnosticRegisters(file, memory.vif1_regs);
++                std::fprintf(file, ",\"carry_bytes\":%u,\"retained_bytes\":%u,\"code_after_fnv\":\"%016llx\",\"data_after_fnv\":\"%016llx\"}\n",
++                    carryBytes, retainedBytes,
++                    static_cast<unsigned long long>(vifDiagnosticHash(memory.getVU1Code(), PS2_VU1_CODE_SIZE)),
++                    static_cast<unsigned long long>(vifDiagnosticHash(memory.getVU1Data(), PS2_VU1_DATA_SIZE)));
++                std::fclose(file);
++            }
++        }
++    };
++
+     uint32_t gifImageQwcFromTag(const uint8_t *data, uint32_t sizeBytes)
+     {
+         if (!data || sizeBytes < 16u)
+@@ -67,22 +252,25 @@
+ 
+ void PS2Memory::processVIF1Data(const uint8_t *data, uint32_t sizeBytes)
+ {
+-    {   // Diagnostic: REO_VIF1_DUMP=<n> writes the first n VIF1 buffers to vif1_NNNN.bin
+-        static const int s_dumpMax = []() { const char *e = std::getenv("REO_VIF1_DUMP"); return e ? std::atoi(e) : 0; }();
+-        static std::atomic<int> s_dumped{0};
+-        if (s_dumpMax > 0 && data && sizeBytes)
+-        {
+-            const int idx = s_dumped.fetch_add(1);
+-            if (idx < s_dumpMax)
+-            {
+-                char name[64];
+-                std::snprintf(name, sizeof(name), "vif1_%04d.bin", idx);
+-                if (FILE *f = std::fopen(name, "wb")) { std::fwrite(data, 1, sizeBytes, f); std::fclose(f); }
+-            }
+-        }
+-    }
+     if (!data || !m_gsVRAM || sizeBytes == 0u)
+         return;
++    std::lock_guard<std::recursive_mutex> streamLock(s_vif1StreamMutex);
++    VifDiagnosticCapture capture(*this, data, sizeBytes);
++    auto& stream = s_vif1Streams[this];
++    if (stream.rdram != m_rdram || (!stream.pending.empty() && vif1_regs.code != stream.pendingCode))
++        stream.pending.clear(); // Initialization/FBRST clears CODE; do not resume stale payload.
++    stream.rdram = m_rdram;
++    std::vector<uint8_t> combined;
++    if (!stream.pending.empty())
++    {
++        capture.carryBytes = static_cast<uint32_t>(stream.pending.size());
++        combined.reserve(stream.pending.size() + sizeBytes);
++        combined.insert(combined.end(), stream.pending.begin(), stream.pending.end());
++        combined.insert(combined.end(), data, data + sizeBytes);
++        data = combined.data();
++        sizeBytes = static_cast<uint32_t>(combined.size());
++        stream.pending.clear();
++    }
+ 
+     auto recomputeVif1Tops = [&]()
+     {
+@@ -127,6 +315,7 @@
+             continue;
+         }
+ 
++        const uint32_t commandStart = pos;
+         uint32_t cmd;
+         memcpy(&cmd, data + pos, 4);
+         pos += 4;
+@@ -136,15 +325,34 @@
+         uint8_t num = (cmd >> 16) & 0xFF;
+         const bool irq = (cmd & 0x80000000u) != 0u;
+ 
++        // DMAC transfers can end between a command and its data or within its
++        // data. Preserve the command with its partial payload; the next call
++        // resumes it rather than treating its remaining words as VIFcodes.
++        // Payload writes are deferred until complete in this synchronous model.
++        if (vif1PayloadBytes(opcode, num, imm, vif1_regs.cycle) > sizeBytes - pos)
++        {
++            vif1_regs.code = cmd;
++            vif1_regs.num = num;
++            if (irq) vif1_regs.stat |= (1u << 11);
++            pos = commandStart;
++            break;
++        }
++
+         const uint32_t opcodeIndex = s_debugVif1OpcodeCount.fetch_add(1, std::memory_order_relaxed);
+-        if (opcodeIndex < 160u)
++        if (opcodeIndex < 160u || capture.logCommand())
+         {
+             RUNTIME_LOG("[vif1:cmd] idx=" << opcodeIndex
++                                          << " buffer=" << capture.index << " pos=" << (pos - 4u)
++                                          << " carry=" << capture.carryBytes
+                                           << " opcode=0x" << std::hex << static_cast<uint32_t>(opcode)
+                                           << " imm=0x" << imm
+                                           << std::dec
+                                           << " num=" << static_cast<uint32_t>(num)
+                                           << " irq=" << static_cast<uint32_t>(irq ? 1u : 0u)
++                                          << " base=" << vif1_regs.base << " ofst=" << vif1_regs.ofst
++                                          << " top=" << vif1_regs.top << " tops=" << vif1_regs.tops
++                                          << " itop=" << vif1_regs.itop << " itops=" << vif1_regs.itops
++                                          << " dbf=" << ((vif1_regs.stat >> 7) & 1u)
+                                           << std::endl);
+         }
+ 
+@@ -165,9 +373,7 @@
+         }
+         else if (opcode == VIF_OFFSET)
+         {
+-            const uint32_t oldTops = vif1_regs.tops & 0x3FFu;
+             vif1_regs.ofst = imm & 0x3FFu;
+-            vif1_regs.base = oldTops;
+             vif1_regs.stat &= ~(1u << 7); // clear DBF
+             recomputeVif1Tops();
+             continue;
+@@ -175,12 +381,11 @@
+         else if (opcode == VIF_BASE)
+         {
+             vif1_regs.base = imm & 0x3FFu;
+-            recomputeVif1Tops();
+             continue;
+         }
+         else if (opcode == VIF_ITOP)
+         {
+-            vif1_regs.itop = imm & 0x3FFu;
++            vif1_regs.itops = imm & 0x3FFu;
+             continue;
+         }
+         else if (opcode == VIF_STMOD)
+@@ -209,7 +414,8 @@
+         }
+         else if (opcode == VIF_MSCAL || opcode == VIF_MSCALF)
+         {
+-            vif1_regs.itops = vif1_regs.itop & 0x3FFu;
++            vif1_regs.itop = vif1_regs.itops & 0x3FFu;
++            vif1_regs.top = vif1_regs.tops & 0x3FFu;
+             vif1_regs.stat ^= (1u << 7); // toggle DBF
+             recomputeVif1Tops();
+             // VU1 TPC is 11 bits (PCSX2 vu1ExecMicro: addr & 0x7FF, << 3).
+@@ -230,7 +436,8 @@
+         }
+         else if (opcode == VIF_MSCNT)
+         {
+-            vif1_regs.itops = vif1_regs.itop & 0x3FFu;
++            vif1_regs.itop = vif1_regs.itops & 0x3FFu;
++            vif1_regs.top = vif1_regs.tops & 0x3FFu;
+             vif1_regs.stat ^= (1u << 7); // toggle DBF
+             recomputeVif1Tops();
+             const uint32_t kickIndex = s_debugVu1KickCount.fetch_add(1, std::memory_order_relaxed);
+@@ -273,18 +480,21 @@
+         }
+         else if (opcode == VIF_MPG)
+         {
+-            uint32_t destAddr = (uint32_t)imm * 8u;
++            uint32_t destAddr = ((uint32_t)imm * 8u) & (PS2_VU1_CODE_SIZE - 1u);
+             // VIF MPG semantics: NUM==0 means 256 instructions (2048 bytes).
+             // MPG payload is instruction-packed and should not be QW-aligned.
+             const uint32_t instructionCount = (num == 0u) ? 256u : static_cast<uint32_t>(num);
+             const uint32_t mpgBytes = instructionCount * 8u;
+-            if (m_vu1Code && destAddr < PS2_VU1_CODE_SIZE && mpgBytes > 0)
+-            {
+-                uint32_t copyBytes = mpgBytes;
+-                if (destAddr + copyBytes > PS2_VU1_CODE_SIZE)
+-                    copyBytes = PS2_VU1_CODE_SIZE - destAddr;
+-                if (pos + copyBytes <= sizeBytes)
+-                    std::memcpy(m_vu1Code + destAddr, data + pos, copyBytes);
++            if (m_vu1Code && mpgBytes > 0)
++            {
++                uint32_t copied = 0;
++                while (copied < mpgBytes)
++                {
++                    const uint32_t copyBytes = std::min(mpgBytes - copied, PS2_VU1_CODE_SIZE - destAddr);
++                    std::memcpy(m_vu1Code + destAddr, data + pos + copied, copyBytes);
++                    copied += copyBytes;
++                    destAddr = (destAddr + copyBytes) & (PS2_VU1_CODE_SIZE - 1u);
++                }
+             }
+             pos += mpgBytes;
+             if (pos > sizeBytes)
+@@ -582,4 +792,10 @@
+             continue;
+         }
+     }
++    if (pos < sizeBytes)
++    {
++        stream.pending.assign(data + pos, data + sizeBytes);
++        stream.pendingCode = vif1_regs.code;
++        capture.retainedBytes = static_cast<uint32_t>(stream.pending.size());
++    }
+ }
+diff --git a/ps2xTest/src/ps2_memory_tests.cpp b/ps2xTest/src/ps2_memory_tests.cpp
+--- a/ps2xTest/src/ps2_memory_tests.cpp
++++ b/ps2xTest/src/ps2_memory_tests.cpp
+@@ -714,12 +714,13 @@
+             t.Equals(mem.vif1_regs.stat, 0u, "RST should clear STAT");
+         });
+ 
+-        tc.Run("VIF double-buffer OFFSET BASE and MSCAL update TOPS and ITOPS", [](TestCase &t)
++        tc.Run("VIF double-buffer OFFSET BASE and execution latch TOP and ITOP", [](TestCase &t)
+         {
+             PS2Memory mem;
+             t.IsTrue(mem.initialize(), "PS2Memory initialize should succeed");
+ 
+             mem.vif1_regs.tops = 0x120u;
++            mem.vif1_regs.base = 0x30u;
+             mem.vif1_regs.stat = (1u << 7); // DBF=1 before OFFSET
+ 
+             std::vector<std::pair<uint32_t, uint32_t>> mscalCalls;
+@@ -731,32 +732,35 @@
+             const uint32_t offsetCmd = makeVifCmd(0x02u, 0u, 0x0022u);
+             mem.processVIF1Data(reinterpret_cast<const uint8_t *>(&offsetCmd), sizeof(offsetCmd));
+             t.Equals(mem.vif1_regs.ofst, 0x22u, "OFFSET should update OFST");
+-            t.Equals(mem.vif1_regs.base, 0x120u, "OFFSET should copy old TOPS into BASE");
++            t.Equals(mem.vif1_regs.base, 0x30u, "OFFSET must preserve BASE");
+             t.IsTrue((mem.vif1_regs.stat & (1u << 7)) == 0u, "OFFSET should clear DBF");
+-            t.Equals(mem.vif1_regs.tops, 0x120u, "DBF=0 should keep TOPS at BASE");
+-
+-            const uint32_t baseCmd = makeVifCmd(0x03u, 0u, 0x0030u);
++            t.Equals(mem.vif1_regs.tops, 0x30u, "OFFSET resets TOPS to preserved BASE");
++
++            const uint32_t baseCmd = makeVifCmd(0x03u, 0u, 0x0040u);
+             mem.processVIF1Data(reinterpret_cast<const uint8_t *>(&baseCmd), sizeof(baseCmd));
+-            t.Equals(mem.vif1_regs.base, 0x30u, "BASE should update BASE register");
+-            t.Equals(mem.vif1_regs.tops, 0x30u, "DBF=0 keeps TOPS equal to BASE");
++            t.Equals(mem.vif1_regs.base, 0x40u, "BASE should update BASE register");
++            t.Equals(mem.vif1_regs.tops, 0x30u, "BASE must not retroactively change current TOPS");
+ 
+             const uint32_t itopCmd = makeVifCmd(0x04u, 0u, 0x0044u);
+             mem.processVIF1Data(reinterpret_cast<const uint8_t *>(&itopCmd), sizeof(itopCmd));
+-            t.Equals(mem.vif1_regs.itop, 0x44u, "ITOP should update ITOP register");
++            t.Equals(mem.vif1_regs.itops, 0x44u, "ITOP stages ITOPS");
++            t.Equals(mem.vif1_regs.itop, 0u, "active ITOP changes only on execution");
+ 
+             const uint32_t mscalCmd = makeVifCmd(0x14u, 0u, 0x0003u);
+             mem.processVIF1Data(reinterpret_cast<const uint8_t *>(&mscalCmd), sizeof(mscalCmd));
+             t.Equals(mscalCalls.size(), static_cast<size_t>(1u), "MSCAL should invoke callback once");
+             t.Equals(mscalCalls[0].first, 0x18u, "MSCAL callback startPC should be IMMEDIATE*8");
+             t.Equals(mscalCalls[0].second, 0x44u, "MSCAL callback should receive current ITOP");
+-            t.Equals(mem.vif1_regs.itops, 0x44u, "MSCAL should latch ITOPS from ITOP");
++            t.Equals(mem.vif1_regs.itop, 0x44u, "MSCAL latches ITOP from staged ITOPS");
++            t.Equals(mem.vif1_regs.top, 0x30u, "MSCAL latches old TOPS before advancing the buffer");
+             t.IsTrue((mem.vif1_regs.stat & (1u << 7)) != 0u, "MSCAL should toggle DBF");
+-            t.Equals(mem.vif1_regs.tops, 0x52u, "DBF=1 should set TOPS to BASE+OFST");
++            t.Equals(mem.vif1_regs.tops, 0x62u, "DBF=1 should set TOPS to BASE+OFST");
+ 
+             const uint32_t mscntCmd = makeVifCmd(0x17u, 0u, 0u);
+             mem.processVIF1Data(reinterpret_cast<const uint8_t *>(&mscntCmd), sizeof(mscntCmd));
+             t.IsTrue((mem.vif1_regs.stat & (1u << 7)) == 0u, "MSCNT should toggle DBF again");
+-            t.Equals(mem.vif1_regs.tops, 0x30u, "DBF=0 should restore TOPS to BASE");
++            t.Equals(mem.vif1_regs.top, 0x62u, "MSCNT latches the second input buffer");
++            t.Equals(mem.vif1_regs.tops, 0x40u, "DBF=0 should restore TOPS to BASE");
+         });
+ 
+         tc.Run("VIF MSKPATH3 uses immediate bit15", [](TestCase &t)
+@@ -1578,7 +1582,77 @@
+             t.IsTrue(imageOk, "VIF1 DIRECT image should update GS VRAM through GIF path2");
+         });
+ 
+-        tc.Run("VIF1 DIRECT image tag can continue with raw image qwords", [](TestCase &t)
++        tc.Run("VIF1 IMAGE continues across DIRECT commands while VIFcodes remain commands", [](TestCase &t)
++        {
++            PS2Memory mem;
++            t.IsTrue(mem.initialize(), "PS2Memory initialize should succeed");
++
++            GS gs;
++            gs.init(mem.getGSVRAM(), static_cast<uint32_t>(PS2_GS_VRAM_SIZE), &mem.gs());
++            GifArbiter arbiter([&](const uint8_t *data, uint32_t sizeBytes)
++            {
++                gs.processGIFPacket(data, sizeBytes);
++            });
++            mem.setGifArbiter(&arbiter);
++
++            const uint64_t bitblt =
++                (static_cast<uint64_t>(0u) << 0) |
++                (static_cast<uint64_t>(1u) << 16) |
++                (static_cast<uint64_t>(0u) << 24) |
++                (static_cast<uint64_t>(0u) << 32) |
++                (static_cast<uint64_t>(1u) << 48) |
++                (static_cast<uint64_t>(0u) << 56);
++            gs.writeRegister(GS_REG_BITBLTBUF, bitblt);
++            gs.writeRegister(GS_REG_TRXPOS, 0ull);
++            gs.writeRegister(GS_REG_TRXREG, (8ull << 0) | (1ull << 32));
++            gs.writeRegister(GS_REG_TRXDIR, 0ull);
++
++            std::vector<uint8_t> packet;
++            appendU32(packet, makeVifCmd(0x50u, 0u, 1u)); // DIRECT 1 QW payload: GIF IMAGE tag only.
++            appendU64(packet, makeGifTag(2u, GIF_FMT_IMAGE, 0u, true));
++            appendU64(packet, 0ull);
++            appendU32(packet, makeVifCmd(0x07u, 0u, 0x1234u)); // Outside DIRECT: not IMAGE data.
++            mem.processVIF1Data(packet.data(), static_cast<uint32_t>(packet.size()));
++            t.Equals(mem.vif1_regs.mark, 0x1234u, "VIF command after an IMAGE-only DIRECT must execute");
++
++            packet.clear();
++            appendU32(packet, makeVifCmd(0x50u, 0u, 1u));
++            for (uint32_t i = 0; i < 16u; ++i)
++            {
++                packet.push_back(static_cast<uint8_t>(0xA0u + i));
++            }
++            appendU32(packet, makeVifCmd(0x07u, 0u, 0x5678u));
++            mem.processVIF1Data(packet.data(), static_cast<uint32_t>(packet.size()));
++            t.Equals(mem.vif1_regs.mark, 0x5678u, "VIFcode after first IMAGE data DIRECT must execute");
++
++            packet.clear();
++            appendU32(packet, makeVifCmd(0x50u, 0u, 1u));
++            for (uint32_t i = 16u; i < 32u; ++i)
++                packet.push_back(static_cast<uint8_t>(0xA0u + i));
++            appendU32(packet, makeVifCmd(0x07u, 0u, 0x9ABCu));
++
++            mem.processVIF1Data(packet.data(), static_cast<uint32_t>(packet.size()));
++            gs.getLastDisplayBaseBytes(); // Complete asynchronous GS work before reading VRAM.
++            t.Equals(mem.vif1_regs.mark, 0x9ABCu, "VIFcode after final IMAGE data DIRECT must execute");
++
++            const uint8_t *vramOut = mem.getGSVRAM();
++            bool imageOk = true;
++            for (uint32_t x = 0; x < 8u && imageOk; ++x)
++            {
++                const uint32_t off = GSPSMCT32::addrPSMCT32(0u, 1u, x, 0u);
++                for (uint32_t c = 0; c < 4u; ++c)
++                {
++                    if (vramOut[off + c] != static_cast<uint8_t>(0xA0u + x * 4u + c))
++                    {
++                        imageOk = false;
++                        break;
++                    }
++                }
++            }
++            t.IsTrue(imageOk, "two subsequent DIRECTs must finish the original PATH2 IMAGE in correct byte order");
++        });
++
++        tc.Run("VIF MSCAL callback can execute XGKICK and update GS VRAM", [](TestCase &t)
+         {
+             PS2Memory mem;
+             t.IsTrue(mem.initialize(), "PS2Memory initialize should succeed");
+@@ -1603,59 +1677,6 @@
+             gs.writeRegister(GS_REG_TRXREG, (4ull << 0) | (1ull << 32));
+             gs.writeRegister(GS_REG_TRXDIR, 0ull);
+ 
+-            std::vector<uint8_t> packet;
+-            appendU32(packet, makeVifCmd(0x50u, 0u, 1u)); // DIRECT 1 QW payload: GIF IMAGE tag only.
+-            appendU64(packet, makeGifTag(1u, GIF_FMT_IMAGE, 0u, true));
+-            appendU64(packet, 0ull);
+-            for (uint32_t i = 0; i < 16u; ++i)
+-            {
+-                packet.push_back(static_cast<uint8_t>(0xA0u + i));
+-            }
+-
+-            mem.processVIF1Data(packet.data(), static_cast<uint32_t>(packet.size()));
+-
+-            const uint8_t *vramOut = mem.getGSVRAM();
+-            bool imageOk = true;
+-            for (uint32_t x = 0; x < 4u && imageOk; ++x)
+-            {
+-                const uint32_t off = GSPSMCT32::addrPSMCT32(0u, 1u, x, 0u);
+-                for (uint32_t c = 0; c < 4u; ++c)
+-                {
+-                    if (vramOut[off + c] != static_cast<uint8_t>(0xA0u + x * 4u + c))
+-                    {
+-                        imageOk = false;
+-                        break;
+-                    }
+-                }
+-            }
+-            t.IsTrue(imageOk, "raw qwords after a DIRECT image tag should continue the PATH2 image upload");
+-        });
+-
+-        tc.Run("VIF MSCAL callback can execute XGKICK and update GS VRAM", [](TestCase &t)
+-        {
+-            PS2Memory mem;
+-            t.IsTrue(mem.initialize(), "PS2Memory initialize should succeed");
+-
+-            GS gs;
+-            gs.init(mem.getGSVRAM(), static_cast<uint32_t>(PS2_GS_VRAM_SIZE), &mem.gs());
+-            GifArbiter arbiter([&](const uint8_t *data, uint32_t sizeBytes)
+-            {
+-                gs.processGIFPacket(data, sizeBytes);
+-            });
+-            mem.setGifArbiter(&arbiter);
+-
+-            const uint64_t bitblt =
+-                (static_cast<uint64_t>(0u) << 0) |
+-                (static_cast<uint64_t>(1u) << 16) |
+-                (static_cast<uint64_t>(0u) << 24) |
+-                (static_cast<uint64_t>(0u) << 32) |
+-                (static_cast<uint64_t>(1u) << 48) |
+-                (static_cast<uint64_t>(0u) << 56);
+-            gs.writeRegister(GS_REG_BITBLTBUF, bitblt);
+-            gs.writeRegister(GS_REG_TRXPOS, 0ull);
+-            gs.writeRegister(GS_REG_TRXREG, (4ull << 0) | (1ull << 32));
+-            gs.writeRegister(GS_REG_TRXDIR, 0ull);
+-
+             uint8_t *vuCode = mem.getVU1Code();
+             uint8_t *vuData = mem.getVU1Data();
+             std::memset(vuCode, 0, PS2_VU1_CODE_SIZE);

@@ -1,0 +1,159 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -1,4 +1,7 @@
++#include <cstdint>
+ void ps2GsRequestWorkerStop();
++bool ps2VifKickVuProfileActive() noexcept;
++void ps2VifKickStageRecord(unsigned,uint64_t,uint64_t,uint64_t) noexcept;
+ #include "gs_backend_route.h"
+ #include "gs_priv_atomic.h"
+ #include "runtime/ps2_gs_gpu.h"
+@@ -661,7 +664,11 @@
+         if (t_isGsWorker || !gsThreadEnabled())
+             return false;
+         const GsWaitTimer waitTimer;
++        const bool stageProfile=item.isPacket && item.path==1u && ps2VifKickVuProfileActive();
++        using StageClock=std::chrono::steady_clock;
++        const auto acquireBegin=stageProfile?StageClock::now():StageClock::time_point{};
+         std::unique_lock<std::mutex> lock(g_gsAsync.m);
++        if(stageProfile) ps2VifKickStageRecord(3,uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(StageClock::now()-acquireBegin).count()),0,g_gsAsync.queuedBytes);
+         if (g_gsAsync.stopping) return true;
+         if (!g_gsAsync.started)
+         {
+@@ -681,6 +688,7 @@
+             if (!g_statePacketStream.known) ++g_statePacketUnknownBlocked;
+             else if (g_statePacketStream.pendingImageBytes) ++g_statePacketImageBlocked;
+         }
++        const auto waitBegin=stageProfile?StageClock::now():StageClock::time_point{};
+         g_gsAsync.drained.wait(lock, [paceTarget, stateOnly, dispatchExperiment] {
+             // Two frames of slack (D44): with one, a heavy frame made the game thread wait
+             // while holding the guest lock, delaying the VBLANK handler (present hitches).
+@@ -692,6 +700,7 @@
+             return g_gsAsync.stopping || (g_gsAsync.queuedBytes < kGsQueueMaxBytes &&
+                                          (dispatchExperiment || exempt || g_gsAsync.completed >= paceTarget));
+         });
++        if(stageProfile) ps2VifKickStageRecord(4,uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(StageClock::now()-waitBegin).count()),0,g_gsAsync.queuedBytes);
+         if (g_gsAsync.stopping) return true;
+         const bool exempt = stateOnly && g_statePacketStream.canBypass();
+         waitTimer.finish("enqueue", paceTarget, exempt ? "state-packet" : item.isPacket ? "packet" : "register");
+@@ -2380,7 +2389,11 @@
+         GsQueueItem item;
+         item.isPacket = true;
+         item.path = gs_backend_bridge::currentPath();
++        const bool stageProfile=item.path==1u && ps2VifKickVuProfileActive();
++        using StageClock=std::chrono::steady_clock;
++        const auto copyBegin=stageProfile?StageClock::now():StageClock::time_point{};
+         item.data.assign(data, data + sizeBytes);
++        if(stageProfile) ps2VifKickStageRecord(2,uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(StageClock::now()-copyBegin).count()),sizeBytes,0);
+         if (gsEnqueue(this, std::move(item)))
+             return;
+     }
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -2620,7 +2620,13 @@
+ 
+ namespace
+ {
+-    struct VifKickVuWork { uint64_t calls = 0, ns = 0, cycles = 0, capped = 0; };
++    // Stages: XGKICK preparation/submission; PATH1 GS copy/queue acquisition/condition wait.
++    // The last three are nested submission costs, never added to VU wall time again.
++    struct VifKickVuWork {
++        uint64_t calls = 0, ns = 0, cycles = 0, capped = 0;
++        uint64_t stageNs[5]{}, stageCalls[5]{}, stageBytes[5]{};
++        uint64_t peakQueueBytes = 0;
++    };
+     thread_local VifKickVuWork* t_vifKickVuWork = nullptr;
+     struct VifKickWriteTiming
+     {
+@@ -2683,11 +2689,17 @@
+             const uint32_t n = records().fetch_add(1, std::memory_order_relaxed);
+             if (n >= c.limit) return;
+             const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(start.time_since_epoch()).count();
+-            std::fprintf(stderr, "[VIF-KICK-TIMING] n=%u elapsed=%.6f ns=%lld duration_us=%lld tid=%d pc=%08x ra=%08x io_depth=%u vu_calls=%llu vu_us=%llu vu_cycles=%llu vu_capped=%llu\n",
++            std::fprintf(stderr, "[VIF-KICK-TIMING] n=%u elapsed=%.6f ns=%lld duration_us=%lld tid=%d pc=%08x ra=%08x io_depth=%u vu_calls=%llu vu_us=%llu vu_cycles=%llu vu_capped=%llu xgkick_calls=%llu xgkick_bytes=%llu xgkick_prep_us=%llu xgkick_submit_us=%llu vu_non_xgkick_us=%llu path1_copy_calls=%llu path1_copy_us=%llu path1_lock_us=%llu path1_queue_wait_us=%llu path1_peak_queue_bytes=%llu\n",
+                 n, std::chrono::duration<double>(start-c.epoch).count(), static_cast<long long>(ns),
+                 static_cast<long long>(us), tid, pc, ra, ioDepth,
+                 static_cast<unsigned long long>(work.calls), static_cast<unsigned long long>(work.ns / 1000u),
+-                static_cast<unsigned long long>(work.cycles), static_cast<unsigned long long>(work.capped));
++                static_cast<unsigned long long>(work.cycles), static_cast<unsigned long long>(work.capped),
++                static_cast<unsigned long long>(work.stageCalls[0]), static_cast<unsigned long long>(work.stageBytes[1]),
++                static_cast<unsigned long long>(work.stageNs[0]/1000u), static_cast<unsigned long long>(work.stageNs[1]/1000u),
++                static_cast<unsigned long long>((work.ns>=work.stageNs[0]+work.stageNs[1]?work.ns-work.stageNs[0]-work.stageNs[1]:0)/1000u),
++                static_cast<unsigned long long>(work.stageCalls[2]), static_cast<unsigned long long>(work.stageNs[2]/1000u),
++                static_cast<unsigned long long>(work.stageNs[3]/1000u), static_cast<unsigned long long>(work.stageNs[4]/1000u),
++                static_cast<unsigned long long>(work.peakQueueBytes));
+         }
+     };
+ 
+@@ -2720,6 +2732,15 @@
+ {
+     if (auto* work = t_vifKickVuWork) {
+         ++work->calls; work->ns += ns; work->cycles += cycles; work->capped += unsigned(capped);
++    }
++}
++
++// Private implementation-only hook. No clocks, allocation or logging here.
++void ps2VifKickStageRecord(unsigned stage,uint64_t ns,uint64_t bytes,uint64_t queueBytes) noexcept
++{
++    if(auto* work=t_vifKickVuWork;work && stage<5u) {
++        work->stageNs[stage]+=ns; ++work->stageCalls[stage]; work->stageBytes[stage]+=bytes;
++        work->peakQueueBytes=std::max(work->peakQueueBytes,queueBytes);
+     }
+ }
+ 
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -21,6 +21,7 @@
+ #endif
+ 
+ bool ps2VifKickVuProfileActive() noexcept;
++void ps2VifKickStageRecord(unsigned,uint64_t,uint64_t,uint64_t) noexcept;
+ void ps2VifKickVuProfileRecord(uint64_t ns, uint32_t cycles, bool capped) noexcept;
+ 
+ namespace
+@@ -1119,6 +1120,9 @@
+             if (!vuData || dataSize < 16u)
+                 return;
+ 
++            const bool stageProfile=ps2VifKickVuProfileActive();
++            using StageClock=std::chrono::steady_clock;
++            const auto prepBegin=stageProfile?StageClock::now():StageClock::time_point{};
+             auto wrapOffset = [&](uint32_t off) -> uint32_t
+             {
+                 return off % dataSize;
+@@ -1197,12 +1201,16 @@
+                                                 << std::endl);
+             }
+ 
++            auto submitPacket=[&](const uint8_t* packet) {
++                const auto submitBegin=stageProfile?StageClock::now():StageClock::time_point{};
++                if(stageProfile) ps2VifKickStageRecord(0,uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(submitBegin-prepBegin).count()),0,0);
++                if(memory) memory->submitGifPacket(GifPathId::Path1,packet,totalBytes);
++                else gs.processGIFPacket(packet,totalBytes);
++                if(stageProfile) ps2VifKickStageRecord(1,uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(StageClock::now()-submitBegin).count()),totalBytes,0);
++            };
+             if (addr + totalBytes <= dataSize)
+             {
+-                if (memory)
+-                    memory->submitGifPacket(GifPathId::Path1, vuData + addr, totalBytes);
+-                else
+-                    gs.processGIFPacket(vuData + addr, totalBytes);
++                submitPacket(vuData+addr);
+             }
+             else
+             {
+@@ -1212,10 +1220,7 @@
+                     wrappedPacket[i] = vuData[wrapOffset(addr + i)];
+                 }
+ 
+-                if (memory)
+-                    memory->submitGifPacket(GifPathId::Path1, wrappedPacket.data(), totalBytes);
+-                else
+-                    gs.processGIFPacket(wrappedPacket.data(), totalBytes);
++                submitPacket(wrappedPacket.data());
+             }
+             return;
+         }

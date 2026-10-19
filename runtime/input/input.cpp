@@ -45,6 +45,15 @@ void Input::update() {
     update_keyboard();
 }
 
+void Input::update_controllers_only() {
+    for (int i = 0; i < 2; ++i) {
+        m_pads[i].reset();
+#ifdef REO_PLATFORM_WINDOWS
+        update_xinput(i);
+#endif
+    }
+}
+
 #ifdef REO_PLATFORM_WINDOWS
 void Input::update_xinput(int port) {
     XINPUT_STATE state;
@@ -163,8 +172,14 @@ void Input::update_keyboard() {
         pad.pressure[11] = 255;
     }
 
-    // System
-    if (key(VK_RETURN))
+    // Keep the host fullscreen chord out of the game's Start button, even
+    // when Control is released before Enter.
+    static bool reservedEnter = false;
+    if (!key(VK_RETURN))
+        reservedEnter = false;
+    else if (key(VK_CONTROL) || key(VK_LCONTROL) || key(VK_RCONTROL))
+        reservedEnter = true;
+    if (key(VK_RETURN) && !reservedEnter)
         buttons &= ~PS2_START;
     if (key(VK_BACK))
         buttons &= ~PS2_SELECT;

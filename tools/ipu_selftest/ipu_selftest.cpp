@@ -13,32 +13,34 @@ static std::map<uint32_t, unsigned> memReads;
 static std::vector<uint8_t> scratchpad(16 * 1024);
 static int fails = 0;
 
-static void check(bool ok, const char *what)
-{
+static void check(bool ok, const char* what) {
     std::printf("%s %s\n", ok ? "PASS" : "FAIL", what);
-    if (!ok) ++fails;
+    if (!ok)
+        ++fails;
 }
 
-struct Bits
-{
+struct Bits {
     std::vector<uint8_t> b;
     int n = 0;
-    void put(const char *s)
-    {
-        for (; *s; ++s)
-        {
-            if (*s == ' ') continue;
-            if (n % 8 == 0) b.push_back(0);
-            if (*s == '1') b.back() |= 0x80 >> (n % 8);
+    void put(const char* s) {
+        for (; *s; ++s) {
+            if (*s == ' ')
+                continue;
+            if (n % 8 == 0)
+                b.push_back(0);
+            if (*s == '1')
+                b.back() |= 0x80 >> (n % 8);
             ++n;
         }
     }
-    void pad16() { while (b.size() % 16) b.push_back(0); }
+    void pad16() {
+        while (b.size() % 16)
+            b.push_back(0);
+    }
 };
 
 // Put data at 0x10000 and run it through DMA channel 4 (normal mode).
-static void feed(const Bits &bits)
-{
+static void feed(const Bits& bits) {
     std::memcpy(ram.data() + 0x10000, bits.b.data(), bits.b.size());
     io[0x1000B410] = 0x10000;
     io[0x1000B420] = static_cast<uint32_t>(bits.b.size() / 16);
@@ -46,20 +48,18 @@ static void feed(const Bits &bits)
     ps2_ipu::dmaKick(0x1000B400);
 }
 
-static void startOut(uint32_t addr, uint32_t qwc)
-{
+static void startOut(uint32_t addr, uint32_t qwc) {
     io[0x1000B010] = addr;
     io[0x1000B020] = qwc;
     io[0x1000B000] = 0x100;
     ps2_ipu::dmaKick(0x1000B000);
 }
 
-int main()
-{
+int main() {
     ps2_ipu::Host h;
     h.readIo = [](uint32_t a) { return io[a]; };
     h.writeIo = [](uint32_t a, uint32_t v) { io[a] = v; };
-    h.mem = [](uint32_t a, uint32_t s) -> uint8_t * {
+    h.mem = [](uint32_t a, uint32_t s) -> uint8_t* {
         ++memReads[a];
         if (a & 0x80000000u) {
             const uint32_t off = a & 0x3FFFu;
@@ -67,7 +67,10 @@ int main()
         }
         return (static_cast<uint64_t>(a) + s <= ram.size()) ? ram.data() + a : nullptr;
     };
-    h.dmaComplete = [](uint32_t ch) { ++completions[ch]; std::printf("  dma%u complete\n", ch); };
+    h.dmaComplete = [](uint32_t ch) {
+        ++completions[ch];
+        std::printf("  dma%u complete\n", ch);
+    };
     ps2_ipu::setHost(h);
 
     // ---- Test 1: BDEC intra, DC only. Y0..3 diff +10 (size 4 '110' + '1010'), EOB '10';
@@ -76,22 +79,28 @@ int main()
     Bits b1;
     // Y0: +10 -> 138; Y1..Y3: diff 0 (size 0 '100') -> 138
     b1.put("110 1010 10");
-    for (int i = 0; i < 3; ++i) b1.put("100 10");
-    b1.put("10 00 10");    // Cb: size 2 ('10'), bits '00' -> -3 => 125
-    b1.put("110 101 10");  // Cr: size 3 ('110'), bits '101' -> +5 => 133
+    for (int i = 0; i < 3; ++i)
+        b1.put("100 10");
+    b1.put("10 00 10");   // Cb: size 2 ('10'), bits '00' -> -3 => 125
+    b1.put("110 101 10"); // Cr: size 3 ('110'), bits '101' -> +5 => 133
     b1.pad16();
     startOut(0x40000, 48);
     feed(b1);
     // BDEC: mbi=1, dcr=1, dt=0, qsc=1, fb=0
     ps2_ipu::write32(0x10002000, (2u << 28) | (1u << 27) | (1u << 26) | (1u << 16));
-    const int16_t *o = reinterpret_cast<const int16_t *>(ram.data() + 0x40000);
+    const int16_t* o = reinterpret_cast<const int16_t*>(ram.data() + 0x40000);
     bool yok = true;
-    for (int i = 0; i < 256; ++i) yok &= (o[i] >= 137 && o[i] <= 139);
+    for (int i = 0; i < 256; ++i)
+        yok &= (o[i] >= 137 && o[i] <= 139);
     bool cbok = true, crok = true;
-    for (int i = 0; i < 64; ++i) { cbok &= (o[256 + i] >= 124 && o[256 + i] <= 126); crok &= (o[320 + i] >= 132 && o[320 + i] <= 134); }
-    std::printf("  Y[0]=%d Y[255]=%d Cb=%d Cr=%d busy=%08X ctrl=%08X\n", o[0], o[255], o[256], o[320],
-                ps2_ipu::read32(0x10002004), ps2_ipu::read32(0x10002010));
-    check(((ps2_ipu::read32(0x10002010) >> 8) & 0x3Fu) == 0x3Fu, "BDEC intra exposes CBP 0x3F in IPU_CTRL[13:8]");
+    for (int i = 0; i < 64; ++i) {
+        cbok &= (o[256 + i] >= 124 && o[256 + i] <= 126);
+        crok &= (o[320 + i] >= 132 && o[320 + i] <= 134);
+    }
+    std::printf("  Y[0]=%d Y[255]=%d Cb=%d Cr=%d busy=%08X ctrl=%08X\n", o[0], o[255], o[256],
+                o[320], ps2_ipu::read32(0x10002004), ps2_ipu::read32(0x10002010));
+    check(((ps2_ipu::read32(0x10002010) >> 8) & 0x3Fu) == 0x3Fu,
+          "BDEC intra exposes CBP 0x3F in IPU_CTRL[13:8]");
     check(yok, "BDEC luma DC 138");
     check(cbok, "BDEC Cb DC 125");
     check(crok, "BDEC Cr DC 133");
@@ -117,15 +126,18 @@ int main()
     // ---- Test 3: CSC of a grey macroblock.
     ps2_ipu::write32(0x10002010, 0x40000000);
     Bits b3;
-    for (int i = 0; i < 384; ++i) b3.put("10000000");
+    for (int i = 0; i < 384; ++i)
+        b3.put("10000000");
     b3.pad16();
     std::memset(ram.data() + 0x50000, 0xEE, 1024);
     startOut(0x50000, 64);
     feed(b3);
     ps2_ipu::write32(0x10002000, (7u << 28) | 1u); // CSC mbc=1, RGB32
-    const uint8_t *px = ram.data() + 0x50000;
+    const uint8_t* px = ram.data() + 0x50000;
     std::printf("  CSC px0 = %u %u %u %u\n", px[0], px[1], px[2], px[3]);
-    check(px[0] >= 128 && px[0] <= 131 && px[1] >= 128 && px[1] <= 131 && px[2] >= 128 && px[2] <= 131, "CSC grey");
+    check(px[0] >= 128 && px[0] <= 131 && px[1] >= 128 && px[1] <= 131 && px[2] >= 128 &&
+              px[2] <= 131,
+          "CSC grey");
 
     // ---- Test 4: BDEC non-intra, cbp = block 0 only ('1010' = 32), coefficient run 1 level 1
     // ('011' + sign 0) => scan pos 1 = natural (0,1): horizontal frequency 1. qsc 8 (qs 16),
@@ -137,11 +149,13 @@ int main()
     startOut(0x60000, 48);
     feed(b4);
     ps2_ipu::write32(0x10002000, (2u << 28) | (8u << 16)); // BDEC mbi=0, qsc=8
-    const int16_t *q = reinterpret_cast<const int16_t *>(ram.data() + 0x60000);
-    std::printf("  row0: %d %d %d %d %d %d %d %d | row7 x0=%d | Y1 x8=%d\n", q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7],
-                q[7 * 16], q[8]);
-    check(q[0] == 4 && q[7] == -4 && q[7 * 16] == q[0] && q[8] == 0, "BDEC non-intra AC (horizontal)");
-    check(((ps2_ipu::read32(0x10002010) >> 8) & 0x3Fu) == 32u, "BDEC non-intra exposes coded-block pattern 32");
+    const int16_t* q = reinterpret_cast<const int16_t*>(ram.data() + 0x60000);
+    std::printf("  row0: %d %d %d %d %d %d %d %d | row7 x0=%d | Y1 x8=%d\n", q[0], q[1], q[2], q[3],
+                q[4], q[5], q[6], q[7], q[7 * 16], q[8]);
+    check(q[0] == 4 && q[7] == -4 && q[7 * 16] == q[0] && q[8] == 0,
+          "BDEC non-intra AC (horizontal)");
+    check(((ps2_ipu::read32(0x10002010) >> 8) & 0x3Fu) == 32u,
+          "BDEC non-intra exposes coded-block pattern 32");
 
     // ---- Test 5: TO_IPU REF+IRQ ends a chain after its own payload with TIE set.
     // TAG comes from bits 31:16 of the tag's lower word, not the upper ADDR word.
@@ -163,11 +177,14 @@ int main()
     ps2_ipu::dmaKick(0x1000B400);
     check((io[0x1000B400] & 0xFFFF0000u) == 0xB0000000u, "DMA4 CHCR.TAG reflects tag lower word");
     check((io[0x1000B400] & 0x100u) == 0, "DMA4 IRQ/TIE clears STR after tag payload");
-    check(io[0x1000B420] == 0 && io[0x1000B410] == payloadAt + 32, "DMA4 transfers exactly tag QWC");
+    check(io[0x1000B420] == 0 && io[0x1000B410] == payloadAt + 32,
+          "DMA4 transfers exactly tag QWC");
     check(io[0x1000B430] == tagAt + 16, "DMA4 IRQ/TIE leaves TADR at the following tag");
     check(completions[4] == 1, "DMA4 IRQ/TIE raises one completion");
-    check(memReads[payloadAt] == 1 && memReads[payloadAt + 16] == 1, "DMA4 reads both tagged payload QW");
-    check(memReads[tagAt + 16] == 0 && memReads[nextPayloadAt] == 0, "DMA4 IRQ/TIE does not consume next tag");
+    check(memReads[payloadAt] == 1 && memReads[payloadAt + 16] == 1,
+          "DMA4 reads both tagged payload QW");
+    check(memReads[tagAt + 16] == 0 && memReads[nextPayloadAt] == 0,
+          "DMA4 IRQ/TIE does not consume next tag");
     ps2_ipu::read32(0x10002010);
     ps2_ipu::dmaKick(0x1000B400); // idle poll/kick must not re-raise completion
     check(completions[4] == 1, "DMA4 completion is not repeated while idle");
@@ -193,15 +210,14 @@ int main()
             packed.b[i] = static_cast<uint8_t>(sample < 0 ? 0 : sample > 255 ? 255 : sample);
         }
     }
-    check(packed.b[0] >= 137 && packed.b[0] <= 139 &&
-          packed.b[256] >= 124 && packed.b[256] <= 126 &&
-          packed.b[320] >= 132 && packed.b[320] <= 134,
+    check(packed.b[0] >= 137 && packed.b[0] <= 139 && packed.b[256] >= 124 &&
+              packed.b[256] <= 126 && packed.b[320] >= 132 && packed.b[320] <= 134,
           "CBP-gated CPU packing copies decoded SPR macroblock");
     ps2_ipu::write32(0x10002010, 0x40000000);
     startOut(0x70000, 64);
     feed(packed);
     ps2_ipu::write32(0x10002000, (7u << 28) | 1u);
-    const uint8_t *picture = ram.data() + 0x70000;
+    const uint8_t* picture = ram.data() + 0x70000;
     check(picture[0] > 100 && picture[1] > 100 && picture[2] > 100,
           "BDEC/CPU-copy/CSC pipeline produces a non-green frame");
     check((io[0x1000B000] & 0x100u) == 0, "Pipeline DMA3 completes RGB32 output");

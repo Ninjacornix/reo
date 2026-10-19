@@ -1,0 +1,19 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -293,10 +293,13 @@
+         const uint32_t instructionPC = m_state.pc;
+         // The upper I flag makes the lower word a literal, not an instruction.
+         // The paired upper operation consumes the previous value of I.
+-        execUpper(upper);
++        // Actual upper NOP: secondary table row 11, column 3. Retain
++        // I/E flags and all pair scheduling even when its handler is skipped.
++        if ((upper & 0x7FFu) != 0x2FFu)
++            execUpper(upper);
+         if ((upper & 0x80000000u) != 0)
+             std::memcpy(&m_state.i, &lower, 4);
+-        else
++        else if (lower != 0x8000033Cu)
+             execLower(lower, vuData, dataSize, gs, memory, upper);
+ 
+         // execLower marks taken branches in bit31; real micro-PCs are 14 bits.

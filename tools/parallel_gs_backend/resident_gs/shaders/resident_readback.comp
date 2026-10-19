@@ -1,0 +1,28 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+#extension GL_EXT_shader_16bit_storage : require
+#extension GL_EXT_shader_8bit_storage : require
+#include "swizzle_utils.h"
+layout(local_size_x=64) in;
+layout(set=0,binding=0,std430) readonly buffer Vram { uint words[]; } vram;
+layout(set=0,binding=1,std430) writeonly buffer Output { uint words[]; } outputData;
+layout(push_constant) uniform Controls { uint base, stride, psm, x, y, width, height, bytes; } p;
+uint pixel(uint index) {
+    uint addr=swizzle_PS2((p.x+index%p.width)&2047u,(p.y+index/p.width)&2047u,p.base,p.stride,p.psm,4194303u);
+    if(p.psm==PSMCT16||p.psm==PSMCT16S||p.psm==PSMZ16||p.psm==PSMZ16S) return (vram.words[addr>>1u]>>((addr&1u)*16u))&65535u;
+    if(p.psm==PSMT8) return (vram.words[addr>>2u]>>((addr&3u)*8u))&255u;
+    if(p.psm==PSMT8H) return vram.words[addr]>>24u;
+    return vram.words[addr];
+}
+void main() {
+    // One invocation writes one packed output word; odd pixel counts and24-bit
+    // pixels crossing word boundaries require no shared writes or CPU packing.
+    uint word=gl_GlobalInvocationID.x+gl_GlobalInvocationID.y*gl_NumWorkGroups.x*64u;
+    if(word>=(p.bytes+3u)/4u) return;
+    uint bpp=get_bits_per_pixel(p.psm)/8u, value=0u;
+    for(uint lane=0u;lane<4u;++lane) {
+        uint byteIndex=word*4u+lane;
+        if(byteIndex<p.bytes) value|=((pixel(byteIndex/bpp)>>((byteIndex%bpp)*8u))&255u)<<(lane*8u);
+    }
+    outputData.words[word]=value;
+}

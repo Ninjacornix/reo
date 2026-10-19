@@ -1,0 +1,17 @@
+--- a/gs/gs_renderer.cpp
++++ b/gs/gs_renderer.cpp
+@@ -1185,9 +1185,11 @@
+ 
+ 	if (binning_cmd)
+ 	{
+-		binning_cmd->barrier(VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+-		                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,
+-		                     VK_ACCESS_2_SHADER_STORAGE_READ_BIT | VK_ACCESS_INDIRECT_COMMAND_READ_BIT);
++        // Preserve visibility of GPU-written work lists and indirect arguments across submissions.
++        // The bounded RX570 controls require this complete producer memory dependency.
++		binning_cmd->barrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_ACCESS_2_MEMORY_WRITE_BIT,
++		                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
++		                     VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT);
+ 		device->submit(binning_cmd);
+ 	}
+ 

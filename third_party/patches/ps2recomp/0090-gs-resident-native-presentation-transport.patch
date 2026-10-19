@@ -1,0 +1,266 @@
+diff --git a/ps2xRuntime/src/lib/gpu_display_transport.h b/ps2xRuntime/src/lib/gpu_display_transport.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/gpu_display_transport.h
+@@ -0,0 +1,24 @@
++#pragma once
++#include <cstdint>
++namespace reo_gpu_present {
++// UI receives numbers only: it never receives a Vulkan object, pointer or lease.
++struct Receipt {
++    uint64_t tick=0,epoch=0,serial=0;
++    uint32_t width=0,height=0,displayFbp=0,sourceFbp=0;
++    bool preferred=false;
++    bool valid()const{return width&&height&&width<=4096&&height<=4096&&serial;}
++};
++struct Target {
++    uintptr_t hwnd=0;
++    uint32_t width=0,height=0;
++    bool linear=false;
++};
++// Implemented in the actual GS runtime owner, not in generated guest code.
++bool requested()noexcept;
++bool active()noexcept;
++void publishTarget(Target);
++Target target();
++bool currentEpoch(uint64_t)noexcept;
++bool publishedReceipt(Receipt&);
++void requestDiagnosticCapture()noexcept;
++}
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.h b/ps2xRuntime/src/lib/gs_backend_route.h
+--- a/ps2xRuntime/src/lib/gs_backend_route.h
++++ b/ps2xRuntime/src/lib/gs_backend_route.h
+@@ -1,4 +1,5 @@
+ #pragma once
++#include "gpu_display_transport.h"
+ // Private implementation API. This header changes no public runtime class layout.
+ #include <array>
+ #include <atomic>
+@@ -24,8 +25,10 @@
+     uint32_t width = 0, height = 0, displayFbp = 0, sourceFbp = 0;
+     bool preferred = false;
+     uint64_t tick = 0;
++    std::optional<reo_gpu_present::Receipt> resident;
+ };
+-struct Capture { Privileged registers{}; uint64_t tick = 0; };
++struct Capture { Privileged registers{}; uint64_t tick = 0; uint64_t epoch = 0; bool forceHostReadback = false; };
++void validateCaptureFrame(const Capture&,const Frame&);
+ struct Init {
+     const uint8_t* vram = nullptr;
+     size_t vramSize = 0;
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.cpp b/ps2xRuntime/src/lib/gs_backend_route.cpp
+--- a/ps2xRuntime/src/lib/gs_backend_route.cpp
++++ b/ps2xRuntime/src/lib/gs_backend_route.cpp
+@@ -64,12 +64,23 @@
+     });
+ }
+ bool Route::reset() { return execute([](Backend& b) { b.reset(); }); }
++void validateCaptureFrame(const Capture& c, const Frame& out) {
++    if (out.width > 4096 || out.height > 4096)
++        throw std::runtime_error("Invalid GPU capture dimensions");
++    if (!out.resident) {
++        if (out.rgba.size() != size_t(out.width) * out.height * 4u)
++            throw std::runtime_error("Invalid GPU host capture payload");
++    } else {
++        const auto& r = *out.resident;
++        if (!r.valid() || !out.rgba.empty() || r.width != out.width || r.height != out.height ||
++            r.tick != c.tick || r.epoch != c.epoch || r.displayFbp != out.displayFbp || r.sourceFbp != out.sourceFbp)
++            throw std::runtime_error("Invalid GPU resident capture metadata");
++    }
++}
+ bool Route::capture(const Capture& c, Frame& out) {
+     return execute([&](Backend& b) {
+         out = b.capture(c); out.tick = c.tick;
+-        if (out.width > 4096 || out.height > 4096 ||
+-            out.rgba.size() != size_t(out.width) * out.height * 4u)
+-            throw std::runtime_error("Invalid GPU capture dimensions");
++        validateCaptureFrame(c,out);
+     });
+ }
+ bool Route::exportVram(size_t offset, uint8_t* dst, size_t bytes) {
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -4,6 +4,7 @@
+ bool ps2VifKickVuProfileActive() noexcept;
+ void ps2VifKickStageRecord(unsigned,uint64_t,uint64_t,uint64_t) noexcept;
+ #include "gs_backend_route.h"
++#include "gpu_display_transport.h"
+ #include "gs_priv_atomic.h"
+ #include "runtime/ps2_gs_gpu.h"
+ #include "runtime/ps2_gs_common.h"
+@@ -108,11 +109,15 @@
+         uint32_t width = 0, height = 0, displayFbp = 0, sourceFbp = 0;
+         bool preferred = false;
+         uint64_t tick = 0;
++        std::optional<reo_gpu_present::Receipt> resident;
+     };
+     // Host presentation never takes the GS state lock or drains newer drawing.
+     // The worker publishes pixels belonging to an ordered post-flip marker.
+     std::mutex g_publishedDisplayMutex;
+     std::shared_ptr<const PublishedDisplayFrame> g_publishedDisplay;
++    std::mutex g_gpuPresentTargetMutex;
++    reo_gpu_present::Target g_gpuPresentTarget{};
++    std::atomic<bool> g_gpuPresentDiagnostic{false};
+     std::atomic<uint64_t> g_vblankSeq{0u}; // display snapshots taken so far
+     std::mutex g_vblankWaitMutex;
+     std::condition_variable g_vblankCv; // present loop wakes on each snapshot (D44)
+@@ -597,13 +602,15 @@
+                         // Still retire the queue marker below; obsolete scanout never reaches GPU/front state.
+                     } else {
+                         gs_backend_bridge::Frame gpu;
+-                        g_backendRoute.capture({item.display.registers, item.display.tick}, gpu);
++                        g_backendRoute.capture({item.display.registers, item.display.tick, item.epoch, g_gpuPresentDiagnostic.exchange(false,std::memory_order_acq_rel)}, gpu);
+                         auto frame = std::make_shared<PublishedDisplayFrame>();
++                        frame->resident = gpu.resident;
+                         frame->pixels = std::move(gpu.rgba);
+                         // Scanout RGB already includes the guest circuit merge. Host
+                         // composition must not apply GS framebuffer alpha again.
+-                        for (size_t alpha = 3; alpha < frame->pixels.size(); alpha += 4)
+-                            frame->pixels[alpha] = 255;
++                        if (!frame->resident) // Legacy/explicit diagnostic host pixels only.
++                            for (size_t alpha = 3; alpha < frame->pixels.size(); alpha += 4)
++                                frame->pixels[alpha] = 255;
+                         frame->width = gpu.width; frame->height = gpu.height;
+                         frame->tick = gpu.tick; frame->displayFbp = gpu.displayFbp;
+                         frame->sourceFbp = gpu.sourceFbp; frame->preferred = gpu.preferred;
+@@ -611,7 +618,7 @@
+                         std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
+                         std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
+                         if (item.epoch == gsPrivCurrentEpoch())
+-                            g_publishedDisplay = frame->pixels.empty() ? nullptr : std::move(frame);
++                            g_publishedDisplay = (frame->resident || !frame->pixels.empty()) ? std::move(frame) : nullptr;
+                     }
+                 }
+                 else if (item.isPacket && gs_backend_bridge::active())
+@@ -1478,6 +1485,9 @@
+         worker = std::move(g_gsAsync.worker);
+     }
+     if (worker.joinable()) worker.join(); // Neither queue nor GS state mutex held.
++    // Publication is metadata-only in native mode, but clear it before closing
++    // the backend owner so no stale epoch/source survives device teardown.
++    { std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex); g_publishedDisplay.reset(); }
+     g_backendRoute.stop();
+     {
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+@@ -1486,10 +1496,7 @@
+         g_gsAsync.busy = false;
+         g_gsAsync.started = false;
+     }
+-    {
+-        std::lock_guard<std::mutex> lock(g_publishedDisplayMutex);
+-        g_publishedDisplay.reset();
+-    }
++    g_gpuPresentDiagnostic.store(false,std::memory_order_release);
+ }
+ 
+ namespace {
+@@ -1498,6 +1505,16 @@
+  bool gsBackendClear(uint32_t, uint32_t, bool, bool&);
+  void gsBackendReset();
+  void gsBackendCompletedEvent(GSRegisters*, uint8_t, uint64_t);
++}
++
++namespace reo_gpu_present {
++bool requested()noexcept {static const bool value=[](){const char* p=std::getenv("REO_GS_GPU_PRESENT");return p&&p[0]=='1';}();return value;}
++bool active()noexcept {return requested()&&gs_backend_bridge::active();}
++void publishTarget(Target value){std::lock_guard<std::mutex> lock(g_gpuPresentTargetMutex);g_gpuPresentTarget=value;}
++Target target(){std::lock_guard<std::mutex> lock(g_gpuPresentTargetMutex);return g_gpuPresentTarget;}
++bool currentEpoch(uint64_t epoch)noexcept{return epoch==gsPrivCurrentEpoch()&&!g_gsStopRequested.load(std::memory_order_acquire);}
++bool publishedReceipt(Receipt& out){std::lock_guard<std::mutex> lock(g_publishedDisplayMutex);if(!active()||!g_publishedDisplay||!g_publishedDisplay->resident||g_publishedDisplay->epoch!=gsPrivCurrentEpoch())return false;out=*g_publishedDisplay->resident;return out.valid();}
++void requestDiagnosticCapture()noexcept{g_gpuPresentDiagnostic.store(true,std::memory_order_release);}
+ }
+ 
+ GS::GS()
+@@ -2290,7 +2307,7 @@
+         std::shared_ptr<const PublishedDisplayFrame> frame;
+         {
+             std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
+-            frame = g_publishedDisplay;
++            frame = (g_publishedDisplay && !g_publishedDisplay->resident) ? g_publishedDisplay : nullptr;
+         }
+         if (gs_backend_bridge::active() && frame && frame->epoch != gsPrivCurrentEpoch()) frame.reset();
+         outPixels = frame ? frame->pixels : std::vector<uint8_t>{};
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -3,6 +3,7 @@
+ #include "vu_cost_attribution.h"
+ #include <memory>
+ #include "gs_priv_atomic.h"
++#include "gpu_display_transport.h"
+ #include "ps2_runtime.h"
+ #include "ps2_debug_panel.h"
+ #include "Kernel/Syscalls/Interrupt.h"
+@@ -1054,6 +1055,7 @@
+ #endif
+         if (IsWindowReady())
+         {
++            reo_gpu_present::publishTarget({});
+             CloseWindow();
+         }
+ 
+@@ -1159,8 +1161,15 @@
+         {
+             SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+             const char *panelEnv = std::getenv("REO_DEBUG_PANEL");
+-            const bool panel = !(panelEnv && panelEnv[0] == '0');
++            const bool panel = !reo_gpu_present::requested() && !(panelEnv && panelEnv[0] == '0');
+             InitWindow(HOST_WINDOW_WIDTH + (panel ? kDebugPanelWidth : 0), HOST_WINDOW_HEIGHT, title);
++            if (reo_gpu_present::requested())
++            {
++                const char* filter = std::getenv("REO_DISPLAY_FILTER");
++                reo_gpu_present::publishTarget({reinterpret_cast<uintptr_t>(GetWindowHandle()),
++                    uint32_t(GetRenderWidth()), uint32_t(GetRenderHeight()),
++                    filter && std::strcmp(filter, "linear") == 0});
++            }
+             InitAudioDevice();
+             m_audioBackend.setAudioReady(IsAudioDeviceReady());
+             // Presentation is paced by the guest vsync clock in run() (one present per
+@@ -2914,6 +2923,7 @@
+     RUNTIME_LOG("Starting execution at address 0x" << std::hex << m_cpuContext.pc << std::dec);
+ 
+     const bool reoHeadless = (std::getenv("REO_HEADLESS") != nullptr);
++    const bool residentPresent = !reoHeadless && reo_gpu_present::active();
+ 
+     // A blank image to use as a framebuffer
+     Texture2D frameTex{};
+@@ -2921,7 +2931,7 @@
+         const char *value = std::getenv("REO_DISPLAY_FILTER");
+         return value && std::strcmp(value, "linear") == 0;
+     }();
+-    if (!reoHeadless)
++    if (!reoHeadless && !residentPresent)
+     {
+         Image blank = GenImageColor(FB_WIDTH, FB_HEIGHT, BLANK);
+         frameTex = LoadTextureFromImage(blank);
+@@ -2933,6 +2943,18 @@
+     // draws and swaps without polling events (D42).
+     std::function<void(bool)> presentFrame = [&](bool modal)
+     {
++        if (residentPresent)
++        {
++            // Native GS owner presents directly. Polling remains on the window
++            // thread; no OpenGL frame upload, draw, swap, or host pixel work.
++            if (!modal) PollInputEvents();
++            if (!modal && IsKeyPressed(KEY_F2)) linearDisplay = !linearDisplay;
++            const bool minimized = IsWindowMinimized();
++            reo_gpu_present::publishTarget({reinterpret_cast<uintptr_t>(GetWindowHandle()),
++                minimized ? 0u : uint32_t(std::max(0, GetRenderWidth())),
++                minimized ? 0u : uint32_t(std::max(0, GetRenderHeight())), linearDisplay});
++            return;
++        }
+         uint32_t presentWidth = FB_WIDTH;
+         uint32_t presentHeight = DEFAULT_DISPLAY_HEIGHT;
+         UploadFrame(frameTex, this, presentWidth, presentHeight);
+@@ -3272,7 +3294,9 @@
+     s_presentFrame = nullptr;
+     if (!reoHeadless)
+     {
+-        UnloadTexture(frameTex);
++        // The GS owner has already joined and retired every GPU image/fence.
++        reo_gpu_present::publishTarget({});
++        if (frameTex.id) UnloadTexture(frameTex);
+         CloseWindow();
+     }
+ 

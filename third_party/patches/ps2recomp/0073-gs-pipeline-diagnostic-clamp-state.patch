@@ -1,0 +1,35 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -893,7 +893,7 @@
+             const char *env = std::getenv("REO_GS_PIPELINE_COUNT");
+             return unsigned(std::clamp(env ? std::atoi(env) : 128, 1, 512));
+         }();
+-        static std::vector<std::array<uint64_t, 9>> seen;
++        static std::vector<std::array<uint64_t, 10>> seen;
+         const double elapsed = std::chrono::duration<double>(Clock::now() - epoch).count();
+         if (seen.size() < limit && elapsed >= at)
+         {
+@@ -901,18 +901,18 @@
+             const uint64_t flags = gs->m_prim.type | (uint64_t(gs->m_prim.ctxt) << 8) |
+                 (uint64_t(gs->m_prim.tme) << 9) | (uint64_t(gs->m_prim.fst) << 10) |
+                 (uint64_t(gs->m_prim.abe) << 11);
+-            const std::array<uint64_t, 9> key{flags, c.test, c.zbuf, c.alpha,
+-                c.frame.fbp, c.frame.psm, c.frame.fbmsk, c.tex0.psm, c.fba};
++            const std::array<uint64_t, 10> key{flags, c.test, c.zbuf, c.alpha,
++                c.frame.fbp, c.frame.psm, c.frame.fbmsk, c.tex0.psm, c.fba, c.clamp};
+             if (std::find(seen.begin(), seen.end(), key) == seen.end())
+             {
+                 seen.push_back(key);
+-                std::fprintf(stderr, "[GS-PIPELINE] n=%zu elapsed=%.6f flags=%llx test=%llx zbuf=%llx alpha=%llx frame=%x/%u/%x/%x tex=%x/%x fba=%llx z=%u,%u,%u\n",
++                std::fprintf(stderr, "[GS-PIPELINE] n=%zu elapsed=%.6f flags=%llx test=%llx zbuf=%llx alpha=%llx frame=%x/%u/%x/%x tex=%x/%x fba=%llx z=%u,%u,%u clamp=%llx\n",
+                     seen.size(), elapsed, static_cast<unsigned long long>(flags),
+                     static_cast<unsigned long long>(c.test), static_cast<unsigned long long>(c.zbuf),
+                     static_cast<unsigned long long>(c.alpha), c.frame.fbp, c.frame.fbw,
+                     unsigned(c.frame.psm), c.frame.fbmsk, c.tex0.tbp0, unsigned(c.tex0.psm),
+                     static_cast<unsigned long long>(c.fba), gs->m_vtxQueue[0].z,
+-                    gs->m_vtxQueue[1].z, gs->m_vtxQueue[2].z);
++                    gs->m_vtxQueue[1].z, gs->m_vtxQueue[2].z, static_cast<unsigned long long>(c.clamp));
+             }
+         }
+     }

@@ -1,0 +1,196 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -10,11 +10,21 @@
+ #include <mutex>
+ #include <unordered_map>
+ 
++// Private diagnostic bridge; no runtime header or public layout changes.
++namespace ps2_reo_sound { void reportAudioPaths(); }
++
+ namespace ps2_cri_audio {
+ namespace {
+ constexpr uint32_t outputRate=48000;
+ struct Channel { std::deque<int16_t> pcm; uint64_t queued=0, consumed=0, producerNs=0; uint32_t producerReports=0; };
+-struct Voice { uint32_t left=0,right=0,channels=0,frequency=48000,volume=256; bool playing=false; double phase=0; uint64_t lateSamples=0, skippedSamples=0, startNs=0, firstNs=0, startByte=0; bool firstReported=false; };
++struct Voice {
++    uint32_t left=0,right=0,channels=0,frequency=48000,volume=256;
++    bool playing=false; double phase=0;
++    uint64_t lateSamples=0, skippedSamples=0, startNs=0, firstNs=0, startByte=0;
++    bool firstReported=false;
++    uint64_t pathActive=0,pathValid=0,pathSignal=0,pathSkipped=0;
++    uint64_t reportedActive=0,reportedValid=0,reportedSignal=0,reportedSkipped=0;
++};
+ std::mutex mutex;
+ std::unordered_map<uint32_t,Channel> channels;
+ std::unordered_map<uint32_t,Voice> voices;
+@@ -26,6 +36,13 @@
+ auto lastReport=lastTick;
+ uint64_t lastFrames=0,lastSignal=0,lastUnderrun=0;
+ const bool syncLog=std::getenv("REO_CRI_SYNC_LOG")!=nullptr;
++const bool pathLog=std::getenv("REO_AUDIO_PATH_LOG")!=nullptr;
++const auto pathEpoch=std::chrono::steady_clock::now();
++const double pathAfterSeconds=[] {
++    const char* value=std::getenv("REO_AUDIO_PATH_AT");
++    return value ? std::max(0.0,std::atof(value)) : 0.0;
++}();
++uint32_t pathReports=0;
+ uint64_t clockNs() { return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()); }
+ 
+ // Called by raylib's audio thread. Its sample requests provide the playback clock.
+@@ -36,6 +53,7 @@
+         for (auto& entry:voices) {
+             Voice& v=entry.second;
+             if (!v.playing || !v.left || !v.channels) continue;
++            if (pathLog) ++v.pathActive;
+             auto li=channels.find(v.left), ri=channels.find(v.right);
+             // Silence still occupies device time. If the producer misses a
+             // deadline, discard that interval when its PCM arrives instead of
+@@ -46,6 +64,7 @@
+                 li->second.pcm.pop_front();li->second.consumed+=2;
+                 if(v.channels>1){ri->second.pcm.pop_front();ri->second.consumed+=2;}
+                 --v.lateSamples;++v.skippedSamples;
++                if (pathLog) ++v.pathSkipped;
+             }
+             if (li==channels.end() || li->second.pcm.empty() ||
+                 (v.channels>1 && (ri==channels.end() || ri->second.pcm.empty()))) {
+@@ -53,6 +72,11 @@
+                 const auto missed=static_cast<uint64_t>(v.phase);v.lateSamples+=missed;v.phase-=missed;continue;
+             }
+             if (syncLog && !v.firstNs) v.firstNs=clockNs();
++            if (pathLog) {
++                ++v.pathValid;
++                v.pathSignal += v.volume != 0 && (li->second.pcm.front() != 0 ||
++                    (v.channels > 1 && ri->second.pcm.front() != 0));
++            }
+             const float gain=std::min(v.volume,256u)/256.0f/32768.0f;
+             l+=li->second.pcm.front()*gain;
+             r+=(v.channels>1?ri->second.pcm.front():li->second.pcm.front())*gain;
+@@ -106,6 +130,34 @@
+           static_cast<unsigned long long>(outputFrames-lastFrames),static_cast<unsigned long long>(signalFrames-lastSignal),
+           static_cast<unsigned long long>(underrunFrames-lastUnderrun),queued,ready?1:0);
+         lastReport=now;lastFrames=outputFrames;lastSignal=signalFrames;lastUnderrun=underrunFrames;
++        // This existing guest-side report path is never entered by the device
++        // callback. Per-voice counters distinguish missing PCM from valid silence.
++        if (pathLog && pathReports < 96u && std::chrono::duration<double>(now-pathEpoch).count() >= pathAfterSeconds) {
++            ++pathReports;
++            const uint64_t ns = clockNs();
++            unsigned rows=0,omitted=0;
++            for (auto& entry : voices) {
++                auto& v = entry.second;
++                const uint64_t active = v.pathActive - v.reportedActive;
++                const uint64_t valid = v.pathValid - v.reportedValid;
++                const uint64_t signal = v.pathSignal - v.reportedSignal;
++                const uint64_t skipped = v.pathSkipped - v.reportedSkipped;
++                v.reportedActive=v.pathActive;v.reportedValid=v.pathValid;
++                v.reportedSignal=v.pathSignal;v.reportedSkipped=v.pathSkipped;
++                if (!active && !skipped) continue;
++                if (rows++ >= 16u) { ++omitted;continue; }
++                const auto left = channels.find(v.left), right = channels.find(v.right);
++                std::fprintf(stderr,"[AUDIO-PATH] cri voice=%x left=%x right=%x frequency=%u channels=%u playing=%u activeFrames=%llu validFrames=%llu silentFrames=%llu starvedFrames=%llu signalFrames=%llu skippedSamples=%llu queuedLeft=%zu queuedRight=%zu ns=%llu\n",
++                    entry.first,v.left,v.right,v.frequency,v.channels,v.playing?1u:0u,
++                    static_cast<unsigned long long>(active),static_cast<unsigned long long>(valid),
++                    static_cast<unsigned long long>(valid-signal),static_cast<unsigned long long>(active-valid),
++                    static_cast<unsigned long long>(signal),static_cast<unsigned long long>(skipped),
++                    left==channels.end()?0:left->second.pcm.size(),right==channels.end()?0:right->second.pcm.size(),
++                    static_cast<unsigned long long>(ns));
++            }
++            if (omitted) std::fprintf(stderr,"[AUDIO-PATH] cri omittedRows=%u ns=%llu\n",omitted,static_cast<unsigned long long>(ns));
++            ps2_reo_sound::reportAudioPaths();
++        }
+         if (syncLog) for (const auto& entry:voices) {
+             const auto& v=entry.second;if(!v.playing) continue;
+             const auto c=channels.find(v.left);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
+@@ -6,6 +6,9 @@
+ #include <array>
+ #include <cmath>
+ #include <cstdio>
++#include <cstdlib>
++#include <chrono>
++#include <type_traits>
+ #include <mutex>
+ 
+ namespace ps2_reo_sound {
+@@ -296,6 +299,13 @@
+ uint64_t requestAge = 0, frameClock = 0;
+ bool muted = false, mono = false;
+ unsigned unsupportedReports = 0;
++const bool pathLog = std::getenv("REO_AUDIO_PATH_LOG") != nullptr;
++struct BankPathCounters { uint64_t activeVoiceFrames,signalVoiceFrames,requests; };
++using BankPathArray = std::array<std::array<BankPathCounters,128>,14>;
++static_assert(std::is_trivially_copyable_v<BankPathArray>);
++static_assert(std::is_trivially_default_constructible_v<BankPathArray>);
++BankPathArray pathCounters{};
++uint64_t pathMixFrames=0;
+ 
+ void report(const char* kind, unsigned value) {
+     if (unsupportedReports++ < 32) std::fprintf(stderr,"[REO-BANK] unsupported %s=%u\n",kind,value);
+@@ -357,6 +367,7 @@
+     r.cancelFlags = uint8_t((portByte >> 7) | ((groupByte >> 7) << 1) | ((indexByte >> 7) << 2));
+     r.requestVolume = volume; r.requestPan = pan; r.requestPitch = pitch; r.age = ++requestAge;
+     r.sequence.start(p.bank, r.index, trailer);
++    if (pathLog) ++pathCounters[port][r.index].requests;
+ }
+ double crossfade(unsigned value, unsigned low, unsigned pivot, unsigned high) {
+     if (value < pivot && (low & 128) && (low & 127) != pivot)
+@@ -477,6 +488,7 @@
+ void mix(float* stereo, unsigned frames) {
+     if (!stereo || !frames) return;
+     std::lock_guard<std::mutex> lock(soundMutex);
++    if (pathLog) pathMixFrames += frames;
+     for (unsigned frame = 0; frame < frames; ++frame, ++frameClock) {
+         if (frameClock % kFramesPerTick == 0) tickUnlocked();
+         for (auto& v : voices) {
+@@ -513,15 +525,49 @@
+             const double right = pan < 64 ? double(std::max(pan - 1,0)) / 63 : 1;
+             if (!muted) { stereo[frame * 2] += float(pcm / 32768. * amplitude / 16384. * envelope * left);
+                           stereo[frame * 2 + 1] += float(pcm / 32768. * amplitude / 16384. * envelope * right); }
++            if (pathLog) {
++                auto& counters=pathCounters[v.port][r.index];
++                ++counters.activeVoiceFrames;
++                counters.signalVoiceFrames += !muted && pcm != 0 && amplitude != 0 && envelope != 0 && (left != 0 || right != 0);
++            }
+             v.position += v.step;
+         }
+         if (frameClock % kFramesPerTick == kFramesPerTick - 1)
+             voices.erase(std::remove_if(voices.begin(),voices.end(),[](const Voice& v){return !v.active;}),voices.end());
+     }
++}
++// Called only by the existing guest-side CRI report, never by mix(). Fixed-size
++// snapshots use the existing bank mutex and release it before diagnostic I/O.
++// Counts are voice contributions: two layers in one sequence count separately.
++void reportAudioPaths() {
++    if (!pathLog) return;
++    // Avoid MSVC 14.43 /Ob2's aggregate-copy/zero codegen failure for this
++    // large nested std::array. Every snapshot byte is populated before use.
++    BankPathArray snapshot;
++    uint64_t mixed=0;
++    {
++        std::lock_guard<std::mutex> lock(soundMutex);
++        std::memcpy(&snapshot,&pathCounters,sizeof(snapshot));
++        std::memset(&pathCounters,0,sizeof(pathCounters));
++        mixed=pathMixFrames;pathMixFrames=0;
++    }
++    const auto ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
++    std::fprintf(stderr,"[AUDIO-PATH] bank mixedFrames=%llu ns=%lld\n",static_cast<unsigned long long>(mixed),static_cast<long long>(ns));
++    unsigned rows=0,omitted=0;
++    for (unsigned port=0;port<snapshot.size();++port) for (unsigned sequence=0;sequence<snapshot[port].size();++sequence) {
++        const auto& c=snapshot[port][sequence];
++        if (!c.activeVoiceFrames && !c.requests) continue;
++        if (rows++ >= 32u) { ++omitted;continue; }
++        std::fprintf(stderr,"[AUDIO-PATH] bank port=%u sequence=%u activeVoiceFrames=%llu signalVoiceFrames=%llu requests=%llu ns=%lld\n",
++            port,sequence,static_cast<unsigned long long>(c.activeVoiceFrames),
++            static_cast<unsigned long long>(c.signalVoiceFrames),static_cast<unsigned long long>(c.requests),static_cast<long long>(ns));
++    }
++    if (omitted) std::fprintf(stderr,"[AUDIO-PATH] bank omittedRows=%u ns=%lld\n",omitted,static_cast<long long>(ns));
+ }
+ void reset() {
+     std::lock_guard<std::mutex> lock(soundMutex);
+     ports = {}; voices.clear(); voices.reserve(48); requestAge = frameClock = 0; muted = mono = false; unsupportedReports = 0;
++    std::memset(&pathCounters,0,sizeof(pathCounters));pathMixFrames=0;
+ }
+ uint32_t pendingLoads() { return 0; }
+ uint32_t portState(unsigned port, uint32_t& count) {

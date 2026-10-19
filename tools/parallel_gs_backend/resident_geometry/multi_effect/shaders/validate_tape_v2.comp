@@ -1,0 +1,66 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+layout(local_size_x=64) in;
+#include "consumer_common.glsl"
+shared uint admitted,failed;
+void serialValidate(){
+ // No authoritative state or pixels are published by this pass.
+ for(uint i=0u;i<PrefixBase+MaxEvents*2u;++i)consumer[i]=0u;
+ consumer[4]=p.identity.z;consumer[5]=p.identity.w;consumer[6]=CertMagic;consumer[7]=CertVersion;
+ if(!literalTemplate()||!producerEnvelope()){fail(80u);return;}
+ for(uint i=23u;i<HeaderWords;++i)if(tape[i]!=0u){fail(80u);return;}
+ uint rawUsed=0u,nativeUsed=0u,triangles=0u,fanPairs=0u;
+ bool awaitingFan=false;
+ for(uint e=0u;e<tape[6];++e){
+  uint pc=descriptor(e,0u),source=descriptor(e,1u),at=descriptor(e,2u),bytes=descriptor(e,3u);
+  uint base=descriptor(e,4u),count=descriptor(e,5u),kind=descriptor(e,6u),certificate=descriptor(e,7u);
+  if(source>=1024u||certificate!=1u||at!=RawBase+rawUsed||bytes<16u||(bytes&15u)!=0u||
+     rawUsed>tape[7]||bytes/4u>tape[7]-rawUsed||at>TapeWords||bytes/4u>TapeWords-at){fail(81u);return;}
+  uvec4 tag=rawRow(at);uint loops=tag.x&32767u;
+  bool final=e+1u==tape[6];
+  if(kind==0u){
+   if(final||awaitingFan||pc!=fanPrePC()||loops!=0u||count!=0u||bytes!=16u||
+      tag.x!=32768u||tag.y!=(p.mainTag.y^0x8000u)||any(notEqual(tag.zw,p.mainTag.zw))){fail(82u);return;}
+   awaitingFan=true;
+  }else if(kind==1u){
+   if(final||!awaitingFan||pc!=fanVerticesPC()||count!=loops||loops<1u||loops>MaxPolygon||
+      tag.x!=(32768u|loops)||tag.y!=(p.mainTag.y^0x8000u)||any(notEqual(tag.zw,p.mainTag.zw))){fail(82u);return;}
+   awaitingFan=false;++fanPairs;if(fanPairs>p.limits.x){fail(82u);return;}
+  }else if(kind==2u){
+   if(!final||awaitingFan||pc!=mainPC()||count!=p.limits.x+2u||loops!=count||
+      tag.x!=(32768u|count)||any(notEqual(tag.yzw,p.mainTag.yzw))){fail(82u);return;}
+  }else if(kind==4u){
+   // Literal packets at110 use the actual original count and return to128.
+   // Geometry at508 still requires N+2 and the existing finalPC contract.
+   if(p.identity.x!=StaticProfile||!final||e!=0u||tape[6]!=1u||awaitingFan||pc!=0x110u||
+      count!=p.limits.x||loops!=count||count<3u||any(notEqual(tag,p.mainTag))||tape[11]!=0x128u){fail(82u);return;}
+  }else{fail(82u);return;}
+  if(count!=0u){
+   if(base>=p.limits.w||count>p.limits.w-base||base+count>tape[9]||bytes!=16u+count*48u){fail(83u);return;}
+
+  }
+  uint slots=count>=3u?count-2u:0u;
+  consumer[PrefixBase+e*2u]=triangles;consumer[PrefixBase+e*2u+1u]=slots;
+  if(slots>p.limits.y-triangles){fail(84u);return;}
+  triangles+=slots;nativeUsed+=count;rawUsed+=bytes/4u;
+ }
+ if(awaitingFan||nativeUsed!=tape[8]||rawUsed!=tape[7]){fail(84u);return;}
+ consumer[2]=triangles;consumer[3]=tape[6];admitted=1u; //raw row checks follow uniformly
+}
+
+void main(){
+ uint lane=gl_LocalInvocationIndex;
+ if(lane==0u){admitted=0u;failed=0u;serialValidate();}
+ memoryBarrierBuffer();barrier();if(admitted==0u)return;
+ // Descriptors/topology-prefix are immutable and were bounded by lane0.
+ // Every raw/Native component is checked; no draw count leaves the GPU.
+ for(uint e=0u;e<tape[6];++e){uint count=descriptor(e,5u),base=descriptor(e,4u),at=descriptor(e,2u);
+  for(uint v=lane;v<count;v+=64u){uint row=(base+v)*8u,r=at+4u+v*12u;
+   if(any(notEqual(native[row+5u],rawRow(r)))||any(notEqual(native[row+6u],rawRow(r+4u)))||
+      any(notEqual(native[row+4u],rawRow(r+8u)))||native[row+7u].x!=0u||native[row+7u].y!=0u||native[row+7u].z!=v||native[row+7u].w!=0u)
+       atomicCompSwap(failed,0u,83u);
+  }
+ }
+ memoryBarrierBuffer();barrier();
+ if(lane==0u){if(failed!=0u)fail(failed);else consumer[8]=1u;}
+}

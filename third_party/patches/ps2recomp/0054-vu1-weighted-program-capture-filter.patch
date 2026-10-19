@@ -1,0 +1,28 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -38,6 +38,24 @@
+         {
+             const char* dir = std::getenv("REO_VU1_DUMP");
+             if (!dir || !*dir) return;
++            // Character geometry (original descriptor 0x230640) uses a different
++            // microprogram from the static room. Filter before arming/budget so
++            // room draws cannot exhaust a requested weighted-program capture.
++            // This identifies the program; actor ownership is checked offline
++            // against the original actor/geometry/allocator pointer chain.
++            if (const char* program = std::getenv("REO_VU1_DUMP_PROGRAM"))
++            {
++                if (std::strcmp(program, "weighted") == 0)
++                {
++                    if (!code || codeSize < 8u) return;
++                    uint32_t firstPair[2];
++                    std::memcpy(firstPair, code, sizeof(firstPair));
++                    if (firstPair[0] != 0x01E10003u || firstPair[1] != 0x000002FFu)
++                        return;
++                }
++                else if (*program)
++                    return; // Unknown opt-in filter must not silently capture everything.
++            }
+             uint32_t limit = 128;
+             if (const char* value = std::getenv("REO_VU1_DUMP_LIMIT"))
+                 limit = std::min(512ul, std::strtoul(value, nullptr, 10));

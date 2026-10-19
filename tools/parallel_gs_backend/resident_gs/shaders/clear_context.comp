@@ -1,0 +1,81 @@
+#version 450
+// Exact arithmetic of ParallelBackend::clearContext. All address/format/color
+// calculations are GPU work. Three compile-time programs perform:
+// dimension setup, earliest invalid y-major ordinal, then the valid prefix.
+layout(local_size_x=64) in;
+layout(set=0,binding=0,std430) buffer Vram {uint vram[];};
+layout(set=0,binding=1,std430) buffer ClearControl {
+    uint cutoff,total,width,height,groupsX,groupsY,groupsZ,status;
+    uint phaseBits,phase1Invocations,phase2Invocations,writeAttempts;
+    uint reserved0,reserved1,reserved2,reserved3;
+} control;
+layout(push_constant) uniform Parameters {
+    uint rgba,fbmsk,fbp,fbw,psm,fba,x0,y0,x1,y1,vramBytes,phase;
+} p;
+bool supported(){return p.fbw>0u&&p.fbw<=63u&&p.fbp<=511u&&
+    (p.psm==0u||p.psm==1u||p.psm==2u||p.psm==10u)&&p.fba<=1u&&
+    p.x0<=2047u&&p.x1<=2047u&&p.y0<=2047u&&p.y1<=2047u&&p.vramBytes==4194304u;}
+uint byteAddress(uint x,uint y){
+    bool is16=p.psm==2u||p.psm==10u;
+    uint page=(y>>(is16?6u:5u))*p.fbw+(x>>6u);
+    uint bx=(x&63u)>>(is16?4u:3u),by=(y&(is16?63u:31u))>>3u;
+    uint block;
+    if(p.psm==2u)block=(by&1u)|((bx&1u)<<1u)|((by&2u)<<1u)|((bx&2u)<<2u)|((by&4u)<<2u);
+    else if(p.psm==10u)block=(by&1u)|((bx&1u)<<1u)|(by&4u)|((by&2u)<<2u)|((bx&2u)<<3u);
+    else block=(bx&1u)|((by&1u)<<1u)|((bx&2u)<<1u)|((by&2u)<<2u)|((bx&4u)<<2u);
+    uint px=x&(is16?15u:7u),py=y&1u;
+    uint pixel=is16?((px&8u)>>3u)|((px&1u)<<1u)|(py<<2u)|((px&2u)<<2u)|((px&4u)<<2u):
+        (px&1u)|(py<<1u)|((px&2u)<<1u)|((px&4u)<<1u);
+    return page*8192u+(p.fbp*32u+block)*256u+((y&7u)>>1u)*64u+pixel*(is16?2u:4u);
+}
+#ifndef CLEAR_PHASE
+#error Define one fixed clear stage
+#endif
+void main(){
+#if CLEAR_PHASE == 0
+    if(gl_GlobalInvocationID.x!=0u)return;
+    control.status=supported()?0u:1u;
+    control.phaseBits=1u;control.phase1Invocations=0u;control.phase2Invocations=0u;control.writeAttempts=0u;
+    control.reserved0=0u;control.reserved1=0u;control.reserved2=0u;control.reserved3=0u;
+    control.width=max(p.x0,p.x1)-p.x0+1u;control.height=max(p.y0,p.y1)-p.y0+1u;
+    control.total=control.status==0u?control.width*control.height:0u;control.cutoff=control.total;
+    uint groups=(control.total+63u)/64u;control.groupsX=min(groups,1024u);
+    control.groupsY=(groups+1023u)/1024u;control.groupsZ=1u;
+#else
+    if(control.status!=0u)return;
+    uint start=gl_GlobalInvocationID.x,stride=gl_NumWorkGroups.x*64u;
+    if(start>=control.total)return;
+    uint invocations=(control.total-1u-start)/stride+1u;
+    atomicOr(control.phaseBits,1u<<CLEAR_PHASE);
+#if CLEAR_PHASE == 1
+    atomicAdd(control.phase1Invocations,invocations);
+#else
+    atomicAdd(control.phase2Invocations,invocations);
+#endif
+    uint attempts=0u;
+    for(uint ordinal=start;ordinal<control.total;ordinal+=stride){
+#if CLEAR_PHASE == 2
+        if(ordinal>=control.cutoff)break;
+#endif
+        uint x=p.x0+ordinal%control.width,y=p.y0+ordinal/control.width;
+        uint address=byteAddress(x,y),pixelBytes=(p.psm==2u||p.psm==10u)?2u:4u;
+#if CLEAR_PHASE == 1
+        if(address>=p.vramBytes||pixelBytes>p.vramBytes-address)atomicMin(control.cutoff,ordinal);
+#else
+        uint color=p.rgba;if(p.fba!=0u&&p.psm!=1u)color|=0x80000000u;
+        uint updateMask=~p.fbmsk,wanted=color&updateMask;
+        if(pixelBytes==2u){
+            uint packed=((color>>3u)&31u)|(((color>>11u)&31u)<<5u)|(((color>>19u)&31u)<<10u)|((color>>16u)&0x8000u);
+            uint shift=(address&2u)*8u;updateMask=(~p.fbmsk&65535u)<<shift;wanted=(packed<<shift)&updateMask;
+        }
+        if(updateMask==0u)continue;
+        ++attempts;
+        uint word=address/4u,observed=atomicAdd(vram[word],0u);
+        for(;;){uint expected=observed,replacement=(expected&~updateMask)|wanted;observed=atomicCompSwap(vram[word],expected,replacement);if(observed==expected)break;}
+#endif
+    }
+#if CLEAR_PHASE == 2
+    if(attempts!=0u)atomicAdd(control.writeAttempts,attempts);
+#endif
+#endif
+}

@@ -1,0 +1,14 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+layout(local_size_x=64) in;
+#include "consumer_common.glsl"
+shared uint admitted;
+void main(){
+ uint lane=gl_LocalInvocationIndex;
+ if(lane==0u)admitted=uint(results[0]==0u&&consumer[0]==0u&&consumer[1]==1u&&consumer[9]==1u&&
+   consumer[4]==p.identity.z&&consumer[5]==p.identity.w&&consumer[6]==CertMagic&&consumer[7]==CertVersion);
+ barrier();
+ if(admitted==0u)for(uint slot=lane;slot<p.limits.y;slot+=64u)dead(slot);
+ barrier();
+ if(lane==0u){consumer[10]=admitted;if(admitted==0u)consumer[1008]=0u;memoryBarrierBuffer();}
+}

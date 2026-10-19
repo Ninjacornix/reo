@@ -1,0 +1,1298 @@
+diff --git a/ps2xRuntime/CMakeLists.txt b/ps2xRuntime/CMakeLists.txt
+--- a/ps2xRuntime/CMakeLists.txt
++++ b/ps2xRuntime/CMakeLists.txt
+@@ -172,6 +172,7 @@
+ endif()
+ 
+ add_library(ps2_runtime STATIC
++    src/lib/gs_backend_route.cpp
+     src/lib/game_overrides.cpp
+     src/lib/ps2_gif_arbiter.cpp
+     src/lib/ps2_audio.cpp
+diff --git a/ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp b/ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp
+@@ -1,3 +1,4 @@
++#include "gs_backend_route.h"
+ #include "Common.h"
+ #include "GS.h"
+ #include "ps2_log.h"
+@@ -204,6 +205,7 @@
+             const uint32_t fbp = static_cast<uint32_t>(frameReg & 0x1FFu);
+             const uint32_t fbw = static_cast<uint32_t>((frameReg >> 16) & 0x3Fu);
+             const uint32_t psm = static_cast<uint32_t>((frameReg >> 24) & 0x3Fu);
++            gs_backend_bridge::exportCpuVram(runtime->memory().getGSVRAM(), PS2_GS_VRAM_SIZE);
+             return sampleFramebufferPixel(runtime->memory().getGSVRAM(), PS2_GS_VRAM_SIZE, fbp, fbw, psm, x, y, outPixel);
+         }
+ 
+@@ -221,6 +223,7 @@
+             const uint32_t fbp = static_cast<uint32_t>(dispfb & 0x1FFu);
+             const uint32_t fbw = static_cast<uint32_t>((dispfb >> 9) & 0x3Fu);
+             const uint32_t psm = static_cast<uint32_t>((dispfb >> 15) & 0x1Fu);
++            gs_backend_bridge::exportCpuVram(runtime->memory().getGSVRAM(), PS2_GS_VRAM_SIZE);
+             return sampleFramebufferPixel(runtime->memory().getGSVRAM(), PS2_GS_VRAM_SIZE, fbp, fbw, psm, x, y, outPixel);
+         }
+ 
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -1,3 +1,4 @@
++#include "gs_priv_atomic.h"
+ #include "Common.h"
+ #include "Interrupt.h"
+ #include "../../ps2_guest_sched.h"
+@@ -567,7 +568,7 @@
+                 // Latch INTC_STAT VBLANK_START bit — games busy-wait on it via
+                 // MMIO polling (0x1000F000 & 4) for frame pacing.
+                 runtime->memory().raiseIntc(kIntcVblankStart);
+-                runtime->memory().gsFieldTick(); // toggle GS_CSR FIELD + VSINT
++                gsPrivFieldTick(runtime->memory().gs()); // toggle GS_CSR FIELD + VSINT
+                 const auto vbStart = std::chrono::steady_clock::now();
+                 dispatchVblankStartAndCapture(rdram, runtime);
+                 {
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp
+@@ -6,22 +6,31 @@
+     void GsSetCrt(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
+         int interlaced = getRegU32(ctx, 4); // $a0 - 0=non-interlaced, 1=interlaced
+-        int videoMode = getRegU32(ctx, 5);  // $a1 - 0=NTSC, 1=PAL, 2=VESA, 3=HiVision
++        int videoMode = getRegU32(ctx, 5);  // $a1 - 0x02=NTSC, 0x03=PAL; other values select VESA/HD modes
+         int frameMode = getRegU32(ctx, 6);  // $a2 - 0=field, 1=frame
+ 
+         if (runtime)
+         {
+-            auto &gs = runtime->memory().gs();
+             const uint64_t smode2 =
+                 (static_cast<uint64_t>(interlaced) & 0x1ull) |
+                 ((static_cast<uint64_t>(frameMode) & 0x1ull) << 1);
+ 
+-            gs.smode2 = smode2;
++            // NTSC clock/sync state normally installed by BIOS SetGsCrt.
++            // Values agree with the original game's complete GS state capture.
++            // Keep game-owned display rectangles and framebuffer selections.
++            if (videoMode == 0x02) {
++                runtime->memory().write64(0x12000010, 0x0000000740814504ull);
++                runtime->memory().write64(0x12000030, 0x0000000000000008ull);
++                runtime->memory().write64(0x12000040, 0x0007F5B61F06F040ull);
++                runtime->memory().write64(0x12000050, 0x000000000033A4D8ull);
++                runtime->memory().write64(0x12000060, 0x00C7800601A01801ull);
++            }
++            runtime->memory().write64(0x12000020, smode2);
+ 
+             // Keep CRT1 enabled after the BIOS syscall selects a display mode.
+-            if ((gs.pmode & 0x3ull) == 0ull)
+-            {
+-                gs.pmode |= 0x1ull;
++            if ((runtime->memory().read64(0x12000000) & 0x3ull) == 0ull)
++            {
++                runtime->memory().write64(0x12000000, runtime->memory().read64(0x12000000) | 1u);
+             }
+         }
+ 
+@@ -42,7 +51,7 @@
+         uint64_t imr = 0;
+         if (runtime)
+         {
+-            imr = runtime->memory().gs().imr;
++            imr = runtime->memory().read64(0x12001010);
+         }
+ 
+         RUNTIME_LOG("PS2 GsGetIMR: Returning IMR=0x" << std::hex << imr << std::dec);
+@@ -61,8 +70,8 @@
+         uint64_t oldImr = 0;
+         if (runtime)
+         {
+-            oldImr = runtime->memory().gs().imr;
+-            runtime->memory().gs().imr = newImr;
++            oldImr = runtime->memory().read64(0x12001010);
++            runtime->memory().write64(0x12001010, newImr);
+         }
+         RUNTIME_LOG("PS2 GsPutIMR: Setting IMR=0x" << std::hex << newImr << std::dec);
+         setReturnU64(ctx, oldImr);
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.cpp b/ps2xRuntime/src/lib/gs_backend_route.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/gs_backend_route.cpp
+@@ -0,0 +1,93 @@
++#include "gs_backend_route.h"
++#include <stdexcept>
++#include <limits>
++#include <utility>
++
++namespace gs_backend_bridge {
++namespace {
++thread_local uint8_t path = 3;
++std::mutex factoryMutex;
++Factory factory;
++}
++uint8_t currentPath() { return path; }
++PathScope::PathScope(uint8_t value) : previous_(path) {
++    if (value < 1 || value > 3) throw std::invalid_argument("Invalid GIF path");
++    path = value;
++}
++PathScope::~PathScope() { path = previous_; }
++void registerFactory(Factory value) { std::lock_guard<std::mutex> l(factoryMutex); factory = std::move(value); }
++Factory registeredFactory() { std::lock_guard<std::mutex> l(factoryMutex); return factory; }
++bool Route::start(Choice choice, const Init& init, Factory make, std::string& reason) {
++    stop();
++    std::lock_guard<std::mutex> lock(mutex_);
++    error_.clear(); vramSize_ = init.vramSize; state_ = State::Software;
++    reason.clear();
++    if (choice == Choice::Software) return false;
++    std::unique_ptr<Backend> candidate;
++    try {
++        if (!init.vram || init.vramSize != 4u * 1024u * 1024u)
++            throw std::invalid_argument("GS backend requires 4 MiB initial VRAM");
++        if (!make) throw std::runtime_error("paraLLEl backend factory is not registered");
++        candidate = make();
++        if (!candidate) throw std::runtime_error("GS backend factory returned null");
++        if (!candidate->init(init, reason)) {
++            if (reason.empty()) reason = "GS backend initialization returned false";
++            candidate->close(); return false;
++        }
++        reason.clear();
++        backend_ = std::move(candidate); state_ = State::Accelerated;
++        return true;
++    } catch (const std::exception& e) { reason = e.what(); }
++    catch (...) { reason = "GS backend initialization failed"; }
++    if (candidate) candidate->close();
++    return false;
++}
++void Route::stop() noexcept {
++    std::lock_guard<std::mutex> lock(mutex_);
++    if (backend_) { backend_->close(); backend_.reset(); }
++    state_ = State::Stopped;
++}
++State Route::state() const { return state_.load(std::memory_order_acquire); }
++std::string Route::failure() const { std::lock_guard<std::mutex> l(mutex_); return error_; }
++bool Route::gif(uint8_t p, const uint8_t* data, size_t size) {
++    return execute([&](Backend& b) {
++        if (p < 1 || p > 3 || !data || !size || (size & 15u)) throw std::invalid_argument("Unaligned GIF payload");
++        b.rawGif(p, data, size);
++    });
++}
++bool Route::reg(uint8_t r, uint64_t value) { return execute([&](Backend& b) { b.directRegister(r, value); }); }
++bool Route::privileged(uint32_t offset, uint8_t width, uint64_t input) {
++    return execute([&](Backend& b) {
++        if ((width != 1 && width != 2 && width != 4 && width != 8) || (offset & (width-1u)))
++            throw std::invalid_argument("Unaligned privileged GS store");
++        b.privilegedWrite(offset, width, input);
++    });
++}
++bool Route::reset() { return execute([](Backend& b) { b.reset(); }); }
++bool Route::capture(const Capture& c, Frame& out) {
++    return execute([&](Backend& b) {
++        out = b.capture(c); out.tick = c.tick;
++        if (out.width > 4096 || out.height > 4096 ||
++            out.rgba.size() != size_t(out.width) * out.height * 4u)
++            throw std::runtime_error("Invalid GPU capture dimensions");
++    });
++}
++bool Route::exportVram(size_t offset, uint8_t* dst, size_t bytes) {
++    return execute([&](Backend& b) {
++        if (!dst || offset > vramSize_ || bytes > vramSize_ - offset)
++            throw std::out_of_range("GPU VRAM readback bounds");
++        b.exportVram(offset, dst, bytes);
++    });
++}
++bool Route::readTransfer(uint8_t* dst, uint32_t bytes, uint32_t& count) {
++    return execute([&](Backend& b) {
++        if (!dst && bytes) throw std::invalid_argument("Null transfer destination");
++        count = b.readTransfer(dst, bytes);
++        if (count > bytes) throw std::runtime_error("Oversized GPU FIFO readback");
++    });
++}
++bool Route::clear(uint32_t c, uint32_t rgba, bool current, bool& result) {
++    return execute([&](Backend& b) { result = b.clearContext(c, rgba, current); });
++}
++bool Route::flush() { return execute([](Backend& b) { b.flush(); }); }
++} // namespace gs_backend_bridge
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.h b/ps2xRuntime/src/lib/gs_backend_route.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/gs_backend_route.h
+@@ -0,0 +1,120 @@
++#pragma once
++// Private implementation API. This header changes no public runtime class layout.
++#include <array>
++#include <atomic>
++#include <cstddef>
++#include <cstdint>
++#include <functional>
++#include <memory>
++#include <mutex>
++#include <optional>
++#include <string>
++#include <stdexcept>
++#include <vector>
++
++struct GSRegisters;
++
++namespace gs_backend_bridge {
++enum class Choice { Software, Parallel };
++enum class State { Empty, Software, Accelerated, Failed, Stopped };
++// Runtime GSRegisters order, NOT paraLLEl's 8192-byte privileged register layout.
++using Privileged = std::array<uint64_t, 19>;
++struct Frame {
++    std::vector<uint8_t> rgba;
++    uint32_t width = 0, height = 0, displayFbp = 0, sourceFbp = 0;
++    bool preferred = false;
++    uint64_t tick = 0;
++};
++struct Capture { Privileged registers{}; uint64_t tick = 0; };
++struct Init {
++    const uint8_t* vram = nullptr;
++    size_t vramSize = 0;
++    Privileged registers{};
++    // addr 0x60/61/62, issued by adapter only at real ordered GS completion.
++    // In particular, paraLLEl's parser on_finish is insufficient on its own.
++    std::function<void(uint8_t addr, uint64_t payload)> completedEvent;
++};
++// All execution calls are serialized by Route. init/close are lifecycle calls;
++// adapters must permit serialized host thread handoff, or marshal internally.
++// No backend callback may wait for guest execution or call a guest handler.
++class Backend {
++public:
++    virtual ~Backend() = default;
++    virtual bool init(const Init&, std::string& error) = 0;
++    virtual void close() noexcept = 0;
++    virtual void reset() = 0;
++    virtual void rawGif(uint8_t path, const uint8_t*, size_t) = 0;
++    virtual void directRegister(uint8_t, uint64_t) = 0;
++    // Absolute GS offset (0x0000..0x1080), exact input width and input value.
++    // In particular, do not substitute the merged CSR for a W1C write.
++    virtual void privilegedWrite(uint32_t offset, uint8_t width, uint64_t input) = 0;
++    virtual Frame capture(const Capture&) = 0;
++    // Reads must synchronize relevant GPU work; flush() alone is not a fence.
++    virtual void exportVram(size_t offset, uint8_t*, size_t) = 0;
++    virtual uint32_t readTransfer(uint8_t*, uint32_t maxBytes) = 0;
++    virtual bool clearContext(uint32_t context, uint32_t rgba, bool active) = 0;
++    virtual void flush() = 0;
++};
++using Factory = std::function<std::unique_ptr<Backend>()>;
++class Route {
++public:
++    ~Route() { stop(); }
++    bool start(Choice choice, const Init&, Factory factory, std::string& reason);
++    void stop() noexcept;
++    State state() const;
++    bool accelerated() const { return state() == State::Accelerated; }
++    std::string failure() const;
++    bool gif(uint8_t path, const uint8_t*, size_t);
++    bool reg(uint8_t, uint64_t);
++    bool privileged(uint32_t offset, uint8_t width, uint64_t input);
++    bool reset();
++    bool capture(const Capture&, Frame&);
++    bool exportVram(size_t offset, uint8_t*, size_t);
++    bool readTransfer(uint8_t*, uint32_t maxBytes, uint32_t& count);
++    bool clear(uint32_t context, uint32_t rgba, bool active, bool& result);
++    bool flush();
++private:
++    template<class F> bool execute(F&& fn) {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (state_ == State::Failed) throw std::runtime_error(error_);
++        if (state_ != State::Accelerated) return false;
++        try { fn(*backend_); }
++        catch (const std::exception& e) { error_ = e.what(); state_ = State::Failed; throw; }
++        catch (...) { error_ = "GPU backend execution failed"; state_ = State::Failed; throw; }
++        return true;
++    }
++    mutable std::mutex mutex_;
++    // Producer selection must never wait behind a long owner-thread GPU call.
++    std::atomic<State> state_{State::Empty};
++    std::string error_;
++    size_t vramSize_ = 0;
++    std::unique_ptr<Backend> backend_;
++};
++
++// The existing arbiter invokes its callback synchronously on the submitting
++// host thread. This scope carries its path into the copied GS queue item.
++uint8_t currentPath();
++class PathScope {
++public:
++    explicit PathScope(uint8_t path);
++    ~PathScope();
++    PathScope(const PathScope&) = delete;
++    PathScope& operator=(const PathScope&) = delete;
++private: uint8_t previous_;
++};
++
++// Factory registration happens before Runtime/GS init. Absence falls back at
++// startup. Selecting another factory during an active session is unsupported.
++void registerFactory(Factory);
++Factory registeredFactory();
++// Implemented in copied ps2_gs_gpu.cpp, behind its existing FIFO.
++void notifyPrivileged(uint32_t offset, uint8_t width, uint64_t input);
++// GPU CPU-MMIO entry. RESET commits its front epoch and FIFO insertion together.
++void writeFrontendPrivileged(GSRegisters& registers, uint32_t offset, uint8_t width, uint64_t input);
++void exportCpuVram(uint8_t* dst, size_t bytes);
++bool active();
++// nullopt: no current queue-owner epoch, or that owner was retired by CPU RESET.
++std::optional<Privileged> peekEventFrontState();
++// Fixture-only monotonic enqueue latch, enabled by REO_GS_BACKEND_ROUTE_TEST=1.
++uint64_t debugControlQueuedCount();
++} // namespace gs_backend_bridge
+diff --git a/ps2xRuntime/src/lib/gs_priv_atomic.h b/ps2xRuntime/src/lib/gs_priv_atomic.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/gs_priv_atomic.h
+@@ -0,0 +1,98 @@
++#pragma once
++#include "runtime/ps2_memory.h"
++#include <array>
++#include <atomic>
++#include <mutex>
++
++// Private CPU/event front authority. Never hold this across a GPU call/drain.
++inline std::mutex g_gsPrivFrontMutex;
++inline std::atomic<uint64_t> g_gsPrivResetEpoch{1};
++inline uint64_t gsPrivCurrentEpoch() {
++    return g_gsPrivResetEpoch.load(std::memory_order_acquire);
++}
++
++// Implementation-only access policy. Public GSRegisters layout remains intact.
++inline uint64_t gsPrivLoad(uint64_t& word) {
++    return std::atomic_ref<uint64_t>(word).load(std::memory_order_acquire);
++}
++inline void gsPrivStore(uint64_t& word, uint64_t value) {
++    std::atomic_ref<uint64_t>(word).store(value, std::memory_order_release);
++}
++template<class F> inline uint64_t gsPrivUpdate(uint64_t& word, F update) {
++    auto atom = std::atomic_ref<uint64_t>(word);
++    uint64_t old = atom.load(std::memory_order_relaxed), next;
++    do { next = update(old); }
++    while (!atom.compare_exchange_weak(old, next, std::memory_order_acq_rel,
++                                      std::memory_order_relaxed));
++    return next;
++}
++inline uint64_t gsPrivWriteLane(uint64_t& word, unsigned lane, unsigned width,
++                               uint64_t value, bool csr) {
++    const uint64_t mask = width == 8 ? ~uint64_t(0) : ((uint64_t(1) << (width*8))-1) << (lane*8);
++    const uint64_t bits = (value << (lane*8)) & mask;
++    return gsPrivUpdate(word, [=](uint64_t old) {
++        const uint64_t status = csr ? uint64_t(3) & mask : 0;
++        return ((old & ~mask) | (bits & ~status) | (old & status)) & ~(bits & status);
++    });
++}
++inline std::array<uint64_t*,19> gsPrivWords(GSRegisters& gs) {
++    return {&gs.pmode,&gs.smode1,&gs.smode2,&gs.srfsh,&gs.synch1,&gs.synch2,
++        &gs.syncv,&gs.dispfb1,&gs.display1,&gs.dispfb2,&gs.display2,&gs.extbuf,
++        &gs.extdata,&gs.extwrite,&gs.bgcolor,&gs.csr,&gs.imr,&gs.busdir,&gs.siglblid};
++}
++inline std::array<uint64_t,19> gsPrivSnapshot(GSRegisters& gs) {
++    std::array<uint64_t,19> result{};
++    auto words = gsPrivWords(gs);
++    for (size_t i=0;i<words.size();++i) result[i]=gsPrivLoad(*words[i]);
++    return result;
++}
++inline void gsPrivPublish(GSRegisters& gs, const std::array<uint64_t,19>& values) {
++    auto words = gsPrivWords(gs);
++    for (size_t i=0;i<words.size();++i) gsPrivStore(*words[i],values[i]);
++}
++// Absolute GS CSR offset and exact CPU input. Status bits 0..4 are W1C;
++// other writes do not replace CSR. RESET immediately retires the old epoch.
++inline uint64_t gsPrivCsrInput(uint32_t offset, unsigned width, uint64_t value) {
++    if (offset < 0x1000u || offset >= 0x1008u ||
++        (width != 1u && width != 2u && width != 4u && width != 8u) ||
++        width > 8u - (offset - 0x1000u)) return 0;
++    const unsigned shift = (offset - 0x1000u) * 8u;
++    const uint64_t inputMask = width == 8u ? ~uint64_t(0) : (uint64_t(1) << (width * 8u)) - 1u;
++    return (value & inputMask) << shift;
++}
++// Caller holds the front mutex. Used only for queue->front RESET insertion.
++inline bool gsPrivCpuCsrWriteLocked(GSRegisters& gs, uint32_t offset, unsigned width, uint64_t value) {
++    const uint64_t input = gsPrivCsrInput(offset, width, value);
++    if (input & (uint64_t(1) << 9u)) {
++        std::array<uint64_t,19> reset{};
++        reset[15] = 0x551B4000ull;
++        reset[16] = 0x7F00ull;
++        gsPrivPublish(gs, reset);
++        g_gsPrivResetEpoch.fetch_add(1u, std::memory_order_release);
++        return true;
++    }
++    gsPrivUpdate(gs.csr, [input](uint64_t old) { return old & ~(input & 0x1Full); });
++    return false;
++}
++inline bool gsPrivCpuCsrWrite(GSRegisters& gs, uint32_t offset, unsigned width, uint64_t value) {
++    std::lock_guard<std::mutex> lock(g_gsPrivFrontMutex);
++    return gsPrivCpuCsrWriteLocked(gs, offset, width, value);
++}
++inline void gsPrivFieldTick(GSRegisters& gs) {
++    std::lock_guard<std::mutex> lock(g_gsPrivFrontMutex);
++    gsPrivUpdate(gs.csr, [](uint64_t old) { return (old ^ (uint64_t(1) << 13u)) | (uint64_t(1) << 3u); });
++}
++// Returns an IRQ request; caller raises it only after this short mutex is released.
++inline bool gsPrivCpuImrWrite(GSRegisters& gs, uint32_t offset, unsigned width, uint64_t value) {
++    if (offset < 0x1010u || offset >= 0x1018u ||
++        (width != 1u && width != 2u && width != 4u && width != 8u) ||
++        width > 8u - (offset - 0x1010u)) return false;
++    const unsigned shift = (offset - 0x1010u) * 8u;
++    const uint64_t mask = width == 8u ? ~uint64_t(0) : ((uint64_t(1) << (width * 8u)) - 1u) << shift;
++    const uint64_t bits = (value << shift) & mask;
++    std::lock_guard<std::mutex> lock(g_gsPrivFrontMutex);
++    const uint64_t old = gsPrivLoad(gs.imr);
++    const uint64_t next = (((old & ~mask) | bits) & 0x1F00ull) | 0x6000ull;
++    gsPrivStore(gs.imr, next);
++    return (gsPrivLoad(gs.csr) & 0x1Full & ((old & ~next) >> 8u)) != 0;
++}
+diff --git a/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp b/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
+--- a/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
++++ b/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
+@@ -1,3 +1,4 @@
++#include "gs_backend_route.h"
+ #include "runtime/ps2_gif_arbiter.h"
+ #include "ps2_log.h"
+ #include <algorithm>
+@@ -124,6 +125,7 @@
+                                                << " path3image=" << static_cast<uint32_t>(pkt.path3Image ? 1u : 0u)
+                                                << std::endl);
+             }
++            gs_backend_bridge::PathScope pathScope(static_cast<uint8_t>(pkt.pathId));
+             m_processFn(pkt.data.data(), static_cast<uint32_t>(pkt.data.size()));
+         }
+     }
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -1,3 +1,6 @@
++void ps2GsRequestWorkerStop();
++#include "gs_backend_route.h"
++#include "gs_priv_atomic.h"
+ #include "runtime/ps2_gs_gpu.h"
+ #include "runtime/ps2_gs_common.h"
+ #include "runtime/ps2_gs_psmct16.h"
+@@ -35,8 +38,18 @@
+ // cannot deadlock against the guest or IO locks its caller may hold.
+ namespace
+ {
++    gs_backend_bridge::Route g_backendRoute;
++    thread_local uint64_t t_backendEpoch = 0; // zero means no owner execution context.
++    struct GsBackendEpochScope {
++        uint64_t previous;
++        explicit GsBackendEpochScope(uint64_t epoch) : previous(t_backendEpoch) { t_backendEpoch = epoch; }
++        ~GsBackendEpochScope() { t_backendEpoch = previous; }
++    };
++
+     struct GsDisplayCapture
+     {
++        uint64_t epoch = 0;
++        gs_backend_bridge::Privileged registers{};
+         bool valid = false;
+         uint64_t pmode = 0, smode2 = 0, dispfb1 = 0, dispfb2 = 0;
+         uint64_t display1 = 0, display2 = 0, bgcolor = 0, mark = 0, tick = 0;
+@@ -44,6 +57,9 @@
+ 
+     struct GsQueueItem
+     {
++        uint64_t epoch = gsPrivCurrentEpoch();
++        std::function<void()> control;
++        uint8_t path = 3;
+         bool isPacket = true;
+         bool isDisplayCapture = false;
+         uint8_t reg = 0;
+@@ -83,6 +99,7 @@
+     GS *g_gsInstance = nullptr;
+     struct PublishedDisplayFrame
+     {
++        uint64_t epoch = 0;
+         std::vector<uint8_t> pixels;
+         uint32_t width = 0, height = 0, displayFbp = 0, sourceFbp = 0;
+         bool preferred = false;
+@@ -568,6 +585,32 @@
+                 }
+             }
+             if (publicationProbeEnabled()) (void)PublicationProbe::get();
++            const GsBackendEpochScope ownerEpoch(item.epoch);
++            try {
++                if (item.control) item.control();
++                else if (item.isDisplayCapture && gs_backend_bridge::active()) {
++                    if (item.epoch != gsPrivCurrentEpoch()) {
++                        // Still retire the queue marker below; obsolete scanout never reaches GPU/front state.
++                    } else {
++                        gs_backend_bridge::Frame gpu;
++                        g_backendRoute.capture({item.display.registers, item.display.tick}, gpu);
++                        auto frame = std::make_shared<PublishedDisplayFrame>();
++                        frame->pixels = std::move(gpu.rgba);
++                        frame->width = gpu.width; frame->height = gpu.height;
++                        frame->tick = gpu.tick; frame->displayFbp = gpu.displayFbp;
++                        frame->sourceFbp = gpu.sourceFbp; frame->preferred = gpu.preferred;
++                        frame->epoch = item.epoch;
++                        std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
++                        std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
++                        if (item.epoch == gsPrivCurrentEpoch())
++                            g_publishedDisplay = frame->pixels.empty() ? nullptr : std::move(frame);
++                    }
++                }
++                else if (item.isPacket && gs_backend_bridge::active())
++                    g_backendRoute.gif(item.path, item.data.data(), item.data.size());
++                else if (!item.isDisplayCapture && gs_backend_bridge::active())
++                    g_backendRoute.reg(item.reg, item.value);
++                else {
+             if (item.isDisplayCapture)
+             {
+                 t_displayCapture = &item.display;
+@@ -584,7 +627,12 @@
+                 gs->processGIFPacket(item.data.data(), static_cast<uint32_t>(item.data.size()));
+             else
+                 gs->writeRegister(item.reg, item.value);
+-            if (publicationProbeEnabled() && !g_gsStopRequested.load(std::memory_order_relaxed)) PublicationProbe::get().record(item);
++                }
++            } catch (const std::exception& e) {
++                std::fprintf(stderr, "[GS-BACKEND-FAIL] %s\n", e.what());
++                ps2GsRequestWorkerStop();
++            } catch (...) { ps2GsRequestWorkerStop(); }
++            if (!item.control && !gs_backend_bridge::active() && publicationProbeEnabled() && !g_gsStopRequested.load(std::memory_order_relaxed)) PublicationProbe::get().record(item);
+             {
+                 std::lock_guard<std::mutex> lock(g_gsAsync.m);
+                 g_gsAsync.busy = false;
+@@ -700,8 +748,8 @@
+         // Tick only changes pixels for the optional field-bob mode. Otherwise
+         // identical registers and VRAM produce the same immutable scanout.
+         static const bool fieldBob = std::getenv("REO_FIELD_BOB") != nullptr;
+-        const bool fieldParityMatters = fieldBob && (b.smode2 & 3u) == 1u;
+-        return a.valid && a.pmode == b.pmode && a.smode2 == b.smode2 &&
++        const bool fieldParityMatters = (fieldBob || gs_backend_bridge::active()) && (b.smode2 & 1u);
++        return a.valid && (!gs_backend_bridge::active() || (a.epoch == b.epoch && a.registers == b.registers)) && a.pmode == b.pmode && a.smode2 == b.smode2 &&
+                a.dispfb1 == b.dispfb1 && a.dispfb2 == b.dispfb2 &&
+                a.display1 == b.display1 && a.display2 == b.display2 &&
+                a.bgcolor == b.bgcolor && (!fieldParityMatters || ((a.tick ^ b.tick) & 1u) == 0);
+@@ -719,13 +767,19 @@
+         if (g_gsPrivRegs)
+         {
+             auto &vb = g_gsAsync.vblankDisplay;
+-            vb.pmode = g_gsPrivRegs->pmode;
+-            vb.smode2 = g_gsPrivRegs->smode2;
+-            vb.dispfb1 = g_gsPrivRegs->dispfb1;
+-            vb.dispfb2 = g_gsPrivRegs->dispfb2;
+-            vb.display1 = g_gsPrivRegs->display1;
+-            vb.display2 = g_gsPrivRegs->display2;
+-            vb.bgcolor = g_gsPrivRegs->bgcolor;
++            static_assert(sizeof(vb.registers) == sizeof(GSRegisters), "Private GS register layout");
++            {
++                std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
++                vb.registers = gsPrivSnapshot(*g_gsPrivRegs);
++                vb.epoch = gsPrivCurrentEpoch();
++            }
++            vb.pmode = vb.registers[0];
++            vb.smode2 = vb.registers[2];
++            vb.dispfb1 = vb.registers[7];
++            vb.dispfb2 = vb.registers[9];
++            vb.display1 = vb.registers[8];
++            vb.display2 = vb.registers[10];
++            vb.bgcolor = vb.registers[14];
+             vb.mark = g_gsAsync.enqueued;
+             vb.tick = captureTick;
+             vb.valid = true;
+@@ -745,6 +799,7 @@
+                     // No intervening GS command: both markers see the same VRAM.
+                     // Keep the latest display state without creating another item.
+                     g_gsAsync.queue.back().display = vb;
++                    g_gsAsync.queue.back().epoch = vb.epoch;
+                     g_gsAsync.lastQueuedDisplay = vb;
+                     g_gsAsync.lastCaptureDrawingSerial = g_gsAsync.drawingSerial;
+                 }
+@@ -754,6 +809,7 @@
+                     item.isPacket = false;
+                     item.isDisplayCapture = true;
+                     item.display = vb;
++                    item.epoch = vb.epoch;
+                     ++g_gsAsync.enqueued;
+                     g_gsAsync.queue.push_back(std::move(item));
+                     g_gsAsync.lastQueuedDisplay = vb;
+@@ -1405,6 +1461,7 @@
+         worker = std::move(g_gsAsync.worker);
+     }
+     if (worker.joinable()) worker.join(); // Neither queue nor GS state mutex held.
++    g_backendRoute.stop();
+     {
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         g_gsInstance = nullptr;
+@@ -1416,6 +1473,14 @@
+         std::lock_guard<std::mutex> lock(g_publishedDisplayMutex);
+         g_publishedDisplay.reset();
+     }
++}
++
++namespace {
++ bool gsBackendControl(std::function<void()>);
++ bool gsBackendTransfer(uint8_t*, uint32_t, uint32_t&);
++ bool gsBackendClear(uint32_t, uint32_t, bool, bool&);
++ void gsBackendReset();
++ void gsBackendCompletedEvent(GSRegisters*, uint8_t, uint64_t);
+ }
+ 
+ GS::GS()
+@@ -1453,10 +1518,31 @@
+     g_gsPrivRegs = privRegs;
+     g_gsInstance = this;
+     reset();
++    gs_backend_bridge::Init initial{vram, vramSize, {}};
++    if (privRegs) {
++        std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
++        g_gsPrivResetEpoch.fetch_add(1u, std::memory_order_release);
++        initial.registers = gsPrivSnapshot(*privRegs);
++    }
++    initial.completedEvent = [privRegs](uint8_t addr, uint64_t payload) {
++        gsBackendCompletedEvent(privRegs, addr, payload);
++    };
++    const char* requested = std::getenv("REO_GS_BACKEND");
++    const bool gpuRequested = requested && std::string(requested) == "parallel";
++    const char* legacy = std::getenv("REO_GFX");
++    const bool bridgeSelected = legacy && std::string(legacy) == "bridge";
++    std::string reason;
++    g_backendRoute.start(gpuRequested && gsThreadEnabled() && !bridgeSelected ? gs_backend_bridge::Choice::Parallel : gs_backend_bridge::Choice::Software,
++                         initial, gs_backend_bridge::registeredFactory(), reason);
++    if (gpuRequested && !gsThreadEnabled()) reason = "GPU routing requires REO_GS_THREAD=1";
++    if (gpuRequested && bridgeSelected) reason = "GPU routing cannot coexist with REO_GFX=bridge";
++    std::fprintf(stderr, "[GS-BACKEND] requested=%s selected=%s reason=%s\n",
++                 gpuRequested ? "parallel" : "software", gs_backend_bridge::active() ? "parallel" : "software", reason.c_str());
+ }
+ 
+ void GS::reset()
+ {
++    gsBackendReset();
+     ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+@@ -1520,6 +1606,15 @@
+ 
+ void GS::snapshotVRAM()
+ {
++    if (gs_backend_bridge::active()) {
++        auto buffer = std::make_shared<std::vector<uint8_t>>(m_vramSize);
++        if (!gsBackendControl([buffer] {
++            g_backendRoute.exportVram(0, buffer->data(), buffer->size());
++        })) return;
++        std::lock_guard<std::mutex> lock(m_snapshotMutex);
++        m_displaySnapshot = std::move(*buffer);
++        return;
++    }
+     ps2GsTriangleBatchBarrier(this);
+     std::lock_guard<std::recursive_mutex> stateLock(m_stateMutex);
+     if (ps2GsWorkerStopRequested()) return;
+@@ -1857,9 +1952,9 @@
+     }};
+     if (!vbValid && m_privRegs)
+     {
+-        vbPmode = m_privRegs->pmode; vbSmode2 = m_privRegs->smode2; vbDispfb1 = m_privRegs->dispfb1;
+-        vbDispfb2 = m_privRegs->dispfb2; vbDisplay1 = m_privRegs->display1; vbDisplay2 = m_privRegs->display2;
+-        vbBgcolor = m_privRegs->bgcolor;
++        vbPmode = gsPrivLoad(m_privRegs->pmode); vbSmode2 = gsPrivLoad(m_privRegs->smode2); vbDispfb1 = gsPrivLoad(m_privRegs->dispfb1);
++        vbDispfb2 = gsPrivLoad(m_privRegs->dispfb2); vbDisplay1 = gsPrivLoad(m_privRegs->display1); vbDisplay2 = gsPrivLoad(m_privRegs->display2);
++        vbBgcolor = gsPrivLoad(m_privRegs->bgcolor);
+     }
+ 
+     if (!m_privRegs || !m_vram || m_vramSize == 0u)
+@@ -2180,6 +2275,7 @@
+             std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
+             frame = g_publishedDisplay;
+         }
++        if (gs_backend_bridge::active() && frame && frame->epoch != gsPrivCurrentEpoch()) frame.reset();
+         outPixels = frame ? frame->pixels : std::vector<uint8_t>{};
+         t_copiedFrameTick = frame ? frame->tick : 0;
+         outWidth = frame ? frame->width : 0;
+@@ -2283,6 +2379,7 @@
+     {
+         GsQueueItem item;
+         item.isPacket = true;
++        item.path = gs_backend_bridge::currentPath();
+         item.data.assign(data, data + sizeBytes);
+         if (gsEnqueue(this, std::move(item)))
+             return;
+@@ -2984,65 +3081,33 @@
+         break;
+     }
+     case GS_REG_SIGNAL:
+-    {
+-        if (m_privRegs)
+-        {
+-            uint32_t id = static_cast<uint32_t>(value & 0xFFFFFFFF);
+-            uint32_t mask = static_cast<uint32_t>(value >> 32);
+-            uint32_t lo = static_cast<uint32_t>(m_privRegs->siglblid & 0xFFFFFFFF);
+-            lo = (lo & ~mask) | (id & mask);
+-            m_privRegs->siglblid = (m_privRegs->siglblid & 0xFFFFFFFF00000000ULL) | lo;
+-            m_privRegs->csr |= 0x1;
+-            // SIGNAL event: GS interrupt (INTC line 0) unless IMR.SIGMSK (bit 8) masks it.
+-            if (!(m_privRegs->imr & (1ull << 8)))
+-                ps2_syscalls::raiseIntcInterrupt(0u);
+-        }
+-        break;
+-    }
++        gsBackendCompletedEvent(m_privRegs, 0x60, value);
++        break;
+     case GS_REG_FINISH:
+-    {
+-        if (m_privRegs)
+-        {
+-            m_privRegs->csr |= 0x2;
+-            // FINISH event: GS interrupt (INTC line 0) unless IMR.FINISHMSK (bit 9) masks it.
+-            // SLUS-20765 waits for its GS handler to clear the frame-busy flag 0x29F704
+-            // (FUN_0018d470 case 2 -> FUN_0018d650); without the interrupt it froze.
+-            if (!(m_privRegs->imr & (1ull << 9)))
+-                ps2_syscalls::raiseIntcInterrupt(0u);
+-        }
+-        break;
+-    }
++        gsBackendCompletedEvent(m_privRegs, 0x61, value);
++        break;
+     case GS_REG_LABEL:
+-    {
+-        if (m_privRegs)
+-        {
+-            uint32_t id = static_cast<uint32_t>(value & 0xFFFFFFFF);
+-            uint32_t mask = static_cast<uint32_t>(value >> 32);
+-            uint32_t hi = static_cast<uint32_t>(m_privRegs->siglblid >> 32);
+-            hi = (hi & ~mask) | (id & mask);
+-            m_privRegs->siglblid = (static_cast<uint64_t>(hi) << 32) | (m_privRegs->siglblid & 0xFFFFFFFF);
+-        }
+-        break;
+-    }
++        gsBackendCompletedEvent(m_privRegs, 0x62, value);
++        break;
+     case 0x59:
+         if (m_privRegs)
+-            m_privRegs->dispfb1 = value;
++            gsPrivStore(m_privRegs->dispfb1, value);
+         break;
+     case 0x5a:
+         if (m_privRegs)
+-            m_privRegs->display1 = value;
++            gsPrivStore(m_privRegs->display1, value);
+         break;
+     case 0x5b:
+         if (m_privRegs)
+-            m_privRegs->dispfb2 = value;
++            gsPrivStore(m_privRegs->dispfb2, value);
+         break;
+     case 0x5c:
+         if (m_privRegs)
+-            m_privRegs->display2 = value;
++            gsPrivStore(m_privRegs->display2, value);
+         break;
+     case 0x5f:
+         if (m_privRegs)
+-            m_privRegs->bgcolor = value;
++            gsPrivStore(m_privRegs->bgcolor, value);
+         break;
+     default:
+         break;
+@@ -3571,6 +3636,8 @@
+ 
+ bool GS::clearFramebufferContext(uint32_t contextIndex, uint32_t rgba)
+ {
++    bool gpuResult = false;
++    if (gsBackendClear(contextIndex, rgba, false, gpuResult)) return gpuResult;
+     ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+@@ -3580,6 +3647,8 @@
+ 
+ bool GS::clearActiveFramebuffer(uint32_t rgba)
+ {
++    bool gpuResult = false;
++    if (gsBackendClear(0, rgba, true, gpuResult)) return gpuResult;
+     ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+@@ -3589,6 +3658,8 @@
+ 
+ uint32_t GS::consumeLocalToHostBytes(uint8_t *dst, uint32_t maxBytes)
+ {
++    uint32_t gpuCount = 0;
++    if (gsBackendTransfer(dst, maxBytes, gpuCount)) return gpuCount;
+     ps2GsTriangleBatchBarrier(this);
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+@@ -3602,3 +3673,215 @@
+     m_localToHostReadPos += toCopy;
+     return static_cast<uint32_t>(toCopy);
+ }
++
++// Private copied-runtime glue. A queued control callback owns all inputs and
++// outputs. Never capture a guest buffer or a caller's stack by reference.
++namespace {
++std::atomic<uint64_t> g_backendControlQueuedCount{0};
++bool gsBackendRouteTestEnabled()
++{
++    static const bool enabled = [] {
++        const char* value = std::getenv("REO_GS_BACKEND_ROUTE_TEST");
++        return value && std::atoi(value) != 0;
++    }();
++    return enabled;
++}
++// Same guest-visible SIGNAL/FINISH/LABEL effects as the serial GS. A concrete
++// adapter must deliver this at GPU completion, not on its parser callback.
++// Atomic status/ID publication preserves concurrent guest acknowledgments.
++void gsBackendCompletedEvent(GSRegisters* regs, uint8_t addr, uint64_t payload)
++{
++    if (!regs || ps2GsWorkerStopRequested()) return;
++    std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
++    if (gs_backend_bridge::active() && (!t_backendEpoch || t_backendEpoch != gsPrivCurrentEpoch())) return;
++    const uint32_t id = uint32_t(payload), mask = uint32_t(payload >> 32);
++    if (addr == 0x60) {
++        gsPrivUpdate(regs->siglblid, [=](uint64_t old) {
++            return (old & 0xFFFFFFFF00000000ull) | ((uint32_t(old)&~mask)|(id&mask));
++        });
++        gsPrivUpdate(regs->csr, [](uint64_t old) { return old|1u; });
++        if (!(gsPrivLoad(regs->imr) & (1ull << 8))) ps2_syscalls::raiseIntcInterrupt(0u);
++    } else if (addr == 0x61) {
++        gsPrivUpdate(regs->csr, [](uint64_t old) { return old|2u; });
++        if (!(gsPrivLoad(regs->imr) & (1ull << 9))) ps2_syscalls::raiseIntcInterrupt(0u);
++    } else if (addr == 0x62) {
++        gsPrivUpdate(regs->siglblid, [=](uint64_t old) {
++            return (uint64_t((uint32_t(old>>32)&~mask)|(id&mask))<<32) | uint32_t(old);
++        });
++    }
++}
++struct GsBackendReply {
++    std::atomic<bool> done{false};
++    std::exception_ptr error;
++};
++std::shared_ptr<GsBackendReply> gsSubmitBackendControl(std::function<void()> fn)
++{
++    const uint64_t submittedEpoch = t_backendEpoch ? t_backendEpoch : gsPrivCurrentEpoch();
++    auto reply = std::make_shared<GsBackendReply>();
++    auto work = [reply, submittedEpoch, fn = std::move(fn)] {
++        const GsBackendEpochScope ownerEpoch(submittedEpoch);
++        try { fn(); } catch (...) { reply->error = std::current_exception(); }
++        reply->done.store(true, std::memory_order_release);
++        g_gsAsync.drained.notify_all();
++    };
++    if (t_isGsWorker || !gsThreadEnabled()) { work(); return reply; }
++    std::unique_lock<std::mutex> lock(g_gsAsync.m);
++    if (g_gsAsync.stopping) return reply;
++    // Bounded control metadata charged as 16 bytes, and independent of drawing
++    // pacing marks. A backend must not require an EE callback for completion.
++    g_gsAsync.drained.wait(lock, [] {
++        return g_gsAsync.stopping || g_gsAsync.queuedBytes + 16u <= kGsQueueMaxBytes;
++    });
++    if (g_gsAsync.stopping) return reply;
++    if (!g_gsAsync.started) {
++        g_gsAsync.started = true;
++        g_gsAsync.worker = std::thread(gsWorkerMain, g_gsInstance);
++    }
++    GsQueueItem item;
++    item.epoch = submittedEpoch;
++    item.isPacket = false;
++    item.control = std::move(work);
++    item.data.resize(16u);
++    ++g_gsAsync.enqueued;
++    g_gsAsync.queuedBytes += item.data.size();
++    g_gsAsync.queue.push_back(std::move(item));
++    if (gsBackendRouteTestEnabled())
++        g_backendControlQueuedCount.fetch_add(1u, std::memory_order_release);
++    lock.unlock();
++    g_gsAsync.work.notify_one();
++    return reply;
++}
++bool gsBackendControl(std::function<void()> fn)
++{
++    auto reply = gsSubmitBackendControl(std::move(fn));
++    if (!reply->done.load(std::memory_order_acquire)) {
++        std::unique_lock<std::mutex> lock(g_gsAsync.m);
++        g_gsAsync.drained.wait(lock, [&] {
++            return g_gsAsync.stopping || reply->done.load(std::memory_order_acquire);
++        });
++    }
++    // On cancellation the callback might still execute until host join; all
++    // callers below use shared owned storage, so this cannot access dead stack.
++    if (!reply->done.load(std::memory_order_acquire)) return false;
++    if (reply->error) {
++        ps2GsRequestWorkerStop();
++        std::rethrow_exception(reply->error);
++    }
++    return true;
++}
++bool gsBackendTransfer(uint8_t* dst, uint32_t maxBytes, uint32_t& count)
++{
++    if (!gs_backend_bridge::active()) return false;
++    if (!dst || !maxBytes) { count = 0; return true; }
++    struct Result { std::vector<uint8_t> bytes; uint32_t count = 0; };
++    auto result = std::make_shared<Result>();
++    result->bytes.resize(maxBytes);
++    const bool completed = gsBackendControl([result, maxBytes] {
++        g_backendRoute.readTransfer(result->bytes.data(), maxBytes, result->count);
++    });
++    count = completed ? result->count : 0;
++    if (count) std::memcpy(dst, result->bytes.data(), count);
++    return true;
++}
++bool gsBackendClear(uint32_t context, uint32_t rgba, bool active, bool& result)
++{
++    if (!gs_backend_bridge::active()) return false;
++    auto answer = std::make_shared<bool>(false);
++    const bool completed = gsBackendControl([answer, context, rgba, active] {
++        g_backendRoute.clear(context, rgba, active, *answer);
++    });
++    result = completed ? *answer : false;
++    return true;
++}
++void gsBackendReset()
++{
++    if (!gs_backend_bridge::active()) return;
++    gsBackendControl([] { g_backendRoute.reset(); });
++}
++}
++namespace gs_backend_bridge {
++uint64_t debugControlQueuedCount()
++{
++    return g_backendControlQueuedCount.load(std::memory_order_acquire);
++}
++bool active()
++{
++    const auto state = g_backendRoute.state();
++    // Failed is still GPU-owned. Do not run the stale software renderer.
++    return state == State::Accelerated || state == State::Failed;
++}
++void notifyPrivileged(uint32_t offset, uint8_t width, uint64_t input)
++{
++    if (!active()) return;
++    gsSubmitBackendControl([offset, width, input] {
++        try { g_backendRoute.privileged(offset, width, input); }
++        catch (...) { ps2GsRequestWorkerStop(); }
++    });
++}
++void writeFrontendPrivileged(GSRegisters& registers, uint32_t offset, uint8_t width, uint64_t input)
++{
++    if (!active()) return; // CPU-MMIO caller uses the software path in that case.
++    const bool reset = (gsPrivCsrInput(offset, width, input) & (uint64_t(1) << 9u)) != 0;
++    if (!reset) {
++        bool interrupt = false;
++        if (offset >= 0x1000u && offset < 0x1008u) gsPrivCpuCsrWrite(registers, offset, width, input);
++        else if (offset >= 0x1010u && offset < 0x1018u) interrupt = gsPrivCpuImrWrite(registers, offset, width, input);
++        if (interrupt) ps2_syscalls::raiseIntcInterrupt(0u);
++        notifyPrivileged(offset, width, input);
++        return;
++    }
++    // CPU RESET must precede every new-epoch capture/command in the FIFO. Reserve
++    // space before the front lock; the worker can retire old GPU work meanwhile.
++    // This private entry is CPU MMIO, never a backend event callback.
++    if (t_isGsWorker) throw std::logic_error("GPU front RESET requires CPU producer context");
++    GsQueueItem item;
++    item.isPacket = false;
++    item.data.resize(16u);
++    item.control = [offset, width, input] {
++        try { g_backendRoute.privileged(offset, width, input); }
++        catch (...) { ps2GsRequestWorkerStop(); }
++    };
++    std::unique_lock<std::mutex> queueLock(g_gsAsync.m);
++    g_gsAsync.drained.wait(queueLock, [] {
++        return g_gsAsync.stopping || g_gsAsync.queuedBytes + 16u <= kGsQueueMaxBytes;
++    });
++    if (g_gsAsync.stopping) return;
++    if (!g_gsAsync.started) {
++        g_gsAsync.started = true;
++        g_gsAsync.worker = std::thread(gsWorkerMain, g_gsInstance);
++    }
++    {
++        std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
++        gsPrivCpuCsrWriteLocked(registers, offset, width, input);
++        item.epoch = gsPrivCurrentEpoch();
++        ++g_gsAsync.enqueued;
++        g_gsAsync.queuedBytes += item.data.size();
++        g_gsAsync.queue.push_back(std::move(item));
++    }
++    if (gsBackendRouteTestEnabled()) g_backendControlQueuedCount.fetch_add(1u, std::memory_order_release);
++    queueLock.unlock();
++    g_gsAsync.work.notify_one();
++}
++void exportCpuVram(uint8_t* dst, size_t bytes)
++{
++    if (!active() || !dst || !bytes) return;
++    auto buffer = std::make_shared<std::vector<uint8_t>>(bytes);
++    if (gsBackendControl([buffer] {
++        g_backendRoute.exportVram(0, buffer->data(), buffer->size());
++    })) std::memcpy(dst, buffer->data(), bytes);
++}
++}
++
++namespace gs_backend_bridge {
++void publishCompletedEvent(GSRegisters* regs, uint8_t addr, uint64_t payload) {
++    gsBackendCompletedEvent(regs, addr, payload);
++}
++void publishPrivilegedReset(const Privileged&) {
++    // CPU front already applied RESET immediately. Never overwrite it from queued GPU state.
++}
++std::optional<Privileged> peekEventFrontState() {
++    std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
++    if (!g_gsPrivRegs || !t_backendEpoch || t_backendEpoch != gsPrivCurrentEpoch()) return std::nullopt;
++    return gsPrivSnapshot(*g_gsPrivRegs);
++}
++}
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -1,3 +1,5 @@
++#include "gs_backend_route.h"
++#include "gs_priv_atomic.h"
+ #include <mutex>
+ #include "runtime/ps2_memory.h"
+ #include "ipu/ps2_ipu.h"
+@@ -399,6 +401,10 @@
+ 
+ uint8_t PS2Memory::read8(uint32_t address)
+ {
++    if (isGsPrivReg(address)) {
++        auto* reg = gsRegPtr(gs_regs, address);
++        return reg ? uint8_t(gsPrivLoad(*reg) >> ((address&7u)*8)) : 0;
++    }
+     const bool scratch = isScratchpad(address);
+     uint32_t physAddr = translateAddress(address);
+ 
+@@ -428,6 +434,10 @@
+         throw std::runtime_error("Unaligned 16-bit read at address: 0x" + std::to_string(address));
+     }
+ 
++    if (isGsPrivReg(address)) {
++        auto* reg = gsRegPtr(gs_regs, address);
++        return reg ? uint16_t(gsPrivLoad(*reg) >> ((address&7u)*8)) : 0;
++    }
+     const bool scratch = isScratchpad(address);
+     uint32_t physAddr = translateAddress(address);
+ 
+@@ -463,7 +473,7 @@
+         if (!reg)
+             return 0;
+         uint32_t off = address & 7;
+-        uint64_t val = *reg;
++        uint64_t val = gsPrivLoad(*reg);
+         return (uint32_t)(val >> (off * 8));
+     }
+ 
+@@ -497,7 +507,7 @@
+     if (isGsPrivReg(address))
+     {
+         uint64_t *reg = gsRegPtr(gs_regs, address);
+-        return reg ? *reg : 0;
++        return reg ? gsPrivLoad(*reg) : 0;
+     }
+ 
+     const bool scratch = isScratchpad(address);
+@@ -558,6 +568,22 @@
+ void PS2Memory::write8(uint32_t address, uint8_t value)
+ {
+     IoRegLockScope ioLock;
++    if (isGsPrivReg(address) && gs_backend_bridge::active() &&
++        (((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1000u ||
++         ((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1010u)) {
++        const auto offset=address-PS2_GS_PRIV_REG_BASE;
++        gs_backend_bridge::writeFrontendPrivileged(gs_regs,offset,1,value);
++        return;
++    }
++    if (isGsPrivReg(address)) {
++        if (auto* reg = gsRegPtr(gs_regs, address)) {
++            const auto offset = address-PS2_GS_PRIV_REG_BASE;
++            const auto merged = gsPrivWriteLane(*reg,address&7u,1,value,(offset&~7u)==0x1000);
++            if (m_hwBridge.onGsRegWrite) m_hwBridge.onGsRegWrite(offset,merged,m_hwBridge.user);
++            gs_backend_bridge::notifyPrivileged(offset,1,value);
++        }
++        return;
++    }
+     const bool scratch = isScratchpad(address);
+     uint32_t physAddr = translateAddress(address);
+ 
+@@ -588,6 +614,22 @@
+         throw std::runtime_error("Unaligned 16-bit write at address: 0x" + std::to_string(address));
+     }
+ 
++    if (isGsPrivReg(address) && gs_backend_bridge::active() &&
++        (((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1000u ||
++         ((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1010u)) {
++        const auto offset=address-PS2_GS_PRIV_REG_BASE;
++        gs_backend_bridge::writeFrontendPrivileged(gs_regs,offset,2,value);
++        return;
++    }
++    if (isGsPrivReg(address)) {
++        if (auto* reg = gsRegPtr(gs_regs, address)) {
++            const auto offset = address-PS2_GS_PRIV_REG_BASE;
++            const auto merged = gsPrivWriteLane(*reg,address&7u,2,value,(offset&~7u)==0x1000);
++            if (m_hwBridge.onGsRegWrite) m_hwBridge.onGsRegWrite(offset,merged,m_hwBridge.user);
++            gs_backend_bridge::notifyPrivileged(offset,2,value);
++        }
++        return;
++    }
+     const bool scratch = isScratchpad(address);
+     uint32_t physAddr = translateAddress(address);
+ 
+@@ -616,6 +658,13 @@
+         throw std::runtime_error("Unaligned 32-bit write at address: 0x" + std::to_string(address));
+     }
+ 
++    if (isGsPrivReg(address) && gs_backend_bridge::active() &&
++        (((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1000u ||
++         ((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1010u)) {
++        const auto offset=address-PS2_GS_PRIV_REG_BASE;
++        gs_backend_bridge::writeFrontendPrivileged(gs_regs,offset,4,value);
++        return;
++    }
+     if (isGsPrivReg(address))
+     {
+         uint64_t *reg = gsRegPtr(gs_regs, address);
+@@ -627,18 +676,19 @@
+             {
+                 // CSR low dword: bits 0..1 are write-one-to-clear status bits.
+                 constexpr uint32_t kW1cMask = 0x3u;
+-                uint64_t current = *reg;
+-                uint32_t oldLow = static_cast<uint32_t>(current & 0xFFFFFFFFull);
+-                uint32_t mergedLow = (oldLow & kW1cMask) | (value & ~kW1cMask);
+-                current = (current & 0xFFFFFFFF00000000ull) | static_cast<uint64_t>(mergedLow);
+-                current &= ~static_cast<uint64_t>(value & kW1cMask);
+-                *reg = current;
++                gsPrivUpdate(*reg, [value](uint64_t current) {
++                    uint32_t oldLow = static_cast<uint32_t>(current);
++                    uint32_t mergedLow = (oldLow & kW1cMask) | (value & ~kW1cMask);
++                    current = (current & 0xFFFFFFFF00000000ull) | mergedLow;
++                    return current & ~static_cast<uint64_t>(value & kW1cMask);
++                });
+             }
+             else
+             {
+                 uint64_t mask = 0xFFFFFFFFULL << (off * 8);
+-                uint64_t newVal = (*reg & ~mask) | ((uint64_t)value << (off * 8));
+-                *reg = newVal;
++                uint64_t newVal = gsPrivUpdate(*reg, [=](uint64_t old) {
++                    return (old & ~mask) | (uint64_t(value) << (off * 8));
++                });
+ 
+                 // Notify hardware bridge of GS register write
+                 if (m_hwBridge.onGsRegWrite)
+@@ -648,6 +698,7 @@
+                 }
+             }
+         }
++        gs_backend_bridge::notifyPrivileged(address - PS2_GS_PRIV_REG_BASE, 4, value);
+         return;
+     }
+ 
+@@ -678,6 +729,13 @@
+         throw std::runtime_error("Unaligned 64-bit write at address: 0x" + std::to_string(address));
+     }
+ 
++    if (isGsPrivReg(address) && gs_backend_bridge::active() &&
++        (((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1000u ||
++         ((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1010u)) {
++        const auto offset=address-PS2_GS_PRIV_REG_BASE;
++        gs_backend_bridge::writeFrontendPrivileged(gs_regs,offset,8,value);
++        return;
++    }
+     if (isGsPrivReg(address))
+     {
+         uint64_t *reg = gsRegPtr(gs_regs, address);
+@@ -688,13 +746,13 @@
+             {
+                 // CSR: bits 0..1 are write-one-to-clear status bits.
+                 constexpr uint64_t kW1cMask = 0x3ull;
+-                uint64_t next = (*reg & kW1cMask) | (value & ~kW1cMask);
+-                next &= ~(value & kW1cMask);
+-                *reg = next;
++                gsPrivUpdate(*reg, [value](uint64_t old) {
++                    return ((old & kW1cMask) | (value & ~kW1cMask)) & ~(value & kW1cMask);
++                });
+             }
+             else
+             {
+-                *reg = value;
++                gsPrivStore(*reg, value);
+             }
+ 
+             // Notify hardware bridge of GS register write
+@@ -704,6 +762,7 @@
+                 m_hwBridge.onGsRegWrite(gsOffset, value, m_hwBridge.user);
+             }
+         }
++        gs_backend_bridge::notifyPrivileged(address - PS2_GS_PRIV_REG_BASE, 8, value);
+         return;
+     }
+ 
+@@ -767,6 +826,14 @@
+         return true;
+     }
+ 
++    if (isGsPrivReg(address) && gs_backend_bridge::active() &&
++        (((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1000u ||
++         ((address-PS2_GS_PRIV_REG_BASE)&~7u)==0x1010u)) {
++        const auto offset=address-PS2_GS_PRIV_REG_BASE;
++        gs_backend_bridge::writeFrontendPrivileged(gs_regs,offset,4,value);
++        m_gsWriteCount.fetch_add(1, std::memory_order_relaxed);
++        return true;
++    }
+     if (isGsPrivReg(address))
+     {
+         m_ioRegisters[address] = value;
+@@ -777,19 +844,22 @@
+             if (regOff == 0x1000u && off == 0u)
+             {
+                 constexpr uint32_t kW1cMask = 0x3u;
+-                uint64_t current = *reg;
+-                uint32_t oldLow = static_cast<uint32_t>(current & 0xFFFFFFFFull);
+-                uint32_t mergedLow = (oldLow & kW1cMask) | (value & ~kW1cMask);
+-                current = (current & 0xFFFFFFFF00000000ull) | static_cast<uint64_t>(mergedLow);
+-                current &= ~static_cast<uint64_t>(value & kW1cMask);
+-                *reg = current;
++                gsPrivUpdate(*reg, [value](uint64_t current) {
++                    uint32_t oldLow = static_cast<uint32_t>(current);
++                    uint32_t mergedLow = (oldLow & kW1cMask) | (value & ~kW1cMask);
++                    current = (current & 0xFFFFFFFF00000000ull) | mergedLow;
++                    return current & ~static_cast<uint64_t>(value & kW1cMask);
++                });
+             }
+             else
+             {
+                 const uint64_t mask = 0xFFFFFFFFull << (off * 8u);
+-                *reg = (*reg & ~mask) | (static_cast<uint64_t>(value) << (off * 8u));
+-            }
+-        }
++                gsPrivUpdate(*reg, [=](uint64_t old) {
++                    return (old & ~mask) | (static_cast<uint64_t>(value) << (off * 8u));
++                });
++            }
++        }
++        gs_backend_bridge::notifyPrivileged(address - PS2_GS_PRIV_REG_BASE, 4, value);
+         m_gsWriteCount.fetch_add(1, std::memory_order_relaxed);
+         return true;
+     }
+@@ -1557,7 +1627,7 @@
+         if (uint64_t *reg = gsRegPtr(gs_regs, address))
+         {
+             const uint32_t off = address & 7u;
+-            return static_cast<uint32_t>((*reg >> (off * 8u)) & 0xFFFFFFFFull);
++            return static_cast<uint32_t>((gsPrivLoad(*reg) >> (off * 8u)) & 0xFFFFFFFFull);
+         }
+         return 0u;
+     }
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1,3 +1,4 @@
++#include "gs_priv_atomic.h"
+ #include "ps2_runtime.h"
+ #include "ps2_debug_panel.h"
+ #include "Kernel/Syscalls/Interrupt.h"
+@@ -862,7 +863,7 @@
+             return e && e[0] == '1';
+         }();
+         static std::vector<uint8_t> s_prevField;
+-        const bool interlaced = (rt->memory().gs().smode2 & 1ull) != 0ull;
++        const bool interlaced = (gsPrivLoad(rt->memory().gs().smode2) & 1ull) != 0ull;
+         if (s_deinterlace && interlaced && s_prevField.size() == uploadBuffer.size())
+         {
+             for (size_t i = 0; i < uploadBuffer.size(); ++i)
+@@ -1502,11 +1503,11 @@
+         static_cast<unsigned long long>(rt.memory().gifCopyCount()));
+     add("gsPkts %u  prims %u", ps2GsDebugGifPackets(), ps2GsDebugVertexKicks());
+     {
+-        const GSRegisters &pr = rt.memory().gs();
+-        add("PMODE %04llx SMODE2 %llx", static_cast<unsigned long long>(pr.pmode & 0xFFFF),
+-            static_cast<unsigned long long>(pr.smode2));
+-        add("DISPFB1 %llx", static_cast<unsigned long long>(pr.dispfb1));
+-        add("DISPLAY1 %llx", static_cast<unsigned long long>(pr.display1));
++        auto& pr = rt.memory().gs();
++        add("PMODE %04llx SMODE2 %llx", static_cast<unsigned long long>(gsPrivLoad(pr.pmode) & 0xFFFF),
++            static_cast<unsigned long long>(gsPrivLoad(pr.smode2)));
++        add("DISPFB1 %llx", static_cast<unsigned long long>(gsPrivLoad(pr.dispfb1)));
++        add("DISPLAY1 %llx", static_cast<unsigned long long>(gsPrivLoad(pr.display1)));
+     }
+     add("present %ux%u", presentWidth, presentHeight);
+     if (g_debugPanelProvider)

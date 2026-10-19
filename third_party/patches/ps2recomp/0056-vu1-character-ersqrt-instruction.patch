@@ -1,0 +1,20 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -967,6 +967,16 @@
+             }
+             case 0x77E: // ESUM
+                 {const float* v=m_state.vf[vfs];m_state.p=v[0]+v[1]+v[2]+v[3];return;}
++            case 0x7BD: // ERSQRT
++            {
++                // VU EFU leaves negative inputs unchanged and preserves zero.
++                float value=m_state.vf[vfs][(instr>>21)&3];
++                if(value>=0) {
++                    value=std::sqrt(value);
++                    if(value!=0) value=1.0f/value;
++                }
++                m_state.p=value;return;
++            }
+             case 0x7BC: case 0x7BE: // ESQRT / ERCPR
+             {
+                 const float value=m_state.vf[vfs][(instr>>21)&3];

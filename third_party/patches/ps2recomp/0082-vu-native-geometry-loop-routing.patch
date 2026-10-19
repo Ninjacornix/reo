@@ -1,0 +1,216 @@
+diff --git a/ps2xRuntime/CMakeLists.txt b/ps2xRuntime/CMakeLists.txt
+--- a/ps2xRuntime/CMakeLists.txt
++++ b/ps2xRuntime/CMakeLists.txt
+@@ -174,6 +174,7 @@
+ add_library(ps2_runtime STATIC
+     src/lib/gs_backend_route.cpp
+     src/lib/vu_specialized_route.cpp
++    src/lib/vu_native_geometry_route.cpp
+     src/lib/vif_launch_overhead.cpp
+     src/lib/vu_program_collection.cpp
+     src/lib/game_overrides.cpp
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -1,5 +1,6 @@
+ #include "runtime/ps2_vu1.h"
+ #include "vu_specialized_route.h"
++#include "vu_native_geometry_route.h"
+ #include "vu_program_collection.h"
+ #include "vif_launch_overhead.h"
+ #include <stdexcept>
+@@ -28,6 +29,7 @@
+ void ps2VifKickStageRecord(unsigned,uint64_t,uint64_t,uint64_t) noexcept;
+ void ps2VifKickVuProfileRecord(uint64_t ns, uint32_t cycles, bool capped) noexcept;
+ void ps2VifKickVuSpecializedRecord(bool selected, uint64_t blocks, uint64_t pairs) noexcept;
++void ps2VifKickVuNativeGeometryRecord(uint64_t loops,uint64_t vertices,uint64_t pairs) noexcept;
+ 
+ namespace
+ {
+@@ -337,8 +339,11 @@
+     bool ended=false,bounds=false;
+     uint32_t cycle=0;
+     uint64_t matchedBlocks=0, matchedPairs=0;
++    uint64_t nativeLoops=0,nativeVertices=0,nativePairs=0;
+     const auto* specializedProgram = vu_specialized::selectProgram(
+         vuCode, codeSize, vuData, dataSize, capture.active);
++    const auto* nativeProgram=vu_native_geometry::selectProgram(
++        specializedProgram,vuCode,codeSize,vuData,dataSize,&m_state,capture.active);
+     if (!specializedProgram)
+     {
+         for (; cycle < maxCycles; ++cycle)
+@@ -420,6 +425,31 @@
+                 break;
+             }
+ 
++            // Optional per-game semantic loop. One image/pointer selection per launch;
++            // no indirect callback for ordinary PCs and no fixedBlock ABI changes.
++            if(nativeProgram && !branchPending && !m_state.ebit && m_state.pc<codeSize && !(m_state.pc&7u))
++            {
++                const auto* loop=nativeProgram->entryLoops[m_state.pc>>3];
++                if(loop && maxCycles-cycle>=loop->minPairs)
++                {
++                    invocation.remainingPairs=maxCycles-cycle;
++                    const auto result=loop->execute(invocation);
++                    if(result.pairs)
++                    {
++                        if(result.pairs>invocation.remainingPairs || !result.vertices ||
++                           branchPending || m_state.ebit || branchTarget!=loop->lastPC ||
++                           (m_state.pc!=loop->firstPC && m_state.pc!=loop->lastPC+8u))
++                            throw std::logic_error("VU native geometry loop violated complete-prefix contract");
++                        ++nativeLoops;nativeVertices+=result.vertices;nativePairs+=result.pairs;
++                        ++matchedBlocks;matchedPairs+=result.pairs;
++                        cycle+=result.pairs-1u;continue;
++                    }
++                    if(result.vertices)throw std::logic_error("VU native zero-pair refusal returned vertices");
++                    // Zero must leave all state/data/branch untouched; independently tested
++                    // before adoption. Never execute a generic duplicate after positive work.
++                }
++            }
++
+             // Nullable indexed lookup: no indirect call for generic PCs.
+             if (!branchPending && !m_state.ebit && m_state.pc < codeSize && !(m_state.pc & 7u))
+             {
+@@ -488,6 +518,7 @@
+         }
+     }
+     if (timing.kickProfile) ps2VifKickVuSpecializedRecord(specializedProgram != nullptr, matchedBlocks, matchedPairs);
++    if(timing.kickProfile)ps2VifKickVuNativeGeometryRecord(nativeLoops,nativeVertices,nativePairs);
+     timing.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds);
+ }
+ 
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -2651,6 +2651,7 @@
+         uint64_t stageNs[5]{}, stageCalls[5]{}, stageBytes[5]{};
+         uint64_t peakQueueBytes = 0;
+         uint64_t matchedLaunches = 0, matchedBlocks = 0, matchedPairs = 0;
++        uint64_t nativeLoops=0,nativeVertices=0,nativePairs=0;
+     };
+     thread_local VifKickVuWork* t_vifKickVuWork = nullptr;
+     struct VifKickWriteTiming
+@@ -2720,7 +2721,7 @@
+             const uint32_t n = records().fetch_add(1, std::memory_order_relaxed);
+             if (n >= c.limit) return;
+             const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(start.time_since_epoch()).count();
+-            std::fprintf(stderr, "[VIF-KICK-TIMING] n=%u elapsed=%.6f ns=%lld duration_us=%lld tid=%d pc=%08x ra=%08x io_depth=%u vu_calls=%llu vu_us=%llu vu_cycles=%llu vu_capped=%llu xgkick_calls=%llu xgkick_bytes=%llu xgkick_prep_us=%llu xgkick_submit_us=%llu vu_non_xgkick_us=%llu path1_copy_calls=%llu path1_copy_us=%llu path1_lock_us=%llu path1_queue_wait_us=%llu path1_peak_queue_bytes=%llu vu_matched_launches=%llu vu_matched_blocks=%llu vu_matched_pairs=%llu\n",
++            std::fprintf(stderr, "[VIF-KICK-TIMING] n=%u elapsed=%.6f ns=%lld duration_us=%lld tid=%d pc=%08x ra=%08x io_depth=%u vu_calls=%llu vu_us=%llu vu_cycles=%llu vu_capped=%llu xgkick_calls=%llu xgkick_bytes=%llu xgkick_prep_us=%llu xgkick_submit_us=%llu vu_non_xgkick_us=%llu path1_copy_calls=%llu path1_copy_us=%llu path1_lock_us=%llu path1_queue_wait_us=%llu path1_peak_queue_bytes=%llu vu_matched_launches=%llu vu_matched_blocks=%llu vu_matched_pairs=%llu vu_native_loops=%llu vu_native_vertices=%llu vu_native_pairs=%llu\n",
+                 n, std::chrono::duration<double>(start-c.epoch).count(), static_cast<long long>(ns),
+                 static_cast<long long>(us), tid, pc, ra, ioDepth,
+                 static_cast<unsigned long long>(work.calls), static_cast<unsigned long long>(work.ns / 1000u),
+@@ -2733,7 +2734,10 @@
+                 static_cast<unsigned long long>(work.peakQueueBytes),
+                 static_cast<unsigned long long>(work.matchedLaunches),
+                 static_cast<unsigned long long>(work.matchedBlocks),
+-                static_cast<unsigned long long>(work.matchedPairs));
++                static_cast<unsigned long long>(work.matchedPairs),
++                static_cast<unsigned long long>(work.nativeLoops),
++                static_cast<unsigned long long>(work.nativeVertices),
++                static_cast<unsigned long long>(work.nativePairs));
+             if (overhead) overhead->complete(n, uint64_t(ns), uint64_t(us));
+         }
+     };
+@@ -2779,6 +2783,11 @@
+         work->matchedBlocks += blocks;
+         work->matchedPairs += pairs;
+     }
++}
++
++// One native geometry record per completed VU run; no per-pair clocks/atomics.
++void ps2VifKickVuNativeGeometryRecord(uint64_t loops,uint64_t vertices,uint64_t pairs) noexcept {
++    if(auto* work=t_vifKickVuWork){work->nativeLoops+=loops;work->nativeVertices+=vertices;work->nativePairs+=pairs;}
+ }
+ 
+ // Private implementation-only hook. No clocks, allocation or logging here.
+diff --git a/ps2xRuntime/src/lib/vu_native_geometry_route.cpp b/ps2xRuntime/src/lib/vu_native_geometry_route.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vu_native_geometry_route.cpp
+@@ -0,0 +1,50 @@
++#include "vu_native_geometry_route.h"
++#include "runtime/ps2_vu1.h"
++#include <atomic>
++#include <cstring>
++#include <limits>
++namespace vu_native_geometry {
++namespace {
++std::atomic<const ProgramTable*> published{nullptr};
++bool disjoint(const void* a,size_t an,const void* b,size_t bn) noexcept {
++    const uintptr_t x=reinterpret_cast<uintptr_t>(a),y=reinterpret_cast<uintptr_t>(b);
++    const uintptr_t max=std::numeric_limits<uintptr_t>::max();
++    if(!a||!b||x>max-an||y>max-bn)return false;
++    return x+an<=y||y+bn<=x;
++}
++}
++bool registerProgramTable(const ProgramTable* table) noexcept {
++    if(!table||!table->count){published.store(nullptr,std::memory_order_release);return true;}
++    if(!table->programs||table->count>64)return false;
++    for(uint32_t i=0;i<table->count;++i) {
++        const auto& p=table->programs[i];const auto* legacy=p.legacyProgram;
++        if(!legacy||!legacy->exactCodeImage||!legacy->codeBytes||legacy->codeBytes>16384||
++           (legacy->codeBytes&7u)||!legacy->dataBytes||legacy->dataBytes>16384||!p.entryLoops)return false;
++        for(uint32_t j=0;j<i;++j)if(table->programs[j].legacyProgram==legacy)return false;
++        for(uint32_t entry=0;entry<legacy->codeBytes/8;++entry) {
++            const auto* loop=p.entryLoops[entry];if(!loop)continue;
++            if(!loop->execute||!loop->minPairs||loop->firstPC!=entry*8||
++               (loop->lastPC&7u)||loop->lastPC<loop->firstPC||loop->lastPC+8>legacy->codeBytes||
++               loop->minPairs>legacy->codeBytes/8)return false;
++            for(uint32_t pc=loop->firstPC;pc<=loop->lastPC;pc+=8) {
++                uint32_t lower,upper;std::memcpy(&lower,legacy->exactCodeImage+pc,4);
++                std::memcpy(&upper,legacy->exactCodeImage+pc+4,4);
++                if(upper&0x40000000u)return false;
++                if(!(upper&0x80000000u)&&((lower>>25)&127u)==64u&&(lower&2047u)==0x6fcu)return false;
++            }
++        }
++    }
++    published.store(table,std::memory_order_release);return true;
++}
++uint32_t registeredProgramCount() noexcept {const auto* table=published.load(std::memory_order_acquire);return table?table->count:0;}
++const Program* selectProgram(const vu_specialized::Program* legacy,const uint8_t* code,
++    uint32_t codeBytes,const uint8_t* data,uint32_t dataBytes,const VU1State* state,bool captureActive) noexcept {
++    if(!legacy||captureActive)return nullptr;
++    const auto* table=published.load(std::memory_order_acquire);if(!table)return nullptr;
++    if(codeBytes!=legacy->codeBytes||dataBytes!=legacy->dataBytes||
++       !disjoint(state,sizeof(VU1State),code,codeBytes)||!disjoint(state,sizeof(VU1State),data,dataBytes)||
++       !disjoint(code,codeBytes,data,dataBytes))return nullptr;
++    for(uint32_t i=0;i<table->count;++i)if(table->programs[i].legacyProgram==legacy)return table->programs+i;
++    return nullptr;
++}
++}
+diff --git a/ps2xRuntime/src/lib/vu_native_geometry_route.h b/ps2xRuntime/src/lib/vu_native_geometry_route.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/vu_native_geometry_route.h
+@@ -0,0 +1,31 @@
++#pragma once
++// Private runtime extension. Public VU class/header/layout remains unchanged.
++#include "vu_specialized_route.h"
++namespace vu_native_geometry {
++struct Result { uint32_t pairs=0,vertices=0; };
++struct DynamicLoop {
++    uint32_t firstPC,lastPC,minPairs; // Inclusive legal body span; no E or XGKICK.
++    // minPairs is a cheap admission-budget threshold, not a consumed-pair lower
++    // bound: rigid loop reserves80 but a complete clipped vertex consumes78.
++    // Zero means complete refusal BEFORE mutation. Positive means exact completed
++    // iteration prefix with complete state/data/PC/branch residue and no callbacks.
++    // Must not consume E or XGKICK, exceed remainingPairs, or return pending E/branch.
++    Result (*execute)(vu_specialized::Invocation&);
++};
++struct Program {
++    const vu_specialized::Program* legacyProgram;
++    const DynamicLoop* const* entryLoops; // codeBytes/8 entries, normally sparse.
++};
++struct ProgramTable {const Program* programs;uint32_t count;};
++// Publish immutable caller-owned table/legacy program/images/entry arrays before
++// runtime initialization. Every replaced object must live until all VU calls end.
++// Registration is not concurrent mutation permission. No hidden native defaults.
++bool registerProgramTable(const ProgramTable*) noexcept;
++uint32_t registeredProgramCount() noexcept;
++// Once per synchronous launch AFTER existing full-image legacy selection. Adds
++// state/CODE and state/data disjointness, capture exclusion, immutable key matching.
++// Code/data stability includes any later generic callbacks; no async MPG promise.
++const Program* selectProgram(const vu_specialized::Program*,const uint8_t* code,
++    uint32_t codeBytes,const uint8_t* data,uint32_t dataBytes,
++    const VU1State* state,bool captureActive) noexcept;
++}

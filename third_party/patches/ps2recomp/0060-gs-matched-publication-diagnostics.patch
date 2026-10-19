@@ -1,0 +1,428 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -13,6 +13,11 @@
+ #include <cstdio>
+ #include <cstdlib>
+ #include <deque>
++#include <array>
++#include <cstddef>
++#include <filesystem>
++#include <sstream>
++#include <string>
+ #include <memory>
+ #include <thread>
+ 
+@@ -85,6 +90,263 @@
+     std::condition_variable g_vblankCv; // present loop wakes on each snapshot (D44)
+     thread_local bool t_isGsWorker = false;
+     thread_local const GsDisplayCapture *t_displayCapture = nullptr;
++
++    // Opt-in evidence only. Worker-owned state and data are captured at the
++    // actual ordered publication marker; independent SHOT reads are not used.
++    bool publicationProbeEnabled()
++    {
++        static const bool enabled = [] {
++            const char *e = std::getenv("REO_GS_PUBLICATION_PROBE");
++            return e && std::atoi(e) != 0;
++        }();
++        return enabled;
++    }
++    thread_local uint64_t t_publicationExecutingSerial = 0;
++
++    struct PublicationCommand
++    {
++        uint64_t serial = 0, value = 0;
++        uint8_t reg = 0;
++        bool packet = false;
++        bool capture = false;
++        GsDisplayCapture display;
++        uint32_t originalBytes = 0;
++        std::vector<uint8_t> bytes;
++    };
++    struct PublicationEvidence
++    {
++        uint64_t serial = 0, tick = 0, mark = 0, previousMarkerSerial = 0, historyStartSerial = 0;
++        int64_t ns = 0;
++        double elapsed = 0, lamp = 0, mirror = 0, green = 0;
++        uint32_t fbp = 0, source = 0, width = 0, height = 0;
++        bool valid = false, preferred = false, truncated = false;
++        uint64_t droppedCommands = 0, droppedBytes = 0;
++        std::string state;
++        std::vector<uint8_t> vram, rgba;
++        std::deque<PublicationCommand> commands;
++    };
++    struct PublicationProbe
++    {
++        using Clock = std::chrono::steady_clock;
++        Clock::time_point epoch = Clock::now();
++        double at = 0, seconds = 20;
++        unsigned dumps = 0, checks = 0;
++        bool active = false, finished = false, waiting = false;
++        uint32_t waitingFbp = 0;
++        std::array<uint32_t, 2> fbps{0u, 112u};
++        std::array<PublicationEvidence, 2> previous;
++        std::array<bool, 2> havePrevious{false, false};
++        std::deque<PublicationCommand> commands;
++        uint64_t previousMarkerSerial = 0, recordingStartSerial = 0, lastDroppedSerial = 0, droppedCommands = 0, droppedBytes = 0;
++        std::array<uint64_t, 256> rawRegisters{};
++        std::array<bool, 256> rawRegisterSeen{};
++        std::array<std::array<uint64_t, 2>, 16> packedRegisters{};
++        std::array<bool, 16> packedRegisterSeen{};
++        size_t commandBytes = 0;
++        bool truncated = true; // Commands before the first selected marker are absent.
++        std::filesystem::path directory;
++        PublicationProbe()
++        {
++            if (const char *e = std::getenv("REO_GS_PUBLICATION_PROBE_AT")) at = std::max(0.0, std::strtod(e, nullptr));
++            if (const char *e = std::getenv("REO_GS_PUBLICATION_PROBE_SECONDS")) seconds = std::clamp(std::strtod(e, nullptr), .001, 60.0);
++            if (const char *e = std::getenv("REO_GS_PUBLICATION_PROBE_FBP0")) fbps[0] = uint32_t(std::strtoul(e, nullptr, 0));
++            if (const char *e = std::getenv("REO_GS_PUBLICATION_PROBE_FBP1")) fbps[1] = uint32_t(std::strtoul(e, nullptr, 0));
++            const char *dir = std::getenv("REO_GS_PUBLICATION_PROBE_DIR");
++            directory = dir ? dir : ".";
++            std::error_code error;
++            std::filesystem::create_directories(directory, error);
++            if (error) finished = true;
++            const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch.time_since_epoch()).count();
++            std::fprintf(stderr, "[GS-PUB-PROBE-CONFIG] epoch_ns=%lld at=%.6f seconds=%.6f fbps=%u,%u max_checks=512 max_dumps=8 max_commands=4096 max_command_bytes=8388608 lamp_roi=.54,0,.70,.11 mirror_roi=.28,.15,.63,.29 lamp_drop=.80 mirror_drop=.55 green=.80 directory=%s error=%d\n",
++                static_cast<long long>(ns), at, seconds, fbps[0], fbps[1], directory.string().c_str(), error.value());
++        }
++        static PublicationProbe &get() { static PublicationProbe probe; return probe; }
++        void record(const GsQueueItem &item)
++        {
++            if (!active || finished) return;
++            constexpr size_t byteLimit = 8u * 1024u * 1024u;
++            PublicationCommand command;
++            command.serial = t_publicationExecutingSerial;
++            command.packet = item.isPacket; command.reg = item.reg; command.value = item.value;
++            command.capture = item.isDisplayCapture; command.display = item.display;
++            command.originalBytes = uint32_t(item.data.size());
++            if (item.data.size() > byteLimit)
++            {
++                truncated = true; ++droppedCommands; droppedBytes += item.data.size();
++                lastDroppedSerial = command.serial;
++                return;
++            }
++            while (!commands.empty() && (commands.size() >= 4096u || commandBytes + item.data.size() > byteLimit))
++            {
++                commandBytes -= commands.front().bytes.size();
++                droppedBytes += commands.front().originalBytes; ++droppedCommands;
++                lastDroppedSerial = std::max(lastDroppedSerial, commands.front().serial);
++                commands.pop_front(); truncated = true;
++            }
++            command.bytes = item.data;
++            commandBytes += command.bytes.size(); commands.push_back(std::move(command));
++        }
++        static double roiLuma(const std::vector<uint8_t> &pixels, uint32_t width, uint32_t height,
++                              double x0, double y0, double x1, double y1)
++        {
++            uint64_t sum = 0, count = 0;
++            for (uint32_t y = uint32_t(height * y0); y < uint32_t(height * y1); ++y)
++                for (uint32_t x = uint32_t(width * x0); x < uint32_t(width * x1); ++x)
++                {
++                    const size_t off = (size_t(y) * width + x) * 4u;
++                    if (off + 3u >= pixels.size()) continue;
++                    sum += 54u * pixels[off] + 183u * pixels[off + 1u] + 19u * pixels[off + 2u]; ++count;
++                }
++            return count ? double(sum) / double(count * 256u) : 0.0;
++        }
++        static double greenFraction(const std::vector<uint8_t> &pixels, uint32_t width, uint32_t height)
++        {
++            uint64_t green = 0, count = 0;
++            for (uint32_t y = 0; y < height; y += 8u) for (uint32_t x = 0; x < width; x += 8u)
++            {
++                const size_t off = (size_t(y) * width + x) * 4u;
++                if (off + 3u >= pixels.size()) continue;
++                const unsigned r = pixels[off], g = pixels[off + 1u], b = pixels[off + 2u];
++                green += g >= 60u && g * 2u > r * 3u && g * 2u > b * 3u; ++count;
++            }
++            return count ? double(green) / double(count) : 0.0;
++        }
++        static uint64_t hash(const std::vector<uint8_t> &bytes)
++        {
++            uint64_t value = 14695981039346656037ull;
++            for (uint8_t byte : bytes) value = (value ^ byte) * 1099511628211ull;
++            return value;
++        }
++        bool bytesFile(const std::string &name, const void *bytes, size_t size)
++        {
++            FILE *f = std::fopen((directory / name).string().c_str(), "wb");
++            if (!f) return false;
++            const bool wrote = size == 0u || std::fwrite(bytes, 1u, size, f) == size;
++            const bool closed = std::fclose(f) == 0;
++            return wrote && closed;
++        }
++        void save(const PublicationEvidence &e, const char *role)
++        {
++            if (dumps >= 8u) { finished = true; return; }
++            char base[80]; std::snprintf(base, sizeof(base), "gs_pub_%u_%s_fbp%u_tick%llu", dumps++, role, e.fbp, static_cast<unsigned long long>(e.tick));
++            const std::string prefix = base;
++            bool ok = bytesFile(prefix + ".vram.bin", e.vram.data(), e.vram.size());
++            ok = bytesFile(prefix + ".rgba.bin", e.rgba.data(), e.rgba.size()) && ok;
++            std::ostringstream json;
++            json << "{\"role\":\"" << role << "\",\"ns\":" << e.ns << ",\"elapsed\":" << e.elapsed
++                 << ",\"tick\":" << e.tick << ",\"capture_mark\":" << e.mark << ",\"executing_serial\":" << e.serial
++                 << ",\"previous_marker_serial\":" << e.previousMarkerSerial << ",\"fbp\":" << e.fbp << ",\"src\":" << e.source
++                 << ",\"history_start_serial\":" << e.historyStartSerial << ",\"faithful_replay_proven\":false"
++                 << ",\"valid\":" << e.valid << ",\"preferred\":" << e.preferred << ",\"width\":" << e.width << ",\"height\":" << e.height
++                 << ",\"lamp_luma\":" << e.lamp << ",\"mirror_luma\":" << e.mirror << ",\"green_fraction\":" << e.green
++                 << ",\"vram_fnv\":" << hash(e.vram) << ",\"rgba_fnv\":" << hash(e.rgba)
++                 << ",\"history_truncated\":" << e.truncated << ",\"dropped_commands\":" << e.droppedCommands << ",\"dropped_bytes\":" << e.droppedBytes
++                 << ",\"state\":" << e.state << ",\"commands\":[";
++            std::vector<uint8_t> packetBytes;
++            bool first = true;
++            for (const auto &command : e.commands)
++            {
++                if (!first) json << ',';
++                first = false;
++                json << "{\"serial\":" << command.serial << ",\"packet\":" << command.packet << ",\"reg\":" << unsigned(command.reg)
++                     << ",\"value\":" << command.value << ",\"offset\":" << packetBytes.size() << ",\"bytes\":" << command.bytes.size()
++                     << ",\"original_bytes\":" << command.originalBytes << ",\"fnv\":" << hash(command.bytes)
++                     << ",\"capture\":" << command.capture;
++                if (command.capture)
++                    json << ",\"display\":{\"valid\":" << command.display.valid << ",\"mark\":" << command.display.mark
++                         << ",\"tick\":" << command.display.tick << ",\"pmode\":" << command.display.pmode
++                         << ",\"smode2\":" << command.display.smode2 << ",\"dispfb1\":" << command.display.dispfb1
++                         << ",\"dispfb2\":" << command.display.dispfb2 << ",\"display1\":" << command.display.display1
++                         << ",\"display2\":" << command.display.display2 << ",\"bgcolor\":" << command.display.bgcolor << '}';
++                json << '}';
++                packetBytes.insert(packetBytes.end(), command.bytes.begin(), command.bytes.end());
++            }
++            json << "]}";
++            ok = bytesFile(prefix + ".commands.bin", packetBytes.data(), packetBytes.size()) && ok;
++            const std::string text = json.str(); ok = bytesFile(prefix + ".json", text.data(), text.size()) && ok;
++            std::fprintf(stderr, "[GS-PUB-PROBE-DUMP] prefix=%s role=%s ns=%lld elapsed=%.6f tick=%llu serial=%llu mark=%llu fbp=%u src=%u valid=%u lamp=%.6f mirror=%.6f green=%.6f commands=%zu truncated=%u files_ok=%u\n",
++                prefix.c_str(), role, static_cast<long long>(e.ns), e.elapsed, static_cast<unsigned long long>(e.tick),
++                static_cast<unsigned long long>(e.serial), static_cast<unsigned long long>(e.mark), e.fbp, e.source, unsigned(e.valid),
++                e.lamp, e.mirror, e.green, e.commands.size(), unsigned(e.truncated), unsigned(ok));
++        }
++        template<class MakeState>
++        void inspect(const uint8_t *vram, uint32_t vramSize, const std::vector<uint8_t> &pixels,
++                     uint32_t width, uint32_t height, uint32_t fbp, uint32_t source, bool preferred, bool valid,
++                     const GsDisplayCapture &display, MakeState makeState)
++        {
++            if (finished) return;
++            const auto now = Clock::now();
++            const double elapsed = std::chrono::duration<double>(now - epoch).count();
++            if (elapsed < at) return;
++            if (elapsed >= at + seconds || ++checks > 512u)
++            {
++                std::fprintf(stderr, "[GS-PUB-PROBE-END] elapsed=%.6f checks=%u dumps=%u waiting=%u\n", elapsed, checks, dumps, unsigned(waiting));
++                active = false; finished = true; commands.clear(); return;
++            }
++            active = true;
++            const unsigned slot = fbp == fbps[0] ? 0u : fbp == fbps[1] ? 1u : 2u;
++            const bool selected = slot < 2u && vram && vramSize;
++            const double lamp = valid ? roiLuma(pixels, width, height, .54, 0, .70, .11) : 0;
++            const double mirror = valid ? roiLuma(pixels, width, height, .28, .15, .63, .29) : 0;
++            const double green = valid ? greenFraction(pixels, width, height) : 0;
++            const bool bad = selected && ((!valid || green >= .80) ||
++                (havePrevious[slot] && (lamp < previous[slot].lamp * .80 || mirror < previous[slot].mirror * .55)));
++            const bool normal = selected && !bad && valid && lamp >= 20.0 && mirror >= 12.0 && green < .20;
++            if (selected && (normal || bad))
++            {
++                PublicationEvidence evidence;
++                evidence.serial = t_publicationExecutingSerial; evidence.tick = display.tick; evidence.mark = display.mark;
++                evidence.previousMarkerSerial = previousMarkerSerial;
++                evidence.historyStartSerial = havePrevious[slot] ? previous[slot].serial : recordingStartSerial;
++                evidence.ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
++                evidence.elapsed = elapsed; evidence.lamp = lamp; evidence.mirror = mirror; evidence.green = green;
++                evidence.fbp = fbp; evidence.source = source; evidence.width = width; evidence.height = height;
++                evidence.valid = valid; evidence.preferred = preferred;
++                evidence.truncated = !havePrevious[slot] || lastDroppedSerial > evidence.historyStartSerial;
++                evidence.droppedCommands = droppedCommands; evidence.droppedBytes = droppedBytes;
++                evidence.state = makeState(); evidence.vram.assign(vram, vram + vramSize); evidence.rgba = pixels;
++                for (const auto &command : commands)
++                    if (command.serial > evidence.historyStartSerial) evidence.commands.push_back(command);
++                if (!waiting && bad)
++                {
++                    if (havePrevious[slot]) save(previous[slot], "previous_normal_same_fbp");
++                    save(evidence, "bad"); waiting = true; waitingFbp = fbp;
++                }
++                else if (waiting && normal && fbp == waitingFbp)
++                {
++                    save(evidence, "next_normal_same_fbp"); waiting = false; active = false; finished = true;
++                    std::fprintf(stderr, "[GS-PUB-PROBE-END] elapsed=%.6f checks=%u dumps=%u waiting=0\n", elapsed, checks, dumps);
++                }
++                if (normal) { previous[slot] = std::move(evidence); havePrevious[slot] = true; }
++            }
++            if (!recordingStartSerial) recordingStartSerial = t_publicationExecutingSerial;
++            previousMarkerSerial = t_publicationExecutingSerial;
++        }
++    };
++    template<class Callback> struct PublicationProbeExit
++    {
++        Callback callback;
++        explicit PublicationProbeExit(Callback value) : callback(value) {}
++        ~PublicationProbeExit() { callback(); }
++    };
++    uint32_t publicationFloatBits(const float &value)
++    {
++        uint32_t bits;
++        std::memcpy(&bits, &value, sizeof(bits));
++        return bits;
++    }
++    std::string publicationHexBytes(const void *data, size_t size)
++    {
++        static constexpr char digits[] = "0123456789abcdef";
++        const auto *bytes = static_cast<const unsigned char *>(data);
++        std::string result(size * 2u, '0');
++        for (size_t i = 0; i < size; ++i)
++        {
++            result[i * 2u] = digits[bytes[i] >> 4u];
++            result[i * 2u + 1u] = digits[bytes[i] & 15u];
++        }
++        return result;
++    }
+     thread_local uint64_t t_copiedFrameTick = 0;
+     constexpr size_t kGsQueueMaxBytes = 64u * 1024u * 1024u;
+ 
+@@ -152,7 +414,9 @@
+                 item = std::move(g_gsAsync.queue.front());
+                 g_gsAsync.queue.pop_front();
+                 g_gsAsync.busy = true;
+-            }
++                if (publicationProbeEnabled()) t_publicationExecutingSerial = g_gsAsync.completed + 1u;
++            }
++            if (publicationProbeEnabled()) (void)PublicationProbe::get();
+             if (item.isDisplayCapture)
+             {
+                 t_displayCapture = &item.display;
+@@ -169,6 +433,7 @@
+                 gs->processGIFPacket(item.data.data(), static_cast<uint32_t>(item.data.size()));
+             else
+                 gs->writeRegister(item.reg, item.value);
++            if (publicationProbeEnabled()) PublicationProbe::get().record(item);
+             {
+                 std::lock_guard<std::mutex> lock(g_gsAsync.m);
+                 g_gsAsync.busy = false;
+@@ -1148,6 +1413,105 @@
+     else
+         gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
++    // Destruction runs after every capture return, while the worker's state lock
++    // and exact display marker are still held. Nothing is sampled when disabled.
++    PublicationProbeExit publicationEvidence{[&] {
++        if (!publicationProbeEnabled() || !t_isGsWorker || !t_displayCapture) return;
++        auto &probe = PublicationProbe::get();
++        probe.inspect(m_vram, m_vramSize, m_hostPresentationFrame,
++                      m_hostPresentationWidth, m_hostPresentationHeight,
++                      m_hostPresentationDisplayFbp, m_hostPresentationSourceFbp,
++                      m_hostPresentationUsedPreferred, m_hasHostPresentationFrame,
++                      *t_displayCapture, [&] {
++            std::ostringstream state;
++            auto member = [&](const char *name, auto value) { state << ",\"" << name << "\":" << +value; };
++            auto frame = [&](const GSFrameReg &f) {
++                state << "{\"fbp\":" << f.fbp;
++                member("fbw", f.fbw); member("psm", f.psm); member("fbmsk", f.fbmsk); state << '}';
++            };
++            state << "{\"schema\":1,\"worker_marker_atomic\":true,\"contexts\":[";
++            for (unsigned i = 0; i < 2u; ++i)
++            {
++                if (i) state << ',';
++                const auto &c = m_ctx[i];
++                state << "{\"frame\":"; frame(c.frame);
++                state << ",\"scissor\":{\"x0\":" << c.scissor.x0;
++                member("x1", c.scissor.x1); member("y0", c.scissor.y0); member("y1", c.scissor.y1); state << '}';
++                state << ",\"tex0\":{\"tbp0\":" << c.tex0.tbp0;
++                member("tbw", c.tex0.tbw); member("psm", c.tex0.psm); member("tw", c.tex0.tw); member("th", c.tex0.th);
++                member("tcc", c.tex0.tcc); member("tfx", c.tex0.tfx); member("cbp", c.tex0.cbp);
++                member("cpsm", c.tex0.cpsm); member("csm", c.tex0.csm); member("csa", c.tex0.csa); member("cld", c.tex0.cld); state << '}';
++                state << ",\"xyoffset\":{\"ofx\":" << c.xyoffset.ofx; member("ofy", c.xyoffset.ofy); state << '}';
++                member("zbuf", c.zbuf); member("tex1", c.tex1); member("clamp", c.clamp);
++                member("alpha", c.alpha); member("test", c.test); member("fba", c.fba); state << '}';
++            }
++            state << "],\"prim\":{\"type\":" << +m_prim.type;
++            member("iip", m_prim.iip); member("tme", m_prim.tme); member("fge", m_prim.fge); member("abe", m_prim.abe);
++            member("aa1", m_prim.aa1); member("fst", m_prim.fst); member("ctxt", m_prim.ctxt); member("fix", m_prim.fix); state << '}';
++            member("prmodecont", m_prmodecont); member("pabe", m_pabe);
++            state << ",\"texa\":{\"ta0\":" << +m_texa.ta0; member("aem", m_texa.aem); member("ta1", m_texa.ta1); state << '}';
++            state << ",\"texclut\":{\"cbw\":" << +m_texclut.cbw; member("cou", m_texclut.cou); member("cov", m_texclut.cov); state << '}';
++            state << ",\"current\":{\"r\":" << +m_curR;
++            member("g", m_curG); member("b", m_curB); member("a", m_curA);
++            member("q_f32_bits", publicationFloatBits(m_curQ)); member("s_f32_bits", publicationFloatBits(m_curS));
++            member("t_f32_bits", publicationFloatBits(m_curT)); member("u", m_curU); member("v", m_curV); member("fog", m_curFog); state << '}';
++            // Raw object representation preserves all six historical slots without
++            // evaluating floats in inactive/uninitialized slots. Padding and inactive
++            // slots are explicitly not claimed to be initialized renderer state.
++            state << ",\"vertex_storage\":{\"count\":" << m_vtxCount;
++            member("index", m_vtxIndex); member("slots", kMaxVerts); member("stride", sizeof(GSVertex));
++            state << ",\"inactive_or_padding_initialized\":false,\"hex\":\""
++                  << publicationHexBytes(m_vtxQueue, sizeof(m_vtxQueue)) << "\",\"offsets\":{\"x\":" << offsetof(GSVertex, x);
++            member("y", offsetof(GSVertex, y)); member("z", offsetof(GSVertex, z)); member("r", offsetof(GSVertex, r));
++            member("g", offsetof(GSVertex, g)); member("b", offsetof(GSVertex, b)); member("a", offsetof(GSVertex, a));
++            member("q", offsetof(GSVertex, q)); member("s", offsetof(GSVertex, s)); member("t", offsetof(GSVertex, t));
++            member("u", offsetof(GSVertex, u)); member("v", offsetof(GSVertex, v)); member("fog", offsetof(GSVertex, fog)); state << "}}";
++            state << ",\"transfer\":{\"sbp\":" << m_bitbltbuf.sbp;
++            member("sbw", m_bitbltbuf.sbw); member("spsm", m_bitbltbuf.spsm); member("dbp", m_bitbltbuf.dbp);
++            member("dbw", m_bitbltbuf.dbw); member("dpsm", m_bitbltbuf.dpsm);
++            member("ssax", m_trxpos.ssax); member("ssay", m_trxpos.ssay); member("dsax", m_trxpos.dsax); member("dsay", m_trxpos.dsay);
++            member("traversal", m_trxpos.dir); member("rrw", m_trxreg.rrw); member("rrh", m_trxreg.rrh);
++            member("trxdir", m_trxdir); member("hwreg_x", m_hwregX); member("hwreg_y", m_hwregY);
++            member("gif_pending_image_bytes", s_gifPendingImageBytes);
++            member("local_to_host_read_pos", m_localToHostReadPos); member("local_to_host_bytes", m_localToHostBuffer.size());
++            const size_t savedReadback = std::min<size_t>(m_localToHostBuffer.size(), 4096u);
++            member("local_to_host_saved_bytes", savedReadback); member("local_to_host_truncated", savedReadback != m_localToHostBuffer.size());
++            state << ",\"local_to_host_prefix_hex\":\"" << publicationHexBytes(m_localToHostBuffer.data(), savedReadback) << "\"}";
++            state << ",\"preferred_display\":{\"has_source\":" << m_hasPreferredDisplaySource;
++            member("dest_fbp", m_preferredDisplayDestFbp); member("last_base_bytes", m_lastDisplayBaseBytes);
++            state << ",\"source_frame\":"; frame(m_preferredDisplaySourceFrame); state << '}';
++            const auto &d = *t_displayCapture;
++            state << ",\"captured_display\":{\"valid\":" << d.valid;
++            member("pmode", d.pmode); member("smode2", d.smode2); member("dispfb1", d.dispfb1); member("dispfb2", d.dispfb2);
++            member("display1", d.display1); member("display2", d.display2); member("bgcolor", d.bgcolor);
++            member("mark", d.mark); member("tick", d.tick); state << '}';
++            state << ",\"host_publication\":{\"valid\":" << m_hasHostPresentationFrame;
++            member("width", m_hostPresentationWidth); member("height", m_hostPresentationHeight);
++            member("display_fbp", m_hostPresentationDisplayFbp); member("source_fbp", m_hostPresentationSourceFbp);
++            member("preferred", m_hostPresentationUsedPreferred); state << '}';
++            // Raw incoming writes retain PRMODE/COLCLAMP/FOGCOL and registers the
++            // runtime currently ignores. An unseen register is unknown, not zero.
++            state << ",\"raw_register_writes\":[";
++            bool first = true;
++            for (unsigned i = 0; i < probe.rawRegisters.size(); ++i) if (probe.rawRegisterSeen[i])
++            {
++                if (!first) state << ',';
++                first = false; state << "{\"reg\":" << i << ",\"value\":" << probe.rawRegisters[i] << '}';
++            }
++            state << "],\"packed_register_writes\":["; first = true;
++            for (unsigned i = 0; i < probe.packedRegisters.size(); ++i) if (probe.packedRegisterSeen[i])
++            {
++                if (!first) state << ',';
++                first = false; state << "{\"reg\":" << i << ",\"lo\":" << probe.packedRegisters[i][0]
++                                     << ",\"hi\":" << probe.packedRegisters[i][1] << '}';
++            }
++            state << "],\"limitations\":[\"unseen raw writes are unknown\",\"inactive vertex slots and padding may be uninitialized\","
++                     "\"derived rasterizer caches and display snapshot omitted\",\"privileged live registers outside marker omitted\","
++                     "\"out-of-queue framebuffer clears are not command-recorded\",\"readback buffer saved only up to 4096 bytes\","
++                     "\"dump I/O perturbs timing; use as content evidence only\"]}";
++            return state.str();
++        });
++    }};
+     if (!vbValid && m_privRegs)
+     {
+         vbPmode = m_privRegs->pmode; vbSmode2 = m_privRegs->smode2; vbDispfb1 = m_privRegs->dispfb1;
+@@ -1687,6 +2051,11 @@
+ 
+ void GS::writeRegisterPacked(uint8_t regDesc, uint64_t lo, uint64_t hi)
+ {
++    if (publicationProbeEnabled() && t_isGsWorker && regDesc < 16u)
++    {
++        auto &probe = PublicationProbe::get();
++        probe.packedRegisters[regDesc] = {lo, hi}; probe.packedRegisterSeen[regDesc] = true;
++    }
+     switch (regDesc)
+     {
+     case 0x00:
+@@ -1881,6 +2250,11 @@
+             return;
+     }
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
++    if (publicationProbeEnabled() && t_isGsWorker)
++    {
++        auto &probe = PublicationProbe::get();
++        probe.rawRegisters[regAddr] = value; probe.rawRegisterSeen[regAddr] = true;
++    }
+     const bool interestingReg =
+         regAddr == GS_REG_PRIM ||
+         regAddr == GS_REG_RGBAQ ||

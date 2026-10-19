@@ -1,0 +1,143 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1,3 +1,4 @@
++#include "../../cri_pcm_retire.h"
+ #include "../../vblank_music_diag.h"
+ #include "Common.h"
+ #include "RPC.h"
+@@ -28,7 +29,7 @@
+         constexpr uint32_t kSoundDriverGuestPoolLimit = 0x00200000u;
+ 
+         struct SjxReply { uint32_t flags, record, pointer, length; };
+-        struct PcmPending { uint32_t ring; uint64_t endByte; SjxReply reply; };
++        struct PcmPending { uint32_t ring; uint64_t endByte; SjxReply reply; uint32_t returnedPrefix=0; };
+         std::deque<PcmPending> g_pcmPending;
+         std::deque<SjxReply> g_sjxReplies;
+         std::unordered_set<uint32_t> g_pcmRings;
+@@ -651,15 +652,22 @@
+             ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::SjxPoll,transfer.eeWorkAddr,g_pcmPending.size(),g_sjxReplies.size());
+             for(auto i=g_pcmPending.begin();i!=g_pcmPending.end();) {
+                 const auto diagnosticConsumed=ps2_cri_audio::consumed(i->ring);
+-                if(diagnosticConsumed<i->endByte) { ++i;continue; }
+-                ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::PcmRetire,i->ring,i->reply.length,i->endByte,diagnosticConsumed);
++                const auto slice=ps2_cri_pcm_retire::plan(i->endByte,i->reply.length,i->returnedPrefix,diagnosticConsumed);
++                if(!slice.valid || !slice.length) { ++i;continue; }
++                // The reply pointer names the original IOP destination bytes.
++                // Preserve the accepted command's contiguous interval and flags.
++                if(uint64_t(i->reply.pointer)+slice.offset+slice.length>UINT32_MAX) { ++i;continue; }
++                SjxReply partial=i->reply;
++                partial.pointer+=slice.offset;partial.length=slice.length;
++                ps2_vblank_music_diag::note(ps2_vblank_music_diag::Kind::PcmRetire,i->ring,partial.length,slice.endByte,diagnosticConsumed);
+                 auto ring=g_dtx_sjrmt_by_handle.find(i->ring);
+                 if(ring!=g_dtx_sjrmt_by_handle.end()) {
+                     auto& state=ring->second;
+-                    state.dataBytes-=std::min(state.dataBytes,i->reply.length);
++                    state.dataBytes-=std::min(state.dataBytes,partial.length);
+                     state.roomBytes=0x4000u-std::min(0x4000u,state.dataBytes);
+                 }
+-                g_sjxReplies.push_back(i->reply);i=g_pcmPending.erase(i);
++                g_sjxReplies.push_back(partial);i->returnedPrefix=slice.totalReturned;
++                if(slice.complete)i=g_pcmPending.erase(i);else ++i;
+             }
+             const uint32_t count=std::min<uint32_t>(static_cast<uint32_t>(g_sjxReplies.size()),
+                 std::min(128u,transfer.wkSize>80u?(transfer.wkSize-80u)/16u:0u));
+diff --git a/ps2xRuntime/src/lib/cri_pcm_retire.h b/ps2xRuntime/src/lib/cri_pcm_retire.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/cri_pcm_retire.h
+@@ -0,0 +1,25 @@
++#pragma once
++#include <cstdint>
++namespace ps2_cri_pcm_retire {
++struct Slice { uint32_t offset=0,length=0,totalReturned=0;uint64_t endByte=0;bool valid=false,complete=false; };
++// No time, callback, guest state, queue-size, or rate assumption. The watermark
++// counts bytes already consumed/copied by the existing real audio output path.
++inline Slice plan(uint64_t endByte,uint32_t incomingLength,uint32_t returned,
++                  uint64_t consumed) noexcept {
++    Slice result;
++    if(!incomingLength || (incomingLength&1u) || endByte<incomingLength || returned>incomingLength)
++        return result;
++    const uint64_t start=endByte-incomingLength;
++    uint64_t ready=consumed>start ? consumed-start : 0;
++    if(ready>incomingLength)ready=incomingLength;
++    // Preserve the existing whole/final-tail behavior. Intermediate free slices
++    // honor the original EE transfer alignment of 0x40 bytes.
++    if(ready<incomingLength)ready&=~uint64_t(63u);
++    result.valid=true;result.offset=returned;result.totalReturned=returned;
++    result.endByte=start+returned;
++    if(ready<=returned)return result; // Reset/backward counters never create space.
++    result.length=uint32_t(ready)-returned;result.totalReturned=uint32_t(ready);
++    result.endByte=start+ready;result.complete=ready==incomingLength;
++    return result;
++}
++}
+diff --git a/ps2xTest/src/ps2_sif_dma_tests.cpp b/ps2xTest/src/ps2_sif_dma_tests.cpp
+--- a/ps2xTest/src/ps2_sif_dma_tests.cpp
++++ b/ps2xTest/src/ps2_sif_dma_tests.cpp
+@@ -4,6 +4,7 @@
+ #include "ps2_stubs.h"
+ #include "runtime/ps2_iop.h"
+ #include "../../ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h"
++#include "../../ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h"
+ 
+ #include <array>
+ #include <cstdint>
+@@ -599,6 +600,7 @@
+             constexpr uint32_t kChunkLen = 4096u;
+ 
+             ps2_syscalls::SifInitRpc(env.rdram.data(), &env.ctx, &env.runtime);
++            ps2_cri_audio::render(nullptr, 0); // Deterministic device-frame clock.
+ 
+             setRegU32(env.ctx, 4, kClientAddr);
+             setRegU32(env.ctx, 5, kDtxSid);
+@@ -748,24 +750,40 @@
+             setRegU32(env.ctx, 10, 4u);
+             setRegU32(env.ctx, 11, 0u);
+             ps2_syscalls::SifCallRpc(env.rdram.data(), &env.ctx, &env.runtime);
+-            // Playback is paced rather than draining all bytes in the START RPC.
+-            // Advance through empty mailbox cycles and bound the wait.
+-            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+-            while (readGuestU32(env.rdram.data(), kRecvAddr) != 0u && std::chrono::steady_clock::now() < deadline) {
+-                std::this_thread::sleep_for(std::chrono::milliseconds(2));
++            // The original IOP returns reusable prefixes, rather than waiting
++            // for the original whole chunk. Drive exact output requests and
++            // verify the real DTX path conserves addresses and byte counts.
++            uint32_t returned = 0;
++            for (unsigned frameBatch = 1; frameBatch <= 4; ++frameBatch) {
++                ps2_cri_audio::render(nullptr, 512);
++                writeGuestU32(env.rdram.data(), kEeWork0Addr, 0u);
+                 ps2_syscalls::noteDtxSifDmaTransfer(env.rdram.data(), kEeWork0Addr, kIopWork0Addr, kWorkLen);
++                const uint32_t count = readGuestU32(env.rdram.data(), kEeWork0Addr);
++                t.Equals(count, 1u, "each consumed prefix yields one destination-capacity reply");
++                if (count == 1u) {
++                    t.Equals(readGuestU32(env.rdram.data(), kEeWork0Addr + 0x14u), 0x0002F600u,
++                             "partial reply retains the original EE registration record");
++                    t.Equals(readGuestU32(env.rdram.data(), kEeWork0Addr + 0x18u), kChunkDataAddr + returned,
++                             "partial replies cover the original contiguous pointer interval");
++                    const uint32_t length = readGuestU32(env.rdram.data(), kEeWork0Addr + 0x1Cu);
++                    t.Equals(length, 1024u, "512 actual mono frames return exactly 1024 PCM bytes");
++                    returned += length;
++                }
+                 setRegU32(env.ctx,4,kClientAddr);setRegU32(env.ctx,5,0x429u);setRegU32(env.ctx,6,0u);
+                 setRegU32(env.ctx,7,kSendAddr);setRegU32(env.ctx,8,8u);setRegU32(env.ctx,9,kRecvAddr);
+                 setRegU32(env.ctx,10,4u);setRegU32(env.ctx,11,0u);
+                 ps2_syscalls::SifCallRpc(env.rdram.data(), &env.ctx, &env.runtime);
++                t.Equals(readGuestU32(env.rdram.data(), kRecvAddr), kChunkLen - frameBatch * 1024u,
++                         "remote available data decreases only by actually consumed slices");
++                writeGuestU32(env.rdram.data(), kEeWork0Addr, 0u);
++                ps2_syscalls::noteDtxSifDmaTransfer(env.rdram.data(), kEeWork0Addr, kIopWork0Addr, kWorkLen);
++                t.Equals(readGuestU32(env.rdram.data(), kEeWork0Addr), 0u,
++                         "a duplicate poll cannot return the same capacity twice");
+             }
+             t.Equals(readGuestU32(env.rdram.data(), kRecvAddr), 0u,
+                      "active PS2RNA playback should drain data across empty mailbox cycles");
+ 
+-            t.Equals(readGuestU32(env.rdram.data(),kEeWork0Addr+0x14u),0x0002F600u,
+-                     "completed PCM reply returns the EE registration record");
+-            t.Equals(readGuestU32(env.rdram.data(),kEeWork0Addr+0x1cu),kChunkLen,
+-                     "full PCM chunk is returned without 256-byte truncation");
++            t.Equals(returned, kChunkLen, "all partial replies conserve the full untruncated PCM chunk");
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x00u, sjrmtHandle);
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x04u, 0u);
+             setRegU32(env.ctx, 4, kClientAddr);

@@ -1,13 +1,26 @@
-*.patch -text
+* text=auto
+*.patch -text -whitespace
 recomp/config/*.csv -text
 *.cpp text eol=lf
 *.c text eol=lf
 *.h text eol=lf
 *.hpp text eol=lf
+*.inl text eol=lf
+*.inc text eol=lf
 *.cs text eol=lf
 *.xaml text eol=lf
 *.py text eol=lf
 *.md text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
 *.ps1 text eol=crlf
 *.cmd text eol=crlf
 *.bat text eol=crlf
+
+# Preserve vendored lookup tables and immutable shader/certificate inputs.
+tools/parallel_gs_backend/smaa/upstream/** -text -whitespace
+*.glsl -text -whitespace
+*.comp -text -whitespace
+*.vert -text -whitespace
+*.frag -text -whitespace

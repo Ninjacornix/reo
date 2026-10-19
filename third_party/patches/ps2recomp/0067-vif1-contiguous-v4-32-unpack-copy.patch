@@ -1,0 +1,26 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+--- a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
++++ b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+@@ -587,6 +587,22 @@
+             if (m_vu1Data && totalBytes > 0 && pos + totalBytes <= sizeBytes)
+             {
+                 const uint8_t *srcBase = data + pos;
++                // V4-32 writes all four raw lanes in mode 0. Equal normalized
++                // write/read cycles are contiguous, provided VU memory does not
++                // wrap and source writes cannot change later source vectors.
++                const uint32_t copyBytes = writeVectorCount * 16u;
++                const uintptr_t sourceBegin = reinterpret_cast<uintptr_t>(srcBase);
++                const uintptr_t destinationBegin = reinterpret_cast<uintptr_t>(m_vu1Data + vuAddr * 16u);
++                const bool separateRanges = sourceBegin <= destinationBegin
++                    ? destinationBegin - sourceBegin >= copyBytes
++                    : sourceBegin - destinationBegin >= copyBytes;
++                if (vn == 3u && vl == 0u && !maskEnable && vif1_regs.mode == 0u &&
++                    cl == wl && vuAddr + writeVectorCount <= 1024u && separateRanges)
++                {
++                    std::memcpy(m_vu1Data + vuAddr * 16u, srcBase, copyBytes);
++                    pos += totalBytes;
++                    continue;
++                }
+                 uint32_t srcIndex = 0u;
+                 for (uint32_t writeIndex = 0; writeIndex < writeVectorCount; ++writeIndex)
+                 {

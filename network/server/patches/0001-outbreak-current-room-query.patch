@@ -1,0 +1,80 @@
+diff --git a/opensnap/plugins/outbreak/plugin.py b/opensnap/plugins/outbreak/plugin.py
+index 59b5bf4..8ca647c 100644
+--- a/opensnap/plugins/outbreak/plugin.py
++++ b/opensnap/plugins/outbreak/plugin.py
+@@ -288,7 +288,14 @@ class OutbreakPlugin(GamePlugin):
+ 
+         channel_type = message.type_flags & FLAG_CHANNEL_BITS
+         requested_id = get_u32(message.payload, 0)
+-        room = context.rooms.get(requested_id) if channel_type == FLAG_ROOM else None
++        room_id = requested_id
++        # The original meeting-room caller (0x0058a250) queries id 0 after
++        # returning from a scenario. Like File #2, resolve the authenticated
++        # caller's current room, while echoing the requested id in the reply.
++        if channel_type == FLAG_ROOM and requested_id == 0:
++            session = resolve_session(context, message, _LOGGER)
++            room_id = 0 if session is None else session.room_id
++        room = context.rooms.get(room_id) if channel_type == FLAG_ROOM else None
+         records = []
+         for member_id in [] if room is None else sorted(room.members)[:MAX_ROOM_PLAYERS]:
+             member = context.sessions.get(member_id)
+diff --git a/tests/test_outbreak_plugin.py b/tests/test_outbreak_plugin.py
+index 2ddc29f..26c260e 100644
+--- a/tests/test_outbreak_plugin.py
++++ b/tests/test_outbreak_plugin.py
+@@ -180,6 +180,55 @@ class OutbreakLobbyTests(unittest.TestCase):
+         )[0]
+         self.assertEqual(area.payload, struct.pack('>L4sL', FREE_AREA_ID, b'MAXI', 100))
+ 
++    def test_zero_room_roster_returns_current_room_after_scenario(self) -> None:
++        host, guest, outsider = self.players
++        room_id = self._create_room(host)
++        self._send(guest, commands.CMD_JOIN, _join_payload(room_id))
++        for player in (host, guest):
++            self._send(player, commands.CMD_CHANGE_USER_STATUS, struct.pack('>L', STATUS_IN_SCENARIO))
++            self._send(player, commands.CMD_CHANGE_USER_STATUS, struct.pack('>L', STATUS_IN_LOBBY))
++
++        pages = self._send(host, commands.CMD_QUERY_USER, struct.pack('>L', 0))
++        self.assertEqual(len(pages), 1)
++        self.assertEqual(struct.unpack_from('>3L', pages[0].payload), (0, 2, 2))
++        expected = {
++            host[1]: b'jill0'.ljust(16, b'\x00') + struct.pack('>2L', host[1], 240) + _profile(1),
++            guest[1]: b'jill1'.ljust(16, b'\x00') + struct.pack('>2L', guest[1], 240) + _profile(2),
++        }
++        actual = {
++            struct.unpack_from('>L', pages[0].payload, 12 + i * 264 + 16)[0]:
++                pages[0].payload[12 + i * 264:12 + (i + 1) * 264]
++            for i in range(2)
++        }
++        self.assertEqual(actual, expected)
++        for requested, flags in ((0, ROOM_FLAGS), (0xFFFFFFFF, ROOM_FLAGS), (0, LOBBY_FLAGS)):
++            empty = self._send(outsider, commands.CMD_QUERY_USER, struct.pack('>L', requested), flags)
++            self.assertEqual(len(empty), 1)
++            self.assertEqual(empty[0].payload, struct.pack('>3L', requested, 0, 0))
++
++    def test_zero_room_roster_pages_four_members_without_leaking_other_rooms(self) -> None:
++        host, guest, third = self.players
++        fourth = self._login('jill3', '10.0.0.4', 4)
++        room_id = self._create_room(host)
++        for player in (guest, third, fourth):
++            self._send(player, commands.CMD_JOIN, _join_payload(room_id))
++        pages = self._send(guest, commands.CMD_QUERY_USER, struct.pack('>L', 0))
++        self.assertEqual([struct.unpack_from('>3L', page.payload) for page in pages], [(0, 4, 3), (0, 4, 1)])
++        self.assertEqual([page.type_flags for page in pages], [FLAG_RESPONSE | FLAG_RELIABLE, FLAG_ROOM | FLAG_RESPONSE | FLAG_RELIABLE])
++        actual = []
++        for page in pages:
++            self.assertLessEqual(len(encode_messages([page])), 896)
++            count = struct.unpack_from('>L', page.payload, 8)[0]
++            actual.extend(struct.unpack_from('>L', page.payload, 12 + i * 264 + 16)[0] for i in range(count))
++        self.assertEqual(set(actual), {player[1] for player in (host, guest, third, fourth)})
++        # Moving one authenticated caller to a different room must change only
++        # that caller's id-zero lookup; the previous room stays intact.
++        other_room = self._create_room(fourth)
++        self.assertNotEqual(other_room, room_id)
++        own = self._send(fourth, commands.CMD_QUERY_USER, struct.pack('>L', 0))[0]
++        self.assertEqual(struct.unpack_from('>3L', own.payload), (0, 1, 1))
++        self.assertEqual(struct.unpack_from('>L', own.payload, 28)[0], fourth[1])
++
+     def test_full_room_roster_is_paged_to_fit_the_client_receive_buffer(self) -> None:
+         # A 4-player roster (1068 bytes) exceeds the client's 896-byte receive
+         # buffer: 3 records with packet number 1 and the room flag clear, then 1

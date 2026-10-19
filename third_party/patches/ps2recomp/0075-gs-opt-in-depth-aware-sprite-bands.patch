@@ -1,0 +1,61 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -170,6 +170,29 @@
+         return (ctx.test & (1ull << 14)) != 0 ||
+                ((ctx.test & (1ull << 16)) != 0 &&
+                 (((ctx.test >> 17) & 3u) != 1u || (ctx.zbuf & (1ull << 32)) == 0));
++    }
++
++    // Untextured CT32/24 sprites have no cross-pixel texture/palette reads.
++    // CT32/24 and Z32/24 use bijective page swizzles: distinct logical rows
++    // own distinct words if X remains within the physical framebuffer width.
++    // Prove complete touched pages nonwrapping and disjoint, so destination
++    // blending/DATE and Z reads/writes cannot observe another band's output.
++    bool spriteDepthParallelSafe(const GSContext &ctx, uint32_t vramSize,
++                                 int x0, int y0, int x1, int y1)
++    {
++        if ((ctx.frame.psm != GS_PSM_CT32 && ctx.frame.psm != GS_PSM_CT24) ||
++            ((ctx.zbuf >> 24) & 15u) > 1u || ctx.frame.fbw == 0u ||
++            x0 < 0 || y0 < 0 || x1 < x0 || y1 < y0 ||
++            uint64_t(x1) >= uint64_t(ctx.frame.fbw) * 64u)
++            return false;
++        const uint64_t first = uint64_t(y0 / 32) * ctx.frame.fbw + unsigned(x0 / 64);
++        const uint64_t last = uint64_t(y1 / 32) * ctx.frame.fbw + unsigned(x1 / 64);
++        const uint64_t fbBegin = (uint64_t(ctx.frame.fbp) + first) * 8192u;
++        const uint64_t fbEnd = (uint64_t(ctx.frame.fbp) + last + 1u) * 8192u;
++        const uint64_t zBegin = ((ctx.zbuf & 0x1FFu) + first) * 8192u;
++        const uint64_t zEnd = ((ctx.zbuf & 0x1FFu) + last + 1u) * 8192u;
++        return fbEnd <= vramSize && zEnd <= vramSize &&
++               (fbEnd <= zBegin || zEnd <= fbBegin);
+     }
+ 
+     uint32_t depthAddress(uint32_t block, uint32_t width, uint8_t format, uint32_t x, uint32_t y)
+@@ -2005,12 +2028,26 @@
+     }
+     else
+     {
+-        for (int y = drawY0; y <= drawY1; ++y)
++        static const bool depthParallelEnabled = [] {
++            const char *e = std::getenv("REO_GS_SPRITE_DEPTH_PARALLEL");
++            return e && std::atoi(e) != 0;
++        }();
++        auto depthBand = [&](int yBegin, int yEnd) {
++        // Worker TLS may contain the previous primitive's depth. Sprite Z is
++        // the complete raw second-vertex value, including overflow bits.
++        const PixelDepthScope bandDepth(v1.z);
++        for (int y = yBegin; y <= yEnd; ++y)
+         {
+             if (ps2GsWorkerStopRequested()) return;
+             for (int x = drawX0; x <= drawX1; ++x)
+                 writePixel(gs, x, y, r, g, b, a);
+         }
++        };
++        if (depthParallelEnabled && !s_noFast && pixelDepthOrDate && spritePixels >= 32768u &&
++            spriteDepthParallelSafe(ctx, gs->m_vramSize, drawX0, drawY0, drawX1, drawY1))
++            RowPool::get().run(drawY0, drawY1, depthBand);
++        else
++            depthBand(drawY0, drawY1);
+     }
+ }
+ 

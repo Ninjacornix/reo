@@ -1,0 +1,28 @@
+inline std::array<ImageSpec, 8> imageSpecs() {
+    return {{
+        {"2ea02b3628231f113edc3fe580f80c1d6ed45c98a7c98f9f83005665f8ad32ce",
+         0x2ea02b3628231f11ull,
+         {0x0u, 0x80u, 0x220u, 0x640u, 0xb80u}},
+        {"479c350324b47c23879136a951911f6a448f4b627f52e34e220553a2f37c9c1c",
+         0x479c350324b47c23ull,
+         {0x0u, 0x70u, 0x180u}},
+        {"5273fa3e9893df4b3833a22b1d7deec2f99a2d2af0c10f2aa0ff5b43d3b2fc25",
+         0x5273fa3e9893df4bull,
+         {0x0u, 0x58u, 0x128u, 0x528u}},
+        {"57026e22a6bb47c66cff4b0e662a6ec200a06c92ce9fb31dc8187aa078e709d1",
+         0x57026e22a6bb47c6ull,
+         {0x0u, 0x78u, 0x138u, 0x410u}},
+        {"64e4b38e853353c7c78d7363b98dca04bdd8f5fe050496f2e23d8643bbba10d3",
+         0x64e4b38e853353c7ull,
+         {0x0u, 0x80u, 0x218u, 0x6b8u}},
+        {"65d42faf847a20b9df414f281d757b64c3932eccfe8cc18a59ed9edb527c3905",
+         0x65d42faf847a20b9ull,
+         {0x0u, 0x58u, 0x128u, 0x510u}},
+        {"819696c9d5c0c9c5a7db85e6fa354f243a52851b0796fd01841181aeb9ae0bf7",
+         0x819696c9d5c0c9c5ull,
+         {0x0u, 0x70u, 0x180u}},
+        {"81bb7caeca8aa1847edbe62fac2bd734e25bc0370b7d16243739355e6324f205",
+         0x81bb7caeca8aa184ull,
+         {0x0u, 0x70u, 0x180u}},
+    }};
+}

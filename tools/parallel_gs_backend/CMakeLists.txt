@@ -1,0 +1,41 @@
+cmake_minimum_required(VERSION 3.18)
+cmake_policy(SET CMP0091 NEW)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL" CACHE STRING "Match pinned shared CRT" FORCE)
+project(reo_parallel_backend LANGUAGES CXX)
+set(PARALLEL_GS_SOURCE "${CMAKE_CURRENT_LIST_DIR}/../../build-ninja/parallel-gs-source" CACHE PATH "Pinned source headers")
+set(PARALLEL_GS_BUILD "${CMAKE_CURRENT_LIST_DIR}/../../build-ninja/m2-gpu-gs-adapter/out" CACHE PATH "Existing clean-barrier library build")
+set(REO_GS_ROUTE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/../../build-ninja/m2-gpu-runtime-routing" CACHE PATH "Frozen private routing source")
+add_library(reo_parallel_gs_prebuilt INTERFACE)
+target_include_directories(reo_parallel_gs_prebuilt INTERFACE
+  "${PARALLEL_GS_SOURCE}/gs" "${PARALLEL_GS_SOURCE}/Granite/vulkan"
+  "${PARALLEL_GS_SOURCE}/Granite/util" "${PARALLEL_GS_SOURCE}/Granite/application/global"
+  "${PARALLEL_GS_SOURCE}/Granite/third_party/volk"
+  "${PARALLEL_GS_SOURCE}/Granite/third_party/khronos/vulkan-headers/include"
+  "${PARALLEL_GS_SOURCE}/Granite/math")
+foreach(entry IN ITEMS "gs/parallel-gs" "Granite/vulkan/granite-vulkan"
+  "Granite/third_party/granite-volk" "Granite/util/granite-util" "Granite/math/granite-math")
+  get_filename_component(part "${entry}" DIRECTORY)
+  get_filename_component(stem "${entry}" NAME)
+  set(library "${PARALLEL_GS_BUILD}/parallel-gs/${part}/Release/${stem}.lib")
+  if(NOT EXISTS "${library}")
+    message(FATAL_ERROR "Required existing Release library missing: ${library}")
+  endif()
+  target_link_libraries(reo_parallel_gs_prebuilt INTERFACE "${library}")
+endforeach()
+target_link_libraries(reo_parallel_gs_prebuilt INTERFACE kernel32 user32 gdi32 winspool shell32 ole32 oleaut32 uuid comdlg32 advapi32)
+target_compile_definitions(reo_parallel_gs_prebuilt INTERFACE NOMINMAX HAVE_WSI_DXGI_INTEROP GRANITE_SHIPPING)
+add_library(reo_parallel_backend STATIC parallel_backend.cpp)
+target_include_directories(reo_parallel_backend PUBLIC "${CMAKE_CURRENT_LIST_DIR}" "${REO_GS_ROUTE_SOURCE}")
+target_compile_features(reo_parallel_backend PUBLIC cxx_std_17)
+target_link_libraries(reo_parallel_backend PRIVATE reo_parallel_gs_prebuilt)
+add_executable(parallel_backend_check check.cpp "${REO_GS_ROUTE_SOURCE}/gs_backend_route.cpp")
+target_link_libraries(parallel_backend_check PRIVATE reo_parallel_backend reo_parallel_gs_prebuilt)
+add_executable(pipeline_cache_store_check cache_check.cpp)
+target_compile_features(pipeline_cache_store_check PRIVATE cxx_std_17)
+target_compile_definitions(pipeline_cache_store_check PRIVATE NOMINMAX)
+if(MSVC)
+  target_compile_options(reo_parallel_backend PRIVATE /O2 /fp:precise /W4)
+  target_compile_options(parallel_backend_check PRIVATE /O2 /fp:precise /W4 /UNDEBUG)
+  target_compile_options(pipeline_cache_store_check PRIVATE /O2 /W4 /UNDEBUG)
+endif()
+# No add_subdirectory, runtime header edits, generated-TU defines or live target changes.

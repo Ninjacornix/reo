@@ -1,0 +1,38 @@
+diff --git a/ps2xRecomp/src/lib/code_generator.cpp b/ps2xRecomp/src/lib/code_generator.cpp
+--- a/ps2xRecomp/src/lib/code_generator.cpp
++++ b/ps2xRecomp/src/lib/code_generator.cpp
+@@ -1807,7 +1807,8 @@
+                                    "else ctx->f[{}] = ctx->f[{}] / ctx->f[{}];",
+                                    ft, fs, ft, fd, fd, fs, ft);
+             case COP1_S_SQRT:
+-                return fmt::format("ctx->f[{}] = FPU_SQRT_S(ctx->f[{}]);", fd, fs);
++                // R5900 SQRT.S is unary in Ft (unlike MIPS III Fs).
++                return fmt::format("ctx->f[{}] = FPU_SQRT_S(ctx->f[{}]);", fd, ft);
+             case COP1_S_ABS:
+                 return fmt::format("ctx->f[{}] = FPU_ABS_S(ctx->f[{}]);", fd, fs);
+             case COP1_S_MOV:
+diff --git a/ps2xTest/src/code_generator_tests.cpp b/ps2xTest/src/code_generator_tests.cpp
+--- a/ps2xTest/src/code_generator_tests.cpp
++++ b/ps2xTest/src/code_generator_tests.cpp
+@@ -571,6 +571,21 @@
+             t.IsTrue(mtc0Code.find("GPR_U32(ctx, 7)") != std::string::npos, "MTC0 should read from rt");
+             t.IsTrue(mtc0Code.find("Unimplemented MTC0") == std::string::npos, "MTC0 should not hit unimplemented path");
+             t.IsTrue(mtc0Code.find("Unhandled COP0") == std::string::npos, "MTC0 should not hit unhandled COP0 path");
++        });
++
++        tc.Run("R5900 SQRT.S reads Ft with distinct Fs and destination", [](TestCase &t) {
++            CodeGenerator gen({}, {});
++            // Actual CRI coefficient opcodes: sqrt.s f20,f22 and f0,f12.
++            for (uint32_t word : {0x46160504u,0x460c0004u}) {
++                Instruction inst{};
++                inst.raw=word;inst.opcode=word>>26;inst.rs=(word>>21)&31;
++                inst.rt=(word>>16)&31;inst.rd=(word>>11)&31;
++                inst.sa=(word>>6)&31;inst.function=word&63;
++                const std::string expected="ctx->f["+std::to_string(inst.sa)+
++                    "] = FPU_SQRT_S(ctx->f["+std::to_string(inst.rt)+"]);";
++                t.Equals(gen.translateInstruction(inst),expected,
++                         "PS2 SQRT.S operand is Ft, not the unused Fs field");
++            }
+         });
+ 
+         tc.Run("FCR access uses CFC1/CTC1", [](TestCase &t) {

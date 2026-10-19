@@ -1,0 +1,19 @@
+#version 450
+// Ordered raw guest-byte writes to the authoritative VU bank. No CPU read/
+// modify/write, lane conversion or geometry calculation.
+layout(local_size_x=1) in;
+layout(set=0,binding=0,std430) buffer Bank {uint words[];};
+layout(set=0,binding=1,std430) readonly buffer Payload {uint payload[];};
+layout(set=0,binding=2,std430) buffer Failure {uint result[];};
+layout(push_constant) uniform Params {uint offset;uint bytes;uint reserved0;uint reserved1;} p;
+void main(){
+    if(result[8]!=0u)return;
+    uint available=uint(words.length())*4u;
+    if(p.reserved0!=0u || p.reserved1!=0u || p.bytes==0u || p.bytes>4096u ||
+       p.offset>=available || p.bytes>available-p.offset){result[8]=12u;return;}
+    for(uint byte=0u;byte<p.bytes;++byte){
+        uint raw=(payload[byte>>2u]>>((byte&3u)*8u))&255u;
+        uint target=p.offset+byte,shift=(target&3u)*8u,word=target>>2u;
+        words[word]=(words[word]&~(255u<<shift))|(raw<<shift);
+    }
+}

@@ -1,0 +1,45 @@
+diff --git a/ps2xRecomp/src/lib/code_generator.cpp b/ps2xRecomp/src/lib/code_generator.cpp
+--- a/ps2xRecomp/src/lib/code_generator.cpp
++++ b/ps2xRecomp/src/lib/code_generator.cpp
+@@ -3041,7 +3041,7 @@
+         // Parallel Copy Halfword (Broadcast lower 16 bits of each 64-bit half)
+         return fmt::format("{{ __m128i src = GPR_VEC(ctx, {}); uint16_t l = _mm_extract_epi16(src, 0); uint16_t h = _mm_extract_epi16(src, 4); \n"
+                            "   SET_GPR_VEC(ctx, {}, _mm_set_epi16(h,h,h,h, l,l,l,l)); }}",
+-                           inst.rs, inst.rd);
++                           inst.rt, inst.rd);
+     }
+ 
+     std::string CodeGenerator::translatePEXCW(const Instruction &inst)
+diff --git a/ps2xTest/src/code_generator_tests.cpp b/ps2xTest/src/code_generator_tests.cpp
+--- a/ps2xTest/src/code_generator_tests.cpp
++++ b/ps2xTest/src/code_generator_tests.cpp
+@@ -585,6 +585,29 @@
+                     "] = FPU_SQRT_S(ctx->f["+std::to_string(inst.rt)+"]);";
+                 t.Equals(gen.translateInstruction(inst),expected,
+                          "PS2 SQRT.S operand is Ft, not the unused Fs field");
++            }
++        });
++
++        tc.Run("R5900 PCPYH reads Rt and broadcasts both 64-bit halves", [](TestCase &t) {
++            CodeGenerator gen({}, {});
++            // Owned game opcodes include distinct rs/rt and rd=rt aliasing.
++            for (uint32_t word : {0x700A46E9u,0x70081EE9u,0x700B5EE9u}) {
++                Instruction inst{};
++                inst.isMMI=true;
++                inst.raw=word;inst.opcode=word>>26;inst.rs=(word>>21)&31;
++                inst.rt=(word>>16)&31;inst.rd=(word>>11)&31;
++                inst.sa=(word>>6)&31;inst.function=word&63;
++                const auto generated=gen.translateInstruction(inst);
++                printGeneratedCode("PCPYH owned opcode "+std::to_string(word),generated);
++                t.IsTrue(inst.rs!=inst.rt,"fixture must distinguish encoded source operands");
++                t.IsTrue(generated.find("__m128i src = GPR_VEC(ctx, "+std::to_string(inst.rt)+");")
++                         != std::string::npos,"PCPYH source is encoded Rt, including destination alias");
++                t.IsTrue(generated.find("_mm_extract_epi16(src, 0)")!=std::string::npos
++                         && generated.find("_mm_extract_epi16(src, 4)")!=std::string::npos,
++                         "PCPYH must retain distinct low/high 64-bit source halfwords");
++                t.IsTrue(generated.find("SET_GPR_VEC(ctx, "+std::to_string(inst.rd)+
++                         ", _mm_set_epi16(h,h,h,h, l,l,l,l));")!=std::string::npos,
++                         "PCPYH must retain four-halfword broadcasts into encoded Rd");
+             }
+         });
+ 

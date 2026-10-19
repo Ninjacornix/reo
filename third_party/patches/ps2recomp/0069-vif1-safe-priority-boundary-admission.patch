@@ -1,0 +1,51 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -2617,12 +2617,47 @@
+     }
+ }
+ 
++namespace
++{
++    bool vifBoundaryYieldEnabled()
++    {
++        static const bool enabled = [] {
++            const char* value = std::getenv("REO_VIF_BOUNDARY_YIELD");
++            const bool selected = value && std::strcmp(value, "1") == 0;
++            if (selected)
++                std::fprintf(stderr, "[VIF-BOUNDARY-CONFIG] enabled=1 channel=10009000 str=00000100 guest_only=1 io_depth_guard=1 higher_priority_only=1 forced_unwind=0 gs_debt_settlement=0\n");
++            return selected;
++        }();
++        return enabled;
++    }
++
++    void vifBoundaryAdmission(PS2Runtime* runtime)
++    {
++        const int tid = ps2_sched::currentThread();
++        if (tid < 1 || ps2IoRegLockDepth() != 0u || runtime->isStopRequested()) return;
++        if (!ps2_sched::mustYield(tid)) return;
++        // This is outside the completed memory callback, never inside the VIF
++        // parser or an IO-held DMA callback. Keep the native stack and guest PC
++        // intact; existing priority admission runs the waiting IRQ/guest first.
++        PS2Runtime::GuestExecutionReleaseScope releaseCpu(runtime);
++    }
++}
++
+ void PS2Runtime::Store32(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, uint32_t value)
+ {
+     ps2TraceGuestWrite(rdram, vaddr, 4u, value, 0u, "WRITE32", ctx);
++    const bool vifKickBoundary = (vaddr & 0x1FFFFFFFu) == 0x10009000u &&
++        (value & 0x100u) != 0u && ps2_sched::currentThread() >= 1 &&
++        ps2IoRegLockDepth() == 0u && vifBoundaryYieldEnabled();
+     try
+     {
++        if (vifKickBoundary)
++        {
++            vifBoundaryAdmission(this);
++            if (isStopRequested()) return;
++        }
+         m_memory.write32(vaddr, value);
++        if (vifKickBoundary) vifBoundaryAdmission(this);
+     }
+     catch (const std::exception &)
+     {

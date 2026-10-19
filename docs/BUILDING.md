@@ -12,13 +12,23 @@ cd reo
 powershell -NoProfile -ExecutionPolicy Bypass -File launcher/build.ps1
 ```
 
-Open `StartLauncher.cmd`. In Play, select a game and configure its native executable, ISO, and matching extracted ELF. An ISO alone is not a native build. Configure each game separately; File #2 is not validated.
+Open `StartLauncher.cmd`. The source checkout needs an already-built native executable. In **Game files**, choose your ISO; the launcher extracts its ELF and assets automatically without mounting. The native executable override is under **Developer options**. File #2 is not validated.
+
+For end users, create a package after building the native game:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File launcher/package.ps1 -Zip
+```
+
+The self-contained package includes the native game, controller adapter, presentation shaders, .NET runtime and app-local Microsoft C++ runtime. It runs outside the checkout and writes imports, saves and logs to Local AppData. It does not include the user's ISO, extracted game files or saves. The player provides only the supported ISO. Native builds are not regenerated on the player's machine.
 
 ```powershell
 & ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --self-test
 ```
 
-The application requires the .NET 8 Desktop Runtime when the SDK is absent. Keep the output directory together: it includes the input adapter, mount helper, icon, and license notices.
+An unbundled source build requires the .NET 8 Desktop Runtime when the SDK is
+absent. Keep its output directory together, including the input adapter,
+shaders and license notices. There is no ISO mount helper or custom app icon.
 
 ## Native game
 
@@ -37,3 +47,31 @@ The setup script fetches pinned dependencies and applies the local runtime patch
 The ordinary target is `reo_recomp`; `reo` is the older scaffold. Experimental GPU builds depend on additional local source/library paths declared in `recomp/CMakeLists.txt`. They are not a turnkey clean-clone release pipeline. Do not reuse a private link script or mix objects compiled against different runtime interfaces.
 
 Use the launcher for normal interactive play. Its settings are under `%LOCALAPPDATA%\OutbreakRecomp\launcher`, and its save folders are `build-ninja/play/saves` and `build-ninja/play-file2/saves`.
+
+Online development additionally uses a separately installed openSNAP server;
+see [networking](NETWORKING.md) and the [server patch](../network/server/README.md).
+The launcher does not install or start this server. Game authentication and
+room management still use the original game protocol and menus.
+
+### Formatting and documentation captures
+
+Run `python tools/format_code.py --write` to apply the repository's clang-format
+style to project-owned C/C++ and C#. Use it without `--write` to check. It
+respects `.clang-format-ignore`: dependencies and generated game code retain
+their original formatting. Shader assets and hash-pinned catalogues are kept
+unchanged; Python, PowerShell, Markdown and XAML are not clang-format inputs.
+
+After building the launcher, capture its real interface without publisher art:
+
+```powershell
+& ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --screenshot "$PWD/docs/images/launcher.png" --original-artwork
+```
+
+Add `--page Coop` to capture the Co-op page. Screenshot mode closes its own
+window after capture and does not start a game. `--original-artwork` also hides
+the local save path in the capture. Keep game previews, local paths,
+credentials and downloaded cover art out of published documentation images.
+
+### Updater-compatible Windows releases
+
+Build a complete Windows package with `launcher/package.ps1 -Version <release-version> -Output dist/RE-Outbreak-v<release-version>-Windows-x64 -Zip`. The version must match the GitHub release tag (for example `0.2.0` / `v0.2.0`). Upload the ZIP and generated `.zip.sha256` to the published stable GitHub Release. Do not upload just the launcher executable: native runtime/shaders and the self-contained .NET files must stay together. Source archives are not installable updates. See [launcher update instructions](../launcher/README.md#updates).

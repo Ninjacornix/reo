@@ -8,6 +8,19 @@ These patches change dependency checkouts; they are stored here so the dependenc
 
 The submodule records the upstream base, not the uncommitted patched state. Every required local change must therefore be represented in the patch series. A modified dependency checkout alone is not a reproducible public contribution.
 
+The current series contains patches `0001` through `0093`. Patch `0092` applies
+without depending on an unpublished instrumentation include. Patch `0093`
+collects the authored host/runtime integration, async VIF1 worker, window
+shortcuts and thread-termination wake fix. Its predecessor focused patches are
+preserved under `ps2recomp-history/` for review and are not applied twice.
+The complete current series has been checked against a fresh pinned worktree.
+
+Locally generated game bodies, including instrumented original IRQ functions,
+remain excluded. Applying the runtime patches is not a substitute for generating
+game code from the user's supported disc. Experimental graphics source builds
+still require their matching local generated bodies and graphics dependencies;
+see [the build guide](../../docs/BUILDING.md).
+
 When updating the dependency:
 
 1. Start with a separate checkout at the recorded base; keep active build checkouts intact.

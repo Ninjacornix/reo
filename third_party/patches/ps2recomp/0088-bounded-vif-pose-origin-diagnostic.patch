@@ -1,0 +1,139 @@
+diff --git a/ps2xRuntime/CMakeLists.txt b/ps2xRuntime/CMakeLists.txt
+--- a/ps2xRuntime/CMakeLists.txt
++++ b/ps2xRuntime/CMakeLists.txt
+@@ -189,6 +189,7 @@
+     src/lib/ps2_memory.cpp
+     src/lib/ps2_pad.cpp
+     src/lib/ps2_runtime.cpp
++    src/lib/pose_origin_capture.cpp
+     src/lib/ps2_vif1_interpreter.cpp
+     src/lib/ps2_vu1.cpp
+     src/lib/games_database.cpp
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1,3 +1,4 @@
++#include "pose_origin_capture.h"
+ #include "vif_launch_overhead.h"
+ #include "vu_cost_attribution.h"
+ #include <memory>
+@@ -2831,6 +2832,7 @@
+         }
+         {
+             VifKickWriteTiming timing(vaddr, value, ctx);
++            PoseOriginScope poseOrigin(m_memory,ctx,vaddr,value);
+             m_memory.write32(vaddr, value);
+         }
+         if (vifKickBoundary) vifBoundaryAdmission(this);
+diff --git a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+--- a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
++++ b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+@@ -1,3 +1,4 @@
++#include "pose_origin_capture.h"
+ #include "vu_program_collection.h"
+ #include "vif_launch_overhead.h"
+ #include <cstdlib>
+@@ -286,6 +287,7 @@
+     };
+ 
+     uint32_t pos = 0;
++    PoseOriginStreamScope poseStream(data,sizeBytes,capture.carryBytes,stream.pendingCode,&pos);
+ 
+     while (pos + 4 <= sizeBytes)
+     {
+diff --git a/ps2xRuntime/src/lib/pose_origin_capture.h b/ps2xRuntime/src/lib/pose_origin_capture.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/pose_origin_capture.h
+@@ -0,0 +1,28 @@
++#pragma once
++#include <cstdint>
++#include <cstddef>
++class PS2Memory;
++struct R5900Context;
++// Private, serialized-owner diagnostics. No public runtime or generated EE ABI.
++class PoseOriginScope {
++public:
++ PoseOriginScope(PS2Memory&,R5900Context*,uint32_t,uint32_t) noexcept;
++ ~PoseOriginScope();
++ PoseOriginScope(const PoseOriginScope&)=delete;
++ PS2Memory* memory=nullptr;R5900Context* context=nullptr;
++ uint32_t requestedAddress=0,requestedValue=0,preDma[7]{};
++private: PoseOriginScope* previous=nullptr;
++};
++class PoseOriginStreamScope {
++public:
++ PoseOriginStreamScope(const uint8_t*,uint32_t,uint32_t,uint32_t,const uint32_t* =nullptr) noexcept;
++ ~PoseOriginStreamScope();
++ PoseOriginStreamScope(const PoseOriginStreamScope&)=delete;
++ const uint8_t* data=nullptr;uint32_t bytes=0,carry=0,pendingCode=0;
++ const uint32_t* cursor=nullptr;
++ uint32_t initialVifRegisters[23]{};
++private: PoseOriginStreamScope* previous=nullptr;
++};
++// Invoke only for an actually observed QuantizationNaN refusal, before fallback.
++void ps2PoseOriginCapture(uint32_t kind,uint32_t attempt,const void* event,size_t eventBytes,
++ const void* vuState,size_t stateBytes,const uint8_t* vuData,size_t dataBytes) noexcept;
+diff --git a/ps2xRuntime/src/lib/pose_origin_capture.cpp b/ps2xRuntime/src/lib/pose_origin_capture.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/pose_origin_capture.cpp
+@@ -0,0 +1,58 @@
++#include "pose_origin_capture.h"
++#include "ps2_runtime.h"
++#include "runtime/ps2_memory.h"
++#include <cstdlib>
++#include <cstring>
++#include <filesystem>
++#include <fstream>
++#include <vector>
++#include <cstdio>
++bool ps2VifKickVuProfileActive() noexcept;
++namespace {
++thread_local PoseOriginScope* boundary=nullptr;
++thread_local PoseOriginStreamScope* stream=nullptr;
++struct Owned {
++ std::filesystem::path directory;
++ bool enabled=false,claimed=false,complete=false;
++ uint32_t kind=0,attempt=0,address=0,value=0,preDma[7]{},streamBytes=0,carry=0,pendingCode=0,parserCursor=0;
++ bool streamTruncated=false;
++ std::vector<uint8_t> ram,spr,ctx,vifRegs,initialVifRegs,vif,event,state,data;
++ Owned() noexcept {const char* p=std::getenv("REO_POSE_ORIGIN_DIR");if(!p||!*p)return;
++  try{directory=p;if(std::filesystem::exists(directory)&&!std::filesystem::is_empty(directory)){
++   std::fputs("[POSE-ORIGIN] disabled: directory is not empty\n",stderr);return;}
++   std::filesystem::create_directories(directory);enabled=true;
++  }catch(...){std::fputs("[POSE-ORIGIN] disabled: directory initialization failed\n",stderr);}}
++ ~Owned(){if(!complete)return;try{
++  auto write=[&](const char* name,const std::vector<uint8_t>& bytes){std::ofstream f(directory/name,std::ios::binary);f.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());return bool(f);};
++  bool ok=write("rdram.bin",ram)&&write("scratchpad.bin",spr)&&write("ee-context.bin",ctx)&&write("vif1-registers.bin",vifRegs)&&write("initial-vif1-registers.bin",initialVifRegs)&&write("combined-vif.bin",vif)&&write("event.bin",event)&&write("vu-state.bin",state)&&write("vu-data.bin",data);
++  std::ofstream f(directory/"summary.json");f<<"{\"version\":1,\"complete\":"<<(ok?"true":"false")<<",\"kind\":"<<kind<<",\"attempt\":"<<attempt<<",\"requested_address\":"<<address<<",\"requested_value\":"<<value<<",\"pre_dma_registers\":[";
++  for(unsigned i=0;i<7;++i){if(i)f<<',';f<<preDma[i];}f<<"],\"context_bytes\":"<<ctx.size()<<",\"vif_register_bytes\":"<<vifRegs.size()<<",\"stream_bytes\":"<<streamBytes<<",\"saved_stream_bytes\":"<<vif.size()<<",\"carry_bytes\":"<<carry<<",\"pending_code\":"<<pendingCode<<",\"parser_cursor\":"<<parserCursor<<",\"stream_truncated\":"<<(streamTruncated?"true":"false")<<"}\n";
++ }catch(...){std::fputs("[POSE-ORIGIN] export failed\n",stderr);}}
++};
++Owned& owned(){static Owned value;return value;}
++void copy(std::vector<uint8_t>& dst,const void* p,size_t bytes){const auto* b=static_cast<const uint8_t*>(p);dst.assign(b,b+bytes);}
++}
++PoseOriginScope::PoseOriginScope(PS2Memory& mem,R5900Context* ctx,uint32_t addr,uint32_t val) noexcept {
++ if((addr&0x1fffffffu)!=0x10009000u||!(val&0x100u)||!ctx||!owned().enabled||owned().claimed||!ps2VifKickVuProfileActive())return;
++ try{memory=&mem;context=ctx;requestedAddress=addr;requestedValue=val;
++  constexpr uint32_t offsets[7]={0,0x10,0x20,0x30,0x40,0x50,0x80};
++  for(unsigned i=0;i<7;++i)preDma[i]=mem.read32(0x10009000u+offsets[i]);
++  previous=boundary;boundary=this;
++ }catch(...){memory=nullptr;context=nullptr;}
++}
++PoseOriginScope::~PoseOriginScope(){if(memory)boundary=previous;}
++PoseOriginStreamScope::PoseOriginStreamScope(const uint8_t* p,uint32_t n,uint32_t c,uint32_t code,const uint32_t* currentPos) noexcept {
++ if(!boundary||!p||!n)return;data=p;bytes=n;carry=c;pendingCode=code;cursor=currentPos;std::memcpy(initialVifRegisters,&boundary->memory->vif1_regs,sizeof(initialVifRegisters));previous=stream;stream=this;
++}
++PoseOriginStreamScope::~PoseOriginStreamScope(){if(data)stream=previous;}
++void ps2PoseOriginCapture(uint32_t kind,uint32_t attempt,const void* event,size_t eventBytes,const void* state,size_t stateBytes,const uint8_t* data,size_t dataBytes) noexcept {
++ auto& out=owned();if(!out.enabled||out.claimed||!boundary||!stream||!event||!state||!data||eventBytes!=248||stateBytes!=632||dataBytes!=16384||!boundary->memory->getRDRAM()||!boundary->memory->getScratchpad())return;
++ // One bounded cold copy. It intentionally affects this diagnostic kick's cost.
++ out.claimed=true;try{
++  out.kind=kind;out.attempt=attempt;out.address=boundary->requestedAddress;out.value=boundary->requestedValue;std::memcpy(out.preDma,boundary->preDma,sizeof(out.preDma));
++  copy(out.ram,boundary->memory->getRDRAM(),PS2_RAM_SIZE);copy(out.spr,boundary->memory->getScratchpad(),PS2_SCRATCHPAD_SIZE);copy(out.ctx,boundary->context,sizeof(R5900Context));
++  copy(out.vifRegs,&boundary->memory->vif1_regs,sizeof(VIFRegisters));copy(out.initialVifRegs,stream->initialVifRegisters,sizeof(stream->initialVifRegisters));out.streamBytes=stream->bytes;out.carry=stream->carry;out.pendingCode=stream->pendingCode;out.parserCursor=stream->cursor?*stream->cursor:0;
++  constexpr uint32_t MaxStream=1024u*1024u;const uint32_t save=stream->bytes<MaxStream?stream->bytes:MaxStream;out.streamTruncated=save!=stream->bytes;copy(out.vif,stream->data,save);
++  copy(out.event,event,eventBytes);copy(out.state,state,stateBytes);copy(out.data,data,dataBytes);out.complete=true;
++ }catch(...){std::fputs("[POSE-ORIGIN] snapshot allocation failed; no retry\n",stderr);}
++}

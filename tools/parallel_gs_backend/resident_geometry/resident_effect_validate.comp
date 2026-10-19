@@ -1,0 +1,42 @@
+#version 450
+// GPU event classification and raw literal command verification. CPU only
+// schedules the already-proven literal metadata; no GIF/vertex readback.
+layout(local_size_x=1) in;
+layout(set=0,binding=0,std430) readonly buffer Events {uint eventWords[];};
+layout(set=0,binding=1,std430) readonly buffer Job {uint completion[];};
+layout(set=0,binding=2,std430) readonly buffer Expected {uvec4 kindCountFlags;uvec4 expectedQwords[7];};
+layout(set=0,binding=3,std430) buffer Effect {uint effectStatus[];};
+layout(set=0,binding=4,std430) buffer Global {uint globalCompletion[];};
+void fail(uint status){effectStatus[0]=status;effectStatus[1]=0u;effectStatus[2]=0u;effectStatus[3]=0u;if(globalCompletion[8]==0u)globalCompletion[8]=status;}
+void main(){
+    for(uint i=0u;i<4u;++i)effectStatus[i]=0u;
+    if(completion[0]!=0u || completion[8]!=0u || globalCompletion[8]!=0u ||
+       completion[5]!=1u || (completion[7]!=0u&&completion[7]!=4u)){fail(13u);return;}
+    uint expectedKind=kindCountFlags.x,count=eventWords[0];
+    if(expectedKind==0u){
+        if(count!=0u || completion[6]!=0u || completion[2]!=0u){fail(14u);return;}
+        return;
+    }
+    if(count!=1u || completion[6]!=1u || eventWords[3]<16u || eventWords[3]>16384u){fail(14u);return;}
+    uvec4 header=uvec4(eventWords[4],eventWords[5],eventWords[6],eventWords[7]);
+    uint loops=header.x&32767u;
+    if((header.x&0xffff0000u)!=0u || (header.x&32768u)==0u ||
+       any(notEqual(header.yzw,expectedQwords[0].yzw))){fail(15u);return;}
+    if(expectedKind==1u){
+        if(header.z!=0x412u || header.w!=0u || ((header.y>>26u)&3u)!=0u ||
+           ((header.y>>28u)&15u)!=3u || ((header.y>>14u)&1u)!=1u ||
+           completion[2]>256u || loops!=completion[2]+2u ||
+           eventWords[3]!=16u+loops*48u){fail(15u);return;}
+        effectStatus[1]=1u;effectStatus[2]=completion[2];effectStatus[3]=eventWords[1];return;
+    }
+    if(expectedKind!=2u || completion[2]!=0u || loops!=6u || eventWords[3]!=112u ||
+       header.z!=14u || header.w!=0u || ((header.y>>26u)&3u)!=0u ||
+       ((header.y>>28u)&15u)!=1u || ((header.y>>14u)&1u)!=0u){fail(16u);return;}
+    const uint addresses[6]=uint[6](0x3bu,0x14u,0x06u,0x08u,0x34u,0x36u);
+    for(uint q=0u;q<7u;++q){
+        uvec4 actual=uvec4(eventWords[4u+q*4u],eventWords[5u+q*4u],eventWords[6u+q*4u],eventWords[7u+q*4u]);
+        if(any(notEqual(actual,expectedQwords[q]))){fail(16u);return;}
+        if(q!=0u && (actual.z!=addresses[q-1u] || actual.w!=0u)){fail(16u);return;}
+    }
+    effectStatus[1]=2u;effectStatus[3]=eventWords[1];
+}

@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+project(gpu_backend_bridge_check LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(ROUTING "${CMAKE_CURRENT_SOURCE_DIR}/../../build-ninja/m2-gpu-runtime-routing")
+add_executable(gpu_backend_bridge_check main.cpp "${ROUTING}/gs_backend_route.cpp")
+target_include_directories(gpu_backend_bridge_check PRIVATE "${ROUTING}")
+find_package(Threads REQUIRED)
+target_link_libraries(gpu_backend_bridge_check PRIVATE Threads::Threads)

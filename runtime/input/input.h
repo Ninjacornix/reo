@@ -65,6 +65,7 @@ class Input {
 
     // Poll all input devices and update state
     void update();
+    void update_controllers_only();
 
     // Get the current DualShock2-compatible state
     const DualShock2State& get_pad(int port = 0) const {

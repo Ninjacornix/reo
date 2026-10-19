@@ -1,14 +1,26 @@
 # Play the native build interactively (no time limit).
-#   powershell -ExecutionPolicy Bypass -File tools\play.ps1 [-Iso <owned ISO>] [-SkipIntro]
+#   powershell -ExecutionPolicy Bypass -File tools\play.ps1 [-Iso <owned ISO>] [-SkipIntro] [-ToMainMenu | -ToScenario] [-GpuPresent] [-AsyncVif]
 # Mounts the ISO read-only, runs build-ninja\recomp\reo_recomp.exe until you close the
 # window, then unmounts. Saves (memory card) go to build-ninja\play\saves.
-# -SkipIntro fast-forwards the boot logos (test-only REO_TURBO) until the title movie.
+# Test routes use normal-speed startup and pad input at observed guest states.
+# -SkipIntro / -FastBoot are retained as legacy parameters; acceleration is disabled.
 param(
     [string]$Iso = 'iso\Resident Evil - Outbreak (v2.00).iso',
     [string]$Elf = 'game_data\SLUS_207.65',
-    [switch]$SkipIntro
+    [Alias('FastBoot')][switch]$SkipIntro,
+    [switch]$ToMainMenu,
+    [switch]$ToScenario,
+    [switch]$GpuPresent,
+    [switch]$AsyncVif
 )
 $ErrorActionPreference = 'Stop'
+if ($ToMainMenu -and $ToScenario) { throw 'Choose either -ToMainMenu or -ToScenario.' }
+if ($AsyncVif -and $env:REO_VIF1_GPU_RESIDENT -eq '1') {
+    throw '-AsyncVif cannot share VU memory with REO_VIF1_GPU_RESIDENT=1.'
+}
+if (($ToMainMenu -or $ToScenario) -and $env:REO_PAD_SCRIPT) {
+    throw 'Clear REO_PAD_SCRIPT before using a state-driven test route.'
+}
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 $Exe = Join-Path $root 'build-ninja\recomp\reo_recomp.exe'
@@ -19,8 +31,13 @@ $playDir = Join-Path $root 'build-ninja\play'
 New-Item -ItemType Directory -Force $playDir | Out-Null
 
 Dismount-DiskImage -ImagePath $Iso -ErrorAction SilentlyContinue | Out-Null
+$savedEnvironment = @{}
+foreach ($key in @('REO_NATURAL', 'REO_ISO', 'REO_TURBO', 'REO_TURBO_UNTIL', 'REO_TEST_ROUTE', 'REO_GS_DISPATCH_PACE', 'REO_GS_SPRITE_DEPTH_PARALLEL', 'REO_GS_GPU_PRESENT', 'REO_GS_BACKEND', 'REO_GS_THREAD', 'REO_VIF1_ASYNC')) {
+    $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable($key, 'Process')
+}
 $img = Mount-DiskImage -ImagePath $Iso -Access ReadOnly -PassThru
 try {
+    if ($AsyncVif) { $env:REO_VIF1_ASYNC = '1' }
     $drive = $null
     for ($i = 0; $i -lt 10 -and -not $drive; ++$i) {
         Start-Sleep -Milliseconds 300
@@ -30,9 +47,25 @@ try {
     $discElf = "${drive}:\" + (Split-Path -Leaf $Elf)
     $runElf = if (Test-Path $discElf) { $discElf } else { $Elf }
 
+    if ($GpuPresent) {
+        $env:REO_GS_GPU_PRESENT = '1'
+        $env:REO_GS_BACKEND = 'parallel'
+        $env:REO_GS_THREAD = '1'
+    }
     $env:REO_NATURAL = '1'
     $env:REO_ISO = $Iso
-    if ($SkipIntro) { $env:REO_TURBO = '8'; $env:REO_TURBO_UNTIL = '0x22F18C' }
+    $env:REO_TURBO = '1'
+    [Environment]::SetEnvironmentVariable('REO_TURBO_UNTIL', $null, 'Process')
+    # Validated scheduling fix; keep explicit caller overrides for comparisons.
+    if ([string]::IsNullOrEmpty($env:REO_GS_DISPATCH_PACE)) {
+        $env:REO_GS_DISPATCH_PACE = '2'
+    }
+    # Full-VRAM validated depth-aware sprite bands restore normal logo cadence.
+    if ([string]::IsNullOrEmpty($env:REO_GS_SPRITE_DEPTH_PARALLEL)) {
+        $env:REO_GS_SPRITE_DEPTH_PARALLEL = '1'
+    }
+    if ($ToMainMenu) { $env:REO_TEST_ROUTE = 'main-menu' }
+    if ($ToScenario) { $env:REO_TEST_ROUTE = 'scenario' }
     Write-Host "Running $Exe (disc ${drive}:). Close the game window to stop."
     $proc = Start-Process -FilePath $Exe -ArgumentList @('--game', 'file1', '--elf', "`"$runElf`"", '--data', "${drive}:\") `
         -WorkingDirectory $playDir -RedirectStandardError (Join-Path $playDir 'stderr.log') `
@@ -41,6 +74,8 @@ try {
     Write-Host "Game exited (code $($proc.ExitCode)). Logs: $playDir"
 }
 finally {
-    Remove-Item Env:REO_NATURAL, Env:REO_ISO, Env:REO_TURBO, Env:REO_TURBO_UNTIL -ErrorAction SilentlyContinue
+    foreach ($key in $savedEnvironment.Keys) {
+        [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key], 'Process')
+    }
     Dismount-DiskImage -ImagePath $Iso -ErrorAction SilentlyContinue | Out-Null
 }

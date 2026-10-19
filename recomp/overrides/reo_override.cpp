@@ -30,10 +30,51 @@
 #include "reo_hw_bridge.h"
 #include "runtime/input/input.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 #include <iostream>
+#include <chrono>
 #include "reo_netbio.h"
+
+#include "reo_game_clock_observer.h"
+#include "actor_first_nonfinite.h"
+#include "ground_query_origin.h"
+#include "reo_dma_builder_observer.h"
+
+#if defined(REO_GAME_FILE1)
+// Read-only observer always delegates the original generated entry exactly once.
+extern void sub_001B0B80_0x1b0b80(uint8_t*, R5900Context*, PS2Runtime*);
+static void reoGameClockActorInput(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_game_clock::sample(r, c, p);
+    const auto token = reo_actor_origin::beforeInput(r, c, p);
+    sub_001B0B80_0x1b0b80(r, c, p);
+    reo_actor_origin::afterInput(token, r, c, p);
+}
+
+extern void o2_00617000_0x617000(uint8_t*, R5900Context*, PS2Runtime*);
+extern void reo_ground_diagnostic_617000(uint8_t*, R5900Context*, PS2Runtime*);
+static void reoGroundQuery(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    if (!reo_ground_origin::enabled) {
+        o2_00617000_0x617000(r, c, p);
+        return;
+    }
+    reo_ground_origin::Work work{};
+    reo_ground_origin::begin(work, r, c, p);
+    reo_ground_origin::Scope scope(work);
+    // The enabled path executes the mechanically copied original body once;
+    // it does not additionally invoke the original compiled symbol.
+    reo_ground_diagnostic_617000(r, c, p);
+    reo_ground_origin::finish(work, r, c, p);
+}
+
+extern void sub_001B02D0_0x1b02d0(uint8_t*, R5900Context*, PS2Runtime*);
+static void reoActorPassEnd(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_actor_origin::endActorPass(r, c, p);
+    sub_001B02D0_0x1b02d0(r, c, p);
+}
+
+#endif
 
 // Forward declarations for demo trigger
 extern void sub_00114420_0x114420(uint8_t*, R5900Context*, PS2Runtime*);
@@ -41,9 +82,15 @@ extern void sub_00114440_0x114440(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_001CB8F0_0x1cb8f0(uint8_t*, R5900Context*, PS2Runtime*);
 
 // Runtime SIF RPC HLE handlers (defined in the runtime lib)
-namespace ps2_stubs { void sceSifBindRpc(uint8_t*, R5900Context*, PS2Runtime*); }
-namespace ps2_syscalls { void sceSifCallRpc(uint8_t*, R5900Context*, PS2Runtime*); }
-namespace ps2_syscalls { void SifInitRpc(uint8_t*, R5900Context*, PS2Runtime*); }
+namespace ps2_stubs {
+void sceSifBindRpc(uint8_t*, R5900Context*, PS2Runtime*);
+}
+namespace ps2_syscalls {
+void sceSifCallRpc(uint8_t*, R5900Context*, PS2Runtime*);
+}
+namespace ps2_syscalls {
+void SifInitRpc(uint8_t*, R5900Context*, PS2Runtime*);
+}
 #include <iomanip>
 #include <chrono>
 #include <thread>
@@ -60,6 +107,10 @@ static ReoHwBridge g_hwBridge;
 static void reo_ret0(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     setReturnU32(ctx, 0);
     ctx->pc = getRegU32(ctx, 31);
+}
+
+PS2Runtime::RecompiledFunction reoActualIrqIntegerRet0Identity() noexcept {
+    return &reo_ret0;
 }
 
 // Generic "return 1" handler
@@ -120,7 +171,7 @@ static void reo_gfx_obj_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runt
     constexpr uint32_t RAM_MASK = 0x1FFFFFF;
 
     // ── DMA channel pointers ──
-    constexpr uint32_t GIF_DMA_BASE  = 0x1000A000;
+    constexpr uint32_t GIF_DMA_BASE = 0x1000A000;
     constexpr uint32_t VIF1_DMA_BASE = 0x10009000;
     constexpr uint32_t CHAN_TABLE_ADDR = 0x29FD74;
 
@@ -132,26 +183,26 @@ static void reo_gfx_obj_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runt
     };
 
     // Write GIF channel pointer to table entry 0
-    write32(CHAN_TABLE_ADDR,     GIF_DMA_BASE);
+    write32(CHAN_TABLE_ADDR, GIF_DMA_BASE);
     write32(CHAN_TABLE_ADDR + 4, VIF1_DMA_BASE);
 
     // ── Display list buffers ──
     // Allocate two 512KB buffers in the bump allocator range (0x600000+)
     // These buffers hold the per-frame GIF command lists that sub_0018D470 processes
-    constexpr uint32_t DL_BUF_SIZE = 0x80000; // 512KB per buffer
+    constexpr uint32_t DL_BUF_SIZE = 0x80000;   // 512KB per buffer
     constexpr uint32_t DL_BUF0_ADDR = 0x700000; // display list buffer 0
     constexpr uint32_t DL_BUF1_ADDR = 0x780000; // display list buffer 1
 
-    write32(0x29FDC4,     DL_BUF0_ADDR); // buffer base [0]
+    write32(0x29FDC4, DL_BUF0_ADDR);     // buffer base [0]
     write32(0x29FDC4 + 4, DL_BUF1_ADDR); // buffer base [1]
 
     // Initialize the double-buffer index to 0
     write32(0x29FDB4, 0);
 
     // Set up initial rendering pointers for buffer 0
-    write32(0x29FDB8, DL_BUF0_ADDR);                // write pointer = start of buffer
-    write32(0x29FDC0, DL_BUF0_ADDR);                // base pointer
-    write32(0x29FDBC, DL_BUF0_ADDR + DL_BUF_SIZE);  // end pointer
+    write32(0x29FDB8, DL_BUF0_ADDR);               // write pointer = start of buffer
+    write32(0x29FDC0, DL_BUF0_ADDR);               // base pointer
+    write32(0x29FDBC, DL_BUF0_ADDR + DL_BUF_SIZE); // end pointer
 
     // Initialize the display list entry struct at 0x29F6F0.
     // The GIF tag processor (sub_0018D470) reads entry[12] as the data buffer
@@ -160,21 +211,21 @@ static void reo_gfx_obj_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runt
     //   entry[1] @ 0x29F6F4: dbIdx=1 entry base
     //   entry[0]+12 = 0x29F6FC: data buffer ptr for buf[0]
     //   entry[1]+12 = 0x29F700: data buffer ptr for buf[1]
-    write32(0x29F6FC, DL_BUF0_ADDR);  // entry[0] data buffer = buf[0]
-    write32(0x29F700, DL_BUF1_ADDR);  // entry[1] data buffer = buf[1]
+    write32(0x29F6FC, DL_BUF0_ADDR); // entry[0] data buffer = buf[0]
+    write32(0x29F700, DL_BUF1_ADDR); // entry[1] data buffer = buf[1]
 
     // Tag entry counts at 0x29F704/0x29F708 (per-buffer, indexed by dbIdx).
     // sub_0018CFB0 increments these as it writes tag entries to the buffer.
     // sub_0018D470 checks if non-zero to decide whether to process tags.
     // Start at 0 — CFB0 will set them when A0920 commits GS setup data.
-    write32(0x29F704, 0);  // entry_count[0] = 0
-    write32(0x29F708, 0);  // entry_count[1] = 0
+    write32(0x29F704, 0); // entry_count[0] = 0
+    write32(0x29F708, 0); // entry_count[1] = 0
 
     // Tag write indices at 0x29F70C/0x29F710 (per-buffer, indexed by dbIdx).
     // CFB0 writes tag entries at buf_ptr + write_idx*4 and increments write_idx.
     // Must be 0 initially so first tag entry goes to buffer offset 0.
-    write32(0x29F70C, 0);  // write_idx[0] = 0
-    write32(0x29F710, 0);  // write_idx[1] = 0
+    write32(0x29F70C, 0); // write_idx[0] = 0
+    write32(0x29F710, 0); // write_idx[1] = 0
 
     // Write end-of-list markers at the start of each buffer
     constexpr uint32_t DL_END_TAG = 0xF0000002;
@@ -184,7 +235,8 @@ static void reo_gfx_obj_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runt
     printf("[REO-GFX] gfx_obj_init:\n");
     printf("[REO-GFX]   GIF DMA base=0x%08X at table[0]=0x%08X\n", GIF_DMA_BASE, CHAN_TABLE_ADDR);
     printf("[REO-GFX]   DL buf[0]=0x%08X buf[1]=0x%08X (512KB each)\n", DL_BUF0_ADDR, DL_BUF1_ADDR);
-    printf("[REO-GFX]   DB index=0, write_ptr=0x%08X, end=0x%08X\n", DL_BUF0_ADDR, DL_BUF0_ADDR + DL_BUF_SIZE);
+    printf("[REO-GFX]   DB index=0, write_ptr=0x%08X, end=0x%08X\n", DL_BUF0_ADDR,
+           DL_BUF0_ADDR + DL_BUF_SIZE);
 
     setReturnU32(ctx, 1);
     ctx->pc = getRegU32(ctx, 31);
@@ -219,21 +271,24 @@ static void reo_video_mode_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* r
     };
 
     // Use args or defaults for NTSC 640x448 interlaced
-    uint32_t width  = getRegU32(ctx, 4);
+    uint32_t width = getRegU32(ctx, 4);
     uint32_t height = getRegU32(ctx, 5);
-    uint32_t psm    = getRegU32(ctx, 6);
-    uint32_t fbw    = getRegU32(ctx, 7);
+    uint32_t psm = getRegU32(ctx, 6);
+    uint32_t fbw = getRegU32(ctx, 7);
 
-    if (width == 0)  width  = 640;
-    if (height == 0) height = 448;
-    if (fbw == 0)    fbw    = width / 64;  // 10 for 640
+    if (width == 0)
+        width = 640;
+    if (height == 0)
+        height = 448;
+    if (fbw == 0)
+        fbw = width / 64; // 10 for 640
 
     // Scalar rendering parameters
-    write32(0x29FED0, height);           // render height
-    write32(0x29FED8, width);            // render width
-    write32(0x29FD50, 0x00800000);       // packed display mode (non-zero)
-    write32(0x29FD54, 0);                // FBP = page 0
-    write32(0x29FD58, fbw);              // FBW = 10
+    write32(0x29FED0, height);     // render height
+    write32(0x29FED8, width);      // render width
+    write32(0x29FD50, 0x00800000); // packed display mode (non-zero)
+    write32(0x29FD54, 0);          // FBP = page 0
+    write32(0x29FD58, fbw);        // FBW = 10
 
     // GS privileged register values for NTSC 640x448 interlaced frame mode
     // PMODE: EN2=1, CRTMD=1, MMOD=1, AMOD=1 → single circuit 2
@@ -244,23 +299,22 @@ static void reo_video_mode_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* r
 
     // DISPFB1: FBP=0, FBW=10, PSM=0 (PSMCT32), DBX=0, DBY=0
     // DISPFB = FBP | (FBW << 9) | (PSM << 15) | (DBX << 32) | (DBY << 43)
-    uint64_t dispfb = (uint64_t)fbw << 9;  // 10 << 9 = 0x1400
-    write64(0x29FDD0, dispfb);  // DISPFB1
-    write64(0x29FDE0, dispfb);  // DISPFB2
+    uint64_t dispfb = (uint64_t)fbw << 9; // 10 << 9 = 0x1400
+    write64(0x29FDD0, dispfb);            // DISPFB1
+    write64(0x29FDE0, dispfb);            // DISPFB2
 
     // DISPLAY1/2: DX=636, DY=50, MAGH=3, MAGV=0, DW=2559, DH=447
     // DISPLAY = DX | (DY << 12) | (MAGH << 23) | (MAGV << 27) | (DW << 32) | (DH << 44)
     uint64_t dx = 636, dy = 50, magh = 3, magv = 0;
-    uint64_t dw = (uint64_t)width * (magh + 1) - 1;  // 2559
-    uint64_t dh = (uint64_t)height - 1;               // 447
-    uint64_t display = dx | (dy << 12) | (magh << 23) | (magv << 27)
-                     | (dw << 32) | (dh << 44);
-    write64(0x29FDD8, display);  // DISPLAY1
-    write64(0x29FDE8, display);  // DISPLAY2
+    uint64_t dw = (uint64_t)width * (magh + 1) - 1; // 2559
+    uint64_t dh = (uint64_t)height - 1;             // 447
+    uint64_t display = dx | (dy << 12) | (magh << 23) | (magv << 27) | (dw << 32) | (dh << 44);
+    write64(0x29FDD8, display); // DISPLAY1
+    write64(0x29FDE8, display); // DISPLAY2
 
     printf("[REO-VIDMODE] video_mode_init: %ux%u PSM=%u FBW=%u\n", width, height, psm, fbw);
-    printf("[REO-VIDMODE]   PMODE=0x%016llX SMODE2=0x%016llX\n",
-           0x0000000000000066ULL, 0x0000000000000003ULL);
+    printf("[REO-VIDMODE]   PMODE=0x%016llX SMODE2=0x%016llX\n", 0x0000000000000066ULL,
+           0x0000000000000003ULL);
     printf("[REO-VIDMODE]   DISPFB=0x%016llX DISPLAY=0x%016llX\n", dispfb, display);
 
     setReturnU32(ctx, 1);
@@ -284,6 +338,12 @@ static void reo_pool_resolve(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runt
     }
     setReturnU32(ctx, addr);
     ctx->pc = getRegU32(ctx, 31);
+}
+
+// Source-only append after the actual reo_pool_resolve definition in its TU.
+// This exports code identity, not a renderer flag or pointer-value heuristic.
+PS2Runtime::RecompiledFunction reoActualPoolResolverPassthroughIdentity() noexcept {
+    return reo_pool_resolve;
 }
 
 // ── Display buffer init (likely display alloc/setup, 640x448) ──────────
@@ -312,8 +372,8 @@ static void reo_dma_poll_complete(uint8_t* rdram, R5900Context* ctx, PS2Runtime*
 static void reo_ret1_log(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     static int logCount = 0;
     if (logCount < 30) {
-        printf("[REO-STUB] ret1 at pc=0x%08X a0=0x%X a1=0x%X\n",
-               ctx->pc, getRegU32(ctx, 4), getRegU32(ctx, 5));
+        printf("[REO-STUB] ret1 at pc=0x%08X a0=0x%X a1=0x%X\n", ctx->pc, getRegU32(ctx, 4),
+               getRegU32(ctx, 5));
         logCount++;
     }
     setReturnU32(ctx, 1);
@@ -404,8 +464,8 @@ static void reo_heap_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime
             heapLimit = (uint32_t)std::min<uint64_t>(candidate, PS2_RAM_SIZE);
         }
         runtime->configureGuestHeap(normalizedBase, heapLimit);
-        printf("[REO] heapInit base=0x%08X size=0x%X -> base=0x%08X end=0x%08X\n",
-               heapBase, heapSize, runtime->guestHeapBase(), runtime->guestHeapEnd());
+        printf("[REO] heapInit base=0x%08X size=0x%X -> base=0x%08X end=0x%08X\n", heapBase,
+               heapSize, runtime->guestHeapBase(), runtime->guestHeapEnd());
     }
     setReturnU32(ctx, 0);
     ctx->pc = getRegU32(ctx, 31);
@@ -426,42 +486,70 @@ static void reo_gs_reset_graph(uint8_t* rdram, R5900Context* ctx, PS2Runtime* ru
         snapshotDone = true;
         auto wr32 = [&](uint32_t a, uint32_t v) {
             uint32_t p = a & PS2_RAM_MASK;
-            if (p + 4 <= PS2_RAM_SIZE) memcpy(rdram + p, &v, 4);
+            if (p + 4 <= PS2_RAM_SIZE)
+                memcpy(rdram + p, &v, 4);
         };
-        auto loadBin = [&](const char* path, const char* fb, uint32_t addr, uint32_t maxSz) -> long {
+        auto loadBin = [&](const char* path, const char* fb, uint32_t addr,
+                           uint32_t maxSz) -> long {
             FILE* f = fopen(path, "rb");
-            if (!f && fb) f = fopen(fb, "rb");
-            if (!f) return 0;
-            fseek(f, 0, SEEK_END); long sz = ftell(f); fseek(f, 0, SEEK_SET);
+            if (!f && fb)
+                f = fopen(fb, "rb");
+            if (!f)
+                return 0;
+            fseek(f, 0, SEEK_END);
+            long sz = ftell(f);
+            fseek(f, 0, SEEK_SET);
             uint32_t p = addr & PS2_RAM_MASK;
             uint32_t rd = (uint32_t)std::min((long)maxSz, sz);
-            if (p + rd <= PS2_RAM_SIZE) fread(rdram + p, 1, rd, f);
-            fclose(f); return sz;
+            if (p + rd <= PS2_RAM_SIZE)
+                fread(rdram + p, 1, rd, f);
+            fclose(f);
+            return sz;
         };
         long msz = loadBin("tools/ps2_debug/pcsx2_mainmenu_8mb.bin",
-                           "tools/ps2_debug/pcsx2_snapshot_4mb.bin", 0xAEA3C0, 8*1024*1024);
-        if (msz > 0) printf("[REO] Injected game data: %ld bytes\n", msz);
-        loadBin("tools/ps2_debug/pcsx2_mainmenu_324000.bin", "tools/ps2_debug/pcsx2_snapshot_324000.bin", 0x324000, 0x500);
-        loadBin("tools/ps2_debug/pcsx2_mainmenu_340000.bin", "tools/ps2_debug/pcsx2_snapshot_340000.bin", 0x340000, 0x3000);
-        loadBin("tools/ps2_debug/pcsx2_mainmenu_236700.bin", "tools/ps2_debug/pcsx2_snapshot_236700.bin", 0x236700, 0x100);
+                           "tools/ps2_debug/pcsx2_snapshot_4mb.bin", 0xAEA3C0, 8 * 1024 * 1024);
+        if (msz > 0)
+            printf("[REO] Injected game data: %ld bytes\n", msz);
+        loadBin("tools/ps2_debug/pcsx2_mainmenu_324000.bin",
+                "tools/ps2_debug/pcsx2_snapshot_324000.bin", 0x324000, 0x500);
+        loadBin("tools/ps2_debug/pcsx2_mainmenu_340000.bin",
+                "tools/ps2_debug/pcsx2_snapshot_340000.bin", 0x340000, 0x3000);
+        loadBin("tools/ps2_debug/pcsx2_mainmenu_236700.bin",
+                "tools/ps2_debug/pcsx2_snapshot_236700.bin", 0x236700, 0x100);
         loadBin("tools/ps2_debug/pcsx2_dma_channels.bin", nullptr, 0x298680, 0x4000);
         loadBin("tools/ps2_debug/pcsx2_render_pool.bin", nullptr, 0x298000, 0x1000);
         for (int ch = 0; ch < 8; ch++) {
-            uint32_t ca = (0x298680 + ch*56) & PS2_RAM_MASK;
-            rdram[ca]='T'; rdram[ca+1]='I'; rdram[ca+2]='M'; rdram[ca+3]='2';
-            rdram[ca+4]=4; rdram[ca+5]=1;
+            uint32_t ca = (0x298680 + ch * 56) & PS2_RAM_MASK;
+            rdram[ca] = 'T';
+            rdram[ca + 1] = 'I';
+            rdram[ca + 2] = 'M';
+            rdram[ca + 3] = '2';
+            rdram[ca + 4] = 4;
+            rdram[ca + 5] = 1;
         }
-        wr32(0x29F6E0, 5); wr32(0x29F6F0, 1); wr32(0x29F6F4, 0x1000); wr32(0x29F6F8, 4);
-        for (int i = 0; i < 5; i++) wr32(0x29FA00 + i*4, 1);
-        wr32(0x29FDB8, 0x010B23C0); wr32(0x29FDBC, 0x011323C0);
-        wr32(0x29FDA8, 0x010AA3C0); wr32(0x29FDAC, 0xE00000);
+        wr32(0x29F6E0, 5);
+        wr32(0x29F6F0, 1);
+        wr32(0x29F6F4, 0x1000);
+        wr32(0x29F6F8, 4);
+        for (int i = 0; i < 5; i++)
+            wr32(0x29FA00 + i * 4, 1);
+        wr32(0x29FDB8, 0x010B23C0);
+        wr32(0x29FDBC, 0x011323C0);
+        wr32(0x29FDA8, 0x010AA3C0);
+        wr32(0x29FDAC, 0xE00000);
         uint32_t base = 0xAEA3C0;
-        wr32(0x224C64, base+0x80940); wr32(0x224C64+64, base+0xA0E40);
-        wr32(0x224C64+128, base+0x121840); wr32(0x224C64+192, base+0x161D40);
-        wr32(0x264A00, 0x30000030); wr32(0x264A04, 0xE00000);
-        wr32(0x264A10, 0x30); wr32(0x264A14, 0xEBA000);
-        wr32(0x264A20, 0x30000030); wr32(0x264A24, 0xF2E000);
-        wr32(0x264A30, 0x30); wr32(0x264A34, 0xF7B000);
+        wr32(0x224C64, base + 0x80940);
+        wr32(0x224C64 + 64, base + 0xA0E40);
+        wr32(0x224C64 + 128, base + 0x121840);
+        wr32(0x224C64 + 192, base + 0x161D40);
+        wr32(0x264A00, 0x30000030);
+        wr32(0x264A04, 0xE00000);
+        wr32(0x264A10, 0x30);
+        wr32(0x264A14, 0xEBA000);
+        wr32(0x264A20, 0x30000030);
+        wr32(0x264A24, 0xF2E000);
+        wr32(0x264A30, 0x30);
+        wr32(0x264A34, 0xF7B000);
         // Load NBD files from romdata
         NetbioReader nr;
         if (nr.open("game_data/NETBIO00.DAT")) {
@@ -469,20 +557,25 @@ static void reo_gs_reset_graph(uint8_t* rdram, R5900Context* ctx, PS2Runtime* ru
             int rc = nr.parse_inner_afs(0, romdata);
             uint32_t la = 0xE00000;
             for (int i = 0; i < std::min(rc, 5); i++) {
-                if (romdata[i].size > 0x200000) continue;
+                if (romdata[i].size > 0x200000)
+                    continue;
                 uint32_t ph = la & PS2_RAM_MASK;
                 if (ph + romdata[i].size <= PS2_RAM_SIZE) {
                     FILE* df = fopen("game_data/NETBIO00.DAT", "rb");
-                    if (df) { fseek(df, romdata[i].offset, SEEK_SET);
-                        fread(rdram+ph, 1, romdata[i].size, df); fclose(df);
-                        printf("[REO] NBD [%d] '%s' %u bytes -> 0x%X\n", i, romdata[i].name, romdata[i].size, la);
+                    if (df) {
+                        fseek(df, romdata[i].offset, SEEK_SET);
+                        fread(rdram + ph, 1, romdata[i].size, df);
+                        fclose(df);
+                        printf("[REO] NBD [%d] '%s' %u bytes -> 0x%X\n", i, romdata[i].name,
+                               romdata[i].size, la);
                     }
                 }
                 la += (romdata[i].size + 0xFFF) & ~0xFFF;
             }
             nr.close();
         }
-        printf("[REO] Snapshot injection complete\n"); fflush(stdout);
+        printf("[REO] Snapshot injection complete\n");
+        fflush(stdout);
     }
 
     setReturnU32(ctx, 0);
@@ -582,8 +675,7 @@ static void reo_pad_init(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime)
 static void reo_pad_port_open(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     static int logCount = 0;
     if (logCount < 4) {
-        printf("[REO] scePadPortOpen port=%d slot=%d\n",
-               getRegU32(ctx, 4), getRegU32(ctx, 5));
+        printf("[REO] scePadPortOpen port=%d slot=%d\n", getRegU32(ctx, 4), getRegU32(ctx, 5));
         logCount++;
     }
     setReturnU32(ctx, 1);
@@ -622,7 +714,7 @@ static void reo_pad_read(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime)
         if (input) {
             const reo::DualShock2State& pad = input->get_pad(0);
             buf[2] = (uint8_t)(pad.buttons >> 8);   // buttons high byte
-            buf[3] = (uint8_t)(pad.buttons & 0xFF);  // buttons low byte
+            buf[3] = (uint8_t)(pad.buttons & 0xFF); // buttons low byte
             buf[4] = pad.right_x;
             buf[5] = pad.right_y;
             buf[6] = pad.left_x;
@@ -634,8 +726,8 @@ static void reo_pad_read(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime)
             if (pad.buttons != 0xFFFF) {
                 static int pressLog = 0;
                 if (pressLog < 20) {
-                    printf("[PAD] buttons=0x%04X LX=%02X LY=%02X RX=%02X RY=%02X\n",
-                           pad.buttons, pad.left_x, pad.left_y, pad.right_x, pad.right_y);
+                    printf("[PAD] buttons=0x%04X LX=%02X LY=%02X RX=%02X RY=%02X\n", pad.buttons,
+                           pad.left_x, pad.left_y, pad.right_x, pad.right_y);
                     pressLog++;
                 }
             }
@@ -659,14 +751,20 @@ static void reo_pad_read(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime)
 
 static void reo_net_socket(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     static int logCount = 0;
-    if (logCount < 4) { printf("[REO] net_socket\n"); logCount++; }
+    if (logCount < 4) {
+        printf("[REO] net_socket\n");
+        logCount++;
+    }
     setReturnU32(ctx, 1); // return fake socket fd
     ctx->pc = getRegU32(ctx, 31);
 }
 
 static void reo_net_connect(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     static int logCount = 0;
-    if (logCount < 4) { printf("[REO] net_connect\n"); logCount++; }
+    if (logCount < 4) {
+        printf("[REO] net_connect\n");
+        logCount++;
+    }
     setReturnS32(ctx, -1); // connection failed (offline mode)
     ctx->pc = getRegU32(ctx, 31);
 }
@@ -694,9 +792,12 @@ static void dump_game_state(uint8_t* rdram) {
     static int dumpCount = 0;
     static auto lastDump = std::chrono::steady_clock::now();
     auto now = std::chrono::steady_clock::now();
-    if (dumpCount > 0 && std::chrono::duration_cast<std::chrono::seconds>(now - lastDump).count() < 2) return;
+    if (dumpCount > 0 &&
+        std::chrono::duration_cast<std::chrono::seconds>(now - lastDump).count() < 2)
+        return;
     lastDump = now;
-    if (dumpCount >= 10) return;
+    if (dumpCount >= 10)
+        return;
     dumpCount++;
 
     // Task table at 0x341640 (256 entries, 16 bytes each)
@@ -704,7 +805,8 @@ static void dump_game_state(uint8_t* rdram) {
     int activeCount = 0;
     for (int i = 0; i < 256; i++) {
         uint32_t addr = (0x341640 + i * 16) & PS2_RAM_MASK;
-        if (addr + 16 > PS2_RAM_SIZE) break;
+        if (addr + 16 > PS2_RAM_SIZE)
+            break;
         uint32_t flag;
         memcpy(&flag, rdram + addr, 4);
         if (flag != 0) {
@@ -713,8 +815,8 @@ static void dump_game_state(uint8_t* rdram) {
             memcpy(&p1, rdram + addr + 8, 4);
             memcpy(&p2, rdram + addr + 12, 4);
             if (activeCount < 10)
-                printf("[DIAG] task[%d]: flag=0x%X cb=0x%08X p1=0x%08X p2=0x%08X\n",
-                       i, flag, cbId, p1, p2);
+                printf("[DIAG] task[%d]: flag=0x%X cb=0x%08X p1=0x%08X p2=0x%08X\n", i, flag, cbId,
+                       p1, p2);
             activeCount++;
         }
     }
@@ -724,13 +826,16 @@ static void dump_game_state(uint8_t* rdram) {
     // Game state variables
     auto rd32 = [&](uint32_t a) -> uint32_t {
         uint32_t p = a & PS2_RAM_MASK;
-        if (p + 4 > PS2_RAM_SIZE) return 0;
-        uint32_t v; memcpy(&v, rdram + p, 4); return v;
+        if (p + 4 > PS2_RAM_SIZE)
+            return 0;
+        uint32_t v;
+        memcpy(&v, rdram + p, 4);
+        return v;
     };
-    printf("[DIAG] state@0x2B0EC0=%u @0x29FA10=%u @0x29FDB4=%u @0x3445E8=%u\n",
-           rd32(0x2B0EC0), rd32(0x29FA10), rd32(0x29FDB4), rd32(0x3445E8));
-    printf("[DIAG] init@0x344000=%u @0x344004=%u @0x344008=%u @0x34400C=%u\n",
-           rd32(0x344000), rd32(0x344004), rd32(0x344008), rd32(0x34400C));
+    printf("[DIAG] state@0x2B0EC0=%u @0x29FA10=%u @0x29FDB4=%u @0x3445E8=%u\n", rd32(0x2B0EC0),
+           rd32(0x29FA10), rd32(0x29FDB4), rd32(0x3445E8));
+    printf("[DIAG] init@0x344000=%u @0x344004=%u @0x344008=%u @0x34400C=%u\n", rd32(0x344000),
+           rd32(0x344004), rd32(0x344008), rd32(0x34400C));
     fflush(stdout);
 }
 
@@ -771,8 +876,12 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
     // Ensure main loop counter at 0x316598 is non-zero (0 = skip game logic)
     {
         uint32_t loopAddr = 0x316598u & PS2_RAM_MASK;
-        uint32_t lc; memcpy(&lc, rdram + loopAddr, 4);
-        if (lc == 0) { lc = 1; memcpy(rdram + loopAddr, &lc, 4); }
+        uint32_t lc;
+        memcpy(&lc, rdram + loopAddr, 4);
+        if (lc == 0) {
+            lc = 1;
+            memcpy(rdram + loopAddr, &lc, 4);
+        }
     }
 
     // REO_NATURAL: when set, disable the PCSX2 snapshot injection + forced
@@ -787,30 +896,40 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
         snapshotLoaded = true;
         auto wr32 = [&](uint32_t a, uint32_t v) {
             uint32_t p = a & PS2_RAM_MASK;
-            if (p + 4 <= PS2_RAM_SIZE) memcpy(rdram + p, &v, 4);
+            if (p + 4 <= PS2_RAM_SIZE)
+                memcpy(rdram + p, &v, 4);
         };
-        auto loadBin = [&](const char* path, const char* fallback, uint32_t addr, uint32_t maxSz) -> long {
+        auto loadBin = [&](const char* path, const char* fallback, uint32_t addr,
+                           uint32_t maxSz) -> long {
             FILE* f = fopen(path, "rb");
-            if (!f && fallback) f = fopen(fallback, "rb");
-            if (!f) return 0;
-            fseek(f, 0, SEEK_END); long sz = ftell(f); fseek(f, 0, SEEK_SET);
+            if (!f && fallback)
+                f = fopen(fallback, "rb");
+            if (!f)
+                return 0;
+            fseek(f, 0, SEEK_END);
+            long sz = ftell(f);
+            fseek(f, 0, SEEK_SET);
             uint32_t p = addr & PS2_RAM_MASK;
             uint32_t readSz = (uint32_t)std::min((long)maxSz, sz);
-            if (p + readSz <= PS2_RAM_SIZE) fread(rdram + p, 1, readSz, f);
+            if (p + readSz <= PS2_RAM_SIZE)
+                fread(rdram + p, 1, readSz, f);
             fclose(f);
             return sz;
         };
 
         // Main game data snapshot (8MB or 4MB)
         long mainSz = loadBin("tools/ps2_debug/pcsx2_mainmenu_8mb.bin",
-                              "tools/ps2_debug/pcsx2_snapshot_4mb.bin",
-                              0xAEA3C0, 8*1024*1024);
-        if (mainSz > 0) printf("[REO] Injected game data: %ld bytes at 0xAEA3C0\n", mainSz);
+                              "tools/ps2_debug/pcsx2_snapshot_4mb.bin", 0xAEA3C0, 8 * 1024 * 1024);
+        if (mainSz > 0)
+            printf("[REO] Injected game data: %ld bytes at 0xAEA3C0\n", mainSz);
 
         // State region snapshots
-        loadBin("tools/ps2_debug/pcsx2_mainmenu_324000.bin", "tools/ps2_debug/pcsx2_snapshot_324000.bin", 0x324000, 0x500);
-        loadBin("tools/ps2_debug/pcsx2_mainmenu_340000.bin", "tools/ps2_debug/pcsx2_snapshot_340000.bin", 0x340000, 0x3000);
-        loadBin("tools/ps2_debug/pcsx2_mainmenu_236700.bin", "tools/ps2_debug/pcsx2_snapshot_236700.bin", 0x236700, 0x100);
+        loadBin("tools/ps2_debug/pcsx2_mainmenu_324000.bin",
+                "tools/ps2_debug/pcsx2_snapshot_324000.bin", 0x324000, 0x500);
+        loadBin("tools/ps2_debug/pcsx2_mainmenu_340000.bin",
+                "tools/ps2_debug/pcsx2_snapshot_340000.bin", 0x340000, 0x3000);
+        loadBin("tools/ps2_debug/pcsx2_mainmenu_236700.bin",
+                "tools/ps2_debug/pcsx2_snapshot_236700.bin", 0x236700, 0x100);
 
         // DMA channels + render pool
         loadBin("tools/ps2_debug/pcsx2_dma_channels.bin", nullptr, 0x298680, 0x4000);
@@ -820,34 +939,48 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
         for (int ch = 0; ch < 8; ch++) {
             uint32_t chAddr = (0x298680 + ch * 56) & PS2_RAM_MASK;
             if (chAddr + 56 <= PS2_RAM_SIZE) {
-                rdram[chAddr] = 'T'; rdram[chAddr+1] = 'I';
-                rdram[chAddr+2] = 'M'; rdram[chAddr+3] = '2';
-                rdram[chAddr+4] = 0x04; rdram[chAddr+5] = 0x01;
+                rdram[chAddr] = 'T';
+                rdram[chAddr + 1] = 'I';
+                rdram[chAddr + 2] = 'M';
+                rdram[chAddr + 3] = '2';
+                rdram[chAddr + 4] = 0x04;
+                rdram[chAddr + 5] = 0x01;
             }
         }
 
         // Display configuration
-        wr32(0x29F6E0, 5); wr32(0x29F6F0, 1); wr32(0x29F6F4, 0x1000);
+        wr32(0x29F6E0, 5);
+        wr32(0x29F6F0, 1);
+        wr32(0x29F6F4, 0x1000);
         wr32(0x29F6F8, 4);
-        wr32(0x29FA00, 1); wr32(0x29FA04, 1); wr32(0x29FA08, 1);
-        wr32(0x29FA0C, 1); wr32(0x29FA10, 1);
+        wr32(0x29FA00, 1);
+        wr32(0x29FA04, 1);
+        wr32(0x29FA08, 1);
+        wr32(0x29FA0C, 1);
+        wr32(0x29FA10, 1);
 
         // Display list buffers
-        wr32(0x29FDB8, 0x010B23C0); wr32(0x29FDBC, 0x011323C0);
-        wr32(0x29FDA8, 0x010AA3C0); wr32(0x29FDAC, 0x00E00000);
+        wr32(0x29FDB8, 0x010B23C0);
+        wr32(0x29FDBC, 0x011323C0);
+        wr32(0x29FDA8, 0x010AA3C0);
+        wr32(0x29FDAC, 0x00E00000);
 
         // Render object table pointers
         uint32_t base = 0xAEA3C0;
-        wr32(0x224C64,       base + 0x80940);
-        wr32(0x224C64 + 64,  base + 0xA0E40);
+        wr32(0x224C64, base + 0x80940);
+        wr32(0x224C64 + 64, base + 0xA0E40);
         wr32(0x224C64 + 128, base + 0x121840);
         wr32(0x224C64 + 192, base + 0x161D40);
 
         // Scene data table
-        wr32(0x264A00, 0x30000030); wr32(0x264A04, 0xE00000);
-        wr32(0x264A10, 0x30); wr32(0x264A14, 0xEBA000);
-        wr32(0x264A20, 0x30000030); wr32(0x264A24, 0xF2E000);
-        wr32(0x264A30, 0x30); wr32(0x264A34, 0xF7B000);
+        wr32(0x264A00, 0x30000030);
+        wr32(0x264A04, 0xE00000);
+        wr32(0x264A10, 0x30);
+        wr32(0x264A14, 0xEBA000);
+        wr32(0x264A20, 0x30000030);
+        wr32(0x264A24, 0xF2E000);
+        wr32(0x264A30, 0x30);
+        wr32(0x264A34, 0xF7B000);
 
         // Load NBD files from romdata
         {
@@ -857,7 +990,8 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
                 int rc = nr.parse_inner_afs(0, romdata);
                 uint32_t loadAddr = 0xE00000;
                 for (int i = 0; i < std::min(rc, 5); i++) {
-                    if (romdata[i].size > 0x200000) continue;
+                    if (romdata[i].size > 0x200000)
+                        continue;
                     uint32_t phys = loadAddr & PS2_RAM_MASK;
                     if (phys + romdata[i].size <= PS2_RAM_SIZE) {
                         FILE* datf = fopen("game_data/NETBIO00.DAT", "rb");
@@ -865,8 +999,8 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
                             fseek(datf, romdata[i].offset, SEEK_SET);
                             fread(rdram + phys, 1, romdata[i].size, datf);
                             fclose(datf);
-                            printf("[REO] Loaded NBD [%d] '%s' (%u bytes) -> 0x%08X\n",
-                                   i, romdata[i].name, romdata[i].size, loadAddr);
+                            printf("[REO] Loaded NBD [%d] '%s' (%u bytes) -> 0x%08X\n", i,
+                                   romdata[i].name, romdata[i].size, loadAddr);
                         }
                     }
                     loadAddr += (romdata[i].size + 0xFFF) & ~0xFFF;
@@ -897,7 +1031,8 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
         SET_GPR_U32(dc, 4, dsp + 96); // a0 = &ThreadParam
         uint32_t tp = (dsp + 96) & PS2_RAM_MASK;
         uint32_t vals[] = {0, 0x1CB9A0, 0x33DA10, 8192, 0x261CF0, 4};
-        for (int i = 0; i < 6; i++) memcpy(rdram + tp + i*4, &vals[i], 4);
+        for (int i = 0; i < 6; i++)
+            memcpy(rdram + tp + i * 4, &vals[i], 4);
         // CreateThread
         sub_00114420_0x114420(rdram, dc, runtime);
         uint32_t tid = GPR_U32(dc, 2);
@@ -930,7 +1065,8 @@ static void reo_demo_thread_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime*
             fflush(stdout);
         }
         // If the function signals completion (v0 != 0), stop
-        if (v0 != 0 && iter > 0) break;
+        if (v0 != 0 && iter > 0)
+            break;
     }
     printf("[DEMO THREAD] Loop done.\n");
     fflush(stdout);
@@ -962,7 +1098,8 @@ static void reo_cri_error_log(uint8_t* rdram, R5900Context* ctx, PS2Runtime* run
         std::string out;
         for (uint32_t i = 0; i < 160; ++i) {
             const uint32_t p = (a + i) & 0x1FFFFFFu;
-            if (!a || rdram[p] == 0) break;
+            if (!a || rdram[p] == 0)
+                break;
             out.push_back(static_cast<char>(rdram[p]));
         }
         return out;
@@ -978,29 +1115,256 @@ static void reo_cri_error_log(uint8_t* rdram, R5900Context* ctx, PS2Runtime* run
 }
 
 // REO_SFD_DIAG=1: log which Sofdec end-of-playback check stops the MPEG decoder (D33):
+void sub_00132DF0_0x132df0(uint8_t*, R5900Context*, PS2Runtime*);
+static void reo_audio_release_trace(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    const uint32_t h = static_cast<uint32_t>(_mm_extract_epi32(c->r[4], 0));
+    const uint32_t pause = static_cast<uint32_t>(_mm_extract_epi32(c->r[5], 0));
+    sub_00132DF0_0x132df0(r, c, p);
+    uint32_t dec = 0;
+    std::memcpy(&dec, r + 0x22F18C, 4);
+    dec &= 0x1FFFFFFu;
+    int32_t numerator = 0, denominator = 0, state = 0;
+    if (dec && dec + 0xF10 < 0x2000000u) {
+        std::memcpy(&numerator, r + dec + 0xF08, 4);
+        std::memcpy(&denominator, r + dec + 0xF0C, 4);
+        std::memcpy(&state, r + dec + 0x48, 4);
+    }
+    const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        std::chrono::steady_clock::now().time_since_epoch())
+                        .count();
+    fprintf(stderr,
+            "[CRI-SYNC] guest-pause handle=%x pause=%u ns=%llu vsync=%llu movie=%d/%d state=%d\n",
+            h, pause, static_cast<unsigned long long>(ns),
+            static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()), numerator,
+            denominator, state);
+}
+
 // 0x1731A0 stop time, 0x173210 end flags, 0x1732D8 input EOF, 0x173330 play time.
 void sub_001731A0_0x1731a0(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_00173210_0x173210(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001732D8_0x1732d8(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_00173330_0x173330(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_0015FFC0_0x15ffc0(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_00162750_0x162750(uint8_t*, R5900Context*, PS2Runtime*);
+// The original movie startup calls 0x1627A8, a second entry inside the
+// generated 0x162750 function. Its entry switch only exposes the 0x1627BC
+// continuation. Execute the original prologue and validation, then reuse that
+// continuation for the original error branch and feed-mode tail call.
+static void reo_sfd_feed_end_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    ctx->pc = 0x1627A8u; // addiu sp, sp, -0x10
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 4294967280));
+    ctx->pc = 0x1627ACu; // sd s0, 0(sp)
+    WRITE64(ADD32(GPR_U32(ctx, 29), 0), GPR_U64(ctx, 16));
+    ctx->pc = 0x1627B0u; // sd ra, 8(sp)
+    WRITE64(ADD32(GPR_U32(ctx, 29), 8), GPR_U64(ctx, 31));
+    ctx->pc = 0x1627B4u; // jal 0x15FFC0
+    SET_GPR_U32(ctx, 31, 0x1627BCu);
+    ctx->pc = 0x1627B8u;
+    ctx->in_delay_slot = true;
+    ctx->branch_pc = 0x1627B4u;
+    SET_GPR_U64(ctx, 16, (uint64_t)GPR_U64(ctx, 4) + (uint64_t)GPR_U64(ctx, 0));
+    ctx->in_delay_slot = false;
+    ctx->pc = 0x15FFC0u;
+    if (runtime->hasFunction(0x15FFC0u)) {
+        auto targetFn = runtime->lookupFunction(0x15FFC0u);
+        targetFn(rdram, ctx, runtime);
+    } else {
+        sub_0015FFC0_0x15ffc0(rdram, ctx, runtime);
+    }
+    if (ctx->pc == 0x15FFC0u)
+        ctx->pc = 0x1627BCu;
+    if (ctx->pc != 0x1627BCu)
+        return;
+    sub_00162750_0x162750(rdram, ctx, runtime);
+}
+void sub_0010A830_0x10a830(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_001D3B90_0x1d3b90(uint8_t*, R5900Context*, PS2Runtime*);
+// Original 0x1D3BC0 selects the result asset through the common 0x1D3BE0
+// routine. Neither entry is exposed by the generated function's entry switch.
+// Reproduce the reached selector-2 prefix, then reuse its 0x1D3C50 continuation.
+static void reo_result_asset_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    ctx->pc = 0x1D3BC0u; // j 0x1D3BE0
+    ctx->pc = 0x1D3BC4u;
+    ctx->in_delay_slot = true;
+    ctx->branch_pc = 0x1D3BC0u;
+    SET_GPR_S32(ctx, 4, (int32_t)ADD32(GPR_U32(ctx, 0), 2));
+    ctx->in_delay_slot = false;
+    ctx->pc = 0x1D3BE0u; // addiu sp, sp, -0xA0
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), 4294967136));
+    ctx->pc = 0x1D3BE4u; // addiu v0, zero, 3
+    SET_GPR_S32(ctx, 2, (int32_t)ADD32(GPR_U32(ctx, 0), 3));
+    ctx->pc = 0x1D3BE8u; // sd ra, 0x10(sp)
+    WRITE64(ADD32(GPR_U32(ctx, 29), 16), GPR_U64(ctx, 31));
+    ctx->pc = 0x1D3BECu; // beq a0, v0 (selector 2: not taken)
+    ctx->pc = 0x1D3BF0u;
+    ctx->in_delay_slot = true;
+    ctx->branch_pc = 0x1D3BECu;
+    WRITE128(ADD32(GPR_U32(ctx, 29), 0), GPR_VEC(ctx, 16));
+    ctx->in_delay_slot = false;
+    ctx->pc = 0x1D3BF4u; // addiu v0, zero, 2
+    SET_GPR_S32(ctx, 2, (int32_t)ADD32(GPR_U32(ctx, 0), 2));
+    ctx->pc = 0x1D3BF8u; // beq a0, v0 (selector 2: taken)
+    ctx->pc = 0x1D3BFCu;
+    ctx->in_delay_slot = true;
+    ctx->branch_pc = 0x1D3BF8u;
+    SET_GPR_S32(ctx, 5, (int32_t)((uint32_t)37 << 16));
+    ctx->in_delay_slot = false;
+    ctx->pc = 0x1D3C44u; // addiu a0, sp, 0x20
+    SET_GPR_S32(ctx, 4, (int32_t)ADD32(GPR_U32(ctx, 29), 32));
+    ctx->pc = 0x1D3C48u; // jal 0x10A830
+    SET_GPR_U32(ctx, 31, 0x1D3C50u);
+    ctx->pc = 0x1D3C4Cu;
+    ctx->in_delay_slot = true;
+    ctx->branch_pc = 0x1D3C48u;
+    SET_GPR_S32(ctx, 5, (int32_t)ADD32(GPR_U32(ctx, 5), 26232));
+    ctx->in_delay_slot = false;
+    ctx->pc = 0x10A830u;
+    if (runtime->hasFunction(0x10A830u)) {
+        auto targetFn = runtime->lookupFunction(0x10A830u);
+        targetFn(rdram, ctx, runtime);
+    } else {
+        sub_0010A830_0x10a830(rdram, ctx, runtime);
+    }
+    if (ctx->pc == 0x10A830u)
+        ctx->pc = 0x1D3C50u;
+    if (ctx->pc != 0x1D3C50u)
+        return;
+    sub_001D3B90_0x1d3b90(rdram, ctx, runtime);
+}
+// Opt-in late-movie observer. The epoch is established at binding installation,
+// so the boot movie cannot consume the diagnostic budget for the quit movie.
+void sub_001752F8_0x1752f8(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_00162AF8_0x162af8(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_0015F608_0x15f608(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_00173F28_0x173f28(uint8_t*, R5900Context*, PS2Runtime*);
+struct SfdEofObserver {
+    uint64_t epochNs = 0, lastSampleNs = 0, calls[3]{};
+    uint32_t atSeconds = 95, seconds = 70, samples = 0, events = 0;
+};
+static SfdEofObserver g_sfdEofObserver;
+static uint64_t sfdEofNow() {
+    return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                     std::chrono::steady_clock::now().time_since_epoch())
+                                     .count());
+}
+static uint32_t sfdEofWord(const uint8_t* r, uint32_t a) {
+    a &= 0x1FFFFFFu;
+    uint32_t value = 0;
+    if (a <= 0x1FFFFFCu)
+        std::memcpy(&value, r + a, 4);
+    return value;
+}
+static bool sfdEofInWindow(uint64_t ns) {
+    const uint64_t elapsed = ns - g_sfdEofObserver.epochNs;
+    return elapsed >= uint64_t(g_sfdEofObserver.atSeconds) * 1000000000ull &&
+           elapsed <
+               uint64_t(g_sfdEofObserver.atSeconds + g_sfdEofObserver.seconds) * 1000000000ull;
+}
+static void reo_sfd_eof_status_observe(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    const uint32_t decoder = getRegU32(c, 4), ra = getRegU32(c, 31);
+    sub_001752F8_0x1752f8(r, c, p);
+    auto& d = g_sfdEofObserver;
+    if (d.samples >= 96)
+        return;
+    const uint64_t ns = sfdEofNow();
+    if (!sfdEofInWindow(ns) || ns < d.lastSampleNs + 1000000000ull)
+        return;
+    d.lastSampleNs = ns;
+    ++d.samples;
+    const uint32_t work = sfdEofWord(r, 0x340A20), object = work ? sfdEofWord(r, work) : 0;
+    const uint32_t reader = object ? sfdEofWord(r, object + 0x44) : 0;
+    const uint32_t file = object ? sfdEofWord(r, object + 0x4C) : 0;
+    const uint32_t dec = decoder & 0x1FFFFFFu;
+    const bool validDec = dec && dec < 0x1FFD000u;
+    const uint32_t inIndex = validDec ? sfdEofWord(r, dec + 0x1AB4) : 0xFFFFFFFFu;
+    const uint32_t videoIndex = validDec ? sfdEofWord(r, dec + 0x1C48) : 0xFFFFFFFFu;
+    const uint32_t sj = validDec && inIndex < 8 ? sfdEofWord(r, dec + 0x1154 + 116 * inIndex) : 0;
+    fprintf(
+        stderr,
+        "[SFD-EOF] sample=%u ns=%llu elapsed_ms=%llu decoder=%08x result=%u completed=%u pc=%08x "
+        "object=%08x status=%u mode70=%u pending71=%u reader=%08x reader_status=%u "
+        "reader_sectors=%u reader_total=%u file_remaining=%u state=%u substate=%u request=%u "
+        "attr49=%u attr56=%u input_index=%u input_end=%u video_index=%u video_end=%u sj=%08x "
+        "sj_data=%u sj_read=%u sj_write=%u calls162af8=%llu calls15f608=%llu calls173f28=%llu\n",
+        d.samples, static_cast<unsigned long long>(ns),
+        static_cast<unsigned long long>((ns - d.epochNs) / 1000000ull), decoder, getRegU32(c, 2),
+        c->pc == ra, c->pc, object, object ? sfdEofWord(r, object + 8) : 0,
+        object ? (sfdEofWord(r, object + 0x70) & 255) : 0,
+        object ? ((sfdEofWord(r, object + 0x70) >> 8) & 255) : 0, reader,
+        reader ? ((sfdEofWord(r, reader) >> 8) & 255) : 0,
+        reader ? sfdEofWord(r, reader + 0x2C) : 0, reader ? sfdEofWord(r, reader + 0x54) : 0,
+        file ? sfdEofWord(r, file + 0x24) : 0, validDec ? sfdEofWord(r, dec + 0x48) : 0,
+        validDec ? sfdEofWord(r, dec + 0x4C) : 0, validDec ? sfdEofWord(r, dec + 0x44) : 0,
+        validDec ? sfdEofWord(r, dec + 0x9A0 + 49 * 4) : 0,
+        validDec ? sfdEofWord(r, dec + 0x9A0 + 56 * 4) : 0, inIndex,
+        validDec && inIndex < 8 ? sfdEofWord(r, dec + 0x114C + 116 * inIndex) : 0, videoIndex,
+        validDec && videoIndex < 8 ? sfdEofWord(r, dec + 0x114C + 116 * videoIndex) : 0, sj,
+        sj ? sfdEofWord(r, sj + 0xC) : 0, sj ? sfdEofWord(r, sj + 0x18) : 0,
+        sj ? sfdEofWord(r, sj + 0x14) : 0, static_cast<unsigned long long>(d.calls[0]),
+        static_cast<unsigned long long>(d.calls[1]), static_cast<unsigned long long>(d.calls[2]));
+}
+template <void (*Orig)(uint8_t*, R5900Context*, PS2Runtime*), unsigned Slot>
+static void reo_sfd_eof_event_observe(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    const uint32_t arg = getRegU32(c, 4), arg1 = getRegU32(c, 5), ra = getRegU32(c, 31);
+    ++g_sfdEofObserver.calls[Slot];
+    Orig(r, c, p);
+    if (g_sfdEofObserver.events >= 24)
+        return;
+    const uint64_t ns = sfdEofNow();
+    if (!sfdEofInWindow(ns))
+        return;
+    ++g_sfdEofObserver.events;
+    fprintf(stderr,
+            "[SFD-EOF] event=%u ns=%llu slot=%u a0=%08x a1=%08x ra=%08x pc=%08x completed=%u "
+            "result=%u\n",
+            g_sfdEofObserver.events, static_cast<unsigned long long>(ns), Slot, arg, arg1, ra,
+            c->pc, c->pc == ra, getRegU32(c, 2));
+}
 template <void (*Orig)(uint8_t*, R5900Context*, PS2Runtime*)>
-static void reo_sfd_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime, const char* name) {
+static void reo_sfd_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime,
+                          const char* name) {
     const uint32_t h = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[4], 0));
     Orig(rdram, ctx, runtime);
     const uint32_t v0 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[2], 0));
     static int n = 0;
+    static const bool syncLog = std::getenv("REO_CRI_SYNC_LOG") != nullptr;
+    static uint64_t lastTick = 0;
+    const uint64_t tick = syncLog ? ps2_syscalls::GetCurrentVSyncTick() : 0;
+    if (syncLog && tick >= lastTick + 60 && h && (h & 0x1FFFFFFu) + 0xF10 < 0x2000000u) {
+        lastTick = tick;
+        int32_t num = 0, den = 0, pictureNum = 0, pictureDen = 0;
+        std::memcpy(&num, rdram + (h & 0x1FFFFFFu) + 0xF08, 4);
+        std::memcpy(&den, rdram + (h & 0x1FFFFFFu) + 0xF0C, 4);
+        std::memcpy(&pictureNum, rdram + (h & 0x1FFFFFFu) + 0xF00, 4);
+        std::memcpy(&pictureDen, rdram + (h & 0x1FFFFFFu) + 0xF04, 4);
+        const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                            std::chrono::steady_clock::now().time_since_epoch())
+                            .count();
+        fprintf(stderr, "[CRI-SYNC] movie ns=%llu vsync=%llu time=%d/%d decoded=%d/%d\n",
+                static_cast<unsigned long long>(ns), static_cast<unsigned long long>(tick), num,
+                den, pictureNum, pictureDen);
+    }
     if (v0 != 0 && n++ < 60) {
         uint32_t st = 0, sub = 0, eof = 0;
         std::memcpy(&st, rdram + ((h + 0x48) & 0x1FFFFFFu), 4);
         std::memcpy(&sub, rdram + ((h + 0x4C) & 0x1FFFFFFu), 4);
         std::memcpy(&eof, rdram + ((h + 0x50) & 0x1FFFFFFu), 4);
-        fprintf(stderr, "[SFD] %s -> %u (dec 0x%x state %u in %u +50 %u)\n", name, v0, h, st, sub, eof);
+        fprintf(stderr, "[SFD] %s -> %u (dec 0x%x state %u in %u +50 %u)\n", name, v0, h, st, sub,
+                eof);
     }
 }
-static void reo_sfd_stoptime(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_check<sub_001731A0_0x1731a0>(r, c, p, "stop-time"); }
-static void reo_sfd_endflags(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_check<sub_00173210_0x173210>(r, c, p, "end-flags"); }
-static void reo_sfd_eof(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_check<sub_001732D8_0x1732d8>(r, c, p, "input-eof"); }
-static void reo_sfd_playtime(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_check<sub_00173330_0x173330>(r, c, p, "play-time"); }
+static void reo_sfd_stoptime(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_check<sub_001731A0_0x1731a0>(r, c, p, "stop-time");
+}
+static void reo_sfd_endflags(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_check<sub_00173210_0x173210>(r, c, p, "end-flags");
+}
+static void reo_sfd_eof(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_check<sub_001732D8_0x1732d8>(r, c, p, "input-eof");
+}
+static void reo_sfd_playtime(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_check<sub_00173330_0x173330>(r, c, p, "play-time");
+}
 // Lifecycle tracing: log a0/ra on entry and v0 on return.
 void sub_001735B0_0x1735b0(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_0015EFB8_0x15efb8(uint8_t*, R5900Context*, PS2Runtime*);
@@ -1008,7 +1372,8 @@ void sub_00172278_0x172278(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_00173C10_0x173c10(uint8_t*, R5900Context*, PS2Runtime*);
 static std::atomic<bool> g_sfdArmed{false}; // set once a Sofdec decoder exists
 template <void (*Orig)(uint8_t*, R5900Context*, PS2Runtime*)>
-static void reo_sfd_trace(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime, const char* name) {
+static void reo_sfd_trace(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime,
+                          const char* name) {
     const uint32_t a0 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[4], 0));
     const uint32_t ra = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[31], 0));
     Orig(rdram, ctx, runtime);
@@ -1017,16 +1382,24 @@ static void reo_sfd_trace(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime
     if (Orig == &sub_001735B0_0x1735b0)
         g_sfdArmed = true;
     if (g_sfdArmed ? armedN++ < 400 : n++ < 200)
-        fprintf(stderr, "[SFD] %s(a0=0x%x) ra=0x%x -> v0=0x%x pc=0x%x%s vsync=%llu\n", name, a0, ra, v0, ctx->pc,
-                ctx->pc == ra ? "" : " (PC != RA)",
+        fprintf(stderr, "[SFD] %s(a0=0x%x) ra=0x%x -> v0=0x%x pc=0x%x%s vsync=%llu\n", name, a0, ra,
+                v0, ctx->pc, ctx->pc == ra ? "" : " (PC != RA)",
                 static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()));
 }
 void sub_0015F2F0_0x15f2f0(uint8_t*, R5900Context*, PS2Runtime*);
 static void reo_sfd_15f2f0(uint8_t* r, R5900Context* c, PS2Runtime* p);
-static void reo_sfd_create(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_001735B0_0x1735b0>(r, c, p, "dec-create"); }
-static void reo_sfd_start(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015EFB8_0x15efb8>(r, c, p, "ply-start"); }
-static void reo_sfd_ready(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_00172278_0x172278>(r, c, p, "dec-input-ready"); }
-static void reo_sfd_stop(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_00173C10_0x173c10>(r, c, p, "dec-stop"); }
+static void reo_sfd_create(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_001735B0_0x1735b0>(r, c, p, "dec-create");
+}
+static void reo_sfd_start(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_0015EFB8_0x15efb8>(r, c, p, "ply-start");
+}
+static void reo_sfd_ready(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_00172278_0x172278>(r, c, p, "dec-input-ready");
+}
+static void reo_sfd_stop(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_00173C10_0x173c10>(r, c, p, "dec-stop");
+}
 void sub_001AB2F0_0x1ab2f0(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_00162808_0x162808(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_00162660_0x162660(uint8_t*, R5900Context*, PS2Runtime*);
@@ -1034,11 +1407,12 @@ void sub_001625D0_0x1625d0(uint8_t*, R5900Context*, PS2Runtime*);
 static void reo_sfd_lookup(uint8_t* r, R5900Context* c, PS2Runtime* p) {
     const uint32_t a0 = static_cast<uint32_t>(_mm_extract_epi32(c->r[4], 0));
     std::string name;
-    for (uint32_t i = 0; i < 64 && r[(a0 + i) & 0x1FFFFFFu]; ++i) name.push_back(static_cast<char>(r[(a0 + i) & 0x1FFFFFFu]));
+    for (uint32_t i = 0; i < 64 && r[(a0 + i) & 0x1FFFFFFu]; ++i)
+        name.push_back(static_cast<char>(r[(a0 + i) & 0x1FFFFFFu]));
     reo_sfd_trace<sub_001AB2F0_0x1ab2f0>(r, c, p, "file-lookup");
     const int32_t idx = static_cast<int32_t>(_mm_extract_epi32(c->r[2], 0));
     std::string hit;
-    if (idx >= 0 && idx < 0x1A6) {   // table 0x2337C0: pointers to names XOR 0xFF
+    if (idx >= 0 && idx < 0x1A6) { // table 0x2337C0: pointers to names XOR 0xFF
         uint32_t ptr = 0;
         std::memcpy(&ptr, r + 0x2337C0 + idx * 4, 4);
         for (uint32_t i = 0; i < 64 && r[(ptr + i) & 0x1FFFFFFu]; ++i)
@@ -1046,18 +1420,29 @@ static void reo_sfd_lookup(uint8_t* r, R5900Context* c, PS2Runtime* p) {
     }
     fprintf(stderr, "[SFD]   lookup \"%s\" -> %d \"%s\"\n", name.c_str(), idx, hit.c_str());
 }
-static void reo_sfd_entry(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_00162808_0x162808>(r, c, p, "ply-entry"); }
-static void reo_sfd_loop(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_00162660_0x162660>(r, c, p, "ply-set-loop"); }
+static void reo_sfd_entry(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_00162808_0x162808>(r, c, p, "ply-entry");
+}
+static void reo_sfd_loop(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_00162660_0x162660>(r, c, p, "ply-set-loop");
+}
 void sub_00162AF8_0x162af8(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_0015F270_0x15f270(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_0015FFC0_0x15ffc0(uint8_t*, R5900Context*, PS2Runtime*);
-static void reo_sfd_162af8(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_00162AF8_0x162af8>(r, c, p, "ply-162af8"); }
-static void reo_sfd_15f270(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015F270_0x15f270>(r, c, p, "ply-start-entry"); }
-static void reo_sfd_15f2f0(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015F2F0_0x15f2f0>(r, c, p, "ply-15f2f0"); }
+static void reo_sfd_162af8(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_00162AF8_0x162af8>(r, c, p, "ply-162af8");
+}
+static void reo_sfd_15f270(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_0015F270_0x15f270>(r, c, p, "ply-start-entry");
+}
+static void reo_sfd_15f2f0(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_0015F2F0_0x15f2f0>(r, c, p, "ply-15f2f0");
+}
 void sub_0012A968_0x12a968(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_0012A9F0_0x12a9f0(uint8_t*, R5900Context*, PS2Runtime*);
 template <void (*Orig)(uint8_t*, R5900Context*, PS2Runtime*)>
-static void reo_cri_lock_trace(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime, const char* name) {
+static void reo_cri_lock_trace(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime,
+                               const char* name) {
     const uint32_t ra = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[31], 0));
     int32_t before = 0, after = 0;
     std::memcpy(&before, rdram + 0x210480, 4);
@@ -1065,28 +1450,45 @@ static void reo_cri_lock_trace(uint8_t* rdram, R5900Context* ctx, PS2Runtime* ru
     std::memcpy(&after, rdram + 0x210480, 4);
     static std::atomic<int> n{0};
     if (n.fetch_add(1) < 3000)
-        fprintf(stderr, "[CRILOCK] %s caller=0x%x count %d->%d vsync=%llu\n", name, ra, before, after,
-                static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()));
+        fprintf(stderr, "[CRILOCK] %s caller=0x%x count %d->%d vsync=%llu\n", name, ra, before,
+                after, static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()));
 }
-static void reo_cri_lock(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_cri_lock_trace<sub_0012A968_0x12a968>(r, c, p, "lock"); }
-static void reo_cri_unlock(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_cri_lock_trace<sub_0012A9F0_0x12a9f0>(r, c, p, "unlock"); }
+static void reo_cri_lock(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_cri_lock_trace<sub_0012A968_0x12a968>(r, c, p, "lock");
+}
+static void reo_cri_unlock(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_cri_lock_trace<sub_0012A9F0_0x12a9f0>(r, c, p, "unlock");
+}
 void sub_0015FA50_0x15fa50(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_00164038_0x164038(uint8_t*, R5900Context*, PS2Runtime*);
-static void reo_sfd_server(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_00164038_0x164038>(r, c, p, "sfd-server"); }
+static void reo_sfd_server(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_00164038_0x164038>(r, c, p, "sfd-server");
+}
 void sub_001725E0_0x1725e0(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_0012B0D8_0x12b0d8(uint8_t*, R5900Context*, PS2Runtime*);
-static void reo_sfd_srvwake(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015FA50_0x15fa50>(r, c, p, "srv-wake(main)"); }
-static void reo_sfd_decstep(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_001725E0_0x1725e0>(r, c, p, "dec-step"); }
-static void reo_sfd_srvsleep(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0012B0D8_0x12b0d8>(r, c, p, "srv-sleep"); }
+static void reo_sfd_srvwake(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_0015FA50_0x15fa50>(r, c, p, "srv-wake(main)");
+}
+static void reo_sfd_decstep(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_001725E0_0x1725e0>(r, c, p, "dec-step");
+}
+static void reo_sfd_srvsleep(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_0012B0D8_0x12b0d8>(r, c, p, "srv-sleep");
+}
 void sub_00142FB8_0x142fb8(uint8_t*, R5900Context*, PS2Runtime*);
 // REO_SFD_DIAG: libmpeg macroblock write-back (clamp+pack into the picture buffer).
 static void reo_mpeg_writeback(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     const uint32_t a0 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[4], 0));
     const uint32_t a1 = static_cast<uint32_t>(_mm_extract_epi32(ctx->r[5], 0));
-    auto rd = [&](uint32_t a) { uint32_t v = 0; std::memcpy(&v, rdram + (a & 0x1FFFFFFu), 4); return v; };
+    auto rd = [&](uint32_t a) {
+        uint32_t v = 0;
+        std::memcpy(&v, rdram + (a & 0x1FFFFFFu), 4);
+        return v;
+    };
     const uint32_t slot = a0 + a1 * 0x140u;
     const uint32_t dst = rd(slot + 0x6d0), work = rd(a0 + 0x834), pred = rd(slot + 0x5ac);
-    const uint32_t f6d8 = rd(slot + 0x6d8), f6e4 = rd(slot + 0x6e4), f6e0 = rd(slot + 0x6e0), n6d4 = rd(slot + 0x6d4);
+    const uint32_t f6d8 = rd(slot + 0x6d8), f6e4 = rd(slot + 0x6e4), f6e0 = rd(slot + 0x6e0),
+                   n6d4 = rd(slot + 0x6d4);
     size_t srcNz = 0;
     for (uint32_t i = 0; i < 768; i += 4)
         srcNz += runtime->Load32(rdram, ctx, (f6d8 ? pred : work) + i) != 0;
@@ -1095,13 +1497,20 @@ static void reo_mpeg_writeback(uint8_t* rdram, R5900Context* ctx, PS2Runtime* ru
     const int k = n.fetch_add(1);
     if (k < 40 || (k % 5000) == 0) {
         size_t nz = 0;
-        for (uint32_t i = 0; i < 384; ++i) nz += rdram[(dst + i) & 0x1FFFFFFu] != 0;
-        fprintf(stderr, "[MPEG-WB] #%d a0=0x%x buf=%u dst=0x%x work=0x%x pred=0x%x 6d8=%u 6e4=%u 6e0=%u n6d4=%u src %zu/192 words nonzero -> %zu/384 nonzero pc=0x%x\n",
+        for (uint32_t i = 0; i < 384; ++i)
+            nz += rdram[(dst + i) & 0x1FFFFFFu] != 0;
+        fprintf(stderr,
+                "[MPEG-WB] #%d a0=0x%x buf=%u dst=0x%x work=0x%x pred=0x%x 6d8=%u 6e4=%u 6e0=%u "
+                "n6d4=%u src %zu/192 words nonzero -> %zu/384 nonzero pc=0x%x\n",
                 k, a0, a1, dst, work, pred, f6d8, f6e4, f6e0, n6d4, srcNz, nz, ctx->pc);
     }
 }
-static void reo_sfd_valid(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_0015FFC0_0x15ffc0>(r, c, p, "ply-valid"); }
-static void reo_sfd_seamless(uint8_t* r, R5900Context* c, PS2Runtime* p) { reo_sfd_trace<sub_001625D0_0x1625d0>(r, c, p, "ply-start-seamless"); }
+static void reo_sfd_valid(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_0015FFC0_0x15ffc0>(r, c, p, "ply-valid");
+}
+static void reo_sfd_seamless(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_sfd_trace<sub_001625D0_0x1625d0>(r, c, p, "ply-start-seamless");
+}
 
 // Opt-in read-only evidence for the libmpeg scratchpad -> packed-picture path.
 void sub_00142FB8_0x142fb8(uint8_t*, R5900Context*, PS2Runtime*);
@@ -1114,17 +1523,75 @@ static void reo_mpeg_picture_trace(uint8_t* r, R5900Context* c, PS2Runtime* p) {
     uint32_t src = 0, dst = 0;
     if (n < 80 && slot < 2 && pc == 0x142fb8u) {
         const uint32_t b = h + slot * 0x140u;
-        src = word(b + 0x5acu); dst = word(b + 0x6d0u);
-        std::fprintf(stderr, "[MPEG-PIC] #%u h=%08x slot=%u src=%08x dst=%08x flags=%u,%u aux=%08x src0=%08x clamp=%08x ra=%08x\n",
-                     n, h, slot, src, dst, word(b+0x6d8u), word(b+0x6e4u), word(h+0x834u), word(src), word(0x143f70u), ra);
+        src = word(b + 0x5acu);
+        dst = word(b + 0x6d0u);
+        std::fprintf(stderr,
+                     "[MPEG-PIC] #%u h=%08x slot=%u src=%08x dst=%08x flags=%u,%u aux=%08x "
+                     "src0=%08x clamp=%08x ra=%08x\n",
+                     n, h, slot, src, dst, word(b + 0x6d8u), word(b + 0x6e4u), word(h + 0x834u),
+                     word(src), word(0x143f70u), ra);
     }
     sub_00142FB8_0x142fb8(r, c, p);
     if (src && dst)
-        std::fprintf(stderr, "[MPEG-PIC] #%u returned pc=%08x dst0=%08x src0=%08x\n", n, c->pc, word(dst), word(src));
+        std::fprintf(stderr, "[MPEG-PIC] #%u returned pc=%08x dst0=%08x src0=%08x\n", n, c->pc,
+                     word(dst), word(src));
 }
 
-static void bind(PS2Runtime& runtime, uint32_t addr,
-                 PS2Runtime::RecompiledFunction fn, const char* name) {
+// Read-only tracing for the title prompt's opacity and sprite submission.
+void sub_00192190_0x192190(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_001AB860_0x1ab860(uint8_t*, R5900Context*, PS2Runtime*);
+static void reo_title_opacity_trace(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    const uint32_t ra = GPR_U32(c, 31);
+    const float angle = c->f[12];
+    const float vf0w =
+        _mm_cvtss_f32(_mm_shuffle_ps(c->vu0_vf[0], c->vu0_vf[0], _MM_SHUFFLE(3, 3, 3, 3)));
+    sub_00192190_0x192190(r, c, p);
+    static unsigned count = 0;
+    if (ra == 0x57ff4cu && (count++ < 12 || count % 120 == 0))
+        fprintf(stderr, "[TITLE-PROMPT] angle=%g opacity=%g vf0w=%g pc=%08x\n", angle, c->f[0],
+                vf0w, c->pc);
+}
+static void reo_title_sprite_trace(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    const uint32_t ra = GPR_U32(c, 31), a = GPR_U32(c, 4);
+    static unsigned count = 0;
+    if (ra == 0x58084cu && (count++ < 12 || count % 120 == 0)) {
+        auto word = [&](uint32_t addr) { return p->Load32(r, c, addr); };
+        const uint32_t front = word(0x5d4898u);
+        fprintf(stderr,
+                "[TITLE-PROMPT] sprite=%08x,%08x,%08x,%08x,%08x front=%08x state=%08x timer=%u "
+                "tex=%08x\n",
+                word(a), word(a + 4), word(a + 8), word(a + 12), word(a + 16), front, word(front),
+                p->Load16(r, c, front + 8), word(front + 0x18));
+    }
+    sub_001AB860_0x1ab860(r, c, p);
+}
+
+extern void sub_00192B70_0x192b70(uint8_t*, R5900Context*, PS2Runtime*);
+// Opt-in, bounded observation of the original scene-tree traversal. Preserve
+// every guest instruction and continuation; never repair links or force exit.
+static void reo_scene_tree_trace(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    static unsigned samples = 0;
+    if (samples < 96) {
+        const uint32_t node = GPR_U32(c, 4), root = GPR_U32(c, 5);
+        uint16_t id = 0;
+        uint32_t parent = 0, sibling = 0, child = 0;
+        if (node < PS2_RAM_SIZE && 0xDCu <= PS2_RAM_SIZE - node) {
+            std::memcpy(&id, r + node + 0xC6u, sizeof(id));
+            std::memcpy(&parent, r + node + 0xC8u, sizeof(parent));
+            std::memcpy(&sibling, r + node + 0xCCu, sizeof(sibling));
+            std::memcpy(&child, r + node + 0xD0u, sizeof(child));
+        }
+        fprintf(stderr,
+                "[SCENE-TREE] n=%u pc=%08x a0=%08x a1=%08x v1=%08x s0=%08x sp=%08x ra=%08x id=%04x "
+                "parent=%08x sibling=%08x child=%08x\n",
+                samples++, c->pc, node, root, GPR_U32(c, 3), GPR_U32(c, 16), GPR_U32(c, 29),
+                GPR_U32(c, 31), id, parent, sibling, child);
+    }
+    sub_00192B70_0x192b70(r, c, p);
+}
+
+static void bind(PS2Runtime& runtime, uint32_t addr, PS2Runtime::RecompiledFunction fn,
+                 const char* name) {
     // Register in BOTH the function table (for indirect jumps/dispatch loop)
     // and the stub override registry (for direct calls from generated code).
     runtime.registerFunction(addr, fn);
@@ -1188,6 +1655,45 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     bind(runtime, 0x117080, ps2_syscalls::SifInitRpc, "SifInitRpc (HLE)");
     bind(runtime, 0x1179E8, ps2_syscalls::sceSifCallRpc, "SifCallRpc (HLE)");
 
+#if defined(REO_GAME_FILE1)
+    if (reo_dma_builder_observer::configure()) {
+        bind(runtime, 0x18C730, reo_dma_builder_observer::call,
+             "observe original DMA CALL construction");
+        bind(runtime, 0x18C7C0, reo_dma_builder_observer::end,
+             "observe original DMA END construction");
+        bind(runtime, 0x189B08, reo_dma_builder_observer::copy, "observe original QWC copies");
+        bind(runtime, 0x18CFB0, reo_dma_builder_observer::enqueue,
+             "observe original chain enqueue");
+    }
+    if (reo_ground_origin::enabled) {
+        runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 3u, 0x617000u, reoGroundQuery);
+    }
+    if (reo_game_clock::enabled || reo_actor_origin::enabled) {
+        bind(runtime, 0x1B0B80, reoGameClockActorInput,
+             "original actor-input clock/finite-coordinate observation");
+    }
+    if (reo_actor_origin::enabled) {
+        bind(runtime, 0x1B02D0, reoActorPassEnd,
+             "original actor-pass finite-coordinate observation");
+    }
+
+#endif
+
+    if (std::getenv("REO_TREE_LOG")) {
+        bind(runtime, 0x192B70, reo_scene_tree_trace, "original scene-tree observation");
+        bind(runtime, 0x192B78, reo_scene_tree_trace, "scene-tree continuation observation");
+        bind(runtime, 0x192BBC, reo_scene_tree_trace, "scene-tree ascent observation");
+    }
+
+    if (std::getenv("REO_TITLE_DIAG")) {
+        bind(runtime, 0x192190, reo_title_opacity_trace, "title opacity trace");
+        bind(runtime, 0x1AB860, reo_title_sprite_trace, "title sprite trace");
+    }
+    if (std::getenv("REO_CRI_SYNC_LOG")) {
+        bind(runtime, 0x132DF0, reo_audio_release_trace, "guest audio pause/release trace");
+        bind(runtime, 0x173330, reo_sfd_playtime, "movie clock trace");
+    }
+
     // CRI DTX server (EE DTX_Init 0x1392F8 binds sid 0x90000200, read from 0x21C414).
     // Hand it to the runtime's DTX compat emulation: create (fn 2) + URPC 0x400-0x4FF
     // (SJRMT/PS2RNA). No guest URPC tables configured -> runtime fallback emulation.
@@ -1195,13 +1701,15 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     {
         PS2DtxCompatLayout dtx{};
         dtx.rpcSid = 0x90000200u;
-        dtx.urpcObjBase = 0x001E0000u;   // opaque SJ/RNA handles (IOP-like ids, never dereferenced)
+        dtx.urpcObjBase = 0x001E0000u; // opaque SJ/RNA handles (IOP-like ids, never dereferenced)
         dtx.urpcObjLimit = 0x001EFF00u;
         ps2_syscalls::setDtxCompatLayout(dtx);
     }
 
     if (std::getenv("REO_CRI_ERRLOG"))
         bind(runtime, 0x163750, reo_cri_error_log, "CRI error reporter (log)");
+    bind(runtime, 0x1627A8, reo_sfd_feed_end_entry, "Sofdec original feed-end entry");
+    bind(runtime, 0x1D3BC0, reo_result_asset_entry, "Original result asset entry");
     if (std::getenv("REO_SFD_DIAG")) {
         bind(runtime, 0x1731A0, reo_sfd_stoptime, "Sofdec stop-time check (log)");
         bind(runtime, 0x173210, reo_sfd_endflags, "Sofdec end-flags check (log)");
@@ -1225,6 +1733,33 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         bind(runtime, 0x164038, reo_sfd_server, "Sofdec server (trace)");
         bind(runtime, 0x142FB8, reo_mpeg_writeback, "libmpeg macroblock write-back (trace)");
     }
+    if (std::getenv("REO_SFD_EOF_DIAG")) {
+        g_sfdEofObserver = {};
+        if (const char* value = std::getenv("REO_SFD_EOF_DIAG_AT")) {
+            const unsigned long parsed = std::strtoul(value, nullptr, 0);
+            g_sfdEofObserver.atSeconds = parsed > 600 ? 600 : static_cast<uint32_t>(parsed);
+        }
+        if (const char* value = std::getenv("REO_SFD_EOF_DIAG_SECONDS")) {
+            const unsigned long parsed = std::strtoul(value, nullptr, 0);
+            g_sfdEofObserver.seconds = parsed > 120 ? 120
+                                       : parsed     ? static_cast<uint32_t>(parsed)
+                                                    : 1;
+        }
+        g_sfdEofObserver.epochNs = sfdEofNow();
+        fprintf(
+            stderr,
+            "[SFD-EOF-CONFIG] epoch=bindings-init ns=%llu at_seconds=%u seconds=%u sample_limit=96 "
+            "event_limit=24 sample_interval_ms=1000 slots=0:162af8,1:15f608,2:173f28\n",
+            static_cast<unsigned long long>(g_sfdEofObserver.epochNs), g_sfdEofObserver.atSeconds,
+            g_sfdEofObserver.seconds);
+        bind(runtime, 0x1752F8, reo_sfd_eof_status_observe, "Sofdec EOF status observer");
+        bind(runtime, 0x162AF8, reo_sfd_eof_event_observe<sub_00162AF8_0x162af8, 0>,
+             "Sofdec feed-mode observer");
+        bind(runtime, 0x15F608, reo_sfd_eof_event_observe<sub_0015F608_0x15f608, 1>,
+             "Sofdec file-end observer");
+        bind(runtime, 0x173F28, reo_sfd_eof_event_observe<sub_00173F28_0x173f28, 2>,
+             "Sofdec input-end observer");
+    }
     if (std::getenv("REO_MPEG_PIC_LOG"))
         bind(runtime, 0x142FB8, reo_mpeg_picture_trace, "libmpeg packed picture (trace)");
     if (std::getenv("REO_CRILOCK_DIAG")) {
@@ -1242,118 +1777,118 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     }
 
     // ── Boot sequence: GS init ───────────────────────────────────────
-    bind(runtime, 0x11D6D0, reo_gs_reset_graph,   "sceGsResetGraph (init)");
-    bind(runtime, 0x11DDE8, reo_gs_put_disp_env,  "sceGsPutDispEnv");
-    bind(runtime, 0x11DF60, reo_gs_reset_path,     "sceGsResetPath");
-    bind(runtime, 0x11E1A0, reo_gs_sync_path,      "sceGsSyncPath");
-    bind(runtime, 0x118110, reo_gs_reset_graph,    "sceGsResetGraph (alt)");
+    bind(runtime, 0x11D6D0, reo_gs_reset_graph, "sceGsResetGraph (init)");
+    bind(runtime, 0x11DDE8, reo_gs_put_disp_env, "sceGsPutDispEnv");
+    bind(runtime, 0x11DF60, reo_gs_reset_path, "sceGsResetPath");
+    bind(runtime, 0x11E1A0, reo_gs_sync_path, "sceGsSyncPath");
+    bind(runtime, 0x118110, reo_gs_reset_graph, "sceGsResetGraph (alt)");
 
     // ── Boot sequence: SIF/IOP init ─────────────────────────────────
-    bind(runtime, 0x11D9C8, reo_sif_check,          "SIF DMA status check (enable IOP loading)");
+    bind(runtime, 0x11D9C8, reo_sif_check, "SIF DMA status check (enable IOP loading)");
 
     // ── Boot sequence: CDVD init ─────────────────────────────────────
-    bind(runtime, 0x11CF08, reo_cd_init,           "sceCdInit");
+    bind(runtime, 0x11CF08, reo_cd_init, "sceCdInit");
 
     // ── Boot sequence: other init stubs ──────────────────────────────
     // These are called during init and need to return success:
-    bind(runtime, 0x11E2B0, reo_ret0,             "init_stub_0x11E2B0");
-    bind(runtime, 0x11E4C8, reo_ret0,             "init_stub_0x11E4C8");
-    bind(runtime, 0x11E7A0, reo_ret0,             "init_stub_0x11E7A0");
-    bind(runtime, 0x11F2D8, reo_ret0,             "init_stub_0x11F2D8");
+    bind(runtime, 0x11E2B0, reo_ret0, "init_stub_0x11E2B0");
+    bind(runtime, 0x11E4C8, reo_ret0, "init_stub_0x11E4C8");
+    bind(runtime, 0x11E7A0, reo_ret0, "init_stub_0x11E7A0");
+    bind(runtime, 0x11F2D8, reo_ret0, "init_stub_0x11F2D8");
 
     // ── Pad (controller) ─────────────────────────────────────────────
-    bind(runtime, 0x100B70, reo_pad_port_open,     "scePadPortOpen");
-    bind(runtime, 0x1D8560, reo_pad_read,          "scePadRead");
+    bind(runtime, 0x100B70, reo_pad_port_open, "scePadPortOpen");
+    bind(runtime, 0x1D8560, reo_pad_read, "scePadRead");
 
     // ── Mid-function entry points (unreachable in recompiled code) ──
     // These addresses fall inside larger recompiled functions but are
     // called via indirect dispatch. The recompiler puts them after a
     // return statement so they're dead code. We register them as stubs.
-    bind(runtime, 0x10A9D8, reo_ret0,              "mid_entry_0x10A9D8 (in sub_0010A8C8)");
-    bind(runtime, 0x1AC640, reo_ret0,              "mid_entry_0x1AC640 (in sub_001AC630)");
-    bind(runtime, 0x1395C8, reo_ret0,              "mid_entry_0x1395C8 (in sub_00139568)");
-    bind(runtime, 0x13F998, reo_ret0,              "mid_entry_0x13F998 (in sub_0013F8A8, render)");
-    bind(runtime, 0x37A5A0, reo_ret0,              "overlay_0x37A5A0 (missing overlay func)");
+    bind(runtime, 0x10A9D8, reo_ret0, "mid_entry_0x10A9D8 (in sub_0010A8C8)");
+    bind(runtime, 0x1AC640, reo_ret0, "mid_entry_0x1AC640 (in sub_001AC630)");
+    bind(runtime, 0x1395C8, reo_ret0, "mid_entry_0x1395C8 (in sub_00139568)");
+    bind(runtime, 0x13F998, reo_ret0, "mid_entry_0x13F998 (in sub_0013F8A8, render)");
+    bind(runtime, 0x37A5A0, reo_ret0, "overlay_0x37A5A0 (missing overlay func)");
 
     // ── Critical DMA/display init stubs ─────────────────────────────────
     // These are PS2 SDK functions the recompiler couldn't decompile.
     // Without them, DMA channels never initialize and rendering never starts.
-    bind(runtime, 0x138208, reo_dma_chan_init,     "sceDmaGetChan/Reset (DMA channel init)");
+    bind(runtime, 0x138208, reo_dma_chan_init, "sceDmaGetChan/Reset (DMA channel init)");
     bind(runtime, 0x128B18, reo_dma_poll_complete, "DMA channel status poll (return complete)");
-    bind(runtime, 0x19F380, reo_display_init,      "display buffer init (640x448)");
-    bind(runtime, 0x136A80, reo_ret1_log,          "gfx_init_0x136A80");
-    bind(runtime, 0x13ADF0, reo_video_mode_init,    "video mode init (NTSC 640x448)");
-    bind(runtime, 0x13AE10, reo_gfx_obj_init,      "gfx_obj_init (GIF DMA table init)");
-    bind(runtime, 0x12B638, reo_ret1_log,          "render_init_0x12B638");
-    bind(runtime, 0x13CB30, reo_ret1_log,          "render_init_0x13CB30");
-    bind(runtime, 0x15E6A0, reo_ret1_log,          "hw_init_0x15E6A0");
-    bind(runtime, 0x12A1E8, reo_ret1_log,          "hw_init_0x12A1E8");
-    bind(runtime, 0x128860, reo_ret1_log,          "hw_init_0x128860");
+    bind(runtime, 0x19F380, reo_display_init, "display buffer init (640x448)");
+    bind(runtime, 0x136A80, reo_ret1_log, "gfx_init_0x136A80");
+    bind(runtime, 0x13ADF0, reo_video_mode_init, "video mode init (NTSC 640x448)");
+    bind(runtime, 0x13AE10, reo_gfx_obj_init, "gfx_obj_init (GIF DMA table init)");
+    bind(runtime, 0x12B638, reo_ret1_log, "render_init_0x12B638");
+    bind(runtime, 0x13CB30, reo_ret1_log, "render_init_0x13CB30");
+    bind(runtime, 0x15E6A0, reo_ret1_log, "hw_init_0x15E6A0");
+    bind(runtime, 0x12A1E8, reo_ret1_log, "hw_init_0x12A1E8");
+    bind(runtime, 0x128860, reo_ret1_log, "hw_init_0x128860");
 
     // ── Pool address resolvers (critical for display list pointers) ──
     // These translate bump-allocator addresses through the memory pool system.
     // Since our allocator returns raw addresses, we bypass pool lookup entirely.
-    bind(runtime, 0x18DCA0, reo_pool_resolve,      "pool_resolve (sub_0018DCA0, 21 callers)");
-    bind(runtime, 0x18DC90, reo_pool_resolve,      "pool_resolve (sub_0018DC90, 8 callers)");
+    bind(runtime, 0x18DCA0, reo_pool_resolve, "pool_resolve (sub_0018DCA0, 21 callers)");
+    bind(runtime, 0x18DC90, reo_pool_resolve, "pool_resolve (sub_0018DC90, 8 callers)");
 
     // ── Thread entry points (merged by recompiler) ──────────────────
     // These are thread entry points that the recompiler merged into
     // larger functions. Register them so StartThread can find them.
-    bind(runtime, 0x11D7F8, reo_ret0,               "SifInit (skip IOP polling)");
-    bind(runtime, 0x115320, reo_sio_thread,         "SIO/pad polling thread");
-    bind(runtime, 0x1CB9A0, reo_demo_thread_entry,  "Demo scene thread entry");
+    bind(runtime, 0x11D7F8, reo_ret0, "SifInit (skip IOP polling)");
+    bind(runtime, 0x115320, reo_sio_thread, "SIO/pad polling thread");
+    bind(runtime, 0x1CB9A0, reo_demo_thread_entry, "Demo scene thread entry");
 
     // ── Frame timing / VSync ──────────────────────────────────────────
     // sub_001D6720 is the VSync frame check in the main loop.
     // Without this override, the game busy-waits forever reading a
     // VBlank counter that never changes (no GS hardware).
-    bind(runtime, 0x1D6720, reo_frame_check,        "VSync frame check (main loop)");
+    bind(runtime, 0x1D6720, reo_frame_check, "VSync frame check (main loop)");
 
     // ── GS sync / render ─────────────────────────────────────────────
-    bind(runtime, 0x1F73B0, reo_gs_sync,           "sceGsSyncPath (render)");
-    bind(runtime, 0x105BD0, reo_gs_sync_v,         "sceGsSyncV");
+    bind(runtime, 0x1F73B0, reo_gs_sync, "sceGsSyncPath (render)");
+    bind(runtime, 0x105BD0, reo_gs_sync_v, "sceGsSyncV");
 
     // ── Additional stubs near GS area (0x107xxx-0x118xxx) ────────────
-    bind(runtime, 0x107D28, reo_ret0,             "gs_related_0x107D28");
-    bind(runtime, 0x107DA8, reo_ret0,             "gs_related_0x107DA8");
-    bind(runtime, 0x118170, reo_ret0,             "gs_related_0x118170");
-    bind(runtime, 0x1181F8, reo_ret0,             "gs_related_0x1181F8");
-    bind(runtime, 0x1187A0, reo_ret0,             "gs_related_0x1187A0");
-    bind(runtime, 0x118A38, reo_ret0,             "gs_related_0x118A38");
+    bind(runtime, 0x107D28, reo_ret0, "gs_related_0x107D28");
+    bind(runtime, 0x107DA8, reo_ret0, "gs_related_0x107DA8");
+    bind(runtime, 0x118170, reo_ret0, "gs_related_0x118170");
+    bind(runtime, 0x1181F8, reo_ret0, "gs_related_0x1181F8");
+    bind(runtime, 0x1187A0, reo_ret0, "gs_related_0x1187A0");
+    bind(runtime, 0x118A38, reo_ret0, "gs_related_0x118A38");
 
     // ── SDK library stubs (0x11Bxxx-0x11Exxx) ────────────────────────
-    bind(runtime, 0x11B828, reo_ret0,             "lib_stub_0x11B828");
-    bind(runtime, 0x11BF08, reo_ret0,             "lib_stub_0x11BF08");
-    bind(runtime, 0x11D6D0, reo_gs_reset_graph,   "sceGsResetGraph");  // already bound above
+    bind(runtime, 0x11B828, reo_ret0, "lib_stub_0x11B828");
+    bind(runtime, 0x11BF08, reo_ret0, "lib_stub_0x11BF08");
+    bind(runtime, 0x11D6D0, reo_gs_reset_graph, "sceGsResetGraph"); // already bound above
 
     // ── Early init stubs (0x100xxx) ──────────────────────────────────
-    bind(runtime, 0x100218, reo_ret0_log,          "crt0_exit/main_return");
+    bind(runtime, 0x100218, reo_ret0_log, "crt0_exit/main_return");
     // 0x100590 and 0x100838: UN-STUBBED — needed for DMA submission pipeline
     // bind(runtime, 0x100590, reo_ret0,             "early_init_0x100590");
-    bind(runtime, 0x100648, reo_ret0,             "early_init_0x100648");
-    bind(runtime, 0x1007C0, reo_ret0,             "early_init_0x1007C0");
+    bind(runtime, 0x100648, reo_ret0, "early_init_0x100648");
+    bind(runtime, 0x1007C0, reo_ret0, "early_init_0x1007C0");
     // bind(runtime, 0x100838, reo_ret0,             "dma_flush_0x100838");
-    bind(runtime, 0x100E88, reo_ret0,             "init_0x100E88");
-    bind(runtime, 0x1010A8, reo_ret0,             "init_0x1010A8");
+    bind(runtime, 0x100E88, reo_ret0, "init_0x100E88");
+    bind(runtime, 0x1010A8, reo_ret0, "init_0x1010A8");
 
     // ── Network / SN@P stubs (0x1B5xxx-0x1B8xxx) ─────────────────────
-    bind(runtime, 0x1B5670, reo_net_socket,        "net_socket");
-    bind(runtime, 0x1B5FB0, reo_ret0,             "net_accept");
-    bind(runtime, 0x1B6E90, reo_ret0,             "net_sif_send");
-    bind(runtime, 0x1B6F10, reo_ret0,             "net_sif_send_2");
-    bind(runtime, 0x1B6FD0, reo_net_connect,       "net_connect");
-    bind(runtime, 0x1B71D0, reo_net_send,          "net_send");
-    bind(runtime, 0x1B7CB0, reo_ret0,             "net_sif_cmd");
-    bind(runtime, 0x1B80D0, reo_net_close,         "net_close");
-    bind(runtime, 0x1BB110, reo_ret0,             "net_rpc_0x1BB110");
-    bind(runtime, 0x1BB230, reo_ret0,             "net_rpc_0x1BB230");
-    bind(runtime, 0x1DD0D8, reo_net_connect,       "net_inet_connect");
+    bind(runtime, 0x1B5670, reo_net_socket, "net_socket");
+    bind(runtime, 0x1B5FB0, reo_ret0, "net_accept");
+    bind(runtime, 0x1B6E90, reo_ret0, "net_sif_send");
+    bind(runtime, 0x1B6F10, reo_ret0, "net_sif_send_2");
+    bind(runtime, 0x1B6FD0, reo_net_connect, "net_connect");
+    bind(runtime, 0x1B71D0, reo_net_send, "net_send");
+    bind(runtime, 0x1B7CB0, reo_ret0, "net_sif_cmd");
+    bind(runtime, 0x1B80D0, reo_net_close, "net_close");
+    bind(runtime, 0x1BB110, reo_ret0, "net_rpc_0x1BB110");
+    bind(runtime, 0x1BB230, reo_ret0, "net_rpc_0x1BB230");
+    bind(runtime, 0x1DD0D8, reo_net_connect, "net_inet_connect");
 
     // ── Sound / audio stubs ──────────────────────────────────────────
-    bind(runtime, 0x1BCF60, reo_ret0,             "audio_init_0x1BCF60");
+    bind(runtime, 0x1BCF60, reo_ret0, "audio_init_0x1BCF60");
 
     // ── Matrix / 3D math stubs ───────────────────────────────────────
-    bind(runtime, 0x1C8850, reo_ret0,             "matrix_stub_0x1C8850");
+    bind(runtime, 0x1C8850, reo_ret0, "matrix_stub_0x1C8850");
 
     // ── Additional stubs (identified by address range) ───────────────
     // Mid-range SDK stubs
@@ -1405,13 +1940,8 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     printf("[REO] Remaining unbound stubs will log TODO_NAMED at runtime.\n");
 }
 
-PS2_REGISTER_GAME_OVERRIDE(
-    "RE Outbreak NTSC-U",
-    "SLUS_207.65",
-    0x00100008,
-    0x00000000,
-    applyOutbreakOverrides
-);
+PS2_REGISTER_GAME_OVERRIDE("RE Outbreak NTSC-U", "SLUS_207.65", 0x00100008, 0x00000000,
+                           applyOutbreakOverrides);
 
 // ═══════════════════════════════════════════════════════════════════════
 // File #2 overrides — RE Outbreak File #2 (SLUS-20984, NTSC-U v1.05)
@@ -1434,10 +1964,5 @@ static void applyFile2Overrides(PS2Runtime& runtime) {
     printf("[REO] File #2 overrides applied (pending address identification).\n");
 }
 
-PS2_REGISTER_GAME_OVERRIDE(
-    "RE Outbreak File #2 NTSC-U",
-    "SLUS_209.84",
-    0x00100008,
-    0x00000000,
-    applyFile2Overrides
-);
+PS2_REGISTER_GAME_OVERRIDE("RE Outbreak File #2 NTSC-U", "SLUS_209.84", 0x00100008, 0x00000000,
+                           applyFile2Overrides);

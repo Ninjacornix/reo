@@ -1,0 +1,15 @@
+--- a/gs/gs_interface.cpp
++++ b/gs/gs_interface.cpp
+@@ -4340,10 +4340,10 @@
+ 		}
+ 		else
+ 		{
+-			if (path.reg == 0 && optimized_draw_handler[path_index])
++			if (path.reg == 0 && optimized_draw_handler[path_index] && size - i >= nreg)
+ 			{
+ 				// Should this divide be optimized to use divide by constant trick?
+-				uint32_t nloops_to_run = std::min<uint32_t>(size / nreg, path.tag.NLOOP - path.loop);
++				uint32_t nloops_to_run = std::min<uint32_t>((size - i) / nreg, path.tag.NLOOP - path.loop);
+ 				(this->*optimized_draw_handler[path_index])(&qwords[i], nloops_to_run);
+ 				i += nloops_to_run * nreg;
+ 				path.loop += nloops_to_run;

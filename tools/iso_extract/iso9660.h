@@ -21,25 +21,27 @@ namespace reo {
  */
 
 constexpr int ISO_SECTOR_SIZE = 2048;
-constexpr int ISO_PVD_SECTOR = 16;  // Primary Volume Descriptor at sector 16
+constexpr int ISO_PVD_SECTOR = 16; // Primary Volume Descriptor at sector 16
 
 struct IsoDirectoryEntry {
     std::string name;
-    uint32_t lba;           // Logical Block Address (sector number)
-    uint32_t size;          // File size in bytes
+    uint32_t lba;  // Logical Block Address (sector number)
+    uint32_t size; // File size in bytes
     bool is_directory;
     std::vector<IsoDirectoryEntry> children;
 };
 
 class Iso9660 {
-public:
+  public:
     Iso9660() = default;
 
     bool open(const std::string& iso_path);
     void close();
 
     // Get the root directory listing (recursive)
-    const IsoDirectoryEntry& root() const { return m_root; }
+    const IsoDirectoryEntry& root() const {
+        return m_root;
+    }
 
     // Find a file by path (e.g., "SLUS_207.65")
     const IsoDirectoryEntry* find(const std::string& path) const;
@@ -54,15 +56,16 @@ public:
     bool extract_all(const std::filesystem::path& output_dir);
 
     // Get volume label
-    const std::string& volume_label() const { return m_volume_label; }
+    const std::string& volume_label() const {
+        return m_volume_label;
+    }
 
-private:
+  private:
     bool parse_pvd();
     void parse_directory(uint32_t lba, uint32_t size, IsoDirectoryEntry& parent);
     const IsoDirectoryEntry* find_recursive(const IsoDirectoryEntry& dir,
-                                             const std::string& name) const;
-    void extract_recursive(const IsoDirectoryEntry& dir,
-                           const std::filesystem::path& base);
+                                            const std::string& name) const;
+    void extract_recursive(const IsoDirectoryEntry& dir, const std::filesystem::path& base);
 
     std::ifstream m_file;
     IsoDirectoryEntry m_root;

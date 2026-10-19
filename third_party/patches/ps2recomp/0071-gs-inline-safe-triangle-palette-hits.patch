@@ -1,0 +1,40 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -1404,6 +1404,9 @@
+ {
+     const auto &ctx = gs->activeContext();
+     const auto &tex = ctx.tex0;
++    // This primitive/band owns the palette view until sampling returns. Only
++    // entries already proven disjoint from all outputs may bypass lookupCLUT.
++    TrianglePaletteCache *const trianglePalette = t_trianglePalette;
+ 
+     int texW = 1 << tex.tw;
+     int texH = 1 << tex.th;
+@@ -1421,7 +1424,7 @@
+         texVf = t * invQ * static_cast<float>(texH);
+     }
+ 
+-    auto samplePoint = [&](int sampleU, int sampleV) -> uint32_t
++    auto samplePoint = [&, trianglePalette](int sampleU, int sampleV) -> uint32_t
+     {
+         sampleU = resolveTextureCoordinate(sampleU, texW, ctx.clamp, false);
+         sampleV = resolveTextureCoordinate(sampleV, texH, ctx.clamp, true);
+@@ -1445,6 +1448,8 @@
+             uint32_t idx = readTexelPSMT4(gs, tex.tbp0, tex.tbw, sampleU, sampleV);
+             if (t_clutCache.valid)
+                 return t_clutCache.table[idx & 0xFFu];
++            if (trianglePalette && trianglePalette->states[idx & 0xFFu] == 2u)
++                return trianglePalette->colors[idx & 0xFFu];
+             return lookupCLUT(gs, static_cast<uint8_t>(idx), tex.cbp, tex.cpsm, tex.csm, tex.csa, tex.psm);
+         }
+ 
+@@ -1458,6 +1463,8 @@
+             uint8_t idx = gs->m_vram[off];
+             if (t_clutCache.valid)
+                 return t_clutCache.table[idx];
++            if (trianglePalette && trianglePalette->states[idx] == 2u)
++                return trianglePalette->colors[idx];
+             return lookupCLUT(gs, idx, tex.cbp, tex.cpsm, tex.csm, tex.csa, tex.psm);
+         }
+ 

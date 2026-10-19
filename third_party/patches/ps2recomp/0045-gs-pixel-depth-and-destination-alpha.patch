@@ -1,0 +1,497 @@
+diff --git a/ps2xRuntime/include/runtime/ps2_gs_gpu.h b/ps2xRuntime/include/runtime/ps2_gs_gpu.h
+--- a/ps2xRuntime/include/runtime/ps2_gs_gpu.h
++++ b/ps2xRuntime/include/runtime/ps2_gs_gpu.h
+@@ -105,7 +105,8 @@
+ 
+ struct GSVertex
+ {
+-    float x, y, z;
++    float x, y;
++    uint32_t z; // Preserve all supplied Z32 bits before screen-space interpolation.
+     uint8_t r, g, b, a;
+     float q;
+     float s, t;
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -9,6 +9,9 @@
+ #include "Kernel/Syscalls/Interrupt.h"
+ #include "runtime/ps2_memory.h"
+ #include <condition_variable>
++#include <chrono>
++#include <cstdio>
++#include <cstdlib>
+ #include <deque>
+ #include <memory>
+ #include <thread>
+@@ -85,6 +88,48 @@
+     thread_local uint64_t t_copiedFrameTick = 0;
+     constexpr size_t kGsQueueMaxBytes = 64u * 1024u * 1024u;
+ 
++    struct GsWaitTimer
++    {
++        using Clock = std::chrono::steady_clock;
++        Clock::time_point started{};
++        bool enabled = false;
++        GsWaitTimer()
++        {
++            static const bool logging = [] {
++                const char *value = std::getenv("REO_GS_WAIT_LOG");
++                return value && std::atoi(value) != 0;
++            }();
++            enabled = logging;
++            if (enabled)
++            {
++                static const auto epoch = Clock::now();
++                static const double at = [] {
++                    const char *value = std::getenv("REO_GS_WAIT_AT");
++                    const double parsed = value ? std::strtod(value, nullptr) : 0.0;
++                    return parsed > 0.0 ? parsed : 0.0;
++                }();
++                started = Clock::now();
++                enabled = std::chrono::duration<double>(started - epoch).count() >= at;
++            }
++        }
++        // Caller holds the queue mutex, serializing the bounded sample count.
++        void finish(const char *operation, uint64_t target, const char *item) const
++        {
++            if (!enabled) return;
++            static unsigned samples = 0;
++            if (samples >= 64) return;
++            const auto now = Clock::now();
++            const auto us = std::chrono::duration_cast<std::chrono::microseconds>(now - started).count();
++            if (us <= 10000) return;
++            const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
++            std::fprintf(stderr, "[GS-WAIT] n=%u ns=%lld operation=%s wait_us=%lld queued_bytes=%zu enqueued=%llu completed=%llu target=%llu item=%s busy=%u\n",
++                ++samples, static_cast<long long>(ns), operation, static_cast<long long>(us),
++                g_gsAsync.queuedBytes, static_cast<unsigned long long>(g_gsAsync.enqueued),
++                static_cast<unsigned long long>(g_gsAsync.completed), static_cast<unsigned long long>(target),
++                item, unsigned(g_gsAsync.busy));
++        }
++    };
++
+     bool gsThreadEnabled()
+     {
+         // On by default; REO_GS_THREAD=0 runs the GS synchronously on the kicking thread.
+@@ -139,6 +184,7 @@
+     {
+         if (t_isGsWorker || !gsThreadEnabled())
+             return false;
++        const GsWaitTimer waitTimer;
+         std::unique_lock<std::mutex> lock(g_gsAsync.m);
+         if (!g_gsAsync.started)
+         {
+@@ -156,6 +202,7 @@
+             // could starve the producer forever, particularly during turbo boot.
+             return g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= paceTarget;
+         });
++        waitTimer.finish("enqueue", paceTarget, item.isPacket ? "packet" : "register");
+         g_gsAsync.queuedBytes += item.data.size();
+         ++g_gsAsync.enqueued;
+         ++g_gsAsync.drawingSerial;
+@@ -254,8 +301,10 @@
+     {
+         if (t_isGsWorker || !gsThreadEnabled())
+             return;
++        const GsWaitTimer waitTimer;
+         std::unique_lock<std::mutex> lock(g_gsAsync.m);
+         g_gsAsync.drained.wait(lock, [target] { return g_gsAsync.completed >= target; });
++        waitTimer.finish("drain-to", target, "none");
+     }
+ 
+     // Waits until every GS call queued before this point has been executed (not until the
+@@ -264,9 +313,11 @@
+     {
+         if (t_isGsWorker || !gsThreadEnabled())
+             return;
++        const GsWaitTimer waitTimer;
+         std::unique_lock<std::mutex> lock(g_gsAsync.m);
+         const uint64_t target = g_gsAsync.enqueued;
+         g_gsAsync.drained.wait(lock, [target] { return g_gsAsync.completed >= target; });
++        waitTimer.finish("drain", target, "none");
+     }
+ }
+ #include <atomic>
+@@ -1688,7 +1739,7 @@
+         GSVertex &vtx = m_vtxQueue[m_vtxCount % kMaxVerts];
+         vtx.x = static_cast<float>(x) / 16.0f;
+         vtx.y = static_cast<float>(y) / 16.0f;
+-        vtx.z = static_cast<float>(z);
++        vtx.z = z;
+         vtx.r = m_curR;
+         vtx.g = m_curG;
+         vtx.b = m_curB;
+@@ -1725,7 +1776,7 @@
+         GSVertex &vtx = m_vtxQueue[m_vtxCount % kMaxVerts];
+         vtx.x = static_cast<float>(x) / 16.0f;
+         vtx.y = static_cast<float>(y) / 16.0f;
+-        vtx.z = static_cast<float>(z);
++        vtx.z = z;
+         vtx.r = m_curR;
+         vtx.g = m_curG;
+         vtx.b = m_curB;
+@@ -1759,7 +1810,7 @@
+         GSVertex &vtx = m_vtxQueue[m_vtxCount % kMaxVerts];
+         vtx.x = static_cast<float>(lo & 0xFFFF) / 16.0f;
+         vtx.y = static_cast<float>((lo >> 32) & 0xFFFF) / 16.0f;
+-        vtx.z = static_cast<float>((hi >> 4) & 0xFFFFFF);
++        vtx.z = static_cast<uint32_t>((hi >> 4) & 0xFFFFFF);
+         vtx.r = m_curR;
+         vtx.g = m_curG;
+         vtx.b = m_curB;
+@@ -1790,7 +1841,7 @@
+         GSVertex &vtx = m_vtxQueue[m_vtxCount % kMaxVerts];
+         vtx.x = static_cast<float>(lo & 0xFFFF) / 16.0f;
+         vtx.y = static_cast<float>((lo >> 32) & 0xFFFF) / 16.0f;
+-        vtx.z = static_cast<float>(hi & 0xFFFFFFFF);
++        vtx.z = static_cast<uint32_t>(hi);
+         vtx.r = m_curR;
+         vtx.g = m_curG;
+         vtx.b = m_curB;
+@@ -1949,7 +2000,7 @@
+         GSVertex &vtx = m_vtxQueue[m_vtxCount % kMaxVerts];
+         vtx.x = static_cast<float>(value & 0xFFFF) / 16.0f;
+         vtx.y = static_cast<float>((value >> 16) & 0xFFFF) / 16.0f;
+-        vtx.z = static_cast<float>((value >> 32) & 0xFFFFFF);
++        vtx.z = static_cast<uint32_t>((value >> 32) & 0xFFFFFF);
+         vtx.fog = static_cast<uint8_t>((value >> 56) & 0xFF);
+         vtx.r = m_curR;
+         vtx.g = m_curG;
+@@ -1969,7 +2020,7 @@
+         GSVertex &vtx = m_vtxQueue[m_vtxCount % kMaxVerts];
+         vtx.x = static_cast<float>(value & 0xFFFF) / 16.0f;
+         vtx.y = static_cast<float>((value >> 16) & 0xFFFF) / 16.0f;
+-        vtx.z = static_cast<float>((value >> 32) & 0xFFFFFFFF);
++        vtx.z = static_cast<uint32_t>(value >> 32);
+         vtx.r = m_curR;
+         vtx.g = m_curG;
+         vtx.b = m_curB;
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -20,6 +20,39 @@
+ 
+ namespace
+ {
++    thread_local uint32_t t_pixelDepth = 0;
++    struct PixelDepthScope
++    {
++        uint32_t previous;
++        explicit PixelDepthScope(uint32_t z = 0) : previous(t_pixelDepth) { t_pixelDepth = z; }
++        ~PixelDepthScope() { t_pixelDepth = previous; }
++    };
++
++    uint32_t depthFromDouble(double z)
++    {
++        return z <= 0.0 ? 0u : z >= 4294967295.0 ? 0xFFFFFFFFu : static_cast<uint32_t>(z);
++    }
++
++    bool needsPixelDepthOrDate(const GSContext &ctx)
++    {
++        return (ctx.test & (1ull << 14)) != 0 ||
++               ((ctx.test & (1ull << 16)) != 0 &&
++                (((ctx.test >> 17) & 3u) != 1u || (ctx.zbuf & (1ull << 32)) == 0));
++    }
++
++    uint32_t depthAddress(uint32_t block, uint32_t width, uint8_t format, uint32_t x, uint32_t y)
++    {
++        if (format == 2u || format == 10u)
++            return format == 2u ? GSPSMCT16::addrPSMZ16(block, width, x, y)
++                                 : GSPSMCT16::addrPSMZ16S(block, width, x, y);
++        // Z32/Z24 have CT32's columns, with the page block index XOR 0x18.
++        const uint32_t page = (block >> 5) + (y >> 5) * width + (x >> 6);
++        const uint32_t blockId = (block & 31u) +
++            (GSPSMCT32::blockTable32[(y >> 3) & 3u][(x >> 3) & 7u] ^ 24u);
++        return (page << 13) + ((blockId >> 5) << 13) + (blockId & 31u) * 256u +
++            uint32_t(GSPSMCT32::columnTable32[y & 7u][x & 7u]) * 4u;
++    }
++
+     // Per-sprite palette cache (drawSprite): lookupCLUT() decoded once per index instead of
+     // per texel sample. Only enabled when the sprite cannot overwrite the palette in VRAM.
+     struct ClutCache
+@@ -259,25 +292,27 @@
+     {
+         bool writeFramebuffer;
+         bool preserveDestinationAlpha;
++        bool writeDepth;
+     };
+ 
+     AlphaTestResult classifyAlphaTest(uint64_t testReg, uint8_t alpha)
+     {
+         const bool pass = passesAlphaTest(testReg, alpha);
+         if (pass)
+-            return {true, false};
++            return {true, false, true};
+ 
+         // TEST.AFAIL controls what happens when the alpha comparison fails.
+         switch (static_cast<uint8_t>((testReg >> 12) & 0x3u))
+         {
+         case 1: // FB_ONLY
+-            return {true, false};
++            return {true, false, false};
+         case 3: // RGB_ONLY
+-            return {true, true};
++            return {true, true, false};
++        case 2: // ZB_ONLY
++            return {false, false, true};
+         case 0: // KEEP
+-        case 2: // ZB_ONLY
+         default:
+-            return {false, false};
++            return {false, false, false};
+         }
+     }
+ 
+@@ -379,6 +414,42 @@
+ 
+ void GSRasterizer::drawPrimitive(GS *gs)
+ {
++    const PixelDepthScope primitiveDepth;
++    // Opt-in late original draw states. Record each distinct pipeline key once,
++    // bounded independently of primitive count, without pixel-loop logging.
++    static const char *pipelineAt = std::getenv("REO_GS_PIPELINE_AT");
++    if (pipelineAt)
++    {
++        using Clock = std::chrono::steady_clock;
++        static const auto epoch = Clock::now();
++        static const double at = std::max(0.0, std::strtod(pipelineAt, nullptr));
++        static const unsigned limit = [] {
++            const char *env = std::getenv("REO_GS_PIPELINE_COUNT");
++            return unsigned(std::clamp(env ? std::atoi(env) : 128, 1, 512));
++        }();
++        static std::vector<std::array<uint64_t, 9>> seen;
++        const double elapsed = std::chrono::duration<double>(Clock::now() - epoch).count();
++        if (seen.size() < limit && elapsed >= at)
++        {
++            const auto &c = gs->activeContext();
++            const uint64_t flags = gs->m_prim.type | (uint64_t(gs->m_prim.ctxt) << 8) |
++                (uint64_t(gs->m_prim.tme) << 9) | (uint64_t(gs->m_prim.fst) << 10) |
++                (uint64_t(gs->m_prim.abe) << 11);
++            const std::array<uint64_t, 9> key{flags, c.test, c.zbuf, c.alpha,
++                c.frame.fbp, c.frame.psm, c.frame.fbmsk, c.tex0.psm, c.fba};
++            if (std::find(seen.begin(), seen.end(), key) == seen.end())
++            {
++                seen.push_back(key);
++                std::fprintf(stderr, "[GS-PIPELINE] n=%zu elapsed=%.6f flags=%llx test=%llx zbuf=%llx alpha=%llx frame=%x/%u/%x/%x tex=%x/%x fba=%llx z=%u,%u,%u\n",
++                    seen.size(), elapsed, static_cast<unsigned long long>(flags),
++                    static_cast<unsigned long long>(c.test), static_cast<unsigned long long>(c.zbuf),
++                    static_cast<unsigned long long>(c.alpha), c.frame.fbp, c.frame.fbw,
++                    unsigned(c.frame.psm), c.frame.fbmsk, c.tex0.tbp0, unsigned(c.tex0.psm),
++                    static_cast<unsigned long long>(c.fba), gs->m_vtxQueue[0].z,
++                    gs->m_vtxQueue[1].z, gs->m_vtxQueue[2].z);
++            }
++        }
++    }
+     const auto &ctx = gs->activeContext();
+     PS2_IF_AGRESSIVE_LOGS({
+         const uint32_t primitiveIndex = s_debugPrimitiveCount.fetch_add(1u, std::memory_order_relaxed);
+@@ -511,6 +582,7 @@
+         const auto &ctx = gs->activeContext();
+         int px = static_cast<int>(v.x) - (ctx.xyoffset.ofx >> 4);
+         int py = static_cast<int>(v.y) - (ctx.xyoffset.ofy >> 4);
++        t_pixelDepth = v.z;
+         writePixel(gs, px, py, v.r, v.g, v.b, v.a);
+         break;
+     }
+@@ -533,12 +605,6 @@
+     }
+ 
+     const AlphaTestResult alphaTest = classifyAlphaTest(ctx.test, a);
+-    if (!alphaTest.writeFramebuffer)
+-    {
+-        g_pxAlpha.fetch_add(1, std::memory_order_relaxed);
+-        return;
+-    }
+-
+     const uint32_t widthBlocks = (ctx.frame.fbw != 0u) ? ctx.frame.fbw : 1u;
+     const uint32_t bytesPerPixel =
+         (ctx.frame.psm == GS_PSM_CT16 || ctx.frame.psm == GS_PSM_CT16S) ? 2u : 4u;
+@@ -561,6 +627,71 @@
+     }
+ 
+     if (off + bytesPerPixel > gs->m_vramSize)
++        return;
++
++    // Tests, blending and framebuffer masks use the original destination value,
++    // including when a depth write happens to address the same VRAM bytes.
++    uint32_t destinationFramebuffer = 0;
++    if ((ctx.test & (1ull << 14)) != 0 || gs->m_prim.abe ||
++        ctx.frame.fbmsk != 0 || alphaTest.preserveDestinationAlpha)
++        std::memcpy(&destinationFramebuffer, gs->m_vram + off, bytesPerPixel);
++
++    // DATE rejects both framebuffer and depth writes, including AFAIL ZB_ONLY.
++    // Hardware ignores the complete draw when DATE is enabled for CT24.
++    if ((ctx.test & (1ull << 14)) != 0)
++    {
++        if (ctx.frame.psm == GS_PSM_CT24)
++            return;
++        const unsigned alphaBit = bytesPerPixel == 2u ? 15u : 31u;
++        if (((destinationFramebuffer >> alphaBit) & 1u) != ((ctx.test >> 15) & 1u))
++            return;
++    }
++
++    if ((ctx.test & (1ull << 16)) != 0)
++    {
++        const uint8_t ztst = static_cast<uint8_t>((ctx.test >> 17) & 3u);
++        if (ztst == 0u) // NEVER rejects every output, even with ZMSK set.
++            return;
++        const uint8_t format = static_cast<uint8_t>((ctx.zbuf >> 24) & 15u);
++        if (format != 0u && format != 1u && format != 2u && format != 10u)
++            return;
++        const uint32_t zBytes = (format == 2u || format == 10u) ? 2u : 4u;
++        const uint32_t zMask = format == 1u ? 0xFFFFFFu : zBytes == 2u ? 0xFFFFu : 0xFFFFFFFFu;
++        const uint32_t zBlock = static_cast<uint32_t>(ctx.zbuf & 0x1FFu) << 5;
++        const uint32_t zOff = depthAddress(zBlock, widthBlocks, format, static_cast<uint32_t>(x),
++                                         static_cast<uint32_t>(y)) % gs->m_vramSize;
++        if (zOff + zBytes > gs->m_vramSize)
++            return;
++        // Sprites bypass interpolated-depth clamping and use vertex 1's raw Z.
++        // Other primitives clamp to the destination format before comparison.
++        const uint32_t sourceZ = gs->m_prim.type == GS_PRIM_SPRITE
++            ? t_pixelDepth : std::min(t_pixelDepth, zMask);
++        if (ztst > 1u)
++        {
++            uint32_t destinationZ = 0;
++            std::memcpy(&destinationZ, gs->m_vram + zOff, zBytes);
++            destinationZ &= zMask;
++            if (ztst == 2u ? sourceZ < destinationZ : sourceZ <= destinationZ)
++                return;
++        }
++        if ((ctx.zbuf & (1ull << 32)) == 0 && alphaTest.writeDepth)
++        {
++            // Z24 writes only its low three bytes, preserving the high plane.
++            std::memcpy(gs->m_vram + zOff, &sourceZ, format == 1u ? 3u : zBytes);
++        }
++    }
++
++    if (!alphaTest.writeFramebuffer)
++    {
++        g_pxAlpha.fetch_add(1, std::memory_order_relaxed);
++        return;
++    }
++
++    // A fully masked framebuffer has no write transaction. In particular, it
++    // must not overwrite an overlapping depth write with the old color word.
++    const uint32_t framebufferBits = bytesPerPixel == 2u ? 0xFFFFu :
++        ctx.frame.psm == GS_PSM_CT24 ? 0xFFFFFFu : 0xFFFFFFFFu;
++    if ((ctx.frame.fbmsk & framebufferBits) == framebufferBits)
+         return;
+ 
+     PS2_IF_AGRESSIVE_LOGS({
+@@ -605,17 +736,9 @@
+ 
+     if (gs->m_prim.abe)
+     {
+-        uint32_t existing = 0u;
+-        if (bytesPerPixel == 2u)
+-        {
+-            uint16_t packed = 0u;
+-            std::memcpy(&packed, gs->m_vram + off, 2);
+-            existing = decodePSMCT16(packed);
+-        }
+-        else
+-        {
+-            std::memcpy(&existing, gs->m_vram + off, 4);
+-        }
++        const uint32_t existing = bytesPerPixel == 2u
++            ? decodePSMCT16(static_cast<uint16_t>(destinationFramebuffer))
++            : destinationFramebuffer;
+         uint8_t dr = existing & 0xFF;
+         uint8_t dg = (existing >> 8) & 0xFF;
+         uint8_t db = (existing >> 16) & 0xFF;
+@@ -665,11 +788,11 @@
+     if (bytesPerPixel == 2u)
+     {
+         uint16_t pixel = encodePSMCT16(r, g, b, a);
++        if (alphaTest.preserveDestinationAlpha)
++            mask |= 0x8000u;
+         if ((mask & 0xFFFFu) != 0u)
+         {
+-            uint16_t existing = 0u;
+-            std::memcpy(&existing, gs->m_vram + off, 2);
+-            pixel = static_cast<uint16_t>((pixel & ~mask) | (existing & mask));
++            pixel = static_cast<uint16_t>((pixel & ~mask) | (destinationFramebuffer & mask));
+         }
+         std::memcpy(gs->m_vram + off, &pixel, 2);
+         return;
+@@ -679,16 +802,12 @@
+ 
+     if (mask != 0)
+     {
+-        uint32_t existing;
+-        std::memcpy(&existing, gs->m_vram + off, 4);
+-        pixel = (pixel & ~mask) | (existing & mask);
++        pixel = (pixel & ~mask) | (destinationFramebuffer & mask);
+     }
+ 
+     if (alphaTest.preserveDestinationAlpha)
+     {
+-        uint32_t existing = 0u;
+-        std::memcpy(&existing, gs->m_vram + off, 4);
+-        pixel = (pixel & 0x00FFFFFFu) | (existing & 0xFF000000u);
++        pixel = (pixel & 0x00FFFFFFu) | (destinationFramebuffer & 0xFF000000u);
+     }
+ 
+     std::memcpy(gs->m_vram + off, &pixel, 4);
+@@ -983,6 +1102,7 @@
+ {
+     const GSVertex &v0 = gs->m_vtxQueue[0];
+     const GSVertex &v1 = gs->m_vtxQueue[1];
++    const PixelDepthScope spriteDepth(v1.z);
+     const auto &ctx = gs->activeContext();
+ 
+     int ofx = ctx.xyoffset.ofx >> 4;
+@@ -1062,7 +1182,9 @@
+     // Fast paths (same results as the generic loops below): 32/24-bit frame, with or without
+     // alpha blending (writeNoBlend32 applies writePixel's ABE arithmetic when asked).
+     static const bool s_noFast = std::getenv("REO_GS_NO_FASTPATH") != nullptr;
+-    const bool fastFrame = !s_noFast && (ctx.frame.psm == GS_PSM_CT32 || ctx.frame.psm == GS_PSM_CT24);
++    const bool pixelDepthOrDate = needsPixelDepthOrDate(ctx);
++    const bool fastFrame = !s_noFast && !pixelDepthOrDate &&
++                          (ctx.frame.psm == GS_PSM_CT32 || ctx.frame.psm == GS_PSM_CT24);
+     const bool fastAbe = gs->m_prim.abe != 0;
+     const bool fastPabe = gs->m_pabe;
+     const uint32_t fbBlock = GSInternal::framePageBaseToBlock(ctx.frame.fbp);
+@@ -1155,7 +1277,7 @@
+ 
+     ClutCacheScope clutScope;
+     bool spriteClutApart = false;
+-    if (gs->m_prim.tme && (ctx.tex0.psm == GS_PSM_T8 || ctx.tex0.psm == GS_PSM_T4) && !s_noFast)
++    if (gs->m_prim.tme && (ctx.tex0.psm == GS_PSM_T8 || ctx.tex0.psm == GS_PSM_T4) && !s_noFast && !pixelDepthOrDate)
+     {
+         // Frame bytes this sprite can touch (whole page rows of the frame, conservative)
+         // vs. the palette's bytes (generous 16 KB from CBP).
+@@ -1297,6 +1419,7 @@
+         uint8_t *const genericVram = gs->m_vram;
+         const uint32_t genericVramSize = gs->m_vramSize;
+         auto genericBand = [&](int yb, int ye) {
++        const PixelDepthScope bandDepth(v1.z);
+         t_clutCache = clutCopy;
+         const DecodedTexelScope texelScope(decodedTexels.pixels.empty() ? nullptr : &decodedTexels);
+         uint32_t discarded = 0;
+@@ -1343,7 +1466,7 @@
+         if (fastFrame)
+             genericDiscarded.fetch_add(discarded, std::memory_order_relaxed);
+         };
+-        if (!s_noFast && genericPixels >= 32768u && gClutApart && (gTxEnd <= gFbStart || gTxStart >= gFbEnd))
++        if (!s_noFast && !pixelDepthOrDate && genericPixels >= 32768u && gClutApart && (gTxEnd <= gFbStart || gTxStart >= gFbEnd))
+             RowPool::get().run(drawY0, drawY1, genericBand);
+         else
+             genericBand(drawY0, drawY1);
+@@ -1469,6 +1592,8 @@
+                 a = color.a;
+             }
+ 
++            t_pixelDepth = depthFromDouble(double(v0.z) + (double(v1.z) - v0.z) * w1 +
++                                           (double(v2.z) - v0.z) * w2);
+             writePixel(gs, x, y, r, g, b, a);
+         }
+     }
+@@ -1518,6 +1643,7 @@
+             a = v1.a;
+         }
+ 
++        t_pixelDepth = depthFromDouble(double(v0.z) + (double(v1.z) - v0.z) * t);
+         writePixel(gs, x0, y0, r, g, b, a);
+ 
+         if (x0 == x1 && y0 == y1)

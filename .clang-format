@@ -13,3 +13,6 @@ ReflowComments: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
+---
+Language: CSharp
+BreakStringLiterals: false

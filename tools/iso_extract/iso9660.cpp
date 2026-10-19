@@ -43,7 +43,8 @@ bool Iso9660::parse_pvd() {
     m_file.seekg((uint64_t)ISO_PVD_SECTOR * ISO_SECTOR_SIZE);
     m_file.read((char*)sector, ISO_SECTOR_SIZE);
 
-    if (!m_file) return false;
+    if (!m_file)
+        return false;
 
     // Check PVD signature
     // Byte 0: type (1 = PVD)
@@ -59,8 +60,10 @@ bool Iso9660::parse_pvd() {
     label[32] = '\0';
     // Trim trailing spaces
     for (int i = 31; i >= 0; i--) {
-        if (label[i] == ' ') label[i] = '\0';
-        else break;
+        if (label[i] == ' ')
+            label[i] = '\0';
+        else
+            break;
     }
     m_volume_label = label;
 
@@ -86,17 +89,19 @@ void Iso9660::parse_directory(uint32_t lba, uint32_t size, IsoDirectoryEntry& pa
         if (record_len == 0) {
             // Move to next sector boundary
             pos = ((pos / ISO_SECTOR_SIZE) + 1) * ISO_SECTOR_SIZE;
-            if (pos >= size) break;
+            if (pos >= size)
+                break;
             continue;
         }
 
-        if (pos + record_len > size) break;
+        if (pos + record_len > size)
+            break;
 
         uint8_t* rec = dir_data.data() + pos;
 
         // Parse directory record fields
-        uint32_t entry_lba = *(uint32_t*)(rec + 2);    // LBA (LE)
-        uint32_t entry_size = *(uint32_t*)(rec + 10);   // Size (LE)
+        uint32_t entry_lba = *(uint32_t*)(rec + 2);   // LBA (LE)
+        uint32_t entry_size = *(uint32_t*)(rec + 10); // Size (LE)
         uint8_t flags = rec[25];
         uint8_t name_len = rec[32];
 
@@ -117,11 +122,13 @@ void Iso9660::parse_directory(uint32_t lba, uint32_t size, IsoDirectoryEntry& pa
 
         // Remove version number (;1) from filename
         char* semi = strchr(name, ';');
-        if (semi) *semi = '\0';
+        if (semi)
+            *semi = '\0';
 
         // Remove trailing dot
         int nlen = (int)strlen(name);
-        if (nlen > 0 && name[nlen - 1] == '.') name[nlen - 1] = '\0';
+        if (nlen > 0 && name[nlen - 1] == '.')
+            name[nlen - 1] = '\0';
 
         IsoDirectoryEntry entry;
         entry.name = name;
@@ -145,7 +152,7 @@ const IsoDirectoryEntry* Iso9660::find(const std::string& path) const {
 }
 
 const IsoDirectoryEntry* Iso9660::find_recursive(const IsoDirectoryEntry& dir,
-                                                   const std::string& name) const {
+                                                 const std::string& name) const {
     // Normalize search name (uppercase, no version suffix)
     std::string search = name;
     std::transform(search.begin(), search.end(), search.begin(), ::toupper);
@@ -201,8 +208,7 @@ bool Iso9660::extract_all(const fs::path& output_dir) {
     return true;
 }
 
-void Iso9660::extract_recursive(const IsoDirectoryEntry& dir,
-                                 const fs::path& base) {
+void Iso9660::extract_recursive(const IsoDirectoryEntry& dir, const fs::path& base) {
     for (auto& entry : dir.children) {
         fs::path out_path = base / entry.name;
 
@@ -210,8 +216,7 @@ void Iso9660::extract_recursive(const IsoDirectoryEntry& dir,
             fs::create_directories(out_path);
             extract_recursive(entry, out_path);
         } else {
-            printf("[ISO] Extracting: %s (%u bytes)\n",
-                   out_path.string().c_str(), entry.size);
+            printf("[ISO] Extracting: %s (%u bytes)\n", out_path.string().c_str(), entry.size);
 
             std::ofstream out(out_path, std::ios::binary);
             if (!out) {

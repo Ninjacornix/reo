@@ -1,0 +1,22 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -53,7 +53,17 @@
+         {
+             static const bool enabled = std::getenv("REO_IRQ_TIMING_LOG") != nullptr;
+             m_enabled = enabled;
+-            if (m_enabled) m_start = std::chrono::steady_clock::now();
++            if (m_enabled)
++            {
++                using Clock = std::chrono::steady_clock;
++                static const auto epoch = Clock::now();
++                static const double afterSeconds = [] {
++                    const char* value = std::getenv("REO_IRQ_TIMING_AT");
++                    return value ? std::max(0.0, std::strtod(value, nullptr)) : 0.0;
++                }();
++                m_start = Clock::now();
++                m_enabled = std::chrono::duration<double>(m_start - epoch).count() >= afterSeconds;
++            }
+         }
+         void acquired()
+         {

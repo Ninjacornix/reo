@@ -8,3 +8,16 @@ tools/parallel_gs_backend/resident_gs/**
 launcher/bin/**
 launcher/obj/**
 launcher/artifacts/**
+
+tools/parallel_gs_backend/smaa/upstream/**
+
+# Instrumented game bodies are generated locally, not authored formatting inputs.
+recomp/overrides/gpu_palette_parent/parent_observed.cpp
+recomp/overrides/gpu_parent_natural/parent_natural_aggregate.cpp
+recomp/overrides/gpu_parent_natural/parent_natural_body.cpp
+recomp/overrides/ground_query_diagnostic.cpp
+recomp/overrides/movie_join_observed_caller.cpp
+recomp/overrides/reo_movie_commit_observed.cpp
+recomp/overrides/reo_movie_initialize_observed.cpp
+tools/parallel_gs_backend/movie_runtime/original_player_caller.cpp
+tools/parallel_gs_backend/movie_runtime/original_transport_*.cpp

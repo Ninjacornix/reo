@@ -1,0 +1,113 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -45,6 +45,22 @@
+     using namespace interrupt_state;
+     thread_local bool t_isIrqWorker = false;
+ 
++    // Called only after interrupt/alarm/guest workers have joined. These
++    // registries and order counters are TU-local in Helpers/Runtime.h;
++    // clearing Lifecycle.cpp's copies does not retire the actual handlers.
++    void resetInterruptHandlerRegistry()
++    {
++        std::lock_guard<std::mutex> lock(g_irq_handler_mutex);
++        g_intcHandlers.clear();
++        g_dmacHandlers.clear();
++        g_nextIntcHandlerId = g_nextDmacHandlerId = 1;
++        g_intc_head_order = g_dmac_head_order = 0;
++        g_intc_tail_order = g_dmac_tail_order = 1000;
++        g_enabled_intc_mask = g_enabled_dmac_mask = 0xFFFFFFFFu;
++        g_pending_dmac_mask.store(0u, std::memory_order_release);
++        g_pending_intc_mask.store(0u, std::memory_order_release);
++    }
++
+     // Opt-in evidence for host backpressure: distinguish waiting for the guest
+     // CPU from work performed while an original IRQ handler owns it. Declare
+     // before GuestExecutionScope so reporting happens after CPU release.
+@@ -424,6 +440,42 @@
+         return true;
+     }
+ 
++    // Keep the post-flip queue marker before any woken guest can submit its
++    // next drawing. The marker only snapshots registers/enqueues zero bytes;
++    // rasterization, draining and producer pacing remain on their usual paths.
++    static void dispatchVblankStartAndCapture(uint8_t *rdram, PS2Runtime *runtime,
++                                              void (*between)(void *) = nullptr, void *user = nullptr)
++    {
++        if (!rdram || !runtime) return;
++        // VBLANK measures admission and the entire atomic boundary. Nested INTC
++        // timings measure individual handlers, not a fresh admission wait.
++        ScopedIrqTiming timing("VBLANK", 0u, kIntcVblankStart);
++        PS2Runtime::GuestExecutionScope execution(runtime);
++        timing.acquired();
++        if (runtime->isStopRequested()) return;
++        dispatchIntcHandlersForCause(rdram, runtime, kIntcVblankStart);
++        if (between) between(user); // Used only by the opt-in isolated fixture.
++        if (!runtime->isStopRequested()) ps2GsSnapshotDisplay();
++    }
++
++    // Private fixture entry: exercise the real handler registry, guest scheduler
++    // and GS queue. The legacy branch deterministically exposes the old gap;
++    // neither it nor the callback is reachable from the production IRQ loop.
++    bool RunVblankCaptureFixtureBoundary(uint8_t *rdram, PS2Runtime *runtime, bool legacy,
++                                         void (*between)(void *), void *user)
++    {
++        const char *enabled = std::getenv("REO_VBLANK_CAPTURE_TEST");
++        if (!enabled || std::strcmp(enabled, "1") != 0 || !rdram || !runtime) return false;
++        if (legacy)
++        {
++            dispatchIntcHandlersForCause(rdram, runtime, kIntcVblankStart);
++            if (between) between(user);
++            if (!runtime->isStopRequested()) ps2GsSnapshotDisplay();
++        }
++        else dispatchVblankStartAndCapture(rdram, runtime, between, user);
++        return true;
++    }
++
+     static void interruptWorkerMain(uint8_t *rdram, PS2Runtime *runtime)
+     {
+         g_currentThreadId = -1;
+@@ -517,7 +569,7 @@
+                 runtime->memory().raiseIntc(kIntcVblankStart);
+                 runtime->memory().gsFieldTick(); // toggle GS_CSR FIELD + VSINT
+                 const auto vbStart = std::chrono::steady_clock::now();
+-                dispatchIntcHandlersForCause(rdram, runtime, kIntcVblankStart);
++                dispatchVblankStartAndCapture(rdram, runtime);
+                 {
+                     // [vblank-slow]: VBLANK_START dispatch that took > 8 ms (it needs the guest
+                     // lock); reports the guest thread that last owned the CPU (D44).
+@@ -527,7 +579,6 @@
+                         std::fprintf(stderr, "[vblank-slow] %lld us, lastOwner=%d tick=%llu catchup=%d\n", static_cast<long long>(us),
+                                      ps2_sched::debugLastOwner(), static_cast<unsigned long long>(tickValue), ticksToProcess);
+                 }
+-                ps2GsSnapshotDisplay(); // after the game's VBLANK handler flipped DISPFB
+                 std::this_thread::sleep_for(std::chrono::microseconds(500));
+                 runtime->memory().raiseIntc(kIntcVblankEnd);
+                 dispatchIntcHandlersForCause(rdram, runtime, kIntcVblankEnd);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
+@@ -14,6 +14,7 @@
+     }
+     using namespace interrupt_state;
+     void joinInterruptWorker();
++    void resetInterruptHandlerRegistry(); // Owns the registry used by Interrupt.cpp.
+     void prepareRuntimeWorkers()
+     {
+         // The previous runtime's coordinator has already joined this worker.
+@@ -97,14 +98,9 @@
+     {
+         joinInterruptWorker();
+         joinAlarmWorker();
++        resetInterruptHandlerRegistry();
+         {
+             std::lock_guard<std::mutex> lock(g_irq_handler_mutex);
+-            g_intcHandlers.clear();
+-            g_dmacHandlers.clear();
+-            g_nextIntcHandlerId = 1;
+-            g_nextDmacHandlerId = 1;
+-            g_enabled_intc_mask = 0xFFFFFFFFu;
+-            g_enabled_dmac_mask = 0xFFFFFFFFu;
+             g_pending_dmac_mask.store(0u, std::memory_order_release);
+             g_pending_intc_mask.store(0u, std::memory_order_release);
+         }

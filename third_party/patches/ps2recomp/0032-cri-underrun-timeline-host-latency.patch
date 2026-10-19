@@ -1,0 +1,155 @@
+diff --git a/ps2xRuntime/CMakeLists.txt b/ps2xRuntime/CMakeLists.txt
+index d559b4d..c78cc62 100644
+--- a/ps2xRuntime/CMakeLists.txt
++++ b/ps2xRuntime/CMakeLists.txt
+@@ -60,6 +60,16 @@ else()
+         GIT_PROGRESS TRUE
+     )
+     FetchContent_MakeAvailable(raylib)
++    if(WIN32)
++        # Callback streams bypass raylib's source ring. Keep Windows device
++        # buffering below one game frame instead of miniaudio's 3 x 10 ms.
++        # Private definitions rebuild only the host library, not guest code.
++        set(PS2X_HOST_AUDIO_PERIOD_MS 5 CACHE STRING "Windows low-latency audio period hint in milliseconds")
++        set(PS2X_HOST_AUDIO_PERIODS 2 CACHE STRING "Windows host audio device period count hint")
++        target_compile_definitions(raylib PRIVATE
++            MA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_LOW_LATENCY=${PS2X_HOST_AUDIO_PERIOD_MS}
++            MA_DEFAULT_PERIODS=${PS2X_HOST_AUDIO_PERIODS})
++    endif()
+ endif()
+ 
+ add_library(ps2_host_backend INTERFACE)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+index 82b8d14..b57ecea 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -13,16 +13,19 @@ namespace ps2_cri_audio {
+ namespace {
+ constexpr uint32_t outputRate=48000;
+ struct Channel { std::deque<int16_t> pcm; uint64_t queued=0, consumed=0; };
+-struct Voice { uint32_t left=0,right=0,channels=0,frequency=48000,volume=256; bool playing=false; double phase=0; };
++struct Voice { uint32_t left=0,right=0,channels=0,frequency=48000,volume=256; bool playing=false; double phase=0; uint64_t lateSamples=0, skippedSamples=0, startNs=0, firstNs=0, startByte=0; bool firstReported=false; };
+ std::mutex mutex;
+ std::unordered_map<uint32_t,Channel> channels;
+ std::unordered_map<uint32_t,Voice> voices;
+ AudioStream stream{};
+ bool ready=false;
++bool externalClock=false;
+ uint64_t outputFrames=0, signalFrames=0, underrunFrames=0;
+ auto lastTick=std::chrono::steady_clock::now();
+ auto lastReport=lastTick;
+ uint64_t lastFrames=0,lastSignal=0,lastUnderrun=0;
++const bool syncLog=std::getenv("REO_CRI_SYNC_LOG")!=nullptr;
++uint64_t clockNs() { return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()); }
+ 
+ // Called by raylib's audio thread. Its sample requests provide the playback clock.
+ void renderLocked(float* dst, unsigned frames) {
+@@ -33,8 +36,22 @@ void renderLocked(float* dst, unsigned frames) {
+             Voice& v=entry.second;
+             if (!v.playing || !v.left || !v.channels) continue;
+             auto li=channels.find(v.left), ri=channels.find(v.right);
++            // Silence still occupies device time. If the producer misses a
++            // deadline, discard that interval when its PCM arrives instead of
++            // permanently moving this voice behind the picture. Skip stereo
++            // pairs together and count real bytes so SJX replies remain valid.
++            while (v.lateSamples && li!=channels.end() && !li->second.pcm.empty() &&
++                (v.channels==1 || (ri!=channels.end() && !ri->second.pcm.empty()))) {
++                li->second.pcm.pop_front();li->second.consumed+=2;
++                if(v.channels>1){ri->second.pcm.pop_front();ri->second.consumed+=2;}
++                --v.lateSamples;++v.skippedSamples;
++            }
+             if (li==channels.end() || li->second.pcm.empty() ||
+-                (v.channels>1 && (ri==channels.end() || ri->second.pcm.empty()))) { starved=true; continue; }
++                (v.channels>1 && (ri==channels.end() || ri->second.pcm.empty()))) {
++                starved=true;v.phase+=v.frequency/static_cast<double>(outputRate);
++                const auto missed=static_cast<uint64_t>(v.phase);v.lateSamples+=missed;v.phase-=missed;continue;
++            }
++            if (syncLog && !v.firstNs) v.firstNs=clockNs();
+             const float gain=std::min(v.volume,256u)/256.0f/32768.0f;
+             l+=li->second.pcm.front()*gain;
+             r+=(v.channels>1?ri->second.pcm.front():li->second.pcm.front())*gain;
+@@ -52,10 +69,10 @@ void renderLocked(float* dst, unsigned frames) {
+         underrunFrames+=starved;
+     }
+ }
+-void callback(void* buffer, unsigned frames) { std::lock_guard<std::mutex> lock(mutex); renderLocked(static_cast<float*>(buffer),frames); }
++void callback(void* buffer, unsigned frames) { render(static_cast<float*>(buffer),frames); }
+ void ensureOutput() {
+     if (ready || !IsAudioDeviceReady()) return;
+-    // A small source buffer bounds prefetch latency to approximately 11 ms.
++    // Callback streams bypass the source ring; device buffering sets latency.
+     SetAudioStreamBufferSizeDefault(512);
+     stream=LoadAudioStream(outputRate,32,2);
+     if (!IsAudioStreamValid(stream)) return;
+@@ -66,7 +83,16 @@ void ensureOutput() {
+ }
+ void tickLocked() {
+     const auto now=std::chrono::steady_clock::now();
+-    if (!ready) {
++    if (syncLog) for (auto& entry:voices) {
++        auto& v=entry.second;
++        if (v.firstNs && !v.firstReported) {
++            std::fprintf(stderr,"[CRI-SYNC] first voice=%x ns=%llu startDelayMs=%.3f startByte=%llu\n",entry.first,
++                static_cast<unsigned long long>(v.firstNs),(v.firstNs-v.startNs)/1000000.0,
++                static_cast<unsigned long long>(v.startByte));
++            v.firstReported=true;
++        }
++    }
++    if (!ready && !externalClock) {
+         // Deterministic wall-clock progress for headless tests; retains PCM rate,
+         // stereo pairing and fractional frames rather than assuming ADX bytes.
+         const auto ns=std::chrono::duration_cast<std::chrono::nanoseconds>(now-lastTick).count();
+@@ -79,9 +105,17 @@ void tickLocked() {
+           static_cast<unsigned long long>(outputFrames-lastFrames),static_cast<unsigned long long>(signalFrames-lastSignal),
+           static_cast<unsigned long long>(underrunFrames-lastUnderrun),queued,ready?1:0);
+         lastReport=now;lastFrames=outputFrames;lastSignal=signalFrames;lastUnderrun=underrunFrames;
++        if (syncLog) for (const auto& entry:voices) {
++            const auto& v=entry.second;if(!v.playing) continue;
++            const auto c=channels.find(v.left);
++            std::fprintf(stderr,"[CRI-SYNC] position voice=%x ns=%llu pcmSeconds=%.6f elapsed=%.6f skipped=%llu late=%llu\n",entry.first,
++                static_cast<unsigned long long>(clockNs()),c==channels.end()?0.0:(c->second.consumed-v.startByte)/(2.0*v.frequency),
++                (clockNs()-v.startNs)/1000000000.0,static_cast<unsigned long long>(v.skippedSamples),static_cast<unsigned long long>(v.lateSamples));
++        }
+     }
+ }
+ }
++void render(float* dst,unsigned frames) { std::lock_guard<std::mutex> lock(mutex);externalClock=true;renderLocked(dst,frames); }
+ bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte) {
+     if (!key || !bytes || !length || (length&1) || length>0x4000) return false;
+     ensureOutput();
+@@ -103,11 +137,19 @@ bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte)
+ void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t freq,uint32_t vol,bool playing) {
+     ensureOutput();std::lock_guard<std::mutex> lock(mutex);tickLocked();
+     auto& v=voices[voice];v.left=left;v.right=right;v.channels=std::min(nch,2u);
+-    v.frequency=std::clamp(freq?freq:48000u,8000u,96000u);v.volume=vol;v.playing=playing;
++    v.frequency=std::clamp(freq?freq:48000u,8000u,96000u);v.volume=vol;
++    if (playing!=v.playing) { v.lateSamples=0;v.skippedSamples=0; }
++    if (syncLog && playing!=v.playing) {
++        v.startNs=clockNs();v.firstNs=0;v.firstReported=false;
++        const auto c=channels.find(left);v.startByte=c==channels.end()?0:c->second.consumed;
++        std::fprintf(stderr,"[CRI-SYNC] play voice=%x enabled=%u ns=%llu queuedLeft=%zu startByte=%llu\n",voice,playing?1:0,
++            static_cast<unsigned long long>(v.startNs),c==channels.end()?0:c->second.pcm.size(),static_cast<unsigned long long>(v.startByte));
++    }
++    v.playing=playing;
+ }
+ uint64_t consumed(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
+ void discard(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);if(i!=channels.end()){i->second.pcm.clear();i->second.consumed=i->second.queued;} }
+-void reset() { std::lock_guard<std::mutex> lock(mutex);channels.clear();voices.clear();lastTick=std::chrono::steady_clock::now(); }
++void reset() { std::lock_guard<std::mutex> lock(mutex);channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
+ void shutdown() {
+     if (ready && IsAudioDeviceReady()) { StopAudioStream(stream);UnloadAudioStream(stream); }
+     ready=false;stream={};reset();
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+index c99b6c8..345408b 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+@@ -7,6 +7,9 @@ bool queue(uint32_t key, const uint8_t* bytes, uint32_t length, uint64_t& endByt
+ void configure(uint32_t voice, uint32_t left, uint32_t right, uint32_t channels,
+                uint32_t frequency, uint32_t volume, bool playing);
+ uint64_t consumed(uint32_t key);
++// Device callback supplies exact frame requests; a zero-frame call selects
++// that clock for deterministic headless playback checks as well.
++void render(float* stereo, unsigned frames);
+ void discard(uint32_t key);
+ void reset();
+ void shutdown();

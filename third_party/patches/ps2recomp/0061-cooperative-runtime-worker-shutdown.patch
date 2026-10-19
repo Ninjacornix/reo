@@ -1,0 +1,1156 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -104,9 +104,16 @@
+ uint64_t ps2GsVblankSeq(); // ps2_gs_gpu.cpp: vblank display snapshots taken (D40)
+ uint64_t ps2GsCopiedFrameTick(); // Tick belonging to the immutable pixels copied on this host thread.
+ uint64_t ps2GsWaitVblank(uint64_t seenSeq, int timeoutMs); // ps2_gs_gpu.cpp (D44)
++void ps2GsRequestWorkerStop(); // Shutdown signal only; safe from guest/IRQ code.
++void ps2GsJoinWorker();        // Host coordinator only, without guest/IO locks.
++void ps2GsJoinRasterWorkers(); // After GS jobs have finished.
+ void ps2InstallModalRender(void *nativeWindow, void (*render)()); // Kernel/Host/Win32ModalRender.cpp (D42)
+ namespace ps2_syscalls
+ {
++    void joinInterruptWorker();
++    void finishRuntimeStop();
++    void prepareRuntimeWorkers();
++    void requestRuntimeWorkerStop();
+     extern std::atomic<uint32_t> g_dbgDmacRaised[16];
+     extern std::atomic<uint32_t> g_dbgDmacHandled[16];
+ }
+@@ -125,6 +132,7 @@
+         std::atomic<uint8_t> g_waiting[kMaxTid]; // runnable, waiting for the guest lock
+         std::atomic<int> g_waitingGuests{0};
+         std::atomic<int> g_waitingWorkers{0}; // non-guest host threads waiting for the lock
++        std::atomic<bool> g_shutdown{false};
+         thread_local int t_tid = -1;
+         // Long busy-waits (see spinYield): preemption checks since this thread last
+         // acquired the CPU, and whether it last gave the CPU up because of spinning.
+@@ -322,7 +330,9 @@
+         for (;;)
+         {
+             mutex.lock();
+-            if (!mustYield(tid))
++            // A stopped/suspended sleeper must reacquire its scope to unwind.
++            // No guest code is dispatched after its caller checks runtime stop.
++            if (g_shutdown.load(std::memory_order_acquire) || !mustYield(tid))
+                 break;
+             mutex.unlock();
+             notifyAll();
+@@ -986,6 +996,7 @@
+ 
+ PS2Runtime::PS2Runtime()
+ {
++    ps2_sched::g_shutdown.store(false, std::memory_order_release);
+     std::memset(&m_cpuContext, 0, sizeof(m_cpuContext));
+ 
+     // R0 is always zero in MIPS
+@@ -1014,7 +1025,11 @@
+     try
+     {
+         requestStop();
+-        ps2_syscalls::detachAllGuestHostThreads();
++        ps2_syscalls::joinInterruptWorker();
++        ps2_syscalls::joinAllGuestHostThreads();
++        ps2GsJoinWorker();
++        ps2GsJoinRasterWorkers();
++        ps2_syscalls::finishRuntimeStop();
+         ps2_cri_audio::shutdown();
+ #if defined(PLATFORM_VITA)
+         m_audioBackend.stopAll();
+@@ -2467,6 +2482,9 @@
+ 
+ bool PS2Runtime::shouldPreemptGuestExecution()
+ {
++    // Generated loop back-edges must unwind even when no higher-priority
++    // guest is runnable; otherwise a busy guest can outlive its runtime.
++    if (isStopRequested()) return true;
+     // Loop back-edges unwind to the dispatcher only when this guest thread must give up
+     // the CPU (EE kernel semantics, no time-slicing; see ps2_guest_sched.h).
+     thread_local uint32_t s_backEdgeCounter = 0u;
+@@ -2614,8 +2632,13 @@
+ 
+ void PS2Runtime::requestStop()
+ {
+-    m_stopRequested.store(true, std::memory_order_relaxed);
+-    ps2_syscalls::notifyRuntimeStop();
++    if (m_stopRequested.exchange(true, std::memory_order_acq_rel))
++        return;
++    ps2_sched::g_shutdown.store(true, std::memory_order_release);
++    ps2_sched::notifyAll();
++    // Cancel GS waits before waking guest scopes that need the CPU to unwind.
++    ps2GsRequestWorkerStop();
++    ps2_syscalls::requestRuntimeWorkerStop();
+ }
+ 
+ bool PS2Runtime::isStopRequested() const
+@@ -2631,6 +2654,8 @@
+ void PS2Runtime::run()
+ {
+     m_stopRequested.store(false, std::memory_order_relaxed);
++    ps2_sched::g_shutdown.store(false, std::memory_order_release);
++    ps2_syscalls::prepareRuntimeWorkers();
+     ps2_stubs::resetSifState();
+     ps2_syscalls::resetSoundDriverRpcState();
+     ps2_stubs::resetAudioStubState();
+@@ -2972,8 +2997,8 @@
+         }
+         else
+         {
+-            std::cerr << "[run] game thread did not stop within timeout; detaching" << std::endl;
+-            gameThread.detach();
++            std::cerr << "[run] game thread still stopping after 2 seconds; preserving runtime until joined" << std::endl;
++            gameThread.join();
+         }
+     }
+ 
+@@ -2995,17 +3020,15 @@
+         }
+     }
+ 
+-    if (g_activeThreads.load(std::memory_order_relaxed) == 0)
+-    {
+-        ps2_syscalls::joinAllGuestHostThreads();
+-    }
+-    else
+-    {
+-        std::cerr << "[run] guest host threads did not stop within timeout; detaching remaining worker threads"
+-                  << std::endl;
+-        ps2_syscalls::detachAllGuestHostThreads();
+-    }
+-
++    if (g_activeThreads.load(std::memory_order_relaxed) > 0)
++        std::cerr << "[run] guest workers still stopping; preserving runtime until joined" << std::endl;
++    ps2_syscalls::joinInterruptWorker();
++    ps2_syscalls::joinAllGuestHostThreads();
++    ps2GsJoinWorker();
++    ps2GsJoinRasterWorkers();
++    ps2_syscalls::finishRuntimeStop();
++
++    s_presentFrame = nullptr;
+     if (!reoHeadless)
+     {
+         UnloadTexture(frameTex);
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -14,6 +14,7 @@
+ #include <cstdlib>
+ #include <deque>
+ #include <array>
++#include <atomic>
+ #include <cstddef>
+ #include <filesystem>
+ #include <sstream>
+@@ -69,9 +70,13 @@
+         uint64_t lastDrawingMark = 0;
+         bool busy = false;
+         bool started = false;
++        bool stopping = false;
++        std::thread worker;
+     };
+ 
+     GsAsync g_gsAsync;
++    std::atomic<bool> g_gsStopRequested{false};
++    std::mutex g_gsJoinMutex; // Serializes host joins, never held by the worker.
+     GSRegisters *g_gsPrivRegs = nullptr; // set by GS::init; read at vblank (D40)
+     GS *g_gsInstance = nullptr;
+     struct PublishedDisplayFrame
+@@ -410,7 +415,8 @@
+             GsQueueItem item;
+             {
+                 std::unique_lock<std::mutex> lock(g_gsAsync.m);
+-                g_gsAsync.work.wait(lock, [] { return !g_gsAsync.queue.empty(); });
++                g_gsAsync.work.wait(lock, [] { return g_gsAsync.stopping || !g_gsAsync.queue.empty(); });
++                if (g_gsAsync.stopping) break;
+                 item = std::move(g_gsAsync.queue.front());
+                 g_gsAsync.queue.pop_front();
+                 g_gsAsync.busy = true;
+@@ -433,28 +439,41 @@
+                 gs->processGIFPacket(item.data.data(), static_cast<uint32_t>(item.data.size()));
+             else
+                 gs->writeRegister(item.reg, item.value);
+-            if (publicationProbeEnabled()) PublicationProbe::get().record(item);
++            if (publicationProbeEnabled() && !g_gsStopRequested.load(std::memory_order_relaxed)) PublicationProbe::get().record(item);
+             {
+                 std::lock_guard<std::mutex> lock(g_gsAsync.m);
+                 g_gsAsync.busy = false;
+-                g_gsAsync.queuedBytes -= item.data.size();
++                if (g_gsAsync.stopping) g_gsAsync.queuedBytes = 0;
++                else g_gsAsync.queuedBytes -= item.data.size();
+                 ++g_gsAsync.completed;
+             }
+             g_gsAsync.drained.notify_all();
+         }
++        {
++            std::lock_guard<std::mutex> lock(g_gsAsync.m);
++            g_gsAsync.busy = false;
++            g_gsAsync.started = false;
++            g_gsAsync.completed = g_gsAsync.enqueued;
++        }
++        t_isGsWorker = false;
++        g_gsAsync.drained.notify_all();
+     }
+ 
+     // Queues the call for the worker; false = run it synchronously (disabled / on worker).
+     bool gsEnqueue(GS *gs, GsQueueItem &&item)
+     {
++        // Discard after stop as handled; false would execute against guest RAM
++        // synchronously while the host is joining and freeing that RAM.
++        if (g_gsStopRequested.load(std::memory_order_acquire)) return true;
+         if (t_isGsWorker || !gsThreadEnabled())
+             return false;
+         const GsWaitTimer waitTimer;
+         std::unique_lock<std::mutex> lock(g_gsAsync.m);
++        if (g_gsAsync.stopping) return true;
+         if (!g_gsAsync.started)
+         {
+             g_gsAsync.started = true;
+-            std::thread(gsWorkerMain, gs).detach();
++            g_gsAsync.worker = std::thread(gsWorkerMain, gs);
+         }
+         // Pacing: the GS may lag at most about one frame. A real EE cannot run ahead of the
+         // GS because the game waits for GS completion; without this the guest queued ~23 s
+@@ -465,8 +484,9 @@
+             // while holding the guest lock, delaying the VBLANK handler (present hitches).
+             // IRQs keep advancing while this producer waits. Chasing a moving mark
+             // could starve the producer forever, particularly during turbo boot.
+-            return g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= paceTarget;
++            return g_gsAsync.stopping || (g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= paceTarget);
+         });
++        if (g_gsAsync.stopping) return true;
+         waitTimer.finish("enqueue", paceTarget, item.isPacket ? "packet" : "register");
+         g_gsAsync.queuedBytes += item.data.size();
+         ++g_gsAsync.enqueued;
+@@ -482,6 +502,7 @@
+     void gsMarkVsyncImpl()
+     {
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        if (g_gsAsync.stopping) return;
+         g_gsAsync.prev2VsyncMark = g_gsAsync.prevVsyncMark;
+         g_gsAsync.prevVsyncMark = g_gsAsync.vsyncMark;
+         // Capture-only work must not advance the guest drawing pacing target.
+@@ -506,8 +527,10 @@
+     // the handlers showed the pre-flip buffer while the game was already redrawing it.
+     void gsSnapshotDisplayImpl()
+     {
++        if (g_gsStopRequested.load(std::memory_order_acquire)) return;
+         const uint64_t captureTick = ps2_syscalls::GetCurrentVSyncTick();
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        if (g_gsAsync.stopping) return;
+         if (g_gsPrivRegs)
+         {
+             auto &vb = g_gsAsync.vblankDisplay;
+@@ -528,7 +551,7 @@
+                 if (!g_gsAsync.started)
+                 {
+                     g_gsAsync.started = true;
+-                    std::thread(gsWorkerMain, g_gsInstance).detach();
++                    g_gsAsync.worker = std::thread(gsWorkerMain, g_gsInstance);
+                 }
+                 const bool unchanged = g_gsAsync.lastCaptureDrawingSerial == g_gsAsync.drawingSerial &&
+                                        sameDisplayCapture(g_gsAsync.lastQueuedDisplay, vb);
+@@ -568,7 +591,7 @@
+             return;
+         const GsWaitTimer waitTimer;
+         std::unique_lock<std::mutex> lock(g_gsAsync.m);
+-        g_gsAsync.drained.wait(lock, [target] { return g_gsAsync.completed >= target; });
++        g_gsAsync.drained.wait(lock, [target] { return g_gsAsync.stopping || g_gsAsync.completed >= target; });
+         waitTimer.finish("drain-to", target, "none");
+     }
+ 
+@@ -581,7 +604,7 @@
+         const GsWaitTimer waitTimer;
+         std::unique_lock<std::mutex> lock(g_gsAsync.m);
+         const uint64_t target = g_gsAsync.enqueued;
+-        g_gsAsync.drained.wait(lock, [target] { return g_gsAsync.completed >= target; });
++        g_gsAsync.drained.wait(lock, [target] { return g_gsAsync.stopping || g_gsAsync.completed >= target; });
+         waitTimer.finish("drain", target, "none");
+     }
+ }
+@@ -1107,6 +1130,54 @@
+ 
+ using namespace GSInternal;
+ 
++// Runtime lifetime hooks intentionally stay private to the implementation.
++bool ps2GsWorkerStopRequested()
++{
++    return g_gsStopRequested.load(std::memory_order_acquire);
++}
++
++void ps2GsRequestWorkerStop()
++{
++    g_gsStopRequested.store(true, std::memory_order_release);
++    {
++        std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        g_gsAsync.stopping = true;
++        g_gsAsync.queue.clear();
++        // Includes the item currently executing; completion handles stopped
++        // accounting explicitly, so cancellation cannot underflow this value.
++        g_gsAsync.queuedBytes = 0;
++    }
++    g_gsAsync.work.notify_all();
++    g_gsAsync.drained.notify_all();
++    // Pair with the wait mutex so a host waiter cannot miss the stop wake.
++    { std::lock_guard<std::mutex> lock(g_vblankWaitMutex); }
++    g_vblankCv.notify_all();
++}
++
++void ps2GsJoinWorker()
++{
++    ps2GsRequestWorkerStop();
++    if (t_isGsWorker) return; // Joining is owned by the host shutdown coordinator.
++    std::lock_guard<std::mutex> joinLock(g_gsJoinMutex);
++    std::thread worker;
++    {
++        std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        worker = std::move(g_gsAsync.worker);
++    }
++    if (worker.joinable()) worker.join(); // Neither queue nor GS state mutex held.
++    {
++        std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        g_gsInstance = nullptr;
++        g_gsPrivRegs = nullptr;
++        g_gsAsync.busy = false;
++        g_gsAsync.started = false;
++    }
++    {
++        std::lock_guard<std::mutex> lock(g_publishedDisplayMutex);
++        g_publishedDisplay.reset();
++    }
++}
++
+ GS::GS()
+ {
+     reset();
+@@ -1114,6 +1185,21 @@
+ 
+ void GS::init(uint8_t *vram, uint32_t vramSize, GSRegisters *privRegs)
+ {
++    // A new session cannot reuse a detached worker still bound to old RAM.
++    ps2GsJoinWorker();
++    {
++        std::lock_guard<std::mutex> lock(g_gsAsync.m);
++        g_gsAsync.queue.clear();
++        g_gsAsync.queuedBytes = 0;
++        g_gsAsync.enqueued = g_gsAsync.completed = 0;
++        g_gsAsync.vsyncMark = g_gsAsync.prevVsyncMark = g_gsAsync.prev2VsyncMark = 0;
++        g_gsAsync.drawingSerial = g_gsAsync.lastCaptureDrawingSerial = g_gsAsync.lastDrawingMark = 0;
++        g_gsAsync.vblankDisplay = {}; g_gsAsync.lastQueuedDisplay = {};
++        g_gsAsync.stopping = false;
++        g_gsStopRequested.store(false, std::memory_order_release);
++    }
++    s_gifPendingImageBytes = 0;
++    g_vblankSeq.store(0, std::memory_order_release);
+     m_vram = vram;
+     m_vramSize = vramSize;
+     m_privRegs = privRegs;
+@@ -1187,6 +1273,7 @@
+ void GS::snapshotVRAM()
+ {
+     std::lock_guard<std::recursive_mutex> stateLock(m_stateMutex);
++    if (ps2GsWorkerStopRequested()) return;
+     if (!m_vram || m_vramSize == 0)
+         return;
+     std::lock_guard<std::mutex> lock(m_snapshotMutex);
+@@ -1251,7 +1338,7 @@
+                                      uint32_t sourceOriginX,
+                                      uint32_t sourceOriginY) const
+ {
+-    if (!m_vram || m_vramSize == 0u)
++    if (ps2GsWorkerStopRequested() || !m_vram || m_vramSize == 0u)
+     {
+         return false;
+     }
+@@ -1271,6 +1358,7 @@
+         {
+             for (uint32_t y = 0; y < height; ++y)
+             {
++                if (ps2GsWorkerStopRequested()) return false;
+                 uint8_t *dstRow = outPixels.data() + (y * kHostFrameWidth * 4u);
+                 for (uint32_t x = 0; x < width; ++x)
+                 {
+@@ -1294,6 +1382,7 @@
+ 
+         for (uint32_t y = 0; y < height; ++y)
+         {
++            if (ps2GsWorkerStopRequested()) return false;
+             const uint32_t dstOff = y * kHostFrameWidth * 4u;
+             uint8_t *dstRow = outPixels.data() + dstOff;
+             for (uint32_t x = 0; x < width; ++x)
+@@ -1322,6 +1411,7 @@
+         {
+             for (uint32_t y = 0; y < height; ++y)
+             {
++                if (ps2GsWorkerStopRequested()) return false;
+                 const uint32_t dstOff = y * kHostFrameWidth * 4u;
+                 uint8_t *dst = outPixels.data() + dstOff;
+                 for (uint32_t x = 0; x < width; ++x)
+@@ -1350,6 +1440,7 @@
+ 
+         for (uint32_t y = 0; y < height; ++y)
+         {
++            if (ps2GsWorkerStopRequested()) return false;
+             const uint32_t dstOff = y * kHostFrameWidth * 4u;
+             uint8_t *dst = outPixels.data() + dstOff;
+             for (uint32_t x = 0; x < width; ++x)
+@@ -1381,6 +1472,7 @@
+ 
+ void GS::latchHostPresentationFrame()
+ {
++    if (ps2GsWorkerStopRequested()) return;
+     // In async mode the ordered GS marker owns the capture. The window uses the
+     // latest completed immutable image, without waiting for this frame's drawing.
+     if (gsThreadEnabled() && !t_isGsWorker)
+@@ -1416,7 +1508,7 @@
+     // Destruction runs after every capture return, while the worker's state lock
+     // and exact display marker are still held. Nothing is sampled when disabled.
+     PublicationProbeExit publicationEvidence{[&] {
+-        if (!publicationProbeEnabled() || !t_isGsWorker || !t_displayCapture) return;
++        if (!publicationProbeEnabled() || !t_isGsWorker || !t_displayCapture || ps2GsWorkerStopRequested()) return;
+         auto &probe = PublicationProbe::get();
+         probe.inspect(m_vram, m_vramSize, m_hostPresentationFrame,
+                       m_hostPresentationWidth, m_hostPresentationHeight,
+@@ -1915,12 +2007,13 @@
+ {
+     std::unique_lock<std::mutex> lock(g_vblankWaitMutex);
+     g_vblankCv.wait_for(lock, std::chrono::milliseconds(timeoutMs),
+-                        [seenSeq] { return g_vblankSeq.load(std::memory_order_acquire) != seenSeq; });
++                        [seenSeq] { return ps2GsWorkerStopRequested() || g_vblankSeq.load(std::memory_order_acquire) != seenSeq; });
+     return g_vblankSeq.load(std::memory_order_acquire);
+ }
+ 
+ void GS::processGIFPacket(const uint8_t *data, uint32_t sizeBytes)
+ {
++    if (ps2GsWorkerStopRequested()) return;
+     if (data && sizeBytes >= 16 && gsThreadEnabled() && !t_isGsWorker)
+     {
+         GsQueueItem item;
+@@ -1982,6 +2075,7 @@
+     uint32_t offset = 0;
+     while (offset + 16 <= sizeBytes)
+     {
++        if (ps2GsWorkerStopRequested()) return;
+         uint64_t tagLo = loadLE64(data + offset);
+         uint64_t tagHi = loadLE64(data + offset + 8);
+         offset += 16;
+@@ -2008,6 +2102,7 @@
+         {
+             for (uint32_t loop = 0; loop < nloop; ++loop)
+             {
++                if (ps2GsWorkerStopRequested()) return;
+                 for (uint32_t r = 0; r < nreg; ++r)
+                 {
+                     if (offset + 16 > sizeBytes)
+@@ -2023,6 +2118,7 @@
+         {
+             for (uint32_t loop = 0; loop < nloop; ++loop)
+             {
++                if (ps2GsWorkerStopRequested()) return;
+                 for (uint32_t r = 0; r < nreg; ++r)
+                 {
+                     if (offset + 8 > sizeBytes)
+@@ -2051,6 +2147,7 @@
+ 
+ void GS::writeRegisterPacked(uint8_t regDesc, uint64_t lo, uint64_t hi)
+ {
++    if (ps2GsWorkerStopRequested()) return;
+     if (publicationProbeEnabled() && t_isGsWorker && regDesc < 16u)
+     {
+         auto &probe = PublicationProbe::get();
+@@ -2240,6 +2337,7 @@
+ 
+ void GS::writeRegister(uint8_t regAddr, uint64_t value)
+ {
++    if (ps2GsWorkerStopRequested()) return;
+     if (gsThreadEnabled() && !t_isGsWorker)
+     {
+         GsQueueItem item;
+@@ -2684,6 +2782,7 @@
+ 
+ void GS::performLocalToLocalTransfer()
+ {
++    if (ps2GsWorkerStopRequested()) return;
+     if (!m_vram)
+         return;
+ 
+@@ -2735,6 +2834,7 @@
+     {
+         for (uint32_t row = 0; row < rrh; ++row)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             const uint32_t srcY = transferCoord(ssay, rrh, row, traversal.reverseY);
+             const uint32_t dstY = transferCoord(dsay, rrh, row, traversal.reverseY);
+             for (uint32_t col = 0; col < rrw; ++col)
+@@ -2764,6 +2864,7 @@
+         uint8_t pixelBytes[4] = {};
+         for (uint32_t row = 0; row < rrh; ++row)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             const uint32_t srcY = transferCoord(ssay, rrh, row, traversal.reverseY);
+             const uint32_t dstY = transferCoord(dsay, rrh, row, traversal.reverseY);
+             for (uint32_t col = 0; col < rrw; ++col)
+@@ -2876,6 +2977,7 @@
+ 
+ void GS::processImageData(const uint8_t *data, uint32_t sizeBytes)
+ {
++    if (ps2GsWorkerStopRequested()) return;
+     g_gsImageCalls.fetch_add(1, std::memory_order_relaxed);
+     if (m_trxdir != 0 || !m_vram)
+     {
+@@ -2932,6 +3034,7 @@
+ 
+         while (offset < sizeBytes && m_hwregY < rrh)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             const uint8_t srcByte = data[offset++];
+             const uint32_t srcLo = srcByte & 0x0Fu;
+             const uint32_t srcHi = (srcByte >> 4) & 0x0Fu;
+@@ -2949,6 +3052,7 @@
+         uint32_t offset = 0;
+         while (offset < sizeBytes && m_hwregY < rrh)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             uint32_t pixelsLeft = rrw - m_hwregX;
+             uint32_t pixelsToCopy = std::min<uint32_t>(pixelsLeft, sizeBytes - offset);
+             if (pixelsToCopy == 0)
+@@ -2983,6 +3087,7 @@
+         uint32_t offset = 0;
+         while (offset < sizeBytes && m_hwregY < rrh)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             uint32_t pixelsLeft = rrw - m_hwregX;
+             uint32_t srcBytesLeft = pixelsLeft * transferBpp;
+             uint32_t bytesAvail = sizeBytes - offset;
+@@ -3030,6 +3135,7 @@
+         uint32_t offset = 0;
+         while (offset < sizeBytes && m_hwregY < rrh)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             uint32_t dstY = dsay + m_hwregY;
+             uint32_t pixelsLeft = rrw - m_hwregX;
+             uint32_t bytesLeft = pixelsLeft * bytesPerPixel;
+@@ -3069,6 +3175,7 @@
+ 
+ void GS::performLocalToHostToBuffer()
+ {
++    if (ps2GsWorkerStopRequested()) return;
+     m_localToHostBuffer.clear();
+     m_localToHostReadPos = 0;
+     if (!m_vram)
+@@ -3098,6 +3205,7 @@
+         uint32_t widthBlocks = static_cast<uint32_t>(sbw);
+         for (uint32_t y = 0; y < rrh; ++y)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             for (uint32_t x = 0; x < rrw; ++x)
+             {
+                 uint32_t vx = ssax + x;
+@@ -3122,6 +3230,7 @@
+         m_localToHostBuffer.reserve(rrw * rrh);
+         for (uint32_t y = 0; y < rrh; ++y)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             for (uint32_t x = 0; x < rrw; ++x)
+             {
+                 const uint32_t src = GSPSMT8::addrPSMT8(sbp, sbw, ssax + x, ssay + y);
+@@ -3136,6 +3245,7 @@
+ 
+         for (uint32_t y = 0; y < rrh; ++y)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             for (uint32_t x = 0; x < rrw; ++x)
+             {
+                 uint32_t srcOff = GSPSMCT32::addrPSMCT32(sbp, sbw, ssax + x, ssay + y);
+@@ -3159,6 +3269,7 @@
+ 
+         for (uint32_t y = 0; y < rrh; ++y)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             if (spsm == GS_PSM_CT32 || spsm == GS_PSM_Z32)
+             {
+                 for (uint32_t x = 0; x < rrw; ++x)
+@@ -3190,6 +3301,7 @@
+ {
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
++    if (ps2GsWorkerStopRequested()) return false;
+     return clearFramebufferRect(m_vram, m_vramSize, m_ctx[(contextIndex != 0u) ? 1 : 0], rgba);
+ }
+ 
+@@ -3197,6 +3309,7 @@
+ {
+     gsDrain();
+     std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
++    if (ps2GsWorkerStopRequested()) return false;
+     return clearFramebufferRect(m_vram, m_vramSize, activeContext(), rgba);
+ }
+ 
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -17,6 +17,8 @@
+ #include <mutex>
+ #include <thread>
+ #include <vector>
++
++bool ps2GsWorkerStopRequested(); // Explicit teardown only; normal draws are unchanged.
+ 
+ namespace
+ {
+@@ -297,12 +299,13 @@
+         // Runs fn(yBegin, yEnd) over [y0, y1] in bands; returns when all bands are done.
+         void run(int y0, int y1, const std::function<void(int, int)> &fn)
+         {
++            std::lock_guard<std::mutex> runLock(m_runMutex);
++            startWorkers();
+             if (m_threads.empty() || y1 - y0 < 16)
+             {
+                 fn(y0, y1);
+                 return;
+             }
+-            std::lock_guard<std::mutex> runLock(m_runMutex);
+             {
+                 std::lock_guard<std::mutex> lock(m_m);
+                 m_fn = &fn;
+@@ -319,22 +322,47 @@
+             m_fn = nullptr;
+         }
+ 
++        // Called only after the GS worker/current sprite has joined. The run
++        // mutex additionally protects standalone synchronous callers.
++        void shutdown()
++        {
++            std::lock_guard<std::mutex> runLock(m_runMutex);
++            {
++                std::lock_guard<std::mutex> lock(m_m);
++                m_stop = true;
++            }
++            m_cv.notify_all();
++            for (auto &worker : m_threads)
++                if (worker.joinable()) worker.join();
++            m_threads.clear();
++            m_generation = 0;
++            m_pending = 0;
++            m_fn = nullptr;
++        }
++
++        ~RowPool() { shutdown(); }
++
+     private:
+         RowPool()
+         {
++        }
++
++        void startWorkers()
++        {
++            if (!m_threads.empty()) return;
++            m_stop = false;
+             static const bool off = std::getenv("REO_GS_NO_PARALLEL") != nullptr;
+             const unsigned hw = std::thread::hardware_concurrency();
+             const unsigned n = off ? 0u : std::min(6u, hw > 4u ? hw / 2u : 1u);
+             for (unsigned i = 0; i < n; ++i)
+                 m_threads.emplace_back([this] { workerMain(); });
+-            for (auto &t : m_threads)
+-                t.detach();
+         }
+ 
+         void work()
+         {
+             for (;;)
+             {
++                if (ps2GsWorkerStopRequested()) return;
+                 const int b = m_next.fetch_add(m_band);
+                 if (b > m_end)
+                     return;
+@@ -349,7 +377,8 @@
+             {
+                 {
+                     std::unique_lock<std::mutex> lock(m_m);
+-                    m_cv.wait(lock, [&] { return m_generation != seen; });
++                    m_cv.wait(lock, [&] { return m_stop || m_generation != seen; });
++                    if (m_stop) return;
+                     seen = m_generation;
+                 }
+                 work();
+@@ -366,7 +395,13 @@
+         std::atomic<int> m_next{0};
+         int m_end = 0, m_band = 1, m_pending = 0;
+         uint64_t m_generation = 0;
++        bool m_stop = false;
+     };
++}
++
++void ps2GsJoinRasterWorkers()
++{
++    RowPool::get().shutdown();
+ }
+ 
+ #include <atomic>
+@@ -1519,8 +1554,11 @@
+         auto band = [&](int yb, int ye) {
+             uint32_t local = 0;
+             for (int y = yb; y <= ye; ++y)
++            {
++                if (ps2GsWorkerStopRequested()) return;
+                 for (int x = drawX0; x <= drawX1; ++x)
+                     local += writeNoBlend32(vram, vramSize, ctx, fbBlock, fbWidthBlocks, x, y, r, g, b, a, fastAbe, fastPabe) ? 0u : 1u;
++            }
+             discarded.fetch_add(local, std::memory_order_relaxed);
+         };
+         if (spritePixels >= 32768u)
+@@ -1553,6 +1591,7 @@
+             uint32_t discarded = 0;
+             for (int y = yb; y <= ye; ++y)
+             {
++                if (ps2GsWorkerStopRequested()) return;
+                 const int ky = y - unclippedY0;
+                 const int tv = resolveTextureCoordinate(vv1 >= vv0 ? vv0 + ky : vv0 - ky - 1, texH, ctx.clamp, true);
+                 for (int x = drawX0; x <= drawX1; ++x)
+@@ -1742,6 +1781,7 @@
+         uint32_t discarded = 0;
+         for (int y = yb; y <= ye; ++y)
+         {
++            if (ps2GsWorkerStopRequested()) return;
+             float ty = (static_cast<float>(y - unclippedY0) + 0.5f) / spriteH;
+             float texVf = v0f + (v1f - v0f) * ty;
+ 
+@@ -1797,8 +1837,11 @@
+     else
+     {
+         for (int y = drawY0; y <= drawY1; ++y)
++        {
++            if (ps2GsWorkerStopRequested()) return;
+             for (int x = drawX0; x <= drawX1; ++x)
+                 writePixel(gs, x, y, r, g, b, a);
++        }
+     }
+ }
+ 
+@@ -1854,6 +1897,7 @@
+ 
+     for (int y = minY; y <= maxY; ++y)
+     {
++        if (ps2GsWorkerStopRequested()) return;
+         float py = static_cast<float>(y) + 0.5f;
+         for (int x = minX; x <= maxX; ++x)
+         {
+@@ -1981,6 +2025,7 @@
+ 
+     for (;;)
+     {
++        if ((step & 63) == 0 && ps2GsWorkerStopRequested()) return;
+         float t = static_cast<float>(step) / static_cast<float>(totalSteps);
+         uint8_t r, g, b, a;
+         if (gs->m_prim.iip)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -7,6 +7,7 @@
+ #include <cstdio>
+ #include <cstdlib>
+ #include <cstring>
++#include <stdexcept>
+ 
+ void ps2GsMarkVsync();       // ps2_gs_gpu.cpp: GS worker pacing (D39)
+ void ps2GsSnapshotDisplay(); // ps2_gs_gpu.cpp: post-flip display snapshot for present (D41)
+@@ -31,6 +32,7 @@
+         std::condition_variable g_vsync_cv;
+         std::atomic<bool> g_irq_worker_stop{false};
+         std::atomic<bool> g_irq_worker_running{false};
++        std::thread g_irq_worker;
+         uint32_t g_enabled_intc_mask = 0xFFFFFFFFu;
+         uint32_t g_enabled_dmac_mask = 0xFFFFFFFFu;
+         std::atomic<uint32_t> g_pending_dmac_mask{0u};
+@@ -41,6 +43,7 @@
+     }
+ 
+     using namespace interrupt_state;
++    thread_local bool t_isIrqWorker = false;
+ 
+     // Opt-in evidence for host backpressure: distinguish waiting for the guest
+     // CPU from work performed while an original IRQ handler owns it. Declare
+@@ -252,7 +255,8 @@
+                 ScopedIrqTiming irqTiming("INTC", info.handler, cause);
+                 PS2Runtime::GuestExecutionScope interruptExecution(runtime);
+                 irqTiming.acquired();
+-                while (irqCtx.pc != 0u && runtime && !runtime->isStopRequested())
++                while (irqCtx.pc != 0u && runtime && !runtime->isStopRequested() &&
++                       (!t_isIrqWorker || !g_irq_worker_stop.load(std::memory_order_acquire)))
+                 {
+                     PS2Runtime::RecompiledFunction step = runtime->lookupFunction(irqCtx.pc);
+                     if (!step)
+@@ -340,7 +344,8 @@
+                 ScopedIrqTiming irqTiming("DMAC", info.handler, cause);
+                 PS2Runtime::GuestExecutionScope interruptExecution(runtime); // atomic, see INTC
+                 irqTiming.acquired();
+-                while (irqCtx.pc != 0u && runtime && !runtime->isStopRequested())
++                while (irqCtx.pc != 0u && runtime && !runtime->isStopRequested() &&
++                       (!t_isIrqWorker || !g_irq_worker_stop.load(std::memory_order_acquire)))
+                 {
+                     PS2Runtime::RecompiledFunction step = runtime->lookupFunction(irqCtx.pc);
+                     if (!step)
+@@ -395,7 +400,6 @@
+     }
+ 
+     // True on the interrupt worker thread.
+-    thread_local bool t_isIrqWorker = false;
+ 
+     // The EE takes INTC (INT0) and DMAC (INT1) on separate lines. SLUS-20765's VBLANK
+     // handler (FUN_0019f600 -> FUN_001a0350 -> FUN_0018d650) busy-waits for a frame-busy flag
+@@ -577,13 +581,13 @@
+ 
+     static void ensureInterruptWorkerRunning(uint8_t *rdram, PS2Runtime *runtime)
+     {
+-        if (!rdram || !runtime)
++        if (!rdram || !runtime || runtime->isStopRequested())
+         {
+             return;
+         }
+ 
+         std::lock_guard<std::mutex> lock(g_irq_worker_mutex);
+-        if (g_irq_worker_running.load(std::memory_order_acquire))
++        if (runtime->isStopRequested() || g_irq_worker_running.load(std::memory_order_acquire))
+         {
+             return;
+         }
+@@ -592,7 +596,11 @@
+         g_irq_worker_running.store(true, std::memory_order_release);
+         try
+         {
+-            std::thread(interruptWorkerMain, rdram, runtime).detach();
++            // A completed predecessor still owns a join obligation. Its loop
++            // has set running=false and no longer needs this mutex.
++            if (g_irq_worker.joinable())
++                g_irq_worker.join();
++            g_irq_worker = std::thread(interruptWorkerMain, rdram, runtime);
+         }
+         catch (...)
+         {
+@@ -615,10 +623,24 @@
+     {
+         g_irq_worker_stop.store(true, std::memory_order_release);
+         g_irq_worker_cv.notify_all();
+-        std::unique_lock<std::mutex> lock(g_irq_worker_mutex);
+-        g_irq_worker_cv.wait_for(lock, std::chrono::milliseconds(500), []()
+-                                 { return !g_irq_worker_running.load(std::memory_order_acquire); });
+         g_vsync_cv.notify_all();
++    }
++
++    void joinInterruptWorker()
++    {
++        stopInterruptWorker();
++        std::thread worker;
++        {
++            std::lock_guard<std::mutex> lock(g_irq_worker_mutex);
++            if (g_irq_worker.joinable())
++            {
++                if (g_irq_worker.get_id() == std::this_thread::get_id())
++                    throw std::logic_error("IRQ worker cannot join itself");
++                worker = std::move(g_irq_worker);
++            }
++        }
++        if (worker.joinable())
++            worker.join();
+     }
+ 
+     uint64_t WaitForNextVSyncTick(uint8_t *rdram, PS2Runtime *runtime)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp
+@@ -4,25 +4,29 @@
+ 
+ namespace ps2_syscalls
+ {
++    namespace interrupt_state
++    {
++        // Private ownership stays in Interrupt.cpp; finalized only after its
++        // worker has joined. These do not enter a public runtime header.
++        extern std::atomic<uint32_t> g_pending_dmac_mask;
++        extern std::atomic<uint32_t> g_pending_intc_mask;
++        extern uint8_t *g_irq_worker_rdram;
++    }
+     using namespace interrupt_state;
++    void joinInterruptWorker();
++    void prepareRuntimeWorkers()
++    {
++        // The previous runtime's coordinator has already joined this worker.
++        std::lock_guard<std::mutex> lock(g_alarm_worker_mutex);
++        if (g_alarm_worker.joinable())
++            throw std::logic_error("Previous alarm worker was not joined");
++        g_alarm_worker_stop.store(false, std::memory_order_release);
++    }
+ 
+-    void notifyRuntimeStop()
++    void requestRuntimeWorkerStop()
+     {
+         stopInterruptWorker();
+-        {
+-            std::lock_guard<std::mutex> lock(g_irq_handler_mutex);
+-            g_intcHandlers.clear();
+-            g_dmacHandlers.clear();
+-            g_nextIntcHandlerId = 1;
+-            g_nextDmacHandlerId = 1;
+-            g_enabled_intc_mask = 0xFFFFFFFFu;
+-            g_enabled_dmac_mask = 0xFFFFFFFFu;
+-        }
+-        {
+-            std::lock_guard<std::mutex> lock(g_vsync_flag_mutex);
+-            g_vsync_registration = {};
+-            g_vsync_tick_counter = 0u;
+-        }
++        requestAlarmWorkerStop();
+ 
+         std::vector<std::shared_ptr<ThreadInfo>> threads;
+         threads.reserve(32);
+@@ -35,10 +39,7 @@
+                     threads.push_back(entry.second);
+                 }
+             }
+-            g_threads.clear();
+-            g_nextThreadId = 2; // Reserve id 1 for main thread.
+         }
+-        g_currentThreadId = 1;
+ 
+         for (const auto &threadInfo : threads)
+         {
+@@ -61,11 +62,10 @@
+                     semas.push_back(entry.second);
+                 }
+             }
+-            g_semas.clear();
+-            g_nextSemaId = 1;
+         }
+         for (const auto &sema : semas)
+         {
++            { std::lock_guard<std::mutex> lock(sema->m); }
+             sema->cv.notify_all();
+         }
+ 
+@@ -80,19 +80,61 @@
+                     eventFlags.push_back(entry.second);
+                 }
+             }
++        }
++        for (const auto &eventFlag : eventFlags)
++        {
++            { std::lock_guard<std::mutex> lock(eventFlag->m); }
++            eventFlag->cv.notify_all();
++        }
++
++        g_alarm_cv.notify_all();
++
++        // Registries and exit callbacks remain valid until every worker has
++        // unwound. This function is callable while the guest CPU is held.
++    }
++
++    void finishRuntimeStop()
++    {
++        joinInterruptWorker();
++        joinAlarmWorker();
++        {
++            std::lock_guard<std::mutex> lock(g_irq_handler_mutex);
++            g_intcHandlers.clear();
++            g_dmacHandlers.clear();
++            g_nextIntcHandlerId = 1;
++            g_nextDmacHandlerId = 1;
++            g_enabled_intc_mask = 0xFFFFFFFFu;
++            g_enabled_dmac_mask = 0xFFFFFFFFu;
++            g_pending_dmac_mask.store(0u, std::memory_order_release);
++            g_pending_intc_mask.store(0u, std::memory_order_release);
++        }
++        {
++            std::lock_guard<std::mutex> lock(g_vsync_flag_mutex);
++            g_vsync_registration = {};
++            g_vsync_tick_counter = 0u;
++            g_irq_worker_rdram = nullptr;
++        }
++        {
++            std::lock_guard<std::mutex> lock(g_thread_map_mutex);
++            g_threads.clear();
++            g_nextThreadId = 2;
++        }
++        g_currentThreadId = 1;
++        {
++            std::lock_guard<std::mutex> lock(g_sema_map_mutex);
++            g_semas.clear();
++            g_nextSemaId = 1;
++        }
++        {
++            std::lock_guard<std::mutex> lock(g_event_flag_map_mutex);
+             g_eventFlags.clear();
+             g_nextEventFlagId = 1;
+         }
+-        for (const auto &eventFlag : eventFlags)
+-        {
+-            eventFlag->cv.notify_all();
+-        }
+-
+         {
+             std::lock_guard<std::mutex> lock(g_alarm_mutex);
+             g_alarms.clear();
++            g_nextAlarmId = 1;
+         }
+-        g_alarm_cv.notify_all();
+ 
+         {
+             std::lock_guard<std::mutex> lock(g_exit_handler_mutex);
+@@ -104,8 +146,27 @@
+         }
+     }
+ 
++    // Keep the existing explicit kernel-reset entrypoint synchronous for
++    // standalone callers/tests. Runtime requestStop uses only the signal
++    // phase above, because it may be called while holding the guest CPU.
++    void notifyRuntimeStop()
++    {
++        requestRuntimeWorkerStop();
++        joinAllHostThreads();
++        finishRuntimeStop();
++        prepareRuntimeWorkers();
++    }
++
+     void joinAllGuestHostThreads()
+     {
++        // An already-running guest can finish a StartThread syscall after the
++        // first registry snapshot. Keep joining until that producer is gone.
++        do
++        {
++            joinAllHostThreads();
++            if (g_activeThreads.load(std::memory_order_acquire) > 0)
++                std::this_thread::yield();
++        } while (g_activeThreads.load(std::memory_order_acquire) > 0);
+         joinAllHostThreads();
+     }
+ 
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -532,7 +532,10 @@
+                           << std::hex << threadCtx->pc << std::dec << ")" << std::endl);
+             }
+ 
+-            runExitHandlersForThread(tid, rdram, threadCtx, runtime);
++            // Global shutdown must unwind host scopes, not start more guest
++            // callbacks after the coordinator has cancelled their resources.
++            if (runtime && !runtime->isStopRequested())
++                runExitHandlersForThread(tid, rdram, threadCtx, runtime);
+             ps2_sched::forget(tid);
+ 
+             uint32_t detachedAutoStack = 0;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp
+@@ -836,7 +836,7 @@
+             ++logCount;
+         }
+ 
+-        if (!runtime || !handler || !runtime->hasFunction(handler))
++        if (!runtime || runtime->isStopRequested() || !handler || !runtime->hasFunction(handler))
+         {
+             setReturnS32(ctx, KE_ERROR);
+             return;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/Runtime.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/Runtime.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/Runtime.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/Runtime.h
+@@ -1,3 +1,5 @@
++#include <stdexcept>
++
+ namespace
+ {
+     struct ThreadExitException final : public std::exception
+@@ -135,16 +137,20 @@
+ 
+ static void ensureAlarmWorkerRunning()
+ {
+-    std::call_once(g_alarm_worker_once, []()
+-                   { std::thread([]()
++    std::lock_guard<std::mutex> workerLock(g_alarm_worker_mutex);
++    if (g_alarm_worker_stop.load(std::memory_order_acquire) || g_alarm_worker.joinable())
++        return;
++    g_alarm_worker = std::thread([]()
+                                  {
+-            for (;;)
++            while (!g_alarm_worker_stop.load(std::memory_order_acquire))
+             {
+                 std::shared_ptr<AlarmInfo> readyAlarm;
+                 {
+                     std::unique_lock<std::mutex> lock(g_alarm_mutex);
+                     while (!readyAlarm)
+                     {
++                        if (g_alarm_worker_stop.load(std::memory_order_acquire))
++                            return;
+                         if (g_alarms.empty())
+                         {
+                             g_alarm_cv.wait(lock);
+@@ -178,6 +184,8 @@
+                 {
+                     continue;
+                 }
++                if (g_alarm_worker_stop.load(std::memory_order_acquire) || readyAlarm->runtime->isStopRequested())
++                    continue;
+                 if (!readyAlarm->runtime->hasFunction(readyAlarm->handler))
+                 {
+                     continue;
+@@ -208,7 +216,8 @@
+                     PS2Runtime::RecompiledFunction func = readyAlarm->runtime->lookupFunction(readyAlarm->handler);
+                     // Alarm handlers are interrupt context: atomic w.r.t. guest threads.
+                     PS2Runtime::GuestExecutionScope alarmExecution(readyAlarm->runtime);
+-                    func(readyAlarm->rdram, &callbackCtx, readyAlarm->runtime);
++                    if (!g_alarm_worker_stop.load(std::memory_order_acquire) && !readyAlarm->runtime->isStopRequested())
++                        func(readyAlarm->rdram, &callbackCtx, readyAlarm->runtime);
+                 }
+                 catch (const ThreadExitException &)
+                 {
+@@ -222,8 +231,35 @@
+                         ++alarmExceptionLogs;
+                     }
+                 }
+-            } })
+-                         .detach(); });
++            } });
++}
++
++static void requestAlarmWorkerStop()
++{
++    {
++        // Pair with the waiter's predicate/empty-queue check to prevent a
++        // stop notification from being lost immediately before cv.wait().
++        std::lock_guard<std::mutex> lock(g_alarm_mutex);
++        g_alarm_worker_stop.store(true, std::memory_order_release);
++    }
++    g_alarm_cv.notify_all();
++}
++
++static void joinAlarmWorker()
++{
++    requestAlarmWorkerStop();
++    std::thread worker;
++    {
++        std::lock_guard<std::mutex> lock(g_alarm_worker_mutex);
++        if (g_alarm_worker.joinable())
++        {
++            if (g_alarm_worker.get_id() == std::this_thread::get_id())
++                throw std::logic_error("Alarm worker cannot join itself");
++            worker = std::move(g_alarm_worker);
++        }
++    }
++    if (worker.joinable())
++        worker.join();
+ }
+ 
+ static void rpcCopyToRdram(uint8_t *rdram, uint32_t dst, uint32_t src, size_t size)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
+@@ -214,7 +214,9 @@
+ inline int g_nextAlarmId = 1;
+ inline std::mutex g_alarm_mutex;
+ inline std::condition_variable g_alarm_cv;
+-inline std::once_flag g_alarm_worker_once;
++inline std::mutex g_alarm_worker_mutex;
++inline std::thread g_alarm_worker;
++inline std::atomic<bool> g_alarm_worker_stop{false};
+ inline std::atomic<int> g_activeThreads{0};
+ inline std::mutex g_fd_mutex;
+ 

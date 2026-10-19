@@ -1,0 +1,56 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -2382,9 +2382,6 @@
+         }
+     });
+ 
+-    if (!drawing)
+-        return;
+-
+     int needed = 0;
+     switch (m_prim.type)
+     {
+@@ -2416,9 +2413,15 @@
+     if (m_vtxCount < needed)
+         return;
+ 
+-    g_gsPrimitivesDrawn.fetch_add(1, std::memory_order_relaxed);
+-    m_rasterizer.drawPrimitive(this);
+-
++    if (drawing)
++    {
++        g_gsPrimitivesDrawn.fetch_add(1, std::memory_order_relaxed);
++        m_rasterizer.drawPrimitive(this);
++    }
++
++    // ADC suppresses this primitive's rasterization, but still consumes its
++    // vertices. Strips retain their latest vertices and fans their anchor;
++    // leaving skipped vertices queued corrupts the next visible primitive.
+     switch (m_prim.type)
+     {
+     case GS_PRIM_LINE:
+diff --git a/ps2xTest/src/ps2_memory_tests.cpp b/ps2xTest/src/ps2_memory_tests.cpp
+--- a/ps2xTest/src/ps2_memory_tests.cpp
++++ b/ps2xTest/src/ps2_memory_tests.cpp
+@@ -1682,9 +1682,10 @@
+             std::memset(vuCode, 0, PS2_VU1_CODE_SIZE);
+             std::memset(vuData, 0, PS2_VU1_DATA_SIZE);
+ 
+-            const uint32_t lower = makeVuLowerSpecial(0x3Du, 0u);
++            // Actual XGKICK is lower primary 0x40, funct 0x3C, secondary 0x1B.
++            const uint32_t lower = makeVuLowerSpecial(0x3Cu, 0u, 0u, 0x1Bu);
+             std::memcpy(vuCode + 0u, &lower, sizeof(lower));
+-            const uint32_t upper = 0u;
++            const uint32_t upper = 0x000002FFu; // Upper NOP.
+             std::memcpy(vuCode + 4u, &upper, sizeof(upper));
+ 
+             const uint64_t gifTag = makeGifTag(1u, GIF_FMT_IMAGE, 0u, true);
+@@ -1712,6 +1713,7 @@
+ 
+             const uint32_t mscalCmd = makeVifCmd(0x14u, 0u, 0u);
+             mem.processVIF1Data(reinterpret_cast<const uint8_t *>(&mscalCmd), sizeof(mscalCmd));
++            gs.getLastDisplayBaseBytes(); // Drain PATH1 before checking pixels and destroying local GS.
+ 
+             const uint8_t *vramOut = mem.getGSVRAM();
+             bool imageOk = true;

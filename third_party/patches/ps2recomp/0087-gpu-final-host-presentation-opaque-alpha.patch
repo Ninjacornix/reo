@@ -1,0 +1,14 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -600,6 +600,10 @@
+                         g_backendRoute.capture({item.display.registers, item.display.tick}, gpu);
+                         auto frame = std::make_shared<PublishedDisplayFrame>();
+                         frame->pixels = std::move(gpu.rgba);
++                        // Scanout RGB already includes the guest circuit merge. Host
++                        // composition must not apply GS framebuffer alpha again.
++                        for (size_t alpha = 3; alpha < frame->pixels.size(); alpha += 4)
++                            frame->pixels[alpha] = 255;
+                         frame->width = gpu.width; frame->height = gpu.height;
+                         frame->tick = gpu.tick; frame->displayFbp = gpu.displayFbp;
+                         frame->sourceFbp = gpu.sourceFbp; frame->preferred = gpu.preferred;

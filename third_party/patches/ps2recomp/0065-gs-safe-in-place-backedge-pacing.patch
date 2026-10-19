@@ -1,0 +1,196 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -462,16 +462,18 @@
+     std::atomic<uint64_t> g_gsSessionGeneration{0u};
+     struct GsProducerPaceDebt { uint64_t generation = 0, target = 0; };
+     thread_local GsProducerPaceDebt t_gsProducerPaceDebt;
+-    bool gsDispatchPaceEnabled()
+-    {
+-        static const bool enabled = [] {
++    unsigned gsDispatchPaceMode() noexcept
++    {
++        static const unsigned mode = [] {
+             const char *e = std::getenv("REO_GS_DISPATCH_PACE");
+-            const bool on = e && std::atoi(e) != 0;
+-            if (on) std::fprintf(stderr, "[GS-DISPATCH-PACE-CONFIG] enabled=1 frozen_producer_target=1 boundary_wait=1 byte_cap=67108864 hard_cap_wait_remains=1\n");
+-            return on;
++            const int value = e ? std::atoi(e) : 0;
++            const unsigned selected = value == 2 ? 2u : value != 0 ? 1u : 0u;
++            if (selected) std::fprintf(stderr, "[GS-DISPATCH-PACE-CONFIG] enabled=1 mode=%u frozen_producer_target=1 boundary_wait=1 backedge_wait=%u io_depth_guard=1 forced_unwind=0 byte_cap=67108864 hard_cap_wait_remains=1\n", selected, unsigned(selected == 2u));
++            return selected;
+         }();
+-        return enabled;
+-    }
++        return mode;
++    }
++    bool gsDispatchPaceEnabled() { return gsDispatchPaceMode() != 0u; }
+     // Deterministic synchronization fixture only. No game run sets this flag.
+     std::mutex g_dispatchTestGateMutex;
+     std::condition_variable g_dispatchTestGateCv;
+@@ -1330,7 +1332,7 @@
+     return g_dispatchTestGateWaiting.load(std::memory_order_acquire);
+ }
+ 
+-// Backedge query: TLS/atomic reads only, no waits, locks, or guest CPU release.
++// Debt query: TLS/atomic reads only, no waits, locks, or guest CPU release.
+ bool ps2GsProducerPacePending() noexcept
+ {
+     if (t_gsProducerPaceDebt.generation != g_gsSessionGeneration.load(std::memory_order_acquire))
+@@ -1338,10 +1340,12 @@
+     return t_gsProducerPaceDebt.target != 0u && ps2_sched::currentThread() >= 1;
+ }
+ 
+-// Called only by a guest dispatcher after callbacks and MMIO have returned,
+-// with its GuestExecutionReleaseScope already active. Each producer waits for
+-// its own frozen debt; later IRQ/frame marks cannot extend this wait.
+-void ps2GsWaitProducerPace()
++bool ps2GsBackedgePaceEnabled() noexcept { return gsDispatchPaceMode() == 2u; }
++
++// Callers have already released guest execution, and mode2 backedges also
++// prove that no recursive IO scope is live. Each producer waits for its own
++// frozen debt; later IRQ/frame marks cannot extend this wait.
++static void gsWaitProducerPace(const char* operation)
+ {
+     if (!ps2GsProducerPacePending()) return;
+     const auto debt = t_gsProducerPaceDebt;
+@@ -1352,8 +1356,10 @@
+         return g_gsAsync.stopping || g_gsAsync.completed >= debt.target ||
+                debt.generation != g_gsSessionGeneration.load(std::memory_order_acquire);
+     });
+-    waitTimer.finish("dispatcher", debt.target, "producer");
++    waitTimer.finish(operation, debt.target, "producer");
+ }
++void ps2GsWaitProducerPace() { gsWaitProducerPace("dispatcher"); }
++void ps2GsWaitProducerPaceAtBackedge() { gsWaitProducerPace("backedge"); }
+ 
+ void ps2GsRequestWorkerStop()
+ {
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -109,6 +109,9 @@
+ void ps2GsJoinRasterWorkers(); // After GS jobs have finished.
+ bool ps2GsProducerPacePending() noexcept; // Query only; never releases CPU inside MMIO.
+ void ps2GsWaitProducerPace(); // Dispatcher boundary, with guest execution released.
++bool ps2GsBackedgePaceEnabled() noexcept;
++void ps2GsWaitProducerPaceAtBackedge();
++uint32_t ps2IoRegLockDepth() noexcept;
+ void ps2InstallModalRender(void *nativeWindow, void (*render)()); // Kernel/Host/Win32ModalRender.cpp (D42)
+ namespace ps2_syscalls
+ {
+@@ -973,9 +976,10 @@
+                 std::fprintf(stderr, "[present-gs] dpkts=%u dprims=%u\n", pkts - s_lastPkts, prims - s_lastPrims);
+                 s_lastPkts = pkts;
+                 s_lastPrims = prims;
+-                std::fprintf(stderr, "[present] seq=%llu swapus=%lld t=%.3f tick=%llu fbp=%u src=%u pref=%d %ux%u luma=%llu hash=%08llx\n",
++                std::fprintf(stderr, "[present] seq=%llu swapus=%lld t=%.3f tick=%llu frame_tick=%llu fbp=%u src=%u pref=%d %ux%u luma=%llu hash=%08llx\n",
+                              static_cast<unsigned long long>(ps2GsVblankSeq()), static_cast<long long>(g_lastSwapUs.load()), t,
+-                             static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()), displayFbp, sourceFbp,
++                             static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()),
++                             static_cast<unsigned long long>(ps2GsCopiedFrameTick()), displayFbp, sourceFbp,
+                              usedPreferredDisplaySource ? 1 : 0, width, height,
+                              static_cast<unsigned long long>(sum / (3u * n)), static_cast<unsigned long long>(hh & 0xFFFFFFFFull));
+             }
+@@ -2495,6 +2499,20 @@
+     // Generated loop back-edges must unwind even when no higher-priority
+     // guest is runnable; otherwise a busy guest can outlive its runtime.
+     if (isStopRequested()) return true;
++    if (ps2GsBackedgePaceEnabled() && ps2GsProducerPacePending() &&
++        ps2IoRegLockDepth() == 0u)
++    {
++        // Wait in place, retaining the native call stack and guest PC. Returning
++        // early at a callee's entry PC can be mistaken for completion by the
++        // generated call wrapper. The IO-depth guard also covers recursive
++        // byte/halfword DMA writes and any backedge inside a bridge callback.
++        // IRQ/alarm execution has no producer debt and never enters this path.
++        {
++            GuestExecutionReleaseScope releaseCpu(this);
++            ps2GsWaitProducerPaceAtBackedge();
++        }
++        if (isStopRequested()) return true;
++    }
+     // Loop back-edges unwind to the dispatcher only when this guest thread must give up
+     // the CPU (EE kernel semantics, no time-slicing; see ps2_guest_sched.h).
+     thread_local uint32_t s_backEdgeCounter = 0u;
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -152,6 +152,23 @@
+ // interrupt/vsync worker and DMA processing. Unsynchronized inserts/rehashes corrupted the
+ // host heap (intermittent AV in an unrelated map). Recursive: these paths nest.
+ static std::recursive_mutex g_ioRegMutex;
++namespace
++{
++    thread_local uint32_t t_ioRegLockDepth = 0;
++    // Includes every recursive acquisition, not merely the innermost DMA
++    // callback. A guest backedge must never release its CPU while any of these
++    // scopes is live: an interrupt can immediately read these same registers.
++    class IoRegLockScope
++    {
++        std::lock_guard<std::recursive_mutex> lock;
++    public:
++        IoRegLockScope() : lock(g_ioRegMutex) { ++t_ioRegLockDepth; }
++        ~IoRegLockScope() { --t_ioRegLockDepth; }
++        IoRegLockScope(const IoRegLockScope&) = delete;
++        IoRegLockScope& operator=(const IoRegLockScope&) = delete;
++    };
++}
++uint32_t ps2IoRegLockDepth() noexcept { return t_ioRegLockDepth; }
+ 
+ bool PS2Memory::initialize(size_t ramSize)
+ {
+@@ -471,7 +488,7 @@
+ 
+ uint64_t PS2Memory::read64(uint32_t address)
+ {
+-    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
++    IoRegLockScope ioLock;
+     if (address & 7)
+     {
+         throw std::runtime_error("Unaligned 64-bit read at address: 0x" + std::to_string(address));
+@@ -540,7 +557,7 @@
+ 
+ void PS2Memory::write8(uint32_t address, uint8_t value)
+ {
+-    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
++    IoRegLockScope ioLock;
+     const bool scratch = isScratchpad(address);
+     uint32_t physAddr = translateAddress(address);
+ 
+@@ -565,7 +582,7 @@
+ 
+ void PS2Memory::write16(uint32_t address, uint16_t value)
+ {
+-    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
++    IoRegLockScope ioLock;
+     if (address & 1)
+     {
+         throw std::runtime_error("Unaligned 16-bit write at address: 0x" + std::to_string(address));
+@@ -743,7 +760,7 @@
+ 
+ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+ {
+-    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
++    IoRegLockScope ioLock;
+     if (address == 0x1000F000u) // INTC_STAT: write-1-to-clear
+     {
+         m_intcStat.fetch_and(~value, std::memory_order_relaxed);
+@@ -1324,7 +1341,7 @@
+ 
+ void PS2Memory::processPendingTransfers()
+ {
+-    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
++    IoRegLockScope ioLock;
+     const bool hadGif = !m_pendingGifTransfers.empty();
+     for (size_t idx = 0; idx < m_pendingGifTransfers.size(); ++idx)
+     {
+@@ -1525,7 +1542,7 @@
+ 
+ uint32_t PS2Memory::readIORegister(uint32_t address)
+ {
+-    std::lock_guard<std::recursive_mutex> ioLock(g_ioRegMutex);
++    IoRegLockScope ioLock;
+     if (ps2_ipu::isIpuRegister(address))
+     {
+         return ps2_ipu::read32(address);

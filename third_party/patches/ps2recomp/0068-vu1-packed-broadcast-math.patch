@@ -1,0 +1,71 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -15,8 +15,48 @@
+ #include <limits>
+ #include <vector>
+ 
++#if defined(_M_X64) || defined(_M_IX86) || defined(__SSE2__)
++#include <emmintrin.h>
++#define REO_VU_PACKED_SSE2 1
++#endif
++
+ namespace
+ {
++#if defined(REO_VU_PACKED_SSE2)
++    // Preserve the original scalar path for all nonfinite inputs, including
++    // NaN payload/operand selection. Finite operations retain separate rounding.
++    inline bool vuPackedFinite(__m128 value)
++    {
++        const __m128i exponent=_mm_set1_epi32(0x7F800000);
++        const __m128i bits=_mm_and_si128(_mm_castps_si128(value),exponent);
++        return _mm_movemask_ps(_mm_castsi128_ps(_mm_cmpeq_epi32(bits,exponent)))==0;
++    }
++    inline void vuPackedDest(float* dst,__m128 result,uint8_t dest)
++    {
++        if(dest==15) { _mm_storeu_ps(dst,result);return; }
++        alignas(16) static constexpr uint32_t masks[16][4]={
++            {0,0,0,0},{0,0,0,~0u},{0,0,~0u,0},{0,0,~0u,~0u},
++            {0,~0u,0,0},{0,~0u,0,~0u},{0,~0u,~0u,0},{0,~0u,~0u,~0u},
++            {~0u,0,0,0},{~0u,0,0,~0u},{~0u,0,~0u,0},{~0u,0,~0u,~0u},
++            {~0u,~0u,0,0},{~0u,~0u,0,~0u},{~0u,~0u,~0u,0},{~0u,~0u,~0u,~0u}};
++        const __m128 mask=_mm_castsi128_ps(_mm_load_si128(reinterpret_cast<const __m128i*>(masks[dest])));
++        const __m128 previous=_mm_loadu_ps(dst);
++        _mm_storeu_ps(dst,_mm_or_ps(_mm_and_ps(mask,result),_mm_andnot_ps(mask,previous)));
++    }
++    inline bool vuPackedBroadcast(float* dst,const float* src,float scalar,const float* acc,uint8_t dest)
++    {
++        const __m128 source=_mm_loadu_ps(src),broadcast=_mm_set1_ps(scalar);
++        if(!vuPackedFinite(source)||!vuPackedFinite(broadcast)) return false;
++        __m128 accumulator;
++        if(acc) {accumulator=_mm_loadu_ps(acc);if(!vuPackedFinite(accumulator)) return false;}
++        // Baseline MSVC MADDbc/MADDAbc: broadcast*source, then product+ACC.
++        // MULA's x lane has reversed multiply operands; finite inputs have the
++        // same bits in both orders. Nonfinite values stay on the scalar path.
++        __m128 result=_mm_mul_ps(broadcast,source);
++        if(acc) result=_mm_add_ps(result,accumulator);
++        vuPackedDest(dst,result,dest);return true;
++    }
++#endif
+     std::atomic<uint32_t> s_debugVu1XgkickCount{0};
+     std::atomic<uint32_t> s_debugVu1RunCount{0};
+ 
+@@ -353,6 +393,18 @@
+     const float *vt = m_state.vf[ft];
+     float result[4];
+ 
++#if defined(REO_VU_PACKED_SSE2)
++    if(op>=0x08u&&op<=0x0Bu)
++    {
++        if(vuPackedBroadcast(vd,vs,vt[op&3u],m_state.acc,dest)) return;
++    }
++    else if(op>=0x3Cu)
++    {
++        const unsigned row=(instr>>6)&31u;
++        if((row==2u||row==6u)&&vuPackedBroadcast(m_state.acc,vs,vt[op&3u],row==2u?m_state.acc:nullptr,dest)) return;
++    }
++#endif
++
+     // Upper opcode decoding (bits 5:0 of upper word)
+     switch (op)
+     {

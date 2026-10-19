@@ -1,0 +1,42 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -690,6 +690,8 @@
+             return;
+         }
+ 
++        int waitType = TSW_NONE;
++        int waitId = 0;
+         {
+             std::lock_guard<std::mutex> lock(info->m);
+             if (info->status == THS_DORMANT)
+@@ -699,8 +701,29 @@
+             }
+             info->terminated = true;
+             info->forceRelease = true;
++            waitType = info->waitType;
++            waitId = info->waitId;
+         }
+         info->cv.notify_all();
++
++        // Resource waits sleep on their own condition variable. Synchronize with
++        // its mutex so termination cannot be lost between checking and sleeping.
++        if (waitType == TSW_SEMA)
++        {
++            if (auto sema = lookupSemaInfo(waitId))
++            {
++                std::lock_guard<std::mutex> lock(sema->m);
++                sema->cv.notify_all();
++            }
++        }
++        else if (waitType == TSW_EVENT)
++        {
++            if (auto eventFlag = lookupEventFlagInfo(waitId))
++            {
++                std::lock_guard<std::mutex> lock(eventFlag->m);
++                eventFlag->cv.notify_all();
++            }
++        }
+ 
+         if (tid == g_currentThreadId)
+         {

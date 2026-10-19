@@ -1,0 +1,33 @@
+#version 450
+layout(local_size_x=1) in;
+layout(set=0,binding=0,std430) readonly buffer Events {uint events[];};
+layout(set=0,binding=1,std430) readonly buffer Native {uvec4 native[];};
+layout(set=0,binding=2,std430) readonly buffer History {uvec4 history[];};
+layout(set=0,binding=3,std430) readonly buffer Completion {uint completion[];};
+layout(set=0,binding=4,std430) buffer Global {uint globalCompletion[];};
+layout(set=0,binding=5,std430) readonly buffer Diagnostics {uint diagnostics[];};
+layout(set=0,binding=6,std430) buffer Certificate {uint cert[];};
+layout(set=0,binding=7,std430) readonly buffer Parameters {uvec4 identity;uvec4 limits;} p;
+void refuse(uint error){cert[0]=error;atomicCompSwap(globalCompletion[8],0u,error);}
+void main(){
+ for(uint w=0u;w<12u;++w)cert[w]=0u;for(uint w=0u;w<40u;++w)cert[1008u+w]=0u;
+ cert[4]=p.identity.x;cert[5]=p.identity.y;cert[6]=0x53544331u;cert[7]=1u;
+ uint count=completion[2],loops=events[4]&32767u;
+ if(p.identity.x==0u||p.identity.z>2047u||(p.identity.z&7u)!=4u||p.identity.w!=0x53544331u||
+    p.limits.x!=256u||p.limits.y!=1u||(p.limits.z!=0u&&p.limits.z!=4u)||p.limits.w!=1u||
+    completion[0]!=0u||completion[8]!=0u||globalCompletion[8]!=0u||diagnostics[0]!=0u||completion[5]!=1u||
+    completion[6]!=1u||(completion[7]!=0u&&completion[7]!=4u)||events[0]!=1u||count>256u||loops!=count+2u||
+    events[4]!=(32768u|loops)||events[3]!=16u+loops*48u||events[6]!=0x412u||events[7]!=0u||
+    ((events[5]>>14u)&1u)!=1u||((events[5]>>15u)&2047u)!=p.identity.z||
+    ((events[5]>>26u)&3u)!=0u||((events[5]>>28u)&15u)!=3u){refuse(89u);return;}
+ uint queued=min(loops,3u),first=loops-queued;
+ for(uint k=0u;k<queued;++k){uint record=first+k;
+  uvec4 st,rgba,xyz;
+  if(record<2u){st=history[record*3u];rgba=history[record*3u+1u];xyz=history[record*3u+2u];}
+  else{uint row=(record-2u)*8u;st=native[row+5u];rgba=native[row+6u];xyz=native[row+4u];if(native[row+7u].x!=0u&&native[row+7u].x!=4u){refuse(89u);return;}}
+  for(uint q=0u;q<3u;++q)for(uint c=0u;c<4u;++c){uint raw=events[8u+record*12u+q*4u+c],v=(q==0u?st:q==1u?rgba:xyz)[c];
+   if(v!=raw){refuse(89u);return;}cert[1012u+k*12u+q*4u+c]=v;}
+ }
+ cert[1]=1u;cert[3]=1u;cert[8]=1u;cert[9]=1u;cert[10]=1u;
+ cert[1008]=1u;cert[1009]=p.identity.z;cert[1010]=queued;cert[1011]=0x47535131u;
+}

@@ -1,0 +1,348 @@
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -23,6 +23,117 @@
+ #include <string>
+ #include <vector>
+ #include "native_movie_image.inl"
++#include "async_vif1.h"
++#include "ps2_runtime.h"
++#include <condition_variable>
++#include <deque>
++#include <thread>
++#include <unordered_map>
++extern uint32_t ps2IoRegLockDepth() noexcept;
++
++namespace reo_async_vif {
++namespace {
++thread_local const PS2Memory* executing=nullptr;
++struct Work {std::function<void()> call;size_t bytes;uint64_t serial;};
++struct State {
++    PS2Memory& memory;PS2Runtime* runtime;
++    std::mutex mutex;std::condition_variable wake,done;
++    std::deque<Work> queue;std::exception_ptr failure;
++    bool stopping=false;size_t bytes=0;uint64_t submitted=0,finished=0,waits=0;
++    uint64_t transfers=0,transferNs=0;
++    std::thread worker; // Start only after every field observed by run() is initialized.
++    State(PS2Memory& m,PS2Runtime* r):memory(m),runtime(r),worker([this]{run();}){}
++    void run() {
++        executing=&memory;
++        for(;;) {
++            Work item;
++            {std::unique_lock<std::mutex> lock(mutex);wake.wait(lock,[&]{return stopping||!queue.empty();});
++                if(stopping)break;item=std::move(queue.front());queue.pop_front();}
++            const auto began=std::chrono::steady_clock::now();
++            try{item.call();}
++            catch(...){std::lock_guard<std::mutex> lock(mutex);failure=std::current_exception();stopping=true;queue.clear();done.notify_all();break;}
++            {std::lock_guard<std::mutex> lock(mutex);bytes-=item.bytes;finished=item.serial;
++                if(item.bytes){++transfers;transferNs+=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-began).count();}
++                done.notify_all();}
++        }
++        executing=nullptr;done.notify_all();
++    }
++    bool append(std::function<void()> call,size_t size,bool onlyIfPending=false) {
++        std::lock_guard<std::mutex> lock(mutex);
++        if(failure)std::rethrow_exception(failure);
++        if(stopping)return true; // Cancellation never publishes a successful completion.
++        if(onlyIfPending&&finished==submitted)return false;
++        if(queue.size()>=4096||size>16u*1024u*1024u||bytes>16u*1024u*1024u-size)
++            throw std::runtime_error("VIF1 worker owned FIFO capacity exceeded");
++        bytes+=size;queue.push_back({std::move(call),size,++submitted});wake.notify_one();return true;
++    }
++    void stop(){std::lock_guard<std::mutex> lock(mutex);stopping=true;queue.clear();wake.notify_all();done.notify_all();}
++};
++std::mutex statesMutex;
++std::unordered_map<PS2Memory*,std::shared_ptr<State>> states;
++std::shared_ptr<State> find(PS2Memory& memory) {
++    if(!requested())return {};
++    std::lock_guard<std::mutex> lock(statesMutex);auto it=states.find(&memory);return it==states.end()?nullptr:it->second;
++}
++}
++bool requested() noexcept {static const bool value=[]{const char* s=std::getenv("REO_VIF1_ASYNC");return s&&s[0]=='1'&&!s[1];}();return value;}
++bool onWorker(const PS2Memory& memory)noexcept{return executing==&memory;}
++void attach(PS2Memory& memory,PS2Runtime* runtime) {
++    if(!requested())return;
++    const char* resident=std::getenv("REO_VIF1_GPU_RESIDENT");
++    if(resident&&resident[0]=='1')throw std::runtime_error("Async VIF1 cannot share a GPU-resident VU bank");
++    std::lock_guard<std::mutex> lock(statesMutex);
++    if(!states.count(&memory)){states.emplace(&memory,std::make_shared<State>(memory,runtime));std::fprintf(stderr,"[VIF1-ASYNC] enabled: owned FIFO, actual completion publication\n");}
++}
++bool active(PS2Memory& memory){return bool(find(memory));}
++bool enqueue(PS2Memory& memory,std::function<void()> call,size_t bytes) {
++    if(onWorker(memory))return false;const auto state=find(memory);return state&&state->append(std::move(call),bytes);
++}
++bool deferPublication(PS2Memory& memory,std::function<void()> call) {
++    if(onWorker(memory))return false;const auto state=find(memory);return state&&state->append(std::move(call),0,true);
++}
++bool queueRegisterWrite(PS2Memory& memory,uint32_t address,uint32_t value) {
++    if(address<0x10003c00u||address>=0x10003e00u||onWorker(memory))return false;
++    const auto state=find(memory);if(!state)return false;
++    return state->append([&memory,address,value]{memory.writeIORegister(address,value);},0,true);
++}
++void drain(PS2Memory& memory) {
++    if(onWorker(memory))return;const auto state=find(memory);if(!state)return;
++    std::unique_lock<std::mutex> lock(state->mutex);const uint64_t cut=state->submitted;
++    if(state->failure)std::rethrow_exception(state->failure);
++    if(state->finished>=cut||state->stopping)return;
++    if(ps2IoRegLockDepth()!=0)throw std::logic_error("Async VIF1 wait attempted under IO ownership");
++    ++state->waits;
++    // Reacquisition must occur AFTER dropping the FIFO mutex, so an IRQ guest
++    // entering a barrier cannot block the releasing guest's admission.
++    lock.unlock();
++    {PS2Runtime::GuestExecutionReleaseScope release(state->runtime);
++        lock.lock();state->done.wait(lock,[&]{return state->finished>=cut||state->stopping||state->failure;});lock.unlock();}
++    std::lock_guard<std::mutex> result(state->mutex);if(state->failure)std::rethrow_exception(state->failure);
++}
++void beforeAccess(PS2Memory& memory,uint32_t address,bool write) {
++    if(!requested()||onWorker(memory)||ps2IsScratchpadAddress(address))return;
++    const uint32_t a=address&0x1fffffffu;
++    const bool bank=a>=PS2_VU1_CODE_BASE&&a<PS2_VU1_DATA_BASE+PS2_VU1_DATA_SIZE;
++    const bool d1write=write&&a>=0x10009000u&&a<0x10009090u;
++    const bool path3=write&&((a>=0x1000a000u&&a<0x1000a090u)||(a>=0x10006000u&&a<0x10007000u));
++    // CSR/IMR/SIGLBL status and acknowledgments must remain usable while GS
++    // SIGNAL backpressure is holding the producer; draining them can deadlock.
++    const bool display=a>=0x12000000u&&a<0x12001000u;
++    if(bank||d1write||path3||display)drain(memory);
++}
++void beforeRegisterRead(PS2Memory& memory,uint32_t a) {
++    if(!requested()||onWorker(memory))return;
++    if((a>=0x10003c00u&&a<0x10003e00u)||(a>=0x10003000u&&a<0x10003100u))drain(memory);
++}
++void check(PS2Memory& memory){const auto s=find(memory);if(s){std::lock_guard<std::mutex> lock(s->mutex);if(s->failure)std::rethrow_exception(s->failure);}}
++void requestStop(PS2Memory& memory){if(const auto s=find(memory))s->stop();}
++void shutdown(PS2Memory& memory) {
++    std::shared_ptr<State> s;{std::lock_guard<std::mutex> lock(statesMutex);const auto it=states.find(&memory);if(it==states.end())return;s=it->second;states.erase(it);}
++    s->stop();if(s->worker.joinable())s->worker.join();
++    std::fprintf(stderr,"[VIF1-ASYNC] stopped submitted=%llu completed=%llu transfers=%llu processing_ms=%.3f waits=%llu failed=%u\n",(unsigned long long)s->submitted,(unsigned long long)s->finished,(unsigned long long)s->transfers,s->transferNs/1e6,(unsigned long long)s->waits,unsigned(bool(s->failure)));
++}
++}
+ 
+ namespace
+ {
+@@ -122,6 +233,7 @@
+ 
+ PS2Memory::~PS2Memory()
+ {
++    reo_async_vif::shutdown(*this);
+     if (m_rdram)
+     {
+         delete[] m_rdram;
+@@ -210,6 +322,7 @@
+ 
+ bool PS2Memory::initialize(size_t ramSize)
+ {
++    reo_async_vif::shutdown(*this);
+     // Reset the actual resident owner while the old RAM/SPR allocation still
+     // exists. Refused ownership transfer must leave its sources allocated.
+     reo_resident_live::beforeColdReset(*this);
+@@ -546,6 +659,7 @@
+ 
+ uint64_t PS2Memory::read64(uint32_t address)
+ {
++    if(!isScratchpad(address))reo_async_vif::beforeRegisterRead(*this,address&0x1fffffffu);
+     reo_resident_live::beforeResidentMemoryAccess(*this,address,false);
+     uint64_t residentValue{};
+     if(reo_resident_live::readMapped(*this,address,&residentValue,sizeof(residentValue)))return residentValue;
+@@ -621,6 +735,7 @@
+ 
+ void PS2Memory::write8(uint32_t address, uint8_t value)
+ {
++    if(!isScratchpad(address))reo_async_vif::beforeRegisterRead(*this,address&0x1fffffffu);
+     [&]() {
+     reo_resident_live::beforeResidentMemoryAccess(*this,address,true);
+     if(reo_resident_live::writeMapped(*this,address,&value,sizeof(value)))return;
+@@ -669,6 +784,7 @@
+ 
+ void PS2Memory::write16(uint32_t address, uint16_t value)
+ {
++    if(!isScratchpad(address))reo_async_vif::beforeRegisterRead(*this,address&0x1fffffffu);
+     [&]() {
+     reo_resident_live::beforeResidentMemoryAccess(*this,address,true);
+     if(reo_resident_live::writeMapped(*this,address,&value,sizeof(value)))return;
+@@ -897,6 +1013,7 @@
+ 
+ bool PS2Memory::writeIORegister(uint32_t address, uint32_t value)
+ {
++    if(reo_async_vif::queueRegisterWrite(*this,address,value))return true;
+     const bool accepted=[&]() -> bool {
+     reo_resident_live::beforeResidentMemoryAccess(*this,address,true);
+     if (isGsPrivReg(address) && gs_backend_bridge::active() &&
+@@ -1545,6 +1662,7 @@
+                 };
+                 if(channelBase==0x1000A000u&&reo_native_movie::submitted(*this)!=movieSubmissionBefore)
+                     reo_native_movie::queueDmaPublication(*this,publishFinalTag,true);
++                else if(channelBase==0x10009000u&&reo_async_vif::deferPublication(*this,publishFinalTag)){}
+                 else if(channelBase!=0x10009000u || !reo_resident_live::deferResidentDmaPublication(*this,publishFinalTag))publishFinalTag();
+             }
+         }
+@@ -1628,6 +1746,20 @@
+     const auto vifProbeStart=s_asyncProbe&&hadVif1?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
+     struct VifProbeEnd{bool on;std::chrono::steady_clock::time_point start;~VifProbeEnd(){if(on)reoAsyncProbeKickDone(uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-start).count()));}}
+         vifProbeEnd{s_asyncProbe&&hadVif1,vifProbeStart};
++    // Snapshot-owned chain bytes only. Source-origin callbacks read guest RAM
++    // and are deliberately kept on their original synchronous path.
++    bool queuedVif=false;
++    if(hadVif1&&reo_async_vif::active(*this)&&!reo_async_vif::onWorker(*this)&&
++       !reo_palette_origin::enabled()&&!reo_parent_natural::findActualOwnerTarget(m_rdram)&&
++       !reo_native_movie::ownsDma(*this)&&
++       std::all_of(m_pendingVif1Transfers.begin(),m_pendingVif1Transfers.end(),[](const auto& p){return !p.chainData.empty();})) {
++        auto owned=std::move(m_pendingVif1Transfers);size_t bytes=0;for(const auto& p:owned)bytes+=p.chainData.size();
++        queuedVif=reo_async_vif::enqueue(*this,[this,owned=std::move(owned)]{
++            for(const auto& p:owned)processVIF1Data(p.chainData.data(),uint32_t(p.chainData.size()));
++            if(m_gifArbiter)m_gifArbiter->drain();
++        },bytes);
++        m_pendingVif1Transfers.clear();
++    }
+     for (auto &p : m_pendingVif1Transfers)
+     {
+         if (!p.chainData.empty())
+@@ -1675,10 +1807,10 @@
+     }
+     m_pendingVif1Transfers.clear();
+ 
+-    reo_resident_live::drainTail(*this);
+-    if (m_gifArbiter)
++    if(!queuedVif)reo_resident_live::drainTail(*this);
++    if (m_gifArbiter&&!queuedVif)
+         m_gifArbiter->drain();
+-    if(hadVif1)reo_resident_live::barrier(*this,reo_resident_live::Barrier::DmaComplete);
++    if(hadVif1&&!queuedVif)reo_resident_live::barrier(*this,reo_resident_live::Barrier::DmaComplete);
+ 
+     auto publishChannels=[this,hadGif,hadVif1] {
+         IoRegLockScope publicationLock;
+@@ -1716,6 +1848,7 @@
+     }
+     };
+     if(hadGif&&reo_native_movie::ownsDma(*this))reo_native_movie::queueDmaPublication(*this,publishChannels,false);
++    else if(hadVif1&&reo_async_vif::deferPublication(*this,publishChannels)){}
+     else if(!hadVif1 || !reo_resident_live::deferResidentDmaPublication(*this,publishChannels))publishChannels();
+ 
+ }
+@@ -1810,6 +1943,7 @@
+ 
+ uint32_t PS2Memory::readIORegister(uint32_t address)
+ {
++    reo_async_vif::beforeRegisterRead(*this,address);
+     if(reo_resident_live::fixtureRawIoPeekActive()) {
+         IoRegLockScope fixturePeekLock;
+         const auto found=m_ioRegisters.find(address);
+@@ -1880,6 +2014,7 @@
+                 if((address==0x1000b000u||address==0x1000b400u)&&ps2_ipu_native::detail::ownsMemory(m_rdram))
+                     return m_ioRegisters[address];
+                 if(address==0x1000a000u&&reo_native_movie::ownsDma(*this))return m_ioRegisters[address];
++                if(address==0x10009000u&&reo_async_vif::active(*this))return m_ioRegisters[address];
+                 uint32_t channelStatus = m_ioRegisters[address] & ~0x100u;
+                 m_ioRegisters[address] = channelStatus;
+                 return channelStatus;
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -4,6 +4,7 @@
+ #include "native_movie_image.h"
+ #include "pre_entry_control_journal.h"
+ #include "resident_vif_live_hooks.h"
++#include "async_vif1.h"
+ #include "resident_wait_integration.h"
+ #include "gpu_fresh_observer.h"
+ #include "gpu_resume_observer.h"
+@@ -1075,6 +1076,7 @@
+         reo_parent_natural::stopActualPreEntryControlRuntime(*this);
+         ps2_syscalls::joinInterruptWorker();
+         ps2_syscalls::joinAllGuestHostThreads();
++        reo_async_vif::shutdown(m_memory);
+         ps2GsJoinWorker();
+         ps2GsJoinRasterWorkers();
+         reo_native_movie::releaseImageProviderAfterGsJoin(*this);
+@@ -1126,6 +1128,7 @@
+         return true;
+     }
+ 
++    reo_async_vif::drain(m_memory);
+     reo_resident_live::beforeColdReset(m_memory);
+     m_gs.init(gsVram, static_cast<uint32_t>(PS2_GS_VRAM_SIZE), &m_memory.gs());
+     m_gifArbiter.setProcessPacketFn([this](const uint8_t *data, uint32_t size)
+@@ -1186,6 +1189,7 @@
+     m_iop.init(rdram);
+     m_iop.reset();
+     m_vu1.reset();
++    reo_async_vif::attach(m_memory,this);
+     reo_resident_live::attachWaitRuntime(m_memory,this);
+     reo_resident_live::bindCold(m_memory,m_gifArbiter,m_vu1.state());
+ 
+@@ -3072,6 +3076,7 @@
+     ps2_sched::notifyAll();
+     // Cancel GS waits before waking guest scopes that need the CPU to unwind.
+     ps2GsRequestWorkerStop();
++    reo_async_vif::requestStop(m_memory);
+     ps2_syscalls::requestRuntimeWorkerStop();
+ }
+ 
+@@ -3251,6 +3256,8 @@
+     bool graphicsFailureReported = false;
+     while (!isStopRequested() && g_activeThreads.load(std::memory_order_relaxed) > 0)
+     {
++        try{reo_async_vif::check(m_memory);}catch(const std::exception& e){
++            std::cerr<<"[run] VIF1 worker failure: "<<e.what()<<std::endl;requestStop();break;}
+         // A stopped graphics worker is a runtime failure, never a silent spin:
+         // report the latched first backend error and shut down in order
+         // instead of iterating the host loop millions of times and exiting
+@@ -3540,6 +3547,7 @@
+         std::cerr << "[run] guest workers still stopping; preserving runtime until joined" << std::endl;
+     ps2_syscalls::joinInterruptWorker();
+     ps2_syscalls::joinAllGuestHostThreads();
++    reo_async_vif::shutdown(m_memory);
+     ps2GsJoinWorker();
+     ps2GsJoinRasterWorkers();
+     ps2_syscalls::finishRuntimeStop();
+diff --git a/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp b/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp
+--- a/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp
++++ b/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp
+@@ -1,4 +1,5 @@
+ #include "resident_vif_live_hooks.h"
++#include "async_vif1.h"
+ #include "resident_wait_integration.h"
+ #include "ps2_runtime.h"
+ #include "parent_first_entry.h"
+@@ -1251,11 +1252,15 @@
+     const int64_t g=nowNs()-end,p=pendingProcessNs.load(std::memory_order_relaxed);gapNs.fetch_add(uint64_t(g));overlapNs.fetch_add(uint64_t(std::min(g,p)));}
+ }
+ void beforeResidentMemoryAccess(PS2Memory& memory,uint32_t address,bool write) {
++    // Scratchpad 70003C10 is NOT VIF1 10003C10: masking before region
++    // classification made the async probe misidentify normal matrix loads.
++    if(ps2IsScratchpadAddress(address))return;
+     // Address filter first: this runs on every PS2Memory access, and
+     // waitRequested() is a CRT getenv (locked environment scan). Profiled
+     // 2026-10-18 as ~21% of the room's guest thread with resident mode off.
+     // Both tests are pure, so the order does not change behaviour.
+     const uint32_t physical=address&0x1fffffffu;
++    if(physical>=0x10000000u)reo_async_vif::beforeAccess(memory,address,write);
+     const bool vif=physical>=0x10003c00u && physical<0x10003e00u;
+     const bool dma=physical>=0x10009000u && physical<0x10009090u;
+     const bool bank=physical>=PS2_VU1_CODE_BASE && physical<PS2_VU1_DATA_BASE+DataBytes;
+diff --git a/ps2xRuntime/src/lib/async_vif1.h b/ps2xRuntime/src/lib/async_vif1.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/async_vif1.h
+@@ -0,0 +1,22 @@
++#pragma once
++// Private worker API. No PS2Memory/PS2Runtime object-layout or generated-header change.
++#include <cstddef>
++#include <cstdint>
++#include <functional>
++class PS2Memory;
++class PS2Runtime;
++namespace reo_async_vif {
++bool requested() noexcept;
++bool onWorker(const PS2Memory&) noexcept;
++void attach(PS2Memory&,PS2Runtime*);
++bool active(PS2Memory&);
++bool enqueue(PS2Memory&,std::function<void()>,size_t bytes);
++bool deferPublication(PS2Memory&,std::function<void()>);
++bool queueRegisterWrite(PS2Memory&,uint32_t,uint32_t);
++void beforeAccess(PS2Memory&,uint32_t,bool);
++void beforeRegisterRead(PS2Memory&,uint32_t);
++void drain(PS2Memory&);
++void check(PS2Memory&);
++void requestStop(PS2Memory&);
++void shutdown(PS2Memory&);
++}

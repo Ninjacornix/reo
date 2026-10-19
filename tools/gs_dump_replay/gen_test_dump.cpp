@@ -20,13 +20,19 @@
 
 static FILE* g_file;
 
-static void write_u8(uint8_t v) { fwrite(&v, 1, 1, g_file); }
-static void write_u32(uint32_t v) { fwrite(&v, 4, 1, g_file); }
-static void write_u64(uint64_t v) { fwrite(&v, 8, 1, g_file); }
+static void write_u8(uint8_t v) {
+    fwrite(&v, 1, 1, g_file);
+}
+static void write_u32(uint32_t v) {
+    fwrite(&v, 4, 1, g_file);
+}
+static void write_u64(uint64_t v) {
+    fwrite(&v, 8, 1, g_file);
+}
 
 // Build a GIF tag (128 bits)
-static void write_gif_tag(uint32_t nloop, bool eop, bool pre, uint16_t prim,
-                           uint8_t flg, uint8_t nreg, uint64_t regs) {
+static void write_gif_tag(uint32_t nloop, bool eop, bool pre, uint16_t prim, uint8_t flg,
+                          uint8_t nreg, uint64_t regs) {
     uint64_t lo = 0;
     lo |= (uint64_t)(nloop & 0x7FFF);
     lo |= (uint64_t)(eop ? 1 : 0) << 15;
@@ -51,7 +57,7 @@ static void write_rgbaq(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     write_u32(rr);
     write_u32(gg);
     write_u32(bb);
-    write_u32(aa);  // A + Q (Q=1.0f in upper bits, but A is what matters)
+    write_u32(aa); // A + Q (Q=1.0f in upper bits, but A is what matters)
 }
 
 // Build a PACKED XYZ2 (128 bits) — triggers drawing kick
@@ -78,17 +84,18 @@ int main(int argc, char* argv[]) {
     }
 
     // ── GS Dump Header ─────────────────────────────────────
-    write_u32(0xDEADBEEF);  // CRC (dummy)
-    write_u32(0);            // state_size = 0 (no frozen state)
+    write_u32(0xDEADBEEF); // CRC (dummy)
+    write_u32(0);          // state_size = 0 (no frozen state)
 
     // GS privileged register block (8192 bytes) follows the state in PCSX2 dumps;
     // reo-gs-replay reads it before the records. All zero = replay defaults.
-    for (int i = 0; i < 8192 / 8; ++i) write_u64(0);
+    for (int i = 0; i < 8192 / 8; ++i)
+        write_u64(0);
 
     // ── Record 1: Set up registers via PATH3 A+D mode ─────
     // GIF tag: nloop=4 (4 register writes), flg=0 (PACKED), nreg=1, reg=AD(0xE)
-    write_u8(0);  // type = Transfer
-    write_u8(2);  // path = PATH3
+    write_u8(0); // type = Transfer
+    write_u8(2); // path = PATH3
 
     // Calculate transfer size: 16 (tag) + 4 * 16 (4 packed AD writes) = 80 bytes
     write_u32(80);
@@ -97,8 +104,8 @@ int main(int argc, char* argv[]) {
     write_gif_tag(4, true, false, 0, 0, 1, 0x0E);
 
     // Write SCISSOR_1 (reg 0x40): x0=0, x1=639, y0=0, y1=447
-    uint64_t scissor = (uint64_t)0 | ((uint64_t)639 << 16) |
-                       ((uint64_t)0 << 32) | ((uint64_t)447 << 48);
+    uint64_t scissor =
+        (uint64_t)0 | ((uint64_t)639 << 16) | ((uint64_t)0 << 32) | ((uint64_t)447 << 48);
     write_ad(0x40, scissor);
 
     // Write FRAME_1 (reg 0x4C): base=0, width=10 (640/64), psm=0 (PSMCT32)
@@ -114,8 +121,8 @@ int main(int argc, char* argv[]) {
 
     // ── Record 2: Draw a red triangle via PATH3 ────────────
     // PRIM = Triangle (3), Gouraud OFF, no texture, no fog, no alpha
-    write_u8(0);  // type = Transfer
-    write_u8(2);  // path = PATH3
+    write_u8(0); // type = Transfer
+    write_u8(2); // path = PATH3
 
     // GIF tag: 3 vertices, PACKED mode, 2 regs (RGBAQ + XYZ2), pre=1 prim=Triangle(3)
     // nloop=3, nreg=2, regs = RGBAQ(0x01) + XYZ2(0x05) = 0x51
@@ -138,8 +145,8 @@ int main(int argc, char* argv[]) {
     write_xyz2(100.0f, 350.0f, 0.0f);
 
     // ── Record 3: Draw a green sprite (rectangle) ──────────
-    write_u8(0);  // type = Transfer
-    write_u8(2);  // path = PATH3
+    write_u8(0); // type = Transfer
+    write_u8(2); // path = PATH3
 
     // Sprite needs 2 vertices, PRIM=6 (sprite)
     // nloop=2, nreg=2, regs = RGBAQ + XYZ2
@@ -157,8 +164,8 @@ int main(int argc, char* argv[]) {
     write_xyz2(600.0f, 200.0f, 0.0f);
 
     // ── Record 4: VSync ────────────────────────────────────
-    write_u8(1);  // type = VSync
-    write_u8(0);  // field = 0
+    write_u8(1); // type = VSync
+    write_u8(0); // field = 0
 
     // ── Record 5: Second frame — draw a blue sprite for background ──
     write_u8(0);

@@ -1,0 +1,23 @@
+diff --git a/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp b/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
+index 7d676b9..a639f40 100644
+--- a/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
++++ b/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
+@@ -157,6 +157,18 @@ namespace ps2_ipu
+         // Peek up to 32 bits MSB first; bits past the end of the FIFO read as zero.
+         uint32_t peekPadded(int n)
+         {
++            if (g_bitPos >= 0 && n > 0 && n <= 32)
++            {
++                // A window spans at most five bytes. Retain zero padding at
++                // FIFO boundaries without extracting every bit individually.
++                const size_t first = static_cast<size_t>(g_bitPos >> 3);
++                const unsigned offset = static_cast<unsigned>(g_bitPos & 7);
++                const unsigned count = (offset + n + 7) / 8;
++                uint64_t window = 0;
++                for (unsigned i = 0; i < count; ++i)
++                    window = (window << 8) | (first + i < g_in.size() ? g_in[first + i] : 0u);
++                return static_cast<uint32_t>((window >> (count * 8 - offset - n)) & ((uint64_t{1} << n) - 1));
++            }
+             uint32_t v = 0;
+             for (int i = 0; i < n; ++i)
+             {

@@ -1,0 +1,197 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -14,6 +14,7 @@
+ #include <cstdlib>
+ #include <deque>
+ #include <array>
++#include <algorithm>
+ #include <atomic>
+ #include <cstddef>
+ #include <filesystem>
+@@ -355,6 +356,109 @@
+     thread_local uint64_t t_copiedFrameTick = 0;
+     constexpr size_t kGsQueueMaxBytes = 64u * 1024u * 1024u;
+ 
++    // GS_STATE_PACKET_CLASSIFIER_BEGIN
++    // Deliberately narrower than a general GIF parser. A single exact PACKED
++    // A+D tag may only write inert context state, never vertices or transfers.
++    uint64_t gsStateLoad64(const uint8_t *data)
++    {
++        uint64_t value;
++        std::memcpy(&value, data, sizeof(value));
++        return value;
++    }
++    bool gsIsStateOnlyPacket(const uint8_t *data, size_t size)
++    {
++        if (!data || size < 32u || size > 272u || (size & 15u)) return false;
++        const uint64_t tag = gsStateLoad64(data);
++        const unsigned loops = unsigned(tag & 0x7fffu);
++        constexpr uint64_t allowedTagBits = 0x100000000000ffffull; // NREG=1, EOP, NLOOP.
++        if ((tag & ~allowedTagBits) || (tag >> 60u) != 1u || !(tag & 0x8000u) ||
++            !loops || loops > 16u || size != 16u + size_t(loops) * 16u || gsStateLoad64(data + 8u) != 0xeull)
++            return false;
++        for (unsigned i = 0; i < loops; ++i)
++        {
++            // Upper address bits must be zero, rather than silently truncating
++            // unknown A+D encodings as the general runtime parser currently does.
++            const uint64_t address = gsStateLoad64(data + 24u + size_t(i) * 16u);
++            switch (address)
++            {
++            case 0x18u: case 0x19u: // XYOFFSET1/2
++            case 0x45u: case 0x46u: // DTHE / COLCLAMP
++            case 0x4cu: case 0x4du: // FRAME1/2
++            case 0x4eu: case 0x4fu: // ZBUF1/2
++                break;
++            default: return false;
++            }
++        }
++        return true;
++    }
++    struct GsStatePacketStream
++    {
++        bool known = true;
++        uint32_t pendingImageBytes = 0;
++        const char *disabledReason = "none";
++        void disable(const char *reason) { known = false; disabledReason = reason; }
++        bool canBypass() const { return known && pendingImageBytes == 0u; }
++        // Producer-owned under the queue mutex. Track the only packet-to-packet
++        // payload continuation supported by processGIFPacket: fragmented IMAGE.
++        // Any unproven parse disables this experiment until the next GS::init.
++        void observe(const uint8_t *data, size_t size)
++        {
++            if (!known || size < 16u) return;
++            if (!data) { disable("null-data"); return; }
++            if (size > 16u * 1024u * 1024u) { disable("packet-size-limit"); return; }
++            if (pendingImageBytes)
++            {
++                const size_t take = std::min<size_t>(pendingImageBytes, size);
++                pendingImageBytes -= uint32_t(take); data += take; size -= take;
++                if (size < 16u) return;
++            }
++            size_t offset = 0;
++            unsigned tags = 0;
++            while (offset + 16u <= size)
++            {
++                if (++tags > 4096u) { disable("tag-limit"); return; }
++                const uint64_t tag = gsStateLoad64(data + offset);
++                offset += 16u;
++                const unsigned loops = unsigned(tag & 0x7fffu);
++                const unsigned format = unsigned((tag >> 58u) & 3u);
++                unsigned regs = unsigned(tag >> 60u);
++                if (!regs) regs = 16u;
++                size_t payload = 0;
++                if (format == 0u) payload = size_t(loops) * regs * 16u;
++                else if (format == 1u) payload = (size_t(loops) * regs * 8u + 15u) & ~size_t(15u);
++                else if (format == 2u)
++                {
++                    payload = size_t(loops) * 16u;
++                    if (payload > size - offset)
++                    {
++                        pendingImageBytes = uint32_t(payload - (size - offset));
++                        return;
++                    }
++                }
++                else { disable("disabled-format"); return; }
++                if (payload > size - offset) { disable("fragmented-nonimage"); return; }
++                offset += payload;
++            }
++            if (offset != size) disable("trailing-bytes");
++        }
++    };
++    // GS_STATE_PACKET_CLASSIFIER_END
++
++    GsStatePacketStream g_statePacketStream;
++    uint64_t g_statePacketExemptions = 0;
++    uint64_t g_statePacketCandidates = 0, g_statePacketImageBlocked = 0, g_statePacketUnknownBlocked = 0;
++    bool g_statePacketStopReported = false;
++    bool gsStatePacketNoPaceEnabled()
++    {
++        static const bool enabled = [] {
++            const char *e = std::getenv("REO_GS_STATE_PACKET_NO_PACE");
++            const bool on = e && std::atoi(e) != 0;
++            if (on) std::fprintf(stderr, "[GS-STATE-PACKET-PACE] enabled=1 max_packet_bytes=272 whitelist=XYOFFSET1,XYOFFSET2,DTHE,COLCLAMP,FRAME1,FRAME2,ZBUF1,ZBUF2 byte_cap=67108864 fifo=1\n");
++            return on;
++        }();
++        return enabled;
++    }
++
+     struct GsWaitTimer
+     {
+         using Clock = std::chrono::steady_clock;
+@@ -479,15 +583,45 @@
+         // GS because the game waits for GS completion; without this the guest queued ~23 s
+         // of logo drawing and present (which drains) froze on a stale frame (D39).
+         const uint64_t paceTarget = g_gsAsync.prev2VsyncMark;
+-        g_gsAsync.drained.wait(lock, [paceTarget] {
++        const bool stateExperiment = gsStatePacketNoPaceEnabled();
++        const bool stateOnly = stateExperiment && item.isPacket && gsIsStateOnlyPacket(item.data.data(), item.data.size());
++        if (stateOnly)
++        {
++            ++g_statePacketCandidates;
++            if (!g_statePacketStream.known) ++g_statePacketUnknownBlocked;
++            else if (g_statePacketStream.pendingImageBytes) ++g_statePacketImageBlocked;
++        }
++        g_gsAsync.drained.wait(lock, [paceTarget, stateOnly] {
+             // Two frames of slack (D44): with one, a heavy frame made the game thread wait
+             // while holding the guest lock, delaying the VBLANK handler (present hitches).
+             // IRQs keep advancing while this producer waits. Chasing a moving mark
+             // could starve the producer forever, particularly during turbo boot.
+-            return g_gsAsync.stopping || (g_gsAsync.queuedBytes < kGsQueueMaxBytes && g_gsAsync.completed >= paceTarget);
++            // Recheck continuation after each wake: another producer may have
++            // queued a fragmented IMAGE while this producer awaited byte space.
++            const bool exempt = stateOnly && g_statePacketStream.canBypass();
++            return g_gsAsync.stopping || (g_gsAsync.queuedBytes < kGsQueueMaxBytes &&
++                                         (exempt || g_gsAsync.completed >= paceTarget));
+         });
+         if (g_gsAsync.stopping) return true;
+-        waitTimer.finish("enqueue", paceTarget, item.isPacket ? "packet" : "register");
++        const bool exempt = stateOnly && g_statePacketStream.canBypass();
++        waitTimer.finish("enqueue", paceTarget, exempt ? "state-packet" : item.isPacket ? "packet" : "register");
++        if (stateExperiment && item.isPacket)
++        {
++            const bool wasKnown = g_statePacketStream.known;
++            g_statePacketStream.observe(item.data.data(), item.data.size());
++            if (wasKnown && !g_statePacketStream.known)
++                std::fprintf(stderr, "[GS-STATE-PACKET-STREAM] disabled=1 ordinal=%llu reason=%s bytes=%zu\n",
++                    static_cast<unsigned long long>(g_gsAsync.enqueued + 1u), g_statePacketStream.disabledReason, item.data.size());
++        }
++        if (exempt)
++        {
++            const uint64_t count = ++g_statePacketExemptions;
++            if (count <= 8u || (count <= 4096u && count % 256u == 0u))
++                std::fprintf(stderr, "[GS-STATE-PACKET-NOPACE] n=%llu ordinal=%llu completed=%llu target=%llu bytes=%zu queued_bytes=%zu\n",
++                    static_cast<unsigned long long>(count), static_cast<unsigned long long>(g_gsAsync.enqueued + 1u),
++                    static_cast<unsigned long long>(g_gsAsync.completed), static_cast<unsigned long long>(paceTarget),
++                    item.data.size(), g_gsAsync.queuedBytes);
++        }
+         g_gsAsync.queuedBytes += item.data.size();
+         ++g_gsAsync.enqueued;
+         ++g_gsAsync.drawingSerial;
+@@ -1142,6 +1276,16 @@
+     {
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         g_gsAsync.stopping = true;
++        if (!g_statePacketStopReported && gsStatePacketNoPaceEnabled() &&
++            (g_statePacketCandidates || !g_statePacketStream.known || g_statePacketStream.pendingImageBytes))
++        {
++            g_statePacketStopReported = true;
++            std::fprintf(stderr, "[GS-STATE-PACKET-SUMMARY] candidates=%llu exempt_commits=%llu image_blocked_at_submission=%llu unknown_blocked_at_submission=%llu stream_known=%u pending_image_bytes=%u reason=%s enqueued=%llu completed=%llu\n",
++                static_cast<unsigned long long>(g_statePacketCandidates), static_cast<unsigned long long>(g_statePacketExemptions),
++                static_cast<unsigned long long>(g_statePacketImageBlocked), static_cast<unsigned long long>(g_statePacketUnknownBlocked),
++                unsigned(g_statePacketStream.known), g_statePacketStream.pendingImageBytes, g_statePacketStream.disabledReason,
++                static_cast<unsigned long long>(g_gsAsync.enqueued), static_cast<unsigned long long>(g_gsAsync.completed));
++        }
+         g_gsAsync.queue.clear();
+         // Includes the item currently executing; completion handles stopped
+         // accounting explicitly, so cancellation cannot underflow this value.
+@@ -1195,6 +1339,9 @@
+         g_gsAsync.vsyncMark = g_gsAsync.prevVsyncMark = g_gsAsync.prev2VsyncMark = 0;
+         g_gsAsync.drawingSerial = g_gsAsync.lastCaptureDrawingSerial = g_gsAsync.lastDrawingMark = 0;
+         g_gsAsync.vblankDisplay = {}; g_gsAsync.lastQueuedDisplay = {};
++        g_statePacketStream = {}; g_statePacketExemptions = 0;
++        g_statePacketCandidates = g_statePacketImageBlocked = g_statePacketUnknownBlocked = 0;
++        g_statePacketStopReported = false;
+         g_gsAsync.stopping = false;
+         g_gsStopRequested.store(false, std::memory_order_release);
+     }

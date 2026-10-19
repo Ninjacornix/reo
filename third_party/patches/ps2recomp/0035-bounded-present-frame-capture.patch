@@ -1,0 +1,71 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index fd04c07..1624a97 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -868,20 +868,30 @@ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint
+         uint64_t h = 1469598103934665603ull;
+         for (size_t i = 0; i < scratch.size(); i += 4093u)
+             h = (h ^ scratch[i]) * 1099511628211ull;
+-        // REO_PRESENT_DUMP_AT=<host s>: write the next 4 presented frames (consecutive
+-        // vblank snapshots) to present_<n>.bmp, to inspect field/flip behaviour (D40).
++        // REO_PRESENT_DUMP_AT=<host s>: dump presented frames for field/flip inspection.
++        // REO_PRESENT_DUMP_COUNT optionally extends the default four-frame burst (0..600).
++        // A JSONL sidecar records the host capture time and observed scanout state. The
++        // sequence is observed here, not a claim that it identifies the exact VRAM latch.
+         {
+             static const double s_dumpAt = []() {
+                 const char *e = std::getenv("REO_PRESENT_DUMP_AT");
+                 return e ? std::atof(e) : -1.0;
+             }();
++            static const int s_dumpCount = []() {
++                const char *e = std::getenv("REO_PRESENT_DUMP_COUNT");
++                return e ? std::clamp(std::atoi(e), 0, 600) : 4;
++            }();
+             static const auto s_start = std::chrono::steady_clock::now();
+             static int s_dumped = 0;
+-            if (s_dumpAt >= 0.0 && s_dumped < 4 &&
++            if (s_dumpAt >= 0.0 && s_dumped < s_dumpCount &&
+                 std::chrono::duration<double>(std::chrono::steady_clock::now() - s_start).count() >= s_dumpAt)
+             {
+                 char name[64];
+                 std::snprintf(name, sizeof(name), "present_%d.bmp", s_dumped);
++                const auto captureTime = std::chrono::steady_clock::now();
++                const auto captureNs = std::chrono::duration_cast<std::chrono::nanoseconds>(captureTime.time_since_epoch()).count();
++                const uint64_t captureTick = ps2_syscalls::GetCurrentVSyncTick();
++                const uint64_t observedSeq = ps2GsVblankSeq();
+                 if (FILE *f = std::fopen(name, "wb"))
+                 {
+                     const uint32_t rowBytes = width * 4u, dataBytes = rowBytes * height;
+@@ -891,15 +901,30 @@ static void UploadFrame(Texture2D &tex, PS2Runtime *rt, uint32_t &outWidth, uint
+                     put32(22, static_cast<uint32_t>(-static_cast<int32_t>(height)));
+                     hdr[26] = 1; hdr[28] = 32; put32(34, dataBytes);
+                     std::fwrite(hdr, 1, 54, f);
++                    // Write whole rows: per-pixel fwrite substantially distorts a burst.
++                    std::vector<uint8_t> bgraRow(rowBytes);
+                     for (uint32_t y = 0; y < height; ++y)
++                    {
+                         for (uint32_t x = 0; x < width; ++x)
+                         {
+                             const uint8_t *px = scratch.data() + (static_cast<size_t>(y) * width + x) * 4u;
+-                            const uint8_t bgra[4] = {px[2], px[1], px[0], 255};
+-                            std::fwrite(bgra, 1, 4, f);
++                            const size_t off = static_cast<size_t>(x) * 4u;
++                            bgraRow[off] = px[2]; bgraRow[off + 1u] = px[1];
++                            bgraRow[off + 2u] = px[0]; bgraRow[off + 3u] = 255u;
+                         }
++                        std::fwrite(bgraRow.data(), 1, rowBytes, f);
++                    }
+                     std::fclose(f);
+                 }
++                if (FILE *metadata = std::fopen("present_dump.jsonl", "ab"))
++                {
++                    std::fprintf(metadata,
++                                 "{\"image\":\"%s\",\"ns\":%lld,\"elapsed\":%.6f,\"tick\":%llu,\"observed_seq\":%llu,\"width\":%u,\"height\":%u,\"fbp\":%u,\"src\":%u,\"preferred\":%d}\n",
++                                 name, static_cast<long long>(captureNs), std::chrono::duration<double>(captureTime - s_start).count(),
++                                 static_cast<unsigned long long>(captureTick), static_cast<unsigned long long>(observedSeq),
++                                 width, height, displayFbp, sourceFbp, usedPreferredDisplaySource ? 1 : 0);
++                    std::fclose(metadata);
++                }
+                 std::fprintf(stderr, "[present-dump] %s %ux%u tick=%llu displayFbp=%u sourceFbp=%u preferred=%d\n", name, width, height,
+                              static_cast<unsigned long long>(ps2_syscalls::GetCurrentVSyncTick()), displayFbp, sourceFbp,
+                              usedPreferredDisplaySource ? 1 : 0);

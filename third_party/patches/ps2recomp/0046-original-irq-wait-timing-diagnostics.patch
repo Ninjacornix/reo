@@ -1,0 +1,68 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -42,6 +42,44 @@
+ 
+     using namespace interrupt_state;
+ 
++    // Opt-in evidence for host backpressure: distinguish waiting for the guest
++    // CPU from work performed while an original IRQ handler owns it. Declare
++    // before GuestExecutionScope so reporting happens after CPU release.
++    class ScopedIrqTiming
++    {
++    public:
++        ScopedIrqTiming(const char* kind, uint32_t handler, uint32_t cause)
++            : m_kind(kind), m_handler(handler), m_cause(cause)
++        {
++            static const bool enabled = std::getenv("REO_IRQ_TIMING_LOG") != nullptr;
++            m_enabled = enabled;
++            if (m_enabled) m_start = std::chrono::steady_clock::now();
++        }
++        void acquired()
++        {
++            if (m_enabled) m_acquired = std::chrono::steady_clock::now();
++        }
++        ~ScopedIrqTiming()
++        {
++            if (!m_enabled || m_acquired == std::chrono::steady_clock::time_point{}) return;
++            const auto end = std::chrono::steady_clock::now();
++            const auto waitUs = std::chrono::duration_cast<std::chrono::microseconds>(m_acquired - m_start).count();
++            const auto holdUs = std::chrono::duration_cast<std::chrono::microseconds>(end - m_acquired).count();
++            if (waitUs < 25000 && holdUs < 25000) return;
++            static std::atomic<uint32_t> reports{0};
++            if (reports.fetch_add(1, std::memory_order_relaxed) >= 128u) return;
++            const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(end.time_since_epoch()).count();
++            std::fprintf(stderr, "[IRQ-TIMING] kind=%s handler=%08x cause=%u waitUs=%lld holdUs=%lld ns=%lld\n",
++                         m_kind, m_handler, m_cause, static_cast<long long>(waitUs),
++                         static_cast<long long>(holdUs), static_cast<long long>(ns));
++        }
++    private:
++        const char* m_kind;
++        uint32_t m_handler, m_cause;
++        bool m_enabled = false;
++        std::chrono::steady_clock::time_point m_start{}, m_acquired{};
++    };
++
+     static void writeGuestU32NoThrow(uint8_t *rdram, uint32_t addr, uint32_t value)
+     {
+         if (addr == 0u)
+@@ -201,7 +239,9 @@
+                 // the running thread yields at its next preemption point (ps2_guest_sched.h)
+                 // instead of executing in parallel (concurrent handlers broke the LIFO nesting
+                 // of CRI ADX SVM locks: "svm_unlock: lock type miss match").
++                ScopedIrqTiming irqTiming("INTC", info.handler, cause);
+                 PS2Runtime::GuestExecutionScope interruptExecution(runtime);
++                irqTiming.acquired();
+                 while (irqCtx.pc != 0u && runtime && !runtime->isStopRequested())
+                 {
+                     PS2Runtime::RecompiledFunction step = runtime->lookupFunction(irqCtx.pc);
+@@ -287,7 +327,9 @@
+                 SET_GPR_U32(&irqCtx, 7, 0u);
+                 irqCtx.pc = info.handler;
+ 
++                ScopedIrqTiming irqTiming("DMAC", info.handler, cause);
+                 PS2Runtime::GuestExecutionScope interruptExecution(runtime); // atomic, see INTC
++                irqTiming.acquired();
+                 while (irqCtx.pc != 0u && runtime && !runtime->isStopRequested())
+                 {
+                     PS2Runtime::RecompiledFunction step = runtime->lookupFunction(irqCtx.pc);

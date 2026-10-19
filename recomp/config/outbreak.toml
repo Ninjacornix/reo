@@ -28,7 +28,6 @@ skip = [
   "sub_00117080",
   "sub_00117818",
   "sub_001179E8",  # SifCallRpc -> runtime HLE (game libsif RPC transport is not emulated; D2)
-  "sub_001F73B0",
   # "sub_001CB8F0",  # UNSTUBBED: demo scene state machine
 ]
 
@@ -1065,4 +1064,3 @@ instructions = [
 [performance]
 critical = [
 ]
-

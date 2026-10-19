@@ -1,0 +1,231 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -6,6 +6,7 @@
+ #include "runtime/ps2_gs_psmt8.h"
+ #include "ps2_log.h"
+ #include "ps2_syscalls.h"
++#include "ps2_guest_sched.h"
+ #include "Kernel/Syscalls/Interrupt.h"
+ #include "runtime/ps2_memory.h"
+ #include <condition_variable>
+@@ -458,6 +459,32 @@
+         }();
+         return enabled;
+     }
++    std::atomic<uint64_t> g_gsSessionGeneration{0u};
++    struct GsProducerPaceDebt { uint64_t generation = 0, target = 0; };
++    thread_local GsProducerPaceDebt t_gsProducerPaceDebt;
++    bool gsDispatchPaceEnabled()
++    {
++        static const bool enabled = [] {
++            const char *e = std::getenv("REO_GS_DISPATCH_PACE");
++            const bool on = e && std::atoi(e) != 0;
++            if (on) std::fprintf(stderr, "[GS-DISPATCH-PACE-CONFIG] enabled=1 frozen_producer_target=1 boundary_wait=1 byte_cap=67108864 hard_cap_wait_remains=1\n");
++            return on;
++        }();
++        return enabled;
++    }
++    // Deterministic synchronization fixture only. No game run sets this flag.
++    std::mutex g_dispatchTestGateMutex;
++    std::condition_variable g_dispatchTestGateCv;
++    bool g_dispatchTestGateClosed = false;
++    std::atomic<bool> g_dispatchTestGateWaiting{false};
++    bool gsDispatchTestGateEnabled()
++    {
++        static const bool enabled = [] {
++            const char *e = std::getenv("REO_GS_DISPATCH_PACE_TEST_GATE");
++            return e && std::atoi(e) != 0;
++        }();
++        return enabled;
++    }
+ 
+     struct GsWaitTimer
+     {
+@@ -526,6 +553,18 @@
+                 g_gsAsync.busy = true;
+                 if (publicationProbeEnabled()) t_publicationExecutingSerial = g_gsAsync.completed + 1u;
+             }
++            if (gsDispatchTestGateEnabled())
++            {
++                std::unique_lock<std::mutex> gateLock(g_dispatchTestGateMutex);
++                if (g_dispatchTestGateClosed)
++                {
++                    g_dispatchTestGateWaiting.store(true, std::memory_order_release);
++                    g_dispatchTestGateCv.wait(gateLock, [] {
++                        return !g_dispatchTestGateClosed || g_gsStopRequested.load(std::memory_order_acquire);
++                    });
++                    g_dispatchTestGateWaiting.store(false, std::memory_order_release);
++                }
++            }
+             if (publicationProbeEnabled()) (void)PublicationProbe::get();
+             if (item.isDisplayCapture)
+             {
+@@ -583,6 +622,7 @@
+         // GS because the game waits for GS completion; without this the guest queued ~23 s
+         // of logo drawing and present (which drains) froze on a stale frame (D39).
+         const uint64_t paceTarget = g_gsAsync.prev2VsyncMark;
++        const bool dispatchExperiment = gsDispatchPaceEnabled();
+         const bool stateExperiment = gsStatePacketNoPaceEnabled();
+         const bool stateOnly = stateExperiment && item.isPacket && gsIsStateOnlyPacket(item.data.data(), item.data.size());
+         if (stateOnly)
+@@ -591,7 +631,7 @@
+             if (!g_statePacketStream.known) ++g_statePacketUnknownBlocked;
+             else if (g_statePacketStream.pendingImageBytes) ++g_statePacketImageBlocked;
+         }
+-        g_gsAsync.drained.wait(lock, [paceTarget, stateOnly] {
++        g_gsAsync.drained.wait(lock, [paceTarget, stateOnly, dispatchExperiment] {
+             // Two frames of slack (D44): with one, a heavy frame made the game thread wait
+             // while holding the guest lock, delaying the VBLANK handler (present hitches).
+             // IRQs keep advancing while this producer waits. Chasing a moving mark
+@@ -600,7 +640,7 @@
+             // queued a fragmented IMAGE while this producer awaited byte space.
+             const bool exempt = stateOnly && g_statePacketStream.canBypass();
+             return g_gsAsync.stopping || (g_gsAsync.queuedBytes < kGsQueueMaxBytes &&
+-                                         (exempt || g_gsAsync.completed >= paceTarget));
++                                         (dispatchExperiment || exempt || g_gsAsync.completed >= paceTarget));
+         });
+         if (g_gsAsync.stopping) return true;
+         const bool exempt = stateOnly && g_statePacketStream.canBypass();
+@@ -624,6 +664,15 @@
+         }
+         g_gsAsync.queuedBytes += item.data.size();
+         ++g_gsAsync.enqueued;
++        // Never wait for this target inside DMA/MMIO, which still owns the IO
++        // mutex. Only the submitting guest producer receives debt. IRQ/alarm
++        // workers, and guest audio threads without GS submissions, receive none.
++        if (dispatchExperiment && ps2_sched::currentThread() >= 1 && g_gsAsync.completed < paceTarget)
++        {
++            const uint64_t generation = g_gsSessionGeneration.load(std::memory_order_relaxed);
++            if (t_gsProducerPaceDebt.generation != generation) t_gsProducerPaceDebt = {generation, 0};
++            t_gsProducerPaceDebt.target = std::max(t_gsProducerPaceDebt.target, paceTarget);
++        }
+         ++g_gsAsync.drawingSerial;
+         g_gsAsync.lastDrawingMark = g_gsAsync.enqueued;
+         g_gsAsync.queue.push_back(std::move(item));
+@@ -1270,6 +1319,42 @@
+     return g_gsStopRequested.load(std::memory_order_acquire);
+ }
+ 
++void ps2GsSetDispatchTestGate(bool closed)
++{
++    if (!gsDispatchTestGateEnabled()) return;
++    { std::lock_guard<std::mutex> lock(g_dispatchTestGateMutex); g_dispatchTestGateClosed = closed; }
++    g_dispatchTestGateCv.notify_all();
++}
++bool ps2GsDispatchTestGateWaiting() noexcept
++{
++    return g_dispatchTestGateWaiting.load(std::memory_order_acquire);
++}
++
++// Backedge query: TLS/atomic reads only, no waits, locks, or guest CPU release.
++bool ps2GsProducerPacePending() noexcept
++{
++    if (t_gsProducerPaceDebt.generation != g_gsSessionGeneration.load(std::memory_order_acquire))
++        t_gsProducerPaceDebt = {};
++    return t_gsProducerPaceDebt.target != 0u && ps2_sched::currentThread() >= 1;
++}
++
++// Called only by a guest dispatcher after callbacks and MMIO have returned,
++// with its GuestExecutionReleaseScope already active. Each producer waits for
++// its own frozen debt; later IRQ/frame marks cannot extend this wait.
++void ps2GsWaitProducerPace()
++{
++    if (!ps2GsProducerPacePending()) return;
++    const auto debt = t_gsProducerPaceDebt;
++    t_gsProducerPaceDebt = {};
++    const GsWaitTimer waitTimer;
++    std::unique_lock<std::mutex> lock(g_gsAsync.m);
++    g_gsAsync.drained.wait(lock, [debt] {
++        return g_gsAsync.stopping || g_gsAsync.completed >= debt.target ||
++               debt.generation != g_gsSessionGeneration.load(std::memory_order_acquire);
++    });
++    waitTimer.finish("dispatcher", debt.target, "producer");
++}
++
+ void ps2GsRequestWorkerStop()
+ {
+     g_gsStopRequested.store(true, std::memory_order_release);
+@@ -1293,6 +1378,11 @@
+     }
+     g_gsAsync.work.notify_all();
+     g_gsAsync.drained.notify_all();
++    if (gsDispatchTestGateEnabled())
++    {
++        { std::lock_guard<std::mutex> lock(g_dispatchTestGateMutex); }
++        g_dispatchTestGateCv.notify_all();
++    }
+     // Pair with the wait mutex so a host waiter cannot miss the stop wake.
+     { std::lock_guard<std::mutex> lock(g_vblankWaitMutex); }
+     g_vblankCv.notify_all();
+@@ -1331,6 +1421,7 @@
+ {
+     // A new session cannot reuse a detached worker still bound to old RAM.
+     ps2GsJoinWorker();
++    ps2GsSetDispatchTestGate(false);
+     {
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         g_gsAsync.queue.clear();
+@@ -1342,6 +1433,7 @@
+         g_statePacketStream = {}; g_statePacketExemptions = 0;
+         g_statePacketCandidates = g_statePacketImageBlocked = g_statePacketUnknownBlocked = 0;
+         g_statePacketStopReported = false;
++        g_gsSessionGeneration.fetch_add(1u, std::memory_order_release);
+         g_gsAsync.stopping = false;
+         g_gsStopRequested.store(false, std::memory_order_release);
+     }
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -107,6 +107,8 @@
+ void ps2GsRequestWorkerStop(); // Shutdown signal only; safe from guest/IRQ code.
+ void ps2GsJoinWorker();        // Host coordinator only, without guest/IO locks.
+ void ps2GsJoinRasterWorkers(); // After GS jobs have finished.
++bool ps2GsProducerPacePending() noexcept; // Query only; never releases CPU inside MMIO.
++void ps2GsWaitProducerPace(); // Dispatcher boundary, with guest execution released.
+ void ps2InstallModalRender(void *nativeWindow, void (*render)()); // Kernel/Host/Win32ModalRender.cpp (D42)
+ namespace ps2_syscalls
+ {
+@@ -2357,6 +2359,14 @@
+ 
+     while (!isStopRequested())
+     {
++        if (ps2GsProducerPacePending())
++        {
++            // The previous function/override and all MMIO callbacks have
++            // returned, so no IO mutex is carried into this wait.
++            GuestExecutionReleaseScope releaseCpu(this);
++            ps2GsWaitProducerPace();
++        }
++        if (isStopRequested()) break;
+         const uint32_t pc = ctx->pc;
+ 
+         if (pc == lastPc)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -4,6 +4,9 @@
+ #include "Thread.h"
+ #include "Interrupt.h"
+ #include "../../ps2_guest_sched.h"
++
++bool ps2GsProducerPacePending() noexcept;
++void ps2GsWaitProducerPace();
+ 
+ namespace ps2_sched
+ {
+@@ -458,6 +461,14 @@
+ 
+                 while (runtime && !runtime->isStopRequested())
+                 {
++                    if (ps2GsProducerPacePending())
++                    {
++                        // This is between guest steps, after every nested
++                        // callback/MMIO frame has unwound and released IO locks.
++                        PS2Runtime::GuestExecutionReleaseScope releaseCpu(runtime);
++                        ps2GsWaitProducerPace();
++                    }
++                    if (runtime->isStopRequested()) break;
+                     ++stepCount;
+                     if (info->terminated.load(std::memory_order_relaxed))
+                     {

@@ -1,0 +1,251 @@
+diff --git a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp
+@@ -20,6 +20,109 @@
+ 
+ namespace
+ {
++    struct TriangleProbeCounts
++    {
++        uint64_t covered = 0, shaded = 0, dateRejected = 0, zRejected = 0;
++        uint64_t alphaNoFramebuffer = 0, boundsRejected = 0, invalidDepth = 0;
++        uint64_t depthWrites = 0, framebufferWrites = 0, framebufferMasked = 0;
++    };
++    thread_local TriangleProbeCounts *t_triangleProbe = nullptr;
++
++    // Diagnostic selection, timing and output happen once per triangle. The
++    // nullable TLS counter never changes test order or performs another VRAM
++    // read. No clock, atomic increment or logging occurs inside the pixel loop.
++    struct TriangleProbe
++    {
++        using Clock = std::chrono::steady_clock;
++        TriangleProbeCounts counts;
++        TriangleProbeCounts *previous = nullptr;
++        Clock::time_point started{};
++        const GSContext *context = nullptr;
++        const GSVertex *vertices = nullptr;
++        unsigned index = 0, limit = 0, type = 0;
++        double elapsed = 0;
++        bool active = false, textured = false;
++
++        TriangleProbe(const GSContext &ctx, const GSPrimReg &prim, const GSVertex *v)
++        {
++            static const char *atEnv = std::getenv("REO_GS_TRI_PROBE_AT");
++            if (!atEnv) return;
++            static const auto epoch = Clock::now();
++            static const double at = std::max(0.0, std::strtod(atEnv, nullptr));
++            static const double seconds = [] {
++                const char *e = std::getenv("REO_GS_TRI_PROBE_SECONDS");
++                return std::clamp(e ? std::strtod(e, nullptr) : 5.0, 0.001, 60.0);
++            }();
++            static const unsigned configuredLimit = [] {
++                const char *e = std::getenv("REO_GS_TRI_PROBE_COUNT");
++                return unsigned(std::clamp(e ? std::atoi(e) : 512, 1, 4096));
++            }();
++            static const bool onlyTextured = [] {
++                const char *e = std::getenv("REO_GS_TRI_PROBE_TEXTURED");
++                return !e || std::atoi(e) != 0;
++            }();
++            static unsigned samples = 0;
++            static bool finished = false;
++            if (finished || samples >= configuredLimit || (onlyTextured && !prim.tme)) return;
++            const auto now = Clock::now();
++            const double sinceEpoch = std::chrono::duration<double>(now - epoch).count();
++            if (sinceEpoch >= at + seconds) { finished = true; return; }
++            if (sinceEpoch < at) return;
++            active = true; index = ++samples; limit = configuredLimit;
++            started = now; elapsed = sinceEpoch; context = &ctx; vertices = v;
++            type = unsigned(prim.type); textured = prim.tme;
++            previous = t_triangleProbe; t_triangleProbe = &counts;
++        }
++        ~TriangleProbe()
++        {
++            if (!active) return;
++            t_triangleProbe = previous;
++            const auto us = std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - started).count();
++            static TriangleProbeCounts total;
++            static uint64_t totalUs = 0;
++#define ADD_TRI_COUNT(field) total.field += counts.field
++            ADD_TRI_COUNT(covered); ADD_TRI_COUNT(shaded); ADD_TRI_COUNT(dateRejected); ADD_TRI_COUNT(zRejected);
++            ADD_TRI_COUNT(alphaNoFramebuffer); ADD_TRI_COUNT(boundsRejected); ADD_TRI_COUNT(invalidDepth);
++            ADD_TRI_COUNT(depthWrites); ADD_TRI_COUNT(framebufferWrites); ADD_TRI_COUNT(framebufferMasked);
++#undef ADD_TRI_COUNT
++            totalUs += uint64_t(std::max<int64_t>(0, us));
++            // Every selected primitive contributes to totals. Detail for the
++            // first eight or slow triangles gives actual vertex provenance.
++            if (index <= 8 || us >= 10000)
++            {
++                const auto &c = *context;
++                std::fprintf(stderr, "[GS-TRI-PROBE] n=%u elapsed=%.6f us=%lld type=%u textured=%u covered=%llu shaded=%llu z_reject=%llu date_reject=%llu alpha_no_fb=%llu bounds_reject=%llu invalid_depth=%llu z_write=%llu fb_write=%llu fb_masked=%llu test=%llx zbuf=%llx frame=%x/%u/%x/%x tex=%x/%x tex1=%llx clamp=%llx alpha=%llx xyoffset=%u,%u scissor=%u,%u,%u,%u\n",
++                    index, elapsed, static_cast<long long>(us), type, unsigned(textured),
++                    static_cast<unsigned long long>(counts.covered), static_cast<unsigned long long>(counts.shaded),
++                    static_cast<unsigned long long>(counts.zRejected), static_cast<unsigned long long>(counts.dateRejected),
++                    static_cast<unsigned long long>(counts.alphaNoFramebuffer), static_cast<unsigned long long>(counts.boundsRejected),
++                    static_cast<unsigned long long>(counts.invalidDepth), static_cast<unsigned long long>(counts.depthWrites),
++                    static_cast<unsigned long long>(counts.framebufferWrites), static_cast<unsigned long long>(counts.framebufferMasked),
++                    static_cast<unsigned long long>(c.test), static_cast<unsigned long long>(c.zbuf),
++                    c.frame.fbp, c.frame.fbw, unsigned(c.frame.psm), c.frame.fbmsk, c.tex0.tbp0, unsigned(c.tex0.psm),
++                    static_cast<unsigned long long>(c.tex1), static_cast<unsigned long long>(c.clamp),
++                    static_cast<unsigned long long>(c.alpha), c.xyoffset.ofx, c.xyoffset.ofy,
++                    c.scissor.x0, c.scissor.y0, c.scissor.x1, c.scissor.y1);
++                for (unsigned i = 0; i < 3; ++i)
++                {
++                    const auto &v = vertices[i];
++                    std::fprintf(stderr, "[GS-TRI-VERTEX] n=%u v=%u xyz=%.9g,%.9g,%u stq=%.9g,%.9g,%.9g rgba=%u,%u,%u,%u\n",
++                        index, i, double(v.x), double(v.y), v.z, double(v.s), double(v.t), double(v.q),
++                        unsigned(v.r), unsigned(v.g), unsigned(v.b), unsigned(v.a));
++                }
++            }
++            // Cumulative output is outside rasterization and has a finite
++            // budget even if the requested time window outlasts the game.
++            std::fprintf(stderr, "[GS-TRI-TOTAL] n=%u limit=%u elapsed=%.6f us=%llu covered=%llu shaded=%llu z_reject=%llu date_reject=%llu alpha_no_fb=%llu bounds_reject=%llu invalid_depth=%llu z_write=%llu fb_write=%llu fb_masked=%llu\n",
++                index, limit, elapsed, static_cast<unsigned long long>(totalUs),
++                static_cast<unsigned long long>(total.covered), static_cast<unsigned long long>(total.shaded),
++                static_cast<unsigned long long>(total.zRejected), static_cast<unsigned long long>(total.dateRejected),
++                static_cast<unsigned long long>(total.alphaNoFramebuffer), static_cast<unsigned long long>(total.boundsRejected),
++                static_cast<unsigned long long>(total.invalidDepth), static_cast<unsigned long long>(total.depthWrites),
++                static_cast<unsigned long long>(total.framebufferWrites), static_cast<unsigned long long>(total.framebufferMasked));
++        }
++    };
++
+     thread_local uint32_t t_pixelDepth = 0;
+     struct PixelDepthScope
+     {
+@@ -622,6 +725,7 @@
+         y < ctx.scissor.y0 || y > ctx.scissor.y1)
+     {
+         g_pxScissor.fetch_add(1, std::memory_order_relaxed);
++        if (t_triangleProbe) ++t_triangleProbe->boundsRejected;
+         return;
+     }
+ 
+@@ -648,7 +752,10 @@
+     }
+ 
+     if (off + bytesPerPixel > gs->m_vramSize)
++    {
++        if (t_triangleProbe) ++t_triangleProbe->boundsRejected;
+         return;
++    }
+ 
+     // Tests, blending and framebuffer masks use the original destination value,
+     // including when a depth write happens to address the same VRAM bytes.
+@@ -662,27 +769,42 @@
+     if ((ctx.test & (1ull << 14)) != 0)
+     {
+         if (ctx.frame.psm == GS_PSM_CT24)
++        {
++            if (t_triangleProbe) ++t_triangleProbe->dateRejected;
+             return;
++        }
+         const unsigned alphaBit = bytesPerPixel == 2u ? 15u : 31u;
+         if (((destinationFramebuffer >> alphaBit) & 1u) != ((ctx.test >> 15) & 1u))
++        {
++            if (t_triangleProbe) ++t_triangleProbe->dateRejected;
+             return;
++        }
+     }
+ 
+     if ((ctx.test & (1ull << 16)) != 0)
+     {
+         const uint8_t ztst = static_cast<uint8_t>((ctx.test >> 17) & 3u);
+         if (ztst == 0u) // NEVER rejects every output, even with ZMSK set.
++        {
++            if (t_triangleProbe) ++t_triangleProbe->zRejected;
+             return;
++        }
+         const uint8_t format = static_cast<uint8_t>((ctx.zbuf >> 24) & 15u);
+         if (format != 0u && format != 1u && format != 2u && format != 10u)
++        {
++            if (t_triangleProbe) ++t_triangleProbe->invalidDepth;
+             return;
++        }
+         const uint32_t zBytes = (format == 2u || format == 10u) ? 2u : 4u;
+         const uint32_t zMask = format == 1u ? 0xFFFFFFu : zBytes == 2u ? 0xFFFFu : 0xFFFFFFFFu;
+         const uint32_t zBlock = static_cast<uint32_t>(ctx.zbuf & 0x1FFu) << 5;
+         const uint32_t zOff = depthAddress(zBlock, widthBlocks, format, static_cast<uint32_t>(x),
+                                          static_cast<uint32_t>(y)) % gs->m_vramSize;
+         if (zOff + zBytes > gs->m_vramSize)
++        {
++            if (t_triangleProbe) ++t_triangleProbe->boundsRejected;
+             return;
++        }
+         // Sprites bypass interpolated-depth clamping and use vertex 1's raw Z.
+         // Other primitives clamp to the destination format before comparison.
+         const uint32_t sourceZ = gs->m_prim.type == GS_PRIM_SPRITE
+@@ -693,18 +815,23 @@
+             std::memcpy(&destinationZ, gs->m_vram + zOff, zBytes);
+             destinationZ &= zMask;
+             if (ztst == 2u ? sourceZ < destinationZ : sourceZ <= destinationZ)
++            {
++                if (t_triangleProbe) ++t_triangleProbe->zRejected;
+                 return;
++            }
+         }
+         if ((ctx.zbuf & (1ull << 32)) == 0 && alphaTest.writeDepth)
+         {
+             // Z24 writes only its low three bytes, preserving the high plane.
+             std::memcpy(gs->m_vram + zOff, &sourceZ, format == 1u ? 3u : zBytes);
++            if (t_triangleProbe) ++t_triangleProbe->depthWrites;
+         }
+     }
+ 
+     if (!alphaTest.writeFramebuffer)
+     {
+         g_pxAlpha.fetch_add(1, std::memory_order_relaxed);
++        if (t_triangleProbe) ++t_triangleProbe->alphaNoFramebuffer;
+         return;
+     }
+ 
+@@ -713,7 +840,10 @@
+     const uint32_t framebufferBits = bytesPerPixel == 2u ? 0xFFFFu :
+         ctx.frame.psm == GS_PSM_CT24 ? 0xFFFFFFu : 0xFFFFFFFFu;
+     if ((ctx.frame.fbmsk & framebufferBits) == framebufferBits)
++    {
++        if (t_triangleProbe) ++t_triangleProbe->framebufferMasked;
+         return;
++    }
+ 
+     PS2_IF_AGRESSIVE_LOGS({
+         const uint32_t pixelIndex = s_debugPixelCount.fetch_add(1, std::memory_order_relaxed);
+@@ -816,6 +946,7 @@
+             pixel = static_cast<uint16_t>((pixel & ~mask) | (destinationFramebuffer & mask));
+         }
+         std::memcpy(gs->m_vram + off, &pixel, 2);
++        if (t_triangleProbe) ++t_triangleProbe->framebufferWrites;
+         return;
+     }
+ 
+@@ -832,6 +963,7 @@
+     }
+ 
+     std::memcpy(gs->m_vram + off, &pixel, 4);
++    if (t_triangleProbe) ++t_triangleProbe->framebufferWrites;
+ }
+ 
+ uint32_t GSRasterizer::readTexelPSMCT32(GS *gs, uint32_t tbp0, uint32_t tbw, int texU, int texV)
+@@ -1514,6 +1646,7 @@
+     const GSVertex &v1 = gs->m_vtxQueue[1];
+     const GSVertex &v2 = gs->m_vtxQueue[2];
+     const auto &ctx = gs->activeContext();
++    TriangleProbe probe(ctx, gs->m_prim, gs->m_vtxQueue);
+ 
+     int ofx = ctx.xyoffset.ofx >> 4;
+     int ofy = ctx.xyoffset.ofy >> 4;
+@@ -1556,6 +1689,8 @@
+ 
+             if (w0 < -kEdgeEpsilon || w1 < -kEdgeEpsilon || w2 < -kEdgeEpsilon)
+                 continue;
++
++            if (probe.active) ++probe.counts.covered;
+ 
+             uint8_t r, g, b, a;
+             if (gs->m_prim.iip)
+@@ -1597,6 +1732,7 @@
+                 }
+ 
+                 uint32_t texel = sampleTexture(gs, is, it, iq, iu, iv);
++                if (probe.active) ++probe.counts.shaded;
+ 
+                 uint8_t tr = static_cast<uint8_t>(texel & 0xFF);
+                 uint8_t tg = static_cast<uint8_t>((texel >> 8) & 0xFF);

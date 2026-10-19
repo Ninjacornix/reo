@@ -25,16 +25,22 @@
 
 #include "ps2_runtime.h"
 #include <cstdio>
+#include "network/native/snap_iop_transport.h"
 
 namespace reo {
-    class GSRenderer;
-    class VUInterpreter;
-    class Input;
-    class CDVD;
+class GSRenderer;
+class VUInterpreter;
+class Input;
+class CDVD;
+} // namespace reo
+
+class PrivateUsbKeyboard;
+namespace reo_network {
+class NetcnfProfileService;
 }
 
 class ReoHwBridge {
-public:
+  public:
     ReoHwBridge();
     ~ReoHwBridge();
 
@@ -46,28 +52,27 @@ public:
     void shutdown();
 
     // Get the singleton (created by init, destroyed by shutdown)
-    static ReoHwBridge* instance() { return s_instance; }
+    static ReoHwBridge* instance() {
+        return s_instance;
+    }
 
-private:
+  private:
     // PS2Memory callback: DMA channel start
-    static void onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc,
-                           uint32_t tadr, const uint8_t* rdram, void* user);
+    static void onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc, uint32_t tadr,
+                           const uint8_t* rdram, void* user);
 
     // PS2Memory callback: GS privileged register write
     static void onGsRegWrite(uint32_t offset, uint64_t value, void* user);
 
     // PS2Runtime callback: VU microprogram execution
-    static void onVuStart(int unit, uint32_t addr, uint8_t* rdram,
-                          R5900Context* ctx, void* user);
+    static void onVuStart(int unit, uint32_t addr, uint8_t* rdram, R5900Context* ctx, void* user);
 
     // PS2Runtime callback: get rendered framebuffer
     static const uint32_t* getFramebuffer(int* width, int* height, void* user);
 
     // PS2Runtime callback: unhandled SIF RPC
-    static bool onSifRpc(uint32_t sid, uint32_t rpcNum,
-                         uint32_t sendBuf, uint32_t sendSize,
-                         uint32_t recvBuf, uint32_t recvSize,
-                         uint8_t* rdram, void* user);
+    static bool onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint32_t sendSize,
+                         uint32_t recvBuf, uint32_t recvSize, uint8_t* rdram, void* user);
 
     // Process VIF1 DMA data stream (extract UNPACK, MSCAL, DIRECT commands)
     void processVif1Dma(uint32_t madr, uint32_t qwc, const uint8_t* rdram);
@@ -82,6 +87,9 @@ private:
     void executeVu(int unit, uint32_t addr, uint8_t* rdram, R5900Context* ctx);
 
     PS2Runtime* m_runtime = nullptr;
+    std::unique_ptr<SnapIopTransport> m_network;
+    std::unique_ptr<PrivateUsbKeyboard> m_privateKeyboard;
+    std::unique_ptr<reo_network::NetcnfProfileService> m_netProfile;
     reo::GSRenderer* m_gs = nullptr;
     reo::VUInterpreter* m_vu0 = nullptr;
     reo::VUInterpreter* m_vu1 = nullptr;
@@ -96,13 +104,16 @@ private:
     uint32_t m_iopHeapNext = kIopHeapBase;
     uint32_t m_iopBootSeen = 0;
 
-public:
+  public:
     // Input access for pad overrides
-    reo::Input* input() { return m_input; }
-private:
+    reo::Input* input() {
+        return m_input;
+    }
+    bool nativeNetworkLinkReady();
 
+  private:
     // Statistics
-    bool m_bridgeGfx = false;  // REO_GFX=bridge: use the bridge VIF1/VU1/GS path
+    bool m_bridgeGfx = false; // REO_GFX=bridge: use the bridge VIF1/VU1/GS path
     uint64_t m_gifPackets = 0;
     uint64_t m_vif1Dmas = 0;
     uint64_t m_vu0Runs = 0;

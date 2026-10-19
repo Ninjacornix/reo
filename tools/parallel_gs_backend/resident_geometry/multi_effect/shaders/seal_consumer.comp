@@ -1,0 +1,29 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+layout(local_size_x=64) in;
+#include "consumer_common.glsl"
+shared uint admitted;
+void main(){
+ uint lane=gl_LocalInvocationIndex;
+ if(lane<40u)consumer[1008u+lane]=0u;
+ if(lane==0u)admitted=uint(consumer[0]==0u&&results[0]==0u&&consumer[8]==1u&&
+   consumer[4]==p.identity.z&&consumer[5]==p.identity.w&&consumer[6]==CertMagic&&consumer[7]==CertVersion);
+ barrier();
+ if(admitted==0u)for(uint slot=lane;slot<p.limits.y;slot+=64u)dead(slot);
+ barrier();
+ if(admitted!=0u){
+  // Mandatory final main packet has PRE and >=3 records. Ordinary strip
+  // queue maintenance leaves the last3 vertices until the next kick shifts.
+  uint event=consumer[3]-1u,base=descriptor(event,4u),count=descriptor(event,5u);
+  for(uint word=lane;word<36u;word+=64u){uint record=word/12u,component=word%12u;
+   uint row=(base+count-3u+record)*8u,q=component/4u,c=component&3u;
+   consumer[1012u+word]=native[row+(q==0u?5u:q==1u?6u:4u)][c];
+  }
+  if(lane==0u){consumer[1008]=1u;consumer[1009]=(p.mainTag.y>>15u)&2047u;consumer[1010]=3u;consumer[1011]=0x47535131u;}
+ }
+ barrier();
+ if(lane==0u){
+  if(admitted==0u)fail(86u);
+  consumer[1]=admitted;memoryBarrierBuffer();
+ }
+}

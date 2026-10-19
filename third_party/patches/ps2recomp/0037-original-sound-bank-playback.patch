@@ -1,0 +1,952 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.h
+@@ -0,0 +1,74 @@
++#pragma once
++#include <cstddef>
++#include <cstdint>
++#include <vector>
++#include <memory>
++#include <unordered_map>
++
++// Owned Tsnd/HSYN bank format. Private helper: no guest state or output hooks.
++namespace ps2_reo_sound {
++constexpr unsigned kOutputRate = 48000;
++constexpr unsigned kSequenceRate = 240; // TsndInitTimer: 36864000 / 0x25800.
++constexpr unsigned kFramesPerTick = kOutputRate / kSequenceRate;
++
++struct Sample {
++    uint32_t bdOffset = 0;
++    uint16_t sampleRate = 0, adsr1 = 0, adsr2 = 0;
++    uint8_t flags = 0, rootNote = 0, programVolume = 0, regionVolume = 0, sampleVolume = 0;
++    int8_t programTranspose = 0, programFine = 0, regionTranspose = 0, regionFine = 0, sampleFine = 0;
++    uint32_t programRecord = 0, regionRecord = 0, sampleRecord = 0, vagiRecord = 0;
++    uint8_t velocityCurve = 0, regionLow = 0, regionCenter = 0, regionHigh = 0;
++    uint8_t velocityLow = 0, velocityCenter = 0, velocityHigh = 0;
++    uint16_t bendDown = 0, bendUp = 0;
++    int basePan = 64;
++};
++
++struct DecodedSample {
++    std::vector<int16_t> pcm;
++    size_t loopStart = 0;
++    bool hasLoop = false;
++};
++
++class Bank {
++public:
++    bool load(const uint8_t* hd, size_t hdBytes, const uint8_t* bd, size_t bdBytes,
++              const uint8_t* tq, size_t tqBytes);
++    bool sequence(unsigned index, uint32_t& offset, uint8_t& priority) const;
++    bool resolve(unsigned program, uint8_t note, uint8_t velocity, std::vector<Sample>& out) const;
++    bool decode(const Sample& sample, DecodedSample& out) const;
++    std::shared_ptr<const DecodedSample> decoded(const Sample& sample) const;
++    const std::vector<uint8_t>& tq() const { return tq_; }
++    unsigned sequenceCount() const;
++private:
++    std::vector<uint8_t> hd_, bd_, tq_;
++    uint32_t prog_ = 0, sset_ = 0, smpl_ = 0, vagi_ = 0;
++    std::unordered_map<uint32_t,std::shared_ptr<const DecodedSample>> decoded_;
++    bool record(uint32_t chunk, unsigned index, size_t bytes, uint32_t& offset) const;
++};
++
++enum class EventType { Note, Program, Volume, Pan, Pitch, Expression, Control,
++                       AllNotesOff, AllSoundOff, End, Unsupported };
++struct Event { EventType type; uint16_t value = 0; uint8_t note = 0, group = 0; };
++// One instance is one Tsnd TQ queue slot. Voice allocation/mixing is separate.
++class Sequence {
++public:
++    bool start(const Bank& bank, unsigned index, uint8_t programOffset);
++    bool tick(const Bank& bank, bool voicesActive, std::vector<Event>& events);
++    bool active() const { return active_; }
++private:
++    uint32_t cursor_ = 0;
++    uint16_t wait_ = 0;
++    uint8_t programOffset_ = 0;
++    bool active_ = false, hasNote_ = false;
++};
++
++// Synchronous EE bank transfers; queries report no pending load after return.
++bool submitBank(unsigned port, const uint8_t* hd, size_t hdBytes, const uint8_t* bd, size_t bdBytes,
++                const uint8_t* tq, size_t tqBytes);
++bool submitPacket(const uint8_t* ram, size_t ramBytes, const uint8_t* packet, size_t packetBytes);
++void mix(float* stereo, unsigned frames); // Add to an existing 48 kHz buffer.
++void reset();
++uint32_t pendingLoads();
++uint32_t portState(unsigned port, uint32_t& sequenceCount);
++uint32_t seState(unsigned port, unsigned index, unsigned group);
++}
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
+@@ -0,0 +1,538 @@
++#include "ReoSoundBanks.h"
++#include <algorithm>
++#include <cstring>
++#include <limits>
++#include <utility>
++#include <array>
++#include <cmath>
++#include <cstdio>
++#include <mutex>
++
++namespace ps2_reo_sound {
++namespace {
++constexpr size_t kBankLimit = 2u * 1024u * 1024u;
++bool range(const std::vector<uint8_t>& bytes, size_t offset, size_t count) {
++    return offset <= bytes.size() && count <= bytes.size() - offset;
++}
++uint16_t u16(const std::vector<uint8_t>& b, size_t p) { return uint16_t(b[p]) | uint16_t(b[p + 1]) << 8; }
++uint32_t u32(const std::vector<uint8_t>& b, size_t p) {
++    return uint32_t(b[p]) | uint32_t(b[p + 1]) << 8 | uint32_t(b[p + 2]) << 16 | uint32_t(b[p + 3]) << 24;
++}
++bool signature(const std::vector<uint8_t>& b, uint32_t p, const char* name) {
++    if (!range(b, p, 16)) return false;
++    // HSYN signature helper 0x2E0 compares each four-byte word backwards:
++    // literal "SCEI" is stored as IECS, literal "Vers" as sreV.
++    for (unsigned i = 0; i < 4; ++i)
++        if (b[p + i] != uint8_t("SCEI"[3 - i]) || b[p + 4 + i] != uint8_t(name[3 - i])) return false;
++    return true;
++}
++}
++
++bool Bank::load(const uint8_t* hd, size_t hn, const uint8_t* bd, size_t bn,
++                const uint8_t* tq, size_t tn) {
++    hd_.clear(); bd_.clear(); tq_.clear(); decoded_.clear(); prog_ = sset_ = smpl_ = vagi_ = 0;
++    if (!hd || !bd || !tq || hn < 0x34 || tn < 16 || !bn ||
++        hn > kBankLimit || bn > kBankLimit || tn > kBankLimit) return false;
++    std::vector<uint8_t> header(hd, hd + hn);
++    if (!signature(header, 0, "Vers") || !signature(header, 0x10, "Head")) return false;
++    uint32_t chunks[4];
++    const char* names[4] = { "Prog", "Sset", "Smpl", "Vagi" };
++    for (unsigned i = 0; i < 4; ++i) {
++        chunks[i] = u32(header, 0x24 + i * 4);
++        if (chunks[i] == 0xFFFFFFFFu || !signature(header, chunks[i], names[i])) return false;
++    }
++    const size_t count = size_t(tq[14]) | size_t(tq[15]) << 8;
++    if (count > (tn - 16) / 4) return false;
++    hd_ = std::move(header); bd_.assign(bd, bd + bn); tq_.assign(tq, tq + tn);
++    prog_ = chunks[0]; sset_ = chunks[1]; smpl_ = chunks[2]; vagi_ = chunks[3];
++    // Guest-load work, never device-callback work. Bound both table scans and
++    // overlapping malformed sample records; valid non-overlapping 2 MiB BD
++    // data expands to at most 7 MiB PCM (28 samples per 16-byte ADPCM block).
++    const uint32_t maxVagi = u32(hd_, size_t(vagi_) + 12);
++    if (maxVagi > 4095 || !range(hd_,size_t(vagi_) + 16,size_t(maxVagi + 1) * 4)) return false;
++    size_t pcmBytes = 0;
++    for (unsigned index = 0; index <= maxVagi; ++index) {
++        uint32_t va;
++        if (!record(vagi_,index,8,va)) continue;
++        const uint32_t start = u32(hd_,va);
++        if (start == 0xFFFFFFFFu || decoded_.count(start)) continue;
++        Sample sample; sample.bdOffset = start;
++        auto pcm = std::make_shared<DecodedSample>();
++        if (!decode(sample,*pcm)) continue;
++        if (pcm->pcm.size() > (8u * 1024u * 1024u - pcmBytes) / sizeof(int16_t)) return false;
++        pcmBytes += pcm->pcm.size() * sizeof(int16_t);
++        decoded_.emplace(start,std::move(pcm));
++    }
++    return true;
++}
++
++bool Bank::record(uint32_t chunk, unsigned index, size_t bytes, uint32_t& offset) const {
++    if (!range(hd_, chunk, 16) || index > u32(hd_, size_t(chunk) + 12) ||
++        !range(hd_, size_t(chunk) + 16, size_t(index) * 4 + 4)) return false;
++    const uint32_t relative = u32(hd_, size_t(chunk) + 16 + size_t(index) * 4);
++    if (relative == 0xFFFFFFFFu || relative > std::numeric_limits<uint32_t>::max() - chunk) return false;
++    offset = chunk + relative;
++    return range(hd_, offset, bytes);
++}
++
++unsigned Bank::sequenceCount() const { return range(tq_, 14, 2) ? u16(tq_, 14) : 0; }
++bool Bank::sequence(unsigned index, uint32_t& offset, uint8_t& priority) const {
++    const unsigned count = sequenceCount();
++    if (!count && !index && range(tq_, 4, 1)) { offset = 4; priority = 0x40; return true; }
++    if (index >= count || !range(tq_, 16 + size_t(index) * 4, 4)) return false;
++    const uint32_t entry = u32(tq_, 16 + size_t(index) * 4);
++    offset = entry & 0xFFFF; priority = uint8_t(entry >> 24);
++    return range(tq_, offset, 1);
++}
++
++bool Bank::resolve(unsigned program, uint8_t note, uint8_t velocity, std::vector<Sample>& out) const {
++    out.clear();
++    uint32_t pr;
++    if (!record(prog_, program, 0x22, pr)) return false;
++    const unsigned count = hd_[pr + 4];
++    const uint32_t relative = u32(hd_, pr);
++    if (relative > std::numeric_limits<uint32_t>::max() - pr ||
++        !range(hd_, size_t(pr) + relative, size_t(count) * 20)) return false;
++    for (unsigned region = 0; region < count; ++region) {
++        const size_t r = size_t(pr) + relative + region * 20;
++        if (note < (hd_[r + 2] & 127) || note > (hd_[r + 4] & 127)) continue;
++        uint32_t ss;
++        if (!record(sset_, u16(hd_, r), 4, ss) || velocity < hd_[ss + 1] || velocity > hd_[ss + 2]) continue;
++        const unsigned samples = hd_[ss + 3];
++        if (!range(hd_, size_t(ss) + 4, samples * 2)) return false;
++        for (unsigned i = 0; i < samples; ++i) {
++            uint32_t sm, va;
++            if (!record(smpl_, u16(hd_, size_t(ss) + 4 + i * 2), 0x2A, sm) ||
++                velocity < (hd_[sm + 2] & 127) || velocity > (hd_[sm + 4] & 127) ||
++                !record(vagi_, u16(hd_, sm), 8, va)) continue;
++            const uint32_t start = u32(hd_, va);
++            if (start == 0xFFFFFFFFu || !range(bd_, start, 16) || !u16(hd_, va + 4)) continue;
++            Sample s;
++            s.bdOffset = start; s.sampleRate = u16(hd_, va + 4); s.flags = hd_[va + 6];
++            s.adsr1 = u16(hd_, sm + 0x12); s.adsr2 = u16(hd_, sm + 0x14);
++            s.rootNote = hd_[sm + 0xB]; s.sampleFine = int8_t(hd_[sm + 0xC]);
++            s.programVolume = hd_[pr + 6]; s.regionVolume = hd_[r + 0x10]; s.sampleVolume = hd_[sm + 0x10];
++            s.programTranspose = int8_t(hd_[pr + 8]); s.programFine = int8_t(hd_[pr + 9]);
++            s.regionTranspose = int8_t(hd_[r + 0x12]); s.regionFine = int8_t(hd_[r + 0x13]);
++            s.programRecord = pr; s.regionRecord = uint32_t(r); s.sampleRecord = sm; s.vagiRecord = va;
++            s.velocityCurve = hd_[ss];
++            s.regionLow = hd_[r + 2]; s.regionCenter = hd_[r + 3]; s.regionHigh = hd_[r + 4];
++            s.velocityLow = hd_[sm + 2]; s.velocityCenter = hd_[sm + 3]; s.velocityHigh = hd_[sm + 4];
++            s.bendDown = u16(hd_, r + 6); s.bendUp = u16(hd_, r + 8);
++            s.basePan = std::clamp(std::abs(int(int8_t(hd_[pr + 7]))) +
++                std::abs(int(int8_t(hd_[r + 0x11]))) + std::abs(int(int8_t(hd_[sm + 0xD]))) - 128, 0, 127);
++            out.push_back(s);
++        }
++    }
++    return true;
++}
++
++bool Bank::decode(const Sample& sample, DecodedSample& out) const {
++    const auto cached = decoded_.find(sample.bdOffset);
++    if (cached != decoded_.end()) { out = *cached->second; return true; }
++    out = {};
++    if (!range(bd_, sample.bdOffset, 16)) return false;
++    static constexpr int coefficients[5][2] = {{0,0},{60,0},{115,-52},{98,-55},{122,-60}};
++    int previous = 0, older = 0;
++    bool sawLoopStart = false;
++    for (size_t at = sample.bdOffset; range(bd_, at, 16); at += 16) {
++        const uint8_t control = bd_[at], flags = bd_[at + 1];
++        unsigned shift = control & 15, filter = control >> 4;
++        if (shift > 12) shift = 9;
++        if (filter > 4) return false;
++        if (flags & 4) { out.loopStart = out.pcm.size(); sawLoopStart = true; }
++        for (unsigned i = 0; i < 28; ++i) {
++            const uint8_t packed = bd_[at + 2 + i / 2];
++            int nibble = ((i & 1) ? packed >> 4 : packed) & 15;
++            if (nibble & 8) nibble -= 16;
++            const int prediction = (previous * coefficients[filter][0] + older * coefficients[filter][1] + 32) >> 6;
++            const int value = std::clamp(nibble * (1 << (12 - shift)) + prediction, -32768, 32767);
++            older = previous; previous = value;
++            out.pcm.push_back(int16_t(value));
++        }
++        if (flags & 1) { out.hasLoop = (flags & 2) != 0; if (!sawLoopStart) out.loopStart = 0; return true; }
++    }
++    // A sample without an end block is truncated; do not play adjacent bank data.
++    out = {};
++    return false;
++}
++
++std::shared_ptr<const DecodedSample> Bank::decoded(const Sample& sample) const {
++    const auto cached = decoded_.find(sample.bdOffset);
++    return cached == decoded_.end() ? nullptr : cached->second;
++}
++
++bool Sequence::start(const Bank& bank, unsigned index, uint8_t programOffset) {
++    uint8_t priority;
++    active_ = bank.sequence(index, cursor_, priority);
++    wait_ = 0; programOffset_ = programOffset; hasNote_ = false;
++    return active_;
++}
++
++bool Sequence::tick(const Bank& bank, bool voicesActive, std::vector<Event>& events) {
++    events.clear();
++    if (!active_) return false;
++    if (wait_) { --wait_; return true; }
++    const auto& tq = bank.tq();
++    auto need = [&](size_t n) { return range(tq, cursor_, n); };
++    auto end = [&]() { active_ = false; events.push_back({EventType::End}); return false; };
++    bool noteThisTick = false;
++    // Bound malformed loops independently of bank-controlled sequence offsets.
++    for (unsigned commands = 0; commands < 1024; ++commands) {
++        if (!need(1)) return end();
++        const uint32_t start = cursor_;
++        const uint8_t op = tq[cursor_++];
++        if (!(op & 128)) {
++            if (!need(1)) return end();
++            if (!(tq[cursor_] & 128)) { wait_ = uint16_t(op) + uint16_t(tq[cursor_++]) * 128; }
++            else wait_ = uint16_t(op) * 4 + 3;
++            return true;
++        }
++        if (op < 0xE0) {
++            if (!need(1)) return end();
++            uint8_t velocity = tq[cursor_++], group = 0;
++            if (velocity & 128) { group = velocity & 127; if (!need(1)) return end(); velocity = tq[cursor_++]; }
++            events.push_back({EventType::Note, velocity, uint8_t((op & 127) + 12), group});
++            hasNote_ = true;
++            noteThisTick = true;
++            continue;
++        }
++        if (op == 0xFF || op == 0xFE) {
++            if (op == 0xFF) {
++                if (voicesActive || noteThisTick || !hasNote_) { cursor_ = start; return true; }
++                events.push_back({EventType::AllSoundOff}); return end();
++            }
++            if (!need(1)) return end();
++            const uint8_t mode = tq[cursor_++];
++            if (!mode) {
++                if (voicesActive || noteThisTick || !hasNote_) { cursor_ = start; return true; }
++                continue;
++            }
++            events.push_back({mode == 0xFE ? EventType::AllNotesOff : EventType::AllSoundOff});
++            return end();
++        }
++        if (op == 0xF8) {
++            if (!need(2)) return end();
++            cursor_ = u16(tq, cursor_);
++            continue;
++        }
++        if (op == 0xE5 || op == 0xE6) {
++            events.push_back({op == 0xE5 ? EventType::AllNotesOff : EventType::AllSoundOff}); continue;
++        }
++        if (op == 0xE3) {
++            if (!need(2)) return end();
++            const uint16_t pitch = uint16_t(tq[cursor_]) | uint16_t(tq[cursor_ + 1]) << 7;
++            cursor_ += 2; events.push_back({EventType::Pitch, pitch}); continue;
++        }
++        if (op >= 0xE0 && op <= 0xEA) {
++            if (!need(1)) return end();
++            const uint8_t value = tq[cursor_++];
++            if (op == 0xE0) events.push_back({EventType::Volume, value});
++            else if (op == 0xE1) events.push_back({EventType::Pan, value});
++            else if (op == 0xE2) events.push_back({EventType::Program, uint16_t(std::min(unsigned(value) + programOffset_, 127u))});
++            else if (op == 0xE4) events.push_back({EventType::Expression, value});
++            else events.push_back({EventType::Control, value, op});
++            continue;
++        }
++        // Extended voice-change/RPN commands remain explicit until implemented.
++        active_ = false; events.push_back({EventType::Unsupported, op}); return false;
++    }
++    active_ = false; events.push_back({EventType::Unsupported, 0xFFFF}); return false;
++}
++
++namespace {
++struct Envelope {
++    enum Phase { Attack, Decay, Sustain, Release, Off } phase = Attack;
++    int value = 0;
++    uint32_t countdown = 0;
++    uint16_t first = 0, second = 0;
++    void release() { phase = Release; countdown = 0; }
++    float advance() {
++        if (phase == Off) return 0;
++        if (countdown) { --countdown; return float(value) / 32768.f; }
++        unsigned rate = 0; bool decreasing = false, exponential = false;
++        if (phase == Attack) { rate = (first >> 8) & 127; exponential = (first & 0x8000) != 0; }
++        else if (phase == Decay) { rate = ((first >> 4) & 15) * 4; decreasing = exponential = true; }
++        else if (phase == Sustain) {
++            rate = (second >> 6) & 127; decreasing = (second & 0x4000) != 0; exponential = (second & 0x8000) != 0;
++        } else { rate = (second & 31) * 4; decreasing = true; exponential = (second & 32) != 0; }
++        if (rate == 127) return float(value) / 32768.f;
++        const unsigned shift = rate >> 2;
++        int step = decreasing ? -8 + int(rate & 3) : 7 - int(rate & 3);
++        uint32_t cycles = 1u << (shift > 11 ? shift - 11 : 0);
++        if (shift < 11) step *= 1 << (11 - shift);
++        if (exponential && decreasing) step = (step * value) >> 15;
++        else if (exponential && value > 0x6000) cycles *= 4;
++        value = std::clamp(value + step, 0, 32767); countdown = cycles - 1;
++        if (phase == Attack && value == 32767) { phase = Decay; countdown = 0; }
++        else if (phase == Decay && value <= int((first & 15) + 1) * 0x800) { phase = Sustain; countdown = 0; }
++        else if (phase == Release && value == 0) phase = Off;
++        return float(value) / 32768.f;
++    }
++};
++struct Voice {
++    unsigned port = 0, slot = 0;
++    uint8_t note = 0, group = 0, velocity = 0;
++    Sample sample;
++    std::shared_ptr<const DecodedSample> data;
++    double position = 0;
++    double step = 0;
++    int cachedBend = 32768;
++    Envelope envelope;
++    bool active = true;
++};
++struct Request {
++    Sequence sequence;
++    uint8_t index = 0, group = 0, priority = 0, cancelFlags = 0;
++    uint8_t requestVolume = 127, requestPan = 64;
++    uint16_t requestPitch = 0x2000, pitch = 0x2000;
++    unsigned program = 0, volume = 127, expression = 127, pan = 64;
++    uint64_t age = 0;
++};
++struct Port { Bank bank; bool loaded = false; unsigned volume = 256; std::array<Request,16> requests; };
++std::array<Port,14> ports;
++std::vector<Voice> voices;
++std::mutex soundMutex;
++uint64_t requestAge = 0, frameClock = 0;
++bool muted = false, mono = false;
++unsigned unsupportedReports = 0;
++
++void report(const char* kind, unsigned value) {
++    if (unsupportedReports++ < 32) std::fprintf(stderr,"[REO-BANK] unsupported %s=%u\n",kind,value);
++}
++void stop(unsigned port, int slot = -1, bool release = false) {
++    for (auto& voice : voices) if (voice.port == port && (slot < 0 || voice.slot == unsigned(slot))) {
++        if (release) voice.envelope.release(); else voice.active = false;
++    }
++    if (!release) for (unsigned i = 0; i < 16; ++i)
++        if (slot < 0 || unsigned(slot) == i) ports[port].requests[i].sequence = {};
++}
++bool installBankUnlocked(unsigned port, Bank&& loaded, size_t hn, size_t bn, size_t tn) {
++    if (port >= ports.size()) return false;
++    stop(port); ports[port].bank = std::move(loaded); ports[port].loaded = true;
++    voices.reserve(48);
++    std::fprintf(stderr,"[REO-BANK] load port=%u hd=%zu bd=%zu tq=%zu sequences=%u\n",port,hn,bn,tn,ports[port].bank.sequenceCount());
++    return true;
++}
++bool matches(const Request& request, unsigned index, unsigned group) {
++    return ((index & 128) || request.index == (index & 127)) &&
++           ((group & 128) || request.group == (group & 127));
++}
++void request(unsigned portByte, unsigned indexByte, unsigned groupByte, uint8_t volume, uint8_t pan,
++             uint16_t pitch, uint8_t trailer, bool change, bool cancel) {
++    const unsigned port = portByte & 127;
++    if (port >= ports.size() || !ports[port].loaded) return;
++    auto& p = ports[port];
++    if (change || cancel) {
++        for (unsigned slot = 0; slot < 16; ++slot) {
++            auto& r = p.requests[slot];
++            if (!r.sequence.active() || !matches(r,indexByte,groupByte)) continue;
++            if (cancel) stop(port,int(slot),true);
++            else { if (volume != 255) r.requestVolume = volume; if (pan != 255) r.requestPan = pan;
++                   if (pitch != 65535) r.requestPitch = pitch; }
++        }
++        return;
++    }
++    uint32_t offset; uint8_t priority;
++    if (!p.bank.sequence(indexByte & 127, offset, priority)) return;
++    int available = -1;
++    for (int slot = 15; slot >= 0; --slot) {
++        auto& r = p.requests[unsigned(slot)];
++        if (r.sequence.active() && (((portByte & 128) && (r.cancelFlags & 1)) ||
++            ((indexByte & 128) && (r.cancelFlags & 4) && r.index == (indexByte & 127)) ||
++            ((groupByte & 128) && (r.cancelFlags & 2) && r.group == (groupByte & 127)))) stop(port,slot,true);
++        if (!r.sequence.active() && available < 0) available = slot;
++    }
++    if (available < 0) {
++        unsigned lowest = priority ? priority - 1 : 0; uint64_t oldest = requestAge;
++        for (int slot = 15; slot >= 0; --slot) {
++            const auto& r = p.requests[unsigned(slot)];
++            if (r.priority <= lowest && r.age <= oldest) { lowest = r.priority; oldest = r.age; available = slot; }
++        }
++    }
++    if (available < 0) return;
++    stop(port,available);
++    auto& r = p.requests[unsigned(available)]; r = {};
++    r.index = indexByte & 127; r.group = groupByte & 127; r.priority = priority;
++    r.cancelFlags = uint8_t((portByte >> 7) | ((groupByte >> 7) << 1) | ((indexByte >> 7) << 2));
++    r.requestVolume = volume; r.requestPan = pan; r.requestPitch = pitch; r.age = ++requestAge;
++    r.sequence.start(p.bank, r.index, trailer);
++}
++double crossfade(unsigned value, unsigned low, unsigned pivot, unsigned high) {
++    if (value < pivot && (low & 128) && (low & 127) != pivot)
++        return double(int(value) - int(low & 127) + 1) / double(int(pivot) - int(low & 127) + 1);
++    if (value >= pivot && (high & 128) && (high & 127) != pivot)
++        return double(int(high & 127) + 1 - int(value)) / double(int(high & 127) + 1 - int(pivot));
++    return 1;
++}
++void tickUnlocked() {
++    std::vector<Event> events; std::vector<Sample> samples;
++    for (unsigned port = 0; port < ports.size(); ++port) {
++        auto& p = ports[port]; if (!p.loaded) continue;
++        for (unsigned slot = 0; slot < 16; ++slot) {
++            auto& r = p.requests[slot];
++            bool playing = false;
++            for (const auto& v : voices) if (v.active && v.port == port && v.slot == slot) { playing = true; break; }
++            r.sequence.tick(p.bank, playing, events);
++            for (const auto& e : events) {
++                switch (e.type) {
++                case EventType::Program: r.program = e.value; break;
++                case EventType::Volume: r.volume = e.value; break;
++                case EventType::Expression: r.expression = e.value; break;
++                case EventType::Pan: r.pan = e.value; break;
++                case EventType::Pitch: r.pitch = e.value; break;
++                case EventType::AllNotesOff: stop(port,int(slot),true); break;
++                case EventType::AllSoundOff: stop(port,int(slot)); break;
++                case EventType::Note:
++                    if (!e.value) {
++                        for (auto& v : voices) if (v.active && v.port == port && v.slot == slot && v.note == e.note && v.group == e.group) v.envelope.release();
++                    } else if (p.bank.resolve(r.program,e.note,uint8_t(e.value),samples)) {
++                        for (const auto& s : samples) {
++                            if (s.velocityCurve) { report("velocity-curve",s.velocityCurve); continue; }
++                            Voice v; v.port = port; v.slot = slot; v.note = e.note; v.group = e.group;
++                            v.velocity = uint8_t(e.value); v.sample = s; v.envelope.first = s.adsr1; v.envelope.second = s.adsr2;
++                            v.data = p.bank.decoded(s);
++                            if (!v.data) { report("sample-decode",s.bdOffset); continue; }
++                            if (voices.size() >= 48) { report("voice-capacity",48); continue; }
++                            voices.push_back(std::move(v));
++                        }
++                    }
++                    break;
++                case EventType::Control: report("TQ-control",e.note); break;
++                case EventType::Unsupported: report("TQ-opcode",e.value); stop(port,int(slot)); break;
++                case EventType::End: break;
++                }
++            }
++        }
++    }
++}
++}
++
++bool submitBank(unsigned port, const uint8_t* hd, size_t hn, const uint8_t* bd, size_t bn,
++                const uint8_t* tq, size_t tn) {
++    Bank loaded;
++    if (port >= ports.size() || !loaded.load(hd,hn,bd,bn,tq,tn)) return false;
++    std::lock_guard<std::mutex> lock(soundMutex);
++    return installBankUnlocked(port,std::move(loaded),hn,bn,tn);
++}
++bool submitPacket(const uint8_t* ram, size_t ramBytes, const uint8_t* packet, size_t bytes) {
++    if (!packet || !bytes) return false;
++    std::unique_lock<std::mutex> lock(soundMutex);
++    for (size_t at = 0; at < bytes && packet[at] != 255;) {
++        const auto* cmd = packet + at; const uint8_t op = *cmd;
++        size_t length = 0;
++        if ((op & 0xF0) == 0) length = op == 8 ? 4 : 5 + ((op & 1) ? 1 : 0) + ((op & 2) ? 1 : 0) + ((op & 4) ? 2 : 0);
++        else if (op == 0x28 || op == 0x40 || op == 0x43) length = 1;
++        else if (op == 0x29 || op == 0x4B) length = 3;
++        else if (op == 0x41 || op == 0x42 || (op >= 0x47 && op <= 0x4A)) length = 2;
++        else if (op == 0x44) length = 6;
++        else if (op == 0x45 || op == 0x4C) length = 4;
++        else if (op == 0x4D || op == 0x4E) length = 21;
++        if (!length || length > bytes - at) { report("packet-opcode",op); return false; }
++        if ((op & 0xF0) == 0) {
++            size_t pos = 4;
++            const bool change = (op & 8) != 0;
++            uint8_t volume = change ? 255 : 127, pan = change ? 255 : 64;
++            uint16_t pitch = change ? 65535 : 0x2000;
++            if (op != 8) {
++                if (op & 1) volume = cmd[pos++]; if (op & 2) pan = cmd[pos++];
++                if (op & 4) { pitch = uint16_t(cmd[pos]) << 8 | cmd[pos + 1]; pos += 2; }
++            }
++            request(cmd[1],cmd[2],cmd[3],volume,pan,pitch,op == 8 ? 0 : cmd[pos],change,op == 8);
++        } else if (op == 0x4D || op == 0x4E) {
++            const unsigned port = unsigned(cmd[1]) << 8 | cmd[2];
++            if (port >= ports.size()) { report("load-id",port); return false; }
++            if (op == 0x4D || !ports[port].loaded) {
++                const uint8_t* data[3]; size_t sizes[3];
++                for (unsigned i = 0; i < 3; ++i) {
++                    const auto* p = cmd + 3 + i * 6;
++                    const uint32_t address = (uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | (p[3] & 240)) & 0x1FFFFFF;
++                    sizes[i] = size_t(p[3] & 15) << 20 | size_t(p[4]) << 12 | size_t(p[5]) << 4;
++                    if (!ram || address > ramBytes || sizes[i] > ramBytes - address) return false;
++                    data[i] = ram + address;
++                }
++                // Decode on the submitting guest thread without blocking the
++                // device callback while it continues other banks/CRI streams.
++                Bank loaded;
++                lock.unlock();
++                const bool valid = loaded.load(data[0],sizes[0],data[1],sizes[1],data[2],sizes[2]);
++                lock.lock();
++                if (!valid || !installBankUnlocked(port,std::move(loaded),sizes[0],sizes[1],sizes[2])) return false;
++            }
++        } else if (op == 0x29) {
++            for (auto& p : ports) p.volume = unsigned(cmd[1]) << 8 | cmd[2];
++        } else if (op == 0x41) muted = cmd[1] != 0;
++        else if (op == 0x42) mono = cmd[1] == 0;
++        else if (op == 0x4C) { if (cmd[1] < ports.size()) ports[cmd[1]].volume = unsigned(cmd[2]) << 8 | cmd[3]; }
++        else if (op == 0x28 || op == 0x40 || op == 0x43) {
++            for (unsigned port = 0; port < ports.size(); ++port) { stop(port); if (op == 0x43) ports[port].loaded = false; }
++        } else if (op >= 0x47 && op <= 0x4A && cmd[1] < ports.size()) {
++            stop(cmd[1]); if (op < 0x4A) ports[cmd[1]].loaded = false;
++        } else if (op == 0x44) report("reverb",cmd[1]);
++        else report("global-control",op);
++        at += length;
++    }
++    return true;
++}
++void mix(float* stereo, unsigned frames) {
++    if (!stereo || !frames) return;
++    std::lock_guard<std::mutex> lock(soundMutex);
++    for (unsigned frame = 0; frame < frames; ++frame, ++frameClock) {
++        if (frameClock % kFramesPerTick == 0) tickUnlocked();
++        for (auto& v : voices) {
++            if (!v.active || !v.data || v.data->pcm.empty()) continue;
++            const auto& data = *v.data;
++            if (v.position >= data.pcm.size()) {
++                if (data.hasLoop && data.loopStart < data.pcm.size())
++                    v.position = data.loopStart + std::fmod(v.position - data.loopStart, double(data.pcm.size() - data.loopStart));
++                else { v.active = false; continue; }
++            }
++            const auto& p = ports[v.port]; const auto& r = p.requests[v.slot]; const auto& s = v.sample;
++            const int bend = std::clamp(int(r.pitch) + int(r.requestPitch) - 0x4000, -8192, 8191);
++            if (bend != v.cachedBend) {
++                const double bendFine = double(bend) * (bend < 0 ? s.bendDown : s.bendUp) / 8192.;
++                const double semitones = int(v.note) + s.programTranspose + s.regionTranspose - int(s.rootNote) +
++                    (s.programFine + s.regionFine + s.sampleFine + bendFine) / 128.;
++                const unsigned pitch = std::min(0x3FFFu, unsigned(std::max(0.,std::floor(4096. * s.sampleRate / kOutputRate * std::exp2(semitones / 12.)))));
++                v.step = double(pitch) / 4096.; v.cachedBend = bend;
++            }
++            const size_t index = size_t(v.position);
++            const size_t next = index + 1 < data.pcm.size() ? index + 1 : data.hasLoop ? data.loopStart : index;
++            const double fraction = v.position - index;
++            const double pcm = data.pcm[index] + (data.pcm[next] - data.pcm[index]) * fraction;
++            double amplitude = double(s.programVolume) * s.regionVolume * s.sampleVolume * v.velocity / 16384.;
++            amplitude *= crossfade(v.note,s.regionLow,s.regionCenter,s.regionHigh) * crossfade(v.velocity,s.velocityLow,s.velocityCenter,s.velocityHigh);
++            const unsigned channelVolume = std::min(127u,r.volume * r.requestVolume / 127) * 128 / 127;
++            const unsigned expression = std::min(127u,r.expression) * 128 / 127;
++            amplitude = std::floor(amplitude * channelVolume * expression / 16384.);
++            amplitude = std::min(16383.,std::floor(amplitude * p.volume / 256.));
++            const float envelope = v.envelope.advance();
++            if (v.envelope.phase == Envelope::Off) { v.active = false; continue; }
++            const int pan = mono ? 64 : std::clamp(s.basePan + int(r.pan) + int(r.requestPan) - 128,0,127);
++            const double left = pan > 64 ? double(127 - pan) / 63 : 1;
++            const double right = pan < 64 ? double(std::max(pan - 1,0)) / 63 : 1;
++            if (!muted) { stereo[frame * 2] += float(pcm / 32768. * amplitude / 16384. * envelope * left);
++                          stereo[frame * 2 + 1] += float(pcm / 32768. * amplitude / 16384. * envelope * right); }
++            v.position += v.step;
++        }
++        if (frameClock % kFramesPerTick == kFramesPerTick - 1)
++            voices.erase(std::remove_if(voices.begin(),voices.end(),[](const Voice& v){return !v.active;}),voices.end());
++    }
++}
++void reset() {
++    std::lock_guard<std::mutex> lock(soundMutex);
++    ports = {}; voices.clear(); voices.reserve(48); requestAge = frameClock = 0; muted = mono = false; unsupportedReports = 0;
++}
++uint32_t pendingLoads() { return 0; }
++uint32_t portState(unsigned port, uint32_t& count) {
++    std::lock_guard<std::mutex> lock(soundMutex);
++    count = port < ports.size() && ports[port].loaded ? ports[port].bank.sequenceCount() : 0;
++    return port < ports.size() && ports[port].loaded ? 1 : 0;
++}
++uint32_t seState(unsigned port, unsigned index, unsigned group) {
++    std::lock_guard<std::mutex> lock(soundMutex);
++    if (port >= ports.size()) return 0;
++    for (const auto& r : ports[port].requests) if (r.sequence.active() && r.index == (index & 127) && r.group == (group & 127)) return 1;
++    return 0;
++}
++}
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+@@ -2,6 +2,8 @@
+ #include <cstdint>
+ #include <cstddef>
+ namespace ps2_cri_audio {
++// Shared host stream also clocks bank voices before the first CRI PCM arrives.
++void ensureHostOutput();
+ // Planar signed 16-bit PCM. Keys are opaque SJRMT stream handles.
+ bool queue(uint32_t key, const uint8_t* bytes, uint32_t length, uint64_t& endByte);
+ void configure(uint32_t voice, uint32_t left, uint32_t right, uint32_t channels,
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -1,4 +1,5 @@
+ #include "CriAudio.h"
++#include "ReoSoundBanks.h"
+ #include "ps2_host_backend.h"
+ #include <algorithm>
+ #include <chrono>
+@@ -115,7 +116,18 @@
+     }
+ }
+ }
+-void render(float* dst,unsigned frames) { std::lock_guard<std::mutex> lock(mutex);externalClock=true;renderLocked(dst,frames); }
++void ensureHostOutput() { ensureOutput(); }
++void render(float* dst,unsigned frames) {
++    {
++        std::lock_guard<std::mutex> lock(mutex);
++        externalClock=true;
++        renderLocked(dst,frames);
++    }
++    // Keep the independent bank lock outside the CRI queue lock. Stream pause or
++    // reset must not erase separately playing menu/character voices.
++    ps2_reo_sound::mix(dst,frames);
++    if (dst) for (unsigned i=0;i<frames*2;++i) dst[i]=std::clamp(dst[i],-1.0f,1.0f);
++}
+ bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte) {
+     if (!key || !bytes || !length || (length&1) || length>0x4000) return false;
+     ensureOutput();
+@@ -153,5 +165,6 @@
+ void shutdown() {
+     if (ready && IsAudioDeviceReady()) { StopAudioStream(stream);UnloadAudioStream(stream); }
+     ready=false;stream={};reset();
++    ps2_reo_sound::reset();
+ }
+ }
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1,6 +1,7 @@
+ #include "Common.h"
+ #include "RPC.h"
+ #include "Helpers/CriAudio.h"
++#include "Helpers/ReoSoundBanks.h"
+ #include <deque>
+ #include <unordered_set>
+ 
+@@ -162,6 +163,7 @@
+         void resetSoundDriverRpcStateUnlocked()
+         {
+             const PS2SoundDriverCompatLayout compat = g_soundDriverCompatLayout;
++            ps2_reo_sound::reset();
+             g_soundDriverRpcState = {};
+             g_soundDriverIopRam = nullptr;
+             g_soundDriverCompatLayout = compat;
+@@ -347,148 +349,62 @@
+             backfillZeroS16Slots(kSoundDriverMidiSumOffset, selectedMidi, 4u);
+         }
+ 
+-        size_t soundDriverCommandLength(uint8_t command)
+-        {
+-            const uint8_t hi = static_cast<uint8_t>(command & 0xF0u);
+-            switch (hi)
+-            {
+-            case 0x00u:
+-            {
+-                size_t len = 4u;
+-                if ((command & 0x01u) != 0u)
+-                {
+-                    ++len;
+-                }
+-                if ((command & 0x02u) != 0u)
+-                {
+-                    ++len;
+-                }
+-                if ((command & 0x04u) != 0u)
+-                {
+-                    len += 2u;
+-                }
+-                return len;
+-            }
+-            case 0x10u:
+-                return (command == 0x11u) ? 3u : 1u;
+-            case 0x20u:
+-                if (command == 0x22u || command == 0x23u || command == 0x24u || command == 0x25u)
+-                {
+-                    return 3u;
+-                }
+-                if (command == 0x26u)
+-                {
+-                    return 4u;
+-                }
+-                if (command == 0x20u)
+-                {
+-                    return 5u;
+-                }
+-                if (command == 0x27u || command == 0x28u || command == 0x29u || command == 0x2Cu || command == 0x2Du)
+-                {
+-                    return 8u;
+-                }
+-                return 2u;
+-            case 0x40u:
+-                if (command == 0x47u || command == 0x48u || command == 0x49u || command == 0x4Au ||
+-                    command == 0x41u || command == 0x42u)
+-                {
+-                    return 2u;
+-                }
+-                if (command == 0x4Bu)
+-                {
+-                    return 3u;
+-                }
+-                if (command == 0x45u || command == 0x4Cu)
+-                {
+-                    return 4u;
+-                }
+-                if (command == 0x44u)
+-                {
+-                    return 6u;
+-                }
+-                if (command == 0x4Du || command == 0x4Eu)
+-                {
+-                    return 3u;
+-                }
+-                if (command == 0x4Fu)
+-                {
+-                    return 6u;
+-                }
+-                return 1u;
+-            case 0x50u:
+-            case 0x60u:
+-                if (command == 0x51u || command == 0x52u || command == 0x53u || command == 0x54u)
+-                {
+-                    return 8u;
+-                }
+-                return 2u;
+-            default:
+-                return 0u;
+-            }
+-        }
+-
+-        void applySoundDriverCommandUnlocked(uint8_t *rdram, const uint8_t *cmd)
+-        {
+-            if (!rdram || !cmd || g_soundDriverRpcState.statusAddr == 0u)
+-            {
+-                return;
+-            }
+-
+-            const uint8_t op = cmd[0];
+-            switch (op)
+-            {
+-            case 0x20u: // SdrBgmReq
+-            {
+-                const uint32_t port = cmd[1] & 0x0Fu;
+-                uint16_t midiInfo = 0u;
+-                (void)readGuestU16(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
+-                midiInfo = static_cast<uint16_t>(midiInfo | static_cast<uint16_t>(1u << port));
+-                (void)writeGuestU16(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
+-                break;
+-            }
+-            case 0x21u: // SdrBgmStop
+-            {
+-                const uint32_t port = cmd[1] & 0x0Fu;
+-                uint16_t midiInfo = 0u;
+-                (void)readGuestU16(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
+-                midiInfo = static_cast<uint16_t>(midiInfo & ~static_cast<uint16_t>(1u << port));
+-                (void)writeGuestU16(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverMidiInfoOffset, midiInfo);
+-                break;
+-            }
+-            case 0x28u: // SdrHDDataSet
+-            {
+-                const uint32_t port = cmd[1] & 0x0Fu;
+-                const PS2SoundDriverCompatLayout &compat = g_soundDriverCompatLayout;
+-                if (compat.primaryMidiCheckAddr != 0u || compat.fallbackMidiCheckAddr != 0u)
+-                {
+-                    const int16_t checksum =
+-                        soundDriverCheckValue(rdram, compat.primaryMidiCheckAddr, compat.fallbackMidiCheckAddr, port, 4u);
+-                    (void)writeGuestS16(g_soundDriverIopRam,
+-                                        g_soundDriverRpcState.statusAddr + kSoundDriverMidiSumOffset + (port * sizeof(int16_t)),
+-                                        checksum);
+-                }
+-                break;
+-            }
+-            case 0x29u: // SdrHDDataSet2
+-            {
+-                const uint32_t port = cmd[1] & 0x0Fu;
+-                const PS2SoundDriverCompatLayout &compat = g_soundDriverCompatLayout;
+-                if (compat.primarySeCheckAddr != 0u || compat.fallbackSeCheckAddr != 0u)
+-                {
+-                    const int16_t checksum =
+-                        soundDriverCheckValue(rdram, compat.primarySeCheckAddr, compat.fallbackSeCheckAddr, port, 5u);
+-                    (void)writeGuestS16(g_soundDriverIopRam,
+-                                        g_soundDriverRpcState.statusAddr + kSoundDriverSeSumOffset + (port * sizeof(int16_t)),
+-                                        checksum);
+-                }
+-                break;
+-            }
+-            case 0x10u: // SdrSeAllStop
+-                rpcZeroRdram(g_soundDriverIopRam, g_soundDriverRpcState.statusAddr + kSoundDriverSeInfoOffset, 6u * sizeof(uint16_t));
+-                break;
+-            default:
+-                break;
++        // Bounded local captures are opt-in; this observer does not alter driver state.
++        void logOriginalSoundCommands(const uint8_t *rdram, const uint8_t *packet, uint32_t size)
++        {
++            static const bool enabled = std::getenv("REO_SOUND_LOG") != nullptr;
++            static uint32_t packets = 0, banks = 0;
++            if (!enabled || !size || packet[0] == 0xFFu || packets >= 512u) return;
++            const uint32_t index = packets++;
++            std::fprintf(stderr, "[REO-SOUND] packet=%u size=%u bytes=", index, size);
++            for (uint32_t i = 0; i < std::min(size, 96u); ++i) std::fprintf(stderr, "%02x", packet[i]);
++            std::fprintf(stderr, "%s\n", size > 96u ? "..." : "");
++            char name[80];
++            std::snprintf(name, sizeof(name), "sound-packet-%03u.bin", index);
++            if (FILE *f = std::fopen(name, "wb")) {
++                std::fwrite(packet, 1, std::min(size, 8192u), f);
++                std::fclose(f);
++            }
++            for (uint32_t offset = 0; offset < size && packet[offset] != 0xFFu;) {
++                const uint8_t op = packet[offset];
++                uint32_t length = 0;
++                if ((op & 0xF0u) == 0) length = op == 8u ? 4u :
++                    5u + ((op & 1u) ? 1u : 0u) + ((op & 2u) ? 1u : 0u) + ((op & 4u) ? 2u : 0u);
++                else if (op == 0x28u || op == 0x40u || op == 0x43u) length = 1;
++                else if (op == 0x29u || op == 0x4Bu) length = 3;
++                else if (op == 0x41u || op == 0x42u || (op >= 0x47u && op <= 0x4Au)) length = 2;
++                else if (op == 0x44u) length = 6;
++                else if (op == 0x45u || op == 0x4Cu) length = 4;
++                else if (op == 0x4Du || op == 0x4Eu) length = 21;
++                if (!length || length > size - offset) {
++                    std::fprintf(stderr, "[REO-SOUND] stop offset=%u op=%02x remaining=%u\n", offset, op, size - offset);
++                    break;
++                }
++                const uint8_t *cmd = packet + offset;
++                if ((op == 0x4Du || op == 0x4Eu) && banks < 64u) {
++                    const uint32_t bank = banks++;
++                    std::fprintf(stderr, "[REO-SOUND] bank=%u op=%02x loadId=%u", bank, op, (cmd[1] << 8) | cmd[2]);
++                    for (uint32_t part = 0; part < 3u; ++part) {
++                        const uint8_t *p = cmd + 3u + part * 6u;
++                        const uint32_t addr = (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) |
++                                              (uint32_t(p[2]) << 8) | (p[3] & 0xF0u);
++                        const uint32_t bytes = (uint32_t(p[3] & 15u) << 20) | (uint32_t(p[4]) << 12) |
++                                               (uint32_t(p[5]) << 4);
++                        const uint32_t physical = addr & 0x01FFFFFFu;
++                        std::fprintf(stderr, " %s=%08x/%u", part == 0 ? "HD" : part == 1 ? "BD" : "TQ", addr, bytes);
++                        if (bytes && bytes <= 2u * 1024u * 1024u && physical < 32u * 1024u * 1024u &&
++                            bytes <= 32u * 1024u * 1024u - physical) {
++                            std::snprintf(name, sizeof(name), "sound-bank-%02u-%s.bin", bank,
++                                          part == 0 ? "hd" : part == 1 ? "bd" : "tq");
++                            if (FILE *f = std::fopen(name, "wb")) {
++                                std::fwrite(rdram + physical, 1, bytes, f);
++                                std::fclose(f);
++                            }
++                        }
++                    }
++                    std::fprintf(stderr, "\n");
++                }
++                offset += length;
+             }
+         }
+ 
+@@ -511,23 +427,12 @@
+                 return;
+             }
+ 
+-            for (uint32_t offset = 0u; offset < sendSize;)
+-            {
+-                const uint8_t op = packet[offset];
+-                if (op == 0xFFu)
+-                {
+-                    break;
+-                }
+-
+-                const size_t len = soundDriverCommandLength(op);
+-                if (len == 0u || (offset + len) > sendSize)
+-                {
+-                    break;
+-                }
+-
+-                applySoundDriverCommandUnlocked(rdram, packet + offset);
+-                offset += static_cast<uint32_t>(len);
+-            }
++            const uint32_t physicalSend = sendBuf & 0x01FFFFFFu;
++            if (sendSize > 32u * 1024u * 1024u - physicalSend) return;
++            logOriginalSoundCommands(rdram, packet, sendSize);
++
++            ps2_cri_audio::ensureHostOutput();
++            (void)ps2_reo_sound::submitPacket(rdram, 32u * 1024u * 1024u, packet, sendSize);
+         }
+ 
+         bool handleSoundDriverRpcServiceImpl(uint8_t *rdram, PS2Runtime *runtime,
+@@ -548,6 +453,27 @@
+             if (sid == IOP_SID_SNDDRV_COMMAND && rpcNum == IOP_RPC_SNDDRV_SUBMIT)
+             {
+                 handleSoundDriverCommandBuffer(rdram, runtime, sendBuf, sendSize);
++                return true;
++            }
++
++            // Original TsndPutFunc 0x279C masks RPC function to its low byte;
++            // bit 31 requests the blocking form. Bank copies complete here.
++            const uint32_t soundQuery = rpcNum & 0xFFu;
++            if (sid == IOP_SID_SNDDRV_STATE &&
++                (soundQuery == 4u || soundQuery == 6u || soundQuery == 0x0Cu))
++            {
++                uint32_t input = 0u, words[2] = {};
++                if (sendBuf && sendSize >= 4u) (void)readGuestU32(rdram, sendBuf, input);
++                if (soundQuery == 0x0Cu) words[0] = ps2_reo_sound::pendingLoads();
++                else if (soundQuery == 6u) words[0] = ps2_reo_sound::portState(input, words[1]);
++                else words[0] = ps2_reo_sound::seState((input >> 16) & 127u, (input >> 8) & 127u, input & 127u);
++                if (recvBuf && recvSize >= 4u)
++                {
++                    (void)writeGuestU32(rdram, recvBuf, words[0]);
++                    if (recvSize >= 8u) (void)writeGuestU32(rdram, recvBuf + 4u, words[1]);
++                    resultPtr = recvBuf;
++                }
++                signalNowaitCompletion = true;
+                 return true;
+             }
+ 

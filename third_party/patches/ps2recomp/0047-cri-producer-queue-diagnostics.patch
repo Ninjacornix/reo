@@ -1,0 +1,71 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -13,7 +13,7 @@
+ namespace ps2_cri_audio {
+ namespace {
+ constexpr uint32_t outputRate=48000;
+-struct Channel { std::deque<int16_t> pcm; uint64_t queued=0, consumed=0; };
++struct Channel { std::deque<int16_t> pcm; uint64_t queued=0, consumed=0, producerNs=0; uint32_t producerReports=0; };
+ struct Voice { uint32_t left=0,right=0,channels=0,frequency=48000,volume=256; bool playing=false; double phase=0; uint64_t lateSamples=0, skippedSamples=0, startNs=0, firstNs=0, startByte=0; bool firstReported=false; };
+ std::mutex mutex;
+ std::unordered_map<uint32_t,Channel> channels;
+@@ -131,7 +131,7 @@
+ bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte) {
+     if (!key || !bytes || !length || (length&1) || length>0x4000) return false;
+     ensureOutput();
+-    std::lock_guard<std::mutex> lock(mutex);tickLocked();
++    std::unique_lock<std::mutex> lock(mutex);tickLocked();
+     auto& c=channels[key];
+     if(c.pcm.size()+length/2>outputRate*2) return false;
+     for(uint32_t i=0;i<length;i+=2) { int16_t x;std::memcpy(&x,bytes+i,2);c.pcm.push_back(x); }
+@@ -144,18 +144,46 @@
+             std::fclose(f);
+         }
+     }
+-    c.queued+=length;endByte=c.queued;return true;
++    c.queued+=length;endByte=c.queued;
++    static const bool producerLog = std::getenv("REO_CRI_PRODUCER_LOG") != nullptr;
++    if (producerLog) {
++        const uint64_t now = clockNs();
++        const uint64_t gapUs = c.producerNs ? (now - c.producerNs) / 1000u : 0;
++        c.producerNs = now;
++        if (c.producerReports < 64u && (c.producerReports < 3u || gapUs >= 40000u)) {
++            ++c.producerReports;
++            const size_t available = c.pcm.size();
++            const uint64_t consumedByte = c.consumed;
++            lock.unlock(); // Never hold the audio queue mutex while writing this diagnostic.
++            std::fprintf(stderr, "[CRI-PRODUCER] key=%x bytes=%u queuedSamples=%zu consumedByte=%llu endByte=%llu gapUs=%llu ns=%llu\n",
++                key, length, available, static_cast<unsigned long long>(consumedByte),
++                static_cast<unsigned long long>(endByte), static_cast<unsigned long long>(gapUs),
++                static_cast<unsigned long long>(now));
++        }
++    }
++    return true;
+ }
+ void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t freq,uint32_t vol,bool playing) {
+     ensureOutput();std::lock_guard<std::mutex> lock(mutex);tickLocked();
+     auto& v=voices[voice];v.left=left;v.right=right;v.channels=std::min(nch,2u);
+     v.frequency=std::clamp(freq?freq:48000u,8000u,96000u);v.volume=vol;
+     if (playing!=v.playing) { v.lateSamples=0;v.skippedSamples=0; }
++    if (playing && !v.playing) {
++        for (const uint32_t key : {left, right}) {
++            const auto channel = channels.find(key);
++            if (channel != channels.end()) {
++                channel->second.producerNs = 0;
++                channel->second.producerReports = 0;
++            }
++        }
++    }
+     if (syncLog && playing!=v.playing) {
+         v.startNs=clockNs();v.firstNs=0;v.firstReported=false;
+         const auto c=channels.find(left);v.startByte=c==channels.end()?0:c->second.consumed;
+-        std::fprintf(stderr,"[CRI-SYNC] play voice=%x enabled=%u ns=%llu queuedLeft=%zu startByte=%llu\n",voice,playing?1:0,
+-            static_cast<unsigned long long>(v.startNs),c==channels.end()?0:c->second.pcm.size(),static_cast<unsigned long long>(v.startByte));
++        const auto rightChannel = channels.find(right);
++        std::fprintf(stderr,"[CRI-SYNC] play voice=%x enabled=%u ns=%llu queuedLeft=%zu startByte=%llu left=%x right=%x channels=%u frequency=%u volume=%u queuedRight=%zu\n",voice,playing?1:0,
++            static_cast<unsigned long long>(v.startNs),c==channels.end()?0:c->second.pcm.size(),static_cast<unsigned long long>(v.startByte),
++            left,right,v.channels,v.frequency,v.volume,rightChannel==channels.end()?0:rightChannel->second.pcm.size());
+     }
+     v.playing=playing;
+ }

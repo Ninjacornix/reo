@@ -1,0 +1,48 @@
+#version 450
+
+// PSMCT32 addressing follows parallel-gs swizzle_utils.h.
+// SPDX-FileCopyrightText: 2024 Arntzen Software AS
+// SPDX-FileContributor: Hans-Kristian Arntzen
+// SPDX-FileContributor: Runar Heyer
+// SPDX-License-Identifier: LGPL-3.0+
+
+layout(local_size_x = 64) in;
+layout(set = 0, binding = 0, std430) writeonly buffer Vram { uint words[]; } vram;
+layout(set = 0, binding = 1) uniform usampler2D sourceImage;
+layout(push_constant) uniform Upload {
+    uint width, height, dbp, dbw;
+    uint x, y, vramMask, sourceLayout;
+    uint sourcePixel, destinationPixel, pixels, frameWidth;
+} upload;
+
+void main()
+{
+    uint i=gl_GlobalInvocationID.x;
+    if(i>=upload.pixels) return;
+    uint n=upload.sourcePixel+i;
+    uvec2 source=uvec2(n%upload.frameWidth,n/upload.frameWidth);
+    if(upload.sourceLayout==1u) {
+        uint mb=n/256u,local=n%256u;
+        source=uvec2((mb%(upload.frameWidth/16u))*16u+local%16u,
+                     (mb/(upload.frameWidth/16u))*16u+local/16u);
+    }
+    if(upload.sourceLayout==2u) {
+        uint mb=n/256u,local=n%256u;
+        uint rows=uint(textureSize(sourceImage,0).y)/16u;
+        source=uvec2((mb/rows)*16u+local%16u,(mb%rows)*16u+local/16u);
+    }
+    uint dst=upload.destinationPixel+i;
+    uvec2 pixel=uvec2(dst%upload.width,dst/upload.width)+uvec2(upload.x,upload.y);
+    uint page = (pixel.y >> 5u) * upload.dbw + (pixel.x >> 6u);
+    uint bx = (pixel.x & 63u) >> 3u;
+    uint by = (pixel.y & 31u) >> 3u;
+    uint block = (bx & 1u) | ((by & 1u) << 1u) | ((bx & 2u) << 1u) |
+                 ((by & 2u) << 2u) | ((bx & 4u) << 2u);
+    uint column = (pixel.y & 7u) >> 1u;
+    uint within = (pixel.x & 1u) | ((pixel.y & 1u) << 1u) |
+                  ((pixel.x & 2u) << 1u) | ((pixel.x & 4u) << 1u);
+    uint address = (page * 8192u + (block + upload.dbp) * 256u +
+                    column * 64u + within * 4u) & upload.vramMask;
+    uvec4 rgba = texelFetch(sourceImage, ivec2(source), 0);
+    vram.words[address >> 2u] = rgba.r | (rgba.g << 8u) | (rgba.b << 16u) | (rgba.a << 24u);
+}

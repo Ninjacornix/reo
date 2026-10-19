@@ -15,21 +15,21 @@
 
 // Reuse trace format definitions
 namespace reo_trace {
-    constexpr uint32_t TRACE_MAGIC   = 0x544F4552; // "REOT"
-    constexpr uint32_t TRACE_VERSION = 1;
+constexpr uint32_t TRACE_MAGIC = 0x544F4552; // "REOT"
+constexpr uint32_t TRACE_VERSION = 1;
 
-    enum EventType : uint8_t {
-        EVT_DMA_GIF       = 0x10,
-        EVT_DMA_VIF1      = 0x11,
-        EVT_GS_REG_WRITE  = 0x20,
-        EVT_VU_START      = 0x30,
-        EVT_VU_END        = 0x31,
-        EVT_XGKICK        = 0x32,
-        EVT_VSYNC          = 0x40,
-        EVT_STUB_CALL      = 0x60,
-        EVT_OVERRIDE_CALL  = 0x61,
-    };
-}
+enum EventType : uint8_t {
+    EVT_DMA_GIF = 0x10,
+    EVT_DMA_VIF1 = 0x11,
+    EVT_GS_REG_WRITE = 0x20,
+    EVT_VU_START = 0x30,
+    EVT_VU_END = 0x31,
+    EVT_XGKICK = 0x32,
+    EVT_VSYNC = 0x40,
+    EVT_STUB_CALL = 0x60,
+    EVT_OVERRIDE_CALL = 0x61,
+};
+} // namespace reo_trace
 
 bool ReoTraceLogger::init() {
     const char* env = getenv("REO_TRACE");
@@ -38,7 +38,8 @@ bool ReoTraceLogger::init() {
     }
 
     const char* path = getenv("REO_TRACE_FILE");
-    if (!path) path = "reo_trace.bin";
+    if (!path)
+        path = "reo_trace.bin";
 
     m_file = fopen(path, "wb");
     if (!m_file) {
@@ -81,7 +82,8 @@ uint32_t ReoTraceLogger::elapsed_us() {
 }
 
 void ReoTraceLogger::write_event(uint8_t type, const void* payload, uint32_t payload_size) {
-    if (!m_file) return;
+    if (!m_file)
+        return;
 
     // Event header: sequence(8) + timestamp_us(4) + type(1) + reserved(3) = 16 bytes
     uint64_t seq = m_sequence.fetch_add(1);
@@ -107,8 +109,8 @@ void ReoTraceLogger::write_event(uint8_t type, const void* payload, uint32_t pay
 
 // ── Event loggers ───────────────────────────────────────────────────
 
-void ReoTraceLogger::log_dma_gif(uint32_t madr, uint32_t qwc,
-                                  const uint8_t* data, uint32_t data_size) {
+void ReoTraceLogger::log_dma_gif(uint32_t madr, uint32_t qwc, const uint8_t* data,
+                                 uint32_t data_size) {
     struct {
         uint32_t madr, qwc;
         uint8_t first[64];
@@ -122,8 +124,8 @@ void ReoTraceLogger::log_dma_gif(uint32_t madr, uint32_t qwc,
     write_event(reo_trace::EVT_DMA_GIF, &payload, sizeof(payload));
 }
 
-void ReoTraceLogger::log_dma_vif1(uint32_t madr, uint32_t qwc, uint32_t tadr,
-                                   const uint8_t* data, uint32_t data_size) {
+void ReoTraceLogger::log_dma_vif1(uint32_t madr, uint32_t qwc, uint32_t tadr, const uint8_t* data,
+                                  uint32_t data_size) {
     struct {
         uint32_t madr, qwc, tadr;
         uint8_t first[64];

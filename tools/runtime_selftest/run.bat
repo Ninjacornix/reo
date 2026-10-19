@@ -28,13 +28,21 @@ if not exist "%TASK_OUT%" mkdir "%TASK_OUT%"
 if errorlevel 1 exit /b 1
 
 cl /nologo /MD /EHsc /O2 /std:c++20 /D_CRT_SECURE_NO_WARNINGS /DNOMINMAX ^
+    /I "%TASK_ROOT%" ^
+    /I "%TASK_ROOT%\tools\parallel_gs_backend\resident_geometry" ^
     /I "%TASK_TEST%\include" ^
     /I "%TASK_RT%\include" ^
+    /I "%TASK_ROOT%\recomp\config\output" ^
     /I "%TASK_RT%\src\lib\Kernel" ^
+    /I "%TASK_RT%\src\lib" ^
     /I "%TASK_BUILD%\_deps\fmt-src\include" ^
     /I "%TASK_BUILD%\_deps\elfio-src\include" ^
     /I "%TASK_BUILD%\_deps\raylib-src\src" ^
     "%~dp0main.cpp" ^
+    "%~dp0backedge_tests.cpp" ^
+    "%TASK_ROOT%\recomp\config\output\sub_00189B08_0x189b08.cpp" ^
+    "%TASK_ROOT%\recomp\config\output\sub_0018F340_0x18f340.cpp" ^
+    "%TASK_ROOT%\recomp\config\output\sub_00126510_0x126510.cpp" ^
     "%TASK_TEST%\src\ps2_sif_dma_tests.cpp" ^
     "%TASK_TEST%\src\ps2_sif_rpc_tests.cpp" ^
     "%TASK_TEST%\src\ps2_memory_tests.cpp" ^

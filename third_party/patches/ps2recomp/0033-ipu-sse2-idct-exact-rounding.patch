@@ -1,0 +1,78 @@
+diff --git a/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp b/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
+index 6b29eb1..7d676b9 100644
+--- a/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
++++ b/ps2xRuntime/src/lib/ipu/ps2_ipu.cpp
+@@ -22,6 +22,9 @@
+ #include <cstdlib>
+ #include <cstring>
+ #include <vector>
++#if defined(_M_X64) || defined(__SSE2__)
++#include <emmintrin.h>
++#endif
+ 
+ namespace ps2_ipu
+ {
+@@ -482,18 +485,54 @@ namespace ps2_ipu
+                 f[63] ^= 1; // MPEG-2 mismatch control
+         }
+ 
++#if defined(_M_X64) || defined(__SSE2__)
++        void roundIdctPair(__m128d sum,int16_t* out) {
++            sum=_mm_min_pd(_mm_max_pd(sum,_mm_set1_pd(-256.0)),_mm_set1_pd(255.0));
++            const __m128i whole=_mm_cvttpd_epi32(sum);
++            const __m128d integral=_mm_cvtepi32_pd(whole);
++            const __m128d fraction=_mm_sub_pd(sum,integral);
++            const __m128d up=_mm_and_pd(_mm_cmpge_pd(fraction,_mm_set1_pd(0.5)),_mm_set1_pd(1.0));
++            const __m128d down=_mm_and_pd(_mm_cmple_pd(fraction,_mm_set1_pd(-0.5)),_mm_set1_pd(1.0));
++            const __m128i rounded=_mm_cvttpd_epi32(_mm_add_pd(integral,_mm_sub_pd(up,down)));
++            const int packed=_mm_cvtsi128_si32(_mm_packs_epi32(rounded,_mm_setzero_si128()));
++            std::memcpy(out,&packed,sizeof(packed));
++        }
++#endif
++
+         void idct(const int32_t *in, int16_t *out)
+         {
+             static double c[8][8];
++            alignas(16) static double ct[8][8];
+             static bool init = false;
+             if (!init)
+             {
+                 for (int x = 0; x < 8; ++x)
+                     for (int u = 0; u < 8; ++u)
+-                        c[x][u] = (u == 0 ? std::sqrt(0.125) : 0.5) * std::cos((2 * x + 1) * u * 3.14159265358979323846 / 16.0);
++                        ct[u][x] = c[x][u] = (u == 0 ? std::sqrt(0.125) : 0.5) * std::cos((2 * x + 1) * u * 3.14159265358979323846 / 16.0);
+                 init = true;
+             }
+             double tmp[64];
++#if defined(_M_X64) || defined(__SSE2__)
++            // Transform two independent outputs per instruction. Each lane
++            // retains the scalar multiply/add order and double precision, so
++            // rounding and MPEG mismatch-control output remain unchanged.
++            for (int y=0;y<8;++y)
++                for (int x=0;x<8;x+=2) {
++                    __m128d sum=_mm_setzero_pd();
++                    for (int u=0;u<8;++u)
++                        sum=_mm_add_pd(sum,_mm_mul_pd(_mm_load_pd(ct[u]+x),_mm_set1_pd(in[y*8+u])));
++                    _mm_storeu_pd(tmp+y*8+x,sum);
++                }
++            for (int x=0;x<8;x+=2)
++                for (int y=0;y<8;++y) {
++                    __m128d sum=_mm_setzero_pd();
++                    for (int v=0;v<8;++v)
++                        sum=_mm_add_pd(sum,_mm_mul_pd(_mm_set1_pd(c[y][v]),_mm_loadu_pd(tmp+v*8+x)));
++                    // Truncate then inspect the exact fractional remainder.
++                    // Adding +/-0.5 first can misround a value just below a tie.
++                    roundIdctPair(sum,out+y*8+x);
++                }
++#else
+             for (int y = 0; y < 8; ++y)       // rows: horizontal transform
+                 for (int x = 0; x < 8; ++x)
+                 {
+@@ -511,6 +550,7 @@ namespace ps2_ipu
+                     const long r = std::lround(s);
+                     out[y * 8 + x] = static_cast<int16_t>(std::clamp<long>(r, -256, 255));
+                 }
++#endif
+         }
+ 
+         // One macroblock: 6 blocks after IDCT, as RAW16 in output order (Y 16x16, Cb, Cr).

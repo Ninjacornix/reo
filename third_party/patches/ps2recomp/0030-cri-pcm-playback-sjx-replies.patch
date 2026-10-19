@@ -1,0 +1,618 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1,5 +1,8 @@
+ #include "Common.h"
+ #include "RPC.h"
++#include "Helpers/CriAudio.h"
++#include <deque>
++#include <unordered_set>
+ 
+ namespace ps2_syscalls
+ {
+@@ -22,8 +25,25 @@
+         constexpr uint32_t kSoundDriverGuestPoolBase = 0x00120000u;
+         constexpr uint32_t kSoundDriverGuestPoolLimit = 0x00200000u;
+ 
++        struct SjxReply { uint32_t flags, record, pointer, length; };
++        struct PcmPending { uint32_t ring; uint64_t endByte; SjxReply reply; };
++        std::deque<PcmPending> g_pcmPending;
++        std::deque<SjxReply> g_sjxReplies;
++        std::unordered_set<uint32_t> g_pcmRings;
++
++        uint32_t resolveRnaRing(uint32_t handle) {
++            if (g_dtx_sjrmt_by_handle.count(handle)) return handle;
++            const auto sjx=g_dtx_sjx_by_handle.find(handle);
++            return sjx==g_dtx_sjx_by_handle.end()?0u:sjx->second.dstSjHandle;
++        }
++        void configurePcmVoice(const DtxPs2RnaState& rna) {
++            ps2_cri_audio::configure(rna.handle,resolveRnaRing(rna.sjHandle0),resolveRnaRing(rna.sjHandle1),
++                rna.channelCount,rna.sampleFreq,rna.volume,rna.playEnabled);
++        }
+         void resetDtxRpcStateUnlocked()
+         {
++            ps2_cri_audio::reset();
++            g_pcmPending.clear();g_sjxReplies.clear();g_pcmRings.clear();
+             g_dtx_remote_by_id.clear();
+             g_dtx_transfer_by_id.clear();
+             g_dtx_sjx_by_handle.clear();
+@@ -699,6 +719,27 @@
+             return true;
+         }
+ 
++        void collectSjxReplies(uint8_t* rdram,const DtxTransferState& transfer) {
++            std::lock_guard<std::mutex> lock(g_dtx_rpc_mutex);
++            for(auto i=g_pcmPending.begin();i!=g_pcmPending.end();) {
++                if(ps2_cri_audio::consumed(i->ring)<i->endByte) { ++i;continue; }
++                auto ring=g_dtx_sjrmt_by_handle.find(i->ring);
++                if(ring!=g_dtx_sjrmt_by_handle.end()) {
++                    auto& state=ring->second;
++                    state.dataBytes-=std::min(state.dataBytes,i->reply.length);
++                    state.roomBytes=0x4000u-std::min(0x4000u,state.dataBytes);
++                }
++                g_sjxReplies.push_back(i->reply);i=g_pcmPending.erase(i);
++            }
++            const uint32_t count=std::min<uint32_t>(static_cast<uint32_t>(g_sjxReplies.size()),
++                std::min(128u,transfer.wkSize>80u?(transfer.wkSize-80u)/16u:0u));
++            for(uint32_t n=0;n<count;++n) {
++                const auto reply=g_sjxReplies.front();g_sjxReplies.pop_front();
++                std::memcpy(getMemPtr(rdram,transfer.eeWorkAddr+16u+n*16u),&reply,sizeof(reply));
++            }
++            writeGuestU32(rdram,transfer.eeWorkAddr,count);
++        }
++
+         std::atomic<uint64_t> g_dbgRnaConsumedBytes{0}; // [perf] PCM bytes "played" by PS2RNA
+         void dtxAppendToSjrmtData(uint8_t *rdram, DtxSjrmtState &state, uint32_t srcDataAddr, uint32_t requestedLen)
+         {
+@@ -713,6 +754,17 @@
+                 return;
+             }
+ 
++            if (std::getenv("REO_DTX_DUMP")) {
++                static unsigned dumps = 0;
++                if (dumps++ < 8) {
++                    const uint8_t* bytes = getConstMemPtr(rdram, srcDataAddr);
++                    if (bytes) {
++                        std::fprintf(stderr, "[SJX-format] src=%08x len=%u bytes:", srcDataAddr, requestedLen);
++                        for (unsigned i=0;i<std::min(32u,requestedLen);++i) std::fprintf(stderr," %02x",bytes[i]);
++                        std::fprintf(stderr,"\n");
++                    }
++                }
++            }
+             const uint32_t requestedCopyLen = std::min(requestedLen, state.roomBytes);
+             uint32_t copiedLen = 0u;
+             for (uint32_t i = 0; i < requestedCopyLen; ++i)
+@@ -730,7 +782,7 @@
+             state.dataBytes = std::min(cap, state.dataBytes + copiedLen);
+         }
+ 
+-        void dtxConsumeSjrmtDataLocked(DtxSjrmtState &state)
++        void dtxConsumeSjrmtDataLocked(DtxSjrmtState &state, uint32_t maxBytes)
+         {
+             const uint32_t cap = (state.wkSize == 0u) ? 0x4000u : state.wkSize;
+             if (cap == 0u || state.dataBytes == 0u)
+@@ -738,7 +790,11 @@
+                 return;
+             }
+ 
+-            const uint32_t consumed = std::min(cap, state.dataBytes);
++            const uint32_t consumed = std::min(std::min(cap, state.dataBytes), maxBytes);
++            if (consumed == 0u)
++            {
++                return;
++            }
+             g_dbgRnaConsumedBytes.fetch_add(consumed, std::memory_order_relaxed);
+             {
+                 static auto s_last = std::chrono::steady_clock::now();
+@@ -759,16 +815,57 @@
+             state.roomBytes = std::min(cap, state.roomBytes + consumed);
+         }
+ 
++        // PS2RNA receives decoded planar PCM16; ADX decoding occurs on the EE.
++        // Legacy/non-audio SJRMT fixtures use a wall-clock fallback at the PCM rate.
++        uint32_t dtxPacedConsumeBudgetBytes(DtxPs2RnaState &rna, uint64_t nowNs)
++        {
++            const uint32_t sfreq = rna.sampleFreq ? rna.sampleFreq : 48000u;
++            const uint32_t ch = rna.channelCount ? rna.channelCount : 2u;
++            const uint64_t pcmBytesPerSec = static_cast<uint64_t>(sfreq) * ch * 2u;
++            const uint64_t streamBytesPerSec = pcmBytesPerSec;
++
++            uint32_t activeRings = 0u;
++            if (rna.sjHandle0 != 0u)
++            {
++                ++activeRings;
++            }
++            if (rna.sjHandle1 != 0u)
++            {
++                ++activeRings;
++            }
++            if (activeRings == 0u)
++            {
++                activeRings = 1u;
++            }
++
++            uint64_t dt = (rna.lastConsumeNs != 0u) ? (nowNs - rna.lastConsumeNs) : 0u;
++            rna.lastConsumeNs = nowNs;
++            if (dt > 250000000ull)
++            {
++                dt = 250000000ull; // cap catch-up bursts after long pauses
++            }
++            return static_cast<uint32_t>(streamBytesPerSec * dt / (1000000000ull * activeRings));
++        }
++
+         void dtxConsumeActivePs2RnaStreamsLocked()
+         {
+-            for (const auto &entry : g_dtx_ps2rna_by_handle)
+-            {
+-                const DtxPs2RnaState &rna = entry.second;
++            const uint64_t nowNs = static_cast<uint64_t>(
++                std::chrono::duration_cast<std::chrono::nanoseconds>(
++                    std::chrono::steady_clock::now().time_since_epoch())
++                    .count());
++
++            for (auto &entry : g_dtx_ps2rna_by_handle)
++            {
++                DtxPs2RnaState &rna = entry.second;
++                configurePcmVoice(rna);
+                 if (!rna.playEnabled)
+                 {
++                    rna.lastConsumeNs = nowNs;
+                     continue;
+                 }
+ 
++                const uint32_t budget = dtxPacedConsumeBudgetBytes(rna, nowNs);
++
+                 auto consumeHandle = [&](uint32_t sjHandle)
+                 {
+                     if (sjHandle == 0u)
+@@ -776,19 +873,50 @@
+                         return;
+                     }
+ 
++                    // PS2RNA names its SJ streams by their SJX handles; the
++                    // chunk data lives in the SJRMT ring those SJX transfers
++                    // target. Resolve either handle form to the ring.
+                     auto it = g_dtx_sjrmt_by_handle.find(sjHandle);
+                     if (it == g_dtx_sjrmt_by_handle.end())
+                     {
++                        auto sjxIt = g_dtx_sjx_by_handle.find(sjHandle);
++                        if (sjxIt != g_dtx_sjx_by_handle.end())
++                        {
++                            it = g_dtx_sjrmt_by_handle.find(sjxIt->second.dstSjHandle);
++                        }
++                    }
++                    if (it == g_dtx_sjrmt_by_handle.end())
++                    {
++                        static std::atomic<int> s_rnaLinkLogs{0};
++                        if (s_rnaLinkLogs.fetch_add(1) < 12)
++                        {
++                            std::fprintf(stderr, "[PS2RNA-link] no ring for sj=0x%x (rna=0x%x)\n",
++                                         sjHandle, rna.handle);
++                        }
+                         return;
+                     }
+ 
+-                    dtxConsumeSjrmtDataLocked(it->second);
++                    if (!g_pcmRings.count(it->first))
++                        dtxConsumeSjrmtDataLocked(it->second, budget);
+                 };
+ 
+                 static std::atomic<int> s_rnaLogs{0};
+                 if (s_rnaLogs.fetch_add(1) < 6)
+-                    std::fprintf(stderr, "[PS2RNA] handle=0x%x ch=%u sfreq=%u vol=0x%x sj0=0x%x sj1=0x%x\n", rna.handle,
+-                                 rna.channelCount, rna.sampleFreq, rna.volume, rna.sjHandle0, rna.sjHandle1);
++                {
++                    auto ringData = [&](uint32_t sjHandle) -> uint32_t {
++                        auto it = g_dtx_sjrmt_by_handle.find(sjHandle);
++                        if (it == g_dtx_sjrmt_by_handle.end())
++                        {
++                            auto sjxIt2 = g_dtx_sjx_by_handle.find(sjHandle);
++                            if (sjxIt2 != g_dtx_sjx_by_handle.end())
++                                it = g_dtx_sjrmt_by_handle.find(sjxIt2->second.dstSjHandle);
++                        }
++                        return (it == g_dtx_sjrmt_by_handle.end()) ? 0xFFFFFFFFu : it->second.dataBytes;
++                    };
++                    std::fprintf(stderr, "[PS2RNA] handle=0x%x ch=%u sfreq=%u vol=0x%x sj0=0x%x sj1=0x%x data0=0x%x data1=0x%x\n", rna.handle,
++                                 rna.channelCount, rna.sampleFreq, rna.volume, rna.sjHandle0, rna.sjHandle1,
++                                 ringData(rna.sjHandle0), ringData(rna.sjHandle1));
++                }
+                 consumeHandle(rna.sjHandle0);
+                 consumeHandle(rna.sjHandle1);
+             }
+@@ -860,22 +988,86 @@
+                     continue;
+                 }
+ 
++                // Resolve the destination ring. The guest names SJ streams by
++                // their SJX handles in some calls and by their SJRMT ring
++                // handles in others; accept either so the chunk actually lands
++                // in a ring (a silent miss here stalls the EE demuxer after its
++                // ~8 buffered chunks because the ack rewrite below never runs).
+                 auto sjrmtIt = g_dtx_sjrmt_by_handle.find(sjx.dstSjHandle);
+                 if (sjrmtIt == g_dtx_sjrmt_by_handle.end())
+                 {
++                    auto dstSjxIt = g_dtx_sjx_by_handle.find(sjx.dstSjHandle);
++                    if (dstSjxIt != g_dtx_sjx_by_handle.end())
++                    {
++                        sjrmtIt = g_dtx_sjrmt_by_handle.find(dstSjxIt->second.dstSjHandle);
++                    }
++                }
++                if (sjrmtIt == g_dtx_sjrmt_by_handle.end())
++                {
++                    static std::atomic<int> s_sjxLinkLogs{0};
++                    if (s_sjxLinkLogs.fetch_add(1) < 12)
++                    {
++                        std::fprintf(stderr, "[SJX-link] no SJRMT ring for sjx=0x%x dst=0x%x line=%u\n",
++                                     sjxHandle, sjx.dstSjHandle, sjx.line);
++                    }
+                     continue;
+                 }
+ 
+-                if (cmdLine == sjx.line)
+-                {
++                if (cmdLine != sjx.line)
++                {
++                    static std::atomic<int> s_sjxLineLogs{0};
++                    if (s_sjxLineLogs.fetch_add(1) < 12)
++                    {
++                        std::fprintf(stderr, "[SJX-line] cmd line=%u != sjx line=%u (sjx=0x%x)\n",
++                                     cmdLine, sjx.line, sjxHandle);
++                    }
++                    continue;
++                }
++
++                const SjxReply reply{static_cast<uint32_t>(cmdXid)<<16,
++                    sjx.eeObjAddr?sjx.eeObjAddr:sjxHandle,chunkDataAddr,chunkLen};
++                bool audioRing=false;
++                for(const auto& entry:g_dtx_ps2rna_by_handle) {
++                    const auto& rna=entry.second;
++                    audioRing|=resolveRnaRing(rna.sjHandle0)==sjrmtIt->first ||
++                               resolveRnaRing(rna.sjHandle1)==sjrmtIt->first;
++                }
++                uint32_t recordAddr=0,sourceAddr=0;
++                const bool validRecord=normalizeGuestLinearAddr(sjx.eeObjAddr,recordAddr) &&
++                                       recordAddr>=0x10000u && recordAddr<PS2_RAM_SIZE-20u;
++                if(audioRing && validRecord) {
++                    uint64_t endByte=0;
++                    const bool valid=normalizeGuestLinearAddr(chunkDataAddr,sourceAddr) &&
++                                     sourceAddr<PS2_RAM_SIZE && chunkLen<=PS2_RAM_SIZE-sourceAddr;
++                    if(valid && ps2_cri_audio::queue(sjrmtIt->first,rdram+sourceAddr,chunkLen,endByte)) {
++                        g_pcmRings.insert(sjrmtIt->first);
++                        g_pcmPending.push_back({sjrmtIt->first,endByte,reply});
++                        sjrmtIt->second.dataBytes+=chunkLen;
++                        sjrmtIt->second.roomBytes=0x4000u-std::min(0x4000u,sjrmtIt->second.dataBytes);
++                    } else {
++                        std::fprintf(stderr,"[CRI-AUDIO] rejected chunk src=%08x len=%u\n",chunkDataAddr,chunkLen);
++                    }
++                } else {
+                     dtxAppendToSjrmtData(rdram, sjrmtIt->second, chunkDataAddr, chunkLen);
+-
+-                    // The IOP side consumes data from the remote SJ stream and returns the
+-                    // chunk to the EE-side room queue. Rewriting the ack packet to line 0
+-                    // makes the EE sjx_rcvcbf recycle the chunk instead of requeueing it
+-                    // as playable data forever.
+-                    cmdPtr[1] = 0u;
+-                }
++                    g_sjxReplies.push_back(reply);
++                }
++
++                {
++                    // REO diagnostic: which ring the chunk landed in and its state.
++                    static std::atomic<int> s_sjxRingLogs{0};
++                    if (s_sjxRingLogs.fetch_add(1) < 40)
++                    {
++                        const DtxSjrmtState &ring = sjrmtIt->second;
++                        std::fprintf(stderr, "[SJX-ring] sjx=0x%x dst=0x%x wk=0x%x cap=0x%x data=0x%x room=0x%x chunk=0x%x+%x\n",
++                                     sjxHandle, sjx.dstSjHandle, ring.wkAddr,
++                                     (ring.wkSize ? ring.wkSize : 0x4000u), ring.dataBytes, ring.roomBytes,
++                                     chunkDataAddr, chunkLen);
++                    }
++                }
++
++                // Audio chunks return through collectSjxReplies only when the
++                // host playback clock consumed them; never recycle an IOP handle.
++
+             }
+ 
+             dtxConsumeActivePs2RnaStreamsLocked();
+@@ -942,9 +1134,15 @@
+                     break;
+                 case 1u: // IOPRNA_CMD_STOP
+                     state.playEnabled = false;
++                    ps2_cri_audio::discard(resolveRnaRing(state.sjHandle0));
++                    ps2_cri_audio::discard(resolveRnaRing(state.sjHandle1));
+                     break;
+                 case 2u: // IOPRNA_CMD_SETPSW
+                     state.playEnabled = (arg1 != 0u);
++                    if(!state.playEnabled) {
++                        ps2_cri_audio::discard(resolveRnaRing(state.sjHandle0));
++                        ps2_cri_audio::discard(resolveRnaRing(state.sjHandle1));
++                    }
+                     break;
+                 case 3u: // IOPRNA_CMD_SETNCH
+                     state.channelCount = arg1;
+@@ -1084,6 +1282,19 @@
+         {
+             dtxApplyPs2RnaPayload(rdram, matched);
+         }
++
++        // Consume at the playback rate on EVERY mailbox cycle. The apply
++        // helpers above return early on empty packets, and the mailboxes are
++        // almost always empty -- gating consumption on command-bearing packets
++        // meant the rings never drained, room never freed, and the EE demuxer
++        // stalled after its first ~8 chunks. The real IOP server ticks its
++        // streams every cycle regardless of mailbox contents.
++        {
++            std::lock_guard<std::mutex> lock(g_dtx_rpc_mutex);
++            dtxConsumeActivePs2RnaStreamsLocked();
++        }
++
++        if (matched.dtxId == 0u) collectSjxReplies(rdram,matched);
+ 
+         static uint32_t dtxAckLogCount = 0u;
+         if (dtxAckLogCount < 32u)
+@@ -1869,6 +2080,8 @@
+                     state.sjHandle0 = sjHandle0;
+                     state.sjHandle1 = sjHandle1;
+                     state.channelCount = maxChannels;
++                    state.sampleFreq = 48000u;
++                    state.volume = 256u;
+                     g_dtx_ps2rna_by_handle[handle] = state;
+                     outWords[0] = handle ? handle : 1u;
+                     outWordCount = 1u;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h
+@@ -402,6 +402,7 @@
+     uint32_t sampleFreq = 0;
+     uint32_t volume = 0;
+     bool playEnabled = false;
++    uint64_t lastConsumeNs = 0; // steady-clock ns of the previous paced consume
+ };
+ 
+ inline std::unordered_map<uint32_t, DtxPs2RnaState> g_dtx_ps2rna_by_handle;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -0,0 +1,115 @@
++#include "CriAudio.h"
++#include "ps2_host_backend.h"
++#include <algorithm>
++#include <chrono>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <deque>
++#include <mutex>
++#include <unordered_map>
++
++namespace ps2_cri_audio {
++namespace {
++constexpr uint32_t outputRate=48000;
++struct Channel { std::deque<int16_t> pcm; uint64_t queued=0, consumed=0; };
++struct Voice { uint32_t left=0,right=0,channels=0,frequency=48000,volume=256; bool playing=false; double phase=0; };
++std::mutex mutex;
++std::unordered_map<uint32_t,Channel> channels;
++std::unordered_map<uint32_t,Voice> voices;
++AudioStream stream{};
++bool ready=false;
++uint64_t outputFrames=0, signalFrames=0, underrunFrames=0;
++auto lastTick=std::chrono::steady_clock::now();
++auto lastReport=lastTick;
++uint64_t lastFrames=0,lastSignal=0,lastUnderrun=0;
++
++// Called by raylib's audio thread. Its sample requests provide the playback clock.
++void renderLocked(float* dst, unsigned frames) {
++    if (dst) std::fill(dst,dst+frames*2,0.0f);
++    for (unsigned i=0;i<frames;++i) {
++        float l=0,r=0; bool starved=false;
++        for (auto& entry:voices) {
++            Voice& v=entry.second;
++            if (!v.playing || !v.left || !v.channels) continue;
++            auto li=channels.find(v.left), ri=channels.find(v.right);
++            if (li==channels.end() || li->second.pcm.empty() ||
++                (v.channels>1 && (ri==channels.end() || ri->second.pcm.empty()))) { starved=true; continue; }
++            const float gain=std::min(v.volume,256u)/256.0f/32768.0f;
++            l+=li->second.pcm.front()*gain;
++            r+=(v.channels>1?ri->second.pcm.front():li->second.pcm.front())*gain;
++            v.phase+=v.frequency/static_cast<double>(outputRate);
++            while (v.phase>=1.0) {
++                if (li->second.pcm.empty() || (v.channels>1 && ri->second.pcm.empty())) break;
++                li->second.pcm.pop_front(); li->second.consumed+=2;
++                if (v.channels>1) { ri->second.pcm.pop_front();ri->second.consumed+=2; }
++                v.phase-=1.0;
++            }
++        }
++        if (dst) { dst[i*2]=std::clamp(l,-1.0f,1.0f); dst[i*2+1]=std::clamp(r,-1.0f,1.0f); }
++        ++outputFrames;
++        signalFrames+=(l!=0 || r!=0);
++        underrunFrames+=starved;
++    }
++}
++void callback(void* buffer, unsigned frames) { std::lock_guard<std::mutex> lock(mutex); renderLocked(static_cast<float*>(buffer),frames); }
++void ensureOutput() {
++    if (ready || !IsAudioDeviceReady()) return;
++    // A small source buffer bounds prefetch latency to approximately 11 ms.
++    SetAudioStreamBufferSizeDefault(512);
++    stream=LoadAudioStream(outputRate,32,2);
++    if (!IsAudioStreamValid(stream)) return;
++    SetAudioStreamCallback(stream,callback);
++    ready=true;
++    PlayAudioStream(stream);
++    std::fprintf(stderr,"[CRI-AUDIO] output ready: signed PCM16 -> stereo float32, 48000 Hz\n");
++}
++void tickLocked() {
++    const auto now=std::chrono::steady_clock::now();
++    if (!ready) {
++        // Deterministic wall-clock progress for headless tests; retains PCM rate,
++        // stereo pairing and fractional frames rather than assuming ADX bytes.
++        const auto ns=std::chrono::duration_cast<std::chrono::nanoseconds>(now-lastTick).count();
++        const uint64_t n=std::min<uint64_t>(outputRate/4,static_cast<uint64_t>(std::max<int64_t>(0,ns))*outputRate/1000000000ull);
++        if (n) { renderLocked(nullptr,static_cast<unsigned>(n));lastTick+=std::chrono::nanoseconds(n*1000000000ull/outputRate); }
++    }
++    if (now-lastReport>=std::chrono::seconds(1)) {
++        size_t queued=0;for(const auto& c:channels) queued+=c.second.pcm.size();
++        std::fprintf(stderr,"[CRI-AUDIO] frames=%llu signal=%llu underrun=%llu queuedSamples=%zu host=%d\n",
++          static_cast<unsigned long long>(outputFrames-lastFrames),static_cast<unsigned long long>(signalFrames-lastSignal),
++          static_cast<unsigned long long>(underrunFrames-lastUnderrun),queued,ready?1:0);
++        lastReport=now;lastFrames=outputFrames;lastSignal=signalFrames;lastUnderrun=underrunFrames;
++    }
++}
++}
++bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte) {
++    if (!key || !bytes || !length || (length&1) || length>0x4000) return false;
++    ensureOutput();
++    std::lock_guard<std::mutex> lock(mutex);tickLocked();
++    auto& c=channels[key];
++    if(c.pcm.size()+length/2>outputRate*2) return false;
++    for(uint32_t i=0;i<length;i+=2) { int16_t x;std::memcpy(&x,bytes+i,2);c.pcm.push_back(x); }
++    // Diagnostic capture runs on the guest producer, never the audio callback.
++    // Bounded to eight seconds per channel; files stay in the smoke directory.
++    if (std::getenv("REO_CRI_PCM_DUMP") && c.queued < outputRate*2u*8u) {
++        char name[64];std::snprintf(name,sizeof(name),"cri-pcm-%08x.raw",key);
++        if (FILE* f=std::fopen(name,c.queued?"ab":"wb")) {
++            std::fwrite(bytes,1,std::min<uint64_t>(length,outputRate*2u*8u-c.queued),f);
++            std::fclose(f);
++        }
++    }
++    c.queued+=length;endByte=c.queued;return true;
++}
++void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t freq,uint32_t vol,bool playing) {
++    ensureOutput();std::lock_guard<std::mutex> lock(mutex);tickLocked();
++    auto& v=voices[voice];v.left=left;v.right=right;v.channels=std::min(nch,2u);
++    v.frequency=std::clamp(freq?freq:48000u,8000u,96000u);v.volume=vol;v.playing=playing;
++}
++uint64_t consumed(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
++void discard(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);if(i!=channels.end()){i->second.pcm.clear();i->second.consumed=i->second.queued;} }
++void reset() { std::lock_guard<std::mutex> lock(mutex);channels.clear();voices.clear();lastTick=std::chrono::steady_clock::now(); }
++void shutdown() {
++    if (ready && IsAudioDeviceReady()) { StopAudioStream(stream);UnloadAudioStream(stream); }
++    ready=false;stream={};reset();
++}
++}
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+@@ -0,0 +1,13 @@
++#pragma once
++#include <cstdint>
++#include <cstddef>
++namespace ps2_cri_audio {
++// Planar signed 16-bit PCM. Keys are opaque SJRMT stream handles.
++bool queue(uint32_t key, const uint8_t* bytes, uint32_t length, uint64_t& endByte);
++void configure(uint32_t voice, uint32_t left, uint32_t right, uint32_t channels,
++               uint32_t frequency, uint32_t volume, bool playing);
++uint64_t consumed(uint32_t key);
++void discard(uint32_t key);
++void reset();
++void shutdown();
++}
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1,6 +1,7 @@
+ #include "ps2_runtime.h"
+ #include "ps2_debug_panel.h"
+ #include "Kernel/Syscalls/Interrupt.h"
++#include "Kernel/Syscalls/Helpers/CriAudio.h"
+ #include "ps2_log.h"
+ #include "ps2_stubs.h"
+ #include "ps2_syscalls.h"
+@@ -987,6 +988,7 @@
+     {
+         requestStop();
+         ps2_syscalls::detachAllGuestHostThreads();
++        ps2_cri_audio::shutdown();
+ #if defined(PLATFORM_VITA)
+         m_audioBackend.stopAll();
+         m_audioBackend.setAudioReady(false);
+diff --git a/ps2xTest/src/ps2_sif_dma_tests.cpp b/ps2xTest/src/ps2_sif_dma_tests.cpp
+--- a/ps2xTest/src/ps2_sif_dma_tests.cpp
++++ b/ps2xTest/src/ps2_sif_dma_tests.cpp
+@@ -9,6 +9,8 @@
+ #include <cstdint>
+ #include <cstring>
+ #include <vector>
++#include <chrono>
++#include <thread>
+ 
+ namespace ps2_stubs
+ {
+@@ -554,6 +556,8 @@
+             t.IsTrue(getRegS32(env.ctx, 2) > 0, "sceSifSetDma should succeed for the SJX transport");
+             t.Equals(env.rdram[kEeWorkAddr + 0x11u], static_cast<uint8_t>(0u),
+                      "SJX DMA ack should rewrite the response line to room so EE recycles the chunk");
++            t.Equals(readGuestU32(env.rdram.data(), kEeWorkAddr + 0x14u), 0x12345678u,
++                     "SJX reply must carry the registered EE record, not the IOP handle");
+             t.Equals(readGuestU32(env.rdram.data(), kEeWorkAddr + kWorkLen - sizeof(uint32_t)), 2u,
+                      "SJX DMA ack should still advance the EE footer ticket");
+ 
+@@ -592,7 +596,7 @@
+             constexpr uint32_t kRingAddr = 0x00030400u;
+             constexpr uint32_t kChunkDataAddr = 0x00030500u;
+             constexpr uint32_t kWorkLen = 0x100u;
+-            constexpr uint32_t kChunkLen = 8u;
++            constexpr uint32_t kChunkLen = 4096u;
+ 
+             ps2_syscalls::SifInitRpc(env.rdram.data(), &env.ctx, &env.runtime);
+ 
+@@ -620,7 +624,7 @@
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x00u, 0u);
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x04u, sjrmtHandle);
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x08u, 1u);
+-            writeGuestU32(env.rdram.data(), kSendAddr + 0x0Cu, 0xCAFEBABEu);
++            writeGuestU32(env.rdram.data(), kSendAddr + 0x0Cu, 0x0002F600u);
+             setRegU32(env.ctx, 4, kClientAddr);
+             setRegU32(env.ctx, 5, 0x400u);
+             setRegU32(env.ctx, 6, 0u);
+@@ -730,8 +734,8 @@
+             setRegU32(env.ctx, 5, 1u);
+             ps2_stubs::sceSifSetDma(env.rdram.data(), &env.ctx, &env.runtime);
+             t.IsTrue(getRegS32(env.ctx, 2) > 0, "sceSifSetDma should succeed for the SJX transport");
+-            t.Equals(env.rdram[kEeWork0Addr + 0x11u], static_cast<uint8_t>(0u),
+-                     "SJX DMA ack should still rewrite the response line to room");
++            t.Equals(readGuestU32(env.rdram.data(), kEeWork0Addr), 0u,
++                     "PCM chunk must not be returned before it is played");
+ 
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x00u, sjrmtHandle);
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x04u, 1u);
+@@ -744,9 +748,24 @@
+             setRegU32(env.ctx, 10, 4u);
+             setRegU32(env.ctx, 11, 0u);
+             ps2_syscalls::SifCallRpc(env.rdram.data(), &env.ctx, &env.runtime);
++            // Playback is paced rather than draining all bytes in the START RPC.
++            // Advance through empty mailbox cycles and bound the wait.
++            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
++            while (readGuestU32(env.rdram.data(), kRecvAddr) != 0u && std::chrono::steady_clock::now() < deadline) {
++                std::this_thread::sleep_for(std::chrono::milliseconds(2));
++                ps2_syscalls::noteDtxSifDmaTransfer(env.rdram.data(), kEeWork0Addr, kIopWork0Addr, kWorkLen);
++                setRegU32(env.ctx,4,kClientAddr);setRegU32(env.ctx,5,0x429u);setRegU32(env.ctx,6,0u);
++                setRegU32(env.ctx,7,kSendAddr);setRegU32(env.ctx,8,8u);setRegU32(env.ctx,9,kRecvAddr);
++                setRegU32(env.ctx,10,4u);setRegU32(env.ctx,11,0u);
++                ps2_syscalls::SifCallRpc(env.rdram.data(), &env.ctx, &env.runtime);
++            }
+             t.Equals(readGuestU32(env.rdram.data(), kRecvAddr), 0u,
+-                     "active PS2RNA playback should drain remote SJRMT data instead of leaving it queued forever");
+-
++                     "active PS2RNA playback should drain data across empty mailbox cycles");
++
++            t.Equals(readGuestU32(env.rdram.data(),kEeWork0Addr+0x14u),0x0002F600u,
++                     "completed PCM reply returns the EE registration record");
++            t.Equals(readGuestU32(env.rdram.data(),kEeWork0Addr+0x1cu),kChunkLen,
++                     "full PCM chunk is returned without 256-byte truncation");
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x00u, sjrmtHandle);
+             writeGuestU32(env.rdram.data(), kSendAddr + 0x04u, 0u);
+             setRegU32(env.ctx, 4, kClientAddr);
+@@ -758,8 +777,8 @@
+             setRegU32(env.ctx, 10, 4u);
+             setRegU32(env.ctx, 11, 0u);
+             ps2_syscalls::SifCallRpc(env.rdram.data(), &env.ctx, &env.runtime);
+-            t.Equals(readGuestU32(env.rdram.data(), kRecvAddr), kWorkLen,
+-                     "drained PS2RNA playback should return remote SJRMT room to full capacity");
++            t.Equals(readGuestU32(env.rdram.data(), kRecvAddr), 0x4000u,
++                     "PCM playback returns room in the audio data buffer, not descriptor storage");
+         });
+ 
+         tc.Run("resetSifState seeds boot-ready SIF registers", [](TestCase &t)

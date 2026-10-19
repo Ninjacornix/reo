@@ -1,0 +1,66 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -38,5 +38,8 @@
+ #include <sstream>
+ 
++// Private runtime linkage: do not change the headers included by generated code.
++bool reoCurrentGuestThreadTerminated() noexcept;
++
+ namespace ps2_stubs
+ {
+     void resetSifState();
+@@ -355,7 +358,8 @@
+             mutex.lock();
+             // A stopped/suspended sleeper must reacquire its scope to unwind.
+             // No guest code is dispatched after its caller checks runtime stop.
+-            if (g_shutdown.load(std::memory_order_acquire) || !mustYield(tid))
++            if (g_shutdown.load(std::memory_order_acquire) || !mustYield(tid) ||
++                reoCurrentGuestThreadTerminated())
+                 break;
+             mutex.unlock();
+             notifyAll();
+@@ -2692,8 +2696,9 @@
+         }
+         if (isStopRequested()) return true;
+     }
+-    // Loop back-edges unwind to the dispatcher only when this guest thread must give up
+-    // the CPU (EE kernel semantics, no time-slicing; see ps2_guest_sched.h).
++    // Scheduler yields must also preserve the native call stack: a backedge to
++    // a callee's entry is indistinguishable from completion to generated callers.
++    // Keep EE priority/suspension admission in acquire(), without time-slicing.
+     thread_local uint32_t s_backEdgeCounter = 0u;
+     if (++s_backEdgeCounter < 64u)
+     {
+@@ -2702,7 +2707,13 @@
+     s_backEdgeCounter = 0u;
+     ps2_syscalls::serviceNestedDmac(m_memory.getRDRAM(), this);
+     const int tid = ps2_sched::currentThread();
+-    return ps2_sched::mustYield(tid) || ps2_sched::spinYield(tid);
++    if (ps2_sched::mustYield(tid) || ps2_sched::spinYield(tid))
++    {
++        { GuestExecutionReleaseScope yieldCpu(this); }
++        // A dying thread must still unwind, including one suspended at yield.
++        return isStopRequested() || reoCurrentGuestThreadTerminated();
++    }
++    return false;
+ }
+ 
+ uint8_t PS2Runtime::Load8(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr)
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp
+@@ -10,6 +10,13 @@
+ 
+ bool ps2GsProducerPacePending() noexcept;
+ void ps2GsWaitProducerPace();
++
++// Called only at runtime admission/yield boundaries, never from generated code.
++bool reoCurrentGuestThreadTerminated() noexcept
++{
++    const auto info = lookupThreadInfo(g_currentThreadId);
++    return info && info->terminated.load(std::memory_order_acquire);
++}
+ 
+ namespace ps2_sched
+ {

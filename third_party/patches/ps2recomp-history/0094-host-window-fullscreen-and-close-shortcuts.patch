@@ -1,0 +1,90 @@
+--- a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+@@ -9,6 +9,9 @@
+ #define WIN32_LEAN_AND_MEAN
+ #define NOMINMAX
+ #include <windows.h>
++#include <algorithm>
++#include <cstdio>
++#include <cstdlib>
+ 
+ namespace
+ {
+@@ -16,11 +19,65 @@
+     WNDPROC g_prevProc = nullptr;
+     void (*g_render)() = nullptr;
+     bool g_inRender = false;
++    bool g_fullscreenChord = false;
++    WINDOWPLACEMENT g_windowedPlacement{sizeof(WINDOWPLACEMENT)};
++    LONG_PTR g_windowedStyle = 0;
++    bool g_havePlacement = false;
++
++    void toggleBorderless(HWND hwnd)
++    {
++        const LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
++        if (style & WS_OVERLAPPEDWINDOW)
++        {
++            g_windowedStyle = style;
++            g_windowedPlacement.length = sizeof(g_windowedPlacement);
++            g_havePlacement = GetWindowPlacement(hwnd, &g_windowedPlacement) != FALSE;
++            MONITORINFO monitor{sizeof(MONITORINFO)};
++            if (!GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitor)) return;
++            SetWindowLongPtrW(hwnd, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
++            SetWindowPos(hwnd, HWND_TOP, monitor.rcMonitor.left, monitor.rcMonitor.top,
++                monitor.rcMonitor.right - monitor.rcMonitor.left, monitor.rcMonitor.bottom - monitor.rcMonitor.top,
++                SWP_FRAMECHANGED | SWP_NOOWNERZORDER);
++            std::fprintf(stderr, "[HOST-WINDOW] fullscreen=1 (Ctrl+Enter)\n");
++        }
++        else
++        {
++            SetWindowLongPtrW(hwnd, GWL_STYLE, g_havePlacement ? g_windowedStyle : style | WS_OVERLAPPEDWINDOW);
++            if (g_havePlacement) SetWindowPlacement(hwnd, &g_windowedPlacement);
++            else
++            {
++                auto dimension = [](const char* name, int fallback, int minimum, int maximum) {
++                    const char* value = std::getenv(name);
++                    return value ? std::clamp(std::atoi(value), minimum, maximum) : fallback;
++                };
++                RECT rect{0,0,dimension("REO_WINDOW_WIDTH",1024,320,8192),dimension("REO_WINDOW_HEIGHT",768,240,4320)};
++                AdjustWindowRectExForDpi(&rect, static_cast<DWORD>(style | WS_OVERLAPPEDWINDOW), FALSE,
++                    static_cast<DWORD>(GetWindowLongPtrW(hwnd,GWL_EXSTYLE)), GetDpiForWindow(hwnd));
++                SetWindowPos(hwnd, nullptr, 80, 60, rect.right-rect.left, rect.bottom-rect.top, SWP_NOZORDER);
++            }
++            SetWindowPos(hwnd, nullptr, 0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
++            std::fprintf(stderr, "[HOST-WINDOW] fullscreen=0 (Ctrl+Enter)\n");
++        }
++    }
+ 
+     LRESULT CALLBACK modalAwareProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+     {
+         switch (msg)
+         {
++        case WM_KEYDOWN:
++            if (wParam == VK_RETURN && (GetKeyState(VK_CONTROL) & 0x8000))
++            {
++                g_fullscreenChord = true;
++                if (!(lParam & (1LL << 30))) toggleBorderless(hwnd);
++                return 0;
++            }
++            break;
++        case WM_KILLFOCUS:
++            g_fullscreenChord = false;
++            break;
++        case WM_KEYUP:
++            if (wParam == VK_RETURN && g_fullscreenChord) { g_fullscreenChord = false; return 0; }
++            break;
+         case WM_ENTERSIZEMOVE:
+             SetTimer(hwnd, kModalTimerId, USER_TIMER_MINIMUM, nullptr); // 10 ms
+             break;
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1311,7 +1311,8 @@
+             const char *panelEnv = std::getenv("REO_DEBUG_PANEL");
+             const bool panel = !reo_gpu_present::requested() && !(panelEnv && panelEnv[0] == '0');
+             InitWindow(HOST_WINDOW_WIDTH + (panel ? kDebugPanelWidth : 0), HOST_WINDOW_HEIGHT, title);
+-                if (reo_gpu_present::requested())
++            SetExitKey(KEY_NULL); // Closing the OS window (including Alt+F4) owns exit.
++            if (reo_gpu_present::requested())
+             {
+                 const char* filter = std::getenv("REO_DISPLAY_FILTER");
+                 reo_gpu_present::publishTarget({reinterpret_cast<uintptr_t>(GetWindowHandle()),

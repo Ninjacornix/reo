@@ -1,0 +1,56 @@
+# 0028: SifInitRpc re-init must not wipe the emulated IOP-side DTX server state
+#
+# An EE-side sceSifInitRpc re-call only refreshes the EE RPC layer. On hardware
+# the IOP-side DTX server objects (DTX_CREATE-registered transfers plus the
+# SJX/PS2RNA/SJRMT handles) outlive it, and the guest never re-registers them.
+# resetDtxRpcStateUnlocked() in the re-init branch stalled every DTX mailbox
+# mid-flight (the EE pump waits forever for the footer ticket; the DMA miss was
+# silent because the DTX_MISS line is suppressed when knownTransfers==0).
+# Observed on SLUS-20765: both mailboxes die ~2 s after CRI init when the
+# movie/file init re-calls SifInitRpc; PCSX2 keeps cycling ~120 packets/s/channel.
+# Also makes a wiped table visible: DTX_MISS now logs for DTX-shaped transfers
+# (>=0x80 bytes, 64-byte aligned) even when the transfer table is empty.
+
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+index 43e5c0f..ecc1117 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1020,7 +1020,15 @@ namespace ps2_syscalls
+                     }
+                 }
+ 
+-                if (knownTransfers != 0u)
++                // Log a miss when transfers are registered, or when the table is
++                // empty but the transfer is DTX-mailbox-shaped (64-byte multiple,
++                // >= 0x80 bytes; the SLUS-20765 mailboxes are 0x880). Without the
++                // second case a wiped table made every mailbox DMA a silent no-op.
++                const bool dtxShapedWithNoTable = (knownTransfers == 0u) &&
++                                                  g_dtxCompatLayout.isConfigured() &&
++                                                  (sizeBytes >= 0x80u) &&
++                                                  ((sizeBytes & 0x3Fu) == 0u);
++                if (knownTransfers != 0u || dtxShapedWithNoTable)
+                 {
+                     RUNTIME_LOG("[sceSifSetDma:DTX_MISS] src=0x" << std::hex << normalizedSrc
+                                                                  << " dst=0x" << normalizedDst
+@@ -1272,8 +1280,20 @@ namespace ps2_syscalls
+         }
+         else
+         {
+-            resetDtxRpcStateUnlocked();
++            // An EE-side sceSifInitRpc re-call only refreshes the EE RPC layer.
++            // The IOP-side DTX server objects (transfers registered by DTX_CREATE
++            // fn 2 and the SJX/PS2RNA/SJRMT handles) outlive it on hardware: the
++            // guest runs DTX_Init/DTX_Create once, so nothing re-registers them.
++            // Wiping them here stalls every DTX mailbox mid-flight: the EE pump
++            // (FUN_00139198) waits forever for the footer ticket the wiped table
++            // would have advanced, and noteDtxSifDmaTransfer skips silently
++            // because the miss log is suppressed when knownTransfers==0.
++            // Observed on SLUS-20765: both mailboxes die ~2 s after CRI init when
++            // the movie/file init re-calls SifInitRpc (12 call sites, e.g.
++            // 0x1ab560 twice), while PCSX2 keeps cycling ~120 packets/s/channel.
++            // The sound-driver state keeps its D36-tested lazy re-init here.
+             g_soundDriverRpcState.initialized = false;
++            RUNTIME_LOG("[SifInitRpc] re-init (DTX server state kept)" << std::endl);
+         }
+         setReturnS32(ctx, 0);
+     }

@@ -1,0 +1,393 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -16,6 +16,8 @@
+ #include <cstdio>
+ #include <cstring>
+ #include <cstdlib>
++#include <cerrno>
++#include <memory>
+ #include <filesystem>
+ #include <iostream>
+ #include <limits>
+@@ -146,10 +148,58 @@
+         std::filesystem::path base;
+         std::vector<VuTraceRecord> trace;
+         bool active = false;
+-        static void write(const std::filesystem::path& path, const void* bytes, size_t size)
+-        {
+-            if (FILE* out = std::fopen(path.string().c_str(), "wb"))
+-            { std::fwrite(bytes, 1, size, out); std::fclose(out); }
++        struct StagedInput {
++            std::array<uint8_t,16384> code{},data{};
++            VU1State state{};
++            std::array<uint32_t,10> meta{};
++        };
++        std::unique_ptr<StagedInput> staged;
++        std::filesystem::path stagedDirectory;
++        uint32_t hitPC=0u,firstHitPair=0u,observedPairs=0u,completedPairs=0u,endPC=0u,outputLimit=0u;
++        bool hit=false,complete=false,finishedE=false,finishedBounds=false,finishedCap=false;
++        struct HitConfig { bool configured=false,valid=false;uint32_t pc=0u,attemptLimit=65536u; };
++        static const HitConfig& hitConfig() {
++            static const HitConfig c=[] {
++                HitConfig result;
++                const char* text=std::getenv("REO_VU1_DUMP_HIT_PC");
++                if(!text)return result;
++                result.configured=true;
++                char* end=nullptr;errno=0;
++                const unsigned long value=std::strtoul(text,&end,0);
++                result.valid=*text && end && !*end && !errno && value<=16376u && !(value&7u);
++                result.pc=static_cast<uint32_t>(value);
++                // Require the existing exact external image filter; a PC alone
++                // cannot distinguish unrelated microprograms at the same address.
++                const char* image=std::getenv("REO_VU1_DUMP_CODE_IMAGE");
++                if(!image||!*image)result.valid=false;
++                if(const char* attempts=std::getenv("REO_VU1_DUMP_HIT_SCAN_LIMIT")) {
++                    errno=0;end=nullptr;const unsigned long n=std::strtoul(attempts,&end,0);
++                    if(!*attempts||!end||*end||errno||!n||n>262144u)result.valid=false;
++                    else result.attemptLimit=static_cast<uint32_t>(n);
++                }
++                std::fprintf(stderr,"[VU1-CAPTURE-HIT-CONFIG] valid=%u pc=%04x scan_limit=%u trace_limit=1024\n",
++                    unsigned(result.valid),result.pc,result.attemptLimit);
++                return result;
++            }();
++            return c;
++        }
++        static bool claim(std::atomic<uint32_t>& count,uint32_t limit,uint32_t& index) noexcept {
++            uint32_t value=count.load(std::memory_order_relaxed);
++            while(value<limit) {
++                if(count.compare_exchange_weak(value,value+1u,std::memory_order_relaxed)) {
++                    index=value;return true;
++                }
++            }
++            return false;
++        }
++        static bool write(const std::filesystem::path& path, const void* bytes, size_t size)
++        {
++            if (FILE* out = std::fopen(path.string().c_str(), "wb")) {
++                const bool written=std::fwrite(bytes,1,size,out)==size;
++                const bool closed=std::fclose(out)==0;
++                return written&&closed;
++            }
++            return false;
+         }
+         // Optional immutable external image filter. Configuration/file IO occurs
+         // only after DUMP is enabled; no diagnostic image enters the GS/runtime.
+@@ -179,6 +229,14 @@
+         {
+             const char* dir = std::getenv("REO_VU1_DUMP");
+             if (!dir || !*dir) return;
++            const auto& hitSettings=hitConfig();
++            if(hitSettings.configured) {
++                if(!hitSettings.valid || !code || codeSize>16384u ||
++                   hitSettings.pc+8u>codeSize || !data || !dataSize || dataSize>16384u)return;
++                // Original-only capture work must not contaminate explicit VIF
++                // profile/overhead windows. This affects HIT_PC mode only.
++                if(ps2VifKickVuProfileActive()||vif_launch_overhead::active())return;
++            }
+             // Full image comparison precedes program/gate/bounded quota use.
+             if(!exactImageAllowed(code,codeSize))return;
+             // Character geometry (original descriptor 0x230640) uses a different
+@@ -241,6 +299,27 @@
+                 }
+                 armed.store(true, std::memory_order_relaxed);
+             }
++            if(hitSettings.configured) {
++                // Nonhits consume only the separate bounded scan-attempt budget.
++                // Output quota is reserved after the full original call finishes.
++                if(s_debugVu1RunCount.load(std::memory_order_relaxed)>=limit)return;
++                static std::atomic<uint32_t> scanAttempts{0u};
++                uint32_t scanIndex=0u;
++                if(!claim(scanAttempts,hitSettings.attemptLimit,scanIndex))return;
++                try {
++                    staged=std::make_unique<StagedInput>();
++                    std::memcpy(staged->code.data(),code,codeSize);
++                    std::memcpy(staged->data.data(),data,dataSize);
++                    std::memcpy(&staged->state,&state,sizeof(state));
++                    staged->meta={0x31555652u,1u,codeSize,dataSize,maxCycles,
++                        memory?memory->vif1_regs.top:0u,memory?memory->vif1_regs.tops:0u,
++                        state.itop,uint32_t(sizeof(VU1State)),uint32_t(sizeof(VuTraceRecord))};
++                    stagedDirectory=dir;
++                    trace.reserve(1024u);
++                    hitPC=hitSettings.pc;outputLimit=limit;active=true;
++                } catch (...) { staged.reset();active=false; }
++                return; // Staged original input has not been published yet.
++            }
+             // Pre-gate microprogram calls must not consume the bounded budget.
+             const uint32_t index = s_debugVu1RunCount.fetch_add(1, std::memory_order_relaxed);
+             if (index >= limit) return;
+@@ -260,13 +339,55 @@
+         }
+         void step(const VU1State& state, uint32_t lower, uint32_t upper)
+         {
+-            if (!active || trace.size() >= 1024) return;
++            if (!active) return;
++            if(staged) {
++                // Detect before the trace cap: clipping can start after thousands
++                // of original pairs, beyond the first1024 trace records.
++                if(!hit && state.pc==hitPC) {hit=true;firstHitPair=observedPairs;}
++                ++observedPairs;
++            }
++            if(trace.size()>=1024u)return;
+             VuTraceRecord record{state.pc, lower, upper, {}};
+             std::memcpy(record.vi, state.vi, sizeof(record.vi)); trace.push_back(record);
+         }
+-        ~VuCapture()
+-        {
+-            if (active) write(base.string()+".trace.bin", trace.data(), trace.size()*sizeof(VuTraceRecord));
++        void finish(uint32_t pairs,uint32_t maxPairs,const VU1State& state,bool ended,bool bounds) noexcept {
++            if(!staged)return;
++            complete=true;completedPairs=pairs;endPC=state.pc;
++            finishedE=ended;finishedBounds=bounds;finishedCap=!ended&&!bounds&&pairs==maxPairs;
++        }
++        ~VuCapture() noexcept
++        {
++            if(!staged) {
++                if(active)write(base.string()+".trace.bin",trace.data(),trace.size()*sizeof(VuTraceRecord));
++                return;
++            }
++            // Never publish input or consume output quota for a nonhit or an
++            // exception-unwound incomplete original call. No guest side effects.
++            if(!active||!hit||!complete)return;
++            try {
++                std::error_code error;
++                std::filesystem::create_directories(stagedDirectory,error);
++                if(error)return;
++                uint32_t index=0u;
++                if(!claim(s_debugVu1RunCount,outputLimit,index))return;
++                char name[40];std::snprintf(name,sizeof(name),"vu1-run-%04u",index);
++                base=stagedDirectory/name;
++                bool ok=write(base.string()+".code.bin",staged->code.data(),staged->meta[2]);
++                ok=write(base.string()+".data.bin",staged->data.data(),staged->meta[3])&&ok;
++                ok=write(base.string()+".state.bin",&staged->state,sizeof(staged->state))&&ok;
++                ok=write(base.string()+".meta.bin",staged->meta.data(),sizeof(staged->meta))&&ok;
++                ok=write(base.string()+".trace.bin",trace.data(),trace.size()*sizeof(VuTraceRecord))&&ok;
++                // Marker is LAST and only follows successful start-input files.
++                // HIT1,v1,PC,zero-based first pair,observed/completed pairs,
++                // endPC,E/bounds/cap flags,tracecount,original entryPC.
++                const uint32_t marker[]={0x31544948u,1u,hitPC,firstHitPair,observedPairs,
++                    completedPairs,endPC,uint32_t(finishedE),uint32_t(finishedBounds),
++                    uint32_t(finishedCap),uint32_t(trace.size()),staged->state.pc};
++                if(ok)ok=write(base.string()+".hit.bin",marker,sizeof(marker));
++                if(!ok)std::fprintf(stderr,"[VU1-CAPTURE-HIT] incomplete output index=%u pc=%04x\n",index,hitPC);
++            } catch (...) {
++                std::fprintf(stderr,"[VU1-CAPTURE-HIT] output failed pc=%04x\n",hitPC);
++            }
+         }
+     };
+ }
+@@ -556,6 +677,7 @@
+     if(timing.kickProfile)ps2VifKickVuNativeGeometryRecord(nativeLoops,nativeVertices,nativePairs);
+     if(timing.kickProfile)ps2VifKickVuNativeGeometryTimingRecord(nativeAttempts,nativeAttemptNs);
+     timing.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds);
++    capture.finish(cycle+(ended?1u:0u),maxCycles,m_state,ended,bounds);
+ }
+ 
+ // ============================================================================
+diff --git a/ps2xRuntime/src/lib/vu_specialized_route.cpp b/ps2xRuntime/src/lib/vu_specialized_route.cpp
+--- a/ps2xRuntime/src/lib/vu_specialized_route.cpp
++++ b/ps2xRuntime/src/lib/vu_specialized_route.cpp
+@@ -1,11 +1,64 @@
+ #include "vu_specialized_route.h"
+ #include <atomic>
++#include <array>
++#include <mutex>
+ #include <cstring>
+ #include <limits>
+ 
+ namespace vu_specialized {
+ namespace {
+-std::atomic<const ProgramTable*> publishedTable{nullptr};
++constexpr uint32_t maxPrograms = 64u;
++constexpr uint32_t maxSnapshots = 16u;
++struct WordFilter { uint32_t offset = 0u, value = 0u; };
++struct ProgramIndex {
++    const Program* program = nullptr;
++    const uint8_t* image = nullptr;
++    const Block* const* entries = nullptr;
++    uint64_t prefix = 0u;
++    uint32_t codeBytes = 0u, dataBytes = 0u, filterCount = 0u;
++    std::array<WordFilter, maxPrograms - 1u> filters{};
++};
++struct RegistrySnapshot {
++    const ProgramTable* table = nullptr;
++    uint32_t count = 0u;
++    std::array<ProgramIndex, maxPrograms> programs{};
++};
++// Startup publication only. Storage never moves or gets overwritten, so a
++// launch holding a previous snapshot remains safe after a table replacement.
++// No registration allocation, per-launch lock, hash, refcount or reclamation.
++std::array<RegistrySnapshot, maxSnapshots> snapshots{};
++uint32_t usedSnapshots = 0u;
++std::mutex registrationMutex;
++std::atomic<const RegistrySnapshot*> publishedSnapshot{nullptr};
++
++uint32_t wordAt(const uint8_t* code, uint32_t offset) noexcept {
++    uint32_t word;
++    std::memcpy(&word, code + offset, sizeof(word));
++    return word;
++}
++
++bool addFilter(ProgramIndex& p, uint32_t offset) noexcept {
++    for (uint32_t i = 0u; i < p.filterCount; ++i)
++        if (p.filters[i].offset == offset) return true;
++    if (p.filterCount == p.filters.size()) return false;
++    p.filters[p.filterCount++] = {offset, wordAt(p.image, offset)};
++    return true;
++}
++
++bool sameSnapshot(const RegistrySnapshot& a, const RegistrySnapshot& b) noexcept {
++    if (a.table != b.table || a.count != b.count) return false;
++    for (uint32_t i = 0u; i < a.count; ++i) {
++        const auto& x = a.programs[i];
++        const auto& y = b.programs[i];
++        if (x.program != y.program || x.image != y.image || x.entries != y.entries ||
++            x.prefix != y.prefix || x.codeBytes != y.codeBytes || x.dataBytes != y.dataBytes ||
++            x.filterCount != y.filterCount) return false;
++        for (uint32_t j = 0u; j < x.filterCount; ++j)
++            if (x.filters[j].offset != y.filters[j].offset ||
++                x.filters[j].value != y.filters[j].value) return false;
++    }
++    return true;
++}
+ 
+ uint64_t firstPair(const uint8_t* code) noexcept {
+     uint64_t value;
+@@ -24,18 +77,19 @@
+ 
+ bool registerProgramTable(const ProgramTable* table) noexcept {
+     if (!table || !table->count) {
+-        publishedTable.store(nullptr, std::memory_order_release);
+-        return true;
++        // Serialize writers so null/replacement publication has one order.
++        try {
++            std::lock_guard<std::mutex> lock(registrationMutex);
++            publishedSnapshot.store(nullptr, std::memory_order_release);
++            return true;
++        } catch (...) { return false; }
+     }
+-    if (!table->programs || table->count > 64u) return false;
++    if (!table->programs || table->count > maxPrograms) return false;
+     for (uint32_t i = 0; i < table->count; ++i) {
+         const auto& p = table->programs[i];
+         if (!p.exactCodeImage || !p.entryBlocks || p.codeBytes < 8u ||
+             p.codeBytes > 16384u || (p.codeBytes & 7u) || !p.dataBytes || p.dataBytes > 16384u)
+             return false;
+-        for (uint32_t j = 0; j < i; ++j)
+-            if (firstPair(p.exactCodeImage) == firstPair(table->programs[j].exactCodeImage))
+-                return false;
+         for (uint32_t entry = 0; entry < p.codeBytes / 8u; ++entry) {
+             const Block* block = p.entryBlocks[entry];
+             if (!block) continue;
+@@ -54,27 +108,80 @@
+             }
+         }
+     }
+-    publishedTable.store(table, std::memory_order_release);
+-    return true;
++    RegistrySnapshot candidate{};
++    candidate.table = table;
++    candidate.count = table->count;
++    for (uint32_t i = 0u; i < table->count; ++i) {
++        const Program& p = table->programs[i];
++        auto& index = candidate.programs[i];
++        index.program = &p;
++        index.image = p.exactCodeImage;
++        index.entries = p.entryBlocks;
++        index.prefix = firstPair(p.exactCodeImage);
++        index.codeBytes = p.codeBytes;
++        index.dataBytes = p.dataBytes;
++    }
++    // For every same-prefix, same-dimension pair, find one differing aligned
++    // word and require it on BOTH entries. Thus no upload can pass both entries'
++    // word filters. Bytes8..end suffice: the first8 are known equal here.
++    // Pairwise offsets deduplicate within each entry; <=count-1 words suffice.
++    for (uint32_t i = 0u; i < candidate.count; ++i) {
++        auto& a = candidate.programs[i];
++        for (uint32_t j = 0u; j < i; ++j) {
++            auto& b = candidate.programs[j];
++            if (a.prefix != b.prefix || a.codeBytes != b.codeBytes || a.dataBytes != b.dataBytes)
++                continue;
++            uint32_t offset = 8u;
++            while (offset < a.codeBytes && wordAt(a.image, offset) == wordAt(b.image, offset))
++                offset += 4u;
++            if (offset == a.codeBytes) return false; // Ambiguous exact identity.
++            if (!addFilter(a, offset) || !addFilter(b, offset)) return false;
++        }
++    }
++    try {
++        std::lock_guard<std::mutex> lock(registrationMutex);
++        for (uint32_t i = 0u; i < usedSnapshots; ++i) {
++            if (!sameSnapshot(snapshots[i], candidate)) continue;
++            publishedSnapshot.store(&snapshots[i], std::memory_order_release);
++            return true;
++        }
++        if (usedSnapshots == maxSnapshots) return false;
++        snapshots[usedSnapshots] = candidate;
++        publishedSnapshot.store(&snapshots[usedSnapshots++], std::memory_order_release);
++        return true;
++    } catch (...) { return false; }
+ }
+ 
+ uint32_t registeredProgramCount() noexcept {
+-    const ProgramTable* table = publishedTable.load(std::memory_order_acquire);
+-    return table ? table->count : 0u;
++    const RegistrySnapshot* snapshot = publishedSnapshot.load(std::memory_order_acquire);
++    return snapshot ? snapshot->count : 0u;
+ }
+ 
+ const Program* selectProgram(const uint8_t* code, uint32_t codeBytes,
+     const uint8_t* data, uint32_t dataBytes, bool captureActive) noexcept {
+-    const ProgramTable* table = publishedTable.load(std::memory_order_acquire);
+-    if (!table || captureActive || codeBytes < 8u || !disjoint(code, codeBytes, data, dataBytes))
++    const RegistrySnapshot* snapshot = publishedSnapshot.load(std::memory_order_acquire);
++    if (!snapshot || captureActive || codeBytes < 8u || !disjoint(code, codeBytes, data, dataBytes))
+         return nullptr;
+     const uint64_t prefix = firstPair(code);
+-    for (uint32_t i = 0; i < table->count; ++i) {
+-        const Program& p = table->programs[i];
+-        if (p.codeBytes != codeBytes || p.dataBytes != dataBytes || firstPair(p.exactCodeImage) != prefix)
++    for (uint32_t i = 0u; i < snapshot->count; ++i) {
++        const auto& p = snapshot->programs[i];
++        if (p.codeBytes != codeBytes || p.dataBytes != dataBytes || p.prefix != prefix)
+             continue;
+-        // First-pair uniqueness means at most one full comparison, once per run.
+-        return std::memcmp(code, p.exactCodeImage, codeBytes) == 0 ? &p : nullptr;
++        bool wordsMatch = true;
++        for (uint32_t j = 0u; j < p.filterCount; ++j) {
++            const WordFilter& filter = p.filters[j];
++            if (wordAt(code, filter.offset) == filter.value) continue;
++            wordsMatch = false;
++            break;
++        }
++        if (!wordsMatch) continue;
++        // Filters prove at most one candidate here. They never admit an image:
++        // every byte, including unused tails, still needs exact equality.
++#if defined(REO_VU_SELECTOR_ORACLE)
++        extern void fullComparisonObserved() noexcept;
++        fullComparisonObserved();
++#endif
++        return std::memcmp(code, p.image, codeBytes) == 0 ? p.program : nullptr;
+     }
+     return nullptr;
+ }
+diff --git a/ps2xRuntime/src/lib/vu_specialized_route.h b/ps2xRuntime/src/lib/vu_specialized_route.h
+--- a/ps2xRuntime/src/lib/vu_specialized_route.h
++++ b/ps2xRuntime/src/lib/vu_specialized_route.h
+@@ -57,8 +57,14 @@
+ 
+ // Publish immutable caller-owned program/table/image storage before runtime init.
+ // All storage, including replaced tables, must live until every VU call ends.
+-// Duplicate first instruction-pair identities are rejected, avoiding ambiguous
+-// matching and more than one complete image comparison per launch.
++// Shared first-pair images are allowed. Exact duplicate images with identical
++// code/data dimensions are rejected. Registration derives distinguishing words;
++// these only reject candidates, and one final full-image comparison admits one.
++// There are 16 immutable metadata snapshots, each supporting at most 64 programs.
++// Null clears without consuming a slot. Identical metadata re-publication reuses
++// a snapshot; exhaustion rejects registration and preserves the active table.
++// All borrowed tables/images/blocks remain immutable for their active VU calls;
++// the selector owns no game image and no mutable-upload identity cache.
+ // Null clears the registry. Failed validation leaves the prior table unchanged.
+ bool registerProgramTable(const ProgramTable*) noexcept;
+ uint32_t registeredProgramCount() noexcept;
