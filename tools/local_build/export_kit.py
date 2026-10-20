@@ -14,6 +14,8 @@ import re
 import shutil
 import subprocess
 
+from compilation_batches import GENERATED_BATCH_SIZE
+
 
 def sha(path):
     with Path(path).open("rb") as f:
@@ -160,9 +162,9 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
                       "options": unit_options})
     groups = [{"id": name, "root": "{generated}/" + folder, "pattern": pattern,
                "batch": batch, "options": generated_options}
-              for name, folder, pattern, batch in [("main", "output", "*.cpp", 8),
-                  ("overlay", "output_ovl", "**/*.cpp", 8),
-                  ("extra", "output_extra", "*.cpp", 8),
+              for name, folder, pattern, batch in [("main", "output", "*.cpp", GENERATED_BATCH_SIZE),
+                  ("overlay", "output_ovl", "**/*.cpp", GENERATED_BATCH_SIZE),
+                  ("extra", "output_extra", "*.cpp", GENERATED_BATCH_SIZE),
                   ("legacy", "output_overlay", "*.cpp", 1)]]
     cache = (build / "CMakeCache.txt").read_text()
     match = re.search(r"(?m)^REO_RECOMP_OD_SOURCES:STRING=(.*)$", cache)

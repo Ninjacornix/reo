@@ -9,6 +9,10 @@ internal static class GameImageCache {
     public record Result(string Image, string Sha256);
     static string Hash(string file) {
         using var stream = File.OpenRead(file);
+        if (stream.Length >= 1024 * 1024) {
+            using var buffered = new BufferedStream(stream, 1024 * 1024);
+            return Convert.ToHexString(SHA256.HashData(buffered)).ToLowerInvariant();
+        }
         return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
     }
     public static Result Prepare(string home, IEnumerable<Input> files, CancellationToken cancel) {

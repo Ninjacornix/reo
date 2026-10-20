@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 namespace Outbreak.Launcher;
 
 internal static class BuildResources {
+    internal const int MaximumWorkers = 32;
     [StructLayout(LayoutKind.Sequential)]
     struct MemoryStatus {
         public uint Length, Load;
@@ -21,9 +22,10 @@ internal static class BuildResources {
     }
     internal static int Select(int processors, ulong availableBytes) {
         const ulong gib = 1024UL * 1024 * 1024;
-        // Reserve 1 GiB for other work and budget 2 GiB per compiler worker.
+        // The worker admits large units separately; this is its upper concurrency bound.
         int memoryLimit =
-            (int)Math.Min(4UL, (availableBytes > gib ? availableBytes - gib : 0) / (2 * gib));
-        return Math.Max(1, Math.Min(Math.Clamp(processors - 1, 1, 4), memoryLimit));
+            (int)Math.Min((ulong)MaximumWorkers,
+                          (availableBytes > gib ? availableBytes - gib : 0) / (5 * gib / 4));
+        return Math.Max(1, Math.Min(Math.Clamp(processors - 1, 1, MaximumWorkers), memoryLimit));
     }
 }

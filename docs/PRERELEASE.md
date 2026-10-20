@@ -1,12 +1,18 @@
 # Prerelease packaging
 
-Current target: **v1.0.10**, marked prerelease. .NET is an external
+Current target: **v1.0.11**, marked prerelease. .NET is an external
 prerequisite. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting.
 
-For this launcher-only update, reuse the frozen v1.0.6 build-inputs6.zip and
-inputs6/build-kit.json. Export a new kit with tools/local_build/export_slim_inputs.py
-only when generator/runtime inputs change. Required generation/runtime inputs
+This update changes generation and compilation, so it requires a new immutable
+kit. Use `tools/local_build/refresh_inputs.py` with the verified prior kit,
+the rebuilt independent recompiler, fresh output/archive paths, and
+`--dependency-sources <matching-ZIP> --version 1.0.11`. The dependency-source ZIP
+must contain the exact source-guard header used to rebuild that recompiler.
+Retain its other frozen dependency files; do not export the dirty runtime checkout.
+Keep the original eight-file grouping: the larger-batch experiment failed the
+complete code-equivalence gate and is not part of v1.0.11.
+Required generation/runtime inputs
 remain in build-inputs.zip; the compiler and large corresponding-source archive
 are excluded. The ZIP expands into Local AppData automatically during import.
 
@@ -17,13 +23,13 @@ manifest declaring external-python. Do not ship vendor, python, wheels,
 dependency-sources, tests, databases, credentials or developer environments.
 
 Commit corresponding source, then run launcher/package-slim.ps1 with -Inputs,
--KitManifest, -Server <source-only-export>, -Output and -Version 1.0.10. It verifies
+-KitManifest, -Server <source-only-export>, -Output and -Version 1.0.11. It verifies
 the server manifest, publishes a framework-dependent single-file launcher,
 consolidates required licence texts into THIRD-PARTY-NOTICES.txt and links GitHub's
 source archive for the release tag. Keep LICENSE/NOTICE and the
 server's own licence. There must be no top-level LICENSES or sources folder.
 
-The main asset is RE-Outbreak-v1.0.10-Windows-x64.zip. ZIP paths must be relative,
+The main asset is RE-Outbreak-v1.0.11-Windows-x64.zip. ZIP paths must be relative,
 use / separators and place Outbreak.Launcher.exe at the root. Reject absolute
 paths, traversal, drive prefixes, duplicate names and unexpected files. Extract
 the final ZIP into a fresh folder and verify all inventory, server and nested
@@ -38,7 +44,7 @@ path, or a missing path to exercise automatic provisioning in the isolated test
 home. It verifies cold setup and a cached restart. Owned services use isolated
 ports/accounts and are shut down afterward.
 
-Publish the main ZIP/checksum and RE-Outbreak-v1.0.10-Dependency-Sources.zip/checksum.
+Publish the main ZIP/checksum and RE-Outbreak-v1.0.11-Dependency-Sources.zip/checksum.
 Use GitHub's automatic source archives for the project; do not add a duplicate
 Project-Source.tar asset. Ordinary players only need the main ZIP. No source
 archives belong inside the application or server folder. Server setup downloads

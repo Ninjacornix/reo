@@ -40,6 +40,10 @@ public static partial class LocalGameBuild {
 
     static string Sha(string file) {
         using var input = File.OpenRead(file);
+        if (input.Length >= 1024 * 1024) {
+            using var buffered = new BufferedStream(input, 1024 * 1024);
+            return Convert.ToHexString(SHA256.HashData(buffered)).ToLowerInvariant();
+        }
         return Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant();
     }
 
@@ -224,7 +228,7 @@ public static partial class LocalGameBuild {
                           if (count.Success)
                               progress?.Report(new(long.Parse(count.Groups[1].Value),
                                                    long.Parse(count.Groups[2].Value),
-                                                   $"Building your game - {jobs} parallel workers",
+                                                   $"Building your game - up to {jobs} parallel workers",
                                                    "Compiling native code"));
                           else if (line.StartsWith("Generating ", StringComparison.Ordinal))
                               progress?.Report(

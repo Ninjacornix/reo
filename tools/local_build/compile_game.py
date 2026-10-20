@@ -7,7 +7,6 @@ an existing installation; this worker never downloads or installs software.
 """
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
 import json
 import os
@@ -16,6 +15,9 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
+
+from build_scheduler import cost_estimate, header_fingerprint, scheduled_results, unit_estimates
 
 
 def digest(path):
@@ -154,29 +156,36 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         return path
 
     units = list(plan.get("units", []))
+    size_hints = {}
     for group in ([] if preflight else plan.get("sourceGroups", [])):
         parent = Path(expand(group["root"])).resolve()
         if not parent.is_relative_to(generated):
             raise ValueError("Generated source group escapes the private generation directory")
-        batch, size, index, includes = [], 0, 0, []
+        batch, size, index, includes, large_guest = [], 0, 0, [], False
         replacements = plan.get("generatedSourceOverrides", {})
         for file in sorted(parent.glob(group["pattern"])):
             if not file.is_file() or file.suffix != ".cpp" or file.name in group.get("exclude", []):
                 continue
-            if batch and (len(batch) >= group.get("batch", 8) or size + file.stat().st_size > 500000):
+            file_size = file.stat().st_size
+            if batch and (len(batch) >= group.get("batch", 8) or size + file_size > 500000):
                 units.append({"id": group["id"] + str(index), "sources": batch,
                               "options": group.get("options", []) + includes, "generated": True})
-                batch, size, index, includes = [], 0, index + 1, []
-            replacement = replacements.get(file.relative_to(generated).as_posix())
+                if not replacements:
+                    size_hints[group['id'] + str(index)] = (size, large_guest)
+                batch, size, index, includes, large_guest = [], 0, index + 1, [], False
+            replacement = replacements.get(file.relative_to(generated).as_posix()) if replacements else None
             batch.append(expand(replacement) if replacement else str(file))
             if replacement:
                 flag = "/I" + str(file.parent)
                 if flag not in includes:
                     includes.append(flag)
-            size += file.stat().st_size
+            size += file_size
+            large_guest |= file_size > 750000 and not file.name.startswith('register')
         if batch:
             units.append({"id": group["id"] + str(index), "sources": batch,
                           "options": group.get("options", []) + includes, "generated": True})
+            if not replacements:
+                size_hints[group['id'] + str(index)] = (size, large_guest)
         if not batch and index == 0:
             raise ValueError("Generated source group is empty")
 
@@ -186,14 +195,9 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
     objects.mkdir(exist_ok=True)
     logs.mkdir(exist_ok=True)
     # Header changes must invalidate users of inline runtime/ISA operations.
-    header_hash = hashlib.sha256()
-    for parent in (kit, generated):
-        for p in sorted(parent.rglob("*")):
-            if p.is_file() and p.suffix in {".h", ".hpp", ".inl", ".inc"}:
-                header_hash.update(str(p.relative_to(parent)).encode())
-                header_hash.update(bytes.fromhex(digest(p)))
+    header_hash = header_fingerprint((kit, generated), digest, jobs)
     base = json.dumps({"abi": plan["runtimeAbi"], "compiler": digest(compiler), "worker": digest(Path(__file__)),
-                       "headers": header_hash.hexdigest(), "plan": digest(kit / plan_name)}, sort_keys=True)
+                       "headers": header_hash, "plan": digest(kit / plan_name)}, sort_keys=True)
     common = [expand(flag) for flag in plan.get("compileOptions", [])]
     names = set()
     for unit in units:
@@ -246,7 +250,8 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         obj, receipt = objects / (name + ".obj"), objects / (name + ".json")
         if obj.exists() and receipt.exists():
             saved = json.loads(receipt.read_text())
-            if saved.get("input") == signature and saved.get("object") == digest(obj):
+            if (isinstance(saved, dict) and saved.get("input") == signature
+                    and saved.get("object") == digest(obj)):
                 return obj, True
         source = objects / (name + ".cpp")
         # Includes preserve each generated function's original header search base.
@@ -260,37 +265,38 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
             pch = ["-include-pch", str(precompiled[unit["pch"]])] if unit.get("pch") else []
             command = [str(compiler), "-c", *portable_defaults,
                        *portable_flags(options), *pch, "-o", str(pending), str(source)]
+        started = time.perf_counter()
         with (logs / (name + ".log")).open("wb") as log:
             result = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
         if result.returncode:
             raise RuntimeError(f"Compile unit {name} failed (exit {result.returncode}); see {logs / (name + '.log')}")
         pending.replace(obj)
         temporary = receipt.with_suffix(".tmp")
-        temporary.write_text(json.dumps({"input": signature, "object": digest(obj)}))
+        temporary.write_text(json.dumps({"input": signature, "object": digest(obj),
+                                         "compileSeconds": time.perf_counter() - started}))
         temporary.replace(receipt)
         return obj, False
 
     completed, reused, failures = {}, 0, []
-    jobs = max(1, min(jobs, 4))
-    with ThreadPoolExecutor(max_workers=jobs) as pool:
-        futures = {pool.submit(compile_unit, unit): unit for unit in units}
+    estimates = {}
+    for unit in units:
+        receipt = objects / (unit['id'] + '.json')
+        if unit['id'] in size_hints:
+            estimates[unit['id']] = cost_estimate(*size_hints[unit['id']], receipt)
+        else:
+            estimates[unit['id']] = unit_estimates(unit, [source_file(p) for p in unit['sources']], receipt)
+    for unit, future in scheduled_results(units, compile_unit, jobs, estimates):
         try:
-            for future in as_completed(futures):
-                try:
-                    obj, cached = future.result()
-                except Exception as error:
-                    if not preflight:
-                        raise
-                    failures.append(str(error))
-                    print(str(error), flush=True)
-                    continue
-                completed[futures[future]["id"]] = obj
-                reused += cached
-                print(f"Compiled {len(completed)}/{len(futures)} ({reused} cached)", flush=True)
-        except BaseException:
-            for future in futures:
-                future.cancel()
-            raise
+            obj, cached = future.result()
+        except Exception as error:
+            if not preflight:
+                raise
+            failures.append(str(error))
+            print(str(error), flush=True)
+            continue
+        completed[unit['id']] = obj
+        reused += cached
+        print(f"Compiled {len(completed)}/{len(units)} ({reused} cached)", flush=True)
     if preflight:
         if failures:
             raise RuntimeError(f"Portable preflight failed in {len(failures)} units; see {logs}")

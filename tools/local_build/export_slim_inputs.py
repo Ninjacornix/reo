@@ -6,6 +6,8 @@ from pathlib import Path
 import shutil
 import zipfile
 
+from compilation_batches import with_generated_batches
+
 
 def sha(path):
     with Path(path).open('rb') as stream:
@@ -27,11 +29,13 @@ def export(kit, output, archive, root, version='1.0.7'):
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, destination)
     plan_file = output / 'compile-plan.json'
-    plan = json.loads(plan_file.read_text())
+    plan = with_generated_batches(json.loads(plan_file.read_text()))
     plan['externalToolchain'] = True
     plan['externalCompilerSha256'] = sha(kit / plan['compiler'].removeprefix('{kit}/'))
     plan_file.write_text(json.dumps(plan, indent=2), encoding='utf-8')
-    shutil.copyfile(root / 'tools/local_build/compile_game.py', output / 'tools/local_build/compile_game.py')
+    for name in ['build_game.py', 'generate_game.py', 'registration_chunks.py',
+                 'compile_game.py', 'compile_linux.py', 'build_scheduler.py', 'compilation_batches.py']:
+        shutil.copyfile(root / 'tools/local_build' / name, output / 'tools/local_build' / name)
     (output / 'notices/SDK-SOURCES.txt').write_text(
         'Exact corresponding dependency sources are available beside this release:\n'
         f'https://github.com/Ninjacornix/reo/releases/download/v{version}/RE-Outbreak-v{version}-Dependency-Sources.zip\n',

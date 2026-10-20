@@ -1,6 +1,7 @@
 """First-run worker: derive, instrument and compile a private game from its ISO import."""
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 from pathlib import Path
@@ -21,19 +22,27 @@ def sha(path):
         return hashlib.file_digest(f, "sha256").hexdigest()
 
 
-def stage(work, name, inputs, action, outputs):
+def stage(work, name, inputs, action, outputs, jobs=1):
     receipt = work / (name + ".json")
     expected = {str(p): sha(p) for p in inputs}
     if receipt.exists():
         record = json.loads(receipt.read_text())
         recorded_inputs = record.get("inputs", {})
-        if all(recorded_inputs.get(p) == digest for p, digest in expected.items()) and record.get("outputs") and all(Path(p).is_file() and sha(p) == digest
-                                                   for p, digest in record.get("outputs", {}).items()):
-            print("Reusing " + name, flush=True)
-            return
+        if all(recorded_inputs.get(p) == digest for p, digest in expected.items()) and record.get("outputs"):
+            def matches(item):
+                path, digest = item
+                return Path(path).is_file() and sha(path) == digest
+            with ThreadPoolExecutor(max_workers=max(1, min(jobs, 4))) as pool:
+                valid = all(pool.map(matches, record["outputs"].items()))
+            if valid:
+                print("Reusing " + name, flush=True)
+                return
     # Never overlay a failed generation with a new one or delete its diagnostics.
     action()
-    record = {"inputs": expected, "outputs": {str(p): sha(p) for p in outputs()}}
+    paths = list(outputs())
+    with ThreadPoolExecutor(max_workers=max(1, min(jobs, 4))) as pool:
+        hashes = list(pool.map(sha, paths))
+    record = {"inputs": expected, "outputs": {str(p): digest for p, digest in zip(paths, hashes)}}
     if not record["outputs"]:
         raise ValueError("Build stage produced no verified output")
     temporary = receipt.with_suffix(".pending")
@@ -80,12 +89,13 @@ def build(kit, disc, work, output, jobs):
             while generated.with_name("config.interrupted" + str(n)).exists():
                 n += 1
             generated.rename(generated.with_name("config.interrupted" + str(n)))
-        generate(recompiler, disc, metadata, generated)
+        generate(recompiler, disc, metadata, generated, jobs=jobs)
 
     stage(work, "generate", [elf, recompiler, script / "generate_game.py",
-                            script / "generate_support.py", *metadata_files], game_generation,
+                            script / "generate_support.py", script / "registration_chunks.py",
+                            *metadata_files], game_generation,
           lambda: [p for folder in ["output", "output_ovl", "output_extra", "output_overlay", "local_source_catalogues"]
-                   for p in (generated / folder).rglob("*") if p.is_file()])
+                   for p in (generated / folder).rglob("*") if p.is_file()], jobs=jobs)
     print("Reconstructing local instrumentation and VU optimizations", flush=True)
     apply_plan(elf, generated, metadata / "local_source_recipes.json", project)
     generate_queue_control(elf, metadata / "local_queue_control.json",
@@ -106,7 +116,7 @@ def build(kit, disc, work, output, jobs):
 
     stage(work, "vu", [elf, metadata / "local_vu_images.json", script / "reconstruct_vu.py",
                        kit / "tools/vu_whole_aot/generate.py", kit / "tools/vu_whole_aot/decode.py"],
-          generate_vu, lambda: [p for p in vu.rglob("*") if p.is_file()])
+          generate_vu, lambda: [p for p in vu.rglob("*") if p.is_file()], jobs=jobs)
     print("Compiling the game locally (the first build can take a while)", flush=True)
     compile_native(kit, generated, work, output, jobs)
 

@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**v1.0.10 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
+**v1.0.11 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -29,14 +29,14 @@ explain the current compilation costs and next optimization candidates.
 
 ## Windows prerelease
 
-Download **RE-Outbreak-v1.0.10-Windows-x64.zip** from
+Download **RE-Outbreak-v1.0.11-Windows-x64.zip** from
 [GitHub Releases](https://github.com/Ninjacornix/reo/releases). Install the
 [requirements](REQUIREMENTS.md), extract the ZIP, and open `Outbreak.Launcher.exe`.
 The launcher folder no longer includes the .NET runtime, language folders or a
 compiler installation. Hosting source is included under `network-server/`, with
 its dependencies listed in `requirements.txt` rather than bundled Python/packages.
 Extract all files into one folder; `Outbreak.Launcher.exe` is at its top level.
-The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Extract v1.0.10 into a fresh
+The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Extract v1.0.11 into a fresh
 folder if upgrading, so old bundled Python/vendor files are left behind. The
 single-file startup fix from v1.0.4 is retained. Licence notices are in
 `THIRD-PARTY-NOTICES.txt`; source archives are separate developer downloads.
@@ -48,6 +48,12 @@ environment variable or terminal command is needed. First setup needs Internet a
 can take substantial time; progress, cancellation and stage ETAs are shown.
 The result and tools are cached in Local AppData,
 so later launches reuse it. No game executable or assets are included.
+
+This update speeds up source generation and compilation without lowering the
+game's compiler optimization level. See the [measured results](docs/COMPILATION_PERFORMANCE.md).
+Its updated build inputs have a new cache identity: games compiled with an older
+kit need rebuilding for this version. Keep an older installation if you want to
+continue using its completed build meanwhile.
 
 Only **File #1 NTSC-U v2.00 (SLUS-20765)** is supported. Before extraction, the
 launcher checks SYSTEM.CNF's boot executable, identifies known game/region serials

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0-windows</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><PlatformTarget>x64</PlatformTarget><ProductionRoot Condition="'$(ProductionRoot)' == ''">../..</ProductionRoot></PropertyGroup>
+ <ItemGroup>
+  <Compile Include="$(ProductionRoot)/launcher/DiscImage.cs" Link="Production/DiscImage.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/DiscValidation.cs" Link="Production/DiscValidation.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/DiscImport.cs" Link="Production/DiscImport.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/GameCatalog.cs" Link="Production/GameCatalog.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/AppLayout.cs" Link="Production/AppLayout.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/LocalBuildPayload.cs" Link="Production/LocalBuildPayload.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/LocalGameBuild.cs" Link="Production/LocalGameBuild.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/PortableCompilerSetup.cs" Link="Production/PortableCompilerSetup.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/BuildResources.cs" Link="Production/BuildResources.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/ExistingGameBuild.cs" Link="Production/ExistingGameBuild.cs" />
+  <Compile Include="$(ProductionRoot)/launcher/GameImageCache.cs" Link="Production/GameImageCache.cs" />
+ </ItemGroup>
+</Project>

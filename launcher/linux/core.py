@@ -173,7 +173,8 @@ class Session:
             environment["PYTHONDONTWRITEBYTECODE"] = "1"
             self.run([str(kit_root / "tools/python/bin/python3"), "-B", "-u",
                       str(kit_root / "tools/local_build/build_game.py"), "--kit", str(kit_root),
-                      "--disc", str(disc), "--work", str(work), "--output", str(output), "--jobs", "4"],
+                      "--disc", str(disc), "--work", str(work), "--output", str(output),
+                      "--jobs", str(max(1, min(32, (os.cpu_count() or 2) - 1)))],
                      work, environment, report, cache / "build.log")
             if identity != sha(kit_root / "build-kit.json"):
                 raise ValueError("The build kit changed while compiling")

@@ -1,6 +1,6 @@
 # Launcher
 
-The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.10 uses a smaller
+The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.11 uses a smaller
 framework-dependent launcher and automatic compiler setup. See
 [requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
 The extracted single-file launcher is checked separately for window startup;

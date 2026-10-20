@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <string>
 #include <string_view>
 #include <regex>
@@ -6,6 +7,43 @@
 #include <cctype>
 #include <vector>
 namespace ps2recomp::source_guard {
+// Each prefix is a literal required at the beginning of a match. Anchoring the
+// original expression at those candidates preserves its matching/refusal rules.
+inline size_t findMatch(const std::string& text, std::smatch& match, const std::regex& pattern,
+                        std::string_view prefix, size_t from = 0, std::string_view second = {}) {
+    while (from < text.size()) {
+        auto at = text.find(prefix, from);
+        if (!second.empty())
+            at = std::min(at, text.find(second, from));
+        if (at == std::string::npos)
+            break;
+        auto flags = std::regex_constants::match_continuous;
+        if (at)
+            flags |= std::regex_constants::match_prev_avail;
+        if (std::regex_search(text.cbegin() + at, text.cend(), match, pattern, flags))
+            return at;
+        from = at + 1;
+    }
+    return std::string::npos;
+}
+inline std::string replaceMatches(const std::string& text, const std::regex& pattern,
+                                  std::string_view prefix, const std::string& format,
+                                  std::string_view second = {}) {
+    std::smatch match;
+    size_t from = 0, at = findMatch(text, match, pattern, prefix, from, second);
+    if (at == std::string::npos)
+        return text;
+    std::string out;
+    out.reserve(text.size());
+    do {
+        out.append(text, from, at - from);
+        out += match.format(format);
+        from = at + match.length();
+        at = findMatch(text, match, pattern, prefix, from, second);
+    } while (at != std::string::npos);
+    out.append(text, from, text.size() - from);
+    return out;
+}
 inline bool ident(char c) {
     return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
 }
@@ -26,12 +64,14 @@ inline std::string trim(std::string value) {
 inline std::string maskedWrites(std::string text) {
     // Replace only a destination-preserving blend. Source-mask blends with a
     // different old operand stay reads and retain their original semantics.
-    const std::regex pattern(R"((ctx->(?:vu0_vf\[[^\]]+\]|vu0_acc))\s*=\s*_mm_blendv_ps\()");
+    static const std::regex pattern(R"((ctx->(?:vu0_vf\[[^\]]+\]|vu0_acc))\s*=\s*_mm_blendv_ps\()");
     std::smatch match;
     size_t from = 0;
-    while (std::regex_search(text.cbegin() + from, text.cend(), match, pattern)) {
-        size_t begin = from + match.position(), open = begin + match.length() - 1,
-               end = balanced(text, open, '(', ')');
+    while (true) {
+        const auto begin = findMatch(text, match, pattern, "ctx->", from);
+        if (begin == std::string::npos)
+            break;
+        size_t open = begin + match.length() - 1, end = balanced(text, open, '(', ')');
         std::vector<std::string> args;
         size_t part = open + 1;
         unsigned round = 0, square = 0;
@@ -152,41 +192,44 @@ inline std::string instrument(std::string text, bool generated = true) {
     if (generated) {
         // The emitted ABI has one actual Context pointer. Unknown aliases or
         // aggregate copies must be reviewed before compiling an owned route.
-        if (std::regex_search(
-                text,
-                std::regex(R"((?:auto|R5900Context)\s*\*\s*(?!ctx\b)[A-Za-z_0-9]+\s*=\s*ctx\b)")) ||
-            std::regex_search(text, std::regex(R"(=\s*\*\s*ctx\b)")) ||
-            std::regex_search(text, std::regex(R"(\bctx\s+->)")))
+        static const std::regex alias(
+            R"((?:auto|R5900Context)\s*\*\s*(?!ctx\b)[A-Za-z_0-9]+\s*=\s*ctx\b)");
+        static const std::regex clone(R"(=\s*\*\s*ctx\b)");
+        static const std::regex spaced(R"(\bctx\s+->)");
+        std::smatch rejected;
+        if (findMatch(text, rejected, alias, "auto", 0, "R5900Context") != std::string::npos ||
+            findMatch(text, rejected, clone, "=") != std::string::npos ||
+            findMatch(text, rejected, spaced, "ctx") != std::string::npos)
             throw std::runtime_error(
                 "Generated Context alias/clone syntax is outside reviewed source emitter");
     }
     text = maskedWrites(std::move(text));
     text = fields(text);
-    const std::regex copy(R"((?:\bstd::|::)memcpy\s*\()");
-    text = std::regex_replace(text, copy, "reo_source_instrumentation::copyBytes(");
-    const std::regex move(R"((?:\bstd::|::)memmove\s*\()");
-    text = std::regex_replace(text, move, "reo_source_instrumentation::moveBytes(");
-    const std::regex fill(R"((?:\bstd::|::)memset\s*\()");
-    text = std::regex_replace(text, fill, "reo_source_instrumentation::fillBytes(");
-    const std::regex signature(
+    static const std::regex copy(R"((?:\bstd::|::)memcpy\s*\()");
+    text = replaceMatches(text, copy, "std::", "reo_source_instrumentation::copyBytes(", "::");
+    static const std::regex move(R"((?:\bstd::|::)memmove\s*\()");
+    text = replaceMatches(text, move, "std::", "reo_source_instrumentation::moveBytes(", "::");
+    static const std::regex fill(R"((?:\bstd::|::)memset\s*\()");
+    text = replaceMatches(text, fill, "std::", "reo_source_instrumentation::fillBytes(", "::");
+    static const std::regex signature(
         R"((void\s+[A-Za-z_0-9]+\s*\(\s*uint8_t\s*\*\s*rdram\s*,\s*R5900Context\s*\*\s*ctx\s*,\s*PS2Runtime\s*\*\s*runtime\s*\)\s*\{))");
-    text = std::regex_replace(
-        text, signature,
+    text = replaceMatches(
+        text, signature, "void",
         "$1\n    reo_source_instrumentation::EntryScope reo_source_entry(runtime,ctx);\n");
     if (generated) {
-        const std::regex site(R"((//\s*0x([0-9a-fA-F]+):\s*0x([0-9a-fA-F]+)[^\n]*\n))");
-        text = std::regex_replace(text, site, "$1    reo_source_entry.at(0x$2u,0x$3u);\n");
-        const std::regex addr(R"(// Address:\s*0x([0-9a-fA-F]+))");
+        static const std::regex site(R"((//\s*0x([0-9a-fA-F]+):\s*0x([0-9a-fA-F]+)[^\n]*\n))");
+        text = replaceMatches(text, site, "//", "$1    reo_source_entry.at(0x$2u,0x$3u);\n");
+        static const std::regex addr(R"(// Address:\s*0x([0-9a-fA-F]+))");
         std::smatch match;
-        if (std::regex_search(text, match, addr)) {
+        if (findMatch(text, match, addr, "// Address:") != std::string::npos) {
             const std::string prefix =
                 "    reo_source_instrumentation::EntryScope reo_source_entry(runtime,ctx);\n";
             const auto where = text.find(prefix);
             if (where != std::string::npos) {
                 std::smatch first;
-                std::regex raw(R"(//\s*0x[0-9a-fA-F]+:\s*0x([0-9a-fA-F]+))");
+                static const std::regex raw(R"(//\s*0x[0-9a-fA-F]+:\s*0x([0-9a-fA-F]+))");
                 const std::string opcode =
-                    std::regex_search(text, first, raw) ? first[1].str() : "0";
+                    findMatch(text, first, raw, "//") != std::string::npos ? first[1].str() : "0";
                 text.insert(
                     where + prefix.size(),
                     "    if(reo_source_instrumentation::dispatchEntry(rdram,*ctx,*runtime,0x" +
@@ -201,9 +244,8 @@ inline std::string instrument(std::string text, bool generated = true) {
     // scan by the first actual generated function signature, so a debug block
     // inside its body can never move the accessor include into that body.
     std::smatch firstFunction;
-    const size_t preambleEnd = std::regex_search(text, firstFunction, signature)
-                                   ? size_t(firstFunction.position())
-                                   : text.size();
+    const auto functionAt = findMatch(text, firstFunction, signature, "void");
+    const size_t preambleEnd = functionAt != std::string::npos ? functionAt : text.size();
     size_t includeEnd = 0;
     const auto functionHeading = text.find("// Function:");
     if (functionHeading != std::string::npos && functionHeading < preambleEnd)

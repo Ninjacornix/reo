@@ -34,6 +34,18 @@ launcher never installs them.
 
 ## Maintainer workflow
 
+For an audited generation-only update, `tools/local_build/refresh_inputs.py`
+creates a new kit from a fully verified old kit and an explicitly supplied rebuilt
+independent recompiler. It updates generation/compiler workers, ordered registration
+chunking, the scheduling helper and the corresponding source-guard patch.
+The release keeps the original eight-file batches; runtime/library inputs remain
+unchanged. Supply fresh `--output` and optional `--archive` paths. Never overwrite
+a sealed kit or substitute a compiler from a different source revision. For a
+release, supply `--dependency-sources` and `--version` together to record the
+matching separately published source archive and its digest. See
+[the measured import comparison](IMPORT_PROFILE.md) for parity checks and the
+completed build comparisons. The script does not publish releases.
+
 The exporter currently consumes the validated developer build's compilation
 database, source-unit inventory and runtime build records. It is not yet a
 clean-clone release pipeline. Preserve these inputs when preparing a kit.

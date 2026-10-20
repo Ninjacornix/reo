@@ -48,7 +48,8 @@ Required third-party notices are in THIRD-PARTY-NOTICES.txt. GitHub's source ZIP
 and the separate dependency-source asset are for developers/redistributors;
 ordinary players only need the Windows-x64.zip download.
 
-Compilation uses up to four parallel workers, selected from CPU and available memory.
+Compilation adapts parallel work to your CPU and available memory (up to 32 workers
+on machines with enough resources). Large source files reserve more memory.
 Shared precompiled headers and completed object files are reused, including after
 an interrupted build. Progress remains visible on every launcher page; compiler
 downloads show transferred MiB, percentage and stage ETA. Python/package setup

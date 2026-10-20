@@ -8,6 +8,7 @@ ps2_recomp tool and address metadata shipped with the build kit.
 
 import argparse
 import csv
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 from pathlib import Path
@@ -21,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from overlay_extract import decompress, wrap_elf
 from generate_catalogues import generate as generate_catalogues
 from generate_support import generate_support
+from registration_chunks import chunk_registrations
 
 ELF_SHA256 = "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
 MAGIC = 0x336F574D
@@ -54,7 +56,7 @@ def validate_mapped_ranges(output, function_map, skip=()):
                                  "rebuild the patched recompiler before compiling game sources")
 
 
-def generate(recompiler, disc, metadata, destination):
+def generate(recompiler, disc, metadata, destination, jobs=1):
     recompiler, disc, metadata, destination = map(Path, (recompiler, disc, metadata, destination))
     elf = disc / "SLUS_207.65"
     if sha(elf) != ELF_SHA256:
@@ -89,53 +91,57 @@ def generate(recompiler, disc, metadata, destination):
             subprocess.run([str(recompiler.resolve()), str(config)], check=True,
                            stdout=log, stderr=subprocess.STDOUT)
 
-    main = staging / "output"
-    invoke("main", elf, metadata / "outbreak_ghidra_functions.csv", main,
-           ("sub_00117080", "sub_00117818", "sub_001179E8"))
-    validate_mapped_ranges(main, metadata / "outbreak_ghidra_functions.csv",
-                           ("sub_00117080", "sub_00117818", "sub_001179E8"))
+    def generate_main():
+        main = staging / "output"
+        invoke("main", elf, metadata / "outbreak_ghidra_functions.csv", main,
+               ("sub_00117080", "sub_00117818", "sub_001179E8"))
+        validate_mapped_ranges(main, metadata / "outbreak_ghidra_functions.csv",
+                               ("sub_00117080", "sub_00117818", "sub_001179E8"))
 
-    with (metadata / "extra_functions.csv").open(newline="") as f:
-        extra_rows = list(csv.DictReader(f))
-    for row in extra_rows:
-        row["name"] = "x_" + re.sub(r"^(sub|FUN)_", "", row["name"])
-    extra_map = work / "extra.csv"
-    with extra_map.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["name", "start", "end", "size"])
-        writer.writeheader()
-        writer.writerows(extra_rows)
-    extra_image = bytearray(elf.read_bytes())
-    struct.pack_into("<I", extra_image, 24, int(extra_rows[0]["start"], 16))
-    extra_elf = work / "extra.elf"
-    extra_elf.write_bytes(extra_image)
-    all_extra = work / "extra_all"
-    invoke("extra", extra_elf, extra_map, all_extra)
-    extra = staging / "output_extra"
-    extra.mkdir()
-    ranges = [(int(row["start"], 16), int(row["end"], 16)) for row in extra_rows]
-    inside_extra = lambda address: any(start <= address < end for start, end in ranges)
-    registrations = re.findall(r"runtime\.registerFunction\((0x[\da-fA-F]+), (\w+)\);",
-                                (all_extra / "register_functions.cpp").read_text())
-    kept = {name for address, name in registrations if inside_extra(int(address, 16))}
-    (extra / "extra_functions.h").write_text((all_extra / "ps2_recompiled_functions.h").read_text()
-        .replace("PS2_RECOMPILED_FUNCTIONS_H", "REO_EXTRA_FUNCTIONS_H"))
-    (extra / "ps2_recompiled_stubs.h").write_text((all_extra / "ps2_recompiled_stubs.h").read_text())
-    for file in all_extra.glob("*.cpp"):
-        if file.name == "register_functions.cpp":
-            continue
-        if any(file.name.startswith(name.rsplit("_0x", 1)[0]) for name in kept):
-            (extra / file.name).write_text(file.read_text().replace('"ps2_recompiled_functions.h"',
-                                                                  '"extra_functions.h"'))
-    (extra / "register_extra.cpp").write_text(
-        '#include "ps2_runtime.h"\n#include "extra_functions.h"\n' +
-        "void reoRegisterExtraFunctions(PS2Runtime& runtime) {\n" +
-        "\n".join(f"    runtime.registerFunction({pc}u, {name});" for pc, name in registrations
-                   if inside_extra(int(pc, 16))) + "\n}\n")
+        registry = main / "register_functions.cpp"
+        registry.write_text(chunk_registrations(registry.read_text()))
+
+    def generate_extra():
+        with (metadata / "extra_functions.csv").open(newline="") as f:
+            extra_rows = list(csv.DictReader(f))
+        for row in extra_rows:
+            row["name"] = "x_" + re.sub(r"^(sub|FUN)_", "", row["name"])
+        extra_map = work / "extra.csv"
+        with extra_map.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["name", "start", "end", "size"])
+            writer.writeheader()
+            writer.writerows(extra_rows)
+        extra_image = bytearray(elf.read_bytes())
+        struct.pack_into("<I", extra_image, 24, int(extra_rows[0]["start"], 16))
+        extra_elf = work / "extra.elf"
+        extra_elf.write_bytes(extra_image)
+        all_extra = work / "extra_all"
+        invoke("extra", extra_elf, extra_map, all_extra)
+        extra = staging / "output_extra"
+        extra.mkdir()
+        ranges = [(int(row["start"], 16), int(row["end"], 16)) for row in extra_rows]
+        inside_extra = lambda address: any(start <= address < end for start, end in ranges)
+        registrations = re.findall(r"runtime\.registerFunction\((0x[\da-fA-F]+), (\w+)\);",
+                                    (all_extra / "register_functions.cpp").read_text())
+        kept = {name for address, name in registrations if inside_extra(int(address, 16))}
+        (extra / "extra_functions.h").write_text((all_extra / "ps2_recompiled_functions.h").read_text()
+            .replace("PS2_RECOMPILED_FUNCTIONS_H", "REO_EXTRA_FUNCTIONS_H"))
+        (extra / "ps2_recompiled_stubs.h").write_text((all_extra / "ps2_recompiled_stubs.h").read_text())
+        for file in all_extra.glob("*.cpp"):
+            if file.name == "register_functions.cpp":
+                continue
+            if any(file.name.startswith(name.rsplit("_0x", 1)[0]) for name in kept):
+                (extra / file.name).write_text(file.read_text().replace('"ps2_recompiled_functions.h"',
+                                                                      '"extra_functions.h"'))
+        (extra / "register_extra.cpp").write_text(
+            '#include "ps2_runtime.h"\n#include "extra_functions.h"\n' +
+            "void reoRegisterExtraFunctions(PS2Runtime& runtime) {\n" +
+            "\n".join(f"    runtime.registerFunction({pc}u, {name});" for pc, name in registrations
+                       if inside_extra(int(pc, 16))) + "\n}\n")
 
     overlays = staging / "output_ovl"
     overlays.mkdir()
-    tags = []
-    for function_map in sorted((metadata / "overlay_maps").glob("ovl*.csv")):
+    def generate_overlay(function_map):
         number = function_map.stem.removeprefix("ovl")
         if not number.isdecimal():
             raise ValueError("Invalid overlay map name")
@@ -183,21 +189,34 @@ def generate(recompiler, disc, metadata, destination):
         (out / ("register_" + tag + ".cpp")).write_text(
             '#include "ps2_runtime.h"\n#include "' + private_header + '"\n' +
             f"void reoRegisterOverlay_{tag}(PS2Runtime& runtime) {{\n" + "\n".join(entries) + "\n}\n")
-        tags.append(tag)
+        return tag
+    maps = sorted((metadata / "overlay_maps").glob("ovl*.csv"))
+    with ThreadPoolExecutor(max_workers=max(1, min(jobs, 4))) as pool:
+        main_job = pool.submit(generate_main)
+        extra_job = pool.submit(generate_extra)
+        overlay_jobs = [pool.submit(generate_overlay, mapped) for mapped in maps]
+        main_job.result()
+        extra_job.result()
+        tags = [job.result() for job in overlay_jobs]
     (overlays / "register_overlays.cpp").write_text(
         '#include "ps2_runtime.h"\n' +
         "\n".join(f"void reoRegisterOverlay_{tag}(PS2Runtime&);" for tag in tags) +
         "\nvoid reoRegisterOverlays(PS2Runtime& runtime) {\n" +
         "\n".join(f"    reoRegisterOverlay_{tag}(runtime);" for tag in tags) + "\n}\n")
+    for registry in [staging / "output_extra/register_extra.cpp",
+                     *(overlays / tag / ("register_" + tag + ".cpp") for tag in tags)]:
+        registry.write_text(chunk_registrations(registry.read_text()))
     generate_support(staging, metadata, invoke)
     catalogue_count = generate_catalogues(elf, metadata / "local_source_catalogues.json",
                                           staging / "local_source_catalogues")
-    sources = list(staging.rglob("*.cpp"))
+    sources = sorted(staging.rglob("*.cpp"))
+    with ThreadPoolExecutor(max_workers=max(1, min(jobs, 4))) as pool:
+        source_hashes = list(pool.map(sha, sources))
     record = {"format": 1, "elfSha256": ELF_SHA256, "recompilerSha256": sha(recompiler),
               "overlays": tags, "instructionWitnesses": catalogue_count,
               "sourceFiles": len(sources),
-              "files": [{"path": str(p.relative_to(staging)).replace("\\", "/"), "sha256": sha(p)}
-                        for p in sources]}
+              "files": [{"path": str(p.relative_to(staging)).replace("\\", "/"), "sha256": digest}
+                        for p, digest in zip(sources, source_hashes)]}
     (staging / "generation.json").write_text(json.dumps(record, indent=2))
     staging.rename(destination)
     return record
@@ -209,8 +228,9 @@ def main():
     parser.add_argument("--disc", required=True, type=Path)
     parser.add_argument("--metadata", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--jobs", type=int, default=1)
     args = parser.parse_args()
-    result = generate(args.recompiler, args.disc, args.metadata, args.output)
+    result = generate(args.recompiler, args.disc, args.metadata, args.output, args.jobs)
     print(json.dumps({k: v for k, v in result.items() if k != "files"}, indent=2))
 
 

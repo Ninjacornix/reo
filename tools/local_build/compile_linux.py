@@ -1,6 +1,5 @@
 """Native Linux worker. Requires an audited Linux plan, never Windows archives."""
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
 import json
 import os
@@ -10,8 +9,10 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 
 from compile_game import digest
+from build_scheduler import cost_estimate, header_fingerprint, scheduled_results, unit_estimates
 
 
 def elf64(path):
@@ -52,27 +53,35 @@ def compile_plan(kit, generated, work, output, jobs):
     if not elf64(compiler) or not elf64(archiver):
         raise ValueError("The portable compiler and archiver must be native x86-64 ELF tools")
     units = list(plan.get("units", []))
+    size_hints = {}
     for group in plan.get("sourceGroups", []):
         parent = Path(expand(group["root"])).resolve()
         if not parent.is_relative_to(generated):
             raise ValueError("Generated source group escapes the private workspace")
-        batch, size, index = [], 0, 0
+        batch, size, index, large_guest = [], 0, 0, False
+        replacements = plan.get("generatedSourceOverrides", {})
         for source in sorted(parent.glob(group["pattern"])):
             if source.name in group.get("exclude", []):
                 continue
             if source.suffix != ".cpp" or not source.is_file():
                 raise ValueError("Generated source group contains a non-C++ input")
-            if batch and (len(batch) >= group.get("batch", 8) or size + source.stat().st_size > 500000):
+            file_size = source.stat().st_size
+            if batch and (len(batch) >= group.get("batch", 8) or size + file_size > 500000):
                 units.append({"id": group["id"] + str(index), "sources": batch,
                               "options": group.get("options", []) + ["-I" + str(parent)]})
-                batch, size, index = [], 0, index + 1
-            replacement = plan.get("generatedSourceOverrides", {}).get(source.relative_to(generated).as_posix())
+                if not replacements:
+                    size_hints[group['id'] + str(index)] = (size, large_guest)
+                batch, size, index, large_guest = [], 0, index + 1, False
+            replacement = replacements.get(source.relative_to(generated).as_posix()) if replacements else None
             batch.append(expand(replacement) if replacement else str(source))
-            size += source.stat().st_size
+            size += file_size
+            large_guest |= file_size > 750000 and not source.name.startswith('register')
         if not batch:
             raise ValueError("Generated Linux source group is empty")
         units.append({"id": group["id"] + str(index), "sources": batch,
                       "options": group.get("options", []) + ["-I" + str(parent)]})
+        if not replacements:
+            size_hints[group['id'] + str(index)] = (size, large_guest)
     ids = [u["id"] for u in units]
     if not units or len(set(ids)) != len(ids) or any(not re.fullmatch(r"[\w-]+", name) for name in ids):
         raise ValueError("Invalid or duplicate Linux compilation units")
@@ -80,13 +89,8 @@ def compile_plan(kit, generated, work, output, jobs):
     objects.mkdir(parents=True, exist_ok=True)
     logs.mkdir(parents=True, exist_ok=True)
     output.mkdir(parents=True, exist_ok=True)
-    headers = hashlib.sha256()
-    for root in (kit, generated):
-        for path in sorted(root.rglob("*")):
-            if path.is_file() and path.suffix in {".h", ".hpp", ".inc", ".inl"}:
-                headers.update(str(path.relative_to(root)).encode())
-                headers.update(bytes.fromhex(digest(path)))
-    base = digest(plan_file) + digest(compiler) + headers.hexdigest()
+    headers = header_fingerprint((kit, generated), digest, jobs)
+    base = digest(plan_file) + digest(compiler) + headers
     common = [expand(v) for v in plan.get("compileOptions", [])]
     if any(flag.startswith(("/D", "/I", "/MD", "/EH", "/std:")) for flag in common):
         raise ValueError("Windows compiler flags are forbidden in a Linux plan")
@@ -99,27 +103,35 @@ def compile_plan(kit, generated, work, output, jobs):
         receipt = target.with_suffix(".json")
         if target.exists() and receipt.exists():
             record = json.loads(receipt.read_text())
-            if record == {"input": signature, "object": digest(target)}:
+            if (isinstance(record, dict) and record.get("input") == signature
+                    and record.get("object") == digest(target)):
                 return target
         unity = target.with_suffix(".cpp")
         unity.write_text("\n".join("#include " + json.dumps(str(p), ensure_ascii=False) for p in sources), encoding="utf-8")
         pending = target.with_suffix(".pending.o")
+        started = time.perf_counter()
         with (logs / (unit["id"] + ".log")).open("wb") as log:
             subprocess.run([str(compiler), "-c", "-O2", "-DNDEBUG", "-std=c++20", "-fexceptions",
                             "-fno-fast-math", "-ffp-contract=off", *options, str(unity), "-o", str(pending)],
                            stdout=log, stderr=subprocess.STDOUT, check=True)
         pending.replace(target)
         temporary = receipt.with_suffix(".pending")
-        temporary.write_text(json.dumps({"input": signature, "object": digest(target)}))
+        temporary.write_text(json.dumps({"input": signature, "object": digest(target),
+                                         "compileSeconds": time.perf_counter() - started}))
         temporary.replace(receipt)
         return target
 
     compiled = {}
-    with ThreadPoolExecutor(max_workers=max(1, min(jobs, 4))) as pool:
-        futures = {pool.submit(compile_one, unit): unit for unit in units}
-        for future in as_completed(futures):
-            compiled[futures[future]["id"]] = future.result()
-            print(f"Compiled {len(compiled)}/{len(units)}", flush=True)
+    estimates = {}
+    for unit in units:
+        receipt = objects / (unit['id'] + '.json')
+        if unit['id'] in size_hints:
+            estimates[unit['id']] = cost_estimate(*size_hints[unit['id']], receipt)
+        else:
+            estimates[unit['id']] = unit_estimates(unit, [local(p) for p in unit['sources']], receipt)
+    for unit, future in scheduled_results(units, compile_one, jobs, estimates):
+        compiled[unit['id']] = future.result()
+        print(f"Compiled {len(compiled)}/{len(units)}", flush=True)
     direct, archives = [], {}
     for unit in units:
         if unit.get("archive"):

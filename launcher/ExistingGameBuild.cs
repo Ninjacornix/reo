@@ -1,4 +1,5 @@
 using System.IO;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace Outbreak.Launcher;
@@ -57,17 +58,19 @@ public static partial class LocalGameBuild {
                 string from = Inside(source, file.Path), to = Inside(staging, file.Path);
                 Directory.CreateDirectory(Path.GetDirectoryName(to)!);
                 await using var input = File.OpenRead(from);
+                using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 await using (var output =
                                  new FileStream(to, FileMode.CreateNew, FileAccess.Write)) {
                     int count;
                     while ((count = await input.ReadAsync(buffer, cancel)) != 0) {
                         await output.WriteAsync(buffer.AsMemory(0, count), cancel);
+                        hash.AppendData(buffer, 0, count);
                         done += count;
                         progress?.Report(
                             new(done, total, "Copying " + file.Path, "Importing existing build"));
                     }
                 }
-                if (Sha(to) != file.Sha256)
+                if (Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant() != file.Sha256)
                     throw new IOException(
                         "The selected build changed while copying. Close tools modifying that folder and retry.");
             }

@@ -6,6 +6,32 @@ from build_game import stage
 
 
 class StageCacheTests(unittest.TestCase):
+    def test_parallel_receipts_detect_changed_and_missing_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'input'
+            source.write_text('verified source')
+            outputs = [root / ('output' + str(i)) for i in range(12)]
+            calls = []
+
+            def action():
+                calls.append(1)
+                for output in outputs:
+                    output.write_text(source.read_text())
+
+            for _ in range(2):
+                stage(root, 'parallel', [source], action, lambda: outputs, jobs=4)
+                self.assertEqual(len(calls), 1)
+                self.assertTrue(all(p.read_text() == source.read_text() for p in outputs))
+            outputs[5].write_text('damaged')
+            stage(root, 'parallel', [source], action, lambda: outputs, jobs=4)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(outputs[5].read_text(), source.read_text())
+            outputs[8].unlink()
+            stage(root, 'parallel', [source], action, lambda: outputs, jobs=4)
+            self.assertEqual(len(calls), 3)
+            self.assertEqual(outputs[8].read_text(), source.read_text())
+
     def test_removed_unused_inputs_preserve_verified_output(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

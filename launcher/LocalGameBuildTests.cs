@@ -34,7 +34,7 @@ static class LocalGameBuildTests {
             cancel.ThrowIfCancellationRequested();
             check(start.ArgumentList.Count == 3 && start.ArgumentList[1] == "--jobs" &&
                       int.TryParse(start.ArgumentList[2], out int workers) &&
-                      workers is >= 1 and <= 4,
+                      workers is >= 1 and <= BuildResources.MaximumWorkers,
                   "native build receives bounded parallel worker count");
             // A synthetic minimal PE header tests admission, not native game execution.
             var pe = new byte[128];
@@ -52,11 +52,13 @@ static class LocalGameBuildTests {
                                                 home: cache, runner: runner ?? Runner);
         try {
             const ulong gib = 1024UL * 1024 * 1024;
-            check(BuildResources.Select(16, 16 * gib) == 4 &&
+            check(BuildResources.Select(16, 16 * gib) == 12 &&
                       BuildResources.Select(4, 16 * gib) == 3,
                   "available CPU capacity is used within worker limit");
-            check(BuildResources.Select(16, 5 * gib) == 2 && BuildResources.Select(16, gib) == 1,
+            check(BuildResources.Select(16, 5 * gib) == 3 && BuildResources.Select(16, gib) == 1,
                   "memory pressure limits parallel compilation");
+            check(BuildResources.Select(128, 128 * gib) == BuildResources.MaximumWorkers,
+                  "high-memory machines respect the maximum worker limit");
             string image = await Build();
             check(File.Exists(image) && calls == 1, "local build creates verified cache");
             check(await Build() == image && calls == 1,

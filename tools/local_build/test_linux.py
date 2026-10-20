@@ -135,6 +135,10 @@ class LinuxPortableTests(unittest.TestCase):
         first = (work / "linux-objects/main.o").stat().st_mtime_ns
         compile_plan(kit, generated, work, output, 2)
         self.assertEqual((work / "linux-objects/main.o").stat().st_mtime_ns, first)
+        (work / "linux-objects/main.json").write_text('[]')
+        compile_plan(kit, generated, work, output, 2)
+        self.assertNotEqual((work / "linux-objects/main.o").stat().st_mtime_ns, first)
+        subprocess.run([str(output / "reo_recomp")], check=True)
 
 
 if __name__ == "__main__":

@@ -33,6 +33,12 @@ When updating the dependency:
 
 Keep the dependency's license and attribution. Do not run checkout/reset over somebody else's modified submodule to test a series.
 
+Patch 0096 optimizes source-guard matching without changing its patterns or
+refusal rules. It must be compiled into the independent recompiler used in a
+new kit; changing the separate root header does not update an old tool binary.
+The import benchmark compares all generated guest files and ordered registration
+results against the pre-patch tool; see [the report](../../docs/IMPORT_PROFILE.md).
+
 ## paraLLEl-GS
 
 `parallel-gs/` contains graphics dependency patches. The ordinary setup script does **not** apply this series or build its full GPU dependency graph. A GPU build must use the matching source revision, libraries and patch series. Do not assume that the PS2Recomp setup also configures paraLLEl-GS.
