@@ -209,6 +209,10 @@ public partial class MainWindow : Window {
         } catch (Exception error) {
             controller.SessionEnabled = false;
             Status.Text = "Could not launch: " + error.Message;
+            if (error is InvalidDataException) {
+                DiscValidationStatus.Text = error.Message;
+                DiscValidationStatus.Foreground = (Brush)FindResource("Accent");
+            }
             LaunchButton.IsEnabled = true;
             LaunchButton.Content = "Play";
         } finally {

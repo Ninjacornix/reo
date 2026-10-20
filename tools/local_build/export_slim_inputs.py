@@ -12,7 +12,7 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def export(kit, output, archive, root, version='1.0.6'):
+def export(kit, output, archive, root, version='1.0.7'):
     kit, output, archive, root = map(lambda p: Path(p).resolve(), (kit, output, archive, root))
     if output.exists() or archive.exists():
         raise FileExistsError('Choose new output paths; previous exports are preserved')
@@ -51,6 +51,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('kit', 'output', 'archive', 'root'):
         parser.add_argument('--' + name, type=Path, required=True)
-    parser.add_argument('--version', default='1.0.6')
+    parser.add_argument('--version', default='1.0.7')
     args = parser.parse_args()
     export(args.kit, args.output, args.archive, args.root, args.version)

@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.7 prerelease — 2026-10-20
+
+- Identify the ISO's actual BOOT2 target and known Outbreak game/region serials
+  before extraction; distinguish unsupported regions, File #2, unknown games,
+  missing boot files and unsupported/modified executable revisions.
+- Keep executable SHA-256 as the authoritative revision check. ISO filenames and
+  SYSTEM.CNF VER metadata cannot bypass compatibility checks.
+- Show the required NTSC-U v2.00 edition and validation result beside the ISO controls.
+- Add isolated synthetic-disc checks and a read-only --check-iso diagnostic.
+
 ## v1.0.6 prerelease — 2026-10-20
 
 - Automatically prepare Python and the listed server packages on first hosting;

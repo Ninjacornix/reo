@@ -8,6 +8,8 @@ For the smaller, dependency-based Windows package:
   The SDK and ASP.NET runtime are not required to run the launcher.
 - **A Vulkan-capable graphics card and its current vendor driver.**
 - **Your own Outbreak NTSC-U v2.00 ISO (SLUS-20765).** Keep it available after import.
+  PAL, Japanese, File #2 and other executable revisions are unsupported. The
+  launcher checks the boot executable and its fingerprint before extracting data.
 - **LLVM/MinGW UCRT 20251216, x86-64**, for the one-time local game compilation:
   [official toolchain](https://github.com/mstorsjo/llvm-mingw/releases/tag/20251216).
   This is a compiler and includes its own headers and libraries; it is not a

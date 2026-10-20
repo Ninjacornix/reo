@@ -1,11 +1,11 @@
 # Prerelease packaging
 
-Current target: **v1.0.6**, marked prerelease. .NET and the compiler are external
+Current target: **v1.0.7**, marked prerelease. .NET and the compiler are external
 requirements. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting.
 
 Use tools/local_build/export_slim_inputs.py with the frozen independent kit and
---version 1.0.6. Required generation/runtime inputs remain in build-inputs.zip;
+--version 1.0.7. Required generation/runtime inputs remain in build-inputs.zip;
 the compiler and large corresponding-source archive are excluded. The ZIP is
 required for first ISO setup and expands into Local AppData.
 
@@ -16,13 +16,13 @@ manifest declaring external-python. Do not ship vendor, python, wheels,
 dependency-sources, tests, databases, credentials or developer environments.
 
 Commit corresponding source, then run launcher/package-slim.ps1 with -Inputs,
--KitManifest, -Server <source-only-export>, -Output and -Version 1.0.6. It verifies
+-KitManifest, -Server <source-only-export>, -Output and -Version 1.0.7. It verifies
 the server manifest, publishes a framework-dependent single-file launcher,
 consolidates required licence texts into THIRD-PARTY-NOTICES.txt and links GitHub's
 source archive for the release tag. Keep LICENSE/NOTICE and the
 server's own licence. There must be no top-level LICENSES or sources folder.
 
-The main asset is RE-Outbreak-v1.0.6-Windows-x64.zip. ZIP paths must be relative,
+The main asset is RE-Outbreak-v1.0.7-Windows-x64.zip. ZIP paths must be relative,
 use / separators and place Outbreak.Launcher.exe at the root. Reject absolute
 paths, traversal, drive prefixes, duplicate names and unexpected files. Extract
 the final ZIP into a fresh folder and verify all inventory, server and nested
@@ -37,7 +37,7 @@ path, or a missing path to exercise automatic provisioning in the isolated test
 home. It verifies cold setup and a cached restart. Owned services use isolated
 ports/accounts and are shut down afterward.
 
-Publish the main ZIP/checksum and RE-Outbreak-v1.0.6-Dependency-Sources.zip/checksum.
+Publish the main ZIP/checksum and RE-Outbreak-v1.0.7-Dependency-Sources.zip/checksum.
 Use GitHub's automatic source archives for the project; do not add a duplicate
 Project-Source.tar asset. Ordinary players only need the main ZIP. No source
 archives belong inside the application or server folder. Server setup downloads
@@ -50,3 +50,9 @@ Inspect all nested archives for private game data. Disclose omitted checks in th
 release notes, use a new immutable tag targeting the full source SHA, and verify
 remote asset hashes/sizes before publishing. No game/setup pass may be invented.
 Native Linux is not a release asset.
+
+ISO checks: --test-disc-import <receipt> runs synthetic rejection/accepted-import
+cases without game data. --check-iso <iso> <receipt> performs read-only real-image
+validation without extraction, compilation or gameplay. Require rejection before
+creating cache files, verify a supported reference when available, and retain
+the exact executable SHA-256 gate. SYSTEM.CNF VER is not the disc revision.

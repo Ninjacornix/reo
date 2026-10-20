@@ -138,10 +138,15 @@ public sealed class DiscImage : IDisposable {
             progress?.Invoke(length);
         }
     }
-    public string Hash(DiscEntry entry) {
+    public string ReadText(DiscEntry entry, int maximumBytes) {
+        if (entry.Directory || entry.Length > maximumBytes)
+            throw new InvalidDataException("The ISO boot configuration is invalid or oversized.");
+        return Encoding.UTF8.GetString(Read(entry.Offset, checked((int)entry.Length)));
+    }
+    public string Hash(DiscEntry entry, CancellationToken cancel = default) {
         using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(
             System.Security.Cryptography.HashAlgorithmName.SHA256);
-        Copy(entry, Stream.Null, CancellationToken.None, hash: hash);
+        Copy(entry, Stream.Null, cancel, hash: hash);
         return Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant();
     }
     public void Dispose() => image.Dispose();

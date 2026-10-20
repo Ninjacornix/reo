@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**v1.0.6 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
+**v1.0.7 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -19,14 +19,14 @@ GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 beh
 
 ## Windows prerelease
 
-Download **RE-Outbreak-v1.0.6-Windows-x64.zip** from
+Download **RE-Outbreak-v1.0.7-Windows-x64.zip** from
 [GitHub Releases](https://github.com/Ninjacornix/reo/releases). Install the
 [requirements](REQUIREMENTS.md), extract the ZIP, and open `Outbreak.Launcher.exe`.
 The launcher folder no longer includes the .NET runtime, language folders or a
 compiler installation. Hosting source is included under `network-server/`, with
 its dependencies listed in `requirements.txt` rather than bundled Python/packages.
 Extract all files into one folder; `Outbreak.Launcher.exe` is at its top level.
-The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Extract v1.0.6 into a fresh
+The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Extract v1.0.7 into a fresh
 folder if upgrading, so old bundled Python/vendor files are left behind. The
 single-file startup fix from v1.0.4 is retained. Licence notices are in
 `THIRD-PARTY-NOTICES.txt`; source archives are separate developer downloads.
@@ -35,6 +35,12 @@ Select your **Outbreak NTSC-U v2.00 ISO (SLUS-20765)** in **Game files**, then
 allow the first local generation and compilation to finish. This can take a long
 time; progress appears in the launcher. The result is cached in Local AppData,
 so later launches reuse it. No game executable or assets are included.
+
+Only **File #1 NTSC-U v2.00 (SLUS-20765)** is supported. Before extraction, the
+launcher checks SYSTEM.CNF's boot executable, identifies known game/region serials
+and verifies the executable SHA-256. PAL, Japanese, File #2, unknown games and
+other/modified executable revisions get a specific error beside the ISO controls.
+The ISO filename and SYSTEM.CNF's VER field do not establish the game revision.
 
 This is an **experimental preview**: the reference native compilation succeeded,
 but the new external-toolchain setup and launcher-to-gameplay flow have not been rerun. Setup,

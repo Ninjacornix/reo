@@ -1,12 +1,21 @@
-﻿# RE: Outbreak v1.0.6 prerelease
+# RE: Outbreak v1.0.7 prerelease
 
 First-time server setup is now automatic. The application download remains small:
 server source and requirements.txt are included, but Python/packages are downloaded
 into a private Local AppData environment only when hosting is first used.
 
+## ISO compatibility checks
+
+Only **Outbreak File #1 NTSC-U v2.00 (SLUS-20765)** is supported. The launcher now
+checks the actual BOOT2 executable from SYSTEM.CNF and its SHA-256 before creating
+import files. It shows the detected serial/region and specific rejection reason
+beside the ISO controls. PAL, Japanese, File #2, unknown games, missing boot files
+and unsupported/modified executables get clear messages. This does not add PAL
+or other-region support. Renaming an ISO or changing its VER metadata cannot
+establish a supported executable revision.
 ## Download and run
 
-Download **RE-Outbreak-v1.0.6-Windows-x64.zip**, extract into a fresh folder and run
+Download **RE-Outbreak-v1.0.7-Windows-x64.zip**, extract into a fresh folder and run
 **Outbreak.Launcher.exe**. Install .NET 8 Desktop Runtime x64, your Vulkan GPU driver
 and the pinned LLVM/MinGW compiler described in REQUIREMENTS.md. These game-build
 requirements are separate from automatic server setup.
@@ -40,7 +49,8 @@ Python installation, server wheels or vendor packages are inside the application
 
 ## Validation and limits
 
-Cold automatic Python/dependency setup, real isolated server/account checks and a
+Synthetic ISO validation/import checks and a read-only check of the supported reference ISO passed.
+Previously verified automatic Python/dependency setup, isolated server/account checks and a
 cached restart passed. Final package extraction and launcher window startup passed.
 No multiplayer game or complete external-toolchain first setup was rerun. The
 reference compilation built all 2,381 units. Rendering, audio, performance and

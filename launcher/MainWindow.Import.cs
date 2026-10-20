@@ -10,6 +10,7 @@ public partial class MainWindow {
         var source = new CancellationTokenSource();
         importCancellation = source;
         DiscProgress.Value = 0;
+        DiscValidationStatus.Text = "";
         ImportActivity.Visibility = Visibility.Visible;
         var elapsed = Stopwatch.StartNew();
         var stageClock = Stopwatch.StartNew();
@@ -41,6 +42,10 @@ public partial class MainWindow {
             }
             ImportTiming.Text = $"Elapsed {Duration(elapsed.Elapsed)} · Stage ETA {eta}";
             ImportState.Text = $"{value.Stage} {value.Percent:0}% - {value.File}";
+            if (value.Stage == "Checking ISO") {
+                DiscValidationStatus.Text = value.File;
+                DiscValidationStatus.Foreground = (System.Windows.Media.Brush)FindResource("Muted");
+            }
             Status.Text = $"{value.Stage} - {value.Percent:0}%";
         });
     }
@@ -54,6 +59,10 @@ public partial class MainWindow {
             Close();
     }
     void RefreshImportUi() {
+        SupportedDiscHint.Text =
+            settings.Game.Id == "file1"
+                ? DiscValidation.Required + " PAL, Japanese and other revisions are unsupported."
+                : "File #2 is not supported in this release.";
         ChooseIsoButton.IsEnabled =
             settings.Game.Id == "file1" && !updating && !game.Running && !launching && !backingUp;
         ImportDiscButton.IsEnabled = settings.Game.Id == "file1" && settings.FilesPresent(root) &&
@@ -95,6 +104,11 @@ public partial class MainWindow {
             Status.Text = "Import canceled.";
         } catch (Exception error) {
             Status.Text = "Could not import: " + error.Message;
+            if (error is InvalidDataException) {
+                DiscValidationStatus.Text = error.Message;
+                DiscValidationStatus.Foreground =
+                    (System.Windows.Media.Brush)FindResource("Accent");
+            }
         } finally {
             launching = false;
             EndDiscImport();

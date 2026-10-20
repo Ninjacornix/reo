@@ -1,6 +1,6 @@
 # Launcher
 
-The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.6 uses a smaller
+The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.7 uses a smaller
 framework-dependent launcher and separately installed requirements. See
 [requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
 The extracted single-file launcher is checked separately for window startup;
@@ -9,7 +9,9 @@ its icon is an embedded WPF resource, with a separate copy for the game window.
 The replacement package contains independent tools and runtime inputs. Select your
 own NTSC-U v2.00 / SLUS-20765 ISO under **Game files**. The launcher imports game
 files without mounting, generates native sources locally, then compiles and caches
-the game. Other executable revisions are rejected before import. A Vulkan-capable
+the game. Boot configuration, game/region serial and executable SHA-256 are checked
+before import, with a specific result beside the ISO controls. Other regions,
+games and executable revisions are rejected. A Vulkan-capable
 GPU driver is required. File #2 remains a placeholder.
 
 The application is portable; system dependencies are installed separately.

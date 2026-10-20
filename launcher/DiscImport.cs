@@ -8,7 +8,9 @@ namespace Outbreak.Launcher;
 public record ImportProgress(long Completed, long Total, string File, string Stage = "Importing") {
     public double Percent => Total == 0 ? 0 : Completed * 100.0 / Total;
 }
-public record ImportedDisc(string Root, string Elf, int Files, long Bytes, bool Reused);
+public record ImportedDisc(string Root, string Elf, int Files, long Bytes, bool Reused) {
+    public string Verification { get; init; } = "";
+}
 public record ImportedFile(string Name, long Length, string Sha256);
 public record ImportManifest(int Version, string Game, string Source, long SourceLength,
                              long SourceWriteTicks, string ElfSha256, ImportedFile[] Files);
@@ -55,7 +57,8 @@ public static class DiscImport {
             if (folder.Length == 0 || !File.Exists(settings.GetIso(game.Id)))
                 return false;
             var source = new FileInfo(settings.GetIso(game.Id));
-            return Matches(Manifest(folder), source.FullName, source, game) &&
+            return Matches(Manifest(folder), source.FullName, source, game,
+                           game.Id == "file1" ? FirstElfSha256 : null) &&
                    File.Exists(Path.Combine(folder, "data", game.ElfName));
         } catch (Exception error)
             when (error is IOException or UnauthorizedAccessException or ArgumentException) {
@@ -89,16 +92,12 @@ public static class DiscImport {
                                 string? home) {
         iso = Path.GetFullPath(iso);
         var source = new FileInfo(iso);
+        progress?.Report(
+            new(0, 0, "Checking game, region and executable revision", "Checking ISO"));
         using var image = new DiscImage(iso);
-        var elf = image.Entries.FirstOrDefault(
-            e => !e.Directory && e.Name.Equals(game.ElfName, StringComparison.OrdinalIgnoreCase));
-        if (elf == null)
-            throw new InvalidDataException("This ISO does not contain " + game.Name + ".");
-        string elfHash = image.Hash(elf);
-        if (!elfHash.Equals(expectedElf, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidDataException(
-                "This disc revision is not supported by the installed game build. File #1 " +
-                "requires the NTSC-U v2.00 disc (SLUS-20765).");
+        var verified = DiscValidation.Check(image, game, expectedElf, cancel);
+        string elfHash = verified.Sha256;
+        progress?.Report(new(1, 1, verified.Description, "Checking ISO"));
         string parent = Path.Combine(home ?? Path.Combine(Settings.Home, "imports"), game.Id);
         Directory.CreateDirectory(parent);
         using var lease = new FileStream(Path.Combine(parent, "import.lock"), FileMode.OpenOrCreate,
@@ -112,7 +111,7 @@ public static class DiscImport {
         var old = Manifest(target);
         if (Matches(old, iso, source, game, expectedElf) && Complete(target, old!, game))
             return new(target, Path.Combine(target, "data", game.ElfName), old!.Files.Length,
-                       old.Files.Sum(f => f.Length), true);
+                       old.Files.Sum(f => f.Length), true) { Verification = verified.Description };
         long total = image.Entries.Where(e => !e.Directory).Sum(e => e.Length);
         string temp = Path.Combine(parent, identity + ".import-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temp);
@@ -162,7 +161,7 @@ public static class DiscImport {
             lock (manifests) manifests[target] = record;
             progress?.Report(new(total, total, "Imported"));
             return new(target, Path.Combine(target, "data", game.ElfName), files.Count, total,
-                       false);
+                       false) { Verification = verified.Description };
         } finally {
             // Only the newly created, private staging directory is removed.
             if (Directory.Exists(temp) &&
