@@ -7,6 +7,13 @@ public partial class App : Application {
     protected override async void OnStartup(StartupEventArgs e) {
         base.OnStartup(e);
         try {
+            int compilerTest = Array.IndexOf(e.Args, "--test-compiler-setup");
+            if (compilerTest >= 0 && compilerTest + 2 < e.Args.Length) {
+                await Task.Run(() => PortableCompilerSetupTests.Run(e.Args[compilerTest + 1],
+                                                                    e.Args[compilerTest + 2]));
+                Shutdown();
+                return;
+            }
             int inspect = Array.IndexOf(e.Args, "--check-iso");
             if (inspect >= 0 && inspect + 2 < e.Args.Length) {
                 try {
@@ -140,7 +147,8 @@ public partial class App : Application {
             if (!e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
                 !e.Args.Contains("--import-iso") && !e.Args.Contains("--test-update") &&
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&
-                !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso"))
+                !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&
+                !e.Args.Contains("--test-compiler-setup"))
                 MessageBox.Show(error.GetBaseException().Message + "\n\nDetails: " + log,
                                 "RE: Outbreak");
             Shutdown(1);

@@ -1,60 +1,48 @@
-# End-user requirements
+﻿# Run RE: Outbreak
 
-For the smaller, dependency-based Windows package:
+1. Install **.NET 8 Desktop Runtime (x64)** from
+   [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/8.0), if needed,
+   and keep your GPU's Vulkan driver current.
+2. Extract the Windows download and open **Outbreak.Launcher.exe**.
+3. In **Game files**, click **Choose ISO** and select your own
+   **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**.
 
-- **Windows 10 or 11, 64-bit.**
-- **.NET 8 Desktop Runtime, x64** — install the Windows Desktop Runtime from
-  [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
-  The SDK and ASP.NET runtime are not required to run the launcher.
-- **A Vulkan-capable graphics card and its current vendor driver.**
-- **Your own Outbreak NTSC-U v2.00 ISO (SLUS-20765).** Keep it available after import.
-  PAL, Japanese, File #2 and other executable revisions are unsupported. The
-  launcher checks the boot executable and its fingerprint before extracting data.
-- **LLVM/MinGW UCRT 20251216, x86-64**, for the one-time local game compilation:
-  [official toolchain](https://github.com/mstorsjo/llvm-mingw/releases/tag/20251216).
-  This is a compiler and includes its own headers and libraries; it is not a
-  graphics driver or a small Visual C++ runtime redistributable.
+Import starts automatically. The launcher checks the disc, downloads/prepares
+its build tools, and builds the game. **No compiler installation, environment
+variables or terminal commands are required.** When setup finishes, click Play.
+PAL, Japanese, File #2 and other executable revisions are currently unsupported.
+No PS2 BIOS is needed. Keep the ISO available for game data reads.
 
-No PS2 BIOS is required. Ordinary offline play and joining another player's
-server do not require a Python installation or a local server.
+## First-time setup
 
-The main download includes compatible openSNAP **source only** under
-`network-server/`. On first **Host server**, the launcher automatically downloads
-a private Python 3.12 environment and installs the listed packages under Local
-AppData, then starts the services. Internet access is needed for first setup;
-later starts reuse the cache. The application folder and system Python/PATH are
-unchanged. See [server setup](network/server/SETUP.md), or network-server/README.md
-in the ZIP. Joining a friend's server does not require these downloads.
+Internet access is needed to download the verified compiler (about 173 MiB).
+The launcher keeps only the Windows x64 tools needed for the game, about 446 MiB,
+in Local AppData. Nothing is installed system-wide or added to PATH.
+Allow about 1 GB of temporary compiler setup space plus several GB for game data
+and compilation. The download, preparation and build show progress and stage
+ETAs; setup can be cancelled and retried.
 
-## Compiler setup
+**First compilation still takes substantial time.** Automatic setup removes the
+manual steps; it does not eliminate compilation. Completed builds and tools are
+cached, so ordinary later launches do not download or compile them again.
 
-Download `llvm-mingw-20251216-ucrt-x86_64.zip` from the official toolchain link
-above and extract it once, for example under `C:\Tools`. Set the user environment
-variable **REO_LLVM_MINGW** to the extracted folder containing `bin` and
-`x86_64-w64-mingw32`. You can use Windows' **Edit environment variables for your
-account** dialog, or PowerShell:
+Keep build-inputs.zip beside the launcher. It contains required independent
+setup inputs and is unpacked automatically; users do not need to open it.
 
-```powershell
-[Environment]::SetEnvironmentVariable('REO_LLVM_MINGW', 'C:\Tools\llvm-mingw-20251216-ucrt-x86_64', 'User')
-```
+## Co-op
 
-Adjust that path to your extraction folder. Use this exact toolchain version;
-the regular LLVM Windows installer and Visual C++ Redistributable do not replace
-its MinGW headers/libraries. Its ZIP SHA-256 is
-`2d96a4b758f7f8deaec5065833fe025aa53cfc5f704d0524002510984da0ccf4`.
+Enable **Host server** to host. Missing Python/server packages are downloaded and
+prepared automatically in Local AppData on first use. Later starts reuse the
+cache. Joining a friend's server does not require that setup. Internet hosting
+still needs reachable addressing and firewall/router rules.
 
-The compiler is needed for first-time generation and later game-code updates;
-completed game builds run from the local cache. First compilation can take a long
-time and needs several GB of working space. Extraction and compilation display
-separate progress and approximate stage ETAs. Neither the launcher nor the build
-worker installs the .NET runtime or compiler automatically. Hosting setup is
-separate and automatically prepares its private Python/packages on first use.
+## Advanced and developer information
 
-The launcher contains `build-inputs.zip`: required independent generation inputs,
-not game data or a compiler installation. It keeps thousands of setup files
-compressed instead of cluttering the launcher folder, and unpacks into Local
-AppData when needed. Keep it beside the launcher. It is still needed even though
-the compiler is installed separately. Project and dependency source archives are
-separate release assets for developers and redistributors; players only need the
-Windows ZIP. Required third-party licence texts are consolidated into
-`THIRD-PARTY-NOTICES.txt` instead of a top-level LICENSES folder.
+An existing compatible LLVM/MinGW installation may optionally be selected with
+REO_LLVM_MINGW; ordinary users should leave it unset. Automatic setup pins the
+20251216 UCRT x86-64 official archive and verifies its SHA-256. The details are in
+[local builds](docs/LOCAL_BUILDS.md).
+
+Required third-party notices are in THIRD-PARTY-NOTICES.txt. GitHub's source ZIP/TAR
+and the separate dependency-source asset are for developers/redistributors;
+ordinary players only need the Windows-x64.zip download.

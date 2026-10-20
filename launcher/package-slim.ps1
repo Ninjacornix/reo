@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)][string]$KitManifest,
     [Parameter(Mandatory=$true)][string]$Server,
     [Parameter(Mandatory=$true)][string]$Output,
-    [string]$Version = '1.0.7'
+    [string]$Version = '1.0.8'
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -58,6 +58,7 @@ foreach ($document in @('REQUIREMENTS.md','README.md','LICENSE','NOTICE.md')) {
 foreach ($document in @('REQUIREMENTS.md','README.md')) {
     $path = Join-Path $Output $document
     $text = [IO.File]::ReadAllText($path).Replace('(network/server/SETUP.md)', '(network-server/README.md)')
+    $text = $text.Replace('(docs/LOCAL_BUILDS.md)', "(https://github.com/Ninjacornix/reo/blob/v$Version/docs/LOCAL_BUILDS.md)")
     [IO.File]::WriteAllText($path, $text, [Text.UTF8Encoding]::new($false))
 }
 $revision = (& git -C $repo rev-parse HEAD).Trim()
@@ -77,6 +78,7 @@ $noticeText = [IO.File]::ReadAllText($noticePath).Replace('(LICENSES/', "(https:
   version=$Version; platform='win-x64'; source='https://github.com/Ninjacornix/reo'; prerelease=$true;
   bundledServer=$false; serverSourceBundled=$true; serverRuntime='external-python';
   automaticServerSetup=$true;
+  automaticCompilerSetup=$true;
   revision=(& git -C $repo rev-parse HEAD).Trim();
   kitSha256=(Get-FileHash -LiteralPath $KitManifest -Algorithm SHA256).Hash.ToLowerInvariant();
   inputsSha256=(Get-FileHash -LiteralPath $Inputs -Algorithm SHA256).Hash.ToLowerInvariant();

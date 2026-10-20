@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.8 prerelease — 2026-10-20
+
+- Make compiler setup automatic during ISO import: download the pinned official
+  LLVM/MinGW archive, verify SHA-256, and prepare only Windows x64 components in
+  Local AppData. No manual extraction, PATH change or environment variable is needed.
+- Add download/preparation progress, cancellation, cached verification and reuse;
+  pass the resolved compiler directly to build steps without changing user settings.
+- Simplify player instructions to opening the launcher and choosing a supported
+  ISO. First compilation still takes time; completed game-build cache is preserved.
+
 ## v1.0.7 prerelease — 2026-10-20
 
 - Identify the ISO's actual BOOT2 target and known Outbreak game/region serials

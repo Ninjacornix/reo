@@ -1,7 +1,17 @@
 # Local build distribution
 
-The precompiled v1.0.0 prerelease is withdrawn. The v1.0.1 portable prerelease
-instead generates game code locally and is published as a build-only preview.
+The precompiled v1.0.0 prerelease is withdrawn. Portable releases generate game
+code locally from the user's verified disc.
+
+In v1.0.8, players choose a supported ISO in the launcher. Import verifies the
+disc, downloads and prepares the pinned Windows x64 compiler automatically, then
+generates and builds the game. No compiler installation, environment variables or
+terminal commands are needed. Progress, approximate stage ETAs and cancellation
+are available throughout setup. First compilation still takes substantial time;
+completed game builds are cached for later launches.
+
+The manual toolchain paths below are maintainer options. An existing compatible
+REO_LLVM_MINGW override remains supported, but ordinary players leave it unset.
 
 The public package contains the launcher, independent recompiler, source metadata,
 authored runtime sources and independent upstream libraries. The user's verified

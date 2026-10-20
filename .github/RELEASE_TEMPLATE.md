@@ -1,58 +1,58 @@
-# RE: Outbreak v1.0.7 prerelease
+﻿# RE: Outbreak v1.0.8 prerelease
 
-First-time server setup is now automatic. The application download remains small:
-server source and requirements.txt are included, but Python/packages are downloaded
-into a private Local AppData environment only when hosting is first used.
+**Compiler setup is automatic.** Open the launcher and choose your supported ISO;
+there is no manual LLVM download, compiler extraction, environment variable or
+terminal command to run.
 
-## ISO compatibility checks
+## Start playing
 
-Only **Outbreak File #1 NTSC-U v2.00 (SLUS-20765)** is supported. The launcher now
-checks the actual BOOT2 executable from SYSTEM.CNF and its SHA-256 before creating
-import files. It shows the detected serial/region and specific rejection reason
-beside the ISO controls. PAL, Japanese, File #2, unknown games, missing boot files
-and unsupported/modified executables get clear messages. This does not add PAL
-or other-region support. Renaming an ISO or changing its VER metadata cannot
-establish a supported executable revision.
-## Download and run
+1. Install .NET 8 Desktop Runtime x64 if the launcher asks for it, and keep your
+   GPU's Vulkan driver current.
+2. Download RE-Outbreak-v1.0.8-Windows-x64.zip and extract it into a fresh folder.
+3. Open Outbreak.Launcher.exe and click **Game files > Choose ISO**.
+4. Select your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**. Import and
+   first-time setup start automatically. Click **Play** when the build is ready.
 
-Download **RE-Outbreak-v1.0.7-Windows-x64.zip**, extract into a fresh folder and run
-**Outbreak.Launcher.exe**. Install .NET 8 Desktop Runtime x64, your Vulkan GPU driver
-and the pinned LLVM/MinGW compiler described in REQUIREMENTS.md. These game-build
-requirements are separate from automatic server setup.
+The launcher validates the disc before extraction, downloads the verified compiler
+when needed, prepares the Windows x64 tools in Local AppData, and builds the game.
+Progress, approximate stage ETAs and cancellation are available. First setup needs
+Internet access. The compiler download is about 173 MiB and uses about 446 MiB
+once prepared. Allow about 1 GB for temporary tool setup plus several GB for game
+files and compilation.
 
-Provide your own NTSC-U v2.00 / SLUS-20765 ISO. The launcher generates/compiles locally
-on first import; progress, elapsed time and a stage ETA are shown. Keep your ISO and
-build-inputs.zip available. The ZIP contains required independent generation inputs,
-compressed to avoid thousands of loose files; it unpacks into Local AppData.
+**First game compilation still takes substantial time.** Automatic setup removes
+manual steps, not the compilation itself. Completed games and tools are reused;
+this release retains the unchanged v1.0.6 build kit so compatible existing game
+builds do not need to be recompiled for this launcher update.
 
-## Hosting
+Keep your ISO and build-inputs.zip available. The ZIP is unpacked automatically;
+users do not need to open it. No compiler is installed system-wide or added to PATH.
+Existing compatible REO_LLVM_MINGW configurations remain an advanced optional override.
 
-Enable **Co-op > Host server**. Missing Python and server packages are prepared
-automatically, then the services start. No manual pip command or administrator
-installer is needed. First setup requires Internet access. Progress is shown and
-the button becomes **Cancel** while setup runs. Later starts reuse the cached
-installation, including offline. Joining friends needs no Python setup.
+## Compatibility and co-op
 
-Downloads use a pinned, SHA-256-verified uv setup tool, managed Python 3.12 and PyPI
-packages. Files stay in Local AppData; the application folder, system PATH and
-other Python installations are not modified. See network-server/README.md for
-cache/log locations and advanced overrides. Normal firewall/router rules still
-apply for hosting over the Internet.
+Only File #1 NTSC-U v2.00 is supported. PAL, Japanese, File #2, unrelated games and
+unsupported/modified executable revisions receive specific errors beside the ISO
+controls. Renaming the ISO does not change compatibility.
+
+Enable **Host server** for local co-op hosting. Missing Python/packages are prepared
+automatically in Local AppData on first hosting; cached starts work offline.
+Joining friends needs no Python setup. Normal firewall/router rules still apply.
 
 ## Downloads and notices
 
-Players only need **Windows-x64.zip**. Required third-party licence texts remain
-in THIRD-PARTY-NOTICES.txt. Corresponding dependency sources are a separate developer
-asset. The duplicate Project-Source.tar download is removed: use GitHub's built-in
-**Source code (zip/tar.gz)** for this tag instead. No source archives, compiler,
-Python installation, server wheels or vendor packages are inside the application ZIP.
+Players only need Windows-x64.zip. Required notices are consolidated in
+THIRD-PARTY-NOTICES.txt. Developer source downloads remain separate; use GitHub's
+source archives for this tag and the dependency-source asset when needed.
+The application ZIP contains no game executable, BIOS or game assets.
 
 ## Validation and limits
 
-Synthetic ISO validation/import checks and a read-only check of the supported reference ISO passed.
-Previously verified automatic Python/dependency setup, isolated server/account checks and a
-cached restart passed. Final package extraction and launcher window startup passed.
-No multiplayer game or complete external-toolchain first setup was rerun. The
-reference compilation built all 2,381 units. Rendering, audio, performance and
-networking remain experimental. File #2 and Linux are not release targets.
-No game executable, BIOS or game assets are included.
+A clean compiler download, SHA-256 verification, selective extraction, real Windows
+C++ compile/resource/archive/link/execute checks, cached reuse and cancellation
+passed. Final package startup and extraction/integrity checks passed. The previously
+verified ISO checks and automatic server setup are retained.
+
+The complete new ISO-to-gameplay flow and a full game compilation were not rerun.
+The earlier reference native build compiled all 2,381 units. Rendering, performance,
+audio and networking remain experimental. File #2 and Linux are not release targets.

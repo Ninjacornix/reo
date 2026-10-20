@@ -74,8 +74,8 @@ public partial class MainWindow {
                                               "enabled with its native build."
             : DiscImport.Ready(settings) ? "Game data imported."
             : File.Exists(settings.GetIso())
-                ? "Import once to play without mounting the ISO. Keep the ISO for game data reads."
-                : "Choose your ISO. File #1 supports the NTSC-U v2.00 disc (SLUS-20765).";
+                ? "Import prepares the build tools automatically. First setup needs Internet access and can take time."
+                : "Choose ISO to start automatic setup. File #1 requires NTSC-U v2.00 (SLUS-20765).";
     }
     void CancelImport(object sender, RoutedEventArgs e) => importCancellation?.Cancel();
     async void ImportDisc(object sender, RoutedEventArgs e) => await ImportSelectedDisc();

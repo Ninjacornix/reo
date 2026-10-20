@@ -1,7 +1,7 @@
 # Launcher
 
-The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.7 uses a smaller
-framework-dependent launcher and separately installed requirements. See
+The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.8 uses a smaller
+framework-dependent launcher and automatic compiler setup. See
 [requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
 The extracted single-file launcher is checked separately for window startup;
 its icon is an embedded WPF resource, with a separate copy for the game window.
@@ -15,8 +15,10 @@ games and executable revisions are rejected. A Vulkan-capable
 GPU driver is required. File #2 remains a placeholder.
 
 The application is portable; system dependencies are installed separately.
-Install .NET 8 Desktop Runtime and the pinned LLVM/MinGW compiler, then select an
-ISO. Required generation inputs are bundled compressed and unpack into the user
+Install .NET 8 Desktop Runtime if needed, then select an ISO. The launcher downloads
+and prepares the pinned LLVM/MinGW x64 compiler automatically in Local AppData;
+no terminal commands or environment variable are required. Required generation
+inputs are bundled compressed and unpack into the user
 cache. The full compiler and .NET runtime are not inside the launcher folder.
 The local server source is under `network-server/`; the launcher prepares Python
 and requirements.txt packages automatically in Local AppData on first hosting.

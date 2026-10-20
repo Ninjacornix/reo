@@ -147,19 +147,14 @@ public static partial class LocalGameBuild {
                                          FileAccess.ReadWrite, FileShare.None);
         if (Ready(ready, hash, kit))
             return executable;
+        string? requestedCompilerHash = null, selectedCompiler = null;
         if (File.Exists(Path.Combine(kitFolder, "compile-plan.json"))) {
-            using var plan = JsonDocument.Parse(
-                File.ReadAllText(Path.Combine(kitFolder, "compile-plan.json")));
+            using var plan =
+                JsonDocument.Parse(File.ReadAllText(Path.Combine(kitFolder, "compile-plan.json")));
             if (plan.RootElement.TryGetProperty("externalToolchain", out var external) &&
                 external.GetBoolean()) {
-                string? compilerFolder = Environment.GetEnvironmentVariable("REO_LLVM_MINGW") ??
-                                         Environment.GetEnvironmentVariable(
-                                             "REO_LLVM_MINGW", EnvironmentVariableTarget.User);
-                if (string.IsNullOrWhiteSpace(compilerFolder) ||
-                    !File.Exists(
-                        Path.Combine(compilerFolder, "bin", "x86_64-w64-mingw32-clang++.exe")))
-                    throw new IOException(
-                        "Install LLVM/MinGW UCRT 20251216 and set REO_LLVM_MINGW to its folder. See REQUIREMENTS.md beside the launcher.");
+                requestedCompilerHash =
+                    plan.RootElement.GetProperty("externalCompilerSha256").GetString();
             }
         }
         // Never compile from a modified input or reuse a partly verified tool installation.
@@ -174,6 +169,13 @@ public static partial class LocalGameBuild {
         }
         if (hash != Sha(Path.Combine(kitFolder, ManifestName)))
             throw new IOException("The build kit changed during validation.");
+        if (requestedCompilerHash != null) {
+            if (kit.Toolchain != "llvm-mingw")
+                throw new IOException("Incompatible compiler configuration in the build kit.");
+            selectedCompiler =
+                await PortableCompilerSetup.Ensure(requestedCompilerHash, progress, cancel)
+                    .ConfigureAwait(false);
+        }
         if (kit.Toolchain == "msvc") {
             progress?.Report(
                 new(0, kit.Steps.Length, "Checking compiler tools", "First-run setup"));
@@ -211,9 +213,10 @@ public static partial class LocalGameBuild {
             };
             foreach (string arg in step.Arguments)
                 start.ArgumentList.Add(Expand(arg));
-            string? externalCompiler = Environment.GetEnvironmentVariable("REO_LLVM_MINGW") ??
-                                       Environment.GetEnvironmentVariable(
-                                           "REO_LLVM_MINGW", EnvironmentVariableTarget.User);
+            string? externalCompiler =
+                selectedCompiler ?? Environment.GetEnvironmentVariable("REO_LLVM_MINGW") ??
+                Environment.GetEnvironmentVariable("REO_LLVM_MINGW",
+                                                   EnvironmentVariableTarget.User);
             if (!string.IsNullOrWhiteSpace(externalCompiler))
                 start.Environment["REO_LLVM_MINGW"] = externalCompiler;
             int code =
