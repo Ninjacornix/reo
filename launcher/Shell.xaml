@@ -204,7 +204,7 @@
        <TextBlock x:Name="ImportState" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,18,0,10"/>
        <TextBlock Text="Already have a completed game build?" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,10"/>
        <Button x:Name="ExistingBuildButton" Content="Use existing build" Click="UseExistingBuild" HorizontalAlignment="Left"/>
-       <TextBlock Text="Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required." Style="{StaticResource Hint}" Margin="0,10,0,0"/>
+       <TextBlock Text="Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,0"/>
        <Expander x:Name="DeveloperFiles" Header="Developer options" Foreground="{StaticResource Muted}" Margin="0,30,0,0">
         <StackPanel Margin="0,16,0,0">
          <TextBlock Text="Native executable"/><TextBox x:Name="ExePath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="exe" Click="BrowseFile" HorizontalAlignment="Left"/>
