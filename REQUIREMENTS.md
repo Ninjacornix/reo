@@ -16,10 +16,9 @@ For the smaller, dependency-based Windows package:
 No PS2 BIOS is required. Ordinary offline play and joining another player's
 server do not require a Python installation or a local server.
 
-Hosting requires a compatible openSNAP server. Its dependencies are separate
-from normal play and are only needed by the host. The optional **Server.zip**
-release asset includes its own Python; extract it beside the launcher only if
-you want to use **Host server**.
+The main download includes the compatible openSNAP server and its Python runtime
+under `network-server/`. Keep that folder beside the launcher to use **Host
+server**. There is no separate server download or Python installation.
 
 ## Compiler setup
 

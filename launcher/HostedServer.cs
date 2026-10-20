@@ -170,7 +170,7 @@ internal sealed class HostedServer : IDisposable {
                 return (python, source);
         }
         throw new IOException(
-            "Hosting files are not installed. Extract the optional Server.zip from this release beside the launcher. Joining another server does not require it.");
+            "Hosting files are missing. Extract the complete release, including its network-server folder.");
     }
     public void Dispose() {
         startup?.Cancel();

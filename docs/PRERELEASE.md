@@ -1,33 +1,40 @@
-# Prerelease packaging
+﻿# Prerelease packaging
 
-The current target is **v1.0.2**, marked prerelease on GitHub. v1.0.0 and v1.0.1
-binary downloads are withdrawn. The user requested separately installed
-requirements instead of bundled system dependencies; see [requirements](../REQUIREMENTS.md).
+The current target is **v1.0.3**, marked prerelease on GitHub. Earlier binary
+downloads are withdrawn. .NET and the compiler remain separately installed
+[requirements](../REQUIREMENTS.md); the local server is bundled.
 
-Export compact inputs with `tools/local_build/export_slim_inputs.py` from the
-frozen independent kit. This omits the compiler and moves exact dependency
-sources to a separate release asset. Runtime/header/metadata inputs needed to
-build from the user's ISO stay in `build-inputs.zip` and unpack into Local AppData.
+Export compact inputs with tools/local_build/export_slim_inputs.py from the frozen
+independent kit, passing --version 1.0.3. This omits the compiler and places exact
+dependency sources in a separate release asset. Required runtime/header/metadata
+inputs stay in build-inputs.zip and unpack into Local AppData.
 
-Commit corresponding sources, then use `launcher/package-slim.ps1 -Inputs ...
--KitManifest ... -Output ... -Version 1.0.2`. It publishes a framework-dependent
-single-file launcher without language folders or a self-contained .NET runtime.
-Use the asset name `RE-Outbreak-v1.0.2-Windows-x64.zip`. The updater recognizes
-this layout and retains path, file-count, size and SHA-256 checks.
+Commit corresponding sources, then use launcher/package-slim.ps1 with -Inputs,
+-KitManifest, -Server, -Output and -Version 1.0.3. Supply the frozen, manifested
+portable server directory. Only its hash-verified declared files are copied into
+network-server/; developer databases and configuration are excluded.
 
-Publish the corresponding independent SDK source ZIP as
-`RE-Outbreak-v1.0.2-Dependency-Sources.zip`, alongside the main download, and
-retain upstream/project licences. Provide the portable server separately as
-`RE-Outbreak-v1.0.2-Server.zip`, rooted at `network-server/`, for optional hosting.
-The launcher does not fetch either system dependencies or the server itself.
+The main asset is RE-Outbreak-v1.0.3-Windows-x64.zip. It contains a framework-dependent
+single-file launcher and the server, without a compiler, language folders or a
+self-contained .NET runtime. ZIP entries must be relative, use / separators and
+have no enclosing package-name directory. The launcher must appear at the archive
+root. Extract into a fresh directory and verify every inventory entry's path,
+length and SHA-256, including the server manifest and nested build inputs. Reject
+backslashes, absolute paths, traversal, drive prefixes, duplicate names and
+unexpected files.
+
+Publish the exact corresponding SDK sources as
+RE-Outbreak-v1.0.3-Dependency-Sources.zip, alongside the main download and checksums.
+Retain upstream/project licences. There is no separate server asset. The launcher
+does not download system dependencies.
 
 Keep game binaries, original instruction code, extracted assets, saves,
-credentials, handoffs and developer caches out of all public artifacts. Inspect
-nested input/source archives as well as the outer package. The dirty dependency
-checkout is preserved; matching frozen dependency sources accompany the binaries.
+credentials, handoffs and developer caches out of every public artifact. Inspect
+nested input/source archives too. Preserve the dirty dependency checkout; matching
+frozen dependency sources accompany the distributed independent binaries.
 
-Use [release notes](../.github/RELEASE_TEMPLATE.md), disclose omitted validation,
-and publish from the intended committed revision using a new tag. Do not replace
-existing tags or manufacture a game/setup pass. The reference native build
-compiled successfully; the revised external-compiler setup and gameplay were not
-rerun. Linux remains unfinished and is not an asset in this release.
+Use the [release notes](../.github/RELEASE_TEMPLATE.md), disclose omitted validation,
+and publish the intended full commit SHA under a new tag. Do not replace existing
+tags or claim a game/setup pass. The reference native build compiled successfully;
+the external-compiler setup and gameplay were not rerun. Linux is not a release
+asset. Compare uploaded asset sizes and SHA-256 digests before publication.

@@ -1,6 +1,6 @@
 # Launcher
 
-The v1.0.0 and oversized v1.0.1 downloads are withdrawn. v1.0.2 uses a smaller
+The v1.0.0, v1.0.1 and v1.0.2 downloads are withdrawn. v1.0.3 uses a smaller
 framework-dependent launcher and separately installed requirements. See
 [requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
 
@@ -14,6 +14,7 @@ The application is portable; system dependencies are installed separately.
 Install .NET 8 Desktop Runtime and the pinned LLVM/MinGW compiler, then select an
 ISO. Required generation inputs are bundled compressed and unpack into the user
 cache. The full compiler and .NET runtime are not inside the launcher folder.
+The local server and its Python runtime are bundled under `network-server/`.
 Legacy development kits require existing Microsoft C++ tools and a Windows SDK.
 The launcher does not install system tools. The first compilation takes time;
 later launches reuse verified completed outputs.

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.3 prerelease — 2026-10-20
+
+- Include the local co-op server and its required Python runtime in the main download.
+- Write ZIP entries as relative paths with standard `/` separators and place the
+  launcher at the archive root, without an enclosing package-name folder.
+- Keep .NET and the compiler external; no separate server download is needed.
+- Withdraw v1.0.2 and require the bundled server files during update validation.
+
 ## v1.0.2 prerelease — 2026-10-20
 
 - Move local-build verification and cached-output hashing off the launcher UI

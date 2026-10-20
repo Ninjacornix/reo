@@ -12,7 +12,7 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def export(kit, output, archive, root):
+def export(kit, output, archive, root, version='1.0.3'):
     kit, output, archive, root = map(lambda p: Path(p).resolve(), (kit, output, archive, root))
     if output.exists() or archive.exists():
         raise FileExistsError('Choose new output paths; previous exports are preserved')
@@ -34,7 +34,7 @@ def export(kit, output, archive, root):
     shutil.copyfile(root / 'tools/local_build/compile_game.py', output / 'tools/local_build/compile_game.py')
     (output / 'notices/SDK-SOURCES.txt').write_text(
         'Exact corresponding dependency sources are available beside this release:\n'
-        'https://github.com/Ninjacornix/reo/releases/download/v1.0.2/RE-Outbreak-v1.0.2-Dependency-Sources.zip\n',
+        f'https://github.com/Ninjacornix/reo/releases/download/v{version}/RE-Outbreak-v{version}-Dependency-Sources.zip\n',
         encoding='utf-8')
     original['files'] = [{'path': p.relative_to(output).as_posix(), 'sha256': sha(p)}
                          for p in sorted(output.rglob('*')) if p.is_file()]
@@ -51,5 +51,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('kit', 'output', 'archive', 'root'):
         parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--version', default='1.0.3')
     args = parser.parse_args()
-    export(args.kit, args.output, args.archive, args.root)
+    export(args.kit, args.output, args.archive, args.root, args.version)
