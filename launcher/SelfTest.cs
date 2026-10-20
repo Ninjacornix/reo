@@ -54,6 +54,7 @@ static class SelfTest {
         Task.Run(() => AutomaticAccountTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => LocalGameBuildTests.Run(Check)).GetAwaiter().GetResult();
+        Task.Run(() => ExistingGameBuildTests.Run(Check)).GetAwaiter().GetResult();
         string pipeName = "reo-log-check-" + Guid.NewGuid().ToString("N"),
                pipeOutput = Path.GetTempFileName();
         using (var pipeReader = new NamedPipeServerStream(
@@ -263,8 +264,8 @@ static class SelfTest {
         Check(DisplayOptions.Size(-5) == DisplayOptions.Sizes[0] &&
                   DisplayOptions.Size(99) == DisplayOptions.Sizes[^1],
               "Invalid resolution settings are bounded");
-        var graphics = new Settings { Fullscreen = true, WindowSize = 4,
-                                      TextureLinear = true, AntiAliasing = true };
+        var graphics = new Settings { Fullscreen = true, WindowSize = 4, TextureLinear = true,
+                                      AntiAliasing = true };
         var graphicsRoundtrip =
             JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(graphics))!;
         Check(JsonSerializer.Deserialize<Settings>("{\"Anisotropy\":16}")!.ResolvedAnisotropy ==
@@ -274,8 +275,7 @@ static class SelfTest {
               "Anisotropic filtering persists supported levels and defaults invalid/old settings " +
                   "to off");
         Check(graphicsRoundtrip.Fullscreen && graphicsRoundtrip.WindowSize == 4 &&
-                  graphicsRoundtrip.TextureLinear &&
-                  graphicsRoundtrip.AntiAliasing,
+                  graphicsRoundtrip.TextureLinear && graphicsRoundtrip.AntiAliasing,
               "Display and startup preferences survive serialization");
         {
             var kind = (string a, string adapter) =>
@@ -293,14 +293,18 @@ static class SelfTest {
                       !HostNetworking.IsVirtualAdapter("Ethernet Realtek PCIe GbE") &&
                       !HostNetworking.IsVirtualAdapter("Hamachi LogMeIn Hamachi Virtual Ethernet"),
                   "Virtual machine adapters are not offered as hosting addresses");
-            Check(HostNetworking.BehindAnotherNat("100.70.1.2") && HostNetworking.BehindAnotherNat("192.168.0.1") &&
-                      !HostNetworking.BehindAnotherNat("93.184.216.34") && !HostNetworking.BehindAnotherNat(null),
-                  "A router with a non-public internet address is reported as behind another network");
-            Check(HostNetworking.Ports.Select(p => p.Number + p.Protocol).SequenceEqual(
-                      new[] { "80TCP", "10127TCP", "9090UDP", "9091UDP" }) &&
+            Check(
+                HostNetworking.BehindAnotherNat("100.70.1.2") &&
+                    HostNetworking.BehindAnotherNat("192.168.0.1") &&
+                    !HostNetworking.BehindAnotherNat("93.184.216.34") &&
+                    !HostNetworking.BehindAnotherNat(null),
+                "A router with a non-public internet address is reported as behind another network");
+            Check(HostNetworking.Ports.Select(p => p.Number + p.Protocol)
+                          .SequenceEqual(new[] { "80TCP", "10127TCP", "9090UDP", "9091UDP" }) &&
                       HostNetworking.PortList.Contains("9091 UDP"),
                   "Hosting lists the four fixed server ports");
-            var forward = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(new Settings { AutoForward = true }))!;
+            var forward = JsonSerializer.Deserialize<Settings>(
+                JsonSerializer.Serialize(new Settings { AutoForward = true }))!;
             Check(forward.AutoForward && !new Settings().AutoForward,
                   "Automatic router forwarding is opt-in and persists");
         }

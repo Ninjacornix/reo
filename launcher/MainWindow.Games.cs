@@ -51,12 +51,17 @@ public partial class MainWindow {
                                 new DoubleAnimation(0, 1, duration) { EasingFunction = easing });
         OutgoingBackdrop.BeginAnimation(OpacityProperty, fadeOut);
     }
+    void GameSelectionChanged(object sender, SelectionChangedEventArgs e) {
+        if (GamePicker.SelectedItem is ListBoxItem item && (string)item.Tag != settings.Game.Id)
+            SelectGame(item, e);
+    }
     void SelectGame(object sender, RoutedEventArgs e) {
-        if (!initialized || game.Running || launching)
+        if (!initialized || game.Running || launching || updating || backingUp || updateRestarting)
             return;
-        settings.SelectedGame = (string)((Button)sender).Tag;
+        settings.SelectedGame = (string)((FrameworkElement)sender).Tag;
         try {
-            settings.Save();
+            if (!args.Contains("--screenshot"))
+                settings.Save();
         } catch (System.IO.IOException error) {
             Status.Text = error.Message;
         }
@@ -77,6 +82,9 @@ public partial class MainWindow {
         bool present = settings.Game.Id == "file1" && settings.FilesPresent(root);
         SelectedGameLabel.Text = settings.Game.Name;
         RefreshBackdrop();
+        GamePicker.SelectedValue = settings.Game.Id;
+        GamePicker.IsEnabled =
+            !game.Running && !launching && !updating && !updateRestarting && !backingUp;
         foreach (int n in new[] { 1, 2 }) {
             string id = "file" + n;
             bool selected = settings.Game.Id == id;
@@ -90,17 +98,10 @@ public partial class MainWindow {
                 : settings.FilesPresent(root, id)
                     ? DiscImport.Ready(settings, id) ? "Ready to play." : "ISO ready to import."
                     : "Game files not configured.";
-            var select = (Button)FindName("SelectGame" + n);
-            select.Content = selected ? "Selected" : "Select";
-            select.Background =
-                (System.Windows.Media.Brush)FindResource(selected ? "SelectedSurface" : "Surface");
-            select.IsEnabled = !game.Running && !launching;
-            System.Windows.Automation.AutomationProperties.SetName(
-                select, (selected ? "Selected: " : "Select: ") + GameDefinition.Find(id).Name);
             ((Button)FindName("ConfigureGame" + n)).IsEnabled = !game.Running && !launching;
         }
-        LaunchButton.IsEnabled = present && !updating &&
-                                 !updateRestarting && !game.Running && !launching && !backingUp;
+        LaunchButton.IsEnabled =
+            present && !updating && !updateRestarting && !game.Running && !launching && !backingUp;
         RefreshOnlineUi();
         PlayDisplaySummary.Text =
             (settings.Fullscreen ? "Borderless" : DisplayOptions.Size(settings.WindowSize).Name) +

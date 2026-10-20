@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**v1.0.9 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
+**v1.0.10 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -17,16 +17,26 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
 
+Already compiled the game? In **Game files**, click **Use existing build** and
+choose `reo_recomp.exe` from a completed compatible launcher build. Keep
+`local-build.json` and the build's DLLs beside it. The launcher verifies and caches
+that build, skipping compilation; your supported ISO is still required. A lone
+EXE or a build from a different kit is not enough.
+
+Game selection works by clicking a game card or using the keyboard; there are no
+separate Select buttons. [Build-time findings](https://github.com/Ninjacornix/reo/blob/main/docs/BUILD_PERFORMANCE.md)
+explain the current compilation costs and next optimization candidates.
+
 ## Windows prerelease
 
-Download **RE-Outbreak-v1.0.9-Windows-x64.zip** from
+Download **RE-Outbreak-v1.0.10-Windows-x64.zip** from
 [GitHub Releases](https://github.com/Ninjacornix/reo/releases). Install the
 [requirements](REQUIREMENTS.md), extract the ZIP, and open `Outbreak.Launcher.exe`.
 The launcher folder no longer includes the .NET runtime, language folders or a
 compiler installation. Hosting source is included under `network-server/`, with
 its dependencies listed in `requirements.txt` rather than bundled Python/packages.
 Extract all files into one folder; `Outbreak.Launcher.exe` is at its top level.
-The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Extract v1.0.9 into a fresh
+The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Extract v1.0.10 into a fresh
 folder if upgrading, so old bundled Python/vendor files are left behind. The
 single-file startup fix from v1.0.4 is retained. Licence notices are in
 `THIRD-PARTY-NOTICES.txt`; source archives are separate developer downloads.

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.10 prerelease
+
+- Select games by clicking their cards or with the keyboard; remove Select buttons.
+- Import a compatible completed launcher build with its receipt and companion files to skip compilation.
+- Validate build-kit/game/architecture identity, file integrity and PE format before cache admission; preserve previous builds on failure/cancellation.
+- Document measured compilation samples and future optimization candidates; keep existing game optimization flags and cache identities.
+
+
 ## v1.0.9 prerelease
 
 - Detect compatible LLVM/MinGW installations on PATH and in common folders before downloading.

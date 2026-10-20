@@ -36,28 +36,33 @@
     <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <Grid>
       <StackPanel x:Name="PagePlay">
-       <Grid Margin="0,8,0,26"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
-        <Border x:Name="GameCard1" Grid.Column="0" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
+       <ListBox x:Name="GamePicker" SelectionChanged="GameSelectionChanged" SelectedValuePath="Tag" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,8,0,26" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Choose game">
+        <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+        <ListBoxItem Tag="file1" Style="{StaticResource GameChoice}" Margin="0,0,9,0" AutomationProperties.Name="Outbreak File 1">
+        <Border x:Name="GameCard1" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
          <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
            <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster1" Width="86" Height="128" Stretch="UniformToFill"/></Border>
            <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #1" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/></StackPanel>
           </Grid>
           <TextBlock x:Name="GameStatus1" Grid.Row="1" Style="{StaticResource Hint}" MinHeight="20" Margin="0,18,0,16"/>
-          <WrapPanel Grid.Row="2"><Button x:Name="SelectGame1" Content="Select" Tag="file1" Click="SelectGame" Margin="0,0,8,0"/><Button x:Name="ConfigureGame1" Content="Game files" Tag="file1" Click="ConfigureGame"/></WrapPanel>
+          <WrapPanel Grid.Row="2"><Button x:Name="ConfigureGame1" Content="Game files" Tag="file1" Click="ConfigureGame"/></WrapPanel>
          </Grid>
         </Border>
-        <Border x:Name="GameCard2" Grid.Column="2" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
+        </ListBoxItem>
+        <ListBoxItem Tag="file2" Style="{StaticResource GameChoice}" Margin="9,0,0,0" AutomationProperties.Name="Outbreak File 2, coming later">
+        <Border x:Name="GameCard2" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
          <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
            <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster2" Width="86" Height="128" Stretch="UniformToFill"/></Border>
            <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #2" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/></StackPanel>
           </Grid>
           <TextBlock x:Name="GameStatus2" Grid.Row="1" Style="{StaticResource Hint}" MinHeight="20" Margin="0,18,0,16"/>
-          <WrapPanel Grid.Row="2"><Button x:Name="SelectGame2" Content="Select" Tag="file2" Click="SelectGame" Margin="0,0,8,0"/><Button x:Name="ConfigureGame2" Content="Game files" Tag="file2" Click="ConfigureGame"/></WrapPanel>
+          <WrapPanel Grid.Row="2"><Button x:Name="ConfigureGame2" Content="Game files" Tag="file2" Click="ConfigureGame"/></WrapPanel>
          </Grid>
         </Border>
-       </Grid>
+        </ListBoxItem>
+       </ListBox>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
         <StackPanel>
        <TextBlock Text="Game details" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15"/>
@@ -197,6 +202,9 @@
        <TextBlock x:Name="SupportedDiscHint" Text="Required: Outbreak File #1, NTSC-U v2.00 (SLUS-20765). PAL, Japanese and other revisions are unsupported." Style="{StaticResource Hint}" Margin="0,14,0,0"/>
        <TextBlock x:Name="DiscValidationStatus" TextWrapping="Wrap" Margin="0,10,0,0"/>
        <TextBlock x:Name="ImportState" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,18,0,10"/>
+       <TextBlock Text="Already have a completed game build?" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,10"/>
+       <Button x:Name="ExistingBuildButton" Content="Use existing build" Click="UseExistingBuild" HorizontalAlignment="Left"/>
+       <TextBlock Text="Choose reo_recomp.exe from a compatible launcher build, keeping local-build.json and its DLLs beside it. Your ISO is still required." Style="{StaticResource Hint}" Margin="0,10,0,0"/>
        <Expander x:Name="DeveloperFiles" Header="Developer options" Foreground="{StaticResource Muted}" Margin="0,30,0,0">
         <StackPanel Margin="0,16,0,0">
          <TextBlock Text="Native executable"/><TextBox x:Name="ExePath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="exe" Click="BrowseFile" HorizontalAlignment="Left"/>

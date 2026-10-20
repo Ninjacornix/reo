@@ -28,6 +28,17 @@
  <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
   <Setter Property="Background" Value="#A64F4F"/><Setter Property="BorderBrush" Value="#C46D69"/><Setter Property="FontWeight" Value="SemiBold"/>
  </Style>
+ <Style x:Key="GameChoice" TargetType="ListBoxItem">
+  <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="VerticalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/><Setter Property="Cursor" Value="Hand"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Grid>
+   <ContentPresenter/>
+   <Border x:Name="CardFocus" BorderBrush="{StaticResource Ink}" BorderThickness="2" CornerRadius="7" IsHitTestVisible="False" Visibility="Collapsed"/>
+  </Grid><ControlTemplate.Triggers>
+   <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="CardFocus" Property="Visibility" Value="Visible"/></Trigger>
+   <Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.9"/></Trigger>
+   <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5"/></Trigger>
+  </ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+ </Style>
  <Style x:Key="NavButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
   <Setter Property="Padding" Value="12,11"/><Setter Property="Foreground" Value="{StaticResource Muted}"/>
   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="NavFrame" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border><ControlTemplate.Triggers>

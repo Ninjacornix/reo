@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Diagnostics;
+using Microsoft.Win32;
 
 namespace Outbreak.Launcher;
 public partial class MainWindow {
@@ -75,6 +76,9 @@ public partial class MainWindow {
             settings.Game.Id == "file1" && !updating && !game.Running && !launching && !backingUp;
         ImportDiscButton.IsEnabled = settings.Game.Id == "file1" && settings.FilesPresent(root) &&
                                      !updating && !game.Running && !launching && !backingUp;
+        ExistingBuildButton.IsEnabled = settings.Game.Id == "file1" &&
+                                        LocalGameBuild.Available(root) && !updating &&
+                                        !game.Running && !launching && !backingUp;
         if (importCancellation != null)
             return;
         ImportState.Text =
@@ -84,6 +88,40 @@ public partial class MainWindow {
             : File.Exists(settings.GetIso())
                 ? "Import prepares the build tools automatically. First setup needs Internet access and can take time."
                 : "Choose ISO to start automatic setup. File #1 requires NTSC-U v2.00 (SLUS-20765).";
+    }
+    async void UseExistingBuild(object sender, RoutedEventArgs e) {
+        if (settings.Game.Id != "file1" || updating || game.Running || launching || backingUp)
+            return;
+        var dialog = new OpenFileDialog { Title = "Choose a completed RE: Outbreak build",
+                                          Filter = "Native game (reo_recomp.exe)|reo_recomp.exe",
+                                          CheckFileExists = true };
+        string cached = LocalGameBuild.TargetPath(root);
+        if (File.Exists(cached))
+            dialog.InitialDirectory = Path.GetDirectoryName(cached);
+        if (dialog.ShowDialog(this) != true)
+            return;
+        launching = true;
+        try {
+            var progress = BeginDiscImport();
+            RefreshGameUi();
+            string imported = await LocalGameBuild.ImportExisting(root, dialog.FileName, progress,
+                                                                  importCancellation!.Token);
+            if (!AppLayout.Packaged(root))
+                settings.SetFile("exe", imported);
+            settings.Save();
+            Status.Text =
+                DiscImport.Ready(settings)
+                    ? "Existing game build ready. Compilation skipped."
+                    : "Game build imported. Choose your ISO for game data; compilation will be skipped.";
+        } catch (OperationCanceledException) {
+            Status.Text = "Build import canceled. Previous build preserved.";
+        } catch (Exception error) {
+            Status.Text = "Could not use existing build: " + error.Message;
+        } finally {
+            launching = false;
+            EndDiscImport();
+            RefreshGameUi();
+        }
     }
     void CancelImport(object sender, RoutedEventArgs e) => importCancellation?.Cancel();
     async void ImportDisc(object sender, RoutedEventArgs e) => await ImportSelectedDisc();

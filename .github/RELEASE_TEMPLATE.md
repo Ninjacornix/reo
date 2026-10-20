@@ -1,29 +1,53 @@
-# RE: Outbreak v1.0.9 prerelease
+# RE: Outbreak v1.0.10 prerelease
 
-## Changes
+Select a game by clicking anywhere on its card, or using the keyboard. Separate
+Select buttons have been removed; Game files remains a separate action.
 
-- Reuse the exact supported LLVM/MinGW compiler if found on PATH, in common Tools folders, through REO_LLVM_MINGW, or in the launcher's private cache. Incompatible/incomplete toolchains are skipped; missing tools are downloaded automatically.
-- Game setup now has a persistent progress panel on every launcher page. Downloads show MiB and percentage; extraction/compilation show counts, stage ETA and cancellation.
-- Co-op hosting shows download progress and live Python/package preparation status. An activity bar is used when the installer does not provide an exact total.
-- Compilation selects up to four workers based on CPU and available memory. A four-thread PC can use three instead of two when memory allows. Lower concurrency under memory pressure helps avoid paging; no fixed speedup is promised.
+## Already have a completed build?
 
-## Setup
+In Game files, click **Use existing build** and choose **reo_recomp.exe** from a
+compatible completed launcher build. Keep **local-build.json** and all of the
+build's companion DLLs beside it. The launcher validates the exact build kit,
+game identity, architecture and file hashes before copying it into the local
+cache. Compilation is skipped. Source files and the previous ready build are
+preserved on failure/cancellation. The selected EXE is not run during validation.
 
-1. Install .NET 8 Desktop Runtime x64 if needed, and keep your Vulkan graphics driver current.
-2. Extract RE-Outbreak-v1.0.9-Windows-x64.zip and open Outbreak.Launcher.exe.
-3. Click Game files > Choose ISO and select your own Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765).
-4. Setup runs automatically. Click Play when the build is ready.
+Your supported ISO is still required for game data. A lone EXE or a build from an
+incompatible kit is rejected. Existing completed local caches continue to be reused
+automatically; you do not need to import them again.
 
-No manual compiler installation or environment variable is required. First setup needs Internet access if tools are missing. The compiler download is about 173 MiB, prepared tools use about 446 MiB, and the full game compilation still takes substantial time and several GB of working space. Keep your ISO and build-inputs.zip available.
+## First setup
 
-The unchanged v1.0.6 generation kit preserves completed game caches. Shared precompiled headers and object receipts already reduce repeated work; cancelled builds can reuse completed units. This release does not change game optimization flags or runtime behavior.
+1. Install .NET 8 Desktop Runtime x64 if needed, and keep your Vulkan driver current.
+2. Extract RE-Outbreak-v1.0.10-Windows-x64.zip and open Outbreak.Launcher.exe.
+3. Choose your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)** in Game files.
+4. Import prepares missing tools and builds automatically. Click Play when ready.
 
-Only File #1 NTSC-U v2.00 is supported. PAL, Japanese, File #2 and modified/unsupported executable revisions are rejected with specific ISO errors.
+Keep build-inputs.zip beside the launcher. No environment variables or manual
+compiler installation are required. Compiler download is about 173 MiB and its
+cache uses about 446 MiB. First compilation still needs substantial time and
+several GB of working space. PAL, Japanese, File #2 and unsupported/modified
+executable revisions are not supported.
 
-Enable Host server to prepare private Python/packages automatically when needed. Joining friends needs no Python setup. Firewall/router access rules still apply.
+Hosting source is bundled; Host server automatically prepares private Python and
+packages if missing. Joining needs no Python setup. Normal router/firewall rules
+still apply. Game and hosting setup progress/cancellation remain visible.
 
-## Downloads and validation
+## Build performance and validation
 
-Players only need Windows-x64.zip. Required notices are in THIRD-PARTY-NOTICES.txt; optional dependency sources are a separate asset. Project sources use GitHub's source archives. No game executable, BIOS or game assets are included.
+The unchanged v1.0.6 build kit preserves existing native caches. No game optimization
+flags were changed. Two reference compilation units were profiled, not the whole
+game: they took 8.750 s and 1.891 s; one spent 4.559 s in register allocation.
+Broader generated-code and parallelism changes need separate measurements. See
+[build performance](https://github.com/Ninjacornix/reo/blob/v1.0.10/docs/BUILD_PERFORMANCE.md).
 
-Existing compiler discovery/rejection/cancellation checks and launcher self-tests passed. Progress panels were rendered at the minimum window size; final package extraction/integrity and launcher startup were verified. No full game compilation, gameplay or co-op session was rerun; a faster complete game build has not been benchmarked. Rendering, audio, performance and networking remain experimental. Linux and File #2 are not release targets.
+Launcher checks include existing-build import/rejection/cancellation and reuse
+without invoking a compiler. Play/Game files layouts were rendered. Final ZIP
+extraction, hashes and packaged launcher startup passed. No complete game
+compilation, gameplay or co-op test was rerun.
+
+Players only need Windows-x64.zip. Dependency sources are a separate optional
+asset; project sources use GitHub's source archives. Required notices are in
+THIRD-PARTY-NOTICES.txt. No game executable, game assets or BIOS are bundled.
+Rendering, performance, audio and networking remain experimental. File #2 and
+Linux are not release targets.
