@@ -17,7 +17,7 @@ internal static class HostedServerTests {
             checks++;
         }
         using var server = new HostedServer();
-        using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        using var limit = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         try {
             // Alternate ports and a temporary database leave existing user services untouched.
             using (var occupied = new TcpListener(IPAddress.Loopback, 32080)) {
@@ -91,11 +91,26 @@ internal static class HostedServerTests {
             await Task.Delay(500);
             HostedServer.CheckPorts(32000);
             Check(true, "Owned ports were not released");
+            bool installedAutomatically =
+                Directory.Exists(Path.Combine(home, "server-python-runtime"));
+            if (installedAutomatically) {
+                string marker = Directory
+                                    .GetFiles(Path.Combine(home, "server-python"), "ready.json",
+                                              SearchOption.AllDirectories)
+                                    .Single();
+                string before = await File.ReadAllTextAsync(marker);
+                await server.Start(root, "127.0.0.1", limit.Token, home, 32000, component);
+                Check(server.Running, "Cached automatic server setup did not restart");
+                Check(await File.ReadAllTextAsync(marker) == before,
+                      "A cached startup unexpectedly repeated installation");
+                server.Dispose();
+            }
             await File.WriteAllTextAsync(receipt, JsonSerializer.Serialize(new {
                 passed = true, checks,
                 externalPython = !File.Exists(Path.Combine(component, "python", "python.exe")),
-                serverServices = 4, automaticRegistration = true, credentialReuse = true,
-                collisionRefused = true, nativeCredentialHandshake = true, game = false
+                installedAutomatically, serverServices = 4, automaticRegistration = true,
+                credentialReuse = true, collisionRefused = true, nativeCredentialHandshake = true,
+                game = false
             }));
         } finally {
             server.Dispose();
@@ -103,12 +118,37 @@ internal static class HostedServerTests {
             for (int i = 0; i < 20; ++i) {
                 try {
                     if (Directory.Exists(home))
-                        Directory.Delete(home, true);
+                        RemoveOwnedTree(home, home);
                     break;
-                } catch (IOException) {
+                } catch (Exception error)
+                    when (error is IOException or UnauthorizedAccessException) {
                     await Task.Delay(50);
                 }
             }
         }
+    }
+    static void RemoveOwnedTree(string folder, string root) {
+        string canonical = Path.GetFullPath(root), temp = Path.GetFullPath(Path.GetTempPath());
+        if (!canonical.StartsWith(temp, StringComparison.OrdinalIgnoreCase) ||
+            !Path.GetFileName(canonical).StartsWith("reo-host-check-", StringComparison.Ordinal) ||
+            !(Path.GetFullPath(folder) == canonical ||
+              Path.GetFullPath(folder).StartsWith(canonical + Path.DirectorySeparatorChar,
+                                                  StringComparison.OrdinalIgnoreCase)))
+            throw new IOException("Refusing cleanup outside the owned server test directory.");
+        foreach (string entry in Directory.EnumerateFileSystemEntries(folder)) {
+            var attributes = File.GetAttributes(entry);
+            bool directory = (attributes & FileAttributes.Directory) != 0;
+            if (directory && (attributes & FileAttributes.ReparsePoint) == 0)
+                RemoveOwnedTree(entry, root);
+            else {
+                File.SetAttributes(entry, attributes & ~FileAttributes.ReadOnly);
+                if (directory)
+                    Directory.Delete(entry);
+                else
+                    File.Delete(entry);
+            }
+        }
+        File.SetAttributes(folder, File.GetAttributes(folder) & ~FileAttributes.ReadOnly);
+        Directory.Delete(folder);
     }
 }

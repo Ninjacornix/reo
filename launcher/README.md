@@ -1,6 +1,6 @@
 # Launcher
 
-The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.5 uses a smaller
+The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.6 uses a smaller
 framework-dependent launcher and separately installed requirements. See
 [requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
 The extracted single-file launcher is checked separately for window startup;
@@ -16,13 +16,13 @@ The application is portable; system dependencies are installed separately.
 Install .NET 8 Desktop Runtime and the pinned LLVM/MinGW compiler, then select an
 ISO. Required generation inputs are bundled compressed and unpack into the user
 cache. The full compiler and .NET runtime are not inside the launcher folder.
-The local server source is under `network-server/`; Python and its packages are
-installed separately as described in its README and requirements.txt. Joining a
-host does not need them. Required build inputs remain compressed in one ZIP.
+The local server source is under `network-server/`; the launcher prepares Python
+and requirements.txt packages automatically in Local AppData on first hosting.
+Joining a host does not need them. Required build inputs remain compressed in one ZIP.
 Third-party licence notices are consolidated; developer source archives are not
 inside the normal download.
 Legacy development kits require existing Microsoft C++ tools and a Windows SDK.
-The launcher does not install system tools. The first compilation takes time;
+The launcher does not install system-wide tools. The first compilation takes time;
 later launches reuse verified completed outputs.
 The final game executable, extracted assets and generated instruction code stay
 in Local AppData. Keep the ISO available for direct sector reads.

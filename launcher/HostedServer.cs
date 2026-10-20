@@ -29,7 +29,7 @@ internal sealed class HostedServer : IDisposable {
 
     public async Task Start(string root, string address, CancellationToken cancel = default,
                             string? stateHome = null, int portOffset = 0,
-                            string? componentRoot = null) {
+                            string? componentRoot = null, IProgress<string>? progress = null) {
         if (Running)
             return;
         if (processes.Count > 0)
@@ -48,7 +48,9 @@ internal sealed class HostedServer : IDisposable {
             lease = new FileStream(Path.Combine(data, "server.lock"), FileMode.OpenOrCreate,
                                    FileAccess.ReadWrite, FileShare.None);
             CheckPorts(portOffset);
-            var (python, source) = await Locate(root, cancel, componentRoot);
+            var (python, source) =
+                await Locate(root, cancel, componentRoot, stateHome ?? Settings.Home, progress);
+            progress?.Report("Starting server services...");
             foreach (var args in new[] { new[] { "app", "capcom" },
                                          new[] { "web", "--web-plugin", "outbreak" },
                                          new[] { "game" }, new[] { "bootstrap" } }) {
@@ -140,7 +142,8 @@ internal sealed class HostedServer : IDisposable {
                 "Server ports are already in use. Stop the other server, or join it with Host server off.");
     }
     static async Task<(string, string)> Locate(string root, CancellationToken cancel,
-                                               string? componentRoot) {
+                                               string? componentRoot, string home,
+                                               IProgress<string>? progress) {
         string payload = componentRoot ?? Path.Combine(root, "network-server");
         if (File.Exists(Path.Combine(payload, "server-manifest.json"))) {
             using var manifest = JsonDocument.Parse(
@@ -172,13 +175,21 @@ internal sealed class HostedServer : IDisposable {
                     python = Environment.GetEnvironmentVariable("REO_SERVER_PYTHON",
                                                                 EnvironmentVariableTarget.User);
                 if (string.IsNullOrWhiteSpace(python))
-                    python = Path.Combine(Settings.Home, "server-python", "Scripts", "python.exe");
+                    python = Path.Combine(home, "server-python", "Scripts", "python.exe");
                 python = Path.GetFullPath(Environment.ExpandEnvironmentVariables(python));
-                if (!File.Exists(python))
-                    throw new IOException(
-                        "Hosting needs Python 3.12 and the packages in network-server/requirements.txt. Follow network-server/README.md to set up the environment.");
-                await CheckExternalPython(python, source, cancel);
-                return (python, source);
+                if (File.Exists(python)) {
+                    try {
+                        await CheckExternalPython(python, source, cancel);
+                        return (python, source);
+                    } catch (IOException) {
+                        progress?.Report("Preparing a private server environment...");
+                    }
+                }
+                string requirements =
+                    Resolve(manifest.RootElement.GetProperty("requirements").GetString()!);
+                return (
+                    await ServerPythonSetup.Ensure(home, source, requirements, progress, cancel),
+                    source);
             }
             return (Resolve(manifest.RootElement.GetProperty("python").GetString()!), source);
         }
@@ -191,7 +202,8 @@ internal sealed class HostedServer : IDisposable {
         throw new IOException(
             "Hosting files are missing. Extract the complete release, including its network-server folder.");
     }
-    static async Task CheckExternalPython(string python, string source, CancellationToken cancel) {
+    internal static async Task CheckExternalPython(string python, string source,
+                                                   CancellationToken cancel) {
         var start = new ProcessStartInfo(
             python) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = source,
                       RedirectStandardOutput = true, RedirectStandardError = true };

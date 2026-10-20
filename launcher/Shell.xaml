@@ -148,7 +148,7 @@
        <StackPanel x:Name="CoopControls" MaxWidth="460" HorizontalAlignment="Left">
         <CheckBox x:Name="HostServer" Content="Host server" Click="OnlineSettingChanged" Margin="0,4,0,24"/>
         <StackPanel x:Name="HostOptions" Visibility="Collapsed" Margin="0,0,0,22">
-         <TextBlock Text="Hosting needs Python 3.12 and requirements.txt installed. Setup: network-server/README.md" Style="{StaticResource Hint}" Margin="0,0,0,12"/>
+         <TextBlock Text="First-time hosting downloads Python and server packages automatically. Internet access is required for setup." Style="{StaticResource Hint}" Margin="0,0,0,12"/>
          <Label Content="Address for friends" Target="{Binding ElementName=HostAddress}" Padding="0" Foreground="{StaticResource Ink}"/>
          <TextBox x:Name="HostAddress" Width="400" HorizontalAlignment="Left" MaxLength="15" TextChanged="OnlineSettingChanged" Margin="0,8,0,8"/>
          <TextBlock Text="Pick one of your addresses:" Style="{StaticResource Hint}"/>

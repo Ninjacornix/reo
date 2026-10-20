@@ -1,9 +1,10 @@
 # Outbreak server source
 
 Players use **Co-op → Host server** in the launcher. It starts the required
-services and shows a copyable address for friends. First install Python 3.12 and
-the requirements listed in [setup](SETUP.md). Only the host needs Python; the
-download includes source rather than a bundled interpreter or pip packages.
+services and shows a copyable address for friends. Missing Python/packages are
+prepared automatically in a private Local AppData environment on first hosting;
+see [setup](SETUP.md). The download includes source rather than a bundled
+interpreter or pip packages.
 Router/firewall configuration is still necessary for Internet hosting.
 
 `tools/local_build/export_server_source.py` selects verified server source from
@@ -11,7 +12,7 @@ the frozen component and writes a format-2 server-manifest.json, requirements.tx
 and setup README. `launcher/package-slim.ps1 -Server PATH` verifies that manifest
 and excludes interpreters, vendor packages, wheels, databases and source archives.
 The older export_server.py remains a maintainer tool for constructing the frozen
-reference component; its Python/dependency payload is not shipped in v1.0.5.
+reference component; its Python/dependency payload is not shipped in v1.0.6.
 
 The native clients can use [openSNAP](https://github.com/GrenderG/openSNAP), a
 separate server project. This directory contains one patch against upstream

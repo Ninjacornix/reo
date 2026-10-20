@@ -1,51 +1,48 @@
-﻿# RE: Outbreak v1.0.5 prerelease
+﻿# RE: Outbreak v1.0.6 prerelease
 
-Source-only server packaging. Python, installed server packages, wheels and server
-dependency source archives are removed from the application download. The v1.0.4
-single-file launcher startup fix is retained.
+First-time server setup is now automatic. The application download remains small:
+server source and requirements.txt are included, but Python/packages are downloaded
+into a private Local AppData environment only when hosting is first used.
 
 ## Download and run
 
-Download **RE-Outbreak-v1.0.5-Windows-x64.zip**, extract all files into a **fresh
-folder**, and open **Outbreak.Launcher.exe**. Do not copy it over an older release:
-that would leave the old Python/vendor files behind. Saves/settings in Local
-AppData remain available.
+Download **RE-Outbreak-v1.0.6-Windows-x64.zip**, extract into a fresh folder and run
+**Outbreak.Launcher.exe**. Install .NET 8 Desktop Runtime x64, your Vulkan GPU driver
+and the pinned LLVM/MinGW compiler described in REQUIREMENTS.md. These game-build
+requirements are separate from automatic server setup.
 
-Install **.NET 8 Desktop Runtime (x64)**, a Vulkan-capable GPU driver and the pinned
-**LLVM/MinGW UCRT 20251216 x86-64** compiler. Set **REO_LLVM_MINGW** as described in
-REQUIREMENTS.md. Provide your own **NTSC-U v2.00 ISO (SLUS-20765)**; first local
-compilation takes substantial time and shows progress, elapsed time and a stage
-ETA. Later launches use the completed cache. Keep the ISO available.
+Provide your own NTSC-U v2.00 / SLUS-20765 ISO. The launcher generates/compiles locally
+on first import; progress, elapsed time and a stage ETA are shown. Keep your ISO and
+build-inputs.zip available. The ZIP contains required independent generation inputs,
+compressed to avoid thousands of loose files; it unpacks into Local AppData.
 
-**build-inputs.zip is required:** it contains independent generation tools and
-runtime inputs for compiling your ISO locally. Compression avoids thousands of
-loose setup files beside the launcher. It unpacks into Local AppData when needed;
-leave the ZIP beside the launcher. It contains no game executable or game assets.
+## Hosting
 
-## Hosting requirements
+Enable **Co-op > Host server**. Missing Python and server packages are prepared
+automatically, then the services start. No manual pip command or administrator
+installer is needed. First setup requires Internet access. Progress is shown and
+the button becomes **Cancel** while setup runs. Later starts reuse the cached
+installation, including offline. Joining friends needs no Python setup.
 
-The network-server folder contains server source, setup instructions, its licence,
-requirements.txt and a verification manifest. **Python and pip packages are not
-bundled.** Only the host needs to install Python 3.12 x64 and run the commands in
-network-server/README.md to create the external environment and install
-requirements.txt. Then use **Co-op > Host server** normally. Joining friends does
-not require Python. The launcher does not install dependencies automatically.
+Downloads use a pinned, SHA-256-verified uv setup tool, managed Python 3.12 and PyPI
+packages. Files stay in Local AppData; the application folder, system PATH and
+other Python installations are not modified. See network-server/README.md for
+cache/log locations and advanced overrides. Normal firewall/router rules still
+apply for hosting over the Internet.
 
-## Notices and developer downloads
+## Downloads and notices
 
-There is no top-level LICENSES folder; required third-party licence texts are
-combined in **THIRD-PARTY-NOTICES.txt**. Project and dependency source archives are
-separate release assets for developers/redistributors, outside the Windows ZIP.
-**Players only need the Windows-x64.zip asset.** Checksum files accompany downloads.
+Players only need **Windows-x64.zip**. Required third-party licence texts remain
+in THIRD-PARTY-NOTICES.txt. Corresponding dependency sources are a separate developer
+asset. The duplicate Project-Source.tar download is removed: use GitHub's built-in
+**Source code (zip/tar.gz)** for this tag instead. No source archives, compiler,
+Python installation, server wheels or vendor packages are inside the application ZIP.
 
 ## Validation and limits
 
-The launcher compiled without warnings/errors; the extracted single-file package
-opened and rendered successfully. The source-only server passed isolated hosting,
-account registration and cleanup checks using an externally installed Python
-interpreter. This was not a multiplayer game run.
-
-The reference game compilation built all 2,381 units. Complete external-toolchain
-first setup and gameplay were not rerun. Rendering, performance, audio and
+Cold automatic Python/dependency setup, real isolated server/account checks and a
+cached restart passed. Final package extraction and launcher window startup passed.
+No multiplayer game or complete external-toolchain first setup was rerun. The
+reference compilation built all 2,381 units. Rendering, audio, performance and
 networking remain experimental. File #2 and Linux are not release targets.
 No game executable, BIOS or game assets are included.

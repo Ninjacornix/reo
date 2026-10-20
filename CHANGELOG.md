@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.6 prerelease — 2026-10-20
+
+- Automatically prepare Python and the listed server packages on first hosting;
+  cache the private environment in Local AppData and reuse it on later starts.
+- Add setup progress, cancellation and retry; verify the downloaded setup tool
+  against pinned SHA-256 hashes and keep installations outside the application folder.
+- Keep server source-only packaging and consolidated notices. Remove the duplicate
+  project-source TAR asset; use GitHub's source archives for the release tag.
+
 ## v1.0.5 prerelease — 2026-10-20
 
 - Ship server source and requirements.txt without Python, installed pip packages,

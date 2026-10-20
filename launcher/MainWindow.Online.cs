@@ -20,8 +20,8 @@ public partial class MainWindow {
         if (!initialized || game.Running || launching)
             return;
         if (!OnlineOptions.Configured(settings)) {
-            AccountStatus.Text = OnlineOptions.Error(settings) ??
-                                 "Enter the server address and a username first.";
+            AccountStatus.Text =
+                OnlineOptions.Error(settings) ?? "Enter the server address and a username first.";
             return;
         }
         await PrepareLauncherAccount();
@@ -43,9 +43,10 @@ public partial class MainWindow {
             // Hosting: register with our own server directly on this PC. Many routers cannot reach their own
             // public address from inside (no NAT loopback), so the advertised address may fail here even
             // though friends can use it. The saved credential stays keyed to the advertised address.
-            Uri? endpoint = settings.HostServer && hostedServer.Running && host == hostedServer.Address
-                                ? new Uri("http://127.0.0.1/reweb/signup/create_id.html")
-                                : null;
+            Uri? endpoint =
+                settings.HostServer && hostedServer.Running && host == hostedServer.Address
+                    ? new Uri("http://127.0.0.1/reweb/signup/create_id.html")
+                    : null;
             await AutomaticAccount.Provision(Settings.Home, host, username, cancel.Token, endpoint);
             if (!cancel.IsCancellationRequested) {
                 preparedAccount = identity;
@@ -56,12 +57,14 @@ public partial class MainWindow {
             if (!cancel.IsCancellationRequested)
                 AccountStatus.Text = error switch {
                     AccountNameTakenException => error.Message,
-                    System.Net.Http.HttpRequestException { HttpRequestError: System.Net.Http.HttpRequestError.ConnectionError } or
-                        TaskCanceledException =>
+                    System.Net.Http.HttpRequestException {
+                        HttpRequestError : System.Net.Http.HttpRequestError.ConnectionError
+                    } or TaskCanceledException =>
                         settings.HostServer && !hostedServer.Running
                             ? "Your server is not running yet. Press Start server above, then Create account."
                             : $"No server answered at {host}. Check the address, and that the host has started their server.",
-                    _ => "Could not prepare the account: " + error.Message.TrimEnd('.') + ". Press Create account to retry."
+                    _ => "Could not prepare the account: " + error.Message.TrimEnd('.') +
+                         ". Press Create account to retry."
                 };
         } finally {
             CreateAccountButton.IsEnabled = true;
@@ -87,13 +90,15 @@ public partial class MainWindow {
         DetectedAddresses.Children.Clear();
         var addresses = HostNetworking.LocalAddresses();
         if (addresses.Count == 0) {
-            DetectedAddresses.Children.Add(new System.Windows.Controls.TextBlock {
-                Text = "No network connection found.", Style = (Style)FindResource("Hint") });
+            DetectedAddresses.Children.Add(
+                new System.Windows.Controls.TextBlock { Text = "No network connection found.",
+                                                        Style = (Style)FindResource("Hint") });
             return;
         }
         foreach (var address in addresses) {
-            var button = new System.Windows.Controls.Button {
-                Content = address.Label, Margin = new Thickness(0, 0, 8, 6), Tag = address.Address };
+            var button = new System.Windows.Controls.Button { Content = address.Label,
+                                                              Margin = new Thickness(0, 0, 8, 6),
+                                                              Tag = address.Address };
             button.Click += (_, _) => HostAddress.Text = (string)button.Tag;
             DetectedAddresses.Children.Add(button);
         }
@@ -110,15 +115,16 @@ public partial class MainWindow {
         try {
             publicAddress = await HostNetworking.PublicAddress(cancel.Token);
             PublicAddressStatus.Text = "Your internet address is " + publicAddress + ".";
-            var use = new System.Windows.Controls.Button {
-                Content = publicAddress + " (internet)", Margin = new Thickness(0, 0, 8, 6) };
+            var use = new System.Windows.Controls.Button { Content = publicAddress + " (internet)",
+                                                           Margin = new Thickness(0, 0, 8, 6) };
             string chosen = publicAddress;
             use.Click += (_, _) => HostAddress.Text = chosen;
             RefreshDetectedAddresses();
             DetectedAddresses.Children.Add(use);
         } catch (OperationCanceledException) when (cancel.IsCancellationRequested) {
         } catch {
-            PublicAddressStatus.Text = "Could not reach the address service. Check your internet connection.";
+            PublicAddressStatus.Text =
+                "Could not reach the address service. Check your internet connection.";
         } finally {
             if (publicLookup == cancel)
                 publicLookup = null;
@@ -146,14 +152,16 @@ public partial class MainWindow {
             if (portsForwarded) {
                 portsForwarded = false;
                 await HostNetworking.ClosePorts();
-                ReachStatus.Text = settings.AutoForward ? "" : "Automatic router forwarding turned off.";
+                ReachStatus.Text =
+                    settings.AutoForward ? "" : "Automatic router forwarding turned off.";
             }
             return;
         }
-        var home = HostNetworking.LocalAddresses()
-                       .FirstOrDefault(a => a.Kind == HostNetworking.AddressKind.Home);
+        var home = HostNetworking.LocalAddresses().FirstOrDefault(
+            a => a.Kind == HostNetworking.AddressKind.Home);
         if (home == null) {
-            ReachStatus.Text = "No home network address found, so router forwarding is not possible.";
+            ReachStatus.Text =
+                "No home network address found, so router forwarding is not possible.";
             return;
         }
         ReachStatus.Text = "Asking your router to open the ports...";
@@ -162,12 +170,15 @@ public partial class MainWindow {
         if (!result.Opened)
             ReachStatus.Text = result.Message;
         else if (HostNetworking.BehindAnotherNat(result.RouterAddress))
-            ReachStatus.Text = "Router ports opened, but your router itself is behind your provider's network " +
-                               $"(router address {result.RouterAddress}). Friends over the internet probably " +
-                               "cannot reach you; use a VPN such as Tailscale or ZeroTier instead.";
+            ReachStatus.Text =
+                "Router ports opened, but your router itself is behind your provider's network " +
+                $"(router address {result.RouterAddress}). Friends over the internet probably " +
+                "cannot reach you; use a VPN such as Tailscale or ZeroTier instead.";
         else
-            ReachStatus.Text = result.Message +
-                               (result.RouterAddress != null ? " Router internet address: " + result.RouterAddress + "." : "");
+            ReachStatus.Text =
+                result.Message + (result.RouterAddress != null
+                                      ? " Router internet address: " + result.RouterAddress + "."
+                                      : "");
     }
 
     async void OnlineSettingChanged(object sender, RoutedEventArgs e) {
@@ -203,7 +214,13 @@ public partial class MainWindow {
         } else if (forwardChanged)
             await UpdateRouterForwarding();
     }
-    async void StartServerClicked(object sender, RoutedEventArgs e) => await StartHostedServer();
+    async void StartServerClicked(object sender, RoutedEventArgs e) {
+        if (serverStarting) {
+            hostedServer.Dispose();
+            return;
+        }
+        await StartHostedServer();
+    }
     async Task StartHostedServer() {
         if (serverStarting || hostedServer.Running)
             return;
@@ -212,12 +229,15 @@ public partial class MainWindow {
             return;
         }
         serverStarting = true;
-        StartServerButton.IsEnabled = false;
+        StartServerButton.IsEnabled = true;
+        StartServerButton.Content = "Cancel";
         HostServer.IsEnabled = false;
         HostAddress.IsEnabled = false;
         HostStatus.Text = "Starting server...";
         try {
-            await hostedServer.Start(root, HostAddress.Text);
+            await hostedServer.Start(
+                root, HostAddress.Text,
+                progress: new Progress<string>(stage => HostStatus.Text = stage));
             bool localOnly =
                 System.Net.IPAddress.IsLoopback(System.Net.IPAddress.Parse(hostedServer.Address));
             HostStatus.Text = localOnly
@@ -228,16 +248,24 @@ public partial class MainWindow {
             if (CoopHost.Text.Trim() != hostedServer.Address) {
                 CoopHost.Text = hostedServer.Address;
                 settings.CoopHost = hostedServer.Address;
-                try { settings.Save(); } catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+                try {
+                    settings.Save();
+                } catch (Exception error)
+                    when (error is IOException or UnauthorizedAccessException) {
+                }
                 preparedAccount = null;
             }
             await UpdateRouterForwarding();
             await PrepareLauncherAccount();
+        } catch (OperationCanceledException) {
+            HostStatus.Text = "Server setup cancelled. Click Start server to retry.";
+            CopyServerButton.IsEnabled = false;
         } catch (Exception error) {
             HostStatus.Text = "Server not started: " + error.Message;
             CopyServerButton.IsEnabled = false;
         } finally {
             serverStarting = false;
+            StartServerButton.Content = "Start server";
             StartServerButton.IsEnabled = !hostedServer.Running;
             HostServer.IsEnabled = true;
             HostAddress.IsEnabled = !hostedServer.Running;

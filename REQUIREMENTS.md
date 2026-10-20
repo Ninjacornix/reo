@@ -17,12 +17,12 @@ No PS2 BIOS is required. Ordinary offline play and joining another player's
 server do not require a Python installation or a local server.
 
 The main download includes compatible openSNAP **source only** under
-`network-server/`. Hosting requires a separate **Python 3.12 x64** installation
-and the packages in `network-server/requirements.txt`. Follow
-[server setup](network/server/SETUP.md), or `network-server/README.md` in the ZIP.
-It creates a Python environment under Local AppData; nothing is installed into
-the application folder. The launcher checks dependencies before starting services.
-Joining a friend's server does not require this setup.
+`network-server/`. On first **Host server**, the launcher automatically downloads
+a private Python 3.12 environment and installs the listed packages under Local
+AppData, then starts the services. Internet access is needed for first setup;
+later starts reuse the cache. The application folder and system Python/PATH are
+unchanged. See [server setup](network/server/SETUP.md), or network-server/README.md
+in the ZIP. Joining a friend's server does not require these downloads.
 
 ## Compiler setup
 
@@ -45,7 +45,8 @@ The compiler is needed for first-time generation and later game-code updates;
 completed game builds run from the local cache. First compilation can take a long
 time and needs several GB of working space. Extraction and compilation display
 separate progress and approximate stage ETAs. Neither the launcher nor the build
-worker downloads or installs these system dependencies automatically.
+worker installs the .NET runtime or compiler automatically. Hosting setup is
+separate and automatically prepares its private Python/packages on first use.
 
 The launcher contains `build-inputs.zip`: required independent generation inputs,
 not game data or a compiler installation. It keeps thousands of setup files

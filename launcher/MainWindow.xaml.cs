@@ -173,6 +173,10 @@ public partial class MainWindow : Window {
             Status.Text = game.NetworkStatus;
     }
     async void LaunchGame(object sender, RoutedEventArgs e) {
+        if (serverStarting && settings.HostServer) {
+            Status.Text = "Wait for server setup to finish before starting the game.";
+            return;
+        }
         if (updating || updateRestarting || launching || game.Running || backingUp)
             return;
         launching = true;

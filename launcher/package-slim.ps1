@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)][string]$KitManifest,
     [Parameter(Mandatory=$true)][string]$Server,
     [Parameter(Mandatory=$true)][string]$Output,
-    [string]$Version = '1.0.5'
+    [string]$Version = '1.0.6'
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -67,21 +67,16 @@ foreach ($license in Get-ChildItem -LiteralPath (Join-Path $repo 'LICENSES') -Fi
     [void]$notices.AppendLine([IO.File]::ReadAllText($license.FullName))
 }
 [void]$notices.AppendLine('===== Corresponding source downloads =====')
-[void]$notices.AppendLine("https://github.com/Ninjacornix/reo/releases/download/v$Version/RE-Outbreak-v$Version-Project-Source.tar")
+[void]$notices.AppendLine("https://github.com/Ninjacornix/reo/archive/refs/tags/v$Version.tar.gz")
 [void]$notices.AppendLine("https://github.com/Ninjacornix/reo/releases/download/v$Version/RE-Outbreak-v$Version-Dependency-Sources.zip")
 [IO.File]::WriteAllText((Join-Path $Output 'THIRD-PARTY-NOTICES.txt'), $notices.ToString(), [Text.UTF8Encoding]::new($false))
 $noticePath = Join-Path $Output 'NOTICE.md'
 $noticeText = [IO.File]::ReadAllText($noticePath).Replace('(LICENSES/', "(https://github.com/Ninjacornix/reo/blob/$revision/LICENSES/")
 [IO.File]::WriteAllText($noticePath, $noticeText, [Text.UTF8Encoding]::new($false))
-$sourceArchive = Join-Path (Split-Path -Parent $Output) "RE-Outbreak-v$Version-Project-Source.tar"
-if (Test-Path -LiteralPath $sourceArchive) { throw 'Project source asset already exists.' }
-& git -C $repo archive HEAD --format=tar ('--output=' + $sourceArchive)
-if ($LASTEXITCODE) { throw 'Source archive failed.' }
-((Get-FileHash -LiteralPath $sourceArchive -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' +
-    [IO.Path]::GetFileName($sourceArchive)) | Set-Content -LiteralPath ($sourceArchive + '.sha256') -Encoding ASCII
 @{format=2; updateFormat=2; installMode='local-build'; layout='framework-dependent-single-file';
   version=$Version; platform='win-x64'; source='https://github.com/Ninjacornix/reo'; prerelease=$true;
   bundledServer=$false; serverSourceBundled=$true; serverRuntime='external-python';
+  automaticServerSetup=$true;
   revision=(& git -C $repo rev-parse HEAD).Trim();
   kitSha256=(Get-FileHash -LiteralPath $KitManifest -Algorithm SHA256).Hash.ToLowerInvariant();
   inputsSha256=(Get-FileHash -LiteralPath $Inputs -Algorithm SHA256).Hash.ToLowerInvariant();
