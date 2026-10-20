@@ -68,7 +68,9 @@ internal sealed class HostedServer : IDisposable {
                              .ToArray())
                     start.Environment.Remove(key);
                 var env = start.Environment;
-                env["PYTHONPATH"] = source + Path.PathSeparator + Path.Combine(source, "vendor");
+                env["PYTHONPATH"] = source;
+                if (Directory.Exists(Path.Combine(source, "vendor")))
+                    env["PYTHONPATH"] += Path.PathSeparator + Path.Combine(source, "vendor");
                 env["PYTHONNOUSERSITE"] = "1";
                 env["PYTHONDONTWRITEBYTECODE"] = "1";
                 env["OPENSNAP_LOG_LEVEL"] = "info";
@@ -150,7 +152,8 @@ internal sealed class HostedServer : IDisposable {
                     throw new IOException("Invalid server package path.");
                 return file;
             }
-            if (manifest.RootElement.GetProperty("format").GetInt32() != 1)
+            int format = manifest.RootElement.GetProperty("format").GetInt32();
+            if (format is not(1 or 2))
                 throw new IOException("Unsupported server package.");
             foreach (var item in manifest.RootElement.GetProperty("files").EnumerateArray()) {
                 using var input = File.OpenRead(Resolve(item.GetProperty("path").GetString()!));
@@ -160,8 +163,24 @@ internal sealed class HostedServer : IDisposable {
                     throw new IOException(
                         "Server package verification failed. Extract a complete release.");
             }
-            return (Resolve(manifest.RootElement.GetProperty("python").GetString()!),
-                    Resolve(manifest.RootElement.GetProperty("source").GetString()!));
+            string source = Resolve(manifest.RootElement.GetProperty("source").GetString()!);
+            if (format == 2) {
+                if (manifest.RootElement.GetProperty("runtime").GetString() != "external-python")
+                    throw new IOException("Unsupported server Python configuration.");
+                string? python = Environment.GetEnvironmentVariable("REO_SERVER_PYTHON");
+                if (string.IsNullOrWhiteSpace(python))
+                    python = Environment.GetEnvironmentVariable("REO_SERVER_PYTHON",
+                                                                EnvironmentVariableTarget.User);
+                if (string.IsNullOrWhiteSpace(python))
+                    python = Path.Combine(Settings.Home, "server-python", "Scripts", "python.exe");
+                python = Path.GetFullPath(Environment.ExpandEnvironmentVariables(python));
+                if (!File.Exists(python))
+                    throw new IOException(
+                        "Hosting needs Python 3.12 and the packages in network-server/requirements.txt. Follow network-server/README.md to set up the environment.");
+                await CheckExternalPython(python, source, cancel);
+                return (python, source);
+            }
+            return (Resolve(manifest.RootElement.GetProperty("python").GetString()!), source);
         }
         if (!AppLayout.Packaged(root)) {
             string source = Path.Combine(root, "build-ninja/coop-research/openSNAP");
@@ -171,6 +190,43 @@ internal sealed class HostedServer : IDisposable {
         }
         throw new IOException(
             "Hosting files are missing. Extract the complete release, including its network-server folder.");
+    }
+    static async Task CheckExternalPython(string python, string source, CancellationToken cancel) {
+        var start = new ProcessStartInfo(
+            python) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = source,
+                      RedirectStandardOutput = true, RedirectStandardError = true };
+        foreach (string key in start.Environment.Keys
+                     .Where(k => k.StartsWith("PYTHON", StringComparison.OrdinalIgnoreCase) ||
+                                 k.StartsWith("OPENSNAP_", StringComparison.OrdinalIgnoreCase))
+                     .ToArray())
+            start.Environment.Remove(key);
+        start.Environment["PYTHONPATH"] = source;
+        start.Environment["PYTHONNOUSERSITE"] = "1";
+        start.Environment["PYTHONDONTWRITEBYTECODE"] = "1";
+        start.ArgumentList.Add("-B");
+        start.ArgumentList.Add("-c");
+        start.ArgumentList.Add(
+            "import sys; assert sys.version_info[:2] == (3,12), 'Python 3.12 is required'; import sqlite3, ssl, flask, cryptography, dnslib; from opensnap_web.signup import SignupService");
+        using var process =
+            Process.Start(start) ?? throw new IOException("Could not check server Python.");
+        var output = process.StandardOutput.ReadToEndAsync();
+        var errors = process.StandardError.ReadToEndAsync();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+        timeout.CancelAfter(TimeSpan.FromSeconds(15));
+        try {
+            await process.WaitForExitAsync(timeout.Token);
+        } catch (OperationCanceledException) {
+            if (!process.HasExited)
+                process.Kill(entireProcessTree: true);
+            cancel.ThrowIfCancellationRequested();
+            throw new IOException("Server Python check timed out. See network-server/README.md.");
+        }
+        await output;
+        string details = (await errors).Trim();
+        if (process.ExitCode != 0)
+            throw new IOException(
+                "Server Python dependencies are missing or incompatible. Install network-server/requirements.txt in the environment described in network-server/README.md.\n" +
+                details[..Math.Min(details.Length, 1200)]);
     }
     public void Dispose() {
         startup?.Cancel();

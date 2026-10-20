@@ -92,9 +92,10 @@ internal static class HostedServerTests {
             HostedServer.CheckPorts(32000);
             Check(true, "Owned ports were not released");
             await File.WriteAllTextAsync(receipt, JsonSerializer.Serialize(new {
-                passed = true, checks, portablePython = true, serverServices = 4,
-                automaticRegistration = true, credentialReuse = true, collisionRefused = true,
-                nativeCredentialHandshake = true, game = false
+                passed = true, checks,
+                externalPython = !File.Exists(Path.Combine(component, "python", "python.exe")),
+                serverServices = 4, automaticRegistration = true, credentialReuse = true,
+                collisionRefused = true, nativeCredentialHandshake = true, game = false
             }));
         } finally {
             server.Dispose();

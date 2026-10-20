@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)][string]$KitManifest,
     [Parameter(Mandatory=$true)][string]$Server,
     [Parameter(Mandatory=$true)][string]$Output,
-    [string]$Version = '1.0.4'
+    [string]$Version = '1.0.5'
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -27,7 +27,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'artifacts/native/XINPUT1_4.dll'
 Copy-Item -LiteralPath $Inputs -Destination (Join-Path $Output 'build-inputs.zip')
 $serverManifest = Join-Path $Server 'server-manifest.json'
 $serverInfo = Get-Content -LiteralPath $serverManifest -Raw | ConvertFrom-Json
-if ($serverInfo.format -ne 1 -or $serverInfo.architecture -ne 'win-x64') {
+if ($serverInfo.format -ne 2 -or $serverInfo.runtime -ne 'external-python' -or $serverInfo.architecture -ne 'win-x64') {
     throw 'Unsupported server manifest.'
 }
 $serverOutput = Join-Path $Output 'network-server'
@@ -37,6 +37,10 @@ foreach ($entry in $serverInfo.files) {
     $relative = [string]$entry.path
     if ($relative -match '(^/|\\|:|(^|/)\.\.?(/|$))' -or !$serverPaths.Add($relative)) {
         throw 'Invalid server package path.'
+    }
+    if ($relative -match '(^|/)(vendor|python|wheels|dependency-sources|__pycache__)(/|$)' -or
+        [IO.Path]::GetExtension($relative) -in @('.exe','.dll','.pyd','.pyc','.whl','.db')) {
+        throw 'Server package must contain source and setup documents only.'
     }
     $inputFile = [IO.Path]::GetFullPath((Join-Path $Server $relative))
     if (!$inputFile.StartsWith($Server + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
@@ -51,16 +55,33 @@ Copy-Item -LiteralPath $serverManifest -Destination $serverOutput
 foreach ($document in @('REQUIREMENTS.md','README.md','LICENSE','NOTICE.md')) {
     Copy-Item -LiteralPath (Join-Path $repo $document) -Destination $Output -Force
 }
-$licenses = Join-Path $Output 'LICENSES'
-New-Item -ItemType Directory -Path $licenses -Force | Out-Null
-Get-ChildItem -LiteralPath (Join-Path $repo 'LICENSES') | Copy-Item -Destination $licenses -Recurse -Force
-$source = Join-Path $Output 'sources'
-New-Item -ItemType Directory -Path $source | Out-Null
-& git -C $repo archive HEAD --format=tar ('--output=' + (Join-Path $source 'project-source.tar'))
+foreach ($document in @('REQUIREMENTS.md','README.md')) {
+    $path = Join-Path $Output $document
+    $text = [IO.File]::ReadAllText($path).Replace('(network/server/SETUP.md)', '(network-server/README.md)')
+    [IO.File]::WriteAllText($path, $text, [Text.UTF8Encoding]::new($false))
+}
+$revision = (& git -C $repo rev-parse HEAD).Trim()
+$notices = [Text.StringBuilder]::new()
+foreach ($license in Get-ChildItem -LiteralPath (Join-Path $repo 'LICENSES') -File | Sort-Object Name) {
+    [void]$notices.AppendLine(('===== ' + $license.Name + ' ====='))
+    [void]$notices.AppendLine([IO.File]::ReadAllText($license.FullName))
+}
+[void]$notices.AppendLine('===== Corresponding source downloads =====')
+[void]$notices.AppendLine("https://github.com/Ninjacornix/reo/releases/download/v$Version/RE-Outbreak-v$Version-Project-Source.tar")
+[void]$notices.AppendLine("https://github.com/Ninjacornix/reo/releases/download/v$Version/RE-Outbreak-v$Version-Dependency-Sources.zip")
+[IO.File]::WriteAllText((Join-Path $Output 'THIRD-PARTY-NOTICES.txt'), $notices.ToString(), [Text.UTF8Encoding]::new($false))
+$noticePath = Join-Path $Output 'NOTICE.md'
+$noticeText = [IO.File]::ReadAllText($noticePath).Replace('(LICENSES/', "(https://github.com/Ninjacornix/reo/blob/$revision/LICENSES/")
+[IO.File]::WriteAllText($noticePath, $noticeText, [Text.UTF8Encoding]::new($false))
+$sourceArchive = Join-Path (Split-Path -Parent $Output) "RE-Outbreak-v$Version-Project-Source.tar"
+if (Test-Path -LiteralPath $sourceArchive) { throw 'Project source asset already exists.' }
+& git -C $repo archive HEAD --format=tar ('--output=' + $sourceArchive)
 if ($LASTEXITCODE) { throw 'Source archive failed.' }
+((Get-FileHash -LiteralPath $sourceArchive -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' +
+    [IO.Path]::GetFileName($sourceArchive)) | Set-Content -LiteralPath ($sourceArchive + '.sha256') -Encoding ASCII
 @{format=2; updateFormat=2; installMode='local-build'; layout='framework-dependent-single-file';
   version=$Version; platform='win-x64'; source='https://github.com/Ninjacornix/reo'; prerelease=$true;
-  bundledServer=$true;
+  bundledServer=$false; serverSourceBundled=$true; serverRuntime='external-python';
   revision=(& git -C $repo rev-parse HEAD).Trim();
   kitSha256=(Get-FileHash -LiteralPath $KitManifest -Algorithm SHA256).Hash.ToLowerInvariant();
   inputsSha256=(Get-FileHash -LiteralPath $Inputs -Algorithm SHA256).Hash.ToLowerInvariant();

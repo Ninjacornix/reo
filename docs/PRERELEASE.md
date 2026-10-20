@@ -1,47 +1,48 @@
-# Prerelease packaging
+﻿# Prerelease packaging
 
-The current target is **v1.0.4**, marked prerelease on GitHub. Earlier binary
-downloads are withdrawn. .NET and the compiler remain separately installed
-[requirements](../REQUIREMENTS.md); the local server is bundled.
+Current target: **v1.0.5**, marked prerelease. .NET and the compiler are external
+requirements. The server is source-only, with Python/pip dependencies installed
+outside the application folder by the host.
 
-Export compact inputs with tools/local_build/export_slim_inputs.py from the frozen
-independent kit, passing --version 1.0.4. This omits the compiler and places exact
-dependency sources in a separate release asset. Required runtime/header/metadata
-inputs stay in build-inputs.zip and unpack into Local AppData.
+Use tools/local_build/export_slim_inputs.py with the frozen independent kit and
+--version 1.0.5. Required generation/runtime inputs remain in build-inputs.zip;
+the compiler and large corresponding-source archive are excluded. The ZIP is
+required for first ISO setup and expands into Local AppData.
 
-Commit corresponding sources, then use launcher/package-slim.ps1 with -Inputs,
--KitManifest, -Server, -Output and -Version 1.0.4. Supply the frozen, manifested
-portable server directory. Only its hash-verified declared files are copied into
-network-server/; developer databases and configuration are excluded.
+Use tools/local_build/export_server_source.py --component <frozen-component>
+--output <new-folder> --root <repo> to select verified server modules/run.py and
+its AGPL licence. The result includes requirements.txt, README.md and a format-2
+manifest declaring external-python. Do not ship vendor, python, wheels,
+dependency-sources, tests, databases, credentials or developer environments.
 
-The main asset is RE-Outbreak-v1.0.4-Windows-x64.zip. It contains a framework-dependent
-single-file launcher and the server, without a compiler, language folders or a
-self-contained .NET runtime. ZIP entries must be relative, use / separators and
-have no enclosing package-name directory. The launcher must appear at the archive
-root. Extract into a fresh directory and verify every inventory entry's path,
-length and SHA-256, including the server manifest and nested build inputs. Reject
-backslashes, absolute paths, traversal, drive prefixes, duplicate names and
-unexpected files.
+Commit corresponding source, then run launcher/package-slim.ps1 with -Inputs,
+-KitManifest, -Server <source-only-export>, -Output and -Version 1.0.5. It verifies
+the server manifest, publishes a framework-dependent single-file launcher,
+consolidates required licence texts into THIRD-PARTY-NOTICES.txt and writes the
+project-source TAR outside the application folder. Keep LICENSE/NOTICE and the
+server's own licence. There must be no top-level LICENSES or sources folder.
 
-Run `launcher/check-package-startup.ps1 -Root <extracted-folder> -Output <new-folder>`
-on the extracted final ZIP. It starts the actual single-file executable from a
-different working directory, renders the Graphics page and requires a successful
-exit plus a PNG screenshot. No game, local server or full setup is launched.
-Keep its receipt outside the package. Compilation or self-tests alone do not
-verify WPF resources in the single-file layout.
+The main asset is RE-Outbreak-v1.0.5-Windows-x64.zip. ZIP paths must be relative,
+use / separators and place Outbreak.Launcher.exe at the root. Reject absolute
+paths, traversal, drive prefixes, duplicate names and unexpected files. Extract
+the final ZIP into a fresh folder and verify all inventory, server and nested
+input paths, sizes and SHA-256 hashes.
 
-Publish the exact corresponding SDK sources as
-RE-Outbreak-v1.0.4-Dependency-Sources.zip, alongside the main download and checksums.
-Retain upstream/project licences. There is no separate server asset. The launcher
-does not download system dependencies.
+Run launcher/check-package-startup.ps1 -Root <extracted-folder> -Output <new-folder>
+on the actual extracted release. It renders the Graphics page from a different
+working directory and requires exit 0 plus a PNG. This does not run a game/server.
+For server integration, use --test-coop-host <source-export> <receipt> with
+REO_SERVER_PYTHON pointing to an installed Python 3.12 environment; its owned
+services use isolated ports/accounts and are shut down afterward.
 
-Keep game binaries, original instruction code, extracted assets, saves,
-credentials, handoffs and developer caches out of every public artifact. Inspect
-nested input/source archives too. Preserve the dirty dependency checkout; matching
-frozen dependency sources accompany the distributed independent binaries.
+Publish the main ZIP/checksum, RE-Outbreak-v1.0.5-Project-Source.tar/checksum and
+RE-Outbreak-v1.0.5-Dependency-Sources.zip/checksum. The source assets provide exact
+corresponding code separately; ordinary players only need the main ZIP. No source
+archives belong inside the application or server folder. The launcher does not
+download/install dependencies. Keep the frozen dependency sources matched to
+binaries and preserve the dirty developer submodule.
 
-Use the [release notes](../.github/RELEASE_TEMPLATE.md), disclose omitted validation,
-and publish the intended full commit SHA under a new tag. Do not replace existing
-tags or claim a game/setup pass. The reference native build compiled successfully;
-the external-compiler setup and gameplay were not rerun. Linux is not a release
-asset. Compare uploaded asset sizes and SHA-256 digests before publication.
+Inspect all nested archives for private game data. Disclose omitted checks in the
+release notes, use a new immutable tag targeting the full source SHA, and verify
+remote asset hashes/sizes before publishing. No game/setup pass may be invented.
+Native Linux is not a release asset.

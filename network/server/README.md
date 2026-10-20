@@ -1,17 +1,17 @@
-# Portable Outbreak server component
+# Outbreak server source
 
 Players use **Co-op → Host server** in the launcher. It starts the required
-services and shows a copyable address for friends; no manual Python setup is
-needed in the portable package. Router/firewall configuration is still necessary
-for Internet hosting. The following commands are maintainer instructions.
+services and shows a copyable address for friends. First install Python 3.12 and
+the requirements listed in [setup](SETUP.md). Only the host needs Python; the
+download includes source rather than a bundled interpreter or pip packages.
+Router/firewall configuration is still necessary for Internet hosting.
 
-`tools/local_build/export_server.py` exports the pinned server plus this patch,
-official embeddable Python and pinned dependencies into a new immutable component
-directory. It includes the full patched server source, dependency source archives
-and notices, verifies Python/dependency digests, checks portable imports, and seals
-`server-manifest.json`. `launcher/package-local.ps1 -Server PATH` verifies and
-copies that component into the portable release. No account database, credentials
-or developer virtual environment is packaged.
+`tools/local_build/export_server_source.py` selects verified server source from
+the frozen component and writes a format-2 server-manifest.json, requirements.txt
+and setup README. `launcher/package-slim.ps1 -Server PATH` verifies that manifest
+and excludes interpreters, vendor packages, wheels, databases and source archives.
+The older export_server.py remains a maintainer tool for constructing the frozen
+reference component; its Python/dependency payload is not shipped in v1.0.5.
 
 The native clients can use [openSNAP](https://github.com/GrenderG/openSNAP), a
 separate server project. This directory contains one patch against upstream

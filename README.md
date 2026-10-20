@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**v1.0.4 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
+**v1.0.5 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -19,15 +19,17 @@ GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 beh
 
 ## Windows prerelease
 
-Download **RE-Outbreak-v1.0.4-Windows-x64.zip** from
+Download **RE-Outbreak-v1.0.5-Windows-x64.zip** from
 [GitHub Releases](https://github.com/Ninjacornix/reo/releases). Install the
 [requirements](REQUIREMENTS.md), extract the ZIP, and open `Outbreak.Launcher.exe`.
 The launcher folder no longer includes the .NET runtime, language folders or a
-compiler installation. Hosting files are included under `network-server/`.
+compiler installation. Hosting source is included under `network-server/`, with
+its dependencies listed in `requirements.txt` rather than bundled Python/packages.
 Extract all files into one folder; `Outbreak.Launcher.exe` is at its top level.
-The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Download v1.0.4 manually
-into a fresh folder if upgrading. This release fixes the single-file launcher's
-icon-loading error at startup.
+The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Extract v1.0.5 into a fresh
+folder if upgrading, so old bundled Python/vendor files are left behind. The
+single-file startup fix from v1.0.4 is retained. Licence notices are in
+`THIRD-PARTY-NOTICES.txt`; source archives are separate developer downloads.
 
 Select your **Outbreak NTSC-U v2.00 ISO (SLUS-20765)** in **Game files**, then
 allow the first local generation and compilation to finish. This can take a long
@@ -65,8 +67,9 @@ To host, enable **Host server**. The launcher starts the services and displays
 **Friends connect to** with a copy button once they are listening. Use the
 suggested LAN address for the same network, or enter a reachable VPN/public IPv4
 before starting. Friends enter that address in their own launchers. The server
-is included in the main download, with its own Python runtime; no separate
-server download or Python installation is needed.
+source is included in the main download. The host must first install Python 3.12
+and the listed packages using `network-server/README.md` in the download or
+[server setup](network/server/SETUP.md). Joining friends needs no Python setup.
 
 Internet hosting still requires a reachable server and firewall/router rules:
 UDP **9090/9091** and TCP **10127/80**. Optional UPnP and Windows Firewall helpers

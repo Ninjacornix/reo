@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.5 prerelease — 2026-10-20
+
+- Ship server source and requirements.txt without Python, installed pip packages,
+  wheels or dependency source archives in the application download.
+- Detect an external server Python environment in Local AppData or via
+  REO_SERVER_PYTHON; check version/imports before starting hosting services.
+- Consolidate the top-level licence folder into THIRD-PARTY-NOTICES.txt and offer
+  project/dependency source archives separately from the normal download.
+- Retain compressed build inputs needed for local ISO recompilation and the
+  single-file startup fix. Document hosting setup and the build-input ZIP.
+
 ## v1.0.4 prerelease — 2026-10-20
 
 - Fix startup of the published single-file launcher: load the window icon as an

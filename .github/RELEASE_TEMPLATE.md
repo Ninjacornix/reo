@@ -1,52 +1,51 @@
-# RE: Outbreak v1.0.4 prerelease
+﻿# RE: Outbreak v1.0.5 prerelease
 
-Windows x64 launcher with the local co-op server included. Replaces the withdrawn
-v1.0.3 download. The compiler and .NET runtime remain separately installed requirements.
+Source-only server packaging. Python, installed server packages, wheels and server
+dependency source archives are removed from the application download. The v1.0.4
+single-file launcher startup fix is retained.
 
-## Startup fix
+## Download and run
 
-Fixes the error **System.Windows.Baml2006.TypeConverterMarkupExtension** when
-opening the single-file launcher. The icon is now loaded from the embedded
-resource without conflicting external WPF content metadata. The extracted
-release was opened and rendered from a different working directory.
+Download **RE-Outbreak-v1.0.5-Windows-x64.zip**, extract all files into a **fresh
+folder**, and open **Outbreak.Launcher.exe**. Do not copy it over an older release:
+that would leave the old Python/vendor files behind. Saves/settings in Local
+AppData remain available.
 
-## Install
+Install **.NET 8 Desktop Runtime (x64)**, a Vulkan-capable GPU driver and the pinned
+**LLVM/MinGW UCRT 20251216 x86-64** compiler. Set **REO_LLVM_MINGW** as described in
+REQUIREMENTS.md. Provide your own **NTSC-U v2.00 ISO (SLUS-20765)**; first local
+compilation takes substantial time and shows progress, elapsed time and a stage
+ETA. Later launches use the completed cache. Keep the ISO available.
 
-1. Install **.NET 8 Desktop Runtime (x64)** and your GPU vendor's Vulkan driver.
-2. Extract **LLVM/MinGW UCRT 20251216 x86-64** and set **REO_LLVM_MINGW** to its
-   folder. See REQUIREMENTS.md in the ZIP or repository for links and commands.
-3. Download **RE-Outbreak-v1.0.4-Windows-x64.zip** and extract **all files** into
-   a fresh folder. Open **Outbreak.Launcher.exe** directly inside that folder.
-4. Select your own **NTSC-U v2.00 ISO (SLUS-20765)**. First local compilation takes
-   substantial time; elapsed time and a current-stage ETA are shown. Later
-   launches reuse the completed cache. Keep your ISO available.
+**build-inputs.zip is required:** it contains independent generation tools and
+runtime inputs for compiling your ISO locally. Compression avoids thousands of
+loose setup files beside the launcher. It unpacks into Local AppData when needed;
+leave the ZIP beside the launcher. It contains no game executable or game assets.
 
-The archive uses relative paths with standard ZIP separators. The launcher is
-at the top level, with its required subfolders alongside it. Extract the ZIP;
-do not run the launcher from the archive viewer or flatten its folders.
+## Hosting requirements
 
-## Co-op
+The network-server folder contains server source, setup instructions, its licence,
+requirements.txt and a verification manifest. **Python and pip packages are not
+bundled.** Only the host needs to install Python 3.12 x64 and run the commands in
+network-server/README.md to create the external environment and install
+requirements.txt. Then use **Co-op > Host server** normally. Joining friends does
+not require Python. The launcher does not install dependencies automatically.
 
-The **network-server** folder is included in the main download, with its Python
-runtime and dependencies. Enable **Host server** in Co-op to host. No additional
-server download or Python installation is needed. Joining another host uses the
-same launcher. Internet hosting still needs a reachable address and the documented
-firewall/router rules.
+## Notices and developer downloads
 
-## Other downloads
+There is no top-level LICENSES folder; required third-party licence texts are
+combined in **THIRD-PARTY-NOTICES.txt**. Project and dependency source archives are
+separate release assets for developers/redistributors, outside the Windows ZIP.
+**Players only need the Windows-x64.zip asset.** Checksum files accompany downloads.
 
-**Dependency-Sources.zip** contains corresponding dependency sources for developers
-and redistributors. Ordinary players only need the **Windows-x64.zip** download.
-SHA-256 checksum files accompany the ZIPs. No compiler or .NET runtime is bundled.
+## Validation and limits
 
-## Upgrading
+The launcher compiled without warnings/errors; the extracted single-file package
+opened and rendered successfully. The source-only server passed isolated hosting,
+account registration and cleanup checks using an externally installed Python
+interpreter. This was not a multiplayer game run.
 
-Download this release manually and extract into a fresh folder when upgrading from
-v1.0.1, v1.0.2 or v1.0.3. Saves and settings in Local AppData are preserved. Previous binary
-downloads remain withdrawn.
-
-Experimental: frontend compilation and archive extraction/integrity checks passed.
-The reference game build compiled all 2,381 units; the revised external-toolchain
-first setup and gameplay have not had a full rerun. Rendering, performance, audio
-and networking still have limitations. File #2 and native Linux are not release
-targets. No game executable, BIOS or game assets are included.
+The reference game compilation built all 2,381 units. Complete external-toolchain
+first setup and gameplay were not rerun. Rendering, performance, audio and
+networking remain experimental. File #2 and Linux are not release targets.
+No game executable, BIOS or game assets are included.

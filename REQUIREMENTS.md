@@ -16,9 +16,13 @@ For the smaller, dependency-based Windows package:
 No PS2 BIOS is required. Ordinary offline play and joining another player's
 server do not require a Python installation or a local server.
 
-The main download includes the compatible openSNAP server and its Python runtime
-under `network-server/`. Keep that folder beside the launcher to use **Host
-server**. There is no separate server download or Python installation.
+The main download includes compatible openSNAP **source only** under
+`network-server/`. Hosting requires a separate **Python 3.12 x64** installation
+and the packages in `network-server/requirements.txt`. Follow
+[server setup](network/server/SETUP.md), or `network-server/README.md` in the ZIP.
+It creates a Python environment under Local AppData; nothing is installed into
+the application folder. The launcher checks dependencies before starting services.
+Joining a friend's server does not require this setup.
 
 ## Compiler setup
 
@@ -44,6 +48,10 @@ separate progress and approximate stage ETAs. Neither the launcher nor the build
 worker downloads or installs these system dependencies automatically.
 
 The launcher contains `build-inputs.zip`: required independent generation inputs,
-not game data or a compiler installation. It is unpacked into Local AppData when
-needed. Dependency sources are offered as a separate release asset for developers
-and redistributors; normal players do not need to download it.
+not game data or a compiler installation. It keeps thousands of setup files
+compressed instead of cluttering the launcher folder, and unpacks into Local
+AppData when needed. Keep it beside the launcher. It is still needed even though
+the compiler is installed separately. Project and dependency source archives are
+separate release assets for developers and redistributors; players only need the
+Windows ZIP. Required third-party licence texts are consolidated into
+`THIRD-PARTY-NOTICES.txt` instead of a top-level LICENSES folder.

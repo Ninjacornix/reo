@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
@@ -14,8 +14,6 @@
   <ItemGroup>
     <Content Include="../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../NOTICE.md" Link="NOTICE.md" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="../LICENSES/REO-upstream-MIT.txt" Link="LICENSES/REO-upstream-MIT.txt" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="../LICENSES/SMAA-MIT.txt" Link="LICENSES/SMAA-MIT.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets/PROVENANCE.md" CopyToOutputDirectory="PreserveNewest" />
     <Resource Include="Assets/app-icon.ico" />
     <None Update="Assets/app-icon.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />

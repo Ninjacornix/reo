@@ -8,7 +8,7 @@ This fork's original contributions are provided under **GPL-3.0-only**; see [LIC
 | PS2Recomp | GPLv3; retain its `LICENSE` and the local patch sources. Source: the URL and revision in `.gitmodules` / Git's submodule entry |
 | paraLLEl-GS-derived files | LGPL-3.0-or-later; [license](LICENSES/LGPL-3.0-or-later.txt), with original Arntzen Software AS and contributor notices retained in `tools/parallel_gs_backend/resident_gs/` |
 | `runtime/gs/stb_image_write.h` | Dual public-domain/MIT terms; the full notice is inside the header |
-| openSNAP server component and patch | Separately executed AGPL-3.0 service; [patch and provenance](network/server/README.md). Portable packages include its source/licence and Python dependency notices. Server binaries and account databases are not committed here |
+| openSNAP server component and patch | Separately executed AGPL-3.0 service; [patch and provenance](network/server/README.md). Packages include server source/licence; Python and pip dependencies are installed separately. Account databases are not distributed |
 
 Downloaded dependencies, including ELFIO, fmt, rabbitizer, toml11, raylib, Granite and Vulkan components, carry their own notices. Binary distributors must include the notices and corresponding source required by the exact components they build. This table is not a substitute for auditing a particular binary's dependency set.
 

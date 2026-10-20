@@ -52,14 +52,16 @@ public static partial class Updates {
     }
     public static List<PackageFile> Validate(string root, Version expected,
                                              CancellationToken cancel = default) {
-        bool compact = false, bundledServer = false;
+        bool compact = false, bundledServer = false, serverSource = false;
         using (var doc =
                    JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "distribution.json")))) {
             var d = doc.RootElement;
             compact = d.TryGetProperty("layout", out var layout) &&
                       layout.GetString() == "framework-dependent-single-file";
-            bundledServer = d.TryGetProperty("bundledServer", out var server) &&
-                            server.GetBoolean();
+            bundledServer =
+                d.TryGetProperty("bundledServer", out var server) && server.GetBoolean();
+            serverSource =
+                d.TryGetProperty("serverSourceBundled", out var source) && source.GetBoolean();
             if (d.ValueKind != JsonValueKind.Object || !d.TryGetProperty("format", out _) ||
                 !d.TryGetProperty("platform", out _) || !d.TryGetProperty("source", out _) ||
                 !d.TryGetProperty("version", out _))
@@ -95,6 +97,13 @@ public static partial class Updates {
                                                 "network-server/source/run.py" })
                 if (!names.Contains(required))
                     throw new IOException("Update server package is incomplete: " + required);
+        if (serverSource)
+            foreach (string required in new[] { "network-server/server-manifest.json",
+                                                "network-server/requirements.txt",
+                                                "network-server/README.md",
+                                                "network-server/source/run.py" })
+                if (!names.Contains(required))
+                    throw new IOException("Update server source is incomplete: " + required);
         if (names.Any(name => name.StartsWith("games/", StringComparison.OrdinalIgnoreCase) ||
                               Path.GetFileName(name).Equals("reo_recomp.exe",
                                                             StringComparison.OrdinalIgnoreCase) ||
