@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
@@ -18,7 +18,7 @@
     <Content Include="../LICENSES/SMAA-MIT.txt" Link="LICENSES/SMAA-MIT.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets/PROVENANCE.md" CopyToOutputDirectory="PreserveNewest" />
     <Resource Include="Assets/app-icon.ico" />
-    <Content Include="Assets/app-icon.ico" Link="Assets/app-icon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets/app-icon.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Resource Include="artifacts/shaders/ColorPreview.ps" Link="Shaders/ColorPreview.ps" />
   </ItemGroup>
 </Project>

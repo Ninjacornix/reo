@@ -1,8 +1,10 @@
 # Launcher
 
-The v1.0.0, v1.0.1 and v1.0.2 downloads are withdrawn. v1.0.3 uses a smaller
+The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.4 uses a smaller
 framework-dependent launcher and separately installed requirements. See
 [requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
+The extracted single-file launcher is checked separately for window startup;
+its icon is an embedded WPF resource, with a separate copy for the game window.
 
 The replacement package contains independent tools and runtime inputs. Select your
 own NTSC-U v2.00 / SLUS-20765 ISO under **Game files**. The launcher imports game

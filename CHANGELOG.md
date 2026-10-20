@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.4 prerelease — 2026-10-20
+
+- Fix startup of the published single-file launcher: load the window icon as an
+  embedded WPF resource rather than registering it as external WPF content too.
+- Keep the separate icon for the game window without WPF content-file metadata.
+- Show the underlying startup error and log location instead of a generic XAML error.
+- Add an extracted-package startup check that renders the Graphics page from a
+  different working directory, without starting a game or server.
+- Withdraw v1.0.3; retain the bundled server and external compiler/.NET requirements.
+
 ## v1.0.3 prerelease — 2026-10-20
 
 - Include the local co-op server and its required Python runtime in the main download.

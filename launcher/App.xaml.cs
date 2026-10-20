@@ -102,10 +102,13 @@ public partial class App : Application {
             window.Show();
         } catch (Exception error) {
             Directory.CreateDirectory(Settings.Home);
-            File.WriteAllText(Path.Combine(Settings.Home, "launcher-error.log"), error.ToString());
+            string log = Path.Combine(Settings.Home, "launcher-error.log");
+            File.WriteAllText(log, error.ToString());
             if (!e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") && !e.Args.Contains("--import-iso") &&
-                !e.Args.Contains("--test-update") && !e.Args.Contains("--check-updates"))
-                MessageBox.Show(error.Message, "RE: Outbreak");
+                !e.Args.Contains("--test-update") && !e.Args.Contains("--check-updates") &&
+                !e.Args.Contains("--screenshot"))
+                MessageBox.Show(error.GetBaseException().Message + "\n\nDetails: " + log,
+                                "RE: Outbreak");
             Shutdown(1);
         }
     }
