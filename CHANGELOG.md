@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.9 prerelease
+
+- Detect compatible LLVM/MinGW installations on PATH and in common folders before downloading.
+- Keep import/download/build progress visible across launcher pages, with MiB/counts and cancellation.
+- Show progress for hosting-tool downloads and live activity during Python/package preparation.
+- Select up to four compile workers from CPU and available memory; preserve existing game/object caches.
+
+
 ## v1.0.8 prerelease — 2026-10-20
 
 - Make compiler setup automatic during ISO import: download the pinned official

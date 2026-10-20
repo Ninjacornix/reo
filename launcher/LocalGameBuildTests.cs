@@ -17,12 +17,12 @@ static class LocalGameBuildTests {
         File.WriteAllText(elf, "Synthetic test input; no commercial game bytes.");
         string Sha(string p) =>
             Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))).ToLowerInvariant();
-        var kit =
-            new LocalBuildKit(1, "synthetic-v1", "win-x64", Sha(elf),
-                              new[] { new BuildKitFile("tools/fixture.bin", Sha(tool)) },
-                              new[] { new LocalBuildStep("Compile fixture", "tools/fixture.bin",
-                                                         new[] { "{output}" }) },
-                              new[] { "reo_recomp.exe" });
+        var kit = new LocalBuildKit(
+            1, "synthetic-v1", "win-x64", Sha(elf),
+            new[] { new BuildKitFile("tools/fixture.bin", Sha(tool)) },
+            new[] { new LocalBuildStep("Compile fixture", "tools/fixture.bin",
+                                       new[] { "{output}", "--jobs", "{jobs}" }) },
+            new[] { "reo_recomp.exe" });
         string manifest = Path.Combine(root, "build-kit", LocalGameBuild.ManifestName);
         void WriteKit(LocalBuildKit value) =>
             File.WriteAllText(manifest, JsonSerializer.Serialize(value));
@@ -32,6 +32,10 @@ static class LocalGameBuildTests {
         Task<int> Runner(ProcessStartInfo start, CancellationToken cancel) {
             calls++;
             cancel.ThrowIfCancellationRequested();
+            check(start.ArgumentList.Count == 3 && start.ArgumentList[1] == "--jobs" &&
+                      int.TryParse(start.ArgumentList[2], out int workers) &&
+                      workers is >= 1 and <= 4,
+                  "native build receives bounded parallel worker count");
             // A synthetic minimal PE header tests admission, not native game execution.
             var pe = new byte[128];
             BitConverter.GetBytes((ushort)0x5a4d).CopyTo(pe, 0);
@@ -47,6 +51,12 @@ static class LocalGameBuildTests {
             await LocalGameBuild.EnsureVerified(root, disc, kit.ElfSha256, cancel: cancel,
                                                 home: cache, runner: runner ?? Runner);
         try {
+            const ulong gib = 1024UL * 1024 * 1024;
+            check(BuildResources.Select(16, 16 * gib) == 4 &&
+                      BuildResources.Select(4, 16 * gib) == 3,
+                  "available CPU capacity is used within worker limit");
+            check(BuildResources.Select(16, 5 * gib) == 2 && BuildResources.Select(16, gib) == 1,
+                  "memory pressure limits parallel compilation");
             string image = await Build();
             check(File.Exists(image) && calls == 1, "local build creates verified cache");
             check(await Build() == image && calls == 1,

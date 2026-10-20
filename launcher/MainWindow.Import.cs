@@ -10,6 +10,10 @@ public partial class MainWindow {
         var source = new CancellationTokenSource();
         importCancellation = source;
         DiscProgress.Value = 0;
+        DiscProgress.IsIndeterminate = true;
+        SetupStage.Text = "Preparing game";
+        SetupCounts.Text = "";
+        SetupDetail.Text = "Checking imported files";
         DiscValidationStatus.Text = "";
         ImportActivity.Visibility = Visibility.Visible;
         var elapsed = Stopwatch.StartNew();
@@ -23,7 +27,10 @@ public partial class MainWindow {
         return new Progress<ImportProgress>(value => {
             if (importCancellation != source)
                 return;
-            DiscProgress.Value = value.Percent;
+            DiscProgress.Value = Math.Clamp(value.Percent, 0, 100);
+            SetupStage.Text = value.Stage;
+            SetupCounts.Text = SetupProgressText.Counts(value);
+            SetupDetail.Text = value.File;
             DiscProgress.IsIndeterminate = value.Total <= 0;
             if (stage != value.Stage || total != value.Total) {
                 stage = value.Stage;
@@ -41,7 +48,8 @@ public partial class MainWindow {
                 eta = "about " + Duration(TimeSpan.FromSeconds(Math.Min(seconds, 7 * 86400)));
             }
             ImportTiming.Text = $"Elapsed {Duration(elapsed.Elapsed)} · Stage ETA {eta}";
-            ImportState.Text = $"{value.Stage} {value.Percent:0}% - {value.File}";
+            ImportState.Text = value.Total > 0 ? $"{value.Stage} {value.Percent:0}% - {value.File}"
+                                               : $"{value.Stage} - {value.File}";
             if (value.Stage == "Checking ISO") {
                 DiscValidationStatus.Text = value.File;
                 DiscValidationStatus.Foreground = (System.Windows.Media.Brush)FindResource("Muted");

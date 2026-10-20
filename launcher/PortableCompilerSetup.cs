@@ -27,18 +27,9 @@ internal static class PortableCompilerSetup {
             throw new IOException(
                 "This build kit needs a different compiler. Download a matching launcher release.");
         if (home == null) {
-            string? configured = Environment.GetEnvironmentVariable("REO_LLVM_MINGW");
-            if (string.IsNullOrWhiteSpace(configured))
-                configured = Environment.GetEnvironmentVariable("REO_LLVM_MINGW",
-                                                                EnvironmentVariableTarget.User);
-            if (!string.IsNullOrWhiteSpace(configured)) {
-                configured = Path.GetFullPath(Environment.ExpandEnvironmentVariables(configured));
-                if (File.Exists(Path.Combine(configured, Driver)) &&
-                    await Hash(Path.Combine(configured, Driver), cancel) == CompilerHash &&
-                    File.Exists(Path.Combine(configured, "bin/llvm-ar.exe")) &&
-                    File.Exists(Path.Combine(configured, "bin/x86_64-w64-mingw32-windres.exe")))
-                    return configured;
-            }
+            string? existing = await FindExisting(Candidates(), progress, cancel);
+            if (existing != null)
+                return existing;
         }
         string parent = Path.Combine(home ?? Settings.Home, "toolchains");
         Directory.CreateDirectory(parent);
@@ -123,6 +114,62 @@ internal static class PortableCompilerSetup {
                 Directory.Delete(staging, true);
         }
     }
+    static IEnumerable<string> Candidates() {
+        foreach (var scope in new[] { EnvironmentVariableTarget.Process,
+                                      EnvironmentVariableTarget.User }) {
+            string? configured = Environment.GetEnvironmentVariable("REO_LLVM_MINGW", scope);
+            if (!string.IsNullOrWhiteSpace(configured))
+                yield return configured;
+        }
+        foreach (string bin in (Environment.GetEnvironmentVariable("PATH") ?? "")
+                     .Split(Path.PathSeparator)) {
+            string path = bin.Trim().Trim('"');
+            if (path.Length > 0 && Path.GetFileName(path.TrimEnd('\\', '/'))
+                                       .Equals("bin", StringComparison.OrdinalIgnoreCase))
+                yield return path + "/..";
+        }
+        foreach (string parent in new[] {
+                     Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Tools"),
+                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                                  "Tools")
+                 })
+            if (!string.IsNullOrEmpty(parent)) {
+                yield return Path.Combine(parent, Name);
+                yield return Path.Combine(parent, "llvm-mingw");
+            }
+        yield return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                                  "scoop/apps/llvm-mingw/current");
+    }
+    internal static async Task<string?> FindExisting(IEnumerable<string> candidates,
+                                                     IProgress<ImportProgress>? progress,
+                                                     CancellationToken cancel) {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (string candidate in candidates) {
+            cancel.ThrowIfCancellationRequested();
+            try {
+                string folder = Path.TrimEndingDirectorySeparator(
+                    Path.GetFullPath(Environment.ExpandEnvironmentVariables(candidate)));
+                if (!seen.Add(folder) || !File.Exists(Path.Combine(folder, Driver)))
+                    continue;
+                progress?.Report(new(0, 0, "Checking an existing compiler", "Checking compiler"));
+                if (await Hash(Path.Combine(folder, Driver), cancel) != CompilerHash ||
+                    !File.Exists(Path.Combine(folder, "bin/llvm-ar.exe")) ||
+                    !File.Exists(Path.Combine(folder, "bin/x86_64-w64-mingw32-windres.exe")) ||
+                    !Directory.Exists(Path.Combine(folder, "include/c++")) ||
+                    !File.Exists(Path.Combine(folder, "include/windows.h")) ||
+                    !File.Exists(Path.Combine(folder, "x86_64-w64-mingw32/lib/libkernel32.a")))
+                    continue;
+                progress?.Report(new(1, 1, "Using existing LLVM/MinGW; no download needed",
+                                     "Checking compiler"));
+                return folder;
+            } catch (Exception error) when (error is IOException or UnauthorizedAccessException or
+                                                ArgumentException or NotSupportedException) {
+                // An unrelated or inaccessible installation should not prevent automatic setup.
+            }
+        }
+        return null;
+    }
     static async Task<bool> Valid(string folder, IProgress<ImportProgress>? progress,
                                   CancellationToken cancel) {
         try {
@@ -205,7 +252,9 @@ internal static class PortableCompilerSetup {
                 if (received != ArchiveBytes)
                     throw new IOException("Compiler download was interrupted. Retry Import.");
             }
-            progress?.Report(new(0, 0, "Verifying compiler download", "Preparing compiler"));
+            progress?.Report(
+                new(ArchiveBytes, ArchiveBytes, "Download complete", "Downloading compiler"));
+            progress?.Report(new(0, 0, "Verifying compiler download", "Verifying compiler"));
             if (await Hash(destination, cancel) != ArchiveHash)
                 throw new IOException(
                     "Compiler download failed SHA-256 verification. Retry Import.");

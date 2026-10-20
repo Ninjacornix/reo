@@ -38,7 +38,8 @@ still needs reachable addressing and firewall/router rules.
 
 ## Advanced and developer information
 
-An existing compatible LLVM/MinGW installation may optionally be selected with
+The exact supported LLVM/MinGW compiler is detected on PATH and in common Tools
+folders. An existing compatible installation may also be selected with
 REO_LLVM_MINGW; ordinary users should leave it unset. Automatic setup pins the
 20251216 UCRT x86-64 official archive and verifies its SHA-256. The details are in
 [local builds](docs/LOCAL_BUILDS.md).
@@ -46,3 +47,9 @@ REO_LLVM_MINGW; ordinary users should leave it unset. Automatic setup pins the
 Required third-party notices are in THIRD-PARTY-NOTICES.txt. GitHub's source ZIP/TAR
 and the separate dependency-source asset are for developers/redistributors;
 ordinary players only need the Windows-x64.zip download.
+
+Compilation uses up to four parallel workers, selected from CPU and available memory.
+Shared precompiled headers and completed object files are reused, including after
+an interrupted build. Progress remains visible on every launcher page; compiler
+downloads show transferred MiB, percentage and stage ETA. Python/package setup
+shows activity and live status when the installer does not provide a total.

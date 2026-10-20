@@ -8,6 +8,54 @@ internal static class PortableCompilerSetupTests {
     sealed class Progress(Action<ImportProgress> report) : IProgress<ImportProgress> {
         public void Report(ImportProgress value) => report(value);
     }
+    internal static async Task CheckExisting(string compiler, string receipt) {
+        compiler = Path.TrimEndingDirectorySeparator(Path.GetFullPath(compiler));
+        string temporary = Path.Combine(Path.GetTempPath(),
+                                        "reo-compiler-discovery-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(temporary);
+        int checks = 0;
+        void Check(bool condition, string message) {
+            if (!condition)
+                throw new IOException(message);
+            checks++;
+        }
+        try {
+            bool download = false;
+            var progress = new Progress(value => download |= value.Stage.StartsWith(
+                                            "Downloading", StringComparison.Ordinal));
+            string? found = await PortableCompilerSetup.FindExisting(
+                new[] { "\0", temporary, compiler }, progress, default);
+            Check(found == compiler && !download, "Existing compatible compiler was not reused");
+            Directory.CreateDirectory(Path.Combine(temporary, "bin"));
+            string driver = "bin/x86_64-w64-mingw32-clang++.exe";
+            File.WriteAllText(Path.Combine(temporary, driver), "Wrong compiler, do not execute");
+            Check(await PortableCompilerSetup.FindExisting(new[] { temporary }, null, default) ==
+                      null,
+                  "An unsupported compiler was accepted");
+            File.Copy(Path.Combine(compiler, driver), Path.Combine(temporary, driver), true);
+            Check(await PortableCompilerSetup.FindExisting(new[] { temporary }, null, default) ==
+                      null,
+                  "A partial compiler installation was accepted");
+            Check(await PortableCompilerSetup.FindExisting(new[] { temporary, compiler, compiler },
+                                                           null, default) == compiler,
+                  "Partial compiler prevented reuse of a valid installation");
+            using var cancellation = new CancellationTokenSource();
+            cancellation.Cancel();
+            bool cancelled = false;
+            try {
+                await PortableCompilerSetup.FindExisting(new[] { compiler }, null,
+                                                         cancellation.Token);
+            } catch (OperationCanceledException) {
+                cancelled = true;
+            }
+            Check(cancelled, "Compiler discovery ignored cancellation");
+            await File.WriteAllTextAsync(
+                receipt, JsonSerializer.Serialize(new { passed = true, checks, downloadRun = false,
+                                                        gameBuildRun = false }));
+        } finally {
+            Directory.Delete(temporary, true);
+        }
+    }
     internal static async Task Run(string home, string receipt) {
         home = Path.GetFullPath(home);
         if (Directory.Exists(home))

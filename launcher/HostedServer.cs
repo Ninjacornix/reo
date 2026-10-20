@@ -29,7 +29,8 @@ internal sealed class HostedServer : IDisposable {
 
     public async Task Start(string root, string address, CancellationToken cancel = default,
                             string? stateHome = null, int portOffset = 0,
-                            string? componentRoot = null, IProgress<string>? progress = null) {
+                            string? componentRoot = null, IProgress<string>? progress = null,
+                            IProgress<ImportProgress>? setupProgress = null) {
         if (Running)
             return;
         if (processes.Count > 0)
@@ -48,9 +49,10 @@ internal sealed class HostedServer : IDisposable {
             lease = new FileStream(Path.Combine(data, "server.lock"), FileMode.OpenOrCreate,
                                    FileAccess.ReadWrite, FileShare.None);
             CheckPorts(portOffset);
-            var (python, source) =
-                await Locate(root, cancel, componentRoot, stateHome ?? Settings.Home, progress);
+            var (python, source) = await Locate(
+                root, cancel, componentRoot, stateHome ?? Settings.Home, progress, setupProgress);
             progress?.Report("Starting server services...");
+            setupProgress?.Report(new(0, 0, "Starting server services", "Starting server"));
             foreach (var args in new[] { new[] { "app", "capcom" },
                                          new[] { "web", "--web-plugin", "outbreak" },
                                          new[] { "game" }, new[] { "bootstrap" } }) {
@@ -143,7 +145,8 @@ internal sealed class HostedServer : IDisposable {
     }
     static async Task<(string, string)> Locate(string root, CancellationToken cancel,
                                                string? componentRoot, string home,
-                                               IProgress<string>? progress) {
+                                               IProgress<string>? progress,
+                                               IProgress<ImportProgress>? setupProgress) {
         string payload = componentRoot ?? Path.Combine(root, "network-server");
         if (File.Exists(Path.Combine(payload, "server-manifest.json"))) {
             using var manifest = JsonDocument.Parse(
@@ -187,9 +190,9 @@ internal sealed class HostedServer : IDisposable {
                 }
                 string requirements =
                     Resolve(manifest.RootElement.GetProperty("requirements").GetString()!);
-                return (
-                    await ServerPythonSetup.Ensure(home, source, requirements, progress, cancel),
-                    source);
+                return (await ServerPythonSetup.Ensure(home, source, requirements, progress, cancel,
+                                                       setupProgress),
+                        source);
             }
             return (Resolve(manifest.RootElement.GetProperty("python").GetString()!), source);
         }

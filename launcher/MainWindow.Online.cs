@@ -234,10 +234,19 @@ public partial class MainWindow {
         HostServer.IsEnabled = false;
         HostAddress.IsEnabled = false;
         HostStatus.Text = "Starting server...";
+        HostSetupActivity.Visibility = Visibility.Visible;
+        HostSetupProgress.IsIndeterminate = true;
+        HostSetupStage.Text = "Preparing server";
+        HostSetupDetail.Text = "Checking hosting files";
         try {
             await hostedServer.Start(
                 root, HostAddress.Text,
-                progress: new Progress<string>(stage => HostStatus.Text = stage));
+                progress: new Progress<string>(stage => HostStatus.Text = stage),
+                setupProgress: new Progress<ImportProgress>(value => {
+                    if (!serverStarting)
+                        return;
+                    ReportHostSetup(value);
+                }));
             bool localOnly =
                 System.Net.IPAddress.IsLoopback(System.Net.IPAddress.Parse(hostedServer.Address));
             HostStatus.Text = localOnly
@@ -265,11 +274,24 @@ public partial class MainWindow {
             CopyServerButton.IsEnabled = false;
         } finally {
             serverStarting = false;
+            HostSetupActivity.Visibility = Visibility.Collapsed;
+            HostSetupProgress.IsIndeterminate = false;
             StartServerButton.Content = "Start server";
             StartServerButton.IsEnabled = !hostedServer.Running;
             HostServer.IsEnabled = true;
             HostAddress.IsEnabled = !hostedServer.Running;
         }
+    }
+    void ReportHostSetup(ImportProgress value) {
+        HostSetupProgress.IsIndeterminate = value.Total <= 0;
+        HostSetupProgress.Value = Math.Clamp(value.Percent, 0, 100);
+        string counts = SetupProgressText.Counts(value);
+        HostSetupStage.Text = value.Stage + (counts.Length > 0 ? " - " + counts : "");
+        HostSetupDetail.Text = value.File;
+    }
+    void CancelServerSetup(object sender, RoutedEventArgs e) {
+        if (serverStarting)
+            hostedServer.Dispose();
     }
     void CopyServerAddress(object sender, RoutedEventArgs e) {
         if (hostedServer.Running)

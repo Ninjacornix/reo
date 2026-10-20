@@ -30,7 +30,7 @@
    </Grid>
   </Border>
   <Grid Grid.Column="1" Margin="34,29,34,24">
-   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <StackPanel x:Name="PageHeader" Margin="0,0,0,20"><TextBlock x:Name="PageTitle" Text="Play" FontSize="30" FontWeight="SemiBold"/><TextBlock x:Name="PageSubtitle" Style="{StaticResource Hint}" Margin="0,7,0,0"/></StackPanel>
    <Grid x:Name="PageContent" Grid.Row="1" Margin="0,0,0,18">
     <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -197,7 +197,6 @@
        <TextBlock x:Name="SupportedDiscHint" Text="Required: Outbreak File #1, NTSC-U v2.00 (SLUS-20765). PAL, Japanese and other revisions are unsupported." Style="{StaticResource Hint}" Margin="0,14,0,0"/>
        <TextBlock x:Name="DiscValidationStatus" TextWrapping="Wrap" Margin="0,10,0,0"/>
        <TextBlock x:Name="ImportState" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,18,0,10"/>
-       <StackPanel x:Name="ImportActivity" Visibility="Collapsed"><ProgressBar x:Name="DiscProgress" Minimum="0" Maximum="100" Height="5" Foreground="{StaticResource Accent}"/><TextBlock x:Name="ImportTiming" Style="{StaticResource Hint}" Margin="0,8,0,0"/><Button Content="Cancel setup" Click="CancelImport" HorizontalAlignment="Left" Margin="0,12,0,0"/></StackPanel>
        <Expander x:Name="DeveloperFiles" Header="Developer options" Foreground="{StaticResource Muted}" Margin="0,30,0,0">
         <StackPanel Margin="0,16,0,0">
          <TextBlock Text="Native executable"/><TextBox x:Name="ExePath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="exe" Click="BrowseFile" HorizontalAlignment="Left"/>
@@ -217,7 +216,30 @@
    </Grid>
    <Image x:Name="OutgoingHeader" Grid.Row="0" Margin="0,0,0,20" Stretch="Fill" IsHitTestVisible="False" Opacity="0"/>
    <Image x:Name="OutgoingPage" Grid.Row="1" Margin="0,0,0,18" Stretch="Fill" IsHitTestVisible="False" Opacity="0"/>
-   <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel VerticalAlignment="Center" Margin="0,0,16,0"><TextBlock x:Name="SelectedGameLabel" FontSize="14" Margin="0,0,0,5"/><TextBlock x:Name="Status" Text="Ready" Style="{StaticResource Hint}"/></StackPanel><Button x:Name="StopButton" Grid.Column="1" Content="Stop" Click="StopGame" IsEnabled="False" Padding="24,11" Margin="0,0,10,0"/><Button x:Name="LaunchButton" Grid.Column="2" Content="Play" Click="LaunchGame" Style="{StaticResource PrimaryButton}" Padding="42,12" MinWidth="142"/></Grid>
+   <StackPanel Grid.Row="2">
+   <Border x:Name="ImportActivity" Visibility="Collapsed" Background="#EE1C1E20" CornerRadius="5" Padding="14" Margin="0,0,0,16">
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <StackPanel Margin="0,0,16,0">
+      <DockPanel Margin="0,0,0,8"><TextBlock x:Name="SetupCounts" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="12,0,0,0" Style="{StaticResource Hint}"/><TextBlock x:Name="SetupStage" FontWeight="SemiBold"/></DockPanel>
+      <ProgressBar x:Name="DiscProgress" Minimum="0" Maximum="100" Height="8" Foreground="{StaticResource Accent}" Background="{StaticResource Line}" AutomationProperties.Name="Game setup progress"/>
+      <TextBlock x:Name="SetupDetail" Style="{StaticResource Hint}" Margin="0,7,0,0"/>
+      <TextBlock x:Name="ImportTiming" Style="{StaticResource Hint}"/>
+     </StackPanel>
+     <Button Grid.Column="1" Content="Cancel setup" Click="CancelImport" VerticalAlignment="Center"/>
+    </Grid>
+   </Border>
+   <Border x:Name="HostSetupActivity" Visibility="Collapsed" Background="#EE1C1E20" CornerRadius="5" Padding="14" Margin="0,0,0,16">
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <StackPanel Margin="0,0,16,0">
+      <TextBlock x:Name="HostSetupStage" FontWeight="SemiBold" Margin="0,0,0,8"/>
+      <ProgressBar x:Name="HostSetupProgress" Minimum="0" Maximum="100" Height="8" Foreground="{StaticResource Accent}" Background="{StaticResource Line}" AutomationProperties.Name="Server setup progress"/>
+      <TextBlock x:Name="HostSetupDetail" Style="{StaticResource Hint}" Margin="0,7,0,0"/>
+     </StackPanel>
+     <Button Grid.Column="1" Content="Cancel setup" Click="CancelServerSetup" VerticalAlignment="Center"/>
+    </Grid>
+   </Border>
+   </StackPanel>
+   <Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel VerticalAlignment="Center" Margin="0,0,16,0"><TextBlock x:Name="SelectedGameLabel" FontSize="14" Margin="0,0,0,5"/><TextBlock x:Name="Status" Text="Ready" Style="{StaticResource Hint}"/></StackPanel><Button x:Name="StopButton" Grid.Column="1" Content="Stop" Click="StopGame" IsEnabled="False" Padding="24,11" Margin="0,0,10,0"/><Button x:Name="LaunchButton" Grid.Column="2" Content="Play" Click="LaunchGame" Style="{StaticResource PrimaryButton}" Padding="42,12" MinWidth="142"/></Grid>
   </Grid>
  </Grid>
 </Window>

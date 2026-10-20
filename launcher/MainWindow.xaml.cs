@@ -64,7 +64,8 @@ public partial class MainWindow : Window {
             accountPreparation?.Cancel();
             hostedServer.Dispose();
             if (portsForwarded)
-                HostNetworking.ClosePorts().Wait(TimeSpan.FromSeconds(5)); // do not leave router ports open
+                HostNetworking.ClosePorts().Wait(
+                    TimeSpan.FromSeconds(5)); // do not leave router ports open
             controller.Dispose();
         };
         Loaded += OnLoaded;
@@ -369,14 +370,42 @@ public partial class MainWindow : Window {
                 UpdateLayout();
                 await Task.Delay(200);
             }
+            if (args.Contains("--preview-setup-download") ||
+                args.Contains("--preview-setup-prepare")) {
+                var progress = BeginDiscImport();
+                progress.Report(args.Contains("--preview-setup-download")
+                                    ? new(90671806, 181343612,
+                                          "Downloading Windows x64 build tools",
+                                          "Downloading compiler")
+                                    : new(2800, 5601, "Preparing Windows x64 build tools",
+                                          "Preparing compiler"));
+                await Task.Delay(150);
+            }
+            if (args.Contains("--preview-server-setup")) {
+                settings.HostServer = true;
+                HostServer.IsChecked = true;
+                HostOptions.Visibility = Visibility.Visible;
+                HostSetupActivity.Visibility = Visibility.Visible;
+                HostStatus.Text = "Preparing Python for hosting";
+                ReportHostSetup(new(0, 0,
+                                    "Downloading Python 3.12 for your private server environment",
+                                    "Preparing Python"));
+                StartServerButton.Content = "Cancel";
+                SettingsScroll.ScrollToVerticalOffset(200);
+                await Task.Delay(150);
+            }
+            UpdateLayout();
             var bitmap = new RenderTargetBitmap((int)ActualWidth, (int)ActualHeight, 96, 96,
                                                 PixelFormats.Pbgra32);
             bitmap.Render(this);
             var encoder = new PngBitmapEncoder();
             encoder.Frames.Add(BitmapFrame.Create(bitmap));
             using (var output = File.Create(args[screenshot + 1])) encoder.Save(output);
-            if (!args.Contains("--keep-open"))
+            if (!args.Contains("--keep-open")) {
+                importCancellation?.Dispose();
+                importCancellation = null;
                 Close();
+            }
         }
         if (probe >= 0 && probe + 1 < args.Length) {
             ShowPage("Controller");
@@ -445,8 +474,11 @@ public partial class MainWindow : Window {
                 snapshot.Fullscreen = false;
                 snapshot.WindowSize = 0;
                 snapshot.CoopHost = "127.0.0.1";
-                snapshot.AccountUsername = "auto" + System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999);
-                snapshot.MemoryCardFile1 = Path.Combine(Settings.Home, "test-cards", "auto-network-" + Guid.NewGuid().ToString("N"));
+                snapshot.AccountUsername =
+                    "auto" +
+                    System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999);
+                snapshot.MemoryCardFile1 = Path.Combine(
+                    Settings.Home, "test-cards", "auto-network-" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(snapshot.MemoryCardFile1);
                 diagnosticRoute = "network-auto";
             }
@@ -473,10 +505,10 @@ public partial class MainWindow : Window {
                     File.Delete(testCheatFile);
             }
             previousRunning = true;
-            await Task.Delay(args.Contains("--test-auto-network") ? 240000
+            await Task.Delay(args.Contains("--test-auto-network")    ? 240000
                              : args.Contains("--test-quick-display") ? 25000
-                             : args.Contains("--test-room")        ? 180000
-                             : args.Contains("--test-memory-card") ? 300000
+                             : args.Contains("--test-room")          ? 180000
+                             : args.Contains("--test-memory-card")   ? 300000
                              : displayTest ? args.Contains("--test-character") ? 110000 : 65000
                                            : 10000);
             object? windowState = game.Running ? GameSession.InspectWindow(game.Process!) : null;

@@ -186,16 +186,13 @@ public static partial class LocalGameBuild {
         string output = Path.Combine(work, "output");
         Directory.CreateDirectory(work);
         Directory.CreateDirectory(output);
-        var values =
-            new Dictionary<string, string> { ["{kit}"] = kitFolder,
-                                             ["{work}"] = work,
-                                             ["{output}"] = output,
-                                             ["{elf}"] = disc.Elf,
-                                             ["{disc}"] = Path.Combine(disc.Root, "data"),
-                                             ["{jobs}"] =
-                                                 Math.Min(4, Math.Max(
-                                                                 1, Environment.ProcessorCount / 2))
-                                                     .ToString() };
+        int jobs = BuildResources.WorkerCount();
+        var values = new Dictionary<string, string> { ["{kit}"] = kitFolder,
+                                                      ["{work}"] = work,
+                                                      ["{output}"] = output,
+                                                      ["{elf}"] = disc.Elf,
+                                                      ["{disc}"] = Path.Combine(disc.Root, "data"),
+                                                      ["{jobs}"] = jobs.ToString() };
         string Expand(string arg) {
             foreach (var pair in values)
                 arg = arg.Replace(pair.Key, pair.Value, StringComparison.Ordinal);
@@ -227,10 +224,15 @@ public static partial class LocalGameBuild {
                           if (count.Success)
                               progress?.Report(new(long.Parse(count.Groups[1].Value),
                                                    long.Parse(count.Groups[2].Value),
-                                                   "Building your game", "Compiling native code"));
+                                                   $"Building your game - {jobs} parallel workers",
+                                                   "Compiling native code"));
                           else if (line.StartsWith("Generating ", StringComparison.Ordinal))
                               progress?.Report(
                                   new(0, 0, "Reading game instructions", "Generating native code"));
+                          else if (line.StartsWith("Precompiling ", StringComparison.Ordinal))
+                              progress?.Report(
+                                  new(0, 0, "Preparing shared headers for faster compilation",
+                                      "Preparing compilation"));
                           else if (line.StartsWith("Linking ", StringComparison.Ordinal))
                               progress?.Report(new(0, 0, "Finishing your game build", "Linking"));
                       }).ConfigureAwait(false);

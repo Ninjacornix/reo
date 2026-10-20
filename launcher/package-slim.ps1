@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)][string]$KitManifest,
     [Parameter(Mandatory=$true)][string]$Server,
     [Parameter(Mandatory=$true)][string]$Output,
-    [string]$Version = '1.0.8'
+    [string]$Version = '1.0.9'
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot

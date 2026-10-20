@@ -1,6 +1,6 @@
 # Prerelease packaging
 
-Current target: **v1.0.8**, marked prerelease. .NET is an external
+Current target: **v1.0.9**, marked prerelease. .NET is an external
 prerequisite. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting.
 
@@ -17,13 +17,13 @@ manifest declaring external-python. Do not ship vendor, python, wheels,
 dependency-sources, tests, databases, credentials or developer environments.
 
 Commit corresponding source, then run launcher/package-slim.ps1 with -Inputs,
--KitManifest, -Server <source-only-export>, -Output and -Version 1.0.8. It verifies
+-KitManifest, -Server <source-only-export>, -Output and -Version 1.0.9. It verifies
 the server manifest, publishes a framework-dependent single-file launcher,
 consolidates required licence texts into THIRD-PARTY-NOTICES.txt and links GitHub's
 source archive for the release tag. Keep LICENSE/NOTICE and the
 server's own licence. There must be no top-level LICENSES or sources folder.
 
-The main asset is RE-Outbreak-v1.0.8-Windows-x64.zip. ZIP paths must be relative,
+The main asset is RE-Outbreak-v1.0.9-Windows-x64.zip. ZIP paths must be relative,
 use / separators and place Outbreak.Launcher.exe at the root. Reject absolute
 paths, traversal, drive prefixes, duplicate names and unexpected files. Extract
 the final ZIP into a fresh folder and verify all inventory, server and nested
@@ -38,7 +38,7 @@ path, or a missing path to exercise automatic provisioning in the isolated test
 home. It verifies cold setup and a cached restart. Owned services use isolated
 ports/accounts and are shut down afterward.
 
-Publish the main ZIP/checksum and RE-Outbreak-v1.0.8-Dependency-Sources.zip/checksum.
+Publish the main ZIP/checksum and RE-Outbreak-v1.0.9-Dependency-Sources.zip/checksum.
 Use GitHub's automatic source archives for the project; do not add a duplicate
 Project-Source.tar asset. Ordinary players only need the main ZIP. No source
 archives belong inside the application or server folder. Server setup downloads
