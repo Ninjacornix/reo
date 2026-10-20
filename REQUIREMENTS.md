@@ -55,8 +55,8 @@ downloads show transferred MiB, percentage and stage ETA. Python/package setup
 shows activity and live status when the installer does not provide a total.
 
 If you already have a compatible completed launcher build, use **Game files > Use
-existing build** and choose its reo_recomp.exe. Keep local-build.json and all
-companion DLLs alongside it. This skips compiler download and game compilation.
+existing build** and choose its reo_recomp.exe. Keep the entire build folder, including local-build.json, DLLs and
+the reo-gpu-present shader folder. This skips compiler download and game compilation.
 The ISO is still required for game data. A bare EXE, a different game or a build
 from an incompatible kit is rejected. Existing local game caches are reused
 automatically without needing this button.

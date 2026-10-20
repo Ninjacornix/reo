@@ -23,6 +23,9 @@ internal static class ExistingGameBuildTests {
         BitConverter.GetBytes((ushort)0x8664).CopyTo(pe, 68);
         File.WriteAllBytes(exe, pe);
         File.WriteAllText(elf, "Synthetic disc input; no game data");
+        Directory.CreateDirectory(Path.Combine(source, "shaders"));
+        File.WriteAllText(Path.Combine(source, "shaders/fixture.spv"),
+                          "Synthetic shader, never executed");
         File.WriteAllText(Path.Combine(source, "runtime.dll"),
                           "Synthetic companion, never executed");
         File.WriteAllText(Path.Combine(kitFolder, "tool.bin"), "Synthetic tool, never executed");
@@ -30,7 +33,7 @@ internal static class ExistingGameBuildTests {
             1, "fixture", "win-x64", Sha(elf),
             new[] { new BuildKitFile("tool.bin", Sha(Path.Combine(kitFolder, "tool.bin"))) },
             new[] { new LocalBuildStep("Never run", "tool.bin", new[] { "{output}" }) },
-            new[] { "reo_recomp.exe", "runtime.dll" });
+            new[] { "reo_recomp.exe", "runtime.dll", "shaders/fixture.spv" });
         string manifest = Path.Combine(kitFolder, LocalGameBuild.ManifestName);
         File.WriteAllText(manifest, JsonSerializer.Serialize(kit));
         var receipt = new LocalBuildReceipt(
@@ -61,6 +64,8 @@ internal static class ExistingGameBuildTests {
             check(File.Exists(target) && Sha(target) == Sha(exe) &&
                       File.Exists(Path.Combine(Path.GetDirectoryName(target)!, "runtime.dll")),
                   "complete existing build and companions are admitted");
+            check(File.Exists(Path.Combine(Path.GetDirectoryName(target)!, "shaders/fixture.spv")),
+                  "nested presentation files are copied into the cache");
             check(File.Exists(exe) && File.Exists(record), "original build is preserved");
             int builds = 0;
             var disc = new ImportedDisc(root, elf, 1, 1, true);

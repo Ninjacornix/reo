@@ -6,8 +6,8 @@ Select buttons have been removed; Game files remains a separate action.
 ## Already have a completed build?
 
 In Game files, click **Use existing build** and choose **reo_recomp.exe** from a
-compatible completed launcher build. Keep **local-build.json** and all of the
-build's companion DLLs beside it. The launcher validates the exact build kit,
+compatible completed launcher build. Keep its **entire folder**, including
+**local-build.json**, DLLs and the **reo-gpu-present** shader folder. The launcher validates the exact build kit,
 game identity, architecture and file hashes before copying it into the local
 cache. Compilation is skipped. Source files and the previous ready build are
 preserved on failure/cancellation. The selected EXE is not run during validation.

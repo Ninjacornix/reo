@@ -25,7 +25,7 @@ public static partial class LocalGameBuild {
         string record = Inside(source, "local-build.json");
         if (!File.Exists(record))
             throw new IOException(
-                "This EXE has no local-build.json record. Select a completed launcher build and keep its DLLs beside it.");
+                "This EXE has no local-build.json record. Select a completed launcher build and keep its entire build folder.");
         var kit = ReadKit(KitFolder(root), expectedElf, cancel);
         string kitHash = Sha(Path.Combine(KitFolder(root), ManifestName));
         progress?.Report(new(0, 0, "Checking build version, executable and companion files",

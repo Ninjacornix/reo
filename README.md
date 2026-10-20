@@ -19,7 +19,7 @@ GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 beh
 
 Already compiled the game? In **Game files**, click **Use existing build** and
 choose `reo_recomp.exe` from a completed compatible launcher build. Keep
-`local-build.json` and the build's DLLs beside it. The launcher verifies and caches
+`local-build.json`, DLLs and `reo-gpu-present` shader folder together. The launcher verifies and caches
 that build, skipping compilation; your supported ISO is still required. A lone
 EXE or a build from a different kit is not enough.
 
