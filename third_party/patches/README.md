@@ -17,6 +17,10 @@ The complete current series has been checked against a fresh pinned worktree.
 Patch `0094` makes an explicit function-map range replace a discovered range at
 the same address, preventing local regeneration from extending into later data.
 Patch `0095` makes integer types and optional stack diagnostics portable to Linux.
+Patch `0096` speeds up source instrumentation (see the v1.0.11 notes). Patch `0097` clears
+the pending movie DMA publication explicitly when the final tag takes it over: a moved-from
+`std::function` is not guaranteed empty, and with libc++ (the llvm-mingw release toolchain) a
+leftover copy stopped every release-built game at its first GPU movie.
 
 Locally generated game bodies, including instrumented original IRQ functions,
 remain excluded. Applying the runtime patches is not a substitute for generating

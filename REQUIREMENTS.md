@@ -4,18 +4,21 @@
    [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/8.0), if needed,
    and keep your GPU's Vulkan driver current.
 2. Extract the Windows download and open **Outbreak.Launcher.exe**.
-3. In **Game files**, click **Choose ISO** and select your own
-   **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**.
+3. Follow the **Play** page: click **Choose ISO** and select your own
+   **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**. A green ✓ confirms it.
+4. Click **Build game**, wait for the one-time setup, then click **Play**.
 
-Import starts automatically. The launcher checks the disc, downloads/prepares
-its build tools, and builds the game. **No compiler installation, environment
-variables or terminal commands are required.** When setup finishes, click Play.
+The launcher checks the disc, prepares its build tools and builds the game.
+**No compiler installation, environment variables or terminal commands are
+required.** The Play page also checks for a Vulkan graphics driver and about
+10 GB of free disk space.
 PAL, Japanese, File #2 and other executable revisions are currently unsupported.
 No PS2 BIOS is needed. Keep the ISO available for game data reads.
 
 ## First-time setup
 
-Internet access is needed to download the verified compiler (about 173 MiB).
+Internet access is needed to download the verified compiler (about 173 MiB),
+unless the exact supported compiler is already installed (see below).
 The launcher keeps only the Windows x64 tools needed for the game, about 446 MiB,
 in Local AppData. Nothing is installed system-wide or added to PATH.
 Allow about 1 GB of temporary compiler setup space plus several GB for game data
@@ -31,10 +34,11 @@ setup inputs and is unpacked automatically; users do not need to open it.
 
 ## Co-op
 
-Enable **Host server** to host. Missing Python/server packages are downloaded and
-prepared automatically in Local AppData on first use. Later starts reuse the
-cache. Joining a friend's server does not require that setup. Internet hosting
-still needs reachable addressing and firewall/router rules.
+Choose **Host a game** in **Co-op** to host. On first use the launcher prepares a
+private server environment in Local AppData: it uses an installed Python 3.12 if
+present (otherwise it downloads one) and installs the server packages. Later
+starts reuse it. Joining a friend's game needs no setup. Internet hosting still
+needs a VPN or forwarded ports; see the README's co-op section.
 
 ## Advanced and developer information
 

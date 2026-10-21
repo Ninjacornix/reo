@@ -12,7 +12,12 @@ using System.Text.RegularExpressions;
 namespace Outbreak.Launcher;
 public record ReleaseAsset(string Name, Uri Url, long Size, string? Digest);
 public record LauncherRelease(string Tag, Version Version, ReleaseAsset Package,
-                              ReleaseAsset? Checksum);
+                              ReleaseAsset? Checksum) {
+    // Release notes contain this marker when the update changes the game build inputs, so the
+    // game is compiled again on the first Play after updating.
+    public const string RebuildMarker = "<!-- reo:requires-rebuild -->";
+    public bool RequiresRebuild { get; init; }
+}
 public record UpdateProgress(string Stage, double Percent);
 public record PackageFile(string Path, long Bytes, string Sha256);
 public record UpdatePlan(string Work, string Source, string Target, string Version, int ParentPid,
@@ -20,7 +25,8 @@ public record UpdatePlan(string Work, string Source, string Target, string Versi
 public static partial class Updates {
     public const string Repository = "https://github.com/Ninjacornix/reo";
     public const string LatestApi = "https://api.github.com/repos/Ninjacornix/reo/releases/latest";
-    public const string DefaultVersion = "1.0.11";
+    public const string DefaultVersion = "1.0.12";
+    public const string DisplayName = "1.0 Alpha";
     public static readonly JsonSerializerOptions Json =
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
     public static string Home => Path.Combine(Settings.Home, "updates");
@@ -116,7 +122,12 @@ public static partial class Updates {
             checksum == null)
             throw new IOException("This release has no SHA-256 digest or checksum asset. It " +
                                   "cannot be installed automatically.");
-        return new(tag, version, package, checksum);
+        return new(tag, version, package, checksum) {
+            RequiresRebuild = r.TryGetProperty("body", out var body) &&
+                              body.ValueKind == JsonValueKind.String &&
+                              body.GetString()!.Contains(LauncherRelease.RebuildMarker,
+                                                         StringComparison.Ordinal)
+        };
     }
     public static bool PrereleaseChannel(string root) {
         if (!AppLayout.Packaged(root))

@@ -9,6 +9,7 @@ namespace Outbreak.Launcher;
 
 public static partial class OnlineOptions {
     public static bool Configured(Settings settings) => settings.Game.Id == "file1" &&
+                                                        settings.ResolvedCoopMode != "offline" &&
                                                         TryHost(settings.CoopHost, out _) &&
                                                         ValidUsername(settings.AccountUsername);
     public const int MinUsernameLength = 4;
@@ -43,16 +44,20 @@ public static partial class OnlineOptions {
     }
 
     public static string? Error(Settings settings) {
+        if (settings.ResolvedCoopMode == "offline")
+            return null;
         if (string.IsNullOrWhiteSpace(settings.CoopHost) &&
             string.IsNullOrWhiteSpace(settings.AccountUsername))
             return null;
         if (settings.Game.Id != "file1")
             return "Online play is available for File #1 only.";
-        if (!TryHost(settings.CoopHost, out _))
-            return "Enter the server's IPv4 address, such as 127.0.0.1.";
         if (!ValidUsername(settings.AccountUsername))
-            return "Use 4–10 letters, numbers or underscores. Underscores cannot start, end or " +
-                   "repeat.";
+            return "Player name: use 4–10 letters, numbers or underscores. Underscores cannot " +
+                   "start, end or repeat.";
+        if (!TryHost(settings.CoopHost, out _))
+            return settings.ResolvedCoopMode == "host"
+                       ? "Choose the address friends will use."
+                       : "Pick a game from the list, or enter the host's address, such as 192.168.1.20.";
         return null;
     }
 

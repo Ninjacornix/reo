@@ -46,7 +46,7 @@ public partial class MainWindow {
         StickSettings.Visibility = keyboard ? Visibility.Collapsed : Visibility.Visible;
         ControllerDetail.Text = "Reconnect this device, or select another.";
         ControllerDetail.Visibility = device.Available ? Visibility.Collapsed : Visibility.Visible;
-        PadBadge.Text = device.Available ? device.Name : "Input device disconnected";
+        PadBadge.Content = device.Available ? device.Name : "Input device disconnected";
         DeadZoneLabel.Text = $"Dead zone: {controller.Profile.DeadZone}%";
         LeftPlot.Update(controller.RawState, controller.State, controller.Profile.DeadZone, false);
         RightPlot.Update(controller.RawState, controller.State, controller.Profile.DeadZone, true);

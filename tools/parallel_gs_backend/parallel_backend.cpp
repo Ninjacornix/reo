@@ -1,4 +1,5 @@
 #include "parallel_backend.h"
+#include "shader_location.hpp"
 #include "parent_first_entry.h"
 #include "native_movie_owner.h"
 #include "resident_vif_live_hooks.h"
@@ -26,6 +27,15 @@
 #include <cstdio>
 #include <memory>
 #include <utility>
+#if defined(_WIN32)
+std::filesystem::path reo_shader_location::executableDirectory() {
+    wchar_t executable[32768];
+    const DWORD length = GetModuleFileNameW(nullptr, executable, 32768);
+    if (!length || length == 32768)
+        return {};
+    return std::filesystem::path(executable).parent_path();
+}
+#endif
 namespace reo_parallel_backend {
 namespace {
 using namespace ParallelGS;
@@ -1013,7 +1023,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
                                                    "clear_write.spv"};
             std::array<std::vector<uint32_t>, 3> modules;
             for (size_t k = 0; k < names.size(); ++k) {
-                std::ifstream file(directory / names[k], std::ios::binary | std::ios::ate);
+                std::ifstream file(reo_shader_location::find(directory, names[k]),
+                                   std::ios::binary | std::ios::ate);
                 if (!file)
                     throw std::runtime_error("Missing pinned GPU context clear shader");
                 const auto bytes = file.tellg();

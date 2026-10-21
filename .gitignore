@@ -122,6 +122,8 @@ desktop.ini
 /recomp/overrides/reo_movie_initialize_observed.cpp
 /tools/parallel_gs_backend/movie_runtime/original_player_caller.cpp
 /tools/parallel_gs_backend/movie_runtime/original_transport_*.cpp
+# Hand-written alias table and registration, no instruction-derived code.
+!/tools/parallel_gs_backend/movie_runtime/original_transport_route.cpp
 *.bundle
 
 # Instruction-derived GPU sources and documentation captures are local only.

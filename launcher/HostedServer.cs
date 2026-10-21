@@ -48,6 +48,7 @@ internal sealed class HostedServer : IDisposable {
         try {
             lease = new FileStream(Path.Combine(data, "server.lock"), FileMode.OpenOrCreate,
                                    FileAccess.ReadWrite, FileShare.None);
+            var ports = HostNetworking.Current;
             CheckPorts(portOffset);
             var (python, source) = await Locate(
                 root, cancel, componentRoot, stateHome ?? Settings.Home, progress, setupProgress);
@@ -93,14 +94,14 @@ internal sealed class HostedServer : IDisposable {
                 env["OPENSNAP_BOOTSTRAP_ADVERTISE_HOST"] = normalized;
                 env["OPENSNAP_GAME_ADVERTISE_HOST"] = normalized;
                 env["OPENSNAP_BOOTSTRAP_PORT"] = (9090 + portOffset).ToString();
-                env["OPENSNAP_GAME_PORT"] = (9091 + portOffset).ToString();
+                env["OPENSNAP_GAME_PORT"] = (ports.Game + portOffset).ToString();
                 env["OPENSNAP_CAPCOM_APP_PORT"] = (10127 + portOffset).ToString();
-                env["OPENSNAP_WEB_PORT"] = (80 + portOffset).ToString();
+                env["OPENSNAP_WEB_PORT"] = (ports.Signup + portOffset).ToString();
                 env["OPENSNAP_BOOTSTRAP_GAMES"] = "outbreak";
                 env["OPENSNAP_GAME_PLUGIN"] = "outbreak";
                 env["OPENSNAP_WEB_GAME_PLUGIN"] = "outbreak";
                 env["OPENSNAP_GAME_SERVER_MAP"] = JsonSerializer.Serialize(
-                    new { outbreak = new { host = normalized, port = 9091 + portOffset } });
+                    new { outbreak = new { host = normalized, port = ports.Game + portOffset } });
                 var process =
                     Process.Start(start) ?? throw new IOException("Could not start the server.");
                 processes.Add(process);
@@ -115,13 +116,27 @@ internal sealed class HostedServer : IDisposable {
             var clock = Stopwatch.StartNew();
             while (clock.Elapsed < TimeSpan.FromSeconds(20)) {
                 cancel.ThrowIfCancellationRequested();
-                if (processes.Any(p => p.HasExited))
-                    throw new IOException("A server service stopped. See the hosted-server logs.");
+                if (processes.Any(p => p.HasExited)) {
+                    int stopped = processes.FindIndex(p => p.HasExited);
+                    string name = new[] { "app", "web", "game", "bootstrap" }[stopped];
+                    await Task.WhenAny(Task.WhenAll(pumps), Task.Delay(1000, cancel));
+                    string tail = "";
+                    try {
+                        var lines = File.ReadAllLines(Path.Combine(data, name + "-stderr.log"))
+                                        .Where(l => l.Trim().Length > 0)
+                                        .TakeLast(3);
+                        tail = string.Join(" | ", lines);
+                    } catch (IOException) {
+                    }
+                    throw new IOException($"The {name} service stopped" +
+                                          (tail.Length > 0 ? ": " + tail[..Math.Min(tail.Length, 600)]
+                                                           : ". See the hosted-server logs."));
+                }
                 var ip = IPGlobalProperties.GetIPGlobalProperties();
                 int[] tcp = ip.GetActiveTcpListeners().Select(e => e.Port).ToArray();
                 int[] udp = ip.GetActiveUdpListeners().Select(e => e.Port).ToArray();
-                if (tcp.Contains(80 + portOffset) && tcp.Contains(10127 + portOffset) &&
-                    udp.Contains(9090 + portOffset) && udp.Contains(9091 + portOffset)) {
+                if (tcp.Contains(ports.Signup + portOffset) && tcp.Contains(10127 + portOffset) &&
+                    udp.Contains(9090 + portOffset) && udp.Contains(ports.Game + portOffset)) {
                     Address = normalized;
                     return;
                 }
@@ -135,13 +150,25 @@ internal sealed class HostedServer : IDisposable {
         }
     }
     internal static void CheckPorts(int portOffset = 0) {
+        var wanted = HostNetworking.Ports.Where(p => p.Number != LanDiscovery.Port)
+                         .Select(p => (Port: p.Number + portOffset, p.Protocol))
+                         .ToList();
         var ip = IPGlobalProperties.GetIPGlobalProperties();
-        if (ip.GetActiveTcpListeners().Any(e => e.Port == 80 + portOffset ||
-                                                e.Port == 10127 + portOffset) ||
-            ip.GetActiveUdpListeners().Any(e => e.Port == 9090 + portOffset ||
-                                                e.Port == 9091 + portOffset))
-            throw new IOException(
-                "Server ports are already in use. Stop the other server, or join it with Host server off.");
+        var busy = wanted.Where(w => w.Protocol == "TCP"
+                                         ? ip.GetActiveTcpListeners().Any(e => e.Port == w.Port)
+                                         : ip.GetActiveUdpListeners().Any(e => e.Port == w.Port))
+                       .ToList();
+        if (busy.Count == 0)
+            return;
+        var owners = HostNetworking.PortOwners(busy);
+        string list = owners.Count > 0 ? string.Join("; ", owners)
+                                       : string.Join(", ", busy.Select(b => $"{b.Port} {b.Protocol}"));
+        bool fixedBusy = busy.Any(b => b.Port - portOffset is HostNetworking.LoginPort or
+                                                              HostNetworking.AppPort);
+        throw new IOException(
+            "Ports already in use: " + list + ". " +
+            (fixedBusy ? "Ports 9090 and 10127 are built into the game, so close that program first."
+                       : "Close that program, or choose other ports under Ports."));
     }
     static async Task<(string, string)> Locate(string root, CancellationToken cancel,
                                                string? componentRoot, string home,

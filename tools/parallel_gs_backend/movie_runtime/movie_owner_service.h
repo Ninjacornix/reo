@@ -1,4 +1,5 @@
 #pragma once
+#include "../shader_location.hpp"
 #include "native_movie_owner.h"
 #include "live_movie_producer.h"
 #include "gs_interface.hpp"
@@ -66,12 +67,13 @@ class MovieOwnerServiceTarget final : public reo_movie_owner::Target {
     void initializePrograms() {
         if (upload_)
             return;
-        // Source/build tree asset IO only. Both helpers independently hash the
-        // exact certified shader bytes and validate their resource interfaces.
+        // Shipped beside the game, or the source tree for development builds. Both helpers
+        // independently hash the exact certified shader bytes and validate their interfaces.
         const auto directory = std::filesystem::path(__FILE__).parent_path();
-        csc_ = shader(directory / "assets/movie_ipu_csc_nv12.spv");
+        csc_ = shader(reo_shader_location::find(directory / "assets", "movie_ipu_csc_nv12.spv"));
         upload_ = ParallelGS::create_resident_image_upload_program(
-            gs_, shader(directory / "../resident_gs/shaders/resident_image_upload.spv"));
+            gs_, shader(reo_shader_location::find(directory / "../resident_gs/shaders",
+                                                  "resident_image_upload.spv")));
         if (!upload_)
             throw std::runtime_error("Create actual GS movie IMAGE upload program");
     }

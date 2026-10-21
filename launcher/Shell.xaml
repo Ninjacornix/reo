@@ -12,19 +12,19 @@
   <Border Background="#181A1B">
    <Grid Margin="16,28,16,24"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <StackPanel>
-     <TextBlock Text="RE: Outbreak" FontSize="20" Margin="12,0,0,36"/>
+     <StackPanel Margin="12,0,0,36"><TextBlock Text="RE: Outbreak" FontSize="20"/><TextBlock x:Name="VersionLabel" Style="{StaticResource Hint}" Margin="0,2,0,0"/></StackPanel>
      <Button x:Name="NavPlay" Tag="Play" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Play" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavGraphics" Tag="Graphics" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Graphics" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavController" Tag="Controller" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Controls" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSaves" Tag="Saves" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Save games" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavCoop" Tag="Coop" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Co-op" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
-     <Button x:Name="NavMods" Tag="Mods" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Mods" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
+     <Button x:Name="NavMods" Tag="Mods" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}" Visibility="Collapsed"><TextBlock Text="Mods" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavCheats" Tag="Cheats" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Cheats" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSetup" Tag="Setup" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Game files" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavLogs" Tag="Logs" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Log" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
     </StackPanel>
-    <StackPanel Grid.Row="2"><TextBlock x:Name="PadBadge" Text="Checking input" Style="{StaticResource Hint}" Margin="12,0,0,14"/><Button x:Name="UpdateButton" Content="Check for updates" Click="CheckForUpdates" ToolTip="Check GitHub Releases and install a newer Windows package" FontSize="13" HorizontalContentAlignment="Left"/>
-     <TextBlock x:Name="UpdateState" Style="{StaticResource Hint}" FontSize="11" TextWrapping="Wrap" Margin="10,8,0,0"/>
+    <StackPanel Grid.Row="2"><Button x:Name="PadBadge" Tag="Controller" Click="Navigate" Content="Checking input" Style="{StaticResource NavButton}" HorizontalContentAlignment="Left" Padding="12,6" FontSize="13" Margin="0,0,0,10" ToolTip="Open Controls" AutomationProperties.Name="Input device, open Controls"/><Button x:Name="UpdateButton" Content="Check for updates" Click="CheckForUpdates" ToolTip="Check GitHub Releases and install a newer Windows package" FontSize="13" HorizontalContentAlignment="Left"/>
+     <TextBlock x:Name="UpdateState" Style="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" Margin="10,8,0,0"/>
      <ProgressBar x:Name="UpdateProgress" Visibility="Collapsed" Height="4" Minimum="0" Maximum="100" Margin="10,8,0,0" Foreground="{StaticResource Accent}"/>
      <Button x:Name="UpdateCancel" Content="Cancel download" Click="CancelUpdate" Visibility="Collapsed" FontSize="12" Margin="0,8,0,0"/></StackPanel>
    </Grid>
@@ -36,51 +36,47 @@
     <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <Grid>
       <StackPanel x:Name="PagePlay">
-       <ListBox x:Name="GamePicker" SelectionChanged="GameSelectionChanged" SelectedValuePath="Tag" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,8,0,26" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Choose game">
+       <ListBox x:Name="GamePicker" SelectionChanged="GameSelectionChanged" SelectedValuePath="Tag" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,8,0,22" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Choose game">
         <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
         <ListBoxItem Tag="file1" Style="{StaticResource GameChoice}" Margin="0,0,9,0" AutomationProperties.Name="Outbreak File 1">
-        <Border x:Name="GameCard1" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
-         <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
-           <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster1" Width="86" Height="128" Stretch="UniformToFill"/></Border>
-           <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #1" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/></StackPanel>
-          </Grid>
-          <TextBlock x:Name="GameStatus1" Grid.Row="1" Style="{StaticResource Hint}" MinHeight="20" Margin="0,18,0,16"/>
-          <WrapPanel Grid.Row="2"><Button x:Name="ConfigureGame1" Content="Game files" Tag="file1" Click="ConfigureGame"/></WrapPanel>
+        <Border x:Name="GameCard1" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="18">
+         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+          <Border x:Name="PosterFrame1" CornerRadius="3" ClipToBounds="True" Margin="0,0,16,0" Visibility="Collapsed"><Image x:Name="GamePoster1" Width="72" Height="106" Stretch="UniformToFill"/></Border>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #1" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,4,0,0"/><TextBlock x:Name="GameStatus1" Style="{StaticResource Hint}" Margin="0,10,0,0"/></StackPanel>
          </Grid>
         </Border>
         </ListBoxItem>
-        <ListBoxItem Tag="file2" Style="{StaticResource GameChoice}" Margin="9,0,0,0" AutomationProperties.Name="Outbreak File 2, coming later">
-        <Border x:Name="GameCard2" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="20">
-         <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
-           <Border CornerRadius="3" ClipToBounds="True"><Image x:Name="GamePoster2" Width="86" Height="128" Stretch="UniformToFill"/></Border>
-           <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #2" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/></StackPanel>
-          </Grid>
-          <TextBlock x:Name="GameStatus2" Grid.Row="1" Style="{StaticResource Hint}" MinHeight="20" Margin="0,18,0,16"/>
-          <WrapPanel Grid.Row="2"><Button x:Name="ConfigureGame2" Content="Game files" Tag="file2" Click="ConfigureGame"/></WrapPanel>
+        <ListBoxItem Tag="file2" Style="{StaticResource GameChoice}" Margin="9,0,0,0" IsEnabled="False" AutomationProperties.Name="Outbreak File 2, coming later">
+        <Border x:Name="GameCard2" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="18">
+         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+          <Border x:Name="PosterFrame2" CornerRadius="3" ClipToBounds="True" Margin="0,0,16,0" Visibility="Collapsed"><Image x:Name="GamePoster2" Width="72" Height="106" Stretch="UniformToFill"/></Border>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="Outbreak" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="File #2" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,4,0,0"/><TextBlock x:Name="GameStatus2" Style="{StaticResource Hint}" Margin="0,10,0,0"/></StackPanel>
          </Grid>
         </Border>
         </ListBoxItem>
        </ListBox>
-       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
+       <Border x:Name="NextStep" Background="#EE1C1E20" BorderBrush="{StaticResource Accent}" BorderThickness="1" CornerRadius="7" Padding="20,16" Margin="0,0,0,24">
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <StackPanel Margin="0,0,16,0" VerticalAlignment="Center"><TextBlock x:Name="NextStepTitle" FontSize="16" FontWeight="SemiBold"/><TextBlock x:Name="NextStepDetail" Style="{StaticResource Hint}" Margin="0,4,0,0"/></StackPanel>
+         <Button x:Name="NextStepButton" Grid.Column="1" Style="{StaticResource PrimaryButton}" Click="NextStepClicked" VerticalAlignment="Center" Padding="22,10"/>
+        </Grid>
+       </Border>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="28"/><ColumnDefinition Width="0.8*"/></Grid.ColumnDefinitions>
         <StackPanel>
-       <TextBlock Text="Game details" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15"/>
-       <StackPanel Margin="0,0,0,20">
-        <TextBlock x:Name="ReadyBuild" Margin="0,0,0,10"/>
-        <TextBlock x:Name="ReadyFiles" Margin="0,0,0,10"/>
-        <TextBlock x:Name="ReadySaves"/><TextBlock x:Name="ReadySavePath" Style="{StaticResource Hint}" Margin="0,4,0,10"/>
-        <TextBlock x:Name="ReadyGraphics" Text="Detecting graphics card..." Margin="0,0,0,10"/>
-        <TextBlock x:Name="ReadyInput"/>
-       </StackPanel>
-        </StackPanel><StackPanel Grid.Column="2">
-       <TextBlock Text="Launch settings" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,14"/>
-       <StackPanel Margin="0,0,0,14">
-        <StackPanel><TextBlock Text="Display" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayDisplaySummary" Margin="0,6,0,0"/></StackPanel>
-        <StackPanel Margin="0,15,0,0"><TextBlock Text="Input device" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayInputSummary" Margin="0,6,0,0"/></StackPanel>
-        <StackPanel Margin="0,15,0,0"><TextBlock Text="Play mode" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayNetworkSummary" Margin="0,6,0,0"/></StackPanel>
-       </StackPanel>
-       <TextBlock Text="Stop at the title video and PRESS START." Style="{StaticResource Hint}" Margin="30,0,0,8"/>
+        <Grid Margin="0,0,0,12"><TextBlock Text="Before you play" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/><Button Content="Check again" Click="RecheckRequirements" HorizontalAlignment="Right" Padding="10,4" FontSize="12"/></Grid>
+        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckDotnetMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckDotnetText" Grid.Column="1" VerticalAlignment="Center"/></Grid>
+        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckVulkanMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckVulkanText" Grid.Column="1" VerticalAlignment="Center"/><Button x:Name="CheckVulkanAction" Grid.Column="2" Tag="CheckVulkan" Click="ChecklistAction" Padding="10,4" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/></Grid>
+        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckDiskMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckDiskText" Grid.Column="1" VerticalAlignment="Center"/><Button x:Name="CheckDiskAction" Grid.Column="2" Tag="CheckDisk" Click="ChecklistAction" Padding="10,4" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/></Grid>
+        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckDiscMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckDiscText" Grid.Column="1" VerticalAlignment="Center"/><Button x:Name="CheckDiscAction" Grid.Column="2" Tag="CheckDisc" Click="ChecklistAction" Padding="10,4" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/></Grid>
+        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckToolsMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckToolsText" Grid.Column="1" VerticalAlignment="Center"/></Grid>
+        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckBuildMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckBuildText" Grid.Column="1" VerticalAlignment="Center"/></Grid>
+        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckInputMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckInputText" Grid.Column="1" VerticalAlignment="Center"/><Button x:Name="CheckInputAction" Grid.Column="2" Tag="CheckInput" Click="ChecklistAction" Padding="10,4" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/></Grid>
+        </StackPanel>
+        <StackPanel Grid.Column="2">
+       <TextBlock Text="Launch settings" FontSize="16" FontWeight="SemiBold" Margin="0,4,0,14"/>
+        <StackPanel><TextBlock Text="Play mode" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayNetworkSummary" Margin="0,4,0,0"/></StackPanel>
+        <StackPanel Margin="0,14,0,0"><TextBlock Text="Display" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayDisplaySummary" Margin="0,4,0,0"/></StackPanel>
+        <StackPanel Margin="0,14,0,0"><TextBlock Text="Input device" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayInputSummary" Margin="0,4,0,0"/></StackPanel>
         </StackPanel>
        </Grid>
        <TextBlock x:Name="SessionSummary" Visibility="Collapsed"/>
@@ -150,32 +146,57 @@
       </StackPanel>
       <StackPanel x:Name="PageCoop" Visibility="Collapsed">
        <TextBlock x:Name="CoopUnavailable" Text="Online play is available for File #1 only." Style="{StaticResource Hint}" Margin="0,0,0,16" Visibility="Collapsed"/>
-       <StackPanel x:Name="CoopControls" MaxWidth="460" HorizontalAlignment="Left">
-        <CheckBox x:Name="HostServer" Content="Host server" Click="OnlineSettingChanged" Margin="0,4,0,24"/>
-        <StackPanel x:Name="HostOptions" Visibility="Collapsed" Margin="0,0,0,22">
-         <TextBlock Text="First-time hosting downloads Python and server packages automatically. Internet access is required for setup." Style="{StaticResource Hint}" Margin="0,0,0,12"/>
-         <Label Content="Address for friends" Target="{Binding ElementName=HostAddress}" Padding="0" Foreground="{StaticResource Ink}"/>
-         <TextBox x:Name="HostAddress" Width="400" HorizontalAlignment="Left" MaxLength="15" TextChanged="OnlineSettingChanged" Margin="0,8,0,8"/>
-         <TextBlock Text="Pick one of your addresses:" Style="{StaticResource Hint}"/>
-         <WrapPanel x:Name="DetectedAddresses" Margin="0,4,0,8"/>
-         <WrapPanel Margin="0,0,0,8"><Button x:Name="PublicAddressButton" Content="Find my internet address" Click="FindPublicAddress" Margin="0,0,10,0"/><TextBlock x:Name="PublicAddressStatus" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="250" Style="{StaticResource Hint}"/></WrapPanel>
-         <TextBlock Style="{StaticResource Hint}" TextWrapping="Wrap" Text="Same house: share your home network address. Over the internet: share your internet address and open the ports below, or use a VPN address (Tailscale, ZeroTier), which needs no port forwarding."/>
-         <TextBlock Text="Ports friends need" Foreground="{StaticResource Ink}" Margin="0,16,0,4"/>
-         <TextBlock x:Name="PortList" Style="{StaticResource Hint}" TextWrapping="Wrap"/>
-         <CheckBox x:Name="AutoForward" Content="Open these ports on my router automatically (UPnP)" Click="OnlineSettingChanged" Margin="0,10,0,6"/>
-         <WrapPanel Margin="0,0,0,4"><Button x:Name="FirewallButton" Content="Allow through Windows Firewall" Click="AllowFirewall" Margin="0,0,10,0"/><TextBlock x:Name="FirewallStatus" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="230" Style="{StaticResource Hint}"/></WrapPanel>
-         <TextBlock x:Name="ReachStatus" TextWrapping="Wrap" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
-         <TextBlock x:Name="HostStatus" Text="Server stopped" TextWrapping="Wrap" Margin="0,12,0,8"/>
-         <WrapPanel><Button x:Name="StartServerButton" Content="Start server" Click="StartServerClicked" Margin="0,0,10,0"/><Button x:Name="CopyServerButton" Content="Copy address" Click="CopyServerAddress" IsEnabled="False"/></WrapPanel>
+       <StackPanel x:Name="CoopControls" MaxWidth="600" HorizontalAlignment="Left">
+        <UniformGrid Columns="3" Margin="0,0,0,26">
+         <RadioButton x:Name="ModeOffline" GroupName="CoopMode" Tag="offline" Style="{StaticResource ModeChoice}" Margin="0,0,6,0" Checked="CoopModeChanged" AutomationProperties.Name="Play alone"><StackPanel><TextBlock Text="Play alone" FontWeight="SemiBold"/><TextBlock Text="Single player" Style="{StaticResource Hint}"/></StackPanel></RadioButton>
+         <RadioButton x:Name="ModeHost" GroupName="CoopMode" Tag="host" Style="{StaticResource ModeChoice}" Margin="3,0,3,0" Checked="CoopModeChanged" AutomationProperties.Name="Host a game"><StackPanel><TextBlock Text="Host a game" FontWeight="SemiBold"/><TextBlock Text="Friends join you" Style="{StaticResource Hint}"/></StackPanel></RadioButton>
+         <RadioButton x:Name="ModeJoin" GroupName="CoopMode" Tag="join" Style="{StaticResource ModeChoice}" Margin="6,0,0,0" Checked="CoopModeChanged" AutomationProperties.Name="Join a game"><StackPanel><TextBlock Text="Join a game" FontWeight="SemiBold"/><TextBlock Text="Play in a friend's game" Style="{StaticResource Hint}"/></StackPanel></RadioButton>
+        </UniformGrid>
+        <StackPanel x:Name="OnlinePanel">
+         <Label Content="Your player name" Target="{Binding ElementName=AccountUsername}" Padding="0" Foreground="{StaticResource Ink}"/>
+         <TextBox x:Name="AccountUsername" Width="270" HorizontalAlignment="Left" TextChanged="OnlineSettingChanged" Margin="0,8,0,6" AutomationProperties.Name="Player name"/>
+         <TextBlock Text="Other players see this name. 4-10 letters, numbers or _." Style="{StaticResource Hint}" Margin="0,0,0,24"/>
+         <StackPanel x:Name="HostOptions">
+          <TextBlock x:Name="HostStatus" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4"/>
+          <TextBlock x:Name="HostDetail" Style="{StaticResource Hint}" Margin="0,0,0,16"/>
+          <Label Content="Friends join using this address" Target="{Binding ElementName=HostAddressPicker}" Padding="0" Foreground="{StaticResource Ink}"/>
+          <WrapPanel Margin="0,8,0,6"><ComboBox x:Name="HostAddressPicker" Width="360" DisplayMemberPath="Label" SelectionChanged="HostAddressChanged" Margin="0,0,10,0" AutomationProperties.Name="Address friends use"/><Button x:Name="CopyServerButton" Content="Copy address" Click="CopyServerAddress" IsEnabled="False"/></WrapPanel>
+          <TextBlock Text="Friends on your network find your game automatically. Others need this address." Style="{StaticResource Hint}" Margin="0,0,0,14"/>
+          <WrapPanel><Button x:Name="FirewallButton" Content="Allow friends through Windows Firewall" Click="AllowFirewall" Margin="0,0,10,0"/><TextBlock x:Name="FirewallStatus" VerticalAlignment="Center" MaxWidth="220" Style="{StaticResource Hint}"/></WrapPanel>
+          <Button x:Name="StartServerButton" Content="Try again" Click="StartServerClicked" HorizontalAlignment="Left" Visibility="Collapsed" Margin="0,12,0,0"/>
+          <Expander x:Name="PortOptions" Header="Ports" Foreground="{StaticResource Muted}" Margin="0,20,0,0">
+           <StackPanel Margin="0,12,0,0" MaxWidth="460" HorizontalAlignment="Left">
+            <Grid Margin="0,0,0,10"><Label Content="Player sign-up (TCP)" Target="{Binding ElementName=SignupPortBox}" Padding="0" Foreground="{StaticResource Ink}" VerticalAlignment="Center"/><TextBox x:Name="SignupPortBox" Width="110" HorizontalAlignment="Right" MaxLength="5" LostKeyboardFocus="PortsChanged" KeyDown="PortKeyDown"/></Grid>
+            <Grid Margin="0,0,0,10"><Label Content="Game server (UDP)" Target="{Binding ElementName=GamePortBox}" Padding="0" Foreground="{StaticResource Ink}" VerticalAlignment="Center"/><TextBox x:Name="GamePortBox" Width="110" HorizontalAlignment="Right" MaxLength="5" LostKeyboardFocus="PortsChanged" KeyDown="PortKeyDown"/></Grid>
+            <TextBlock Style="{StaticResource Hint}" Text="Login (9090 UDP) and the app server (10127 TCP) are built into the game and cannot change. Friends' launchers pick up your other ports automatically."/>
+            <TextBlock x:Name="PortStatus" Margin="0,8,0,0"/>
+            <Button Content="Use default ports" Click="ResetPorts" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+           </StackPanel>
+          </Expander>
+          <Expander x:Name="InternetOptions" Header="Playing over the internet" Foreground="{StaticResource Muted}" Margin="0,20,0,0">
+           <StackPanel Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource Hint}" Text="Easiest: everyone joins the same VPN, such as Tailscale or ZeroTier, and you choose its address above. Without a VPN, your router has to let friends in."/>
+            <WrapPanel Margin="0,12,0,8"><Button x:Name="PublicAddressButton" Content="Find my internet address" Click="FindPublicAddress" Margin="0,0,10,0"/><TextBlock x:Name="PublicAddressStatus" VerticalAlignment="Center" MaxWidth="260" Style="{StaticResource Hint}"/></WrapPanel>
+            <CheckBox x:Name="AutoForward" Content="Ask my router to open the ports automatically (UPnP)" Click="OnlineSettingChanged"/>
+            <TextBlock x:Name="ReachStatus" Style="{StaticResource Hint}" Margin="0,4,0,0"/>
+            <TextBlock Text="Ports to forward in your router" Margin="0,14,0,4"/>
+            <TextBlock x:Name="PortList" Style="{StaticResource Hint}"/>
+           </StackPanel>
+          </Expander>
+         </StackPanel>
+         <StackPanel x:Name="JoinOptions">
+          <Grid Margin="0,0,0,10"><TextBlock Text="Games on your network" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/><Button x:Name="SearchGamesButton" Content="Search again" Click="SearchGamesClicked" HorizontalAlignment="Right" Padding="12,6"/></Grid>
+          <StackPanel x:Name="FoundGames"/>
+          <TextBlock x:Name="SearchStatus" Style="{StaticResource Hint}" Margin="0,4,0,20"/>
+          <Label Content="Or enter the host's address" Target="{Binding ElementName=CoopHost}" Padding="0" Foreground="{StaticResource Ink}"/>
+          <TextBox x:Name="CoopHost" Width="270" HorizontalAlignment="Left" MaxLength="15" TextChanged="OnlineSettingChanged" Margin="0,8,0,6" AutomationProperties.Name="Host address"/>
+          <TextBlock Text="The host can copy it from their Co-op page." Style="{StaticResource Hint}"/>
+         </StackPanel>
+         <CheckBox x:Name="AutoLobby" Content="Take me to the waiting room automatically" Click="OnlineSettingChanged" Margin="0,26,0,4"/>
+         <TextBlock x:Name="AutoLobbyHint" Style="{StaticResource Hint}"/>
+         <TextBlock x:Name="CoopValidation" Margin="0,16,0,0" Visibility="Collapsed"/>
+         <TextBlock x:Name="AccountStatus" Margin="0,10,0,0"/>
         </StackPanel>
-        <Label Content="Server IPv4 address" Target="{Binding ElementName=CoopHost}" Padding="0" Foreground="{StaticResource Ink}"/>
-        <TextBox x:Name="CoopHost" LostKeyboardFocus="AccountConfirmed" KeyDown="AccountKeyDown" Width="400" HorizontalAlignment="Left" MaxLength="17" TextChanged="OnlineSettingChanged" Margin="0,8,0,6" AutomationProperties.Name="Server IPv4 address"/>
-        <TextBlock Text="Address of your compatible openSNAP server." Style="{StaticResource Hint}" Margin="0,0,0,22"/>
-        <Label Content="Username" Target="{Binding ElementName=AccountUsername}" Padding="0" Foreground="{StaticResource Ink}"/>
-        <WrapPanel Margin="0,8,0,6"><TextBox x:Name="AccountUsername" LostKeyboardFocus="AccountConfirmed" KeyDown="AccountKeyDown" Width="270" HorizontalAlignment="Left" TextChanged="OnlineSettingChanged" Margin="0,0,10,0" AutomationProperties.Name="Account username"/><Button x:Name="CreateAccountButton" Content="Create account" Click="CreateAccountClicked" AutomationProperties.Name="Create account"/></WrapPanel>
-        <TextBlock Text="4-10 letters, numbers or underscores. Then press Create account. No password needed; the launcher handles it." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,22"/>
-        <TextBlock x:Name="AccountStatus" TextWrapping="Wrap" Margin="0,0,0,18"/><TextBlock x:Name="CoopValidation" TextWrapping="Wrap" Margin="0,0,0,18" Visibility="Collapsed"/>
-        <TextBlock Text="Your account is created here. Login is automatic when you enter Network. Hosting starts a server for this session; friends use your reachable address." Style="{StaticResource Hint}" TextWrapping="Wrap"/>
        </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageMods" Visibility="Collapsed">
@@ -205,6 +226,11 @@
        <TextBlock Text="Already have a completed game build?" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,10"/>
        <Button x:Name="ExistingBuildButton" Content="Use existing build" Click="UseExistingBuild" HorizontalAlignment="Left"/>
        <TextBlock Text="Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+       <TextBlock Text="Remove game" FontSize="16" FontWeight="SemiBold" Margin="0,30,0,8"/>
+       <TextBlock x:Name="RemoveSummary" Style="{StaticResource Hint}" Text="Deletes the imported disc data, the built game and its build cache from this PC. Your ISO file and this launcher stay."/>
+       <CheckBox x:Name="RemoveSaves" Content="Also delete save games for this game" Click="RemoveOptionsChanged" Margin="0,10,0,4"/>
+       <CheckBox x:Name="RemoveTools" Content="Also remove the build and hosting tools (downloaded again when needed)" Click="RemoveOptionsChanged" Margin="0,4,0,10"/>
+       <WrapPanel><Button x:Name="RemoveGameButton" Content="Remove game..." Click="RemoveGame" Margin="0,0,12,0"/><TextBlock x:Name="RemoveSize" VerticalAlignment="Center" Style="{StaticResource Hint}"/></WrapPanel>
        <Expander x:Name="DeveloperFiles" Header="Developer options" Foreground="{StaticResource Muted}" Margin="0,30,0,0">
         <StackPanel Margin="0,16,0,0">
          <TextBlock Text="Native executable"/><TextBox x:Name="ExePath" IsReadOnly="True" Margin="0,8,0,8"/><Button Content="Browse" Tag="exe" Click="BrowseFile" HorizontalAlignment="Left"/>

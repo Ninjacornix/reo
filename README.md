@@ -2,58 +2,43 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**v1.0.11 prerelease** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
+**1.0 Alpha prerelease (v1.0.12)** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
+
+![The launcher on first start: it asks for your game disc](docs/launcher-screenshots/launcher-play.png)
+
+## Get started
+
+1. Install the [.NET 8 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) if you don't have it, and keep your graphics driver current (Vulkan is required).
+2. Download **RE-Outbreak-v1.0.12-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
+3. The **Play** page tells you the next step. Click **Choose ISO** and pick your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**. The launcher checks it and shows a green ✓ when it is supported.
+4. Click **Build game**. This one-time setup imports the disc, prepares the build tools (about 173 MB, reused if the exact compiler is already installed) and compiles the game. It needs Internet and about 10 GB of free space, and can take over an hour. Progress stays visible at the bottom of every page.
+5. Click **Play**.
+
+The Play page's **Before you play** checklist shows what is ready (✓) and what is
+missing (✗), with a button for each fix: **Get driver** opens your graphics card
+maker's driver page, **Free up space** opens Windows storage settings, **Choose ISO**
+picks your disc. .NET itself must be installed before the launcher can open;
+Windows offers the download link if it is missing.
+
+Later launches reuse the finished build. After a build, the launcher deletes its
+temporary generated sources and keeps only a compile cache (about 1.2 GB) so future
+updates rebuild only what changed. **Remove game** in **Game files** deletes the
+imported disc data, the built game and that cache; your ISO stays, and saves and
+build tools are only removed if you tick those options. No compiler installation, environment variable or terminal command is needed. Keep the ISO available; the game reads it directly.
+
+Already compiled the game with a compatible launcher? In **Game files**, click **Use existing build** and choose `reo_recomp.exe` from that build folder. Keep the folder complete (`local-build.json`, DLLs and the `reo-gpu-present` shaders). Your ISO is still required.
 
 ## Status
 
 - **Outbreak: File #1:** boots into menus and gameplay. Rendering, performance and cutscene/audio synchronization are still under development.
-- **Outbreak: File #2:** configuration and a launcher entry exist; gameplay is not validated.
-- **Launcher:** one-time ISO import without mounting, ISO-derived local build, fullscreen and aspect controls, bilinear/anisotropic filtering, FXAA/SMAA, brightness/gamma, controller remapping, selectable memory cards, cheats, logs and GitHub release updates.
-- **Online co-op:** launcher server hosting and automatic account/login integration are in development. Four native clients previously completed local multiplayer checks; see below for current limits.
-- **Room management:** room creation and joining use the original game menus.
+- **Outbreak: File #2:** a placeholder in the launcher; not playable.
+- **Launcher:** guided first-run setup, ISO check before import, local build with cached reuse, display and filtering options, controller remapping, memory cards, cheats, logs, co-op hosting/joining and GitHub release updates.
+- **Online co-op:** experimental; see below.
 - **Mods:** placeholder. **Cheats:** built-in health, infection and ammunition options plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
-
-Already compiled the game? In **Game files**, click **Use existing build** and
-choose `reo_recomp.exe` from a completed compatible launcher build. Keep
-`local-build.json`, DLLs and `reo-gpu-present` shader folder together. The launcher verifies and caches
-that build, skipping compilation; your supported ISO is still required. A lone
-EXE or a build from a different kit is not enough.
-
-Game selection works by clicking a game card or using the keyboard; there are no
-separate Select buttons. [Build-time findings](https://github.com/Ninjacornix/reo/blob/main/docs/BUILD_PERFORMANCE.md)
-explain the current compilation costs and next optimization candidates.
-
-## Windows prerelease
-
-Download **RE-Outbreak-v1.0.11-Windows-x64.zip** from
-[GitHub Releases](https://github.com/Ninjacornix/reo/releases). Install the
-[requirements](REQUIREMENTS.md), extract the ZIP, and open `Outbreak.Launcher.exe`.
-The launcher folder no longer includes the .NET runtime, language folders or a
-compiler installation. Hosting source is included under `network-server/`, with
-its dependencies listed in `requirements.txt` rather than bundled Python/packages.
-Extract all files into one folder; `Outbreak.Launcher.exe` is at its top level.
-The v1.0.1, v1.0.2 and v1.0.3 downloads are withdrawn. Extract v1.0.11 into a fresh
-folder if upgrading, so old bundled Python/vendor files are left behind. The
-single-file startup fix from v1.0.4 is retained. Licence notices are in
-`THIRD-PARTY-NOTICES.txt`; source archives are separate developer downloads.
-
-Click **Choose ISO** in **Game files** and select your **Outbreak NTSC-U v2.00 ISO
-(SLUS-20765)**. Import starts automatically: the launcher checks the disc, downloads
-and prepares the compiler, then builds the game. No manual compiler installation,
-environment variable or terminal command is needed. First setup needs Internet and
-can take substantial time; progress, cancellation and stage ETAs are shown.
-The result and tools are cached in Local AppData,
-so later launches reuse it. No game executable or assets are included.
-
-This update speeds up source generation and compilation without lowering the
-game's compiler optimization level. See the [measured results](docs/COMPILATION_PERFORMANCE.md).
-Its updated build inputs have a new cache identity: games compiled with an older
-kit need rebuilding for this version. Keep an older installation if you want to
-continue using its completed build meanwhile.
 
 Only **File #1 NTSC-U v2.00 (SLUS-20765)** is supported. Before extraction, the
 launcher checks SYSTEM.CNF's boot executable, identifies known game/region serials
@@ -61,53 +46,63 @@ and verifies the executable SHA-256. PAL, Japanese, File #2, unknown games and
 other/modified executable revisions get a specific error beside the ISO controls.
 The ISO filename and SYSTEM.CNF's VER field do not establish the game revision.
 
-This is an **experimental preview**: the reference native compilation succeeded,
-but the new external-toolchain setup and launcher-to-gameplay flow have not been rerun. Setup,
-rendering, performance and audio may still have problems. The previous v1.0.0
-game-binary package remains withdrawn.
+v1.0.12 ships new build files with a reusable compile cache, so the game is built
+once more after updating. From then on, updates recompile only the parts of the game
+that changed. Generation and compilation were also made faster in v1.0.11 without
+changing compiler optimization; see the [measured results](docs/COMPILATION_PERFORMANCE.md).
 
-Keep your ISO anywhere on your PC; no special filename or folder is required.
-The launcher already imports game data without mounting the ISO. Keep the ISO
-available afterward because the game still performs direct sector reads.
+This is an **experimental preview**. Setup, rendering, performance and audio may
+still have problems. The previous v1.0.0 game-binary package remains withdrawn.
 
 For development builds, see [Building on Windows](docs/BUILDING.md). Existing
 local executables and generated sources are preserved for development and are
-not public release assets. File #2 remains unsupported.
+not public release assets.
 Maintainers can follow [prerelease preparation](docs/PRERELEASE.md) for the
 repository and package requirements. Native Linux support is in development;
 no playable Linux package is currently available.
 
 ## Online co-op
 
-In **Co-op**, enter a server IPv4 address and choose a username. Press Enter or
-leave the username field to create the account; its status appears below. Use
-**Play** as usual, then choose **Network** in the game. The launcher enters the
-saved credentials automatically;
-there is no separate online launch mode. If the name already belongs to someone
-else, choose another username. Automatic provisioning and native login have
-been checked separately. The latest two-client retest also reached the first
-room through the ordinary login route with disposable test accounts.
+![The Co-op page with Play alone, Host a game and Join a game](docs/launcher-screenshots/launcher-coop.png)
 
-To host, enable **Host server**. The launcher starts the services and displays
-**Friends connect to** with a copy button once they are listening. Use the
-suggested LAN address for the same network, or enter a reachable VPN/public IPv4
-before starting. Friends enter that address in their own launchers. The server
-source is included in the main download. On first hosting, the launcher downloads
-Python and installs the required packages into a private Local AppData environment,
-then starts the server. Progress and cancellation are available in Co-op. Later
-starts reuse the cache; joining friends needs no setup. See
-[server setup](network/server/SETUP.md) for details and advanced overrides.
+Open **Co-op**, pick **Host a game** or **Join a game**, and enter a player name.
+There is no registration or password: the launcher creates the account on the
+host's server for you.
 
-Internet hosting still requires a reachable server and firewall/router rules:
-UDP **9090/9091** and TCP **10127/80**. Optional UPnP and Windows Firewall helpers
-are implemented but have not been validated for Internet play. A built-in VPN
-is not provided. A LAN address is not an Internet address.
+- **Host a game** opens your game for friends right away. Choose the address they
+  should use (home network, VPN or internet) and click **Copy address**. The first
+  time, the launcher prepares the hosting server: it uses an installed Python 3.12
+  if you have one, otherwise it downloads a private copy, then installs the server
+  packages into Local AppData. Later starts reuse it.
+- **Join a game** lists games hosted on your network, or you can type the host's
+  address.
+- With **Take me to the waiting room automatically** (on by default), pressing
+  **Play** signs in and brings you to the host's room. The host opens a room for
+  four players; friends join it. Press any button to take over at any point. The
+  host chooses **START SCENARIO**.
 
-Create or join rooms and choose the scenario inside the game. Up to four native
-clients have authenticated, entered a room and replicated movement in local
-checks. The new automatic account/hosting flow, reconnects, item sharing, room
-transitions and LAN/Internet play are not yet fully validated. Co-op remains
-experimental.
+Playing over the internet needs the host to be reachable. The easiest way is a VPN
+such as Tailscale or ZeroTier. Otherwise forward these ports to the host (the
+launcher can ask your router through UPnP):
+
+| Port | Use | Can it change? |
+| --- | --- | --- |
+| UDP 9090 | Login | No, built into the game |
+| TCP 10127 | Game app server | No, built into the game |
+| UDP 9091 | Game server | Yes, under **Ports** |
+| TCP 10128 | Player sign-up (was TCP 80 before v1.0.12) | Yes, under **Ports** |
+| UDP 10129 | Finding the host's game | No |
+
+If a port is busy, the launcher names the program using it. Internet play cannot
+always work behind carrier-grade NAT without a VPN. Hosts' IP addresses are visible
+to the players who join them.
+
+What has been checked: hosting, automatic sign-up and the native credential
+handshake (isolated tests), and two local game clients reaching the same waiting
+room through the launcher's room automation. Not yet validated: the complete
+Play-button path from the title screen to the waiting room, internet play,
+reconnects, item sharing and room transitions. Co-op remains experimental. See
+[server setup](network/server/SETUP.md) for advanced overrides.
 
 ## Source layout
 

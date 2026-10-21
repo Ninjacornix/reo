@@ -105,14 +105,26 @@ internal sealed class AutomaticAccount : IDisposable {
         using var handler = new SocketsHttpHandler { AllowAutoRedirect = false, UseProxy = false,
                                                      ConnectTimeout = TimeSpan.FromSeconds(5) };
         using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(20) };
-        await Register(client, endpoint ?? new Uri($"http://{host}/reweb/signup/create_id.html"),
-                       username, credential, cancel);
+        if (endpoint != null) {
+            await Register(client, endpoint, username, credential, cancel);
+            return credential;
+        }
+        try {
+            await Register(client, SignupEndpoint(host, HostNetworking.SignupPort), username,
+                           credential, cancel);
+        } catch (HttpRequestException error)
+            when (error.HttpRequestError == HttpRequestError.ConnectionError) {
+            // Servers hosted by launchers before 1.0.12, and standalone openSNAP servers, use 80.
+            await Register(client, SignupEndpoint(host, 80), username, credential, cancel);
+        }
         return credential;
     }
+    internal static Uri SignupEndpoint(string host, int port) =>
+        new($"http://{host}:{port}/reweb/signup/create_id.html");
     readonly string host, username, directory, status, input;
     readonly CancellationTokenSource stop = new();
     readonly Action<string> report;
-    readonly Uri endpoint;
+    readonly Uri? endpoint;
     readonly object gate = new();
     Task? setup, delivery;
     int attempt;
@@ -122,7 +134,7 @@ internal sealed class AutomaticAccount : IDisposable {
                             Uri? registrationEndpoint = null) {
         OnlineOptions.TryHost(settings.CoopHost, out host);
         username = settings.AccountUsername;
-        endpoint = registrationEndpoint ?? new Uri($"http://{host}/reweb/signup/create_id.html");
+        endpoint = registrationEndpoint;
         this.report = report;
         directory = Path.Combine(home, "network-sessions", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);

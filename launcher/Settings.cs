@@ -23,6 +23,19 @@ public sealed partial class Settings {
     public bool AutoForward { get; set; }
     public string CoopHost { get; set; } = "";
     public string AccountUsername { get; set; } = "";
+    // "offline", "host" or "join"; null in settings saved by older launchers.
+    public string? CoopMode { get; set; }
+    public bool AutoLobby { get; set; } = true;
+    public string JoinHostName { get; set; } = "";
+    // Hosting ports the host may change; JoinSignupPort is learned from the host (0 = default).
+    public int SignupPort { get; set; } = HostNetworking.SignupPort;
+    public int GamePort { get; set; } = HostNetworking.GamePort;
+    public int JoinSignupPort { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string ResolvedCoopMode => CoopMode is "offline" or "host" or "join" ? CoopMode
+                                      : HostServer                             ? "host"
+                                      : !string.IsNullOrWhiteSpace(CoopHost)   ? "join"
+                                                                               : "offline";
     public bool TextureLinear { get; set; }
     public int Anisotropy { get; set; } = 1;
     public int ResolvedAnisotropy => Anisotropy is 2 or 4 or 8 or 16 ? Anisotropy : 1;
@@ -65,6 +78,14 @@ public sealed partial class Settings {
         settings.EnabledCheats ??= new();
         settings.CoopHost ??= "";
         settings.AccountUsername ??= "";
+        settings.JoinHostName ??= "";
+        if (HostNetworking.PortError(settings.SignupPort, settings.GamePort) != null) {
+            settings.SignupPort = HostNetworking.SignupPort;
+            settings.GamePort = HostNetworking.GamePort;
+        }
+        if (settings.JoinSignupPort is < 0 or > 65535)
+            settings.JoinSignupPort = 0;
+        settings.HostAddress ??= "";
         settings.PlayStation ??= new();
         settings.Xbox ??= new();
         settings.Keyboard ??= InputMapping.KeyboardDefaults();

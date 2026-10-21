@@ -19,7 +19,8 @@ public sealed class GameSession {
     public async Task Launch(string root, Settings settings, Controller controller,
                              string? diagnosticRoute = null,
                              IProgress<ImportProgress>? importProgress = null,
-                             CancellationToken cancel = default) {
+                             CancellationToken cancel = default,
+                             LobbyAutomation.Options? lobby = null) {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
@@ -56,6 +57,13 @@ public sealed class GameSession {
             else if (!shader.StartsWith("present_smaa_") || settings.ResolvedAntiAliasing == "smaa")
                 throw new FileNotFoundException("The selected build is missing its presentation shader: " + shader);
         }
+        // GPU helper shaders (movies, context clears, readbacks) that the game loads from
+        // reo-gpu-present; developer builds without them read the source tree instead.
+        foreach (string shader in new[] { "movie_ipu_csc_nv12.spv", "resident_image_upload.spv",
+            "clear_setup.spv", "clear_bounds.spv", "clear_write.spv", "resident_readback.spv" }) {
+            string input = Path.Combine(shaderSource, shader);
+            if (File.Exists(input)) runtimeFiles.Add(new(input, "reo-gpu-present/" + shader));
+        }
         foreach (string dependency in new[] { "msvcp140.dll", "msvcp140_atomic_wait.dll",
             "vcruntime140.dll", "vcruntime140_1.dll", "libc++.dll", "libunwind.dll", "libwinpthread-1.dll" }) {
             string input = Path.Combine(sourceFolder, dependency);
@@ -91,6 +99,16 @@ public sealed class GameSession {
         }
         foreach (var pair in onlineEnvironment)
             Set(pair.Key, pair.Value);
+        string? keyboardQueue = null;
+        if (lobby != null && automaticAccount && diagnosticRoute == null) {
+            // Title -> Network -> automatic sign-in uses the native route; the launcher then steers
+            // the lobby. Pad input from the launcher map also applies while the game is unfocused.
+            Set("REO_TEST_ROUTE", "network-auto");
+            Set("REO_COOP_TEST_INPUT", "1");
+            keyboardQueue = Path.Combine(Logs, "keyboard.bin");
+            LobbyAutomation.CreateKeyboardQueue(keyboardQueue);
+            Set("REO_COOP_KEYBOARD_FILE", keyboardQueue);
+        }
         string cheatFile = Cheats.Export(settings, Logs);
         if (cheatFile.Length != 0)
             Set("REO_CHEATS_FILE", cheatFile);
@@ -159,9 +177,10 @@ public sealed class GameSession {
         AutomaticAccount? account = null;
         Process = new Process { StartInfo = start };
         try {
-            account = automaticAccount ? new AutomaticAccount(Settings.Home, settings,
-                                                              text => NetworkStatus = text)
-                                       : null;
+            account = automaticAccount
+                          ? new AutomaticAccount(Settings.Home, settings, text => NetworkStatus = text,
+                                                 MainWindow.SignupEndpoint(settings, null))
+                          : null;
             account?.Bind(start);
             cancel.ThrowIfCancellationRequested();
             if (!Process.Start())
@@ -173,7 +192,13 @@ public sealed class GameSession {
             stderr.Dispose();
             throw;
         }
-        _ = RecordExit(Process, Logs, cardLease, account);
+        LobbyAutomation? automation = null;
+        if (keyboardQueue != null) {
+            automation = new LobbyAutomation(Process, discElf, controller, keyboardQueue, lobby!,
+                                             text => NetworkStatus = text);
+            _ = automation.Run();
+        }
+        _ = RecordExit(Process, Logs, cardLease, account, automation);
         controller.GameProcessId = Process.Id;
         _ = Pump(Process.StandardOutput, stdout);
         _ = Pump(Process.StandardError, stderr, account == null ? null : account.Observe);
@@ -191,6 +216,7 @@ public sealed class GameSession {
                       server = onlineEnvironment.GetValueOrDefault("REO_COOP_HOST"),
                       accountUsername = onlineEnvironment.GetValueOrDefault("REO_COOP_USERNAME"),
                       networkProfileMarker,
+                      automaticLobby = keyboardQueue != null,
                       inputDevice = controller.SelectedDevice.Name,
                       fullscreen = settings.Fullscreen,
                       resolution = DisplayOptions.Size(settings.WindowSize),
@@ -211,10 +237,11 @@ public sealed class GameSession {
         _ = ApplyWindow(Process, settings);
     }
     async Task RecordExit(Process process, string logs, FileStream cardLease,
-                          AutomaticAccount? account) {
+                          AutomaticAccount? account, LobbyAutomation? automation) {
         try {
             await process.WaitForExitAsync();
         } finally {
+            automation?.Dispose();
             account?.Dispose();
             NetworkStatus = null;
             cardLease.Dispose();

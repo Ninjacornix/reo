@@ -10,6 +10,50 @@ improvement: **79m31s to 69m45s (12.3% less time)**. The separate 64-file experi
 finished in 65m09s but changed one guest function's machine code. It was rejected
 by the final comparison and is not in the release.
 
+## After v1.0.11: reuse across updates, cleanup, and where the limit is
+
+**Reuse across kit versions (worker cache format 2, next kit).** Object receipts used
+to include the compile plan's and worker's hashes and absolute paths, so any new kit
+recompiled all 2,381 units. The key is now what reaches the compiler: cache format,
+runtime ABI, compiler hash, exact flags, every header under every include root, and
+each source's contents, with paths spelled relative to the kit/workspace. A scan of
+all 2,382 objects of the full v1.0.11 build found absolute paths only in three
+runtime/backend units and none in the 2,262 generated game-code units, so moved
+objects are identical to fresh ones. The launcher moves the previous kit's object
+cache into a new kit's workspace, so an update compiles only units whose inputs
+changed. `test_windows_compile.py` builds a program, moves kit and workspace to new
+paths with a changed plan, and requires every object reused and byte-identical to a
+fresh build there; a header edit still recompiles its users. Objects from older
+cache formats are never reused. This takes effect from the first kit exported with
+this worker; that kit itself still compiles everything once.
+
+**Cleanup.** A finished build keeps its object cache (about 1.2 GB, for fast
+rebuilds after updates) and removes the generated sources (about 0.5 GB),
+precompiled headers (about 0.1 GB), the duplicate output copy (about 0.9 GB),
+replaced builds and older kits' workspaces. Finished builds of older kits stay for
+older installations. **Remove game** in Game files deletes everything else.
+
+**Scheduling is near this machine's limit.** Replaying the 2,381 measured unit times
+of the v1.0.11 build on 7 simulated workers gives 3,226 s in the shipped order and
+3,221 s in perfect longest-first order: ordering is worth about 5 s. The real build
+averaged 5.4 concurrent compiles, and total compiler time rose 19% from 4 to 7 jobs,
+so a cold build on a 6-core PC is CPU-bound. The first v1.0.12 verification build
+also showed the memory model was too cautious: it reserved 1.25 GiB per compiler
+and read free memory once, so with about 7 GB free it ran 4 compilers at 38% CPU
+while each actually used 60-150 MB. Two attempts to fix that failed in instructive ways: trusting the
+measured free memory started 11 compilers at once, and treating compilers as
+"settled" after 20 seconds missed units such as `main246` (317 KB of source, about
+7 minutes of compiling, still growing). Both ran the PC out of memory. The shipped
+scheduler reserves 0.5 GiB per ordinary unit, 1.5 GiB when a unit's largest
+non-registration source exceeds 250 KB, and 4 GiB above 750 KB, keeps a 1.5 GiB
+margin, and holds each reservation until that compiler finishes. Capacity is the
+free memory measured when nothing is running and shrinks when other programs take
+memory; a further compiler also starts whenever free memory covers the margin, every
+running reservation and its own. The launcher's worker
+bound uses the same 0.5 GiB figure. Remaining cold-build levers change
+generated machine code (larger batches, inlining or optimization changes) and were
+rejected by the identical-output rule.
+
 ## Measured results
 
 Same Ryzen 5 2600 / 16 GB Windows machine and pinned LLVM/MinGW compiler as the

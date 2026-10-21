@@ -41,9 +41,11 @@ internal static class ServerPythonSetup {
                                environment + ".incomplete-" + Guid.NewGuid().ToString("N"));
             }
             await Run(uv, home,
-                      new[] { "venv", "--no-project", "--managed-python", "--python", "3.12",
+                      // An installed Python 3.12 is used when present; uv downloads one only otherwise.
+                      new[] { "venv", "--no-project", "--python-preference", "system",
+                              "--python", "3.12",
                               environment },
-                      "Preparing Python for hosting (first use may download Python)...", progress,
+                      "Preparing Python for hosting (downloads Python 3.12 only if it is not installed)...", progress,
                       cancel, details);
         }
         await Run(uv, home,

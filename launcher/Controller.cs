@@ -158,9 +158,22 @@ public sealed partial class Controller : IDisposable {
                   Axis(data[offset + 3], true));
         return true;
     }
+    readonly object injection = new();
+    ushort injectedButtons;
+    long injectedUntil;
+    // Automatic lobby steering: ordinary pad buttons added to the player's own input for a moment.
+    public void Inject(ushort buttons, int milliseconds) {
+        lock (injection) {
+            injectedButtons = buttons;
+            injectedUntil = Environment.TickCount64 + milliseconds;
+        }
+    }
     public void Publish() {
         Poll();
         var pad = State;
+        lock (injection)
+            if (Environment.TickCount64 < injectedUntil)
+                pad = pad with { Buttons = (ushort)(pad.Buttons | injectedButtons) };
         string selected = SelectedDevice.Id;
         if (pad != lastPublished || selected != lastPublishedDevice) {
             ++packet;

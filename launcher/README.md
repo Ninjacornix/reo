@@ -1,7 +1,7 @@
 # Launcher
 
-The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.11 uses a smaller
-framework-dependent launcher and automatic compiler setup. See
+The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.12 (1.0 Alpha) uses a
+framework-dependent launcher, automatic compiler setup and guided first-run steps. See
 [requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
 The extracted single-file launcher is checked separately for window startup;
 its icon is an embedded WPF resource, with a separate copy for the game window.
@@ -44,12 +44,13 @@ build-kit instructions are in [local builds](../docs/LOCAL_BUILDS.md).
 
 ## Pages
 
-- **Play:** select File #1 or File #2 and inspect local game files, saves, GPU and input device. Choose your ISO; the verified local game build is selected automatically. File #2 gameplay is not included in the current package.
+- **Play:** select File #1 or File #2. A next-step box guides first setup (incomplete download, missing Vulkan driver, Choose ISO, unsupported disc, Build game). The **Before you play** checklist marks .NET, the Vulkan driver (with the graphics card maker's driver page), free disk space, the game disc, build tools, the built game and the input device as done or missing, each with a fix button. File #2 is shown as coming later and cannot be selected.
+- **Game files:** choosing an ISO runs a quick read-only check; a green ✓ enables Import, a red ✗ explains the problem. **Use existing build** imports a completed compatible build. **Remove game** deletes the imported disc data, the built game and its compile cache (optionally also saves and the shared build/hosting tools) after a confirmation; the ISO stays. Import/build progress stays visible at the bottom of every page.
 - **Graphics:** window resolution, borderless fullscreen, image scaling, 3D texture filtering, anisotropic filtering (Off/2Ã—/4Ã—/8Ã—/16Ã—), FXAA or SMAA, brightness, gamma, async geometry and experimental GPU movie decoding. Changes apply next launch.
 - **Controls:** choose keyboard, DualSense or Xbox/XInput; remap buttons and keys; adjust dead zones and stick options. USB DualSense is physically tested; Xbox and Bluetooth have parser/simulated coverage. Rumble and adaptive triggers are unsupported.
 - **Save games:** open the selected game's memory-card folder or create a ZIP backup while the game is closed. Save/load itself remains in the game.
 - **Log:** read session debug/output logs, with optional follow mode.
-- **Co-op:** username, server address, automatic account/login plumbing, server hosting and a copyable address for friends. The new game-to-lobby flow is still being validated.
+- **Co-op:** Play alone, Host a game or Join a game; player name; hosting address, ports and firewall; games found on the local network; optional automatic waiting room. See [Co-op](#co-op).
 - **Cheats:** built-in gameplay toggles and optional compatible PCSX2 data cheats.
 - **Mods:** placeholder.
 
@@ -57,12 +58,12 @@ Check for updates uses [GitHub Releases](https://github.com/Ninjacornix/reo/rele
 
 ## Co-op
 
-Use the ordinary **Play** button for both offline and network play. In **Co-op**,
-enter a server IPv4 address and a username (4-10 letters, numbers or single inner
-underscores). Press Enter or leave the username field to create or reuse the
-account on the selected server. The status below confirms readiness. Login uses
-that saved account when the native game enters Network. There is no separate
-online launch mode, and incomplete network settings do not prevent offline play.
+Use the ordinary **Play** button for both single-player and network play. In
+**Co-op**, choose **Play alone**, **Host a game** or **Join a game**, and enter a
+player name (4-10 letters, numbers or single inner underscores). There is no
+Create account step: when you press Play, the launcher creates or reuses the
+account on the chosen server and reports problems (name taken, host unreachable)
+before the game starts. Login is automatic when the game enters Network.
 
 The launcher generates a server-specific password, saves it with Windows DPAPI
 for the current Windows user before registration, and uses the server's existing
@@ -74,43 +75,47 @@ credential handoff, removed after acknowledgement. Pending private session files
 are removed when the game closes.
 Keep launcher account data if you want to reuse the same account in future.
 
-Enable **Host server** to start the four required services without a terminal or
-Python installation. Choose the LAN/VPN/public address to advertise before
-starting. Once the services are listening, **Friends connect to** shows a copyable
-address. Changing that field requires stopping the server first. Stopping hosting
-or closing the launcher stops only its owned server processes; existing services
-on occupied ports are refused and preserved. Persistent server data is separate
-from the portable application under Local AppData.
+### Hosting
 
-The portable server component includes pinned openSNAP source, the current-room
-patch, its AGPL licence, Python and dependencies. The native game/runtime remains
-a separate process.
+**Host a game** starts the four server services without a terminal. The first
+time, a private Python 3.12 environment is prepared in Local AppData: an installed
+Python 3.12 is used when present, otherwise uv downloads one; the pinned server
+packages are then installed. Later starts reuse the cached environment.
 
-Helping friends reach you (all optional; nothing happens without a click):
+Choose the address friends use (home network, VPN or internet; **Find my internet
+address** adds the public one) and click **Copy address**. Changing the address
+restarts the server. Stopping hosting or closing the launcher stops only its own
+server processes. Persistent server data is separate from the portable application
+under Local AppData. **Allow friends through Windows Firewall** adds two inbound
+rules for exactly the hosting ports after Windows' administrator prompt.
 
-- **Pick one of your addresses** lists this PC's addresses, labelled *home network*
-  (friends in the same house), *VPN* (Tailscale, ZeroTier, Hamachi — works over the
-  internet without port forwarding) or *internet*. Virtual-machine/WSL adapters are
-  hidden because friends cannot reach them.
-- **Find my internet address** asks `api.ipify.org` for the address the internet sees.
-- **Ports friends need** lists the four fixed ports: TCP 80 (account sign-up),
-  TCP 10127 (game app server), UDP 9090 (login), UDP 9091 (game server). For internet
-  play without a VPN, forward them to this PC in your router.
-- **Open these ports on my router automatically (UPnP)** asks the router to forward
-  them while the server runs and removes the forwarding when hosting stops or the
-  launcher closes. Many routers have UPnP off; the launcher then says so. If the
-  router itself reports a private internet address, your provider uses carrier-grade
-  NAT and forwarding cannot work: use a VPN address instead.
-- **Allow through Windows Firewall** adds two inbound rules for exactly these ports
-  ("RE Outbreak Recomp server (TCP)/(UDP)") after Windows' administrator prompt.
+**Ports** lets the host change the player sign-up port (TCP, default 10128) and
+the game server port (UDP, default 9091). Login (UDP 9090) and the game app server
+(TCP 10127) are built into the game and fixed. If a port is busy, the error names
+the program and process using it. **Playing over the internet** explains VPN use,
+optional UPnP router forwarding and the full port list. If the router itself
+reports a private internet address, the provider uses carrier-grade NAT and
+forwarding cannot work: use a VPN address instead.
 
-Some providers block incoming port 80, which account sign-up needs.
+### Joining
 
-These new controls require the updated native account hooks. Portable server
-startup, real signup/login checks and the native credential handshake have passed
-isolated integration checks. An automated native game run also authenticated and
-reached server selection without manual credential entry. Previous four-client
-gameplay checks used the manual account flow; the new flow has not repeated them. Room creation/joining and scenario choices still use the original game menus.
+**Join a game** lists games announced by hosting launchers on the local network
+(UDP 10129 broadcast; no central service) or accepts a typed IPv4 address. The
+host's launcher also tells joining launchers its sign-up port; if it cannot be
+asked, the launcher tries 10128 and then 80 for servers hosted by older launchers.
+
+### Automatic waiting room
+
+**Take me to the waiting room automatically** is on by default. After Play, the
+native `network-auto` route presses Start at the title, selects Network and hands
+over to automatic login. The launcher then reads the original lobby state from the
+game's memory (read-only) and answers known menu gates with ordinary pad presses:
+the host selects the free-mode server, creates a four-player room titled with the
+host's player name; guests wait until the host's room exists and join it. Any
+button press by the player ends the automation; unknown states only wait. The host
+still chooses START SCENARIO. A two-client local test reached the shared waiting
+room this way; the complete title-to-room path from the Play button has not been
+validated yet.
 
 ## Display and startup
 

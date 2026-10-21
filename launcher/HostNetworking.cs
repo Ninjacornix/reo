@@ -11,11 +11,61 @@ namespace Outbreak.Launcher;
 // Helpers that make hosting reachable for friends: which address to share, which ports must be
 // open, optional router port forwarding (UPnP) and an optional Windows Firewall rule.
 internal static class HostNetworking {
-    // Fixed by the game's network protocol (see HostedServer); they cannot be changed.
+    // The game itself connects to login 9090 and app server 10127, so those are fixed. The login
+    // server tells games which game-server port to use, and sign-up is only used by launchers
+    // (joining launchers learn it through discovery), so both can be changed by the host.
+    // Sign-up avoids port 80, which many providers block for home users.
+    internal const int SignupPort = 10128, GamePort = 9091, LoginPort = 9090, AppPort = 10127;
+    internal sealed record PortChoice(int Signup, int Game);
+    internal static PortChoice Current { get; set; } = new(SignupPort, GamePort);
     internal sealed record ServerPort(int Number, string Protocol, string Use);
-    internal static readonly ServerPort[] Ports = {
-        new(80, "TCP", "account sign-up"), new(10127, "TCP", "game app server"),
-        new(9090, "UDP", "login"), new(9091, "UDP", "game server") };
+    internal static ServerPort[] Ports => new ServerPort[] {
+        new(Current.Signup, "TCP", "player sign-up"), new(AppPort, "TCP", "game app server (fixed)"),
+        new(LoginPort, "UDP", "login (fixed)"), new(Current.Game, "UDP", "game server"),
+        new(LanDiscovery.Port, "UDP", "finding your game") };
+    internal static string? PortError(int signup, int game) {
+        int[] reserved = { LoginPort, AppPort, LanDiscovery.Port };
+        if (signup is < 1024 or > 65535 || game is < 1024 or > 65535)
+            return "Ports must be numbers from 1024 to 65535.";
+        if (reserved.Contains(signup) || reserved.Contains(game))
+            return $"Ports {LoginPort}, {AppPort} and {LanDiscovery.Port} are already used by the game.";
+        return null;
+    }
+
+    // Which programs listen on the given ports, from netstat (no administrator rights needed).
+    internal static List<string> PortOwners(IEnumerable<(int Port, string Protocol)> wanted) {
+        var result = new List<string>();
+        try {
+            var start = new ProcessStartInfo("netstat", "-ano") {
+                UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true };
+            using var process = Process.Start(start)!;
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit(5000);
+            var targets = wanted.ToList();
+            foreach (string line in output.Split('\n')) {
+                string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 4 || parts[0] is not("TCP" or "UDP") ||
+                    (parts[0] == "TCP" && (parts.Length < 5 || parts[3] != "LISTENING")))
+                    continue;
+                int colon = parts[1].LastIndexOf(':');
+                if (colon < 0 || !int.TryParse(parts[1][(colon + 1)..], out int port) ||
+                    !int.TryParse(parts[^1].Trim(), out int pid) || !targets.Contains((port, parts[0])))
+                    continue;
+                string name;
+                try {
+                    using var owner = Process.GetProcessById(pid);
+                    name = owner.ProcessName;
+                } catch (ArgumentException) {
+                    name = "another program";
+                }
+                string entry = $"{port} {parts[0]} is used by {name} (process {pid})";
+                if (!result.Contains(entry))
+                    result.Add(entry);
+            }
+        } catch (Exception error) when (error is Win32Exception or InvalidOperationException) {
+        }
+        return result;
+    }
     internal static string PortList =>
         string.Join("\n", Ports.Select(p => $"{p.Number} {p.Protocol} — {p.Use}"));
 
@@ -166,17 +216,23 @@ internal static class HostNetworking {
     const string RuleTcp = "RE Outbreak Recomp server (TCP)";
     const string RuleUdp = "RE Outbreak Recomp server (UDP)";
 
-    internal static bool FirewallRulesPresent() => RuleExists(RuleTcp) && RuleExists(RuleUdp);
+    // Present only when the rules cover the currently configured ports.
+    internal static bool FirewallRulesPresent() =>
+        RuleExists(RuleTcp, Ports.Where(p => p.Protocol == "TCP").Select(p => p.Number)) &&
+        RuleExists(RuleUdp, Ports.Where(p => p.Protocol == "UDP").Select(p => p.Number));
 
-    static bool RuleExists(string name) {
+    static bool RuleExists(string name, IEnumerable<int> ports) {
         try {
             var start = new ProcessStartInfo("netsh", $"advfirewall firewall show rule name=\"{name}\"") {
                 UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true,
                 RedirectStandardError = true };
             using var process = Process.Start(start)!;
-            process.StandardOutput.ReadToEnd();
+            string output = process.StandardOutput.ReadToEnd();
             process.WaitForExit(5000);
-            return process.ExitCode == 0;
+            // Port numbers are not localized, unlike the field labels around them.
+            return process.ExitCode == 0 &&
+                   ports.All(port => System.Text.RegularExpressions.Regex.IsMatch(
+                                 output, $@"(?<![0-9]){port}(?![0-9])"));
         } catch {
             return false;
         }

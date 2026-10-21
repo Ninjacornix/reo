@@ -24,8 +24,11 @@ public partial class MainWindow : Window {
         args = arguments;
         root = AppLayout.FindRoot(AppContext.BaseDirectory);
         settings = Settings.Load(root);
+        if (settings.Game.Id == "file2" && !arguments.Contains("--preview-file2"))
+            settings.SelectedGame = "file1"; // File #2 is shown as coming later and cannot be selected
         controller.Configure(settings);
         InitializeComponent();
+        VersionLabel.Text = Updates.DisplayName;
         DeveloperFiles.Visibility =
             AppLayout.Packaged(root) ? Visibility.Collapsed : Visibility.Visible;
         WindowSize.ItemsSource = DisplayOptions.Sizes;
@@ -62,6 +65,7 @@ public partial class MainWindow : Window {
         Closed += (_, _) => {
             timer.Stop();
             accountPreparation?.Cancel();
+            lanResponder?.Dispose();
             hostedServer.Dispose();
             if (portsForwarded)
                 HostNetworking.ClosePorts().Wait(
@@ -99,7 +103,7 @@ public partial class MainWindow : Window {
             name switch { "Graphics" => ("Graphics", "Display and image settings."),
                           "Controller" => ("Controls", "Devices and bindings."),
                           "Saves" => ("Save games", "Memory cards and backups."),
-                          "Coop" => ("Co-op", "Choose Network in the game to connect."),
+                          "Coop" => ("Co-op", "Play together with friends."),
                           "Setup" => ("Game files", "Import your game disc."),
                           "Logs" => ("Log", "Game debug and output."),
                           "Mods" => ("Mods", "Game modifications."),
@@ -112,6 +116,8 @@ public partial class MainWindow : Window {
             UpdateSaves();
         if (name == "Cheats")
             RefreshCheats();
+        if (name == "Setup")
+            _ = EstimateRemoval();
         AnimatePageChange();
     }
     void SettingChanged(object sender, SelectionChangedEventArgs e) => SaveSettings(sender, e);
@@ -167,6 +173,7 @@ public partial class MainWindow : Window {
             LaunchButton.Content = "Play";
             LaunchButton.IsEnabled = true;
             controller.SessionEnabled = false;
+            hostRoomReady = false;
             UpdateSaves();
         }
         previousRunning = running;
@@ -174,12 +181,24 @@ public partial class MainWindow : Window {
             Status.Text = game.NetworkStatus;
     }
     async void LaunchGame(object sender, RoutedEventArgs e) {
-        if (serverStarting && settings.HostServer) {
-            Status.Text = "Wait for server setup to finish before starting the game.";
+        string mode = settings.ResolvedCoopMode;
+        if (mode == "host" && serverStarting) {
+            Status.Text = "Wait until your game is open for friends (see Co-op).";
             return;
         }
         if (updating || updateRestarting || launching || game.Running || backingUp)
             return;
+        if (mode != "offline" && settings.Game.Id == "file1") {
+            string? problem = OnlineOptions.Error(settings) ??
+                              (mode == "host" && !hostedServer.Running
+                                   ? "Your game is not open for friends. See Co-op."
+                                   : null);
+            if (problem != null) {
+                Status.Text = problem;
+                ShowPage("Coop");
+                return;
+            }
+        }
         launching = true;
         LaunchButton.IsEnabled = false;
         LaunchButton.Content = "Preparing…";
@@ -187,9 +206,24 @@ public partial class MainWindow : Window {
         try {
             var snapshot =
                 JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(settings))!;
+            LobbyAutomation.Options? lobby = null;
+            if (OnlineOptions.Configured(snapshot)) {
+                Status.Text = "Checking your player name...";
+                await RefreshJoinHost();
+                if (!await PrepareLauncherAccount()) {
+                    Status.Text = AccountStatus.Text;
+                    LaunchButton.IsEnabled = true;
+                    LaunchButton.Content = "Play";
+                    ShowPage("Coop");
+                    return;
+                }
+                lobby = LobbyOptions();
+                snapshot.JoinHostName = settings.JoinHostName;
+                snapshot.JoinSignupPort = settings.JoinSignupPort;
+            }
             var progress = BeginDiscImport();
             await game.Launch(root, snapshot, controller, importProgress: progress,
-                              cancel: importCancellation!.Token);
+                              cancel: importCancellation!.Token, lobby: lobby);
             if (game.Imported != null) {
                 settings.SetImport(game.Imported.Root);
                 try {
@@ -212,7 +246,7 @@ public partial class MainWindow : Window {
             Status.Text = "Could not launch: " + error.Message;
             if (error is InvalidDataException) {
                 DiscValidationStatus.Text = error.Message;
-                DiscValidationStatus.Foreground = (Brush)FindResource("Accent");
+                DiscValidationStatus.Foreground = (Brush)FindResource("Danger");
             }
             LaunchButton.IsEnabled = true;
             LaunchButton.Content = "Play";
@@ -236,7 +270,7 @@ public partial class MainWindow : Window {
         RefreshGameUi();
         SaveSettings(sender, e);
         if (kind == "iso")
-            await ImportSelectedDisc();
+            await CheckSelectedDisc();
     }
     void UpdateSaves() {
         RefreshCards();
@@ -315,8 +349,8 @@ public partial class MainWindow : Window {
         if (!args.Any(a => a.StartsWith("--test-") || a is "--smoke-launch" or "--screenshot" or
                                                            "--probe-controller"))
             _ = CheckUpdates(true);
-        if (settings.HostServer && args.Length == 0)
-            await StartHostedServer();
+        if (settings.ResolvedCoopMode == "host" && args.Length == 0)
+            await StartHosting();
         int screenshot = Array.IndexOf(args, "--screenshot");
         int probe = Array.IndexOf(args, "--probe-controller");
         int page = Array.IndexOf(args, "--page");
@@ -348,13 +382,22 @@ public partial class MainWindow : Window {
             // Capture the same artwork used by the live launcher, without private paths.
             await LoadArtworkAsync();
             await Task.Delay(1500);
-            ReadySavePath.Visibility = Visibility.Collapsed;
             if (args.Contains("--public-preview")) {
+                // First-run state without this PC's disc, build or user-supplied cover art.
+                // Nothing here is saved.
                 initialized = false;
+                settings.Iso = "";
+                settings.Exe = AppLayout.Native(root, "file1");
+                discCheck = null;
+                RefreshGameUi();
+                graphicsCards = Array.Empty<string>();
                 CoopHost.Text = "";
                 AccountUsername.Text = "";
-                HostServer.IsChecked = false;
-                PlayNetworkSummary.Text = "Offline";
+                settings.CoopHost = "";
+                settings.AccountUsername = "";
+                settings.CoopMode = args.Contains("--preview-join") ? "join" : "offline";
+                (settings.CoopMode == "join" ? ModeJoin : ModeOffline).IsChecked = true;
+                RefreshOnlineUi();
                 LaunchButton.Content = "Play";
                 initialized = true;
             }
@@ -382,15 +425,16 @@ public partial class MainWindow : Window {
                 await Task.Delay(150);
             }
             if (args.Contains("--preview-server-setup")) {
-                settings.HostServer = true;
-                HostServer.IsChecked = true;
-                HostOptions.Visibility = Visibility.Visible;
+                initialized = false;
+                settings.CoopMode = "host";
+                ModeHost.IsChecked = true;
+                initialized = true;
+                RefreshOnlineUi();
                 HostSetupActivity.Visibility = Visibility.Visible;
-                HostStatus.Text = "Preparing Python for hosting";
+                HostStatus.Text = "Opening your game...";
                 ReportHostSetup(new(0, 0,
                                     "Downloading Python 3.12 for your private server environment",
                                     "Preparing Python"));
-                StartServerButton.Content = "Cancel";
                 SettingsScroll.ScrollToVerticalOffset(200);
                 await Task.Delay(150);
             }

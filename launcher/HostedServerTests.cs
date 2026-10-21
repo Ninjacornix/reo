@@ -20,7 +20,7 @@ internal static class HostedServerTests {
         using var limit = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         try {
             // Alternate ports and a temporary database leave existing user services untouched.
-            using (var occupied = new TcpListener(IPAddress.Loopback, 32080)) {
+            using (var occupied = new TcpListener(IPAddress.Loopback, 42128)) {
                 occupied.Start();
                 bool refused = false;
                 try {
@@ -34,7 +34,7 @@ internal static class HostedServerTests {
             Check(server.Running && server.Address == "127.0.0.1",
                   "The four owned services did not start");
             var settings = new Settings { CoopHost = "127.0.0.1", AccountUsername = "autocheck1" };
-            var endpoint = new Uri("http://127.0.0.1:32080/reweb/signup/create_id.html");
+            var endpoint = new Uri("http://127.0.0.1:42128/reweb/signup/create_id.html");
             string launcherCredential = await AutomaticAccount.Provision(
                 home, "127.0.0.1", settings.AccountUsername, limit.Token, endpoint);
             Check(

@@ -15,7 +15,8 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None, version=None):
+def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None, version=None,
+            updated_sources=(), added_sources=(), added_shaders=()):
     kit, output, recompiler, root = [Path(p).resolve() for p in (kit, output, recompiler, root)]
     if output.exists() or output.is_relative_to(kit) or (archive and Path(archive).exists()):
         raise FileExistsError('Choose fresh immutable kit/archive paths')
@@ -50,6 +51,33 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
             plan_file.write_text(json.dumps(with_generated_batches(
                 json.loads(plan_file.read_text())), indent=2) + '\n', encoding='utf-8')
     shutil.copyfile(recompiler, output / 'tools/ps2_recomp.exe')
+    # Authored runtime fixes replace files the kit already carries; nothing new is added.
+    for name in updated_sources:
+        target = (output / 'source' / name).resolve()
+        if not target.is_relative_to(output / 'source') or not target.is_file():
+            raise ValueError('Only existing kit sources can be updated: ' + name)
+        shutil.copyfile(root / name, target)
+    for name in added_sources:
+        target = (output / 'source' / name).resolve()
+        if not target.is_relative_to(output / 'source') or target.exists():
+            raise ValueError('Added sources must be new kit files: ' + name)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(root / name, target)
+    # Compiled helper shaders the runtime loads from reo-gpu-present beside the game.
+    for name in added_shaders:
+        source = (root / name).resolve()
+        if source.suffix != '.spv' or (output / 'shaders' / source.name).exists():
+            raise ValueError('Added shaders must be new .spv kit files: ' + name)
+        shutil.copyfile(source, output / 'shaders' / source.name)
+        destination = 'reo-gpu-present/' + source.name
+        for plan_name in ('compile-plan.json', 'compile-plan-linux.json'):
+            plan_file = output / plan_name
+            if plan_file.is_file():
+                plan = json.loads(plan_file.read_text())
+                plan.setdefault('copyOutputs', []).append(
+                    {'source': '{kit}/shaders/' + source.name, 'destination': destination})
+                plan_file.write_text(json.dumps(plan, indent=2) + '\n', encoding='utf-8')
+        original['outputs'].append(destination)
     # The existing corresponding SDK archive plus this independent-source delta
     # reproduces the changed compiler; runtime/library inputs are unchanged.
     updates = output / 'notices/source-updates'
@@ -89,6 +117,13 @@ if __name__ == '__main__':
     parser.add_argument('--archive', type=Path)
     parser.add_argument('--dependency-sources', type=Path)
     parser.add_argument('--version')
+    parser.add_argument('--update-source', action='append', default=[],
+                        help='Repository-relative authored source replacing the kit copy')
+    parser.add_argument('--add-source', action='append', default=[],
+                        help='Repository-relative authored source new to the kit')
+    parser.add_argument('--add-shader', action='append', default=[],
+                        help='Repository-relative compiled .spv shipped in reo-gpu-present')
     args = parser.parse_args()
     print(json.dumps(refresh(args.kit, args.output, args.recompiler, args.root, args.archive,
-                             args.dependency_sources, args.version), indent=2))
+                             args.dependency_sources, args.version, args.update_source,
+                             args.add_source, args.add_shader), indent=2))

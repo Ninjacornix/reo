@@ -24,6 +24,13 @@ public partial class MainWindow {
             Status.Text = "Close the game before installing an update.";
             return;
         }
+        if (availableUpdate.RequiresRebuild &&
+            MessageBox.Show(this,
+                            $"After updating to {availableUpdate.Tag}, the game is built again the first time you press Play. " +
+                                "This is a one-time setup like the first one and can take a while.\n\nInstall the update now?",
+                            "Update needs a game rebuild", MessageBoxButton.YesNo,
+                            MessageBoxImage.Information) != MessageBoxResult.Yes)
+            return;
         updating = true;
         updateCancellation = new CancellationTokenSource(TimeSpan.FromMinutes(20));
         UpdateButton.IsEnabled = false;
@@ -89,9 +96,11 @@ public partial class MainWindow {
             } else {
                 UpdateButton.Content = AppLayout.Packaged(root) ? "Install " + availableUpdate.Tag
                                                                 : "View " + availableUpdate.Tag;
-                UpdateState.Text = AppLayout.Packaged(root)
-                                       ? "Update available. Restarts launcher."
-                                       : "Use a release package to install updates.";
+                UpdateState.Text = !AppLayout.Packaged(root)
+                                       ? "Use a release package to install updates."
+                                   : availableUpdate.RequiresRebuild
+                                       ? "Update available. The game is rebuilt once afterwards."
+                                       : "Update available. Restarts launcher.";
                 if (!quiet)
                     Status.Text = "New release: " + availableUpdate.Tag;
             }

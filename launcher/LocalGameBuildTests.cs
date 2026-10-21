@@ -52,10 +52,10 @@ static class LocalGameBuildTests {
                                                 home: cache, runner: runner ?? Runner);
         try {
             const ulong gib = 1024UL * 1024 * 1024;
-            check(BuildResources.Select(16, 16 * gib) == 12 &&
+            check(BuildResources.Select(16, 16 * gib) == 15 &&
                       BuildResources.Select(4, 16 * gib) == 3,
                   "available CPU capacity is used within worker limit");
-            check(BuildResources.Select(16, 5 * gib) == 3 && BuildResources.Select(16, gib) == 1,
+            check(BuildResources.Select(16, 3 * gib) == 4 && BuildResources.Select(16, gib) == 1,
                   "memory pressure limits parallel compilation");
             check(BuildResources.Select(128, 128 * gib) == BuildResources.MaximumWorkers,
                   "high-memory machines respect the maximum worker limit");
@@ -119,6 +119,53 @@ static class LocalGameBuildTests {
                 wrongElf = true;
             }
             check(wrongElf && calls == 3, "public build entry refuses synthetic unsupported ELF");
+
+            // An update's build adopts the previous kit's objects; finished builds keep only those.
+            string games = Path.Combine(root, "handoff", "file1");
+            string older = Path.Combine(games, "older"), newer = Path.Combine(games, "newer");
+            void Put(string path) {
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.WriteAllText(path, "synthetic");
+            }
+            Put(Path.Combine(older, "work", "objects", "main0.obj"));
+            Put(Path.Combine(older, "work", "project", "generated.cpp"));
+            Put(Path.Combine(older, "ready", "reo_recomp.exe"));
+            LocalGameBuild.AdoptPreviousObjects(newer, Path.Combine(newer, "work"));
+            check(File.Exists(Path.Combine(newer, "work", "objects", "main0.obj")) &&
+                      !Directory.Exists(Path.Combine(older, "work", "objects")),
+                  "a new kit's build adopts the previous objects");
+            Put(Path.Combine(newer, "work", "output", "reo_recomp.exe"));
+            Put(Path.Combine(newer, "work", "project", "generated.cpp"));
+            Put(Path.Combine(newer, "work", "precompiled-headers", "a.pch"));
+            Put(Path.Combine(newer, "ready.previous-1", "reo_recomp.exe"));
+            Put(Path.Combine(newer, "ready", "reo_recomp.exe"));
+            long freed = LocalGameBuild.RemoveIntermediates(newer);
+            check(freed > 0 && Directory.Exists(Path.Combine(newer, "work", "objects")) &&
+                      File.Exists(Path.Combine(newer, "ready", "reo_recomp.exe")) &&
+                      !Directory.Exists(Path.Combine(newer, "work", "output")) &&
+                      !Directory.Exists(Path.Combine(newer, "work", "project")) &&
+                      !Directory.Exists(Path.Combine(newer, "work", "precompiled-headers")) &&
+                      !Directory.Exists(Path.Combine(newer, "ready.previous-1")) &&
+                      !Directory.Exists(Path.Combine(older, "work")) &&
+                      File.Exists(Path.Combine(older, "ready", "reo_recomp.exe")),
+                  "cleanup keeps the object cache and finished builds, removes intermediates");
+
+            // Remove game: only launcher-made folders; saves and tools only when asked.
+            string home = Path.Combine(root, "remove-home");
+            foreach (string folder in new[] { "local-games/file1/x", "imports/file1/y", "game-cache",
+                                              "memory-cards/default/file1/data", "toolchains/z",
+                                              "imports/file2/keep" })
+                Directory.CreateDirectory(Path.Combine(home, folder));
+            var outside = new Settings { MemoryCardFile1 = Path.Combine(root, "my-own-card") };
+            var plain = GameRemoval.Targets(root, outside, "file1", false, false, home);
+            var everything = GameRemoval.Targets(root, outside, "file1", true, true, home);
+            check(plain.Count == 3 && everything.Count == 5 &&
+                      everything.All(t => !t.Path.Contains("file2") && !t.Path.Contains("my-own-card")),
+                  "Remove game selects only this game's launcher folders");
+            check(GameRemoval.Remove(everything).Count == 0 &&
+                      Directory.Exists(Path.Combine(home, "imports", "file2", "keep")) &&
+                      !Directory.Exists(Path.Combine(home, "local-games", "file1")),
+                  "Remove game deletes the selected folders and nothing else");
         } finally {
             // Only this test's newly created directory can be removed.
             if (Directory.Exists(root))

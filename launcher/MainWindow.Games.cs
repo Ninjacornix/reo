@@ -11,12 +11,15 @@ public partial class MainWindow {
     bool backdropTransition;
     readonly Dictionary<string, BitmapImage> gameArtwork = new();
     async Task LoadArtworkAsync() {
+        if (args.Contains("--public-preview"))
+            return; // user-supplied covers stay out of published screenshots
         await Task.WhenAll(Enumerable.Range(1, 2).Select(async edition => {
             var image = await GameArtwork.FetchAsync(edition);
             if (image == null || !IsLoaded)
                 return;
             gameArtwork["file" + edition] = image;
             ((Image)FindName("GamePoster" + edition)).Source = image;
+            ((Border)FindName("PosterFrame" + edition)).Visibility = Visibility.Visible;
             RefreshBackdrop();
         }));
     }
@@ -69,12 +72,6 @@ public partial class MainWindow {
         RefreshGameUi();
         UpdateSaves();
     }
-    void ConfigureGame(object sender, RoutedEventArgs e) {
-        if (game.Running || launching)
-            return;
-        SelectGame(sender, e);
-        ShowPage("Setup");
-    }
     void RefreshGameUi() {
         ExePath.Text = settings.GetExe();
         IsoPath.Text = settings.GetIso();
@@ -91,14 +88,13 @@ public partial class MainWindow {
             ((Border)FindName("GameCard" + n)).BorderBrush =
                 (System.Windows.Media.Brush)FindResource(selected ? "Accent" : "Line");
             ((TextBlock)FindName("GameStatus" + n)).Text =
-                id == "file2" ? "Coming later. Native build not yet available."
+                id == "file2" ? "Coming later"
                 : !(AppLayout.Packaged(root) ? LocalGameBuild.Available(root)
                                              : File.Exists(settings.GetExe(id)))
-                    ? "Local build kit not installed."
-                : settings.FilesPresent(root, id)
-                    ? DiscImport.Ready(settings, id) ? "Ready to play." : "ISO ready to import."
-                    : "Game files not configured.";
-            ((Button)FindName("ConfigureGame" + n)).IsEnabled = !game.Running && !launching;
+                    ? (AppLayout.Packaged(root) ? "Setup needed: download incomplete" : "No developer build")
+                : !File.Exists(settings.GetIso(id)) ? "Choose your game disc"
+                : DiscImport.Ready(settings, id) && File.Exists(settings.GetExe(id)) ? "Ready to play"
+                                                                                       : "Not built yet";
         }
         LaunchButton.IsEnabled =
             present && !updating && !updateRestarting && !game.Running && !launching && !backingUp;

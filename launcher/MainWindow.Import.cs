@@ -5,6 +5,118 @@ using Microsoft.Win32;
 
 namespace Outbreak.Launcher;
 public partial class MainWindow {
+    // Result of the quick read-only check of the chosen ISO (boot file, serial, executable hash).
+    sealed record DiscCheck(string Path, long Length, long WriteTicks, bool Ok, string Message) {
+        public bool Matches(string iso) {
+            try {
+                var file = new FileInfo(iso);
+                return file.Exists && string.Equals(file.FullName, Path, StringComparison.OrdinalIgnoreCase) &&
+                       file.Length == Length && file.LastWriteTimeUtc.Ticks == WriteTicks;
+            } catch (Exception error) when (error is IOException or ArgumentException or
+                                                UnauthorizedAccessException or NotSupportedException) {
+                return false;
+            }
+        }
+    }
+    DiscCheck? discCheck;
+    bool checkingDisc;
+    async Task CheckSelectedDisc() {
+        string iso = settings.GetIso();
+        if (settings.Game.Id != "file1" || checkingDisc || !File.Exists(iso) ||
+            discCheck?.Matches(iso) == true)
+            return;
+        var file = new FileInfo(iso);
+        var game = settings.Game;
+        checkingDisc = true;
+        RefreshImportUi();
+        try {
+            string message = DiscImport.Ready(settings)
+                                 ? "Verified: Outbreak File #1, NTSC-U v2.00 (SLUS-20765)."
+                                 : await Task.Run(() => {
+                                       using var image = new DiscImage(file.FullName);
+                                       return DiscValidation.Check(image, game, DiscImport.FirstElfSha256,
+                                                                   CancellationToken.None).Description;
+                                   });
+            discCheck = new(file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, true, message);
+        } catch (Exception error) when (error is InvalidDataException or IOException or
+                                            UnauthorizedAccessException) {
+            discCheck = new(file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
+                            error is InvalidDataException ? error.Message
+                                                          : "The ISO could not be read: " + error.Message);
+        } finally {
+            checkingDisc = false;
+            RefreshGameUi();
+        }
+    }
+    async void ChooseIso() {
+        if (updating || updateRestarting || launching || game.Running || backingUp)
+            return;
+        var dialog = new OpenFileDialog { Title = "Choose your Outbreak File #1 disc image",
+                                          Filter = "Disc image (*.iso)|*.iso", CheckFileExists = true };
+        if (dialog.ShowDialog(this) != true)
+            return;
+        settings.SetFile("iso", dialog.FileName);
+        SaveSettings(this, new());
+        RefreshGameUi();
+        await CheckSelectedDisc();
+    }
+    // ---- Remove game ----
+    int removalEstimate;
+    async void RemoveOptionsChanged(object sender, RoutedEventArgs e) => await EstimateRemoval();
+    async Task EstimateRemoval() {
+        int ticket = ++removalEstimate;
+        var targets = GameRemoval.Targets(root, settings, settings.Game.Id, RemoveSaves.IsChecked == true,
+                                          RemoveTools.IsChecked == true);
+        RemoveSize.Text = "Measuring...";
+        long size = await Task.Run(() => GameRemoval.Size(targets));
+        if (ticket != removalEstimate)
+            return;
+        RemoveSize.Text = targets.Count == 0 ? "Nothing to remove." : "Frees about " + Gigabytes(size) + ".";
+        RemoveGameButton.IsEnabled = targets.Count > 0 && !updating && !game.Running && !launching &&
+                                     !backingUp && importCancellation == null;
+    }
+    async void RemoveGame(object sender, RoutedEventArgs e) {
+        if (updating || game.Running || launching || backingUp || importCancellation != null) {
+            Status.Text = "Close the game and wait for setup to finish before removing it.";
+            return;
+        }
+        bool tools = RemoveTools.IsChecked == true, saves = RemoveSaves.IsChecked == true;
+        if (tools && (hostedServer.Running || serverStarting)) {
+            Status.Text = "Stop hosting (Co-op: Play alone) before removing the hosting tools.";
+            return;
+        }
+        var targets = GameRemoval.Targets(root, settings, settings.Game.Id, saves, tools);
+        if (targets.Count == 0) {
+            Status.Text = "Nothing to remove.";
+            return;
+        }
+        long size = await Task.Run(() => GameRemoval.Size(targets));
+        string list = string.Join("\n", targets.Select(t => "\u2022 " + t.What).Distinct());
+        if (MessageBox.Show(this,
+                            $"Remove {settings.Game.Name} from this PC?\n\n{list}\n\nFrees about {Gigabytes(size)}. " +
+                                "Your ISO file is kept." + (saves ? " Save games are deleted." : " Save games are kept.") +
+                                "\nPlaying again needs the one-time setup again.",
+                            "Remove game", MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                            MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
+        RemoveGameButton.IsEnabled = false;
+        Status.Text = "Removing game files...";
+        var failed = await Task.Run(() => GameRemoval.Remove(targets));
+        settings.Iso = "";
+        settings.SetImport("");
+        discCheck = null;
+        try {
+            settings.Save();
+        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+        }
+        Status.Text = failed.Count == 0
+                          ? $"{settings.Game.Name} removed. Freed about {Gigabytes(size)}."
+                          : "Some files are in use and were kept: " + string.Join(", ", failed);
+        RefreshGameUi();
+        UpdateSaves();
+        await EstimateRemoval();
+    }
+
     CancellationTokenSource? importCancellation;
     bool closeAfterImport;
     IProgress<ImportProgress> BeginDiscImport() {
@@ -74,19 +186,28 @@ public partial class MainWindow {
                 : "File #2 is not supported in this release.";
         ChooseIsoButton.IsEnabled =
             settings.Game.Id == "file1" && !updating && !game.Running && !launching && !backingUp;
+        bool idle = !updating && !game.Running && !launching && !backingUp;
+        bool verified = discCheck is { Ok: true } && discCheck.Matches(settings.GetIso());
         ImportDiscButton.IsEnabled = settings.Game.Id == "file1" && settings.FilesPresent(root) &&
-                                     !updating && !game.Running && !launching && !backingUp;
-        ExistingBuildButton.IsEnabled = settings.Game.Id == "file1" &&
-                                        LocalGameBuild.Available(root) && !updating &&
-                                        !game.Running && !launching && !backingUp;
+                                     verified && idle;
+        ExistingBuildButton.IsEnabled = settings.Game.Id == "file1" && idle;
         if (importCancellation != null)
             return;
+        bool known = discCheck != null && discCheck.Matches(settings.GetIso());
+        DiscValidationStatus.Text = settings.Game.Id != "file1" || !File.Exists(settings.GetIso()) ? ""
+                                    : checkingDisc || !known ? "Checking disc..."
+                                    : discCheck!.Ok ? "✓ " + discCheck.Message
+                                                    : "✗ " + discCheck.Message;
+        DiscValidationStatus.Foreground = (System.Windows.Media.Brush)FindResource(
+            !known || checkingDisc ? "Muted" : discCheck!.Ok ? "Good" : "Danger");
+        if (File.Exists(settings.GetIso()) && !known && !checkingDisc)
+            _ = CheckSelectedDisc();
         ImportState.Text =
             settings.Game.Id == "file2" ? "File #2 is a placeholder. ISO import and play will be " +
                                               "enabled with its native build."
             : DiscImport.Ready(settings) ? "Game data imported."
             : File.Exists(settings.GetIso())
-                ? "Import prepares the build tools automatically. First setup needs Internet access and can take time."
+                ? "Import copies the disc and builds the game once. It downloads build tools (about 173 MB) and can take a while."
                 : "Choose ISO to start automatic setup. File #1 requires NTSC-U v2.00 (SLUS-20765).";
     }
     async void UseExistingBuild(object sender, RoutedEventArgs e) {
@@ -100,6 +221,14 @@ public partial class MainWindow {
             dialog.InitialDirectory = Path.GetDirectoryName(cached);
         if (dialog.ShowDialog(this) != true)
             return;
+        if (!AppLayout.Packaged(root) && !LocalGameBuild.Available(root)) {
+            // Developer checkout without a build kit: use the chosen build directly.
+            settings.SetFile("exe", dialog.FileName);
+            settings.Save();
+            Status.Text = "Using the selected game build.";
+            RefreshGameUi();
+            return;
+        }
         launching = true;
         try {
             var progress = BeginDiscImport();
@@ -151,9 +280,12 @@ public partial class MainWindow {
         } catch (Exception error) {
             Status.Text = "Could not import: " + error.Message;
             if (error is InvalidDataException) {
+                var file = new FileInfo(settings.GetIso());
+                discCheck = new(file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
+                                error.Message);
                 DiscValidationStatus.Text = error.Message;
                 DiscValidationStatus.Foreground =
-                    (System.Windows.Media.Brush)FindResource("Accent");
+                    (System.Windows.Media.Brush)FindResource("Danger");
             }
         } finally {
             launching = false;

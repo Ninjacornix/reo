@@ -61,6 +61,13 @@ public partial class App : Application {
                 Shutdown();
                 return;
             }
+            int lobbyTest = Array.IndexOf(e.Args, "--test-lobby");
+            if (lobbyTest >= 0 && lobbyTest + 3 < e.Args.Length) {
+                await LobbyAutomationLiveTest.Run(e.Args[lobbyTest + 1], e.Args[lobbyTest + 2],
+                                                  e.Args[lobbyTest + 3]);
+                Shutdown();
+                return;
+            }
             int fixture = Array.IndexOf(e.Args, "--test-update");
             if (fixture >= 0 && fixture + 1 < e.Args.Length) {
                 string target =
@@ -153,6 +160,7 @@ public partial class App : Application {
             string log = Path.Combine(Settings.Home, "launcher-error.log");
             File.WriteAllText(log, error.ToString());
             if (!e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
+                !e.Args.Contains("--test-lobby") &&
                 !e.Args.Contains("--import-iso") && !e.Args.Contains("--test-update") &&
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&
                 !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&

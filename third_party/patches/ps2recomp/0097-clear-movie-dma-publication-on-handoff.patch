@@ -1,0 +1,13 @@
+--- a/ps2xRuntime/src/lib/native_movie_image.inl
++++ b/ps2xRuntime/src/lib/native_movie_image.inl
+@@ -107,7 +107,9 @@
+         if(binding->pendingPublication)throw std::logic_error("Original movie DMA has duplicate completion publication");
+         binding->pendingPublication=std::move(publication);return;
+     }
+-    auto channels=std::move(binding->pendingPublication);
++    // std::exchange: a moved-from std::function is not guaranteed empty (libc++ keeps small
++    // callables), and a leftover would be reported as a duplicate on the next movie DMA.
++    auto channels=std::exchange(binding->pendingPublication,nullptr);
+     if(!channels)throw std::logic_error("Original movie DMA final tag preceded its channel publication");
+     queuePublication(binding->epoch,[binding,channels=std::move(channels),publication=std::move(publication)]{
+         publishWithActualIoLock([&]{channels();publication();binding->activeDma=false;});

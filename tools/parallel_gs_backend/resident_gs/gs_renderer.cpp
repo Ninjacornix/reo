@@ -2,6 +2,7 @@
 #include "resident_readback.hpp"
 #include <filesystem>
 #include <fstream>
+#include "../shader_location.hpp"
 #include "resident_clear_context.hpp"
 // SPDX-FileCopyrightText: 2024 Arntzen Software AS
 // SPDX-FileContributor: Hans-Kristian Arntzen
@@ -3536,7 +3537,7 @@ std::vector<uint8_t> GSRenderer::readback_resident_transfer(const CopyDescriptor
     const uint64_t bytes=uint64_t(p.width)*p.height*reo_gpu_readback::bytesPerPixel(p.psm);
     if(bytes>64u*1024u*1024u)throw std::invalid_argument("Oversized original GPU readback");
     p.bytes=uint32_t(bytes);
-    const auto path=std::filesystem::path(__FILE__).parent_path()/"shaders/resident_readback.spv";
+    const auto path=reo_shader_location::find(std::filesystem::path(__FILE__).parent_path()/"shaders","resident_readback.spv");
     std::ifstream file(path,std::ios::binary|std::ios::ate);
     if(!file)throw std::runtime_error("Pinned GPU readback shader missing");
     const auto n=file.tellg();if(n<20||n>65536||(uint64_t(n)&3u))throw std::runtime_error("GPU readback shader size");

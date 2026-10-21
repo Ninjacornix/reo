@@ -50,6 +50,7 @@ static class SelfTest {
         }
         DiscImportTests.Run(Check);
         OnlineOptionsTests.Run(Check);
+        CoopAutomationTests.Run(Check);
         GameImageCacheTests.Run(Check);
         Task.Run(() => AutomaticAccountTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
@@ -300,9 +301,10 @@ static class SelfTest {
                     !HostNetworking.BehindAnotherNat(null),
                 "A router with a non-public internet address is reported as behind another network");
             Check(HostNetworking.Ports.Select(p => p.Number + p.Protocol)
-                          .SequenceEqual(new[] { "80TCP", "10127TCP", "9090UDP", "9091UDP" }) &&
+                          .SequenceEqual(new[] { "10128TCP", "10127TCP", "9090UDP", "9091UDP",
+                                                 "10129UDP" }) &&
                       HostNetworking.PortList.Contains("9091 UDP"),
-                  "Hosting lists the four fixed server ports");
+                  "Hosting lists the server and discovery ports, without port 80");
             var forward = JsonSerializer.Deserialize<Settings>(
                 JsonSerializer.Serialize(new Settings { AutoForward = true }))!;
             Check(forward.AutoForward && !new Settings().AutoForward,

@@ -22,10 +22,11 @@ internal static class BuildResources {
     }
     internal static int Select(int processors, ulong availableBytes) {
         const ulong gib = 1024UL * 1024 * 1024;
-        // The worker admits large units separately; this is its upper concurrency bound.
+        // Upper bound only: the worker re-reads free memory for every compiler it starts and
+        // reserves 0.5 GiB per ordinary unit (they measured 60-150 MB) and 4 GiB for huge ones.
         int memoryLimit =
             (int)Math.Min((ulong)MaximumWorkers,
-                          (availableBytes > gib ? availableBytes - gib : 0) / (5 * gib / 4));
+                          (availableBytes > gib ? availableBytes - gib : 0) / (gib / 2));
         return Math.Max(1, Math.Min(Math.Clamp(processors - 1, 1, MaximumWorkers), memoryLimit));
     }
 }

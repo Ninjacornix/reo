@@ -149,8 +149,10 @@ public static partial class LocalGameBuild {
         Directory.CreateDirectory(cache);
         using var lease = new FileStream(Path.Combine(cache, "build.lock"), FileMode.OpenOrCreate,
                                          FileAccess.ReadWrite, FileShare.None);
-        if (Ready(ready, hash, kit))
+        if (Ready(ready, hash, kit)) {
+            RemoveIntermediates(cache);
             return executable;
+        }
         string? requestedCompilerHash = null, selectedCompiler = null;
         if (File.Exists(Path.Combine(kitFolder, "compile-plan.json"))) {
             using var plan =
@@ -188,6 +190,7 @@ public static partial class LocalGameBuild {
             throw new IOException("The build kit requests an unsupported compiler toolchain.");
         string work = Path.Combine(cache, "work");
         string output = Path.Combine(work, "output");
+        AdoptPreviousObjects(cache, work);
         Directory.CreateDirectory(work);
         Directory.CreateDirectory(output);
         int jobs = BuildResources.WorkerCount();
@@ -270,8 +273,69 @@ public static partial class LocalGameBuild {
         if (Directory.Exists(ready))
             Directory.Move(ready, ready + ".previous-" + Guid.NewGuid().ToString("N"));
         Directory.Move(staging, ready);
+        RemoveIntermediates(cache);
         progress?.Report(new(kit.Steps.Length, kit.Steps.Length, "Ready", "Building native code"));
         return executable;
+    }
+
+    // A new kit gets the objects compiled for the previous one: the worker's content-keyed
+    // receipts decide which units are reused, so only changed units compile again.
+    internal static void AdoptPreviousObjects(string cache, string work) {
+        string objects = Path.Combine(work, "objects");
+        if (Directory.Exists(objects))
+            return;
+        string? previous =
+            Directory.EnumerateDirectories(Path.GetDirectoryName(cache)!)
+                .Where(d => !Path.GetFullPath(d).Equals(Path.GetFullPath(cache),
+                                                        StringComparison.OrdinalIgnoreCase) &&
+                            Directory.Exists(Path.Combine(d, "work", "objects")))
+                .OrderByDescending(d => Directory.GetLastWriteTimeUtc(Path.Combine(d, "work", "objects")))
+                .FirstOrDefault();
+        if (previous == null)
+            return;
+        try {
+            using var lease = new FileStream(Path.Combine(previous, "build.lock"), FileMode.OpenOrCreate,
+                                             FileAccess.ReadWrite, FileShare.None);
+            Directory.CreateDirectory(work);
+            Directory.Move(Path.Combine(previous, "work", "objects"), objects);
+        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+            // Another build owns it, or it cannot be moved: compile everything instead.
+        }
+    }
+
+    // A finished build keeps only its object cache (for fast rebuilds after an update). Generated
+    // sources, precompiled headers, the duplicate output copy, replaced builds and other kits'
+    // workspaces are removed. Other kits' finished builds stay for older installations.
+    internal static long RemoveIntermediates(string cache) {
+        long freed = 0;
+        void Remove(string path) {
+            if (!Directory.Exists(path) ||
+                (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+                return;
+            try {
+                long size = new DirectoryInfo(path).EnumerateFiles("*", SearchOption.AllDirectories)
+                                .Sum(f => f.Length);
+                Directory.Delete(path, true);
+                freed += size;
+            } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+            }
+        }
+        string work = Path.Combine(cache, "work");
+        foreach (string name in new[] { "output", "project", "precompiled-headers" })
+            Remove(Path.Combine(work, name));
+        foreach (string pattern in new[] { "ready.previous-*", "ready-*", "existing-*" })
+            foreach (string stale in Directory.EnumerateDirectories(cache, pattern))
+                Remove(stale);
+        foreach (string other in Directory.EnumerateDirectories(Path.GetDirectoryName(cache)!))
+            if (!Path.GetFullPath(other).Equals(Path.GetFullPath(cache), StringComparison.OrdinalIgnoreCase)) {
+                try {
+                    using var lease = new FileStream(Path.Combine(other, "build.lock"), FileMode.OpenOrCreate,
+                                                     FileAccess.ReadWrite, FileShare.None);
+                    Remove(Path.Combine(other, "work"));
+                } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+                }
+            }
+        return freed;
     }
 
     static bool IsPe(string file) {

@@ -2,8 +2,10 @@
 """Compile private generated sources and link against audited independent inputs.
 
 The plan contains file paths/options, not commercial game instructions. Object
-receipts make interrupted builds resumable. Microsoft tools are discovered from
-an existing installation; this worker never downloads or installs software.
+receipts make interrupted builds resumable, and their keys describe only what
+reaches the compiler, so a later kit can reuse objects of unchanged units.
+Microsoft tools are discovered from an existing installation; this worker never
+downloads or installs software.
 """
 
 import argparse
@@ -18,6 +20,14 @@ import tempfile
 import time
 
 from build_scheduler import cost_estimate, header_fingerprint, scheduled_results, unit_estimates
+
+
+# Bump when compile_unit changes how an object is produced from the keyed inputs below.
+CACHE_FORMAT = 2
+MSVC_FLAGS = ["/nologo", "/c", "/TP", "/O2", "/Ob2", "/MD", "/DNDEBUG", "/EHsc", "/std:c++20",
+              "/bigobj", "/fp:precise", "/utf-8"]
+PORTABLE_DEFAULTS = ["-O2", "-DNDEBUG", "-std=c++20", "-msse4.1", "-fms-extensions",
+                     "-fno-fast-math", "-ffp-contract=off", "-fno-strict-aliasing", "-fwrapv"]
 
 
 def digest(path):
@@ -161,7 +171,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         parent = Path(expand(group["root"])).resolve()
         if not parent.is_relative_to(generated):
             raise ValueError("Generated source group escapes the private generation directory")
-        batch, size, index, includes, large_guest = [], 0, 0, [], False
+        batch, size, index, includes, large_guest, largest = [], 0, 0, [], False, 0
         replacements = plan.get("generatedSourceOverrides", {})
         for file in sorted(parent.glob(group["pattern"])):
             if not file.is_file() or file.suffix != ".cpp" or file.name in group.get("exclude", []):
@@ -171,8 +181,8 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
                 units.append({"id": group["id"] + str(index), "sources": batch,
                               "options": group.get("options", []) + includes, "generated": True})
                 if not replacements:
-                    size_hints[group['id'] + str(index)] = (size, large_guest)
-                batch, size, index, includes, large_guest = [], 0, index + 1, [], False
+                    size_hints[group['id'] + str(index)] = (size, large_guest, largest)
+                batch, size, index, includes, large_guest, largest = [], 0, index + 1, [], False, 0
             replacement = replacements.get(file.relative_to(generated).as_posix()) if replacements else None
             batch.append(expand(replacement) if replacement else str(file))
             if replacement:
@@ -181,11 +191,13 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
                     includes.append(flag)
             size += file_size
             large_guest |= file_size > 750000 and not file.name.startswith('register')
+            if not file.name.startswith('register'):
+                largest = max(largest, file_size)
         if batch:
             units.append({"id": group["id"] + str(index), "sources": batch,
                           "options": group.get("options", []) + includes, "generated": True})
             if not replacements:
-                size_hints[group['id'] + str(index)] = (size, large_guest)
+                size_hints[group['id'] + str(index)] = (size, large_guest, largest)
         if not batch and index == 0:
             raise ValueError("Generated source group is empty")
 
@@ -194,11 +206,33 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
     objects, logs = work / "objects", work / "compile-logs"
     objects.mkdir(exist_ok=True)
     logs.mkdir(exist_ok=True)
-    # Header changes must invalidate users of inline runtime/ISA operations.
-    header_hash = header_fingerprint((kit, generated), digest, jobs)
-    base = json.dumps({"abi": plan["runtimeAbi"], "compiler": digest(compiler), "worker": digest(Path(__file__)),
-                       "headers": header_hash, "plan": digest(kit / plan_name)}, sort_keys=True)
     common = [expand(flag) for flag in plan.get("compileOptions", [])]
+
+    # Cache keys spell paths relative to the kit/workspace (generated objects embed no
+    # absolute paths), so a moved workspace or a newer kit reuses unchanged units.
+    placeholders = sorted(((str(Path(path)), name) for name, path in values.items()),
+                          key=lambda pair: -len(pair[0]))
+
+    def stable(text):
+        for path, name in placeholders:
+            text = text.replace(path, name)
+        return text.replace("\\", "/")
+
+    # Header changes must invalidate users of inline runtime/ISA operations: fingerprint
+    # every include root, not only the kit and generated trees.
+    roots = {kit, generated}
+    if generated.parent.parent.is_relative_to(work):
+        roots.add(generated.parent.parent)
+    for option in common + [expand(o) for unit in units for o in unit.get("options", [])]:
+        if option[:2] in ("/I", "-I") and Path(option[2:]).is_dir():
+            roots.add(Path(option[2:]).resolve())
+    roots = sorted(r for r in roots if not any(r != o and r.is_relative_to(o) for o in roots))
+    header_hash = header_fingerprint(roots, digest, jobs, label=stable)
+    base = json.dumps({"cache": CACHE_FORMAT, "abi": plan["runtimeAbi"], "compiler": digest(compiler),
+                       "headers": header_hash, "command": PORTABLE_DEFAULTS if portable else MSVC_FLAGS},
+                      sort_keys=True)
+    # Precompiled headers record absolute header paths, so their files stay per location.
+    location = json.dumps({"base": base, "paths": sorted(str(p) for p in values.values())})
     names = set()
     for unit in units:
         if not re.fullmatch(r"[A-Za-z0-9_-]+", unit["id"]) or unit["id"] in names:
@@ -207,8 +241,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         if not unit.get("sources"):
             raise ValueError("Empty compile unit")
 
-    portable_defaults = ["-O2", "-DNDEBUG", "-std=c++20", "-msse4.1", "-fms-extensions",
-                         "-fno-fast-math", "-ffp-contract=off", "-fno-strict-aliasing", "-fwrapv"]
+    portable_defaults = PORTABLE_DEFAULTS
     precompiled = {}
     if portable and not preflight:
         pch_root = work / "precompiled-headers"
@@ -218,8 +251,10 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
             if not unit.get("generated"):
                 continue
             options = common + [expand(o) for o in unit.get("options", [])]
-            key = hashlib.sha256((base + json.dumps(options) + preamble).encode()).hexdigest()
+            key = hashlib.sha256((location + json.dumps(options) + preamble).encode()).hexdigest()
             unit["pch"] = key
+            unit["pchSignature"] = hashlib.sha256(
+                (base + json.dumps([stable(o) for o in options]) + preamble).encode()).hexdigest()
             if key in precompiled:
                 continue
             header, pch, receipt = (pch_root / (key + suffix) for suffix in (".hpp", ".pch", ".json"))
@@ -245,8 +280,9 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         name = unit["id"]
         sources = [source_file(p) for p in unit["sources"]]
         options = common + [expand(o) for o in unit.get("options", [])]
-        signature = hashlib.sha256((base + json.dumps(options) + unit.get("pch", "") +
-            "".join(str(p) + digest(p) for p in sources)).encode()).hexdigest()
+        signature = hashlib.sha256((base + json.dumps([stable(o) for o in options]) +
+            unit.get("pchSignature", "") +
+            "".join(stable(str(p)) + digest(p) for p in sources)).encode()).hexdigest()
         obj, receipt = objects / (name + ".obj"), objects / (name + ".json")
         if obj.exists() and receipt.exists():
             saved = json.loads(receipt.read_text())
@@ -258,9 +294,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         source.write_text("\n".join('#include ' + json.dumps(str(p).replace("\\", "/"), ensure_ascii=False)
                                      for p in sources) + "\n", encoding="utf-8")
         pending = objects / (name + ".pending.obj")
-        command = [str(compiler), "/nologo", "/c", "/TP", "/O2", "/Ob2", "/MD",
-                   "/DNDEBUG", "/EHsc", "/std:c++20", "/bigobj", "/fp:precise", "/utf-8",
-                   *options, "/Fo" + str(pending), str(source)]
+        command = [str(compiler), *MSVC_FLAGS, *options, "/Fo" + str(pending), str(source)]
         if portable:
             pch = ["-include-pch", str(precompiled[unit["pch"]])] if unit.get("pch") else []
             command = [str(compiler), "-c", *portable_defaults,
@@ -282,7 +316,8 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
     for unit in units:
         receipt = objects / (unit['id'] + '.json')
         if unit['id'] in size_hints:
-            estimates[unit['id']] = cost_estimate(*size_hints[unit['id']], receipt)
+            size, large_guest, largest = size_hints[unit['id']]
+            estimates[unit['id']] = cost_estimate(size, large_guest, receipt, largest)
         else:
             estimates[unit['id']] = unit_estimates(unit, [source_file(p) for p in unit['sources']], receipt)
     for unit, future in scheduled_results(units, compile_unit, jobs, estimates):
