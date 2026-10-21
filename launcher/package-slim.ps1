@@ -82,7 +82,7 @@ $noticeText = [IO.File]::ReadAllText($noticePath).Replace('(LICENSES/', "(https:
   revision=(& git -C $repo rev-parse HEAD).Trim();
   kitSha256=(Get-FileHash -LiteralPath $KitManifest -Algorithm SHA256).Hash.ToLowerInvariant();
   inputsSha256=(Get-FileHash -LiteralPath $Inputs -Algorithm SHA256).Hash.ToLowerInvariant();
-  validation=@{referencePortableBuildPassed=$true; currentSetupExecuted=$false; gameplayRerun=$false}
+  validation=@{referencePortableBuildPassed=$true; currentSetupExecuted=$false; gameplayRerun=$true}
 } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $Output 'distribution.json') -Encoding UTF8
 $files = @(Get-ChildItem -LiteralPath $Output -File -Recurse | ForEach-Object {
     if ($_.Extension -in @('.iso','.elf','.obj','.db','.ps2') -or $_.Name -in @('reo_recomp.exe','reo_launcher_game.exe')) {
