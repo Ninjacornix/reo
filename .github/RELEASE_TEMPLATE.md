@@ -12,6 +12,7 @@ One **Randomizer** mod now randomizes ordinary items, guns, ammunition and suppo
 - Randomize supported zombie, Cerberus, licker and hunter encounters. Original scripted entrances finish before species replacement, and choices persist across rooms.
 - Hosts publish randomizer seeds, item exclusions and enemy profiles to joining players. An optional native asset bank provides space for the additional enemy resources.
 - Keep personal equipment and scenario keys unchanged. Ordinary items retain their original quantities.
+- Reduce instruction and memory-write bookkeeping when optional graphics source audits are disabled.
 
 **Experimental:** start a fresh File #1 scenario. Full scenario completion, save/resume compatibility and mixed-enemy co-op gameplay remain unverified. Host-to-guest settings transfer is tested separately from native multiplayer gameplay.
 

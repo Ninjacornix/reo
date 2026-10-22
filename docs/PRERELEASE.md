@@ -13,11 +13,15 @@ Ship the unified `examples/mods/randomizer.json` package and the Mods UI, includ
 
 Refresh `inputs-v113f` using its unchanged recompiler, replacing `recomp/reo_bootstrap.cpp`, `recomp/overrides/reo_hw_bridge.cpp`, `recomp/overrides/reo_missing_entries.cpp` and the eight runtime files in patch `0100-optional-native-asset-bank.patch`. Add `recomp/overrides/reo_mods.h` and the three `runtime/mods/*.h` headers. Keep generated instruction catalogues from the previous kit rather than copying local developer witness tables. Preserve the dirty submodule.
 
-Kit manifest SHA-256: `ed806caf255a43e4d3a7b86056e4435b9c8b8a259765218e1fe0ebd7a1000257`.
-Input archive SHA-256: `c846ca307e37199a80bd7ac5753bc10b11313b1918603eb6d03e6bdcb097d0bc`.
+Apply `0101-unbound-source-witness-fast-path.patch` to the frozen SDK copy and update `tools/parallel_gs_backend/resident_geometry/guarded_source_overlay.hpp`. Ordinary CPU execution skips instruction/store witnesses only when neither a bound source owner (including tombstones) nor the first-entry audit needs them. The main repository's working submodule keeps its existing edits; the independent patch reproduces the changes in a sealed kit.
+
+Kit manifest SHA-256: `6958c1ad48e115466252ec8401bb70cac0ac56d6f8e6aab0d4f97a56fe91c9c4`.
+Input archive SHA-256: `04a053c1bd94a08416ac4f9d45b25404105ca11301bdc2ec3febc7cb30046998`.
 The frozen dependency source archive is unchanged; additional matching SDK patches remain in the input kit's `notices/source-updates`. New runtime headers require a full compilation and the release notes must contain `<!-- reo:requires-rebuild -->`.
 
 Verification workspace: `build-ninja/release-v115`; the existing `release-v112/verify/work` supplies resumable object storage. No built game is distributed. Full scenario completion, save/resume and mixed-enemy co-op gameplay are unverified and must remain disclosed.
+
+The pre-optimization room test measured 12.8 original game updates/s; host presentation still reported 60 calls/s. A matching prior-build test measured 14.3 updates/s. Presentation counts cannot establish gameplay speed. The optimized kit requires a fresh `--test-room` clock measurement before publication. Native source-witness checks pass 985 cases covering enabled audits, owners/tombstones, RAM/MMIO/wrapping writes, faults and 128-bit values. Item fixtures verify byte-for-byte preservation of scenario-key and personal pickup records across seeds.
 
 ## v1.0.13
 

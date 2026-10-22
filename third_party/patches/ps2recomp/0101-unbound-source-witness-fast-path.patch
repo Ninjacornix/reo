@@ -1,0 +1,46 @@
+--- a/ps2xRuntime/src/lib/parent_natural_runtime.h
++++ b/ps2xRuntime/src/lib/parent_natural_runtime.h
+@@ -89,6 +89,13 @@
+ // Zero means every lookup yields no target, so per-access guards may take the plain path.
+ extern std::atomic<size_t> actualOwnerBindingCount;
+ inline bool anyActualOwnerBound()noexcept{return actualOwnerBindingCount.load(std::memory_order_acquire)!=0;}
++// Configured before guest execution. Instruction/store witnesses have no
++// consumer while neither a source owner nor the first-entry audit is active.
++// The owner count includes tombstones; stopping an owner never drops guards.
++extern std::atomic<bool> actualFirstEntryEnrollmentFlag;
++inline bool anySourceWitnessRequired()noexcept{
++    return anyActualOwnerBound()||actualFirstEntryEnrollmentFlag.load(std::memory_order_acquire);
++}
+ class AccessScope final {
+     PS2Runtime* priorRuntime_;R5900Context* priorContext_;
+     std::shared_ptr<ControlTarget> priorCachedTarget_;const void* priorCachedRam_=nullptr;uint64_t priorCachedGeneration_=0,priorCachedEpoch_=0;
+--- a/ps2xRuntime/src/lib/parent_natural_dispatch.cpp
++++ b/ps2xRuntime/src/lib/parent_natural_dispatch.cpp
+@@ -137,8 +137,8 @@
+ 
+ namespace reo_parent_natural {
+-namespace {std::atomic<bool> firstEntryEnrollmentRequested{false};}
+-void setActualFirstEntryEnrollmentRequested(bool value)noexcept{firstEntryEnrollmentRequested.store(value,std::memory_order_release);}
+-bool actualFirstEntryEnrollmentRequested()noexcept{return firstEntryEnrollmentRequested.load(std::memory_order_acquire);}
++std::atomic<bool> actualFirstEntryEnrollmentFlag{false};
++void setActualFirstEntryEnrollmentRequested(bool value)noexcept{actualFirstEntryEnrollmentFlag.store(value,std::memory_order_release);}
++bool actualFirstEntryEnrollmentRequested()noexcept{return actualFirstEntryEnrollmentFlag.load(std::memory_order_acquire);}
+ void ensureActualFirstGraphicsEntry(uint8_t* ram,R5900Context& ctx,PS2Runtime& runtime,uint32_t entry,
+                                    const FirstEntryInvocationHandle& invocation){
+     if(!actualFirstEntryEnrollmentRequested())return;
+--- a/ps2xRuntime/src/lib/source_instruction_access.hpp
++++ b/ps2xRuntime/src/lib/source_instruction_access.hpp
+@@ -63,7 +63,12 @@
+         }));
+         return current_->enrollmentInvocation_;
+     }
+-    void at(uint32_t pc,uint32_t opcode){actualInstructionOrigin=classifyInstruction(pc,opcode);inputs_.at(pc,opcode);}
++    void at(uint32_t pc,uint32_t opcode){
++        // The original CPU path needs no per-instruction TLS/shared_ptr work
++        // when no owner or explicitly enabled audit consumes the witnesses.
++        if(!anySourceWitnessRequired())return;
++        actualInstructionOrigin=classifyInstruction(pc,opcode);inputs_.at(pc,opcode);
++    }
+ };
+ inline bool dispatchEntry(uint8_t* ram,R5900Context& ctx,PS2Runtime& runtime,uint32_t entry){
+     // The current real PC is retained for registered continuations. No entry

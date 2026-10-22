@@ -85,6 +85,13 @@ T guardedRead(PS2Runtime& runtime, const void* ram, R5900Context& ctx, uint32_t 
 template <class T, class OriginalWrite>
 void guardedWrite(PS2Runtime& runtime, const void* ram, R5900Context& ctx, uint32_t address,
                   T value, bool fast, OriginalWrite&& original) {
+    // No source owner or first-entry audit can consume a write witness. Use
+    // the same original RAM/MMIO operation without constructing empty permits.
+    // Bound owners (including stopped-owner tombstones) retain the full path.
+    if (!reo_parent_natural::anySourceWitnessRequired()) {
+        original(value);
+        return;
+    }
     auto target = scopedMemoryOwner(ram, ctx);
     if (!target) {
         // Actual startup integer writes retain source history before the first

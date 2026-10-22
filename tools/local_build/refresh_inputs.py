@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import zipfile
 
 from compilation_batches import with_generated_batches
@@ -16,7 +17,7 @@ def sha(path):
 
 
 def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None, version=None,
-            updated_sources=(), added_sources=(), added_shaders=()):
+            updated_sources=(), added_sources=(), added_shaders=(), source_patches=()):
     kit, output, recompiler, root = [Path(p).resolve() for p in (kit, output, recompiler, root)]
     if output.exists() or output.is_relative_to(kit) or (archive and Path(archive).exists()):
         raise FileExistsError('Choose fresh immutable kit/archive paths')
@@ -57,6 +58,14 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
         if not target.is_relative_to(output / 'source') or not target.is_file():
             raise ValueError('Only existing kit sources can be updated: ' + name)
         shutil.copyfile(root / name, target)
+    for name in source_patches:
+        patch = (root / name).resolve()
+        if not patch.is_relative_to(root) or not patch.is_file():
+            raise ValueError('Source patch must be a repository file: ' + name)
+        directory = (output / 'source/third_party/PS2Recomp').relative_to(root).as_posix()
+        command = ['git', 'apply', '--directory=' + directory]
+        subprocess.run([*command, '--check', str(patch)], cwd=root, check=True)
+        subprocess.run([*command, str(patch)], cwd=root, check=True)
     for name in added_sources:
         target = (output / 'source' / name).resolve()
         if not target.is_relative_to(output / 'source') or target.exists():
@@ -83,7 +92,8 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
     updates = output / 'notices/source-updates'
     updates.mkdir(parents=True, exist_ok=True)
     for patch in ('0096-faster-source-instrumentation.patch', '0099-unguarded-generated-ranges.patch',
-                  '0100-optional-native-asset-bank.patch'):
+                  '0100-optional-native-asset-bank.patch',
+                  '0101-unbound-source-witness-fast-path.patch'):
         shutil.copyfile(root / 'third_party/patches/ps2recomp' / patch, updates / patch)
     if dependency_sources:
         notices = output / 'notices'
@@ -124,7 +134,9 @@ if __name__ == '__main__':
                         help='Repository-relative authored source new to the kit')
     parser.add_argument('--add-shader', action='append', default=[],
                         help='Repository-relative compiled .spv shipped in reo-gpu-present')
+    parser.add_argument('--source-patch', action='append', default=[],
+                        help='Repository patch applied to the frozen PS2Recomp source copy')
     args = parser.parse_args()
     print(json.dumps(refresh(args.kit, args.output, args.recompiler, args.root, args.archive,
                              args.dependency_sources, args.version, args.update_source,
-                             args.add_source, args.add_shader), indent=2))
+                             args.add_source, args.add_shader, args.source_patch), indent=2))

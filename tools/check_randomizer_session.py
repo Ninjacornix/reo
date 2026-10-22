@@ -32,6 +32,7 @@ def verify(receipt_path):
         "supplyConserved": collections.Counter((r[1], r[2]) for r in rows) == collections.Counter((r[3], r[4]) for r in rows),
         "changedCountMatches": changed == sum((r[1], r[2]) != (r[3], r[4]) for r in rows) and changed > 0,
         "excludedTypesAbsent": all(r[1] not in options.get("excludeItemTypes", []) and r[3] not in options.get("excludeItemTypes", []) for r in rows),
+        "progressionAndPersonalTypesExcluded": all(0 <= r[1] < 400 and 0 <= r[3] < 400 for r in rows),
         "returnedToMenu": bool(re.search(r"MAIN MENU PROOF .*pickupProof=1 resultsProof=1", log)),
     }
     proofs = re.findall(r"PICKUP PROOF handle=(\d+) item=(\d+) slot=(\d+) before=([\d/]+) after=([\d/]+) owner=(\d+) world=(\d+) active=(\d+) type=([0-9a-f]+) quantity=(\d+) metadata=(\d+)", log)

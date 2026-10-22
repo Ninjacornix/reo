@@ -199,6 +199,8 @@ public sealed class GameSession {
         if (diagnosticRoute is "gameplay" or "gameplay-pickup") {
             Set(diagnosticRoute == "gameplay-pickup" ? "REO_TEST_INTERACT_QUIT" : "REO_TEST_ROOM_SOAK", "1");
             if (diagnosticRoute == "gameplay-pickup") Set("REO_TEST_WEAPON_PICKUP", "1");
+        }
+        if (diagnosticRoute is "gameplay" or "gameplay-pickup" or "gameplay-enemies" or "gameplay-enemy-combat") {
             Set("REO_GAME_CLOCK_LOG", "1");
             Set("REO_GAME_CLOCK_FROM_SECS", "0");
             Set("REO_GAME_CLOCK_SECONDS", "300");

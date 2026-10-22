@@ -23,6 +23,9 @@ inline void testWeaponShuffle() {
     make(8, 29, 8, 31); // Invalid quantity.
     make(9, 100, 9, 30); make(10, 300, 10, 1); // Ammo and healing.
     make(11, 10000, 11, 1); // Scenario key, never part of the ordinary pool.
+    make(12, 10001, 12, 1);
+    make(13, 19999, 13, 1);
+    make(14, 65535, 14, 1); // High IDs must not wrap into ordinary supplies.
     auto initial = ram;
     auto result = reo::mods::shuffleWeapons(ram.data(), 2026);
     auto require = [](bool ok) { if (!ok) throw std::runtime_error("Weapon shuffle check failed"); };
@@ -57,6 +60,10 @@ inline void testWeaponShuffle() {
         auto duplicate = initial;
         reo::mods::shufflePickups(duplicate.data(), seed, true);
         require(full == duplicate);
+        for (unsigned h : {4u, 11u, 12u, 13u, 14u}) {
+            const auto a = 0x3c5630u + h * 60;
+            require(std::equal(initial.begin() + a, initial.begin() + a + 60, full.begin() + a));
+        }
         before.clear(); after.clear();
         for (unsigned i = 0; i < mixed.count; ++i) {
             auto a = mixed.before[i].address;
