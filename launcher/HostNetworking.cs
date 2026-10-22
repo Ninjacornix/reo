@@ -22,7 +22,7 @@ internal static class HostNetworking {
     internal static ServerPort[] Ports => new ServerPort[] {
         new(Current.Signup, "TCP", "player sign-up"), new(AppPort, "TCP", "game app server (fixed)"),
         new(LoginPort, "UDP", "login (fixed)"), new(Current.Game, "UDP", "game server"),
-        new(LanDiscovery.Port, "UDP", "finding your game") };
+        new(LanDiscovery.Port, "UDP", "finding your game and sharing randomizer settings") };
     internal static string? PortError(int signup, int game) {
         int[] reserved = { LoginPort, AppPort, LanDiscovery.Port };
         if (signup is < 1024 or > 65535 || game is < 1024 or > 65535)

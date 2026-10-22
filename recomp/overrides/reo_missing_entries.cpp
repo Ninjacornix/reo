@@ -36,6 +36,30 @@
 #endif
 
 void o2_006A12B0_0x6a12b0(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
+// Separate original O2 entries merged into 6A12B0 by the function map.
+// The generated entry switch contains resume PCs, not 6A1390/6A13D0.
+static void zombieFadeDelay(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    const auto a=GPR_U32(ctx,4);
+    const auto ticks=int16_t(int16_t(READ16(a+0xe))-1);
+    WRITE16(a+0xe,uint16_t(ticks));
+    if(ticks<=0) WRITE8(a+0xa,uint8_t(READ8(a+0xa)+1));
+    ctx->f[12]=0;ctx->pc=0x58c300;
+    runtime->lookupFunction(ctx->pc)(rdram,ctx,runtime);
+}
+static void zombieFadeOut(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    const auto a=GPR_U32(ctx,4),sp=GPR_U32(ctx,29)-32;
+    WRITE64(sp+16,GPR_U64(ctx,31));WRITE128(sp,GPR_VEC(ctx,16));
+    SET_GPR_U32(ctx,29,sp);SET_GPR_U32(ctx,16,a);
+    const auto alpha=READ8(a+0xccc);
+    if(alpha<8) {
+        WRITE8(a+0xccc,0);WRITE8(a+0xa,uint8_t(READ8(a+0xa)+1));WRITE8(a+1,0);
+        SET_GPR_U32(ctx,31,0x6a1404);ctx->pc=0x6acb50;
+        runtime->lookupFunction(ctx->pc)(rdram,ctx,runtime);
+        if(ctx->pc!=0x6a1404) return;
+    } else { WRITE8(a+0xccc,alpha-8);ctx->pc=0x6a1404; }
+    // This genuine generated resume copies alpha and restores this exact frame.
+    o2_006A12B0_0x6a12b0(rdram,ctx,runtime);
+}
 void o3_00603320_0x603320(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
 void o3_005F74E0_0x5f74e0(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
 void o3_005F74F0_0x5f74f0(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
@@ -315,10 +339,20 @@ void sub_001B7890(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     WRITE32(ADD32(GPR_U32(ctx, 3), 0x80u), GPR_U32(ctx, 4));
     ctx->pc = GPR_U32(ctx, 31);
 }
+// Original BIN/8.DAT (MWo3 id 10), 814720: 3c01008b / 03e00008 /
+// ac24a318. The network death flow calls this state setter; it lies just beyond
+// the last mapped function. Preserve the store in the JR delay slot.
+void networkScenarioState(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    SET_GPR_S32(ctx,1,0x008b0000);
+    const auto target=GPR_U32(ctx,31);
+    WRITE32(ADD32(GPR_U32(ctx,1),uint32_t(int32_t(int16_t(0xa318)))),GPR_U32(ctx,4));
+    ctx->pc=target;
+}
 } // namespace
 
 // Call after all generated (and overlay) registration.
 void install(PS2Runtime& runtime) {
+    runtime.registerOverlayFunction(0x810000u,0x336F574Du,4u,10u,0x814720u,networkScenarioState);
     runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x5F8280u, nativeNetworkDisplay);
     runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x5809B0u, nativePasswordPoll);
     runtime.registerFunction(0x1C8850, nativeNetworkSeconds);
@@ -353,12 +387,8 @@ void install(PS2Runtime& runtime) {
 #endif
     if (!runtime.hasFunction(0x1B7890u))
         runtime.registerFunction(0x1B7890u, sub_001B7890);
-    // Overlay 2 (BIN/2.DAT, id 3, base 0x570000): a separate function starting at 0x6A1390 (after
-    // jr $ra at 0x6A1380 and two nop pads) was merged into sub_006A12B0 by recomp/config/overlay_maps/
-    // ovl2.csv. The generated o2_006A12B0 already has `case 0x6A1390: goto label_6a1390`, so register
-    // that entry exactly like the generator's own resume aliases (0x6A1348, 0x6A1364, ...).
-    runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 3u, 0x6a1390u,
-                                    o2_006A12B0_0x6a12b0);
+    runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 3u, 0x6a1390u,zombieFadeDelay);
+    runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 3u, 0x6a13d0u,zombieFadeOut);
     runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x603320u, nativePlatformStep);
     runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x609750u,
                                     nativePlatformInformation);

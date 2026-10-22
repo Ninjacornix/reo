@@ -80,3 +80,5 @@ python tools/local_build/generate_catalogues.py --elf game_data/SLUS_207.65 --ma
 
 Do this after applying the runtime patch series and before compiling affected
 runtime sources. These generated `.inc` files must remain local.
+
+Patch 0100 adds optional 64 MB native memory backing for enemy assets while retaining the original 32 MB console heap, stack and reported RAM size. CPU memory helpers, disc reads and DMA paths use the configured backing size. The default remains 32 MB. The Randomizer requests the additional bank before guest execution.

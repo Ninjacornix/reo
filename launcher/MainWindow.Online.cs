@@ -264,9 +264,11 @@ public partial class MainWindow {
                 preparedAccount = null;
             }
             try {
-                lanResponder ??= new LanDiscovery.Responder(DescribeHostedGame);
+                lanResponder ??= new LanDiscovery.Responder(DescribeHostedGame,
+                    () => game.Running ? game.HostRandomizerConfiguration : null);
             } catch (System.Net.Sockets.SocketException) {
-                HostDetail.Text += " Friends need to type your address.";
+                hostedServer.Dispose();
+                throw new IOException("UDP port 10129 is already in use. Close the other hosting launcher and try again; this port carries shared game settings.");
             }
             await UpdateRouterForwarding();
         } catch (OperationCanceledException) {

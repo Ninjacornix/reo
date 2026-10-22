@@ -1,7 +1,11 @@
 #include "../../runtime/cheats/outbreak_cheats.h"
 #include <iostream>
 #include <sstream>
+#include "weapon_shuffle_tests.h"
+#include "enemy_randomizer_tests.h"
 int main() {
+    testWeaponShuffle();
+    testEnemyRandomizer();
     using namespace reo::cheats;
     unsigned checks = 0;
     auto check = [&](bool ok) {

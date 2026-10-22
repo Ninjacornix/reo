@@ -11,7 +11,14 @@ public sealed class GameSession {
     public ImportedDisc? Imported { get; private set; }
     public string? NetworkStatus { get; private set; }
     public string? MovieStatus { get; private set; }
-    public bool Running => Process is { HasExited : false };
+    internal byte[]? HostRandomizerConfiguration { get; private set; }
+    string? randomizerStopReason;
+    public bool Running {
+        get {
+            try { return Process != null && !Process.HasExited; }
+            catch (InvalidOperationException) { return false; } // Created, but not started yet.
+        }
+    }
     public static string SaveFolder(string root, string game = "file1") =>
         AppLayout.Packaged(root)
             ? Path.Combine(Settings.Home, "memory-cards", "default", game, "data")
@@ -25,6 +32,15 @@ public sealed class GameSession {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
+        var selectedMods = Mods.Selected(settings);
+        byte[]? randomizerConfiguration = null;
+        HostRandomizerConfiguration = null;
+        randomizerStopReason = null;
+        if (onlineEnvironment.Count > 0) {
+            var shared = await RandomizerSession.Resolve(settings, selectedMods, cancel);
+            randomizerConfiguration = shared.Bytes;
+            selectedMods = shared.Mods;
+        }
         NetworkStatus = null;
         string sourceExe = settings.GetExe(), iso = settings.GetIso();
         var selectedGame = settings.Game;
@@ -75,8 +91,14 @@ public sealed class GameSession {
         var cached = await Task.Run(() => GameImageCache.Prepare(
             Path.Combine(Settings.Home, "game-cache"), runtimeFiles, cancel), cancel);
         string image = cached.Image, hash = cached.Sha256;
+        if (randomizerConfiguration != null && !HasMarker(image, RandomizerSession.Capability))
+            throw new IOException("This shared session needs the updated game build with stable randomizer support.");
         Logs = Path.Combine(Settings.Home, "sessions", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
         Directory.CreateDirectory(Logs);
+        if (randomizerConfiguration != null) {
+            File.WriteAllBytes(Path.Combine(Logs,"randomizer-session.json"),randomizerConfiguration);
+            File.WriteAllText(Path.Combine(Logs,"randomizer-session.sha256"),RandomizerSession.Digest(randomizerConfiguration));
+        }
         Directory.CreateDirectory(SaveFolder(root, selectedGame.Id));
         Directory.CreateDirectory(AppLayout.Work(root, selectedGame.Id));
         var start = new ProcessStartInfo(
@@ -110,10 +132,42 @@ public sealed class GameSession {
             LobbyAutomation.CreateKeyboardQueue(keyboardQueue);
             Set("REO_COOP_KEYBOARD_FILE", keyboardQueue);
         }
-        string cheatFile = Cheats.Export(settings, Logs);
+        string cheatFile = Cheats.Export(settings, Logs, selectedMods);
+        Mods.SaveSession(selectedMods, Logs);
+        var weaponShuffle = selectedMods.SingleOrDefault(m => m.WeaponShuffle != null)?.WeaponShuffle;
+        if (weaponShuffle != null) {
+            if (!SupportsWeaponShuffle(image))
+                throw new IOException("This mod needs a game build with weapon shuffle support. Rebuild or update the game.");
+            Set("REO_MOD_WEAPON_SHUFFLE_SEED", weaponShuffle.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
         if (cheatFile.Length != 0)
             Set("REO_CHEATS_FILE", cheatFile);
+        var itemRandomizer = selectedMods.SingleOrDefault(m => m.ItemRandomizer != null)?.ItemRandomizer;
+        if (itemRandomizer != null) {
+            if (!HasMarker(image, "[MOD-ITEM-RANDOMIZER-1] installed seed=%u"))
+                throw new IOException("This mod needs a game build with item randomizer support. Rebuild or update the game.");
+            Set("REO_MOD_ITEM_RANDOMIZER_SEED", itemRandomizer.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            if (itemRandomizer.ExcludeItemTypes.Count != 0) {
+                if (!HasMarker(image, "[MOD-ITEM-EXCLUSIONS-1] installed"))
+                    throw new IOException("This mod needs a game build with item randomizer exclusions. Rebuild or update the game.");
+                Set("REO_MOD_ITEM_EXCLUDE_TYPES", string.Join(",", itemRandomizer.ExcludeItemTypes.Select(
+                    t => t.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+            }
+        }
         Set("REO_ISO", Path.GetFullPath(iso));
+        var enemyRandomizer = selectedMods.SingleOrDefault(m => m.EnemyRandomizer != null)?.EnemyRandomizer;
+        if (enemyRandomizer != null) {
+            bool species = enemyRandomizer.Mode == "enemyTypes";
+            if (!(species ? SupportsEnemySpawnRandomizer(image) : SupportsZombieRandomizer(image)))
+                throw new IOException("This mod needs a game build supporting its enemy randomizer mode. Rebuild or update the game.");
+            Set(species ? "REO_MOD_ENEMY_SPAWN_SEED" : "REO_MOD_ZOMBIE_RANDOMIZER_SEED",
+                enemyRandomizer.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            if(species) {
+                Set("REO_MOD_ENEMY_POOL", string.Join(";",enemyRandomizer.Pool.Select(p =>
+                    string.Join(":",p.Type,p.Model,p.Health,p.Behavior,p.Posture,p.Weight))));
+                Set("REO_MOD_ENEMY_SOURCE_BEHAVIORS",string.Join(",",enemyRandomizer.SourceBehaviors));
+            }
+        }
         Set("REO_NATURAL", "1");
         Set("REO_TURBO", "1"); // existing normal-speed scheduling mode, no time warp
         Set("REO_GS_BACKEND", "parallel");
@@ -138,17 +192,24 @@ public sealed class GameSession {
         Set("REO_GAMMA",
             settings.Gamma.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         if (diagnosticRoute != null) {
-            Set("REO_TEST_ROUTE", diagnosticRoute);
-            if (settings.CheatsEnabled)
+            Set("REO_TEST_ROUTE", diagnosticRoute is "gameplay-pickup" or "gameplay-preview" or "gameplay-enemies" or "gameplay-enemy-combat" ? "gameplay" : diagnosticRoute);
+            if (settings.CheatsEnabled || selectedMods.Count > 0)
                 Set("REO_CHEAT_DIAG", "1");
         }
-        if (diagnosticRoute == "gameplay") {
-            Set("REO_TEST_ROOM_SOAK", "1");
+        if (diagnosticRoute is "gameplay" or "gameplay-pickup") {
+            Set(diagnosticRoute == "gameplay-pickup" ? "REO_TEST_INTERACT_QUIT" : "REO_TEST_ROOM_SOAK", "1");
+            if (diagnosticRoute == "gameplay-pickup") Set("REO_TEST_WEAPON_PICKUP", "1");
             Set("REO_GAME_CLOCK_LOG", "1");
             Set("REO_GAME_CLOCK_FROM_SECS", "0");
             Set("REO_GAME_CLOCK_SECONDS", "300");
             Set("REO_GAME_CLOCK_FILE", Path.Combine(Logs, "clock.csv"));
         }
+        if (diagnosticRoute == "gameplay-preview") {
+            Set("REO_SHOT_AT", "55,70");
+            Set("REO_SHOT_RAM", "1");
+        }
+        if (diagnosticRoute is "gameplay-enemies" or "gameplay-enemy-combat") Set("REO_TEST_ENEMIES", "1");
+        if (diagnosticRoute == "gameplay-enemy-combat") Set("REO_TEST_WORLD_TARGET", "8180,13340,30");
         // GPU movies when the rendering GPU has a hardware MPEG-2 decoder and the player left them
         // on in Graphics; otherwise the original CPU decoder.
         MovieDecoderChoice movies = await MovieDecoder.Choose(cancel);
@@ -182,12 +243,18 @@ public sealed class GameSession {
         var stderr = new StreamWriter(Path.Combine(Logs, "stderr.log")) { AutoFlush = true };
         AutomaticAccount? account = null;
         Process = new Process { StartInfo = start };
+        if (settings.ResolvedCoopMode == "host") HostRandomizerConfiguration = randomizerConfiguration;
         try {
             account = automaticAccount
                           ? new AutomaticAccount(Settings.Home, settings, text => NetworkStatus = text,
                                                  MainWindow.SignupEndpoint(settings, null))
                           : null;
             account?.Bind(start);
+            if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join") {
+                var current=await RandomizerSession.Fetch(settings.CoopHost,cancel);
+                if (!current.AsSpan().SequenceEqual(randomizerConfiguration))
+                    throw new IOException("The host started a different session while your game was preparing. Press Play again to use its settings.");
+            }
             cancel.ThrowIfCancellationRequested();
             if (!Process.Start())
                 throw new IOException("Windows could not start the game.");
@@ -205,6 +272,8 @@ public sealed class GameSession {
             _ = automation.Run();
         }
         _ = RecordExit(Process, Logs, cardLease, account, automation);
+        if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join")
+            _ = WatchRandomizerSession(Process,Logs,settings.CoopHost,randomizerConfiguration);
         controller.GameProcessId = Process.Id;
         _ = Pump(Process.StandardOutput, stdout);
         _ = Pump(Process.StandardError, stderr, account == null ? null : account.Observe);
@@ -247,6 +316,25 @@ public sealed class GameSession {
                 new JsonSerializerOptions { WriteIndented = true }));
         _ = ApplyWindow(Process, settings);
     }
+    async Task WatchRandomizerSession(Process process,string logs,string host,byte[] expected) {
+        using var stopped=new CancellationTokenSource();
+        _ = process.WaitForExitAsync().ContinueWith(_ => { try { stopped.Cancel(); } catch(ObjectDisposedException) { } },TaskScheduler.Default);
+        while(!stopped.IsCancellationRequested) {
+            try {
+                await Task.Delay(2000,stopped.Token);
+                var current=await RandomizerSession.Fetch(host,stopped.Token);
+                if(current.AsSpan().SequenceEqual(expected)) continue;
+                const string message="The host changed sessions. Relaunch to synchronize its randomizer settings.";
+                randomizerStopReason=message;
+                NetworkStatus=message;
+                await File.WriteAllTextAsync(Path.Combine(logs,"randomizer-session-error.txt"),message);
+                if(!process.HasExited) process.CloseMainWindow();
+                return;
+            } catch(OperationCanceledException) { return; }
+              catch(IOException) { /* Native networking handles a disconnected host. */ }
+              catch(System.Net.Sockets.SocketException) { }
+        }
+    }
     async Task RecordExit(Process process, string logs, FileStream cardLease,
                           AutomaticAccount? account, LobbyAutomation? automation) {
         try {
@@ -254,7 +342,7 @@ public sealed class GameSession {
         } finally {
             automation?.Dispose();
             account?.Dispose();
-            NetworkStatus = null;
+            NetworkStatus = randomizerStopReason;
             cardLease.Dispose();
         }
         await File.WriteAllTextAsync(Path.Combine(logs, "exit.json"), JsonSerializer.Serialize(new {
@@ -262,8 +350,14 @@ public sealed class GameSession {
         }));
     }
     // Drain pipes independently of the UI: native window messages can wait on the game.
-    internal static bool SupportsAutomaticAccount(string image) {
-        byte[] marker = System.Text.Encoding.ASCII.GetBytes("[COOP-AUTO] native-password-applied %u");
+    internal static bool SupportsAutomaticAccount(string image) => HasMarker(image, "[COOP-AUTO] native-password-applied %u");
+    internal static bool SupportsWeaponShuffle(string image) => HasMarker(image, "[MOD-WEAPON-SHUFFLE-1] installed seed=%u");
+    internal static bool SupportsZombieRandomizer(string image) => HasMarker(image, "[MOD-ZOMBIE-RANDOMIZER-1] installed seed=%u");
+    internal static bool SupportsEnemySpawnRandomizer(string image) =>
+        HasMarker(image, "[MOD-ENEMY-SPAWN-1] installed seed=%u") &&
+        HasMarker(image, RandomizerSession.Capability) && HasMarker(image, "[MOD-ENEMY-ASSETS-1]");
+    static bool HasMarker(string image, string value) {
+        byte[] marker = System.Text.Encoding.ASCII.GetBytes(value);
         byte[] buffer = new byte[1024 * 1024 + marker.Length];
         using var source = File.OpenRead(image);
         int retained = 0, read;

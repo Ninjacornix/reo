@@ -49,6 +49,8 @@ static class SelfTest {
             checks++;
         }
         DiscImportTests.Run(Check);
+        ModsTests.Run(Check);
+        Task.Run(() => RandomizerSessionTests.Run(Check)).GetAwaiter().GetResult();
         OnlineOptionsTests.Run(Check);
         CoopAutomationTests.Run(Check);
         GameImageCacheTests.Run(Check);

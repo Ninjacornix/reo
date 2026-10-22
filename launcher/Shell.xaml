@@ -18,7 +18,7 @@
      <Button x:Name="NavController" Tag="Controller" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Controls" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSaves" Tag="Saves" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Save games" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavCoop" Tag="Coop" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Co-op" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
-     <Button x:Name="NavMods" Tag="Mods" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}" Visibility="Collapsed"><TextBlock Text="Mods" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
+     <Button x:Name="NavMods" Tag="Mods" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Mods" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavCheats" Tag="Cheats" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Cheats" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSetup" Tag="Setup" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Game files" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavLogs" Tag="Logs" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Log" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
@@ -203,7 +203,13 @@
        </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageMods" Visibility="Collapsed">
-       <TextBlock Text="Mod support is not available in this build." Style="{StaticResource Hint}" Margin="0,8,0,0"/>
+       <TextBlock Text="Your mods" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+       <TextBlock x:Name="ModHelp" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,20"/>
+       <StackPanel x:Name="ModControls">
+        <WrapPanel><Button Content="Import mod" Click="ImportMod" Margin="0,0,10,0"/><Button Content="Open mods folder" Click="OpenModFolder" Margin="0,0,10,0"/><Button Content="Reload" Click="ReloadMods"/></WrapPanel>
+        <StackPanel x:Name="ModList" Margin="0,16,0,0"/>
+        <TextBlock Text="To remove a mod, untick it and delete its JSON file from the mods folder. To create one, start with examples/mods/no-infection.json; see docs/MODDING.md in the project." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,20,0,0"/>
+       </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageCheats" Visibility="Collapsed">
        <TextBlock x:Name="CheatGame" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>

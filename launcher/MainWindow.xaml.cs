@@ -55,6 +55,7 @@ public partial class MainWindow : Window {
         UpdateSaves();
         InitializeInput();
         RefreshGameUi();
+        RefreshMods();
         SourceInitialized += (_, _) => controller.Attach(new WindowInteropHelper(this).Handle);
         timer.Tick += Tick;
         timer.Start();
@@ -135,6 +136,8 @@ public partial class MainWindow : Window {
             UpdateSaves();
         if (name == "Cheats")
             RefreshCheats();
+        if (name == "Mods")
+            RefreshMods();
         if (name == "Setup")
             _ = EstimateRemoval();
         AnimatePageChange();
@@ -557,6 +560,27 @@ public partial class MainWindow : Window {
                 snapshot.EnabledCheats = Cheats.Builtins("file1").Select(g => g.Id).ToList();
             }
             string? testCheatFile = null;
+            int testMod = Array.IndexOf(args, "--test-mod");
+            if (testMod >= 0) {
+                if (testMod + 1 >= args.Length)
+                    throw new ArgumentException("--test-mod requires an installed mod ID.");
+                snapshot.EnabledMods = new() { args[testMod + 1] };
+                snapshot.CheatsEnabled = false;
+                snapshot.EnabledCheats.Clear();
+                snapshot.CoopMode = "offline";
+                snapshot.HostServer = false;
+                snapshot.CoopHost = "";
+                diagnosticRoute = "gameplay";
+            }
+            if (args.Contains("--test-no-mods")) {
+                snapshot.EnabledMods.Clear();
+                snapshot.CheatsEnabled = false;
+                snapshot.EnabledCheats.Clear();
+            }
+            if (args.Contains("--test-pickup")) diagnosticRoute = "gameplay-pickup";
+            if (args.Contains("--test-room-preview")) diagnosticRoute = "gameplay-preview";
+            if (args.Contains("--test-enemies")) diagnosticRoute = "gameplay-enemies";
+            if (args.Contains("--test-enemy-combat")) diagnosticRoute = "gameplay-enemy-combat";
             if (args.Contains("--test-cheats")) {
                 string folder = Cheats.Folder("file1");
                 Directory.CreateDirectory(folder);
@@ -577,6 +601,10 @@ public partial class MainWindow : Window {
             previousRunning = true;
             await Task.Delay(args.Contains("--test-auto-network")    ? 240000
                              : args.Contains("--test-quick-display") ? 25000
+                             : args.Contains("--test-room-preview")  ? 80000
+                               : args.Contains("--test-enemy-long") ? 420000
+                               : args.Contains("--test-enemies") || args.Contains("--test-enemy-combat") ? 180000
+                             : args.Contains("--test-pickup")        ? 120000
                              : args.Contains("--test-room")          ? 180000
                              : args.Contains("--test-memory-card")   ? 300000
                              : displayTest ? args.Contains("--test-character") ? 110000 : 65000

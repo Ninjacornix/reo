@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "id": "example.no-infection",
+  "name": "No infection",
+  "version": "1.0.0",
+  "description": "Keeps your living character's infection gauge at zero. A simple example mod for offline play.",
+  "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "effects": ["infection"],
+  "patches": []
+}

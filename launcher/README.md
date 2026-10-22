@@ -1,6 +1,6 @@
 # Launcher
 
-The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.12 (1.0 Alpha) uses a
+The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.15 (1.0 Alpha) uses a
 framework-dependent launcher, automatic compiler setup and guided first-run steps. See
 [requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
 The extracted single-file launcher is checked separately for window startup;

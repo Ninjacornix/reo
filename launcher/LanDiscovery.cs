@@ -54,8 +54,10 @@ public static class LanDiscovery {
         readonly UdpClient socket;
         readonly CancellationTokenSource stop = new();
         readonly Func<Game> describe;
-        public Responder(Func<Game> describe) {
+        readonly Func<byte[]?>? randomizers;
+        public Responder(Func<Game> describe, Func<byte[]?>? randomizers = null) {
             this.describe = describe;
+            this.randomizers = randomizers;
             socket = new UdpClient(new IPEndPoint(IPAddress.Any, Port));
             _ = Serve();
         }
@@ -72,7 +74,10 @@ public static class LanDiscovery {
                         return;
                     continue;
                 }
-                if (!request.Buffer.AsSpan().SequenceEqual(Query))
+                bool discovery = request.Buffer.AsSpan().SequenceEqual(Query);
+                bool mods = request.Buffer.Length == RandomizerSession.QueryPrefix.Length + 16 &&
+                            request.Buffer.AsSpan().StartsWith(RandomizerSession.QueryPrefix);
+                if (!discovery && !mods)
                     continue;
                 // Bound the work a flood of queries can cause.
                 long now = Environment.TickCount64;
@@ -83,7 +88,8 @@ public static class LanDiscovery {
                 if (++answered > 20)
                     continue;
                 try {
-                    byte[] reply = Encode(describe());
+                    byte[] reply = discovery ? Encode(describe()) :
+                        RandomizerSession.Reply(request.Buffer, randomizers?.Invoke())!;
                     await socket.SendAsync(reply, request.RemoteEndPoint, stop.Token).ConfigureAwait(false);
                 } catch (Exception error) when (error is OperationCanceledException or
                                                     ObjectDisposedException or SocketException) {

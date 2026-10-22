@@ -1,11 +1,23 @@
 # Prerelease packaging
 
-Current target: **v1.0.13**, shown in the launcher as **1.0 Alpha**, marked
-prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.13)". Tags stay numeric so
+Current target: **v1.0.15**, shown in the launcher as **1.0 Alpha**, marked
+prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.15)". Tags stay numeric so
 installed launchers offer the update. .NET is an
 external prerequisite. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.15
+
+Ship the unified `examples/mods/randomizer.json` package and the Mods UI, including migration of the retired samples and removal of Practice Mode. Native hooks add item/gun and seeded enemy spawn randomization, persistent spawn choices, original entrance handoffs, host-controlled settings and an optional 32 MB native asset bank.
+
+Refresh `inputs-v113f` using its unchanged recompiler, replacing `recomp/reo_bootstrap.cpp`, `recomp/overrides/reo_hw_bridge.cpp`, `recomp/overrides/reo_missing_entries.cpp` and the eight runtime files in patch `0100-optional-native-asset-bank.patch`. Add `recomp/overrides/reo_mods.h` and the three `runtime/mods/*.h` headers. Keep generated instruction catalogues from the previous kit rather than copying local developer witness tables. Preserve the dirty submodule.
+
+Kit manifest SHA-256: `cbdfd0fe51f3fc50a929ab62021fbcde91d6a4a010b54ef0df3a2207f18ede76`.
+Input archive SHA-256: `add67f5c780e5aefc41dd17978d15e91bfb05fbf21c3a7d457bae712f615ff6f`.
+The frozen dependency source archive is unchanged; additional matching SDK patches remain in the input kit's `notices/source-updates`. New runtime headers require a full compilation and the release notes must contain `<!-- reo:requires-rebuild -->`.
+
+Verification workspace: `build-ninja/release-v115`; the existing `release-v112/verify/work` supplies resumable object storage. No built game is distributed. Full scenario completion, save/resume and mixed-enemy co-op gameplay are unverified and must remain disclosed.
 
 ## v1.0.13
 

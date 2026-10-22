@@ -104,10 +104,10 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
     //   0x1100C000 → phys 0x1100C000 → masked to rdram offset 0x0100C000
     uint8_t* rdram = runtime.memory().getRDRAM();
 
-    uint8_t* vu0_code = rdram + (PS2_VU0_CODE_BASE & PS2_RAM_MASK);
-    uint8_t* vu0_data = rdram + (PS2_VU0_DATA_BASE & PS2_RAM_MASK);
-    uint8_t* vu1_code = rdram + (PS2_VU1_CODE_BASE & PS2_RAM_MASK);
-    uint8_t* vu1_data = rdram + (PS2_VU1_DATA_BASE & PS2_RAM_MASK);
+    uint8_t* vu0_code = rdram + (PS2_VU0_CODE_BASE & ps2RamBackingMask());
+    uint8_t* vu0_data = rdram + (PS2_VU0_DATA_BASE & ps2RamBackingMask());
+    uint8_t* vu1_code = rdram + (PS2_VU1_CODE_BASE & ps2RamBackingMask());
+    uint8_t* vu1_data = rdram + (PS2_VU1_DATA_BASE & ps2RamBackingMask());
 
     // Initialize VU interpreters
     m_vu0 = new reo::VUInterpreter(0, vu0_code, PS2_VU0_CODE_SIZE, vu0_data, PS2_VU0_DATA_SIZE);
@@ -230,9 +230,9 @@ void ReoHwBridge::onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc, 
 
             if (qwc > 0) {
                 // Normal mode: data at madr, qwc quadwords
-                uint32_t phys = madr & PS2_RAM_MASK;
+                uint32_t phys = madr & ps2RamBackingMask();
                 uint32_t bytes = qwc * 16;
-                if (phys + bytes <= PS2_RAM_SIZE) {
+                if (phys + bytes <= ps2RamBackingBytes) {
                     REO_TRACE_DMA_GIF(madr, qwc, rdram + phys, bytes);
                     self->m_gs->submit_path3(rdram + phys, bytes);
                 }
@@ -242,8 +242,8 @@ void ReoHwBridge::onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc, 
                 int chainDepth = 0;
                 constexpr int MAX_CHAIN = 256;
                 while (chainDepth < MAX_CHAIN) {
-                    uint32_t physTag = curTag & PS2_RAM_MASK;
-                    if (physTag + 16 > PS2_RAM_SIZE)
+                    uint32_t physTag = curTag & ps2RamBackingMask();
+                    if (physTag + 16 > ps2RamBackingBytes)
                         break;
 
                     uint64_t tag;
@@ -269,9 +269,9 @@ void ReoHwBridge::onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc, 
                             // CNT/NEXT/CALL/RET/END: data follows inline
                             dataAddr = curTag + 16;
                         }
-                        uint32_t phys = dataAddr & PS2_RAM_MASK;
+                        uint32_t phys = dataAddr & ps2RamBackingMask();
                         uint32_t bytes = tagQwc * 16;
-                        if (phys + bytes <= PS2_RAM_SIZE) {
+                        if (phys + bytes <= ps2RamBackingBytes) {
                             REO_TRACE_DMA_GIF(dataAddr, tagQwc, rdram + phys, bytes);
                             self->m_gs->submit_path3(rdram + phys, bytes);
                         }
@@ -286,8 +286,8 @@ void ReoHwBridge::onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc, 
                         // a sentinel REFE/QWC=0 at display list buffer start.
                         // The ADDR field (masked to RAM) points to the real chain.
                         if (tagQwc == 0 && chainDepth == 0) {
-                            uint32_t nextAddr = tagAddr & PS2_RAM_MASK;
-                            if (nextAddr + 16 <= PS2_RAM_SIZE && nextAddr != 0) {
+                            uint32_t nextAddr = tagAddr & ps2RamBackingMask();
+                            if (nextAddr + 16 <= ps2RamBackingBytes && nextAddr != 0) {
                                 static int skipLog = 0;
                                 if (skipLog < 10) {
                                     printf("[HW-BRIDGE] GIF: skipping sentinel REFE/QWC=0, chain "
@@ -332,9 +332,9 @@ void ReoHwBridge::onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc, 
             self->m_vif1Dmas++;
 
             if (qwc > 0) {
-                uint32_t phys = madr & PS2_RAM_MASK;
+                uint32_t phys = madr & ps2RamBackingMask();
                 uint32_t bytes = qwc * 16;
-                if (phys + bytes <= PS2_RAM_SIZE)
+                if (phys + bytes <= ps2RamBackingBytes)
                     REO_TRACE_DMA_VIF1(madr, qwc, tadr, rdram + phys, bytes);
                 self->processVif1Dma(madr, qwc, rdram);
             } else {
@@ -474,9 +474,9 @@ const uint32_t* ReoHwBridge::getFramebuffer(int* width, int* height, void* user)
 // ── VIF1 DMA processing ────────────────────────────────────────────
 
 void ReoHwBridge::processVif1Dma(uint32_t madr, uint32_t qwc, const uint8_t* rdram) {
-    uint32_t phys = madr & PS2_RAM_MASK;
+    uint32_t phys = madr & ps2RamBackingMask();
     uint32_t bytes = qwc * 16;
-    if (phys + bytes > PS2_RAM_SIZE)
+    if (phys + bytes > ps2RamBackingBytes)
         return;
 
     processVifCommands(rdram + phys, bytes, rdram);
@@ -488,8 +488,8 @@ void ReoHwBridge::processVif1DmaChain(uint32_t tadr, const uint8_t* rdram) {
     uint32_t currentTag = tadr;
 
     for (int i = 0; i < MAX_CHAIN; i++) {
-        uint32_t physTag = currentTag & PS2_RAM_MASK;
-        if (physTag + 16 > PS2_RAM_SIZE)
+        uint32_t physTag = currentTag & ps2RamBackingMask();
+        if (physTag + 16 > ps2RamBackingBytes)
             break;
 
         uint64_t tag;
@@ -535,9 +535,9 @@ void ReoHwBridge::processVif1DmaChain(uint32_t tadr, const uint8_t* rdram) {
         }
 
         if (tagQwc > 0 && dataAddr != 0) {
-            uint32_t phys = dataAddr & PS2_RAM_MASK;
+            uint32_t phys = dataAddr & ps2RamBackingMask();
             uint32_t bytes = tagQwc * 16;
-            if (phys + bytes <= PS2_RAM_SIZE) {
+            if (phys + bytes <= ps2RamBackingBytes) {
                 processVifCommands(rdram + phys, bytes, rdram);
             }
         }
@@ -729,9 +729,9 @@ void ReoHwBridge::processVifCommands(const uint8_t* data, uint32_t size, const u
                                 : nullptr; // Can't directly access VU data memory here
                         // The VUInterpreter constructor stored the data_mem pointer,
                         // but we need the bridge's pointer. Use the rdram offset.
-                        // VU1 data memory is at rdram + (0x1100C000 & PS2_RAM_MASK)
+                        // VU1 data memory is at rdram + (0x1100C000 & ps2RamBackingMask())
                         uint8_t* vu1_data_mem =
-                            const_cast<uint8_t*>(rdram) + (PS2_VU1_DATA_BASE & PS2_RAM_MASK);
+                            const_cast<uint8_t*>(rdram) + (PS2_VU1_DATA_BASE & ps2RamBackingMask());
                         reo_source_instrumentation::copyBytes(vu1_data_mem + vuDst, data + pos,
                                                               num * 16);
                     }
@@ -807,8 +807,8 @@ static constexpr uint32_t SIF_LIBSD = 0x80000701;
 
 // Helper: read a uint32 from rdram
 static inline uint32_t rdramRead32(const uint8_t* rdram, uint32_t addr) {
-    uint32_t phys = addr & PS2_RAM_MASK;
-    if (phys + 4 > PS2_RAM_SIZE)
+    uint32_t phys = addr & ps2RamBackingMask();
+    if (phys + 4 > ps2RamBackingBytes)
         return 0;
     uint32_t v;
     reo_source_instrumentation::copyBytesForBank(rdram, &v, rdram + phys, 4);
@@ -817,8 +817,8 @@ static inline uint32_t rdramRead32(const uint8_t* rdram, uint32_t addr) {
 
 // Helper: write a uint32 to rdram
 static inline void rdramWrite32(uint8_t* rdram, uint32_t addr, uint32_t val) {
-    uint32_t phys = addr & PS2_RAM_MASK;
-    if (phys + 4 > PS2_RAM_SIZE)
+    uint32_t phys = addr & ps2RamBackingMask();
+    if (phys + 4 > ps2RamBackingBytes)
         return;
     reo_source_instrumentation::copyBytesForBank(rdram, rdram + phys, &val, 4);
 }
@@ -934,14 +934,14 @@ uint16_t pad2AutomaticAccount(uint8_t* rd, double now) {
     menu.choice = byte(0x6DF179);
     if (menu.step == 6 && word(0x69BCD8) == 5) {
         const uint32_t profile = word(0x69BCC0);
-        if (profile >= 0x100000 && profile <= PS2_RAM_SIZE - 0x50) {
+        if (profile >= 0x100000 && profile <= ps2RamBackingBytes - 0x50) {
             menu.profileStage = byte(profile + 0x20);
             menu.profileCursor = byte(profile + 0x10);
             menu.profileReady = byte(profile + 0x4C) == 1 && byte(profile + 0x24) > 0;
         }
     }
     const uint32_t keyboard = word(0x6436D0);
-    menu.keyboardValid = keyboard >= 0x100000 && keyboard <= PS2_RAM_SIZE - 0x700;
+    menu.keyboardValid = keyboard >= 0x100000 && keyboard <= ps2RamBackingBytes - 0x700;
     if (menu.keyboardValid) {
         menu.keyboardActive = byte(keyboard + 0x28) == 1;
         menu.keyboardDone = byte(keyboard + 0x36) != 0;
@@ -1034,7 +1034,7 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
     };
     auto pointer = [](uint32_t a, uint32_t bytes) {
         // Reject null, MMIO and unrelated aliases before dereferencing.
-        return a >= 0x100000u && a < PS2_RAM_SIZE && bytes <= PS2_RAM_SIZE - a;
+        return a >= 0x100000u && a < ps2RamBackingBytes && bytes <= ps2RamBackingBytes - a;
     };
     const uint32_t front = word(0x5D4898u);
     uint32_t state = 0;
@@ -1292,10 +1292,12 @@ uint16_t pad2TestWorldTarget(uint8_t* rd, double now, reo::DualShock2State& pad)
         reo_source_instrumentation::bankRead(rd, rd + (0x4BADEDu)) >= 4u ||
         reo_source_instrumentation::bankRead(rd, rd + (0x4BAE07u)) != 0)
         return 0;
-    const uint32_t actor =
-        0x4A5C30u + uint32_t(reo_source_instrumentation::bankRead(rd, rd + (0x4BADEDu))) * 0x10E0u;
+    static const bool enemyTest = std::getenv("REO_TEST_ENEMIES") != nullptr;
+    const uint32_t actor = 0x4A5C30u +
+        (enemyTest ? 0u : uint32_t(reo_source_instrumentation::bankRead(rd, rd + (0x4BADEDu)))) * 0x10E0u;
     if (!reo_source_instrumentation::bankRead(rd, rd + (actor)) ||
-        reo_source_instrumentation::bankRead(rd, rd + (actor + 0xBD0u)))
+        (enemyTest ? int16_t(half(actor + 0x544u)) <= 0
+                   : reo_source_instrumentation::bankRead(rd, rd + (actor + 0xBD0u)) != 0))
         return 0;
     const float x = scalar(actor + 0x38u), z = scalar(actor + 0x40u);
     const double cx = double(scalar(0x324144u)) - scalar(0x324138u);
@@ -1429,6 +1431,9 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
         PickupRelease,
         PickupConfirm,
         PickupFinish,
+        InventoryOpen,
+        InventoryView,
+        InventoryClose,
         Select,
         ReleaseSelect,
         MenuReady,
@@ -1476,6 +1481,9 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
                                   "pickup-release",
                                   "pickup-confirm",
                                   "pickup-finish",
+                                  "inventory-open",
+                                  "inventory-view",
+                                  "inventory-close",
                                   "select",
                                   "release-select",
                                   "menu-ready",
@@ -1512,7 +1520,7 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
         return v;
     };
     auto valid = [](uint32_t a, uint32_t size) {
-        return a >= 0x100000u && a < PS2_RAM_SIZE && size <= PS2_RAM_SIZE - a;
+        return a >= 0x100000u && a < ps2RamBackingBytes && size <= ps2RamBackingBytes - a;
     };
     auto resultsWork = [&]() {
         // Original 603740/sub2 calls ovl9 8270D0. Its 826FE0 initializer
@@ -1642,8 +1650,8 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
         return now - entered >= 0.12 && word(0x324308u) == 0 && word(0x32430Cu) == 0 &&
                half(0x324264u) == 0 && half(0x324266u) == 0 &&
                (fetched == 0 || fetched == 0xFFFFu) &&
-               reo_source_instrumentation::bankRead(rd, rd + (0x2B09E6u)) == 128u &&
-               reo_source_instrumentation::bankRead(rd, rd + (0x2B09E7u)) == 128u;
+               std::abs(int(reo_source_instrumentation::bankRead(rd, rd + (0x2B09E6u))) - 128) <= 1 &&
+               std::abs(int(reo_source_instrumentation::bankRead(rd, rd + (0x2B09E7u))) - 128) <= 1;
     };
     if (stage == Done)
         return true;
@@ -1665,13 +1673,17 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
         stop("unexpected room transition");
         return true;
     }
-    const uint32_t actor =
-        0x4A5C30u + uint32_t(reo_source_instrumentation::bankRead(rd, rd + (0x4BADEDu))) * 0x10E0u;
+    static const bool weaponPickup = std::getenv("REO_TEST_WEAPON_PICKUP") != nullptr;
+    // This offline diagnostic selects Kevin in slot 0. Pin that actor for the
+    // test instead of following a global selector from the asynchronous worker.
+    const uint32_t actor = 0x4A5C30u +
+        (weaponPickup ? 0u : uint32_t(reo_source_instrumentation::bankRead(rd, rd + (0x4BADEDu)))) * 0x10E0u;
     if (stage <= PickupFinish &&
         (reo_source_instrumentation::bankRead(rd, rd + (0x4BADD0u)) != 2u ||
          reo_source_instrumentation::bankRead(rd, rd + (0x4BADEDu)) >= 4u ||
          !valid(actor, 0x10E0u) || !reo_source_instrumentation::bankRead(rd, rd + (actor)) ||
-         reo_source_instrumentation::bankRead(rd, rd + (actor + 0xBD0u)) ||
+         (weaponPickup ? int16_t(half(actor + 0x544u)) <= 0
+                       : reo_source_instrumentation::bankRead(rd, rd + (actor + 0xBD0u)) != 0) ||
          reo_source_instrumentation::bankRead(rd, rd + (0x4BADF8u)) ||
          reo_source_instrumentation::bankRead(rd, rd + (0x4BAE8Du)) ||
          reo_source_instrumentation::bankRead(rd, rd + (0x4BADEEu))))
@@ -1685,7 +1697,11 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
           reo_source_instrumentation::bankRead(rd, rd + (actor + 9u)) == 0x16u))
         return true;
     const double x = scalar(actor + 0x38u), z = scalar(actor + 0x40u);
-    const double dx = 8420.0 - x, dz = 13020.0 - z;
+    const double targetX = weaponPickup ? 8460.0 : 8420.0;
+    const double targetZ = weaponPickup ? 13014.0 : 13020.0;
+    const double faceX = weaponPickup ? 8494.0 : 8420.0;
+    const double faceZ = weaponPickup ? 12923.0 : 12945.0;
+    const double dx = targetX - x, dz = targetZ - z;
     auto steer = [&](double heading, double magnitude) {
         constexpr double tau = 6.2831853071795864769;
         const double cx = double(scalar(0x324144u)) - scalar(0x324138u);
@@ -1694,10 +1710,16 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
             return false;
         const int16_t camera = static_cast<int16_t>(int(std::atan2(cx, cz) * 65536 / tau) & 0xFFF0);
         const double relative = heading - double(camera) * tau / 65536;
-        pad.left_x =
-            uint8_t(std::clamp(int(std::lround(128 - magnitude * std::sin(relative))), 0, 255));
-        pad.left_y =
-            uint8_t(std::clamp(int(std::lround(128 - magnitude * std::cos(relative))), 0, 255));
+        auto axis = [&](double component) {
+            double delta = magnitude * component;
+            // The guest removes a per-axis dead zone, which otherwise snaps
+            // shallow facing angles onto a cardinal direction.
+            if (weaponPickup && std::abs(component) > 0.001)
+                delta = std::copysign(41.0 + (magnitude - 41.0) * std::abs(component), component);
+            return uint8_t(std::clamp(int(std::lround(128 - delta)), 0, 255));
+        };
+        pad.left_x = axis(std::sin(relative));
+        pad.left_y = axis(std::cos(relative));
         return true;
     };
     auto projectionInside = [&](double margin = 0) {
@@ -1705,7 +1727,15 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
         const double yaw = double(int16_t(half(actor + 0x92u))) * tau / 65536;
         const double distance = double(scalar(actor + 0x1B4u)) + 46;
         const double px = x + distance * std::sin(yaw), pz = z + distance * std::cos(yaw);
-        return std::isfinite(distance) && px >= 8390 + margin && px <= 8450 - margin &&
+        if (!std::isfinite(distance)) return false;
+        if (weaponPickup) {
+            // Stand on the accessible side of the bar and face the original
+            // handle-3 item. Let the game's own pickup range test decide reach.
+            const double tx = faceX - x, tz = faceZ - z;
+            const double length = std::sqrt(tx * tx + tz * tz);
+            return length > 0 && (tx * std::sin(yaw) + tz * std::cos(yaw)) / length > 0.99;
+        }
+        return px >= 8390 + margin && px <= 8450 - margin &&
                pz >= 12900 + margin && pz <= 12990 - margin;
     };
     auto settledIdle = [&]() {
@@ -1756,12 +1786,13 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
         const uint32_t item = 0x3C5630u + uint32_t(pickupHandle) * 0x3Cu;
         std::fprintf(stderr,
                      "[TEST-INTERACT-QUIT] PICKUP PROOF handle=%u item=%u slot=%u "
-                     "before=%u/%u/%u/%u after=%u/%u/%u/%u owner=%u world=%u active=%u\n",
+                     "before=%u/%u/%u/%u after=%u/%u/%u/%u owner=%u world=%u active=%u type=%04x quantity=%u metadata=%u\n",
                      pickupHandle, pickupItem, slot, inventoryBeforePickup[0],
                      inventoryBeforePickup[1], inventoryBeforePickup[2], inventoryBeforePickup[3],
                      inventory[0], inventory[1], inventory[2], inventory[3], half(item + 0x28u),
                      reo_source_instrumentation::bankRead(rd, rd + (item + 3u)),
-                     reo_source_instrumentation::bankRead(rd, rd + (item)));
+                     reo_source_instrumentation::bankRead(rd, rd + (item)), half(item + 6u),
+                     half(item + 0x24u), reo_source_instrumentation::bankRead(rd, rd + item + 0x2bu));
         return true;
     };
     if (now >= nextReport) {
@@ -1843,7 +1874,7 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
             // Original 1A6090 removes 40/41 raw units per axis; 6621F0 then
             // ignores processed magnitudes below 16. Raw magnitude 72 remains
             // above that gate at every angle (minimum 19), unlike 48 or 64.
-            else if (!steer(std::atan2(8420.0 - x, 12945.0 - z), 72))
+            else if (!steer(std::atan2(faceX - x, faceZ - z), 72))
                 stop("invalid facing camera");
             break;
         case ReleaseFace:
@@ -1911,8 +1942,11 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
                              task, half(task + 0x12u), word(task + 0x14u), half(task + 0x0Cu));
                 go(Message);
             } else {
-                buttons = pad2TestActorAction(rd, 0x20u);
-                if (!buttons)
+                // Retry a normal press/release edge if the initial press lands
+                // while the actor is finishing an animation.
+                buttons = (!weaponPickup || std::fmod(now - entered, 1.0) < 0.4)
+                    ? pad2TestActorAction(rd, 0x20u) : 0;
+                if (!buttons && !weaponPickup)
                     stop("invalid original interaction mapping");
             }
             break;
@@ -1961,12 +1995,29 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
                 reo_source_instrumentation::bankRead(rd, rd + (actor + 8u)) == 1u &&
                 reo_source_instrumentation::bankRead(rd, rd + (actor + 9u)) == 0u) {
                 if (acquired)
-                    go(Select);
+                    go(weaponPickup ? InventoryOpen : Select);
                 else
                     stop("resolved idle without pickup inventory proof");
             }
             break;
         }
+        case InventoryOpen:
+            if (reo_source_instrumentation::bankRead(rd, rd + 0x755EC4u) == 1u)
+                go(InventoryView);
+            else
+                buttons = pad2ButtonBit("START");
+            break;
+        case InventoryView:
+            // Leave the actual inventory visible for screenshot evidence.
+            if (now - entered >= 15.0 && released())
+                go(InventoryClose);
+            break;
+        case InventoryClose:
+            if (!reo_source_instrumentation::bankRead(rd, rd + 0x755EC4u))
+                go(Select);
+            else
+                buttons = pad2ButtonBit("START");
+            break;
         case Select:
             if (reo_source_instrumentation::bankRead(rd, rd + (0x4BAE94u)) ||
                 reo_source_instrumentation::bankRead(rd, rd + (0x755EC4u)) == 4u)
@@ -2262,15 +2313,15 @@ void pad2FeederLoop() {
             if (!rd)
                 continue;
             // sceDbcGetDepNumber (EE 0x188D90) requires the port's word in the work area to be 1.
-            if (work && (work & PS2_RAM_MASK) + 4 <= PS2_RAM_SIZE) {
+            if (work && (work & ps2RamBackingMask()) + 4 <= ps2RamBackingBytes) {
                 const uint32_t connected = 1;
-                reo_source_instrumentation::copyBytesForBank(rd, rd + (work & PS2_RAM_MASK),
+                reo_source_instrumentation::copyBytesForBank(rd, rd + (work & ps2RamBackingMask()),
                                                              &connected, 4); // port 0
             }
             ++frame;
             for (uint32_t base : socks) {
-                const uint32_t b0 = base & PS2_RAM_MASK, b1 = (base + 0x80) & PS2_RAM_MASK;
-                if (b1 + 0x80 > PS2_RAM_SIZE)
+                const uint32_t b0 = base & ps2RamBackingMask(), b1 = (base + 0x80) & ps2RamBackingMask();
+                if (b1 + 0x80 > ps2RamBackingBytes)
                     continue;
                 uint32_t s0, s1;
                 reo_source_instrumentation::copyBytesForBank(rd, &s0, rd + b0 + 0x7C, 4);
@@ -2430,7 +2481,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 const uint32_t physical = address & 0x1FFFFFFFu;
                 return (bank == 0 || bank == 0x20000000u || bank == 0x80000000u ||
                         bank == 0xA0000000u) &&
-                       physical < PS2_RAM_SIZE && size <= PS2_RAM_SIZE - physical;
+                       physical < ps2RamBackingBytes && size <= ps2RamBackingBytes - physical;
             };
             if (sendSize > 0x1000 || recvSize > 0x1000 || !valid(sendBuf, sendSize) ||
                 !valid(recvBuf, recvSize))
@@ -2456,7 +2507,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 const uint32_t physical = address & 0x1FFFFFFFu;
                 return (bank == 0 || bank == 0x20000000u || bank == 0x80000000u ||
                         bank == 0xA0000000u) &&
-                       physical < PS2_RAM_SIZE && size <= PS2_RAM_SIZE - physical;
+                       physical < ps2RamBackingBytes && size <= ps2RamBackingBytes - physical;
             };
             if (sendSize > 0x10000 || recvSize < 4 || recvSize > 0x10000 ||
                 !valid(sendBuf, sendSize) || !valid(recvBuf, recvSize))
@@ -2522,7 +2573,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 const uint32_t physical = address & 0x1FFFFFFFu;
                 return (bank == 0 || bank == 0x20000000u || bank == 0x80000000u ||
                         bank == 0xA0000000u) &&
-                       physical < PS2_RAM_SIZE && size <= PS2_RAM_SIZE - physical;
+                       physical < ps2RamBackingBytes && size <= ps2RamBackingBytes - physical;
             };
             if (sendSize > 0x10000 || recvSize > 0x10000 || recvSize < 0x1C ||
                 !valid(sendBuf, sendSize) || !valid(recvBuf, recvSize)) {
@@ -2555,13 +2606,13 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     const uint32_t n = std::min<uint32_t>(sendSize, 32);
                     for (uint32_t i = 0; i < n; ++i) {
                         const uint8_t b = reo_source_instrumentation::bankRead(
-                            rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK));
+                            rdram, rdram + ((sendBuf + i) & ps2RamBackingMask()));
                         snprintf(hex + i * 3, 4, "%02X ", b);
                     }
                     const uint32_t m = std::min<uint32_t>(sendSize, 64);
                     for (uint32_t i = 0; i < m; ++i) {
                         const uint8_t b = reo_source_instrumentation::bankRead(
-                            rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK));
+                            rdram, rdram + ((sendBuf + i) & ps2RamBackingMask()));
                         text[i] = (b >= 0x20 && b < 0x7F) ? (char)b : '.';
                     }
                 }
@@ -2592,7 +2643,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     std::string path;
                     for (uint32_t i = 0x14; i < std::min<uint32_t>(sendSize, 0x14 + 0x400); ++i) {
                         const char ch = (char)reo_source_instrumentation::bankRead(
-                            rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK));
+                            rdram, rdram + ((sendBuf + i) & ps2RamBackingMask()));
                         if (!ch)
                             break;
                         path.push_back(ch);
@@ -2632,11 +2683,11 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     const uint32_t buf = rdramRead32(rdram, sendBuf + 0x10);
                     const int32_t size = (int32_t)rdramRead32(rdram, sendBuf + 0x14);
                     std::FILE* f = (fd >= 0 && fd < kMaxFioFds) ? self->m_fioFds[fd] : nullptr;
-                    const uint32_t phys = buf & PS2_RAM_MASK;
+                    const uint32_t phys = buf & ps2RamBackingMask();
                     int32_t result = -9; // EBADF
                     if (f && size < 0) {
                         result = -22; // EINVAL
-                    } else if (f && (uint64_t)phys + (uint32_t)size > PS2_RAM_SIZE) {
+                    } else if (f && (uint64_t)phys + (uint32_t)size > ps2RamBackingBytes) {
                         result = -14; // EFAULT
                     } else if (f) {
                         result = (int32_t)fread(rdram + phys, 1, (size_t)size, f);
@@ -2660,7 +2711,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     std::string dev;
                     for (uint32_t i = 0xC; i < 0xC + 0x40; ++i) {
                         const char ch = (char)reo_source_instrumentation::bankRead(
-                            rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK));
+                            rdram, rdram + ((sendBuf + i) & ps2RamBackingMask()));
                         if (!ch)
                             break;
                         dev.push_back(ch);
@@ -2768,10 +2819,10 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
             const uint32_t a1 = sendBuf ? rdramRead32(rdram, sendBuf + 4) : 0;
             const uint32_t a2 = sendBuf ? rdramRead32(rdram, sendBuf + 8) : 0;
             if (rpcNum == 0x01) { // Read {sector, count, dst, mode}
-                const uint32_t dst = a2 & PS2_RAM_MASK;
+                const uint32_t dst = a2 & ps2RamBackingMask();
                 bool ok = false;
                 if (self && self->m_cdvd && a1 != 0 && a1 <= 0x4000 &&
-                    static_cast<uint64_t>(dst) + static_cast<uint64_t>(a1) * 2048u <= PS2_RAM_SIZE)
+                    static_cast<uint64_t>(dst) + static_cast<uint64_t>(a1) * 2048u <= ps2RamBackingBytes)
                     ok = self->m_cdvd->read_sectors(a0, a1, rdram + dst);
                 static const bool cdLogAllN = std::getenv("REO_CD_LOG") != nullptr;
                 if (cdLogAllN || nLog++ < 60)
@@ -2801,8 +2852,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
             std::string path;
             if (sendBuf) {
                 for (uint32_t i = 0; i < 0x100; ++i) {
-                    const uint32_t a = (sendBuf + pathOff + i) & PS2_RAM_MASK;
-                    if (a >= PS2_RAM_SIZE ||
+                    const uint32_t a = (sendBuf + pathOff + i) & ps2RamBackingMask();
+                    if (a >= ps2RamBackingBytes ||
                         reo_source_instrumentation::bankRead(rdram, rdram + (a)) == 0)
                         break;
                     path.push_back(static_cast<char>(
@@ -2869,8 +2920,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                         break;
 
                     // Detect send buffer format: path string or structured data
-                    uint32_t sendPhys = sendBuf & PS2_RAM_MASK;
-                    if (sendPhys >= PS2_RAM_SIZE)
+                    uint32_t sendPhys = sendBuf & ps2RamBackingMask();
+                    if (sendPhys >= ps2RamBackingBytes)
                         break;
                     const uint8_t* sendPtr = rdram + sendPhys;
 
@@ -2887,8 +2938,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     } else {
                         // Structured: {sectors, dest_addr, path...} or similar
                         destAddr = rdramRead32(rdram, sendBuf + 4);
-                        uint32_t pathPhys = (sendBuf + 8) & PS2_RAM_MASK;
-                        if (pathPhys < PS2_RAM_SIZE) {
+                        uint32_t pathPhys = (sendBuf + 8) & ps2RamBackingMask();
+                        if (pathPhys < ps2RamBackingBytes) {
                             ps2_path = (const char*)(rdram + pathPhys);
                         }
                         if (destAddr == 0)
@@ -2901,8 +2952,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
 
                         std::vector<uint8_t> data;
                         if (self->m_cdvd->read_file(ps2_path, data)) {
-                            uint32_t destPhys = destAddr & PS2_RAM_MASK;
-                            if (destPhys + data.size() <= PS2_RAM_SIZE) {
+                            uint32_t destPhys = destAddr & ps2RamBackingMask();
+                            if (destPhys + data.size() <= ps2RamBackingBytes) {
                                 reo_source_instrumentation::copyBytesForBank(
                                     rdram, rdram + destPhys, data.data(), data.size());
                                 printf("[HW-BRIDGE:CDVD] Loaded %zu bytes\n", data.size());
@@ -2920,8 +2971,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     if (!sendBuf || !recvBuf || !self->m_cdvd)
                         break;
 
-                    uint32_t sendPhys = sendBuf & PS2_RAM_MASK;
-                    if (sendPhys >= PS2_RAM_SIZE)
+                    uint32_t sendPhys = sendBuf & ps2RamBackingMask();
+                    if (sendPhys >= ps2RamBackingBytes)
                         break;
                     std::string ps2_path = (const char*)(rdram + sendPhys);
 
@@ -2980,8 +3031,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 case 4: { // padRead
                     if (recvBuf && recvSize >= 32) {
                         // Fill with default pad state (all released, analog centered)
-                        uint32_t recvPhys = recvBuf & PS2_RAM_MASK;
-                        if (recvPhys + 32 <= PS2_RAM_SIZE) {
+                        uint32_t recvPhys = recvBuf & ps2RamBackingMask();
+                        if (recvPhys + 32 <= ps2RamBackingBytes) {
                             uint8_t* buf = rdram + recvPhys;
                             reo_source_instrumentation::fillBytes(buf, 0, 32);
                             reo_source_instrumentation::memoryCell(buf + 0) = 0x00; // success
@@ -3039,7 +3090,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 if (bank != 0 && bank != 0x20000000u && bank != 0x80000000u && bank != 0xa0000000u)
                     return false;
                 const uint32_t physical = address & 0x1fffffffu;
-                return physical < PS2_RAM_SIZE && count <= PS2_RAM_SIZE - physical;
+                return physical < ps2RamBackingBytes && count <= ps2RamBackingBytes - physical;
             };
             auto read = [&](uint32_t address, void* data, size_t count) {
                 if (!valid(address, count))
@@ -3101,7 +3152,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     for (uint32_t i = 0; i < n; ++i)
                         snprintf(hex + i * 3, 4, "%02X ",
                                  reo_source_instrumentation::bankRead(
-                                     rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK)));
+                                     rdram, rdram + ((sendBuf + i) & ps2RamBackingMask())));
                 }
                 fprintf(
                     stderr,
@@ -3140,7 +3191,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     for (uint32_t i = 0; i < n; ++i)
                         snprintf(hex + i * 3, 4, "%02X ",
                                  reo_source_instrumentation::bankRead(
-                                     rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK)));
+                                     rdram, rdram + ((sendBuf + i) & ps2RamBackingMask())));
                 }
                 fprintf(stderr, "[HW-BRIDGE:%s] fno=0x%X send=0x%08X/%u recv=0x%08X/%u data=[%s]\n",
                         isHeap ? "HEAP" : "LOADFILE", rpcNum, sendBuf, sendSize, recvBuf, recvSize,
@@ -3187,7 +3238,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 std::string name;
                 for (uint32_t i = 8; i < std::min<uint32_t>(sendSize, 8 + 252); ++i) {
                     const char ch = reo_source_instrumentation::bankRead(
-                        rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK));
+                        rdram, rdram + ((sendBuf + i) & ps2RamBackingMask()));
                     if (!ch)
                         break;
                     name.push_back(ch);
@@ -3222,7 +3273,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 for (uint32_t i = 0;
                      i < std::min<uint32_t>(argLen, 0xFC) && sendSize >= 0x104 + argLen; ++i) {
                     const char ch = (char)reo_source_instrumentation::bankRead(
-                        rdram, rdram + ((sendBuf + 0x104 + i) & PS2_RAM_MASK));
+                        rdram, rdram + ((sendBuf + 0x104 + i) & ps2RamBackingMask()));
                     args.push_back(ch ? ch : ' ');
                 }
                 std::string what;
@@ -3232,7 +3283,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     char hdr[5] = {0};
                     for (int i = 0; i < 4; ++i)
                         hdr[i] = (char)reo_source_instrumentation::bankRead(
-                            rdram, rdram + ((iopAddr + i) & PS2_RAM_MASK));
+                            rdram, rdram + ((iopAddr + i) & ps2RamBackingMask()));
                     char buf[64];
                     snprintf(buf, sizeof buf, "buffer@IOP 0x%08X (magic %02X%02X%02X%02X)", iopAddr,
                              (uint8_t)hdr[0], (uint8_t)hdr[1], (uint8_t)hdr[2], (uint8_t)hdr[3]);
@@ -3240,7 +3291,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 } else {
                     for (uint32_t i = 8; i < std::min<uint32_t>(sendSize, 8 + 0x100); ++i) {
                         const char ch = (char)reo_source_instrumentation::bankRead(
-                            rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK));
+                            rdram, rdram + ((sendBuf + i) & ps2RamBackingMask()));
                         if (!ch)
                             break;
                         what.push_back(ch);
@@ -3272,7 +3323,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                         for (uint32_t i = 0; sendBuf && i < std::min<uint32_t>(sendSize, 48); ++i)
                             snprintf(hex + i * 3, 4, "%02X ",
                                      reo_source_instrumentation::bankRead(
-                                         rdram, rdram + ((sendBuf + i) & PS2_RAM_MASK)));
+                                         rdram, rdram + ((sendBuf + i) & ps2RamBackingMask())));
                         fprintf(
                             stderr,
                             "[NET-RPC-MISSING] sid=%08X op=%X send=%08X/%u recv=%08X/%u data=%s\n",

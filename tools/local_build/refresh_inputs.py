@@ -82,7 +82,8 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
     # reproduces the changed compiler; runtime/library inputs are unchanged.
     updates = output / 'notices/source-updates'
     updates.mkdir(parents=True, exist_ok=True)
-    for patch in ('0096-faster-source-instrumentation.patch', '0099-unguarded-generated-ranges.patch'):
+    for patch in ('0096-faster-source-instrumentation.patch', '0099-unguarded-generated-ranges.patch',
+                  '0100-optional-native-asset-bank.patch'):
         shutil.copyfile(root / 'third_party/patches/ps2recomp' / patch, updates / patch)
     if dependency_sources:
         notices = output / 'notices'

@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.15 prerelease - 2026-10-22
+
+- Add one **Randomizer** mod for ordinary items, guns, ammunition and supported enemy spawns.
+- Consolidate legacy sample selections and preserve their seeds and pools; remove Practice Mode.
+- Add editable mod imports and host-published randomizer settings adopted automatically by joining players.
+- Preserve original enemy entrances before species handoff and retain choices across rooms.
+- Add an optional native enemy asset bank and matching CPU, disc and DMA memory support.
+- Ship updated build inputs; existing installations rebuild the game after updating.
+- Randomizer remains experimental: full scenario completion, save/resume and mixed-enemy co-op gameplay are unverified.
+
 ## v1.0.10 prerelease
 
 - Select games by clicking their cards or with the keyboard; remove Select buttons.

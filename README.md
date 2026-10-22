@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**1.0 Alpha prerelease (v1.0.12)** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
+**1.0 Alpha prerelease (v1.0.15)** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -11,7 +11,7 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 ## Get started
 
 1. Install the [.NET 8 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) if you don't have it, and keep your graphics driver current (Vulkan is required).
-2. Download **RE-Outbreak-v1.0.12-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
+2. Download **RE-Outbreak-v1.0.15-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
 3. The **Play** page tells you the next step. Click **Choose ISO** and pick your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**. The launcher checks it and shows a green ✓ when it is supported.
 4. Click **Build game**. This one-time setup imports the disc, prepares the build tools (about 173 MB, reused if the exact compiler is already installed) and compiles the game. It needs Internet and about 10 GB of free space, and can take over an hour. Progress stays visible at the bottom of every page.
 5. Click **Play**.
@@ -36,7 +36,7 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 - **Outbreak: File #2:** a placeholder in the launcher; not playable.
 - **Launcher:** guided first-run setup, ISO check before import, local build with cached reuse, display and filtering options, controller remapping, memory cards, cheats, logs, co-op hosting/joining and GitHub release updates.
 - **Online co-op:** experimental; see below.
-- **Mods:** placeholder. **Cheats:** built-in health, infection and ammunition options plus a supported subset of PCSX2 data cheats.
+- **Mods:** enable **Randomizer** for File #1 to randomize items, guns, ammunition and enemy spawns together. Original enemy entrances hand off to seeded native species; see [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection and ammunition options plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
 
@@ -46,9 +46,9 @@ and verifies the executable SHA-256. PAL, Japanese, File #2, unknown games and
 other/modified executable revisions get a specific error beside the ISO controls.
 The ISO filename and SYSTEM.CNF's VER field do not establish the game revision.
 
-v1.0.12 ships new build files with a reusable compile cache, so the game is built
-once more after updating. From then on, updates recompile only the parts of the game
-that changed. Generation and compilation were also made faster in v1.0.11 without
+v1.0.15 ships the Randomizer runtime and new build files, so the game is built
+once more after updating. Runtime headers changed, so this update recompiles all
+units. Later updates can reuse the compile cache where inputs are unchanged. Generation and compilation were also made faster in v1.0.11 without
 changing compiler optimization; see the [measured results](docs/COMPILATION_PERFORMANCE.md).
 
 This is an **experimental preview**. Setup, rendering, performance and audio may
@@ -91,7 +91,7 @@ launcher can ask your router through UPnP):
 | TCP 10127 | Game app server | No, built into the game |
 | UDP 9091 | Game server | Yes, under **Ports** |
 | TCP 10128 | Player sign-up (was TCP 80 before v1.0.12) | Yes, under **Ports** |
-| UDP 10129 | Finding the host's game | No |
+| UDP 10129 | Finding the host and sharing session settings | Yes |
 
 If a port is busy, the launcher names the program using it. Internet play cannot
 always work behind carrier-grade NAT without a VPN. Hosts' IP addresses are visible

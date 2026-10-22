@@ -1,5 +1,6 @@
 #if defined(REO_GAME_FILE1)
 #include "overrides/reo_cheats.h"
+#include "overrides/reo_mods.h"
 #endif
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)
 #include "natural_dispatch.h"
@@ -1068,7 +1069,11 @@ int main(int argc, char* argv[]) {
 
 #endif
 
-    if (!runtime.initialize(g.name)) {
+    size_t ramBackingBytes = PS2_RAM_SIZE;
+#if defined(REO_GAME_FILE1)
+    if (std::getenv("REO_MOD_ENEMY_SPAWN_SEED")) ramBackingBytes = 2u * PS2_RAM_SIZE;
+#endif
+    if (!runtime.initialize(g.name, ramBackingBytes)) {
 
         fprintf(stderr, "[BOOT] Failed to initialize runtime\n");
 
@@ -1265,8 +1270,10 @@ int main(int argc, char* argv[]) {
     ps2SetDebugPanelProvider(reoDebugPanelText);
 
 #if defined(REO_GAME_FILE1)
-    if (g.serial == "SLUS-20765")
+    if (g.serial == "SLUS-20765") {
         reo::cheats::install(runtime);
+        reo::mods::install(runtime);
+    }
 #endif
     runtime.run();
 

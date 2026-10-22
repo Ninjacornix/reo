@@ -133,10 +133,11 @@ public static class Cheats {
         }
         return result;
     }
-    public static string Export(Settings settings, string logs) {
-        if (!settings.CheatsEnabled || settings.Game.Id != "file1")
+    public static string Export(Settings settings, string logs, List<ModManifest>? mods = null) {
+        mods ??= new();
+        if ((!settings.CheatsEnabled && mods.Count == 0) || settings.Game.Id != "file1")
             return "";
-        var selected = settings.EnabledCheats.ToHashSet(StringComparer.Ordinal);
+        var selected = (settings.CheatsEnabled ? settings.EnabledCheats : new List<string>()).ToHashSet(StringComparer.Ordinal);
         var writes = new List<CheatWrite>();
         var builtins = new List<string>();
         foreach (var g in Load(settings.Game.Id).Where(g => selected.Contains(g.Id))) {
@@ -146,6 +147,7 @@ public static class Cheats {
                 builtins.Add("builtin " + g.Builtin);
             writes.AddRange(g.Writes);
         }
+        Mods.Append(mods, writes, builtins);
         if (writes.Count == 0 && builtins.Count == 0)
             return "";
         if (writes.Count > 4096)

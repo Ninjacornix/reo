@@ -57,6 +57,9 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
                 copy(root / name, "source/" + name)
     # New authored account plumbing is also needed in development exports before commit.
     copy(root / "network/native/automatic_account.h", "source/network/native/automatic_account.h")
+    # Keep the new mod hook available in development kits before it is committed.
+    for name in ("recomp/overrides/reo_mods.h", "runtime/mods/weapon_shuffle.h", "runtime/mods/enemy_randomizer.h", "runtime/mods/enemy_spawn_randomizer.h"):
+        copy(root / name, "source/" + name)
     for part in ["ps2xRuntime", "ps2xRecomp/include"]:
         for file in (dependency / part).rglob("*"):
             if file.is_file() and file.suffix in {".h", ".hpp", ".inl", ".inc"} and "local_source_catalogues" not in file.parts:

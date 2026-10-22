@@ -1,0 +1,583 @@
+--- a/ps2xRuntime/include/ps2_runtime.h
++++ b/ps2xRuntime/include/ps2_runtime.h
+@@ -453,7 +453,7 @@
+     PS2Runtime();
+     ~PS2Runtime();
+ 
+-    bool initialize(const char *title = "PS2 Game");
++    bool initialize(const char *title = "PS2 Game", size_t ramBackingBytes = PS2_RAM_SIZE);
+     bool syncCoreSubsystems();
+     // Verifier-rejection recovery: restore the retained PRE-LAUNCH snapshot
+     // (captured by the GPU owner before the refused dispatch) into the live
+--- a/ps2xRuntime/include/ps2_runtime_macros.h
++++ b/ps2xRuntime/include/ps2_runtime_macros.h
+@@ -157,23 +157,23 @@
+ 
+ static inline bool Ps2FastRangeIsContiguous(uint32_t offset, uint32_t bytes)
+ {
+-    return offset <= (PS2_RAM_SIZE - bytes);
++    return offset <= (ps2RamBackingBytes - bytes);
+ }
+ 
+ static inline uint8_t Ps2FastRead8(const uint8_t *rdram, uint32_t addr)
+ {
+-    return rdram[addr & PS2_RAM_MASK];
++    return rdram[addr & ps2RamBackingMask()];
+ }
+ 
+ static inline uint16_t Ps2FastRead16(const uint8_t *rdram, uint32_t addr)
+ {
+-    const uint32_t offset = addr & PS2_RAM_MASK;
++    const uint32_t offset = addr & ps2RamBackingMask();
+     if (!Ps2FastRangeIsContiguous(offset, sizeof(uint16_t)))
+     {
+         uint8_t wrapped[sizeof(uint16_t)];
+         for (uint32_t i = 0; i < sizeof(uint16_t); ++i)
+         {
+-            wrapped[i] = rdram[(offset + i) & PS2_RAM_MASK];
++            wrapped[i] = rdram[(offset + i) & ps2RamBackingMask()];
+         }
+         uint16_t value;
+         std::memcpy(&value, wrapped, sizeof(value));
+@@ -187,13 +187,13 @@
+ 
+ static inline uint32_t Ps2FastRead32(const uint8_t *rdram, uint32_t addr)
+ {
+-    const uint32_t offset = addr & PS2_RAM_MASK;
++    const uint32_t offset = addr & ps2RamBackingMask();
+     if (!Ps2FastRangeIsContiguous(offset, sizeof(uint32_t)))
+     {
+         uint8_t wrapped[sizeof(uint32_t)];
+         for (uint32_t i = 0; i < sizeof(uint32_t); ++i)
+         {
+-            wrapped[i] = rdram[(offset + i) & PS2_RAM_MASK];
++            wrapped[i] = rdram[(offset + i) & ps2RamBackingMask()];
+         }
+         uint32_t value;
+         std::memcpy(&value, wrapped, sizeof(value));
+@@ -207,13 +207,13 @@
+ 
+ static inline uint64_t Ps2FastRead64(const uint8_t *rdram, uint32_t addr)
+ {
+-    const uint32_t offset = addr & PS2_RAM_MASK;
++    const uint32_t offset = addr & ps2RamBackingMask();
+     if (!Ps2FastRangeIsContiguous(offset, sizeof(uint64_t)))
+     {
+         uint8_t wrapped[sizeof(uint64_t)];
+         for (uint32_t i = 0; i < sizeof(uint64_t); ++i)
+         {
+-            wrapped[i] = rdram[(offset + i) & PS2_RAM_MASK];
++            wrapped[i] = rdram[(offset + i) & ps2RamBackingMask()];
+         }
+         uint64_t value;
+         std::memcpy(&value, wrapped, sizeof(value));
+@@ -227,13 +227,13 @@
+ 
+ static inline __m128i Ps2FastRead128(const uint8_t *rdram, uint32_t addr)
+ {
+-    const uint32_t offset = addr & PS2_RAM_MASK;
++    const uint32_t offset = addr & ps2RamBackingMask();
+     if (!Ps2FastRangeIsContiguous(offset, sizeof(__m128i)))
+     {
+         alignas(16) uint8_t wrapped[sizeof(__m128i)];
+         for (uint32_t i = 0; i < sizeof(__m128i); ++i)
+         {
+-            wrapped[i] = rdram[(offset + i) & PS2_RAM_MASK];
++            wrapped[i] = rdram[(offset + i) & ps2RamBackingMask()];
+         }
+         __m128i value;
+         std::memcpy(&value, wrapped, sizeof(value));
+@@ -247,19 +247,19 @@
+ 
+ static inline void Ps2FastWrite8(uint8_t *rdram, uint32_t addr, uint8_t value)
+ {
+-    rdram[addr & PS2_RAM_MASK] = value;
++    rdram[addr & ps2RamBackingMask()] = value;
+ }
+ 
+ static inline void Ps2FastWrite16(uint8_t *rdram, uint32_t addr, uint16_t value)
+ {
+-    const uint32_t offset = addr & PS2_RAM_MASK;
++    const uint32_t offset = addr & ps2RamBackingMask();
+     if (!Ps2FastRangeIsContiguous(offset, sizeof(uint16_t)))
+     {
+         uint8_t wrapped[sizeof(uint16_t)];
+         std::memcpy(wrapped, &value, sizeof(value));
+         for (uint32_t i = 0; i < sizeof(uint16_t); ++i)
+         {
+-            rdram[(offset + i) & PS2_RAM_MASK] = wrapped[i];
++            rdram[(offset + i) & ps2RamBackingMask()] = wrapped[i];
+         }
+         return;
+     }
+@@ -268,14 +268,14 @@
+ 
+ static inline void Ps2FastWrite32(uint8_t *rdram, uint32_t addr, uint32_t value)
+ {
+-    const uint32_t offset = addr & PS2_RAM_MASK;
++    const uint32_t offset = addr & ps2RamBackingMask();
+     if (!Ps2FastRangeIsContiguous(offset, sizeof(uint32_t)))
+     {
+         uint8_t wrapped[sizeof(uint32_t)];
+         std::memcpy(wrapped, &value, sizeof(value));
+         for (uint32_t i = 0; i < sizeof(uint32_t); ++i)
+         {
+-            rdram[(offset + i) & PS2_RAM_MASK] = wrapped[i];
++            rdram[(offset + i) & ps2RamBackingMask()] = wrapped[i];
+         }
+         return;
+     }
+@@ -284,14 +284,14 @@
+ 
+ static inline void Ps2FastWrite64(uint8_t *rdram, uint32_t addr, uint64_t value)
+ {
+-    const uint32_t offset = addr & PS2_RAM_MASK;
++    const uint32_t offset = addr & ps2RamBackingMask();
+     if (!Ps2FastRangeIsContiguous(offset, sizeof(uint64_t)))
+     {
+         uint8_t wrapped[sizeof(uint64_t)];
+         std::memcpy(wrapped, &value, sizeof(value));
+         for (uint32_t i = 0; i < sizeof(uint64_t); ++i)
+         {
+-            rdram[(offset + i) & PS2_RAM_MASK] = wrapped[i];
++            rdram[(offset + i) & ps2RamBackingMask()] = wrapped[i];
+         }
+         return;
+     }
+@@ -300,14 +300,14 @@
+ 
+ static inline void Ps2FastWrite128(uint8_t *rdram, uint32_t addr, __m128i value)
+ {
+-    const uint32_t offset = addr & PS2_RAM_MASK;
++    const uint32_t offset = addr & ps2RamBackingMask();
+     if (!Ps2FastRangeIsContiguous(offset, sizeof(__m128i)))
+     {
+         alignas(16) uint8_t wrapped[sizeof(__m128i)];
+         std::memcpy(wrapped, &value, sizeof(value));
+         for (uint32_t i = 0; i < sizeof(__m128i); ++i)
+         {
+-            rdram[(offset + i) & PS2_RAM_MASK] = wrapped[i];
++            rdram[(offset + i) & ps2RamBackingMask()] = wrapped[i];
+         }
+         return;
+     }
+--- a/ps2xRuntime/include/runtime/ps2_memory.h
++++ b/ps2xRuntime/include/runtime/ps2_memory.h
+@@ -21,6 +21,11 @@
+ 
+ constexpr uint32_t PS2_RAM_SIZE = 32u * 1024u * 1024u; // 32MB
+ constexpr uint32_t PS2_RAM_MASK = PS2_RAM_SIZE - 1u;   // Mask for 32MB alignment
++// Optional native asset bank. Console RAM size, kernel heap and stack remain
++// 32 MB; a native port can explicitly request 64 MB backing before execution.
++// Like the scratchpad binding, this is configured before any guest/DMA threads.
++inline uint32_t ps2RamBackingBytes = PS2_RAM_SIZE;
++inline uint32_t ps2RamBackingMask() { return ps2RamBackingBytes - 1u; }
+ constexpr uint32_t PS2_RAM_BASE = 0x00000000;          // Physical base of RDRAM
+ constexpr uint32_t PS2_SCRATCHPAD_BASE = 0x70000000;
+ constexpr uint32_t PS2_SCRATCHPAD_ALIAS_BASE = 0xF0000000;
+@@ -130,9 +135,9 @@
+         phys = addr & 0x1FFFFFFFu;
+     }
+ 
+-    if (phys >= PS2_RAM_SIZE)
+-    {
+-        phys &= PS2_RAM_MASK;
++    if (phys >= ps2RamBackingBytes)
++    {
++        phys &= ps2RamBackingMask();
+     }
+ 
+     scratch = false;
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -328,6 +328,7 @@
+ 
+ bool PS2Memory::initialize(size_t ramSize)
+ {
++    if (ramSize != PS2_RAM_SIZE && ramSize != 2u * PS2_RAM_SIZE) return false;
+     reo_async_vif::shutdown(*this);
+     // Reset the actual resident owner while the old RAM/SPR allocation still
+     // exists. Refused ownership transfer must leave its sources allocated.
+@@ -350,6 +351,7 @@
+     };
+ 
+     cleanup();
++    ps2RamBackingBytes = static_cast<uint32_t>(ramSize);
+     m_seenGifCopy = false;
+     m_dmaStartCount.store(0, std::memory_order_relaxed);
+     m_gifCopyCount.store(0, std::memory_order_relaxed);
+@@ -388,7 +390,7 @@
+                     return (off + size <= PS2_SCRATCHPAD_SIZE) ? m_scratchpad + off : nullptr;
+                 }
+                 const uint32_t off = addr & 0x1FFFFFFFu;
+-                return (off + size <= PS2_RAM_SIZE) ? m_rdram + off : nullptr;
++                return (off + size <= ps2RamBackingBytes) ? m_rdram + off : nullptr;
+             };
+             ipuHost.dmaComplete = [this](uint32_t channel)
+             {
+@@ -465,7 +467,7 @@
+     // This includes the accelerated window rooted at 0x30100000.
+     if (virtualAddress >= 0x20000000u && virtualAddress < 0x40000000u)
+     {
+-        return virtualAddress & PS2_RAM_MASK;
++        return virtualAddress & ps2RamBackingMask();
+     }
+ 
+     // KSEG0/KSEG1 direct-mapped window.
+@@ -573,7 +575,7 @@
+     {
+         return m_scratchpad[physAddr];
+     }
+-    if (physAddr < PS2_RAM_SIZE)
++    if (physAddr < ps2RamBackingBytes)
+     {
+         return m_rdram[physAddr];
+     }
+@@ -609,9 +611,9 @@
+     {
+         return loadScalar<uint16_t>(m_scratchpad, physAddr, PS2_SCRATCHPAD_SIZE, "read16 scratchpad", address);
+     }
+-    if (physAddr < PS2_RAM_SIZE)
+-    {
+-        return loadScalar<uint16_t>(m_rdram, physAddr, PS2_RAM_SIZE, "read16 rdram", address);
++    if (physAddr < ps2RamBackingBytes)
++    {
++        return loadScalar<uint16_t>(m_rdram, physAddr, ps2RamBackingBytes, "read16 rdram", address);
+     }
+     else if (physAddr >= PS2_IO_BASE && physAddr < PS2_IO_BASE + PS2_IO_SIZE)
+     {
+@@ -651,9 +653,9 @@
+     {
+         return loadScalar<uint32_t>(m_scratchpad, physAddr, PS2_SCRATCHPAD_SIZE, "read32 scratchpad", address);
+     }
+-    if (physAddr < PS2_RAM_SIZE)
+-    {
+-        return loadScalar<uint32_t>(m_rdram, physAddr, PS2_RAM_SIZE, "read32 rdram", address);
++    if (physAddr < ps2RamBackingBytes)
++    {
++        return loadScalar<uint32_t>(m_rdram, physAddr, ps2RamBackingBytes, "read32 rdram", address);
+     }
+     else if (physAddr >= PS2_IO_BASE && physAddr < PS2_IO_BASE + PS2_IO_SIZE)
+     {
+@@ -688,9 +690,9 @@
+     {
+         return loadScalar<uint64_t>(m_scratchpad, physAddr, PS2_SCRATCHPAD_SIZE, "read64 scratchpad", address);
+     }
+-    if (physAddr < PS2_RAM_SIZE)
+-    {
+-        return loadScalar<uint64_t>(m_rdram, physAddr, PS2_RAM_SIZE, "read64 rdram", address);
++    if (physAddr < ps2RamBackingBytes)
++    {
++        return loadScalar<uint64_t>(m_rdram, physAddr, ps2RamBackingBytes, "read64 rdram", address);
+     }
+ 
+     // 64-bit IO read: compose from the two adjacent 32-bit IO register slots
+@@ -728,9 +730,9 @@
+         inRange(physAddr, sizeof(__m128i), PS2_SCRATCHPAD_SIZE, "read128 scratchpad", address);
+         return _mm_loadu_si128(reinterpret_cast<__m128i *>(&m_scratchpad[physAddr]));
+     }
+-    if (physAddr < PS2_RAM_SIZE)
+-    {
+-        inRange(physAddr, sizeof(__m128i), PS2_RAM_SIZE, "read128 rdram", address);
++    if (physAddr < ps2RamBackingBytes)
++    {
++        inRange(physAddr, sizeof(__m128i), ps2RamBackingBytes, "read128 rdram", address);
+         return _mm_loadu_si128(reinterpret_cast<__m128i *>(&m_rdram[physAddr]));
+     }
+ 
+@@ -769,7 +771,7 @@
+     {
+         m_scratchpad[physAddr] = value;
+     }
+-    else if (physAddr < PS2_RAM_SIZE)
++    else if (physAddr < ps2RamBackingBytes)
+     {
+         reo_parent_natural::beforeActualPreEntryRuntimeRamWrite(m_rdram,physAddr,&value,sizeof(value));
+         m_rdram[physAddr] = value;
+@@ -824,10 +826,10 @@
+     {
+         storeScalar<uint16_t>(m_scratchpad, physAddr, PS2_SCRATCHPAD_SIZE, value, "write16 scratchpad", address);
+     }
+-    else if (physAddr < PS2_RAM_SIZE)
++    else if (physAddr < ps2RamBackingBytes)
+     {
+         reo_parent_natural::beforeActualPreEntryRuntimeRamWrite(m_rdram,physAddr,&value,sizeof(value));
+-        storeScalar<uint16_t>(m_rdram, physAddr, PS2_RAM_SIZE, value, "write16 rdram", address);
++        storeScalar<uint16_t>(m_rdram, physAddr, ps2RamBackingBytes, value, "write16 rdram", address);
+     }
+     else if (physAddr >= PS2_IO_BASE && physAddr < PS2_IO_BASE + PS2_IO_SIZE)
+     {
+@@ -902,13 +904,13 @@
+     {
+         storeScalar<uint32_t>(m_scratchpad, physAddr, PS2_SCRATCHPAD_SIZE, value, "write32 scratchpad", address);
+     }
+-    else if (physAddr < PS2_RAM_SIZE)
++    else if (physAddr < ps2RamBackingBytes)
+     {
+         // Check if this might be code modification
+         markModified(address, 4);
+ 
+         reo_parent_natural::beforeActualPreEntryRuntimeRamWrite(m_rdram,physAddr,&value,sizeof(value));
+-        storeScalar<uint32_t>(m_rdram, physAddr, PS2_RAM_SIZE, value, "write32 rdram", address);
++        storeScalar<uint32_t>(m_rdram, physAddr, ps2RamBackingBytes, value, "write32 rdram", address);
+     }
+     else if (physAddr >= PS2_IO_BASE && physAddr < PS2_IO_BASE + PS2_IO_SIZE)
+     {
+@@ -969,11 +971,11 @@
+     {
+         storeScalar<uint64_t>(m_scratchpad, physAddr, PS2_SCRATCHPAD_SIZE, value, "write64 scratchpad", address);
+     }
+-    else if (physAddr < PS2_RAM_SIZE)
++    else if (physAddr < ps2RamBackingBytes)
+     {
+         markModified(address, 8);
+         reo_parent_natural::beforeActualPreEntryRuntimeRamWrite(m_rdram,physAddr,&value,sizeof(value));
+-        storeScalar<uint64_t>(m_rdram, physAddr, PS2_RAM_SIZE, value, "write64 rdram", address);
++        storeScalar<uint64_t>(m_rdram, physAddr, ps2RamBackingBytes, value, "write64 rdram", address);
+     }
+     else
+     {
+@@ -999,10 +1001,10 @@
+         inRange(physAddr, sizeof(__m128i), PS2_SCRATCHPAD_SIZE, "write128 scratchpad", address);
+         _mm_storeu_si128(reinterpret_cast<__m128i *>(&m_scratchpad[physAddr]), value);
+     }
+-    else if (physAddr < PS2_RAM_SIZE)
++    else if (physAddr < ps2RamBackingBytes)
+     {
+         markModified(address, 16);
+-        inRange(physAddr, sizeof(__m128i), PS2_RAM_SIZE, "write128 rdram", address);
++        inRange(physAddr, sizeof(__m128i), ps2RamBackingBytes, "write128 rdram", address);
+         reo_parent_natural::beforeActualPreEntryRuntimeRamWrite(m_rdram,physAddr,&value,sizeof(value));
+         _mm_storeu_si128(reinterpret_cast<__m128i *>(&m_rdram[physAddr]), value);
+     }
+@@ -1222,7 +1224,7 @@
+                 auto ramPtr = [&](uint32_t a, uint32_t bytes) -> uint8_t *
+                 {
+                     const uint32_t off = a & 0x1FFFFFF0u;
+-                    return (off + bytes <= PS2_RAM_SIZE) ? m_rdram + off : nullptr;
++                    return (off + bytes <= ps2RamBackingBytes) ? m_rdram + off : nullptr;
+                 };
+                 auto copyQw = [&](uint32_t ramAddr, uint32_t count)
+                 {
+@@ -1397,7 +1399,7 @@
+                         else
+                         {
+                             base2 = m_rdram;
+-                            maxSz2 = PS2_RAM_SIZE;
++                            maxSz2 = ps2RamBackingBytes;
+                         }
+                         if (src >= maxSz2)
+                             return;
+@@ -1418,7 +1420,7 @@
+                         tagPhys = translateAddress(localTagAddr);
+                         
+                         const uint8_t *localBase = tagScratch ? m_scratchpad : m_rdram;
+-                        const uint32_t localMax = tagScratch ? PS2_SCRATCHPAD_SIZE : PS2_RAM_SIZE;
++                        const uint32_t localMax = tagScratch ? PS2_SCRATCHPAD_SIZE : ps2RamBackingBytes;
+                         if (tagPhys + 16u > localMax)
+                             return;
+ 
+@@ -1438,7 +1440,7 @@
+                         const bool tagScratch = isScratchpad(localTagAddr);
+                         const uint32_t tagPhys = translateAddress(localTagAddr);
+                         const uint8_t *localBase = tagScratch ? m_scratchpad : m_rdram;
+-                        const uint32_t localMax = tagScratch ? PS2_SCRATCHPAD_SIZE : PS2_RAM_SIZE;
++                        const uint32_t localMax = tagScratch ? PS2_SCRATCHPAD_SIZE : ps2RamBackingBytes;
+                         if (tagPhys + 16u <= localMax)
+                             { reo_palette_origin::append(chainOrigins,this,uint32_t(chainBuf.size()),tagPhys+8u,8u,tagScratch);
+                         if(!reo_parent_natural::appendActualParserBytes(m_rdram,chainBuf,parentOrigins,tagPhys+8u,8u,tagScratch))
+@@ -1475,7 +1477,7 @@
+                         else
+                         {
+                             tagBase = m_rdram;
+-                            tagMax = PS2_RAM_SIZE;
++                            tagMax = ps2RamBackingBytes;
+                         }
+                         if (physTag + 16 > tagMax)
+                             break;
+@@ -1731,10 +1733,10 @@
+                     submitGifPacket(GifPathId::Path3, m_scratchpad + srcPhys, sizeBytes, false);
+                 }
+             }
+-            else if (srcPhys < PS2_RAM_SIZE)
+-            {
+-                if (static_cast<uint64_t>(srcPhys) + sizeBytes > PS2_RAM_SIZE)
+-                    sizeBytes = PS2_RAM_SIZE - srcPhys;
++            else if (srcPhys < ps2RamBackingBytes)
++            {
++                if (static_cast<uint64_t>(srcPhys) + sizeBytes > ps2RamBackingBytes)
++                    sizeBytes = ps2RamBackingBytes - srcPhys;
+                 if (sizeBytes >= 16)
+                 {
+                     m_seenGifCopy = true;
+@@ -1796,10 +1798,10 @@
+                     }else processVIF1Data(m_scratchpad+srcPhys,sizeBytes);
+                 }
+             }
+-            else if (srcPhys < PS2_RAM_SIZE)
+-            {
+-                if (srcPhys + sizeBytes > PS2_RAM_SIZE)
+-                    sizeBytes = PS2_RAM_SIZE - srcPhys;
++            else if (srcPhys < ps2RamBackingBytes)
++            {
++                if (srcPhys + sizeBytes > ps2RamBackingBytes)
++                    sizeBytes = ps2RamBackingBytes - srcPhys;
+                 if (sizeBytes > 0)
+                 {
+                     std::vector<uint8_t> actualParser;reo_parent_natural::Origins actualOrigins;
+@@ -1913,10 +1915,10 @@
+         return;
+     const uint64_t bytes64 = static_cast<uint64_t>(qwCount) * 16ull;
+     uint32_t sizeBytes = (bytes64 > 0xFFFFFFFFull) ? 0xFFFFFFFFu : static_cast<uint32_t>(bytes64);
+-    if (srcPhysAddr >= PS2_RAM_SIZE)
++    if (srcPhysAddr >= ps2RamBackingBytes)
+         return;
+-    if (static_cast<uint64_t>(srcPhysAddr) + static_cast<uint64_t>(sizeBytes) > static_cast<uint64_t>(PS2_RAM_SIZE))
+-        sizeBytes = PS2_RAM_SIZE - srcPhysAddr;
++    if (static_cast<uint64_t>(srcPhysAddr) + static_cast<uint64_t>(sizeBytes) > static_cast<uint64_t>(ps2RamBackingBytes))
++        sizeBytes = ps2RamBackingBytes - srcPhysAddr;
+     if (sizeBytes < 16)
+         return;
+     m_seenGifCopy = true;
+@@ -2064,7 +2066,7 @@
+         return;
+     }
+ 
+-    if ((end - start) > PS2_RAM_SIZE)
++    if ((end - start) > ps2RamBackingBytes)
+     {
+         std::cerr << "Ignoring oversized code region: start=0x" << std::hex << start
+                   << " end=0x" << end << std::dec << std::endl;
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1278,11 +1278,11 @@
+     m_memory.vif1_regs.tops = savedTops;
+ }
+ 
+-bool PS2Runtime::initialize(const char *title)
++bool PS2Runtime::initialize(const char *title, size_t ramBackingBytes)
+ {
+     try
+     {
+-        if (!m_memory.initialize())
++        if (!m_memory.initialize(ramBackingBytes))
+         {
+             std::cerr << "Failed to initialize PS2 memory" << std::endl;
+             return false;
+--- a/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
++++ b/ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp
+@@ -162,7 +162,7 @@
+                 uint32_t gateWord = 0;
+                 if (config.hasGate)
+                 {
+-                    if (!memory.getRDRAM() || config.gate > PS2_RAM_SIZE - 4u)
++                    if (!memory.getRDRAM() || config.gate > ps2RamBackingBytes - 4u)
+                         return;
+                     std::memcpy(&gateWord, memory.getRDRAM() + config.gate, sizeof(gateWord));
+                     if ((gateWord & config.mask) != (config.value & config.mask))
+@@ -251,12 +251,12 @@
+ {
+     if (!m_rdram || !m_gsVRAM || sizeBytes == 0u)
+         return;
+-    if (srcPhys >= PS2_RAM_SIZE)
++    if (srcPhys >= ps2RamBackingBytes)
+         return;
+ 
+     const uint64_t requestedEnd = static_cast<uint64_t>(srcPhys) + static_cast<uint64_t>(sizeBytes);
+-    if (requestedEnd > static_cast<uint64_t>(PS2_RAM_SIZE))
+-        sizeBytes = PS2_RAM_SIZE - srcPhys;
++    if (requestedEnd > static_cast<uint64_t>(ps2RamBackingBytes))
++        sizeBytes = ps2RamBackingBytes - srcPhys;
+ 
+     processVIF1Data(m_rdram + srcPhys, sizeBytes);
+ }
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/CD.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/CD.cpp
+@@ -25,14 +25,14 @@
+                 return 0;
+             }
+ 
+-            const uint64_t maxBytes = static_cast<uint64_t>(PS2_RAM_SIZE - offset);
++            const uint64_t maxBytes = static_cast<uint64_t>(ps2RamBackingBytes - offset);
+             const uint64_t clamped = std::min<uint64_t>(requested, maxBytes);
+             return static_cast<size_t>(clamped);
+         };
+ 
+         auto tryRead = [&](const CdReadArgs &args) -> bool
+         {
+-            const uint32_t offset = args.buf & PS2_RAM_MASK;
++            const uint32_t offset = args.buf & ps2RamBackingMask();
+             const size_t bytes = clampReadBytes(args.sectors, offset);
+             if (bytes == 0)
+             {
+@@ -49,7 +49,7 @@
+         {
+             // Some game-side wrappers use a nonstandard register layout.
+             // If primary decode does not resolve to a known LBN, try safe alternatives.
+-            constexpr uint32_t kMaxReasonableSectors = PS2_RAM_SIZE / kCdSectorSize;
++            const uint32_t kMaxReasonableSectors = ps2RamBackingBytes / kCdSectorSize;
+             if (!isResolvableCdLbn(selected.lbn))
+             {
+                 const std::array<CdReadArgs, 5> alternatives = {
+@@ -92,7 +92,7 @@
+ 
+             if (!ok)
+             {
+-                const uint32_t offset = a2 & PS2_RAM_MASK;
++                const uint32_t offset = a2 & ps2RamBackingMask();
+                 const size_t bytes = clampReadBytes(a1, offset);
+                 if (bytes > 0)
+                 {
+@@ -285,9 +285,9 @@
+                 break;
+             }
+ 
+-            uint32_t offset = buf & PS2_RAM_MASK;
++            uint32_t offset = buf & ps2RamBackingMask();
+             size_t bytes = static_cast<size_t>(sectors) * kCdSectorSize;
+-            const size_t maxBytes = PS2_RAM_SIZE - offset;
++            const size_t maxBytes = ps2RamBackingBytes - offset;
+             if (bytes > maxBytes)
+             {
+                 bytes = maxBytes;
+@@ -482,9 +482,9 @@
+         uint32_t buf = getRegU32(ctx, 5);
+         uint32_t errAddr = getRegU32(ctx, 7);
+ 
+-        uint32_t offset = buf & PS2_RAM_MASK;
++        uint32_t offset = buf & ps2RamBackingMask();
+         size_t bytes = static_cast<size_t>(sectors) * kCdSectorSize;
+-        const size_t maxBytes = PS2_RAM_SIZE - offset;
++        const size_t maxBytes = ps2RamBackingBytes - offset;
+         if (bytes > maxBytes)
+         {
+             bytes = maxBytes;
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/LibC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/LibC.cpp
+@@ -9,7 +9,7 @@
+     {
+         uint32_t sanitizeMemTransferSize(uint32_t size, const char *op)
+         {
+-            constexpr uint32_t kMaxTransfer = PS2_RAM_SIZE;
++            const uint32_t kMaxTransfer = ps2RamBackingBytes;
+             if (size <= kMaxTransfer)
+             {
+                 return size;
+@@ -43,7 +43,7 @@
+             {
+                 return (offset < PS2_SCRATCHPAD_SIZE) ? (PS2_SCRATCHPAD_SIZE - offset) : 0u;
+             }
+-            return (offset < PS2_RAM_SIZE) ? (PS2_RAM_SIZE - offset) : 0u;
++            return (offset < ps2RamBackingBytes) ? (ps2RamBackingBytes - offset) : 0u;
+         }
+     }
+ 
+@@ -574,7 +574,7 @@
+         {
+             const uint32_t watchBase = ps2PathWatchPhysAddr();
+             const uint32_t watchEnd = watchBase + PS2_PATH_WATCH_BYTES;
+-            const uint32_t dest = str_addr & PS2_RAM_MASK;
++            const uint32_t dest = str_addr & ps2RamBackingMask();
+             const bool touchesWatch = dest < watchEnd && dest >= watchBase;
+             static uint32_t watchSprintfLogCount = 0;
+             if (touchesWatch && watchSprintfLogCount < 64u)

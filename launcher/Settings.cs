@@ -78,6 +78,7 @@ public sealed partial class Settings {
         if (!settings.DualSense && settings.InputDeviceId.Length == 0)
             settings.InputDeviceId = "keyboard";
         settings.EnabledCheats ??= new();
+        settings.EnabledMods ??= new();
         settings.CoopHost ??= "";
         settings.AccountUsername ??= "";
         settings.JoinHostName ??= "";
