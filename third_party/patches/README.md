@@ -8,7 +8,7 @@ These patches change dependency checkouts; they are stored here so the dependenc
 
 The submodule records the upstream base, not the uncommitted patched state. Every required local change must therefore be represented in the patch series. A modified dependency checkout alone is not a reproducible public contribution.
 
-The current series contains patches `0001` through `0095`. Patch `0092` applies
+The current series contains patches `0001` through `0099`. Patch `0092` applies
 without depending on an unpublished instrumentation include. Patch `0093`
 collects the authored host/runtime integration, async VIF1 worker, window
 shortcuts and thread-termination wake fix. Its predecessor focused patches are
@@ -21,6 +21,28 @@ Patch `0096` speeds up source instrumentation (see the v1.0.11 notes). Patch `00
 the pending movie DMA publication explicitly when the final tag takes it over: a moved-from
 `std::function` is not guaranteed empty, and with libc++ (the llvm-mingw release toolchain) a
 leftover copy stopped every release-built game at its first GPU movie.
+
+Patches `0098` and `0099` remove source-guard overhead that slowed the whole game while no
+source owner is bound, which is always the case in release builds. Profiling showed the
+original CPU movie decoder (needed on GPUs without a hardware MPEG-2 decoder, such as AMD
+RDNA 4) at 4-5 frames per second against the stream's 29.97, and gameplay advancing about
+9 game updates per second instead of 30. With both patches and the matching inline paths in
+`tools/parallel_gs_backend/resident_geometry/guarded_source_overlay.hpp`, a Ryzen 5 2600
+plays movies at 27-31 fps (23-25 in the heaviest scene) and gameplay at 29.6 updates/s:
+
+- `0098` (runtime): generated register/context accessors take an inline plain copy while no
+  owner is bound, which is when the guarded lookup finds no target and does exactly that
+  copy; resident-wait switches are read from the environment once instead of on every
+  memory-mapped register write; and `refuseUnguardedSource` stops the game if code emitted
+  without guards runs while an owner is bound.
+- `0099` (generator): `PS2RECOMP_UNGUARDED_RANGES` names guest address ranges emitted
+  without source instrumentation. `tools/local_build/generate_game.py` passes the game's
+  libmpeg decoder, 0x142000-0x147FFF, to the main and extra passes (95 functions). No source
+  owner reads it, and owners are only bound by the resident GPU geometry path, which release
+  launchers leave off. Those bodies are wrapped in the new `ps2_plain_access_begin.hpp` /
+  `ps2_plain_access_end.hpp` (generated from `ps2_runtime_macros.h`): a compile batch shares a
+  translation unit, and an earlier instrumented file would otherwise leave the guarded
+  register/memory accessor macros in effect.
 
 Locally generated game bodies, including instrumented original IRQ functions,
 remain excluded. Applying the runtime patches is not a substitute for generating

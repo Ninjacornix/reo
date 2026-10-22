@@ -24,6 +24,7 @@ if ($LASTEXITCODE) { throw 'Launcher build failed.' }
     /p:DebugType=None /p:DebugSymbols=false ("/p:Version=" + $Version)
 if ($LASTEXITCODE) { throw 'Single-file launcher publish failed.' }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'artifacts/native/XINPUT1_4.dll') -Destination $Output
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'artifacts/native/reo-movie-check.exe') -Destination $Output
 Copy-Item -LiteralPath $Inputs -Destination (Join-Path $Output 'build-inputs.zip')
 $serverManifest = Join-Path $Server 'server-manifest.json'
 $serverInfo = Get-Content -LiteralPath $serverManifest -Raw | ConvertFrom-Json

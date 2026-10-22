@@ -12,6 +12,9 @@ The launcher checks the disc, prepares its build tools and builds the game.
 **No compiler installation, environment variables or terminal commands are
 required.** The Play page also checks for a Vulkan graphics driver and about
 10 GB of free disk space.
+Movies decode on the graphics card when it has a hardware MPEG-2 decoder; on cards
+without one (for example the AMD Radeon RX 9060 XT) the processor decodes them instead,
+which needs a reasonably modern CPU for full speed.
 PAL, Japanese, File #2 and other executable revisions are currently unsupported.
 No PS2 BIOS is needed. Keep the ISO available for game data reads.
 

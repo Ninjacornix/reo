@@ -1,11 +1,63 @@
 # Prerelease packaging
 
-Current target: **v1.0.12**, shown in the launcher as **1.0 Alpha**, marked
-prerelease. The tag stays numeric so installed v1.0.11 launchers offer it as an
-update; use "RE: Outbreak 1.0 Alpha (v1.0.12)" as the release title. .NET is an
+Current target: **v1.0.13**, shown in the launcher as **1.0 Alpha**, marked
+prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.13)". Tags stay numeric so
+installed launchers offer the update. .NET is an
 external prerequisite. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.13
+
+**Movies on GPUs without a hardware MPEG-2 decoder.** An RX 9060 XT system (and its
+Ryzen 7000 integrated Radeon) exposes no D3D11 MPEG-2 VLD profile, so the GPU movie route
+stopped at the first movie ("Initialize full hardware MPEG2 VLD"). The launcher now runs
+`reo-movie-check.exe` (`launcher/native/movie_decoder_check.cpp`, built by `build.ps1`)
+before each launch: it repeats Granite's device choice through Vulkan and the
+`Mpeg2VldCore` acceptance test on that adapter's LUID, and `GameSession` sets
+`REO_GPU_MOVIE=1` only on a clear yes. `tools/diagnostics/video_decoder_probe.cpp` lists
+every adapter's decoder profiles for support reports.
+
+**CPU movie and gameplay speed.** The original CPU decoder ran at 4-5 fps and gameplay
+advanced about 9 game updates per second on a Ryzen 5 2600: every generated instruction
+and register access went through source-guard instrumentation, and every memory-mapped
+register write called `getenv`. Fixes: PS2Recomp patches `0098` (inline unbound paths,
+cached switches, `refuseUnguardedSource`) and `0099` (`PS2RECOMP_UNGUARDED_RANGES`,
+`ps2_plain_access_begin/end.hpp`), the inline unbound read in `guarded_source_overlay.hpp`,
+and `generate_game.py` passing the libmpeg range 0x142000-0x147FFF to the main and extra
+passes (95 functions). Measured on the Ryzen 5 2600: CPU movies 27-31 fps (23-25 in the
+heaviest title-movie scene; stream 29.97); first room reached at 57 s instead of 101 s;
+gameplay 29.6 game updates/s instead of 9.0 (`clock_units` in the gameplay route's
+`clock.csv`). Check that rate in future release tests.
+
+Compiling the inline accessors costs more: `main693` (the 1.1 MB generated outlier) now
+takes over 20 minutes alone and peak compiler memory is higher.
+
+Kit: refreshed from `inputs-v112h` with the patched recompiler
+(`build-ninja/recompiler-unguarded`, `code_generator.cpp` per patch 0099, other objects from
+the shipped recompiler; a control build of the unpatched source reproduced the shipped
+object byte for byte):
+
+```
+python tools/local_build/refresh_inputs.py --kit build-ninja/slim-release/inputs-v112h \
+  --output <new> --archive <new>.zip --recompiler build-ninja/recompiler-unguarded/ps2_recomp.exe \
+  --dependency-sources <RE-Outbreak-v1.0.12-Dependency-Sources.zip> --version 1.0.13 \
+  --update-source third_party/PS2Recomp/ps2xRuntime/src/lib/parent_natural_runtime.h \
+  --update-source third_party/PS2Recomp/ps2xRuntime/src/lib/parent_natural_dispatch.cpp \
+  --update-source third_party/PS2Recomp/ps2xRuntime/src/lib/source_instruction_access.hpp \
+  --update-source third_party/PS2Recomp/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp \
+  --update-source tools/parallel_gs_backend/resident_geometry/guarded_source_overlay.hpp \
+  --add-source third_party/PS2Recomp/ps2xRuntime/include/ps2_plain_access_begin.hpp \
+  --add-source third_party/PS2Recomp/ps2xRuntime/include/ps2_plain_access_end.hpp
+```
+
+Kit `build-ninja/slim-release/inputs-v113f`, manifest
+29d3e480ab9f183f1d9e4f76e1ac7fdcffe0ac327167b052ce1c3bfe4019f36a; archive
+`build-inputs-v113f.zip`, SHA-256
+2c7d45bb839c162aae8f9a214c5bf31b1e5d925bf096dea4f5d6fbe161860873. Headers changed, so
+updating players rebuild every unit once.
+
+## v1.0.12
 
 v1.0.12 ships launcher changes (guided Play page and checklist, ISO check before
 import, Remove game, Co-op page, LAN discovery, configurable sign-up/game-server

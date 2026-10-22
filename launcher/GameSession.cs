@@ -10,6 +10,7 @@ public sealed class GameSession {
     public string? Logs { get; private set; }
     public ImportedDisc? Imported { get; private set; }
     public string? NetworkStatus { get; private set; }
+    public string? MovieStatus { get; private set; }
     public bool Running => Process is { HasExited : false };
     public static string SaveFolder(string root, string game = "file1") =>
         AppLayout.Packaged(root)
@@ -148,9 +149,10 @@ public sealed class GameSession {
             Set("REO_GAME_CLOCK_SECONDS", "300");
             Set("REO_GAME_CLOCK_FILE", Path.Combine(Logs, "clock.csv"));
         }
-        // Movies always decode on the GPU: the CPU decoder cannot keep 30 fps, so
-        // cutscene video falls behind its audio. There is no CPU option.
-        Set("REO_GPU_MOVIE", "1");
+        // GPU movies when the rendering GPU has a hardware MPEG-2 decoder, else the original CPU decoder.
+        MovieDecoderChoice movies = await MovieDecoder.Choose(cancel);
+        MovieStatus = movies.Gpu ? "Movies: GPU decoder" : "Movies: CPU decoder (" + movies.Reason + ")";
+        Set("REO_GPU_MOVIE", movies.Gpu ? "1" : "0");
         controller.Select(
             controller.SelectedDevice.Id); // pin the chosen source across hotplug events
         controller.SessionEnabled = true;
@@ -232,7 +234,10 @@ public sealed class GameSession {
                       importedData = discRoot,
                       importReused = Imported.Reused,
                       mountedIso = false,
-                      directIso = true },
+                      directIso = true,
+                      movieDecoder = movies.Gpu ? "gpu" : "cpu",
+                      movieDecoderGpu = movies.GpuName,
+                      movieDecoderReason = movies.Reason },
                 new JsonSerializerOptions { WriteIndented = true }));
         _ = ApplyWindow(Process, settings);
     }

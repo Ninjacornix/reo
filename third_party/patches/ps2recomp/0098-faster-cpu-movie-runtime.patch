@@ -1,0 +1,139 @@
+--- a/ps2xRuntime/src/lib/parent_natural_runtime.h
++++ b/ps2xRuntime/src/lib/parent_natural_runtime.h
+@@ -1,6 +1,7 @@
+ #pragma once
+ #include "ps2_runtime.h"
+ #include "resident_vif_commands.h"
++#include <atomic>
+ #include <functional>
+ #include <memory>
+ #include <mutex>
+@@ -84,6 +85,10 @@
+ void stopActualOwnerTarget(const std::shared_ptr<ControlTarget>&);
+ std::shared_ptr<ControlTarget> findActualOwnerTarget(const void* ram);
+ uint64_t actualOwnerBindingGeneration()noexcept;
++// Number of bound owners, tombstones included; written only under the registry lock.
++// Zero means every lookup yields no target, so per-access guards may take the plain path.
++extern std::atomic<size_t> actualOwnerBindingCount;
++inline bool anyActualOwnerBound()noexcept{return actualOwnerBindingCount.load(std::memory_order_acquire)!=0;}
+ class AccessScope final {
+     PS2Runtime* priorRuntime_;R5900Context* priorContext_;
+     std::shared_ptr<ControlTarget> priorCachedTarget_;const void* priorCachedRam_=nullptr;uint64_t priorCachedGeneration_=0,priorCachedEpoch_=0;
+--- a/ps2xRuntime/src/lib/parent_natural_dispatch.cpp
++++ b/ps2xRuntime/src/lib/parent_natural_dispatch.cpp
+@@ -7,8 +7,10 @@
+ #include <map>
+ #include <atomic>
+ #include <stdexcept>
++#include <cstdio>
+ extern uint32_t ps2IoRegLockDepth()noexcept;
+ namespace reo_parent_natural {
++std::atomic<size_t> actualOwnerBindingCount{0};
+ namespace {
+ struct Binding {std::weak_ptr<ControlTarget> target;R5900Context* actualContext=nullptr;bool tombstone=false;};
+ std::mutex bindingsMutex;
+@@ -18,7 +20,7 @@
+ // GPU parent/source owners off); a non-empty map, tombstones included, still takes
+ // the locked path, so guarded behaviour is unchanged. Profiled 2026-10-18: the
+ // unconditional lock+scan cost ~40% of the guest render thread's samples.
+-std::atomic<size_t> bindingCount{0};
++std::atomic<size_t>& bindingCount=actualOwnerBindingCount;
+ std::atomic<uint64_t> coldSessions{1};
+ std::atomic<uint64_t> bindingGeneration{1};
+ thread_local std::shared_ptr<ControlTarget> cachedTarget;
+@@ -70,6 +72,13 @@
+     changedBindingGeneration();
+ }
+ uint64_t actualOwnerBindingGeneration()noexcept{return bindingGeneration.load(std::memory_order_acquire);}
++// Called by code the generator emitted without source guards (PS2RECOMP_UNGUARDED_RANGES) when
++// it is entered while an owner is bound; those bodies declare it themselves.
++[[noreturn]] void refuseUnguardedSource(uint32_t pc){
++    if(actualRuntime)actualRuntime->requestStop();
++    char message[96];std::snprintf(message,sizeof message,"Unguarded generated code at 0x%06X ran with a bound source owner",pc);
++    throw OwnedSourceFailure(message);
++}
+ std::shared_ptr<ControlTarget> findActualOwnerTarget(const void* ram) {
+     if(bindingCount.load(std::memory_order_acquire)==0)return {};
+     const uint64_t generation=actualOwnerBindingGeneration();
+--- a/ps2xRuntime/src/lib/source_instruction_access.hpp
++++ b/ps2xRuntime/src/lib/source_instruction_access.hpp
+@@ -22,7 +22,11 @@
+ using OwnedSourceFailure=reo_parent_natural::OwnedSourceFailure;
+ struct SourceAccessCache {std::shared_ptr<ControlTarget> target;TypedSourceWriteTarget* typed=nullptr;ExplicitSourceWriteTarget* exact=nullptr;NativeControlWriteTarget* native=nullptr;CpuInputWriteTarget* cpuInputs=nullptr;const void* ram=nullptr;uint64_t binding=0,epoch=0;};
+ inline thread_local SourceAccessCache accessCache{};
++// Returned while no owner is bound anywhere, which is when the lookup below would find
++// no target. Skipping it avoids the thread-local cache on every guarded access.
++inline const std::shared_ptr<ControlTarget> unboundTarget{};
+ inline const std::shared_ptr<ControlTarget>& selectedTarget(const void* ram){
++    if(!anyActualOwnerBound())return unboundTarget;
+     const uint64_t binding=actualOwnerBindingGeneration();
+     if(accessCache.ram!=ram||accessCache.binding!=binding||(accessCache.target&&accessCache.epoch!=accessCache.target->epoch())){
+         std::shared_ptr<ControlTarget> target;uint64_t before=0,after=0;do{before=actualOwnerBindingGeneration();target=findActualOwnerTarget(ram);after=actualOwnerBindingGeneration();}while(before!=after);
+@@ -84,7 +88,7 @@
+     const auto base=reinterpret_cast<uintptr_t>(&ctx),at=reinterpret_cast<uintptr_t>(field);
+     if(at<base||at-base>sizeof(ctx)||sizeof(T)>sizeof(ctx)-(at-base))throw std::out_of_range("Actual Context field outside1648 ABI");return uint32_t(at-base);
+ }
+-template<class T> T readField(R5900Context& ctx,const T* field){
++template<class T> T readFieldOwned(R5900Context& ctx,const T* field){
+     static_assert(std::is_trivially_copyable_v<T>);const uint32_t at=fieldOffset(ctx,field);
+     try{
+         auto* runtime=currentRuntime();const auto& target=runtime?selectedTarget(runtime->memory().getRDRAM()):selectedTarget(nullptr);
+@@ -95,7 +99,7 @@
+         T value;std::memcpy(&value,field,sizeof(T));if(target&&(target->ownsAnySource()||target->readyForSelection())){recordNativeGuardedRead(*target,ctx,SourceSpace::Context,at,sizeof(T));recordActualGuardedContextInput(target,ctx,at,&value,sizeof(T));}return value;
+     }catch(...){propagateOwnedFailure(currentRuntime());}
+ }
+-template<class T> void writeField(uint8_t* ram,R5900Context& ctx,T* field,T value,InstructionOrigin origin=actualInstructionOrigin){
++template<class T> void writeFieldOwned(uint8_t* ram,R5900Context& ctx,T* field,T value,InstructionOrigin origin){
+     static_assert(std::is_trivially_copyable_v<T>);const uint32_t at=fieldOffset(ctx,field);
+     try{
+         const auto& target=selectedTarget(ram);
+@@ -113,6 +117,18 @@
+         catch(...){exact->abandonSourceWrite(permit);throw;}
+     }catch(...){propagateOwnedFailure(currentRuntime());}
+ }
++// Every generated register/context access passes through these two. While no owner is bound
++// the guarded bodies above reduce to the plain copy, so it is done inline here.
++template<class T> inline T readField(R5900Context& ctx,const T* field){
++    static_assert(std::is_trivially_copyable_v<T>);
++    if(!anyActualOwnerBound()){(void)fieldOffset(ctx,field);T value;std::memcpy(&value,field,sizeof(T));return value;}
++    return readFieldOwned(ctx,field);
++}
++template<class T> inline void writeField(uint8_t* ram,R5900Context& ctx,T* field,T value,InstructionOrigin origin=actualInstructionOrigin){
++    static_assert(std::is_trivially_copyable_v<T>);
++    if(!anyActualOwnerBound()){(void)fieldOffset(ctx,field);std::memcpy(field,&value,sizeof(T));return;}
++    writeFieldOwned(ram,ctx,field,value,origin);
++}
+ template<class T> class FieldCell final {
+     uint8_t* ram_;R5900Context& ctx_;T* field_;InstructionOrigin origin_;
+ public:FieldCell(uint8_t* ram,R5900Context& ctx,T* field,InstructionOrigin origin):ram_(ram),ctx_(ctx),field_(field),origin_(origin){}
+--- a/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp
++++ b/ps2xRuntime/src/lib/resident_vif_live_hooks.cpp
+@@ -958,17 +958,22 @@
+     }
+ }
+ namespace {
++// Process environment switches, fixed before start; read once because finishResidentMemoryWrite
++// asks on every memory-mapped register write and getenv scans the environment under a lock.
+ bool waitRequested() {
+-    const char* value=std::getenv("REO_VIF1_GPU_WAIT_RELEASE");
+-    return value && std::strcmp(value,"1")==0;
++    static const bool requested=[]{const char* value=std::getenv("REO_VIF1_GPU_WAIT_RELEASE");
++        return value && std::strcmp(value,"1")==0;}();
++    return requested;
+ }
+ bool asyncRequested() {
+-    const char* value=std::getenv("REO_VIF1_GPU_ASYNC_DMA");
+-    return waitRequested() && value && std::strcmp(value,"1")==0;
++    static const bool requested=[]{const char* value=std::getenv("REO_VIF1_GPU_ASYNC_DMA");
++        return value && std::strcmp(value,"1")==0;}();
++    return waitRequested() && requested;
+ }
+ bool fixtureRequested() {
+-    const char* value=std::getenv("REO_RESIDENT_WAIT_TEST");
+-    return value && std::strcmp(value,"1")==0;
++    static const bool requested=[]{const char* value=std::getenv("REO_RESIDENT_WAIT_TEST");
++        return value && std::strcmp(value,"1")==0;}();
++    return requested;
+ }
+ thread_local std::unordered_set<PS2Memory*> localWaitHandoffs;
+ thread_local bool fixtureRawPeek=false;

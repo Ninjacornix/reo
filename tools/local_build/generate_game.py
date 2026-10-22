@@ -11,6 +11,7 @@ import csv
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import struct
@@ -25,6 +26,10 @@ from generate_support import generate_support
 from registration_chunks import chunk_registrations
 
 ELF_SHA256 = "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
+# The game's libmpeg macroblock decoder (0x142000-0x147FFF), emitted without source guards.
+# Only the CPU movie decoder runs it and no source owner reads it; through the guards it ran
+# at 7-8 movie frames per second instead of the stream's 29.97.
+UNGUARDED_RANGES = "0x142000-0x148000"
 MAGIC = 0x336F574D
 
 
@@ -87,9 +92,13 @@ def generate(recompiler, disc, metadata, destination, jobs=1):
                           "patch_cop0 = true\npatch_cache = true\nstubs = []\nskip = " +
                           json.dumps(list(skip)) + "\n" + policy)
         print("Generating " + name, flush=True)
+        environment = dict(os.environ)
+        environment.pop("PS2RECOMP_UNGUARDED_RANGES", None)
+        if name in ("main", "extra"):  # main-executable addresses; overlays load elsewhere
+            environment["PS2RECOMP_UNGUARDED_RANGES"] = UNGUARDED_RANGES
         with (logs / (name + ".log")).open("wb") as log:
             subprocess.run([str(recompiler.resolve()), str(config)], check=True,
-                           stdout=log, stderr=subprocess.STDOUT)
+                           stdout=log, stderr=subprocess.STDOUT, env=environment)
 
     def generate_main():
         main = staging / "output"

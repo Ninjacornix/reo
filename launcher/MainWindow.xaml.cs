@@ -235,7 +235,8 @@ public partial class MainWindow : Window {
             }
             previousRunning = true;
             LaunchButton.Content = "Game running";
-            Status.Text = "Game running · Keep the launcher open for input";
+            Status.Text = "Game running · Keep the launcher open for input" +
+                          (game.MovieStatus is { } movies ? " · " + movies : "");
         } catch (OperationCanceledException) {
             controller.SessionEnabled = false;
             Status.Text = "Import canceled.";

@@ -1,0 +1,329 @@
+--- a/ps2xRecomp/src/lib/code_generator.cpp
++++ b/ps2xRecomp/src/lib/code_generator.cpp
+@@ -13,6 +13,76 @@
+ #include <iostream>
+ #include <cctype>
+ #include <cmath>
++#include <cstdlib>
++#include <regex>
++
++namespace
++{
++    // PS2RECOMP_UNGUARDED_RANGES="0x142000-0x148000,..." (end exclusive) names guest code
++    // emitted without source instrumentation, for hot code that no source owner reads, such
++    // as a software video decoder. Each such body refuses to run while an owner is bound,
++    // so a guarded configuration fails loudly instead of losing coverage.
++    const std::vector<std::pair<uint32_t, uint32_t>> &unguardedRanges()
++    {
++        static const std::vector<std::pair<uint32_t, uint32_t>> ranges = []
++        {
++            std::vector<std::pair<uint32_t, uint32_t>> result;
++            const char *text = std::getenv("PS2RECOMP_UNGUARDED_RANGES");
++            if (!text)
++                return result;
++            const std::regex item(R"(\s*0x([0-9a-fA-F]+)\s*-\s*0x([0-9a-fA-F]+)\s*)");
++            std::string all(text);
++            size_t at = 0;
++            while (at <= all.size())
++            {
++                const size_t end = std::min(all.find(',', at), all.size());
++                std::smatch match;
++                const std::string part = all.substr(at, end - at);
++                if (!std::regex_match(part, match, item))
++                    throw std::runtime_error("Invalid PS2RECOMP_UNGUARDED_RANGES entry: " + part);
++                const auto first = static_cast<uint32_t>(std::stoul(match[1].str(), nullptr, 16));
++                const auto last = static_cast<uint32_t>(std::stoul(match[2].str(), nullptr, 16));
++                if (first >= last)
++                    throw std::runtime_error("Empty PS2RECOMP_UNGUARDED_RANGES entry: " + part);
++                result.emplace_back(first, last);
++                at = end + 1;
++            }
++            return result;
++        }();
++        return ranges;
++    }
++
++    bool unguardedFunction(uint32_t start)
++    {
++        for (const auto &[first, last] : unguardedRanges())
++            if (start >= first && start < last)
++                return true;
++        return false;
++    }
++
++    std::string unguardedSource(const std::string &text)
++    {
++        static const std::regex signature(
++            R"((void\s+[A-Za-z_0-9]+\s*\(\s*uint8_t\s*\*\s*rdram\s*,\s*R5900Context\s*\*\s*ctx\s*,\s*PS2Runtime\s*\*\s*runtime\s*\)\s*\{))");
++        std::string body = std::regex_replace(
++            text, signature,
++            "$1\n    if (reo_parent_natural::actualOwnerBindingCount.load(std::memory_order_acquire))\n"
++            "        reo_parent_natural::refuseUnguardedSource(ctx->pc);\n");
++        // Compile batches share a translation unit, so an earlier instrumented file can leave
++        // guarded accessor macros defined; restore the plain ones around these bodies only.
++        std::smatch first;
++        const size_t bodies = std::regex_search(body, first, signature) ? size_t(first.position()) : 0;
++        const size_t comment = body.rfind("// Function:", bodies);
++        const size_t at = comment != std::string::npos ? comment : bodies;
++        body.insert(at, "#include \"ps2_plain_access_begin.hpp\"\n");
++        return "#include <atomic>\n#include <cstddef>\n#include <cstdint>\n"
++               "namespace reo_parent_natural {\n"
++               "extern std::atomic<std::size_t> actualOwnerBindingCount;\n"
++               "[[noreturn]] void refuseUnguardedSource(std::uint32_t pc);\n"
++               "}\n" +
++               body + "#include \"ps2_plain_access_end.hpp\"\n";
++    }
++}
+ 
+ namespace ps2recomp
+ {
+@@ -1165,6 +1235,8 @@
+         // unreachable dead code after the jr $ra return block.
+         ss << "    ctx->pc = GPR_U32(ctx, 31); return;\n";
+         ss << "}\n";
++        if (unguardedFunction(function.start))
++            return unguardedSource(ss.str());
+         return source_guard::instrument(ss.str(), true);
+     }
+ 
+--- /dev/null
++++ b/ps2xRuntime/include/ps2_plain_access_begin.hpp
+@@ -0,0 +1,204 @@
++// Generated from ps2_runtime_macros.h; no include guard by design.
++// Code emitted without source instrumentation (PS2RECOMP_UNGUARDED_RANGES) includes this
++// first and ps2_plain_access_end.hpp last. A compile batch can place it after instrumented
++// files, whose override headers redefine these accessors for the rest of the translation
++// unit; this restores the plain ones for this file only.
++#include "ps2_runtime_macros.h"
++#pragma push_macro("FAST_READ8")
++#pragma push_macro("FAST_READ16")
++#pragma push_macro("FAST_READ32")
++#pragma push_macro("FAST_READ64")
++#pragma push_macro("FAST_READ128")
++#pragma push_macro("FAST_WRITE8")
++#pragma push_macro("FAST_WRITE16")
++#pragma push_macro("FAST_WRITE32")
++#pragma push_macro("FAST_WRITE64")
++#pragma push_macro("FAST_WRITE128")
++#pragma push_macro("READ8")
++#pragma push_macro("READ16")
++#pragma push_macro("READ32")
++#pragma push_macro("READ64")
++#pragma push_macro("READ128")
++#pragma push_macro("WRITE8")
++#pragma push_macro("WRITE16")
++#pragma push_macro("WRITE32")
++#pragma push_macro("WRITE64")
++#pragma push_macro("WRITE128")
++#pragma push_macro("GPR_U32")
++#pragma push_macro("GPR_S32")
++#pragma push_macro("GPR_U64")
++#pragma push_macro("GPR_S64")
++#pragma push_macro("GPR_VEC")
++#pragma push_macro("SET_GPR_U32")
++#pragma push_macro("SET_GPR_S32")
++#pragma push_macro("SET_GPR_U64")
++#pragma push_macro("SET_GPR_S64")
++#pragma push_macro("SET_GPR_VEC")
++#undef FAST_READ8
++#undef FAST_READ16
++#undef FAST_READ32
++#undef FAST_READ64
++#undef FAST_READ128
++#undef FAST_WRITE8
++#undef FAST_WRITE16
++#undef FAST_WRITE32
++#undef FAST_WRITE64
++#undef FAST_WRITE128
++#undef READ8
++#undef READ16
++#undef READ32
++#undef READ64
++#undef READ128
++#undef WRITE8
++#undef WRITE16
++#undef WRITE32
++#undef WRITE64
++#undef WRITE128
++#undef GPR_U32
++#undef GPR_S32
++#undef GPR_U64
++#undef GPR_S64
++#undef GPR_VEC
++#undef SET_GPR_U32
++#undef SET_GPR_S32
++#undef SET_GPR_U64
++#undef SET_GPR_S64
++#undef SET_GPR_VEC
++#define FAST_READ8(addr) Ps2FastRead8(rdram, (uint32_t)(addr))
++#define FAST_READ16(addr) Ps2FastRead16(rdram, (uint32_t)(addr))
++#define FAST_READ32(addr) Ps2FastRead32(rdram, (uint32_t)(addr))
++#define FAST_READ64(addr) Ps2FastRead64(rdram, (uint32_t)(addr))
++#define FAST_READ128(addr) Ps2FastRead128(rdram, (uint32_t)(addr))
++#define FAST_WRITE8(addr, val) Ps2FastWrite8(rdram, (uint32_t)(addr), (uint8_t)(val))
++#define FAST_WRITE16(addr, val) Ps2FastWrite16(rdram, (uint32_t)(addr), (uint16_t)(val))
++#define FAST_WRITE32(addr, val) Ps2FastWrite32(rdram, (uint32_t)(addr), (uint32_t)(val))
++#define FAST_WRITE64(addr, val) Ps2FastWrite64(rdram, (uint32_t)(addr), (uint64_t)(val))
++#define FAST_WRITE128(addr, val) Ps2FastWrite128(rdram, (uint32_t)(addr), (val))
++#define READ8(addr) ([&]() -> uint8_t {                       \
++    uint32_t _addr = (uint32_t)(addr);                        \
++    return PS2Runtime::isSpecialAddress(_addr)                \
++        ? runtime->Load8(rdram, ctx, _addr)                   \
++        : FAST_READ8(_addr); }())
++#define READ16(addr) ([&]() -> uint16_t {                     \
++    uint32_t _addr = (uint32_t)(addr);                        \
++    return PS2Runtime::isSpecialAddress(_addr)                \
++        ? runtime->Load16(rdram, ctx, _addr)                  \
++        : FAST_READ16(_addr); }())
++#define READ32(addr) ([&]() -> uint32_t {                     \
++    uint32_t _addr = (uint32_t)(addr);                        \
++    return PS2Runtime::isSpecialAddress(_addr)                \
++        ? runtime->Load32(rdram, ctx, _addr)                  \
++        : FAST_READ32(_addr); }())
++#define READ64(addr) ([&]() -> uint64_t {                     \
++    uint32_t _addr = (uint32_t)(addr);                        \
++    return PS2Runtime::isSpecialAddress(_addr)                \
++        ? runtime->Load64(rdram, ctx, _addr)                  \
++        : FAST_READ64(_addr); }())
++#define READ128(addr) ([&]() -> __m128i {                     \
++    uint32_t _addr = (uint32_t)(addr);                        \
++    return PS2Runtime::isSpecialAddress(_addr)                \
++        ? runtime->Load128(rdram, ctx, _addr)                 \
++        : FAST_READ128(_addr); }())
++#define WRITE8(addr, val)                                                            \
++    do                                                                               \
++    {                                                                                \
++        uint32_t _addr = (addr);                                                     \
++        if (PS2Runtime::isSpecialAddress(_addr))                                     \
++            runtime->Store8(rdram, ctx, _addr, (val));                               \
++        else                                                                         \
++        {                                                                            \
++            ps2TraceGuestWrite(rdram, _addr, 1u, (uint8_t)(val), 0u, "WRITE8", ctx); \
++            FAST_WRITE8(_addr, (val));                                               \
++        }                                                                            \
++    } while (0)
++#define WRITE16(addr, val)                                                             \
++    do                                                                                 \
++    {                                                                                  \
++        uint32_t _addr = (addr);                                                       \
++        if (PS2Runtime::isSpecialAddress(_addr))                                       \
++            runtime->Store16(rdram, ctx, _addr, (val));                                \
++        else                                                                           \
++        {                                                                              \
++            ps2TraceGuestWrite(rdram, _addr, 2u, (uint16_t)(val), 0u, "WRITE16", ctx); \
++            FAST_WRITE16(_addr, (val));                                                \
++        }                                                                              \
++    } while (0)
++#define WRITE32(addr, val)                                                             \
++    do                                                                                 \
++    {                                                                                  \
++        uint32_t _addr = (addr);                                                       \
++        if (PS2Runtime::isSpecialAddress(_addr))                                       \
++            runtime->Store32(rdram, ctx, _addr, (val));                                \
++        else                                                                           \
++        {                                                                              \
++            ps2TraceGuestWrite(rdram, _addr, 4u, (uint32_t)(val), 0u, "WRITE32", ctx); \
++            FAST_WRITE32(_addr, (val));                                                \
++        }                                                                              \
++    } while (0)
++#define WRITE64(addr, val)                                                             \
++    do                                                                                 \
++    {                                                                                  \
++        uint32_t _addr = (addr);                                                       \
++        if (PS2Runtime::isSpecialAddress(_addr))                                       \
++            runtime->Store64(rdram, ctx, _addr, (val));                                \
++        else                                                                           \
++        {                                                                              \
++            ps2TraceGuestWrite(rdram, _addr, 8u, (uint64_t)(val), 0u, "WRITE64", ctx); \
++            FAST_WRITE64(_addr, (val));                                                \
++        }                                                                              \
++    } while (0)
++#define WRITE128(addr, val)                                                          \
++    do                                                                               \
++    {                                                                                \
++        uint32_t _addr = (addr);                                                     \
++        __m128i _value = (val);                                                      \
++        if (PS2Runtime::isSpecialAddress(_addr))                                     \
++            runtime->Store128(rdram, ctx, _addr, _value);                            \
++        else                                                                         \
++        {                                                                            \
++            const uint64_t _lo = static_cast<uint64_t>(PS2_EXTRACT_EPI64_0(_value)); \
++            const uint64_t _hi = static_cast<uint64_t>(PS2_EXTRACT_EPI64_1(_value)); \
++            ps2TraceGuestWrite(rdram, _addr, 16u, _lo, _hi, "WRITE128", ctx);        \
++            FAST_WRITE128(_addr, _value);                                            \
++        }                                                                            \
++    } while (0)
++#define GPR_U32(ctx_ptr, reg_idx) ((reg_idx == 0) ? 0U : static_cast<uint32_t>(PS2_EXTRACT_EPI32_0(ctx_ptr->r[reg_idx])))
++#define GPR_S32(ctx_ptr, reg_idx) ((reg_idx == 0) ? 0 : PS2_EXTRACT_EPI32_0(ctx_ptr->r[reg_idx]))
++#define GPR_U64(ctx_ptr, reg_idx) ((reg_idx == 0) ? 0ULL : static_cast<uint64_t>(PS2_EXTRACT_EPI64_0(ctx_ptr->r[reg_idx])))
++#define GPR_S64(ctx_ptr, reg_idx) ((reg_idx == 0) ? 0LL : PS2_EXTRACT_EPI64_0(ctx_ptr->r[reg_idx]))
++#define GPR_VEC(ctx_ptr, reg_idx) ((reg_idx == 0) ? _mm_setzero_si128() : ctx_ptr->r[reg_idx])
++#define SET_GPR_U32(ctx_ptr, reg_idx, val)                                \
++    do                                                                    \
++    {                                                                     \
++        if ((reg_idx) != 0)                                               \
++        {                                                                 \
++            __m128i _newVal = _mm_cvtsi64_si128((int64_t)(int32_t)(val)); \
++                                                                          \
++            Ps2SetGprLow64(ctx_ptr, reg_idx, _newVal);                    \
++        }                                                                 \
++    } while (0)
++#define SET_GPR_S32(ctx_ptr, reg_idx, val)                                \
++    do                                                                    \
++    {                                                                     \
++        if ((reg_idx) != 0)                                               \
++        {                                                                 \
++            __m128i _newVal = _mm_cvtsi64_si128((int64_t)(int32_t)(val)); \
++            Ps2SetGprLow64(ctx_ptr, reg_idx, _newVal);                    \
++        }                                                                 \
++    } while (0)
++#define SET_GPR_U64(ctx_ptr, reg_idx, val)                       \
++    do                                                           \
++    {                                                            \
++        if ((reg_idx) != 0)                                      \
++        {                                                        \
++            __m128i _newVal = _mm_cvtsi64_si128((int64_t)(val)); \
++            Ps2SetGprLow64(ctx_ptr, reg_idx, _newVal);           \
++        }                                                        \
++    } while (0)
++#define SET_GPR_S64(ctx_ptr, reg_idx, val) SET_GPR_U64(ctx_ptr, reg_idx, val)
++#define SET_GPR_VEC(ctx_ptr, reg_idx, val) \
++    do                                     \
++    {                                      \
++        if (reg_idx != 0)                  \
++            ctx_ptr->r[reg_idx] = (val);   \
++    } while (0)
+--- /dev/null
++++ b/ps2xRuntime/include/ps2_plain_access_end.hpp
+@@ -0,0 +1,31 @@
++// Generated with ps2_plain_access_begin.hpp; no include guard by design.
++#pragma pop_macro("SET_GPR_VEC")
++#pragma pop_macro("SET_GPR_S64")
++#pragma pop_macro("SET_GPR_U64")
++#pragma pop_macro("SET_GPR_S32")
++#pragma pop_macro("SET_GPR_U32")
++#pragma pop_macro("GPR_VEC")
++#pragma pop_macro("GPR_S64")
++#pragma pop_macro("GPR_U64")
++#pragma pop_macro("GPR_S32")
++#pragma pop_macro("GPR_U32")
++#pragma pop_macro("WRITE128")
++#pragma pop_macro("WRITE64")
++#pragma pop_macro("WRITE32")
++#pragma pop_macro("WRITE16")
++#pragma pop_macro("WRITE8")
++#pragma pop_macro("READ128")
++#pragma pop_macro("READ64")
++#pragma pop_macro("READ32")
++#pragma pop_macro("READ16")
++#pragma pop_macro("READ8")
++#pragma pop_macro("FAST_WRITE128")
++#pragma pop_macro("FAST_WRITE64")
++#pragma pop_macro("FAST_WRITE32")
++#pragma pop_macro("FAST_WRITE16")
++#pragma pop_macro("FAST_WRITE8")
++#pragma pop_macro("FAST_READ128")
++#pragma pop_macro("FAST_READ64")
++#pragma pop_macro("FAST_READ32")
++#pragma pop_macro("FAST_READ16")
++#pragma pop_macro("FAST_READ8")

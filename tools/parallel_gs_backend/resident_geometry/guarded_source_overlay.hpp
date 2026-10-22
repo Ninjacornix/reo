@@ -46,6 +46,9 @@ inline std::shared_ptr<ControlTarget> scopedMemoryOwner(const void* ram, R5900Co
 template <class T, class OriginalRead>
 T guardedRead(PS2Runtime& runtime, const void* ram, R5900Context& ctx, uint32_t address, bool fast,
               OriginalRead&& original) {
+    // No bound owner: scopedMemoryOwner below yields none and the read is the original one.
+    if (!reo_parent_natural::anyActualOwnerBound())
+        return original();
     auto target = scopedMemoryOwner(ram, ctx);
     MemoryView view{};
     uint32_t first = 0;
