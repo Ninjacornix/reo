@@ -13,8 +13,8 @@ Ship the unified `examples/mods/randomizer.json` package and the Mods UI, includ
 
 Refresh `inputs-v113f` using its unchanged recompiler, replacing `recomp/reo_bootstrap.cpp`, `recomp/overrides/reo_hw_bridge.cpp`, `recomp/overrides/reo_missing_entries.cpp` and the eight runtime files in patch `0100-optional-native-asset-bank.patch`. Add `recomp/overrides/reo_mods.h` and the three `runtime/mods/*.h` headers. Keep generated instruction catalogues from the previous kit rather than copying local developer witness tables. Preserve the dirty submodule.
 
-Kit manifest SHA-256: `cbdfd0fe51f3fc50a929ab62021fbcde91d6a4a010b54ef0df3a2207f18ede76`.
-Input archive SHA-256: `add67f5c780e5aefc41dd17978d15e91bfb05fbf21c3a7d457bae712f615ff6f`.
+Kit manifest SHA-256: `ed806caf255a43e4d3a7b86056e4435b9c8b8a259765218e1fe0ebd7a1000257`.
+Input archive SHA-256: `c846ca307e37199a80bd7ac5753bc10b11313b1918603eb6d03e6bdcb097d0bc`.
 The frozen dependency source archive is unchanged; additional matching SDK patches remain in the input kit's `notices/source-updates`. New runtime headers require a full compilation and the release notes must contain `<!-- reo:requires-rebuild -->`.
 
 Verification workspace: `build-ninja/release-v115`; the existing `release-v112/verify/work` supplies resumable object storage. No built game is distributed. Full scenario completion, save/resume and mixed-enemy co-op gameplay are unverified and must remain disclosed.

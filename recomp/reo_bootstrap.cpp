@@ -195,9 +195,11 @@ static void print_banner(const GameDef& g) {
 // Raylib and Win32 export these names with incompatible signatures.
 #define CloseWindow ReoWin32CloseWindow
 #define ShowCursor ReoWin32ShowCursor
+#define Rectangle ReoWin32Rectangle
 #include <windows.h>
 #undef CloseWindow
 #undef ShowCursor
+#undef Rectangle
 
 // Crash diagnostics: on an unhandled exception print the code, fault address and the
 
@@ -1175,19 +1177,19 @@ int main(int argc, char* argv[]) {
 
     ps2_game_overrides::applyMatching(runtime, elf_path, g.entry_point);
 #if defined(REO_GAME_FILE1)
-    if (g.serial == "SLUS-20765")
+    if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo::mc2::install(runtime);
 #endif
-    if (g.serial == "SLUS-20765")
+    if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_movie_entry::install(runtime);
-    if (g.serial == "SLUS-20765")
+    if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_missing_entries::install(runtime); // unregistered entries (stutter + skipped logic)
 #if defined(REO_GAME_FILE1)
-    if (g.serial == "SLUS-20765")
+    if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_movie_join::install(runtime);
 #endif
 #if defined(_WIN32) && defined(REO_HAVE_PARALLEL_GS) && defined(REO_GAME_FILE1)
-    if (g.serial == "SLUS-20765") {
+    if (std::strcmp(g.serial, "SLUS-20765") == 0) {
         const char* gpuMovie = std::getenv("REO_GPU_MOVIE");
         if (gpuMovie && std::atoi(gpuMovie) != 0 && !reo_gpu_movie::installNativeMovieGame(runtime))
             throw std::runtime_error(
@@ -1222,13 +1224,13 @@ int main(int argc, char* argv[]) {
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)
     // Install both exact registry bodies before any producer can select them.
     // The allocation-only diagnostic observer cannot authorize opaque bytes.
-    if (g.serial == "SLUS-20765" && !ReoInstallConnectedParentBodies(runtime))
+    if (std::strcmp(g.serial, "SLUS-20765") == 0 && !ReoInstallConnectedParentBodies(runtime))
         throw std::runtime_error("Guarded parent registry differs from pinned original bodies");
 #else
-    if (g.serial == "SLUS-20765")
+    if (std::strcmp(g.serial, "SLUS-20765") == 0)
         ReoInstallPaletteOriginObserver(runtime);
 #if defined(REO_GAME_FILE1)
-    if (g.serial == "SLUS-20765")
+    if (std::strcmp(g.serial, "SLUS-20765") == 0)
         ReoInstallPaletteParentFrontierObserver(runtime);
 #endif
 #endif
@@ -1239,7 +1241,7 @@ int main(int argc, char* argv[]) {
     // identities separately from reviewed SDK overrides; unsupported execution
     // paths remain refused by the owned integer dispatcher.
 #if defined(REO_GAME_FILE1)
-    if (g.serial == "SLUS-20765") {
+    if (std::strcmp(g.serial, "SLUS-20765") == 0) {
         try {
             reo_irq_integer::installActualOriginalCpuIrqGameReceiver(runtime);
             printf("[REO] original CPU IRQ receiver registered\n");
@@ -1270,7 +1272,7 @@ int main(int argc, char* argv[]) {
     ps2SetDebugPanelProvider(reoDebugPanelText);
 
 #if defined(REO_GAME_FILE1)
-    if (g.serial == "SLUS-20765") {
+    if (std::strcmp(g.serial, "SLUS-20765") == 0) {
         reo::cheats::install(runtime);
         reo::mods::install(runtime);
     }
