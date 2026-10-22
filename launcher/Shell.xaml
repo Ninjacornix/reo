@@ -112,6 +112,9 @@
        <TextBlock Text="Gameplay" Style="{StaticResource Section}"/>
        <TextBlock Text="Original game timing"/><TextBlock Text="30 game updates / 60 display refreshes" Style="{StaticResource Hint}" Margin="0,6,0,14"/>
        <CheckBox x:Name="AsyncVif" Content="Parallel geometry worker" Click="SaveSettings"/>
+       <TextBlock Text="Movies" Style="{StaticResource Section}"/>
+       <CheckBox x:Name="GpuMovies" Content="Decode movies on the graphics card" Click="SaveSettings" IsEnabled="False"/>
+       <TextBlock x:Name="GpuMoviesHint" Text="Checking the graphics card..." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,6,0,0"/>
        <TextBlock Text="Changes apply on the next launch." Style="{StaticResource Hint}" Margin="0,14,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageController" Visibility="Collapsed">

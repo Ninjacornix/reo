@@ -18,6 +18,8 @@ public sealed partial class Settings {
     public string ResolvedFit => ScreenFit is "stretch" or "center" or "fill" ? ScreenFit : "fit";
     public bool LinearFilter { get; set; } = true;
     public bool AsyncVif { get; set; } = true;
+    // Used only when the movie decoder check finds a compatible GPU.
+    public bool GpuMovies { get; set; } = true;
     public bool HostServer { get; set; }
     public string HostAddress { get; set; } = "";
     public bool AutoForward { get; set; }

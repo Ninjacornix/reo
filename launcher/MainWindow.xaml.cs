@@ -39,6 +39,7 @@ public partial class MainWindow : Window {
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
         AsyncVif.IsChecked = settings.AsyncVif;
+        GpuMovies.IsChecked = settings.GpuMovies;
         InitializeOnline();
         TextureFilter.SelectedIndex = settings.TextureLinear ? 1 : 0;
         AnisotropicFilter.SelectedIndex =
@@ -74,6 +75,24 @@ public partial class MainWindow : Window {
         };
         Loaded += OnLoaded;
         Loaded += async (_, _) => await LoadArtworkAsync();
+        Loaded += async (_, _) => await CheckMovieDecoderAsync();
+    }
+    MovieDecoderChoice? movieDecoder;
+    async Task CheckMovieDecoderAsync() {
+        movieDecoder = await MovieDecoder.Choose(CancellationToken.None);
+        GpuMovies.IsEnabled = movieDecoder.Gpu;
+        GpuMovies.IsChecked = movieDecoder.Gpu && settings.GpuMovies;
+        UpdateGpuMoviesHint();
+    }
+    void UpdateGpuMoviesHint() {
+        if (movieDecoder == null)
+            return;
+        string gpu = movieDecoder.GpuName.Length != 0 ? movieDecoder.GpuName : "This graphics card";
+        GpuMoviesHint.Text = !movieDecoder.Gpu
+            ? movieDecoder.Reason + ". Movies decode on the processor."
+            : GpuMovies.IsChecked == true
+                ? gpu + " decodes MPEG-2 video. Uncheck to decode movies on the processor."
+                : gpu + " can decode movies; the processor decodes them instead.";
     }
     void Navigate(object sender, RoutedEventArgs e) => ShowPage((string)((Button)sender).Tag);
     void ShowPage(string name) {
@@ -134,6 +153,9 @@ public partial class MainWindow : Window {
         UpdateScreenFitHint();
         settings.Fullscreen = Fullscreen.IsChecked == true;
         settings.AsyncVif = AsyncVif.IsChecked == true;
+        if (GpuMovies.IsEnabled) // greyed out on an incompatible GPU; keep the saved choice
+            settings.GpuMovies = GpuMovies.IsChecked == true;
+        UpdateGpuMoviesHint();
         settings.TextureLinear = TextureFilter.SelectedIndex == 1;
         settings.Anisotropy =
             new[] { 1, 2, 4, 8, 16 }[Math.Clamp(AnisotropicFilter.SelectedIndex, 0, 4)];
@@ -380,6 +402,9 @@ public partial class MainWindow : Window {
                 ShowBindings(this, new());
             if (args.Contains("--preview-sticks"))
                 ShowInputLayout(this, new());
+            if (args.Contains("--scroll-end"))
+                await Dispatcher.InvokeAsync(SettingsScroll.ScrollToEnd,
+                                       System.Windows.Threading.DispatcherPriority.Loaded);
             // Capture the same artwork used by the live launcher, without private paths.
             await LoadArtworkAsync();
             await Task.Delay(1500);

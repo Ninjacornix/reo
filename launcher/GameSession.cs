@@ -149,10 +149,14 @@ public sealed class GameSession {
             Set("REO_GAME_CLOCK_SECONDS", "300");
             Set("REO_GAME_CLOCK_FILE", Path.Combine(Logs, "clock.csv"));
         }
-        // GPU movies when the rendering GPU has a hardware MPEG-2 decoder, else the original CPU decoder.
+        // GPU movies when the rendering GPU has a hardware MPEG-2 decoder and the player left them
+        // on in Graphics; otherwise the original CPU decoder.
         MovieDecoderChoice movies = await MovieDecoder.Choose(cancel);
-        MovieStatus = movies.Gpu ? "Movies: GPU decoder" : "Movies: CPU decoder (" + movies.Reason + ")";
-        Set("REO_GPU_MOVIE", movies.Gpu ? "1" : "0");
+        bool gpuMovies = movies.Gpu && settings.GpuMovies;
+        MovieStatus = gpuMovies   ? "Movies: graphics card"
+                      : movies.Gpu ? "Movies: processor (chosen in Graphics)"
+                                   : "Movies: processor (" + movies.Reason + ")";
+        Set("REO_GPU_MOVIE", gpuMovies ? "1" : "0");
         controller.Select(
             controller.SelectedDevice.Id); // pin the chosen source across hotplug events
         controller.SessionEnabled = true;
@@ -235,7 +239,9 @@ public sealed class GameSession {
                       importReused = Imported.Reused,
                       mountedIso = false,
                       directIso = true,
-                      movieDecoder = movies.Gpu ? "gpu" : "cpu",
+                      movieDecoder = gpuMovies ? "gpu" : "cpu",
+                      gpuMoviesAvailable = movies.Gpu,
+                      gpuMoviesSetting = settings.GpuMovies,
                       movieDecoderGpu = movies.GpuName,
                       movieDecoderReason = movies.Reason },
                 new JsonSerializerOptions { WriteIndented = true }));
