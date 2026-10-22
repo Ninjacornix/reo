@@ -1,32 +1,24 @@
-# RE: Outbreak 1.0 Alpha (v1.0.13) prerelease
+# RE: Outbreak 1.0 Alpha (v1.0.14) prerelease
 
-<!-- reo:requires-rebuild -->
+A launcher update. **The game is not built again** if you already built it with v1.0.13;
+coming from v1.0.12 or older, the one rebuild from v1.0.13 still applies.
 
-**The game is built once more after updating** (the launcher asks first; about an hour,
-like the first setup).
+## New
 
-## Fixes
+- **Graphics > Movies > Decode movies on the graphics card.** The launcher checks your
+  graphics card when it opens. If the card has a hardware MPEG-2 decoder, the box is on
+  and you can turn it off to decode movies on the processor instead. Without a decoder
+  (for example the AMD Radeon RX 9060 XT) the box is greyed out, the reason is shown, and
+  the processor decodes movies.
 
-- **Gameplay runs at full speed.** Builds from v1.0.12 rendered smoothly but the game
-  itself advanced only about 9 times per second instead of 30, so everything moved in
-  slow motion. Measured now: 29.6 game updates per second.
-- **Movies play on graphics cards without an MPEG-2 decoder.** Some cards (for example
-  the AMD Radeon RX 9060 XT) have no hardware MPEG-2 video decoder, and the game closed at
-  the first movie. Before each launch the launcher now checks the card: movies decode on
-  the graphics card when it can, otherwise on the processor. The status line shows which
-  one is used.
-- **Processor-decoded movies are much faster:** from 4-5 to 27-31 frames per second on a
-  Ryzen 5 2600 (2018); the heaviest title-movie scene dips to 23-25. Newer processors
-  should keep the full 30.
-
-Tested on a Radeon RX 570 + Ryzen 5 2600 PC: the game built from this release reaches the
-title screen and the first room with no errors, with movies decoded on the graphics card
-and, forced, on the processor. Not yet tested on a PC without an MPEG-2 decoder.
+Everything from v1.0.13 is included: full-speed gameplay (30 game updates per second),
+movies on graphics cards without an MPEG-2 decoder, and much faster processor-decoded
+movies.
 
 ## First setup
 
 1. Install .NET 8 Desktop Runtime x64 if needed, and keep your Vulkan driver current.
-2. Extract RE-Outbreak-v1.0.13-Windows-x64.zip into a new folder and open Outbreak.Launcher.exe.
+2. Extract RE-Outbreak-v1.0.14-Windows-x64.zip into a new folder and open Outbreak.Launcher.exe.
 3. Follow the Play page: choose your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**, then **Build game**.
 
 Keep build-inputs.zip and reo-movie-check.exe beside the launcher. The build takes over an
