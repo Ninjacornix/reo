@@ -13,11 +13,12 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from overlay_extract import wrap_elf
+from generate_game import recompiler_environment
 
 
 @unittest.skipUnless(os.environ.get("REO_TEST_RECOMPILER"), "Set REO_TEST_RECOMPILER to the freshly built tool")
 class RecompilerTests(unittest.TestCase):
-    def generate(self, words):
+    def generate(self, words, source_audit=True):
         with tempfile.TemporaryDirectory(prefix="reo-compiler-test-") as folder:
             root = Path(folder)
             code = bytearray(256)
@@ -37,7 +38,8 @@ class RecompilerTests(unittest.TestCase):
             config.write_text("[general]\ninput=" + quote(elf) + "\nghidra_output=" + quote(functions) +
                               "\noutput=" + quote(root / "out") + "\nsingle_file_output=false\nstubs=[]\nskip=[]\n")
             result = subprocess.run([os.environ["REO_TEST_RECOMPILER"], str(config)],
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                    env=recompiler_environment('main', source_audit))
             self.assertEqual(result.returncode, 0, result.stdout)
             return (root / "out/sub_00100080_0x100080.cpp").read_text()
 
@@ -50,6 +52,19 @@ class RecompilerTests(unittest.TestCase):
         instruction = (0x1c << 26) | (10 << 16) | (8 << 11) | (0x1b << 6) | 0x29
         source = self.generate([instruction, 0x03e00008, 0])
         self.assertIn("__m128i src = GPR_VEC(ctx, 10)", source)
+
+    def test_player_code_omits_instruction_witnesses_and_refuses_bound_owners(self):
+        source = self.generate([0x03e00008, 0], source_audit=False)
+        self.assertNotIn('EntryScope', source)
+        self.assertNotIn('reo_source_entry.at(', source)
+        self.assertNotIn('REO_SOURCE_READ(', source)
+        self.assertIn('ps2_plain_access_begin.hpp', source)
+        self.assertIn('refuseUnguardedSource(ctx->pc)', source)
+
+    def test_source_audit_code_retains_instruction_witnesses(self):
+        source = self.generate([0x03e00008, 0], source_audit=True)
+        self.assertIn('EntryScope', source)
+        self.assertIn('reo_source_entry.at(', source)
 
 
 if __name__ == "__main__":

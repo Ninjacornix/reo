@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import struct
 import subprocess
 import sys
@@ -26,11 +27,22 @@ from generate_support import generate_support
 from registration_chunks import chunk_registrations
 
 ELF_SHA256 = "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
-# The game's libmpeg macroblock decoder (0x142000-0x147FFF), emitted without source guards.
-# Only the CPU movie decoder runs it and no source owner reads it; through the guards it ran
-# at 7-8 movie frames per second instead of the stream's 29.97.
-UNGUARDED_RANGES = "0x142000-0x148000"
+# Ordinary CPU gameplay uses the same plain accessors as the working native
+# build. Per-instruction source witnesses belong to opt-in source-audit builds;
+# enabling them throughout a player build reduced room updates to 13-14/s.
+UNGUARDED_RANGES = "0x0-0x2000000"
+AUDIT_UNGUARDED_RANGES = "0x142000-0x148000"  # CPU libmpeg never supplies owned GPU sources.
 MAGIC = 0x336F574D
+
+
+def recompiler_environment(name, source_audit=False):
+    environment = dict(os.environ)
+    environment.pop("PS2RECOMP_UNGUARDED_RANGES", None)
+    if not source_audit:
+        environment["PS2RECOMP_UNGUARDED_RANGES"] = UNGUARDED_RANGES
+    elif name in ("main", "extra"):
+        environment["PS2RECOMP_UNGUARDED_RANGES"] = AUDIT_UNGUARDED_RANGES
+    return environment
 
 
 def sha(path):
@@ -61,7 +73,7 @@ def validate_mapped_ranges(output, function_map, skip=()):
                                  "rebuild the patched recompiler before compiling game sources")
 
 
-def generate(recompiler, disc, metadata, destination, jobs=1):
+def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False):
     recompiler, disc, metadata, destination = map(Path, (recompiler, disc, metadata, destination))
     elf = disc / "SLUS_207.65"
     if sha(elf) != ELF_SHA256:
@@ -78,12 +90,12 @@ def generate(recompiler, disc, metadata, destination, jobs=1):
     work = staging / "inputs"
     work.mkdir()
 
-    def invoke(name, image, function_map, output, skip=()):
+    def invoke(name, image, function_map, output, skip=(), *, audit_override=None, main_policy=False):
         # TOML strings are escaped using JSON's compatible basic-string syntax.
         quote = lambda p: json.dumps(str(Path(p).resolve()).replace("\\", "/"))
         config = work / (name + ".toml")
         policy = ""
-        if name == "main":
+        if name == "main" or main_policy:
             original = (metadata / "outbreak.toml").read_text()
             policy = original[original.index("[mmio]"):]
         config.write_text("[general]\ninput = " + quote(image) + "\nghidra_output = " +
@@ -92,10 +104,8 @@ def generate(recompiler, disc, metadata, destination, jobs=1):
                           "patch_cop0 = true\npatch_cache = true\nstubs = []\nskip = " +
                           json.dumps(list(skip)) + "\n" + policy)
         print("Generating " + name, flush=True)
-        environment = dict(os.environ)
-        environment.pop("PS2RECOMP_UNGUARDED_RANGES", None)
-        if name in ("main", "extra"):  # main-executable addresses; overlays load elsewhere
-            environment["PS2RECOMP_UNGUARDED_RANGES"] = UNGUARDED_RANGES
+        environment = recompiler_environment("main" if main_policy else name,
+                                             source_audit if audit_override is None else audit_override)
         with (logs / (name + ".log")).open("wb") as log:
             subprocess.run([str(recompiler.resolve()), str(config)], check=True,
                            stdout=log, stderr=subprocess.STDOUT, env=environment)
@@ -109,6 +119,8 @@ def generate(recompiler, disc, metadata, destination, jobs=1):
 
         registry = main / "register_functions.cpp"
         registry.write_text(chunk_registrations(registry.read_text()))
+        (main / "ps2_codegen_features.h").write_text(
+            '#pragma once\n#define REO_GENERATED_SOURCE_AUDIT ' + str(int(source_audit)) + '\n')
 
     def generate_extra():
         with (metadata / "extra_functions.csv").open(newline="") as f:
@@ -216,13 +228,45 @@ def generate(recompiler, disc, metadata, destination, jobs=1):
                      *(overlays / tag / ("register_" + tag + ".cpp") for tag in tags)]:
         registry.write_text(chunk_registrations(registry.read_text()))
     generate_support(staging, metadata, invoke)
+    if not source_audit:
+        # Authored audit/IRQ helpers are reconstructed from exact, hash-checked
+        # tracked bodies. Keep these recipe inputs separate from the ordinary
+        # game functions selected by the compile plan.
+        recipes = json.loads((metadata / "local_source_recipes.json").read_text())["recipes"]
+        by_pass = {}
+        for recipe in recipes:
+            relative = Path(recipe["source"])
+            if relative.is_absolute() or '..' in relative.parts:
+                raise ValueError("Audit recipe source escapes generated storage")
+            if relative.parts[0] == "output":
+                tag = "main"
+            elif relative.parts[:1] == ("output_ovl",) and len(relative.parts) == 3:
+                tag = relative.parts[1]
+            else:
+                raise ValueError("Unsupported audit recipe source pass")
+            by_pass.setdefault(tag, set()).add(relative)
+        for tag, sources in by_pass.items():
+            with tempfile.TemporaryDirectory(prefix="audit-" + tag + "-", dir=work) as temporary:
+                audit_output = Path(temporary)
+                image = elf if tag == "main" else work / (tag + ".elf")
+                mapping = metadata / "outbreak_ghidra_functions.csv" if tag == "main" else work / (tag + ".csv")
+                skip = ("sub_00117080", "sub_00117818", "sub_001179E8") if tag == "main" else ()
+                invoke("audit_" + tag, image, mapping, audit_output, skip,
+                       audit_override=True, main_policy=tag == "main")
+                for relative in sources:
+                    target = staging / "audit_sources" / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    text = (audit_output / relative.name).read_text()
+                    if tag != "main":
+                        text = text.replace('"ps2_recompiled_functions.h"', '"' + tag + '_functions.h"')
+                    target.write_text(text)
     catalogue_count = generate_catalogues(elf, metadata / "local_source_catalogues.json",
                                           staging / "local_source_catalogues")
     sources = sorted(staging.rglob("*.cpp"))
     with ThreadPoolExecutor(max_workers=max(1, min(jobs, 4))) as pool:
         source_hashes = list(pool.map(sha, sources))
     record = {"format": 1, "elfSha256": ELF_SHA256, "recompilerSha256": sha(recompiler),
-              "overlays": tags, "instructionWitnesses": catalogue_count,
+              "overlays": tags, "instructionWitnesses": catalogue_count, "sourceAudit": source_audit,
               "sourceFiles": len(sources),
               "files": [{"path": str(p.relative_to(staging)).replace("\\", "/"), "sha256": digest}
                         for p, digest in zip(sources, source_hashes)]}
@@ -238,8 +282,10 @@ def main():
     parser.add_argument("--metadata", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--jobs", type=int, default=1)
+    parser.add_argument("--source-audit", action="store_true",
+                        help="Enable per-instruction GPU source witnesses for developer audits")
     args = parser.parse_args()
-    result = generate(args.recompiler, args.disc, args.metadata, args.output, args.jobs)
+    result = generate(args.recompiler, args.disc, args.metadata, args.output, args.jobs, args.source_audit)
     print(json.dumps({k: v for k, v in result.items() if k != "files"}, indent=2))
 
 

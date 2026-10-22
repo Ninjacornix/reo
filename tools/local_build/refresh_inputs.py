@@ -44,7 +44,8 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
         if sha(target) != entry['sha256']:
             raise ValueError('Copied input failed verification: ' + name)
     for name in ['build_game.py', 'generate_game.py', 'registration_chunks.py',
-                 'compile_game.py', 'compile_linux.py', 'build_scheduler.py', 'compilation_batches.py']:
+                 'compile_game.py', 'compile_linux.py', 'build_scheduler.py', 'compilation_batches.py',
+                 'source_recipes.py']:
         shutil.copyfile(root / 'tools/local_build' / name, output / 'tools/local_build' / name)
     for name in ('compile-plan.json', 'compile-plan-linux.json'):
         plan_file = output / name

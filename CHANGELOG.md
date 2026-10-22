@@ -7,6 +7,7 @@
 - Add editable mod imports and host-published randomizer settings adopted automatically by joining players.
 - Preserve original enemy entrances before species handoff and retain choices across rooms.
 - Add an optional native enemy asset bank and matching CPU, disc and DMA memory support.
+- Restore plain generated game code for ordinary gameplay; make per-instruction source auditing an explicit developer option.
 - Skip unused instruction and memory-write witnesses during ordinary CPU gameplay; preserve enabled source audits and stopped-owner checks.
 - Verify that scenario keys and personal equipment retain their complete original pickup records across randomizer seeds.
 - Ship updated build inputs; existing installations rebuild the game after updating.

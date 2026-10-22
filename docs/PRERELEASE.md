@@ -15,13 +15,15 @@ Refresh `inputs-v113f` using its unchanged recompiler, replacing `recomp/reo_boo
 
 Apply `0101-unbound-source-witness-fast-path.patch` to the frozen SDK copy and update `tools/parallel_gs_backend/resident_geometry/guarded_source_overlay.hpp`. Ordinary CPU execution skips instruction/store witnesses only when neither a bound source owner (including tombstones) nor the first-entry audit needs them. The main repository's working submodule keeps its existing edits; the independent patch reproduces the changes in a sealed kit.
 
-Kit manifest SHA-256: `6958c1ad48e115466252ec8401bb70cac0ac56d6f8e6aab0d4f97a56fe91c9c4`.
-Input archive SHA-256: `04a053c1bd94a08416ac4f9d45b25404105ca11301bdc2ec3febc7cb30046998`.
+Normal player builds generate plain CPU game code for every executable and overlay pass. `generate_game.py --source-audit` explicitly enables developer source witnesses. Exact tracked inputs for the 25 authored audit/IRQ helper recipes are generated separately; their base and result hashes remain enforced. They are excluded from the ordinary gameplay source groups. The bootstrap rejects graphics source auditing with a player build rather than claiming to provide witnesses it did not generate.
+
+Kit manifest SHA-256: `18e04105d5c2a980d74e2a17a0706fc46dab6c15cbe7d6c6608fd3052cce58c8`.
+Input archive SHA-256: `0d3aa0a01db13da091fcb99503167cb331b44944f110b47f54c64ab95e95d45d`.
 The frozen dependency source archive is unchanged; additional matching SDK patches remain in the input kit's `notices/source-updates`. New runtime headers require a full compilation and the release notes must contain `<!-- reo:requires-rebuild -->`.
 
 Verification workspace: `build-ninja/release-v115`; the existing `release-v112/verify/work` supplies resumable object storage. No built game is distributed. Full scenario completion, save/resume and mixed-enemy co-op gameplay are unverified and must remain disclosed.
 
-The pre-optimization room test measured 12.8 original game updates/s; host presentation still reported 60 calls/s. A matching prior-build test measured 14.3 updates/s. Presentation counts cannot establish gameplay speed. The optimized kit requires a fresh `--test-room` clock measurement before publication. Native source-witness checks pass 985 cases covering enabled audits, owners/tombstones, RAM/MMIO/wrapping writes, faults and 128-bit values. Item fixtures verify byte-for-byte preservation of scenario-key and personal pickup records across seeds.
+The tracked portable builds measured 12.8 and 14.3 original game updates/s while presentation reported 60 calls/s. The earlier working native build uses plain generated gameplay and measured 30.00 updates/s. The corrected portable code measured 29.95 updates/s over a read-only 20-second room sample (`sessions/20261022-222853-561/live-clock.json`); presentation counts do not establish gameplay speed. Generated-source verification confirms the same 17,503 ordinary source paths and 17,487 plain guest bodies, with no per-instruction tracking in those bodies. All 60 local-build tests pass (one Linux-only test skipped on Windows). Native source-witness checks pass 985 synthetic binding cases covering enabled audits, owners/tombstones, RAM/MMIO/wrapping writes, faults and 128-bit values. Item fixtures verify byte-for-byte preservation of scenario-key and personal pickup records across seeds.
 
 ## v1.0.13
 

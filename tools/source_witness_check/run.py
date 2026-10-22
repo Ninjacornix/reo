@@ -1,4 +1,4 @@
-"""Native checks of the frozen source-witness fast path and enabled guards."""
+"""Check extracted frozen guard bodies with synthetic bindings, not GPU gameplay."""
 import argparse
 import json
 import os

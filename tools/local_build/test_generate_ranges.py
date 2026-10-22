@@ -3,11 +3,26 @@
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from generate_game import validate_mapped_ranges
+from generate_game import validate_mapped_ranges, recompiler_environment
 
 
 class MappedRangeTests(unittest.TestCase):
+    def test_player_build_uses_plain_cpu_code_for_every_executable_pass(self):
+        with patch.dict('os.environ', {'PS2RECOMP_UNGUARDED_RANGES': 'invalid-inherited-setting'}):
+            for name in ['main', 'extra', 'o2', 'ovl9', 'support']:
+                self.assertEqual(recompiler_environment(name)['PS2RECOMP_UNGUARDED_RANGES'],
+                                 '0x0-0x2000000')
+
+    def test_source_audit_is_explicit_and_preserves_overlay_witnesses(self):
+        with patch.dict('os.environ', {'PS2RECOMP_UNGUARDED_RANGES': 'invalid-inherited-setting'}):
+            for name in ['main', 'extra']:
+                self.assertEqual(recompiler_environment(name, True)['PS2RECOMP_UNGUARDED_RANGES'],
+                                 '0x142000-0x148000')
+            for name in ['o2', 'ovl9', 'support']:
+                self.assertNotIn('PS2RECOMP_UNGUARDED_RANGES', recompiler_environment(name, True))
+
     def validate(self, end, *, missing=False, skip=False):
         with tempfile.TemporaryDirectory(prefix="reo-range-check-") as folder:
             root = Path(folder)

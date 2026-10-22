@@ -1,4 +1,4 @@
-"""First-run worker: derive, instrument and compile a private game from its ISO import."""
+"""First-run worker: derive and compile a private game from its ISO import."""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -94,7 +94,7 @@ def build(kit, disc, work, output, jobs):
     stage(work, "generate", [elf, recompiler, script / "generate_game.py",
                             script / "generate_support.py", script / "registration_chunks.py",
                             *metadata_files], game_generation,
-          lambda: [p for folder in ["output", "output_ovl", "output_extra", "output_overlay", "local_source_catalogues"]
+          lambda: [p for folder in ["output", "output_ovl", "output_extra", "output_overlay", "local_source_catalogues", "audit_sources"]
                    for p in (generated / folder).rglob("*") if p.is_file()], jobs=jobs)
     print("Reconstructing local instrumentation and VU optimizations", flush=True)
     apply_plan(elf, generated, metadata / "local_source_recipes.json", project)

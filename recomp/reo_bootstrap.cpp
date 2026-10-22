@@ -8,6 +8,11 @@
 #include "gs_priv_atomic.h"
 
 #include "gs_backend_route.h"
+#if __has_include("ps2_codegen_features.h")
+#include "ps2_codegen_features.h"
+#else
+#define REO_GENERATED_SOURCE_AUDIT 0
+#endif
 
 #include "vu_specialized_route.h"
 
@@ -1046,6 +1051,10 @@ int main(int argc, char* argv[]) {
     // Normal generated registration after ELF load installs these SAME guarded
     // symbols again. No Runtime RAM/opcode image is read or seeded here.
     if (const char* first = std::getenv("REO_GPU_FIRST_ENTRY_AUDIT"); first && first[0]) {
+#if !REO_GENERATED_SOURCE_AUDIT
+        std::fprintf(stderr, "GPU source audits require game code generated with --source-audit.\n");
+        return 1;
+#endif
         runtime.registerFunction(0x196010u, &sub_00196010_0x196010);
         runtime.registerFunction(0x197900u, &sub_00197900_0x197900);
         runtime.registerFunction(0x191280u, &sub_00191280_0x191280);

@@ -70,7 +70,11 @@ def apply_plan(elf, generated, plan, output):
         return path
 
     for recipe in plan["recipes"]:
-        base = inside(generated, recipe["source"])
+        # Player builds keep the tracked recipe inputs outside the ordinary
+        # generated game-source directories. All recipe hashes still apply.
+        audit = Path(generated) / "audit_sources"
+        relative = Path("audit_sources") / recipe["source"] if audit.is_dir() else recipe["source"]
+        base = inside(generated, relative)
         target = inside(output, recipe["destination"])
         result = apply_recipe(base.read_text(), recipe)
         result = re.sub(r"REO_LOCAL_WORD_([0-9a-f]+)", witness, result)

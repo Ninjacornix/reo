@@ -4,7 +4,7 @@ One **Randomizer** mod now randomizes ordinary items, guns, ammunition and suppo
 
 <!-- reo:requires-rebuild -->
 
-**The game rebuilds after this update.** The Randomizer needs updated native runtime files. Runtime headers changed, so all game units compile again; allow over an hour on slower PCs and about 10 GB of free space. Your ISO, imported data and saves are retained by the update.
+**The game rebuilds after this update.** The Randomizer and gameplay-speed fixes need regenerated game code and updated runtime files. Keep about 10 GB free for the build; time depends on your processor and available memory. Your ISO, imported data and saves are retained by the update.
 
 ## Changes
 
@@ -13,6 +13,7 @@ One **Randomizer** mod now randomizes ordinary items, guns, ammunition and suppo
 - Hosts publish randomizer seeds, item exclusions and enemy profiles to joining players. An optional native asset bank provides space for the additional enemy resources.
 - Keep personal equipment and scenario keys unchanged. Ordinary items retain their original quantities.
 - Reduce instruction and memory-write bookkeeping when optional graphics source audits are disabled.
+- Restore ordinary CPU game-code generation for normal play. Per-instruction source tracking is an explicit developer audit option.
 
 **Experimental:** start a fresh File #1 scenario. Full scenario completion, save/resume compatibility and mixed-enemy co-op gameplay remain unverified. Host-to-guest settings transfer is tested separately from native multiplayer gameplay.
 
