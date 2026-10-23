@@ -11,10 +11,10 @@ namespace Outbreak.Launcher;
 // A host publishes one immutable, data-only configuration for its running game.
 // Joining players use this snapshot instead of their locally enabled randomizers.
 internal static class RandomizerSession {
-    internal const int Protocol = 2, MaxPacket = 8192;
-    internal const string Capability = "[MOD-SESSION-2] stable-spawns";
-    internal static readonly byte[] QueryPrefix = Encoding.ASCII.GetBytes("REO-MODS?2");
-    internal static readonly byte[] ReplyPrefix = Encoding.ASCII.GetBytes("REO-MODS!2");
+    internal const int Protocol = 3, MaxPacket = 32768;
+    internal const string Capability = "[MOD-SESSION-3] scenario-plan";
+    internal static readonly byte[] QueryPrefix = Encoding.ASCII.GetBytes("REO-MODS?3");
+    internal static readonly byte[] ReplyPrefix = Encoding.ASCII.GetBytes("REO-MODS!3");
     static readonly JsonSerializerOptions Json = new() {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
@@ -74,7 +74,7 @@ internal static class RandomizerSession {
     internal static List<ModManifest> ModsFor(Configuration config) {
         if (config.Weapons == null && config.Items == null && config.Enemies == null) return new();
         var manifest = new ModManifest { Format=1, Id="session.host-randomizers", Name="Host randomizers",
-            Version="2", ElfSha256=config.Elf, WeaponShuffle=config.Weapons,
+            Version="3", ElfSha256=config.Elf, WeaponShuffle=config.Weapons,
             ItemRandomizer=config.Items, EnemyRandomizer=config.Enemies };
         return new() { Mods.Parse(JsonSerializer.Serialize(manifest, Json)) };
     }

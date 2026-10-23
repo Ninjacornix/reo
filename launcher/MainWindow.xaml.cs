@@ -496,7 +496,7 @@ public partial class MainWindow : Window {
         }
         int smoke = Array.IndexOf(args, "--smoke-launch");
         if (smoke >= 0 && smoke + 2 < args.Length) {
-            if (Process.GetProcesses().Any(
+            if (!args.Contains("--test-roster-probe") && !args.Contains("--test-peer-room") && Process.GetProcesses().Any(
                     p => p.ProcessName.StartsWith("reo_recomp",
                                                   StringComparison.OrdinalIgnoreCase) ||
                          p.ProcessName == "reo_launcher_game"))
@@ -507,6 +507,8 @@ public partial class MainWindow : Window {
             if (args.Contains("--test-memory-card")) {
                 snapshot.MemoryCardFile1 =
                     Path.Combine(Settings.Home, "test-cards", "launcher-diagnostic");
+                if(args.Contains("--test-roster-probe") || args.Contains("--test-peer-room"))
+                    snapshot.MemoryCardFile1 = Path.Combine(Settings.Home,"test-cards","roster-"+Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(snapshot.MemoryCardFile1);
                 controller.Select("keyboard");
             }
@@ -581,6 +583,7 @@ public partial class MainWindow : Window {
             if (args.Contains("--test-room-preview")) diagnosticRoute = "gameplay-preview";
             if (args.Contains("--test-enemies")) diagnosticRoute = "gameplay-enemies";
             if (args.Contains("--test-enemy-combat")) diagnosticRoute = "gameplay-enemy-combat";
+            if (args.Contains("--test-roster-probe")) diagnosticRoute = "gameplay-roster-probe";
             if (args.Contains("--test-cheats")) {
                 string folder = Cheats.Folder("file1");
                 Directory.CreateDirectory(folder);
@@ -600,6 +603,7 @@ public partial class MainWindow : Window {
             }
             previousRunning = true;
             await Task.Delay(args.Contains("--test-auto-network")    ? 240000
+                             : args.Contains("--test-roster-probe")   ? 95000
                              : args.Contains("--test-quick-display") ? 25000
                              : args.Contains("--test-room-preview")  ? 80000
                                : args.Contains("--test-enemy-long") ? 420000

@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.0.16 prerelease - 2026-10-23
+
+- Add an offline **Unlock everything** cheat for all five File #1 scenarios, difficulties, costumes, NPC characters and purchased collection extras. Preserve reward points, options, inventory and completion records; require an updated native build.
+- Fix infinite ammunition for ordinary and randomized guns, including the rocket launcher, while excluding ammunition boxes, healing, keys and melee items. Verify health/infection restoration and repeated firing in offline gameplay.
+- Build the complete enemy replacement plan from the host's synchronized seed before actors load. Apply room-family limits in spawn-ID order so client loading order and room visits cannot reroll enemies; require version 3 session support on every peer.
+- Load randomized floor models from the imported scenario banks. Keep model geometry paired with its hierarchy and omit unused materials to prevent invisible pickups and corrupted character or room textures.
+- Use native free-flight behavior for replacement crows and wasps, activate G embryos, preserve foreign-room Neptune height, and register the original G/Thanatos grab-reaction continuations.
+- Draw weapons, ammunition and common items from separate seeded global pools across all five File #1 scenarios. Keep keys, Daylight, the lighter, owned items and starting equipment fixed.
+- Expand the editable enemy pool to 56 profiles across 19 native families, with per-room animation-family reservations. Full-scenario and boss compatibility remain experimental.
+- Show local player health on DualSense light bars: green above half HP, yellow at 25–50%, red below 25%, and blue outside gameplay.
+- Route controller input through the launcher adapter for both LLVM/MinGW and MSVC game builds.
+- Keep game cards dark while selection is disabled and show the active game as running.
+- Keep scripted enemy spawns in their original family after entrances finish, preserving later scenario state commands. Shuffle their zombie models and health before construction; ordinary sources retain seeded species choices.
+- Fix scripted enemies receiving different maximum health when network reconstruction clears their entrance behavior on only one client. Preserve their original scripted identity throughout the scenario. Two-client first-room retesting found matching maximum health and eventual damage agreement; delayed combat updates, later rooms and mixed-species combat remain experimental.
+
 ## v1.0.15 prerelease - 2026-10-22
 
 - Add one **Randomizer** mod for ordinary items, guns, ammunition and supported enemy spawns.

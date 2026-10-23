@@ -4,7 +4,7 @@ The first mod format is a single JSON file. Anyone can edit and share one; no co
 
 ## Randomizer
 
-The launcher has one **Randomizer** package for items, guns, ammunition and enemy spawns. Guns are included in the ordinary item pool; no separate gun shuffle is needed. Personal equipment and scenario keys stay unchanged. Enemy choices include supported zombie, Cerberus, licker and hunter profiles and persist across rooms. Start a fresh File #1 scenario. The mod remains experimental; full scenario completion is unverified.
+The launcher has one **Randomizer** package for weapons, ammunition, common items and enemy spawns. Weapon pickups receive other weapons, ammunition receives ammunition, and common items receive common items. The global catalogue includes definitions from all five File #1 scenarios, rather than only supplies already present in the selected scenario. Starting equipment, owned items, scenario keys, Daylight and the lighter stay unchanged. Enemy choices persist across rooms. Start a fresh File #1 scenario. The mod remains experimental; full scenario completion is unverified.
 
 1. Open **Mods > Import mod** and choose `examples/mods/randomizer.json` (also included with the launcher build).
 2. Tick **Randomizer** and launch File #1 for solo play or hosting. Joining players adopt the host's settings automatically.
@@ -31,10 +31,21 @@ session with a relaunch message. Settings are recorded in `randomizer-session.js
 and its SHA-256 receipt beside `mods.json`. This protocol currently targets games
 hosted through the updated launcher, not legacy servers without this responder.
 
-363 launcher checks currently pass, including the actual join resolution path over
+375 launcher checks currently pass, including the actual join resolution path over
 UDP with conflicting local mods and an unmodded host. A two-client native test
 produced identical initial layouts for all 80 eligible item records, but froze in
 mixed-enemy loading. That failed run is not evidence of working enemy co-op.
+
+The multiplayer audit on 2026-10-23 found that the old room-family reservation filter depended on actor construction order: the same 56-profile pool and seed 534703871 produced 13 different selections out of 16 when ordinary source spawns were processed in reverse order (`build-ninja/global-randomizer/multiplayer-order-audit.txt`). Version 3 fixes this by preparing the complete scenario enemy plan from the synchronized host seed, original spawn identities and original room-family requirements before actor construction. Room-family limits are applied in canonical spawn-ID order. Actual actor loading order, later resource flags and room visits cannot reroll the stored choices. The original spawn records remain unchanged by planning.
+
+Both launcher protocol 3 and native `MOD-SESSION-3` support are required; old independently rolled sessions are rejected. The existing real UDP transfer tests confirm that clients adopt the host's seeds and full pool, replacing conflicting local selections. Native regression fixtures cover reversed actor and room orders, different actor allocations, resource availability changes, seed variation, scripted/dead source exclusions, six-family limits and no writes to guest RAM during planning. Full live multiplayer gameplay remains a separate validation requirement.
+
+Local version-3 validation used two independent native processes with seed 534703871. Both produced the same complete plan for 33 eligible enemies from 62 scenario records, plus identical replacements for all 68 eligible items, and exited normally without missing callbacks or crashes. The first ran for 180 seconds; the second previewed the room for 80 seconds. The previously failing five-seed order reproduction now has zero mismatches. These native runs are independent sequential sessions, combined with the separate real UDP transfer tests, rather than a live network gameplay trial (`build-ninja/global-randomizer/seed-plan-validation.json`).
+
+A separate live network trial on 2026-10-23 connected two native clients to the same private loopback server and observed 314.8 seconds in the first Outbreak room. Both clients shared player/enemy movement, the counter item's pickup ownership and floor removal, duplicate-pickup prevention and ammunition consumption. **Combat consistency failed:** spawn 2 remained at 550 HP on the host and 570 HP on the guest for the last 79.6 seconds; its maximum-HP fields also differed. Remote player HP sometimes updated several seconds late. Synced seeds establish choices, not reliable ongoing combat replication. This initial failure was investigated in the follow-up below. Enemy deaths, cross-species replacements in later rooms, separate-PC networking and full scenario completion remain unverified. Evidence: `build-ninja/global-randomizer/live-sync-test-v3/verification.json`, input events, read-only state samples and both clients' captures. The clients were deliberately stopped after observation.
+
+The follow-up isolated a randomizer regression: after a scripted entrance, native network reconstruction can recreate one peer's actor with behavior zero. That peer incorrectly received the editable profile's 700 maximum HP while its partner kept the original shuffled 580 HP. The scenario plan now stores each spawn's original scripted identity and prevents that late profile application. A 419.9-second two-client repeat with the same seed and no cheats had no maximum-HP disagreements, and all observed enemy damage converged. Native grab/escape updates still produced temporary HP differences lasting up to 18.4 seconds; this fix does not make the original networking instantaneous. Evidence: `build-ninja/global-randomizer/coop-combat-fixed1/combat-verification.json`. A fresh final-binary network run additionally picked up/equipped the seed-43 rocket launcher and observed matching negative HP, collapse and subsequent scripted recovery on both peers. That controlled firing run used built-in health/infection/ammunition options in disposable sessions to keep the players alive; it does not validate multiplayer cheat replication. Permanent death/removal across other enemy families and later-room mixed-species combat remain unverified.
+
 
 ## Make your own
 
@@ -45,13 +56,18 @@ the enemy spawn mode described here.
 
 The `enemyTypes` mode intercepts original actor construction and makes seeded
 choices from the manifest's weighted `pool`. Profiles specify numeric `type`,
-`model`, `health`, `behavior`, `posture` and `weight`. The sample contains ordinary
-zombie models, Cerberus (`2:1`), licker (`0:0`) and alpha hunter (`22:0`). The source
+`model`, `health`, `behavior`, `posture` and `weight`. The expanded sample contains
+56 profiles across 19 native families, including zombie models, Cerberus, lickers,
+hunters, crows, spiders, moths, wasps, leeches, G creatures and bosses. The source
 model must also occur in the pool. `sourceBehaviors: [0,9,24,33]` includes ordinary
 and supported scripted zombie sources; named variant 85 stays excluded.
 
-Scripted zombies keep their original entrance until their own AI state machine
-hands control to normal movement. The same allocated actor is then rebuilt with
+Scripted zombie spawns retain their original family for their whole scenario
+lifetime: later scenario commands can still address their native zombie states
+after an entrance finishes. Their models and health are shuffled before native
+construction using the enemy seed, within the original room/lifecycle groups.
+Ordinary behavior-zero sources can receive a weighted choice of another species.
+The same allocated actor is then rebuilt with
 the chosen species' native model, animation resources, collision state and AI.
 The handoff preserves its current position, orientation, spawn ID and list links.
 It does not insert an enemy, change trigger records, wait for a hardcoded timer,
@@ -63,6 +79,33 @@ scenario, original spawn ID and original type/model; current room, actor slot,
 construction order and frame timing do not enter the roll. The chosen profile is
 cached until a new scenario, so room changes do not reroll existing enemies.
 Independent choices can match by chance.
+
+The manifest profiles define the allowed enemy pool, not fixed encounter layouts.
+The runtime uses a versioned 32-bit pseudorandom generator: item locations use a
+seeded choices within separate global weapon, ammunition and common-item pools,
+and ordinary enemy spawns use weighted seeded rolls. Native animation resources
+limit each room to six reserved enemy families; later choices in that room use
+those available families. Scripted sources retain their native family. The default item seed is `2027` and enemy seed
+is `2031`. Keeping the same seeds, scenario and configuration repeats the layout;
+edit the seeds to request another layout. Nothing rerolls merely because a room
+is revisited.
+
+Local follow-up to v1.0.15: a longer manual first-room session exposed a later
+zombie script command (`10/1`) reaching a replacement hunter's null state callback.
+The main game thread returned while audio and presentation continued. The earlier
+three-minute movement checks did not cover that transition. Scripted sources now
+retain zombie-family state compatibility and use the seeded profile shuffle
+before construction. This correction is included in v1.0.16.
+
+The corrected build passed a seven-minute running/combat trial in the first
+room (`build-ninja/release-v115/local-script-fix-validation.json`). An independent
+read-only monitor collected 1,619 samples with no active game-counter stall;
+the steady sample measured 29.90 updates/s. Seed 2031 changed five of eight
+eligible scripted profiles, and the first three zombies continued moving through
+many states after the cutscene. This covers the reported room transition, not
+complete-scenario progression or multiplayer compatibility.
+
+Expanded-roster diagnostics on 2026-10-23 separately initialized the native families in the editable sample. Follow-up runs verified actual player damage from free-flying crows, wasps and active G embryos (`build-ninja/global-randomizer/roster-flight-fixed/results.json`). G-type and both Thanatos variants completed their native grab reactions after the original missing overlay entry and resume points were registered; the foreign-room Neptune remained alive and updated on the room's floor (`build-ninja/global-randomizer/roster-boss-resumes/results.json`). These isolated tests add a temporary diagnostic actor; ordinary launches only replace eligible original spawns. Full scenario, boss and multiplayer compatibility remain unverified.
 
 Enemy-type mods request an additional 32 MB native asset bank. The original game
 heap, stack, save data and kernel-reported RAM size remain in the original 32 MB.
@@ -138,14 +181,26 @@ The combined package also passed a three-minute combat run (`build-ninja/enemies
 
 ### Item Randomizer
 
-The `itemRandomizer` section in `examples/mods/randomizer.json` mixes the ordinary scenario pickup pool across weapons, ammunition, healing, melee and supplies. A weapon location can receive a non-weapon item. Each item carries its original quantity and metadata reference; handles and placement remain at their original locations. Edit `"itemRandomizer": { "seed": 2027 }` to choose another permutation. Guns are already included; adding a separate `weaponShuffle` conflicts with this pool.
+The default `itemRandomizer` section uses `"mode": "global"`. Weapons replace weapons (including melee and throwing weapons), ammunition replaces ammunition, and common items replace common items. Each eligible pickup receives a seeded choice different from its original type and a quantity within the replacement's capacity. Handles, placement and ownership stay unchanged. The launcher builds the catalogue from the player's imported File #1 data; no game data is distributed with the mod. Guns are included; adding a separate `weaponShuffle` conflicts with this mode.
 
-This mode includes valid ordinary item IDs below 400. Personal equipment and the scenario-key ID range are excluded. The item section does not change enemies, doors or puzzle logic (the combined package handles enemies separately), and does not promise that every seed is completable. Use a fresh offline File #1 scenario. The native executable must advertise `MOD-ITEM-RANDOMIZER-1`; old builds are rejected. Diagnostics list every original/replacement pair under that tag.
+The global catalogue merges item metadata and combination recipes from all five scenarios, preserving existing metadata indices and progression recipes. Original personal-equipment records, owned items, progression-flagged items, keys, Daylight (312) and the lighter (450) are excluded. Personal tools are excluded from replacement supplies; personal weapons can appear as additional weapon pickups. The item section does not change doors or puzzle logic and does not promise that every seed is completable. Use a fresh File #1 scenario. The executable must advertise `MOD-GLOBAL-ITEMS-1`, `MOD-GLOBAL-MODELS-1` and `MOD-ITEM-RANDOMIZER-1`; old builds are rejected. Diagnostics list every original/replacement pair. Omitted mode or `"mode": "shuffle"` retains the legacy scenario-supply permutation for existing custom manifests; its historical cross-category checks below do not describe the new default.
+
+Global mode also merges floor models from the player's imported scenario object banks. Meshes retain their pairing with hierarchy roots; only used materials and textures are loaded, preserving space in the native material pool shared with characters and rooms. Five inventory-only ammunition definitions use ordinary ammunition-box floor models while retaining their actual inventory icon, quantity and weapon compatibility. The private coverage check verifies a floor model for all 78 eligible replacement types in every scenario bank, including original key models and geometry preservation (`build-ninja/global-randomizer/global-models-validation.json`).
+
+```json
+"itemRandomizer": { "seed": 2027, "mode": "global" }
+```
+
+Local global-mode validation on 2026-10-23: all five original item tables fit the native metadata/recipe capacities with protected progression data unchanged. Determinism and category-preservation fixtures passed. The live first-scenario run with seed 534703871 changed all 68 eligible pickups, acquired a randomized weapon through normal interaction, and returned through the original quit/results flow to the main menu (`build-ninja/global-randomizer/smoke-global-pickup.json`). Weapon firing, save/resume and full-scenario completion remain separate checks.
+
+The corrected model-loading build also passed the seed-43 rocket-launcher pickup and native return-to-menu route (`build-ninja/global-randomizer/preview-bank-fixed.json`). The earlier merged-bank prototype loaded unused materials until the shared native pool was exhausted, corrupting character and room textures; the compact bank removes those unused allocations. A separate preview confirms the rocket-launcher floor geometry is visible. An additional input-only trial equipped that randomized launcher through the original inventory menu and fired it: the pickup record's rounds fell from 1 to 0, Kevin visibly held the launcher, and gameplay/movement continued afterward (`build-ninja/global-randomizer/fire-test-v2/weapon-use-validation.json`). These checks cover the starting room and this weapon, not every scenario or every weapon's use.
+
+The final local bank passed a 180-second starting-room trial with both seeds set to 534703871. Adjacent unpaused gameplay intervals measured 29.79 updates/s over 115.6 seconds, with no active-counter stall longer than 0.71 seconds and a maximum of 393/600 native material slots used. The intentional pause/options interval is excluded from that speed calculation. Exit was clean, no extra diagnostic enemy was spawned, and the later room capture retained normal character and room textures (`build-ninja/global-randomizer/soak-final-analysis.json`, `soak-final-room.png`).
 
 Mod authors can preserve selected ordinary items with an optional decimal ID list:
 
 ```json
-"itemRandomizer": { "seed": 2027, "excludeItemTypes": [0, 309] }
+"itemRandomizer": { "seed": 2027, "mode": "global", "excludeItemTypes": [0, 309] }
 ```
 
 This example keeps standard handguns (ID 0) and first aid sprays (ID 309 / hexadecimal `0135`) at their original locations. Every record of an excluded type stays untouched and its contents are removed from the shuffle pool, so exclusions cannot duplicate supplies. IDs must be distinct integers from 0 through 399. Omit the list or use `[]` for the original unrestricted pool. Exclusions change the seeded permutation; they are recorded in the session's `mods.json`. Builds lacking `MOD-ITEM-EXCLUSIONS-1` are rejected when the list is nonempty. This is an author-controlled way to protect specific supplies, not a progression solver.
@@ -195,6 +250,14 @@ The `effects` array accepts:
 | `ammo` | Keep eligible carried firearms loaded to their normal capacity. |
 
 Combine effects, for example `"effects": ["health", "infection"]`. These use the same implementation as built-in cheats, without requiring the Cheats switch to be enabled.
+
+Built-in cheats require both **Enable cheats** and the individual cheat selections; changes apply on the next launch. The Randomizer does not enable them. Full health restores a living character each guest frame: it does not suppress enemy hit reactions or revive a dead character. Brief damage/virus/ammunition values can exist between the original action and the next restoration. Cheats remain restricted to offline play.
+
+**Unlock everything** grants the five File #1 scenarios, Easy/Normal/Hard/Very Hard, costumes, NPC characters and purchased collection extras (including Lone Wolf and Infinity availability). It applies in menus as well as gameplay, so no living character is required. It does not add key items, change inventory, grant points or fabricate completion records. Selecting a game mode still uses the original menus. Unlocks are applied to the loaded progression data; the game's normal save operation can retain them after the cheat is disabled. Existing saves are not edited directly by the launcher. An older native executable without `CHEATS-UNLOCK-1` is rejected before launching this selection.
+
+Validation on 2026-10-23 compared fresh private test cards: the unchanged build listed one scenario, while the enabled build listed IDs 0â€“4 and accepted navigation through all five. Native menus exposed all four difficulties, Kevin Type-C, the MAC NPC and owned gallery/Extra entries. Fifty-five native cheat checks include a complete RAM comparison proving unlock writes stay within the progression bitsets and preserve other records and settings; 375 launcher checks include the exported selection and master-switch behavior. Private receipts and original opcode-reader excerpts are under `build-ninja/global-randomizer/unlock-investigation/` and `unlock-validation.json`. This does not establish full scenario completion or save/reload persistence.
+
+Live verification on 2026-10-23 found and fixed an ammunition-category bug: the old hexadecimal item-ID range refilled personal guns but ignored ordinary guns with decimal IDs below 100. The corrected check uses weapon/ammunition metadata and excludes common items, ammunition boxes, keys and melee. In an isolated offline test with all three built-ins enabled, the randomized one-round rocket launcher completed five firing cycles and returned to one round; sixteen native damage events were followed by restored 2300/2300 HP, and infection reset to zero. The matching old-build test left the rocket empty after one shot. Native regression fixtures pass 48 cheat checks, including real firearm and excluded-item categories. Private evidence: `build-ninja/global-randomizer/cheats-validation.json`. This is a first-room offline check, not a full-scenario or multiplayer-cheat validation.
 
 Advanced authors can add `patches` with this structure:
 

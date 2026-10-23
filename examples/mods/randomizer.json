@@ -2,11 +2,12 @@
   "format": 1,
   "id": "example.randomizer",
   "name": "Randomizer",
-  "version": "1.5.0",
-  "description": "Randomizes items, guns, ammunition and enemy spawns. Enemy choices persist across rooms, with zombie, Cerberus, licker and hunter profiles. Hosts share randomizer settings with joining players. Personal equipment and scenario keys stay unchanged. Start a fresh File #1 scenario. Experimental; full scenario completion remains unverified.",
+  "version": "1.7.0",
+  "description": "Seeded global weapon, ammunition and common-item pools, plus an expanded File #1 enemy roster. Weapons replace weapons; common items replace common items. Progression items and starting equipment stay fixed. Scripted enemy families stay compatible with scenario commands. Start a fresh scenario. Experimental; full scenario completion remains unverified.",
   "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
   "itemRandomizer": {
-    "seed": 2027
+    "seed": 2027,
+    "mode": "global"
   },
   "enemyRandomizer": {
     "seed": 2031,
@@ -216,7 +217,7 @@
         "health": 300,
         "behavior": 0,
         "posture": 0,
-        "weight": 3
+        "weight": 8
       },
       {
         "type": 0,
@@ -224,7 +225,7 @@
         "health": 700,
         "behavior": 0,
         "posture": 0,
-        "weight": 3
+        "weight": 12
       },
       {
         "type": 22,
@@ -232,7 +233,239 @@
         "health": 1200,
         "behavior": 0,
         "posture": 0,
-        "weight": 3
+        "weight": 12
+      },
+      {
+        "type": 5,
+        "model": 0,
+        "health": 50,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 36,
+        "model": 0,
+        "health": 300,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 9,
+        "model": 0,
+        "health": 250,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 10,
+        "model": 0,
+        "health": 100,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 22,
+        "model": 1,
+        "health": 1200,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 12
+      },
+      {
+        "type": 29,
+        "model": 0,
+        "health": 4500,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 30,
+        "model": 0,
+        "health": 400,
+        "behavior": 1,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 27,
+        "model": 0,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 1,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 2,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 3,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 4,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 5,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 6,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 7,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 8,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 27,
+        "model": 9,
+        "health": 1400,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 2
+      },
+      {
+        "type": 55,
+        "model": 0,
+        "health": 30,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 19,
+        "model": 0,
+        "health": 6000,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 20,
+        "model": 0,
+        "health": 5000,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 0,
+        "model": 1,
+        "health": 700,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 12
+      },
+      {
+        "type": 2,
+        "model": 2,
+        "health": 300,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 8
+      },
+      {
+        "type": 2,
+        "model": 3,
+        "health": 300,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 8
+      },
+      {
+        "type": 7,
+        "model": 0,
+        "health": 600,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 6,
+        "model": 0,
+        "health": 150,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 23,
+        "model": 0,
+        "health": 900,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 26,
+        "model": 0,
+        "health": 1500,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 24
+      },
+      {
+        "type": 43,
+        "model": 0,
+        "health": 4500,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 12
+      },
+      {
+        "type": 43,
+        "model": 1,
+        "health": 6000,
+        "behavior": 0,
+        "posture": 0,
+        "weight": 12
       }
     ]
   }

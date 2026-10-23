@@ -219,6 +219,29 @@ class IsolationTests(unittest.TestCase):
             ack.write_text("1\n")
             self.assertEqual(harness.queue_keyboard(file, "reo02")["sequence"], 2)
 
+    def test_usb_keyboard_retries_transient_reader_sharing_without_partial_queue(self):
+        with tempfile.TemporaryDirectory() as temp:
+            file = Path(temp) / "keyboard.bin"
+            initial = struct.pack("<III", harness.KEYBOARD_MAGIC, 0, 0)
+            file.write_bytes(initial)
+            Path(str(file) + ".ack").write_text("0")
+            original_replace = Path.replace
+            attempts = []
+            def reader_sharing(source, destination):
+                attempts.append(source)
+                if len(attempts) == 1:
+                    self.assertEqual(file.read_bytes(), initial)
+                    raise PermissionError("Reader briefly denies FILE_SHARE_DELETE")
+                return original_replace(source, destination)
+            with mock.patch.object(Path, "replace", reader_sharing), mock.patch.object(harness.time, "sleep"):
+                receipt = harness.queue_keyboard(file, "reo01", enter=True)
+            self.assertEqual(receipt["sequence"], 1)
+            self.assertEqual(len(attempts), 2)
+            self.assertEqual(struct.unpack_from("<III", file.read_bytes()),
+                             (harness.KEYBOARD_MAGIC, 1, 12))
+            self.assertFalse(Path(str(file) + ".writer-lock").exists())
+            self.assertEqual(list(Path(temp).glob("*.tmp-*")), [])
+
     def test_usb_keyboard_enter_only_respects_pending_ack(self):
         self.assertEqual(harness.keyboard_reports("", True),
                          [bytes((0, 0, 40, 0, 0, 0, 0, 0)), bytes(8)])
@@ -275,6 +298,16 @@ class IsolationTests(unittest.TestCase):
             self.assertEqual(harness.native_outcome(0, diagnostics), "exited-no-fatal-diagnostic")
             self.assertEqual(harness.native_outcome(1, diagnostics), "nonzero-exit")
             self.assertEqual(harness.native_outcome(0xC000013A, diagnostics, True), "supervisor-stopped")
+
+    def test_missing_movie_shader_is_failure_even_when_native_exit_is_zero(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            (folder / "stdout.log").write_text("")
+            (folder / "stderr.log").write_text(
+                "[StartThread] exception: Missing certified native movie shader asset\n"
+                "[run] exiting loop, activeThreads=0\n")
+            diagnostics = harness.classify_native_logs(folder)
+            self.assertEqual(harness.native_outcome(0, diagnostics), "fatal-diagnostic")
 
     def test_account_provider_failure_is_fatal_even_at_exit_zero(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -427,7 +460,10 @@ class WindowsTests(unittest.TestCase):
                                    creationflags=subprocess.CREATE_NO_WINDOW)
         try:
             identity = harness.process_identity(process.pid)
-            self.assertEqual(Path(identity["image"]), Path(sys.executable).resolve())
+            # Microsoft Store Python's app-execution alias can differ from the
+            # actual process image. The child must use our real interpreter.
+            parent_image = harness.process_identity(os.getpid())["image"]
+            self.assertEqual(Path(identity["image"]), Path(parent_image))
             wrong = dict(identity, creationFileTime=identity["creationFileTime"] + 1)
             with self.assertRaises(ValueError):
                 harness.stop_owned(wrong)

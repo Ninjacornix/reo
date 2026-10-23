@@ -17,7 +17,11 @@ inline bool supportedZombieVariant(unsigned variant) {
         default: return false;
     }
 }
-inline EnemyShuffleResult shuffleZombieProfiles(uint8_t* ram, uint32_t seed) {
+struct ZombieShuffleFilter {
+    std::array<bool,256> behaviors{}, variants{};
+};
+inline EnemyShuffleResult shuffleZombieProfiles(uint8_t* ram, uint32_t seed,
+                                                const ZombieShuffleFilter* filter=nullptr) {
     using namespace reo::cheats;
     EnemyShuffleResult result;
     if (!ram) return result;
@@ -25,6 +29,7 @@ inline EnemyShuffleResult shuffleZombieProfiles(uint8_t* ram, uint32_t seed) {
     for (unsigned i = 0; i < count; ++i) {
         const uint32_t a = 0x74f250u + i * 96;
         const auto health = half(ram, a + 0x1c), maximum = half(ram, a + 0x1e);
+        if(filter && (!filter->behaviors[ram[a+0x2a]] || !filter->variants[ram[a+3]])) continue;
         // 6BAA40 builds the scenario records; 6BB040 creates actors from them.
         // Both room-local (0) and tracked (1) entries use 6BBDA0 to copy the
         // variant/health. Keep those two lifecycle groups separate. Leave other

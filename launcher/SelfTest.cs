@@ -53,6 +53,7 @@ static class SelfTest {
         Task.Run(() => RandomizerSessionTests.Run(Check)).GetAwaiter().GetResult();
         OnlineOptionsTests.Run(Check);
         CoopAutomationTests.Run(Check);
+        ControllerLightTests.Run(Check);
         GameImageCacheTests.Run(Check);
         Task.Run(() => AutomaticAccountTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
@@ -90,16 +91,17 @@ static class SelfTest {
             }
         }
         var builtinCheats = Cheats.Builtins("file1");
-        Check(builtinCheats.Count == 3 &&
+        Check(builtinCheats.Count == 4 &&
                   builtinCheats.All(g => g.Supported && g.Writes.Count == 0),
               "Built-in toggles work without imported cheat files");
-        Check(builtinCheats.Select(g => g.Id).Distinct().Count() == 3 &&
+        Check(builtinCheats.Select(g => g.Id).Distinct().Count() == 4 &&
                   Cheats.Builtins("file2").Count == 0,
               "Built-ins have stable separate identities and are File1-only");
         Check(builtinCheats.Any(g => g.Builtin == "health") &&
                   builtinCheats.Any(g => g.Builtin == "infection") &&
-                  builtinCheats.Any(g => g.Builtin == "ammo"),
-              "Health, infection and ammunition are built in");
+                  builtinCheats.Any(g => g.Builtin == "ammo") &&
+                  builtinCheats.Any(g => g.Builtin == "unlock"),
+              "Health, infection, ammunition and progression unlocks are built in");
         var cheatGroups = Cheats.Parse("[Health]\npatch=1,EE,004A5C40,word,000003E8\n[" +
                                            "Unsupported]\npatch=1,EE,D04A5C40,extended,00000001",
                                        "test.pnach");
@@ -129,6 +131,18 @@ static class SelfTest {
               "Valid lines cannot partially enable an unsupported group");
         Check(Cheats.Export(new Settings { CheatsEnabled = false }, Path.GetTempPath()) == "",
               "Disabled cheats never export");
+        string unlockFixture = Path.Combine(Path.GetTempPath(), "reo-unlock-export-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(unlockFixture);
+        try {
+            var unlockSettings = new Settings { SelectedGame = "file1", CheatsEnabled = true,
+                EnabledCheats = new() { "builtin.file1.unlock" } };
+            string unlockFile = Cheats.Export(unlockSettings, unlockFixture);
+            Check(File.ReadAllLines(unlockFile).SequenceEqual(new[] { "REO-CHEATS-2", "builtin unlock" }),
+                  "Unlock selection exports only the progression builtin");
+            unlockSettings.CheatsEnabled = false;
+            Check(Cheats.Export(unlockSettings, unlockFixture) == "",
+                  "Unlock selection still respects the master cheat switch");
+        } finally { Directory.Delete(unlockFixture, true); }
         var usb = new byte[64];
         usb[0] = 1;
         Array.Fill(usb, (byte)128, 1, 4);

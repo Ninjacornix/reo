@@ -2,19 +2,20 @@
 #include "weapon_shuffle.h"
 
 namespace reo::mods {
+inline constexpr unsigned MaxSpawnProfiles=128;
 struct SpawnProfile {
     uint8_t type{}, model{}, behavior{}, posture{};
     uint16_t health{}, weight{};
 };
 struct SpawnPool {
-    std::array<SpawnProfile,32> profiles{};
+    std::array<SpawnProfile,MaxSpawnProfiles> profiles{};
     unsigned count=0;
     std::array<bool,256> sourceBehaviors{};
 };
 inline SpawnPool parseSpawnPool(std::string_view text, std::string_view behaviors) {
     SpawnPool pool;
     while(!text.empty()) {
-        if(pool.count==pool.profiles.size()) throw std::runtime_error("Enemy pool exceeds 32 profiles");
+        if(pool.count==pool.profiles.size()) throw std::runtime_error("Enemy pool exceeds 128 profiles");
         unsigned fields[6]{};
         for(unsigned i=0;i<6;++i) {
             const auto delimiter=text.find(i==5 ? ';' : ':');
@@ -74,36 +75,38 @@ inline uint32_t enemyProfileCallback(const uint8_t* ram, const SpawnProfile& p) 
 // Called on the original actor construction path, after the spawn record was
 // copied but before its model, animations and family-specific renderer setup.
 // No spawn-table, position, trigger, room, identity or lifecycle writes.
-inline int chooseSpawnProfile(const uint8_t* ram, uint32_t a, uint32_t seed,
-                              const SpawnPool& pool, const std::array<bool,32>& available) {
-    using namespace reo::cheats;
-    // Selection is separate from application: scripted sources wait for their
-    // original entrance to hand control to ordinary AI before replacement.
-    if(!ram || !enemyActorAddress(a) || ram[a]!=1 || ram[a+2]!=2 || ram[a+8]!=0 ||
-       ram[a+0xb9a]>1 ||
-       int16_t(half(ram,a+0x544))<=0 ||
-       !pool.sourceBehaviors[ram[a+0xc2b]] ||
-       (ram[a+3]!=1 && ram[a+0xc2b]!=0)) return -1;
-    const auto model=half(ram,a+0xbba);
+template<size_t N>
+inline int chooseSpawnIdentity(unsigned type,unsigned model,unsigned behavior,unsigned lifecycle,
+                               int health,unsigned spawn,unsigned scenario,uint32_t seed,
+                               uint64_t sharedTypes,const SpawnPool& pool,
+                               const std::array<bool,N>& available) {
+    if(type>=64 || lifecycle>1 || health<=0 || !pool.sourceBehaviors[behavior] ||
+       (type!=1 && behavior!=0)) return -1;
     bool source=false;
     for(unsigned i=0;i<pool.count;++i)
-        source |= pool.profiles[i].type==ram[a+3] && pool.profiles[i].model==model;
+        source |= pool.profiles[i].type==type && pool.profiles[i].model==model;
     if(!source) return -1;
     unsigned total=0;
-    std::array<unsigned,32> weights{};
+    std::array<unsigned,MaxSpawnProfiles> weights{};
     for(unsigned i=0;i<pool.count;++i) {
         const auto& p=pool.profiles[i];
+        // Scripted sources remain addressable by scenario commands after their
+        // entrance ends. Those commands use the original family's state table;
+        // e.g. a zombie command 10/1 jumps through a null hunter callback.
+        // Keep that contract for the spawn's entire seeded lifetime, including
+        // room revisits. Ordinary behavior-zero sources may change families.
+        const bool scriptCompatible=behavior==0 || p.type==type;
         // Zombie-source species changes use the deferred private-model loader.
         // Other sources still require the room's original shared model.
-        const bool shared=(word(ram,0x709ac0u+(p.type/32)*4)&(1u<<(p.type%32)))!=0;
-        if(available[i] && (!shared || (ram[a+3]==1 && p.type!=1) || (p.type==ram[a+3] && p.model==model)))
+        const bool shared=(sharedTypes&(uint64_t(1)<<p.type))!=0;
+        if(scriptCompatible && i<N && available[i] && (!shared || (type==1 && p.type!=1) || (p.type==type && p.model==model)))
             total += weights[i]=p.weight;
     }
     if(!total) return -1;
     // Stable scenario spawn identity, never the current room, actor allocation,
     // update count or another enemy's roll. Equal results are possible by chance.
-    uint32_t state=seed ^ (uint32_t(half(ram,0x3243da))<<16) ^
-        (uint32_t(ram[a+0xb98])*0x9e3779b9u) ^ (uint32_t(ram[a+3])<<8) ^ model;
+    uint32_t state=seed ^ (uint32_t(scenario)<<16) ^
+        (uint32_t(spawn)*0x9e3779b9u) ^ (uint32_t(type)<<8) ^ model;
     unsigned choice=next(state)%total;
     for(unsigned i=0;i<pool.count;++i) {
         if(choice<weights[i]) return int(i);
@@ -111,14 +114,61 @@ inline int chooseSpawnProfile(const uint8_t* ram, uint32_t a, uint32_t seed,
     }
     return -1;
 }
+template<size_t N>
+inline int chooseSpawnProfile(const uint8_t* ram,uint32_t a,uint32_t seed,
+                              const SpawnPool& pool,const std::array<bool,N>& available) {
+    using namespace reo::cheats;
+    if(!ram || !enemyActorAddress(a) || ram[a]!=1 || ram[a+2]!=2 || ram[a+8]!=0) return -1;
+    return chooseSpawnIdentity(ram[a+3],half(ram,a+0xbba),ram[a+0xc2b],ram[a+0xb9a],
+        int16_t(half(ram,a+0x544)),ram[a+0xb98],half(ram,0x3243da),seed,
+        uint64_t(word(ram,0x709ac0))|(uint64_t(word(ram,0x709ac4))<<32),pool,available);
+}
 struct SpawnDecisions {
     std::array<int,256> profiles;
+    std::array<bool,256> scripted{};
+    bool planned=false;
     SpawnDecisions() { reset(); }
-    void reset() { profiles.fill(-2); }
+    void reset() { profiles.fill(-2);scripted.fill(false);planned=false; }
+    template<size_t N>
+    void prepare(const uint8_t* ram,uint32_t seed,const SpawnPool& pool,
+                 const std::array<bool,N>& supported) {
+        using namespace reo::cheats;
+        if(!ram) throw std::runtime_error("Cannot plan an absent enemy table");
+        profiles.fill(-1);scripted.fill(false);planned=true;
+        std::array<uint64_t,256> families{};
+        const unsigned count=ram[0x4bae8e];
+        // Reserve every original family first. Then roll all records in stable
+        // spawn-ID order, before any actor, room visit or network update can
+        // affect resource availability or the original source identity.
+        for(unsigned id=0;id<count;++id) {
+            const auto record=0x74f250u+id*96;
+            if(ram[record]!=id || ram[record+2]>=64 || !ram[record+0x22]) continue;
+            families[ram[record+0x22]]|=uint64_t(1)<<ram[record+2];
+        }
+        const uint64_t shared=uint64_t(word(ram,0x709ac0))|(uint64_t(word(ram,0x709ac4))<<32);
+        for(unsigned id=0;id<count;++id) {
+            const auto record=0x74f250u+id*96;
+            const unsigned room=ram[record+0x22];
+            if(ram[record]!=id || !room) continue;
+            scripted[id]=ram[record+0x2a]!=0;
+            auto reserved=families[room];unsigned used=0;
+            for(auto bits=reserved;bits;bits&=bits-1) ++used;
+            std::array<bool,N> available{};
+            for(unsigned i=0;i<pool.count && i<N;++i)
+                available[i]=supported[i] && (used<6 || (reserved&(uint64_t(1)<<pool.profiles[i].type)));
+            const int choice=chooseSpawnIdentity(ram[record+2],ram[record+3],ram[record+0x2a],
+                ram[record+0x26],int16_t(half(ram,record+0x1c)),id,half(ram,0x3243da),
+                seed,shared,pool,available);
+            profiles[id]=choice;
+            if(choice>=0) families[room]|=uint64_t(1)<<pool.profiles[choice].type;
+        }
+    }
+    template<size_t N>
     int pick(const uint8_t* ram,uint32_t actor,uint32_t seed,const SpawnPool& pool,
-             const std::array<bool,32>& supported) {
+             const std::array<bool,N>& supported) {
         if (!ram || !enemyActorAddress(actor)) return -1;
         auto& profile=profiles[ram[actor+0xb98]];
+        if(planned) return profile;
         if (profile==-2) profile=chooseSpawnProfile(ram,actor,seed,pool,supported);
         return profile;
     }

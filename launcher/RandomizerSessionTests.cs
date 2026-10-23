@@ -14,6 +14,8 @@ internal static class RandomizerSessionTests {
         var parsed=RandomizerSession.Parse(config);
         check(parsed.Items?.Seed==sample.ItemRandomizer?.Seed && parsed.Enemies?.Seed==sample.EnemyRandomizer?.Seed,
             "Host publishes both randomizer seeds");
+        check(parsed.Items?.Mode=="global" && parsed.Enemies!.Pool.Count>32,
+            "Host preserves global item mode and the expanded enemy roster");
         var adopted=RandomizerSession.ModsFor(parsed).Single();
         check(adopted.EnemyRandomizer!.Pool.Count==sample.EnemyRandomizer!.Pool.Count && adopted.Effects.Count==0 && adopted.Patches.Count==0,
             "Host session adopts complete pool without executable mods or cheats");
@@ -22,9 +24,12 @@ internal static class RandomizerSessionTests {
         byte[] empty=RandomizerSession.Create("reo01",new());
         check(RandomizerSession.ModsFor(RandomizerSession.Parse(empty)).Count==0,"Unmodded host clears guest randomizers");
         void Reject(Action action,string label) { try { action(); check(false,label); } catch(IOException) {check(true,label);} }
-        Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":2","\"protocol\":999"))),"Incompatible protocol rejected");
-        Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":2,",""))),"Missing protocol rejected");
-        Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"weight\":3","\"weight\":0"))),"Invalid network profile rejected");
+        Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3","\"protocol\":999"))),"Incompatible protocol rejected");
+        Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3,",""))),"Missing protocol rejected");
+        Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3","\"protocol\":2"))),"Old independently rolled enemy sessions rejected");
+        var invalidWeight=System.Text.Json.Nodes.JsonNode.Parse(config)!;
+        invalidWeight["enemies"]!["pool"]![0]!["weight"]=0;
+        Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(invalidWeight.ToJsonString())),"Invalid network profile rejected");
         Reject(()=>RandomizerSession.Parse(new byte[RandomizerSession.MaxPacket]),"Oversize session rejected");
         sample.Effects.Add("health");
         Reject(()=>RandomizerSession.Create("HostTest",new() {sample}),"Effects cannot be shared as randomizers");

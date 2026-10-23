@@ -89,6 +89,7 @@ public partial class MainWindow {
                 (System.Windows.Media.Brush)FindResource(selected ? "Accent" : "Line");
             ((TextBlock)FindName("GameStatus" + n)).Text =
                 id == "file2" ? "Coming later"
+                : selected && game.Running ? "Running"
                 : !(AppLayout.Packaged(root) ? LocalGameBuild.Available(root)
                                              : File.Exists(settings.GetExe(id)))
                     ? (AppLayout.Packaged(root) ? "Setup needed: download incomplete" : "No developer build")

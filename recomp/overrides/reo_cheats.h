@@ -15,6 +15,11 @@ inline void service(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
     if (ctx->pc == 0x19f6c0u) {
         apply(active, ram, false);
         const auto result = applyBuiltins(builtinFlags, ram);
+        static bool unlocksReported = false;
+        if (result.unlocks && !unlocksReported) {
+            unlocksReported = true;
+            std::fprintf(stderr, "[CHEATS-UNLOCK-1] progression\n");
+        }
         static unsigned gameplayFrames = 0;
         if (result.active) {
             static const bool diagnostic = std::getenv("REO_CHEAT_DIAG") != nullptr;

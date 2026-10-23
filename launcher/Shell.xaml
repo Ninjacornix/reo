@@ -37,6 +37,7 @@
      <Grid>
       <StackPanel x:Name="PagePlay">
        <ListBox x:Name="GamePicker" SelectionChanged="GameSelectionChanged" SelectedValuePath="Tag" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,8,0,22" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Choose game">
+        <ListBox.Template><ControlTemplate TargetType="ListBox"><ItemsPresenter/></ControlTemplate></ListBox.Template>
         <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
         <ListBoxItem Tag="file1" Style="{StaticResource GameChoice}" Margin="0,0,9,0" AutomationProperties.Name="Outbreak File 1">
         <Border x:Name="GameCard1" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="18">

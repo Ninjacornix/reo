@@ -7,7 +7,32 @@ import collections
 import json
 from pathlib import Path
 import re
+import struct
 import sys
+
+
+def catalogue_items(path):
+    data = Path(path).read_bytes()
+    if data[:8] != b"RGIC1\0\0\0":
+        raise ValueError("Invalid global item catalogue")
+    count, = struct.unpack_from("<I", data, 8)
+    position, items = 12, {}
+    for _ in range(count):
+        item_type, = struct.unpack_from("<H", data, position)
+        flags, = struct.unpack_from("<I", data, position + 2)
+        capacity, = struct.unpack_from("<H", data, position + 10)
+        combinations, = struct.unpack_from("<H", data, position + 38)
+        position += 40 + combinations * 6
+        if item_type in items or position > len(data):
+            raise ValueError("Invalid global item entry")
+        protected = item_type in (312, 450) or item_type >= 10000 or bool(flags & 0x08000000)
+        category = (None if protected else "ammunition" if 200 <= item_type < 300
+                    else "weapon" if flags & 1 and not flags & 4
+                    else "common" if flags & 4 or 300 <= item_type < 500 else None)
+        items[item_type] = (category, capacity, flags)
+    if position != len(data):
+        raise ValueError("Incomplete global item catalogue")
+    return items
 
 
 def verify(receipt_path):
@@ -29,12 +54,26 @@ def verify(receipt_path):
         "cleanExit": receipt.get("exited") is True and receipt.get("exitCode") == 0,
         "seedMatches": seed == options["seed"],
         "completeItemLog": len(rows) == eligible and len({r[0] for r in rows}) == eligible,
-        "supplyConserved": collections.Counter((r[1], r[2]) for r in rows) == collections.Counter((r[3], r[4]) for r in rows),
         "changedCountMatches": changed == sum((r[1], r[2]) != (r[3], r[4]) for r in rows) and changed > 0,
         "excludedTypesAbsent": all(r[1] not in options.get("excludeItemTypes", []) and r[3] not in options.get("excludeItemTypes", []) for r in rows),
-        "progressionAndPersonalTypesExcluded": all(0 <= r[1] < 400 and 0 <= r[3] < 400 for r in rows),
         "returnedToMenu": bool(re.search(r"MAIN MENU PROOF .*pickupProof=1 resultsProof=1", log)),
     }
+    if options.get("mode", "shuffle") == "global":
+        items = catalogue_items(session / "global-items.bin")
+        checks.update({
+            "globalCatalogueInstalled": "[MOD-GLOBAL-ITEMS-1] definitions=" in log,
+            "separateCategories": all(a in items and b in items and items[a][0] is not None
+                                      and items[a][0] == items[b][0] for _, a, _, b, _, _ in rows),
+            "everyTypeChanged": all(r[1] != r[3] for r in rows),
+            "replacementQuantityWithinCapacity": all(r[3] in items and 1 <= r[4] <= items[r[3]][1] for r in rows),
+            "originalPersonalEquipmentExcluded": all(r[1] in items and not items[r[1]][2] & 0x40 for r in rows),
+            "progressionTypesExcluded": all(t not in (312, 450) and t < 600
+                                            and t in items and not items[t][2] & 0x08000000
+                                            for r in rows for t in (r[1], r[3])),
+        })
+    else:
+        checks["supplyConserved"] = collections.Counter((r[1], r[2]) for r in rows) == collections.Counter((r[3], r[4]) for r in rows)
+        checks["progressionAndPersonalTypesExcluded"] = all(0 <= r[1] < 400 and 0 <= r[3] < 400 for r in rows)
     proofs = re.findall(r"PICKUP PROOF handle=(\d+) item=(\d+) slot=(\d+) before=([\d/]+) after=([\d/]+) owner=(\d+) world=(\d+) active=(\d+) type=([0-9a-f]+) quantity=(\d+) metadata=(\d+)", log)
     acquired = []
     for handle, item, slot, before, after, owner, world, active, item_type, quantity, metadata in proofs:
@@ -55,7 +94,7 @@ def verify(receipt_path):
 if __name__ == "__main__":
     try:
         result = verify(sys.argv[1])
-    except (IndexError, KeyError, ValueError, OSError) as error:
+    except (IndexError, KeyError, ValueError, OSError, struct.error) as error:
         result = {"passed": False, "error": str(error)}
     print(json.dumps(result, indent=2))
     sys.exit(0 if result["passed"] else 1)

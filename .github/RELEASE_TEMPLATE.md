@@ -1,28 +1,29 @@
-# RE: Outbreak 1.0 Alpha (v1.0.15) prerelease
+# RE: Outbreak 1.0 Alpha (v1.0.16) prerelease
 
-One **Randomizer** mod now randomizes ordinary items, guns, ammunition and supported enemy spawns together. Practice Mode and the overlapping randomizer samples have been removed.
+Seeded global item pools, corrected pickup models, expanded experimental enemies, multiplayer randomizer fixes and working cheat options.
 
 <!-- reo:requires-rebuild -->
 
-**The game rebuilds after this update.** The Randomizer and gameplay-speed fixes need regenerated game code and updated runtime files. Keep about 10 GB free for the build; time depends on your processor and available memory. Your ISO, imported data and saves are retained by the update.
+**The game rebuilds after this update.** Updated runtime headers and original enemy continuation mappings require a new game build. Keep about 10 GB free for the build. Your ISO, imported data and saves are retained.
 
 ## Changes
 
-- Import `examples/mods/randomizer.json` on the Mods page, then enable **Randomizer**. Existing sample installations migrate automatically to one entry, preserving combined seeds and enemy profiles. Original sample JSON files remain recoverable under `retired-samples` in the mods folder.
-- Randomize supported zombie, Cerberus, licker and hunter encounters. Original scripted entrances finish before species replacement, and choices persist across rooms.
-- Hosts publish randomizer seeds, item exclusions and enemy profiles to joining players. An optional native asset bank provides space for the additional enemy resources.
-- Keep personal equipment and scenario keys unchanged. Ordinary items retain their original quantities.
-- Reduce instruction and memory-write bookkeeping when optional graphics source audits are disabled.
-- Restore ordinary CPU game-code generation for normal play. Per-instruction source tracking is an explicit developer audit option.
+- One **Randomizer** with separate seeded weapon, ammunition and common-item pools across all five File #1 scenarios. Keys, Daylight, the lighter and starting/personal equipment stay fixed.
+- Correct pickup model hierarchy and material handling, addressing invisible items and corrupted character/window textures.
+- Expand the editable enemy pool to 56 profiles across 19 families. Preserve original scripted families and per-room animation limits; correct crow/wasp flight, G embryo activation and specific large-enemy continuations.
+- Joiners adopt the host's seeds, complete pool and exclusions. Build the same enemy plan in spawn-ID order, independent of actor loading order. Keep scripted enemy maximum health consistent when network reconstruction clears an entrance behavior.
+- Fix infinite ammunition for ordinary/randomized guns. Add **Unlock everything** for scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep unlocks.
+- Restore controller input for both supported native build toolchains. Show player health on DualSense lights: green, yellow or red, with blue outside gameplay.
+- Keep disabled game cards dark and show the running game clearly.
 
-**Experimental:** start a fresh File #1 scenario. Full scenario completion, save/resume compatibility and mixed-enemy co-op gameplay remain unverified. Host-to-guest settings transfer is tested separately from native multiplayer gameplay.
+**Verification and limits:** native fixtures, 375 launcher assertions, 60 local-build tests (one skip) and 49 co-op harness tests (one skip) pass. Offline tests covered pickup/equip/firing, health/infection/ammunition cheats, unlock menus and fullscreen bounds. Two native clients connected to a private loopback server shared movement, pickups, ammunition and enemy maximum health. A randomized rocket pickup/equip/fire test also matched the enemy collapse and scripted recovery on both clients. Combat updates can still arrive late during grabs. Later-room mixed-species combat, separate-PC/WAN play, reconnects, save/resume and full scenario completion remain unverified. Randomizer and co-op remain experimental; start a fresh scenario.
 
 ## First setup
 
-1. Install .NET 8 Desktop Runtime x64 if needed, and keep your Vulkan driver current.
-2. Extract `RE-Outbreak-v1.0.15-Windows-x64.zip` into a new folder and open `Outbreak.Launcher.exe`.
-3. Follow the Play page: choose your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**, then **Build game**.
+1. Install .NET 8 Desktop Runtime x64 if needed, and update your Vulkan graphics driver.
+2. Extract `RE-Outbreak-v1.0.16-Windows-x64.zip` into a new folder and open `Outbreak.Launcher.exe`.
+3. Choose your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**, then **Build game**.
 
 Keep `build-inputs.zip`, `reo-movie-check.exe` and the supplied mod examples beside the launcher. PAL, Japanese, File #2 and unsupported or modified executable revisions are not supported. Game data and precompiled game binaries are not included.
 
-The dependency source download contains the frozen SDK source base; matching additional source patches are included under `notices/source-updates` inside `build-inputs.zip`. Ordinary players need only the Windows x64 download.
+The dependency source download contains the frozen SDK source base; matching additional source patches are under `notices/source-updates` inside `build-inputs.zip`. Players need only the Windows x64 download.

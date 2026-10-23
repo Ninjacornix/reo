@@ -1,11 +1,14 @@
 #include "../../runtime/cheats/outbreak_cheats.h"
 #include <iostream>
 #include <sstream>
+#include <tuple>
 #include "weapon_shuffle_tests.h"
 #include "enemy_randomizer_tests.h"
+#include "global_item_tests.h"
 int main() {
     testWeaponShuffle();
     testEnemyRandomizer();
+    testGlobalItems();
     using namespace reo::cheats;
     unsigned checks = 0;
     auto check = [&](bool ok) {
@@ -67,9 +70,9 @@ int main() {
     ram[item] = 1;
     ram[item + 2] = 81;
     ram[item + 0x2b] = 18;
-    setHalf(ram.data(), item + 6, 0x190);
+    setHalf(ram.data(), item + 6, 20); // Actual ordinary rocket-launcher ID.
     setHalf(ram.data(), item + 0x24, 2);
-    setHalf(ram.data(), info + 18, 0x190);
+    setHalf(ram.data(), info + 18, 20);
     setHalf(ram.data(), info + 8, 7);
     setWord(ram.data(), info, 0x00102041);
     check(!applyBuiltins(7, ram.data()).active && half(ram.data(), actor + 0x544) == 1200); // menu
@@ -85,13 +88,31 @@ int main() {
     applyBuiltins(NoInfection, ram.data());
     check(half(ram.data(), actor + 0x544) == 1100 && half(ram.data(), item + 0x24) == 1 &&
           word(ram.data(), actor + 0xbac) == 0);
-    setHalf(ram.data(), info + 18, 0x191);
+    setHalf(ram.data(), info + 18, 21);
     check(applyBuiltins(InfiniteAmmo, ram.data()).ammunitionSlots == 0 &&
           half(ram.data(), item + 0x24) == 1);
-    setHalf(ram.data(), info + 18, 0x190);
+    setHalf(ram.data(), info + 18, 20);
     setWord(ram.data(), info, 1);
     check(applyBuiltins(InfiniteAmmo, ram.data()).ammunitionSlots == 0);
     setWord(ram.data(), info, 0x00102041);
+    // Real catalogue categories: ordinary/personal firearms refill; ammunition,
+    // common items and personal supplies sharing bit 0x100000 do not.
+    for (const auto [type, flags, refill] :
+         {std::tuple{0u, 0x102001u, true}, {20u, 0x104001u, true},
+          {28u, 0x108001u, true}, {400u, 0x102041u, true}, {401u, 0x102041u, true},
+          {200u, 0x100400u, false}, {250u, 0x100002u, false},
+          {309u, 0x140005u, false}, {409u, 0x100040u, false},
+          {454u, 0x100008u, false}, {10001u, 0x104001u, false}}) {
+        setHalf(ram.data(), item + 6, uint16_t(type));
+        setHalf(ram.data(), info + 18, uint16_t(type));
+        setWord(ram.data(), info, flags);
+        setHalf(ram.data(), item + 0x24, 1);
+        check(applyBuiltins(InfiniteAmmo, ram.data()).ammunitionSlots == unsigned(refill));
+        check(half(ram.data(), item + 0x24) == (refill ? 7 : 1));
+    }
+    setHalf(ram.data(), item + 6, 20);
+    setHalf(ram.data(), info + 18, 20);
+    setWord(ram.data(), info, 0x104001);
     ram[item + 2] = 82;
     check(applyBuiltins(InfiniteAmmo, ram.data()).ammunitionSlots == 0);
     ram[item + 2] = 81;
@@ -103,5 +124,40 @@ int main() {
     ram[actor + 8] = 0;
     ram[0x4baded] = 255;
     check(!applyBuiltins(7, ram.data()).active);
+    std::istringstream unlockInput("REO-CHEATS-2\nbuiltin unlock\n");
+    check(parseProgram(unlockInput).builtins == UnlockEverything);
+    std::fill(ram.begin(), ram.end(), 0x5a);
+    ram[0x4badd0] = 0; // Unlocks must work in menus, without a living actor.
+    ram[0x4baded] = 255;
+    auto beforeUnlock = ram;
+    check(!applyBuiltins(0, ram.data()).unlocks && ram == beforeUnlock);
+    auto unlocked = applyBuiltins(UnlockEverything, ram.data());
+    check(unlocked.unlocks && !unlocked.active);
+    check((word(ram.data(), 0x323bd8) & 0x1f) == 0x1f);
+    check((ram[0x31fb83] & 0x0c) == 0x0c && (ram[0x31fb7f] & 5) == 5);
+    for (uint32_t a = 0; a < ram.size(); ++a) {
+        const bool characterBits = (a >= 0x31fb64 && a < 0x31fb6c) ||
+                                   (a >= 0x31fb6d && a < 0x31fb79);
+        bool collectionBits = false;
+        for (unsigned bank = 0; bank < 3; ++bank)
+            for (uint32_t start : {0x323bf4u, 0x323c54u})
+                collectionBits |= a >= start + bank * 32 && a < start + bank * 32 + 24;
+        if (characterBits || collectionBits) {
+            if (ram[a] != 0xff) throw std::runtime_error("Missing progression unlock");
+        } else if (a == 0x31fb83) {
+            if (ram[a] != (beforeUnlock[a] | 0x0c)) throw std::runtime_error("Difficulty bits changed");
+        } else if (a == 0x31fb7f) {
+            if (ram[a] != (beforeUnlock[a] | 5)) throw std::runtime_error("Bonus bits changed");
+        } else if (a >= 0x323bd8 && a < 0x323bdc) {
+            if (word(ram.data(), 0x323bd8) != (word(beforeUnlock.data(), 0x323bd8) | 0x1f))
+                throw std::runtime_error("Existing scenario bits lost");
+        } else if (ram[a] != beforeUnlock[a]) {
+            throw std::runtime_error("Unlock changed unrelated RAM");
+        }
+    }
+    check(true); // Complete RAM comparison includes points, options, records and inventories.
+    beforeUnlock = ram;
+    applyBuiltins(UnlockEverything, ram.data());
+    check(ram == beforeUnlock); // Repeated guest frames must be idempotent.
     std::cout << "PASS " << checks << " cheat engine checks\n";
 }

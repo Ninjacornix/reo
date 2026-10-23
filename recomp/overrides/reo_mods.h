@@ -2,13 +2,13 @@
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
 #include "../../runtime/mods/weapon_shuffle.h"
+#include "../../runtime/mods/global_items.h"
 #include "../../runtime/mods/enemy_randomizer.h"
 #include "../../runtime/mods/enemy_spawn_randomizer.h"
 #include <charconv>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <chrono>
 
 #if defined(REO_GAME_FILE1)
 extern void o2_005924E0_0x5924e0(uint8_t*, R5900Context*, PS2Runtime*);
@@ -19,8 +19,57 @@ extern void o2_00696300_0x696300(uint8_t*, R5900Context*, PS2Runtime*);
 extern void o2_006055E0_0x6055e0(uint8_t*, R5900Context*, PS2Runtime*);
 extern void o2_0061C3E0_0x61c3e0(uint8_t*, R5900Context*, PS2Runtime*);
 extern void o2_0060F710_0x60f710(uint8_t*, R5900Context*, PS2Runtime*);
+extern void o2_006CE400_0x6ce400(uint8_t*, R5900Context*, PS2Runtime*);
+extern void sub_001A9F20_0x1a9f20(uint8_t*, R5900Context*, PS2Runtime*);
+extern void o9_0081DA80_0x81da80(uint8_t*, R5900Context*, PS2Runtime*);
+extern void o9_0081DA90_0x81da90(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_001A0D10_0x1a0d10(uint8_t*, R5900Context*, PS2Runtime*);
 namespace reo::mods {
+inline std::array<float,50> foreignNeptuneHeight{};
+inline std::array<bool,50> foreignNeptune{};
+inline void clampRandomizedNeptune(uint8_t* ram,R5900Context* ctx,PS2Runtime* runtime) {
+    const auto a=GPR_U32(ctx,4);
+    o2_006CE400_0x6ce400(ram,ctx,runtime);
+    if(enemyActorAddress(a) && foreignNeptune[(a-0x42eb00)/0xd90] && ram[a+0xba5]==99)
+        std::memcpy(ram+a+0x3c,&foreignNeptuneHeight[(a-0x42eb00)/0xd90],4);
+}
+inline void readGlobalModelBank(uint8_t* ram,R5900Context* ctx,PS2Runtime* runtime) {
+    const char* catalogue=std::getenv("REO_MOD_GLOBAL_ITEM_CATALOGUE");
+    const uint32_t source=GPR_U32(ctx,5),destination=GPR_U32(ctx,6);
+    std::string path;
+    if(catalogue && source<PS2_RAM_SIZE) {
+        for(unsigned i=0;i<256 && source+i<PS2_RAM_SIZE && ram[source+i];++i) {
+            char c=char(ram[source+i]);path+=c>='a' && c<='z' ? char(c-'a'+'A') : c;
+        }
+    }
+    const auto position=path.find("OBJS");
+    if(position!=std::string::npos && position+10<=path.size() && path.substr(position+6,4)==".NBD") {
+        const auto name=path.substr(position,10);
+        static std::map<std::string,std::vector<uint8_t>> cached;
+        auto& bytes=cached[name];
+        if(bytes.empty()) {
+            const auto folder=std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(catalogue))).parent_path()/"global-models";
+            std::ifstream input(folder/name,std::ios::binary|std::ios::ate);
+            const auto length=input ? std::streamoff(input.tellg()) : -1;
+            if(length<=64 || length>2*1024*1024) throw std::runtime_error("Global item model bank is missing or too large");
+            bytes.resize(size_t(length));input.seekg(0);
+            if(!input.read(reinterpret_cast<char*>(bytes.data()),length)) throw std::runtime_error("Cannot read global item models");
+        }
+        size_t start=0,length=bytes.size();
+        const auto suffix=path.substr(position+10);
+        for(auto [label,offset]:std::array<std::pair<const char*,unsigned>,3>{{{"TEX",0},{"AMO",16},{"AHI",32}}})
+            if(suffix.find(label)!=std::string::npos) {
+                start=reo::cheats::word(bytes.data(),offset+4);length=reo::cheats::word(bytes.data(),offset+8);
+            }
+        if(start>bytes.size() || length>bytes.size()-start ||
+           (destination && (destination<0x100000 || uint64_t(destination)+length>PS2_RAM_SIZE)))
+            throw std::runtime_error("Global model read exceeds the native buffer");
+        if(destination) std::memcpy(ram+destination,bytes.data()+start,length);
+        std::fprintf(stderr,"[MOD-GLOBAL-MODELS-1] file=%s destination=%08x bytes=%zu\n",path.c_str(),destination,length);
+        SET_GPR_U32(ctx,2,uint32_t(length));ctx->pc=GPR_U32(ctx,31);return;
+    }
+    sub_001A9F20_0x1a9f20(ram,ctx,runtime);
+}
 inline bool enemyEnabled = false, enemyPending = true, enemyDiagnostics = false;
 inline bool spawnEnabled = false;
 inline SpawnPool spawnPool{};
@@ -102,6 +151,17 @@ inline void continueEnemyReplacement(uint8_t* ram,R5900Context* ctx,PS2Runtime* 
         setWord(ram,a+0x51c,0x4bec30+slot*0xc84);
         setWord(ram,a+0x514,0x4bd4a0+slot*0x3ec);
         ram[a+0x524]=ram[0x4bec30+slot*0xc84+1];
+        // Crows and wasps have a scene-specific flight path selected by +4.
+        // A foreign room lacks its flight ceiling/script setup: crows stay at
+        // floor height and wasps enter a scripted exit. Use native free flight
+        // for these replacements; their AI still handles collision and damage.
+        // Neptune uses the same field to select swimming versus stranded AI;
+        // a zombie's scene flag must not select a pool at a foreign elevation.
+        if(ram[a+3]==5 || ram[a+3]==6 || ram[a+3]==26) ram[a+4]=0;
+        if(ram[a+3]==26) {
+            const auto slot=(a-0x42eb00)/0xd90;
+            foreignNeptune[slot]=true;std::memcpy(&foreignNeptuneHeight[slot],ram+a+0x3c,4);
+        }
         ram[a+8]=ram[a+9]=ram[a+10]=ram[a+11]=0;
         completedSpawnEntrances[ram[a+0xb98]]=true;
         std::fprintf(stderr,"[MOD-ENEMY-SPAWN-1] ready actor=%08x spawn=%u type=%u model=%u bones=%u animation=%u callback=%08x\n",
@@ -167,10 +227,20 @@ inline void resetEnemyShuffle(uint8_t* ram, R5900Context* ctx, PS2Runtime* runti
     o2_006BAA40_0x6baa40(ram, ctx, runtime);
 }
 inline void initializeEnemies(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
+    const bool firstInitialization=enemyPending && ctx->pc==0x6bb040u;
     if (enemyPending && ctx->pc == 0x6bb040u) {
         enemyPending = false;
-        if (enemyEnabled) {
-            const auto result = shuffleZombieProfiles(ram, enemySeed);
+        // Shuffle native zombie appearances before construction, including the
+        // scripted spawns whose family must remain compatible with later events.
+        if (enemyEnabled || spawnEnabled) {
+            ZombieShuffleFilter scripted;
+            if(spawnEnabled) {
+                scripted.behaviors=spawnPool.sourceBehaviors;
+                scripted.behaviors[0]=false;
+                for(unsigned i=0;i<spawnPool.count;++i)
+                    if(spawnPool.profiles[i].type==1) scripted.variants[spawnPool.profiles[i].model]=true;
+            }
+            const auto result = shuffleZombieProfiles(ram, enemySeed, spawnEnabled ? &scripted : nullptr);
             std::fprintf(stderr, "[MOD-ZOMBIE-RANDOMIZER-1] seed=%u eligible=%u changed=%u\n",
                 enemySeed, result.count, result.changed);
             for (unsigned i = 0; i < result.count; ++i) {
@@ -191,15 +261,60 @@ inline void initializeEnemies(uint8_t* ram, R5900Context* ctx, PS2Runtime* runti
             }
         }
     }
-    if(spawnEnabled && ctx->pc==0x6bb040u) pendingEnemies={};
+    if(spawnEnabled && ctx->pc==0x6bb040u) {
+        pendingEnemies={};
+        const auto room=reo::cheats::half(ram,0x3243dc);
+        // Developer compatibility fixture: add an independent ordinary spawn
+        // through the native constructor. Existing scenario actors/scripts are
+        // unchanged. This branch is never enabled by an ordinary mod launch.
+        if(firstInitialization && enemyDiagnostics && std::getenv("REO_TEST_ENEMY_PROBE")) {
+            const unsigned count=ram[0x4bae8e];
+            const unsigned start=ram[0x7552d0+room],roomCount=ram[0x755250+room],probe=start+roomCount;
+            if(probe>=254 || !roomCount) throw std::runtime_error("No native room-group slot for roster probe");
+            const auto record=0x74f250+probe*96;
+            // Extend this room's contiguous group into the next, currently
+            // inactive room slot. Never alter this room's scripted actor IDs.
+            // The fixture ends in this room and is not a progression test.
+            std::memcpy(ram+record,ram+0x74f250+start*96,96);
+            ram[record]=ram[record+0x27]=uint8_t(probe);ram[record+2]=1;ram[record+3]=9;
+            ram[record+0x22]=uint8_t(room);
+            ram[record+0x26]=ram[record+0x2a]=ram[record+0x2b]=0;
+            reo::cheats::setWord(ram,record+0x10,8500);reo::cheats::setWord(ram,record+0x18,13150);
+            reo::cheats::setHalf(ram,record+0x1c,700);reo::cheats::setHalf(ram,record+0x1e,700);
+            ram[0x755250+room]=uint8_t(roomCount+1);
+            ram[0x4bae8e]=uint8_t(std::max(count,probe+1));
+            std::fprintf(stderr,"[TEST-ENEMY-PROBE] independent native spawn=%u room=%u\n",probe,room);
+        }
+        if(firstInitialization) {
+            std::array<bool,MaxSpawnProfiles> supported{};
+            for(unsigned i=0;i<spawnPool.count;++i) {
+                const auto callback=enemyProfileCallback(ram,spawnPool.profiles[i]);
+                if(!callback || !runtime->hasFunction(callback))
+                    throw std::runtime_error("The seeded enemy plan contains an unsupported native profile");
+                supported[i]=true;
+            }
+            spawnDecisions.prepare(ram,enemySeed,spawnPool,supported);
+            std::fprintf(stderr,"[MOD-ENEMY-PLAN-3] scenario=%u seed=%u records=%u\n",
+                reo::cheats::half(ram,0x3243da),enemySeed,ram[0x4bae8e]);
+            for(unsigned id=0;id<ram[0x4bae8e];++id) {
+                const int choice=spawnDecisions.profiles[id];
+                if(choice<0) continue;
+                const auto& p=spawnPool.profiles[choice];
+                std::fprintf(stderr,"[MOD-ENEMY-PLAN-3] spawn=%u type=%u model=%u hp=%u behavior=%u posture=%u\n",
+                    id,p.type,p.model,p.health,p.behavior,p.posture);
+            }
+        }
+    }
     o2_006BB040_0x6bb040(ram,ctx,runtime);
 }
 inline void inspectEnemyActor(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
     if (ctx->pc == 0x6bb9f0u) {
         const uint32_t a = uint32_t(_mm_cvtsi128_si32(ctx->r[4]));
-        if(enemyActorAddress(a)) pendingEnemies[(a-0x42eb00)/0xd90]={};
+        if(enemyActorAddress(a)) {
+            pendingEnemies[(a-0x42eb00)/0xd90]={};foreignNeptune[(a-0x42eb00)/0xd90]=false;
+        }
         if(spawnEnabled && enemyActorAddress(a)) {
-            std::array<bool,32> available{};
+            std::array<bool,MaxSpawnProfiles> available{};
             for(unsigned i=0;i<spawnPool.count;++i) {
                 const auto& p=spawnPool.profiles[i];
                 const auto callback=enemyProfileCallback(ram,p);
@@ -218,7 +333,10 @@ inline void inspectEnemyActor(uint8_t* ram, R5900Context* ctx, PS2Runtime* runti
                 if(ram[a+3]==1 && (p.type!=ram[a+3] || p.model!=reo::cheats::half(ram,a+0xbba))) {
                     pending={true,p,ram[a+3],uint8_t(reo::cheats::half(ram,a+0xbba)),ram[a+0xb98]};
                     std::fprintf(stderr,"[MOD-ENEMY-SPAWN-1] deferred actor=%08x behavior=%u\n",a,ram[a+0xc2b]);
-                } else if(ram[a+0xc2b]==0) {
+                } else if(ram[a+0xc2b]==0 &&
+                          !(spawnDecisions.planned && spawnDecisions.scripted[ram[a+0xb98]])) {
+                    // Online reconstruction can clear an entrance's behavior on
+                    // only one peer. Keep its original scripted health/profile.
                     applySpawnProfile(ram,a,p,callback);
                     const auto metadata=reo::cheats::word(ram,0x387e90+p.type*8)+p.model*16;
                     for(unsigned offset:{0xb4u,0xb8u,0xbcu}) reo::cheats::setWord(ram,a+offset,reo::cheats::word(ram,metadata+8));
@@ -306,7 +424,14 @@ inline void initializePickups(uint8_t* ram, R5900Context* ctx, PS2Runtime* runti
     // This entry runs after scenario item/metadata loading, before bonus items.
     // Resume labels must never apply a second permutation.
     if (ctx->pc == 0x5924e0u) {
-        const auto result = shufflePickups(ram, weaponSeed, allOrdinaryItems, excludedItems);
+        const char* catalogue=std::getenv("REO_MOD_GLOBAL_ITEM_CATALOGUE");
+        if(catalogue) {
+            const auto entries=readItemCatalogue(catalogue);
+            const auto count=installItemCatalogue(ram,entries);
+            std::fprintf(stderr,"[MOD-GLOBAL-ITEMS-1] definitions=%u categories=weapon,ammunition,common\n",count);
+        }
+        const auto result = catalogue ? randomizeGlobalPickups(ram,weaponSeed,excludedItems)
+                                     : shufflePickups(ram, weaponSeed, allOrdinaryItems, excludedItems);
         const char* tag = allOrdinaryItems ? "MOD-ITEM-RANDOMIZER-1" : "MOD-WEAPON-SHUFFLE-1";
         std::fprintf(stderr, "[%s] seed=%u eligible=%u changed=%u\n",
                      tag, weaponSeed, result.count, result.changed);
@@ -318,7 +443,7 @@ inline void initializePickups(uint8_t* ram, R5900Context* ctx, PS2Runtime* runti
     o2_005924E0_0x5924e0(ram, ctx, runtime);
 }
 inline void install(PS2Runtime& runtime) {
-    std::fprintf(stderr,"[MOD-SESSION-2] stable-spawns\n");
+    std::fprintf(stderr,"[MOD-SESSION-3] scenario-plan\n");
     enemyDiagnostics = std::getenv("REO_TEST_ENEMIES") != nullptr;
     if (const char* seed = std::getenv("REO_MOD_ENEMY_SPAWN_SEED")) {
         const auto parsed=std::from_chars(seed,seed+std::strlen(seed),enemySeed);
@@ -327,6 +452,7 @@ inline void install(PS2Runtime& runtime) {
         const char* behaviors=std::getenv("REO_MOD_ENEMY_SOURCE_BEHAVIORS");
         if(!pool || !behaviors) throw std::runtime_error("Enemy spawn pool required");
         spawnPool=parseSpawnPool(pool,behaviors); spawnEnabled=true;
+        std::fprintf(stderr,"[MOD-ENEMY-ROSTER-1] installed\n");
         std::fprintf(stderr,"[MOD-ENEMY-SPAWN-1] installed seed=%u\n",enemySeed);
     }
     if (const char* seed = std::getenv("REO_MOD_ZOMBIE_RANDOMIZER_SEED")) {
@@ -352,6 +478,13 @@ inline void install(PS2Runtime& runtime) {
         runtime.registerOverlayFunction(0x570000u, 0x336f574du, 4u, 3u, 0x696300u, inspectZombieUpdate);
     }
     if(spawnEnabled) {
+        runtime.registerOverlayFunction(0x570000u,0x336f574du,4u,3u,0x6ce400u,clampRandomizedNeptune);
+        // Original NPC grab reactions reached by G-type and Thanatos attacks.
+        // Their entry points were missing from the overlay function map.
+        runtime.registerOverlayFunction(0x810000u,0x336f574du,4u,9u,0x81da80u,o9_0081DA80_0x81da80);
+        for(uint32_t pc:{0x81da90u,0x81db20u,0x81db30u,0x81db40u,0x81db50u,
+                         0x81db64u,0x81db7cu,0x81db94u,0x81dbacu})
+            runtime.registerOverlayFunction(0x810000u,0x336f574du,4u,9u,pc,o9_0081DA90_0x81da90);
         runtime.registerFunction(0x1a0d10u,initializeModAssetHeap);
         for(unsigned i=0;i<=6;++i) runtime.registerFunction(replacementResume+i*4,continueEnemyReplacement);
     }
@@ -360,6 +493,12 @@ inline void install(PS2Runtime& runtime) {
         if (value) throw std::runtime_error("Only one pickup randomizer can be enabled");
         value = items;
         allOrdinaryItems = true;
+        if(std::getenv("REO_MOD_GLOBAL_ITEM_CATALOGUE"))
+            std::fprintf(stderr,"[MOD-GLOBAL-ITEMS-1] installed\n");
+        if(std::getenv("REO_MOD_GLOBAL_ITEM_CATALOGUE")) {
+            runtime.registerFunction(0x1a9f20u,readGlobalModelBank);
+            std::fprintf(stderr,"[MOD-GLOBAL-MODELS-1] installed\n");
+        }
     }
     if (!value) return;
     if (const char* exclusions = std::getenv("REO_MOD_ITEM_EXCLUDE_TYPES")) {

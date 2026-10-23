@@ -35,6 +35,7 @@ public sealed class EnemyProfile {
 }
 public sealed class ItemRandomizer {
     public uint Seed { get; set; }
+    public string Mode { get; set; } = "shuffle";
     public List<int> ExcludeItemTypes { get; set; } = new();
 }
 public sealed class WeaponShuffle {
@@ -124,7 +125,7 @@ public static class Mods {
         if (m.EnemyRandomizer is {} enemy) {
             if(enemy.Mode is not ("zombieProfiles" or "enemyTypes"))
                 throw new IOException("Supported enemy randomizer modes are zombieProfiles and enemyTypes.");
-            if(enemy.Pool == null || enemy.Pool.Count > 32 || enemy.SourceBehaviors == null ||
+            if(enemy.Pool == null || enemy.Pool.Count > 128 || enemy.SourceBehaviors == null ||
                enemy.SourceBehaviors.Count == 0 || enemy.SourceBehaviors.Count > 256 ||
                enemy.SourceBehaviors.Any(b => b < 0 || b > 255) || enemy.SourceBehaviors.Distinct().Count()!=enemy.SourceBehaviors.Count)
                 throw new IOException("Invalid enemy pool or source behavior list.");
@@ -136,7 +137,7 @@ public static class Mods {
                 throw new IOException("Enemy profiles need distinct type/model pairs and valid health, behavior and weight.");
         }
         if (m.ItemRandomizer is { } randomizer &&
-            (randomizer.ExcludeItemTypes == null || randomizer.ExcludeItemTypes.Count > 400 ||
+            (randomizer.Mode is not ("shuffle" or "global") || randomizer.ExcludeItemTypes == null || randomizer.ExcludeItemTypes.Count > 400 ||
              randomizer.ExcludeItemTypes.Any(t => t < 0 || t >= 400) ||
              randomizer.ExcludeItemTypes.Distinct().Count() != randomizer.ExcludeItemTypes.Count))
             throw new IOException("excludeItemTypes must contain distinct ordinary item IDs from 0 to 399.");

@@ -2,7 +2,7 @@
 #include "data_cheats.h"
 
 namespace reo::cheats {
-enum Builtin : unsigned { FullHealth = 1, NoInfection = 2, InfiniteAmmo = 4 };
+enum Builtin : unsigned { FullHealth = 1, NoInfection = 2, InfiniteAmmo = 4, UnlockEverything = 8 };
 struct Program {
     std::vector<Write> writes;
     unsigned builtins = 0;
@@ -29,6 +29,8 @@ inline Program parseProgram(std::istream& input) {
                 result.builtins |= NoInfection;
             else if (name == "ammo")
                 result.builtins |= InfiniteAmmo;
+            else if (name == "unlock")
+                result.builtins |= UnlockEverything;
             else
                 throw std::runtime_error("Unknown built-in cheat");
         } else
@@ -56,12 +58,34 @@ inline void setWord(uint8_t* r, uint32_t a, uint32_t v) {
 }
 struct BuiltinResult {
     bool active = false;
+    bool unlocks = false;
     unsigned player = 0, health = 0, maximum = 0, ammunitionSlots = 0;
     uint32_t virus = 0;
 };
 inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r) {
     BuiltinResult result;
-    if (!flags || !r || r[0x4badd0] != 2 || r[0x4baded] >= 4)
+    if (!flags || !r)
+        return result;
+    if (flags & UnlockEverything) {
+        // Verified NTSC-U v2.00 save/progression fields. The scenario menu
+        // 581820 tests +4078 in the save structure rooted at 31FB60; the
+        // difficulty menu 587640 tests bits 2/3 at +23.
+        setWord(r, 0x323bd8, word(r, 0x323bd8) | 0x1fu);
+        // Costume and NPC bitsets, without touching reward points or options.
+        for (uint32_t a = 0x31fb64; a < 0x31fb6c; ++a) r[a] = 0xff;
+        for (uint32_t a = 0x31fb6d; a < 0x31fb79; ++a) r[a] = 0xff;
+        r[0x31fb83] |= 0x0c;
+        r[0x31fb7f] |= 0x05; // Purchased bonus-mode availability, not current mode.
+        // 57C4C0/57C530: available/purchased collection bits, three banks
+        // at a 32-byte stride. Leave each bank's padding and other records alone.
+        for (uint32_t bank = 0; bank < 3; ++bank)
+            for (uint32_t offset = 0; offset < 24; ++offset) {
+                r[0x323bf4 + bank * 32 + offset] = 0xff;
+                r[0x323c54 + bank * 32 + offset] = 0xff;
+            }
+        result.unlocks = true;
+    }
+    if (r[0x4badd0] != 2 || r[0x4baded] >= 4)
         return result;
     const unsigned player = r[0x4baded];
     const uint32_t actor = 0x4a5c30u + player * 0x10e0u;
@@ -84,13 +108,16 @@ inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r) {
                 continue;
             const uint32_t item = 0x3c5630u + handle * 60u;
             const unsigned index = r[item + 0x2b];
-            if (r[item] != 1 || r[item + 2] != handle || index == 255)
+            if (r[item] != 1 || r[item + 2] != handle || index >= 129)
                 continue;
             const uint32_t info = 0x74bb50u + index * 24u;
             const unsigned type = half(r, item + 6), capacity = half(r, info + 8);
             // Metadata identity and firearm category exclude consumables/keys/melee.
-            if (type < 0x100 || type >= 0x200 || half(r, info + 18) != type ||
-                !(word(r, info) & 0x100000u) || !capacity || capacity > 999)
+            // Ordinary guns use decimal IDs below 100; personal guns include
+            // 400/401. Weapon + loaded-ammunition metadata, excluding common
+            // items, distinguishes both from ammo boxes, healing and melee.
+            if (type >= 600 || half(r, info + 18) != type ||
+                (word(r, info) & 0x100005u) != 0x100001u || !capacity || capacity > 999)
                 continue;
             const int16_t current = int16_t(half(r, item + 0x24));
             if (current < 0 || current > int(capacity))

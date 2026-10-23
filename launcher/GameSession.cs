@@ -63,7 +63,10 @@ public sealed class GameSession {
             throw new FileNotFoundException("The installation is missing its controller adapter. " +
                                             "Extract the complete release archive.");
         var runtimeFiles = new List<GameImageCache.Input> {
-            new(sourceExe, "reo_launcher_game.exe"), new(proxy, "XINPUT1_4.dll")
+            new(sourceExe, "reo_launcher_game.exe"), new(proxy, "XINPUT1_4.dll"),
+            // LLVM/MinGW's xinput import library binds to 1_3; MSVC binds to 1_4.
+            // Both builds must read the same selected launcher device.
+            new(proxy, "XINPUT1_3.dll")
         };
         string sourceFolder = Path.GetDirectoryName(Path.GetFullPath(sourceExe))!;
         string shaderSource = Path.Combine(sourceFolder, "reo-gpu-present");
@@ -141,9 +144,22 @@ public sealed class GameSession {
             Set("REO_MOD_WEAPON_SHUFFLE_SEED", weaponShuffle.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
         if (cheatFile.Length != 0)
+        {
+            if (File.ReadLines(cheatFile).Contains("builtin unlock") &&
+                !HasMarker(image, "[CHEATS-UNLOCK-1] progression"))
+                throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
             Set("REO_CHEATS_FILE", cheatFile);
+        }
         var itemRandomizer = selectedMods.SingleOrDefault(m => m.ItemRandomizer != null)?.ItemRandomizer;
         if (itemRandomizer != null) {
+            if (itemRandomizer.Mode == "global") {
+                if (!HasMarker(image, "[MOD-GLOBAL-ITEMS-1] installed"))
+                    throw new IOException("This Randomizer needs the updated game build with global item support.");
+                if (!HasMarker(image, "[MOD-GLOBAL-MODELS-1] installed"))
+                    throw new IOException("This Randomizer needs the updated game build with global item models.");
+                string catalogue = GlobalItemCatalogue.Prepare(discRoot, Logs!);
+                Set("REO_MOD_GLOBAL_ITEM_CATALOGUE", catalogue);
+            }
             if (!HasMarker(image, "[MOD-ITEM-RANDOMIZER-1] installed seed=%u"))
                 throw new IOException("This mod needs a game build with item randomizer support. Rebuild or update the game.");
             Set("REO_MOD_ITEM_RANDOMIZER_SEED", itemRandomizer.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -163,6 +179,8 @@ public sealed class GameSession {
             Set(species ? "REO_MOD_ENEMY_SPAWN_SEED" : "REO_MOD_ZOMBIE_RANDOMIZER_SEED",
                 enemyRandomizer.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture));
             if(species) {
+                if (enemyRandomizer.Pool.Count > 32 && !HasMarker(image, "[MOD-ENEMY-ROSTER-1] installed"))
+                    throw new IOException("This Randomizer needs the updated game build with the expanded enemy roster.");
                 Set("REO_MOD_ENEMY_POOL", string.Join(";",enemyRandomizer.Pool.Select(p =>
                     string.Join(":",p.Type,p.Model,p.Health,p.Behavior,p.Posture,p.Weight))));
                 Set("REO_MOD_ENEMY_SOURCE_BEHAVIORS",string.Join(",",enemyRandomizer.SourceBehaviors));
@@ -210,7 +228,11 @@ public sealed class GameSession {
             Set("REO_SHOT_AT", "55,70");
             Set("REO_SHOT_RAM", "1");
         }
-        if (diagnosticRoute is "gameplay-enemies" or "gameplay-enemy-combat") Set("REO_TEST_ENEMIES", "1");
+        if (diagnosticRoute is "gameplay-enemies" or "gameplay-enemy-combat" or "gameplay-roster-probe") Set("REO_TEST_ENEMIES", "1");
+        if (diagnosticRoute == "gameplay-roster-probe") {
+            Set("REO_TEST_ROUTE", "gameplay");
+            Set("REO_TEST_ENEMY_PROBE", "1");
+        }
         if (diagnosticRoute == "gameplay-enemy-combat") Set("REO_TEST_WORLD_TARGET", "8180,13340,30");
         // GPU movies when the rendering GPU has a hardware MPEG-2 decoder and the player left them
         // on in Graphics; otherwise the original CPU decoder.
@@ -277,6 +299,9 @@ public sealed class GameSession {
         if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join")
             _ = WatchRandomizerSession(Process,Logs,settings.CoopHost,randomizerConfiguration);
         controller.GameProcessId = Process.Id;
+        var lightProcess = Process;
+        string lightLogs = Logs!;
+        _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
         _ = Pump(Process.StandardError, stderr, account == null ? null : account.Observe);
         await File.WriteAllTextAsync(

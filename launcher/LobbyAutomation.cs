@@ -419,6 +419,17 @@ public sealed class LobbyAutomation : IDisposable {
         uint Word(uint address) => BitConverter.ToUInt32(Bytes(address, 4));
         byte Byte(uint address) => Bytes(address, 1)[0];
 
+        internal ControllerHealth.Sample ReadHealth() {
+            int phase = Byte(0x4badd0), slot = Byte(0x4baded);
+            if (phase != 2 || slot >= 4)
+                return new(phase, slot, false, 0, 0);
+            byte[] actor = Bytes(0x4a5c30u + (uint)slot * 0x10e0u, 0x548);
+            if (Byte(0x4badd0) != phase || Byte(0x4baded) != slot)
+                return new(0, 0, false, 0, 0);
+            return new(phase, slot, actor[0] != 0, BitConverter.ToInt16(actor, 0x544),
+                       BitConverter.ToInt16(actor, 0x546));
+        }
+
         public Snapshot Read() {
             // Throws InvalidDataException outside the BIN3 lobby overlay.
             byte[] overlay = Bytes(0x570000, 8);

@@ -17,7 +17,8 @@ def sha(path):
 
 
 def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None, version=None,
-            updated_sources=(), added_sources=(), added_shaders=(), source_patches=()):
+            updated_sources=(), added_sources=(), added_shaders=(), source_patches=(),
+            updated_metadata=()):
     kit, output, recompiler, root = [Path(p).resolve() for p in (kit, output, recompiler, root)]
     if output.exists() or output.is_relative_to(kit) or (archive and Path(archive).exists()):
         raise FileExistsError('Choose fresh immutable kit/archive paths')
@@ -59,6 +60,15 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
         if not target.is_relative_to(output / 'source') or not target.is_file():
             raise ValueError('Only existing kit sources can be updated: ' + name)
         shutil.copyfile(root / name, target)
+    for name in updated_metadata:
+        source = (root / name).resolve()
+        metadata_root = (root / 'recomp/config').resolve()
+        if not source.is_relative_to(metadata_root) or source.suffix != '.csv':
+            raise ValueError('Metadata update must be a repository address map: ' + name)
+        target = (output / 'metadata' / source.relative_to(metadata_root)).resolve()
+        if not target.is_relative_to(output / 'metadata') or not target.is_file():
+            raise ValueError('Only existing kit address maps can be updated: ' + name)
+        shutil.copyfile(source, target)
     for name in source_patches:
         patch = (root / name).resolve()
         if not patch.is_relative_to(root) or not patch.is_file():
@@ -137,7 +147,10 @@ if __name__ == '__main__':
                         help='Repository-relative compiled .spv shipped in reo-gpu-present')
     parser.add_argument('--source-patch', action='append', default=[],
                         help='Repository patch applied to the frozen PS2Recomp source copy')
+    parser.add_argument('--update-metadata', action='append', default=[],
+                        help='Repository address map replacing existing kit metadata')
     args = parser.parse_args()
     print(json.dumps(refresh(args.kit, args.output, args.recompiler, args.root, args.archive,
                              args.dependency_sources, args.version, args.update_source,
-                             args.add_source, args.add_shader, args.source_patch), indent=2))
+                             args.add_source, args.add_shader, args.source_patch,
+                             args.update_metadata), indent=2))

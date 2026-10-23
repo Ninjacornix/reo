@@ -134,7 +134,8 @@ def prepare(args):
                 "mountedIso": False, "players": [],
                 "coopVerdict": "not-tested", "trafficCapture": "process-owned endpoints only; no payload capture"}
     dependencies = [p for p in source.parent.glob("*.dll") if p.name.lower() in {
-        "msvcp140.dll", "msvcp140_atomic_wait.dll", "vcruntime140.dll", "vcruntime140_1.dll", "vulkan-1.dll"}]
+        "msvcp140.dll", "msvcp140_atomic_wait.dll", "vcruntime140.dll", "vcruntime140_1.dll", "vulkan-1.dll",
+        "libc++.dll", "libunwind.dll", "libwinpthread-1.dll"}]
     for i in range(args.players):
         player = session / f"player{i + 1}"
         for leaf in ("image/reo-gpu-present", "work", "card0", "logs"):
@@ -144,10 +145,14 @@ def prepare(args):
         if digest(image) != manifest["sourceSha256"]:
             raise ValueError("Native source changed while preparing copies; preserved partial session, use a new directory")
         shutil.copy2(adapter, image.parent / "XINPUT1_4.dll")
+        # Match the launcher's adapter aliases for both MSVC and LLVM/MinGW.
+        shutil.copy2(adapter, image.parent / "XINPUT1_3.dll")
         for path in dependencies:
             shutil.copy2(path, image.parent / path.name)
-        for shader in SHADERS:
-            shutil.copy2(source.parent / "reo-gpu-present" / shader, image.parent / "reo-gpu-present" / shader)
+        # Native movies/readbacks also use certified helper shaders. Preserve
+        # the complete built shader set, as the production launcher does.
+        for shader in (source.parent / "reo-gpu-present").glob("*.spv"):
+            shutil.copy2(shader, image.parent / "reo-gpu-present" / shader.name)
         files = [{"path": str(p.relative_to(player)), "sha256": digest(p)}
                  for p in sorted((player / "image").rglob("*")) if p.is_file()]
         save(player / "input.json", {"buttons": [], "lx": 0, "ly": 0, "rx": 0, "ry": 0})
@@ -309,6 +314,7 @@ FATAL_DIAGNOSTICS = (
     ("native-crash", "[crash]"),
     ("graphics-backend-failure", "[gs-backend-fail]"),
     ("graphics-backend-failure", "[run] graphics backend failure"),
+    ("graphics-backend-failure", "missing certified native movie shader asset"),
     ("account-provider-failure", "[coop-account] cannot"),
     ("account-provider-failure", "[coop-account] invalid"),
     ("account-provider-failure", "[coop-account] original account helper did not return"),
@@ -590,7 +596,14 @@ def queue_keyboard(path, text, enter=False, *, replace=False):
                 stream.write(payload)
                 stream.flush()
                 os.fsync(stream.fileno())
-            temporary.replace(path)
+            for attempt in range(11):
+                try:
+                    temporary.replace(path)
+                    break
+                except PermissionError:
+                    if attempt == 10:
+                        raise
+                    time.sleep(0.02)
         finally:
             if temporary.exists():
                 temporary.unlink()

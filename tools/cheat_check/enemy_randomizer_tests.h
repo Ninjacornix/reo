@@ -45,6 +45,26 @@ inline void testEnemyRandomizer() {
         require(before == after && ram == initial); // Includes every excluded record and all trigger/position bytes.
     }
     require(changed && reo::mods::shuffleZombieProfiles(nullptr,0).count == 0);
+    // Combined species mode must only shuffle scripted sources explicitly
+    // admitted by its editable pool. Ordinary and unrelated scripts stay intact.
+    ram=initial;
+    ram[0x74f250+0x2a]=9;ram[0x74f250+96+0x2a]=9;
+    ram[0x74f250+2*96+0x2a]=24;
+    const auto scriptedSource=ram;
+    reo::mods::ZombieShuffleFilter filter;
+    filter.behaviors[9]=true;filter.variants[9]=true;filter.variants[11]=true;
+    bool scriptedChanged=false;
+    for(unsigned seed=0;seed<32;++seed) {
+        ram=scriptedSource;
+        const auto result=reo::mods::shuffleZombieProfiles(ram.data(),seed,&filter);
+        require(result.count==2);scriptedChanged|=result.changed!=0;
+        auto replay=scriptedSource;reo::mods::shuffleZombieProfiles(replay.data(),seed,&filter);
+        require(replay==ram);
+        for(unsigned i=0;i<2;++i) for(unsigned offset : {3u,0x1cu,0x1du,0x1eu,0x1fu})
+            ram[0x74f250+i*96+offset]=scriptedSource[0x74f250+i*96+offset];
+        require(ram==scriptedSource);
+    }
+    require(scriptedChanged);
     ram=initial; ram[0x4bae8e]=0; const auto empty=ram;
     require(reo::mods::shuffleZombieProfiles(ram.data(),2031).count == 0 && ram==empty);
     std::cout << "PASS zombie profiles: deterministic, room/lifecycle conservation, exclusions and full-RAM write boundaries\n";
@@ -91,6 +111,23 @@ inline void testEnemyRandomizer() {
         require(ram==source); // Entire spawn table, trigger data, position and lifecycle stay intact.
     }
     require(std::all_of(chosen.begin(),chosen.end(),[](bool v){return v;}));
+    // A scripted entrance becoming mobile does not release later scenario
+    // commands. Preserve the original family across seeds and room revisits,
+    // even when the source actor subsequently switches to ordinary behavior.
+    auto scriptedPool=pool;scriptedPool.sourceBehaviors[24]=true;scriptedPool.sourceBehaviors[33]=true;
+    for(unsigned behavior : {9u,24u,33u}) {
+        for(uint32_t seed=0;seed<128;++seed) {
+            ram=source;ram[actor+0xc2b]=uint8_t(behavior);
+            SpawnDecisions scripted;
+            int choice=scripted.pick(ram.data(),actor,seed,scriptedPool,available);
+            require(choice>=0 && scriptedPool.profiles[choice].type==1);
+            ram[actor+0xc2b]=0;setHalf(ram.data(),0x3243dc,19);
+            require(scripted.pick(ram.data(),actor,seed,scriptedPool,available)==choice);
+        }
+    }
+    ram=source;ram[actor+0xc2b]=9;
+    auto noCompatible=available;noCompatible[0]=false;
+    require(chooseSpawnProfile(ram.data(),actor,2031,scriptedPool,noCompatible)==-1);
     // Revisit the same spawn in another room/actor slot; resource timing and
     // another actor's construction must not alter its established selection.
     ram=source; available.fill(true);
@@ -139,6 +176,59 @@ inline void testEnemyRandomizer() {
     for(unsigned i=0;i<6;++i) ram[0x4bec30+i*0xc84+1]=1;
     require(!enemyAnimationAvailable(ram.data(),2));
     ram[0x4bec30+5*0xc84+1]=0;require(enemyAnimationAvailable(ram.data(),2));
+
+    // Shared seeds must survive different room visits, actor allocation, and
+    // first-construction orders once a room needs more than six families.
+    const auto planPool=parseSpawnPool("1:9:700:0:0:1;2:1:300:0:0:3;0:0:700:0:0:3;22:0:1200:0:0:3;5:0:50:0:0:3;7:0:600:0:0:3;6:0:150:0:0:3;26:0:1500:0:0:3","0,9");
+    ram.assign(ram.size(),0);ram[0x4bae8e]=32;setHalf(ram.data(),0x3243da,1);setWord(ram.data(),0x709ac0,2);
+    for(unsigned id=0;id<32;++id) {
+        const auto r=0x74f250u+id*96;
+        ram[r]=uint8_t(id);ram[r+2]=1;ram[r+3]=9;ram[r+0x22]=uint8_t(id/16+1);
+        setHalf(ram.data(),r+0x1c,700);setHalf(ram.data(),r+0x1e,700);
+    }
+    ram[0x74f250+29*96+0x2a]=9; // Scripted source keeps its native family.
+    ram[0x74f250+30*96+0x26]=2; // Unsupported lifecycle stays native.
+    setHalf(ram.data(),0x74f250+31*96+0x1c,0); // Dead source stays native.
+    const auto scenarioSource=ram;
+    std::array<bool,MaxSpawnProfiles> supported{};supported.fill(true);
+    bool seedVaries=false;std::array<int,256> previousPlan{};
+    for(uint32_t seed:{0u,1u,43u,2031u,534703871u,0xffffffffu}) {
+        ram=scenarioSource;SpawnDecisions host,client;
+        host.prepare(ram.data(),seed,planPool,supported);
+        client.prepare(ram.data(),seed,planPool,supported);
+        require(host.profiles==client.profiles && ram==scenarioSource);
+        if(seed) seedVaries|=host.profiles!=previousPlan;
+        previousPlan=host.profiles;
+        require(host.profiles[30]==-1 && host.profiles[31]==-1 && host.profiles[200]==-1);
+        require(host.profiles[29]>=0 && planPool.profiles[host.profiles[29]].type==1);
+        require(host.scripted[29] && client.scripted[29] && !host.scripted[0]);
+        // Live networking can reconstruct a finished entrance with behavior 0.
+        // Its original scripted identity must survive that transient actor state.
+        ram[actor+0xb98]=29;ram[actor+0xc2b]=0;
+        require(host.pick(ram.data(),actor,seed,planPool,supported)>=0 && host.scripted[29]);
+        for(unsigned room=1;room<=2;++room) {
+            std::array<bool,64> families{};families[1]=true;
+            for(unsigned id=(room-1)*16;id<room*16;++id)
+                if(host.profiles[id]>=0) families[planPool.profiles[host.profiles[id]].type]=true;
+            require(std::count(families.begin(),families.end(),true)<=6);
+        }
+        std::array<int,32> forward{},reverse{};auto unavailable=supported;unavailable.fill(false);
+        for(unsigned n=0;n<32;++n) {
+            const auto slot=actor+(n%40)*0xd90;ram[slot+0xb98]=uint8_t(n);
+            forward[n]=host.pick(ram.data(),slot,seed,planPool,supported);
+        }
+        // A client's runtime resource flags and current room cannot reroll its
+        // already planned identities, including a late visit to another room.
+        setHalf(ram.data(),0x3243dc,99);setWord(ram.data(),0x709ac0,0xffffffff);
+        for(int n=31;n>=0;--n) {
+            const auto slot=actor+(unsigned(n+7)%40)*0xd90;ram[slot+0xb98]=uint8_t(n);
+            reverse[n]=client.pick(ram.data(),slot,seed,planPool,unavailable);
+        }
+        require(forward==reverse);
+        client.reset();require(!client.planned && client.profiles[0]==-2 && !client.scripted[29]);
+    }
+    require(seedVaries);
+    std::cout << "PASS shared enemy plans: same host seed across reversed actor/room orders, six-family limit, scripted/dead exclusions and no planning RAM writes\n";
 
     std::cout << "PASS enemy spawn interception: editable pool, multiple species/seeds, protected source states and exact actor-only writes\n";
 }

@@ -2,7 +2,7 @@
 
 This harness isolates up to four native game processes. A single instance can be used for online-menu discovery. Starting windows or observing sockets **does not demonstrate working co-op**. The current script intentionally records `coopVerdict: not-tested`; the network implementation must supply protocol/lobby/gameplay evidence separately.
 
-Requirements: Windows, Python 3.11+, an existing launcher ISO import, the supported NTSC-U v2.00 ISO, a built native executable, its five `reo-gpu-present` SPIR-V files, and the launcher `XINPUT1_4.dll`. No ISO mount, BIOS, compiler, or shared launcher cache is used during tests.
+Requirements: Windows, Python 3.11+, an existing launcher ISO import, the supported NTSC-U v2.00 ISO, a built native executable, its complete `reo-gpu-present` SPIR-V directory (including movie helpers), its runtime DLLs, and the launcher `XINPUT1_4.dll`. Preparation copies supported MSVC or LLVM runtime DLLs and supplies the same controller adapter under both XInput DLL names. No ISO mount, BIOS, compiler, or shared launcher cache is used during tests.
 
 Prepare a fresh session (copies executables/dependencies, validates the imported file sizes and ELF hash, does not run the game):
 
@@ -108,6 +108,8 @@ python tools/coop_playtest/coop_playtest.py drive-start --session build-ninja/co
 This sends the host's START SCENARIO selection, then Start on each client until the original gameplay state remains stable for two seconds. It stops sending Start in gameplay so it does not open the pause menu. The exclusive `drive-start.json` records input times and each client's observed gameplay entry. `allInGameplay=true` is a loading/UI result, not proof of synchronized movement.
 
 A two-client live retest on 2026-10-19 reached the shared waiting room in 13.5 seconds of lobby driving and first-room gameplay on both clients about 20 seconds after starting. No fatal native diagnostics were recorded. Credentials were supplied by the disposable USB-password driver; launcher provisioning and automatic native login have separate evidence. Private logs, screenshots and identities remain under ignored `build-ninja/coop-playtest/hostjoin005/`. A follow-up session was interrupted and is not a passing result.
+
+A 2026-10-23 test of the version-3 randomizer build connected two native clients through a private loopback server and observed 314.8 seconds of first-room gameplay. Shared movement, pickup ownership/floor removal, duplicate-pickup prevention and ammunition consumption were observed. Combat-state consistency failed: spawn 2 retained 550 HP on the host and 570 HP on the guest for 79.6 seconds through the end of observation; their maximum-HP fields also differed. Remote player HP sometimes updated several seconds late. Enemy deaths, later rooms and cross-species replacements were not verified. The private receipt is `build-ninja/global-randomizer/live-sync-test-v3/verification.json`; ordinary pad inputs and read-only RAM sampling produced the evidence. Both clients were deliberately stopped, not recorded as clean scenario completions. Matching seeds or an error-free run must not override this failed combat check.
 
 `stop` records a separately owned stop request after checking the identity on the terminating handle. The supervisor recognizes only confirmed termination with the same PID, image, creation time and requested exit code as `operator-stopped`; a different crash code or any fatal native diagnostic remains a failure. Previous immutable run receipts are not rewritten to change historical classification.
 

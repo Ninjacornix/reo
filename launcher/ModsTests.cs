@@ -17,6 +17,10 @@ static class ModsTests {
         var shuffle = Mods.Parse(shuffleJson);
         string itemsJson = Fixture("example.item-randomizer", "\"itemRandomizer\": {\"seed\": 2027}");
         var items = Mods.Parse(itemsJson);
+        check(Mods.Parse(itemsJson.Replace("\"seed\": 2027", "\"seed\": 2027, \"mode\": \"global\"")).ItemRandomizer!.Mode == "global",
+            "Global item catalogue mode parses explicitly");
+        Reject(() => Mods.Parse(itemsJson.Replace("\"seed\": 2027", "\"seed\": 2027, \"mode\": \"unknown\"")),
+            "Unknown global item mode is rejected");
         string enemiesJson = Fixture("example.zombie-randomizer", "\"enemyRandomizer\": {\"seed\": 2031, \"mode\": \"zombieProfiles\"}");
         var enemies = Mods.Parse(enemiesJson);
         string combinedJson = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "examples", "mods", "randomizer.json"));

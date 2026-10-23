@@ -1,11 +1,25 @@
 # Prerelease packaging
 
-Current target: **v1.0.15**, shown in the launcher as **1.0 Alpha**, marked
-prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.15)". Tags stay numeric so
+Current target: **v1.0.16**, shown in the launcher as **1.0 Alpha**, marked
+prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.16)". Tags stay numeric so
 installed launchers offer the update. .NET is an
 external prerequisite. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.16
+
+Ship the separate global weapon, ammunition and common-item pools, corrected pickup model hierarchy/material handling, expanded experimental enemy roster, protocol-3 host plans, DualSense health lights and corrected ammunition/progression cheats. Preserve progression keys, starting equipment and original scripted enemy families. Scripted enemy identity is captured before native reconstruction can clear its behavior; this prevents different maximum health on network peers.
+
+Refresh the frozen v1.0.15 kit with the authored cheat/mod headers and new `runtime/mods/global_items.h`; update `metadata/overlay_maps/ovl9.csv` with the two original G/Thanatos continuation entries. Preserve the frozen SDK and existing dirty submodule. Do not copy an unrelated locally rebuilt SDK into the release.
+
+Final kit manifest SHA-256: `99211d381dca110cc6044472a8ea04938985981f0e34f8f55119d2d38e34e957`.
+Input archive SHA-256: `91d0b38473ad2e7ac06e0f110e1bdac7251a51df7cca21b204f39b81915d3db5`.
+The corresponding frozen dependency archive is unchanged and is renamed for this release. Include `<!-- reo:requires-rebuild -->` in release notes.
+
+Verification workspace: `build-ninja/release-v116`. Regeneration reproduced all existing ordinary guest bodies byte-for-byte; the only ordinary changes were two added original o9 functions and their registration. The local native test executable reuses verified unchanged game/SDK objects and freshly compiles the authored bootstrap plus those two functions; this is a source-equivalence/object-reuse check, not a second full clean compilation. Native fixtures, 375 launcher assertions, 60 local-build tests (one Windows skip) and 49 co-op harness tests (one skip) pass. Offline checks covered pickup/equip/firing, health/infection/ammunition cheats, unlock menus and fullscreen window bounds.
+
+Two real native clients in a private loopback network room verified movement, pickup ownership/removal, duplicate prevention and ammunition updates. An initial combat mismatch is retained as failed evidence. The corrected 419.9-second repeat had matching enemy maximum health and eventual damage agreement. Combat updates can still arrive several seconds late during grabs. Later-room mixed-species combat, separate-PC/WAN play, reconnects, save/resume and full scenario completion remain unverified. Preserve those limits in the release notes.
 
 ## v1.0.15
 

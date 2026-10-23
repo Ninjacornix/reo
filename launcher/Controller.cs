@@ -19,6 +19,10 @@ public sealed partial class Controller : IDisposable {
     uint packet;
     Pad lastPublished = new();
     string lastPublishedDevice = "";
+    readonly DualSenseLight light = new();
+    int healthLight = 0x0040ff;
+    internal void SetHealthLight(PadLight color) =>
+        Interlocked.Exchange(ref healthLight, (color.R << 16) | (color.G << 8) | color.B);
     public Pad State { get; private set; } = new();
     public bool Connected => SelectedDevice.Available;
     public bool SessionEnabled { get; set; }
@@ -101,8 +105,8 @@ public sealed partial class Controller : IDisposable {
         }
         return 0;
     }
-    // Report layouts documented by SDL's PS5 HID driver. No output reports,
-    // pairing, exclusive handle, virtual device driver or global input injection.
+    // Input report layouts documented by SDL's PS5 HID driver. Light output uses
+    // a separate shared handle; no pairing, exclusive handle or virtual driver.
     public static bool TryParse(byte[] data, int deadZone, out Pad pad) {
         pad = new();
         if (data.Length < 10)
@@ -194,8 +198,15 @@ public sealed partial class Controller : IDisposable {
         view.Write(30, pad.RY);
         Thread.MemoryBarrier();
         view.Write(4, ++sequence);
+        var device = SelectedDevice;
+        int rgb = SessionEnabled ? Volatile.Read(ref healthLight) : 0x0040ff;
+        bool playstation = device.Available && device.Kind == "playstation";
+        light.Update(playstation ? device.Id[3..] : null,
+                     playstation && dualSense[device.Id[3..]].Transport == "Bluetooth",
+                     new((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb));
     }
     public void Dispose() {
+        light.Dispose();
         source?.RemoveHook(Hook);
         view.Dispose();
         map.Dispose();
