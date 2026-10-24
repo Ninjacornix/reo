@@ -34,6 +34,9 @@ class ResidentXlibPresenter {
     Vulkan::ImageHandle heldSource_;
     struct Parameters {
         uint32_t sourceWidth, sourceHeight, destinationWidth, destinationHeight, flags;
+        // Match the shared final-pass shader ABI. The Windows launcher supplies
+        // overlay readings; this reference presenter keeps the overlay off.
+        uint32_t fps = 0, frameMs = 0, ups = 0;
     };
     static uint32_t layoutFlags() {
         const char* aspect = std::getenv("REO_DISPLAY_ASPECT");

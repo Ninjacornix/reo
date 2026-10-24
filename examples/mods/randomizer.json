@@ -3,7 +3,7 @@
   "id": "example.randomizer",
   "name": "Randomizer",
   "version": "1.7.0",
-  "description": "Seeded global weapon, ammunition and common-item pools, plus an expanded File #1 enemy roster. Weapons replace weapons; common items replace common items. Progression items and starting equipment stay fixed. Scripted enemy families stay compatible with scenario commands. Start a fresh scenario. Experimental; full scenario completion remains unverified.",
+  "description": "Outbreak randomizer mod baby!!",
   "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
   "itemRandomizer": {
     "seed": 2027,

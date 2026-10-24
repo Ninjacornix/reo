@@ -1,6 +1,8 @@
 #if defined(REO_GAME_FILE1)
 #include "overrides/reo_cheats.h"
 #include "overrides/reo_mods.h"
+#include "overrides/reo_rumble.h"
+#include "overrides/reo_audio.h"
 #endif
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)
 #include "natural_dispatch.h"
@@ -23,6 +25,7 @@
 #include "vif_launch_overhead.h"
 
 #include "overrides/reo_game_clock_observer.h"
+#include "overrides/reo_performance.h"
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1170,6 +1173,7 @@ int main(int argc, char* argv[]) {
     // Only normal bootstrap-owned32MiB File1 RAM can enable the private observer.
 
     reo_game_clock::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+    reo_performance::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
 
     reo_actor_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_ground_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
@@ -1284,6 +1288,8 @@ int main(int argc, char* argv[]) {
     if (std::strcmp(g.serial, "SLUS-20765") == 0) {
         reo::cheats::install(runtime);
         reo::mods::install(runtime);
+        reo::rumble::install(runtime);
+        reo::audio::install(runtime);
     }
 #endif
     runtime.run();

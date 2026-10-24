@@ -10,6 +10,8 @@
 #include <stdexcept>
 #include <vector>
 #include "smaa/resident_smaa.hpp"
+#include "runtime/gs/performance.h"
+#include <chrono>
 
 namespace reo_gpu_present {
 // Existing GS/geometry Vulkan Device and its serialized graphics owner are
@@ -25,8 +27,10 @@ class ResidentDxgiPresenter {
     HWND window_ = nullptr;
     unsigned width_ = 0, height_ = 0;
     uint64_t submitted_ = 0;
+    reo::performance::Meter performance_;
     struct Parameters {
         uint32_t sourceWidth, sourceHeight, destinationWidth, destinationHeight, linear;
+        uint32_t fps = 0, frameMs = 0, ups = 0;
     };
     static uint32_t layoutFlags() {
         const char* aspect = std::getenv("REO_DISPLAY_ASPECT");
@@ -187,6 +191,22 @@ class ResidentDxgiPresenter {
                                       (colorPercent("REO_GAMMA", 0.5f, 2.0f) << 16u);
         Parameters parameters{source.width, source.height, width_, height_,
                               (linear ? 1u : 0u) | (fxaa ? 2u : 0u) | color | layoutFlags()};
+        if (reo::performance::enabled()) {
+            const auto now = uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::steady_clock::now().time_since_epoch()).count());
+            const auto reading = performance_.sample(now, submitted_,
+                reo::performance::updates.load(std::memory_order_relaxed));
+            parameters.fps = reading.fps | 0x80000000u;
+            parameters.frameMs = reading.frameMs;
+            parameters.ups = reading.ups;
+            static const bool diagnostic = [] {
+                const char* value = std::getenv("REO_PERFORMANCE_DIAG");
+                return value && std::strcmp(value, "1") == 0;
+            }();
+            if (diagnostic && submitted_ % 120 == 0)
+                std::fprintf(stderr, "[PERFORMANCE-OVERLAY] fps=%.1f frame_ms=%.1f ups=%.1f\n",
+                    reading.fps / 10.0, reading.frameMs / 10.0, reading.ups / 10.0);
+        }
         cmd->push_constants(&parameters, 0, sizeof(parameters));
         cmd->draw(3);
         cmd->end_render_pass();

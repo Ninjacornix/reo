@@ -1,4 +1,5 @@
 #include "parallel_backend.h"
+#include "runtime/gs/internal_resolution.h"
 #include "shader_location.hpp"
 #include "parent_first_entry.h"
 #include "native_movie_owner.h"
@@ -58,6 +59,24 @@ struct ThreadIndexScope {
 };
 class ParallelBackend final : public Backend, private SignalInterface {
     Config config_;
+    const unsigned internalResolution_ = reo::graphics::internalResolution(std::getenv("REO_INTERNAL_RESOLUTION"));
+    uint32_t reportedScanoutWidth_ = 0, reportedScanoutHeight_ = 0, scanoutReports_ = 0;
+    unsigned memoryLogFrames_ = 0;
+    void reportMemory() {
+        const char* option = std::getenv("REO_GPU_MEMORY_LOG");
+        if (!option || std::strcmp(option, "1") != 0 || memoryLogFrames_++ % 120)
+            return;
+        Vulkan::HeapBudget heaps[VK_MAX_MEMORY_HEAPS]{};
+        device_->get_memory_budget(heaps);
+        const auto& properties = device_->get_memory_properties();
+        for (uint32_t i = 0; i < properties.memoryHeapCount; ++i)
+            std::fprintf(stderr, "[GPU-MEMORY] heap=%u local=%u size_mib=%llu budget_mib=%llu tracked_mib=%llu usage_mib=%llu\n",
+                i, (properties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) ? 1u : 0u,
+                static_cast<unsigned long long>(heaps[i].max_size >> 20),
+                static_cast<unsigned long long>(heaps[i].budget_size >> 20),
+                static_cast<unsigned long long>(heaps[i].tracked_usage >> 20),
+                static_cast<unsigned long long>(heaps[i].device_usage >> 20));
+    }
     Init init_;
     std::unique_ptr<Context> context_;
     std::unique_ptr<Device> device_;
@@ -527,8 +546,25 @@ class ParallelBackend final : public Backend, private SignalInterface {
         const unsigned flags =
             CONTEXT_CREATION_ENABLE_PUSH_DESCRIPTOR_BIT |
             CONTEXT_CREATION_ENABLE_DESCRIPTOR_HEAP_BIT |
+#if defined(_WIN32)
+            // Keep command checkpoints at 2x. On the RX 570, removing these
+            // markers reproducibly loses the device during the startup draw;
+            // with them the same run reaches gameplay. This is a compatibility
+            // workaround, and retains post-mortem evidence if a failure recurs.
+            (internalResolution_ == 2 ? CONTEXT_CREATION_ENABLE_POST_MORTEM_BIT : 0) |
+#endif
             (config_.descriptorBuffer ? CONTEXT_CREATION_ENABLE_DESCRIPTOR_BUFFER_BIT : 0);
         bool initialized = false;
+#if defined(_WIN32)
+        if (config_.residentPresentation) {
+            // The DXGI bridge uses PRESENT_SRC_KHR for external image
+            // ownership transitions, requiring the swapchain extension.
+            const char* instanceExtensions[] = {"VK_KHR_surface"};
+            const char* deviceExtensions[] = {"VK_KHR_swapchain"};
+            initialized = context_->init_instance_and_device(instanceExtensions, 1,
+                                                              deviceExtensions, 1, flags);
+        } else
+#endif
 #if defined(REO_LINUX_XLIB_PRESENT)
         if (config_.residentPresentation) {
             const char* instanceExtensions[] = {"VK_KHR_surface", "VK_KHR_xlib_surface"};
@@ -572,6 +608,14 @@ class ParallelBackend final : public Backend, private SignalInterface {
 #endif
         gs_ = std::make_unique<GSInterface>();
         GSOptions options{};
+        // Four ordered samples form a 2x2 grid for higher-resolution scanout.
+        options.super_sampling = internalResolution_ == 2 ? SuperSampling::X4 : SuperSampling::X1;
+        options.ordered_super_sampling = true;
+        // Preserve the existing texture resolve policy; geometry still uses
+        // four distinct samples at 2x.
+        options.super_sampled_textures = false;
+        std::fprintf(stderr,"[INTERNAL-RESOLUTION-1] scale=%u samples=%u\n",
+                     internalResolution_,internalResolution_ * internalResolution_);
         if (!gs_->init(device_.get(), options)) {
             error = "paraLLEl-GS initialization failed";
             close();
@@ -909,6 +953,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
     Frame capture(const Capture& capture) override {
         ThreadIndexScope threadIndex;
         requireLive();
+        reportMemory();
         if (residentGeometry_)
             residentGeometry_->guardPublishedEffects();
         completeEvents();
@@ -924,8 +969,16 @@ class ParallelBackend final : public Backend, private SignalInterface {
         info.adapt_to_internal_horizontal_resolution = true;
         info.force_progressive = config_.forceProgressive;
         info.anti_blur = config_.antiBlur;
+        info.high_resolution_scanout = reo::graphics::highResolutionScanout(
+            internalResolution_, capture.registers[0], capture.registers[8], capture.registers[10]);
         gs_->flush();
         auto scanout = gs_->vsync(info);
+        if(scanout.image && scanoutReports_ < 16 &&
+           (scanout.image->get_width()!=reportedScanoutWidth_ || scanout.image->get_height()!=reportedScanoutHeight_)) {
+            reportedScanoutWidth_=scanout.image->get_width();reportedScanoutHeight_=scanout.image->get_height();++scanoutReports_;
+            std::fprintf(stderr,"[INTERNAL-RESOLUTION-1] image=%ux%u high-resolution=%u\n",
+                         reportedScanoutWidth_,reportedScanoutHeight_,scanout.high_resolution_scanout ? 1u : 0u);
+        }
 #if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
         if (presenter_ && scanout.image) {
             if (!config_.presentationEpochCurrent(capture.epoch))

@@ -1,0 +1,87 @@
+--- a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+@@ -23,6 +23,46 @@
+     WINDOWPLACEMENT g_windowedPlacement{sizeof(WINDOWPLACEMENT)};
+     LONG_PTR g_windowedStyle = 0;
+     bool g_havePlacement = false;
++    bool g_cursorHidden = false;
++
++    void restoreCursor()
++    {
++        if (g_cursorHidden)
++        {
++            SetCursor(LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)));
++            g_cursorHidden = false;
++        }
++    }
++
++    bool fullscreenClient(HWND hwnd)
++    {
++        if (GetForegroundWindow() != hwnd || IsIconic(hwnd) ||
++            (GetWindowLongPtrW(hwnd, GWL_STYLE) & WS_OVERLAPPEDWINDOW)) return false;
++        RECT bounds{};
++        MONITORINFO monitor{sizeof(MONITORINFO)};
++        if (!GetWindowRect(hwnd, &bounds) ||
++            !GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitor)) return false;
++        return bounds.left <= monitor.rcMonitor.left && bounds.top <= monitor.rcMonitor.top &&
++               bounds.right >= monitor.rcMonitor.right && bounds.bottom >= monitor.rcMonitor.bottom;
++    }
++
++    void updateCursor(HWND hwnd)
++    {
++        POINT point{};
++        RECT client{};
++        if (fullscreenClient(hwnd) && GetCursorPos(&point) && ScreenToClient(hwnd, &point) &&
++            GetClientRect(hwnd, &client) && PtInRect(&client, point))
++        {
++            if (!g_cursorHidden)
++            {
++                TRACKMOUSEEVENT track{sizeof(TRACKMOUSEEVENT), TME_LEAVE, hwnd, 0};
++                TrackMouseEvent(&track);
++            }
++            SetCursor(nullptr);
++            g_cursorHidden = true;
++        }
++        else restoreCursor();
++    }
+ 
+     void toggleBorderless(HWND hwnd)
+     {
+@@ -72,8 +112,24 @@
+                 return 0;
+             }
+             break;
++        case WM_SETCURSOR:
++            if (LOWORD(lParam) == HTCLIENT && fullscreenClient(hwnd))
++            {
++                updateCursor(hwnd);
++                if (g_cursorHidden) return TRUE;
++            }
++            else restoreCursor();
++            break;
+         case WM_KILLFOCUS:
+             g_fullscreenChord = false;
++            restoreCursor();
++            break;
++        case WM_ACTIVATEAPP:
++            if (!wParam) restoreCursor();
++            break;
++        case WM_MOUSELEAVE:
++        case WM_DESTROY:
++            restoreCursor();
+             break;
+         case WM_KEYUP:
+             if (wParam == VK_RETURN && g_fullscreenChord) { g_fullscreenChord = false; return 0; }
+@@ -99,7 +155,11 @@
+         default:
+             break;
+         }
+-        return CallWindowProcW(g_prevProc, hwnd, msg, wParam, lParam);
++        const auto result = CallWindowProcW(g_prevProc, hwnd, msg, wParam, lParam);
++        if (msg == WM_WINDOWPOSCHANGED || msg == WM_STYLECHANGED || msg == WM_SIZE ||
++            msg == WM_SETFOCUS || msg == WM_MOUSEMOVE || (msg == WM_ACTIVATEAPP && wParam))
++            updateCursor(hwnd);
++        return result;
+     }
+ }
+ 

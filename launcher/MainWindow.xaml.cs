@@ -38,10 +38,12 @@ public partial class MainWindow : Window {
         ScreenFit.SelectedIndex = Array.IndexOf(DisplayOptions.Fits, settings.ResolvedFit);
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
+        PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
         GpuMovies.IsChecked = settings.GpuMovies;
         InitializeOnline();
         TextureFilter.SelectedIndex = settings.TextureLinear ? 1 : 0;
+        InternalResolution.SelectedIndex = settings.ResolvedInternalResolution - 1;
         AnisotropicFilter.SelectedIndex =
             Array.IndexOf(new[] { 1, 2, 4, 8, 16 }, settings.ResolvedAnisotropy);
         AntiAlias.SelectedIndex = settings.ResolvedAntiAliasing switch { "smaa" => 2, "fxaa" => 1,
@@ -50,6 +52,7 @@ public partial class MainWindow : Window {
         Brightness.Value = settings.Brightness;
         Gamma.Value = settings.Gamma;
         InitializeColorPreview();
+        InitializeAudio();
         initialized = true;
         ShowPage("Play");
         UpdateSaves();
@@ -86,10 +89,10 @@ public partial class MainWindow : Window {
         UpdateGpuMoviesHint();
     }
     void UpdateGpuMoviesHint() {
-        if (movieDecoder == null)
+        if (movieDecoder == null || FindName("GpuMoviesHint") is not TextBlock hint)
             return;
         string gpu = movieDecoder.GpuName.Length != 0 ? movieDecoder.GpuName : "This graphics card";
-        GpuMoviesHint.Text = !movieDecoder.Gpu
+        hint.Text = !movieDecoder.Gpu
             ? movieDecoder.Reason + ". Movies decode on the processor."
             : GpuMovies.IsChecked == true
                 ? gpu + " decodes MPEG-2 video. Uncheck to decode movies on the processor."
@@ -108,7 +111,7 @@ public partial class MainWindow : Window {
             ArtworkLayer.BeginAnimation(OpacityProperty, null);
             ArtworkLayer.Opacity = artworkOpacity;
         }
-        foreach (string page in new[] { "Play", "Graphics", "Controller", "Saves", "Coop", "Mods",
+        foreach (string page in new[] { "Play", "Graphics", "Audio", "Controller", "Saves", "Coop", "Mods",
                                         "Cheats", "Setup", "Logs" }) {
             ((FrameworkElement)FindName("Page" + page)).Visibility =
                 page == name ? Visibility.Visible : Visibility.Collapsed;
@@ -121,6 +124,7 @@ public partial class MainWindow : Window {
         }
         (PageTitle.Text, PageSubtitle.Text) =
             name switch { "Graphics" => ("Graphics", "Display and image settings."),
+                          "Audio" => ("Audio", "Adjust the game's volume. Changes apply immediately."),
                           "Controller" => ("Controls", "Devices and bindings."),
                           "Saves" => ("Save games", "Memory cards and backups."),
                           "Coop" => ("Co-op", "Play together with friends."),
@@ -155,11 +159,13 @@ public partial class MainWindow : Window {
                 .Fits[Math.Clamp(ScreenFit.SelectedIndex, 0, DisplayOptions.Fits.Length - 1)];
         UpdateScreenFitHint();
         settings.Fullscreen = Fullscreen.IsChecked == true;
+        settings.PerformanceOverlay = PerformanceOverlay.IsChecked == true;
         settings.AsyncVif = AsyncVif.IsChecked == true;
         if (GpuMovies.IsEnabled) // greyed out on an incompatible GPU; keep the saved choice
             settings.GpuMovies = GpuMovies.IsChecked == true;
         UpdateGpuMoviesHint();
         settings.TextureLinear = TextureFilter.SelectedIndex == 1;
+        settings.InternalResolution = InternalResolution.SelectedIndex == 1 ? 2 : 1;
         settings.Anisotropy =
             new[] { 1, 2, 4, 8, 16 }[Math.Clamp(AnisotropicFilter.SelectedIndex, 0, 4)];
         settings.AntiAliasing = AntiAlias.SelectedIndex > 0;
@@ -170,6 +176,7 @@ public partial class MainWindow : Window {
         };
         settings.Brightness = (int)Math.Round(Brightness.Value);
         settings.Gamma = Math.Round(Gamma.Value, 2);
+        ReadAudioSettings();
         WindowSize.IsEnabled = !settings.Fullscreen;
         try {
             settings.Save();
@@ -260,7 +267,9 @@ public partial class MainWindow : Window {
             }
             previousRunning = true;
             LaunchButton.Content = "Game running";
+            UpdateRandomizerSeed();
             Status.Text = "Game running · Keep the launcher open for input" +
+                          (game.RandomizerSeedSummary is { } seed ? " · " + seed : "") +
                           (game.MovieStatus is { } movies ? " · " + movies : "");
         } catch (OperationCanceledException) {
             controller.SessionEnabled = false;
@@ -381,7 +390,7 @@ public partial class MainWindow : Window {
         int probe = Array.IndexOf(args, "--probe-controller");
         int page = Array.IndexOf(args, "--page");
         if (page >= 0 && page + 1 < args.Length &&
-            new[] { "Play", "Graphics", "Controller", "Saves", "Coop", "Mods", "Cheats", "Setup",
+            new[] { "Play", "Graphics", "Audio", "Controller", "Saves", "Coop", "Mods", "Cheats", "Setup",
                     "Logs" }
                 .Contains(args[page + 1]))
             ShowPage(args[page + 1]);
@@ -510,7 +519,7 @@ public partial class MainWindow : Window {
                 if(args.Contains("--test-roster-probe") || args.Contains("--test-peer-room"))
                     snapshot.MemoryCardFile1 = Path.Combine(Settings.Home,"test-cards","roster-"+Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(snapshot.MemoryCardFile1);
-                controller.Select("keyboard");
+                if (!args.Contains("--test-physical-pad")) controller.Select("keyboard");
             }
             snapshot.SelectedGame = "file1";
             snapshot.Exe = Path.GetFullPath(args[smoke + 1]);
@@ -527,6 +536,8 @@ public partial class MainWindow : Window {
                                       : args.Contains("--test-720p") ? 3
                                                                      : 0;
                 snapshot.TextureLinear = args.Contains("--test-linear-textures");
+                snapshot.PerformanceOverlay = args.Contains("--test-performance-overlay");
+                snapshot.InternalResolution = args.Contains("--test-internal-2x") ? 2 : 1;
                 snapshot.Anisotropy = args.Contains("--test-anisotropic") ? 16 : 1;
                 snapshot.LinearFilter = !args.Contains("--test-nearest");
                 snapshot.AntiAliasing = !args.Contains("--test-aa-off");
@@ -597,6 +608,7 @@ public partial class MainWindow : Window {
             }
             try {
                 await game.Launch(root, snapshot, controller, diagnosticRoute);
+                UpdateRandomizerSeed();
             } finally {
                 if (testCheatFile != null)
                     File.Delete(testCheatFile);

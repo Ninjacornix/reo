@@ -3,7 +3,9 @@ namespace Outbreak.Launcher;
 public partial class MainWindow {
     void UpdateScreenFitHint() {
         AspectRatio.IsEnabled = settings.ResolvedFit != "stretch";
-        ScreenFitHint.Text = settings.ResolvedFit switch {
+        if (FindName("ScreenFitHint") is not System.Windows.Controls.TextBlock hint)
+            return;
+        hint.Text = settings.ResolvedFit switch {
             "stretch" => "Fills the window. Picture proportions follow the window size.",
             "center" =>
                 "Keeps the original pixel height, centered. Shrinks only when needed to fit.",
@@ -11,6 +13,6 @@ public partial class MainWindow {
             _ => "Centers the picture at the selected ratio, with black borders where needed."
         };
         if (settings.ResolvedAspect == "16:9" && settings.ResolvedFit != "stretch")
-            ScreenFitHint.Text += " 16:9 reshapes the picture; the camera is unchanged.";
+            hint.Text += " 16:9 reshapes the picture; the camera is unchanged.";
     }
 }

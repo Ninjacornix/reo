@@ -12,6 +12,9 @@ public partial class MainWindow {
                                                    : controller.Profile.Buttons;
     void InitializeInput() {
         PreviewKeyDown += CaptureKey;
+        inputUiUpdating = true;
+        RumbleSwitch.IsChecked = settings.RumbleEnabled;
+        inputUiUpdating = false;
         controller.Poll();
         UpdateInputUi();
         ShowBindings(this, new());
@@ -78,6 +81,13 @@ public partial class MainWindow {
             return;
         controller.Profile.SwapSticks = SwapSticks.IsChecked == true;
         controller.Profile.InvertRightY = InvertRightY.IsChecked == true;
+        SaveInputPreferences();
+    }
+    void RumbleChanged(object sender, RoutedEventArgs e) {
+        if (!initialized || inputUiUpdating)
+            return;
+        settings.RumbleEnabled = RumbleSwitch.IsChecked == true;
+        controller.Publish();
         SaveInputPreferences();
     }
     void SaveInputPreferences() {

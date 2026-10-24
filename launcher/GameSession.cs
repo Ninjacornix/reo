@@ -11,6 +11,9 @@ public sealed class GameSession {
     public ImportedDisc? Imported { get; private set; }
     public string? NetworkStatus { get; private set; }
     public string? MovieStatus { get; private set; }
+    internal string? AudioMapName { get; set; }
+    public string? RandomizerSeedSummary { get; private set; }
+    readonly RandomizerSeeds randomizerSeeds = new();
     internal byte[]? HostRandomizerConfiguration { get; private set; }
     string? randomizerStopReason;
     public bool Running {
@@ -32,7 +35,7 @@ public sealed class GameSession {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
-        var selectedMods = Mods.Selected(settings);
+        var selectedMods = randomizerSeeds.ForLaunch(Mods.Selected(settings), settings.ResolvedCoopMode);
         byte[]? randomizerConfiguration = null;
         HostRandomizerConfiguration = null;
         randomizerStopReason = null;
@@ -41,6 +44,7 @@ public sealed class GameSession {
             randomizerConfiguration = shared.Bytes;
             selectedMods = shared.Mods;
         }
+        RandomizerSeedSummary = RandomizerSeeds.Describe(selectedMods);
         NetworkStatus = null;
         string sourceExe = settings.GetExe(), iso = settings.GetIso();
         var selectedGame = settings.Game;
@@ -116,6 +120,8 @@ public sealed class GameSession {
                      .ToArray())
             start.Environment.Remove(key);
         void Set(string key, string value) => start.Environment[key] = value;
+        Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
+        if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
         bool automaticAccount = onlineEnvironment.Count > 0 &&
                                 await Task.Run(() => SupportsAutomaticAccount(image), cancel);
         if (onlineEnvironment.Count > 0 && !automaticAccount) {
@@ -202,6 +208,9 @@ public sealed class GameSession {
         Set("REO_WINDOW_WIDTH", outputSize.Width.ToString());
         Set("REO_WINDOW_HEIGHT", outputSize.Height.ToString());
         Set("REO_TEXTURE_FILTER", settings.TextureLinear ? "linear" : "original");
+        Set("REO_INTERNAL_RESOLUTION", settings.ResolvedInternalResolution.ToString());
+        Set("REO_PERFORMANCE_OVERLAY", settings.PerformanceOverlay ? "1" : "0");
+        Set("REO_GPU_MEMORY_LOG", settings.ResolvedInternalResolution == 2 ? "1" : "0");
         Set("REO_TEXTURE_ANISOTROPY", settings.ResolvedAnisotropy.ToString());
         Set("REO_POST_AA", settings.ResolvedAntiAliasing);
         Set("REO_BRIGHTNESS",
@@ -210,6 +219,9 @@ public sealed class GameSession {
         Set("REO_GAMMA",
             settings.Gamma.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         if (diagnosticRoute != null) {
+            Set("REO_PERFORMANCE_DIAG", settings.PerformanceOverlay ? "1" : "0");
+            Set("REO_AUDIO_DIAG", "1");
+            Set("REO_RUMBLE_DIAG", "1");
             Set("REO_TEST_ROUTE", diagnosticRoute is "gameplay-pickup" or "gameplay-preview" or "gameplay-enemies" or "gameplay-enemy-combat" ? "gameplay" : diagnosticRoute);
             if (settings.CheatsEnabled || selectedMods.Count > 0)
                 Set("REO_CHEAT_DIAG", "1");
@@ -302,6 +314,7 @@ public sealed class GameSession {
         var lightProcess = Process;
         string lightLogs = Logs!;
         _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
+        _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
         _ = Pump(Process.StandardError, stderr, account == null ? null : account.Observe);
         await File.WriteAllTextAsync(
@@ -309,6 +322,7 @@ public sealed class GameSession {
             JsonSerializer.Serialize(
                 new { pid = Process.Id,
                       game = selectedGame.Id,
+                      randomizerSeed = RandomizerSeedSummary,
                       source = sourceExe,
                       image,
                       sha256 = hash,
@@ -324,6 +338,8 @@ public sealed class GameSession {
                       resolution = DisplayOptions.Size(settings.WindowSize),
                       linearScaling = settings.LinearFilter,
                       textureLinear = settings.TextureLinear,
+                      internalResolution = settings.ResolvedInternalResolution,
+                      performanceOverlay = settings.PerformanceOverlay,
                       anisotropy = settings.ResolvedAnisotropy,
                       aspectRatio = settings.ResolvedAspect,
                       screenFit = settings.ResolvedFit,

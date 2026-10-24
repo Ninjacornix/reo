@@ -15,11 +15,10 @@ public partial class MainWindow {
         EnableCheats.IsChecked = settings.CheatsEnabled;
         CheatList.Children.Clear();
         if (settings.Game.Id == "file2") {
-            CheatHelp.Text =
+            Status.Text =
                 "File #2 support is planned. Cheats will be available with its native build.";
             return;
         }
-        CheatHelp.Text = "Choose cheats for your character. Changes apply on the next launch.";
         try {
             var groups = Cheats.Load(settings.Game.Id);
             if (groups.Count == 0)
@@ -33,7 +32,7 @@ public partial class MainWindow {
                                    Tag = g.Id };
                 toggle.Click += CheatToggled;
                 row.Children.Add(toggle);
-                string detail = g.Supported          ? g.Description
+                string detail = g.Supported          ? ""
                                 : g.Error.Length > 0 ? g.Error
                                                      : "No supported patch lines.";
                 if (detail.Length > 0)
@@ -44,7 +43,7 @@ public partial class MainWindow {
                 CheatList.Children.Add(row);
             }
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
-            CheatHelp.Text = error.Message;
+            Status.Text = error.Message;
         }
     }
     void CheatToggled(object sender, RoutedEventArgs e) {

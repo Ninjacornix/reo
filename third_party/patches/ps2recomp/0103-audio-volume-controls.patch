@@ -1,0 +1,139 @@
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -14,12 +14,18 @@
+ // Private diagnostic bridge; no runtime header or public layout changes.
+ namespace ps2_reo_sound { void reportAudioPaths(); }
+ 
++float reoAudioMasterGain();
++void reoAudioResetStreams();
++void reoAudioPoll();
++float reoAudioStreamGain(uint32_t handle);
++
+ namespace ps2_cri_audio {
+ namespace {
+ constexpr uint32_t outputRate=48000;
+ struct Channel { std::deque<int16_t> pcm; uint64_t queued=0, consumed=0, producerNs=0; uint32_t producerReports=0; };
+ struct Voice {
+     uint32_t left=0,right=0,channels=0,frequency=48000,volume=256;
++    float mixerGain=1;
+     bool playing=false,draining=false; double phase=0; // draining: stopped by the game, plays out accepted PCM
+     uint64_t lateSamples=0, skippedSamples=0, startNs=0, firstNs=0, startByte=0;
+     bool firstReported=false;
+@@ -49,6 +55,7 @@
+ // Called by raylib's audio thread. Its sample requests provide the playback clock.
+ void renderLocked(float* dst, unsigned frames) {
+     if (dst) std::fill(dst,dst+frames*2,0.0f);
++    for(auto& entry:voices) entry.second.mixerGain=reoAudioStreamGain(entry.first);
+     for (unsigned i=0;i<frames;++i) {
+         float l=0,r=0; bool starved=false;
+         for (auto& entry:voices) {
+@@ -82,7 +89,7 @@
+                 v.pathSignal += v.volume != 0 && (li->second.pcm.front() != 0 ||
+                     (v.channels > 1 && ri->second.pcm.front() != 0));
+             }
+-            const float gain=std::min(v.volume,256u)/256.0f/32768.0f;
++            const float gain=std::min(v.volume,256u)/256.0f/32768.0f*v.mixerGain;
+             l+=li->second.pcm.front()*gain;
+             r+=(v.channels>1?ri->second.pcm.front():li->second.pcm.front())*gain;
+             v.phase+=v.frequency/static_cast<double>(outputRate);
+@@ -112,6 +119,7 @@
+     std::fprintf(stderr,"[CRI-AUDIO] output ready: signed PCM16 -> stereo float32, 48000 Hz\n");
+ }
+ void tickLocked() {
++    reoAudioPoll();
+     const auto now=std::chrono::steady_clock::now();
+     if (syncLog) for (auto& entry:voices) {
+         auto& v=entry.second;
+@@ -174,7 +182,7 @@
+     }
+ }
+ }
+-void ensureHostOutput() { ensureOutput(); }
++void ensureHostOutput() { reoAudioPoll();ensureOutput(); }
+ void render(float* dst,unsigned frames) {
+     {
+         std::lock_guard<std::mutex> lock(mutex);
+@@ -184,7 +192,8 @@
+     // Keep the independent bank lock outside the CRI queue lock. Stream pause or
+     // reset must not erase separately playing menu/character voices.
+     ps2_reo_sound::mix(dst,frames);
+-    if (dst) for (unsigned i=0;i<frames*2;++i) dst[i]=std::clamp(dst[i],-1.0f,1.0f);
++    const float master=reoAudioMasterGain();
++    if (dst) for (unsigned i=0;i<frames*2;++i) dst[i]=std::clamp(dst[i]*master,-1.0f,1.0f);
+ }
+ bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte) {
+     if (!key || !bytes || !length || (length&1) || length>0x4000) return false;
+@@ -263,7 +272,7 @@
+ size_t queuedSamples(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);return i==channels.end()?0:i->second.pcm.size(); }
+ uint64_t consumed(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
+ void discard(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);if(i!=channels.end()){i->second.pcm.clear();i->second.consumed=i->second.queued;} }
+-void reset() { std::lock_guard<std::mutex> lock(mutex);channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
++void reset() { std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
+ void shutdown() {
+     if (ready && IsAudioDeviceReady()) { StopAudioStream(stream);UnloadAudioStream(stream); }
+     ready=false;stream={};reset();
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
+@@ -10,6 +10,8 @@
+ #include <chrono>
+ #include <type_traits>
+ #include <mutex>
++
++float reoAudioBankGain(unsigned port,unsigned sequence,uint64_t fingerprint);
+ 
+ namespace ps2_reo_sound {
+ namespace {
+@@ -292,7 +294,7 @@
+     unsigned program = 0, volume = 127, expression = 127, pan = 64;
+     uint64_t age = 0;
+ };
+-struct Port { Bank bank; bool loaded = false; unsigned volume = 256; std::array<Request,16> requests; };
++struct Port { uint64_t fingerprint=0; Bank bank; bool loaded = false; unsigned volume = 256; std::array<Request,16> requests; };
+ std::array<Port,14> ports;
+ std::vector<Voice> voices;
+ std::mutex soundMutex;
+@@ -319,7 +321,7 @@
+ }
+ bool installBankUnlocked(unsigned port, Bank&& loaded, size_t hn, size_t bn, size_t tn) {
+     if (port >= ports.size()) return false;
+-    stop(port); ports[port].bank = std::move(loaded); ports[port].loaded = true;
++    stop(port); ports[port].fingerprint=loaded.fingerprint(); ports[port].bank = std::move(loaded); ports[port].loaded = true;
+     voices.reserve(48);
+     std::fprintf(stderr,"[REO-BANK] load port=%u hd=%zu bd=%zu tq=%zu sequences=%u\n",port,hn,bn,tn,ports[port].bank.sequenceCount());
+     return true;
+@@ -489,6 +491,10 @@
+     if (!stereo || !frames) return;
+     std::lock_guard<std::mutex> lock(soundMutex);
+     if (pathLog) pathMixFrames += frames;
++    std::array<std::array<float,16>,14> gains{};
++    for(unsigned port=0;port<ports.size();++port)
++        for(unsigned slot=0;slot<ports[port].requests.size();++slot)
++            gains[port][slot]=reoAudioBankGain(port,ports[port].requests[slot].index,ports[port].fingerprint);
+     for (unsigned frame = 0; frame < frames; ++frame, ++frameClock) {
+         if (frameClock % kFramesPerTick == 0) tickUnlocked();
+         for (auto& v : voices) {
+@@ -523,8 +529,8 @@
+             const int pan = mono ? 64 : std::clamp(s.basePan + int(r.pan) + int(r.requestPan) - 128,0,127);
+             const double left = pan > 64 ? double(127 - pan) / 63 : 1;
+             const double right = pan < 64 ? double(std::max(pan - 1,0)) / 63 : 1;
+-            if (!muted) { stereo[frame * 2] += float(pcm / 32768. * amplitude / 16384. * envelope * left);
+-                          stereo[frame * 2 + 1] += float(pcm / 32768. * amplitude / 16384. * envelope * right); }
++            if (!muted) { stereo[frame * 2] += float(pcm / 32768. * amplitude / 16384. * envelope * left * gains[v.port][v.slot]);
++                          stereo[frame * 2 + 1] += float(pcm / 32768. * amplitude / 16384. * envelope * right * gains[v.port][v.slot]); }
+             if (pathLog) {
+                 auto& counters=pathCounters[v.port][r.index];
+                 ++counters.activeVoiceFrames;
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.h
+@@ -38,6 +38,11 @@
+     bool decode(const Sample& sample, DecodedSample& out) const;
+     std::shared_ptr<const DecodedSample> decoded(const Sample& sample) const;
+     const std::vector<uint8_t>& tq() const { return tq_; }
++    uint64_t fingerprint() const {
++        uint64_t hash=14695981039346656037ull;
++        for(auto byte:hd_) { hash^=byte;hash*=1099511628211ull; }
++        return hash;
++    }
+     unsigned sequenceCount() const;
+ private:
+     std::vector<uint8_t> hd_, bd_, tq_;

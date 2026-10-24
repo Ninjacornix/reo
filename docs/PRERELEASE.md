@@ -1,11 +1,49 @@
 # Prerelease packaging
 
-Current target: **v1.0.16**, shown in the launcher as **1.0 Alpha**, marked
-prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.16)". Tags stay numeric so
+Current target: **v1.0.17**, shown in the launcher as **1.0 Alpha**, marked
+prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.17)". Tags stay numeric so
 installed launchers offer the update. .NET is an
 external prerequisite. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.17
+
+Ship Native / 2× internal resolution, the optional top-right performance counter,
+five live audio volume controls, controller rumble and its saved switch, the
+fullscreen cursor fix, missing randomized weapon motions and a fresh seed per
+solo/host launch. Joining continues to use the host's configuration. Simplify
+the Mods/Cheats text and show only the four main readiness checks on Play.
+
+Refresh the frozen v1.0.16 kit. Apply patches `0102-fullscreen-cursor.patch` and
+`0103-audio-volume-controls.patch` to that kit's SDK source copy; preserve the
+dirty working submodule. Include both patches in the source-update notices.
+Replace the independent final presentation shaders with the verified versions
+whose push constants include performance readings. Include the new authored
+runtime headers; do not distribute a built game or game objects.
+
+Verification workspace: `build-ninja/release-v117`. Actual local launcher-to-room
+checks cover 2×/Native, fullscreen, SMAA/direct presentation, the performance
+counter on/off, live audio, rumble/cursor checks and randomized grenade launcher
+ready/fire behavior. Performance-counter checks pass 14 cases, actual audio
+mixing passes 465 cases and the launcher passes 445 assertions. The 2× fullscreen
+randomizer run measured about 29.98 gameplay updates/s during ordinary active
+gameplay. Keep the RX 570 command-checkpoint compatibility workaround; the
+underlying driver/ordering cause has not been demonstrated to be repaired.
+
+The reference executable incrementally reuses unchanged verified generated/SDK
+objects and recompiles changed authored/runtime units. Validate source and object
+correspondence with the new sealed kit; disclose that a complete cold first-run
+compilation is not repeated. Existing co-op verification belongs to v1.0.16;
+separate-PC/WAN play, later-room mixed enemies, save/resume and full-scenario
+completion remain unverified. Include `<!-- reo:requires-rebuild -->`.
+
+Sealed kit manifest SHA-256:
+`ef36a0fec0200a0917211bc983b745dbbe82d0e11b84341a9ac62686fa3bc0f6`.
+Input archive SHA-256:
+`9ea4222f2ef1a734c0dbdad2a1437876e81d02754c964d09c3795e870b897857`.
+The 60 local-build tests pass with one platform skip; the 49 co-op harness
+tests pass with one skip. The dependency source base remains unchanged.
 
 ## v1.0.16
 

@@ -38,15 +38,6 @@ public partial class MainWindow {
         }
     }
     string[] graphicsCards = Array.Empty<string>();
-    static bool CompilerInstalled() {
-        try {
-            string tools = Path.Combine(Settings.Home, "toolchains");
-            return Directory.Exists(tools) &&
-                   Directory.EnumerateFiles(tools, "compiler-setup.json", SearchOption.AllDirectories).Any();
-        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
-            return false;
-        }
-    }
     void RefreshReadyCheck() {
         bool packaged = AppLayout.Packaged(root);
         bool kit = packaged ? LocalGameBuild.Available(root) : File.Exists(settings.GetExe());
@@ -72,20 +63,6 @@ public partial class MainWindow {
                  : discCheck != null && discCheck.Matches(iso) ? "Game disc not supported"
                                                                : "Checking game disc...",
                  discOk ? null : "Choose ISO");
-        bool tools = !packaged || built || CompilerInstalled();
-        SetCheck("CheckTools", tools ? Check.Done : Check.Info,
-                 !packaged ? "Developer checkout: no build tools needed"
-                 : tools ? "Build tools installed"
-                         : "Build tools: downloaded automatically during setup (about 173 MB)");
-        SetCheck("CheckBuild", built ? Check.Done : kit ? Check.Info : Check.Missing,
-                 built ? (packaged ? "Game built" : "Developer build available")
-                 : kit ? "Game not built yet"
-                 : packaged ? "Build files missing: extract the complete download"
-                            : "No developer build found");
-        SetCheck("CheckInput", controller.SelectedDevice.Available ? Check.Done : Check.Missing,
-                 controller.SelectedDevice.Available ? "Input: " + controller.SelectedDevice.Name
-                                                     : "Input device disconnected",
-                 controller.SelectedDevice.Available ? null : "Controls");
         RefreshNextStep(packaged, kit, built, vulkan, roomy);
     }
     static string DriverPage(IEnumerable<string> cards) {

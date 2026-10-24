@@ -10,6 +10,7 @@ public sealed partial class Settings {
     public string Iso { get; set; } = "";
     public int WindowSize { get; set; }
     public bool Fullscreen { get; set; }
+    public bool PerformanceOverlay { get; set; }
     public string AspectRatio { get; set; } = "4:3";
     public string ScreenFit { get; set; } = "fit";
     [System.Text.Json.Serialization.JsonIgnore]
@@ -39,6 +40,9 @@ public sealed partial class Settings {
                                       : !string.IsNullOrWhiteSpace(CoopHost)   ? "join"
                                                                                : "offline";
     public bool TextureLinear { get; set; }
+    public int InternalResolution { get; set; } = 1;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public int ResolvedInternalResolution => InternalResolution == 2 ? 2 : 1;
     public int Anisotropy { get; set; } = 1;
     public int ResolvedAnisotropy => Anisotropy is 2 or 4 or 8 or 16 ? Anisotropy : 1;
     public bool AntiAliasing { get; set; } = true;
@@ -50,6 +54,12 @@ public sealed partial class Settings {
     public int Brightness { get; set; } = 100;
     public double Gamma { get; set; } = 1.0;
     public bool DualSense { get; set; } = true;
+    public bool RumbleEnabled { get; set; } = true;
+    public int MasterVolume { get; set; } = 100;
+    public int MusicVolume { get; set; } = 100;
+    public int SfxVolume { get; set; } = 100;
+    public int VoiceVolume { get; set; } = 100;
+    public int UiVolume { get; set; } = 100;
     public int DeadZone { get; set; } = 12;
     public string InputDeviceId { get; set; } = "";
     public PadProfile PlayStation { get; set; } = new();
@@ -72,6 +82,11 @@ public sealed partial class Settings {
             settings.Iso = Path.Combine(root, "iso", "Resident Evil - Outbreak (v2.00).iso");
         settings.WindowSize = Math.Clamp(settings.WindowSize, 0, DisplayOptions.Sizes.Length - 1);
         settings.Brightness = Math.Clamp(settings.Brightness, 50, 150);
+        settings.MasterVolume = Math.Clamp(settings.MasterVolume, 0, 100);
+        settings.MusicVolume = Math.Clamp(settings.MusicVolume, 0, 100);
+        settings.SfxVolume = Math.Clamp(settings.SfxVolume, 0, 100);
+        settings.VoiceVolume = Math.Clamp(settings.VoiceVolume, 0, 100);
+        settings.UiVolume = Math.Clamp(settings.UiVolume, 0, 100);
         settings.Gamma =
             double.IsFinite(settings.Gamma) ? Math.Clamp(settings.Gamma, 0.5, 2.0) : 1.0;
         settings.DeadZone = Math.Clamp(settings.DeadZone, 0, 30);

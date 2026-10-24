@@ -43,6 +43,7 @@
 #include "runtime/gs/gs_renderer.h"
 #include "runtime/vu/vu_interpreter.h"
 #include "runtime/input/input.h"
+#include "runtime/input/pad2_rumble.h"
 #include "runtime/memory_card/card_rpc.h"
 #include "runtime/cdvd/cdvd.h"
 #include <cstdio>
@@ -58,6 +59,15 @@
 #include <map>
 #include <string>
 #include "source_instruction_access.hpp"
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <xinput.h>
+#endif
+
+void reoPad2Stop();
 
 namespace ps2_syscalls {
 bool hleSignalSema(uint32_t semaId);
@@ -65,9 +75,6 @@ bool hleSignalSema(uint32_t semaId);
 namespace ps2_stubs {
 uint32_t hleIopRebootCount();
 }
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 ReoHwBridge* ReoHwBridge::s_instance = nullptr;
 
@@ -182,6 +189,7 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
 }
 
 void ReoHwBridge::shutdown() {
+    reoPad2Stop();
     ReoTraceLogger::instance().shutdown();
     m_network.reset();
     m_privateKeyboard.reset();
@@ -845,6 +853,8 @@ struct Pad2Feeder {
     std::vector<uint32_t> sockets; // EE record-pair buffers
     uint32_t workAddr = 0;         // sceDbcSetWorkAddr area: per-port connection words
     uint32_t nextSocketId = 0;
+    std::atomic<uint32_t> outputSocket{UINT32_MAX};
+    std::atomic<uint32_t> motors{0};
     uint8_t* rdram = nullptr;
     bool started = false;
     std::atomic<bool> stop{false};
@@ -2370,6 +2380,10 @@ uint32_t pad2RegisterSocket(uint8_t* rdram, uint32_t eeBuf, uint32_t devClass) {
             devClass == 1u ? " (pad)" : "");
     if (devClass != 1u)
         return id;
+    if(g_pad2.outputSocket==UINT32_MAX || eeBuf==g_pad2.sockets.front()) {
+        g_pad2.outputSocket=id;
+        g_pad2.motors.store(0,std::memory_order_relaxed);
+    }
     if (!g_pad2.started) {
         g_pad2.started = true;
         pad2ParseScript();
@@ -2440,7 +2454,16 @@ void reoDebugPanelText(std::string& out) {
 }
 
 // Stop the pad feeder before guest RAM goes away (reo_bootstrap.cpp, after runtime.run()).
+void reoPad2RumbleFrame() {
+#ifdef _WIN32
+    const auto speeds=g_pad2.motors.load(std::memory_order_relaxed);
+    XINPUT_VIBRATION vibration{WORD(speeds),WORD(speeds>>16)};
+    XInputSetState(0,&vibration);
+#endif
+}
 void reoPad2Stop() {
+    g_pad2.motors.store(0,std::memory_order_relaxed);
+    reoPad2RumbleFrame();
     g_pad2.stop = true;
     if (g_pad2.thread.joinable())
         g_pad2.thread.join();
@@ -2455,6 +2478,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
     if (self) {
         const uint32_t boots = ps2_stubs::hleIopRebootCount();
         if (boots != self->m_iopBootSeen) {
+            g_pad2.motors.store(0,std::memory_order_relaxed);
+            g_pad2.outputSocket=UINT32_MAX;
             self->m_iopBootSeen = boots;
             self->m_iopHeapNext = kIopHeapBase;
             if (self->m_network)
@@ -3144,6 +3169,24 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
             // version returned by rpc 0x80001363 (EE 0x1888E0) to satisfy (v >> 8) == 3
             // ("libdbc.a = 3.0"). Minor version unverified. Other calls are logged and
             // answered with zeroed success until their semantics are needed.
+            // Decode before clearing a reply: libdbc reuses its request buffer.
+            reo::pad2::Output output;
+            if(sendBuf && sendSize>=12 && sendSize<=0x1090 && g_pad2.outputSocket!=UINT32_MAX) {
+                const uint32_t physical=sendBuf&0x1fffffffu;
+                if(physical<ps2RamBackingBytes && sendSize<=ps2RamBackingBytes-physical) {
+                    std::vector<uint8_t> request(sendSize);
+                    reo_source_instrumentation::copyBytesForBank(rdram,request.data(),rdram+physical,sendSize);
+                    const auto previous=g_pad2.motors.load(std::memory_order_relaxed);
+                    output=reo::pad2::decodeOutput(rpcNum,g_pad2.outputSocket,request,
+                        {uint16_t(previous),uint16_t(previous>>16)});
+                    if(output.kind==reo::pad2::OutputKind::Motors) {
+                        const uint32_t speeds=output.motors.large | uint32_t(output.motors.small)<<16;
+                        g_pad2.motors.store(speeds,std::memory_order_relaxed);
+                        if(previous!=speeds && std::getenv("REO_RUMBLE_DIAG"))
+                            std::fprintf(stderr,"[PAD-RUMBLE] large=%u small=%u\n",output.motors.large,output.motors.small);
+                    }
+                }
+            }
             static int dbcLog = 0;
             if (dbcLog < 80) {
                 char hex[3 * 32 + 1] = {0};
@@ -3176,6 +3219,11 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     rdramWrite32(rdram, recvBuf, 0x0300u); // dbcman 3.0
                 if (rpcNum == 0x80001301u && recvSize >= 0x28)
                     rdramWrite32(rdram, recvBuf + 0x24, socketId);
+                if(output.kind==reo::pad2::OutputKind::Profile && recvSize>=0x210) {
+                    rdramWrite32(rdram,recvBuf+8,1);
+                    rdramWrite32(rdram,recvBuf+12,3); // one-bit small + eight-bit large motor
+                    rdramWrite32(rdram,recvBuf+0x20c,0);
+                }
             }
             return true;
         }

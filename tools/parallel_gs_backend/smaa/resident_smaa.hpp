@@ -18,6 +18,7 @@ class ResidentSmaa {
     bool initialized_ = false;
     struct Extent {
         uint32_t sourceWidth, sourceHeight, width, height, flags;
+        uint32_t fps = 0, frameMs = 0, ups = 0;
     };
 
     Vulkan::Program* load(const char* name, const std::vector<uint32_t>& vertex,

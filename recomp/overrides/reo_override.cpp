@@ -38,6 +38,7 @@
 #include "reo_netbio.h"
 
 #include "reo_game_clock_observer.h"
+#include "reo_performance.h"
 #include "actor_first_nonfinite.h"
 #include "ground_query_origin.h"
 #include "reo_dma_builder_observer.h"
@@ -46,6 +47,7 @@
 // Read-only observer always delegates the original generated entry exactly once.
 extern void sub_001B0B80_0x1b0b80(uint8_t*, R5900Context*, PS2Runtime*);
 static void reoGameClockActorInput(uint8_t* r, R5900Context* c, PS2Runtime* p) {
+    reo_performance::sample(r, c, p);
     reo_game_clock::sample(r, c, p);
     const auto token = reo_actor_origin::beforeInput(r, c, p);
     sub_001B0B80_0x1b0b80(r, c, p);
@@ -1668,7 +1670,7 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     if (reo_ground_origin::enabled) {
         runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 3u, 0x617000u, reoGroundQuery);
     }
-    if (reo_game_clock::enabled || reo_actor_origin::enabled) {
+    if (reo_game_clock::enabled || reo_actor_origin::enabled || reo_performance::ram) {
         bind(runtime, 0x1B0B80, reoGameClockActorInput,
              "original actor-input clock/finite-coordinate observation");
     }

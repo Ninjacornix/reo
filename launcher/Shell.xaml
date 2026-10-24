@@ -15,6 +15,7 @@
      <StackPanel Margin="12,0,0,36"><TextBlock Text="RE: Outbreak" FontSize="20"/><TextBlock x:Name="VersionLabel" Style="{StaticResource Hint}" Margin="0,2,0,0"/></StackPanel>
      <Button x:Name="NavPlay" Tag="Play" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Play" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavGraphics" Tag="Graphics" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Graphics" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
+     <Button x:Name="NavAudio" Tag="Audio" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Audio" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavController" Tag="Controller" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Controls" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSaves" Tag="Saves" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Save games" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavCoop" Tag="Coop" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Co-op" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
@@ -69,9 +70,6 @@
         <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckVulkanMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckVulkanText" Grid.Column="1" VerticalAlignment="Center"/><Button x:Name="CheckVulkanAction" Grid.Column="2" Tag="CheckVulkan" Click="ChecklistAction" Padding="10,4" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/></Grid>
         <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckDiskMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckDiskText" Grid.Column="1" VerticalAlignment="Center"/><Button x:Name="CheckDiskAction" Grid.Column="2" Tag="CheckDisk" Click="ChecklistAction" Padding="10,4" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/></Grid>
         <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckDiscMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckDiscText" Grid.Column="1" VerticalAlignment="Center"/><Button x:Name="CheckDiscAction" Grid.Column="2" Tag="CheckDisc" Click="ChecklistAction" Padding="10,4" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/></Grid>
-        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckToolsMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckToolsText" Grid.Column="1" VerticalAlignment="Center"/></Grid>
-        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckBuildMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckBuildText" Grid.Column="1" VerticalAlignment="Center"/></Grid>
-        <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CheckInputMark" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Status"/><TextBlock x:Name="CheckInputText" Grid.Column="1" VerticalAlignment="Center"/><Button x:Name="CheckInputAction" Grid.Column="2" Tag="CheckInput" Click="ChecklistAction" Padding="10,4" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/></Grid>
         </StackPanel>
         <StackPanel Grid.Column="2">
        <TextBlock Text="Launch settings" FontSize="16" FontWeight="SemiBold" Margin="0,4,0,14"/>
@@ -85,16 +83,15 @@
       <StackPanel x:Name="PageGraphics" Visibility="Collapsed">
        <TextBlock Text="Display" Style="{StaticResource Section}"/>
        <CheckBox x:Name="Fullscreen" Content="Borderless fullscreen" Click="SaveSettings" ToolTip="Ctrl+Enter toggles fullscreen in game. Alt+F4 closes the game."/>
+       <CheckBox x:Name="PerformanceOverlay" Content="Show performance counter" Checked="SaveSettings" Unchecked="SaveSettings" ToolTip="Show display FPS, frame time and game updates per second in the top-right corner. Applies on the next launch."/>
        <Grid Margin="0,14,0,16"><TextBlock Text="Window resolution" VerticalAlignment="Center"/><ComboBox x:Name="WindowSize" HorizontalAlignment="Right" DisplayMemberPath="Name" SelectionChanged="SettingChanged"/></Grid>
-       <TextBlock Text="Fullscreen uses the monitor's desktop resolution." Style="{StaticResource Hint}" Margin="0,0,0,18"/>
        <Grid Margin="0,4,0,16"><TextBlock Text="Aspect ratio" VerticalAlignment="Center"/><ComboBox x:Name="AspectRatio" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="4:3 (original)"/><ComboBoxItem Content="16:9"/></ComboBox></Grid>
        <Grid Margin="0,4,0,16"><TextBlock Text="Screen fit" VerticalAlignment="Center"/><ComboBox x:Name="ScreenFit" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Fit (centered)"/><ComboBoxItem Content="Native size (centered)"/><ComboBoxItem Content="Stretch to window"/><ComboBoxItem Content="Fill (crop edges)"/></ComboBox></Grid>
-       <TextBlock x:Name="ScreenFitHint" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,18"/>
        <Grid Margin="0,4,0,16"><TextBlock Text="Image scaling" VerticalAlignment="Center"/><ComboBox x:Name="Filter" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Bilinear"/><ComboBoxItem Content="Nearest"/></ComboBox></Grid>
+       <Grid Margin="0,4,0,6"><TextBlock Text="Internal resolution" VerticalAlignment="Center"/><ComboBox x:Name="InternalResolution" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Native"/><ComboBoxItem Content="2×"/></ComboBox></Grid>
        <Grid Margin="0,4,0,16"><TextBlock Text="Texture filtering (3D)" VerticalAlignment="Center"/><ComboBox x:Name="TextureFilter" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Original"/><ComboBoxItem Content="Bilinear"/></ComboBox></Grid>
        <Grid Margin="0,4,0,16"><TextBlock Text="Anisotropic filtering" VerticalAlignment="Center"/><ComboBox x:Name="AnisotropicFilter" HorizontalAlignment="Right" SelectionChanged="SettingChanged" ToolTip="Improves 3D textures viewed at an angle. Includes bilinear filtering; higher levels cost more GPU time."><ComboBoxItem Content="Off"/><ComboBoxItem Content="2×"/><ComboBoxItem Content="4×"/><ComboBoxItem Content="8×"/><ComboBoxItem Content="16×"/></ComboBox></Grid>
        <Grid Margin="0,4,0,16"><TextBlock Text="Anti-aliasing" VerticalAlignment="Center"/><ComboBox x:Name="AntiAlias" HorizontalAlignment="Right" SelectionChanged="SettingChanged"><ComboBoxItem Content="Off"/><ComboBoxItem Content="FXAA"/><ComboBoxItem Content="SMAA"/></ComboBox></Grid>
-       <TextBlock Text="FXAA and SMAA smooth edges on the GPU. They do not increase texture detail." Style="{StaticResource Hint}" Margin="0,0,0,12"/>
        <Grid Margin="0,22,0,12"><TextBlock Text="Brightness and gamma" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/><Button Content="Reset" Click="ResetColor" HorizontalAlignment="Right" Padding="14,6"/></Grid>
        <Border Background="#080A0A" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" ClipToBounds="True" Margin="0,0,0,18">
         <Grid Height="320"><Image x:Name="RoomPreview" Stretch="Uniform"/><TextBlock x:Name="PreviewEmpty" Text="Room preview unavailable" Style="{StaticResource Hint}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Grid>
@@ -110,17 +107,43 @@
          <Slider x:Name="Gamma" Minimum="0.5" Maximum="2" Value="1" SmallChange="0.01" LargeChange="0.1" ValueChanged="ColorChanged" Margin="0,8,0,0" AutomationProperties.Name="Gamma"/>
         </StackPanel>
        </Grid>
-       <TextBlock Text="Gameplay" Style="{StaticResource Section}"/>
-       <TextBlock Text="Original game timing"/><TextBlock Text="30 game updates / 60 display refreshes" Style="{StaticResource Hint}" Margin="0,6,0,14"/>
        <CheckBox x:Name="AsyncVif" Content="Parallel geometry worker" Click="SaveSettings"/>
-       <TextBlock Text="Movies" Style="{StaticResource Section}"/>
        <CheckBox x:Name="GpuMovies" Content="Decode movies on the graphics card" Click="SaveSettings" IsEnabled="False"/>
-       <TextBlock x:Name="GpuMoviesHint" Text="Checking the graphics card..." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-       <TextBlock Text="Changes apply on the next launch." Style="{StaticResource Hint}" Margin="0,14,0,0"/>
+      </StackPanel>
+      <StackPanel x:Name="PageAudio" Visibility="Collapsed" MaxWidth="600" HorizontalAlignment="Left" Width="600">
+       <StackPanel Margin="0,4,0,14">
+        <Grid><TextBlock Text="Master"/><TextBlock x:Name="MasterVolumeValue" Text="100%" HorizontalAlignment="Right" Foreground="{StaticResource Muted}"/></Grid>
+        <Slider x:Name="MasterVolume" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" ValueChanged="AudioChanged" Margin="0,6,0,0" AutomationProperties.Name="Master volume"/>
+       </StackPanel>
+       <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,14"/>
+       <StackPanel Margin="0,0,0,12">
+        <Grid><TextBlock Text="Music"/><TextBlock x:Name="MusicVolumeValue" Text="100%" HorizontalAlignment="Right" Foreground="{StaticResource Muted}"/></Grid>
+        <Slider x:Name="MusicVolume" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" ValueChanged="AudioChanged" Margin="0,6,0,0" AutomationProperties.Name="Music volume"/>
+       </StackPanel>
+       <StackPanel Margin="0,0,0,12">
+        <Grid><TextBlock Text="Sound effects"/><TextBlock x:Name="SfxVolumeValue" Text="100%" HorizontalAlignment="Right" Foreground="{StaticResource Muted}"/></Grid>
+        <Slider x:Name="SfxVolume" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" ValueChanged="AudioChanged" Margin="0,6,0,0" AutomationProperties.Name="Sound effects volume"/>
+       </StackPanel>
+       <StackPanel Margin="0,0,0,12">
+        <Grid><TextBlock Text="Voice"/><TextBlock x:Name="VoiceVolumeValue" Text="100%" HorizontalAlignment="Right" Foreground="{StaticResource Muted}"/></Grid>
+        <Slider x:Name="VoiceVolume" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" ValueChanged="AudioChanged" Margin="0,6,0,0" AutomationProperties.Name="Voice volume"/>
+       </StackPanel>
+       <StackPanel Margin="0,0,0,12">
+        <Grid><TextBlock Text="UI"/><TextBlock x:Name="UiVolumeValue" Text="100%" HorizontalAlignment="Right" Foreground="{StaticResource Muted}"/></Grid>
+        <Slider x:Name="UiVolume" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" ValueChanged="AudioChanged" Margin="0,6,0,0" AutomationProperties.Name="UI volume"/>
+       </StackPanel>
+       <TextBlock Text="Set a volume to 0% to mute it." Style="{StaticResource Hint}"/>
+       <TextBlock Text="Cinematic audio follows Master volume." Style="{StaticResource Hint}" Margin="0,6,0,0"/>
+       <Button Content="Reset volumes" Click="ResetAudio" HorizontalAlignment="Left" Margin="0,12,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageController" Visibility="Collapsed">
        <Grid Margin="0,4,0,17"><TextBlock Text="Input device" VerticalAlignment="Center"/><ComboBox x:Name="InputDevicePicker" Width="340" HorizontalAlignment="Right" DisplayMemberPath="Name" SelectionChanged="InputDeviceChanged"/></Grid>
        <TextBlock x:Name="ControllerDetail" Style="{StaticResource Hint}" Margin="0,0,0,12"/>
+       <Grid Margin="0,0,0,18">
+        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Margin="0,0,16,0"><TextBlock x:Name="RumbleLabel" Text="Rumble"/><TextBlock Text="Controller vibration." Style="{StaticResource Hint}" Margin="0,3,0,0"/></StackPanel>
+        <CheckBox x:Name="RumbleSwitch" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Checked="RumbleChanged" Unchecked="RumbleChanged" AutomationProperties.Name="Controller rumble" AutomationProperties.LabeledBy="{Binding ElementName=RumbleLabel}"/>
+       </Grid>
        <WrapPanel Margin="0,0,0,18"><Button x:Name="BindingsTab" Content="Bindings" Click="ShowBindings" Margin="0,0,8,0"/><Button x:Name="LayoutTab" Content="Sticks" Click="ShowInputLayout"/></WrapPanel>
        <StackPanel x:Name="InputBindingsPanel">
         <Grid x:Name="CapturePanel" Visibility="Collapsed" Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions><TextBlock x:Name="CaptureHint" Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0,0,12,0"/><Button x:Name="CancelCaptureButton" Grid.Column="1" Content="Cancel" Click="CancelCapture"/></Grid>
@@ -204,24 +227,21 @@
        </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageMods" Visibility="Collapsed">
-       <TextBlock Text="Your mods" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-       <TextBlock x:Name="ModHelp" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,20"/>
+       <TextBlock x:Name="ModSeed" Style="{StaticResource Hint}" Margin="0,0,0,14" Visibility="Collapsed"/>
        <StackPanel x:Name="ModControls">
         <WrapPanel><Button Content="Import mod" Click="ImportMod" Margin="0,0,10,0"/><Button Content="Open mods folder" Click="OpenModFolder" Margin="0,0,10,0"/><Button Content="Reload" Click="ReloadMods"/></WrapPanel>
         <StackPanel x:Name="ModList" Margin="0,16,0,0"/>
-        <TextBlock Text="To remove a mod, untick it and delete its JSON file from the mods folder. To create one, start with examples/mods/no-infection.json; see docs/MODDING.md in the project." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,20,0,0"/>
+        <TextBlock Text="To remove a mod, untick it and delete its JSON file from the mods folder." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,20,0,0"/>
        </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageCheats" Visibility="Collapsed">
        <TextBlock x:Name="CheatGame" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-       <TextBlock x:Name="CheatHelp" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,20"/>
        <StackPanel x:Name="CheatControls">
         <CheckBox x:Name="EnableCheats" Content="Enable cheats" Click="CheatToggled" Margin="0,0,0,20"/>
         <StackPanel x:Name="CheatList"/>
         <Expander Header="Custom cheats" Margin="0,24,0,0" Foreground="{StaticResource Muted}">
          <StackPanel Margin="0,16,0,0">
           <WrapPanel><Button Content="Import .pnach" Click="ImportCheats" Margin="0,0,10,0"/><Button Content="Open cheats folder" Click="OpenCheatFolder" Margin="0,0,10,0"/><Button Content="Reload" Click="ReloadCheats"/></WrapPanel>
-          <TextBlock Text="Optional PCSX2 files for NTSC-U v2.00. EE data writes and RAW 0/1/2 codes are supported." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,12,0,0"/>
          </StackPanel>
         </Expander>
        </StackPanel>

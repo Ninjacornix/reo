@@ -50,10 +50,14 @@ static class SelfTest {
         }
         DiscImportTests.Run(Check);
         ModsTests.Run(Check);
+        RandomizerSeedsTests.Run(Check);
         Task.Run(() => RandomizerSessionTests.Run(Check)).GetAwaiter().GetResult();
         OnlineOptionsTests.Run(Check);
         CoopAutomationTests.Run(Check);
         ControllerLightTests.Run(Check);
+        ControllerRumbleTests.Run(Check);
+        GlobalWeaponMotionsTests.Run(Check);
+        AudioMixerTests.Run(Check);
         GameImageCacheTests.Run(Check);
         Task.Run(() => AutomaticAccountTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
@@ -285,6 +289,17 @@ static class SelfTest {
                                       AntiAliasing = true };
         var graphicsRoundtrip =
             JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(graphics))!;
+        Check(!JsonSerializer.Deserialize<Settings>("{}")!.PerformanceOverlay &&
+                  JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(
+                      new Settings { PerformanceOverlay = true }))!.PerformanceOverlay,
+              "Performance overlay defaults off and its saved toggle survives serialization");
+        Check(JsonSerializer.Deserialize<Settings>("{}")!.ResolvedInternalResolution == 1 &&
+                  new Settings { InternalResolution = -1 }.ResolvedInternalResolution == 1 &&
+                  new Settings { InternalResolution = 4 }.ResolvedInternalResolution == 1,
+              "Old and invalid internal resolution settings use Native");
+        Check(JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(
+                  new Settings { InternalResolution = 2 }))!.ResolvedInternalResolution == 2,
+              "2x internal resolution survives serialization");
         Check(JsonSerializer.Deserialize<Settings>("{\"Anisotropy\":16}")!.ResolvedAnisotropy ==
                       16 &&
                   new Settings { Anisotropy = 3 }.ResolvedAnisotropy == 1 &&
@@ -403,6 +418,7 @@ static class SelfTest {
         view.Write(12, unchecked((uint)Environment.TickCount));
         Check(get(0, out var resumed) == 0 && resumed.Buttons == held.Buttons,
               "Reconnect resumes without game reinitialization");
+        ControllerRumbleTests.RunNative(Check, library, view);
         Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "test-results"));
         File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "test-results", "self-test.json"),
                           JsonSerializer.Serialize(new { passed = true, checks }));

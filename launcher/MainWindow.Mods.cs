@@ -7,14 +7,16 @@ using System.Windows.Controls;
 namespace Outbreak.Launcher;
 public partial class MainWindow {
     string modsGame = "";
+    void UpdateRandomizerSeed() {
+        ModSeed.Text = game.RandomizerSeedSummary ?? "";
+        ModSeed.Visibility = game.RandomizerSeedSummary == null ? Visibility.Collapsed : Visibility.Visible;
+    }
     void ReloadMods(object sender, RoutedEventArgs e) => RefreshMods();
     void RefreshMods() {
         modsGame = settings.Game.Id;
+        UpdateRandomizerSeed();
         ModControls.IsEnabled = settings.Game.Id == "file1" && !game.Running && !launching;
         ModList.Children.Clear();
-        ModHelp.Text = settings.Game.Id == "file1"
-            ? "Import a mod, then tick it to enable for solo or hosting. Joining uses the host's randomizer settings automatically. Changes apply on the next launch; effects and data patches are solo only."
-            : "Mods will be available for File #2 when its native build is supported.";
         try {
             if (!game.Running && !launching && Mods.ConsolidateRandomizers(settings)) settings.Save();
             var installed = Mods.Load();
@@ -50,7 +52,7 @@ public partial class MainWindow {
                 ModList.Children.Add(new TextBlock { Text = "No mods installed. Import a mod JSON file to start.",
                     TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 16, 0, 16) });
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
-            ModHelp.Text = error.Message;
+            Status.Text = error.Message;
         }
     }
     void ModToggled(object sender, RoutedEventArgs e) {

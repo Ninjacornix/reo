@@ -20,21 +20,40 @@ public sealed partial class Controller : IDisposable {
     Pad lastPublished = new();
     string lastPublishedDevice = "";
     readonly DualSenseLight light = new();
+    readonly ControllerRumble rumble;
+    volatile bool sessionEnabled;
+    int rumbleSessionStart;
+    internal sealed record RumbleObservation(bool Enabled, string Device, bool Available,
+                                             PadRumble Requested);
+    RumbleObservation rumbleObservation = new(false, "", false, new());
+    internal RumbleObservation RumbleOutput => Volatile.Read(ref rumbleObservation);
+    internal DualSenseLight.Output? LastDualSenseOutput => light.LastOutput;
     int healthLight = 0x0040ff;
     internal void SetHealthLight(PadLight color) =>
         Interlocked.Exchange(ref healthLight, (color.R << 16) | (color.G << 8) | color.B);
     public Pad State { get; private set; } = new();
     public bool Connected => SelectedDevice.Available;
-    public bool SessionEnabled { get; set; }
+    public bool SessionEnabled {
+        get => sessionEnabled;
+        set {
+            if (value && !sessionEnabled)
+                Interlocked.Exchange(ref rumbleSessionStart, view.ReadInt32(36));
+            sessionEnabled = value;
+        }
+    }
     public int DeadZone { get; set; } = 12;
     public uint Reports { get; private set; }
     public string Transport { get; private set; } = "USB";
 
-    public Controller(Func<uint, Pad?>? xboxReader = null) {
-        readXbox = xboxReader ?? new XboxInput().Read;
+    public Controller(Func<uint, Pad?>? xboxReader = null,
+                      Action<uint, ushort, ushort>? xboxRumble = null) {
+        var native = xboxReader == null ? new XboxInput() : null;
+        readXbox = xboxReader ?? native!.Read;
+        rumble = new(xboxRumble ?? (native == null ? (_, _, _) => { } : native.Rumble));
         map = MemoryMappedFile.CreateNew(MapName, 64);
         view = map.CreateViewAccessor();
         view.Write(0, Magic);
+        view.Write(32, ControllerRumble.Magic);
     }
     public void Attach(nint hwnd) {
         source = HwndSource.FromHwnd(hwnd);
@@ -199,13 +218,19 @@ public sealed partial class Controller : IDisposable {
         Thread.MemoryBarrier();
         view.Write(4, ++sequence);
         var device = SelectedDevice;
+        var motors = ControllerRumble.Read(view, SessionEnabled && config.RumbleEnabled,
+                                          unchecked((uint)Environment.TickCount),
+                                          Volatile.Read(ref rumbleSessionStart));
+        rumble.Update(device, motors);
+        Volatile.Write(ref rumbleObservation, new(SessionEnabled, device.Name, device.Available, motors));
         int rgb = SessionEnabled ? Volatile.Read(ref healthLight) : 0x0040ff;
         bool playstation = device.Available && device.Kind == "playstation";
         light.Update(playstation ? device.Id[3..] : null,
                      playstation && dualSense[device.Id[3..]].Transport == "Bluetooth",
-                     new((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb));
+                     new((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb), motors);
     }
     public void Dispose() {
+        rumble.Dispose();
         light.Dispose();
         source?.RemoveHook(Hook);
         view.Dispose();

@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+## v1.0.17 prerelease - 2026-10-24
+
+- Add a saved performance counter toggle in Graphics. Draw display FPS, average frame time and original gameplay updates per second in the top-right corner using the existing final GPU pass.
+- Simplify Mods and Cheats text and keep the four main readiness checks on Play.
+- Add saved Native / 2× internal resolution independently of the window size. Preserve a 1024×896 scanout for File #1, guard uninitialized startup display registers and retain GPU command checkpoints at 2× as an RX 570 compatibility workaround. Log GPU memory budgets in 2× sessions.
+- Roll a fresh 32-bit randomizer seed for every solo/host game launch, show it in the running-game status and record it in session logs. Joining players keep the host's immutable seed; editable item/enemy pools stay unchanged.
+- Add saved Master, Music, Sound effects, Voice and UI volume sliders with live game updates and a reset button. Keep cinematic sound that mixes speech and music under Master volume.
+- Add game-driven controller rumble through File #1's native libpad2 actuator commands, preserving motor strength and timing.
+- Route vibration to the selected DualSense or XInput controller. Combine PS5 rumble with health light colours and stop motors on stale output, disconnect, device changes and shutdown.
+- Add a saved **Rumble** on/off switch in Controls that applies immediately during gameplay.
+- Hide the cursor over the focused fullscreen game, including Ctrl+Enter changes; restore it in windowed mode, when switching apps and on exit.
+- Load missing weapon motions from the imported disc when randomizing pickups, fixing the grenade launcher's broken ready pose and shots that consumed ammunition without completing. Preserve room animations and native motion-table limits.
+
 ## v1.0.16 prerelease - 2026-10-23
 
 - Add an offline **Unlock everything** cheat for all five File #1 scenarios, difficulties, costumes, NPC characters and purchased collection extras. Preserve reward points, options, inventory and completion records; require an updated native build.

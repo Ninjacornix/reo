@@ -79,6 +79,7 @@ internal static class GlobalItemCatalogue {
         }
         if (entries.Count is < 1 or > 128) throw new IOException("Global item catalogue exceeds native capacity.");
         GlobalItemModels.Prepare(models,logs);
+        GlobalWeaponMotions.Prepare(discRoot, logs);
         string path = Path.Combine(logs, "global-items.bin");
         using var output = new BinaryWriter(File.Create(path));
         output.Write("RGIC1\0\0\0"u8); output.Write(entries.Count);

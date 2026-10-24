@@ -774,7 +774,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
                 COMMAND "${REO_SPIRV_VAL}" --target-env vulkan1.2 "${_present_output}/${_present_stage}.spv"
 
-                DEPENDS "${_present_source}/${_present_stage}" "${_present_source}/present_color.glsl" "${_present_source}/present_layout.glsl" "${_present_source}/smaa/upstream/SMAA.hlsl" VERBATIM)
+                DEPENDS "${_present_source}/${_present_stage}" "${_present_source}/present_color.glsl" "${_present_source}/present_layout.glsl" "${_present_source}/present_performance.glsl" "${_present_source}/smaa/upstream/SMAA.hlsl" VERBATIM)
 
         endforeach()
 

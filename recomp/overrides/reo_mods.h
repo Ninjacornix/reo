@@ -11,6 +11,7 @@
 #include <cstring>
 
 #if defined(REO_GAME_FILE1)
+#include "reo_weapon_motions.h"
 extern void o2_005924E0_0x5924e0(uint8_t*, R5900Context*, PS2Runtime*);
 extern void o2_006BAA40_0x6baa40(uint8_t*, R5900Context*, PS2Runtime*);
 extern void o2_006BB040_0x6bb040(uint8_t*, R5900Context*, PS2Runtime*);
@@ -42,6 +43,7 @@ inline void readGlobalModelBank(uint8_t* ram,R5900Context* ctx,PS2Runtime* runti
             char c=char(ram[source+i]);path+=c>='a' && c<='z' ? char(c-'a'+'A') : c;
         }
     }
+    if(catalogue && readGlobalWeaponMotions(ram,ctx,path,destination,catalogue)) return;
     const auto position=path.find("OBJS");
     if(position!=std::string::npos && position+10<=path.size() && path.substr(position+6,4)==".NBD") {
         const auto name=path.substr(position,10);

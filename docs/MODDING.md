@@ -8,7 +8,7 @@ The launcher has one **Randomizer** package for weapons, ammunition, common item
 
 1. Open **Mods > Import mod** and choose `examples/mods/randomizer.json` (also included with the launcher build).
 2. Tick **Randomizer** and launch File #1 for solo play or hosting. Joining players adopt the host's settings automatically.
-3. To change the layout, edit the installed JSON's `itemRandomizer.seed` and `enemyRandomizer.seed`, then reload and start a fresh scenario.
+3. Each solo/host launch generates a fresh seed automatically. The launcher shows the current seed while running and records it in that session's `launch.json` and `mods.json`. Start a fresh scenario to use the new layout.
 
 Existing installations automatically consolidate the old combined, item, weapon, zombie and enemy samples into Randomizer. An enabled randomizer stays enabled, preserving the combined package's seeds and enemy pool when available. Practice Mode is removed. Original JSON files are kept under the mods folder's `retired-samples` subfolder, outside the active list. Unrelated custom mods are preserved.
 
@@ -85,10 +85,13 @@ The runtime uses a versioned 32-bit pseudorandom generator: item locations use a
 seeded choices within separate global weapon, ammunition and common-item pools,
 and ordinary enemy spawns use weighted seeded rolls. Native animation resources
 limit each room to six reserved enemy families; later choices in that room use
-those available families. Scripted sources retain their native family. The default item seed is `2027` and enemy seed
-is `2031`. Keeping the same seeds, scenario and configuration repeats the layout;
-edit the seeds to request another layout. Nothing rerolls merely because a room
-is revisited.
+those available families. Scripted sources retain their native family. The launcher
+chooses a fresh full-range 32-bit seed for each solo/host launch and applies it to
+all enabled randomizers. It rejects the immediately previous launch seed and the
+installed manifest seeds. Installed JSON files, enemy pools and exclusions remain
+unchanged; joining clients use the host's immutable seed. The native generator is
+deterministic for a given seed, scenario and configuration, including native test
+runs supplied with an explicit seed. Nothing rerolls merely because a room is revisited.
 
 Local follow-up to v1.0.15: a longer manual first-room session exposed a later
 zombie script command (`10/1`) reaching a replacement hunter's null state callback.

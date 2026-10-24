@@ -2,10 +2,11 @@
 #extension GL_GOOGLE_include_directive : require
 #include "present_color.glsl"
 #include "present_layout.glsl"
+#include "present_performance.glsl"
 layout(set=0,binding=0) uniform sampler2D mergedScanout;
 layout(location=0) out vec4 hostColor;
 // Bits 0/1: scaling/FXAA; bytes 1/2: brightness/gamma percent (zero = neutral).
-layout(push_constant) uniform PresentSize { uvec2 source; uvec2 destination; uint linear; } extent;
+layout(push_constant) uniform PresentSize { uvec2 source; uvec2 destination; uint linear; uint fps; uint frameMs; uint ups; } extent;
 
 float luminance(vec3 color) { return dot(color, vec3(0.299, 0.587, 0.114)); }
 vec3 readColor(vec2 uv) { return textureLod(mergedScanout, uv, 0).rgb; }
@@ -44,4 +45,5 @@ void main() {
     } else {
         hostColor = displayColor(texelFetch(mergedScanout, ivec2(texel), 0).rgb, extent.linear);
     }
+    hostColor = performanceOverlay(hostColor, extent.destination, extent.fps, extent.frameMs, extent.ups);
 }

@@ -154,17 +154,30 @@ public sealed class XboxInput {
     }
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     delegate uint GetState(uint slot, out State state);
+    [StructLayout(LayoutKind.Sequential)]
+    struct Vibration {
+        public ushort Left, Right;
+    }
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    delegate uint SetState(uint slot, ref Vibration state);
     readonly GetState get;
+    readonly SetState set;
     public XboxInput() {
         nint module = NativeLibrary.Load(
             System.IO.Path.Combine(Environment.SystemDirectory, "xinput1_4.dll"));
         get = Marshal.GetDelegateForFunctionPointer<GetState>(
             NativeLibrary.GetExport(module, "XInputGetState"));
+        set = Marshal.GetDelegateForFunctionPointer<SetState>(
+            NativeLibrary.GetExport(module, "XInputSetState"));
     }
     public Pad? Read(uint slot) => get(slot, out var state) == 0
                                        ? new Pad(state.Buttons, state.LT, state.RT, state.LX,
                                                  state.LY, state.RX, state.RY)
                                        : null;
+    public void Rumble(uint slot, ushort left, ushort right) {
+        var value = new Vibration { Left = left, Right = right };
+        set(slot, ref value);
+    }
 }
 
 public sealed class FullscreenChord {
