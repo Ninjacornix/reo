@@ -1,11 +1,46 @@
 # Prerelease packaging
 
-Current target: **v1.0.18**, shown in the launcher as **1.0 Alpha**, marked
-prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.18)". Tags stay numeric so
+Current target: **v1.0.19**, shown in the launcher as **1.0 Alpha**, marked
+prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.19)". Tags stay numeric so
 installed launchers offer the update. .NET is an
 external prerequisite. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.19
+
+Refresh the frozen v1.0.18 kit with `recomp/overrides/reo_vu_specialized.cpp` and
+SDK patch `0104-vu-geometry-code-coverage.patch`. Include the patch in the kit's
+source-update notices. Preserve the dirty working submodule; the reference
+native uses a private patched SDK copy. The dependency source base, generated
+game sources and independent libraries remain unchanged.
+
+The selector now accepts an explicit checked code extent for block execution.
+Every compiled block and native loop must fit within it; code outside it runs
+through the interpreter. The default full-bank API remains unchanged. Whole
+program AOT does not use prefix admission.
+
+Verification: `build-ninja/geometry-tail/verification.json` and
+`build-ninja/release-v119`. Nineteen synthetic coverage checks and 34 checks
+against three actual supplied banks pass. Replaying the captured later-room
+bank suffix in the first-room workload measured 7.48 updates/s with the old
+selector and 30.00 with the fix; maximum ordinary fixed update was 36.18 ms.
+The normal production native also measured 30.00 updates/s (maximum 39.14 ms).
+The reproduction is not a complete automated replay of room 7. Full scenario,
+new multiplayer coverage and reduced GPU utilization are not established.
+
+The reference native recompiles only authored9, runtime61 and runtime62 against
+the frozen compatible objects. Verify the new sealed kit matches these sources;
+a full cold compilation is not repeated. Include `<!-- reo:requires-rebuild -->`.
+
+Sealed kit manifest SHA-256:
+`7c9f9b0c314cf1c805f91d67a3a2b3e0f82f4dfb0e683e98fbf3c43cc8e6a2ad`.
+Input archive SHA-256:
+`665feb68192abbf2fbe4dc78424004cab384074cec016a5c96aec21008b990fa`.
+All three changed units recompiled from the sealed kit are byte-identical to
+the tested native objects. Git's patch application changes SDK line endings;
+the object comparison independently verifies their equivalence. The 60 build
+tool tests and 49 co-op harness tests pass with one skip each.
 
 ## v1.0.18
 

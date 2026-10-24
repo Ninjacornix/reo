@@ -1,0 +1,150 @@
+diff --git a/ps2xRuntime/src/lib/vu_specialized_route.h b/ps2xRuntime/src/lib/vu_specialized_route.h
+--- a/ps2xRuntime/src/lib/vu_specialized_route.h
++++ b/ps2xRuntime/src/lib/vu_specialized_route.h
+@@ -59,7 +59,9 @@
+ // All storage, including replaced tables, must live until every VU call ends.
+ // Shared first-pair images are allowed. Exact duplicate images with identical
+ // code/data dimensions are rejected. Registration derives distinguishing words;
+-// these only reject candidates, and one final full-image comparison admits one.
++// these only reject candidates, and a final comparison admits one. The default
++// API compares the complete bank; the explicit extent API below covers only
++// a prefix and rejects blocks outside it.
+ // There are 16 immutable metadata snapshots, each supporting at most 64 programs.
+ // Null clears without consuming a slot. Identical metadata re-publication reuses
+ // a snapshot; exhaustion rejects registration and preserves the active table.
+@@ -67,6 +69,12 @@
+ // the selector owns no game image and no mutable-upload identity cache.
+ // Null clears the registry. Failed validation leaves the prior table unchanged.
+ bool registerProgramTable(const ProgramTable*) noexcept;
++// Opt-in prefix coverage for block specialization. Every registered block must
++// fit entirely inside comparedBytes. Bytes outside it ALWAYS execute through
++// the interpreter, unless a native loop separately proves its entire body is
++// covered. This is not permission to execute a whole-program AOT from a prefix.
++bool registerProgramTableCodeExtent(const ProgramTable*, uint32_t comparedBytes) noexcept;
++uint32_t codeComparisonBytes(const Program*) noexcept;
+ uint32_t registeredProgramCount() noexcept;
+ 
+ // One call per synchronous launch. Requires code stability for the whole launch,
+diff --git a/ps2xRuntime/src/lib/vu_specialized_route.cpp b/ps2xRuntime/src/lib/vu_specialized_route.cpp
+--- a/ps2xRuntime/src/lib/vu_specialized_route.cpp
++++ b/ps2xRuntime/src/lib/vu_specialized_route.cpp
+@@ -1,5 +1,6 @@
+ #include "vu_specialized_route.h"
+ #include <atomic>
++#include <algorithm>
+ #include <array>
+ #include <mutex>
+ #include <cstring>
+@@ -15,7 +16,7 @@
+     const uint8_t* image = nullptr;
+     const Block* const* entries = nullptr;
+     uint64_t prefix = 0u;
+-    uint32_t codeBytes = 0u, dataBytes = 0u, filterCount = 0u;
++    uint32_t codeBytes = 0u, dataBytes = 0u, comparedBytes = 0u, filterCount = 0u;
+     std::array<WordFilter, maxPrograms - 1u> filters{};
+ };
+ struct RegistrySnapshot {
+@@ -52,6 +53,7 @@
+         const auto& y = b.programs[i];
+         if (x.program != y.program || x.image != y.image || x.entries != y.entries ||
+             x.prefix != y.prefix || x.codeBytes != y.codeBytes || x.dataBytes != y.dataBytes ||
++            x.comparedBytes != y.comparedBytes ||
+             x.filterCount != y.filterCount) return false;
+         for (uint32_t j = 0u; j < x.filterCount; ++j)
+             if (x.filters[j].offset != y.filters[j].offset ||
+@@ -76,6 +78,11 @@
+ }
+ 
+ bool registerProgramTable(const ProgramTable* table) noexcept {
++    return registerProgramTableCodeExtent(table, 0u);
++}
++
++bool registerProgramTableCodeExtent(const ProgramTable* table, uint32_t comparedBytes) noexcept {
++    if (comparedBytes && (comparedBytes < 8u || (comparedBytes & 7u))) return false;
+     if (!table || !table->count) {
+         // Serialize writers so null/replacement publication has one order.
+         try {
+@@ -90,11 +97,14 @@
+         if (!p.exactCodeImage || !p.entryBlocks || p.codeBytes < 8u ||
+             p.codeBytes > 16384u || (p.codeBytes & 7u) || !p.dataBytes || p.dataBytes > 16384u)
+             return false;
++        const uint32_t checkedBytes = comparedBytes ? comparedBytes : p.codeBytes;
++        if (checkedBytes > p.codeBytes) return false;
+         for (uint32_t entry = 0; entry < p.codeBytes / 8u; ++entry) {
+             const Block* block = p.entryBlocks[entry];
+             if (!block) continue;
+             if (!block->execute || !block->instructionPairs ||
+-                block->instructionPairs > p.codeBytes / 8u - entry)
++                block->instructionPairs > p.codeBytes / 8u - entry ||
++                (entry + block->instructionPairs) * 8u > checkedBytes)
+                 return false;
+             for (uint32_t pair = 0; pair < block->instructionPairs; ++pair) {
+                 uint32_t lower, upper;
+@@ -119,6 +129,7 @@
+         index.entries = p.entryBlocks;
+         index.prefix = firstPair(p.exactCodeImage);
+         index.codeBytes = p.codeBytes;
++        index.comparedBytes = comparedBytes ? comparedBytes : p.codeBytes;
+         index.dataBytes = p.dataBytes;
+     }
+     // For every same-prefix, same-dimension pair, find one differing aligned
+@@ -132,9 +143,10 @@
+             if (a.prefix != b.prefix || a.codeBytes != b.codeBytes || a.dataBytes != b.dataBytes)
+                 continue;
+             uint32_t offset = 8u;
+-            while (offset < a.codeBytes && wordAt(a.image, offset) == wordAt(b.image, offset))
++            const uint32_t limit = std::min(a.comparedBytes, b.comparedBytes);
++            while (offset < limit && wordAt(a.image, offset) == wordAt(b.image, offset))
+                 offset += 4u;
+-            if (offset == a.codeBytes) return false; // Ambiguous exact identity.
++            if (offset == limit) return false; // Ambiguous covered identity.
+             if (!addFilter(a, offset) || !addFilter(b, offset)) return false;
+         }
+     }
+@@ -155,6 +167,13 @@
+ uint32_t registeredProgramCount() noexcept {
+     const RegistrySnapshot* snapshot = publishedSnapshot.load(std::memory_order_acquire);
+     return snapshot ? snapshot->count : 0u;
++}
++
++uint32_t codeComparisonBytes(const Program* program) noexcept {
++    const auto* snapshot = publishedSnapshot.load(std::memory_order_acquire);
++    if (snapshot) for (uint32_t i = 0; i < snapshot->count; ++i)
++        if (snapshot->programs[i].program == program) return snapshot->programs[i].comparedBytes;
++    return program ? program->codeBytes : 0u;
+ }
+ 
+ const Program* selectProgram(const uint8_t* code, uint32_t codeBytes,
+@@ -176,12 +195,13 @@
+         }
+         if (!wordsMatch) continue;
+         // Filters prove at most one candidate here. They never admit an image:
+-        // every byte, including unused tails, still needs exact equality.
++        // Every covered byte still needs exact equality. Uncovered instructions
++        // have no registered block and execute from the actual live bank.
+ #if defined(REO_VU_SELECTOR_ORACLE)
+         extern void fullComparisonObserved() noexcept;
+         fullComparisonObserved();
+ #endif
+-        return std::memcmp(code, p.image, codeBytes) == 0 ? p.program : nullptr;
++        return std::memcmp(code, p.image, p.comparedBytes) == 0 ? p.program : nullptr;
+     }
+     return nullptr;
+ }
+diff --git a/ps2xRuntime/src/lib/vu_native_geometry_route.cpp b/ps2xRuntime/src/lib/vu_native_geometry_route.cpp
+--- a/ps2xRuntime/src/lib/vu_native_geometry_route.cpp
++++ b/ps2xRuntime/src/lib/vu_native_geometry_route.cpp
+@@ -20,11 +20,13 @@
+         const auto& p=table->programs[i];const auto* legacy=p.legacyProgram;
+         if(!legacy||!legacy->exactCodeImage||!legacy->codeBytes||legacy->codeBytes>16384||
+            (legacy->codeBytes&7u)||!legacy->dataBytes||legacy->dataBytes>16384||!p.entryLoops)return false;
++        const uint32_t comparedBytes=vu_specialized::codeComparisonBytes(legacy);
+         for(uint32_t j=0;j<i;++j)if(table->programs[j].legacyProgram==legacy)return false;
+         for(uint32_t entry=0;entry<legacy->codeBytes/8;++entry) {
+             const auto* loop=p.entryLoops[entry];if(!loop)continue;
+             if(!loop->execute||!loop->minPairs||loop->firstPC!=entry*8||
+                (loop->lastPC&7u)||loop->lastPC<loop->firstPC||loop->lastPC>=legacy->codeBytes||
++               loop->lastPC+8u>comparedBytes||
+                loop->minPairs>legacy->codeBytes/8)return false;
+             if((loop->legalExits==nullptr)!=(loop->legalExitCount==0u) ||
+                loop->legalExitCount>maxLegalExits)return false;

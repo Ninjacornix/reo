@@ -1,6 +1,20 @@
 Isolated generated C++ VU block experiment. Production VU/runtime sources and
 public headers are untouched. The coordinator owns all compilation and execution.
 
+`code_extent_check.cpp` separately tests the opt-in comparison extent introduced
+by SDK patch `0104-vu-geometry-code-coverage.patch`. Compile it with the patched
+`vu_specialized_route.cpp` and `vu_native_geometry_route.cpp`, using the SDK
+include and source directories. It checks appended code, changed covered bytes,
+block/native bounds, ambiguous identities and restoration of the default full
+bank comparison. It contains no game inputs.
+
+`coverage_inputs_check.cpp` additionally checks explicitly supplied local bank
+files against the actual generated program factory and native bindings. Link it
+with the game's matching local objects and SDK; pass a directory of 16 KiB bank
+files. Inputs are never bundled with this tool. Each accepted bank must match
+every covered byte, contain a real suffix difference, retain bounded native
+routines, reject covered mutations and reproduce refusal in exact-bank mode.
+
 `python tools/vu_block_check/generate.py` freezes the current interpreter into
 `build-ninja/m2-vu-block-proposal/ps2_vu1.baseline.cpp` and generates its candidate
 copy `ps2_vu1.cpp`. Generation reads owned snapshots and copies the current upper

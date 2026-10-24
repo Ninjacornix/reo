@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v1.0.19 prerelease - 2026-10-24
+
+- Keep compiled VU geometry active when later rooms append independent microcode to the bank. Check every byte covering the optimized blocks and native routines, reject routines outside that coverage, and interpret appended code normally. A captured-bank regression replay improved from 7.48 to 30.00 game updates/sec; full-room and scenario coverage remains limited.
+
 ## v1.0.18 prerelease - 2026-10-24
 
 - Add 4× internal scene rendering at 2048×1792, alongside Native and 2×. Preserve distinct samples through scanout and report unsupported GPU sampling modes.
