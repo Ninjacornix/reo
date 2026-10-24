@@ -20,6 +20,8 @@
 #include "bitops.hpp"
 #include "shaders/slangmosh.hpp"
 #include "anisotropic_spirv.hpp"
+#include "scanout_spirv.hpp"
+#include "runtime/gs/shader_warmup.h"
 #include "shaders/swizzle_utils.h"
 #include "thread_id.hpp"
 #include "gs_util.hpp"
@@ -29,6 +31,9 @@
 #include <algorithm>
 #include <cmath>
 #include <climits>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #if defined(__clang__)
 #pragma clang diagnostic ignored "-Wformat-security"
@@ -478,7 +483,7 @@ bool GSRenderer::can_potentially_super_sample() const
 	return buffers.gpu->get_create_info().size > vram_size * 2;
 }
 
-void GSRenderer::kick_compilation_tasks()
+void GSRenderer::kick_compilation_tasks(const GSOptions &options)
 {
 	const char *env = getenv("PGS_SKIP_COMPILATION_TASKS");
 	if (env && strcmp(env, "1") == 0)
@@ -487,8 +492,10 @@ void GSRenderer::kick_compilation_tasks()
 		return;
 	}
 
-	// Pre-prime all potential shader variants early.
+	// Prime the selected sampling mode plus Native demoted/UI passes. Avoid
+	// competing with the guest for CPU time on resolution modes it cannot use.
 	std::vector<Vulkan::DeferredPipelineCompile> tasks;
+	std::vector<Vulkan::DeferredPipelineCompile> critical;
 	compilation_tasks_active = true;
 
 	{
@@ -519,6 +526,9 @@ void GSRenderer::kick_compilation_tasks()
 
 		// Prime all common combinations.
 		static const struct { uint32_t color_psm, depth_psm; } formats[] = {
+			{ PSMCT32, PSMZ32 },
+			{ PSMCT24, PSMZ32 },
+			{ PSMCT16S, PSMZ32 },
 			{ PSMCT24, PSMZ24 },
 			{ PSMCT32, PSMZ24 },
 			{ PSMCT16S, PSMZ24 },
@@ -572,6 +582,9 @@ void GSRenderer::kick_compilation_tasks()
 				{
 					for (auto &rates : sampling_rates)
 					{
+						if (!reo::graphics::warmupSampling(unsigned(options.super_sampling),
+							options.ordered_super_sampling, options.dynamic_super_sampling,
+							rates.sample_x, rates.sample_y)) continue;
 						for (auto &feedback : feedbacks)
 						{
 							if ((flags & VARIANT_FLAG_FEEDBACK_BIT) != 0)
@@ -592,25 +605,33 @@ void GSRenderer::kick_compilation_tasks()
 
 							uint32_t active_flags =
 									flags | (rates.sample_y ? VARIANT_FLAG_HAS_SUPER_SAMPLE_REFERENCE_BIT : 0);
-							cmd->set_specialization_constant(5, active_flags);
-							cmd->extract_pipeline_state(deferred);
-							tasks.push_back(deferred);
+							// Single-sample passes also retain references when the VRAM
+							// allocation supports supersampling, matching dispatch_shading.
+							if (can_potentially_super_sample())
+								active_flags |= VARIANT_FLAG_HAS_SUPER_SAMPLE_REFERENCE_BIT;
+							auto append = [&](uint32_t active) {
+								for (auto *program : {shaders.ubershader[0][0], anisotropic_shaders[0][0]}) {
+									if (!program || (program == anisotropic_shaders[0][0] && (flags & VARIANT_FLAG_FEEDBACK_BIT))) continue;
+									cmd->set_program(program);
+									cmd->set_specialization_constant(5, active);
+									cmd->extract_pipeline_state(deferred);
+									tasks.push_back(deferred);
+									// The measured Outbreak 3D passes use CT32/Z32. Resolve
+									// their Native and selected-resolution shaders before the
+									// guest starts instead of stalling on first room entry.
+									if (format.color_psm == PSMCT32 &&
+									    (format.depth_psm == PSMZ32 || format.depth_psm == UINT32_MAX) && flags == 0 &&
+									    !(active & VARIANT_FLAG_HAS_TEXTURE_ARRAY_BIT)) critical.push_back(deferred);
+								}
+							};
+							append(active_flags);
 
 							if (rates.sample_y != 0)
 							{
 								active_flags |= VARIANT_FLAG_HAS_TEXTURE_ARRAY_BIT;
-								cmd->set_specialization_constant(5, active_flags);
-								cmd->extract_pipeline_state(deferred);
-								tasks.push_back(deferred);
+								append(active_flags);
 							}
 
-							if (rates.sample_x == 0 && rates.sample_y == 0 && can_potentially_super_sample())
-							{
-								cmd->set_specialization_constant(
-									5, flags | VARIANT_FLAG_HAS_SUPER_SAMPLE_REFERENCE_BIT);
-								cmd->extract_pipeline_state(deferred);
-								tasks.push_back(deferred);
-							}
 						}
 					}
 				}
@@ -748,19 +769,62 @@ void GSRenderer::kick_compilation_tasks()
 		device->submit_discard(cmd);
 	}
 
-	size_t num_tasks = tasks.size();
-	size_t target_threads = (std::thread::hardware_concurrency() + 1) / 2;
-	size_t tasks_per_thread = num_tasks / target_threads;
+	// Transfers and binning are used throughout a room, including when a new
+	// primitive count appears. Do not leave these small infrastructure families
+	// at the end of the background queue where first use stalls the renderer.
+	for (const auto &task : tasks)
+		if (task.program == shaders.vram_copy || task.program == shaders.binning ||
+		    task.program == shaders.upload[0] || task.program == shaders.upload[1]) critical.push_back(task);
+	const auto start = std::chrono::steady_clock::now();
+	if (const char *path = std::getenv("REO_FRAME_PACING_FILE"); path && *path) {
+		const auto name = std::string(path) + ".warmup.csv";
+		if (auto *file = std::fopen(name.c_str(), "wb")) {
+			std::fputs("hash,program,critical\n", file);
+			for (const auto &task : tasks) {
+				const char *kind = task.program == shaders.vram_copy ? "copy" :
+					task.program == shaders.binning ? "binning" :
+					task.program == shaders.upload[0] || task.program == shaders.upload[1] ? "upload" :
+					task.program == anisotropic_shaders[0][0] ? "anisotropic" : "shading";
+				const bool ready = std::any_of(critical.begin(), critical.end(),
+					[&](const Vulkan::DeferredPipelineCompile &item) { return item.hash == task.hash; });
+				std::fprintf(file, "%016llx,%s,%u\n", static_cast<unsigned long long>(task.hash), kind, unsigned(ready));
+			}
+			std::fclose(file);
+		}
+	}
+	std::vector<Vulkan::DeferredPipelineCompile> remaining;
+	for (const auto &task : tasks)
+		if (std::none_of(critical.begin(), critical.end(),
+			[&](const Vulkan::DeferredPipelineCompile &item) { return item.hash == task.hash; })) remaining.push_back(task);
+	const size_t total = critical.size() + remaining.size();
+	std::fprintf(stderr, "[SHADER-WARMUP] progress 0/%zu\n", total);
+	size_t prepared = 0;
+	for (auto &task : critical) {
+		if (std::getenv("REO_FRAME_PACING_FILE"))
+			LOGI("Scene shader warmup: %016llx\n", static_cast<unsigned long long>(task.hash));
+		if (!Vulkan::CommandBuffer::build_compute_pipeline(device, task, Vulkan::CommandBuffer::CompileMode::AsyncThread).pipeline)
+			throw std::runtime_error("Critical scene shader warmup failed");
+		if (++prepared % 16 == 0 || prepared == critical.size())
+			std::fprintf(stderr, "[SHADER-WARMUP] progress %zu/%zu\n", prepared, total);
+	}
+	const size_t target_threads = reo::graphics::warmupWorkers(remaining.size(), std::thread::hardware_concurrency());
+	struct Progress { std::atomic<size_t> completed{0}; std::mutex mutex; };
+	auto progress = std::make_shared<Progress>();
+	progress->completed.store(prepared);
 
 	for (size_t thread_index = 0; thread_index < target_threads; thread_index++)
 	{
+		const auto range = reo::graphics::warmupRange(remaining.size(), thread_index, target_threads);
 		std::vector<Vulkan::DeferredPipelineCompile> deferred(
-			tasks.data() + thread_index * tasks_per_thread,
-			tasks.data() + std::min<size_t>((thread_index + 1) * tasks_per_thread, tasks.size())
+			remaining.data() + range.begin, remaining.data() + range.end
 		);
 
-		auto async_task = std::async(std::launch::async, [this, moved_tasks = std::move(deferred)]()
+		auto async_task = std::async(std::launch::async, [this, progress, total, moved_tasks = std::move(deferred)]()
 		{
+#ifdef _WIN32
+			// Leave the launcher and desktop responsive during preparation.
+			SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+#endif
 			// Just shuts up warnings.
 			Util::register_thread_index(0);
 			for (auto &task: moved_tasks)
@@ -770,11 +834,24 @@ void GSRenderer::kick_compilation_tasks()
 					break;
 				Vulkan::CommandBuffer::build_compute_pipeline(
 						device, task, Vulkan::CommandBuffer::CompileMode::AsyncThread);
+				const size_t done = progress->completed.fetch_add(1) + 1;
+				if (done % 16 == 0 || done == total) {
+					std::lock_guard<std::mutex> guard(progress->mutex);
+					std::fprintf(stderr, "[SHADER-WARMUP] progress %zu/%zu\n", progress->completed.load(), total);
+				}
 			}
 		});
 
 		compilation_tasks.push_back(std::move(async_task));
 	}
+	// Joining here keeps compiler/driver locks and CPU work out of live play.
+	// The per-device pipeline cache makes subsequent preparation much faster.
+	for (auto &task : compilation_tasks) task.wait();
+	compilation_tasks.clear();
+	compilation_tasks_active = false;
+	LOGI("Shader warmup: %zu pipelines prepared in %.1f ms on %zu workers before gameplay.\n",
+	     progress->completed.load(), std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now()-start).count(), target_threads);
+	std::fputs("[SHADER-WARMUP] ready\n", stderr);
 }
 
 GSRenderer::GSRenderer(PageTracker &tracker_)
@@ -841,6 +918,17 @@ bool GSRenderer::init(Vulkan::Device *device_, const GSOptions &options)
 	blit_quad = device_->request_program(shaders.quad, shaders.blit_circuit);
 	sample_quad[0] = device_->request_program(shaders.quad, shaders.sample_circuit[0]);
 	sample_quad[1] = device_->request_program(shaders.quad, shaders.sample_circuit[1]);
+	if (options.super_sampling == SuperSampling::X16 && options.ordered_super_sampling)
+	{
+		for (unsigned promoted = 0; promoted < 2; ++promoted)
+		{
+			const auto &layout = shaders.sample_circuit[promoted]->get_layout();
+			auto *fragment = device_->request_shader(
+				reinterpret_cast<const uint32_t *>(reo_scanout4::code[promoted]),
+				reo_scanout4::size[promoted], &layout);
+			sample_quad[promoted] = device_->request_program(shaders.quad, fragment);
+		}
+	}
 	weave_quad = device_->request_program(shaders.quad, shaders.weave);
 
 	flush_submit(0);
@@ -893,7 +981,7 @@ bool GSRenderer::init(Vulkan::Device *device_, const GSOptions &options)
 	descriptor_timeline = device->request_semaphore(VK_SEMAPHORE_TYPE_TIMELINE);
 	init_luts();
 
-	kick_compilation_tasks();
+	kick_compilation_tasks(options);
 
 	// Reserve 1/3 of our budget to slab-allocate image handles.
 	Vulkan::HeapBudget budgets[VK_MAX_MEMORY_HEAPS] = {};
@@ -4560,8 +4648,9 @@ void GSRenderer::sample_crtc_circuit(Vulkan::CommandBuffer &cmd, const Vulkan::I
 	auto valid_extent = rect.valid_extent;
 	if (super_samples > 1)
 	{
-		valid_extent.width *= 2;
-		valid_extent.height *= 2;
+		const auto scale = img.get_width() / rect.image_extent.width;
+		valid_extent.width *= scale;
+		valid_extent.height *= scale;
 	}
 	cmd.set_scissor({{ 0, 0 }, valid_extent });
 
@@ -4964,6 +5053,8 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 		phase = info.phase;
 	}
 
+	const uint32_t scanout_scale = !high_resolution_scanout ? 1u :
+		(sampling_rate_x_log2 == 2 && sampling_rate_y_log2 == 2 ? 4u : 2u);
 	bool EN1 = priv.pmode.EN1;
 	bool EN2 = priv.pmode.EN2;
 	uint32_t MMOD = priv.pmode.MMOD;
@@ -5055,8 +5146,8 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 		{
 			if (high_resolution_scanout)
 			{
-				image_info.width *= 2;
-				image_info.height *= 2;
+				image_info.width *= scanout_scale;
+				image_info.height *= scanout_scale;
 			}
 			circuit1 = device->create_image(image_info);
 			sample_crtc_circuit(cmd, *circuit1, priv.dispfb1, rect, super_samples, promoted1);
@@ -5113,8 +5204,8 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 		{
 			if (high_resolution_scanout)
 			{
-				image_info.width *= 2;
-				image_info.height *= 2;
+				image_info.width *= scanout_scale;
+				image_info.height *= scanout_scale;
 			}
 			circuit2 = device->create_image(image_info);
 			sample_crtc_circuit(cmd, *circuit2, priv.dispfb2, rect, super_samples, promoted2);
@@ -5175,8 +5266,8 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 		// Need to do all the CRTC offset math in single sampled domain to avoid lots of confusing cases later.
 		if (high_resolution_scanout)
 		{
-			horiz_resolution0 >>= 1;
-			horiz_resolution1 >>= 1;
+			horiz_resolution0 /= scanout_scale;
+			horiz_resolution1 /= scanout_scale;
 		}
 
 		uint32_t magh1 = priv.display1.MAGH + 1;
@@ -5223,8 +5314,8 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 
 		if (high_resolution_scanout)
 		{
-			effective_mode_width *= 2;
-			effective_mode_height *= 2;
+			effective_mode_width *= scanout_scale;
+			effective_mode_height *= scanout_scale;
 		}
 
 		bool is_raw_circuit1 =
@@ -5247,8 +5338,8 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 			                  VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			                  info.dst_stage, info.dst_access);
 
-			result.internal_width = result.image->get_width() >> int(high_resolution_scanout);
-			result.internal_height = result.image->get_height() >> int(high_resolution_scanout);
+			result.internal_width = result.image->get_width() / scanout_scale;
+			result.internal_height = result.image->get_height() / scanout_scale;
 			result.double_strike = double_strike;
 
 			flush_submit(0);
@@ -5258,13 +5349,13 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 
 	result.internal_width = mode_width;
 	result.internal_height = mode_height;
-	image_info.width = mode_width << int(high_resolution_scanout);
-	image_info.height = mode_height << int(high_resolution_scanout);
+	image_info.width = mode_width * scanout_scale;
+	image_info.height = mode_height * scanout_scale;
 
 	if (field_aware_rendering)
 	{
 		// Avoid a one line flicker due to field rendering.
-		image_info.height--;
+		image_info.height -= scanout_scale / 2;
 	}
 
 	auto merged = device->create_image(image_info);
@@ -5330,13 +5421,13 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 
 			if (high_resolution_scanout)
 			{
-				vp.x *= 2.0f;
-				vp.y *= 2.0f;
-				vp.width *= 2.0f;
-				vp.height *= 2.0f;
+				vp.x *= float(scanout_scale);
+				vp.y *= float(scanout_scale);
+				vp.width *= float(scanout_scale);
+				vp.height *= float(scanout_scale);
 
 				if (field_aware_rendering && !info.phase)
-					vp.y -= 1.0f;
+					vp.y -= float(scanout_scale / 2);
 			}
 
 			cmd.set_viewport(vp);
@@ -5363,13 +5454,13 @@ ScanoutResult GSRenderer::vsync(const PrivRegisterState &priv, const VSyncInfo &
 
 			if (high_resolution_scanout)
 			{
-				vp.x *= 2.0f;
-				vp.y *= 2.0f;
-				vp.width *= 2.0f;
-				vp.height *= 2.0f;
+				vp.x *= float(scanout_scale);
+				vp.y *= float(scanout_scale);
+				vp.width *= float(scanout_scale);
+				vp.height *= float(scanout_scale);
 
 				if (field_aware_rendering && !info.phase)
-					vp.y -= 1.0f;
+					vp.y -= float(scanout_scale / 2);
 			}
 
 			cmd.set_viewport(vp);

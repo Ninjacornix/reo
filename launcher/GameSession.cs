@@ -10,6 +10,10 @@ public sealed class GameSession {
     public string? Logs { get; private set; }
     public ImportedDisc? Imported { get; private set; }
     public string? NetworkStatus { get; private set; }
+    volatile string? graphicsStatus;
+    public string? GraphicsStatus => graphicsStatus;
+    TaskCompletionSource graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    internal Task WaitForGraphicsReadyAsync(TimeSpan timeout) => graphicsReady.Task.WaitAsync(timeout);
     public string? MovieStatus { get; private set; }
     internal string? AudioMapName { get; set; }
     public string? RandomizerSeedSummary { get; private set; }
@@ -31,11 +35,23 @@ public sealed class GameSession {
                              string? diagnosticRoute = null,
                              IProgress<ImportProgress>? importProgress = null,
                              CancellationToken cancel = default,
-                             LobbyAutomation.Options? lobby = null) {
+                             LobbyAutomation.Options? lobby = null,
+                             uint? diagnosticSeed = null, bool diagnosticColdCache = false) {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
+        if (diagnosticColdCache && diagnosticRoute == null)
+            throw new InvalidOperationException("A private shader cache requires a diagnostic run.");
         var selectedMods = randomizerSeeds.ForLaunch(Mods.Selected(settings), settings.ResolvedCoopMode);
+        if (diagnosticSeed is uint fixedSeed) {
+            if (diagnosticRoute == null || settings.ResolvedCoopMode != "offline")
+                throw new InvalidOperationException("Fixed diagnostic seeds require an offline diagnostic run.");
+            foreach (var mod in selectedMods) {
+                if (mod.ItemRandomizer != null) mod.ItemRandomizer.Seed = fixedSeed;
+                if (mod.WeaponShuffle != null) mod.WeaponShuffle.Seed = fixedSeed;
+                if (mod.EnemyRandomizer != null) mod.EnemyRandomizer.Seed = fixedSeed;
+            }
+        }
         byte[]? randomizerConfiguration = null;
         HostRandomizerConfiguration = null;
         randomizerStopReason = null;
@@ -46,6 +62,8 @@ public sealed class GameSession {
         }
         RandomizerSeedSummary = RandomizerSeeds.Describe(selectedMods);
         NetworkStatus = null;
+        graphicsStatus = null;
+        graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
         string sourceExe = settings.GetExe(), iso = settings.GetIso();
         var selectedGame = settings.Game;
         if (selectedGame.Id != "file1")
@@ -210,7 +228,7 @@ public sealed class GameSession {
         Set("REO_TEXTURE_FILTER", settings.TextureLinear ? "linear" : "original");
         Set("REO_INTERNAL_RESOLUTION", settings.ResolvedInternalResolution.ToString());
         Set("REO_PERFORMANCE_OVERLAY", settings.PerformanceOverlay ? "1" : "0");
-        Set("REO_GPU_MEMORY_LOG", settings.ResolvedInternalResolution == 2 ? "1" : "0");
+        Set("REO_GPU_MEMORY_LOG", settings.ResolvedInternalResolution > 1 ? "1" : "0");
         Set("REO_TEXTURE_ANISOTROPY", settings.ResolvedAnisotropy.ToString());
         Set("REO_POST_AA", settings.ResolvedAntiAliasing);
         Set("REO_BRIGHTNESS",
@@ -219,6 +237,13 @@ public sealed class GameSession {
         Set("REO_GAMMA",
             settings.Gamma.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         if (diagnosticRoute != null) {
+            Set("REO_FRAME_PACING_FILE", Path.Combine(Logs, "frames.csv"));
+            Set("REO_VIF_KICK_TIMING_AT", "0");
+            Set("REO_VIF_KICK_TIMING_MIN_US", "5000");
+            Set("REO_VIF_KICK_TIMING_LIMIT", "256");
+            Set("REO_GS_WAIT_LOG", "1");
+            Set("REO_IRQ_TIMING_LOG", "1");
+            if (diagnosticColdCache) Set("REO_PIPELINE_CACHE_FILE", Path.Combine(Logs, "pipeline.cache"));
             Set("REO_PERFORMANCE_DIAG", settings.PerformanceOverlay ? "1" : "0");
             Set("REO_AUDIO_DIAG", "1");
             Set("REO_RUMBLE_DIAG", "1");
@@ -316,7 +341,10 @@ public sealed class GameSession {
         _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
         _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
-        _ = Pump(Process.StandardError, stderr, account == null ? null : account.Observe);
+        _ = Pump(Process.StandardError, stderr, line => {
+            ObserveGraphicsLine(line);
+            account?.Observe(line);
+        });
         await File.WriteAllTextAsync(
             Path.Combine(Logs, "launch.json"),
             JsonSerializer.Serialize(
@@ -386,6 +414,8 @@ public sealed class GameSession {
             automation?.Dispose();
             account?.Dispose();
             NetworkStatus = randomizerStopReason;
+            graphicsStatus = null;
+            graphicsReady.TrySetCanceled();
             cardLease.Dispose();
         }
         await File.WriteAllTextAsync(Path.Combine(logs, "exit.json"), JsonSerializer.Serialize(new {
@@ -412,6 +442,22 @@ public sealed class GameSession {
             buffer.AsSpan(length - retained, retained).CopyTo(buffer);
         }
         return false;
+    }
+    internal void ObserveGraphicsLine(string line) {
+        const string marker = "[SHADER-WARMUP] ";
+        int start = line.IndexOf(marker, StringComparison.Ordinal);
+        if (start < 0) return;
+        string text = line[(start + marker.Length)..];
+        if (text == "ready") {
+            graphicsStatus = null;
+            graphicsReady.TrySetResult();
+            return;
+        }
+        if (!text.StartsWith("progress ", StringComparison.Ordinal)) return;
+        var counts = text[9..].Split('/');
+        if (counts.Length == 2 && int.TryParse(counts[0], out int done) &&
+            int.TryParse(counts[1], out int total) && total > 0 && done >= 0 && done <= total)
+            graphicsStatus = $"Preparing graphics · {(long)done * 100 / total}%";
     }
     internal static async Task Pump(StreamReader input, StreamWriter output,
                                     Action<string>? observe = null) {
@@ -461,6 +507,7 @@ public sealed class GameSession {
             return null;
         return new { clientWidth = client.Right - client.Left,
                      clientHeight = client.Bottom - client.Top,
+                     focused = GetForegroundWindow() == window,
                      x = bounds.Left,
                      y = bounds.Top,
                      width = bounds.Right - bounds.Left,
@@ -487,6 +534,8 @@ public sealed class GameSession {
                                     uint flags);
     [DllImport("user32")]
     static extern uint GetDpiForWindow(nint window);
+    [DllImport("user32")]
+    static extern nint GetForegroundWindow();
     [DllImport("user32")]
     static extern bool GetClientRect(nint window, out Rect rect);
     [DllImport("user32")]

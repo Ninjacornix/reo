@@ -208,6 +208,7 @@ static void print_banner(const GameDef& g) {
 #undef CloseWindow
 #undef ShowCursor
 #undef Rectangle
+#include "runtime/timer/windows_resolution.h"
 
 // Crash diagnostics: on an unhandled exception print the code, fault address and the
 
@@ -1042,6 +1043,8 @@ int main(int argc, char* argv[]) {
     gpuConfig.antiBlur = true;
 
     gpuConfig.persistentPipelineCache = true;
+    if (const char* cache = std::getenv("REO_PIPELINE_CACHE_FILE"); cache && *cache)
+        gpuConfig.pipelineCacheFile = cache;
 
     gpuConfig.publishPrivilegedReset = gs_backend_bridge::publishPrivilegedReset;
 
@@ -1291,6 +1294,9 @@ int main(int argc, char* argv[]) {
         reo::rumble::install(runtime);
         reo::audio::install(runtime);
     }
+#endif
+#ifdef _WIN32
+    reo::ScopedTimerResolution timerPrecision;
 #endif
     runtime.run();
 

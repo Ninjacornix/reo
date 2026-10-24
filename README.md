@@ -2,7 +2,7 @@
 
 An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
 
-**1.0 Alpha prerelease (v1.0.17)** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
+**1.0 Alpha prerelease (v1.0.18)** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -11,7 +11,7 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 ## Get started
 
 1. Install the [.NET 8 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) if you don't have it, and keep your graphics driver current (Vulkan is required).
-2. Download **RE-Outbreak-v1.0.16-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
+2. Download **RE-Outbreak-v1.0.18-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
 3. The **Play** page tells you the next step. Click **Choose ISO** and pick your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**. The launcher checks it and shows a green ✓ when it is supported.
 4. Click **Build game**. This one-time setup imports the disc, prepares the build tools (about 173 MB, reused if the exact compiler is already installed) and compiles the game. It needs Internet and about 10 GB of free space, and can take over an hour. Progress stays visible at the bottom of every page.
 5. Click **Play**.
@@ -39,6 +39,23 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 - **Mods:** enable **Randomizer** for File #1 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition and progression-unlock options plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
+
+The development build offers named window resolutions: **Native (512 × 448)**,
+**HD (1280 × 720)**, **FHD (1920 × 1080)**, **QHD / 2K (2560 × 1440)** and
+**4K (3840 × 2160)**. Existing window sizes remain available. Windows may limit
+window sizes larger than the desktop; borderless fullscreen uses the desktop
+resolution. **Internal resolution** separately chooses Native,
+**2× (1024 × 896)** or **4× (2048 × 1792)** scene rendering before output scaling;
+higher settings increase GPU load. The 4× option requires GPU sampling support;
+unsupported devices report an error instead of silently substituting 2×.
+
+The development renderer prepares the selected resolution's shaders before
+gameplay and reuses its pipeline cache on subsequent launches. The launcher
+shows preparation progress; a first run or a driver cache reset can take longer.
+Compiler work finishes before gameplay starts. On Windows, the game requests
+precise timers and opts out of process power throttling while running, restoring
+the previous policy on shutdown. These changes reduce compilation and scheduling
+hitches; they do not guarantee a constant update rate in CPU-heavy rooms.
 
 Only **File #1 NTSC-U v2.00 (SLUS-20765)** is supported. Before extraction, the
 launcher checks SYSTEM.CNF's boot executable, identifies known game/region serials

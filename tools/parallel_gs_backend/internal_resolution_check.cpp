@@ -43,7 +43,7 @@ static Frame render(const char* scale) {
     init.registers = display();
     std::string error;
     require(backend->init(init, error), error.c_str());
-    if (scale[0] == '2') {
+    if (scale[0] != '1') {
         auto startup = display(); startup[8] = 0;
         auto frame = backend->capture({startup, 122});
         require(frame.width <= 4096 && frame.height <= 4096,
@@ -74,19 +74,25 @@ int main() try {
     Util::register_thread_index(4);
     require(reo::graphics::internalResolution(nullptr) == 1, "Native default");
     require(!reo::graphics::highResolutionScanout(2, 1, 0, 0), "Startup display guard");
-    require(!reo::graphics::highResolutionScanout(2, 3, display()[8], 0),
-            "Both enabled circuits must be initialized");
-    require(reo::graphics::highResolutionScanout(2, 2, 0, display()[8]),
-            "Second display circuit supports 2x");
+    for (unsigned scale : {2u, 4u}) {
+        require(!reo::graphics::highResolutionScanout(scale, 3, display()[8], 0),
+                "Both enabled circuits must be initialized");
+        require(reo::graphics::highResolutionScanout(scale, 2, 0, display()[8]),
+                "Second display circuit supports upscaling");
+        require(!reo::graphics::highResolutionScanout(scale, 1, 4095ull << 32, 0),
+                "Oversized transient display must remain Native");
+    }
+    require(reo::graphics::internalResolution("4") == 4, "4x not accepted");
     bool rejected = false;
-    try { reo::graphics::internalResolution("4"); }
+    try { reo::graphics::internalResolution("8"); }
     catch (const std::invalid_argument&) { rejected = true; }
     require(rejected, "Unsupported resolution accepted");
     const auto native = render("1");
-    const auto higher = render("2");
     require(native.width == 512 && native.height == 448, "Wrong native scanout");
-    require(higher.width == native.width * 2 && higher.height == native.height * 2,
-            "Internal resolution did not double both dimensions");
+    for (unsigned scale : {2u, 4u}) {
+    const auto higher = render(scale == 2 ? "2" : "4");
+    require(higher.width == native.width * scale && higher.height == native.height * scale,
+            "Internal resolution did not scale both dimensions");
     size_t differentBlocks = 0, litPixels = 0;
     for (uint32_t y = 0; y < higher.height; y += 2)
         for (uint32_t x = 0; x < higher.width; x += 2) {
@@ -102,10 +108,13 @@ int main() try {
         }
     std::cout << "lit-pixels=" << litPixels << " subpixel-blocks=" << differentBlocks << '\n';
     require(litPixels > 100, "Triangle not drawn");
-    require(differentBlocks > 20, "2x image contains only duplicated native pixels");
+    // At 4x, nonuniform 2x2 blocks also distinguish real 4x samples from a
+    // nearest-neighbour enlargement of the existing 2x render.
+    require(differentBlocks > 20, "Upscaled image contains only duplicated lower-resolution pixels");
     std::cout << "PASS native=" << native.width << 'x' << native.height
-              << " 2x=" << higher.width << 'x' << higher.height
+              << ' ' << scale << "x=" << higher.width << 'x' << higher.height
               << " distinct-subpixel-blocks=" << differentBlocks << '\n';
+    }
     return 0;
 } catch (const std::exception& error) {
     std::cerr << error.what() << '\n';

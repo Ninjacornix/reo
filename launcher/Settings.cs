@@ -42,7 +42,7 @@ public sealed partial class Settings {
     public bool TextureLinear { get; set; }
     public int InternalResolution { get; set; } = 1;
     [System.Text.Json.Serialization.JsonIgnore]
-    public int ResolvedInternalResolution => InternalResolution == 2 ? 2 : 1;
+    public int ResolvedInternalResolution => InternalResolution is 2 or 4 ? InternalResolution : 1;
     public int Anisotropy { get; set; } = 1;
     public int ResolvedAnisotropy => Anisotropy is 2 or 4 or 8 or 16 ? Anisotropy : 1;
     public bool AntiAliasing { get; set; } = true;

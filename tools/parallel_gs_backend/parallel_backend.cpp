@@ -1,5 +1,6 @@
 #include "parallel_backend.h"
 #include "runtime/gs/internal_resolution.h"
+#include "runtime/gs/frame_pacing.h"
 #include "shader_location.hpp"
 #include "parent_first_entry.h"
 #include "native_movie_owner.h"
@@ -92,6 +93,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
     std::unique_ptr<reo_gpu_present::ResidentXlibPresenter> presenter_;
 #endif
     reo_gpu_present::ResidentOwnerImages displayImages_;
+    reo::performance::FrameTrace frameTrace_;
     uint64_t normalDownloads_ = 0, outputReadbacks_ = 0;
     BufferHandle captureReadback_;
     size_t captureReadbackBytes_ = 0;
@@ -547,11 +549,11 @@ class ParallelBackend final : public Backend, private SignalInterface {
             CONTEXT_CREATION_ENABLE_PUSH_DESCRIPTOR_BIT |
             CONTEXT_CREATION_ENABLE_DESCRIPTOR_HEAP_BIT |
 #if defined(_WIN32)
-            // Keep command checkpoints at 2x. On the RX 570, removing these
+            // Keep command checkpoints when upscaling. On the RX 570, removing these
             // markers reproducibly loses the device during the startup draw;
             // with them the same run reaches gameplay. This is a compatibility
             // workaround, and retains post-mortem evidence if a failure recurs.
-            (internalResolution_ == 2 ? CONTEXT_CREATION_ENABLE_POST_MORTEM_BIT : 0) |
+            (internalResolution_ > 1 ? CONTEXT_CREATION_ENABLE_POST_MORTEM_BIT : 0) |
 #endif
             (config_.descriptorBuffer ? CONTEXT_CREATION_ENABLE_DESCRIPTOR_BUFFER_BIT : 0);
         bool initialized = false;
@@ -606,13 +608,23 @@ class ParallelBackend final : public Backend, private SignalInterface {
             return false;
         }
 #endif
+        // GSInterface otherwise silently clamps unsupported sampling rates.
+        // Reject an unavailable 4x mode rather than report a lower resolution
+        // as the requested quality. Match GSRenderer's X16 capability check.
+        if (internalResolution_ == 4 && !device_->supports_subgroup_size_log2(true, 4, 6)) {
+            error = "4x internal resolution is unavailable on this GPU. Select 2x or Native.";
+            close();
+            return false;
+        }
         gs_ = std::make_unique<GSInterface>();
         GSOptions options{};
-        // Four ordered samples form a 2x2 grid for higher-resolution scanout.
-        options.super_sampling = internalResolution_ == 2 ? SuperSampling::X4 : SuperSampling::X1;
+        // Ordered samples form a 2x2 or 4x4 grid for higher-resolution scanout.
+        options.super_sampling = internalResolution_ == 4 ? SuperSampling::X16
+                               : internalResolution_ == 2 ? SuperSampling::X4
+                                                          : SuperSampling::X1;
         options.ordered_super_sampling = true;
         // Preserve the existing texture resolve policy; geometry still uses
-        // four distinct samples at 2x.
+        // distinct samples at the selected internal resolution.
         options.super_sampled_textures = false;
         std::fprintf(stderr,"[INTERNAL-RESOLUTION-1] scale=%u samples=%u\n",
                      internalResolution_,internalResolution_ * internalResolution_);
@@ -951,6 +963,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         privWord(base) = mergeLane(privWord(base), lane, width, input);
     }
     Frame capture(const Capture& capture) override {
+        auto timing = frameTrace_.begin(capture.tick);
         ThreadIndexScope threadIndex;
         requireLive();
         reportMemory();
@@ -973,6 +986,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
             internalResolution_, capture.registers[0], capture.registers[8], capture.registers[10]);
         gs_->flush();
         auto scanout = gs_->vsync(info);
+        timing.scanout();
         if(scanout.image && scanoutReports_ < 16 &&
            (scanout.image->get_width()!=reportedScanoutWidth_ || scanout.image->get_height()!=reportedScanoutHeight_)) {
             reportedScanoutWidth_=scanout.image->get_width();reportedScanoutHeight_=scanout.image->get_height();++scanoutReports_;
@@ -996,6 +1010,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
                 if (!config_.presentationEpochCurrent(capture.epoch))
                     return {};
                 complete = presenter_->present(scanout.image, false, target.linear);
+                timing.presented();
             } else {
                 // Minimize/attach suspension is not a backend failure. Retain
                 // the newly rendered source after a genuine queue fence.

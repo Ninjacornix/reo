@@ -1,11 +1,43 @@
 # Prerelease packaging
 
-Current target: **v1.0.17**, shown in the launcher as **1.0 Alpha**, marked
-prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.17)". Tags stay numeric so
+Current target: **v1.0.18**, shown in the launcher as **1.0 Alpha**, marked
+prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.18)". Tags stay numeric so
 installed launchers offer the update. .NET is an
 external prerequisite. The server is source-only, with Python/packages prepared
 automatically in Local AppData on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.18
+
+Refresh the frozen v1.0.17 kit with the changed bootstrap, clock observer,
+internal-resolution policy, parallel backend and resident GS renderer. Include
+the authored timing/warmup headers and generic scanout shader header. Preserve
+the frozen SDK, independent libraries, previous source patches and the dirty
+working submodule. The dependency source base remains unchanged.
+
+Verification workspace: `build-ninja/release-v118`; native evidence is under
+`build-ninja/higher-resolution` and `build-ninja/frame-pacing`. The reference
+native executable incrementally recompiles changed authored/graphics units and
+reuses unchanged verified game/SDK objects. Validate correspondence against the
+sealed kit; a complete cold compilation is not repeated. Include
+`<!-- reo:requires-rebuild -->` in release notes.
+
+Tests cover 450 launcher assertions, 14 performance-meter cases, shader task
+coverage and selected profiles, Windows timer policy restoration, and actual
+Native / 2× / 4× scanout dimensions with independent pixel detail. The latest
+fullscreen 2× repeat measured median 33.34 ms, 99th percentile 35.44 ms and maximum
+52.55 ms for ordinary game updates. Residual CPU timing spikes remain; do not
+claim constant updates or complete driver, scenario or multiplayer stability.
+Output above the desktop resolution is subject to Windows window-size limits;
+4K output on a 4K display has not been tested.
+
+Sealed kit manifest SHA-256:
+`cc558c696ae8be9367ea6e99c94eff62f422972af52417119e8cc11a79de6304`.
+Input archive SHA-256:
+`9845a96fad91763e59b04908f4ef5fcddd582e620b33811c8df7668586d0dcbe`.
+The 60 local-build tests pass with one platform skip; 49 co-op harness tests
+pass with one skip. Harness tests do not establish new multiplayer gameplay
+coverage.
 
 ## v1.0.17
 

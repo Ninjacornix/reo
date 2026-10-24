@@ -611,7 +611,7 @@ private:
 
 	void drain_compilation_tasks();
 	void drain_compilation_tasks_nonblock();
-	void kick_compilation_tasks();
+	void kick_compilation_tasks(const GSOptions &options);
 	std::atomic_bool compilation_tasks_active;
 	std::vector<std::future<void>> compilation_tasks;
 

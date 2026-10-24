@@ -161,6 +161,10 @@ inline void export_after_join() {
                  "n,elapsed_ns,clock_units,room_counter,actor,animation_bits,x_bits,z_bits,event_"
                  "root,manager,skeleton,room,destination,main_service16,step,phase,subphase,paused,"
                  "selected,request,door,cache_scenario,cache_room,cache_variant\n");
+    // Match original actor updates to host presentation in the same steady
+    // clock domain. Comment rows preserve the existing CSV reader contract.
+    std::fprintf(f, "# first_room_ns=%lld\n", static_cast<long long>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(first_room.time_since_epoch()).count()));
     const unsigned limit = reserved.load();
     unsigned count = 0, unpublished = 0;
     for (unsigned n = 0; n < limit && n < capacity; ++n) {

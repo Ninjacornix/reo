@@ -282,6 +282,11 @@ static class SelfTest {
         Check(DisplayOptions.Size(4) == new OutputSize(1920, 1080) &&
                   DisplayOptions.Size(6) == new OutputSize(3840, 2160),
               "1080p and 4K use the selected output aspect ratio");
+        Check(DisplayOptions.MenuSizes[0] == new OutputSize(512, 448) &&
+                  DisplayOptions.MenuSizes.Take(5).Select(s => s.Height)
+                      .SequenceEqual(new[] { 448, 720, 1080, 1440, 2160 }) &&
+                  Array.IndexOf(DisplayOptions.Sizes, DisplayOptions.MenuSizes[2]) == 4,
+              "Named resolution presets include Native through 4K without changing saved indices");
         Check(DisplayOptions.Size(-5) == DisplayOptions.Sizes[0] &&
                   DisplayOptions.Size(99) == DisplayOptions.Sizes[^1],
               "Invalid resolution settings are bounded");
@@ -295,11 +300,26 @@ static class SelfTest {
               "Performance overlay defaults off and its saved toggle survives serialization");
         Check(JsonSerializer.Deserialize<Settings>("{}")!.ResolvedInternalResolution == 1 &&
                   new Settings { InternalResolution = -1 }.ResolvedInternalResolution == 1 &&
-                  new Settings { InternalResolution = 4 }.ResolvedInternalResolution == 1,
+                  new Settings { InternalResolution = 8 }.ResolvedInternalResolution == 1,
               "Old and invalid internal resolution settings use Native");
         Check(JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(
                   new Settings { InternalResolution = 2 }))!.ResolvedInternalResolution == 2,
               "2x internal resolution survives serialization");
+        Check(JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(
+                  new Settings { InternalResolution = 4 }))!.ResolvedInternalResolution == 4,
+              "4x internal resolution survives serialization");
+        var preparingGraphics = new GameSession();
+        preparingGraphics.ObserveGraphicsLine("[INFO]: [SHADER-WARMUP] progress 16/64");
+        Check(preparingGraphics.GraphicsStatus == "Preparing graphics · 25%",
+              "Actual shader progress is shown in the launcher");
+        preparingGraphics.ObserveGraphicsLine("[SHADER-WARMUP] progress 2/0");
+        preparingGraphics.ObserveGraphicsLine("[SHADER-WARMUP] progress 80/64");
+        Check(preparingGraphics.GraphicsStatus == "Preparing graphics · 25%",
+              "Malformed shader progress cannot replace the last valid status");
+        preparingGraphics.ObserveGraphicsLine("[SHADER-WARMUP] ready");
+        Check(preparingGraphics.GraphicsStatus == null &&
+                  preparingGraphics.WaitForGraphicsReadyAsync(TimeSpan.FromSeconds(1)).IsCompletedSuccessfully,
+              "Completed shader preparation clears the startup status");
         Check(JsonSerializer.Deserialize<Settings>("{\"Anisotropy\":16}")!.ResolvedAnisotropy ==
                       16 &&
                   new Settings { Anisotropy = 3 }.ResolvedAnisotropy == 1 &&

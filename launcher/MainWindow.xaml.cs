@@ -19,7 +19,7 @@ public partial class MainWindow : Window {
     readonly GameSession game = new();
     readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     readonly string[] args;
-    bool initialized, launching, previousRunning, backingUp;
+    bool initialized, launching, previousRunning, backingUp, graphicsPreparing;
     public MainWindow(string[] arguments) {
         args = arguments;
         root = AppLayout.FindRoot(AppContext.BaseDirectory);
@@ -31,8 +31,8 @@ public partial class MainWindow : Window {
         VersionLabel.Text = Updates.DisplayName;
         DeveloperFiles.Visibility =
             AppLayout.Packaged(root) ? Visibility.Collapsed : Visibility.Visible;
-        WindowSize.ItemsSource = DisplayOptions.Sizes;
-        WindowSize.SelectedIndex = settings.WindowSize;
+        WindowSize.ItemsSource = DisplayOptions.MenuSizes;
+        WindowSize.SelectedItem = DisplayOptions.Size(settings.WindowSize);
         Filter.SelectedIndex = settings.LinearFilter ? 0 : 1;
         AspectRatio.SelectedIndex = settings.ResolvedAspect == "16:9" ? 1 : 0;
         ScreenFit.SelectedIndex = Array.IndexOf(DisplayOptions.Fits, settings.ResolvedFit);
@@ -43,7 +43,8 @@ public partial class MainWindow : Window {
         GpuMovies.IsChecked = settings.GpuMovies;
         InitializeOnline();
         TextureFilter.SelectedIndex = settings.TextureLinear ? 1 : 0;
-        InternalResolution.SelectedIndex = settings.ResolvedInternalResolution - 1;
+        InternalResolution.SelectedIndex =
+            Array.IndexOf(DisplayOptions.InternalScales, settings.ResolvedInternalResolution);
         AnisotropicFilter.SelectedIndex =
             Array.IndexOf(new[] { 1, 2, 4, 8, 16 }, settings.ResolvedAnisotropy);
         AntiAlias.SelectedIndex = settings.ResolvedAntiAliasing switch { "smaa" => 2, "fxaa" => 1,
@@ -150,8 +151,8 @@ public partial class MainWindow : Window {
     void SaveSettings(object sender, RoutedEventArgs e) {
         if (!initialized)
             return;
-        settings.WindowSize =
-            Math.Clamp(WindowSize.SelectedIndex, 0, DisplayOptions.Sizes.Length - 1);
+        if (WindowSize.SelectedItem is OutputSize outputSize)
+            settings.WindowSize = Array.IndexOf(DisplayOptions.Sizes, outputSize);
         settings.LinearFilter = Filter.SelectedIndex == 0;
         settings.AspectRatio = AspectRatio.SelectedIndex == 1 ? "16:9" : "4:3";
         settings.ScreenFit =
@@ -165,7 +166,8 @@ public partial class MainWindow : Window {
             settings.GpuMovies = GpuMovies.IsChecked == true;
         UpdateGpuMoviesHint();
         settings.TextureLinear = TextureFilter.SelectedIndex == 1;
-        settings.InternalResolution = InternalResolution.SelectedIndex == 1 ? 2 : 1;
+        settings.InternalResolution = DisplayOptions.InternalScales[
+            Math.Clamp(InternalResolution.SelectedIndex, 0, DisplayOptions.InternalScales.Length - 1)];
         settings.Anisotropy =
             new[] { 1, 2, 4, 8, 16 }[Math.Clamp(AnisotropicFilter.SelectedIndex, 0, 4)];
         settings.AntiAliasing = AntiAlias.SelectedIndex > 0;
@@ -209,7 +211,15 @@ public partial class MainWindow : Window {
             UpdateSaves();
         }
         previousRunning = running;
-        if (game.NetworkStatus != null)
+        if (running && game.GraphicsStatus is string preparing) {
+            graphicsPreparing = true;
+            Status.Text = preparing;
+        } else {
+            if (graphicsPreparing && running && game.NetworkStatus == null)
+                Status.Text = "Game running";
+            graphicsPreparing = false;
+        }
+        if (game.NetworkStatus != null && !graphicsPreparing)
             Status.Text = game.NetworkStatus;
     }
     async void LaunchGame(object sender, RoutedEventArgs e) {
@@ -532,12 +542,16 @@ public partial class MainWindow : Window {
                                      : args.Contains("--test-fill")   ? "fill"
                                                                       : "fit";
                 snapshot.Fullscreen = args.Contains("--test-fullscreen");
-                snapshot.WindowSize = args.Contains("--test-1080p")  ? 4
+                snapshot.WindowSize = args.Contains("--test-4k")     ? 6
+                                      : args.Contains("--test-1440p") ? 5
+                                      : args.Contains("--test-native-output") ? 7
+                                      : args.Contains("--test-1080p")  ? 4
                                       : args.Contains("--test-720p") ? 3
                                                                      : 0;
                 snapshot.TextureLinear = args.Contains("--test-linear-textures");
                 snapshot.PerformanceOverlay = args.Contains("--test-performance-overlay");
-                snapshot.InternalResolution = args.Contains("--test-internal-2x") ? 2 : 1;
+                snapshot.InternalResolution = args.Contains("--test-internal-4x") ? 4
+                                              : args.Contains("--test-internal-2x") ? 2 : 1;
                 snapshot.Anisotropy = args.Contains("--test-anisotropic") ? 16 : 1;
                 snapshot.LinearFilter = !args.Contains("--test-nearest");
                 snapshot.AntiAliasing = !args.Contains("--test-aa-off");
@@ -607,13 +621,24 @@ public partial class MainWindow : Window {
                     Cheats.Parse(text, Path.GetFileName(testCheatFile)).Select(g => g.Id).ToList();
             }
             try {
-                await game.Launch(root, snapshot, controller, diagnosticRoute);
+                uint? diagnosticSeed = null;
+                int seedArgument = Array.IndexOf(args, "--test-fixed-seed");
+                if (seedArgument >= 0) {
+                    if (seedArgument + 1 >= args.Length || !uint.TryParse(args[seedArgument + 1], out uint seed))
+                        throw new ArgumentException("--test-fixed-seed requires a uint32 seed.");
+                    diagnosticSeed = seed;
+                }
+                await game.Launch(root, snapshot, controller, diagnosticRoute,
+                                  diagnosticSeed: diagnosticSeed,
+                                  diagnosticColdCache: args.Contains("--test-cold-shaders"));
                 UpdateRandomizerSeed();
             } finally {
                 if (testCheatFile != null)
                     File.Delete(testCheatFile);
             }
             previousRunning = true;
+            if (args.Contains("--test-wait-graphics"))
+                await game.WaitForGraphicsReadyAsync(TimeSpan.FromMinutes(10));
             await Task.Delay(args.Contains("--test-auto-network")    ? 240000
                              : args.Contains("--test-roster-probe")   ? 95000
                              : args.Contains("--test-quick-display") ? 25000

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v1.0.18 prerelease - 2026-10-24
+
+- Add 4× internal scene rendering at 2048×1792, alongside Native and 2×. Preserve distinct samples through scanout and report unsupported GPU sampling modes.
+- Offer named Native, HD, FHD, QHD / 2K and 4K window resolutions independently of internal rendering. Preserve existing saved window sizes; fullscreen uses the desktop resolution.
+- Prepare the selected resolution's shader pipelines before gameplay, show preparation progress and reuse the persistent pipeline cache. Limit preparation to two workers and finish compiler work before entering the game.
+- Request precise Windows timers and opt out of process power throttling during gameplay, restoring the previous policy on shutdown.
+- Verify the launcher with 450 assertions and actual Native / 2× / 4× scanout detail. Latest fullscreen 2× testing measured a 33.34 ms median game update and 35.44 ms at the 99th percentile; occasional spikes up to 52.55 ms remain. Full-scenario stability and new multiplayer validation are not claimed.
+
 ## v1.0.17 prerelease - 2026-10-24
 
 - Add a saved performance counter toggle in Graphics. Draw display FPS, average frame time and original gameplay updates per second in the top-right corner using the existing final GPU pass.

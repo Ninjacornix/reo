@@ -57,6 +57,10 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
                 copy(root / name, "source/" + name)
     # New authored account plumbing is also needed in development exports before commit.
     copy(root / "network/native/automatic_account.h", "source/network/native/automatic_account.h")
+    for name in ("tools/parallel_gs_backend/resident_gs/scanout_spirv.hpp",
+                 "runtime/gs/frame_pacing.h", "runtime/gs/shader_warmup.h",
+                 "runtime/timer/windows_resolution.h"):
+        copy(root / name, "source/" + name)
     # Keep the new mod hook available in development kits before it is committed.
     for name in ("recomp/overrides/reo_mods.h", "runtime/mods/weapon_shuffle.h", "runtime/mods/enemy_randomizer.h", "runtime/mods/enemy_spawn_randomizer.h"):
         copy(root / name, "source/" + name)
