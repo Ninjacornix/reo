@@ -84,11 +84,6 @@ and verifies the executable SHA-256. PAL, Japanese, File #2, unknown games and
 other/modified executable revisions get a specific error beside the ISO controls.
 The ISO filename and SYSTEM.CNF's VER field do not establish the game revision.
 
-v1.0.16 ships updated Randomizer and cheat runtime files, so the game is built
-once more after updating. Runtime headers changed, so this update recompiles all
-units. Later updates can reuse the compile cache where inputs are unchanged. Generation and compilation were also made faster in v1.0.11 without
-changing compiler optimization; see the [measured results](docs/COMPILATION_PERFORMANCE.md).
-
 Report problems on the [issue tracker](https://github.com/Ninjacornix/reo/issues). The previous v1.0.0 game-binary package remains withdrawn.
 
 For development builds, see [Building on Windows](docs/BUILDING.md). Existing
