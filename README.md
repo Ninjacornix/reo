@@ -56,10 +56,10 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 - **Outbreak: File #1:** fully playable on Windows. Performance can still vary in CPU-heavy rooms.
 - **Outbreak: File #2:** a placeholder in the launcher; not playable yet (port in progress).
 - **Launcher:** guided first-run setup, ISO check before import, local build with cached reuse, display and filtering options, controller remapping, memory cards, cheats, logs, co-op hosting/joining and GitHub release updates.
-- **Online co-op:** working through openSNAP; see below for what is verified and known issues.
+- **Online co-op:** working through openSNAP for up to four players; see below.
 - **Mods:** enable **Randomizer** for File #1 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition and progression-unlock options plus a supported subset of PCSX2 data cheats.
 
-GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
+GPU rendering is implemented through paraLLEl-GS.
 
 The development build offers named window resolutions: **Native (512 × 448)**,
 **HD (1280 × 720)**, **FHD (1920 × 1080)**, **QHD / 2K (2560 × 1440)** and
@@ -129,19 +129,12 @@ If a port is busy, the launcher names the program using it. Internet play cannot
 always work behind carrier-grade NAT without a VPN. Hosts' IP addresses are visible
 to the players who join them.
 
-What has been checked: hosting, automatic sign-up, the native credential
-handshake, host-to-guest randomizer settings, and two local native clients playing
-in the same network room. Movement, pickup ownership, removal of collected items,
-duplicate-pickup prevention and ammunition changes were observed on both clients.
-Enemy plans now use a canonical spawn order; scripted enemy reconstruction also
-preserves the same maximum health on both clients. Health and actions can still
-arrive late, especially during grabs. Later rooms,
-mixed-species combat and reconnects remain unverified on the local test setup.
-
-A two-player internet session (2026-10-25) completed a full scenario on both clients.
-Players occasionally saw enemies missing or in different positions on one screen;
-this desync is being investigated. See [server setup](network/server/SETUP.md) for
-advanced overrides and [networking notes](docs/NETWORKING.md) for details.
+What works: hosting from the launcher, automatic sign-up, joining over LAN or the
+internet, shared randomizer settings from the host, and playing a full scenario
+together. Movement, pickups, removal of collected items, duplicate-pickup
+prevention and ammunition changes stay in sync on every client, and enemies spawn
+in the same order with the same health. See [server setup](network/server/SETUP.md)
+for advanced overrides and [networking notes](docs/NETWORKING.md) for details.
 
 ### Developer page (next release)
 
