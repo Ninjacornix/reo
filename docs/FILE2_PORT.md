@@ -172,3 +172,9 @@ Boot no longer shows "memory card cannot be found".
 
 2026-10-26 movies: `REO_GPU_MOVIE_STATS=1` prints frames shown/discarded per second; File #2 intro
 and credits measured 30-31 shown/s in 102 of 107 one-second windows (others are movie start/end).
+
+2026-10-26 saving (confirmed): Options -> SAVE/LOAD -> SAVE DATA -> "Create the main data? YES" wrote
+BASLUS-20984OB2 (icon.sys, icons, game.bin 119544 B, patch.bin 8240 B; [MC2] create/write all
+succeeded) and showed "Data has been saved."; a second save found the existing data ("OK to
+overwrite"). Launcher: File #2 is selectable and playable from a developer tree; smoke launch
+`--smoke-launch <exe> <result.json> --test-file2 <iso>` ran 60 s, GPU movies, exit 0.
