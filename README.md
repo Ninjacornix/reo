@@ -1,6 +1,6 @@
-# RE: Outbreak — Resident Evil Outbreak PC Port (Native Windows)
+# RE: Outbreak — Resident Evil Outbreak Native PC Port
 
-**Resident Evil Outbreak (PS2, *Biohazard Outbreak*) running natively on Windows PC**, built with
+**Resident Evil Outbreak (PS2, *Biohazard Outbreak*) running natively on PC**, built with
 static recompilation and a PS2 compatibility runtime — not an emulator. Play **Outbreak File #1**
 from start to finish, with **online co-op** through openSNAP, a **randomizer**, **cheats**,
 **controller support** and modern **video settings** up to 4K.
