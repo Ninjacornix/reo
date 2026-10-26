@@ -1,5 +1,15 @@
 # RE: Outbreak — Resident Evil Outbreak Native PC Port
 
+[![Latest release](https://img.shields.io/github/v/release/Ninjacornix/reo?label=release&color=b33a3a)](https://github.com/Ninjacornix/reo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Ninjacornix/reo/total?label=downloads&color=2ea44f)](https://github.com/Ninjacornix/reo/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078d4?logo=windows)](REQUIREMENTS.md)
+[![.NET](https://img.shields.io/badge/.NET-8%20Desktop-512bd4?logo=dotnet)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+[![Vulkan](https://img.shields.io/badge/Vulkan-required-ac162c?logo=vulkan)](REQUIREMENTS.md)
+[![Co-op](https://img.shields.io/badge/co--op-openSNAP-6f42c1)](#online-co-op)
+[![Mods](https://img.shields.io/badge/mods-randomizer-e36209)](docs/MODDING.md)
+[![License](https://img.shields.io/badge/license-GPL--3.0-f2c94c)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/Ninjacornix/reo?style=flat&color=555)](https://github.com/Ninjacornix/reo/stargazers)
+
 **Resident Evil Outbreak (PS2, *Biohazard Outbreak*) running natively on PC**, built with
 static recompilation and a PS2 compatibility runtime — not an emulator. Play **Outbreak File #1**
 from start to finish, with **online co-op** through openSNAP, a **randomizer**, **cheats**,
