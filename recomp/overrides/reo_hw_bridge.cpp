@@ -2342,7 +2342,17 @@ void pad2FeederLoop() {
                 // Original ds2u_s1 FUN_1170's 0x73 analog report, consumed by
                 // libpad2/game 0x1A6760: six raw SIO bytes and profile 0x000FFFFF.
                 reo_source_instrumentation::bankCell(rd, rec + 1) = 10;
-                reo_source_instrumentation::bankCell(rd, rec + 2) = 6;
+#if defined(REO_GAME_FILE2)
+                // File #2 requires DUALSHOCK 2 analog mode: 0x13CB90 accepts only pad mode
+                // 's' (0x73), which libpad2 0x1E8510 sets when the profile has bits in
+                // 0xFFF00000. That mode reads 18 data bytes (buttons, sticks, then the 12
+                // pressure bytes R L U D Tri Cir X Sq L1 R1 L2 R2); otherwise the game
+                // reopens its pause menu every frame (0x619740).
+                constexpr uint8_t dataBytes = 18;
+#else
+                constexpr uint8_t dataBytes = 6;
+#endif
+                reo_source_instrumentation::bankCell(rd, rec + 2) = dataBytes;
                 reo_source_instrumentation::bankCell(rd, rec + 3) = 4;
                 const uint32_t valid = 1;
                 reo_source_instrumentation::copyBytes(rec + 4, &valid, 4);
@@ -2353,10 +2363,24 @@ void pad2FeederLoop() {
                 reo_source_instrumentation::bankCell(rd, rec + 0x1F) = hostPad.right_y;
                 reo_source_instrumentation::bankCell(rd, rec + 0x20) = hostPad.left_x;
                 reo_source_instrumentation::bankCell(rd, rec + 0x21) = hostPad.left_y;
+#if defined(REO_GAME_FILE2)
+                static constexpr const char* pressureOrder[12] = {
+                    "RIGHT", "LEFT", "UP", "DOWN", "TRIANGLE", "CIRCLE",
+                    "CROSS", "SQUARE", "L1", "R1", "L2", "R2"};
+                for (int i = 0; i < 12; ++i)
+                    reo_source_instrumentation::bankCell(rd, rec + 0x22 + i) =
+                        (pressed & pad2ButtonBit(pressureOrder[i])) ? 0xFF : 0x00;
+                // Profile 0x3FFFFFFF: digital, both sticks and all 12 pressure bytes.
+                reo_source_instrumentation::bankCell(rd, rec + 0x2E) = 0xFF;
+                reo_source_instrumentation::bankCell(rd, rec + 0x2F) = 0xFF;
+                reo_source_instrumentation::bankCell(rd, rec + 0x30) = 0xFF;
+                reo_source_instrumentation::bankCell(rd, rec + 0x31) = 0x3F;
+#else
                 reo_source_instrumentation::bankCell(rd, rec + 0x22) = 0xFF;
                 reo_source_instrumentation::bankCell(rd, rec + 0x23) = 0xFF;
                 reo_source_instrumentation::bankCell(rd, rec + 0x24) = 0x0F;
                 reo_source_instrumentation::bankCell(rd, rec + 0x25) = 0;
+#endif
                 std::atomic_thread_fence(std::memory_order_release);
                 const uint32_t seq = std::max(s0, s1) + 1;
                 reo_source_instrumentation::copyBytes(rec + 0x7C, &seq, 4); // publish last

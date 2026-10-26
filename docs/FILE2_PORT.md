@@ -156,3 +156,19 @@ Hot loop while paused: `FUN_001ddd10` (callers include `FUN_001edcb0` <- `FUN_00
 - `REO_SHOT_AT` produces nothing with the GPU presenter; window captures were used instead.
 - Release note: the wrapped File #1 sources change their SHA-256, so the build kit's
   native-source equivalence inputs must be regenerated for the next release.
+
+2026-10-26 pause menu at scenario start (fixed, confirmed by window capture): ovl2 0x619740 sets the
+pause request 0x4DB454 every frame while main 0x13CB90 reports the pad as unusable; it requires pad
+mode 's' (0x73, DUALSHOCK 2 analog) with mode word 1. libpad2 0x1E8510 only selects 0x73 when the
+profile has bits in 0xFFF00000; the bridge advertised 0x000FFFFF (mode 0x60). File #2 builds now
+report 18 data bytes (buttons, sticks, 12 pressure bytes) and profile 0x3FFFFFFF. File #1 is unchanged
+(it has no such check). Pause chain: 0x6198F0 -> 0x710670(4) -> menu 0x71C6A0 (EXIT = index 10).
+
+2026-10-26 memory card: File #2 links a different libmc2 build (no matcher hits). Workers located via
+its dispatcher FUN_0012CA58 (request types 2-15, same argument lists as File #1 FUN_00181A28);
+`reo::mc2::install(runtime, File2Workers)`. Type 14 goes through wrapper 0x12FF88, whose library
+state checks fail without the original workers, so the wrapper is replaced as a whole (`statWrapper`).
+Boot no longer shows "memory card cannot be found".
+
+2026-10-26 movies: `REO_GPU_MOVIE_STATS=1` prints frames shown/discarded per second; File #2 intro
+and credits measured 30-31 shown/s in 102 of 107 one-second windows (others are movie start/end).

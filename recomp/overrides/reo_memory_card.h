@@ -226,6 +226,32 @@ inline void stat(uint8_t* ram, R5900Context* ctx, PS2Runtime*) {
         result = Request::error(result == 0 ? -4 : result);
     r.finish(ctx, result);
 }
+// File #2 request type 14 runs wrapper 0x12FF88(port, path, info) instead of the
+// worker directly. The wrapper first checks library card state that the replaced
+// workers never establish, then converts the worker's 512-byte entry exactly as
+// File #1's dispatcher does: name at +24, two 8-byte stamps, size at +16, mode at
+// +20; 0x81010011 (entry found) becomes 0.
+inline void statWrapper(uint8_t* ram, R5900Context* ctx, PS2Runtime*) {
+    Request r(ram);
+    int result = -5;
+    if (r.named(GPR_U32(ctx, 4), GPR_U32(ctx, 5), 0, 1))
+        result = r.call(13);
+    int code;
+    if (result > 0) {
+        const auto* src = r.scratch();
+        std::array<uint8_t, 24 + 33> info{};
+        std::memcpy(info.data(), src, 8);            // entry +8
+        std::memcpy(info.data() + 8, src + 8, 8);    // entry +24
+        std::memcpy(info.data() + 16, src + 16, 4);  // entry +4
+        std::memcpy(info.data() + 20, src + 20, 2);  // entry +0
+        std::memcpy(info.data() + 24, src + 32, 32); // entry +64 (name)
+        const uint32_t target = GPR_U32(ctx, 6);
+        const size_t nameBytes = strnlen(reinterpret_cast<const char*>(info.data() + 24), 32) + 1;
+        code = target && !r.transfer(target, info.data(), 24 + nameBytes, true) ? Request::error(-5) : 0;
+    } else
+        code = Request::error(result == 0 ? -4 : result);
+    r.finish(ctx, code);
+}
 inline void directory(uint8_t* ram, R5900Context* ctx, PS2Runtime*) {
     Request r(ram);
     int skip = GPR_U32(ctx, 6), limit = static_cast<int>(GPR_U32(ctx, 7));
@@ -304,21 +330,33 @@ inline void space(uint8_t* ram, R5900Context* ctx, PS2Runtime*) {
         result = service().entrySpace(GPR_U32(ctx, 4), name);
     r.finish(ctx, Request::error(result));
 }
-inline void install(PS2Runtime& runtime) {
-    // SLUS-20765 libmc2 worker backends. Original request thread, semaphore,
-    // completion status and public API remain guest code.
-    runtime.registerFunction(0x183290, info);
-    runtime.registerFunction(0x185280, create);
-    runtime.registerFunction(0x184828, data<false>);
-    runtime.registerFunction(0x1858c8, data<true>);
-    runtime.registerFunction(0x185e40, remove);
-    runtime.registerFunction(0x184360, stat);
-    runtime.registerFunction(0x186230, directory);
-    runtime.registerFunction(0x183670, format<16>);
-    runtime.registerFunction(0x183fc8, format<17>);
-    runtime.registerFunction(0x1860b0, chdir);
-    runtime.registerFunction(0x186798, chmod);
-    runtime.registerFunction(0x1868c8, rename);
-    runtime.registerFunction(0x186a88, space);
+// libmc2 worker backends called by the request thread's dispatcher (by request
+// type). Original request thread, semaphore, completion status and public API
+// remain guest code. File #2 links a different libmc2 build: its workers were
+// located through its dispatcher FUN_0012CA58 (same request types and argument
+// lists); its type-14 wrapper 0x12FF88 is replaced as a whole (statWrapper).
+struct Workers {
+    uint32_t info, format16, format17, read, write, create, remove, rename, directory, chdir, chmod,
+        stat, space;
+    bool statIsWrapper = false;
+};
+inline constexpr Workers File1Workers{0x183290, 0x183670, 0x183fc8, 0x184828, 0x1858c8, 0x185280, 0x185e40,
+                                      0x1868c8, 0x186230, 0x1860b0, 0x186798, 0x184360, 0x186a88};
+inline constexpr Workers File2Workers{0x12e118, 0x12e4b0, 0x12ede0, 0x130608, 0x130810, 0x130078, 0x130df0,
+                                      0x1317f0, 0x131148, 0x131020, 0x131668, 0x12ff88, 0x131970, true};
+inline void install(PS2Runtime& runtime, const Workers& w = File1Workers) {
+    runtime.registerFunction(w.info, info);
+    runtime.registerFunction(w.create, create);
+    runtime.registerFunction(w.read, data<false>);
+    runtime.registerFunction(w.write, data<true>);
+    runtime.registerFunction(w.remove, remove);
+    runtime.registerFunction(w.stat, w.statIsWrapper ? statWrapper : stat);
+    runtime.registerFunction(w.directory, directory);
+    runtime.registerFunction(w.format16, format<16>);
+    runtime.registerFunction(w.format17, format<17>);
+    runtime.registerFunction(w.chdir, chdir);
+    runtime.registerFunction(w.chmod, chmod);
+    runtime.registerFunction(w.rename, rename);
+    runtime.registerFunction(w.space, space);
 }
 } // namespace reo::mc2

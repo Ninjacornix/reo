@@ -10,6 +10,9 @@
 #include "movie_join_observer.h"
 #include "native_movie_image.h"
 #include <set>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
@@ -695,6 +698,23 @@ void nativeMovieReleaseFrame(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtim
             (originalReturnPC != REO_MA(0x15d920) && originalReturnPC != REO_MA(0x15e3c0)))
             throw std::runtime_error(
                 "Original movie release lacks its successful174080 branch and audited caller");
+        // REO_GPU_MOVIE_STATS=1: frames the original player showed/discarded per second.
+        static const bool stats = [] {
+            const char* v = std::getenv("REO_GPU_MOVIE_STATS");
+            return v && *v == '1';
+        }();
+        if (stats) {
+            static auto windowStart = std::chrono::steady_clock::now();
+            static unsigned shown = 0, discarded = 0;
+            (originalReturnPC == REO_MA(0x15d920) ? discarded : shown)++;
+            const auto now = std::chrono::steady_clock::now();
+            if (now - windowStart >= std::chrono::seconds(1)) {
+                std::fprintf(stderr, "[GPU-MOVIE-FPS] shown=%u discarded=%u ms=%lld\n", shown, discarded,
+                             (long long)std::chrono::duration_cast<std::chrono::milliseconds>(now - windowStart).count());
+                windowStart = now;
+                shown = discarded = 0;
+            }
+        }
         uint32_t physical = 0;
         if (!OriginalCompressedLineage::physical(frame, 0x40, physical))
             throw std::runtime_error("Original movie release frame metadata is outside RDRAM");

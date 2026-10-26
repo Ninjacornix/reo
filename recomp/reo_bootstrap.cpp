@@ -33,9 +33,7 @@
 #if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
 #include "overrides/movie_join_observer.h"
 #endif
-#if defined(REO_GAME_FILE1)
 #include "overrides/reo_memory_card.h"
-#endif
 
 #include "reo_vu_specialized.h"
 
@@ -797,6 +795,21 @@ static void reoStartShots(PS2Runtime* runtime) {
                                     std::chrono::steady_clock::now().time_since_epoch())
                                     .count();
 
+            // REO_SHOT_RAM=1: also dump EE RAM (32 MB per shot), with or without a CPU frame.
+
+            static const bool dumpRam = std::getenv("REO_SHOT_RAM") != nullptr;
+
+            if (const uint8_t* ram = dumpRam ? runtime->memory().getRDRAM() : nullptr) {
+
+                char rn[64];
+                snprintf(rn, sizeof(rn), "eeram_%u.bin", t);
+
+                if (FILE* rf = fopen(rn, "wb")) {
+                    fwrite(ram, 1, PS2_RAM_SIZE, rf);
+                    fclose(rf);
+                }
+            }
+
             if (runtime->gs().copyLatchedHostPresentationFrame(px, w, h) && w && h &&
                 px.size() >= size_t(w) * h * 4) {
 
@@ -830,21 +843,6 @@ static void reoStartShots(PS2Runtime* runtime) {
                     if (FILE* vf = fopen(vn, "wb")) {
                         fwrite(vram, 1, PS2_GS_VRAM_SIZE, vf);
                         fclose(vf);
-                    }
-                }
-
-                // REO_SHOT_RAM=1: also dump EE RAM (32 MB per shot).
-
-                static const bool dumpRam = std::getenv("REO_SHOT_RAM") != nullptr;
-
-                if (const uint8_t* ram = dumpRam ? runtime->memory().getRDRAM() : nullptr) {
-
-                    char rn[64];
-                    snprintf(rn, sizeof(rn), "eeram_%u.bin", t);
-
-                    if (FILE* rf = fopen(rn, "wb")) {
-                        fwrite(ram, 1, PS2_RAM_SIZE, rf);
-                        fclose(rf);
                     }
                 }
 
@@ -1245,7 +1243,10 @@ int main(int argc, char* argv[]) {
     printf("[BOOT] Applying game overrides (post-registration)...\n");
 
     ps2_game_overrides::applyMatching(runtime, elf_path, g.entry_point);
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, "SLUS-20984") == 0)
+        reo::mc2::install(runtime, reo::mc2::File2Workers);
+#else
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo::mc2::install(runtime);
 #endif
