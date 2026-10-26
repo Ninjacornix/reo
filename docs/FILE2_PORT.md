@@ -110,3 +110,15 @@ smoke run `20261025-163126-file2-boot9` runs 120 s without a crash with GS traff
 (gsPkts=568972, prims=189435). Fixed on the way: missing CRI DTX layout (stall after
 "Now Loading") and a clang-cl/MSVC `__m128i` return ABI mismatch in `PS2Runtime::Load128`.
 Visual state, input and PCSX2 comparison: not yet checked.
+
+2026-10-26: scripted input (`REO_PAD_SCRIPT`, LEFT+CROSS on the memory-card prompt, then
+START/CROSS) reaches the title screen, the File #2 main menu, Single Play -> New Game and
+Character Select with 3D models (`build-ninja/smoke/20261026-202458-file2-text`).
+- Garbled menu/character text (`hhh`, `MUU-'`) was 14 language-table accessors at
+  `0x14E040..0x14E220` (32-byte `lbu v1,0x97D(0x300000); return table[v1]` stubs) that
+  Ghidra never made functions; the runtime logged 1,694 `Function ... not found` and the
+  game used a stale pointer. Added to `recomp/config/file2/extra_functions.csv`; warnings 0,
+  text correct (confirmed).
+- Intro movie plays at ~4 decoded frames/s (CPU IPU path, `csc` in `[perf]`); START skips
+  it. The GPU movie route is File #1-only: ~1,175 address references, 38 unmapped.
+- No memory-card HLE for File #2 yet: the game asks to start without saving.
