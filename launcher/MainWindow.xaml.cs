@@ -41,6 +41,7 @@ public partial class MainWindow : Window {
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
         GpuMovies.IsChecked = settings.GpuMovies;
+        InitializeDeveloper();
         InitializeOnline();
         TextureFilter.SelectedIndex = settings.TextureLinear ? 1 : 0;
         InternalResolution.SelectedIndex =
@@ -113,7 +114,7 @@ public partial class MainWindow : Window {
             ArtworkLayer.Opacity = artworkOpacity;
         }
         foreach (string page in new[] { "Play", "Graphics", "Audio", "Controller", "Saves", "Coop", "Mods",
-                                        "Cheats", "Setup", "Logs" }) {
+                                        "Cheats", "Setup", "Logs", "Developer" }) {
             ((FrameworkElement)FindName("Page" + page)).Visibility =
                 page == name ? Visibility.Visible : Visibility.Collapsed;
             var button = (Button)FindName("Nav" + page);
@@ -133,6 +134,7 @@ public partial class MainWindow : Window {
                           "Logs" => ("Log", "Game debug and output."),
                           "Mods" => ("Mods", "Game modifications."),
                           "Cheats" => ("Cheats", "Gameplay adjustments."),
+                          "Developer" => ("Developer", "Diagnostic recordings for troubleshooting."),
                           _ => ("Play", "Choose your game.") };
         SettingsScroll.Visibility = name == "Logs" ? Visibility.Collapsed : Visibility.Visible;
         if (name == "Logs")
@@ -401,7 +403,7 @@ public partial class MainWindow : Window {
         int page = Array.IndexOf(args, "--page");
         if (page >= 0 && page + 1 < args.Length &&
             new[] { "Play", "Graphics", "Audio", "Controller", "Saves", "Coop", "Mods", "Cheats", "Setup",
-                    "Logs" }
+                    "Logs", "Developer" }
                 .Contains(args[page + 1]))
             ShowPage(args[page + 1]);
         if (screenshot >= 0 && screenshot + 1 < args.Length) {

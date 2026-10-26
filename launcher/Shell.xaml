@@ -23,6 +23,7 @@
      <Button x:Name="NavCheats" Tag="Cheats" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Cheats" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSetup" Tag="Setup" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Game files" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavLogs" Tag="Logs" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Log" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
+     <Button x:Name="NavDeveloper" Tag="Developer" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Developer" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
     </StackPanel>
     <StackPanel Grid.Row="2"><Button x:Name="PadBadge" Tag="Controller" Click="Navigate" Content="Checking input" Style="{StaticResource NavButton}" HorizontalContentAlignment="Left" Padding="12,6" FontSize="13" Margin="0,0,0,10" ToolTip="Open Controls" AutomationProperties.Name="Input device, open Controls"/><Button x:Name="UpdateButton" Content="Check for updates" Click="CheckForUpdates" ToolTip="Check GitHub Releases and install a newer Windows package" FontSize="13" HorizontalContentAlignment="Left"/>
      <TextBlock x:Name="UpdateState" Style="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" Margin="10,8,0,0"/>
@@ -245,6 +246,22 @@
          </StackPanel>
         </Expander>
        </StackPanel>
+      </StackPanel>
+      <StackPanel x:Name="PageDeveloper" Visibility="Collapsed" MaxWidth="600" HorizontalAlignment="Left">
+       <TextBlock Text="Recordings are saved in each game's session folder. Leave these off for normal play; they apply on the next launch." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+       <TextBlock Text="Co-op network" Style="{StaticResource Section}"/>
+       <CheckBox x:Name="DevNetworkTrace" Content="Packet timing" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="Every co-op packet's time, direction, size and header (coop-trace.jsonl). Full contents, including login, are removed when the game closes." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <CheckBox x:Name="DevTransportLog" Content="Network transport log" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="Socket calls and results in the game log (first 256, then every 128th)." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <CheckBox x:Name="DevSnapTrace" Content="SN@P packet log" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="Headers of the first 64 game protocol packets in the game log." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <TextBlock Text="Timing" Style="{StaticResource Section}"/>
+       <CheckBox x:Name="DevFrameTiming" Content="Frame timing" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="Per-frame start, scan-out and present times for about the first 9 minutes (frames.csv, written when the game closes)." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <CheckBox x:Name="DevGameClock" Content="Game clock and player position" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="File #1 only. Game clock, room and your character's position for 10 minutes after entering the first room (clock.csv). Compare two players' files to see when they drift apart." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <Button Content="Open session folders" Click="OpenSessionFolders" HorizontalAlignment="Left" Margin="0,8,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageSetup" Visibility="Collapsed">
        <TextBlock Text="Disc image (.iso)"/>

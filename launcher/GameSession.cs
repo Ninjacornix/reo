@@ -149,6 +149,11 @@ public sealed class GameSession {
         }
         foreach (var pair in onlineEnvironment)
             Set(pair.Key, pair.Value);
+        // Developer recordings come first so diagnostic routes below keep their own settings.
+        foreach (var pair in settings.Developer.Environment(Logs!, onlineEnvironment.Count > 0, selectedGame.Id))
+            Set(pair.Key, pair.Value);
+        if (start.Environment.ContainsKey("REO_COOP_TRACE_FILE"))
+            NetworkTrace.Start(Logs!);
         string? keyboardQueue = null;
         if (lobby != null && automaticAccount && diagnosticRoute == null) {
             // Title -> Network -> automatic sign-in uses the native route; the launcher then steers
@@ -368,6 +373,7 @@ public sealed class GameSession {
                       textureLinear = settings.TextureLinear,
                       internalResolution = settings.ResolvedInternalResolution,
                       performanceOverlay = settings.PerformanceOverlay,
+                      developer = settings.Developer,
                       anisotropy = settings.ResolvedAnisotropy,
                       aspectRatio = settings.ResolvedAspect,
                       screenFit = settings.ResolvedFit,
@@ -418,6 +424,7 @@ public sealed class GameSession {
             graphicsReady.TrySetCanceled();
             cardLease.Dispose();
         }
+        await Task.Run(() => NetworkTrace.Finish(logs));
         await File.WriteAllTextAsync(Path.Combine(logs, "exit.json"), JsonSerializer.Serialize(new {
             pid = process.Id, exitCode = process.ExitCode, utc = DateTime.UtcNow
         }));

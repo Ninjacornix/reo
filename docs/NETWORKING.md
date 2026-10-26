@@ -85,6 +85,25 @@ the original code.
 
 See [connecting with friends](#connecting-with-friends) for hosting requirements.
 
+The launcher's Developer page groups opt-in recordings: packet timing
+(`REO_COOP_TRACE_FILE`), the transport log (`REO_NET_TRACE`), the first 64 SN@P packets
+(`REO_SNAP_TRACE`), frame timing (`REO_FRAME_PACING_FILE`, about 9 minutes) and the File #1
+game clock/player position observer (`REO_GAME_CLOCK_*`, 600 s from the first room).
+Network items apply only to online launches; `launch.json` records which were on.
+Packet timing sets `REO_COOP_TRACE_FILE` for an online launch. When the game exits, the launcher rewrites the trace as `coop-trace.jsonl`
+in the session folder, keeping each packet's timestamp, direction, peer, length and first
+16 bytes, and deletes the full-payload file. `coop-trace-clock.json` maps the game's
+steady-clock timestamps to UTC for alignment with the server log. If the launcher closes
+before the game, the full-payload `coop-trace.raw.jsonl` remains; do not share that file.
+Frame rate per second is already in every session's `stderr.log` (`[perf]` lines).
+
+2026-10-25 two-player internet session (host log plus openSNAP server logs only):
+host held 60 vsyncs per second for the hour; scenario results recorded 54,147 ticks
+for the host and 53,321 for the joining player; each client sent roughly one gameplay
+packet per second through the game service, the host's mostly on a 1.0 s cadence. The
+players reported enemies missing or in different positions on one screen. Whether the
+original game also sends at this rate is unverified (needs a PCSX2 reference capture).
+
 `tools/snap_iop_check/run.bat` exercises the verified RPC layouts against real
 loopback sockets, including failure cases and handle reset. This is transport
 validation, not a gameplay test.
@@ -120,7 +139,11 @@ them through its firewall:
 | UDP | 9090 | Bootstrap login |
 | UDP | 9091 | Game and room traffic |
 | TCP | 10127 | Capcom application service |
-| TCP | 80 | Account/signup pages, when used |
+| TCP | 10128 | Account sign-up (launcher-hosted web service) |
+| UDP | 10129 | Host launcher: game discovery and shared randomizer settings |
+
+A joining launcher reads the host's randomizer settings over UDP 10129 before it starts
+the game; without that forward it stops with "Could not read the host's randomizer settings".
 
 Friends enter the host's public IPv4 address. Configure the bootstrap/game
 advertised addresses and `OPENSNAP_GAME_SERVER_MAP` to give clients a reachable

@@ -58,6 +58,8 @@ static class SelfTest {
         ControllerRumbleTests.Run(Check);
         GlobalWeaponMotionsTests.Run(Check);
         AudioMixerTests.Run(Check);
+        NetworkTraceTests.Run(Check);
+        DeveloperOptionsTests.Run(Check);
         GameImageCacheTests.Run(Check);
         Task.Run(() => AutomaticAccountTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
