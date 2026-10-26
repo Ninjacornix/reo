@@ -403,6 +403,11 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     file(GLOB RECOMP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}/*.cpp")
 
+    # Sibling generated directories (output_overlay, output_extra, output_ovl) sit
+    # next to OUTPUT_DIR: recomp/config for File #1, recomp/config/output_file2 for
+    # File #2 (tools/local_build/generate_game.py --game file2).
+    get_filename_component(_reo_generated_root "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}" DIRECTORY)
+
     list(LENGTH RECOMP_SOURCES RECOMP_COUNT)
 
     message(STATUS "REO [${TARGET_NAME}]: Found ${RECOMP_COUNT} recompiled source files in ${OUTPUT_DIR}")
@@ -423,7 +428,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     # Overlay functions (runtime-loaded code dumped from PCSX2)
 
-    set(OVERLAY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_overlay")
+    set(OVERLAY_DIR "${_reo_generated_root}/output_overlay")
 
     if(EXISTS "${OVERLAY_DIR}")
 
@@ -451,7 +456,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     # Extra main-ELF entry points the Ghidra map merged into neighbours (tools/extra_recomp.py).
 
-    set(EXTRA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_extra")
+    set(EXTRA_DIR "${_reo_generated_root}/output_extra")
 
     if(EXISTS "${EXTRA_DIR}/register_extra.cpp")
 
@@ -465,7 +470,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
 
 
-    set(OVL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_ovl")
+    set(OVL_DIR "${_reo_generated_root}/output_ovl")
 
     if(EXISTS "${OVL_DIR}/register_overlays.cpp")
 
@@ -504,8 +509,6 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         overrides/reo_netbio.cpp
 
         overrides/reo_vu_specialized.cpp
-
-        overrides/reo_missing_entries.cpp
 
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_parser.cpp"
 
@@ -551,6 +554,8 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             "${CMAKE_CURRENT_SOURCE_DIR}/.."
             "${CMAKE_CURRENT_SOURCE_DIR}/../tools/parallel_gs_backend/resident_geometry")
         list(APPEND _reo_handwritten_sources overrides/ground_query_diagnostic.cpp)
+        # Unregistered File #1 entry points (resume PCs, stutter fixes).
+        list(APPEND _reo_handwritten_sources overrides/reo_missing_entries.cpp)
         if(WIN32 AND REO_BUILD_GPU_GS)
             set(_reo_movie_game_sources
                 "${_reo_adapter_source}/movie_runtime/native_movie_game.cpp"
@@ -704,7 +709,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
         "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}"
 
-        "${CMAKE_CURRENT_SOURCE_DIR}/config/output_overlay"
+        "${_reo_generated_root}/output_overlay"
 
         "${CMAKE_CURRENT_SOURCE_DIR}/overrides"
 
@@ -1048,4 +1053,4 @@ add_recomp_target(reo_recomp "output" "REO_GAME_FILE1")
 
 # ── File #2: RE Outbreak File #2 (SLUS-20984) ─────────────────────
 
-add_recomp_target(reo_recomp_file2 "output_file2" "REO_GAME_FILE2")
+add_recomp_target(reo_recomp_file2 "output_file2/output" "REO_GAME_FILE2")

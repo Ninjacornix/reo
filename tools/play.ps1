@@ -1,11 +1,14 @@
 # Play the native build interactively (no time limit).
-#   powershell -ExecutionPolicy Bypass -File tools\play.ps1 [-Iso <owned ISO>] [-ToMainMenu | -ToScenario] [-GpuPresent] [-AsyncVif]
-# Mounts the ISO read-only, runs build-ninja\recomp\reo_recomp.exe until you close the
-# window, then unmounts. Saves (memory card) go to build-ninja\play\saves.
+#   powershell -ExecutionPolicy Bypass -File tools\play.ps1 [-Game file1|file2] [-Iso <owned ISO>] [-ToMainMenu | -ToScenario] [-GpuPresent] [-AsyncVif]
+# Mounts the ISO read-only, runs build-ninja\recomp\reo_recomp.exe (File #2:
+# reo_recomp_file2.exe) until you close the window, then unmounts. Saves (memory card)
+# go to build-ninja\play\saves (File #2: build-ninja\play-file2\saves).
 # Test routes use normal-speed startup and pad input at observed guest states.
 param(
-    [string]$Iso = 'iso\Resident Evil - Outbreak (v2.00).iso',
-    [string]$Elf = 'game_data\SLUS_207.65',
+    [ValidateSet('file1', 'file2')]
+    [string]$Game = 'file1',
+    [string]$Iso,
+    [string]$Elf,
     [switch]$ToMainMenu,
     [switch]$ToScenario,
     [switch]$GpuPresent,
@@ -21,11 +24,22 @@ if (($ToMainMenu -or $ToScenario) -and $env:REO_PAD_SCRIPT) {
 }
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$Exe = Join-Path $root 'build-ninja\recomp\reo_recomp.exe'
+if ($Game -eq 'file2') {
+    # The test routes wait for File #1 guest states.
+    if ($ToMainMenu -or $ToScenario) { throw 'Test routes are not mapped for File #2 yet.' }
+    if (-not $Iso) { $Iso = 'iso\Resident Evil - Outbreak - File #2.iso' }
+    if (-not $Elf) { $Elf = 'game_data_file2\SLUS_209.84' }
+    $Exe = Join-Path $root 'build-ninja\recomp\reo_recomp_file2.exe'
+    $playDir = Join-Path $root 'build-ninja\play-file2'
+} else {
+    if (-not $Iso) { $Iso = 'iso\Resident Evil - Outbreak (v2.00).iso' }
+    if (-not $Elf) { $Elf = 'game_data\SLUS_207.65' }
+    $Exe = Join-Path $root 'build-ninja\recomp\reo_recomp.exe'
+    $playDir = Join-Path $root 'build-ninja\play'
+}
 if (-not (Test-Path $Exe)) { Write-Error "game not built: $Exe"; exit 2 }
 $Iso = (Resolve-Path $Iso).Path
 $Elf = (Resolve-Path $Elf).Path
-$playDir = Join-Path $root 'build-ninja\play'
 New-Item -ItemType Directory -Force $playDir | Out-Null
 
 Dismount-DiskImage -ImagePath $Iso -ErrorAction SilentlyContinue | Out-Null
@@ -67,7 +81,7 @@ try {
     if ($ToMainMenu) { $env:REO_TEST_ROUTE = 'main-menu' }
     if ($ToScenario) { $env:REO_TEST_ROUTE = 'scenario' }
     Write-Host "Running $Exe (disc ${drive}:). Close the game window to stop."
-    $proc = Start-Process -FilePath $Exe -ArgumentList @('--game', 'file1', '--elf', "`"$runElf`"", '--data', "${drive}:\") `
+    $proc = Start-Process -FilePath $Exe -ArgumentList @('--game', $Game, '--elf', "`"$runElf`"", '--data', "${drive}:\") `
         -WorkingDirectory $playDir -RedirectStandardError (Join-Path $playDir 'stderr.log') `
         -RedirectStandardOutput (Join-Path $playDir 'stdout.log') -PassThru
     $proc.WaitForExit()

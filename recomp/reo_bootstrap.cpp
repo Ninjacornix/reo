@@ -325,6 +325,35 @@ static LONG WINAPI reoCrashFilter(EXCEPTION_POINTERS* ep) {
                 static_cast<unsigned long long>(ep->ExceptionRecord->ExceptionInformation[1]));
     }
 
+    // Uncaught MSVC C++ exception: walk the x64 ThrowInfo catchable types (image-relative)
+    // and print what() when the thrown object derives from std::exception.
+    if (ep->ExceptionRecord->ExceptionCode == 0xE06D7363 &&
+        ep->ExceptionRecord->NumberParameters >= 4 &&
+        ep->ExceptionRecord->ExceptionInformation[0] == 0x19930520) {
+        const auto object = ep->ExceptionRecord->ExceptionInformation[1];
+        const auto throwInfo = ep->ExceptionRecord->ExceptionInformation[2];
+        const auto image = ep->ExceptionRecord->ExceptionInformation[3];
+        const char* typeName = nullptr;
+        bool isStdException = false;
+        if (object && throwInfo && image) {
+            const auto rva = [image](uint32_t offset) { return image + offset; };
+            const auto array = rva(*reinterpret_cast<const uint32_t*>(throwInfo + 12));
+            const int count = *reinterpret_cast<const int*>(array);
+            for (int i = 0; i < count && i < 32; ++i) {
+                const auto type = rva(reinterpret_cast<const uint32_t*>(array + 4)[i]);
+                const char* name = reinterpret_cast<const char*>(
+                    rva(*reinterpret_cast<const uint32_t*>(type + 4)) + 16);
+                if (i == 0)
+                    typeName = name;
+                if (std::strcmp(name, ".?AVexception@std@@") == 0)
+                    isStdException = true;
+            }
+        }
+        fprintf(stderr, " c++ type=%s", typeName ? typeName : "?");
+        if (isStdException)
+            fprintf(stderr, " what=\"%s\"", reinterpret_cast<const std::exception*>(object)->what());
+    }
+
     fprintf(stderr, "\n[CRASH] stack (module+rva):");
 
     for (int i = 0; i < 48 && c.Rip; ++i) {
@@ -1079,8 +1108,23 @@ int main(int argc, char* argv[]) {
 #endif
     }
 #endif
+#if defined(REO_GAME_FILE1)
     reo_gpu_enrollment::configureBeforeBoot(gpuConfig, fs::u8path(GetApplicationDirectory()),
                                             g.serial, &runtime);
+#else
+    // The resident geometry registry is pinned to File #1 code images; a File #1
+    // setting left in the user environment must not prevent File #2 from starting.
+    // Clear it for this process so the runtime's own check does not refuse either.
+    if (const char* resident = std::getenv("REO_VIF1_GPU_RESIDENT"); resident && resident[0] == '1') {
+        fprintf(stderr, "[GPU-GEOMETRY] REO_VIF1_GPU_RESIDENT cleared: resident geometry is "
+                        "File #1 only; geometry stays on the CPU VU path\n");
+#ifdef _WIN32
+        _putenv_s("REO_VIF1_GPU_RESIDENT", "");
+#else
+        unsetenv("REO_VIF1_GPU_RESIDENT");
+#endif
+    }
+#endif
 
     gs_backend_bridge::registerFactory(reo_parallel_backend::makeFactory(std::move(gpuConfig)));
 
@@ -1198,8 +1242,10 @@ int main(int argc, char* argv[]) {
 #endif
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_movie_entry::install(runtime);
+#if defined(REO_GAME_FILE1)
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_missing_entries::install(runtime); // unregistered entries (stutter + skipped logic)
+#endif
 #if defined(REO_GAME_FILE1)
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_movie_join::install(runtime);
