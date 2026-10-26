@@ -24,7 +24,7 @@ public partial class MainWindow : Window {
         args = arguments;
         root = AppLayout.FindRoot(AppContext.BaseDirectory);
         settings = Settings.Load(root);
-        if (settings.Game.Id == "file2" && !arguments.Contains("--preview-file2"))
+        if (settings.Game.Id == "file2" && AppLayout.Packaged(root) && !arguments.Contains("--preview-file2"))
             settings.SelectedGame = "file1"; // File #2 is shown as coming later and cannot be selected
         controller.Configure(settings);
         InitializeComponent();
@@ -533,8 +533,15 @@ public partial class MainWindow : Window {
                 Directory.CreateDirectory(snapshot.MemoryCardFile1);
                 if (!args.Contains("--test-physical-pad")) controller.Select("keyboard");
             }
-            snapshot.SelectedGame = "file1";
-            snapshot.Exe = Path.GetFullPath(args[smoke + 1]);
+            int file2Test = Array.IndexOf(args, "--test-file2");
+            if (file2Test >= 0 && file2Test + 1 < args.Length) {
+                snapshot.SelectedGame = "file2";
+                snapshot.SecondExe = Path.GetFullPath(args[smoke + 1]);
+                snapshot.SecondIso = Path.GetFullPath(args[file2Test + 1]);
+            } else {
+                snapshot.SelectedGame = "file1";
+                snapshot.Exe = Path.GetFullPath(args[smoke + 1]);
+            }
             snapshot.DualSense = true;
             bool displayTest = args.Contains("--display-test");
             if (displayTest) {
@@ -641,7 +648,8 @@ public partial class MainWindow : Window {
             previousRunning = true;
             if (args.Contains("--test-wait-graphics"))
                 await game.WaitForGraphicsReadyAsync(TimeSpan.FromMinutes(10));
-            await Task.Delay(args.Contains("--test-auto-network")    ? 240000
+            await Task.Delay(args.Contains("--test-file2")           ? 60000
+                             : args.Contains("--test-auto-network")    ? 240000
                              : args.Contains("--test-roster-probe")   ? 95000
                              : args.Contains("--test-quick-display") ? 25000
                              : args.Contains("--test-room-preview")  ? 80000

@@ -22,7 +22,7 @@ public partial class MainWindow {
     bool checkingDisc;
     async Task CheckSelectedDisc() {
         string iso = settings.GetIso();
-        if (settings.Game.Id != "file1" || checkingDisc || !File.Exists(iso) ||
+        if (!Playable(settings.Game.Id) || checkingDisc || !File.Exists(iso) ||
             discCheck?.Matches(iso) == true)
             return;
         var file = new FileInfo(iso);
@@ -183,9 +183,10 @@ public partial class MainWindow {
         SupportedDiscHint.Text =
             settings.Game.Id == "file1"
                 ? DiscValidation.Required + " PAL, Japanese and other revisions are unsupported."
+                : Playable("file2") ? "Developer build: File #2 NTSC-U (SLUS-20984) matching game_data_file2."
                 : "File #2 is not supported in this release.";
         ChooseIsoButton.IsEnabled =
-            settings.Game.Id == "file1" && !updating && !game.Running && !launching && !backingUp;
+            Playable(settings.Game.Id) && !updating && !game.Running && !launching && !backingUp;
         bool idle = !updating && !game.Running && !launching && !backingUp;
         bool verified = discCheck is { Ok: true } && discCheck.Matches(settings.GetIso());
         ImportDiscButton.IsEnabled = settings.Game.Id == "file1" && settings.FilesPresent(root) &&
@@ -194,7 +195,7 @@ public partial class MainWindow {
         if (importCancellation != null)
             return;
         bool known = discCheck != null && discCheck.Matches(settings.GetIso());
-        DiscValidationStatus.Text = settings.Game.Id != "file1" || !File.Exists(settings.GetIso()) ? ""
+        DiscValidationStatus.Text = !Playable(settings.Game.Id) || !File.Exists(settings.GetIso()) ? ""
                                     : checkingDisc || !known ? "Checking disc..."
                                     : discCheck!.Ok ? "✓ " + discCheck.Message
                                                     : "✗ " + discCheck.Message;
@@ -203,7 +204,7 @@ public partial class MainWindow {
         if (File.Exists(settings.GetIso()) && !known && !checkingDisc)
             _ = CheckSelectedDisc();
         ImportState.Text =
-            settings.Game.Id == "file2" ? "File #2 is a placeholder. ISO import and play will be " +
+            !Playable(settings.Game.Id) ? "File #2 is a placeholder. ISO import and play will be " +
                                               "enabled with its native build."
             : DiscImport.Ready(settings) ? "Game data imported."
             : File.Exists(settings.GetIso())

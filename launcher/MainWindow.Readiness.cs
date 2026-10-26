@@ -109,7 +109,7 @@ public partial class MainWindow {
     void RefreshNextStep(bool packaged, bool kit, bool built, bool vulkan, bool roomy) {
         string iso = settings.GetIso();
         (string title, string detail, NextAction action) =
-            settings.Game.Id != "file1" ? ("", "", NextAction.None)
+            !Playable(settings.Game.Id) || settings.Game.Id != "file1" ? ("", "", NextAction.None)
             : importCancellation != null
                 ? ("Setting up the game", "Progress is shown below. This happens only once.", NextAction.None)
             : !kit && packaged
@@ -149,7 +149,7 @@ public partial class MainWindow {
         };
         NextStepButton.IsEnabled = !updating && !game.Running && !launching && !backingUp;
         // The footer reflects readiness instead of a bare "Ready" while setup is unfinished.
-        string summary = settings.Game.Id != "file1" ? "Not available yet"
+        string summary = !Playable(settings.Game.Id) ? "Not available yet"
                          : title.Length == 0 ? "Ready to play" : "Next step: " + title;
         if (Status.Text == "Ready" || Status.Text == readinessStatus)
             Status.Text = summary;

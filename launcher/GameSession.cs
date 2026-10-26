@@ -39,7 +39,9 @@ public sealed class GameSession {
                              uint? diagnosticSeed = null, bool diagnosticColdCache = false) {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
-        var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
+        // Co-op is File #1 only; File #2 always launches offline.
+        var onlineEnvironment = settings.Game.Id == "file1" ? OnlineOptions.LaunchEnvironment(settings)
+                                                            : new Dictionary<string, string>();
         if (diagnosticColdCache && diagnosticRoute == null)
             throw new InvalidOperationException("A private shader cache requires a diagnostic run.");
         var selectedMods = randomizerSeeds.ForLaunch(Mods.Selected(settings), settings.ResolvedCoopMode);
@@ -66,7 +68,7 @@ public sealed class GameSession {
         graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
         string sourceExe = settings.GetExe(), iso = settings.GetIso();
         var selectedGame = settings.Game;
-        if (selectedGame.Id != "file1")
+        if (selectedGame.Id != "file1" && AppLayout.Packaged(root))
             throw new IOException("File #2 is not available in this release.");
         if (!AppLayout.Packaged(root) && !File.Exists(sourceExe))
             throw new FileNotFoundException(

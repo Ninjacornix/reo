@@ -10,6 +10,8 @@ public partial class MainWindow {
     string backdropGame = "";
     bool backdropTransition;
     readonly Dictionary<string, BitmapImage> gameArtwork = new();
+    // File #2 runs only from a developer tree (its native build is not packaged yet).
+    bool Playable(string id) => id == "file1" || (id == "file2" && !AppLayout.Packaged(root));
     async Task LoadArtworkAsync() {
         if (args.Contains("--public-preview"))
             return; // user-supplied covers stay out of published screenshots
@@ -68,7 +70,7 @@ public partial class MainWindow {
         } catch (System.IO.IOException error) {
             Status.Text = error.Message;
         }
-        Status.Text = settings.Game.Id == "file2" ? "File #2 is not available yet." : "Ready";
+        Status.Text = Playable(settings.Game.Id) ? "Ready" : "File #2 is not available yet.";
         RefreshGameUi();
         UpdateSaves();
     }
@@ -76,7 +78,7 @@ public partial class MainWindow {
         ExePath.Text = settings.GetExe();
         IsoPath.Text = settings.GetIso();
         ElfPath.Text = settings.GetElf(root);
-        bool present = settings.Game.Id == "file1" && settings.FilesPresent(root);
+        bool present = Playable(settings.Game.Id) && settings.FilesPresent(root);
         SelectedGameLabel.Text = settings.Game.Name;
         RefreshBackdrop();
         GamePicker.SelectedValue = settings.Game.Id;
@@ -88,7 +90,7 @@ public partial class MainWindow {
             ((Border)FindName("GameCard" + n)).BorderBrush =
                 (System.Windows.Media.Brush)FindResource(selected ? "Accent" : "Line");
             ((TextBlock)FindName("GameStatus" + n)).Text =
-                id == "file2" ? "Coming later"
+                !Playable(id) ? "Coming later"
                 : selected && game.Running ? "Running"
                 : !(AppLayout.Packaged(root) ? LocalGameBuild.Available(root)
                                              : File.Exists(settings.GetExe(id)))
