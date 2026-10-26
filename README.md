@@ -1,12 +1,26 @@
-# RE: Outbreak
+# RE: Outbreak — Resident Evil Outbreak PC Port (Native Windows)
 
-An experimental native Windows port of Resident Evil Outbreak, built with static recompilation and a PS2 compatibility runtime.
+**Resident Evil Outbreak (PS2, *Biohazard Outbreak*) running natively on Windows PC**, built with
+static recompilation and a PS2 compatibility runtime — not an emulator. Play **Outbreak File #1**
+from start to finish, with **online co-op** through openSNAP, a **randomizer**, **cheats**,
+**controller support** and modern **video settings** up to 4K.
 
-**1.0 Alpha prerelease (v1.0.19)** | [Downloads](https://github.com/Ninjacornix/reo/releases) | [Requirements](REQUIREMENTS.md)
+**Latest release: v1.0.19** | [Download for Windows](https://github.com/Ninjacornix/reo/releases/latest) | [Requirements](REQUIREMENTS.md) | [All releases](https://github.com/Ninjacornix/reo/releases)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
 ![The launcher on first start: it asks for your game disc](docs/launcher-screenshots/launcher-play.png)
+
+## Features
+
+- **Outbreak File #1 is fully playable** — menus, scenarios, cutscenes, movies, audio and saves, on Windows x64.
+- **Online co-op (up to 4 players)** through the bundled [openSNAP](https://github.com/GrenderG/openSNAP) server: host from the launcher, friends join by address or LAN discovery. No registration, no external account.
+- **Mods — Randomizer:** seeded weapon, ammunition, item and enemy-spawn randomization, shared from the host to every co-op player. [Create your own mod](docs/MODDING.md).
+- **Cheats:** health, infection, ammunition and progression unlocks, plus a supported subset of PCSX2 `.pnach` cheats.
+- **Controller support:** DualSense (light bar and rumble), Xbox / XInput controllers and keyboard, with full remapping.
+- **Video settings:** HD, Full HD, 2K and 4K output, 2× / 4× internal resolution, 16:9 or 4:3, FXAA / SMAA anti-aliasing, anisotropic and linear texture filtering, brightness and gamma, borderless fullscreen and a performance counter.
+- **Audio mixer:** separate master, music, effects, voice and menu volume.
+- **One-click launcher:** checks your ISO, builds the game locally, manages memory cards, logs and updates.
 
 ## Get started
 
@@ -32,10 +46,10 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 
 ## Status
 
-- **Outbreak: File #1:** boots into menus and gameplay. Rendering, performance and cutscene/audio synchronization are still under development.
-- **Outbreak: File #2:** a placeholder in the launcher; not playable.
+- **Outbreak: File #1:** fully playable on Windows. Performance can still vary in CPU-heavy rooms.
+- **Outbreak: File #2:** a placeholder in the launcher; not playable yet (port in progress).
 - **Launcher:** guided first-run setup, ISO check before import, local build with cached reuse, display and filtering options, controller remapping, memory cards, cheats, logs, co-op hosting/joining and GitHub release updates.
-- **Online co-op:** experimental; see below.
+- **Online co-op:** working through openSNAP; see below for what is verified and known issues.
 - **Mods:** enable **Randomizer** for File #1 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition and progression-unlock options plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS. VU execution and other PS2 behavior still use compatibility paths; this is not a claim that all game graphics work has moved to the GPU or that original timing is fully preserved.
@@ -68,8 +82,7 @@ once more after updating. Runtime headers changed, so this update recompiles all
 units. Later updates can reuse the compile cache where inputs are unchanged. Generation and compilation were also made faster in v1.0.11 without
 changing compiler optimization; see the [measured results](docs/COMPILATION_PERFORMANCE.md).
 
-This is an **experimental preview**. Setup, rendering, performance and audio may
-still have problems. The previous v1.0.0 game-binary package remains withdrawn.
+Report problems on the [issue tracker](https://github.com/Ninjacornix/reo/issues). The previous v1.0.0 game-binary package remains withdrawn.
 
 For development builds, see [Building on Windows](docs/BUILDING.md). Existing
 local executables and generated sources are preserved for development and are
@@ -120,9 +133,26 @@ in the same network room. Movement, pickup ownership, removal of collected items
 duplicate-pickup prevention and ammunition changes were observed on both clients.
 Enemy plans now use a canonical spawn order; scripted enemy reconstruction also
 preserves the same maximum health on both clients. Health and actions can still
-arrive late, especially during grabs. Internet play, reconnects, later rooms,
-mixed-species combat and full scenario completion remain unverified. Co-op remains experimental. See
-[server setup](network/server/SETUP.md) for advanced overrides.
+arrive late, especially during grabs. Later rooms,
+mixed-species combat and reconnects remain unverified on the local test setup.
+
+A two-player internet session (2026-10-25) completed a full scenario on both clients.
+Players occasionally saw enemies missing or in different positions on one screen;
+this desync is being investigated. See [server setup](network/server/SETUP.md) for
+advanced overrides and [networking notes](docs/NETWORKING.md) for details.
+
+### Developer page (next release)
+
+The launcher's **Developer** page turns on diagnostic recordings, saved in each game's
+session folder. Leave them off for normal play.
+
+| Toggle | Setting | Records |
+| --- | --- | --- |
+| Packet timing | `REO_COOP_TRACE_FILE` | Every co-op packet's time, direction, size and header (`coop-trace.jsonl`); full payloads, including login, are removed when the game closes |
+| Network transport log | `REO_NET_TRACE` | Socket calls and results in `stderr.log` |
+| SN@P packet log | `REO_SNAP_TRACE` | The first 64 game protocol packets in `stderr.log` |
+| Frame timing | `REO_FRAME_PACING_FILE` | Per-frame timing for about 9 minutes (`frames.csv`) |
+| Game clock and player position | `REO_GAME_CLOCK_LOG` | File #1 game clock, room and player position for 10 minutes (`clock.csv`) |
 
 ## Source layout
 
@@ -143,3 +173,9 @@ Generated sources, captures, saves, build outputs and private handoffs remain lo
 This fork's original contributions are GPL-3.0-only. Inherited upstream and third-party components retain their licenses and attribution; see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
 
 Resident Evil and Outbreak are trademarks of their respective owners. This project is not affiliated with or endorsed by Capcom or Sony.
+
+---
+
+*Keywords: Resident Evil Outbreak PC, Biohazard Outbreak PC port, RE Outbreak Windows, PS2
+static recompilation, PS2Recomp, Resident Evil Outbreak online co-op, openSNAP, Outbreak
+randomizer, Outbreak File 1 PC, native PS2 port.*
