@@ -122,3 +122,12 @@ Character Select with 3D models (`build-ninja/smoke/20261026-202458-file2-text`)
 - Intro movie plays at ~4 decoded frames/s (CPU IPU path, `csc` in `[perf]`); START skips
   it. The GPU movie route is File #1-only: ~1,175 address references, 38 unmapped.
 - No memory-card HLE for File #2 yet: the game asks to start without saving.
+
+2026-10-26 VU geometry: the ELF microcode region (`0xFB000..0x100F00` in File #1, same layout in
+File #2, ~24 KB) is byte-identical between the games, so File #1's specialized/native VU1
+programs are now built for File #2 as well (CMake and `reo_vu_specialized.cpp` gates widened to
+`REO_GAME_FILE[12]`; the runtime still compares the live bank, `[VU-CODE-COVERAGE]
+compared_bytes=3888`). A/B on the same exe and scripted route (scenario room behind the pause
+menu, 160-210 s): main thread 134 ms vs 275 ms CPU per 1 s sample with `REO_VU_SPECIALIZED=0`.
+Gameplay movement not yet measured. The dev submodule lacked patch 0104 (CRLF); applied with
+`git apply --ignore-whitespace`, then `ps2_runtime.lib` rebuilt.

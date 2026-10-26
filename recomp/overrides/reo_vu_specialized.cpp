@@ -4,16 +4,16 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#if defined(REO_HAVE_NATIVE_GEOMETRY) && defined(REO_GAME_FILE1)
+#if defined(REO_HAVE_NATIVE_GEOMETRY) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
 #include "reo_vu_native_geometry.h"
 #endif
 
 // Root/generator supplies this file in the ignored game-generated candidate.
 // Runtime sources and distributed generic patches contain no game code image.
-#if defined(REO_HAVE_GENERATED_VU_PROGRAMS) && defined(REO_GAME_FILE1)
+#if defined(REO_HAVE_GENERATED_VU_PROGRAMS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
 #include "reo_vu_specialized_generated.h"
 #endif
-#if defined(REO_HAVE_WHOLE_VU_PROGRAMS) && defined(REO_GAME_FILE1)
+#if defined(REO_HAVE_WHOLE_VU_PROGRAMS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
 #include "vu_whole_program.h"
 #include "reo_vu_whole_registered_generated.h"
 #endif
@@ -22,7 +22,7 @@
 // Opt-in (REO_VU_WHOLE=1): 2026-10-18 A/B gave no measurable room speed gain (20.13 on vs 20.18 off
 // updates/s), and only 2 of its programs have byte-parity oracle proof. REO_VU_SPECIALIZED=0 also disables it.
 static void reoRegisterVuWholePrograms(bool enabled) noexcept {
-#if defined(REO_HAVE_WHOLE_VU_PROGRAMS) && defined(REO_GAME_FILE1)
+#if defined(REO_HAVE_WHOLE_VU_PROGRAMS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
     const char* flag = std::getenv("REO_VU_WHOLE");
     if (!(flag && std::strcmp(flag, "1") == 0))
         enabled = false;
@@ -40,7 +40,7 @@ bool reoRegisterVuSpecializedPrograms() noexcept {
         vu_native_geometry::registerProgramTable(nullptr);
         return vu_specialized::registerProgramTable(nullptr);
     }
-#if defined(REO_HAVE_GENERATED_VU_PROGRAMS) && defined(REO_GAME_FILE1)
+#if defined(REO_HAVE_GENERATED_VU_PROGRAMS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
     const auto* legacy = reo_vu_specialized_generated::programTable();
     // The VU bank can retain room/effect uploads after the canonical geometry
     // image. Only blocks and native loops fully covered by this checked prefix

@@ -591,7 +591,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             overrides/gpu_palette_parent/parent_observed.cpp
             overrides/gpu_palette_parent/observer_install.cpp)
     endif()
-    if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
         list(APPEND _reo_handwritten_sources "${REO_VU_SPECIALIZED_SOURCE}")
 
@@ -599,12 +599,12 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     endif()
 
-    if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
         list(APPEND _reo_handwritten_sources "${REO_VU_WHOLE_SOURCE}")
         get_filename_component(_reo_vu_whole_dir "${REO_VU_WHOLE_SOURCE}" DIRECTORY)
     endif()
 
-    if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
         list(APPEND _reo_handwritten_sources "${REO_VU_NATIVE_GEOMETRY_SOURCE}")
 
@@ -630,7 +630,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         target_link_libraries(${TARGET_NAME} PRIVATE ws2_32)
     endif()
 
-    if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
         set_property(SOURCE overrides/reo_vu_specialized.cpp "${REO_VU_WHOLE_SOURCE}"
             TARGET_DIRECTORY ${TARGET_NAME} APPEND PROPERTY INCLUDE_DIRECTORIES
                 "${PS2RECOMP_DIR}/ps2xRuntime/src/lib" "${_reo_vu_whole_dir}"
@@ -639,7 +639,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             APPEND PROPERTY COMPILE_DEFINITIONS REO_HAVE_WHOLE_VU_PROGRAMS=1)
     endif()
 
-    if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
         set_property(SOURCE overrides/reo_vu_specialized.cpp "${REO_VU_SPECIALIZED_SOURCE}"
 
@@ -655,7 +655,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     endif()
 
-    if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
         set_property(SOURCE overrides/reo_vu_specialized.cpp "${REO_VU_NATIVE_GEOMETRY_SOURCE}"
 
@@ -901,7 +901,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
             PROPERTIES COMPILE_OPTIONS "${_reo_handwritten_opts}")
 
-        if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
             set_property(SOURCE "${REO_VU_WHOLE_SOURCE}" TARGET_DIRECTORY ${TARGET_NAME}
                 APPEND PROPERTY COMPILE_OPTIONS /fp:precise)
         endif()
@@ -911,7 +911,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         set_property(SOURCE overrides/reo_hw_bridge.cpp TARGET_DIRECTORY ${TARGET_NAME}
             APPEND PROPERTY INCLUDE_DIRECTORIES "${PS2RECOMP_DIR}/ps2xRuntime/src/lib")
 
-        if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
             set_property(SOURCE "${REO_VU_SPECIALIZED_SOURCE}" TARGET_DIRECTORY ${TARGET_NAME}
 
@@ -919,7 +919,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
         endif()
 
-        if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
             set_property(SOURCE overrides/reo_vu_specialized.cpp "${REO_VU_NATIVE_GEOMETRY_SOURCE}"
 
