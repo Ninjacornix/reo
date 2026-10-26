@@ -3212,6 +3212,13 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
             // sceDbcSetWorkAddr (EE 0x188BC0): EE area at +4 receives per-port connection words.
             if (rpcNum == 0x80001304u && sendBuf && sendSize >= 8)
                 pad2SetWorkAddr(rdram, rdramRead32(rdram, sendBuf + 4));
+            bool stateQuery = false;
+            if (sendBuf && sendSize >= 12) {
+                const uint32_t head[3]{rdramRead32(rdram, sendBuf), rdramRead32(rdram, sendBuf + 4),
+                                       rdramRead32(rdram, sendBuf + 8)};
+                stateQuery = reo::pad2::isStateQuery(
+                    rpcNum, {reinterpret_cast<const uint8_t*>(head), sizeof(head)});
+            }
             if (recvBuf && recvSize >= 4) {
                 for (uint32_t off = 0; off + 4 <= recvSize && off < 0x40; off += 4)
                     rdramWrite32(rdram, recvBuf + off, 0);
@@ -3223,6 +3230,13 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     rdramWrite32(rdram,recvBuf+8,1);
                     rdramWrite32(rdram,recvBuf+12,3); // one-bit small + eight-bit large motor
                     rdramWrite32(rdram,recvBuf+0x20c,0);
+                }
+                // The bridge always reports a connected pad: answer the state
+                // query with one byte, 1 (stable), as stamped into the records.
+                if (stateQuery && recvSize >= 0x210) {
+                    rdramWrite32(rdram, recvBuf + 8, 1);
+                    rdramWrite32(rdram, recvBuf + 12, 1);
+                    rdramWrite32(rdram, recvBuf + 0x20c, 0);
                 }
             }
             return true;

@@ -131,3 +131,12 @@ compared_bytes=3888`). A/B on the same exe and scripted route (scenario room beh
 menu, 160-210 s): main thread 134 ms vs 275 ms CPU per 1 s sample with `REO_VU_SPECIALIZED=0`.
 Gameplay movement not yet measured. The dev submodule lacked patch 0104 (CRLF); applied with
 `git apply --ignore-whitespace`, then `ps2_runtime.lib` rebuilt.
+
+2026-10-26 pad state: libpad2 `0x12B280` (exact match of File #1) falls back to dbcman RPC
+`0x8000131A` command `0x0101800C` when the record counter has not advanced. The bridge zeroed
+the reply count, so `0x134518` copied nothing and the caller returned an uninitialized stack
+byte as the port state; `0x33D050` flapped 2/1 around scenario load (`REO_PEEK`). The bridge now
+answers count 1, state 1 (`runtime/input/pad2_rumble.h` `isStateQuery`). After the fix the port
+state stays 0x101. In scripted runs the in-game pause menu still opens on scenario entry and
+EXIT does not close it; cause not found (not the pad state, not the automation helpers).
+Hot loop while paused: `FUN_001ddd10` (callers include `FUN_001edcb0` <- `FUN_00146340`).
