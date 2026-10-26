@@ -30,8 +30,10 @@
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
 #include "overrides/reo_gpu_movie_boundary.h"
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
 #include "overrides/movie_join_observer.h"
+#endif
+#if defined(REO_GAME_FILE1)
 #include "overrides/reo_memory_card.h"
 #endif
 
@@ -44,7 +46,7 @@
 namespace gs_backend_bridge {
 void publishPrivilegedReset(const Privileged&);
 }
-#if defined(_WIN32) && defined(REO_GAME_FILE1)
+#if defined(_WIN32) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
 #include "movie_runtime/native_movie_game.h"
 #endif
 
@@ -156,6 +158,13 @@ struct GameDef {
 
     uint32_t entry_point;
 };
+
+// Serial of the game this build's movie addresses (reo_movie_game_addresses.h) describe.
+#if defined(REO_GAME_FILE2)
+#define REO_MOVIE_SERIAL "SLUS-20984"
+#else
+#define REO_MOVIE_SERIAL "SLUS-20765"
+#endif
 
 static const GameDef s_games[] = {
 
@@ -1240,22 +1249,23 @@ int main(int argc, char* argv[]) {
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo::mc2::install(runtime);
 #endif
-    if (std::strcmp(g.serial, "SLUS-20765") == 0)
+    if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0)
         reo_movie_entry::install(runtime);
 #if defined(REO_GAME_FILE1)
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_missing_entries::install(runtime); // unregistered entries (stutter + skipped logic)
 #endif
-#if defined(REO_GAME_FILE1)
-    if (std::strcmp(g.serial, "SLUS-20765") == 0)
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0)
         reo_movie_join::install(runtime);
 #endif
-#if defined(_WIN32) && defined(REO_HAVE_PARALLEL_GS) && defined(REO_GAME_FILE1)
-    if (std::strcmp(g.serial, "SLUS-20765") == 0) {
+#if defined(_WIN32) && defined(REO_HAVE_PARALLEL_GS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
+    if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0) {
         const char* gpuMovie = std::getenv("REO_GPU_MOVIE");
         if (gpuMovie && std::atoi(gpuMovie) != 0 && !reo_gpu_movie::installNativeMovieGame(runtime))
             throw std::runtime_error(
                 "Native GPU movie installation refused its original GAME identities");
+#if defined(REO_GAME_FILE1)
         // REO_TRACE_171920=1 (CPU movie path only; the GPU route requires the original pointer at 0x171920):
         // log every entry into the movie demuxer's end-of-program callback, for comparing the paths.
         const char* trace = std::getenv("REO_TRACE_171920");
@@ -1281,6 +1291,7 @@ int main(int argc, char* argv[]) {
                                      rd(work + 0xa48 + 0x48), rd(work + 0x9ec));
                     sub_00171920_0x171920(rdram, ctx, rt);
                 });
+#endif
     }
 #endif
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)

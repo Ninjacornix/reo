@@ -1,4 +1,5 @@
 #pragma once
+#include "reo_movie_game_addresses.h"
 // Narrow original libmpeg picture boundary. Read-only transport metadata;
 // this does not decode pixels, alter guest state, or fake movie completion.
 #include "ps2_runtime.h"
@@ -74,7 +75,7 @@ inline Metadata capture(const uint8_t* ram, const R5900Context* c) {
             for (unsigned j = 0; j < 3; ++j)
                 m.callbacks[i][j] = word(ram, m.inner + 0xC + 12 * i + 4 * j);
     }
-    m.sofdec = word(ram, 0x22F18C);
+    m.sofdec = word(ram, REO_MA(0x22F18C));
     if (span(m.sofdec, 0x1B34))
         m.work = word(ram, m.sofdec + 0x1B30);
     m.workSupported = span(m.work, 0xAA0);
@@ -91,7 +92,7 @@ inline Metadata capture(const uint8_t* ram, const R5900Context* c) {
 inline GuestFunction originals[2]{};
 inline std::atomic<unsigned> entries{0};
 template <unsigned Kind> void picture(uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
-    constexpr uint32_t entry = Kind == 0 ? 0x147D30u : 0x147D78u;
+    constexpr uint32_t entry = Kind == 0 ? REO_MA(0x147D30u) : REO_MA(0x147D78u);
     auto original = originals[Kind];
     if (!original) {
         std::fprintf(stderr, "[GPU-MOVIE-BOUNDARY] missing original entry\n");
@@ -149,7 +150,7 @@ inline bool install(PS2Runtime& rt) {
         return false;
     // Requires the real original generated registration first. Do not bind to
     // sceMpeg stubs; natural execution currently uses these original entries.
-    auto first = rt.lookupFunction(0x147D30u), second = rt.lookupFunction(0x147D78u);
+    auto first = rt.lookupFunction(REO_MA(0x147D30u)), second = rt.lookupFunction(REO_MA(0x147D78u));
     if (!first || !second || first == picture<0> || second == picture<1>)
         return false;
     originals[0] = first;
@@ -157,8 +158,8 @@ inline bool install(PS2Runtime& rt) {
     entries.store(0, std::memory_order_relaxed);
     metadataReads.store(0, std::memory_order_relaxed);
     metadataCaptures.store(0, std::memory_order_relaxed);
-    rt.registerFunction(0x147D30u, picture<0>);
-    rt.registerFunction(0x147D78u, picture<1>);
+    rt.registerFunction(REO_MA(0x147D30u), picture<0>);
+    rt.registerFunction(REO_MA(0x147D78u), picture<1>);
     std::fprintf(stderr, "[GPU-MOVIE-BOUNDARY] enabled original147d30/147d78 observer; metadata "
                          "only; limit24; no replacement/completion writes\n");
     return true;

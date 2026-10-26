@@ -1,3 +1,4 @@
+#include "reo_movie_game_addresses.h"
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
 #include "native_movie_game.h"
@@ -14,7 +15,7 @@
 #include <cstdlib>
 #include <exception>
 
-void sub_00171D10_0x171d10(uint8_t*, R5900Context*, PS2Runtime*);
+void REO_MS_171D10(uint8_t*, R5900Context*, PS2Runtime*);
 void reo_movie_native_171d10(uint8_t*, R5900Context*, PS2Runtime*);
 namespace reo_gpu_movie {
 namespace {
@@ -336,7 +337,7 @@ Result receive(void* pointer, Operation operation, uint8_t* ram, R5900Context* c
         if (operation == Operation::Decode144500) {
             pending->decode = value.transport->decodeEvent(ram, pending->serial, value.inner);
             value.transport->thresholds(pending->th0, pending->th1);
-            if (returnPC != 0x146594)
+            if (returnPC != REO_MA(0x146594))
                 throw std::runtime_error(
                     "Owned movie decode lacks original1464F0 reference selection");
             pending->decode.referenceMetadata =
@@ -360,7 +361,7 @@ Result receive(void* pointer, Operation operation, uint8_t* ram, R5900Context* c
                                OriginalCompressedLineage::read32(ram, value.owner.work + 0x10)};
             value.transport->thresholds(pending->output.th0, pending->output.th1);
             pending->output.actualThresholds = true;
-            if (returnPC != 0x146eac)
+            if (returnPC != REO_MA(0x146eac))
                 throw std::runtime_error(
                     "Owned movie CSC lacks genuine146DD8 timestamp publication");
             pending->output.referenceMetadata =
@@ -690,8 +691,8 @@ void nativeMovieReleaseFrame(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtim
         healthy(value);
         //15D920 discards a peeked late frame.15E3C0 releases the selected
         // frame after the original client returns it. No host drop policy.
-        if (!ctx || ctx->pc != 0x174080 || GPR_U32(ctx, 2) != 0 ||
-            (originalReturnPC != 0x15d920 && originalReturnPC != 0x15e3c0))
+        if (!ctx || ctx->pc != REO_MA(0x174080) || GPR_U32(ctx, 2) != 0 ||
+            (originalReturnPC != REO_MA(0x15d920) && originalReturnPC != REO_MA(0x15e3c0)))
             throw std::runtime_error(
                 "Original movie release lacks its successful174080 branch and audited caller");
         uint32_t physical = 0;
@@ -786,7 +787,7 @@ void nativeMovieReleaseFrame(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtim
                          static_cast<unsigned long long>(source.picture),
                          static_cast<unsigned long long>(source.outputEventSerial),
                          originalReturnPC, frame, source.destination,
-                         originalReturnPC == 0x15d920 ? "original-discard"
+                         originalReturnPC == REO_MA(0x15d920) ? "original-discard"
                                                       : "original-client-return");
     });
 }
@@ -825,11 +826,11 @@ void nativeMovieReturned(const uint8_t*, R5900Context* ctx, PS2Runtime* runtime,
 bool installNativeMovieGame(PS2Runtime& runtime) {
     if (game.runtime || runtime.hasFunction(NativeWaitPC))
         return false;
-    constexpr uint32_t aliases[]{0x171d10, 0x171d4c, 0x171d90, 0x171da8, 0x171db0,
-                                 0x171dfc, 0x171e10, 0x171e1c, 0x171e24};
+    constexpr uint32_t aliases[]{REO_MA(0x171d10), REO_MA(0x171d4c), REO_MA(0x171d90), REO_MA(0x171da8), REO_MA(0x171db0),
+                                 REO_MA(0x171dfc), REO_MA(0x171e10), REO_MA(0x171e1c), REO_MA(0x171e24)};
     for (auto pc : aliases) {
         const auto original = runtime.lookupFunction(pc);
-        if (original != sub_00171D10_0x171d10 && original != reo_movie_join_observed_caller)
+        if (original != REO_MS_171D10 && original != reo_movie_join_observed_caller)
             return false;
     }
     if (!reo_gpu_movie_transport::install(runtime, game.lineage, &game, pictureHeader, ringReset))
