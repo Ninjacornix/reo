@@ -178,3 +178,11 @@ BASLUS-20984OB2 (icon.sys, icons, game.bin 119544 B, patch.bin 8240 B; [MC2] cre
 succeeded) and showed "Data has been saved."; a second save found the existing data ("OK to
 overwrite"). Launcher: File #2 is selectable and playable from a developer tree; smoke launch
 `--smoke-launch <exe> <result.json> --test-file2 <iso>` ran 60 s, GPU movies, exit 0.
+
+2026-10-27 File #1 dev build: `reo_bootstrap.cpp` never compiled through the dev path because
+`build-ninja/asset-clang-launcher.py` sent it to MSVC while `overrides/reo_audio.h` uses GCC
+atomics and minimal Win32 headers (the release kit uses llvm-mingw). The launcher script (local,
+untracked) now compiles it with clang-cl too, and `reo_audio.h` defines `_AMD64_` for the SDK
+headers. `reo_recomp.exe` (File #1) builds and boots with GPU movies to the main menu
+(`build-ninja/smoke/*-file1-regress`, 0 missing functions); run with `REO_VIF1_GPU_RESIDENT=0`
+unless the GPU catalogue assets are next to the exe.
