@@ -31,6 +31,8 @@ if ($Game -eq 'file2') {
     if (-not $Elf) { $Elf = 'game_data_file2\SLUS_209.84' }
     $Exe = Join-Path $root 'build-ninja\recomp\reo_recomp_file2.exe'
     $playDir = Join-Path $root 'build-ninja\play-file2'
+    # File #2 movies need the GPU decoder (the CPU route runs at ~4 frames/s).
+    $GpuPresent = $true
 } else {
     if (-not $Iso) { $Iso = 'iso\Resident Evil - Outbreak (v2.00).iso' }
     if (-not $Elf) { $Elf = 'game_data\SLUS_207.65' }
