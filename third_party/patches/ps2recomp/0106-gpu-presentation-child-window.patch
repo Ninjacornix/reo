@@ -1,0 +1,95 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+@@ -113,6 +113,60 @@ void ps2InstallModalRender(void *nativeWindow, void (*render)())
+         SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&modalAwareProc)));
+ }
+ 
++namespace
++{
++    HWND g_presentWindow = nullptr;
++    int g_presentWidth = 0, g_presentHeight = 0;
++
++    // Input passes through to the raylib window underneath.
++    LRESULT CALLBACK presentProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
++    {
++        if (msg == WM_NCHITTEST) return HTTRANSPARENT;
++        if (msg == WM_ERASEBKGND) return 1;
++        return DefWindowProcW(hwnd, msg, wParam, lParam);
++    }
++}
++
++// Newer NVIDIA and AMD drivers can present the raylib window's OpenGL context through
++// their own DXGI swap chain; a second flip-model swap chain on that window then fails
++// with E_ACCESSDENIED. The resident GPU presenter therefore draws into a child window
++// that OpenGL never touches, sized to the parent's client area. Call on the window thread.
++void *ps2PresentationWindow(void *nativeWindow, int width, int height)
++{
++    HWND parent = static_cast<HWND>(nativeWindow);
++    if (!parent)
++        return nullptr;
++    if (!g_presentWindow)
++    {
++        WNDCLASSW wc{};
++        wc.lpfnWndProc = presentProc;
++        wc.hInstance = GetModuleHandleW(nullptr);
++        wc.lpszClassName = L"REOPresentation";
++        RegisterClassW(&wc);
++        SetWindowLongPtrW(parent, GWL_STYLE, GetWindowLongPtrW(parent, GWL_STYLE) | WS_CLIPCHILDREN);
++        g_presentWindow = CreateWindowExW(WS_EX_NOPARENTNOTIFY, wc.lpszClassName, L"",
++            WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_CLIPSIBLINGS, 0, 0, std::max(width, 1),
++            std::max(height, 1), parent, nullptr, wc.hInstance, nullptr);
++        if (!g_presentWindow)
++        {
++            std::fprintf(stderr, "[HOST-WINDOW] presentation child unavailable (%lu); using main window\n",
++                GetLastError());
++            return parent;
++        }
++        g_presentWidth = width;
++        g_presentHeight = height;
++        std::fprintf(stderr, "[HOST-WINDOW] presentation child=%p parent=%p size=%dx%d\n",
++            static_cast<void *>(g_presentWindow), static_cast<void *>(parent), width, height);
++    }
++    if (width > 0 && height > 0 && (width != g_presentWidth || height != g_presentHeight))
++    {
++        SetWindowPos(g_presentWindow, nullptr, 0, 0, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
++        g_presentWidth = width;
++        g_presentHeight = height;
++    }
++    return g_presentWindow;
++}
+ #else
+ void ps2InstallModalRender(void *, void (*)()) {}
++void *ps2PresentationWindow(void *nativeWindow, int, int) { return nativeWindow; }
+ #endif
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -135,6 +135,7 @@ bool ps2GsBackedgePaceEnabled() noexcept;
+ void ps2GsWaitProducerPaceAtBackedge();
+ uint32_t ps2IoRegLockDepth() noexcept;
+ void ps2InstallModalRender(void *nativeWindow, void (*render)()); // Kernel/Host/Win32ModalRender.cpp (D42)
++void *ps2PresentationWindow(void *nativeWindow, int width, int height); // Kernel/Host/Win32ModalRender.cpp
+ namespace ps2_syscalls
+ {
+     void joinInterruptWorker();
+@@ -1315,7 +1316,8 @@ bool PS2Runtime::initialize(const char *title, size_t ramBackingBytes)
+             if (reo_gpu_present::requested())
+             {
+                 const char* filter = std::getenv("REO_DISPLAY_FILTER");
+-                reo_gpu_present::publishTarget({reinterpret_cast<uintptr_t>(GetWindowHandle()),
++                reo_gpu_present::publishTarget({reinterpret_cast<uintptr_t>(
++                    ps2PresentationWindow(GetWindowHandle(), GetRenderWidth(), GetRenderHeight())),
+                     uint32_t(GetRenderWidth()), uint32_t(GetRenderHeight()),
+                     filter && std::strcmp(filter, "linear") == 0});
+             }
+@@ -3161,7 +3163,8 @@ void PS2Runtime::run()
+             if (!modal) PollInputEvents();
+             if (!modal && IsKeyPressed(KEY_F2)) linearDisplay = !linearDisplay;
+             const bool minimized = IsWindowMinimized();
+-            reo_gpu_present::publishTarget({reinterpret_cast<uintptr_t>(GetWindowHandle()),
++            reo_gpu_present::publishTarget({reinterpret_cast<uintptr_t>(
++                ps2PresentationWindow(GetWindowHandle(), GetRenderWidth(), GetRenderHeight())),
+                 minimized ? 0u : uint32_t(std::max(0, GetRenderWidth())),
+                 minimized ? 0u : uint32_t(std::max(0, GetRenderHeight())), linearDisplay});
+             // Confirmed presentation point for the resident route: a publish
