@@ -186,3 +186,9 @@ untracked) now compiles it with clang-cl too, and `reo_audio.h` defines `_AMD64_
 headers. `reo_recomp.exe` (File #1) builds and boots with GPU movies to the main menu
 (`build-ninja/smoke/*-file1-regress`, 0 missing functions); run with `REO_VIF1_GPU_RESIDENT=0`
 unless the GPU catalogue assets are next to the exe.
+
+2026-10-27 map gaps: gameplay logged `Function at address 0x144600 not found` x6. A gap scan of the
+File #2 map (code between mapped functions, referenced by jal/j/pointers) added 14 spans to
+extra_functions.csv (0x10B0D8, 0x1430C0-0x143100, 0x144600, 0x144800, 0x147420, 0x147440, 0x18BF08,
+0x18C090, 0x18C100, 0x1D0EF0, 0x1F2540). Same route afterwards: 0 missing functions, no crash.
+File #1's map has only 3 unreferenced gaps (0x1B7890 already handled by reo_missing_entries).
