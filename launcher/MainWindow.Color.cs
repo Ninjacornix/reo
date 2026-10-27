@@ -23,13 +23,19 @@ public partial class MainWindow {
                 SaveSettings(this, new());
             }
         };
+        bool room = false;
         if (File.Exists(PreviewPath)) {
             try {
                 LoadPreview(PreviewPath);
+                room = true;
             } catch (Exception error)
                 when (error is IOException or NotSupportedException or FileFormatException) {
-                PreviewEmpty.Text = "Room preview unavailable";
             }
+        }
+        if (!room) {
+            // No capture from the player's own game: show the drawn calibration chart.
+            RoomPreview.Source = CalibrationPreview.Create();
+            PreviewEmpty.Visibility = Visibility.Collapsed;
         }
         UpdateColorPreview();
     }

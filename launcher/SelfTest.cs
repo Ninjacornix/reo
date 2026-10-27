@@ -412,6 +412,17 @@ static class SelfTest {
                   BuildFailure.LastError(unicodePath)!.StartsWith("subprocess.CalledProcessError") &&
                   BuildFailure.Message("generate", 1, "cache", longPath).Contains("Error: shutil.Error"),
               "Build failures name long paths and non-ASCII folders and quote the last error");
+        var calibration = CalibrationPreview.Create();
+        byte Grey(int x, int y) {
+            var pixel = new byte[4];
+            calibration.CopyPixels(new System.Windows.Int32Rect(x, y, 1, 1), pixel, 4, 0);
+            return pixel[0];
+        }
+        Check(calibration.PixelWidth == CalibrationPreview.Width && calibration.PixelHeight == CalibrationPreview.Height &&
+                  Enumerable.Range(0, CalibrationPreview.Shadows.Length).All(i =>
+                      Grey(40 + 24 + i * 64 + 24, 116 + 48) == CalibrationPreview.Shadows[i] &&
+                      Grey(CalibrationPreview.Width - 40 - 420 + 24 + i * 64 + 24, 116 + 48) == CalibrationPreview.Highlights[i]),
+              "Brightness calibration preview draws its exact shadow and highlight levels");
         Check(new Settings { AspectRatio = "invalid", ScreenFit = "invalid" }.ResolvedAspect ==
                       "4:3" &&
                   new Settings { ScreenFit = "invalid" }.ResolvedFit == "fit",
