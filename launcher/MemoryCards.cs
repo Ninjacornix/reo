@@ -28,6 +28,24 @@ public sealed partial class Settings {
     }
 }
 public static class MemoryCards {
+    public static void Backup(string folder, string destination) {
+        folder = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder));
+        destination = Path.GetFullPath(destination);
+        if (destination.Equals(folder, StringComparison.OrdinalIgnoreCase) ||
+            destination.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            throw new IOException("Choose a backup location outside the memory-card folder.");
+        if (!Directory.Exists(folder))
+            throw new IOException("The selected memory-card folder is missing.");
+        using var lease = Acquire(folder);
+        string temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try {
+            // Include runtime metadata so extracting the ZIP preserves the whole card.
+            System.IO.Compression.ZipFile.CreateFromDirectory(folder, temporary);
+            File.Move(temporary, destination, true);
+        } finally {
+            if (File.Exists(temporary)) File.Delete(temporary);
+        }
+    }
     public static MemoryCardOption Create(string name, string? home = null) {
         name = name.Trim();
         if (name.Length == 0 || name.Length > 64)

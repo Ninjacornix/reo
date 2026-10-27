@@ -5,6 +5,9 @@ namespace Outbreak.Launcher;
 
 internal static class DiscValidation {
     internal const string Required = "Required: Outbreak File #1, NTSC-U v2.00 (SLUS-20765).";
+    internal static string RequiredFor(string game) => game == "file2"
+        ? "Required: Outbreak File #2, NTSC-U v1.05 (SLUS-20984)." : Required;
+    internal static string VerifiedFor(string game) => RequiredFor(game).Replace("Required:", "Verified:");
     internal record Verified(DiscEntry Elf, string Sha256, string Description);
     // Disc serial facts: PCSX2 bin/resources/GameIndex.yaml; these identify editions, not revisions.
     static readonly Dictionary<string, string> Titles =
@@ -14,9 +17,7 @@ internal static class DiscValidation {
     internal static Verified Check(DiscImage image, GameDefinition game, string expectedHash,
                                    CancellationToken cancel) {
         cancel.ThrowIfCancellationRequested();
-        string required = game.Id == "file1"
-                              ? Required
-                              : "Required: the matching File #2 development executable.";
+        string required = RequiredFor(game.Id);
         InvalidDataException Reject(string message) => new(message + " " + required);
         var config = image.Entries.SingleOrDefault(
             e => !e.Directory && e.Name.Equals("SYSTEM.CNF", StringComparison.OrdinalIgnoreCase));
@@ -60,8 +61,7 @@ internal static class DiscValidation {
         if (title == null)
             throw Reject("Unsupported game or edition detected: " + identity + ".");
         if (title != game.Id)
-            throw Reject("Wrong game selected. Detected " + identity +
-                         ". File #2 is not supported in this release.");
+            throw Reject("Wrong game selected. Detected " + identity + ". Select the matching game.");
         if (!path.Equals(game.ElfName, StringComparison.OrdinalIgnoreCase))
             throw Reject("Unsupported region/edition. Detected " + identity + ".");
         string hash = image.Hash(elf, cancel);
@@ -69,8 +69,6 @@ internal static class DiscValidation {
             throw Reject("Unsupported revision or modified/damaged executable. Detected " +
                          identity + "; its SHA-256 does not match the supported build.");
         // SYSTEM.CNF VER is boot metadata; only the executable hash establishes the supported revision.
-        return new(elf, hash,
-                   game.Id == "file1" ? "Verified: Outbreak File #1, NTSC-U v2.00 (SLUS-20765)."
-                                      : "Verified: matching File #2 development executable.");
+        return new(elf, hash, VerifiedFor(game.Id));
     }
 }

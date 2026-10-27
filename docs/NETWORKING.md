@@ -85,6 +85,25 @@ the original code.
 
 See [connecting with friends](#connecting-with-friends) for hosting requirements.
 
+The launcher's Developer page groups opt-in recordings: packet timing
+(`REO_COOP_TRACE_FILE`), the transport log (`REO_NET_TRACE`), the first 64 SN@P packets
+(`REO_SNAP_TRACE`), frame timing (`REO_FRAME_PACING_FILE`, about 9 minutes) and the File #1
+game clock/player position observer (`REO_GAME_CLOCK_*`, 600 s from the first room).
+Network items apply only to online launches; `launch.json` records which were on.
+Packet timing sets `REO_COOP_TRACE_FILE` for an online launch. When the game exits, the launcher rewrites the trace as `coop-trace.jsonl`
+in the session folder, keeping each packet's timestamp, direction, peer, length and first
+16 bytes, and deletes the full-payload file. `coop-trace-clock.json` maps the game's
+steady-clock timestamps to UTC for alignment with the server log. If the launcher closes
+before the game, the full-payload `coop-trace.raw.jsonl` remains; do not share that file.
+Frame rate per second is already in every session's `stderr.log` (`[perf]` lines).
+
+2026-10-25 two-player internet session (host log plus openSNAP server logs only):
+host held 60 vsyncs per second for the hour; scenario results recorded 54,147 ticks
+for the host and 53,321 for the joining player; each client sent roughly one gameplay
+packet per second through the game service, the host's mostly on a 1.0 s cadence. The
+players reported enemies missing or in different positions on one screen. Whether the
+original game also sends at this rate is unverified (needs a PCSX2 reference capture).
+
 `tools/snap_iop_check/run.bat` exercises the verified RPC layouts against real
 loopback sockets, including failure cases and handle reset. This is transport
 validation, not a gameplay test.
@@ -98,6 +117,74 @@ unfocused; keyboard input remains restricted to the foreground game.
 Acceptance requires genuine native clients to authenticate, join the same room,
 start a scenario, and exchange gameplay changes correctly. Two-client and then
 four-client results must include actual protocol and guest progress evidence.
+
+## File #1 update cadence and movement correction (2026-10-27)
+
+Original SLUS-20765 code has separate outbound queues. The reliable batch
+pump at `1C72F0` uses the float at `235F60`, whose shipped value is `1.0`
+seconds. The second queue at `1C7400` uses `32AF20`, initially zero (no
+interval delay on that pump). Thus there is no single full-world snapshot
+frequency: message production, queue batching, events and simulation are
+separate. The earlier Internet trace's roughly one gameplay packet per second
+agrees with the reliable queue's default. File #2's roughly half-second batch
+must not be substituted for the File #1 value.
+
+The original tuning parser `1F5E30` can replace the interval fields with
+nonzero supplied values. Lowering the reliable batching interval is possible,
+but the resulting fresh movement-update rate still depends on the producers,
+queue capacity, acknowledgements and packet delivery. A 100 ms experiment
+would target ten batch opportunities per second; it has not been implemented
+or validated as a desync fix here. The parser is registered for APP command
+`6210`; the current File #1 APP service has no tuning handler or exposed
+settings option for it. Adding a supported rate control therefore needs
+integration and multiplayer checks. Original cadence proof (640 verified
+instructions and ELF literals):
+`build-ninja/file2-lobby-research/cadence-comparison.json`.
+
+The server forwards gameplay relay payloads and sender identity; it does not
+simulate the world or send authoritative world-state repairs.
+
+File #1 already has conditional linear movement correction. Receiver `67ED50`
+can set a target via `6647B0` and request 15 update steps. `6647F0` applies the
+correction through `663BB0`/`663990`: each step adds `(target-current)/remaining`
+and decrements the counter, ending exactly at the target. `663990` snaps when
+the separation exceeds 500 game units. Some actor/animation/room branches use
+immediate corrections, and the smoothing path is gated by actor state. These
+facts were checked against 1,480 original overlay instruction words; evidence
+is in `build-ninja/file2-network-research/file1-interpolation-proof.json`.
+
+An extra unconditional LERP would alter these existing behaviors. A focused
+movement-jump investigation should align both clients' packet timestamps and
+clock/position recordings, identify long packet gaps or growing reliable
+queues, and observe which correction path fires. Higher batching frequency
+and visual smoothing are candidates for testing; neither establishes that
+missing or stale gameplay state has been repaired. The initial investigation made no runtime changes; the subsequent native
+batching change is recorded below.
+
+## Faster native File #1 batching (2026-10-27)
+
+Native online File #1 now uses a 0.5-second reliable batching interval, matching
+File #2, in place of the original 1.0-second default. The wrapper at original
+pump `1C72F0` changes only the exact default float at `235F60` when both a
+co-op host and native platform mode are configured. Other server-supplied
+intervals are retained. The original queue pump still handles batching,
+acknowledgements, retries and completion. Simulation timing, the other outbound
+queue and existing interpolation are unchanged.
+
+Validation PASS: `build-ninja/file1-cadence-check/players01/verification.json`.
+Two native clients automatically authenticated, joined one room and started
+the Outbreak scenario. Both original interval fields read 0.5 seconds; observed
+reliable gameplay packet median spacing was approximately 0.52 seconds on each
+client (29 datagrams each in the final 15-second sample). Reciprocal movement
+travelled 82.64 and 65.39 game units, with matching settled peer coordinates;
+the uninstructed player stayed stationary during each input. Both clients
+exited normally with code 0 and no fatal/missing-function/device-loss findings.
+An isolated offline launch retained the original 1.0-second field. Temporary
+clients and server services were stopped. This is bounded loopback coverage;
+Internet jitter/loss and long-session desync reproduction remain untested.
+Final File #1 executable SHA-256:
+`607980bfd8a7eeadcd073e0f59e386091209676cab542aeb48ac9da7c9e2e923`.
+No release was published.
 
 ## Connecting with friends
 
@@ -120,7 +207,11 @@ them through its firewall:
 | UDP | 9090 | Bootstrap login |
 | UDP | 9091 | Game and room traffic |
 | TCP | 10127 | Capcom application service |
-| TCP | 80 | Account/signup pages, when used |
+| TCP | 10128 | Account sign-up (launcher-hosted web service) |
+| UDP | 10129 | Host launcher: game discovery and shared randomizer settings |
+
+A joining launcher reads the host's randomizer settings over UDP 10129 before it starts
+the game; without that forward it stops with "Could not read the host's randomizer settings".
 
 Friends enter the host's public IPv4 address. Configure the bootstrap/game
 advertised addresses and `OPENSNAP_GAME_SERVER_MAP` to give clients a reachable

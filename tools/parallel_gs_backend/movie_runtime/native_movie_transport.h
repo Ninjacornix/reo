@@ -1,4 +1,5 @@
 #pragma once
+#include "reo_movie_game_addresses.h"
 #pragma push_macro("EXCEPTION_BREAKPOINT")
 #undef EXCEPTION_BREAKPOINT
 #include "ps2_runtime.h"
@@ -112,7 +113,7 @@ class NativeMovieTransport {
             return;
         ps2_ipu_native::Cursor cursor;
         if (!ps2_ipu_native::cursor(runtime_, this, owner_.generation, cursor) ||
-            cursor.elementaryBit < 32 || (cursor.elementaryBit & 7) || context.pc != 0x145d60)
+            cursor.elementaryBit < 32 || (cursor.elementaryBit & 7) || context.pc != REO_MA(0x145d60))
             throw std::runtime_error(
                 "Original parsed picture lacks exact native compressed cursor lineage");
         pictureBegin_ = (cursor.elementaryBit - 32) / 8;

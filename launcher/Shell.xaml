@@ -23,6 +23,7 @@
      <Button x:Name="NavCheats" Tag="Cheats" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Cheats" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavSetup" Tag="Setup" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Game files" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
      <Button x:Name="NavLogs" Tag="Logs" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Log" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
+     <Button x:Name="NavDeveloper" Tag="Developer" Click="Navigate" HorizontalContentAlignment="Left" Margin="0,3,0,3" Style="{StaticResource NavButton}"><TextBlock Text="Developer" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Button>
     </StackPanel>
     <StackPanel Grid.Row="2"><Button x:Name="PadBadge" Tag="Controller" Click="Navigate" Content="Checking input" Style="{StaticResource NavButton}" HorizontalContentAlignment="Left" Padding="12,6" FontSize="13" Margin="0,0,0,10" ToolTip="Open Controls" AutomationProperties.Name="Input device, open Controls"/><Button x:Name="UpdateButton" Content="Check for updates" Click="CheckForUpdates" ToolTip="Check GitHub Releases and install a newer Windows package" FontSize="13" HorizontalContentAlignment="Left"/>
      <TextBlock x:Name="UpdateState" Style="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" Margin="10,8,0,0"/>
@@ -48,7 +49,7 @@
          </Grid>
         </Border>
         </ListBoxItem>
-        <ListBoxItem Tag="file2" Style="{StaticResource GameChoice}" Margin="9,0,0,0" IsEnabled="False" AutomationProperties.Name="Outbreak File 2, coming later">
+        <ListBoxItem Tag="file2" Style="{StaticResource GameChoice}" Margin="9,0,0,0" AutomationProperties.Name="Outbreak File 2">
         <Border x:Name="GameCard2" Background="#EE1C1E20" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="18">
          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
           <Border x:Name="PosterFrame2" CornerRadius="3" ClipToBounds="True" Margin="0,0,16,0" Visibility="Collapsed"><Image x:Name="GamePoster2" Width="72" Height="106" Stretch="UniformToFill"/></Border>
@@ -172,7 +173,7 @@
        <TextBlock Text="8 MB PS2 card. Save and load from the game. Raw .ps2 images are not supported." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,12,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageCoop" Visibility="Collapsed">
-       <TextBlock x:Name="CoopUnavailable" Text="Online play is available for File #1 only." Style="{StaticResource Hint}" Margin="0,0,0,16" Visibility="Collapsed"/>
+       <TextBlock x:Name="CoopUnavailable" Text="Online play is unavailable for this game." Style="{StaticResource Hint}" Margin="0,0,0,16" Visibility="Collapsed"/>
        <StackPanel x:Name="CoopControls" MaxWidth="600" HorizontalAlignment="Left">
         <UniformGrid Columns="3" Margin="0,0,0,26">
          <RadioButton x:Name="ModeOffline" GroupName="CoopMode" Tag="offline" Style="{StaticResource ModeChoice}" Margin="0,0,6,0" Checked="CoopModeChanged" AutomationProperties.Name="Play alone"><StackPanel><TextBlock Text="Play alone" FontWeight="SemiBold"/><TextBlock Text="Single player" Style="{StaticResource Hint}"/></StackPanel></RadioButton>
@@ -246,6 +247,22 @@
         </Expander>
        </StackPanel>
       </StackPanel>
+      <StackPanel x:Name="PageDeveloper" Visibility="Collapsed" MaxWidth="600" HorizontalAlignment="Left">
+       <TextBlock Text="Recordings are saved in each game's session folder. Leave these off for normal play; they apply on the next launch." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+       <TextBlock Text="Co-op network" Style="{StaticResource Section}"/>
+       <CheckBox x:Name="DevNetworkTrace" Content="Packet timing" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="Every co-op packet's time, direction, size and header (coop-trace.jsonl). Full contents, including login, are removed when the game closes." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <CheckBox x:Name="DevTransportLog" Content="Network transport log" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="Socket calls and results in the game log (first 256, then every 128th)." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <CheckBox x:Name="DevSnapTrace" Content="SN@P packet log" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="Headers of the first 64 game protocol packets in the game log." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <TextBlock Text="Timing" Style="{StaticResource Section}"/>
+       <CheckBox x:Name="DevFrameTiming" Content="Frame timing" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="Per-frame start, scan-out and present times for about the first 9 minutes (frames.csv, written when the game closes)." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <CheckBox x:Name="DevGameClock" Content="Game clock and player position" Click="DeveloperSettingChanged"/>
+       <TextBlock Text="File #1 only. Game clock, room and your character's position for 10 minutes after entering the first room (clock.csv). Compare two players' files to see when they drift apart." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+       <Button Content="Open session folders" Click="OpenSessionFolders" HorizontalAlignment="Left" Margin="0,8,0,0"/>
+      </StackPanel>
       <StackPanel x:Name="PageSetup" Visibility="Collapsed">
        <TextBlock Text="Disc image (.iso)"/>
        <TextBox x:Name="IsoPath" IsReadOnly="True" Margin="0,8,0,8"/>
@@ -255,7 +272,7 @@
        <TextBlock x:Name="ImportState" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,18,0,10"/>
        <TextBlock Text="Already have a completed game build?" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,10"/>
        <Button x:Name="ExistingBuildButton" Content="Use existing build" Click="UseExistingBuild" HorizontalAlignment="Left"/>
-       <TextBlock Text="Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+       <TextBlock x:Name="ExistingBuildHint" Text="Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,0"/>
        <TextBlock Text="Remove game" FontSize="16" FontWeight="SemiBold" Margin="0,30,0,8"/>
        <TextBlock x:Name="RemoveSummary" Style="{StaticResource Hint}" Text="Deletes the imported disc data, the built game and its build cache from this PC. Your ISO file and this launcher stay."/>
        <CheckBox x:Name="RemoveSaves" Content="Also delete save games for this game" Click="RemoveOptionsChanged" Margin="0,10,0,4"/>

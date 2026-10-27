@@ -20,29 +20,32 @@ public static partial class LocalGameBuild {
     }
     static bool
         DigestString(string? value) => value is { Length : 64 } && value.All(Uri.IsHexDigit);
-    static string? PayloadIdentity(string root) {
-        string? identity = DistributionValue(root, "kitSha256");
+    static string PayloadKey(string key, string game) => game == "file1" ? key : "file2" + char.ToUpperInvariant(key[0]) + key[1..];
+    static string PayloadArchive(string root, string game) => Path.Combine(root,
+        game == "file1" ? "build-inputs.zip" : "build-inputs-file2.zip");
+    static string? PayloadIdentity(string root, string game = "file1") {
+        string? identity = DistributionValue(root, PayloadKey("kitSha256", game));
         return DigestString(identity) ? identity : null;
     }
-    static string PayloadFolder(string root) {
-        string legacy = Path.Combine(root, "build-kit");
+    static string PayloadFolder(string root, string game = "file1") {
+        string legacy = Path.Combine(root, game == "file1" ? "build-kit" : "build-kit-file2");
         return File.Exists(Path.Combine(legacy, ManifestName))
                    ? legacy
-                   : Path.Combine(Settings.Home, "build-kits", PayloadIdentity(root) ?? "missing");
+                   : Path.Combine(Settings.Home, "build-kits", PayloadIdentity(root, game) ?? "missing-" + game);
     }
-    static bool HasPayload(string root) => PayloadIdentity(root) != null
-                                           && File.Exists(Path.Combine(root, "build-inputs.zip"));
+    static bool HasPayload(string root, string game = "file1") => PayloadIdentity(root, game) != null
+                                           && File.Exists(PayloadArchive(root, game));
     static void ExpandPayload(string root, IProgress<ImportProgress>? progress,
-                              CancellationToken cancel) {
-        if (!HasPayload(root))
+                              CancellationToken cancel, string game = "file1") {
+        if (!HasPayload(root, game))
             return;
-        string destination = PayloadFolder(root), identity = PayloadIdentity(root)!;
+        string destination = PayloadFolder(root, game), identity = PayloadIdentity(root, game)!;
         if (File.Exists(Path.Combine(destination, ManifestName)) &&
             Sha(Path.Combine(destination, ManifestName)) == identity)
             return;
-        string archive = Path.Combine(root, "build-inputs.zip");
+        string archive = PayloadArchive(root, game);
         progress?.Report(new(0, 0, "Checking setup archive", "Preparing build files"));
-        string? expected = DistributionValue(root, "inputsSha256");
+        string? expected = DistributionValue(root, PayloadKey("inputsSha256", game));
         if (!DigestString(expected) || Sha(archive) != expected)
             throw new IOException(
                 "Setup archive verification failed. Extract the complete release.");

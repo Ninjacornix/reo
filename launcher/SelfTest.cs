@@ -49,19 +49,27 @@ static class SelfTest {
             checks++;
         }
         DiscImportTests.Run(Check);
+        GraphicsOptionsTests.Run(Check);
         ModsTests.Run(Check);
         RandomizerSeedsTests.Run(Check);
         Task.Run(() => RandomizerSessionTests.Run(Check)).GetAwaiter().GetResult();
         OnlineOptionsTests.Run(Check);
         CoopAutomationTests.Run(Check);
+        CoopSmokeOptionsTests.Run(Check);
+        File2LobbyTests.Run(Check);
         ControllerLightTests.Run(Check);
         ControllerRumbleTests.Run(Check);
+        ControllerInputTests.Run(Check);
+        MemoryCardBackupTests.Run(Check);
         GlobalWeaponMotionsTests.Run(Check);
         AudioMixerTests.Run(Check);
+        NetworkTraceTests.Run(Check);
+        DeveloperOptionsTests.Run(Check);
         GameImageCacheTests.Run(Check);
         Task.Run(() => AutomaticAccountTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => LocalGameBuildTests.Run(Check)).GetAwaiter().GetResult();
+        Task.Run(() => File2LauncherTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => ExistingGameBuildTests.Run(Check)).GetAwaiter().GetResult();
         string pipeName = "reo-log-check-" + Guid.NewGuid().ToString("N"),
                pipeOutput = Path.GetTempFileName();

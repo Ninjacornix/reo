@@ -14,6 +14,7 @@ public partial class MainWindow {
     volatile bool hostRoomReady;
     CancellationTokenSource? gameSearch;
     long lastGameSearch;
+    string onlineEdition = "";
     List<LanDiscovery.Game> foundGames = new();
 
     // Checks the player name on the chosen server before the game starts, so problems show here
@@ -23,7 +24,7 @@ public partial class MainWindow {
             return false;
         OnlineOptions.TryHost(settings.CoopHost, out string host);
         string username = settings.AccountUsername;
-        string identity = host + "\n" + username;
+        string identity = settings.Game.Id + "\n" + host + "\n" + username;
         if (preparedAccount == identity)
             return true;
         accountPreparation?.Cancel();
@@ -228,12 +229,15 @@ public partial class MainWindow {
     async void StartServerClicked(object sender, RoutedEventArgs e) => await StartHosting();
 
     async Task StartHosting() {
-        if (serverStarting || hostedServer.Running)
+        if (serverStarting || !OnlineOptions.Supported(settings.Game.Id))
+            return;
+        if (hostedServer.Running && hostedServer.GameId == settings.Game.Id)
             return;
         if (game.Running || launching) {
             HostStatus.Text = "Close the game to open your game for friends.";
             return;
         }
+        if (hostedServer.Running) await StopHosting();
         serverStarting = true;
         StartServerButton.Visibility = Visibility.Collapsed;
         HostStatus.Text = "Opening your game...";
@@ -249,7 +253,7 @@ public partial class MainWindow {
                 setupProgress: new Progress<ImportProgress>(value => {
                     if (serverStarting)
                         ReportHostSetup(value);
-                }));
+                }), game: settings.Game.Id);
             bool localOnly =
                 System.Net.IPAddress.IsLoopback(System.Net.IPAddress.Parse(hostedServer.Address));
             HostStatus.Text = localOnly ? "Your game is open on this PC only"
@@ -294,7 +298,7 @@ public partial class MainWindow {
     LanDiscovery.Game DescribeHostedGame() =>
         new(OnlineOptions.ValidUsername(settings.AccountUsername) ? settings.AccountUsername : "Host",
             hostedServer.Address, Updates.DefaultVersion, hostRoomReady && game.Running,
-            settings.SignupPort);
+            settings.SignupPort, hostedServer.GameId);
 
     async Task StopHosting() {
         lanResponder?.Dispose();
@@ -325,8 +329,9 @@ public partial class MainWindow {
     // ---- Joining: games on the local network ----
     void SearchGamesClicked(object sender, RoutedEventArgs e) => SearchGames();
     async void SearchGames() {
-        if (gameSearch != null || settings.ResolvedCoopMode != "join" || game.Running)
+        if (!OnlineOptions.Supported(settings.Game.Id) || gameSearch != null || settings.ResolvedCoopMode != "join" || game.Running)
             return;
+        string edition = settings.Game.Id;
         using var cancel = new CancellationTokenSource();
         gameSearch = cancel;
         lastGameSearch = Environment.TickCount64;
@@ -334,7 +339,9 @@ public partial class MainWindow {
         if (foundGames.Count == 0)
             SearchStatus.Text = "Searching...";
         try {
-            foundGames = await LanDiscovery.Search(TimeSpan.FromSeconds(1.5), cancel.Token);
+            var discovered = await LanDiscovery.Search(TimeSpan.FromSeconds(1.5), cancel.Token, edition);
+            if (settings.Game.Id != edition) return;
+            foundGames = discovered;
             SearchStatus.Text = foundGames.Count == 0
                                     ? "No games found yet. Your friend chooses Host a game; this list updates on its own."
                                     : "";
@@ -357,7 +364,7 @@ public partial class MainWindow {
 
     void ShowFoundGames() {
         FoundGames.Children.Clear();
-        foreach (var found in foundGames) {
+        foreach (var found in foundGames.Where(g => g.GameId == settings.Game.Id)) {
             bool selected = found.Address == settings.CoopHost;
             var text = new StackPanel();
             text.Children.Add(new TextBlock { Text = found.Name + "'s game", FontWeight = FontWeights.SemiBold });
@@ -372,6 +379,7 @@ public partial class MainWindow {
             System.Windows.Automation.AutomationProperties.SetName(button, "Join " + found.Name + "'s game");
             button.Click += (_, _) => {
                 var game = (LanDiscovery.Game)button.Tag;
+                if (game.GameId != settings.Game.Id) return;
                 CoopHost.Text = game.Address; // saves through OnlineSettingChanged
             };
             FoundGames.Children.Add(button);
@@ -457,8 +465,8 @@ public partial class MainWindow {
             return null;
         if (settings.ResolvedCoopMode == "host")
             return new(true, settings.AccountUsername, hostedServer.Address,
-                       ready => hostRoomReady = ready);
-        return new(false, settings.JoinHostName, settings.CoopHost);
+                       ready => hostRoomReady = ready, settings.Game.Id);
+        return new(false, settings.JoinHostName, settings.CoopHost, Game: settings.Game.Id);
     }
 
     // A host typed by address may still answer discovery directly: learn its name and sign-up port.
@@ -466,8 +474,10 @@ public partial class MainWindow {
         if (settings.ResolvedCoopMode != "join")
             return;
         try {
+            string edition = settings.Game.Id;
             var host = await LanDiscovery.Ask(settings.CoopHost, TimeSpan.FromSeconds(1.5),
-                                              CancellationToken.None);
+                                              CancellationToken.None, edition);
+            if (settings.Game.Id != edition) return;
             if (host != null && (host.Name != settings.JoinHostName ||
                                  host.Signup != settings.JoinSignupPort)) {
                 settings.JoinHostName = host.Name;
@@ -480,7 +490,20 @@ public partial class MainWindow {
     }
 
     void RefreshOnlineUi() {
-        bool supported = settings.Game.Id == "file1";
+        if (onlineEdition != settings.Game.Id) {
+            if (onlineEdition.Length > 0) {
+                gameSearch?.Cancel();
+                accountPreparation?.Cancel();
+                foundGames.Clear();
+                settings.JoinHostName = "";
+                settings.JoinSignupPort = 0;
+                preparedAccount = null;
+                AccountStatus.Text = "";
+            }
+            onlineEdition = settings.Game.Id;
+            ShowFoundGames();
+        }
+        bool supported = OnlineOptions.Supported(settings.Game.Id);
         string mode = settings.ResolvedCoopMode;
         CoopControls.IsEnabled =
             supported && !updating && !updateRestarting && !game.Running && !launching;
@@ -494,7 +517,7 @@ public partial class MainWindow {
             CopyServerButton.IsEnabled = false;
             StartServerButton.Visibility = Visibility.Visible;
         }
-        if (mode == "join" && PageCoop.Visibility == Visibility.Visible && !game.Running &&
+        if (supported && mode == "join" && PageCoop.Visibility == Visibility.Visible && !game.Running &&
             Environment.TickCount64 - lastGameSearch > 5000)
             SearchGames();
         AutoLobbyHint.Text = mode == "host"

@@ -134,6 +134,12 @@ public partial class App : Application {
                 Shutdown();
                 return;
             }
+            if (e.Args.Contains("--test-coop-session")) {
+                int smoke = Array.IndexOf(e.Args, "--smoke-launch");
+                if (smoke < 0 || smoke + 2 >= e.Args.Length)
+                    throw new ArgumentException("--test-coop-session requires --smoke-launch <exe> <result.json>.");
+                _ = CoopSmokeOptions.Parse(e.Args);
+            }
             bool diagnostic = e.Args.Any(arg => arg is "--screenshot" or "--probe-controller" or
                                                        "--smoke-launch");
             if (!diagnostic) {
@@ -159,7 +165,8 @@ public partial class App : Application {
             Directory.CreateDirectory(Settings.Home);
             string log = Path.Combine(Settings.Home, "launcher-error.log");
             File.WriteAllText(log, error.ToString());
-            if (!e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
+            if (!e.Args.Contains("--smoke-launch") && !e.Args.Contains("--test-coop-session") &&
+                !e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
                 !e.Args.Contains("--test-lobby") &&
                 !e.Args.Contains("--import-iso") && !e.Args.Contains("--test-update") &&
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&

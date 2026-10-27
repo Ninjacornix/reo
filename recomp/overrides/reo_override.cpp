@@ -81,7 +81,9 @@ static void reoActorPassEnd(uint8_t* r, R5900Context* c, PS2Runtime* p) {
 // Forward declarations for demo trigger
 extern void sub_00114420_0x114420(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_00114440_0x114440(uint8_t*, R5900Context*, PS2Runtime*);
+#if defined(REO_GAME_FILE1)
 extern void sub_001CB8F0_0x1cb8f0(uint8_t*, R5900Context*, PS2Runtime*);
+#endif
 
 // Runtime SIF RPC HLE handlers (defined in the runtime lib)
 namespace ps2_stubs {
@@ -1053,6 +1055,7 @@ static void reo_frame_check(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runti
     ctx->pc = getRegU32(ctx, 31);
 }
 
+#if defined(REO_GAME_FILE1)
 static void reo_demo_thread_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     printf("[DEMO THREAD] Started! Calling sub_001CB8F0 in loop...\n");
     fflush(stdout);
@@ -1074,6 +1077,7 @@ static void reo_demo_thread_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime*
     fflush(stdout);
     ctx->pc = 0; // Signal thread exit
 }
+#endif
 
 // ── Thread entry stubs ───────────────────────────────────────────────
 // Thread entry points that the recompiler merged into other functions.
@@ -1092,6 +1096,7 @@ static void reo_sio_thread(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtim
 // Address binding helpers
 // ═══════════════════════════════════════════════════════════════════════
 
+#if defined(REO_GAME_FILE1) // File #1 trace and observer hooks (bound only by applyOutbreakOverrides)
 // REO_CRI_ERRLOG=1: CRI middleware error reporter (0x163750, "Exxxxxx ..." format + arg).
 // CRI hands errors to a game callback, not the console; log them, then run the original.
 void sub_00163750_0x163750(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime);
@@ -1591,6 +1596,7 @@ static void reo_scene_tree_trace(uint8_t* r, R5900Context* c, PS2Runtime* p) {
     }
     sub_00192B70_0x192b70(r, c, p);
 }
+#endif // REO_GAME_FILE1
 
 static void bind(PS2Runtime& runtime, uint32_t addr, PS2Runtime::RecompiledFunction fn,
                  const char* name) {
@@ -1632,6 +1638,7 @@ static bool bindNamed(PS2Runtime& runtime, uint32_t addr, const char* name) {
 //   Syscall wrappers at 0x114240-0x1148F0 are fully recompiled
 //   and work via runtime->handleSyscall() — no override needed.
 
+#if defined(REO_GAME_FILE1)
 static void applyOutbreakOverrides(PS2Runtime& runtime) {
     printf("[REO] Applying RE Outbreak File #1 overrides (SLUS-20765, NTSC-U v2.00)\n");
 
@@ -1944,26 +1951,43 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
 
 PS2_REGISTER_GAME_OVERRIDE("RE Outbreak NTSC-U", "SLUS_207.65", 0x00100008, 0x00000000,
                            applyOutbreakOverrides);
+#endif // REO_GAME_FILE1
 
 // ═══════════════════════════════════════════════════════════════════════
 // File #2 overrides — RE Outbreak File #2 (SLUS-20984, NTSC-U v1.05)
 // ═══════════════════════════════════════════════════════════════════════
 //
-// File #2 uses the same engine but with a larger ELF (64KB more code).
-// Function addresses are DIFFERENT from File #1 — they need separate
-// identification. For now, apply the same pattern with File #2 addresses.
+// File #2 uses the same engine with a larger ELF. Most game addresses differ
+// from File #1; tools/file2_port/translate.py proposes File #2 equivalents
+// (recomp/config/file2/file1_to_file2.json), each to be checked in Ghidra.
+// Only the self-execution core is applied here: the libsif family sits at the
+// same addresses in both executables (exact masked-hash matches, identical
+// sizes) and is skipped by generate_game.py --game file2 as for File #1.
 
 static void applyFile2Overrides(PS2Runtime& runtime) {
     printf("[REO] Applying RE Outbreak File #2 overrides (SLUS-20984, NTSC-U v1.05)\n");
 
-    // File #2 addresses will differ from File #1.
-    // TODO: Run reo_recomp_file2 and observe which TODO_NAMED stubs are called
-    // to identify the equivalent function addresses in the File #2 ELF.
-    //
-    // For now, the generated stubs will log TODO_NAMED and return 0,
-    // which is safe for initial testing.
+    if (!g_hwBridge.init(runtime)) {
+        printf("[REO] WARNING: Hardware bridge failed to initialize!\n");
+    }
 
-    printf("[REO] File #2 overrides applied (pending address identification).\n");
+    bind(runtime, 0x117818, ps2_stubs::sceSifBindRpc, "sceSifBindRpc (HLE)");
+    bind(runtime, 0x117080, ps2_syscalls::SifInitRpc, "SifInitRpc (HLE)");
+    bind(runtime, 0x1179E8, ps2_syscalls::sceSifCallRpc, "SifCallRpc (HLE)");
+
+    // CRI DTX server, as for File #1: the game binds the same sid 0x90000200
+    // (observed: "unhandled sid=0x90000200 func=2", then the guest reports
+    // "DTX_Create: can't create DTX of server" and SJX_Init fails). The layout
+    // holds no File #1 code addresses; handles are opaque and never dereferenced.
+    {
+        PS2DtxCompatLayout dtx{};
+        dtx.rpcSid = 0x90000200u;
+        dtx.urpcObjBase = 0x001E0000u;
+        dtx.urpcObjLimit = 0x001EFF00u;
+        ps2_syscalls::setDtxCompatLayout(dtx);
+    }
+
+    printf("[REO] File #2 overrides applied (libsif + CRI DTX HLE; game hooks not yet mapped).\n");
 }
 
 PS2_REGISTER_GAME_OVERRIDE("RE Outbreak File #2 NTSC-U", "SLUS_209.84", 0x00100008, 0x00000000,

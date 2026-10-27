@@ -44,8 +44,12 @@ static class OnlineOptionsTests {
         check(OnlineOptions.LaunchEnvironment(online).Count == 0,
               "Incomplete network settings leave normal Play available offline");
         online.SelectedGame = "file2";
-        check(OnlineOptions.Error(online)?.Contains("File #1", StringComparison.Ordinal) == true,
-              "File #2 remains unsupported online");
+        online.CoopHost = "127.0.0.1";
+        var secondEnvironment = OnlineOptions.LaunchEnvironment(online);
+        check(OnlineOptions.Error(online) == null && secondEnvironment.Count == 4 &&
+                  secondEnvironment["REO_COOP_HOST"] == "127.0.0.1" &&
+                  secondEnvironment["REO_COOP_AUTO_ACCOUNT"] == "1",
+              "File #2 uses native online routing and automatic accounts");
         CheckMemoryCardPreparation(check);
     }
 

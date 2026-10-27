@@ -39,6 +39,7 @@
 #include "network/native/netcnf_profile.h"
 #include "network/native/private_usb_keyboard.h"
 #include "network/native/automatic_account.h"
+#include "network/native/game_addresses.h"
 #include "reo_trace_logger.h"
 #include "runtime/gs/gs_renderer.h"
 #include "runtime/vu/vu_interpreter.h"
@@ -938,26 +939,35 @@ uint16_t pad2AutomaticAccount(uint8_t* rd, double now) {
         return value;
     };
     account::Menu menu;
-    menu.step = byte(0x6DF150); menu.substep = byte(0x6DF151);
-    menu.cursor = int16_t(word(0x6DF158)); menu.delay = int16_t(word(0x6DF154));
-    menu.upperDelay = int16_t(word(0x6DF154) >> 16);
-    menu.choice = byte(0x6DF179);
-    if (menu.step == 6 && word(0x69BCD8) == 5) {
-        const uint32_t profile = word(0x69BCC0);
+#if defined(REO_GAME_FILE2)
+    menu.gameFile2 = true;
+    menu.cardStage = byte(reo_network::game::menu.step + 0x160);
+    menu.cardDialog = byte(reo_network::game::menu.step + 0x161);
+    menu.cardKind = word(reo_network::game::menu.step + 0x180);
+    menu.cardMessage = word(reo_network::game::menu.step + 0x16C);
+    menu.cardDelay = int32_t(word(reo_network::game::menu.step + 0x184));
+#endif
+    menu.originalEditorReady = attempt != 0 && account::editorReadyGeneration.load() == attempt;
+    menu.step = byte(reo_network::game::menu.step); menu.substep = byte(reo_network::game::menu.substep);
+    menu.cursor = int16_t(word(reo_network::game::menu.cursor)); menu.delay = int16_t(word(reo_network::game::menu.delay));
+    menu.upperDelay = int16_t(word(reo_network::game::menu.delay) >> 16);
+    menu.choice = byte(reo_network::game::menu.choice);
+    if (menu.step == 6 && word(reo_network::game::menu.profileStage) == 5) {
+        const uint32_t profile = word(reo_network::game::menu.profileWork);
         if (profile >= 0x100000 && profile <= ps2RamBackingBytes - 0x50) {
             menu.profileStage = byte(profile + 0x20);
             menu.profileCursor = byte(profile + 0x10);
             menu.profileReady = byte(profile + 0x4C) == 1 && byte(profile + 0x24) > 0;
         }
     }
-    const uint32_t keyboard = word(0x6436D0);
+    const uint32_t keyboard = word(reo_network::game::menu.keyboardWork);
     menu.keyboardValid = keyboard >= 0x100000 && keyboard <= ps2RamBackingBytes - 0x700;
     if (menu.keyboardValid) {
         menu.keyboardActive = byte(keyboard + 0x28) == 1;
         menu.keyboardDone = byte(keyboard + 0x36) != 0;
     }
-    menu.keyboardDelay = byte(0x6436C8);
-    menu.passwordPresent = byte(0x8A64E0) != 0;
+    menu.keyboardDelay = byte(reo_network::game::menu.keyboardDelay);
+    menu.passwordPresent = byte(reo_network::game::menu.password) != 0;
     const auto decision = flow.tick(menu, now, true, status == "typed" + suffix);
     if (decision.requestPassword) std::fprintf(stderr, "\n[COOP-AUTO] password-ready %u\n", attempt);
     if (decision.submitted) {
@@ -1046,7 +1056,7 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
         // Reject null, MMIO and unrelated aliases before dereferencing.
         return a >= 0x100000u && a < ps2RamBackingBytes && bytes <= ps2RamBackingBytes - a;
     };
-    const uint32_t front = word(0x5D4898u);
+    const uint32_t front = word(reo_network::game::frontMenu);
     uint32_t state = 0;
     if (pointer(front, 0x74u)) {
         state = word(front) & 0x00FFFFFFu;
@@ -1067,7 +1077,13 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
             lastSelectionState = selectionState;
         }
         const bool character = selectionReady && (selectionState & 0xFFFFu) == 0x0109u;
-        if ((target == 5 && state == 0x030200u) || (target == 1 && mainMenu) ||
+        const bool title = state ==
+#if defined(REO_GAME_FILE2)
+            0x030100u;
+#else
+            0x030200u;
+#endif
+        if ((target == 5 && title) || (target == 1 && mainMenu) ||
             (target == 2 && scenario) || (target == 3 && character)) {
             fprintf(stderr, "[TEST-ROUTE] reached %s t=%.3f state=%06x; automatic input disabled\n",
                     target == 5   ? "title"
@@ -1078,7 +1094,11 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
             done = true;
             return 0;
         }
-        if (state == 0x030200u)
+        if (title
+#if defined(REO_GAME_FILE2)
+            || state == 0x020000u // Original frontend opening movie; Start skips it.
+#endif
+        )
             button = pad2ButtonBit("START"); // 580110, title prompt
         else if (target >= 6 && mainMenu && word(front + 0x64u) == 0) {
             const auto cursor = reo_source_instrumentation::bankRead(rd, rd + front + 0xCu);
@@ -1108,12 +1128,12 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
         const auto byte = [rd](uint32_t address) {
             return reo_source_instrumentation::bankRead(rd, rd + address);
         };
-        const uint8_t step = byte(0x6DF150), substep = byte(0x6DF151);
+        const uint8_t step = byte(reo_network::game::menu.step), substep = byte(reo_network::game::menu.substep);
         static uint32_t lastNetworkState = ~0u;
         const uint32_t networkState = uint32_t(step) | uint32_t(substep) << 8;
         if (networkState != lastNetworkState) {
             std::fprintf(stderr, "[TEST-ROUTE] network t=%.3f step=%u substep=%u cursor=%d choice=%u\n",
-                now, unsigned(step), unsigned(substep), int(int16_t(word(0x6DF158))), unsigned(byte(0x6DF179)));
+                now, unsigned(step), unsigned(substep), int(int16_t(word(reo_network::game::menu.cursor))), unsigned(byte(reo_network::game::menu.choice)));
             lastNetworkState = networkState;
         }
         if (target == 6 && profileChosen && (step == 7 || step == 31 || step == 33)) {
@@ -1132,14 +1152,14 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
             done = true;
             return 0;
         }
-        if (step == 1 && substep == 1 && int16_t(word(0x6DF154) >> 16) <= 0)
+        if (step == 1 && substep == 1 && int16_t(word(reo_network::game::menu.delay) >> 16) <= 0)
             button = pad2ButtonBit("CROSS");
-        else if (step == 2 && (substep == 4 || substep == 21) && int16_t(word(0x6DF154) >> 16) <= 0)
-            button = pad2ButtonBit(byte(0x6DF179) ? "UP" : "CROSS");
-        else if ((step == 3 || step == 4) && substep == 2 && int16_t(word(0x6DF154)) == 0)
-            button = pad2ButtonBit(int16_t(word(0x6DF158)) == 0 ? "CROSS" : "UP");
-        else if (step == 6 && word(0x69BCD8) == 5) {
-            const uint32_t menu = word(0x69BCC0);
+        else if (step == 2 && (substep == 4 || substep == 21) && int16_t(word(reo_network::game::menu.delay) >> 16) <= 0)
+            button = pad2ButtonBit(byte(reo_network::game::menu.choice) ? "UP" : "CROSS");
+        else if ((step == 3 || step == 4) && substep == 2 && int16_t(word(reo_network::game::menu.delay)) == 0)
+            button = pad2ButtonBit(int16_t(word(reo_network::game::menu.cursor)) == 0 ? "CROSS" : "UP");
+        else if (step == 6 && word(reo_network::game::menu.profileStage) == 5) {
+            const uint32_t menu = word(reo_network::game::menu.profileWork);
             if (pointer(menu, 0x50)) {
                 const uint8_t stage = byte(menu + 0x20);
                 if (profileChosen && stage != 1 && (target == 6 || stage == 13)) {
@@ -1158,8 +1178,8 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
                 }
             }
         } else if ((target == 7 || target == 8) && profileChosen && step == 44 && substep == 1 &&
-                   int16_t(word(0x6DF154)) == 0) {
-            const auto cursor = int16_t(word(0x6DF158));
+                   int16_t(word(reo_network::game::menu.delay)) == 0) {
+            const auto cursor = int16_t(word(reo_network::game::menu.cursor));
             button = pad2ButtonBit(cursor == 1 ? "CROSS" : "DOWN");
             if (cursor == 1)
                 editorChosen = true;
@@ -1169,9 +1189,9 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
             button = 0;
             if (substep == 11) {
                 static bool passwordKeyboardStarted = false;
-                const uint32_t keyboard = word(0x6436D0);
+                const uint32_t keyboard = word(reo_network::game::menu.keyboardWork);
                 const bool validKeyboard = keyboard >= 0x100000u && keyboard <= 0x2000000u - 0x700u;
-                const auto inputDelay = byte(0x6436C8);
+                const auto inputDelay = byte(reo_network::game::menu.keyboardDelay);
                 if (!passwordKeyboardStarted && validKeyboard && byte(keyboard + 0x28) == 1 &&
                     inputDelay > 0) {
                     passwordKeyboardStarted = true;
@@ -1190,9 +1210,9 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
                 }
                 return 0;
             }
-            if (substep == 1 && int16_t(word(0x6DF154)) == 0) {
-                const auto cursor = int16_t(word(0x6DF158));
-                const bool hasPassword = byte(0x8A64E0) != 0;
+            if (substep == 1 && int16_t(word(reo_network::game::menu.delay)) == 0) {
+                const auto cursor = int16_t(word(reo_network::game::menu.cursor));
+                const bool hasPassword = byte(reo_network::game::menu.password) != 0;
                 if (passwordInputReady && hasPassword) {
                     button = pad2ButtonBit(cursor == 0 ? "CROSS" : "UP");
                     if (cursor == 0)
@@ -2342,7 +2362,17 @@ void pad2FeederLoop() {
                 // Original ds2u_s1 FUN_1170's 0x73 analog report, consumed by
                 // libpad2/game 0x1A6760: six raw SIO bytes and profile 0x000FFFFF.
                 reo_source_instrumentation::bankCell(rd, rec + 1) = 10;
-                reo_source_instrumentation::bankCell(rd, rec + 2) = 6;
+#if defined(REO_GAME_FILE2)
+                // File #2 requires DUALSHOCK 2 analog mode: 0x13CB90 accepts only pad mode
+                // 's' (0x73), which libpad2 0x1E8510 sets when the profile has bits in
+                // 0xFFF00000. That mode reads 18 data bytes (buttons, sticks, then the 12
+                // pressure bytes R L U D Tri Cir X Sq L1 R1 L2 R2); otherwise the game
+                // reopens its pause menu every frame (0x619740).
+                constexpr uint8_t dataBytes = 18;
+#else
+                constexpr uint8_t dataBytes = 6;
+#endif
+                reo_source_instrumentation::bankCell(rd, rec + 2) = dataBytes;
                 reo_source_instrumentation::bankCell(rd, rec + 3) = 4;
                 const uint32_t valid = 1;
                 reo_source_instrumentation::copyBytes(rec + 4, &valid, 4);
@@ -2353,10 +2383,24 @@ void pad2FeederLoop() {
                 reo_source_instrumentation::bankCell(rd, rec + 0x1F) = hostPad.right_y;
                 reo_source_instrumentation::bankCell(rd, rec + 0x20) = hostPad.left_x;
                 reo_source_instrumentation::bankCell(rd, rec + 0x21) = hostPad.left_y;
+#if defined(REO_GAME_FILE2)
+                static constexpr const char* pressureOrder[12] = {
+                    "RIGHT", "LEFT", "UP", "DOWN", "TRIANGLE", "CIRCLE",
+                    "CROSS", "SQUARE", "L1", "R1", "L2", "R2"};
+                for (int i = 0; i < 12; ++i)
+                    reo_source_instrumentation::bankCell(rd, rec + 0x22 + i) =
+                        (pressed & pad2ButtonBit(pressureOrder[i])) ? 0xFF : 0x00;
+                // Profile 0x3FFFFFFF: digital, both sticks and all 12 pressure bytes.
+                reo_source_instrumentation::bankCell(rd, rec + 0x2E) = 0xFF;
+                reo_source_instrumentation::bankCell(rd, rec + 0x2F) = 0xFF;
+                reo_source_instrumentation::bankCell(rd, rec + 0x30) = 0xFF;
+                reo_source_instrumentation::bankCell(rd, rec + 0x31) = 0x3F;
+#else
                 reo_source_instrumentation::bankCell(rd, rec + 0x22) = 0xFF;
                 reo_source_instrumentation::bankCell(rd, rec + 0x23) = 0xFF;
                 reo_source_instrumentation::bankCell(rd, rec + 0x24) = 0x0F;
                 reo_source_instrumentation::bankCell(rd, rec + 0x25) = 0;
+#endif
                 std::atomic_thread_fence(std::memory_order_release);
                 const uint32_t seq = std::max(s0, s1) + 1;
                 reo_source_instrumentation::copyBytes(rec + 0x7C, &seq, 4); // publish last
@@ -3212,6 +3256,13 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
             // sceDbcSetWorkAddr (EE 0x188BC0): EE area at +4 receives per-port connection words.
             if (rpcNum == 0x80001304u && sendBuf && sendSize >= 8)
                 pad2SetWorkAddr(rdram, rdramRead32(rdram, sendBuf + 4));
+            bool stateQuery = false;
+            if (sendBuf && sendSize >= 12) {
+                const uint32_t head[3]{rdramRead32(rdram, sendBuf), rdramRead32(rdram, sendBuf + 4),
+                                       rdramRead32(rdram, sendBuf + 8)};
+                stateQuery = reo::pad2::isStateQuery(
+                    rpcNum, {reinterpret_cast<const uint8_t*>(head), sizeof(head)});
+            }
             if (recvBuf && recvSize >= 4) {
                 for (uint32_t off = 0; off + 4 <= recvSize && off < 0x40; off += 4)
                     rdramWrite32(rdram, recvBuf + off, 0);
@@ -3223,6 +3274,13 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     rdramWrite32(rdram,recvBuf+8,1);
                     rdramWrite32(rdram,recvBuf+12,3); // one-bit small + eight-bit large motor
                     rdramWrite32(rdram,recvBuf+0x20c,0);
+                }
+                // The bridge always reports a connected pad: answer the state
+                // query with one byte, 1 (stable), as stamped into the records.
+                if (stateQuery && recvSize >= 0x210) {
+                    rdramWrite32(rdram, recvBuf + 8, 1);
+                    rdramWrite32(rdram, recvBuf + 12, 1);
+                    rdramWrite32(rdram, recvBuf + 0x20c, 0);
                 }
             }
             return true;

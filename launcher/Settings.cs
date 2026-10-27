@@ -29,6 +29,8 @@ public sealed partial class Settings {
     // "offline", "host" or "join"; null in settings saved by older launchers.
     public string? CoopMode { get; set; }
     public bool AutoLobby { get; set; } = true;
+    DeveloperOptions developer = new();
+    public DeveloperOptions Developer { get => developer; set => developer = value ?? new(); }
     public string JoinHostName { get; set; } = "";
     // Hosting ports the host may change; JoinSignupPort is learned from the host (0 = default).
     public int SignupPort { get; set; } = HostNetworking.SignupPort;

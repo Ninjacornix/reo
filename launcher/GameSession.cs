@@ -36,9 +36,11 @@ public sealed class GameSession {
                              IProgress<ImportProgress>? importProgress = null,
                              CancellationToken cancel = default,
                              LobbyAutomation.Options? lobby = null,
-                             uint? diagnosticSeed = null, bool diagnosticColdCache = false) {
+                             uint? diagnosticSeed = null, bool diagnosticColdCache = false,
+                             string? accountHome = null, string? workingDirectory = null) {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
+        var graphics = GraphicsOptions.From(settings);
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
         if (diagnosticColdCache && diagnosticRoute == null)
             throw new InvalidOperationException("A private shader cache requires a diagnostic run.");
@@ -55,7 +57,7 @@ public sealed class GameSession {
         byte[]? randomizerConfiguration = null;
         HostRandomizerConfiguration = null;
         randomizerStopReason = null;
-        if (onlineEnvironment.Count > 0) {
+        if (onlineEnvironment.Count > 0 && settings.Game.Id == "file1") {
             var shared = await RandomizerSession.Resolve(settings, selectedMods, cancel);
             randomizerConfiguration = shared.Bytes;
             selectedMods = shared.Mods;
@@ -66,8 +68,6 @@ public sealed class GameSession {
         graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
         string sourceExe = settings.GetExe(), iso = settings.GetIso();
         var selectedGame = settings.Game;
-        if (selectedGame.Id != "file1")
-            throw new IOException("File #2 is not available in this release.");
         if (!AppLayout.Packaged(root) && !File.Exists(sourceExe))
             throw new FileNotFoundException(
                 "This game build is missing. Extract the complete release archive.");
@@ -78,7 +78,7 @@ public sealed class GameSession {
         cancel.ThrowIfCancellationRequested();
         settings.SetImport(Imported.Root);
         if (AppLayout.Packaged(root))
-            sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel);
+            sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel, game: selectedGame.Id);
         string discRoot = Path.Combine(Imported.Root, "data"), discElf = Imported.Elf;
         string proxy = Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll");
         if (!File.Exists(proxy))
@@ -96,7 +96,7 @@ public sealed class GameSession {
             "present_smaa_edge.frag.spv", "present_smaa_weights.frag.spv", "present_smaa_blend.frag.spv" }) {
             string input = Path.Combine(shaderSource, shader);
             if (File.Exists(input)) runtimeFiles.Add(new(input, "reo-gpu-present/" + shader));
-            else if (!shader.StartsWith("present_smaa_") || settings.ResolvedAntiAliasing == "smaa")
+            else if (!shader.StartsWith("present_smaa_") || graphics.Environment["REO_POST_AA"] == "smaa")
                 throw new FileNotFoundException("The selected build is missing its presentation shader: " + shader);
         }
         // GPU helper shaders (movies, context clears, readbacks) that the game loads from
@@ -125,10 +125,12 @@ public sealed class GameSession {
             File.WriteAllText(Path.Combine(Logs,"randomizer-session.sha256"),RandomizerSession.Digest(randomizerConfiguration));
         }
         Directory.CreateDirectory(SaveFolder(root, selectedGame.Id));
-        Directory.CreateDirectory(AppLayout.Work(root, selectedGame.Id));
+        string work = workingDirectory == null ? AppLayout.Work(root, selectedGame.Id)
+                                              : Path.GetFullPath(workingDirectory);
+        Directory.CreateDirectory(work);
         var start = new ProcessStartInfo(
             image) { UseShellExecute = false, CreateNoWindow = true,
-                     WorkingDirectory = AppLayout.Work(root, selectedGame.Id),
+                     WorkingDirectory = work,
                      RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (string arg in new[] { "--game", selectedGame.Id, "--elf", discElf, "--data",
                                        discRoot })
@@ -149,6 +151,11 @@ public sealed class GameSession {
         }
         foreach (var pair in onlineEnvironment)
             Set(pair.Key, pair.Value);
+        // Developer recordings come first so diagnostic routes below keep their own settings.
+        foreach (var pair in settings.Developer.Environment(Logs!, onlineEnvironment.Count > 0, selectedGame.Id))
+            Set(pair.Key, pair.Value);
+        if (start.Environment.ContainsKey("REO_COOP_TRACE_FILE"))
+            NetworkTrace.Start(Logs!);
         string? keyboardQueue = null;
         if (lobby != null && automaticAccount && diagnosticRoute == null) {
             // Title -> Network -> automatic sign-in uses the native route; the launcher then steers
@@ -217,25 +224,9 @@ public sealed class GameSession {
         Set("REO_GS_GPU_PRESENT", "1");
         Set("REO_GS_DISPATCH_PACE", "2");
         Set("REO_GS_SPRITE_DEPTH_PARALLEL", "1");
-        Set("REO_VIF1_ASYNC", settings.AsyncVif ? "1" : "0");
         Set("REO_VIF1_GPU_RESIDENT", "0");
-        Set("REO_DISPLAY_ASPECT", settings.ResolvedAspect);
-        Set("REO_DISPLAY_FIT", settings.ResolvedFit);
-        Set("REO_DISPLAY_FILTER", settings.LinearFilter ? "linear" : "nearest");
-        var outputSize = DisplayOptions.Size(settings.WindowSize);
-        Set("REO_WINDOW_WIDTH", outputSize.Width.ToString());
-        Set("REO_WINDOW_HEIGHT", outputSize.Height.ToString());
-        Set("REO_TEXTURE_FILTER", settings.TextureLinear ? "linear" : "original");
-        Set("REO_INTERNAL_RESOLUTION", settings.ResolvedInternalResolution.ToString());
-        Set("REO_PERFORMANCE_OVERLAY", settings.PerformanceOverlay ? "1" : "0");
-        Set("REO_GPU_MEMORY_LOG", settings.ResolvedInternalResolution > 1 ? "1" : "0");
-        Set("REO_TEXTURE_ANISOTROPY", settings.ResolvedAnisotropy.ToString());
-        Set("REO_POST_AA", settings.ResolvedAntiAliasing);
-        Set("REO_BRIGHTNESS",
-            (settings.Brightness / 100.0)
-                .ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
-        Set("REO_GAMMA",
-            settings.Gamma.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        foreach (var pair in graphics.Environment)
+            Set(pair.Key, pair.Value);
         if (diagnosticRoute != null) {
             Set("REO_FRAME_PACING_FILE", Path.Combine(Logs, "frames.csv"));
             Set("REO_VIF_KICK_TIMING_AT", "0");
@@ -244,7 +235,7 @@ public sealed class GameSession {
             Set("REO_GS_WAIT_LOG", "1");
             Set("REO_IRQ_TIMING_LOG", "1");
             if (diagnosticColdCache) Set("REO_PIPELINE_CACHE_FILE", Path.Combine(Logs, "pipeline.cache"));
-            Set("REO_PERFORMANCE_DIAG", settings.PerformanceOverlay ? "1" : "0");
+            Set("REO_PERFORMANCE_DIAG", graphics.Environment["REO_PERFORMANCE_OVERLAY"]);
             Set("REO_AUDIO_DIAG", "1");
             Set("REO_RUMBLE_DIAG", "1");
             Set("REO_TEST_ROUTE", diagnosticRoute is "gameplay-pickup" or "gameplay-preview" or "gameplay-enemies" or "gameplay-enemy-combat" ? "gameplay" : diagnosticRoute);
@@ -274,7 +265,7 @@ public sealed class GameSession {
         // GPU movies when the rendering GPU has a hardware MPEG-2 decoder and the player left them
         // on in Graphics; otherwise the original CPU decoder.
         MovieDecoderChoice movies = await MovieDecoder.Choose(cancel);
-        bool gpuMovies = movies.Gpu && settings.GpuMovies;
+        bool gpuMovies = movies.Gpu && graphics.GpuMovies;
         MovieStatus = gpuMovies   ? "Movies: graphics card"
                       : movies.Gpu ? "Movies: processor (chosen in Graphics)"
                                    : "Movies: processor (" + movies.Reason + ")";
@@ -307,7 +298,7 @@ public sealed class GameSession {
         if (settings.ResolvedCoopMode == "host") HostRandomizerConfiguration = randomizerConfiguration;
         try {
             account = automaticAccount
-                          ? new AutomaticAccount(Settings.Home, settings, text => NetworkStatus = text,
+                          ? new AutomaticAccount(accountHome ?? Settings.Home, settings, text => NetworkStatus = text,
                                                  MainWindow.SignupEndpoint(settings, null))
                           : null;
             account?.Bind(start);
@@ -338,7 +329,11 @@ public sealed class GameSession {
         controller.GameProcessId = Process.Id;
         var lightProcess = Process;
         string lightLogs = Logs!;
-        _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
+        // Health addresses currently describe File #1 only; keep the neutral
+        // light for File #2 rather than interpret unrelated guest memory.
+        controller.SetHealthLight(PadLight.Blue);
+        if (selectedGame.Id == "file1")
+            _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
         _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
         _ = Pump(Process.StandardError, stderr, line => {
@@ -362,18 +357,20 @@ public sealed class GameSession {
                       networkProfileMarker,
                       automaticLobby = keyboardQueue != null,
                       inputDevice = controller.SelectedDevice.Name,
-                      fullscreen = settings.Fullscreen,
-                      resolution = DisplayOptions.Size(settings.WindowSize),
-                      linearScaling = settings.LinearFilter,
-                      textureLinear = settings.TextureLinear,
-                      internalResolution = settings.ResolvedInternalResolution,
-                      performanceOverlay = settings.PerformanceOverlay,
-                      anisotropy = settings.ResolvedAnisotropy,
-                      aspectRatio = settings.ResolvedAspect,
-                      screenFit = settings.ResolvedFit,
-                      antiAliasing = settings.ResolvedAntiAliasing,
-                      brightness = settings.Brightness,
-                      gamma = settings.Gamma,
+                      fullscreen = graphics.Fullscreen,
+                      graphicsEnvironment = graphics.Environment,
+                      resolution = graphics.Output,
+                      linearScaling = graphics.Environment["REO_DISPLAY_FILTER"] == "linear",
+                      textureLinear = graphics.Environment["REO_TEXTURE_FILTER"] == "linear",
+                      internalResolution = int.Parse(graphics.Environment["REO_INTERNAL_RESOLUTION"], System.Globalization.CultureInfo.InvariantCulture),
+                      performanceOverlay = graphics.Environment["REO_PERFORMANCE_OVERLAY"] == "1",
+                      developer = settings.Developer,
+                      anisotropy = int.Parse(graphics.Environment["REO_TEXTURE_ANISOTROPY"], System.Globalization.CultureInfo.InvariantCulture),
+                      aspectRatio = graphics.Environment["REO_DISPLAY_ASPECT"],
+                      screenFit = graphics.Environment["REO_DISPLAY_FIT"],
+                      antiAliasing = graphics.Environment["REO_POST_AA"],
+                      brightness = (int)Math.Round(100 * double.Parse(graphics.Environment["REO_BRIGHTNESS"], System.Globalization.CultureInfo.InvariantCulture)),
+                      gamma = double.Parse(graphics.Environment["REO_GAMMA"], System.Globalization.CultureInfo.InvariantCulture),
                       memoryCard = cardFolder,
                       importedData = discRoot,
                       importReused = Imported.Reused,
@@ -381,11 +378,11 @@ public sealed class GameSession {
                       directIso = true,
                       movieDecoder = gpuMovies ? "gpu" : "cpu",
                       gpuMoviesAvailable = movies.Gpu,
-                      gpuMoviesSetting = settings.GpuMovies,
+                      gpuMoviesSetting = graphics.GpuMovies,
                       movieDecoderGpu = movies.GpuName,
                       movieDecoderReason = movies.Reason },
                 new JsonSerializerOptions { WriteIndented = true }));
-        _ = ApplyWindow(Process, settings);
+        _ = ApplyWindow(Process, graphics);
     }
     async Task WatchRandomizerSession(Process process,string logs,string host,byte[] expected) {
         using var stopped=new CancellationTokenSource();
@@ -418,6 +415,7 @@ public sealed class GameSession {
             graphicsReady.TrySetCanceled();
             cardLease.Dispose();
         }
+        await Task.Run(() => NetworkTrace.Finish(logs));
         await File.WriteAllTextAsync(Path.Combine(logs, "exit.json"), JsonSerializer.Serialize(new {
             pid = process.Id, exitCode = process.ExitCode, utc = DateTime.UtcNow
         }));
@@ -469,7 +467,7 @@ public sealed class GameSession {
             }
         }
     }
-    static async Task ApplyWindow(Process process, Settings settings) {
+    static async Task ApplyWindow(Process process, GraphicsOptions graphics) {
         for (int i = 0; i < 1200 && !process.HasExited; ++i) {
             await Task.Delay(100).ConfigureAwait(false);
             process.Refresh();
@@ -477,7 +475,7 @@ public sealed class GameSession {
             if (hwnd == 0)
                 continue;
             _ = GameWindowIcon.Apply(process, hwnd);
-            if (settings.Fullscreen) {
+            if (graphics.Fullscreen) {
                 long style = GetWindowLongPtr(hwnd, -16).ToInt64() & ~0x00CF0000L;
                 SetWindowLongPtr(hwnd, -16, new nint(style));
                 var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
@@ -486,7 +484,7 @@ public sealed class GameSession {
                                  info.Monitor.Right - info.Monitor.Left,
                                  info.Monitor.Bottom - info.Monitor.Top, 0x4024);
             } else {
-                var size = DisplayOptions.Size(settings.WindowSize);
+                var size = graphics.Output;
                 var rect = new Rect { Right = size.Width, Bottom = size.Height };
                 AdjustWindowRectExForDpi(ref rect, (uint)GetWindowLongPtr(hwnd, -16).ToInt64(),
                                          false, (uint)GetWindowLongPtr(hwnd, -20).ToInt64(),
