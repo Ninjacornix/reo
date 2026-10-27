@@ -322,7 +322,7 @@ class SameOwnerMovieBridge {
             pendingCommand = gs_.request_command_buffer(Vulkan::CommandBuffer::Type::Generic);
             auto& cmd = pendingCommand;
             cmd->acquire_image_barrier(
-                *slot.imported, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                *slot.imported, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
                 VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT,
                 VK_QUEUE_FAMILY_EXTERNAL);
             cmd->image_barrier(*slot.rgba,
@@ -344,7 +344,7 @@ class SameOwnerMovieBridge {
                 VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
                 VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, VK_ACCESS_2_MEMORY_READ_BIT);
             cmd->release_image_barrier(
-                *slot.imported, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+                *slot.imported, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
                 VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT,
                 VK_QUEUE_FAMILY_EXTERNAL);
             wait->signal_external();
