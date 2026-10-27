@@ -2321,16 +2321,10 @@ void pad2FeederLoop() {
             }
             g_pad2.lastPressed = pressed;
             const uint16_t data = (uint16_t)~pressed; // active-low
-            // Scripted directions also move the left stick, as the keyboard does.
-            // A neutral analog report must remain centered rather than at zero.
-            if (pressed & pad2ButtonBit("LEFT"))
-                hostPad.left_x = 0;
-            if (pressed & pad2ButtonBit("RIGHT"))
-                hostPad.left_x = 255;
-            if (pressed & pad2ButtonBit("UP"))
-                hostPad.left_y = 0;
-            if (pressed & pad2ButtonBit("DOWN"))
-                hostPad.left_y = 255;
+            // Keep digital directions independent from the analog sticks. Both
+            // games use a neutral left stick plus D-pad for tank controls;
+            // synthesizing a deflection here selects camera-relative movement.
+            // Keyboard and analog test steering supply their own stick values.
             std::vector<uint32_t> socks;
             uint8_t* rd = nullptr;
             uint32_t work = 0;

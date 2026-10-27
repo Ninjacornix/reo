@@ -525,3 +525,31 @@ completion, saved multiplayer progress, four simultaneous native clients,
 and remote Internet/NAT play were not exercised. All temporary native clients,
 launcher hosts and local test-server services were stopped. Changes remain
 local on `file2-port`; nothing was published.
+
+
+### D-pad tank controls restored (2026-10-27)
+
+Branch `fix/dpad-tank-controls` removes the shared libpad2 feeder's conversion
+of every digital direction into a full left-stick deflection. Both games now
+receive D-pad and analog input independently, restoring the original tank
+control path for a controller D-pad while retaining camera-relative stick
+movement. No gameplay control thresholds or original movement functions were
+changed. Keyboard input already supplies its own stick values.
+
+Original gates were checked against 776 instruction words across both games:
+File #1 `662288` and File #2 `687688` enter camera-relative processing only when
+analog magnitude is at least 16. Evidence:
+`build-ninja/file2-network-research/dpad-analog-gates.json`.
+
+Both native builds and the Release launcher built successfully; all 639
+launcher checks passed. New adapter checks cover all eight D-pad directions,
+independent analog movement, and simultaneous digital/analog input for both
+games. Native input/gameplay probes passed in File #1 single-player and File #2
+co-op: D-pad left/right changed yaw with zero displacement and zero analog
+magnitude; D-pad up travelled approximately 54 units with unchanged yaw; stick
+left/right travelled approximately 54 units with nonzero analog magnitude.
+Input used private controller reports; guest RAM was read-only. This does not
+constitute a physical controller hands-on test. All three clients exited 0
+with no fatal/missing-function/device-loss findings; temporary services were
+stopped. Verification: `build-ninja/dpad-tank-check/verification.json`.
+No release was created.
