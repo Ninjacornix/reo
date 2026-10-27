@@ -143,6 +143,7 @@ public static partial class Updates {
             UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = helper
         };
         start.ArgumentList.Add("--apply-update");
+        Storage.ProcessEnvironment(start);
         start.ArgumentList.Add(planFile);
         using var process =
             Process.Start(start) ?? throw new IOException("Could not start the update installer.");

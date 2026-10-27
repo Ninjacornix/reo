@@ -1,4 +1,5 @@
 import json
+import shlex
 import unittest
 
 from compile_game import portable_flags, response_text
@@ -18,6 +19,10 @@ class PortableFlagTests(unittest.TestCase):
         encoded = response_text(paths, True)
         self.assertEqual([json.loads(line) for line in encoded.splitlines()],
                          [p.replace("\\", "/") for p in paths])
+
+    def test_non_ascii_paths_reach_tools_as_literal_utf8(self):
+        paths = ["C:/Users/Jos\u00e9/game files/main.obj", "D:/\u0418\u0433\u0440\u044b/runtime.lib"]
+        self.assertEqual(shlex.split(response_text(paths, True)), paths)
 
 
 if __name__ == "__main__":

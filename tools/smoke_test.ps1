@@ -18,7 +18,9 @@ param(
     [string]$Label = '',
     [string]$ExePath = '',
     [switch]$ToMainMenu,
-    [switch]$ToScenario
+    [switch]$ToScenario,
+    # File #2: also pass -Elf game_data_file2\SLUS_209.84 -ExePath build-ninja\recomp\reo_recomp_file2.exe
+    [ValidateSet('file1', 'file2')][string]$Game = 'file1'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,7 +83,7 @@ try {
         if ((Get-FileHash $discElf).Hash -ne (Get-FileHash $Elf).Hash) { Write-Error "ELF on disc differs from $Elf"; exit 2 }
         $runElf = $discElf
     } else { $runElf = $Elf }
-    $runArgs = @('--game', 'file1', '--elf', "`"$runElf`"", '--data', "${drive}:\")
+    $runArgs = @('--game', $Game, '--elf', "`"$runElf`"", '--data', "${drive}:\")
     $sw = [Diagnostics.Stopwatch]::StartNew()
     $proc = Start-Process -FilePath $Exe -ArgumentList $runArgs -WorkingDirectory $OutDir `
         -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -WindowStyle Hidden
@@ -108,6 +110,16 @@ try {
         [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key], 'Process')
     }
     Dismount-DiskImage -ImagePath $Iso | Out-Null
+}
+
+$runtimeFailures = @(Select-String -LiteralPath $stdout,$stderr -SimpleMatch -Pattern @(
+    'Warning: Function at address ',
+    'Error: Called unimplemented function',
+    'VK_ERROR_DEVICE_LOST'
+))
+if ($runtimeFailures.Count -gt 0) {
+    $code = 1
+    $result += "; runtime failure diagnostics: $($runtimeFailures.Count) (first: $($runtimeFailures[0].Line.Trim()))"
 }
 
 $summary = @(

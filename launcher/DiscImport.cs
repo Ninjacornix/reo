@@ -17,17 +17,16 @@ public record ImportManifest(int Version, string Game, string Source, long Sourc
 public static class DiscImport {
     public const string FirstElfSha256 =
         "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46";
+    public const string SecondElfSha256 =
+        "5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d";
+    public static string ExpectedElf(string game) => game switch {
+        "file1" => FirstElfSha256,
+        "file2" => SecondElfSha256,
+        _ => throw new ArgumentException("Unknown game", nameof(game))
+    };
     static readonly Dictionary<string, ImportManifest> manifests =
         new(StringComparer.OrdinalIgnoreCase);
-    public static string ExpectedElf(Settings settings, string root) {
-        if (settings.Game.Id == "file1")
-            return FirstElfSha256;
-        string reference = settings.GetElf(root);
-        if (!File.Exists(reference))
-            throw new IOException("This release does not include a supported File #2 build.");
-        using var stream = File.OpenRead(reference);
-        return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
-    }
+    public static string ExpectedElf(Settings settings, string root) => ExpectedElf(settings.Game.Id);
     static ImportManifest? Manifest(string folder) {
         lock (manifests) {
             if (manifests.TryGetValue(folder, out var manifest))
@@ -58,7 +57,7 @@ public static class DiscImport {
                 return false;
             var source = new FileInfo(settings.GetIso(game.Id));
             return Matches(Manifest(folder), source.FullName, source, game,
-                           game.Id == "file1" ? FirstElfSha256 : null) &&
+                           ExpectedElf(game.Id)) &&
                    File.Exists(Path.Combine(folder, "data", game.ElfName));
         } catch (Exception error)
             when (error is IOException or UnauthorizedAccessException or ArgumentException) {
@@ -109,6 +108,18 @@ public static class DiscImport {
                               .ToLowerInvariant();
         string target = Path.Combine(parent, identity);
         var old = Manifest(target);
+        if (!Matches(old, iso, source, game, expectedElf)) {
+            // A portable installation may have moved together with its ISO. Its
+            // rebased manifest is still valid even though the path-based directory
+            // identity predates the move; reuse it instead of extracting again.
+            foreach (string candidate in Directory.EnumerateDirectories(parent)) {
+                if ((File.GetAttributes(candidate) & FileAttributes.ReparsePoint) != 0) continue;
+                var relocated = Manifest(candidate);
+                if (Matches(relocated, iso, source, game, expectedElf) && Complete(candidate, relocated!, game))
+                    return new(candidate, Path.Combine(candidate, "data", game.ElfName), relocated!.Files.Length,
+                               relocated.Files.Sum(f => f.Length), true) { Verification = verified.Description };
+            }
+        }
         if (Matches(old, iso, source, game, expectedElf) && Complete(target, old!, game))
             return new(target, Path.Combine(target, "data", game.ElfName), old!.Files.Length,
                        old.Files.Sum(f => f.Length), true) { Verification = verified.Description };

@@ -403,6 +403,11 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     file(GLOB RECOMP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}/*.cpp")
 
+    # Sibling generated directories (output_overlay, output_extra, output_ovl) sit
+    # next to OUTPUT_DIR: recomp/config for File #1, recomp/config/output_file2 for
+    # File #2 (tools/local_build/generate_game.py --game file2).
+    get_filename_component(_reo_generated_root "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}" DIRECTORY)
+
     list(LENGTH RECOMP_SOURCES RECOMP_COUNT)
 
     message(STATUS "REO [${TARGET_NAME}]: Found ${RECOMP_COUNT} recompiled source files in ${OUTPUT_DIR}")
@@ -423,7 +428,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     # Overlay functions (runtime-loaded code dumped from PCSX2)
 
-    set(OVERLAY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_overlay")
+    set(OVERLAY_DIR "${_reo_generated_root}/output_overlay")
 
     if(EXISTS "${OVERLAY_DIR}")
 
@@ -451,7 +456,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     # Extra main-ELF entry points the Ghidra map merged into neighbours (tools/extra_recomp.py).
 
-    set(EXTRA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_extra")
+    set(EXTRA_DIR "${_reo_generated_root}/output_extra")
 
     if(EXISTS "${EXTRA_DIR}/register_extra.cpp")
 
@@ -465,7 +470,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
 
 
-    set(OVL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config/output_ovl")
+    set(OVL_DIR "${_reo_generated_root}/output_ovl")
 
     if(EXISTS "${OVL_DIR}/register_overlays.cpp")
 
@@ -504,8 +509,6 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         overrides/reo_netbio.cpp
 
         overrides/reo_vu_specialized.cpp
-
-        overrides/reo_missing_entries.cpp
 
         "${CMAKE_CURRENT_SOURCE_DIR}/../game/formats/nbd_parser.cpp"
 
@@ -551,6 +554,8 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             "${CMAKE_CURRENT_SOURCE_DIR}/.."
             "${CMAKE_CURRENT_SOURCE_DIR}/../tools/parallel_gs_backend/resident_geometry")
         list(APPEND _reo_handwritten_sources overrides/ground_query_diagnostic.cpp)
+        # Unregistered File #1 entry points (resume PCs, stutter fixes).
+        list(APPEND _reo_handwritten_sources overrides/reo_missing_entries.cpp)
         if(WIN32 AND REO_BUILD_GPU_GS)
             set(_reo_movie_game_sources
                 "${_reo_adapter_source}/movie_runtime/native_movie_game.cpp"
@@ -585,8 +590,46 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             overrides/reo_movie_initialize_observed.cpp
             overrides/gpu_palette_parent/parent_observed.cpp
             overrides/gpu_palette_parent/observer_install.cpp)
+    elseif(GAME_DEFINE STREQUAL "REO_GAME_FILE2")
+        list(APPEND _reo_handwritten_sources overrides/reo_file2_network.cpp)
+        # Native movie route: shared handwritten sources (addresses from
+        # movie_addresses/file2) plus File #1's copied functions translated by
+        # tools/file2_port/port_movie.py copies into the generated tree.
+        set(_reo_movie_copies "${_reo_generated_root}/movie_copies")
+        if(WIN32 AND REO_BUILD_GPU_GS)
+            set(_reo_movie_game_sources
+                "${_reo_adapter_source}/movie_runtime/native_movie_game.cpp"
+                "${_reo_adapter_source}/movie_runtime/original_graphics_route.cpp"
+                "${_reo_adapter_source}/movie_runtime/original_transport_route.cpp"
+                "${_reo_movie_copies}/original_transport_1570d8.cpp"
+                "${_reo_movie_copies}/original_transport_170ae8.cpp"
+                "${_reo_movie_copies}/original_transport_170d90.cpp"
+                "${_reo_movie_copies}/original_transport_171880.cpp"
+                "${_reo_movie_copies}/original_transport_171d10.cpp"
+                "${_reo_movie_copies}/original_transport_16aea0.cpp"
+                "${_reo_movie_copies}/original_transport_174030.cpp"
+                "${_reo_movie_copies}/original_transport_171920.cpp")
+            list(APPEND _reo_handwritten_sources ${_reo_movie_game_sources})
+            set_property(SOURCE ${_reo_movie_game_sources} APPEND PROPERTY
+                OBJECT_DEPENDS "${_reo_graphics_cohort_headers}")
+            set_property(SOURCE ${_reo_movie_game_sources} APPEND PROPERTY INCLUDE_DIRECTORIES
+                "${PS2RECOMP_DIR}/ps2xRuntime/src/lib"
+                "${CMAKE_CURRENT_SOURCE_DIR}/.."
+                "${_reo_adapter_source}" "${_reo_adapter_source}/movie_runtime" "${_reo_native_gs_dir}"
+                "${REO_PARALLEL_GS_SOURCE}/gs" "${REO_PARALLEL_GS_SOURCE}/Granite/vulkan"
+                "${REO_PARALLEL_GS_SOURCE}/Granite/util" "${REO_PARALLEL_GS_SOURCE}/Granite/math"
+                "${REO_PARALLEL_GS_SOURCE}/Granite/application/global"
+                "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/volk"
+                "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/khronos/vulkan-headers/include")
+            set_property(SOURCE ${_reo_movie_game_sources} APPEND PROPERTY COMPILE_DEFINITIONS
+                NOMINMAX GRANITE_SHIPPING HAVE_WSI_DXGI_INTEROP)
+        endif()
+        list(APPEND _reo_handwritten_sources
+            "${_reo_movie_copies}/movie_join_observed_caller.cpp"
+            "${_reo_movie_copies}/reo_movie_commit_observed.cpp"
+            "${_reo_movie_copies}/reo_movie_initialize_observed.cpp")
     endif()
-    if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
         list(APPEND _reo_handwritten_sources "${REO_VU_SPECIALIZED_SOURCE}")
 
@@ -594,12 +637,12 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     endif()
 
-    if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
         list(APPEND _reo_handwritten_sources "${REO_VU_WHOLE_SOURCE}")
         get_filename_component(_reo_vu_whole_dir "${REO_VU_WHOLE_SOURCE}" DIRECTORY)
     endif()
 
-    if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
         list(APPEND _reo_handwritten_sources "${REO_VU_NATIVE_GEOMETRY_SOURCE}")
 
@@ -625,7 +668,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         target_link_libraries(${TARGET_NAME} PRIVATE ws2_32)
     endif()
 
-    if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
         set_property(SOURCE overrides/reo_vu_specialized.cpp "${REO_VU_WHOLE_SOURCE}"
             TARGET_DIRECTORY ${TARGET_NAME} APPEND PROPERTY INCLUDE_DIRECTORIES
                 "${PS2RECOMP_DIR}/ps2xRuntime/src/lib" "${_reo_vu_whole_dir}"
@@ -634,7 +677,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             APPEND PROPERTY COMPILE_DEFINITIONS REO_HAVE_WHOLE_VU_PROGRAMS=1)
     endif()
 
-    if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
         set_property(SOURCE overrides/reo_vu_specialized.cpp "${REO_VU_SPECIALIZED_SOURCE}"
 
@@ -650,7 +693,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     endif()
 
-    if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+    if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
         set_property(SOURCE overrides/reo_vu_specialized.cpp "${REO_VU_NATIVE_GEOMETRY_SOURCE}"
 
@@ -704,8 +747,9 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
         "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}"
 
-        "${CMAKE_CURRENT_SOURCE_DIR}/config/output_overlay"
+        "${_reo_generated_root}/output_overlay"
 
+        "${CMAKE_CURRENT_SOURCE_DIR}/overrides/movie_addresses/$<IF:$<STREQUAL:${GAME_DEFINE},REO_GAME_FILE2>,file2,file1>"
         "${CMAKE_CURRENT_SOURCE_DIR}/overrides"
 
         "${CMAKE_CURRENT_SOURCE_DIR}/.."
@@ -896,7 +940,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
             PROPERTIES COMPILE_OPTIONS "${_reo_handwritten_opts}")
 
-        if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        if(REO_VU_WHOLE_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
             set_property(SOURCE "${REO_VU_WHOLE_SOURCE}" TARGET_DIRECTORY ${TARGET_NAME}
                 APPEND PROPERTY COMPILE_OPTIONS /fp:precise)
         endif()
@@ -906,7 +950,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
         set_property(SOURCE overrides/reo_hw_bridge.cpp TARGET_DIRECTORY ${TARGET_NAME}
             APPEND PROPERTY INCLUDE_DIRECTORIES "${PS2RECOMP_DIR}/ps2xRuntime/src/lib")
 
-        if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        if(REO_VU_SPECIALIZED_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
             set_property(SOURCE "${REO_VU_SPECIALIZED_SOURCE}" TARGET_DIRECTORY ${TARGET_NAME}
 
@@ -914,7 +958,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
         endif()
 
-        if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        if(REO_VU_NATIVE_GEOMETRY_SOURCE AND GAME_DEFINE MATCHES "^REO_GAME_FILE[12]$")
 
             set_property(SOURCE overrides/reo_vu_specialized.cpp "${REO_VU_NATIVE_GEOMETRY_SOURCE}"
 
@@ -1048,4 +1092,4 @@ add_recomp_target(reo_recomp "output" "REO_GAME_FILE1")
 
 # ── File #2: RE Outbreak File #2 (SLUS-20984) ─────────────────────
 
-add_recomp_target(reo_recomp_file2 "output_file2" "REO_GAME_FILE2")
+add_recomp_target(reo_recomp_file2 "output_file2/output" "REO_GAME_FILE2")

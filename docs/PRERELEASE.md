@@ -4,7 +4,7 @@ Current target: **v1.0.19**, shown in the launcher as **1.0 Alpha**, marked
 prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.19)". Tags stay numeric so
 installed launchers offer the update. .NET is an
 external prerequisite. The server is source-only, with Python/packages prepared
-automatically in Local AppData on first hosting (an installed Python 3.12 is
+automatically in the selected data folder on first hosting (an installed Python 3.12 is
 reused when present).
 
 ## v1.0.19
@@ -312,7 +312,7 @@ compile, but generation still reruns). Export a new kit only when actual
 runtime/generator inputs change.
 
 Automatic compiler setup lives in PortableCompilerSetup.cs, pins the official
-20251216 UCRT x64 ZIP SHA-256, downloads to Local AppData and admits only verified
+20251216 UCRT x64 ZIP SHA-256, downloads to the selected data folder and admits only verified
 x64 components with a complete hashed cache inventory. No user environment variable
 is changed. --test-compiler-setup <fresh-home> <receipt> checks cold download, native
 compile/link/run, cached reuse and cancellation without compiling the game.

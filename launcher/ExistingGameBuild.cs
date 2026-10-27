@@ -7,16 +7,16 @@ namespace Outbreak.Launcher;
 public static partial class LocalGameBuild {
     public static Task<string>
     ImportExisting(string root, string executable, IProgress<ImportProgress>? progress = null,
-                   CancellationToken cancel = default) => Task.Run(async () => {
-        ExpandPayload(root, progress, cancel);
-        return await ImportExistingVerified(root, executable, DiscImport.FirstElfSha256, progress,
-                                            cancel);
+                   CancellationToken cancel = default, string game = "file1") => Task.Run(async () => {
+        ExpandPayload(root, progress, cancel, game);
+        return await ImportExistingVerified(root, executable, DiscImport.ExpectedElf(game), progress,
+                                            cancel, game: game);
     }, cancel);
 
     internal static async Task<string>
     ImportExistingVerified(string root, string executable, string expectedElf,
                            IProgress<ImportProgress>? progress = null,
-                           CancellationToken cancel = default, string? home = null) {
+                           CancellationToken cancel = default, string? home = null, string game = "file1") {
         cancel.ThrowIfCancellationRequested();
         executable = Path.GetFullPath(executable);
         if (!Path.GetFileName(executable)
@@ -27,8 +27,8 @@ public static partial class LocalGameBuild {
         if (!File.Exists(record))
             throw new IOException(
                 "This EXE has no local-build.json record. Select a completed launcher build and keep its entire build folder.");
-        var kit = ReadKit(KitFolder(root), expectedElf, cancel);
-        string kitHash = Sha(Path.Combine(KitFolder(root), ManifestName));
+        var kit = ReadKit(KitFolder(root, game), expectedElf, cancel);
+        string kitHash = Sha(Path.Combine(KitFolder(root, game), ManifestName));
         progress?.Report(new(0, 0, "Checking build version, executable and companion files",
                              "Checking existing build"));
         if (!Ready(source, kitHash, kit) || !File.Exists(executable) || !IsPe(executable))
@@ -36,7 +36,7 @@ public static partial class LocalGameBuild {
                 "This build is incompatible, incomplete or modified. Use a completed build for this launcher's game version and build kit, or import your ISO to compile it.");
         var receipt =
             JsonSerializer.Deserialize<LocalBuildReceipt>(File.ReadAllText(record), Json)!;
-        string target = TargetPath(root, home: home), ready = Path.GetDirectoryName(target)!,
+        string target = TargetPath(root, game, home: home), ready = Path.GetDirectoryName(target)!,
                cache = Path.GetDirectoryName(ready)!;
         Directory.CreateDirectory(cache);
         using var lease = new FileStream(Path.Combine(cache, "build.lock"), FileMode.OpenOrCreate,
@@ -77,7 +77,7 @@ public static partial class LocalGameBuild {
             File.WriteAllText(Path.Combine(staging, "local-build.json"),
                               JsonSerializer.Serialize(receipt, Json));
             if (!Ready(staging, kitHash, kit) ||
-                Sha(Path.Combine(KitFolder(root), ManifestName)) != kitHash)
+                Sha(Path.Combine(KitFolder(root, game), ManifestName)) != kitHash)
                 throw new IOException(
                     "The build or kit changed during import. Retry with an unchanged build folder.");
             cancel.ThrowIfCancellationRequested();

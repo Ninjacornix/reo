@@ -1,0 +1,1185 @@
+# PS2Recomp policy for Resident Evil Outbreak File #2 (SLUS_209.84, NTSC-U, SHA-256 5c0411a2...0fd8d).
+# Read by tools/local_build/generate_game.py --game file2 from the MMIO table onward; the general
+# section is generated per pass. The MMIO and jump tables are the upstream ElfAnalyzer output for
+# this executable (recomp/config/outbreak_file2.toml).
+
+[mmio]
+"0x124634" = "0x10000000"
+"0x114b20" = "0x10000000"
+"0x1028f8" = "0x10000000"
+"0x102868" = "0x10000000"
+"0x128e84" = "0x10000000"
+"0x102810" = "0x10000000"
+"0x102800" = "0x10000000"
+"0x102c1c" = "0x10000000"
+"0x11372c" = "0x10000000"
+"0x113740" = "0x10000000"
+"0x1028ac" = "0x10000000"
+"0x1028ec" = "0x10000000"
+"0x1c50a8" = "0x10000000"
+"0x113710" = "0x10000000"
+"0x127ac4" = "0x10000000"
+"0x1028dc" = "0x10000000"
+"0x103388" = "0x10000000"
+"0x102b30" = "0x10000000"
+"0x113c44" = "0x10000000"
+"0x102b40" = "0x10000000"
+"0x1134e4" = "0x10000000"
+"0x102b98" = "0x10000000"
+"0x102bdc" = "0x10000000"
+"0x11377c" = "0x10000000"
+"0x102c0c" = "0x10000000"
+"0x112718" = "0x10000000"
+"0x102c28" = "0x10000000"
+"0x113a3c" = "0x10000000"
+"0x103148" = "0x10000000"
+"0x1136c8" = "0x10000000"
+"0x103108" = "0x10000000"
+"0x113680" = "0x10000000"
+"0x103180" = "0x10000000"
+"0x103140" = "0x10000000"
+"0x127748" = "0x10000000"
+"0x103178" = "0x10000000"
+"0x1136f8" = "0x10000000"
+"0x113638" = "0x10000000"
+"0x113650" = "0x10000000"
+"0x103190" = "0x10000000"
+"0x1136e0" = "0x10000000"
+"0x1031a0" = "0x10000000"
+"0x113668" = "0x10000000"
+"0x1031a8" = "0x10000000"
+"0x128ce0" = "0x10000000"
+"0x127cd0" = "0x10000000"
+"0x1032dc" = "0x10000000"
+"0x11352c" = "0x10000000"
+"0x1c46ec" = "0x10000000"
+"0x128cd0" = "0x10000000"
+"0x1032ec" = "0x10000000"
+"0x1032fc" = "0x10000000"
+"0x1036e0" = "0x10000000"
+"0x125d2c" = "0x10000000"
+"0x103304" = "0x10000000"
+"0x1130e8" = "0x10000000"
+"0x127dc0" = "0x10000000"
+"0x103380" = "0x10000000"
+"0x1139a0" = "0x10000000"
+"0x1036c8" = "0x10000000"
+"0x1135a4" = "0x10000000"
+"0x1036f4" = "0x10000000"
+"0x10370c" = "0x10000000"
+"0x112728" = "0x10000000"
+"0x113024" = "0x10000000"
+"0x1130d4" = "0x10000000"
+"0x1134a0" = "0x10000000"
+"0x11e2e4" = "0x10000000"
+"0x113698" = "0x10000000"
+"0x126fb8" = "0x10000000"
+"0x1136b0" = "0x10000000"
+"0x113af4" = "0x10000000"
+"0x113734" = "0x10000000"
+"0x1dd938" = "0x10003c00"
+"0x1139ec" = "0x10000000"
+"0x11e250" = "0x10000000"
+"0x113a28" = "0x10000000"
+"0x113a38" = "0x10000000"
+"0x113ae0" = "0x10000000"
+"0x113bcc" = "0x10000000"
+"0x113cc0" = "0x10000000"
+"0x127cf8" = "0x10000000"
+"0x113d2c" = "0x10000000"
+"0x113dec" = "0x10000000"
+"0x113df4" = "0x10000000"
+"0x113e10" = "0x10000000"
+"0x113e3c" = "0x10000000"
+"0x114acc" = "0x10000000"
+"0x113e40" = "0x10000000"
+"0x113e7c" = "0x10000000"
+"0x126f98" = "0x10000000"
+"0x113ef8" = "0x10000000"
+"0x125e74" = "0x10000000"
+"0x113f24" = "0x10000000"
+"0x113f5c" = "0x10000000"
+"0x113fd0" = "0x10000000"
+"0x1c5048" = "0x10000000"
+"0x11e760" = "0x10001000"
+"0x113fd8" = "0x10000000"
+"0x12650c" = "0x10002010"
+"0x114004" = "0x10000000"
+"0x114008" = "0x10000000"
+"0x1140bc" = "0x10000000"
+"0x1140c8" = "0x10000000"
+"0x127868" = "0x10000000"
+"0x11414c" = "0x10000000"
+"0x12701c" = "0x10000000"
+"0x114158" = "0x10000000"
+"0x114184" = "0x10000000"
+"0x114190" = "0x10000000"
+"0x1141bc" = "0x10000000"
+"0x1141c0" = "0x10000000"
+"0x114af0" = "0x10000000"
+"0x1276b8" = "0x10000000"
+"0x114b6c" = "0x10000000"
+"0x114b90" = "0x10000000"
+"0x114bbc" = "0x1000f000"
+"0x115ef8" = "0x10000000"
+"0x116a64" = "0x10000000"
+"0x1277ec" = "0x10000000"
+"0x116a78" = "0x1000e010"
+"0x1c4d00" = "0x10000000"
+"0x116a84" = "0x10000000"
+"0x11e040" = "0x10000000"
+"0x11e190" = "0x10000000"
+"0x11e1c0" = "0x10000000"
+"0x11e3b8" = "0x10000000"
+"0x11e56c" = "0x10000000"
+"0x11e570" = "0x10000000"
+"0x128cf8" = "0x10000000"
+"0x11e5b4" = "0x10001000"
+"0x11e6bc" = "0x10000000"
+"0x2122d8" = "0x10000000"
+"0x11e6c4" = "0x10000000"
+"0x11e6f8" = "0x10001000"
+"0x11e724" = "0x10001000"
+"0x11e72c" = "0x10001010"
+"0x11e7b0" = "0x10000010"
+"0x11e814" = "0x10000010"
+"0x1227a8" = "0x10000000"
+"0x124478" = "0x10000000"
+"0x1244d4" = "0x10000000"
+"0x1258f0" = "0x10000000"
+"0x1244e4" = "0x10000000"
+"0x1279c0" = "0x1000b020"
+"0x1245f4" = "0x10000000"
+"0x124674" = "0x10002010"
+"0x1246a0" = "0x10000000"
+"0x1246ec" = "0x10000000"
+"0x124a88" = "0x10000000"
+"0x125718" = "0x10000000"
+"0x125ac8" = "0x10000000"
+"0x125b08" = "0x10000000"
+"0x129404" = "0x10000000"
+"0x125c1c" = "0x10000000"
+"0x125cdc" = "0x10000000"
+"0x125d68" = "0x10000000"
+"0x125e3c" = "0x10000000"
+"0x125f50" = "0x10000000"
+"0x125fa0" = "0x10000000"
+"0x126058" = "0x10000000"
+"0x126498" = "0x10000000"
+"0x126534" = "0x10002010"
+"0x12653c" = "0x10002010"
+"0x126564" = "0x10002010"
+"0x12656c" = "0x10002010"
+"0x126594" = "0x10002010"
+"0x126fa0" = "0x10000000"
+"0x126fac" = "0x10000000"
+"0x126fe0" = "0x10000000"
+"0x127014" = "0x10000000"
+"0x127028" = "0x10000000"
+"0x127034" = "0x10000000"
+"0x127058" = "0x10000000"
+"0x127080" = "0x10000000"
+"0x12773c" = "0x10000000"
+"0x1277e4" = "0x10000000"
+"0x1277fc" = "0x10000000"
+"0x127840" = "0x10000000"
+"0x1278b0" = "0x10000000"
+"0x1278c8" = "0x10000000"
+"0x1278dc" = "0x10000000"
+"0x127924" = "0x10000000"
+"0x127930" = "0x1000b020"
+"0x127940" = "0x1000b000"
+"0x1279c8" = "0x1000b000"
+"0x127aa0" = "0x10000000"
+"0x127ad4" = "0x10000000"
+"0x127ae0" = "0x10000000"
+"0x127f28" = "0x10000000"
+"0x127b04" = "0x10000000"
+"0x127b60" = "0x10000000"
+"0x127bb8" = "0x10000000"
+"0x127bf0" = "0x10000000"
+"0x127c08" = "0x10000000"
+"0x127c48" = "0x10000000"
+"0x127c64" = "0x10000000"
+"0x127ce4" = "0x10002010"
+"0x127d30" = "0x10000000"
+"0x127da4" = "0x10000000"
+"0x127dc8" = "0x10000000"
+"0x127dd8" = "0x10000000"
+"0x127e78" = "0x10000000"
+"0x127f9c" = "0x10000000"
+"0x127fa4" = "0x10000000"
+"0x128c68" = "0x10000000"
+"0x128c98" = "0x10000000"
+"0x128cd8" = "0x10000000"
+"0x128e6c" = "0x10000000"
+"0x128e74" = "0x10000000"
+"0x1293c4" = "0x10000000"
+"0x1293e8" = "0x10000000"
+"0x1293f8" = "0x10000000"
+"0x12ad90" = "0x10000000"
+"0x12ad98" = "0x10000000"
+"0x12ada4" = "0x10000000"
+"0x141a20" = "0x1000a000"
+"0x141ba4" = "0x1000a000"
+"0x1c4684" = "0x10000000"
+"0x1c4b40" = "0x10000000"
+"0x1c4b44" = "0x10000000"
+"0x1c4d70" = "0x10000000"
+"0x1c4ff8" = "0x10000000"
+"0x1c5000" = "0x10000000"
+"0x1c5018" = "0x10000000"
+"0x1c5040" = "0x10000000"
+"0x1dd460" = "0x10003c00"
+"0x1eda04" = "0x10000810"
+"0x1eda10" = "0x10000800"
+"0x1edcd8" = "0x10000010"
+"0x1edce0" = "0x10000000"
+"0x2122e0" = "0x10000000"
+"0x21230c" = "0x10000000"
+"0x2129d4" = "0x10000000"
+
+# Jump tables detected in the program
+[jump_tables]
+[[jump_tables.table]]
+address = "0x241c50"
+entries = [
+  { index = 0, target = "0x10bc84" },
+  { index = 1, target = "0x10b928" },
+  { index = 2, target = "0x10b928" },
+  { index = 3, target = "0x10b928" },
+  { index = 4, target = "0x10b928" },
+  { index = 5, target = "0x10b928" },
+  { index = 6, target = "0x10b928" },
+  { index = 7, target = "0x10b928" },
+  { index = 8, target = "0x10b928" },
+  { index = 9, target = "0x10b920" },
+  { index = 10, target = "0x10b920" },
+  { index = 11, target = "0x10b920" },
+  { index = 12, target = "0x10b920" },
+  { index = 13, target = "0x10b920" },
+  { index = 14, target = "0x10b928" },
+  { index = 15, target = "0x10b928" },
+  { index = 16, target = "0x10b928" },
+  { index = 17, target = "0x10b928" },
+  { index = 18, target = "0x10b928" },
+  { index = 19, target = "0x10b928" },
+  { index = 20, target = "0x10b928" },
+  { index = 21, target = "0x10b928" },
+  { index = 22, target = "0x10b928" },
+  { index = 23, target = "0x10b928" },
+  { index = 24, target = "0x10b928" },
+  { index = 25, target = "0x10b928" },
+  { index = 26, target = "0x10b928" },
+  { index = 27, target = "0x10b928" },
+  { index = 28, target = "0x10b928" },
+  { index = 29, target = "0x10b928" },
+  { index = 30, target = "0x10b928" },
+  { index = 31, target = "0x10b928" },
+  { index = 32, target = "0x10b920" },
+  { index = 33, target = "0x10b928" },
+  { index = 34, target = "0x10b928" },
+  { index = 35, target = "0x10b928" },
+  { index = 36, target = "0x10b928" },
+  { index = 37, target = "0x10b928" },
+  { index = 38, target = "0x10b928" },
+  { index = 39, target = "0x10b928" },
+  { index = 40, target = "0x10b928" },
+  { index = 41, target = "0x10b928" },
+  { index = 42, target = "0x10b928" },
+  { index = 43, target = "0x10b908" },
+  { index = 44, target = "0x10b928" },
+  { index = 45, target = "0x10b900" },
+]
+
+[[jump_tables.table]]
+address = "0x241dc0"
+entries = [
+  { index = 0, target = "0x10d3a8" },
+  { index = 1, target = "0x10da58" },
+  { index = 2, target = "0x10da58" },
+  { index = 3, target = "0x10d3c0" },
+  { index = 4, target = "0x10da58" },
+  { index = 5, target = "0x10da58" },
+  { index = 6, target = "0x10da58" },
+  { index = 7, target = "0x10da58" },
+  { index = 8, target = "0x10da58" },
+  { index = 9, target = "0x10da58" },
+  { index = 10, target = "0x10d3c8" },
+  { index = 11, target = "0x10d3f0" },
+  { index = 12, target = "0x10da58" },
+  { index = 13, target = "0x10d3e4" },
+  { index = 14, target = "0x10d400" },
+  { index = 15, target = "0x10da58" },
+  { index = 16, target = "0x10d480" },
+  { index = 17, target = "0x10d488" },
+  { index = 18, target = "0x10d488" },
+  { index = 19, target = "0x10d488" },
+  { index = 20, target = "0x10d488" },
+  { index = 21, target = "0x10d488" },
+  { index = 22, target = "0x10d488" },
+  { index = 23, target = "0x10d488" },
+  { index = 24, target = "0x10d488" },
+  { index = 25, target = "0x10d488" },
+  { index = 26, target = "0x10da58" },
+  { index = 27, target = "0x10da58" },
+  { index = 28, target = "0x10da58" },
+  { index = 29, target = "0x10da58" },
+  { index = 30, target = "0x10da58" },
+  { index = 31, target = "0x10da58" },
+  { index = 32, target = "0x10da58" },
+  { index = 33, target = "0x10da58" },
+  { index = 34, target = "0x10da58" },
+  { index = 35, target = "0x10da58" },
+  { index = 36, target = "0x10d518" },
+  { index = 37, target = "0x10d570" },
+  { index = 38, target = "0x10da58" },
+  { index = 39, target = "0x10d570" },
+  { index = 40, target = "0x10da58" },
+  { index = 41, target = "0x10da58" },
+  { index = 42, target = "0x10da58" },
+  { index = 43, target = "0x10da58" },
+  { index = 44, target = "0x10d4c0" },
+  { index = 45, target = "0x10da58" },
+  { index = 46, target = "0x10da58" },
+  { index = 47, target = "0x10d7b0" },
+  { index = 48, target = "0x10da58" },
+  { index = 49, target = "0x10da58" },
+  { index = 50, target = "0x10da58" },
+  { index = 51, target = "0x10da58" },
+  { index = 52, target = "0x10da58" },
+  { index = 53, target = "0x10d880" },
+  { index = 54, target = "0x10da58" },
+  { index = 55, target = "0x10da58" },
+  { index = 56, target = "0x10d8c8" },
+  { index = 57, target = "0x10da58" },
+  { index = 58, target = "0x10da58" },
+  { index = 59, target = "0x10da58" },
+  { index = 60, target = "0x10da58" },
+  { index = 61, target = "0x10da58" },
+  { index = 62, target = "0x10da58" },
+  { index = 63, target = "0x10da58" },
+  { index = 64, target = "0x10da58" },
+  { index = 65, target = "0x10da58" },
+  { index = 66, target = "0x10da58" },
+  { index = 67, target = "0x10d4f8" },
+  { index = 68, target = "0x10d51c" },
+  { index = 69, target = "0x10d570" },
+  { index = 70, target = "0x10d570" },
+  { index = 71, target = "0x10d570" },
+  { index = 72, target = "0x10d4c8" },
+  { index = 73, target = "0x10d51c" },
+  { index = 74, target = "0x10da58" },
+  { index = 75, target = "0x10da58" },
+  { index = 76, target = "0x10d4d0" },
+  { index = 77, target = "0x10da58" },
+  { index = 78, target = "0x10d750" },
+  { index = 79, target = "0x10d7b4" },
+  { index = 80, target = "0x10d7f8" },
+  { index = 81, target = "0x10d4e4" },
+  { index = 82, target = "0x10da58" },
+  { index = 83, target = "0x10d820" },
+  { index = 84, target = "0x10da58" },
+  { index = 85, target = "0x10d884" },
+  { index = 86, target = "0x10da58" },
+  { index = 87, target = "0x10da58" },
+  { index = 88, target = "0x10d8d8" },
+]
+
+[[jump_tables.table]]
+address = "0x241f60"
+entries = [
+  { index = 0, target = "0x10ede8" },
+  { index = 1, target = "0x10edf0" },
+  { index = 2, target = "0x10edf0" },
+  { index = 3, target = "0x10edf0" },
+  { index = 4, target = "0x10edf0" },
+  { index = 5, target = "0x10edf0" },
+  { index = 6, target = "0x10edf0" },
+  { index = 7, target = "0x10edf0" },
+  { index = 8, target = "0x10edf0" },
+  { index = 9, target = "0x10edf0" },
+  { index = 10, target = "0x10edf0" },
+  { index = 11, target = "0x10edf0" },
+  { index = 12, target = "0x10edf0" },
+  { index = 13, target = "0x10edf0" },
+  { index = 14, target = "0x10edf0" },
+  { index = 15, target = "0x10edf0" },
+  { index = 16, target = "0x10edf0" },
+  { index = 17, target = "0x10edf0" },
+  { index = 18, target = "0x10edf0" },
+  { index = 19, target = "0x10edf0" },
+  { index = 20, target = "0x10edf0" },
+  { index = 21, target = "0x10edf0" },
+  { index = 22, target = "0x10edf0" },
+  { index = 23, target = "0x10edf0" },
+  { index = 24, target = "0x10edf0" },
+  { index = 25, target = "0x10edf0" },
+  { index = 26, target = "0x10edf0" },
+  { index = 27, target = "0x10edf0" },
+  { index = 28, target = "0x10edf0" },
+  { index = 29, target = "0x10edf0" },
+  { index = 30, target = "0x10edf0" },
+  { index = 31, target = "0x10edf0" },
+  { index = 32, target = "0x10edf0" },
+  { index = 33, target = "0x10edf0" },
+  { index = 34, target = "0x10edf0" },
+  { index = 35, target = "0x10edf0" },
+  { index = 36, target = "0x10edf0" },
+  { index = 37, target = "0x10ec10" },
+  { index = 38, target = "0x10edf0" },
+  { index = 39, target = "0x10edf0" },
+  { index = 40, target = "0x10edf0" },
+  { index = 41, target = "0x10edf0" },
+  { index = 42, target = "0x10ec78" },
+  { index = 43, target = "0x10edf0" },
+  { index = 44, target = "0x10edf0" },
+  { index = 45, target = "0x10edf0" },
+  { index = 46, target = "0x10edf0" },
+  { index = 47, target = "0x10edf0" },
+  { index = 48, target = "0x10ec98" },
+  { index = 49, target = "0x10ec98" },
+  { index = 50, target = "0x10ec98" },
+  { index = 51, target = "0x10ec98" },
+  { index = 52, target = "0x10ec98" },
+  { index = 53, target = "0x10ec98" },
+  { index = 54, target = "0x10ec98" },
+  { index = 55, target = "0x10ec98" },
+  { index = 56, target = "0x10ec98" },
+  { index = 57, target = "0x10ec98" },
+  { index = 58, target = "0x10edf0" },
+  { index = 59, target = "0x10edf0" },
+  { index = 60, target = "0x10edf0" },
+  { index = 61, target = "0x10edf0" },
+  { index = 62, target = "0x10edf0" },
+  { index = 63, target = "0x10edf0" },
+  { index = 64, target = "0x10edf0" },
+  { index = 65, target = "0x10edf0" },
+  { index = 66, target = "0x10edf0" },
+  { index = 67, target = "0x10edf0" },
+  { index = 68, target = "0x10ecb0" },
+  { index = 69, target = "0x10ed28" },
+  { index = 70, target = "0x10edf0" },
+  { index = 71, target = "0x10ed28" },
+  { index = 72, target = "0x10edf0" },
+  { index = 73, target = "0x10edf0" },
+  { index = 74, target = "0x10edf0" },
+  { index = 75, target = "0x10edf0" },
+  { index = 76, target = "0x10ec88" },
+  { index = 77, target = "0x10edf0" },
+  { index = 78, target = "0x10edf0" },
+  { index = 79, target = "0x10ece0" },
+  { index = 80, target = "0x10edf0" },
+  { index = 81, target = "0x10edf0" },
+  { index = 82, target = "0x10edf0" },
+  { index = 83, target = "0x10edf0" },
+  { index = 84, target = "0x10edf0" },
+  { index = 85, target = "0x10edf0" },
+  { index = 86, target = "0x10edf0" },
+  { index = 87, target = "0x10edf0" },
+  { index = 88, target = "0x10ed18" },
+  { index = 89, target = "0x10edf0" },
+  { index = 90, target = "0x10edf0" },
+  { index = 91, target = "0x10ed38" },
+  { index = 92, target = "0x10edf0" },
+  { index = 93, target = "0x10edf0" },
+  { index = 94, target = "0x10edf0" },
+  { index = 95, target = "0x10edf0" },
+  { index = 96, target = "0x10edf0" },
+  { index = 97, target = "0x10edf0" },
+  { index = 98, target = "0x10edf0" },
+  { index = 99, target = "0x10ed60" },
+  { index = 100, target = "0x10ecb4" },
+  { index = 101, target = "0x10ed28" },
+  { index = 102, target = "0x10ed28" },
+  { index = 103, target = "0x10ed28" },
+  { index = 104, target = "0x10ec90" },
+  { index = 105, target = "0x10ecc8" },
+  { index = 106, target = "0x10edf0" },
+  { index = 107, target = "0x10edf0" },
+  { index = 108, target = "0x10ec80" },
+  { index = 109, target = "0x10edf0" },
+  { index = 110, target = "0x10ed90" },
+  { index = 111, target = "0x10ece4" },
+  { index = 112, target = "0x10ed70" },
+  { index = 113, target = "0x10edf0" },
+  { index = 114, target = "0x10edf0" },
+  { index = 115, target = "0x10ed30" },
+  { index = 116, target = "0x10edf0" },
+  { index = 117, target = "0x10ed00" },
+  { index = 118, target = "0x10edf0" },
+  { index = 119, target = "0x10edf0" },
+  { index = 120, target = "0x10ed18" },
+]
+
+[[jump_tables.table]]
+address = "0x242170"
+entries = [
+  { index = 0, target = "0x10f298" },
+  { index = 1, target = "0x10f318" },
+  { index = 2, target = "0x10f298" },
+  { index = 3, target = "0x10f318" },
+  { index = 4, target = "0x10f318" },
+  { index = 5, target = "0x10f210" },
+  { index = 6, target = "0x10f238" },
+  { index = 7, target = "0x10f238" },
+  { index = 8, target = "0x10f238" },
+  { index = 9, target = "0x10f238" },
+  { index = 10, target = "0x10f238" },
+  { index = 11, target = "0x10f238" },
+  { index = 12, target = "0x10f238" },
+  { index = 13, target = "0x10f258" },
+  { index = 14, target = "0x10f258" },
+  { index = 15, target = "0x10f318" },
+  { index = 16, target = "0x10f318" },
+  { index = 17, target = "0x10f318" },
+  { index = 18, target = "0x10f318" },
+  { index = 19, target = "0x10f318" },
+  { index = 20, target = "0x10f318" },
+  { index = 21, target = "0x10f318" },
+  { index = 22, target = "0x10f280" },
+  { index = 23, target = "0x10f280" },
+  { index = 24, target = "0x10f280" },
+  { index = 25, target = "0x10f280" },
+  { index = 26, target = "0x10f280" },
+  { index = 27, target = "0x10f280" },
+  { index = 28, target = "0x10f318" },
+  { index = 29, target = "0x10f318" },
+  { index = 30, target = "0x10f318" },
+  { index = 31, target = "0x10f318" },
+  { index = 32, target = "0x10f318" },
+  { index = 33, target = "0x10f318" },
+  { index = 34, target = "0x10f318" },
+  { index = 35, target = "0x10f318" },
+  { index = 36, target = "0x10f318" },
+  { index = 37, target = "0x10f318" },
+  { index = 38, target = "0x10f318" },
+  { index = 39, target = "0x10f318" },
+  { index = 40, target = "0x10f318" },
+  { index = 41, target = "0x10f318" },
+  { index = 42, target = "0x10f318" },
+  { index = 43, target = "0x10f318" },
+  { index = 44, target = "0x10f318" },
+  { index = 45, target = "0x10f2b0" },
+  { index = 46, target = "0x10f318" },
+  { index = 47, target = "0x10f318" },
+  { index = 48, target = "0x10f318" },
+  { index = 49, target = "0x10f318" },
+  { index = 50, target = "0x10f318" },
+  { index = 51, target = "0x10f318" },
+  { index = 52, target = "0x10f318" },
+  { index = 53, target = "0x10f318" },
+  { index = 54, target = "0x10f280" },
+  { index = 55, target = "0x10f280" },
+  { index = 56, target = "0x10f280" },
+  { index = 57, target = "0x10f280" },
+  { index = 58, target = "0x10f280" },
+  { index = 59, target = "0x10f280" },
+  { index = 60, target = "0x10f318" },
+  { index = 61, target = "0x10f318" },
+  { index = 62, target = "0x10f318" },
+  { index = 63, target = "0x10f318" },
+  { index = 64, target = "0x10f318" },
+  { index = 65, target = "0x10f318" },
+  { index = 66, target = "0x10f318" },
+  { index = 67, target = "0x10f318" },
+  { index = 68, target = "0x10f318" },
+  { index = 69, target = "0x10f318" },
+  { index = 70, target = "0x10f318" },
+  { index = 71, target = "0x10f318" },
+  { index = 72, target = "0x10f318" },
+  { index = 73, target = "0x10f318" },
+  { index = 74, target = "0x10f318" },
+  { index = 75, target = "0x10f318" },
+  { index = 76, target = "0x10f318" },
+  { index = 77, target = "0x10f2b0" },
+]
+
+[[jump_tables.table]]
+address = "0x2422b0"
+entries = [
+  { index = 0, target = "0x10f4c0" },
+  { index = 1, target = "0x10f58c" },
+  { index = 2, target = "0x10f4c0" },
+  { index = 3, target = "0x10f4d8" },
+  { index = 4, target = "0x10f58c" },
+  { index = 5, target = "0x10f498" },
+  { index = 6, target = "0x10f4b0" },
+  { index = 7, target = "0x10f4b0" },
+  { index = 8, target = "0x10f4b0" },
+  { index = 9, target = "0x10f4b0" },
+  { index = 10, target = "0x10f4b0" },
+  { index = 11, target = "0x10f4b0" },
+  { index = 12, target = "0x10f4b0" },
+  { index = 13, target = "0x10f4b0" },
+  { index = 14, target = "0x10f4b0" },
+  { index = 15, target = "0x10f58c" },
+  { index = 16, target = "0x10f58c" },
+  { index = 17, target = "0x10f58c" },
+  { index = 18, target = "0x10f58c" },
+  { index = 19, target = "0x10f58c" },
+  { index = 20, target = "0x10f58c" },
+  { index = 21, target = "0x10f58c" },
+  { index = 22, target = "0x10f58c" },
+  { index = 23, target = "0x10f58c" },
+  { index = 24, target = "0x10f58c" },
+  { index = 25, target = "0x10f58c" },
+  { index = 26, target = "0x10f4f0" },
+  { index = 27, target = "0x10f58c" },
+  { index = 28, target = "0x10f58c" },
+  { index = 29, target = "0x10f58c" },
+  { index = 30, target = "0x10f58c" },
+  { index = 31, target = "0x10f58c" },
+  { index = 32, target = "0x10f58c" },
+  { index = 33, target = "0x10f58c" },
+  { index = 34, target = "0x10f58c" },
+  { index = 35, target = "0x10f58c" },
+  { index = 36, target = "0x10f58c" },
+  { index = 37, target = "0x10f58c" },
+  { index = 38, target = "0x10f58c" },
+  { index = 39, target = "0x10f58c" },
+  { index = 40, target = "0x10f58c" },
+  { index = 41, target = "0x10f58c" },
+  { index = 42, target = "0x10f58c" },
+  { index = 43, target = "0x10f58c" },
+  { index = 44, target = "0x10f58c" },
+  { index = 45, target = "0x10f58c" },
+  { index = 46, target = "0x10f58c" },
+  { index = 47, target = "0x10f58c" },
+  { index = 48, target = "0x10f58c" },
+  { index = 49, target = "0x10f58c" },
+  { index = 50, target = "0x10f58c" },
+  { index = 51, target = "0x10f58c" },
+  { index = 52, target = "0x10f58c" },
+  { index = 53, target = "0x10f58c" },
+  { index = 54, target = "0x10f58c" },
+  { index = 55, target = "0x10f58c" },
+  { index = 56, target = "0x10f58c" },
+  { index = 57, target = "0x10f58c" },
+  { index = 58, target = "0x10f4f0" },
+]
+
+[[jump_tables.table]]
+address = "0x25f250"
+entries = [
+  { index = 0, target = "0x165484" },
+  { index = 1, target = "0x1654d0" },
+  { index = 2, target = "0x16551c" },
+  { index = 3, target = "0x1655d0" },
+  { index = 4, target = "0x165754" },
+  { index = 5, target = "0x1657f4" },
+  { index = 6, target = "0x165894" },
+  { index = 7, target = "0x165934" },
+  { index = 8, target = "0x165b6c" },
+  { index = 9, target = "0x165bb8" },
+  { index = 10, target = "0x166b98" },
+  { index = 11, target = "0x165a3c" },
+  { index = 12, target = "0x165c50" },
+  { index = 13, target = "0x165e10" },
+  { index = 14, target = "0x166b98" },
+  { index = 15, target = "0x165f74" },
+  { index = 16, target = "0x165fc0" },
+  { index = 17, target = "0x166004" },
+  { index = 18, target = "0x166b98" },
+  { index = 19, target = "0x166b98" },
+  { index = 20, target = "0x166b98" },
+  { index = 21, target = "0x166b98" },
+  { index = 22, target = "0x166b98" },
+  { index = 23, target = "0x166b98" },
+  { index = 24, target = "0x166b98" },
+  { index = 25, target = "0x166b98" },
+  { index = 26, target = "0x166b98" },
+  { index = 27, target = "0x166b98" },
+  { index = 28, target = "0x166b98" },
+  { index = 29, target = "0x166b98" },
+  { index = 30, target = "0x166b98" },
+  { index = 31, target = "0x166b98" },
+  { index = 32, target = "0x166b98" },
+  { index = 33, target = "0x166b98" },
+  { index = 34, target = "0x165c04" },
+  { index = 35, target = "0x166b98" },
+  { index = 36, target = "0x166244" },
+  { index = 37, target = "0x1663e8" },
+  { index = 38, target = "0x16624c" },
+  { index = 39, target = "0x166b98" },
+  { index = 40, target = "0x166b98" },
+  { index = 41, target = "0x166b98" },
+  { index = 42, target = "0x16603c" },
+  { index = 43, target = "0x16606c" },
+  { index = 44, target = "0x166b98" },
+  { index = 45, target = "0x166b98" },
+  { index = 46, target = "0x166084" },
+  { index = 47, target = "0x165dd8" },
+  { index = 48, target = "0x166b98" },
+  { index = 49, target = "0x166b98" },
+  { index = 50, target = "0x165708" },
+  { index = 51, target = "0x166b98" },
+  { index = 52, target = "0x166b98" },
+  { index = 53, target = "0x166b98" },
+  { index = 54, target = "0x166b98" },
+  { index = 55, target = "0x166b98" },
+  { index = 56, target = "0x166b98" },
+  { index = 57, target = "0x166b98" },
+  { index = 58, target = "0x166b98" },
+  { index = 59, target = "0x166b98" },
+  { index = 60, target = "0x166b98" },
+  { index = 61, target = "0x166054" },
+  { index = 62, target = "0x166b98" },
+  { index = 63, target = "0x166b98" },
+  { index = 64, target = "0x1659d4" },
+  { index = 65, target = "0x166b98" },
+  { index = 66, target = "0x166b98" },
+  { index = 67, target = "0x166b98" },
+  { index = 68, target = "0x165a88" },
+  { index = 69, target = "0x165ad4" },
+  { index = 70, target = "0x165b20" },
+  { index = 71, target = "0x166b98" },
+  { index = 72, target = "0x166b98" },
+  { index = 73, target = "0x166b98" },
+  { index = 74, target = "0x166b98" },
+  { index = 75, target = "0x166b98" },
+  { index = 76, target = "0x166b98" },
+  { index = 77, target = "0x166b98" },
+  { index = 78, target = "0x166b98" },
+  { index = 79, target = "0x166b98" },
+  { index = 80, target = "0x166b98" },
+  { index = 81, target = "0x166b98" },
+  { index = 82, target = "0x166b98" },
+  { index = 83, target = "0x166b98" },
+  { index = 84, target = "0x166b98" },
+  { index = 85, target = "0x166b98" },
+  { index = 86, target = "0x166b98" },
+  { index = 87, target = "0x166b98" },
+  { index = 88, target = "0x166b98" },
+  { index = 89, target = "0x166b98" },
+  { index = 90, target = "0x166b98" },
+  { index = 91, target = "0x166b98" },
+  { index = 92, target = "0x166b98" },
+  { index = 93, target = "0x166b98" },
+  { index = 94, target = "0x166b98" },
+  { index = 95, target = "0x166b98" },
+  { index = 96, target = "0x166b98" },
+  { index = 97, target = "0x166b98" },
+  { index = 98, target = "0x166b98" },
+  { index = 99, target = "0x166b98" },
+  { index = 100, target = "0x166b98" },
+  { index = 101, target = "0x166b98" },
+  { index = 102, target = "0x166b98" },
+  { index = 103, target = "0x166b98" },
+  { index = 104, target = "0x166b98" },
+  { index = 105, target = "0x166b98" },
+  { index = 106, target = "0x166b98" },
+  { index = 107, target = "0x165670" },
+  { index = 108, target = "0x166b98" },
+  { index = 109, target = "0x166b98" },
+  { index = 110, target = "0x166b98" },
+  { index = 111, target = "0x166b98" },
+  { index = 112, target = "0x166b98" },
+  { index = 113, target = "0x166b98" },
+  { index = 114, target = "0x166b98" },
+  { index = 115, target = "0x166b98" },
+  { index = 116, target = "0x166b98" },
+  { index = 117, target = "0x1656bc" },
+]
+
+[[jump_tables.table]]
+address = "0x25f430"
+entries = [
+  { index = 0, target = "0x166450" },
+  { index = 1, target = "0x166b98" },
+  { index = 2, target = "0x1664b8" },
+  { index = 3, target = "0x1664ec" },
+  { index = 4, target = "0x166520" },
+  { index = 5, target = "0x166598" },
+  { index = 6, target = "0x16666c" },
+  { index = 7, target = "0x1666e4" },
+  { index = 8, target = "0x166774" },
+  { index = 9, target = "0x1667ec" },
+  { index = 10, target = "0x166980" },
+  { index = 11, target = "0x1669b4" },
+  { index = 12, target = "0x1669e8" },
+  { index = 13, target = "0x1668b0" },
+  { index = 14, target = "0x166a50" },
+  { index = 15, target = "0x166b98" },
+  { index = 16, target = "0x166b98" },
+  { index = 17, target = "0x166b98" },
+  { index = 18, target = "0x166b98" },
+  { index = 19, target = "0x166b98" },
+  { index = 20, target = "0x166b98" },
+  { index = 21, target = "0x166b98" },
+  { index = 22, target = "0x166b98" },
+  { index = 23, target = "0x166b98" },
+  { index = 24, target = "0x166b98" },
+  { index = 25, target = "0x166b98" },
+  { index = 26, target = "0x166b98" },
+  { index = 27, target = "0x166b98" },
+  { index = 28, target = "0x166b98" },
+  { index = 29, target = "0x166b98" },
+  { index = 30, target = "0x166b98" },
+  { index = 31, target = "0x166b98" },
+  { index = 32, target = "0x166b98" },
+  { index = 33, target = "0x166b98" },
+  { index = 34, target = "0x166b98" },
+  { index = 35, target = "0x166b98" },
+  { index = 36, target = "0x166a1c" },
+  { index = 37, target = "0x166b98" },
+  { index = 38, target = "0x166b98" },
+  { index = 39, target = "0x166b98" },
+  { index = 40, target = "0x166b98" },
+  { index = 41, target = "0x166b98" },
+  { index = 42, target = "0x166b98" },
+  { index = 43, target = "0x166b98" },
+  { index = 44, target = "0x166b98" },
+  { index = 45, target = "0x166b98" },
+  { index = 46, target = "0x166b98" },
+  { index = 47, target = "0x166b98" },
+  { index = 48, target = "0x166b98" },
+  { index = 49, target = "0x166b98" },
+  { index = 50, target = "0x166b98" },
+  { index = 51, target = "0x166b98" },
+  { index = 52, target = "0x166b98" },
+  { index = 53, target = "0x166b98" },
+  { index = 54, target = "0x166b98" },
+  { index = 55, target = "0x166b98" },
+  { index = 56, target = "0x166b98" },
+  { index = 57, target = "0x166b98" },
+  { index = 58, target = "0x166b98" },
+  { index = 59, target = "0x166b98" },
+  { index = 60, target = "0x166b98" },
+  { index = 61, target = "0x166b98" },
+  { index = 62, target = "0x166b98" },
+  { index = 63, target = "0x166b98" },
+  { index = 64, target = "0x166b98" },
+  { index = 65, target = "0x166b98" },
+  { index = 66, target = "0x166864" },
+  { index = 67, target = "0x166b98" },
+  { index = 68, target = "0x166b98" },
+  { index = 69, target = "0x166484" },
+  { index = 70, target = "0x1668e4" },
+  { index = 71, target = "0x166918" },
+  { index = 72, target = "0x16694c" },
+]
+
+[[jump_tables.table]]
+address = "0x2654b0"
+entries = [
+  { index = 0, target = "0x1aba10" },
+  { index = 1, target = "0x1aba00" },
+  { index = 2, target = "0x1aba08" },
+  { index = 3, target = "0x1aba20" },
+  { index = 4, target = "0x1aba18" },
+  { index = 5, target = "0x1aba18" },
+  { index = 6, target = "0x1aba18" },
+]
+
+[[jump_tables.table]]
+address = "0x267490"
+entries = [
+  { index = 0, target = "0x1b7938" },
+  { index = 1, target = "0x1b7920" },
+  { index = 2, target = "0x1b7930" },
+  { index = 3, target = "0x1b7938" },
+  { index = 4, target = "0x1b7938" },
+]
+
+[[jump_tables.table]]
+address = "0x267d70"
+entries = [
+  { index = 0, target = "0x1ce180" },
+  { index = 1, target = "0x1ce188" },
+  { index = 2, target = "0x1ce190" },
+  { index = 3, target = "0x1ce198" },
+  { index = 4, target = "0x1ce1a0" },
+  { index = 5, target = "0x1ce1a8" },
+  { index = 6, target = "0x1ce1b0" },
+  { index = 7, target = "0x1ce1b8" },
+]
+
+[[jump_tables.table]]
+address = "0x268090"
+entries = [
+  { index = 0, target = "0x1d0338" },
+  { index = 1, target = "0x1d0318" },
+  { index = 2, target = "0x1d0298" },
+  { index = 3, target = "0x1d02b8" },
+  { index = 4, target = "0x1d0338" },
+  { index = 5, target = "0x1d0338" },
+  { index = 6, target = "0x1d0338" },
+  { index = 7, target = "0x1d0338" },
+  { index = 8, target = "0x1d0338" },
+  { index = 9, target = "0x1d0338" },
+  { index = 10, target = "0x1d0338" },
+  { index = 11, target = "0x1d0258" },
+  { index = 12, target = "0x1d0338" },
+  { index = 13, target = "0x1d0278" },
+  { index = 14, target = "0x1d0338" },
+  { index = 15, target = "0x1d0338" },
+  { index = 16, target = "0x1d0338" },
+  { index = 17, target = "0x1d0338" },
+  { index = 18, target = "0x1d0338" },
+  { index = 19, target = "0x1d0338" },
+  { index = 20, target = "0x1d0338" },
+  { index = 21, target = "0x1d02d8" },
+  { index = 22, target = "0x1d02f8" },
+  { index = 23, target = "0x1d0338" },
+  { index = 24, target = "0x1d0338" },
+  { index = 25, target = "0x1d0338" },
+  { index = 26, target = "0x1d0338" },
+  { index = 27, target = "0x1d0338" },
+  { index = 28, target = "0x1d0338" },
+  { index = 29, target = "0x1d0338" },
+  { index = 30, target = "0x1d0338" },
+  { index = 31, target = "0x1d0338" },
+  { index = 32, target = "0x1d0338" },
+  { index = 33, target = "0x1d0338" },
+  { index = 34, target = "0x1d0338" },
+  { index = 35, target = "0x1d0338" },
+  { index = 36, target = "0x1d0338" },
+  { index = 37, target = "0x1d0338" },
+  { index = 38, target = "0x1d0338" },
+  { index = 39, target = "0x1d0338" },
+  { index = 40, target = "0x1d0338" },
+  { index = 41, target = "0x1d0338" },
+  { index = 42, target = "0x1d0338" },
+  { index = 43, target = "0x1d0338" },
+  { index = 44, target = "0x1d0338" },
+  { index = 45, target = "0x1d0338" },
+  { index = 46, target = "0x1d0338" },
+  { index = 47, target = "0x1d0338" },
+  { index = 48, target = "0x1d0338" },
+  { index = 49, target = "0x1d0338" },
+  { index = 50, target = "0x1d0338" },
+  { index = 51, target = "0x1d0338" },
+  { index = 52, target = "0x1d0338" },
+  { index = 53, target = "0x1d0338" },
+  { index = 54, target = "0x1d0338" },
+  { index = 55, target = "0x1d0338" },
+  { index = 56, target = "0x1d0338" },
+  { index = 57, target = "0x1d0338" },
+  { index = 58, target = "0x1d0338" },
+  { index = 59, target = "0x1d0338" },
+  { index = 60, target = "0x1d0338" },
+  { index = 61, target = "0x1d0338" },
+  { index = 62, target = "0x1d0338" },
+  { index = 63, target = "0x1d0338" },
+  { index = 64, target = "0x1d0338" },
+  { index = 65, target = "0x1d0338" },
+  { index = 66, target = "0x1d0338" },
+  { index = 67, target = "0x1d0338" },
+  { index = 68, target = "0x1d0338" },
+  { index = 69, target = "0x1d0338" },
+  { index = 70, target = "0x1d0338" },
+  { index = 71, target = "0x1d0338" },
+  { index = 72, target = "0x1d0338" },
+  { index = 73, target = "0x1d0338" },
+  { index = 74, target = "0x1d0338" },
+  { index = 75, target = "0x1d0338" },
+  { index = 76, target = "0x1d0338" },
+  { index = 77, target = "0x1d0338" },
+  { index = 78, target = "0x1d0338" },
+  { index = 79, target = "0x1d0338" },
+  { index = 80, target = "0x1d0338" },
+  { index = 81, target = "0x1d0338" },
+  { index = 82, target = "0x1d0338" },
+  { index = 83, target = "0x1d0338" },
+  { index = 84, target = "0x1d0338" },
+  { index = 85, target = "0x1d0338" },
+  { index = 86, target = "0x1d0338" },
+  { index = 87, target = "0x1d0338" },
+  { index = 88, target = "0x1d0338" },
+  { index = 89, target = "0x1d0338" },
+  { index = 90, target = "0x1d0338" },
+  { index = 91, target = "0x1d0338" },
+  { index = 92, target = "0x1d0338" },
+  { index = 93, target = "0x1d0338" },
+  { index = 94, target = "0x1d0338" },
+  { index = 95, target = "0x1d0338" },
+  { index = 96, target = "0x1d0338" },
+  { index = 97, target = "0x1d0338" },
+  { index = 98, target = "0x1d0338" },
+  { index = 99, target = "0x1d0338" },
+  { index = 100, target = "0x1d0338" },
+]
+
+# Patches to apply during recompilation
+[patches]
+# Individual instruction patches
+# (42 ElfAnalyzer "potential self-modifying code" nops removed, as for File #1:
+#  docs/DIVERGENCES.md D20 found every File #1 instance to be an ordinary data store.)
+instructions = [
+]
+
+[performance]
+critical = [
+  "sub_00100008", # Uses SIMD instructions
+  "sub_00101388", # Contains heavy loops
+  "sub_00101E00", # Uses SIMD instructions
+  "sub_00101E18", # Uses SIMD instructions
+  "sub_00101F60", # Uses SIMD instructions
+  "sub_00101FA0", # Uses SIMD instructions
+  "sub_00101FB0", # Uses SIMD instructions
+  "sub_00102298", # Uses SIMD instructions
+  "sub_001022C8", # Uses SIMD instructions
+  "sub_00102308", # Uses SIMD instructions
+  "sub_00102350", # Uses SIMD instructions
+  "sub_00102498", # Uses SIMD instructions
+  "sub_001024E0", # Uses SIMD instructions
+  "sub_001024F0", # Uses SIMD instructions
+  "sub_00103C78", # Contains heavy loops
+  "sub_00106358", # Contains heavy loops
+  "sub_001071D8", # Contains heavy loops
+  "sub_00107938", # Uses SIMD instructions
+  "sub_00107A18", # Uses SIMD instructions
+  "sub_00107C68", # Uses SIMD instructions
+  "sub_00108280", # Uses SIMD instructions
+  "sub_00108F40", # Contains heavy loops
+  "sub_0010ABB8", # Uses SIMD instructions
+  "sub_0010ACE8", # Uses SIMD instructions
+  "sub_0010AE78", # Uses SIMD instructions
+  "sub_0010AFC0", # Uses SIMD instructions
+  "sub_0010B158", # Uses SIMD instructions
+  "sub_0010B290", # Uses SIMD instructions
+  "sub_0010B440", # Uses SIMD instructions
+  "sub_0010B5F8", # Uses SIMD instructions
+  "sub_0010B808", # Contains heavy loops
+  "sub_0010C7F8", # Contains heavy loops
+  "sub_0010D1E0", # Contains heavy loops
+  "sub_0010EAF0", # Contains heavy loops
+  "sub_0010F780", # Contains heavy loops
+  "sub_0010FAA0", # Uses SIMD instructions
+  "sub_00112708", # Uses SIMD instructions
+  "sub_00112820", # Uses SIMD instructions
+  "sub_001130F8", # Uses SIMD instructions
+  "sub_00113488", # Uses SIMD instructions
+  "sub_001137A0", # Uses SIMD instructions
+  "sub_00113FB0", # Contains heavy loops
+  "sub_00116218", # Contains heavy loops
+  "sub_0011D0D0", # Uses SIMD instructions
+  "sub_0011F128", # Uses SIMD instructions
+  "sub_001210B8", # Contains heavy loops
+  "sub_00123498", # Uses SIMD instructions
+  "sub_00126E88", # Uses SIMD instructions
+  "sub_00129378", # Uses SIMD instructions
+  "sub_00129728", # Uses SIMD instructions
+  "sub_001297B8", # Uses SIMD instructions
+  "sub_00129898", # Uses SIMD instructions
+  "sub_00129918", # Uses SIMD instructions
+  "sub_001299A0", # Uses SIMD instructions
+  "sub_00129CF0", # Uses SIMD instructions
+  "sub_00129D58", # Uses SIMD instructions
+  "sub_00129DD8", # Uses SIMD instructions
+  "sub_00129FD0", # Uses SIMD instructions
+  "sub_0012A028", # Uses SIMD instructions
+  "sub_0012A0A0", # Uses SIMD instructions
+  "sub_0012A288", # Uses SIMD instructions
+  "sub_0012AD70", # Uses SIMD instructions
+  "sub_0012D2C8", # Contains heavy loops
+  "sub_0012DDD8", # Uses SIMD instructions
+  "sub_0012E4B0", # Uses SIMD instructions
+  "sub_0012F260", # Contains heavy loops
+  "sub_0012F988", # Contains heavy loops
+  "sub_0012FE58", # Uses SIMD instructions
+  "sub_00130078", # Uses SIMD instructions
+  "sub_00130810", # Uses SIMD instructions
+  "sub_00131148", # Contains heavy loops
+  "sub_00131668", # Uses SIMD instructions
+  "sub_00131DF8", # Contains heavy loops
+  "sub_00133768", # Contains heavy loops
+  "sub_00136D30", # Contains heavy loops
+  "sub_0013BDE0", # Contains heavy loops
+  "sub_0013C110", # Contains heavy loops
+  "sub_0013F4D0", # Uses SIMD instructions
+  "sub_00141710", # Uses SIMD instructions
+  "sub_00142200", # Contains heavy loops
+  "sub_00148CD0", # Contains heavy loops
+  "sub_00149030", # Contains heavy loops
+  "sub_00149620", # Contains heavy loops
+  "sub_0014A390", # Contains heavy loops
+  "sub_0014E490", # Contains heavy loops
+  "sub_00152830", # Contains heavy loops
+  "sub_00157720", # Contains heavy loops
+  "sub_0015ABA0", # Contains heavy loops
+  "sub_0015BF20", # Contains heavy loops
+  "sub_0015DA98", # Contains heavy loops
+  "sub_00160EAC", # Contains heavy loops
+  "sub_0016FFB4", # Contains heavy loops
+  "sub_001705FC", # Contains heavy loops
+  "sub_00178188", # Contains heavy loops
+  "sub_0017C2C0", # Contains heavy loops
+  "sub_0017C8F0", # Contains heavy loops
+  "sub_0017E9B0", # Contains heavy loops
+  "sub_0017FDA8", # Uses SIMD instructions
+  "sub_00180118", # Uses SIMD instructions
+  "sub_00180830", # Contains heavy loops
+  "sub_00181B80", # Contains heavy loops
+  "sub_001822D8", # Uses SIMD instructions
+  "sub_00185788", # Contains heavy loops
+  "sub_00198748", # Contains heavy loops
+  "sub_00198B98", # Contains heavy loops
+  "sub_001991C0", # Contains heavy loops
+  "sub_00199928", # Contains heavy loops
+  "sub_0019A5F0", # Uses SIMD instructions
+  "sub_0019ADF8", # Contains heavy loops
+  "sub_0019BA88", # Contains heavy loops
+  "sub_0019E4C0", # Uses SIMD instructions
+  "sub_001A0C28", # Uses SIMD instructions
+  "sub_001A3578", # Contains heavy loops
+  "sub_001A3E58", # Uses SIMD instructions
+  "sub_001AFE80", # Contains heavy loops
+  "sub_001BF918", # Uses SIMD instructions
+  "sub_001BFAA8", # Uses SIMD instructions
+  "sub_001C2B88", # Uses SIMD instructions
+  "sub_001CA6D0", # Uses SIMD instructions
+  "sub_001D1760", # Contains heavy loops
+  "sub_001D3550", # Uses SIMD instructions
+  "sub_001D35D0", # Uses SIMD instructions
+  "sub_001D3C20", # Contains heavy loops
+  "sub_001D3F70", # Contains heavy loops
+  "sub_001D65B0", # Contains heavy loops
+  "sub_001D6BE0", # Contains heavy loops
+  "sub_001D7FE0", # Uses SIMD instructions
+  "sub_001D8230", # Uses SIMD instructions
+  "sub_001D8AB0", # Uses SIMD instructions
+  "sub_001D8AE0", # Uses SIMD instructions
+  "sub_001D8B20", # Uses SIMD instructions
+  "sub_001D8B70", # Uses SIMD instructions
+  "sub_001D8DA0", # Uses SIMD instructions
+  "sub_001D96D0", # Uses SIMD instructions
+  "sub_001D9E90", # Uses SIMD instructions
+  "sub_001D9F40", # Uses SIMD instructions
+  "sub_001D9FC0", # Uses SIMD instructions
+  "sub_001DA0A0", # Uses SIMD instructions
+  "sub_001DA0F0", # Uses SIMD instructions
+  "sub_001DA240", # Uses SIMD instructions
+  "sub_001DA5C0", # Uses SIMD instructions
+  "sub_001DA690", # Uses SIMD instructions
+  "sub_001DA770", # Uses SIMD instructions
+  "sub_001DA9D0", # Uses SIMD instructions
+  "sub_001DAA40", # Uses SIMD instructions
+  "sub_001DAAB0", # Uses SIMD instructions
+  "sub_001DAB10", # Uses SIMD instructions
+  "sub_001DAEE0", # Uses SIMD instructions
+  "sub_001DCB30", # Uses SIMD instructions
+  "sub_001DD670", # Uses SIMD instructions
+  "sub_001DDB30", # Uses SIMD instructions
+  "sub_001DE140", # Contains heavy loops
+  "sub_001E1910", # Contains heavy loops
+  "sub_001E43A0", # Uses SIMD instructions
+  "sub_001E4420", # Uses SIMD instructions
+  "sub_001E4500", # Uses SIMD instructions
+  "sub_001E45E0", # Uses SIMD instructions
+  "sub_001E46C0", # Uses SIMD instructions
+  "sub_001E4760", # Uses SIMD instructions
+  "sub_001E4890", # Uses SIMD instructions
+  "sub_001E4940", # Uses SIMD instructions
+  "sub_001E4AB0", # Uses SIMD instructions
+  "sub_001E4CF0", # Uses SIMD instructions
+  "sub_001E4D20", # Contains heavy loops
+  "sub_001E8510", # Contains heavy loops
+  "sub_001EC110", # Uses SIMD instructions
+  "sub_001EC690", # Uses SIMD instructions
+  "sub_001EDE00", # Uses SIMD instructions
+  "sub_001FC350", # Uses SIMD instructions
+  "sub_001FE150", # Uses SIMD instructions
+]
+

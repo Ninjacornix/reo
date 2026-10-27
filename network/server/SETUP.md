@@ -7,7 +7,7 @@ progress in the launcher; the Start server button becomes **Cancel** during setu
 Later starts reuse the installed environment, including when offline.
 
 The application ZIP contains server source only. Setup downloads go under
-`%LOCALAPPDATA%/OutbreakRecomp/launcher`, outside the application folder:
+`data/` beside the launcher by default, or the folder selected under **Game files > Storage**:
 
 - `server-tools/`: pinned, hash-verified uv setup tool and its download cache.
 - `server-python-runtime/`: private Python runtime downloaded by uv.

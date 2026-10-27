@@ -7,6 +7,20 @@ public partial class App : Application {
     protected override async void OnStartup(StartupEventArgs e) {
         base.OnStartup(e);
         try {
+            int wait = Array.IndexOf(e.Args, "--wait-for-launcher-exit");
+            if (wait >= 0 && wait + 2 < e.Args.Length && int.TryParse(e.Args[wait + 1], out int pid) &&
+                long.TryParse(e.Args[wait + 2], out long ticks)) {
+                try {
+                    using var parent = System.Diagnostics.Process.GetProcessById(pid);
+                    if (parent.StartTime.ToUniversalTime().Ticks == ticks)
+                        await parent.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(15));
+                } catch (ArgumentException) { }
+            }
+            string storageRoot = AppLayout.FindRoot(AppContext.BaseDirectory);
+            int storage = Array.IndexOf(e.Args, "--data-home");
+            if (storage >= 0 && (storage + 1 >= e.Args.Length || e.Args[storage + 1].StartsWith("--")))
+                throw new ArgumentException("--data-home requires a folder.");
+            Storage.Configure(storageRoot, storage >= 0 ? e.Args[storage + 1] : null);
             int existingCompilerTest = Array.IndexOf(e.Args, "--test-existing-compiler");
             if (existingCompilerTest >= 0 && existingCompilerTest + 2 < e.Args.Length) {
                 await Task.Run(
@@ -134,6 +148,12 @@ public partial class App : Application {
                 Shutdown();
                 return;
             }
+            if (e.Args.Contains("--test-coop-session")) {
+                int smoke = Array.IndexOf(e.Args, "--smoke-launch");
+                if (smoke < 0 || smoke + 2 >= e.Args.Length)
+                    throw new ArgumentException("--test-coop-session requires --smoke-launch <exe> <result.json>.");
+                _ = CoopSmokeOptions.Parse(e.Args);
+            }
             bool diagnostic = e.Args.Any(arg => arg is "--screenshot" or "--probe-controller" or
                                                        "--smoke-launch");
             if (!diagnostic) {
@@ -152,26 +172,45 @@ public partial class App : Application {
                 Shutdown();
                 return;
             }
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            bool importOldData = !e.Args.Any(arg => arg.StartsWith("--test-") ||
+                arg is "--smoke-launch" or "--screenshot" or "--probe-controller");
+            if (importOldData && Storage.NeedsLegacyImport(Settings.Home, Storage.LegacyHome)) {
+                if (!await StorageProgressWindow.Run(null, "Bring your existing launcher data here",
+                        (progress, cancel) => Storage.Initialize(installation, true, progress, cancel, !diagnostic))) {
+                    Shutdown(); return;
+                }
+            } else await Storage.Initialize(installation, importOldData, null, default, !diagnostic);
             var window = new MainWindow(e.Args);
             MainWindow = window;
             window.Show();
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
         } catch (Exception error) {
-            Directory.CreateDirectory(Settings.Home);
-            string log = Path.Combine(Settings.Home, "launcher-error.log");
-            File.WriteAllText(log, error.ToString());
-            if (!e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
+            string log = "";
+            try {
+                // A failed first migration must not create files in its empty
+                // destination, otherwise retrying would look like a conflict.
+                string logFolder = Storage.Initialized ? Settings.Home : AppContext.BaseDirectory;
+                Directory.CreateDirectory(logFolder);
+                log = Path.Combine(logFolder, "launcher-error.log");
+                File.WriteAllText(log, error.ToString());
+            } catch { log = ""; }
+            if (!e.Args.Contains("--smoke-launch") && !e.Args.Contains("--test-coop-session") &&
+                !e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
                 !e.Args.Contains("--test-lobby") &&
                 !e.Args.Contains("--import-iso") && !e.Args.Contains("--test-update") &&
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&
                 !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&
                 !e.Args.Contains("--test-compiler-setup") &&
                 !e.Args.Contains("--test-existing-compiler"))
-                MessageBox.Show(error.GetBaseException().Message + "\n\nDetails: " + log,
+                MessageBox.Show(error.GetBaseException().Message +
+                                (log.Length > 0 ? "\n\nDetails: " + log : "\n\nKeep the launcher in a folder you can write to, such as your Games folder."),
                                 "RE: Outbreak");
             Shutdown(1);
         }
     }
     protected override void OnExit(ExitEventArgs e) {
+        Storage.Close();
         singleInstance?.Dispose();
         base.OnExit(e);
     }

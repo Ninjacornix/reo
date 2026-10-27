@@ -21,6 +21,10 @@ import zlib
 
 
 EXPECTED_ELF = "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
+GAMES = {
+    "file1": (EXPECTED_ELF, "SLUS_207.65", "reo_recomp.exe", "Resident Evil - Outbreak (v2.00).iso"),
+    "file2": ("5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d", "SLUS_209.84", "reo_recomp_file2.exe", "Resident Evil - Outbreak - File #2.iso"),
+}
 SHADERS = ("present_opaque.vert.spv", "present_native.frag.spv",
            "present_smaa_edge.frag.spv", "present_smaa_weights.frag.spv",
            "present_smaa_blend.frag.spv")
@@ -68,55 +72,69 @@ def beneath(root, relative):
     return path
 
 
-def validate_import(folder, iso):
+def validate_import(folder, iso, game="file1"):
+    expected, elf_name, _, _ = GAMES[game]
     folder, iso = Path(folder).resolve(), Path(iso).resolve()
     record = json.loads((folder / "import.json").read_text(encoding="utf-8-sig"))
     metadata = iso.stat()
     ticks = metadata.st_mtime_ns // 100 + 621355968000000000
-    if (record.get("Version") != 1 or record.get("Game") != "file1"
+    if (record.get("Version") != 1 or record.get("Game") != game
             or Path(record["Source"]).resolve() != iso
             or record["SourceLength"] != metadata.st_size
             or record["SourceWriteTicks"] != ticks
-            or record["ElfSha256"] != EXPECTED_ELF):
+            or record["ElfSha256"] != expected):
         raise ValueError("Import does not match the supported ISO and current source metadata")
     data = folder / "data"
     for entry in record["Files"]:
         path = beneath(data, entry["Name"])
         if not path.is_file() or path.stat().st_size != entry["Length"]:
             raise ValueError(f"Incomplete imported file: {entry['Name']}")
-    elf = data / "SLUS_207.65"
-    if digest(elf) != EXPECTED_ELF:
-        raise ValueError("Imported ELF hash differs from supported NTSC-U v2.00")
+    elf = data / elf_name
+    if digest(elf) != expected:
+        raise ValueError("Imported ELF hash differs from the selected supported edition")
     return data, elf
 
 
-def configured_import(root, iso, supplied):
+def configured_import(root, iso, supplied, game="file1"):
     if supplied:
         return Path(supplied)
-    home = Path(os.environ["LOCALAPPDATA"]) / "OutbreakRecomp" / "launcher"
-    settings = home / "settings.json"
-    if settings.exists():
-        folder = json.loads(settings.read_text(encoding="utf-8-sig")).get("ImportedFile1")
-        if folder:
-            return Path(folder)
-    candidates = []
-    for record in (home / "imports" / "file1").glob("*/import.json"):
-        value = json.loads(record.read_text(encoding="utf-8-sig"))
-        if Path(value["Source"]).resolve() == iso:
-            candidates.append(record.parent)
-    if len(candidates) != 1:
-        raise ValueError("Import the ISO in the launcher first, or specify --import-root")
-    return candidates[0]
+    home = Path(root) / "data"
+    locator = Path(root) / "storage.json"
+    if locator.exists():
+        config = {key.lower(): value for key, value in json.loads(locator.read_text(encoding="utf-8-sig")).items()}
+        if config.get("format") != 1 or not isinstance(config.get("folder"), str) or not config["folder"]:
+            raise ValueError("Invalid launcher storage configuration")
+        chosen = Path(config["folder"])
+        home = chosen if chosen.is_absolute() else Path(root) / chosen
+    legacy = Path(os.environ["LOCALAPPDATA"]) / "OutbreakRecomp" / "launcher"
+    for location in dict.fromkeys((home, legacy)):
+        settings = location / "settings.json"
+        if settings.exists():
+            folder = json.loads(settings.read_text(encoding="utf-8-sig")).get("ImportedFile2" if game == "file2" else "ImportedFile1")
+            if folder:
+                return Path(folder)
+        candidates = []
+        for record in (location / "imports" / game).glob("*/import.json"):
+            value = json.loads(record.read_text(encoding="utf-8-sig"))
+            if Path(value["Source"]).resolve() == iso:
+                candidates.append(record.parent)
+        if len(candidates) == 1:
+            return candidates[0]
+        if len(candidates) > 1:
+            raise ValueError("Multiple matching imports; specify --import-root")
+    raise ValueError("Import the ISO in the launcher first, or specify --import-root")
 
 
 def prepare(args):
     if not 1 <= args.players <= 4:
         raise ValueError("Use 1 through 4 players (1 is for online-menu discovery)")
     root = Path(args.root).resolve()
-    source = Path(args.exe or root / "build-ninja/recomp/reo_recomp.exe").resolve()
-    iso = Path(args.iso or root / "iso/Resident Evil - Outbreak (v2.00).iso").resolve()
-    imported = configured_import(root, iso, args.import_root)
-    data, elf = validate_import(imported, iso)
+    game = getattr(args, "game", "file1")
+    _, _, exe_name, iso_name = GAMES[game]
+    source = Path(args.exe or root / "build-ninja/recomp" / exe_name).resolve()
+    iso = Path(args.iso or root / "iso" / iso_name).resolve()
+    imported = configured_import(root, iso, args.import_root, game)
+    data, elf = validate_import(imported, iso, game)
     adapter = Path(args.adapter or root / "launcher/bin/Release/net8.0-windows/XINPUT1_4.dll").resolve()
     required = [source, adapter] + [source.parent / "reo-gpu-present" / s for s in SHADERS]
     for path in required:
@@ -127,7 +145,7 @@ def prepare(args):
         raise ValueError("Session already exists; use a new directory to preserve prior evidence")
     token = uuid.uuid4().hex
     session.mkdir(parents=True)
-    manifest = {"format": 1, "owner": "reo-coop-playtest", "token": token,
+    manifest = {"game": game, "format": 1, "owner": "reo-coop-playtest", "token": token,
                 "createdUtc": utc(), "session": str(session), "iso": str(iso),
                 "importRoot": str(imported.resolve()), "data": str(data), "elf": str(elf),
                 "sourceExe": str(source), "sourceSha256": digest(source),
@@ -829,7 +847,7 @@ def run(args):
     folder, record = session_record(args.session)
     if (folder / "run.json").exists():
         raise ValueError("This prepared session was already run; prepare a new session")
-    validate_import(record["importRoot"], record["iso"])
+    validate_import(record["importRoot"], record["iso"], record.get("game", "file1"))
     config = json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {}
     if args.route:
         config.setdefault("environment", {})["REO_TEST_ROUTE"] = args.route
@@ -866,7 +884,7 @@ def run(args):
             output = open(Path(player["logs"]) / "stdout.log", "wb")
             error = open(Path(player["logs"]) / "stderr.log", "wb")
             handles += [output, error]
-            argv = [player["image"], "--game", "file1", "--elf", record["elf"], "--data", record["data"]]
+            argv = [player["image"], "--game", record.get("game", "file1"), "--elf", record["elf"], "--data", record["data"]]
             process = subprocess.Popen(argv, cwd=player["workingDirectory"], env=env,
                                        stdout=output, stderr=error, creationflags=subprocess.CREATE_NO_WINDOW)
             processes.append(process)
@@ -948,6 +966,7 @@ def main():
     p = sub.add_parser("prepare")
     p.add_argument("--session", required=True)
     p.add_argument("--players", type=int, default=2)
+    p.add_argument("--game", choices=tuple(GAMES), default="file1")
     p.add_argument("--root", default=str(Path(__file__).resolve().parents[2]))
     for arg in ("exe", "iso", "import-root", "adapter"):
         p.add_argument("--" + arg)

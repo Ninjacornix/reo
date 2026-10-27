@@ -561,6 +561,7 @@ struct SnapIopTransport::Impl {
                     return char(c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c);
                 });
                 const bool known = name == "snap01.reo.capcom.sf.yav4.com" ||
+                                   name == "snap01.capcom.client.sf.yav4.com" ||
                                    name == "app01.reo.capcom.sf.yav4.com" ||
                                    name == "regweb.reo.capcom.sf.yav4.com" || name == "localhost" ||
                                    name == env("REO_COOP_HOST");

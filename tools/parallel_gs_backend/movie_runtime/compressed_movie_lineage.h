@@ -1,4 +1,5 @@
 #pragma once
+#include "reo_movie_game_addresses.h"
 #include <cstdlib>
 #include <cstdio>
 // Original PES/header/ring ownership only. No decoded graphics or clock model.
@@ -270,7 +271,7 @@ class OriginalCompressedLineage {
                       uint32_t source, uint32_t bytes, uint32_t sofdec, uint32_t originalReturn) {
         ring = canonical(ring);
         sofdec = canonical(sofdec);
-        if (originalReturn != 0x16aaf8 || canonical(read32(ram, sofdec + 0x1b30)) + 0xa48 != ring)
+        if (originalReturn != REO_MA(0x16aaf8) || canonical(read32(ram, sofdec + 0x1b30)) + 0xa48 != ring)
             throw std::invalid_argument("Original selected video ring/caller mismatch");
         // Original16B814 stores the controller at Sofdec+1AEC. Original
         // 16A354..16A35C and16A6AC..16A6B4 then load controller[0] before
@@ -319,7 +320,7 @@ class OriginalCompressedLineage {
                      uint32_t source, uint32_t bytes, uint32_t originalReturn) {
         ring = canonical(ring);
         uint32_t sourceAt = 0;
-        if (originalReturn != 0x171978 || canonical(source) != 0x240918 || bytes != 16 ||
+        if (originalReturn != REO_MA(0x171978) || canonical(source) != REO_MA(0x240918) || bytes != 16 ||
             !physical(source, bytes, sourceAt) || read32(ram, ring - 0xa48 + 0x9d8 + 0x18) != 1)
             throw std::invalid_argument("Original movie EOF padding source/caller mismatch");
         std::lock_guard<std::mutex> lock(mutex_);

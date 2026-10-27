@@ -40,13 +40,13 @@ public partial class MainWindow {
     string[] graphicsCards = Array.Empty<string>();
     void RefreshReadyCheck() {
         bool packaged = AppLayout.Packaged(root);
-        bool kit = packaged ? LocalGameBuild.Available(root) : File.Exists(settings.GetExe());
+        bool kit = packaged ? LocalGameBuild.Available(root, settings.Game.Id) : File.Exists(settings.GetExe());
         bool built = File.Exists(settings.GetExe());
         bool vulkan = VulkanInstalled();
         long free = FreeSpace();
         bool roomy = built || free < 0 || free >= SetupSpace;
         string iso = settings.GetIso();
-        bool discOk = discCheck is { Ok: true } && discCheck.Matches(iso);
+        bool discOk = discCheck is { Ok: true } && discCheck.Matches(iso, settings.Game.Id);
         string cards = graphicsCards.Length > 0 ? " (" + string.Join(", ", graphicsCards) + ")" : "";
         SetCheck("CheckDotnet", Check.Done, ".NET 8 Desktop Runtime");
         SetCheck("CheckVulkan", vulkan ? Check.Done : Check.Missing,
@@ -60,7 +60,7 @@ public partial class MainWindow {
         SetCheck("CheckDisc", discOk ? Check.Done : Check.Missing,
                  discOk ? "Game disc verified"
                  : !File.Exists(iso) ? "Game disc not chosen yet"
-                 : discCheck != null && discCheck.Matches(iso) ? "Game disc not supported"
+                 : discCheck != null && discCheck.Matches(iso, settings.Game.Id) ? "Game disc not supported"
                                                                : "Checking game disc...",
                  discOk ? null : "Choose ISO");
         RefreshNextStep(packaged, kit, built, vulkan, roomy);
@@ -109,7 +109,7 @@ public partial class MainWindow {
     void RefreshNextStep(bool packaged, bool kit, bool built, bool vulkan, bool roomy) {
         string iso = settings.GetIso();
         (string title, string detail, NextAction action) =
-            settings.Game.Id != "file1" ? ("", "", NextAction.None)
+            !Playable(settings.Game.Id) ? ("", "", NextAction.None)
             : importCancellation != null
                 ? ("Setting up the game", "Progress is shown below. This happens only once.", NextAction.None)
             : !kit && packaged
@@ -124,9 +124,9 @@ public partial class MainWindow {
                          NextAction.Driver)
             : !File.Exists(iso)
                 ? ("Choose your game disc",
-                   "Select your own Outbreak File #1 ISO (NTSC-U v2.00, SLUS-20765).",
+                   "Select your own game ISO. " + DiscValidation.RequiredFor(settings.Game.Id),
                    NextAction.ChooseIso)
-            : discCheck == null || !discCheck.Matches(iso)
+            : discCheck == null || !discCheck.Matches(iso, settings.Game.Id)
                 ? ("Checking your disc...", "This takes a few seconds.", NextAction.None)
             : !discCheck.Ok ? ("This disc can't be used", discCheck.Message, NextAction.ChooseIso)
             : !DiscImport.Ready(settings) || !built
@@ -143,13 +143,13 @@ public partial class MainWindow {
         NextStepButton.Visibility = action == NextAction.None ? Visibility.Collapsed : Visibility.Visible;
         NextStepButton.Content = action switch {
             NextAction.Releases => "Open downloads", NextAction.Setup => "Game files",
-            NextAction.ChooseIso => discCheck?.Ok == false && discCheck.Matches(iso)
+            NextAction.ChooseIso => discCheck?.Ok == false && discCheck.Matches(iso, settings.Game.Id)
                                         ? "Choose another ISO" : "Choose ISO",
             NextAction.Build => "Build game", _ => "Get driver"
         };
         NextStepButton.IsEnabled = !updating && !game.Running && !launching && !backingUp;
         // The footer reflects readiness instead of a bare "Ready" while setup is unfinished.
-        string summary = settings.Game.Id != "file1" ? "Not available yet"
+        string summary = !Playable(settings.Game.Id) ? "Not available yet"
                          : title.Length == 0 ? "Ready to play" : "Next step: " + title;
         if (Status.Text == "Ready" || Status.Text == readinessStatus)
             Status.Text = summary;

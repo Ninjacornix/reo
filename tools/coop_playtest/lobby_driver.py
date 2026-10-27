@@ -25,7 +25,10 @@ class GuestRam:
                     ("size", ctypes.c_size_t), ("state", ctypes.c_ulong),
                     ("protect", ctypes.c_ulong), ("kind", ctypes.c_ulong)]
 
-    def __init__(self, identity, elf):
+    def __init__(self, identity, elf, game="file1"):
+        if game not in ("file1", "file2"):
+            raise ValueError("Unsupported lobby game profile")
+        self.game = game
         self.identity = {k: identity[k] for k in ("pid", "image", "creationFileTime")}
         self.k = harness.native()
         self.k.VirtualQueryEx.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t]
@@ -98,42 +101,48 @@ class GuestRam:
 
     def snapshot(self):
         self.check()
-        if self.read(0x570000, 8) != struct.pack("<II", 0x336F574D, 4):
+        game = getattr(self, "game", "file1")
+        if game not in ("file1", "file2"):
+            raise ValueError("Unsupported lobby game profile")
+        second = game == "file2"
+        if self.read(0x58D000 if second else 0x570000, 8) != struct.pack("<II", 0x336F574D, 4):
             raise ValueError("Expected BIN3 lobby overlay is not active")
-        raw = self.read(ROOT, 0x980)
-        counts = self.read(0x6D881E, 6)
+        raw = self.read(0x6E2ED0 if second else ROOT, 0xA00 if second else 0x980)
+        counts = self.read(0x6E293E if second else 0x6D881E, 6)
         area_count, room_ordinal, room_count = struct.unpack("<HHH", counts)
         if area_count > 128 or room_count > 128:
             raise ValueError("Original lobby list counts exceed the verified bounds")
-        rooms = self.read(0x6CD4A0, room_count * 0x15C) if raw[0] == 3 and raw[0xE] == 1 else b""
-        server_count = struct.unpack("<I", self.read(0x699560, 4))[0]
-        server_rows = self.read(0x6994E0, min(server_count, 32) * 2)
-        keyboard_work = struct.unpack("<I", self.read(0x6436D0, 4))[0]
+        rooms = self.read(0x6DEAA0 if second else 0x6CD4A0, room_count * 0x15C) if raw[0] == 3 and raw[0xE] == 1 else b""
+        # File #2's original 5F55E0 loads a byte count, not File #1's mode/backend pairs.
+        server_count = self.read(0x8AA5D8, 1)[0] if second else struct.unpack("<I", self.read(0x699560, 4))[0]
+        server_rows = b"" if second else self.read(0x6994E0, min(server_count, 32) * 2)
+        keyboard_work = struct.unpack("<I", self.read(0x64C160 if second else 0x6436D0, 4))[0]
         keyboard_valid = 0 < keyboard_work < 0x2000000 - 0x40
         keyboard = self.read(keyboard_work, 0x40) if keyboard_valid else bytes(0x40)
         state = {"state": raw[0], "sub": raw[1], "menu": raw[0xE], "phase": raw[0xF],
-                 "nested": raw[0x10], "pending": raw[0x42B], "cursor": raw[0x8DE],
-                 "settingsCursor": raw[0x8DF], "joinCursor": raw[0x8E0],
+                 "nested": raw[0x10], "pending": -1 if second else raw[0x42B], "cursor": raw[0x907 if second else 0x8DE],
+                 "settingsCursor": raw[0x908 if second else 0x8DF], "joinCursor": raw[0x909 if second else 0x8E0],
                  "characterIndex": struct.unpack_from("<H", raw, 4)[0],
                  "characterCount": struct.unpack_from("<H", raw, 0xA)[0],
-                 "areaCursor": raw[0x446], "areaPage": raw[0x447],
-                 "roomCursor": raw[0x444], "roomPage": raw[0x445],
-                 "memberCount": struct.unpack_from("<H", raw, 0x452)[0], "host": raw[0x956],
-                 "chat": bool(raw[0x13] or raw[0x14] or raw[0x54F]),
-                 "areaCount": area_count, "roomCount": room_count, "roomOrdinal": room_ordinal,
-                 "title": self.read(0x6A3DF2, 16).split(b"\0")[0].decode("ascii", errors="replace"),
-                 "maxPlayersIndex": self.read(0x6A3E7A, 1)[0], "rooms": []}
-        state.update({"outerStep": self.read(0x6DF150, 1)[0], "outerSub": self.read(0x6DF151, 1)[0],
-                      "mainMode": raw[0x41A], "serverController": self.read(0x6995A0, 1)[0],
-                      "serverWidget": raw[0x8D8], "serverWidgetSub": raw[0x8D9],
+                 "areaCursor": raw[0x44A if second else 0x446], "areaPage": raw[0x44B if second else 0x447],
+                 "roomCursor": raw[0x448 if second else 0x444], "roomPage": raw[0x449 if second else 0x445],
+                 "memberCount": struct.unpack_from("<H", raw, 0x456 if second else 0x452)[0], "host": raw[0x97E if second else 0x956],
+                 "chat": bool(raw[0x13] or raw[0x14] or raw[0x56B if second else 0x54F]),
+                 "areaCount": area_count, "roomCount": room_count, "roomOrdinal": -1 if second else room_ordinal,
+                 "title": self.read(0x6B53F2 if second else 0x6A3DF2, 16).split(b"\0")[0].decode("ascii", errors="replace"),
+                 "maxPlayersIndex": self.read(0x6B547A if second else 0x6A3E7A, 1)[0], "rooms": []}
+        state.update({"outerStep": self.read(0x6E9490 if second else 0x6DF150, 1)[0], "outerSub": self.read(0x6E9491 if second else 0x6DF151, 1)[0],
+                      "mainMode": raw[0x41A], "serverController": self.read(0x6A9848 if second else 0x6995A0, 1)[0],
+                      "serverWidget": raw[0x900 if second else 0x8D8], "serverWidgetSub": raw[0x901 if second else 0x8D9],
                       "serverCount": server_count,
+                      "serverControllerSub": self.read(0x6A9849, 1)[0] if second else -1,
                       "serverRows": [{"mode": server_rows[i], "backend": server_rows[i + 1]}
                                      for i in range(0, len(server_rows), 2)],
                       "keyboardInitialized": keyboard_valid and keyboard[0x28] == 1,
-                      "keyboardDelay": self.read(0x6436C8, 1)[0], "keyboardComplete": keyboard[0x36]})
+                      "keyboardDelay": self.read(0x64C148 if second else 0x6436C8, 1)[0], "keyboardComplete": keyboard[0x36]})
         for i in range(len(rooms) // 0x15C):
             row = rooms[i * 0x15C:(i + 1) * 0x15C]
-            state["rooms"].append({"index": i, "kind": row[0xE], "containsTitle": b"cooptest" in row})
+            state["rooms"].append({"index": i, "kind": row[0xE], "containsTitle": row[0x18:0x28].split(b"\0", 1)[0] == b"cooptest"})
         self.check()
         return state
 
@@ -148,10 +157,22 @@ def waiting_room(snapshot, host=False):
             snapshot["nested"] == 2 and not snapshot["chat"] and bool(snapshot["host"]) == host)
 
 
-def plan(number, snapshot, context, *, goal, host_waiting):
+def plan(number, snapshot, context, *, goal, host_waiting, game="file1"):
     """Return one action only for source- and native017-verified idle gates."""
     state, sub, menu, phase, nested = (snapshot[k] for k in ("state", "sub", "menu", "phase", "nested"))
-    if (snapshot["outerStep"] == 37 and snapshot["outerSub"] == 7 and snapshot["mainMode"] == 7 and
+    if game not in ("file1", "file2"):
+        return "refuse", None, "unsupported-game-lobby-layout"
+    if game == "file2" and snapshot["mainMode"] != 1:
+        if (snapshot["mainMode"] == 7 and snapshot["serverController"] == 3 and
+                snapshot.get("serverControllerSub", -1) == 0 and snapshot["serverWidget"] == 2 and
+                snapshot["serverWidgetSub"] == 0 and not snapshot["chat"]):
+            if snapshot["serverCount"] == 1 and snapshot["cursor"] == 0:
+                return "button", "cross", "select-original-file2-only-server"
+            if snapshot["serverCount"] == 0:
+                return "wait", None, "await-original-file2-server-list"
+            return "wait", None, "file2-select-server-in-original-menu"
+        return "wait", None, "await-original-file2-server-selection"
+    if (game == "file1" and snapshot["outerStep"] == 37 and snapshot["outerSub"] == 7 and snapshot["mainMode"] == 7 and
             snapshot["serverController"] == 3 and snapshot["serverWidget"] == 2 and snapshot["serverWidgetSub"] == 0):
         rows = snapshot["serverRows"]
         if snapshot["serverCount"] != len(rows) or not rows or snapshot["cursor"] >= len(rows):
@@ -173,6 +194,16 @@ def plan(number, snapshot, context, *, goal, host_waiting):
         if context["outsideCount"] < 150:
             return "wait", None, "await-post-login-transition"
         return "refuse", None, "disconnect-or-post-start-ui-is-outside-this-driver"
+    if game == "file2" and state == 1 and sub == 0 and menu == 1 and phase == 2 and nested == 0:
+        # Original 608DB0 phase2 selects ten difficulty areas before the scenario lobby.
+        cursor = snapshot["cursor"]
+        if not 0 <= cursor < 10:
+            return "refuse", None, "invalid-file2-difficulty-area-cursor"
+        return "button", "left" if cursor >= 5 else "up" if cursor else "cross", "select-original-file2-first-difficulty-area"
+    editor_ready = (state == 3 and sub == 0 and menu == 3 and phase == 3 and nested == 2 and
+                    snapshot["keyboardInitialized"] and snapshot["keyboardDelay"] == 0 and
+                    snapshot["keyboardComplete"] == 0)
+    context["titleReadySamples"] = context.get("titleReadySamples", 0) + 1 if editor_ready else 0
     if goal == "shared-area" and state == 3 and sub == 0 and menu == 1 and phase == 0:
         return "done", None, "original-room-list-reached"
     if goal == "waiting-room" and waiting_room(snapshot, host=number == 1):
@@ -198,7 +229,8 @@ def plan(number, snapshot, context, *, goal, host_waiting):
         return "button", "up" if current > target else "down" if current < target else "cross", "select-original-room-record"
     if state == 3 and sub == 0 and menu == 3 and number == 1 and goal == "waiting-room":
         if phase == 3 and nested == 2 and not context.get("titleQueued"):
-            if (not context.get("titleWarmupObserved") or not snapshot["keyboardInitialized"] or
+            if ((context["titleReadySamples"] < 2 if game == "file2" else not context.get("titleWarmupObserved")) or
+                    not snapshot["keyboardInitialized"] or
                     snapshot["keyboardDelay"] != 0 or snapshot["keyboardComplete"] != 0):
                 return "wait", None, "await-original-title-editor-input-readiness"
             if snapshot["title"]:
@@ -236,6 +268,9 @@ def drive(folder, record, *, goal="shared-area", timeout=240, press_limit=100,
           pad_writer=None, queue_writer=harness.queue_keyboard, monotonic=time.monotonic, sleeper=time.sleep):
     if goal not in ("shared-area", "waiting-room") or not 1 <= timeout <= 900 or not 1 <= press_limit <= 200:
         raise ValueError("Invalid lobby goal, timeout or press limit")
+    game = record.get("game", "file1")
+    if game not in ("file1", "file2"):
+        raise ValueError("Unsupported lobby game profile")
     folder = Path(folder).resolve()
     run = json.loads((folder / "run.json").read_text(encoding="utf-8"))
     identities = {r["number"]: r for r in run["players"]}
@@ -245,7 +280,7 @@ def drive(folder, record, *, goal="shared-area", timeout=240, press_limit=100,
     with open(receipt_path, "x", encoding="utf-8") as stream:
         json.dump({"status": "initializing", "coopVerdict": "not-tested"}, stream)
     readers, rows, contexts, next_action = {}, [], {}, {}
-    result = {"goal": goal, "startedUtc": harness.utc(), "coopVerdict": "not-tested", "hostStartSent": False,
+    result = {"goal": goal, "game": game, "startedUtc": harness.utc(), "coopVerdict": "not-tested", "hostStartSent": False,
               "serverMembershipVerified": False, "players": rows, "events": []}
     started = monotonic()
     if pad_writer is None:
@@ -261,6 +296,7 @@ def drive(folder, record, *, goal="shared-area", timeout=240, press_limit=100,
                     identity_reader(identity["pid"]) != expected):
                 raise ValueError("A lobby process does not match its owned session identity")
             readers[number] = reader_factory(identity, record["elf"])
+            readers[number].game = game
             contexts[number] = {"titleQueued": False, "stableKey": None, "stableSince": monotonic(),
                                 "log": harness.LoginLogCursor(Path(player["logs"]) / "stderr.log")}
             rows.append({"number": number, "status": "observing", "presses": 0, "snapshot": None})
@@ -292,7 +328,7 @@ def drive(folder, record, *, goal="shared-area", timeout=240, press_limit=100,
                 key = json.dumps(snapshot, sort_keys=True)
                 if key != context["stableKey"]:
                     context["stableKey"], context["stableSince"] = key, monotonic()
-                kind, value, reason = plan(number, snapshot, context, goal=goal, host_waiting=host_waiting)
+                kind, value, reason = plan(number, snapshot, context, goal=goal, host_waiting=host_waiting, game=game)
                 row["reason"] = reason
                 if kind in ("done", "refuse"):
                     row["status"] = "observed-goal" if kind == "done" else "failed"

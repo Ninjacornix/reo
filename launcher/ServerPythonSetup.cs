@@ -164,6 +164,7 @@ internal static class ServerPythonSetup {
         start.Environment["UV_PYTHON_INSTALL_DIR"] = Path.Combine(home, "server-python-runtime");
         start.Environment["UV_CACHE_DIR"] = Path.Combine(home, "server-tools", "cache");
         start.Environment["UV_NO_PROGRESS"] = "1";
+        Storage.ProcessEnvironment(start, home);
         start.Environment["NO_COLOR"] = "1";
         start.ArgumentList.Add("--no-config");
         foreach (string argument in arguments)

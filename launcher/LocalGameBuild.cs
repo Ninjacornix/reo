@@ -21,18 +21,18 @@ public static partial class LocalGameBuild {
     public const string ManifestName = "build-kit.json";
     static readonly JsonSerializerOptions Json =
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
-    static string KitFolder(string root) => PayloadFolder(root);
-    public static bool Available(string root) => File.Exists(Path.Combine(KitFolder(root),
+    static string KitFolder(string root, string game = "file1") => PayloadFolder(root, game);
+    public static bool Available(string root, string game = "file1") => File.Exists(Path.Combine(KitFolder(root, game),
                                                                           ManifestName)) ||
-                                                 HasPayload(root);
+                                                 HasPayload(root, game);
 
     public static string TargetPath(string root, string game = "file1", string? home = null) {
-        string manifest = Path.Combine(KitFolder(root), ManifestName);
+        string manifest = Path.Combine(KitFolder(root, game), ManifestName);
         string kitHash =
-            PayloadIdentity(root) ?? (File.Exists(manifest) ? Sha(manifest) : "missing-build-kit");
+            PayloadIdentity(root, game) ?? (File.Exists(manifest) ? Sha(manifest) : "missing-build-kit");
         string identity = Convert
                               .ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-                                  kitHash + "\n" + DiscImport.FirstElfSha256 + "\nwin-x64")))
+                                  kitHash + "\n" + DiscImport.ExpectedElf(game) + "\nwin-x64")))
                               .ToLowerInvariant();
         return Path.Combine(home ?? Path.Combine(Settings.Home, "local-games"), game, identity,
                             "ready", "reo_recomp.exe");
@@ -121,10 +121,10 @@ public static partial class LocalGameBuild {
                                       IProgress<ImportProgress>? progress = null,
                                       CancellationToken cancel = default, string? home = null,
                                       Func<ProcessStartInfo, CancellationToken, Task<int>>? runner =
-                                          null) => Task.Run(async () => {
-        ExpandPayload(root, progress, cancel);
-        return await EnsureVerified(root, disc, DiscImport.FirstElfSha256, progress, cancel, home,
-                                    runner)
+                                          null, string game = "file1") => Task.Run(async () => {
+        ExpandPayload(root, progress, cancel, game);
+        return await EnsureVerified(root, disc, DiscImport.ExpectedElf(game), progress, cancel, home,
+                                    runner, game)
             .ConfigureAwait(false);
     }, cancel);
 
@@ -132,9 +132,10 @@ public static partial class LocalGameBuild {
     EnsureVerified(string root, ImportedDisc disc, string expectedElf,
                    IProgress<ImportProgress>? progress = null, CancellationToken cancel = default,
                    string? home = null,
-                   Func<ProcessStartInfo, CancellationToken, Task<int>>? runner = null) {
-        string kitFolder = KitFolder(root);
-        if (!Available(root))
+                   Func<ProcessStartInfo, CancellationToken, Task<int>>? runner = null,
+                   string game = "file1") {
+        string kitFolder = KitFolder(root, game);
+        if (!Available(root, game))
             throw new IOException(
                 "This installation has no local build kit. The precompiled " +
                 "game download was withdrawn; a compatible build kit is required.");
@@ -143,7 +144,7 @@ public static partial class LocalGameBuild {
         string hash = Sha(Path.Combine(kitFolder, ManifestName));
         if (Sha(disc.Elf) != kit.ElfSha256)
             throw new IOException("The imported ELF does not match this build kit.");
-        string executable = TargetPath(root, home: home);
+        string executable = TargetPath(root, game, home: home);
         string ready = Path.GetDirectoryName(executable)!;
         string cache = Path.GetDirectoryName(ready)!;
         Directory.CreateDirectory(cache);
@@ -215,6 +216,7 @@ public static partial class LocalGameBuild {
                 WorkingDirectory = work, UseShellExecute = false, CreateNoWindow = true,
                 RedirectStandardOutput = true, RedirectStandardError = true
             };
+            Storage.ProcessEnvironment(start, home);
             foreach (string arg in step.Arguments)
                 start.ArgumentList.Add(Expand(arg));
             string? externalCompiler =

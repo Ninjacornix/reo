@@ -8,12 +8,14 @@ public static class UpdateWorker {
     public static void InstallFiles(string source, string target, string backup, Version version,
                                     Action<int>? checkpoint = null) {
         var incoming = Updates.Validate(source, version);
+        if (incoming.Any(file => Storage.ProtectedUpdatePath(target, file.Path)))
+            throw new IOException("The update package must not replace your storage folder or storage location settings.");
         var previous = Updates.Inventory(target);
         var wanted = incoming.Select(f => f.Path)
                          .Append("package-manifest.json")
                          .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var obsolete = previous
-                           .Where(f => !wanted.Contains(f.Path) &&
+                           .Where(f => !Storage.ProtectedUpdatePath(target, f.Path) && !wanted.Contains(f.Path) &&
                                        File.Exists(Updates.SafePath(target, f.Path)) &&
                                        Updates.Sha(Updates.SafePath(target, f.Path))
                                            .Equals(f.Sha256, StringComparison.OrdinalIgnoreCase))

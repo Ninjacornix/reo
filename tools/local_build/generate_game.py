@@ -27,6 +27,19 @@ from generate_support import generate_support
 from registration_chunks import chunk_registrations
 
 ELF_SHA256 = "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
+# Per-game inputs. File #2 shares the engine; its metadata (function maps,
+# recompiler policy) lives in recomp/config/file2 and is matched to File #1 by
+# tools/file2_port/match_functions.py.
+GAMES = {
+    "file1": {"elf": "SLUS_207.65", "sha256": ELF_SHA256, "policy": "outbreak.toml",
+              "functions": "outbreak_ghidra_functions.csv",
+              "skip": ("sub_00117080", "sub_00117818", "sub_001179E8")},
+    "file2": {"elf": "SLUS_209.84",
+              "sha256": "5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d",
+              "policy": "outbreak_file2.toml", "functions": "outbreak_file2_ghidra_functions.csv",
+              # Same SDK addresses as File #1 (exact masked-hash matches).
+              "skip": ("sub_00117080", "sub_00117818", "sub_001179E8")},
+}
 # Ordinary CPU gameplay uses the same plain accessors as the working native
 # build. Per-instruction source witnesses belong to opt-in source-audit builds;
 # enabling them throughout a player build reduced room updates to 13-14/s.
@@ -73,10 +86,12 @@ def validate_mapped_ranges(output, function_map, skip=()):
                                  "rebuild the patched recompiler before compiling game sources")
 
 
-def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False):
+def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False, game="file1"):
     recompiler, disc, metadata, destination = map(Path, (recompiler, disc, metadata, destination))
-    elf = disc / "SLUS_207.65"
-    if sha(elf) != ELF_SHA256:
+    profile = GAMES[game]
+    skip_main = profile["skip"]
+    elf = disc / profile["elf"]
+    if sha(elf) != profile["sha256"]:
         raise ValueError("Unsupported ELF revision; local recompilation was not started")
     bin_dir = next((p for p in disc.iterdir() if p.is_dir() and p.name.upper() == "BIN"), None)
     if bin_dir is None:
@@ -96,7 +111,7 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
         config = work / (name + ".toml")
         policy = ""
         if name == "main" or main_policy:
-            original = (metadata / "outbreak.toml").read_text()
+            original = (metadata / profile["policy"]).read_text()
             policy = original[original.index("[mmio]"):]
         config.write_text("[general]\ninput = " + quote(image) + "\nghidra_output = " +
                           quote(function_map) + "\noutput = " + quote(output) +
@@ -112,10 +127,9 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
 
     def generate_main():
         main = staging / "output"
-        invoke("main", elf, metadata / "outbreak_ghidra_functions.csv", main,
-               ("sub_00117080", "sub_00117818", "sub_001179E8"))
-        validate_mapped_ranges(main, metadata / "outbreak_ghidra_functions.csv",
-                               ("sub_00117080", "sub_00117818", "sub_001179E8"))
+        invoke("main", elf, metadata / profile["functions"], main,
+               skip_main)
+        validate_mapped_ranges(main, metadata / profile["functions"], skip_main)
 
         registry = main / "register_functions.cpp"
         registry.write_text(chunk_registrations(registry.read_text()))
@@ -249,8 +263,8 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
             with tempfile.TemporaryDirectory(prefix="audit-" + tag + "-", dir=work) as temporary:
                 audit_output = Path(temporary)
                 image = elf if tag == "main" else work / (tag + ".elf")
-                mapping = metadata / "outbreak_ghidra_functions.csv" if tag == "main" else work / (tag + ".csv")
-                skip = ("sub_00117080", "sub_00117818", "sub_001179E8") if tag == "main" else ()
+                mapping = metadata / profile["functions"] if tag == "main" else work / (tag + ".csv")
+                skip = skip_main if tag == "main" else ()
                 invoke("audit_" + tag, image, mapping, audit_output, skip,
                        audit_override=True, main_policy=tag == "main")
                 for relative in sources:
@@ -265,11 +279,13 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
     sources = sorted(staging.rglob("*.cpp"))
     with ThreadPoolExecutor(max_workers=max(1, min(jobs, 4))) as pool:
         source_hashes = list(pool.map(sha, sources))
-    record = {"format": 1, "elfSha256": ELF_SHA256, "recompilerSha256": sha(recompiler),
+    record = {"format": 1, "elfSha256": profile["sha256"], "recompilerSha256": sha(recompiler),
               "overlays": tags, "instructionWitnesses": catalogue_count, "sourceAudit": source_audit,
               "sourceFiles": len(sources),
               "files": [{"path": str(p.relative_to(staging)).replace("\\", "/"), "sha256": digest}
                         for p, digest in zip(sources, source_hashes)]}
+    if game != "file1":
+        record["game"] = game
     (staging / "generation.json").write_text(json.dumps(record, indent=2))
     staging.rename(destination)
     return record
@@ -284,8 +300,10 @@ def main():
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--source-audit", action="store_true",
                         help="Enable per-instruction GPU source witnesses for developer audits")
+    parser.add_argument("--game", choices=sorted(GAMES), default="file1")
     args = parser.parse_args()
-    result = generate(args.recompiler, args.disc, args.metadata, args.output, args.jobs, args.source_audit)
+    result = generate(args.recompiler, args.disc, args.metadata, args.output, args.jobs, args.source_audit,
+                      args.game)
     print(json.dumps({k: v for k, v in result.items() if k != "files"}, indent=2))
 
 

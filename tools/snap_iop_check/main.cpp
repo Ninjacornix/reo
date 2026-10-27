@@ -129,6 +129,16 @@ int main(int argc, char** argv) {
         require(result(transport.call(0x3b, socketRequest(query), 64)) == -1,
                 "double DNS release rejects unknown handle");
         dns = request(128);
+        const std::string file2Host = "snap01.capcom.client.sf.yav4.com";
+        std::copy(file2Host.begin(), file2Host.end(), dns.begin() + 0x1c);
+        const int file2Query = result(transport.call(0x3a, dns, 64));
+        auto file2Answer = transport.call(0x3c, socketRequest(file2Query), 64);
+        std::memcpy(&address, file2Answer.data() + 0x20, 4);
+        require(file2Query > 0 && result(file2Answer) == 1 && address == htonl(INADDR_LOOPBACK),
+                "File #2 bootstrap alias resolves to the selected host");
+        require(result(transport.call(0x3b, socketRequest(file2Query), 64)) == 0,
+                "File #2 bootstrap query is released");
+        dns = request(128);
         const std::string unknownHost = "gate1.us.dnas.playstation.org";
         std::copy(unknownHost.begin(), unknownHost.end(), dns.begin() + 0x1c);
         const int unknownQuery = result(transport.call(0x3a, dns, 64));

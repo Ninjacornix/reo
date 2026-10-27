@@ -8,7 +8,13 @@ using System.Text.RegularExpressions;
 namespace Outbreak.Launcher;
 
 public static partial class OnlineOptions {
-    public static bool Configured(Settings settings) => settings.Game.Id == "file1" &&
+    // Enable an edition only after its native login/lobby path has been verified.
+    public static bool Supported(string game) => game is "file1" or "file2";
+    internal static string ServerPlugin(string game) => game switch {
+        "file1" => "outbreak", "file2" => "outbreak2",
+        _ => throw new ArgumentException("Unknown game edition.", nameof(game))
+    };
+    public static bool Configured(Settings settings) => Supported(settings.Game.Id) &&
                                                         settings.ResolvedCoopMode != "offline" &&
                                                         TryHost(settings.CoopHost, out _) &&
                                                         ValidUsername(settings.AccountUsername);
@@ -49,8 +55,8 @@ public static partial class OnlineOptions {
         if (string.IsNullOrWhiteSpace(settings.CoopHost) &&
             string.IsNullOrWhiteSpace(settings.AccountUsername))
             return null;
-        if (settings.Game.Id != "file1")
-            return "Online play is available for File #1 only.";
+        if (!Supported(settings.Game.Id))
+            return "Online play is unavailable for this game.";
         if (!ValidUsername(settings.AccountUsername))
             return "Player name: use 4–10 letters, numbers or underscores. Underscores cannot " +
                    "start, end or repeat.";
