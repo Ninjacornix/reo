@@ -929,6 +929,25 @@ int main(int argc, char* argv[]) {
 
     setvbuf(stdout, nullptr, _IONBF, 0); // unbuffered: pinpoint crash location
 
+#if defined(REO_GAME_FILE2)
+    // File #2's GPU movie route kicks GIF DMA (D2_CHCR 0x1000A000) while the IO lock is
+    // held; the async VIF1 worker must drain before PATH3 and refuses to wait under that
+    // lock ("Async VIF1 wait attempted under IO ownership"). GPU movies without the worker
+    // and CPU movies with it both run cleanly, so keep the worker off for that pairing.
+    {
+        const char* movie = std::getenv("REO_GPU_MOVIE");
+        const char* async = std::getenv("REO_VIF1_ASYNC");
+        if (movie && std::atoi(movie) != 0 && async && std::strcmp(async, "1") == 0) {
+#ifdef _WIN32
+            _putenv_s("REO_VIF1_ASYNC", "0");
+#else
+            setenv("REO_VIF1_ASYNC", "0", 1);
+#endif
+            std::fprintf(stderr, "[VIF1-ASYNC] off: File #2 GPU movies need the synchronous VIF1 path\n");
+        }
+    }
+#endif
+
     // Defaults — selected game determines paths
 
     int game_idx = -1; // -1 = auto-detect from build target

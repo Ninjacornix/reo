@@ -553,3 +553,26 @@ constitute a physical controller hands-on test. All three clients exited 0
 with no fatal/missing-function/device-loss findings; temporary services were
 stopped. Verification: `build-ninja/dpad-tank-check/verification.json`.
 No release was created.
+
+### Launcher crash: stub entries and async VIF1 (2026-10-28)
+
+A File #2 session launched from the launcher stopped at ~110 s with
+`Async VIF1 wait attempted under IO ownership`, after
+`Function at address 0x15bcc0 not found` (called from ovl2 `0x58E500`).
+
+- `0x15BC90` is four 16-byte entry stubs (`j 0x15BCD0` with `a0` = 0..3) and a
+  shared body; the map merged them into one function, so `0x15BCA0/B0/C0` and the
+  body were unregistered. Added to `extra_functions.csv` and regenerated with the
+  pinned v1.0.19 recompiler. A scan of the main ELF and all overlays found no
+  other stub table of this kind. File #1 merges the same stubs (`0x1D3BA0`) but
+  never calls the later entries.
+- The async error is separate: the launcher enables the async VIF1 worker
+  (`REO_VIF1_ASYNC=1`), and with GPU movies File #2 writes `D2_CHCR`
+  (`0x1000A000`, PATH3) while the IO lock is held; the worker must drain before
+  PATH3 and refuses to wait under that lock. GPU movies without the worker and
+  CPU movies with it both run cleanly (CPU movies + worker: 125 s, boot to
+  gameplay). File #2 now turns the worker off when GPU movies are on
+  (`[VIF1-ASYNC] off: ...`). File #1 is unchanged.
+- Verified with the launcher's settings (GPU movies, async requested, 16:9, 2x,
+  FXAA): 135 s from boot into Training Ground gameplay, GPU movies 29-31 fps,
+  60 presents/s, no missing functions, no errors.
