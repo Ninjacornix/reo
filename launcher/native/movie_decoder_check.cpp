@@ -3,6 +3,9 @@
 // The launcher sets REO_GPU_MOVIE from it. The GPU route needs D3D11 MPEG-2 VLD on the
 // adapter the renderer uses (AMD RDNA 4 parts, for example, have none); without it the
 // original CPU decoder plays the movies.
+// Sharing decoded frames with Vulkan has only been verified on AMD. NVIDIA drivers lose the
+// device at the first scenario movie (GTX 1070 Ti, driver 582.31, issue #4) and Intel is
+// untested, so both use the CPU decoder. REO_GPU_MOVIES_ANY_VENDOR=1 skips this rule.
 // Built by launcher/build.ps1 (MSVC, Vulkan SDK headers); the launcher ships it as
 // reo-movie-check.exe beside Outbreak.Launcher.exe.
 #include <initguid.h>
@@ -42,6 +45,7 @@ struct Selected {
     std::string name;
     LUID luid{};
     bool luidValid = false;
+    uint32_t vendor = 0;
 };
 
 // Granite's default choice: the GRANITE_VULKAN_DEVICE_INDEX device if set, otherwise the
@@ -124,6 +128,7 @@ bool selectRendererGpu(Selected& selected, std::string& error) {
         p.pNext = &id;
         properties2(chosen, &p);
         selected.name = p.properties.deviceName;
+        selected.vendor = p.properties.vendorID;
         selected.luidValid = id.deviceLUIDValid == VK_TRUE;
         static_assert(sizeof(LUID) == VK_LUID_SIZE);
         std::memcpy(&selected.luid, id.deviceLUID, sizeof(LUID));
@@ -134,6 +139,17 @@ bool selectRendererGpu(Selected& selected, std::string& error) {
     if (destroy)
         destroy(instance, nullptr);
     return ok;
+}
+
+bool verifiedVendor(uint32_t vendor, std::string& reason) {
+    if (vendor == 0x1002)
+        return true;
+    if (const char* any = std::getenv("REO_GPU_MOVIES_ANY_VENDOR"); any && std::strcmp(any, "1") == 0)
+        return true;
+    reason = vendor == 0x10de ? "Movie decoding on NVIDIA graphics cards can crash the game"
+             : vendor == 0x8086 ? "Movie decoding on Intel graphics is untested"
+                                : "Movie decoding on this graphics card is untested";
+    return false;
 }
 
 bool plain(const GUID& g) {
@@ -217,6 +233,6 @@ int main() {
     if (!selectRendererGpu(gpu, error) || !gpu.luidValid)
         return report(gpu.name, false, error);
     std::string reason;
-    const bool gpuMovies = hardwareMpeg2(gpu.luid, reason);
+    const bool gpuMovies = verifiedVendor(gpu.vendor, reason) && hardwareMpeg2(gpu.luid, reason);
     return report(gpu.name, gpuMovies, reason);
 }

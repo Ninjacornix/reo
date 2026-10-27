@@ -90,8 +90,11 @@ public partial class MainWindow : Window {
         UpdateGpuMoviesHint();
     }
     void UpdateGpuMoviesHint() {
-        if (movieDecoder == null || FindName("GpuMoviesHint") is not TextBlock hint)
+        if (movieDecoder == null)
             return;
+        TextBlock hint = GpuMoviesHint;
+        if (movieDecoder.Gpu) hint.ClearValue(TextBlock.ForegroundProperty);
+        else hint.SetResourceReference(TextBlock.ForegroundProperty, "Danger");
         string gpu = movieDecoder.GpuName.Length != 0 ? movieDecoder.GpuName : "This graphics card";
         hint.Text = !movieDecoder.Gpu
             ? movieDecoder.Reason + ". Movies decode on the processor."

@@ -110,6 +110,7 @@
        </Grid>
        <CheckBox x:Name="AsyncVif" Content="Parallel geometry worker" Click="SaveSettings"/>
        <CheckBox x:Name="GpuMovies" Content="Decode movies on the graphics card" Click="SaveSettings" IsEnabled="False"/>
+       <TextBlock x:Name="GpuMoviesHint" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="28,2,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageAudio" Visibility="Collapsed" MaxWidth="600" HorizontalAlignment="Left" Width="600">
        <StackPanel Margin="0,4,0,14">
