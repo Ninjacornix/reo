@@ -98,20 +98,31 @@ def validate_import(folder, iso, game="file1"):
 def configured_import(root, iso, supplied, game="file1"):
     if supplied:
         return Path(supplied)
-    home = Path(os.environ["LOCALAPPDATA"]) / "OutbreakRecomp" / "launcher"
-    settings = home / "settings.json"
-    if settings.exists():
-        folder = json.loads(settings.read_text(encoding="utf-8-sig")).get("ImportedFile2" if game == "file2" else "ImportedFile1")
-        if folder:
-            return Path(folder)
-    candidates = []
-    for record in (home / "imports" / game).glob("*/import.json"):
-        value = json.loads(record.read_text(encoding="utf-8-sig"))
-        if Path(value["Source"]).resolve() == iso:
-            candidates.append(record.parent)
-    if len(candidates) != 1:
-        raise ValueError("Import the ISO in the launcher first, or specify --import-root")
-    return candidates[0]
+    home = Path(root) / "data"
+    locator = Path(root) / "storage.json"
+    if locator.exists():
+        config = {key.lower(): value for key, value in json.loads(locator.read_text(encoding="utf-8-sig")).items()}
+        if config.get("format") != 1 or not isinstance(config.get("folder"), str) or not config["folder"]:
+            raise ValueError("Invalid launcher storage configuration")
+        chosen = Path(config["folder"])
+        home = chosen if chosen.is_absolute() else Path(root) / chosen
+    legacy = Path(os.environ["LOCALAPPDATA"]) / "OutbreakRecomp" / "launcher"
+    for location in dict.fromkeys((home, legacy)):
+        settings = location / "settings.json"
+        if settings.exists():
+            folder = json.loads(settings.read_text(encoding="utf-8-sig")).get("ImportedFile2" if game == "file2" else "ImportedFile1")
+            if folder:
+                return Path(folder)
+        candidates = []
+        for record in (location / "imports" / game).glob("*/import.json"):
+            value = json.loads(record.read_text(encoding="utf-8-sig"))
+            if Path(value["Source"]).resolve() == iso:
+                candidates.append(record.parent)
+        if len(candidates) == 1:
+            return candidates[0]
+        if len(candidates) > 1:
+            raise ValueError("Multiple matching imports; specify --import-root")
+    raise ValueError("Import the ISO in the launcher first, or specify --import-root")
 
 
 def prepare(args):

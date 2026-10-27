@@ -276,7 +276,7 @@ Packages are limited to 1 MB and 4096 patches; selected mods and cheats share a 
 
 ## Installation and diagnostics
 
-Installed files live in `%LOCALAPPDATA%\OutbreakRecomp\launcher\mods\file1`. You can copy JSON files there directly and press Reload. Invalid packages show an error. Missing, invalid or duplicate enabled IDs block launch until repaired or disabled.
+Installed files live in `data/mods/file1` beside the launcher (or `mods/file1` inside your selected storage folder). You can copy JSON files there directly and press Reload. Invalid packages show an error. Missing, invalid or duplicate enabled IDs block launch until repaired or disabled.
 
 Effects and arbitrary data patches remain restricted to **Play alone**. The launcher now allows the host to publish item/enemy randomizer settings; mixed-species multiplayer gameplay verification remains in progress. A session records the complete selected manifests in `mods.json` and the combined native effects/data writes in `cheats.txt` beside its logs. The original ISO and imported game files are not edited.
 

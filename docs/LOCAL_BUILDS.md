@@ -17,7 +17,7 @@ The public package contains the launcher, independent recompiler, source metadat
 authored runtime sources and independent upstream libraries. The user's verified
 disc supplies main/overlay instructions and VU microprogram images. The final
 executable, instrumentation copies, instruction witnesses and VU translations are
-generated and compiled in Local AppData, then cached outside the installation.
+generated, compiled and cached in the selected data folder (`data/` beside the launcher by default).
 
 The Windows release must be portable: open the launcher EXE and select an ISO,
 without a Windows installer or system toolchain installation. Independent build

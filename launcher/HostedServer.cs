@@ -96,6 +96,7 @@ internal sealed class HostedServer : IDisposable {
                              .ToArray())
                     start.Environment.Remove(key);
                 var env = start.Environment;
+                Storage.ProcessEnvironment(start, stateHome);
                 env["PYTHONPATH"] = source;
                 if (Directory.Exists(Path.Combine(source, "vendor")))
                     env["PYTHONPATH"] += Path.PathSeparator + Path.Combine(source, "vendor");

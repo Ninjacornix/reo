@@ -264,6 +264,11 @@
        <Button Content="Open session folders" Click="OpenSessionFolders" HorizontalAlignment="Left" Margin="0,8,0,0"/>
       </StackPanel>
       <StackPanel x:Name="PageSetup" Visibility="Collapsed">
+       <TextBlock Text="Storage folder" FontSize="16" FontWeight="SemiBold"/>
+       <TextBlock Text="By default, everything stays in the data folder inside the folder where you extracted the launcher. You can choose another storage folder below." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,8,0,8"/>
+       <TextBox x:Name="StoragePath" IsReadOnly="True" AutomationProperties.Name="Current storage folder" Margin="0,0,0,10"/>
+       <WrapPanel><Button x:Name="ChooseStorageButton" Content="Change folder…" Click="ChangeStorageFolder" Margin="0,0,10,0"/><Button Content="Open folder" Click="OpenStorageFolder"/></WrapPanel>
+       <TextBlock x:Name="StorageStatus" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,24"/>
        <TextBlock Text="Disc image (.iso)"/>
        <TextBox x:Name="IsoPath" IsReadOnly="True" Margin="0,8,0,8"/>
        <WrapPanel><Button x:Name="ChooseIsoButton" Content="Choose ISO" Tag="iso" Click="BrowseFile" Margin="0,0,10,0"/><Button x:Name="ImportDiscButton" Content="Import" Click="ImportDisc"/></WrapPanel>

@@ -108,6 +108,18 @@ public static class DiscImport {
                               .ToLowerInvariant();
         string target = Path.Combine(parent, identity);
         var old = Manifest(target);
+        if (!Matches(old, iso, source, game, expectedElf)) {
+            // A portable installation may have moved together with its ISO. Its
+            // rebased manifest is still valid even though the path-based directory
+            // identity predates the move; reuse it instead of extracting again.
+            foreach (string candidate in Directory.EnumerateDirectories(parent)) {
+                if ((File.GetAttributes(candidate) & FileAttributes.ReparsePoint) != 0) continue;
+                var relocated = Manifest(candidate);
+                if (Matches(relocated, iso, source, game, expectedElf) && Complete(candidate, relocated!, game))
+                    return new(candidate, Path.Combine(candidate, "data", game.ElfName), relocated!.Files.Length,
+                               relocated.Files.Sum(f => f.Length), true) { Verification = verified.Description };
+            }
+        }
         if (Matches(old, iso, source, game, expectedElf) && Complete(target, old!, game))
             return new(target, Path.Combine(target, "data", game.ElfName), old!.Files.Length,
                        old.Files.Sum(f => f.Length), true) { Verification = verified.Description };

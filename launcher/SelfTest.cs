@@ -48,6 +48,7 @@ static class SelfTest {
                 throw new Exception(message);
             checks++;
         }
+        Task.Run(() => StorageTests.Run(Check)).GetAwaiter().GetResult();
         DiscImportTests.Run(Check);
         GraphicsOptionsTests.Run(Check);
         ModsTests.Run(Check);

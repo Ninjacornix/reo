@@ -16,6 +16,26 @@ import coop_playtest as harness
 
 
 class IsolationTests(unittest.TestCase):
+    def test_import_discovery_uses_portable_and_custom_storage_before_legacy(self):
+        with tempfile.TemporaryDirectory() as temp, mock.patch.dict(os.environ, LOCALAPPDATA=temp):
+            root = Path(temp) / "launcher"
+            legacy = Path(temp) / "OutbreakRecomp" / "launcher"
+            legacy.mkdir(parents=True)
+            (legacy / "settings.json").write_text(json.dumps(dict(ImportedFile1="old-import")))
+            self.assertEqual(harness.configured_import(root, root / "disc.iso", None), Path("old-import"))
+            home = root / "data"
+            home.mkdir(parents=True)
+            (home / "settings.json").write_text(json.dumps(dict(ImportedFile1="portable-import")))
+            self.assertEqual(harness.configured_import(root, root / "disc.iso", None), Path("portable-import"))
+            custom = root / "chosen folder"
+            custom.mkdir()
+            (custom / "settings.json").write_text(json.dumps(dict(ImportedFile1="custom-import", ImportedFile2="file2-import")))
+            for location in ("chosen folder", str(custom)):
+                (root / "storage.json").write_text(json.dumps(dict(format=1, folder=location)))
+                self.assertEqual(harness.configured_import(root, root / "disc.iso", None), Path("custom-import"))
+                self.assertEqual(harness.configured_import(root, root / "disc.iso", None, "file2"), Path("file2-import"))
+            self.assertEqual(harness.configured_import(root, root / "disc.iso", "explicit-import"), Path("explicit-import"))
+
     def test_import_is_bound_to_selected_edition(self):
         for game, (expected, elf_name, _, _) in harness.GAMES.items():
             with self.subTest(game=game), tempfile.TemporaryDirectory() as temp:

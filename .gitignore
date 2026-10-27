@@ -35,6 +35,8 @@ SCPH-*
 *.dmp
 *.wav
 /saves/
+/data/
+/storage.json
 /gs_frames/
 /reo_fb_dump.bmp
 /docs/title_screen.png

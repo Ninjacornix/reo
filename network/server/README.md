@@ -2,7 +2,7 @@
 
 Players use **Co-op → Host server** in the launcher. It starts the required
 services and shows a copyable address for friends. Missing Python/packages are
-prepared automatically in a private Local AppData environment on first hosting;
+prepared automatically in a private environment in your selected data folder on first hosting;
 see [setup](SETUP.md). The download includes source rather than a bundled
 interpreter or pip packages.
 Router/firewall configuration is still necessary for Internet hosting.

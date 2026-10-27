@@ -26,6 +26,7 @@ public partial class MainWindow : Window {
         settings = Settings.Load(root);
         controller.Configure(settings);
         InitializeComponent();
+        RefreshStorageUi();
         VersionLabel.Text = Updates.DisplayName;
         DeveloperFiles.Visibility =
             AppLayout.Packaged(root) ? Visibility.Collapsed : Visibility.Visible;
@@ -377,6 +378,11 @@ public partial class MainWindow : Window {
         }
     }
     void OnClosing(object? sender, CancelEventArgs e) {
+        if (storageChanging) {
+            e.Cancel = true;
+            Status.Text = "Wait for the storage copy to finish, or cancel it in the progress window.";
+            return;
+        }
         if (backingUp) {
             e.Cancel = true;
             Status.Text = "Wait for the memory-card backup to finish before closing.";

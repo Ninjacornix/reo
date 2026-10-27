@@ -3,9 +3,7 @@ using System.Text.Json;
 
 namespace Outbreak.Launcher;
 public sealed partial class Settings {
-    public static string Home =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                     "OutbreakRecomp", "launcher");
+    public static string Home => Storage.Home;
     public string Exe { get; set; } = "";
     public string Iso { get; set; } = "";
     public int WindowSize { get; set; }
