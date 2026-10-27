@@ -1238,6 +1238,38 @@ static void reo_result_asset_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime
         return;
     sub_001D3B90_0x1d3b90(rdram, ctx, runtime);
 }
+// Collections calls a separate selector-3 entry which the function map merged
+// into 0x1D3B90. Registering that parent as an alias would run its common-bank
+// entry instead. Set up the original selector frame and filename-copy call,
+// then resume the generated shop path. The original tail still owns loading,
+// reverb setup, and restoring the caller's registers.
+static void reo_collection_asset_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    SET_GPR_S32(ctx, 4, 3);
+    SET_GPR_S32(ctx, 29, (int32_t)ADD32(GPR_U32(ctx, 29), uint32_t(-0xA0)));
+    const uint32_t sp = GPR_U32(ctx, 29);
+    SET_GPR_S32(ctx, 2, 3);
+    WRITE64(sp + 0x10, GPR_U64(ctx, 31));
+    WRITE128(sp, GPR_VEC(ctx, 16));
+    SET_GPR_S32(ctx, 5, 0x250000);
+    SET_GPR_S32(ctx, 4, (int32_t)ADD32(sp, 0x20));
+    SET_GPR_U32(ctx, 31, 0x1D3C68u);
+    ctx->pc = 0x1D3C64u;
+    ctx->in_delay_slot = true;
+    ctx->branch_pc = 0x1D3C60u;
+    SET_GPR_S32(ctx, 5, (int32_t)ADD32(GPR_U32(ctx, 5), 0x6680));
+    ctx->in_delay_slot = false;
+    ctx->pc = 0x10A830u;
+    if (runtime->hasFunction(0x10A830u)) {
+        runtime->lookupFunction(0x10A830u)(rdram, ctx, runtime);
+    } else {
+        sub_0010A830_0x10a830(rdram, ctx, runtime);
+    }
+    if (ctx->pc == 0x10A830u)
+        ctx->pc = 0x1D3C68u;
+    if (ctx->pc != 0x1D3C68u)
+        return;
+    sub_001D3B90_0x1d3b90(rdram, ctx, runtime);
+}
 // Opt-in late-movie observer. The epoch is established at binding installation,
 // so the boot movie cannot consume the diagnostic budget for the quit movie.
 void sub_001752F8_0x1752f8(uint8_t*, R5900Context*, PS2Runtime*);
@@ -1719,6 +1751,7 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         bind(runtime, 0x163750, reo_cri_error_log, "CRI error reporter (log)");
     bind(runtime, 0x1627A8, reo_sfd_feed_end_entry, "Sofdec original feed-end entry");
     bind(runtime, 0x1D3BC0, reo_result_asset_entry, "Original result asset entry");
+    bind(runtime, 0x1D3BD0, reo_collection_asset_entry, "Original Collection asset entry");
     if (std::getenv("REO_SFD_DIAG")) {
         bind(runtime, 0x1731A0, reo_sfd_stoptime, "Sofdec stop-time check (log)");
         bind(runtime, 0x173210, reo_sfd_endflags, "Sofdec end-flags check (log)");
