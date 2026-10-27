@@ -55,7 +55,8 @@ def portable_flags(options):
 
 def response_text(arguments, portable=False):
     if portable:
-        return "\n".join(json.dumps(str(arg).replace("\\", "/")) for arg in arguments)
+        # LLVM response files use literal UTF-8, not JSON's ASCII \uXXXX escapes.
+        return "\n".join(json.dumps(str(arg).replace("\\", "/"), ensure_ascii=False) for arg in arguments)
     return "\n".join(subprocess.list2cmdline([str(arg)]) for arg in arguments)
 
 
