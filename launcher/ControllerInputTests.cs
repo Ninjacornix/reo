@@ -62,6 +62,26 @@ internal static class ControllerInputTests {
                     controller.Publish();
                     check(get(0, out var reconnected) == 0 && reconnected.Buttons == 0x1000,
                           game + " selected physical controller reconnects through the same native adapter");
+                    settings.Xbox.SwapSticks = false;
+                    settings.Xbox.InvertRightY = false;
+                    controller.Configure(settings);
+                    foreach (ushort direction in new ushort[] { 1, 2, 4, 8, 5, 9, 6, 10 }) {
+                        physical = new(direction);
+                        controller.Publish();
+                        check(get(0, out var digital) == 0 && digital.Buttons == direction &&
+                              digital.LX == 0 && digital.LY == 0 && digital.RX == 0 && digital.RY == 0,
+                              game + " D-pad direction " + direction + " keeps both sticks neutral");
+                    }
+                    physical = new(0, 0, 0, 20000, -20000);
+                    controller.Publish();
+                    check(get(0, out var analog) == 0 && analog.Buttons == 0 &&
+                          analog.LX > 0 && analog.LY < 0,
+                          game + " analog movement remains independent from digital directions");
+                    physical = new(4, 0, 0, 20000, -20000);
+                    controller.Publish();
+                    check(get(0, out var mixed) == 0 && mixed.Buttons == 4 &&
+                          mixed.LX == analog.LX && mixed.LY == analog.LY,
+                          game + " simultaneous D-pad and stick preserve both inputs");
                     using var map = MemoryMappedFile.OpenExisting(controller.MapName);
                     using var view = map.CreateViewAccessor();
                     view.Write(0, 0u);
