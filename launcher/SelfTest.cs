@@ -387,6 +387,11 @@ static class SelfTest {
               "Aspect and centered sizing survive settings loading");
         Check(DisplayOptions.Aspects.All(aspect => new Settings { AspectRatio = aspect }.ResolvedAspect == aspect),
               "Every listed aspect ratio, including ultrawide, survives settings loading");
+        Check(!new Settings { AspectRatio = "16:9" }.ResolvedWidescreen &&
+                  !new Settings { AspectRatio = "4:3", WidescreenCamera = true }.ResolvedWidescreen &&
+                  JsonSerializer.Deserialize<Settings>("{\"AspectRatio\":\"21:9\",\"WidescreenCamera\":true}")!.ResolvedWidescreen &&
+                  DisplayOptions.AspectChoices.Distinct().Count() == DisplayOptions.AspectChoices.Length,
+              "Existing 16:9 stays stretched; widescreen camera needs a wide ratio and survives loading");
         Check(new Settings { AspectRatio = "invalid", ScreenFit = "invalid" }.ResolvedAspect ==
                       "4:3" &&
                   new Settings { ScreenFit = "invalid" }.ResolvedFit == "fit",

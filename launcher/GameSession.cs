@@ -220,6 +220,7 @@ public sealed class GameSession {
         Set("REO_VIF1_ASYNC", settings.AsyncVif ? "1" : "0");
         Set("REO_VIF1_GPU_RESIDENT", "0");
         Set("REO_DISPLAY_ASPECT", settings.ResolvedAspect);
+        Set("REO_WIDESCREEN", settings.ResolvedWidescreen ? "1" : "0");
         Set("REO_DISPLAY_FIT", settings.ResolvedFit);
         Set("REO_DISPLAY_FILTER", settings.LinearFilter ? "linear" : "nearest");
         var outputSize = DisplayOptions.Size(settings.WindowSize);
@@ -370,6 +371,7 @@ public sealed class GameSession {
                       performanceOverlay = settings.PerformanceOverlay,
                       anisotropy = settings.ResolvedAnisotropy,
                       aspectRatio = settings.ResolvedAspect,
+                      widescreenCamera = settings.ResolvedWidescreen,
                       screenFit = settings.ResolvedFit,
                       antiAliasing = settings.ResolvedAntiAliasing,
                       brightness = settings.Brightness,

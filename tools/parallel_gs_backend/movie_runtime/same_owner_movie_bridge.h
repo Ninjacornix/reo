@@ -5,6 +5,7 @@
 #include "import_receipt.h"
 #include "movie_asset_sha256.h"
 #include "movie_picture_identity.h"
+#include "../movie_frame_signal.h"
 #include "device.hpp"
 #include "command_buffer.hpp"
 #include <array>
@@ -355,6 +356,7 @@ class SameOwnerMovieBridge {
             slot.identity = identity;
             slot.serial++;
             slot.state = OutputState::Produced;
+            reo_gpu_present::gpuMovieFrames.fetch_add(1, std::memory_order_relaxed);
             slot.rgbaInitialized = true;
             ticket = {generation_, identity.picture, slot.serial, selected, identity.pts90k, true};
             return true;

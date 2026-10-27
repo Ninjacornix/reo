@@ -13,7 +13,8 @@ public partial class MainWindow {
             _ => "Centers the picture at the selected ratio, with black borders where needed."
         };
         if (settings.ResolvedAspect != "4:3" && settings.ResolvedFit != "stretch")
-            hint.Text += " " + settings.ResolvedAspect +
-                         " stretches the original picture wider; the camera view is unchanged.";
+            hint.Text += settings.ResolvedWidescreen
+                ? " Widescreen shows more of each room; menus, the HUD and text are stretched, movies stay 4:3."
+                : " Stretched widens the original 4:3 picture; the camera view is unchanged.";
     }
 }

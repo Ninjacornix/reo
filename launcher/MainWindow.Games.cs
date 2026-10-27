@@ -105,7 +105,8 @@ public partial class MainWindow {
             " / " +
             (settings.ResolvedFit == "stretch"
                  ? "Stretched"
-                 : settings.ResolvedAspect + " " + DisplayOptions.FitName(settings.ResolvedFit)) +
+                 : settings.ResolvedAspect + (settings.ResolvedAspect == "4:3" ? "" : settings.ResolvedWidescreen ? " widescreen" : " stretched") +
+                       " " + DisplayOptions.FitName(settings.ResolvedFit)) +
             " / " + (settings.LinearFilter ? "Bilinear" : "Nearest");
         PlayInputSummary.Text = controller.SelectedDevice.Name;
         RefreshReadyCheck();

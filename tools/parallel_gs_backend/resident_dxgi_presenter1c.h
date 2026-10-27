@@ -10,9 +10,13 @@
 #include <stdexcept>
 #include <vector>
 #include "smaa/resident_smaa.hpp"
+#include "movie_frame_signal.h"
 #include "runtime/gs/performance.h"
 #include <chrono>
 
+namespace ps2_ipu {
+extern std::atomic<uint32_t> g_dbgCsc; // CPU movie route: IPU colour conversions
+}
 namespace reo_gpu_present {
 // Existing GS/geometry Vulkan Device and its serialized graphics owner are
 // mandatory. This helper does not instantiate another renderer, Vulkan context,
@@ -27,6 +31,10 @@ class ResidentDxgiPresenter {
     HWND window_ = nullptr;
     unsigned width_ = 0, height_ = 0;
     uint64_t submitted_ = 0;
+    uint64_t movieFrames_ = 0;
+    bool movieLayout_ = false;
+    unsigned movieSwitches_ = 0;
+    std::chrono::steady_clock::time_point lastMovieFrame_{};
     reo::performance::Meter performance_;
     struct Parameters {
         uint32_t sourceWidth, sourceHeight, destinationWidth, destinationHeight, linear;
@@ -46,6 +54,31 @@ class ResidentDxgiPresenter {
                         : std::strcmp(fit, "fill") == 0    ? 3u
                                                            : 0u;
         return (ratio << 24u) | (mode << 26u);
+    }
+    // The widescreen camera widens only 3D; movies are 4:3 pictures, so while one is
+    // being decoded (either route) they are shown at 4:3 instead of stretched.
+    uint32_t currentLayout() {
+        static const uint32_t base = layoutFlags();
+        static const bool widescreen = [] {
+            const char* value = std::getenv("REO_WIDESCREEN");
+            return value && std::strcmp(value, "1") == 0;
+        }();
+        if (!widescreen || !(base & (3u << 24u)))
+            return base;
+        const uint64_t frames = reo_gpu_present::gpuMovieFrames.load(std::memory_order_relaxed) +
+                                ps2_ipu::g_dbgCsc.load(std::memory_order_relaxed);
+        const auto now = std::chrono::steady_clock::now();
+        if (frames != movieFrames_) {
+            movieFrames_ = frames;
+            lastMovieFrame_ = now;
+        }
+        const bool movie = now - lastMovieFrame_ < std::chrono::milliseconds(250);
+        if (movie != movieLayout_ && movieSwitches_ < 64) {
+            ++movieSwitches_;
+            std::fprintf(stderr, "[WIDESCREEN-1] movie layout=%s\n", movie ? "4:3" : "wide");
+        }
+        movieLayout_ = movie;
+        return movie ? base & ~(3u << 24u) : base;
     }
     static uint32_t colorPercent(const char* name, float minimum, float maximum) {
         const char* value = std::getenv(name);
@@ -164,8 +197,9 @@ class ResidentDxgiPresenter {
                            VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                            VK_ACCESS_2_MEMORY_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                            VK_ACCESS_2_SHADER_SAMPLED_READ_BIT);
+        const uint32_t layout = currentLayout();
         if (smaa_)
-            smaa_->prepare(*cmd, *merged, program_, linear, layoutFlags());
+            smaa_->prepare(*cmd, *merged, program_, linear, layout);
         cmd->acquire_image_barrier(
             *target_, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
@@ -194,7 +228,7 @@ class ResidentDxgiPresenter {
         static const uint32_t color = (colorPercent("REO_BRIGHTNESS", 0.5f, 1.5f) << 8u) |
                                       (colorPercent("REO_GAMMA", 0.5f, 2.0f) << 16u);
         Parameters parameters{source.width, source.height, width_, height_,
-                              (linear ? 1u : 0u) | (fxaa ? 2u : 0u) | color | layoutFlags()};
+                              (linear ? 1u : 0u) | (fxaa ? 2u : 0u) | color | layout};
         if (reo::performance::enabled()) {
             const auto now = uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
                 std::chrono::steady_clock::now().time_since_epoch()).count());

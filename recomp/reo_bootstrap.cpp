@@ -3,6 +3,7 @@
 #include "overrides/reo_mods.h"
 #include "overrides/reo_rumble.h"
 #include "overrides/reo_audio.h"
+#include "overrides/reo_widescreen.h"
 #endif
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)
 #include "natural_dispatch.h"
@@ -1293,6 +1294,7 @@ int main(int argc, char* argv[]) {
         reo::mods::install(runtime);
         reo::rumble::install(runtime);
         reo::audio::install(runtime);
+        reo::widescreen::install(runtime);
     }
 #endif
 #ifdef _WIN32
