@@ -214,9 +214,15 @@ public static partial class LocalGameBuild {
             progress?.Report(new(i, kit.Steps.Length, step.Name, "Building native code"));
             var start = new ProcessStartInfo(Inside(kitFolder, step.Tool)) {
                 WorkingDirectory = work, UseShellExecute = false, CreateNoWindow = true,
-                RedirectStandardOutput = true, RedirectStandardError = true
+                RedirectStandardOutput = true, RedirectStandardError = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding = System.Text.Encoding.UTF8
             };
             Storage.ProcessEnvironment(start, home);
+            // Python writes piped output in the ANSI code page by default; a path outside it
+            // (Cyrillic, for example) would fail while reporting the real build error.
+            start.Environment["PYTHONUTF8"] = "1";
+            start.Environment["PYTHONIOENCODING"] = "utf-8";
             foreach (string arg in step.Arguments)
                 start.ArgumentList.Add(Expand(arg));
             string? externalCompiler =
@@ -245,9 +251,12 @@ public static partial class LocalGameBuild {
                           else if (line.StartsWith("Linking ", StringComparison.Ordinal))
                               progress?.Report(new(0, 0, "Finishing your game build", "Linking"));
                       }).ConfigureAwait(false);
-            if (code != 0)
-                throw new IOException($"Local build failed during {step.Name} (exit {code}). " +
-                                      "The completed game was not replaced. Build logs: " + cache);
+            if (code != 0) {
+                string stepLog = Path.Combine(cache, $"step-{i:D3}.log");
+                string? text = null;
+                try { text = File.ReadAllText(stepLog); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                throw new IOException(BuildFailure.Message(step.Name, code, cache, text));
+            }
         }
         cancel.ThrowIfCancellationRequested();
         // Output is admitted only after all stages succeed and its files are verified.

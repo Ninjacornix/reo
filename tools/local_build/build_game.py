@@ -50,6 +50,14 @@ def stage(work, name, inputs, action, outputs, jobs=1):
     temporary.replace(receipt)
 
 
+def extended(path):
+    """Windows path without the 260-character limit (kit sources nest deeply)."""
+    text = str(Path(path).resolve())
+    if sys.platform != "win32" or text.startswith("\\\\?\\"):
+        return Path(text)
+    return Path("\\\\?\\UNC\\" + text[2:] if text.startswith("\\\\") else "\\\\?\\" + text)
+
+
 def build(kit, disc, work, output, jobs):
     kit, disc, work, output = [Path(p).resolve() for p in (kit, disc, work, output)]
     work.mkdir(parents=True, exist_ok=True)
@@ -73,7 +81,7 @@ def build(kit, disc, work, output, jobs):
     project = work / "project"
     project.mkdir(exist_ok=True)
     print("Preparing independent runtime sources", flush=True)
-    shutil.copytree(kit / "source", project, dirs_exist_ok=True)
+    shutil.copytree(extended(kit / "source"), extended(project), dirs_exist_ok=True)
     metadata = kit / "metadata"
     generated = project / "recomp/config"
     elf = disc / "SLUS_207.65"

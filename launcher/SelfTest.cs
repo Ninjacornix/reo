@@ -401,6 +401,17 @@ static class SelfTest {
                   JsonSerializer.Deserialize<Settings>("{\"AspectRatio\":\"21:9\",\"WidescreenCamera\":true}")!.ResolvedWidescreen &&
                   DisplayOptions.AspectChoices.Distinct().Count() == DisplayOptions.AspectChoices.Length,
               "Existing 16:9 stays stretched; widescreen camera needs a wide ratio and survives loading");
+        string deep = @"C:\Users\Player Name\AppData\Local\OutbreakRecomp\launcher\local-games\file1\" +
+                      new string('0', 64) + @"\work\project\build-ninja\parallel-gs-source\Granite\third_party\spirv-tools\test\opt\loop_optimizations\pch_test_opt_loop.h";
+        string longPath = "shutil.Error: [('" + deep + "', '" + deep + "', '[WinError 3] The system cannot find the path specified')]";
+        string unicodePath = "Recompiler failed for main (exit 1):\n  Error: Could not load ELF file: C:/Users/Jo\u00e3o/disc/SLUS_207.65\n" +
+                             "subprocess.CalledProcessError: Command '['ps2_recomp.exe']' returned non-zero exit status 1.";
+        Check(BuildFailure.Explain(longPath)!.Contains("longer than Windows allows") &&
+                  BuildFailure.Explain(unicodePath)!.Contains("letters such as") &&
+                  BuildFailure.Explain("[WinError 3] 'C:\\short\\missing.h'") == null &&
+                  BuildFailure.LastError(unicodePath)!.StartsWith("subprocess.CalledProcessError") &&
+                  BuildFailure.Message("generate", 1, "cache", longPath).Contains("Error: shutil.Error"),
+              "Build failures name long paths and non-ASCII folders and quote the last error");
         Check(new Settings { AspectRatio = "invalid", ScreenFit = "invalid" }.ResolvedAspect ==
                       "4:3" &&
                   new Settings { ScreenFit = "invalid" }.ResolvedFit == "fit",
