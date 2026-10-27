@@ -6,6 +6,11 @@
 #include <cstring>
 #include <string>
 #ifdef _WIN32
+// Minimal Win32 headers need the architecture macro windows.h would define
+// (llvm-mingw derives it itself; the Windows SDK headers do not).
+#if (defined(_M_X64) || defined(__x86_64__)) && !defined(_AMD64_)
+#define _AMD64_
+#endif
 #include <minwindef.h>
 #include <winnt.h>
 #include <memoryapi.h>
