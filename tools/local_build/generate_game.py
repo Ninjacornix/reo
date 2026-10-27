@@ -121,9 +121,16 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
         print("Generating " + name, flush=True)
         environment = recompiler_environment("main" if main_policy else name,
                                              source_audit if audit_override is None else audit_override)
-        with (logs / (name + ".log")).open("wb") as log:
-            subprocess.run([str(recompiler.resolve()), str(config)], check=True,
-                           stdout=log, stderr=subprocess.STDOUT, env=environment)
+        log_path = logs / (name + ".log")
+        with log_path.open("wb") as log:
+            result = subprocess.run([str(recompiler.resolve()), str(config)],
+                                    stdout=log, stderr=subprocess.STDOUT, env=environment)
+        if result.returncode:
+            # The launcher keeps only this script's output; repeat the recompiler's reason.
+            tail = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-12:]
+            print("Recompiler failed for " + name + " (exit " + str(result.returncode) + "):",
+                  *("  " + line for line in tail), sep="\n", flush=True)
+            raise subprocess.CalledProcessError(result.returncode, result.args)
 
     def generate_main():
         main = staging / "output"
