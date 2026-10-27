@@ -10,9 +10,13 @@ public sealed partial class Settings {
     public bool Fullscreen { get; set; }
     public bool PerformanceOverlay { get; set; }
     public string AspectRatio { get; set; } = "4:3";
+    // Widen the game camera to the selected ratio instead of stretching the 4:3 view.
+    public bool WidescreenCamera { get; set; }
     public string ScreenFit { get; set; } = "fit";
     [System.Text.Json.Serialization.JsonIgnore]
-    public string ResolvedAspect => AspectRatio == "16:9" ? "16:9" : "4:3";
+    public string ResolvedAspect => Array.IndexOf(DisplayOptions.Aspects, AspectRatio) >= 0 ? AspectRatio : "4:3";
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool ResolvedWidescreen => WidescreenCamera && ResolvedAspect != "4:3";
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedFit => ScreenFit is "stretch" or "center" or "fill" ? ScreenFit : "fit";
     public bool LinearFilter { get; set; } = true;

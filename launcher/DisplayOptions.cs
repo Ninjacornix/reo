@@ -23,6 +23,14 @@ public static class DisplayOptions {
     };
     public static readonly int[] InternalScales = { 1, 2, 4 };
     public static readonly string[] Fits = { "fit", "center", "stretch", "fill" };
+    // Picture shapes the presenter knows (present_layout.glsl layout bits).
+    public static readonly string[] Aspects = { "4:3", "16:9", "21:9", "32:9" };
+    // Aspect ratio menu order. Widescreen widens the game camera (more of the scene);
+    // stretched reshapes the original 4:3 view.
+    public static readonly (string Aspect, bool Widescreen)[] AspectChoices = {
+        ("4:3", false), ("16:9", true), ("16:9", false), ("21:9", true), ("21:9", false),
+        ("32:9", true), ("32:9", false)
+    };
     public static string FitName(string fit) => fit switch { "center" => "Centered",
                                                              "stretch" => "Stretched",
                                                              "fill" => "Fill",

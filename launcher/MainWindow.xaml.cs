@@ -33,7 +33,8 @@ public partial class MainWindow : Window {
         WindowSize.ItemsSource = DisplayOptions.MenuSizes;
         WindowSize.SelectedItem = DisplayOptions.Size(settings.WindowSize);
         Filter.SelectedIndex = settings.LinearFilter ? 0 : 1;
-        AspectRatio.SelectedIndex = settings.ResolvedAspect == "16:9" ? 1 : 0;
+        AspectRatio.SelectedIndex = Math.Max(0, Array.IndexOf(DisplayOptions.AspectChoices,
+            (settings.ResolvedAspect, settings.ResolvedWidescreen)));
         ScreenFit.SelectedIndex = Array.IndexOf(DisplayOptions.Fits, settings.ResolvedFit);
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
@@ -158,7 +159,10 @@ public partial class MainWindow : Window {
         if (WindowSize.SelectedItem is OutputSize outputSize)
             settings.WindowSize = Array.IndexOf(DisplayOptions.Sizes, outputSize);
         settings.LinearFilter = Filter.SelectedIndex == 0;
-        settings.AspectRatio = AspectRatio.SelectedIndex == 1 ? "16:9" : "4:3";
+        var aspect = DisplayOptions.AspectChoices[
+            Math.Clamp(AspectRatio.SelectedIndex, 0, DisplayOptions.AspectChoices.Length - 1)];
+        settings.AspectRatio = aspect.Aspect;
+        settings.WidescreenCamera = aspect.Widescreen;
         settings.ScreenFit =
             DisplayOptions
                 .Fits[Math.Clamp(ScreenFit.SelectedIndex, 0, DisplayOptions.Fits.Length - 1)];

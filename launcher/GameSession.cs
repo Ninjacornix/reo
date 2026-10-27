@@ -366,6 +366,7 @@ public sealed class GameSession {
                       developer = settings.Developer,
                       anisotropy = int.Parse(graphics.Environment["REO_TEXTURE_ANISOTROPY"], System.Globalization.CultureInfo.InvariantCulture),
                       aspectRatio = graphics.Environment["REO_DISPLAY_ASPECT"],
+                      widescreenCamera = graphics.Environment["REO_WIDESCREEN"] == "1",
                       screenFit = graphics.Environment["REO_DISPLAY_FIT"],
                       antiAliasing = graphics.Environment["REO_POST_AA"],
                       brightness = (int)Math.Round(100 * double.Parse(graphics.Environment["REO_BRIGHTNESS"], System.Globalization.CultureInfo.InvariantCulture)),

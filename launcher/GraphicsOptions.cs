@@ -13,6 +13,7 @@ internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool 
         var environment = new Dictionary<string, string> {
             ["REO_VIF1_ASYNC"] = settings.AsyncVif ? "1" : "0",
             ["REO_DISPLAY_ASPECT"] = settings.ResolvedAspect,
+            ["REO_WIDESCREEN"] = settings.ResolvedWidescreen ? "1" : "0",
             ["REO_DISPLAY_FIT"] = settings.ResolvedFit,
             ["REO_DISPLAY_FILTER"] = settings.LinearFilter ? "linear" : "nearest",
             ["REO_WINDOW_WIDTH"] = Number(size.Width),

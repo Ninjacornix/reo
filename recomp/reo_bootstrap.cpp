@@ -4,6 +4,9 @@
 #include "overrides/reo_rumble.h"
 #include "overrides/reo_audio.h"
 #endif
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
+#include "overrides/reo_widescreen.h"
+#endif
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)
 #include "natural_dispatch.h"
 #endif
@@ -1259,8 +1262,10 @@ int main(int argc, char* argv[]) {
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_missing_entries::install(runtime); // unregistered entries (stutter + skipped logic)
 #elif defined(REO_GAME_FILE2)
-    if (std::strcmp(g.serial, "SLUS-20984") == 0)
+    if (std::strcmp(g.serial, "SLUS-20984") == 0) {
         reo_file2_network::install(runtime);
+        reo::widescreen::install(runtime, reo::widescreen::File2);
+    }
 #endif
 #if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
     if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0)
@@ -1357,6 +1362,7 @@ int main(int argc, char* argv[]) {
         reo::mods::install(runtime);
         reo::rumble::install(runtime);
         reo::audio::install(runtime);
+        reo::widescreen::install(runtime);
     }
 #endif
 #ifdef _WIN32
