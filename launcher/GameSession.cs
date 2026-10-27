@@ -27,9 +27,7 @@ public sealed class GameSession {
         }
     }
     public static string SaveFolder(string root, string game = "file1") =>
-        AppLayout.Packaged(root)
-            ? Path.Combine(Settings.Home, "memory-cards", "default", game, "data")
-            : Path.Combine(root, "build-ninja", GameDefinition.Find(game).PlayFolder, "saves");
+        Path.Combine(Settings.Home, "memory-cards", "default", game, "data");
 
     public async Task Launch(string root, Settings settings, Controller controller,
                              string? diagnosticRoute = null,
@@ -132,6 +130,7 @@ public sealed class GameSession {
             image) { UseShellExecute = false, CreateNoWindow = true,
                      WorkingDirectory = work,
                      RedirectStandardOutput = true, RedirectStandardError = true };
+        Storage.ProcessEnvironment(start, accountHome);
         foreach (string arg in new[] { "--game", selectedGame.Id, "--elf", discElf, "--data",
                                        discRoot })
             start.ArgumentList.Add(arg);

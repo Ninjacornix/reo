@@ -120,6 +120,10 @@ static class UpdateTests {
             File.WriteAllText(Path.Combine(target, "memory-cards", "mine", "save"), "keep save");
             File.WriteAllText(Path.Combine(target, "my-notes.txt"), "keep unknown file");
             File.WriteAllText(Path.Combine(target, "modified-old.txt"), "user edit");
+            string storageLocator = "{\"format\":1,\"folder\":\"custom storage\"}";
+            File.WriteAllText(Path.Combine(target, Storage.LocatorName), storageLocator);
+            Directory.CreateDirectory(Path.Combine(target, "custom storage"));
+            File.WriteAllText(Path.Combine(target, "custom storage", "settings.json"), "portable preferences");
             UpdateWorker.InstallFiles(source, target, Path.Combine(root, "backup"),
                                       Updates.ParseVersion("0.2.0"));
             check(Updates.InstalledVersion(target) == Updates.ParseVersion("0.2.0"),
@@ -131,6 +135,21 @@ static class UpdateTests {
                           "keep save" &&
                       File.Exists(Path.Combine(target, "my-notes.txt")),
                   "User saves and unknown files survive updating");
+            check(File.ReadAllText(Path.Combine(target, Storage.LocatorName)) == storageLocator &&
+                  File.ReadAllText(Path.Combine(target, "custom storage", "settings.json")) == "portable preferences",
+                  "Updating preserves portable storage and its selected location");
+            foreach (string protectedPath in new[] { Storage.LocatorName, "custom storage/settings.json" }) {
+                string guarded = Path.Combine(root, "guarded-" + Guid.NewGuid().ToString("N"));
+                Fixture(guarded, "0.2.0");
+                string injected = Path.Combine(guarded, protectedPath);
+                Directory.CreateDirectory(Path.GetDirectoryName(injected)!);
+                File.WriteAllText(injected, "unwanted replacement");
+                var inventory = Updates.Inventory(guarded);
+                inventory.Add(new(protectedPath, new FileInfo(injected).Length, Updates.Sha(injected)));
+                File.WriteAllText(Path.Combine(guarded, "package-manifest.json"), JsonSerializer.Serialize(inventory));
+                Refuses(() => UpdateWorker.InstallFiles(guarded, target, Path.Combine(root, "guarded-backup"),
+                    Updates.ParseVersion("0.2.0")), "Packages cannot overwrite user storage: " + protectedPath);
+            }
             string zip = Path.Combine(root, "release.zip");
             ZipFile.CreateFromDirectory(source, zip);
             string extracted = Updates.Extract(zip, Path.Combine(root, "extracted"));

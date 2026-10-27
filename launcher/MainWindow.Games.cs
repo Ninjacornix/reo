@@ -101,6 +101,7 @@ public partial class MainWindow {
         LaunchButton.IsEnabled =
             present && !updating && !updateRestarting && !game.Running && !launching && !backingUp;
         RefreshOnlineUi();
+        RefreshStorageUi();
         PlayDisplaySummary.Text =
             (settings.Fullscreen ? "Borderless" : DisplayOptions.Size(settings.WindowSize).Name) +
             " / " +

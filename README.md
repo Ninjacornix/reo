@@ -105,7 +105,7 @@ host's server for you.
   should use (home network, VPN or internet) and click **Copy address**. The first
   time, the launcher prepares the hosting server: it uses an installed Python 3.12
   if you have one, otherwise it downloads a private copy, then installs the server
-  packages into Local AppData. Later starts reuse it.
+  packages into your selected data folder. Later starts reuse it.
 - **Join a game** lists games hosted on your network, or you can type the host's
   address.
 - With **Take me to the waiting room automatically** (on by default), pressing
@@ -174,3 +174,28 @@ Resident Evil and Outbreak are trademarks of their respective owners. This proje
 *Keywords: Resident Evil Outbreak PC, Biohazard Outbreak PC port, RE Outbreak Windows, PS2
 static recompilation, PS2Recomp, Resident Evil Outbreak online co-op, openSNAP, Outbreak
 randomizer, Outbreak File 1 PC, native PS2 port.*
+
+## Portable storage
+
+The launcher keeps settings, imported game files, built games, memory cards,
+mods, hosting data, logs, download caches and working files in `data/` beside the
+launcher by default. Both File #1 and File #2 use this shared storage location.
+Keep the application in a writable folder.
+
+Use **Game files > Storage > Change folder** to choose a new or empty folder.
+The launcher copies and verifies your data, updates its paths and restarts.
+Close the game and stop hosting or setup first. The original folder remains as
+a backup; cancellation or a failed copy keeps the existing selection.
+`storage.json` beside the launcher records your choice. Locations inside the
+application folder are stored as relative paths so the folder can be moved.
+Reconnect an external drive before starting if you selected storage on that drive.
+
+On the first normal start, existing data from
+`%LOCALAPPDATA%/OutbreakRecomp/launcher` is copied into the new location when no
+profile has been initialized there. Existing files are never merged or overwritten.
+The old AppData folder is retained as a backup. Previously selected external ISO
+files, executables and custom memory cards stay where you put them; select files
+inside your application folder if you want those to travel with it too.
+
+Updates preserve the storage folder and its locator. For isolated development
+and diagnostics, `--data-home <folder>` overrides the location for that process.

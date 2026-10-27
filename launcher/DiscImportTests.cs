@@ -74,6 +74,15 @@ static class DiscImportTests {
         check(!imported.Reused && imported.Files == 4 &&
                   File.ReadAllBytes(imported.Elf).SequenceEqual(elf),
               "Import writes original ELF and files");
+        string relocatedCache = Path.Combine(home, "relocated-cache"), relocatedImport = Path.Combine(relocatedCache, "file1", "previous-path-identity");
+        foreach (string file in Directory.EnumerateFiles(imported.Root, "*", SearchOption.AllDirectories)) {
+            string destination = Path.Combine(relocatedImport, Path.GetRelativePath(imported.Root, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Copy(file, destination);
+        }
+        var reusedRelocation = DiscImport.Ensure(iso, GameDefinition.First, expected, home: relocatedCache).GetAwaiter().GetResult();
+        check(reusedRelocation.Reused && reusedRelocation.Root == relocatedImport,
+              "A relocated valid import is reused without extracting another copy");
         check(
             imported.Verification.Contains("NTSC-U v2.00"),
             "Executable hash establishes supported revision independently of SYSTEM.CNF VER=1.00");

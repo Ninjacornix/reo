@@ -216,6 +216,7 @@ public static partial class LocalGameBuild {
                 WorkingDirectory = work, UseShellExecute = false, CreateNoWindow = true,
                 RedirectStandardOutput = true, RedirectStandardError = true
             };
+            Storage.ProcessEnvironment(start, home);
             foreach (string arg in step.Arguments)
                 start.ArgumentList.Add(Expand(arg));
             string? externalCompiler =
