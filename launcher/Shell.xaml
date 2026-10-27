@@ -325,7 +325,7 @@
     </Grid>
    </Border>
    </StackPanel>
-   <Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel VerticalAlignment="Center" Margin="0,0,16,0"><TextBlock x:Name="SelectedGameLabel" FontSize="14" Margin="0,0,0,5"/><TextBlock x:Name="Status" Text="Ready" Style="{StaticResource Hint}"/></StackPanel><Button x:Name="StopButton" Grid.Column="1" Content="Stop" Click="StopGame" IsEnabled="False" Padding="24,11" Margin="0,0,10,0"/><Button x:Name="LaunchButton" Grid.Column="2" Content="Play" Click="LaunchGame" Style="{StaticResource PrimaryButton}" Padding="42,12" MinWidth="142"/></Grid>
+   <Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel VerticalAlignment="Center" Margin="0,0,16,0"><TextBlock x:Name="SelectedGameLabel" FontSize="14" Margin="0,0,0,5"/><TextBlock x:Name="Status" Text="Ready" Style="{StaticResource Hint}" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/></StackPanel><Button x:Name="StopButton" Grid.Column="1" Content="Stop" Click="StopGame" IsEnabled="False" Padding="24,11" Margin="0,0,10,0"/><Button x:Name="LaunchButton" Grid.Column="2" Content="Play" Click="LaunchGame" Style="{StaticResource PrimaryButton}" Padding="42,12" MinWidth="142"/></Grid>
   </Grid>
  </Grid>
 </Window>
