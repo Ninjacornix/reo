@@ -12,7 +12,8 @@ public partial class MainWindow {
             "fill" => "Fills the window at the selected ratio. Edges may be cropped.",
             _ => "Centers the picture at the selected ratio, with black borders where needed."
         };
-        if (settings.ResolvedAspect == "16:9" && settings.ResolvedFit != "stretch")
-            hint.Text += " 16:9 reshapes the picture; the camera is unchanged.";
+        if (settings.ResolvedAspect != "4:3" && settings.ResolvedFit != "stretch")
+            hint.Text += " " + settings.ResolvedAspect +
+                         " stretches the original picture wider; the camera view is unchanged.";
     }
 }

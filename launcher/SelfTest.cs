@@ -385,6 +385,8 @@ static class SelfTest {
             "{\"AspectRatio\":\"16:9\",\"ScreenFit\":\"center\"}")!;
         Check(layout.ResolvedAspect == "16:9" && layout.ResolvedFit == "center",
               "Aspect and centered sizing survive settings loading");
+        Check(DisplayOptions.Aspects.All(aspect => new Settings { AspectRatio = aspect }.ResolvedAspect == aspect),
+              "Every listed aspect ratio, including ultrawide, survives settings loading");
         Check(new Settings { AspectRatio = "invalid", ScreenFit = "invalid" }.ResolvedAspect ==
                       "4:3" &&
                   new Settings { ScreenFit = "invalid" }.ResolvedFit == "fit",

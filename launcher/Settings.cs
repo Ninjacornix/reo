@@ -14,7 +14,7 @@ public sealed partial class Settings {
     public string AspectRatio { get; set; } = "4:3";
     public string ScreenFit { get; set; } = "fit";
     [System.Text.Json.Serialization.JsonIgnore]
-    public string ResolvedAspect => AspectRatio == "16:9" ? "16:9" : "4:3";
+    public string ResolvedAspect => Array.IndexOf(DisplayOptions.Aspects, AspectRatio) >= 0 ? AspectRatio : "4:3";
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedFit => ScreenFit is "stretch" or "center" or "fill" ? ScreenFit : "fit";
     public bool LinearFilter { get; set; } = true;

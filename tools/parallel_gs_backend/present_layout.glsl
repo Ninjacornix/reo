@@ -1,7 +1,9 @@
 // Presentation only. Bits 24:25 select aspect; 26:28 select screen fit.
 vec2 pictureSize(uvec2 source, uvec2 destination, uint flags) {
     vec2 outputSize = vec2(destination);
-    float aspect = ((flags >> 24u) & 3u) == 1u ? 16.0 / 9.0 : 4.0 / 3.0;
+    // 4:3, 16:9, 21:9 (3440x1440, the common ultrawide panel) and 32:9.
+    const float aspects[4] = float[4](4.0 / 3.0, 16.0 / 9.0, 43.0 / 18.0, 32.0 / 9.0);
+    float aspect = aspects[(flags >> 24u) & 3u];
     vec2 unit = vec2(aspect, 1.0);
     float fitHeight = min(outputSize.x / aspect, outputSize.y);
     uint mode = (flags >> 26u) & 7u;

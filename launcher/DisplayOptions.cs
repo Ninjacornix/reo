@@ -23,6 +23,8 @@ public static class DisplayOptions {
     };
     public static readonly int[] InternalScales = { 1, 2, 4 };
     public static readonly string[] Fits = { "fit", "center", "stretch", "fill" };
+    // Menu order; the presenter maps each to its layout bits (present_layout.glsl).
+    public static readonly string[] Aspects = { "4:3", "16:9", "21:9", "32:9" };
     public static string FitName(string fit) => fit switch { "center" => "Centered",
                                                              "stretch" => "Stretched",
                                                              "fill" => "Fill",

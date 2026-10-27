@@ -35,7 +35,11 @@ class ResidentDxgiPresenter {
     static uint32_t layoutFlags() {
         const char* aspect = std::getenv("REO_DISPLAY_ASPECT");
         const char* fit = std::getenv("REO_DISPLAY_FIT");
-        uint32_t ratio = aspect && std::strcmp(aspect, "16:9") == 0 ? 1u : 0u;
+        uint32_t ratio = !aspect                             ? 0u
+                        : std::strcmp(aspect, "16:9") == 0 ? 1u
+                        : std::strcmp(aspect, "21:9") == 0 ? 2u
+                        : std::strcmp(aspect, "32:9") == 0 ? 3u
+                                                           : 0u;
         uint32_t mode = !fit                               ? 0u
                         : std::strcmp(fit, "stretch") == 0 ? 1u
                         : std::strcmp(fit, "center") == 0  ? 2u
