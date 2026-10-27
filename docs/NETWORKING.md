@@ -118,6 +118,74 @@ Acceptance requires genuine native clients to authenticate, join the same room,
 start a scenario, and exchange gameplay changes correctly. Two-client and then
 four-client results must include actual protocol and guest progress evidence.
 
+## File #1 update cadence and movement correction (2026-10-27)
+
+Original SLUS-20765 code has separate outbound queues. The reliable batch
+pump at `1C72F0` uses the float at `235F60`, whose shipped value is `1.0`
+seconds. The second queue at `1C7400` uses `32AF20`, initially zero (no
+interval delay on that pump). Thus there is no single full-world snapshot
+frequency: message production, queue batching, events and simulation are
+separate. The earlier Internet trace's roughly one gameplay packet per second
+agrees with the reliable queue's default. File #2's roughly half-second batch
+must not be substituted for the File #1 value.
+
+The original tuning parser `1F5E30` can replace the interval fields with
+nonzero supplied values. Lowering the reliable batching interval is possible,
+but the resulting fresh movement-update rate still depends on the producers,
+queue capacity, acknowledgements and packet delivery. A 100 ms experiment
+would target ten batch opportunities per second; it has not been implemented
+or validated as a desync fix here. The parser is registered for APP command
+`6210`; the current File #1 APP service has no tuning handler or exposed
+settings option for it. Adding a supported rate control therefore needs
+integration and multiplayer checks. Original cadence proof (640 verified
+instructions and ELF literals):
+`build-ninja/file2-lobby-research/cadence-comparison.json`.
+
+The server forwards gameplay relay payloads and sender identity; it does not
+simulate the world or send authoritative world-state repairs.
+
+File #1 already has conditional linear movement correction. Receiver `67ED50`
+can set a target via `6647B0` and request 15 update steps. `6647F0` applies the
+correction through `663BB0`/`663990`: each step adds `(target-current)/remaining`
+and decrements the counter, ending exactly at the target. `663990` snaps when
+the separation exceeds 500 game units. Some actor/animation/room branches use
+immediate corrections, and the smoothing path is gated by actor state. These
+facts were checked against 1,480 original overlay instruction words; evidence
+is in `build-ninja/file2-network-research/file1-interpolation-proof.json`.
+
+An extra unconditional LERP would alter these existing behaviors. A focused
+movement-jump investigation should align both clients' packet timestamps and
+clock/position recordings, identify long packet gaps or growing reliable
+queues, and observe which correction path fires. Higher batching frequency
+and visual smoothing are candidates for testing; neither establishes that
+missing or stale gameplay state has been repaired. The initial investigation made no runtime changes; the subsequent native
+batching change is recorded below.
+
+## Faster native File #1 batching (2026-10-27)
+
+Native online File #1 now uses a 0.5-second reliable batching interval, matching
+File #2, in place of the original 1.0-second default. The wrapper at original
+pump `1C72F0` changes only the exact default float at `235F60` when both a
+co-op host and native platform mode are configured. Other server-supplied
+intervals are retained. The original queue pump still handles batching,
+acknowledgements, retries and completion. Simulation timing, the other outbound
+queue and existing interpolation are unchanged.
+
+Validation PASS: `build-ninja/file1-cadence-check/players01/verification.json`.
+Two native clients automatically authenticated, joined one room and started
+the Outbreak scenario. Both original interval fields read 0.5 seconds; observed
+reliable gameplay packet median spacing was approximately 0.52 seconds on each
+client (29 datagrams each in the final 15-second sample). Reciprocal movement
+travelled 82.64 and 65.39 game units, with matching settled peer coordinates;
+the uninstructed player stayed stationary during each input. Both clients
+exited normally with code 0 and no fatal/missing-function/device-loss findings.
+An isolated offline launch retained the original 1.0-second field. Temporary
+clients and server services were stopped. This is bounded loopback coverage;
+Internet jitter/loss and long-session desync reproduction remain untested.
+Final File #1 executable SHA-256:
+`607980bfd8a7eeadcd073e0f59e386091209676cab542aeb48ac9da7c9e2e923`.
+No release was published.
+
 ## Connecting with friends
 
 The current implementation uses a separate openSNAP server. Creating an in-game

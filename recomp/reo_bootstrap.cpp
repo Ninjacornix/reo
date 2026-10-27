@@ -118,6 +118,9 @@ void installActualOriginalCpuIrqGameReceiver(PS2Runtime&);
 namespace reo_missing_entries {
 void install(PS2Runtime& runtime);
 }
+namespace reo_file2_network {
+void install(PS2Runtime& runtime);
+}
 extern bool ReoInstallPaletteOriginObserver(PS2Runtime& runtime);
 #if defined(REO_GAME_FILE1)
 extern bool ReoInstallPaletteParentFrontierObserver(PS2Runtime& runtime);
@@ -1255,6 +1258,9 @@ int main(int argc, char* argv[]) {
 #if defined(REO_GAME_FILE1)
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo_missing_entries::install(runtime); // unregistered entries (stutter + skipped logic)
+#elif defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, "SLUS-20984") == 0)
+        reo_file2_network::install(runtime);
 #endif
 #if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
     if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0)

@@ -15,25 +15,35 @@ public static class LanDiscovery {
     const int MaxPacket = 512;
     static readonly byte[] Query = Encoding.ASCII.GetBytes("REO-LAN?1");
     static readonly byte[] ReplyPrefix = Encoding.ASCII.GetBytes("REO-LAN!1");
+    static readonly byte[] File2Query = Encoding.ASCII.GetBytes("REO-LAN?2:file2");
+    static readonly byte[] File2ReplyPrefix = Encoding.ASCII.GetBytes("REO-LAN!2");
+    static byte[] QueryFor(string game) => game switch {
+        "file1" => Query, "file2" => File2Query,
+        _ => throw new ArgumentException("Unknown game edition.", nameof(game))
+    };
 
     public sealed record Game(string Name, string Address, string Version, bool RoomReady,
-                              int Signup = HostNetworking.SignupPort);
+                              int Signup = HostNetworking.SignupPort, string GameId = "file1");
 
     internal static byte[] Encode(Game game) {
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(
             new { name = game.Name, address = game.Address, version = game.Version,
-                  room = game.RoomReady, signup = game.Signup });
-        return ReplyPrefix.Concat(body).ToArray();
+                  room = game.RoomReady, signup = game.Signup, game = game.GameId });
+        _ = QueryFor(game.GameId);
+        return (game.GameId == "file2" ? File2ReplyPrefix : ReplyPrefix).Concat(body).ToArray();
     }
 
     // Untrusted network input: bounded size, exact prefix, validated fields.
     internal static Game? Decode(ReadOnlySpan<byte> packet) {
-        if (packet.Length > MaxPacket || !packet.StartsWith(ReplyPrefix))
+        bool second = packet.StartsWith(File2ReplyPrefix);
+        if (packet.Length > MaxPacket || (!second && !packet.StartsWith(ReplyPrefix)))
             return null;
         try {
             using var json = JsonDocument.Parse(packet[ReplyPrefix.Length..].ToArray(),
                                                 new JsonDocumentOptions { MaxDepth = 2 });
             var root = json.RootElement;
+            string edition = root.TryGetProperty("game", out var gameId) ? gameId.GetString() ?? "" : "file1";
+            if (edition != (second ? "file2" : "file1")) return null;
             string name = root.GetProperty("name").GetString() ?? "";
             string version = root.GetProperty("version").GetString() ?? "";
             int signup = root.GetProperty("signup").GetInt32();
@@ -41,7 +51,7 @@ public static class LanDiscovery {
                 !OnlineOptions.ValidUsername(name) || version.Length > 20 ||
                 version.Any(c => c is < ' ' or > '~') || signup is < 1024 or > 65535)
                 return null;
-            return new(name, address, version, root.GetProperty("room").GetBoolean(), signup);
+            return new(name, address, version, root.GetProperty("room").GetBoolean(), signup, edition);
         } catch (Exception error) when (error is JsonException or InvalidOperationException or
                                             KeyNotFoundException or ArgumentException or
                                             FormatException) {
@@ -55,10 +65,10 @@ public static class LanDiscovery {
         readonly CancellationTokenSource stop = new();
         readonly Func<Game> describe;
         readonly Func<byte[]?>? randomizers;
-        public Responder(Func<Game> describe, Func<byte[]?>? randomizers = null) {
+        public Responder(Func<Game> describe, Func<byte[]?>? randomizers = null, IPAddress? bindAddress = null) {
             this.describe = describe;
             this.randomizers = randomizers;
-            socket = new UdpClient(new IPEndPoint(IPAddress.Any, Port));
+            socket = new UdpClient(new IPEndPoint(bindAddress ?? IPAddress.Any, Port));
             _ = Serve();
         }
         async Task Serve() {
@@ -74,8 +84,9 @@ public static class LanDiscovery {
                         return;
                     continue;
                 }
-                bool discovery = request.Buffer.AsSpan().SequenceEqual(Query);
-                bool mods = request.Buffer.Length == RandomizerSession.QueryPrefix.Length + 16 &&
+                var game = describe();
+                bool discovery = request.Buffer.AsSpan().SequenceEqual(QueryFor(game.GameId));
+                bool mods = game.GameId == "file1" && request.Buffer.Length == RandomizerSession.QueryPrefix.Length + 16 &&
                             request.Buffer.AsSpan().StartsWith(RandomizerSession.QueryPrefix);
                 if (!discovery && !mods)
                     continue;
@@ -88,7 +99,7 @@ public static class LanDiscovery {
                 if (++answered > 20)
                     continue;
                 try {
-                    byte[] reply = discovery ? Encode(describe()) :
+                    byte[] reply = discovery ? Encode(game) :
                         RandomizerSession.Reply(request.Buffer, randomizers?.Invoke())!;
                     await socket.SendAsync(reply, request.RemoteEndPoint, stop.Token).ConfigureAwait(false);
                 } catch (Exception error) when (error is OperationCanceledException or
@@ -122,24 +133,25 @@ public static class LanDiscovery {
     }
 
     // Broadcast search of the local network.
-    public static Task<List<Game>> Search(TimeSpan wait, CancellationToken cancel) =>
-        Collect(BroadcastAddresses().Distinct().ToArray(), wait, cancel);
+    public static Task<List<Game>> Search(TimeSpan wait, CancellationToken cancel, string game = "file1") =>
+        Collect(BroadcastAddresses().Distinct().ToArray(), wait, cancel, game);
 
     // Direct question to one host, including hosts reached over a VPN or the internet.
-    public static async Task<Game?> Ask(string address, TimeSpan wait, CancellationToken cancel) {
+    public static async Task<Game?> Ask(string address, TimeSpan wait, CancellationToken cancel, string game = "file1") {
         if (!OnlineOptions.TryHost(address, out string host))
             return null;
-        return (await Collect(new[] { IPAddress.Parse(host) }, wait, cancel).ConfigureAwait(false))
+        return (await Collect(new[] { IPAddress.Parse(host) }, wait, cancel, game).ConfigureAwait(false))
             .FirstOrDefault();
     }
 
     static async Task<List<Game>> Collect(IPAddress[] targets, TimeSpan wait,
-                                          CancellationToken cancel) {
+                                          CancellationToken cancel, string edition) {
+        byte[] query = QueryFor(edition);
         var found = new Dictionary<string, Game>();
         using var socket = new UdpClient(new IPEndPoint(IPAddress.Any, 0)) { EnableBroadcast = true };
         foreach (var target in targets) {
             try {
-                await socket.SendAsync(Query, new IPEndPoint(target, Port), cancel).ConfigureAwait(false);
+                await socket.SendAsync(query, new IPEndPoint(target, Port), cancel).ConfigureAwait(false);
             } catch (SocketException) {
             }
         }
@@ -155,7 +167,7 @@ public static class LanDiscovery {
                 // ICMP port unreachable from a host that is not hosting; keep listening.
                 continue;
             }
-            if (Decode(reply.Buffer) is { } game)
+            if (Decode(reply.Buffer) is { } game && game.GameId == edition)
                 found[game.Address] = game;
         }
         cancel.ThrowIfCancellationRequested();

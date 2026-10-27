@@ -16,6 +16,25 @@ import coop_playtest as harness
 
 
 class IsolationTests(unittest.TestCase):
+    def test_import_is_bound_to_selected_edition(self):
+        for game, (expected, elf_name, _, _) in harness.GAMES.items():
+            with self.subTest(game=game), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                iso = root / "disc.iso"
+                iso.write_bytes(b"synthetic disc")
+                data = root / "data"
+                data.mkdir()
+                elf = data / elf_name
+                elf.write_bytes(b"synthetic ELF")
+                record = dict(Version=1, Game=game, Source=str(iso),
+                              SourceLength=iso.stat().st_size,
+                              SourceWriteTicks=iso.stat().st_mtime_ns // 100 + 621355968000000000,
+                              ElfSha256=expected, Files=[dict(Name=elf_name, Length=elf.stat().st_size)])
+                (root / "import.json").write_text(json.dumps(record))
+                with mock.patch.object(harness, "digest", return_value=expected):
+                    self.assertEqual(harness.validate_import(root, iso, game), (data.resolve(), elf.resolve()))
+                    with self.assertRaises(ValueError):
+                        harness.validate_import(root, iso, "file2" if game == "file1" else "file1")
     def test_operator_stop_requires_confirmed_exact_identity_and_exit_code(self):
         with tempfile.TemporaryDirectory() as temp:
             identity = dict(pid=123, image=str(Path(temp) / "game.exe"), creationFileTime=456)

@@ -145,6 +145,26 @@ static class DiscImportTests {
                    "PAL (Europe/Australia)");
         RejectDisc("Japan", "SLPM_654.28", "BOOT2 = cdrom0:\\SLPM_654.28;1\r\n", "NTSC-J (Japan)");
         RejectDisc("Wrong-title", "SLUS_209.84", "BOOT2 = cdrom0:\\SLUS_209.84;1\r\n", "File #2");
+        string secondIso = Path.Combine(home, "Wrong-title USA v2.00.iso");
+        var secondDisc = DiscImport.Ensure(secondIso, GameDefinition.Second, expected,
+                                          home: Path.Combine(home, "second-title"))
+            .GetAwaiter().GetResult();
+        check(File.Exists(secondDisc.Elf) && Path.GetFileName(secondDisc.Elf) == "SLUS_209.84" &&
+                  secondDisc.Verification.Contains("File #2, NTSC-U v1.05"),
+              "File #2 import uses its own serial and verification description");
+        check(DiscImport.ExpectedElf(new Settings { SelectedGame = "file2" }, home) ==
+                  DiscImport.SecondElfSha256 && DiscImport.SecondElfSha256 != DiscImport.FirstElfSha256,
+              "File #2 has a pinned hash without needing a local reference ELF");
+        bool secondRevisionRejected = false;
+        try {
+            using var secondImage = new DiscImage(secondIso);
+            _ = DiscValidation.Check(secondImage, GameDefinition.Second, DiscImport.SecondElfSha256,
+                                     CancellationToken.None);
+        } catch (InvalidDataException error) {
+            secondRevisionRejected = error.Message.Contains("Unsupported revision") &&
+                                     error.Message.Contains("NTSC-U v1.05");
+        }
+        check(secondRevisionRejected, "Synthetic File #2 ELF cannot pass the real revision hash");
         RejectDisc("Unknown-title", "SLUS_123.45", "BOOT2 = cdrom0:\\SLUS_123.45;1\r\n",
                    "Unsupported game");
         RejectDisc("Decoy-USA-ELF", "SLES_515.89", "BOOT2 = cdrom0:\\SLES_515.89;1\r\n", "PAL",

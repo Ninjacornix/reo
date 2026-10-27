@@ -10,8 +10,7 @@ public partial class MainWindow {
     string backdropGame = "";
     bool backdropTransition;
     readonly Dictionary<string, BitmapImage> gameArtwork = new();
-    // File #2 runs only from a developer tree (its native build is not packaged yet).
-    bool Playable(string id) => id == "file1" || (id == "file2" && !AppLayout.Packaged(root));
+    bool Playable(string id) => id is "file1" or "file2";
     async Task LoadArtworkAsync() {
         if (args.Contains("--public-preview"))
             return; // user-supplied covers stay out of published screenshots
@@ -92,9 +91,9 @@ public partial class MainWindow {
             ((TextBlock)FindName("GameStatus" + n)).Text =
                 !Playable(id) ? "Coming later"
                 : selected && game.Running ? "Running"
-                : !(AppLayout.Packaged(root) ? LocalGameBuild.Available(root)
+                : !(AppLayout.Packaged(root) ? LocalGameBuild.Available(root, id)
                                              : File.Exists(settings.GetExe(id)))
-                    ? (AppLayout.Packaged(root) ? "Setup needed: download incomplete" : "No developer build")
+                    ? (AppLayout.Packaged(root) ? "Game setup files missing" : "No developer build")
                 : !File.Exists(settings.GetIso(id)) ? "Choose your game disc"
                 : DiscImport.Ready(settings, id) && File.Exists(settings.GetExe(id)) ? "Ready to play"
                                                                                        : "Not built yet";

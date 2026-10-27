@@ -112,6 +112,16 @@ try {
     Dismount-DiskImage -ImagePath $Iso | Out-Null
 }
 
+$runtimeFailures = @(Select-String -LiteralPath $stdout,$stderr -SimpleMatch -Pattern @(
+    'Warning: Function at address ',
+    'Error: Called unimplemented function',
+    'VK_ERROR_DEVICE_LOST'
+))
+if ($runtimeFailures.Count -gt 0) {
+    $code = 1
+    $result += "; runtime failure diagnostics: $($runtimeFailures.Count) (first: $($runtimeFailures[0].Line.Trim()))"
+}
+
 $summary = @(
     "result:  $result",
     "exe:     $Exe",

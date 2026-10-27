@@ -76,9 +76,24 @@ void sub_001DFDA8_0x1dfda8(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001DF99C_0x1df99c(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001EA000_0x1ea000(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001C8850_0x1c8850(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_001C72F0_0x1c72f0(uint8_t*, R5900Context*, PS2Runtime*);
 
 namespace reo_missing_entries {
 namespace {
+void nativeReliableSend(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
+    const char* host = std::getenv("REO_COOP_HOST");
+    const char* mode = std::getenv("REO_COOP_PLATFORM_AUTH");
+    if (host && *host && mode && std::strcmp(mode, "native") == 0 &&
+        READ32(0x235F60) == 0x3F800000u) {
+        // SLUS-20765's reliable queue defaults to 1 second. Match File #2's
+        // original 0.5-second batch interval; retain non-default server tuning.
+        // The original pump still owns queueing, ACKs, retries and send completion.
+        WRITE32(0x235F60, 0x3F000000u);
+        std::fprintf(stderr, "[COOP-RATE] File #1 reliable batching: 1000 -> 500 ms\n");
+    }
+    sub_001C72F0_0x1c72f0(rdram, ctx, runtime);
+}
+
 void nativeNetworkDisplay(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     namespace account = reo_network::automatic_account;
     const unsigned step = READ8(0x6DF150);
@@ -352,6 +367,7 @@ void networkScenarioState(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) 
 
 // Call after all generated (and overlay) registration.
 void install(PS2Runtime& runtime) {
+    runtime.registerFunction(0x1C72F0, nativeReliableSend);
     runtime.registerOverlayFunction(0x810000u,0x336F574Du,4u,10u,0x814720u,networkScenarioState);
     runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x5F8280u, nativeNetworkDisplay);
     runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x5809B0u, nativePasswordPoll);

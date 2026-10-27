@@ -591,6 +591,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             overrides/gpu_palette_parent/parent_observed.cpp
             overrides/gpu_palette_parent/observer_install.cpp)
     elseif(GAME_DEFINE STREQUAL "REO_GAME_FILE2")
+        list(APPEND _reo_handwritten_sources overrides/reo_file2_network.cpp)
         # Native movie route: shared handwritten sources (addresses from
         # movie_addresses/file2) plus File #1's copied functions translated by
         # tools/file2_port/port_movie.py copies into the generated tree.

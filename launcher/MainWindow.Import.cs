@@ -6,11 +6,11 @@ using Microsoft.Win32;
 namespace Outbreak.Launcher;
 public partial class MainWindow {
     // Result of the quick read-only check of the chosen ISO (boot file, serial, executable hash).
-    sealed record DiscCheck(string Path, long Length, long WriteTicks, bool Ok, string Message) {
-        public bool Matches(string iso) {
+    sealed record DiscCheck(string Game, string Path, long Length, long WriteTicks, bool Ok, string Message) {
+        public bool Matches(string iso, string game) {
             try {
                 var file = new FileInfo(iso);
-                return file.Exists && string.Equals(file.FullName, Path, StringComparison.OrdinalIgnoreCase) &&
+                return Game == game && file.Exists && string.Equals(file.FullName, Path, StringComparison.OrdinalIgnoreCase) &&
                        file.Length == Length && file.LastWriteTimeUtc.Ticks == WriteTicks;
             } catch (Exception error) when (error is IOException or ArgumentException or
                                                 UnauthorizedAccessException or NotSupportedException) {
@@ -23,7 +23,7 @@ public partial class MainWindow {
     async Task CheckSelectedDisc() {
         string iso = settings.GetIso();
         if (!Playable(settings.Game.Id) || checkingDisc || !File.Exists(iso) ||
-            discCheck?.Matches(iso) == true)
+            discCheck?.Matches(iso, settings.Game.Id) == true)
             return;
         var file = new FileInfo(iso);
         var game = settings.Game;
@@ -31,16 +31,16 @@ public partial class MainWindow {
         RefreshImportUi();
         try {
             string message = DiscImport.Ready(settings)
-                                 ? "Verified: Outbreak File #1, NTSC-U v2.00 (SLUS-20765)."
+                                 ? DiscValidation.VerifiedFor(game.Id)
                                  : await Task.Run(() => {
                                        using var image = new DiscImage(file.FullName);
-                                       return DiscValidation.Check(image, game, DiscImport.FirstElfSha256,
+                                       return DiscValidation.Check(image, game, DiscImport.ExpectedElf(game.Id),
                                                                    CancellationToken.None).Description;
                                    });
-            discCheck = new(file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, true, message);
+            discCheck = new(game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, true, message);
         } catch (Exception error) when (error is InvalidDataException or IOException or
                                             UnauthorizedAccessException) {
-            discCheck = new(file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
+            discCheck = new(game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
                             error is InvalidDataException ? error.Message
                                                           : "The ISO could not be read: " + error.Message);
         } finally {
@@ -51,7 +51,7 @@ public partial class MainWindow {
     async void ChooseIso() {
         if (updating || updateRestarting || launching || game.Running || backingUp)
             return;
-        var dialog = new OpenFileDialog { Title = "Choose your Outbreak File #1 disc image",
+        var dialog = new OpenFileDialog { Title = "Choose your " + settings.Game.Name + " disc image",
                                           Filter = "Disc image (*.iso)|*.iso", CheckFileExists = true };
         if (dialog.ShowDialog(this) != true)
             return;
@@ -102,7 +102,7 @@ public partial class MainWindow {
         RemoveGameButton.IsEnabled = false;
         Status.Text = "Removing game files...";
         var failed = await Task.Run(() => GameRemoval.Remove(targets));
-        settings.Iso = "";
+        settings.SetFile("iso", "");
         settings.SetImport("");
         discCheck = null;
         try {
@@ -180,21 +180,22 @@ public partial class MainWindow {
             Close();
     }
     void RefreshImportUi() {
-        SupportedDiscHint.Text =
-            settings.Game.Id == "file1"
-                ? DiscValidation.Required + " PAL, Japanese and other revisions are unsupported."
-                : Playable("file2") ? "Developer build: File #2 NTSC-U (SLUS-20984) matching game_data_file2."
-                : "File #2 is not supported in this release.";
+        ExistingBuildHint.Text = AppLayout.Packaged(root)
+            ? "Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required."
+            : "Choose " + (settings.Game.Id == "file2" ? "reo_recomp_file2.exe" : "reo_recomp.exe") +
+              " from your developer build. Keep its DLLs and shaders together. Your ISO is still required.";
+        SupportedDiscHint.Text = DiscValidation.RequiredFor(settings.Game.Id) +
+            " PAL, Japanese and other revisions are unsupported.";
         ChooseIsoButton.IsEnabled =
             Playable(settings.Game.Id) && !updating && !game.Running && !launching && !backingUp;
         bool idle = !updating && !game.Running && !launching && !backingUp;
-        bool verified = discCheck is { Ok: true } && discCheck.Matches(settings.GetIso());
-        ImportDiscButton.IsEnabled = settings.Game.Id == "file1" && settings.FilesPresent(root) &&
+        bool verified = discCheck is { Ok: true } && discCheck.Matches(settings.GetIso(), settings.Game.Id);
+        ImportDiscButton.IsEnabled = Playable(settings.Game.Id) && settings.FilesPresent(root) &&
                                      verified && idle;
-        ExistingBuildButton.IsEnabled = settings.Game.Id == "file1" && idle;
+        ExistingBuildButton.IsEnabled = Playable(settings.Game.Id) && idle;
         if (importCancellation != null)
             return;
-        bool known = discCheck != null && discCheck.Matches(settings.GetIso());
+        bool known = discCheck != null && discCheck.Matches(settings.GetIso(), settings.Game.Id);
         DiscValidationStatus.Text = !Playable(settings.Game.Id) || !File.Exists(settings.GetIso()) ? ""
                                     : checkingDisc || !known ? "Checking disc..."
                                     : discCheck!.Ok ? "✓ " + discCheck.Message
@@ -204,25 +205,26 @@ public partial class MainWindow {
         if (File.Exists(settings.GetIso()) && !known && !checkingDisc)
             _ = CheckSelectedDisc();
         ImportState.Text =
-            !Playable(settings.Game.Id) ? "File #2 is a placeholder. ISO import and play will be " +
-                                              "enabled with its native build."
+            AppLayout.Packaged(root) && !LocalGameBuild.Available(root, settings.Game.Id)
+                ? "This package is missing setup files for " + settings.Game.Name + "."
             : DiscImport.Ready(settings) ? "Game data imported."
             : File.Exists(settings.GetIso())
                 ? "Import copies the disc and builds the game once. It downloads build tools (about 173 MB) and can take a while."
-                : "Choose ISO to start automatic setup. File #1 requires NTSC-U v2.00 (SLUS-20765).";
+                : "Choose ISO to start setup. " + DiscValidation.RequiredFor(settings.Game.Id);
     }
     async void UseExistingBuild(object sender, RoutedEventArgs e) {
-        if (settings.Game.Id != "file1" || updating || game.Running || launching || backingUp)
+        if (updating || game.Running || launching || backingUp)
             return;
         var dialog = new OpenFileDialog { Title = "Choose a completed RE: Outbreak build",
-                                          Filter = "Native game (reo_recomp.exe)|reo_recomp.exe",
+                                          Filter = AppLayout.Packaged(root) ? "Native game (reo_recomp.exe)|reo_recomp.exe"
+                                              : "Native game|reo_recomp.exe;reo_recomp_file2.exe",
                                           CheckFileExists = true };
-        string cached = LocalGameBuild.TargetPath(root);
+        string cached = LocalGameBuild.TargetPath(root, settings.Game.Id);
         if (File.Exists(cached))
             dialog.InitialDirectory = Path.GetDirectoryName(cached);
         if (dialog.ShowDialog(this) != true)
             return;
-        if (!AppLayout.Packaged(root) && !LocalGameBuild.Available(root)) {
+        if (!AppLayout.Packaged(root) && !LocalGameBuild.Available(root, settings.Game.Id)) {
             // Developer checkout without a build kit: use the chosen build directly.
             settings.SetFile("exe", dialog.FileName);
             settings.Save();
@@ -235,7 +237,7 @@ public partial class MainWindow {
             var progress = BeginDiscImport();
             RefreshGameUi();
             string imported = await LocalGameBuild.ImportExisting(root, dialog.FileName, progress,
-                                                                  importCancellation!.Token);
+                                                                  importCancellation!.Token, game: settings.Game.Id);
             if (!AppLayout.Packaged(root))
                 settings.SetFile("exe", imported);
             settings.Save();
@@ -258,7 +260,7 @@ public partial class MainWindow {
     async Task ImportSelectedDisc() {
         if (updating || game.Running || launching || backingUp)
             return;
-        if (AppLayout.Packaged(root) ? !LocalGameBuild.Available(root)
+        if (AppLayout.Packaged(root) ? !LocalGameBuild.Available(root, settings.Game.Id)
                                      : !File.Exists(settings.GetExe())) {
             Status.Text = "This installation is missing its compatible local build kit.";
             return;
@@ -272,7 +274,7 @@ public partial class MainWindow {
                                                    importCancellation!.Token);
             settings.SetImport(imported.Root);
             if (AppLayout.Packaged(root))
-                await LocalGameBuild.Ensure(root, imported, progress, importCancellation!.Token);
+                await LocalGameBuild.Ensure(root, imported, progress, importCancellation!.Token, game: settings.Game.Id);
             settings.Save();
             Status.Text = imported.Reused ? "Game data is already imported."
                                           : "Game imported. Ready to play.";
@@ -282,7 +284,7 @@ public partial class MainWindow {
             Status.Text = "Could not import: " + error.Message;
             if (error is InvalidDataException) {
                 var file = new FileInfo(settings.GetIso());
-                discCheck = new(file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
+                discCheck = new(settings.Game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
                                 error.Message);
                 DiscValidationStatus.Text = error.Message;
                 DiscValidationStatus.Foreground =

@@ -15,6 +15,25 @@ internal sealed class HostedServer : IDisposable {
     CancellationTokenSource? startup;
     public bool Running => processes.Count == 4 && processes.All(p => !p.HasExited);
     public string Address { get; private set; } = "";
+    public string GameId { get; private set; } = "file1";
+    internal static string StateFolder(string home, string game) =>
+        Path.Combine(home, game == "file1" ? "hosted-server" : game == "file2" ? "hosted-server-file2"
+            : throw new ArgumentException("Unknown game edition.", nameof(game)));
+    internal static Dictionary<string, string> EditionEnvironment(string game, string host, int port) {
+        string plugin = OnlineOptions.ServerPlugin(game);
+        string bind = IPAddress.IsLoopback(IPAddress.Parse(host)) ? host : "0.0.0.0";
+        return new() {
+            ["OPENSNAP_BOOTSTRAP_HOST"] = bind,
+            ["OPENSNAP_GAME_HOST"] = bind,
+            ["OPENSNAP_CAPCOM_APP_HOST"] = bind,
+            ["OPENSNAP_WEB_HOST"] = bind,
+            ["OPENSNAP_BOOTSTRAP_GAMES"] = plugin,
+            ["OPENSNAP_GAME_PLUGIN"] = plugin,
+            ["OPENSNAP_WEB_GAME_PLUGIN"] = plugin,
+            ["OPENSNAP_GAME_SERVER_MAP"] = JsonSerializer.Serialize(
+                new Dictionary<string, object> { [plugin] = new { host, port } })
+        };
+    }
     public static string SuggestedAddress() =>
         NetworkInterface.GetAllNetworkInterfaces()
             .Where(n => n.OperationalStatus == OperationalStatus.Up &&
@@ -30,9 +49,13 @@ internal sealed class HostedServer : IDisposable {
     public async Task Start(string root, string address, CancellationToken cancel = default,
                             string? stateHome = null, int portOffset = 0,
                             string? componentRoot = null, IProgress<string>? progress = null,
-                            IProgress<ImportProgress>? setupProgress = null) {
-        if (Running)
+                            IProgress<ImportProgress>? setupProgress = null, string game = "file1") {
+        string plugin = OnlineOptions.ServerPlugin(game);
+        if (Running) {
+            if (GameId != game)
+                throw new IOException("Stop the hosted game before switching editions.");
             return;
+        }
         if (processes.Count > 0)
             Dispose();
         startup?.Dispose();
@@ -43,7 +66,7 @@ internal sealed class HostedServer : IDisposable {
                 "Choose the LAN, VPN or public IPv4 address your friends will use.");
         if (portOffset < 0 || portOffset > 55000)
             throw new ArgumentOutOfRangeException(nameof(portOffset));
-        string data = Path.Combine(stateHome ?? Settings.Home, "hosted-server");
+        string data = StateFolder(stateHome ?? Settings.Home, game);
         Directory.CreateDirectory(data);
         try {
             lease = new FileStream(Path.Combine(data, "server.lock"), FileMode.OpenOrCreate,
@@ -55,7 +78,7 @@ internal sealed class HostedServer : IDisposable {
             progress?.Report("Starting server services...");
             setupProgress?.Report(new(0, 0, "Starting server services", "Starting server"));
             foreach (var args in new[] { new[] { "app", "capcom" },
-                                         new[] { "web", "--web-plugin", "outbreak" },
+                                         new[] { "web", "--web-plugin", plugin },
                                          new[] { "game" }, new[] { "bootstrap" } }) {
                 cancel.ThrowIfCancellationRequested();
                 var start = new ProcessStartInfo(python) {
@@ -84,10 +107,6 @@ internal sealed class HostedServer : IDisposable {
                 env["OPENSNAP_DATA_DIR"] = data;
                 env["OPENSNAP_STORAGE_BACKEND"] = "sqlite";
                 env["OPENSNAP_SQLITE_PATH"] = Path.Combine(data, "opensnap.db");
-                env["OPENSNAP_BOOTSTRAP_HOST"] = "0.0.0.0";
-                env["OPENSNAP_GAME_HOST"] = "0.0.0.0";
-                env["OPENSNAP_CAPCOM_APP_HOST"] = "0.0.0.0";
-                env["OPENSNAP_WEB_HOST"] = "0.0.0.0";
                 env["OPENSNAP_WEB_HTTPS_HOST"] = "";
                 env["OPENSNAP_WEB_HTTPS_CERTFILE"] = "";
                 env["OPENSNAP_WEB_HTTPS_KEYFILE"] = "";
@@ -97,11 +116,8 @@ internal sealed class HostedServer : IDisposable {
                 env["OPENSNAP_GAME_PORT"] = (ports.Game + portOffset).ToString();
                 env["OPENSNAP_CAPCOM_APP_PORT"] = (10127 + portOffset).ToString();
                 env["OPENSNAP_WEB_PORT"] = (ports.Signup + portOffset).ToString();
-                env["OPENSNAP_BOOTSTRAP_GAMES"] = "outbreak";
-                env["OPENSNAP_GAME_PLUGIN"] = "outbreak";
-                env["OPENSNAP_WEB_GAME_PLUGIN"] = "outbreak";
-                env["OPENSNAP_GAME_SERVER_MAP"] = JsonSerializer.Serialize(
-                    new { outbreak = new { host = normalized, port = ports.Game + portOffset } });
+                foreach (var pair in EditionEnvironment(game, normalized, ports.Game + portOffset))
+                    env[pair.Key] = pair.Value;
                 var process =
                     Process.Start(start) ?? throw new IOException("Could not start the server.");
                 processes.Add(process);
@@ -138,6 +154,7 @@ internal sealed class HostedServer : IDisposable {
                 if (tcp.Contains(ports.Signup + portOffset) && tcp.Contains(10127 + portOffset) &&
                     udp.Contains(9090 + portOffset) && udp.Contains(ports.Game + portOffset)) {
                     Address = normalized;
+                    GameId = game;
                     return;
                 }
                 await Task.Delay(100, cancel);

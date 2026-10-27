@@ -24,8 +24,6 @@ public partial class MainWindow : Window {
         args = arguments;
         root = AppLayout.FindRoot(AppContext.BaseDirectory);
         settings = Settings.Load(root);
-        if (settings.Game.Id == "file2" && AppLayout.Packaged(root) && !arguments.Contains("--preview-file2"))
-            settings.SelectedGame = "file1"; // File #2 is shown as coming later and cannot be selected
         controller.Configure(settings);
         InitializeComponent();
         VersionLabel.Text = Updates.DisplayName;
@@ -125,7 +123,7 @@ public partial class MainWindow : Window {
                 (Color)ColorConverter.ConvertFromString(page == name ? "#BD6665" : "#181A1B"));
         }
         (PageTitle.Text, PageSubtitle.Text) =
-            name switch { "Graphics" => ("Graphics", "Display and image settings."),
+            name switch { "Graphics" => ("Graphics", "Shared by File #1 and File #2. Changes apply on the next launch."),
                           "Audio" => ("Audio", "Adjust the game's volume. Changes apply immediately."),
                           "Controller" => ("Controls", "Devices and bindings."),
                           "Saves" => ("Save games", "Memory cards and backups."),
@@ -232,9 +230,9 @@ public partial class MainWindow : Window {
         }
         if (updating || updateRestarting || launching || game.Running || backingUp)
             return;
-        if (mode != "offline" && settings.Game.Id == "file1") {
+        if (mode != "offline" && OnlineOptions.Supported(settings.Game.Id)) {
             string? problem = OnlineOptions.Error(settings) ??
-                              (mode == "host" && !hostedServer.Running
+                              (mode == "host" && (!hostedServer.Running || hostedServer.GameId != settings.Game.Id)
                                    ? "Your game is not open for friends. See Co-op."
                                    : null);
             if (problem != null) {
@@ -342,6 +340,7 @@ public partial class MainWindow : Window {
         CurrentLogPath.Length > 0 ? Path.GetDirectoryName(CurrentLogPath)!
                                   : game.Logs ?? Path.Combine(Settings.Home, "sessions"));
     async void BackupSaves(object sender, RoutedEventArgs e) {
+        if (launching || backingUp || updating) return;
         if (game.Running ||
             Process.GetProcesses().Any(
                 p => p.ProcessName.StartsWith("reo_recomp", StringComparison.OrdinalIgnoreCase) ||
@@ -357,27 +356,32 @@ public partial class MainWindow : Window {
         }
         var dialog = new SaveFileDialog {
             Title = "Back up memory cards", Filter = "ZIP archive (*.zip)|*.zip",
-            FileName = "Outbreak-saves-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".zip"
+            FileName = "Outbreak-" + settings.Game.Id + "-saves-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".zip"
         };
         if (dialog.ShowDialog(this) != true)
             return;
         backingUp = true;
+        RefreshGameUi();
+        RefreshCards();
         BackupButton.IsEnabled = false;
-        LaunchButton.IsEnabled = false;
         try {
-            string temp = dialog.FileName + "." + Guid.NewGuid().ToString("N") + ".tmp";
-            await Task.Run(() => ZipFile.CreateFromDirectory(folder, temp));
-            File.Move(temp, dialog.FileName, true);
+            await Task.Run(() => MemoryCards.Backup(folder, dialog.FileName));
             Status.Text = "Memory-card backup saved.";
         } catch (Exception error) {
             Status.Text = "Backup failed: " + error.Message;
         } finally {
             backingUp = false;
             BackupButton.IsEnabled = true;
-            LaunchButton.IsEnabled = true;
+            RefreshGameUi();
+            RefreshCards();
         }
     }
     void OnClosing(object? sender, CancelEventArgs e) {
+        if (backingUp) {
+            e.Cancel = true;
+            Status.Text = "Wait for the memory-card backup to finish before closing.";
+            return;
+        }
         if (importCancellation != null && !game.Running) {
             closeAfterImport = true;
             importCancellation.Cancel();
@@ -517,7 +521,9 @@ public partial class MainWindow : Window {
         }
         int smoke = Array.IndexOf(args, "--smoke-launch");
         if (smoke >= 0 && smoke + 2 < args.Length) {
-            if (!args.Contains("--test-roster-probe") && !args.Contains("--test-peer-room") && Process.GetProcesses().Any(
+            var coopCheck = CoopSmokeOptions.Parse(args);
+            try {
+            if (coopCheck?.AllowConcurrent != true && !args.Contains("--test-roster-probe") && !args.Contains("--test-peer-room") && Process.GetProcesses().Any(
                     p => p.ProcessName.StartsWith("reo_recomp",
                                                   StringComparison.OrdinalIgnoreCase) ||
                          p.ProcessName == "reo_launcher_game"))
@@ -528,6 +534,9 @@ public partial class MainWindow : Window {
             if (args.Contains("--test-memory-card")) {
                 snapshot.MemoryCardFile1 =
                     Path.Combine(Settings.Home, "test-cards", "launcher-diagnostic");
+                snapshot.MemoryCardFile2 =
+                    Path.Combine(Settings.Home, "test-cards", "launcher-diagnostic-file2");
+                Directory.CreateDirectory(snapshot.MemoryCardFile2);
                 if(args.Contains("--test-roster-probe") || args.Contains("--test-peer-room"))
                     snapshot.MemoryCardFile1 = Path.Combine(Settings.Home,"test-cards","roster-"+Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(snapshot.MemoryCardFile1);
@@ -543,6 +552,12 @@ public partial class MainWindow : Window {
                 snapshot.Exe = Path.GetFullPath(args[smoke + 1]);
             }
             snapshot.DualSense = true;
+            if (args.Contains("--test-controls")) {
+                snapshot.Fullscreen = false;
+                snapshot.WindowSize = 0;
+            }
+            if (args.Contains("--test-sync-vif")) snapshot.AsyncVif = false;
+            if (args.Contains("--test-cpu-movies")) snapshot.GpuMovies = false;
             bool displayTest = args.Contains("--display-test");
             if (displayTest) {
                 snapshot.AspectRatio = args.Contains("--test-16x9") ? "16:9" : "4:3";
@@ -567,29 +582,42 @@ public partial class MainWindow : Window {
                 snapshot.AntiAliasingMode = args.Contains("--test-aa-off") ? "off"
                                             : args.Contains("--test-smaa") ? "smaa"
                                                                            : "fxaa";
+                snapshot.Brightness = 100;
+                snapshot.Gamma = 1.0;
                 if (args.Contains("--test-bright")) {
                     snapshot.Brightness = 125;
                     snapshot.Gamma = 1.25;
                 }
             }
-            string? diagnosticRoute = displayTest
+            string? diagnosticRoute = displayTest && file2Test < 0
                                           ? args.Contains("--test-room")        ? "gameplay"
                                             : args.Contains("--test-main-menu") ? "main-menu"
                                             : args.Contains("--test-character") ? "character"
                                                                                 : "title"
                                           : null;
-            if (args.Contains("--test-auto-network")) {
-                snapshot.HostServer = false;
-                snapshot.Fullscreen = false;
-                snapshot.WindowSize = 0;
-                snapshot.CoopHost = "127.0.0.1";
-                snapshot.AccountUsername =
-                    "auto" +
-                    System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999);
-                snapshot.MemoryCardFile1 = Path.Combine(
-                    Settings.Home, "test-cards", "auto-network-" + Guid.NewGuid().ToString("N"));
-                Directory.CreateDirectory(snapshot.MemoryCardFile1);
-                diagnosticRoute = "network-auto";
+            LobbyAutomation.Options? diagnosticLobby = null;
+            if (coopCheck != null) {
+                coopCheck.Prepare(snapshot);
+                if (!OnlineOptions.Configured(snapshot))
+                    throw new InvalidOperationException("Co-op is not enabled for this edition in the current launcher build.");
+                controller.Configure(snapshot);
+                controller.Select("keyboard");
+                HostNetworking.Current = new(snapshot.SignupPort, snapshot.GamePort);
+                if (coopCheck.StartServer)
+                    await hostedServer.Start(root, coopCheck.Address, stateHome: coopCheck.AccountHome,
+                                             game: snapshot.Game.Id);
+                if (coopCheck.Mode == "host") {
+                    lanResponder = new LanDiscovery.Responder(
+                        () => new(coopCheck.Player, coopCheck.Address, Updates.DefaultVersion,
+                                  hostRoomReady && game.Running, snapshot.SignupPort, snapshot.Game.Id),
+                        () => game.Running ? game.HostRandomizerConfiguration : null,
+                        System.Net.IPAddress.Loopback);
+                }
+                if (coopCheck.Lobby) {
+                    diagnosticLobby = new(coopCheck.Mode == "host", coopCheck.Room, coopCheck.Address,
+                                          ready => hostRoomReady = ready, snapshot.Game.Id);
+                    diagnosticRoute = null;
+                } else diagnosticRoute = "network-auto";
             }
             if (args.Contains("--test-builtin-cheats")) {
                 snapshot.CheatsEnabled = true;
@@ -638,8 +666,17 @@ public partial class MainWindow : Window {
                     diagnosticSeed = seed;
                 }
                 await game.Launch(root, snapshot, controller, diagnosticRoute,
-                                  diagnosticSeed: diagnosticSeed,
-                                  diagnosticColdCache: args.Contains("--test-cold-shaders"));
+                                  lobby: diagnosticLobby, diagnosticSeed: diagnosticSeed,
+                                  diagnosticColdCache: args.Contains("--test-cold-shaders"),
+                                  accountHome: coopCheck?.AccountHome, workingDirectory: coopCheck?.Work);
+                if (coopCheck != null)
+                    File.WriteAllText(Path.Combine(coopCheck.Folder, "running.json"), JsonSerializer.Serialize(
+                        new { game = snapshot.Game.Id, player = coopCheck.Player, mode = coopCheck.Mode,
+                              pid = game.Process!.Id, image = game.Process.StartInfo.FileName,
+                              creationFileTime = game.Process.StartTime.ToFileTimeUtc(),
+                              logs = game.Logs, map = controller.MapName, card = snapshot.CardFolder(root),
+                              accountHome = coopCheck.AccountHome, workingDirectory = coopCheck.Work },
+                        new JsonSerializerOptions { WriteIndented = true }));
                 UpdateRandomizerSeed();
             } finally {
                 if (testCheatFile != null)
@@ -648,7 +685,9 @@ public partial class MainWindow : Window {
             previousRunning = true;
             if (args.Contains("--test-wait-graphics"))
                 await game.WaitForGraphicsReadyAsync(TimeSpan.FromMinutes(10));
-            await Task.Delay(args.Contains("--test-file2")           ? 60000
+            await Task.Delay(coopCheck != null                         ? coopCheck.Seconds * 1000
+                             : args.Contains("--test-controls")        ? 60000
+                             : args.Contains("--test-file2")           ? (args.Contains("--test-quick-display") ? 25000 : 60000)
                              : args.Contains("--test-auto-network")    ? 240000
                              : args.Contains("--test-roster-probe")   ? 95000
                              : args.Contains("--test-quick-display") ? 25000
@@ -682,6 +721,27 @@ public partial class MainWindow : Window {
                     new JsonSerializerOptions { WriteIndented = true }));
             if (exited)
                 Close();
+            } catch (Exception error) when (coopCheck != null) {
+                bool forced = false;
+                if (game.Running) {
+                    game.Process!.CloseMainWindow();
+                    await Task.WhenAny(game.Process.WaitForExitAsync(), Task.Delay(5000));
+                    if (game.Running) {
+                        // This window owns the diagnostic process and its disposable card.
+                        game.Process.Kill();
+                        forced = true;
+                        await game.Process.WaitForExitAsync();
+                    }
+                }
+                string result = Path.GetFullPath(args[smoke + 2]);
+                Directory.CreateDirectory(Path.GetDirectoryName(result)!);
+                File.WriteAllText(result, JsonSerializer.Serialize(new {
+                    failed = true, error = error.GetBaseException().Message, logs = game.Logs,
+                    forcedStop = forced, session = coopCheck.Folder, coopVerdict = "not-verified"
+                }, new JsonSerializerOptions { WriteIndented = true }));
+                hostedServer.Dispose();
+                Application.Current.Shutdown(1);
+            }
         }
     }
 }

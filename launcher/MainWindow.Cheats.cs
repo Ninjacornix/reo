@@ -16,7 +16,7 @@ public partial class MainWindow {
         CheatList.Children.Clear();
         if (settings.Game.Id == "file2") {
             Status.Text =
-                "File #2 support is planned. Cheats will be available with its native build.";
+                "Cheats are not available for File #2 yet.";
             return;
         }
         try {
