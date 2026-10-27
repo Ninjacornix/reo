@@ -190,10 +190,10 @@ a backup; cancellation or a failed copy keeps the existing selection.
 application folder are stored as relative paths so the folder can be moved.
 Reconnect an external drive before starting if you selected storage on that drive.
 
-On the first normal start, existing data from
-`%LOCALAPPDATA%/OutbreakRecomp/launcher` is copied into the new location when no
-profile has been initialized there. Existing files are never merged or overwritten.
-The old AppData folder is retained as a backup. Previously selected external ISO
+On the first normal start, existing data from older launcher versions is copied
+into the new location when no profile has been initialized there. Existing files
+are never merged or overwritten. The original folder is retained as a backup.
+Previously selected external ISO
 files, executables and custom memory cards stay where you put them; select files
 inside your application folder if you want those to travel with it too.
 

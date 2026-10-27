@@ -2,7 +2,7 @@ using System.IO;
 
 namespace Outbreak.Launcher;
 
-// "Remove game": deletes what the launcher created for a game in Local AppData. The player's
+// "Remove game": deletes what the launcher created for a game in its storage folder. The player's
 // ISO, the launcher folder and settings stay; saves and shared build tools only on request.
 internal static class GameRemoval {
     public sealed record Target(string Path, string What);
@@ -52,7 +52,7 @@ internal static class GameRemoval {
         foreach (var target in targets) {
             try {
                 if ((File.GetAttributes(target.Path) & FileAttributes.ReparsePoint) != 0)
-                    Directory.Delete(target.Path); // never follow a link out of Local AppData
+                    Directory.Delete(target.Path); // never follow a link out of launcher storage
                 else
                     Directory.Delete(target.Path, true);
             } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
