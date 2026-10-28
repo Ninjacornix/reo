@@ -4,6 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import subprocess
+import tempfile
 
 
 def sha(path):
@@ -30,6 +32,29 @@ def export(component, output, root):
         target = output / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
+    # Frozen reference components may predate the current room-query fix.
+    # Bind the shipped server to the published patch, including when the
+    # component already contains it, without modifying the reference source.
+    patch = root / 'network/server/patches/0001-outbreak-current-room-query.patch'
+    relative = 'opensnap/plugins/outbreak/plugin.py'
+    with tempfile.TemporaryDirectory(prefix='reo-server-patch-') as temporary:
+        # An isolated repository prevents git apply from silently filtering paths
+        # when the export directory is inside the maintainer's checkout.
+        work = Path(temporary)
+        subprocess.run(['git', 'init', '--quiet', str(work)], check=True)
+        target = work / relative
+        target.parent.mkdir(parents=True)
+        shutil.copyfile(output / 'source' / relative, target)
+        command = ['git', 'apply', '--no-index', '--include=' + relative]
+        forward = subprocess.run([*command, '--check', str(patch)], cwd=work, capture_output=True)
+        if forward.returncode == 0:
+            subprocess.run([*command, str(patch)], cwd=work, check=True)
+        else:
+            reverse = subprocess.run([*command, '--reverse', '--check', str(patch)], cwd=work,
+                                     capture_output=True)
+            if reverse.returncode:
+                raise ValueError('Server component does not match the published room-query patch')
+        shutil.copyfile(target, output / 'source' / relative)
     shutil.copyfile(root / 'network/server/requirements-portable.txt', output / 'requirements.txt')
     shutil.copyfile(root / 'network/server/SETUP.md', output / 'README.md')
     record = {'format': 2, 'architecture': 'win-x64', 'revision': original['revision'],
