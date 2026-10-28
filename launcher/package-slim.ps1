@@ -126,6 +126,7 @@ foreach ($document in @('REQUIREMENTS.md','README.md')) {
     $path = Join-Path $Output $document
     $text = [IO.File]::ReadAllText($path).Replace('(network/server/SETUP.md)', '(network-server/README.md)')
     $text = $text.Replace('(docs/LOCAL_BUILDS.md)', "(https://github.com/Ninjacornix/reo/blob/$ReleaseTag/docs/LOCAL_BUILDS.md)")
+    $text = $text.Replace('(docs/FILE2_RANDOMIZER.md)', "(https://github.com/Ninjacornix/reo/blob/$ReleaseTag/docs/FILE2_RANDOMIZER.md)")
     [IO.File]::WriteAllText($path, $text, [Text.UTF8Encoding]::new($false))
 }
 $revision = (& git -C $repo rev-parse HEAD).Trim()

@@ -35,8 +35,9 @@ ETAs; setup can be cancelled and retried.
 manual steps; it does not eliminate compilation. Completed builds and tools are
 cached, so ordinary later launches do not download or compile them again.
 
-Keep build-inputs.zip and build-inputs-file2.zip beside the launcher. It contains required independent
-setup inputs and is unpacked automatically; users do not need to open it.
+Keep build-inputs.zip and build-inputs-file2.zip beside the launcher. They contain
+required independent setup inputs and are unpacked automatically; users do not
+need to open them.
 
 ## Co-op
 

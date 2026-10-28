@@ -31,6 +31,18 @@ standard zero-element arrays; its kit applies the File #2 definition to every
 compilation unit. Never fill those catalogues with File #1 instruction words or
 synthetic source entries just to satisfy compilation.
 
+The shared portable graph also needs the reviewed movie allocator ownership
+provider as a direct object before the Granite archive. Validate its pinned
+upstream source and exact generated transform; never bypass its ownership
+receipt to hide an opening-movie failure. Include the shared audio host bridge
+and the full software GS register range in both kits.
+
+Completed RC0 checks cover both games' local builds, room entry and cached
+normal Play, plus the final File #2 item/enemy replays. Private bound packaging
+proofs are `build-ninja/rc0/download-test-05/file1-first-run/package-validation-file1.json` and
+`build-ninja/rc0/portable-mods-05/package-validation-file2.json`. Both refer to
+the exact sealed manifests; the game executables remain private.
+
 Release validation flags require completed-build receipts bound to the exact
 sealed manifest hashes. Missing proof remains pending; do not inherit old passing
 flags. See [File #2 verification](FILE2_RANDOMIZER.md) for the tested replacement
