@@ -566,13 +566,16 @@ A File #2 session launched from the launcher stopped at ~110 s with
   pinned v1.0.19 recompiler. A scan of the main ELF and all overlays found no
   other stub table of this kind. File #1 merges the same stubs (`0x1D3BA0`) but
   never calls the later entries.
-- The async error is separate: the launcher enables the async VIF1 worker
-  (`REO_VIF1_ASYNC=1`), and with GPU movies File #2 writes `D2_CHCR`
-  (`0x1000A000`, PATH3) while the IO lock is held; the worker must drain before
-  PATH3 and refuses to wait under that lock. GPU movies without the worker and
-  CPU movies with it both run cleanly (CPU movies + worker: 125 s, boot to
-  gameplay). File #2 now turns the worker off when GPU movies are on
-  (`[VIF1-ASYNC] off: ...`). File #1 is unchanged.
-- Verified with the launcher's settings (GPU movies, async requested, 16:9, 2x,
-  FXAA): 135 s from boot into Training Ground gameplay, GPU movies 29-31 fps,
-  60 presents/s, no missing functions, no errors.
+- The async error is separate. Captured stack (WinDbg/cdb, link-time PDB):
+  `o0_00396390` (from the per-frame service `0x1EDCB0`) -> `Store8` -> `PS2Memory::write8`
+  -> `writeIORegister` -> async VIF1 access check -> `drain` -> throw. File #2 starts GIF
+  DMA with a byte store to `D2_CHCR` (`0x1000A000`); File #1 uses 32-bit stores. The
+  byte/halfword IO path held the IO lock around `writeIORegister`, so a drain needed
+  after the worker picked up new work could not wait. Runtime patch `0108` merges the
+  byte/halfword value under the lock and writes it after releasing the lock, exactly
+  like a 32-bit store.
+- Verified with the launcher's settings (GPU movies, async worker, 16:9, 2x, FXAA):
+  17 File #2 runs of 100-140 s from boot into the gameplay overlay with the worker
+  active, no errors or missing functions. One early run froze at ~32 s (host loop
+  stopped, no error); 12 later runs with a hang catcher (cdb attach on stall) did not
+  reproduce it. File #1 with the worker: 2 runs to scenario, clean.
