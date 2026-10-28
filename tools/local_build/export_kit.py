@@ -245,7 +245,8 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
             "runtimeAbi": "outbreak-local-1" if game == "file1" else "outbreak-file2-local-1", "units": units, "sourceGroups": groups,
             "compileOptions": ["/I{work}/project/tools/vu_whole_aot", "/I{generated}/output", "/I{generated}/output_overlay",
                                "/I{work}/project/third_party/PS2Recomp/ps2xRuntime/src/lib",
-                               "/I{generated}/vu/specialized", "/I{generated}/vu/whole"],
+                               "/I{generated}/vu/specialized", "/I{generated}/vu/whole"] +
+                              (["/DREO_GAME_FILE2"] if game == "file2" else []),
             "independentInputs": independent,
             "linkOptions": ["/MACHINE:X64", "/SUBSYSTEM:CONSOLE", "/MANIFEST:EMBED",
                             "/MANIFESTINPUT:{kit}/tools/native.manifest", *system],

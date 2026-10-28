@@ -48,6 +48,18 @@ class SlimInputExportTests(unittest.TestCase):
             self.assertTrue(plan['externalToolchain'])
             self.assertEqual(plan['externalCompilerSha256'],expected)
 
+    def test_external_kit_without_a_verified_driver_identity_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root,kit=self.fixture(directory,True)
+            path=kit/'compile-plan.json';plan=json.loads(path.read_text());plan.pop('externalCompilerSha256')
+            path.write_text(json.dumps(plan));manifest=json.loads((kit/'build-kit.json').read_text())
+            for item in manifest['files']:
+                if item['path']=='compile-plan.json':item['sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
+            (kit/'build-kit.json').write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError,'compiler identity'):
+                export(kit,root/'slim',root/'slim.zip',Path(__file__).resolve().parents[2])
+            self.assertFalse((root/'slim.zip').exists())
+
 
 if __name__=='__main__':
     unittest.main()

@@ -25,6 +25,11 @@ portable data. Choose each owned ISO through the actual launcher, build, launch,
 and verify cached reuse. Keep the failed first candidate: it exposed a native
 generator output path exceeding MAX_PATH and incorrectly returning success.
 Recompiler path handling and failure propagation must pass before publication.
+The next candidate also exposed missing File #2 catalogue includes during shared
+header compilation. Patch 0110 represents File #2's empty source catalogues with
+standard zero-element arrays; its kit applies the File #2 definition to every
+compilation unit. Never fill those catalogues with File #1 instruction words or
+synthetic source entries just to satisfy compilation.
 
 Release validation flags require completed-build receipts bound to the exact
 sealed manifest hashes. Missing proof remains pending; do not inherit old passing
