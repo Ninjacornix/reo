@@ -4,7 +4,8 @@
    the launcher's .NET runtime.
 2. Extract the Windows download and open **Outbreak.Launcher.exe**.
 3. Follow the **Play** page: click **Choose ISO** and select your own
-   **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**. A green ✓ confirms it.
+   **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**, or select File #2 and use
+   **File #2 NTSC-U v1.05 (SLUS-20984)**. A green ✓ confirms it.
 4. Click **Build game**, wait for the one-time setup, then click **Play**.
 
 The launcher checks the disc, prepares its build tools and builds the game.

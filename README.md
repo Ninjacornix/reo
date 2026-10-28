@@ -12,7 +12,7 @@ static recompilation and a PS2 compatibility runtime — not an emulator. Play *
 from start to finish, with **online co-op** through openSNAP, a **randomizer**, **cheats**,
 **controller support** and modern **video settings** up to 4K.
 
-**Prerelease: v1.0.20-rc0** | [Download for Windows](https://github.com/Ninjacornix/reo/releases/latest) | [Requirements](REQUIREMENTS.md) | [All releases](https://github.com/Ninjacornix/reo/releases)
+**Prerelease: v1.0.20-rc0** | [Download for Windows](https://github.com/Ninjacornix/reo/releases/tag/v1.0.20-rc0) | [Requirements](REQUIREMENTS.md) | [All releases](https://github.com/Ninjacornix/reo/releases)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 

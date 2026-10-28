@@ -1,0 +1,205 @@
+diff --git a/ps2xRecomp/include/ps2recomp/native_paths.h b/ps2xRecomp/include/ps2recomp/native_paths.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRecomp/include/ps2recomp/native_paths.h
+@@ -0,0 +1,22 @@
++#pragma once
++#include <filesystem>
++#include <string>
++
++namespace ps2recomp::native_paths {
++inline std::filesystem::path extended(std::filesystem::path path) {
++    path = std::filesystem::absolute(path).lexically_normal();
++#ifdef _WIN32
++    std::wstring value = path.native();
++    if (value.rfind(L"\\\\?\\", 0) != 0) {
++        value = value.rfind(L"\\\\", 0) == 0
++            ? L"\\\\?\\UNC\\" + value.substr(2)
++            : L"\\\\?\\" + value;
++    }
++    path = std::filesystem::path(value);
++#endif
++    return path;
++}
++inline std::filesystem::path utf8(const std::string& path) {
++    return extended(std::filesystem::u8path(path));
++}
++}
+diff --git a/ps2xRecomp/src/lib/config_manager.cpp b/ps2xRecomp/src/lib/config_manager.cpp
+--- a/ps2xRecomp/src/lib/config_manager.cpp
++++ b/ps2xRecomp/src/lib/config_manager.cpp
+@@ -1,4 +1,5 @@
+ #include "ps2recomp/config_manager.h"
++#include "ps2recomp/native_paths.h"
+ #include <toml.hpp>
+ #include <fstream>
+ #include <iostream>
+@@ -22,7 +23,9 @@
+         try
+         {
+             std::cout << "Parsing toml file: " << m_configPath << std::endl;
+-            auto data = toml::parse(m_configPath);
++            std::ifstream input(native_paths::utf8(m_configPath), std::ios::binary);
++            if (!input) throw std::runtime_error("Failed to open configuration file: " + m_configPath);
++            auto data = toml::parse(input, m_configPath);
+             const auto &general = toml::find(data, "general");
+ 
+             config.inputPath = toml::find<std::string>(general, "input");
+@@ -299,13 +302,15 @@
+         patches["instructions"] = instPatches;
+         data["patches"] = patches;
+ 
+-        std::ofstream file(m_configPath);
++        std::ofstream file(native_paths::utf8(m_configPath));
+         if (!file)
+         {
+             throw std::runtime_error("Failed to open file for writing: " + m_configPath);
+         }
+ 
+         file << data;
++        file.close();
++        if (!file) throw std::runtime_error("Failed to finish writing configuration file: " + m_configPath);
+     }
+ 
+ } // namespace ps2recomp
+diff --git a/ps2xRecomp/src/lib/elf_parser.cpp b/ps2xRecomp/src/lib/elf_parser.cpp
+--- a/ps2xRecomp/src/lib/elf_parser.cpp
++++ b/ps2xRecomp/src/lib/elf_parser.cpp
+@@ -1,4 +1,5 @@
+ #include "ps2recomp/elf_parser.h"
++#include "ps2recomp/native_paths.h"
+ #include "ps2recomp/types.h"
+ #include <iostream>
+ #include <stdexcept>
+@@ -960,7 +961,7 @@
+         m_hasLoadedGhidraMap = false;
+         m_ghidraMapStarts.clear();
+ 
+-        std::ifstream file(mapPath);
++        std::ifstream file(native_paths::utf8(mapPath));
+         if (!file.is_open())
+         {
+             std::cerr << "Warning: Could not open Ghidra function map: " << mapPath << std::endl;
+@@ -1113,7 +1114,8 @@
+ 
+     bool ElfParser::parse()
+     {
+-        if (!m_elf->load(m_filePath))
++        std::ifstream input(native_paths::utf8(m_filePath), std::ios::binary);
++        if (!input || !m_elf->load(input))
+         {
+             std::cerr << "Error: Could not load ELF file: " << m_filePath << std::endl;
+             return false;
+@@ -1323,7 +1325,7 @@
+         if (HasDwarfSections(*m_elf))
+         {
+ #if defined(_WIN32)
+-            const int fileDescriptor = _open(m_filePath.c_str(), _O_RDONLY | _O_BINARY);
++            const int fileDescriptor = _wopen(native_paths::utf8(m_filePath).c_str(), _O_RDONLY | _O_BINARY);
+ #else
+             const int fileDescriptor = ::open(m_filePath.c_str(), O_RDONLY);
+ #endif
+diff --git a/ps2xRecomp/src/lib/ps2_recompiler.cpp b/ps2xRecomp/src/lib/ps2_recompiler.cpp
+--- a/ps2xRecomp/src/lib/ps2_recompiler.cpp
++++ b/ps2xRecomp/src/lib/ps2_recompiler.cpp
+@@ -1,3 +1,4 @@
++#include "ps2recomp/native_paths.h"
+ #include "ps2recomp/ps2_recompiler.h"
+ #include "ps2recomp/instructions.h"
+ #include "ps2recomp/types.h"
+@@ -863,7 +864,7 @@
+             m_codeGenerator->setBootstrapInfo(m_bootstrapInfo);
+             m_codeGenerator->setConfiguredJumpTables(m_config.jumpTables);
+ 
+-            fs::create_directories(m_config.outputPath);
++            fs::create_directories(native_paths::utf8(m_config.outputPath));
+ 
+             return true;
+         }
+@@ -1060,7 +1061,10 @@
+                 }
+             }
+ 
+-            generateFunctionHeader();
++            if (!generateFunctionHeader())
++            {
++                throw std::runtime_error("Failed to generate function header");
++            }
+ 
+             if (m_config.singleFileOutput)
+             {
+@@ -1155,7 +1159,7 @@
+                     }
+ 
+                     fs::path outputPath = getOutputPath(function);
+-                    fs::create_directories(outputPath.parent_path());
++                    fs::create_directories(native_paths::extended(outputPath.parent_path()));
+                     if (!writeToFile(outputPath.string(), code))
+                     {
+                         throw std::runtime_error("Failed to write function output: " + outputPath.string());
+@@ -1174,11 +1178,15 @@
+             }
+             std::cout << "Generated function registration file: " << registerPath << std::endl;
+ 
+-            generateStubHeader();
++            if (!generateStubHeader())
++            {
++                throw std::runtime_error("Failed to generate stub header");
++            }
+         }
+         catch (const std::exception &e)
+         {
+             std::cerr << "Error during output generation: " << e.what() << std::endl;
++            throw;
+         }
+     }
+ 
+@@ -1221,7 +1229,7 @@
+             // ss << "} // namespace ps2recomp\n";
+ 
+             fs::path headerPath = fs::path(m_config.outputPath) / "ps2_recompiled_stubs.h";
+-            writeToFile(headerPath.string(), ss.str());
++            if (!writeToFile(headerPath.string(), ss.str())) return false;
+ 
+             std::cout << "Generated generating header file: " << headerPath << std::endl;
+             return true;
+@@ -1261,7 +1269,7 @@
+             ss << "\n#endif // PS2_RECOMPILED_FUNCTIONS_H\n";
+ 
+             fs::path headerPath = fs::path(m_config.outputPath) / "ps2_recompiled_functions.h";
+-            writeToFile(headerPath.string(), ss.str());
++            if (!writeToFile(headerPath.string(), ss.str())) return false;
+ 
+             std::cout << "Generated function header file: " << headerPath << std::endl;
+             return true;
+@@ -1504,7 +1512,7 @@
+ 
+     bool PS2Recompiler::writeToFile(const std::string &path, const std::string &content)
+     {
+-        std::ofstream file(path);
++        std::ofstream file(native_paths::utf8(path));
+         if (!file)
+         {
+             std::cerr << "Failed to open file for writing: " << path << std::endl;
+@@ -1513,6 +1521,11 @@
+ 
+         file << content;
+         file.close();
++        if (!file)
++        {
++            std::cerr << "Failed to finish writing file: " << path << std::endl;
++            return false;
++        }
+ 
+         return true;
+     }
+diff --git a/ps2xRecomp/src/runner/ps2_recomp.manifest b/ps2xRecomp/src/runner/ps2_recomp.manifest
+--- a/ps2xRecomp/src/runner/ps2_recomp.manifest
++++ b/ps2xRecomp/src/runner/ps2_recomp.manifest
+@@ -2,5 +2,5 @@
+ <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+   <assemblyIdentity version="1.0.0.0" name="REO.Native"/>
+   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"/></requestedPrivileges></security></trustInfo>
+-  <application xmlns="urn:schemas-microsoft-com:asm.v3"><windowsSettings><activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage></windowsSettings></application>
++  <application xmlns="urn:schemas-microsoft-com:asm.v3"><windowsSettings><activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage><longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware></windowsSettings></application>
+ </assembly>

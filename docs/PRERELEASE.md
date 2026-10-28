@@ -1,11 +1,35 @@
 # Prerelease packaging
 
-Current target: **v1.0.19**, shown in the launcher as **1.0 Alpha**, marked
-prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.19)". Tags stay numeric so
-installed launchers offer the update. .NET is an
-external prerequisite. The server is source-only, with Python/packages prepared
+Current target: **v1.0.20-rc0**, with numeric assembly version **1.0.20**, marked
+prerelease. Package with `-ReleaseTag v1.0.20-rc0 -Version 1.0.20 -SelfContained`.
+The Windows folder includes the launcher's .NET runtime. The server is source-only, with Python/packages prepared
 automatically in the selected data folder on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.20-rc0
+
+Supply both independently sealed game payloads to `launcher/package-slim.ps1`:
+`-Inputs` / `-KitManifest` for File #1 and `-InputsFile2` / `-KitManifestFile2`
+for File #2. Both kits must use the corresponding game's verified ELF, original
+function maps, recipe metadata and locally reconstructed VU images. Include all
+11 presentation/helper shaders and the matching LLVM runtime DLLs.
+
+Rebuild dependencies from the complete published patch series, rather than
+assuming the developer's dirty SDK has every published fix. Preserve that
+checkout. Package the corresponding dependency source archive as
+`RE-Outbreak-v1.0.20-rc0-Dependency-Sources.zip`.
+
+The first-download test uses a fresh extracted ZIP under a path with spaces and
+non-ASCII characters, an unrelated working directory, system-only PATH and empty
+portable data. Choose each owned ISO through the actual launcher, build, launch,
+and verify cached reuse. Keep the failed first candidate: it exposed a native
+generator output path exceeding MAX_PATH and incorrectly returning success.
+Recompiler path handling and failure propagation must pass before publication.
+
+Release validation flags require completed-build receipts bound to the exact
+sealed manifest hashes. Missing proof remains pending; do not inherit old passing
+flags. See [File #2 verification](FILE2_RANDOMIZER.md) for the tested replacement
+paths and the remaining scenario, roster, save/resume and multiplayer limits.
 
 ## v1.0.19
 
