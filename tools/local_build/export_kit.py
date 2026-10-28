@@ -67,7 +67,7 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
     copy(root / "network/native/automatic_account.h", "source/network/native/automatic_account.h")
     for name in ("tools/parallel_gs_backend/resident_gs/scanout_spirv.hpp",
                  "runtime/gs/frame_pacing.h", "runtime/gs/shader_warmup.h",
-                 "runtime/timer/windows_resolution.h"):
+                 "runtime/timer/windows_resolution.h", "runtime/audio/host_bridge.h"):
         copy(root / name, "source/" + name)
     # These authored hooks must also be present in development exports before
     # their new files are committed. Both game targets include this closure.

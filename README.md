@@ -26,7 +26,7 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 - **Cheats:** health, infection, ammunition and progression unlocks, plus a supported subset of PCSX2 `.pnach` cheats.
 - **Controller support:** DualSense (light bar and rumble), Xbox / XInput controllers and keyboard, with full remapping.
 - **Video settings:** HD, Full HD, 2K and 4K output, 2× / 4× internal resolution, 16:9 or 4:3, FXAA / SMAA anti-aliasing, anisotropic and linear texture filtering, brightness and gamma, borderless fullscreen and a performance counter.
-- **Audio mixer:** separate master, music, effects, voice and menu volume.
+- **Audio mixer:** separate master, music, effects, voice and menu volume in File #1; live master volume in File #2.
 - **One-click launcher:** checks your ISO, builds the game locally, manages memory cards, logs and updates.
 
 ## Get started

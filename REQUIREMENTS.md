@@ -17,6 +17,8 @@ passes the launcher check. CPU decoding needs a reasonably modern processor for 
 PAL, Japanese and other executable revisions are currently unsupported. File #2
 is experimental; full scenario completion is not verified.
 No PS2 BIOS is needed. Keep the ISO available for game data reads.
+File #2 currently supports master volume. Separate music, effects, voice and UI
+volume controls are available for File #1.
 
 ## First-time setup
 

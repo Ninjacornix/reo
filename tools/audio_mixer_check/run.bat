@@ -23,4 +23,15 @@ if errorlevel 1 (
     exit /b 1
 )
 "%TASK_OUT%\audio_mixer_check.exe" "%~1"
+if errorlevel 1 exit /b 1
+cl /nologo /MD /EHsc /O2 /std:c++20 /D_CRT_SECURE_NO_WARNINGS /DNOMINMAX /DREO_GAME_FILE2 ^
+    /I "%TASK_ROOT%\tools" /I "%TASK_STAGE%" /I "%~dp0." ^
+    "%~dp0file2_bridge_pcm.cpp" "%TASK_STAGE%\CriAudio.cpp" "%TASK_STAGE%\ReoSoundBanks.cpp" ^
+    /Fo"%TASK_OUT%\\" /Fe"%TASK_OUT%\file2_bridge_pcm.exe" ^
+    >"%TASK_OUT%\file2-build.log" 2>&1
+if errorlevel 1 (
+    type "%TASK_OUT%\file2-build.log"
+    exit /b 1
+)
+"%TASK_OUT%\file2_bridge_pcm.exe"
 exit /b %errorlevel%

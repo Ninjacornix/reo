@@ -79,6 +79,7 @@ public partial class MainWindow {
         ElfPath.Text = settings.GetElf(root);
         bool present = Playable(settings.Game.Id) && settings.FilesPresent(root);
         SelectedGameLabel.Text = settings.Game.Name;
+        UpdateAudioAvailability();
         RefreshBackdrop();
         GamePicker.SelectedValue = settings.Game.Id;
         GamePicker.IsEnabled =
