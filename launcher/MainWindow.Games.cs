@@ -115,7 +115,7 @@ public partial class MainWindow {
         RefreshImportUi();
         if (PageCheats.Visibility == Visibility.Visible && cheatsGame != settings.Game.Id)
             RefreshCheats();
-        ModControls.IsEnabled = settings.Game.Id == "file1" && !game.Running && !launching;
+        ModControls.IsEnabled = !game.Running && !launching;
         if (PageMods.Visibility == Visibility.Visible && modsGame != settings.Game.Id)
             RefreshMods();
     }

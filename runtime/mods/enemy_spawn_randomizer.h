@@ -48,29 +48,35 @@ inline SpawnPool parseSpawnPool(std::string_view text, std::string_view behavior
     return pool;
 }
 inline bool enemyActorAddress(uint32_t a) {
-    return a>=0x42eb00u && a+0xd90u<=0x459120u && (a-0x42eb00u)%0xd90u==0;
+    return a>=gameLayout.enemyBase && a<=gameLayout.enemyEnd-gameLayout.enemyStride &&
+           (a-gameLayout.enemyBase)%gameLayout.enemyStride==0;
 }
 inline bool enemyAnimationAvailable(const uint8_t* ram,uint8_t type) {
     if(!ram || type>=64) return false;
-    if(ram[0x4baeb0u+type]<6) return true;
-    for(unsigned i=0;i<6;++i) if(ram[0x4bec30u+i*0xc84+1]==0) return true;
+    if(ram[gameLayout.animationSlots+type]<6) return true;
+    for(unsigned i=0;i<6;++i) if(ram[gameLayout.animationPool+i*gameLayout.animationStride+1]==0) return true;
     return false;
 }
 inline bool enemyReadyForHandoff(const uint8_t* ram,uint32_t a,unsigned type,unsigned model,unsigned spawn,
                                 bool entranceAlreadyCompleted=false) {
     using namespace reo::cheats;
     return ram && enemyActorAddress(a) && ram[a]==1 && ram[a+2]==2 &&
-        ram[a+3]==type && half(ram,a+0xbba)==model && ram[a+0xb98]==spawn &&
-        (entranceAlreadyCompleted || (ram[a+1] && ram[a+8]==1)) && int16_t(half(ram,a+0x544))>0;
+        ram[a+3]==type && half(ram,a+gameLayout.enemyModel)==model && ram[a+gameLayout.enemySpawn]==spawn &&
+        (entranceAlreadyCompleted || (ram[a+1] && ram[a+8]==1)) && int16_t(half(ram,a+gameLayout.enemyHealth))>0;
 }
 inline uint32_t enemyProfileCallback(const uint8_t* ram, const SpawnProfile& p) {
     using namespace reo::cheats;
     if(!ram || p.type>=64) return 0;
-    const auto modelTable=word(ram,0x387e90u+p.type*8);
-    const auto modelCount=word(ram,0x387e94u+p.type*8);
-    const auto index=half(ram,0x70aa50u+p.type*2);
+    const auto modelTable=word(ram,gameLayout.modelTable+p.type*8);
+    const auto modelCount=word(ram,(gameLayout.modelTable+4)+p.type*8);
+    const auto index=half(ram,gameLayout.callbackIndex+p.type*2);
+#if defined(REO_GAME_FILE2)
+    // File #2 retains model metadata for removed File #1 families. Index
+    // zero is its placeholder callback (661120), not a playable enemy.
+    if (index == 0) return 0;
+#endif
     if(modelTable<0x100000u || modelTable>=0x2000000u-4096 || p.model>=modelCount || index>=32) return 0;
-    return word(ram,0x70ab20u+index*4);
+    return word(ram,gameLayout.callbackTable+index*4);
 }
 // Called on the original actor construction path, after the spawn record was
 // copied but before its model, animations and family-specific renderer setup.
@@ -114,14 +120,26 @@ inline int chooseSpawnIdentity(unsigned type,unsigned model,unsigned behavior,un
     }
     return -1;
 }
+inline uint64_t sharedEnemyTypes(const uint8_t* ram) {
+    using namespace reo::cheats;
+#if defined(REO_GAME_FILE2)
+    // Original 5C8E10: the three bonus scenarios use these native shared
+    // families instead of the normal loaded-resource bitset.
+    const auto scenario = half(ram, gameLayout.scenario);
+    if (scenario >= 21 && scenario <= 23)
+        return (uint64_t(1) << 41) | (uint64_t(1) << 43);
+#endif
+    return uint64_t(word(ram, gameLayout.sharedTypes)) |
+           (uint64_t(word(ram, gameLayout.sharedTypes + 4)) << 32);
+}
 template<size_t N>
 inline int chooseSpawnProfile(const uint8_t* ram,uint32_t a,uint32_t seed,
                               const SpawnPool& pool,const std::array<bool,N>& available) {
     using namespace reo::cheats;
     if(!ram || !enemyActorAddress(a) || ram[a]!=1 || ram[a+2]!=2 || ram[a+8]!=0) return -1;
-    return chooseSpawnIdentity(ram[a+3],half(ram,a+0xbba),ram[a+0xc2b],ram[a+0xb9a],
-        int16_t(half(ram,a+0x544)),ram[a+0xb98],half(ram,0x3243da),seed,
-        uint64_t(word(ram,0x709ac0))|(uint64_t(word(ram,0x709ac4))<<32),pool,available);
+    return chooseSpawnIdentity(ram[a+3],half(ram,a+gameLayout.enemyModel),ram[a+gameLayout.enemyBehavior],ram[a+gameLayout.enemyLifecycle],
+        int16_t(half(ram,a+gameLayout.enemyHealth)),ram[a+gameLayout.enemySpawn],half(ram,gameLayout.scenario),seed,
+        sharedEnemyTypes(ram),pool,available);
 }
 struct SpawnDecisions {
     std::array<int,256> profiles;
@@ -136,18 +154,18 @@ struct SpawnDecisions {
         if(!ram) throw std::runtime_error("Cannot plan an absent enemy table");
         profiles.fill(-1);scripted.fill(false);planned=true;
         std::array<uint64_t,256> families{};
-        const unsigned count=ram[0x4bae8e];
+        const unsigned count=ram[gameLayout.spawnCount];
         // Reserve every original family first. Then roll all records in stable
         // spawn-ID order, before any actor, room visit or network update can
         // affect resource availability or the original source identity.
         for(unsigned id=0;id<count;++id) {
-            const auto record=0x74f250u+id*96;
+            const auto record=gameLayout.spawnTable+id*96;
             if(ram[record]!=id || ram[record+2]>=64 || !ram[record+0x22]) continue;
             families[ram[record+0x22]]|=uint64_t(1)<<ram[record+2];
         }
-        const uint64_t shared=uint64_t(word(ram,0x709ac0))|(uint64_t(word(ram,0x709ac4))<<32);
+        const uint64_t shared=sharedEnemyTypes(ram);
         for(unsigned id=0;id<count;++id) {
-            const auto record=0x74f250u+id*96;
+            const auto record=gameLayout.spawnTable+id*96;
             const unsigned room=ram[record+0x22];
             if(ram[record]!=id || !room) continue;
             scripted[id]=ram[record+0x2a]!=0;
@@ -157,7 +175,7 @@ struct SpawnDecisions {
             for(unsigned i=0;i<pool.count && i<N;++i)
                 available[i]=supported[i] && (used<6 || (reserved&(uint64_t(1)<<pool.profiles[i].type)));
             const int choice=chooseSpawnIdentity(ram[record+2],ram[record+3],ram[record+0x2a],
-                ram[record+0x26],int16_t(half(ram,record+0x1c)),id,half(ram,0x3243da),
+                ram[record+0x26],int16_t(half(ram,record+0x1c)),id,half(ram,gameLayout.scenario),
                 seed,shared,pool,available);
             profiles[id]=choice;
             if(choice>=0) families[room]|=uint64_t(1)<<pool.profiles[choice].type;
@@ -167,7 +185,7 @@ struct SpawnDecisions {
     int pick(const uint8_t* ram,uint32_t actor,uint32_t seed,const SpawnPool& pool,
              const std::array<bool,N>& supported) {
         if (!ram || !enemyActorAddress(actor)) return -1;
-        auto& profile=profiles[ram[actor+0xb98]];
+        auto& profile=profiles[ram[actor+gameLayout.enemySpawn]];
         if(planned) return profile;
         if (profile==-2) profile=chooseSpawnProfile(ram,actor,seed,pool,supported);
         return profile;
@@ -175,7 +193,7 @@ struct SpawnDecisions {
 };
 inline uint16_t replacementHealth(const uint8_t* ram,uint32_t a,const SpawnProfile& p) {
     using namespace reo::cheats;
-    const auto hp=int16_t(half(ram,a+0x544)), maximum=int16_t(half(ram,a+0x546));
+    const auto hp=int16_t(half(ram,a+gameLayout.enemyHealth)), maximum=int16_t(half(ram,a+gameLayout.enemyMaximum));
     if(hp<=0) return 0;
     if(maximum<=0 || hp>=maximum) return p.health;
     return uint16_t(std::max(1u,unsigned(p.health)*unsigned(hp)/unsigned(maximum)));
@@ -183,9 +201,9 @@ inline uint16_t replacementHealth(const uint8_t* ram,uint32_t a,const SpawnProfi
 inline void applySpawnProfile(uint8_t* ram,uint32_t a,const SpawnProfile& p,uint32_t callback) {
     using namespace reo::cheats;
     const auto hp=replacementHealth(ram,a,p);
-    ram[a+3]=p.type; setHalf(ram,a+0xbba,p.model);
-    setHalf(ram,a+0x544,hp); setHalf(ram,a+0x546,p.health);
-    ram[a+0xc2b]=p.behavior; ram[a+0xb9c]=p.posture;
+    ram[a+3]=p.type; setHalf(ram,a+gameLayout.enemyModel,p.model);
+    setHalf(ram,a+gameLayout.enemyHealth,hp); setHalf(ram,a+gameLayout.enemyMaximum,p.health);
+    ram[a+gameLayout.enemyBehavior]=p.behavior; ram[a+gameLayout.enemyPosture]=p.posture;
     setWord(ram,a+0x14,callback);
 }
 }

@@ -1,8 +1,7 @@
 ﻿# Run RE: Outbreak
 
-1. Install **.NET 8 Desktop Runtime (x64)** from
-   [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/8.0), if needed,
-   and keep your GPU's Vulkan driver current.
+1. Keep your GPU's Vulkan driver current. The RC0 Windows download includes
+   the launcher's .NET runtime.
 2. Extract the Windows download and open **Outbreak.Launcher.exe**.
 3. Follow the **Play** page: click **Choose ISO** and select your own
    **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**. A green ✓ confirms it.
@@ -12,10 +11,10 @@ The launcher checks the disc, prepares its build tools and builds the game.
 **No compiler installation, environment variables or terminal commands are
 required.** The Play page also checks for a Vulkan graphics driver and about
 10 GB of free disk space.
-Movies decode on the graphics card when it has a hardware MPEG-2 decoder; on cards
-without one (for example the AMD Radeon RX 9060 XT) the processor decodes them instead,
-which needs a reasonably modern CPU for full speed.
-PAL, Japanese, File #2 and other executable revisions are currently unsupported.
+Movies use CPU decoding by default. GPU decoding is available after its decoder
+passes the launcher check. CPU decoding needs a reasonably modern processor for full speed.
+PAL, Japanese and other executable revisions are currently unsupported. File #2
+is experimental; full scenario completion is not verified.
 No PS2 BIOS is needed. Keep the ISO available for game data reads.
 
 ## First-time setup
@@ -23,7 +22,8 @@ No PS2 BIOS is needed. Keep the ISO available for game data reads.
 Internet access is needed to download the verified compiler (about 173 MiB),
 unless the exact supported compiler is already installed (see below).
 The launcher keeps only the Windows x64 tools needed for the game, about 446 MiB,
-in Local AppData. Nothing is installed system-wide or added to PATH.
+in the portable data folder beside the launcher, or your selected storage folder.
+Nothing is installed system-wide or added to PATH.
 Allow about 1 GB of temporary compiler setup space plus several GB for game data
 and compilation. The download, preparation and build show progress and stage
 ETAs; setup can be cancelled and retried.
@@ -32,13 +32,13 @@ ETAs; setup can be cancelled and retried.
 manual steps; it does not eliminate compilation. Completed builds and tools are
 cached, so ordinary later launches do not download or compile them again.
 
-Keep build-inputs.zip beside the launcher. It contains required independent
+Keep build-inputs.zip and build-inputs-file2.zip beside the launcher. It contains required independent
 setup inputs and is unpacked automatically; users do not need to open it.
 
 ## Co-op
 
 Choose **Host a game** in **Co-op** to host. On first use the launcher prepares a
-private server environment in Local AppData: it uses an installed Python 3.12 if
+private server environment in the launcher data folder: it uses an installed Python 3.12 if
 present (otherwise it downloads one) and installs the server packages. Later
 starts reuse it. Joining a friend's game needs no setup. Internet hosting still
 needs a VPN or forwarded ports; see the README's co-op section.

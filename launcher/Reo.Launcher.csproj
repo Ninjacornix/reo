@@ -14,6 +14,7 @@
   <ItemGroup>
     <Content Include="../examples/mods/no-infection.json" Link="examples/mods/no-infection.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../examples/mods/randomizer.json" Link="examples/mods/randomizer.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../examples/mods/randomizer-file2.json" Link="examples/mods/randomizer-file2.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../docs/MODDING.md" Link="docs/MODDING.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../NOTICE.md" Link="NOTICE.md" CopyToOutputDirectory="PreserveNewest" />

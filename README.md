@@ -12,7 +12,7 @@ static recompilation and a PS2 compatibility runtime — not an emulator. Play *
 from start to finish, with **online co-op** through openSNAP, a **randomizer**, **cheats**,
 **controller support** and modern **video settings** up to 4K.
 
-**Latest release: v1.0.19** | [Download for Windows](https://github.com/Ninjacornix/reo/releases/latest) | [Requirements](REQUIREMENTS.md) | [All releases](https://github.com/Ninjacornix/reo/releases)
+**Prerelease: v1.0.20-rc0** | [Download for Windows](https://github.com/Ninjacornix/reo/releases/latest) | [Requirements](REQUIREMENTS.md) | [All releases](https://github.com/Ninjacornix/reo/releases)
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
@@ -31,17 +31,16 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 
 ## Get started
 
-1. Install the [.NET 8 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) if you don't have it, and keep your graphics driver current (Vulkan is required).
-2. Download **RE-Outbreak-v1.0.19-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
-3. The **Play** page tells you the next step. Click **Choose ISO** and pick your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**. The launcher checks it and shows a green ✓ when it is supported.
+1. Keep your graphics driver current (Vulkan is required). The RC0 Windows download includes the launcher's .NET runtime.
+2. Download **RE-Outbreak-v1.0.20-rc0-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
+3. The **Play** page tells you the next step. Click **Choose ISO** and pick your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**, or select File #2 and use **NTSC-U v1.05 (SLUS-20984)**. The launcher checks it and shows a green ✓ when it is supported.
 4. Click **Build game**. This one-time setup imports the disc, prepares the build tools (about 173 MB, reused if the exact compiler is already installed) and compiles the game. It needs Internet and about 10 GB of free space, and can take over an hour. Progress stays visible at the bottom of every page.
 5. Click **Play**.
 
 The Play page's **Before you play** checklist shows what is ready (✓) and what is
 missing (✗), with a button for each fix: **Get driver** opens your graphics card
 maker's driver page, **Free up space** opens Windows storage settings, **Choose ISO**
-picks your disc. .NET itself must be installed before the launcher can open;
-Windows offers the download link if it is missing.
+picks your disc. The RC0 Windows package starts without a separate .NET installation.
 
 Later launches reuse the finished build. After a build, the launcher deletes its
 temporary generated sources and keeps only a compile cache (about 1.2 GB) so future
@@ -54,10 +53,10 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 ## Status
 
 - **Outbreak: File #1:** fully playable on Windows. Performance can still vary in CPU-heavy rooms.
-- **Outbreak: File #2:** a placeholder in the launcher; not playable yet (port in progress).
+- **Outbreak: File #2:** experimental Windows port with separate disc import/build, cheats and Randomizer support. Selected pickup, equipment, firing and enemy combat paths are verified; full scenario completion remains unverified. See [File #2 validation](docs/FILE2_RANDOMIZER.md).
 - **Launcher:** guided first-run setup, ISO check before import, local build with cached reuse, display and filtering options, controller remapping, memory cards, cheats, logs, co-op hosting/joining and GitHub release updates.
 - **Online co-op:** working through openSNAP for up to four players; see below.
-- **Mods:** enable **Randomizer** for File #1 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition and progression-unlock options plus a supported subset of PCSX2 data cheats.
+- **Mods:** enable the matching **Randomizer** package for File #1 or File #2 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. File #2 fits its global additions within each scenario's native model/data limits. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition and File #1 progression-unlock options plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS.
 

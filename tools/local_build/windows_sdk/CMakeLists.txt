@@ -4,6 +4,7 @@ project(reo_portable_windows_sdk LANGUAGES C CXX)
 if(NOT MINGW OR NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "Build this SDK with the pinned LLVM/MinGW UCRT toolchain")
 endif()
+enable_language(RC)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 foreach(component PS2RECOMP RAYLIB FMT LIBDWARF RABBITIZER TOML11 ELFIO PARALLEL)
@@ -38,6 +39,10 @@ file(GLOB_RECURSE recompiler_sources CONFIGURE_DEPENDS
     "${REO_PS2RECOMP_SOURCE}/ps2xRecomp/src/lib/*.cpp"
     "${REO_PS2RECOMP_SOURCE}/ps2xRecomp/src/runner/*.cpp")
 add_executable(ps2_recomp ${recompiler_sources})
+target_sources(ps2_recomp PRIVATE
+    "${REO_PS2RECOMP_SOURCE}/ps2xRecomp/src/runner/ps2_recomp.rc")
+target_include_directories(ps2_recomp PRIVATE
+    "${REO_PS2RECOMP_SOURCE}/ps2xRecomp/src/runner")
 target_include_directories(ps2_recomp PRIVATE
     "${REO_PS2RECOMP_SOURCE}/ps2xRecomp/include"
     "${REO_PS2RECOMP_SOURCE}/ps2xRuntime/include"

@@ -1,8 +1,13 @@
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
 #include "overrides/reo_cheats.h"
+#endif
+#if defined(REO_GAME_FILE1)
 #include "overrides/reo_mods.h"
 #include "overrides/reo_rumble.h"
 #include "overrides/reo_audio.h"
+#endif
+#if defined(REO_GAME_FILE2)
+#include "overrides/reo_mods_file2.h"
 #endif
 #if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
 #include "overrides/reo_widescreen.h"
@@ -1144,7 +1149,7 @@ int main(int argc, char* argv[]) {
 #endif
 
     size_t ramBackingBytes = PS2_RAM_SIZE;
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
     if (std::getenv("REO_MOD_ENEMY_SPAWN_SEED")) ramBackingBytes = 2u * PS2_RAM_SIZE;
 #endif
     if (!runtime.initialize(g.name, ramBackingBytes)) {
@@ -1356,6 +1361,12 @@ int main(int argc, char* argv[]) {
 
     ps2SetDebugPanelProvider(reoDebugPanelText);
 
+#if defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, "SLUS-20984") == 0) {
+        reo::cheats::install(runtime);
+        reo::mods::install(runtime);
+    }
+#endif
 #if defined(REO_GAME_FILE1)
     if (std::strcmp(g.serial, "SLUS-20765") == 0) {
         reo::cheats::install(runtime);

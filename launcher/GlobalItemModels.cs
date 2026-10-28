@@ -7,10 +7,88 @@ namespace Outbreak.Launcher;
 // Merge only the player's own ordinary object models. NBD chunk/reference layout
 // documented by Fothsid: https://gist.github.com/Fothsid/0d01f5d2f3c6d48de8963f5171a2933b
 internal static class GlobalItemModels {
-    sealed record Bank(List<byte[]> Textures, List<byte[]> Amo, List<uint> Roots,
+    sealed record Bank(uint RootKind, List<byte[]> Textures, List<byte[]> Amo, List<uint> Roots,
                        Dictionary<uint, byte[]> Nodes, Dictionary<uint, uint> Tags);
     sealed record Plan(Bank Bank, HashSet<uint> Wanted, List<uint> Selected,
                        List<(uint Index, byte[] Mesh)> Meshes);
+    internal sealed class PreparedBanks {
+        readonly Dictionary<int, Bank> banks;
+        readonly Dictionary<int, MatBank> mats;
+        static readonly Dictionary<ushort, ushort> AmmoBoxes = new() { [201]=200, [203]=200, [209]=200, [210]=200, [251]=250 };
+        sealed record MatEntry(ushort Type, byte Root, byte[] Aux);
+        sealed record MatBank(byte[] Header, List<MatEntry> Entries);
+        internal PreparedBanks(Dictionary<int, byte[]> sources, Dictionary<int, byte[]> materials) {
+            banks = sources.ToDictionary(p => p.Key, p => Parse(p.Value));
+            mats = materials.ToDictionary(p => p.Key, p => ParseMat(p.Value, banks[p.Key].Roots.Count));
+        }
+        IEnumerable<Bank> Ordered(int scenario) => new[] { banks[scenario] }
+            .Concat(banks.Where(p => p.Key != scenario).Select(p => p.Value));
+        static MatBank ParseMat(byte[] data, int roots) {
+            uint count = U(data);
+            if (count > 96 || data.Length < 16 + count * 8) throw new IOException("Invalid object material table.");
+            var entries = new List<MatEntry>(); var types = new HashSet<ushort>();
+            for (int i=0; i<count; ++i) {
+                int at=16+i*8; ushort type=BitConverter.ToUInt16(data,at); byte root=data[at+2], subcount=data[at+3];
+                if (root>=roots || subcount>4 || !types.Add(type)) throw new IOException("Invalid object material binding.");
+                int offset=checked((int)U(data,at+4));
+                entries.Add(new(type,root,Slice(data,offset,subcount*32)));
+            }
+            return new(Slice(data,0,16),entries);
+        }
+        (Bank Bank, MatEntry Entry)? Find(int scenario, ushort type) {
+            foreach(int id in new[]{scenario}.Concat(banks.Keys.Where(k=>k!=scenario))) {
+                var entry=mats[id].Entries.FirstOrDefault(e=>e.Type==type);
+                if(entry!=null) return (banks[id],entry);
+            }
+            if(AmmoBoxes.TryGetValue(type,out ushort box)) return Find(scenario,box);
+            return null;
+        }
+        internal HashSet<ushort> Types => mats.Values.SelectMany(m=>m.Entries.Select(e=>e.Type))
+            .Concat(AmmoBoxes.Keys).ToHashSet();
+        HashSet<ushort> Canonical(int scenario,HashSet<ushort> allowed) => allowed.Select(t=>Find(scenario,t))
+            .Where(p=>p!=null).Select(p=>(ushort)p!.Value.Bank.Tags[p.Value.Bank.Roots[p.Value.Entry.Root]]).ToHashSet();
+        internal int MaterialCount(int scenario,HashSet<ushort> allowed) => mats[scenario].Entries.Count+
+            allowed.Count(t=>!mats[scenario].Entries.Any(e=>e.Type==t) && Find(scenario,t)!=null);
+        internal int RootCount(int scenario, HashSet<ushort> allowed) {
+            allowed=Canonical(scenario,allowed);
+            var seen = new HashSet<uint>(); int count = 0;
+            foreach (var bank in Ordered(scenario)) {
+                bool first = count == 0;
+                var wanted = bank.Roots.Select(r => bank.Tags[r])
+                    .Where(t => first || t < 600 && !seen.Contains(t) && allowed.Contains((ushort)t)).ToHashSet();
+                count += bank.Roots.Count(r => wanted.Contains(bank.Tags[r])); seen.UnionWith(wanted);
+            }
+            return count;
+        }
+        internal byte[] Build(int scenario, HashSet<ushort> allowed) =>
+            Merge(Ordered(scenario).ToList(),Canonical(scenario,allowed));
+        internal byte[] BuildMaterials(int scenario,HashSet<ushort> allowed,byte[] merged) {
+            var model=Parse(merged); var basis=mats[scenario]; var entries=new List<MatEntry>(basis.Entries);
+            foreach(ushort type in allowed.Order()) {
+                if(entries.Any(e=>e.Type==type)) continue;
+                var source=Find(scenario,type); if(source==null) continue;
+                uint tag=source.Value.Bank.Tags[source.Value.Bank.Roots[source.Value.Entry.Root]];
+                int root=model.Roots.FindIndex(r=>model.Tags[r]==tag);
+                if(root<0 || root>=96) throw new IOException("Object material binding has no merged model.");
+                entries.Add(new(type,(byte)root,source.Value.Entry.Aux));
+            }
+            if(entries.Count>96) throw new IOException("Object material table exceeds native capacity.");
+            using var stream=new MemoryStream();using var output=new BinaryWriter(stream);
+            output.Write(basis.Header);output.Write(new byte[entries.Count*8]);
+            for(int i=0;i<entries.Count;++i) {
+                var e=entries[i];uint offset=(uint)stream.Position;output.Write(e.Aux);
+                long end=stream.Position;stream.Position=16+i*8;
+                output.Write(e.Type);output.Write(e.Root);output.Write((byte)(e.Aux.Length/32));output.Write(e.Aux.Length==0 ? 0u : offset);
+                stream.Position=end;
+            }
+            stream.Position=0;output.Write(entries.Count);return stream.ToArray();
+        }
+        internal byte[] Availability(byte[] materials) {
+            var parsed=ParseMat(materials,96);var result=new byte[608];"RGIF1\0\0\0"u8.CopyTo(result);
+            foreach(var entry in parsed.Entries) if(entry.Type<600) result[8+entry.Type]=1;
+            return result;
+        }
+    }
     static uint U(byte[] data, int at=0) {
         if(at < 0 || at > data.Length - 4) throw new IOException("Incomplete object model.");
         return BitConverter.ToUInt32(data, at);
@@ -49,12 +127,13 @@ internal static class GlobalItemModels {
         }
         var amo=Children(Slice(data,checked((int)U(data,20)),checked((int)U(data,24))));
         var ahi=Children(Slice(data,checked((int)U(data,36)),checked((int)U(data,40))));
-        if(U(ahi[0])!=0x80000000 || U(ahi[0],4)>100) throw new IOException("Unsupported object hierarchy.");
+        uint rootKind = U(ahi[0]);
+        if(rootKind is not (0 or 0x80000000) || U(ahi[0],4)>100) throw new IOException("Unsupported object hierarchy.");
         var roots=Enumerable.Range(0,(int)U(ahi[0],4)).Select(i=>U(ahi[0],12+i*4)).ToList();
         var nodes=ahi.Skip(1).ToDictionary(n=>U(n,12));
         var tags=nodes.ToDictionary(n=>n.Key,n=>U(n.Value,80));
         if(roots.Any(r=>!nodes.ContainsKey(r))) throw new IOException("Missing model root.");
-        return new(textures,amo,roots,nodes,tags);
+        return new(rootKind,textures,amo,roots,nodes,tags);
     }
     static IEnumerable<uint> References(byte[] data,uint kind) {
         uint type=U(data);
@@ -90,14 +169,15 @@ internal static class GlobalItemModels {
                 var node=(byte[])p.Value.Clone();Put(node,80,type);return node;
             });
             var amo=source.Amo.Select(c=>U(c)==2 ? Chunk(2,1,new[]{mesh}) : c).ToList();
-            yield return new(source.Textures,amo,new(){source.Roots[ordinal]},nodes,nodes.Keys.ToDictionary(i=>i,_=>type));
+            yield return new(source.RootKind,source.Textures,amo,new(){source.Roots[ordinal]},nodes,nodes.Keys.ToDictionary(i=>i,_=>type));
         }
     }
-    static byte[] Merge(List<Bank> ordered) {
+    static byte[] Merge(List<Bank> ordered, HashSet<ushort>? allowed = null) {
         var plans=new List<Plan>();var seen=new HashSet<uint>();
         foreach(var bank in ordered.Concat(AmmoBoxModels(ordered))) {
             bool first=plans.Count==0;
-            var wanted=bank.Roots.Select(r=>bank.Tags[r]).Where(t=>first || t<600 && !seen.Contains(t)).ToHashSet();
+            var wanted=bank.Roots.Select(r=>bank.Tags[r])
+                .Where(t=>first || t<600 && !seen.Contains(t) && (allowed == null || allowed.Contains((ushort)t))).ToHashSet();
             if(wanted.Count==0) continue;
             // World objects pair mesh ordinal with hierarchy-root ordinal. Their
             // authored joint-reference IDs do not index this scenario's AHI.
@@ -161,12 +241,12 @@ internal static class GlobalItemModels {
         foreach(var texture in textureRefs) Put(texture,12,textureMapFinal[U(texture,12)]);
         if(roots.Count>96 || textures.Count>32 || nodesOut.Count>=1024 || meshesOut.Count!=roots.Count ||
            roots.Where((root,index)=>(index+1<roots.Count ? roots[index+1] : (uint)nodesOut.Count)-root>6).Any())
-            throw new IOException("Global object bank exceeds native capacity.");
+            throw new IOException($"Global object bank exceeds native capacity (roots={roots.Count}, textures={textures.Count}, nodes={nodesOut.Count}, meshes={meshesOut.Count}).");
         var date=ordered[0].Amo.Single(c=>U(c)==0x20000);
         byte[] amo=Chunk(1,4,new[]{date,Chunk(2,(uint)meshesOut.Count,meshesOut),
             Chunk(9,(uint)materials.Count,materials),Chunk(10,(uint)textureRefs.Count,textureRefs)});
         byte[] ahi=Chunk(0xc0000000,(uint)nodesOut.Count+1,
-            new[]{Chunk(0x80000000,(uint)roots.Count,new[]{Words(roots)})}.Concat(nodesOut.Values));
+            new[]{Chunk(ordered[0].RootKind,(uint)roots.Count,new[]{Words(roots)})}.Concat(nodesOut.Values));
         using var stream=new MemoryStream();stream.Write(new byte[64]);
         var sections=new[]{("TEX\0",textures.SelectMany(b=>b).ToArray(),(uint)textures.Count),("AMO\0",amo,0u),("AHI\0",ahi,0u)};
         for(int i=0;i<sections.Length;++i) {
@@ -182,11 +262,11 @@ internal static class GlobalItemModels {
         if(stream.Length>2*1024*1024) throw new IOException("Global object bank exceeds the native read buffer.");
         return stream.ToArray();
     }
-    internal static void Prepare(Dictionary<int,byte[]> sources,string logs) {
+    internal static void Prepare(Dictionary<int,byte[]> sources,string logs, HashSet<ushort>? allowed = null) {
         var banks=sources.ToDictionary(p=>p.Key,p=>Parse(p.Value));
         string folder=Path.Combine(logs,"global-models");Directory.CreateDirectory(folder);
         foreach(var (number,bank) in banks) {
-            var merged=Merge(new[]{bank}.Concat(banks.Where(p=>p.Key!=number).Select(p=>p.Value)).ToList());
+            var merged=Merge(new[]{bank}.Concat(banks.Where(p=>p.Key!=number).Select(p=>p.Value)).ToList(), allowed);
             File.WriteAllBytes(Path.Combine(folder,$"OBJS{number:00}.NBD"),merged);
         }
     }

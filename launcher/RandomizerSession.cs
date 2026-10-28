@@ -35,35 +35,40 @@ internal static class RandomizerSession {
         if (settings.CheatsEnabled && settings.EnabledCheats.Count != 0)
             throw new IOException("Disable local cheats before joining or hosting a shared randomizer session.");
         if (settings.ResolvedCoopMode == "host")
-            return new(Create(settings.AccountUsername, selected), selected);
+            return new(Create(settings.AccountUsername, selected, settings.Game.Id), selected);
         if (settings.ResolvedCoopMode != "join") throw new IOException("A shared session requires host or join mode.");
         var bytes = await Fetch(settings.CoopHost, cancel, port);
-        var shared = Parse(bytes);
+        var shared = Parse(bytes, settings.Game.Id);
         if (settings.JoinHostName.Length > 0 && settings.JoinHostName != shared.Host)
             throw new IOException("The host changed. Refresh the game list before joining.");
         return new(bytes, ModsFor(shared));
     }
-    internal static byte[] Create(string host, List<ModManifest> mods) {
+    internal static byte[] Create(string host, List<ModManifest> mods, string game = "file1") {
         if (!OnlineOptions.ValidUsername(host) || mods.Any(m => m.Effects.Count != 0 || m.Patches.Count != 0))
             throw new IOException("Co-op supports host-controlled randomizers only; disable other gameplay mods.");
         if (mods.Count(m => m.WeaponShuffle != null || m.ItemRandomizer != null) > 1 ||
             mods.Count(m => m.EnemyRandomizer != null) > 1)
             throw new IOException("Enable at most one item and one enemy randomizer.");
-        var config = new Configuration { Protocol=Protocol, Elf=DiscImport.FirstElfSha256,
+        string elf = DiscImport.ExpectedElf(game);
+        if (mods.Any(m => !m.ElfSha256.Equals(elf, StringComparison.OrdinalIgnoreCase)))
+            throw new IOException("Shared randomizers must target the selected game's ELF.");
+        var config = new Configuration { Protocol=Protocol, Elf=elf,
             Session = Guid.NewGuid().ToString("N"), Host = host,
             Weapons = mods.SingleOrDefault(m => m.WeaponShuffle != null)?.WeaponShuffle,
             Items = mods.SingleOrDefault(m => m.ItemRandomizer != null)?.ItemRandomizer,
             Enemies = mods.SingleOrDefault(m => m.EnemyRandomizer != null)?.EnemyRandomizer };
         byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(config, Json);
-        _ = Parse(bytes);
+        _ = Parse(bytes, game);
         return bytes;
     }
-    internal static Configuration Parse(byte[] bytes) {
+    internal static Configuration Parse(byte[] bytes, string? game = null) {
         if (bytes.Length > MaxPacket - 64) throw new IOException("Host randomizer configuration is too large.");
         try {
             var config = JsonSerializer.Deserialize<Configuration>(bytes, Json)
                 ?? throw new IOException("Host configuration is empty.");
-            if (config.Protocol != Protocol || config.Elf != DiscImport.FirstElfSha256 ||
+            bool supportedElf = config.Elf == DiscImport.FirstElfSha256 || config.Elf == DiscImport.SecondElfSha256;
+            if (config.Protocol != Protocol || !supportedElf ||
+                (game != null && config.Elf != DiscImport.ExpectedElf(game)) ||
                 config.Session == null || config.Session.Length != 32 || !Guid.TryParseExact(config.Session, "N", out _) ||
                 !OnlineOptions.ValidUsername(config.Host))
                 throw new IOException("Host randomizer session is incompatible. Update both launchers and game builds.");
