@@ -70,17 +70,29 @@ $secondValidation = if ($InputsFile2) { Read-ValidationProof $ValidationReportFi
 & (Join-Path $PSScriptRoot 'build.ps1')
 if ($LASTEXITCODE) { throw 'Launcher build failed.' }
 $selfContainedValue = $SelfContained.IsPresent.ToString().ToLowerInvariant()
-$singleFileValue = (!$SelfContained.IsPresent).ToString().ToLowerInvariant()
+# Both layouts publish one launcher executable. Self-contained builds also bundle the
+# .NET/WPF native libraries (extracted on first start) instead of leaving ~250 loose DLLs.
+$singleFileArgs = @('/p:PublishSingleFile=true')
+if ($SelfContained) { $singleFileArgs += @('/p:IncludeNativeLibrariesForSelfExtract=true', '/p:EnableCompressionInSingleFile=true') }
 & dotnet publish (Join-Path $PSScriptRoot 'Reo.Launcher.csproj') -c Release -r win-x64 --self-contained $selfContainedValue `
-    -o $Output --nologo ("/p:PublishSingleFile=" + $singleFileValue) /p:SatelliteResourceLanguages=en `
+    -o $Output --nologo @singleFileArgs /p:SatelliteResourceLanguages=en `
     /p:DebugType=None /p:DebugSymbols=false ("/p:Version=" + $Version)
 if ($LASTEXITCODE) { throw 'Single-file launcher publish failed.' }
+$looseRuntime = @(Get-ChildItem -LiteralPath $Output -File | Where-Object {
+    $_.Extension -eq '.dll' -or $_.Name -like 'Outbreak.Launcher.*.json' })
+if ($looseRuntime.Count) { throw ('Single-file publish left runtime files beside the launcher: ' + ($looseRuntime.Name -join ', ')) }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'artifacts/native/XINPUT1_4.dll') -Destination $Output
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'artifacts/native/reo-movie-check.exe') -Destination $Output
 Copy-Item -LiteralPath $Inputs -Destination (Join-Path $Output 'build-inputs.zip')
 if ($InputsFile2) { Copy-Item -LiteralPath $InputsFile2 -Destination (Join-Path $Output 'build-inputs-file2.zip') }
 if ($SelfContained) {
-    $runtimeConfig = Get-Content -LiteralPath (Join-Path $Output 'Outbreak.Launcher.runtimeconfig.json') -Raw | ConvertFrom-Json
+    # The single-file bundle embeds runtimeconfig.json; read the copy the publish build wrote.
+    $runtimeConfigPath = (& dotnet msbuild (Join-Path $PSScriptRoot 'Reo.Launcher.csproj') -nologo `
+        -getProperty:ProjectRuntimeConfigFilePath /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true |
+        Select-Object -Last 1).Trim()
+    if ($LASTEXITCODE -or !(Test-Path -LiteralPath $runtimeConfigPath)) { throw 'Missing self-contained runtime configuration.' }
+    $runtimeConfig = Get-Content -LiteralPath $runtimeConfigPath -Raw | ConvertFrom-Json
+    if (!$runtimeConfig.runtimeOptions.includedFrameworks) { throw 'Runtime configuration is not self-contained.' }
     $nuget = if ($env:NUGET_PACKAGES) { $env:NUGET_PACKAGES } else { Join-Path $env:USERPROFILE '.nuget/packages' }
     $runtimeLicenses = Join-Path $Output 'LICENSES'
     New-Item -ItemType Directory -Path $runtimeLicenses -Force | Out-Null
@@ -142,7 +154,7 @@ foreach ($license in Get-ChildItem -LiteralPath (Join-Path $repo 'LICENSES') -Fi
 $noticePath = Join-Path $Output 'NOTICE.md'
 $noticeText = [IO.File]::ReadAllText($noticePath).Replace('(LICENSES/', "(https://github.com/Ninjacornix/reo/blob/$revision/LICENSES/")
 [IO.File]::WriteAllText($noticePath, $noticeText, [Text.UTF8Encoding]::new($false))
-$publishLayout = if ($SelfContained) { 'self-contained-folder' } else { 'framework-dependent-single-file' }
+$publishLayout = if ($SelfContained) { 'self-contained-single-file' } else { 'framework-dependent-single-file' }
 $referenceBuildPassed = [bool]$firstValidation -and (!$InputsFile2 -or [bool]$secondValidation)
 $roomRoutesPassed = [bool]$firstValidation.roomRoutePassed -and (!$InputsFile2 -or [bool]$secondValidation.roomRoutePassed)
 $distribution = @{format=2; updateFormat=2; installMode='local-build'; layout=$publishLayout;

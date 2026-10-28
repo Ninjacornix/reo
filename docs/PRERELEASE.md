@@ -2,7 +2,11 @@
 
 Current target: **v1.0.20-rc0**, with numeric assembly version **1.0.20**, marked
 prerelease. Package with `-ReleaseTag v1.0.20-rc0 -Version 1.0.20 -SelfContained`.
-The Windows folder includes the launcher's .NET runtime. The server is source-only, with Python/packages prepared
+The launcher is one self-contained single-file `Outbreak.Launcher.exe` (layout
+`self-contained-single-file`); its .NET/WPF runtime is bundled inside, not shipped as
+loose DLLs. The first rc0 upload published a self-contained *folder* (~250 runtime
+DLLs at the package root) because `-SelfContained` disabled single-file; the rc0
+assets were replaced with the single-file package. The server is source-only, with Python/packages prepared
 automatically in the selected data folder on first hosting (an installed Python 3.12 is
 reused when present).
 
