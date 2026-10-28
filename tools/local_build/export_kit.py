@@ -17,6 +17,38 @@ import subprocess
 from compilation_batches import GENERATED_BATCH_SIZE
 from generate_game import GAMES
 
+MOVIE_ALLOCATOR_SHA256 = "259c858fe1af5daff2a8a61129e333bf8dff0daa52219f0eeea63d63150a4143"
+
+
+def reviewed_movie_allocator(build, compdb, target_name, pinned_sha256=MOVIE_ALLOCATOR_SHA256):
+    """Require CMake's reviewed provider object, rather than the archive allocator."""
+    build = Path(build).resolve()
+    vendor = build / "parallel-gs-source/Granite/vulkan/memory_allocator.cpp"
+    source = build / "recomp/reo_movie_memory_allocator.cpp"
+    if sha(vendor) != pinned_sha256:
+        raise ValueError("Movie allocator provider requires the reviewed pinned Granite source")
+    original = vendor.read_text()
+    needle = "::CloseHandle(external->handle);"
+    if original.count(needle) != 1:
+        raise ValueError("Pinned movie allocator must have exactly one reviewed handle close")
+    patched = original.replace(needle,
+        "const bool reo_movie_handle_closed = ::CloseHandle(external->handle) != FALSE;\n"
+        "\t\treo_movie_import::provider_closed(reinterpret_cast<uintptr_t>(external->handle), reo_movie_handle_closed);")
+    expected = '#include "movie_runtime/import_receipt.h"\n' + patched
+    if source.read_text() != expected:
+        raise ValueError("CMake movie allocator differs from the reviewed source-preserving transform")
+    rows = [r for r in compdb if Path(r["file"]).resolve() == source and
+            "reo_movie_allocator_native.dir" in r["command"]]
+    if len(rows) != 1 or not rows[0].get("output"):
+        raise ValueError("Audited build graph must contain exactly one movie allocator OBJECT compilation")
+    prefix = "build recomp/" + target_name + ".exe:"
+    link = next((line.replace("\\", "/") for line in (build / "build.ninja").read_text().splitlines()
+                 if line.replace("\\", "/").startswith(prefix)), "")
+    direct_inputs = link.split(" | ", 1)[0].split(" || ", 1)[0].split()
+    if rows[0]["output"].replace("\\", "/") not in direct_inputs:
+        raise ValueError("Movie allocator provider must be a direct executable link object")
+    return source, rows[0]
+
 
 def sha(path):
     with Path(path).open("rb") as f:
@@ -33,6 +65,26 @@ def arguments(command):
         return [values[i] for i in range(count.value)]
     finally:
         ctypes.windll.kernel32.LocalFree(ctypes.cast(values, ctypes.c_void_p))
+
+
+def compile_options(command, relocate):
+    args = arguments(command)
+    flags = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg in {"/D", "-D", "/I", "-I"}:
+            arg += args[i + 1]
+            i += 1
+        if arg.startswith(("/I", "-I")):
+            flags.append("/I" + relocate(arg[2:]))
+        elif arg.startswith(("/D", "-D")):
+            if "CMAKE_INTDIR" not in arg:
+                flags.append("/D" + arg[2:])
+        elif arg in {"/Od", "/fp:precise", "/arch:AVX", "/arch:AVX2"}:
+            flags.append(arg)
+        i += 1
+    return flags
 
 
 def export(root, build, dependency, destination, recompiler, recipe_plan=None, game="file1"):
@@ -110,23 +162,7 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
             raise ValueError("Build references an unexported external path: " + str(path))
 
     def options(command):
-        args = arguments(command)
-        flags = []
-        i = 0
-        while i < len(args):
-            arg = args[i]
-            if arg in {"/D", "-D", "/I", "-I"}:
-                arg += args[i + 1]
-                i += 1
-            if arg.startswith(("/I", "-I")):
-                flags.append("/I" + relocate(arg[2:]))
-            elif arg.startswith(("/D", "-D")):
-                if "CMAKE_INTDIR" not in arg:
-                    flags.append("/D" + arg[2:])
-            elif arg in {"/Od", "/fp:precise", "/arch:AVX", "/arch:AVX2"}:
-                flags.append(arg)
-            i += 1
-        return flags
+        return compile_options(command, relocate)
 
     compdb = json.loads((safety / "compdb.json").read_text())
     other_target = "reo_recomp.dir" if game == "file2" else "reo_recomp_file2.dir"
@@ -143,6 +179,9 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
             if kind == "main/overlay-generated":
                 continue
             source = Path(file).resolve()
+            if source == build / "recomp/reo_movie_memory_allocator.cpp":
+                # Appended with a fixed identity below, preserving existing cache keys.
+                continue
             row = records.get(str(source).lower())
             if row is None:
                 # A unity member inherits the flags of its owning translation unit.
@@ -175,6 +214,11 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
         copy(dependency / relative, "source/third_party/PS2Recomp/" + relative)
         units.append({"id": "runtime" + str(len(units)), "sources": [relocate(path)], "archive": "runtime",
                       "options": options(lines[n + 1])})
+
+    allocator, allocator_row = reviewed_movie_allocator(build, compdb, target_name)
+    copy(allocator, "source/" + allocator.relative_to(root).as_posix())
+    units.append({"id": "movieAllocatorNative", "sources": [relocate(allocator)],
+                  "options": options(allocator_row["command"])})
 
     sample = next(r for r in compdb if "unity_0_cxx.cxx" in r["file"] and target_name + ".dir" in r["command"])
     generated_options = options(sample["command"])
