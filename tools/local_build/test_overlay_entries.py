@@ -24,7 +24,19 @@ def callback_rows():
                 if int(row["start"], 16) in ENTRIES]
 
 
+def common_rows():
+    with (ROOT / "recomp/config/overlay_maps/ovl0.csv").open(newline="") as stream:
+        return [row for row in csv.DictReader(stream) if int(row["start"], 16) < 0x370100]
+
+
 class OverlayEntryMapTests(unittest.TestCase):
+    def test_common_overlay_starts_at_first_code_entry(self):
+        rows = [row for row in common_rows() if int(row["start"], 16) >= 0x370080]
+        self.assertEqual([(row["name"], int(row["start"], 16), int(row["end"], 16),
+                           int(row["size"])) for row in rows],
+                         [("sub_00370080", 0x370080, 0x3700C0, 64),
+                          ("sub_003700C0", 0x3700C0, 0x370100, 64)])
+
     def test_callback_and_shared_body_are_separate_callable_entries(self):
         rows = callback_rows()
         self.assertEqual([int(row["start"], 16) for row in rows], list(ENTRIES))
@@ -42,6 +54,38 @@ class OverlayEntryMapTests(unittest.TestCase):
 @unittest.skipUnless(os.environ.get("REO_TEST_RECOMPILER"),
                      "Set REO_TEST_RECOMPILER to the freshly built tool")
 class OverlayEntryGenerationTests(unittest.TestCase):
+    def test_common_overlay_registers_first_code_after_header(self):
+        with tempfile.TemporaryDirectory(prefix="reo-common-overlay-test-") as folder:
+            root = Path(folder)
+            base = 0x370000
+            code = bytearray(0x100)
+            struct.pack_into("<4s4I", code, 0, b"MWo3", 1, base, len(code) - 64, 0)
+            # Authored fixtures distinguish two adjacent callable entries while
+            # retaining the real map's first-code boundary and header rows.
+            for offset, mask in [(0x80, 0xFF), (0xC0, 0xFFFF)]:
+                struct.pack_into("<III", code, offset, 0x30820000 | mask, 0x03E00008, 0)
+            (root / "0.elf").write_bytes(wrap_elf(code, base, len(code)))
+            with (root / "ovl0.csv").open("w", newline="") as stream:
+                writer = csv.DictWriter(stream, fieldnames=["name", "start", "end", "size"])
+                writer.writeheader()
+                writer.writerows(common_rows())
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools/overlay_recomp.py"), str(root),
+                 os.environ["REO_TEST_RECOMPILER"], "0"], cwd=root,
+                env=recompiler_environment("o0"), stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            output = root / "recomp/config/output_ovl/o0"
+            registry = (output / "register_o0.cpp").read_text()
+            registered = re.findall(
+                r"registerOverlayFunction\(0x370000u, 0x336F574Du, 4u, 1u, "
+                r"(0x[\da-fA-F]+)u, (\w+)\);", registry)
+            self.assertEqual({int(pc, 16) for pc, _ in registered}, {0x370080, 0x3700C0})
+            self.assertEqual(len(registered), 2)  # Header rows must stay unregistered.
+            first = (output / "o0_00370080_0x370080.cpp").read_text()
+            self.assertIn("// Address: 0x370080 - 0x3700c0", first)
+            self.assertIn("GPR_U64(ctx, 4) & (uint64_t)(uint16_t)255", first)
+
     def test_overlay_registration_preserves_callback_tail_entry(self):
         with tempfile.TemporaryDirectory(prefix="reo-overlay-entry-test-") as folder:
             root = Path(folder)
