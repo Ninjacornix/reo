@@ -59,7 +59,35 @@ again and streams virtual archives from original ranges plus replacement files.
 No enabled packs leaves the original disc path active. Exact-byte replacements also
 leave their original archives intact.
 
-For mod authoring, extract assets from your own existing import:
+### Exporting original assets
+
+After choosing an ISO, open **Game files** and tick **Export original assets to
+.pak files during setup** before importing. This optional setting starts off
+unchecked and is saved separately for File #1 and File #2. **Export now** also
+works with an already imported game. **Open exports folder** opens the results.
+
+Each game exports **one `original-assets.pak` containing all original NETBIO leaf
+assets**, including textures, models, audio, movies and reference name tables.
+The files keep their native formats; this does not convert everything to a common
+texture/model/audio format. Container headers and padding, DUMMY padding, game
+executables and code overlays are excluded.
+
+Results live under the selected storage folder at
+`asset-exports/<game>/<source-identity>/single/`. Export requires extra disk space
+and time to compress and verify every file. The launcher checks available space
+first and shows progress with **Cancel setup**. Canceling or failing an export keeps the
+imported game and completed exports. Completed exports are reused when the source
+and output size/timestamps still match. If an export was edited, a fresh version
+goes into a new folder and the previous export is kept.
+
+These original reference packs are for local editing, and cannot be enabled in
+**Mods**. Unzip the reference pack to obtain its `assets.json` index and assets;
+copy only the files you want to change into a separate edited folder, keeping
+their relative paths. Use the packer below to produce an installable replacement
+pack. The replacement restrictions above still apply, including protected name
+tables. Keep full original reference packs private.
+
+Alternatively, extract assets from your own existing import using Python:
 
 ```powershell
 python tools/assets/extract_assets.py "<import>/data" "<new-reference-folder>"

@@ -49,7 +49,7 @@ Private owned-data receipts below are under the original checkout's ignored
 |---|---|
 | Synthetic extraction/packer/C++ reader | Six unittest cases pass: identity with nonzero padding, smaller/larger/empty nested replacements, both tables, names/unknown metadata, nameless archives, alignment, boundary reads, determinism and bounds/protected-entry refusal. |
 | Launcher synthetic cases | 32 checks for both editions, paths including Windows normalization/device aliases, malformed/duplicate manifests, ZIP duplicates/missing files, AFS extents, ambiguity, loose packs, duplicate IDs and co-op policy. |
-| Self-contained launcher | All 705 self-tests pass with nonexistent .NET lookup roots and system-only PATH. |
+| Self-contained launcher | All 728 self-tests pass with nonexistent .NET lookup roots and system-only PATH, including 23 original-export checks. |
 | Real package integration | 29 checks pass: both editions, deterministic plans, cache reuse without rewriting payloads/receipts, cache corruption at launcher/runtime, bad binary headers, duplicate targets, conflicts naming both packs, wrong base hashes, ZIP links, network refusal, Unicode cache paths exceeding 300 characters and exact-byte identity bypass. |
 | Complete host/sector route comparison | All 4,920,984 replacement bytes for File #1 and 62,438 for File #2 agree with the payloads through host and CDVD sector routes. |
 | Portable compilation | Both refreshed frozen kits compile all four affected C++ units with pinned LLVM/MinGW UCRT after normal owned-ELF catalogue generation: eight units pass. |
@@ -125,3 +125,56 @@ ignored `build-ninja/extracted-assets/` folder:
 Every extracted file passed read-back SHA-256 comparison. Container headers and
 padding, DUMMY padding, executable and code overlays are excluded. Keep these owned
 game files private.
+
+## Optional original-asset export during setup
+
+`AssetExports.cs` writes one ZIP64-capable `original-assets.pak` per game, with
+every indexed NETBIO leaf in its original native format. Numeric prefixes preserve
+duplicate and missing names. `asset-reference.json` identifies the reference
+archive, and `assets.json` records numeric addresses, paths, byte counts and hashes
+in the existing authoring-tool format. The mod loader rejects reference exports;
+authors package selected changed files with `pack_assets.py` instead.
+
+The existing WPF Game files page has an unchecked per-edition setup preference,
+**Export now** for existing imports and **Open exports folder**. A newly selected
+supported ISO opens this page. Both explicit setup and the normal automatic setup
+path honor the preference after importing/building. Existing progress and Cancel
+controls cover export, verification and checksum recording. Controls that would
+change the active edition/settings are disabled during work.
+
+The exporter checks free space, cancellation and executable identity. It writes to
+a unique staging folder, hashes every payload while copying, reopens and verifies
+every compressed entry, then records the whole-pack checksum before publishing.
+Unchanged source/output stamps reuse completed exports; changed exports are kept
+while a new version is created. Cancellation removes only this invocation's named
+staging files, preserving imports and completed exports.
+
+Follow-up evidence is in the original checkout's ignored
+`build-ninja/asset-export-build/` folder:
+
+- All 23 synthetic export checks pass, including per-edition preferences, every
+  leaf and hash, duplicates/unsafe names, empty files, authoring metadata, reuse,
+  preservation of edited exports, pointer confinement, cancellation, wrong ELF,
+  both editions and long Unicode output paths. The full portable suite passes
+  728 checks without an installed .NET lookup path.
+- Real File #1: 18,641 entries, 4,217,165,504 payload bytes, a 3,611,570,825-byte
+  pack. Real File #2: 17,230 entries, 2,384,632,075 payload bytes, a
+  1,764,432,471-byte pack. All entry sizes/hashes match the earlier independent
+  Python extractions. Both whole-pack checksums match their receipts; repeated
+  exports reuse the archives without rewriting them.
+- A changed File #1 font copied from the reference export was packaged with the
+  Python authoring tool. All 9,280 replacement bytes agree through the native host
+  and sector routes.
+- Windows UI Automation checks both editions start unchecked, retain separate
+  preferences across restarts, and require an imported game for **Export now**.
+  Starting a real export and canceling it verifies disabled busy controls, removed
+  unpublished output and preserved imported data. Separate real Import checks for
+  both games confirm that ticking the setup option triggers export and canceling
+  retains the completed import. These use private hard-linked import aliases,
+  without modifying original game files. The compact layout was visually inspected
+  using the page's existing scroll area.
+
+Only the newly generated large test archives were removed after these checks to
+recover test space. The requested raw original extractions remain in place. No
+native runtime changes were needed for this launcher follow-up; the earlier
+native/gameplay evidence and final-release packaging limits above still apply.

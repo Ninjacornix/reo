@@ -53,6 +53,7 @@ static class SelfTest {
         GraphicsOptionsTests.Run(Check);
         ModsTests.Run(Check);
         AssetPakTests.Run(Check);
+        AssetExportTests.Run(Check);
         RandomizerSeedsTests.Run(Check);
         Task.Run(() => RandomizerSessionTests.Run(Check)).GetAwaiter().GetResult();
         OnlineOptionsTests.Run(Check);

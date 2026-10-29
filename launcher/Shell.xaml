@@ -277,6 +277,16 @@
        <TextBlock x:Name="SupportedDiscHint" Text="Required: Outbreak File #1, NTSC-U v2.00 (SLUS-20765). PAL, Japanese and other revisions are unsupported." Style="{StaticResource Hint}" Margin="0,14,0,0"/>
        <TextBlock x:Name="DiscValidationStatus" TextWrapping="Wrap" Margin="0,10,0,0"/>
        <TextBlock x:Name="ImportState" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,18,0,10"/>
+       <StackPanel x:Name="OriginalAssetOptions" Margin="0,10,0,0">
+        <CheckBox x:Name="ExportOriginalAssets" Checked="OriginalAssetOptionChanged" Unchecked="OriginalAssetOptionChanged" AutomationProperties.Name="Export original assets to .pak files during setup">
+         <TextBlock Text="Export original assets to .pak files during setup" TextWrapping="Wrap"/>
+        </CheckBox>
+        <TextBlock Text="One pack with all original assets for local modding. Keeps native formats and uses extra disk space. Completed exports are reused." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="25,6,0,8"/>
+        <WrapPanel Margin="0,0,0,4">
+         <Button x:Name="ExportOriginalAssetsNow" Content="Export now" Click="ExportOriginalAssetsClicked" Margin="0,0,10,8"/>
+         <Button x:Name="OpenOriginalAssetExports" Content="Open exports folder" Click="OpenOriginalAssetExportsClicked" Margin="0,0,0,8"/>
+        </WrapPanel>
+       </StackPanel>
        <TextBlock Text="Already have a completed game build?" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,10"/>
        <Button x:Name="ExistingBuildButton" Content="Use existing build" Click="UseExistingBuild" HorizontalAlignment="Left"/>
        <TextBlock x:Name="ExistingBuildHint" Text="Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,0"/>

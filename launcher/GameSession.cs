@@ -9,6 +9,7 @@ public sealed class GameSession {
     public Process? Process { get; private set; }
     public string? Logs { get; private set; }
     public ImportedDisc? Imported { get; private set; }
+    public OriginalAssetExport? OriginalAssets { get; private set; }
     public string? NetworkStatus { get; private set; }
     volatile string? graphicsStatus;
     public string? GraphicsStatus => graphicsStatus;
@@ -39,6 +40,7 @@ public sealed class GameSession {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var graphics = GraphicsOptions.From(settings);
+        OriginalAssets = null;
         var selectedAssetPaks = AssetPaks.Selected(settings);
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
         if (diagnosticColdCache && diagnosticRoute == null)
@@ -78,6 +80,8 @@ public sealed class GameSession {
         settings.SetImport(Imported.Root);
         if (AppLayout.Packaged(root))
             sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel, game: selectedGame.Id);
+        if (settings.WantsOriginalAssetPaks(selectedGame.Id))
+            OriginalAssets = await AssetExports.Ensure(Imported, selectedGame.Id, importProgress, cancel);
         string discRoot = Path.Combine(Imported.Root, "data"), discElf = Imported.Elf;
         string proxy = Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll");
         if (!File.Exists(proxy))

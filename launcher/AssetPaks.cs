@@ -104,6 +104,8 @@ public static class AssetPaks {
                 } else {
                     Require(new FileInfo(file).Length <= MaxExpanded, "Asset pack exceeds 2 GiB.");
                     zip = ZipFile.OpenRead(file);
+                    Require(zip.GetEntry(AssetExports.ReferenceHeader) == null,
+                        "Original asset exports are for local editing. Build a replacement .pak from your changed files.");
                     Require(zip.Entries.Count <= 10000, "Asset pack has too many ZIP entries.");
                     long expanded = 0;
                     foreach (var entry in zip.Entries) {
@@ -201,15 +203,17 @@ public static class AssetPaks {
         Require(selected.Count == 0 || settings.ResolvedCoopMode == "offline", "Asset packs currently support solo play only. Disable them before hosting or joining co-op.");
         return selected;
     }
-    public static AssetIndex Index(string data, string game, string? indexFile = null) {
+    public static AssetIndex Index(string data, string game, string? indexFile = null, CancellationToken cancel = default) {
         _ = Expected(game);
         var archives = new List<AssetArchive>(); var entries = new List<AssetIndexEntry>();
         foreach (string name in game == "file1" ? new[] { "NETBIO00.DAT", "NETBIO01.DAT", "NETBIO02.DAT" } : new[] { "NETBIO00.DAT", "NETBIO01.DAT" }) {
+            cancel.ThrowIfCancellationRequested();
             string source = Path.Combine(data, name); var info = new FileInfo(source);
             Require(info.Exists && info.Length < 0x100000000L, "Missing or oversized original asset archive: " + name);
             archives.Add(new(name, info.Length, info.LastWriteTimeUtc.Ticks));
             using var stream = File.OpenRead(source); using var reader = new BinaryReader(stream);
             void Walk(long offset, long length, string path, string label, int depth) {
+                cancel.ThrowIfCancellationRequested();
                 Require(offset >= 0 && length >= 0 && offset <= stream.Length && length <= stream.Length - offset, "Invalid asset archive extent.");
                 stream.Position = offset;
                 bool isArchive = length >= 4 && reader.ReadUInt32() == 0x00534641;
@@ -299,7 +303,7 @@ public static class AssetPaks {
         data = Path.TrimEndingDirectorySeparator(Path.GetFullPath(data));
         session = Path.GetFullPath(session);
         cache = Path.GetFullPath(cache ?? Path.Combine(Settings.Home, "asset-cache"));
-        var index = Index(data, game, Path.Combine(Path.GetDirectoryName(data)!, "assets.json"));
+        var index = Index(data, game, Path.Combine(Path.GetDirectoryName(data)!, "assets.json"), cancel);
         string elf = Path.Combine(data, game == "file1" ? "SLUS_207.65" : "SLUS_209.84");
         Require(HashRange(elf, 0, new FileInfo(elf).Length) == Expected(game), "Asset pack executable identity mismatch.");
         var prepared = new List<PreparedAsset>(); var owners = new Dictionary<string, string>();

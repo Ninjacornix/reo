@@ -59,6 +59,7 @@ public partial class MainWindow {
         SaveSettings(this, new());
         RefreshGameUi();
         await CheckSelectedDisc();
+        if (discCheck is { Ok: true } && !DiscImport.Ready(settings)) ShowPage("Setup");
     }
     // ---- Remove game ----
     int removalEstimate;
@@ -180,6 +181,7 @@ public partial class MainWindow {
             Close();
     }
     void RefreshImportUi() {
+        RefreshOriginalAssetExportUi();
         ExistingBuildHint.Text = AppLayout.Packaged(root)
             ? "Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required."
             : "Choose " + (settings.Game.Id == "file2" ? "reo_recomp_file2.exe" : "reo_recomp.exe") +
@@ -266,6 +268,7 @@ public partial class MainWindow {
             return;
         }
         launching = true;
+        bool exportingOriginalAssets = false;
         try {
             var progress = BeginDiscImport();
             RefreshGameUi();
@@ -276,13 +279,18 @@ public partial class MainWindow {
             if (AppLayout.Packaged(root))
                 await LocalGameBuild.Ensure(root, imported, progress, importCancellation!.Token, game: settings.Game.Id);
             settings.Save();
-            Status.Text = imported.Reused ? "Game data is already imported."
-                                          : "Game imported. Ready to play.";
+            OriginalAssetExport? originalAssets = null;
+            if (settings.WantsOriginalAssetPaks()) {
+                exportingOriginalAssets = true;
+                originalAssets = await AssetExports.Ensure(imported, settings.Game.Id, progress, importCancellation!.Token);
+            }
+            Status.Text = originalAssets != null ? $"Game ready. {originalAssets.Entries:N0} original assets {(originalAssets.Reused ? "already exported" : "exported")}."
+                : imported.Reused ? "Game data is already imported." : "Game imported. Ready to play.";
         } catch (OperationCanceledException) {
-            Status.Text = "Import canceled.";
+            Status.Text = exportingOriginalAssets ? "Asset export canceled. Imported game files are kept." : "Import canceled.";
         } catch (Exception error) {
-            Status.Text = "Could not import: " + error.Message;
-            if (error is InvalidDataException) {
+            Status.Text = exportingOriginalAssets ? "Game ready. Original asset export failed: " + error.Message : "Could not import: " + error.Message;
+            if (!exportingOriginalAssets && error is InvalidDataException) {
                 var file = new FileInfo(settings.GetIso());
                 discCheck = new(settings.Game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
                                 error.Message);

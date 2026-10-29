@@ -125,6 +125,25 @@ public partial class App : Application {
                 return;
             }
             int preparePaks = Array.IndexOf(e.Args, "--prepare-asset-paks");
+            int testExports = Array.IndexOf(e.Args, "--test-asset-exports");
+            if (testExports >= 0 && testExports + 1 < e.Args.Length) {
+                int checks = 0;
+                AssetExportTests.Run((valid, name) => { if (!valid) throw new IOException(name); checks++; });
+                File.WriteAllText(e.Args[testExports + 1], System.Text.Json.JsonSerializer.Serialize(new { passed = true, checks }));
+                Shutdown(); return;
+            }
+            int exportAssets = Array.IndexOf(e.Args, "--export-original-assets");
+            if (exportAssets >= 0) {
+                if (exportAssets + 4 >= e.Args.Length) throw new ArgumentException("--export-original-assets <game> <import-root> <output-home> <result.json>");
+                string selectedGame = e.Args[exportAssets + 1], imported = Path.GetFullPath(e.Args[exportAssets + 2]);
+                string resultPath = Path.GetFullPath(e.Args[exportAssets + 4]);
+                if (File.Exists(resultPath)) throw new IOException("Choose a new export result file.");
+                var disc = new ImportedDisc(imported, Path.Combine(imported, "data", GameDefinition.Find(selectedGame).ElfName), 0, 0, true);
+                var result = await AssetExports.Ensure(disc, selectedGame, home: e.Args[exportAssets + 3]);
+                Directory.CreateDirectory(Path.GetDirectoryName(resultPath)!);
+                File.WriteAllText(resultPath, System.Text.Json.JsonSerializer.Serialize(result));
+                Shutdown(); return;
+            }
             int testPaks = Array.IndexOf(e.Args, "--test-asset-paks");
             if (testPaks >= 0 && testPaks + 1 < e.Args.Length) {
                 int checks = 0;
@@ -220,7 +239,8 @@ public partial class App : Application {
             if (!e.Args.Contains("--smoke-launch") && !e.Args.Contains("--test-coop-session") &&
                 !e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
                 !e.Args.Contains("--test-lobby") &&
-                !e.Args.Contains("--import-iso") && !e.Args.Contains("--prepare-asset-paks") && !e.Args.Contains("--test-asset-paks") && !e.Args.Contains("--test-update") &&
+                !e.Args.Contains("--import-iso") && !e.Args.Contains("--prepare-asset-paks") && !e.Args.Contains("--test-asset-paks") &&
+                !e.Args.Contains("--test-asset-exports") && !e.Args.Contains("--export-original-assets") && !e.Args.Contains("--test-update") &&
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&
                 !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&
                 !e.Args.Contains("--test-compiler-setup") &&
