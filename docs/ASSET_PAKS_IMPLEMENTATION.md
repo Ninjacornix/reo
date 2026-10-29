@@ -251,3 +251,40 @@ Evidence is in the original checkout's ignored `build-ninja/game-pak-build/`:
 These are opening and representative replacement checks, not full-campaign or
 network-compatibility claims. A final release still needs refreshed kits and the
 normal full cold-build/package verification described in `PRERELEASE.md`.
+
+## Executable string reference extraction (issue #25)
+
+`tools/assets/extract_elf_strings.py` exports an addressable editing reference
+from the owned, SHA-256-verified File #1 executable. It checks ELF32/MIPS program
+headers and derives addresses from the actual file-backed PT_LOAD segment. The
+executable has combined/stripped sections, so UI grouping uses a hash-locked data
+range rather than claiming an ELF section provides semantic UI boundaries.
+
+The export covers file offsets `0x150060..0x159F80`, including UI/scenario text
+before the issue's reported start. It finds 980 printable NUL-terminated
+candidates; 421 lie in the narrower UI/name region ending at `0x152E80`, of which
+391 have matching aligned address words in the binary. Literal word matches are
+static pointer candidates, not verified call sites or runtime use. Every entry
+retains original bytes, spaces, line breaks, tags, encoding and a conservative
+byte budget that excludes the terminator and adjacent padding.
+
+The private output is in the original checkout's ignored
+`build-ninja/executable-strings/file1-checked/`. Its 160,750-byte reference PAK
+contains editable CSV/JSON plus the indexed original byte pool. All 980 entries'
+bytes, addresses, terminators, encoding round trips and literal address words
+were independently checked against the original executable. The issue's examples
+resolve to `0x250E20` (inventory command with leading spaces), `0x250D60` (herb
+prompt with line breaks/spaces), `0x250850` (floor prompt with formatting tag),
+and `0x24FE60` (scenario name). Verification receipts remain beside the private
+PAK. The source executable SHA-256 remains unchanged.
+
+Three synthetic unittest cases pass for ELF bounds/mapping, duplicate strings,
+encoded byte budgets, formatting, truncated/binary runs, ZIP/CSV read-back,
+source identity and refusal to overwrite or export inside imported game data.
+REA native tools were unavailable in this session; this is direct static ELF
+byte analysis, without decompilation or game-rendering evidence. No REA client
+configuration or analysis-engine installation was changed.
+
+This adds a reference extractor only. It does not implement executable-string
+runtime overrides or claim a translated string was rendered in-game. The output
+is deliberately separate from both replacement mods and complete game PAKs.

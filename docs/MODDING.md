@@ -132,6 +132,28 @@ Developers can prepare and validate packs without starting a game:
 Outbreak.Launcher.exe --prepare-asset-paks file1 "<import>/data" "<pack-folder>" "<new-session-folder>"
 ```
 
+## Executable-string references
+
+For the supported File #1 executable, a separate local reference export helps
+prepare translations of strings stored inside the ELF:
+
+```powershell
+python tools/assets/extract_elf_strings.py "<import>/data/SLUS_207.65" "<new-private-reference-folder>"
+```
+
+`executable-strings-file1.pak` contains `ui-strings.csv` / `ui-strings.json`, a
+broader candidate catalogue, original bytes and verification metadata. Entries
+include ELF-mapped addresses, file offsets, encoded byte budgets, formatting tags
+and locations of literal address words. The UI grouping is a location heuristic;
+SDK diagnostics and other non-display strings also occur in the broader list.
+Keep original identity fields and bytes intact, and enter translations separately.
+
+This is an editing reference, **not an installable mod or playable game PAK**.
+Runtime executable-string overrides are still unimplemented. Byte limits exclude
+the terminating NUL and do not borrow adjacent padding. Original text uses the
+CP932/Shift-JIS family encoding; a translation also needs appropriate glyph/font
+mapping. Keep these original game text references private.
+
 ## Randomizer
 
 The launcher has one **Randomizer** package for weapons, ammunition, common items and enemy spawns. Weapon pickups receive other weapons, ammunition receives ammunition, and common items receive common items. The global catalogue includes definitions from all five File #1 scenarios, rather than only supplies already present in the selected scenario. Starting equipment, owned items, scenario keys, Daylight and the lighter stay unchanged. Enemy choices persist across rooms. Start a fresh File #1 scenario. The mod remains experimental; full scenario completion is unverified.
