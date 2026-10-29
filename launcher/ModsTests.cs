@@ -3,6 +3,7 @@ using System.IO;
 namespace Outbreak.Launcher;
 static class ModsTests {
     public static void Run(Action<bool, string> check) {
+        File2ModsTests.Run(check);
         string example = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "examples", "mods", "no-infection.json"));
         void Reject(Action action, string name) {
             try { action(); } catch (IOException) { check(true, name); return; }

@@ -53,8 +53,11 @@ internal static class RandomizerSessionTests {
         check(fetched.SequenceEqual(config),"Real UDP host-to-guest configuration transfer");
         check(RandomizerSession.Digest(fetched)==RandomizerSession.Digest(config),"Host and guest configuration hashes match");
         using var resolveTimeout=new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var secondSample=Mods.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"examples","mods","randomizer-file2.json")));
+        secondSample.ItemRandomizer!.Seed=41; secondSample.EnemyRandomizer!.Seed=41;
+        byte[] secondConfig=RandomizerSession.Create("reo01",new() {secondSample},"file2");
         var resolveServer=Task.Run(async ()=> {
-            foreach(var body in new[] {config,empty,config}) {
+            foreach(var body in new[] {config,empty,config,secondConfig,config,secondConfig}) {
                 var request=await server.ReceiveAsync(resolveTimeout.Token);
                 await server.SendAsync(RandomizerSession.Reply(request.Buffer,body)!,request.RemoteEndPoint,resolveTimeout.Token);
             }
@@ -69,6 +72,17 @@ internal static class RandomizerSessionTests {
         guest.JoinHostName="DifferentHost";
         try { await RandomizerSession.Resolve(guest,new(),resolveTimeout.Token,port); check(false,"Wrong host rejected"); }
         catch(IOException) { check(true,"Wrong host rejected"); }
+        guest.SelectedGame="file2"; guest.JoinHostName="reo01";
+        var secondResolved=await RandomizerSession.Resolve(guest,new() {sample},resolveTimeout.Token,port);
+        check(secondResolved.Bytes.SequenceEqual(secondConfig) && secondResolved.Mods.Single().ElfSha256==DiscImport.SecondElfSha256 &&
+              secondResolved.Mods.Single().ItemRandomizer!.Seed==41 &&
+              secondResolved.Mods.Single().EnemyRandomizer!.Pool.Count==secondSample.EnemyRandomizer.Pool.Count,
+              "Real UDP File #2 join adopts host seeds and complete pool, ignoring File #1 local settings");
+        try { await RandomizerSession.Resolve(guest,new(),resolveTimeout.Token,port); check(false,"File #2 UDP join rejects File #1 host"); }
+        catch(IOException) { check(true,"File #2 UDP join rejects File #1 host"); }
+        guest.SelectedGame="file1";
+        try { await RandomizerSession.Resolve(guest,new(),resolveTimeout.Token,port); check(false,"File #1 UDP join rejects File #2 host"); }
+        catch(IOException) { check(true,"File #1 UDP join rejects File #2 host"); }
         await resolveServer;
         string receipts=Path.Combine(AppContext.BaseDirectory,"test-results");
         Directory.CreateDirectory(receipts);

@@ -1,35 +1,52 @@
 # Launcher
 
-The v1.0.0 through v1.0.3 downloads are withdrawn. v1.0.15 (1.0 Alpha) uses a
-framework-dependent launcher, automatic compiler setup and guided first-run steps. See
-[requirements](../REQUIREMENTS.md). Revised setup/gameplay have not been rerun.
-The extracted single-file launcher is checked separately for window startup;
-its icon is an embedded WPF resource, with a separate copy for the game window.
+The v1.0.20-rc0 Windows download includes the .NET runtime. Extract the complete
+folder and open **Outbreak.Launcher.exe**; players do not need to install .NET,
+Visual Studio or a compiler separately. See [requirements](../REQUIREMENTS.md).
 
-The replacement package contains independent tools and runtime inputs. Select your
-own NTSC-U v2.00 / SLUS-20765 ISO under **Game files**. The launcher imports game
-files without mounting, generates native sources locally, then compiles and caches
-the game. Boot configuration, game/region serial and executable SHA-256 are checked
-before import, with a specific result beside the ISO controls. Other regions,
-games and executable revisions are rejected. A Vulkan-capable
-GPU driver is required. File #2 remains a placeholder.
+Choose your own supported NTSC-U disc: File #1 v2.00 / SLUS-20765 or File #2
+v1.05 / SLUS-20984. The launcher verifies the disc, imports its files without
+mounting, generates native sources locally, then compiles and caches the game.
+Other executable revisions are rejected. A Vulkan-capable GPU driver is required.
+File #2 and its Randomizer are experimental; see
+[the verified paths and remaining limits](../docs/FILE2_RANDOMIZER.md).
 
-The application is portable; system dependencies are installed separately.
-Install .NET 8 Desktop Runtime if needed, then select an ISO. The launcher downloads
-and prepares the pinned LLVM/MinGW x64 compiler automatically in Local AppData;
-no terminal commands or environment variable are required. Required generation
-inputs are bundled compressed and unpack into the user
-cache. The full compiler and .NET runtime are not inside the launcher folder.
-The local server source is under `network-server/`; the launcher prepares Python
-and requirements.txt packages automatically in Local AppData on first hosting.
-Joining a host does not need them. Required build inputs remain compressed in one ZIP.
-Third-party licence notices are consolidated; developer source archives are not
-inside the normal download.
-Legacy development kits require existing Microsoft C++ tools and a Windows SDK.
-The launcher does not install system-wide tools. The first compilation takes time;
-later launches reuse verified completed outputs.
-The final game executable, extracted assets and generated instruction code stay
-in Local AppData. Keep the ISO available for direct sector reads.
+On first build the launcher downloads and prepares the pinned LLVM/MinGW x64
+compiler automatically. Keep **build-inputs.zip** and **build-inputs-file2.zip**
+beside the launcher. No terminal commands or environment variables are required.
+The compiler is shared between games; later launches reuse verified completed
+builds. Nothing is installed system-wide or added to PATH.
+
+After disc import, the launcher also prepares that game's two title-screen
+demonstration videos as silent H.264 MP4s at CRF 20 using the medium encoder
+preset; earlier cached encodes are regenerated once. Videos use full opacity on
+Play with a readability gradient. Videos and fallback artwork appear only on
+Play; all other pages use the solid background color and close video playback.
+Returning to Play resumes its saved position.
+They loop and crossfade behind the launcher, switching between File #1 and
+File #2 with the game selection. There are no playback or seeking controls.
+Switching back resumes that game's previous clip and timestamp. Minimizing or
+playing the game also preserves the background position for the current launcher
+session. Conversion is a one-time setup per game; later launches reuse the cache.
+The existing image remains the fallback
+when movies are absent, conversion or playback fails, or Windows animations are
+disabled. Playback stops while the game runs or the launcher is minimized.
+
+The optional converter is a pinned [Gyan FFmpeg essentials build](https://www.gyan.dev/ffmpeg/builds/),
+downloaded once (about 109 MiB) into **data/media-tools/**, with archive and
+executable SHA-256 verification. No separate FFmpeg installation is required.
+MP4s stay in each private import's **background-videos-v1/** directory, are reused
+on later launches, follow storage moves, and are removed with the imported game.
+An unavailable converter or network connection does not block importing,
+building or playing. No game videos are included in the launcher download.
+
+Portable data stays in **data/** beside the launcher unless a different storage
+folder is selected. Imported files, generated code, completed games, saves and
+build caches remain private. Keep the ISO available for direct sector reads.
+The **network-server/** folder contains server source; on first hosting the
+launcher prepares Python and its packages in the selected data folder. Joining
+an existing host does not need those hosting tools. Dependency-source archives
+are separate developer downloads.
 
 Developers can build the launcher with .NET 8 SDK and Visual Studio C++ tools:
 
@@ -44,16 +61,16 @@ build-kit instructions are in [local builds](../docs/LOCAL_BUILDS.md).
 
 ## Pages
 
-- **Play:** select File #1 or File #2. A next-step box guides first setup (incomplete download, missing Vulkan driver, Choose ISO, unsupported disc, Build game). The **Before you play** checklist marks .NET, the Vulkan driver (with the graphics card maker's driver page), free disk space, the game disc, build tools, the built game and the input device as done or missing, each with a fix button. File #2 is shown as coming later and cannot be selected.
+- **Play:** select File #1 or File #2. The next-step box guides disc selection, setup and Play. The readiness checklist shows the launcher runtime (bundled in RC0), Vulkan driver, free disk space and supported disc. Required first-build tools are prepared automatically.
 - **Game files:** choosing an ISO runs a quick read-only check; a green ✓ enables Import, a red ✗ explains the problem. **Use existing build** imports a completed compatible build. **Remove game** deletes the imported disc data, the built game and its compile cache (optionally also saves and the shared build/hosting tools) after a confirmation; the ISO stays. Import/build progress stays visible at the bottom of every page.
 - **Graphics:** window resolution, borderless fullscreen, image scaling, 3D texture filtering, anisotropic filtering (Off/2×/4×/8×/16×), FXAA or SMAA, brightness, gamma and async geometry. Changes apply next launch.
-- **Movies:** before each launch `reo-movie-check.exe` (beside the launcher) asks whether the GPU the game renders with has a hardware MPEG-2 decoder. If it does, **Graphics > Movies > Decode movies on the graphics card** is available and on by default; unchecking it makes the processor decode them. Without a decoder (the AMD Radeon RX 9060 XT, for example) the box is greyed out and the game's original CPU decoder plays movies. The choice is shown in the status line and saved as `movieDecoder` in the session's `launch.json`.
+- **Movies:** before each launch `reo-movie-check.exe` (beside the launcher) asks whether the GPU the game renders with has a hardware MPEG-2 decoder. CPU decoding is the default. If the decoder check passes, **Graphics > Movies > Decode movies on the graphics card** becomes available; enable it to use the verified GPU decoder. Without a decoder (the AMD Radeon RX 9060 XT, for example) the box is greyed out and the game's original CPU decoder plays movies. The choice is shown in the status line and saved as `movieDecoder` in the session's `launch.json`.
 - **Controls:** choose keyboard, DualSense or Xbox/XInput; remap buttons and keys; adjust dead zones and stick options. USB DualSense is physically tested; Xbox and Bluetooth have parser/simulated coverage. Rumble and adaptive triggers are unsupported.
 - **Save games:** open the selected game's memory-card folder or create a ZIP backup while the game is closed. Save/load itself remains in the game.
 - **Log:** read session debug/output logs, with optional follow mode.
 - **Co-op:** Play alone, Host a game or Join a game; player name; hosting address, ports and firewall; games found on the local network; optional automatic waiting room. See [Co-op](#co-op).
 - **Cheats:** built-in gameplay toggles and optional compatible PCSX2 data cheats.
-- **Mods:** placeholder.
+- **Mods:** import and enable packages separately for each game. The bundled File #1 and File #2 Randomizer examples use a fresh seed per solo/host launch; joiners use the host settings.
 
 Check for updates uses [GitHub Releases](https://github.com/Ninjacornix/reo/releases). Packaged installations can download, verify and install newer releases; source checkouts open the release page. See [Updates](#updates).
 
@@ -144,7 +161,35 @@ The selected ISO is imported once without mounting. The original ISO stays avail
 
 ## Artwork and validation
 
-Game cards and faded backgrounds are plain by default. Users can optionally
-provide their own local cover images; the launcher no longer downloads them.
-These local files are neither embedded in the launcher nor distributed with the
-source. See [asset provenance](Assets/PROVENANCE.md).
+The Play page shows 190 × 135 × 14 mm 3D cases using cover images. Ready games turn
+slowly; unavailable games are grayscale. Motion stops when the page is hidden,
+the window is minimized, or Windows animations are disabled. Without artwork,
+the case displays the game's title. Drag a case to rotate it horizontally and
+vertically. After a four-second inspection pause, the case eases back to its idle
+pose along the shortest rotation. Double-click to reset immediately. Clicking
+the case still selects that game. The Play page gives both cases a larger shared
+archive stage; the camera adapts to the available viewport so all drag angles fit.
+
+Artwork is selected from the ISO's boot serial and region, defaulting to NTSC-U.
+Personal covers live in the selected data folder's `artwork/` directory.
+Maintainers can also package predownloaded covers under `Assets/Covers/`; see
+[cover naming and fallback rules](Assets/Covers/README.md). The launcher does
+not automatically download images. NTSC-U front, spine and back scans were predownloaded into the
+packaged folder; see [artwork sources](Assets/Covers/ARTWORK-NOTICE.md).
+See [asset provenance](Assets/PROVENANCE.md).
+
+## Cover artwork
+
+On first normal launch, the launcher downloads cover scans automatically with
+progress at the bottom, then applies them to the 3D cases. Verified images are
+cached in the selected data folder's `artwork/downloaded/` directory. Later
+launches reuse them. Images are not bundled; offline or failed downloads retain
+placeholders and never block playing. Personal cover images remain supported.
+See [artwork selection and sources](Assets/Covers/README.md).
+
+The Play page crossfades its background artwork when changing games. Transparent
+case stages have left-aligned #1 / #2 lettering; the selected case lights up
+under a spotlight while the other stays dim. Dragging uses the normal cursor.
+A quick fling keeps the case spinning with friction; grabbing it stops the spin.
+Once stopped, cases pause for four seconds, then ease back to idle. Reduced-motion, hidden-page and
+minimized-window behavior is respected.

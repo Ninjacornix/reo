@@ -11,14 +11,9 @@ public partial class MainWindow {
     void RefreshCheats() {
         cheatsGame = settings.Game.Id;
         CheatGame.Text = settings.Game.Name;
-        CheatControls.IsEnabled = settings.Game.Id == "file1" && !game.Running && !launching;
+        CheatControls.IsEnabled = !game.Running && !launching;
         EnableCheats.IsChecked = settings.CheatsEnabled;
         CheatList.Children.Clear();
-        if (settings.Game.Id == "file2") {
-            Status.Text =
-                "Cheats are not available for File #2 yet.";
-            return;
-        }
         try {
             var groups = Cheats.Load(settings.Game.Id);
             if (groups.Count == 0)

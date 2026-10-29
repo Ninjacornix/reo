@@ -7,6 +7,10 @@ public sealed partial class Settings {
     public string Exe { get; set; } = "";
     public string Iso { get; set; } = "";
     public int WindowSize { get; set; }
+    public double LauncherWidth { get; set; } = 1320;
+    public double LauncherHeight { get; set; } = 920;
+    public bool LauncherMaximized { get; set; }
+    public bool LauncherBackgroundMovies { get; set; } = true;
     public bool Fullscreen { get; set; }
     public bool PerformanceOverlay { get; set; }
     public string AspectRatio { get; set; } = "4:3";

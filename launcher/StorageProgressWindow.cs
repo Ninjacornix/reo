@@ -17,7 +17,8 @@ internal static class StorageProgressWindow {
         panel.Children.Add(heading); panel.Children.Add(detail); panel.Children.Add(bar); panel.Children.Add(button);
         var dialog = new Window { Title = title, Content = panel, Width = 520, SizeToContent = SizeToContent.Height,
             ResizeMode = ResizeMode.NoResize, WindowStartupLocation = owner == null ? WindowStartupLocation.CenterScreen : WindowStartupLocation.CenterOwner,
-            Background = new SolidColorBrush(Color.FromRgb(28, 30, 32)), Foreground = Brushes.White, Owner = owner };
+            Background = Palette.Brush(Palette.Background), Foreground = Palette.Brush(Palette.Text), Owner = owner };
+        dialog.SetResourceReference(Control.FontFamilyProperty, "GameDisplayFont");
         bool finished = false, cancelled = false;
         Exception? failure = null;
         void Cancel() { cancel.Cancel(); button.IsEnabled = false; heading.Text = "Cancelling… Your original files are safe."; }

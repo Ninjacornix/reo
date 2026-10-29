@@ -63,6 +63,8 @@ static class DiscImportTests {
                     Record("ASSET.BIN;1"u8.ToArray(), 24, asset.Length, false));
         File.WriteAllBytes(iso, image);
         // clang-format on
+        check(GameArtwork.DiscIdentity(1, iso) == new GameArtwork.Identity("SLUS-20765", "ntsc-u"),
+              "Artwork reads SYSTEM.CNF from the ISO without relying on its filename");
         string expected = Convert.ToHexString(SHA256.HashData(elf)).ToLowerInvariant();
         using (var disc = new DiscImage(iso))
             check(disc.Entries.Count == 5 && disc.Entries.Any(e => e.Name == "BIN/ASSET.BIN"),

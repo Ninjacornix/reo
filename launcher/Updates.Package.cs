@@ -57,7 +57,8 @@ public static partial class Updates {
                    JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "distribution.json")))) {
             var d = doc.RootElement;
             compact = d.TryGetProperty("layout", out var layout) &&
-                      layout.GetString() == "framework-dependent-single-file";
+                      layout.GetString() is "framework-dependent-single-file" or
+                                            "self-contained-single-file";
             bundledServer =
                 d.TryGetProperty("bundledServer", out var server) && server.GetBoolean();
             serverSource =

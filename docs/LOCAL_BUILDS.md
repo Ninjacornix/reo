@@ -26,9 +26,19 @@ verified cached outputs without compiling.
 
 The portable Windows exporter and compiler worker now support the pinned
 LLVM/MinGW UCRT toolchain. Independent libraries and the recompiler are built with
-that same toolchain; MSVC C++ archives are not reused. The full first-run game
-compilation has completed successfully. The sealed launcher's end-to-end setup
-and room route were not rerun for this build-only prerelease.
+that same toolchain; MSVC C++ archives are not reused. RC0 was tested through the extracted Windows launcher: supported-disc import,
+local generation/compilation, actual room entry and cached Play passed for both
+games. The test used a path with spaces and non-ASCII characters, an unrelated
+working directory and a system-only PATH. Compiler-unavailable cache checks
+confirmed completed games launch without compiling again. The compiler was
+restored and hash-verified afterward. The Windows ZIP bundles the launcher's
+.NET runtime; players do not need a separate .NET installation.
+
+File #2's final portable native also repeated actual randomized pickup, equip,
+firing and enemy reconstruction/combat/death checks. See
+[File #2 validation](FILE2_RANDOMIZER.md) for exact scope and remaining limits.
+These results establish the tested Windows machine and routes, rather than all
+hardware, discs, scenarios, saves or multiplayer sessions.
 Legacy MSVC development kits continue to require existing Microsoft tools; the
 launcher never installs them.
 
@@ -99,6 +109,18 @@ currently loaded, disc-derived overlay; an unresolved adapter fails explicitly.
 Build logs and reusable object receipts stay in the private workspace. A cache key
 includes the build-kit manifest, supported ELF hash and architecture. Completed
 files are hashed and admitted only after the complete pipeline succeeds.
+
+**Long paths.** Windows long paths are off by default, so Python opens files through
+the 259-character limit. Build files nest about 180 characters below the data folder
+and kit sources about 250, which broke rc0 builds in data folders over ~80 characters.
+`tools/local_build/long_paths.py` gives the rule: `build_game.py` turns its kit, disc,
+work and output roots into extended (`\\?\`) paths, so every derived Python path is
+extended; anything handed to a native tool (recompiler config/arguments, compiler
+arguments, response files, generated `#include` lines, `PATH`) goes through `native()`.
+LLVM and the patched recompiler lengthen ordinary paths themselves. Build paths only
+through `pathlib`: an extended path does not treat `/` as a separator. Windows still
+refuses to start a program, or run it in a folder, past 259 characters; the launcher
+therefore rejects data folders longer than 150 characters before building.
 
 ## Linux
 

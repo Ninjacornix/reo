@@ -46,6 +46,16 @@ public static class InputMapping {
             result.Add(RightTrigger);
         return result;
     }
+    public static bool ActionPressed(Pad mapped, string action) => action switch {
+        "CameraUp" => mapped.RY > 0,
+        "CameraDown" => mapped.RY < 0,
+        "CameraLeft" => mapped.RX < 0,
+        "CameraRight" => mapped.RX > 0,
+        "L2" => mapped.LT > 30,
+        "R2" => mapped.RT > 30,
+        _ => Actions.Any(a => a.Id == action && a.Code < LeftTrigger &&
+                             (mapped.Buttons & a.Code) != 0)
+    };
     public static string SourceName(int code, string kind) {
         if (code == 0)
             return "Unbound";

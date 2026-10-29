@@ -6,7 +6,7 @@ using System.Windows.Media.Imaging;
 namespace Outbreak.Launcher;
 public partial class MainWindow {
     string currentPage = "", pendingPage = "";
-    bool pageTransition, animatePage;
+    bool pageTransition, animatePage, fadeLivePage;
 
     bool PreparePageChange(string name) {
         if (pageTransition) {
@@ -17,9 +17,12 @@ public partial class MainWindow {
             return false;
         animatePage = IsLoaded && currentPage.Length != 0 && SystemParameters.ClientAreaAnimation &&
                       PageContent.ActualWidth > 0 && PageContent.ActualHeight > 0;
+        // RenderTargetBitmap snapshots rasterize the live video and 3D cases on
+        // the UI thread. A short foreground fade keeps navigation responsive.
+        fadeLivePage = animatePage && (currentPage == "Play" || name == "Play" || backgroundPlayer?.HasVideo == true);
+        animatePage &= !fadeLivePage;
         if (animatePage) {
             OutgoingPage.Source = SnapshotPageArea(PageContent);
-            OutgoingHeader.Source = SnapshotPageArea(PageHeader);
         }
         if (currentPage == "Controller")
             CancelCapture(this, new());
@@ -27,7 +30,9 @@ public partial class MainWindow {
         return true;
     }
 
-    BitmapSource SnapshotPageArea(FrameworkElement area) {
+    BitmapSource? SnapshotPageArea(FrameworkElement area) {
+        if (area.ActualWidth <= 0 || area.ActualHeight <= 0)
+            return null;
         var bounds = new Rect(0, 0, area.ActualWidth, area.ActualHeight);
         // Include the background beneath the old page. Dissolving this opaque
         // image over the new page avoids the brightness dip from two alpha fades.
@@ -48,6 +53,11 @@ public partial class MainWindow {
     }
 
     void AnimatePageChange() {
+        if (fadeLivePage) {
+            PageContent.BeginAnimation(OpacityProperty, new DoubleAnimation(0.85, 1,
+                TimeSpan.FromMilliseconds(160)) { FillBehavior = FillBehavior.Stop });
+            return;
+        }
         if (!animatePage)
             return;
         pageTransition = true;
@@ -56,17 +66,13 @@ public partial class MainWindow {
         var outgoing = new DoubleAnimation(1, 0, duration) { EasingFunction = easing };
         outgoing.Completed += (_, _) => {
             OutgoingPage.Source = null;
-            OutgoingHeader.Source = null;
             OutgoingPage.BeginAnimation(OpacityProperty, null);
-            OutgoingHeader.BeginAnimation(OpacityProperty, null);
             pageTransition = false;
             string next = pendingPage;
             pendingPage = "";
             if (next.Length != 0 && next != currentPage)
                 ShowPage(next);
         };
-        OutgoingHeader.BeginAnimation(
-            OpacityProperty, new DoubleAnimation(1, 0, duration) { EasingFunction = easing });
         OutgoingPage.BeginAnimation(OpacityProperty, outgoing);
     }
 }

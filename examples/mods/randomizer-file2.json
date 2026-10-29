@@ -1,0 +1,360 @@
+{
+    "format":  1,
+    "id":  "example.randomizer",
+    "name":  "Randomizer",
+    "version":  "1.7.0",
+    "description":  "Randomizes weapons, ammunition, common items and supported enemy spawns while preserving keys, starting equipment and scripted enemy families.",
+    "elfSha256":  "5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d",
+    "itemRandomizer":  {
+                           "seed":  2027,
+                           "mode":  "global"
+                       },
+    "enemyRandomizer":  {
+                            "seed":  2031,
+                            "mode":  "enemyTypes",
+                            "sourceBehaviors":  [
+                                                    0,
+                                                    9,
+                                                    24,
+                                                    33
+                                                ],
+                            "pool":  [
+                                         {
+                                             "type":  1,
+                                             "model":  0,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  9,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  10,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  11,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  12,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  13,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  14,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  15,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  16,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  40,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  41,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  42,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  43,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  44,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  45,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  46,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  47,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  48,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  49,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  50,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  51,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  52,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  57,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  1,
+                                             "model":  58,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  1
+                                         },
+                                         {
+                                             "type":  2,
+                                             "model":  1,
+                                             "health":  300,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  8
+                                         },
+                                         {
+                                             "type":  0,
+                                             "model":  0,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  12
+                                         },
+                                         {
+                                             "type":  22,
+                                             "model":  0,
+                                             "health":  1200,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  12
+                                         },
+                                         {
+                                             "type":  5,
+                                             "model":  0,
+                                             "health":  50,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  36,
+                                             "model":  0,
+                                             "health":  300,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  22,
+                                             "model":  1,
+                                             "health":  1200,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  12
+                                         },
+                                         {
+                                             "type":  29,
+                                             "model":  0,
+                                             "health":  4500,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  30,
+                                             "model":  0,
+                                             "health":  400,
+                                             "behavior":  1,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  19,
+                                             "model":  0,
+                                             "health":  6000,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  20,
+                                             "model":  0,
+                                             "health":  5000,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  0,
+                                             "model":  1,
+                                             "health":  700,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  12
+                                         },
+                                         {
+                                             "type":  2,
+                                             "model":  2,
+                                             "health":  300,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  8
+                                         },
+                                         {
+                                             "type":  2,
+                                             "model":  3,
+                                             "health":  300,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  8
+                                         },
+                                         {
+                                             "type":  7,
+                                             "model":  0,
+                                             "health":  600,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  6,
+                                             "model":  0,
+                                             "health":  150,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  23,
+                                             "model":  0,
+                                             "health":  900,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  24
+                                         },
+                                         {
+                                             "type":  43,
+                                             "model":  0,
+                                             "health":  4500,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  12
+                                         },
+                                         {
+                                             "type":  43,
+                                             "model":  1,
+                                             "health":  6000,
+                                             "behavior":  0,
+                                             "posture":  0,
+                                             "weight":  12
+                                         }
+                                     ]
+                        }
+}

@@ -50,6 +50,11 @@ static class SelfTest {
         }
         Task.Run(() => StorageTests.Run(Check)).GetAwaiter().GetResult();
         DiscImportTests.Run(Check);
+        Task.Run(() => BackgroundVideoTests.Run(Check)).GetAwaiter().GetResult();
+        GameArtworkTests.Run(Check);
+        GameFontTests.Run(Check);
+        PaletteTests.Run(Check);
+        GameArtworkDownloadTests.Run(Check);
         GraphicsOptionsTests.Run(Check);
         ModsTests.Run(Check);
         RandomizerSeedsTests.Run(Check);
@@ -108,8 +113,9 @@ static class SelfTest {
                   builtinCheats.All(g => g.Supported && g.Writes.Count == 0),
               "Built-in toggles work without imported cheat files");
         Check(builtinCheats.Select(g => g.Id).Distinct().Count() == 4 &&
-                  Cheats.Builtins("file2").Count == 0,
-              "Built-ins have stable separate identities and are File1-only");
+                  Cheats.Builtins("file2").Count == 3 &&
+                  Cheats.Builtins("file2").All(g => g.Id.StartsWith("builtin.file2.")),
+              "Built-ins have stable separate identities for each game");
         Check(builtinCheats.Any(g => g.Builtin == "health") &&
                   builtinCheats.Any(g => g.Builtin == "infection") &&
                   builtinCheats.Any(g => g.Builtin == "ammo") &&
@@ -155,6 +161,29 @@ static class SelfTest {
             unlockSettings.CheatsEnabled = false;
             Check(Cheats.Export(unlockSettings, unlockFixture) == "",
                   "Unlock selection still respects the master cheat switch");
+            var secondCheats = new Settings { SelectedGame = "file2", CoopMode = "offline",
+                CheatsEnabled = true, EnabledCheats = new() { "builtin.file1.unlock", "builtin.file1.health" } };
+            Check(Cheats.Export(secondCheats, unlockFixture) == "",
+                  "File #1 selections never apply to File #2");
+            secondCheats.EnabledCheats.AddRange(Cheats.Builtins("file2").Select(g => g.Id));
+            string secondFile = Cheats.Export(secondCheats, unlockFixture);
+            Check(File.ReadAllLines(secondFile).SequenceEqual(new[] {
+                      "REO-CHEATS-2", "builtin health", "builtin infection", "builtin ammo" }),
+                  "File #2 exports its own health, infection and ammunition selections");
+            secondCheats.SelectedGame = "file1";
+            secondCheats.EnabledCheats = Cheats.Builtins("file2").Select(g => g.Id).ToList();
+            Check(Cheats.Export(secondCheats, unlockFixture) == "",
+                  "File #2 selections never apply to File #1");
+            secondCheats.SelectedGame = "file2";
+            secondCheats.CheatsEnabled = false;
+            Check(Cheats.Export(secondCheats, unlockFixture) == "",
+                  "File #2 respects the master cheat switch");
+            secondCheats.CheatsEnabled = true;
+            secondCheats.CoopMode = "host";
+            bool blockedOnlineCheats = false;
+            try { Cheats.Export(secondCheats, unlockFixture); }
+            catch (IOException) { blockedOnlineCheats = true; }
+            Check(blockedOnlineCheats, "File #2 cheats cannot be enabled in co-op");
         } finally { Directory.Delete(unlockFixture, true); }
         var usb = new byte[64];
         usb[0] = 1;
@@ -370,6 +399,37 @@ static class SelfTest {
             Check(forward.AutoForward && !new Settings().AutoForward,
                   "Automatic router forwarding is opt-in and persists");
         }
+        var feedbackProfile = new PadProfile();
+        feedbackProfile.Buttons["Cross"] = 0x2000;
+        feedbackProfile.Buttons["Circle"] = 0;
+        var feedbackPad = InputMapping.RemapPad(new Pad(0x2000, 30, 31), feedbackProfile);
+        Check(InputMapping.ActionPressed(feedbackPad, "Cross") &&
+                  !InputMapping.ActionPressed(feedbackPad, "Circle"),
+              "Input feedback follows remapped actions and leaves unbound actions inactive");
+        Check(!InputMapping.ActionPressed(feedbackPad, "L2") &&
+                  InputMapping.ActionPressed(feedbackPad, "R2"),
+              "Input feedback uses the same trigger threshold as game button input");
+        var feedbackKeys = InputMapping.Keyboard(InputMapping.KeyboardDefaults(),
+                                                key => key is 32 or 38);
+        Check(InputMapping.ActionPressed(feedbackKeys, "Cross") &&
+                  InputMapping.ActionPressed(feedbackKeys, "CameraUp") &&
+                  !InputMapping.ActionPressed(feedbackKeys, "CameraDown") &&
+                  !InputMapping.ActionPressed(new Pad(), "Cross"),
+              "Keyboard feedback covers simultaneous buttons and camera keys and clears on release");
+        var feedbackButton = new System.Windows.Controls.Button {
+            Style = (System.Windows.Style)System.Windows.Application.Current.FindResource(
+                typeof(System.Windows.Controls.Button))
+        };
+        feedbackButton.ApplyTemplate();
+        var feedbackFrame = (System.Windows.Controls.Border)feedbackButton.Template.FindName(
+            "Frame", feedbackButton);
+        var idleBackground = feedbackFrame.Background;
+        InputFeedback.SetIsActive(feedbackButton, true);
+        Check(feedbackFrame.Background == System.Windows.Application.Current.FindResource("Accent"),
+              "Held input lights the binding button using the real launcher template");
+        InputFeedback.SetIsActive(feedbackButton, false);
+        Check(feedbackFrame.Background == idleBackground,
+              "Releasing input restores the binding button background");
         var colorSettings =
             JsonSerializer.Deserialize<Settings>("{\"Brightness\":125,\"Gamma\":1.25}")!;
         Check(colorSettings.Brightness == 125 && colorSettings.Gamma == 1.25,

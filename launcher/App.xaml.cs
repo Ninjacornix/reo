@@ -148,6 +148,13 @@ public partial class App : Application {
                 Shutdown();
                 return;
             }
+            int videoTest = Array.IndexOf(e.Args, "--test-background-videos");
+            if (videoTest >= 0 && videoTest + 4 < e.Args.Length) {
+                await Task.Run(() => BackgroundVideoTests.VerifyOwnedDiscs(e.Args[videoTest + 1], e.Args[videoTest + 2],
+                    e.Args[videoTest + 3], e.Args[videoTest + 4]));
+                Shutdown();
+                return;
+            }
             if (e.Args.Contains("--test-coop-session")) {
                 int smoke = Array.IndexOf(e.Args, "--smoke-launch");
                 if (smoke < 0 || smoke + 2 >= e.Args.Length)
@@ -155,7 +162,7 @@ public partial class App : Application {
                 _ = CoopSmokeOptions.Parse(e.Args);
             }
             bool diagnostic = e.Args.Any(arg => arg is "--screenshot" or "--probe-controller" or
-                                                       "--smoke-launch");
+                                                       "--smoke-launch" or "--test-background-playback");
             if (!diagnostic) {
                 singleInstance = new Mutex(true, "Local\\Outbreak-Launcher", out bool created);
                 if (!created) {
@@ -175,12 +182,7 @@ public partial class App : Application {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             bool importOldData = !e.Args.Any(arg => arg.StartsWith("--test-") ||
                 arg is "--smoke-launch" or "--screenshot" or "--probe-controller");
-            if (importOldData && Storage.NeedsLegacyImport(Settings.Home, Storage.LegacyHome)) {
-                if (!await StorageProgressWindow.Run(null, "Bring your existing launcher data here",
-                        (progress, cancel) => Storage.Initialize(installation, true, progress, cancel, !diagnostic))) {
-                    Shutdown(); return;
-                }
-            } else await Storage.Initialize(installation, importOldData, null, default, !diagnostic);
+            await Storage.Initialize(installation, importOldData, null, default, !diagnostic);
             var window = new MainWindow(e.Args);
             MainWindow = window;
             window.Show();
@@ -202,7 +204,8 @@ public partial class App : Application {
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&
                 !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&
                 !e.Args.Contains("--test-compiler-setup") &&
-                !e.Args.Contains("--test-existing-compiler"))
+                !e.Args.Contains("--test-existing-compiler") && !e.Args.Contains("--test-background-videos") &&
+                !e.Args.Contains("--test-background-playback"))
                 MessageBox.Show(error.GetBaseException().Message +
                                 (log.Length > 0 ? "\n\nDetails: " + log : "\n\nKeep the launcher in a folder you can write to, such as your Games folder."),
                                 "RE: Outbreak");

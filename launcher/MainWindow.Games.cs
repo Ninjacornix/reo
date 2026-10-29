@@ -2,40 +2,58 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Outbreak.Launcher;
 public partial class MainWindow {
     int slowUiTick;
+    string artworkLoadKey = "";
     string backdropGame = "";
     bool backdropTransition;
-    readonly Dictionary<string, BitmapImage> gameArtwork = new();
+    readonly Dictionary<string, BitmapSource> backdropArtwork = new();
     bool Playable(string id) => id is "file1" or "file2";
     async Task LoadArtworkAsync() {
-        if (args.Contains("--public-preview"))
+        if (!IsLoaded || args.Contains("--public-preview"))
             return; // user-supplied covers stay out of published screenshots
+        var sources = new[] { settings.GetIso("file1"), settings.GetIso("file2") };
+        string key = GameArtwork.CacheKey(sources.Concat(new[] { GameArtwork.Folder, GameArtwork.DownloadFolder }));
+        if (artworkLoadKey == key)
+            return;
+        artworkLoadKey = key;
         await Task.WhenAll(Enumerable.Range(1, 2).Select(async edition => {
-            var image = await GameArtwork.FetchAsync(edition);
-            if (image == null || !IsLoaded)
+            var image = await GameArtwork.FetchAsync(edition, sources[edition - 1]);
+            if (!IsLoaded || artworkLoadKey != key)
                 return;
-            gameArtwork["file" + edition] = image;
-            ((Image)FindName("GamePoster" + edition)).Source = image;
-            ((Border)FindName("PosterFrame" + edition)).Visibility = Visibility.Visible;
+            var gameCase = (GameCaseView)FindName("GameCase" + edition);
+            gameCase.Cover = image?.Front;
+            gameCase.BackCover = image?.Back;
+            gameCase.SpineCover = image?.Spine;
+            if (image == null)
+                backdropArtwork.Remove("file" + edition);
+            else {
+                var front = image.Front;
+                var backdrop = new CroppedBitmap(front, new Int32Rect(0,
+                    (int)(front.PixelHeight * 0.14), front.PixelWidth,
+                    Math.Max(1, (int)(front.PixelHeight * 0.72))));
+                backdrop.Freeze();
+                backdropArtwork["file" + edition] = backdrop;
+            }
             RefreshBackdrop();
         }));
     }
     void RefreshBackdrop() {
         if (backdropTransition)
             return;
-        var cover = gameArtwork.GetValueOrDefault(settings.Game.Id);
-        if (backdropGame == settings.Game.Id &&
-            (cover == null || ReferenceEquals(Backdrop.Source, cover)))
+        var next = backdropArtwork.GetValueOrDefault(settings.Game.Id);
+        if (backdropGame == settings.Game.Id && ReferenceEquals(Backdrop.Source, next))
             return;
         bool first = backdropGame.Length == 0;
         backdropGame = settings.Game.Id;
-        var next = cover;
+        UpdateArtworkVisibility();
         if (first || !SystemParameters.ClientAreaAnimation) {
             Backdrop.Source = next;
+            UpdateArtworkVisibility();
             return;
         }
         backdropTransition = true;
@@ -43,17 +61,17 @@ public partial class MainWindow {
         Backdrop.Source = next;
         var duration = TimeSpan.FromMilliseconds(450);
         var easing = new CubicEase { EasingMode = EasingMode.EaseInOut };
-        var fadeOut = new DoubleAnimation(1, 0, duration) { EasingFunction = easing };
-        fadeOut.Completed += (_, _) => {
+        var fade = new DoubleAnimation(1, 0, duration) { EasingFunction = easing };
+        fade.Completed += (_, _) => {
             OutgoingBackdrop.Source = null;
             OutgoingBackdrop.BeginAnimation(OpacityProperty, null);
             Backdrop.BeginAnimation(OpacityProperty, null);
             backdropTransition = false;
-            RefreshBackdrop(); // Honor the latest selection if it changed during the fade.
+            UpdateArtworkVisibility();
+            RefreshBackdrop();
         };
-        Backdrop.BeginAnimation(OpacityProperty,
-                                new DoubleAnimation(0, 1, duration) { EasingFunction = easing });
-        OutgoingBackdrop.BeginAnimation(OpacityProperty, fadeOut);
+        Backdrop.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, duration) { EasingFunction = easing });
+        OutgoingBackdrop.BeginAnimation(OpacityProperty, fade);
     }
     void GameSelectionChanged(object sender, SelectionChangedEventArgs e) {
         if (GamePicker.SelectedItem is ListBoxItem item && (string)item.Tag != settings.Game.Id)
@@ -74,11 +92,16 @@ public partial class MainWindow {
         UpdateSaves();
     }
     void RefreshGameUi() {
+        RefreshGameFont();
         ExePath.Text = settings.GetExe();
         IsoPath.Text = settings.GetIso();
         ElfPath.Text = settings.GetElf(root);
         bool present = Playable(settings.Game.Id) && settings.FilesPresent(root);
+        if (IsLoaded)
+            _ = LoadArtworkAsync();
         SelectedGameLabel.Text = settings.Game.Name;
+        UpdateAudioAvailability();
+        RefreshBackgroundVideos();
         RefreshBackdrop();
         GamePicker.SelectedValue = settings.Game.Id;
         GamePicker.IsEnabled =
@@ -86,9 +109,11 @@ public partial class MainWindow {
         foreach (int n in new[] { 1, 2 }) {
             string id = "file" + n;
             bool selected = settings.Game.Id == id;
-            ((Border)FindName("GameCard" + n)).BorderBrush =
-                (System.Windows.Media.Brush)FindResource(selected ? "Accent" : "Line");
-            ((TextBlock)FindName("GameStatus" + n)).Text =
+            var gameCase = (GameCaseView)FindName("GameCase" + n);
+            gameCase.IsSelected = selected;
+            gameCase.IsAvailable =
+                Playable(id) && File.Exists(settings.GetExe(id)) && File.Exists(settings.GetIso(id));
+            string gameStatus =
                 !Playable(id) ? "Coming later"
                 : selected && game.Running ? "Running"
                 : !(AppLayout.Packaged(root) ? LocalGameBuild.Available(root, id)
@@ -97,6 +122,8 @@ public partial class MainWindow {
                 : !File.Exists(settings.GetIso(id)) ? "Choose your game disc"
                 : DiscImport.Ready(settings, id) && File.Exists(settings.GetExe(id)) ? "Ready to play"
                                                                                        : "Not built yet";
+            System.Windows.Automation.AutomationProperties.SetItemStatus(
+                (ListBoxItem)GamePicker.Items[n - 1], gameStatus);
         }
         LaunchButton.IsEnabled =
             present && !updating && !updateRestarting && !game.Running && !launching && !backingUp;
@@ -111,11 +138,13 @@ public partial class MainWindow {
                        " " + DisplayOptions.FitName(settings.ResolvedFit)) +
             " / " + (settings.LinearFilter ? "Bilinear" : "Nearest");
         PlayInputSummary.Text = controller.SelectedDevice.Name;
+        PlayModsSummary.Text = ModsSummary();
+        PlayCheatsSummary.Text = CheatsSummary();
         RefreshReadyCheck();
         RefreshImportUi();
         if (PageCheats.Visibility == Visibility.Visible && cheatsGame != settings.Game.Id)
             RefreshCheats();
-        ModControls.IsEnabled = settings.Game.Id == "file1" && !game.Running && !launching;
+        ModControls.IsEnabled = !game.Running && !launching;
         if (PageMods.Visibility == Visibility.Visible && modsGame != settings.Game.Id)
             RefreshMods();
     }
@@ -124,5 +153,33 @@ public partial class MainWindow {
             return;
         Status.Text =
             game.Process!.CloseMainWindow() ? "Closing game..." : "Waiting for the game window...";
+    }
+    static string NameList(List<string> names) =>
+        names.Count == 0 ? "Off"
+        : names.Count <= 2 ? string.Join(", ", names)
+                           : $"{names[0]}, {names[1]} +{names.Count - 2} more";
+    string ModsSummary() {
+        // Guests play with the host's mods; their own selection waits for solo or hosted games.
+        if (settings.ResolvedCoopMode == "join")
+            return "Host's choice";
+        if (settings.ActiveMods.Count == 0)
+            return "Off";
+        try {
+            var installed = Mods.Load(null, settings.Game.Id);
+            return NameList(settings.ActiveMods.Distinct().Select(id =>
+                installed.FirstOrDefault(m => m.Manifest?.Id == id)?.Manifest?.Name is { Length: > 0 } name ? name : id).ToList());
+        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+            return settings.ActiveMods.Count + " on";
+        }
+    }
+    string CheatsSummary() {
+        if (!settings.CheatsEnabled || settings.EnabledCheats.Count == 0)
+            return "Off";
+        try {
+            return NameList(Cheats.Load(settings.Game.Id).Where(g => settings.EnabledCheats.Contains(g.Id))
+                                .Select(g => g.Name).ToList());
+        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+            return "On";
+        }
     }
 }

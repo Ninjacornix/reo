@@ -79,7 +79,7 @@ internal sealed record CoopSmokeOptions(string Folder, string Player, string Mod
         snapshot.AntiAliasing = false;
         snapshot.AntiAliasingMode = "off";
         snapshot.AutoForward = false;
-        snapshot.EnabledMods.Clear();
+        snapshot.ActiveMods.Clear();
         snapshot.CheatsEnabled = false;
         snapshot.EnabledCheats.Clear();
         snapshot.InputDeviceId = "keyboard";
