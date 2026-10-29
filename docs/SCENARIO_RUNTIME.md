@@ -53,7 +53,7 @@ The complete Hellfire ledge route still needs a gameplay retest. Existing builds
 must regenerate and recompile the overlay; editing the map does not patch an
 already-built RC0 executable. Generated sources and owned assets remain local.
 
-## Below Freezing Point: separate slowdown investigation
+## Below Freezing Point: missing compiled VU variants
 
 The reporter's second log shows 60 VBlanks/presentations per second but only
 15 original game updates per second near its end. Main-thread samples concentrate
@@ -63,10 +63,65 @@ This is the game's frame queue busy-count loop, waiting on
 `0x0029F704 + 4 * (1 - RAM[0x0029FDB4])`. The original VIF1 DMA callback
 `0x0018D160` decrements that count at `0x0018D224` after checking completion.
 The log has matching raised/handled VIF1 interrupt counts. Its aggregate worker
-processing time does not distinguish expensive room-specific VU work from delayed
-completion delivery. The Hellfire map change does not establish a slowdown fix.
+processing time alone does not distinguish expensive room-specific VU work from
+delayed completion delivery.
 
-The next measurement is a repeated affected-room run with VIF kick timing, VU
-program census, IRQ timings and game-clock recording, comparing asynchronous VIF1
-on and off. Keep the same room, settings and warm shader cache. Do not clear the
-busy count or speed up the clock: that would bypass original synchronization.
+An isolated local run reproduced the slowdown in the subway starting room on a
+Ryzen 5 2600 / RX 570. The route used Kevin, Normal difficulty, default partners,
+native internal resolution, 640 x 480 output and no post AA. Only scenario unlocks
+were enabled, with copied saves; health, ammunition and gameplay timing stayed
+unchanged. The owned ISO was mounted read-only for the test.
+
+VIF timing and actual program collection identified three uncatalogued VU images.
+The dominant image used the interpreter for every instruction and accounted for
+77.9% of VU time in the diagnostic window. VIF batches spent about 60 ms executing
+VU programs while measured GS queue waits were only tens of microseconds.
+Each new image was independently reconstructed byte-for-byte from ordered uploads
+and file offsets in the supported ELF:
+
+| SHA-256 prefix | Observed entry PCs (bytes) |
+| --- | --- |
+| `85e7a8fbc584` | 0, 128, 536, 1720 |
+| `c5e55542acbe` | 0, 128, 544, 1600, 2944 |
+| `e6181d374c50` | 0, 120, 320, 1048 |
+
+`local_vu_images.json` now includes these exact identities, copy ranges and entry
+keys. The local generator emits a separate default table for marked images and
+entry keys. Runtime registration uses that table automatically; `REO_VU_WHOLE=0`
+disables it and `REO_VU_WHOLE=1` admits the full experimental table. Older metadata,
+raw diagnostic captures and older generated factories retain their opt-in behavior.
+The existing specialized/native routes continue to take precedence.
+
+Validation:
+
+- PASS: all 11 catalogued images reconstruct to their expected SHA-256, including
+  exact byte equality with all four launched images from the captured route.
+- PASS: seven synthetic default-policy tests and eight existing local-generation
+  tests. Mixed raw captures cannot broaden the entry keys admitted by default.
+- PASS: twelve native registration checks exercise default admission, explicit
+  opt-in/out, the master switch, and backward compatibility with an older factory.
+- PASS: the reusable `tools/vu_whole_aot/run-check.bat` oracle replays 512 captured
+  `c5e55542acbe` invocations plus 64 each for `85e7a8fbc584` and `e6181d374c50`,
+  covering every observed entry of all three variants. Compiled execution matches
+  the interpreter for every byte of the 632-byte VU state, 16 KiB VU data and
+  604 GIF packets (1,085,440 bytes).
+- PASS: the final default build restores normal game updates and clock advancement
+  without any `REO_VU_WHOLE` override. Startup confirms exactly three default
+  programs registered; both runs exit normally with no dropped or invalid clock
+  observations.
+
+| Measurement, room seconds 3 through 13 | Baseline | Final default build |
+| --- | ---: | ---: |
+| Game updates/s | 14.975 | 29.993 |
+| Game clock units/s | 29.949 | 59.987 |
+| Median update interval | 66.634 ms | 33.282 ms |
+| p99 update interval | 68.209 ms | 35.657 ms |
+
+The timing comparison uses selected-player, unpaused phase-2 updates with identical
+settings and warmed shaders. VU census, program collection and kick profiling were
+disabled for timing: census hashing itself slows this workload. Presentation stayed
+at 60 Hz in both builds. The candidate replaces the generated VU table and its
+registration hook; the preceding eight-image factory matches the current
+generator's old-plan output. Full scenario completion and other frozen areas
+remain untested. Test processes were closed and the task-mounted ISO dismounted;
+original saves and the separate dirty checkout were preserved.

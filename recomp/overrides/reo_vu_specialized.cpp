@@ -18,16 +18,25 @@
 #include "reo_vu_whole_registered_generated.h"
 #endif
 
-// Whole-program AOT (tools/vu_whole_aot) covers images that have no specialized/native table.
-// Opt-in (REO_VU_WHOLE=1): 2026-10-18 A/B gave no measurable room speed gain (20.13 on vs 20.18 off
-// updates/s), and only 2 of its programs have byte-parity oracle proof. REO_VU_SPECIALIZED=0 also disables it.
+// Exact room variants with replay and live-route validation run compiled by default.
+// REO_VU_WHOLE=1 also admits the experimental catalogue; 0 disables both tables.
+// Old generated factories without a default table retain their opt-in behavior.
 static void reoRegisterVuWholePrograms(bool enabled) noexcept {
 #if defined(REO_HAVE_WHOLE_VU_PROGRAMS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
     const char* flag = std::getenv("REO_VU_WHOLE");
-    if (!(flag && std::strcmp(flag, "1") == 0))
-        enabled = false;
-    vu_whole_program::registerProgramTable(
-        enabled ? reo_vu_whole_registered_generated::programTable() : nullptr);
+    const vu_whole_program::Table* table = nullptr;
+    if (enabled) {
+        if (flag && std::strcmp(flag, "1") == 0)
+            table = reo_vu_whole_registered_generated::programTable();
+#if defined(REO_VU_HAS_DEFAULT_PROGRAM_TABLE)
+        else if (!flag)
+            table = reo_vu_whole_registered_generated::defaultProgramTable();
+#endif
+    }
+    const bool registered = vu_whole_program::registerProgramTable(table);
+    std::fprintf(stderr, "[VU-WHOLE] mode=%s programs=%u registered=%u\n",
+                 flag ? (std::strcmp(flag, "1") == 0 ? "all" : "disabled") : "default",
+                 table ? table->count : 0u, unsigned(registered));
 #else
     (void)enabled;
 #endif

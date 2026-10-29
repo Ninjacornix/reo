@@ -52,12 +52,14 @@ def reachable(code,starts):
 
 def load_inputs(args):
     programs={}
-    def add(code,start,provenance):
+    def add(code,start,provenance,enabled_by_default=False):
         if len(code)!=16384 or start&7 or start>=16384:raise ValueError('Expected16KiB code/aligned startPC')
         digest=hashlib.sha256(code).hexdigest()
-        item=programs.setdefault(digest,dict(code=code,starts=set(),provenance=set()))
+        item=programs.setdefault(digest,dict(code=code,starts=set(),default_starts=set(),provenance=set(),enabled_by_default=False))
         if item['code']!=code:raise ValueError('FullSHA256 collision with unequal bytes')
         item['starts'].add(start);item['provenance'].add(provenance)
+        item['enabled_by_default'] |= enabled_by_default
+        if enabled_by_default:item['default_starts'].add(start)
     for folder in args.capture_dir:
         for path in sorted(folder.glob('*.code.bin')):
             state=Path(str(path)[:-9]+'.state.bin').read_bytes()
@@ -68,14 +70,16 @@ def load_inputs(args):
         for raw in (args.collection/'events.jsonl').read_text().splitlines():
             event=json.loads(raw)
             if event['event']=='image':
+                enabled_by_default=event.get('enabled_by_default',False)
+                if type(enabled_by_default) is not bool:raise ValueError('Invalid VU default policy')
                 path=(args.collection/event['file']).resolve()
                 if path.parent!=args.collection.resolve():raise ValueError('Image path escapes collection')
                 code=path.read_bytes()
                 if len(code)!=event['bytes'] or hashlib.sha256(code).hexdigest()!=event['sha256']:raise ValueError('Image hash/size mismatch')
-                images[event['image']]=code
+                images[event['image']]=(code,enabled_by_default)
             if event['event']=='launch':
-                code=images[event['image']]
+                code,enabled_by_default=images[event['image']]
                 if hashlib.sha256(code).hexdigest()!=event['sha256']:raise ValueError('Launch image identity mismatch')
-                add(code,event['start_pc'],str(args.collection/'events.jsonl'))
+                add(code,event['start_pc'],str(args.collection/'events.jsonl'),enabled_by_default)
     if not programs:raise ValueError('No owned launch identities')
     return programs
