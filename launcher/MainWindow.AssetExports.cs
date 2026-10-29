@@ -13,6 +13,7 @@ public partial class MainWindow {
             ExportOriginalAssets.IsChecked = settings.WantsOriginalAssetPaks();
             bool idle = !game.Running && !launching && !updating && !updateRestarting && !backingUp && importCancellation == null;
             OriginalAssetOptions.IsEnabled = idle;
+            ExportOriginalAssets.IsEnabled = idle && !settings.UsesGamePak();
             ExportOriginalAssetsNow.IsEnabled = idle && DiscImport.Ready(settings);
             OpenOriginalAssetExports.IsEnabled = Directory.Exists(AssetExports.GameFolder(settings.Game.Id));
         } finally { refreshingOriginalAssetOptions = false; }
@@ -33,6 +34,7 @@ public partial class MainWindow {
             string imported = settings.ImportFolder();
             var disc = new ImportedDisc(imported, Path.Combine(imported, "data", settings.Game.ElfName), 0, 0, true);
             var result = await AssetExports.Ensure(disc, settings.Game.Id, progress, importCancellation!.Token);
+            settings.RememberGamePak(result); settings.Save();
             originalAssetFolders[settings.Game.Id] = result.Root;
             Status.Text = $"{result.Entries:N0} original assets {(result.Reused ? "already exported" : "exported")}. Use Open exports folder.";
         } catch (OperationCanceledException) { Status.Text = "Asset export canceled. Game files and completed exports are kept."; }

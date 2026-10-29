@@ -21,6 +21,7 @@ addition to `--kit`, `--output` and `--recompiler`:
 
 ```text
 --update-source runtime/cdvd/cdvd.cpp
+--update-source runtime/cdvd/cdvd.h
 --update-source recomp/overrides/reo_hw_bridge.cpp
 --update-source recomp/overrides/reo_hw_bridge.h
 --add-source runtime/assets/virtual_afs.h
@@ -34,6 +35,13 @@ build stages before compiling runtime sources. Both private refreshed kits passe
 portable compilation of all four affected runtime units. This preflight is not a
 fresh full-game release build. Before publishing, run the complete packaging and
 cold-build checks for the final merged tree.
+
+PAK-as-game-source support additionally requires the updated `cdvd.h` and
+`cdvd.cpp`, and rebuilding their consumers (including `reo_hw_bridge.cpp`). The
+launcher requires `[GAME-PAK-1]` in the native image before launching in PAK mode.
+The updated original export preserves boot files and archive ranges; older
+asset-only exports need re-exporting. Game PAKs contain owned game data and must
+never be bundled in a release.
 
 ## v1.0.19
 

@@ -67,20 +67,19 @@ public sealed class GameSession {
         NetworkStatus = null;
         graphicsStatus = null;
         graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        string sourceExe = settings.GetExe(), iso = settings.GetIso();
+        string sourceExe = settings.GetExe(), iso = settings.GetGameSource();
         var selectedGame = settings.Game;
         if (!AppLayout.Packaged(root) && !File.Exists(sourceExe))
             throw new FileNotFoundException(
                 "This game build is missing. Extract the complete release archive.");
         if (!File.Exists(iso))
-            throw new FileNotFoundException("Choose the selected game's ISO in Game files.");
-        Imported = await DiscImport.Ensure(
-            iso, selectedGame, DiscImport.ExpectedElf(settings, root), importProgress, cancel);
+            throw new FileNotFoundException("Choose the selected game's " + (settings.UsesGamePak() ? "PAK" : "ISO") + " in Game files.");
+        Imported = await settings.PrepareGame(importProgress, cancel);
         cancel.ThrowIfCancellationRequested();
         settings.SetImport(Imported.Root);
         if (AppLayout.Packaged(root))
             sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel, game: selectedGame.Id);
-        if (settings.WantsOriginalAssetPaks(selectedGame.Id))
+        if (!settings.UsesGamePak() && settings.WantsOriginalAssetPaks(selectedGame.Id))
             OriginalAssets = await AssetExports.Ensure(Imported, selectedGame.Id, importProgress, cancel);
         string discRoot = Path.Combine(Imported.Root, "data"), discElf = Imported.Elf;
         string proxy = Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll");
@@ -119,6 +118,8 @@ public sealed class GameSession {
         var cached = await Task.Run(() => GameImageCache.Prepare(
             Path.Combine(Settings.Home, "game-cache"), runtimeFiles, cancel), cancel);
         string image = cached.Image, hash = cached.Sha256;
+        if (settings.UsesGamePak() && !HasMarker(image, "[GAME-PAK-1]"))
+            throw new IOException("Playing from PAK needs an updated game build. Rebuild or update the selected game.");
         if (randomizerConfiguration != null && !HasMarker(image, RandomizerSession.Capability))
             throw new IOException("This shared session needs the updated game build with stable randomizer support.");
         Logs = Path.Combine(Settings.Home, "sessions", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
@@ -209,7 +210,8 @@ public sealed class GameSession {
                     t => t.ToString(System.Globalization.CultureInfo.InvariantCulture))));
             }
         }
-        Set("REO_ISO", Path.GetFullPath(iso));
+        if (settings.UsesGamePak()) Set("REO_GAME_PAK", "1");
+        else Set("REO_ISO", Path.GetFullPath(iso));
         var enemyRandomizer = selectedMods.SingleOrDefault(m => m.EnemyRandomizer != null)?.EnemyRandomizer;
         if (enemyRandomizer != null) {
             bool species = enemyRandomizer.Mode == "enemyTypes";
@@ -357,7 +359,9 @@ public sealed class GameSession {
                       source = sourceExe,
                       image,
                       sha256 = hash,
-                      iso,
+                      iso = settings.UsesGamePak() ? null : iso,
+                      gameSource = iso,
+                      gameSourceType = settings.UsesGamePak() ? "pak" : "iso",
                       discRoot,
                       networkConfigured = OnlineOptions.Configured(settings),
                       server = onlineEnvironment.GetValueOrDefault("REO_COOP_HOST"),

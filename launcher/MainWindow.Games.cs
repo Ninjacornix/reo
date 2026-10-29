@@ -75,7 +75,7 @@ public partial class MainWindow {
     }
     void RefreshGameUi() {
         ExePath.Text = settings.GetExe();
-        IsoPath.Text = settings.GetIso();
+        IsoPath.Text = settings.GetGameSource();
         ElfPath.Text = settings.GetElf(root);
         bool present = Playable(settings.Game.Id) && settings.FilesPresent(root);
         SelectedGameLabel.Text = settings.Game.Name;
@@ -94,7 +94,7 @@ public partial class MainWindow {
                 : !(AppLayout.Packaged(root) ? LocalGameBuild.Available(root, id)
                                              : File.Exists(settings.GetExe(id)))
                     ? (AppLayout.Packaged(root) ? "Game setup files missing" : "No developer build")
-                : !File.Exists(settings.GetIso(id)) ? "Choose your game disc"
+                : !File.Exists(settings.GetGameSource(id)) ? "Choose your game source"
                 : DiscImport.Ready(settings, id) && File.Exists(settings.GetExe(id)) ? "Ready to play"
                                                                                        : "Not built yet";
         }

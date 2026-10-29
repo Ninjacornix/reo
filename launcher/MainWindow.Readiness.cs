@@ -45,7 +45,7 @@ public partial class MainWindow {
         bool vulkan = VulkanInstalled();
         long free = FreeSpace();
         bool roomy = built || free < 0 || free >= SetupSpace;
-        string iso = settings.GetIso();
+        string iso = settings.GetGameSource();
         bool discOk = discCheck is { Ok: true } && discCheck.Matches(iso, settings.Game.Id);
         string cards = graphicsCards.Length > 0 ? " (" + string.Join(", ", graphicsCards) + ")" : "";
         SetCheck("CheckDotnet", Check.Done, ".NET 8 Desktop Runtime");
@@ -58,11 +58,11 @@ public partial class MainWindow {
                          : Gigabytes(free) + " free (setup needs about 10 GB)",
                  roomy ? null : "Free up space");
         SetCheck("CheckDisc", discOk ? Check.Done : Check.Missing,
-                 discOk ? "Game disc verified"
-                 : !File.Exists(iso) ? "Game disc not chosen yet"
-                 : discCheck != null && discCheck.Matches(iso, settings.Game.Id) ? "Game disc not supported"
-                                                               : "Checking game disc...",
-                 discOk ? null : "Choose ISO");
+                 discOk ? "Game source verified"
+                 : !File.Exists(iso) ? "Game source not chosen yet"
+                 : discCheck != null && discCheck.Matches(iso, settings.Game.Id) ? "Game source not supported"
+                                                               : "Checking game source...",
+                 discOk ? null : settings.UsesGamePak() ? "Choose PAK" : "Choose ISO");
         RefreshNextStep(packaged, kit, built, vulkan, roomy);
     }
     static string DriverPage(IEnumerable<string> cards) {
@@ -107,7 +107,7 @@ public partial class MainWindow {
     NextAction nextAction;
     string readinessStatus = "";
     void RefreshNextStep(bool packaged, bool kit, bool built, bool vulkan, bool roomy) {
-        string iso = settings.GetIso();
+        string iso = settings.GetGameSource();
         (string title, string detail, NextAction action) =
             !Playable(settings.Game.Id) ? ("", "", NextAction.None)
             : importCancellation != null
@@ -123,12 +123,12 @@ public partial class MainWindow {
                          "The game needs a Vulkan graphics driver. Install the latest driver from your graphics card maker.",
                          NextAction.Driver)
             : !File.Exists(iso)
-                ? ("Choose your game disc",
-                   "Select your own game ISO. " + DiscValidation.RequiredFor(settings.Game.Id),
+                ? ("Choose your game source",
+                   settings.UsesGamePak() ? "Select a complete game PAK exported by this launcher." : "Select your own game ISO. " + DiscValidation.RequiredFor(settings.Game.Id),
                    NextAction.ChooseIso)
             : discCheck == null || !discCheck.Matches(iso, settings.Game.Id)
-                ? ("Checking your disc...", "This takes a few seconds.", NextAction.None)
-            : !discCheck.Ok ? ("This disc can't be used", discCheck.Message, NextAction.ChooseIso)
+                ? ("Checking your game source...", "This takes a few seconds.", NextAction.None)
+            : !discCheck.Ok ? ("This game source can't be used", discCheck.Message, NextAction.ChooseIso)
             : !DiscImport.Ready(settings) || !built
                 ? ("Build the game",
                    "One-time setup: imports your disc and compiles the game. It downloads build tools " +
@@ -144,7 +144,7 @@ public partial class MainWindow {
         NextStepButton.Content = action switch {
             NextAction.Releases => "Open downloads", NextAction.Setup => "Game files",
             NextAction.ChooseIso => discCheck?.Ok == false && discCheck.Matches(iso, settings.Game.Id)
-                                        ? "Choose another ISO" : "Choose ISO",
+                                        ? (settings.UsesGamePak() ? "Choose another PAK" : "Choose another ISO") : (settings.UsesGamePak() ? "Choose PAK" : "Choose ISO"),
             NextAction.Build => "Build game", _ => "Get driver"
         };
         NextStepButton.IsEnabled = !updating && !game.Running && !launching && !backingUp;

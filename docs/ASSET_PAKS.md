@@ -1,6 +1,12 @@
 # Asset replacement packs (`.pak`) — research and implementation spec
 
 Status: **v1 implemented on `feature/asset-paks`, unreleased** (2026-10-29).
+Follow-up: the optional original export is now a complete private game PAK,
+selectable instead of ISO in Game files. It preserves boot files and reconstructs
+the original archives into a verified local cache. Native PAK-mode sector reads
+use those files without an ISO. The original v1 mod-format design below remains
+historical context; installable replacement packs are still separate from complete
+game PAKs. See `MODDING.md` for the current source-switch workflow.
 See `MODDING.md` for the supported format and `ASSET_PAKS_IMPLEMENTATION.md` for
 implementation and measured validation. This document retains the research and
 original acceptance plan. Implementation refinements: indices are built on demand;

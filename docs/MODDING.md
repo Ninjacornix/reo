@@ -69,8 +69,9 @@ works with an already imported game. **Open exports folder** opens the results.
 Each game exports **one `original-assets.pak` containing all original NETBIO leaf
 assets**, including textures, models, audio, movies and reference name tables.
 The files keep their native formats; this does not convert everything to a common
-texture/model/audio format. Container headers and padding, DUMMY padding, game
-executables and code overlays are excluded.
+texture/model/audio format. Updated exports also include private game boot data
+and archive metadata so the PAK can be selected as a game source. These additional
+files are separate from the editable leaf index and must not be distributed.
 
 Results live under the selected storage folder at
 `asset-exports/<game>/<source-identity>/single/`. Export requires extra disk space
@@ -80,8 +81,8 @@ imported game and completed exports. Completed exports are reused when the sourc
 and output size/timestamps still match. If an export was edited, a fresh version
 goes into a new folder and the previous export is kept.
 
-These original reference packs are for local editing, and cannot be enabled in
-**Mods**. Unzip the reference pack to obtain its `assets.json` index and assets;
+These original reference packs cannot be enabled in **Mods**. Unzip the reference
+pack to obtain its `assets.json` index and assets;
 copy only the files you want to change into a separate edited folder, keeping
 their relative paths. Use the packer below to produce an installable replacement
 pack. The replacement restrictions above still apply, including protected name
@@ -92,6 +93,27 @@ Alternatively, extract assets from your own existing import using Python:
 ```powershell
 python tools/assets/extract_assets.py "<import>/data" "<new-reference-folder>"
 ```
+
+### Playing from PAK instead of ISO
+
+In **Game files**, turn on **Use PAK instead of ISO**, then **Choose PAK** and
+select your exported `original-assets.pak`. Press **Import** or **Play**. Each
+game remembers its own source switch and paths, so switching back to ISO keeps
+your previous selection. A completed launcher export also remembers its PAK path,
+so you can simply turn on the switch afterward. An older asset-only export or a replacement mod PAK
+cannot boot the game; export again with the updated launcher.
+
+First use verifies the PAK and prepares ordinary game files under
+`imports/<game>/pak-<checksum>/`. Matching existing imports on the same local
+NTFS drive are verified and reused through hard links, avoiding another full
+copy. Otherwise, setup needs space for the complete uncompressed game data.
+Completed caches are reused. Canceling an import keeps completed game data.
+
+PAK mode needs an updated native game build; the launcher tells you to rebuild
+if it lacks support. The game reads sectors from the prepared files, and does
+not open or require an ISO. This is a game-source option, separate from enabling
+replacement mods; the same replacement-pack restrictions still apply. Keep the
+full game PAK private, just like your ISO.
 
 Copy selected files into an edited folder, preserving the extracted relative paths.
 After editing, package only changed files:

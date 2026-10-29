@@ -49,5 +49,5 @@ public sealed partial class Settings {
     }
     public bool FilesPresent(string root, string? gameId = null) =>
         (AppLayout.Packaged(root) ? LocalGameBuild.Available(root, gameId ?? Game.Id) : File.Exists(GetExe(gameId))) &&
-        File.Exists(GetIso(gameId));
+        File.Exists(GetGameSource(gameId));
 }

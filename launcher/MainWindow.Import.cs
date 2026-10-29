@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Diagnostics;
 using Microsoft.Win32;
@@ -21,7 +21,7 @@ public partial class MainWindow {
     DiscCheck? discCheck;
     bool checkingDisc;
     async Task CheckSelectedDisc() {
-        string iso = settings.GetIso();
+        string iso = settings.GetGameSource();
         if (!Playable(settings.Game.Id) || checkingDisc || !File.Exists(iso) ||
             discCheck?.Matches(iso, settings.Game.Id) == true)
             return;
@@ -31,18 +31,19 @@ public partial class MainWindow {
         RefreshImportUi();
         try {
             string message = DiscImport.Ready(settings)
-                                 ? DiscValidation.VerifiedFor(game.Id)
+                                 ? (settings.UsesGamePak() ? "Verified game PAK: " + game.Name : DiscValidation.VerifiedFor(game.Id))
                                  : await Task.Run(() => {
+                                       if (settings.UsesGamePak(game.Id)) { GamePaks.Check(file.FullName, game.Id); return "Verified game PAK: " + game.Name; }
                                        using var image = new DiscImage(file.FullName);
                                        return DiscValidation.Check(image, game, DiscImport.ExpectedElf(game.Id),
                                                                    CancellationToken.None).Description;
                                    });
             discCheck = new(game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, true, message);
-        } catch (Exception error) when (error is InvalidDataException or IOException or
+        } catch (Exception error) when (error is IOException or System.Text.Json.JsonException or
                                             UnauthorizedAccessException) {
             discCheck = new(game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
                             error is InvalidDataException ? error.Message
-                                                          : "The ISO could not be read: " + error.Message);
+                                                          : "The game source could not be read: " + error.Message);
         } finally {
             checkingDisc = false;
             RefreshGameUi();
@@ -51,15 +52,15 @@ public partial class MainWindow {
     async void ChooseIso() {
         if (updating || updateRestarting || launching || game.Running || backingUp)
             return;
-        var dialog = new OpenFileDialog { Title = "Choose your " + settings.Game.Name + " disc image",
-                                          Filter = "Disc image (*.iso)|*.iso", CheckFileExists = true };
+        var dialog = new OpenFileDialog { Title = "Choose your " + settings.Game.Name + (settings.UsesGamePak() ? " game PAK" : " disc image"),
+                                          Filter = settings.UsesGamePak() ? "Game PAK (*.pak)|*.pak" : "Disc image (*.iso)|*.iso", CheckFileExists = true };
         if (dialog.ShowDialog(this) != true)
             return;
-        settings.SetFile("iso", dialog.FileName);
+        settings.SetGameSource(dialog.FileName);
         SaveSettings(this, new());
         RefreshGameUi();
+        ShowPage("Setup");
         await CheckSelectedDisc();
-        if (discCheck is { Ok: true } && !DiscImport.Ready(settings)) ShowPage("Setup");
     }
     // ---- Remove game ----
     int removalEstimate;
@@ -95,7 +96,7 @@ public partial class MainWindow {
         string list = string.Join("\n", targets.Select(t => "\u2022 " + t.What).Distinct());
         if (MessageBox.Show(this,
                             $"Remove {settings.Game.Name} from this PC?\n\n{list}\n\nFrees about {Gigabytes(size)}. " +
-                                "Your ISO file is kept." + (saves ? " Save games are deleted." : " Save games are kept.") +
+                                "Your source ISO or PAK is kept." + (saves ? " Save games are deleted." : " Save games are kept.") +
                                 "\nPlaying again needs the one-time setup again.",
                             "Remove game", MessageBoxButton.YesNo, MessageBoxImage.Warning,
                             MessageBoxResult.No) != MessageBoxResult.Yes)
@@ -103,7 +104,7 @@ public partial class MainWindow {
         RemoveGameButton.IsEnabled = false;
         Status.Text = "Removing game files...";
         var failed = await Task.Run(() => GameRemoval.Remove(targets));
-        settings.SetFile("iso", "");
+        settings.SetGameSource("");
         settings.SetImport("");
         discCheck = null;
         try {
@@ -181,38 +182,39 @@ public partial class MainWindow {
             Close();
     }
     void RefreshImportUi() {
+        RefreshGameSourceUi();
         RefreshOriginalAssetExportUi();
         ExistingBuildHint.Text = AppLayout.Packaged(root)
-            ? "Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required."
+            ? "Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your selected ISO or game PAK is still required."
             : "Choose " + (settings.Game.Id == "file2" ? "reo_recomp_file2.exe" : "reo_recomp.exe") +
-              " from your developer build. Keep its DLLs and shaders together. Your ISO is still required.";
-        SupportedDiscHint.Text = DiscValidation.RequiredFor(settings.Game.Id) +
+              " from your developer build. Keep its DLLs and shaders together. Your selected ISO or game PAK is still required.";
+        SupportedDiscHint.Text = settings.UsesGamePak() ? "Choose a complete game PAK exported by this launcher. The first launch prepares a local game-data cache; the ISO is not needed. Older asset-only PAKs need to be re-exported." : DiscValidation.RequiredFor(settings.Game.Id) +
             " PAL, Japanese and other revisions are unsupported.";
         ChooseIsoButton.IsEnabled =
             Playable(settings.Game.Id) && !updating && !game.Running && !launching && !backingUp;
         bool idle = !updating && !game.Running && !launching && !backingUp;
-        bool verified = discCheck is { Ok: true } && discCheck.Matches(settings.GetIso(), settings.Game.Id);
+        bool verified = discCheck is { Ok: true } && discCheck.Matches(settings.GetGameSource(), settings.Game.Id);
         ImportDiscButton.IsEnabled = Playable(settings.Game.Id) && settings.FilesPresent(root) &&
                                      verified && idle;
         ExistingBuildButton.IsEnabled = Playable(settings.Game.Id) && idle;
         if (importCancellation != null)
             return;
-        bool known = discCheck != null && discCheck.Matches(settings.GetIso(), settings.Game.Id);
-        DiscValidationStatus.Text = !Playable(settings.Game.Id) || !File.Exists(settings.GetIso()) ? ""
-                                    : checkingDisc || !known ? "Checking disc..."
+        bool known = discCheck != null && discCheck.Matches(settings.GetGameSource(), settings.Game.Id);
+        DiscValidationStatus.Text = !Playable(settings.Game.Id) || !File.Exists(settings.GetGameSource()) ? ""
+                                    : checkingDisc || !known ? "Checking game source..."
                                     : discCheck!.Ok ? "✓ " + discCheck.Message
                                                     : "✗ " + discCheck.Message;
         DiscValidationStatus.Foreground = (System.Windows.Media.Brush)FindResource(
             !known || checkingDisc ? "Muted" : discCheck!.Ok ? "Good" : "Danger");
-        if (File.Exists(settings.GetIso()) && !known && !checkingDisc)
+        if (File.Exists(settings.GetGameSource()) && !known && !checkingDisc)
             _ = CheckSelectedDisc();
         ImportState.Text =
             AppLayout.Packaged(root) && !LocalGameBuild.Available(root, settings.Game.Id)
                 ? "This package is missing setup files for " + settings.Game.Name + "."
             : DiscImport.Ready(settings) ? "Game data imported."
-            : File.Exists(settings.GetIso())
-                ? "Import copies the disc and builds the game once. It downloads build tools (about 173 MB) and can take a while."
-                : "Choose ISO to start setup. " + DiscValidation.RequiredFor(settings.Game.Id);
+            : File.Exists(settings.GetGameSource())
+                ? (settings.UsesGamePak() ? "Import prepares verified game files from the PAK and builds the game once. It needs extra disk space for the game-data cache." : "Import copies the disc and builds the game once. It downloads build tools (about 173 MB) and can take a while.")
+                : (settings.UsesGamePak() ? "Choose PAK to start setup." : "Choose ISO to start setup. " + DiscValidation.RequiredFor(settings.Game.Id));
     }
     async void UseExistingBuild(object sender, RoutedEventArgs e) {
         if (updating || game.Running || launching || backingUp)
@@ -272,17 +274,16 @@ public partial class MainWindow {
         try {
             var progress = BeginDiscImport();
             RefreshGameUi();
-            var imported = await DiscImport.Ensure(settings.GetIso(), settings.Game,
-                                                   DiscImport.ExpectedElf(settings, root), progress,
-                                                   importCancellation!.Token);
+            var imported = await settings.PrepareGame(progress, importCancellation!.Token);
             settings.SetImport(imported.Root);
             if (AppLayout.Packaged(root))
                 await LocalGameBuild.Ensure(root, imported, progress, importCancellation!.Token, game: settings.Game.Id);
             settings.Save();
             OriginalAssetExport? originalAssets = null;
-            if (settings.WantsOriginalAssetPaks()) {
+            if (!settings.UsesGamePak() && settings.WantsOriginalAssetPaks()) {
                 exportingOriginalAssets = true;
                 originalAssets = await AssetExports.Ensure(imported, settings.Game.Id, progress, importCancellation!.Token);
+                settings.RememberGamePak(originalAssets); settings.Save();
             }
             Status.Text = originalAssets != null ? $"Game ready. {originalAssets.Entries:N0} original assets {(originalAssets.Reused ? "already exported" : "exported")}."
                 : imported.Reused ? "Game data is already imported." : "Game imported. Ready to play.";
@@ -291,7 +292,7 @@ public partial class MainWindow {
         } catch (Exception error) {
             Status.Text = exportingOriginalAssets ? "Game ready. Original asset export failed: " + error.Message : "Could not import: " + error.Message;
             if (!exportingOriginalAssets && error is InvalidDataException) {
-                var file = new FileInfo(settings.GetIso());
+                var file = new FileInfo(settings.GetGameSource());
                 discCheck = new(settings.Game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
                                 error.Message);
                 DiscValidationStatus.Text = error.Message;

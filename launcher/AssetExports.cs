@@ -68,7 +68,7 @@ public static class AssetExports {
             if (!File.Exists(receipt) || new FileInfo(receipt).Length > 64 * 1024) return null;
             RejectLink(receipt);
             var record = JsonSerializer.Deserialize<Receipt>(File.ReadAllText(receipt), Json);
-            if (record is not { Format: 1 } || record.Game != game || record.ElfSha256 != elf || record.Identity != identity ||
+            if (record is not { Format: 2 } || record.Game != game || record.ElfSha256 != elf || record.Identity != identity ||
                 record.Grouping != grouping || record.Archives == null || !record.Archives.SequenceEqual(archives) ||
                 record.Packs == null || record.Packs.Count is < 1 or > 16) return null;
             var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -116,7 +116,8 @@ public static class AssetExports {
         long total = leaves.Sum(e => e.Size);
         // Deflate can grow incompressible data slightly. Reserve headers, manifests
         // and 1% expansion as well as free space for normal launcher activity.
-        long required = checked(total + total / 100 + leaves.Count * 4096L + 128L * 1024 * 1024);
+        long sourceBytes = suppliedIndex == null ? Directory.EnumerateFiles(data, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) : total;
+        long required = checked(sourceBytes + sourceBytes / 100 + leaves.Count * 4096L + 128L * 1024 * 1024);
         Require(new DriveInfo(Path.GetPathRoot(parent)!).AvailableFreeSpace >= required,
             $"Original asset export needs up to {required / (1024.0 * 1024 * 1024):0.00} GB of free space. Game data is already imported.");
         string staging = Path.Combine(parent, ".export-" + Guid.NewGuid().ToString("N"));
@@ -161,13 +162,14 @@ public static class AssetExports {
                     }
                     WriteJson(zip, ReferenceHeader, new { format = 1, kind = "original-assets", game, elfSha256 = elf, grouping, category = group.Key, index = "assets.json" });
                     WriteJson(zip, "assets.json", new { format = 1, verified = true, game, elfSha256 = elf, entries = exported });
+                    if (suppliedIndex == null) GamePaks.Write(zip, data, game, exported, progress, cancel);
                 }
                 packs.Add((name, exported));
             }
             completed = 0; Report("Verifying original asset packs", "Checking exported files", 0, total, true);
             foreach (var pack in packs) {
                 using var zip = ZipFile.OpenRead(Path.Combine(staging, pack.File));
-                Require(zip.Entries.Count == pack.Entries.Count + 2, "Incomplete original asset pack.");
+                Require(zip.Entries.Count >= pack.Entries.Count + 2, "Incomplete original asset pack.");
                 foreach (var entry in pack.Entries) {
                     cancel.ThrowIfCancellationRequested(); var member = zip.GetEntry(entry.File);
                     Require(member != null && member.Length == entry.Bytes, "Exported asset size differs: " + entry.Path);
@@ -181,6 +183,10 @@ public static class AssetExports {
                     Require(count == entry.Bytes && Convert.ToHexString(hash.GetHashAndReset()).Equals(entry.Sha256, StringComparison.OrdinalIgnoreCase),
                         "Exported asset hash differs: " + entry.Path);
                 }
+            }
+            if (suppliedIndex == null) {
+                using var zip = ZipFile.OpenRead(Path.Combine(staging, "original-assets.pak"));
+                GamePaks.Verify(zip, game, progress, cancel);
             }
             long compressed = packs.Sum(p => new FileInfo(Path.Combine(staging, p.File)).Length); completed = 0;
             var records = new List<OriginalAssetPack>();
@@ -198,7 +204,7 @@ public static class AssetExports {
             Require(Snapshot(data, game).SequenceEqual(archives), "Imported archives changed during export; retry.");
             cancel.ThrowIfCancellationRequested();
             string receipt = Path.Combine(staging, "export.json"); created.Add(receipt);
-            File.WriteAllText(receipt, JsonSerializer.Serialize(new Receipt(1, game, elf, identity, grouping, archives, records), Json));
+            File.WriteAllText(receipt, JsonSerializer.Serialize(new Receipt(2, game, elf, identity, grouping, archives, records), Json));
             string folder = grouping;
             if (Directory.Exists(Path.Combine(parent, folder))) folder += "-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..8];
             string destination = Path.Combine(parent, folder); Directory.Move(staging, destination);

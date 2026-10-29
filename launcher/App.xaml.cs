@@ -133,6 +133,15 @@ public partial class App : Application {
                 Shutdown(); return;
             }
             int exportAssets = Array.IndexOf(e.Args, "--export-original-assets");
+            int importGamePak = Array.IndexOf(e.Args, "--import-game-pak");
+            if (importGamePak >= 0) {
+                if (importGamePak + 4 >= e.Args.Length) throw new ArgumentException("--import-game-pak <game> <pak> <data-home> <new-result.json>");
+                string resultPath = e.Args[importGamePak + 4];
+                if (File.Exists(resultPath)) throw new IOException("Choose a new game PAK result file.");
+                var result = await GamePaks.Ensure(e.Args[importGamePak + 2], e.Args[importGamePak + 1], home: e.Args[importGamePak + 3]);
+                File.WriteAllText(resultPath, System.Text.Json.JsonSerializer.Serialize(result));
+                Shutdown(); return;
+            }
             if (exportAssets >= 0) {
                 if (exportAssets + 4 >= e.Args.Length) throw new ArgumentException("--export-original-assets <game> <import-root> <output-home> <result.json>");
                 string selectedGame = e.Args[exportAssets + 1], imported = Path.GetFullPath(e.Args[exportAssets + 2]);
@@ -240,7 +249,7 @@ public partial class App : Application {
                 !e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
                 !e.Args.Contains("--test-lobby") &&
                 !e.Args.Contains("--import-iso") && !e.Args.Contains("--prepare-asset-paks") && !e.Args.Contains("--test-asset-paks") &&
-                !e.Args.Contains("--test-asset-exports") && !e.Args.Contains("--export-original-assets") && !e.Args.Contains("--test-update") &&
+                !e.Args.Contains("--test-asset-exports") && !e.Args.Contains("--export-original-assets") && !e.Args.Contains("--import-game-pak") && !e.Args.Contains("--test-update") &&
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&
                 !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&
                 !e.Args.Contains("--test-compiler-setup") &&

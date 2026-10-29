@@ -133,7 +133,7 @@ public partial class MainWindow : Window {
                           "Controller" => ("Controls", "Devices and bindings."),
                           "Saves" => ("Save games", "Memory cards and backups."),
                           "Coop" => ("Co-op", "Play together with friends."),
-                          "Setup" => ("Game files", "Import your game disc."),
+                          "Setup" => ("Game files", "Import your ISO or game PAK."),
                           "Logs" => ("Log", "Game debug and output."),
                           "Mods" => ("Mods", "Game modifications."),
                           "Cheats" => ("Cheats", "Gameplay adjustments."),
@@ -276,6 +276,7 @@ public partial class MainWindow : Window {
                               cancel: importCancellation!.Token, lobby: lobby);
             if (game.Imported != null) {
                 settings.SetImport(game.Imported.Root);
+                if (game.OriginalAssets != null) settings.RememberGamePak(game.OriginalAssets);
                 try {
                     settings.Save();
                 } catch (Exception error)
@@ -312,6 +313,7 @@ public partial class MainWindow : Window {
         if (updating || updateRestarting || launching || game.Running || backingUp)
             return;
         string kind = (string)((Button)sender).Tag;
+        if (kind == "iso") { ChooseIso(); return; }
         var dialog = new OpenFileDialog { Title = "Choose game file",
                                           Filter = kind == "exe"   ? "Executable (*.exe)|*.exe"
                                                    : kind == "iso" ? "Disc image (*.iso)|*.iso"
