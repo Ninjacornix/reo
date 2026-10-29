@@ -23,6 +23,20 @@ def elf_fixture():
 
 
 class ElfStringTests(unittest.TestCase):
+    def test_optional_padding_stops_at_data_and_literal_references(self):
+        image, start, _ = elf_fixture(); image = bytearray(image)
+        image[start:] = bytes(len(image) - start)
+        image[start:start + 5] = b'HELLO'; image[192:196] = b'NEXT'
+        def budget():
+            return strings.candidates(image, start, 208, 208)[1][0]
+        self.assertEqual((budget()['maxBytes'], budget()['paddingMaxBytes'], budget()['usePadding']), (5, 15, False))
+        for pointer in (0x0010002c, 0x8010002c, 0xa010002c):
+            struct.pack_into('<I', image, 132, pointer)
+            self.assertEqual(budget()['paddingMaxBytes'], 11)
+        struct.pack_into('<I', image, 132, 0x00100025)
+        self.assertEqual(budget()['paddingMaxBytes'], 5)
+        struct.pack_into('<I', image, 132, 0); image[170] = 1
+        self.assertEqual(budget()['paddingMaxBytes'], 9)
     def test_addresses_budgets_tokens_and_duplicates(self):
         data, start, end = elf_fixture()
         _, entries, originals = strings.candidates(data, start, end, end)

@@ -14,7 +14,7 @@ internal static class ExecutableStringTests {
                 return new("test", 0, $"0x{addr:X8}", "ui-region-candidate", text, null, "cp932", raw.Length, 1,
                     Convert.ToHexString(raw).ToLowerInvariant(), Convert.ToHexString(SHA256.HashData(raw)).ToLowerInvariant(), 0, true, controls, formats, true, new());
             }
-            var original = Entry(address, "SINGLE PLAY", Array.Empty<string>(), Array.Empty<string>());
+            var original = Entry(address, "SINGLE PLAY", Array.Empty<string>(), Array.Empty<string>()) with { PaddingMaxBytes = 24 };
             var tagged = Entry(address + 32, "<p1>Use %s?", new[] { "<p1>" }, new[] { "%s" });
             var reference = new ElfStringReferences.Reference(new(), new() { original, tagged }, 2);
             ExecutableStringReplacement Value(string? text = "PAK CHECK", uint? at = null) => new() {
@@ -43,6 +43,14 @@ internal static class ExecutableStringTests {
             check(ExecutableStrings.Build(new[] { Pack(hex) }, reference).Single().Replacement.SequenceEqual("PAK"u8.ToArray()), game + " supports explicit encoded translation bytes");
             hex.Text = "also text";
             Reject(() => AssetPaks.Parse(Json(Pack(hex))), game + " rejects ambiguous text and bytesHex fields");
+            var padded = Value("LONGER TRANSLATION"); padded.UsePadding = true; padded.MaxBytes = 24;
+            check(ExecutableStrings.Build(new[] { Pack(padded) }, reference).Single().Capacity == 24,
+                  game + " explicitly opted-in translation uses its verified padding budget");
+            padded.MaxBytes = 25;
+            Reject(() => ExecutableStrings.Build(new[] { Pack(padded) }, reference), game + " rejects a padding budget beyond verified zeros and references");
+            var custom = Value(null); custom.BytesHex = "a6b0b6";
+            check(ExecutableStrings.Build(new[] { Pack(custom) }, reference).Single().Replacement.SequenceEqual(new byte[] { 0xa6, 0xb0, 0xb6 }),
+                  game + " custom-font half-width katakana mappings remain valid CP932 bytes");
             var tag = new ExecutableStringReplacement { Address = tagged.Address, MaxBytes = tagged.MaxBytes, BaseSha256 = tagged.OriginalSha256, Text = "<p1>Get %s!" };
             check(ExecutableStrings.Build(new[] { Pack(tag) }, reference).Count == 1, game + " accepts translated text with preserved control and format tokens");
             tag.Text = "<p1>Get %n!";

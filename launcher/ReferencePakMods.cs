@@ -55,11 +55,12 @@ internal static class ReferencePakMods {
         }
         string prefix = assets ? ElfStringReferences.Prefix : "";
         var originals = new Dictionary<string, JsonElement>(); var edits = new Dictionary<uint, ExecutableStringReplacement>();
-        void Add(JsonElement entry, string? text, string? bytesHex) {
+        void Add(JsonElement entry, string? text, string? bytesHex, bool usePadding = false) {
             if (text == null && bytesHex == null) return;
             if (text != null && text == entry.GetProperty("originalText").GetString() || bytesHex != null &&
                 bytesHex.Equals(entry.GetProperty("originalBytesHex").GetString(), StringComparison.OrdinalIgnoreCase)) return;
-            var value = new ExecutableStringReplacement { Address = entry.GetProperty("address").GetString() ?? "", MaxBytes = entry.GetProperty("maxBytes").GetInt32(),
+            var value = new ExecutableStringReplacement { Address = entry.GetProperty("address").GetString() ?? "", UsePadding = usePadding,
+                MaxBytes = entry.GetProperty(usePadding ? "paddingMaxBytes" : "maxBytes").GetInt32(),
                 BaseSha256 = entry.GetProperty("originalSha256").GetString() ?? "", Text = text, BytesHex = bytesHex };
             ExecutableStrings.ValidateManifest(new() { value }); uint address = ExecutableStrings.Address(value.Address);
             if (edits.TryGetValue(address, out var previous)) Require(JsonSerializer.Serialize(previous, Json) == JsonSerializer.Serialize(value, Json), "Conflicting translations in exported PAK.");
@@ -76,7 +77,7 @@ internal static class ReferencePakMods {
                 originals[id] = entry.Clone();
                 string? text = entry.TryGetProperty("translation", out var t) && t.ValueKind != JsonValueKind.Null ? t.GetString() : null;
                 string? hex = entry.TryGetProperty("translationBytesHex", out var h) && h.ValueKind != JsonValueKind.Null ? h.GetString() : null;
-                Add(entry, text, hex);
+                Add(entry, text, hex, entry.TryGetProperty("usePadding", out var padding) && padding.GetBoolean());
             }
         }
         foreach (string name in new[] { "ui-strings.csv", "candidates.csv" }) {
@@ -91,7 +92,10 @@ internal static class ReferencePakMods {
                 Require(originals.TryGetValue(row[columns["id"]], out var entry), "Keep original JSON references alongside edited CSV.");
                 Require(row[columns["address"]] == entry.GetProperty("address").GetString() && row[columns["originalText"]] == entry.GetProperty("originalText").GetString() &&
                     int.TryParse(row[columns["maxBytes"]], NumberStyles.None, CultureInfo.InvariantCulture, out int max) && max == entry.GetProperty("maxBytes").GetInt32(), "Edited CSV changed original string identity.");
-                Add(entry, text, null);
+                bool usePadding = false;
+                if (columns.TryGetValue("usePadding", out int column) && row[column].Length > 0)
+                    Require(bool.TryParse(row[column], out usePadding), "usePadding must be true or false.");
+                Add(entry, text, null, usePadding);
             }
         }
         Require(changes.Count + edits.Count is > 0 and <= 4096, "No changed assets or translations found. Original exports are for local editing; change payloads or translation fields first.");

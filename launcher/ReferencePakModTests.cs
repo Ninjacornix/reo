@@ -15,7 +15,7 @@ internal static class ReferencePakModTests {
                 string hash = Convert.ToHexString(SHA256.HashData(original)).ToLowerInvariant();
                 var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
                 string address = game == "file1" ? "0x00250F30" : "0x00255C50";
-                void Write(bool edited, bool csv = false, bool invalid = false) {
+                void Write(bool edited, bool csv = false, bool invalid = false, bool padding = false) {
                     File.Delete(source); using var zip = ZipFile.Open(source, ZipArchiveMode.Create);
                     void Json(string name, object value) { using var writer = new StreamWriter(zip.CreateEntry(name).Open()); writer.Write(JsonSerializer.Serialize(value, options)); }
                     Json("asset-reference.json", new { format = 1, kind = "original-assets", game, elfSha256 = DiscImport.ExpectedElf(game) });
@@ -23,10 +23,10 @@ internal static class ReferencePakModTests {
                     using (var output = zip.CreateEntry("NETBIO00.DAT/00000_native.bin").Open()) output.Write(edited ? changed : original);
                     Json("executable-strings/ui-strings.json", new { format = 1, game, elfSha256 = DiscImport.ExpectedElf(game), entries = new[] { new {
                         id = "test", address, maxBytes = 8, originalText = "original", originalBytesHex = Convert.ToHexString(original), originalSha256 = hash,
-                        translation = edited && !csv ? "PAK TEST" : null } } });
+                        paddingMaxBytes = 24, usePadding = padding, translation = edited && !csv ? (padding ? "LONGER TRANSLATION" : "PAK TEST") : null } } });
                     if (csv) {
                         using var writer = new StreamWriter(zip.CreateEntry("executable-strings/ui-strings.csv").Open(), Encoding.UTF8);
-                        writer.Write($"id,address,maxBytes,originalText,translation\r\ntest,{address},8,original,PAK CSV\r\n");
+                        writer.Write($"id,address,maxBytes,originalText,translation,usePadding\r\ntest,{address},8,original,{(padding ? "LONGER TRANSLATION" : "PAK CSV")},{padding}\r\n");
                     }
                     if (invalid) Json("../escape", new { invalid = true });
                 }
@@ -48,6 +48,12 @@ internal static class ReferencePakModTests {
                 Write(false, csv: true); string csvMods = Path.Combine(root, game + "-csv"); AssetPaks.Import(source, csvMods);
                 var csvManifest = AssetPaks.Load(csvMods).Single().Manifest!;
                 check(csvManifest.Replace.Count == 0 && csvManifest.Strings.Single().Text == "PAK CSV", game + " edited CSV alone produces an installable string-only mod");
+                Write(true, padding: true); string paddedMods = Path.Combine(root, game + "-padding-json"); AssetPaks.Import(source, paddedMods);
+                check(AssetPaks.Load(paddedMods).Single().Manifest!.Strings.Single() is { UsePadding: true, MaxBytes: 24, Text: "LONGER TRANSLATION" },
+                      game + " edited JSON explicitly opts into the exported padding budget");
+                Write(false, csv: true, padding: true); paddedMods = Path.Combine(root, game + "-padding-csv"); AssetPaks.Import(source, paddedMods);
+                check(AssetPaks.Load(paddedMods).Single().Manifest!.Strings.Single() is { UsePadding: true, MaxBytes: 24, Text: "LONGER TRANSLATION" },
+                      game + " edited CSV explicitly opts into the exported padding budget");
                 Write(true, invalid: true);
                 try { AssetPaks.Import(source, Path.Combine(root, game + "-unsafe")); check(false, game + " edited reference import rejects ZIP traversal"); }
                 catch (IOException) { check(!File.Exists(Path.Combine(root, "escape")), game + " edited reference import rejects ZIP traversal"); }

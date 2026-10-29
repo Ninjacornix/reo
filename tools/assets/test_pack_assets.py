@@ -9,6 +9,29 @@ from pack_assets import create
 
 
 class PackTests(unittest.TestCase):
+    def test_optional_padding_json_csv_and_custom_font_bytes(self):
+        from pack_assets import ELF
+        for game in ELF:
+            with self.subTest(game=game), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder); edited = root / 'edited'; edited.mkdir()
+                index = root / 'assets.json'; index.write_text(json.dumps(dict(format=1, verified=True, entries=[])))
+                entry = dict(id='test', address='0x00250f30', maxBytes=8, paddingMaxBytes=24, originalText='original',
+                             originalBytesHex=b'original'.hex(), originalSha256=hashlib.sha256(b'original').hexdigest(), translation='LONGER TRANSLATION')
+                doc = dict(format=1, game=game, elfSha256=ELF[game], entries=[entry]); path = edited / 'strings.json'
+                path.write_text(json.dumps(doc))
+                with self.assertRaises(ValueError): create(index, edited, root / 'strict.pak', game, 'test.strict', 'Strict', '1')
+                entry['usePadding'] = True; path.write_text(json.dumps(doc))
+                mod = create(index, edited, root / 'padding.pak', game, 'test.padding', 'Padding', '1')['strings'][0]
+                self.assertTrue(mod['usePadding']); self.assertEqual(mod['maxBytes'], 24)
+                entry['translation'] = None; path.write_text(json.dumps(doc))
+                import csv
+                csvfile = edited / 'ui-strings.csv'
+                with csvfile.open('w', newline='', encoding='utf-8') as stream:
+                    writer = csv.writer(stream); writer.writerow(['id', 'address', 'maxBytes', 'originalText', 'translation', 'usePadding'])
+                    writer.writerow(['test', entry['address'], 8, 'original', 'LONGER TRANSLATION', 'true'])
+                self.assertTrue(create(index, edited, root / 'csv.pak', game, 'test.csv', 'CSV', '1')['strings'][0]['usePadding'])
+                csvfile.unlink(); entry['translationBytesHex'] = 'a6b0b6'; path.write_text(json.dumps(doc))
+                self.assertEqual(create(index, edited, root / 'font.pak', game, 'test.font', 'Font', '1')['strings'][0]['bytesHex'], 'a6b0b6')
     def test_string_only_json_and_csv_translations(self):
         for game in ('file1', 'file2'):
             with self.subTest(game=game), tempfile.TemporaryDirectory() as folder:

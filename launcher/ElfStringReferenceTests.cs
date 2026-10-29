@@ -48,6 +48,20 @@ internal static class ElfStringReferenceTests {
                     result.Files["ui-strings.csv"].AsSpan(0, 3).SequenceEqual(new byte[] { 0xef, 0xbb, 0xbf }),
                     game + " JSON leaves translations separate and CSV declares UTF-8");
             using var canceled = new CancellationTokenSource(); canceled.Cancel();
+            var padded = (byte[])data.Clone(); Array.Clear(padded, 160, padded.Length - 160);
+            Encoding.ASCII.GetBytes("HELLO").CopyTo(padded, 160); Encoding.ASCII.GetBytes("NEXT").CopyTo(padded, 192);
+            var paddedProfile = new ElfStringReferences.Profile(160, 208, 208);
+            ElfStringReferences.Entry Budget() => ElfStringReferences.Extract(padded, game, paddedProfile, Hash(padded)).Entries[0];
+            check(Budget().MaxBytes == 5 && Budget().PaddingMaxBytes == 15 && !Budget().UsePadding,
+                  game + " optional budget includes verified zero padding and reserves a terminator");
+            foreach (uint target in new[] { 0x0010002cu, 0x8010002cu, 0xa010002cu }) {
+                BinaryPrimitives.WriteUInt32LittleEndian(padded.AsSpan(132), target);
+                check(Budget().PaddingMaxBytes == 11, game + " padding stops before physical or KSEG literal pointer " + target);
+            }
+            BinaryPrimitives.WriteUInt32LittleEndian(padded.AsSpan(132), 0x00100025);
+            check(Budget().PaddingMaxBytes == 5, game + " a reference to the original terminator prevents extension");
+            BinaryPrimitives.WriteUInt32LittleEndian(padded.AsSpan(132), 0); padded[170] = 1;
+            check(Budget().PaddingMaxBytes == 9, game + " padding stops before any nonzero data");
             try { ElfStringReferences.Extract(data, game, profile, Hash(data), canceled.Token); check(false, game + " string extraction honors cancellation"); }
             catch (OperationCanceledException) { check(true, game + " string extraction honors cancellation"); }
             try { ElfStringReferences.Extract(data, game, profile, new string('0', 64)); check(false, game + " string extraction rejects a wrong executable hash"); }

@@ -13,6 +13,7 @@ public partial class MainWindow {
             ExportOriginalAssets.IsChecked = settings.WantsOriginalAssetPaks();
             bool idle = !game.Running && !launching && !updating && !updateRestarting && !backingUp && importCancellation == null;
             OriginalAssetOptions.IsEnabled = idle;
+            CleanOldImportsButton.IsEnabled = idle;
             ExportOriginalAssets.IsEnabled = idle && !settings.UsesGamePak();
             ExportOriginalAssetsNow.IsEnabled = idle && DiscImport.Ready(settings);
             OpenOriginalAssetExports.IsEnabled = Directory.Exists(AssetExports.GameFolder(settings.Game.Id));

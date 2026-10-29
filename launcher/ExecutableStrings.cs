@@ -8,14 +8,20 @@ namespace Outbreak.Launcher;
 public sealed class ExecutableStringReplacement {
     public string Address { get; set; } = "";
     public int MaxBytes { get; set; }
+    public bool UsePadding { get; set; }
     public string BaseSha256 { get; set; } = "";
     public string? Text { get; set; }
     public string? BytesHex { get; set; }
 }
 internal static class ExecutableStrings {
     internal const string Capability = "[EXECUTABLE-STRINGS-1]";
+    internal const string PaddingCapability = "[EXECUTABLE-STRINGS-2]";
     internal const string PlanName = "executable-strings.bin";
-    internal sealed record Patch(uint Address, byte[] Original, byte[] Replacement, string Pack);
+    internal sealed record Patch(uint Address, byte[] Original, byte[] Replacement, string Pack, int Capacity);
+    internal static string RequiredCapability(string plan) {
+        using var input = File.OpenRead(plan); Span<byte> magic = stackalloc byte[8];
+        input.ReadExactly(magic); return magic.SequenceEqual("REOSTR2\0"u8) ? PaddingCapability : Capability;
+    }
     static void Require(bool value, string message) { if (!value) throw new IOException(message); }
     internal static uint Address(string value) {
         Require(value != null && Regex.IsMatch(value, @"\A(?:0x)?[0-9a-fA-F]{1,8}\z"), "Invalid executable string address.");
@@ -45,7 +51,9 @@ internal static class ExecutableStrings {
             foreach (var value in pack.Strings) {
                 cancel.ThrowIfCancellationRequested(); uint address = Address(value.Address);
                 Require(entries.TryGetValue(address, out var original), "String target is outside the verified executable catalogue: " + value.Address);
-                Require(original!.MaxBytes == value.MaxBytes && original.OriginalSha256.Equals(value.BaseSha256, StringComparison.OrdinalIgnoreCase), "Original executable string identity differs: " + value.Address);
+                Require((value.UsePadding ? value.MaxBytes >= original!.MaxBytes && value.MaxBytes <= original.PaddingMaxBytes
+                                          : original!.MaxBytes == value.MaxBytes) && original.OriginalSha256.Equals(value.BaseSha256, StringComparison.OrdinalIgnoreCase),
+                        "Original executable string identity or verified padding budget differs: " + value.Address);
                 Require(!owners.TryGetValue(address, out var owner), $"Pack {pack.Name} conflicts with {owner} at string {value.Address}."); owners.Add(address, pack.Name);
                 byte[] bytes;
                 try { bytes = value.Text != null ? encoding.GetBytes(value.Text) : Convert.FromHexString(value.BytesHex!); }
@@ -57,8 +65,8 @@ internal static class ExecutableStrings {
                     @"%(?:\d+\$)?[-+ #0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|ll|[hlLjzt])?[diuoxXfFeEgGaAcspn%]")), "Translation must preserve formatting tags and printf arguments: " + value.Address);
                 var raw = Convert.FromHexString(original.OriginalBytesHex);
                 if (raw.AsSpan().SequenceEqual(bytes)) continue;
-                total += raw.Length + bytes.Length; Require(total <= 1024 * 1024 && result.Count < 4096, "Executable string plan exceeds limits.");
-                result.Add(new(address, raw, bytes, pack.Id));
+                total += value.MaxBytes + bytes.Length; Require(total <= 1024 * 1024 && result.Count < 4096, "Executable string plan exceeds limits.");
+                result.Add(new(address, raw, bytes, pack.Id, value.MaxBytes));
             }
         }
         return result;
@@ -68,16 +76,20 @@ internal static class ExecutableStrings {
         var patches = Build(packs, ElfStringReferences.Read(elf, game, cancel), cancel);
         if (patches.Count == 0) return;
         Directory.CreateDirectory(session);
+        bool padded = patches.Any(p => p.Capacity > p.Original.Length);
         using (var output = new BinaryWriter(File.Create(Path.Combine(session, PlanName)))) {
-            output.Write(Encoding.ASCII.GetBytes("REOSTR1\0")); output.Write(game == "file1" ? 1u : 2u);
+            output.Write(Encoding.ASCII.GetBytes(padded ? "REOSTR2\0" : "REOSTR1\0")); output.Write(game == "file1" ? 1u : 2u);
             output.Write(Convert.FromHexString(DiscImport.ExpectedElf(game))); output.Write((uint)patches.Count);
             foreach (var patch in patches.OrderBy(p => p.Address)) {
-                output.Write(patch.Address); output.Write((uint)patch.Original.Length); output.Write((uint)patch.Replacement.Length);
+                output.Write(patch.Address); output.Write((uint)patch.Original.Length);
+                if (padded) output.Write((uint)patch.Capacity);
+                output.Write((uint)patch.Replacement.Length);
                 output.Write(patch.Original); output.Write((byte)0); output.Write(patch.Replacement);
             }
         }
         File.WriteAllText(Path.Combine(session, "executable-strings.json"), JsonSerializer.Serialize(new { format = 1, game,
-            replace = patches.Select(p => new { address = $"0x{p.Address:X8}", maxBytes = p.Original.Length, bytesHex = Convert.ToHexString(p.Replacement).ToLowerInvariant(), pack = p.Pack }) },
+            replace = patches.Select(p => new { address = $"0x{p.Address:X8}", originalBytes = p.Original.Length, maxBytes = p.Capacity,
+                usePadding = p.Capacity > p.Original.Length, bytesHex = Convert.ToHexString(p.Replacement).ToLowerInvariant(), pack = p.Pack }) },
             new JsonSerializerOptions { WriteIndented = true }));
     }
 }

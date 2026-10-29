@@ -128,7 +128,7 @@ public sealed class GameSession {
             throw new IOException("Asset packs need an updated game build. Rebuild or update the selected game.");
         string assetPlan = await Task.Run(() => AssetPaks.Prepare(selectedAssetPaks, discRoot, selectedGame.Id, Logs, cancel: cancel), cancel);
         string stringPlan = Path.Combine(Logs, ExecutableStrings.PlanName);
-        if (File.Exists(stringPlan) && !HasMarker(image, ExecutableStrings.Capability))
+        if (File.Exists(stringPlan) && !HasMarker(image, ExecutableStrings.RequiredCapability(stringPlan)))
             throw new IOException("Executable string replacements need an updated game build. Rebuild or update the selected game.");
         if (randomizerConfiguration != null) {
             File.WriteAllBytes(Path.Combine(Logs,"randomizer-session.json"),randomizerConfiguration);

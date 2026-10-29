@@ -17,7 +17,10 @@ internal static class ElfStringReferences {
     internal sealed record Entry(string Id, int FileOffset, string Address, string Group, string OriginalText,
         string? Translation, string Encoding, int MaxBytes, int TerminatorBytes, string OriginalBytesHex,
         string OriginalSha256, int OriginalsOffset, bool SourceTextRoundTrips, string[] ControlTokens,
-        string[] FormatTokens, bool NeedsManualReview, List<string> LiteralAddressWordFileOffsets);
+        string[] FormatTokens, bool NeedsManualReview, List<string> LiteralAddressWordFileOffsets) {
+        public int PaddingMaxBytes { get; init; }
+        public bool UsePadding { get; init; }
+    }
     internal sealed record Reference(Dictionary<string, byte[]> Files, List<Entry> Entries, int UiCount);
     static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
     static readonly Encoding Sjis = CreateEncoding();
@@ -78,13 +81,27 @@ internal static class ElfStringReferences {
         }
         Require(entries.Count > 0, "No executable string candidates found.");
         var addresses = entries.ToDictionary(e => uint.Parse(e.Address[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture));
+        var paddingReferences = new HashSet<uint>();
         foreach (var source in segments) {
             int limit = (source.FileOffset + source.Bytes) & ~3;
             for (int at = (source.FileOffset + 3) & ~3; at < limit; at += 4) {
                 if ((at & 0xffff) == 0) cancel.ThrowIfCancellationRequested();
-                if (addresses.TryGetValue(U32(bytes, at), out var entry)) entry.LiteralAddressWordFileOffsets.Add($"0x{at:X8}");
+                uint value = U32(bytes, at);
+                if (addresses.TryGetValue(value, out var entry)) entry.LiteralAddressWordFileOffsets.Add($"0x{at:X8}");
+                uint target = value is >= 0x80000000 and < 0xc0000000 ? value & 0x1fffffff : value;
+                if (target >= segment.Address + start - segment.FileOffset && target < segment.Address + end - segment.FileOffset)
+                    paddingReferences.Add(target);
             }
         }
+        entries = entries.Select(entry => {
+            int stop = entry.FileOffset + entry.MaxBytes;
+            uint address = uint.Parse(entry.Address[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            long alignedEnd = ((long)address + entry.MaxBytes + 16) & ~15L;
+            int limit = (int)Math.Min(end, entry.FileOffset + alignedEnd - address);
+            while (stop < limit && stop - entry.FileOffset <= 65535 && bytes[stop] == 0 &&
+                   !paddingReferences.Contains(segment.Address + (uint)(stop - segment.FileOffset))) stop++;
+            return entry with { PaddingMaxBytes = Math.Max(entry.MaxBytes, stop - entry.FileOffset - 1) };
+        }).ToList();
         var ui = entries.Where(e => e.Group == "ui-region-candidate").ToList();
         var files = new Dictionary<string, byte[]> {
             ["strings.json"] = JsonBytes(new { format = 1, game, elfSha256 = expected, entries }),
@@ -95,7 +112,7 @@ internal static class ElfStringReferences {
                 "Start with ui-strings.csv or ui-strings.json; enter translations separately.\n" +
                 "Candidates need manual review. UI grouping is a location heuristic. The broader catalogue includes SDK diagnostics and resource names.\n" +
                 "Addresses come from ELF PT_LOAD mapping. Literal address words are static pointer candidates, not verified call sites.\n" +
-                "maxBytes counts original CP932/Shift-JIS-family bytes, excluding the NUL terminator; adjacent padding is not available.\n" +
+                "maxBytes is the strict original byte limit. Optional usePadding=true permits paddingMaxBytes: verified zero alignment bytes without literal address references, up to the next 16-byte boundary; one NUL is reserved.\n" +
                 "Preserve original bytes, spaces, line breaks, formatting tags and printf arguments. Glyph/font mapping also needs verification.\n" +
                 "originals.bin contains the indexed NUL-terminated original candidates. Keep original game text private.\n" +
                 "Enter translation fields, then import the edited PAK through Mods and enable it. Updated native builds apply bounded string overrides in solo play.\n")
@@ -117,9 +134,10 @@ internal static class ElfStringReferences {
     static string[] Tokens(string text, string pattern) => Regex.Matches(text, pattern).Select(m => m.Value).ToArray();
     static byte[] Csv(IEnumerable<Entry> entries) {
         static string Cell(string text) => "\"" + text.Replace("\"", "\"\"") + "\"";
-        var result = new StringBuilder("id,address,fileOffset,maxBytes,encoding,literalAddressWordFileOffsets,originalText,translation\r\n");
+        var result = new StringBuilder("id,address,fileOffset,maxBytes,encoding,literalAddressWordFileOffsets,originalText,translation,paddingMaxBytes,usePadding\r\n");
         foreach (var entry in entries) result.Append(string.Join(",", new[] { entry.Id, entry.Address, $"0x{entry.FileOffset:X8}",
-            entry.MaxBytes.ToString(CultureInfo.InvariantCulture), entry.Encoding, string.Join(";", entry.LiteralAddressWordFileOffsets), entry.OriginalText, "" }.Select(Cell))).Append("\r\n");
+            entry.MaxBytes.ToString(CultureInfo.InvariantCulture), entry.Encoding, string.Join(";", entry.LiteralAddressWordFileOffsets), entry.OriginalText, "",
+            entry.PaddingMaxBytes.ToString(CultureInfo.InvariantCulture), "false" }.Select(Cell))).Append("\r\n");
         return Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(result.ToString())).ToArray();
     }
     internal static void Write(ZipArchive zip, string elf, string game, CancellationToken cancel = default) {

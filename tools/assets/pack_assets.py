@@ -32,11 +32,12 @@ def string_changes(edited, game):
             for entry in data['entries']:
                 identity = entry['id']
                 original = {k: entry[k] for k in ('address', 'maxBytes', 'originalText', 'originalBytesHex', 'originalSha256')}
+                original['paddingMaxBytes'] = entry.get('paddingMaxBytes', entry['maxBytes'])
                 if identity in originals and originals[identity] != original:
                     raise ValueError('Conflicting original executable string identities')
                 originals[identity] = original
                 if entry.get('translation') is not None or entry.get('translationBytesHex') is not None:
-                    edits.append((identity, entry.get('translation'), entry.get('translationBytesHex')))
+                    edits.append((identity, entry.get('translation'), entry.get('translationBytesHex'), entry.get('usePadding', False)))
     for root in roots:
         for name in ('ui-strings.csv', 'candidates.csv'):
             file = root / name
@@ -49,9 +50,12 @@ def string_changes(edited, game):
                     source = originals.get(row['id'])
                     if source is None or row['originalText'] != source['originalText'] or row['address'] != source['address'] or int(row['maxBytes']) != source['maxBytes']:
                         raise ValueError('Keep the original JSON reference alongside edited CSV files')
-                    edits.append((row['id'], row['translation'], None))
+                    padding = row.get('usePadding', 'false').strip().lower() or 'false'
+                    if padding not in ('true', 'false'):
+                        raise ValueError('usePadding must be true or false')
+                    edits.append((row['id'], row['translation'], None, padding == 'true'))
     result = {}
-    for identity, text, encoded in edits:
+    for identity, text, encoded, padding in edits:
         source = originals[identity]
         raw = bytes.fromhex(source['originalBytesHex'])
         if len(raw) != source['maxBytes'] or hashlib.sha256(raw).hexdigest() != source['originalSha256']:
@@ -63,7 +67,12 @@ def string_changes(edited, game):
             decoded = replacement.decode('cp932')
         except (UnicodeError, ValueError) as error:
             raise ValueError('Invalid CP932 translation; custom fonts need verified encoded byte mappings') from error
-        if len(replacement) > len(raw) or b'\0' in replacement:
+        if not isinstance(padding, bool):
+            raise ValueError('usePadding must be true or false')
+        budget = source['paddingMaxBytes'] if padding else len(raw)
+        if not isinstance(budget, int) or not len(raw) <= budget <= 65535:
+            raise ValueError('Invalid verified padding budget')
+        if len(replacement) > budget or b'\0' in replacement:
             raise ValueError('Executable translation exceeds byte budget or contains NUL')
         for pattern in (r'<[^>\r\n]+>', r'%(?:\d+\$)?[-+ #0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|ll|[hlLjzt])?[diuoxXfFeEgGaAcspn%]'):
             if re.findall(pattern, source['originalText']) != re.findall(pattern, decoded):
@@ -71,7 +80,9 @@ def string_changes(edited, game):
         if raw == replacement:
             continue
         address = source['address']
-        entry = dict(address=address, maxBytes=len(raw), baseSha256=source['originalSha256'])
+        entry = dict(address=address, maxBytes=budget, baseSha256=source['originalSha256'])
+        if padding:
+            entry['usePadding'] = True
         entry['text' if text is not None else 'bytesHex'] = text if text is not None else replacement.hex()
         if address in result and result[address] != entry:
             raise ValueError('Conflicting translations for the same executable address')

@@ -169,9 +169,51 @@ and enable it. Both games support these overrides in updated native builds, in s
 play. The Python packer also reads edited reference files in the edited folder.
 Conflicting translations, changed original identities, invalid CP932 sequences,
 embedded NULs and translations exceeding `maxBytes` are rejected. Preserve all
-formatting tags and printf arguments. Byte limits exclude the terminating NUL and
-do not borrow adjacent padding. Font glyph coverage still needs manual checking.
+formatting tags and printf arguments. Byte limits exclude the terminating NUL.
+Font glyph coverage still needs manual checking.
 An empty CSV cell means no edit; JSON `translation: ""` explicitly clears a string.
+
+### Optional verified string padding
+
+The strict default remains the original `maxBytes`. New references also export
+`paddingMaxBytes` and `usePadding: false`. Set **`usePadding` to `true`** for a
+specific translated row in JSON or CSV to permit the larger exported budget.
+Keep the original `maxBytes`, original text and identity fields unchanged in the
+reference. For example, `\n\n\nUnequip items.` has 17 original bytes and a verified
+31-byte budget in both supported editions. Re-export older references to obtain
+the padding metadata; previous exports are preserved.
+
+Padding stops at the first nonzero byte, the next 16-byte alignment boundary, the
+supported string-region boundary or an aligned literal address reference,
+whichever comes first. References in all file-backed ELF load segments are
+checked, including KSEG0/KSEG1 aliases. At least one terminating NUL remains.
+The launcher recalculates the budget from the original ELF; it does not trust an
+edited reference's claimed budget. The runtime independently checks original file
+and live guest zero bytes, pointer references, alignment and overlapping patches
+before writing anything. This is a conservative static check, not proof that no
+computed pointer or overlay can ever use a byte; review and playtest translations.
+
+In hand-authored `pak.json` string entries, `usePadding: true` permits `maxBytes`
+between the original length and the verified `paddingMaxBytes`. `baseSha256`
+still hashes only the original string bytes. Padded plans require an updated
+native build with `[EXECUTABLE-STRINGS-2]`; the launcher requests a rebuild for
+older binaries. Strict-only plans retain their existing format and capability.
+
+Custom-font mappings in CP932's single-byte half-width katakana range, including
+`A6`–`B6`, remain accepted through `translationBytesHex` / `bytesHex`. They are not
+normalized or changed into Latin Unicode characters; the replacement font supplies
+the intended accented glyphs.
+
+### Cleaning old imports
+
+In **Game files → Clean up old imports...**, review the older completed imports
+for the selected game and confirm deletion. Nothing is deleted automatically when
+an ISO changes. The selected imports for both games, remembered source ISO/PAK
+paths, saves, exports and mods are protected. Unknown files, incomplete imports,
+malformed receipts and linked files/folders are left alone. Cleanup shares setup's
+lock and rechecks each target before deleting it. Estimated sizes are logical file
+sizes; shared hard-linked files can free less physical disk space. Keep an older
+game revision's source if you want to import that revision again later.
 
 Installable `pak.json` may contain a `strings` array alongside or instead of
 `replace`. Each entry needs `address`, `maxBytes`, `baseSha256` (the original

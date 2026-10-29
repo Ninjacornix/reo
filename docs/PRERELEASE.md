@@ -44,6 +44,14 @@ before guest execution. Rebuild both editions; the launcher refuses older binari
 Edited original exports can now be imported under Mods, which compiles their
 changed asset payloads and translation fields into ordinary replacement layers.
 
+Opt-in executable-string padding additionally needs `[EXECUTABLE-STRINGS-2]` and
+the updated `runtime/assets/executable_strings.h`. The runtime accepts strict v1
+plans and bounded v2 plans, rechecking zero alignment space and literal pointers
+before writes. Include a native rebuild notice for this update. Export receipt
+format 5 refreshes the new padding metadata without overwriting older exports.
+The old-import cleanup action is manual and affects only reviewed, unselected,
+completed imports; it must never be called automatically after setup.
+
 PAK-as-game-source support additionally requires the updated `cdvd.h` and
 `cdvd.cpp`, and rebuilding their consumers (including `reo_hw_bridge.cpp`). The
 launcher requires `[GAME-PAK-1]` in the native image before launching in PAK mode.

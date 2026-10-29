@@ -79,7 +79,7 @@ def candidates(data, start, end, ui_end):
             entries.append(dict(
                 id=f'elf-{address:08X}', fileOffset=position, address=f'0x{address:08X}',
                 group='ui-region-candidate' if position < ui_end else 'other-candidate',
-                originalText=text, translation=None, encoding='cp932', maxBytes=len(raw),
+                originalText=text, translation=None, encoding='cp932', maxBytes=len(raw), usePadding=False,
                 terminatorBytes=1, originalBytesHex=raw.hex(), originalSha256=sha(raw),
                 originalsOffset=len(originals), sourceTextRoundTrips=text.encode('cp932') == raw,
                 controlTokens=re.findall(r'<[^>\r\n]+>', text),
@@ -90,12 +90,26 @@ def candidates(data, start, end, ui_end):
     by_address = {int(entry['address'], 16): entry for entry in entries}
     for entry in entries:
         entry['literalAddressWordFileOffsets'] = []
+    padding_references = set()
+    address_start = segment['address'] + start - segment['fileOffset']
+    address_end = segment['address'] + end - segment['fileOffset']
     for source in segments:
         aligned = (source['fileOffset'] + 3) & ~3
         limit = (source['fileOffset'] + source['bytes']) & ~3
         for index, (value,) in enumerate(struct.iter_unpack('<I', data[aligned:limit])):
             if value in by_address:
                 by_address[value]['literalAddressWordFileOffsets'].append(f'0x{aligned + index * 4:08X}')
+            target = value & 0x1fffffff if 0x80000000 <= value < 0xc0000000 else value
+            if address_start <= target < address_end:
+                padding_references.add(target)
+    for entry in entries:
+        stop = entry['fileOffset'] + entry['maxBytes']
+        address = int(entry['address'], 16)
+        aligned_end = (address + entry['maxBytes'] + 16) & ~15
+        limit = min(end, entry['fileOffset'] + aligned_end - address)
+        while stop < limit and stop - entry['fileOffset'] <= 65535 and data[stop] == 0 and segment['address'] + stop - segment['fileOffset'] not in padding_references:
+            stop += 1
+        entry['paddingMaxBytes'] = max(entry['maxBytes'], stop - entry['fileOffset'] - 1)
     return segment, entries, bytes(originals)
 
 
@@ -106,9 +120,9 @@ def json_bytes(value):
 def csv_bytes(entries):
     stream = io.StringIO(newline='')
     writer = csv.writer(stream)
-    writer.writerow(['id', 'address', 'fileOffset', 'maxBytes', 'encoding', 'literalAddressWordFileOffsets', 'originalText', 'translation'])
+    writer.writerow(['id', 'address', 'fileOffset', 'maxBytes', 'encoding', 'literalAddressWordFileOffsets', 'originalText', 'translation', 'paddingMaxBytes', 'usePadding'])
     for entry in entries:
-        writer.writerow([entry['id'], entry['address'], f"0x{entry['fileOffset']:08X}", entry['maxBytes'], entry['encoding'], ';'.join(entry['literalAddressWordFileOffsets']), entry['originalText'], ''])
+        writer.writerow([entry['id'], entry['address'], f"0x{entry['fileOffset']:08X}", entry['maxBytes'], entry['encoding'], ';'.join(entry['literalAddressWordFileOffsets']), entry['originalText'], '', entry['paddingMaxBytes'], 'false'])
     return stream.getvalue().encode('utf-8-sig')
 
 
@@ -152,7 +166,10 @@ these are static pointer candidates, not verified runtime references.
 
 Addresses come from ELF PT_LOAD mapping, not from a hard-coded offset guess.
 maxBytes counts original encoded bytes, excluding the one-byte NUL terminator.
-It does not borrow adjacent padding. Preserve leading spaces, <...> controls,
+Padding is optional: usePadding=true enables the verified paddingMaxBytes budget.
+Only original zeros without aligned literal address references are available;
+one terminating NUL is reserved, and expansion stops at the next 16-byte boundary.
+Preserve leading spaces, <...> controls,
 printf arguments and line breaks. Enter a translation separately; keep the raw
 original bytes and identity fields unchanged. CP932 represents the original
 Shift-JIS-family bytes; Unicode character count is not an encoded byte budget.

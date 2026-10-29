@@ -371,3 +371,68 @@ New models, rooms, object behavior and complete campaign modifications have not
 been exhaustively playtested; replacements must preserve their native formats and
 the game's existing structural and memory constraints. This remains unreleased
 and requires the final merged release's full cold-build/package checks.
+
+## Issue #25 follow-up: verified padding and stale imports
+
+The translator's 2026-10-29 reply requests additional NUL padding for longer
+Spanish UI strings and cleanup of obsolete import folders. Both editions now
+export an optional `paddingMaxBytes` budget while retaining the original
+`maxBytes` and a false-by-default `usePadding` flag. JSON/CSV imports and the
+Python packer honor explicit per-string opt-in. The CP932 half-width katakana
+byte mappings used by custom translation fonts remain accepted unchanged.
+
+Budgets are bounded by untouched zeros, one reserved NUL, the next 16-byte
+alignment boundary, supported data-region limits and literal pointer targets
+across every file-backed ELF segment, including KSEG aliases. This prevents long
+zero-filled non-UI data runs being treated as free string space. Calculated and
+overlay references cannot be excluded by this static check; author review and
+gameplay testing remain necessary. The original string hash remains unchanged.
+
+Strict plans stay `REOSTR1`; a plan using extra space becomes `REOSTR2` and carries
+both original length and verified capacity. The native loader accepts both,
+revalidates the complete plan and guest zeros, detects overlapping extents and
+applies changes only after validation. The launcher checks the new native marker
+before launching padded strings. Original game files are unchanged.
+
+`StaleImports` lists only recognized completed version-1 ISO and version-2 PAK
+imports under the selected game's own import directory. Selected folders and
+remembered sources/executables/cards are protected. Unknown files, bad receipts,
+pending imports and any nested reparse points exclude a folder. The Game files
+action displays candidates and their sizes and defaults to cancellation. Cleanup
+takes the same import lock as setup and repeats scope/link/selection checks before
+each delete. It never runs automatically. Size is an estimate when data shares
+hard links.
+
+Validation (private evidence: original checkout `build-ninja/padding-pak-build/`
+and this worktree's ignored `build-ninja/`):
+
+- Self-contained launcher: **891 checks pass** with system-only PATH and absent
+  .NET lookup roots. New checks cover padding, literal/aliased pointers, strict
+  defaults, JSON/CSV opt-in, custom font bytes and cleanup of synthetic fixtures.
+- Python asset tools: **13 tests complete**, 11 pass and two optional probe tests
+  skip without their environment variables.
+- C# and independent Python extraction match every entry, original byte pool and
+  parsed CSV for both real ELFs: 980 File #1 / 1,928 File #2 candidates, with
+  larger budgets for 930 / 1,763 respectively. `Unequip items.` with its three
+  leading newlines expands from 17 to 31 bytes in both.
+- Native probes pass 18 strict + 15 padded checks for File #1 and 16 + 16 for
+  File #2. They compare the entire synthetic RAM image to expected changes,
+  verify terminators/padding, reject referenced space and malformed plans, and
+  establish no partial writes after rejection.
+- Both updated bootstrap units compile under the exact pinned LLVM/MinGW UCRT
+  compiler. Local gameplay binaries freshly compile/link those units against
+  previously verified unchanged objects; this is not a fresh whole-game build.
+- Edited standalone reference PAKs import into replacement mods and produce v2
+  plans for both games. Both also pass full launcher launch/window/normal-exit
+  checks. Real game runs reach gameplay and visibly render longer labels:
+  File #1 `  RELOAD` (8 bytes) becomes `  PAKPAD OK` (11), and File #2 `EQUIP`
+  (5 bytes) becomes `PAKTEST` (7). Screenshots are
+  `file1-personal/padded-item-command.png` and
+  `file2-personal/translated-command.png`. These test PAKs remain private.
+- WPF UI checks exercise cleanup's actual review dialog, cancellation and
+  confirmation. Only the stale fixture is removed; the active import, unknown
+  personal files, a nested junction and its target survive. The normal Play
+  action rejects an older string-v1 native binary with the rebuild message.
+
+No release or issue comment was published by this follow-up. Final merged release
+packaging and cold-build validation remain required as described in `PRERELEASE.md`.
