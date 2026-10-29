@@ -73,6 +73,11 @@ texture/model/audio format. Updated exports also include private game boot data
 and archive metadata so the PAK can be selected as a game source. These additional
 files are separate from the editable leaf index and must not be distributed.
 
+For **both File #1 and File #2**, the same PAK automatically includes an
+`executable-strings/` folder with editable CSV/JSON, original encoded bytes,
+addresses and byte limits. No separate script or second PAK is needed. Re-export
+older packs with **Export now** to add these references; previous exports are kept.
+
 Results live under the selected storage folder at
 `asset-exports/<game>/<source-identity>/single/`. Export requires extra disk space
 and time to compress and verify every file. The launcher checks available space
@@ -134,21 +139,25 @@ Outbreak.Launcher.exe --prepare-asset-paks file1 "<import>/data" "<pack-folder>"
 
 ## Executable-string references
 
-For the supported File #1 executable, a separate local reference export helps
-prepare translations of strings stored inside the ELF:
+Launcher game-to-PAK exports automatically include executable string references
+for the selected edition under `executable-strings/`. For a smaller, standalone
+editing reference, the Python tool supports both original executables:
 
 ```powershell
 python tools/assets/extract_elf_strings.py "<import>/data/SLUS_207.65" "<new-private-reference-folder>"
 ```
 
-`executable-strings-file1.pak` contains `ui-strings.csv` / `ui-strings.json`, a
+Use `SLUS_209.84` for File #2; the supported executable hash selects the profile,
+or specify `--game file1` / `--game file2` to enforce an edition.
+`executable-strings-<game>.pak` contains `ui-strings.csv` / `ui-strings.json`, a
 broader candidate catalogue, original bytes and verification metadata. Entries
 include ELF-mapped addresses, file offsets, encoded byte budgets, formatting tags
 and locations of literal address words. The UI grouping is a location heuristic;
 SDK diagnostics and other non-display strings also occur in the broader list.
 Keep original identity fields and bytes intact, and enter translations separately.
 
-This is an editing reference, **not an installable mod or playable game PAK**.
+The string reference itself is **not an installable mod or a playable game PAK**.
+Its presence inside a complete game PAK does not apply edited translations.
 Runtime executable-string overrides are still unimplemented. Byte limits exclude
 the terminating NUL and do not borrow adjacent padding. Original text uses the
 CP932/Shift-JIS family encoding; a translation also needs appropriate glyph/font

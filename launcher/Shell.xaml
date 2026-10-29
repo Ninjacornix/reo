@@ -282,7 +282,7 @@
         <CheckBox x:Name="ExportOriginalAssets" Checked="OriginalAssetOptionChanged" Unchecked="OriginalAssetOptionChanged" AutomationProperties.Name="Export original assets to .pak files during setup">
          <TextBlock Text="Export original assets to .pak files during setup" TextWrapping="Wrap"/>
         </CheckBox>
-        <TextBlock Text="One pack with original assets and game boot data. Can be used instead of the ISO. Keeps native formats and uses extra disk space. Completed exports are reused." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="25,6,0,8"/>
+        <TextBlock Text="One pack with original assets, executable string references and game boot data. Can be used instead of the ISO. Keeps native formats and uses extra disk space. Completed exports are reused." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="25,6,0,8"/>
         <WrapPanel Margin="0,0,0,4">
          <Button x:Name="ExportOriginalAssetsNow" Content="Export now" Click="ExportOriginalAssetsClicked" Margin="0,0,10,8"/>
          <Button x:Name="OpenOriginalAssetExports" Content="Open exports folder" Click="OpenOriginalAssetExportsClicked" Margin="0,0,0,8"/>

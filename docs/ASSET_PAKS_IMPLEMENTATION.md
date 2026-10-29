@@ -49,7 +49,7 @@ Private owned-data receipts below are under the original checkout's ignored
 |---|---|
 | Synthetic extraction/packer/C++ reader | Six unittest cases pass: identity with nonzero padding, smaller/larger/empty nested replacements, both tables, names/unknown metadata, nameless archives, alignment, boundary reads, determinism and bounds/protected-entry refusal. |
 | Launcher synthetic cases | 32 checks for both editions, paths including Windows normalization/device aliases, malformed/duplicate manifests, ZIP duplicates/missing files, AFS extents, ambiguity, loose packs, duplicate IDs and co-op policy. |
-| Self-contained launcher | All 766 self-tests pass with nonexistent .NET lookup roots and system-only PATH, including 23 original-export checks and 38 game-source checks. |
+| Self-contained launcher | All 793 self-tests pass with nonexistent .NET lookup roots and system-only PATH, including 23 original-export checks, 38 game-source checks and 27 executable-string checks. |
 | Real package integration | 29 checks pass: both editions, deterministic plans, cache reuse without rewriting payloads/receipts, cache corruption at launcher/runtime, bad binary headers, duplicate targets, conflicts naming both packs, wrong base hashes, ZIP links, network refusal, Unicode cache paths exceeding 300 characters and exact-byte identity bypass. |
 | Complete host/sector route comparison | All 4,920,984 replacement bytes for File #1 and 62,438 for File #2 agree with the payloads through host and CDVD sector routes. |
 | Portable compilation | Both refreshed frozen kits compile all four affected C++ units with pinned LLVM/MinGW UCRT after normal owned-ELF catalogue generation: eight units pass. |
@@ -255,12 +255,12 @@ normal full cold-build/package verification described in `PRERELEASE.md`.
 ## Executable string reference extraction (issue #25)
 
 `tools/assets/extract_elf_strings.py` exports an addressable editing reference
-from the owned, SHA-256-verified File #1 executable. It checks ELF32/MIPS program
+from either owned, SHA-256-verified game executable. It checks ELF32/MIPS program
 headers and derives addresses from the actual file-backed PT_LOAD segment. The
 executable has combined/stripped sections, so UI grouping uses a hash-locked data
 range rather than claiming an ELF section provides semantic UI boundaries.
 
-The export covers file offsets `0x150060..0x159F80`, including UI/scenario text
+The File #1 export covers file offsets `0x150060..0x159F80`, including UI/scenario text
 before the issue's reported start. It finds 980 printable NUL-terminated
 candidates; 421 lie in the narrower UI/name region ending at `0x152E80`, of which
 391 have matching aligned address words in the binary. Literal word matches are
@@ -278,13 +278,43 @@ prompt with line breaks/spaces), `0x250850` (floor prompt with formatting tag),
 and `0x24FE60` (scenario name). Verification receipts remain beside the private
 PAK. The source executable SHA-256 remains unchanged.
 
-Three synthetic unittest cases pass for ELF bounds/mapping, duplicate strings,
+Four synthetic unittest cases pass for ELF bounds/mapping, duplicate strings,
 encoded byte budgets, formatting, truncated/binary runs, ZIP/CSV read-back,
 source identity and refusal to overwrite or export inside imported game data.
 REA native tools were unavailable in this session; this is direct static ELF
 byte analysis, without decompilation or game-rendering evidence. No REA client
 configuration or analysis-engine installation was changed.
 
-This adds a reference extractor only. It does not implement executable-string
-runtime overrides or claim a translated string was rendered in-game. The output
-is deliberately separate from both replacement mods and complete game PAKs.
+File #2 uses its independently inspected range `0x1554D0..0x169B80`, with the
+narrower UI/name region ending at `0x159DB0`. It has 1,928 printable candidates;
+671 lie in the UI region, all with matching aligned address words. The separate
+private reference PAK and receipts are in `build-ninja/executable-strings/file2-checked/`.
+
+`launcher/ElfStringReferences.cs` implements the same extraction in managed code;
+the launcher needs no Python or external analysis tool. Every real launcher export
+for either edition embeds the seven editing/reference files directly under
+`executable-strings/` inside the existing `original-assets.pak`, alongside native
+assets and boot data. `asset-reference.json` points to the string manifest. A
+read-back check regenerates references from the verified original ELF and compares
+every embedded payload before publishing the completed PAK. Export receipt format
+3 invalidates older export caches; re-exporting preserves the old pack in place
+and publishes a new version with references included.
+
+The portable launcher passes 793 self-tests, including 27 new checks for both
+edition profiles, ELF bounds, addresses, pointer words, byte budgets, tags,
+encoding, duplicates, byte pools, metadata checksums, CSV, cancellation and source
+identity. Private integration evidence in `build-ninja/combined-string-build/`
+uses both real owned executables with small synthetic NETBIO fixtures. The C#
+catalogues match the independent Python JSON entries, raw byte pools and parsed
+CSV exactly for both games, including File #2's embedded CRLF line breaks.
+Both single combined PAKs preserve asset/boot metadata, survive ZIP read-back,
+upgrade old receipts while retaining previous exports, reuse completed results
+without rewriting and restore every fixture game file byte for byte. String
+references are not copied into runtime game data. These integration checks run
+with system-only PATH and nonexistent .NET lookup roots. The large native assets
+and runtime code are unchanged from the earlier full-game validations.
+
+This adds automatic reference extraction only. It does not implement executable-
+string runtime overrides or claim a translated string was rendered in-game.
+Standalone references remain separate from installable replacement mods; complete
+game PAKs now contain these references as editing metadata.

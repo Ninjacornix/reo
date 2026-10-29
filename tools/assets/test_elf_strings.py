@@ -50,6 +50,20 @@ class ElfStringTests(unittest.TestCase):
         for first, last in ((start + 1, end), (start, len(data) + 1), (end, start)):
             with self.assertRaises(ValueError): strings.candidates(data, first, last, last)
 
+    def test_second_game_reference_identity(self):
+        data, start, end = elf_fixture()
+        with tempfile.TemporaryDirectory(prefix='reo-elf-file2-tests-') as temp:
+            root = Path(temp); imported = root / 'import'; imported.mkdir()
+            elf = imported / 'SLUS_209.84'; elf.write_bytes(data)
+            result = strings.export(elf, root / 'export', game='file2', expected_sha=strings.sha(data), start=start, end=end, ui_end=end)
+            self.assertEqual(result['game'], 'file2')
+            self.assertEqual(Path(result['pak']).name, 'executable-strings-file2.pak')
+            with zipfile.ZipFile(result['pak']) as archive:
+                header = json.loads(archive.read('string-reference.json'))
+                self.assertEqual(header['elf'], 'SLUS_209.84')
+                self.assertEqual(json.loads(archive.read('strings.json'))['game'], 'file2')
+            with self.assertRaises(ValueError): strings.export(elf, root / 'wrong-revision', game='file2')
+
     def test_verified_reference_pack_and_refusals(self):
         data, start, end = elf_fixture()
         with tempfile.TemporaryDirectory(prefix='reo-elf-string-tests-') as temp:

@@ -1,8 +1,8 @@
 """Export private, addressable string references from an owned Outbreak ELF.
 
 This does not patch the executable or create an installable translation mod.
-The supported File #1 profile examines the UI/data tail, including the region
-reported in issue #25. Stripped ELF sections do not identify individual UI text.
+Both supported game profiles examine the UI/data tail. Stripped ELF sections
+do not identify individual UI text.
 """
 import argparse
 import csv
@@ -18,6 +18,11 @@ from pathlib import Path
 FILE1_SHA256 = '06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
 FILE1_START, FILE1_END = 0x150060, 0x159F80
 UI_END = 0x152E80
+FILE2_SHA256 = '5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d'
+PROFILES = {
+    'file1': (FILE1_SHA256, FILE1_START, FILE1_END, UI_END, 'SLUS_207.65'),
+    'file2': (FILE2_SHA256, 0x1554D0, 0x169B80, 0x159DB0, 'SLUS_209.84'),
+}
 
 
 def sha(data):
@@ -107,11 +112,17 @@ def csv_bytes(entries):
     return stream.getvalue().encode('utf-8-sig')
 
 
-def export(elf, output, *, expected_sha=FILE1_SHA256, start=FILE1_START, end=FILE1_END, ui_end=UI_END):
+def export(elf, output, *, game=None, expected_sha=None, start=None, end=None, ui_end=None):
     elf, output = Path(elf).resolve(), Path(output).resolve()
     data = elf.read_bytes()
+    game = game or ('file2' if sha(data) == FILE2_SHA256 else 'file1')
+    profile_sha, profile_start, profile_end, profile_ui_end, elf_name = PROFILES[game]
+    expected_sha = expected_sha or profile_sha
+    start = profile_start if start is None else start
+    end = profile_end if end is None else end
+    ui_end = profile_ui_end if ui_end is None else ui_end
     if sha(data) != expected_sha:
-        raise ValueError('Executable SHA-256 does not match the supported File #1 revision')
+        raise ValueError('Executable SHA-256 does not match the selected supported game revision')
     segment, entries, originals = candidates(data, start, end, ui_end)
     if not entries:
         raise ValueError('No printable string candidates in the selected range')
@@ -126,7 +137,7 @@ def export(elf, output, *, expected_sha=FILE1_SHA256, start=FILE1_START, end=FIL
         if data[offset:offset + size + 1] != raw + b'\0' or originals[entry['originalsOffset']:entry['originalsOffset'] + size + 1] != raw + b'\0':
             raise ValueError('Extracted reference does not match its source bytes')
     ui = [e for e in entries if e['group'] == 'ui-region-candidate']
-    readme = '''Executable string reference for Outbreak File #1 NTSC-U v2.00.
+    readme = f'''Executable string reference for Outbreak {game} ({elf_name}).
 
 This is a private editing reference, not an installable mod or a playable game PAK.
 No executable-string runtime override has been implemented by this extraction.
@@ -150,11 +161,11 @@ originals.bin holds only the extracted NUL-terminated candidates, indexed by
 originalsOffset. No executable is bundled. Original text bytes stay private.
 '''
     payloads = {
-        'strings.json': json_bytes(dict(format=1, game='file1', elfSha256=sha(data), entries=entries)),
-        'ui-strings.json': json_bytes(dict(format=1, game='file1', elfSha256=sha(data), entries=ui)),
+        'strings.json': json_bytes(dict(format=1, game=game, elfSha256=sha(data), entries=entries)),
+        'ui-strings.json': json_bytes(dict(format=1, game=game, elfSha256=sha(data), entries=ui)),
         'ui-strings.csv': csv_bytes(ui), 'candidates.csv': csv_bytes(entries),
         'originals.bin': originals, 'README.txt': readme.encode('utf-8')}
-    header = dict(format=1, kind='executable-string-reference', game='file1', elf='SLUS_207.65',
+    header = dict(format=1, kind='executable-string-reference', game=game, elf=elf_name,
                   elfSha256=sha(data), runtimePatchSupported=False, candidateCount=len(entries),
                   uiRegionCandidateCount=len(ui), encoding='cp932',
                   uiRegionCandidatesWithAddressWords=sum(bool(e['literalAddressWordFileOffsets']) for e in ui),
@@ -165,7 +176,7 @@ originalsOffset. No executable is bundled. Original text bytes stay private.
                   files={name: dict(bytes=len(raw), sha256=sha(raw)) for name, raw in payloads.items()})
     payloads['string-reference.json'] = json_bytes(header)
     output.mkdir(parents=True)
-    pak = output / 'executable-strings-file1.pak'
+    pak = output / f'executable-strings-{game}.pak'
     with zipfile.ZipFile(pak, 'x', compression=zipfile.ZIP_DEFLATED) as archive:
         for name, raw in payloads.items():
             archive.writestr(name, raw)
@@ -177,7 +188,7 @@ originalsOffset. No executable is bundled. Original text bytes stay private.
                 raise ValueError('Exported payload differs: ' + name)
     for name, raw in payloads.items():
         (output / name).write_bytes(raw)
-    report = dict(passed=True, game='file1', sourceSha256=sha(data), pak=str(pak),
+    report = dict(passed=True, game=game, sourceSha256=sha(data), pak=str(pak),
                   pakBytes=pak.stat().st_size, pakSha256=sha(pak.read_bytes()),
                   candidates=len(entries), uiRegionCandidates=len(ui),
                   uiRegionCandidatesWithAddressWords=header['uiRegionCandidatesWithAddressWords'], allSourceBytesVerified=True,
@@ -188,10 +199,11 @@ originalsOffset. No executable is bundled. Original text bytes stay private.
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('elf', type=Path, help='Owned, unmodified SLUS_207.65')
+    parser.add_argument('elf', type=Path, help='Owned, unmodified SLUS_207.65 or SLUS_209.84')
     parser.add_argument('output', type=Path, help='New private output directory')
+    parser.add_argument('--game', choices=PROFILES, help='Game identity; inferred from supported executable hash by default')
     args = parser.parse_args()
-    print(json.dumps(export(args.elf, args.output), indent=2))
+    print(json.dumps(export(args.elf, args.output, game=args.game), indent=2))
 
 
 if __name__ == '__main__':

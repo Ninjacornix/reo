@@ -54,6 +54,7 @@ static class SelfTest {
         ModsTests.Run(Check);
         AssetPakTests.Run(Check);
         AssetExportTests.Run(Check);
+        ElfStringReferenceTests.Run(Check);
         GamePakTests.Run(Check);
         RandomizerSeedsTests.Run(Check);
         Task.Run(() => RandomizerSessionTests.Run(Check)).GetAwaiter().GetResult();

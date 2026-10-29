@@ -68,7 +68,7 @@ public static class AssetExports {
             if (!File.Exists(receipt) || new FileInfo(receipt).Length > 64 * 1024) return null;
             RejectLink(receipt);
             var record = JsonSerializer.Deserialize<Receipt>(File.ReadAllText(receipt), Json);
-            if (record is not { Format: 2 } || record.Game != game || record.ElfSha256 != elf || record.Identity != identity ||
+            if (record is not { Format: 3 } || record.Game != game || record.ElfSha256 != elf || record.Identity != identity ||
                 record.Grouping != grouping || record.Archives == null || !record.Archives.SequenceEqual(archives) ||
                 record.Packs == null || record.Packs.Count is < 1 or > 16) return null;
             var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -160,9 +160,14 @@ public static class AssetExports {
                         exported.Add(new(plan.Entry.Path, plan.File, plan.Entry.Name, plan.Entry.Size,
                             Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant(), plan.Entry.Offset));
                     }
-                    WriteJson(zip, ReferenceHeader, new { format = 1, kind = "original-assets", game, elfSha256 = elf, grouping, category = group.Key, index = "assets.json" });
+                    WriteJson(zip, ReferenceHeader, new { format = 1, kind = "original-assets", game, elfSha256 = elf, grouping, category = group.Key, index = "assets.json",
+                        executableStrings = suppliedIndex == null ? ElfStringReferences.Prefix + "string-reference.json" : null });
                     WriteJson(zip, "assets.json", new { format = 1, verified = true, game, elfSha256 = elf, entries = exported });
-                    if (suppliedIndex == null) GamePaks.Write(zip, data, game, exported, progress, cancel);
+                    if (suppliedIndex == null) {
+                        progress?.Report(new(0, 0, "Extracting executable string references", "Exporting original assets"));
+                        ElfStringReferences.Write(zip, Path.Combine(data, GameDefinition.Find(game).ElfName), game, cancel);
+                        GamePaks.Write(zip, data, game, exported, progress, cancel);
+                    }
                 }
                 packs.Add((name, exported));
             }
@@ -187,6 +192,7 @@ public static class AssetExports {
             if (suppliedIndex == null) {
                 using var zip = ZipFile.OpenRead(Path.Combine(staging, "original-assets.pak"));
                 GamePaks.Verify(zip, game, progress, cancel);
+                ElfStringReferences.Verify(zip, Path.Combine(data, GameDefinition.Find(game).ElfName), game, cancel);
             }
             long compressed = packs.Sum(p => new FileInfo(Path.Combine(staging, p.File)).Length); completed = 0;
             var records = new List<OriginalAssetPack>();
@@ -204,7 +210,7 @@ public static class AssetExports {
             Require(Snapshot(data, game).SequenceEqual(archives), "Imported archives changed during export; retry.");
             cancel.ThrowIfCancellationRequested();
             string receipt = Path.Combine(staging, "export.json"); created.Add(receipt);
-            File.WriteAllText(receipt, JsonSerializer.Serialize(new Receipt(2, game, elf, identity, grouping, archives, records), Json));
+            File.WriteAllText(receipt, JsonSerializer.Serialize(new Receipt(3, game, elf, identity, grouping, archives, records), Json));
             string folder = grouping;
             if (Directory.Exists(Path.Combine(parent, folder))) folder += "-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..8];
             string destination = Path.Combine(parent, folder); Directory.Move(staging, destination);
