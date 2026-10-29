@@ -68,9 +68,22 @@ Primary references:
   finds DualSense, keyboard and the saved disconnected entry, selects the DualSense
   and verifies the saved physical selection. This uses an isolated settings folder.
   A new launcher process restores that selection and detects the physical USB pad.
+- After the user connects the same controller over **real Bluetooth**, Windows
+  exposes its Bluetooth HID interface and the patched single-file launcher selects
+  `DualSense (Bluetooth)`. The initial probe receives 2,892 reports and the native
+  XInput adapter reports connected status.
+- A 45.031-second live WPF/Raw Input test receives **31,483 Bluetooth reports**.
+  User-operated Cross/Circle/Triangle, D-pad in all four directions and both
+  shoulder buttons are observed (`buttonsSeen=B30F`). Both triggers reach 255 and
+  all four stick axes exceed 30,000 in magnitude. Every sampled normalized input
+  matches the production native XInput adapter, with **zero mismatches and zero
+  unavailable-device samples**. All buttons, triggers and axes finish at zero.
+  Receipts are `physical-bt-probe-first.json` and `physical-bt-live.json`.
 
 Private build, hardware receipts and UI checks remain under the worktree's ignored
 `build-ninja/` directory. Original game data and personal launcher settings are
-unchanged. Physical Bluetooth pairing, disconnect/reconnect and gameplay still
-need a tester with a Bluetooth-connected controller. No Bluetooth hardware pass
-or universal controller compatibility is claimed.
+unchanged. Physical USB and Bluetooth discovery/input are now verified. Bluetooth
+used the user's existing pairing; a physical power-cycle/reconnect, rumble/light
+output correctness and a full game session were not tested in this Bluetooth run.
+Reconnect behavior retains the simulated/native-adapter coverage above. Universal
+controller compatibility is not claimed.
