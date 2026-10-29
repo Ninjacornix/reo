@@ -68,7 +68,7 @@ public static class AssetExports {
             if (!File.Exists(receipt) || new FileInfo(receipt).Length > 64 * 1024) return null;
             RejectLink(receipt);
             var record = JsonSerializer.Deserialize<Receipt>(File.ReadAllText(receipt), Json);
-            if (record is not { Format: 3 } || record.Game != game || record.ElfSha256 != elf || record.Identity != identity ||
+            if (record is not { Format: 4 } || record.Game != game || record.ElfSha256 != elf || record.Identity != identity ||
                 record.Grouping != grouping || record.Archives == null || !record.Archives.SequenceEqual(archives) ||
                 record.Packs == null || record.Packs.Count is < 1 or > 16) return null;
             var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -210,7 +210,7 @@ public static class AssetExports {
             Require(Snapshot(data, game).SequenceEqual(archives), "Imported archives changed during export; retry.");
             cancel.ThrowIfCancellationRequested();
             string receipt = Path.Combine(staging, "export.json"); created.Add(receipt);
-            File.WriteAllText(receipt, JsonSerializer.Serialize(new Receipt(3, game, elf, identity, grouping, archives, records), Json));
+            File.WriteAllText(receipt, JsonSerializer.Serialize(new Receipt(4, game, elf, identity, grouping, archives, records), Json));
             string folder = grouping;
             if (Directory.Exists(Path.Combine(parent, folder))) folder += "-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..8];
             string destination = Path.Combine(parent, folder); Directory.Move(staging, destination);

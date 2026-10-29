@@ -39,7 +39,7 @@ internal static class ElfStringReferenceTests {
                 game + " every original byte and terminator matches the source");
             using (var header = JsonDocument.Parse(result.Files["string-reference.json"])) {
                 var h = header.RootElement;
-                check(h.GetProperty("game").GetString() == game && !h.GetProperty("runtimePatchSupported").GetBoolean() &&
+                check(h.GetProperty("game").GetString() == game && h.GetProperty("runtimePatchSupported").GetBoolean() &&
                     h.GetProperty("files").EnumerateObject().All(p => p.Value.GetProperty("sha256").GetString() == Hash(result.Files[p.Name])),
                     game + " reference header identifies the edition and hashes all editing files");
             }

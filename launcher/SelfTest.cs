@@ -55,6 +55,8 @@ static class SelfTest {
         AssetPakTests.Run(Check);
         AssetExportTests.Run(Check);
         ElfStringReferenceTests.Run(Check);
+        ExecutableStringTests.Run(Check);
+        ReferencePakModTests.Run(Check);
         GamePakTests.Run(Check);
         RandomizerSeedsTests.Run(Check);
         Task.Run(() => RandomizerSessionTests.Run(Check)).GetAwaiter().GetResult();

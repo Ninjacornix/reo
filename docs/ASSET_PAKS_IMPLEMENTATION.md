@@ -132,7 +132,7 @@ game files private.
 every indexed NETBIO leaf in its original native format. Numeric prefixes preserve
 duplicate and missing names. `asset-reference.json` identifies the reference
 archive, and `assets.json` records numeric addresses, paths, byte counts and hashes
-in the existing authoring-tool format. The mod loader rejects reference exports;
+in the existing authoring-tool format. Initially the mod loader rejected reference exports;
 authors package selected changed files with `pack_assets.py` instead.
 
 The existing WPF Game files page has an unchecked per-edition setup preference,
@@ -314,7 +314,60 @@ references are not copied into runtime game data. These integration checks run
 with system-only PATH and nonexistent .NET lookup roots. The large native assets
 and runtime code are unchanged from the earlier full-game validations.
 
-This adds automatic reference extraction only. It does not implement executable-
-string runtime overrides or claim a translated string was rendered in-game.
-Standalone references remain separate from installable replacement mods; complete
-game PAKs now contain these references as editing metadata.
+That first stage added reference extraction only. The runtime and import follow-up
+below supersedes that limitation.
+
+## Edited PAK import and executable-string runtime overrides
+
+`ReferencePakMods` scans an edited original export imported through Mods, hashes
+its indexed native payloads and compiles only changed entries and translation
+fields into an ordinary replacement mod. It supports combined exports and
+standalone string references, including quoted/multiline CSV. Import is asynchronous
+and cancellable; staging files are published atomically. An original ISO or
+unmodified complete game PAK remains the base. `_game` boot/code changes are not
+compiled into mods. Export receipt format 4 refreshes the editing instructions and
+runtime-support metadata while preserving earlier exports.
+
+`ExecutableStrings` validates addresses, original hashes and exact byte budgets
+against each supported ELF catalogue, enforces CP932 encoding and formatting,
+detects conflicts and emits a bounded binary plan. `runtime/assets/executable_strings.h`
+independently verifies the ELF hash, original file and guest-memory bytes, allowed
+data ranges, terminators, formatting, overlaps and plan limits before any write.
+The bootstrap applies the plan before guest execution and logs each replacement.
+The disk executable is never patched. Co-op and older native binaries are refused.
+
+The self-contained launcher passes 847 checks with system-only PATH and nonexistent
+.NET lookup roots. Eleven Python asset-tool tests complete (nine pass, two optional
+native-probe tests skip without their environment variables). The native string
+probe verifies actual bytes, zero termination and atomic rejection of malformed
+plans against both owned executables. Private evidence is under the original
+checkout's ignored `build-ninja/applied-pak-build/`; no owned game data is committed.
+
+Real edited-export imports were converted and prepared for both owned games.
+File #1 replaced two compressed texture entries and a room ADX with a differently
+sized original track; File #2 replaced a texture entry. Normal input reached
+gameplay and movement in both editions, and screenshots show the deliberate magenta
+texture changes. The decoded File #1 room-audio PCM differs from the identity
+baseline while the opening movie's PCM remains identical. Both exit normally.
+
+The File #2 item menu visibly renders `PAKTEST` in place of `COMBINE` in
+`file2-final/translated-command.png`. File #1's eight and File #2's six patches
+are logged and remain present in read-only live guest-memory observations.
+The attempted File #1 item-menu capture did not establish visible string rendering;
+do not infer that all extracted candidates are displayed or translated. Some menu
+labels, including the scenario-selection title tested, are texture images.
+
+Full `GameSession.Launch` checks with the imported mods pass for both editions:
+each launcher copies the updated native build, prepares both plans, supplies their
+environment variables, opens the game window and records exit code 0. This is also
+tested with system-only PATH and no .NET lookup roots. Original disk ELF hashes
+remain unchanged. Both updated bootstrap units compile with the exact pinned
+LLVM/MinGW UCRT toolchain; linked gameplay tests reuse verified unchanged objects
+with freshly compiled bootstrap units. Native string probes pass 17 File #1 and
+15 File #2 checks, including no partial writes after invalid plans.
+
+These checks establish representative texture, sound and string replacements.
+New models, rooms, object behavior and complete campaign modifications have not
+been exhaustively playtested; replacements must preserve their native formats and
+the game's existing structural and memory constraints. This remains unreleased
+and requires the final merged release's full cold-build/package checks.

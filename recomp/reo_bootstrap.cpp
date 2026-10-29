@@ -11,6 +11,7 @@
 #include "natural_dispatch.h"
 #endif
 #include "gs_priv_atomic.h"
+#include "runtime/assets/executable_strings.h"
 
 #include "gs_backend_route.h"
 #if __has_include("ps2_codegen_features.h")
@@ -1229,6 +1230,12 @@ int main(int argc, char* argv[]) {
 #endif
 
     printf("[BOOT] All functions registered.\n");
+    try {
+        reo::assets::applyExecutableStrings(std::filesystem::u8path(elf_path), runtime.memory().getRDRAM(), PS2_RAM_SIZE,
+                                          std::strcmp(g.serial, "SLUS-20984") == 0);
+    } catch (const std::exception& error) {
+        std::fprintf(stderr, "Executable string replacements rejected: %s\n", error.what()); return 1;
+    }
 
     // Only normal bootstrap-owned32MiB File1 RAM can enable the private observer.
 

@@ -98,11 +98,11 @@ internal static class ElfStringReferences {
                 "maxBytes counts original CP932/Shift-JIS-family bytes, excluding the NUL terminator; adjacent padding is not available.\n" +
                 "Preserve original bytes, spaces, line breaks, formatting tags and printf arguments. Glyph/font mapping also needs verification.\n" +
                 "originals.bin contains the indexed NUL-terminated original candidates. Keep original game text private.\n" +
-                "This export does not implement runtime executable-string overrides. Editing these references does not change game text.\n")
+                "Enter translation fields, then import the edited PAK through Mods and enable it. Updated native builds apply bounded string overrides in solo play.\n")
         };
         files["string-reference.json"] = JsonBytes(new {
             format = 1, kind = "executable-string-reference", game, elf = GameDefinition.Find(game).ElfName, elfSha256 = expected,
-            runtimePatchSupported = false, candidateCount = entries.Count, uiRegionCandidateCount = ui.Count,
+            runtimePatchSupported = true, candidateCount = entries.Count, uiRegionCandidateCount = ui.Count,
             uiRegionCandidatesWithAddressWords = ui.Count(e => e.LiteralAddressWordFileOffsets.Count > 0), encoding = "cp932",
             range = new { fileStart = start, fileEndExclusive = end, uiFileEndExclusive = profile.UiEnd,
                 addressStart = $"0x{segment.Address + (uint)(start - segment.FileOffset):X8}" },

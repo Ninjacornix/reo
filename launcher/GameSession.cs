@@ -127,6 +127,9 @@ public sealed class GameSession {
         if (selectedAssetPaks.Count > 0 && !HasMarker(image, AssetPaks.Capability))
             throw new IOException("Asset packs need an updated game build. Rebuild or update the selected game.");
         string assetPlan = await Task.Run(() => AssetPaks.Prepare(selectedAssetPaks, discRoot, selectedGame.Id, Logs, cancel: cancel), cancel);
+        string stringPlan = Path.Combine(Logs, ExecutableStrings.PlanName);
+        if (File.Exists(stringPlan) && !HasMarker(image, ExecutableStrings.Capability))
+            throw new IOException("Executable string replacements need an updated game build. Rebuild or update the selected game.");
         if (randomizerConfiguration != null) {
             File.WriteAllBytes(Path.Combine(Logs,"randomizer-session.json"),randomizerConfiguration);
             File.WriteAllText(Path.Combine(Logs,"randomizer-session.sha256"),RandomizerSession.Digest(randomizerConfiguration));
@@ -149,6 +152,7 @@ public sealed class GameSession {
             start.Environment.Remove(key);
         void Set(string key, string value) => start.Environment[key] = value;
         if (assetPlan.Length != 0) Set("REO_ASSET_OVERLAY", assetPlan);
+        if (File.Exists(stringPlan)) Set("REO_EXECUTABLE_STRINGS", stringPlan);
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
         bool automaticAccount = onlineEnvironment.Count > 0 &&

@@ -140,7 +140,8 @@ def export(elf, output, *, game=None, expected_sha=None, start=None, end=None, u
     readme = f'''Executable string reference for Outbreak {game} ({elf_name}).
 
 This is a private editing reference, not an installable mod or a playable game PAK.
-No executable-string runtime override has been implemented by this extraction.
+Enter translation fields, then import the edited PAK through Mods and enable it.
+Updated native builds apply bounded string overrides in solo play.
 
 Start with ui-strings.csv or ui-strings.json. The broader strings.json and
 candidates.csv also contain SDK messages, resource paths and possible false
@@ -166,7 +167,7 @@ originalsOffset. No executable is bundled. Original text bytes stay private.
         'ui-strings.csv': csv_bytes(ui), 'candidates.csv': csv_bytes(entries),
         'originals.bin': originals, 'README.txt': readme.encode('utf-8')}
     header = dict(format=1, kind='executable-string-reference', game=game, elf=elf_name,
-                  elfSha256=sha(data), runtimePatchSupported=False, candidateCount=len(entries),
+                  elfSha256=sha(data), runtimePatchSupported=True, candidateCount=len(entries),
                   uiRegionCandidateCount=len(ui), encoding='cp932',
                   uiRegionCandidatesWithAddressWords=sum(bool(e['literalAddressWordFileOffsets']) for e in ui),
                   range=dict(fileStart=start, fileEndExclusive=end, uiFileEndExclusive=ui_end,
@@ -192,7 +193,7 @@ originalsOffset. No executable is bundled. Original text bytes stay private.
                   pakBytes=pak.stat().st_size, pakSha256=sha(pak.read_bytes()),
                   candidates=len(entries), uiRegionCandidates=len(ui),
                   uiRegionCandidatesWithAddressWords=header['uiRegionCandidatesWithAddressWords'], allSourceBytesVerified=True,
-                  allZipPayloadsVerified=True, runtimePatchSupported=False)
+                  allZipPayloadsVerified=True, runtimePatchSupported=True)
     (output / 'verification.json').write_bytes(json_bytes(report))
     return report
 

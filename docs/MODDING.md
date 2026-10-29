@@ -86,12 +86,18 @@ imported game and completed exports. Completed exports are reused when the sourc
 and output size/timestamps still match. If an export was edited, a fresh version
 goes into a new folder and the previous export is kept.
 
-These original reference packs cannot be enabled in **Mods**. Unzip the reference
-pack to obtain its `assets.json` index and assets;
-copy only the files you want to change into a separate edited folder, keeping
-their relative paths. Use the packer below to produce an installable replacement
-pack. The replacement restrictions above still apply, including protected name
-tables. Keep full original reference packs private.
+To apply edits, keep your original ISO or unmodified game PAK as the game source.
+Edit a copy of the exported PAK: replace selected native asset payloads or fill in
+string translation fields, preserving their original metadata. Open **Mods → Import
+mod**, choose the edited PAK, then tick the imported pack. The launcher scans the
+export and creates a replacement mod containing only changed assets and translations;
+this needs no Python. Import runs in the background and supports cancellation.
+An unchanged export has nothing to install. Protected name tables and code remain
+unsupported. Keep full original and edited game exports private.
+
+Alternatively, unzip the reference pack and copy selected files into a separate
+edited folder, preserving their relative paths. Use the packer below to produce
+an installable replacement pack suitable for sharing your own changes.
 
 Alternatively, extract assets from your own existing import using Python:
 
@@ -156,12 +162,30 @@ and locations of literal address words. The UI grouping is a location heuristic;
 SDK diagnostics and other non-display strings also occur in the broader list.
 Keep original identity fields and bytes intact, and enter translations separately.
 
-The string reference itself is **not an installable mod or a playable game PAK**.
-Its presence inside a complete game PAK does not apply edited translations.
-Runtime executable-string overrides are still unimplemented. Byte limits exclude
-the terminating NUL and do not borrow adjacent padding. Original text uses the
-CP932/Shift-JIS family encoding; a translation also needs appropriate glyph/font
-mapping. Keep these original game text references private.
+Fill the `translation` column in CSV or the `translation` field in JSON, retaining
+the original JSON references alongside CSV. JSON also accepts `translationBytesHex`
+for verified encoded byte mappings. Import the edited reference PAK through **Mods**
+and enable it. Both games support these overrides in updated native builds, in solo
+play. The Python packer also reads edited reference files in the edited folder.
+Conflicting translations, changed original identities, invalid CP932 sequences,
+embedded NULs and translations exceeding `maxBytes` are rejected. Preserve all
+formatting tags and printf arguments. Byte limits exclude the terminating NUL and
+do not borrow adjacent padding. Font glyph coverage still needs manual checking.
+An empty CSV cell means no edit; JSON `translation: ""` explicitly clears a string.
+
+Installable `pak.json` may contain a `strings` array alongside or instead of
+`replace`. Each entry needs `address`, `maxBytes`, `baseSha256` (the original
+string bytes' SHA-256) and either `text` or `bytesHex`. The launcher validates these
+against the supported original executable catalogue. The runtime rechecks the
+original ELF and guest bytes before applying the complete plan to guest memory;
+the original executable on disk stays unchanged. Session receipts are
+`executable-strings.json` and `executable-strings.bin`.
+
+Selecting an edited full game PAK directly as the game source still requires its
+original checksums; apply changes through **Mods**. Text baked into textures needs
+a texture edit rather than a string override. Existing models, rooms, sounds and
+scenario data can be replaced in their native formats; adding new archive entries,
+code or arbitrary campaigns is not implemented. Keep original game references private.
 
 ## Randomizer
 

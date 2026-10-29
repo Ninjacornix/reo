@@ -73,7 +73,7 @@ class ElfStringTests(unittest.TestCase):
             # The source and references must be in separate data directories.
             imported = root / 'import'; imported.mkdir(); elf = imported / elf.name; elf.write_bytes(data)
             result = strings.export(elf, output, **kwargs)
-            self.assertTrue(result['passed']); self.assertFalse(result['runtimePatchSupported'])
+            self.assertTrue(result['passed']); self.assertTrue(result['runtimePatchSupported'])
             self.assertEqual(elf.read_bytes(), data)
             with zipfile.ZipFile(result['pak']) as archive:
                 self.assertIsNone(archive.testzip())

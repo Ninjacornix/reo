@@ -33,7 +33,8 @@ Applies to **File #1 and File #2** (same container layout, section 2).
 - Adding new entries, removing entries or reordering archives (section 2.4 explains why).
 - Editing `rNNN_h.bin` name tables.
 - Texture replacement by GS upload hash (PCSX2-style). That is a later, separate feature.
-- Executable strings (`SLUS` rodata). Separate feature; see issue #25 part 1.
+- Executable strings were outside original v1; the follow-up now supports bounded
+  original string replacements in both games. See `MODDING.md`.
 - Decoding asset formats (`.sld` compression, `.NBD`, TIM2). v1 moves bytes; editing
   tools are follow-up work.
 - Co-op with asset mods (refused in v1, section 4.5).

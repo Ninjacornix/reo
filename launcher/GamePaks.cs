@@ -19,7 +19,7 @@ public static class GamePaks {
     internal const string Header = "game-data.json";
     static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
     static void Require(bool value, string message) { if (!value) throw new IOException(message); }
-    static void Safe(string path) {
+    internal static void Safe(string path) {
         Require(!string.IsNullOrWhiteSpace(path) && path.Length < 512 && !path.Contains('\\') &&
             !Path.IsPathRooted(path) && path.Split('/').All(p => p.Length > 0 && p is not "." and not ".." &&
                 !p.EndsWith('.') && !p.EndsWith(' ') && p.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 &&

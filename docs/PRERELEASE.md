@@ -24,8 +24,10 @@ addition to `--kit`, `--output` and `--recompiler`:
 --update-source runtime/cdvd/cdvd.h
 --update-source recomp/overrides/reo_hw_bridge.cpp
 --update-source recomp/overrides/reo_hw_bridge.h
+--update-source recomp/reo_bootstrap.cpp
 --add-source runtime/assets/virtual_afs.h
 --add-source runtime/assets/overlay.h
+--add-source runtime/assets/executable_strings.h
 --source-patch third_party/patches/ps2recomp/0109-virtual-asset-archives.patch
 ```
 
@@ -35,6 +37,12 @@ build stages before compiling runtime sources. Both private refreshed kits passe
 portable compilation of all four affected runtime units. This preflight is not a
 fresh full-game release build. Before publishing, run the complete packaging and
 cold-build checks for the final merged tree.
+
+Executable-string mods additionally require `[EXECUTABLE-STRINGS-1]` in the native
+build. The bootstrap applies only bounded, identity-checked original string slots
+before guest execution. Rebuild both editions; the launcher refuses older binaries.
+Edited original exports can now be imported under Mods, which compiles their
+changed asset payloads and translation fields into ordinary replacement layers.
 
 PAK-as-game-source support additionally requires the updated `cdvd.h` and
 `cdvd.cpp`, and rebuilding their consumers (including `reo_hw_bridge.cpp`). The

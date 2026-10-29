@@ -17,6 +17,7 @@ public sealed class AssetPakManifest {
     public string Game { get; set; } = "";
     public string ElfSha256 { get; set; } = "";
     public List<AssetReplacement> Replace { get; set; } = new();
+    public List<ExecutableStringReplacement> Strings { get; set; } = new();
 }
 public sealed class AssetReplacement {
     public string Path { get; set; } = "";
@@ -78,7 +79,9 @@ public static class AssetPaks {
             manifest.Description != null && manifest.Description.Length <= 4000, "Asset pack needs a name and version.");
         Require(string.Equals(manifest.ElfSha256, Expected(manifest.Game), StringComparison.OrdinalIgnoreCase),
             "Asset pack targets an unsupported executable revision.");
-        Require(manifest.Replace != null && manifest.Replace.Count is > 0 and <= 4096, "Asset pack needs 1–4096 replacements.");
+        Require(manifest.Replace != null && manifest.Strings != null && manifest.Replace.Count <= 4096 && manifest.Strings.Count <= 4096 &&
+            manifest.Replace.Count + manifest.Strings.Count is > 0 and <= 4096, "Asset pack needs 1–4096 asset or string replacements.");
+        ExecutableStrings.ValidateManifest(manifest.Strings!);
         var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var replacement in manifest.Replace!) {
             Require(replacement != null, "Null asset replacement.");
@@ -180,15 +183,25 @@ public static class AssetPaks {
         var duplicates = result.Where(p => p.Manifest != null).GroupBy(p => p.Manifest!.Id).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet();
         return result.Select(p => p.Manifest != null && duplicates.Contains(p.Manifest.Id) ? p with { Error = "Duplicate asset pack ID." } : p).ToList();
     }
-    public static void Import(string source, string? folder = null) {
+    public static void Import(string source, string? folder = null, CancellationToken cancel = default) {
         folder ??= Folder;
+        try { if (!Directory.Exists(source) && ReferencePakMods.ConvertIfReference(source, folder, cancel)) return; }
+        catch (Exception error) when (error is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException or ArgumentException) {
+            throw new IOException("Invalid edited PAK: " + error.Message, error);
+        }
         using var package = new Package(source);
         Require(!Directory.Exists(source), "For loose packs, place the folder inside the asset mods folder.");
         Require(!Load(folder).Any(p => p.Manifest?.Id == package.Manifest.Id), "This asset pack ID is already installed.");
         Directory.CreateDirectory(folder);
-        using var input = File.OpenRead(source);
-        using var output = new FileStream(Path.Combine(folder, package.Manifest.Id + ".pak"), FileMode.CreateNew, FileAccess.Write);
-        input.CopyTo(output);
+        string temp = Path.Combine(folder, ".import-" + Guid.NewGuid().ToString("N") + ".tmp");
+        try {
+            using (var input = File.OpenRead(source))
+            using (var output = new FileStream(temp, FileMode.CreateNew, FileAccess.Write)) {
+                byte[] buffer = new byte[1024 * 1024]; int n;
+                while ((n = input.Read(buffer)) > 0) { cancel.ThrowIfCancellationRequested(); output.Write(buffer, 0, n); }
+            }
+            cancel.ThrowIfCancellationRequested(); File.Move(temp, Path.Combine(folder, package.Manifest.Id + ".pak"));
+        } finally { if (File.Exists(temp)) File.Delete(temp); }
     }
     public static List<InstalledAssetPak> Selected(Settings settings, string? folder = null) {
         var enabled = settings.EnabledAssetPaks.Distinct().ToList();
@@ -306,6 +319,7 @@ public static class AssetPaks {
         var index = Index(data, game, Path.Combine(Path.GetDirectoryName(data)!, "assets.json"), cancel);
         string elf = Path.Combine(data, game == "file1" ? "SLUS_207.65" : "SLUS_209.84");
         Require(HashRange(elf, 0, new FileInfo(elf).Length) == Expected(game), "Asset pack executable identity mismatch.");
+        ExecutableStrings.Prepare(packs.Select(p => p.Manifest!).ToList(), elf, game, session, cancel);
         var prepared = new List<PreparedAsset>(); var owners = new Dictionary<string, string>();
         foreach (var installed in packs.OrderBy(p => p.Manifest!.Id, StringComparer.Ordinal)) {
             cancel.ThrowIfCancellationRequested();

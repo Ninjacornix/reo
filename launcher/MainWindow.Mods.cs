@@ -63,7 +63,7 @@ public partial class MainWindow {
                 bool enabled = id != null && settings.EnabledAssetPaks.Contains(id);
                 var row = new StackPanel { Margin = new Thickness(0, 10, 0, 10) };
                 var toggle = new CheckBox {
-                    Content = manifest == null ? Path.GetFileName(pak.File) : $"{manifest.Name} · {manifest.Version} · {manifest.Replace.Count} assets",
+                    Content = manifest == null ? Path.GetFileName(pak.File) : $"{manifest.Name} · {manifest.Version} · {manifest.Replace.Count} assets · {manifest.Strings.Count} strings",
                     IsChecked = enabled, IsEnabled = manifest != null && (pak.Error.Length == 0 || enabled), Tag = id
                 };
                 toggle.Checked += AssetPakToggled;
@@ -106,17 +106,25 @@ public partial class MainWindow {
         } catch (IOException error) { Status.Text = error.Message; }
         RefreshMods();
     }
-    void ImportMod(object sender, RoutedEventArgs e) {
-        if (game.Running || launching) return;
+    async void ImportMod(object sender, RoutedEventArgs e) {
+        if (game.Running || launching || updating || updateRestarting || backingUp || importCancellation != null) return;
         var dialog = new OpenFileDialog { Filter = "Outbreak mods (*.pak;*.json)|*.pak;*.json|Asset packs (*.pak)|*.pak|JSON mods (*.json)|*.json" };
         if (dialog.ShowDialog(this) != true) return;
+        string source = dialog.FileName;
+        launching = true;
         try {
-            if (Path.GetExtension(dialog.FileName).Equals(".pak", StringComparison.OrdinalIgnoreCase)) AssetPaks.Import(dialog.FileName);
-            else Mods.Import(dialog.FileName);
+            var progress = BeginDiscImport(); RefreshGameUi();
+            progress.Report(new(0, 0, "Reading edited assets and translations", "Importing mod"));
+            var cancel = importCancellation!.Token;
+            await Task.Run(() => {
+                if (Path.GetExtension(source).Equals(".pak", StringComparison.OrdinalIgnoreCase)) AssetPaks.Import(source, cancel: cancel);
+                else Mods.Import(source);
+            }, cancel);
             Status.Text = "Mod imported. Tick it to enable.";
+        } catch (OperationCanceledException) { Status.Text = "Mod import canceled. Previous mods are kept.";
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
             Status.Text = error.Message;
-        }
+        } finally { launching = false; EndDiscImport(); RefreshGameUi(); }
         RefreshMods();
     }
     void OpenModFolder(object sender, RoutedEventArgs e) {

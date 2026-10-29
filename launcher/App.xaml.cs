@@ -125,6 +125,14 @@ public partial class App : Application {
                 return;
             }
             int preparePaks = Array.IndexOf(e.Args, "--prepare-asset-paks");
+            int importPak = Array.IndexOf(e.Args, "--import-asset-pak");
+            if (importPak >= 0) {
+                if (importPak + 3 >= e.Args.Length) throw new ArgumentException("--import-asset-pak <source.pak> <mod-folder> <new-result.json>");
+                string result = e.Args[importPak + 3]; if (File.Exists(result)) throw new IOException("Choose a new import result file.");
+                await Task.Run(() => AssetPaks.Import(e.Args[importPak + 1], e.Args[importPak + 2]));
+                File.WriteAllText(result, System.Text.Json.JsonSerializer.Serialize(AssetPaks.Load(e.Args[importPak + 2]).Select(p => new { Id = p.Manifest?.Id, Game = p.Manifest?.Game, p.Error })));
+                Shutdown(); return;
+            }
             int testExports = Array.IndexOf(e.Args, "--test-asset-exports");
             if (testExports >= 0 && testExports + 1 < e.Args.Length) {
                 int checks = 0;
@@ -249,7 +257,7 @@ public partial class App : Application {
                 !e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
                 !e.Args.Contains("--test-lobby") &&
                 !e.Args.Contains("--import-iso") && !e.Args.Contains("--prepare-asset-paks") && !e.Args.Contains("--test-asset-paks") &&
-                !e.Args.Contains("--test-asset-exports") && !e.Args.Contains("--export-original-assets") && !e.Args.Contains("--import-game-pak") && !e.Args.Contains("--test-update") &&
+                !e.Args.Contains("--test-asset-exports") && !e.Args.Contains("--export-original-assets") && !e.Args.Contains("--import-game-pak") && !e.Args.Contains("--import-asset-pak") && !e.Args.Contains("--test-update") &&
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&
                 !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&
                 !e.Args.Contains("--test-compiler-setup") &&
