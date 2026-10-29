@@ -36,6 +36,7 @@
  */
 
 #include "reo_hw_bridge.h"
+#include "runtime/assets/overlay.h"
 #include "network/native/netcnf_profile.h"
 #include "network/native/private_usb_keyboard.h"
 #include "network/native/automatic_account.h"
@@ -78,6 +79,8 @@ uint32_t hleIopRebootCount();
 }
 
 ReoHwBridge* ReoHwBridge::s_instance = nullptr;
+std::string ReoHwBridge::m_fioAssetKeys[ReoHwBridge::kMaxFioFds];
+uint64_t ReoHwBridge::m_fioAssetPositions[ReoHwBridge::kMaxFioFds] = {};
 
 ReoHwBridge::ReoHwBridge() = default;
 
@@ -2530,6 +2533,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     f = nullptr;
                 }
             }
+            for (auto& key : self->m_fioAssetKeys) key.clear();
             fprintf(stderr, "[HW-BRIDGE:IOP] reboot #%u: HLE IOP heap and fds reset\n", boots);
         }
     }
@@ -2722,6 +2726,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                                 ++fd;
                             if (fd < kMaxFioFds) {
                                 self->m_fioFds[fd] = f;
+                                self->m_fioAssetKeys[fd] = reo::assets::active && reo::assets::active->find(path) ? path : "";
+                                self->m_fioAssetPositions[fd] = 0;
                                 result = fd;
                             } else {
                                 fclose(f);
@@ -2753,7 +2759,14 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     } else if (f && (uint64_t)phys + (uint32_t)size > ps2RamBackingBytes) {
                         result = -14; // EFAULT
                     } else if (f) {
-                        result = (int32_t)fread(rdram + phys, 1, (size_t)size, f);
+                        const auto* archive = !self->m_fioAssetKeys[fd].empty() && reo::assets::active
+                            ? reo::assets::active->find(self->m_fioAssetKeys[fd]) : nullptr;
+                        if (archive) {
+                            auto& position = self->m_fioAssetPositions[fd];
+                            const size_t n = position < archive->file.size ? static_cast<size_t>(std::min<uint64_t>(size, archive->file.size - position)) : 0;
+                            if (n) archive->file.read(position, n, rdram + phys);
+                            position += n; result = static_cast<int32_t>(n);
+                        } else result = (int32_t)fread(rdram + phys, 1, (size_t)size, f);
                     }
                     if (resAddr && resSize >= 4)
                         rdramWrite32(rdram, resAddr, (uint32_t)result);
@@ -2801,11 +2814,20 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     if (f && rpcNum == 0x1) {
                         fclose(f);
                         self->m_fioFds[fd] = nullptr;
+                        self->m_fioAssetKeys[fd].clear();
                         result = 0;
                     } else if (f && rpcNum == 0x4 && sendSize >= 0x18) {
                         const int32_t off = (int32_t)rdramRead32(rdram, sendBuf + 0x10);
                         const int32_t whence = (int32_t)rdramRead32(rdram, sendBuf + 0x14);
-                        if (whence >= 0 && whence <= 2 && _fseeki64(f, off, whence) == 0) {
+                        const auto* archive = !self->m_fioAssetKeys[fd].empty() && reo::assets::active
+                            ? reo::assets::active->find(self->m_fioAssetKeys[fd]) : nullptr;
+                        if (archive) {
+                            const int64_t base = whence == 0 ? 0 : whence == 1 ? static_cast<int64_t>(self->m_fioAssetPositions[fd]) : static_cast<int64_t>(archive->file.size);
+                            const int64_t position = base + off;
+                            if (whence >= 0 && whence <= 2 && position >= 0 && position <= 0x7fffffff) {
+                                self->m_fioAssetPositions[fd] = static_cast<uint64_t>(position); result = static_cast<int32_t>(position);
+                            } else result = -22;
+                        } else if (whence >= 0 && whence <= 2 && _fseeki64(f, off, whence) == 0) {
                             const long long pos = _ftelli64(f);
                             result = (pos >= 0 && pos <= 0x7FFFFFFF) ? (int32_t)pos : -22; // EINVAL
                         } else {

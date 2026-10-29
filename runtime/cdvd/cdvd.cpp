@@ -1,4 +1,5 @@
 #include "cdvd.h"
+#include "runtime/assets/overlay.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -17,6 +18,17 @@ namespace fs = std::filesystem;
 
 CDVD::CDVD(const fs::path& game_data_root) : m_root(game_data_root) {
     build_file_map();
+    assets::active.reset();
+#ifdef _WIN32
+    const wchar_t* plan = _wgetenv(L"REO_ASSET_OVERLAY");
+#else
+    const char* plan = std::getenv("REO_ASSET_OVERLAY");
+#endif
+    if (plan && *plan) {
+        const char* host = std::getenv("REO_COOP_HOST");
+        assets::require(!host || !*host, "Asset packs require offline play");
+        assets::active = std::make_unique<assets::Overlay>(m_root, fs::path(plan));
+    }
     open_image();
 }
 
@@ -130,6 +142,7 @@ std::string CDVD::normalize_ps2_path(const std::string& path) const {
 
 fs::path CDVD::resolve_path(const std::string& ps2_path) const {
     std::string key = normalize_ps2_path(ps2_path);
+    while (!key.empty() && key.front() == '\\') key.erase(key.begin());
     auto it = m_file_map.find(key);
     if (it != m_file_map.end()) {
         return it->second;
@@ -138,6 +151,10 @@ fs::path CDVD::resolve_path(const std::string& ps2_path) const {
 }
 
 bool CDVD::read_file(const std::string& ps2_path, std::vector<uint8_t>& out) {
+    if (const auto* archive = assets::active ? assets::active->find(ps2_path) : nullptr) {
+        out.resize(static_cast<size_t>(archive->file.size));
+        archive->file.read(0, out.size(), out.data()); return true;
+    }
     fs::path local = resolve_path(ps2_path);
     if (local.empty()) {
         fprintf(stderr, "[CDVD] File not found: %s\n", ps2_path.c_str());
@@ -159,6 +176,7 @@ bool CDVD::read_file(const std::string& ps2_path, std::vector<uint8_t>& out) {
 }
 
 bool CDVD::read_sectors(uint32_t lba, uint32_t count, void* buffer) {
+    if (assets::active && assets::active->sector(lba, count, buffer)) return true;
     if (!m_image || !buffer || count == 0)
         return false;
     const uint64_t off = static_cast<uint64_t>(lba) * 2048u;
@@ -184,6 +202,9 @@ bool CDVD::read_sectors(uint32_t lba, uint32_t count, void* buffer) {
 }
 
 bool CDVD::search_file(const std::string& ps2_path, uint32_t& lba, uint32_t& size) {
+    if (const auto* archive = assets::active ? assets::active->find(ps2_path) : nullptr) {
+        lba = archive->lba; size = static_cast<uint32_t>(archive->file.size); return true;
+    }
     // Path components, upper-case, without "cdrom0:" and ";version".
     std::string p = ps2_path;
     const size_t colon = p.find(':');
@@ -260,6 +281,8 @@ bool CDVD::file_exists(const std::string& ps2_path) const {
 }
 
 uint32_t CDVD::file_size(const std::string& ps2_path) const {
+    if (const auto* archive = assets::active ? assets::active->find(ps2_path) : nullptr)
+        return static_cast<uint32_t>(archive->file.size);
     fs::path local = resolve_path(ps2_path);
     if (local.empty())
         return 0;

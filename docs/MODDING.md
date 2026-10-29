@@ -1,6 +1,86 @@
 # Creating a simple Outbreak mod
 
-The first mod format is a single JSON file. Anyone can edit and share one; no compiler or game rebuild is needed when enabling a mod in an existing compatible build. This version supports seeded items, zombie profiles, a bounded experimental enemy-species mode, existing native gameplay effects and bounded EE data patches. Lua scripts, DLL plugins, asset replacement and PS2 instruction patches are not supported yet.
+Gameplay mods use a JSON file; asset replacement mods use a `.pak` ZIP. Anyone can create and share a mod; an existing compatible game build does not need rebuilding when enabling a new package. Asset packs support both File #1 and File #2 in solo play. Gameplay JSON mods on this branch target File #1. Lua scripts, DLL plugins and PS2 instruction patches are unsupported.
+
+## Asset replacement packs
+
+Import a `.pak` from **Mods**, then tick it. The page shows packs for the selected
+game, their versions and replacement counts. Switching games preserves each game's
+enabled packs. The Play page shows the active asset-pack count. Disable packs before
+hosting or joining co-op. An older native game build is refused with a rebuild message.
+
+An asset pack replaces existing native game files, including textures, models, text,
+audio and movies. It does not convert formats, enable PCSX2 texture packs or add frame
+interpolation. Use suitable format-specific editing tools. Game memory limits still
+apply; accepting a large file does not guarantee the game can load it.
+
+The ZIP needs root `pak.json` and replacement files:
+
+```json
+{
+  "format": 1,
+  "id": "example.translation.file1",
+  "name": "Example translation",
+  "version": "1.0.0",
+  "game": "file1",
+  "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "replace": [
+    {"path": "NETBIO00.DAT/0/551", "file": "files/edited-font.tm2"}
+  ]
+}
+```
+
+For File #2 use `game: "file2"` and executable SHA-256
+`5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d`.
+IDs must be unique across installed packs. Each replacement may specify `baseSha256`;
+a mismatch rejects the pack rather than applying it to the wrong original asset.
+
+Paths address zero-based archive entry indices. Unique names can also be used, or
+mixed with numeric indices, for example `NETBIO00.DAT/romdata_usa.afs/#551`. Numeric
+paths are recommended: File #2 has many sound entries named `SOUN`. Replacing an
+entire nested AFS, a room's `_h.bin` name table, DUMMY padding, code overlays or the
+executable is unsupported. Entries cannot be added, removed or reordered. Two enabled
+packs replacing the same resolved entry are rejected, naming both packs.
+
+Each payload is limited to 256 MiB, each ZIP to 10,000 members and 2 GiB expanded,
+each pack to 4,096 replacements, and the session to 4,096 replacements. Virtual AFS
+files must remain below 4 GiB. ZIP paths cannot be absolute or contain `..`, links,
+duplicate members, Windows device names, or components ending with dots/spaces.
+A loose development folder with the same `pak.json` layout
+can be placed in the launcher's data folder under `mods/assets/`.
+
+Original imports stay archived and unchanged. The launcher builds a small metadata
+index on demand, hashes targeted original entries, and caches ZIP payloads under
+`asset-cache/<pack-sha256>/`. Later launches reuse verified cache files. Loose packs
+are read again so edits apply on the next launch. The session's `asset-overlay.json`
+is a readable receipt; `asset-overlay.bin` is its bounded, versioned native input,
+passed using `REO_ASSET_OVERLAY`. The runtime checks executable and payload identities
+again and streams virtual archives from original ranges plus replacement files.
+No enabled packs leaves the original disc path active. Exact-byte replacements also
+leave their original archives intact.
+
+For mod authoring, extract assets from your own existing import:
+
+```powershell
+python tools/assets/extract_assets.py "<import>/data" "<new-reference-folder>"
+```
+
+Copy selected files into an edited folder, preserving the extracted relative paths.
+After editing, package only changed files:
+
+```powershell
+python tools/assets/pack_assets.py "<reference>/assets.json" "<edited-folder>" "translation.pak" --game file1 --id example.translation.file1 --name "Example translation"
+```
+
+The packer skips unchanged and absent files and includes original entry hashes.
+Keep all extracted originals private. Distribute only the changed assets you have
+permission to distribute; do not include full game archives, ISOs or executables.
+
+Developers can prepare and validate packs without starting a game:
+
+```powershell
+Outbreak.Launcher.exe --prepare-asset-paks file1 "<import>/data" "<pack-folder>" "<new-session-folder>"
+```
 
 ## Randomizer
 

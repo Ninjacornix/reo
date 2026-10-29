@@ -77,6 +77,7 @@
         <StackPanel><TextBlock Text="Play mode" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayNetworkSummary" Margin="0,4,0,0"/></StackPanel>
         <StackPanel Margin="0,14,0,0"><TextBlock Text="Display" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayDisplaySummary" Margin="0,4,0,0"/></StackPanel>
         <StackPanel Margin="0,14,0,0"><TextBlock Text="Input device" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayInputSummary" Margin="0,4,0,0"/></StackPanel>
+        <StackPanel Margin="0,14,0,0"><TextBlock Text="Asset packs" Style="{StaticResource Hint}"/><TextBlock x:Name="PlayAssetSummary" Margin="0,4,0,0"/></StackPanel>
         </StackPanel>
        </Grid>
        <TextBlock x:Name="SessionSummary" Visibility="Collapsed"/>
@@ -233,7 +234,7 @@
        <StackPanel x:Name="ModControls">
         <WrapPanel><Button Content="Import mod" Click="ImportMod" Margin="0,0,10,0"/><Button Content="Open mods folder" Click="OpenModFolder" Margin="0,0,10,0"/><Button Content="Reload" Click="ReloadMods"/></WrapPanel>
         <StackPanel x:Name="ModList" Margin="0,16,0,0"/>
-        <TextBlock Text="To remove a mod, untick it and delete its JSON file from the mods folder." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,20,0,0"/>
+        <TextBlock Text="Asset packs support solo play. To remove a mod, untick it and delete its file from the mods folder. Loose asset packs go in mods/assets with a root pak.json." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,20,0,0"/>
        </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageCheats" Visibility="Collapsed">

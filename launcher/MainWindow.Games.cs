@@ -111,11 +111,12 @@ public partial class MainWindow {
                        " " + DisplayOptions.FitName(settings.ResolvedFit)) +
             " / " + (settings.LinearFilter ? "Bilinear" : "Nearest");
         PlayInputSummary.Text = controller.SelectedDevice.Name;
+        RefreshAssetPakSummary();
         RefreshReadyCheck();
         RefreshImportUi();
         if (PageCheats.Visibility == Visibility.Visible && cheatsGame != settings.Game.Id)
             RefreshCheats();
-        ModControls.IsEnabled = settings.Game.Id == "file1" && !game.Running && !launching;
+        ModControls.IsEnabled = !game.Running && !launching;
         if (PageMods.Visibility == Visibility.Visible && modsGame != settings.Game.Id)
             RefreshMods();
     }

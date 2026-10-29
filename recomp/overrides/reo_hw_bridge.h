@@ -99,6 +99,8 @@ class ReoHwBridge {
     // HLE FILEIO server (sid 0x80000001): IOP-side descriptors for disc files.
     static constexpr int kMaxFioFds = 32;
     std::FILE* m_fioFds[kMaxFioFds] = {};
+    static std::string m_fioAssetKeys[kMaxFioFds];
+    static uint64_t m_fioAssetPositions[kMaxFioFds];
     // HLE IOP heap (bump allocator, reset on IOP reboot; see onSifRpc).
     static constexpr uint32_t kIopHeapBase = 0x00088000u;
     uint32_t m_iopHeapNext = kIopHeapBase;

@@ -36,6 +36,9 @@ def arguments(command):
 
 def export(root, build, dependency, destination, recompiler, recipe_plan=None):
     root, build, dependency, destination = [Path(p).resolve() for p in (root, build, dependency, destination)]
+    support = dependency / "ps2xRuntime/src/lib/Kernel/Stubs/Helpers/Support.h"
+    if "REO_ASSET_OVERLAY_AVAILABLE" not in support.read_text(encoding="utf-8"):
+        raise ValueError("Apply PS2Recomp patch 0109-virtual-asset-archives.patch before exporting asset-capable build kits")
     if destination.exists():
         raise FileExistsError("Build kit outputs are immutable; choose a fresh directory")
     destination.mkdir(parents=True)
@@ -62,6 +65,8 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
                  "runtime/timer/windows_resolution.h"):
         copy(root / name, "source/" + name)
     # Keep the new mod hook available in development kits before it is committed.
+    for name in ("runtime/assets/virtual_afs.h", "runtime/assets/overlay.h"):
+        copy(root / name, "source/" + name)
     for name in ("recomp/overrides/reo_mods.h", "runtime/mods/weapon_shuffle.h", "runtime/mods/enemy_randomizer.h", "runtime/mods/enemy_spawn_randomizer.h"):
         copy(root / name, "source/" + name)
     for part in ["ps2xRuntime", "ps2xRecomp/include"]:

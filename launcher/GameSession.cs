@@ -39,6 +39,7 @@ public sealed class GameSession {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var graphics = GraphicsOptions.From(settings);
+        var selectedAssetPaks = AssetPaks.Selected(settings);
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
         if (diagnosticColdCache && diagnosticRoute == null)
             throw new InvalidOperationException("A private shader cache requires a diagnostic run.");
@@ -118,6 +119,9 @@ public sealed class GameSession {
             throw new IOException("This shared session needs the updated game build with stable randomizer support.");
         Logs = Path.Combine(Settings.Home, "sessions", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
         Directory.CreateDirectory(Logs);
+        if (selectedAssetPaks.Count > 0 && !HasMarker(image, AssetPaks.Capability))
+            throw new IOException("Asset packs need an updated game build. Rebuild or update the selected game.");
+        string assetPlan = await Task.Run(() => AssetPaks.Prepare(selectedAssetPaks, discRoot, selectedGame.Id, Logs, cancel: cancel), cancel);
         if (randomizerConfiguration != null) {
             File.WriteAllBytes(Path.Combine(Logs,"randomizer-session.json"),randomizerConfiguration);
             File.WriteAllText(Path.Combine(Logs,"randomizer-session.sha256"),RandomizerSession.Digest(randomizerConfiguration));
@@ -139,6 +143,7 @@ public sealed class GameSession {
                      .ToArray())
             start.Environment.Remove(key);
         void Set(string key, string value) => start.Environment[key] = value;
+        if (assetPlan.Length != 0) Set("REO_ASSET_OVERLAY", assetPlan);
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
         bool automaticAccount = onlineEnvironment.Count > 0 &&

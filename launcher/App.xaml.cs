@@ -124,6 +124,28 @@ public partial class App : Application {
                 Shutdown(await UpdateWorker.Run(e.Args[update + 1]));
                 return;
             }
+            int preparePaks = Array.IndexOf(e.Args, "--prepare-asset-paks");
+            int testPaks = Array.IndexOf(e.Args, "--test-asset-paks");
+            if (testPaks >= 0 && testPaks + 1 < e.Args.Length) {
+                int checks = 0;
+                AssetPakTests.Run((valid, name) => { if (!valid) throw new IOException(name); checks++; });
+                File.WriteAllText(e.Args[testPaks + 1], System.Text.Json.JsonSerializer.Serialize(new { passed = true, checks }));
+                Shutdown(); return;
+            }
+            if (preparePaks >= 0) {
+                if (preparePaks + 4 >= e.Args.Length) throw new ArgumentException("--prepare-asset-paks <game> <import-data> <pack-folder> <new-session-folder>");
+                string selectedGame = e.Args[preparePaks + 1], data = e.Args[preparePaks + 2], folder = e.Args[preparePaks + 3], session = e.Args[preparePaks + 4];
+                var installed = AssetPaks.Load(folder);
+                if (installed.Any(p => p.Error.Length != 0)) throw new IOException(string.Join("; ", installed.Where(p => p.Error.Length != 0).Select(p => p.Error)));
+                var packs = installed.Where(p => p.Manifest?.Game == selectedGame).ToList();
+                if (packs.Count == 0) throw new IOException("No asset packs for the selected game.");
+                if (Directory.Exists(session)) throw new IOException("Choose a new session folder.");
+                int cacheArg = Array.IndexOf(e.Args, "--asset-cache");
+                if (cacheArg >= 0 && cacheArg + 1 >= e.Args.Length) throw new ArgumentException("--asset-cache requires a directory.");
+                string assetCache = cacheArg >= 0 ? Path.GetFullPath(e.Args[cacheArg + 1]) : Path.Combine(Path.GetFullPath(session), "cache");
+                await Task.Run(() => AssetPaks.Prepare(packs, data, selectedGame, session, assetCache));
+                Shutdown(); return;
+            }
             int import = Array.IndexOf(e.Args, "--import-iso");
             if (import >= 0) {
                 string Option(string name) {
@@ -198,7 +220,7 @@ public partial class App : Application {
             if (!e.Args.Contains("--smoke-launch") && !e.Args.Contains("--test-coop-session") &&
                 !e.Args.Contains("--test-coop-host") && !e.Args.Contains("--self-test") &&
                 !e.Args.Contains("--test-lobby") &&
-                !e.Args.Contains("--import-iso") && !e.Args.Contains("--test-update") &&
+                !e.Args.Contains("--import-iso") && !e.Args.Contains("--prepare-asset-paks") && !e.Args.Contains("--test-asset-paks") && !e.Args.Contains("--test-update") &&
                 !e.Args.Contains("--check-updates") && !e.Args.Contains("--screenshot") &&
                 !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&
                 !e.Args.Contains("--test-compiler-setup") &&

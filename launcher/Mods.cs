@@ -189,7 +189,9 @@ public static class Mods {
         // Their own mod preferences remain saved for subsequent solo/host games.
         if (settings.ResolvedCoopMode == "join") return new();
         if (settings.EnabledMods.Count == 0) return new();
-        if (settings.Game.Id != "file1") throw new IOException("Mods currently support File #1 only.");
+        // File #1 JSON preferences remain saved when playing File #2. Asset packs
+        // have their own edition-aware selection and are supported by both games.
+        if (settings.Game.Id != "file1") return new();
         var installed = Load(folder);
         var selected = new List<ModManifest>();
         foreach (string id in settings.EnabledMods.Distinct().OrderBy(x => x, StringComparer.Ordinal)) {

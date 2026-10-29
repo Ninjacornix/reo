@@ -7,6 +7,34 @@ external prerequisite. The server is source-only, with Python/packages prepared
 automatically in the selected data folder on first hosting (an installed Python 3.12 is
 reused when present).
 
+## Unreleased: asset packs
+
+`feature/asset-paks` adds streamed native-asset replacement for both editions in
+solo play. See `MODDING.md` and `ASSET_PAKS_IMPLEMENTATION.md`. A release containing
+this feature needs refreshed build kits and the launcher capability check; include
+`<!-- reo:requires-rebuild -->` in its release notes. Existing cached native builds
+cannot apply packs until rebuilt.
+
+Kit exports require SDK patch `0109-virtual-asset-archives.patch`. For an existing
+frozen kit, use `tools/local_build/refresh_inputs.py` with these arguments in
+addition to `--kit`, `--output` and `--recompiler`:
+
+```text
+--update-source runtime/cdvd/cdvd.cpp
+--update-source recomp/overrides/reo_hw_bridge.cpp
+--update-source recomp/overrides/reo_hw_bridge.h
+--add-source runtime/assets/virtual_afs.h
+--add-source runtime/assets/overlay.h
+--source-patch third_party/patches/ps2recomp/0109-virtual-asset-archives.patch
+```
+
+The refresh rehashes the kit inventory and includes the SDK patch in source-update
+notices. Generate instruction catalogues from the player's ELF through the normal
+build stages before compiling runtime sources. Both private refreshed kits passed
+portable compilation of all four affected runtime units. This preflight is not a
+fresh full-game release build. Before publishing, run the complete packaging and
+cold-build checks for the final merged tree.
+
 ## v1.0.19
 
 Refresh the frozen v1.0.18 kit with `recomp/overrides/reo_vu_specialized.cpp` and
