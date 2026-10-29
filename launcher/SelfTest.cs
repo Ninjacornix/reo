@@ -61,6 +61,7 @@ static class SelfTest {
         ControllerLightTests.Run(Check);
         ControllerRumbleTests.Run(Check);
         ControllerInputTests.Run(Check);
+        ControllerDiscoveryTests.Run(Check);
         MemoryCardBackupTests.Run(Check);
         GlobalWeaponMotionsTests.Run(Check);
         AudioMixerTests.Run(Check);
@@ -273,7 +274,8 @@ static class SelfTest {
         Check(InputMapping.Keyboard(keyboard, k => k == 'K').Buttons == 0,
               "Cleared key cannot produce stale action");
         Pad? simulatedXbox = new Pad(0x4000, 77, 89, 16384, -16384);
-        using (var devices = new Controller(slot => slot == 2 ? simulatedXbox : null)) {
+        using (var devices = new Controller(slot => slot == 2 ? simulatedXbox : null, (_, _, _) => { },
+                                            () => new(new(), new()), () => Environment.TickCount64)) {
             var config = new Settings { InputDeviceId = "xbox:2" };
             devices.Configure(config);
             devices.Poll();

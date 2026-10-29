@@ -12,9 +12,7 @@ public sealed partial class Controller : IDisposable {
     public readonly string MapName = "Local\\REO-Pad-" + Guid.NewGuid().ToString("N");
     readonly MemoryMappedFile map;
     readonly MemoryMappedViewAccessor view;
-    readonly Dictionary<nint, bool> supported = new();
     HwndSource? source;
-    long lastSeen;
     int sequence;
     uint packet;
     Pad lastPublished = new();
@@ -46,7 +44,12 @@ public sealed partial class Controller : IDisposable {
     public string Transport { get; private set; } = "USB";
 
     public Controller(Func<uint, Pad?>? xboxReader = null,
-                      Action<uint, ushort, ushort>? xboxRumble = null) {
+                      Action<uint, ushort, ushort>? xboxRumble = null)
+        : this(xboxReader, xboxRumble, RawInputPads.Enumerate, () => Environment.TickCount64) { }
+    internal Controller(Func<uint, Pad?>? xboxReader, Action<uint, ushort, ushort>? xboxRumble,
+                        Func<RawInputPads.Snapshot?> discoverPads, Func<long> inputClock) {
+        this.discoverPads = discoverPads;
+        this.inputClock = inputClock;
         var native = xboxReader == null ? new XboxInput() : null;
         readXbox = xboxReader ?? native!.Read;
         rumble = new(xboxRumble ?? (native == null ? (_, _, _) => { } : native.Rumble));
@@ -63,35 +66,31 @@ public sealed partial class Controller : IDisposable {
                     new RawDevice { Page = 1, Usage = 4, Flags = 0x2100, Window = hwnd } };
         if (!RegisterRawInputDevices(devices, 2, (uint)Marshal.SizeOf<RawDevice>()))
             throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+        RefreshDualSense();
+    }
+    void RemoveDualSense(nint handle) {
+        if (deviceNames.Remove(handle, out string? removed)) dualSense.Remove(removed);
+    }
+    void AddDualSense(RawInputPads.Device device) {
+        if (deviceNames.TryGetValue(device.Handle, out string? previous) && previous != device.Path)
+            RemoveDualSense(device.Handle);
+        deviceNames[device.Handle] = device.Path;
+        if (!dualSense.ContainsKey(device.Path)) dualSense[device.Path] = new(new Pad(), device.Transport);
+    }
+    void RefreshDualSense() {
+        if (discoverPads() is not { } snapshot) return;
+        foreach (var handle in deviceNames.Keys.Where(h => !snapshot.Handles.Contains(h)).ToArray()) RemoveDualSense(handle);
+        foreach (var device in snapshot.Pads) AddDualSense(device);
     }
     bool IsSupported(nint device) {
-        if (supported.TryGetValue(device, out bool answer))
-            return answer;
-        uint length = 0;
-        GetRawInputDeviceInfo(device, 0x20000007, 0, ref length);
-        if (length == 0 || length > 8192)
-            return false;
-        nint text = Marshal.AllocHGlobal((int)(length + 1) * 2);
-        try {
-            if (GetRawInputDeviceInfo(device, 0x20000007, text, ref length) == uint.MaxValue)
-                return false;
-            string name = Marshal.PtrToStringUni(text) ?? "";
-            answer = name.Contains("VID_054C", StringComparison.OrdinalIgnoreCase) &&
-                     (name.Contains("PID_0CE6", StringComparison.OrdinalIgnoreCase) ||
-                      name.Contains("PID_0DF2", StringComparison.OrdinalIgnoreCase));
-            supported[device] = answer;
-            if (answer)
-                deviceNames[device] = name;
-            return answer;
-        } finally {
-            Marshal.FreeHGlobal(text);
-        }
+        if (deviceNames.ContainsKey(device)) return true;
+        if (RawInputPads.Read(device) is not { } found) return false;
+        AddDualSense(found); return true;
     }
     nint Hook(nint hwnd, int message, nint wp, nint lp, ref bool handled) {
-        if (message == 0xFE && wp == 2) {
-            if (deviceNames.Remove(lp, out string? removed))
-                dualSense.Remove(removed);
-            supported.Remove(lp);
+        if (message == 0xFE) {
+            if (wp == 2) RemoveDualSense(lp);
+            else if (wp == 1) { lastDiscovery = -1000; RefreshDualSense(); }
         }
         if (message != 0xFF)
             return 0;
@@ -113,24 +112,29 @@ public sealed partial class Controller : IDisposable {
                 return 0;
             var bytes = new byte[width];
             Marshal.Copy(data + (int)header + 8 + (count - 1) * width, bytes, 0, width);
-            if (!TryParse(bytes, 0, out Pad pad))
-                return 0;
-            lastSeen = Environment.TickCount64;
-            Reports++;
-            Transport = bytes[0] == 0x31 || bytes.Length == 10 ? "Bluetooth" : "USB";
-            dualSense[deviceNames[Marshal.ReadIntPtr(data, 8)]] = new(pad, lastSeen, Transport);
+            AcceptReport(Marshal.ReadIntPtr(data, 8), bytes);
         } finally {
             Marshal.FreeHGlobal(data);
         }
         return 0;
     }
+    internal bool AcceptReport(nint device, byte[] bytes) {
+        if (!deviceNames.TryGetValue(device, out string? path) || !TryParse(bytes, 0, out Pad pad)) return false;
+        Reports++;
+        Transport = bytes[0] == 0x31 || bytes.Length is 10 or 78 ? "Bluetooth" : "USB";
+        dualSense[path] = new(pad, Transport);
+        return true;
+    }
     // Input report layouts documented by SDL's PS5 HID driver. Light output uses
     // a separate shared handle; no pairing, exclusive handle or virtual driver.
     public static bool TryParse(byte[] data, int deadZone, out Pad pad) {
         pad = new();
-        if (data.Length < 10)
+        if (data.Length < 10 || !(data[0] == 1 && data.Length is 10 or 64 or 78 ||
+                                  data[0] == 0x31 && data.Length == 78))
             return false;
-        bool simple = data[0] == 1 && data.Length == 10;
+        // Windows may pad the basic Bluetooth report to 78 bytes. Its controls
+        // still use the compact layout, not the enhanced report's offsets.
+        bool simple = data[0] == 1 && data.Length is 10 or 78;
         int offset = data[0] == 0x31 ? 2 : data[0] == 1 ? 1 : -1;
         if (offset < 0 || (!simple && data.Length < offset + 10))
             return false;
@@ -224,7 +228,8 @@ public sealed partial class Controller : IDisposable {
         rumble.Update(device, motors);
         Volatile.Write(ref rumbleObservation, new(SessionEnabled, device.Name, device.Available, motors));
         int rgb = SessionEnabled ? Volatile.Read(ref healthLight) : 0x0040ff;
-        bool playstation = device.Available && device.Kind == "playstation";
+        bool playstation = device.Available && device.Kind == "playstation" &&
+                           dualSense[device.Id[3..]].Transport != "Unknown";
         light.Update(playstation ? device.Id[3..] : null,
                      playstation && dualSense[device.Id[3..]].Transport == "Bluetooth",
                      new((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb), motors);
@@ -247,6 +252,4 @@ public sealed partial class Controller : IDisposable {
     [DllImport("user32")]
     static extern uint GetRawInputData(nint input, uint command, nint data, ref uint size,
                                        uint headerSize);
-    [DllImport("user32", CharSet = CharSet.Unicode)]
-    static extern uint GetRawInputDeviceInfo(nint device, uint command, nint data, ref uint size);
 }
