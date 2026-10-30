@@ -17,6 +17,29 @@ beside the launcher. No terminal commands or environment variables are required.
 The compiler is shared between games; later launches reuse verified completed
 builds. Nothing is installed system-wide or added to PATH.
 
+After disc import, the launcher also prepares that game's two title-screen
+demonstration videos as silent H.264 MP4s at CRF 20 using the medium encoder
+preset; earlier cached encodes are regenerated once. Videos use full opacity on
+Play with a readability gradient. Videos and fallback artwork appear only on
+Play; all other pages use the solid background color and close video playback.
+Returning to Play resumes its saved position.
+They loop and crossfade behind the launcher, switching between File #1 and
+File #2 with the game selection. There are no playback or seeking controls.
+Switching back resumes that game's previous clip and timestamp. Minimizing or
+playing the game also preserves the background position for the current launcher
+session. Conversion is a one-time setup per game; later launches reuse the cache.
+The existing image remains the fallback
+when movies are absent, conversion or playback fails, or Windows animations are
+disabled. Playback stops while the game runs or the launcher is minimized.
+
+The optional converter is a pinned [Gyan FFmpeg essentials build](https://www.gyan.dev/ffmpeg/builds/),
+downloaded once (about 109 MiB) into **data/media-tools/**, with archive and
+executable SHA-256 verification. No separate FFmpeg installation is required.
+MP4s stay in each private import's **background-videos-v1/** directory, are reused
+on later launches, follow storage moves, and are removed with the imported game.
+An unavailable converter or network connection does not block importing,
+building or playing. No game videos are included in the launcher download.
+
 Portable data stays in **data/** beside the launcher unless a different storage
 folder is selected. Imported files, generated code, completed games, saves and
 build caches remain private. Keep the ISO available for direct sector reads.
@@ -138,7 +161,35 @@ The selected ISO is imported once without mounting. The original ISO stays avail
 
 ## Artwork and validation
 
-Game cards and faded backgrounds are plain by default. Users can optionally
-provide their own local cover images; the launcher no longer downloads them.
-These local files are neither embedded in the launcher nor distributed with the
-source. See [asset provenance](Assets/PROVENANCE.md).
+The Play page shows 190 × 135 × 14 mm 3D cases using cover images. Ready games turn
+slowly; unavailable games are grayscale. Motion stops when the page is hidden,
+the window is minimized, or Windows animations are disabled. Without artwork,
+the case displays the game's title. Drag a case to rotate it horizontally and
+vertically. After a four-second inspection pause, the case eases back to its idle
+pose along the shortest rotation. Double-click to reset immediately. Clicking
+the case still selects that game. The Play page gives both cases a larger shared
+archive stage; the camera adapts to the available viewport so all drag angles fit.
+
+Artwork is selected from the ISO's boot serial and region, defaulting to NTSC-U.
+Personal covers live in the selected data folder's `artwork/` directory.
+Maintainers can also package predownloaded covers under `Assets/Covers/`; see
+[cover naming and fallback rules](Assets/Covers/README.md). The launcher does
+not automatically download images. NTSC-U front, spine and back scans were predownloaded into the
+packaged folder; see [artwork sources](Assets/Covers/ARTWORK-NOTICE.md).
+See [asset provenance](Assets/PROVENANCE.md).
+
+## Cover artwork
+
+On first normal launch, the launcher downloads cover scans automatically with
+progress at the bottom, then applies them to the 3D cases. Verified images are
+cached in the selected data folder's `artwork/downloaded/` directory. Later
+launches reuse them. Images are not bundled; offline or failed downloads retain
+placeholders and never block playing. Personal cover images remain supported.
+See [artwork selection and sources](Assets/Covers/README.md).
+
+The Play page crossfades its background artwork when changing games. Transparent
+case stages have left-aligned #1 / #2 lettering; the selected case lights up
+under a spotlight while the other stays dim. Dragging uses the normal cursor.
+A quick fling keeps the case spinning with friction; grabbing it stops the spin.
+Once stopped, cases pause for four seconds, then ease back to idle. Reduced-motion, hidden-page and
+minimized-window behavior is respected.

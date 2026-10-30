@@ -19,6 +19,7 @@
     <Content Include="../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../NOTICE.md" Link="NOTICE.md" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets/PROVENANCE.md" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets/Covers/ARTWORK-NOTICE.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Resource Include="Assets/app-icon.ico" />
     <None Update="Assets/app-icon.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Resource Include="artifacts/shaders/ColorPreview.ps" Link="Shaders/ColorPreview.ps" />
@@ -26,6 +27,14 @@
   <ItemGroup>
     <RetiredModExample Include="practice-mode;weapon-shuffle;item-randomizer;zombie-randomizer;outbreak-randomizer;ground-enemy-randomizer" />
   </ItemGroup>
+  <Target Name="RemovePackagedCoverImagesFromBuild" AfterTargets="Build" Condition="'$(OutDir)' != ''">
+    <ItemGroup><OldPackagedCover Include="$(OutDir)Assets/Covers/**/*.jpg;$(OutDir)Assets/Covers/**/*.png;$(OutDir)Assets/Covers/**/*-wrap.json" /></ItemGroup>
+    <Delete Files="@(OldPackagedCover)" />
+  </Target>
+  <Target Name="RemovePackagedCoverImagesFromPublish" AfterTargets="Publish" Condition="'$(PublishDir)' != ''">
+    <ItemGroup><PublishedCover Include="$(PublishDir)Assets/Covers/**/*.jpg;$(PublishDir)Assets/Covers/**/*.png;$(PublishDir)Assets/Covers/**/*-wrap.json" /></ItemGroup>
+    <Delete Files="@(PublishedCover)" />
+  </Target>
   <Target Name="RemoveRetiredModExamplesFromBuild" AfterTargets="Build">
     <Delete Files="@(RetiredModExample->'$(OutDir)examples/mods/%(Identity).json')" />
   </Target>

@@ -101,9 +101,11 @@ public partial class MainWindow {
             return;
         RemoveGameButton.IsEnabled = false;
         Status.Text = "Removing game files...";
+        await StopBackgroundPreparation();
         var failed = await Task.Run(() => GameRemoval.Remove(targets));
         settings.SetFile("iso", "");
         settings.SetImport("");
+        backgroundRemoving = false;
         discCheck = null;
         try {
             settings.Save();
@@ -273,6 +275,7 @@ public partial class MainWindow {
                                                    DiscImport.ExpectedElf(settings, root), progress,
                                                    importCancellation!.Token);
             settings.SetImport(imported.Root);
+            PrepareImportedBackgroundVideos();
             if (AppLayout.Packaged(root))
                 await LocalGameBuild.Ensure(root, imported, progress, importCancellation!.Token, game: settings.Game.Id);
             settings.Save();

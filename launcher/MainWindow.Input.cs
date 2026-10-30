@@ -7,6 +7,7 @@ namespace Outbreak.Launcher;
 public partial class MainWindow {
     bool inputUiUpdating, captureArmed;
     string deviceFingerprint = "", displayedDevice = "", captureTarget = "";
+    readonly Dictionary<string, Button> bindingButtons = new();
     Dictionary<string, int> CurrentBindings => controller.SelectedDevice.Kind == "keyboard"
                                                    ? settings.Keyboard
                                                    : controller.Profile.Buttons;
@@ -49,10 +50,10 @@ public partial class MainWindow {
         StickSettings.Visibility = keyboard ? Visibility.Collapsed : Visibility.Visible;
         ControllerDetail.Text = "Reconnect this device, or select another.";
         ControllerDetail.Visibility = device.Available ? Visibility.Collapsed : Visibility.Visible;
-        PadBadge.Content = device.Available ? device.Name : "Input device disconnected";
         DeadZoneLabel.Text = $"Dead zone: {controller.Profile.DeadZone}%";
         LeftPlot.Update(controller.RawState, controller.State, controller.Profile.DeadZone, false);
         RightPlot.Update(controller.RawState, controller.State, controller.Profile.DeadZone, true);
+        UpdateBindingFeedback();
         if (captureTarget.Length != 0 && !keyboard) {
             var pressed = InputMapping.Pressed(controller.RawState);
             if (pressed.Count == 0)
@@ -103,18 +104,19 @@ public partial class MainWindow {
         CancelCapture(sender, e);
         InputLayoutPanel.Visibility = Visibility.Visible;
         InputBindingsPanel.Visibility = Visibility.Collapsed;
-        LayoutTab.BorderBrush = new SolidColorBrush(Color.FromRgb(161, 75, 77));
-        BindingsTab.BorderBrush = new SolidColorBrush(Color.FromRgb(52, 61, 62));
+        LayoutTab.BorderBrush = Palette.Brush(Palette.Accent);
+        BindingsTab.BorderBrush = Palette.Brush(Palette.Text, Palette.Divider);
     }
     void ShowBindings(object sender, RoutedEventArgs e) {
         InputLayoutPanel.Visibility = Visibility.Collapsed;
         InputBindingsPanel.Visibility = Visibility.Visible;
         BuildBindingRows();
-        BindingsTab.BorderBrush = new SolidColorBrush(Color.FromRgb(161, 75, 77));
-        LayoutTab.BorderBrush = new SolidColorBrush(Color.FromRgb(52, 61, 62));
+        BindingsTab.BorderBrush = Palette.Brush(Palette.Accent);
+        LayoutTab.BorderBrush = Palette.Brush(Palette.Text, Palette.Divider);
     }
     void BuildBindingRows() {
         BindingRows.Children.Clear();
+        bindingButtons.Clear();
         var rows = InputMapping.Actions.Select(a => (a.Id, a.Label)).ToList();
         if (controller.SelectedDevice.Kind == "keyboard")
             rows.AddRange(InputMapping.Camera);
@@ -130,6 +132,7 @@ public partial class MainWindow {
                                            controller.SelectedDevice.Kind),
                                        Tag = action.Id, Padding = new Thickness(12, 7, 12, 7) };
             binding.Click += StartBinding;
+            bindingButtons[action.Id] = binding;
             Grid.SetColumn(binding, 1);
             row.Children.Add(binding);
             var clear =
@@ -144,6 +147,15 @@ public partial class MainWindow {
             Grid.SetColumn(clear, 2);
             row.Children.Add(clear);
             BindingRows.Children.Add(row);
+        }
+        UpdateBindingFeedback();
+    }
+    void UpdateBindingFeedback() {
+        foreach (var (action, button) in bindingButtons) {
+            bool active = controller.SelectedDevice.Available && captureTarget.Length == 0 &&
+                          InputMapping.ActionPressed(controller.State, action);
+            if (InputFeedback.GetIsActive(button) != active)
+                InputFeedback.SetIsActive(button, active);
         }
     }
     void StartBinding(object sender, RoutedEventArgs e) {

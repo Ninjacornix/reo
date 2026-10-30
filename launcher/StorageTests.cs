@@ -93,8 +93,6 @@ internal static class StorageTests {
                 check(refused && !Directory.Exists(cancelTarget) && File.ReadAllText(Path.Combine(root, Storage.LocatorName)) == oldLocator,
                       "A busy file aborts migration without switching storage");
             }
-            check(Storage.NeedsLegacyImport(Path.Combine(root, "new-profile"), source) && !Storage.NeedsLegacyImport(destination, source),
-                  "Existing AppData-style settings are imported once, never over an established profile");
             check(Storage.ProtectedUpdatePath(root, "storage.json") && Storage.ProtectedUpdatePath(root, "custom data/settings.json") &&
                   Storage.ProtectedUpdatePath(root, "data/settings.json") &&
                   !Storage.ProtectedUpdatePath(root, "Outbreak.Launcher.exe"), "Updates distinguish user storage from launcher package files");

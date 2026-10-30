@@ -28,7 +28,7 @@ internal static class GameRemoval {
         }
         if (tools)
             foreach (string name in new[] { "toolchains", "server-python", "server-python-runtime",
-                                            "server-tools" })
+                                            "server-tools", "media-tools" })
                 targets.Add(new(Path.Combine(home, name), "build and hosting tools"));
         return targets.Where(t => Directory.Exists(t.Path))
                    .GroupBy(t => Path.GetFullPath(t.Path), StringComparer.OrdinalIgnoreCase)

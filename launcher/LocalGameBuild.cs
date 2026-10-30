@@ -26,6 +26,21 @@ public static partial class LocalGameBuild {
                                                                           ManifestName)) ||
                                                  HasPayload(root, game);
 
+    // Windows will not start a program, or run one in a folder, whose path passes 259
+    // characters, even though the build scripts reach deeper files through extended paths.
+    // The build's working folder and its Python sit about 90-100 characters below the data
+    // folder, so the data folder itself must stay within 150.
+    public const int MaxDataFolderLength = 150;
+    const int MaxProcessPath = 245;
+    public static string? DataFolderProblem(string dataFolder) {
+        int length = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dataFolder)).Length;
+        return length <= MaxDataFolderLength ? null : TooDeep(length);
+    }
+    static string TooDeep(int length) =>
+        $"This folder is too deep for Windows to build the game (the data folder path is {length} characters; " +
+        $"at most {MaxDataFolderLength}). Move the launcher folder somewhere shorter, such as D:\\Outbreak, " +
+        "or choose a shorter storage folder in Game files.";
+
     public static string TargetPath(string root, string game = "file1", string? home = null) {
         string manifest = Path.Combine(KitFolder(root, game), ManifestName);
         string kitHash =
@@ -147,6 +162,12 @@ public static partial class LocalGameBuild {
         string executable = TargetPath(root, game, home: home);
         string ready = Path.GetDirectoryName(executable)!;
         string cache = Path.GetDirectoryName(ready)!;
+        // Fail before a long setup rather than when a build step cannot start.
+        string deepest = new[] { Path.Combine(cache, "work") }
+                             .Concat(kit.Steps.Select(step => Inside(kitFolder, step.Tool)))
+                             .MaxBy(path => path.Length)!;
+        if (deepest.Length > MaxProcessPath)
+            throw new IOException(TooDeep(Path.GetFullPath(Settings.Home).Length));
         Directory.CreateDirectory(cache);
         using var lease = new FileStream(Path.Combine(cache, "build.lock"), FileMode.OpenOrCreate,
                                          FileAccess.ReadWrite, FileShare.None);

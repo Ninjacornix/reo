@@ -110,6 +110,18 @@ Build logs and reusable object receipts stay in the private workspace. A cache k
 includes the build-kit manifest, supported ELF hash and architecture. Completed
 files are hashed and admitted only after the complete pipeline succeeds.
 
+**Long paths.** Windows long paths are off by default, so Python opens files through
+the 259-character limit. Build files nest about 180 characters below the data folder
+and kit sources about 250, which broke rc0 builds in data folders over ~80 characters.
+`tools/local_build/long_paths.py` gives the rule: `build_game.py` turns its kit, disc,
+work and output roots into extended (`\\?\`) paths, so every derived Python path is
+extended; anything handed to a native tool (recompiler config/arguments, compiler
+arguments, response files, generated `#include` lines, `PATH`) goes through `native()`.
+LLVM and the patched recompiler lengthen ordinary paths themselves. Build paths only
+through `pathlib`: an extended path does not treat `/` as a separator. Windows still
+refuses to start a program, or run it in a folder, past 259 characters; the launcher
+therefore rejects data folders longer than 150 characters before building.
+
 ## Linux
 
 Native Linux implementation has started in [launcher/linux](../launcher/linux/README.md),
