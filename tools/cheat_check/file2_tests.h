@@ -69,10 +69,7 @@ inline void testFile2Cheats() {
         check(!apply2(7).active && ram == before);
         r[0x4db3ad] = 4;
         check(!apply2(7).active);
-        bool refused = false;
-        try { apply2(UnlockEverything); } catch (const std::runtime_error&) { refused = true; }
-        check(refused);
+        check(apply2(UnlockEverything).unlocks);
     }
     std::cout << "PASS " << checks << " File #2 cheat checks\n";
 }
-
