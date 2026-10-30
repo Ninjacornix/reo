@@ -120,6 +120,21 @@ static class LocalGameBuildTests {
             }
             check(wrongElf && calls == 3, "public build entry refuses synthetic unsupported ELF");
 
+            check(LocalGameBuild.DataFolderProblem(@"D:\Outbreak\data") == null &&
+                      LocalGameBuild.DataFolderProblem(@"D:\" + new string('x', 160)) is { } message &&
+                      message.Contains("shorter"),
+                  "Data folders too deep for Windows are reported before building");
+            // A build folder Windows cannot start programs in is refused before any step runs.
+            string tooDeep = Path.Combine(root, new string('d', 120), new string('e', 120));
+            bool deepRefused = false;
+            try {
+                await LocalGameBuild.EnsureVerified(root, disc, Sha(elf), home: tooDeep, runner: Runner);
+            } catch (IOException error) when (error.Message.Contains("too deep")) {
+                deepRefused = true;
+            }
+            check(deepRefused && calls == 3 && !Directory.Exists(tooDeep),
+                  "A too-deep build folder is refused before running the build");
+
             // An update's build adopts the previous kit's objects; finished builds keep only those.
             string games = Path.Combine(root, "handoff", "file1");
             string older = Path.Combine(games, "older"), newer = Path.Combine(games, "newer");

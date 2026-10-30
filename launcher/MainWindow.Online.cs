@@ -367,7 +367,7 @@ public partial class MainWindow {
         foreach (var found in foundGames.Where(g => g.GameId == settings.Game.Id)) {
             bool selected = found.Address == settings.CoopHost;
             var text = new StackPanel();
-            text.Children.Add(new TextBlock { Text = found.Name + "'s game", FontWeight = FontWeights.SemiBold });
+            text.Children.Add(new TextBlock { Text = found.Name + "'s game", FontWeight = FontWeights.Normal });
             text.Children.Add(new TextBlock {
                 Text = found.Address + (found.Version == Updates.DefaultVersion
                                             ? ""

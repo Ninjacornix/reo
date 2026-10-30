@@ -21,22 +21,6 @@ public partial class MainWindow {
         }
     }
     static string Gigabytes(long bytes) => (bytes / (1024.0 * 1024 * 1024)).ToString("0.#") + " GB";
-    enum Check { Done, Missing, Info }
-    void SetCheck(string name, Check state, string text, string? action = null) {
-        var mark = (TextBlock)FindName(name + "Mark");
-        mark.Text = state switch { Check.Done => "\u2713", Check.Missing => "\u2717", _ => "\u2022" };
-        mark.Foreground = (Brush)FindResource(state switch { Check.Done => "Good", Check.Missing => "Danger",
-                                                             _ => "Muted" });
-        System.Windows.Automation.AutomationProperties.SetName(
-            mark, state switch { Check.Done => "Done", Check.Missing => "Needed", _ => "Information" });
-        var label = (TextBlock)FindName(name + "Text");
-        label.Text = text;
-        label.Foreground = (Brush)FindResource(state == Check.Info ? "Muted" : "Ink");
-        if (FindName(name + "Action") is Button button) {
-            button.Content = action;
-            button.Visibility = action == null ? Visibility.Collapsed : Visibility.Visible;
-        }
-    }
     string[] graphicsCards = Array.Empty<string>();
     void RefreshReadyCheck() {
         bool packaged = AppLayout.Packaged(root);
@@ -45,24 +29,6 @@ public partial class MainWindow {
         bool vulkan = VulkanInstalled();
         long free = FreeSpace();
         bool roomy = built || free < 0 || free >= SetupSpace;
-        string iso = settings.GetIso();
-        bool discOk = discCheck is { Ok: true } && discCheck.Matches(iso, settings.Game.Id);
-        string cards = graphicsCards.Length > 0 ? " (" + string.Join(", ", graphicsCards) + ")" : "";
-        SetCheck("CheckDotnet", Check.Done, ".NET 8 Desktop Runtime");
-        SetCheck("CheckVulkan", vulkan ? Check.Done : Check.Missing,
-                 (vulkan ? "Vulkan graphics driver" : "Vulkan graphics driver not found") + cards,
-                 vulkan ? null : "Get driver");
-        SetCheck("CheckDisk", roomy ? Check.Done : Check.Missing,
-                 free < 0 ? "Free disk space unknown"
-                 : built ? Gigabytes(free) + " free disk space"
-                         : Gigabytes(free) + " free (setup needs about 10 GB)",
-                 roomy ? null : "Free up space");
-        SetCheck("CheckDisc", discOk ? Check.Done : Check.Missing,
-                 discOk ? "Game disc verified"
-                 : !File.Exists(iso) ? "Game disc not chosen yet"
-                 : discCheck != null && discCheck.Matches(iso, settings.Game.Id) ? "Game disc not supported"
-                                                               : "Checking game disc...",
-                 discOk ? null : "Choose ISO");
         RefreshNextStep(packaged, kit, built, vulkan, roomy);
     }
     static string DriverPage(IEnumerable<string> cards) {
@@ -76,32 +42,12 @@ public partial class MainWindow {
                    ? "https://www.intel.com/content/www/us/en/support/detect.html"
                    : "ms-settings:windowsupdate";
     }
-    void ChecklistAction(object sender, RoutedEventArgs e) {
-        void Open(string target) {
-            try {
-                Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
-            } catch (System.ComponentModel.Win32Exception) {
-                Status.Text = "Could not open " + target;
-            }
+    void OpenExternal(string target) {
+        try {
+            Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+        } catch (System.ComponentModel.Win32Exception) {
+            Status.Text = "Could not open " + target;
         }
-        switch ((string)((Button)sender).Tag) {
-        case "CheckVulkan":
-            Open(DriverPage(graphicsCards));
-            break;
-        case "CheckDisk":
-            Open("ms-settings:storagesense");
-            break;
-        case "CheckDisc":
-            ChooseIso();
-            break;
-        case "CheckInput":
-            ShowPage("Controller");
-            break;
-        }
-    }
-    async void RecheckRequirements(object sender, RoutedEventArgs e) {
-        await DetectGraphicsCard();
-        RefreshGameUi();
     }
     enum NextAction { None, Releases, Setup, ChooseIso, Build, Driver }
     NextAction nextAction;
@@ -119,6 +65,8 @@ public partial class MainWindow {
             : !kit ? ("No game build found",
                       "Build reo_recomp in this checkout, or choose Use existing build in Game files.",
                       NextAction.Setup)
+            : !built && packaged && LocalGameBuild.DataFolderProblem(Settings.Home) is { } tooDeep
+                ? ("Choose a shorter folder", tooDeep, NextAction.Setup)
             : !vulkan ? ("Update your graphics driver",
                          "The game needs a Vulkan graphics driver. Install the latest driver from your graphics card maker.",
                          NextAction.Driver)
@@ -154,6 +102,14 @@ public partial class MainWindow {
         if (Status.Text == "Ready" || Status.Text == readinessStatus)
             Status.Text = summary;
         readinessStatus = summary;
+        UpdateStatusLine();
+    }
+    // Nothing needs saying for "ready", and a pending next step already has its own panel.
+    // Messages and progress still appear as a status toast.
+    static bool QuietStatus(string text) =>
+        text is "" or "Ready" or "Ready to play" || text.StartsWith("Next step: ", StringComparison.Ordinal);
+    void UpdateStatusLine() {
+        if (QuietStatus(Status.Text)) HideStatusToast();
     }
     async void NextStepClicked(object sender, RoutedEventArgs e) {
         switch (nextAction) {
@@ -170,7 +126,7 @@ public partial class MainWindow {
             await ImportSelectedDisc();
             break;
         case NextAction.Driver:
-            ChecklistAction(CheckVulkanAction, e);
+            OpenExternal(DriverPage(graphicsCards));
             break;
         }
     }

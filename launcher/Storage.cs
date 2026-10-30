@@ -18,9 +18,6 @@ public static class Storage {
         PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     sealed record Locator(int Format, string Folder);
     sealed record Location(string Home, string Installation);
-    public static string LegacyHome => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "OutbreakRecomp", "launcher");
     public static string Home => home ??= Resolve(AppLayout.FindRoot(AppContext.BaseDirectory));
     public static string DefaultHome(string root) => Path.Combine(Full(root), "data");
     static string Full(string path) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
@@ -52,14 +49,8 @@ public static class Storage {
         home = Resolve(root, requested);
         Initialized = false;
     }
-    public static bool NeedsLegacyImport(string destination, string legacy) =>
-        !Same(destination, legacy) && !File.Exists(Path.Combine(destination, "settings.json")) &&
-        !File.Exists(Path.Combine(destination, MarkerName)) && File.Exists(Path.Combine(legacy, "settings.json"));
-
     public static async Task Initialize(string root, bool importLegacy, IProgress<StorageProgress>? progress,
                                         CancellationToken cancel, bool exclusive = true) {
-        if (importLegacy && NeedsLegacyImport(Home, LegacyHome))
-            await CopyData(LegacyHome, Home, root, progress, cancel);
         CheckWritable(Home);
         if (exclusive)
             lease = new FileStream(Path.Combine(Home, ".storage.lock"), FileMode.OpenOrCreate,

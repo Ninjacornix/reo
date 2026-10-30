@@ -26,8 +26,11 @@ public partial class MainWindow : Window {
         settings = Settings.Load(root);
         controller.Configure(settings);
         InitializeComponent();
+        InitializeBackgroundVideos();
+        InitializeStatusToast();
+        InitializeWindowLayout();
         RefreshStorageUi();
-        VersionLabel.Text = Updates.DisplayName;
+        VersionLabel.Text = Updates.BuildLabel(root);
         DeveloperFiles.Visibility =
             AppLayout.Packaged(root) ? Visibility.Collapsed : Visibility.Visible;
         WindowSize.ItemsSource = DisplayOptions.MenuSizes;
@@ -41,6 +44,7 @@ public partial class MainWindow : Window {
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
         GpuMovies.IsChecked = settings.GpuMovies;
+        LauncherBackgroundMovies.IsChecked = settings.LauncherBackgroundMovies;
         InitializeDeveloper();
         InitializeOnline();
         TextureFilter.SelectedIndex = settings.TextureLinear ? 1 : 0;
@@ -70,6 +74,7 @@ public partial class MainWindow : Window {
                 updateCancellation?.Cancel();
         };
         Closed += (_, _) => {
+            artworkCancellation.Cancel();
             timer.Stop();
             accountPreparation?.Cancel();
             lanResponder?.Dispose();
@@ -93,11 +98,9 @@ public partial class MainWindow : Window {
     void UpdateGpuMoviesHint() {
         if (movieDecoder == null)
             return;
-        TextBlock hint = GpuMoviesHint;
-        if (movieDecoder.Gpu) hint.ClearValue(TextBlock.ForegroundProperty);
-        else hint.SetResourceReference(TextBlock.ForegroundProperty, "Danger");
+        // Shown on hover, including while the option is unavailable, so the reason stays visible.
         string gpu = movieDecoder.GpuName.Length != 0 ? movieDecoder.GpuName : "This graphics card";
-        hint.Text = !movieDecoder.Gpu
+        GpuMovies.ToolTip = !movieDecoder.Gpu
             ? movieDecoder.Reason + ". Movies decode on the processor."
             : GpuMovies.IsChecked == true
                 ? gpu + " decodes MPEG-2 video. Uncheck to decode movies on the processor."
@@ -107,39 +110,21 @@ public partial class MainWindow : Window {
     void ShowPage(string name) {
         if (!PreparePageChange(name))
             return;
-        double artworkOpacity = name == "Play" ? 0.46 : 0.10;
-        if (SystemParameters.ClientAreaAnimation)
-            ArtworkLayer.BeginAnimation(OpacityProperty,
-                                        new System.Windows.Media.Animation.DoubleAnimation(
-                                            artworkOpacity, TimeSpan.FromMilliseconds(220)));
-        else {
-            ArtworkLayer.BeginAnimation(OpacityProperty, null);
-            ArtworkLayer.Opacity = artworkOpacity;
-        }
+        RefreshBackgroundVideos();
+        UpdateArtworkVisibility();
         foreach (string page in new[] { "Play", "Graphics", "Audio", "Controller", "Saves", "Coop", "Mods",
                                         "Cheats", "Setup", "Logs", "Developer" }) {
             ((FrameworkElement)FindName("Page" + page)).Visibility =
                 page == name ? Visibility.Visible : Visibility.Collapsed;
             var button = (Button)FindName("Nav" + page);
-            button.Background = new SolidColorBrush(
-                (Color)ColorConverter.ConvertFromString(page == name ? "#3A2B2B" : "#181A1B"));
+            System.Windows.Controls.Primitives.Selector.SetIsSelected(button, page == name);
+            button.Background = page == name ? Palette.Brush(Palette.Accent, Palette.Selection) : Brushes.Transparent;
             button.Foreground = (Brush)FindResource(page == name ? "Ink" : "Muted");
-            button.BorderBrush = new SolidColorBrush(
-                (Color)ColorConverter.ConvertFromString(page == name ? "#BD6665" : "#181A1B"));
+            button.BorderBrush = page == name ? Palette.Brush(Palette.Accent) : Brushes.Transparent;
         }
-        (PageTitle.Text, PageSubtitle.Text) =
-            name switch { "Graphics" => ("Graphics", "Shared by File #1 and File #2. Changes apply on the next launch."),
-                          "Audio" => ("Audio", "Adjust the game's volume. Changes apply immediately."),
-                          "Controller" => ("Controls", "Devices and bindings."),
-                          "Saves" => ("Save games", "Memory cards and backups."),
-                          "Coop" => ("Co-op", "Play together with friends."),
-                          "Setup" => ("Game files", "Import your game disc."),
-                          "Logs" => ("Log", "Game debug and output."),
-                          "Mods" => ("Mods", "Game modifications."),
-                          "Cheats" => ("Cheats", "Gameplay adjustments."),
-                          "Developer" => ("Developer", "Diagnostic recordings for troubleshooting."),
-                          _ => ("Play", "Choose your game.") };
         SettingsScroll.Visibility = name == "Logs" ? Visibility.Collapsed : Visibility.Visible;
+        // The Play page fits the window, so its rows can share the height; other pages scroll.
+        SettingsScroll.VerticalScrollBarVisibility = name == "Play" ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
         if (name == "Logs")
             RefreshLogSessions();
         if (name == "Saves")
@@ -197,8 +182,12 @@ public partial class MainWindow : Window {
         SessionSummary.Text = "GPU rendering / " + controller.SelectedDevice.Name;
     }
     void Tick(object? sender, EventArgs e) {
+        RefreshArtworkActivity();
         controller.Publish();
-        UpdateInputUi();
+        // Keep input publication at 60 Hz; hidden controller plots and binding
+        // controls only need the slower device refresh, not a redraw every frame.
+        if (currentPage == "Controller" || captureTarget.Length != 0 || slowUiTick == 0)
+            UpdateInputUi();
         bool running = game.Running;
         StopButton.IsEnabled = running;
         CheatControls.IsEnabled = !running && !launching;
@@ -408,11 +397,21 @@ public partial class MainWindow : Window {
         }
     }
     async void OnLoaded(object sender, RoutedEventArgs e) {
+        int backgroundTest = Array.IndexOf(args, "--test-background-playback");
+        if (backgroundTest >= 0 && backgroundTest + 1 < args.Length) {
+            await TestBackgroundPlayback(args[backgroundTest + 1]);
+            return;
+        }
         _ = DetectGraphicsCard();
         ReportUpdateResult();
         if (!args.Any(a => a.StartsWith("--test-") || a is "--smoke-launch" or "--screenshot" or
                                                            "--probe-controller"))
+        {
             _ = CheckUpdates(true);
+            _ = DownloadArtworkAsync();
+        }
+        if (args.Contains("--preview-artwork-download"))
+            _ = DownloadArtworkAsync();
         if (settings.ResolvedCoopMode == "host" && args.Length == 0)
             await StartHosting();
         int screenshot = Array.IndexOf(args, "--screenshot");
@@ -504,6 +503,10 @@ public partial class MainWindow : Window {
                                     "Preparing Python"));
                 SettingsScroll.ScrollToVerticalOffset(200);
                 await Task.Delay(150);
+            }
+            if (args.Contains("--preview-status")) {
+                Status.Text = "Saved · Developer recordings apply on the next launch";
+                await Task.Delay(400);
             }
             UpdateLayout();
             var bitmap = new RenderTargetBitmap((int)ActualWidth, (int)ActualHeight, 96, 96,

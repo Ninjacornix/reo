@@ -108,7 +108,7 @@ public partial class MainWindow {
             when (error is IOException or HttpRequestException or JsonException or
                       OperationCanceledException or InvalidOperationException or
                           UnauthorizedAccessException or KeyNotFoundException) {
-            UpdateState.Text = "Update check unavailable.";
+            UpdateState.Text = "";
             if (!quiet)
                 Status.Text = error.Message;
         } finally {

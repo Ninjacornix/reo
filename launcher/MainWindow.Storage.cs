@@ -38,6 +38,7 @@ public partial class MainWindow {
         storageChanging = true;
         storageMessage = null;
         try {
+            await StopBackgroundPreparation();
             settings.Save();
             if (!await StorageProgressWindow.Run(this, "Change storage folder",
                     (progress, cancel) => Storage.Select(root, Settings.Home, picker.FolderName, progress, cancel))) {
@@ -58,6 +59,8 @@ public partial class MainWindow {
             storageMessage = "Storage change failed: " + error.GetBaseException().Message + " Your original files are still available.";
         } finally {
             storageChanging = false;
+            backgroundRemoving = false;
+            RefreshBackgroundVideos();
             ChooseStorageButton.IsEnabled = true;
             RefreshStorageUi();
         }

@@ -50,6 +50,11 @@ static class SelfTest {
         }
         Task.Run(() => StorageTests.Run(Check)).GetAwaiter().GetResult();
         DiscImportTests.Run(Check);
+        Task.Run(() => BackgroundVideoTests.Run(Check)).GetAwaiter().GetResult();
+        GameArtworkTests.Run(Check);
+        GameFontTests.Run(Check);
+        PaletteTests.Run(Check);
+        GameArtworkDownloadTests.Run(Check);
         GraphicsOptionsTests.Run(Check);
         ModsTests.Run(Check);
         RandomizerSeedsTests.Run(Check);
@@ -396,6 +401,37 @@ static class SelfTest {
             Check(forward.AutoForward && !new Settings().AutoForward,
                   "Automatic router forwarding is opt-in and persists");
         }
+        var feedbackProfile = new PadProfile();
+        feedbackProfile.Buttons["Cross"] = 0x2000;
+        feedbackProfile.Buttons["Circle"] = 0;
+        var feedbackPad = InputMapping.RemapPad(new Pad(0x2000, 30, 31), feedbackProfile);
+        Check(InputMapping.ActionPressed(feedbackPad, "Cross") &&
+                  !InputMapping.ActionPressed(feedbackPad, "Circle"),
+              "Input feedback follows remapped actions and leaves unbound actions inactive");
+        Check(!InputMapping.ActionPressed(feedbackPad, "L2") &&
+                  InputMapping.ActionPressed(feedbackPad, "R2"),
+              "Input feedback uses the same trigger threshold as game button input");
+        var feedbackKeys = InputMapping.Keyboard(InputMapping.KeyboardDefaults(),
+                                                key => key is 32 or 38);
+        Check(InputMapping.ActionPressed(feedbackKeys, "Cross") &&
+                  InputMapping.ActionPressed(feedbackKeys, "CameraUp") &&
+                  !InputMapping.ActionPressed(feedbackKeys, "CameraDown") &&
+                  !InputMapping.ActionPressed(new Pad(), "Cross"),
+              "Keyboard feedback covers simultaneous buttons and camera keys and clears on release");
+        var feedbackButton = new System.Windows.Controls.Button {
+            Style = (System.Windows.Style)System.Windows.Application.Current.FindResource(
+                typeof(System.Windows.Controls.Button))
+        };
+        feedbackButton.ApplyTemplate();
+        var feedbackFrame = (System.Windows.Controls.Border)feedbackButton.Template.FindName(
+            "Frame", feedbackButton);
+        var idleBackground = feedbackFrame.Background;
+        InputFeedback.SetIsActive(feedbackButton, true);
+        Check(feedbackFrame.Background == System.Windows.Application.Current.FindResource("Accent"),
+              "Held input lights the binding button using the real launcher template");
+        InputFeedback.SetIsActive(feedbackButton, false);
+        Check(feedbackFrame.Background == idleBackground,
+              "Releasing input restores the binding button background");
         var colorSettings =
             JsonSerializer.Deserialize<Settings>("{\"Brightness\":125,\"Gamma\":1.25}")!;
         Check(colorSettings.Brightness == 125 && colorSettings.Gamma == 1.25,

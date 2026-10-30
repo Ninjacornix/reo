@@ -27,6 +27,20 @@ public static partial class Updates {
     public const string LatestApi = "https://api.github.com/repos/Ninjacornix/reo/releases/latest";
     public const string DefaultVersion = "1.0.20";
     public const string DisplayName = "1.0 RC0";
+    // The exact build: a release's tag (v1.0.20-rc0 shows as 1.0.20-rc0), or a developer build.
+    public static string BuildLabel(string root) {
+        try {
+            using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "distribution.json")));
+            var d = doc.RootElement;
+            string tag = d.TryGetProperty("releaseTag", out var t) ? t.GetString() ?? "" : "";
+            if (tag.Length == 0 && d.TryGetProperty("version", out var v))
+                tag = v.GetString() ?? "";
+            if (tag.Length != 0)
+                return tag.TrimStart('v');
+        } catch (Exception error) when (error is IOException or JsonException or UnauthorizedAccessException or InvalidOperationException) {
+        }
+        return DefaultVersion + "-dev";
+    }
     public static readonly JsonSerializerOptions Json =
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
     public static string Home => Path.Combine(Settings.Home, "updates");

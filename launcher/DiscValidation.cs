@@ -14,6 +14,7 @@ internal static class DiscValidation {
         new() { ["SLUS-20765"] = "file1", ["SLES-51589"] = "file1", ["SLPM-65428"] = "file1",
                 ["SLPM-74201"] = "file1", ["SLUS-20984"] = "file2", ["SLES-53319"] = "file2",
                 ["SLPM-65692"] = "file2" };
+    internal static string? GameForSerial(string serial) => Titles.GetValueOrDefault(serial);
     internal static Verified Check(DiscImage image, GameDefinition game, string expectedHash,
                                    CancellationToken cancel) {
         cancel.ThrowIfCancellationRequested();
