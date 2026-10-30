@@ -52,10 +52,15 @@ static class SelfTest {
         DiscImportTests.Run(Check);
         Task.Run(() => BackgroundVideoTests.Run(Check)).GetAwaiter().GetResult();
         GameArtworkTests.Run(Check);
+        GameControllerArtworkTests.Run(Check);
         GameFontTests.Run(Check);
         PaletteTests.Run(Check);
         GameArtworkDownloadTests.Run(Check);
         GraphicsOptionsTests.Run(Check);
+        GamePreviewAssetsTests.Run(Check);
+        GamePreviewAnimationTests.Run(Check);
+        GamePreviewWeaponTests.Run(Check);
+        PreviewInteractionTests.Run(Check);
         ModsTests.Run(Check);
         RandomizerSeedsTests.Run(Check);
         Task.Run(() => RandomizerSessionTests.Run(Check)).GetAwaiter().GetResult();
@@ -63,12 +68,16 @@ static class SelfTest {
         CoopAutomationTests.Run(Check);
         CoopSmokeOptionsTests.Run(Check);
         File2LobbyTests.Run(Check);
+        LobbyRoomSettingsTests.Run(Check);
         ControllerLightTests.Run(Check);
         ControllerRumbleTests.Run(Check);
         ControllerInputTests.Run(Check);
         MemoryCardBackupTests.Run(Check);
         GlobalWeaponMotionsTests.Run(Check);
         AudioMixerTests.Run(Check);
+        AudioOutputTests.Run(Check);
+        CheatCompatibilityTests.Run(Check);
+        SubtitleControlTests.Run(Check);
         NetworkTraceTests.Run(Check);
         DeveloperOptionsTests.Run(Check);
         GameImageCacheTests.Run(Check);
@@ -109,18 +118,20 @@ static class SelfTest {
             }
         }
         var builtinCheats = Cheats.Builtins("file1");
-        Check(builtinCheats.Count == 4 &&
+        Check(builtinCheats.Count == 6 &&
                   builtinCheats.All(g => g.Supported && g.Writes.Count == 0),
               "Built-in toggles work without imported cheat files");
-        Check(builtinCheats.Select(g => g.Id).Distinct().Count() == 4 &&
-                  Cheats.Builtins("file2").Count == 3 &&
+        Check(builtinCheats.Select(g => g.Id).Distinct().Count() == 6 &&
+                  Cheats.Builtins("file2").Count == 5 &&
                   Cheats.Builtins("file2").All(g => g.Id.StartsWith("builtin.file2.")),
               "Built-ins have stable separate identities for each game");
         Check(builtinCheats.Any(g => g.Builtin == "health") &&
                   builtinCheats.Any(g => g.Builtin == "infection") &&
                   builtinCheats.Any(g => g.Builtin == "ammo") &&
-                  builtinCheats.Any(g => g.Builtin == "unlock"),
-              "Health, infection, ammunition and progression unlocks are built in");
+                  builtinCheats.Any(g => g.Builtin == "unlock") &&
+                  builtinCheats.Any(g => g.Builtin == "points") &&
+                  builtinCheats.Any(g => g.Builtin == "escape"),
+              "Health, infection, ammunition, progression unlocks, results points and escape time are built in");
         var cheatGroups = Cheats.Parse("[Health]\npatch=1,EE,004A5C40,word,000003E8\n[" +
                                            "Unsupported]\npatch=1,EE,D04A5C40,extended,00000001",
                                        "test.pnach");
@@ -168,8 +179,8 @@ static class SelfTest {
             secondCheats.EnabledCheats.AddRange(Cheats.Builtins("file2").Select(g => g.Id));
             string secondFile = Cheats.Export(secondCheats, unlockFixture);
             Check(File.ReadAllLines(secondFile).SequenceEqual(new[] {
-                      "REO-CHEATS-2", "builtin health", "builtin infection", "builtin ammo" }),
-                  "File #2 exports its own health, infection and ammunition selections");
+                      "REO-CHEATS-2", "builtin health", "builtin infection", "builtin ammo", "builtin points", "builtin escape" }),
+                  "File #2 exports its own health, infection, ammunition, results points and escape time selections");
             secondCheats.SelectedGame = "file1";
             secondCheats.EnabledCheats = Cheats.Builtins("file2").Select(g => g.Id).ToList();
             Check(Cheats.Export(secondCheats, unlockFixture) == "",
@@ -231,6 +242,27 @@ static class SelfTest {
         profile.InvertRightY = true;
         var swapped = InputMapping.RemapPad(new(0, 0, 0, 0, 20000), profile);
         Check(swapped.LY == 0 && swapped.RY < 0, "Stick swap and right Y inversion");
+        var stickFeedbackProfile = new PadProfile { DeadZone = 0 };
+        var leftFeedback = new StickPlot(); var rightFeedback = new StickPlot();
+        void UpdateStickFeedback(Pad physical) {
+            var mapped = InputMapping.RemapPad(physical, stickFeedbackProfile);
+            leftFeedback.Update(mapped, stickFeedbackProfile.DeadZone, false);
+            rightFeedback.Update(mapped, stickFeedbackProfile.DeadZone, true);
+        }
+        UpdateStickFeedback(new(0, 0, 0, 16384, -8192));
+        Check(leftFeedback.Position == new System.Windows.Point(.5, .25) && rightFeedback.Position == default,
+            "Moving only the physical left stick updates only the left game-input plot");
+        stickFeedbackProfile.SwapSticks = true;
+        UpdateStickFeedback(new(0, 0, 0, 16384, -8192));
+        Check(leftFeedback.Position == default && rightFeedback.Position == new System.Windows.Point(.5, .25),
+            "Swapping sticks moves left-stick feedback to the right plot without a duplicate raw marker");
+        UpdateStickFeedback(new(0, 0, 0, 0, 0, 16384, -8192));
+        Check(leftFeedback.Position == new System.Windows.Point(.5, .25) && rightFeedback.Position == default,
+            "Swapping sticks moves right-stick feedback to the left plot only");
+        stickFeedbackProfile.InvertRightY = true;
+        UpdateStickFeedback(new(0, 0, 0, 16384, -8192));
+        Check(leftFeedback.Position == default && rightFeedback.Position == new System.Windows.Point(.5, -.25),
+            "Right-Y inversion affects only the mapped right game-input plot");
         Check(InputMapping.Keyboard(InputMapping.KeyboardDefaults(), k => k == 13).Buttons == 0x10,
               "Enter still maps to Start");
         Check(InputMapping.Keyboard(InputMapping.KeyboardDefaults(), k => k == 13 || k == 17)
@@ -251,12 +283,12 @@ static class SelfTest {
         cardSettings.SelectCard(cardA.Folder);
         Check(cardSettings.CardFolder(cardHome) == cardA.Folder, "Selected card used for File 1");
         cardSettings.SelectedGame = "file2";
-        Check(cardSettings.CardFolder(cardHome) == GameSession.SaveFolder(cardHome, "file2"),
-              "File 2 retains its own legacy card");
+        Check(cardSettings.CardFolder(cardHome) == cardA.Folder,
+              "File 2 shares the selected memory card");
         cardSettings.SelectCard(cardB.Folder);
         cardSettings.SelectedGame = "file1";
-        Check(cardSettings.CardFolder(cardHome) == cardA.Folder,
-              "Selections stay independent between games");
+        Check(cardSettings.CardFolder(cardHome) == cardB.Folder,
+              "Selecting a card in either game changes the shared selection");
         using (var lease = MemoryCards.Acquire(cardA.Folder)) {
             bool rejected = false;
             try {
@@ -308,9 +340,9 @@ static class SelfTest {
         Check(games.GetExe() == "second.exe" && games.GetIso() == "second.iso" &&
                   games.GetElf("C:\\games").EndsWith("game_data_file2\\SLUS_209.84"),
               "Game selection uses independent executable, ISO and ELF");
-        Check(GameSession.SaveFolder("C:\\games", "file1") !=
+        Check(GameSession.SaveFolder("C:\\games", "file1") ==
                   GameSession.SaveFolder("C:\\games", "file2"),
-              "Games never share memory-card folders");
+              "Both games use the same default memory-card folder");
         games.SelectedGame = "file1";
         Check(games.GetExe() == "first.exe" && games.GetIso() == "first.iso",
               "Switching back preserves first game configuration");

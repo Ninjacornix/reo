@@ -44,6 +44,7 @@ public partial class MainWindow {
             BuildBindingRows();
         }
         bool keyboard = device.Kind == "keyboard";
+        RefreshControllerArtwork();
         LayoutTab.IsEnabled = !keyboard;
         if (keyboard && InputLayoutPanel.Visibility == Visibility.Visible)
             ShowBindings(this, new());
@@ -51,8 +52,8 @@ public partial class MainWindow {
         ControllerDetail.Text = "Reconnect this device, or select another.";
         ControllerDetail.Visibility = device.Available ? Visibility.Collapsed : Visibility.Visible;
         DeadZoneLabel.Text = $"Dead zone: {controller.Profile.DeadZone}%";
-        LeftPlot.Update(controller.RawState, controller.State, controller.Profile.DeadZone, false);
-        RightPlot.Update(controller.RawState, controller.State, controller.Profile.DeadZone, true);
+        LeftPlot.Update(controller.State, controller.Profile.DeadZone, false);
+        RightPlot.Update(controller.State, controller.Profile.DeadZone, true);
         UpdateBindingFeedback();
         if (captureTarget.Length != 0 && !keyboard) {
             var pressed = InputMapping.Pressed(controller.RawState);
@@ -94,8 +95,7 @@ public partial class MainWindow {
     void SaveInputPreferences() {
         try {
             settings.Save();
-            Status.Text = "Input settings saved";
-        } catch (System.IO.IOException error) {
+        } catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException) {
             Status.Text = "Could not save input settings: " + error.Message;
         }
         SessionSummary.Text = "GPU rendering / " + controller.SelectedDevice.Name;
@@ -111,15 +111,15 @@ public partial class MainWindow {
         InputLayoutPanel.Visibility = Visibility.Collapsed;
         InputBindingsPanel.Visibility = Visibility.Visible;
         BuildBindingRows();
+        RefreshControllerArtwork();
         BindingsTab.BorderBrush = Palette.Brush(Palette.Accent);
         LayoutTab.BorderBrush = Palette.Brush(Palette.Text, Palette.Divider);
     }
     void BuildBindingRows() {
         BindingRows.Children.Clear();
         bindingButtons.Clear();
+        if (BuildControllerMap()) { UpdateBindingFeedback(); return; }
         var rows = InputMapping.Actions.Select(a => (a.Id, a.Label)).ToList();
-        if (controller.SelectedDevice.Kind == "keyboard")
-            rows.AddRange(InputMapping.Camera);
         foreach (var action in rows) {
             var row = new Grid { Margin = new Thickness(0, 4, 14, 4) };
             row.ColumnDefinitions.Add(new());
@@ -131,6 +131,8 @@ public partial class MainWindow {
                                            CurrentBindings.GetValueOrDefault(action.Id),
                                            controller.SelectedDevice.Kind),
                                        Tag = action.Id, Padding = new Thickness(12, 7, 12, 7) };
+            System.Windows.Automation.AutomationProperties.SetName(binding, action.Label + " binding");
+            System.Windows.Automation.AutomationProperties.SetHelpText(binding, "Activate to remap this PS2 control.");
             binding.Click += StartBinding;
             bindingButtons[action.Id] = binding;
             Grid.SetColumn(binding, 1);
@@ -138,6 +140,7 @@ public partial class MainWindow {
             var clear =
                 new Button { Content = "Clear", Tag = action.Id, Margin = new Thickness(7, 0, 0, 0),
                              Padding = new Thickness(6), FontSize = 11 };
+            System.Windows.Automation.AutomationProperties.SetName(clear, "Clear " + action.Label + " binding");
             clear.Click += (_, _) => {
                 CurrentBindings[action.Id] = 0;
                 CancelCapture(this, new());
@@ -172,7 +175,11 @@ public partial class MainWindow {
                 ? $"{target}: press a key."
                 : $"{target}: release held controls, then press a button or trigger.";
         CapturePanel.Visibility = Visibility.Visible;
-        ((Button)sender).Content = "Waiting…";
+        foreach (var (action, button) in bindingButtons) {
+            string text = captureTarget == action ? "Waiting..." : InputMapping.SourceName(CurrentBindings.GetValueOrDefault(action), controller.SelectedDevice.Kind);
+            if (bindingValues.TryGetValue(action, out var value)) value.Text = text;
+            else button.Content = text;
+        }
     }
     void CaptureKey(object sender, KeyEventArgs e) {
         if (captureTarget.Length == 0 || controller.SelectedDevice.Kind != "keyboard" || e.IsRepeat)
@@ -184,10 +191,11 @@ public partial class MainWindow {
         FinishBinding(key);
     }
     void FinishBinding(int source) {
-        CurrentBindings[captureTarget] = source;
+        string target = captureTarget;
+        CurrentBindings[target] = source;
         CancelCapture(this, new());
         SaveInputPreferences();
-        BuildBindingRows();
+        if (bindingButtons.TryGetValue(target, out var binding)) binding.Focus();
     }
     void CancelCapture(object sender, RoutedEventArgs e) {
         bool active = captureTarget.Length != 0;

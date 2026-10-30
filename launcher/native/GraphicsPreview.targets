@@ -1,0 +1,23 @@
+<Project>
+  <PropertyGroup>
+    <_GraphicsPreviewNativeDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\artifacts\native\$(Configuration)'))</_GraphicsPreviewNativeDirectory>
+    <_GraphicsPreviewNativeLibrary>$(_GraphicsPreviewNativeDirectory)\Reo.GraphicsPreview.dll</_GraphicsPreviewNativeLibrary>
+    <!-- P/Invoke by library name finds the extracted native module in single-file
+         builds; normal builds and directory publishes keep it beside the app. -->
+    <IncludeNativeLibrariesForSelfExtract Condition="'$(PublishSingleFile)' == 'true'">true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <_GraphicsPreviewNativeInput Include="$(MSBuildThisFileDirectory)graphics_preview.cpp;$(MSBuildThisFileDirectory)graphics_preview.h;$(MSBuildThisFileDirectory)build_graphics_preview.ps1;$(MSBuildThisFileFullPath)" />
+    <Content Include="$(_GraphicsPreviewNativeLibrary)" Link="Reo.GraphicsPreview.dll"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+  <Target Name="BuildGraphicsPreviewNative" BeforeTargets="PrepareForBuild"
+          Condition="'$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true'"
+          Inputs="@(_GraphicsPreviewNativeInput)" Outputs="$(_GraphicsPreviewNativeLibrary)">
+    <Error Condition="'$(PlatformTarget)' != 'x64'" Text="The Direct3D preview requires the launcher's x64 target." />
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)build_graphics_preview.ps1&quot; -OutputDirectory &quot;$(_GraphicsPreviewNativeDirectory)&quot; -Configuration &quot;$(Configuration)&quot;" />
+    <ItemGroup>
+      <FileWrites Include="$(_GraphicsPreviewNativeLibrary);$(_GraphicsPreviewNativeDirectory)\Reo.GraphicsPreview.obj;$(_GraphicsPreviewNativeDirectory)\Reo.GraphicsPreview.lib;$(_GraphicsPreviewNativeDirectory)\Reo.GraphicsPreview.exp;$(_GraphicsPreviewNativeDirectory)\graphics-preview-build.json" />
+    </ItemGroup>
+  </Target>
+</Project>

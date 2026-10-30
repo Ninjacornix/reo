@@ -27,7 +27,11 @@ public static class Cheats {
                   new() { Id = $"builtin.{game}.ammo", Builtin = "ammo", Name = "Infinite ammunition",
                           Description = "Keeps carried firearms loaded to their normal capacity." },
                   new() { Id = "builtin.file1.unlock", Builtin = "unlock", Name = "Unlock everything",
-                          Description = "Unlocks all File #1 scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep these unlocks." }
+                          Description = "Unlocks all File #1 scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep these unlocks." },
+                  new() { Id = $"builtin.{game}.points", Builtin = "points", Name = "Max results points",
+                          Description = "Keeps spendable results points at 999,999,999. Saving can retain the balance." },
+                  new() { Id = $"builtin.{game}.escape", Builtin = "escape", Name = "Infinite escape time",
+                          Description = "Stops active escape countdowns." }
               }.Where(g => game == "file1" || g.Builtin != "unlock").ToList();
     public static string Folder(string game) => Path.Combine(Settings.Home, "cheats", game);
     public static bool DataAddress(uint a,

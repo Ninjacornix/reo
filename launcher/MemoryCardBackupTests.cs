@@ -57,8 +57,8 @@ internal static class MemoryCardBackupTests {
             settings = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(settings))!;
             foreach (var pair in selected) {
                 settings.SelectedGame = pair.Key;
-                check(settings.CardFolder(root) == pair.Value,
-                      pair.Key + " restored folder selection persists independently");
+                check(settings.CardFolder(root) == selected["file2"],
+                      pair.Key + " uses the same restored card after settings reload");
             }
         } finally { Directory.Delete(root, true); }
     }

@@ -11,6 +11,10 @@ public sealed partial class Settings {
     public double LauncherHeight { get; set; } = 920;
     public bool LauncherMaximized { get; set; }
     public bool LauncherBackgroundMovies { get; set; } = true;
+    public string LauncherFont { get; set; } = "outbreak";
+    public string LauncherLanguage { get; set; } = "en";
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string ResolvedLauncherFont => LauncherFont is "segoe-ui" or "tahoma" ? LauncherFont : "outbreak";
     public bool Fullscreen { get; set; }
     public bool PerformanceOverlay { get; set; }
     public string AspectRatio { get; set; } = "4:3";
@@ -64,6 +68,9 @@ public sealed partial class Settings {
     public bool DualSense { get; set; } = true;
     public bool RumbleEnabled { get; set; } = true;
     public int MasterVolume { get; set; } = 100;
+    public bool ShowSubtitles { get; set; } = true;
+    public string AudioOutputId { get; set; } = "";
+    public string AudioOutputName { get; set; } = "";
     public int MusicVolume { get; set; } = 100;
     public int SfxVolume { get; set; } = 100;
     public int VoiceVolume { get; set; } = 100;
@@ -104,6 +111,10 @@ public sealed partial class Settings {
         settings.EnabledMods ??= new();
         settings.CoopHost ??= "";
         settings.AccountUsername ??= "";
+        settings.RoomName ??= "";
+        settings.JoinRoomName ??= "";
+        settings.RoomMaxPlayers = Math.Clamp(settings.RoomMaxPlayers, 2, 4);
+        if (!new[] { 3, 5, 10, 15, 30 }.Contains(settings.RoomWaitMinutes)) settings.RoomWaitMinutes = 5;
         settings.JoinHostName ??= "";
         if (HostNetworking.PortError(settings.SignupPort, settings.GamePort) != null) {
             settings.SignupPort = HostNetworking.SignupPort;
@@ -119,6 +130,7 @@ public sealed partial class Settings {
         settings.Xbox.DeadZone = Math.Clamp(settings.Xbox.DeadZone, 0, 30);
         settings.PlayStation.Buttons ??= InputMapping.PadDefaults();
         settings.Xbox.Buttons ??= InputMapping.PadDefaults();
+        settings.UpgradeMemoryCards(root);
         return settings;
     }
     public void Save() {

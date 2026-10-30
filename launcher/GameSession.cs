@@ -16,6 +16,7 @@ public sealed class GameSession {
     internal Task WaitForGraphicsReadyAsync(TimeSpan timeout) => graphicsReady.Task.WaitAsync(timeout);
     public string? MovieStatus { get; private set; }
     internal string? AudioMapName { get; set; }
+    internal string? SubtitleMapName { get; set; }
     public string? RandomizerSeedSummary { get; private set; }
     readonly RandomizerSeeds randomizerSeeds = new();
     internal byte[]? HostRandomizerConfiguration { get; private set; }
@@ -26,7 +27,8 @@ public sealed class GameSession {
             catch (InvalidOperationException) { return false; } // Created, but not started yet.
         }
     }
-    public static string SaveFolder(string root, string game = "file1") =>
+    public static string SaveFolder(string root, string game = "file1") => Settings.DefaultCardFolder(root);
+    internal static string LegacySaveFolder(string root, string game) =>
         Path.Combine(Settings.Home, "memory-cards", "default", game, "data");
 
     public async Task Launch(string root, Settings settings, Controller controller,
@@ -42,7 +44,8 @@ public sealed class GameSession {
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
         if (diagnosticColdCache && diagnosticRoute == null)
             throw new InvalidOperationException("A private shader cache requires a diagnostic run.");
-        var selectedMods = randomizerSeeds.ForLaunch(Mods.Selected(settings), settings.ResolvedCoopMode);
+        var selectedMods = randomizerSeeds.ForLaunch(Mods.Selected(settings), settings.ResolvedCoopMode,
+                                                    configurations: settings.ActiveModConfigurations);
         if (diagnosticSeed is uint fixedSeed) {
             if (diagnosticRoute == null || settings.ResolvedCoopMode != "offline")
                 throw new InvalidOperationException("Fixed diagnostic seeds require an offline diagnostic run.");
@@ -125,7 +128,7 @@ public sealed class GameSession {
             File.WriteAllBytes(Path.Combine(Logs,"randomizer-session.json"),randomizerConfiguration);
             File.WriteAllText(Path.Combine(Logs,"randomizer-session.sha256"),RandomizerSession.Digest(randomizerConfiguration));
         }
-        Directory.CreateDirectory(SaveFolder(root, selectedGame.Id));
+        Directory.CreateDirectory(Settings.DefaultCardFolder(root));
         string work = workingDirectory == null ? AppLayout.Work(root, selectedGame.Id)
                                               : Path.GetFullPath(workingDirectory);
         Directory.CreateDirectory(work);
@@ -143,6 +146,9 @@ public sealed class GameSession {
             start.Environment.Remove(key);
         void Set(string key, string value) => start.Environment[key] = value;
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
+        Set("REO_SUBTITLES", settings.ShowSubtitles ? "1" : "0");
+        if (SubtitleMapName != null) Set("REO_SUBTITLE_MAP", SubtitleMapName);
+        if (!string.IsNullOrWhiteSpace(settings.AudioOutputId)) Set("REO_AUDIO_DEVICE", settings.AudioOutputId);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
         bool automaticAccount = onlineEnvironment.Count > 0 &&
                                 await Task.Run(() => SupportsAutomaticAccount(image), cancel);
@@ -178,12 +184,7 @@ public sealed class GameSession {
         }
         if (cheatFile.Length != 0)
         {
-            if (selectedGame.Id == "file2" &&
-                !HasMarker(image, "[CHEATS-FILE2-1] health infection ammo data"))
-                throw new IOException("File #2 cheats need the updated game build. Rebuild or update the game.");
-            if (File.ReadLines(cheatFile).Contains("builtin unlock") &&
-                !HasMarker(image, "[CHEATS-UNLOCK-1] progression"))
-                throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
+            VerifyCheatCompatibility(image, selectedGame.Id, File.ReadLines(cheatFile));
             Set("REO_CHEATS_FILE", cheatFile);
         }
         var itemRandomizer = selectedMods.SingleOrDefault(m => m.ItemRandomizer != null)?.ItemRandomizer;
@@ -284,7 +285,7 @@ public sealed class GameSession {
         start.Environment["REO_MC0_ROOT"] = cardFolder;
         start.Environment["REO_MC1_ROOT"] = ":none:";
         if (!Directory.Exists(cardFolder) &&
-            !string.Equals(cardFolder, Path.GetFullPath(SaveFolder(root, selectedGame.Id)),
+            !string.Equals(cardFolder, Path.GetFullPath(Settings.DefaultCardFolder(root)),
                            StringComparison.OrdinalIgnoreCase))
             throw new DirectoryNotFoundException("The selected memory card folder no longer " +
                                                  "exists. Select another card in Save games.");
@@ -427,6 +428,19 @@ public sealed class GameSession {
         }));
     }
     // Drain pipes independently of the UI: native window messages can wait on the game.
+    internal const string PointsCheatCapability = "[CHEATS-POINTS-1] maximum results points";
+    internal const string EscapeCheatCapability = "[CHEATS-ESCAPE-1] active countdown frozen";
+    internal static void VerifyCheatCompatibility(string image, string gameId, IEnumerable<string> manifest) {
+        var lines = manifest.ToHashSet(StringComparer.Ordinal);
+        if (gameId == "file2" && !HasMarker(image, "[CHEATS-FILE2-1] health infection ammo data"))
+            throw new IOException("File #2 cheats need the updated game build. Rebuild or update the game.");
+        if (lines.Contains("builtin unlock") && !HasMarker(image, "[CHEATS-UNLOCK-1] progression"))
+            throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
+        if (lines.Contains("builtin points") && !HasMarker(image, PointsCheatCapability))
+            throw new IOException("Max results points needs the updated game build. Rebuild or update the game.");
+        if (lines.Contains("builtin escape") && !HasMarker(image, EscapeCheatCapability))
+            throw new IOException("Infinite escape time needs the updated game build. Rebuild or update the game.");
+    }
     internal static bool SupportsAutomaticAccount(string image) => HasMarker(image, "[COOP-AUTO] native-password-applied %u");
     internal static bool SupportsWeaponShuffle(string image) => HasMarker(image, "[MOD-WEAPON-SHUFFLE-1] installed seed=%u");
     internal static bool SupportsZombieRandomizer(string image) => HasMarker(image, "[MOD-ZOMBIE-RANDOMIZER-1] installed seed=%u");

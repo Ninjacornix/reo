@@ -9,22 +9,39 @@ namespace Outbreak.Launcher;
 public partial class MainWindow {
     int slowUiTick;
     string artworkLoadKey = "";
+    Task artworkLoadTask = Task.CompletedTask;
     string backdropGame = "";
     bool backdropTransition;
     readonly Dictionary<string, BitmapSource> backdropArtwork = new();
     bool Playable(string id) => id is "file1" or "file2";
-    async Task LoadArtworkAsync() {
-        if (!IsLoaded || args.Contains("--public-preview"))
-            return; // user-supplied covers stay out of published screenshots
-        var sources = new[] { settings.GetIso("file1"), settings.GetIso("file2") };
+    string PlayButtonLabel => settings.Game.Id == "file2" ? "Play File #2" : "Play File #1";
+    void KeepPlayViewport(object sender, RequestBringIntoViewEventArgs e) {
+        // Selecting a case must not automatically scroll the enclosing Play
+        // page to fit the entire description. Wheel/scrollbar input stays native.
+        e.Handled = true;
+    }
+    Task LoadArtworkAsync() {
+        if (!IsLoaded) return Task.CompletedTask;
+        bool publicPreview = args.Contains("--public-preview");
+        // Redact personal covers in screenshots, while retaining the verified
+        // downloaded DVD labels. A preview must not replace them with bare discs.
+        var sources = publicPreview ? new[] { "", "" } : new[] { settings.GetIso("file1"), settings.GetIso("file2") };
         string key = GameArtwork.CacheKey(sources.Concat(new[] { GameArtwork.Folder, GameArtwork.DownloadFolder }));
         if (artworkLoadKey == key)
-            return;
+            return artworkLoadTask;
         artworkLoadKey = key;
-        await Task.WhenAll(Enumerable.Range(1, 2).Select(async edition => {
-            var image = await GameArtwork.FetchAsync(edition, sources[edition - 1]);
+        return artworkLoadTask = Task.WhenAll(Enumerable.Range(1, 2).Select(async edition => {
+            var coverTask = publicPreview ? Task.FromResult<GameArtwork.CaseArtwork?>(null)
+                : GameArtwork.FetchAsync(edition, sources[edition - 1]);
+            var discTask = publicPreview ? GameArtwork.FetchVerifiedDownloadedDiscAsync(edition)
+                : GameArtwork.FetchDiscAsync(edition, sources[edition - 1]);
+            var disc = await discTask;
+            disc ??= await GameArtwork.FetchVerifiedDownloadedDiscAsync(edition);
             if (!IsLoaded || artworkLoadKey != key)
                 return;
+            if (disc != null) ((GameDiscView)FindName("GameDisc" + edition)).Artwork = disc;
+            var image = await coverTask;
+            if (!IsLoaded || artworkLoadKey != key) return;
             var gameCase = (GameCaseView)FindName("GameCase" + edition);
             gameCase.Cover = image?.Front;
             gameCase.BackCover = image?.Back;
@@ -74,7 +91,7 @@ public partial class MainWindow {
         OutgoingBackdrop.BeginAnimation(OpacityProperty, fade);
     }
     void GameSelectionChanged(object sender, SelectionChangedEventArgs e) {
-        if (GamePicker.SelectedItem is ListBoxItem item && (string)item.Tag != settings.Game.Id)
+        if (sender is ListBox picker && picker.SelectedItem is ListBoxItem item && (string)item.Tag != settings.Game.Id)
             SelectGame(item, e);
     }
     void SelectGame(object sender, RoutedEventArgs e) {
@@ -92,27 +109,34 @@ public partial class MainWindow {
         UpdateSaves();
     }
     void RefreshGameUi() {
+        RefreshDeveloperUi();
         RefreshGameFont();
         ExePath.Text = settings.GetExe();
         IsoPath.Text = settings.GetIso();
         ElfPath.Text = settings.GetElf(root);
         bool present = Playable(settings.Game.Id) && settings.FilesPresent(root);
+        if (!game.Running && !launching)
+            LaunchButton.Content = PlayButtonLabel;
         if (IsLoaded)
             _ = LoadArtworkAsync();
-        SelectedGameLabel.Text = settings.Game.Name;
         UpdateAudioAvailability();
+        RefreshGraphicsPreviewSource();
         RefreshBackgroundVideos();
         RefreshBackdrop();
         GamePicker.SelectedValue = settings.Game.Id;
+        GameCasePicker.SelectedValue = settings.Game.Id;
         GamePicker.IsEnabled =
             !game.Running && !launching && !updating && !updateRestarting && !backingUp;
+        GameCasePicker.IsEnabled = GamePicker.IsEnabled;
         foreach (int n in new[] { 1, 2 }) {
             string id = "file" + n;
             bool selected = settings.Game.Id == id;
+            var disc = (GameDiscView)FindName("GameDisc" + n);
+            disc.IsSelected = selected;
+            disc.IsAvailable = DiscImport.Ready(settings, id) && File.Exists(settings.GetExe(id));
             var gameCase = (GameCaseView)FindName("GameCase" + n);
             gameCase.IsSelected = selected;
-            gameCase.IsAvailable =
-                Playable(id) && File.Exists(settings.GetExe(id)) && File.Exists(settings.GetIso(id));
+            gameCase.IsAvailable = disc.IsAvailable;
             string gameStatus =
                 !Playable(id) ? "Coming later"
                 : selected && game.Running ? "Running"
@@ -122,8 +146,11 @@ public partial class MainWindow {
                 : !File.Exists(settings.GetIso(id)) ? "Choose your game disc"
                 : DiscImport.Ready(settings, id) && File.Exists(settings.GetExe(id)) ? "Ready to play"
                                                                                        : "Not built yet";
+            ((TextBlock)FindName("DiscStatus" + n)).Text = (selected ? "Selected · " : "") + gameStatus;
             System.Windows.Automation.AutomationProperties.SetItemStatus(
                 (ListBoxItem)GamePicker.Items[n - 1], gameStatus);
+            System.Windows.Automation.AutomationProperties.SetItemStatus(
+                (ListBoxItem)GameCasePicker.Items[n - 1], gameStatus);
         }
         LaunchButton.IsEnabled =
             present && !updating && !updateRestarting && !game.Running && !launching && !backingUp;
@@ -144,7 +171,7 @@ public partial class MainWindow {
         RefreshImportUi();
         if (PageCheats.Visibility == Visibility.Visible && cheatsGame != settings.Game.Id)
             RefreshCheats();
-        ModControls.IsEnabled = !game.Running && !launching;
+        if (PageMods.Visibility == Visibility.Visible) UpdateModState();
         if (PageMods.Visibility == Visibility.Visible && modsGame != settings.Game.Id)
             RefreshMods();
     }

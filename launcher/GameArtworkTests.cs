@@ -29,6 +29,10 @@ internal static class GameArtworkTests {
         Directory.CreateDirectory(personal);
         Directory.CreateDirectory(bundled);
         try {
+            string invalidDisc = Path.Combine(root, "invalid.iso");
+            File.WriteAllText(invalidDisc, "not a disc image");
+            check(GameArtwork.DiscIdentity(2, invalidDisc) == GameArtwork.DefaultIdentity(2),
+                  "An invalid ISO safely falls back to the edition's default artwork");
             void Write(string folder, string name, byte red, byte green, byte blue) {
                 var pixels = new byte[] { blue, green, red, 255 };
                 var bitmap = BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, pixels, 4);
@@ -46,6 +50,22 @@ internal static class GameArtworkTests {
             }
             var pal = new GameArtwork.Identity("SLES-51589", "pal");
             var locations = new[] { personal, bundled };
+            check(GameArtwork.LoadDiscArtwork(locations, 1, pal) == null,
+                  "Missing disc label uses the procedural DVD fallback");
+            Write(bundled, "file1-ntsc-u-disc.png", 255, 0, 0);
+            check(IsColor(GameArtwork.LoadDiscArtwork(locations, 1, pal), 255, 0, 0),
+                  "A missing regional disc label falls back to the downloaded NTSC-U label");
+            Write(personal, "file1-disc.png", 0, 255, 0);
+            Write(bundled, "SLES-51589-disc.png", 0, 0, 255);
+            check(IsColor(GameArtwork.LoadDiscArtwork(locations, 1, pal), 0, 255, 0),
+                  "Personal generic disc labels override cached labels");
+            Write(personal, "SLES-51589-disc.png", 255, 255, 0);
+            check(IsColor(GameArtwork.LoadDiscArtwork(locations, 1, pal), 255, 255, 0),
+                  "Exact serial disc labels take priority within the personal folder");
+            File.WriteAllText(Path.Combine(personal, "SLES-51589-disc.png"), "invalid");
+            check(IsColor(GameArtwork.LoadDiscArtwork(locations, 1, pal), 0, 255, 0) &&
+                      GameArtwork.LoadDiscArtwork(locations, 2, GameArtwork.DefaultIdentity(2)) == null,
+                  "Corrupt disc labels fall back safely without using another game's label");
             Write(personal, "file1-cover.png", 0, 0, 255);
             Write(bundled, "file1-pal-cover.png", 255, 0, 0);
             Write(bundled, "file1-ntsc-u-cover.png", 255, 255, 255);

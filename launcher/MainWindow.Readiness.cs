@@ -52,10 +52,13 @@ public partial class MainWindow {
     enum NextAction { None, Releases, Setup, ChooseIso, Build, Driver }
     NextAction nextAction;
     string readinessStatus = "";
-    void RefreshNextStep(bool packaged, bool kit, bool built, bool vulkan, bool roomy) {
-        string iso = settings.GetIso();
-        (string title, string detail, NextAction action) =
-            !Playable(settings.Game.Id) ? ("", "", NextAction.None)
+    readonly Dictionary<string, DiscCheck> readinessDiscChecks = new();
+    (string title, string detail, NextAction action) NextStepFor(string edition, bool packaged, bool kit, bool built, bool vulkan, bool roomy) {
+        string iso = settings.GetIso(edition);
+        var known = discCheck?.Matches(iso, edition) == true ? discCheck : readinessDiscChecks.GetValueOrDefault(edition);
+        if (known?.Matches(iso, edition) != true) known = null;
+        return
+            !Playable(edition) ? ("", "", NextAction.None)
             : importCancellation != null
                 ? ("Setting up the game", "Progress is shown below. This happens only once.", NextAction.None)
             : !kit && packaged
@@ -72,30 +75,49 @@ public partial class MainWindow {
                          NextAction.Driver)
             : !File.Exists(iso)
                 ? ("Choose your game disc",
-                   "Select your own game ISO. " + DiscValidation.RequiredFor(settings.Game.Id),
+                   "Select your own game ISO. " + DiscValidation.RequiredFor(edition),
                    NextAction.ChooseIso)
-            : discCheck == null || !discCheck.Matches(iso, settings.Game.Id)
+            : DiscImport.Ready(settings, edition) && built ? ("", "", NextAction.None)
+            : known == null
                 ? ("Checking your disc...", "This takes a few seconds.", NextAction.None)
-            : !discCheck.Ok ? ("This disc can't be used", discCheck.Message, NextAction.ChooseIso)
-            : !DiscImport.Ready(settings) || !built
+            : !known.Ok ? ("This disc can't be used", known.Message, NextAction.ChooseIso)
+            : !DiscImport.Ready(settings, edition) || !built
                 ? ("Build the game",
                    "One-time setup: imports your disc and compiles the game. It downloads build tools " +
                        "(about 173 MB) and can take a while." +
                        (roomy ? "" : " Free up disk space first: about 10 GB is needed."),
                    NextAction.Build)
                 : ("", "", NextAction.None);
+    }
+    static string NextStepActionLabel(NextAction action, bool invalidDisc) => action switch {
+        NextAction.Releases => "Open downloads", NextAction.Setup => "Game files",
+        NextAction.ChooseIso => invalidDisc ? "Choose another ISO" : "Choose ISO",
+        NextAction.Build => "Build game", _ => "Get driver"
+    };
+    void RefreshNextStep(bool packaged, bool kit, bool built, bool vulkan, bool roomy) {
+        if (discCheck != null) readinessDiscChecks[discCheck.Game] = discCheck;
+        var (title, detail, action) = NextStepFor(settings.Game.Id, packaged, kit, built, vulkan, roomy);
         nextAction = action;
         NextStep.Visibility = title.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         NextStepTitle.Text = title;
         NextStepDetail.Text = detail;
         NextStepButton.Visibility = action == NextAction.None ? Visibility.Collapsed : Visibility.Visible;
-        NextStepButton.Content = action switch {
-            NextAction.Releases => "Open downloads", NextAction.Setup => "Game files",
-            NextAction.ChooseIso => discCheck?.Ok == false && discCheck.Matches(iso, settings.Game.Id)
-                                        ? "Choose another ISO" : "Choose ISO",
-            NextAction.Build => "Build game", _ => "Get driver"
-        };
+        NextStepButton.Content = NextStepActionLabel(action, discCheck?.Ok == false && discCheck.Matches(settings.GetIso(), settings.Game.Id));
         NextStepButton.IsEnabled = !updating && !game.Running && !launching && !backingUp;
+        // The inactive edition's hidden notice measures the same header slot.
+        // Ready/setup switches therefore never insert/remove space above cases.
+        string other = settings.Game.Id == "file1" ? "file2" : "file1";
+        bool otherBuilt = File.Exists(settings.GetExe(other));
+        bool otherKit = packaged ? LocalGameBuild.Available(root, other) : otherBuilt;
+        long otherFree = FreeSpace();
+        var otherState = NextStepFor(other, packaged, otherKit, otherBuilt, vulkan,
+            otherBuilt || otherFree < 0 || otherFree >= SetupSpace);
+        NextStepMeasure.Visibility = otherState.title.Length == 0 ? Visibility.Collapsed : Visibility.Hidden;
+        NextStepMeasureTitle.Text = otherState.title;
+        NextStepMeasureDetail.Text = otherState.detail;
+        NextStepMeasureButton.Visibility = otherState.action == NextAction.None ? Visibility.Collapsed : Visibility.Visible;
+        NextStepMeasureButton.Content = NextStepActionLabel(otherState.action,
+            readinessDiscChecks.GetValueOrDefault(other) is { Ok: false } otherCheck && otherCheck.Matches(settings.GetIso(other), other));
         // The footer reflects readiness instead of a bare "Ready" while setup is unfinished.
         string summary = !Playable(settings.Game.Id) ? "Not available yet"
                          : title.Length == 0 ? "Ready to play" : "Next step: " + title;
