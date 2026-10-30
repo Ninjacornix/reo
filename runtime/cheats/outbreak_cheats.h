@@ -63,14 +63,42 @@ struct BuiltinResult {
     uint32_t virus = 0;
 };
 enum class Game { File1, File2 };
+inline void unlockFile2(uint8_t* r) {
+    // SLUS-20984 v1.05: original 13C190/13C110 full-unlock routines,
+    // with tables at 217878/217880/217890/2178B0. Keep other records,
+    // reward points and selected options intact. Do not directly write the
+    // secondary scenario-availability bank at 2FF8C8.
+    constexpr uint8_t costumes[8] = {3, 3, 3, 3, 3, 15, 15, 15};
+    constexpr uint32_t npcs[4] = {
+        0x72400c40u | 0x098ff082u, 0xff03c200u | 0x00d80df8u,
+        0x03ffc0fbu | 0x1c000000u, 0u
+    };
+    constexpr unsigned collectionCounts[5] = {145, 59, 146, 14, 11};
+    for (unsigned i = 0; i < 8; ++i) r[0x2feea8 + i] |= costumes[i];
+    for (unsigned i = 0; i < 4; ++i)
+        setWord(r, 0x2feeb0 + 4 * i, word(r, 0x2feeb0 + 4 * i) | npcs[i]);
+    r[0x2feec5] |= 0x0f; // All four difficulties; preserve other bits.
+    r[0x2feec3] |= 0x0d; // Purchased bonus-mode availability, not active mode.
+    setWord(r, 0x30022c, word(r, 0x30022c) | 0x0fffu);
+    // Five banks of 160 bits; only the real entries are available/purchased.
+    for (unsigned bank = 0; bank < 5; ++bank)
+        for (unsigned bit = 0; bit < collectionCounts[bank]; ++bit) {
+            const unsigned offset = bank * 20 + bit / 8;
+            const uint8_t mask = uint8_t(1u << (bit % 8));
+            r[0x300248 + offset] |= mask;
+            r[0x3002ac + offset] |= mask;
+        }
+}
 inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r, Game game = Game::File1) {
     BuiltinResult result;
     if (!flags || !r)
         return result;
     const bool file2 = game == Game::File2;
-    if (file2 && (flags & UnlockEverything))
-        throw std::runtime_error("Progression unlocks are not supported for File #2");
-    if (flags & UnlockEverything) {
+    if (file2 && (flags & UnlockEverything)) {
+        unlockFile2(r);
+        result.unlocks = true;
+    }
+    if (!file2 && (flags & UnlockEverything)) {
         // Verified NTSC-U v2.00 save/progression fields. The scenario menu
         // 581820 tests +4078 in the save structure rooted at 31FB60; the
         // difficulty menu 587640 tests bits 2/3 at +23.

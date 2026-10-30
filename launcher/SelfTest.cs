@@ -79,6 +79,7 @@ static class SelfTest {
         LocalBuildPayloadTests.Run(Check);
         Task.Run(() => LocalGameBuildTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => File2LauncherTests.Run(Check)).GetAwaiter().GetResult();
+        ProgressionUnlockTests.Run(Check);
         Task.Run(() => ExistingGameBuildTests.Run(Check)).GetAwaiter().GetResult();
         string pipeName = "reo-log-check-" + Guid.NewGuid().ToString("N"),
                pipeOutput = Path.GetTempFileName();
@@ -116,7 +117,7 @@ static class SelfTest {
                   builtinCheats.All(g => g.Supported && g.Writes.Count == 0),
               "Built-in toggles work without imported cheat files");
         Check(builtinCheats.Select(g => g.Id).Distinct().Count() == 4 &&
-                  Cheats.Builtins("file2").Count == 3 &&
+                  Cheats.Builtins("file2").Count == 4 &&
                   Cheats.Builtins("file2").All(g => g.Id.StartsWith("builtin.file2.")),
               "Built-ins have stable separate identities for each game");
         Check(builtinCheats.Any(g => g.Builtin == "health") &&
@@ -171,8 +172,8 @@ static class SelfTest {
             secondCheats.EnabledCheats.AddRange(Cheats.Builtins("file2").Select(g => g.Id));
             string secondFile = Cheats.Export(secondCheats, unlockFixture);
             Check(File.ReadAllLines(secondFile).SequenceEqual(new[] {
-                      "REO-CHEATS-2", "builtin health", "builtin infection", "builtin ammo" }),
-                  "File #2 exports its own health, infection and ammunition selections");
+                      "REO-CHEATS-2", "builtin health", "builtin infection", "builtin ammo", "builtin unlock" }),
+                  "File #2 exports its own health, infection, ammunition and progression selections");
             secondCheats.SelectedGame = "file1";
             secondCheats.EnabledCheats = Cheats.Builtins("file2").Select(g => g.Id).ToList();
             Check(Cheats.Export(secondCheats, unlockFixture) == "",
