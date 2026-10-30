@@ -41,7 +41,7 @@ static partial class GameArtwork {
                 e.Name.Equals("SYSTEM.CNF", StringComparison.OrdinalIgnoreCase));
             return config == null ? DefaultIdentity(edition)
                                   : FromBootConfig(edition, disc.ReadText(config, 16384));
-        } catch (Exception error) when (error is IOException or UnauthorizedAccessException or
+        } catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or
                                               ArgumentException or RegexMatchTimeoutException) {
             return DefaultIdentity(edition);
         }
@@ -89,6 +89,25 @@ static partial class GameArtwork {
         }
         return null;
     }
+    internal static BitmapSource? LoadDiscArtwork(IEnumerable<string> folders, int edition, Identity identity) {
+        // Personal labels take priority, including a generic file1/file2 override over a cached serial.
+        foreach (string folder in folders)
+            foreach (string stem in CandidateStems(edition, identity))
+                foreach (string extension in new[] { ".png", ".jpg" })
+                    if (LoadImage(Path.Combine(folder, stem + "-disc" + extension), 0) is { } image)
+                        return image;
+        return null;
+    }
+    public static Task<BitmapSource?> FetchDiscAsync(int edition, string iso) =>
+        Task.Run(() => LoadDiscArtwork(new[] { Folder, DownloadFolder }, edition, DiscIdentity(edition, iso)));
+    // Public screenshots may show only the known downloaded label, never a personal override.
+    internal static BitmapSource? LoadVerifiedDownloadedDisc(string folder, int edition) {
+        var asset = Downloads.SingleOrDefault(item => item.Name == $"file{edition}-ntsc-u-disc.png");
+        return asset != null && DownloadCurrent(folder, asset)
+            ? LoadImage(Path.Combine(folder, asset.Name), 0) : null;
+    }
+    internal static Task<BitmapSource?> FetchVerifiedDownloadedDiscAsync(int edition) =>
+        Task.Run(() => LoadVerifiedDownloadedDisc(DownloadFolder, edition));
     static CaseArtwork? LoadWrap(string path) {
         var image = LoadImage(path, 0);
         if (image == null || image.PixelWidth <= image.PixelHeight)

@@ -39,7 +39,7 @@ public partial class MainWindow {
                                                                    CancellationToken.None).Description;
                                    });
             discCheck = new(game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, true, message);
-        } catch (Exception error) when (error is IOException or System.Text.Json.JsonException or
+        } catch (Exception error) when (error is IOException or InvalidDataException or System.Text.Json.JsonException or
                                             UnauthorizedAccessException) {
             discCheck = new(game.Id, file.FullName, file.Length, file.LastWriteTimeUtc.Ticks, false,
                             error is InvalidDataException ? error.Message
@@ -64,7 +64,9 @@ public partial class MainWindow {
     }
     // ---- Remove game ----
     int removalEstimate;
-    async void RemoveOptionsChanged(object sender, RoutedEventArgs e) => await EstimateRemoval();
+    async void RemoveOptionsChanged(object sender, RoutedEventArgs e) {
+        if (initialized) await EstimateRemoval();
+    }
     async Task EstimateRemoval() {
         int ticket = ++removalEstimate;
         var targets = GameRemoval.Targets(root, settings, settings.Game.Id, RemoveSaves.IsChecked == true,
@@ -186,6 +188,7 @@ public partial class MainWindow {
     void RefreshImportUi() {
         RefreshGameSourceUi();
         RefreshOriginalAssetExportUi();
+        RefreshGameFilesUi();
         ExistingBuildHint.Text = AppLayout.Packaged(root)
             ? "Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your selected ISO or game PAK is still required."
             : "Choose " + (settings.Game.Id == "file2" ? "reo_recomp_file2.exe" : "reo_recomp.exe") +
@@ -238,7 +241,7 @@ public partial class MainWindow {
             RefreshGameUi();
             return;
         }
-        launching = true;
+        SetLaunching(true);
         try {
             var progress = BeginDiscImport();
             RefreshGameUi();
@@ -256,7 +259,7 @@ public partial class MainWindow {
         } catch (Exception error) {
             Status.Text = "Could not use existing build: " + error.Message;
         } finally {
-            launching = false;
+            SetLaunching(false);
             EndDiscImport();
             RefreshGameUi();
         }
@@ -271,7 +274,7 @@ public partial class MainWindow {
             Status.Text = "This installation is missing its compatible local build kit.";
             return;
         }
-        launching = true;
+        SetLaunching(true);
         bool exportingOriginalAssets = false;
         try {
             var progress = BeginDiscImport();
@@ -303,7 +306,7 @@ public partial class MainWindow {
                     (System.Windows.Media.Brush)FindResource("Danger");
             }
         } finally {
-            launching = false;
+            SetLaunching(false);
             EndDiscImport();
             RefreshGameUi();
         }

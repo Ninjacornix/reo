@@ -1,8 +1,19 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace Outbreak.Launcher;
 public partial class App : Application {
+    static App() {
+        // Disable hover popups consistently, including controls created in code
+        // and controls inside dropdowns. Accessible names/help remain available.
+        ToolTipService.IsEnabledProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(false));
+        ToolTipService.IsEnabledProperty.OverrideMetadata(typeof(FrameworkContentElement), new FrameworkPropertyMetadata(false));
+        EventManager.RegisterClassHandler(typeof(FrameworkElement), ToolTipService.ToolTipOpeningEvent,
+            new ToolTipEventHandler((_, e) => e.Handled = true));
+        EventManager.RegisterClassHandler(typeof(FrameworkContentElement), ToolTipService.ToolTipOpeningEvent,
+            new ToolTipEventHandler((_, e) => e.Handled = true));
+    }
     Mutex? singleInstance;
     protected override async void OnStartup(StartupEventArgs e) {
         base.OnStartup(e);
@@ -221,6 +232,9 @@ public partial class App : Application {
             }
             bool diagnostic = e.Args.Any(arg => arg is "--screenshot" or "--probe-controller" or
                                                        "--smoke-launch" or "--test-background-playback");
+            diagnostic |= e.Args.Contains("--data-home") && e.Args.Any(arg => arg is
+                "--test-graphics-ui" or "--test-disc-selectors" or "--test-audio-ui" or
+                "--test-launcher-ui" or "--test-developer-ui" or "--test-game-files-ui" or "--test-coop-ui" or "--test-memory-cards-ui" or "--test-controls-ui" or "--test-mods-ui" or "--test-cheats-ui" or "--test-play-layout");
             if (!diagnostic) {
                 singleInstance = new Mutex(true, "Local\\Outbreak-Launcher", out bool created);
                 if (!created) {
@@ -264,7 +278,9 @@ public partial class App : Application {
                 !e.Args.Contains("--test-disc-import") && !e.Args.Contains("--check-iso") &&
                 !e.Args.Contains("--test-compiler-setup") &&
                 !e.Args.Contains("--test-existing-compiler") && !e.Args.Contains("--test-background-videos") &&
-                !e.Args.Contains("--test-background-playback"))
+                !e.Args.Contains("--test-background-playback") && !e.Args.Contains("--test-cheats-ui") &&
+                !e.Args.Contains("--test-mods-ui") && !e.Args.Contains("--test-launcher-ui") && !e.Args.Contains("--test-developer-ui") && !e.Args.Contains("--test-game-files-ui") && !e.Args.Contains("--test-coop-ui") && !e.Args.Contains("--test-memory-cards-ui") && !e.Args.Contains("--test-controls-ui") &&
+                !e.Args.Contains("--test-graphics-ui") && !e.Args.Contains("--test-disc-selectors") && !e.Args.Contains("--test-play-layout"))
                 MessageBox.Show(error.GetBaseException().Message +
                                 (log.Length > 0 ? "\n\nDetails: " + log : "\n\nKeep the launcher in a folder you can write to, such as your Games folder."),
                                 "RE: Outbreak");

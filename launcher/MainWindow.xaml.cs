@@ -26,6 +26,7 @@ public partial class MainWindow : Window {
         settings = Settings.Load(root);
         controller.Configure(settings);
         InitializeComponent();
+        InitializeLauncherSettings();
         InitializeBackgroundVideos();
         InitializeStatusToast();
         InitializeWindowLayout();
@@ -44,7 +45,6 @@ public partial class MainWindow : Window {
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
         GpuMovies.IsChecked = settings.GpuMovies;
-        LauncherBackgroundMovies.IsChecked = settings.LauncherBackgroundMovies;
         InitializeDeveloper();
         InitializeOnline();
         TextureFilter.SelectedIndex = settings.TextureLinear ? 1 : 0;
@@ -58,7 +58,9 @@ public partial class MainWindow : Window {
         Brightness.Value = settings.Brightness;
         Gamma.Value = settings.Gamma;
         InitializeColorPreview();
+        InitializeGraphicsPreview();
         InitializeAudio();
+        SizeChanged += (_, _) => { UpdateCheatLayout(); UpdateModLayout(); };
         initialized = true;
         ShowPage("Play");
         UpdateSaves();
@@ -77,6 +79,7 @@ public partial class MainWindow : Window {
             artworkCancellation.Cancel();
             timer.Stop();
             accountPreparation?.Cancel();
+            publicLookup?.Cancel();
             lanResponder?.Dispose();
             hostedServer.Dispose();
             if (portsForwarded)
@@ -113,7 +116,7 @@ public partial class MainWindow : Window {
         RefreshBackgroundVideos();
         UpdateArtworkVisibility();
         foreach (string page in new[] { "Play", "Graphics", "Audio", "Controller", "Saves", "Coop", "Mods",
-                                        "Cheats", "Setup", "Logs", "Developer" }) {
+                                        "Cheats", "Setup", "Launcher", "Logs", "Developer" }) {
             ((FrameworkElement)FindName("Page" + page)).Visibility =
                 page == name ? Visibility.Visible : Visibility.Collapsed;
             var button = (Button)FindName("Nav" + page);
@@ -123,12 +126,17 @@ public partial class MainWindow : Window {
             button.BorderBrush = page == name ? Palette.Brush(Palette.Accent) : Brushes.Transparent;
         }
         SettingsScroll.Visibility = name == "Logs" ? Visibility.Collapsed : Visibility.Visible;
-        // The Play page fits the window, so its rows can share the height; other pages scroll.
-        SettingsScroll.VerticalScrollBarVisibility = name == "Play" ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+        // Graphics has its own settings scroller. Play also needs scrolling when
+        // setup notices and the full game descriptions exceed a compact window.
+        SettingsScroll.VerticalScrollBarVisibility = name == "Graphics" ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+        if (name == "Play") SettingsScroll.ScrollToVerticalOffset(playScrollOffset);
+        RefreshGraphicsPreviewActivity();
         if (name == "Logs")
             RefreshLogSessions();
         if (name == "Saves")
             UpdateSaves();
+        if (name == "Coop")
+            RefreshOnlineUi();
         if (name == "Cheats")
             RefreshCheats();
         if (name == "Mods")
@@ -175,11 +183,13 @@ public partial class MainWindow : Window {
         WindowSize.IsEnabled = !settings.Fullscreen;
         try {
             settings.Save();
-            Status.Text = "Saved · Changes apply on the next launch";
+            if (!ReferenceEquals(sender, audioMixer) && currentPage != "Graphics")
+                Status.Text = "Saved · Changes apply on the next launch";
         } catch (IOException error) {
             Status.Text = "Settings could not be saved: " + error.Message;
         }
         SessionSummary.Text = "GPU rendering / " + controller.SelectedDevice.Name;
+        InvalidateGraphicsPreview();
     }
     void Tick(object? sender, EventArgs e) {
         RefreshArtworkActivity();
@@ -189,8 +199,15 @@ public partial class MainWindow : Window {
         if (currentPage == "Controller" || captureTarget.Length != 0 || slowUiTick == 0)
             UpdateInputUi();
         bool running = game.Running;
+        if (currentPage == "Graphics") RefreshGraphicsPreviewActivity();
+        if (running != previousRunning)
+            RefreshBackgroundVideos();
         StopButton.IsEnabled = running;
         CheatControls.IsEnabled = !running && !launching;
+        if (currentPage == "Mods" && ModControls.IsEnabled == (running || launching))
+            UpdateModState();
+        if (currentPage == "Cheats" && CheatSessionNote.IsVisible != (running || launching))
+            UpdateCheatState();
         if (++slowUiTick >= 30) {
             slowUiTick = 0;
             RefreshGameUi();
@@ -198,10 +215,10 @@ public partial class MainWindow : Window {
                 RefreshLog();
         }
         BackupButton.IsEnabled = !updating && !running && !launching && !backingUp;
-        CardControls.IsEnabled = !updating && !running && !launching && !backingUp;
+        RefreshCardAvailability();
         if (previousRunning && !running) {
             Status.Text = $"Game closed · Exit code {game.Process!.ExitCode} · Session logs saved";
-            LaunchButton.Content = "Play";
+            LaunchButton.Content = PlayButtonLabel;
             LaunchButton.IsEnabled = true;
             controller.SessionEnabled = false;
             hostRoomReady = false;
@@ -227,6 +244,16 @@ public partial class MainWindow : Window {
         }
         if (updating || updateRestarting || launching || game.Running || backingUp)
             return;
+        if (ModConfigurationProblem() is string modProblem) {
+            ShowPage("Mods");
+            foreach (var row in modRows.Where(r => r.SeedError?.Visibility == Visibility.Visible)) {
+                row.Options!.IsExpanded = true;
+                row.SeedInput!.BringIntoView(); row.SeedInput.Focus();
+                break;
+            }
+            Status.Text = modProblem;
+            return;
+        }
         if (mode != "offline" && OnlineOptions.Supported(settings.Game.Id)) {
             string? problem = OnlineOptions.Error(settings) ??
                               (mode == "host" && (!hostedServer.Running || hostedServer.GameId != settings.Game.Id)
@@ -238,7 +265,7 @@ public partial class MainWindow : Window {
                 return;
             }
         }
-        launching = true;
+        SetLaunching(true);
         LaunchButton.IsEnabled = false;
         LaunchButton.Content = "Preparing…";
         Status.Text = "Preparing game...";
@@ -252,13 +279,14 @@ public partial class MainWindow : Window {
                 if (!await PrepareLauncherAccount()) {
                     Status.Text = AccountStatus.Text;
                     LaunchButton.IsEnabled = true;
-                    LaunchButton.Content = "Play";
+                    LaunchButton.Content = PlayButtonLabel;
                     ShowPage("Coop");
                     return;
                 }
                 lobby = LobbyOptions();
                 snapshot.JoinHostName = settings.JoinHostName;
                 snapshot.JoinSignupPort = settings.JoinSignupPort;
+                snapshot.JoinRoomName = settings.JoinRoomName;
             }
             var progress = BeginDiscImport();
             await game.Launch(root, snapshot, controller, importProgress: progress,
@@ -283,7 +311,7 @@ public partial class MainWindow : Window {
             controller.SessionEnabled = false;
             Status.Text = "Import canceled.";
             LaunchButton.IsEnabled = true;
-            LaunchButton.Content = "Play";
+            LaunchButton.Content = PlayButtonLabel;
         } catch (Exception error) {
             controller.SessionEnabled = false;
             Status.Text = "Could not launch: " + error.Message;
@@ -292,9 +320,9 @@ public partial class MainWindow : Window {
                 DiscValidationStatus.Foreground = (Brush)FindResource("Danger");
             }
             LaunchButton.IsEnabled = true;
-            LaunchButton.Content = "Play";
+            LaunchButton.Content = PlayButtonLabel;
         } finally {
-            launching = false;
+            SetLaunching(false);
             EndDiscImport();
         }
     }
@@ -319,16 +347,16 @@ public partial class MainWindow : Window {
     void UpdateSaves() {
         RefreshCards();
         string folder = settings.CardFolder(root);
-        int count = Directory.Exists(folder)
-                        ? Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories)
-                              .Count(p => !Path.GetRelativePath(folder, p)
-                                               .Split(Path.DirectorySeparatorChar)
-                                               .Any(part => part.StartsWith(
-                                                        ".reo-", StringComparison.Ordinal)))
-                        : 0;
-        SaveCount.Text = count == 0
-                             ? "No memory-card files yet. Create a save from the game's menus."
-                             : $"{count} memory-card files · Selected memory card";
+        try {
+            int count = Directory.Exists(folder)
+                ? Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories)
+                    .Count(p => !Path.GetRelativePath(folder, p).Split(Path.DirectorySeparatorChar)
+                        .Any(part => part.StartsWith(".reo-", StringComparison.Ordinal)))
+                : 0;
+            SaveCount.Text = count == 0 ? "Empty card" : $"{count} {(count == 1 ? "file" : "files")} stored";
+        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+            SaveCount.Text = "Card files are unavailable.";
+        }
     }
     void OpenFolder(string folder) {
         Directory.CreateDirectory(folder);
@@ -399,6 +427,66 @@ public partial class MainWindow : Window {
         }
     }
     async void OnLoaded(object sender, RoutedEventArgs e) {
+        int playLayoutTest = Array.IndexOf(args, "--test-play-layout");
+        if (playLayoutTest >= 0 && playLayoutTest + 1 < args.Length) {
+            await TestPlayLayout(args[playLayoutTest + 1]);
+            return;
+        }
+        int launcherUiTest = Array.IndexOf(args, "--test-launcher-ui");
+        if (launcherUiTest >= 0 && launcherUiTest + 1 < args.Length) {
+            await TestLauncherUi(args[launcherUiTest + 1]);
+            return;
+        }
+        int developerUiTest = Array.IndexOf(args, "--test-developer-ui");
+        if (developerUiTest >= 0 && developerUiTest + 1 < args.Length) {
+            await TestDeveloperUi(args[developerUiTest + 1]);
+            return;
+        }
+        int gameFilesTest = Array.IndexOf(args, "--test-game-files-ui");
+        if (gameFilesTest >= 0 && gameFilesTest + 1 < args.Length) {
+            await TestGameFilesUi(args[gameFilesTest + 1]);
+            return;
+        }
+        int coopUiTest = Array.IndexOf(args, "--test-coop-ui");
+        if (coopUiTest >= 0 && coopUiTest + 1 < args.Length) {
+            await TestCoopUi(args[coopUiTest + 1]);
+            return;
+        }
+        int cardsUiTest = Array.IndexOf(args, "--test-memory-cards-ui");
+        if (cardsUiTest >= 0 && cardsUiTest + 1 < args.Length) {
+            await TestMemoryCardsUi(args[cardsUiTest + 1]);
+            return;
+        }
+        int graphicsUiTest = Array.IndexOf(args, "--test-graphics-ui");
+        if (graphicsUiTest >= 0 && graphicsUiTest + 1 < args.Length) {
+            await TestGraphicsUi(args[graphicsUiTest + 1]);
+            return;
+        }
+        int controlsUiTest = Array.IndexOf(args, "--test-controls-ui");
+        if (controlsUiTest >= 0 && controlsUiTest + 1 < args.Length) {
+            await TestControlsUi(args[controlsUiTest + 1]);
+            return;
+        }
+        int modsUiTest = Array.IndexOf(args, "--test-mods-ui");
+        if (modsUiTest >= 0 && modsUiTest + 1 < args.Length) {
+            await TestModsUi(args[modsUiTest + 1]);
+            return;
+        }
+        int cheatsUiTest = Array.IndexOf(args, "--test-cheats-ui");
+        if (cheatsUiTest >= 0 && cheatsUiTest + 1 < args.Length) {
+            await TestCheatsUi(args[cheatsUiTest + 1]);
+            return;
+        }
+        int audioUiTest = Array.IndexOf(args, "--test-audio-ui");
+        if (audioUiTest >= 0 && audioUiTest + 1 < args.Length) {
+            await TestAudioUi(args[audioUiTest + 1]);
+            return;
+        }
+        int discSelectorTest = Array.IndexOf(args, "--test-disc-selectors");
+        if (discSelectorTest >= 0 && discSelectorTest + 1 < args.Length) {
+            await TestDiscSelectors(args[discSelectorTest + 1]);
+            return;
+        }
         int backgroundTest = Array.IndexOf(args, "--test-background-playback");
         if (backgroundTest >= 0 && backgroundTest + 1 < args.Length) {
             await TestBackgroundPlayback(args[backgroundTest + 1]);
@@ -421,7 +509,7 @@ public partial class MainWindow : Window {
         int page = Array.IndexOf(args, "--page");
         if (page >= 0 && page + 1 < args.Length &&
             new[] { "Play", "Graphics", "Audio", "Controller", "Saves", "Coop", "Mods", "Cheats", "Setup",
-                    "Logs", "Developer" }
+                    "Launcher", "Logs", "Developer" }
                 .Contains(args[page + 1]))
             ShowPage(args[page + 1]);
         if (screenshot >= 0 && screenshot + 1 < args.Length) {
@@ -466,7 +554,7 @@ public partial class MainWindow : Window {
                 settings.CoopMode = args.Contains("--preview-join") ? "join" : "offline";
                 (settings.CoopMode == "join" ? ModeJoin : ModeOffline).IsChecked = true;
                 RefreshOnlineUi();
-                LaunchButton.Content = "Play";
+                LaunchButton.Content = PlayButtonLabel;
                 initialized = true;
             }
             if (args.Contains("--preview-color")) {
@@ -558,6 +646,7 @@ public partial class MainWindow : Window {
                 if(args.Contains("--test-roster-probe") || args.Contains("--test-peer-room"))
                     snapshot.MemoryCardFile1 = Path.Combine(Settings.Home,"test-cards","roster-"+Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(snapshot.MemoryCardFile1);
+                snapshot.SelectCard(args.Contains("--test-file2") ? snapshot.MemoryCardFile2 : snapshot.MemoryCardFile1);
                 if (!args.Contains("--test-physical-pad")) controller.Select("keyboard");
             }
             int file2Test = Array.IndexOf(args, "--test-file2");

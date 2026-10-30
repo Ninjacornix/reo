@@ -56,7 +56,7 @@ The setup script fetches pinned dependencies and applies the local runtime patch
 
 The ordinary target is `reo_recomp`; `reo` is the older scaffold. Experimental GPU builds depend on additional local source/library paths declared in `recomp/CMakeLists.txt`. They are not a turnkey clean-clone release pipeline. Do not reuse a private link script or mix objects compiled against different runtime interfaces.
 
-Use the launcher for normal interactive play. Its settings are under `data/` beside the launcher by default, and its default save folders are `data/memory-cards/default/file1/data` and `data/memory-cards/default/file2/data`. Change the shared storage folder under **Game files > Storage**.
+Use the launcher for normal interactive play. Its settings are under `data/` beside the launcher by default, and both games share the selected memory card. The default card is `data/memory-cards/default/data`. Existing edition-specific cards remain available as named entries without moving their files. Change the shared storage folder under **Game files > Launcher storage**.
 
 The launcher can start the separately licensed portable openSNAP component using
 **Host server**. Source developers must first export that component; see

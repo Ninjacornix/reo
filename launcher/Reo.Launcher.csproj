@@ -11,6 +11,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/app-icon.ico</ApplicationIcon>
   </PropertyGroup>
+  <Import Project="native/GraphicsPreview.targets" />
   <ItemGroup>
     <Content Include="../examples/mods/no-infection.json" Link="examples/mods/no-infection.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../examples/mods/randomizer.json" Link="examples/mods/randomizer.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

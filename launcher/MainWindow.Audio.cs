@@ -1,24 +1,40 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 
 namespace Outbreak.Launcher;
 
 public partial class MainWindow {
     readonly AudioMixer audioMixer = new();
+    readonly SubtitleControl subtitleControl = new();
     readonly DispatcherTimer audioSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    bool refreshingAudioOutputs;
 
     void InitializeAudio() {
         var levels = AudioLevels.From(settings);
         MasterVolume.Value = levels.Master; MusicVolume.Value = levels.Music;
         SfxVolume.Value = levels.Sfx; VoiceVolume.Value = levels.Voice; UiVolume.Value = levels.Ui;
+        AudioSubtitles.IsChecked = settings.ShowSubtitles;
         UpdateAudioLabels();
         game.AudioMapName = audioMixer.MapName;
         audioMixer.Publish(settings);
-        audioSaveTimer.Tick += (_, _) => { audioSaveTimer.Stop(); SaveSettings(this, new()); };
+        game.SubtitleMapName = subtitleControl.MapName;
+        subtitleControl.Publish(settings.ShowSubtitles);
+        RefreshAudioOutputs();
+        audioSaveTimer.Tick += (_, _) => { audioSaveTimer.Stop(); SaveSettings(audioMixer, new()); };
+        SizeChanged += (_, _) => UpdateAudioLayout();
+        UpdateAudioLayout();
         Closing += (_, _) => {
-            if (audioSaveTimer.IsEnabled) { audioSaveTimer.Stop(); SaveSettings(this, new()); }
+            if (audioSaveTimer.IsEnabled) { audioSaveTimer.Stop(); SaveSettings(audioMixer, new()); }
         };
-        Closed += (_, _) => { audioSaveTimer.Stop(); audioMixer.Dispose(); };
+        Closed += (_, _) => { audioSaveTimer.Stop(); audioMixer.Dispose(); subtitleControl.Dispose(); };
+    }
+    void UpdateAudioLayout() {
+        bool compact = (ActualHeight > 0 ? ActualHeight : Height) < 760;
+        AudioMasterRow.Height = compact ? 42 : 56;
+        foreach (Grid row in AudioChannels.Children) row.Height = compact ? 42 : 56;
+        AudioSubtitlesRow.Height = compact ? 40 : 48;
+        AudioFooterDivider.Margin = new Thickness(0, compact ? 4 : 8, 0, compact ? 8 : 14);
     }
     void UpdateAudioLabels() {
         MasterVolumeValue.Text = $"{MasterVolume.Value:0}%";
@@ -29,18 +45,51 @@ public partial class MainWindow {
     }
     void UpdateAudioAvailability() {
         bool separateChannels = settings.Game.Id == "file1";
+        AudioEditionLabel.Text = separateChannels ? "OUTBREAK / FILE #1" : "OUTBREAK / FILE #2";
+        AudioChannelNote.Text = separateChannels
+            ? "VOLUME BALANCE"
+            : "File #2 supports Master volume only.";
+        AudioChannels.Opacity = separateChannels ? 1 : .45;
         foreach (var slider in new[] { MusicVolume, SfxVolume, VoiceVolume, UiVolume }) {
             slider.IsEnabled = separateChannels;
             slider.ToolTip = separateChannels ? null
                 : "Separate music, effects, voice and UI volumes are available for File #1. Use Master for File #2.";
         }
     }
+    void RefreshAudioOutputs() {
+        refreshingAudioOutputs = true;
+        try {
+            AudioOutputPicker.ItemsSource = AudioOutputs.Choices(AudioOutputs.Enumerate(), settings.AudioOutputId ?? "", settings.AudioOutputName ?? "");
+            AudioOutputPicker.SelectedValue = settings.AudioOutputId ?? "";
+            UpdateAudioOutputHint();
+        } finally { refreshingAudioOutputs = false; }
+    }
+    void UpdateAudioOutputHint() {
+        bool unavailable = AudioOutputPicker.SelectedItem is AudioOutput { Available: false };
+        AudioOutputHint.Text = unavailable ? "Output unavailable. The game will use Windows default." : "";
+        AudioOutputHint.Visibility = unavailable ? Visibility.Visible : Visibility.Collapsed;
+    }
+    void AudioOutputOpened(object sender, EventArgs e) => RefreshAudioOutputs();
+    void AudioOutputChanged(object sender, SelectionChangedEventArgs e) {
+        if (!initialized || refreshingAudioOutputs || AudioOutputPicker.SelectedItem is not AudioOutput output) return;
+        settings.AudioOutputId = output.Id;
+        if (output.Available) settings.AudioOutputName = output.Name;
+        UpdateAudioOutputHint();
+        SaveSettings(audioMixer, new());
+    }
     void ReadAudioSettings() {
+        settings.ShowSubtitles = AudioSubtitles.IsChecked == true;
         settings.MasterVolume = (int)Math.Round(MasterVolume.Value);
         settings.MusicVolume = (int)Math.Round(MusicVolume.Value);
         settings.SfxVolume = (int)Math.Round(SfxVolume.Value);
         settings.VoiceVolume = (int)Math.Round(VoiceVolume.Value);
         settings.UiVolume = (int)Math.Round(UiVolume.Value);
+    }
+    void SubtitlesChanged(object sender, RoutedEventArgs e) {
+        if (!initialized) return;
+        settings.ShowSubtitles = AudioSubtitles.IsChecked == true;
+        subtitleControl.Publish(settings.ShowSubtitles);
+        SaveSettings(audioMixer, new());
     }
     void AudioChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
         if (!initialized) return;

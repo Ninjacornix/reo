@@ -55,6 +55,10 @@ public partial class MainWindow {
         ArtworkLayer.Visibility = Backdrop.Source != null || OutgoingBackdrop.Source != null || video
             ? Visibility.Visible : Visibility.Collapsed;
     }
+    void SetLaunching(bool value) {
+        launching = value;
+        RefreshBackgroundVideos();
+    }
     void RefreshBackgroundVideos() {
         if (backgroundPlayer == null || backgroundClosing || backgroundRemoving) return;
         bool disabled = !settings.LauncherBackgroundMovies || args.Contains("--public-preview") || !SystemParameters.ClientAreaAnimation;

@@ -1,10 +1,10 @@
-# Cover artwork downloads
+# Cover and DVD artwork downloads
 
 Cover images are not shipped in the repository or launcher package. On a normal
-first launch, the launcher automatically downloads the NTSC-U retail cover scans
+first launch, the launcher automatically downloads the NTSC-U retail cover scans and DVD labels
 listed in `ARTWORK-NOTICE.md`. A progress bar appears at the bottom. Verified
 images are cached in the selected data folder under `artwork/downloaded/` and
-applied to the 3D cases without restarting. Later launches reuse this cache.
+applied to the background and 3D DVD selectors without restarting. Later launches reuse this cache.
 
 Offline, failed or canceled downloads keep placeholders (or existing local art).
 Failed transfers are retried on the next launcher launch. Partial files are never
@@ -16,6 +16,9 @@ Personal artwork may be placed in the data folder's `artwork/` directory:
 - Region: `file1-ntsc-u-cover.jpg`, `file1-pal-cover.jpg`, `file1-ntsc-j-cover.jpg`;
   use `file2` for File #2.
 - Generic fallback: `file1-cover.jpg` or `file2-cover.jpg`.
+- DVD labels: use the same prefixes with `-disc.png` or `-disc.jpg`, such as
+  `file1-disc.png` or `SLUS-20984-disc.png`. Personal disc labels always override
+  the downloaded labels, even when the personal name is less specific.
 
 The installed ISO's SYSTEM.CNF chooses the serial and region; absent or unknown
 metadata defaults to NTSC-U. Artwork detection does not add playback support for

@@ -15,7 +15,11 @@ static partial class GameArtwork {
         new("file2-ntsc-u-back.jpg", "https://images.launchbox-app.com/5e85cd55-a093-4159-a297-c45ad2ca7671.jpg",
             320374, "5ce93996367c2246336b18a08f42c3adcd573bdb5bbbd0ee8ad58d10517fbea1"),
         new("file2-ntsc-u-spine.jpg", "https://images.launchbox-app.com/8c4509ac-8d5e-4d4c-a226-0a4355806ac8.jpg",
-            31504, "5d8fd502d0b2033cb3ef7ba2d6dad4fcf60be49886b0e893ba97ec27c3c875ad")
+            31504, "5d8fd502d0b2033cb3ef7ba2d6dad4fcf60be49886b0e893ba97ec27c3c875ad"),
+        new("file1-ntsc-u-disc.png", "https://images.launchbox-app.com/047fbc2e-e4b4-4273-a826-985c64ec9218.png",
+            2210829, "c7807c50c05996397283bd364a369ec530d4b45e8d308bcbd48c0aaa86999def"),
+        new("file2-ntsc-u-disc.png", "https://images.launchbox-app.com/ebf484e8-03b3-4f91-8b0b-a50328338fe3.png",
+            1954866, "c9ef136ac2e421f8dd0a1f78e9d93a0d154b372980818a33b7a90a39870fed61")
     };
     internal const string DownloadLayout = "{\"front\":[1712,0,1494,2136],\"back\":[0,0,1534,2136],\"spine\":[1534,0,178,2136]}";
     internal static bool DownloadCurrent(string folder, Download asset) {
@@ -107,7 +111,7 @@ static partial class GameArtwork {
                 // Artwork is optional. Keep other successful files and try the rest.
             }
             completed += asset.Bytes;
-            progress?.Report(new(completed * 100.0 / total, "Preparing cover artwork"));
+            progress?.Report(new(completed * 100.0 / total, "Preparing artwork"));
         }
     }
 }

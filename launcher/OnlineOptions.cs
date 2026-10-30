@@ -60,10 +60,12 @@ public static partial class OnlineOptions {
         if (!ValidUsername(settings.AccountUsername))
             return "Player name: use 4–10 letters, numbers or underscores. Underscores cannot " +
                    "start, end or repeat.";
+        if (settings.AutoLobby && settings.ResolvedCoopMode == "host" && !LobbySettings.ValidTitle(settings.ResolvedRoomName))
+            return "Room name: use up to 15 letters, numbers or underscores.";
         if (!TryHost(settings.CoopHost, out _))
             return settings.ResolvedCoopMode == "host"
                        ? "Choose the address friends will use."
-                       : "Pick a game from the list, or enter the host's address, such as 192.168.1.20.";
+                       : "Enter the address you got from the host.";
         return null;
     }
 
