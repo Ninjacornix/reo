@@ -73,8 +73,9 @@ public static partial class LocalGameBuild {
             throw new IOException("The build kit path escapes its installation.");
         for (var path = new FileInfo(result) as FileSystemInfo; path != null;
              path = path is FileInfo f ? f.Directory : ((DirectoryInfo)path).Parent) {
-            if (path.Exists && (path.Attributes & FileAttributes.ReparsePoint) != 0)
-                throw new IOException("Build-kit paths must not traverse symbolic links.");
+            if (path.Exists && BuildPathLinks.Redirects(path.FullName, path.Attributes))
+                throw new IOException("Build-kit paths must not traverse symbolic links or junctions: " +
+                                      path.FullName + ". Choose a storage folder without linked files or folders in Game files.");
             if (path.FullName.Equals(parent, StringComparison.OrdinalIgnoreCase))
                 break;
         }

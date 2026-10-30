@@ -35,7 +35,7 @@ public static partial class LocalGameBuild {
     }
     static bool HasPayload(string root, string game = "file1") => PayloadIdentity(root, game) != null
                                            && File.Exists(PayloadArchive(root, game));
-    static void ExpandPayload(string root, IProgress<ImportProgress>? progress,
+    internal static void ExpandPayload(string root, IProgress<ImportProgress>? progress,
                               CancellationToken cancel, string game = "file1") {
         if (!HasPayload(root, game))
             return;

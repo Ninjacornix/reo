@@ -79,8 +79,8 @@ public static class Storage {
     static void CheckLinks(string path) {
         for (FileSystemInfo? entry = Directory.Exists(path) ? new DirectoryInfo(path) : new FileInfo(path);
              entry != null; entry = entry is DirectoryInfo d ? d.Parent : ((FileInfo)entry).Directory)
-            if (entry.Exists && (entry.Attributes & FileAttributes.ReparsePoint) != 0)
-                throw new IOException("Choose a storage folder without symbolic links or junctions.");
+            if (entry.Exists && BuildPathLinks.Redirects(entry.FullName, entry.Attributes))
+                throw new IOException("Choose a storage folder without symbolic links or junctions: " + entry.FullName);
     }
 
     static List<FileInfo> Files(string folder, CancellationToken cancel, List<string> directories) {
@@ -89,7 +89,7 @@ public static class Storage {
         while (pending.TryPop(out var directory)) {
             cancel.ThrowIfCancellationRequested();
             foreach (var entry in directory.EnumerateFileSystemInfos()) {
-                if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                if (BuildPathLinks.Redirects(entry.FullName, entry.Attributes))
                     throw new IOException("Cannot copy linked files or folders: " + entry.FullName);
                 if (entry is DirectoryInfo child) { directories.Add(child.FullName); pending.Push(child); }
                 else if (entry.Name != ".storage.lock" && entry.Name != MarkerName &&
