@@ -50,6 +50,7 @@ public static class DiscImport {
         m.SourceLength == file.Length && m.SourceWriteTicks == file.LastWriteTimeUtc.Ticks &&
         (expected == null || m.ElfSha256 == expected);
     public static bool Ready(Settings settings, string? gameId = null) {
+        if (settings.UsesGamePak(gameId)) return GamePaks.Ready(settings, gameId);
         try {
             var game = GameDefinition.Find(gameId ?? settings.Game.Id);
             string folder = settings.ImportFolder(game.Id);

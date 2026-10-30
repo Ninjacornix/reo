@@ -1,6 +1,233 @@
 # Creating a simple Outbreak mod
 
-The first mod format is a single JSON file. Anyone can edit and share one; no compiler or game rebuild is needed when enabling a mod in an existing compatible build. This version supports seeded items, zombie profiles, a bounded experimental enemy-species mode, existing native gameplay effects and bounded EE data patches. Lua scripts, DLL plugins, asset replacement and PS2 instruction patches are not supported yet.
+Gameplay mods use a JSON file; asset replacement mods use a `.pak` ZIP. Anyone can create and share a mod; an existing compatible game build does not need rebuilding when enabling a new package. Asset packs support both File #1 and File #2 in solo play. Gameplay JSON mods on this branch target File #1. Lua scripts, DLL plugins and PS2 instruction patches are unsupported.
+
+## Asset replacement packs
+
+Import a `.pak` from **Mods**, then tick it. The page shows packs for the selected
+game, their versions and replacement counts. Switching games preserves each game's
+enabled packs. The Play page shows the active asset-pack count. Disable packs before
+hosting or joining co-op. An older native game build is refused with a rebuild message.
+
+An asset pack replaces existing native game files, including textures, models, text,
+audio and movies. It does not convert formats, enable PCSX2 texture packs or add frame
+interpolation. Use suitable format-specific editing tools. Game memory limits still
+apply; accepting a large file does not guarantee the game can load it.
+
+The ZIP needs root `pak.json` and replacement files:
+
+```json
+{
+  "format": 1,
+  "id": "example.translation.file1",
+  "name": "Example translation",
+  "version": "1.0.0",
+  "game": "file1",
+  "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "replace": [
+    {"path": "NETBIO00.DAT/0/551", "file": "files/edited-font.tm2"}
+  ]
+}
+```
+
+For File #2 use `game: "file2"` and executable SHA-256
+`5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d`.
+IDs must be unique across installed packs. Each replacement may specify `baseSha256`;
+a mismatch rejects the pack rather than applying it to the wrong original asset.
+
+Paths address zero-based archive entry indices. Unique names can also be used, or
+mixed with numeric indices, for example `NETBIO00.DAT/romdata_usa.afs/#551`. Numeric
+paths are recommended: File #2 has many sound entries named `SOUN`. Replacing an
+entire nested AFS, a room's `_h.bin` name table, DUMMY padding, code overlays or the
+executable is unsupported. Entries cannot be added, removed or reordered. Two enabled
+packs replacing the same resolved entry are rejected, naming both packs.
+
+Each payload is limited to 256 MiB, each ZIP to 10,000 members and 2 GiB expanded,
+each pack to 4,096 replacements, and the session to 4,096 replacements. Virtual AFS
+files must remain below 4 GiB. ZIP paths cannot be absolute or contain `..`, links,
+duplicate members, Windows device names, or components ending with dots/spaces.
+A loose development folder with the same `pak.json` layout
+can be placed in the launcher's data folder under `mods/assets/`.
+
+Original imports stay archived and unchanged. The launcher builds a small metadata
+index on demand, hashes targeted original entries, and caches ZIP payloads under
+`asset-cache/<pack-sha256>/`. Later launches reuse verified cache files. Loose packs
+are read again so edits apply on the next launch. The session's `asset-overlay.json`
+is a readable receipt; `asset-overlay.bin` is its bounded, versioned native input,
+passed using `REO_ASSET_OVERLAY`. The runtime checks executable and payload identities
+again and streams virtual archives from original ranges plus replacement files.
+No enabled packs leaves the original disc path active. Exact-byte replacements also
+leave their original archives intact.
+
+### Exporting original assets
+
+After choosing an ISO, open **Game files** and tick **Export original assets to
+.pak files during setup** before importing. This optional setting starts off
+unchecked and is saved separately for File #1 and File #2. **Export now** also
+works with an already imported game. **Open exports folder** opens the results.
+
+Each game exports **one `original-assets.pak` containing all original NETBIO leaf
+assets**, including textures, models, audio, movies and reference name tables.
+The files keep their native formats; this does not convert everything to a common
+texture/model/audio format. Updated exports also include private game boot data
+and archive metadata so the PAK can be selected as a game source. These additional
+files are separate from the editable leaf index and must not be distributed.
+
+For **both File #1 and File #2**, the same PAK automatically includes an
+`executable-strings/` folder with editable CSV/JSON, original encoded bytes,
+addresses and byte limits. No separate script or second PAK is needed. Re-export
+older packs with **Export now** to add these references; previous exports are kept.
+
+Results live under the selected storage folder at
+`asset-exports/<game>/<source-identity>/single/`. Export requires extra disk space
+and time to compress and verify every file. The launcher checks available space
+first and shows progress with **Cancel setup**. Canceling or failing an export keeps the
+imported game and completed exports. Completed exports are reused when the source
+and output size/timestamps still match. If an export was edited, a fresh version
+goes into a new folder and the previous export is kept.
+
+To apply edits, keep your original ISO or unmodified game PAK as the game source.
+Edit a copy of the exported PAK: replace selected native asset payloads or fill in
+string translation fields, preserving their original metadata. Open **Mods → Import
+mod**, choose the edited PAK, then tick the imported pack. The launcher scans the
+export and creates a replacement mod containing only changed assets and translations;
+this needs no Python. Import runs in the background and supports cancellation.
+An unchanged export has nothing to install. Protected name tables and code remain
+unsupported. Keep full original and edited game exports private.
+
+Alternatively, unzip the reference pack and copy selected files into a separate
+edited folder, preserving their relative paths. Use the packer below to produce
+an installable replacement pack suitable for sharing your own changes.
+
+Alternatively, extract assets from your own existing import using Python:
+
+```powershell
+python tools/assets/extract_assets.py "<import>/data" "<new-reference-folder>"
+```
+
+### Playing from PAK instead of ISO
+
+In **Game files**, turn on **Use PAK instead of ISO**, then **Choose PAK** and
+select your exported `original-assets.pak`. Press **Import** or **Play**. Each
+game remembers its own source switch and paths, so switching back to ISO keeps
+your previous selection. A completed launcher export also remembers its PAK path,
+so you can simply turn on the switch afterward. An older asset-only export or a replacement mod PAK
+cannot boot the game; export again with the updated launcher.
+
+First use verifies the PAK and prepares ordinary game files under
+`imports/<game>/pak-<checksum>/`. Matching existing imports on the same local
+NTFS drive are verified and reused through hard links, avoiding another full
+copy. Otherwise, setup needs space for the complete uncompressed game data.
+Completed caches are reused. Canceling an import keeps completed game data.
+
+PAK mode needs an updated native game build; the launcher tells you to rebuild
+if it lacks support. The game reads sectors from the prepared files, and does
+not open or require an ISO. This is a game-source option, separate from enabling
+replacement mods; the same replacement-pack restrictions still apply. Keep the
+full game PAK private, just like your ISO.
+
+Copy selected files into an edited folder, preserving the extracted relative paths.
+After editing, package only changed files:
+
+```powershell
+python tools/assets/pack_assets.py "<reference>/assets.json" "<edited-folder>" "translation.pak" --game file1 --id example.translation.file1 --name "Example translation"
+```
+
+The packer skips unchanged and absent files and includes original entry hashes.
+Keep all extracted originals private. Distribute only the changed assets you have
+permission to distribute; do not include full game archives, ISOs or executables.
+
+Developers can prepare and validate packs without starting a game:
+
+```powershell
+Outbreak.Launcher.exe --prepare-asset-paks file1 "<import>/data" "<pack-folder>" "<new-session-folder>"
+```
+
+## Executable-string references
+
+Launcher game-to-PAK exports automatically include executable string references
+for the selected edition under `executable-strings/`. For a smaller, standalone
+editing reference, the Python tool supports both original executables:
+
+```powershell
+python tools/assets/extract_elf_strings.py "<import>/data/SLUS_207.65" "<new-private-reference-folder>"
+```
+
+Use `SLUS_209.84` for File #2; the supported executable hash selects the profile,
+or specify `--game file1` / `--game file2` to enforce an edition.
+`executable-strings-<game>.pak` contains `ui-strings.csv` / `ui-strings.json`, a
+broader candidate catalogue, original bytes and verification metadata. Entries
+include ELF-mapped addresses, file offsets, encoded byte budgets, formatting tags
+and locations of literal address words. The UI grouping is a location heuristic;
+SDK diagnostics and other non-display strings also occur in the broader list.
+Keep original identity fields and bytes intact, and enter translations separately.
+
+Fill the `translation` column in CSV or the `translation` field in JSON, retaining
+the original JSON references alongside CSV. JSON also accepts `translationBytesHex`
+for verified encoded byte mappings. Import the edited reference PAK through **Mods**
+and enable it. Both games support these overrides in updated native builds, in solo
+play. The Python packer also reads edited reference files in the edited folder.
+Conflicting translations, changed original identities, invalid CP932 sequences,
+embedded NULs and translations exceeding `maxBytes` are rejected. Preserve all
+formatting tags and printf arguments. Byte limits exclude the terminating NUL.
+Font glyph coverage still needs manual checking.
+An empty CSV cell means no edit; JSON `translation: ""` explicitly clears a string.
+
+### Optional verified string padding
+
+The strict default remains the original `maxBytes`. New references also export
+`paddingMaxBytes` and `usePadding: false`. Set **`usePadding` to `true`** for a
+specific translated row in JSON or CSV to permit the larger exported budget.
+Keep the original `maxBytes`, original text and identity fields unchanged in the
+reference. For example, `\n\n\nUnequip items.` has 17 original bytes and a verified
+31-byte budget in both supported editions. Re-export older references to obtain
+the padding metadata; previous exports are preserved.
+
+Padding stops at the first nonzero byte, the next 16-byte alignment boundary, the
+supported string-region boundary or an aligned literal address reference,
+whichever comes first. References in all file-backed ELF load segments are
+checked, including KSEG0/KSEG1 aliases. At least one terminating NUL remains.
+The launcher recalculates the budget from the original ELF; it does not trust an
+edited reference's claimed budget. The runtime independently checks original file
+and live guest zero bytes, pointer references, alignment and overlapping patches
+before writing anything. This is a conservative static check, not proof that no
+computed pointer or overlay can ever use a byte; review and playtest translations.
+
+In hand-authored `pak.json` string entries, `usePadding: true` permits `maxBytes`
+between the original length and the verified `paddingMaxBytes`. `baseSha256`
+still hashes only the original string bytes. Padded plans require an updated
+native build with `[EXECUTABLE-STRINGS-2]`; the launcher requests a rebuild for
+older binaries. Strict-only plans retain their existing format and capability.
+
+Custom-font mappings in CP932's single-byte half-width katakana range, including
+`A6`–`B6`, remain accepted through `translationBytesHex` / `bytesHex`. They are not
+normalized or changed into Latin Unicode characters; the replacement font supplies
+the intended accented glyphs.
+
+### Cleaning old imports
+
+In **Game files → Clean up old imports...**, review the older completed imports
+for the selected game and confirm deletion. Nothing is deleted automatically when
+an ISO changes. The selected imports for both games, remembered source ISO/PAK
+paths, saves, exports and mods are protected. Unknown files, incomplete imports,
+malformed receipts and linked files/folders are left alone. Cleanup shares setup's
+lock and rechecks each target before deleting it. Estimated sizes are logical file
+sizes; shared hard-linked files can free less physical disk space. Keep an older
+game revision's source if you want to import that revision again later.
+
+Installable `pak.json` may contain a `strings` array alongside or instead of
+`replace`. Each entry needs `address`, `maxBytes`, `baseSha256` (the original
+string bytes' SHA-256) and either `text` or `bytesHex`. The launcher validates these
+against the supported original executable catalogue. The runtime rechecks the
+original ELF and guest bytes before applying the complete plan to guest memory;
+the original executable on disk stays unchanged. Session receipts are
+`executable-strings.json` and `executable-strings.bin`.
+
+Selecting an edited full game PAK directly as the game source still requires its
+original checksums; apply changes through **Mods**. Text baked into textures needs
+a texture edit rather than a string override. Existing models, rooms, sounds and
+scenario data can be replaced in their native formats; adding new archive entries,
+code or arbitrary campaigns is not implemented. Keep original game references private.
 
 ## Randomizer
 

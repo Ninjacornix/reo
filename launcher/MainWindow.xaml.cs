@@ -265,6 +265,7 @@ public partial class MainWindow : Window {
                               cancel: importCancellation!.Token, lobby: lobby);
             if (game.Imported != null) {
                 settings.SetImport(game.Imported.Root);
+                if (game.OriginalAssets != null) settings.RememberGamePak(game.OriginalAssets);
                 try {
                     settings.Save();
                 } catch (Exception error)
@@ -301,6 +302,7 @@ public partial class MainWindow : Window {
         if (updating || updateRestarting || launching || game.Running || backingUp)
             return;
         string kind = (string)((Button)sender).Tag;
+        if (kind == "iso") { ChooseIso(); return; }
         var dialog = new OpenFileDialog { Title = "Choose game file",
                                           Filter = kind == "exe"   ? "Executable (*.exe)|*.exe"
                                                    : kind == "iso" ? "Disc image (*.iso)|*.iso"

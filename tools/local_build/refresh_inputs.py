@@ -106,6 +106,9 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
                   '0100-optional-native-asset-bank.patch',
                   '0101-unbound-source-witness-fast-path.patch'):
         shutil.copyfile(root / 'third_party/patches/ps2recomp' / patch, updates / patch)
+    for patch in source_patches:
+        source = root / patch
+        shutil.copyfile(source, updates / source.name)
     if dependency_sources:
         notices = output / 'notices'
         (notices / 'SDK-SOURCES.txt').write_text(

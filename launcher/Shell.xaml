@@ -92,6 +92,7 @@
         <StackPanel Margin="0,0,24,0"><TextBlock Text="CONTROLLER" Style="{StaticResource LaunchLabel}"/><TextBlock x:Name="PlayInputSummary" Style="{StaticResource LaunchValue}"/></StackPanel>
         <StackPanel Margin="0,0,24,0"><TextBlock Text="MODS" Style="{StaticResource LaunchLabel}"/><TextBlock x:Name="PlayModsSummary" Style="{StaticResource LaunchValue}"/></StackPanel>
         <StackPanel><TextBlock Text="CHEATS" Style="{StaticResource LaunchLabel}"/><TextBlock x:Name="PlayCheatsSummary" Style="{StaticResource LaunchValue}"/></StackPanel>
+        <StackPanel><TextBlock Text="ASSET PACKS" Style="{StaticResource LaunchLabel}"/><TextBlock x:Name="PlayAssetSummary" Style="{StaticResource LaunchValue}"/></StackPanel>
        </UniformGrid>
        <TextBlock x:Name="SessionSummary" Grid.Row="2" Visibility="Collapsed"/>
       </Grid>
@@ -246,7 +247,7 @@
        <StackPanel x:Name="ModControls">
         <WrapPanel><Button Content="Import mod" Click="ImportMod" Margin="0,0,10,0"/><Button Content="Open mods folder" Click="OpenModFolder" Margin="0,0,10,0"/><Button Content="Reload" Click="ReloadMods"/></WrapPanel>
         <StackPanel x:Name="ModList" Margin="0,16,0,0"/>
-        <TextBlock Text="To remove a mod, untick it and delete its JSON file from the mods folder." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,20,0,0"/>
+        <TextBlock Text="Asset packs support solo play. To remove a mod, untick it and delete its file from the mods folder. Loose asset packs go in mods/assets with a root pak.json." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,20,0,0"/>
        </StackPanel>
       </StackPanel>
       <StackPanel x:Name="PageCheats" Visibility="Collapsed">
@@ -283,16 +284,30 @@
        <TextBox x:Name="StoragePath" IsReadOnly="True" AutomationProperties.Name="Current storage folder" Margin="0,0,0,10"/>
        <WrapPanel><Button x:Name="ChooseStorageButton" Content="Change folder…" Click="ChangeStorageFolder" Margin="0,0,10,0"/><Button Content="Open folder" Click="OpenStorageFolder"/></WrapPanel>
        <TextBlock x:Name="StorageStatus" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,24"/>
-       <TextBlock Text="Disc image (.iso)"/>
+       <CheckBox x:Name="UseGamePakSwitch" Content="Use PAK instead of ISO" Checked="GameSourceChanged" Unchecked="GameSourceChanged" Margin="0,0,0,10"/>
+       <TextBlock x:Name="GameSourceLabel" Text="Disc image (.iso)"/>
        <TextBox x:Name="IsoPath" IsReadOnly="True" Margin="0,8,0,8"/>
        <WrapPanel><Button x:Name="ChooseIsoButton" Content="Choose ISO" Tag="iso" Click="BrowseFile" Margin="0,0,10,0"/><Button x:Name="ImportDiscButton" Content="Import" Click="ImportDisc"/></WrapPanel>
-       <TextBlock x:Name="SupportedDiscHint" Text="Required: Outbreak File #1, NTSC-U v2.00 (SLUS-20765). PAL, Japanese and other revisions are unsupported." Style="{StaticResource Hint}" Margin="0,14,0,0"/>
+       <TextBlock x:Name="SupportedDiscHint" Text="Required: Outbreak File #1, NTSC-U v2.00 (SLUS-20765). PAL, Japanese and other revisions are unsupported." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,14,0,0"/>
        <TextBlock x:Name="DiscValidationStatus" TextWrapping="Wrap" Margin="0,10,0,0"/>
        <TextBlock x:Name="ImportState" Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,18,0,10"/>
-       <TextBlock Text="Already have a completed game build?" FontSize="16" FontWeight="Normal" Margin="0,24,0,10"/>
+       <StackPanel x:Name="OriginalAssetOptions" Margin="0,10,0,0">
+        <CheckBox x:Name="ExportOriginalAssets" Checked="OriginalAssetOptionChanged" Unchecked="OriginalAssetOptionChanged" AutomationProperties.Name="Export original assets to .pak files during setup">
+         <TextBlock Text="Export original assets to .pak files during setup" TextWrapping="Wrap"/>
+        </CheckBox>
+        <TextBlock Text="One pack with original assets, executable string references and game boot data. Can be used instead of the ISO. Keeps native formats and uses extra disk space. Completed exports are reused." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="25,6,0,8"/>
+        <WrapPanel Margin="0,0,0,4">
+         <Button x:Name="ExportOriginalAssetsNow" Content="Export now" Click="ExportOriginalAssetsClicked" Margin="0,0,10,8"/>
+         <Button x:Name="OpenOriginalAssetExports" Content="Open exports folder" Click="OpenOriginalAssetExportsClicked" Margin="0,0,0,8"/>
+        </WrapPanel>
+       </StackPanel>
+       <TextBlock Text="Already have a completed game build?" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,10"/>
        <Button x:Name="ExistingBuildButton" Content="Use existing build" Click="UseExistingBuild" HorizontalAlignment="Left"/>
        <TextBlock x:Name="ExistingBuildHint" Text="Choose reo_recomp.exe from a compatible launcher build. Keep its entire folder, including local-build.json, DLLs and shaders. Your ISO is still required." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,10,0,0"/>
-       <TextBlock Text="Remove game" FontSize="16" FontWeight="Normal" Margin="0,30,0,8"/>
+       <TextBlock Text="Old imports" FontSize="16" FontWeight="SemiBold" Margin="0,30,0,8"/>
+       <TextBlock Text="Review and remove older completed ISO or PAK imports. Your selected game files are kept." Style="{StaticResource Hint}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+       <Button x:Name="CleanOldImportsButton" Content="Clean up old imports..." Click="CleanOldImports" HorizontalAlignment="Left"/>
+       <TextBlock Text="Remove game" FontSize="16" FontWeight="SemiBold" Margin="0,30,0,8"/>
        <TextBlock x:Name="RemoveSummary" Style="{StaticResource Hint}" Text="Deletes the imported disc data, the built game and its build cache from this PC. Your ISO file and this launcher stay."/>
        <CheckBox x:Name="RemoveSaves" Content="Also delete save games for this game" Click="RemoveOptionsChanged" Margin="0,10,0,4"/>
        <CheckBox x:Name="RemoveTools" Content="Also remove the build and hosting tools (downloaded again when needed)" Click="RemoveOptionsChanged" Margin="0,4,0,10"/>
