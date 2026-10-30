@@ -21,6 +21,12 @@ vu_whole_program::registerProgramTable. The selector verifies exact image,
 observed entry, dimensions, inactive capture, and state/code/data disjointness.
 Unknown keys retain current block/generic execution.
 
+Reconstructed catalogue images marked `enabledByDefault: true` propagate their
+approved launch keys into a separate `defaultProgramTable()`. Unmarked images
+and additional raw capture keys remain in the full opt-in `programTable()`.
+Legacy inputs generate an empty default table. Catalogue metadata contains only
+identities and offsets; all code arrays are reconstructed locally.
+
 The CFG conservatively includes all aligned sites after a reachable indirect
 branch. Bounded Plain regions accept all suffix entries, with one complete
 budget/context admission, and retain exact cold scheduling for incoming E,
@@ -34,3 +40,16 @@ foundation. It has only generic ISA/runtime operations, never owned arrays.
 The source-only reproduction in local-generated was compared with all149
 retained native Plain bodies after program-ID/namespace normalization. Root
 must still run actual runtime/factory full-output oracles before promotion.
+
+Replay validation on Windows uses the production VU interpreter and supplied
+factory, replacing only the packet sinks:
+
+    run-check.bat LOCAL_CAPTURE FRESH_RESULTS LOCAL_FACTORY [RUNTIME_ROOT]
+
+The optional runtime root defaults to `third_party/PS2Recomp/ps2xRuntime`.
+Visual Studio C++ tools are required; the script prefers `clang-cl` on PATH and
+otherwise uses MSVC. Every captured image/entry must select the supplied table.
+The check compares the complete VU state, data bank and GIF packet streams against
+execution with AOT disabled, and writes five replay timings per mode to
+`result.json`. Mismatches save both complete outputs. Build artifacts and logs
+stay in ignored `build-ninja/vu-whole-check`; captures and factories stay local.
