@@ -26,9 +26,19 @@ verified cached outputs without compiling.
 
 The portable Windows exporter and compiler worker now support the pinned
 LLVM/MinGW UCRT toolchain. Independent libraries and the recompiler are built with
-that same toolchain; MSVC C++ archives are not reused. The full first-run game
-compilation has completed successfully. The sealed launcher's end-to-end setup
-and room route were not rerun for this build-only prerelease.
+that same toolchain; MSVC C++ archives are not reused. RC0 was tested through the extracted Windows launcher: supported-disc import,
+local generation/compilation, actual room entry and cached Play passed for both
+games. The test used a path with spaces and non-ASCII characters, an unrelated
+working directory and a system-only PATH. Compiler-unavailable cache checks
+confirmed completed games launch without compiling again. The compiler was
+restored and hash-verified afterward. The Windows ZIP bundles the launcher's
+.NET runtime; players do not need a separate .NET installation.
+
+File #2's final portable native also repeated actual randomized pickup, equip,
+firing and enemy reconstruction/combat/death checks. See
+[File #2 validation](FILE2_RANDOMIZER.md) for exact scope and remaining limits.
+These results establish the tested Windows machine and routes, rather than all
+hardware, discs, scenarios, saves or multiplayer sessions.
 Legacy MSVC development kits continue to require existing Microsoft tools; the
 launcher never installs them.
 

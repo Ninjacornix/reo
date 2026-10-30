@@ -11,7 +11,7 @@ import sys
 import os
 
 from compile_game import compile_plan, msvc_environment
-from generate_game import generate
+from generate_game import generate, GAMES
 from reconstruct_vu import reconstruct
 from source_recipes import apply_plan
 from generate_queue_control import generate as generate_queue_control
@@ -58,8 +58,21 @@ def extended(path):
     return Path("\\\\?\\UNC\\" + text[2:] if text.startswith("\\\\") else "\\\\?\\" + text)
 
 
-def build(kit, disc, work, output, jobs):
+def game_profile(kit, requested=None):
+    """Bind worker inputs to the selected kit, never to a File #1 default ELF."""
+    plan = json.loads((Path(kit) / "compile-plan.json").read_text())
+    game = plan.get("game", "file1")
+    if game not in GAMES or (requested is not None and requested != game):
+        raise ValueError("Requested game differs from this build kit")
+    profile = GAMES[game]
+    if plan.get("elfSha256", profile["sha256"]) != profile["sha256"]:
+        raise ValueError("Build kit game and ELF revision disagree")
+    return game, profile
+
+
+def build(kit, disc, work, output, jobs, game=None):
     kit, disc, work, output = [Path(p).resolve() for p in (kit, disc, work, output)]
+    game, profile = game_profile(kit, game)
     work.mkdir(parents=True, exist_ok=True)
     if sys.platform == "linux":
         from compile_linux import compile_plan as compile_native
@@ -84,10 +97,10 @@ def build(kit, disc, work, output, jobs):
     shutil.copytree(extended(kit / "source"), extended(project), dirs_exist_ok=True)
     metadata = kit / "metadata"
     generated = project / "recomp/config"
-    elf = disc / "SLUS_207.65"
+    elf = disc / profile["elf"]
     script = Path(__file__).parent
     metadata_files = [p for p in sorted(metadata.rglob("*")) if p.is_file() and p.name not in
-                      {"local_queue_control.json", "local_source_recipes.json", "local_vu_images.json"}]
+                      {"local_queue_control.json", "local_vu_images.json"}]
 
     def game_generation():
         if generated.exists():
@@ -97,7 +110,7 @@ def build(kit, disc, work, output, jobs):
             while generated.with_name("config.interrupted" + str(n)).exists():
                 n += 1
             generated.rename(generated.with_name("config.interrupted" + str(n)))
-        generate(recompiler, disc, metadata, generated, jobs=jobs)
+        generate(recompiler, disc, metadata, generated, jobs=jobs, game=game)
 
     stage(work, "generate", [elf, recompiler, script / "generate_game.py",
                             script / "generate_support.py", script / "registration_chunks.py",
@@ -134,5 +147,6 @@ if __name__ == "__main__":
     for name in ["kit", "disc", "work", "output"]:
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--jobs", type=int, default=2)
+    parser.add_argument("--game", choices=sorted(GAMES), help="Must match the verified build kit")
     args = parser.parse_args()
-    build(args.kit, args.disc, args.work, args.output, args.jobs)
+    build(args.kit, args.disc, args.work, args.output, args.jobs, args.game)

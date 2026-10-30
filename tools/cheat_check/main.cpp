@@ -5,7 +5,9 @@
 #include "weapon_shuffle_tests.h"
 #include "enemy_randomizer_tests.h"
 #include "global_item_tests.h"
+#include "file2_tests.h"
 int main() {
+    testFile2Cheats();
     testWeaponShuffle();
     testEnemyRandomizer();
     testGlobalItems();

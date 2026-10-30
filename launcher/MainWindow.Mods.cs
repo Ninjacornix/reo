@@ -15,16 +15,16 @@ public partial class MainWindow {
     void RefreshMods() {
         modsGame = settings.Game.Id;
         UpdateRandomizerSeed();
-        ModControls.IsEnabled = settings.Game.Id == "file1" && !game.Running && !launching;
+        ModControls.IsEnabled = !game.Running && !launching;
         ModList.Children.Clear();
         try {
             if (!game.Running && !launching && Mods.ConsolidateRandomizers(settings)) settings.Save();
-            var installed = Mods.Load();
+            var installed = Mods.Load(game: settings.Game.Id);
             var shown = new HashSet<string>();
             foreach (var mod in installed) {
                 var m = mod.Manifest;
                 string? id = m?.Id;
-                bool enabled = id != null && settings.EnabledMods.Contains(id);
+                bool enabled = id != null && settings.ActiveMods.Contains(id);
                 var row = new StackPanel { Margin = new Thickness(0, 10, 0, 10) };
                 var toggle = new CheckBox {
                     Content = m == null ? Path.GetFileName(mod.File) : $"{m.Name} · {m.Version}",
@@ -40,7 +40,7 @@ public partial class MainWindow {
                 ModList.Children.Add(row);
                 if (id != null) shown.Add(id);
             }
-            foreach (string id in settings.EnabledMods.Where(x => !shown.Contains(x)).Distinct()) {
+            foreach (string id in settings.ActiveMods.Where(x => !shown.Contains(x)).Distinct()) {
                 var toggle = new CheckBox {
                     Content = id + " — missing or invalid; untick to disable", IsChecked = true,
                     Tag = id, Margin = new Thickness(0, 10, 0, 10)
@@ -59,8 +59,8 @@ public partial class MainWindow {
         if (!initialized || game.Running || launching) return;
         var box = (CheckBox)sender;
         if (box.Tag is not string id) return;
-        settings.EnabledMods.RemoveAll(x => x == id);
-        if (box.IsChecked == true) settings.EnabledMods.Add(id);
+        settings.ActiveMods.RemoveAll(x => x == id);
+        if (box.IsChecked == true) settings.ActiveMods.Add(id);
         try {
             settings.Save();
             Status.Text = "Mods saved. Changes apply on next launch.";
@@ -72,7 +72,7 @@ public partial class MainWindow {
         var dialog = new OpenFileDialog { Filter = "Outbreak mod (*.json)|*.json" };
         if (dialog.ShowDialog(this) != true) return;
         try {
-            Mods.Import(dialog.FileName);
+            Mods.Import(dialog.FileName, game: settings.Game.Id);
             Status.Text = "Mod imported. Tick it to enable.";
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
             Status.Text = error.Message;
@@ -81,8 +81,9 @@ public partial class MainWindow {
     }
     void OpenModFolder(object sender, RoutedEventArgs e) {
         try {
-            Directory.CreateDirectory(Mods.Folder);
-            Process.Start(new ProcessStartInfo(Mods.Folder) { UseShellExecute = true });
+            string folder = Mods.FolderFor(settings.Game.Id);
+            Directory.CreateDirectory(folder);
+            Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception) {
             Status.Text = error.Message;
         }

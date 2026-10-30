@@ -52,6 +52,22 @@ def generate(elf, plan, output):
     image, plan = Path(elf).read_bytes(), json.loads(Path(plan).read_text())
     if plan.get("format") != 1 or hashlib.sha256(image).hexdigest() != plan["elfSha256"]:
         raise ValueError("Unsupported queue-control source ELF")
+    mode = plan.get("mode", "source-audit")
+    if mode == "original-runtime-only":
+        if plan.get("game") != "file2" or plan.get("blocks") != []:
+            raise ValueError("Invalid original-runtime queue profile")
+        # File #2's bootstrap uses its original guest queue functions. The
+        # separate owned GPU source-audit adapter is installed for File #1 only.
+        # Keep unsupported use explicit and refuse it before observing/mutating
+        # queue state; do not reconstruct File #1 instructions from a File #2 ISO.
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+        Path(output).write_text(
+            'inline void reo_gpu_upstream::QueueControlAdapter::State::run() {\n'
+            '    throw std::invalid_argument("Owned GPU queue auditing is unavailable for File #2");\n'
+            '}\n')
+        return 0
+    if mode != "source-audit":
+        raise ValueError("Unsupported queue-control reconstruction mode")
     phoff = struct.unpack_from("<I", image, 28)[0]
     phsize, count = struct.unpack_from("<HH", image, 42)
     segments = [struct.unpack_from("<8I", image, phoff + i * phsize) for i in range(count)]

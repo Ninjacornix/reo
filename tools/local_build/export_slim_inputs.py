@@ -30,8 +30,15 @@ def export(kit, output, archive, root, version='1.0.7'):
         shutil.copyfile(source, destination)
     plan_file = output / 'compile-plan.json'
     plan = with_generated_batches(json.loads(plan_file.read_text()))
+    external_compiler = plan.get('externalCompilerSha256') if plan.get('externalToolchain') else None
+    if plan.get('externalToolchain'):
+        if not isinstance(external_compiler, str) or len(external_compiler) != 64 or any(
+                c not in '0123456789abcdef' for c in external_compiler):
+            raise ValueError('An external-toolchain kit must retain its verified compiler identity')
+    else:
+        external_compiler = sha(kit / plan['compiler'].removeprefix('{kit}/'))
     plan['externalToolchain'] = True
-    plan['externalCompilerSha256'] = sha(kit / plan['compiler'].removeprefix('{kit}/'))
+    plan['externalCompilerSha256'] = external_compiler
     plan_file.write_text(json.dumps(plan, indent=2), encoding='utf-8')
     for name in ['build_game.py', 'generate_game.py', 'registration_chunks.py',
                  'compile_game.py', 'compile_linux.py', 'build_scheduler.py', 'compilation_batches.py']:

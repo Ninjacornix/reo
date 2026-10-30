@@ -16,19 +16,19 @@ public sealed class CheatGroup {
 public record CheatWrite(int Place, uint Address, int Size, ulong Value);
 public static class Cheats {
     public static List<CheatGroup> Builtins(string game) =>
-        game != "file1"
+        game is not ("file1" or "file2")
             ? new()
-            : new() {
-                  new() { Id = "builtin.file1.health", Builtin = "health", Name = "Full health",
+            : new List<CheatGroup> {
+                  new() { Id = $"builtin.{game}.health", Builtin = "health", Name = "Full health",
                           Description = "Keeps your living character at maximum health." },
-                  new() { Id = "builtin.file1.infection", Builtin = "infection",
+                  new() { Id = $"builtin.{game}.infection", Builtin = "infection",
                           Name = "No infection",
                           Description = "Keeps your character's virus gauge at zero." },
-                  new() { Id = "builtin.file1.ammo", Builtin = "ammo", Name = "Infinite ammunition",
+                  new() { Id = $"builtin.{game}.ammo", Builtin = "ammo", Name = "Infinite ammunition",
                           Description = "Keeps carried firearms loaded to their normal capacity." },
                   new() { Id = "builtin.file1.unlock", Builtin = "unlock", Name = "Unlock everything",
                           Description = "Unlocks all File #1 scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep these unlocks." }
-              };
+              }.Where(g => game == "file1" || g.Builtin != "unlock").ToList();
     public static string Folder(string game) => Path.Combine(Settings.Home, "cheats", game);
     public static bool DataAddress(uint a,
                                    int size) => size > 0 && a >= 0x370000 &&
@@ -127,7 +127,9 @@ public static class Cheats {
             try {
                 if (new FileInfo(file).Length > 1024 * 1024)
                     throw new IOException("Cheat file exceeds 1 MB.");
-                result.AddRange(Parse(File.ReadAllText(file), Path.GetFileName(file)));
+                string identity = Path.GetFileName(file);
+                if (game == "file2") identity = "file2/" + identity;
+                result.AddRange(Parse(File.ReadAllText(file), identity));
             } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
                 result.Add(new CheatGroup { Id = "invalid." + Path.GetFileName(file),
                                             Name = Path.GetFileName(file), Error = error.Message });
@@ -137,7 +139,7 @@ public static class Cheats {
     }
     public static string Export(Settings settings, string logs, List<ModManifest>? mods = null) {
         mods ??= new();
-        if ((!settings.CheatsEnabled && mods.Count == 0) || settings.Game.Id != "file1")
+        if (!settings.CheatsEnabled && mods.Count == 0)
             return "";
         var selected = (settings.CheatsEnabled ? settings.EnabledCheats : new List<string>()).ToHashSet(StringComparer.Ordinal);
         var writes = new List<CheatWrite>();
@@ -152,6 +154,8 @@ public static class Cheats {
         Mods.Append(mods, writes, builtins);
         if (writes.Count == 0 && builtins.Count == 0)
             return "";
+        if (settings.ResolvedCoopMode != "offline")
+            throw new IOException("Cheats are available in Play alone. Disable cheats before hosting or joining co-op.");
         if (writes.Count > 4096)
             throw new IOException("Select fewer cheats (4096 write limit).");
         string file = Path.Combine(logs, "cheats.txt");

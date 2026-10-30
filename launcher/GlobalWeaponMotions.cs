@@ -118,7 +118,8 @@ internal static class GlobalWeaponMotions {
         return stream.ToArray();
     }
 
-    internal static void Prepare(string discRoot, string logs) {
+    internal static void Prepare(string discRoot, string logs, string game = "file1") {
+        _ = DiscImport.ExpectedElf(game);
         using var archive = File.OpenRead(Path.Combine(discRoot, "NETBIO00.DAT"));
         byte[] Read(long offset, int count) {
             if (offset < 0 || count < 0 || offset > archive.Length - count)
@@ -154,10 +155,16 @@ internal static class GlobalWeaponMotions {
             if (item.Size > Maximum) throw new IOException("Player motion member is too large.");
             return Read(item.Offset, item.Size);
         }
-        var sources = new[] { "pc_000.bin", "pc_001.bin", "pc_002.bin", "pc_028.bin", "pc_035.bin", "pc_041.bin" }
+        var sourceNames = game == "file2"
+            ? rom.Keys.Where(n => n.StartsWith("pc_", StringComparison.Ordinal) && n.EndsWith(".bin", StringComparison.Ordinal) &&
+                                  int.TryParse(n.AsSpan(3, n.Length - 7), out int id) && id is >= 200 and <= 320).Order(StringComparer.Ordinal).ToArray()
+            : new[] { "pc_000.bin", "pc_001.bin", "pc_002.bin", "pc_028.bin", "pc_035.bin", "pc_041.bin" };
+        if (sourceNames.Length == 0) throw new IOException("Player weapon motion sources are missing.");
+        var sources = sourceNames
                           .Select(Member).ToArray();
         string folder = Path.Combine(logs, "global-motions"); System.IO.Directory.CreateDirectory(folder);
-        foreach (int id in Enumerable.Range(1, 82).Concat(new[] { 777, 994, 995, 996, 997, 998, 999 })) {
+        var targets = game == "file2" ? Enumerable.Range(200, 121) : Enumerable.Range(1, 82).Concat(new[] { 777 });
+        foreach (int id in targets.Concat(new[] { 994, 995, 996, 997, 998, 999 })) {
             string name = $"pc_{id:000}.bin";
             if (!rom.ContainsKey(name)) continue;
             File.WriteAllBytes(Path.Combine(folder, name.ToUpperInvariant()), Merge(Member(name), sources));

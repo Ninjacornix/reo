@@ -2,9 +2,11 @@ using System.Runtime.InteropServices;
 
 namespace Outbreak.Launcher;
 public sealed partial class Controller {
-    sealed record PhysicalPad(Pad Pad, long Seen, string Transport);
+    sealed record PhysicalPad(Pad Pad, string Transport);
     readonly Dictionary<nint, string> deviceNames = new();
-    readonly Dictionary<string, PhysicalPad> dualSense = new();
+    readonly Dictionary<string, PhysicalPad> dualSense = new(StringComparer.OrdinalIgnoreCase);
+    readonly Func<RawInputPads.Snapshot?> discoverPads;
+    readonly Func<long> inputClock;
     readonly Dictionary<uint, Pad> xbox = new();
     readonly Func<uint, Pad?> readXbox;
     Settings config = new();
@@ -18,11 +20,10 @@ public sealed partial class Controller {
         config = value;
     }
     public IReadOnlyList<InputDevice> AvailableDevices =>
-        dualSense.Where(d => Environment.TickCount64 - d.Value.Seen < 2000)
-            .Select((d, i) =>
+        dualSense.Select((d, i) =>
                         new InputDevice("ps:" + d.Key,
                                         "DualSense" + (dualSense.Count > 1 ? " " + (i + 1) : "") +
-                                            " (" + d.Value.Transport + ")",
+                                            (d.Value.Transport == "Unknown" ? "" : " (" + d.Value.Transport + ")"),
                                         "playstation"))
             .Concat(xbox.Keys.Order().Select(
                 slot => new InputDevice("xbox:" + slot, "Xbox / XInput controller " + (slot + 1),
@@ -50,9 +51,10 @@ public sealed partial class Controller {
         RawState = State = new();
     }
     public void Poll() {
-        long now = Environment.TickCount64;
+        long now = inputClock();
         if (now - lastDiscovery >= 500) {
             lastDiscovery = now;
+            RefreshDualSense();
             for (uint slot = 0; slot < 4; ++slot) {
                 Pad? state = readXbox(slot);
                 if (state == null)

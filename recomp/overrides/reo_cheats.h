@@ -7,14 +7,21 @@
 #include <cstdlib>
 
 namespace reo::cheats {
+#if defined(REO_GAME_FILE2)
+inline constexpr Game selectedGame = Game::File2;
+inline constexpr uint32_t frameService = 0x1edcb0u;
+#else
+inline constexpr Game selectedGame = Game::File1;
+inline constexpr uint32_t frameService = 0x19f6c0u;
+#endif
 inline std::vector<Write> active;
 inline unsigned builtinFlags = 0;
 inline void (*originalService)(uint8_t*, R5900Context*, PS2Runtime*) = nullptr;
 inline void service(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
     // Original per-frame service, on the guest owner. Never write from a host timer.
-    if (ctx->pc == 0x19f6c0u) {
+    if (ctx->pc == frameService) {
         apply(active, ram, false);
-        const auto result = applyBuiltins(builtinFlags, ram);
+        const auto result = applyBuiltins(builtinFlags, ram, selectedGame);
         static bool unlocksReported = false;
         if (result.unlocks && !unlocksReported) {
             unlocksReported = true;
@@ -52,13 +59,17 @@ inline void install(PS2Runtime& runtime) {
     auto program = parseProgram(input);
     active = std::move(program.writes);
     builtinFlags = program.builtins;
+    if (selectedGame == Game::File2 && (builtinFlags & UnlockEverything))
+        throw std::runtime_error("Progression unlocks are not supported for File #2");
     if (active.empty() && !builtinFlags)
         return;
-    originalService = runtime.lookupFunction(0x19f6c0u);
+    originalService = runtime.lookupFunction(frameService);
     if (!originalService || originalService == service)
         throw std::runtime_error("Cheat frame service unavailable");
     apply(active, runtime.memory().getRDRAM(), true);
-    runtime.registerFunction(0x19f6c0u, service);
+    runtime.registerFunction(frameService, service);
+    if (selectedGame == Game::File2)
+        std::fprintf(stderr, "[CHEATS-FILE2-1] health infection ammo data\n");
     std::fprintf(stderr,
                  "[CHEATS] loaded %zu data writes, builtins=%u; original frame service retained\n",
                  active.size(), builtinFlags);

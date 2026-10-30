@@ -311,7 +311,8 @@ File #2 is now selectable in the WPF launcher on `file2-port`. Disc checking and
 import use the pinned SLUS-20984 v1.05 ELF digest, independently of any local
 reference ELF. Import removal, existing-build selection, readiness checks and
 launching follow the selected game. File #2 co-op was added in the subsequent
-work recorded below; its cheats and mods are not enabled.
+work recorded below. Gameplay cheats and randomizer mods were added on
+2026-10-28 (see below and `FILE2_RANDOMIZER.md`).
 
 Packaged setup supports a separate `build-kit-file2` directory, or
 `build-inputs-file2.zip` with `file2KitSha256` and `file2InputsSha256` distribution
@@ -579,3 +580,76 @@ A File #2 session launched from the launcher stopped at ~110 s with
   active, no errors or missing functions. One early run froze at ~32 s (host loop
   stopped, no error); 12 later runs with a hang catcher (cdb attach on stall) did not
   reproduce it. File #1 with the worker: 2 runs to scenario, clean.
+
+### File #2 gameplay cheats (2026-10-28)
+
+Baseline: Windows x64, `develop` at `9d9e089`, SLUS-20984 NTSC-U v1.05.
+The launcher blocked File #2 cheats and bootstrap installed the hook only for
+File #1. File #2 now exposes Full health, No infection, Infinite ammunition,
+and compatible `.pnach` data writes. Selections and imports are game-specific;
+File #1 selection identities are preserved. Cheats require offline play.
+Older File #2 executables are rejected when cheats are selected.
+
+The original frame service is retained at `0x1EDCB0`. Original opcode readers
+and the live Training Ground RAM establish these File #2 fields:
+
+| Field | Address / actor offset | Evidence |
+|---|---|---|
+| Gameplay / selected player | `0x4DB390` / `+0x1D` | Matched main data references; live RAM |
+| Actor base / stride | `0x4C5E10` / `0x1100` | `0x609F38..0x609F50` |
+| Health / maximum | `+0x540` / `+0x542` | `0x59B44C`, live 2300/2300; File #1 offsets differ |
+| Infection | `+0xBC4` | `0x684F2C..0x685014` |
+| Dead-state guard | `+0xBE8` | `0x6102C0` |
+| Inventory handles | `+0xC94`, five slots | `0x5A1318`; live carried/personal slots |
+| Item pool / stride | `0x3E1C20` / 60 | `0x5D0450..0x5D0478` |
+| Metadata / loaded count | `0x7ACA00` / `0x7ADA20` | `0x5B0640..0x5B066C` |
+
+Validation: both native game targets build; Release launcher builds without
+warnings. `cmd /c tools\cheat_check\run.bat` passes 76 File #2 checks, the
+55 existing cheat checks and existing mod fixtures. The new checks cover all
+four player slots, complete RAM write boundaries, dead/menu guards, firearm
+categories, catalogue bounds and independent effects. Launcher `--self-test`
+passes 710 checks, including export isolation, master switch and co-op rejection.
+
+A first bounded run exposed the differing health offsets and was corrected.
+The rebuilt 90-second controlled run then loaded Training Ground with a private
+card. Data cheats continuously set living player health to 1200, infection to
+1234 and the personal gun to zero rounds before built-ins ran. Both 65/80-second
+RAM snapshots show 2300/2300 HP, zero infection and seven rounds; a separate
+`0xCAFEBABE` data write also applied. Native diagnostics report one firearm
+slot. Clean close, exit 0; no missing functions or device loss. Private evidence:
+`build-ninja/file2-cheats/live-verification.json` and
+`build-ninja/smoke/20261028-095634-file2-cheats-controlled/`.
+This verifies restoration after controlled writes, not natural enemy damage,
+firing cycles, full-scenario coverage or multiplayer cheat replication.
+
+**Unlock everything remains File #1 only.** File #2 progression fields are not
+implemented; its native hook rejects that built-in before applying any writes.
+No release kit was exported or published.
+
+### File #2 randomizer support (2026-10-28)
+
+The launcher and native target now support the File #2 Randomizer package with
+shared item/exclusion/seed rules, protected progression and starting equipment,
+scripted enemy-family preservation, canonical host-synchronized spawn plans and
+six-family room limits. File #2 has separate mod imports/preferences and a
+supported native roster. Global data/models/material aliases are fitted within
+each scenario's original capacities; unavailable floor-model definitions cannot
+become replacements. See `FILE2_RANDOMIZER.md` for original-code evidence,
+format details and the complete validation scope.
+
+Both native targets and the Release launcher build. 634 File #2 randomizer
+checks and 707 release launcher checks pass, as do existing File #1 fixtures and cheat
+checks. Actual-disc asset generation and native table validation pass all 12
+scenario banks. Bounded live runs cover Training Ground and Wild Things;
+Wild Things seed 43 with exclusions `[0,309]` changed 89 eligible items and
+prepared a 34-record enemy plan, reached a rendered controllable room and
+closed cleanly with exit 0. Extended final-build checks also verified normal
+pickup/equip/firing of a randomized rocket launcher without cheats and completed
+zombie-to-dog native reconstruction, visible attacks, received gunfire and death.
+The latter damage test used player health/ammo builtins; enemy health remained
+under the original game code. A reproduced mid-frame texture-scratch/UI overlap
+was fixed with exclusive loading scratch and restoration of all three native
+aliases. Read-only observers confirmed intact UI pointers and no null DMA jobs.
+See `FILE2_RANDOMIZER.md` for receipts and scope. Full scenarios, save/resume,
+every profile and live co-op combat remain unverified.

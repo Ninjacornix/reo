@@ -201,7 +201,7 @@ public partial class MainWindow : Window {
         UpdateInputUi();
         bool running = game.Running;
         StopButton.IsEnabled = running;
-        CheatControls.IsEnabled = settings.Game.Id == "file1" && !running && !launching;
+        CheatControls.IsEnabled = !running && !launching;
         if (++slowUiTick >= 30) {
             slowUiTick = 0;
             RefreshGameUi();
@@ -641,7 +641,7 @@ public partial class MainWindow : Window {
             if (testMod >= 0) {
                 if (testMod + 1 >= args.Length)
                     throw new ArgumentException("--test-mod requires an installed mod ID.");
-                snapshot.EnabledMods = new() { args[testMod + 1] };
+                snapshot.ActiveMods = new() { args[testMod + 1] };
                 snapshot.CheatsEnabled = false;
                 snapshot.EnabledCheats.Clear();
                 snapshot.CoopMode = "offline";
@@ -650,7 +650,7 @@ public partial class MainWindow : Window {
                 diagnosticRoute = "gameplay";
             }
             if (args.Contains("--test-no-mods")) {
-                snapshot.EnabledMods.Clear();
+                snapshot.ActiveMods.Clear();
                 snapshot.CheatsEnabled = false;
                 snapshot.EnabledCheats.Clear();
             }

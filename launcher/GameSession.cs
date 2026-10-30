@@ -55,7 +55,7 @@ public sealed class GameSession {
         byte[]? randomizerConfiguration = null;
         HostRandomizerConfiguration = null;
         randomizerStopReason = null;
-        if (onlineEnvironment.Count > 0 && settings.Game.Id == "file1") {
+        if (onlineEnvironment.Count > 0) {
             var shared = await RandomizerSession.Resolve(settings, selectedMods, cancel);
             randomizerConfiguration = shared.Bytes;
             selectedMods = shared.Mods;
@@ -114,6 +114,9 @@ public sealed class GameSession {
         var cached = await Task.Run(() => GameImageCache.Prepare(
             Path.Combine(Settings.Home, "game-cache"), runtimeFiles, cancel), cancel);
         string image = cached.Image, hash = cached.Sha256;
+        if (selectedGame.Id == "file2" && selectedMods.Count > 0 &&
+            !HasMarker(image, "[MOD-FILE2-1] installed"))
+            throw new IOException("File #2 mods need the updated game build. Rebuild or update the game.");
         if (randomizerConfiguration != null && !HasMarker(image, RandomizerSession.Capability))
             throw new IOException("This shared session needs the updated game build with stable randomizer support.");
         Logs = Path.Combine(Settings.Home, "sessions", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
@@ -175,6 +178,9 @@ public sealed class GameSession {
         }
         if (cheatFile.Length != 0)
         {
+            if (selectedGame.Id == "file2" &&
+                !HasMarker(image, "[CHEATS-FILE2-1] health infection ammo data"))
+                throw new IOException("File #2 cheats need the updated game build. Rebuild or update the game.");
             if (File.ReadLines(cheatFile).Contains("builtin unlock") &&
                 !HasMarker(image, "[CHEATS-UNLOCK-1] progression"))
                 throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
@@ -187,7 +193,7 @@ public sealed class GameSession {
                     throw new IOException("This Randomizer needs the updated game build with global item support.");
                 if (!HasMarker(image, "[MOD-GLOBAL-MODELS-1] installed"))
                     throw new IOException("This Randomizer needs the updated game build with global item models.");
-                string catalogue = GlobalItemCatalogue.Prepare(discRoot, Logs!);
+                string catalogue = GlobalItemCatalogue.Prepare(discRoot, Logs!, selectedGame.Id);
                 Set("REO_MOD_GLOBAL_ITEM_CATALOGUE", catalogue);
             }
             if (!HasMarker(image, "[MOD-ITEM-RANDOMIZER-1] installed seed=%u"))

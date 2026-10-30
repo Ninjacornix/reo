@@ -15,6 +15,39 @@ import shutil
 import subprocess
 
 from compilation_batches import GENERATED_BATCH_SIZE
+from generate_game import GAMES
+
+MOVIE_ALLOCATOR_SHA256 = "259c858fe1af5daff2a8a61129e333bf8dff0daa52219f0eeea63d63150a4143"
+
+
+def reviewed_movie_allocator(build, compdb, target_name, pinned_sha256=MOVIE_ALLOCATOR_SHA256):
+    """Require CMake's reviewed provider object, rather than the archive allocator."""
+    build = Path(build).resolve()
+    vendor = build / "parallel-gs-source/Granite/vulkan/memory_allocator.cpp"
+    source = build / "recomp/reo_movie_memory_allocator.cpp"
+    if sha(vendor) != pinned_sha256:
+        raise ValueError("Movie allocator provider requires the reviewed pinned Granite source")
+    original = vendor.read_text()
+    needle = "::CloseHandle(external->handle);"
+    if original.count(needle) != 1:
+        raise ValueError("Pinned movie allocator must have exactly one reviewed handle close")
+    patched = original.replace(needle,
+        "const bool reo_movie_handle_closed = ::CloseHandle(external->handle) != FALSE;\n"
+        "\t\treo_movie_import::provider_closed(reinterpret_cast<uintptr_t>(external->handle), reo_movie_handle_closed);")
+    expected = '#include "movie_runtime/import_receipt.h"\n' + patched
+    if source.read_text() != expected:
+        raise ValueError("CMake movie allocator differs from the reviewed source-preserving transform")
+    rows = [r for r in compdb if Path(r["file"]).resolve() == source and
+            "reo_movie_allocator_native.dir" in r["command"]]
+    if len(rows) != 1 or not rows[0].get("output"):
+        raise ValueError("Audited build graph must contain exactly one movie allocator OBJECT compilation")
+    prefix = "build recomp/" + target_name + ".exe:"
+    link = next((line.replace("\\", "/") for line in (build / "build.ninja").read_text().splitlines()
+                 if line.replace("\\", "/").startswith(prefix)), "")
+    direct_inputs = link.split(" | ", 1)[0].split(" || ", 1)[0].split()
+    if rows[0]["output"].replace("\\", "/") not in direct_inputs:
+        raise ValueError("Movie allocator provider must be a direct executable link object")
+    return source, rows[0]
 
 
 def sha(path):
@@ -34,8 +67,35 @@ def arguments(command):
         ctypes.windll.kernel32.LocalFree(ctypes.cast(values, ctypes.c_void_p))
 
 
-def export(root, build, dependency, destination, recompiler, recipe_plan=None):
+def compile_options(command, relocate):
+    args = arguments(command)
+    flags = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg in {"/D", "-D", "/I", "-I"}:
+            arg += args[i + 1]
+            i += 1
+        if arg.startswith(("/I", "-I")):
+            flags.append("/I" + relocate(arg[2:]))
+        elif arg.startswith(("/D", "-D")):
+            if "CMAKE_INTDIR" not in arg:
+                flags.append("/D" + arg[2:])
+        elif arg in {"/Od", "/fp:precise", "/arch:AVX", "/arch:AVX2"}:
+            flags.append(arg)
+        i += 1
+    return flags
+
+
+def export(root, build, dependency, destination, recompiler, recipe_plan=None, game="file1"):
     root, build, dependency, destination = [Path(p).resolve() for p in (root, build, dependency, destination)]
+    profile = GAMES[game]
+    target_name = "reo_recomp_file2" if game == "file2" else "reo_recomp"
+    metadata_root = root / "recomp/config" / ("file2" if game == "file2" else "")
+    safety = build / ("public-safety-file2" if game == "file2" else "public-safety")
+    for name in ("compdb.json", "source-unit-inventory.json"):
+        if not (safety / name).is_file():
+            raise FileNotFoundError(f"An audited {target_name} build graph is required: {safety / name}")
     if destination.exists():
         raise FileExistsError("Build kit outputs are immutable; choose a fresh directory")
     destination.mkdir(parents=True)
@@ -59,10 +119,16 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
     copy(root / "network/native/automatic_account.h", "source/network/native/automatic_account.h")
     for name in ("tools/parallel_gs_backend/resident_gs/scanout_spirv.hpp",
                  "runtime/gs/frame_pacing.h", "runtime/gs/shader_warmup.h",
-                 "runtime/timer/windows_resolution.h"):
+                 "runtime/timer/windows_resolution.h", "runtime/audio/host_bridge.h"):
         copy(root / name, "source/" + name)
-    # Keep the new mod hook available in development kits before it is committed.
-    for name in ("recomp/overrides/reo_mods.h", "runtime/mods/weapon_shuffle.h", "runtime/mods/enemy_randomizer.h", "runtime/mods/enemy_spawn_randomizer.h"):
+    # These authored hooks must also be present in development exports before
+    # their new files are committed. Both game targets include this closure.
+    for name in ("recomp/overrides/reo_cheats.h", "recomp/overrides/reo_mods.h",
+                 "recomp/overrides/reo_mods_file2.h", "recomp/overrides/reo_weapon_motions.h",
+                 "runtime/cheats/data_cheats.h", "runtime/cheats/outbreak_cheats.h",
+                 "runtime/mods/game_layout.h", "runtime/mods/weapon_shuffle.h",
+                 "runtime/mods/global_items.h", "runtime/mods/enemy_randomizer.h",
+                 "runtime/mods/enemy_spawn_randomizer.h"):
         copy(root / name, "source/" + name)
     for part in ["ps2xRuntime", "ps2xRecomp/include"]:
         for file in (dependency / part).rglob("*"):
@@ -86,34 +152,24 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
 
     def relocate(path):
         absolute = Path(path).resolve()
+        if game == "file2" and absolute.is_relative_to(root / "recomp/config/output_file2"):
+            relative = absolute.relative_to(root / "recomp/config/output_file2")
+            if relative.parts and relative.parts[0] in {"output", "output_extra", "output_ovl", "output_overlay", "local_source_catalogues"}:
+                return "{generated}/" + relative.as_posix()
         try:
             return "{work}/project/" + absolute.relative_to(root).as_posix()
         except ValueError:
             raise ValueError("Build references an unexported external path: " + str(path))
 
     def options(command):
-        args = arguments(command)
-        flags = []
-        i = 0
-        while i < len(args):
-            arg = args[i]
-            if arg in {"/D", "-D", "/I", "-I"}:
-                arg += args[i + 1]
-                i += 1
-            if arg.startswith(("/I", "-I")):
-                flags.append("/I" + relocate(arg[2:]))
-            elif arg.startswith(("/D", "-D")):
-                if "CMAKE_INTDIR" not in arg:
-                    flags.append("/D" + arg[2:])
-            elif arg in {"/Od", "/fp:precise", "/arch:AVX", "/arch:AVX2"}:
-                flags.append(arg)
-            i += 1
-        return flags
+        return compile_options(command, relocate)
 
-    compdb = json.loads((build / "public-safety/compdb.json").read_text())
+    compdb = json.loads((safety / "compdb.json").read_text())
+    other_target = "reo_recomp.dir" if game == "file2" else "reo_recomp_file2.dir"
+    compdb = [r for r in compdb if other_target not in r["command"]]
     records = {str(Path(row["file"]).resolve()).lower(): row for row in compdb
                if str(row["file"]).endswith((".cpp", ".cxx"))}
-    inventory = json.loads((build / "public-safety/source-unit-inventory.json").read_text())
+    inventory = json.loads((safety / "source-unit-inventory.json").read_text())
     copied = set()
     units = []
     for record in inventory:
@@ -123,6 +179,9 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
             if kind == "main/overlay-generated":
                 continue
             source = Path(file).resolve()
+            if source == build / "recomp/reo_movie_memory_allocator.cpp":
+                # Appended with a fixed identity below, preserving existing cache keys.
+                continue
             row = records.get(str(source).lower())
             if row is None:
                 # A unity member inherits the flags of its owning translation unit.
@@ -156,11 +215,18 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
         units.append({"id": "runtime" + str(len(units)), "sources": [relocate(path)], "archive": "runtime",
                       "options": options(lines[n + 1])})
 
-    sample = next(r for r in compdb if "unity_0_cxx.cxx" in r["file"] and "reo_recomp.dir" in r["command"])
+    allocator, allocator_row = reviewed_movie_allocator(build, compdb, target_name)
+    copy(allocator, "source/" + allocator.relative_to(root).as_posix())
+    units.append({"id": "movieAllocatorNative", "sources": [relocate(allocator)],
+                  "options": options(allocator_row["command"])})
+
+    sample = next(r for r in compdb if "unity_0_cxx.cxx" in r["file"] and target_name + ".dir" in r["command"])
     generated_options = options(sample["command"])
+    if "/DREO_GAME_" + game.upper() not in generated_options:
+        raise ValueError("The audited compilation graph targets a different game")
     for folder, name in [("vu/specialized", "reo_vu_specialized_generated.cpp"),
                          ("vu/whole", "reo_vu_whole_registered_generated.cpp")]:
-        original = next(r for r in compdb if str(r["file"]).endswith(name))
+        original = next(r for r in compdb if str(r["file"]).endswith(name) and target_name + ".dir" in r["command"])
         unit_options = options(original["command"])
         # Replace developer-only generated include directories with private ones.
         unit_options = [o for o in unit_options if "m2-vu-" not in o]
@@ -175,11 +241,11 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
                   ("legacy", "output_overlay", "*.cpp", 1)]]
     cache = (build / "CMakeCache.txt").read_text()
     match = re.search(r"(?m)^REO_RECOMP_OD_SOURCES:STRING=(.*)$", cache)
-    od_names = match[1].split(";") if match and match[1] else []
+    od_names = match[1].split(";") if game == "file1" and match and match[1] else []
     if od_names:
         for group in groups:
             group["exclude"] = od_names
-        old_generated = json.loads((build / "public-safety/current-generated-sources.json").read_text())
+        old_generated = json.loads((safety / "current-generated-sources.json").read_text())
         for n, name in enumerate(od_names):
             paths = [Path(p) for p in old_generated if Path(p).name == name]
             if len(paths) != 1:
@@ -190,7 +256,7 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
     # Link only independent upstream libraries; Microsoft SDK libs are resolved
     # from the user's toolchain and never copied into the distribution.
     ninja = (build / "build.ninja").read_text()
-    start = ninja.index("build recomp\\reo_recomp.exe:")
+    start = ninja.index("build recomp\\" + target_name + ".exe:")
     variables = ninja[start:ninja.index("\nbuild ", start + 6)]
     libs = re.search(r"(?m)^  LINK_LIBRARIES = (.*)$", variables)[1].split()
     independent, system = [], []
@@ -207,31 +273,48 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None):
         elif value not in system:
             system.append(value)
     shaders = []
-    for source in (build / "recomp/reo_recomp-present-shaders").glob("*.spv"):
+    shader_sources = [build / "recomp" / (target_name + "-present-shaders") / name for name in (
+        "present_native.frag.spv", "present_opaque.vert.spv", "present_smaa_blend.frag.spv",
+        "present_smaa_edge.frag.spv", "present_smaa_weights.frag.spv")]
+    shader_sources += [root / "tools/parallel_gs_backend/movie_runtime/assets/movie_ipu_csc_nv12.spv"]
+    shader_sources += [root / "tools/parallel_gs_backend/resident_gs/shaders" / name for name in (
+        "resident_image_upload.spv", "clear_setup.spv", "clear_bounds.spv", "clear_write.spv", "resident_readback.spv")]
+    for source in shader_sources:
+        if not source.is_file():
+            raise FileNotFoundError("A portable GPU helper shader is missing: " + str(source))
         copy(source, "shaders/" + source.name)
         shaders.append({"source": "{kit}/shaders/" + source.name,
                         "destination": "reo-gpu-present/" + source.name})
-    plan = {"format": 1, "runtimeAbi": "outbreak-local-1", "units": units, "sourceGroups": groups,
+    plan = {"format": 1, "game": game, "elfSha256": profile["sha256"],
+            "runtimeAbi": "outbreak-local-1" if game == "file1" else "outbreak-file2-local-1", "units": units, "sourceGroups": groups,
             "compileOptions": ["/I{work}/project/tools/vu_whole_aot", "/I{generated}/output", "/I{generated}/output_overlay",
                                "/I{work}/project/third_party/PS2Recomp/ps2xRuntime/src/lib",
-                               "/I{generated}/vu/specialized", "/I{generated}/vu/whole"],
+                               "/I{generated}/vu/specialized", "/I{generated}/vu/whole"] +
+                              (["/DREO_GAME_FILE2"] if game == "file2" else []),
             "independentInputs": independent,
             "linkOptions": ["/MACHINE:X64", "/SUBSYSTEM:CONSOLE", "/MANIFEST:EMBED",
                             "/MANIFESTINPUT:{kit}/tools/native.manifest", *system],
             "copyOutputs": shaders, "copyLocalCrt": True}
-    source_recipes = json.loads(Path(recipe_plan or root / "recomp/config/local_source_recipes.json").read_text())
+    source_recipes = json.loads(Path(recipe_plan or metadata_root / "local_source_recipes.json").read_text())
+    if source_recipes.get("elfSha256") != profile["sha256"]:
+        raise ValueError("Source recipes target a different game ELF")
+    reconstructed = {r["destination"] for r in source_recipes["recipes"]}
+    for record in inventory:
+        for file, kind in zip(record["sources"], record["kinds"]):
+            if kind == "copied-body" and Path(file).resolve().relative_to(root).as_posix() not in reconstructed:
+                raise ValueError("Copied-body source has no corresponding reconstruction recipe: " + str(file))
     plan["generatedSourceOverrides"] = {
         row["source"]: "{work}/project/" + row["destination"] for row in source_recipes["recipes"]
         if row["destination"].startswith("generated-overrides/")}
     (destination / "compile-plan.json").write_text(json.dumps(plan, indent=2) + "\n")
-    for source in (root / "recomp/config").glob("*.json"):
+    for source in metadata_root.glob("*.json"):
         if source.name.startswith("local_"):
             copy(source, "metadata/" + source.name)
     (destination / "metadata/local_source_recipes.json").write_text(json.dumps(source_recipes, indent=2))
-    for source in [root / "recomp/config/outbreak_ghidra_functions.csv", root / "recomp/config/extra_functions.csv",
-                   root / "recomp/config/outbreak.toml"]:
+    for source in [metadata_root / profile["functions"], metadata_root / "extra_functions.csv",
+                   metadata_root / profile["policy"]]:
         copy(source, "metadata/" + source.name)
-    for source in (root / "recomp/config/overlay_maps").glob("*.csv"):
+    for source in (metadata_root / "overlay_maps").glob("*.csv"):
         copy(source, "metadata/overlay_maps/" + source.name)
     for parent in [root / "tools/local_build", root / "tools/vu_whole_aot"]:
         for source in parent.glob("*.py"):
@@ -273,5 +356,6 @@ if __name__ == "__main__":
                         help="Fresh independent compiler built from the exported patched dependency revision")
     parser.add_argument("--recipe-plan", type=Path,
                         help="Instrumentation recipes verified against this recompiler's fresh output")
+    parser.add_argument("--game", choices=GAMES, default="file1")
     args = parser.parse_args()
-    export(args.root, args.build, args.dependency, args.output, args.recompiler, args.recipe_plan)
+    export(args.root, args.build, args.dependency, args.output, args.recompiler, args.recipe_plan, args.game)

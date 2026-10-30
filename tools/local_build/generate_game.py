@@ -86,6 +86,35 @@ def validate_mapped_ranges(output, function_map, skip=()):
                                  "rebuild the patched recompiler before compiling game sources")
 
 
+def prepare_recipe_sources(staging, recipes):
+    """Copy plain recipe bases and return the passes requiring source auditing."""
+    staging = Path(staging)
+    by_pass, source_modes = {}, {}
+    for recipe in recipes:
+        relative = Path(recipe["source"])
+        if not relative.parts or relative.is_absolute() or '..' in relative.parts:
+            raise ValueError("Audit recipe source escapes generated storage")
+        if relative.parts[0] == "output":
+            tag = "main"
+        elif relative.parts[:1] == ("output_ovl",) and len(relative.parts) == 3:
+            tag = relative.parts[1]
+        else:
+            raise ValueError("Unsupported audit recipe source pass")
+        audit = recipe.get("sourceAudit", True)
+        if type(audit) is not bool or (relative in source_modes and source_modes[relative] != audit):
+            raise ValueError("Conflicting recipe source audit modes")
+        source_modes[relative] = audit
+        if not audit:
+            # Plain movie observers use the exact ordinary locally generated
+            # function, not a differently instrumented source-audit function.
+            target = staging / "audit_sources" / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(staging / relative, target)
+        else:
+            by_pass.setdefault(tag, set()).add(relative)
+    return by_pass
+
+
 def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False, game="file1"):
     recompiler, disc, metadata, destination = map(Path, (recompiler, disc, metadata, destination))
     profile = GAMES[game]
@@ -215,6 +244,7 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
         overlay_elf.write_bytes(wrapped)
         out = overlays / tag
         invoke(tag, overlay_elf, mapped, out)
+        validate_mapped_ranges(out, mapped)
         header = out / "ps2_recompiled_functions.h"
         private_header = tag + "_functions.h"
         (out / private_header).write_text(header.read_text().replace(
@@ -254,18 +284,7 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
         # tracked bodies. Keep these recipe inputs separate from the ordinary
         # game functions selected by the compile plan.
         recipes = json.loads((metadata / "local_source_recipes.json").read_text())["recipes"]
-        by_pass = {}
-        for recipe in recipes:
-            relative = Path(recipe["source"])
-            if relative.is_absolute() or '..' in relative.parts:
-                raise ValueError("Audit recipe source escapes generated storage")
-            if relative.parts[0] == "output":
-                tag = "main"
-            elif relative.parts[:1] == ("output_ovl",) and len(relative.parts) == 3:
-                tag = relative.parts[1]
-            else:
-                raise ValueError("Unsupported audit recipe source pass")
-            by_pass.setdefault(tag, set()).add(relative)
+        by_pass = prepare_recipe_sources(staging, recipes)
         for tag, sources in by_pass.items():
             with tempfile.TemporaryDirectory(prefix="audit-" + tag + "-", dir=work) as temporary:
                 audit_output = Path(temporary)

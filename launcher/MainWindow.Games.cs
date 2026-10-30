@@ -79,6 +79,7 @@ public partial class MainWindow {
         ElfPath.Text = settings.GetElf(root);
         bool present = Playable(settings.Game.Id) && settings.FilesPresent(root);
         SelectedGameLabel.Text = settings.Game.Name;
+        UpdateAudioAvailability();
         RefreshBackdrop();
         GamePicker.SelectedValue = settings.Game.Id;
         GamePicker.IsEnabled =
@@ -115,7 +116,7 @@ public partial class MainWindow {
         RefreshImportUi();
         if (PageCheats.Visibility == Visibility.Visible && cheatsGame != settings.Game.Id)
             RefreshCheats();
-        ModControls.IsEnabled = settings.Game.Id == "file1" && !game.Running && !launching;
+        ModControls.IsEnabled = !game.Running && !launching;
         if (PageMods.Visibility == Visibility.Visible && modsGame != settings.Game.Id)
             RefreshMods();
     }
