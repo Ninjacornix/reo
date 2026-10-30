@@ -75,6 +75,8 @@ static class SelfTest {
         GameImageCacheTests.Run(Check);
         Task.Run(() => AutomaticAccountTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => UpdateTests.Run(Check)).GetAwaiter().GetResult();
+        BuildPathLinksTests.Run(Check);
+        LocalBuildPayloadTests.Run(Check);
         Task.Run(() => LocalGameBuildTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => File2LauncherTests.Run(Check)).GetAwaiter().GetResult();
         Task.Run(() => ExistingGameBuildTests.Run(Check)).GetAwaiter().GetResult();
