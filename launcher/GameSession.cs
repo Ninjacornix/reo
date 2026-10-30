@@ -9,6 +9,7 @@ public sealed class GameSession {
     public Process? Process { get; private set; }
     public string? Logs { get; private set; }
     public ImportedDisc? Imported { get; private set; }
+    public OriginalAssetExport? OriginalAssets { get; private set; }
     public string? NetworkStatus { get; private set; }
     volatile string? graphicsStatus;
     public string? GraphicsStatus => graphicsStatus;
@@ -39,6 +40,8 @@ public sealed class GameSession {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var graphics = GraphicsOptions.From(settings);
+        OriginalAssets = null;
+        var selectedAssetPaks = AssetPaks.Selected(settings);
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
         if (diagnosticColdCache && diagnosticRoute == null)
             throw new InvalidOperationException("A private shader cache requires a diagnostic run.");
@@ -64,19 +67,20 @@ public sealed class GameSession {
         NetworkStatus = null;
         graphicsStatus = null;
         graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        string sourceExe = settings.GetExe(), iso = settings.GetIso();
+        string sourceExe = settings.GetExe(), iso = settings.GetGameSource();
         var selectedGame = settings.Game;
         if (!AppLayout.Packaged(root) && !File.Exists(sourceExe))
             throw new FileNotFoundException(
                 "This game build is missing. Extract the complete release archive.");
         if (!File.Exists(iso))
-            throw new FileNotFoundException("Choose the selected game's ISO in Game files.");
-        Imported = await DiscImport.Ensure(
-            iso, selectedGame, DiscImport.ExpectedElf(settings, root), importProgress, cancel);
+            throw new FileNotFoundException("Choose the selected game's " + (settings.UsesGamePak() ? "PAK" : "ISO") + " in Game files.");
+        Imported = await settings.PrepareGame(importProgress, cancel);
         cancel.ThrowIfCancellationRequested();
         settings.SetImport(Imported.Root);
         if (AppLayout.Packaged(root))
             sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel, game: selectedGame.Id);
+        if (!settings.UsesGamePak() && settings.WantsOriginalAssetPaks(selectedGame.Id))
+            OriginalAssets = await AssetExports.Ensure(Imported, selectedGame.Id, importProgress, cancel);
         string discRoot = Path.Combine(Imported.Root, "data"), discElf = Imported.Elf;
         string proxy = Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll");
         if (!File.Exists(proxy))
@@ -117,10 +121,18 @@ public sealed class GameSession {
         if (selectedGame.Id == "file2" && selectedMods.Count > 0 &&
             !HasMarker(image, "[MOD-FILE2-1] installed"))
             throw new IOException("File #2 mods need the updated game build. Rebuild or update the game.");
+        if (settings.UsesGamePak() && !HasMarker(image, "[GAME-PAK-1]"))
+            throw new IOException("Playing from PAK needs an updated game build. Rebuild or update the selected game.");
         if (randomizerConfiguration != null && !HasMarker(image, RandomizerSession.Capability))
             throw new IOException("This shared session needs the updated game build with stable randomizer support.");
         Logs = Path.Combine(Settings.Home, "sessions", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
         Directory.CreateDirectory(Logs);
+        if (selectedAssetPaks.Count > 0 && !HasMarker(image, AssetPaks.Capability))
+            throw new IOException("Asset packs need an updated game build. Rebuild or update the selected game.");
+        string assetPlan = await Task.Run(() => AssetPaks.Prepare(selectedAssetPaks, discRoot, selectedGame.Id, Logs, cancel: cancel), cancel);
+        string stringPlan = Path.Combine(Logs, ExecutableStrings.PlanName);
+        if (File.Exists(stringPlan) && !HasMarker(image, ExecutableStrings.RequiredCapability(stringPlan)))
+            throw new IOException("Executable string replacements need an updated game build. Rebuild or update the selected game.");
         if (randomizerConfiguration != null) {
             File.WriteAllBytes(Path.Combine(Logs,"randomizer-session.json"),randomizerConfiguration);
             File.WriteAllText(Path.Combine(Logs,"randomizer-session.sha256"),RandomizerSession.Digest(randomizerConfiguration));
@@ -142,6 +154,8 @@ public sealed class GameSession {
                      .ToArray())
             start.Environment.Remove(key);
         void Set(string key, string value) => start.Environment[key] = value;
+        if (assetPlan.Length != 0) Set("REO_ASSET_OVERLAY", assetPlan);
+        if (File.Exists(stringPlan)) Set("REO_EXECUTABLE_STRINGS", stringPlan);
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
         bool automaticAccount = onlineEnvironment.Count > 0 &&
@@ -206,7 +220,8 @@ public sealed class GameSession {
                     t => t.ToString(System.Globalization.CultureInfo.InvariantCulture))));
             }
         }
-        Set("REO_ISO", Path.GetFullPath(iso));
+        if (settings.UsesGamePak()) Set("REO_GAME_PAK", "1");
+        else Set("REO_ISO", Path.GetFullPath(iso));
         var enemyRandomizer = selectedMods.SingleOrDefault(m => m.EnemyRandomizer != null)?.EnemyRandomizer;
         if (enemyRandomizer != null) {
             bool species = enemyRandomizer.Mode == "enemyTypes";
@@ -354,7 +369,9 @@ public sealed class GameSession {
                       source = sourceExe,
                       image,
                       sha256 = hash,
-                      iso,
+                      iso = settings.UsesGamePak() ? null : iso,
+                      gameSource = iso,
+                      gameSourceType = settings.UsesGamePak() ? "pak" : "iso",
                       discRoot,
                       networkConfigured = OnlineOptions.Configured(settings),
                       server = onlineEnvironment.GetValueOrDefault("REO_COOP_HOST"),

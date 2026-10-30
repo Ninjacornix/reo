@@ -35,7 +35,7 @@ class CDVD {
     bool search_file(const std::string& ps2_path, uint32_t& lba, uint32_t& size);
 
     bool has_image() const {
-        return m_image != nullptr;
+        return m_image != nullptr || m_gamePak;
     }
 
     // Check if a file exists on the virtual disc
@@ -54,6 +54,9 @@ class CDVD {
     void* m_image = nullptr; // FILE* (ISO) or HANDLE (raw volume)
     bool m_imageIsVolume = false;
     uint64_t m_imageSize = 0;
+    bool m_gamePak = false;
+    struct PakFile { uint32_t lba; uint64_t bytes; std::filesystem::path path; };
+    std::vector<PakFile> m_pakFiles;
 
     void build_file_map();
     void open_image();

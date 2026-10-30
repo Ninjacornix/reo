@@ -51,6 +51,57 @@ Release validation flags require completed-build receipts bound to the exact
 sealed manifest hashes. Missing proof remains pending; do not inherit old passing
 flags. See [File #2 verification](FILE2_RANDOMIZER.md) for the tested replacement
 paths and the remaining scenario, roster, save/resume and multiplayer limits.
+## Unreleased: asset packs
+
+`feature/asset-paks` adds streamed native-asset replacement for both editions in
+solo play. See `MODDING.md` and `ASSET_PAKS_IMPLEMENTATION.md`. A release containing
+this feature needs refreshed build kits and the launcher capability check; include
+`<!-- reo:requires-rebuild -->` in its release notes. Existing cached native builds
+cannot apply packs until rebuilt.
+
+Kit exports require SDK patch `0109-virtual-asset-archives.patch`. For an existing
+frozen kit, use `tools/local_build/refresh_inputs.py` with these arguments in
+addition to `--kit`, `--output` and `--recompiler`:
+
+```text
+--update-source runtime/cdvd/cdvd.cpp
+--update-source runtime/cdvd/cdvd.h
+--update-source recomp/overrides/reo_hw_bridge.cpp
+--update-source recomp/overrides/reo_hw_bridge.h
+--update-source recomp/reo_bootstrap.cpp
+--add-source runtime/assets/virtual_afs.h
+--add-source runtime/assets/overlay.h
+--add-source runtime/assets/executable_strings.h
+--source-patch third_party/patches/ps2recomp/0109-virtual-asset-archives.patch
+```
+
+The refresh rehashes the kit inventory and includes the SDK patch in source-update
+notices. Generate instruction catalogues from the player's ELF through the normal
+build stages before compiling runtime sources. Both private refreshed kits passed
+portable compilation of all four affected runtime units. This preflight is not a
+fresh full-game release build. Before publishing, run the complete packaging and
+cold-build checks for the final merged tree.
+
+Executable-string mods additionally require `[EXECUTABLE-STRINGS-1]` in the native
+build. The bootstrap applies only bounded, identity-checked original string slots
+before guest execution. Rebuild both editions; the launcher refuses older binaries.
+Edited original exports can now be imported under Mods, which compiles their
+changed asset payloads and translation fields into ordinary replacement layers.
+
+Opt-in executable-string padding additionally needs `[EXECUTABLE-STRINGS-2]` and
+the updated `runtime/assets/executable_strings.h`. The runtime accepts strict v1
+plans and bounded v2 plans, rechecking zero alignment space and literal pointers
+before writes. Include a native rebuild notice for this update. Export receipt
+format 5 refreshes the new padding metadata without overwriting older exports.
+The old-import cleanup action is manual and affects only reviewed, unselected,
+completed imports; it must never be called automatically after setup.
+
+PAK-as-game-source support additionally requires the updated `cdvd.h` and
+`cdvd.cpp`, and rebuilding their consumers (including `reo_hw_bridge.cpp`). The
+launcher requires `[GAME-PAK-1]` in the native image before launching in PAK mode.
+The updated original export preserves boot files and archive ranges; older
+asset-only exports need re-exporting. Game PAKs contain owned game data and must
+never be bundled in a release.
 
 ## v1.0.19
 

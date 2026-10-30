@@ -76,7 +76,7 @@ public static class Storage {
                               1, FileOptions.DeleteOnClose)) { }
     }
 
-    static void CheckLinks(string path) {
+    internal static void CheckLinks(string path) {
         for (FileSystemInfo? entry = Directory.Exists(path) ? new DirectoryInfo(path) : new FileInfo(path);
              entry != null; entry = entry is DirectoryInfo d ? d.Parent : ((FileInfo)entry).Directory)
             if (entry.Exists && BuildPathLinks.Redirects(entry.FullName, entry.Attributes))

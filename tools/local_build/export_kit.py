@@ -96,6 +96,9 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
     for name in ("compdb.json", "source-unit-inventory.json"):
         if not (safety / name).is_file():
             raise FileNotFoundError(f"An audited {target_name} build graph is required: {safety / name}")
+    support = dependency / "ps2xRuntime/src/lib/Kernel/Stubs/Helpers/Support.h"
+    if "REO_ASSET_OVERLAY_AVAILABLE" not in support.read_text(encoding="utf-8"):
+        raise ValueError("Apply PS2Recomp patch 0109-virtual-asset-archives.patch before exporting asset-capable build kits")
     if destination.exists():
         raise FileExistsError("Build kit outputs are immutable; choose a fresh directory")
     destination.mkdir(parents=True)
@@ -120,6 +123,8 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
     for name in ("tools/parallel_gs_backend/resident_gs/scanout_spirv.hpp",
                  "runtime/gs/frame_pacing.h", "runtime/gs/shader_warmup.h",
                  "runtime/timer/windows_resolution.h", "runtime/audio/host_bridge.h"):
+        copy(root / name, "source/" + name)
+    for name in ("runtime/assets/virtual_afs.h", "runtime/assets/overlay.h", "runtime/assets/executable_strings.h"):
         copy(root / name, "source/" + name)
     # These authored hooks must also be present in development exports before
     # their new files are committed. Both game targets include this closure.

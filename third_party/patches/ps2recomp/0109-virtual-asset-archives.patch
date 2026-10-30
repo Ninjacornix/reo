@@ -1,0 +1,149 @@
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/Helpers/Support.h
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/Helpers/Support.h
+@@ -1,3 +1,7 @@
++#if __has_include("runtime/assets/overlay.h")
++#include "runtime/assets/overlay.h"
++#define REO_ASSET_OVERLAY_AVAILABLE 1
++#endif
+ #include <algorithm>
+ #include <cctype>
+ #include "source_instruction_access.hpp"
+@@ -5,7 +9,7 @@
+ namespace
+ {
+     constexpr uint32_t kCdSectorSize = 2048;
+-    constexpr uint32_t kCdPseudoLbnStart = 0x00100000;
++    constexpr uint32_t kCdPseudoLbnStart = 0x40000000;
+ 
+     struct CdFileEntry
+     {
+@@ -384,7 +388,10 @@
+             }
+         }
+ 
+-        const uint64_t sizeBytes = std::filesystem::file_size(path, ec);
++        uint64_t sizeBytes = std::filesystem::file_size(path, ec);
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++        reo::assets::hostSize(path, sizeBytes);
++#endif
+         if (ec)
+         {
+             g_lastCdError = -1;
+@@ -417,6 +424,9 @@
+             return true;
+         }
+ 
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++        if (reo::assets::hostRead(path, offsetBytes, dst, byteCount)) { g_lastCdError = 0; return true; }
++#endif
+         reo_source_instrumentation::fillBytes(dst, 0, byteCount);
+         std::ifstream file(path, std::ios::binary);
+         if (!file.is_open())
+@@ -439,6 +449,9 @@
+ 
+     bool readCdSectors(uint32_t lbn, uint32_t sectors, uint8_t *dst, size_t byteCount)
+     {
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++        if (reo::assets::active && reo::assets::active->sector(lbn, sectors, dst, byteCount)) { g_lastCdError = 0; return true; }
++#endif
+         for (const auto &[key, entry] : g_cdFilesByKey)
+         {
+             const uint32_t endLbn = entry.baseLbn + entry.sectors;
+@@ -480,6 +493,9 @@
+ 
+     bool isResolvableCdLbn(uint32_t lbn)
+     {
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++        if (reo::assets::active && reo::assets::active->containsLba(lbn)) return true;
++#endif
+         for (const auto &[key, entry] : g_cdFilesByKey)
+         {
+             const uint32_t endLbn = entry.baseLbn + entry.sectors;
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/FileIO.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/FileIO.cpp
+@@ -1,8 +1,15 @@
+ #include "Common.h"
+ #include "FileIO.h"
++#if __has_include("runtime/assets/overlay.h")
++#include "runtime/assets/overlay.h"
++#define REO_ASSET_OVERLAY_AVAILABLE 1
++#endif
+ 
+ namespace ps2_syscalls
+ {
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++    static std::unordered_map<int, std::pair<std::string, uint64_t>> g_assetFds;
++#endif
+     static int allocatePs2Fd(FILE *file)
+     {
+         if (!file)
+@@ -97,6 +104,10 @@
+         const char *mode = translateFioMode(flags);
+         RUNTIME_LOG("fioOpen: '" << hostPath << "' flags=0x" << std::hex << flags << std::dec << " mode='" << mode << "'");
+ 
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++        const bool asset = reo::assets::active && reo::assets::active->find(ps2Path);
++        if (asset && std::strcmp(mode, "rb") != 0) { setReturnS32(ctx, -30); return; }
++#endif
+         FILE *fp = ::fopen(hostPath.c_str(), mode);
+         if (!fp)
+         {
+@@ -114,6 +125,9 @@
+             return;
+         }
+ 
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++        if (asset) { std::lock_guard<std::mutex> lock(g_sys_fd_mutex); g_assetFds.emplace(ps2Fd, std::make_pair(std::string(ps2Path), uint64_t(0))); }
++#endif
+         // returns the PS2 file descriptor
+         setReturnS32(ctx, ps2Fd);
+     }
+@@ -130,6 +144,9 @@
+             return;
+         }
+ 
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++        { std::lock_guard<std::mutex> lock(g_sys_fd_mutex); g_assetFds.erase(ps2Fd); }
++#endif
+         int ret = ::fclose(fp);
+         releasePs2Fd(ps2Fd);
+ 
+@@ -194,6 +211,17 @@
+         size_t bytesRead = 0;
+         {
+             std::lock_guard<std::mutex> lock(g_sys_fd_mutex);
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++            auto entry = g_assetFds.find(ps2Fd);
++            const auto* archive = entry != g_assetFds.end() && reo::assets::active ? reo::assets::active->find(entry->second.first) : nullptr;
++            if (archive) {
++                if (size > ps2RamBackingBytes - (bufAddr & ps2RamBackingMask())) { setReturnS32(ctx, -14); return; }
++                auto& position = entry->second.second;
++                bytesRead = position < archive->file.size ? static_cast<size_t>(std::min<uint64_t>(size, archive->file.size - position)) : 0;
++                if (bytesRead) archive->file.read(position, bytesRead, hostBuf);
++                position += bytesRead;
++            } else
++#endif
+             bytesRead = fread(hostBuf, 1, size, fp);
+         }
+ 
+@@ -293,6 +321,20 @@
+             return;
+         }
+ 
++#ifdef REO_ASSET_OVERLAY_AVAILABLE
++        {
++            std::lock_guard<std::mutex> lock(g_sys_fd_mutex);
++            auto entry = g_assetFds.find(ps2Fd);
++            const auto* archive = entry != g_assetFds.end() && reo::assets::active ? reo::assets::active->find(entry->second.first) : nullptr;
++            if (archive) {
++                const int64_t base = whence == PS2_FIO_SEEK_SET ? 0 : whence == PS2_FIO_SEEK_CUR ? static_cast<int64_t>(entry->second.second) : static_cast<int64_t>(archive->file.size);
++                const int64_t next = base + offset;
++                if ((whence != PS2_FIO_SEEK_SET && whence != PS2_FIO_SEEK_CUR && whence != PS2_FIO_SEEK_END) || next < 0 || next > 0x7fffffff) setReturnS32(ctx, -22);
++                else { entry->second.second = static_cast<uint64_t>(next); setReturnS32(ctx, static_cast<int32_t>(next)); }
++                return;
++            }
++        }
++#endif
+         int hostWhence;
+         switch (whence)
+         {

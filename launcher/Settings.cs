@@ -102,6 +102,7 @@ public sealed partial class Settings {
             settings.InputDeviceId = "keyboard";
         settings.EnabledCheats ??= new();
         settings.EnabledMods ??= new();
+        settings.EnabledAssetPaks ??= new();
         settings.CoopHost ??= "";
         settings.AccountUsername ??= "";
         settings.JoinHostName ??= "";
