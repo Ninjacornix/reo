@@ -73,4 +73,3 @@ inline void testFile2Cheats() {
     }
     std::cout << "PASS " << checks << " File #2 cheat checks\n";
 }
-
