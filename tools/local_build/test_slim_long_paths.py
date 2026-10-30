@@ -17,7 +17,9 @@ class SlimLongPathTests(unittest.TestCase):
             root = Path(directory)
             kit = root / 'kit'
             (kit / 'tools/local_build').mkdir(parents=True)
+            (kit / 'tools/local_build/build_game.py').write_text('# Synthetic previous worker\n')
             (kit / 'notices').mkdir()
+            (kit / 'notices/LICENSE.txt').write_text('Synthetic notice fixture\n')
             (kit / 'toolchain/bin').mkdir(parents=True)
             (kit / 'toolchain/bin/compiler.exe').write_bytes(b'Synthetic compiler identity')
             (kit / 'compile-plan.json').write_text(json.dumps({
