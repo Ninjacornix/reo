@@ -1,6 +1,7 @@
 #if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
 #include "overrides/reo_cheats.h"
 #include "../runtime/audio/host_bridge.h"
+#include "overrides/reo_subtitles.h"
 #endif
 #if defined(REO_GAME_FILE1)
 #include "overrides/reo_mods.h"
@@ -1374,6 +1375,7 @@ int main(int argc, char* argv[]) {
         reo::cheats::install(runtime);
         reo::mods::install(runtime);
         reo::audio::initialize();
+        reo::subtitles::install(runtime);
     }
 #endif
 #if defined(REO_GAME_FILE1)
@@ -1383,6 +1385,7 @@ int main(int argc, char* argv[]) {
         reo::rumble::install(runtime);
         reo::audio::install(runtime);
         reo::widescreen::install(runtime);
+        reo::subtitles::install(runtime);
     }
 #endif
 #ifdef _WIN32

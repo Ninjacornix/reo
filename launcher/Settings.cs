@@ -13,6 +13,7 @@ public sealed partial class Settings {
     public bool LauncherBackgroundMovies { get; set; } = true;
     public string LauncherFont { get; set; } = "outbreak";
     public string LauncherLanguage { get; set; } = "en";
+    public List<string> BundledModEditions { get; set; } = new();
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedLauncherFont => LauncherFont is "segoe-ui" or "tahoma" ? LauncherFont : "outbreak";
     public bool Fullscreen { get; set; }

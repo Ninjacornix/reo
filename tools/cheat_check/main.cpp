@@ -6,7 +6,9 @@
 #include "enemy_randomizer_tests.h"
 #include "global_item_tests.h"
 #include "file2_tests.h"
+#include "results_points_tests.h"
 int main() {
+    testResultsPointsCheats();
     testFile2Cheats();
     testWeaponShuffle();
     testEnemyRandomizer();
@@ -49,6 +51,9 @@ int main() {
         "REO-CHEATS-2\nbuiltin health\nbuiltin infection\nbuiltin ammo\n1 0056FFF0 4 1\n");
     auto program = parseProgram(builtinInput);
     check(program.builtins == 7 && program.writes.size() == 1);
+    std::istringstream timedRewards("REO-CHEATS-2\nbuiltin points\nbuiltin escape\nbuiltin points\n");
+    const auto expanded = parseProgram(timedRewards);
+    check(expanded.builtins == (MaxResultsPoints | InfiniteEscapeTime) && expanded.writes.empty());
     bool unknown = false;
     try {
         std::istringstream input("REO-CHEATS-2\nbuiltin unsafe\n");

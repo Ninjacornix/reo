@@ -58,13 +58,23 @@ game build was produced. The final RC1 inspection and packaging checks remain.
 
 ## Items for final RC1 inspection
 
-The launcher overhaul includes controls for spoken subtitles, audio-device
-selection, maximum results points and infinite escape time. Their matching
-native implementations remain in separate local engine work and are not supplied
-by these seven branches. The points/escape launch capability guards reject old
-native images; a successful launcher test is not proof of these native features.
-Before release, integrate and verify the matching native work or make the
-unavailable controls explicit. File #2 progression unlocks are included here.
+The follow-up native integration supplies the spoken-subtitle hooks, per-game
+Windows audio endpoint selection, maximum results points and infinite escape
+time, including their native tests and local-build export inputs. It retains
+File #2 progression unlocks and the asset PAK bootstrap. These changes require
+fresh native builds; existing game executables do not gain the new behavior from
+a launcher update alone.
+
+Both editions now receive the bundled Randomizer on first use, disabled by
+default. Existing packages and enabled selections are preserved. The per-edition
+initialization preference remembers deletion, so visiting Mods does not silently
+restore a removed package.
+
+Follow-up checks include the original owned dialogue queues for both games,
+original generated countdown services, full-RAM results-point write boundaries,
+and real Windows default, selected and missing audio endpoint initialization.
+These controlled native checks do not represent a fresh full-game release build.
+See [subtitle verification](../tools/subtitle_check/README.md).
 
 Refresh both asset-capable local-build kits and perform the final merged-tree
 native rebuild, first-run, cached-launch, scenario and packaging checks before

@@ -381,6 +381,15 @@ set(PS2RECOMP_LIBS
 
 
 
+if(WIN32)
+    enable_language(C)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/ReoAudioOutput.cmake")
+    set(REO_AUDIO_OUTPUT_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/reo_audio_output.c")
+    reo_audio_output_source("${PS2RECOMP_BUILD}/_deps/raylib-src/src/raudio.c" "${REO_AUDIO_OUTPUT_SOURCE}")
+    set_source_files_properties("${REO_AUDIO_OUTPUT_SOURCE}" PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON SKIP_PRECOMPILE_HEADERS ON
+        COMPILE_DEFINITIONS "MA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_LOW_LATENCY=5;MA_DEFAULT_PERIODS=2")
+endif()
+
 # REO runtime HLE sources — compiled into each recomp target
 
 set(REO_RUNTIME_SOURCES
@@ -663,6 +672,9 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
     )
 
     if(WIN32)
+        # A direct object supplies raylib audio before its archive is considered.
+        # This replaces only the host audio provider, for both game editions.
+        target_sources(${TARGET_NAME} PRIVATE "${REO_AUDIO_OUTPUT_SOURCE}")
         target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/snap_iop_transport.cpp")
         target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/netcnf_profile.cpp")
         target_link_libraries(${TARGET_NAME} PRIVATE ws2_32)

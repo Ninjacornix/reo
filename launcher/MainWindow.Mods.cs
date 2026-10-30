@@ -47,7 +47,11 @@ public partial class MainWindow {
         ModList.Children.Clear();
         modRows.Clear();
         try {
-            if (!game.Running && !launching && Mods.ConsolidateRandomizers(settings)) settings.Save();
+            if (!game.Running && !launching) {
+                bool changed = Mods.ConsolidateRandomizers(settings);
+                changed = Mods.EnsureBundledRandomizer(settings) || changed;
+                if (changed) settings.Save();
+            }
             var installed = Mods.Load(game: settings.Game.Id);
             var shown = new HashSet<string>();
             foreach (var mod in installed) {

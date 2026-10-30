@@ -1,6 +1,6 @@
 # Creating a simple Outbreak mod
 
-Gameplay mods use a JSON file; asset replacement mods use a `.pak` ZIP. Anyone can create and share a mod; an existing compatible game build does not need rebuilding when enabling a new package. Asset packs support both File #1 and File #2 in solo play. Gameplay JSON mods on this branch target File #1. Lua scripts, DLL plugins and PS2 instruction patches are unsupported.
+Gameplay mods use a JSON file; asset replacement mods use a `.pak` ZIP. Anyone can create and share a mod; an existing compatible game build does not need rebuilding when enabling a new package. Asset packs support both File #1 and File #2 in solo play. Gameplay JSON mods support both games; each package targets one edition. Lua scripts, DLL plugins and PS2 instruction patches are unsupported.
 
 ## Asset replacement packs
 
@@ -233,7 +233,7 @@ code or arbitrary campaigns is not implemented. Keep original game references pr
 
 The launcher supports **Randomizer** packages for File #1 and File #2: weapons, ammunition, common items and enemy spawns. Weapon pickups receive other weapons, ammunition receives ammunition, and common items receive common items. Starting equipment, owned items, scenario keys, Daylight and the lighter stay unchanged. Enemy choices persist across rooms. Start a fresh scenario. The mod remains experimental; full scenario completion is unverified.
 
-1. Select the game, then open **Mods > Import mod**. Choose `examples/mods/randomizer.json` for File #1 or `examples/mods/randomizer-file2.json` for File #2 (both included with the launcher build).
+1. Select the game and open **Mods**. Its matching **Randomizer** package appears automatically, initially disabled. Existing packages and selections are preserved. Deleting the package keeps it removed; use **Import mod** with `examples/mods/randomizer.json` or `examples/mods/randomizer-file2.json` to restore it.
 2. Tick **Randomizer** and launch for solo play or hosting. Joining players adopt the matching game's host settings automatically; cross-game configurations are rejected.
 3. Open **Options** below the mod. **New seed each launch** is the default. Choose **Custom seed** and enter a whole number from **0 to 4294967295** to repeat a run with the same game and mod settings. A Randomizer package uses that seed for both its item and enemy randomizers. Start a fresh scenario to use the new layout.
 4. The launcher shows the actual seed while running and records it in that session's `launch.json` and `mods.json`. Joining players always adopt the host's published configuration and seed, regardless of their local preferences.

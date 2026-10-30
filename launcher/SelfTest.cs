@@ -62,6 +62,7 @@ static class SelfTest {
         GamePreviewWeaponTests.Run(Check);
         PreviewInteractionTests.Run(Check);
         ModsTests.Run(Check);
+        BundledRandomizerTests.Run(Check);
         AssetPakTests.Run(Check);
         AssetExportTests.Run(Check);
         ElfStringReferenceTests.Run(Check);

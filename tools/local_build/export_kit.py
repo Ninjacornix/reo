@@ -16,6 +16,7 @@ import subprocess
 
 from compilation_batches import GENERATED_BATCH_SIZE
 from generate_game import GAMES
+from prepare_audio_output import instrument as instrument_audio_output
 
 MOVIE_ALLOCATOR_SHA256 = "259c858fe1af5daff2a8a61129e333bf8dff0daa52219f0eeea63d63150a4143"
 
@@ -122,7 +123,9 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
     copy(root / "network/native/automatic_account.h", "source/network/native/automatic_account.h")
     for name in ("tools/parallel_gs_backend/resident_gs/scanout_spirv.hpp",
                  "runtime/gs/frame_pacing.h", "runtime/gs/shader_warmup.h",
-                 "runtime/timer/windows_resolution.h", "runtime/audio/host_bridge.h"):
+                 "runtime/timer/windows_resolution.h", "runtime/audio/host_bridge.h",
+                 "runtime/audio/reo_output_device.h", "runtime/text/subtitles.h",
+                 "recomp/overrides/reo_subtitles.h"):
         copy(root / name, "source/" + name)
     for name in ("runtime/assets/virtual_afs.h", "runtime/assets/overlay.h", "runtime/assets/executable_strings.h"):
         copy(root / name, "source/" + name)
@@ -184,6 +187,8 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
             if kind == "main/overlay-generated":
                 continue
             source = Path(file).resolve()
+            if source == build / "recomp/reo_audio_output.c":
+                continue # Reviewed separately below, with a stable cache identity.
             if source == build / "recomp/reo_movie_memory_allocator.cpp":
                 # Appended with a fixed identity below, preserving existing cache keys.
                 continue
@@ -224,6 +229,17 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
     copy(allocator, "source/" + allocator.relative_to(root).as_posix())
     units.append({"id": "movieAllocatorNative", "sources": [relocate(allocator)],
                   "options": options(allocator_row["command"])})
+
+    audio = build / "recomp/reo_audio_output.c"
+    original_audio = root / "third_party/PS2Recomp/out/build/_deps/raylib-src/src/raudio.c"
+    if audio.read_text(encoding="utf-8") != instrument_audio_output(original_audio.read_text(encoding="utf-8")):
+        raise ValueError("CMake audio provider differs from the reviewed source-preserving transform")
+    audio_rows = [row for row in compdb if Path(row["file"]).resolve() == audio and target_name + ".dir" in row["command"]]
+    if len(audio_rows) != 1:
+        raise ValueError("Audited build graph must contain the direct per-game audio provider")
+    copy(audio, "source/" + audio.relative_to(root).as_posix())
+    units.append({"id": "audioOutputNative", "sources": [relocate(audio)],
+                  "options": options(audio_rows[0]["command"])})
 
     sample = next(r for r in compdb if "unity_0_cxx.cxx" in r["file"] and target_name + ".dir" in r["command"])
     generated_options = options(sample["command"])

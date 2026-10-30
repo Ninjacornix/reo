@@ -66,6 +66,20 @@ public static partial class Mods {
         _ = DiscImport.ExpectedElf(game);
         return Path.Combine(Settings.Home, "mods", game);
     }
+    public static bool EnsureBundledRandomizer(Settings settings, string? folder = null) {
+        string game = settings.Game.Id;
+        settings.BundledModEditions ??= new();
+        if (settings.BundledModEditions.Contains(game)) return false;
+        folder ??= FolderFor(game);
+        if (!Load(folder, game).Any(mod => mod.Manifest?.Id == RandomizerId) &&
+            !File.Exists(Path.Combine(folder, RandomizerId + ".json"))) {
+            string sample = game == "file2" ? "randomizer-file2.json" : "randomizer.json";
+            Import(Path.Combine(AppContext.BaseDirectory, "examples", "mods", sample), folder, game);
+        }
+        // Install disabled once per edition. A user's deletion must stay deleted.
+        settings.BundledModEditions.Add(game);
+        return true;
+    }
     public static bool ConsolidateRandomizers(Settings settings, string? folder = null) {
         folder ??= FolderFor(settings.Game.Id);
         var installed = Load(folder, settings.Game.Id);

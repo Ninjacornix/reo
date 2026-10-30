@@ -208,8 +208,9 @@ public partial class MainWindow {
             Check(!modRows.Any(r => r.Mod.File == invalid), "Invalid JSON packages can be deleted through the same confirmed action");
             foreach (string path in ownedFiles) File.Delete(path);
             settings.ActiveMods.Clear(); RefreshMods();
-            Check(modRows.Count == 0 && ModList.Children.OfType<TextBlock>().Any(t => t.Text.StartsWith("No mods installed")) && ImportModButton.IsEnabled,
-                  "Empty mod library retains import and recovery controls");
+            Check(modRows.All(r => r.Mod.Manifest?.Id == Mods.RandomizerId) && ImportModButton.IsEnabled &&
+                  (modRows.Count > 0 || ModList.Children.OfType<TextBlock>().Any(t => t.Text.StartsWith("No mods installed"))),
+                  "Removing diagnostic packages preserves bundled mods or the empty-library recovery controls");
             await File.WriteAllTextAsync(Path.Combine(output, "result.json"), JsonSerializer.Serialize(new { passed = true, checks }, new JsonSerializerOptions { WriteIndented = true }));
         } catch (Exception error) {
             await File.WriteAllTextAsync(Path.Combine(output, "result.json"), JsonSerializer.Serialize(new { passed = false, checks, error = error.ToString() }, new JsonSerializerOptions { WriteIndented = true }));

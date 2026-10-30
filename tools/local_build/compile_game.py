@@ -20,6 +20,7 @@ import tempfile
 import time
 
 from build_scheduler import cost_estimate, header_fingerprint, scheduled_results, unit_estimates
+from long_paths import native
 
 
 # Bump when compile_unit changes how an object is produced from the keyed inputs below.
@@ -28,6 +29,21 @@ MSVC_FLAGS = ["/nologo", "/c", "/TP", "/O2", "/Ob2", "/MD", "/DNDEBUG", "/EHsc",
               "/bigobj", "/fp:precise", "/utf-8"]
 PORTABLE_DEFAULTS = ["-O2", "-DNDEBUG", "-std=c++20", "-msse4.1", "-fms-extensions",
                      "-fno-fast-math", "-ffp-contract=off", "-fno-strict-aliasing", "-fwrapv"]
+
+
+def run(command, **options):
+    """Run a native tool. Workspace paths may be extended (long_paths.py); the tools
+    receive ordinary ones, which LLVM and the recompiler lengthen themselves."""
+    return subprocess.run([native(arg) for arg in command], **options)
+
+
+def source_flags(c_source, portable=False):
+    flags = PORTABLE_DEFAULTS if portable else MSVC_FLAGS
+    if not c_source:
+        return flags
+    if portable:
+        return ["-std=c11" if flag == "-std=c++20" else flag for flag in flags]
+    return [flag for flag in flags if flag not in {"/TP", "/EHsc", "/std:c++20"}] + ["/TC", "/std:c11"]
 
 
 def digest(path):
@@ -74,8 +90,8 @@ def portable_flags(options):
 def response_text(arguments, portable=False):
     if portable:
         # LLVM response files use literal UTF-8, not JSON's ASCII \uXXXX escapes.
-        return "\n".join(json.dumps(str(arg).replace("\\", "/"), ensure_ascii=False) for arg in arguments)
-    return "\n".join(subprocess.list2cmdline([str(arg)]) for arg in arguments)
+        return "\n".join(json.dumps(native(arg).replace("\\", "/"), ensure_ascii=False) for arg in arguments)
+    return "\n".join(subprocess.list2cmdline([native(arg)]) for arg in arguments)
 
 
 def portable_root(kit, plan):
@@ -113,7 +129,7 @@ def portable_environment(kit, plan):
     if not system_root:
         raise RuntimeError("The Windows system directory is unavailable")
     system = Path(system_root)
-    env["PATH"] = os.pathsep.join(map(str, (tools[0].parent, system / "System32", system)))
+    env["PATH"] = os.pathsep.join(map(native, (tools[0].parent, system / "System32", system)))
     return env, tools
 
 
@@ -289,7 +305,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
                 print("Precompiling shared guest headers", flush=True)
                 pch_log = logs / (key + "-pch.log")
                 with pch_log.open("wb") as log:
-                    result = subprocess.run([str(compiler), *portable_defaults, *portable_flags(options),
+                    result = run([str(compiler), *portable_defaults, *portable_flags(options),
                                     "-x", "c++-header", str(header), "-o", str(pending)], env=env,
                                    stdout=log, stderr=subprocess.STDOUT)
                 if result.returncode:
@@ -301,29 +317,30 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
     def compile_unit(unit):
         name = unit["id"]
         sources = [source_file(p) for p in unit["sources"]]
+        c_source = all(path.suffix.lower() == ".c" for path in sources)
         options = common + [expand(o) for o in unit.get("options", [])]
         signature = hashlib.sha256((base + json.dumps([stable(o) for o in options]) +
             unit.get("pchSignature", "") +
-            "".join(stable(str(p)) + digest(p) for p in sources)).encode()).hexdigest()
+            "".join(stable(str(p)) + digest(p) for p in sources) + ("|C11" if c_source else "")).encode()).hexdigest()
         obj, receipt = objects / (name + ".obj"), objects / (name + ".json")
         if obj.exists() and receipt.exists():
             saved = json.loads(receipt.read_text())
             if (isinstance(saved, dict) and saved.get("input") == signature
                     and saved.get("object") == digest(obj)):
                 return obj, True
-        source = objects / (name + ".cpp")
+        source = objects / (name + (".c" if c_source else ".cpp"))
         # Includes preserve each generated function's original header search base.
-        source.write_text("\n".join('#include ' + json.dumps(str(p).replace("\\", "/"), ensure_ascii=False)
+        source.write_text("\n".join('#include ' + json.dumps(native(p).replace("\\", "/"), ensure_ascii=False)
                                      for p in sources) + "\n", encoding="utf-8")
         pending = objects / (name + ".pending.obj")
-        command = [str(compiler), *MSVC_FLAGS, *options, "/Fo" + str(pending), str(source)]
+        command = [str(compiler), *source_flags(c_source), *options, "/Fo" + str(pending), str(source)]
         if portable:
             pch = ["-include-pch", str(precompiled[unit["pch"]])] if unit.get("pch") else []
-            command = [str(compiler), "-c", *portable_defaults,
+            command = [str(compiler), "-c", *source_flags(c_source, portable=True),
                        *portable_flags(options), *pch, "-o", str(pending), str(source)]
         started = time.perf_counter()
         with (logs / (name + ".log")).open("wb") as log:
-            result = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
+            result = run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
         if result.returncode:
             raise compiler_failure(f"Compile unit {name}", result.returncode, logs / (name + '.log'))
         pending.replace(obj)
@@ -381,7 +398,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         with archive_log.open("wb") as log:
             command = ([str(archiver), "rcs", str(target), "@" + str(response)] if portable else
                        [str(linker.parent / "lib.exe"), "/NOLOGO", "/OUT:" + str(target), "@" + str(response)])
-            result = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
+            result = run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
         if result.returncode:
             raise compiler_failure(f"Archive {name}", result.returncode, archive_log)
         archive_inputs.append(str(target))
@@ -401,7 +418,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
             target = objects / ("resource" + str(n) + ".obj")
             resource_log = logs / ("resource" + str(n) + ".log")
             with resource_log.open("wb") as log:
-                result = subprocess.run([str(resource_compiler), "-I", str(resource.parent), "-i", str(resource),
+                result = run([str(resource_compiler), "-I", str(resource.parent), "-i", str(resource),
                                 "-O", "coff", "-o", str(target)], env=env, stdout=log,
                                stderr=subprocess.STDOUT)
             if result.returncode:
@@ -415,7 +432,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
                         encoding="utf-8" if portable else "utf-16")
     print("Linking locally generated game", flush=True)
     with (logs / "link.log").open("wb") as log:
-        result = subprocess.run([str(linker), "@" + str(response)], env=env, stdout=log,
+        result = run([str(linker), "@" + str(response)], env=env, stdout=log,
                                 stderr=subprocess.STDOUT)
     if result.returncode:
         raise compiler_failure("Game linking", result.returncode, logs / "link.log")

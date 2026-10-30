@@ -2,7 +2,9 @@
 #include "data_cheats.h"
 
 namespace reo::cheats {
-enum Builtin : unsigned { FullHealth = 1, NoInfection = 2, InfiniteAmmo = 4, UnlockEverything = 8 };
+enum Builtin : unsigned { FullHealth = 1, NoInfection = 2, InfiniteAmmo = 4, UnlockEverything = 8,
+                          MaxResultsPoints = 16, InfiniteEscapeTime = 32 };
+inline constexpr uint32_t maximumResultsPoints = 999999999u;
 struct Program {
     std::vector<Write> writes;
     unsigned builtins = 0;
@@ -31,6 +33,10 @@ inline Program parseProgram(std::istream& input) {
                 result.builtins |= InfiniteAmmo;
             else if (name == "unlock")
                 result.builtins |= UnlockEverything;
+            else if (name == "points")
+                result.builtins |= MaxResultsPoints;
+            else if (name == "escape")
+                result.builtins |= InfiniteEscapeTime;
             else
                 throw std::runtime_error("Unknown built-in cheat");
         } else
@@ -59,6 +65,7 @@ inline void setWord(uint8_t* r, uint32_t a, uint32_t v) {
 struct BuiltinResult {
     bool active = false;
     bool unlocks = false;
+    bool points = false;
     unsigned player = 0, health = 0, maximum = 0, ammunitionSlots = 0;
     uint32_t virus = 0;
 };
@@ -94,6 +101,13 @@ inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r, Game game = Game:
     if (!flags || !r)
         return result;
     const bool file2 = game == Game::File2;
+    if (flags & MaxResultsPoints) {
+        // Owned award functions 37C4C0 / 398CC0 clamp to this same cap.
+        // Refill the spendable wallet; preserve lifetime earnings and records.
+        // Collection menus use these fields without a living gameplay actor.
+        setWord(r, file2 ? 0x2feea4u : 0x31fb60u, maximumResultsPoints);
+        result.points = true;
+    }
     if (file2 && (flags & UnlockEverything)) {
         unlockFile2(r);
         result.unlocks = true;
