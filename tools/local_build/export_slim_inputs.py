@@ -34,7 +34,8 @@ def export(kit, output, archive, root, version='1.0.7'):
     plan['externalCompilerSha256'] = sha(kit / plan['compiler'].removeprefix('{kit}/'))
     plan_file.write_text(json.dumps(plan, indent=2), encoding='utf-8')
     for name in ['build_game.py', 'generate_game.py', 'registration_chunks.py',
-                 'compile_game.py', 'compile_linux.py', 'build_scheduler.py', 'compilation_batches.py']:
+                 'compile_game.py', 'compile_linux.py', 'build_scheduler.py', 'compilation_batches.py',
+                 'long_paths.py']:
         shutil.copyfile(root / 'tools/local_build' / name, output / 'tools/local_build' / name)
     (output / 'notices/SDK-SOURCES.txt').write_text(
         'Exact corresponding dependency sources are available beside this release:\n'
