@@ -25,8 +25,8 @@ public record UpdatePlan(string Work, string Source, string Target, string Versi
 public static partial class Updates {
     public const string Repository = "https://github.com/Ninjacornix/reo";
     public const string LatestApi = "https://api.github.com/repos/Ninjacornix/reo/releases/latest";
-    public const string DefaultVersion = "1.0.19";
-    public const string DisplayName = "1.0 Alpha";
+    public const string DefaultVersion = "1.0.20";
+    public const string DisplayName = "1.0 RC0";
     public static readonly JsonSerializerOptions Json =
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
     public static string Home => Path.Combine(Settings.Home, "updates");

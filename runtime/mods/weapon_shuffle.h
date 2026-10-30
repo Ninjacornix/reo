@@ -1,5 +1,6 @@
 #pragma once
 #include "../cheats/outbreak_cheats.h"
+#include "game_layout.h"
 #include <array>
 #include <algorithm>
 #include <charconv>
@@ -44,7 +45,7 @@ inline ShuffleResult shufflePickups(uint8_t* ram, uint32_t seed, bool allOrdinar
     ShuffleResult result;
     if (!ram) return result;
     for (unsigned handle = 1; handle < 256; ++handle) {
-        const uint32_t a = 0x3c5630u + handle * 60u;
+        const uint32_t a = gameLayout.itemPool + handle * 60u;
         const unsigned type = half(ram, a + 6);
         // Ordinary item IDs are below 400; personal items start at 400 and
         // scenario-key IDs use the 10000+ lookup range. Legacy mode restricts
@@ -54,9 +55,9 @@ inline ShuffleResult shufflePickups(uint8_t* ram, uint32_t seed, bool allOrdinar
             half(ram, a + 0x28) != 0 || type >= (allOrdinaryItems ? 400u : 100u)) continue;
         // Remove both the location and its contents from the permutation.
         if (excluded[type]) continue;
-        const unsigned index = ram[0x74b6e0u + type];
+        const unsigned index = ram[gameLayout.itemLookup + type];
         if (index >= 129) continue;
-        const uint32_t info = 0x74bb50u + index * 24u;
+        const uint32_t info = gameLayout.itemMetadata + index * 24u;
         const unsigned capacity = half(ram, info + 8), quantity = half(ram, a + 0x24);
         if (half(ram, info + 18) != type || !word(ram, info) || quantity > 32767) continue;
         const bool firearm = type < 100 && (word(ram, info) & 0x100000u);

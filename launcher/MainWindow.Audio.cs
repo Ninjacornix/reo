@@ -27,6 +27,14 @@ public partial class MainWindow {
         VoiceVolumeValue.Text = $"{VoiceVolume.Value:0}%";
         UiVolumeValue.Text = $"{UiVolume.Value:0}%";
     }
+    void UpdateAudioAvailability() {
+        bool separateChannels = settings.Game.Id == "file1";
+        foreach (var slider in new[] { MusicVolume, SfxVolume, VoiceVolume, UiVolume }) {
+            slider.IsEnabled = separateChannels;
+            slider.ToolTip = separateChannels ? null
+                : "Separate music, effects, voice and UI volumes are available for File #1. Use Master for File #2.";
+        }
+    }
     void ReadAudioSettings() {
         settings.MasterVolume = (int)Math.Round(MasterVolume.Value);
         settings.MusicVolume = (int)Math.Round(MusicVolume.Value);
@@ -40,6 +48,8 @@ public partial class MainWindow {
         audioSaveTimer.Stop(); audioSaveTimer.Start();
     }
     void ResetAudio(object sender, RoutedEventArgs e) {
-        MasterVolume.Value = MusicVolume.Value = SfxVolume.Value = VoiceVolume.Value = UiVolume.Value = 100;
+        MasterVolume.Value = 100;
+        if (settings.Game.Id == "file1")
+            MusicVolume.Value = SfxVolume.Value = VoiceVolume.Value = UiVolume.Value = 100;
     }
 }

@@ -1,11 +1,56 @@
 # Prerelease packaging
 
-Current target: **v1.0.19**, shown in the launcher as **1.0 Alpha**, marked
-prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.19)". Tags stay numeric so
-installed launchers offer the update. .NET is an
-external prerequisite. The server is source-only, with Python/packages prepared
+Current target: **v1.0.20-rc0**, with numeric assembly version **1.0.20**, marked
+prerelease. Package with `-ReleaseTag v1.0.20-rc0 -Version 1.0.20 -SelfContained`.
+The launcher is one self-contained single-file `Outbreak.Launcher.exe` (layout
+`self-contained-single-file`); its .NET/WPF runtime is bundled inside, not shipped as
+loose DLLs. The first rc0 upload published a self-contained *folder* (~250 runtime
+DLLs at the package root) because `-SelfContained` disabled single-file; the rc0
+assets were replaced with the single-file package. The server is source-only, with Python/packages prepared
 automatically in the selected data folder on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.20-rc0
+
+Supply both independently sealed game payloads to `launcher/package-slim.ps1`:
+`-Inputs` / `-KitManifest` for File #1 and `-InputsFile2` / `-KitManifestFile2`
+for File #2. Both kits must use the corresponding game's verified ELF, original
+function maps, recipe metadata and locally reconstructed VU images. Include all
+11 presentation/helper shaders and the matching LLVM runtime DLLs.
+
+Rebuild dependencies from the complete published patch series, rather than
+assuming the developer's dirty SDK has every published fix. Preserve that
+checkout. Package the corresponding dependency source archive as
+`RE-Outbreak-v1.0.20-rc0-Dependency-Sources.zip`.
+
+The first-download test uses a fresh extracted ZIP under a path with spaces and
+non-ASCII characters, an unrelated working directory, system-only PATH and empty
+portable data. Choose each owned ISO through the actual launcher, build, launch,
+and verify cached reuse. Keep the failed first candidate: it exposed a native
+generator output path exceeding MAX_PATH and incorrectly returning success.
+Recompiler path handling and failure propagation must pass before publication.
+The next candidate also exposed missing File #2 catalogue includes during shared
+header compilation. Patch 0110 represents File #2's empty source catalogues with
+standard zero-element arrays; its kit applies the File #2 definition to every
+compilation unit. Never fill those catalogues with File #1 instruction words or
+synthetic source entries just to satisfy compilation.
+
+The shared portable graph also needs the reviewed movie allocator ownership
+provider as a direct object before the Granite archive. Validate its pinned
+upstream source and exact generated transform; never bypass its ownership
+receipt to hide an opening-movie failure. Include the shared audio host bridge
+and the full software GS register range in both kits.
+
+Completed RC0 checks cover both games' local builds, room entry and cached
+normal Play, plus the final File #2 item/enemy replays. Private bound packaging
+proofs are `build-ninja/rc0/download-test-05/file1-first-run/package-validation-file1.json` and
+`build-ninja/rc0/portable-mods-05/package-validation-file2.json`. Both refer to
+the exact sealed manifests; the game executables remain private.
+
+Release validation flags require completed-build receipts bound to the exact
+sealed manifest hashes. Missing proof remains pending; do not inherit old passing
+flags. See [File #2 verification](FILE2_RANDOMIZER.md) for the tested replacement
+paths and the remaining scenario, roster, save/resume and multiplayer limits.
 
 ## v1.0.19
 

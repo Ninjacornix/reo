@@ -53,7 +53,7 @@ function KitPath([string]$relative) {
     }
     $path = [IO.Path]::GetFullPath((Join-Path $Kit $relative))
     if (!$path.StartsWith($Kit.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Kit path escapes root.' }
-    if ([IO.Path]::GetFileName($relative) -in @('reo_recomp.exe','reo_launcher_game.exe') -or
+    if ([IO.Path]::GetFileName($relative) -in @('reo_recomp.exe','reo_recomp_file2.exe','reo_launcher_game.exe') -or
         [IO.Path]::GetExtension($relative) -in @('.iso','.elf','.bin','.obj')) { throw 'Private game content in build kit.' }
     return $path
 }

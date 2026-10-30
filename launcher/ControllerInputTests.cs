@@ -28,7 +28,8 @@ internal static class ControllerInputTests {
                 settings.Xbox.Buttons["Circle"] = 0;
                 settings.Xbox.SwapSticks = true;
                 settings.Xbox.InvertRightY = true;
-                using var controller = new Controller(slot => slot == 2 ? physical : null);
+                using var controller = new Controller(slot => slot == 2 ? physical : null, (_, _, _) => { },
+                                                       () => new(new(), new()), () => Environment.TickCount64);
                 controller.Configure(settings);
                 controller.SessionEnabled = true;
                 controller.Publish();

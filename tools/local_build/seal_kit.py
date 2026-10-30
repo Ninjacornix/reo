@@ -5,6 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 import zipfile
+from generate_game import GAMES
 
 PYTHON_SHA256 = "4acbed6dd1c744b0376e3b1cf57ce906f9dc9e95e68824584c8099a63025a3c3"
 PYTHON_SOURCE = "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip"
@@ -22,6 +23,9 @@ def seal(kit, python_zip):
     if sha(python_zip) != PYTHON_SHA256:
         raise ValueError("Use the pinned official Python embeddable package: " + PYTHON_SOURCE)
     plan = json.loads((kit / "compile-plan.json").read_text())
+    game = plan.get("game", "file1")
+    if game not in GAMES or plan.get("elfSha256", GAMES[game]["sha256"]) != GAMES[game]["sha256"]:
+        raise ValueError("Compile plan must identify a supported game and matching ELF")
     python = kit / "tools/python"
     python.mkdir()
     with zipfile.ZipFile(python_zip) as archive:
@@ -41,7 +45,7 @@ def seal(kit, python_zip):
     files = [{"path": p.relative_to(kit).as_posix(), "sha256": sha(p)}
              for p in sorted(kit.rglob("*")) if p.is_file()]
     if any(p["path"].endswith((".obj", ".elf", ".iso", ".bin")) or
-           Path(p["path"]).name.lower() in {"reo_recomp.exe", "reo_launcher_game.exe"} for p in files):
+           Path(p["path"]).name.lower() in {"reo_recomp.exe", "reo_recomp_file2.exe", "reo_launcher_game.exe"} for p in files):
         raise ValueError("A private/game-derived binary entered the build kit")
     # .lib files may only be the explicitly declared independent upstream inputs.
     libraries = {item["path"].replace("{kit}/", ""): item["sha256"] for item in plan["independentInputs"]}
@@ -49,7 +53,7 @@ def seal(kit, python_zip):
         if item["path"].endswith(".lib") and libraries.get(item["path"]) != item["sha256"]:
             raise ValueError("Undeclared precompiled library in the build kit")
     record = {"format": 1, "runtimeAbi": plan["runtimeAbi"], "architecture": "win-x64",
-              "toolchain": plan.get("toolchain", "msvc"), "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+              "toolchain": plan.get("toolchain", "msvc"), "elfSha256": GAMES[game]["sha256"],
               "files": files, "outputs": outputs, "steps": [{"name": "Generate and compile from your disc",
                   "tool": "tools/python/python.exe", "arguments": ["-B", "-u", "-X", "utf8", "{kit}/tools/local_build/build_game.py",
                       "--kit", "{kit}", "--disc", "{disc}", "--work", "{work}", "--output", "{output}",

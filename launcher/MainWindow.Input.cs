@@ -24,7 +24,7 @@ public partial class MainWindow {
         var devices = controller.AvailableDevices.ToList();
         if (!device.Available)
             devices.Add(device);
-        string fingerprint = string.Join('|', devices.Select(d => d.Id)) + ":" + device.Id;
+        string fingerprint = string.Join('|', devices.Select(d => d.Id + ":" + d.Name)) + ":" + device.Id;
         if (fingerprint != deviceFingerprint) {
             deviceFingerprint = fingerprint;
             inputUiUpdating = true;

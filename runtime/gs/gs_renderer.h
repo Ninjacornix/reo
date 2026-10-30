@@ -254,7 +254,9 @@ class GSRenderer {
     bool m_vsync_flag = false;
 
     // GS register state (privileged)
-    uint64_t m_regs[256] = {};
+    static constexpr uint32_t RegisterCount = 0x2000 / 0x10;
+    static_assert((GS_SIGLBLID >> 4) < RegisterCount);
+    uint64_t m_regs[RegisterCount] = {};
 
     // VRAM (4MB, same as PS2 GS)
     uint8_t m_vram[4 * 1024 * 1024] = {};

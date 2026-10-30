@@ -35,6 +35,24 @@ def digest(path):
         return hashlib.file_digest(f, "sha256").hexdigest()
 
 
+def compiler_failure(label, code, log_path):
+    """Keep the actual diagnostic ahead of long command/workspace paths in the UI."""
+    detail = "Inspect the compiler log for details"
+    try:
+        with Path(log_path).open("rb") as stream:
+            stream.seek(0, 2)
+            stream.seek(max(0, stream.tell() - 65536))
+            lines = stream.read().decode("utf-8", errors="replace").splitlines()
+        for line in lines:
+            match = re.search(r"\b(?:fatal error|error)(?:\s+[A-Z]+\d+)?\s*:\s*.*", line, re.I)
+            if match:
+                detail = match.group(0).strip()[:500]
+                break
+    except OSError:
+        pass
+    return RuntimeError(f"{label} failed (exit {code}): {detail}; log: {log_path}")
+
+
 def portable_flags(options):
     result = []
     for option in options:
@@ -269,10 +287,13 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
                 header.write_text(preamble, encoding="utf-8")
                 pending = pch.with_suffix(".pending.pch")
                 print("Precompiling shared guest headers", flush=True)
-                with (logs / (key + "-pch.log")).open("wb") as log:
-                    subprocess.run([str(compiler), *portable_defaults, *portable_flags(options),
+                pch_log = logs / (key + "-pch.log")
+                with pch_log.open("wb") as log:
+                    result = subprocess.run([str(compiler), *portable_defaults, *portable_flags(options),
                                     "-x", "c++-header", str(header), "-o", str(pending)], env=env,
-                                   stdout=log, stderr=subprocess.STDOUT, check=True)
+                                   stdout=log, stderr=subprocess.STDOUT)
+                if result.returncode:
+                    raise compiler_failure("Shared header compilation", result.returncode, pch_log)
                 pending.replace(pch)
                 receipt.write_text(json.dumps({"sha256": digest(pch)}))
             precompiled[key] = pch
@@ -304,7 +325,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         with (logs / (name + ".log")).open("wb") as log:
             result = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
         if result.returncode:
-            raise RuntimeError(f"Compile unit {name} failed (exit {result.returncode}); see {logs / (name + '.log')}")
+            raise compiler_failure(f"Compile unit {name}", result.returncode, logs / (name + '.log'))
         pending.replace(obj)
         temporary = receipt.with_suffix(".tmp")
         temporary.write_text(json.dumps({"input": signature, "object": digest(obj),
@@ -356,11 +377,13 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         response = objects / (name + ".rsp")
         response.write_text(response_text(members, portable),
                             encoding="utf-8" if portable else "utf-16")
-        with (logs / (name + "-archive.log")).open("wb") as log:
+        archive_log = logs / (name + "-archive.log")
+        with archive_log.open("wb") as log:
             command = ([str(archiver), "rcs", str(target), "@" + str(response)] if portable else
                        [str(linker.parent / "lib.exe"), "/NOLOGO", "/OUT:" + str(target), "@" + str(response)])
-            subprocess.run(command,
-                           env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
+            result = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
+        if result.returncode:
+            raise compiler_failure(f"Archive {name}", result.returncode, archive_log)
         archive_inputs.append(str(target))
     args = [str(completed[u["id"]]) for u in units if not u.get("archive")] + archive_inputs + link_inputs
     args += [expand(arg) for arg in plan.get("linkOptions", [])]
@@ -376,10 +399,13 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         for n, entry in enumerate(plan.get("resources", [])):
             resource = source_file(entry)
             target = objects / ("resource" + str(n) + ".obj")
-            with (logs / ("resource" + str(n) + ".log")).open("wb") as log:
-                subprocess.run([str(resource_compiler), "-I", str(resource.parent), "-i", str(resource),
+            resource_log = logs / ("resource" + str(n) + ".log")
+            with resource_log.open("wb") as log:
+                result = subprocess.run([str(resource_compiler), "-I", str(resource.parent), "-i", str(resource),
                                 "-O", "coff", "-o", str(target)], env=env, stdout=log,
-                               stderr=subprocess.STDOUT, check=True)
+                               stderr=subprocess.STDOUT)
+            if result.returncode:
+                raise compiler_failure(f"Resource {resource.name}", result.returncode, resource_log)
             resources.append(str(target))
         args = [str(completed[u["id"]]) for u in units if not u.get("archive")]
         args += resources + ["-Wl,--start-group", *archive_inputs, *link_inputs,
@@ -389,8 +415,10 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
                         encoding="utf-8" if portable else "utf-16")
     print("Linking locally generated game", flush=True)
     with (logs / "link.log").open("wb") as log:
-        subprocess.run([str(linker), "@" + str(response)], env=env, stdout=log,
-                       stderr=subprocess.STDOUT, check=True)
+        result = subprocess.run([str(linker), "@" + str(response)], env=env, stdout=log,
+                                stderr=subprocess.STDOUT)
+    if result.returncode:
+        raise compiler_failure("Game linking", result.returncode, logs / "link.log")
     for entry in plan.get("copyOutputs", []):
         source = source_file(entry["source"])
         relative = Path(entry["destination"])

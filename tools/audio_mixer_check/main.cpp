@@ -1,6 +1,6 @@
 #include "CriAudio.h"
 #include "ReoSoundBanks.h"
-#include "../../runtime/audio/mixer.h"
+#include "../../runtime/audio/host_bridge.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -10,14 +10,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-float reoAudioMasterGain() { return reo::audio::gain(reo::audio::Master); }
-void reoAudioPoll() {} // Fixture publishes validated controls directly; no launcher MMF.
-float reoAudioStreamGain(uint32_t h) { return reo::audio::streamGain(h); }
-float reoAudioBankGain(unsigned p,unsigned s,uint64_t f) {
-    return reo::audio::gain(reo::audio::bankBus(p,s,f));
-}
-void reoAudioResetStreams() { for(auto& entry:reo::audio::streamRoutes) entry.store(0); }
 
 namespace {
 unsigned checks=0;

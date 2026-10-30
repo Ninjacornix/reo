@@ -4,15 +4,33 @@ The first mod format is a single JSON file. Anyone can edit and share one; no co
 
 ## Randomizer
 
-The launcher has one **Randomizer** package for weapons, ammunition, common items and enemy spawns. Weapon pickups receive other weapons, ammunition receives ammunition, and common items receive common items. The global catalogue includes definitions from all five File #1 scenarios, rather than only supplies already present in the selected scenario. Starting equipment, owned items, scenario keys, Daylight and the lighter stay unchanged. Enemy choices persist across rooms. Start a fresh File #1 scenario. The mod remains experimental; full scenario completion is unverified.
+The launcher supports **Randomizer** packages for File #1 and File #2: weapons, ammunition, common items and enemy spawns. Weapon pickups receive other weapons, ammunition receives ammunition, and common items receive common items. Starting equipment, owned items, scenario keys, Daylight and the lighter stay unchanged. Enemy choices persist across rooms. Start a fresh scenario. The mod remains experimental; full scenario completion is unverified.
 
-1. Open **Mods > Import mod** and choose `examples/mods/randomizer.json` (also included with the launcher build).
-2. Tick **Randomizer** and launch File #1 for solo play or hosting. Joining players adopt the host's settings automatically.
+1. Select the game, then open **Mods > Import mod**. Choose `examples/mods/randomizer.json` for File #1 or `examples/mods/randomizer-file2.json` for File #2 (both included with the launcher build).
+2. Tick **Randomizer** and launch for solo play or hosting. Joining players adopt the matching game's host settings automatically; cross-game configurations are rejected.
 3. Each solo/host launch generates a fresh seed automatically. The launcher shows the current seed while running and records it in that session's `launch.json` and `mods.json`. Start a fresh scenario to use the new layout.
 
 Existing installations automatically consolidate the old combined, item, weapon, zombie and enemy samples into Randomizer. An enabled randomizer stays enabled, preserving the combined package's seeds and enemy pool when available. Practice Mode is removed. Original JSON files are kept under the mods folder's `retired-samples` subfolder, outside the active list. Unrelated custom mods are preserved.
 
 Changes apply on the next launch. Untick the mod to disable it. To remove it, untick it, open the mods folder, delete its JSON file and reload the list. Effects on saved gameplay are not automatically undone. Imports never overwrite existing packages.
+
+File #2 uses its own imported disc, mod folder, selections and enemy roster. Its
+global candidates come from the five main scenarios and are fitted separately
+for all 12 gameplay banks. Every original metadata entry, referenced recipe,
+model and material alias stays intact. Only missing definitions/models are
+appended, within the native limits of 128 metadata entries, 480 recipe halfwords,
+96 model roots and 96 material aliases. Global additions therefore vary by
+scenario; `global-items-file2.json` records additions and omissions. Definitions
+without a floor-model alias cannot become replacement pickups; unsupported
+original pickups stay unchanged.
+
+Both games share the same seeded selection and exclusion algorithms. Scripted
+enemies keep their original family for their entire seeded lifetime, room plans
+reserve at most six animation families, and dead or unsupported sources remain
+untouched. Removed File #1 enemy families are excluded from the File #2 sample;
+their leftover model metadata is insufficient to make them playable. File #2
+requires a new native executable with `MOD-FILE2-1`; an older build is rejected
+before launch. See [File #2 implementation and validation](FILE2_RANDOMIZER.md).
 
 ## Shared randomizer sessions
 
@@ -255,6 +273,8 @@ The `effects` array accepts:
 Combine effects, for example `"effects": ["health", "infection"]`. These use the same implementation as built-in cheats, without requiring the Cheats switch to be enabled.
 
 Built-in cheats require both **Enable cheats** and the individual cheat selections; changes apply on the next launch. The Randomizer does not enable them. Full health restores a living character each guest frame: it does not suppress enemy hit reactions or revive a dead character. Brief damage/virus/ammunition values can exist between the original action and the next restoration. Cheats remain restricted to offline play.
+
+File #2 (SLUS-20984 v1.05) supports **Full health**, **No infection**, **Infinite ammunition** and the same subset of imported `.pnach` data writes. Select File #2 before importing or enabling cheats; its files and selections are separate from File #1. An older File #2 executable without the cheat hook is rejected when cheats are selected. **Unlock everything** currently remains File #1 only; File #2 progression unlocks are not implemented.
 
 **Unlock everything** grants the five File #1 scenarios, Easy/Normal/Hard/Very Hard, costumes, NPC characters and purchased collection extras (including Lone Wolf and Infinity availability). It applies in menus as well as gameplay, so no living character is required. It does not add key items, change inventory, grant points or fabricate completion records. Selecting a game mode still uses the original menus. Unlocks are applied to the loaded progression data; the game's normal save operation can retain them after the cheat is disabled. Existing saves are not edited directly by the launcher. An older native executable without `CHEATS-UNLOCK-1` is rejected before launching this selection.
 

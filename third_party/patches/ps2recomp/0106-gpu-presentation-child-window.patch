@@ -1,10 +1,10 @@
 diff --git a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
 --- a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
 +++ b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
-@@ -113,6 +113,60 @@ void ps2InstallModalRender(void *nativeWindow, void (*render)())
+@@ -113,5 +113,60 @@ void ps2InstallModalRender(void *nativeWindow, void (*render)())
          SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&modalAwareProc)));
  }
- 
++
 +namespace
 +{
 +    HWND g_presentWindow = nullptr;

@@ -142,7 +142,7 @@ void GSRenderer::shutdown() {
 // GS register access
 uint64_t GSRenderer::read_register(uint32_t offset) {
     uint32_t idx = (offset & 0x1FFF) >> 4;
-    if (idx < 256) {
+    if (idx < RegisterCount) {
         return m_regs[idx];
     }
     return 0;
@@ -150,7 +150,7 @@ uint64_t GSRenderer::read_register(uint32_t offset) {
 
 void GSRenderer::write_register(uint32_t offset, uint64_t value) {
     uint32_t idx = (offset & 0x1FFF) >> 4;
-    if (idx < 256) {
+    if (idx < RegisterCount) {
         m_regs[idx] = value;
     }
 
