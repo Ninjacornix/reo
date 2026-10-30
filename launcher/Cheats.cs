@@ -29,7 +29,11 @@ public static class Cheats {
                   new() { Id = $"builtin.{game}.unlock", Builtin = "unlock", Name = "Unlock everything",
                           Description = game == "file1"
                               ? "Unlocks all File #1 scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep these unlocks."
-                              : "Unlocks all File #2 scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep these unlocks." }
+                              : "Unlocks all File #2 scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep these unlocks." },
+                  new() { Id = $"builtin.{game}.points", Builtin = "points", Name = "Max results points",
+                          Description = "Keeps spendable results points at 999,999,999. Saving can retain the balance." },
+                  new() { Id = $"builtin.{game}.escape", Builtin = "escape", Name = "Infinite escape time",
+                          Description = "Stops active escape countdowns." }
               };
     public static string Folder(string game) => Path.Combine(Settings.Home, "cheats", game);
     public static bool DataAddress(uint a,

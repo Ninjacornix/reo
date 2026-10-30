@@ -11,19 +11,28 @@ internal sealed class RandomizerSeeds {
     uint? previous;
 
     internal List<ModManifest> ForLaunch(List<ModManifest> selected, string mode,
-                                          Func<uint>? next = null) {
+                                          Func<uint>? next = null,
+                                          IReadOnlyDictionary<string, ModConfiguration>? configurations = null) {
         if (mode == "join" || !selected.Any(m => Seeds(m).Any())) return selected;
         var copies = selected.Select(m => Mods.Parse(JsonSerializer.Serialize(m, Json))).ToList();
         var excluded = selected.SelectMany(Seeds).ToHashSet();
         if (previous is uint last) excluded.Add(last);
-        uint seed;
-        do { seed = (next ?? Draw)(); } while (excluded.Contains(seed));
-        foreach (var mod in copies) {
-            if (mod.ItemRandomizer != null) mod.ItemRandomizer.Seed = seed;
-            if (mod.WeaponShuffle != null) mod.WeaponShuffle.Seed = seed;
-            if (mod.EnemyRandomizer != null) mod.EnemyRandomizer.Seed = seed;
+        uint? Custom(ModManifest mod) => configurations != null &&
+            configurations.TryGetValue(mod.Id, out var options) && options?.UseCustomSeed == true ? options.Seed : null;
+        foreach (var mod in selected.Where(m => Seeds(m).Any()))
+            if (Custom(mod) is uint custom) excluded.Add(custom);
+        uint seed = 0;
+        bool automatic = selected.Any(m => Seeds(m).Any() && Custom(m) == null);
+        if (automatic) {
+            do { seed = (next ?? Draw)(); } while (excluded.Contains(seed));
+            previous = seed;
         }
-        previous = seed;
+        foreach (var mod in copies) {
+            uint configured = Custom(mod) ?? seed;
+            if (mod.ItemRandomizer != null) mod.ItemRandomizer.Seed = configured;
+            if (mod.WeaponShuffle != null) mod.WeaponShuffle.Seed = configured;
+            if (mod.EnemyRandomizer != null) mod.EnemyRandomizer.Seed = configured;
+        }
         return copies;
     }
     static uint Draw() {

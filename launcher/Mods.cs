@@ -49,7 +49,7 @@ public sealed class ModPatch {
 }
 public sealed record InstalledMod(string File, ModManifest? Manifest, string Error);
 
-public static class Mods {
+public static partial class Mods {
     const int MaxBytes = 1024 * 1024;
     public const string RandomizerId = "example.randomizer";
     static readonly HashSet<string> RetiredSamples = new(StringComparer.Ordinal) {
@@ -189,7 +189,7 @@ public static class Mods {
         folder ??= FolderFor(game);
         Directory.CreateDirectory(folder);
         if (Load(folder, game).Any(x => x.Manifest?.Id == m.Id))
-            throw new IOException("This mod ID is already installed. Remove the old JSON file before importing an update.");
+            throw new IOException("This mod ID is already installed. Delete the installed package before importing an update.");
         string target = Path.Combine(folder, m.Id + ".json");
         using var stream = new FileStream(target, FileMode.CreateNew, FileAccess.Write);
         using var writer = new StreamWriter(stream);

@@ -65,6 +65,62 @@ public partial class MainWindow {
             }
             Check(new[] { BackgroundMovieA, BackgroundMovieB }.All(p => p.IsMuted && p.Volume == 0 && !p.IsHitTestVisible && !p.Focusable),
                   "Both video surfaces are muted, passive and excluded from keyboard focus");
+            if (args.Contains("--test-background-game-lifecycle")) {
+                foreach (string edition in new[] { "file1", "file2" }) {
+                    GamePicker.SelectedValue = edition;
+                    await Until(() => backgroundPlayer.HasVideo && !backgroundPlayer.IsBlending && backgroundPlayer.Position > 1);
+                    string savedClip = backgroundPlayer.CurrentFile;
+                    double savedPosition = backgroundPlayer.Position;
+                    bool Closed() => !backgroundPlayer.HasVideo && BackgroundMovieA.Source == null && BackgroundMovieB.Source == null;
+                    SetLaunching(true);
+                    Check(Closed(), edition + " launch preparation immediately closes both video decoders");
+                    await Task.Delay(500);
+                    Check(Closed(), edition + " stays suspended while preparing the game");
+                    SetLaunching(false); // A failed or canceled launch never creates a game process.
+                    await Until(() => backgroundPlayer.HasVideo && !backgroundPlayer.IsBlending);
+                    Check(backgroundPlayer.CurrentFile == savedClip && backgroundPlayer.Position >= savedPosition - .75,
+                          edition + " canceled launch resumes the saved clip");
+
+                    savedPosition = backgroundPlayer.Position;
+                    SetLaunching(true);
+                    // A private child waits for input until the test ends its session.
+                    // Use the real Running property and UI polling, with no commercial game needed.
+                    using var child = Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe")) {
+                        ArgumentList = { "/d", "/c", "set /p REO_BACKGROUND_TEST=" },
+                        UseShellExecute = false, CreateNoWindow = true,
+                        RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true
+                    })!;
+                    var processProperty = typeof(GameSession).GetProperty(nameof(GameSession.Process))!;
+                    try {
+                        processProperty.SetValue(game, child);
+                        SetLaunching(false); // Preparation is over; the game is still alive.
+                        await Until(() => previousRunning);
+                        Check(game.Running && Closed(), edition + " running game keeps both decoders closed");
+                        ShowPage("Graphics");
+                        ShowPage("Play");
+                        WindowState = WindowState.Minimized;
+                        WindowState = WindowState.Normal;
+                        await Task.Delay(1500);
+                        Check(game.Running && Closed(), edition + " navigation and window restore cannot restart videos during gameplay");
+                        using (File.Open(savedClip, FileMode.Open, FileAccess.Read, FileShare.None)) { }
+                        Check(true, edition + " movie is released for exclusive access during gameplay");
+                        await child.StandardInput.WriteLineAsync("finished");
+                        child.StandardInput.Close();
+                        await child.WaitForExitAsync();
+                        await Until(() => !previousRunning && backgroundPlayer.HasVideo && !backgroundPlayer.IsBlending);
+                        Check(child.ExitCode == 0 && backgroundPlayer.CurrentFile == savedClip &&
+                              backgroundPlayer.Position >= savedPosition - .75,
+                              edition + " game exit automatically resumes the saved clip without navigation");
+                    } finally {
+                        if (!child.HasExited) { child.Kill(); await child.WaitForExitAsync(); }
+                        previousRunning = false;
+                        processProperty.SetValue(game, null);
+                        SetLaunching(false);
+                    }
+                }
+                await File.WriteAllTextAsync(Path.Combine(output, "playback-result.json"), JsonSerializer.Serialize(new { passed = true, checks }, new JsonSerializerOptions { WriteIndented = true }));
+                return;
+            }
             Capture("file1");
             double navigationPosition = backgroundPlayer.Position;
             ShowPage("Graphics");

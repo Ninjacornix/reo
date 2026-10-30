@@ -29,7 +29,7 @@ public partial class MainWindow {
     }
     async void ExportOriginalAssetsClicked(object sender, RoutedEventArgs e) {
         if (updating || updateRestarting || game.Running || launching || backingUp || importCancellation != null || !DiscImport.Ready(settings)) return;
-        launching = true;
+        SetLaunching(true);
         try {
             var progress = BeginDiscImport(); RefreshGameUi();
             string imported = settings.ImportFolder();
@@ -40,7 +40,7 @@ public partial class MainWindow {
             Status.Text = $"{result.Entries:N0} original assets {(result.Reused ? "already exported" : "exported")}. Use Open exports folder.";
         } catch (OperationCanceledException) { Status.Text = "Asset export canceled. Game files and completed exports are kept."; }
         catch (Exception error) { Status.Text = "Original asset export failed: " + error.Message; }
-        finally { launching = false; EndDiscImport(); RefreshGameUi(); }
+        finally { SetLaunching(false); EndDiscImport(); RefreshGameUi(); }
     }
     void OpenOriginalAssetExportsClicked(object sender, RoutedEventArgs e) {
         string folder = originalAssetFolders.GetValueOrDefault(settings.Game.Id) ?? AssetExports.GameFolder(settings.Game.Id);

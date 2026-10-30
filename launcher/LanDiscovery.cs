@@ -23,12 +23,12 @@ public static class LanDiscovery {
     };
 
     public sealed record Game(string Name, string Address, string Version, bool RoomReady,
-                              int Signup = HostNetworking.SignupPort, string GameId = "file1");
+                              int Signup = HostNetworking.SignupPort, string GameId = "file1", string RoomTitle = "");
 
     internal static byte[] Encode(Game game) {
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(
             new { name = game.Name, address = game.Address, version = game.Version,
-                  room = game.RoomReady, signup = game.Signup, game = game.GameId });
+                  room = game.RoomReady, signup = game.Signup, game = game.GameId, title = game.RoomTitle });
         _ = QueryFor(game.GameId);
         return (game.GameId == "file2" ? File2ReplyPrefix : ReplyPrefix).Concat(body).ToArray();
     }
@@ -47,11 +47,13 @@ public static class LanDiscovery {
             string name = root.GetProperty("name").GetString() ?? "";
             string version = root.GetProperty("version").GetString() ?? "";
             int signup = root.GetProperty("signup").GetInt32();
+            string title = root.TryGetProperty("title", out var roomTitle) ? roomTitle.GetString() ?? "" : "";
+            if (title.Length > 0 && !LobbySettings.ValidTitle(title)) return null;
             if (!OnlineOptions.TryHost(root.GetProperty("address").GetString(), out string address) ||
                 !OnlineOptions.ValidUsername(name) || version.Length > 20 ||
                 version.Any(c => c is < ' ' or > '~') || signup is < 1024 or > 65535)
                 return null;
-            return new(name, address, version, root.GetProperty("room").GetBoolean(), signup, edition);
+            return new(name, address, version, root.GetProperty("room").GetBoolean(), signup, edition, title);
         } catch (Exception error) when (error is JsonException or InvalidOperationException or
                                             KeyNotFoundException or ArgumentException or
                                             FormatException) {

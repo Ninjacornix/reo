@@ -12,6 +12,7 @@ public partial class MainWindow {
         DevGameClock.IsChecked = options.GameClock;
     }
     void DeveloperSettingChanged(object sender, RoutedEventArgs e) {
+        if (!initialized) return;
         var options = settings.Developer;
         options.NetworkTrace = DevNetworkTrace.IsChecked == true;
         options.TransportLog = DevTransportLog.IsChecked == true;
@@ -20,10 +21,13 @@ public partial class MainWindow {
         options.GameClock = DevGameClock.IsChecked == true;
         try {
             settings.Save();
-            Status.Text = options.Any ? "Saved · Developer recordings apply on the next launch" : "Saved";
-        } catch (IOException error) {
+        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
             Status.Text = "Could not save settings: " + error.Message;
         }
+    }
+    void RefreshDeveloperUi() {
+        DevGameClock.IsEnabled = settings.Game.Id == "file1";
+        DeveloperSessionNote.Visibility = game.Running || launching ? Visibility.Visible : Visibility.Collapsed;
     }
     void OpenSessionFolders(object sender, RoutedEventArgs e) =>
         OpenFolder(Path.Combine(Settings.Home, "sessions"));

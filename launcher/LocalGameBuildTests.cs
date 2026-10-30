@@ -172,6 +172,24 @@ static class LocalGameBuildTests {
                                                   "memory-cards/default/file1/data", "toolchains/z",
                                                   "imports/file2/keep" })
                     Directory.CreateDirectory(Path.Combine(home, folder));
+                string sharedCard = Path.Combine(home, "memory-cards", "shared", "data");
+                string firstSave = Path.Combine(sharedCard, "BASLUS-20765NETBIO");
+                string secondSave = Path.Combine(sharedCard, "BASLUS-20984NETBIO");
+                Directory.CreateDirectory(firstSave); Directory.CreateDirectory(secondSave);
+                File.WriteAllText(Path.Combine(firstSave, "data"), "first");
+                File.WriteAllText(Path.Combine(secondSave, "data"), "second");
+                var shared = new Settings { MemoryCard = sharedCard };
+                var sharedTargets = GameRemoval.Targets(root, shared, "file1", true, false, home);
+                check(sharedTargets.Any(t => t.Path == firstSave) && !sharedTargets.Any(t => t.Path == sharedCard || t.Path == secondSave),
+                      "Game removal targets only its own title inside a shared card: " + parent);
+                check(GameRemoval.Remove(sharedTargets).Count == 0 && File.ReadAllText(Path.Combine(secondSave, "data")) == "second" &&
+                      Directory.Exists(sharedCard) && !Directory.Exists(firstSave),
+                      "Removing File 1 preserves File 2's exact shared-card save data: " + parent);
+                // Recreate the ordinary removal fixtures consumed above.
+                Directory.CreateDirectory(Path.Combine(home, "local-games", "file1", "x"));
+                Directory.CreateDirectory(Path.Combine(home, "imports", "file1", "y"));
+                Directory.CreateDirectory(Path.Combine(home, "game-cache"));
+                Directory.CreateDirectory(Path.Combine(home, "memory-cards", "default", "file1", "data"));
                 var outside = new Settings { MemoryCardFile1 = Path.Combine(root, "my-own-card") };
                 var plain = GameRemoval.Targets(root, outside, "file1", false, false, home);
                 var everything = GameRemoval.Targets(root, outside, "file1", true, true, home);
@@ -179,7 +197,6 @@ static class LocalGameBuildTests {
                     .Select(relative => Path.GetFullPath(Path.Combine(home, relative))),
                     StringComparer.OrdinalIgnoreCase);
                 bool plainMatches = expected.SetEquals(plain.Select(t => Path.GetFullPath(t.Path)));
-                expected.Add(Path.GetFullPath(Path.Combine(home, "memory-cards/default/file1")));
                 expected.Add(Path.GetFullPath(Path.Combine(home, "toolchains")));
                 check(plainMatches && expected.SetEquals(everything.Select(t => Path.GetFullPath(t.Path))),
                       "Remove game selects only this game's launcher folders: " + parent);

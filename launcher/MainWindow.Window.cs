@@ -52,6 +52,8 @@ public partial class MainWindow {
         if (message is WM_ENTERSIZEMOVE or WM_EXITSIZEMOVE) {
             bool moving = message == WM_ENTERSIZEMOVE;
             backgroundPlayer?.Hold(moving);
+            GameDisc1.Hold(moving);
+            GameDisc2.Hold(moving);
             GameCase1.Hold(moving);
             GameCase2.Hold(moving);
         }

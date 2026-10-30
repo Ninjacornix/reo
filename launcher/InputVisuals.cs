@@ -12,18 +12,19 @@ public static class InputFeedback {
 }
 
 public sealed class StickPlot : FrameworkElement {
-    Pad raw = new(), output = new();
+    Pad output = new();
     int zone;
     bool right;
-    public void Update(Pad input, Pad mapped, int deadZone, bool rightStick) {
-        if (raw == input && output == mapped && zone == deadZone && right == rightStick)
+    public void Update(Pad mapped, int deadZone, bool rightStick) {
+        if (output == mapped && zone == deadZone && right == rightStick)
             return;
-        raw = input;
         output = mapped;
         zone = deadZone;
         right = rightStick;
         InvalidateVisual();
     }
+    internal Point Position => new((right ? output.RX : output.LX) / 32768.0,
+        -(right ? output.RY : output.LY) / 32768.0);
     static void DrawText(DrawingContext dc, string text, Point center, double size, Brush brush) {
         var formatted =
             new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
@@ -44,12 +45,9 @@ public sealed class StickPlot : FrameworkElement {
         dc.DrawEllipse(Palette.Brush(Palette.Accent, 100),
                        new Pen(Palette.Brush(Palette.Accent), 1), center,
                        radius * zone / 100, radius * zone / 100);
-        double rx = right ? raw.RX : raw.LX, ry = right ? raw.RY : raw.LY;
-        double ox = right ? output.RX : output.LX, oy = right ? output.RY : output.LY;
-        dc.DrawEllipse(null, new Pen(Palette.Brush(Palette.TextMuted), 1.5),
-                       new(center.X + rx / 32768 * radius, center.Y - ry / 32768 * radius), 5, 5);
+        var position = Position;
         dc.DrawEllipse(Palette.Brush(Palette.Text), null,
-                       new(center.X + ox / 32768 * radius, center.Y - oy / 32768 * radius), 3, 3);
+                       new(center.X + position.X * radius, center.Y + position.Y * radius), 3, 3);
         DrawText(dc, right ? "Right stick" : "Left stick", new(center.X, radius * 2 + 14), 11,
                  Palette.Brush(Palette.TextMuted));
     }

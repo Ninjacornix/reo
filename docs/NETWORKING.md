@@ -27,6 +27,29 @@ it does not supply a DNAS certificate or grant server admission. Leaving this
 option unset retains the original console path, which is experimental and
 currently encounters uncompiled self-decrypting DNAS code.
 
+The Co-op page uses a shared connection-mode selector with player and waiting-room
+settings on the left and host or join controls on the right. Hosting keeps invite
+addresses, firewall status, internet access and port settings together. Discovered
+games show their waiting-room state; selecting one preserves its advertised sign-up
+port. Manual addresses remain available for games outside local discovery.
+The hosting invite dropdown fetches the internet address once, retains it alongside
+local addresses. The dropdown contains addresses only. Lookup never changes
+the selected invite address. Forwarding and editable ports are shown directly on the page. Joining runs one
+initial local-game search per edition; further searches require Search again.
+
+With automatic waiting-room entry enabled, hosts can choose a room name (up to
+15 letters, digits or underscores), 2–4 players, and a waiting time of 5, 10, 15
+or 30 minutes. File #2 also offers 3 minutes. Blank names use the player name.
+These preferences drive the original creation menus through ordinary pad and
+USB-keyboard input. The driver reads live choice labels, editability and active
+bounds; unsupported area rules return control to the game menus. Discovery
+includes the custom room title so updated joining launchers can select it.
+
+UPnP requests router port mappings only while hosting and when enabled. The
+router must support and permit UPnP; accepted mappings do not prove public
+reachability. The launcher reports the request result separately from its saved
+preference and leaves router configuration untouched when the preference is off.
+
 The launcher has one Play action. Valid Co-op settings export the configured
 server/username plus `REO_COOP_AUTO_ACCOUNT=1`; incomplete settings leave offline
 play available. Confirming the username with Enter or leaving the field provisions

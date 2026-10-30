@@ -13,6 +13,10 @@ internal static class ProgressionUnlockTests {
             check(GameSession.SupportsProgressionUnlocks(image, "file1") &&
                   !GameSession.SupportsProgressionUnlocks(image, "file2"),
                   "Old File #2 cheat support and the File #1 unlock marker cannot enable File #2 unlocks");
+            bool wrongMarkerBlocked = false;
+            try { GameSession.VerifyCheatCompatibility(image, "file2", new[] { "builtin unlock" }); }
+            catch (IOException) { wrongMarkerBlocked = true; }
+            check(wrongMarkerBlocked, "The merged launch verifier rejects File #1 unlock capability for File #2");
             // A marker can straddle the streaming capability reader's buffer boundary.
             const string file2Marker = "[CHEATS-UNLOCK-FILE2-1] progression";
             using (var stream = File.Create(image)) {
@@ -24,6 +28,10 @@ internal static class ProgressionUnlockTests {
                   !GameSession.SupportsProgressionUnlocks(image, "file1") &&
                   !GameSession.SupportsProgressionUnlocks(image, "unknown"),
                   "File #2 requires its own unlock marker, including across a read boundary");
+
+            File.WriteAllText(image, "[CHEATS-FILE2-1] health infection ammo data\n" + file2Marker);
+            GameSession.VerifyCheatCompatibility(image, "file2", new[] { "builtin unlock" });
+            check(true, "The merged launch verifier accepts the game-specific File #2 unlock capability");
 
             var settings = new Settings { SelectedGame = "file2", CoopMode = "offline",
                 CheatsEnabled = true, EnabledCheats = new() { "builtin.file2.unlock" } };
