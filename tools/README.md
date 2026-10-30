@@ -20,4 +20,15 @@ Keep build tools and regression checks in source control. Their output, captures
 
 Individual check directories describe their requirements. Several use a locally built runtime or GPU backend and are not standalone unit tests. Build against matching headers and libraries; keep game captures local.
 
+The Hellfire overlay-entry regression uses authored synthetic instructions only:
+
+```powershell
+$env:REO_TEST_RECOMPILER = '<path to the patched ps2_recomp.exe>'
+python -m unittest discover -s tools/local_build -p test_overlay_entries.py -v
+```
+
+Without `REO_TEST_RECOMPILER`, the function-map check still runs and the generator
+integration check is skipped. See [scenario runtime investigation](../docs/SCENARIO_RUNTIME.md)
+for the issue #26 evidence and remaining gameplay checks.
+
 `ps2_debug` utilities use PCSX2 PINE for reference captures. They are developer tooling, not a dependency of the native launcher. Private handoffs and agent-specific build scripts are excluded from publication.

@@ -23,6 +23,8 @@ def reconstruct(elf, plan, output):
         raise FileExistsError("Choose a fresh private VU output directory")
     images = {}
     for image in recipe["images"]:
+        if type(image.get("enabledByDefault", False)) is not bool:
+            raise ValueError("Invalid VU default policy")
         expected = image["sha256"]
         if not re.fullmatch(r"[0-9a-f]{64}", expected) or image["bytes"] != 16384 or expected in images:
             raise ValueError("Invalid VU image identity")
@@ -47,8 +49,11 @@ def reconstruct(elf, plan, output):
         expected = image["sha256"]
         filename = "image-" + expected + ".bin"
         (output / filename).write_bytes(images[expected])
-        events.append({"event": "image", "image": n, "file": filename, "bytes": 16384,
-                       "sha256": expected})
+        event = {"event": "image", "image": n, "file": filename, "bytes": 16384,
+                 "sha256": expected}
+        if image.get("enabledByDefault", False):
+            event["enabled_by_default"] = True
+        events.append(event)
         for pc in image["entryPcs"]:
             events.append({"event": "launch", "image": n, "sha256": expected, "start_pc": pc})
     (output / "events.jsonl").write_text("\n".join(json.dumps(row) for row in events) + "\n")
