@@ -62,11 +62,43 @@ struct BuiltinResult {
     unsigned player = 0, health = 0, maximum = 0, ammunitionSlots = 0;
     uint32_t virus = 0;
 };
-inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r) {
+enum class Game { File1, File2 };
+inline void unlockFile2(uint8_t* r) {
+    // SLUS-20984 v1.05: original 13C190/13C110 full-unlock routines,
+    // with tables at 217878/217880/217890/2178B0. Keep other records,
+    // reward points and selected options intact. Do not directly write the
+    // secondary scenario-availability bank at 2FF8C8.
+    constexpr uint8_t costumes[8] = {3, 3, 3, 3, 3, 15, 15, 15};
+    constexpr uint32_t npcs[4] = {
+        0x72400c40u | 0x098ff082u, 0xff03c200u | 0x00d80df8u,
+        0x03ffc0fbu | 0x1c000000u, 0u
+    };
+    constexpr unsigned collectionCounts[5] = {145, 59, 146, 14, 11};
+    for (unsigned i = 0; i < 8; ++i) r[0x2feea8 + i] |= costumes[i];
+    for (unsigned i = 0; i < 4; ++i)
+        setWord(r, 0x2feeb0 + 4 * i, word(r, 0x2feeb0 + 4 * i) | npcs[i]);
+    r[0x2feec5] |= 0x0f; // All four difficulties; preserve other bits.
+    r[0x2feec3] |= 0x0d; // Purchased bonus-mode availability, not active mode.
+    setWord(r, 0x30022c, word(r, 0x30022c) | 0x0fffu);
+    // Five banks of 160 bits; only the real entries are available/purchased.
+    for (unsigned bank = 0; bank < 5; ++bank)
+        for (unsigned bit = 0; bit < collectionCounts[bank]; ++bit) {
+            const unsigned offset = bank * 20 + bit / 8;
+            const uint8_t mask = uint8_t(1u << (bit % 8));
+            r[0x300248 + offset] |= mask;
+            r[0x3002ac + offset] |= mask;
+        }
+}
+inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r, Game game = Game::File1) {
     BuiltinResult result;
     if (!flags || !r)
         return result;
-    if (flags & UnlockEverything) {
+    const bool file2 = game == Game::File2;
+    if (file2 && (flags & UnlockEverything)) {
+        unlockFile2(r);
+        result.unlocks = true;
+    }
+    if (!file2 && (flags & UnlockEverything)) {
         // Verified NTSC-U v2.00 save/progression fields. The scenario menu
         // 581820 tests +4078 in the save structure rooted at 31FB60; the
         // difficulty menu 587640 tests bits 2/3 at +23.
@@ -85,32 +117,43 @@ inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r) {
             }
         result.unlocks = true;
     }
-    if (r[0x4badd0] != 2 || r[0x4baded] >= 4)
+    const uint32_t state = file2 ? 0x4db390u : 0x4badd0u;
+    if (r[state] != 2 || r[state + 0x1d] >= 4)
         return result;
-    const unsigned player = r[0x4baded];
-    const uint32_t actor = 0x4a5c30u + player * 0x10e0u;
-    const int16_t hp = int16_t(half(r, actor + 0x544)), maximum = int16_t(half(r, actor + 0x546));
-    if (!r[actor] || r[actor + 0xbd0] || r[actor + 8] == 4 || hp <= 0 || maximum <= 0)
+    const unsigned player = r[state + 0x1d];
+    // SLUS-20984 v1.05: 609F38..609F50 actor table/stride,
+    // 6102C0 dead flag, 684F2C virus, 5A1318 inventory handles.
+    const uint32_t actor = file2 ? 0x4c5e10u + player * 0x1100u
+                                : 0x4a5c30u + player * 0x10e0u;
+    const uint32_t dead = file2 ? 0xbe8u : 0xbd0u;
+    const uint32_t virus = file2 ? 0xbc4u : 0xbacu;
+    const uint32_t inventory = file2 ? 0xc94u : 0xc84u;
+    const uint32_t health = file2 ? 0x540u : 0x544u;
+    const int16_t hp = int16_t(half(r, actor + health)), maximum = int16_t(half(r, actor + health + 2));
+    if (!r[actor] || r[actor + dead] || r[actor + 8] == 4 || hp <= 0 || maximum <= 0)
         return result;
     result.active = true;
     result.player = player;
     // Original actor HP/max fields; only the selected, living player is touched.
     if ((flags & FullHealth) && hp < maximum)
-        setHalf(r, actor + 0x544, uint16_t(maximum));
+        setHalf(r, actor + health, uint16_t(maximum));
     // Original 667F90 computes gauge = actor.BAC / character limit * 100.
     if (flags & NoInfection)
-        setWord(r, actor + 0xbac, 0);
+        setWord(r, actor + virus, 0);
     if (flags & InfiniteAmmo) {
         // Four inventory handles plus the character's personal weapon slot.
         for (unsigned slot = 0; slot < 5; ++slot) {
-            const unsigned handle = r[actor + 0xc84 + slot];
+            const unsigned handle = r[actor + inventory + slot];
             if (!handle)
                 continue;
-            const uint32_t item = 0x3c5630u + handle * 60u;
+            const uint32_t item = (file2 ? 0x3e1c20u : 0x3c5630u) + handle * 60u;
             const unsigned index = r[item + 0x2b];
-            if (r[item] != 1 || r[item + 2] != handle || index >= 129)
+            // File #2 loads its catalogue count at 5B0640; never index
+            // beyond the byte-addressable table, even with malformed data.
+            const unsigned count = file2 ? half(r, 0x7ada20) : 129;
+            if (r[item] != 1 || r[item + 2] != handle || count > 256 || index >= count)
                 continue;
-            const uint32_t info = 0x74bb50u + index * 24u;
+            const uint32_t info = (file2 ? 0x7aca00u : 0x74bb50u) + index * 24u;
             const unsigned type = half(r, item + 6), capacity = half(r, info + 8);
             // Metadata identity and firearm category exclude consumables/keys/melee.
             // Ordinary guns use decimal IDs below 100; personal guns include
@@ -126,9 +169,9 @@ inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r) {
             ++result.ammunitionSlots;
         }
     }
-    result.health = half(r, actor + 0x544);
+    result.health = half(r, actor + health);
     result.maximum = unsigned(maximum);
-    result.virus = word(r, actor + 0xbac);
+    result.virus = word(r, actor + virus);
     return result;
 }
 } // namespace reo::cheats

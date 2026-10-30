@@ -1,5 +1,7 @@
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
 #include "overrides/reo_cheats.h"
+#endif
+#if defined(REO_GAME_FILE1)
 #include "overrides/reo_mods.h"
 #include "overrides/reo_rumble.h"
 #include "overrides/reo_audio.h"
@@ -1356,6 +1358,10 @@ int main(int argc, char* argv[]) {
 
     ps2SetDebugPanelProvider(reoDebugPanelText);
 
+#if defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, "SLUS-20984") == 0)
+        reo::cheats::install(runtime);
+#endif
 #if defined(REO_GAME_FILE1)
     if (std::strcmp(g.serial, "SLUS-20765") == 0) {
         reo::cheats::install(runtime);

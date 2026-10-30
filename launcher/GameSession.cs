@@ -182,7 +182,7 @@ public sealed class GameSession {
                 !HasMarker(image, "[CHEATS-FILE2-1] health infection ammo data"))
                 throw new IOException("File #2 cheats need the updated game build. Rebuild or update the game.");
             if (File.ReadLines(cheatFile).Contains("builtin unlock") &&
-                !HasMarker(image, "[CHEATS-UNLOCK-1] progression"))
+                !SupportsProgressionUnlocks(image, selectedGame.Id))
                 throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
             Set("REO_CHEATS_FILE", cheatFile);
         }
@@ -428,6 +428,11 @@ public sealed class GameSession {
     }
     // Drain pipes independently of the UI: native window messages can wait on the game.
     internal static bool SupportsAutomaticAccount(string image) => HasMarker(image, "[COOP-AUTO] native-password-applied %u");
+    internal static bool SupportsProgressionUnlocks(string image, string game) => game switch {
+        "file1" => HasMarker(image, "[CHEATS-UNLOCK-1] progression"),
+        "file2" => HasMarker(image, "[CHEATS-UNLOCK-FILE2-1] progression"),
+        _ => false
+    };
     internal static bool SupportsWeaponShuffle(string image) => HasMarker(image, "[MOD-WEAPON-SHUFFLE-1] installed seed=%u");
     internal static bool SupportsZombieRandomizer(string image) => HasMarker(image, "[MOD-ZOMBIE-RANDOMIZER-1] installed seed=%u");
     internal static bool SupportsEnemySpawnRandomizer(string image) =>
