@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -19,6 +20,15 @@ class WindowsGenerationPaths(unittest.TestCase):
         cls.temporary = tempfile.TemporaryDirectory(prefix='reo-path-host-')
         cls.addClassCleanup(cls.temporary.cleanup)
         cls.folder = Path(cls.temporary.name).resolve()
+        # Cleanup must also work when the parent Python process has long paths
+        # disabled, rather than relying on the machine used to run these tests.
+        def cleanup():
+            target = extended(cls.folder)
+            if target.exists():
+                if target.resolve() != extended(cls.temporary.name).resolve() or not cls.folder.name.startswith('reo-path-host-'):
+                    raise RuntimeError('Unexpected path-test cleanup target')
+                shutil.rmtree(target)
+        cls.addClassCleanup(cleanup)
         cls.host = cls.folder / 'python_legacy_paths.exe'
         cls.dll = Path(os.environ.get('REO_TEST_PYTHON_DLL', str(
             Path(sys.base_prefix) / f'python{sys.version_info.major}{sys.version_info.minor}.dll')))
