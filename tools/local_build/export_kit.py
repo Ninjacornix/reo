@@ -238,6 +238,11 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
     if len(audio_rows) != 1:
         raise ValueError("Audited build graph must contain the direct per-game audio provider")
     copy(audio, "source/" + audio.relative_to(root).as_posix())
+    # raudio includes these C implementations directly; the header-only sweep
+    # above deliberately does not collect .c files from third-party trees.
+    for name in ("external/stb_vorbis.c", "external/qoaplay.c"):
+        helper = original_audio.parent / name
+        copy(helper, "source/" + helper.relative_to(root).as_posix())
     units.append({"id": "audioOutputNative", "sources": [relocate(audio)],
                   "options": options(audio_rows[0]["command"])})
 
