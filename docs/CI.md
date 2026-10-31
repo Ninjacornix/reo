@@ -21,8 +21,9 @@ it omits game build kits and cannot install/play games as a complete release
 would. Reports and previews expire after seven days. Release publishing remains
 manual through the existing sealed-kit package process.
 
-Both `Source checks` and `Windows launcher` are intended to be required before
-merging PRs into `develop` and `main`. Keep those job names stable. A normal
+Both `Source checks` and `Windows launcher` are required before merging PRs into
+`develop` and `main`, including administrator merges. Branches must be up to date;
+force pushes and branch deletion are disabled. Keep those job names stable. A normal
 feature goes through a PR into `develop`; release integration goes through a PR
 from `develop` into `main`. No outside approving reviewer is required for the
 single-maintainer workflow.
