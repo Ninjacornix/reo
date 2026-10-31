@@ -5,10 +5,11 @@ import json
 from pathlib import Path
 import struct
 import re
+from long_paths import extended
 
 
 def generate_support(staging, metadata, invoke):
-    staging, metadata = Path(staging), Path(metadata)
+    staging, metadata = map(extended, (staging, metadata))
     plan = json.loads((metadata / "local_supplemental_functions.json").read_text())
     if plan.get("format") != 1:
         raise ValueError("Unsupported supplemental function metadata")

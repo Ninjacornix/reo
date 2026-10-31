@@ -15,6 +15,7 @@ from generate_game import generate, GAMES
 from reconstruct_vu import reconstruct
 from source_recipes import apply_plan
 from generate_queue_control import generate as generate_queue_control
+from long_paths import extended
 
 
 def sha(path):
@@ -50,14 +51,6 @@ def stage(work, name, inputs, action, outputs, jobs=1):
     temporary.replace(receipt)
 
 
-def extended(path):
-    """Windows path without the 260-character limit (kit sources nest deeply)."""
-    text = str(Path(path).resolve())
-    if sys.platform != "win32" or text.startswith("\\\\?\\"):
-        return Path(text)
-    return Path("\\\\?\\UNC\\" + text[2:] if text.startswith("\\\\") else "\\\\?\\" + text)
-
-
 def game_profile(kit, requested=None):
     """Bind worker inputs to the selected kit, never to a File #1 default ELF."""
     plan = json.loads((Path(kit) / "compile-plan.json").read_text())
@@ -71,7 +64,7 @@ def game_profile(kit, requested=None):
 
 
 def build(kit, disc, work, output, jobs, game=None):
-    kit, disc, work, output = [Path(p).resolve() for p in (kit, disc, work, output)]
+    kit, disc, work, output = map(extended, (kit, disc, work, output))
     game, profile = game_profile(kit, game)
     work.mkdir(parents=True, exist_ok=True)
     if sys.platform == "linux":

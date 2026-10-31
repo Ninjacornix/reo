@@ -76,7 +76,7 @@ class GameProfileTests(unittest.TestCase):
             (output / "image.bin").write_bytes(b"Synthetic VU output")
 
         with patch("build_game.sys.platform", "win32"), \
-             patch("build_game.extended", side_effect=lambda p: Path(p)), \
+             patch("build_game.extended", side_effect=lambda p: Path(p).resolve()), \
              patch("build_game.msvc_environment", return_value=({"VCToolsRedistDir": str(self.root)}, "cl", "lib")), \
              patch("build_game.generate", side_effect=generate), \
              patch("build_game.apply_plan"), patch("build_game.generate_queue_control"), \

@@ -122,6 +122,30 @@ through `pathlib`: an extended path does not treat `/` as a separator. Windows s
 refuses to start a program, or run it in a folder, past 259 characters; the launcher
 therefore rejects data folders longer than 150 characters before building.
 
+RC1 issue [#9](https://github.com/Ninjacornix/reo/issues/9#issuecomment-6545969825)
+exposed an incomplete application of that rule. The File #1 generator found
+`coop_verified_callback_0058BFF0_0x58bff0.cpp` but could not open its 261-character
+ordinary path. Its seven supplemental groups reach this longer filename; the
+File #2 kit has no supplemental groups and avoids that particular failure.
+The worker, generator, supplemental generator and compiler now normalize their
+Python roots through the shared helper. Native compiler/recompiler arguments
+still use ordinary paths through `native()`.
+
+Windows CI builds a small Python host without `longPathAware`, exercising the
+limit even on machines where long paths are enabled. Tests cover the failing
+filename, supplemental generation, cleanup and stage-receipt reuse. With
+`REO_TEST_CXX` and `REO_LLVM_MINGW` set, the integration check also compiles, links,
+executes and reuses a native object beyond the path limit using the release
+toolchain. Local verification additionally reproduced the original exception
+using RC1's bundled Python and recompiler, then completed all seven real File #1
+supplemental passes with the fix. A broader full-generation attempt exhausted
+scratch disk space, so it is not a completed full-game rebuild validation.
+
+Both `refresh_inputs.py` and `export_slim_inputs.py` must include the current
+`generate_support.py` and `long_paths.py`. A source fix alone does not update
+already downloaded RC1 kits: a new sealed kit/package is required to distribute
+the corrected workers. No system-wide registry change is required.
+
 ## Linux
 
 Native Linux implementation has started in [launcher/linux](../launcher/linux/README.md),

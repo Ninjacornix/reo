@@ -20,7 +20,7 @@ import tempfile
 import time
 
 from build_scheduler import cost_estimate, header_fingerprint, scheduled_results, unit_estimates
-from long_paths import native
+from long_paths import extended, native
 
 
 # Bump when compile_unit changes how an object is produced from the keyed inputs below.
@@ -101,7 +101,7 @@ def portable_root(kit, plan):
     location = os.environ.get("REO_LLVM_MINGW", "")
     if not location:
         raise RuntimeError("Install LLVM/MinGW UCRT 20251216 and set REO_LLVM_MINGW to its extracted folder. See REQUIREMENTS.md.")
-    return Path(location).resolve()
+    return extended(location)
 
 
 def portable_environment(kit, plan):
@@ -171,7 +171,7 @@ def msvc_environment():
 
 
 def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.json", preflight=False):
-    kit, generated, work, output = map(lambda p: Path(p).resolve(), (kit, generated, work, output))
+    kit, generated, work, output = map(extended, (kit, generated, work, output))
     plan = json.loads((kit / plan_name).read_text())
     if plan.get("format") != 1 or not plan.get("runtimeAbi") or not (plan.get("units") or plan.get("sourceGroups")):
         raise ValueError("Invalid local compilation plan")

@@ -25,6 +25,7 @@ from overlay_extract import decompress, wrap_elf
 from generate_catalogues import generate as generate_catalogues
 from generate_support import generate_support
 from registration_chunks import chunk_registrations
+from long_paths import extended, native
 
 ELF_SHA256 = "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
 # Per-game inputs. File #2 shares the engine; its metadata (function maps,
@@ -66,11 +67,11 @@ def sha(path):
 def validate_mapped_ranges(output, function_map, skip=()):
     """Reject discovery ranges that overrule the explicit function map."""
     sources = {}
-    for source in Path(output).glob("*.cpp"):
+    for source in extended(output).glob("*.cpp"):
         match = re.search(r"_0x([0-9a-fA-F]+)\.cpp$", source.name)
         if match:
             sources[int(match[1], 16)] = source
-    with Path(function_map).open(newline="") as stream:
+    with extended(function_map).open(newline="") as stream:
         for row in csv.DictReader(stream):
             if row["name"] in skip:
                 continue
@@ -88,7 +89,7 @@ def validate_mapped_ranges(output, function_map, skip=()):
 
 def prepare_recipe_sources(staging, recipes):
     """Copy plain recipe bases and return the passes requiring source auditing."""
-    staging = Path(staging)
+    staging = extended(staging)
     by_pass, source_modes = {}, {}
     for recipe in recipes:
         relative = Path(recipe["source"])
@@ -116,7 +117,7 @@ def prepare_recipe_sources(staging, recipes):
 
 
 def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False, game="file1"):
-    recompiler, disc, metadata, destination = map(Path, (recompiler, disc, metadata, destination))
+    recompiler, disc, metadata, destination = map(extended, (recompiler, disc, metadata, destination))
     profile = GAMES[game]
     skip_main = profile["skip"]
     elf = disc / profile["elf"]
@@ -136,7 +137,7 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
 
     def invoke(name, image, function_map, output, skip=(), *, audit_override=None, main_policy=False):
         # TOML strings are escaped using JSON's compatible basic-string syntax.
-        quote = lambda p: json.dumps(str(Path(p).resolve()).replace("\\", "/"))
+        quote = lambda p: json.dumps(native(Path(p).resolve()).replace("\\", "/"))
         config = work / (name + ".toml")
         policy = ""
         if name == "main" or main_policy:
@@ -152,7 +153,7 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
                                              source_audit if audit_override is None else audit_override)
         log_path = logs / (name + ".log")
         with log_path.open("wb") as log:
-            result = subprocess.run([str(recompiler.resolve()), str(config)],
+            result = subprocess.run([native(recompiler), native(config)],
                                     stdout=log, stderr=subprocess.STDOUT, env=environment)
         if result.returncode:
             # The launcher keeps only this script's output; repeat the recompiler's reason.
