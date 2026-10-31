@@ -37,6 +37,12 @@ jobs:
         run: mkdir -p build-ninja/ci/source-reports
       - name: Audit publication inputs
         run: python tools/publication_audit.py | tee build-ninja/ci/source-reports/publication.json
+      - name: Set up .NET for portable input checks
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '8.0.x'
+      - name: Test keyboard D-pad and right-stick bindings
+        run: dotnet run --project tools/keyboard_input_check | tee build-ninja/ci/source-reports/keyboard-input.log
       - name: Test local build tools
         run: python -m unittest discover -s tools/local_build -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/local-build.log
       - name: Test asset tools with synthetic inputs
