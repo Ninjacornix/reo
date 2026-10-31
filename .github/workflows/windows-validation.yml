@@ -1,0 +1,97 @@
+name: Windows validation
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+  PYTHONUTF8: '1'
+
+jobs:
+  source-checks:
+    name: Source checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Prepare reports
+        run: mkdir -p build-ninja/ci/source-reports
+      - name: Audit publication inputs
+        run: python tools/publication_audit.py | tee build-ninja/ci/source-reports/publication.json
+      - name: Test local build tools
+        run: python -m unittest discover -s tools/local_build -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/local-build.log
+      - name: Test asset tools with synthetic inputs
+        run: python -m unittest discover -s tools/assets -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/assets.log
+      - name: Test native pipeline cache
+        run: |
+          c++ -std=c++17 -O2 -pthread tools/parallel_gs_backend/cache_check.cpp -o build-ninja/ci/cache-check
+          build-ninja/ci/cache-check build-ninja/ci/cache-output | tee build-ninja/ci/source-reports/cache.log
+      - name: Upload source reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: source-check-reports
+          path: build-ninja/ci/source-reports/
+          retention-days: 7
+          if-no-files-found: warn
+
+  windows-launcher:
+    name: Windows launcher
+    runs-on: windows-2022
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Check out pinned Vulkan headers
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: KhronosGroup/Vulkan-Headers
+          ref: 2cd90f9d20df57eac214c148f3aed885372ddcfe # v1.4.321
+          path: build-ninja/ci/vulkan-headers
+          persist-credentials: false
+      - name: Set up .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build, test and publish launcher preview
+        run: ./tools/ci/windows.ps1 -VulkanHeaders "$env:GITHUB_WORKSPACE/build-ninja/ci/vulkan-headers" -Output "$env:GITHUB_WORKSPACE/build-ninja/ci/windows" -Commit $env:GITHUB_SHA
+      - name: Upload Windows reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: windows-check-reports
+          path: build-ninja/ci/windows/reports/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Upload launcher preview
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: launcher-preview-win-x64
+          path: build-ninja/ci/windows/reo-launcher-preview-win-x64.zip
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error

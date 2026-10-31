@@ -49,9 +49,9 @@ int main() {
         _putenv_s("REO_AUDIO_LEVELS","70,11,22,33,44");
         initialize();check(equal(reoAudioMasterGain(),.7f),"Initialize environment before IPC");
         auto update=[&](const std::array<uint32_t,8>& snapshot) {
-            __atomic_store_n(words+2,1u,__ATOMIC_RELEASE);
-            for(unsigned i=0;i<8;++i) if(i!=2) __atomic_store_n(words+i,snapshot[i],__ATOMIC_RELAXED);
-            __atomic_store_n(words+2,snapshot[2],__ATOMIC_RELEASE);
+            std::atomic_ref<uint32_t>(words[2]).store(1u,std::memory_order_release);
+            for(unsigned i=0;i<8;++i) if(i!=2) std::atomic_ref<uint32_t>(words[i]).store(snapshot[i],std::memory_order_relaxed);
+            std::atomic_ref<uint32_t>(words[2]).store(snapshot[2],std::memory_order_release);
         };
         const std::array<uint32_t,8> good{magic,version,2,40,10,20,30,60};
         update(good);reoAudioPoll();

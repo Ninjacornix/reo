@@ -1,4 +1,4 @@
-param([switch]$Run)
+param([switch]$Run, [string]$OutputDirectory = '')
 $ErrorActionPreference='Stop'
 Push-Location $PSScriptRoot
 try {
@@ -36,9 +36,9 @@ exit /b %errorlevel%
     if (!$fxc) { throw 'Windows SDK shader compiler (fxc.exe) is required for the image preview.' }
     & $fxc /nologo /T ps_2_0 /E main /Fo (Join-Path $shaderOutput 'ColorPreview.ps') (Join-Path $PSScriptRoot 'Shaders\ColorPreview.hlsl')
     if ($LASTEXITCODE) { throw 'Image preview shader build failed.' }
-    & dotnet build Reo.Launcher.csproj -c Release --nologo
+    $output = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $PSScriptRoot 'bin\Release\net8.0-windows' }
+    & dotnet build Reo.Launcher.csproj -c Release --nologo --output $output
     if ($LASTEXITCODE) { throw 'Launcher build failed.' }
-    $output = Join-Path $PSScriptRoot 'bin\Release\net8.0-windows'
     Copy-Item -LiteralPath (Join-Path $native 'XINPUT1_4.dll') -Destination $output -Force
     Copy-Item -LiteralPath (Join-Path $native 'reo-movie-check.exe') -Destination $output -Force
     if ($Run) { Start-Process -FilePath (Join-Path $output 'Outbreak.Launcher.exe') -WindowStyle Normal }
