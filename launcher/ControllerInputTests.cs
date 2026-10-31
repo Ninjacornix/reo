@@ -32,13 +32,16 @@ internal static class ControllerInputTests {
                                                        () => new(new(), new()), () => Environment.TickCount64);
                 controller.Configure(settings);
                 controller.SessionEnabled = true;
-                controller.Publish();
                 string dll = Path.Combine(root, game + ".dll");
                 File.Copy(Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll"), dll);
                 Environment.SetEnvironmentVariable("REO_LAUNCHER_PAD_MAP", controller.MapName);
                 nint library = NativeLibrary.Load(dll);
                 try {
                     var get = Marshal.GetDelegateForFunctionPointer<GetState>(NativeLibrary.GetExport(library, "XInputGetState"));
+                    // Cold DLL copying/loading and the adapter's system-library
+                    // lookup can exceed the feed's 500 ms timeout on CI hosts.
+                    get(0, out _);
+                    controller.Publish();
                     check(get(0, out var initial) == 0 && initial.Pad == controller.State
                           && initial.Buttons == 0x1000 && initial.LT == 91 && initial.RT == 182
                           && initial.LX < 0 && initial.LY > 0 && initial.RX > 0 && initial.RY > 0,
@@ -85,6 +88,12 @@ internal static class ControllerInputTests {
                           game + " simultaneous D-pad and stick preserve both inputs");
                     using var map = MemoryMappedFile.OpenExisting(controller.MapName);
                     using var view = map.CreateViewAccessor();
+                    view.Write(12, unchecked((uint)(Environment.TickCount - 1000)));
+                    check(get(0, out var stale) == 0 && stale.Pad == new Pad(),
+                          game + " stale heartbeats release the logical pad");
+                    controller.Publish();
+                    check(get(0, out var refreshed) == 0 && refreshed.Pad == controller.State,
+                          game + " fresh heartbeats restore input after a stale feed");
                     view.Write(0, 0u);
                     check(get(0, out var invalid) == 0 && invalid.Pad == new Pad(),
                           game + " invalid private feed cannot select a different controller");
