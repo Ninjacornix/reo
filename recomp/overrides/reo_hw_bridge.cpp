@@ -1,3 +1,4 @@
+#include "../../runtime/input/scenario_test_route.h"
 /*
  * REO Hardware Bridge — Implementation
  *
@@ -1013,6 +1014,8 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
         fprintf(stderr, "[TEST-ROUTE] invalid REO_TEST_ROUTE=%s; disabled\n", e);
         return 0;
     }();
+    static const char* scenarioOption = std::getenv("REO_TEST_SCENARIO");
+    static const int scenarioTarget = reo::scenario_test_route::requested(scenarioOption);
     static bool done = false;
     static double pressUntil = 0, releaseUntil = 0;
     static uint16_t button = 0;
@@ -1025,6 +1028,15 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
         return 0;
     if (now > (target >= 6 ? 300 : target == 4 ? 180 : 120)) {
         fprintf(stderr, "[TEST-ROUTE] timeout t=%.3f; automatic input disabled\n", now);
+        done = true;
+        return 0;
+    }
+    if ((target == 3 || target == 4) && scenarioOption && *scenarioOption && (scenarioTarget < 0
+#if defined(REO_GAME_FILE2)
+        || true // Chapter cursor layout below is File #1 only.
+#endif
+        )) {
+        std::fprintf(stderr, "[TEST-ROUTE-SCENARIO-1] invalid or unsupported chapter; automatic input disabled\n");
         done = true;
         return 0;
     }
@@ -1112,10 +1124,32 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
             button = pad2ButtonBit("CROSS"); // confirm SINGLE PLAY
         else if (target >= 3 && scenario && (!hasSelection || (selectionState & 0xFFFFu) == 0))
             button = pad2ButtonBit("CROSS"); // enter original scenario selection
-        else if (target >= 3 && selectionReady && (selectionState & 0xFFFFu) == 0x0108u)
-            button = pad2ButtonBit("CROSS"); // 5838E0: idle scenario, debounce timer expired
+        else if (target >= 3 && selectionReady && (selectionState & 0xFFFFu) == 0x0108u) {
+            // 5838E0's list count/cursor. Preserve the existing route unless
+            // a diagnostic explicitly requests a chapter.
+            if (!scenarioOption || !*scenarioOption) button = pad2ButtonBit("CROSS");
+            else if (pointer(selection, 0x264u)) {
+                const uint32_t count = word(selection + 0x25cu), cursor = word(selection + 0x260u);
+                const auto choice = reo::scenario_test_route::choose(scenarioTarget, cursor, count);
+                std::fprintf(stderr, "[TEST-ROUTE-SCENARIO-1] target=%d cursor=%u count=%u\n", scenarioTarget, cursor, count);
+                if (choice == reo::scenario_test_route::Choice::Unavailable) {
+                    std::fprintf(stderr, "[TEST-ROUTE-SCENARIO-1] all five chapters must be available; automatic input disabled\n");
+                    done = true;
+                    return 0;
+                }
+                button = pad2ButtonBit(choice == reo::scenario_test_route::Choice::Confirm ? "CROSS" :
+                                       choice == reo::scenario_test_route::Choice::Right ? "RIGHT" : "LEFT");
+            } else {
+                std::fprintf(stderr, "[TEST-ROUTE-SCENARIO-1] invalid chapter list pointer; automatic input disabled\n");
+                done = true;
+                return 0;
+            }
+        }
         else if (target == 4 && character)
             button = pad2ButtonBit("CROSS"); // 584D90: original character idle/timer gate
+        else if (target == 4 && scenarioOption && *scenarioOption && hasSelection &&
+                 (selectionState & 0xFFFFu) == 0x030Au)
+            button = pad2ButtonBit("CROSS"); // 586690: unlocked-mode confirmation, retain default
         else if (target == 4 && hasSelection && (selectionState & 0xFFFFu) == 0x050Bu)
             button = pad2ButtonBit("CROSS"); // 587640 case5: difficulty, no +20 timer gate
         else

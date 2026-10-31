@@ -186,3 +186,77 @@ the preceding build differs only by the added common-helper function and
 registration. No test processes remain and the task-mounted ISO was detached.
 Original saves were preserved. These checks cover beginnings, not full chapters
 or the Hellfire ledge traversal.
+
+## RC1 follow-up: ice and smoke effects (issue #26)
+
+The [latest report on 2026-10-31](https://github.com/Ninjacornix/reo/issues/26#issuecomment-6547642583)
+confirms that RC1 fixes the Hellfire crash, but reports slow motion in Below
+Freezing Point's frozen areas and Hellfire's smoke areas. It does not include a
+new RC1 log, exact room names, or a save at the slow room. The earlier tables
+above cover chapter openings only. They do not establish that this remaining
+report is fixed, nor that GPU utilization is its cause.
+
+Branch `fix/issue-26-rc1-effects-performance` adds a File #1 diagnostic chapter
+selector to the existing automatic input route:
+
+```
+REO_TEST_ROUTE=gameplay
+REO_TEST_SCENARIO=1
+```
+
+Chapter indices are 0 Outbreak, 1 Below Freezing Point, 2 The Hive, 3 Hellfire,
+and 4 Decisions, Decisions. Use a private memory-card directory and unlock all
+five chapters there; a temporary `REO-CHEATS-2` manifest with `builtin unlock`
+can provide availability. The route observes the original list count and
+cursor and sends ordinary pad input. It also confirms the extra unlocked-mode
+screen before difficulty selection, retaining the default choice. Missing or
+empty `REO_TEST_SCENARIO` retains the existing route. Invalid arguments,
+explicit File #2 selection and incomplete lists stop automatic input. No guest
+state is patched by the selector. Fixture instructions are in
+`tools/scenario_route_check/README.md`.
+
+For reproduction, retain `runtime.log`, a game-clock journal, chapter/room and
+player movement details. Record an ordinary warmed run with VU collection and
+profiling disabled before collecting a separate diagnostic pass. The existing
+`REO_VU_PROGRAM_LOG=1` / `REO_VU_PROGRAM_DIR` observer can identify uploaded and
+launched images, but its full-image hashing and disk writes perturb timing.
+A collector limit can stop observation before the affected room; check its
+termination record. Compare actual launched image/entry identities against
+`recomp/config/local_vu_images.json`; matching the catalogue alone does not prove
+that an optimized executor ran or that its output is correct.
+
+The default remains the three previously verified VU images. Do not treat
+`REO_VU_WHOLE=1` as a released fix: the additional experimental images require
+replay and visible-room verification. Also, the current whole-program branch
+of the dependency reports zero matched pairs to kick/cost attribution despite
+updating its census count. Its generic/unknown pair totals cannot, on their
+own, establish interpreter fallback; inspect actual admission or replay first.
+
+Local follow-up uses the Mac native build as an offscreen diagnostic rig.
+It cannot establish Windows RTX 3060 utilization, visible effects correctness,
+or MoltenVK/native-Metal performance equivalence. RC1 slow-room verification
+remains open pending a precise reproduction and a visible Windows run.
+
+Follow-up checks on Apple M2 / MoltenVK, native resolution, offscreen:
+
+- The C++ fixture passes 68 checks; the native File #1 bridge compiles and links.
+- Below Freezing Point selects cursor 1 of 5, confirms the unlocked-mode screen
+  and reaches room 1. The journal contains 1,353 actor observations, 450 ordinary
+  updates over 15.00085 host seconds (29.998 updates/s), with zero dropped,
+  invalid or unpublished records. This is an instrumented diagnostic window,
+  not a benchmark of the reporter's slow room.
+- Hellfire selects cursor 3 of 5 and passes the same menu confirmations. The
+  80-second run exits normally but produces zero active-actor journal rows.
+  The route's early `reached gameplay` message alone is insufficient evidence
+  of interactive gameplay; this run does not validate Hellfire performance.
+- Both VU collectors stop at their 64 MiB byte limit: 339,745 launches for
+  Below Freezing Point and 341,471 for Hellfire. No unknown image appears in
+  the collected portion. Later execution is unobserved. The Below Freezing
+  Point portion includes all three already-approved default images, so simply
+  adding those images again would not address this report.
+
+Private evidence is under `build-ninja/issue26/chapter-1-confirmed`,
+`chapter-3-confirmed` and `follow-up-summary.json`. The local candidate reuses
+Mac build objects, replacing only `pad2TestRoute` plus its new header. It is
+not a rebuilt or tested Windows RC1 executable. Raw VU images, game data,
+private cards and binaries remain ignored and are not part of this branch.
