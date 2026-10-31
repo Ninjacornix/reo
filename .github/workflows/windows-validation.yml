@@ -41,6 +41,10 @@ jobs:
         run: python -m unittest discover -s tools/local_build -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/local-build.log
       - name: Test asset tools with synthetic inputs
         run: python -m unittest discover -s tools/assets -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/assets.log
+      - name: Test unlock-only progression during gameplay
+        run: |
+          c++ -std=c++17 -O2 tools/cheat_check/online_unlock_tests.cpp -o build-ninja/ci/online-unlock-check
+          build-ninja/ci/online-unlock-check | tee build-ninja/ci/source-reports/online-unlocks.log
       - name: Test native pipeline cache
         run: |
           c++ -std=c++17 -O2 -pthread tools/parallel_gs_backend/cache_check.cpp -o build-ninja/ci/cache-check

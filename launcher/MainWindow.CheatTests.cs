@@ -84,6 +84,14 @@ public partial class MainWindow {
             Capture("locked-during-launch");
             SetLaunching(false); UpdateCheatState();
             Check(health.IsEnabled && EnableCheats.IsEnabled && !CheatSessionNote.IsVisible, "Cheat editing returns when launching finishes");
+            string? previousMode = settings.CoopMode;
+            foreach (string mode in new[] { "host", "join" }) {
+                settings.CoopMode = mode; UpdateCheatState();
+                Check(CheatSessionNote.IsVisible && CheatSessionNote.Text.Contains("Unlock everything") &&
+                      CheatSessionNote.Text.Contains("Play alone") && EnableCheats.IsEnabled,
+                      mode + " explains online progression unlocks without locking selection edits");
+            }
+            settings.CoopMode = previousMode; UpdateCheatState();
             Width = MinWidth; Height = MinHeight; await Task.Delay(300); UpdateLayout();
             SettingsScroll.ScrollToTop(); await Task.Delay(100); Capture("compact-file1-top");
             SettingsScroll.ScrollToEnd(); await Task.Delay(100);

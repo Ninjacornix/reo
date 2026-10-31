@@ -40,10 +40,9 @@ internal static class ProgressionUnlockTests {
                   "File #2 unlocks export without enabling health, infection or ammunition cheats");
             foreach (string mode in new[] { "host", "join" }) {
                 settings.CoopMode = mode;
-                bool blocked = false;
-                try { Cheats.Export(settings, root); }
-                catch (IOException error) { blocked = error.Message.Contains("Play alone"); }
-                check(blocked, "File #2 unlock-only selection is unavailable in co-op " + mode);
+                string online = Cheats.Export(settings, root);
+                check(File.ReadAllLines(online).SequenceEqual(new[] { "REO-CHEATS-2", "builtin unlock" }),
+                      "File #2 unlock-only selection is available in co-op " + mode);
             }
         } finally { Directory.Delete(root, true); }
     }

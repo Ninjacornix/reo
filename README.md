@@ -60,6 +60,12 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 
 GPU rendering is implemented through paraLLEl-GS.
 
+**Online progression unlocks:** select **Cheats → Enable cheats → Unlock
+everything** for the chosen game, and clear other cheat selections before hosting
+or joining. Unlock-only selections are accepted for co-op launches.
+Health, ammunition, points, timer and imported data cheats require **Play alone**.
+See [online unlock behavior and verification](docs/ONLINE_UNLOCKS.md).
+
 The development build offers named window resolutions: **Native (512 × 448)**,
 **HD (1280 × 720)**, **FHD (1920 × 1080)**, **QHD / 2K (2560 × 1440)** and
 **4K (3840 × 2160)**. Existing window sizes remain available. Windows may limit

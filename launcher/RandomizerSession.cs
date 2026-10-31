@@ -32,8 +32,7 @@ internal static class RandomizerSession {
     internal sealed record Resolution(byte[] Bytes, List<ModManifest> Mods);
     internal static async Task<Resolution> Resolve(Settings settings, List<ModManifest> selected,
                                                   CancellationToken cancel, int port=LanDiscovery.Port) {
-        if (settings.CheatsEnabled && settings.EnabledCheats.Count != 0)
-            throw new IOException("Disable local cheats before joining or hosting a shared randomizer session.");
+        Cheats.VerifyOnlineSelection(settings);
         if (settings.ResolvedCoopMode == "host")
             return new(Create(settings.AccountUsername, selected, settings.Game.Id), selected);
         if (settings.ResolvedCoopMode != "join") throw new IOException("A shared session requires host or join mode.");

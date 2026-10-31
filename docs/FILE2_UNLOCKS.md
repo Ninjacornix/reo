@@ -1,8 +1,8 @@
 # File #2 progression unlocks
 
-Select **File #2 → Cheats**, enable **Enable cheats** and **Unlock everything**, then use **Play alone**. This option grants scenario, difficulty, costume, NPC, bonus-mode and collection availability through the running game's progression data. It does not grant points, add inventory items or play through scenarios. The game's normal save operation is needed to retain changes after disabling the option; the launcher does not replace or directly edit a memory card.
+Select **File #2 → Cheats**, enable **Enable cheats** and **Unlock everything**, then launch **Play alone**, **Host a game** or **Join a game**. This option grants scenario, difficulty, costume, NPC, bonus-mode and collection availability through the running game's progression data. It does not grant points, add inventory items or play through scenarios. The game's normal save operation is needed to retain changes after disabling the option; the launcher does not replace or directly edit a memory card.
 
-File #2 uses the native marker `[CHEATS-UNLOCK-FILE2-1] progression`. The launcher rejects an older File #2 native build that has only the health/infection/ammunition hook or File #1's unlock marker. Rebuild or update the game when prompted. Both the master cheat switch and the File #2 unlock selection are required. File #1 and File #2 selections remain separate, and cheats are unavailable in co-op.
+File #2 uses the native marker `[CHEATS-UNLOCK-FILE2-1] progression`. The launcher rejects an older File #2 native build that has only the health/infection/ammunition hook or File #1's unlock marker. Rebuild or update the game when prompted. Both the master cheat switch and the File #2 unlock selection are required. File #1 and File #2 selections remain separate, and the built-in progression unlock is available in co-op. Deselect other cheats before hosting or joining; gameplay and imported data cheats still require Play alone. See [online unlocks](ONLINE_UNLOCKS.md).
 
 ## Original-code evidence
 
