@@ -72,7 +72,11 @@ public sealed class GameSession {
         graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
         string sourceExe = settings.GetExe(), iso = settings.GetGameSource();
         var selectedGame = settings.Game;
-        if (!AppLayout.Packaged(root) && !File.Exists(sourceExe))
+        bool localBuildKit=AppLayout.Packaged(root);
+#if REO_CROSS_PLATFORM
+        localBuildKit &= OperatingSystem.IsWindows();
+#endif
+        if (!localBuildKit && !File.Exists(sourceExe))
             throw new FileNotFoundException(
                 "This game build is missing. Extract the complete release archive.");
         if (!File.Exists(iso))
@@ -80,11 +84,18 @@ public sealed class GameSession {
         Imported = await settings.PrepareGame(importProgress, cancel);
         cancel.ThrowIfCancellationRequested();
         settings.SetImport(Imported.Root);
-        if (AppLayout.Packaged(root))
+        if (localBuildKit)
             sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel, game: selectedGame.Id);
         if (!settings.UsesGamePak() && settings.WantsOriginalAssetPaks(selectedGame.Id))
             OriginalAssets = await AssetExports.Ensure(Imported, selectedGame.Id, importProgress, cancel);
         string discRoot = Path.Combine(Imported.Root, "data"), discElf = Imported.Elf;
+        string image, hash;
+#if REO_CROSS_PLATFORM
+        if (!OperatingSystem.IsWindows()) {
+            image = sourceExe; hash = Updates.Sha(image);
+        } else
+#endif
+        {
         string proxy = Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll");
         if (!File.Exists(proxy))
             throw new FileNotFoundException("The installation is missing its controller adapter. " +
@@ -120,7 +131,8 @@ public sealed class GameSession {
         if (File.Exists(vulkanLoader)) runtimeFiles.Add(new(vulkanLoader, "vulkan-1.dll"));
         var cached = await Task.Run(() => GameImageCache.Prepare(
             Path.Combine(Settings.Home, "game-cache"), runtimeFiles, cancel), cancel);
-        string image = cached.Image, hash = cached.Sha256;
+        image = cached.Image; hash = cached.Sha256;
+        }
         VerifyAudioCompatibility(image, selectedGame.Id);
         if (selectedGame.Id == "file2" && selectedMods.Count > 0 &&
             !HasMarker(image, "[MOD-FILE2-1] installed"))
@@ -165,6 +177,9 @@ public sealed class GameSession {
         if (SubtitleMapName != null) Set("REO_SUBTITLE_MAP", SubtitleMapName);
         if (!string.IsNullOrWhiteSpace(settings.AudioOutputId)) Set("REO_AUDIO_DEVICE", settings.AudioOutputId);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
+#if REO_CROSS_PLATFORM
+        PlatformRuntime.Configure(start, root, settings, controller, Logs!);
+#endif
         bool automaticAccount = onlineEnvironment.Count > 0 &&
                                 await Task.Run(() => SupportsAutomaticAccount(image), cancel);
         if (onlineEnvironment.Count > 0 && !automaticAccount) {
@@ -321,7 +336,11 @@ public sealed class GameSession {
         try {
             account = automaticAccount
                           ? new AutomaticAccount(accountHome ?? Settings.Home, settings, text => NetworkStatus = text,
+#if REO_CROSS_PLATFORM
+                                                 new Uri($"http://{settings.CoopHost}:{(settings.ResolvedCoopMode == "join" && settings.JoinSignupPort > 0 ? settings.JoinSignupPort : settings.SignupPort)}/reweb/signup/create_id.html"))
+#else
                                                  MainWindow.SignupEndpoint(settings, null))
+#endif
                           : null;
             account?.Bind(start);
             if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join") {
@@ -354,9 +373,9 @@ public sealed class GameSession {
         // Health addresses currently describe File #1 only; keep the neutral
         // light for File #2 rather than interpret unrelated guest memory.
         controller.SetHealthLight(PadLight.Blue);
-        if (selectedGame.Id == "file1")
+        if (OperatingSystem.IsWindows() && selectedGame.Id == "file1")
             _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
-        _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
+        if (OperatingSystem.IsWindows()) _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
         _ = Pump(Process.StandardError, stderr, line => {
             ObserveGraphicsLine(line);
@@ -407,7 +426,7 @@ public sealed class GameSession {
                       movieDecoderGpu = movies.GpuName,
                       movieDecoderReason = movies.Reason },
                 new JsonSerializerOptions { WriteIndented = true }));
-        _ = ApplyWindow(Process, graphics);
+        if (OperatingSystem.IsWindows()) _ = ApplyWindow(Process, graphics);
     }
     async Task WatchRandomizerSession(Process process,string logs,string host,byte[] expected) {
         using var stopped=new CancellationTokenSource();
@@ -421,7 +440,13 @@ public sealed class GameSession {
                 randomizerStopReason=message;
                 NetworkStatus=message;
                 await File.WriteAllTextAsync(Path.Combine(logs,"randomizer-session-error.txt"),message);
-                if(!process.HasExited) process.CloseMainWindow();
+                if(!process.HasExited) {
+#if REO_CROSS_PLATFORM
+                    await PlatformRuntime.Stop(process);
+#else
+                    process.CloseMainWindow();
+#endif
+                }
                 return;
             } catch(OperationCanceledException) { return; }
               catch(IOException) { /* Native networking handles a disconnected host. */ }

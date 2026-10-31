@@ -1,15 +1,19 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+#if !REO_CROSS_PLATFORM
 using System.Windows;
 using System.Windows.Media.Imaging;
+#endif
 
 namespace Outbreak.Launcher;
 
 // Personal artwork overrides artwork cached by the automatic first-run download.
 static partial class GameArtwork {
     internal record Identity(string Serial, string Region);
+#if !REO_CROSS_PLATFORM
     internal record CaseArtwork(BitmapSource Front, BitmapSource? Back, BitmapSource? Spine);
+#endif
     sealed record WrapLayout(int[] Front, int[] Back, int[] Spine);
     public static string Folder => Path.Combine(Settings.Home, "artwork");
     public static string DownloadFolder => Path.Combine(Folder, "downloaded");
@@ -53,6 +57,7 @@ static partial class GameArtwork {
     internal static IEnumerable<string> CandidateNames(int edition, Identity identity) =>
         CandidateStems(edition, identity)
             .SelectMany(stem => new[] { stem + "-cover.jpg", stem + "-cover.png" });
+#if !REO_CROSS_PLATFORM
     internal static BitmapImage? LoadCover(string folder, int edition, Identity identity) {
         return LoadCover(new[] { folder }, edition, identity);
     }
@@ -161,6 +166,7 @@ static partial class GameArtwork {
     }
     public static Task<CaseArtwork?> FetchAsync(int edition, string iso) =>
         Task.Run(() => LoadCaseArtwork(new[] { Folder, DownloadFolder }, edition, DiscIdentity(edition, iso)));
+#endif
     public static string CacheKey(IEnumerable<string> paths) => string.Join('|', paths.Select(path => {
         try {
             if (Directory.Exists(path))

@@ -11,6 +11,11 @@ public record StorageProgress(long Copied, long Total, string File);
 // The small locator stays beside the launcher; all managed state lives in Home.
 public static class Storage {
     public const string LocatorName = "storage.json", MarkerName = ".storage-location.json";
+    static string LocatorPath(string root) =>
+#if REO_CROSS_PLATFORM
+        !OperatingSystem.IsWindows() ? Path.Combine(DefaultHome(root), "launcher-location.json") :
+#endif
+        Path.Combine(root, LocatorName);
     static string? home;
     static FileStream? lease;
     public static bool Initialized { get; private set; }
@@ -19,7 +24,12 @@ public static class Storage {
     sealed record Locator(int Format, string Folder);
     sealed record Location(string Home, string Installation);
     public static string Home => home ??= Resolve(AppLayout.FindRoot(AppContext.BaseDirectory));
-    public static string DefaultHome(string root) => Path.Combine(Full(root), "data");
+    public static string DefaultHome(string root) =>
+#if REO_CROSS_PLATFORM
+        PlatformPaths.DataHome(root);
+#else
+        Path.Combine(Full(root), "data");
+#endif
     static string Full(string path) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
     static bool Same(string a, string b) => Full(a).Equals(Full(b), StringComparison.OrdinalIgnoreCase);
     internal static bool Within(string path, string parent) => Same(path, parent) ||
@@ -32,7 +42,7 @@ public static class Storage {
             return path;
         }
         if (!string.IsNullOrWhiteSpace(requested)) return Validate(requested);
-        string file = Path.Combine(root, LocatorName);
+        string file = LocatorPath(root);
         if (!File.Exists(file)) return DefaultHome(root);
         var value = JsonSerializer.Deserialize<Locator>(File.ReadAllText(file), Json) ??
                     throw new IOException("The storage location file is invalid.");
@@ -79,9 +89,15 @@ public static class Storage {
     internal static void CheckLinks(string path) {
         for (FileSystemInfo? entry = Directory.Exists(path) ? new DirectoryInfo(path) : new FileInfo(path);
              entry != null; entry = entry is DirectoryInfo d ? d.Parent : ((FileInfo)entry).Directory)
-            if (entry.Exists && BuildPathLinks.Redirects(entry.FullName, entry.Attributes))
+            if (entry.Exists && !MacSystemLink(entry) && BuildPathLinks.Redirects(entry.FullName, entry.Attributes))
                 throw new IOException("Choose a storage folder without symbolic links or junctions: " + entry.FullName);
     }
+
+    // macOS itself redirects these root directories into /private. All user-created
+    // symlinks beneath them remain rejected by the storage boundary.
+    static bool MacSystemLink(FileSystemInfo entry) => OperatingSystem.IsMacOS() &&
+        entry.FullName is "/var" or "/tmp" or "/etc" &&
+        entry.ResolveLinkTarget(false)?.FullName == "/private" + entry.FullName;
 
     static List<FileInfo> Files(string folder, CancellationToken cancel, List<string> directories) {
         var result = new List<FileInfo>();
@@ -164,10 +180,10 @@ public static class Storage {
                                     IProgress<StorageProgress>? progress, CancellationToken cancel) {
         if (Same(source, destination)) return;
         // Test the locator's directory before a potentially long copy. Selection publishes last.
-        CheckWritable(root);
+        CheckWritable(Path.GetDirectoryName(LocatorPath(root))!);
         await CopyData(source, destination, root, progress, cancel);
         string value = Within(destination, root) ? Path.GetRelativePath(root, destination) : Full(destination);
-        await WriteJson(Path.Combine(root, LocatorName), new Locator(1, value), cancel);
+        await WriteJson(LocatorPath(root), new Locator(1, value), cancel);
     }
 
     static Location? ReadLocation(string folder) {

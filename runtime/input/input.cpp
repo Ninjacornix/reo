@@ -1,6 +1,9 @@
 #include "input.h"
 #include <cstdio>
 #include <cstring>
+#ifdef REO_PLATFORM_MACOS
+#include "macos_input.h"
+#endif
 
 #ifdef REO_PLATFORM_WINDOWS
 #include <windows.h>
@@ -26,7 +29,11 @@ bool Input::init() {
     }
 #endif
 
+#ifdef REO_PLATFORM_MACOS
+    printf("[INPUT] Initialized (GameController + macOS keyboard)\n");
+#else
     printf("[INPUT] Initialized (XInput + keyboard)\n");
+#endif
     return true;
 }
 
@@ -35,6 +42,11 @@ void Input::shutdown() {
 }
 
 void Input::update() {
+#ifdef REO_PLATFORM_MACOS
+    for (int i = 0; i < 2; ++i)
+        m_pads[i] = macos_input::read(i);
+    return;
+#endif
 #ifdef REO_PLATFORM_WINDOWS
     for (int i = 0; i < 2; i++) {
         if (m_xinput_connected[i]) {
@@ -50,6 +62,8 @@ void Input::update_controllers_only() {
         m_pads[i].reset();
 #ifdef REO_PLATFORM_WINDOWS
         update_xinput(i);
+#elif defined(REO_PLATFORM_MACOS)
+        m_pads[i] = macos_input::read(i, false);
 #endif
     }
 }

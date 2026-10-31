@@ -13,6 +13,9 @@
   </PropertyGroup>
   <Import Project="native/GraphicsPreview.targets" />
   <ItemGroup>
+    <Compile Remove="shared/**/*.cs;desktop/**/*.cs;cross-tests/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="../examples/mods/no-infection.json" Link="examples/mods/no-infection.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../examples/mods/randomizer.json" Link="examples/mods/randomizer.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../examples/mods/randomizer-file2.json" Link="examples/mods/randomizer-file2.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

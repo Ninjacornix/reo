@@ -1,6 +1,10 @@
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+#if REO_CROSS_PLATFORM
+using HwndSource = Outbreak.Launcher.NativeWindowMessages;
+#else
 using System.Windows.Interop;
+#endif
 
 namespace Outbreak.Launcher;
 
@@ -50,15 +54,35 @@ public sealed partial class Controller : IDisposable {
                         Func<RawInputPads.Snapshot?> discoverPads, Func<long> inputClock) {
         this.discoverPads = discoverPads;
         this.inputClock = inputClock;
+#if REO_CROSS_PLATFORM
+        if (!OperatingSystem.IsWindows()) {
+            xboxReader ??= NativeControllers.Read;
+            xboxRumble ??= NativeControllers.Rumble;
+            discoverPads = () => null;
+            this.discoverPads = discoverPads;
+        }
+#endif
         var native = xboxReader == null ? new XboxInput() : null;
         readXbox = xboxReader ?? native!.Read;
         rumble = new(xboxRumble ?? (native == null ? (_, _, _) => { } : native.Rumble));
+#if REO_CROSS_PLATFORM
+        if (!OperatingSystem.IsWindows()) {
+            string folder = Path.Combine(Settings.Home, "input"); Directory.CreateDirectory(folder);
+            MapName = Path.Combine(folder, Guid.NewGuid().ToString("N")+".map");
+            var file = new FileStream(MapName, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.ReadWrite, 4096, FileOptions.DeleteOnClose);
+            file.SetLength(64);
+            map = MemoryMappedFile.CreateFromFile(file,null,64,MemoryMappedFileAccess.ReadWrite,HandleInheritability.None,false);
+        } else
+#endif
         map = MemoryMappedFile.CreateNew(MapName, 64);
         view = map.CreateViewAccessor();
         view.Write(0, Magic);
         view.Write(32, ControllerRumble.Magic);
     }
     public void Attach(nint hwnd) {
+#if REO_CROSS_PLATFORM
+        if (!OperatingSystem.IsWindows()) return;
+#endif
         source = HwndSource.FromHwnd(hwnd);
         source.AddHook(Hook);
         var devices =

@@ -1,6 +1,7 @@
 #pragma once
 #include "device.hpp"
 #include "command_buffer.hpp"
+#include "../shader_location.hpp"
 #include "upstream/Textures/AreaTex.h"
 #include "upstream/Textures/SearchTex.h"
 #include <filesystem>
@@ -29,6 +30,11 @@ class ResidentSmaa {
         if (!length || length == 32768)
             throw std::runtime_error("SMAA executable path unavailable");
         auto path = std::filesystem::path(executable).parent_path() / "reo-gpu-present" / name;
+#elif defined(__APPLE__)
+        const auto executable = reo_shader_location::executableDirectory();
+        if (executable.empty())
+            throw std::runtime_error("SMAA executable path unavailable");
+        auto path = executable / "reo-gpu-present" / name;
 #elif defined(__linux__)
         std::error_code error;
         const auto executable = std::filesystem::read_symlink("/proc/self/exe", error);

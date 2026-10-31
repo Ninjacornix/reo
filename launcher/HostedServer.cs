@@ -34,6 +34,18 @@ internal sealed class HostedServer : IDisposable {
                 new Dictionary<string, object> { [plugin] = new { host, port } })
         };
     }
+    // Probe sockets directly so readiness does not depend on OS listener enumeration.
+    static bool UdpListening(int port) {
+        using var socket=new Socket(AddressFamily.InterNetwork,SocketType.Dgram,ProtocolType.Udp);
+        try{socket.Bind(new IPEndPoint(IPAddress.Any,port));return false;}
+        catch(SocketException e)when(e.SocketErrorCode==SocketError.AddressAlreadyInUse){return true;}
+    }
+    static async Task<bool> TcpListening(string address,int port,CancellationToken cancel) {
+        using var socket=new TcpClient(AddressFamily.InterNetwork);
+        using var timeout=CancellationTokenSource.CreateLinkedTokenSource(cancel);timeout.CancelAfter(250);
+        try{await socket.ConnectAsync(address,port,timeout.Token);return true;}
+        catch(Exception e)when(e is SocketException or OperationCanceledException){cancel.ThrowIfCancellationRequested();return false;}
+    }
     public static string SuggestedAddress() =>
         NetworkInterface.GetAllNetworkInterfaces()
             .Where(n => n.OperationalStatus == OperationalStatus.Up &&
@@ -85,8 +97,17 @@ internal sealed class HostedServer : IDisposable {
                     UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = data,
                     RedirectStandardOutput = true, RedirectStandardError = true
                 };
-                start.ArgumentList.Add("-u");
-                start.ArgumentList.Add(Path.Combine(source, "run.py"));
+#if REO_CROSS_PLATFORM
+                if (!OperatingSystem.IsWindows()) {
+                    var runner = PlatformServices.Server(root);
+                    foreach (string argument in runner.Prefix) start.ArgumentList.Add(argument);
+                    start.ArgumentList.Add(source);
+                } else
+#endif
+                {
+                    start.ArgumentList.Add("-u");
+                    start.ArgumentList.Add(Path.Combine(source, "run.py"));
+                }
                 foreach (string arg in args)
                     start.ArgumentList.Add(arg);
                 foreach (string key in start.Environment.Keys
@@ -149,11 +170,8 @@ internal sealed class HostedServer : IDisposable {
                                           (tail.Length > 0 ? ": " + tail[..Math.Min(tail.Length, 600)]
                                                            : ". See the hosted-server logs."));
                 }
-                var ip = IPGlobalProperties.GetIPGlobalProperties();
-                int[] tcp = ip.GetActiveTcpListeners().Select(e => e.Port).ToArray();
-                int[] udp = ip.GetActiveUdpListeners().Select(e => e.Port).ToArray();
-                if (tcp.Contains(ports.Signup + portOffset) && tcp.Contains(10127 + portOffset) &&
-                    udp.Contains(9090 + portOffset) && udp.Contains(ports.Game + portOffset)) {
+                if (await TcpListening(normalized, ports.Signup + portOffset, cancel) && await TcpListening(normalized, 10127 + portOffset, cancel) &&
+                    UdpListening(9090 + portOffset) && UdpListening(ports.Game + portOffset)) {
                     Address = normalized;
                     GameId = game;
                     return;
@@ -174,7 +192,7 @@ internal sealed class HostedServer : IDisposable {
         var ip = IPGlobalProperties.GetIPGlobalProperties();
         var busy = wanted.Where(w => w.Protocol == "TCP"
                                          ? ip.GetActiveTcpListeners().Any(e => e.Port == w.Port)
-                                         : ip.GetActiveUdpListeners().Any(e => e.Port == w.Port))
+                                         : UdpListening(w.Port))
                        .ToList();
         if (busy.Count == 0)
             return;
@@ -192,6 +210,12 @@ internal sealed class HostedServer : IDisposable {
                                                string? componentRoot, string home,
                                                IProgress<string>? progress,
                                                IProgress<ImportProgress>? setupProgress) {
+#if REO_CROSS_PLATFORM
+        if (!OperatingSystem.IsWindows()) {
+            var runner = PlatformServices.Server(root);
+            return (runner.Executable, runner.Source);
+        }
+#endif
         string payload = componentRoot ?? Path.Combine(root, "network-server");
         if (File.Exists(Path.Combine(payload, "server-manifest.json"))) {
             using var manifest = JsonDocument.Parse(

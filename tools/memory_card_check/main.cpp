@@ -34,7 +34,9 @@ int main(int argc, char** argv) {
         word(8, flags);
         word(12, max);
         word(16, 0x1000);
-        strcpy_s(reinterpret_cast<char*>(q.data() + 20), 1024, name);
+        if (std::strlen(name) >= 1024)
+            throw std::runtime_error("test card path exceeds protocol buffer");
+        std::memcpy(q.data() + 20, name, std::strlen(name) + 1);
     };
     {
         Service card({root / "card0", {}});

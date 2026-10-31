@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>osx-arm64</RuntimeIdentifier>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../GlobalItemCatalogue.cs" Link="GlobalItemCatalogue.cs" />
+    <Compile Include="../../GlobalItemModels.cs" Link="GlobalItemModels.cs" />
+    <Compile Include="../../GlobalWeaponMotions.cs" Link="GlobalWeaponMotions.cs" />
+    <Compile Include="../../GlobalWeaponMotionsTests.cs" Link="GlobalWeaponMotionsTests.cs" />
+  </ItemGroup>
+</Project>

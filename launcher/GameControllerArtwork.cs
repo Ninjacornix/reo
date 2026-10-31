@@ -1,8 +1,10 @@
 using System.Buffers.Binary;
 using System.IO;
 using System.Security.Cryptography;
+#if !REO_CROSS_PLATFORM
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+#endif
 
 namespace Outbreak.Launcher;
 
@@ -24,6 +26,7 @@ internal static class GameControllerArtwork {
         _ => null
     };
 
+#if !REO_CROSS_PLATFORM
     internal static BitmapSource? Load(string import, string game, string home) => LoadCore(import, game, home, false);
     internal static BitmapSource? LoadOverlay(string import, string game, string home) => LoadCore(import, game, home, true);
 
@@ -105,6 +108,28 @@ internal static class GameControllerArtwork {
             catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
         }
     }
+
+#else
+    internal static byte[]? LoadPixels(string import, string game, bool overlay = false) {
+        var profile = Profile(game);
+        if (profile == null || string.IsNullOrWhiteSpace(import)) return null;
+        string archive = Path.Combine(import, "data", "NETBIO00.DAT");
+        if (!File.Exists(archive)) return null;
+        using var stream = File.OpenRead(archive);
+        var rom = BackgroundVideos.Entry(stream, new(0, stream.Length), 0);
+        var texture = BackgroundVideos.Entry(stream, rom, profile.Index);
+        if (texture.Length != profile.Size) throw new InvalidDataException("Unsupported controller texture size.");
+        byte[] source = new byte[profile.Size];
+        stream.Position = texture.Offset; stream.ReadExactly(source);
+        if (!Matches(source, profile.SourceHash)) throw new InvalidDataException("Unsupported controller texture data.");
+        byte[] decoded = DecompressOb(game == "file2" ? MomoMember(source, overlay ? 5 : 2) : source);
+        byte[] pixels = DecodeCrop(decoded, game == "file1" ? (overlay ? 9 : 5) : 0, overlay);
+        if (!Matches(pixels, overlay ? OverlayHash : profile.PixelHash)) throw new InvalidDataException("Unsupported controller pixels.");
+        return pixels;
+    }
+    static bool Matches(byte[] bytes, string expected) =>
+        Convert.ToHexString(SHA256.HashData(bytes)).Equals(expected, StringComparison.OrdinalIgnoreCase);
+#endif
 
     internal static byte[] MomoMember(ReadOnlySpan<byte> source, int index) {
         if (source.Length < 8 || source.Length > MaxDecodedBytes || !source[..4].SequenceEqual("MOMO"u8))

@@ -8,6 +8,8 @@
 #if defined(_WIN32)
 #include "resident_dxgi_presenter1c.h"
 #include "movie_runtime/movie_owner_service_fwd.h"
+#elif defined(REO_MACOS_METAL_PRESENT)
+#include "macos/resident_metal_presenter.h"
 #elif defined(REO_LINUX_XLIB_PRESENT)
 #include "linux/resident_xlib_presenter.h"
 #endif
@@ -89,6 +91,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
     bool movieEnabled_ = false;
 #if defined(_WIN32)
     std::unique_ptr<reo_gpu_present::ResidentDxgiPresenter> presenter_;
+#elif defined(REO_MACOS_METAL_PRESENT)
+    std::unique_ptr<reo_gpu_present::ResidentMetalPresenter> presenter_;
 #elif defined(REO_LINUX_XLIB_PRESENT)
     std::unique_ptr<reo_gpu_present::ResidentXlibPresenter> presenter_;
 #endif
@@ -493,7 +497,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
 
   public:
     reo_parallel_backend::ResidentDiagnostics diagnostics() const {
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         const uint64_t presented = presenter_ ? presenter_->submittedFrames() : 0;
 #else
         const uint64_t presented = 0;
@@ -567,6 +571,14 @@ class ParallelBackend final : public Backend, private SignalInterface {
                                                               deviceExtensions, 1, flags);
         } else
 #endif
+#if defined(REO_MACOS_METAL_PRESENT)
+        if (config_.residentPresentation) {
+            const char* instanceExtensions[] = {"VK_KHR_surface", "VK_EXT_metal_surface"};
+            const char* deviceExtensions[] = {"VK_KHR_swapchain"};
+            initialized = context_->init_instance_and_device(instanceExtensions, 2,
+                                                              deviceExtensions, 1, flags);
+        } else
+#endif
 #if defined(REO_LINUX_XLIB_PRESENT)
         if (config_.residentPresentation) {
             const char* instanceExtensions[] = {"VK_KHR_surface", "VK_KHR_xlib_surface"};
@@ -585,7 +597,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         device_->set_context(*context_);
         device_->init_frame_contexts(4);
         initializePipelineCache();
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         if (config_.residentPresentation) {
             displayImages_.beginSession();
             if (!config_.presentationTarget || !config_.presentationEpochCurrent ||
@@ -596,6 +608,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
             }
 #if defined(_WIN32)
             presenter_ = std::make_unique<reo_gpu_present::ResidentDxgiPresenter>(
+#elif defined(REO_MACOS_METAL_PRESENT)
+            presenter_ = std::make_unique<reo_gpu_present::ResidentMetalPresenter>(
 #else
             presenter_ = std::make_unique<reo_gpu_present::ResidentXlibPresenter>(
 #endif
@@ -689,7 +703,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         fifo_.clear();
         observer_.reset();
         displayImages_.shutdown();
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         if (presenter_ && config_.residentStoppedDiagnostic)
             try {
                 config_.residentStoppedDiagnostic(displayImages_.liveImages(),
@@ -741,7 +755,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         gifHalted_ = false;
         heldWork_.clear();
         displayImages_.retireEpoch();
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         if (presenter_)
             presenter_->retireSource();
 #endif
@@ -993,7 +1007,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
             std::fprintf(stderr,"[INTERNAL-RESOLUTION-1] image=%ux%u high-resolution=%u\n",
                          reportedScanoutWidth_,reportedScanoutHeight_,scanout.high_resolution_scanout ? 1u : 0u);
         }
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         if (presenter_ && scanout.image) {
             if (!config_.presentationEpochCurrent(capture.epoch))
                 return {};

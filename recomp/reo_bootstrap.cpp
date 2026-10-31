@@ -19,6 +19,10 @@
 #endif
 #include "gs_priv_atomic.h"
 #include "runtime/assets/executable_strings.h"
+#ifdef __APPLE__
+#include "runtime/core/macos_run_control.h"
+#include "runtime/input/macos_input.h"
+#endif
 
 #include "gs_backend_route.h"
 #if __has_include("ps2_codegen_features.h")
@@ -1155,6 +1159,12 @@ int main(int argc, char* argv[]) {
 #if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
     if (std::getenv("REO_MOD_ENEMY_SPAWN_SEED")) ramBackingBytes = 2u * PS2_RAM_SIZE;
 #endif
+#ifdef __APPLE__
+    if (!std::getenv("REO_HEADLESS") && !reo::macos_input::display_available()) {
+        fprintf(stderr,"[BOOT] No awake display is available. Wake the display and launch the game again.\n");
+        return 1;
+    }
+#endif
     if (!runtime.initialize(g.name, ramBackingBytes)) {
 
         fprintf(stderr, "[BOOT] Failed to initialize runtime\n");
@@ -1390,6 +1400,13 @@ int main(int argc, char* argv[]) {
 #endif
 #ifdef _WIN32
     reo::ScopedTimerResolution timerPrecision;
+#endif
+#ifdef __APPLE__
+    reo::ScopedMacRunControl macRunControl([&runtime] { runtime.requestStop(); },
+        [](const char* audio, const char* subtitles) {
+            reo::audio::applyEnvironmentLevels(audio);
+            reo::subtitles::applyEnvironment(subtitles);
+        });
 #endif
     runtime.run();
 

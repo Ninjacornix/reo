@@ -1,0 +1,45 @@
+--- a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+@@ -226,6 +226,12 @@
+     }
+     return g_presentWindow;
+ }
++#elif defined(__APPLE__) && defined(REO_MACOS_METAL_PRESENT)
++void* reoMetalLayerForWindow(void* nativeWindow, int width, int height);
++void ps2InstallModalRender(void *, void (*)()) {}
++void *ps2PresentationWindow(void *nativeWindow, int width, int height) {
++    return reoMetalLayerForWindow(nativeWindow, width, height);
++}
+ #else
+ void ps2InstallModalRender(void *, void (*)()) {}
+ void *ps2PresentationWindow(void *nativeWindow, int, int) { return nativeWindow; }
+--- a/ps2xRuntime/CMakeLists.txt
++++ b/ps2xRuntime/CMakeLists.txt
+@@ -307,3 +307,15 @@
+ install(DIRECTORY include/
+     DESTINATION include
+ )
++
++# REO's Metal view bridge is optional; other runtime consumers keep their host path.
++option(PS2X_MACOS_METAL_PRESENT "Enable REO Metal presentation target" OFF)
++if(APPLE AND PS2X_MACOS_METAL_PRESENT)
++    set(_reo_metal_bridge "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/parallel_gs_backend/macos/metal_layer.mm")
++    set(_reo_macos_input "${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/input/macos_input.mm")
++    target_sources(ps2_runtime PRIVATE "${_reo_metal_bridge}" "${_reo_macos_input}")
++    set_source_files_properties("${_reo_metal_bridge}" PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
++    set_source_files_properties("${_reo_macos_input}" PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
++    target_compile_definitions(ps2_runtime PRIVATE REO_MACOS_METAL_PRESENT)
++    target_link_libraries(ps2_runtime PUBLIC "-framework Cocoa" "-framework Metal" "-framework QuartzCore" "-framework GameController")
++endif()
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -10,6 +10,9 @@
+ endif()
+ 
+ project("PS2 Retro X")
++if(APPLE AND PS2X_MACOS_METAL_PRESENT)
++    enable_language(OBJC OBJCXX)
++endif()
+ 
+ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+ 

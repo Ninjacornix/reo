@@ -14,9 +14,13 @@ public static class AppLayout {
                                              "the complete release archive to a folder.");
     }
     public static string Native(string root, string game) =>
+#if REO_CROSS_PLATFORM
+        PlatformPaths.GameExecutable(root, game);
+#else
         Packaged(root) ? LocalGameBuild.TargetPath(root, game)
                        : Path.Combine(root, "build-ninja", "recomp",
                                       game == "file2" ? "reo_recomp_file2.exe" : "reo_recomp.exe");
+#endif
     public static string Work(string root, string game) => Path.Combine(Settings.Home, "play", game);
 }
 public sealed partial class Settings {

@@ -1,0 +1,49 @@
+name: Shared RC1 launcher
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['launcher/**', 'tools/launcher/**', '.github/workflows/shared-launcher.yml']
+permissions:
+  contents: read
+jobs:
+  shared:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            rid: win-x64
+          - os: macos-15
+            rid: osx-arm64
+          - os: ubuntu-24.04
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.400'
+      - name: Linux render and controller dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1 libegl1 libxkbcommon0 libsdl2-dev
+      - name: Verify RC1 reference
+        run: python tools/launcher/check_reference.py
+      - name: Shared core regression tests
+        run: dotnet run --project launcher/cross-tests
+      - name: Publish common desktop
+        run: dotnet publish launcher/desktop/Reo.Launcher.Desktop.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o build-launcher/${{ matrix.rid }}
+      - name: Linux controller bridge
+        if: runner.os == 'Linux'
+        run: c++ -std=c++17 -shared -fPIC launcher/desktop/Platform/controllers_sdl.cpp $(sdl2-config --cflags --libs) -o build-launcher/linux-x64/libReo.Platform.so
+      - name: Mac controller bridge
+        if: runner.os == 'macOS'
+        run: clang++ -std=c++17 -dynamiclib -fobjc-arc launcher/desktop/Platform/controllers_macos.mm -framework AppKit -framework GameController -framework CoreHaptics -o build-launcher/osx-arm64/libReo.Platform.dylib
+      - name: Render all twelve RC1 pages and exercise controls
+        run: dotnet launcher/desktop/bin/Release/net10.0/${{ matrix.rid }}/Outbreak.Launcher.dll --headless-check build-launcher/captures
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: shared-launcher-${{ matrix.rid }}
+          path: build-launcher/

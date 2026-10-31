@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
+#if !REO_CROSS_PLATFORM
 using System.Windows.Input;
+#endif
 
 namespace Outbreak.Launcher;
 
@@ -71,7 +73,11 @@ public static class InputMapping {
                 38 => "Up arrow",
                 39 => "Right arrow",
                 40 => "Down arrow",
+#if REO_CROSS_PLATFORM
+                _ => code is >= 65 and <= 90 ? ((char)code).ToString() : $"Key {code}"
+#else
                 _ => KeyInterop.KeyFromVirtualKey(code).ToString()
+#endif
             };
         return code switch {
             0x1000 => kind == "xbox" ? "A" : "Cross",
