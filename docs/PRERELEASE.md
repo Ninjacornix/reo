@@ -1,7 +1,8 @@
 # Prerelease packaging
 
-Current target: **v1.0.20-rc0**, with numeric assembly version **1.0.20**, marked
-prerelease. Package with `-ReleaseTag v1.0.20-rc0 -Version 1.0.20 -SelfContained`.
+Current target: **v1.0.20-rc1**, from **develop**, with numeric assembly version
+**1.0.20**, marked prerelease. Package with
+`-ReleaseTag v1.0.20-rc1 -Version 1.0.20 -SelfContained`.
 The launcher is one self-contained single-file `Outbreak.Launcher.exe` (layout
 `self-contained-single-file`); its .NET/WPF runtime is bundled inside, not shipped as
 loose DLLs. The first rc0 upload published a self-contained *folder* (~250 runtime
@@ -9,6 +10,30 @@ DLLs at the package root) because `-SelfContained` disabled single-file; the rc0
 assets were replaced with the single-file package. The server is source-only, with Python/packages prepared
 automatically in the selected data folder on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.20-rc1
+
+Keep RC0's single-file launcher layout and both external build-input ZIPs. RC1
+requires refreshed game inputs for the merged runtime hooks, asset packs,
+File #2 audio channels, subtitle preferences and cheats. Do not reuse RC0's sealed
+inputs or its passing validation flags for these changed kits.
+
+Replay the complete published SDK patch series in a separate checkout; preserve
+the developer's dirty submodule. Keep the reviewed movie allocator and per-game
+C audio provider as direct executable link objects. The portable worker invokes
+clang++ and must explicitly select `-x c` for that C provider.
+
+Verify both exact sealed kits, complete their portable builds, and record actual
+room-route results separately. Supply receipts bound to those manifest hashes
+through `-ValidationReport` and `-ValidationReportFile2`. Preserve interrupted
+build diagnostics; resumed objects remain subject to the normal receipt checks.
+
+Use RC0's release Markdown as the starting point, updating the changes, validation
+and known limits. Remove RC0's obsolete automatic AppData-copy warning: packaged
+RC1 starts with its own `data` folder unless a storage locator selects another
+folder. Publish the Windows ZIP, dependency sources and their SHA-256 files as
+`v1.0.20-rc1`, a testing prerelease from develop, without advancing main or marking
+it as the latest stable release.
 
 ## v1.0.20-rc0
 

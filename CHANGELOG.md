@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v1.0.20-rc1 prerelease - 2026-10-31
+
+- Redesign the launcher settings pages, disc selectors, memory-card profiles, mod configuration and logs. Add a GPU-rendered animated graphics preview and separate launcher appearance settings.
+- Add native asset PAK exports and replacements, executable-string edits and PAK game sources for both editions.
+- Add File #2 progression unlocks and separate Master, Music, Sound effects, Voice and UI audio channels. Support Windows output-device selection and optional spoken subtitles while preserving interaction prompts.
+- Add maximum result points and infinite escape time cheats for both games. Include the File #2 Randomizer in the launcher.
+- Integrate scenario runtime, DualSense Bluetooth and build-path fixes. Stop launcher background movies while the game runs and disable game settings before installation.
+- Add required source and Windows launcher CI checks and protect develop/main. Fix portable C audio-provider compilation through the pinned clang++ driver.
+
 ## v1.0.19 prerelease - 2026-10-24
 
 - Keep compiled VU geometry active when later rooms append independent microcode to the bank. Check every byte covering the optimized blocks and native routines, reject routines outside that coverage, and interpret appended code normally. A captured-bank regression replay improved from 7.48 to 30.00 game updates/sec; full-room and scenario coverage remains limited.
