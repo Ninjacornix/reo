@@ -43,7 +43,14 @@ function Test-Launcher([string]$Folder, [string]$Name) {
         }
         [IO.File]::WriteAllText((Join-Path $reports ($Name + '-stdout.log')), $stdout.GetAwaiter().GetResult())
         [IO.File]::WriteAllText((Join-Path $reports ($Name + '-stderr.log')), $stderr.GetAwaiter().GetResult())
-        if ($process.ExitCode -ne 0) { throw "$Name failed with exit $($process.ExitCode)." }
+        if ($process.ExitCode -ne 0) {
+            $errorLog = Join-Path $Folder 'launcher-error.log'
+            if (Test-Path -LiteralPath $errorLog) {
+                Copy-Item -LiteralPath $errorLog -Destination (Join-Path $reports ($Name + '-error.log'))
+                Get-Content -LiteralPath $errorLog | Write-Output
+            }
+            throw "$Name failed with exit $($process.ExitCode)."
+        }
         $receipt = Join-Path $Folder 'test-results/self-test.json'
         $result = Get-Content -LiteralPath $receipt -Raw | ConvertFrom-Json
         if (!$result.passed -or $result.checks -lt 1) { throw "$Name did not produce passing self-checks." }
