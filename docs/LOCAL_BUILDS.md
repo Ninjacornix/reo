@@ -56,6 +56,21 @@ matching separately published source archive and its digest. See
 [the measured import comparison](IMPORT_PROFILE.md) for parity checks and the
 completed build comparisons. The script does not publish releases.
 
+RC2 networking adds compiled source units. When refreshing a pre-RC2 kit, copy
+`native_netcode.cpp/.h`, `game_netcode.h` and `world_sync.cpp/.h` from
+`network/native/` with `--add-source`, update the transport and the edition's
+network override, and add both `.cpp` units to **both** compile plans:
+
+```text
+--add-unit network/native/native_netcode.cpp=network/native/snap_iop_transport.cpp
+--add-unit network/native/world_sync.cpp=network/native/snap_iop_transport.cpp
+```
+
+Each new unit inherits the existing transport unit's audited include/define
+options. A fresh CMake export already includes these units. RC1's frozen server
+component is rejected by the RC2 exporter; use `--checkout` at the pinned server
+revision described in [the server workflow](../network/server/README.md).
+
 The exporter currently consumes the validated developer build's compilation
 database, source-unit inventory and runtime build records. It is not yet a
 clean-clone release pipeline. Preserve these inputs when preparing a kit.

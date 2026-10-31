@@ -5,6 +5,7 @@
 #include <ws2tcpip.h>
 
 #include "../../network/native/snap_iop_transport.h"
+#include "../../network/native/native_netcode.h"
 
 #include <algorithm>
 #include <array>
@@ -12,12 +13,16 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
 
 namespace {
+// Reproduce the hardware bridge's lifetime: this owner predates the lazily
+// constructed native state and destroys its transport during process teardown.
+std::unique_ptr<SnapIopTransport> lateTransport;
 unsigned checks = 0;
 void require(bool ok, const char* message) {
     ++checks;
@@ -97,7 +102,10 @@ std::vector<uint8_t> receive(SnapIopTransport& transport, int id, size_t wanted)
 
 int main(int argc, char** argv) {
     try {
+        const bool localOnly=argc>1 && std::strcmp(argv[1],"--local-only")==0;
         _putenv_s("REO_COOP_HOST", "127.0.0.1");
+        lateTransport=std::make_unique<SnapIopTransport>();
+        {
         SnapIopTransport transport;
         require(result(transport.call(0x05, request(), 64)) == 0, "actual Winsock init");
         require(result(transport.call(0x10, request(), 64)) == -1,
@@ -277,6 +285,7 @@ int main(int argc, char** argv) {
         }
 
         // The reviewed separate openSNAP APP process must speak first.
+        if (!localOnly) {
         const int appId = open(transport, 7, htons(10127));
         require(appId >= 0, "real Capcom APP open");
         connected(transport, appId);
@@ -287,6 +296,7 @@ int main(int argc, char** argv) {
         require(result(transport.call(0x0b, socketRequest(appId), 64)) == 0, "actual TCP close");
         require(result(transport.call(0x4a, socketRequest(appId), 64)) == 0,
                 "APP TCP delete after original close");
+        }
         if (argc > 1 && std::strcmp(argv[1], "--http") == 0) {
             const int httpId = open(transport, 7, htons(80));
             require(httpId >= 0, "legacy registration HTTP opens only selected host");
@@ -324,7 +334,15 @@ int main(int argc, char** argv) {
                 "reset invalidates old TCP handles");
         require(result(transport.call(0x1a, socketRequest(udpId), 64)) == -1,
                 "reset closes old UDP handles");
-        std::printf("PASS checks=%u real_tcp=1 real_udp=1 capcom_app=1\n", checks);
+        }
+        auto& mailbox=reo_network::native::runtime();
+        const auto stamp=reo_network::native::nowUs();
+        mailbox.status({1,1,1,3,reo_network::native::Mode::Enhanced,{1,2,0,0},stamp});
+        reo_network::native::Motion motion;
+        motion.slot=1;
+        require(mailbox.receive(2,1,stamp,stamp,motion),
+                "populated native mailbox survives global transport teardown");
+        std::printf("PASS checks=%u real_tcp=1 real_udp=1 capcom_app=%d\n", checks,localOnly?0:1);
         return 0;
     } catch (const std::exception& error) {
         std::fprintf(stderr, "FAIL checks=%u: %s\n", checks, error.what());

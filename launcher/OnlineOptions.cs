@@ -75,7 +75,7 @@ public static partial class OnlineOptions {
         TryHost(settings.CoopHost, out string host);
         return new() { ["REO_COOP_HOST"] = host, ["REO_COOP_PLATFORM_AUTH"] = "native",
                        ["REO_COOP_USERNAME"] = settings.AccountUsername,
-                       ["REO_COOP_AUTO_ACCOUNT"] = "1" };
+                       ["REO_COOP_AUTO_ACCOUNT"] = "1", ["REO_NETCODE"] = "auto" };
     }
 
     public static string PrepareMemoryCard(Settings settings, string folder, FileStream? lease) {

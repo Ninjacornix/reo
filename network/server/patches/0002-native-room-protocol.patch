@@ -1,0 +1,101 @@
+diff --git a/opensnap/udp_server.py b/opensnap/udp_server.py
+index 1827875..0654644 100644
+--- a/opensnap/udp_server.py
++++ b/opensnap/udp_server.py
+@@ -18,6 +18,7 @@ from opensnap.protocol.constants import (
+     FOOTER_BYTES,
+ )
+ from opensnap.protocol.models import Endpoint, SnapMessage
++from reo_native.protocol import NativeRooms
+ 
+ 
+ @dataclass(slots=True)
+@@ -260,6 +261,7 @@ class SnapUdpServer:
+     ) -> None:
+         self._config = config
+         self._engine = engine
++        self._native_rooms = NativeRooms(engine)
+         # Called once the socket is bound, i.e. the service is up.
+         self._on_bound = on_bound
+         self._tick_interval_seconds = tick_interval_seconds
+@@ -323,6 +325,16 @@ class SnapUdpServer:
+                         )
+                         payload = b''
+ 
++                    if payload:
++                        endpoint = Endpoint(host=host, port=port)
++                        native = self._native_rooms.handle(payload, endpoint)
++                        if native is not None:
++                            for old, new, sid in self._native_rooms.take_endpoint_moves():
++                                self._move_session_transport(old, new, sid)
++                            for target, response in native:
++                                self._send_socket_datagram(udp_socket, datagram=response,
++                                                          endpoint=target, action='native')
++                            payload = b''
+                     if payload:
+                         received_at = time.monotonic()
+                         self._logger.info(
+@@ -331,12 +343,13 @@ class SnapUdpServer:
+                             port,
+                             len(payload),
+                         )
+-                        self._logger.debug(
+-                            'Received hexdump from %s:%d\n%s',
+-                            host,
+-                            port,
+-                            format_hexdump(payload),
+-                        )
++                        if self._logger.isEnabledFor(logging.DEBUG):
++                            self._logger.debug(
++                                'Received hexdump from %s:%d\n%s',
++                                host,
++                                port,
++                                format_hexdump(payload),
++                            )
+                         endpoint = Endpoint(host=host, port=port)
+                         self._last_inbound_at_by_endpoint[(endpoint.host, endpoint.port)] = received_at
+                         self._remember_footer_variant(payload, endpoint)
+@@ -346,7 +359,9 @@ class SnapUdpServer:
+                             self._move_session_transport(old_endpoint, new_endpoint, moved_session_id)
+                         for _, restarted_session_id in result.reliable_restarts:
+                             self._forget_session_reliables(restarted_session_id)
++                            self._native_rooms.restart(restarted_session_id)
+                         self._send_messages(udp_socket, result.messages)
++                        self._native_rooms.observe()
+                         self._log_engine_errors(endpoint, payload, result.errors)
+ 
+                     now = time.monotonic()
+@@ -359,10 +374,13 @@ class SnapUdpServer:
+                             )
+                         self._send_messages(udp_socket, tick_messages)
+                         self._forget_idle_endpoints(now)
++                        if self._native_rooms.peers:
++                            self._native_rooms.observe()
+                         next_tick = now + self._tick_interval_seconds
+ 
+                     self._retransmit_due(udp_socket)
+                     self._pump_framed_links(udp_socket)
++                    self._native_rooms.report(self)
+         finally:
+             self._engine.close()
+ 
+@@ -793,12 +811,13 @@ class SnapUdpServer:
+             endpoint.port,
+             command,
+         )
+-        self._logger.debug(
+-            'Outbound hexdump to %s:%d\n%s',
+-            endpoint.host,
+-            endpoint.port,
+-            format_hexdump(datagram),
+-        )
++        if self._logger.isEnabledFor(logging.DEBUG):
++            self._logger.debug(
++                'Outbound hexdump to %s:%d\n%s',
++                endpoint.host,
++                endpoint.port,
++                format_hexdump(datagram),
++            )
+         self._send_socket_datagram(
+             udp_socket,
+             datagram=datagram,

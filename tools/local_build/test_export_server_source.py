@@ -7,6 +7,7 @@ import tempfile
 import unittest
 
 from export_server_source import export
+from server_source import REVISION
 
 
 class ServerSourceExportTests(unittest.TestCase):
@@ -29,7 +30,7 @@ class ServerSourceExportTests(unittest.TestCase):
 
             def manifest():
                 (component / 'server-manifest.json').write_text(json.dumps({
-                    'revision': 'fixture', 'files': [{'path': relative,
+                    'revision': REVISION, 'files': [{'path': relative,
                         'sha256': hashlib.sha256(source.read_bytes()).hexdigest()}]}), encoding='utf-8')
 
             def check_output(folder):
@@ -50,7 +51,7 @@ class ServerSourceExportTests(unittest.TestCase):
             check_output(second)
             source.write_text('room = incompatible\n', encoding='utf-8')
             manifest()
-            with self.assertRaisesRegex(ValueError, 'published room-query patch'):
+            with self.assertRaisesRegex(ValueError, 'published patch'):
                 export(component, first.parent / 'bad', root)
 
 

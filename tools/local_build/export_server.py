@@ -12,8 +12,7 @@ import urllib.request
 import zipfile
 
 from seal_kit import PYTHON_SHA256, PYTHON_SOURCE, sha
-
-REVISION = "f9af55491718a043923225a0895fe60eab76fd7c"
+from server_source import REVISION, patch_source
 
 
 def fetch(url, destination, expected):
@@ -40,9 +39,7 @@ def export(checkout, python_zip, output):
     archive = subprocess.check_output(["git", "-C", str(checkout), "archive", REVISION])
     with tarfile.open(fileobj=io.BytesIO(archive)) as package:
         package.extractall(source, filter="data")
-    patch = root / "network/server/patches/0001-outbreak-current-room-query.patch"
-    # Apply to the exported source, never modify the developer's running server.
-    subprocess.run(["git", "apply", "--no-index", str(patch)], cwd=source, check=True)
+    patch_source(source, root)
     python = output / "python"
     python.mkdir()
     with zipfile.ZipFile(python_zip) as package:

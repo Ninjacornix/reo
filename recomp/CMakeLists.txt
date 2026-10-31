@@ -671,6 +671,8 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     )
 
+    target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/native_netcode.cpp")
+    target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/world_sync.cpp")
     if(WIN32)
         # A direct object supplies raylib audio before its archive is considered.
         # This replaces only the host audio provider, for both game editions.

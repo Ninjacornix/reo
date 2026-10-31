@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include "snap_iop_transport.h"
+#include "native_netcode.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -15,6 +16,7 @@
 #include <fstream>
 #include <map>
 #include <mutex>
+#include <random>
 #include <string>
 
 #pragma comment(lib, "ws2_32.lib")
@@ -93,6 +95,15 @@ struct SnapIopTransport::Impl {
     bool diagnostics = false;
     uint64_t calls = 0;
     std::ofstream trace;
+    bool nativeEnabled = false;
+    uint16_t nativeSocket = 0xffff, nativePort = 0;
+    // The process-global hardware bridge can outlive function-local statics.
+    // Retain the state through Channel::reset during transport destruction.
+    std::shared_ptr<reo_network::native::State> nativeState=reo_network::native::sharedRuntime();
+    reo_network::native::Channel native{*nativeState,
+        (uint64_t(std::random_device{}()) << 32) | std::random_device{}()};
+    std::ofstream metrics;
+    uint64_t metricsAt = 0, flushAt = 0;
 
     Impl() {
         WSADATA data{};
@@ -121,6 +132,9 @@ struct SnapIopTransport::Impl {
         const auto path = env("REO_COOP_TRACE_FILE");
         if (!path.empty())
             trace.open(path, std::ios::app | std::ios::binary);
+        nativeEnabled = target && env("REO_COOP_PLATFORM_AUTH") == "native" && env("REO_NETCODE") != "legacy";
+        const auto metricsPath = env("REO_NETCODE_METRICS_FILE");
+        if (!metricsPath.empty()) metrics.open(metricsPath, std::ios::app | std::ios::binary);
     }
     ~Impl() {
         clear();
@@ -140,6 +154,9 @@ struct SnapIopTransport::Impl {
         nextQuery = 1;
         linkStarted = false;
         configChanged = true;
+        native.reset();
+        nativeSocket = 0xffff;
+        nativePort = 0;
     }
     void log(const char* direction, const char* protocol, uint16_t id, const uint8_t* data,
              size_t length, const sockaddr_in* peer = nullptr) {
@@ -156,7 +173,7 @@ struct SnapIopTransport::Impl {
             trace << ",\"peer\":\"" << ip << "\",\"port\":" << ntohs(peer->sin_port);
         }
         trace << ",\"bytes\":" << length << ",\"hex\":\"" << hex(data, length) << "\"}\n";
-        trace.flush();
+        // Buffered diagnostics must not synchronously flush for every game packet.
     }
     Socket* get(uint16_t id, bool udp) {
         auto it = sockets.find(id);
@@ -275,6 +292,7 @@ struct SnapIopTransport::Impl {
         if (found->second.native != INVALID_SOCKET)
             closesocket(found->second.native);
         sockets.erase(found);
+        if (id == nativeSocket) { native.reset(); nativeSocket = 0xffff; nativePort = 0; }
         return 0;
     }
     std::vector<uint8_t> call(uint32_t op, const std::vector<uint8_t>& request, size_t replySize) {
@@ -474,6 +492,17 @@ struct SnapIopTransport::Impl {
                 if (sent == length) {
                     result = 0;
                     log("send", "udp", id, request.data() + 0x28, length, &peer);
+                    if (nativeEnabled && (nativeSocket == 0xffff || nativeSocket == id)) {
+                        native.observeSend(request.data()+0x28, length, reo_network::native::nowUs());
+                        if (native.bound() || native.waiting()) {
+                            nativeSocket=id;
+                            // Bootstrap ACKs share this socket but must not retarget
+                            // the native channel away from its game service.
+                            const auto* bytes=request.data()+0x28;
+                            if(!nativePort || (length>=20 && bytes[3]>=1 && bytes[3]<=0x14))
+                                nativePort=peer.sin_port;
+                        }
+                    }
                 } else if (sent == SOCKET_ERROR && pending(WSAGetLastError())) {
                     result = Again;
                 }
@@ -482,11 +511,12 @@ struct SnapIopTransport::Impl {
             case 0x1b: {
                 size_t cursor = Header;
                 unsigned count = 0;
+                unsigned drained = 0;
                 std::array<uint8_t, 65536> packet{};
                 for (auto& [socketId, entry] : sockets) {
                     if (!entry.udp)
                         continue;
-                    while (count < 64 && cursor + 14 <= reply.size()) {
+                    while (drained < 128 && count < 64 && cursor + 14 <= reply.size()) {
                         fd_set readable;
                         FD_ZERO(&readable);
                         FD_SET(entry.native, &readable);
@@ -506,6 +536,16 @@ struct SnapIopTransport::Impl {
                             int(packet.size()), 0, reinterpret_cast<sockaddr*>(&peer), &peerSize);
                         if (received == SOCKET_ERROR)
                             break;
+                        ++drained;
+                        const bool fromNativePeer = nativeEnabled && socketId==nativeSocket &&
+                            peer.sin_addr.s_addr==target && peer.sin_port==nativePort;
+                        if (fromNativePeer) {
+                            const auto now = reo_network::native::nowUs();
+                            if (native.consume(packet.data(),size_t(received),now)) continue;
+                            native.observeReceive(packet.data(),size_t(received),now);
+                        }
+                        // Unknown extension packets never enter the original PS2 decoder.
+                        if (received >= 4 && !std::memcmp(packet.data(), "REO2", 4)) continue;
                         put16(reply, cursor, socketId);
                         put16(reply, cursor + 2, uint16_t(received));
                         put16(reply, cursor + 4, peer.sin_port);
@@ -603,7 +643,25 @@ struct SnapIopTransport::Impl {
             trace << "{\"event\":\"rpc\",\"op\":" << op << ",\"ret\":" << result
                   << ",\"request_bytes\":" << request.size() << ",\"reply_bytes\":" << reply.size()
                   << ",\"sockets\":" << sockets.size() << "}\n";
-            trace.flush();
+        }
+        const uint64_t now = reo_network::native::nowUs();
+        if (nativeEnabled && nativeSocket != 0xffff) {
+            if (auto* entry = get(nativeSocket,true)) {
+                sockaddr_in peer{};
+                peer.sin_family=AF_INET; peer.sin_addr.s_addr=target; peer.sin_port=nativePort;
+                for (const auto& packet : native.poll(now))
+                    sendto(entry->native,reinterpret_cast<const char*>(packet.data()),int(packet.size()),0,
+                           reinterpret_cast<const sockaddr*>(&peer),sizeof(peer));
+            }
+            if (metrics && (!metricsAt || now-metricsAt>=1000000)) {
+                metrics << native.metrics(now);
+                metricsAt=now;
+            }
+        }
+        if (now-flushAt>=1000000) {
+            if (trace) trace.flush();
+            if (metrics) metrics.flush();
+            flushAt=now;
         }
         return reply;
     }

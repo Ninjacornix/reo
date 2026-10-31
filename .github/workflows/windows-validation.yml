@@ -41,10 +41,18 @@ jobs:
         run: python -m unittest discover -s tools/local_build -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/local-build.log
       - name: Test asset tools with synthetic inputs
         run: python -m unittest discover -s tools/assets -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/assets.log
+      - name: Test real UDP impairment fixture
+        run: python -m unittest discover -s tools/netcode_lab -v
+      - name: Test co-op automation guards
+        run: python -m unittest discover -s tools/coop_playtest -p 'test_*.py' -v
       - name: Test native pipeline cache
         run: |
           c++ -std=c++17 -O2 -pthread tools/parallel_gs_backend/cache_check.cpp -o build-ninja/ci/cache-check
           build-ninja/ci/cache-check build-ninja/ci/cache-output | tee build-ninja/ci/source-reports/cache.log
+      - name: Test native network state and fallback
+        run: |
+          c++ -std=c++20 -O2 -pthread tools/native_netcode_check/main.cpp network/native/native_netcode.cpp -o build-ninja/ci/netcode-check
+          build-ninja/ci/netcode-check | tee build-ninja/ci/source-reports/netcode.log
       - name: Upload source reports
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -53,6 +61,40 @@ jobs:
           path: build-ninja/ci/source-reports/
           retention-days: 7
           if-no-files-found: warn
+
+  server-compatibility:
+    name: Server compatibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Check out pinned openSNAP
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: GrenderG/openSNAP
+          ref: 1014371ba70d1caa415a09b1fa39f550b1e9cb55
+          path: build-ninja/ci/opensnap
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Prepare patched source component
+        run: |
+          python -m pip install -r network/server/requirements-portable.txt
+          python tools/local_build/export_server_source.py --checkout build-ninja/ci/opensnap --output build-ninja/ci/server --root .
+      - name: Test original Outbreak handlers and reliable transport
+        working-directory: build-ninja/ci/opensnap
+        env:
+          PYTHONPATH: ${{ github.workspace }}/build-ninja/ci/server/source:${{ github.workspace }}/build-ninja/ci/opensnap
+        run: python -B -m unittest tests.test_outbreak_plugin tests.test_outbreak2_plugin tests.test_udp_reliability tests.test_udp_server_runtime -q
+      - name: Test native negotiation and legacy rooms
+        env:
+          PYTHONPATH: ${{ github.workspace }}/build-ninja/ci/server/source:${{ github.workspace }}/build-ninja/ci/opensnap
+        run: python -B -m unittest discover -s network/server/tests -v
 
   windows-launcher:
     name: Windows launcher

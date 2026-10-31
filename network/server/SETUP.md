@@ -31,7 +31,9 @@ the launcher pins both archive and executable SHA-256 hashes. Python downloads
 use uv's managed Python distributions; packages come from https://pypi.org/simple.
 
 The server source is pinned to openSNAP revision
-`f9af55491718a043923225a0895fe60eab76fd7c` with the Outbreak room-query patch.
+`1014371ba70d1caa415a09b1fa39f550b1e9cb55` with the Outbreak room-query and
+native-room patches. Updated native clients negotiate their room's networking
+mode automatically; legacy clients and servers keep the original protocol.
 Upstream: https://github.com/GrenderG/openSNAP
 Patch: https://github.com/Ninjacornix/reo/tree/main/network/server/patches
 The separately executed server retains its AGPL-3.0 licence in source/LICENSE.

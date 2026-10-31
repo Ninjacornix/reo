@@ -103,9 +103,12 @@ internal sealed class HostedServer : IDisposable {
                 env["PYTHONNOUSERSITE"] = "1";
                 env["PYTHONDONTWRITEBYTECODE"] = "1";
                 env["OPENSNAP_LOG_LEVEL"] = "info";
+                if (args[0] == "game")
+                    env["OPENSNAP_NATIVE_METRICS_FILE"] = Path.Combine(data, "network-metrics.jsonl");
                 env["OPENSNAP_ENV_FILE"] = Path.Combine(data, "launcher-empty.env");
                 env["OPENSNAP_ENV_DIST_FILE"] = Path.Combine(data, "launcher-empty.dist");
-                env["OPENSNAP_DATA_DIR"] = data;
+                // Account/log paths are writable state; upstream APP pages are immutable content.
+                env["OPENSNAP_DATA_DIR"] = Path.Combine(source, "data");
                 env["OPENSNAP_STORAGE_BACKEND"] = "sqlite";
                 env["OPENSNAP_SQLITE_PATH"] = Path.Combine(data, "opensnap.db");
                 env["OPENSNAP_WEB_HTTPS_HOST"] = "";

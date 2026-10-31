@@ -30,7 +30,7 @@ static class OnlineOptionsTests {
             "Offline launch ignores unfinished online settings and exports no network environment");
         var online = new Settings { CoopHost = "127.000.000.001", AccountUsername = "reo01" };
         var env = OnlineOptions.LaunchEnvironment(online);
-        check(env.Count == 4 && env["REO_COOP_HOST"] == "127.0.0.1" &&
+        check(env.Count == 5 && env["REO_COOP_HOST"] == "127.0.0.1" && env["REO_NETCODE"] == "auto" &&
                   env["REO_COOP_PLATFORM_AUTH"] == "native" && env["REO_COOP_USERNAME"] == "reo01",
               "Online launch selects genuine native platform authentication and configured " +
                   "account/server");
@@ -46,7 +46,7 @@ static class OnlineOptionsTests {
         online.SelectedGame = "file2";
         online.CoopHost = "127.0.0.1";
         var secondEnvironment = OnlineOptions.LaunchEnvironment(online);
-        check(OnlineOptions.Error(online) == null && secondEnvironment.Count == 4 &&
+        check(OnlineOptions.Error(online) == null && secondEnvironment.Count == 5 &&
                   secondEnvironment["REO_COOP_HOST"] == "127.0.0.1" &&
                   secondEnvironment["REO_COOP_AUTO_ACCOUNT"] == "1",
               "File #2 uses native online routing and automatic accounts");
