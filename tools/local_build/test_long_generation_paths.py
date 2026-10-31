@@ -130,6 +130,27 @@ print('long-path stage receipt reused verified output')
 ''', base)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_worker_imports_longer_named_helpers_from_deep_kit(self):
+        directory = self.folder / ('i' * (244 - len(str(self.folder)) - 1))
+        target = extended(directory)
+        target.mkdir()
+        # Only independent authored tools are copied; no SDK or disc data.
+        for source in (ROOT / 'tools/local_build').glob('*.py'):
+            if not source.name.startswith('test_'):
+                shutil.copyfile(source, target / source.name)
+        shutil.copyfile(ROOT / 'tools/overlay_extract.py', target.parent / 'overlay_extract.py')
+        result = self.child(r'''
+from pathlib import Path
+directory=Path(sys.argv[1])
+assert len(str(directory/'build_game.py'))<=259
+assert len(str(directory/'generate_support.py'))>259
+sys.path.insert(0,str(directory))
+import build_game
+print('deep worker imported all build helpers')
+''', directory)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('deep worker imported all build helpers', result.stdout)
+
     @unittest.skipUnless(os.environ.get('REO_TEST_CXX') and os.environ.get('REO_LLVM_MINGW'),
                          'Set REO_TEST_CXX and REO_LLVM_MINGW for the release compiler integration')
     def test_compilation_receipts_and_cache_reuse_beyond_max_path(self):

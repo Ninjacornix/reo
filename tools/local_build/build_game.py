@@ -10,12 +10,20 @@ import subprocess
 import sys
 import os
 
-from compile_game import compile_plan, msvc_environment
-from generate_game import generate, GAMES
-from reconstruct_vu import reconstruct
-from source_recipes import apply_plan
-from generate_queue_control import generate as generate_queue_control
+# The entry script can fit below MAX_PATH while a longer-named sibling module
+# does not. Normalize the import directory before loading any build helpers.
 from long_paths import extended
+_import_paths = sys.path[:]
+sys.path.insert(0, str(extended(Path(__file__).parent)))
+try:
+    from compile_game import compile_plan, msvc_environment
+    from generate_game import generate, GAMES
+    from reconstruct_vu import reconstruct
+    from source_recipes import apply_plan
+    from generate_queue_control import generate as generate_queue_control
+finally:
+    sys.path[:] = _import_paths
+del _import_paths
 
 
 def sha(path):
@@ -91,7 +99,7 @@ def build(kit, disc, work, output, jobs, game=None):
     metadata = kit / "metadata"
     generated = project / "recomp/config"
     elf = disc / profile["elf"]
-    script = Path(__file__).parent
+    script = extended(Path(__file__).parent)
     metadata_files = [p for p in sorted(metadata.rglob("*")) if p.is_file() and p.name not in
                       {"local_queue_control.json", "local_vu_images.json"}]
 

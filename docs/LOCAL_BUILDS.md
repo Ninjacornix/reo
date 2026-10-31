@@ -130,10 +130,13 @@ File #2 kit has no supplemental groups and avoids that particular failure.
 The worker, generator, supplemental generator and compiler now normalize their
 Python roots through the shared helper. Native compiler/recompiler arguments
 still use ordinary paths through `native()`.
+The worker also normalizes its helper import directory before loading sibling
+modules, covering kit locations where the entry script fits but a longer helper
+filename exceeds the ordinary limit.
 
 Windows CI builds a small Python host without `longPathAware`, exercising the
 limit even on machines where long paths are enabled. Tests cover the failing
-filename, supplemental generation, cleanup and stage-receipt reuse. With
+filename, deep-kit imports, supplemental generation, cleanup and stage-receipt reuse. With
 `REO_TEST_CXX` and `REO_LLVM_MINGW` set, the integration check also compiles, links,
 executes and reuses a native object beyond the path limit using the release
 toolchain. Local verification additionally reproduced the original exception
