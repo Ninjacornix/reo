@@ -3,6 +3,14 @@ param(
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9_.-]*$')][string]$Configuration = 'Release'
 )
 $ErrorActionPreference = 'Stop'
+function Get-PreviewSha256([string]$Path) {
+    # A Windows PowerShell child launched from pwsh can inherit a module path
+    # that omits Get-FileHash. Hash through .NET on both supported hosts.
+    $stream = [IO.File]::OpenRead($Path)
+    $hash = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
+    finally { $hash.Dispose(); $stream.Dispose() }
+}
 $taskOutput = [IO.Path]::GetFullPath($OutputDirectory)
 $taskSource = Join-Path $PSScriptRoot 'graphics_preview.cpp'
 $taskHeader = Join-Path $PSScriptRoot 'graphics_preview.h'
@@ -67,9 +75,9 @@ $taskReceipt = [ordered]@{
     architecture = 'win-x64'
     compiler = $taskCompiler
     windowsSdk = $taskSdkVersion.Name
-    sourceSha256 = (Get-FileHash -LiteralPath $taskSource -Algorithm SHA256).Hash.ToLowerInvariant()
-    headerSha256 = (Get-FileHash -LiteralPath $taskHeader -Algorithm SHA256).Hash.ToLowerInvariant()
-    librarySha256 = (Get-FileHash -LiteralPath $taskDll -Algorithm SHA256).Hash.ToLowerInvariant()
+    sourceSha256 = Get-PreviewSha256 $taskSource
+    headerSha256 = Get-PreviewSha256 $taskHeader
+    librarySha256 = Get-PreviewSha256 $taskDll
     libraryBytes = (Get-Item -LiteralPath $taskDll).Length
 }
 $taskReceipt | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $taskOutput 'graphics-preview-build.json') -Encoding utf8

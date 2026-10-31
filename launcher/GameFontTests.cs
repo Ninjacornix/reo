@@ -52,7 +52,8 @@ internal static class GameFontTests {
             check(loaded && !face.CharacterToGlyphMap.ContainsKey('\u00e9'), "Unsupported characters remain available for WPF font fallback");
         } finally {
             // WPF can retain a read handle; leave only this tiny synthetic temp file if locked.
-            try { File.Delete(path); Directory.Delete(folder); } catch (IOException) { }
+            try { File.Delete(path); Directory.Delete(folder); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
         }
     }
 }
