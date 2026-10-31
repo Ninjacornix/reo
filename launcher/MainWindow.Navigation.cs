@@ -3,10 +3,27 @@ using System.Windows.Media.Animation;
 
 namespace Outbreak.Launcher;
 public partial class MainWindow {
+    static readonly string[] GamePages = { "Graphics", "Audio", "Controller", "Saves", "Coop", "Mods", "Cheats", "Developer" };
+    bool gameNavigationAvailable;
     string currentPage = "";
     bool pageTransition, animatePage;
     double playScrollOffset;
     int pageTransitionVersion;
+
+    void UpdateNavigationAvailability(bool installed) {
+        bool removedLastGame = gameNavigationAvailable && !installed;
+        gameNavigationAvailable = installed;
+        foreach (string page in GamePages) {
+            var button = (System.Windows.Controls.Button)FindName("Nav" + page);
+            button.IsEnabled = installed;
+            System.Windows.Automation.AutomationProperties.SetHelpText(button,
+                installed ? "" : "Install a game in Game files to use this section.");
+        }
+        if (removedLastGame && GamePages.Contains(currentPage)) {
+            ShowPage("Play");
+            NavPlay.Focus();
+        }
+    }
 
     bool PreparePageChange(string name) {
         if (name == currentPage) return false;

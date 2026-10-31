@@ -7,7 +7,6 @@
 #include <map>
 #include <stdexcept>
 #include <vector>
-#if defined(REO_GAME_FILE1)
 struct R5900Context { uint32_t r[32]{},pc=0; };
 struct PS2Runtime {
     using Function=void(*)(uint8_t*,R5900Context*,PS2Runtime*);
@@ -21,10 +20,7 @@ constexpr uint32_t PS2_RAM_SIZE=32u*1024u*1024u;
 #include "../../recomp/overrides/reo_audio.h"
 unsigned frameCalls=0,streamCalls=0;
 void originalFrame(uint8_t*,R5900Context*,PS2Runtime*) { ++frameCalls; }
-void sub_00133490_0x133490(uint8_t*,R5900Context*,PS2Runtime*) { ++streamCalls; }
-#else
-#include "../../runtime/audio/host_bridge.h"
-#endif
+void originalStream(uint8_t*,R5900Context*,PS2Runtime*) { ++streamCalls; }
 
 unsigned checks=0;
 float bridgeApiRoundtrip();
@@ -73,30 +69,37 @@ int main() {
         routeStream(0x1234,Music);check(equal(reoAudioStreamGain(0x1234),.1f),"Routed stream gain");
         check(equal(reoAudioStreamGain(0x9876),1.f),"Unknown stream follows master only");
         reoAudioResetStreams();check(equal(reoAudioStreamGain(0x1234),1.f),"Reset stream handle route");
-#if defined(REO_GAME_FILE1)
-        check(equal(bridgeApiRoundtrip(),2.f),"File1 all five external SDK audio symbols link and run");
-        check(equal(reoAudioBankGain(0,0,0),.6f),"File1 UI bank classification");
-        check(equal(reoAudioBankGain(4,0,0),.3f),"File1 voice bank classification");
-        check(equal(reoAudioBankGain(1,0,0),.2f),"File1 SFX bank classification");
-        PS2Runtime runtime;runtime.functions[0x19f6c0]=::originalFrame;
+        check(equal(bridgeApiRoundtrip(),2.f),"All five external SDK audio symbols link and run");
+        check(equal(reoAudioBankGain(0,0,0),.6f),"UI bank classification");
+        check(equal(reoAudioBankGain(4,0,0),.3f),"Voice bank classification");
+        check(equal(reoAudioBankGain(1,0,0),.2f),"SFX bank classification");
+        PS2Runtime runtime;runtime.functions[frameAddress]=::originalFrame;
+        runtime.functions[streamAddress]=::originalStream;
         reo::audio::install(runtime);
-        check(runtime.registrations==std::vector<uint32_t>({0x19f6c0,0x133490}),"File1 exact hook registrations");
+        check(runtime.registrations==std::vector<uint32_t>({frameAddress,streamAddress}),"Exact edition-specific hook registrations");
         std::vector<uint8_t> ram(PS2_RAM_SIZE);R5900Context ctx;
-        ctx.pc=0x19f6c0;runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
-        check(frameCalls==1,"File1 forwards original frame once");
+        ctx.pc=frameAddress;runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
+        check(frameCalls==1,"Original frame service forwards once");
         uint32_t rna=0x2000,handle=0x3000;
         std::memcpy(ram.data()+0x100c,&rna,4);std::memcpy(ram.data()+rna+0x20,&handle,4);
-        ctx.pc=0x133490;ctx.r[4]=0x1000;ctx.r[5]=1;ctx.r[6]=7;
+        ctx.pc=streamAddress;ctx.r[4]=0x1000;ctx.r[5]=1;ctx.r[6]=7;
         runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
-        check(streamCalls==1,"File1 forwards original stream once");
-        check(equal(reoAudioStreamGain(handle),.3f),"File1 actual ADXT/RNA routing");
+        check(streamCalls==1,"Original stream service forwards once");
+        check(equal(reoAudioStreamGain(handle),.3f),"Actual ADXT/RNA routing");
         ctx.pc=0;ctx.r[5]=0;reo::audio::startStream(ram.data(),&ctx,&runtime);
-        check(streamCalls==2&&equal(reoAudioStreamGain(handle),.3f),"File1 PC guard and continuation");
-#else
-        check(equal(bridgeApiRoundtrip(),2.4f),"File2 all five external SDK audio symbols link and run");
-        for(unsigned port=0;port<16;++port)
-            check(equal(reoAudioBankGain(port,6,startVoiceBank),1.f),"File2 imported File1 bank categories");
-        // No guest runtime object or function registration is needed by this build.
+        check(streamCalls==2&&equal(reoAudioStreamGain(handle),.3f),"PC guard and continuation");
+        for(unsigned afs:{0u,1u,2u,3u,4u,5u,6u,7u,8u,99u}) {
+            ctx.pc=streamAddress;ctx.r[5]=afs;
+            runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
+            check(equal(reoAudioStreamGain(handle),gain(streamBus(afs))),"Actual ADXT/RNA hook routes each supported archive and leaves mixed streams on Master");
+        }
+        const auto calls=streamCalls;
+        ctx.pc=streamAddress;ctx.r[4]=PS2_RAM_SIZE-8;
+        runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
+        check(streamCalls==calls+1,"An invalid guest pointer still forwards the original stream service once");
+#if defined(REO_GAME_FILE2)
+        check(equal(reoAudioBankGain(12,0,file2StartVoiceBank),.3f),"File2 selection speech uses its verified bank identity");
+        check(equal(reoAudioBankGain(12,0,startVoiceBank),.2f),"File1 bank identity cannot classify File2 enemy audio as speech");
 #endif
         update({magic,version,4,0,100,100,100,100});reoAudioPoll();
         check(reoAudioMasterGain()==0,"Live master mute");

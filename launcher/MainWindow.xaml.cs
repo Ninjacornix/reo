@@ -109,7 +109,9 @@ public partial class MainWindow : Window {
                 ? gpu + " decodes MPEG-2 video. Uncheck to decode movies on the processor."
                 : gpu + " can decode movies; the processor decodes them instead.";
     }
-    void Navigate(object sender, RoutedEventArgs e) => ShowPage((string)((Button)sender).Tag);
+    void Navigate(object sender, RoutedEventArgs e) {
+        if (sender is Button { IsEnabled: true, Tag: string page }) ShowPage(page);
+    }
     void ShowPage(string name) {
         if (!PreparePageChange(name))
             return;
@@ -427,6 +429,16 @@ public partial class MainWindow : Window {
         }
     }
     async void OnLoaded(object sender, RoutedEventArgs e) {
+        int logsTest = Array.IndexOf(args, "--test-logs-ui");
+        if (logsTest >= 0 && logsTest + 1 < args.Length) {
+            await TestLogsUi(args[logsTest + 1]);
+            return;
+        }
+        int navigationTest = Array.IndexOf(args, "--test-navigation-ui");
+        if (navigationTest >= 0 && navigationTest + 1 < args.Length) {
+            await TestNavigationUi(args[navigationTest + 1]);
+            return;
+        }
         int playLayoutTest = Array.IndexOf(args, "--test-play-layout");
         if (playLayoutTest >= 0 && playLayoutTest + 1 < args.Length) {
             await TestPlayLayout(args[playLayoutTest + 1]);

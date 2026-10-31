@@ -2,11 +2,11 @@
 #include "overrides/reo_cheats.h"
 #include "../runtime/audio/host_bridge.h"
 #include "overrides/reo_subtitles.h"
+#include "overrides/reo_audio.h"
 #endif
 #if defined(REO_GAME_FILE1)
 #include "overrides/reo_mods.h"
 #include "overrides/reo_rumble.h"
-#include "overrides/reo_audio.h"
 #endif
 #if defined(REO_GAME_FILE2)
 #include "overrides/reo_mods_file2.h"
@@ -1374,7 +1374,7 @@ int main(int argc, char* argv[]) {
     if (std::strcmp(g.serial, "SLUS-20984") == 0) {
         reo::cheats::install(runtime);
         reo::mods::install(runtime);
-        reo::audio::initialize();
+        reo::audio::install(runtime);
         reo::subtitles::install(runtime);
     }
 #endif

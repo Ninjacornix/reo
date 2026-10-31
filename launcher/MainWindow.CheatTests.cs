@@ -20,8 +20,8 @@ public partial class MainWindow {
         void Check(bool ok, string message) { if (!ok) throw new IOException(message); checks.Add(message); }
         void Toggle(CheckBox box) => ((IToggleProvider)new CheckBoxAutomationPeer(box).GetPattern(PatternInterface.Toggle)!).Toggle();
         void Space(CheckBox box) {
-            foreach (var routedEvent in new[] { Keyboard.KeyDownEvent, Keyboard.KeyUpEvent })
-                box.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(this), Environment.TickCount, Key.Space) { RoutedEvent = routedEvent });
+            foreach (var routedEvent in new[] { Keyboard.PreviewKeyDownEvent, Keyboard.PreviewKeyUpEvent })
+                InputManager.Current.ProcessInput(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(box), Environment.TickCount, Key.Space) { RoutedEvent = routedEvent });
         }
         CheckBox[] Options() => CheatList.Children.OfType<CheckBox>().ToArray();
         Settings Stored() => JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath))!;
@@ -37,6 +37,8 @@ public partial class MainWindow {
             settings.EnabledCheats.Clear(); settings.CheatsEnabled = false;
             GamePicker.SelectedValue = "file1"; ShowPage("Cheats");
             await Task.Delay(400);
+            HideStatusToast();
+            await Task.Delay(350);
             if (args.Contains("--test-owned-game-font"))
                 Check(((FontFamily)Application.Current.Resources["GameDisplayFont"]).Source.Contains(GameFont.FamilyName),
                       "The page uses the verified owned game dialogue font");
@@ -49,12 +51,12 @@ public partial class MainWindow {
             var health = Options()[0]; var ammo = Options()[2];
             Toggle(health); Toggle(ammo);
             Check(Stored().EnabledCheats.Contains("builtin.file1.health") && Stored().EnabledCheats.Contains("builtin.file1.ammo") &&
-                  CheatSelectionState.Text.StartsWith("2 selected"), "Individual cheat choices persist and update the visible selection count");
+                  CheatSelectionState.Text == "2 selected", "Individual cheat choices persist and update the visible selection count");
             var points = Options().Single(c => (string)c.Tag == "builtin.file1.points");
             var escape = Options().Single(c => (string)c.Tag == "builtin.file1.escape");
             Toggle(points); Toggle(escape);
             Check(Stored().EnabledCheats.Contains("builtin.file1.points") && Stored().EnabledCheats.Contains("builtin.file1.escape") &&
-                  CheatSelectionState.Text.StartsWith("4 selected"), "File #1 points and escape options persist through the native checkboxes");
+                  CheatSelectionState.Text == "4 selected", "File #1 points and escape options persist through the native checkboxes");
             string manifestFolder = Path.Combine(output, "manifests");
             Directory.CreateDirectory(manifestFolder);
             var manifest = File.ReadAllLines(Cheats.Export(settings, manifestFolder));
@@ -71,7 +73,7 @@ public partial class MainWindow {
             Space(health);
             Toggle(EnableCheats);
             Check(!Stored().CheatsEnabled && Stored().EnabledCheats.Count == 2 && health.IsChecked == true && ammo.IsChecked == true &&
-                  CheatSelectionState.Text.EndsWith("Cheats disabled"), "Disabling cheats preserves selections and clearly explains their inactive state");
+                  CheatSelectionState.Text == "2 selected", "Disabling cheats preserves selections and their count while the master switch shows the inactive state");
             NavCheats.Focus(); Capture("disabled-master");
             Toggle(EnableCheats); NavCheats.Focus(); Capture("file1-selected");
             SetLaunching(true); UpdateCheatState();

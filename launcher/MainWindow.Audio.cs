@@ -44,16 +44,12 @@ public partial class MainWindow {
         UiVolumeValue.Text = $"{UiVolume.Value:0}%";
     }
     void UpdateAudioAvailability() {
-        bool separateChannels = settings.Game.Id == "file1";
-        AudioEditionLabel.Text = separateChannels ? "OUTBREAK / FILE #1" : "OUTBREAK / FILE #2";
-        AudioChannelNote.Text = separateChannels
-            ? "VOLUME BALANCE"
-            : "File #2 supports Master volume only.";
-        AudioChannels.Opacity = separateChannels ? 1 : .45;
+        AudioEditionLabel.Text = settings.Game.Id == "file1" ? "OUTBREAK / FILE #1" : "OUTBREAK / FILE #2";
+        AudioChannelNote.Text = "VOLUME BALANCE";
+        AudioChannels.Opacity = 1;
         foreach (var slider in new[] { MusicVolume, SfxVolume, VoiceVolume, UiVolume }) {
-            slider.IsEnabled = separateChannels;
-            slider.ToolTip = separateChannels ? null
-                : "Separate music, effects, voice and UI volumes are available for File #1. Use Master for File #2.";
+            slider.IsEnabled = true;
+            slider.ToolTip = null;
         }
     }
     void RefreshAudioOutputs() {
@@ -98,7 +94,6 @@ public partial class MainWindow {
     }
     void ResetAudio(object sender, RoutedEventArgs e) {
         MasterVolume.Value = 100;
-        if (settings.Game.Id == "file1")
-            MusicVolume.Value = SfxVolume.Value = VoiceVolume.Value = UiVolume.Value = 100;
+        MusicVolume.Value = SfxVolume.Value = VoiceVolume.Value = UiVolume.Value = 100;
     }
 }

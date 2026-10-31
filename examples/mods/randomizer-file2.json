@@ -3,7 +3,7 @@
     "id":  "example.randomizer",
     "name":  "Randomizer",
     "version":  "1.7.0",
-    "description":  "Randomizes weapons, ammunition, common items and supported enemy spawns while preserving keys, starting equipment and scripted enemy families.",
+    "description":  "Outbreak randomizer mod baby!!",
     "elfSha256":  "5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d",
     "itemRandomizer":  {
                            "seed":  2027,

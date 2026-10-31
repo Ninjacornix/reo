@@ -132,25 +132,27 @@ public partial class MainWindow {
             Set(MusicVolume, 17);
             GamePicker.SelectedValue = "file2";
             await Task.Delay(350);
-            Check(MasterVolume.IsEnabled && !MusicVolume.IsEnabled && !SfxVolume.IsEnabled &&
-                  !VoiceVolume.IsEnabled && !UiVolume.IsEnabled && AudioChannelNote.IsVisible &&
-                  AudioChannelNote.Text.Contains("File #2 supports Master volume"),
-                  "File #2 keeps Master usable and explains its disabled separate channels on the page");
-            Check(AudioSubtitles.IsEnabled, "Subtitles remains available for File #2 independently of its audio channel restrictions");
+            Check(MasterVolume.IsEnabled && MusicVolume.IsEnabled && SfxVolume.IsEnabled &&
+                  VoiceVolume.IsEnabled && UiVolume.IsEnabled && AudioChannels.Opacity == 1 &&
+                  AudioChannelNote.Text == "VOLUME BALANCE",
+                  "File #2 exposes all five volume controls at full opacity");
+            Check(AudioSubtitles.IsEnabled, "Subtitles remains independent of File #2 audio channel levels");
             ToggleSubtitles();
             Check(!settings.ShowSubtitles && subtitleView.ReadUInt32(12) == 0,
                   "File #2 can publish the hidden-subtitles preference through the same native control");
-            bool blocked = false;
-            try { Set(MusicVolume, 0); } catch (ElementNotEnabledException) { blocked = true; }
-            Check(blocked && settings.MusicVolume == 17, "Disabled File #2 sliders reject automation input without changing the saved balance");
+            Set(MusicVolume, 0); Set(SfxVolume, 23); Set(VoiceVolume, 37); Set(UiVolume, 61);
+            await Task.Delay(400);
+            Check(settings.MusicVolume == 0 && settings.SfxVolume == 23 && settings.VoiceVolume == 37 && settings.UiVolume == 61 &&
+                  view.ReadInt32(16) == 0 && view.ReadInt32(20) == 23 && view.ReadInt32(24) == 37 && view.ReadInt32(28) == 61,
+                  "File #2 native slider automation publishes independent channel levels immediately through real IPC");
             Set(MasterVolume, 40);
             Reset();
             await Task.Delay(400);
-            Check(MasterVolume.Value == 100 && MusicVolume.Value == 17 && !settings.ShowSubtitles,
-                  "File #2 reset restores Master while preserving channel balance and the subtitle preference");
+            Check(AudioLevels.From(settings) == new AudioLevels(100,100,100,100,100) && !settings.ShowSubtitles,
+                  "File #2 reset restores all five channels while preserving the subtitle preference");
             ToggleSubtitles();
             NavAudio.Focus();
-            Capture("file2-master-only");
+            Capture("file2-channels");
             Width = MinWidth; Height = MinHeight;
             await Task.Delay(300);
             SettingsScroll.ScrollToEnd();
@@ -165,8 +167,8 @@ public partial class MainWindow {
             GamePicker.SelectedValue = "file1";
             SettingsScroll.ScrollToTop();
             await Task.Delay(300);
-            Check(MusicVolume.IsEnabled && MusicVolume.Value == 17 && AudioChannels.Opacity == 1,
-                  "Switching back to File #1 restores channel controls and their previous balance");
+            Check(MusicVolume.IsEnabled && MusicVolume.Value == 100 && AudioChannels.Opacity == 1,
+                  "Both games retain the same saved audio balance and enabled channel controls");
             Capture("compact-file1");
             await File.WriteAllTextAsync(Path.Combine(output, "result.json"), JsonSerializer.Serialize(new { passed = true, checks }, new JsonSerializerOptions { WriteIndented = true }));
         } catch (Exception error) {

@@ -65,6 +65,11 @@ File #2 progression unlocks and the asset PAK bootstrap. These changes require
 fresh native builds; existing game executables do not gain the new behavior from
 a launcher update alone.
 
+The File #2 audio follow-up also supplies independent Music, Sound effects,
+Voice and Interface routing, with original sound-bank PCM and live IPC checks.
+Its launcher rejects older Master-only native builds and requests a rebuild.
+See [File #2 audio verification](FILE2_AUDIO.md).
+
 Both editions now receive the bundled Randomizer on first use, disabled by
 default. Existing packages and enabled selections are preserved. The per-edition
 initialization preference remembers deletion, so visiting Mods does not silently

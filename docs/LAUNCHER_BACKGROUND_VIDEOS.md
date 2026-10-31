@@ -1,6 +1,6 @@
 # Launcher demonstration backgrounds
 
-In **Graphics**, clear **Play background movies in launcher** to use the normal
+In **Launcher**, turn off **Background movies** to use the normal
 placeholder images. The setting applies immediately, is shared by both editions
 and stays saved across restarts. Disabling it closes both video decoders and
 cancels pending video preparation; switching games cannot restart movies while it

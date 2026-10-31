@@ -5,7 +5,7 @@ for %%R in ("%~dp0..\..") do set "TASK_ROOT=%%~fR"
 set "TASK_OUT=%TASK_ROOT%\build-ninja\audio_mixer_check"
 set "TASK_STAGE=%TASK_OUT%\sdk\ps2xRuntime\src\lib\Kernel\Syscalls\Helpers"
 if "%~1"=="" (
-    echo Usage: tools\audio_mixer_check\run.bat ^<owned imported data directory^>
+    echo Usage: tools\audio_mixer_check\run.bat ^<File1 data directory^> [File2 data directory]
     exit /b 1
 )
 for /f "usebackq tokens=*" %%V in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "TASK_VS_ROOT=%%V"
@@ -33,5 +33,5 @@ if errorlevel 1 (
     type "%TASK_OUT%\file2-build.log"
     exit /b 1
 )
-"%TASK_OUT%\file2_bridge_pcm.exe"
+"%TASK_OUT%\file2_bridge_pcm.exe" "%~2"
 exit /b %errorlevel%

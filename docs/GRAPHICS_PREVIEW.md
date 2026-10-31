@@ -124,3 +124,14 @@ screenshots and a JSON receipt, then restores the settings file. No OS input is
 injected or game session
 started. Owned asset checks separately verify textures, mesh references, finite
 animation output, grounded feet and absence of accumulated pose drift.
+
+Fresh-install resource verification on 2026-10-31 passed 26 owned-data checks
+using separate empty caches for File #1 and File #2, with no exported PAKs.
+Each edition alone supplied Kevin's model, original textures and complete idle
+animation directly from its imported `NETBIO00.DAT`. The full loop stayed finite,
+grounded and repeatable. The same check generated and loaded the game font in WPF
+and extracted and reused the edition's verified controller image. These resources
+need no manual export or additional download after importing either supported
+game. A Release publish also included `Reo.GraphicsPreview.dll` with the exact
+hash of the built renderer. Cover/DVD artwork and background-video tooling have
+their own optional downloads; see [background preparation](LAUNCHER_BACKGROUND_VIDEOS.md).

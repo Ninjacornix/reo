@@ -128,12 +128,14 @@ public partial class MainWindow {
         GamePicker.IsEnabled =
             !game.Running && !launching && !updating && !updateRestarting && !backingUp;
         GameCasePicker.IsEnabled = GamePicker.IsEnabled;
+        bool installed = false;
         foreach (int n in new[] { 1, 2 }) {
             string id = "file" + n;
             bool selected = settings.Game.Id == id;
             var disc = (GameDiscView)FindName("GameDisc" + n);
             disc.IsSelected = selected;
             disc.IsAvailable = DiscImport.Ready(settings, id) && File.Exists(settings.GetExe(id));
+            installed |= disc.IsAvailable;
             var gameCase = (GameCaseView)FindName("GameCase" + n);
             gameCase.IsSelected = selected;
             gameCase.IsAvailable = disc.IsAvailable;
@@ -152,6 +154,7 @@ public partial class MainWindow {
             System.Windows.Automation.AutomationProperties.SetItemStatus(
                 (ListBoxItem)GameCasePicker.Items[n - 1], gameStatus);
         }
+        UpdateNavigationAvailability(installed);
         LaunchButton.IsEnabled =
             present && !updating && !updateRestarting && !game.Running && !launching && !backingUp;
         RefreshOnlineUi();

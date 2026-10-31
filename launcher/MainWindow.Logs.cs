@@ -13,6 +13,7 @@ public partial class MainWindow {
     string lastLogPath = "";
     long lastLogLength = -1;
     DateTime lastLogWrite;
+    int logRefreshVersion;
     string CurrentLogPath =>
         manualLog ??
         (LogSessionPicker.SelectedItem is LogSession session
@@ -60,11 +61,20 @@ public partial class MainWindow {
         lastLogPath = "";
         RefreshLog();
     }
+    void LogFollowChanged(object sender, RoutedEventArgs e) {
+        if (!initialized) return;
+        LogFollowState.Text = lastLogPath.Length == 0 ? "" : FollowLog.IsChecked == true ? "FOLLOWING" : "PAUSED";
+        if (FollowLog.IsChecked == true) DebugLog.ScrollToVerticalOffset(DebugLog.ExtentHeight);
+    }
     void RefreshLog() {
         string path = CurrentLogPath;
         if (path.Length == 0 || !File.Exists(path)) {
-            DebugLog.Text = "No log available.";
-            LogInfo.Text = "Start the game or open an existing log file.";
+            ++logRefreshVersion;
+            lastLogPath = "";
+            DebugLog.Text = "";
+            LogEmpty.Visibility = Visibility.Visible;
+            LogEmptyDetail.Text = "Start the game or open an existing log file.";
+            LogInfo.Text = LogFollowState.Text = "";
             return;
         }
         try {
@@ -72,22 +82,26 @@ public partial class MainWindow {
             if (lastLogPath == path && lastLogLength == info.Length &&
                 lastLogWrite == info.LastWriteTimeUtc)
                 return;
-            double offset = DebugLog.VerticalOffset;
+            bool sameSource = lastLogPath == path;
+            double offset = sameSource ? DebugLog.VerticalOffset : 0;
+            double horizontal = sameSource ? DebugLog.HorizontalOffset : 0;
             DebugLog.Text = LogTail.Read(path);
-            if (FollowLog.IsChecked == true)
-                DebugLog.Dispatcher.BeginInvoke(
-                    System.Windows.Threading.DispatcherPriority.Background, new Action(() => {
-                        if (FollowLog.IsChecked == true)
-                            DebugLog.ScrollToEnd();
-                    }));
-            else
-                DebugLog.ScrollToVerticalOffset(offset);
+            LogEmpty.Visibility = DebugLog.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+            LogEmptyDetail.Text = "Waiting for log entries.";
+            int version = ++logRefreshVersion;
+            DebugLog.Dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Background, new Action(() => {
+                    if (version != logRefreshVersion) return;
+                    DebugLog.ScrollToVerticalOffset(FollowLog.IsChecked == true ? DebugLog.ExtentHeight : offset);
+                    DebugLog.ScrollToHorizontalOffset(horizontal);
+                }));
             lastLogPath = path;
             lastLogLength = info.Length;
             lastLogWrite = info.LastWriteTimeUtc;
             LogInfo.Text = Path.GetFileName(path) + " / latest 128 KB / " +
                            info.Length.ToString("N0") + " bytes";
             LogInfo.ToolTip = path;
+            LogFollowState.Text = FollowLog.IsChecked == true ? "FOLLOWING" : "PAUSED";
         } catch (IOException) {
             LogInfo.Text = "Waiting for the log writer...";
         } catch (UnauthorizedAccessException) {

@@ -9,6 +9,8 @@
 4. Click **Build game**, wait for the one-time setup, then click **Play**.
 
 The launcher checks the disc, prepares its build tools and builds the game.
+Until either game is installed, only Play, Launcher, Game files and Log are
+available; the game-specific sections enable automatically after setup finishes.
 **No compiler installation, environment variables or terminal commands are
 required.** The Play page also checks for a Vulkan graphics driver and about
 10 GB of free disk space.
@@ -17,8 +19,9 @@ passes the launcher check. CPU decoding needs a reasonably modern processor for 
 PAL, Japanese and other executable revisions are currently unsupported. File #2
 is experimental; full scenario completion is not verified.
 No PS2 BIOS is needed. Keep the ISO available for game data reads.
-File #2 currently supports master volume. Separate music, effects, voice and UI
-volume controls are available for File #1.
+Both games support Master, Music, Sound effects, Voice and Interface volume
+controls. Rebuild or update an older File #2 native build to enable its separate
+channels. Cinematic soundtracks are already mixed and follow Master volume.
 
 ## First-time setup
 

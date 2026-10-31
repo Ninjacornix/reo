@@ -82,7 +82,7 @@
            <Grid Margin="76,0,26,30" Opacity="{Binding SpotlightLevel, ElementName=GameCase1}" IsHitTestVisible="False"><Grid.CacheMode><BitmapCache/></Grid.CacheMode><Path x:Name="CaseBeam1" Data="M 0.32,0 L 0.68,0 L 0.9,1 L 0.1,1 Z" Stretch="Fill"><Path.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="{local:Palette WarmIvory, Alpha=0}" Offset="0"/><GradientStop Color="{local:Palette WarmIvory, Alpha=22}" Offset="0.25"/><GradientStop Color="{local:Palette WarmIvory, Alpha=10}" Offset="0.65"/><GradientStop Color="{local:Palette WarmIvory, Alpha=0}" Offset="1"/></LinearGradientBrush></Path.Fill><Path.Effect><BlurEffect Radius="24"/></Path.Effect></Path></Grid>
            <local:GameCaseView x:Name="GameCase1" Edition="1" Margin="50,34,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
           </Grid>
-          <TextBlock Text="In the aftermath of a deadly viral outbreak, Raccoon City descends into chaos as its streets become overrun by the undead. Follow eight ordinary survivors, each with their own story, as they struggle to escape the collapsing city. With danger lurking around every corner and time running out, they must work together to survive the nightmare before Raccoon City is lost forever." Style="{StaticResource CaseBlurb}"/>
+          <TextBlock Text="As a deadly viral outbreak engulfs Raccoon City, its streets descend into chaos, overrun by the undead. Follow eight ordinary survivors, each with their own background and struggles, as they fight to escape the collapsing city. With danger lurking around every corner and time running out, they must overcome unimaginable horrors to survive the nightmare before Raccoon City is lost forever." Style="{StaticResource CaseBlurb}"/>
           </StackPanel>
          </Border>
         </ListBoxItem>
@@ -94,7 +94,7 @@
            <Grid Margin="76,0,26,30" Opacity="{Binding SpotlightLevel, ElementName=GameCase2}" IsHitTestVisible="False"><Grid.CacheMode><BitmapCache/></Grid.CacheMode><Path x:Name="CaseBeam2" Data="M 0.32,0 L 0.68,0 L 0.9,1 L 0.1,1 Z" Stretch="Fill"><Path.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="{local:Palette WarmIvory, Alpha=0}" Offset="0"/><GradientStop Color="{local:Palette WarmIvory, Alpha=22}" Offset="0.25"/><GradientStop Color="{local:Palette WarmIvory, Alpha=10}" Offset="0.65"/><GradientStop Color="{local:Palette WarmIvory, Alpha=0}" Offset="1"/></LinearGradientBrush></Path.Fill><Path.Effect><BlurEffect Radius="24"/></Path.Effect></Path></Grid>
            <local:GameCaseView x:Name="GameCase2" Edition="2" Margin="50,34,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
           </Grid>
-          <TextBlock Text="As the nightmare in Raccoon City continues, the last remaining survivors face an increasingly desperate struggle for survival. With the deadly T-virus spreading uncontrollably and the city on the brink of destruction, eight ordinary people must navigate abandoned hospitals, infested streets, and other terrifying locations. Every moment brings them closer to either escape or becoming another victim of the outbreak." Style="{StaticResource CaseBlurb}"/>
+          <TextBlock Text="As the nightmare in Raccoon City continues, eight ordinary survivors face new horrors in their desperate struggle for survival. With the deadly T-virus spreading uncontrollably and the city on the brink of destruction, they must navigate an infested zoo, abandoned subway tunnels, a forgotten hospital, and other terrifying locations. Every moment brings them closer to either escaping the nightmare or becoming another victim of the outbreak." Style="{StaticResource CaseBlurb}"/>
           </StackPanel>
          </Border>
         </ListBoxItem>
@@ -406,7 +406,7 @@
         <Grid Height="44"><Grid.ColumnDefinitions><ColumnDefinition Width="170"/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
          <TextBlock x:Name="CheatsEnabledLabel" Text="Enable cheats" FontSize="18" VerticalAlignment="Center"/>
          <CheckBox x:Name="EnableCheats" Grid.Column="1" Style="{StaticResource ToggleSwitch}" Checked="CheatToggled" Unchecked="CheatToggled" VerticalAlignment="Center" AutomationProperties.Name="Enable cheats" AutomationProperties.LabeledBy="{Binding ElementName=CheatsEnabledLabel}" AutomationProperties.HelpText="Apply selected cheats on the next game launch. Turning this off preserves your selections."/>
-         <TextBlock x:Name="CheatSelectionState" Grid.Column="2" Style="{StaticResource Hint}" FontSize="14" Margin="16,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+         <TextBlock x:Name="CheatSelectionState" Grid.Column="2" Style="{StaticResource Hint}" FontSize="14" Margin="16,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" TextAlignment="Right"/>
         </Grid>
         <Border Height="1" Background="{StaticResource Line}" Margin="0,8,0,10"/>
         <StackPanel x:Name="CheatList"/>
@@ -520,12 +520,25 @@
 
      </Grid>
     </ScrollViewer>
-    <Grid x:Name="PageLogs" Visibility="Collapsed">
-     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-     <ComboBox x:Name="LogSessionPicker" DisplayMemberPath="Name" SelectionChanged="LogSelectionChanged" Margin="0,0,0,10"/>
-     <WrapPanel Grid.Row="1" Margin="0,0,0,12"><ComboBox x:Name="LogStreamPicker" SelectionChanged="LogSelectionChanged" MinWidth="180" Margin="0,0,10,0"><ComboBoxItem Content="Game debug"/><ComboBoxItem Content="Game output"/></ComboBox><Button Content="Open file" Click="BrowseLog" Margin="0,0,8,0"/><Button Content="Open folder" Click="OpenLogs"/><CheckBox x:Name="FollowLog" Content="Follow" IsChecked="True" Margin="15,6,0,6"/></WrapPanel>
-     <TextBox x:Name="DebugLog" Grid.Row="2" IsReadOnly="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="14" Padding="12"/>
-     <TextBlock x:Name="LogInfo" Grid.Row="3" Style="{StaticResource Hint}" Margin="0,9,0,0"/>
+    <Grid x:Name="PageLogs" Visibility="Collapsed" MaxWidth="940" HorizontalAlignment="Stretch">
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <Grid Margin="0,3,0,28"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock Text="Session log" FontSize="24"/>
+      <TextBlock x:Name="LogFollowState" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="14" VerticalAlignment="Center"/>
+     </Grid>
+     <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="24"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+      <StackPanel><TextBlock Text="SESSION" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,10"/><ComboBox x:Name="LogSessionPicker" DisplayMemberPath="Name" SelectionChanged="LogSelectionChanged" AutomationProperties.Name="Log session"/></StackPanel>
+      <StackPanel Grid.Column="2"><TextBlock Text="STREAM" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,10"/><ComboBox x:Name="LogStreamPicker" MinWidth="0" SelectionChanged="LogSelectionChanged" AutomationProperties.Name="Log stream"><ComboBoxItem Content="Game debug"/><ComboBoxItem Content="Game output"/></ComboBox></StackPanel>
+     </Grid>
+     <Grid Grid.Row="2" Margin="0,16,0,18"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <WrapPanel><Button x:Name="OpenLogFileButton" Content="Open file" Click="BrowseLog" FontSize="14" Margin="0,0,8,0"/><Button x:Name="OpenLogFolderButton" Content="Open folder" Click="OpenLogs" FontSize="14"/></WrapPanel>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="Follow" FontSize="16" Margin="0,0,16,0" VerticalAlignment="Center"/><CheckBox x:Name="FollowLog" Style="{StaticResource ToggleSwitch}" IsChecked="True" Checked="LogFollowChanged" Unchecked="LogFollowChanged" AutomationProperties.Name="Follow latest log entries" VerticalAlignment="Center"/></StackPanel>
+     </Grid>
+     <Grid Grid.Row="3">
+      <TextBox x:Name="DebugLog" IsReadOnly="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="14" Padding="12" FlowDirection="LeftToRight" AutomationProperties.Name="Log contents"><TextBox.Resources><SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{local:Palette Background}"/></TextBox.Resources></TextBox>
+      <StackPanel x:Name="LogEmpty" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24" IsHitTestVisible="False"><TextBlock Text="No log available" FontSize="20" HorizontalAlignment="Center"/><TextBlock x:Name="LogEmptyDetail" Text="Start the game or open an existing log file." Style="{StaticResource Hint}" FontSize="14" TextWrapping="Wrap" TextAlignment="Center" Margin="0,10,0,0"/></StackPanel>
+     </Grid>
+     <TextBlock x:Name="LogInfo" Grid.Row="4" Style="{StaticResource Hint}" FontSize="14" Margin="0,10,0,0" TextTrimming="CharacterEllipsis"/>
     </Grid>
    </Grid>
    <Image x:Name="OutgoingPage" Grid.Row="1" Margin="0,0,0,18" Stretch="Fill" IsHitTestVisible="False" Opacity="0"/>

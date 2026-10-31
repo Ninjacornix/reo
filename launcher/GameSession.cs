@@ -121,6 +121,7 @@ public sealed class GameSession {
         var cached = await Task.Run(() => GameImageCache.Prepare(
             Path.Combine(Settings.Home, "game-cache"), runtimeFiles, cancel), cancel);
         string image = cached.Image, hash = cached.Sha256;
+        VerifyAudioCompatibility(image, selectedGame.Id);
         if (selectedGame.Id == "file2" && selectedMods.Count > 0 &&
             !HasMarker(image, "[MOD-FILE2-1] installed"))
             throw new IOException("File #2 mods need the updated game build. Rebuild or update the game.");
@@ -446,6 +447,11 @@ public sealed class GameSession {
     }
     // Drain pipes independently of the UI: native window messages can wait on the game.
     internal const string PointsCheatCapability = "[CHEATS-POINTS-1] maximum results points";
+    internal const string File2AudioCapability = "[AUDIO-MIXER-FILE2-1] master,music,sfx,voice,ui";
+    internal static void VerifyAudioCompatibility(string image, string gameId) {
+        if (gameId == "file2" && !HasMarker(image, File2AudioCapability))
+            throw new IOException("File #2 volume controls need the updated game build. Rebuild or update File #2 in Game files.");
+    }
     internal const string EscapeCheatCapability = "[CHEATS-ESCAPE-1] active countdown frozen";
     internal static void VerifyCheatCompatibility(string image, string gameId, IEnumerable<string> manifest) {
         var lines = manifest.ToHashSet(StringComparer.Ordinal);

@@ -33,13 +33,22 @@ inline unsigned streamBus(unsigned afs) {
     return Count; // Mixed cinematics and unknown streams follow Master only.
 }
 constexpr uint64_t startVoiceBank=0xa402cd5907c716a7ull;
-constexpr unsigned bankBus(unsigned port,unsigned sequence,uint64_t fingerprint) {
+constexpr uint64_t file2StartVoiceBank=0x2b5c216e4d0bfbd7ull;
+constexpr unsigned bankBusFor(unsigned port,unsigned sequence,uint64_t fingerprint,uint64_t selectionBank) {
     if(port==0) return Ui;
     if(port>=4 && port<=7) return Voice;
-    if(port==12 && fingerprint==startVoiceBank) return Voice;
+    if(port==12 && fingerprint==selectionBank) return Voice;
     // NPC banks also carry their firearm cues.
     if(port==13 && sequence!=6 && sequence!=8 && sequence!=9) return Voice;
     return Sfx;
+}
+constexpr unsigned bankBus(unsigned port,unsigned sequence,uint64_t fingerprint) {
+    return bankBusFor(port,sequence,fingerprint,startVoiceBank);
+}
+constexpr unsigned file2BankBus(unsigned port,unsigned sequence,uint64_t fingerprint) {
+    // SLUS-20984: 144440 player voices, 144500 weapon/NPC exceptions,
+    // 144AD0 enemy port. Selection speech uses File #2's own start.snd header.
+    return bankBusFor(port,sequence,fingerprint,file2StartVoiceBank);
 }
 inline void routeStream(uint32_t handle,unsigned bus) {
     if(!handle || bus>Count) return;

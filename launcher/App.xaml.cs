@@ -233,7 +233,7 @@ public partial class App : Application {
             bool diagnostic = e.Args.Any(arg => arg is "--screenshot" or "--probe-controller" or
                                                        "--smoke-launch" or "--test-background-playback");
             diagnostic |= e.Args.Contains("--data-home") && e.Args.Any(arg => arg is
-                "--test-graphics-ui" or "--test-disc-selectors" or "--test-audio-ui" or
+                "--test-logs-ui" or "--test-navigation-ui" or "--test-graphics-ui" or "--test-disc-selectors" or "--test-audio-ui" or
                 "--test-launcher-ui" or "--test-developer-ui" or "--test-game-files-ui" or "--test-coop-ui" or "--test-memory-cards-ui" or "--test-controls-ui" or "--test-mods-ui" or "--test-cheats-ui" or "--test-play-layout");
             if (!diagnostic) {
                 singleInstance = new Mutex(true, "Local\\Outbreak-Launcher", out bool created);

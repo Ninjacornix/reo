@@ -1,13 +1,15 @@
 # Local game font in the launcher
 
-The current `perf/background-video-composition` launcher uses the regular
+The launcher uses the regular
 20-dot Gothic glyphs in the owned game's `d20go04.bin`. This replaces the earlier
 chunky `sfont.tm2` choice and the unsuccessful stroke-thinning experiment.
 `FONT8_8.TM2` and the serif `s20le04.bin` are other confirmed local font assets.
 
-All launcher-rendered text uses the shared game font: navigation, descriptions,
-headings, controls, settings, paths, logs, status messages, tooltips and storage
-progress. Windows-managed title bars and dialogs retain Windows fonts. Text inside
+The default Outbreak font uses the shared game glyphs for navigation, descriptions,
+headings, controls, settings, paths, status messages and storage progress. Log
+contents always use Consolas for aligned columns and text selection. Launcher
+settings also offer Segoe UI and Tahoma. Windows-managed title bars and dialogs
+retain Windows fonts. Text inside
 artwork is unchanged. Characters outside the generated ASCII subset use WPF font
 fallback. No game font or generated typeface ships in source or release packages.
 

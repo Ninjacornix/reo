@@ -82,9 +82,7 @@ public partial class MainWindow {
         CheatSessionNote.Visibility = locked ? Visibility.Visible : Visibility.Collapsed;
         CheatSessionNote.Text = "Stop the game to change cheats. Your selections are preserved.";
         int selected = cheatGroups.Count(g => g.Supported && settings.EnabledCheats.Contains(g.Id));
-        CheatSelectionState.Text = settings.CheatsEnabled
-            ? $"{selected} selected / Next launch"
-            : $"{selected} selected / Cheats disabled";
+        CheatSelectionState.Text = $"{selected} selected";
     }
     void CheatToggled(object sender, RoutedEventArgs e) {
         if (!initialized || refreshingCheats || game.Running || launching)

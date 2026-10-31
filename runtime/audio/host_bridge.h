@@ -81,10 +81,7 @@ void reoAudioResetStreams() {
 }
 float reoAudioBankGain(unsigned port,unsigned sequence,uint64_t fingerprint) {
 #if defined(REO_GAME_FILE2)
-    // File #2 bank categories have not been verified. Their mixed output still
-    // receives the master gain in CriAudio::render, without File #1 port rules.
-    (void)port;(void)sequence;(void)fingerprint;
-    return reo::audio::gain(reo::audio::Count);
+    return reo::audio::gain(reo::audio::file2BankBus(port,sequence,fingerprint));
 #else
     return reo::audio::gain(reo::audio::bankBus(port,sequence,fingerprint));
 #endif
