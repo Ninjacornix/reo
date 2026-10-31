@@ -26,7 +26,7 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 - **Cheats:** health, infection, ammunition and progression unlocks, plus a supported subset of PCSX2 `.pnach` cheats.
 - **Controller support:** DualSense (light bar and rumble), Xbox / XInput controllers and keyboard, with full remapping.
 - **Video settings:** HD, Full HD, 2K and 4K output, 2× / 4× internal resolution, 16:9 or 4:3, FXAA / SMAA anti-aliasing, anisotropic and linear texture filtering, brightness and gamma, borderless fullscreen and a performance counter.
-- **Audio mixer:** separate master, music, effects, voice and menu volume in File #1; live master volume in File #2.
+- **Audio mixer:** separate live master, music, effects, voice and menu volume in File #1 and File #2, with per-game Windows audio-output selection. Spoken subtitles can be hidden while interaction prompts remain visible.
 - **One-click launcher:** checks your ISO, builds the game locally, manages memory cards, logs and updates.
 
 ## Get started
@@ -56,7 +56,7 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 - **Outbreak: File #2:** experimental Windows port with separate disc import/build, cheats and Randomizer support. Selected pickup, equipment, firing and enemy combat paths are verified; full scenario completion remains unverified. See [File #2 validation](docs/FILE2_RANDOMIZER.md).
 - **Launcher:** guided first-run setup, ISO check before import, local build with cached reuse, display and filtering options, controller remapping, memory cards, cheats, logs, co-op hosting/joining and GitHub release updates.
 - **Online co-op:** working through openSNAP for up to four players; see below.
-- **Mods:** enable the matching **Randomizer** package for File #1 or File #2 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. File #2 fits its global additions within each scenario's native model/data limits. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition and File #1 progression-unlock options plus a supported subset of PCSX2 data cheats.
+- **Mods:** enable the matching **Randomizer** package for File #1 or File #2 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. File #2 fits its global additions within each scenario's native model/data limits. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition, progression unlocks, maximum result points and infinite escape time for both editions, plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS.
 
@@ -189,9 +189,9 @@ a backup; cancellation or a failed copy keeps the existing selection.
 application folder are stored as relative paths so the folder can be moved.
 Reconnect an external drive before starting if you selected storage on that drive.
 
-On the first normal start, existing data from older launcher versions is copied
-into the new location when no profile has been initialized there. Existing files
-are never merged or overwritten. The original folder is retained as a backup.
+Fresh packaged installations use their own data folder; they do not automatically
+copy older launcher profiles from AppData. An existing `storage.json` selection
+continues to select its configured folder. Existing files are not merged or overwritten.
 Previously selected external ISO
 files, executables and custom memory cards stay where you put them; select files
 inside your application folder if you want those to travel with it too.
