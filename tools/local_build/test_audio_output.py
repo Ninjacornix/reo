@@ -1,5 +1,8 @@
 import tempfile
 import unittest
+import os
+import shutil
+import subprocess
 from pathlib import Path
 
 from compile_game import MSVC_FLAGS, PORTABLE_DEFAULTS, source_flags
@@ -44,6 +47,20 @@ void InitAudioDevice(void)
         self.assertNotIn('/std:c++20', source_flags(True))
         self.assertIn('-std=c11', source_flags(True, portable=True))
         self.assertNotIn('-std=c++20', source_flags(True, portable=True))
+
+    def test_cpp_driver_compiles_c_provider_as_c(self):
+        compiler = shutil.which('clang++')
+        if not compiler:
+            candidate = Path(os.environ.get('REO_LLVM_MINGW', '')) / 'bin/x86_64-w64-mingw32-clang++.exe'
+            compiler = str(candidate) if candidate.is_file() else None
+        if not compiler:
+            self.skipTest('clang++ unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / 'provider.c'
+            source.write_text('int main(void) { int class = 3; return _Generic(class, int: 0, default: 1); }\n')
+            result = subprocess.run([compiler, *source_flags(True, portable=True),
+                                     '-fsyntax-only', str(source)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == '__main__':

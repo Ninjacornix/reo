@@ -42,7 +42,8 @@ def source_flags(c_source, portable=False):
     if not c_source:
         return flags
     if portable:
-        return ["-std=c11" if flag == "-std=c++20" else flag for flag in flags]
+        # The pinned compiler is clang++; a .c suffix alone still selects C++.
+        return ["-x", "c", *["-std=c11" if flag == "-std=c++20" else flag for flag in flags]]
     return [flag for flag in flags if flag not in {"/TP", "/EHsc", "/std:c++20"}] + ["/TC", "/std:c11"]
 
 
