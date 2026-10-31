@@ -48,6 +48,7 @@ class Proxy:
         self.serial = self.sent = self.dropped = self.duplicated = self.queue_dropped = 0
         self.next_report = 0
         self.native_status = {}
+        self.traffic = {'up': {}, 'down': {}}
         try:
             for front_port, back_port in ports:
                 front = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -65,6 +66,21 @@ class Proxy:
             sock.close()
         for sock in self.clients.values():
             sock.close()
+
+    def observe_traffic(self, direction, payload):
+        """Count ingress only, including later loss; never retain packet contents.
+
+        IPv4 byte totals assume a 20-byte IP header and 8-byte UDP header. They
+        exclude Ethernet, tunnels, fragmentation and the proxy's second hop.
+        """
+        category = 'original'
+        if len(payload) >= 6 and payload[:5] == b'REO2\x01':
+            category = {1: 'native_hello', 2: 'native_status', 3: 'native_motion',
+                        6: 'native_world_digest', 7: 'native_world_request'}.get(payload[5], 'native_other')
+        row = self.traffic[direction].setdefault(category, {'packets': 0, 'payload_bytes': 0, 'ipv4_bytes': 0})
+        row['packets'] += 1
+        row['payload_bytes'] += len(payload)
+        row['ipv4_bytes'] += len(payload) + 28
 
     def schedule(self, destination, payload, address=None):
         if len(payload) == 64 and payload[:6] == b'REO2\x01\x02':
@@ -110,6 +126,7 @@ class Proxy:
                 payload, source = key.fileobj.recvfrom(65536)
             except (BlockingIOError, ConnectionResetError):
                 continue
+            self.observe_traffic('up' if role == 'front' else 'down', payload)
             if role == 'front':
                 identity = (key.fileobj, source)
                 if identity not in self.clients:
@@ -146,6 +163,7 @@ class Proxy:
                                              'dropped': self.dropped, 'duplicated': self.duplicated,
                                              'queue_dropped': self.queue_dropped, 'queued': len(self.queue),
                                              'clients': len(self.clients),
+                                             'traffic': self.traffic,
                                              'native_status': list(self.native_status.values())}) + '\n')
 
 

@@ -140,9 +140,36 @@ use that ownership fix.
 Local automated checks pass: 21,667 native assertions, 510 real TCP/UDP/APP
 transport checks (498 without a separate APP service), 24 native server tests,
 100 relevant upstream Outbreak/reliability/runtime tests, 104 local-build tool
-tests (11 skips), 63 co-op harness tests (one skip), nine impairment-fixture tests,
+tests (11 skips), 63 co-op harness tests (one skip), ten impairment-fixture tests,
 and 1,226 launcher checks. The full upstream suite is not claimed to pass.
 
 These are bounded loopback and synthetic checks. Complete scenarios, critical
 interactions, room/script transitions, missing-actor recovery, long sessions and
 real Internet conditions still require broader validation before release.
+
+### Traffic measurement
+
+Matched four-player File #1 runs used the same native binary, fresh cards, the
+same introductory room and two 1.2-second movement inputs. Each measurement
+covered approximately 31 seconds after login, scenario entry and warmup, without
+injected impairment. These are lightly active samples, not peak combat or loss
+budgets. Legacy here means all four clients forced `REO_NETCODE=legacy` on the
+same build/server, rather than a comparison against a different RC1 executable.
+
+| Mode | Mean player upload | Mean player download | Total host upload |
+| --- | ---: | ---: | ---: |
+| Legacy | 0.40 KB/s | 0.59 KB/s | 2.38 KB/s |
+| Enhanced | 2.12 KB/s | 5.50 KB/s | 21.99 KB/s |
+
+Units are decimal KB/s. The loopback proxy counts original and native UDP
+datagrams without retaining their contents, and adds an estimated 28-byte
+IPv4/UDP header per datagram. It excludes Ethernet, tunnels, the proxy's extra
+hop and bootstrap/APP/signup traffic. Rates are averages across the four players.
+
+The increase is approximately 5.3 times upload and 9.3 times download in this
+quiet scene, from a small baseline. Most added bytes are the intended 20 Hz
+motion stream: about 1.56 KB/s upload and 4.68 KB/s download per player in a
+four-player room, including the estimated headers. Faster batch opportunities
+do not multiply all original traffic by five; original traffic measured about
+0.39/0.58 KB/s per player in the enhanced run. Busy scenarios, retransmissions,
+additional transport overhead and large public servers require further profiling.

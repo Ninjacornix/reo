@@ -33,6 +33,22 @@ class ImpairmentTests(unittest.TestCase):
             self.assertEqual(len(peers), 2)
             self.assertEqual(replies, {0: b'\0reply', 1: b'\1reply'})
             self.assertEqual(proxy.queue_dropped, 0)
+            self.assertEqual(proxy.traffic['up']['original'],
+                             {'packets': 2, 'payload_bytes': 2, 'ipv4_bytes': 58})
+            self.assertEqual(proxy.traffic['down']['original'],
+                             {'packets': 2, 'payload_bytes': 12, 'ipv4_bytes': 68})
+
+    def test_byte_counts_classify_without_retaining_payloads(self):
+        proxy = Proxy([])
+        self.addCleanup(proxy.close)
+        for kind, category, size in [(1, 'native_hello', 48), (2, 'native_status', 64),
+                                     (3, 'native_motion', 50), (6, 'native_world_digest', 48),
+                                     (7, 'native_world_request', 36)]:
+            frame = b'REO2\x01' + bytes([kind]) + b'x' * (size - 6)
+            proxy.observe_traffic('up', frame)
+            self.assertEqual(proxy.traffic['up'][category],
+                             {'packets': 1, 'payload_bytes': size, 'ipv4_bytes': size + 28})
+        self.assertNotIn('xxxx', repr(proxy.traffic))
 
     def test_profile_rejects_nan_and_invalid_rates(self):
         for settings in [{'loss_percent': 100}, {'rtt_ms': -1}, {'jitter_ms': float('nan')}, {'drop_unreliable_snap': 'yes'}]:
