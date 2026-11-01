@@ -79,8 +79,10 @@ public partial class MainWindow {
     void UpdateCheatState() {
         bool locked = game.Running || launching;
         CheatControls.IsEnabled = !locked;
-        CheatSessionNote.Visibility = locked ? Visibility.Visible : Visibility.Collapsed;
-        CheatSessionNote.Text = "Stop the game to change cheats. Your selections are preserved.";
+        bool online = settings.ResolvedCoopMode != "offline";
+        CheatSessionNote.Visibility = locked || online ? Visibility.Visible : Visibility.Collapsed;
+        CheatSessionNote.Text = locked ? "Stop the game to change cheats. Your selections are preserved."
+            : "Unlock everything is available while hosting or joining co-op. Other cheats require Play alone.";
         int selected = cheatGroups.Count(g => g.Supported && settings.EnabledCheats.Contains(g.Id));
         CheatSelectionState.Text = $"{selected} selected";
     }

@@ -28,13 +28,23 @@ public static class Cheats {
                           Description = "Keeps carried firearms loaded to their normal capacity." },
                   new() { Id = $"builtin.{game}.unlock", Builtin = "unlock", Name = "Unlock everything",
                           Description = game == "file1"
-                              ? "Unlocks all File #1 scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep these unlocks."
-                              : "Unlocks all File #2 scenarios, difficulties, costumes, NPC characters and collection extras. Saving can keep these unlocks." },
+                              ? "Unlocks all File #1 scenarios, difficulties, costumes, NPC characters and collection extras. Available in Play alone and co-op. Saving can keep these unlocks."
+                              : "Unlocks all File #2 scenarios, difficulties, costumes, NPC characters and collection extras. Available in Play alone and co-op. Saving can keep these unlocks." },
                   new() { Id = $"builtin.{game}.points", Builtin = "points", Name = "Max results points",
                           Description = "Keeps spendable results points at 999,999,999. Saving can retain the balance." },
                   new() { Id = $"builtin.{game}.escape", Builtin = "escape", Name = "Infinite escape time",
                           Description = "Stops active escape countdowns." }
               };
+    internal const string OnlineRestriction = "Only Unlock everything is available in co-op. Other cheats require Play alone; deselect them or disable cheats before hosting or joining.";
+    // Progression unlocks change menu/save availability, rather than player stats
+    // or shared gameplay. Imported writes are never classified by their label.
+    internal static bool OnlineAllowed(CheatGroup group) =>
+        group.Supported && group.Builtin == "unlock" && group.Writes.Count == 0;
+    internal static void VerifyOnlineSelection(Settings settings) {
+        if (settings.CheatsEnabled && Load(settings.Game.Id).Any(group =>
+                settings.EnabledCheats.Contains(group.Id) && !OnlineAllowed(group)))
+            throw new IOException(OnlineRestriction);
+    }
     public static string Folder(string game) => Path.Combine(Settings.Home, "cheats", game);
     public static bool DataAddress(uint a,
                                    int size) => size > 0 && a >= 0x370000 &&
@@ -160,8 +170,9 @@ public static class Cheats {
         Mods.Append(mods, writes, builtins);
         if (writes.Count == 0 && builtins.Count == 0)
             return "";
-        if (settings.ResolvedCoopMode != "offline")
-            throw new IOException("Cheats are available in Play alone. Disable cheats before hosting or joining co-op.");
+        if (settings.ResolvedCoopMode != "offline" &&
+            (writes.Count != 0 || builtins.Any(builtin => builtin != "builtin unlock")))
+            throw new IOException(OnlineRestriction);
         if (writes.Count > 4096)
             throw new IOException("Select fewer cheats (4096 write limit).");
         string file = Path.Combine(logs, "cheats.txt");
