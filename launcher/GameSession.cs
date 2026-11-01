@@ -337,7 +337,7 @@ public sealed class GameSession {
             account = automaticAccount
                           ? new AutomaticAccount(accountHome ?? Settings.Home, settings, text => NetworkStatus = text,
 #if REO_CROSS_PLATFORM
-                                                 new Uri($"http://{settings.CoopHost}:{(settings.ResolvedCoopMode == "join" && settings.JoinSignupPort > 0 ? settings.JoinSignupPort : settings.SignupPort)}/reweb/signup/create_id.html"))
+                                                 SignupEndpoints.For(settings, null))
 #else
                                                  MainWindow.SignupEndpoint(settings, null))
 #endif

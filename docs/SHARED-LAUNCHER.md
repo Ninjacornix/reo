@@ -9,25 +9,36 @@ The game remains native code: Vulkan on Windows/Linux and MoltenVK → Metal on 
 
 ## Design reference
 
-The reference is **RC1 Windows in this checkout**, `launcher/Shell.xaml` and
-`launcher/Theme.xaml`. The old WPF view remains available for comparison.
+The reference is **RC1 Windows in this checkout**, `launcher/Shell.xaml`, `launcher/Theme.xaml`
+and the `launcher/MainWindow.*.cs` partials. The old WPF view remains available for comparison.
 `launcher/desktop/Views/Shell.axaml` and `Theme.axaml` are the common editable views.
 Do not rerun the one-time migration scripts over these files: subsequent fixes and
 platform adaptations live in the common files.
 
-The source check preserves 304 named RC1 controls, all 12 pages, page copy/order,
-120 event sources and reference SHA-256 hashes. The game font, pinned artwork,
-controller diagram and preview models come from the existing RC1 code and the
-user's disc. The case geometry, camera, lighting, texture quantization, ground
-projection and drag behavior use the Windows reference calculations.
+The common code-behind is a line-by-line port of the RC1 partials: every
+`launcher/desktop/MainWindow.<Area>.cs` keeps the RC1 handler names, order, wording, guards
+and status messages, and the view wires the same 120 XAML event sources. `Compatibility/`
+adapts WPF idioms to Avalonia without changing behaviour: `Visibility` (including `Hidden`),
+keyed styles as classes, `BeginAnimation` hold/revert semantics, `StatusText`, file dialogs and
+`MessageBox` (the Windows system dialog on Windows). RC1 custom controls are ported in
+`Controls/`: the lit DVD (`GameDiscView`), the keepcase scene (`GameCaseView` with RC1 motion,
+spotlight flicker, lighting and the 720-line cache), `BackgroundVideoPlayer` cross-fades,
+`StickPlot`, the preview rotation and the storage progress window.
 
-This is **not yet certified pixel-identical to WPF**. The renderer changed, disc
-shading and soft shadows can differ, and video transitions still need comparison.
-The source checks currently pass 571 assertions; headless UI/media checks pass
-54 assertions. Headless captures check the common UI and interactions; they do not establish
-visual equality to the old Windows application. Native window decorations also
-follow each OS. Compare actual WPF and Avalonia captures on Windows before calling
-the migration visually complete.
+Theme parity notes: WPF relative gradient points are written as percentages; RC1 keyed styles
+do not inherit the implicit `TextBlock`/`CheckBox` setters; `IsKeyboardFocused` maps to
+`:focus`; plain `TextBox`, `ProgressBar` and `ListBox` keep their Aero2 defaults; tooltips are
+off, as in RC1.
+
+Platform adapters, not design changes: Windows-only services (Windows Firewall rules, UPnP
+through HNetCfg, audio-output enumeration, graphics-card query, the native GPU preview child
+window) are skipped or replaced on macOS and Linux; wording names the Trash and the system
+instead of the Recycle Bin and Windows there. The Kevin preview uses the same renderer through
+`GraphicsPreviewHost`. Background movies, like RC1, only come from launcher-verified imports.
+
+This is **not yet certified pixel-identical to WPF**. Font rasterization differs between
+DirectWrite and Skia, and Segoe UI/Tahoma fall back to system faces outside Windows. Compare
+actual WPF and Avalonia captures on Windows before calling the migration visually complete.
 
 ## Run and verify
 
@@ -38,8 +49,9 @@ dotnet run --project launcher/cross-tests
 dotnet run --project launcher/desktop -- --headless-check build-launcher/captures
 ```
 
-`--headless-check` uses an isolated data folder, disables background movies and
-renders inside Avalonia's headless platform. It exercises graphics/audio settings,
+`--headless-check` uses an isolated data folder (seed it with a `settings.json` to capture
+another state), disables background movies, animations and hosting, and renders inside
+Avalonia's headless platform. It exercises graphics/audio settings,
 fullscreen dependencies, navigation, synchronized case/disc selection, settings
 round-trip, page visibility and finite bounds. Captures are local artifacts.
 

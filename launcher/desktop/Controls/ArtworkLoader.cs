@@ -17,7 +17,7 @@ internal static class ArtworkLoader {
         foreach(string stem in stems.Distinct())foreach(string folder in folders) {
             foreach(string extension in new[]{".jpg",".png"}) {
                 string path=Path.Combine(folder,stem+"-wrap"+extension);
-                if(Load(path) is not {} bitmap)continue;
+                if(Load(path,0) is not {} bitmap)continue;
                 int width=bitmap.PixelSize.Width,height=bitmap.PixelSize.Height;
                 if(width<=height)continue;
                 Layout? layout;
@@ -26,12 +26,12 @@ internal static class ArtworkLoader {
                 else {int spine=(int)Math.Round(width*14d/284),back=(width-spine)/2;layout=new([back+spine,0,width-back-spine,height],[0,0,back,height],[back,0,spine,height]);}
                 bool Valid(int[]? p)=>p is {Length:4}&&p[0]>=0&&p[1]>=0&&p[2]>0&&p[3]>0&&(long)p[0]+p[2]<=width&&(long)p[1]+p[3]<=height;
                 if(layout==null||!Valid(layout.Front)||!Valid(layout.Back)||!Valid(layout.Spine))continue;
-                IImage Crop(int[] p)=>new CroppedBitmap{Source=bitmap,SourceRect=new PixelRect(p[0],p[1],p[2],p[3])};
+                IImage Crop(int[] p)=>CropPixels(bitmap,new PixelRect(p[0],p[1],p[2],p[3]));
                 return new(Crop(layout.Front),Crop(layout.Back),Crop(layout.Spine));
             }
-            var front=Load(Path.Combine(folder,stem+"-cover.jpg"))??Load(Path.Combine(folder,stem+"-cover.png"));
+            var front=Load(Path.Combine(folder,stem+"-cover.jpg"),1200)??Load(Path.Combine(folder,stem+"-cover.png"),1200);
             if(front==null)continue;
-            IImage? Part(string name)=>folders.SelectMany(f=>new[]{Path.Combine(f,stem+"-"+name+".jpg"),Path.Combine(f,stem+"-"+name+".png")}).Select(Load).FirstOrDefault(b=>b!=null);
+            IImage? Part(string name)=>folders.SelectMany(f=>new[]{Path.Combine(f,stem+"-"+name+".jpg"),Path.Combine(f,stem+"-"+name+".png")}).Select(path=>Load(path,name=="spine"?0:1200)).FirstOrDefault(b=>b!=null);
             return new(front,Part("back"),Part("spine"));
         }
         return null;
@@ -41,11 +41,26 @@ internal static class ArtworkLoader {
         foreach(string folder in new[]{GameArtwork.Folder,GameArtwork.DownloadFolder})
             foreach(string stem in new[]{id.Serial,$"file{edition}-{id.Region}",$"file{edition}",$"file{edition}-ntsc-u"}.Distinct())
                 foreach(string extension in new[]{".png",".jpg"})
-                    if(Load(Path.Combine(folder,stem+"-disc"+extension)) is {} image)return image;
+                    if(Load(Path.Combine(folder,stem+"-disc"+extension),0) is {} image)return image;
         return null;
     }
-    internal static Bitmap? Load(string path) {
-        try {if(!File.Exists(path)||new FileInfo(path).Length>32*1024*1024)return null;return new Bitmap(path);}
+    // Public screenshots may show only the known downloaded label, never a personal override.
+    internal static Bitmap? LoadVerifiedDownloadedDisc(int edition) {
+        var asset=GameArtwork.Downloads.SingleOrDefault(item=>item.Name==$"file{edition}-ntsc-u-disc.png");
+        return asset!=null&&GameArtwork.DownloadCurrent(GameArtwork.DownloadFolder,asset)?Load(Path.Combine(GameArtwork.DownloadFolder,asset.Name),0):null;
+    }
+    // Bitmaps are free-threaded; CroppedBitmap is a UI object, so crops are copied while loading.
+    static Bitmap CropPixels(Bitmap source,PixelRect rect) {
+        var result=new WriteableBitmap(rect.Size,new Vector(96,96),source.Format??PixelFormat.Bgra8888,source.AlphaFormat??AlphaFormat.Premul);
+        using(var pixels=result.Lock())source.CopyPixels(rect,pixels.Address,pixels.RowBytes*rect.Height,pixels.RowBytes);
+        return result;
+    }
+    internal static Bitmap? Load(string path,int decodeWidth=1200) {
+        try {
+            if(!File.Exists(path)||new FileInfo(path).Length>32*1024*1024)return null;
+            using var stream=File.OpenRead(path);
+            return decodeWidth>0?Bitmap.DecodeToWidth(stream,decodeWidth,BitmapInterpolationMode.HighQuality):new Bitmap(stream);
+        }
         catch(Exception e)when(e is IOException or ArgumentException or NotSupportedException){return null;}
     }
     internal static IImage Ps2Texture(IImage image,bool available) {
@@ -67,10 +82,12 @@ internal static class ArtworkLoader {
         }
         return result;
     }
+    // RC1: the backdrop is the cover's middle band, rows 14% to 86%, full width.
     internal static IImage Backdrop(IImage image) {
-        double width=image.Size.Width,height=image.Size.Height,crop=width*.72;
-        var bitmap=new RenderTargetBitmap(new PixelSize(Math.Max(1,(int)crop),Math.Max(1,(int)height)),new Vector(96,96));
-        using(var dc=bitmap.CreateDrawingContext())dc.DrawImage(image,new Rect(width*.14,0,crop,height),new Rect(bitmap.Size));
+        double width=image.Size.Width,height=image.Size.Height;
+        int top=(int)(height*0.14),rows=Math.Max(1,(int)(height*0.72));
+        var bitmap=new RenderTargetBitmap(new PixelSize(Math.Max(1,(int)width),rows),new Vector(96,96));
+        using(var dc=bitmap.CreateDrawingContext())dc.DrawImage(image,new Rect(0,top,width,rows),new Rect(0,0,width,rows));
         return bitmap;
     }
     internal static WriteableBitmap FromBgra(byte[] bytes,int width,int height) {
