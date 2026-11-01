@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build File #1 natively on Apple Silicon from an owned ISO (development only)."""
+"""Build File #1 or File #2 natively on Apple Silicon from an owned ISO (development only)."""
 
 import argparse
 import hashlib
@@ -82,6 +82,8 @@ def main():
     parser.add_argument("--iso", type=Path, required=True)
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--build", type=Path, default=ROOT / "build-macos")
+    parser.add_argument("--game", choices=("file1", "file2"), default="file1",
+                        help="file2 builds in its own workspace, like the Windows File #2 build kit")
     args = parser.parse_args()
     if sys.platform != "darwin" or platform.machine() != "arm64":
         parser.error("Run natively on an Apple Silicon Mac")
@@ -111,6 +113,8 @@ def main():
     prepare(elfio, "https://github.com/serge1/ELFIO.git", ELFIO_PIN)
     toml11 = build / "ps2recomp/_deps/toml11-src"
     prepare(toml11, "https://github.com/ToruNiina/toml11.git", TOML11_PIN)
+    if args.game == "file2":
+        return build_file2(args, build, ps2, gs, elfio, toml11, metal_driver)
     disc = import_iso(args.iso, build / "imports")
     elf = disc / "SLUS_207.65"
     metadata = ROOT / "recomp/config"
@@ -178,6 +182,89 @@ def main():
     (build / "macos-build.json").write_text(json.dumps(record, indent=2))
     print("Local application:", package_app(build, record, metal_driver))
     print("Native build complete. Gameplay and performance still require validation.")
+
+
+def sync_project(project, ps2):
+    """Copy this checkout's sources and the patched PS2Recomp tree into a private File #2 project.
+
+    File #1's generated files (runtime catalogues, IRQ originals, queue-control body) live in
+    the shared trees; File #2 regenerates its own here, as the Windows build kit worker does.
+    """
+    project.mkdir(parents=True, exist_ok=True)
+    tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\0")
+    tracked = b"\0".join(path for path in tracked if path and path != b"third_party/PS2Recomp")
+    run("rsync", "-a", "--from0", "--files-from=-", str(ROOT) + "/", project, input=tracked)
+    runtime = subprocess.check_output(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"], cwd=ps2)
+    generated = (b"ps2xRuntime/src/lib/irq_cpu_original/", b"ps2xRuntime/src/lib/local_source_catalogues/")
+    runtime = b"\0".join(path for path in runtime.split(b"\0") if path and not path.startswith(generated))
+    run("rsync", "-a", "--from0", "--files-from=-", str(ps2) + "/", project / "third_party/PS2Recomp", input=runtime)
+
+
+def build_file2(args, build, ps2, gs, elfio, toml11, metal_driver):
+    work = build / "file2"
+    project = work / "project"
+    sync_project(project, ps2)
+    disc = import_iso(args.iso, build / "imports", game="file2")
+    elf = disc / "SLUS_209.84"
+    metadata = ROOT / "recomp/config/file2"
+    runtime = project / "third_party/PS2Recomp"
+    file2 = "-DREO_GAME_FILE2"
+    # Every unit, including the shared runtime and backend libraries, is compiled for File #2.
+    run(sys.executable, ROOT / "tools/local_build/generate_catalogues.py", "--elf", elf,
+        "--manifest", metadata / "local_source_catalogues.json", "--output",
+        runtime / "ps2xRuntime/src/lib/local_source_catalogues")
+    run("cmake", "-S", runtime, "-B", work / "ps2recomp", "-G", "Ninja",
+        "-DCMAKE_BUILD_TYPE=Release", "-DPS2X_MACOS_METAL_PRESENT=ON",
+        "-DPS2X_BUILD_RECOMP=ON", "-DPS2X_BUILD_RUNTIME=ON",
+        "-DPS2X_BUILD_ANALYZER=OFF", "-DPS2X_BUILD_TEST=OFF", "-DPS2X_BUILD_STUDIO=OFF",
+        f"-DCMAKE_CXX_FLAGS={file2}", f"-DCMAKE_C_FLAGS={file2}",
+        "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON", f"-DFETCHCONTENT_SOURCE_DIR_ELFIO={elfio}",
+        f"-DFETCHCONTENT_SOURCE_DIR_TOML11={toml11}")
+    run("cmake", "--build", work / "ps2recomp", "--target", "ps2_recomp", "ps2_runtime",
+        "--parallel", args.jobs)
+    # The GPU backend build is game-independent and shared with File #1.
+    run("cmake", "-S", ROOT / "tools/parallel_gs_check", "-B", build / "graphics", "-G", "Ninja",
+        "-DCMAKE_BUILD_TYPE=Release", f"-DPARALLEL_GS_SOURCE={gs}")
+    run("cmake", "--build", build / "graphics", "--target", "parallel_gs_check", "macos_present_check",
+        "--parallel", args.jobs)
+    recompiler = work / "ps2recomp/ps2xRecomp/ps2_recomp"
+    config = project / "recomp/config"
+    generated = config / "output_file2"
+    if not generated.exists():
+        generate(recompiler, disc, metadata, generated, args.jobs, game="file2")
+    else:
+        record = json.loads((generated / "generation.json").read_text())
+        if (record["elfSha256"] != sha(elf.read_bytes()) or
+                record["recompilerSha256"] != sha(recompiler.read_bytes())):
+            raise RuntimeError("Generated File #2 sources belong to a different disc or recompiler; preserve them and use a fresh build directory")
+    apply_plan(elf, generated, metadata / "local_source_recipes.json", project)
+    generate_queue(elf, metadata / "local_queue_control.json",
+                   project / "tools/parallel_gs_backend/resident_geometry/upstream/queue_control_body.inc")
+    vu = work / "vu"
+    if not vu.exists():
+        reconstruct(elf, metadata / "local_vu_images.json", vu)
+    whole = vu / "whole-registered"
+    if not whole.exists():
+        run(sys.executable, ROOT / "tools/vu_whole_aot/generate.py", "--collection", vu, "--out", whole)
+    game = work / "game"
+    run("cmake", "-S", project, "-B", game, "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
+        f"-DPS2RECOMP_BUILD={work / 'ps2recomp'}", f"-DREO_RECOMP_CONFIG_ROOT={config}",
+        "-DREO_BUILD_GPU_GS=ON", f"-DREO_PARALLEL_GS_SOURCE={gs}",
+        f"-DREO_PARALLEL_GS_BUILD={build / 'graphics'}", "-DREO_RECOMP_PCH=ON",
+        "-DREO_VULKAN_SDK_MIN=1.4.304", f"-DCMAKE_CXX_FLAGS={file2}", f"-DCMAKE_C_FLAGS={file2}",
+        f"-DREO_VU_SPECIALIZED_SOURCE={vu / 'specialized/reo_vu_specialized_generated.cpp'}",
+        f"-DREO_VU_WHOLE_SOURCE={whole / 'reo_vu_whole_registered_generated.cpp'}")
+    run("cmake", "--build", game, "--target", "reo_recomp_file2", "--parallel", args.jobs)
+    check_environment = dict(os.environ, GRANITE_VULKAN_LIBRARY=str(metal_driver),
+                             REO_PARALLEL_GS_DESCRIPTOR_BUFFER="0")
+    run(build / "graphics/macos_present_check", game / "recomp/reo-gpu-present", env=check_environment)
+    record_path = build / "macos-build.json"
+    record = json.loads(record_path.read_text()) if record_path.exists() else {"format": 1}
+    record.update({"file2Iso": str(args.iso.resolve()), "file2Data": str(disc),
+                   "file2Executable": str(game / "recomp/reo_recomp_file2"), "file2GameplayValidated": False})
+    record_path.write_text(json.dumps(record, indent=2))
+    print("Native File #2 build complete:", game / "recomp/reo_recomp_file2")
+    print("Gameplay and performance still require validation.")
 
 
 if __name__ == "__main__":

@@ -38,6 +38,9 @@ public partial class MainWindow:Window {
             if(!File.Exists(Settings.Exe))Settings.Exe=record["executable"];
             if(!File.Exists(Settings.Iso))Settings.Iso=record["iso"];
             if(!Directory.Exists(Settings.ImportedFile1)&&record.TryGetValue("data",out var data))Settings.ImportedFile1=Path.GetDirectoryName(data)!;
+            if(!File.Exists(Settings.SecondExe)&&record.TryGetValue("file2Executable",out var exe2))Settings.SecondExe=exe2;
+            if(!File.Exists(Settings.SecondIso)&&record.TryGetValue("file2Iso",out var iso2))Settings.SecondIso=iso2;
+            if(!Directory.Exists(Settings.ImportedFile2)&&record.TryGetValue("file2Data",out var data2))Settings.ImportedFile2=Path.GetDirectoryName(data2)!;
         }
         InitializeComponent();
         controller=new();controller.Configure(Settings);

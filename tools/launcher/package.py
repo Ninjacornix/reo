@@ -44,6 +44,14 @@ def main():
     sys.path.insert(0,str(ROOT/'tools/macos'));from play import molten_library
     copy(molten_library(),native/'libMoltenVK.dylib')
     record.update(executable='native/reo_recomp',driver='native/libMoltenVK.dylib')
+    if record.get('file2Executable') and Path(record['file2Executable']).exists():
+        # File #2 is a separate native build with its own presentation shaders.
+        second=mac/'native-file2';second.mkdir(exist_ok=True)
+        copy(record['file2Executable'],second/'reo_recomp_file2')
+        shutil.copytree(Path(record['file2Executable']).parent/'reo-gpu-present',second/'reo-gpu-present',dirs_exist_ok=True)
+        record['file2Executable']='native-file2/reo_recomp_file2'
+    else:
+        for key in ('file2Executable','file2Data','file2Iso','file2GameplayValidated'):record.pop(key,None)
     (mac/'native-build.json').write_text(json.dumps(record,indent=2))
     (mac/'platform-services.json').write_text(json.dumps({'server':{'executable':'tools/Reo.Services/Reo.Services','source':'tools/Reo.Services/_internal/server'},'ffmpeg':'tools/Reo.Services/_internal/tools/ffmpeg'},indent=2))
     licences=resources/'licenses';licences.mkdir(exist_ok=True)
