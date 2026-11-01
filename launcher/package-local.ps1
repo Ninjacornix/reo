@@ -65,7 +65,7 @@ foreach ($file in $manifest.files) {
 }
 & (Join-Path $PSScriptRoot 'build.ps1')
 if ($LASTEXITCODE) { throw 'Launcher build failed.' }
-& dotnet publish (Join-Path $PSScriptRoot 'Reo.Launcher.csproj') -c Release -r win-x64 --self-contained true -o $Output --nologo /p:DebugType=None /p:DebugSymbols=false ("/p:Version=" + $Version)
+& dotnet publish (Join-Path $PSScriptRoot 'desktop/Reo.Launcher.Desktop.csproj') -c Release -r win-x64 --self-contained true -o $Output --nologo /p:DebugType=None /p:DebugSymbols=false ("/p:Version=" + $Version)
 if ($LASTEXITCODE) { throw 'Launcher publish failed.' }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'artifacts/native/XINPUT1_4.dll') -Destination $Output
 $targetKit = Join-Path $Output 'build-kit'

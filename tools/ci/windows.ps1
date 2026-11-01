@@ -24,10 +24,10 @@ function Invoke-Recorded([string]$Name, [scriptblock]$Command) {
     if ($LASTEXITCODE -ne 0) { throw "$Name failed with exit $LASTEXITCODE." }
 }
 function Test-Launcher([string]$Folder, [string]$Name) {
-    $testHome = Join-Path $Output ($Name + '-home')
+    $captures = Join-Path $Output ($Name + '-captures')
     $start = [Diagnostics.ProcessStartInfo]::new()
     $start.FileName = Join-Path $Folder 'Outbreak.Launcher.exe'
-    $start.Arguments = '--data-home "' + $testHome + '" --self-test'
+    $start.Arguments = '--headless-check "' + $captures + '"'
     $start.UseShellExecute = $false
     $start.CreateNoWindow = $true
     $start.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
@@ -51,9 +51,9 @@ function Test-Launcher([string]$Folder, [string]$Name) {
             }
             throw "$Name failed with exit $($process.ExitCode)."
         }
-        $receipt = Join-Path $Folder 'test-results/self-test.json'
+        $receipt = Join-Path $captures 'report.json'
         $result = Get-Content -LiteralPath $receipt -Raw | ConvertFrom-Json
-        if (!$result.passed -or $result.checks -lt 1) { throw "$Name did not produce passing self-checks." }
+        if (!$result.passed -or $result.pages -ne 12 -or $result.checks -lt 56) { throw "$Name did not produce passing self-checks." }
         Copy-Item -LiteralPath $receipt -Destination (Join-Path $reports ($Name + '.json'))
         Write-Output "$Name passed $($result.checks) checks."
     } finally { $process.Dispose() }
@@ -66,20 +66,21 @@ try {
     $env:VULKAN_SDK = $VulkanHeaders
     $env:PYTHONUTF8 = '1'
     Invoke-Recorded 'launcher-build' { & (Join-Path $repo 'launcher/build.ps1') -OutputDirectory $build }
-    Test-Launcher $build 'launcher-self-test'
+    Test-Launcher $build 'launcher-ui'
+    Invoke-Recorded 'windows-services' { & dotnet run --project launcher/cross-tests -c Release -- --windows-services-check }
     Invoke-Recorded 'audio-bridge' { & (Join-Path $repo 'tools/audio_mixer_check/run-bridge.bat') }
     Invoke-Recorded 'native-cheats' { & (Join-Path $repo 'tools/cheat_check/run.bat') }
     Invoke-Recorded 'native-netcode' { & (Join-Path $repo 'tools/native_netcode_check/run.bat') }
     Invoke-Recorded 'snap-iop-network' { & (Join-Path $repo 'tools/snap_iop_check/run.bat') --local-only }
     Invoke-Recorded 'file2-unlocks' { & (Join-Path $repo 'tools/cheat_check/run-file2-unlocks.bat') }
     Invoke-Recorded 'launcher-publish' {
-        & dotnet publish launcher/Reo.Launcher.csproj -c Release -r win-x64 --self-contained true `
+        & dotnet publish launcher/desktop/Reo.Launcher.Desktop.csproj -c Release -r win-x64 --self-contained true `
             -o $publish --nologo /p:DebugType=None /p:DebugSymbols=false
     }
     foreach ($native in @('XINPUT1_4.dll', 'reo-movie-check.exe')) {
         Copy-Item -LiteralPath (Join-Path $build $native) -Destination $publish
     }
-    foreach ($native in @('XINPUT1_4.dll', 'reo-movie-check.exe', 'Reo.GraphicsPreview.dll')) {
+    foreach ($native in @('XINPUT1_4.dll', 'reo-movie-check.exe')) {
         $file = Join-Path $publish $native
         if (!(Test-Path -LiteralPath $file) -or (Get-Item -LiteralPath $file).Length -lt 1024) {
             throw "The published launcher is missing $native."
@@ -111,11 +112,26 @@ extracted models, fonts, textures, videos and personal data are not included.
 Use a complete official release for game installation. This preview checks
 launcher compilation and asset-free behavior; it does not certify gameplay.
 '@ | Set-Content -LiteralPath (Join-Path $publish 'Read me.txt') -Encoding UTF8
-    Test-Launcher $publish 'published-self-test'
+    Test-Launcher $publish 'published-ui'
+    if ($runtime.runtimeOptions.includedFrameworks.name -contains 'Microsoft.WindowsDesktop.App') {
+        throw 'The universal launcher must not depend on WPF.'
+    }
+    $probe = Join-Path $Output 'update-probe'
+    Invoke-Recorded 'publish-update-probe' { & dotnet publish launcher/cross-tests -c Release -r win-x64 --self-contained true -o $probe --nologo }
+    Invoke-Recorded 'update-worker' { & dotnet (Join-Path $publish 'Outbreak.Launcher.dll') --update-worker-check (Join-Path $Output 'update-check') (Join-Path $probe 'Reo.Launcher.CrossTests.exe') }
+    Copy-Item -LiteralPath (Join-Path $Output 'update-check/report.json') -Destination (Join-Path $reports 'update-worker.json')
+    $single = Join-Path $Output 'single-file'
+    Invoke-Recorded 'single-file-publish' {
+        & dotnet publish launcher/desktop/Reo.Launcher.Desktop.csproj -c Release -r win-x64 --self-contained true -o $single --nologo `
+            /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true
+    }
+    Test-Launcher $single 'single-file-ui'
+    $loose = @(Get-ChildItem -LiteralPath $single -File | Where-Object { ($_.Extension -eq '.dll' -and $_.Name -ne 'XINPUT1_4.dll') -or $_.Name -like 'Outbreak.Launcher.*.json' })
+    if ($loose.Count) { throw 'Single-file publish left loose runtime files.' }
     $previewFiles = @(Get-ChildItem -LiteralPath $publish | Where-Object Name -Ne 'test-results' | Select-Object -ExpandProperty FullName)
     Compress-Archive -LiteralPath $previewFiles -DestinationPath (Join-Path $Output 'reo-launcher-preview-win-x64.zip')
     @{ passed=$true; commit=$Commit; gameDataUsed=$false; gameplayRun=$false;
-       nativeComponents=@('XINPUT1_4.dll','reo-movie-check.exe','Reo.GraphicsPreview.dll') } |
+       nativeComponents=@('XINPUT1_4.dll','reo-movie-check.exe') } |
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $reports 'windows-ci.json') -Encoding UTF8
 } finally {
     $env:VULKAN_SDK = $priorSdk

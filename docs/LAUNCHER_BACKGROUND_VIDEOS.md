@@ -80,44 +80,26 @@ software snapshot of the video and 3D scene.
 
 ## Verification
 
-Build with `launcher/build.ps1`; run the launcher's `--self-test` suite for bounded
-AFS parsing, archive revision checks, cross-game cache rejection, path traversal,
-same-length cache corruption, and cancellation before process start.
-
-With owned supported discs, this diagnostic exercises the real nested AFS parser,
-source hashes, portable converter, all four transcodes and cache reuse:
+Build with `launcher/build.ps1`. Run the shared checks for bounded AFS parsing,
+archive revision checks, cross-game cache rejection, path traversal, same-length
+cache corruption and cancellation before process start:
 
 ```powershell
-& 'launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe' `
-  --test-background-videos 'C:/owned/file1.iso' 'C:/owned/file2.iso' - `
-  'C:/private/video-verification'
+dotnet run --project launcher/cross-tests -c Release
+& 'launcher/bin/Release/net10.0/win-x64/Outbreak.Launcher.exe' `
+  --headless-check 'C:/private/video-verification'
 ```
 
-Use `-` to exercise automatic converter setup; an already downloaded, identical
-pinned ZIP can be supplied in its place for offline verification. The output
-includes a minimal **non-playable** UI fixture, not a complete disc import.
+The headless check exercises decoding, duration, pause/resume, end and stop using
+a generated silent clip when the pinned converter is already cached. It does not
+download the converter just to run a test. The report records `mediaChecked`.
 
-```powershell
-& 'launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe' `
-  --data-home 'C:/private/video-verification/ui-data' `
-  --test-background-playback 'C:/private/video-verification/playback'
-```
-
-Provide the fixture with the normal cached artwork to verify the image fallback.
-The live WPF check verifies both editions, natural crossfades, changing rendered
-frames, independent clip/timestamp resumption, solid backgrounds on every other
-page and resumption on return to Play, input/focus
-exclusion, minimize/restore, missing-media fallback and
-exclusive file access after stopping. It saves screenshots and a JSON result.
-The same check can be run after copying the fixture to a folder containing
-spaces/non-ASCII characters; normal storage rebasing must resolve the new paths.
-Inspect all four MP4s with `ffprobe` to confirm H.264, 4:3 display aspect, original
-durations and absence of audio streams.
-
-Add `--measure-background-performance` to the playback diagnostic to sample CPU
-time and UI dispatcher latency with the static image and with live video. Results
-are hardware- and scene-dependent; rendering callback frequency is not a decoded
-video frame-rate measurement.
+For owned-disc integration, import both supported games through Game files and
+verify all four converted clips, game switching, independent resume positions,
+minimize/restore and missing-media fallback. Inspect MP4s with `ffprobe` to confirm
+H.264, 4:3 display aspect, original duration and no audio streams. The old WPF
+`--test-background-playback` diagnostic is retired; the measurements below are
+historical results from that frontend.
 
 ### Composition cost (2026-10-29, RX 570, 2560x1440 at 125%)
 

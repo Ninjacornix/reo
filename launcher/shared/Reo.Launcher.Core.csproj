@@ -1,35 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><DefineConstants>$(DefineConstants);REO_CROSS_PLATFORM</DefineConstants></PropertyGroup>
   <ItemGroup>
-    <Compile Include="../GraphicsOptions.cs" Link="Legacy/GraphicsOptions.cs" />
-    <Compile Include="../Cheats.cs" Link="Legacy/Cheats.cs" />
-    <Compile Include="../GameScenePreviewRenderer.cs" Link="Legacy/GameScenePreviewRenderer.cs" />
-    <Compile Include="../GlobalItemCatalogue.cs" Link="Legacy/GlobalItemCatalogue.cs" />
-    <Compile Include="../DeveloperOptions.cs" Link="Legacy/DeveloperOptions.cs" />
-    <Compile Include="../LogTail.cs" Link="Legacy/LogTail.cs" />
-    <Compile Include="../LobbySettings.cs" Link="Legacy/LobbySettings.cs" />
-    <Compile Include="../GameRemoval.cs" Link="Legacy/GameRemoval.cs" />
-    <Compile Include="../AssetExports.cs" Link="Legacy/AssetExports.cs" />
-    <Compile Include="../RandomizerSeeds.cs" Link="Legacy/RandomizerSeeds.cs" />
-    <Compile Include="../RandomizerSession.cs" Link="Legacy/RandomizerSession.cs" />
-    <Compile Include="../GlobalWeaponMotions.cs" Link="Legacy/GlobalWeaponMotions.cs" />
-    <Compile Include="../GamePaks.cs" Link="Legacy/GamePaks.cs" />
-    <Compile Include="../ModConfiguration.cs" Link="Legacy/ModConfiguration.cs" />
-    <Compile Include="../MemoryCards.cs" Link="Legacy/MemoryCards.cs" />
-    <Compile Include="../DiscValidation.cs" Link="Legacy/DiscValidation.cs" />
-    <Compile Include="../BitmapTypeface.cs" Link="Legacy/BitmapTypeface.cs" />
-    <Compile Include="../StaleImports.cs" Link="Legacy/StaleImports.cs" />
-    <Compile Include="../Mods.cs" Link="Legacy/Mods.cs" />
-    <Compile Include="../DisplayOptions.cs" Link="Legacy/DisplayOptions.cs" />
-    <Compile Include="../GlobalItemModels.cs" Link="Legacy/GlobalItemModels.cs" />
-    <Compile Include="../ModDeletion.cs" Link="Legacy/ModDeletion.cs" />
-    <Compile Include="../LanDiscovery.cs" Link="Legacy/LanDiscovery.cs" />
-    <Compile Include="../DiscImage.cs" Link="Legacy/DiscImage.cs" />
-    <Compile Include="../GpuScenePreview.cs" Link="Legacy/GpuScenePreview.cs" />
-    <Compile Include="../AssetPaks.cs" Link="Legacy/AssetPaks.cs" />
-    <Compile Include="../DiscImport.cs" Link="Legacy/DiscImport.cs" />
-    <Compile Include="../SetupProgressText.cs" Link="Legacy/SetupProgressText.cs" />
-    <Compile Include="../FontContours.cs" Link="Legacy/FontContours.cs" />
+    <Compile Include="../GraphicsOptions.cs" Link="Shared/GraphicsOptions.cs" />
+    <Compile Include="../Cheats.cs" Link="Shared/Cheats.cs" />
+    <Compile Include="../GameScenePreviewRenderer.cs" Link="Shared/GameScenePreviewRenderer.cs" />
+    <Compile Include="../GlobalItemCatalogue.cs" Link="Shared/GlobalItemCatalogue.cs" />
+    <Compile Include="../DeveloperOptions.cs" Link="Shared/DeveloperOptions.cs" />
+    <Compile Include="../LogTail.cs" Link="Shared/LogTail.cs" />
+    <Compile Include="../LobbySettings.cs" Link="Shared/LobbySettings.cs" />
+    <Compile Include="../GameRemoval.cs" Link="Shared/GameRemoval.cs" />
+    <Compile Include="../AssetExports.cs" Link="Shared/AssetExports.cs" />
+    <Compile Include="../RandomizerSeeds.cs" Link="Shared/RandomizerSeeds.cs" />
+    <Compile Include="../RandomizerSession.cs" Link="Shared/RandomizerSession.cs" />
+    <Compile Include="../GlobalWeaponMotions.cs" Link="Shared/GlobalWeaponMotions.cs" />
+    <Compile Include="../GamePaks.cs" Link="Shared/GamePaks.cs" />
+    <Compile Include="../ModConfiguration.cs" Link="Shared/ModConfiguration.cs" />
+    <Compile Include="../MemoryCards.cs" Link="Shared/MemoryCards.cs" />
+    <Compile Include="../DiscValidation.cs" Link="Shared/DiscValidation.cs" />
+    <Compile Include="../BitmapTypeface.cs" Link="Shared/BitmapTypeface.cs" />
+    <Compile Include="../StaleImports.cs" Link="Shared/StaleImports.cs" />
+    <Compile Include="../Mods.cs" Link="Shared/Mods.cs" />
+    <Compile Include="../DisplayOptions.cs" Link="Shared/DisplayOptions.cs" />
+    <Compile Include="../GlobalItemModels.cs" Link="Shared/GlobalItemModels.cs" />
+    <Compile Include="../ModDeletion.cs" Link="Shared/ModDeletion.cs" />
+    <Compile Include="../LanDiscovery.cs" Link="Shared/LanDiscovery.cs" />
+    <Compile Include="../DiscImage.cs" Link="Shared/DiscImage.cs" />
+    <Compile Include="../AssetPaks.cs" Link="Shared/AssetPaks.cs" />
+    <Compile Include="../DiscImport.cs" Link="Shared/DiscImport.cs" />
+    <Compile Include="../SetupProgressText.cs" Link="Shared/SetupProgressText.cs" />
+    <Compile Include="../FontContours.cs" Link="Shared/FontContours.cs" />
+    <Compile Include="../CoopSmokeOptions.cs" Link="Shared/CoopSmokeOptions.cs" />
     <Compile Include="../Settings.cs" Link="Shared/Settings.cs" />
     <Compile Include="../AppLayout.cs" Link="Shared/AppLayout.cs" />
     <Compile Include="../Storage.cs" Link="Shared/Storage.cs" />

@@ -1,8 +1,8 @@
-name: Shared RC1 launcher
+name: Universal launcher
 on:
   workflow_dispatch:
   push:
-    branches: ['macos/**', 'launcher/**']
+    branches: ['develop', 'main', 'macos/**', 'launcher/**']
     paths: ['launcher/**', 'tools/launcher/**', '.github/workflows/shared-launcher.yml']
   pull_request:
     paths: ['launcher/**', 'tools/launcher/**', '.github/workflows/shared-launcher.yml']
@@ -31,7 +31,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libfontconfig1 libegl1 libxkbcommon0 libsdl2-dev
-      - name: Verify RC1 reference
+      - name: Verify launcher reference contract
         run: python tools/launcher/check_reference.py
       - name: Shared core regression tests
         run: dotnet run --project launcher/cross-tests

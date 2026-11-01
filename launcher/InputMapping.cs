@@ -67,7 +67,6 @@ public static partial class InputMapping {
         _ => Actions.Any(a => a.Id == action && a.Code < LeftTrigger &&
                              (mapped.Buttons & a.Code) != 0)
     };
-#if REO_CROSS_PLATFORM
     public static string SourceName(int code, string kind) {
         if (code == 0)
             return "Unbound";
@@ -83,11 +82,7 @@ public static partial class InputMapping {
                 38 => "Up arrow",
                 39 => "Right arrow",
                 40 => "Down arrow",
-#if REO_CROSS_PLATFORM
                 _ => code is >= 65 and <= 90 ? ((char)code).ToString() : $"Key {code}"
-#else
-                _ => KeyInterop.KeyFromVirtualKey(code).ToString()
-#endif
             };
         return code switch {
             0x1000 => kind == "xbox" ? "A" : "Cross",
@@ -103,7 +98,6 @@ public static partial class InputMapping {
             _ => Actions.FirstOrDefault(a => a.Code == code).Label ?? "Unknown"
         };
     }
-#endif
     public static (short X, short Y) FilterStick(short x, short y, int percent) {
         double magnitude = Math.Sqrt((double)x * x + (double)y * y);
         double threshold = Math.Clamp(percent, 0, 30) * 32767.0 / 100;

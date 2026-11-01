@@ -1,10 +1,6 @@
 using System.Buffers.Binary;
 using System.IO;
 using System.Security.Cryptography;
-#if !REO_CROSS_PLATFORM
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-#endif
 
 namespace Outbreak.Launcher;
 
@@ -26,90 +22,6 @@ internal static class GameControllerArtwork {
         _ => null
     };
 
-#if !REO_CROSS_PLATFORM
-    internal static BitmapSource? Load(string import, string game, string home) => LoadCore(import, game, home, false);
-    internal static BitmapSource? LoadOverlay(string import, string game, string home) => LoadCore(import, game, home, true);
-
-    static BitmapSource? LoadCore(string import, string game, string home, bool overlay) {
-        var profile = Profile(game);
-        if (profile == null || string.IsNullOrWhiteSpace(import)) return null;
-        string archive = Path.Combine(import, "data", "NETBIO00.DAT");
-        if (!File.Exists(archive)) return null;
-        // Check the tiny, pinned source member even on cache hits. A cache cannot authorize
-        // artwork for an absent, different or unsupported game import.
-        using var stream = File.OpenRead(archive);
-        var rom = BackgroundVideos.Entry(stream, new(0, stream.Length), 0);
-        var texture = BackgroundVideos.Entry(stream, rom, profile.Index);
-        if (texture.Length != profile.Size) throw new InvalidDataException("Unsupported controller texture size.");
-        byte[] source = new byte[profile.Size];
-        stream.Position = texture.Offset;
-        stream.ReadExactly(source);
-        if (!Matches(source, profile.SourceHash)) throw new InvalidDataException("Unsupported controller texture data.");
-
-        string folder = Path.Combine(home, "controller-artwork");
-        string cache = Path.Combine(folder, game + (overlay ? "-overlay-v1.png" : "-controller-v1.png"));
-        string pixelHash = overlay ? OverlayHash : profile.PixelHash;
-        int width = overlay ? OverlayWidth : Width, height = overlay ? OverlayHeight : Height;
-        if (ReadCache(cache, pixelHash, width, height) is { } cached) return cached;
-        byte[] decoded = DecompressOb(game == "file2" ? MomoMember(source, overlay ? 5 : 2) : source);
-        byte[] pixels = DecodeCrop(decoded, game == "file1" ? (overlay ? 9 : 5) : 0, overlay);
-        if (!Matches(pixels, pixelHash)) throw new InvalidDataException("Unsupported controller artwork pixels.");
-        var image = Create(pixels, width, height);
-        SaveCache(cache, folder, image);
-        return image;
-    }
-
-    static bool Matches(byte[] bytes, string expected) =>
-        Convert.ToHexString(SHA256.HashData(bytes)).Equals(expected, StringComparison.OrdinalIgnoreCase);
-
-    static BitmapSource Create(byte[] pixels, int width, int height) {
-        var image = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, pixels, width * 4);
-        image.Freeze();
-        return image;
-    }
-
-    static BitmapSource? ReadCache(string path, string pixelHash, int width, int height) {
-        try {
-            using var stream = File.OpenRead(path);
-            if (stream.Length > 1024 * 1024) return null;
-            // Reject oversized IHDR dimensions before asking WPF to allocate a decoder.
-            Span<byte> header = stackalloc byte[24];
-            if (stream.Read(header) != header.Length ||
-                !header[..8].SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }) ||
-                !header[12..16].SequenceEqual("IHDR"u8) ||
-                BinaryPrimitives.ReadUInt32BigEndian(header[16..20]) != width ||
-                BinaryPrimitives.ReadUInt32BigEndian(header[20..24]) != height) return null;
-            stream.Position = 0;
-            var frame = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat,
-                BitmapCacheOption.OnLoad).Frames[0];
-            if (frame.PixelWidth != width || frame.PixelHeight != height) return null;
-            var converted = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
-            byte[] pixels = new byte[width * height * 4];
-            converted.CopyPixels(pixels, width * 4, 0);
-            return Matches(pixels, pixelHash) ? Create(pixels, width, height) : null;
-        } catch (Exception error) when (error is IOException or UnauthorizedAccessException or
-                                               NotSupportedException or ArgumentException or FileFormatException) {
-            return null;
-        }
-    }
-
-    static void SaveCache(string path, string folder, BitmapSource image) {
-        string pending = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
-        try {
-            Directory.CreateDirectory(folder);
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(image));
-            using (var output = File.Create(pending)) encoder.Save(output);
-            File.Move(pending, path, true);
-        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
-            // Caching is optional; the controller can still be shown on read-only storage.
-        } finally {
-            try { if (File.Exists(pending)) File.Delete(pending); }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
-        }
-    }
-
-#else
     internal static byte[]? LoadPixels(string import, string game, bool overlay = false) {
         var profile = Profile(game);
         if (profile == null || string.IsNullOrWhiteSpace(import)) return null;
@@ -129,7 +41,6 @@ internal static class GameControllerArtwork {
     }
     static bool Matches(byte[] bytes, string expected) =>
         Convert.ToHexString(SHA256.HashData(bytes)).Equals(expected, StringComparison.OrdinalIgnoreCase);
-#endif
 
     internal static byte[] MomoMember(ReadOnlySpan<byte> source, int index) {
         if (source.Length < 8 || source.Length > MaxDecodedBytes || !source[..4].SequenceEqual("MOMO"u8))

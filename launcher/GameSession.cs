@@ -73,9 +73,7 @@ public sealed class GameSession {
         string sourceExe = settings.GetExe(), iso = settings.GetGameSource();
         var selectedGame = settings.Game;
         bool localBuildKit=AppLayout.Packaged(root);
-#if REO_CROSS_PLATFORM
         localBuildKit &= OperatingSystem.IsWindows();
-#endif
         if (!localBuildKit && !File.Exists(sourceExe))
             throw new FileNotFoundException(
                 "This game build is missing. Extract the complete release archive.");
@@ -90,11 +88,9 @@ public sealed class GameSession {
             OriginalAssets = await AssetExports.Ensure(Imported, selectedGame.Id, importProgress, cancel);
         string discRoot = Path.Combine(Imported.Root, "data"), discElf = Imported.Elf;
         string image, hash;
-#if REO_CROSS_PLATFORM
         if (!OperatingSystem.IsWindows()) {
             image = sourceExe; hash = Updates.Sha(image);
         } else
-#endif
         {
         string proxy = Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll");
         if (!File.Exists(proxy))
@@ -177,9 +173,7 @@ public sealed class GameSession {
         if (SubtitleMapName != null) Set("REO_SUBTITLE_MAP", SubtitleMapName);
         if (!string.IsNullOrWhiteSpace(settings.AudioOutputId)) Set("REO_AUDIO_DEVICE", settings.AudioOutputId);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
-#if REO_CROSS_PLATFORM
         PlatformRuntime.Configure(start, root, settings, controller, Logs!);
-#endif
         bool automaticAccount = onlineEnvironment.Count > 0 &&
                                 await Task.Run(() => SupportsAutomaticAccount(image), cancel);
         if (onlineEnvironment.Count > 0 && !automaticAccount) {
@@ -338,11 +332,7 @@ public sealed class GameSession {
         try {
             account = automaticAccount
                           ? new AutomaticAccount(accountHome ?? Settings.Home, settings, text => NetworkStatus = text,
-#if REO_CROSS_PLATFORM
                                                  SignupEndpoints.For(settings, null))
-#else
-                                                 MainWindow.SignupEndpoint(settings, null))
-#endif
                           : null;
             account?.Bind(start);
             if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join") {
@@ -443,11 +433,7 @@ public sealed class GameSession {
                 NetworkStatus=message;
                 await File.WriteAllTextAsync(Path.Combine(logs,"randomizer-session-error.txt"),message);
                 if(!process.HasExited) {
-#if REO_CROSS_PLATFORM
                     await PlatformRuntime.Stop(process);
-#else
-                    process.CloseMainWindow();
-#endif
                 }
                 return;
             } catch(OperationCanceledException) { return; }

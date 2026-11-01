@@ -174,9 +174,9 @@ Clang build worker and platform-specific manifest. It must generate the same gam
 code from the same supported disc; no Windows SDK libraries or game objects should
 be bundled as a shortcut.
 
-The Windows launcher is WPF; the new Linux frontend uses Qt. Windows-only input,
-display, movie decoding and thread/scheduler paths also
-need Linux implementations and gameplay validation. Running under Wine/Proton
+The universal launcher uses Avalonia on Windows, Linux and macOS. Native input,
+display, movie decoding and thread/scheduler paths still need platform-specific
+gameplay validation. Running under Wine/Proton
 would be a separate compatibility target, not evidence of a native Linux port.
 No Linux download should be offered until the same installation and room-route
 checks pass on Linux hardware.

@@ -9,11 +9,11 @@ The game remains native code: Vulkan on Windows/Linux and MoltenVK → Metal on 
 
 ## Design reference
 
-The reference is **RC1 Windows in this checkout**, `launcher/Shell.xaml`, `launcher/Theme.xaml`
-and the `launcher/MainWindow.*.cs` partials. The old WPF view remains available for comparison.
-`launcher/desktop/Views/Shell.axaml` and `Theme.axaml` are the common editable views.
-Do not rerun the one-time migration scripts over these files: subsequent fixes and
-platform adaptations live in the common files.
+The reference contract is preserved in `launcher/desktop/Views/Shell.reference.json`:
+required control names, page text, action sources and the original source hashes.
+`launcher/desktop/Views/Shell.axaml` and `Theme.axaml` are the only editable desktop views.
+The WPF project, views, UI handlers and one-time migration scripts have been removed.
+Historical source remains available in Git; visual comparisons use the published RC1 package.
 
 The common code-behind is a line-by-line port of the RC1 partials: every
 `launcher/desktop/MainWindow.<Area>.cs` keeps the RC1 handler names, order, wording, guards
@@ -31,8 +31,7 @@ do not inherit the implicit `TextBlock`/`CheckBox` setters; `IsKeyboardFocused` 
 off, as in RC1.
 
 Platform adapters, not design changes: Windows-only services (Windows Firewall rules, UPnP
-through HNetCfg, audio-output enumeration, graphics-card query, the native GPU preview child
-window) are skipped or replaced on macOS and Linux; wording names the Trash and the system
+through HNetCfg, audio-output enumeration and graphics-card query) are skipped or replaced on macOS and Linux; wording names the Trash and the system
 instead of the Recycle Bin and Windows there. The Kevin preview uses the same renderer through
 `GraphicsPreviewHost`. Background movies, like RC1, only come from launcher-verified imports.
 
@@ -110,7 +109,7 @@ These outputs are frontend builds, not complete game distributions. Windows stil
 needs the original controller proxy, native game/shaders and build/server kit;
 Linux needs its native game, SDL bridge and server payload. The new CI matrix
 runs each OS's common-core and UI checks and publishes review artifacts. This
-workflow has been added locally; no remote CI result is claimed.
+workflow also runs on `develop` and `main`.
 
 ## Remaining release validation
 
@@ -119,5 +118,4 @@ those platforms. File #2, physical pads/rumble, co-op gameplay, Mac audio-output
 selection, automatic lobby navigation, background-video transitions and update
 installation need further integration work. Update checking only reports matching
 platform packages. Router automation uses the Windows adapter; Mac/Linux hosts
-need manual router/firewall setup. Existing WPF and earlier Qt sources are retained
-for reference and regression checks.
+need manual router/firewall setup. The old WPF frontend is retired; shared services and native input/movie helpers remain.

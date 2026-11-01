@@ -1,19 +1,12 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-#if !REO_CROSS_PLATFORM
-using System.Windows;
-using System.Windows.Media.Imaging;
-#endif
 
 namespace Outbreak.Launcher;
 
 // Personal artwork overrides artwork cached by the automatic first-run download.
 static partial class GameArtwork {
     internal record Identity(string Serial, string Region);
-#if !REO_CROSS_PLATFORM
-    internal record CaseArtwork(BitmapSource Front, BitmapSource? Back, BitmapSource? Spine);
-#endif
     sealed record WrapLayout(int[] Front, int[] Back, int[] Spine);
     public static string Folder => Path.Combine(Settings.Home, "artwork");
     public static string DownloadFolder => Path.Combine(Folder, "downloaded");
@@ -57,116 +50,6 @@ static partial class GameArtwork {
     internal static IEnumerable<string> CandidateNames(int edition, Identity identity) =>
         CandidateStems(edition, identity)
             .SelectMany(stem => new[] { stem + "-cover.jpg", stem + "-cover.png" });
-#if !REO_CROSS_PLATFORM
-    internal static BitmapImage? LoadCover(string folder, int edition, Identity identity) {
-        return LoadCover(new[] { folder }, edition, identity);
-    }
-    internal static BitmapImage? LoadCover(IEnumerable<string> folders, int edition, Identity identity) {
-        var locations = folders.ToArray();
-        foreach (string candidate in CandidateNames(edition, identity)) {
-            foreach (string folder in locations) {
-                var image = LoadImage(Path.Combine(folder, candidate));
-                if (image != null)
-                    return image;
-            }
-        }
-        return null;
-    }
-    internal static CaseArtwork? LoadCaseArtwork(IEnumerable<string> folders, int edition, Identity identity) {
-        var locations = folders.ToArray();
-        foreach (string stem in CandidateStems(edition, identity)) {
-            foreach (string folder in locations) {
-                foreach (string extension in new[] { ".jpg", ".png" }) {
-                    string wrap = Path.Combine(folder, stem + "-wrap" + extension);
-                    if (LoadWrap(wrap) is { } artwork)
-                        return artwork;
-                }
-                var front = LoadImage(Path.Combine(folder, stem + "-cover.jpg")) ??
-                            LoadImage(Path.Combine(folder, stem + "-cover.png"));
-                if (front == null)
-                    continue;
-                BitmapSource? Part(string name) => locations.SelectMany(location => new[] {
-                    Path.Combine(location, stem + "-" + name + ".jpg"),
-                    Path.Combine(location, stem + "-" + name + ".png")
-                }).Select(path => LoadImage(path, name == "spine" ? 0 : 1200)).FirstOrDefault(image => image != null);
-                return new(front, Part("back"), Part("spine"));
-            }
-        }
-        return null;
-    }
-    internal static BitmapSource? LoadDiscArtwork(IEnumerable<string> folders, int edition, Identity identity) {
-        // Personal labels take priority, including a generic file1/file2 override over a cached serial.
-        foreach (string folder in folders)
-            foreach (string stem in CandidateStems(edition, identity))
-                foreach (string extension in new[] { ".png", ".jpg" })
-                    if (LoadImage(Path.Combine(folder, stem + "-disc" + extension), 0) is { } image)
-                        return image;
-        return null;
-    }
-    public static Task<BitmapSource?> FetchDiscAsync(int edition, string iso) =>
-        Task.Run(() => LoadDiscArtwork(new[] { Folder, DownloadFolder }, edition, DiscIdentity(edition, iso)));
-    // Public screenshots may show only the known downloaded label, never a personal override.
-    internal static BitmapSource? LoadVerifiedDownloadedDisc(string folder, int edition) {
-        var asset = Downloads.SingleOrDefault(item => item.Name == $"file{edition}-ntsc-u-disc.png");
-        return asset != null && DownloadCurrent(folder, asset)
-            ? LoadImage(Path.Combine(folder, asset.Name), 0) : null;
-    }
-    internal static Task<BitmapSource?> FetchVerifiedDownloadedDiscAsync(int edition) =>
-        Task.Run(() => LoadVerifiedDownloadedDisc(DownloadFolder, edition));
-    static CaseArtwork? LoadWrap(string path) {
-        var image = LoadImage(path, 0);
-        if (image == null || image.PixelWidth <= image.PixelHeight)
-            return null;
-        try {
-            string metadata = Path.ChangeExtension(path, ".json");
-            WrapLayout? layout;
-            if (File.Exists(metadata)) {
-                layout = JsonSerializer.Deserialize<WrapLayout>(File.ReadAllText(metadata),
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            } else {
-                int spine = (int)Math.Round(image.PixelWidth * 14.0 / 284);
-                int back = (image.PixelWidth - spine) / 2, height = image.PixelHeight;
-                layout = new(new[] { back + spine, 0, image.PixelWidth - back - spine, height },
-                    new[] { 0, 0, back, height }, new[] { back, 0, spine, height });
-            }
-            bool Valid(int[]? rectangle) => rectangle is { Length: 4 } &&
-                rectangle[0] >= 0 && rectangle[1] >= 0 && rectangle[2] > 0 && rectangle[3] > 0 &&
-                (long)rectangle[0] + rectangle[2] <= image.PixelWidth &&
-                (long)rectangle[1] + rectangle[3] <= image.PixelHeight;
-            if (layout == null || !Valid(layout.Front) || !Valid(layout.Back) || !Valid(layout.Spine))
-                return null;
-            BitmapSource Crop(int[] rectangle) {
-                var crop = new CroppedBitmap(image,
-                    new Int32Rect(rectangle[0], rectangle[1], rectangle[2], rectangle[3]));
-                crop.Freeze();
-                return crop;
-            }
-            return new(Crop(layout.Front), Crop(layout.Back), Crop(layout.Spine));
-        } catch (Exception error) when (error is IOException or UnauthorizedAccessException or
-                                              JsonException or ArgumentException) {
-            return null;
-        }
-    }
-    static BitmapImage? LoadImage(string path, int decodeWidth = 1200) {
-        try {
-            using var stream = File.OpenRead(path);
-            var bitmap = new BitmapImage();
-            bitmap.BeginInit();
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.DecodePixelWidth = decodeWidth;
-            bitmap.StreamSource = stream;
-            bitmap.EndInit();
-            bitmap.Freeze();
-            return bitmap;
-        } catch (Exception error)
-            when (error is IOException or UnauthorizedAccessException or NotSupportedException or
-                      ArgumentException or System.IO.FileFormatException) {
-            return null;
-        }
-    }
-    public static Task<CaseArtwork?> FetchAsync(int edition, string iso) =>
-        Task.Run(() => LoadCaseArtwork(new[] { Folder, DownloadFolder }, edition, DiscIdentity(edition, iso)));
-#endif
     public static string CacheKey(IEnumerable<string> paths) => string.Join('|', paths.Select(path => {
         try {
             if (Directory.Exists(path))
