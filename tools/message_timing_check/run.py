@@ -74,7 +74,7 @@ def main():
     creationflags = subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
     results = []
     for game in ('file1', 'file2'):
-        executable = output / (game + ('-owned' if args.owned_queue else '') + ('.exe' if os.name == 'nt' else ''))
+        executable = output / (game + '-check' + ('-owned' if args.owned_queue else '') + ('.exe' if os.name == 'nt' else ''))
         command = [args.compiler, '-std=c++20', '-O2', '-Wall', '-Wextra',
                    '-DREO_GAME_' + game.upper(), str(Path(__file__).with_name('check.cpp')),
                    '-o', str(executable)]
