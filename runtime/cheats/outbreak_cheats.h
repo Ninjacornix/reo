@@ -73,8 +73,8 @@ enum class Game { File1, File2 };
 inline void unlockFile2(uint8_t* r) {
     // SLUS-20984 v1.05: original 13C190/13C110 full-unlock routines,
     // with tables at 217878/217880/217890/2178B0. Keep other records,
-    // reward points and selected options intact. Do not directly write the
-    // secondary scenario-availability bank at 2FF8C8.
+    // reward points and selected options intact. The online room constructor
+    // 5EBE80 reads the separate scenario-availability bank at 2FF8C8.
     constexpr uint8_t costumes[8] = {3, 3, 3, 3, 3, 15, 15, 15};
     constexpr uint32_t npcs[4] = {
         0x72400c40u | 0x098ff082u, 0xff03c200u | 0x00d80df8u,
@@ -87,6 +87,7 @@ inline void unlockFile2(uint8_t* r) {
     r[0x2feec5] |= 0x0f; // All four difficulties; preserve other bits.
     r[0x2feec3] |= 0x0d; // Purchased bonus-mode availability, not active mode.
     setWord(r, 0x30022c, word(r, 0x30022c) | 0x0fffu);
+    setWord(r, 0x2ff8c8, word(r, 0x2ff8c8) | 0x0ffeu);
     // Five banks of 160 bits; only the real entries are available/purchased.
     for (unsigned bank = 0; bank < 5; ++bank)
         for (unsigned bit = 0; bit < collectionCounts[bank]; ++bit) {
@@ -117,6 +118,9 @@ inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r, Game game = Game:
         // 581820 tests +4078 in the save structure rooted at 31FB60; the
         // difficulty menu 587640 tests bits 2/3 at +23.
         setWord(r, 0x323bd8, word(r, 0x323bd8) | 0x1fu);
+        // Online room creation 5CCA50 tests save +2394, independently of the
+        // offline scenario menu's +4078 bank. Preserve all non-scenario bits.
+        setWord(r, 0x321ef4, word(r, 0x321ef4) | 0x1fu);
         // Costume and NPC bitsets, without touching reward points or options.
         for (uint32_t a = 0x31fb64; a < 0x31fb6c; ++a) r[a] = 0xff;
         for (uint32_t a = 0x31fb6d; a < 0x31fb79; ++a) r[a] = 0xff;
