@@ -125,6 +125,7 @@ launcher compilation and asset-free behavior; it does not certify gameplay.
         & dotnet publish launcher/desktop/Reo.Launcher.Desktop.csproj -c Release -r win-x64 --self-contained true -o $single --nologo `
             /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true
     }
+    Copy-Item -LiteralPath (Join-Path $publish 'distribution.json') -Destination $single
     Test-Launcher $single 'single-file-ui'
     $loose = @(Get-ChildItem -LiteralPath $single -File | Where-Object { ($_.Extension -eq '.dll' -and $_.Name -ne 'XINPUT1_4.dll') -or $_.Name -like 'Outbreak.Launcher.*.json' })
     if ($loose.Count) { throw 'Single-file publish left loose runtime files.' }
