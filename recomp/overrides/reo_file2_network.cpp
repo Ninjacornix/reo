@@ -5,6 +5,7 @@
 #include "reo_hw_bridge.h"
 #include "../../network/native/ee_count_clock.h"
 #include "../../network/native/automatic_account.h"
+#include "../../network/native/game_netcode.h"
 #include <cstdlib>
 #include <cstring>
 #include <atomic>
@@ -19,8 +20,34 @@ void sub_0016F598_0x16f598(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001F4110_0x1f4110(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001B3C30_0x1b3c30(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001B63C0_0x1b63c0(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_001F2BB0_0x1f2bb0(uint8_t*, R5900Context*, PS2Runtime*);
+void o2_00689F70_0x689f70(uint8_t*, R5900Context*, PS2Runtime*);
+void o2_006AF6A0_0x6af6a0(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_0013B440_0x13b440(uint8_t*, R5900Context*, PS2Runtime*);
 namespace reo_file2_network {
 namespace {
+void nativeReliableSend(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    reo_network::native::capture(rdram,reo_network::native::File2);
+    reo_network::native::cadence(rdram,reo_network::native::File2,
+                               reo_network::native::runtime().enhanced(reo_network::native::nowUs()));
+    reo_network::native::worldPump(rdram,ctx,runtime,true);
+    sub_001F2BB0_0x1f2bb0(rdram,ctx,runtime);
+}
+void nativeMotionCorrection(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    reo_network::native::correction(rdram,reo_network::native::File2,GPR_U32(ctx,4));
+    o2_00689F70_0x689f70(rdram,ctx,runtime);
+}
+void nativeMotionReceive(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    reo_network::native::MotionRecord record(rdram,reo_network::native::File2,GPR_U32(ctx,4),GPR_U32(ctx,5));
+    o2_006AF6A0_0x6af6a0(rdram,ctx,runtime);
+}
+void nativeEventSend(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    reo_network::native::worldObserve(rdram,true,GPR_U32(ctx,4),GPR_U32(ctx,5));
+    const auto mode=reo_network::native::reliableRefresh && GPR_U32(ctx,4)==8 ? 4u :
+        reo_network::native::eventReliability(rdram,reo_network::native::File2,GPR_U32(ctx,4),GPR_U32(ctx,5),GPR_U32(ctx,7));
+    if(mode!=GPR_U32(ctx,7)) SET_GPR_U32(ctx,7,mode);
+    sub_0013B440_0x13b440(rdram,ctx,runtime);
+}
 void originalEntry1B6418(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
     // SLUS_209.84 has a separate entry at 1B6418, absorbed into the mapped
     // 1B63C0 range. Execute its original prologue and call, then enter the
@@ -256,6 +283,10 @@ void nativePlatformStep(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) 
 }
 } // namespace
 void install(PS2Runtime& runtime) {
+    runtime.registerFunction(0x1F2BB0,nativeReliableSend);
+    runtime.registerFunction(0x13B440,nativeEventSend);
+    runtime.registerOverlayFunction(0x58D000u,0x336F574Du,4u,3u,0x689F70u,nativeMotionCorrection);
+    runtime.registerOverlayFunction(0x58D000u,0x336F574Du,4u,3u,0x6AF6A0u,nativeMotionReceive);
     runtime.registerFunction(0x1B6418, originalEntry1B6418);
     runtime.registerFunction(0x16F598, nativeNetworkCount);
     runtime.registerFunction(0x1F4110, nativeNetworkSeconds);

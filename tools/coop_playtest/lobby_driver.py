@@ -11,11 +11,44 @@ import coop_playtest as harness
 
 
 ROOT = 0x6D8DB0
+# Waiting-room UI records rebuilt by File #1 5D4270/588490 and File #2
+# 5EEA30/5A0AF0. Four records; SID text then player name, each 16 bytes.
+# The nearby root+452/456 value is a cached USER attribute, not this roster.
+ROSTER_BASES = {"file1": 0x6DBBE4, "file2": 0x6E5F6C}
+ROSTER_STRIDE = 0x3B0
 # Local test pacing: the driver reads the original menu state before every press, so it only needs
 # a short settle time, not a fixed long delay between inputs.
 PRESS_GAP = 0.35
 STABLE_FOR = 0.12
 BUSY_RETRY = 0.3
+
+
+def lobby_roster(read, game):
+    """Decode only the bounded identity fields of the original four UI slots.
+
+    The game formats SID nibbles as '0'+nibble, including :;<=>? for 10..15.
+    A partly copied row, duplicate SID or unsupported text must not inflate the
+    count used to decide whether all clients reached the waiting room.
+    """
+    if game not in ROSTER_BASES:
+        raise ValueError("Unsupported lobby roster profile")
+    rows, seen = [], set()
+    for slot in range(4):
+        data = read(ROSTER_BASES[game] + slot * ROSTER_STRIDE, 32)
+        if len(data) != 32:
+            raise ValueError("Incomplete original lobby roster read")
+        sid, name = (part.split(b"\0", 1)[0] for part in (data[:16], data[16:]))
+        valid_sid = len(sid) == 8 and sid != b"00000000" and all(0x30 <= byte <= 0x3F for byte in sid)
+        valid_name = 4 <= len(name) <= 10 and all(
+            0x30 <= byte <= 0x39 or 0x41 <= byte <= 0x5A or 0x61 <= byte <= 0x7A or byte == 0x5F
+            for byte in name)
+        occupied = bool(valid_sid and valid_name and sid not in seen)
+        row = {"slot": slot, "occupied": occupied}
+        if occupied:
+            seen.add(sid)
+            row.update(sid=sid.decode("ascii"), name=name.decode("ascii"))
+        rows.append(row)
+    return rows
 
 
 class GuestRam:
@@ -126,7 +159,8 @@ class GuestRam:
                  "characterCount": struct.unpack_from("<H", raw, 0xA)[0],
                  "areaCursor": raw[0x44A if second else 0x446], "areaPage": raw[0x44B if second else 0x447],
                  "roomCursor": raw[0x448 if second else 0x444], "roomPage": raw[0x449 if second else 0x445],
-                 "memberCount": struct.unpack_from("<H", raw, 0x456 if second else 0x452)[0], "host": raw[0x97E if second else 0x956],
+                 "cachedRoomPopulation": struct.unpack_from("<H", raw, 0x456 if second else 0x452)[0],
+                 "memberCount": 0, "roster": [], "host": raw[0x97E if second else 0x956],
                  "chat": bool(raw[0x13] or raw[0x14] or raw[0x56B if second else 0x54F]),
                  "areaCount": area_count, "roomCount": room_count, "roomOrdinal": -1 if second else room_ordinal,
                  "title": self.read(0x6B53F2 if second else 0x6A3DF2, 16).split(b"\0")[0].decode("ascii", errors="replace"),
@@ -140,6 +174,9 @@ class GuestRam:
                                      for i in range(0, len(server_rows), 2)],
                       "keyboardInitialized": keyboard_valid and keyboard[0x28] == 1,
                       "keyboardDelay": self.read(0x64C148 if second else 0x6436C8, 1)[0], "keyboardComplete": keyboard[0x36]})
+        if state["state"] == 4 and state["sub"] == 0 and state["phase"] == 6 and state["nested"] == 2:
+            state["roster"] = lobby_roster(self.read, game)
+            state["memberCount"] = sum(row["occupied"] for row in state["roster"])
         for i in range(len(rooms) // 0x15C):
             row = rooms[i * 0x15C:(i + 1) * 0x15C]
             state["rooms"].append({"index": i, "kind": row[0xE], "containsTitle": row[0x18:0x28].split(b"\0", 1)[0] == b"cooptest"})

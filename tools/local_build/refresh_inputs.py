@@ -11,6 +11,24 @@ import zipfile
 from compilation_batches import with_generated_batches
 
 
+def add_translation_units(plan, additions):
+    """Add authored TUs using an existing audited unit's exact include/define cohort."""
+    for name, template in additions:
+        if not name.endswith('.cpp') or name.startswith('/') or '..' in Path(name).parts:
+            raise ValueError('Translation unit must be a repository-relative C++ source')
+        source = '{work}/project/' + name
+        if any(source in unit['sources'] for unit in plan['units']):
+            raise ValueError('Translation unit already compiled: ' + name)
+        matches = [unit for unit in plan['units'] if '{work}/project/' + template in unit['sources']]
+        if len(matches) != 1:
+            raise ValueError('Expected one audited translation-unit template: ' + template)
+        identifier = 'added_' + re.sub(r'[^A-Za-z0-9_]', '_', name)
+        if any(unit['id'] == identifier for unit in plan['units']):
+            raise ValueError('Duplicate translation-unit identity')
+        plan['units'].append({'id': identifier, 'sources': [source], 'options': list(matches[0]['options'])})
+    return plan
+
+
 def sha(path):
     with Path(path).open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -18,7 +36,7 @@ def sha(path):
 
 def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None, version=None,
             updated_sources=(), added_sources=(), added_shaders=(), source_patches=(),
-            updated_metadata=()):
+            updated_metadata=(), added_units=()):
     kit, output, recompiler, root = [Path(p).resolve() for p in (kit, output, recompiler, root)]
     if output.exists() or output.is_relative_to(kit) or (archive and Path(archive).exists()):
         raise FileExistsError('Choose fresh immutable kit/archive paths')
@@ -83,6 +101,13 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
             raise ValueError('Added sources must be new kit files: ' + name)
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / name, target)
+    if any(name not in added_sources for name, template in added_units):
+        raise ValueError('New translation units must also be included in added sources')
+    for plan_name in ('compile-plan.json', 'compile-plan-linux.json'):
+        plan_path = output / plan_name
+        if plan_path.is_file() and added_units:
+            plan_path.write_text(json.dumps(add_translation_units(json.loads(plan_path.read_text()), added_units),
+                                            indent=2) + '\n', encoding='utf-8')
     # Compiled helper shaders the runtime loads from reo-gpu-present beside the game.
     for name in added_shaders:
         source = (root / name).resolve()
@@ -146,6 +171,8 @@ if __name__ == '__main__':
                         help='Repository-relative authored source replacing the kit copy')
     parser.add_argument('--add-source', action='append', default=[],
                         help='Repository-relative authored source new to the kit')
+    parser.add_argument('--add-unit', action='append', default=[], metavar='SOURCE=TEMPLATE',
+                        help='Compile an added .cpp using an existing authored source unit\'s audited options')
     parser.add_argument('--add-shader', action='append', default=[],
                         help='Repository-relative compiled .spv shipped in reo-gpu-present')
     parser.add_argument('--source-patch', action='append', default=[],
@@ -153,7 +180,10 @@ if __name__ == '__main__':
     parser.add_argument('--update-metadata', action='append', default=[],
                         help='Repository address map replacing existing kit metadata')
     args = parser.parse_args()
+    additions = [tuple(value.split('=', 1)) for value in args.add_unit]
+    if any(len(value) != 2 for value in additions):
+        parser.error('--add-unit requires SOURCE=TEMPLATE')
     print(json.dumps(refresh(args.kit, args.output, args.recompiler, args.root, args.archive,
                              args.dependency_sources, args.version, args.update_source,
                              args.add_source, args.add_shader, args.source_patch,
-                             args.update_metadata), indent=2))
+                             args.update_metadata, additions), indent=2))

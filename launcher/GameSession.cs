@@ -174,6 +174,8 @@ public sealed class GameSession {
         }
         foreach (var pair in onlineEnvironment)
             Set(pair.Key, pair.Value);
+        if (onlineEnvironment.Count > 0)
+            Set("REO_NETCODE_METRICS_FILE", Path.Combine(Logs!, "network-metrics.jsonl"));
         // Developer recordings come first so diagnostic routes below keep their own settings.
         foreach (var pair in settings.Developer.Environment(Logs!, onlineEnvironment.Count > 0, selectedGame.Id))
             Set(pair.Key, pair.Value);
