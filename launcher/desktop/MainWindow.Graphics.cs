@@ -164,7 +164,7 @@ public partial class MainWindow {
         graphicsPreviewTimer.Stop();
         graphicsPreviewBusy = true;
         // One frame in flight. The next frame starts when this one is displayed.
-        graphicsPreviewNextFrame = Stopwatch.GetTimestamp() + Stopwatch.Frequency * 33 / 1000; // CPU render: about 30 fps
+        graphicsPreviewNextFrame = Stopwatch.GetTimestamp() + Stopwatch.Frequency * 16 / 1000; // RC1 presents at display rate: about 60 fps
         var started = Stopwatch.GetTimestamp();
         try {
             var frame = await Task.Run(() => graphicsPreviewEnvironment.Render(scene, options, seconds, width, height, yaw, pitch, zoom));
