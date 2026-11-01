@@ -345,8 +345,8 @@ The existing owned-data mixer regressions pass 465 File #1 checks and 330 File #
 checks with the bank cancellation change. The independent source SDK and its
 uncommitted working edits remain untouched; fixtures stage sealed RC1 inputs.
 Local Windows evidence is retained under `build-ninja/issue26-verify` and
-`build-ninja/issue26-bank-*`. Complete loading/cutscene/FMV gameplay verification
-and the ice/smoke performance investigation remain separate acceptance work.
+`build-ninja/issue26-bank-*`. The room and silent transition follow-ups below
+extend this acceptance work.
 
 ### Windows ice/smoke VU coverage
 
@@ -401,3 +401,28 @@ and writes at most 128 `gpu-shot-NN.bmp` files in the process working directory.
 It neither shows nor focuses a window and does not initialize audio. With the
 option unset, these readbacks are not requested. Capturing a frame has overhead;
 do not interpret a capture-time stall as steady-state game performance.
+
+### Silent production audio transition follow-up
+
+The 200-second `bfp-audio-silent-11` run uses ordinary controller input, real
+imported sound banks and the production PCM renderer at 48 kHz. Its private
+test sink supplies callback time without initializing an audio device; all
+device-status reports remain `host=0`. Unlike a test that only advances CRI
+stream counters, this also advances bank sequences, envelopes and sample loops.
+
+The route exercises menu-to-game entry, the tunnel opening movie, the tunnel
+to platform load and the platform gunshot cutscene. Movies are allowed to run
+for five seconds before the test presses Start. Real stop calls include menu
+music with four unreturned chunks, the room transition with two unreturned
+chunks, and speech with zero unreturned chunks and an accepted queued tail.
+These match both paths of the independently verified RPC stop policy. The
+ambient bank's active-frame reports cease at the room transition; subsequent
+stream plays on a reused RNA handle are separate original play requests.
+The run exits normally with zero active guest threads. It does not complete
+the chapter or provide a physical-speaker listening test.
+
+`hellfire-audio-silent-07` repeats the boiler fixture with the final six-program
+default table and the same silent production PCM sink. It averages 29.98 game
+updates/second at 4x/SMAA, keeps every owned window hidden, initializes no audio
+device and exits normally. Neither the user SDK's edits nor desktop audio
+settings are changed by these tests.
