@@ -18,6 +18,12 @@ public sealed partial class App : Application {
         }
         base.OnFrameworkInitializationCompleted();
     }
+    static bool StorageLockHeld() {
+        string path = Path.Combine(Settings.Home, ".storage.lock");
+        try { using var probe = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None); return false; }
+        catch (IOException) { return File.Exists(path); }
+        catch (UnauthorizedAccessException) { return false; }
+    }
     async Task Start(IClassicDesktopStyleApplicationLifetime desktop, string[] args) {
         try {
             int wait = Array.IndexOf(args, "--wait-for-launcher-exit");
@@ -53,7 +59,15 @@ public sealed partial class App : Application {
             }
             bool importOldData = !args.Any(arg => arg.StartsWith("--test-") ||
                 arg is "--smoke-launch" or "--screenshot" or "--probe-controller");
-            await Storage.Initialize(installation, importOldData, null, default, !diagnostic);
+            try {
+                await Storage.Initialize(installation, importOldData, null, default, !diagnostic);
+            } catch (IOException) when (!diagnostic && StorageLockHeld()) {
+                // Another launcher instance owns the data folder (the single-instance mutex is
+                // per-session on some desktops): report it like RC1's mutex check.
+                await MessageBox.Show(null, "The Outbreak launcher is already open.", "RE: Outbreak");
+                desktop.Shutdown();
+                return;
+            }
             var window = new MainWindow(args);
             desktop.MainWindow = window;
             window.Show();

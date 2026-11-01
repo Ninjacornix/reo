@@ -48,8 +48,9 @@ public sealed class GraphicsPreviewHost : Control {
     }
     internal (int Width, int Height) PixelSize {
         get {
-            double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
-            return (Math.Max(1, (int)(Bounds.Width * scale)), Math.Max(1, (int)(Bounds.Height * scale)));
+            // The preview is a CPU render: draw at layout size, the same detail RC1's GPU preview
+            // shows at 100% scaling, instead of every Retina pixel.
+            return (Math.Max(1, (int)Bounds.Width), Math.Max(1, (int)Bounds.Height));
         }
     }
     internal void Present(PreviewFrame value) {

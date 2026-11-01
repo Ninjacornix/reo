@@ -164,6 +164,8 @@ public partial class MainWindow : Window {
         if (name == "Setup")
             _ = EstimateRemoval();
         AnimatePageChange();
+        GameCase1.RefreshVisibility();
+        GameCase2.RefreshVisibility();
     }
     void SettingChanged(object? sender, SelectionChangedEventArgs e) => SaveSettings(sender, e);
     void SaveSettings(object? sender, RoutedEventArgs e) {

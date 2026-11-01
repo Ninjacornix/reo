@@ -180,13 +180,15 @@ public partial class GameCaseView : Control {
     }
     void Animate() { if (!frames.IsEnabled) frames.Start(); Step(); }
     void Step() {
+        if (!Visible) { RefreshVisibility(); frames.Stop(); return; }
         bool changed = false;
+        // Only redraw when the pose changes; idle motion samples at 30 frames per second.
         if (turnMotion is { } spin) {
-            turn = spin.Sample(out bool done); changed = true;
+            double next = spin.Sample(out bool done); changed |= next != turn; turn = next;
             if (done && ReferenceEquals(turnMotion, spin)) { turnMotion = null; spin.Completed?.Invoke(); }
         }
         if (tiltMotion is { } pitch) {
-            tilt = pitch.Sample(out bool done); changed = true;
+            double next = pitch.Sample(out bool done); changed |= next != tilt; tilt = next;
             if (done && ReferenceEquals(tiltMotion, pitch)) { tiltMotion = null; pitch.Completed?.Invoke(); }
         }
         if (lightMotion is { } light) {
@@ -437,5 +439,13 @@ public partial class GameCaseView : Control {
     public override void Render(DrawingContext dc) {
         base.Render(dc);
         RenderCase(dc);
+    }
+    // RC1 reacts to IsVisibleChanged, which includes a hidden ancestor (another page shown).
+    bool shownBefore;
+    internal void RefreshVisibility() {
+        if (shownBefore == Visible) return;
+        shownBefore = Visible;
+        UpdateSpotlightMotion();
+        UpdateMotion();
     }
 }

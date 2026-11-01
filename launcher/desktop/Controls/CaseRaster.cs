@@ -31,9 +31,9 @@ public partial class GameCaseView {
     void RenderCase(DrawingContext dc) {
         if (Bounds.Width <= 0 || Bounds.Height <= 0) return;
         double windowHeight = owner?.Bounds.Height > 0 ? owner.Bounds.Height : Bounds.Height * 2.5;
-        double renderScaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
         // About 720 lines for the whole window: just above a 480p PS2 frame, pixels still visible.
-        double scale = Math.Clamp(720 / Math.Max(1, windowHeight), .15, 1) * renderScaling;
+        // The line count is the design, independent of the display's pixel density.
+        double scale = Math.Clamp(720 / Math.Max(1, windowHeight), .15, 1);
         int width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * scale)), height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * scale));
         if (raster == null || raster.PixelSize != new PixelSize(width, height)) {
             raster?.Dispose();
@@ -173,23 +173,30 @@ public partial class GameCaseView {
     }
     // The floor layer: the spotlight pool, the contact patch and the lamp's cast shadow, each with
     // RC1's blur, beneath the case in the same cache.
+    // Pool and contact patch depend only on the framing; their blurred masks are cached.
+    float[] floorLayer = [], poolMask = [], contactMask = [];
+    (int, int, float, float, float) floorKey;
     void RenderFloor(Matrix4x4 rotation, float level, int width, int height, Func<Vector3, Vector2> project) {
         double cacheScale = width / Math.Max(1, Bounds.Width);
         var floor = project(new Vector3(0, (float)Ground, 0));
         float caseWidth = project(new Vector3(.675f, (float)Ground, 0)).X - project(new Vector3(-.675f, (float)Ground, 0)).X;
-        float[] layer = new float[width * height];
-        // Pool: ivory 72 → 0 radial, 2.2 × 0.5 case widths, blur 10, opacity = level.
-        if (level > 0) {
-            Ellipse(layer, width, height, floor, caseWidth * 1.1f, caseWidth * .25f, 72 / 255f * level, (float)(10 * cacheScale));
-            for (int i = 0; i < layer.Length; i++)
-                if (layer[i] > 0) Blend(i, Ivory.X * layer[i], Ivory.Y * layer[i], Ivory.Z * layer[i], layer[i]);
-            Array.Clear(layer);
+        var key = (width, height, floor.X, floor.Y, caseWidth);
+        if (floorKey != key || poolMask.Length != width * height) {
+            floorKey = key;
+            poolMask = new float[width * height]; contactMask = new float[width * height]; floorLayer = new float[width * height];
+            // Pool: ivory 72 → 0 radial, 2.2 × 0.5 case widths, blur 10.
+            Ellipse(poolMask, width, height, floor, caseWidth * 1.1f, caseWidth * .25f, 72 / 255f, (float)(10 * cacheScale));
+            // Contact: black 240 → 0 radial, 1.1 case widths × max(10, .18 widths), blur 8.
+            Ellipse(contactMask, width, height, floor, caseWidth * .55f, Math.Max(10 * (float)cacheScale, caseWidth * .18f) / 2, 240 / 255f, (float)(8 * cacheScale));
         }
-        // Contact: black 240 → 0 radial, 1.1 case widths × max(10, .18 widths), blur 8, always grounded.
-        Ellipse(layer, width, height, floor, caseWidth * .55f, Math.Max(10 * (float)cacheScale, caseWidth * .18f) / 2, 240 / 255f * (.45f + .55f * level), (float)(8 * cacheScale));
-        for (int i = 0; i < layer.Length; i++) if (layer[i] > 0) Blend(i, 0, 0, 0, layer[i]);
+        if (level > 0)
+            for (int i = 0; i < poolMask.Length; i++) {
+                float a = poolMask[i] * level;
+                if (a > 0) Blend(i, Ivory.X * a, Ivory.Y * a, Ivory.Z * a, a);
+            }
+        float contact = .45f + .55f * level;
+        for (int i = 0; i < contactMask.Length; i++) if (contactMask[i] > 0) Blend(i, 0, 0, 0, contactMask[i] * contact);
         if (level <= 0) return;
-        Array.Clear(layer);
         // Shadow: the eight corners cast from the lamp onto the floor, as a convex hull.
         var lamp = new Vector3(0, 5, 4);
         var corners = (from x in new[] { -.675f, .675f } from y in new[] { -.95f, .95f } from z in new[] { -.07f, .07f }
@@ -205,12 +212,17 @@ public partial class GameCaseView {
         foreach (var p in projected.Reverse().Skip(1)) { while (hull.Count > lower && Cross(hull[^2], hull[^1], p) <= 0) hull.RemoveAt(hull.Count - 1); hull.Add(p); }
         if (hull.Count > 1) hull.RemoveAt(hull.Count - 1);
         if (hull.Count < 3) return;
-        float top = hull.Min(p => p.Y), bottom = hull.Max(p => p.Y);
+        float blur = (float)(5 * cacheScale);
+        float top = hull.Min(p => p.Y), bottom = hull.Max(p => p.Y), left = hull.Min(p => p.X), right = hull.Max(p => p.X);
+        int x0 = Math.Clamp((int)(left - blur * 2) - 1, 0, width - 1), x1 = Math.Clamp((int)(right + blur * 2) + 1, 0, width - 1);
+        int y0 = Math.Clamp((int)(top - blur * 2) - 1, 0, height - 1), y1 = Math.Clamp((int)(bottom + blur * 2) + 1, 0, height - 1);
+        var layer = floorLayer;
+        for (int y = y0; y <= y1; y++) Array.Clear(layer, y * width + x0, x1 - x0 + 1);
         for (int y = Math.Max(0, (int)top); y <= Math.Min(height - 1, (int)Math.Ceiling(bottom)); y++)
-            for (int x = 0; x < width; x++) {
+            for (int x = Math.Max(0, (int)left); x <= Math.Min(width - 1, (int)Math.Ceiling(right)); x++) {
                 var point = new Vector2(x + .5f, y + .5f);
                 bool inside = true;
-                for (int i = 0; i < hull.Count && inside; i++) inside = Cross(hull[i], hull[(i + 1) % hull.Count], point) >= 0 || Cross(hull[i], hull[(i + 1) % hull.Count], point) == 0;
+                for (int i = 0; i < hull.Count && inside; i++) inside = Cross(hull[i], hull[(i + 1) % hull.Count], point) >= 0;
                 if (!inside) {
                     inside = true;
                     for (int i = 0; i < hull.Count && inside; i++) inside = Cross(hull[i], hull[(i + 1) % hull.Count], point) <= 0;
@@ -218,8 +230,12 @@ public partial class GameCaseView {
                 // Vertical gradient over the shape's bounds: transparent at the top, black 190 at the bottom.
                 if (inside) layer[y * width + x] = 190 / 255f * (bottom > top ? (point.Y - top) / (bottom - top) : 1);
             }
-        Blur(layer, width, height, (float)(5 * cacheScale));
-        for (int i = 0; i < layer.Length; i++) if (layer[i] > 0) Blend(i, 0, 0, 0, Math.Clamp(layer[i] * level, 0, 1));
+        Blur(layer, width, height, blur, x0, y0, x1, y1);
+        for (int y = y0; y <= y1; y++)
+            for (int x = x0; x <= x1; x++) {
+                int i = y * width + x;
+                if (layer[i] > 0) Blend(i, 0, 0, 0, Math.Clamp(layer[i] * level, 0, 1));
+            }
     }
     void Ellipse(float[] layer, int width, int height, Vector2 center, float radiusX, float radiusY, float peak, float blur) {
         int left = Math.Max(0, (int)(center.X - radiusX - blur)), right = Math.Min(width - 1, (int)(center.X + radiusX + blur));
@@ -229,34 +245,38 @@ public partial class GameCaseView {
             float r = MathF.Sqrt(dx * dx + dy * dy);
             if (r < 1) layer[y * width + x] = peak * (1 - r);
         }
-        Blur(layer, width, height, blur);
+        Blur(layer, width, height, blur, Math.Max(0, left - (int)blur), Math.Max(0, top - (int)blur),
+             Math.Min(width - 1, right + (int)blur), Math.Min(height - 1, bottom + (int)blur));
     }
     // WPF BlurEffect (Gaussian, Radius ≈ 3σ), as three box passes per axis.
-    static void Blur(float[] layer, int width, int height, float radius) {
+    static void Blur(float[] layer, int width, int height, float radius, int x0, int y0, int x1, int y1) {
         if (radius < .5f) return;
         double sigma = radius / 3.0;
-        int box = Math.Max(1, (int)Math.Round(Math.Sqrt(12 * sigma * sigma / 3 + 1)));
-        int reach = box / 2;
-        var temp = new float[layer.Length];
+        int reach = Math.Max(1, (int)Math.Round(Math.Sqrt(12 * sigma * sigma / 3 + 1))) / 2;
+        int w = x1 - x0 + 1, h = y1 - y0 + 1;
+        if (w <= 0 || h <= 0) return;
+        var line = new float[Math.Max(w, h)];
+        float scale = 1f / (2 * reach + 1);
         for (int pass = 0; pass < 3; pass++) {
-            for (int y = 0; y < height; y++) {
-                float sum = 0; int count = 0;
-                for (int x = -reach; x < width + reach; x++) {
-                    int add = x + reach, remove = x - reach - 1;
-                    if (add >= 0 && add < width) { sum += layer[y * width + add]; }
-                    if (remove >= 0 && remove < width) { sum -= layer[y * width + remove]; }
-                    count = Math.Min(add, width - 1) - Math.Max(remove + 1, 0) + 1;
-                    if (x >= 0 && x < width) temp[y * width + x] = sum / (2 * reach + 1);
-                }
-            }
-            for (int x = 0; x < width; x++) {
+            for (int y = y0; y <= y1; y++) {
                 float sum = 0;
-                for (int y = -reach; y < height + reach; y++) {
-                    int add = y + reach, remove = y - reach - 1;
-                    if (add >= 0 && add < height) sum += temp[add * width + x];
-                    if (remove >= 0 && remove < height) sum -= temp[remove * width + x];
-                    if (y >= 0 && y < height) layer[y * width + x] = sum / (2 * reach + 1);
+                for (int x = x0 - reach; x <= x1 + reach; x++) {
+                    int add = x + reach, remove = x - reach - 1;
+                    if (add >= x0 && add <= x1) sum += layer[y * width + add];
+                    if (remove >= x0 && remove <= x1) sum -= layer[y * width + remove];
+                    if (x >= x0 && x <= x1) line[x - x0] = sum * scale;
                 }
+                Array.Copy(line, 0, layer, y * width + x0, w);
+            }
+            for (int x = x0; x <= x1; x++) {
+                float sum = 0;
+                for (int y = y0 - reach; y <= y1 + reach; y++) {
+                    int add = y + reach, remove = y - reach - 1;
+                    if (add >= y0 && add <= y1) sum += layer[add * width + x];
+                    if (remove >= y0 && remove <= y1) sum -= layer[remove * width + x];
+                    if (y >= y0 && y <= y1) line[y - y0] = sum * scale;
+                }
+                for (int y = y0; y <= y1; y++) layer[y * width + x] = line[y - y0];
             }
         }
     }
