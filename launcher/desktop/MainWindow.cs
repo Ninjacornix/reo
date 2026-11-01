@@ -79,7 +79,7 @@ public partial class MainWindow : Window {
         RefreshGameUi();
         RefreshMods();
         Opened += (_, _) => {
-            if (OperatingSystem.IsWindows() && TryGetPlatformHandle() is { } handle) controller.Attach(handle.Handle);
+            if (OperatingSystem.IsWindows() && TryGetPlatformHandle() is { HandleDescriptor: "HWND" } handle) controller.Attach(handle.Handle);
         };
         timer.Tick += Tick;
         timer.Start();

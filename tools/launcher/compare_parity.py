@@ -71,8 +71,10 @@ def main(folder):
     (out / 'report.json').write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))
     if __import__('os').environ.get('GITHUB_ACTIONS') == 'true':
-        for page, entry in report.items():
-            print(f'::notice title=Parity {page}::' + json.dumps(entry, separators=(',', ':')))
+        # One annotation: a step shows at most ten.
+        summary = ' | '.join(f"{page} {e.get('changedPercent', 'missing')}%/{e.get('mean', '-')}"
+                             for page, e in report.items())
+        print('::notice title=Parity (changed %/mean)::' + summary)
 
 
 if __name__ == '__main__':
