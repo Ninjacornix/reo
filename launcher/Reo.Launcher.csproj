@@ -13,7 +13,7 @@
   </PropertyGroup>
   <Import Project="native/GraphicsPreview.targets" />
   <ItemGroup>
-    <Compile Remove="shared/**/*.cs;desktop/**/*.cs;cross-tests/**/*.cs" />
+    <Compile Remove="shared/**/*.cs;desktop/**/*.cs;cross-tests/**/*.cs;macos/**/*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="../examples/mods/no-infection.json" Link="examples/mods/no-infection.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

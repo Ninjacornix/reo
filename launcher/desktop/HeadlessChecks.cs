@@ -36,10 +36,10 @@ internal static class HeadlessChecks {
               "The common launcher lost the RC2 keyboard voice-command bindings.");
         var up=window.GetVisualDescendants().OfType<Button>().First(b=>b.Tag as string=="Up");
         up.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        window.RaiseEvent(new KeyEventArgs{RoutedEvent=InputElement.KeyDownEvent,Key=Key.Up});
+        window.KeyPress(Key.Up,RawInputModifiers.None);
         Check(window.settings.Keyboard["Up"]==38 && window.settings.Keyboard["CameraUp"]==0,
-              "Remapping movement to an arrow did not release its old voice command.");
-        window.RaiseEvent(new KeyEventArgs{RoutedEvent=InputElement.KeyUpEvent,Key=Key.Up});
+              $"Remapping movement to an arrow did not release its old voice command (Up={window.settings.Keyboard["Up"]}, CameraUp={window.settings.Keyboard["CameraUp"]}).");
+        window.KeyRelease(Key.Up,RawInputModifiers.None);
         Check(InputMapping.Keyboard(window.settings.Keyboard,k=>k==38)==new Pad(1),
               "Keyboard movement must send only the digital D-pad after remapping.");
         Control<Button>("ResetBindingsButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
