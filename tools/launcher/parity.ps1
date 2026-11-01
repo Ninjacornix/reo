@@ -30,7 +30,8 @@ foreach ($app in @(@{ Name = 'rc1'; Exe = $rc1Exe }, @{ Name = 'common'; Exe = $
     New-Item -ItemType Directory -Force $folder | Out-Null
     foreach ($page in $pages) {
         # A fresh data folder per capture keeps every page independent of the previous run.
-        $data = Join-Path $Output ($app.Name + '-data')
+        # Equal-length data paths keep path text (Game files, Saves) directly comparable.
+        $data = Join-Path $Output ('data-' + $app.Name.Substring(0, 1))
         if (Test-Path $data) { Remove-Item -Recurse -Force $data }
         New-Item -ItemType Directory -Force $data | Out-Null
         if ($Seed) {

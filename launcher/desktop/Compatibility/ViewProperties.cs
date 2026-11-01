@@ -303,8 +303,8 @@ public class Rc1TextBlock : TextBlock {
         // Wrapped text keeps its full width so arrange cannot break the last line again.
         return new Size(TextWrapping == TextWrapping.NoWrap ? Round(size.Width) : size.Width, Round(size.Height));
     }
-    // With an explicit LineHeight, WPF keeps each line's glyphs at the top of the line and adds the
-    // extra space below them; Avalonia adds it above. Draw the text at WPF's position.
+    // With an explicit LineHeight, WPF centres each line's glyphs in the extra space; Avalonia adds
+    // all of it above them. Draw the text at WPF's position.
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
         base.OnPropertyChanged(change);
         if (OperatingSystem.IsWindows() && (change.Property == TextProperty || change.Property == FontSizeProperty ||
@@ -313,7 +313,7 @@ public class Rc1TextBlock : TextBlock {
         if (change.Property == LineHeightProperty || change.Property == FontSizeProperty ||
             change.Property == FontFamilyProperty || change.Property == FontWeightProperty || change.Property == FontStyleProperty) {
             double extra = double.IsNaN(LineHeight) ? 0 : LineHeight - NaturalLineHeight();
-            RenderTransform = extra > 0 ? new TranslateTransform(0, -extra) : null;
+            RenderTransform = extra > 0 ? new TranslateTransform(0, -extra / 2) : null;
         }
     }
     // RC1 sets TextFormattingMode.Display: GDI-compatible, hinted whole-pixel advances. Spread the

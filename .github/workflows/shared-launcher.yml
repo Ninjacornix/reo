@@ -83,7 +83,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Set-Location build-launcher/parity
-          Set-Content .gitignore "rc1-data/`ncommon-data/"
+          Set-Content .gitignore "data-r/`ndata-c/"
           git init -q
           git checkout -q -b ci/parity-results
           git config user.name 'github-actions'
