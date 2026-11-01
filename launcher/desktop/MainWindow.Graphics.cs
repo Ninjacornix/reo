@@ -157,21 +157,23 @@ public partial class MainWindow {
         if (!GraphicsPreviewActive || graphicsScene == null || graphicsPreviewBusy || graphicsPreviewFaulted ||
             GraphicsPreviewStage.ActualWidth < 32 || GraphicsPreviewStage.ActualHeight < 32) return;
         if (Stopwatch.GetTimestamp() < graphicsPreviewNextFrame) { ScheduleGraphicsPreview(); return; }
-        var scene = graphicsScene;
-        var options = graphicsPreviewOptions ?? ReadGraphicsPreviewOptions();
-        int version = graphicsPreviewVersion;
-        double seconds = graphicsPreviewTestTime ?? (staticCapture ? 0 : graphicsPreviewClock.Elapsed.TotalSeconds);
-        GraphicsGpuView.Visibility = Visibility.Visible;
-        UpdateLayout();
-        var size = GraphicsGpuView.PixelSize;
-        int height = Math.Clamp(size.Height, 32, 4096), width = Math.Clamp(size.Width, 32, 4096);
-        float yaw = GraphicsGpuView.Rotation.Yaw, pitch = GraphicsGpuView.Rotation.Pitch, zoom = GraphicsGpuView.Rotation.Zoom;
-        graphicsPreviewTimer.Stop();
+        // Visibility and UpdateLayout can synchronously raise SizeChanged and reenter this method.
+        // Claim the frame before either operation, and release it even if frame setup fails.
         graphicsPreviewBusy = true;
-        // One frame in flight. The next frame starts when this one is displayed.
-        graphicsPreviewNextFrame = Stopwatch.GetTimestamp() + Stopwatch.Frequency * 16 / 1000; // RC1 presents at display rate: about 60 fps
-        var started = Stopwatch.GetTimestamp();
         try {
+            var scene = graphicsScene;
+            var options = graphicsPreviewOptions ?? ReadGraphicsPreviewOptions();
+            int version = graphicsPreviewVersion;
+            double seconds = graphicsPreviewTestTime ?? (staticCapture ? 0 : graphicsPreviewClock.Elapsed.TotalSeconds);
+            GraphicsGpuView.Visibility = Visibility.Visible;
+            UpdateLayout();
+            var size = GraphicsGpuView.PixelSize;
+            int height = Math.Clamp(size.Height, 32, 4096), width = Math.Clamp(size.Width, 32, 4096);
+            float yaw = GraphicsGpuView.Rotation.Yaw, pitch = GraphicsGpuView.Rotation.Pitch, zoom = GraphicsGpuView.Rotation.Zoom;
+            graphicsPreviewTimer.Stop();
+            // One frame in flight. The next frame starts when this one is displayed.
+            graphicsPreviewNextFrame = Stopwatch.GetTimestamp() + Stopwatch.Frequency * 16 / 1000; // RC1 presents at display rate: about 60 fps
+            var started = Stopwatch.GetTimestamp();
             var frame = await Task.Run(() => graphicsPreviewEnvironment.Render(scene, options, seconds, width, height, yaw, pitch, zoom));
             if (!GraphicsPreviewActive || scene != graphicsScene || version != graphicsPreviewVersion) return;
             GraphicsGpuView.Present(frame);
