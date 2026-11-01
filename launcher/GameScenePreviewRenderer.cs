@@ -32,6 +32,11 @@ internal sealed class GameScenePreviewRenderer {
     byte[] morphologyEdges = Array.Empty<byte>();
     (int Width, int Height, float Aspect, bool Linear, int Anisotropy, Vector4 Crop, float Zoom)? environmentKey;
     readonly List<(Projected A, Projected B, Projected C, Texture? Texture)> triangles = new();
+    float previousZoom = float.NaN;
+    uint[]? zoomedFxaa;
+    uint[] zoomedFxaaBuffer = Array.Empty<uint>();
+    int[] rescaleX0 = Array.Empty<int>(), rescaleX1 = Array.Empty<int>(), rescaleFx = Array.Empty<int>(),
+        rescaleY0 = Array.Empty<int>(), rescaleY1 = Array.Empty<int>(), rescaleFy = Array.Empty<int>();
     readonly ConditionalWeakTable<PreviewMesh, Vertex[]> transformedVertices = new();
     internal PreviewRenderTimings? LastTimings { get; private set; }
     Presentation? presentation;
@@ -92,14 +97,28 @@ internal sealed class GameScenePreviewRenderer {
         view = Matrix4x4.CreateLookAt(new(2.8f, 1.55f, 4.4f), new(0, .95f, 0), Vector3.UnitY);
         long timestamp = Stopwatch.GetTimestamp();
         var backgroundKey = (renderWidth, renderHeight, cameraAspect, options.TextureLinear, options.Anisotropy, crop, zoom);
+        // Zoom only narrows the camera's field of view from the same eye, so the cached room
+        // rescales exactly about the view centre. While the zoom is changing, frames reuse a
+        // room rendered with a wider margin; the first frame after it settles renders it sharp.
+        bool zooming = zoom != previousZoom; previousZoom = zoom;
+        bool sameView = environmentKey is { } cached && (cached.Width, cached.Height, cached.Aspect, cached.Linear,
+            cached.Anisotropy, cached.Crop) == (renderWidth, renderHeight, cameraAspect, options.TextureLinear, options.Anisotropy, crop);
+        zoomedFxaa = null;
         if (environmentKey == backgroundKey) {
-            environmentDepth.CopyTo(depth, 0); environmentColor.CopyTo(color, 0);
+            environmentDepth.AsSpan().CopyTo(depth); environmentColor.AsSpan().CopyTo(color);
+        } else if (zooming && sameView && environmentKey!.Value.Zoom <= zoom && zoom <= environmentKey.Value.Zoom * 1.6f) {
+            RescaleEnvironment(environmentKey.Value.Zoom / zoom);
         } else {
+            float renderedZoom = zooming ? Math.Max(.65f, zoom / 1.25f) : zoom;
+            tangent = MathF.Tan(32 * MathF.PI / 360) / renderedZoom;
             Array.Clear(depth); Array.Fill(color, 0xff111214);
             foreach (var mesh in environment) Draw(mesh, environmentTextures, Matrix4x4.Identity, false);
-            environmentDepth = (float[])depth.Clone(); environmentColor = (uint[])color.Clone();
+            if (environmentDepth.Length != depth.Length) { environmentDepth = new float[depth.Length]; environmentColor = new uint[color.Length]; }
+            depth.AsSpan().CopyTo(environmentDepth); color.AsSpan().CopyTo(environmentColor);
             environmentFxaa = null;
-            environmentKey = backgroundKey;
+            environmentKey = backgroundKey with { Item7 = renderedZoom };
+            if (renderedZoom != zoom) RescaleEnvironment(renderedZoom / zoom);
+            tangent = MathF.Tan(32 * MathF.PI / 360) / zoom;
         }
         long afterBackground = Stopwatch.GetTimestamp();
         scene.Animate(double.IsFinite(seconds) ? Math.Max(0, seconds) : 0);
@@ -242,6 +261,37 @@ internal sealed class GameScenePreviewRenderer {
                 color[index] = Pack(rgb); depth[index] = q;
             }
         }
+    }
+
+    // Map each output pixel to the cached room at another field of view (factor = cached zoom / zoom).
+    void RescaleEnvironment(float factor) {
+        void Axis(int count, float origin, float size, ref int[] first, ref int[] second, ref int[] weight) {
+            if (first.Length != count) { first = new int[count]; second = new int[count]; weight = new int[count]; }
+            for (int i = 0; i < count; i++) {
+                float ndc = ((i + .5f) / count * size + origin) * 2 - 1;
+                float source = (((ndc * factor + 1) / 2 - origin) / size) * count - .5f;
+                source = Math.Clamp(source, 0, count - 1);
+                int low = (int)source;
+                first[i] = low; second[i] = Math.Min(low + 1, count - 1);
+                weight[i] = Math.Clamp((int)((source - low) * 256 + .5f), 0, 256);
+            }
+        }
+        Axis(renderWidth, crop.X, crop.Z, ref rescaleX0, ref rescaleX1, ref rescaleFx);
+        Axis(renderHeight, crop.Y, crop.W, ref rescaleY0, ref rescaleY1, ref rescaleFy);
+        Rescale(environmentColor, color, environmentDepth, depth);
+    }
+    void Rescale(uint[] sourceColor, uint[] targetColor, float[]? sourceDepth, float[]? targetDepth) {
+        int width = renderWidth;
+        Parallel.For(0, renderHeight, y => {
+            int row0 = rescaleY0[y] * width, row1 = rescaleY1[y] * width, fy = rescaleFy[y];
+            int nearestRow = (fy < 128 ? rescaleY0[y] : rescaleY1[y]) * width, row = y * width;
+            for (int x = 0; x < width; x++) {
+                int x0 = rescaleX0[x], x1 = rescaleX1[x], fx = rescaleFx[x];
+                targetColor[row + x] = LerpPacked(LerpPacked(sourceColor[row0 + x0], sourceColor[row0 + x1], fx),
+                    LerpPacked(sourceColor[row1 + x0], sourceColor[row1 + x1], fx), fy);
+                if (targetDepth != null) targetDepth[row + x] = sourceDepth![nearestRow + (fx < 128 ? x0 : x1)];
+            }
+        });
     }
 
     static float Aspect(string aspect) => aspect switch { "16:9" => 16f / 9, "21:9" => 43f / 18, "32:9" => 32f / 9, _ => 4f / 3 };
@@ -400,7 +450,12 @@ internal sealed class GameScenePreviewRenderer {
             ApplyFxaa(environmentColor, environmentFxaa, renderWidth, renderHeight, 1, 1, renderWidth - 2, renderHeight - 2);
         }
         if (fxaaResult.Length != color.Length) fxaaResult = new uint[color.Length];
-        environmentFxaa.CopyTo(fxaaResult, 0);
+        if (zoomedFxaa == null && environmentKey is { } key && key.Zoom != previousZoom) {
+            if (zoomedFxaaBuffer.Length != color.Length) zoomedFxaaBuffer = new uint[color.Length];
+            Rescale(environmentFxaa, zoomedFxaaBuffer, null, null);
+            zoomedFxaa = zoomedFxaaBuffer;
+        }
+        (zoomedFxaa ?? environmentFxaa).CopyTo(fxaaResult, 0);
         // The directional span is clamped to eight pixels; the furthest sample
         // is half that span plus bilinear coverage. Six pixels includes all of
         // its support, so unchanged background pixels reuse exactly the same AA.

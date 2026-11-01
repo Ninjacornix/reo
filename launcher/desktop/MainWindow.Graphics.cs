@@ -34,7 +34,12 @@ public partial class MainWindow {
         PageGraphics.PropertyChanged += (_, e) => { if (e.Property == IsVisibleProperty) RefreshGraphicsPreviewActivity(); };
         WindowStateChanged += RefreshGraphicsPreviewActivity;
         GraphicsPreviewStage.SizeChanged += (_, _) => InvalidateGraphicsPreview();
-        GraphicsGpuView.RotationChanged += (_, _) => InvalidateGraphicsPreview();
+        // Rotation and zoom are read when each frame starts. Unlike option changes, they do not
+        // discard the frame in flight: continuous wheel/drag input would otherwise drop every frame.
+        GraphicsGpuView.RotationChanged += (_, _) => {
+            if (initialized && !graphicsPreviewClosed && GraphicsPreviewActive && graphicsScene != null &&
+                !graphicsPreviewBusy && !graphicsPreviewFaulted) _ = RenderGraphicsPreview();
+        };
         Closed += (_, _) => {
             graphicsPreviewClosed = true;
             graphicsPreviewTimer.Stop(); graphicsPreviewClock.Stop();
