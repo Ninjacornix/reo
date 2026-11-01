@@ -135,7 +135,7 @@ def prepare(args):
     iso = Path(args.iso or root / "iso" / iso_name).resolve()
     imported = configured_import(root, iso, args.import_root, game)
     data, elf = validate_import(imported, iso, game)
-    adapter = Path(args.adapter or root / "launcher/bin/Release/net8.0-windows/XINPUT1_4.dll").resolve()
+    adapter = Path(args.adapter or root / "launcher/bin/Release/net10.0/win-x64/XINPUT1_4.dll").resolve()
     required = [source, adapter] + [source.parent / "reo-gpu-present" / s for s in SHADERS]
     for path in required:
         if not path.is_file():

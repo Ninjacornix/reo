@@ -93,18 +93,7 @@ public static partial class OnlineOptions {
         if (Directory.Exists(directory))
             return ExistingProfileDirectory(directory);
         // Atomic creation distinguishes our new directory from an existing one.
-#if REO_CROSS_PLATFORM
         Directory.CreateDirectory(directory);
-#else
-        if (!CreateDirectoryW(directory, 0)) {
-            int error = Marshal.GetLastWin32Error();
-            if (error == 183 && Directory.Exists(directory))
-                return ExistingProfileDirectory(directory);
-            throw new IOException(
-                "Could not prepare the online profile on the selected memory card: " +
-                new Win32Exception(error).Message);
-        }
-#endif
         try {
             using var marker = new FileStream(Path.Combine(directory, "BWNETDCNF"),
                                               FileMode.CreateNew, FileAccess.Write, FileShare.None);

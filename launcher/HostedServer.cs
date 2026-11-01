@@ -97,13 +97,11 @@ internal sealed class HostedServer : IDisposable {
                     UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = data,
                     RedirectStandardOutput = true, RedirectStandardError = true
                 };
-#if REO_CROSS_PLATFORM
                 if (!OperatingSystem.IsWindows()) {
                     var runner = PlatformServices.Server(root);
                     foreach (string argument in runner.Prefix) start.ArgumentList.Add(argument);
                     start.ArgumentList.Add(source);
                 } else
-#endif
                 {
                     start.ArgumentList.Add("-u");
                     start.ArgumentList.Add(Path.Combine(source, "run.py"));
@@ -213,12 +211,10 @@ internal sealed class HostedServer : IDisposable {
                                                string? componentRoot, string home,
                                                IProgress<string>? progress,
                                                IProgress<ImportProgress>? setupProgress) {
-#if REO_CROSS_PLATFORM
         if (!OperatingSystem.IsWindows()) {
             var runner = PlatformServices.Server(root);
             return (runner.Executable, runner.Source);
         }
-#endif
         string payload = componentRoot ?? Path.Combine(root, "network-server");
         if (File.Exists(Path.Combine(payload, "server-manifest.json"))) {
             using var manifest = JsonDocument.Parse(

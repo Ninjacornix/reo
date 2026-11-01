@@ -48,7 +48,8 @@ launcher prepares Python and its packages in the selected data folder. Joining
 an existing host does not need those hosting tools. Dependency-source archives
 are separate developer downloads.
 
-Developers can build the launcher with .NET 8 SDK and Visual Studio C++ tools:
+Developers can build the universal launcher with the .NET 10 SDK and Visual Studio C++ tools.
+The Windows build includes its runtime, controller adapter and movie decoder helper:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File launcher/build.ps1

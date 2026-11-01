@@ -1,9 +1,4 @@
-#if REO_CROSS_PLATFORM
 using Color = Outbreak.Launcher.Rgba;
-#else
-using System.Windows.Markup;
-using System.Windows.Media;
-#endif
 
 namespace Outbreak.Launcher;
 
@@ -11,8 +6,7 @@ namespace Outbreak.Launcher;
 // black covers most of the window, ivory carries text, orange marks focus, selection and the
 // main action. UI code uses the roles below. In-between shades are these colours at partial
 // opacity, never new colours: hover = Text 14%, divider = Text 12%, control outline = Text 40%,
-// selection = Accent 25%. SelfTest rejects anything else. Two exceptions: CalibrationPreview's
-// grey ramp must stay neutral to calibrate brightness, and 3D shadows are black at partial
+// selection = Accent 25%. 3D shadows are black at partial
 // opacity (soft black is the window colour, so it cannot darken anything).
 public static class Palette {
     // The colours themselves. Physical things (the PS2 cases, lamp light) use these directly.
@@ -42,13 +36,6 @@ public static class Palette {
         intensity = Math.Clamp(intensity, 0, 1);
         return Color.FromRgb((byte)(color.R * intensity), (byte)(color.G * intensity), (byte)(color.B * intensity));
     }
-#if !REO_CROSS_PLATFORM
-    public static SolidColorBrush Brush(Color color, byte alpha = 255) {
-        var brush = new SolidColorBrush(WithAlpha(color, alpha));
-        brush.Freeze();
-        return brush;
-    }
-#endif
     public static bool Contains(Color color) => All.Any(c => c.R == color.R && c.G == color.G && c.B == color.B);
     public static Color Over(Color foreground, Color background) {
         double a = foreground.A / 255.0;
@@ -67,25 +54,3 @@ public static class Palette {
 
 // XAML access: {local:Palette Accent} or {local:Palette Text, Alpha=36}. Produces a Color for
 // Color properties and a frozen brush everywhere else.
-#if !REO_CROSS_PLATFORM
-[MarkupExtensionReturnType(typeof(object))]
-public sealed class PaletteExtension : MarkupExtension {
-    public PaletteExtension() { }
-    public PaletteExtension(string name) => Name = name;
-    [ConstructorArgument("name")] public string Name { get; set; } = "";
-    public byte Alpha { get; set; } = 255;
-    public override object ProvideValue(IServiceProvider services) {
-        object? value = typeof(Palette).GetProperty(Name)?.GetValue(null) ?? typeof(Palette).GetField(Name)?.GetValue(null);
-        if (value is not Color baseColor)
-            throw new ArgumentException("Unknown palette colour: " + Name);
-        var color = Palette.WithAlpha(baseColor, Alpha);
-        var target = services.GetService(typeof(IProvideValueTarget)) as IProvideValueTarget;
-        bool wantsColor = target?.TargetProperty switch {
-            System.Windows.DependencyProperty p => p.PropertyType == typeof(Color),
-            System.Reflection.PropertyInfo p => p.PropertyType == typeof(Color),
-            _ => false
-        };
-        return wantsColor ? color : Palette.Brush(color);
-    }
-}
-#endif

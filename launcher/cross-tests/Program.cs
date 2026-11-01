@@ -17,6 +17,7 @@ Storage.Configure(root,home);
 int passed=0;var failures=new List<string>();
 void Check(bool ok,string message){if(ok)passed++;else failures.Add(message);}
 try {
+if(args.Contains("--windows-services-check"))try{await WindowsServiceChecks.Run(Check);}catch(Exception e){failures.Add("WindowsServices: "+e);}
 try{await PlatformServicesTests.Run(Check);}catch(Exception e){failures.Add("PlatformServices: "+e);}
 if(OperatingSystem.IsWindows())try{UpdateTests.Run(Check);}catch(Exception e){failures.Add("Updates: "+e);}
 try{KeyboardInputTests.Run(Check);}catch(Exception e){failures.Add("KeyboardInput: "+e);}

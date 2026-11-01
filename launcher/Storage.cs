@@ -12,9 +12,7 @@ public record StorageProgress(long Copied, long Total, string File);
 public static class Storage {
     public const string LocatorName = "storage.json", MarkerName = ".storage-location.json";
     static string LocatorPath(string root) =>
-#if REO_CROSS_PLATFORM
         !OperatingSystem.IsWindows() ? Path.Combine(DefaultHome(root), "launcher-location.json") :
-#endif
         Path.Combine(root, LocatorName);
     static string? home;
     static FileStream? lease;
@@ -25,11 +23,7 @@ public static class Storage {
     sealed record Location(string Home, string Installation);
     public static string Home => home ??= Resolve(AppLayout.FindRoot(AppContext.BaseDirectory));
     public static string DefaultHome(string root) =>
-#if REO_CROSS_PLATFORM
         PlatformPaths.DataHome(root);
-#else
-        Path.Combine(Full(root), "data");
-#endif
     static string Full(string path) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
     static bool Same(string a, string b) => Full(a).Equals(Full(b), StringComparison.OrdinalIgnoreCase);
     internal static bool Within(string path, string parent) => Same(path, parent) ||

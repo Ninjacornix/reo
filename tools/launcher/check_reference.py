@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""Check that the common view retains the selected Windows RC1 reference."""
+"""Check the universal view against the preserved RC1/RC2 UI contract."""
 from pathlib import Path
-import hashlib,json,xml.etree.ElementTree as ET
+import json,xml.etree.ElementTree as ET
 root=Path(__file__).resolve().parents[2]
 reference=json.loads((root/'launcher/desktop/Views/Shell.reference.json').read_text())
 x='{http://schemas.microsoft.com/winfx/2006/xaml}'
-original=ET.parse(root/'launcher/Shell.xaml');common=ET.parse(root/'launcher/desktop/Views/Shell.axaml')
-names=lambda tree:{node.get(x+'Name'):node for node in tree.iter() if node.get(x+'Name')}
-old,new=names(original),names(common)
-# Avalonia transforms are not named controls; the toast offset uses RenderTransform.
-old.pop("StatusToastOffset",None)
-assert not old.keys()-new.keys(),f'Missing RC1 controls: {old.keys()-new.keys()}'
-for source,digest in reference['sourceSha256'].items():assert hashlib.sha256((root/'launcher'/source).read_bytes()).hexdigest()==digest,f'Reference changed: {source}'
-for name in reference['actions']:assert name in new,f'Command source missing: {name}'
-pages=[name for name in old if name.startswith('Page') and name!='PageContent']
-assert len(pages)==12
-for name in pages:
-    oldtext=[node.get('Text') for node in old[name].iter() if node.get('Text')]
-    newtext=[node.get('Text') for node in new[name].iter() if node.get('Text')]
-    assert oldtext==newtext,f'RC1 page copy/order changed: {name}'
-print(json.dumps(dict(passed=True,reference=reference['reference'],namedControls=len(old),pages=len(pages),actionSources=len(reference['actions']))))
+common=ET.parse(root/'launcher/desktop/Views/Shell.axaml')
+controls={n.get(x+'Name'):n for n in common.iter() if n.get(x+'Name')}
+missing=set(reference['requiredControls'])-controls.keys()
+assert not missing,f'Missing launcher controls: {missing}'
+for name in reference['actions']:assert name in controls,f'Command source missing: {name}'
+assert len(reference['pageCopy'])==12
+for page,copy in reference['pageCopy'].items():
+    actual=[n.get('Text') for n in controls[page].iter() if n.get('Text')]
+    assert actual==copy,f'Launcher page copy/order changed: {page}'
+# A retirement must also update the entry points: do not retain a second WPF app.
+assert not list((root/'launcher').glob('*.xaml')),'Retired WPF views are present'
+assert not (root/'launcher/Reo.Launcher.csproj').exists(),'Retired WPF project is present'
+for name in ['launcher/build.ps1','launcher/package-local.ps1','launcher/package-slim.ps1','tools/ci/windows.ps1']:
+    assert 'desktop/Reo.Launcher.Desktop.csproj' in (root/name).read_text(),f'Wrong launcher build entry point: {name}'
+print(json.dumps(dict(passed=True,reference=reference['reference'],namedControls=len(controls),pages=12,actionSources=len(reference['actions']),singleFrontend=True)))

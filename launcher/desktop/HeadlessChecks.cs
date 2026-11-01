@@ -91,8 +91,12 @@ internal static class HeadlessChecks {
         Check(window.settings.ResolvedCoopMode=="join"&&Control<Control>("JoinOptions").IsVisible&&!Control<Control>("HostOptions").IsVisible,"Join mode did not reveal its RC1 controls.");
         using(var bitmap=window.CaptureRenderedFrame())bitmap!.Save(Path.Combine(output,"Coop-join.png"));
         Control<RadioButton>("ModeOffline").IsChecked=true;
-        window.ShowPage("Setup");var developer=Control<Expander>("DeveloperFiles");developer.IsExpanded=true;Dispatcher.UIThread.RunJobs();
-        Check(developer.GetVisualDescendants().OfType<Border>().Any(b=>b.Name=="OptionsBody"&&b.IsVisible&&b.Bounds.Height>0),"RC1 expandable section did not open.");developer.IsExpanded=false;
+        window.ShowPage("Setup");var developer=Control<Expander>("DeveloperFiles");
+        Check(developer.IsVisible==!AppLayout.Packaged(window.root),"Developer setup visibility does not match the installation type.");
+        if(developer.IsVisible) {
+            developer.IsExpanded=true;Dispatcher.UIThread.RunJobs();
+            Check(developer.GetVisualDescendants().OfType<Border>().Any(b=>b.Name=="OptionsBody"&&b.IsVisible&&b.Bounds.Height>0),"RC1 expandable section did not open.");developer.IsExpanded=false;
+        }
         bool mediaChecked=false;
         string? ffmpeg=null;try{ffmpeg=PlatformServices.Ffmpeg();}catch(IOException){}
         if(ffmpeg!=null) {

@@ -15,7 +15,9 @@ $start = [Diagnostics.ProcessStartInfo]::new()
 $start.FileName = Join-Path $Root 'Outbreak.Launcher.exe'
 $start.WorkingDirectory = $Output
 $start.UseShellExecute = $false
-$start.Arguments = '--screenshot "' + $screenshot + '" --page Graphics'
+$start.CreateNoWindow = $true
+$start.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
+$start.Arguments = '--data-home "' + (Join-Path $Output 'data') + '" --screenshot "' + $screenshot + '" --page Graphics'
 $process = [Diagnostics.Process]::Start($start)
 try {
     if (!$process.WaitForExit(30000)) {

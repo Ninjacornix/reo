@@ -78,9 +78,7 @@ public static class MemoryCards {
         catch { settings.MemoryCards = previousCards; settings.SelectCard(previous); throw; }
         try {
             if (recycle)
-#if REO_CROSS_PLATFORM
             if (!OperatingSystem.IsWindows()) PlatformServices.Trash(folder); else
-#endif
             Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(folder,
                 Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
                 Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin,

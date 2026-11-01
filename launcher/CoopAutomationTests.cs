@@ -41,10 +41,10 @@ static class CoopAutomationTests {
               "Port validation changed");
         var hostSettings = new Settings { CoopMode = "host", CoopHost = "192.168.1.20", SignupPort = 20500 };
         var joinSettings = new Settings { CoopMode = "join", CoopHost = "192.168.1.20", JoinSignupPort = 20500 };
-        check(MainWindow.SignupEndpoint(hostSettings, null)!.ToString() ==
+        check(SignupEndpoints.For(hostSettings, null)!.ToString() ==
                   "http://127.0.0.1:20500/reweb/signup/create_id.html" &&
-                  MainWindow.SignupEndpoint(joinSettings, null)!.Port == 20500 &&
-                  MainWindow.SignupEndpoint(new Settings { CoopMode = "join", CoopHost = "192.168.1.20" }, null) == null,
+                  SignupEndpoints.For(joinSettings, null)!.Port == 20500 &&
+                  SignupEndpoints.For(new Settings { CoopMode = "join", CoopHost = "192.168.1.20" }, null) == null,
               "Sign-up must use the host's configured port");
         foreach (string bad in new[] {
                      "REO-LAN!1{\"name\":\"x\",\"address\":\"192.168.1.20\",\"version\":\"1\",\"room\":true,\"signup\":10128}",

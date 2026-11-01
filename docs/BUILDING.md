@@ -8,7 +8,7 @@ Use a short checkout path, such as `C:\dev\reo`. Full recompilation is expensive
 
 ## Launcher
 
-Requirements: Windows x64, .NET 8 SDK, Visual Studio 2022 with Desktop development with C++.
+Requirements: Windows x64, .NET 10 SDK, Visual Studio 2022 with Desktop development with C++.
 
 ```powershell
 git clone --recurse-submodules https://github.com/Ninjacornix/reo.git
@@ -32,7 +32,8 @@ never distributed.
 See [local build kits](LOCAL_BUILDS.md) for the maintainer workflow.
 
 ```powershell
-& ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --self-test
+dotnet run --project launcher/cross-tests -c Release -- --windows-services-check
+& ./launcher/bin/Release/net10.0/win-x64/Outbreak.Launcher.exe --headless-check build-launcher/local-captures
 ```
 
 An unbundled source build requires the .NET 8 Desktop Runtime when the SDK is

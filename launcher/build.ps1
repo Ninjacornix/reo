@@ -28,16 +28,8 @@ exit /b %errorlevel%
 "@ | Set-Content -LiteralPath $build
     & cmd /c $build
     if ($LASTEXITCODE) { throw 'Controller adapter or movie decoder check build failed.' }
-    $shaderOutput = Join-Path $PSScriptRoot 'artifacts\shaders'
-    New-Item -ItemType Directory -Force $shaderOutput | Out-Null
-    $sdkBin = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
-    $fxc = Get-ChildItem -LiteralPath $sdkBin -Directory | Sort-Object Name -Descending |
-        ForEach-Object { Join-Path $_.FullName 'x64\fxc.exe' } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-    if (!$fxc) { throw 'Windows SDK shader compiler (fxc.exe) is required for the image preview.' }
-    & $fxc /nologo /T ps_2_0 /E main /Fo (Join-Path $shaderOutput 'ColorPreview.ps') (Join-Path $PSScriptRoot 'Shaders\ColorPreview.hlsl')
-    if ($LASTEXITCODE) { throw 'Image preview shader build failed.' }
-    $output = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $PSScriptRoot 'bin\Release\net8.0-windows' }
-    & dotnet build Reo.Launcher.csproj -c Release --nologo --output $output
+    $output = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $PSScriptRoot 'bin\Release\net10.0\win-x64' }
+    & dotnet build desktop/Reo.Launcher.Desktop.csproj -c Release -r win-x64 --self-contained true --nologo --output $output
     if ($LASTEXITCODE) { throw 'Launcher build failed.' }
     Copy-Item -LiteralPath (Join-Path $native 'XINPUT1_4.dll') -Destination $output -Force
     Copy-Item -LiteralPath (Join-Path $native 'reo-movie-check.exe') -Destination $output -Force
