@@ -322,7 +322,9 @@ public class Rc1TextBlock : TextBlock {
         string text = Text ?? "";
         if (text.Length < 2 || text.Contains('\n')) { ClearValue(LetterSpacingProperty); return; }
         var face = new Typeface(FontFamily, FontStyle, FontWeight);
-        double? gdi = GdiText.Width(face, FontSize, text);
+        double? gdi;
+        try { gdi = GdiText.Width(face, FontSize, text); }
+        catch (Exception error) when (error is System.Runtime.InteropServices.MarshalDirectiveException or DllNotFoundException or EntryPointNotFoundException) { gdi = null; }
         if (gdi == null) { ClearValue(LetterSpacingProperty); return; }
         using var layout = new Avalonia.Media.TextFormatting.TextLayout(text, face, FontSize, null);
         double spacing = (gdi.Value - layout.WidthIncludingTrailingWhitespace) / text.Length;
@@ -357,7 +359,8 @@ static class GdiText {
     [System.Runtime.InteropServices.DllImport("gdi32.dll")] static extern bool DeleteObject(nint item);
     [System.Runtime.InteropServices.DllImport("gdi32.dll")] static extern bool DeleteDC(nint dc);
     [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
-    static extern bool GetTextExtentPoint32W(nint dc, string text, int length, out (int Width, int Height) size);
+    static extern bool GetTextExtentPoint32W(nint dc, string text, int length, out Extent size);
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)] struct Extent { public int Width, Height; }
     [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
     static extern int GetTextFaceW(nint dc, int count, System.Text.StringBuilder face);
     [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
