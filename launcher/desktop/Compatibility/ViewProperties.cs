@@ -305,6 +305,10 @@ public class Rc1TextBlock : TextBlock {
     }
     // With an explicit LineHeight, WPF centres each line's glyphs in the extra space; Avalonia adds
     // all of it above them. Draw the text at WPF's position.
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
+        base.OnAttachedToVisualTree(e);
+        if (OperatingSystem.IsWindows()) ApplyDisplayWidths();
+    }
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
         base.OnPropertyChanged(change);
         if (OperatingSystem.IsWindows() && (change.Property == TextProperty || change.Property == FontSizeProperty ||
@@ -323,7 +327,7 @@ public class Rc1TextBlock : TextBlock {
         if (text.Length < 2 || text.Contains('\n')) { ClearValue(LetterSpacingProperty); return; }
         var face = new Typeface(FontFamily, FontStyle, FontWeight);
         double? gdi;
-        try { gdi = GdiText.Width(face, FontSize, text); }
+        try { gdi = GdiText.Width(face, FontSize, text, TopLevel.GetTopLevel(this)?.RenderScaling ?? 1); }
         catch (Exception error) when (error is System.Runtime.InteropServices.MarshalDirectiveException or DllNotFoundException or EntryPointNotFoundException) { gdi = null; }
         if (gdi == null) { ClearValue(LetterSpacingProperty); return; }
         using var layout = new Avalonia.Media.TextFormatting.TextLayout(text, face, FontSize, null);
@@ -368,12 +372,13 @@ static class GdiText {
     static readonly Dictionary<(string, int, bool, int), nint> fonts = new();
     static nint dc;
     internal static void Register(string path) { if (OperatingSystem.IsWindows()) AddFontResourceExW(path, 0x10, 0); }
-    internal static double? Width(Typeface typeface, double size, string text) {
+    internal static double? Width(Typeface typeface, double size, string text, double scale = 1) {
         if (!OperatingSystem.IsWindows()) return null;
         string name = typeface.FontFamily.FamilyNames.FirstOrDefault() ?? typeface.FontFamily.Name;
         if (name.Contains('#')) name = name[(name.LastIndexOf('#') + 1)..];
-        int pixels = (int)Math.Round(size);
-        if (pixels <= 0 || Math.Abs(pixels - size) > .01) return null;
+        // WPF Display formatting measures at device pixels.
+        int pixels = (int)Math.Round(size * scale);
+        if (pixels <= 0) return null;
         var key = (name, (int)typeface.Weight, typeface.Style != FontStyle.Normal, pixels);
         if (dc == 0) dc = CreateCompatibleDC(0);
         if (!fonts.TryGetValue(key, out var font)) {
@@ -386,6 +391,6 @@ static class GdiText {
         }
         if (font == 0) return null;
         SelectObject(dc, font);
-        return GetTextExtentPoint32W(dc, text, text.Length, out var extent) ? extent.Width : null;
+        return GetTextExtentPoint32W(dc, text, text.Length, out var extent) ? extent.Width / scale : null;
     }
 }

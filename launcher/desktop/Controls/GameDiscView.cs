@@ -48,7 +48,7 @@ public sealed class GameDiscView : Control {
         (byte)Math.Clamp(Math.Round(color.R * Diffuse + 255 * specular), 0, 255),
         (byte)Math.Clamp(Math.Round(color.G * Diffuse + 255 * specular), 0, 255),
         (byte)Math.Clamp(Math.Round(color.B * Diffuse + 255 * specular), 0, 255));
-    static readonly GradientStops Silver = new() {
+    static GradientStops Silver() => new() {
         new(Lit(Color.FromRgb(185, 190, 195), MetalSpecular), 0), new(Lit(Color.FromRgb(132, 139, 145), MetalSpecular), .25),
         new(Lit(Color.FromRgb(224, 226, 228), MetalSpecular), .50), new(Lit(Color.FromRgb(107, 114, 120), MetalSpecular), .75),
         new(Lit(Color.FromRgb(185, 190, 195), MetalSpecular), 1) };
@@ -150,7 +150,7 @@ public sealed class GameDiscView : Control {
             var box = new Rect(center.X - scale, center.Y - scale, scale * 2, scale * 2);
             var metal = new LinearGradientBrush {
                 StartPoint = new RelativePoint(box.TopLeft, RelativeUnit.Absolute),
-                EndPoint = new RelativePoint(box.BottomRight, RelativeUnit.Absolute), GradientStops = Silver };
+                EndPoint = new RelativePoint(box.BottomRight, RelativeUnit.Absolute), GradientStops = Silver() };
             context.DrawGeometry(metal, null, Ring(center, scale * .962, scale));
             context.DrawGeometry(metal, null, Ring(center, scale * .125, scale * .20));
             if (label != null)

@@ -55,6 +55,10 @@
       </ControlTheme>
     </ResourceDictionary>
   </Styles.Resources>
+  <!-- RC1 sets FocusVisualStyle to null: focus shows only through each template's own border. -->
+  <Style Selector=":is(Control)">
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
+  </Style>
   <!-- RC1 templates dim disabled controls themselves; the base theme must not dim them again. -->
   <Style Selector=":is(InputElement):disabled">
     <Setter Property="Opacity" Value="1" />
