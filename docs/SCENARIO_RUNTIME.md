@@ -260,3 +260,51 @@ Private evidence is under `build-ninja/issue26/chapter-1-confirmed`,
 Mac build objects, replacing only `pad2TestRoute` plus its new header. It is
 not a rebuilt or tested Windows RC1 executable. Raw VU images, game data,
 private cards and binaries remain ignored and are not part of this branch.
+
+## Second RC1 follow-up: music across transitions
+
+The [second follow-up](https://github.com/Ninjacornix/reo/issues/26#issuecomment-6549086698)
+reports completing Decisions, Decisions without other issues, but hearing ambient
+music through loading screens, cutscenes and FMVs. Together, the last two
+comments leave two separate reports: effects slowdown and audio across
+transitions. Neither comment contains a new RC1 log or a precise reproduction.
+
+Branch `fix/issue-26-music-transitions` carries the earlier chapter diagnostics
+and fixes a confirmed audio lifecycle defect with dependency patch
+`0113-cri-release-destroyed-rna-voices.patch`. Previously, `PS2RNA_DESTROY` erased
+the RPC metadata but left the independent host mixer voice playing. That voice
+could continue consuming queued PCM, survive a pending drain, and play again if
+its former ring received more data. The host now removes that one voice under
+the existing mixer mutex before erasing its RPC metadata. Other voices and
+shared channel queues retain their ownership and playback. Ordinary STOP,
+pause, and natural-end draining are unchanged; globally discarding all stopped
+PCM would risk clipping speech endings.
+
+`tools/audio_transition_check` drives real DTX RPC and RNA control DMA, supplies
+synthetic signed PCM at the producer boundary, and inspects real mixer output.
+The baseline fails after 15 checks at `Destroy silences only the destroyed host
+voice`. The patched sources pass all 30 checks, covering continued speech,
+repeated destruction, old-ring refill, accepted speech tails and destruction
+during a pending drain. The existing owned File #1 mixer/bank regression also
+passes 465 checks. The new patch applies to the canonical SDK after the existing
+release patches; the original SDK checkout and game executable remain intact.
+See the fixture README for the reproducible Mac Ninja runner and source-hash
+receipts. No Windows executable has been validated by these checks.
+
+A 130-second offscreen Hellfire baseline records the menu BGM stop, subsequent
+FMV audio and entry into room 27. Its journal has 1,144 actor observations but no
+eligible continuous gameplay segment, so it supplies no accepted performance
+measurement. The trace includes no `PS2RNA_DESTROY` call: it does not establish
+that the lifecycle defect explains the reporter's entire ambient-music case.
+The native candidate also exits normally after 130 seconds with zero active
+threads, 1,082 actor observations and zero dropped/invalid/unpublished records.
+It likewise has no eligible gameplay segment and does not exercise RNA
+destruction during this opening. Its provenance and log are retained in
+`audio-candidate` and `chapter-3-candidate` under the evidence directory. Visible
+Windows testing of the reported loading/cutscene/FMV sequence is still required.
+Ice and smoke performance remains unresolved by this audio change.
+
+Private evidence stays under `build-ninja/issue26-audio`: `repro-baseline`,
+`repro-candidate`, `mixer-regression.log`, and `chapter-3-confirmed`. The audio
+fixture uses synthetic samples; owned game assets, session logs, cards and
+native binaries remain ignored.
