@@ -371,6 +371,24 @@ static class GdiText {
     static extern int AddFontResourceExW(string path, uint flags, nint reserved);
     static readonly Dictionary<(string, int, bool, int), nint> fonts = new();
     static nint dc;
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    struct TextMetric { public int Height, Ascent, Descent, InternalLeading, ExternalLeading, AveCharWidth, MaxCharWidth, Weight, Overhang, DigitizedAspectX, DigitizedAspectY;
+        public char FirstChar, LastChar, DefaultChar, BreakChar; public byte Italic, Underlined, StruckOut, PitchAndFamily, CharSet; }
+    [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    static extern bool GetTextMetricsW(nint dc, out TextMetric metric);
+    // Diagnostic: GDI line metrics for a face at whole pixel sizes.
+    internal static string Metrics(string face) {
+        if (!OperatingSystem.IsWindows()) return "";
+        var parts = new List<string>();
+        foreach (int size in new[] { 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 142 }) {
+            if (dc == 0) dc = CreateCompatibleDC(0);
+            var font = CreateFontW(-size, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, face);
+            var old = SelectObject(dc, font);
+            if (GetTextMetricsW(dc, out var m)) parts.Add($"{size}:{m.Height}/{m.Ascent}/{m.Descent}");
+            SelectObject(dc, old); DeleteObject(font);
+        }
+        return string.Join(' ', parts);
+    }
     internal static void Register(string path) { if (OperatingSystem.IsWindows()) AddFontResourceExW(path, 0x10, 0); }
     internal static double? Width(Typeface typeface, double size, string text, double scale = 1) {
         if (!OperatingSystem.IsWindows()) return null;

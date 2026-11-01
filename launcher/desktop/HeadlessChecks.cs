@@ -91,6 +91,8 @@ internal static class HeadlessChecks {
             surface.Close();Check(!surface.HasVideo,"Stopped video retained its frame.");mediaChecked=true;
         }
         File.WriteAllText(Path.Combine(output,"visual-brushes.txt"),string.Join("\n",window.GetVisualDescendants().OfType<Avalonia.Controls.Control>().Select(c=>$"{c.GetType().Name} {c.Name} {c.Bounds} bg={c.GetValue(TemplatedControl.BackgroundProperty)}")));
+        if(OperatingSystem.IsWindows()&&Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true")
+            Console.WriteLine("::notice title=GDI metrics Segoe UI (size:height/ascent/descent)::"+Compatibility.GdiText.Metrics("Segoe UI"));
         window.Close();
         File.WriteAllText(Path.Combine(output,"report.json"),JsonSerializer.Serialize(new{passed=true,pages=12,checks,mediaChecked}));
         return 0;
