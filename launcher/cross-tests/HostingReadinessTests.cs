@@ -4,7 +4,12 @@ using Outbreak.Launcher;
 
 internal static class HostingReadinessTests {
     internal static async Task Run(Action<bool, string> check) {
-        foreach (string advertised in new[] { "192.0.2.1", "192.168.1.20", "127.0.0.1", "127.8.9.10" }) {
+        // Windows accepts the whole loopback range without interface aliases. Other platforms
+        // may require configuring an alias, which these isolated checks must not do.
+        string[] addresses = OperatingSystem.IsWindows()
+            ? ["192.0.2.1", "192.168.1.20", "127.0.0.1", "127.8.9.10"]
+            : ["192.0.2.1", "192.168.1.20", "127.0.0.1"];
+        foreach (string advertised in addresses) {
             var bind = IPAddress.IsLoopback(IPAddress.Parse(advertised)) ? IPAddress.Parse(advertised) : IPAddress.Loopback;
             using var signup = new TcpListener(bind, 0);
             using var app = new TcpListener(bind, 0);
