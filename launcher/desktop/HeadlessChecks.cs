@@ -98,6 +98,7 @@ internal static class HeadlessChecks {
             Check(developer.GetVisualDescendants().OfType<Border>().Any(b=>b.Name=="OptionsBody"&&b.IsVisible&&b.Bounds.Height>0),"RC1 expandable section did not open.");developer.IsExpanded=false;
         }
         window.CheckGraphicsPreviewReentry(Check);
+        window.CheckHostingSummary(Check);
         bool mediaChecked=false;
         string? ffmpeg=null;try{ffmpeg=PlatformServices.Ffmpeg();}catch(IOException){}
         if(ffmpeg!=null) {
@@ -125,6 +126,30 @@ internal static class HeadlessChecks {
 }
 
 public partial class MainWindow {
+    internal void CheckHostingSummary(Action<bool, string> check) {
+        var previousMode = settings.CoopMode;
+        string previousHost = settings.CoopHost, previousUsername = settings.AccountUsername;
+        try {
+            settings.CoopMode = "host";
+            settings.CoopHost = "192.0.2.1";
+            settings.AccountUsername = "hosttest";
+            serverStarting = false;
+            RefreshOnlineUi();
+            check(PlayNetworkSummary.Text == "Hosting not running (see Co-op)", "Stopped hosting is presented as still opening.");
+            check(StartServerButton.IsVisible, "Stopped hosting has no start/retry button after reopening the launcher.");
+            serverStarting = true;
+            RefreshOnlineUi();
+            check(PlayNetworkSummary.Text == "Hosting (opening your game...)", "Active hosting startup is not shown.");
+            check(!StartServerButton.IsVisible, "Hosting offers another startup while setup is in progress.");
+        } finally {
+            serverStarting = false;
+            settings.CoopMode = previousMode;
+            settings.CoopHost = previousHost;
+            settings.AccountUsername = previousUsername;
+            RefreshOnlineUi();
+        }
+    }
+
     // Exercise the actual layout callback which can synchronously request another preview frame.
     internal void CheckGraphicsPreviewReentry(Action<bool, string> check) {
         ShowPage("Graphics"); Dispatcher.UIThread.RunJobs();

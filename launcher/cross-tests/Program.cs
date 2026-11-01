@@ -31,6 +31,7 @@ try{GamePreviewAssetsTests.Run(Check);}catch(Exception e){failures.Add("GamePrev
 try{GamePreviewAnimationTests.Run(Check);}catch(Exception e){failures.Add("GamePreviewAnimation: "+e);}
 try{GamePreviewWeaponTests.Run(Check);}catch(Exception e){failures.Add("GamePreviewWeapon: "+e);}
 try{PreviewConcurrencyTests.Run(Check);}catch(Exception e){failures.Add("PreviewConcurrency: "+e);}
+try{await HostingReadinessTests.Run(Check);}catch(Exception e){failures.Add("HostingReadiness: "+e);}
 try{RandomizerSeedsTests.Run(Check);}catch(Exception e){failures.Add("RandomizerSeeds: "+e);}
 try{ExecutableStringTests.Run(Check);}catch(Exception e){failures.Add("ExecutableString: "+e);}
 try{ElfStringReferenceTests.Run(Check);}catch(Exception e){failures.Add("ElfStringReference: "+e);}

@@ -35,9 +35,9 @@ internal sealed class HostedServer : IDisposable {
         };
     }
     // Probe sockets directly so readiness does not depend on OS listener enumeration.
-    static bool UdpListening(int port) {
+    static bool UdpListening(int port, IPAddress? bindAddress = null) {
         using var socket=new Socket(AddressFamily.InterNetwork,SocketType.Dgram,ProtocolType.Udp);
-        try{socket.Bind(new IPEndPoint(IPAddress.Any,port));return false;}
+        try{socket.Bind(new IPEndPoint(bindAddress ?? IPAddress.Any,port));return false;}
         catch(SocketException e)when(e.SocketErrorCode==SocketError.AddressAlreadyInUse){return true;}
     }
     static async Task<bool> TcpListening(string address,int port,CancellationToken cancel) {
@@ -45,6 +45,18 @@ internal sealed class HostedServer : IDisposable {
         using var timeout=CancellationTokenSource.CreateLinkedTokenSource(cancel);timeout.CancelAfter(250);
         try{await socket.ConnectAsync(address,port,timeout.Token);return true;}
         catch(Exception e)when(e is SocketException or OperationCanceledException){cancel.ThrowIfCancellationRequested();return false;}
+    }
+    internal static async Task<bool> ServicesReady(string advertisedAddress, int signup, int app, int bootstrap, int game,
+                                                   CancellationToken cancel) {
+        var address = IPAddress.Parse(advertisedAddress);
+        bool loopbackOnly = IPAddress.IsLoopback(address);
+        // Public/VPN addresses are advertised to friends; readiness checks our own services.
+        // Match the UDP bind scope too: on Windows, a wildcard probe can succeed even while
+        // the same port is occupied on a particular loopback address.
+        string localAddress = loopbackOnly ? address.ToString() : "127.0.0.1";
+        var bindAddress = loopbackOnly ? address : IPAddress.Any;
+        return await TcpListening(localAddress, signup, cancel) && await TcpListening(localAddress, app, cancel) &&
+               UdpListening(bootstrap, bindAddress) && UdpListening(game, bindAddress);
     }
     public static string SuggestedAddress() =>
         NetworkInterface.GetAllNetworkInterfaces()
@@ -171,8 +183,8 @@ internal sealed class HostedServer : IDisposable {
                                           (tail.Length > 0 ? ": " + tail[..Math.Min(tail.Length, 600)]
                                                            : ". See the hosted-server logs."));
                 }
-                if (await TcpListening(normalized, ports.Signup + portOffset, cancel) && await TcpListening(normalized, 10127 + portOffset, cancel) &&
-                    UdpListening(9090 + portOffset) && UdpListening(ports.Game + portOffset)) {
+                if (await ServicesReady(normalized, ports.Signup + portOffset, 10127 + portOffset,
+                                        9090 + portOffset, ports.Game + portOffset, cancel)) {
                     Address = normalized;
                     GameId = game;
                     return;
