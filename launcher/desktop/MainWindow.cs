@@ -30,6 +30,10 @@ public partial class MainWindow : Window {
             if (!File.Exists(settings.Iso) && record.TryGetValue("iso", out var iso)) settings.Iso = iso;
             if (!Directory.Exists(settings.ImportedFile1) && record.TryGetValue("data", out var data))
                 settings.ImportedFile1 = Path.GetDirectoryName(data)!;
+            if (!File.Exists(settings.SecondExe) && record.TryGetValue("file2Executable", out var exe2)) settings.SecondExe = exe2;
+            if (!File.Exists(settings.SecondIso) && record.TryGetValue("file2Iso", out var iso2)) settings.SecondIso = iso2;
+            if (!Directory.Exists(settings.ImportedFile2) && record.TryGetValue("file2Data", out var data2))
+                settings.ImportedFile2 = Path.GetDirectoryName(data2)!;
         }
         controller.Configure(settings);
         InitializeComponent();

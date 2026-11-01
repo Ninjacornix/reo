@@ -25,7 +25,7 @@ public static class PlatformPaths {
             using var doc=JsonDocument.Parse(File.ReadAllText(path));
             var result=doc.RootElement.EnumerateObject().Where(p=>p.Value.ValueKind==JsonValueKind.String)
                 .ToDictionary(p=>p.Name,p=>p.Value.GetString()!);
-            foreach(string key in new[]{"executable","driver","data","iso"})
+            foreach(string key in new[]{"executable","driver","data","iso","file2Executable","file2Data","file2Iso"})
                 if(result.TryGetValue(key,out var value)&&!Path.IsPathRooted(value))result[key]=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path)!,value));
             return result;
         }
@@ -33,6 +33,7 @@ public static class PlatformPaths {
     }
     public static string GameExecutable(string root,string game) {
         if(game=="file1" && NativeRecord(root) is {} record)return record["executable"];
+        if(game=="file2" && NativeRecord(root) is {} second && second.TryGetValue("file2Executable",out var file2))return file2;
         string name=game=="file2"?"reo_recomp_file2":"reo_recomp";
         return Path.Combine(root,OperatingSystem.IsWindows()?"build-ninja":"build-"+Platform,"recomp",name+(OperatingSystem.IsWindows()?".exe":""));
     }

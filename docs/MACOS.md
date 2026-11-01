@@ -94,6 +94,22 @@ dependency edits and incomplete generation directories are preserved rather
 than reset. A first build downloads and compiles dependencies and game code;
 later builds reuse completed objects.
 
+File #2 (NTSC-U v1.05, SLUS-20984) builds the same way from its own ISO:
+
+```sh
+python3 tools/macos/build.py --game file2 --iso "iso/Resident Evil - Outbreak - File #2.iso" --jobs 6
+python3 tools/launcher/package.py --reuse-services
+```
+
+Like the Windows File #2 build kit, File #2 builds in a private workspace,
+`build-macos/file2/`: a copy of this checkout and the patched PS2Recomp tree where its
+runtime catalogues, source recipes and queue-control body are generated, a runtime and
+game build with every unit compiled for `REO_GAME_FILE2`, and the `reo_recomp_file2`
+target. File #1's generated files are untouched. The builder adds `file2Executable`,
+`file2Data` and `file2Iso` to `macos-build.json`; the launcher and `package.py` use them
+(`Outbreak.app/Contents/Resources/launcher/native-file2/`). Then import File #2 once
+from Game files.
+
 `build-macos/macos-build.json` records the local ISO, extracted data and
 executable paths after a successful build. Keep the ISO available. Neither the
 disc nor generated game code belongs in a distributed source/package archive.
