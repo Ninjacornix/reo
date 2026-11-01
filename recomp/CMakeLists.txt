@@ -29,6 +29,7 @@ set(PS2RECOMP_BUILD "${PS2RECOMP_DIR}/out/build")
 
 
 option(REO_BUILD_GPU_GS "Link the validated paraLLEl-GS adapter; select with REO_GS_BACKEND=parallel" OFF)
+option(REO_BUILD_SCANOUT_PACING_CHECK "Build the Windows standalone GPU scanout pacing check" OFF)
 
 # Source-only guarded wrapper registration. Runtime source ownership remains
 # hard-disabled until the direct-context/upstream/reset closure is implemented.
@@ -273,6 +274,15 @@ if(REO_BUILD_GPU_GS)
     endif()
     set_property(TARGET reo_parallel_backend_native PROPERTY UNITY_BUILD OFF)
     target_link_libraries(reo_parallel_backend_native PRIVATE ${_reo_gpu_libraries})
+    if(WIN32 AND REO_BUILD_SCANOUT_PACING_CHECK)
+        add_executable(reo_scanout_pacing_check "${_reo_adapter_source}/scanout_pacing_check.cpp")
+        get_target_property(_reo_pacing_includes reo_parallel_backend_native INCLUDE_DIRECTORIES)
+        get_target_property(_reo_pacing_definitions reo_parallel_backend_native COMPILE_DEFINITIONS)
+        target_include_directories(reo_scanout_pacing_check PRIVATE ${_reo_pacing_includes})
+        target_compile_definitions(reo_scanout_pacing_check PRIVATE ${_reo_pacing_definitions})
+        target_compile_features(reo_scanout_pacing_check PRIVATE cxx_std_20)
+        target_link_libraries(reo_scanout_pacing_check PRIVATE reo_parallel_backend_native)
+    endif()
     list(PREPEND _reo_gpu_libraries reo_parallel_backend_native)
 
     foreach(_reo_graphics_target IN ITEMS

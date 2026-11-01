@@ -581,3 +581,58 @@ and frame-pacing CSVs, resource samples and hidden-window resize receipts in
 the two viewport session folders. Large readbacks and private pipeline caches
 remain private alongside the raw metric files; no owned artwork or game code is
 added to the repository.
+
+### Presentation backpressure mitigation
+
+The renderer now retires obsolete progressive display markers when they are
+more than three host VBlanks behind the live clock. It submits all preceding
+guest GS work and preserves every GIF packet, DMA and synchronization event.
+It omits the stale circuit merge and host post-processing/presentation, keeping
+the last immutable published picture until a new picture is ready. An intentional
+black screen still produces a normal picture. SDK patch 0116 documents and
+implements this empty-frame publication contract.
+
+This is limited to progressive output. Interlaced fields, mode transitions,
+EXTWRITE and explicit diagnostic readbacks keep the original path. No more than
+two consecutive markers may be retired, so rendering cannot starve. Offline
+replays have no live-clock callback and retain their original behavior.
+`REO_SKIP_STALE_SCANOUT=0` disables the mitigation for comparison.
+
+Two runs of the same executable and room-entry fixture compare that switch.
+The player remains at `2811.375, -1200, 4353.8252`; sampled position and all six
+camera fields remain constant throughout each 20-second measurement. Both use
+4x internal resolution, SMAA and verified hidden output extents.
+
+| Probe | First FHD | First 4K | Repeat FHD | Repeat 4K |
+| --- | ---: | ---: | ---: | ---: |
+| Disabled, `gpu-stale-off-38` | 7.156 | 5.805 | 10.408 | 5.805 |
+| Enabled, `gpu-stale-on-37` | 10.458 | 8.757 | 13.161 | 11.459 |
+
+These are original game updates per second. The GPU remains about 93–99% busy,
+with another application consuming most of its time. The test process receives
+roughly 22–31% of the busiest engine during these stages. This is a practical
+backpressure mitigation, not an exclusive benchmark or evidence that the
+reporter's exact slowdown is completely resolved. The remaining upscaled
+GPU-pressure slowdown is still open. The enabled run includes bounded visual
+readbacks; the disabled run omits them. All native processes exit normally.
+
+At 1x internal resolution, post-AA off and a verified 640x448 hidden output,
+`gpu-native-movie41` measures 600 original updates in 19.984 seconds (30.024/s)
+in the same room. The GPU movie option is enabled for this run. This is a
+compatibility check at native resolution, not a performance estimate for 4x/4K.
+
+`tools/parallel_gs_backend/scanout_pacing_check.cpp` adds 148 real GPU checks.
+It compares actual readback pixels with an unpaced reference while alternating
+raw GIF and direct-register drawing, exercising skipped markers, mode changes,
+interlaced history, reset, diagnostic capture, forced readback and blank output.
+It also checks the consecutive-skip bound. Both 1x and 4x checks pass on the
+RX 570. The fixture opens no window, audio device or native game runtime and
+uses synthetic geometry only. Enable `REO_BUILD_GPU_GS` and
+`REO_BUILD_SCANOUT_PACING_CHECK` in the normal Windows CMake build, then build
+and run target `reo_scanout_pacing_check`. An optional
+`REO_PIPELINE_CACHE_FILE` should point to a private test cache.
+
+Stencil-culling, unchanged-frame caching and reduced GPU checkpoint detail
+were also investigated privately. They are not included: the evidence did not
+establish a sufficient live benefit. The crash-checkpoint compatibility
+workaround and requested rendering quality remain unchanged.

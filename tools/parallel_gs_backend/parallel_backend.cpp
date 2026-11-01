@@ -94,6 +94,10 @@ class ParallelBackend final : public Backend, private SignalInterface {
 #endif
     reo_gpu_present::ResidentOwnerImages displayImages_;
     reo::performance::FrameTrace frameTrace_;
+    uint64_t staleScanouts_ = 0;
+    unsigned consecutiveStale_ = 0;
+    std::array<uint64_t, 2> lastScanoutMode_{};
+    bool lastScanoutProgressive_ = false;
     uint64_t normalDownloads_ = 0, outputReadbacks_ = 0;
     BufferHandle captureReadback_;
     size_t captureReadbackBytes_ = 0;
@@ -672,6 +676,12 @@ class ParallelBackend final : public Backend, private SignalInterface {
         ThreadIndexScope threadIndex;
         const bool saveCache = live_ && cacheReady_;
         live_ = false;
+        if (staleScanouts_)
+            std::fprintf(stderr, "[GS-PRESENT-PACING] retired_stale=%llu\n",
+                static_cast<unsigned long long>(staleScanouts_));
+        staleScanouts_ = 0;
+        consecutiveStale_ = 0;
+        lastScanoutProgressive_ = false;
         reo_parent_natural::setActualFirstEntryEnrollmentRequested(false);
         retireMovieOwner();
         if (gs_)
@@ -726,6 +736,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
     void reset() override {
         ThreadIndexScope threadIndex;
         requireLive();
+        consecutiveStale_ = 0;
+        lastScanoutProgressive_ = false;
         if (residentGeometry_ && !residentResetReady_)
             throw std::runtime_error("GS reset lacks real resident retirement/epoch preparation");
         residentResetReady_ = false;
@@ -985,7 +997,35 @@ class ParallelBackend final : public Backend, private SignalInterface {
         info.high_resolution_scanout = reo::graphics::highResolutionScanout(
             internalResolution_, capture.registers[0], capture.registers[8], capture.registers[10]);
         gs_->flush();
+        // Presentation can fall behind the guest while the queue still owns
+        // newer drawings. Retire obsolete progressive markers after submitting
+        // ALL preceding GS work; never discard a guest packet, event or DMA.
+        // Interlaced history and EXTWRITE have side effects and cannot be skipped.
+        // At most two consecutive markers may be retired, preventing starvation.
+        static const bool pace = [] {
+            const char* value = std::getenv("REO_SKIP_STALE_SCANOUT");
+            return !value || std::strcmp(value, "0") != 0;
+        }();
+        if (pace && config_.currentVsyncTick && consecutiveStale_ < 2 &&
+            lastScanoutProgressive_ && lastScanoutMode_[0] == capture.registers[1] &&
+            lastScanoutMode_[1] == capture.registers[2] &&
+            !capture.forceHostReadback && !(capture.registers[13] & 1u) &&
+            !(config_.diagnosticOutputRequested &&
+              config_.diagnosticOutputRequested(capture.tick)) &&
+            gs_->vsync_can_skip(info)) {
+            const uint64_t now = config_.currentVsyncTick();
+            if (now > capture.tick && now - capture.tick > 3) {
+                ++staleScanouts_;
+                ++consecutiveStale_;
+                // An empty frame means this marker has no new host picture.
+                // The worker keeps its last publication while retiring the marker.
+                return {};
+            }
+        }
+        consecutiveStale_ = 0;
         auto scanout = gs_->vsync(info);
+        lastScanoutProgressive_ = scanout.image && !scanout.interlaced;
+        lastScanoutMode_ = {capture.registers[1], capture.registers[2]};
         timing.scanout();
         if(scanout.image && scanoutReports_ < 16 &&
            (scanout.image->get_width()!=reportedScanoutWidth_ || scanout.image->get_height()!=reportedScanoutHeight_)) {

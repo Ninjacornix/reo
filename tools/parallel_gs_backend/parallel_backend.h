@@ -34,6 +34,9 @@ struct Config {
     // refreshes this bank rather than clearing it again. nullopt suppresses a
     // stale pre-RESET job; the root's callback owns its epoch/front-state lock.
     std::function<std::optional<gs_backend_bridge::Privileged>()> peekEventFrontState;
+    // Live host VBlank clock for discarding obsolete progressive presentations.
+    // Empty disables this policy (offline replays and host readbacks).
+    std::function<uint64_t()> currentVsyncTick;
 };
 // Constructs a factory only; deliberately does not register/enable it.
 gs_backend_bridge::Factory makeFactory(Config config = {});

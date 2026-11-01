@@ -1121,6 +1121,8 @@ int main(int argc, char* argv[]) {
     gpuConfig.forceProgressive = true;
 
     gpuConfig.antiBlur = true;
+    if (gpuConfig.residentPresentation)
+        gpuConfig.currentVsyncTick = [] { return ps2_syscalls::GetCurrentVSyncTick(); };
 
     gpuConfig.persistentPipelineCache = true;
     if (const char* cache = std::getenv("REO_PIPELINE_CACHE_FILE"); cache && *cache)
