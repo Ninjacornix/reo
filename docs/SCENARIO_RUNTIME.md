@@ -636,3 +636,41 @@ Stencil-culling, unchanged-frame caching and reduced GPU checkpoint detail
 were also investigated privately. They are not included: the evidence did not
 establish a sufficient live benefit. The crash-checkpoint compatibility
 workaround and requested rendering quality remain unchanged.
+
+### Additional frozen-lab VU coverage
+
+The follow-up VU census finds another interpreted image in the frozen-room
+route: `65d42faf847a20b9df414f281d757b64c3932eccfe8cc18a59ed9edb527c3905`
+(census key `ca43537919fe633e`). In the six-program run it accounts for 429.80 ms,
+or 6.8% of sampled VU execution time over 20 seconds. Its compiled implementation
+already exists in the experimental catalogue; it is now enabled by default.
+The catalogue still contains 12 exact images, with seven enabled by default.
+
+`bfp-effect-capture-48` collects 128 original launches in scenario 35, room 28,
+using a full-image filter and the original room field as a capture gate. The
+captured entry counts are 31 at PC 0, 31 at 88, 30 at 296 and 36 at 1296. These
+cover all four registered entries. The production interpreter replay and the
+new default table agree on all 632 state bytes, all 16 KiB of data, and both
+ordered GIF streams: 121 packets containing 148,432 bytes. Five replay rounds
+have median times of 3.7865 ms interpreted and 1.1096 ms compiled. That is a
+program replay improvement, not a claim of a comparable game frame-rate gain.
+
+Another 545 earlier frozen-area and Hellfire captures pass with the new table.
+Generated instruction bodies are identical to the six-program factory; only
+the default descriptor list changes. Existing native geometry kernels retain
+priority, and unknown images or entries retain the interpreter fallback. No
+SDK, shader, rendering-quality or game-clock changes are included in this
+follow-up. Captures and generated game code remain private under
+`build-ninja/issue26-verify`.
+
+The seven-program native run, `bfp-vu7-candidate-49`, reports 100% compiled
+pair coverage for this image (12,453 launches, 109.26 ms over its 20-second
+census). The earlier six-program run records 12,354 launches and 429.80 ms.
+Other programs also run faster in the later session, so these separate-session
+times are not an isolated performance benchmark. The complete replay above
+provides the controlled comparison. The native frozen-lab / chemical-storage /
+frozen-lab route measures 29.941 / 30.035 / 29.991 original game updates per
+second at 4x internal resolution with forced bilinear filtering. It exits
+normally. This verifies the additional compiled path and local compatibility;
+the reporter's exact RTX 3060 configuration remains unverified, and the
+previously documented GPU-pressure case is not declared resolved.

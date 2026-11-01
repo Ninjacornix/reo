@@ -157,6 +157,7 @@
     {
       "sha256": "65d42faf847a20b9df414f281d757b64c3932eccfe8cc18a59ed9edb527c3905",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         88,
