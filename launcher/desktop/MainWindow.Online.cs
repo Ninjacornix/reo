@@ -1,0 +1,606 @@
+using Avalonia.Input.Platform;
+
+namespace Outbreak.Launcher.Desktop;
+
+// Ports of RC1 MainWindow.Online.cs, MainWindow.InviteAddresses.cs and MainWindow.LobbySettings.cs.
+public partial class MainWindow {
+    readonly HostedServer hostedServer = new();
+    bool serverStarting;
+    CancellationTokenSource? accountPreparation;
+    string? preparedAccount;
+    LanDiscovery.Responder? lanResponder;
+    volatile bool hostRoomReady;
+    CancellationTokenSource? gameSearch;
+    readonly HashSet<string> searchedGameEditions = new(StringComparer.Ordinal);
+    Func<CancellationToken, string, Task<List<LanDiscovery.Game>>>? gameSearchLookup;
+    string onlineEdition = "";
+    List<LanDiscovery.Game> foundGames = new();
+    // UI diagnostics exercise real controls/settings without starting services,
+    // broadcasting discovery packets or changing this PC's network setup.
+    bool CoopUiDiagnostics => args.Contains("--test-coop-ui") || staticCapture;
+
+    // Checks the player name on the chosen server before the game starts, so problems show here
+    // instead of inside the game. The game repeats this automatically when it signs in.
+    async Task<bool> PrepareLauncherAccount() {
+        if (!OnlineOptions.Configured(settings))
+            return false;
+        OnlineOptions.TryHost(settings.CoopHost, out string host);
+        string username = settings.AccountUsername;
+        string identity = settings.Game.Id + "\n" + host + "\n" + username;
+        if (preparedAccount == identity)
+            return true;
+        accountPreparation?.Cancel();
+        using var cancel = new CancellationTokenSource();
+        accountPreparation = cancel;
+        AccountStatus.Text = "Checking your player name...";
+        AccountStatus.Foreground = (IBrush)FindResource("Muted");
+        try {
+            // Hosting: sign up with our own server directly on this PC. Many routers cannot reach
+            // their own public address from inside (no NAT loopback).
+            Uri? endpoint = SignupEndpoint(settings, hostedServer.Running ? hostedServer.Address : null);
+            await AutomaticAccount.Provision(Settings.Home, host, username, cancel.Token, endpoint);
+            preparedAccount = identity;
+            AccountStatus.Text = "";
+            return true;
+        } catch (OperationCanceledException) when (cancel.IsCancellationRequested) {
+            return false;
+        } catch (Exception error) {
+            if (!cancel.IsCancellationRequested) {
+                AccountStatus.Text = error switch {
+                    AccountNameTakenException =>
+                        "Another player already uses that name in this game. Choose another name.",
+                    System.Net.Http.HttpRequestException {
+                        HttpRequestError : System.Net.Http.HttpRequestError.ConnectionError
+                    } or TaskCanceledException =>
+                        settings.ResolvedCoopMode == "host"
+                            ? "Your game is not open yet. Wait for it, or press Try again."
+                            : $"No game answered at {host}. Check the address, and that your friend chose Host a game.",
+                    _ => "Could not check your player name: " + error.Message.TrimEnd('.') + "."
+                };
+                AccountStatus.Foreground = (IBrush)FindResource("Danger");
+            }
+            return false;
+        } finally {
+            if (accountPreparation == cancel)
+                accountPreparation = null;
+        }
+    }
+
+    // Hosts sign up with their own server on this PC: many routers cannot reach their own public
+    // address from inside. Joiners use the port their host announced, if any.
+    internal static Uri? SignupEndpoint(Settings settings, string? hostedAddress) => SignupEndpoints.For(settings, hostedAddress);
+
+    void ShowPorts() {
+        HostNetworking.Current = new(settings.SignupPort, settings.GamePort);
+        SignupPortBox.Text = settings.SignupPort.ToString();
+        GamePortBox.Text = settings.GamePort.ToString();
+    }
+    void PortKeyDown(object? sender, KeyEventArgs e) {
+        if (e.Key == Key.Enter)
+            PortsChanged(sender, e);
+    }
+    void ResetPorts(object? sender, RoutedEventArgs e) {
+        SignupPortBox.Text = HostNetworking.SignupPort.ToString();
+        GamePortBox.Text = HostNetworking.GamePort.ToString();
+        PortsChanged(sender, e);
+    }
+    async void PortsChanged(object? sender, RoutedEventArgs e) {
+        if (!initialized)
+            return;
+        if (!int.TryParse((SignupPortBox.Text ?? "").Trim(), out int signup) ||
+            !int.TryParse((GamePortBox.Text ?? "").Trim(), out int gamePort)) {
+            PortStatus.Text = "Ports must be numbers from 1024 to 65535.";
+            PortStatus.Foreground = (IBrush)FindResource("Danger");
+            return;
+        }
+        string? error = HostNetworking.PortError(signup, gamePort);
+        if (error != null) {
+            PortStatus.Text = error;
+            PortStatus.Foreground = (IBrush)FindResource("Danger");
+            return;
+        }
+        PortStatus.Text = "";
+        if (signup == settings.SignupPort && gamePort == settings.GamePort)
+            return;
+        settings.SignupPort = signup;
+        settings.GamePort = gamePort;
+        SaveOnlineSettings();
+        ShowPorts();
+        preparedAccount = null;
+        _ = RefreshFirewallStatus();
+        if (settings.ResolvedCoopMode == "host" && (hostedServer.Running || serverStarting)) {
+            await StopHosting();
+            await StartHosting();
+        }
+        PortStatus.Text = "Ports saved.";
+        PortStatus.Foreground = (IBrush)FindResource("Muted");
+    }
+
+    void InitializeOnline() {
+        string mode = settings.ResolvedCoopMode;
+        settings.CoopMode = mode;
+        (mode switch { "host" => ModeHost, "join" => ModeJoin, _ => ModeOffline }).IsChecked = true;
+        CoopHost.Text = mode == "join" ? settings.CoopHost : "";
+        AccountUsername.Text = settings.AccountUsername;
+        AccountUsername.MaxLength = OnlineOptions.MaxUsernameLength;
+        AutoLobby.IsChecked = settings.AutoLobby;
+        AutoForward.IsChecked = settings.AutoForward;
+        // RC1 requests forwarding through Windows' UPnP client (HNetCfg); other desktops forward manually.
+        if (!OperatingSystem.IsWindows()) AutoForward.IsEnabled = false;
+        InitializeLobbySettings();
+        ShowPorts();
+        RefreshHostAddresses();
+        _ = RefreshFirewallStatus();
+    }
+
+    // RC1 handles RadioButton.Checked; IsCheckedChanged also reports the unchecked choice.
+    async void CoopModeChanged(object? sender, RoutedEventArgs e) {
+        if (!initialized || sender is not RadioButton { Tag: string mode, IsChecked: true })
+            return;
+        settings.CoopMode = mode;
+        settings.HostServer = mode == "host";
+        settings.CoopHost = mode == "host" ? settings.HostAddress : (CoopHost.Text ?? "").Trim();
+        preparedAccount = null;
+        AccountStatus.Text = "";
+        SaveOnlineSettings();
+        RefreshGameUi();
+        if (mode == "host")
+            await StartHosting();
+        else
+            await StopHosting();
+    }
+
+    async void OnlineSettingChanged(object? sender, RoutedEventArgs e) {
+        if (!initialized)
+            return;
+        accountPreparation?.Cancel();
+        preparedAccount = null;
+        AccountStatus.Text = "";
+        settings.AccountUsername = (AccountUsername.Text ?? "").Trim();
+        settings.AutoLobby = AutoLobby.IsChecked == true;
+        bool forwardChanged = settings.AutoForward != (AutoForward.IsChecked == true);
+        settings.AutoForward = AutoForward.IsChecked == true;
+        if (settings.ResolvedCoopMode == "join" && sender == CoopHost) {
+            settings.CoopHost = (CoopHost.Text ?? "").Trim();
+            var picked = foundGames.FirstOrDefault(g => g.Address == settings.CoopHost);
+            settings.JoinHostName = picked?.Name ?? "";
+            settings.JoinSignupPort = picked?.Signup ?? 0;
+            settings.JoinRoomName = picked?.RoomTitle ?? "";
+            ShowFoundGames();
+        }
+        SaveOnlineSettings();
+        RefreshGameUi();
+        if (forwardChanged)
+            await UpdateRouterForwarding();
+    }
+
+    void SaveOnlineSettings() {
+        try {
+            settings.Save();
+        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+            Status.Text = "Settings could not be saved: " + error.Message;
+        }
+    }
+
+    async void HostAddressChanged(object? sender, SelectionChangedEventArgs e) {
+        if (!initialized || HostAddressPicker.SelectedItem is not AddressChoice choice ||
+            choice.Address == settings.HostAddress)
+            return;
+        settings.HostAddress = choice.Address;
+        if (settings.ResolvedCoopMode == "host")
+            settings.CoopHost = choice.Address;
+        preparedAccount = null;
+        SaveOnlineSettings();
+        // The server tells players where to connect, so a new address needs a restart.
+        if (settings.ResolvedCoopMode == "host" && (hostedServer.Running || serverStarting)) {
+            await StopHosting();
+            await StartHosting();
+        }
+        RefreshGameUi();
+    }
+
+    async void StartServerClicked(object? sender, RoutedEventArgs e) => await StartHosting();
+
+    async Task StartHosting() {
+        if (CoopUiDiagnostics) return;
+        if (serverStarting || !OnlineOptions.Supported(settings.Game.Id))
+            return;
+        if (hostedServer.Running && hostedServer.GameId == settings.Game.Id)
+            return;
+        if (game.Running || launching) {
+            HostStatus.Text = "Close the game to open your game for friends.";
+            return;
+        }
+        if (hostedServer.Running) await StopHosting();
+        serverStarting = true;
+        StartServerButton.Visibility = Visibility.Collapsed;
+        HostStatus.Text = "Opening your game...";
+        HostDetail.Text = "";
+        HostSetupActivity.Visibility = Visibility.Visible;
+        HostSetupProgress.IsIndeterminate = true;
+        HostSetupStage.Text = "Preparing hosting";
+        HostSetupDetail.Text = "Checking hosting files";
+        try {
+            await hostedServer.Start(
+                root, settings.HostAddress,
+                progress: new Progress<string>(stage => HostDetail.Text = stage),
+                setupProgress: new Progress<ImportProgress>(value => {
+                    if (serverStarting)
+                        ReportHostSetup(value);
+                }), game: settings.Game.Id);
+            bool localOnly =
+                System.Net.IPAddress.IsLoopback(System.Net.IPAddress.Parse(hostedServer.Address));
+            HostStatus.Text = localOnly ? "Your game is open on this PC only"
+                                        : "Your game is open for friends";
+            HostDetail.Text = localOnly ? "No network was found, so friends cannot join yet."
+                                        : "Press Play. Friends choose Join a game.";
+            CopyServerButton.IsEnabled = !localOnly;
+            // Your own game must use the address the server actually started on.
+            if (settings.CoopHost != hostedServer.Address) {
+                settings.CoopHost = hostedServer.Address;
+                SaveOnlineSettings();
+                preparedAccount = null;
+            }
+            try {
+                lanResponder ??= new LanDiscovery.Responder(DescribeHostedGame,
+                    () => game.Running ? game.HostRandomizerConfiguration : null);
+            } catch (System.Net.Sockets.SocketException) {
+                hostedServer.Dispose();
+                throw new IOException("UDP port 10129 is already in use. Close the other hosting launcher and try again; this port carries shared game settings.");
+            }
+            await UpdateRouterForwarding();
+        } catch (OperationCanceledException) {
+            HostStatus.Text = "Hosting cancelled";
+            HostDetail.Text = "";
+            StartServerButton.Visibility = Visibility.Visible;
+            CopyServerButton.IsEnabled = false;
+        } catch (Exception error) {
+            HostStatus.Text = "Your game could not be opened";
+            HostDetail.Text = error.Message;
+            if (error.Message.StartsWith("Ports already in use", StringComparison.Ordinal))
+                HostPortSettings.BringIntoView();
+            StartServerButton.Visibility = Visibility.Visible;
+            CopyServerButton.IsEnabled = false;
+        } finally {
+            serverStarting = false;
+            HostSetupActivity.Visibility = Visibility.Collapsed;
+            HostSetupProgress.IsIndeterminate = false;
+            RefreshGameUi();
+        }
+    }
+
+    LanDiscovery.Game DescribeHostedGame() =>
+        new(OnlineOptions.ValidUsername(settings.AccountUsername) ? settings.AccountUsername : "Host",
+            hostedServer.Address, Updates.DefaultVersion, hostRoomReady && game.Running,
+            settings.SignupPort, hostedServer.GameId,
+            settings.AutoLobby && LobbySettings.ValidTitle(settings.ResolvedRoomName) ? settings.ResolvedRoomName : "");
+
+    async Task StopHosting() {
+        lanResponder?.Dispose();
+        lanResponder = null;
+        hostedServer.Dispose();
+        HostStatus.Text = "";
+        HostDetail.Text = "";
+        CopyServerButton.IsEnabled = false;
+        await UpdateRouterForwarding();
+    }
+
+    void ReportHostSetup(ImportProgress value) {
+        HostSetupProgress.IsIndeterminate = value.Total <= 0;
+        HostSetupProgress.Value = Math.Clamp(value.Percent, 0, 100);
+        string counts = SetupProgressText.Counts(value);
+        HostSetupStage.Text = value.Stage + (counts.Length > 0 ? " - " + counts : "");
+        HostSetupDetail.Text = value.File;
+    }
+    void CancelServerSetup(object? sender, RoutedEventArgs e) {
+        if (serverStarting)
+            hostedServer.Dispose();
+    }
+    void CopyServerAddress(object? sender, RoutedEventArgs e) {
+        if (hostedServer.Running)
+            _ = Clipboard?.SetValueAsync(DataFormat.Text, hostedServer.Address);
+    }
+
+    // ---- Joining: games on the local network ----
+    void SearchGamesClicked(object? sender, RoutedEventArgs e) => SearchGames();
+    async void SearchGames() {
+        if (CoopUiDiagnostics && gameSearchLookup == null) return;
+        if (!OnlineOptions.Supported(settings.Game.Id) || gameSearch != null || settings.ResolvedCoopMode != "join" || game.Running)
+            return;
+        string edition = settings.Game.Id;
+        using var cancel = new CancellationTokenSource();
+        gameSearch = cancel;
+        searchedGameEditions.Add(edition);
+        SearchGamesButton.IsEnabled = false;
+        if (foundGames.Count == 0)
+            SearchStatus.Text = "Searching...";
+        try {
+            var discovered = await (CoopUiDiagnostics ? gameSearchLookup!(cancel.Token, edition) :
+                LanDiscovery.Search(TimeSpan.FromSeconds(1.5), cancel.Token, edition));
+            if (settings.Game.Id != edition) return;
+            foundGames = discovered;
+            SearchStatus.Text = foundGames.Count == 0
+                                    ? "No games found."
+                                    : "";
+            var chosen = foundGames.FirstOrDefault(g => g.Address == settings.CoopHost);
+            if (chosen != null && (chosen.Name != settings.JoinHostName ||
+                                   chosen.Signup != settings.JoinSignupPort || chosen.RoomTitle != settings.JoinRoomName)) {
+                settings.JoinHostName = chosen.Name;
+                settings.JoinSignupPort = chosen.Signup;
+                settings.JoinRoomName = chosen.RoomTitle;
+                SaveOnlineSettings();
+            }
+        } catch (Exception error) when (error is OperationCanceledException or
+                                            System.Net.Sockets.SocketException) {
+            SearchStatus.Text = "Could not search your network.";
+        } finally {
+            gameSearch = null;
+            SearchGamesButton.IsEnabled = true;
+            ShowFoundGames();
+        }
+    }
+
+    void ShowFoundGames() {
+        FoundGames.Children.Clear();
+        foreach (var found in foundGames.Where(g => g.GameId == settings.Game.Id)) {
+            bool selected = found.Address == settings.CoopHost;
+            var text = new StackPanel();
+            var heading = new Grid();
+            heading.ColumnDefinitions.Add(new());
+            heading.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
+            heading.Children.Add(new Rc1TextBlock { Text = found.Name + "'s game", FontSize = 17,
+                Margin = new Thickness(0, 0, 12, 0) });
+            if (selected) {
+                var marker = new Rc1TextBlock { Text = "SELECTED", FontSize = 11,
+                    Foreground = (IBrush)FindResource("Muted"), VerticalAlignment = VerticalAlignment.Center };
+                Grid.SetColumn(marker, 1); heading.Children.Add(marker);
+            }
+            text.Children.Add(heading);
+            text.Children.Add(new Rc1TextBlock {
+                Text = found.Address + (found.Version == Updates.DefaultVersion
+                                            ? ""
+                                            : " · different launcher version (" + found.Version + ")"),
+                Style = (Style)FindResource("Hint"), FontSize = 14, Margin = new Thickness(0, 6, 0, 0) });
+            text.Children.Add(new Rc1TextBlock { Text = found.RoomReady ? "Waiting room open" : "Waiting for a room",
+                Foreground = (IBrush)FindResource("Muted"), FontSize = 12, Margin = new Thickness(0, 7, 0, 0) });
+            if (found.RoomTitle.Length > 0)
+                text.Children.Add(new Rc1TextBlock { Text = found.RoomTitle, FontSize = 14,
+                    Foreground = (IBrush)FindResource("Muted"), Margin = new Thickness(0, 5, 0, 0) });
+            var button = new Button { Content = text, HorizontalContentAlignment = HorizontalAlignment.Left,
+                                      Margin = new Thickness(0, 0, 0, 8), Tag = found,
+                                      Style = (Style)FindResource("CoopGameChoice"),
+                                      Background = selected ? VisualPalette.Brush(Palette.Accent, 22) : Brushes.Transparent,
+                                      BorderBrush = selected ? (IBrush)FindResource("Accent") : Brushes.Transparent };
+            Avalonia.Automation.AutomationProperties.SetName(button, "Join " + found.Name + "'s game");
+            button.Click += (_, _) => {
+                var game = (LanDiscovery.Game)button.Tag;
+                if (game.GameId != settings.Game.Id) return;
+                CoopHost.Text = game.Address; // saves through OnlineSettingChanged
+            };
+            FoundGames.Children.Add(button);
+        }
+    }
+
+    // ---- Reaching the host ----
+    async Task RefreshFirewallStatus() {
+        // Windows Firewall rules are a Windows adapter. Other desktops prompt or use their own settings.
+        if (!OperatingSystem.IsWindows()) { FirewallStatus.Text = ""; FirewallButton.Visibility = Visibility.Collapsed; return; }
+        bool present = await Task.Run(HostNetworking.FirewallRulesPresent);
+        FirewallStatus.Text = present ? "Windows Firewall allows friends." : "Windows may block friends.";
+        FirewallButton.Visibility = present ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    async void AllowFirewall(object? sender, RoutedEventArgs e) {
+        if (!OperatingSystem.IsWindows()) return;
+        FirewallButton.IsEnabled = false;
+        FirewallStatus.Text = "Waiting for administrator approval...";
+        bool added = await HostNetworking.AddFirewallRules();
+        FirewallStatus.Text = added ? "Windows Firewall allows friends." : "Not allowed (approval declined or failed).";
+        FirewallButton.IsEnabled = true;
+        FirewallButton.Visibility = added ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    bool portsForwarded;
+    async Task UpdateRouterForwarding() {
+        if (!OperatingSystem.IsWindows()) { ReachStatus.Text = ""; return; }
+        if (!hostedServer.Running || !settings.AutoForward) {
+            if (portsForwarded) {
+                portsForwarded = false;
+                await HostNetworking.ClosePorts();
+            }
+            ReachStatus.Text = settings.AutoForward ? "Requested when hosting starts. Your router must support UPnP." : "";
+            return;
+        }
+        var home = HostNetworking.LocalAddresses().FirstOrDefault(
+            a => a.Kind == HostNetworking.AddressKind.Home);
+        if (home == null) {
+            ReachStatus.Text =
+                "No home network address found, so router forwarding is not possible.";
+            return;
+        }
+        ReachStatus.Text = "Requesting port forwarding from your router...";
+        var result = await HostNetworking.OpenPorts(home.Address);
+        portsForwarded = result.Opened;
+        if (!result.Opened)
+            ReachStatus.Text = result.Message;
+        else if (HostNetworking.BehindAnotherNat(result.RouterAddress))
+            ReachStatus.Text =
+                "Your router accepted the request, but is behind another network. Internet access is not confirmed.";
+        else
+            ReachStatus.Text =
+                "Your router accepted the request. Internet access is not confirmed.";
+    }
+
+    // Lobby steering for the next launch, when the player asked for it.
+    LobbyAutomation.Options? LobbyOptions() {
+        if (!settings.AutoLobby || !OnlineOptions.Configured(settings))
+            return null;
+        if (settings.ResolvedCoopMode == "host")
+            return new(true, settings.ResolvedRoomName, hostedServer.Address,
+                       ready => hostRoomReady = ready, settings.Game.Id,
+                       settings.ResolvedRoomMaxPlayers, settings.ResolvedRoomWaitMinutes);
+        return new(false, settings.JoinRoomName.Length > 0 ? settings.JoinRoomName : settings.JoinHostName,
+                   settings.CoopHost, Game: settings.Game.Id);
+    }
+
+    // A host typed by address may still answer discovery directly: learn its name and sign-up port.
+    async Task RefreshJoinHost() {
+        if (settings.ResolvedCoopMode != "join")
+            return;
+        try {
+            string edition = settings.Game.Id;
+            var host = await LanDiscovery.Ask(settings.CoopHost, TimeSpan.FromSeconds(1.5),
+                                              CancellationToken.None, edition);
+            if (settings.Game.Id != edition) return;
+            if (host != null && (host.Name != settings.JoinHostName ||
+                                 host.Signup != settings.JoinSignupPort || host.RoomTitle != settings.JoinRoomName)) {
+                settings.JoinHostName = host.Name;
+                settings.JoinSignupPort = host.Signup;
+                settings.JoinRoomName = host.RoomTitle;
+                preparedAccount = null;
+                SaveOnlineSettings();
+            }
+        } catch (System.Net.Sockets.SocketException) {
+        }
+    }
+
+    void RefreshOnlineUi() {
+        if (onlineEdition != settings.Game.Id) {
+            if (onlineEdition.Length > 0) {
+                gameSearch?.Cancel();
+                accountPreparation?.Cancel();
+                foundGames.Clear();
+                SearchStatus.Text = searchedGameEditions.Contains(settings.Game.Id) ? "Press Search again to look for games." : "";
+                settings.JoinHostName = "";
+                settings.JoinSignupPort = 0;
+                settings.JoinRoomName = "";
+                preparedAccount = null;
+                AccountStatus.Text = "";
+            }
+            onlineEdition = settings.Game.Id;
+            ShowFoundGames();
+        }
+        bool supported = OnlineOptions.Supported(settings.Game.Id);
+        string mode = settings.ResolvedCoopMode;
+        CoopControls.IsEnabled =
+            supported && !updating && !updateRestarting && !game.Running && !launching;
+        CoopUnavailable.Visibility = supported ? Visibility.Collapsed : Visibility.Visible;
+        OnlinePanel.Visibility = mode == "offline" ? Visibility.Collapsed : Visibility.Visible;
+        OfflinePanel.Visibility = mode == "offline" ? Visibility.Visible : Visibility.Collapsed;
+        HostOptions.Visibility = mode == "host" ? Visibility.Visible : Visibility.Collapsed;
+        JoinOptions.Visibility = mode == "join" ? Visibility.Visible : Visibility.Collapsed;
+        RefreshLobbySettings();
+        if (mode == "host" && PageCoop.IsVisible && !internetLookupAttempted &&
+            (!CoopUiDiagnostics || publicAddressLookup != null)) _ = LookupPublicAddress();
+        if (mode == "host" && CopyServerButton.IsEnabled && !hostedServer.Running) {
+            HostStatus.Text = "Your game closed unexpectedly";
+            HostDetail.Text = "See the hosted-server logs, or press Try again.";
+            CopyServerButton.IsEnabled = false;
+            StartServerButton.Visibility = Visibility.Visible;
+        }
+        if (supported && mode == "join" && PageCoop.Visibility == Visibility.Visible && !game.Running &&
+            !searchedGameEditions.Contains(settings.Game.Id))
+            SearchGames();
+        string? error = OnlineOptions.Error(settings);
+        CoopValidation.Text = error ?? "";
+        bool awaitingHostAddress = mode == "join" && string.IsNullOrWhiteSpace(settings.CoopHost) &&
+            OnlineOptions.ValidUsername(settings.AccountUsername);
+        CoopValidation.Visibility = error == null || awaitingHostAddress ? Visibility.Collapsed : Visibility.Visible;
+        CoopValidation.Foreground = (IBrush)FindResource("Danger");
+        PlayNetworkSummary.Text =
+            mode == "offline" ? "Single player"
+            : !OnlineOptions.Configured(settings) ? "Co-op not set up yet (see Co-op)"
+            : mode == "host" ? (hostedServer.Running ? "Hosting at " + hostedServer.Address
+                                                      : "Hosting (opening your game...)")
+            : "Joining " + (settings.JoinHostName.Length > 0 ? settings.JoinHostName + " at " : "") +
+                  settings.CoopHost;
+        if (!game.Running && !launching)
+            LaunchButton.Content = PlayButtonLabel;
+    }
+}
+
+// ---- RC1 MainWindow.InviteAddresses.cs ----
+public partial class MainWindow {
+    sealed record AddressChoice(string Address, string Label) {
+        public override string ToString() => Label;
+    }
+    CancellationTokenSource? publicLookup;
+    string internetAddress = "";
+    bool internetLookupAttempted;
+    // Used only by isolated UI diagnostics; normal lookups use the existing address service.
+    Func<CancellationToken, Task<string>>? publicAddressLookup;
+
+    void RefreshHostAddresses(string? extra = null, string? extraLabel = null) {
+        if (extra != null) internetAddress = extra;
+        var choices = HostNetworking.LocalAddresses().Select(a => new AddressChoice(a.Address, a.Label)).ToList();
+        if (internetAddress.Length > 0 && choices.All(c => c.Address != internetAddress))
+            choices.Add(new(internetAddress, extraLabel ?? internetAddress + " (internet)"));
+        string saved = settings.HostAddress;
+        if (OnlineOptions.TryHost(saved, out _) && choices.All(c => c.Address != saved))
+            choices.Add(new(saved, saved + " (saved)"));
+        if (choices.Count == 0)
+            choices.Add(new("127.0.0.1", "127.0.0.1 (this PC only: no network found)"));
+        bool wasInitialized = initialized;
+        initialized = false;
+        try {
+            HostAddressPicker.ItemsSource = choices;
+            HostAddressPicker.SelectedItem = choices.FirstOrDefault(c => c.Address == saved) ?? choices[0];
+            if (settings.HostAddress.Length == 0) settings.HostAddress = ((AddressChoice)HostAddressPicker.SelectedItem).Address;
+        } finally { initialized = wasInitialized; }
+    }
+
+    async Task LookupPublicAddress() {
+        if (publicLookup != null || (CoopUiDiagnostics && publicAddressLookup == null)) return;
+        using var cancel = new CancellationTokenSource();
+        publicLookup = cancel;
+        internetLookupAttempted = true;
+        PublicAddressStatus.Text = "";
+        RefreshHostAddresses();
+        try {
+            string address = await (CoopUiDiagnostics ? publicAddressLookup!(cancel.Token) : HostNetworking.PublicAddress(cancel.Token));
+            if (!OnlineOptions.TryHost(address, out address)) throw new System.IO.IOException("Invalid address response.");
+            internetAddress = address;
+        } catch (OperationCanceledException) when (cancel.IsCancellationRequested) {
+        } catch {
+            PublicAddressStatus.Text = "Internet address unavailable.";
+        } finally {
+            if (publicLookup == cancel) publicLookup = null;
+            if (!cancel.IsCancellationRequested) RefreshHostAddresses();
+        }
+    }
+}
+
+// ---- RC1 MainWindow.LobbySettings.cs ----
+public partial class MainWindow {
+    sealed record RoomChoice(int Value, string Label) {
+        public override string ToString() => Label;
+    }
+    bool refreshingLobbySettings;
+    string lobbyChoicesEdition = "";
+    void InitializeLobbySettings() {
+        RoomName.Text = settings.RoomName;
+        RoomPlayers.ItemsSource = new[] { new RoomChoice(2, "2 players"), new RoomChoice(3, "3 players"), new RoomChoice(4, "4 players") };
+        RefreshLobbySettings();
+    }
+    void RefreshLobbySettings() {
+        refreshingLobbySettings = true;
+        try {
+            if (lobbyChoicesEdition != settings.Game.Id) {
+                RoomWait.ItemsSource = LobbySettings.WaitTimes(settings.Game.Id).Select(n => new RoomChoice(n, n + " minutes")).ToArray();
+                lobbyChoicesEdition = settings.Game.Id;
+            }
+            RoomPlayers.SelectedValue = settings.ResolvedRoomMaxPlayers;
+            RoomWait.SelectedValue = settings.ResolvedRoomWaitMinutes;
+            RoomSettings.Visibility = settings.ResolvedCoopMode == "host" ? Visibility.Visible : Visibility.Collapsed;
+            RoomSettings.IsEnabled = settings.AutoLobby;
+        } finally { refreshingLobbySettings = false; }
+    }
+    void RoomSettingChanged(object? sender, RoutedEventArgs e) {
+        if (!initialized || refreshingLobbySettings) return;
+        settings.RoomName = (RoomName.Text ?? "").Trim();
+        if (RoomPlayers.SelectedValue is int players) settings.RoomMaxPlayers = players;
+        if (RoomWait.SelectedValue is int minutes) settings.RoomWaitMinutes = minutes;
+        SaveOnlineSettings();
+        RefreshOnlineUi();
+    }
+}

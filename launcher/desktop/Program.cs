@@ -8,7 +8,16 @@ internal static class Program {
     public static int Main(string[] args) {
         if(args.Contains("--display-check")){bool awake=PlatformRuntime.DisplayAvailable();System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new{awakeDisplay=awake}));return awake?0:2;}
         if(args.Contains("--runtime-check")||args.Contains("--service-check")){try{return IntegrationChecks.Run(args).GetAwaiter().GetResult();}catch(Exception error){Console.Error.WriteLine(error);return 1;}}
-        if(args.Contains("--headless-check"))return HeadlessChecks.Run(args);
+        if(args.Contains("--headless-check")) {
+            try{return HeadlessChecks.Run(args);}
+            catch(Exception error) {
+                // CI annotations are readable without signing in to the job log.
+                if(Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true")
+                    System.Console.WriteLine("::error title=Headless check::"+error.ToString().Replace("%","%25").Replace("\r","").Replace("\n","%0A"));
+                System.Console.Error.WriteLine(error);
+                return 1;
+            }
+        }
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
     public static AppBuilder BuildAvaloniaApp()=>AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();

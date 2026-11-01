@@ -11,6 +11,7 @@ internal sealed class OwnedFontCollection:FontCollectionBase {
             throw new IOException("The owned game font could not be loaded.");
     }
     internal static FontFamily Load(string path) {
+        GdiText.Register(path);
         var collection=new OwnedFontCollection(path);
         FontManager.Current.AddFontCollection(collection);
         var family=new FontFamily("fonts:OutbreakOwned#"+GameFont.FamilyName);

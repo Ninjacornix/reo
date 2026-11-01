@@ -9,7 +9,7 @@ This is a local Apple Silicon build, not a notarized public release. The current
 launcher uses the common Avalonia/C# frontend for macOS, Windows and Linux, with
 RC1 Windows in this checkout as its design reference. It bundles .NET and native
 service tools; no external .NET or Python installation is needed to run the app.
-Open `build-macos/common-launcher/RE Outbreak RC1.app` or `StartOutbreakMac.command`.
+Open `build-macos/common-launcher/Outbreak.app` or `StartOutbreakMac.command`.
 See [the common launcher implementation and checks](SHARED-LAUNCHER.md).
 
 Build the common app after preparing the native game and server dependencies:

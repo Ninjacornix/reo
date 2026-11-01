@@ -1,27 +1,13 @@
-using Avalonia;
-using Avalonia.Layout;
-using Path = System.IO.Path;
-using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
-using Avalonia.Controls.Primitives;
-using Avalonia.Automation;
-using Avalonia.Input;
-using Avalonia.Interactivity;
-using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Outbreak.Launcher.Desktop.Compatibility;
-using BitmapSource = Avalonia.Media.Imaging.Bitmap;
-using PointCollection = Avalonia.Points;
-using System.Diagnostics;
-using System.IO;
 using System.Globalization;
 
 namespace Outbreak.Launcher.Desktop;
+
+// Port of RC1 MainWindow.Mods.cs.
 public partial class MainWindow {
     string modsGame = "";
     List<InstalledAssetPak> installedAssetPaks = new();
     void RefreshAssetPakSummary() {
-        int count = installedAssetPaks.Count(p => p.Manifest?.Game == Settings.Game.Id && Settings.EnabledAssetPaks.Contains(p.Manifest.Id));
+        int count = installedAssetPaks.Count(p => p.Manifest?.Game == settings.Game.Id && settings.EnabledAssetPaks.Contains(p.Manifest.Id));
         PlayModsSummary.Text = count == 0 ? ModsSummary() : ModsSummary() + " / " + count + (count == 1 ? " asset pack" : " asset packs");
     }
     sealed class ModRow {
@@ -43,32 +29,32 @@ public partial class MainWindow {
     readonly Dictionary<string, string> modSeedDrafts = new();
     bool updatingModState;
     bool deletingMod;
-    string ModKey(string id) => Settings.Game.Id + "/" + id;
+    string ModKey(string id) => settings.Game.Id + "/" + id;
     void UpdateRandomizerSeed() {
         ModSeed.Text = game.RandomizerSeedSummary == null ? "" :
-            (game.Running || busy ? "Current session / " : "Last launch / ") + game.RandomizerSeedSummary;
+            (game.Running || launching ? "Current session / " : "Last launch / ") + game.RandomizerSeedSummary;
         ModSeed.Visibility = game.RandomizerSeedSummary == null ? Visibility.Collapsed : Visibility.Visible;
     }
-    void ReloadMods(object sender, RoutedEventArgs e) => RefreshMods();
+    void ReloadMods(object? sender, RoutedEventArgs e) => RefreshMods();
     void RefreshMods() {
-        modsGame = Settings.Game.Id;
+        modsGame = settings.Game.Id;
         UpdateRandomizerSeed();
         ModList.Children.Clear();
         modRows.Clear();
         try {
-            if (!game.Running && !busy) {
-                bool changed = Mods.ConsolidateRandomizers(Settings);
-                changed = Mods.EnsureBundledRandomizer(Settings) || changed;
-                if (changed) Settings.Save();
+            if (!game.Running && !launching) {
+                bool changed = Mods.ConsolidateRandomizers(settings);
+                changed = Mods.EnsureBundledRandomizer(settings) || changed;
+                if (changed) settings.Save();
             }
-            var installed = Mods.Load(game: Settings.Game.Id);
+            var installed = Mods.Load(game: settings.Game.Id);
             var shown = new HashSet<string>();
             foreach (var mod in installed) {
                 string? id = mod.Manifest?.Id;
                 AddModRow(mod, modRows.Count + 1);
                 if (id != null) shown.Add(id);
             }
-            foreach (string id in Settings.ActiveMods.Where(x => !shown.Contains(x)).Distinct()) {
+            foreach (string id in settings.ActiveMods.Where(x => !shown.Contains(x)).Distinct()) {
                 AddModRow(new InstalledMod(id, new ModManifest { Id = id, Name = id },
                     "Missing or invalid package. Import the mod again or remove this entry."), modRows.Count + 1, missing: true);
             }
@@ -77,29 +63,28 @@ public partial class MainWindow {
             RefreshAssetPakSummary();
             foreach (var pak in assetPaks) {
                 var manifest = pak.Manifest;
-                if (manifest != null && manifest.Game != Settings.Game.Id) continue;
+                if (manifest != null && manifest.Game != settings.Game.Id) continue;
                 string? id = manifest?.Id;
-                bool enabled = id != null && Settings.EnabledAssetPaks.Contains(id);
+                bool enabled = id != null && settings.EnabledAssetPaks.Contains(id);
                 var row = new StackPanel { Margin = new Thickness(0, 10, 0, 10) };
                 var toggle = new CheckBox {
                     Content = manifest == null ? Path.GetFileName(pak.File) : $"{manifest.Name} · {manifest.Version} · {manifest.Replace.Count} assets · {manifest.Strings.Count} strings",
                     IsChecked = enabled, IsEnabled = manifest != null && (pak.Error.Length == 0 || enabled), Tag = id
                 };
                 toggle.IsCheckedChanged += AssetPakToggled;
-
                 row.Children.Add(toggle);
-                row.Children.Add(new TextBlock { Text = pak.Error.Length > 0 ? pak.Error : manifest!.Description,
-                    Style = (Compatibility.Style)FindResource("Hint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(25, 5, 0, 0) });
+                row.Children.Add(new Rc1TextBlock { Text = pak.Error.Length > 0 ? pak.Error : manifest!.Description,
+                    Style = (Style)FindResource("Hint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(25, 5, 0, 0) });
                 ModList.Children.Add(row);
             }
-            foreach (string id in Settings.EnabledAssetPaks.Where(id => !assetPaks.Any(p => p.Manifest?.Id == id)).Distinct()) {
+            foreach (string id in settings.EnabledAssetPaks.Where(id => !assetPaks.Any(p => p.Manifest?.Id == id)).Distinct()) {
                 var toggle = new CheckBox { Content = id + " — missing or invalid asset pack; untick to disable",
                     IsChecked = true, Tag = id, Margin = new Thickness(0, 10, 0, 10) };
                 toggle.IsCheckedChanged += AssetPakToggled;
                 ModList.Children.Add(toggle);
             }
             if (ModList.Children.Count == 0)
-                ModList.Children.Add(new TextBlock { Text = "No mods installed. Import a .pak asset pack or mod JSON file to start.",
+                ModList.Children.Add(new Rc1TextBlock { Text = "No mods installed. Import a .pak asset pack or mod JSON file to start.",
                     TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 16, 0, 16) });
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
             Status.Text = error.Message;
@@ -114,25 +99,25 @@ public partial class MainWindow {
         var content = new Grid();
         content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(34) });
         content.ColumnDefinitions.Add(new ColumnDefinition());
-        content.Children.Add(new TextBlock { Text = number.ToString("00"), FontSize = 14,
+        content.Children.Add(new Rc1TextBlock { Text = number.ToString("00"), FontSize = 14,
             Foreground = VisualPalette.Brush(Palette.TextMuted), VerticalAlignment = VerticalAlignment.Center });
         var text = new StackPanel(); Grid.SetColumn(text, 1); content.Children.Add(text);
         var name = new Grid();
         name.ColumnDefinitions.Add(new ColumnDefinition()); name.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        name.Children.Add(new TextBlock { Text = title, FontSize = 18, TextWrapping = TextWrapping.Wrap });
-        var version = new TextBlock { Text = manifest?.Version.Length > 0 ? "v" + manifest.Version : "",
+        name.Children.Add(new Rc1TextBlock { Text = title, FontSize = 18, TextWrapping = TextWrapping.Wrap });
+        var version = new Rc1TextBlock { Text = manifest?.Version.Length > 0 ? "v" + manifest.Version : "",
             FontSize = 14, Foreground = VisualPalette.Brush(Palette.TextMuted), Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(version, 1); name.Children.Add(version); text.Children.Add(name);
-        text.Children.Add(new TextBlock { Text = detail, Style = (Compatibility.Style)FindResource("Hint"), FontSize = 14,
+        text.Children.Add(new Rc1TextBlock { Text = detail, Style = (Style)FindResource("Hint"), FontSize = 14,
             LineHeight = 20, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) });
-        var toggle = new CheckBox { Content = content, Tag = manifest?.Id, Style = (Compatibility.Style)FindResource("ModOption"),
-            IsChecked = manifest != null && Settings.ActiveMods.Contains(manifest.Id) };
-        AutomationProperties.SetName(toggle, title);
-        AutomationProperties.SetHelpText(toggle, detail);
+        var toggle = new CheckBox { Content = content, Tag = manifest?.Id, Style = (Style)FindResource("ModOption"),
+            IsChecked = manifest != null && settings.ActiveMods.Contains(manifest.Id) };
+        Avalonia.Automation.AutomationProperties.SetName(toggle, title);
+        Avalonia.Automation.AutomationProperties.SetHelpText(toggle, detail);
         var delete = new Button { Content = missing ? "Remove entry" : "Delete", FontSize = 14,
             Padding = new Thickness(10, 5, 10, 5), VerticalAlignment = VerticalAlignment.Top };
-        AutomationProperties.SetName(delete, "Delete " + title);
-        var row = new ModRow { Mod = installed, Toggle = toggle, Missing = missing, Edition = Settings.Game.Id, Delete = delete };
+        Avalonia.Automation.AutomationProperties.SetName(delete, "Delete " + title);
+        var row = new ModRow { Mod = installed, Toggle = toggle, Missing = missing, Edition = settings.Game.Id, Delete = delete };
         modRows.Add(row);
         toggle.IsCheckedChanged += ModToggled;
         var body = new StackPanel(); body.Children.Add(toggle);
@@ -151,49 +136,49 @@ public partial class MainWindow {
     Expander CreateModOptions(ModRow row, ModManifest manifest) {
         string id = manifest.Id, key = ModKey(id);
         uint fallback = manifest.ItemRandomizer?.Seed ?? manifest.WeaponShuffle?.Seed ?? manifest.EnemyRandomizer!.Seed;
-        var configuration = Settings.ConfigurationFor(id, fallback);
+        var configuration = settings.ConfigurationFor(id, fallback);
         var header = new Grid(); header.ColumnDefinitions.Add(new ColumnDefinition());
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        header.Children.Add(new TextBlock { Text = "Options", FontSize = 14 });
-        row.Summary = new TextBlock { FontSize = 14, Foreground = VisualPalette.Brush(Palette.TextMuted), Margin = new Thickness(12, 0, 12, 0) };
+        header.Children.Add(new Rc1TextBlock { Text = "Options", FontSize = 14 });
+        row.Summary = new Rc1TextBlock { FontSize = 14, Foreground = VisualPalette.Brush(Palette.TextMuted), Margin = new Thickness(12, 0, 12, 0) };
         Grid.SetColumn(row.Summary, 1); header.Children.Add(row.Summary);
         var panel = new StackPanel();
         var modeRow = new Grid { Margin = new Thickness(0, 0, 0, 10) };
         modeRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140) }); modeRow.ColumnDefinitions.Add(new ColumnDefinition());
-        modeRow.Children.Add(new TextBlock { Text = "Seed", FontSize = 16, VerticalAlignment = VerticalAlignment.Center });
+        modeRow.Children.Add(new Rc1TextBlock { Text = "Seed", FontSize = 16, VerticalAlignment = VerticalAlignment.Center });
         row.SeedMode = new ComboBox { ItemsSource = new[] { "New seed each launch", "Custom seed" },
             SelectedIndex = configuration.UseCustomSeed ? 1 : 0, HorizontalAlignment = HorizontalAlignment.Left, MinWidth = 250 };
-        AutomationProperties.SetName(row.SeedMode, manifest.Name + " seed mode");
+        Avalonia.Automation.AutomationProperties.SetName(row.SeedMode, manifest.Name + " seed mode");
         Grid.SetColumn(row.SeedMode, 1); modeRow.Children.Add(row.SeedMode); panel.Children.Add(modeRow);
         row.CustomSeedRow = new Grid { Margin = new Thickness(0, 0, 0, 8) };
         row.CustomSeedRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140) }); row.CustomSeedRow.ColumnDefinitions.Add(new ColumnDefinition());
-        row.CustomSeedRow.Children.Add(new TextBlock { Text = "Seed value", FontSize = 16, VerticalAlignment = VerticalAlignment.Center });
+        row.CustomSeedRow.Children.Add(new Rc1TextBlock { Text = "Seed value", FontSize = 16, VerticalAlignment = VerticalAlignment.Center });
         row.SeedInput = new TextBox { Text = modSeedDrafts.TryGetValue(key, out var draft) ? draft : configuration.Seed.ToString(CultureInfo.InvariantCulture),
             Width = 250, MaxLength = 10, HorizontalAlignment = HorizontalAlignment.Left };
-        AutomationProperties.SetName(row.SeedInput, manifest.Name + " custom seed");
-        AutomationProperties.SetHelpText(row.SeedInput, "A whole number from 0 to 4294967295. The same seed is used for this mod's item, weapon and enemy randomizers.");
+        Avalonia.Automation.AutomationProperties.SetName(row.SeedInput, manifest.Name + " custom seed");
+        Avalonia.Automation.AutomationProperties.SetHelpText(row.SeedInput, "A whole number from 0 to 4294967295. The same seed is used for this mod's item, weapon and enemy randomizers.");
         Grid.SetColumn(row.SeedInput, 1); row.CustomSeedRow.Children.Add(row.SeedInput); panel.Children.Add(row.CustomSeedRow);
-        row.SeedError = new TextBlock { FontSize = 14, Foreground = VisualPalette.Brush(Palette.Accent), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 6) };
+        row.SeedError = new Rc1TextBlock { FontSize = 14, Foreground = VisualPalette.Brush(Palette.Accent), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 6) };
         panel.Children.Add(row.SeedError);
-        panel.Children.Add(new TextBlock { Text = "Use the same seed and mod Settings to repeat a run. Joining players use the host's seed.",
-            Style = (Compatibility.Style)FindResource("Hint"), FontSize = 14, TextWrapping = TextWrapping.Wrap });
-        var options = new Expander { Header = header, Content = panel, Style = (Compatibility.Style)FindResource("ModOptionsDropdown"),
+        panel.Children.Add(new Rc1TextBlock { Text = "Use the same seed and mod settings to repeat a run. Joining players use the host's seed.",
+            Style = (Style)FindResource("Hint"), FontSize = 14, TextWrapping = TextWrapping.Wrap });
+        var options = new Expander { Header = header, Content = panel, Style = (Style)FindResource("ModOptionsDropdown"),
             Margin = new Thickness(46, 0, 0, 5), IsExpanded = expandedModOptions.Contains(key) };
-        AutomationProperties.SetName(options, manifest.Name + " options"); row.Options = options;
+        Avalonia.Automation.AutomationProperties.SetName(options, manifest.Name + " options"); row.Options = options;
         options.Expanded += (_, _) => expandedModOptions.Add(key);
         options.Collapsed += (_, _) => expandedModOptions.Remove(key);
         row.SeedMode.SelectionChanged += (_, _) => {
-            if (game.Running || busy) return;
-            var previous = Settings.ConfigurationFor(id, fallback);
-            Settings.SetConfiguration(id, new() { UseCustomSeed = row.SeedMode.SelectedIndex == 1, Seed = previous.Seed });
+            if (game.Running || launching) return;
+            var previous = settings.ConfigurationFor(id, fallback);
+            settings.SetConfiguration(id, new() { UseCustomSeed = row.SeedMode.SelectedIndex == 1, Seed = previous.Seed });
             SaveModPreferences(); UpdateModSeedControls(row, fallback);
         };
         row.SeedInput.TextChanged += (_, _) => {
-            if (game.Running || busy) return;
-            modSeedDrafts[key] = row.SeedInput.Text;
+            if (game.Running || launching) return;
+            modSeedDrafts[key] = row.SeedInput.Text ?? "";
             if (ModConfiguration.TrySeed(row.SeedInput.Text, out uint seed)) {
-                var previous = Settings.ConfigurationFor(id, fallback);
-                Settings.SetConfiguration(id, new() { UseCustomSeed = previous.UseCustomSeed, Seed = seed });
+                var previous = settings.ConfigurationFor(id, fallback);
+                settings.SetConfiguration(id, new() { UseCustomSeed = previous.UseCustomSeed, Seed = seed });
                 SaveModPreferences();
             }
             UpdateModSeedControls(row, fallback);
@@ -203,7 +188,7 @@ public partial class MainWindow {
         return options;
     }
     void UpdateModSeedControls(ModRow row, uint fallback) {
-        var options = Settings.ConfigurationFor(row.Mod.Manifest!.Id, fallback);
+        var options = settings.ConfigurationFor(row.Mod.Manifest!.Id, fallback);
         bool valid = ModConfiguration.TrySeed(row.SeedInput!.Text, out _);
         row.CustomSeedRow!.Visibility = options.UseCustomSeed ? Visibility.Visible : Visibility.Collapsed;
         row.SeedInput.IsEnabled = options.UseCustomSeed;
@@ -212,49 +197,49 @@ public partial class MainWindow {
         row.Summary!.Text = options.UseCustomSeed ? valid ? "Custom seed / " + options.Seed : "Invalid seed" : "New seed each launch";
     }
     void UpdateModLayout() {
-        bool compact = (Bounds.Height > 0 ? Bounds.Height : Height) < 760;
+        bool compact = (ActualHeight > 0 ? ActualHeight : Height) < 760;
         foreach (var row in modRows) {
             row.Toggle.MinHeight = compact ? 54 : 64;
             row.Toggle.Padding = new Thickness(12, compact ? 5 : 9, 12, compact ? 5 : 9);
         }
     }
     void UpdateModState() {
-        bool locked = game.Running || busy;
+        bool locked = game.Running || launching;
         ModControls.IsEnabled = !locked && !deletingMod;
-        ModGame.Text = Settings.Game.Id == "file1" ? "FILE #1" : "FILE #2";
-        bool joining = Settings.ResolvedCoopMode == "join";
+        ModGame.Text = settings.Game.Id == "file1" ? "FILE #1" : "FILE #2";
+        bool joining = settings.ResolvedCoopMode == "join";
         ModSessionNote.Visibility = locked || joining ? Visibility.Visible : Visibility.Collapsed;
-        ModSessionNote.Text = locked ? "Stop the game to change mods. Your Settings are preserved."
-            : "Joining uses the host's mods and seed. Your local Settings are kept for solo play or hosting.";
-        ModSelectionState.Text = $"{Settings.ActiveMods.Distinct().Count()} enabled";
+        ModSessionNote.Text = locked ? "Stop the game to change mods. Your settings are preserved."
+            : "Joining uses the host's mods and seed. Your local settings are kept for solo play or hosting.";
+        ModSelectionState.Text = $"{settings.ActiveMods.Distinct().Count()} enabled";
         updatingModState = true;
         foreach (var row in modRows) {
-            row.Toggle.IsChecked = row.Mod.Manifest != null && Settings.ActiveMods.Contains(row.Mod.Manifest.Id);
+            row.Toggle.IsChecked = row.Mod.Manifest != null && settings.ActiveMods.Contains(row.Mod.Manifest.Id);
             row.Toggle.IsEnabled = row.Mod.Manifest != null &&
                 ((!row.Missing && row.Mod.Error.Length == 0) || row.Toggle.IsChecked == true);
         }
         updatingModState = false;
     }
     void SaveModPreferences() {
-        try { Settings.Save(); RefreshGameUi(); }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Status.Text = "Mod Settings could not be saved: " + error.Message; }
+        try { settings.Save(); RefreshGameUi(); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Status.Text = "Mod settings could not be saved: " + error.Message; }
     }
     void AskDeleteMod(ModRow row, StackPanel body, string title) {
-        if (game.Running || busy || deletingMod || row.Edition != Settings.Game.Id) return;
+        if (game.Running || launching || deletingMod || row.Edition != settings.Game.Id) return;
         if (row.DeleteConfirmation != null) {
             row.DeleteConfirmation.Visibility = Visibility.Visible;
             row.CancelDelete!.Focus();
             return;
         }
         var panel = new StackPanel { Margin = new Thickness(46, 10, 12, 14) };
-        panel.Children.Add(new TextBlock { Text = row.Missing ? $"Remove the missing entry “{title}”?" :
-            $"Move “{title}” to the Recycle Bin?", FontSize = 15, TextWrapping = TextWrapping.Wrap });
+        panel.Children.Add(new Rc1TextBlock { Text = row.Missing ? $"Remove the missing entry “{title}”?" :
+            $"Move “{title}” to the {PlatformText.RecycleBin}?", FontSize = 15, TextWrapping = TextWrapping.Wrap });
         var buttons = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         row.ConfirmDelete = new Button { Content = row.Missing ? "Remove entry" : "Delete mod",
             FontSize = 14, Margin = new Thickness(0, 0, 8, 0), Background = VisualPalette.Brush(Palette.AccentDeep),
             BorderBrush = VisualPalette.Brush(Palette.Accent) };
         row.CancelDelete = new Button { Content = "Cancel", FontSize = 14 };
-        AutomationProperties.SetName(row.ConfirmDelete, "Confirm deletion of " + title);
+        Avalonia.Automation.AutomationProperties.SetName(row.ConfirmDelete, "Confirm deletion of " + title);
         row.CancelDelete.Click += (_, _) => { panel.Visibility = Visibility.Collapsed; row.Delete.Focus(); };
         row.ConfirmDelete.Click += (_, _) => DeleteMod(row);
         buttons.Children.Add(row.ConfirmDelete); buttons.Children.Add(row.CancelDelete);
@@ -262,47 +247,47 @@ public partial class MainWindow {
         row.CancelDelete.Focus();
     }
     void DeleteMod(ModRow row) {
-        if (game.Running || busy || deletingMod || row.Edition != Settings.Game.Id || !modRows.Contains(row)) return;
+        if (game.Running || launching || deletingMod || row.Edition != settings.Game.Id || !modRows.Contains(row)) return;
         deletingMod = true; UpdateModState();
         try {
-            Mods.Delete(Settings, row.Mod, row.Missing);
-            if (row.Mod.Manifest is { } manifest && !Mods.Load(game: Settings.Game.Id).Any(m => m.Manifest?.Id == manifest.Id)) {
+            Mods.Delete(settings, row.Mod, row.Missing);
+            if (row.Mod.Manifest is { } manifest && !Mods.Load(game: settings.Game.Id).Any(m => m.Manifest?.Id == manifest.Id)) {
                 modSeedDrafts.Remove(ModKey(manifest.Id)); expandedModOptions.Remove(ModKey(manifest.Id));
             }
             RefreshMods(); RefreshGameUi();
-            Status.Text = row.Missing ? "Missing mod entry removed." : "Mod moved to the Recycle Bin.";
+            Status.Text = row.Missing ? "Missing mod entry removed." : $"Mod moved to the {PlatformText.RecycleBin}.";
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException or OperationCanceledException) {
             Status.Text = "Could not delete mod: " + error.Message;
         } finally { deletingMod = false; UpdateModState(); }
     }
     string? ModConfigurationProblem() {
-        if (Settings.ResolvedCoopMode == "join") return null;
-        foreach (string id in Settings.ActiveMods) {
-            if (Settings.ConfigurationFor(id).UseCustomSeed && modSeedDrafts.TryGetValue(ModKey(id), out string? text) && !ModConfiguration.TrySeed(text, out _))
-                return "Correct the custom seed in Mods before busy. Use a whole number from 0 to 4294967295.";
+        if (settings.ResolvedCoopMode == "join") return null;
+        foreach (string id in settings.ActiveMods) {
+            if (settings.ConfigurationFor(id).UseCustomSeed && modSeedDrafts.TryGetValue(ModKey(id), out string? text) && !ModConfiguration.TrySeed(text, out _))
+                return "Correct the custom seed in Mods before launching. Use a whole number from 0 to 4294967295.";
         }
         return null;
     }
-    void AssetPakToggled(object sender, RoutedEventArgs e) {
-        if (!initialized || game.Running || busy || ((CheckBox)sender).Tag is not string id) return;
-        Settings.EnabledAssetPaks.RemoveAll(value => value == id);
-        if (((CheckBox)sender).IsChecked == true) Settings.EnabledAssetPaks.Add(id);
-        try { Settings.Save(); Status.Text = "Asset packs saved. Changes apply on next solo launch."; }
+    void AssetPakToggled(object? sender, RoutedEventArgs e) {
+        if (!initialized || game.Running || launching || ((CheckBox)sender).Tag is not string id) return;
+        settings.EnabledAssetPaks.RemoveAll(value => value == id);
+        if (((CheckBox)sender).IsChecked == true) settings.EnabledAssetPaks.Add(id);
+        try { settings.Save(); Status.Text = "Asset packs saved. Changes apply on next solo launch."; }
         catch (IOException error) { Status.Text = error.Message; }
         RefreshMods();
     }
-    void ModToggled(object sender, RoutedEventArgs e) {
-        if (!initialized || updatingModState || game.Running || busy) return;
+    void ModToggled(object? sender, RoutedEventArgs e) {
+        if (!initialized || updatingModState || game.Running || launching) return;
         var box = (CheckBox)sender;
         if (box.Tag is not string id) return;
-        Settings.ActiveMods.RemoveAll(x => x == id);
-        if (box.IsChecked == true) Settings.ActiveMods.Add(id);
+        settings.ActiveMods.RemoveAll(x => x == id);
+        if (box.IsChecked == true) settings.ActiveMods.Add(id);
         try {
-            Settings.Save(); UpdateModState(); RefreshGameUi();
+            settings.Save(); UpdateModState(); RefreshGameUi();
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Status.Text = error.Message; }
     }
-    async void ImportMod(object sender, RoutedEventArgs e) {
-        if (game.Running || busy || busy || busy || busy || importCancellation != null) return;
+    async void ImportMod(object? sender, RoutedEventArgs e) {
+        if (game.Running || launching || updating || updateRestarting || backingUp || importCancellation != null) return;
         var dialog = new OpenFileDialog { Filter = "Outbreak mods (*.pak;*.json)|*.pak;*.json|Asset packs (*.pak)|*.pak|JSON mods (*.json)|*.json" };
         if (await dialog.ShowDialog(this) != true) return;
         string source = dialog.FileName;
@@ -313,7 +298,7 @@ public partial class MainWindow {
             var cancel = importCancellation!.Token;
             await Task.Run(() => {
                 if (Path.GetExtension(source).Equals(".pak", StringComparison.OrdinalIgnoreCase)) AssetPaks.Import(source, cancel: cancel);
-                else Mods.Import(source, game: Settings.Game.Id);
+                else Mods.Import(source, game: settings.Game.Id);
             }, cancel);
             Status.Text = "Mod imported. Tick it to enable.";
         } catch (OperationCanceledException) { Status.Text = "Mod import canceled. Previous mods are kept.";
@@ -322,9 +307,9 @@ public partial class MainWindow {
         } finally { SetLaunching(false); EndDiscImport(); RefreshGameUi(); }
         RefreshMods();
     }
-    void OpenModFolder(object sender, RoutedEventArgs e) {
+    void OpenModFolder(object? sender, RoutedEventArgs e) {
         try {
-            Directory.CreateDirectory(Mods.FolderFor(Settings.Game.Id));
+            Directory.CreateDirectory(Mods.FolderFor(settings.Game.Id));
             Directory.CreateDirectory(AssetPaks.Folder);
             Process.Start(new ProcessStartInfo(Path.GetDirectoryName(AssetPaks.Folder)!) { UseShellExecute = true });
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception) {

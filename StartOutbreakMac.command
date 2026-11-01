@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 if (( $# )); then
     exec python3 tools/macos/play.py "$@"
 fi
-reo_launcher="$PWD/build-macos/common-launcher/RE Outbreak RC1.app"
+reo_launcher="$PWD/build-macos/common-launcher/Outbreak.app"
 if [[ -d "$reo_launcher" ]]; then
     exec /usr/bin/open "$reo_launcher"
 fi
