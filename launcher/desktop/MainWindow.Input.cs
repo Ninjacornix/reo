@@ -15,9 +15,13 @@ public partial class MainWindow {
                                                    ? settings.Keyboard
                                                    : controller.Profile.Buttons;
     void InitializeInput() {
-        AddHandler(KeyDownEvent, CaptureKey, RoutingStrategies.Tunnel);
-        // macOS and Linux deliver keyboard play to the game through the launcher's key table.
-        AddHandler(KeyDownEvent, (_, e) => ForwardKey(e, true), RoutingStrategies.Tunnel, handledEventsToo: true);
+        // Capture before recording the held key, so a newly pressed key is not
+        // mistaken for a repeat if routed-handler ordering changes.
+        AddHandler(KeyDownEvent, (_, e) => {
+            CaptureKey(this, e);
+            // macOS and Linux forward play through the launcher's key table.
+            ForwardKey(e, true);
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(KeyUpEvent, (_, e) => ForwardKey(e, false), RoutingStrategies.Tunnel, handledEventsToo: true);
         Deactivated += (_, _) => { heldKeys.Clear(); NativeControllers.ClearKeys(); };
         inputUiUpdating = true;
