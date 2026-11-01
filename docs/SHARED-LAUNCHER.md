@@ -68,6 +68,23 @@ repeats registration and rejects a wrong credential. It does not access Keychain
 The game check imports the owned ISO, follows the diagnostic route to gameplay,
 checks logs, and joins shutdown. It does not use existing saves.
 
+On Windows, `--apply-update <plan.json>` runs the shared transactional installer
+before UI initialization. The parent passes its selected storage to the copied
+helper, and restart preserves that storage. The process regression check uses
+synthetic packages and the cross-tests executable as a UI-free parent/restart
+probe; it covers readiness under the parent's storage lease, cancellation,
+installation, restart and malformed commands:
+
+```powershell
+dotnet publish launcher/desktop -c Release -r win-x64 --self-contained true
+dotnet publish launcher/cross-tests -c Release -r win-x64 --self-contained true -o build-launcher/update-probe
+dotnet launcher/desktop/bin/Release/net10.0/win-x64/Outbreak.Launcher.dll --update-worker-check build-launcher/update-check build-launcher/update-probe/Reo.Launcher.CrossTests.exe
+```
+
+Windows video playback uses the same hash-verified private FFmpeg cache as the
+import converter, preparing it asynchronously when needed. Explicit bundled
+FFmpeg metadata retains priority. Availability probes never download a tool.
+
 ## Packaging
 
 On the prepared Apple Silicon checkout:

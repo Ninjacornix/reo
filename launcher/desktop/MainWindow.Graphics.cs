@@ -34,7 +34,12 @@ public partial class MainWindow {
         PageGraphics.PropertyChanged += (_, e) => { if (e.Property == IsVisibleProperty) RefreshGraphicsPreviewActivity(); };
         WindowStateChanged += RefreshGraphicsPreviewActivity;
         GraphicsPreviewStage.SizeChanged += (_, _) => InvalidateGraphicsPreview();
-        GraphicsGpuView.RotationChanged += (_, _) => InvalidateGraphicsPreview();
+        // Rotation and zoom are read when each frame starts. Unlike option changes, they do not
+        // discard the frame in flight: continuous wheel/drag input would otherwise drop every frame.
+        GraphicsGpuView.RotationChanged += (_, _) => {
+            if (initialized && !graphicsPreviewClosed && GraphicsPreviewActive && graphicsScene != null &&
+                !graphicsPreviewBusy && !graphicsPreviewFaulted) _ = RenderGraphicsPreview();
+        };
         Closed += (_, _) => {
             graphicsPreviewClosed = true;
             graphicsPreviewTimer.Stop(); graphicsPreviewClock.Stop();
@@ -164,7 +169,7 @@ public partial class MainWindow {
         graphicsPreviewTimer.Stop();
         graphicsPreviewBusy = true;
         // One frame in flight. The next frame starts when this one is displayed.
-        graphicsPreviewNextFrame = Stopwatch.GetTimestamp() + Stopwatch.Frequency * 33 / 1000; // CPU render: about 30 fps
+        graphicsPreviewNextFrame = Stopwatch.GetTimestamp() + Stopwatch.Frequency * 16 / 1000; // RC1 presents at display rate: about 60 fps
         var started = Stopwatch.GetTimestamp();
         try {
             var frame = await Task.Run(() => graphicsPreviewEnvironment.Render(scene, options, seconds, width, height, yaw, pitch, zoom));

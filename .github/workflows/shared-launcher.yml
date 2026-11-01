@@ -45,6 +45,12 @@ jobs:
         run: clang++ -std=c++17 -dynamiclib -fobjc-arc launcher/desktop/Platform/controllers_macos.mm -framework AppKit -framework GameController -framework CoreHaptics -o build-launcher/osx-arm64/libReo.Platform.dylib
       - name: Render all twelve RC1 pages and exercise controls
         run: dotnet launcher/desktop/bin/Release/net10.0/${{ matrix.rid }}/Outbreak.Launcher.dll --headless-check build-launcher/captures
+      - name: Windows updater process handshake, cancellation and restart
+        if: runner.os == 'Windows'
+        run: |
+          dotnet publish launcher/cross-tests -c Release -r win-x64 --self-contained true -o "$env:RUNNER_TEMP/reo-update-probe"
+          dotnet launcher/desktop/bin/Release/net10.0/win-x64/Outbreak.Launcher.dll --update-worker-check "$env:RUNNER_TEMP/reo-update-check" "$env:RUNNER_TEMP/reo-update-probe/Reo.Launcher.CrossTests.exe"
+          Copy-Item "$env:RUNNER_TEMP/reo-update-check/report.json" build-launcher/update-worker-check.json
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:

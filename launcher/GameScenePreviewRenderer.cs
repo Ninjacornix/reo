@@ -3,6 +3,7 @@ using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace Outbreak.Launcher;
 
@@ -29,7 +30,13 @@ internal sealed class GameScenePreviewRenderer {
     uint[] fxaaResult = Array.Empty<uint>();
     uint[] morphologyResult = Array.Empty<uint>();
     byte[] morphologyEdges = Array.Empty<byte>();
-    (int Width, int Height, float Aspect, bool Linear, int Anisotropy, Vector4 Crop)? environmentKey;
+    (int Width, int Height, float Aspect, bool Linear, int Anisotropy, Vector4 Crop, float Zoom)? environmentKey;
+    readonly List<(Projected A, Projected B, Projected C, Texture? Texture)> triangles = new();
+    float previousZoom = float.NaN;
+    uint[]? zoomedFxaa;
+    uint[] zoomedFxaaBuffer = Array.Empty<uint>();
+    int[] rescaleX0 = Array.Empty<int>(), rescaleX1 = Array.Empty<int>(), rescaleFx = Array.Empty<int>(),
+        rescaleY0 = Array.Empty<int>(), rescaleY1 = Array.Empty<int>(), rescaleFy = Array.Empty<int>();
     readonly ConditionalWeakTable<PreviewMesh, Vertex[]> transformedVertices = new();
     internal PreviewRenderTimings? LastTimings { get; private set; }
     Presentation? presentation;
@@ -84,18 +91,34 @@ internal sealed class GameScenePreviewRenderer {
             depth = new float[renderWidth * renderHeight]; color = new uint[depth.Length];
         }
         cameraAspect = options.Widescreen ? Aspect(options.Aspect) : 4f / 3;
-        tangent = MathF.Tan(32 * MathF.PI / 360);
+        // RC1 zooms the camera (projection tangent / zoom); the actor stays on the floor.
+        zoom = float.IsFinite(zoom) && zoom > 0 ? Math.Clamp(zoom, .65f, 2.5f) : 1;
+        tangent = MathF.Tan(32 * MathF.PI / 360) / zoom;
         view = Matrix4x4.CreateLookAt(new(2.8f, 1.55f, 4.4f), new(0, .95f, 0), Vector3.UnitY);
         long timestamp = Stopwatch.GetTimestamp();
-        var backgroundKey = (renderWidth, renderHeight, cameraAspect, options.TextureLinear, options.Anisotropy, crop);
+        var backgroundKey = (renderWidth, renderHeight, cameraAspect, options.TextureLinear, options.Anisotropy, crop, zoom);
+        // Zoom only narrows the camera's field of view from the same eye, so the cached room
+        // rescales exactly about the view centre. While the zoom is changing, frames reuse a
+        // room rendered with a wider margin; the first frame after it settles renders it sharp.
+        bool zooming = zoom != previousZoom; previousZoom = zoom;
+        bool sameView = environmentKey is { } cached && (cached.Width, cached.Height, cached.Aspect, cached.Linear,
+            cached.Anisotropy, cached.Crop) == (renderWidth, renderHeight, cameraAspect, options.TextureLinear, options.Anisotropy, crop);
+        zoomedFxaa = null;
         if (environmentKey == backgroundKey) {
-            environmentDepth.CopyTo(depth, 0); environmentColor.CopyTo(color, 0);
+            environmentDepth.AsSpan().CopyTo(depth); environmentColor.AsSpan().CopyTo(color);
+        } else if (zooming && sameView && environmentKey!.Value.Zoom <= zoom && zoom <= environmentKey.Value.Zoom * 1.6f) {
+            RescaleEnvironment(environmentKey.Value.Zoom / zoom);
         } else {
+            float renderedZoom = zooming ? Math.Max(.65f, zoom / 1.25f) : zoom;
+            tangent = MathF.Tan(32 * MathF.PI / 360) / renderedZoom;
             Array.Clear(depth); Array.Fill(color, 0xff111214);
             foreach (var mesh in environment) Draw(mesh, environmentTextures, Matrix4x4.Identity, false);
-            environmentDepth = (float[])depth.Clone(); environmentColor = (uint[])color.Clone();
+            if (environmentDepth.Length != depth.Length) { environmentDepth = new float[depth.Length]; environmentColor = new uint[color.Length]; }
+            depth.AsSpan().CopyTo(environmentDepth); color.AsSpan().CopyTo(environmentColor);
             environmentFxaa = null;
-            environmentKey = backgroundKey;
+            environmentKey = backgroundKey with { Item7 = renderedZoom };
+            if (renderedZoom != zoom) RescaleEnvironment(renderedZoom / zoom);
+            tangent = MathF.Tan(32 * MathF.PI / 360) / zoom;
         }
         long afterBackground = Stopwatch.GetTimestamp();
         scene.Animate(double.IsFinite(seconds) ? Math.Max(0, seconds) : 0);
@@ -107,8 +130,7 @@ internal sealed class GameScenePreviewRenderer {
             (scene.Minimum.Z + scene.Maximum.Z) / 2);
         var model = Matrix4x4.CreateTranslation(-center) * Matrix4x4.CreateScale(scale);
         model *= Matrix4x4.CreateTranslation(0,-.9f,0) *
-                 Matrix4x4.CreateFromYawPitchRoll(yaw*MathF.PI/180,pitch*MathF.PI/180,0) *
-                 Matrix4x4.CreateScale(Math.Clamp(zoom,.4f,3f)) * Matrix4x4.CreateTranslation(0,.9f,0);
+                 Matrix4x4.CreateFromYawPitchRoll(yaw*MathF.PI/180,pitch*MathF.PI/180,0) * Matrix4x4.CreateTranslation(0,.9f,0);
         characterLeft = renderWidth; characterTop = renderHeight; characterRight = characterBottom = -1;
         foreach (var mesh in scene.Meshes) Draw(mesh, scene.Textures, model, true);
         long afterGeometry = Stopwatch.GetTimestamp();
@@ -130,7 +152,9 @@ internal sealed class GameScenePreviewRenderer {
         if (mesh.Positions.Length > 200_000 || mesh.Indices.Length > 600_000)
             throw new InvalidDataException("The preview mesh exceeds its geometry limit.");
         var transformed = transformedVertices.GetValue(mesh, m => new Vertex[m.Positions.Length]);
-        for (int i = 0; i < transformed.Length; i++) {
+        var view = this.view;
+        Parallel.For(0, (transformed.Length + 1023) / 1024, chunk => {
+        for (int i = chunk * 1024, end = Math.Min(transformed.Length, i + 1024); i < end; i++) {
             var world = Vector3.Transform(mesh.Positions[i], model);
             var normal = i < mesh.Normals.Length ? mesh.Normals[i] : Vector3.UnitY;
             if (normal.LengthSquared() < .001f || !float.IsFinite(normal.X + normal.Y + normal.Z)) normal = Vector3.UnitY;
@@ -138,21 +162,43 @@ internal sealed class GameScenePreviewRenderer {
             float light = .31f + .66f * Math.Max(0, Vector3.Dot(normal, lightDirection));
             if (character) light += .13f;
             transformed[i] = new(Vector3.Transform(world, view), i < mesh.TexCoords.Length ? mesh.TexCoords[i] : Vector2.Zero, light);
-        }
+        } });
         Texture? texture = mesh.TextureIndex >= 0 && mesh.TextureIndex < sourceTextures.Count
             ? textures.GetValue(sourceTextures[mesh.TextureIndex], t => new Texture(t)) : null;
         collectCharacterBounds = character;
+        triangles.Clear();
         Span<Vertex> clipped = stackalloc Vertex[4];
         for (int i = 0; i + 2 < mesh.Indices.Length; i += 3) {
             int ia = mesh.Indices[i], ib = mesh.Indices[i + 1], ic = mesh.Indices[i + 2];
             if ((uint)ia >= transformed.Length || (uint)ib >= transformed.Length || (uint)ic >= transformed.Length) continue;
             var a = transformed[ia]; var b = transformed[ib]; var c = transformed[ic];
-            if (a.View.Z < -.08f && b.View.Z < -.08f && c.View.Z < -.08f) Raster(Project(a), Project(b), Project(c), texture);
+            if (a.View.Z < -.08f && b.View.Z < -.08f && c.View.Z < -.08f) Gather(Project(a), Project(b), Project(c), texture);
             else {
                 int count = Clip(a, b, c, clipped);
-                for (int p = 1; p + 1 < count; p++) Raster(Project(clipped[0]), Project(clipped[p]), Project(clipped[p + 1]), texture);
+                for (int p = 1; p + 1 < count; p++) Gather(Project(clipped[0]), Project(clipped[p]), Project(clipped[p + 1]), texture);
             }
         }
+        // RC1 rasterizes on the GPU. Here row bands rasterize in parallel; each band owns its
+        // depth and color rows, and triangles keep submission order within a band.
+        int bands = Math.Min(renderHeight, Environment.ProcessorCount * 4);
+        Parallel.For(0, bands, band => {
+            int top = band * renderHeight / bands, bottom = (band + 1) * renderHeight / bands - 1;
+            foreach (var t in triangles) Raster(t.A, t.B, t.C, t.Texture, top, bottom);
+        });
+    }
+    void Gather(Projected a, Projected b, Projected c, Texture? texture) {
+        if (collectCharacterBounds) {
+            int x0 = Math.Max(0, (int)MathF.Floor(Math.Min(a.X, Math.Min(b.X, c.X))));
+            int x1 = Math.Min(renderWidth - 1, (int)MathF.Ceiling(Math.Max(a.X, Math.Max(b.X, c.X))));
+            int y0 = Math.Max(0, (int)MathF.Floor(Math.Min(a.Y, Math.Min(b.Y, c.Y))));
+            int y1 = Math.Min(renderHeight - 1, (int)MathF.Ceiling(Math.Max(a.Y, Math.Max(b.Y, c.Y))));
+            float area = Edge(a, b, c.X, c.Y);
+            if (x0 <= x1 && y0 <= y1 && float.IsFinite(area) && Math.Abs(area) >= .001f) {
+                characterLeft = Math.Min(characterLeft, x0); characterRight = Math.Max(characterRight, x1);
+                characterTop = Math.Min(characterTop, y0); characterBottom = Math.Max(characterBottom, y1);
+            }
+        }
+        triangles.Add((a, b, c, texture));
     }
 
     static int Clip(Vertex a, Vertex b, Vertex c, Span<Vertex> output) {
@@ -178,19 +224,15 @@ internal sealed class GameScenePreviewRenderer {
             vertex.Uv.X * invZ, vertex.Uv.Y * invZ, vertex.Light * invZ);
     }
     static float Edge(Projected a, Projected b, float x, float y) => (x - a.X) * (b.Y - a.Y) - (y - a.Y) * (b.X - a.X);
-    void Raster(Projected a, Projected b, Projected c, Texture? texture) {
+    void Raster(Projected a, Projected b, Projected c, Texture? texture, int bandTop, int bandBottom) {
         float area = Edge(a, b, c.X, c.Y);
         if (!float.IsFinite(area) || Math.Abs(area) < .001f) return;
         if (area < 0) { (b, c) = (c, b); area = -area; }
         int x0 = Math.Max(0, (int)MathF.Floor(Math.Min(a.X, Math.Min(b.X, c.X))));
         int x1 = Math.Min(renderWidth - 1, (int)MathF.Ceiling(Math.Max(a.X, Math.Max(b.X, c.X))));
-        int y0 = Math.Max(0, (int)MathF.Floor(Math.Min(a.Y, Math.Min(b.Y, c.Y))));
-        int y1 = Math.Min(renderHeight - 1, (int)MathF.Ceiling(Math.Max(a.Y, Math.Max(b.Y, c.Y))));
+        int y0 = Math.Max(bandTop, (int)MathF.Floor(Math.Min(a.Y, Math.Min(b.Y, c.Y))));
+        int y1 = Math.Min(bandBottom, (int)MathF.Ceiling(Math.Max(a.Y, Math.Max(b.Y, c.Y))));
         if (x0 > x1 || y0 > y1) return;
-        if (collectCharacterBounds) {
-            characterLeft = Math.Min(characterLeft, x0); characterRight = Math.Max(characterRight, x1);
-            characterTop = Math.Min(characterTop, y0); characterBottom = Math.Max(characterBottom, y1);
-        }
         float inverse = 1 / area;
         float adx = (c.Y - b.Y) * inverse, bdx = (a.Y - c.Y) * inverse, cdx = (b.Y - a.Y) * inverse;
         float ady = (b.X - c.X) * inverse, bdy = (c.X - a.X) * inverse, cdy = (a.X - b.X) * inverse;
@@ -219,6 +261,37 @@ internal sealed class GameScenePreviewRenderer {
                 color[index] = Pack(rgb); depth[index] = q;
             }
         }
+    }
+
+    // Map each output pixel to the cached room at another field of view (factor = cached zoom / zoom).
+    void RescaleEnvironment(float factor) {
+        void Axis(int count, float origin, float size, ref int[] first, ref int[] second, ref int[] weight) {
+            if (first.Length != count) { first = new int[count]; second = new int[count]; weight = new int[count]; }
+            for (int i = 0; i < count; i++) {
+                float ndc = ((i + .5f) / count * size + origin) * 2 - 1;
+                float source = (((ndc * factor + 1) / 2 - origin) / size) * count - .5f;
+                source = Math.Clamp(source, 0, count - 1);
+                int low = (int)source;
+                first[i] = low; second[i] = Math.Min(low + 1, count - 1);
+                weight[i] = Math.Clamp((int)((source - low) * 256 + .5f), 0, 256);
+            }
+        }
+        Axis(renderWidth, crop.X, crop.Z, ref rescaleX0, ref rescaleX1, ref rescaleFx);
+        Axis(renderHeight, crop.Y, crop.W, ref rescaleY0, ref rescaleY1, ref rescaleFy);
+        Rescale(environmentColor, color, environmentDepth, depth);
+    }
+    void Rescale(uint[] sourceColor, uint[] targetColor, float[]? sourceDepth, float[]? targetDepth) {
+        int width = renderWidth;
+        Parallel.For(0, renderHeight, y => {
+            int row0 = rescaleY0[y] * width, row1 = rescaleY1[y] * width, fy = rescaleFy[y];
+            int nearestRow = (fy < 128 ? rescaleY0[y] : rescaleY1[y]) * width, row = y * width;
+            for (int x = 0; x < width; x++) {
+                int x0 = rescaleX0[x], x1 = rescaleX1[x], fx = rescaleFx[x];
+                targetColor[row + x] = LerpPacked(LerpPacked(sourceColor[row0 + x0], sourceColor[row0 + x1], fx),
+                    LerpPacked(sourceColor[row1 + x0], sourceColor[row1 + x1], fx), fy);
+                if (targetDepth != null) targetDepth[row + x] = sourceDepth![nearestRow + (fx < 128 ? x0 : x1)];
+            }
+        });
     }
 
     static float Aspect(string aspect) => aspect switch { "16:9" => 16f / 9, "21:9" => 43f / 18, "32:9" => 32f / 9, _ => 4f / 3 };
@@ -278,7 +351,6 @@ internal sealed class GameScenePreviewRenderer {
     }
     byte[] Present(uint[] source, int width, int height) {
         byte[] result = new byte[width * height * 4];
-        var destination = MemoryMarshal.Cast<byte, uint>(result.AsSpan());
         var map = MapPresentation(width, height);
         if (colorKey != (options.Brightness, options.Gamma)) {
             for (int i = 0; i < 256; i++) colorLut[i] = (byte)Math.Clamp((int)Math.Round(Math.Pow(Math.Clamp(i / 255.0 * options.Brightness / 100, 0, 1), 1 / options.Gamma) * 255), 0, 255);
@@ -286,7 +358,8 @@ internal sealed class GameScenePreviewRenderer {
         }
         bool neutral = options.Brightness == 100 && options.Gamma == 1;
         bool cover = options.CoverPreview;
-        for (int y = 0; y < height; y++) {
+        Parallel.For(0, height, y => {
+            var destination = MemoryMarshal.Cast<byte, uint>(result.AsSpan());
             int row0 = map.Y0[y] * renderWidth, row1 = map.Y1[y] * renderWidth, fractionY = map.Fy[y];
             int nearestRow = map.NearestY[y] * renderWidth;
             for (int x = 0; x < width; x++) {
@@ -299,7 +372,7 @@ internal sealed class GameScenePreviewRenderer {
                 destination[index] = neutral ? pixel : 0xff000000u | colorLut[pixel & 255] |
                     (uint)colorLut[(pixel >> 8) & 255] << 8 | (uint)colorLut[(pixel >> 16) & 255] << 16;
             }
-        }
+        });
         return result;
     }
     static uint LerpPacked(uint a, uint b, int weight) {
@@ -377,7 +450,12 @@ internal sealed class GameScenePreviewRenderer {
             ApplyFxaa(environmentColor, environmentFxaa, renderWidth, renderHeight, 1, 1, renderWidth - 2, renderHeight - 2);
         }
         if (fxaaResult.Length != color.Length) fxaaResult = new uint[color.Length];
-        environmentFxaa.CopyTo(fxaaResult, 0);
+        if (zoomedFxaa == null && environmentKey is { } key && key.Zoom != previousZoom) {
+            if (zoomedFxaaBuffer.Length != color.Length) zoomedFxaaBuffer = new uint[color.Length];
+            Rescale(environmentFxaa, zoomedFxaaBuffer, null, null);
+            zoomedFxaa = zoomedFxaaBuffer;
+        }
+        (zoomedFxaa ?? environmentFxaa).CopyTo(fxaaResult, 0);
         // The directional span is clamped to eight pixels; the furthest sample
         // is half that span plus bilinear coverage. Six pixels includes all of
         // its support, so unchanged background pixels reuse exactly the same AA.
@@ -396,7 +474,8 @@ internal sealed class GameScenePreviewRenderer {
     // FXAA's luminance range and gradient direction determine subpixel samples.
     static void ApplyFxaa(uint[] source, uint[] result, int width, int height, int left, int top, int right, int bottom) {
         static float Luma(uint c) => ((c >> 16 & 255) * .299f + (c >> 8 & 255) * .587f + (c & 255) * .114f) / 255;
-        for (int y = top; y <= bottom; y++) for (int x = left; x <= right; x++) {
+        if (bottom < top) return;
+        Parallel.For(top, bottom + 1, y => { for (int x = left; x <= right; x++) {
             int p = y * width + x; float lm = Luma(source[p]);
             float nw = Luma(source[p - width - 1]), ne = Luma(source[p - width + 1]),
                 sw = Luma(source[p + width - 1]), se = Luma(source[p + width + 1]);
@@ -410,7 +489,7 @@ internal sealed class GameScenePreviewRenderer {
             var a = (At(-1f / 6) + At(1f / 6)) * .5f;
             var b = a * .5f + (At(-.5f) + At(.5f)) * .25f;
             float lb = Vector3.Dot(b, new(.299f, .587f, .114f)); result[p] = Pack(lb < low || lb > high ? a : b);
-        }
+        } });
     }
     // Morphological edge search and neighborhood blending for the SMAA preview.
     // Analytic coverage weights replace the native backend's precomputed area LUT;
@@ -428,11 +507,11 @@ internal sealed class GameScenePreviewRenderer {
             // compared squared to omit two normalizations and a square root.
             return r * r + g * g + bl * bl > 936;
         }
-        for (int y = 1; y < height; y++) for (int x = 1; x < width; x++) {
+        Parallel.For(1, height, y => { for (int x = 1; x < width; x++) {
             int p = y * width + x;
             if (Different(source[p], source[p - 1])) edges[p] |= 1;
             if (Different(source[p], source[p - width])) edges[p] |= 2;
-        }
+        } });
         for (int y = 1; y < height - 1; y++) for (int x = 1; x < width - 1; x++) {
             int p = y * width + x; if (edges[p] == 0) continue;
             Vector3 rgb = Unpack(source[p]); float total = 1;

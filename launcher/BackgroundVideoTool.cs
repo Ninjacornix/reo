@@ -16,6 +16,21 @@ internal static class BackgroundVideoTool {
     static readonly HashSet<string> verified = new(StringComparer.OrdinalIgnoreCase);
 
     internal static string Folder(string home) => Path.Combine(home, "media-tools", Version);
+    // A synchronous availability probe must neither download a converter nor
+    // trust a partial/unverified executable in the Windows cache.
+    internal static string? Cached(string home) {
+        if (!gate.Wait(0)) return null;
+        try {
+            string exe = Path.Combine(Folder(home), "ffmpeg.exe");
+            if (!File.Exists(exe)) return null;
+            if (!verified.Contains(exe)) {
+                using var stream = File.OpenRead(exe);
+                if (Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant() != ExecutableHash) return null;
+                verified.Add(exe);
+            }
+            return exe;
+        } finally { gate.Release(); }
+    }
     internal static async Task<string> Ensure(string home, CancellationToken cancel, IProgress<ImportProgress>? progress = null) {
 #if REO_CROSS_PLATFORM
         if (!OperatingSystem.IsWindows()) return PlatformServices.Ffmpeg();

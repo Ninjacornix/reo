@@ -47,6 +47,7 @@
     <Compile Include="../Updates.cs" Link="Shared/Updates.cs" />
     <Compile Include="../Updates.Download.cs" Link="Shared/Updates.Download.cs" />
     <Compile Include="../Updates.Package.cs" Link="Shared/Updates.Package.cs" />
+    <Compile Include="../UpdateWorker.cs" Link="Shared/UpdateWorker.cs" />
     <Compile Include="../BackgroundVideoTool.cs" Link="Shared/BackgroundVideoTool.cs" />
     <Compile Include="../BackgroundVideos.cs" Link="Shared/BackgroundVideos.cs" />
     <Compile Include="../GameFont.cs" Link="Shared/GameFont.cs" />
