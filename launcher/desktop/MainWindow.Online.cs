@@ -510,8 +510,10 @@ public partial class MainWindow {
         PlayNetworkSummary.Text =
             mode == "offline" ? "Single player"
             : !OnlineOptions.Configured(settings) ? "Co-op not set up yet (see Co-op)"
-            : mode == "host" ? (hostedServer.Running ? "Hosting at " + hostedServer.Address
-                                                      : "Hosting (opening your game...)")
+            : mode == "host" ? (serverStarting ? "Hosting (opening your game...)"
+                                : hostedServer.Running && hostedServer.GameId == settings.Game.Id
+                                    ? "Hosting at " + hostedServer.Address
+                                    : "Hosting not running (see Co-op)")
             : "Joining " + (settings.JoinHostName.Length > 0 ? settings.JoinHostName + " at " : "") +
                   settings.CoopHost;
         if (!game.Running && !launching)
