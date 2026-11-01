@@ -1,0 +1,34 @@
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -18,6 +18,20 @@
+ #include "ps2_debug_panel.h"
+ #include "Kernel/Syscalls/Interrupt.h"
+ #include "Kernel/Syscalls/Helpers/CriAudio.h"
++#ifdef __APPLE__
++#include <objc/message.h>
++#include <objc/runtime.h>
++extern "C" void *GetWindowHandle(void);
++// raylib's GetWindowHandle returns the GLFW window's NSWindow on macOS.
++static void reoMacNativeFullscreen()
++{
++    void *window = GetWindowHandle();
++    if (!window)
++        return;
++    using Send = void (*)(void *, SEL, void *);
++    reinterpret_cast<Send>(objc_msgSend)(window, sel_registerName("toggleFullScreen:"), nullptr);
++}
++#endif
+ #include "ps2_log.h"
+ #include "ps2_stubs.h"
+ #include "ps2_syscalls.h"
+@@ -1322,7 +1336,8 @@
+             InitWindow(dimension("REO_WINDOW_WIDTH", HOST_WINDOW_WIDTH) + (panel ? kDebugPanelWidth : 0),
+                        dimension("REO_WINDOW_HEIGHT", HOST_WINDOW_HEIGHT), title);
+             const char* full = std::getenv("REO_FULLSCREEN");
+-            if (full && *full == '1') ToggleBorderlessWindowed();
++            // Native macOS fullscreen: the window gets its own Space, as other Mac games do.
++            if (full && *full == '1') reoMacNativeFullscreen();
+ #else
+             InitWindow(HOST_WINDOW_WIDTH + (panel ? kDebugPanelWidth : 0), HOST_WINDOW_HEIGHT, title);
+ #endif

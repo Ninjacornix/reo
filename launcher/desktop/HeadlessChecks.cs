@@ -154,7 +154,16 @@ public partial class MainWindow {
     internal void CheckGraphicsPreviewReentry(Action<bool, string> check) {
         ShowPage("Graphics"); Dispatcher.UIThread.RunJobs();
         graphicsPreviewLoad?.Cancel();
+        // Showing the page may already have a frame in flight; let it finish so this check owns the next one.
+        for (var idle = Stopwatch.StartNew(); graphicsPreviewBusy && idle.Elapsed.TotalSeconds < 20;) {
+            Dispatcher.UIThread.RunJobs(); Thread.Sleep(1);
+        }
         graphicsScene = null;
+        // A collapsed control keeps its last arranged size on some platforms (macOS), so showing it
+        // again need not raise SizeChanged. Give it a different size so the render's own layout pass
+        // always reaches the callback, as a first show does.
+        double previousWidth = GraphicsGpuView.Width;
+        GraphicsGpuView.Width = Math.Max(32, GraphicsGpuView.Bounds.Width - 7);
         GraphicsGpuView.Visibility = Visibility.Collapsed;
         UpdateLayout();
         var positions = new[] { System.Numerics.Vector3.Zero, System.Numerics.Vector3.UnitY };
@@ -172,6 +181,7 @@ public partial class MainWindow {
             nestedCompleted = RenderGraphicsPreview().IsCompleted;
         }
         GraphicsGpuView.SizeChanged += Reenter;
+        string guard = $"active={GraphicsPreviewActive} busy={graphicsPreviewBusy} faulted={graphicsPreviewFaulted} stage={GraphicsPreviewStage.ActualWidth}x{GraphicsPreviewStage.ActualHeight} pageVisible={PageGraphics.IsEffectivelyVisible} launching={launching}";
         try {
             var render = RenderGraphicsPreview();
             var deadline = Stopwatch.StartNew();
@@ -180,9 +190,10 @@ public partial class MainWindow {
             }
             check(render.IsCompletedSuccessfully, "Preview did not complete after a layout reentry.");
             check(reentered && ownedDuringLayout && nestedCompleted,
-                $"Layout preview ownership: callback={reentered}, busy={ownedDuringLayout}, nestedCompleted={nestedCompleted}.");
+                $"Layout preview ownership: callback={reentered}, busy={ownedDuringLayout}, nestedCompleted={nestedCompleted}. {guard}");
         } finally {
             GraphicsGpuView.SizeChanged -= Reenter;
+            GraphicsGpuView.Width = previousWidth;
             ShowPage("Play");
             graphicsScene = null;
             graphicsPreviewSource = "";

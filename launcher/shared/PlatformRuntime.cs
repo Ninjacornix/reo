@@ -29,6 +29,8 @@ internal static class PlatformRuntime {
         start.Environment["REO_FULLSCREEN"]=settings.Fullscreen?"1":"0";
         if(OperatingSystem.IsWindows())return;
         start.Environment["REO_MACOS_LIVE_SETTINGS"]=Path.Combine(logs,"live-settings.txt");
+        // The raylib host shows its developer panel (F1) unless told not to; RC1 players never see it.
+        start.Environment["REO_DEBUG_PANEL"]="0";
         PublishLive(logs,settings);
         if(!OperatingSystem.IsMacOS())return;
         if(!DisplayAvailable())throw new IOException("No awake display is available. Wake the display and launch the game again.");
