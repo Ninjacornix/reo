@@ -70,6 +70,9 @@ def main(folder):
     (out / 'index.html').write_text('<body style="background:#141210;color:#f3ecdf;font-family:sans-serif">' + ''.join(rows))
     (out / 'report.json').write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))
+    if __import__('os').environ.get('GITHUB_ACTIONS') == 'true':
+        for page, entry in report.items():
+            print(f'::notice title=Parity {page}::' + json.dumps(entry, separators=(',', ':')))
 
 
 if __name__ == '__main__':
