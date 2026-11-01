@@ -18,6 +18,7 @@ internal sealed record PreviewRenderTimings(double Background, double Animation,
 // device. Texture sampling, depth, perspective and resolution are actually evaluated
 // for each frame; the preview is not a filtered movie or a stack of pre-rendered images.
 internal sealed class GameScenePreviewRenderer {
+    readonly object renderGate = new();
     readonly ConditionalWeakTable<PreviewTexture, Texture> textures = new();
     readonly List<PreviewMesh> environment = new();
     readonly List<PreviewTexture> environmentTextures = new();
@@ -64,6 +65,13 @@ internal sealed class GameScenePreviewRenderer {
 
     internal PreviewFrame Render(GamePreviewScene scene, PreviewRenderOptions requested, double seconds, int width, int height,
                                  float yaw = 0, float pitch = 0, float zoom = 1) {
+        // A frame owns the reusable buffers, transformed vertices, triangle list and scene pose
+        // until all parallel raster workers finish. Calls from other threads must wait outside it.
+        lock (renderGate) return RenderCore(scene, requested, seconds, width, height, yaw, pitch, zoom);
+    }
+
+    PreviewFrame RenderCore(GamePreviewScene scene, PreviewRenderOptions requested, double seconds, int width, int height,
+                            float yaw, float pitch, float zoom) {
         ArgumentNullException.ThrowIfNull(scene);
         ArgumentNullException.ThrowIfNull(requested);
         width = Math.Clamp(width, 32, 1600); height = Math.Clamp(height, 32, 1600);

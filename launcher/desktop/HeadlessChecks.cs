@@ -97,6 +97,7 @@ internal static class HeadlessChecks {
             developer.IsExpanded=true;Dispatcher.UIThread.RunJobs();
             Check(developer.GetVisualDescendants().OfType<Border>().Any(b=>b.Name=="OptionsBody"&&b.IsVisible&&b.Bounds.Height>0),"RC1 expandable section did not open.");developer.IsExpanded=false;
         }
+        window.CheckGraphicsPreviewReentry(Check);
         bool mediaChecked=false;
         string? ffmpeg=null;try{ffmpeg=PlatformServices.Ffmpeg();}catch(IOException){}
         if(ffmpeg!=null) {
@@ -120,5 +121,47 @@ internal static class HeadlessChecks {
         window.Close();
         File.WriteAllText(Path.Combine(output,"report.json"),JsonSerializer.Serialize(new{passed=true,pages=12,checks,mediaChecked}));
         return 0;
+    }
+}
+
+public partial class MainWindow {
+    // Exercise the actual layout callback which can synchronously request another preview frame.
+    internal void CheckGraphicsPreviewReentry(Action<bool, string> check) {
+        ShowPage("Graphics"); Dispatcher.UIThread.RunJobs();
+        graphicsPreviewLoad?.Cancel();
+        graphicsScene = null;
+        GraphicsGpuView.Visibility = Visibility.Collapsed;
+        UpdateLayout();
+        var positions = new[] { System.Numerics.Vector3.Zero, System.Numerics.Vector3.UnitY };
+        var skin = new GamePreviewScene.Skin(positions, positions.ToArray(), positions.ToArray(), positions.ToArray(), [[], []]);
+        graphicsScene = new([], [], [], [skin], "synthetic layout regression");
+        graphicsPreviewFaulted = false;
+        graphicsPreviewVersion++;
+        graphicsPreviewNextFrame = 0;
+        graphicsPreviewTimer.Stop();
+        bool reentered = false, ownedDuringLayout = false, nestedCompleted = false;
+        void Reenter(object? sender, SizeChangedEventArgs args) {
+            if (reentered) return;
+            reentered = true;
+            ownedDuringLayout = graphicsPreviewBusy;
+            nestedCompleted = RenderGraphicsPreview().IsCompleted;
+        }
+        GraphicsGpuView.SizeChanged += Reenter;
+        try {
+            var render = RenderGraphicsPreview();
+            var deadline = Stopwatch.StartNew();
+            while (!render.IsCompleted && deadline.Elapsed.TotalSeconds < 20) {
+                Dispatcher.UIThread.RunJobs(); Thread.Sleep(1);
+            }
+            check(render.IsCompletedSuccessfully, "Preview did not complete after a layout reentry.");
+            check(reentered && ownedDuringLayout && nestedCompleted,
+                $"Layout preview ownership: callback={reentered}, busy={ownedDuringLayout}, nestedCompleted={nestedCompleted}.");
+        } finally {
+            GraphicsGpuView.SizeChanged -= Reenter;
+            ShowPage("Play");
+            graphicsScene = null;
+            graphicsPreviewSource = "";
+            graphicsPreviewVersion++;
+        }
     }
 }
