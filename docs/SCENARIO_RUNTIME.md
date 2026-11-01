@@ -394,3 +394,10 @@ boiler candidate, and `bfp-background-10` the final frozen-room candidate.
 the comparison JSON files record the timing scope. Captures, translated game
 instructions, imported assets and native binaries are not committed. The
 independent dirty SDK checkout is not used or modified.
+
+For unattended GPU-path screenshots, set `REO_GPU_SHOT_EVERY_SECONDS` to an
+interval from 1 to 120 seconds. The bootstrap requests final-shader readbacks
+and writes at most 128 `gpu-shot-NN.bmp` files in the process working directory.
+It neither shows nor focuses a window and does not initialize audio. With the
+option unset, these readbacks are not requested. Capturing a frame has overhead;
+do not interpret a capture-time stall as steady-state game performance.
