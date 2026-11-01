@@ -347,3 +347,50 @@ uncommitted working edits remain untouched; fixtures stage sealed RC1 inputs.
 Local Windows evidence is retained under `build-ninja/issue26-verify` and
 `build-ninja/issue26-bank-*`. Complete loading/cutscene/FMV gameplay verification
 and the ice/smoke performance investigation remain separate acceptance work.
+
+### Windows ice/smoke VU coverage
+
+The Windows room investigation reproduced a CPU-side VU bottleneck in Hellfire's
+boiler room (scenario 2, room 28). A clean baseline at 4x internal resolution and
+SMAA averaged 18.0 game updates/second; the candidate averaged 29.9 at the same
+player position. Median large VIF batches fell from 49.6 ms to 25.1 ms. Display
+presentation remained near 60 Hz in both cases, so presentation FPS alone hid
+the simulation slowdown. These are local measurements with concurrent desktop
+work, not a hardware-independent performance guarantee.
+
+Two existing File #1 VU images used in the frozen lab were still opt-in:
+`2ea02b...` and `5273fa...`. The boiler room also uploads an uncatalogued complete
+image, `c41dc6...`, whose active instructions differ from the superficially
+similar `2ea02b...` image. The catalogue now reconstructs that exact 16 KiB image
+from four ranges of the owned, hash-checked ELF. These three images are admitted
+by default only through their recorded entry points. The other six experimental
+images retain their opt-in policy. Full-image comparison, capture exclusion and
+unknown-program fallback remain in force; no effect or geometry is removed.
+
+The final six-program default table passes 1,185 captured-input replays against
+the production interpreter: 173 frozen-lab inputs for `2ea02b...`, 64 frozen and
+64 Hellfire inputs for `5273fa...`, 244 boiler-room inputs for `c41dc6...`, and
+640 regression inputs covering the three previous default images. Each replay
+compares the complete 632-byte VU state, 16 KiB data bank and both emitted GIF
+packet streams. The newly admitted programs' isolated replays are approximately
+four to five times faster. The check tool's `--default` mode requires every
+capture to select the actual default table, rather than the experimental table.
+The owned-data audio checks still pass 46 RPC/PCM checks, 35 bank-cancellation
+checks, 465 File #1 mixer checks and 330 File #2 mixer checks.
+
+The low-temperature lab (scenario 35, room 28) retains 30 updates/second at 4x
+and SMAA on this host. Its VU work is reduced, but this host did not reproduce a
+sub-30 rate in that particular frozen-room view. Room fixtures enter through
+the original room-request/cleanup/loading path with an existing arrival point;
+they do not constitute complete chapter playthroughs. Separate ordinary-pad
+traversal reaches the tunnel, platform and lift passage. Test windows stay
+hidden and no audio device is initialized. A private PCM sink can advance the
+production stream and bank mixers without sending sound to the desktop.
+
+Evidence stays in the ignored `build-ninja/issue26-verify` directory:
+`hellfire-background-06` is the clean baseline, `hellfire-background-05` the
+boiler candidate, and `bfp-background-10` the final frozen-room candidate.
+`vu-oracle-default-04` contains the final default-table output comparisons;
+the comparison JSON files record the timing scope. Captures, translated game
+instructions, imported assets and native binaries are not committed. The
+independent dirty SDK checkout is not used or modified.

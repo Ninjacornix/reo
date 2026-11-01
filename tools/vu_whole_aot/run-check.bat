@@ -1,7 +1,7 @@
 @echo off
 setlocal
 if "%~3"=="" (
-    echo Usage: run-check.bat CAPTURE_DIR FRESH_RESULTS_DIR FACTORY_DIR [RUNTIME_ROOT]
+    echo Usage: run-check.bat CAPTURE_DIR FRESH_RESULTS_DIR FACTORY_DIR [RUNTIME_ROOT] [--default]
     exit /b 2
 )
 for %%R in ("%~dp0..\..") do set "TASK_ROOT=%%~fR"
@@ -44,7 +44,7 @@ if errorlevel 1 (
     type "%TASK_OUT%\build.log"
     exit /b 1
 )
-"%TASK_OUT%\check.exe" "%TASK_CAPTURE%" "%TASK_RESULTS%" >"%TASK_OUT%\check.log" 2>&1
+"%TASK_OUT%\check.exe" "%TASK_CAPTURE%" "%TASK_RESULTS%" %5 >"%TASK_OUT%\check.log" 2>&1
 if errorlevel 1 (
     type "%TASK_OUT%\check.log"
     exit /b 1

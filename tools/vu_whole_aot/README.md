@@ -47,6 +47,9 @@ factory, replacing only the packet sinks:
     run-check.bat LOCAL_CAPTURE FRESH_RESULTS LOCAL_FACTORY [RUNTIME_ROOT]
 
 The optional runtime root defaults to `third_party/PS2Recomp/ps2xRuntime`.
+Supply `--default` as the fifth argument to verify the default table rather
+than the full experimental table. The result receipt records this choice;
+every supplied capture must actually select the requested table.
 Visual Studio C++ tools are required; the script prefers `clang-cl` on PATH and
 otherwise uses MSVC. Every captured image/entry must select the supplied table.
 The check compares the complete VU state, data bank and GIF packet streams against
