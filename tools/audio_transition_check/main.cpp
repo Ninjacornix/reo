@@ -51,6 +51,22 @@ struct Session {
         check(ps2_cri_audio::queue(ring,reinterpret_cast<uint8_t*>(pcm.data()),sizeof(pcm),end),"Queue synthetic PCM");
         playing(voice,true);return {voice,ring};
     }
+    std::pair<uint32_t,uint32_t> transferredStream(uint32_t buffer,unsigned chunks){
+        constexpr uint32_t mailbox=0x26000,record=0x27000;
+        rpc(2,{0,mailbox,mailbox+0x400,0x100});
+        const uint32_t ring=rpc(0x422,{1,buffer,0x4000});
+        const uint32_t sjx=rpc(0x400,{0,ring,0,record});
+        const uint32_t voice=rpc(0x408,{1,0,sjx,0});
+        for(unsigned i=0;i<0x2000;++i){int16_t sample=4096;std::memcpy(ram.data()+buffer+i*2,&sample,2);}
+        for(unsigned i=0;i<chunks;++i){
+            std::memset(ram.data()+mailbox,0,0x100);word(mailbox,1);
+            word(mailbox+0x14,sjx);word(mailbox+0x18,buffer);word(mailbox+0x1c,0x4000);
+            word(mailbox+0xfc,i+1);
+            ps2_syscalls::noteDtxSifDmaTransfer(ram.data(),mailbox,mailbox+0x400,0x100);
+        }
+        check(ps2_cri_audio::queuedSamples(ring)==chunks*0x2000,"Real SJX PCM accepted");
+        playing(voice,true);return {voice,ring};
+    }
 };
 std::vector<float> render(unsigned n){std::vector<float> out(n*2);ps2_cri_audio::render(out.data(),n);return out;}
 bool constant(const std::vector<float>& out,float value){return std::all_of(out.begin(),out.end(),[&](float v){return v==value;});}
@@ -77,6 +93,16 @@ int main() try {
     ps2_cri_audio::drain(other);s.playing(other,false);s.rpc(0x409,{other});
     check(constant(render(64),0),"Destroy cancels a pending drain");
     check(ps2_cri_audio::queuedSamples(otherRing)==512,"Destroy does not consume a drained queue");
+    auto [cut,cutRing]=s.transferredStream(0x60000,2);
+    check(constant(render(64),.125f),"Transferred music audible before stop");
+    s.playing(cut,false);
+    check(constant(render(64),0),"Stop with outstanding chunks cuts music immediately");
+    check(ps2_cri_audio::queuedSamples(cutRing)==0,"Intentional cut retires old PCM");
+    s.rpc(0x409,{cut});
+    auto [natural,naturalRing]=s.transferredStream(0x70000,1);
+    s.playing(natural,false);
+    check(constant(render(0x2000),.125f),"Natural end preserves the accepted speech tail");
+    check(constant(render(64),0),"Natural end stops after the accepted tail");
     std::cout<<"PASS "<<checks<<" RPC/audio transition checks\n";
     return 0;
 } catch(const std::exception& e){std::cerr<<"FAIL after "<<checks<<" checks: "<<e.what()<<'\n';return 1;}

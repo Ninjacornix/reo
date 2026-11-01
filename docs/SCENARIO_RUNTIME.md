@@ -308,3 +308,32 @@ Private evidence stays under `build-ninja/issue26-audio`: `repro-baseline`,
 `repro-candidate`, `mixer-regression.log`, and `chapter-3-confirmed`. The audio
 fixture uses synthetic samples; owned game assets, session logs, cards and
 native binaries remain ignored.
+
+### Windows follow-up: cancelled sequences and interrupted streams
+
+The Windows follow-up found two additional defects beyond RNA destruction.
+Bank cancellation released the currently playing notes without retiring their
+TQ sequence. A repeating ambient sequence could therefore schedule new notes
+after cancellation. Patch 0114 retires the scheduler on explicit or flagged
+replacement cancellation while preserving the release envelope and unrelated
+sequences. An ordinary AllNotesOff within a sequence still retains its scheduler.
+The new `bank_cancel.cpp` fixture uses authored repeating TQ commands with the
+owned menu bank: the old helper fails at check 16, and the patched helper passes
+33 checks, including targeted/wildcard/repeated cancellation and replacement.
+
+The RPC stop helper also always drained PCM, despite its documented distinction
+between natural endings and intentional cuts. A Windows Below Freezing Point
+opening records a stereo music stop with four unreturned chunks (32,768 bytes)
+and 18,144 queued samples on each channel. Patch 0115 discards a stopped stream's
+PCM when its producer still owns outstanding chunks and cancels any pending
+drain. An acknowledged natural ending still plays its accepted tail. The extended
+RPC fixture transfers PCM through real SJX and RNA mailboxes: with patch 0113
+alone it fails at check 37; with patch 0115 it passes all 46 checks. These tests
+use synthetic PCM and the production runtime/RPC/mixer, without an audio device.
+
+The existing owned-data mixer regressions pass 465 File #1 checks and 330 File #2
+checks with the bank cancellation change. The independent source SDK and its
+uncommitted working edits remain untouched; fixtures stage sealed RC1 inputs.
+Local Windows evidence is retained under `build-ninja/issue26-verify` and
+`build-ninja/issue26-bank-*`. Complete loading/cutscene/FMV gameplay verification
+and the ice/smoke performance investigation remain separate acceptance work.

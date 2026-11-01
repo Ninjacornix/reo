@@ -15,6 +15,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 REL = Path('ps2xRuntime/src/lib/Kernel/Syscalls')
 PATCH = ROOT / 'third_party/patches/ps2recomp/0113-cri-release-destroyed-rna-voices.patch'
+STOP_PATCH = ROOT / 'third_party/patches/ps2recomp/0115-audio-cut-interrupted-streams.patch'
 
 
 def run(args):
@@ -31,14 +32,16 @@ def run(args):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(args.sdk / relative, target)
     apply = ['git', 'apply', '--directory=' + stage.relative_to(ROOT).as_posix()]
-    already = subprocess.run(apply + ['--reverse', '--check', str(PATCH)], cwd=ROOT,
-                             capture_output=True).returncode == 0
-    if args.baseline and already:
-        subprocess.run(apply + ['--reverse', str(PATCH)], cwd=ROOT, check=True)
-    elif not already:
-        subprocess.run(apply + ['--check', str(PATCH)], cwd=ROOT, check=True)
-        if not args.baseline:
-            subprocess.run(apply + [str(PATCH)], cwd=ROOT, check=True)
+    patches = [PATCH, STOP_PATCH]
+    for patch in reversed(patches) if args.baseline else patches:
+        already = subprocess.run(apply + ['--reverse', '--check', str(patch)], cwd=ROOT,
+                                 capture_output=True).returncode == 0
+        if args.baseline and already:
+            subprocess.run(apply + ['--reverse', str(patch)], cwd=ROOT, check=True)
+        elif not already:
+            subprocess.run(apply + ['--check', str(patch)], cwd=ROOT, check=True)
+            if not args.baseline:
+                subprocess.run(apply + [str(patch)], cwd=ROOT, check=True)
     commands = json.loads((args.runtime_build / 'compile_commands.json').read_text())
     command = next(c for c in commands if c['file'].endswith('/Kernel/Syscalls/RPC.cpp'))
     template = command.get('arguments') or shlex.split(command['command'])
@@ -73,6 +76,7 @@ def run(args):
                                 stdout=log, stderr=subprocess.STDOUT)
     receipt = {'baseline': args.baseline, 'returncode': result.returncode,
                'sdk': str(args.sdk), 'patchSha256': hashlib.sha256(PATCH.read_bytes()).hexdigest(),
+               'stopPatchSha256': hashlib.sha256(STOP_PATCH.read_bytes()).hexdigest(),
                'sourceSha256': {str(p): hashlib.sha256((stage / p).read_bytes()).hexdigest()
                                 for p in files},
                'scope': 'Real RPC destroy and production PCM output; synthetic producer data; no game/device verification'}
