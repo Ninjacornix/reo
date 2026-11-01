@@ -24,4 +24,10 @@
     <Content Include="../artifacts/native/XINPUT1_4.dll" Condition="Exists('../artifacts/native/XINPUT1_4.dll')" Link="XINPUT1_4.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="../artifacts/native/reo-movie-check.exe" Condition="Exists('../artifacts/native/reo-movie-check.exe')" Link="reo-movie-check.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
-<ItemGroup><Content Include="../../examples/mods/*.json" Link="examples/mods/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup></Project>
+  <ItemGroup><Content Include="../../examples/mods/*.json" Link="examples/mods/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
+  <Target Name="ExcludePublishSymbols" AfterTargets="ComputeFilesToPublish" Condition="'$(DebugSymbols)' == 'false'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
+</Project>
