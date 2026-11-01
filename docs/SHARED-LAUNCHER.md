@@ -76,7 +76,7 @@ On the prepared Apple Silicon checkout:
 python3 tools/launcher/package.py
 ```
 
-Result: `build-macos/common-launcher/RE Outbreak RC1.app`. The app bundles the .NET
+Result: `build-macos/common-launcher/Outbreak.app`. The app bundles the .NET
 runtime, native game, MoltenVK, controller/Keychain adapters, FFmpeg and a separate
 UI-free Python server worker. Original disc files remain outside the app. Signing
 is local ad-hoc, not notarization. `--reuse-services` is only for an unchanged

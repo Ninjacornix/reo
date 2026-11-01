@@ -29,7 +29,7 @@ def main():
     for module in ('opensnap','opensnap_app','opensnap_web','opensnap_dns'):command+=['--collect-submodules',module]
     command+=['--add-data',str(payload/'server')+':server','--add-binary','/opt/homebrew/bin/ffmpeg:tools',ROOT/'network/server/worker.py']
     if not args.reuse_services:run(*command,env={**os.environ,'PYTHONPATH':str(source)})
-    app=build/'common-launcher/RE Outbreak RC1.app';contents=app/'Contents';entry=contents/'MacOS';resources=contents/'Resources';mac=resources/'launcher'
+    app=build/'common-launcher/Outbreak.app';contents=app/'Contents';entry=contents/'MacOS';resources=contents/'Resources';mac=resources/'launcher'
 
     if app.exists():shutil.rmtree(app)
     mac.mkdir(parents=True,exist_ok=True);entry.mkdir(parents=True,exist_ok=True)
@@ -53,7 +53,7 @@ def main():
     for filename in ('COPYING.GPLv2','COPYING.GPLv3','LICENSE.md','LICENSE'):
         if (ffmpeg/filename).exists():copy(ffmpeg/filename,licences/('FFmpeg-'+filename))
     if (build/'Outbreak.icns').exists():copy(build/'Outbreak.icns',resources/'Outbreak.icns')
-    with (contents/'Info.plist').open('wb') as stream:plistlib.dump(dict(CFBundleExecutable='Outbreak.Launcher',CFBundleIdentifier='net.ninjacornix.reo.rc1',CFBundleName='RE Outbreak RC1',CFBundlePackageType='APPL',CFBundleShortVersionString='1.0.20',CFBundleVersion='3',CFBundleIconFile='Outbreak.icns',LSMinimumSystemVersion='14.0',NSHighResolutionCapable=True,NSLocalNetworkUsageDescription='Discover and connect to Outbreak co-op servers on your local network.'),stream)
+    with (contents/'Info.plist').open('wb') as stream:plistlib.dump(dict(CFBundleExecutable='Outbreak.Launcher',CFBundleIdentifier='net.ninjacornix.reo.rc1',CFBundleName='Outbreak',CFBundleDisplayName='Outbreak',CFBundlePackageType='APPL',CFBundleShortVersionString='1.0.20',CFBundleVersion='3',CFBundleIconFile='Outbreak.icns',LSMinimumSystemVersion='14.0',NSHighResolutionCapable=True,NSLocalNetworkUsageDescription='Discover and connect to Outbreak co-op servers on your local network.'),stream)
     # Sign inner Mach-O files before signing the containing app.
     for path in mac.rglob('*'):
         if not path.is_file() or path.is_symlink():continue

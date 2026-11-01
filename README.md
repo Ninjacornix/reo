@@ -18,7 +18,7 @@ This is an unofficial fan project. You must provide your own legally obtained ga
 
 An **Apple Silicon macOS RC1 port** is available in this source branch, with a bundled
 desktop launcher and Vulkan-to-Metal rendering through MoltenVK. Open the locally built
-`build-macos/common-launcher/RE Outbreak RC1.app`; see [shared RC1 launcher](docs/SHARED-LAUNCHER.md)
+`build-macos/common-launcher/Outbreak.app`; see [shared RC1 launcher](docs/SHARED-LAUNCHER.md)
 and [Mac build and validation](docs/MACOS.md).
 File #1 gameplay, graphics, launcher and server protocol checks pass on an M2. Full multiplayer,
 physical controllers and File #2 on Mac remain unverified; no public Mac download is published.
