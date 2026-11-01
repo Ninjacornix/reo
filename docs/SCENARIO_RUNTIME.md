@@ -426,3 +426,56 @@ default table and the same silent production PCM sink. It averages 29.98 game
 updates/second at 4x/SMAA, keeps every owned window hidden, initializes no audio
 device and exits normally. Neither the user SDK's edits nor desktop audio
 settings are changed by these tests.
+
+### Expanded Below Freezing Point verification
+
+The frozen-area follow-up compares the sealed RC1 baseline with the final
+six-program candidate at 4x internal resolution, SMAA and 16x anisotropy.
+Both run the real production PCM mixer through the private silent sink.
+The room matrix covers the low-temperature room, special research room,
+chemical storage, B6 south/east passages, B7 south/east passages and chemical
+disposal: eight rooms and twelve original arrival fixtures per build. Each
+arrival includes idle and ordinary controller movement segments. Room-average
+rates remain approximately 30 original game updates/second on both builds;
+the RC1 frozen-area slowdown is not reproduced in this matrix. Movement is
+limited by walls in some fixtures, so twelve entrances do not imply twelve
+distinct camera views or a complete scenario playthrough.
+
+These direct room requests leave the AI companions in their previous room.
+Consequently the matrix measures the player and room effects, not a full party.
+Its `REO_GAME_CLOCK_SECONDS=1200` setting also exceeds the journal's supported
+maximum of 600 seconds. The external read-only original-counter observations
+remain valid for average rates, but provide no accepted per-update tail
+statistics. Do not infer smooth frame pacing from those averages.
+
+A separate RC1 test disables asynchronous VIF processing and uses a valid
+180-second clock journal. Steady gameplay in the low-temperature room averages
+29.998 updates/second with a 34.30 ms 95th-percentile update interval; chemical
+storage averages 29.994 with a 34.35 ms 95th percentile. Neither segment contains
+an update interval above 45 ms. This exercise includes walking and unarmed
+actions; actual handgun firing was not established and is not claimed.
+
+Private evidence is retained in `frozen-matrix-candidate-12`,
+`frozen-matrix-baseline-13`, `frozen-expanded-verification.json` and
+`frozen-vfx-baseline-sync-14` under `build-ninja/issue26-verify`. The original
+game counter, rather than the approximately 60 Hz presentation rate, is the
+performance measure. These measurements verify the tested paths without
+establishing that every reported frozen-area slowdown has been resolved.
+
+The companion follow-up explicitly places George and Alyssa in the
+low-temperature room with Kevin, allows the delayed opening cutscene to finish,
+and reapplies the recorded placement before timing. Native AI and rendering
+then run without further actor writes. The accepted RC1 sample keeps all three
+actors active in that room for the entire 25 seconds and averages 30.019
+updates/second. GPU captures show the cold fog and all three survivors, although
+not every survivor is visible in every frame. Earlier attempts interrupted by
+the opening movie are excluded. This is a controlled party fixture, not natural
+chapter progression.
+
+In the candidate run, George walks into the adjacent room after 17 seconds, so
+its complete 25-second sample does not qualify as full-party coverage. Comparing
+the common first 15 seconds instead, both builds record 450 original updates
+(30.000 updates/second), with all three actors active in room 28 throughout.
+Evidence is retained in `frozen-party-baseline-20`, `frozen-party-candidate-18`
+and `frozen-party-common-window.json`. This additional party/fog workload also
+does not reproduce the reported baseline slowdown.
