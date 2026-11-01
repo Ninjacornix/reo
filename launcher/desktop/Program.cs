@@ -6,6 +6,25 @@ namespace Outbreak.Launcher.Desktop;
 internal static class Program {
     [STAThread]
     public static int Main(string[] args) {
+        int update = Array.IndexOf(args, "--apply-update");
+        if (update >= 0) {
+            if (!OperatingSystem.IsWindows()) {
+                Console.Error.WriteLine("Automatic update installation is only supported on Windows.");
+                return 1;
+            }
+            if (update + 1 >= args.Length || args[update + 1].StartsWith("--")) {
+                Console.Error.WriteLine("--apply-update requires an update plan file.");
+                return 1;
+            }
+            // Installer helpers must not create an Avalonia app, claim the UI
+            // mutex, or acquire the data lease still held by the parent.
+            try { return UpdateWorker.Run(args[update + 1]).GetAwaiter().GetResult(); }
+            catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+        }
+        if (args.Contains("--update-worker-check")) {
+            try { return UpdateWorkerChecks.Run(args).GetAwaiter().GetResult(); }
+            catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+        }
         if(args.Contains("--display-check")){bool awake=PlatformRuntime.DisplayAvailable();System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new{awakeDisplay=awake}));return awake?0:2;}
         if(args.Contains("--runtime-check")||args.Contains("--service-check")){try{return IntegrationChecks.Run(args).GetAwaiter().GetResult();}catch(Exception error){Console.Error.WriteLine(error);return 1;}}
         if(args.Contains("--headless-check")) {

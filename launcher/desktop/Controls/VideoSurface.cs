@@ -84,7 +84,8 @@ public sealed partial class VideoSurface : Control, IDisposable {
         string? failure = null;
         bool ended = false;
         try {
-            var info = new ProcessStartInfo(PlatformServices.Ffmpeg()) { UseShellExecute = false, CreateNoWindow = true,
+            string ffmpeg = await PlatformServices.PrepareFfmpeg(token);
+            var info = new ProcessStartInfo(ffmpeg) { UseShellExecute = false, CreateNoWindow = true,
                 RedirectStandardOutput = true, RedirectStandardError = true };
             var arguments = new List<string> { "-hide_banner", "-loglevel", "info", "-nostdin" };
             if (offset > TimeSpan.Zero) arguments.AddRange(["-ss", offset.TotalSeconds.ToString("0.###", CultureInfo.InvariantCulture)]);

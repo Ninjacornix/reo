@@ -3,8 +3,8 @@ using Avalonia.Markup.Xaml;
 
 namespace Outbreak.Launcher.Desktop;
 
-// Port of RC1 App.xaml.cs desktop startup. Command-line tools and WPF self-tests stay in the RC1
-// Windows build; the common launcher keeps the interactive startup sequence.
+// Port of RC1 App.xaml.cs desktop startup. The installer is dispatched by Program
+// before Avalonia starts; this class handles the interactive startup sequence.
 public sealed partial class App : Application {
     Mutex? singleInstance;
     // RC1 turns tooltips off for every element (App static constructor).

@@ -87,7 +87,8 @@ public static class UpdateWorker {
     static UpdatePlan ReadPlan(string file) {
         var plan = JsonSerializer.Deserialize<UpdatePlan>(File.ReadAllText(file), Updates.Json) ??
                    throw new IOException("Missing update plan.");
-        string work = Path.GetFullPath(plan.Work), home = Path.GetFullPath(Updates.Home);
+        string dataHome = Storage.Resolve(plan.Target, Environment.GetEnvironmentVariable("REO_UPDATE_DATA_HOME"));
+        string work = Path.GetFullPath(plan.Work), home = Path.Combine(dataHome, "updates");
         if (!string.Equals(Path.GetDirectoryName(work), home, StringComparison.OrdinalIgnoreCase) ||
             !Guid.TryParseExact(Path.GetFileName(work), "N", out _) ||
             Path.GetFullPath(file) != Path.Combine(work, "plan.json") ||
@@ -101,6 +102,9 @@ public static class UpdateWorker {
                 "The updater cannot replace a source checkout or staging directory.");
         if (Updates.ParseVersion(plan.Version) <= Updates.InstalledVersion(plan.Target))
             throw new IOException("Update would not install a newer version.");
+        // Configure only after checking the plan's ownership. Do not initialize
+        // storage or take its lease while waiting for the parent to exit.
+        Storage.Configure(plan.Target, dataHome);
         return plan;
     }
     public static async Task<int> Run(string file) {
@@ -144,8 +148,8 @@ public static class UpdateWorker {
             failure = error.Message;
             restored = error is not AggregateException;
             if (plan == null) {
-                Directory.CreateDirectory(Updates.Home);
-                File.WriteAllText(Path.Combine(Updates.Home, "worker-error.txt"), error.ToString());
+                // An invalid plan does not establish an owned output directory.
+                Console.Error.WriteLine(error);
                 return 1;
             }
         }
@@ -162,6 +166,9 @@ public static class UpdateWorker {
             };
             start.ArgumentList.Add(failure == null ? "--update-complete" : "--update-failed");
             start.ArgumentList.Add(receipt);
+            start.ArgumentList.Add("--data-home");
+            start.ArgumentList.Add(Settings.Home);
+            start.Environment.Remove("REO_UPDATE_DATA_HOME");
             using var restarted = Process.Start(start);
             if (restarted != null)
                 File.WriteAllText(Path.Combine(plan.Work, "restart.json"),

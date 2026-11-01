@@ -1,11 +1,24 @@
 using Outbreak.Launcher;
 using System.Text.Json;
+// A UI-free restart/parent fixture for the real Windows updater process check.
+if (args.Length == 2 && args[0] == "--update-parent-check") {
+    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+    while (!File.Exists(args[1])) await Task.Delay(50, timeout.Token);
+    return 0;
+}
+if (args.Length == 4 && args[0] is "--update-complete" or "--update-failed" && args[2] == "--data-home") {
+    File.WriteAllText(Path.Combine(Environment.CurrentDirectory, "restart-check.json"),
+                      JsonSerializer.Serialize(new { arguments = args, receipt = File.ReadAllText(args[1]) }));
+    return 0;
+}
 string root=PlatformPaths.FindRoot(AppContext.BaseDirectory);
 string home=Path.Combine(Path.GetTempPath(),"reo-common-tests-"+Guid.NewGuid().ToString("N"));
 Storage.Configure(root,home);
 int passed=0;var failures=new List<string>();
 void Check(bool ok,string message){if(ok)passed++;else failures.Add(message);}
 try {
+try{await PlatformServicesTests.Run(Check);}catch(Exception e){failures.Add("PlatformServices: "+e);}
+if(OperatingSystem.IsWindows())try{UpdateTests.Run(Check);}catch(Exception e){failures.Add("Updates: "+e);}
 try{GraphicsOptionsTests.Run(Check);}catch(Exception e){failures.Add("GraphicsOptions: "+e);}
 try{ModsTests.Run(Check);}catch(Exception e){failures.Add("Mods: "+e);}
 try{DiscImportTests.Run(Check);}catch(Exception e){failures.Add("DiscImport: "+e);}
