@@ -130,6 +130,8 @@ public sealed class GameSession {
         image = cached.Image; hash = cached.Sha256;
         }
         VerifyAudioCompatibility(image, selectedGame.Id);
+        var examineEnvironment = ExamineMessageEnvironment(selectedMods,
+            selectedMods.Any(m => m.ExamineMessages != null) && SupportsExamineMessages(image));
         if (selectedGame.Id == "file2" && selectedMods.Count > 0 &&
             !HasMarker(image, "[MOD-FILE2-1] installed"))
             throw new IOException("File #2 mods need the updated game build. Rebuild or update the game.");
@@ -166,6 +168,7 @@ public sealed class GameSession {
                      .ToArray())
             start.Environment.Remove(key);
         void Set(string key, string value) => start.Environment[key] = value;
+        foreach (var pair in examineEnvironment) Set(pair.Key, pair.Value);
         if (assetPlan.Length != 0) Set("REO_ASSET_OVERLAY", assetPlan);
         if (File.Exists(stringPlan)) Set("REO_EXECUTABLE_STRINGS", stringPlan);
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
@@ -461,6 +464,24 @@ public sealed class GameSession {
     }
     // Drain pipes independently of the UI: native window messages can wait on the game.
     internal const string PointsCheatCapability = "[CHEATS-POINTS-1] maximum results points";
+    internal const string ExamineMessagesCapability = "[MOD-EXAMINE-TIME-1] multiplier";
+    internal static bool SupportsExamineMessages(string image) => HasMarker(image, ExamineMessagesCapability);
+    internal static Dictionary<string, string> ExamineMessageEnvironment(IEnumerable<ModManifest> mods, bool supportsCapability) {
+        var environment = new Dictionary<string, string>();
+        if (Mods.SelectedExamineMessages(mods) is not {} examine) return environment;
+        Mods.ValidateExamineMessages(examine);
+        if (!supportsCapability)
+            throw new IOException("Examine message timing needs the updated game build. Rebuild or update the selected game in Game files.");
+        // Native timing uses integer permille; round upward so the requested
+        // message duration is never shortened by conversion. The round-trip
+        // decimal avoids promoting 8.001 to 8002 through binary multiplication.
+        var invariant = System.Globalization.CultureInfo.InvariantCulture;
+        decimal multiplier = decimal.Parse(examine.DurationMultiplier.ToString("R", invariant),
+            System.Globalization.NumberStyles.Float, invariant);
+        int permille = (int)decimal.Ceiling(multiplier * 1000);
+        environment["REO_MOD_EXAMINE_TIME_SCALE"] = permille.ToString(invariant);
+        return environment;
+    }
     internal const string File2AudioCapability = "[AUDIO-MIXER-FILE2-1] master,music,sfx,voice,ui";
     internal static void VerifyAudioCompatibility(string image, string gameId) {
         if (gameId == "file2" && !HasMarker(image, File2AudioCapability))

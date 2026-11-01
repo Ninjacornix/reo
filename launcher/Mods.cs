@@ -18,6 +18,10 @@ public sealed class ModManifest {
     public WeaponShuffle? WeaponShuffle { get; set; }
     public ItemRandomizer? ItemRandomizer { get; set; }
     public EnemyRandomizer? EnemyRandomizer { get; set; }
+    public ExamineMessages? ExamineMessages { get; set; }
+}
+public sealed class ExamineMessages {
+    public double DurationMultiplier { get; set; } = 1;
 }
 public sealed class EnemyRandomizer {
     public uint Seed { get; set; }
@@ -142,6 +146,7 @@ public static partial class Mods {
             throw new IOException("Supported effects are health, infection and ammo.");
         if (m.WeaponShuffle != null && m.ItemRandomizer != null)
             throw new IOException("Choose either an item randomizer or a weapon shuffle.");
+        if (m.ExamineMessages is {} examine) ValidateExamineMessages(examine);
         if (m.EnemyRandomizer is {} enemy) {
             if(enemy.Mode is not ("zombieProfiles" or "enemyTypes"))
                 throw new IOException("Supported enemy randomizer modes are zombieProfiles and enemyTypes.");
@@ -161,10 +166,21 @@ public static partial class Mods {
              randomizer.ExcludeItemTypes.Any(t => t < 0 || t >= 400) ||
              randomizer.ExcludeItemTypes.Distinct().Count() != randomizer.ExcludeItemTypes.Count))
             throw new IOException("excludeItemTypes must contain distinct ordinary item IDs from 0 to 399.");
-        if (m.Effects.Count == 0 && m.Patches.Count == 0 && m.WeaponShuffle == null && m.ItemRandomizer == null && m.EnemyRandomizer == null)
-            throw new IOException("Mod must contain an item/enemy randomizer, weapon shuffle, effect or data patch.");
+        if (m.Effects.Count == 0 && m.Patches.Count == 0 && m.WeaponShuffle == null && m.ItemRandomizer == null && m.EnemyRandomizer == null && m.ExamineMessages == null)
+            throw new IOException("Mod must contain an item/enemy randomizer, weapon shuffle, examine message timing, effect or data patch.");
         foreach (var p in m.Patches) _ = Write(p);
         return m;
+    }
+    internal static void ValidateExamineMessages(ExamineMessages examine) {
+        if (!double.IsFinite(examine.DurationMultiplier) || examine.DurationMultiplier < 1 || examine.DurationMultiplier > 10)
+            throw new IOException("examineMessages.durationMultiplier must be a finite number from 1 to 10.");
+    }
+    internal static ExamineMessages? SelectedExamineMessages(IEnumerable<ModManifest> mods) {
+        var selected = mods.Where(m => m.ExamineMessages != null).ToList();
+        if (selected.Count > 1)
+            throw new IOException("Examine message timing conflicts between " +
+                string.Join(", ", selected.Select(m => m.Name)) + ". Enable only one examine message timing mod.");
+        return selected.SingleOrDefault()?.ExamineMessages;
     }
     public static CheatWrite Write(ModPatch p) {
         if (p == null || p.When is not ("boot" or "frame") || p.Size is not (1 or 2 or 4 or 8) ||
@@ -226,8 +242,9 @@ public static partial class Mods {
             throw new IOException("Enable only one pickup randomizer mod at a time.");
         if (selected.Count(m => m.EnemyRandomizer != null) > 1)
             throw new IOException("Enable only one enemy randomizer mod at a time.");
-        if (settings.ResolvedCoopMode == "host" && selected.Any(m => m.Effects.Count != 0 || m.Patches.Count != 0))
-            throw new IOException("Co-op supports host-controlled randomizers only. Disable effects and data-patch mods.");
+        _ = SelectedExamineMessages(selected);
+        if (settings.ResolvedCoopMode == "host" && selected.Any(m => m.Effects.Count != 0 || m.Patches.Count != 0 || m.ExamineMessages != null))
+            throw new IOException("Co-op supports host-controlled randomizers only. Disable effects, data-patch and examine message timing mods.");
         return selected;
     }
     public static void Append(List<ModManifest> mods, List<CheatWrite> writes, List<string> builtins) {

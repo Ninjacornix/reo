@@ -24,6 +24,17 @@ internal static class RandomizerSessionTests {
         byte[] empty=RandomizerSession.Create("reo01",new());
         check(RandomizerSession.ModsFor(RandomizerSession.Parse(empty)).Count==0,"Unmodded host clears guest randomizers");
         void Reject(Action action,string label) { try { action(); check(false,label); } catch(IOException) {check(true,label);} }
+        foreach (string game in new[] { "file1", "file2" }) {
+            var timing = new ModManifest { Format = 1, Id = "fixture.examine", Name = "Examine timing", Version = "1",
+                ElfSha256 = DiscImport.ExpectedElf(game), ExamineMessages = new() { DurationMultiplier = 2 } };
+            Reject(() => RandomizerSession.Create("reo01", new() { timing }, game), game + " solo examine timing cannot be shared by a host");
+            timing.ItemRandomizer = new() { Seed = 42 };
+            Reject(() => RandomizerSession.Create("reo01", new() { timing }, game), game + " randomizer package cannot silently drop its examine timing when shared");
+            var injected = System.Text.Json.Nodes.JsonNode.Parse(RandomizerSession.Create("reo01", new(), game))!;
+            injected["examineMessages"] = System.Text.Json.Nodes.JsonNode.Parse("{\"durationMultiplier\":2}");
+            Reject(() => RandomizerSession.Parse(Encoding.UTF8.GetBytes(injected.ToJsonString()), game),
+                game + " guest protocol rejects injected examine timing instead of silently inheriting it");
+        }
         Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3","\"protocol\":999"))),"Incompatible protocol rejected");
         Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3,",""))),"Missing protocol rejected");
         Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3","\"protocol\":2"))),"Old independently rolled enemy sessions rejected");
@@ -63,12 +74,15 @@ internal static class RandomizerSessionTests {
             }
         });
         var guest=new Settings { CoopMode="join", CoopHost="127.0.0.1", JoinHostName="reo01", CheatsEnabled=false };
+        sample.ExamineMessages = new() { DurationMultiplier = 2 };
         var resolved=await RandomizerSession.Resolve(guest,new() {sample},resolveTimeout.Token,port);
         check(resolved.Mods.Single().EnemyRandomizer!.Seed==parsed.Enemies!.Seed &&
               resolved.Mods.Single().EnemyRandomizer!.Seed!=sample.EnemyRandomizer.Seed &&
-              resolved.Mods.Single().Effects.Count==0,"Join path replaces conflicting local mods with host settings");
+              resolved.Mods.Single().Effects.Count==0 && resolved.Mods.Single().ExamineMessages==null,
+              "Join path replaces conflicting local mods and solo examine timing with host settings");
         var cleared=await RandomizerSession.Resolve(guest,new() {sample},resolveTimeout.Token,port);
-        check(cleared.Mods.Count==0 && sample.Effects.Count==1,"Unmodded host clears session without changing installed package");
+        check(cleared.Mods.Count==0 && sample.Effects.Count==1 && sample.ExamineMessages.DurationMultiplier==2,
+            "Unmodded host clears session without changing installed package or solo examine timing");
         guest.JoinHostName="DifferentHost";
         try { await RandomizerSession.Resolve(guest,new(),resolveTimeout.Token,port); check(false,"Wrong host rejected"); }
         catch(IOException) { check(true,"Wrong host rejected"); }

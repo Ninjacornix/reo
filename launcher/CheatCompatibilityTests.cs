@@ -5,6 +5,7 @@ namespace Outbreak.Launcher;
 
 internal static class CheatCompatibilityTests {
     internal static void Run(Action<bool, string> check) {
+        ExamineMessageTests(check);
         string folder = Path.Combine(Path.GetTempPath(), "reo-cheat-capabilities-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         string image = Path.Combine(folder, "fixture.exe");
@@ -71,6 +72,60 @@ internal static class CheatCompatibilityTests {
             string absolute = Path.GetFullPath(folder);
             if (absolute.StartsWith(Path.GetFullPath(Path.GetTempPath()), StringComparison.OrdinalIgnoreCase) &&
                 Path.GetFileName(absolute).StartsWith("reo-cheat-capabilities-", StringComparison.Ordinal))
+                Directory.Delete(absolute, true);
+        }
+    }
+    static void ExamineMessageTests(Action<bool, string> check) {
+        void Reject(Action action, string label) {
+            try { action(); } catch (IOException) { check(true, label); return; }
+            check(false, label);
+        }
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        string folder = Path.Combine(Path.GetTempPath(), "reo-examine-capabilities-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try {
+            string image = Path.Combine(folder, "fixture.exe");
+            foreach (string game in new[] { "file1", "file2" }) {
+                var mod = new ModManifest { Format = 1, Id = "fixture.examine", Name = "Examine timing", Version = "1",
+                    ElfSha256 = DiscImport.ExpectedElf(game), ExamineMessages = new() };
+                var selected = new List<ModManifest> { mod };
+                File.WriteAllText(image, "old-game [MOD-EXAMINE-TIME-1]", Encoding.ASCII);
+                check(!GameSession.SupportsExamineMessages(image), game + " requires the complete examine capability marker");
+                bool rejectedOld = false;
+                try { GameSession.ExamineMessageEnvironment(selected, GameSession.SupportsExamineMessages(image)); }
+                catch (IOException error) {
+                    rejectedOld = error.Message.Contains("Examine message timing") && error.Message.Contains("Rebuild or update");
+                }
+                check(rejectedOld, game + " selected timing mod rejects older binaries with rebuild/update guidance");
+                check(GameSession.ExamineMessageEnvironment(Array.Empty<ModManifest>(), false).Count == 0,
+                    game + " disabled examine timing needs no native capability or environment variable");
+                check(GameSession.ExamineMessageEnvironment(new[] { new ModManifest() }, false).Count == 0,
+                    game + " unrelated mods do not require examine timing support");
+                string marker = GameSession.ExamineMessagesCapability;
+                File.WriteAllText(image, new string('x', 1024 * 1024 + marker.Length - 3) + marker, Encoding.ASCII);
+                check(GameSession.SupportsExamineMessages(image), game + " exact examine capability is detected across binary read boundaries");
+                System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("hr-HR");
+                foreach (var (multiplier, expected) in new[] {
+                    (1d, "1000"), (10d, "10000"), (2.5d, "2500"), (2.3456789d, "2346"),
+                    (8.001d, "8001"), (1.0000000000000002d, "1001"), (9.9999999d, "10000") }) {
+                    mod.ExamineMessages!.DurationMultiplier = multiplier;
+                    var environment = GameSession.ExamineMessageEnvironment(selected, GameSession.SupportsExamineMessages(image));
+                    check(environment.Count == 1 && environment["REO_MOD_EXAMINE_TIME_SCALE"] == expected,
+                        game + " selected multiplier becomes upward-rounded invariant integer permille " + expected);
+                }
+                foreach (double invalid in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, 0.999d, 10.001d }) {
+                    mod.ExamineMessages!.DurationMultiplier = invalid;
+                    Reject(() => GameSession.ExamineMessageEnvironment(selected, true), game + " programmatic invalid timing cannot reach native environment");
+                }
+                mod.ExamineMessages!.DurationMultiplier = 2;
+                Reject(() => GameSession.ExamineMessageEnvironment(new[] { mod, mod }, true),
+                    game + " environment derivation defensively rejects multiple timing mods");
+            }
+        } finally {
+            System.Globalization.CultureInfo.CurrentCulture = culture;
+            string absolute = Path.GetFullPath(folder);
+            if (absolute.StartsWith(Path.GetFullPath(Path.GetTempPath()), StringComparison.OrdinalIgnoreCase) &&
+                Path.GetFileName(absolute).StartsWith("reo-examine-capabilities-", StringComparison.Ordinal))
                 Directory.Delete(absolute, true);
         }
     }
