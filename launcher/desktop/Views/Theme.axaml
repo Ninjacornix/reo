@@ -55,6 +55,10 @@
       </ControlTheme>
     </ResourceDictionary>
   </Styles.Resources>
+  <!-- RC1 templates dim disabled controls themselves; the base theme must not dim them again. -->
+  <Style Selector=":disabled">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
   <Style Selector="ProgressBar">
     <Setter Property="BorderBrush" Value="#FFBCBCBC" />
     <Setter Property="BorderThickness" Value="1" />
@@ -414,6 +418,10 @@
   </Style>
   <Style Selector="CheckBox:disabled">
     <Setter Property="Opacity" Value="0.4" />
+  </Style>
+  <!-- RC1 CheatOption/ModOption are keyed styles: disabled rows only switch to muted text. -->
+  <Style Selector="CheckBox.CheatOption:disabled">
+    <Setter Property="Opacity" Value="1" />
   </Style>
   <Style Selector="Thumb.SliderThumb">
     <Setter Property="Width" Value="20" />
