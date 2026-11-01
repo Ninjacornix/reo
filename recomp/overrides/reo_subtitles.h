@@ -3,6 +3,7 @@
 #include "ps2_runtime_macros.h"
 #endif
 #include "../../runtime/text/subtitles.h"
+#include "reo_message_timing.h"
 #include <stdexcept>
 #include <vector>
 
@@ -52,12 +53,16 @@ inline void enqueue(uint8_t* ram,R5900Context* ctx,PS2Runtime* runtime) {
         spoken=callerMatches(ram,readWord(ram,callerSp+0x60),front,spokenReturns);
     else if(returnPc==customReturn)
         spoken=callerMatches(ram,readWord(ram,callerSp+0x10),custom,typedReturns);
+    const auto timing = reo::message_timing::request(ram, returnPc, callerSp);
     originalAllocator(ram,ctx,runtime);
     if(ctx->pc==returnPc) {
         // Returns alpha pointer (slot+10), not the base of the queue record.
         // Every successful reuse clears the previous slot's classification.
         const int index=slotIndex(GPR_U32(ctx,2),10);
-        if(index>=0) spokenSlots[index]=spoken;
+        if(index>=0) {
+            spokenSlots[index]=spoken;
+            reo::message_timing::allocated(ram, timing, slots + unsigned(index) * 0x8c);
+        }
     }
 }
 inline void draw(uint8_t* ram,R5900Context* ctx,PS2Runtime* runtime) {
@@ -85,6 +90,7 @@ inline void install(PS2Runtime& runtime) {
     for(auto pc:aliases) runtime.registerFunction(pc,enqueue);
     runtime.registerFunction(drawLeaf,draw);
     spokenSlots.fill(false);
+    reo::message_timing::initialize();
     initialize();
 }
 }

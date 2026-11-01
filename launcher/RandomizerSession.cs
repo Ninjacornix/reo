@@ -43,7 +43,7 @@ internal static class RandomizerSession {
         return new(bytes, ModsFor(shared));
     }
     internal static byte[] Create(string host, List<ModManifest> mods, string game = "file1") {
-        if (!OnlineOptions.ValidUsername(host) || mods.Any(m => m.Effects.Count != 0 || m.Patches.Count != 0))
+        if (!OnlineOptions.ValidUsername(host) || mods.Any(m => m.Effects.Count != 0 || m.Patches.Count != 0 || m.ExamineMessages != null))
             throw new IOException("Co-op supports host-controlled randomizers only; disable other gameplay mods.");
         if (mods.Count(m => m.WeaponShuffle != null || m.ItemRandomizer != null) > 1 ||
             mods.Count(m => m.EnemyRandomizer != null) > 1)

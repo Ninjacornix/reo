@@ -229,6 +229,47 @@ a texture edit rather than a string override. Existing models, rooms, sounds and
 scenario data can be replaced in their native formats; adding new archive entries,
 code or arbitrary campaigns is not implemented. Keep original game references private.
 
+## Examine-message timing
+
+Gameplay JSON mods can extend the original timed examine/interaction messages
+in **both File #1 and File #2**. Add this field to a package targeting the selected
+game's original ELF hash:
+
+```json
+"examineMessages": {
+  "durationMultiplier": 1.5
+}
+```
+
+Use a finite number from `1` to `10`: `1.5` gives 50% more reading time and `2`
+doubles it. The launcher rounds upward to thousandths, and the native game rounds
+up to whole ticks. Timers saturate at `32767` ticks. Omitting the field retains
+original timing; `1` also preserves it. Only one enabled package may set timing.
+
+The field can be a mod's only feature or accompany other supported JSON mod
+features. Complete examples are
+[`examine-messages-file1.json`](../examples/mods/examine-messages-file1.json) and
+[`examine-messages-file2.json`](../examples/mods/examine-messages-file2.json).
+Import the matching example through **Mods**, then enable it alongside your
+translation PAK. These examples are not installed or enabled automatically.
+Change the JSON value to configure timing; there is no new launcher setting.
+
+The hook extends both the original timed-message task and each displayed line
+once, including multiline messages. Original start delays, dismissal and
+cancellation remain active. This shared script path also handles timed system
+notices. Spoken captions, voiced dialogue, choice menus and other message
+producers retain their timing. A scenario using a different display path is
+outside this feature's scope; the hook requires the verified original call chain.
+
+Timing mods currently apply in solo play. They are rejected for hosting and are
+not part of a guest's shared randomizer configuration. Updated native builds
+need `[MOD-EXAMINE-TIME-1] multiplier`; the launcher requests a game update/rebuild
+only when an enabled timing mod needs it. The launcher passes the selected scale
+as integer permille through `REO_MOD_EXAMINE_TIME_SCALE`. Session `mods.json`
+retains the package's requested multiplier.
+
+See [implementation and original-code checks](../tools/message_timing_check/README.md).
+
 ## Randomizer
 
 The launcher supports **Randomizer** packages for File #1 and File #2: weapons, ammunition, common items and enemy spawns. Weapon pickups receive other weapons, ammunition receives ammunition, and common items receive common items. Starting equipment, owned items, scenario keys, Daylight and the lighter stay unchanged. Enemy choices persist across rooms. Start a fresh scenario. The mod remains experimental; full scenario completion is unverified.

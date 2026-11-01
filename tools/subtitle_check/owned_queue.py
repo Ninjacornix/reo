@@ -7,23 +7,33 @@ from pathlib import Path
 import re
 
 
-def stage(root: Path, output: Path, game: str) -> None:
+def stage(root: Path, output: Path, game: str, *, timing: bool = False) -> None:
     file2 = game == 'file2'
     source = root / ('recomp/config/output_file2/output' if file2 else 'recomp/config/output')
     addresses = ([0x1400d0, 0x13ff80, 0x140040, 0x140210, 0x1402d0,
                   0x13fef0, 0x13fe40, 0x13f7f0] if file2 else
                  [0x1b46e0, 0x1b4590, 0x1b4650, 0x1b4820, 0x1b48e0,
                   0x1b4500, 0x1b4450, 0x1b3e00])
+    overlay = root / ('recomp/config/output_file2/output_ovl/o2' if file2 else
+                      'recomp/config/output_ovl/o2')
+    if timing:
+        addresses += ([0x6e43e0, 0x6e75c0, 0x6e7700, 0x6e7630, 0x1403a0] if file2 else
+                      [0x6b6880, 0x6b9f30, 0x6ba070, 0x6b9fa0, 0x1b49b0])
     texts = []
     functions = {}
     for address in addresses:
-        path = next(source.glob(f'*_0x{address:x}.cpp'))
+        folder = overlay if address >= 0x570000 else source
+        path = next(folder.glob(f'*_0x{address:x}.cpp'))
         text = path.read_text()
         name = re.search(r'void (\w+)\(uint8_t\* rdram', text)[1]
         functions[address] = name
         texts.append(re.sub(r'^#include .*$', '', text, flags=re.M))
     combined = '\n'.join(texts)
-    calls = set(re.findall(r'\b((?:sub_|func_)\w+_0x[0-9a-f]+)\(rdram, ctx, runtime\)', combined))
+    calls = set(re.findall(r'\b((?:sub_|func_|o2_)\w+_0x[0-9a-f]+)\(rdram, ctx, runtime\)', combined))
+    if timing:
+        named = {int(re.search(r'_0x([0-9a-f]+)$', name)[1], 16) for name in calls}
+        indirect = {int(pc, 16) for pc in re.findall(r'runtime->lookupFunction\(0x([0-9a-fA-F]+)u?\)', combined)}
+        calls.update(f'func_controlled_0x{pc:x}' for pc in indirect - named - set(functions))
     declarations = '\n'.join(f'void {name}(uint8_t*,R5900Context*,PS2Runtime*);'
                              for name in calls | set(functions.values()))
     stubs = []
@@ -36,12 +46,18 @@ def stage(root: Path, output: Path, game: str) -> None:
             body = 'SET_GPR_S32(c,2,std::strcmp((char*)ram+GPR_U32(c,4),(char*)ram+GPR_U32(c,5)));'
         elif address == (0x13faf0 if file2 else 0x1b4100):
             body = '++draws;'
+        elif timing and address == (0x58f880 if file2 else 0x573740):
+            body = '++taskFrees;'
+        elif timing and address == (0x14d990 if file2 else 0x1c1ce0):
+            body = 'SET_GPR_U32(c,2,0x40000);'
         else:
             body = 'SET_GPR_U32(c,2,0);'
         stubs.append(f'void {name}(uint8_t* ram,R5900Context* c,PS2Runtime*) {{ (void)ram;{body}c->pc=GPR_U32(c,31); }}')
     registration_text = (source / 'register_functions.cpp').read_text()
+    if timing:
+        registration_text += (overlay / 'register_o2.cpp').read_text()
     registrations = []
-    for pc, name in re.findall(r'runtime.registerFunction\(0x([0-9a-f]+), (\w+)\);', registration_text):
+    for pc, name in re.findall(r'0x([0-9a-f]+)u?, (\w+)\);', registration_text):
         if name in functions.values():
             registrations.append(f'runtime.registerFunction(0x{pc},{name});')
     for name in calls - set(functions.values()):
@@ -102,3 +118,10 @@ template<class Publish> void runOwnedQueueChecks(PS2Runtime& runtime,std::vector
             .replace('DRAW_LOOP', hex(draw_loop)).replace('UPDATE', hex(update)))
     output.mkdir(parents=True, exist_ok=True)
     (output / 'owned_queue.inc').write_text(declarations + '\n' + combined + '\n' + '\n'.join(stubs) + test)
+    if timing:
+        # Generated instruction words are local evidence, never public fixtures.
+        words = dict(re.findall(r'// 0x([0-9a-f]+): 0x([0-9a-f]+) ', combined))
+        witnesses = '\n'.join(f'    store<uint32_t>(ram.data(),0x{pc},0x{word});'
+                              for pc, word in words.items())
+        (output / 'timing_registration.inc').write_text('\n'.join(registrations))
+        (output / 'timing_witnesses.inc').write_text(witnesses)
