@@ -416,7 +416,9 @@ public partial class GameCaseView : Control {
     IImage Fallback(bool spine, bool available) {
         int width = spine ? 36 : 256, height = 360;
         var bitmap = new RenderTargetBitmap(new PixelSize(width, height), new Vector(96, 96));
-        using (var dc = bitmap.CreateDrawingContext()) {
+        // RC1 draws the placeholder into a DrawingBrush: greyscale text antialiasing, no ClearType.
+        using (var dc = bitmap.CreateDrawingContext())
+        using (dc.PushRenderOptions(new RenderOptions { TextRenderingMode = TextRenderingMode.Antialias })) {
             dc.DrawRectangle(VisualPalette.Brush(Palette.SoftBlack), null, new Rect(0, 0, width, height));
             dc.DrawRectangle(VisualPalette.Brush(available ? Palette.BurntOrange : Palette.WarmIvoryMuted), null, new Rect(0, 0, width, 6));
             var text = new FormattedText(spine ? $"OUTBREAK   /   FILE #{Edition}" : $"OUTBREAK\nFILE #{Edition}",

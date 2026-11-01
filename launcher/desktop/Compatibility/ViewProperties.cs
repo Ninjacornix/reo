@@ -303,6 +303,40 @@ public class Rc1TextBlock : TextBlock {
         // Wrapped text keeps its full width so arrange cannot break the last line again.
         return new Size(TextWrapping == TextWrapping.NoWrap ? Round(size.Width) : size.Width, Round(size.Height));
     }
+    // With an explicit LineHeight, WPF keeps each line's glyphs at the top of the line and adds the
+    // extra space below them; Avalonia adds it above. Draw the text at WPF's position.
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
+        base.OnPropertyChanged(change);
+        if (OperatingSystem.IsWindows() && (change.Property == TextProperty || change.Property == FontSizeProperty ||
+            change.Property == FontFamilyProperty || change.Property == FontWeightProperty || change.Property == FontStyleProperty))
+            ApplyDisplayWidths();
+        if (change.Property == LineHeightProperty || change.Property == FontSizeProperty ||
+            change.Property == FontFamilyProperty || change.Property == FontWeightProperty || change.Property == FontStyleProperty) {
+            double extra = double.IsNaN(LineHeight) ? 0 : LineHeight - NaturalLineHeight();
+            RenderTransform = extra > 0 ? new TranslateTransform(0, -extra) : null;
+        }
+    }
+    // RC1 sets TextFormattingMode.Display: GDI-compatible, hinted whole-pixel advances. Spread the
+    // difference from Avalonia's shaped width over the characters so lines break where RC1's do.
+    void ApplyDisplayWidths() {
+        string text = Text ?? "";
+        if (text.Length < 2 || text.Contains('\n')) { ClearValue(LetterSpacingProperty); return; }
+        var face = new Typeface(FontFamily, FontStyle, FontWeight);
+        double? gdi = GdiText.Width(face, FontSize, text);
+        if (gdi == null) { ClearValue(LetterSpacingProperty); return; }
+        using var layout = new Avalonia.Media.TextFormatting.TextLayout(text, face, FontSize, null);
+        double spacing = (gdi.Value - layout.WidthIncludingTrailingWhitespace) / text.Length;
+        if (Math.Abs(spacing) < .001) ClearValue(LetterSpacingProperty); else LetterSpacing = spacing;
+    }
+    static readonly Dictionary<(FontFamily, FontStyle, FontWeight, double), double> naturalHeights = new();
+    double NaturalLineHeight() {
+        var key = (FontFamily, FontStyle, FontWeight, FontSize);
+        if (!naturalHeights.TryGetValue(key, out double height)) {
+            using var layout = new Avalonia.Media.TextFormatting.TextLayout("X", new Typeface(FontFamily, FontStyle, FontWeight), FontSize, null);
+            naturalHeights[key] = height = layout.Height;
+        }
+        return height;
+    }
 }
 public class Rc1TextPresenter : Avalonia.Controls.Presenters.TextPresenter {
     protected override Type StyleKeyOverride => typeof(Avalonia.Controls.Presenters.TextPresenter);
@@ -310,5 +344,45 @@ public class Rc1TextPresenter : Avalonia.Controls.Presenters.TextPresenter {
         var size = base.MeasureOverride(availableSize);
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
         return new Size(size.Width, Math.Round(size.Height * scale, MidpointRounding.AwayFromZero) / scale);
+    }
+}
+
+// Windows GDI text extents (WPF Display formatting). Fonts not known to GDI return null.
+static class GdiText {
+    [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    static extern nint CreateFontW(int height, int width, int escapement, int orientation, int weight, uint italic, uint underline,
+        uint strike, uint charset, uint outPrecision, uint clipPrecision, uint quality, uint pitchAndFamily, string face);
+    [System.Runtime.InteropServices.DllImport("gdi32.dll")] static extern nint CreateCompatibleDC(nint dc);
+    [System.Runtime.InteropServices.DllImport("gdi32.dll")] static extern nint SelectObject(nint dc, nint item);
+    [System.Runtime.InteropServices.DllImport("gdi32.dll")] static extern bool DeleteObject(nint item);
+    [System.Runtime.InteropServices.DllImport("gdi32.dll")] static extern bool DeleteDC(nint dc);
+    [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    static extern bool GetTextExtentPoint32W(nint dc, string text, int length, out (int Width, int Height) size);
+    [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    static extern int GetTextFaceW(nint dc, int count, System.Text.StringBuilder face);
+    [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    static extern int AddFontResourceExW(string path, uint flags, nint reserved);
+    static readonly Dictionary<(string, int, bool, int), nint> fonts = new();
+    static nint dc;
+    internal static void Register(string path) { if (OperatingSystem.IsWindows()) AddFontResourceExW(path, 0x10, 0); }
+    internal static double? Width(Typeface typeface, double size, string text) {
+        if (!OperatingSystem.IsWindows()) return null;
+        string name = typeface.FontFamily.FamilyNames.FirstOrDefault() ?? typeface.FontFamily.Name;
+        if (name.Contains('#')) name = name[(name.LastIndexOf('#') + 1)..];
+        int pixels = (int)Math.Round(size);
+        if (pixels <= 0 || Math.Abs(pixels - size) > .01) return null;
+        var key = (name, (int)typeface.Weight, typeface.Style != FontStyle.Normal, pixels);
+        if (dc == 0) dc = CreateCompatibleDC(0);
+        if (!fonts.TryGetValue(key, out var font)) {
+            font = CreateFontW(-pixels, 0, 0, 0, (int)typeface.Weight, key.Item3 ? 1u : 0u, 0, 0, 1, 0, 0, 5, 0, name);
+            SelectObject(dc, font);
+            var actual = new System.Text.StringBuilder(64);
+            GetTextFaceW(dc, actual.Capacity, actual);
+            if (!string.Equals(actual.ToString(), name, StringComparison.OrdinalIgnoreCase)) { DeleteObject(font); font = 0; }
+            fonts[key] = font;
+        }
+        if (font == 0) return null;
+        SelectObject(dc, font);
+        return GetTextExtentPoint32W(dc, text, text.Length, out var extent) ? extent.Width : null;
     }
 }

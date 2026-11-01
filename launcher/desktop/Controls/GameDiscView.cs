@@ -80,7 +80,8 @@ public sealed class GameDiscView : Control {
     }
     static IImage Placeholder(int edition) {
         var bitmap = new RenderTargetBitmap(new PixelSize(512, 512), new Vector(96, 96));
-        using (var context = bitmap.CreateDrawingContext()) {
+        using (var context = bitmap.CreateDrawingContext())
+        using (context.PushRenderOptions(new RenderOptions { TextRenderingMode = TextRenderingMode.Antialias })) {
             context.DrawRectangle(new LinearGradientBrush {
                 StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
                 GradientStops = { new(Color.FromRgb(49, 44, 43), 0), new(Color.FromRgb(17, 16, 16), 1) } }, null, new Rect(0, 0, 512, 512));
