@@ -108,9 +108,10 @@ public partial class MainWindow : Window {
     async Task CheckMovieDecoderAsync() {
         movieDecoder = await MovieDecoder.Choose(CancellationToken.None);
         GpuMovies.IsEnabled = movieDecoder.Gpu;
-        // Reflecting the probe is not a user change: keep the saved choice and stay silent.
+        // RC1 (Windows) reports the resulting save. Other desktops have no GPU movie decoder, so
+        // reflecting the probe there is not a user change: keep the saved choice and stay silent.
         bool wasInitialized = initialized;
-        initialized = false;
+        initialized = OperatingSystem.IsWindows() && initialized;
         try { GpuMovies.IsChecked = movieDecoder.Gpu && settings.GpuMovies; }
         finally { initialized = wasInitialized; }
         UpdateGpuMoviesHint();

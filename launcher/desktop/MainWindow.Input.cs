@@ -138,7 +138,7 @@ public partial class MainWindow {
             row.ColumnDefinitions.Add(new());
             row.ColumnDefinitions.Add(new() { Width = new GridLength(115) });
             row.ColumnDefinitions.Add(new() { Width = new GridLength(48) });
-            row.Children.Add(new TextBlock { Text = action.Label,
+            row.Children.Add(new Rc1TextBlock { Text = action.Label,
                                              VerticalAlignment = VerticalAlignment.Center });
             var binding = new Button { Content = InputMapping.SourceName(
                                            CurrentBindings.GetValueOrDefault(action.Id),
@@ -285,10 +285,10 @@ public partial class MainWindow {
     }
     Button CreateMapBinding(string id, string label) {
         var content = new StackPanel();
-        content.Children.Add(new TextBlock { Text = label, FontSize = 14,
+        content.Children.Add(new Rc1TextBlock { Text = label, FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center,
             Foreground = VisualPalette.Brush(Palette.TextMuted) });
-        var value = new TextBlock { Text = captureTarget == id ? "Waiting..." : InputMapping.SourceName(CurrentBindings.GetValueOrDefault(id), controller.SelectedDevice.Kind),
+        var value = new Rc1TextBlock { Text = captureTarget == id ? "Waiting..." : InputMapping.SourceName(CurrentBindings.GetValueOrDefault(id), controller.SelectedDevice.Kind),
             FontSize = 16, VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 2, 0, 0) };
         content.Children.Add(value); bindingValues[id] = value;

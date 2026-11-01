@@ -6,8 +6,8 @@ internal static class StorageProgressWindow {
         Func<IProgress<StorageProgress>, CancellationToken, Task> operation) {
         var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var cancel = new CancellationTokenSource();
-        var heading = new TextBlock { Text = "Copying and verifying your launcher data…", TextWrapping = TextWrapping.Wrap };
-        var detail = new TextBlock { Margin = new(0, 12, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis };
+        var heading = new Rc1TextBlock { Text = "Copying and verifying your launcher data…", TextWrapping = TextWrapping.Wrap };
+        var detail = new Rc1TextBlock { Margin = new(0, 12, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis };
         var bar = new ProgressBar { Height = 10, Margin = new(0, 18, 0, 18), IsIndeterminate = true, Maximum = 100 };
         var button = new Button { Content = "Cancel", HorizontalAlignment = HorizontalAlignment.Right, Padding = new(22, 7, 22, 7) };
         var panel = new StackPanel { Margin = new(24) };

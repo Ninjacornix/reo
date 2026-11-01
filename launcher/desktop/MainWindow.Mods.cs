@@ -73,7 +73,7 @@ public partial class MainWindow {
                 };
                 toggle.IsCheckedChanged += AssetPakToggled;
                 row.Children.Add(toggle);
-                row.Children.Add(new TextBlock { Text = pak.Error.Length > 0 ? pak.Error : manifest!.Description,
+                row.Children.Add(new Rc1TextBlock { Text = pak.Error.Length > 0 ? pak.Error : manifest!.Description,
                     Style = (Style)FindResource("Hint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(25, 5, 0, 0) });
                 ModList.Children.Add(row);
             }
@@ -84,7 +84,7 @@ public partial class MainWindow {
                 ModList.Children.Add(toggle);
             }
             if (ModList.Children.Count == 0)
-                ModList.Children.Add(new TextBlock { Text = "No mods installed. Import a .pak asset pack or mod JSON file to start.",
+                ModList.Children.Add(new Rc1TextBlock { Text = "No mods installed. Import a .pak asset pack or mod JSON file to start.",
                     TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 16, 0, 16) });
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
             Status.Text = error.Message;
@@ -99,16 +99,16 @@ public partial class MainWindow {
         var content = new Grid();
         content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(34) });
         content.ColumnDefinitions.Add(new ColumnDefinition());
-        content.Children.Add(new TextBlock { Text = number.ToString("00"), FontSize = 14,
+        content.Children.Add(new Rc1TextBlock { Text = number.ToString("00"), FontSize = 14,
             Foreground = VisualPalette.Brush(Palette.TextMuted), VerticalAlignment = VerticalAlignment.Center });
         var text = new StackPanel(); Grid.SetColumn(text, 1); content.Children.Add(text);
         var name = new Grid();
         name.ColumnDefinitions.Add(new ColumnDefinition()); name.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        name.Children.Add(new TextBlock { Text = title, FontSize = 18, TextWrapping = TextWrapping.Wrap });
-        var version = new TextBlock { Text = manifest?.Version.Length > 0 ? "v" + manifest.Version : "",
+        name.Children.Add(new Rc1TextBlock { Text = title, FontSize = 18, TextWrapping = TextWrapping.Wrap });
+        var version = new Rc1TextBlock { Text = manifest?.Version.Length > 0 ? "v" + manifest.Version : "",
             FontSize = 14, Foreground = VisualPalette.Brush(Palette.TextMuted), Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(version, 1); name.Children.Add(version); text.Children.Add(name);
-        text.Children.Add(new TextBlock { Text = detail, Style = (Style)FindResource("Hint"), FontSize = 14,
+        text.Children.Add(new Rc1TextBlock { Text = detail, Style = (Style)FindResource("Hint"), FontSize = 14,
             LineHeight = 20, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) });
         var toggle = new CheckBox { Content = content, Tag = manifest?.Id, Style = (Style)FindResource("ModOption"),
             IsChecked = manifest != null && settings.ActiveMods.Contains(manifest.Id) };
@@ -139,28 +139,28 @@ public partial class MainWindow {
         var configuration = settings.ConfigurationFor(id, fallback);
         var header = new Grid(); header.ColumnDefinitions.Add(new ColumnDefinition());
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        header.Children.Add(new TextBlock { Text = "Options", FontSize = 14 });
-        row.Summary = new TextBlock { FontSize = 14, Foreground = VisualPalette.Brush(Palette.TextMuted), Margin = new Thickness(12, 0, 12, 0) };
+        header.Children.Add(new Rc1TextBlock { Text = "Options", FontSize = 14 });
+        row.Summary = new Rc1TextBlock { FontSize = 14, Foreground = VisualPalette.Brush(Palette.TextMuted), Margin = new Thickness(12, 0, 12, 0) };
         Grid.SetColumn(row.Summary, 1); header.Children.Add(row.Summary);
         var panel = new StackPanel();
         var modeRow = new Grid { Margin = new Thickness(0, 0, 0, 10) };
         modeRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140) }); modeRow.ColumnDefinitions.Add(new ColumnDefinition());
-        modeRow.Children.Add(new TextBlock { Text = "Seed", FontSize = 16, VerticalAlignment = VerticalAlignment.Center });
+        modeRow.Children.Add(new Rc1TextBlock { Text = "Seed", FontSize = 16, VerticalAlignment = VerticalAlignment.Center });
         row.SeedMode = new ComboBox { ItemsSource = new[] { "New seed each launch", "Custom seed" },
             SelectedIndex = configuration.UseCustomSeed ? 1 : 0, HorizontalAlignment = HorizontalAlignment.Left, MinWidth = 250 };
         Avalonia.Automation.AutomationProperties.SetName(row.SeedMode, manifest.Name + " seed mode");
         Grid.SetColumn(row.SeedMode, 1); modeRow.Children.Add(row.SeedMode); panel.Children.Add(modeRow);
         row.CustomSeedRow = new Grid { Margin = new Thickness(0, 0, 0, 8) };
         row.CustomSeedRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140) }); row.CustomSeedRow.ColumnDefinitions.Add(new ColumnDefinition());
-        row.CustomSeedRow.Children.Add(new TextBlock { Text = "Seed value", FontSize = 16, VerticalAlignment = VerticalAlignment.Center });
+        row.CustomSeedRow.Children.Add(new Rc1TextBlock { Text = "Seed value", FontSize = 16, VerticalAlignment = VerticalAlignment.Center });
         row.SeedInput = new TextBox { Text = modSeedDrafts.TryGetValue(key, out var draft) ? draft : configuration.Seed.ToString(CultureInfo.InvariantCulture),
             Width = 250, MaxLength = 10, HorizontalAlignment = HorizontalAlignment.Left };
         Avalonia.Automation.AutomationProperties.SetName(row.SeedInput, manifest.Name + " custom seed");
         Avalonia.Automation.AutomationProperties.SetHelpText(row.SeedInput, "A whole number from 0 to 4294967295. The same seed is used for this mod's item, weapon and enemy randomizers.");
         Grid.SetColumn(row.SeedInput, 1); row.CustomSeedRow.Children.Add(row.SeedInput); panel.Children.Add(row.CustomSeedRow);
-        row.SeedError = new TextBlock { FontSize = 14, Foreground = VisualPalette.Brush(Palette.Accent), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 6) };
+        row.SeedError = new Rc1TextBlock { FontSize = 14, Foreground = VisualPalette.Brush(Palette.Accent), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 6) };
         panel.Children.Add(row.SeedError);
-        panel.Children.Add(new TextBlock { Text = "Use the same seed and mod settings to repeat a run. Joining players use the host's seed.",
+        panel.Children.Add(new Rc1TextBlock { Text = "Use the same seed and mod settings to repeat a run. Joining players use the host's seed.",
             Style = (Style)FindResource("Hint"), FontSize = 14, TextWrapping = TextWrapping.Wrap });
         var options = new Expander { Header = header, Content = panel, Style = (Style)FindResource("ModOptionsDropdown"),
             Margin = new Thickness(46, 0, 0, 5), IsExpanded = expandedModOptions.Contains(key) };
@@ -232,7 +232,7 @@ public partial class MainWindow {
             return;
         }
         var panel = new StackPanel { Margin = new Thickness(46, 10, 12, 14) };
-        panel.Children.Add(new TextBlock { Text = row.Missing ? $"Remove the missing entry “{title}”?" :
+        panel.Children.Add(new Rc1TextBlock { Text = row.Missing ? $"Remove the missing entry “{title}”?" :
             $"Move “{title}” to the {PlatformText.RecycleBin}?", FontSize = 15, TextWrapping = TextWrapping.Wrap });
         var buttons = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         row.ConfirmDelete = new Button { Content = row.Missing ? "Remove entry" : "Delete mod",

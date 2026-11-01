@@ -18,14 +18,14 @@ public partial class MainWindow {
             var groups = Cheats.Load(settings.Game.Id);
             cheatGroups = groups;
             if (groups.Count == 0)
-                CheatList.Children.Add(new TextBlock { Text = "No cheats imported.",
+                CheatList.Children.Add(new Rc1TextBlock { Text = "No cheats imported.",
                                                        Margin = new Thickness(0, 18, 0, 0) });
             bool? builtinSection = null;
             int number = 0;
             foreach (var g in groups) {
                 bool builtin = g.Builtin != null;
                 if (builtinSection != builtin) {
-                    CheatList.Children.Add(new TextBlock { Text = builtin ? "Built-in cheats" : "Imported cheats",
+                    CheatList.Children.Add(new Rc1TextBlock { Text = builtin ? "Built-in cheats" : "Imported cheats",
                         Foreground = VisualPalette.Brush(Palette.TextMuted), FontSize = 14,
                         Margin = new Thickness(0, builtinSection == null ? 0 : 14, 0, 5) });
                     builtinSection = builtin;
@@ -33,12 +33,12 @@ public partial class MainWindow {
                 var content = new Grid();
                 content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(34) });
                 content.ColumnDefinitions.Add(new ColumnDefinition());
-                content.Children.Add(new TextBlock { Text = (++number).ToString("00"), FontSize = 14,
+                content.Children.Add(new Rc1TextBlock { Text = (++number).ToString("00"), FontSize = 14,
                     Foreground = VisualPalette.Brush(Palette.TextMuted), VerticalAlignment = VerticalAlignment.Center });
                 var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
                 Grid.SetColumn(text, 1);
                 content.Children.Add(text);
-                text.Children.Add(new TextBlock { Text = g.Name, FontSize = 18, TextWrapping = TextWrapping.Wrap });
+                text.Children.Add(new Rc1TextBlock { Text = g.Name, FontSize = 18, TextWrapping = TextWrapping.Wrap });
                 var toggle =
                     new CheckBox { Content = content, IsEnabled = g.Supported,
                                    IsChecked = g.Supported && settings.EnabledCheats.Contains(g.Id),
@@ -50,7 +50,7 @@ public partial class MainWindow {
                                 : g.Error.Length > 0 ? g.Error
                                                      : "No supported patch lines.";
                 if (detail.Length > 0)
-                    text.Children.Add(new TextBlock { Text = detail,
+                    text.Children.Add(new Rc1TextBlock { Text = detail,
                                                      Style = (Style)FindResource("Hint"),
                                                      FontSize = 14, LineHeight = 20,
                                                      TextWrapping = TextWrapping.Wrap,

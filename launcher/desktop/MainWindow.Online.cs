@@ -348,23 +348,23 @@ public partial class MainWindow {
             var heading = new Grid();
             heading.ColumnDefinitions.Add(new());
             heading.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
-            heading.Children.Add(new TextBlock { Text = found.Name + "'s game", FontSize = 17,
+            heading.Children.Add(new Rc1TextBlock { Text = found.Name + "'s game", FontSize = 17,
                 Margin = new Thickness(0, 0, 12, 0) });
             if (selected) {
-                var marker = new TextBlock { Text = "SELECTED", FontSize = 11,
+                var marker = new Rc1TextBlock { Text = "SELECTED", FontSize = 11,
                     Foreground = (IBrush)FindResource("Muted"), VerticalAlignment = VerticalAlignment.Center };
                 Grid.SetColumn(marker, 1); heading.Children.Add(marker);
             }
             text.Children.Add(heading);
-            text.Children.Add(new TextBlock {
+            text.Children.Add(new Rc1TextBlock {
                 Text = found.Address + (found.Version == Updates.DefaultVersion
                                             ? ""
                                             : " · different launcher version (" + found.Version + ")"),
                 Style = (Style)FindResource("Hint"), FontSize = 14, Margin = new Thickness(0, 6, 0, 0) });
-            text.Children.Add(new TextBlock { Text = found.RoomReady ? "Waiting room open" : "Waiting for a room",
+            text.Children.Add(new Rc1TextBlock { Text = found.RoomReady ? "Waiting room open" : "Waiting for a room",
                 Foreground = (IBrush)FindResource("Muted"), FontSize = 12, Margin = new Thickness(0, 7, 0, 0) });
             if (found.RoomTitle.Length > 0)
-                text.Children.Add(new TextBlock { Text = found.RoomTitle, FontSize = 14,
+                text.Children.Add(new Rc1TextBlock { Text = found.RoomTitle, FontSize = 14,
                     Foreground = (IBrush)FindResource("Muted"), Margin = new Thickness(0, 5, 0, 0) });
             var button = new Button { Content = text, HorizontalContentAlignment = HorizontalAlignment.Left,
                                       Margin = new Thickness(0, 0, 0, 8), Tag = found,

@@ -290,3 +290,25 @@ public sealed class TextInset : Avalonia.Data.Converters.IValueConverter {
     public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) =>
         throw new NotSupportedException();
 }
+
+// WPF layout rounding rounds a TextBlock's measured size to the nearest device pixel; Avalonia
+// rounds up. One pixel per text line drifts every list and form, so RC1 rounding is used here.
+public class Rc1TextBlock : TextBlock {
+    protected override Type StyleKeyOverride => typeof(TextBlock);
+    protected override Size MeasureOverride(Size availableSize) {
+        var size = base.MeasureOverride(availableSize);
+        if (!UseLayoutRounding) return size;
+        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+        double Round(double value) => Math.Round(value * scale, MidpointRounding.AwayFromZero) / scale;
+        // Wrapped text keeps its full width so arrange cannot break the last line again.
+        return new Size(TextWrapping == TextWrapping.NoWrap ? Round(size.Width) : size.Width, Round(size.Height));
+    }
+}
+public class Rc1TextPresenter : Avalonia.Controls.Presenters.TextPresenter {
+    protected override Type StyleKeyOverride => typeof(Avalonia.Controls.Presenters.TextPresenter);
+    protected override Size MeasureOverride(Size availableSize) {
+        var size = base.MeasureOverride(availableSize);
+        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+        return new Size(size.Width, Math.Round(size.Height * scale, MidpointRounding.AwayFromZero) / scale);
+    }
+}
