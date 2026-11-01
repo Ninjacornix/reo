@@ -297,17 +297,20 @@ public class Rc1TextBlock : TextBlock {
     protected override Type StyleKeyOverride => typeof(TextBlock);
     protected override Size MeasureOverride(Size availableSize) {
         var size = base.MeasureOverride(availableSize);
-        if (!UseLayoutRounding) return size;
         double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+        // RC1 (Display formatting) stacks lines at GDI's whole-pixel line height.
+        if (double.IsNaN(LineHeight) && DisplayMetrics(scale) is { } gdi) {
+            int lines = Math.Max(1, (int)Math.Round(size.Height / NaturalLineHeight()));
+            size = size.WithHeight(lines * gdi.Height);
+        }
+        if (!UseLayoutRounding) return size;
         double Round(double value) => Math.Round(value * scale, MidpointRounding.AwayFromZero) / scale;
         // Wrapped text keeps its full width so arrange cannot break the last line again.
         return new Size(TextWrapping == TextWrapping.NoWrap ? Round(size.Width) : size.Width, Round(size.Height));
     }
-    // With an explicit LineHeight, WPF centres each line's glyphs in the extra space; Avalonia adds
-    // all of it above them. Draw the text at WPF's position.
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
         base.OnAttachedToVisualTree(e);
-        if (OperatingSystem.IsWindows()) ApplyDisplayWidths();
+        if (OperatingSystem.IsWindows()) { ApplyDisplayWidths(); PlaceBaseline(); InvalidateMeasure(); }
     }
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
         base.OnPropertyChanged(change);
@@ -315,10 +318,36 @@ public class Rc1TextBlock : TextBlock {
             change.Property == FontFamilyProperty || change.Property == FontWeightProperty || change.Property == FontStyleProperty))
             ApplyDisplayWidths();
         if (change.Property == LineHeightProperty || change.Property == FontSizeProperty ||
-            change.Property == FontFamilyProperty || change.Property == FontWeightProperty || change.Property == FontStyleProperty) {
-            double extra = double.IsNaN(LineHeight) ? 0 : LineHeight - NaturalLineHeight();
-            RenderTransform = extra > 0 ? new TranslateTransform(0, -extra / 2) : null;
+            change.Property == FontFamilyProperty || change.Property == FontWeightProperty || change.Property == FontStyleProperty)
+            PlaceBaseline();
+    }
+    // Draw glyphs where RC1 does. Avalonia puts a line's baseline at the font ascent plus all of any
+    // explicit LineHeight's extra space; RC1 uses GDI's rounded ascent and centres the extra space.
+    void PlaceBaseline() {
+        double natural = NaturalLineHeight(), ascent = NaturalAscent();
+        double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+        double avalonia = (double.IsNaN(LineHeight) ? 0 : Math.Max(0, LineHeight - natural)) + ascent;
+        double rc1;
+        if (DisplayMetrics(scale) is { } gdi)
+            rc1 = gdi.Ascent + (double.IsNaN(LineHeight) ? 0 : (LineHeight - gdi.Height) / 2);
+        else
+            rc1 = ascent + (double.IsNaN(LineHeight) ? 0 : Math.Max(0, LineHeight - natural) / 2);
+        double shift = rc1 - avalonia;
+        RenderTransform = Math.Abs(shift) > .01 ? new TranslateTransform(0, shift) : null;
+    }
+    (double Height, double Ascent)? DisplayMetrics(double scale) {
+        if (!OperatingSystem.IsWindows()) return null;
+        try { return GdiText.LineMetrics(new Typeface(FontFamily, FontStyle, FontWeight), FontSize, scale); }
+        catch (Exception error) when (error is System.Runtime.InteropServices.MarshalDirectiveException or DllNotFoundException or EntryPointNotFoundException) { return null; }
+    }
+    static readonly Dictionary<(FontFamily, FontStyle, FontWeight, double), double> naturalAscents = new();
+    double NaturalAscent() {
+        var key = (FontFamily, FontStyle, FontWeight, FontSize);
+        if (!naturalAscents.TryGetValue(key, out double ascent)) {
+            using var layout = new Avalonia.Media.TextFormatting.TextLayout("X", new Typeface(FontFamily, FontStyle, FontWeight), FontSize, null);
+            naturalAscents[key] = ascent = layout.Baseline;
         }
+        return ascent;
     }
     // RC1 sets TextFormattingMode.Display: GDI-compatible, hinted whole-pixel advances. Spread the
     // difference from Avalonia's shaped width over the characters so lines break where RC1's do.
@@ -376,6 +405,27 @@ static class GdiText {
         public char FirstChar, LastChar, DefaultChar, BreakChar; public byte Italic, Underlined, StruckOut, PitchAndFamily, CharSet; }
     [System.Runtime.InteropServices.DllImport("gdi32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
     static extern bool GetTextMetricsW(nint dc, out TextMetric metric);
+    static readonly Dictionary<(string, int, bool, int), (int Height, int Ascent)?> lineMetrics = new();
+    internal static (double Height, double Ascent)? LineMetrics(Typeface typeface, double size, double scale) {
+        if (!OperatingSystem.IsWindows()) return null;
+        string name = typeface.FontFamily.FamilyNames.FirstOrDefault() ?? typeface.FontFamily.Name;
+        if (name.Contains('#')) name = name[(name.LastIndexOf('#') + 1)..];
+        int pixels = (int)Math.Round(size * scale);
+        if (pixels <= 0) return null;
+        var key = (name, (int)typeface.Weight, typeface.Style != FontStyle.Normal, pixels);
+        if (!lineMetrics.TryGetValue(key, out var metric)) {
+            if (dc == 0) dc = CreateCompatibleDC(0);
+            var font = CreateFontW(-pixels, 0, 0, 0, (int)typeface.Weight, key.Item3 ? 1u : 0u, 0, 0, 1, 0, 0, 5, 0, name);
+            var old = SelectObject(dc, font);
+            var actual = new System.Text.StringBuilder(64);
+            GetTextFaceW(dc, actual.Capacity, actual);
+            metric = string.Equals(actual.ToString(), name, StringComparison.OrdinalIgnoreCase) && GetTextMetricsW(dc, out var m)
+                ? (m.Height, m.Ascent) : null;
+            SelectObject(dc, old); DeleteObject(font);
+            lineMetrics[key] = metric;
+        }
+        return metric is { } value ? (value.Height / scale, value.Ascent / scale) : null;
+    }
     // Diagnostic: GDI line metrics for a face at whole pixel sizes.
     internal static string Metrics(string face) {
         if (!OperatingSystem.IsWindows()) return "";
