@@ -10,6 +10,12 @@ Use a short checkout path, such as `C:\dev\reo`. Full recompilation is expensive
 
 Requirements: Windows x64, .NET 10 SDK, Visual Studio 2022 with Desktop development with C++.
 
+The build checks for a compatible SDK before compiling native helpers. It also
+finds user SDK installations in `%USERPROFILE%\.dotnet`, `DOTNET_ROOT_X64` or
+`DOTNET_ROOT` when an older system SDK is first on PATH. Install the SDK from
+[Microsoft's .NET 10 downloads](https://dotnet.microsoft.com/download/dotnet/10.0);
+the runtime alone cannot build the launcher.
+
 ```powershell
 git clone --recurse-submodules https://github.com/Ninjacornix/reo.git
 cd reo
@@ -36,8 +42,8 @@ dotnet run --project launcher/cross-tests -c Release -- --windows-services-check
 & ./launcher/bin/Release/net10.0/win-x64/Outbreak.Launcher.exe --headless-check build-launcher/local-captures
 ```
 
-An unbundled source build requires the .NET 8 Desktop Runtime when the SDK is
-absent. Keep its output directory together, including the input adapter,
+The Windows launcher build is self-contained and needs no separately installed
+.NET runtime to run. Keep its output directory together, including the input adapter,
 shaders and license notices. ISO mounting is not needed. Launcher and game-window
 icons are original project artwork.
 

@@ -13,7 +13,7 @@ if errorlevel 1 (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0launcher\build.ps1"
     if errorlevel 1 (
         echo.
-        echo The launcher build failed. If the launcher is already open, close it and run this again.
+        echo The launcher build failed. See the error above for the cause.
         pause
         exit /b 1
     )
