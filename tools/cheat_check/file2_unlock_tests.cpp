@@ -19,6 +19,7 @@ int main(int argc, char** argv) try {
         auto result = applyBuiltins(UnlockEverything, ram.data(), Game::File2);
         check(result.unlocks && !result.active, "Menu progression service");
         check((word(ram.data(), 0x30022c) & 0xfff) == 0xfff, "Scenario availability");
+        check((word(ram.data(), 0x2ff8c8) & 0xffe) == 0xffe, "Online room scenario availability");
         check((ram[0x2feec5] & 15) == 15, "Difficulty availability");
         auto expected = before;
         const uint8_t costumeMask[] = {3,3,3,3,3,15,15,15};
@@ -29,6 +30,7 @@ int main(int argc, char** argv) try {
         expected[0x2feec5] |= 15;
         expected[0x2feec3] |= 13;
         setWord(expected.data(), 0x30022c, word(before.data(),0x30022c) | 0xfff);
+        setWord(expected.data(), 0x2ff8c8, word(before.data(),0x2ff8c8) | 0xffe);
         const unsigned counts[] = {145,59,146,14,11};
         for (unsigned bank = 0; bank < 5; ++bank)
             for (unsigned bit = 0; bit < 160; ++bit) {

@@ -61,18 +61,17 @@ while pc != 0xdeadbeef:
 result = Path(sys.argv[2]).read_bytes()
 if len(result) != len(ram):
     raise ValueError('Expected a complete 32 MiB native test dump')
-# The native original also enables a secondary scenario-availability bank. Our
-# feature leaves it to the original game. All other progression bytes must match.
+# The online room constructor reads the secondary scenario-availability bank.
+# It must now match the original full-unlock routine as well.
 if int.from_bytes(ram[0x2ff8c8:0x2ff8cc],'little') != 0xffe:
     raise ValueError('Original secondary availability bank was unexpected')
-ram[0x2ff8c8:0x2ff8cc] = bytes(4)
 diff = [hex(a) for a in range(0x2feea0,0x300314) if ram[a] != result[a]]
 if diff:
     raise ValueError('Native/original progression mismatch at ' + ', '.join(diff[:20]))
 report = {'passed':True, 'elfSha256':hashlib.sha256(image).hexdigest(),
           'routine':'0x13c190', 'executedInstructions':steps,
           'progressionBytesCompared':0x300314-0x2feea0,
-          'secondaryAvailabilityBankNotWritten':True,
+          'secondaryAvailabilityBankCompared':True,
           'method':'Bounded interpreter executes original ELF instructions and reads its own unlock tables; compares native header result'}
 Path(sys.argv[3]).write_text(json.dumps(report,indent=2))
 print(json.dumps(report,indent=2))

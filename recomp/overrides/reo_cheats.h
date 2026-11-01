@@ -52,6 +52,7 @@ inline void service(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
         static bool unlocksReported = false;
         if (result.unlocks && !unlocksReported) {
             unlocksReported = true;
+            std::fprintf(stderr, "[CHEATS-ONLINE-UNLOCK-1] progression\n");
             if constexpr (selectedGame == Game::File2)
                 std::fprintf(stderr, "[CHEATS-UNLOCK-FILE2-1] progression\n");
             else

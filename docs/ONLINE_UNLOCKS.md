@@ -2,54 +2,77 @@
 
 For the selected game, open **Cheats**, turn on **Enable cheats**, and select
 **Unlock everything**. Deselect other cheats, then host or join normally.
-File #1 and File #2 retain separate selections. This uses each game's existing
-progression operation; it does not replace or directly edit a memory card.
-Saving through the game can retain unlocks.
+File #1 and File #2 retain separate selections. Saving through the game can
+retain unlocks; the launcher does not replace or directly edit a memory card.
 
-The launcher previously rejected every cheat selection in both manifest export
-and shared-session setup. Both paths now permit the built-in progression unlock.
-Mixed selections still report which option is available online. Health,
-infection, ammunition, results points, escape-time and imported data cheats
-remain available in Play alone. Validation preserves saved selections rather
-than silently dropping selected effects.
+The built-in progression option is allowed in co-op. Health, infection,
+ammunition, results points, escape time and imported data cheats remain
+restricted to Play alone. Imported patches are not accepted simply because
+their name is "Unlock everything". Saved selections are preserved on rejection.
 
-The unlock changes local progression/menu availability. It is not included in
-the host's randomizer configuration and does not grant unlocks to other players.
-Each player chooses their own progression option. The existing native capability
-check still requires the selected edition's progression marker; update/rebuild
-an older native game if prompted.
+## Host unlocked, guest locked
 
-Both exported manifests and host/join setup use this rule. Imported patch groups
-are not accepted based on a name such as “Unlock everything.” Data patches and
-other mod effects cannot piggyback on the built-in unlock manifest.
+A host can choose an unlocked scenario and start it with a guest who has not
+unlocked it. The guest does not need to enable the option. Unlock selections
+are local: they are not part of the shared randomizer configuration, and the
+host's cheat does not grant the guest its progression or costumes.
+
+This was verified with two native Windows clients in each game, separate fresh
+cards, and the cheat enabled only on the host:
+
+| Game | Host selection | Guest before and during gameplay | Result |
+| --- | --- | --- | --- |
+| File #1 | The Hive | Offline and online scenario masks both `0x01` (Outbreak only) | Both clients entered stage 28, room 8; guest movement observed |
+| File #2 | Elimination 1 | Offline mask `0x1f`, online mask `0x1e`; bonus scenario 6 absent from guest's own choices | Both clients entered stage 29, room 1; guest movement observed |
+
+Both original waiting-room rosters contained two members before the host started.
+Both clients reached interactive phase 2, without modal or pause layers. Ordinary
+private controller input moved the guest's local actor in both tests. Its unlock
+masks remained unchanged after movement. These runs stopped before completing a
+scenario: they do not establish save/reload persistence or every scenario's behavior.
+
+## Native implementation and compatibility
+
+The live test exposed a gap in the previous implementation: offline unlock bits
+were set while File #1's online room menu still offered only Outbreak. Online
+room creation uses separate progression banks:
+
+| Game | Original reader | Online bank | Applied mask |
+| --- | --- | --- | --- |
+| File #1 | `5CCA50`, scenario cycling `5CD7D0` | `0x321ef4` (save base `0x31fb60` + `0x2394`) | OR `0x1f` |
+| File #2 | `5EBE80` | `0x2ff8c8` | OR `0x0ffe` |
+
+The per-frame built-in now updates those fields as well as offline availability,
+preserving other bits. File #2's bank also matches the original full-unlock routine
+`13C190`. No lobby result, guest input or network packet is fabricated.
+
+Online use requires native marker `[CHEATS-ONLINE-UNLOCK-1] progression`, in
+addition to the edition's existing progression marker. An older native build is
+rejected with a Game files rebuild/update instruction when online unlocks are
+selected. A guest who does not select unlocks does not require this new capability.
 
 ## Verification
 
-`OnlineUnlockTests` runs in the Windows launcher self-test. It covers every
-combination of the six built-in choices for both editions in host and join mode,
-master-switch behavior, edition isolation, imported patches, mixed mod effects,
-and actual UDP host/guest configuration transfer. Existing capability and
-randomizer-session tests remain in place. The new tests and those related suites
-passed 833 assertions locally using the production changed files and the Mac
-branch's portable core adapters in an isolated temporary harness.
+Private evidence is under `build-ninja/mixed-unlock-verification/`: the pre-fix
+File #1 run is `file1-02`, and corrected runs are `file1-03` and `file2-01`.
+Receipts retain executable hashes, PID/creation identities, menu/progression
+observations, two-member rosters, scenario-start states, actor samples and native
+window captures. Windows ran on a private desktop which was never switched to;
+all audio buses were muted. Guest RAM was read-only to the test driver. The only
+gameplay input was ordinary private controller/keyboard reports.
 
-The Windows C#/XAML compile check passes on Mac with the unavailable compiled
-preview shader excluded for compilation only. The normal Windows build pipeline
-builds that shader. Updated WPF UI diagnostics check the co-op explanation; those
-UI tests and live online scenario/costume selection still need a Windows run.
-No completed online gameplay or save/reload result is claimed here.
+The test images compile the updated authored bootstrap and cheat headers against
+the existing audited RC1 guest/runtime objects. They are isolated verification
+images, not a clean full RC2 build or replacements for the user's installed games.
 
-The native checker parses an unlock-only manifest and applies it with a living
-actor in each of four player slots in both editions. Full-RAM comparison rejects
-changes outside progression fields, checks scenario bits and verifies repeated
-application. It passes 33 checks, or 34 with an external launcher manifest.
-Existing File #2 progression checks also pass. To repeat without a game disc:
+Launcher tests cover host/guest selections, real UDP transfer with an unlocked
+host and cheat-free guest, unchanged shared configuration, gameplay-cheat
+rejection, and native capability handling. Native full-RAM checks cover both
+availability banks, preserve unrelated state, and verify repeated application.
+The File #2 oracle executes 13,068 original instructions and compares all 5,236
+progression bytes, including the online bank.
 
 ```sh
 c++ -std=c++17 -O2 tools/cheat_check/online_unlock_tests.cpp -o /tmp/reo-online-unlocks
 /tmp/reo-online-unlocks
 ```
-
-An optional manifest argument checks the exact file emitted by the launcher.
-The source CI job runs this native checker, and Windows CI runs the launcher
-self-tests. Remote CI has not been run as part of this local verification.

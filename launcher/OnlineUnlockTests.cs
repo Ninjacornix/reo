@@ -51,6 +51,20 @@ internal static class OnlineUnlockTests {
                 await serve;
                 check(joined.Bytes.SequenceEqual(hosted.Bytes) && joined.Mods.Count == 0,
                     game + " unlock-only guest resolves the host over real UDP without adding shared effects");
+                enabled.CheatsEnabled = false;
+                enabled.EnabledCheats.Clear();
+                var serveLockedGuest = Task.Run(async () => {
+                    var query = await server.ReceiveAsync(deadline.Token);
+                    await server.SendAsync(RandomizerSession.Reply(query.Buffer, hosted.Bytes)!, query.RemoteEndPoint, deadline.Token);
+                });
+                var lockedGuest = await RandomizerSession.Resolve(enabled, new(), deadline.Token,
+                    ((IPEndPoint)server.Client.LocalEndPoint!).Port);
+                await serveLockedGuest;
+                check(lockedGuest.Bytes.SequenceEqual(hosted.Bytes) && lockedGuest.Mods.Count == 0 &&
+                      Cheats.Export(enabled, root) == "",
+                    game + " a guest without unlocks accepts the unlocked host without inheriting its cheat");
+                enabled.CheatsEnabled = true;
+                enabled.EnabledCheats.Add($"builtin.{game}.unlock");
                 enabled.EnabledCheats.Add($"builtin.{game}.health");
                 bool blocked = false;
                 try { await RandomizerSession.Resolve(enabled, new(), deadline.Token, ((IPEndPoint)server.Client.LocalEndPoint!).Port); }

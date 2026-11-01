@@ -29,8 +29,10 @@ int main(int argc, char** argv) try {
             check(result.unlocks && result.active && result.player == player, "Unlocks must work with a living gameplay actor");
             auto allowed = [&](uint32_t address) {
                 if (file2) return (address >= 0x2feea8 && address < 0x2feec0) || address == 0x2feec3 || address == 0x2feec5 ||
+                    (address >= 0x2ff8c8 && address < 0x2ff8cc) ||
                     (address >= 0x30022c && address < 0x300230) || (address >= 0x300248 && address < 0x300310);
                 if ((address >= 0x31fb64 && address < 0x31fb6c) || (address >= 0x31fb6d && address < 0x31fb79) ||
+                    (address >= 0x321ef4 && address < 0x321ef8) ||
                     address == 0x31fb7f || address == 0x31fb83 || (address >= 0x323bd8 && address < 0x323bdc)) return true;
                 for (unsigned bank = 0; bank < 3; ++bank)
                     for (uint32_t start : {0x323bf4u, 0x323c54u})
@@ -42,6 +44,10 @@ int main(int argc, char** argv) try {
             check(true, "Full RAM preserves actor health, infection, inventory, points, options and network state");
             const uint32_t scenarios = word(ram.data(), file2 ? 0x30022cu : 0x323bd8u), mask = file2 ? 0xfffu : 0x1fu;
             check((scenarios & mask) == mask, "Scenario progression bits are not available");
+            // Original online room constructors 5CCA50 and 5EBE80 read separate banks.
+            const uint32_t onlineMask = file2 ? 0xffeu : 0x1fu;
+            check((word(ram.data(), file2 ? 0x2ff8c8u : 0x321ef4u) & onlineMask) == onlineMask,
+                  "Online room scenario choices remain locked");
             const auto once = ram;
             applyBuiltins(program.builtins, ram.data(), game);
             check(ram == once, "Repeated unlock application must be idempotent");

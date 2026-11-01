@@ -210,7 +210,8 @@ public sealed class GameSession {
         }
         if (cheatFile.Length != 0)
         {
-            VerifyCheatCompatibility(image, selectedGame.Id, File.ReadLines(cheatFile));
+            VerifyCheatCompatibility(image, selectedGame.Id, File.ReadLines(cheatFile),
+                                     online: settings.ResolvedCoopMode != "offline");
             Set("REO_CHEATS_FILE", cheatFile);
         }
         var itemRandomizer = selectedMods.SingleOrDefault(m => m.ItemRandomizer != null)?.ItemRandomizer;
@@ -466,12 +467,15 @@ public sealed class GameSession {
             throw new IOException("File #2 volume controls need the updated game build. Rebuild or update File #2 in Game files.");
     }
     internal const string EscapeCheatCapability = "[CHEATS-ESCAPE-1] active countdown frozen";
-    internal static void VerifyCheatCompatibility(string image, string gameId, IEnumerable<string> manifest) {
+    internal const string OnlineUnlockCapability = "[CHEATS-ONLINE-UNLOCK-1] progression";
+    internal static void VerifyCheatCompatibility(string image, string gameId, IEnumerable<string> manifest, bool online = false) {
         var lines = manifest.ToHashSet(StringComparer.Ordinal);
         if (gameId == "file2" && !HasMarker(image, "[CHEATS-FILE2-1] health infection ammo data"))
             throw new IOException("File #2 cheats need the updated game build. Rebuild or update the game.");
         if (lines.Contains("builtin unlock") && !SupportsProgressionUnlocks(image, gameId))
             throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
+        if (online && lines.Contains("builtin unlock") && !HasMarker(image, OnlineUnlockCapability))
+            throw new IOException("Online Unlock everything needs the updated game build. Rebuild or update the selected game in Game files.");
         if (lines.Contains("builtin points") && !HasMarker(image, PointsCheatCapability))
             throw new IOException("Max results points needs the updated game build. Rebuild or update the game.");
         if (lines.Contains("builtin escape") && !HasMarker(image, EscapeCheatCapability))

@@ -18,24 +18,27 @@ Original routine `0x13c190` and helper `0x13c110` establish the progression layo
 | NPC characters | Four words at `0x2feeb0`; OR the corresponding masks from both original tables, preserving the zero-mask final word | Tables `0x217880` and `0x217890`; getter `0x59c550` |
 | Difficulties | Byte `0x2feec5` OR `0x0f` | Getter `0x59bb00`, setter `0x597f20` |
 | Main and extra scenarios | Word `0x30022c` OR `0x0fff` | Unlock routine `0x13c190`; save initialization `0x13a610`; availability getter `0x59bab0` and scenario list `0x59bda0` |
+| Online scenario choices | Word `0x2ff8c8` OR `0x0ffe` | Full-unlock routine `0x13c190`; online room constructor `0x5ebe80` |
 | Bonus-mode availability | Byte `0x2feec3` OR `0x0d`; active mode stays unchanged | Getters `0x59bc30`, `0x59bc40`, `0x59bc50` read masks `1`, `8`, `4` |
 | Collection availability and purchases | Bases `0x300248` and `0x3002ac`; five banks at a 20-byte stride, valid bit counts `145, 59, 146, 14, 11` | Count table `0x2178b0`; getters `0x593fd0` and `0x594020` |
 
-The availability getter `0x59bab0` reads banks at `0x2ff8c8 + index * 0x964`; the scenario list `0x59bda0` requests index `1`, selecting `0x30022c`. The original full-unlock routine also writes `0x0ffe` to the other availability bank at `0x2ff8c8`. This feature deliberately omits that direct write.
+The availability getter `0x59bab0` reads banks at `0x2ff8c8 + index * 0x964`; the offline scenario list `0x59bda0` requests index `1`, selecting `0x30022c`. Online room constructor `0x5ebe80` reads the other bank at `0x2ff8c8`. The option now updates both banks, following the original full-unlock routine's `0x0ffe` online mask while preserving unrelated bits. Online use requires marker `[CHEATS-ONLINE-UNLOCK-1] progression`.
 
-The original menus may subsequently reconcile availability from owned collection extras. Routine `0x597fd0` calls `0x597f70` to set bits `6`–`11` in both banks. A fresh live run observed the other bank change from `0x1e` to `0xfde` after leaving Collection, through that original game behavior and without gameplay. Direct cheat writes preserve reward points, active options, padding, unused collection bits and data outside the documented masks; normal game processing is retained.
+The original Collection menus can also reconcile availability: routine `0x597fd0` calls `0x597f70` to set bits `6`–`11` in both banks. Before the online-bank fix, a fresh live run observed `0x2ff8c8` change from `0x1e` to `0xfde` after leaving Collection. Online room creation must not depend on visiting Collection first, so the built-in now grants those online choices directly. Reward points, active options, padding, unused collection bits and unrelated data remain preserved.
 
 ## Verification
 
 Static evidence comes from the original ELF instructions and matching generated opcode comments. REA diagnostics found unavailable registration/engine state; no analysis engine or configuration was installed or changed.
 
-An independent bounded interpreter executed the original unlock routine and its own data tables: **13,068 original instructions**. Its result matched the native implementation across **5,236 progression bytes**, except for the deliberately omitted original-only write to the other scenario-availability bank at `0x2ff8c8`. The private receipt is `build-ninja/issue-29-unlocks/original-oracle.json` in the original development workspace; private game inputs and generated game sources are not published.
+An independent bounded interpreter executed the original unlock routine and its own data tables: **13,068 original instructions**. Its result matches the native implementation across all **5,236 progression bytes**, including the online scenario-availability bank. The updated private receipt is `build-ninja/mixed-unlock-verification/file2-original-oracle.json`; private game inputs and generated game sources are not published.
 
-Regression checks pass **23 File #2 progression checks**, **76 existing File #2 health/infection/ammunition checks** and **55 File #1 checks**. They cover the write boundary, preserved data, repeated application and game-specific behavior. The launcher passes **788 checks**, including separate selections, unlock-only export, co-op rejection and native capability markers.
+Regression checks pass **25 File #2 progression checks** (26 when writing an oracle dump), **76 existing File #2 health/infection/ammunition checks**, **57 File #1 checks**, and **41 unlock-only native checks**. They cover both scenario banks, write boundaries, preserved data, repeated application and game-specific behavior. Launcher checks include edition isolation, unlock-only export, mixed-unlock host/guest transfer, gameplay-cheat rejection and native capability markers.
 
 Live verification on a fresh test card confirmed the native unlock marker, Elimination 1 availability, Kevin Type-B, NPC Luke, all four difficulties with Very Hard selectable, the Infinity menu, owned Gallery entries and all 11 owned EXTRA entries while reward points remained zero. The private run is `build-ninja/issue-29-unlocks/enabled-02` in the original development workspace.
 
 Save/reload persistence remains unverified. The oracle, fixtures and observed menus do not establish full scenario completion, every costume's in-game rendering or saved-unlock persistence.
+
+A separate two-client Windows test verified an unlocked host starting Elimination 1 with a guest whose bonus scenarios remained locked. Both entered gameplay and the guest moved while its offline/online progression masks stayed `0x1f`/`0x1e`. See [online unlock verification](ONLINE_UNLOCKS.md) for the evidence and scope.
 
 To repeat the original-code comparison with your own supported ELF, run:
 

@@ -8,8 +8,8 @@ internal static class CheatCompatibilityTests {
         string folder = Path.Combine(Path.GetTempPath(), "reo-cheat-capabilities-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         string image = Path.Combine(folder, "fixture.exe");
-        bool Rejected(string game, string token, string name) {
-            try { GameSession.VerifyCheatCompatibility(image, game, new[] { "REO-CHEATS-2", "builtin " + token }); }
+        bool Rejected(string game, string token, string name, bool online = false) {
+            try { GameSession.VerifyCheatCompatibility(image, game, new[] { "REO-CHEATS-2", "builtin " + token }, online); }
             catch (IOException error) { return error.Message.Contains(name) && error.Message.Contains("Rebuild or update"); }
             return false;
         }
@@ -50,6 +50,18 @@ internal static class CheatCompatibilityTests {
             foreach (string game in new[] { "file1", "file2" }) {
                 GameSession.VerifyCheatCompatibility(image, game, new[] { "builtin points", "builtin escape" });
                 check(true, game + " accepts both new built-ins when the native binary advertises both capabilities");
+            }
+            foreach (string game in new[] { "file1", "file2" }) {
+                string progression = game == "file1" ? "[CHEATS-UNLOCK-1] progression" : "[CHEATS-UNLOCK-FILE2-1] progression";
+                File.WriteAllText(image, "[CHEATS-FILE2-1] health infection ammo data\n" + progression, Encoding.ASCII);
+                GameSession.VerifyCheatCompatibility(image, game, new[] { "builtin unlock" });
+                GameSession.VerifyCheatCompatibility(image, game, new[] { "REO-CHEATS-2" }, online: true);
+                check(true, game + " a guest without unlocks does not require the host's online-unlock capability");
+                check(Rejected(game, "unlock", "Online Unlock everything", online: true),
+                      game + " offline-only unlock binaries are rejected for online unlocks with a rebuild instruction");
+                File.AppendAllText(image, "\n" + GameSession.OnlineUnlockCapability, Encoding.ASCII);
+                GameSession.VerifyCheatCompatibility(image, game, new[] { "builtin unlock" }, online: true);
+                check(true, game + " accepts online unlocks when the native room-progression banks are supported");
             }
             string marker = "[CHEATS-POINTS-1] maximum results points";
             File.WriteAllText(image, new string('x', 1024 * 1024 + marker.Length - 3) + marker, Encoding.ASCII);
