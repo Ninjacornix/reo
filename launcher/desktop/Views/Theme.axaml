@@ -56,7 +56,7 @@
     </ResourceDictionary>
   </Styles.Resources>
   <!-- RC1 templates dim disabled controls themselves; the base theme must not dim them again. -->
-  <Style Selector=":disabled">
+  <Style Selector=":is(InputElement):disabled">
     <Setter Property="Opacity" Value="1" />
   </Style>
   <Style Selector="ProgressBar">
