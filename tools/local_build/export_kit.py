@@ -125,7 +125,8 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
                  "runtime/gs/frame_pacing.h", "runtime/gs/shader_warmup.h",
                  "runtime/timer/windows_resolution.h", "runtime/audio/host_bridge.h",
                  "runtime/audio/reo_output_device.h", "runtime/text/subtitles.h",
-                 "recomp/overrides/reo_subtitles.h"):
+                 "recomp/overrides/reo_subtitles.h", "runtime/text/message_timing.h",
+                 "recomp/overrides/reo_message_timing.h"):
         copy(root / name, "source/" + name)
     for name in ("runtime/assets/virtual_afs.h", "runtime/assets/overlay.h", "runtime/assets/executable_strings.h"):
         copy(root / name, "source/" + name)

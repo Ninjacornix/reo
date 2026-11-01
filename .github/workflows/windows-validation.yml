@@ -51,6 +51,8 @@ jobs:
         run: |
           c++ -std=c++17 -O2 tools/cheat_check/online_unlock_tests.cpp -o build-ninja/ci/online-unlock-check
           build-ninja/ci/online-unlock-check | tee build-ninja/ci/source-reports/online-unlocks.log
+      - name: Test mod-controlled message timing
+        run: python tools/message_timing_check/run.py --compiler c++
       - name: Test real UDP impairment fixture
         run: python -m unittest discover -s tools/netcode_lab -v
       - name: Test co-op automation guards
