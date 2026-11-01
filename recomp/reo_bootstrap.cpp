@@ -1082,6 +1082,36 @@ int main(int argc, char* argv[]) {
     }
     gpuConfig.validatedDrawing = true;
 
+    // Opt-in bounded GPU readback for unattended visual regression checks.
+    // Capture the final shader output without changing window focus or visibility.
+    if (const char* seconds = std::getenv("REO_GPU_SHOT_EVERY_SECONDS")) {
+        const double interval = std::atof(seconds);
+        if (std::isfinite(interval) && interval >= 1 && interval <= 120) {
+            struct Shots {
+                std::chrono::steady_clock::time_point next;
+                unsigned count = 0;
+            };
+            auto shots = std::make_shared<Shots>();
+            shots->next = std::chrono::steady_clock::now() +
+                          std::chrono::milliseconds(int64_t(interval * 1000));
+            gpuConfig.diagnosticOutputRequested = [shots](uint64_t) {
+                return shots->count < 128 && std::chrono::steady_clock::now() >= shots->next;
+            };
+            gpuConfig.diagnosticOutput = [shots, interval](uint64_t tick,
+                const std::vector<uint8_t>& bytes, uint32_t width, uint32_t height) {
+                if (bytes.size() != size_t(width) * height * 4 || !width || !height)
+                    throw std::runtime_error("GPU diagnostic frame size differs");
+                char name[64];
+                std::snprintf(name, sizeof(name), "gpu-shot-%02u.bmp", ++shots->count);
+                reoWriteBmp(name, bytes, width, height);
+                std::fprintf(stderr, "[GPU-SHOT] file=%s tick=%llu size=%ux%u\n", name,
+                    static_cast<unsigned long long>(tick), width, height);
+                shots->next = std::chrono::steady_clock::now() +
+                              std::chrono::milliseconds(int64_t(interval * 1000));
+            };
+        }
+    }
+
     gpuConfig.descriptorBuffer = false;
 
     // Match the stock PCSX2 automatic FFMD0/anti-blur presentation policy.
@@ -1091,6 +1121,8 @@ int main(int argc, char* argv[]) {
     gpuConfig.forceProgressive = true;
 
     gpuConfig.antiBlur = true;
+    if (gpuConfig.residentPresentation)
+        gpuConfig.currentVsyncTick = [] { return ps2_syscalls::GetCurrentVSyncTick(); };
 
     gpuConfig.persistentPipelineCache = true;
     if (const char* cache = std::getenv("REO_PIPELINE_CACHE_FILE"); cache && *cache)

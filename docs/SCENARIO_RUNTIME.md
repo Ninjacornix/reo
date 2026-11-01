@@ -260,3 +260,417 @@ Private evidence is under `build-ninja/issue26/chapter-1-confirmed`,
 Mac build objects, replacing only `pad2TestRoute` plus its new header. It is
 not a rebuilt or tested Windows RC1 executable. Raw VU images, game data,
 private cards and binaries remain ignored and are not part of this branch.
+
+## Second RC1 follow-up: music across transitions
+
+The [second follow-up](https://github.com/Ninjacornix/reo/issues/26#issuecomment-6549086698)
+reports completing Decisions, Decisions without other issues, but hearing ambient
+music through loading screens, cutscenes and FMVs. Together, the last two
+comments leave two separate reports: effects slowdown and audio across
+transitions. Neither comment contains a new RC1 log or a precise reproduction.
+
+Branch `fix/issue-26-music-transitions` carries the earlier chapter diagnostics
+and fixes a confirmed audio lifecycle defect with dependency patch
+`0113-cri-release-destroyed-rna-voices.patch`. Previously, `PS2RNA_DESTROY` erased
+the RPC metadata but left the independent host mixer voice playing. That voice
+could continue consuming queued PCM, survive a pending drain, and play again if
+its former ring received more data. The host now removes that one voice under
+the existing mixer mutex before erasing its RPC metadata. Other voices and
+shared channel queues retain their ownership and playback. Ordinary STOP,
+pause, and natural-end draining are unchanged; globally discarding all stopped
+PCM would risk clipping speech endings.
+
+`tools/audio_transition_check` drives real DTX RPC and RNA control DMA, supplies
+synthetic signed PCM at the producer boundary, and inspects real mixer output.
+The baseline fails after 15 checks at `Destroy silences only the destroyed host
+voice`. The patched sources pass all 30 checks, covering continued speech,
+repeated destruction, old-ring refill, accepted speech tails and destruction
+during a pending drain. The existing owned File #1 mixer/bank regression also
+passes 465 checks. The new patch applies to the canonical SDK after the existing
+release patches; the original SDK checkout and game executable remain intact.
+See the fixture README for the reproducible Mac Ninja runner and source-hash
+receipts. No Windows executable has been validated by these checks.
+
+A 130-second offscreen Hellfire baseline records the menu BGM stop, subsequent
+FMV audio and entry into room 27. Its journal has 1,144 actor observations but no
+eligible continuous gameplay segment, so it supplies no accepted performance
+measurement. The trace includes no `PS2RNA_DESTROY` call: it does not establish
+that the lifecycle defect explains the reporter's entire ambient-music case.
+The native candidate also exits normally after 130 seconds with zero active
+threads, 1,082 actor observations and zero dropped/invalid/unpublished records.
+It likewise has no eligible gameplay segment and does not exercise RNA
+destruction during this opening. Its provenance and log are retained in
+`audio-candidate` and `chapter-3-candidate` under the evidence directory. Visible
+Windows testing of the reported loading/cutscene/FMV sequence is still required.
+Ice and smoke performance remains unresolved by this audio change.
+
+Private evidence stays under `build-ninja/issue26-audio`: `repro-baseline`,
+`repro-candidate`, `mixer-regression.log`, and `chapter-3-confirmed`. The audio
+fixture uses synthetic samples; owned game assets, session logs, cards and
+native binaries remain ignored.
+
+### Windows follow-up: cancelled sequences and interrupted streams
+
+The Windows follow-up found two additional defects beyond RNA destruction.
+Bank cancellation released the currently playing notes without retiring their
+TQ sequence. A repeating ambient sequence could therefore schedule new notes
+after cancellation. Patch 0114 retires the scheduler on explicit or flagged
+replacement cancellation while preserving the release envelope and unrelated
+sequences. An ordinary AllNotesOff within a sequence still retains its scheduler.
+The new `bank_cancel.cpp` fixture uses authored repeating TQ commands with the
+owned menu bank: the old helper fails at check 16, and the patched helper passes
+35 checks, including targeted/repeated cancellation and replacement. Original-driver
+inspection also confirms that cancellation masks both selectors to seven bits;
+their high bits do not request wildcard cancellation.
+
+This inspection uses the existing Ghidra `reoiso` project. The original
+`/iop/10_mod10.irx` `Tsnd_tqcancel` entry is `0x2ED0`: its first instructions mask
+both selectors with `0x7F`, and it sets the matching request's cancel bit. The
+sequence worker `tsnd_tq` at `0x3358` processes that bit and clears the active
+request on the ordinary cancel path. Original instruction bytes corroborate the
+selector masks; the project's imperfect function-return annotations do not
+establish complete decompiler control-flow coverage.
+
+The RPC stop helper also always drained PCM, despite its documented distinction
+between natural endings and intentional cuts. A Windows Below Freezing Point
+opening records a stereo music stop with four unreturned chunks (32,768 bytes)
+and 18,144 queued samples on each channel. Patch 0115 discards a stopped stream's
+PCM when its producer still owns outstanding chunks and cancels any pending
+drain. An acknowledged natural ending still plays its accepted tail. The extended
+RPC fixture transfers PCM through real SJX and RNA mailboxes: with patch 0113
+alone it fails at check 37; with patch 0115 it passes all 46 checks. These tests
+use synthetic PCM and the production runtime/RPC/mixer, without an audio device.
+
+The existing owned-data mixer regressions pass 465 File #1 checks and 330 File #2
+checks with the bank cancellation change. The independent source SDK and its
+uncommitted working edits remain untouched; fixtures stage sealed RC1 inputs.
+Local Windows evidence is retained under `build-ninja/issue26-verify` and
+`build-ninja/issue26-bank-*`. The room and silent transition follow-ups below
+extend this acceptance work.
+
+### Windows ice/smoke VU coverage
+
+The Windows room investigation reproduced a CPU-side VU bottleneck in Hellfire's
+boiler room (scenario 2, room 28). A clean baseline at 4x internal resolution and
+SMAA averaged 18.0 game updates/second; the candidate averaged 29.9 at the same
+player position. Median large VIF batches fell from 49.6 ms to 25.1 ms. Display
+presentation remained near 60 Hz in both cases, so presentation FPS alone hid
+the simulation slowdown. These are local measurements with concurrent desktop
+work, not a hardware-independent performance guarantee.
+
+Two existing File #1 VU images used in the frozen lab were still opt-in:
+`2ea02b...` and `5273fa...`. The boiler room also uploads an uncatalogued complete
+image, `c41dc6...`, whose active instructions differ from the superficially
+similar `2ea02b...` image. The catalogue now reconstructs that exact 16 KiB image
+from four ranges of the owned, hash-checked ELF. These three images are admitted
+by default only through their recorded entry points. The other six experimental
+images retain their opt-in policy. Full-image comparison, capture exclusion and
+unknown-program fallback remain in force; no effect or geometry is removed.
+
+The final six-program default table passes 1,185 captured-input replays against
+the production interpreter: 173 frozen-lab inputs for `2ea02b...`, 64 frozen and
+64 Hellfire inputs for `5273fa...`, 244 boiler-room inputs for `c41dc6...`, and
+640 regression inputs covering the three previous default images. Each replay
+compares the complete 632-byte VU state, 16 KiB data bank and both emitted GIF
+packet streams. The newly admitted programs' isolated replays are approximately
+four to five times faster. The check tool's `--default` mode requires every
+capture to select the actual default table, rather than the experimental table.
+The owned-data audio checks still pass 46 RPC/PCM checks, 35 bank-cancellation
+checks, 465 File #1 mixer checks and 330 File #2 mixer checks.
+
+The low-temperature lab (scenario 35, room 28) retains 30 updates/second at 4x
+and SMAA on this host. Its VU work is reduced, but this host did not reproduce a
+sub-30 rate in that particular frozen-room view. Room fixtures enter through
+the original room-request/cleanup/loading path with an existing arrival point;
+they do not constitute complete chapter playthroughs. Separate ordinary-pad
+traversal reaches the tunnel, platform and lift passage. Test windows stay
+hidden and no audio device is initialized. A private PCM sink can advance the
+production stream and bank mixers without sending sound to the desktop.
+
+Evidence stays in the ignored `build-ninja/issue26-verify` directory:
+`hellfire-background-06` is the clean baseline, `hellfire-background-05` the
+boiler candidate, and `bfp-background-10` the final frozen-room candidate.
+`vu-oracle-default-04` contains the final default-table output comparisons;
+the comparison JSON files record the timing scope. Captures, translated game
+instructions, imported assets and native binaries are not committed. The
+independent dirty SDK checkout is not used or modified.
+
+For unattended GPU-path screenshots, set `REO_GPU_SHOT_EVERY_SECONDS` to an
+interval from 1 to 120 seconds. The bootstrap requests final-shader readbacks
+and writes at most 128 `gpu-shot-NN.bmp` files in the process working directory.
+It neither shows nor focuses a window and does not initialize audio. With the
+option unset, these readbacks are not requested. Capturing a frame has overhead;
+do not interpret a capture-time stall as steady-state game performance.
+
+### Silent production audio transition follow-up
+
+The 200-second `bfp-audio-silent-11` run uses ordinary controller input, real
+imported sound banks and the production PCM renderer at 48 kHz. Its private
+test sink supplies callback time without initializing an audio device; all
+device-status reports remain `host=0`. Unlike a test that only advances CRI
+stream counters, this also advances bank sequences, envelopes and sample loops.
+
+The route exercises menu-to-game entry, the tunnel opening movie, the tunnel
+to platform load and the platform gunshot cutscene. Movies are allowed to run
+for five seconds before the test presses Start. Real stop calls include menu
+music with four unreturned chunks, the room transition with two unreturned
+chunks, and speech with zero unreturned chunks and an accepted queued tail.
+These match both paths of the independently verified RPC stop policy. The
+ambient bank's active-frame reports cease at the room transition; subsequent
+stream plays on a reused RNA handle are separate original play requests.
+The run exits normally with zero active guest threads. It does not complete
+the chapter or provide a physical-speaker listening test.
+
+`hellfire-audio-silent-07` repeats the boiler fixture with the final six-program
+default table and the same silent production PCM sink. It averages 29.98 game
+updates/second at 4x/SMAA, keeps every owned window hidden, initializes no audio
+device and exits normally. Neither the user SDK's edits nor desktop audio
+settings are changed by these tests.
+
+### Expanded Below Freezing Point verification
+
+The frozen-area follow-up compares the sealed RC1 baseline with the final
+six-program candidate at 4x internal resolution, SMAA and 16x anisotropy.
+Both run the real production PCM mixer through the private silent sink.
+The room matrix covers the low-temperature room, special research room,
+chemical storage, B6 south/east passages, B7 south/east passages and chemical
+disposal: eight rooms and twelve original arrival fixtures per build. Each
+arrival includes idle and ordinary controller movement segments. Room-average
+rates remain approximately 30 original game updates/second on both builds;
+the RC1 frozen-area slowdown is not reproduced in this matrix. Movement is
+limited by walls in some fixtures, so twelve entrances do not imply twelve
+distinct camera views or a complete scenario playthrough.
+
+These direct room requests leave the AI companions in their previous room.
+Consequently the matrix measures the player and room effects, not a full party.
+Its `REO_GAME_CLOCK_SECONDS=1200` setting also exceeds the journal's supported
+maximum of 600 seconds. The external read-only original-counter observations
+remain valid for average rates, but provide no accepted per-update tail
+statistics. Do not infer smooth frame pacing from those averages.
+
+A separate RC1 test disables asynchronous VIF processing and uses a valid
+180-second clock journal. Steady gameplay in the low-temperature room averages
+29.998 updates/second with a 34.30 ms 95th-percentile update interval; chemical
+storage averages 29.994 with a 34.35 ms 95th percentile. Neither segment contains
+an update interval above 45 ms. This exercise includes walking and unarmed
+actions; actual handgun firing was not established and is not claimed.
+
+Private evidence is retained in `frozen-matrix-candidate-12`,
+`frozen-matrix-baseline-13`, `frozen-expanded-verification.json` and
+`frozen-vfx-baseline-sync-14` under `build-ninja/issue26-verify`. The original
+game counter, rather than the approximately 60 Hz presentation rate, is the
+performance measure. These measurements verify the tested paths without
+establishing that every reported frozen-area slowdown has been resolved.
+
+The companion follow-up explicitly places George and Alyssa in the
+low-temperature room with Kevin, allows the delayed opening cutscene to finish,
+and reapplies the recorded placement before timing. Native AI and rendering
+then run without further actor writes. The accepted RC1 sample keeps all three
+actors active in that room for the entire 25 seconds and averages 30.019
+updates/second. GPU captures show the cold fog and all three survivors, although
+not every survivor is visible in every frame. Earlier attempts interrupted by
+the opening movie are excluded. This is a controlled party fixture, not natural
+chapter progression.
+
+In the candidate run, George walks into the adjacent room after 17 seconds, so
+its complete 25-second sample does not qualify as full-party coverage. Comparing
+the common first 15 seconds instead, both builds record 450 original updates
+(30.000 updates/second), with all three actors active in room 28 throughout.
+Evidence is retained in `frozen-party-baseline-20`, `frozen-party-candidate-18`
+and `frozen-party-common-window.json`. This additional party/fog workload also
+does not reproduce the reported baseline slowdown.
+
+### Further frozen-area reproduction attempts
+
+The next pass adds every B4 room omitted from the earlier lower-floor matrix:
+passages A/B/C, computer room, turntable, main shaft, west/east passages and
+duct, alongside the two laboratory rooms. `frozen-upper-baseline-21` completes
+all eleven original-arrival fixtures on RC1. Its valid native journal records
+approximately 30 updates/second in each room. Passage A averages 29.80 with
+occasional 50.9 ms intervals; the other long room epochs average 29.999–30.001
+with 95th-percentile intervals of 33.8–34.2 ms. This does not reproduce sustained
+slow motion.
+
+`frozen-deep-baseline-22` extends the main shaft and west/east passages to two
+arrivals each, longer ordinary-pad movement and controlled companion placement.
+Thirty segments cover 270 measured seconds at 29.90–30.10 updates/second.
+Nineteen segments retain all three actors' active flags and room membership
+throughout. Companions can walk out or resume an earlier navigation action;
+membership alone does not prove that all three are visible or spatially near
+the player. These remain controlled fixtures rather than complete chapter
+traversal. The external steering reader subsequently pins player 0 instead of
+following the original global actor-loop slot, which can momentarily identify
+a companion.
+
+The output-size check also found a harness error: the standalone game starts
+at 640x448 even when `REO_WINDOW_WIDTH/HEIGHT` request 1920x1080. The launcher
+normally manages its window size. Thus `frozen-wide-cold-baseline-23` verifies
+widescreen-camera and empty engine-cache behavior at the small output size;
+it is not an accepted 1080p benchmark. `frozen-ultra-baseline-24` changes size
+mid-run and is also excluded from resolution comparisons. No launcher sizing
+regression is established by this standalone diagnostic behavior.
+
+The corrected fixture checks the owned process identity, resizes only its
+hidden GLFW window with `SWP_NOACTIVATE`, accounts for Windows DPI scaling and
+checks that it stays hidden. `frozen-fhd-baseline-25` then confirms 1920x1080
+in native GPU readbacks. At 16:9, 4x internal resolution, SMAA, forced linear
+textures and 16x anisotropy, an empty private engine pipeline cache produces
+one 309.1 ms active-gameplay interval in the main shaft. Its 95th percentile
+is 34.28 ms, so this is an isolated hitch rather than sustained slow motion.
+The evidence does not establish its cause.
+
+`frozen-fhd-baseline-26` repeats the same four-room/six-arrival route and actual
+hidden-window size with GPU screenshots and detailed VIF timing disabled.
+The long main-shaft epochs average 29.999 and 30.001 updates/second, with
+95th-percentile intervals of 34.07 and 34.02 ms and maxima of 38.23 and 34.96 ms.
+East-passage and special-research epochs also remain at 30 updates/second.
+The 309 ms hitch does not repeat. Both runs exit normally. Each uses a separate
+empty engine pipeline cache; the graphics driver's own shared cache is not
+cleared. The reporter's RTX 3060 differs from this host's RX 570. That difference
+limits reproduction coverage but does not establish a driver defect.
+
+The six-program candidate's first empty-cache FHD run,
+`frozen-fhd-candidate-27`, records a longer slow interval in the special-research
+room: 28.376 updates/second over 20.6 seconds, a 50.07 ms 95th percentile and
+11.0% of intervals above 45 ms. Repeating the same candidate with its warm
+engine cache (`frozen-fhd-candidate-28`) returns 29.998 updates/second and a
+33.89 ms 95th percentile there. This pair does not establish either a persistent
+candidate regression or the cause of the first slow interval.
+
+### Frozen-room slowdown under GPU pressure
+
+A fixed-view output-size probe provides a sustained rendering-load case on
+both builds. Scenario 35, room 30 uses player position
+`2832.0232, -1200, 4351.584`; the recorded position and six camera fields remain
+unchanged throughout each probe. Original AI and particles continue normally.
+Graphics stay at 16:9, 4x internal resolution, SMAA, forced linear textures and
+16x anisotropy. Only the owned hidden window's client extent changes. Each
+measurement lasts 20 seconds after three seconds of settling, with neutral
+controller input and no actor/camera writes, GPU readbacks or detailed VIF logs.
+
+The first attempt (`frozen-fhd-baseline-29`) confirms 30 updates/second at FHD
+and small output, but Windows clamps its 4K resize; that 4K attempt is rejected.
+The corrected fixture uses a hidden popup style to avoid the desktop frame's
+monitor tracking limit and verifies the actual 3840x2160 client extent. It never
+shows or activates the window. The popup style also remains in effect when
+returning to FHD, so that return does not change both style and size.
+
+| Build and probe | First 1920x1080 | 3840x2160 | Return to 1920x1080 | Repeat 3840x2160 |
+| --- | ---: | ---: | ---: | ---: |
+| RC1, `frozen-viewport-baseline-30` | 29.674 | 23.818 | 28.923 | — |
+| RC2 six-program candidate, `frozen-viewport-candidate-31` | 28.723 | 23.669 | 28.022 | 22.367 |
+
+Rates are original game updates/second; 30 is full game speed. The RC1 probe
+also measures 29.122 at 640x448 between its first FHD and 4K stages. Native-clock
+records corroborate the sustained 4K slowdown: its 95th-percentile interval is
+66.40 ms on RC1, and 66.43/66.73 ms in the two RC2 4K stages. No journal records
+are dropped or invalid. Native coverage of the first FHD stage is censored;
+the external original-counter average still covers its complete 20 seconds.
+
+The shared GPU engine is approximately 99% busy during each 4K measurement.
+The test process accounts for roughly 68–73% of that engine while another GPU
+application continues running. RC2 loads the already-populated RC1 engine
+pipeline cache and repeats the 4K slowdown, excluding an explanation confined
+to the first use of an empty engine cache. This is a concrete GPU-pressure
+reproduction on this RX 570 host, not an exclusive-hardware benchmark or proof
+of the reporter's exact RTX 3060 configuration. It remains present in RC2;
+the CPU-side VU improvements do not cover this rendering-load case.
+
+Evidence includes `viewport-probe.json`, `viewport-analysis.json`, native clock
+and frame-pacing CSVs, resource samples and hidden-window resize receipts in
+the two viewport session folders. Large readbacks and private pipeline caches
+remain private alongside the raw metric files; no owned artwork or game code is
+added to the repository.
+
+### Presentation backpressure mitigation
+
+The renderer now retires obsolete progressive display markers when they are
+more than three host VBlanks behind the live clock. It submits all preceding
+guest GS work and preserves every GIF packet, DMA and synchronization event.
+It omits the stale circuit merge and host post-processing/presentation, keeping
+the last immutable published picture until a new picture is ready. An intentional
+black screen still produces a normal picture. SDK patch 0116 documents and
+implements this empty-frame publication contract.
+
+This is limited to progressive output. Interlaced fields, mode transitions,
+EXTWRITE and explicit diagnostic readbacks keep the original path. No more than
+two consecutive markers may be retired, so rendering cannot starve. Offline
+replays have no live-clock callback and retain their original behavior.
+`REO_SKIP_STALE_SCANOUT=0` disables the mitigation for comparison.
+
+Two runs of the same executable and room-entry fixture compare that switch.
+The player remains at `2811.375, -1200, 4353.8252`; sampled position and all six
+camera fields remain constant throughout each 20-second measurement. Both use
+4x internal resolution, SMAA and verified hidden output extents.
+
+| Probe | First FHD | First 4K | Repeat FHD | Repeat 4K |
+| --- | ---: | ---: | ---: | ---: |
+| Disabled, `gpu-stale-off-38` | 7.156 | 5.805 | 10.408 | 5.805 |
+| Enabled, `gpu-stale-on-37` | 10.458 | 8.757 | 13.161 | 11.459 |
+
+These are original game updates per second. The GPU remains about 93–99% busy,
+with another application consuming most of its time. The test process receives
+roughly 22–31% of the busiest engine during these stages. This is a practical
+backpressure mitigation, not an exclusive benchmark or evidence that the
+reporter's exact slowdown is completely resolved. The remaining upscaled
+GPU-pressure slowdown is still open. The enabled run includes bounded visual
+readbacks; the disabled run omits them. All native processes exit normally.
+
+At 1x internal resolution, post-AA off and a verified 640x448 hidden output,
+`gpu-native-movie41` measures 600 original updates in 19.984 seconds (30.024/s)
+in the same room. The GPU movie option is enabled for this run. This is a
+compatibility check at native resolution, not a performance estimate for 4x/4K.
+
+`tools/parallel_gs_backend/scanout_pacing_check.cpp` adds 148 real GPU checks.
+It compares actual readback pixels with an unpaced reference while alternating
+raw GIF and direct-register drawing, exercising skipped markers, mode changes,
+interlaced history, reset, diagnostic capture, forced readback and blank output.
+It also checks the consecutive-skip bound. Both 1x and 4x checks pass on the
+RX 570. The fixture opens no window, audio device or native game runtime and
+uses synthetic geometry only. Enable `REO_BUILD_GPU_GS` and
+`REO_BUILD_SCANOUT_PACING_CHECK` in the normal Windows CMake build, then build
+and run target `reo_scanout_pacing_check`. An optional
+`REO_PIPELINE_CACHE_FILE` should point to a private test cache.
+
+Stencil-culling, unchanged-frame caching and reduced GPU checkpoint detail
+were also investigated privately. They are not included: the evidence did not
+establish a sufficient live benefit. The crash-checkpoint compatibility
+workaround and requested rendering quality remain unchanged.
+
+### Additional frozen-lab VU coverage
+
+The follow-up VU census finds another interpreted image in the frozen-room
+route: `65d42faf847a20b9df414f281d757b64c3932eccfe8cc18a59ed9edb527c3905`
+(census key `ca43537919fe633e`). In the six-program run it accounts for 429.80 ms,
+or 6.8% of sampled VU execution time over 20 seconds. Its compiled implementation
+already exists in the experimental catalogue; it is now enabled by default.
+The catalogue still contains 12 exact images, with seven enabled by default.
+
+`bfp-effect-capture-48` collects 128 original launches in scenario 35, room 28,
+using a full-image filter and the original room field as a capture gate. The
+captured entry counts are 31 at PC 0, 31 at 88, 30 at 296 and 36 at 1296. These
+cover all four registered entries. The production interpreter replay and the
+new default table agree on all 632 state bytes, all 16 KiB of data, and both
+ordered GIF streams: 121 packets containing 148,432 bytes. Five replay rounds
+have median times of 3.7865 ms interpreted and 1.1096 ms compiled. That is a
+program replay improvement, not a claim of a comparable game frame-rate gain.
+
+Another 545 earlier frozen-area and Hellfire captures pass with the new table.
+Generated instruction bodies are identical to the six-program factory; only
+the default descriptor list changes. Existing native geometry kernels retain
+priority, and unknown images or entries retain the interpreter fallback. No
+SDK, shader, rendering-quality or game-clock changes are included in this
+follow-up. Captures and generated game code remain private under
+`build-ninja/issue26-verify`.
+
+The seven-program native run, `bfp-vu7-candidate-49`, reports 100% compiled
+pair coverage for this image (12,453 launches, 109.26 ms over its 20-second
+census). The earlier six-program run records 12,354 launches and 429.80 ms.
+Other programs also run faster in the later session, so these separate-session
+times are not an isolated performance benchmark. The complete replay above
+provides the controlled comparison. The native frozen-lab / chemical-storage /
+frozen-lab route measures 29.941 / 30.035 / 29.991 original game updates per
+second at 4x internal resolution with forced bilinear filtering. It exits
+normally. This verifies the additional compiled path and local compatibility;
+the reporter's exact RTX 3060 configuration remains unverified, and the
+previously documented GPU-pressure case is not declared resolved.

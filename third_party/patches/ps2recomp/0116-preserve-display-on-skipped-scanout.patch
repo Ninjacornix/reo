@@ -1,0 +1,59 @@
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.h b/ps2xRuntime/src/lib/gs_backend_route.h
+--- a/ps2xRuntime/src/lib/gs_backend_route.h
++++ b/ps2xRuntime/src/lib/gs_backend_route.h
+@@ -21,6 +21,8 @@
+ enum class State { Empty, Software, Accelerated, Failed, Stopped };
+ // Runtime GSRegisters order, NOT paraLLEl's 8192-byte privileged register layout.
+ using Privileged = std::array<uint64_t, 19>;
++// Zero size with no payload means no new host picture; the worker retains its
++// last publication. An intentional black picture carries pixels/a resident image.
+ struct Frame {
+     std::vector<uint8_t> rgba;
+     uint32_t width = 0, height = 0, displayFbp = 0, sourceFbp = 0;
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -645,22 +645,27 @@
+                     } else {
+                         gs_backend_bridge::Frame gpu;
+                         g_backendRoute.capture({item.display.registers, item.display.tick, item.epoch, g_gpuPresentDiagnostic.exchange(false,std::memory_order_acq_rel)}, gpu);
+-                        auto frame = std::make_shared<PublishedDisplayFrame>();
+-                        frame->resident = gpu.resident;
+-                        frame->pixels = std::move(gpu.rgba);
+-                        // Scanout RGB already includes the guest circuit merge. Host
+-                        // composition must not apply GS framebuffer alpha again.
+-                        if (!frame->resident) // Legacy/explicit diagnostic host pixels only.
+-                            for (size_t alpha = 3; alpha < frame->pixels.size(); alpha += 4)
+-                                frame->pixels[alpha] = 255;
+-                        frame->width = gpu.width; frame->height = gpu.height;
+-                        frame->tick = gpu.tick; frame->displayFbp = gpu.displayFbp;
+-                        frame->sourceFbp = gpu.sourceFbp; frame->preferred = gpu.preferred;
+-                        frame->epoch = item.epoch;
+-                        std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
+-                        std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
+-                        if (item.epoch == gsPrivCurrentEpoch())
+-                            g_publishedDisplay = (frame->resident || !frame->pixels.empty()) ? std::move(frame) : nullptr;
++                        // Empty captures deliberately retire a stale progressive marker.
++                        // Keep the previous immutable picture; drawing and marker
++                        // completion still retire through the normal FIFO below.
++                        if (gpu.width || gpu.height || gpu.resident || !gpu.rgba.empty()) {
++                            auto frame = std::make_shared<PublishedDisplayFrame>();
++                            frame->resident = gpu.resident;
++                            frame->pixels = std::move(gpu.rgba);
++                            // Scanout RGB already includes the guest circuit merge. Host
++                            // composition must not apply GS framebuffer alpha again.
++                            if (!frame->resident) // Legacy/explicit diagnostic host pixels only.
++                                for (size_t alpha = 3; alpha < frame->pixels.size(); alpha += 4)
++                                    frame->pixels[alpha] = 255;
++                            frame->width = gpu.width; frame->height = gpu.height;
++                            frame->tick = gpu.tick; frame->displayFbp = gpu.displayFbp;
++                            frame->sourceFbp = gpu.sourceFbp; frame->preferred = gpu.preferred;
++                            frame->epoch = item.epoch;
++                            std::lock_guard<std::mutex> frontLock(g_gsPrivFrontMutex);
++                            std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex);
++                            if (item.epoch == gsPrivCurrentEpoch())
++                                g_publishedDisplay = (frame->resident || !frame->pixels.empty()) ? std::move(frame) : nullptr;
++                        }
+                     }
+                 }
+                 else if (item.isPacket && gs_backend_bridge::active())
