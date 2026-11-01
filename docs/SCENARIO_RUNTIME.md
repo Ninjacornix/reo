@@ -479,3 +479,105 @@ the common first 15 seconds instead, both builds record 450 original updates
 Evidence is retained in `frozen-party-baseline-20`, `frozen-party-candidate-18`
 and `frozen-party-common-window.json`. This additional party/fog workload also
 does not reproduce the reported baseline slowdown.
+
+### Further frozen-area reproduction attempts
+
+The next pass adds every B4 room omitted from the earlier lower-floor matrix:
+passages A/B/C, computer room, turntable, main shaft, west/east passages and
+duct, alongside the two laboratory rooms. `frozen-upper-baseline-21` completes
+all eleven original-arrival fixtures on RC1. Its valid native journal records
+approximately 30 updates/second in each room. Passage A averages 29.80 with
+occasional 50.9 ms intervals; the other long room epochs average 29.999–30.001
+with 95th-percentile intervals of 33.8–34.2 ms. This does not reproduce sustained
+slow motion.
+
+`frozen-deep-baseline-22` extends the main shaft and west/east passages to two
+arrivals each, longer ordinary-pad movement and controlled companion placement.
+Thirty segments cover 270 measured seconds at 29.90–30.10 updates/second.
+Nineteen segments retain all three actors' active flags and room membership
+throughout. Companions can walk out or resume an earlier navigation action;
+membership alone does not prove that all three are visible or spatially near
+the player. These remain controlled fixtures rather than complete chapter
+traversal. The external steering reader subsequently pins player 0 instead of
+following the original global actor-loop slot, which can momentarily identify
+a companion.
+
+The output-size check also found a harness error: the standalone game starts
+at 640x448 even when `REO_WINDOW_WIDTH/HEIGHT` request 1920x1080. The launcher
+normally manages its window size. Thus `frozen-wide-cold-baseline-23` verifies
+widescreen-camera and empty engine-cache behavior at the small output size;
+it is not an accepted 1080p benchmark. `frozen-ultra-baseline-24` changes size
+mid-run and is also excluded from resolution comparisons. No launcher sizing
+regression is established by this standalone diagnostic behavior.
+
+The corrected fixture checks the owned process identity, resizes only its
+hidden GLFW window with `SWP_NOACTIVATE`, accounts for Windows DPI scaling and
+checks that it stays hidden. `frozen-fhd-baseline-25` then confirms 1920x1080
+in native GPU readbacks. At 16:9, 4x internal resolution, SMAA, forced linear
+textures and 16x anisotropy, an empty private engine pipeline cache produces
+one 309.1 ms active-gameplay interval in the main shaft. Its 95th percentile
+is 34.28 ms, so this is an isolated hitch rather than sustained slow motion.
+The evidence does not establish its cause.
+
+`frozen-fhd-baseline-26` repeats the same four-room/six-arrival route and actual
+hidden-window size with GPU screenshots and detailed VIF timing disabled.
+The long main-shaft epochs average 29.999 and 30.001 updates/second, with
+95th-percentile intervals of 34.07 and 34.02 ms and maxima of 38.23 and 34.96 ms.
+East-passage and special-research epochs also remain at 30 updates/second.
+The 309 ms hitch does not repeat. Both runs exit normally. Each uses a separate
+empty engine pipeline cache; the graphics driver's own shared cache is not
+cleared. The reporter's RTX 3060 differs from this host's RX 570. That difference
+limits reproduction coverage but does not establish a driver defect.
+
+The six-program candidate's first empty-cache FHD run,
+`frozen-fhd-candidate-27`, records a longer slow interval in the special-research
+room: 28.376 updates/second over 20.6 seconds, a 50.07 ms 95th percentile and
+11.0% of intervals above 45 ms. Repeating the same candidate with its warm
+engine cache (`frozen-fhd-candidate-28`) returns 29.998 updates/second and a
+33.89 ms 95th percentile there. This pair does not establish either a persistent
+candidate regression or the cause of the first slow interval.
+
+### Frozen-room slowdown under GPU pressure
+
+A fixed-view output-size probe provides a sustained rendering-load case on
+both builds. Scenario 35, room 30 uses player position
+`2832.0232, -1200, 4351.584`; the recorded position and six camera fields remain
+unchanged throughout each probe. Original AI and particles continue normally.
+Graphics stay at 16:9, 4x internal resolution, SMAA, forced linear textures and
+16x anisotropy. Only the owned hidden window's client extent changes. Each
+measurement lasts 20 seconds after three seconds of settling, with neutral
+controller input and no actor/camera writes, GPU readbacks or detailed VIF logs.
+
+The first attempt (`frozen-fhd-baseline-29`) confirms 30 updates/second at FHD
+and small output, but Windows clamps its 4K resize; that 4K attempt is rejected.
+The corrected fixture uses a hidden popup style to avoid the desktop frame's
+monitor tracking limit and verifies the actual 3840x2160 client extent. It never
+shows or activates the window. The popup style also remains in effect when
+returning to FHD, so that return does not change both style and size.
+
+| Build and probe | First 1920x1080 | 3840x2160 | Return to 1920x1080 | Repeat 3840x2160 |
+| --- | ---: | ---: | ---: | ---: |
+| RC1, `frozen-viewport-baseline-30` | 29.674 | 23.818 | 28.923 | — |
+| RC2 six-program candidate, `frozen-viewport-candidate-31` | 28.723 | 23.669 | 28.022 | 22.367 |
+
+Rates are original game updates/second; 30 is full game speed. The RC1 probe
+also measures 29.122 at 640x448 between its first FHD and 4K stages. Native-clock
+records corroborate the sustained 4K slowdown: its 95th-percentile interval is
+66.40 ms on RC1, and 66.43/66.73 ms in the two RC2 4K stages. No journal records
+are dropped or invalid. Native coverage of the first FHD stage is censored;
+the external original-counter average still covers its complete 20 seconds.
+
+The shared GPU engine is approximately 99% busy during each 4K measurement.
+The test process accounts for roughly 68–73% of that engine while another GPU
+application continues running. RC2 loads the already-populated RC1 engine
+pipeline cache and repeats the 4K slowdown, excluding an explanation confined
+to the first use of an empty engine cache. This is a concrete GPU-pressure
+reproduction on this RX 570 host, not an exclusive-hardware benchmark or proof
+of the reporter's exact RTX 3060 configuration. It remains present in RC2;
+the CPU-side VU improvements do not cover this rendering-load case.
+
+Evidence includes `viewport-probe.json`, `viewport-analysis.json`, native clock
+and frame-pacing CSVs, resource samples and hidden-window resize receipts in
+the two viewport session folders. Large readbacks and private pipeline caches
+remain private alongside the raw metric files; no owned artwork or game code is
+added to the repository.
