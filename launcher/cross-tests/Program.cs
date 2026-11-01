@@ -19,6 +19,8 @@ void Check(bool ok,string message){if(ok)passed++;else failures.Add(message);}
 try {
 try{await PlatformServicesTests.Run(Check);}catch(Exception e){failures.Add("PlatformServices: "+e);}
 if(OperatingSystem.IsWindows())try{UpdateTests.Run(Check);}catch(Exception e){failures.Add("Updates: "+e);}
+try{KeyboardInputTests.Run(Check);}catch(Exception e){failures.Add("KeyboardInput: "+e);}
+try{await OnlineUnlockTests.Run(Check);}catch(Exception e){failures.Add("OnlineUnlocks: "+e);}
 try{GraphicsOptionsTests.Run(Check);}catch(Exception e){failures.Add("GraphicsOptions: "+e);}
 try{ModsTests.Run(Check);}catch(Exception e){failures.Add("Mods: "+e);}
 try{DiscImportTests.Run(Check);}catch(Exception e){failures.Add("DiscImport: "+e);}

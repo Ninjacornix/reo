@@ -27,6 +27,22 @@ internal static class HeadlessChecks {
         int checks=0;
         void Check(bool condition,string why){if(!condition)throw new IOException(why);checks++;}
         T Control<T>(string name) where T:Avalonia.Controls.Control=>window.FindControl<T>(name)??throw new IOException("Missing RC1 control: "+name);
+        window.ShowPage("Controller");Dispatcher.UIThread.RunJobs();
+        var input=Control<ComboBox>("InputDevicePicker");
+        input.SelectedItem=input.Items.OfType<InputDevice>().First(d=>d.Kind=="keyboard");
+        Dispatcher.UIThread.RunJobs();
+        Check(Control<StackPanel>("KeyboardStickBindingsPanel").IsVisible &&
+              Control<UniformGrid>("KeyboardStickBindings").Children.Count==4,
+              "The common launcher lost the RC2 keyboard voice-command bindings.");
+        var up=window.GetVisualDescendants().OfType<Button>().First(b=>b.Tag as string=="Up");
+        up.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        window.RaiseEvent(new KeyEventArgs{RoutedEvent=InputElement.KeyDownEvent,Key=Key.Up});
+        Check(window.settings.Keyboard["Up"]==38 && window.settings.Keyboard["CameraUp"]==0,
+              "Remapping movement to an arrow did not release its old voice command.");
+        window.RaiseEvent(new KeyEventArgs{RoutedEvent=InputElement.KeyUpEvent,Key=Key.Up});
+        Check(InputMapping.Keyboard(window.settings.Keyboard,k=>k==38)==new Pad(1),
+              "Keyboard movement must send only the digital D-pad after remapping.");
+        Control<Button>("ResetBindingsButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         window.ShowPage("Graphics");Dispatcher.UIThread.RunJobs();
         var resolution=Control<ComboBox>("InternalResolution");resolution.IsDropDownOpen=true;Dispatcher.UIThread.RunJobs();
         Check(resolution.GetRealizedContainers().Any(),"Dropdown does not populate RC1 choices.");resolution.IsDropDownOpen=false;

@@ -63,6 +63,10 @@ jobs:
         run: |
           c++ -std=c++20 -O2 -pthread tools/native_netcode_check/main.cpp network/native/native_netcode.cpp -o build-ninja/ci/netcode-check
           build-ninja/ci/netcode-check | tee build-ninja/ci/source-reports/netcode.log
+      - name: Test portable sockets with native netcode over loopback
+        run: |
+          c++ -std=c++20 -O2 -pthread tools/snap_iop_check/main.cpp network/native/snap_iop_transport.cpp network/native/native_netcode.cpp -o build-ninja/ci/snap-iop-check
+          build-ninja/ci/snap-iop-check --local-only | tee build-ninja/ci/source-reports/snap-iop.log
       - name: Upload source reports
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

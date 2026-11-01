@@ -67,6 +67,43 @@ public static partial class InputMapping {
         _ => Actions.Any(a => a.Id == action && a.Code < LeftTrigger &&
                              (mapped.Buttons & a.Code) != 0)
     };
+#if REO_CROSS_PLATFORM
+    public static string SourceName(int code, string kind) {
+        if (code == 0)
+            return "Unbound";
+        if (kind == "keyboard" && code >= '0' && code <= '9')
+            return ((char)code).ToString();
+        if (kind == "keyboard")
+            return code switch {
+                32 => "Space",
+                13 => "Enter",
+                8 => "Backspace",
+                27 => "Esc",
+                37 => "Left arrow",
+                38 => "Up arrow",
+                39 => "Right arrow",
+                40 => "Down arrow",
+#if REO_CROSS_PLATFORM
+                _ => code is >= 65 and <= 90 ? ((char)code).ToString() : $"Key {code}"
+#else
+                _ => KeyInterop.KeyFromVirtualKey(code).ToString()
+#endif
+            };
+        return code switch {
+            0x1000 => kind == "xbox" ? "A" : "Cross",
+            0x2000 => kind == "xbox" ? "B" : "Circle",
+            0x4000 => kind == "xbox" ? "X" : "Square",
+            0x8000 => kind == "xbox" ? "Y" : "Triangle",
+            0x100 => kind == "xbox" ? "LB" : "L1",
+            0x200 => kind == "xbox" ? "RB" : "R1",
+            LeftTrigger => kind == "xbox" ? "LT" : "L2",
+            RightTrigger => kind == "xbox" ? "RT" : "R2",
+            0x10 => kind == "xbox" ? "Menu" : "Options",
+            0x20 => kind == "xbox" ? "View" : "Create",
+            _ => Actions.FirstOrDefault(a => a.Code == code).Label ?? "Unknown"
+        };
+    }
+#endif
     public static (short X, short Y) FilterStick(short x, short y, int percent) {
         double magnitude = Math.Sqrt((double)x * x + (double)y * y);
         double threshold = Math.Clamp(percent, 0, 30) * 32767.0 / 100;

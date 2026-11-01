@@ -534,6 +534,11 @@
                 </Grid>
                 <Canvas x:Name="ControllerDiagram" SizeChanged="ControllerDiagramSizeChanged" Height="470" ClipToBounds="False" IsVisible="false" />
                 <UniformGrid x:Name="BindingRows" Columns="2" />
+                <StackPanel x:Name="KeyboardStickBindingsPanel" IsVisible="false" Margin="0,20,0,0">
+                  <compat:Rc1TextBlock Text="RIGHT STICK / VOICE COMMANDS" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,0,0,8" />
+                  <compat:Rc1TextBlock Text="D-pad keys use tank controls. Assigning a key clears its previous keyboard binding." Classes="Hint" FontSize="14" Margin="0,0,0,8" />
+                  <UniformGrid x:Name="KeyboardStickBindings" Columns="2" />
+                </StackPanel>
                 <Grid Margin="0,14,0,8">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition />

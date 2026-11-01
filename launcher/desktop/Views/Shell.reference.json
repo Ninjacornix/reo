@@ -1,7 +1,7 @@
 {
-  "reference": "v1.0.20-rc1",
+  "reference": "v1.0.20-rc1 + RC2 keyboard controls",
   "sourceSha256": {
-    "Shell.xaml": "58520b88d4097bc1a2b4b2c85b46cee7dc8896662c0460b5fa10618f29f21341",
+    "Shell.xaml": "ab01c37414a780999502da553f0b5650a7ef13668c8b6c3132d3e2602f2f2ace",
     "Theme.xaml": "b58cd89b05dc373c195e4e53a546dce7f72ce97b21a1ef78fa1dbfb432e911d1"
   },
   "actions": {
@@ -404,5 +404,9 @@
     "DiscChoice": "GameChoice",
     "CoopStatus": "Hint",
     "GameFilePath": "CoopTextInput"
+  },
+  "rc1SourceSha256": {
+    "Shell.xaml": "58520b88d4097bc1a2b4b2c85b46cee7dc8896662c0460b5fa10618f29f21341",
+    "Theme.xaml": "b58cd89b05dc373c195e4e53a546dce7f72ce97b21a1ef78fa1dbfb432e911d1"
   }
 }

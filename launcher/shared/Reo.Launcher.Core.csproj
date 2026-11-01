@@ -34,6 +34,7 @@
     <Compile Include="../AppLayout.cs" Link="Shared/AppLayout.cs" />
     <Compile Include="../Storage.cs" Link="Shared/Storage.cs" />
     <Compile Include="../GameCatalog.cs" Link="Shared/GameCatalog.cs" />
+    <Compile Include="../Pad.cs" Link="Shared/Pad.cs" />
     <Compile Include="../InputMapping.cs" Link="Shared/InputMapping.cs" />
     <Compile Include="../HostNetworking.cs" Link="Shared/HostNetworking.cs" />
     <Compile Include="../BuildPathLinks.cs" Link="Shared/BuildPathLinks.cs" />
