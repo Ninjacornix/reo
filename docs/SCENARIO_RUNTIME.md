@@ -319,7 +319,17 @@ replacement cancellation while preserving the release envelope and unrelated
 sequences. An ordinary AllNotesOff within a sequence still retains its scheduler.
 The new `bank_cancel.cpp` fixture uses authored repeating TQ commands with the
 owned menu bank: the old helper fails at check 16, and the patched helper passes
-33 checks, including targeted/wildcard/repeated cancellation and replacement.
+35 checks, including targeted/repeated cancellation and replacement. Original-driver
+inspection also confirms that cancellation masks both selectors to seven bits;
+their high bits do not request wildcard cancellation.
+
+This inspection uses the existing Ghidra `reoiso` project. The original
+`/iop/10_mod10.irx` `Tsnd_tqcancel` entry is `0x2ED0`: its first instructions mask
+both selectors with `0x7F`, and it sets the matching request's cancel bit. The
+sequence worker `tsnd_tq` at `0x3358` processes that bit and clears the active
+request on the ordinary cancel path. Original instruction bytes corroborate the
+selector masks; the project's imperfect function-return annotations do not
+establish complete decompiler control-flow coverage.
 
 The RPC stop helper also always drained PCM, despite its documented distinction
 between natural endings and intentional cuts. A Windows Below Freezing Point

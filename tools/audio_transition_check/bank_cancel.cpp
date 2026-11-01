@@ -47,13 +47,15 @@ int main(int argc,char** argv) try {
     check(!active(0,3)&&active(1,4),"Targeted cancellation preserves other sequence");
     check(signal(render(48000)),"Other sequence continues playing");
     packet({8,2,128,128});
-    check(!active(0,3)&&!active(1,4),"Wildcard cancellation retires matching sequences");
-    render(48000);check(!signal(render(48000)),"Wildcard cancellation cannot restart loops");
+    check(active(1,4),"High selector bits are masked, not wildcard cancellation");
+    packet({8,2,129,132});
+    check(!active(1,4),"Masked exact selectors retire their matching sequence");
+    render(48000);check(!signal(render(48000)),"Cancelled matching sequence cannot restart");
     load(source);
     packet({0,130,0,3,0});render(2048);
     packet({0,130,1,4,0});
     check(!active(0,3)&&active(1,4),"Replace matching flagged request retires old sequence");
-    packet({8,2,128,128});render(48000);
+    packet({8,2,1,4});render(48000);
     check(!signal(render(48000)),"Replacement has no orphaned sequence");
     std::printf("PASS %u bank cancellation checks\n",checks);
     return 0;

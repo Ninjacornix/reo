@@ -33,7 +33,7 @@ the convenience runner has only been validated with the Mac Ninja link format.
 `bank_cancel.cpp` checks a separate bank-audio cancellation defect: releasing
 current notes must also retire the cancelled sequence, so it cannot schedule
 new notes during a loading screen or cutscene. Ordinary in-sequence AllNotesOff
-retains its scheduler. Other sequences, wildcard cancellation, repeated
+retains its scheduler. Other sequences, masked exact selectors, repeated
 cancellation and replacement of flagged requests are covered.
 
 Run with an existing Clang C++20 compiler and your owned imported File #1 data:

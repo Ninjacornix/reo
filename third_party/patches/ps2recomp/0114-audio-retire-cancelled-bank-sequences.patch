@@ -1,11 +1,15 @@
 diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
 --- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
 +++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp
-@@ -340,7 +340,11 @@
+@@ -338,8 +338,14 @@
+     if (change || cancel) {
          for (unsigned slot = 0; slot < 16; ++slot) {
              auto& r = p.requests[slot];
-             if (!r.sequence.active() || !matches(r,indexByte,groupByte)) continue;
+-            if (!r.sequence.active() || !matches(r,indexByte,groupByte)) continue;
 -            if (cancel) stop(port,int(slot),true);
++            const bool selected = cancel ? r.index == (indexByte & 127) && r.group == (groupByte & 127)
++                                         : matches(r,indexByte,groupByte);
++            if (!r.sequence.active() || !selected) continue;
 +            if (cancel) {
 +                // Cancel the scheduler as well as releasing its current notes.
 +                r.sequence = {};
@@ -14,7 +18,7 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp b/ps2
              else { if (volume != 255) r.requestVolume = volume; if (pan != 255) r.requestPan = pan;
                     if (pitch != 65535) r.requestPitch = pitch; }
          }
-@@ -355,7 +359,10 @@
+@@ -352,7 +358,10 @@
          auto& r = p.requests[unsigned(slot)];
          if (r.sequence.active() && (((portByte & 128) && (r.cancelFlags & 1)) ||
              ((indexByte & 128) && (r.cancelFlags & 4) && r.index == (indexByte & 127)) ||
