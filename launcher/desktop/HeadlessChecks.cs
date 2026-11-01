@@ -136,9 +136,11 @@ public partial class MainWindow {
             serverStarting = false;
             RefreshOnlineUi();
             check(PlayNetworkSummary.Text == "Hosting not running (see Co-op)", "Stopped hosting is presented as still opening.");
+            check(StartServerButton.IsVisible, "Stopped hosting has no start/retry button after reopening the launcher.");
             serverStarting = true;
             RefreshOnlineUi();
             check(PlayNetworkSummary.Text == "Hosting (opening your game...)", "Active hosting startup is not shown.");
+            check(!StartServerButton.IsVisible, "Hosting offers another startup while setup is in progress.");
         } finally {
             serverStarting = false;
             settings.CoopMode = previousMode;

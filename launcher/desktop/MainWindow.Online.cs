@@ -498,6 +498,9 @@ public partial class MainWindow {
             CopyServerButton.IsEnabled = false;
             StartServerButton.Visibility = Visibility.Visible;
         }
+        bool hostingThisGame = hostedServer.Running && hostedServer.GameId == settings.Game.Id;
+        StartServerButton.Visibility = mode == "host" && !serverStarting && !hostingThisGame
+            ? Visibility.Visible : Visibility.Collapsed;
         if (supported && mode == "join" && PageCoop.Visibility == Visibility.Visible && !game.Running &&
             !searchedGameEditions.Contains(settings.Game.Id))
             SearchGames();
@@ -511,7 +514,7 @@ public partial class MainWindow {
             mode == "offline" ? "Single player"
             : !OnlineOptions.Configured(settings) ? "Co-op not set up yet (see Co-op)"
             : mode == "host" ? (serverStarting ? "Hosting (opening your game...)"
-                                : hostedServer.Running && hostedServer.GameId == settings.Game.Id
+                                : hostingThisGame
                                     ? "Hosting at " + hostedServer.Address
                                     : "Hosting not running (see Co-op)")
             : "Joining " + (settings.JoinHostName.Length > 0 ? settings.JoinHostName + " at " : "") +
