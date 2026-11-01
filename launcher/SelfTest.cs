@@ -315,7 +315,8 @@ static class SelfTest {
         var keyboard = InputMapping.KeyboardDefaults();
         keyboard["Cross"] = 'K';
         var keys = InputMapping.Keyboard(keyboard, k => k == 'K' || k == 'W');
-        Check(keys.Buttons == 0x1001 && keys.LY == 32767, "Keyboard remap and movement");
+        Check(keys.Buttons == 0x1001 && keys.LX == 0 && keys.LY == 0, "Keyboard remap and digital movement");
+        KeyboardInputTests.Run(Check);
         Check(InputMapping.Keyboard(keyboard, k => k == 'W' || k == 'S').LY == 0,
               "Opposite keyboard movement cancels");
         keyboard["Cross"] = 0;

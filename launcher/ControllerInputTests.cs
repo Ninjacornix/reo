@@ -88,6 +88,21 @@ internal static class ControllerInputTests {
                           game + " simultaneous D-pad and stick preserve both inputs");
                     using var map = MemoryMappedFile.OpenExisting(controller.MapName);
                     using var view = map.CreateViewAccessor();
+                    var keyboard = InputMapping.KeyboardDefaults();
+                    void CheckKeyboard(Pad expected, string detail) {
+                        view.Write(4, 1001);
+                        Thread.MemoryBarrier();
+                        view.Write(8, 1u);view.Write(12, unchecked((uint)Environment.TickCount));view.Write(16, 900u);
+                        view.Write(20, expected.Buttons);view.Write(22, expected.LT);view.Write(23, expected.RT);
+                        view.Write(24, expected.LX);view.Write(26, expected.LY);view.Write(28, expected.RX);view.Write(30, expected.RY);
+                        Thread.MemoryBarrier();view.Write(4, 1002);
+                        check(get(0,out var actual)==0 && actual.Pad==expected,game+" keyboard mapping reaches native XInput: "+detail);
+                    }
+                    foreach(int key in new[]{(int)'W','S','A','D'})
+                        CheckKeyboard(InputMapping.Keyboard(keyboard,k=>k==key),"digital "+(char)key);
+                    InputMapping.BindKeyboard(keyboard,"Up",38);
+                    CheckKeyboard(InputMapping.Keyboard(keyboard,k=>k==38),"arrow reassignment with neutral right stick");
+                    CheckKeyboard(InputMapping.Keyboard(keyboard,k=>k==39),"independent right-stick voice command");
                     view.Write(12, unchecked((uint)(Environment.TickCount - 1000)));
                     check(get(0, out var stale) == 0 && stale.Pad == new Pad(),
                           game + " stale heartbeats release the logical pad");

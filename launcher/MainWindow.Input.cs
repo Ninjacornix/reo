@@ -118,7 +118,16 @@ public partial class MainWindow {
     void BuildBindingRows() {
         BindingRows.Children.Clear();
         bindingButtons.Clear();
-        if (BuildControllerMap()) { UpdateBindingFeedback(); return; }
+        bool diagram = BuildControllerMap();
+        KeyboardStickBindings.Children.Clear();
+        bool keyboard = controller.SelectedDevice.Kind == "keyboard";
+        KeyboardStickBindingsPanel.Visibility = keyboard ? Visibility.Visible : Visibility.Collapsed;
+        if (keyboard) foreach (var action in InputMapping.Camera) {
+            var binding = CreateMapBinding(action.Id, action.Label);
+            binding.Margin = new Thickness(0, 4, 14, 4);
+            KeyboardStickBindings.Children.Add(binding);
+        }
+        if (diagram) { UpdateBindingFeedback(); return; }
         var rows = InputMapping.Actions.Select(a => (a.Id, a.Label)).ToList();
         foreach (var action in rows) {
             var row = new Grid { Margin = new Thickness(0, 4, 14, 4) };
@@ -192,9 +201,13 @@ public partial class MainWindow {
     }
     void FinishBinding(int source) {
         string target = captureTarget;
-        CurrentBindings[target] = source;
+        string[] cleared = controller.SelectedDevice.Kind == "keyboard"
+            ? InputMapping.BindKeyboard(CurrentBindings, target, source) : Array.Empty<string>();
+        if (controller.SelectedDevice.Kind != "keyboard") CurrentBindings[target] = source;
         CancelCapture(this, new());
         SaveInputPreferences();
+        if (cleared.Length > 0) Status.Text = "Cleared previous keyboard binding: " + string.Join(", ",
+            cleared.Select(id => InputMapping.Actions.FirstOrDefault(a => a.Id == id).Label ?? InputMapping.Camera.FirstOrDefault(a => a.Id == id).Label ?? id));
         if (bindingButtons.TryGetValue(target, out var binding)) binding.Focus();
     }
     void CancelCapture(object sender, RoutedEventArgs e) {

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RollForward>LatestMajor</RollForward>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../launcher/Pad.cs" Link="Pad.cs" />
+    <Compile Include="../../launcher/InputMapping.cs" Link="InputMapping.cs" />
+    <Compile Include="../../launcher/KeyboardInputTests.cs" Link="KeyboardInputTests.cs" />
+  </ItemGroup>
+</Project>

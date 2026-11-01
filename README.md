@@ -60,6 +60,11 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 
 GPU rendering is implemented through paraLLEl-GS.
 
+On keyboard, **WASD sends D-pad input for tank controls**. In **Controls → Button
+map**, the **Right stick / voice commands** section lets you remap or clear the
+arrow keys. Assigning a key to another keyboard action clears its previous
+binding, so using arrows for movement also releases their old voice commands.
+
 The development build offers named window resolutions: **Native (512 × 448)**,
 **HD (1280 × 720)**, **FHD (1920 × 1080)**, **QHD / 2K (2560 × 1440)** and
 **4K (3840 × 2160)**. Existing window sizes remain available. Windows may limit
