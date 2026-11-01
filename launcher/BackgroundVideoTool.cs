@@ -17,6 +17,9 @@ internal static class BackgroundVideoTool {
 
     internal static string Folder(string home) => Path.Combine(home, "media-tools", Version);
     internal static async Task<string> Ensure(string home, CancellationToken cancel, IProgress<ImportProgress>? progress = null) {
+#if REO_CROSS_PLATFORM
+        if (!OperatingSystem.IsWindows()) return PlatformServices.Ffmpeg();
+#endif
         await gate.WaitAsync(cancel).ConfigureAwait(false);
         try {
             string folder = Folder(home), exe = Path.Combine(folder, "ffmpeg.exe");

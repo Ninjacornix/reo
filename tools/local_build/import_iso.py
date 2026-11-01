@@ -6,7 +6,7 @@ from pathlib import Path
 import struct
 import tempfile
 
-from generate_game import ELF_SHA256
+from generate_game import ELF_SHA256, GAMES
 
 SECTOR = 2048
 
@@ -16,7 +16,10 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def import_iso(source, cache, report=lambda text: None, cancelled=lambda: False):
+def import_iso(source, cache, report=lambda text: None, cancelled=lambda: False, game="file1"):
+    profile = GAMES[game]
+    expected = profile["sha256"]
+    revision = {"file1": "NTSC-U v2.00 / SLUS-20765", "file2": "NTSC-U v1.05 / SLUS-20984"}[game]
     source, cache = Path(source).resolve(), Path(cache).resolve()
     before = source.stat()
     identity = {"source": str(source), "bytes": before.st_size, "mtimeNs": before.st_mtime_ns}
@@ -26,7 +29,7 @@ def import_iso(source, cache, report=lambda text: None, cancelled=lambda: False)
     receipt = destination / "import.json"
     if receipt.exists():
         record = json.loads(receipt.read_text(encoding="utf-8"))
-        if record.get("identity") == identity and record.get("elfSha256") == ELF_SHA256:
+        if record.get("identity") == identity and record.get("elfSha256") == expected:
             valid = bool(record.get("files"))
             for entry in record.get("files", []):
                 path = (destination / "data" / entry["path"]).resolve()
@@ -108,11 +111,11 @@ def import_iso(source, cache, report=lambda text: None, cancelled=lambda: False)
                     entries.append((relative, extent, count))
 
         walk(struct.unpack_from("<I", pvd, 158)[0], struct.unpack_from("<I", pvd, 166)[0], Path())
-        elf_entry = next((entry for entry in entries if entry[0].as_posix() == "SLUS_207.65"), None)
+        elf_entry = next((entry for entry in entries if entry[0].as_posix() == profile["elf"]), None)
         if elf_entry is None or elf_entry[2] > 32 * 1024 * 1024:
-            raise ValueError("Supported File #1 executable was not found")
-        if hashlib.sha256(read(elf_entry[1] * SECTOR, elf_entry[2])).hexdigest() != ELF_SHA256:
-            raise ValueError("Unsupported game revision; use NTSC-U v2.00 / SLUS-20765")
+            raise ValueError("Supported File #" + game[-1] + " executable was not found")
+        if hashlib.sha256(read(elf_entry[1] * SECTOR, elf_entry[2])).hexdigest() != expected:
+            raise ValueError("Unsupported game revision; use " + revision)
         files = []
         for relative, lba, size in entries:
             if cancelled():
@@ -138,6 +141,6 @@ def import_iso(source, cache, report=lambda text: None, cancelled=lambda: False)
     if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
         raise ValueError("The ISO changed during import")
     (staging / "import.json").write_text(json.dumps({"format": 1, "identity": identity,
-        "elfSha256": ELF_SHA256, "files": files}, indent=2), encoding="utf-8")
+        "elfSha256": expected, "files": files}, indent=2), encoding="utf-8")
     staging.rename(destination)
     return destination / "data"

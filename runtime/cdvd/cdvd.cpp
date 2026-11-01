@@ -1,4 +1,8 @@
 #include "cdvd.h"
+#include "runtime/core/host_file.h"
+#ifndef _WIN32
+#include <strings.h>
+#endif
 #include "runtime/assets/overlay.h"
 #include <cstdio>
 #include <cstdlib>
@@ -80,8 +84,8 @@ void CDVD::open_image() {
 #endif
     if (!label.empty()) {
         if (f) {
-            _fseeki64(f, 0, SEEK_END);
-            m_imageSize = static_cast<uint64_t>(_ftelli64(f));
+            host_file::seek(f, 0, SEEK_END);
+            m_imageSize = static_cast<uint64_t>(host_file::tell(f));
             m_image = f;
             printf("[CDVD] Disc image: %s (%llu bytes)\n", label.c_str(),
                    (unsigned long long)m_imageSize);
@@ -140,7 +144,11 @@ std::string CDVD::normalize_ps2_path(const std::string& path) const {
     const char* prefixes[] = {"cdrom0:\\", "cdrom0:", "cdrom:\\", "cdrom:", "host:"};
     for (auto prefix : prefixes) {
         size_t plen = strlen(prefix);
+#ifdef _WIN32
         if (normalized.size() >= plen && _strnicmp(normalized.c_str(), prefix, plen) == 0) {
+#else
+        if (normalized.size() >= plen && strncasecmp(normalized.c_str(), prefix, plen) == 0) {
+#endif
             normalized = normalized.substr(plen);
             break;
         }
@@ -233,7 +241,7 @@ bool CDVD::read_sectors(uint32_t lba, uint32_t count, void* buffer) {
     }
 #endif
     FILE* f = static_cast<FILE*>(m_image);
-    if (_fseeki64(f, static_cast<long long>(off), SEEK_SET) != 0)
+    if (host_file::seek(f, static_cast<long long>(off), SEEK_SET) != 0)
         return false;
     return fread(buffer, 1, static_cast<size_t>(len), f) == len;
 }

@@ -2,6 +2,9 @@
 #include <cstring>
 #include <algorithm>
 #include <cctype>
+#ifndef _WIN32
+#include <strings.h>
+#endif
 
 bool NetbioReader::open(const char* path) {
     close();
@@ -104,7 +107,11 @@ uint32_t NetbioReader::read_file_to_ram(int index, uint8_t* rdram, uint32_t dest
 
 int NetbioReader::find_file(const char* name) const {
     for (int i = 0; i < (int)m_entries.size(); i++) {
+#ifdef _WIN32
         if (_stricmp(m_entries[i].name, name) == 0)
+#else
+        if (strcasecmp(m_entries[i].name, name) == 0)
+#endif
             return i;
     }
     return -1;

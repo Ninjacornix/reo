@@ -1,6 +1,8 @@
 using System.IO;
 using System.Security.Cryptography;
+#if !REO_CROSS_PLATFORM
 using System.Windows.Media;
+#endif
 
 namespace Outbreak.Launcher;
 
@@ -59,6 +61,8 @@ internal static class GameFont {
         }
         return path;
     }
+#if !REO_CROSS_PLATFORM
     internal static FontFamily Load(string path) => new(new Uri(Path.GetDirectoryName(path)! +
         Path.DirectorySeparatorChar), "./" + Path.GetFileName(path) + "#" + FamilyName);
+#endif
 }

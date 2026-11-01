@@ -1,0 +1,23 @@
+diff --git a/util/timer.cpp b/util/timer.cpp
+index a1408352..9d6f9f6c 100644
+--- a/util/timer.cpp
++++ b/util/timer.cpp
+@@ -138,6 +138,18 @@ void sleep_until_nsecs(int64_t timepoint)
+ 		_mm_pause();
+ #endif
+ 	}
++#elif defined(__APPLE__)
++	// Darwin has CLOCK_MONOTONIC but no clock_nanosleep/TIMER_ABSTIME.
++	// Recheck the same clock after interruption to retain an absolute deadline.
++	for (;;)
++	{
++		const int64_t remaining = timepoint - get_current_time_nsecs();
++		if (remaining <= 0)
++			break;
++		const timespec delay = { time_t(remaining / 1000000000ll), long(remaining % 1000000000ll) };
++		if (nanosleep(&delay, nullptr) < 0 && errno != EINTR)
++			break;
++	}
+ #else
+ 	constexpr auto timebase = CLOCK_MONOTONIC;
+ 	struct timespec ts = {};

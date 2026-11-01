@@ -1,5 +1,9 @@
+#if REO_CROSS_PLATFORM
+using Color = Outbreak.Launcher.Rgba;
+#else
 using System.Windows.Markup;
 using System.Windows.Media;
+#endif
 
 namespace Outbreak.Launcher;
 
@@ -38,11 +42,13 @@ public static class Palette {
         intensity = Math.Clamp(intensity, 0, 1);
         return Color.FromRgb((byte)(color.R * intensity), (byte)(color.G * intensity), (byte)(color.B * intensity));
     }
+#if !REO_CROSS_PLATFORM
     public static SolidColorBrush Brush(Color color, byte alpha = 255) {
         var brush = new SolidColorBrush(WithAlpha(color, alpha));
         brush.Freeze();
         return brush;
     }
+#endif
     public static bool Contains(Color color) => All.Any(c => c.R == color.R && c.G == color.G && c.B == color.B);
     public static Color Over(Color foreground, Color background) {
         double a = foreground.A / 255.0;
@@ -61,6 +67,7 @@ public static class Palette {
 
 // XAML access: {local:Palette Accent} or {local:Palette Text, Alpha=36}. Produces a Color for
 // Color properties and a frozen brush everywhere else.
+#if !REO_CROSS_PLATFORM
 [MarkupExtensionReturnType(typeof(object))]
 public sealed class PaletteExtension : MarkupExtension {
     public PaletteExtension() { }
@@ -81,3 +88,4 @@ public sealed class PaletteExtension : MarkupExtension {
         return wantsColor ? color : Palette.Brush(color);
     }
 }
+#endif

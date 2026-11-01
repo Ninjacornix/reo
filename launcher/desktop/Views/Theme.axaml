@@ -1,0 +1,708 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <ResourceDictionary>
+      <StreamGeometry x:Key="Ps2CardShell">M 7,1 Q 1,1 1,9 L 1,56 Q 3,59 1,62 L 1,67 Q 4,70 1,73 L 1,77 Q 4,80 1,83 L 1,87 Q 4,90 1,93 L 1,101 Q 1,109 9,109 L 77,109 Q 85,109 85,101 L 85,93 Q 82,90 85,87 L 85,83 Q 82,80 85,77 L 85,73 Q 82,70 85,67 L 85,62 Q 83,59 85,56 L 85,9 Q 85,1 79,1 Z</StreamGeometry>
+      <StreamGeometry x:Key="Ps2CardFace">M 34,9 L 43,5 52,9 Z M 9,8 A 1.8,1.8 0 1 0 12.6,8 A 1.8,1.8 0 1 0 9,8 M 73,8 A 1.8,1.8 0 1 0 76.6,8 A 1.8,1.8 0 1 0 73,8 M 9,55 L 77,55 Q 80,55 80,59 L 80,89 Q 80,92 77,92 L 9,92 Q 6,92 6,89 L 6,59 Q 6,55 9,55 Z M 31,101 L 55,101</StreamGeometry>
+      <FontFamily x:Key="GameDisplayFont">Segoe UI</FontFamily>
+      <SolidColorBrush x:Key="SelectedSurface" Color="#40DB6A22" />
+      <SolidColorBrush x:Key="Ink" Color="#FFF3ECDF" />
+      <SolidColorBrush x:Key="Muted" Color="#FFB3A898" />
+      <SolidColorBrush x:Key="Good" Color="#FFF3ECDF" />
+      <SolidColorBrush x:Key="ControlLine" Color="#66F3ECDF" />
+      <SolidColorBrush x:Key="Danger" Color="#FFDB6A22" />
+      <SolidColorBrush x:Key="Accent" Color="#FFDB6A22" />
+      <SolidColorBrush x:Key="Surface" Color="#FF24211E" />
+      <SolidColorBrush x:Key="Line" Color="#1FF3ECDF" />
+      <DrawingBrush x:Key="AudioFilledSteps" TileMode="Tile" DestinationRect="0,0,12,18" SourceRect="0,0,12,18">
+        <DrawingBrush.Drawing>
+          <GeometryDrawing Brush="{StaticResource Accent}">
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry Rect="0,4,8,10" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+        </DrawingBrush.Drawing>
+      </DrawingBrush>
+      <DrawingBrush x:Key="AudioEmptySteps" TileMode="Tile" DestinationRect="0,0,12,18" SourceRect="0,0,12,18">
+        <DrawingBrush.Drawing>
+          <GeometryDrawing Brush="#26F3ECDF">
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry Rect="0,4,8,10" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+        </DrawingBrush.Drawing>
+      </DrawingBrush>
+      <ControlTheme x:Key="Rc1ScrollBar" TargetType="ScrollBar">
+        <Setter Property="Width" Value="9" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="ScrollBar">
+              <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" ViewportSize="{TemplateBinding ViewportSize}" IsDirectionReversed="True">
+                <Track.Thumb>
+                  <Thumb>
+                    <Thumb.Template>
+                      <ControlTemplate TargetType="Thumb">
+                        <Border Background="#66F3ECDF" CornerRadius="4" Margin="2" />
+                      </ControlTemplate>
+                    </Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+              </Track>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </ControlTheme>
+    </ResourceDictionary>
+  </Styles.Resources>
+  <Style Selector="ToolTip">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+  </Style>
+  <Style Selector="ContextMenu">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+  </Style>
+  <Style Selector="TextBlock">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style Selector="Button">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Background" Value="{StaticResource Surface}" />
+    <Setter Property="BorderBrush" Value="{StaticResource ControlLine}" />
+    <Setter Property="Padding" Value="15,9" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Frame" CornerRadius="4" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="Button:pointerover /template/ Border#Frame">
+    <Setter Property="Background" Value="#24F3ECDF" />
+  </Style>
+  <Style Selector="Button:pointerover /template/ Border#Frame">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Button:focus-visible /template/ Border#Frame">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Button.input-active /template/ Border#Frame">
+    <Setter Property="Background" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Button.input-active /template/ Border#Frame">
+    <Setter Property="BorderBrush" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="Button:disabled /template/ Border#Frame">
+    <Setter Property="Opacity" Value="0.4" />
+  </Style>
+  <Style Selector="TextBox">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Background" Value="#FF141210" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="CaretBrush" Value="{StaticResource Ink}" />
+    <Setter Property="BorderBrush" Value="{StaticResource ControlLine}" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="SelectionBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="ComboBoxItem">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBoxItem">
+          <Border x:Name="Item" Background="#FF24211E" Padding="{TemplateBinding Padding}">
+            <ContentPresenter Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="ComboBoxItem:pointerover /template/ Border#Item">
+    <Setter Property="Background" Value="{StaticResource SelectedSurface}" />
+  </Style>
+  <Style Selector="ComboBoxItem:selected /template/ Border#Item">
+    <Setter Property="Background" Value="{StaticResource SelectedSurface}" />
+  </Style>
+  <Style Selector="ComboBox">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Background" Value="{StaticResource Surface}" />
+    <Setter Property="MinWidth" Value="210" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBox">
+          <Grid>
+            <ToggleButton Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+              <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                  <Border x:Name="Box" Background="{StaticResource Surface}" BorderBrush="{StaticResource ControlLine}" BorderThickness="1" CornerRadius="4">
+                    <Path Data="M 0,0 L 4,4 L 8,0" Stroke="{StaticResource Muted}" StrokeThickness="1.4" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0" />
+                  </Border>
+                </ControlTemplate>
+              </ToggleButton.Template>
+            </ToggleButton>
+            <Border x:Name="ComboFocus" BorderBrush="{StaticResource Accent}" BorderThickness="2" CornerRadius="4" IsHitTestVisible="False" IsVisible="false" />
+            <ContentPresenter IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="12,10,35,10" VerticalAlignment="Center" />
+            <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" Focusable="False">
+              <Border Background="#FF24211E" BorderBrush="#66F3ECDF" BorderThickness="1" MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}">
+                <ItemsPresenter x:Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+              </Border>
+            </Popup>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="ComboBox:pointerover /template/ Border#Box">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="ComboBox:focus-within /template/ Border#ComboFocus">
+    <Setter Property="IsVisible" Value="true" />
+  </Style>
+  <Style Selector="ComboBox:disabled">
+    <Setter Property="Opacity" Value="0.4" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Grid Background="Transparent" Height="32">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="42" />
+              <ColumnDefinition Width="40" />
+            </Grid.ColumnDefinitions>
+            <Border x:Name="Track" Height="24" CornerRadius="12" Background="{StaticResource Surface}" BorderBrush="{StaticResource ControlLine}" BorderThickness="1" VerticalAlignment="Center">
+              <Ellipse x:Name="Thumb" Width="14" Height="14" Fill="{StaticResource Ink}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0" />
+            </Border>
+            <TextBlock x:Name="StateLabel" Grid.Column="1" Text="Off" Foreground="{StaticResource Muted}" Margin="9,0,0,0" VerticalAlignment="Center" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:checked /template/ Border#Track">
+    <Setter Property="Background" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:checked /template/ Border#Track">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:checked /template/ Ellipse#Thumb">
+    <Setter Property="HorizontalAlignment" Value="Right" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:checked /template/ TextBlock#StateLabel">
+    <Setter Property="Text" Value="On" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:checked /template/ TextBlock#StateLabel">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:pointerover /template/ Border#Track">
+    <Setter Property="BorderBrush" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:focus-visible /template/ Border#Track">
+    <Setter Property="BorderBrush" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:focus-visible /template/ Border#Track">
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="CheckBox.ToggleSwitch:disabled">
+    <Setter Property="Opacity" Value="0.4" />
+  </Style>
+  <Style Selector="CheckBox.CheatOption">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="64" />
+    <Setter Property="Margin" Value="0,1" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Border x:Name="Row" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="76" />
+              </Grid.ColumnDefinitions>
+              <ContentPresenter VerticalAlignment="Center" Margin="0,0,14,0" Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+              <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Border x:Name="Indicator" Width="4" Height="18" Background="{StaticResource ControlLine}" Margin="0,0,10,0" />
+                <TextBlock x:Name="ChoiceState" Text="OFF" Foreground="{StaticResource Muted}" FontSize="16" Width="36" />
+              </StackPanel>
+            </Grid>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox.CheatOption:checked /template/ Border#Row">
+    <Setter Property="Background" Value="#16DB6A22" />
+  </Style>
+  <Style Selector="CheckBox.CheatOption:checked /template/ Border#Indicator">
+    <Setter Property="Background" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="CheckBox.CheatOption:checked /template/ TextBlock#ChoiceState">
+    <Setter Property="Text" Value="ON" />
+  </Style>
+  <Style Selector="CheckBox.CheatOption:checked /template/ TextBlock#ChoiceState">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="CheckBox.CheatOption:pointerover /template/ Border#Row">
+    <Setter Property="Background" Value="#0EF3ECDF" />
+  </Style>
+  <Style Selector="CheckBox.CheatOption:focus-visible /template/ Border#Row">
+    <Setter Property="BorderBrush" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="CheckBox.CheatOption:disabled">
+    <Setter Property="Foreground" Value="{StaticResource Muted}" />
+  </Style>
+  <Style Selector="Button.ControllerBindingButton">
+    <Setter Property="Background" Value="#EB141210" />
+    <Setter Property="BorderBrush" Value="{StaticResource ControlLine}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="BindingFrame" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="Button.ControllerBindingButton:pointerover /template/ Border#BindingFrame">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Button.ControllerBindingButton:focus-visible /template/ Border#BindingFrame">
+    <Setter Property="BorderBrush" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="Button.ControllerBindingButton:focus-visible /template/ Border#BindingFrame">
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="Button.ControllerBindingButton.input-active /template/ Border#BindingFrame">
+    <Setter Property="Background" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Button.ControllerBindingButton.input-active /template/ Border#BindingFrame">
+    <Setter Property="BorderBrush" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="Button.ControllerBindingButton:disabled">
+    <Setter Property="Opacity" Value="0.5" />
+  </Style>
+  <Style Selector="CheckBox.ModOption" />
+  <Style Selector="Expander.ModOptionsDropdown">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Expander">
+          <StackPanel>
+            <ToggleButton x:Name="OptionsToggle" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" HorizontalContentAlignment="Stretch" Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{TemplateBinding AutomationProperties.Name}">
+              <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                  <Border x:Name="HeaderRow" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="8,8">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition />
+                      </Grid.ColumnDefinitions>
+                      <Path x:Name="Arrow" Data="M 0,0 L 5,5 L 0,10" Stroke="{StaticResource Muted}" StrokeThickness="1.5" VerticalAlignment="Center" />
+                      <ContentPresenter Grid.Column="1" Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    </Grid>
+                  </Border>
+                </ControlTemplate>
+              </ToggleButton.Template>
+              <ContentPresenter Content="{TemplateBinding Header}" />
+            </ToggleButton>
+            <Border x:Name="OptionsBody" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Margin="8,2,0,8" Padding="20,10,0,6" IsVisible="false">
+              <ContentPresenter Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+            </Border>
+          </StackPanel>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="Expander.ModOptionsDropdown:expanded /template/ Path#Arrow">
+    <Setter Property="Data" Value="M 0,2 L 5,7 L 10,2" />
+  </Style>
+  <Style Selector="Expander.ModOptionsDropdown:expanded /template/ Path#Arrow">
+    <Setter Property="Stroke" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Expander.ModOptionsDropdown:expanded /template/ Border#OptionsBody">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="Expander.ModOptionsDropdown:pointerover /template/ Border#HeaderRow">
+    <Setter Property="Background" Value="#0EF3ECDF" />
+  </Style>
+  <Style Selector="Expander.ModOptionsDropdown:focus-visible /template/ Border#HeaderRow">
+    <Setter Property="BorderBrush" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="CheckBox">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Margin" Value="0,8" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Grid Background="Transparent">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="22" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Border x:Name="Box" Width="18" Height="18" CornerRadius="3" Background="#FF141210" BorderBrush="{StaticResource ControlLine}" BorderThickness="1" VerticalAlignment="Center">
+              <Path x:Name="Check" Data="M 3,8 L 6,11 L 12,4" Stroke="{StaticResource Ink}" StrokeThickness="1.8" IsVisible="false" StrokeLineCap="Round" />
+            </Border>
+            <ContentPresenter Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Border#Box">
+    <Setter Property="Background" Value="#FF9A4008" />
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Border#Box">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Path#Check">
+    <Setter Property="IsVisible" Value="true" />
+  </Style>
+  <Style Selector="CheckBox:pointerover /template/ Border#Box">
+    <Setter Property="BorderBrush" Value="#FFDB6A22" />
+  </Style>
+  <Style Selector="CheckBox:focus-visible /template/ Border#Box">
+    <Setter Property="BorderBrush" Value="#FFDB6A22" />
+  </Style>
+  <Style Selector="CheckBox:disabled">
+    <Setter Property="Opacity" Value="0.4" />
+  </Style>
+  <Style Selector="Thumb.SliderThumb">
+    <Setter Property="Width" Value="20" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Thumb">
+          <Grid Background="Transparent">
+            <Ellipse Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" Fill="{StaticResource Ink}" Stroke="{StaticResource Accent}" StrokeThickness="2" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="Slider">
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Slider">
+          <Grid>
+            <Border x:Name="SliderFocus" BorderBrush="{StaticResource Accent}" BorderThickness="1" CornerRadius="4" IsVisible="false" />
+            <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" Height="24" VerticalAlignment="Center" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
+              <Track.DecreaseButton>
+                <RepeatButton>
+                  <RepeatButton.Template>
+                    <ControlTemplate TargetType="RepeatButton">
+                      <Border Background="Transparent" Height="24">
+                        <Border Height="4" Background="{StaticResource Accent}" CornerRadius="2" VerticalAlignment="Center" />
+                      </Border>
+                    </ControlTemplate>
+                  </RepeatButton.Template>
+                </RepeatButton>
+              </Track.DecreaseButton>
+              <Track.Thumb>
+                <Thumb Classes="SliderThumb" />
+              </Track.Thumb>
+              <Track.IncreaseButton>
+                <RepeatButton>
+                  <RepeatButton.Template>
+                    <ControlTemplate TargetType="RepeatButton">
+                      <Border Background="Transparent" Height="24">
+                        <Border Height="4" Background="{StaticResource Line}" CornerRadius="2" VerticalAlignment="Center" />
+                      </Border>
+                    </ControlTemplate>
+                  </RepeatButton.Template>
+                </RepeatButton>
+              </Track.IncreaseButton>
+            </Track>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="Slider:focus-within /template/ Border#SliderFocus">
+    <Setter Property="IsVisible" Value="true" />
+  </Style>
+  <Style Selector="ScrollBar, ScrollViewer /template/ ScrollBar">
+    <Setter Property="Theme" Value="{StaticResource Rc1ScrollBar}" />
+  </Style>
+  <Style Selector="ComboBox.GraphicsChoice">
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Width" Value="176" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Margin" Value="0,4" />
+  </Style>
+  <Style Selector="TextBlock.Hint">
+    <Setter Property="Foreground" Value="{StaticResource Muted}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="LineHeight" Value="26" />
+  </Style>
+  <Style Selector="TextBlock.LaunchLabel">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Foreground" Value="{StaticResource Muted}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="Margin" Value="0,0,0,6" />
+  </Style>
+  <Style Selector="TextBlock.LaunchValue">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="LineHeight" Value="26" />
+  </Style>
+  <Style Selector="TextBlock.Section">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Margin" Value="0,22,0,12" />
+  </Style>
+  <Style Selector="Button.PrimaryButton">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Background" Value="#FF9A4008" />
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style Selector="Slider.AudioSlider">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Slider">
+          <Grid Background="Transparent">
+            <Border x:Name="AudioSliderFocus" BorderBrush="{StaticResource Accent}" BorderThickness="1" IsVisible="false" />
+            <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" Height="28" VerticalAlignment="Center" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
+              <Track.DecreaseButton>
+                <RepeatButton>
+                  <RepeatButton.Template>
+                    <ControlTemplate TargetType="RepeatButton">
+                      <Grid Background="Transparent">
+                        <Border Height="18" Background="{StaticResource AudioFilledSteps}" VerticalAlignment="Center" />
+                      </Grid>
+                    </ControlTemplate>
+                  </RepeatButton.Template>
+                </RepeatButton>
+              </Track.DecreaseButton>
+              <Track.Thumb>
+                <Thumb Width="16" Height="28">
+                  <Thumb.Template>
+                    <ControlTemplate TargetType="Thumb">
+                      <Grid Background="Transparent">
+                        <Border x:Name="Fader" Width="4" Height="18" Background="{StaticResource Ink}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Grid>
+                    </ControlTemplate>
+                  </Thumb.Template>
+                </Thumb>
+              </Track.Thumb>
+              <Track.IncreaseButton>
+                <RepeatButton>
+                  <RepeatButton.Template>
+                    <ControlTemplate TargetType="RepeatButton">
+                      <Grid Background="Transparent">
+                        <Border Height="18" Background="{StaticResource AudioEmptySteps}" VerticalAlignment="Center" />
+                      </Grid>
+                    </ControlTemplate>
+                  </RepeatButton.Template>
+                </RepeatButton>
+              </Track.IncreaseButton>
+            </Track>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="Slider.AudioSlider:pointerover /template/ Border#Fader">
+    <Setter Property="Background" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Slider.AudioSlider:focus-within /template/ Border#AudioSliderFocus">
+    <Setter Property="IsVisible" Value="true" />
+  </Style>
+  <Style Selector="TextBlock.CaseNumber">
+    <Setter Property="Foreground" Value="#35F3ECDF" />
+  </Style>
+  <Style Selector="ListBoxItem:selected TextBlock.CaseNumber">
+    <Setter Property="Foreground" Value="#B8F3ECDF" />
+  </Style>
+  <Style Selector="TextBlock.CaseBlurb">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Foreground" Value="{StaticResource Muted}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="LineHeight" Value="26" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Margin" Value="8,6,48,0" />
+  </Style>
+  <Style Selector="ListBoxItem:selected TextBlock.CaseBlurb">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="ListBoxItem.GameChoice">
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ListBoxItem">
+          <ContentPresenter Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="ListBoxItem.GameChoice:disabled">
+    <Setter Property="Opacity" Value="0.5" />
+  </Style>
+  <Style Selector="ListBoxItem.DiscChoice">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ListBoxItem">
+          <ContentPresenter Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="ListBoxItem.DiscChoice:disabled">
+    <Setter Property="Opacity" Value="0.5" />
+  </Style>
+  <Style Selector="TextBlock.CoopStatus">
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style Selector="TextBox.CoopTextInput">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TextBox">
+          <Border x:Name="InputFrame" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+            <ScrollViewer x:Name="PART_ScrollViewer" Focusable="False" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}">
+              <TextPresenter x:Name="PART_TextPresenter" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}" SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}" TextWrapping="{TemplateBinding TextWrapping}" Margin="{TemplateBinding Padding}" />
+            </ScrollViewer>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="TextBox.CoopTextInput:focus-within /template/ Border#InputFrame">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="TextBox.CoopTextInput:disabled /template/ Border#InputFrame">
+    <Setter Property="Opacity" Value=".45" />
+  </Style>
+  <Style Selector="TextBox.GameFilePath">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="MaxHeight" Value="82" />
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+  </Style>
+  <Style Selector="Button.CoopGameChoice">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Frame" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <Border Background="{TemplateBinding BorderBrush}" />
+              <ContentPresenter Grid.Column="1" Margin="14,12" VerticalAlignment="Center" Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+            </Grid>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="Button.CoopGameChoice:pointerover /template/ Border#Frame">
+    <Setter Property="Background" Value="#0EF3ECDF" />
+  </Style>
+  <Style Selector="Button.CoopGameChoice:focus-visible /template/ Border#Frame">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Button.CoopGameChoice:disabled">
+    <Setter Property="Opacity" Value=".45" />
+  </Style>
+  <Style Selector="RadioButton.ModeChoice">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="82" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Frame" Background="{StaticResource Surface}" BorderBrush="Transparent" BorderThickness="1">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <Border x:Name="ModeMark" Background="Transparent" />
+              <ContentPresenter Grid.Column="1" VerticalAlignment="Center" Margin="16,12" Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+            </Grid>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="RadioButton.ModeChoice:pointerover /template/ Border#Frame">
+    <Setter Property="Background" Value="#0EF3ECDF" />
+  </Style>
+  <Style Selector="RadioButton.ModeChoice:checked /template/ Border#Frame">
+    <Setter Property="Background" Value="#16DB6A22" />
+  </Style>
+  <Style Selector="RadioButton.ModeChoice:checked /template/ Border#ModeMark">
+    <Setter Property="Background" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="RadioButton.ModeChoice:focus-visible /template/ Border#Frame">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="RadioButton.ModeChoice:disabled">
+    <Setter Property="Opacity" Value="0.45" />
+  </Style>
+  <Style Selector="Button.NavButton">
+    <Setter Property="FontFamily" Value="{DynamicResource GameDisplayFont}" />
+    <Setter Property="Padding" Value="12,11" />
+    <Setter Property="Foreground" Value="{StaticResource Muted}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="NavFrame" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+            <ContentPresenter Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style Selector="Button.NavButton:pointerover /template/ Border#NavFrame">
+    <Setter Property="Background" Value="#24F3ECDF" />
+  </Style>
+  <Style Selector="Button.NavButton:pointerover">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+  </Style>
+  <Style Selector="Button.NavButton:focus-visible /template/ Border#NavFrame">
+    <Setter Property="Background" Value="{StaticResource SelectedSurface}" />
+  </Style>
+  <Style Selector="Button.NavButton:focus-visible /template/ Border#NavFrame">
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+  </Style>
+  <Style Selector="Button.NavButton:focus-visible /template/ Border#NavFrame">
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Button.NavButton:disabled /template/ Border#NavFrame">
+    <Setter Property="Opacity" Value="0.4" />
+  </Style>
+  <Style Selector="ListBoxItem.GameChoice:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBoxItem.GameChoice:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+</Styles>

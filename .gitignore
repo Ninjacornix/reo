@@ -45,6 +45,11 @@ SCPH-*
 # Recompiled game code is generated locally
 /recomp_output/
 /recomp/config/output*/
+# Local development builds also link these directories from ignored build roots.
+/recomp/config/output
+/recomp/config/output_extra
+/recomp/config/output_overlay
+/recomp/config/output_ovl
 *.recomp.cpp
 
 # Build products and downloaded dependencies

@@ -55,7 +55,8 @@ internal sealed class GameScenePreviewRenderer {
     internal IReadOnlyList<PreviewMesh> EnvironmentMeshes => environment;
     internal IReadOnlyList<PreviewTexture> EnvironmentTextures => environmentTextures;
 
-    internal PreviewFrame Render(GamePreviewScene scene, PreviewRenderOptions requested, double seconds, int width, int height) {
+    internal PreviewFrame Render(GamePreviewScene scene, PreviewRenderOptions requested, double seconds, int width, int height,
+                                 float yaw = 0, float pitch = 0, float zoom = 1) {
         ArgumentNullException.ThrowIfNull(scene);
         ArgumentNullException.ThrowIfNull(requested);
         width = Math.Clamp(width, 32, 1600); height = Math.Clamp(height, 32, 1600);
@@ -105,6 +106,9 @@ internal sealed class GameScenePreviewRenderer {
         var center = new Vector3((scene.Minimum.X + scene.Maximum.X) / 2, scene.Minimum.Y,
             (scene.Minimum.Z + scene.Maximum.Z) / 2);
         var model = Matrix4x4.CreateTranslation(-center) * Matrix4x4.CreateScale(scale);
+        model *= Matrix4x4.CreateTranslation(0,-.9f,0) *
+                 Matrix4x4.CreateFromYawPitchRoll(yaw*MathF.PI/180,pitch*MathF.PI/180,0) *
+                 Matrix4x4.CreateScale(Math.Clamp(zoom,.4f,3f)) * Matrix4x4.CreateTranslation(0,.9f,0);
         characterLeft = renderWidth; characterTop = renderHeight; characterRight = characterBottom = -1;
         foreach (var mesh in scene.Meshes) Draw(mesh, scene.Textures, model, true);
         long afterGeometry = Stopwatch.GetTimestamp();
@@ -274,7 +278,7 @@ internal sealed class GameScenePreviewRenderer {
     }
     byte[] Present(uint[] source, int width, int height) {
         byte[] result = new byte[width * height * 4];
-        var destination = MemoryMarshal.Cast<byte, uint>(result);
+        var destination = MemoryMarshal.Cast<byte, uint>(result.AsSpan());
         var map = MapPresentation(width, height);
         if (colorKey != (options.Brightness, options.Gamma)) {
             for (int i = 0; i < 256; i++) colorLut[i] = (byte)Math.Clamp((int)Math.Round(Math.Pow(Math.Clamp(i / 255.0 * options.Brightness / 100, 0, 1), 1 / options.Gamma) * 255), 0, 255);

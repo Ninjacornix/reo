@@ -1,8 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-only
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
+using SocketLength = int;
+#else
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+using SOCKET = int;
+using SocketLength = socklen_t;
+constexpr int INVALID_SOCKET = -1;
+static void closesocket(SOCKET socket) { close(socket); }
+#endif
 
 #include "../../network/native/snap_iop_transport.h"
 #include "../../network/native/native_netcode.h"
@@ -23,6 +35,13 @@ namespace {
 // Reproduce the hardware bridge's lifetime: this owner predates the lazily
 // constructed native state and destroys its transport during process teardown.
 std::unique_ptr<SnapIopTransport> lateTransport;
+void setEnvironment(const char* key, const char* value) {
+#ifdef _WIN32
+    _putenv_s(key, value);
+#else
+    if (*value) setenv(key, value, 1); else unsetenv(key);
+#endif
+}
 unsigned checks = 0;
 void require(bool ok, const char* message) {
     ++checks;
@@ -57,7 +76,7 @@ sockaddr_in local(uint16_t port = 0) {
 }
 uint16_t boundPort(SOCKET socket) {
     auto address = local();
-    int length = sizeof(address);
+    SocketLength length = sizeof(address);
     require(getsockname(socket, reinterpret_cast<sockaddr*>(&address), &length) == 0,
             "bound host port");
     return address.sin_port;
@@ -102,12 +121,12 @@ std::vector<uint8_t> receive(SnapIopTransport& transport, int id, size_t wanted)
 
 int main(int argc, char** argv) {
     try {
-        const bool localOnly=argc>1 && std::strcmp(argv[1],"--local-only")==0;
-        _putenv_s("REO_COOP_HOST", "127.0.0.1");
+        const bool localOnly=argc>1 && (std::strcmp(argv[1],"--local-only")==0 || std::strcmp(argv[1],"--loopback-only")==0);
+        setEnvironment("REO_COOP_HOST", "127.0.0.1");
         lateTransport=std::make_unique<SnapIopTransport>();
         {
         SnapIopTransport transport;
-        require(result(transport.call(0x05, request(), 64)) == 0, "actual Winsock init");
+        require(result(transport.call(0x05, request(), 64)) == 0, "actual native socket init");
         require(result(transport.call(0x10, request(), 64)) == -1,
                 "unavailable TcpSendNb rejected");
         require(result(transport.call(0xffff, request(), 64)) == -1, "unknown RPC rejected");
@@ -182,20 +201,24 @@ int main(int argc, char** argv) {
         invalidResolver[0x1c] = '\"';
         require(result(transport.call(0x38, invalidResolver, 0x20)) == -1,
                 "invalid resolver hostname rejected");
-        _putenv_s("REO_COOP_HOST", "");
+        setEnvironment("REO_COOP_HOST", "");
         {
             SnapIopTransport unconfigured;
             require(result(unconfigured.call(0x38, resolver, 0x20)) == -1,
                     "resolver initialization fails without selected host resolver");
         }
-        _putenv_s("REO_COOP_HOST", "127.0.0.1");
+        setEnvironment("REO_COOP_HOST", "127.0.0.1");
 
         SOCKET udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         auto bindAddress = local();
         require(bind(udp, reinterpret_cast<sockaddr*>(&bindAddress), sizeof(bindAddress)) == 0,
                 "real UDP echo bind");
         const uint16_t udpPort = boundPort(udp);
+#ifdef _WIN32
         DWORD timeout = 2000;
+#else
+        timeval timeout{2, 0};
+#endif
         setsockopt(udp, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout),
                    sizeof(timeout));
         const int udpId = open(transport, 0x18, 0);
@@ -209,7 +232,7 @@ int main(int argc, char** argv) {
         require(result(transport.call(0x19, sendRequest, 64)) == 0, "UDP send success uses zero");
         std::array<char, 64> wire{};
         sockaddr_in source{};
-        int sourceLength = sizeof(source);
+        SocketLength sourceLength = sizeof(source);
         const int received = recvfrom(udp, wire.data(), int(wire.size()), 0,
                                       reinterpret_cast<sockaddr*>(&source), &sourceLength);
         require(received == 5 && std::memcmp(wire.data(), payload.data(), 5) == 0,
@@ -264,7 +287,7 @@ int main(int argc, char** argv) {
         require(result(closedStatus) == 0 && read16(closedStatus, 0x1e) == 9,
                 "closed handle status is safe without an OS socket");
         require(result(transport.call(0x12, socketRequest(tcpId, 8), 64)) == 0,
-                "closed handle receive returns EOF without Winsock access");
+                "closed handle receive returns EOF without host socket access");
         require(result(transport.call(0x4a, socketRequest(tcpId), 64)) == 0,
                 "TCP delete releases the closed tombstone");
         require(result(transport.call(0x4a, socketRequest(tcpId), 64)) == -1,

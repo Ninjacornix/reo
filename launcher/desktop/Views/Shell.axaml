@@ -1,0 +1,1227 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:local="using:Outbreak.Launcher.Desktop.Controls" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="Outbreak.Launcher.Desktop.MainWindow" Title="RE: Outbreak" Width="1320" Height="920" MinWidth="980" MinHeight="690" UseLayoutRounding="True" Background="#FF141210" FontFamily="{DynamicResource GameDisplayFont}" FontSize="16" WindowStartupLocation="CenterScreen">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="210" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <Grid x:Name="BackgroundScene" Grid.Column="1" IsHitTestVisible="False" ClipToBounds="True" IsVisible="false">
+      <Grid x:Name="ArtworkLayer" IsVisible="false">
+        <Grid x:Name="ImageBackdropLayer" Opacity="0.46">
+          <Image x:Name="Backdrop" Stretch="UniformToFill" HorizontalAlignment="Right" Width="610" />
+          <Image x:Name="OutgoingBackdrop" Stretch="UniformToFill" HorizontalAlignment="Right" Width="610" Opacity="0" />
+        </Grid>
+        <Grid x:Name="BackgroundVideoLayer">
+          <local:VideoSurface x:Name="BackgroundMovieA" Stretch="UniformToFill" IsHitTestVisible="False" Focusable="False" Opacity="0" />
+          <local:VideoSurface x:Name="BackgroundMovieB" Stretch="UniformToFill" IsHitTestVisible="False" Focusable="False" Opacity="0" />
+        </Grid>
+      </Grid>
+      <Grid IsHitTestVisible="False">
+        <Rectangle x:Name="ImageBackgroundShade">
+          <Rectangle.Fill>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+              <GradientStop Color="#FF141210" Offset="0" />
+              <GradientStop Color="#F4141210" Offset="0.30" />
+              <GradientStop Color="#60141210" Offset="1" />
+            </LinearGradientBrush>
+          </Rectangle.Fill>
+        </Rectangle>
+        <Rectangle x:Name="VideoBackgroundShade" IsVisible="false">
+          <Rectangle.Fill>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+              <GradientStop Color="#FF141210" Offset="0" />
+              <GradientStop Color="#DA141210" Offset="0.30" />
+              <GradientStop Color="#30141210" Offset="1" />
+            </LinearGradientBrush>
+          </Rectangle.Fill>
+        </Rectangle>
+        <Rectangle x:Name="VideoVignette" IsVisible="false">
+          <Rectangle.Fill>
+            <RadialGradientBrush Center="0.66,0.42" GradientOrigin="0.66,0.42" RadiusX="0.62" RadiusY="0.78">
+              <GradientStop Color="#00141210" Offset="0" />
+              <GradientStop Color="#00141210" Offset="0.45" />
+              <GradientStop Color="#6E141210" Offset="0.78" />
+              <GradientStop Color="#D7141210" Offset="1" />
+            </RadialGradientBrush>
+          </Rectangle.Fill>
+        </Rectangle>
+        <Rectangle>
+          <Rectangle.Fill>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+              <GradientStop Color="#80141210" Offset="0" />
+              <GradientStop Color="#00141210" Offset="0.4" />
+              <GradientStop Color="#FF141210" Offset="1" />
+            </LinearGradientBrush>
+          </Rectangle.Fill>
+        </Rectangle>
+      </Grid>
+    </Grid>
+    <Border Background="#FF141210" BorderBrush="#1FF3ECDF" BorderThickness="0,0,1,0">
+      <Grid Margin="16,28,16,24">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ScrollViewer x:Name="NavigationScroll" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,12">
+          <StackPanel>
+            <StackPanel Margin="12,0,0,36">
+              <TextBlock Text="Outbreak" FontSize="20" FontFamily="{DynamicResource GameDisplayFont}" />
+              <TextBlock x:Name="VersionLabel" Margin="0,2,0,0" Classes="Hint" />
+            </StackPanel>
+            <Button x:Name="NavPlay" Tag="Play" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Play" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavGraphics" Tag="Graphics" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Graphics" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavAudio" Tag="Audio" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Audio" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavController" Tag="Controller" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Controls" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavSaves" Tag="Saves" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Save games" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavCoop" Tag="Coop" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Co-op" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavMods" Tag="Mods" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Mods" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavCheats" Tag="Cheats" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Cheats" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavSetup" Tag="Setup" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Game files" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavLauncher" Tag="Launcher" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Launcher" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavLogs" Tag="Logs" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Log" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+            <Button x:Name="NavDeveloper" Tag="Developer" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
+              <TextBlock Text="Developer" Foreground="{Binding $parent[Button].Foreground}" />
+            </Button>
+          </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+          <TextBlock x:Name="UpdateState" FontSize="16" TextWrapping="Wrap" Margin="10,0,0,8" />
+          <ProgressBar x:Name="UpdateProgress" Height="4" Minimum="0" Maximum="100" Margin="10,0,0,8" Foreground="{StaticResource Accent}" IsVisible="false" />
+          <Button x:Name="UpdateCancel" Content="Cancel download" FontSize="16" Margin="0,0,0,8" IsVisible="false" />
+          <Button x:Name="UpdateButton" Content="Check for updates" FontSize="14" HorizontalContentAlignment="Left" ToolTip.Tip="Check GitHub Releases and install a newer Windows package" />
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Grid Grid.Column="1" Margin="34,29,34,0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <Grid x:Name="PageContent" Grid.Row="1" Margin="0,0,0,18">
+        <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <Grid>
+            <Grid x:Name="PagePlay">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <Grid x:Name="NextStepSlot">
+                <Border x:Name="NextStep" Background="#EE24211E" BorderBrush="{StaticResource Accent}" BorderThickness="1" CornerRadius="7" Padding="20,16" Margin="0,0,0,24">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+                      <TextBlock x:Name="NextStepTitle" FontSize="16" FontWeight="Normal" />
+                      <TextBlock x:Name="NextStepDetail" Margin="0,4,0,0" Classes="Hint" />
+                    </StackPanel>
+                    <Button x:Name="NextStepButton" Grid.Column="1" VerticalAlignment="Center" Padding="22,10" Classes="PrimaryButton" />
+                  </Grid>
+                </Border>
+                <Border x:Name="NextStepMeasure" IsHitTestVisible="False" Focusable="False" BorderThickness="1" Padding="20,16" Margin="0,0,0,24" Opacity="0">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+                      <TextBlock x:Name="NextStepMeasureTitle" FontSize="16" FontWeight="Normal" />
+                      <TextBlock x:Name="NextStepMeasureDetail" Margin="0,4,0,0" Classes="Hint" />
+                    </StackPanel>
+                    <Button x:Name="NextStepMeasureButton" Grid.Column="1" VerticalAlignment="Center" Padding="22,10" Focusable="False" Classes="PrimaryButton" />
+                  </Grid>
+                </Border>
+              </Grid>
+              <ListBox x:Name="GameCasePicker" Grid.Row="1" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,0,22" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Choose game" SelectedValueBinding="{Binding Tag}">
+                <ListBox.Template>
+                  <ControlTemplate TargetType="ListBox">
+                    <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" />
+                  </ControlTemplate>
+                </ListBox.Template>
+                <ListBox.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" />
+                  </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBoxItem Background="Transparent" Theme="{x:Null}" Tag="file1" AutomationProperties.Name="Outbreak File 1" Margin="0,0,9,0" Classes="GameChoice">
+                  <Border x:Name="GameCard1" BorderBrush="Transparent" BorderThickness="0">
+                    <StackPanel>
+                      <Grid Height="340">
+                        <TextBlock Text="#1" FontSize="142" Margin="4,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{DynamicResource GameDisplayFont}" FontWeight="Normal" IsHitTestVisible="False" Classes="CaseNumber" />
+                        <Grid Margin="76,0,26,30" Opacity="{Binding SpotlightLevel, ElementName=GameCase1}" IsHitTestVisible="False">
+                          <Path x:Name="CaseBeam1" Data="M 0.32,0 L 0.68,0 L 0.9,1 L 0.1,1 Z" Stretch="Fill">
+                            <Path.Fill>
+                              <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#00F3ECDF" Offset="0" />
+                                <GradientStop Color="#16F3ECDF" Offset="0.25" />
+                                <GradientStop Color="#0AF3ECDF" Offset="0.65" />
+                                <GradientStop Color="#00F3ECDF" Offset="1" />
+                              </LinearGradientBrush>
+                            </Path.Fill>
+                          </Path>
+                        </Grid>
+                        <local:GameCaseView x:Name="GameCase1" Edition="1" Margin="50,34,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                      </Grid>
+                      <TextBlock Text="As a deadly viral outbreak engulfs Raccoon City, its streets descend into chaos, overrun by the undead. Follow eight ordinary survivors, each with their own background and struggles, as they fight to escape the collapsing city. With danger lurking around every corner and time running out, they must overcome unimaginable horrors to survive the nightmare before Raccoon City is lost forever." Classes="CaseBlurb" />
+                    </StackPanel>
+                  </Border>
+                </ListBoxItem>
+                <ListBoxItem Background="Transparent" Theme="{x:Null}" Tag="file2" AutomationProperties.Name="Outbreak File 2" Margin="9,0,0,0" Classes="GameChoice">
+                  <Border x:Name="GameCard2" BorderBrush="Transparent" BorderThickness="0">
+                    <StackPanel>
+                      <Grid Height="340">
+                        <TextBlock Text="#2" FontSize="142" Margin="4,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{DynamicResource GameDisplayFont}" FontWeight="Normal" IsHitTestVisible="False" Classes="CaseNumber" />
+                        <Grid Margin="76,0,26,30" Opacity="{Binding SpotlightLevel, ElementName=GameCase2}" IsHitTestVisible="False">
+                          <Path x:Name="CaseBeam2" Data="M 0.32,0 L 0.68,0 L 0.9,1 L 0.1,1 Z" Stretch="Fill">
+                            <Path.Fill>
+                              <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#00F3ECDF" Offset="0" />
+                                <GradientStop Color="#16F3ECDF" Offset="0.25" />
+                                <GradientStop Color="#0AF3ECDF" Offset="0.65" />
+                                <GradientStop Color="#00F3ECDF" Offset="1" />
+                              </LinearGradientBrush>
+                            </Path.Fill>
+                          </Path>
+                        </Grid>
+                        <local:GameCaseView x:Name="GameCase2" Edition="2" Margin="50,34,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                      </Grid>
+                      <TextBlock Text="As the nightmare in Raccoon City continues, eight ordinary survivors face new horrors in their desperate struggle for survival. With the deadly T-virus spreading uncontrollably and the city on the brink of destruction, they must navigate an infested zoo, abandoned subway tunnels, a forgotten hospital, and other terrifying locations. Every moment brings them closer to either escaping the nightmare or becoming another victim of the outbreak." Classes="CaseBlurb" />
+                    </StackPanel>
+                  </Border>
+                </ListBoxItem>
+              </ListBox>
+              <UniformGrid Grid.Row="2" Rows="1" VerticalAlignment="Center">
+                <StackPanel Margin="0,0,24,0">
+                  <TextBlock Text="PLAY MODE" Classes="LaunchLabel" />
+                  <TextBlock x:Name="PlayNetworkSummary" Classes="LaunchValue" />
+                </StackPanel>
+                <StackPanel Margin="0,0,24,0">
+                  <TextBlock Text="DISPLAY" Classes="LaunchLabel" />
+                  <TextBlock x:Name="PlayDisplaySummary" Classes="LaunchValue" />
+                </StackPanel>
+                <StackPanel Margin="0,0,24,0">
+                  <TextBlock Text="CONTROLLER" Classes="LaunchLabel" />
+                  <TextBlock x:Name="PlayInputSummary" Classes="LaunchValue" />
+                </StackPanel>
+                <StackPanel Margin="0,0,24,0">
+                  <TextBlock Text="MODS" Classes="LaunchLabel" />
+                  <TextBlock x:Name="PlayModsSummary" Classes="LaunchValue" />
+                </StackPanel>
+                <StackPanel>
+                  <TextBlock Text="CHEATS" Classes="LaunchLabel" />
+                  <TextBlock x:Name="PlayCheatsSummary" Classes="LaunchValue" />
+                </StackPanel>
+              </UniformGrid>
+              <TextBlock x:Name="SessionSummary" Grid.Row="2" IsVisible="false" />
+            </Grid>
+            <Grid x:Name="PageGraphics" MaxWidth="1120" HorizontalAlignment="Stretch" IsVisible="false">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <Grid Margin="0,3,0,18">
+                <TextBlock Text="Picture configuration" FontSize="24" />
+              </Grid>
+              <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="1.2*" MinWidth="300" />
+                  <ColumnDefinition Width="24" />
+                  <ColumnDefinition Width="0.8*" MinWidth="280" MaxWidth="380" />
+                </Grid.ColumnDefinitions>
+                <ScrollViewer x:Name="GraphicsSettingsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,12,0">
+                  <StackPanel x:Name="GraphicsSettingsList">
+                    <TextBlock Text="DISPLAY" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,10" />
+                    <Grid MinHeight="42" Margin="0,0,0,6">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="Borderless fullscreen" FontSize="14" VerticalAlignment="Center" />
+                      <CheckBox x:Name="Fullscreen" Grid.Column="1" AutomationProperties.Name="Borderless fullscreen" Classes="ToggleSwitch" ToolTip.Tip="Ctrl+Enter toggles fullscreen in game." />
+                    </Grid>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="WindowSize" DockPanel.Dock="Right" AutomationProperties.Name="Window resolution" Classes="GraphicsChoice" ToolTip.Tip="Windowed output size. Borderless fullscreen uses the desktop resolution.">
+                        <ComboBox.ItemTemplate>
+                          <DataTemplate>
+                            <TextBlock>
+                              <Run Text="{Binding Width}" />
+                              <Run Text=" × " />
+                              <Run Text="{Binding Height}" />
+                            </TextBlock>
+                          </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                      </ComboBox>
+                      <TextBlock Text="Window resolution" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="AspectRatio" DockPanel.Dock="Right" AutomationProperties.Name="Aspect ratio" Classes="GraphicsChoice">
+                        <ComboBoxItem Content="4:3 original" />
+                        <ComboBoxItem Content="16:9 widescreen" />
+                        <ComboBoxItem Content="16:9 stretched" />
+                        <ComboBoxItem Content="21:9 ultrawide" />
+                        <ComboBoxItem Content="21:9 stretched" />
+                        <ComboBoxItem Content="32:9 ultrawide" />
+                        <ComboBoxItem Content="32:9 stretched" />
+                      </ComboBox>
+                      <TextBlock Text="Aspect ratio" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="ScreenFit" DockPanel.Dock="Right" AutomationProperties.Name="Screen fit" Classes="GraphicsChoice">
+                        <ComboBoxItem Content="Fit" />
+                        <ComboBoxItem Content="Native size" />
+                        <ComboBoxItem Content="Stretch to window" />
+                        <ComboBoxItem Content="Fill" />
+                      </ComboBox>
+                      <TextBlock Text="Screen fit" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,16" />
+                    <TextBlock Text="RENDERING" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,8" />
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="InternalResolution" DockPanel.Dock="Right" AutomationProperties.Name="Internal resolution" Classes="GraphicsChoice" ToolTip.Tip="Renders more scene detail before scaling. Higher settings increase GPU load.">
+                        <ComboBoxItem Content="Native" />
+                        <ComboBoxItem Content="2×" />
+                        <ComboBoxItem Content="4×" />
+                      </ComboBox>
+                      <TextBlock Text="Internal resolution" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="TextureFilter" DockPanel.Dock="Right" AutomationProperties.Name="Texture filtering" Classes="GraphicsChoice">
+                        <ComboBoxItem Content="Original" />
+                        <ComboBoxItem Content="Bilinear" />
+                      </ComboBox>
+                      <TextBlock Text="Texture filtering" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="AnisotropicFilter" DockPanel.Dock="Right" AutomationProperties.Name="Anisotropic filtering" Classes="GraphicsChoice" ToolTip.Tip="Sharpens textures viewed at an angle. Includes bilinear filtering.">
+                        <ComboBoxItem Content="Off" />
+                        <ComboBoxItem Content="2×" />
+                        <ComboBoxItem Content="4×" />
+                        <ComboBoxItem Content="8×" />
+                        <ComboBoxItem Content="16×" />
+                      </ComboBox>
+                      <TextBlock Text="Anisotropic filtering" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="AntiAlias" DockPanel.Dock="Right" AutomationProperties.Name="Anti-aliasing" Classes="GraphicsChoice">
+                        <ComboBoxItem Content="Off" />
+                        <ComboBoxItem Content="FXAA" />
+                        <ComboBoxItem Content="SMAA" />
+                      </ComboBox>
+                      <TextBlock Text="Anti-aliasing" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="Filter" DockPanel.Dock="Right" AutomationProperties.Name="Image scaling" Classes="GraphicsChoice">
+                        <ComboBoxItem Content="Bilinear" />
+                        <ComboBoxItem Content="Nearest" />
+                      </ComboBox>
+                      <TextBlock Text="Image scaling" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,16" />
+                    <Grid Margin="0,0,0,12">
+                      <TextBlock Text="PICTURE" Foreground="{StaticResource Muted}" FontSize="14" VerticalAlignment="Center" />
+                      <Button Content="Reset" HorizontalAlignment="Right" Padding="12,5" FontSize="14" AutomationProperties.Name="Reset brightness and gamma" x:Name="Action_ResetColor_25" />
+                    </Grid>
+                    <Grid>
+                      <TextBlock Text="Brightness" FontSize="14" />
+                      <TextBlock x:Name="BrightnessValue" Text="100%" HorizontalAlignment="Right" FontSize="14" />
+                    </Grid>
+                    <Slider x:Name="Brightness" Minimum="50" Maximum="150" Value="100" SmallChange="1" LargeChange="10" Margin="0,4,0,12" AutomationProperties.Name="Brightness" Classes="AudioSlider" />
+                    <Grid>
+                      <TextBlock Text="Gamma" FontSize="14" />
+                      <TextBlock x:Name="GammaValue" Text="1.00" HorizontalAlignment="Right" FontSize="14" />
+                    </Grid>
+                    <Slider x:Name="Gamma" Minimum="0.5" Maximum="2" Value="1" SmallChange="0.01" LargeChange="0.1" Margin="0,4,0,14" AutomationProperties.Name="Gamma" Classes="AudioSlider" />
+                    <Expander Header="More options" Margin="0,4,0,6" Classes="ModOptionsDropdown">
+                      <StackPanel>
+                        <CheckBox x:Name="PerformanceOverlay" Content="FPS counter" FontSize="14" ToolTip.Tip="Shows the in-game FPS counter. Applies on the next launch." />
+                        <CheckBox x:Name="AsyncVif" Content="Parallel geometry worker" FontSize="14" />
+                        <CheckBox x:Name="GpuMovies" Content="Decode movies on the graphics card" FontSize="14" IsEnabled="False" />
+                      </StackPanel>
+                    </Expander>
+                  </StackPanel>
+                </ScrollViewer>
+                <Grid x:Name="GraphicsPreviewPane" Grid.Column="2">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <Grid Margin="0,0,0,10">
+                    <TextBlock x:Name="GraphicsPreviewTitle" Text="PREVIEW" Foreground="{StaticResource Muted}" FontSize="14" />
+                    <TextBlock x:Name="GraphicsPreviewState" Text="Live preview" HorizontalAlignment="Right" FontSize="14" Foreground="{StaticResource Muted}" />
+                  </Grid>
+                  <Border x:Name="GraphicsPreviewStage" Grid.Row="1" BorderBrush="{StaticResource Line}" BorderThickness="1" Background="#FF141210" ClipToBounds="True">
+                    <Grid>
+                      <Image x:Name="RoomPreview" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" AutomationProperties.Name="Kevin graphics preview" IsVisible="false" />
+                      <local:GraphicsPreviewHost x:Name="GraphicsGpuView" AutomationProperties.Name="Rotate and zoom Kevin preview" AutomationProperties.HelpText="Drag to rotate. Scroll to zoom. Release to keep the angle. Home restores the default view." IsVisible="false" />
+                      <TextBlock x:Name="PreviewEmpty" Text="Loading Kevin…" FontSize="14" Foreground="{StaticResource Muted}" TextWrapping="Wrap" TextAlignment="Center" Margin="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                  </Border>
+                  <StackPanel Grid.Row="2" Margin="0,12,0,0">
+                    <TextBlock x:Name="GraphicsPreviewCaption" Text="Drag to rotate. Scroll to zoom." FontSize="14" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
+                  </StackPanel>
+                </Grid>
+              </Grid>
+            </Grid>
+            <StackPanel x:Name="PageAudio" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <Grid Margin="0,3,0,14">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Sound configuration" FontSize="24" />
+                <TextBlock x:Name="AudioEditionLabel" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="14" VerticalAlignment="Center" />
+              </Grid>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="170" />
+                  <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Output device" FontSize="18" VerticalAlignment="Center" />
+                <ComboBox x:Name="AudioOutputPicker" Grid.Column="1" AutomationProperties.Name="Audio output device" DisplayMemberBinding="{Binding Name}" SelectedValueBinding="{Binding Id}" />
+              </Grid>
+              <TextBlock x:Name="AudioOutputHint" FontSize="14" Margin="170,6,0,0" IsVisible="false" Classes="Hint" />
+              <Grid x:Name="AudioSubtitlesRow" Height="48">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="170" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="AudioSubtitlesLabel" Text="Subtitles" FontSize="18" VerticalAlignment="Center" />
+                <CheckBox x:Name="AudioSubtitles" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Subtitles" AutomationProperties.LabeledBy="{Binding ElementName=AudioSubtitlesLabel}" AutomationProperties.HelpText="Show captions for spoken dialogue." Classes="ToggleSwitch" />
+              </Grid>
+              <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,10" />
+              <TextBlock x:Name="AudioChannelNote" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,8" />
+              <Grid Height="56" x:Name="AudioMasterRow">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="170" />
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="64" />
+                  <ColumnDefinition Width="0" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Master volume" FontSize="18" VerticalAlignment="Center" />
+                <Slider x:Name="MasterVolume" Grid.Column="1" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" AutomationProperties.Name="Master volume" VerticalAlignment="Center" Classes="AudioSlider" />
+                <TextBlock x:Name="MasterVolumeValue" Grid.Column="2" Text="100%" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center" />
+              </Grid>
+              <StackPanel x:Name="AudioChannels">
+                <Grid Height="56">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="0" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Music" FontSize="18" VerticalAlignment="Center" />
+                  <Slider x:Name="MusicVolume" Grid.Column="1" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" AutomationProperties.Name="Music" VerticalAlignment="Center" Classes="AudioSlider" />
+                  <TextBlock x:Name="MusicVolumeValue" Grid.Column="2" Text="100%" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+                <Grid Height="56">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="0" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Sound effects" FontSize="18" VerticalAlignment="Center" />
+                  <Slider x:Name="SfxVolume" Grid.Column="1" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" AutomationProperties.Name="Sound effects" VerticalAlignment="Center" Classes="AudioSlider" />
+                  <TextBlock x:Name="SfxVolumeValue" Grid.Column="2" Text="100%" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+                <Grid Height="56">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="0" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Voice" FontSize="18" VerticalAlignment="Center" />
+                  <Slider x:Name="VoiceVolume" Grid.Column="1" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" AutomationProperties.Name="Voice" VerticalAlignment="Center" Classes="AudioSlider" />
+                  <TextBlock x:Name="VoiceVolumeValue" Grid.Column="2" Text="100%" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+                <Grid Height="56">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="0" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Interface" FontSize="18" VerticalAlignment="Center" />
+                  <Slider x:Name="UiVolume" Grid.Column="1" Minimum="0" Maximum="100" Value="100" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" LargeChange="10" AutomationProperties.Name="Interface" VerticalAlignment="Center" Classes="AudioSlider" />
+                  <TextBlock x:Name="UiVolumeValue" Grid.Column="2" Text="100%" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+              </StackPanel>
+              <Border x:Name="AudioFooterDivider" Height="1" Background="{StaticResource Line}" Margin="0,8,0,14" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="ResetAudioButton" Grid.Column="1" Content="Reset volumes" />
+              </Grid>
+            </StackPanel>
+            <StackPanel x:Name="PageController" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <Grid Margin="0,3,0,14">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Control configuration" FontSize="24" />
+              </Grid>
+              <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="140" />
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="20" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Input device" FontSize="18" VerticalAlignment="Center" />
+                <ComboBox x:Name="InputDevicePicker" Grid.Column="1" AutomationProperties.Name="Input device" DisplayMemberBinding="{Binding Name}" />
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock x:Name="RumbleLabel" Text="Rumble" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0" />
+                  <CheckBox x:Name="RumbleSwitch" VerticalAlignment="Center" AutomationProperties.Name="Controller rumble" AutomationProperties.LabeledBy="{Binding ElementName=RumbleLabel}" Classes="ToggleSwitch" ToolTip.Tip="Controller vibration." />
+                </StackPanel>
+              </Grid>
+              <TextBlock x:Name="ControllerDetail" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,10" Classes="Hint" />
+              <WrapPanel Margin="0,2,0,12">
+                <Button x:Name="BindingsTab" Content="Button map" Margin="0,0,8,0" />
+                <Button x:Name="LayoutTab" Content="Stick settings" />
+              </WrapPanel>
+              <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,12" />
+              <StackPanel x:Name="InputBindingsPanel">
+                <TextBlock Text="Select a binding to change it. Right-click a binding to clear it." FontSize="14" TextWrapping="Wrap" Margin="0,0,0,12" Classes="Hint" />
+                <TextBlock x:Name="ControllerArtworkHint" Text="Import the game to display its original controller artwork. Bindings remain available below." FontSize="14" TextWrapping="Wrap" Margin="0,0,0,12" Classes="Hint" />
+                <Grid x:Name="CapturePanel" Margin="0,0,0,12" IsVisible="false">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="CaptureHint" FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0" Classes="Hint" />
+                  <Button x:Name="ClearCaptureButton" Grid.Column="1" Content="Clear binding" Margin="0,0,8,0" />
+                  <Button x:Name="CancelCaptureButton" Grid.Column="2" Content="Cancel" />
+                </Grid>
+                <Canvas x:Name="ControllerDiagram" Height="470" ClipToBounds="False" IsVisible="false" />
+                <UniformGrid x:Name="BindingRows" Columns="2" />
+                <Grid Margin="0,14,0,8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="PS2 button mapping" FontSize="14" Foreground="{StaticResource Muted}" VerticalAlignment="Center" />
+                  <Button x:Name="ResetBindingsButton" Grid.Column="1" Content="Reset bindings" VerticalAlignment="Center" />
+                </Grid>
+              </StackPanel>
+              <StackPanel x:Name="InputLayoutPanel" IsVisible="false">
+                <StackPanel x:Name="StickSettings">
+                  <Grid Margin="0,5,0,18">
+                    <TextBlock x:Name="DeadZoneLabel" Text="Dead zone: 12%" VerticalAlignment="Center" />
+                    <Slider x:Name="DeadZone" Minimum="0" Maximum="30" Value="12" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Stick dead zone" Classes="AudioSlider" />
+                  </Grid>
+                  <CheckBox x:Name="SwapSticks" Content="Swap left and right sticks" />
+                  <CheckBox x:Name="InvertRightY" Content="Invert right stick Y" />
+                  <Grid Margin="0,18,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <local:StickPlot x:Name="LeftPlot" Height="140" />
+                    <local:StickPlot x:Name="RightPlot" Grid.Column="1" Height="140" />
+                  </Grid>
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="PageSaves" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <TextBlock Text="Memory cards" FontSize="24" Margin="0,3,0,30" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width=".95*" MinWidth="240" />
+                  <ColumnDefinition Width="28" />
+                  <ColumnDefinition Width="1.05*" MinWidth="295" />
+                </Grid.ColumnDefinitions>
+                <StackPanel x:Name="CardControls">
+                  <TextBlock Text="YOUR CARDS" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,12" />
+                  <ListBox x:Name="CardSelection" Background="Transparent" BorderThickness="0" Padding="0" MaxHeight="312" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Memory card profiles">
+                    <ListBox.Styles>
+                      <Style Selector="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Cursor" Value="Hand" />
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                        <Setter Property="Template">
+                          <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                              <Border x:Name="CardRow" Background="Transparent" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" MinHeight="68" Margin="0,0,0,5">
+                                <Grid>
+                                  <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4" />
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                  </Grid.ColumnDefinitions>
+                                  <Border x:Name="CardMark" Background="Transparent" />
+                                  <Viewbox Grid.Column="1" Width="28" Height="36" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <Grid Width="86" Height="110">
+                                      <Path Data="{StaticResource Ps2CardShell}" Stroke="{StaticResource Muted}" StrokeThickness="2.5" />
+                                      <Path Data="{StaticResource Ps2CardFace}" Stroke="{StaticResource Muted}" StrokeThickness="2" />
+                                    </Grid>
+                                  </Viewbox>
+                                  <TextBlock Grid.Column="2" Text="{Binding Name}" FontSize="17" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,10,12,10" />
+                                  <TextBlock x:Name="CardInUse" Grid.Column="3" Text="IN USE" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center" Margin="0,0,12,0" IsVisible="false" />
+                                </Grid>
+                              </Border>
+                            </ControlTemplate>
+                          </Setter.Value>
+                        </Setter>
+                      </Style>
+                    </ListBox.Styles>
+                  </ListBox>
+                  <TextBlock Text="ADD CARD" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,26,0,12" />
+                  <TextBox x:Name="NewCardName" MaxLength="64" AutomationProperties.Name="New memory card name" AutomationProperties.HelpText="Name a separate save profile. Press Enter to create it." />
+                  <TextBlock x:Name="CardCreateError" Foreground="{StaticResource Danger}" FontSize="14" Margin="0,8,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" IsVisible="false" />
+                  <WrapPanel Margin="0,12,0,0">
+                    <Button x:Name="CreateCardButton" Content="Create card" Background="#FF9A4008" BorderBrush="{StaticResource Accent}" Margin="0,0,8,8" />
+                    <Button Content="Use existing folder" Margin="0,0,0,8" x:Name="Action_BrowseCard_53" />
+                  </WrapPanel>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                  <TextBlock Text="SELECTED CARD" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                  <Viewbox Width="100" Height="128" HorizontalAlignment="Left" Margin="0,0,0,20" IsHitTestVisible="False">
+                    <Grid Width="86" Height="110">
+                      <Path Data="{StaticResource Ps2CardShell}" Fill="{StaticResource Surface}" Stroke="{StaticResource ControlLine}" StrokeThickness="1" />
+                      <Path Data="{StaticResource Ps2CardFace}" Stroke="{StaticResource Muted}" StrokeThickness="1" />
+                      <TextBlock Text="PS2" FontSize="9" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" Margin="0,15,0,0" />
+                      <TextBlock Text="8 MB" FontSize="15" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" Margin="0,28,0,0" />
+                      <TextBlock Text="MEMORY CARD" FontSize="6" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" Margin="0,47,0,0" />
+                    </Grid>
+                  </Viewbox>
+                  <TextBlock x:Name="SelectedCardName" FontSize="23" TextWrapping="Wrap" />
+                  <TextBlock Text="PS2 MEMORY CARD" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,8,0,18" />
+                  <TextBlock x:Name="SaveCount" FontSize="16" Margin="0,0,0,20" Classes="Hint" />
+                  <WrapPanel>
+                    <Button Content="Open folder" Margin="0,0,8,8" x:Name="Action_OpenSaves_54" />
+                    <Button x:Name="BackupButton" Content="Back up card" Margin="0,0,0,8" />
+                  </WrapPanel>
+                  <Button x:Name="DeleteCardButton" Content="Delete card" HorizontalAlignment="Left" Margin="0,8,0,0" AutomationProperties.HelpText="Remove a custom card. Launcher-created card data goes to the Recycle Bin; existing external folders are kept." />
+                  <StackPanel x:Name="DeleteCardPanel" Margin="0,16,0,0" IsVisible="false">
+                    <TextBlock x:Name="DeleteCardQuestion" FontSize="15" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                    <WrapPanel Margin="0,12,0,0">
+                      <Button x:Name="ConfirmDeleteCardButton" Content="Move to Recycle Bin" Background="#FF9A4008" BorderBrush="{StaticResource Accent}" Margin="0,0,8,8" />
+                      <Button x:Name="CancelDeleteCardButton" Content="Cancel" Margin="0,0,0,8" />
+                    </WrapPanel>
+                  </StackPanel>
+                  <TextBlock Text="CARD LOCATION" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,24,0,10" />
+                  <TextBlock x:Name="CardPath" FontSize="14" TextWrapping="Wrap" Classes="Hint" />
+                  <TextBlock x:Name="CardBusyHint" Text="Close the game to switch cards." Foreground="{StaticResource Muted}" FontSize="14" TextWrapping="Wrap" Margin="0,18,0,0" IsVisible="false" />
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+            <StackPanel x:Name="PageCoop" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <TextBlock Text="Co-op" FontSize="24" Margin="0,3,0,28" />
+              <TextBlock x:Name="CoopUnavailable" Text="Online play is unavailable for this game." Margin="0,0,0,16" Classes="Hint" IsVisible="false" />
+              <StackPanel x:Name="CoopControls">
+                <TextBlock Text="CONNECTION MODE" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,12" />
+                <UniformGrid x:Name="CoopModeBar" Columns="3" Margin="0,0,0,30">
+                  <RadioButton x:Name="ModeOffline" GroupName="CoopMode" Tag="offline" Margin="0,0,8,0" AutomationProperties.Name="Play alone" Classes="ModeChoice">
+                    <StackPanel>
+                      <TextBlock Text="Play alone" FontSize="18" />
+                      <TextBlock Text="Single player" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,6,0,0" />
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton x:Name="ModeHost" GroupName="CoopMode" Tag="host" Margin="0,0,8,0" AutomationProperties.Name="Host a game" Classes="ModeChoice">
+                    <StackPanel>
+                      <TextBlock Text="Host a game" FontSize="18" />
+                      <TextBlock Text="Friends join you" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,6,0,0" />
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton x:Name="ModeJoin" GroupName="CoopMode" Tag="join" AutomationProperties.Name="Join a game" Classes="ModeChoice">
+                    <StackPanel>
+                      <TextBlock Text="Join a game" FontSize="18" />
+                      <TextBlock Text="Find your group" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,6,0,0" />
+                    </StackPanel>
+                  </RadioButton>
+                </UniformGrid>
+                <Grid x:Name="OfflinePanel">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width=".85*" />
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="1.15*" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Text="OFFLINE SESSION" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                    <TextBlock Text="On your own" FontSize="22" />
+                    <TextBlock Text="Play with AI partners. No connection needed." FontSize="15" Margin="0,10,0,0" Classes="Hint" />
+                  </StackPanel>
+                </Grid>
+                <Grid x:Name="OnlinePanel">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width=".85*" MinWidth="255" />
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="1.15*" MinWidth="300" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Margin="0,0,6,0">
+                    <TextBlock Text="PLAYER" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                    <Label Content="Player name" Target="{Binding ElementName=AccountUsername}" Padding="0" Foreground="{StaticResource Ink}" FontSize="18" />
+                    <TextBox x:Name="AccountUsername" Margin="0,12,0,8" AutomationProperties.Name="Player name" AutomationProperties.HelpText="Four to ten letters, numbers or underscores. Underscores cannot start, end or repeat." Classes="CoopTextInput" />
+                    <TextBlock Text="4 to 10 letters, numbers or underscores." FontSize="14" Classes="Hint" />
+                    <TextBlock x:Name="AccountStatus" FontSize="14" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                    <TextBlock Text="WAITING ROOM" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,32,0,14" />
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock x:Name="AutoLobbyLabel" Text="Enter automatically" FontSize="17" VerticalAlignment="Center" Margin="0,0,12,0" />
+                      <CheckBox x:Name="AutoLobby" Grid.Column="1" AutomationProperties.Name="Enter the waiting room automatically" AutomationProperties.LabeledBy="{Binding ElementName=AutoLobbyLabel}" AutomationProperties.HelpText="After launch, sign in and open or join the host's room. Press any button to take over." Classes="ToggleSwitch" />
+                    </Grid>
+                    <StackPanel x:Name="RoomSettings" Margin="0,18,0,0" IsVisible="false">
+                      <Label Content="Room name" Target="{Binding ElementName=RoomName}" Padding="0" Foreground="{StaticResource Ink}" FontSize="14" />
+                      <Grid Margin="0,8,0,14">
+                        <TextBox x:Name="RoomName" MaxLength="15" AutomationProperties.Name="Waiting room name" AutomationProperties.HelpText="Up to 15 letters, numbers or underscores. Leave blank to use your player name." Classes="CoopTextInput" />
+                        <TextBlock Text="Use player name" Foreground="{StaticResource Muted}" FontSize="14" Margin="11,8" IsHitTestVisible="False" />
+                      </Grid>
+                      <DockPanel MinHeight="48">
+                        <ComboBox x:Name="RoomPlayers" DockPanel.Dock="Right" Width="150" MinWidth="120" Margin="12,0,0,0" AutomationProperties.Name="Maximum players" DisplayMemberBinding="{Binding Label}" SelectedValueBinding="{Binding Value}" />
+                        <TextBlock Text="Maximum players" FontSize="14" VerticalAlignment="Center" />
+                      </DockPanel>
+                      <DockPanel MinHeight="48" Margin="0,8,0,0">
+                        <ComboBox x:Name="RoomWait" DockPanel.Dock="Right" Width="150" MinWidth="120" Margin="12,0,0,0" AutomationProperties.Name="Room waiting time" DisplayMemberBinding="{Binding Label}" SelectedValueBinding="{Binding Value}" />
+                        <TextBlock Text="Waiting time" FontSize="14" VerticalAlignment="Center" />
+                      </DockPanel>
+                    </StackPanel>
+                    <TextBlock x:Name="CoopValidation" Foreground="{StaticResource Danger}" FontSize="14" Margin="0,22,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" IsVisible="false" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <StackPanel x:Name="HostOptions">
+                      <TextBlock Text="HOST CONNECTION" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                      <TextBlock x:Name="HostStatus" Foreground="{StaticResource Ink}" FontSize="21" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                      <TextBlock x:Name="HostDetail" FontSize="14" Margin="0,0,0,20" Classes="CoopStatus Hint" />
+                      <Label Content="Invite address" Target="{Binding ElementName=HostAddressPicker}" Padding="0" Foreground="{StaticResource Ink}" FontSize="17" />
+                      <ComboBox x:Name="HostAddressPicker" Margin="0,12,0,12" AutomationProperties.Name="Address friends use" DisplayMemberBinding="{Binding Label}" />
+                      <TextBlock x:Name="PublicAddressStatus" FontSize="14" Margin="0,0,0,10" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                      <WrapPanel>
+                        <Button x:Name="CopyServerButton" Content="Copy address" IsEnabled="False" Margin="0,0,8,8" />
+                        <Button x:Name="StartServerButton" Content="Try again" Margin="0,0,0,8" IsVisible="false" />
+                      </WrapPanel>
+                      <TextBlock Text="Friends on your network can find this game automatically." FontSize="14" Margin="0,4,0,12" Classes="Hint" />
+                      <TextBlock x:Name="FirewallStatus" FontSize="14" Margin="0,0,0,10" Classes="CoopStatus Hint" />
+                      <Button x:Name="FirewallButton" Content="Allow through Windows Firewall" HorizontalAlignment="Left" FontSize="14" Margin="0,0,0,14" />
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="AutoForwardLabel" Text="Request port forwarding (UPnP)" FontSize="15" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <CheckBox x:Name="AutoForward" Grid.Column="1" AutomationProperties.Name="Automatic port forwarding using UPnP" AutomationProperties.LabeledBy="{Binding ElementName=AutoForwardLabel}" Classes="ToggleSwitch" />
+                      </Grid>
+                      <TextBlock x:Name="ReachStatus" FontSize="14" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                      <StackPanel x:Name="HostPortSettings" Margin="0,18,0,0">
+                        <TextBlock Text="PORT SETTINGS" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,10" />
+                        <Grid Margin="0,0,0,14">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="42" />
+                            <ColumnDefinition Width="88" />
+                          </Grid.ColumnDefinitions>
+                          <Label Content="Player sign-up" Target="{Binding ElementName=SignupPortBox}" Padding="0" Foreground="{StaticResource Ink}" FontSize="15" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="TCP" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" />
+                          <TextBox x:Name="SignupPortBox" Grid.Column="2" MaxLength="5" HorizontalContentAlignment="Center" AutomationProperties.Name="Player sign-up TCP port" Classes="CoopTextInput" />
+                        </Grid>
+                        <Grid Margin="0,0,0,4">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="42" />
+                            <ColumnDefinition Width="88" />
+                          </Grid.ColumnDefinitions>
+                          <Label Content="Game server" Target="{Binding ElementName=GamePortBox}" Padding="0" Foreground="{StaticResource Ink}" FontSize="15" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="UDP" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" />
+                          <TextBox x:Name="GamePortBox" Grid.Column="2" MaxLength="5" HorizontalContentAlignment="Center" AutomationProperties.Name="Game server UDP port" Classes="CoopTextInput" />
+                        </Grid>
+                        <TextBlock x:Name="PortStatus" FontSize="14" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                        <Button x:Name="ResetPortsButton" Content="Use default ports" HorizontalAlignment="Left" FontSize="14" Margin="0,10,0,0" />
+                      </StackPanel>
+                    </StackPanel>
+                    <StackPanel x:Name="JoinOptions">
+                      <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="AVAILABLE GAMES" Foreground="{StaticResource Muted}" FontSize="14" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <Button x:Name="SearchGamesButton" Grid.Column="1" Content="Search again" FontSize="14" Padding="10,6" />
+                      </Grid>
+                      <ScrollViewer x:Name="FoundGamesScroll" MaxHeight="246" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="FoundGames" />
+                      </ScrollViewer>
+                      <TextBlock x:Name="SearchStatus" FontSize="14" Margin="0,4,0,22" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                      <Label Content="Host address" Target="{Binding ElementName=CoopHost}" Padding="0" Foreground="{StaticResource Ink}" FontSize="17" Margin="0,8,0,0" />
+                      <TextBox x:Name="CoopHost" MaxLength="15" Margin="0,12,0,8" AutomationProperties.Name="Host address" AutomationProperties.HelpText="Enter the IPv4 address you got from the host." Classes="CoopTextInput" />
+                      <TextBlock Text="Enter the address you got from the host." FontSize="14" Classes="Hint" />
+                    </StackPanel>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="PageMods" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <Grid Margin="0,3,0,14">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Mod configuration" FontSize="24" />
+                <TextBlock x:Name="ModGame" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="14" VerticalAlignment="Center" />
+              </Grid>
+              <TextBlock x:Name="ModSessionNote" FontSize="14" Margin="0,0,0,8" TextWrapping="Wrap" Classes="Hint" IsVisible="false" />
+              <TextBlock x:Name="ModSeed" FontSize="14" Margin="0,0,0,8" TextWrapping="Wrap" Classes="Hint" IsVisible="false" />
+              <StackPanel x:Name="ModControls">
+                <TextBlock x:Name="ModSelectionState" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,2,0,10" />
+                <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,10" />
+                <StackPanel x:Name="ModList" />
+                <Border Height="1" Background="{StaticResource Line}" Margin="0,12,0,12" />
+                <WrapPanel x:Name="ModFileActions">
+                  <Button x:Name="ImportModButton" Content="Import mod" Margin="0,0,10,6" />
+                  <Button Content="Open mods folder" Margin="0,0,10,6" x:Name="Action_OpenModFolder_78" />
+                  <Button Content="Reload" Margin="0,0,0,6" x:Name="Action_ReloadMods_79" />
+                </WrapPanel>
+              </StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="PageCheats" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <Grid Margin="0,3,0,14">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Cheat configuration" FontSize="24" />
+                <TextBlock x:Name="CheatGame" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="14" VerticalAlignment="Center" />
+              </Grid>
+              <TextBlock x:Name="CheatSessionNote" FontSize="14" Margin="0,0,0,8" TextWrapping="Wrap" Classes="Hint" IsVisible="false" />
+              <StackPanel x:Name="CheatControls">
+                <Grid Height="44">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="CheatsEnabledLabel" Text="Enable cheats" FontSize="18" VerticalAlignment="Center" />
+                  <CheckBox x:Name="EnableCheats" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Enable cheats" AutomationProperties.LabeledBy="{Binding ElementName=CheatsEnabledLabel}" AutomationProperties.HelpText="Apply selected cheats on the next game launch. Turning this off preserves your selections." Classes="ToggleSwitch" />
+                  <TextBlock x:Name="CheatSelectionState" Grid.Column="2" FontSize="14" Margin="16,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" TextAlignment="Right" Classes="Hint" />
+                </Grid>
+                <Border Height="1" Background="{StaticResource Line}" Margin="0,8,0,10" />
+                <StackPanel x:Name="CheatList" />
+                <Border Height="1" Background="{StaticResource Line}" Margin="0,12,0,12" />
+                <WrapPanel x:Name="CheatFileActions">
+                  <Button x:Name="ImportCheatsButton" Content="Import .pnach" Margin="0,0,10,6" />
+                  <Button Content="Open cheats folder" Margin="0,0,10,6" x:Name="Action_OpenCheatFolder_82" />
+                  <Button Content="Reload" Margin="0,0,0,6" x:Name="Action_ReloadCheats_83" />
+                </WrapPanel>
+                <TextBlock Text="Selections are saved automatically. Changes apply on the next launch." FontSize="14" TextWrapping="Wrap" Margin="0,3,0,0" Classes="Hint" />
+              </StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="PageLauncher" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <TextBlock Text="Launcher" FontSize="24" Margin="0,3,0,28" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="32" />
+                  <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="APPEARANCE" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                  <Label Content="Font" Target="{Binding ElementName=LauncherFontPicker}" Padding="0" Foreground="{StaticResource Ink}" FontSize="18" />
+                  <ComboBox x:Name="LauncherFontPicker" Margin="0,12,0,0" AutomationProperties.Name="Launcher font" SelectedValueBinding="{Binding Tag}">
+                    <ComboBoxItem Content="Outbreak" Tag="outbreak" />
+                    <ComboBoxItem Content="Segoe UI" Tag="segoe-ui" />
+                    <ComboBoxItem Content="Tahoma" Tag="tahoma" />
+                  </ComboBox>
+                  <TextBlock x:Name="LauncherFontHint" Text="Install either game to use the Outbreak font." FontSize="14" Margin="0,8,0,0" Classes="Hint" IsVisible="false" />
+                  <Label Content="Language" Target="{Binding ElementName=LauncherLanguagePicker}" Padding="0" Foreground="{StaticResource Ink}" FontSize="18" Margin="0,26,0,0" />
+                  <ComboBox x:Name="LauncherLanguagePicker" Margin="0,12,0,0" AutomationProperties.Name="Launcher language" SelectedValueBinding="{Binding Tag}">
+                    <ComboBoxItem Content="English" Tag="en" />
+                  </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Text="BACKGROUND" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                  <Grid MinHeight="48">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="LauncherMoviesLabel" Text="Background movies" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <CheckBox x:Name="LauncherBackgroundMovies" Grid.Column="1" AutomationProperties.Name="Launcher background movies" AutomationProperties.LabeledBy="{Binding ElementName=LauncherMoviesLabel}" Classes="ToggleSwitch" />
+                  </Grid>
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+            <StackPanel x:Name="PageDeveloper" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <TextBlock Text="Developer" FontSize="24" Margin="0,3,0,28" />
+              <TextBlock x:Name="DeveloperSessionNote" Text="Changes apply to your next session." FontSize="14" Margin="0,0,0,18" Classes="Hint" IsVisible="false" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="32" />
+                  <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="NETWORK" Foreground="{StaticResource Muted}" FontSize="14" />
+                    <TextBlock Text="Co-op only" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="12" />
+                  </Grid>
+                  <Grid MinHeight="62">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="DevNetworkLabel" Text="Packet timing" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <CheckBox x:Name="DevNetworkTrace" Grid.Column="1" AutomationProperties.Name="Record co-op packet timing" AutomationProperties.LabeledBy="{Binding ElementName=DevNetworkLabel}" AutomationProperties.HelpText="Record co-op packet timestamps, directions, sizes and headers in the session folder." Classes="ToggleSwitch" />
+                  </Grid>
+                  <Grid MinHeight="62">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="DevTransportLabel" Text="Transport log" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <CheckBox x:Name="DevTransportLog" Grid.Column="1" AutomationProperties.Name="Record network transport log" AutomationProperties.LabeledBy="{Binding ElementName=DevTransportLabel}" AutomationProperties.HelpText="Record native network socket activity in the game log." Classes="ToggleSwitch" />
+                  </Grid>
+                  <Grid MinHeight="62">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="DevSnapLabel" Text="SN@P packet log" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <CheckBox x:Name="DevSnapTrace" Grid.Column="1" AutomationProperties.Name="Record SN@P packet log" AutomationProperties.LabeledBy="{Binding ElementName=DevSnapLabel}" AutomationProperties.HelpText="Record the first game-protocol packet headers in the game log." Classes="ToggleSwitch" />
+                  </Grid>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Text="TIMING" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                  <Grid MinHeight="62">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="DevFrameLabel" Text="Frame timing" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <CheckBox x:Name="DevFrameTiming" Grid.Column="1" AutomationProperties.Name="Record frame timing" AutomationProperties.LabeledBy="{Binding ElementName=DevFrameLabel}" AutomationProperties.HelpText="Write frame start, scan-out and presentation times to frames.csv in the session folder." Classes="ToggleSwitch" />
+                  </Grid>
+                  <Grid MinHeight="62">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                      <TextBlock x:Name="DevClockLabel" Text="Game clock and position" FontSize="18" />
+                      <TextBlock Text="File #1 only" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,5,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="DevGameClock" Grid.Column="1" AutomationProperties.Name="Record game clock and position" AutomationProperties.LabeledBy="{Binding ElementName=DevClockLabel}" AutomationProperties.HelpText="File #1 only. Write the game clock, room and player position to clock.csv for the first ten minutes." Classes="ToggleSwitch" />
+                  </Grid>
+                </StackPanel>
+              </Grid>
+              <TextBlock Text="SESSION FILES" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,30,0,14" />
+              <WrapPanel>
+                <Button x:Name="OpenSessionFoldersButton" Content="Open session folders" Margin="0,0,8,8" />
+                <Button x:Name="DeveloperViewLogsButton" Content="View logs" Tag="Logs" Margin="0,0,0,8" />
+              </WrapPanel>
+            </StackPanel>
+            <StackPanel x:Name="PageSetup" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+              <Grid Margin="0,3,0,28">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Game files" FontSize="24" />
+                <TextBlock x:Name="GameFilesEdition" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="14" VerticalAlignment="Center" />
+              </Grid>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="1.1*" MinWidth="300" />
+                  <ColumnDefinition Width="32" />
+                  <ColumnDefinition Width=".9*" MinWidth="260" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="GAME SOURCE" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                  <Grid MinHeight="48" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Use game PAK" FontSize="18" VerticalAlignment="Center" />
+                    <CheckBox x:Name="UseGamePakSwitch" Grid.Column="1" AutomationProperties.Name="Use PAK instead of ISO" Classes="ToggleSwitch" />
+                  </Grid>
+                  <TextBlock x:Name="GameSourceLabel" Text="Disc image (.iso)" FontSize="18" />
+                  <TextBox x:Name="IsoPath" IsReadOnly="True" Margin="0,12,0,12" AutomationProperties.Name="Selected game disc image" Classes="GameFilePath CoopTextInput" />
+                  <WrapPanel x:Name="DiscFileActions">
+                    <Button x:Name="ChooseIsoButton" Content="Choose ISO" Tag="iso" Margin="0,0,8,8" />
+                    <Button x:Name="ImportDiscButton" Content="Import and build" Background="#FF9A4008" BorderBrush="{StaticResource Accent}" Margin="0,0,0,8" />
+                  </WrapPanel>
+                  <TextBlock x:Name="SupportedDiscHint" FontSize="14" TextWrapping="Wrap" Margin="0,6,0,0" Classes="Hint" />
+                  <TextBlock x:Name="DiscValidationStatus" FontSize="14" TextWrapping="Wrap" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                  <TextBlock x:Name="ImportState" FontSize="14" TextWrapping="Wrap" Margin="0,14,0,0" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                  <Expander Header="Asset exports" Margin="0,20,0,0" Classes="ModOptionsDropdown">
+                    <StackPanel x:Name="OriginalAssetOptions">
+                      <Grid MinHeight="48">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Export during setup" FontSize="15" VerticalAlignment="Center" />
+                        <CheckBox x:Name="ExportOriginalAssets" Grid.Column="1" AutomationProperties.Name="Export original assets during setup" Classes="ToggleSwitch" />
+                      </Grid>
+                      <WrapPanel Margin="0,10,0,0">
+                        <Button x:Name="ExportOriginalAssetsNow" Content="Export now" FontSize="14" Margin="0,0,8,8" />
+                        <Button x:Name="OpenOriginalAssetExports" Content="Open exports folder" FontSize="14" Margin="0,0,0,8" />
+                      </WrapPanel>
+                      <Button x:Name="CleanOldImportsButton" Content="Clean up old imports..." HorizontalAlignment="Left" FontSize="14" Margin="0,10,0,0" />
+                    </StackPanel>
+                  </Expander>
+                  <TextBlock Text="GAME BUILD" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,32,0,16" />
+                  <TextBlock x:Name="GameFilesBuildState" FontSize="20" />
+                  <TextBox x:Name="SelectedBuildPath" IsReadOnly="True" Margin="0,12,0,12" AutomationProperties.Name="Selected game build" Classes="GameFilePath CoopTextInput" />
+                  <WrapPanel x:Name="BuildFileActions">
+                    <Button x:Name="ExistingBuildButton" Content="Use existing build" Margin="0,0,0,8" />
+                  </WrapPanel>
+                  <TextBlock x:Name="ExistingBuildHint" FontSize="14" TextWrapping="Wrap" Margin="0,4,0,0" Classes="Hint" />
+                  <Expander x:Name="DeveloperFiles" Header="Developer files" Margin="0,28,0,0" Classes="ModOptionsDropdown">
+                    <StackPanel Margin="0,16,0,4">
+                      <Label Content="Native executable" Target="{Binding ElementName=ExePath}" Padding="0" Foreground="{StaticResource Ink}" FontSize="14" />
+                      <TextBox x:Name="ExePath" IsReadOnly="True" Margin="0,8,0,10" AutomationProperties.Name="Developer native executable" Classes="GameFilePath CoopTextInput" />
+                      <Button x:Name="BrowseExeButton" Content="Browse executable" Tag="exe" HorizontalAlignment="Left" FontSize="14" />
+                      <Label Content="Reference ELF" Target="{Binding ElementName=ElfPath}" Padding="0" Foreground="{StaticResource Ink}" FontSize="14" Margin="0,20,0,0" />
+                      <TextBox x:Name="ElfPath" IsReadOnly="True" Margin="0,8,0,10" AutomationProperties.Name="Developer reference ELF" Classes="GameFilePath CoopTextInput" />
+                      <Button x:Name="BrowseElfButton" Content="Browse ELF" Tag="elf" HorizontalAlignment="Left" FontSize="14" />
+                    </StackPanel>
+                  </Expander>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Text="LAUNCHER STORAGE" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                  <Label Content="Data folder" Target="{Binding ElementName=StoragePath}" Padding="0" Foreground="{StaticResource Ink}" FontSize="18" />
+                  <TextBox x:Name="StoragePath" IsReadOnly="True" AutomationProperties.Name="Current storage folder" Margin="0,12,0,12" Classes="GameFilePath CoopTextInput" />
+                  <WrapPanel>
+                    <Button x:Name="ChooseStorageButton" Content="Change folder" Margin="0,0,8,8" />
+                    <Button x:Name="OpenStorageButton" Content="Open folder" Margin="0,0,0,8" />
+                  </WrapPanel>
+                  <TextBlock x:Name="StorageStatus" FontSize="14" TextWrapping="Wrap" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                  <TextBlock Text="REMOVE GAME" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,32,0,16" />
+                  <TextBlock x:Name="RemoveSummary" FontSize="14" Text="Remove imported data, the game build and cache. Your ISO and launcher are kept." TextWrapping="Wrap" Margin="0,0,0,18" Classes="Hint" />
+                  <StackPanel x:Name="GameRemovalControls">
+                    <Grid MinHeight="48">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock x:Name="RemoveSavesLabel" Text="Include this game's saves" FontSize="15" VerticalAlignment="Center" Margin="0,0,12,0" />
+                      <CheckBox x:Name="RemoveSaves" Grid.Column="1" AutomationProperties.Name="Also delete this game's saves" AutomationProperties.LabeledBy="{Binding ElementName=RemoveSavesLabel}" Classes="ToggleSwitch" />
+                    </Grid>
+                    <Grid MinHeight="48" Margin="0,8,0,0">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock x:Name="RemoveToolsLabel" Text="Include shared build and hosting tools" FontSize="15" VerticalAlignment="Center" Margin="0,0,12,0" />
+                      <CheckBox x:Name="RemoveTools" Grid.Column="1" AutomationProperties.Name="Also remove shared build and hosting tools" AutomationProperties.LabeledBy="{Binding ElementName=RemoveToolsLabel}" AutomationProperties.HelpText="These tools are shared by both games and download again when needed." Classes="ToggleSwitch" />
+                    </Grid>
+                    <TextBlock x:Name="RemoveSize" FontSize="14" Margin="0,16,0,12" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
+                    <Button x:Name="RemoveGameButton" Content="Remove game..." HorizontalAlignment="Left" FontSize="14" />
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Grid>
+        </ScrollViewer>
+        <Grid x:Name="PageLogs" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <Grid Margin="0,3,0,28">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Session log" FontSize="24" />
+            <TextBlock x:Name="LogFollowState" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="14" VerticalAlignment="Center" />
+          </Grid>
+          <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="24" />
+              <ColumnDefinition Width="200" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="SESSION" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,10" />
+              <ComboBox x:Name="LogSessionPicker" AutomationProperties.Name="Log session" DisplayMemberBinding="{Binding Name}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="STREAM" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,10" />
+              <ComboBox x:Name="LogStreamPicker" MinWidth="0" AutomationProperties.Name="Log stream">
+                <ComboBoxItem Content="Game debug" />
+                <ComboBoxItem Content="Game output" />
+              </ComboBox>
+            </StackPanel>
+          </Grid>
+          <Grid Grid.Row="2" Margin="0,16,0,18">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <WrapPanel>
+              <Button x:Name="OpenLogFileButton" Content="Open file" FontSize="14" Margin="0,0,8,0" />
+              <Button x:Name="OpenLogFolderButton" Content="Open folder" FontSize="14" />
+            </WrapPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Follow" FontSize="16" Margin="0,0,16,0" VerticalAlignment="Center" />
+              <CheckBox x:Name="FollowLog" IsChecked="True" AutomationProperties.Name="Follow latest log entries" VerticalAlignment="Center" Classes="ToggleSwitch" />
+            </StackPanel>
+          </Grid>
+          <Grid Grid.Row="3">
+            <TextBox x:Name="DebugLog" IsReadOnly="True" TextWrapping="NoWrap" FontFamily="Consolas" FontSize="14" Padding="12" FlowDirection="LeftToRight" AutomationProperties.Name="Log contents" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+            <StackPanel x:Name="LogEmpty" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24" IsHitTestVisible="False">
+              <TextBlock Text="No log available" FontSize="20" HorizontalAlignment="Center" />
+              <TextBlock x:Name="LogEmptyDetail" Text="Start the game or open an existing log file." FontSize="14" TextWrapping="Wrap" TextAlignment="Center" Margin="0,10,0,0" Classes="Hint" />
+            </StackPanel>
+          </Grid>
+          <TextBlock x:Name="LogInfo" Grid.Row="4" FontSize="14" Margin="0,10,0,0" TextTrimming="CharacterEllipsis" Classes="Hint" />
+        </Grid>
+      </Grid>
+      <Image x:Name="OutgoingPage" Grid.Row="1" Margin="0,0,0,18" Stretch="Fill" IsHitTestVisible="False" Opacity="0" />
+      <StackPanel Grid.Row="2">
+        <Border x:Name="BackgroundVideoActivity" Background="#EE24211E" CornerRadius="5" Padding="14" Margin="0,0,0,16" IsVisible="false">
+          <StackPanel>
+            <TextBlock x:Name="BackgroundVideoDetail" Text="Preparing background videos" FontWeight="Normal" Margin="0,0,0,8" />
+            <ProgressBar x:Name="BackgroundVideoProgress" Minimum="0" Maximum="100" Height="8" Foreground="{StaticResource Accent}" Background="{StaticResource Line}" AutomationProperties.Name="Background video preparation progress" />
+          </StackPanel>
+        </Border>
+        <Border x:Name="ArtworkActivity" Background="#EE24211E" CornerRadius="5" Padding="14" Margin="0,0,0,16" IsVisible="false">
+          <StackPanel>
+            <Grid Margin="0,0,0,8">
+              <TextBlock Text="Downloading artwork" FontWeight="Normal" />
+              <TextBlock x:Name="ArtworkDownloadDetail" HorizontalAlignment="Right" Classes="Hint" />
+            </Grid>
+            <ProgressBar x:Name="ArtworkDownloadProgress" Minimum="0" Maximum="100" Height="8" Foreground="{StaticResource Accent}" Background="{StaticResource Line}" AutomationProperties.Name="Artwork download progress" />
+          </StackPanel>
+        </Border>
+        <Border x:Name="ImportActivity" Background="#EE24211E" CornerRadius="5" Padding="14" Margin="0,0,0,16" IsVisible="false">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Margin="0,0,16,0">
+              <DockPanel Margin="0,0,0,8">
+                <TextBlock x:Name="SetupCounts" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="12,0,0,0" Classes="Hint" />
+                <TextBlock x:Name="SetupStage" FontWeight="Normal" />
+              </DockPanel>
+              <ProgressBar x:Name="DiscProgress" Minimum="0" Maximum="100" Height="8" Foreground="{StaticResource Accent}" Background="{StaticResource Line}" AutomationProperties.Name="Game setup progress" />
+              <TextBlock x:Name="SetupDetail" Margin="0,7,0,0" Classes="Hint" />
+              <TextBlock x:Name="ImportTiming" Classes="Hint" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Cancel setup" VerticalAlignment="Center" x:Name="Action_CancelImport_114" />
+          </Grid>
+        </Border>
+        <Border x:Name="HostSetupActivity" Background="#EE24211E" CornerRadius="5" Padding="14" Margin="0,0,0,16" IsVisible="false">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Margin="0,0,16,0">
+              <TextBlock x:Name="HostSetupStage" FontWeight="Normal" Margin="0,0,0,8" />
+              <ProgressBar x:Name="HostSetupProgress" Minimum="0" Maximum="100" Height="8" Foreground="{StaticResource Accent}" Background="{StaticResource Line}" AutomationProperties.Name="Server setup progress" />
+              <TextBlock x:Name="HostSetupDetail" Margin="0,7,0,0" Classes="Hint" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Cancel setup" VerticalAlignment="Center" x:Name="Action_CancelServerSetup_115" />
+          </Grid>
+        </Border>
+      </StackPanel>
+      <Grid x:Name="LauncherFooter" Grid.Row="3">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <ListBox x:Name="GamePicker" Width="400" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,24,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Choose game" SelectedValueBinding="{Binding Tag}">
+          <ListBox.Template>
+            <ControlTemplate TargetType="ListBox">
+              <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" />
+            </ControlTemplate>
+          </ListBox.Template>
+          <ListBox.ItemsPanel>
+            <ItemsPanelTemplate>
+              <UniformGrid Columns="2" />
+            </ItemsPanelTemplate>
+          </ListBox.ItemsPanel>
+          <ListBoxItem Background="Transparent" Theme="{x:Null}" Tag="file1" AutomationProperties.Name="Outbreak File 1" Margin="0,0,8,0" Classes="DiscChoice GameChoice">
+            <ToolTip.Tip>
+              <StackPanel>
+                <TextBlock Text="Outbreak: File #1" />
+                <TextBlock x:Name="DiscStatus1" />
+              </StackPanel>
+            </ToolTip.Tip>
+            <Grid Background="Transparent">
+              <local:GameDiscView x:Name="GameDisc1" Edition="1" />
+            </Grid>
+          </ListBoxItem>
+          <ListBoxItem Background="Transparent" Theme="{x:Null}" Tag="file2" AutomationProperties.Name="Outbreak File 2" Margin="8,0,0,0" Classes="DiscChoice GameChoice">
+            <ToolTip.Tip>
+              <StackPanel>
+                <TextBlock Text="Outbreak: File #2" />
+                <TextBlock x:Name="DiscStatus2" />
+              </StackPanel>
+            </ToolTip.Tip>
+            <Grid Background="Transparent">
+              <local:GameDiscView x:Name="GameDisc2" Edition="2" />
+            </Grid>
+          </ListBoxItem>
+        </ListBox>
+        <Button x:Name="StopButton" Grid.Column="1" Content="Stop" IsEnabled="False" Padding="24,11" Margin="0,0,10,24" VerticalAlignment="Bottom" />
+        <Button x:Name="LaunchButton" Grid.Column="2" Content="Play File #1" Padding="42,12" MinWidth="142" Margin="0,0,0,24" VerticalAlignment="Bottom" Classes="PrimaryButton" />
+      </Grid>
+    </Grid>
+    <Border x:Name="StatusToast" Grid.Column="1" Opacity="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,18,18,0" MinWidth="300" MaxWidth="400" Background="#FF24211E" BorderBrush="#2EF3ECDF" BorderThickness="1" CornerRadius="6" Cursor="Hand" ZIndex="10" IsVisible="false">
+      <Border.RenderTransform><TranslateTransform /></Border.RenderTransform>
+      <Border.RenderTransform>
+        <TranslateTransform />
+      </Border.RenderTransform>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Border Width="3" Background="{StaticResource Accent}" CornerRadius="1.5" Margin="12,14,0,14" />
+        <StackPanel Grid.Column="1" Margin="12,12,18,13" VerticalAlignment="Center">
+          <TextBlock x:Name="StatusToastTitle" Foreground="#FFF3ECDF" FontSize="16" FontWeight="Normal" TextWrapping="Wrap" />
+          <TextBlock x:Name="StatusToastDetail" TextWrapping="Wrap" Margin="0,3,0,0" Classes="Hint" />
+          <TextBlock x:Name="Status" Text="Ready" IsVisible="false" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

@@ -3,6 +3,10 @@
 Run `tools\snap_iop_check\run.bat` from a Visual Studio 2022 C++ environment.
 The script initializes that environment itself when installed at the standard path.
 
+On macOS, compile `main.cpp` with `network/native/snap_iop_transport.cpp` using
+Clang C++20 and run with `--loopback-only` for the isolated TCP/UDP checks.
+That flag skips the separate openSNAP APP-service check and reports `capcom_app=0`.
+
 Tests exercise genuine TCP/UDP loopback sockets, connection refusal, guest socket
 zero, network byte order, UDP bulk receive alignment, unsupported operations,
 DNS redirection, interface generation, and reset lifetime. The final APP check

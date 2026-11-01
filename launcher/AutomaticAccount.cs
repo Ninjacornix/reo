@@ -55,6 +55,9 @@ internal static class AccountCredentials {
     }
 
     public static string Get(string home, string host, string username) {
+#if REO_CROSS_PLATFORM
+        if (!OperatingSystem.IsWindows()) return PlatformCredentials.Get(host, username);
+#endif
         byte[] identity = SHA256.HashData(Encoding.UTF8.GetBytes(host + "\n" + username));
         string directory = Path.Combine(home, "accounts");
         Directory.CreateDirectory(directory);
