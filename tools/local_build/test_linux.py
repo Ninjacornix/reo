@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 from compile_linux import compile_plan
-from import_iso import import_iso
+from import_iso import GAMES, import_iso
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "launcher/linux"))
 from core import game_environment, inside, native_elf, output_hashes, verify_kit
@@ -23,7 +23,7 @@ class LinuxPortableTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
-    def iso(self, unsafe=False):
+    def iso(self, unsafe=False, game="file1"):
         image = bytearray(26 * 2048)
 
         def entry(name, lba, size, flags=0):
@@ -40,22 +40,24 @@ class LinuxPortableTests(unittest.TestCase):
         struct.pack_into("<H", pvd, 128, 2048)
         pvd[156:190] = entry(b"\x00", 20, 2048, 2)
         records = (entry(b"\x00", 20, 2048, 2) + entry(b"\x01", 20, 2048, 2) +
-                   entry(b"../escape;1" if unsafe else b"SLUS_207.65;1", 21, len(executable)))
+                   entry(b"../escape;1" if unsafe else (GAMES[game]["elf"] + ";1").encode(), 21, len(executable)))
         image[20 * 2048:20 * 2048 + len(records)] = records
         image[21 * 2048:21 * 2048 + len(executable)] = executable
-        path = self.root / "owned.iso"
+        path = self.root / (game + "-owned.iso")
         path.write_bytes(image)
         return path, executable
 
     def test_iso_is_imported_and_reverified_without_mount(self):
-        iso, executable = self.iso()
-        with patch("import_iso.ELF_SHA256", hashlib.sha256(executable).hexdigest()):
-            data = import_iso(iso, self.root / "cache")
-            self.assertEqual((data / "SLUS_207.65").read_bytes(), executable)
-            self.assertEqual(import_iso(iso, self.root / "cache"), data)
-            (data / "SLUS_207.65").write_bytes(b"tampered")
-            with self.assertRaisesRegex(ValueError, "verification"):
-                import_iso(iso, self.root / "cache")
+        for game in ("file1", "file2"):
+            with self.subTest(game=game):
+                iso, executable = self.iso(game=game)
+                with patch.dict(GAMES[game], {"sha256": hashlib.sha256(executable).hexdigest()}):
+                    data = import_iso(iso, self.root / "cache", game=game)
+                    self.assertEqual((data / GAMES[game]["elf"]).read_bytes(), executable)
+                    self.assertEqual(import_iso(iso, self.root / "cache", game=game), data)
+                    (data / GAMES[game]["elf"]).write_bytes(b"tampered")
+                    with self.assertRaisesRegex(ValueError, "verification"):
+                        import_iso(iso, self.root / "cache", game=game)
 
     def test_iso_traversal_is_rejected(self):
         iso, _ = self.iso(unsafe=True)

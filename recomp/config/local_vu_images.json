@@ -5,6 +5,7 @@
     {
       "sha256": "2ea02b3628231f113edc3fe580f80c1d6ed45c98a7c98f9f83005665f8ad32ce",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         128,
@@ -64,6 +65,7 @@
     {
       "sha256": "5273fa3e9893df4b3833a22b1d7deec2f99a2d2af0c10f2aa0ff5b43d3b2fc25",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         88,
@@ -155,6 +157,7 @@
     {
       "sha256": "65d42faf847a20b9df414f281d757b64c3932eccfe8cc18a59ed9edb527c3905",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         88,
@@ -355,6 +358,18 @@
         ]
       ],
       "enabledByDefault": true
+    },
+    {
+      "sha256": "c41dc6cc559b9dadc3fd91b4620c17a37241904de44aa05ece1142f12a904a07",
+      "bytes": 16384,
+      "enabledByDefault": true,
+      "entryPcs": [0, 128, 544, 1600, 2944],
+      "copies": [
+        [1033984, 0, 2048],
+        [1036040, 2048, 912],
+        [1016520, 2960, 400],
+        [1044744, 3360, 528]
+      ]
     }
   ],
   "specialized": [

@@ -1,0 +1,24 @@
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -1311,7 +1311,21 @@
+             SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+             const char *panelEnv = std::getenv("REO_DEBUG_PANEL");
+             const bool panel = !reo_gpu_present::requested() && !(panelEnv && panelEnv[0] == '0');
++#ifdef __APPLE__
++            auto dimension = [](const char* name, int fallback) {
++                const char* value = std::getenv(name);
++                if (!value) return fallback;
++                char* end = nullptr;
++                const long parsed = std::strtol(value, &end, 10);
++                return end != value && !*end && parsed >= 256 && parsed <= 7680 ? int(parsed) : fallback;
++            };
++            InitWindow(dimension("REO_WINDOW_WIDTH", HOST_WINDOW_WIDTH) + (panel ? kDebugPanelWidth : 0),
++                       dimension("REO_WINDOW_HEIGHT", HOST_WINDOW_HEIGHT), title);
++            const char* full = std::getenv("REO_FULLSCREEN");
++            if (full && *full == '1') ToggleBorderlessWindowed();
++#else
+             InitWindow(HOST_WINDOW_WIDTH + (panel ? kDebugPanelWidth : 0), HOST_WINDOW_HEIGHT, title);
++#endif
+             SetExitKey(KEY_NULL); // Closing the OS window (including Alt+F4) owns exit.
+             if (reo_gpu_present::requested())
+             {

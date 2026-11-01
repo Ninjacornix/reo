@@ -16,6 +16,13 @@ from start to finish, with **online co-op** through openSNAP, a **randomizer**, 
 
 This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
 
+An **Apple Silicon macOS RC1 port** is available in this source branch, with a bundled
+desktop launcher and Vulkan-to-Metal rendering through MoltenVK. Open the locally built
+`build-macos/common-launcher/Outbreak.app`; see [shared RC1 launcher](docs/SHARED-LAUNCHER.md)
+and [Mac build and validation](docs/MACOS.md).
+File #1 gameplay, graphics, launcher and server protocol checks pass on an M2. Full multiplayer,
+physical controllers and File #2 on Mac remain unverified; no public Mac download is published.
+
 ![The launcher on first start: it asks for your game disc](docs/launcher-screenshots/launcher-play.png)
 
 ## Features
@@ -59,6 +66,17 @@ Already compiled the game with a compatible launcher? In **Game files**, click *
 - **Mods:** enable the matching **Randomizer** package for File #1 or File #2 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. File #2 fits its global additions within each scenario's native model/data limits. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition, progression unlocks, maximum result points and infinite escape time for both editions, plus a supported subset of PCSX2 data cheats.
 
 GPU rendering is implemented through paraLLEl-GS.
+
+On keyboard, **WASD sends D-pad input for tank controls**. In **Controls → Button
+map**, the **Right stick / voice commands** section lets you remap or clear the
+arrow keys. Assigning a key to another keyboard action clears its previous
+binding, so using arrows for movement also releases their old voice commands.
+
+**Online progression unlocks:** select **Cheats → Enable cheats → Unlock
+everything** for the chosen game, and clear other cheat selections before hosting
+or joining. Unlock-only selections are accepted for co-op launches.
+Health, ammunition, points, timer and imported data cheats require **Play alone**.
+See [online unlock behavior and verification](docs/ONLINE_UNLOCKS.md).
 
 The development build offers named window resolutions: **Native (512 × 448)**,
 **HD (1280 × 720)**, **FHD (1920 × 1080)**, **QHD / 2K (2560 × 1440)** and

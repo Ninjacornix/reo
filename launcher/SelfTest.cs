@@ -86,6 +86,7 @@ static class SelfTest {
         AudioMixerTests.Run(Check);
         AudioOutputTests.Run(Check);
         CheatCompatibilityTests.Run(Check);
+        Task.Run(() => OnlineUnlockTests.Run(Check)).GetAwaiter().GetResult();
         SubtitleControlTests.Run(Check);
         NetworkTraceTests.Run(Check);
         DeveloperOptionsTests.Run(Check);
@@ -206,7 +207,7 @@ static class SelfTest {
             bool blockedOnlineCheats = false;
             try { Cheats.Export(secondCheats, unlockFixture); }
             catch (IOException) { blockedOnlineCheats = true; }
-            Check(blockedOnlineCheats, "File #2 cheats cannot be enabled in co-op");
+            Check(blockedOnlineCheats, "File #2 gameplay cheats cannot be enabled in co-op");
         } finally { Directory.Delete(unlockFixture, true); }
         var usb = new byte[64];
         usb[0] = 1;
@@ -315,7 +316,8 @@ static class SelfTest {
         var keyboard = InputMapping.KeyboardDefaults();
         keyboard["Cross"] = 'K';
         var keys = InputMapping.Keyboard(keyboard, k => k == 'K' || k == 'W');
-        Check(keys.Buttons == 0x1001 && keys.LY == 32767, "Keyboard remap and movement");
+        Check(keys.Buttons == 0x1001 && keys.LX == 0 && keys.LY == 0, "Keyboard remap and digital movement");
+        KeyboardInputTests.Run(Check);
         Check(InputMapping.Keyboard(keyboard, k => k == 'W' || k == 'S').LY == 0,
               "Opposite keyboard movement cancels");
         keyboard["Cross"] = 0;

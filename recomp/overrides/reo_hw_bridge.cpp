@@ -1,3 +1,4 @@
+#include "../../runtime/input/scenario_test_route.h"
 /*
  * REO Hardware Bridge — Implementation
  *
@@ -36,6 +37,10 @@
  */
 
 #include "reo_hw_bridge.h"
+#ifdef __APPLE__
+#include "../../runtime/input/macos_input.h"
+#endif
+#include "runtime/core/host_file.h"
 #include "runtime/assets/overlay.h"
 #include "network/native/netcnf_profile.h"
 #include "network/native/private_usb_keyboard.h"
@@ -1013,6 +1018,8 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
         fprintf(stderr, "[TEST-ROUTE] invalid REO_TEST_ROUTE=%s; disabled\n", e);
         return 0;
     }();
+    static const char* scenarioOption = std::getenv("REO_TEST_SCENARIO");
+    static const int scenarioTarget = reo::scenario_test_route::requested(scenarioOption);
     static bool done = false;
     static double pressUntil = 0, releaseUntil = 0;
     static uint16_t button = 0;
@@ -1025,6 +1032,15 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
         return 0;
     if (now > (target >= 6 ? 300 : target == 4 ? 180 : 120)) {
         fprintf(stderr, "[TEST-ROUTE] timeout t=%.3f; automatic input disabled\n", now);
+        done = true;
+        return 0;
+    }
+    if ((target == 3 || target == 4) && scenarioOption && *scenarioOption && (scenarioTarget < 0
+#if defined(REO_GAME_FILE2)
+        || true // Chapter cursor layout below is File #1 only.
+#endif
+        )) {
+        std::fprintf(stderr, "[TEST-ROUTE-SCENARIO-1] invalid or unsupported chapter; automatic input disabled\n");
         done = true;
         return 0;
     }
@@ -1112,10 +1128,32 @@ uint16_t pad2TestRoute(uint8_t* rd, double now) {
             button = pad2ButtonBit("CROSS"); // confirm SINGLE PLAY
         else if (target >= 3 && scenario && (!hasSelection || (selectionState & 0xFFFFu) == 0))
             button = pad2ButtonBit("CROSS"); // enter original scenario selection
-        else if (target >= 3 && selectionReady && (selectionState & 0xFFFFu) == 0x0108u)
-            button = pad2ButtonBit("CROSS"); // 5838E0: idle scenario, debounce timer expired
+        else if (target >= 3 && selectionReady && (selectionState & 0xFFFFu) == 0x0108u) {
+            // 5838E0's list count/cursor. Preserve the existing route unless
+            // a diagnostic explicitly requests a chapter.
+            if (!scenarioOption || !*scenarioOption) button = pad2ButtonBit("CROSS");
+            else if (pointer(selection, 0x264u)) {
+                const uint32_t count = word(selection + 0x25cu), cursor = word(selection + 0x260u);
+                const auto choice = reo::scenario_test_route::choose(scenarioTarget, cursor, count);
+                std::fprintf(stderr, "[TEST-ROUTE-SCENARIO-1] target=%d cursor=%u count=%u\n", scenarioTarget, cursor, count);
+                if (choice == reo::scenario_test_route::Choice::Unavailable) {
+                    std::fprintf(stderr, "[TEST-ROUTE-SCENARIO-1] all five chapters must be available; automatic input disabled\n");
+                    done = true;
+                    return 0;
+                }
+                button = pad2ButtonBit(choice == reo::scenario_test_route::Choice::Confirm ? "CROSS" :
+                                       choice == reo::scenario_test_route::Choice::Right ? "RIGHT" : "LEFT");
+            } else {
+                std::fprintf(stderr, "[TEST-ROUTE-SCENARIO-1] invalid chapter list pointer; automatic input disabled\n");
+                done = true;
+                return 0;
+            }
+        }
         else if (target == 4 && character)
             button = pad2ButtonBit("CROSS"); // 584D90: original character idle/timer gate
+        else if (target == 4 && scenarioOption && *scenarioOption && hasSelection &&
+                 (selectionState & 0xFFFFu) == 0x030Au)
+            button = pad2ButtonBit("CROSS"); // 586690: unlocked-mode confirmation, retain default
         else if (target == 4 && hasSelection && (selectionState & 0xFFFFu) == 0x050Bu)
             button = pad2ButtonBit("CROSS"); // 587640 case5: difficulty, no +20 timer gate
         else
@@ -2500,6 +2538,8 @@ void reoPad2RumbleFrame() {
     const auto speeds=g_pad2.motors.load(std::memory_order_relaxed);
     XINPUT_VIBRATION vibration{WORD(speeds),WORD(speeds>>16)};
     XInputSetState(0,&vibration);
+#elif defined(__APPLE__)
+    reo::macos_input::rumble(g_pad2.motors.load(std::memory_order_relaxed));
 #endif
 }
 void reoPad2Stop() {
@@ -2719,7 +2759,7 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                     if ((flags & 0x3) != 0x1) {
                         result = -30; // EROFS: only O_RDONLY on the disc
                     } else if (self->m_cdvd->file_exists(path)) {
-                        FILE* f = _wfopen(self->m_cdvd->resolve_path(path).c_str(), L"rb");
+                        FILE* f = reo::host_file::openRead(self->m_cdvd->resolve_path(path));
                         if (f) {
                             int fd = 0;
                             while (fd < kMaxFioFds && self->m_fioFds[fd])
@@ -2827,8 +2867,8 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                             if (whence >= 0 && whence <= 2 && position >= 0 && position <= 0x7fffffff) {
                                 self->m_fioAssetPositions[fd] = static_cast<uint64_t>(position); result = static_cast<int32_t>(position);
                             } else result = -22;
-                        } else if (whence >= 0 && whence <= 2 && _fseeki64(f, off, whence) == 0) {
-                            const long long pos = _ftelli64(f);
+                        } else if (whence >= 0 && whence <= 2 && reo::host_file::seek(f, off, whence) == 0) {
+                            const auto pos = reo::host_file::tell(f);
                             result = (pos >= 0 && pos <= 0x7FFFFFFF) ? (int32_t)pos : -22; // EINVAL
                         } else {
                             result = -22;

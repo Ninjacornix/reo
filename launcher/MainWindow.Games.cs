@@ -173,8 +173,10 @@ public partial class MainWindow {
         RefreshAssetPakSummary();
         RefreshReadyCheck();
         RefreshImportUi();
-        if (PageCheats.Visibility == Visibility.Visible && cheatsGame != settings.Game.Id)
-            RefreshCheats();
+        if (PageCheats.Visibility == Visibility.Visible) {
+            if (cheatsGame != settings.Game.Id) RefreshCheats();
+            else UpdateCheatState();
+        }
         if (PageMods.Visibility == Visibility.Visible) UpdateModState();
         if (PageMods.Visibility == Visibility.Visible && modsGame != settings.Game.Id)
             RefreshMods();

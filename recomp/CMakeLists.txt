@@ -24,11 +24,13 @@ project(reo_recomp CXX)
 
 set(PS2RECOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/PS2Recomp")
 
-set(PS2RECOMP_BUILD "${PS2RECOMP_DIR}/out/build")
+set(PS2RECOMP_BUILD "${PS2RECOMP_DIR}/out/build" CACHE PATH "Native PS2Recomp dependency build")
+set(REO_RECOMP_CONFIG_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/config" CACHE PATH "Locally generated game sources")
 
 
 
 option(REO_BUILD_GPU_GS "Link the validated paraLLEl-GS adapter; select with REO_GS_BACKEND=parallel" OFF)
+option(REO_BUILD_SCANOUT_PACING_CHECK "Build the Windows standalone GPU scanout pacing check" OFF)
 
 # Source-only guarded wrapper registration. Runtime source ownership remains
 # hard-disabled until the direct-context/upstream/reset closure is implemented.
@@ -121,7 +123,11 @@ if(REO_BUILD_GPU_GS)
 
         get_filename_component(_stem "${_entry}" NAME)
 
-        list(APPEND _reo_gpu_libraries "${REO_PARALLEL_GS_BUILD}/parallel-gs/${_part}/Release/${_stem}.lib")
+        if(APPLE)
+            list(APPEND _reo_gpu_libraries "${REO_PARALLEL_GS_BUILD}/parallel-gs/${_part}/lib${_stem}.a")
+        else()
+            list(APPEND _reo_gpu_libraries "${REO_PARALLEL_GS_BUILD}/parallel-gs/${_part}/Release/${_stem}.lib")
+        endif()
 
     endforeach()
 
@@ -173,7 +179,7 @@ if(REO_BUILD_GPU_GS)
     target_sources(reo_parallel_gs_resident_native PRIVATE "${_aniso_output}/anisotropic_spirv.hpp")
     target_include_directories(reo_parallel_gs_resident_native PRIVATE "${_aniso_output}")
     target_compile_definitions(reo_parallel_gs_resident_native PRIVATE NOMINMAX GRANITE_SHIPPING
-        HAVE_WSI_DXGI_INTEROP _CRT_SECURE_NO_WARNINGS)
+        $<$<PLATFORM_ID:Windows>:HAVE_WSI_DXGI_INTEROP> _CRT_SECURE_NO_WARNINGS)
     if(MSVC)
         set_property(TARGET reo_parallel_gs_resident_native PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
         target_compile_options(reo_parallel_gs_resident_native PRIVATE /O2 /fp:precise /wd4267 /wd4244 /wd4309 /wd4005)
@@ -261,7 +267,7 @@ if(REO_BUILD_GPU_GS)
         "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/volk"
         "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/khronos/vulkan-headers/include")
     set_property(SOURCE reo_bootstrap.cpp APPEND PROPERTY COMPILE_DEFINITIONS
-        NOMINMAX GRANITE_SHIPPING HAVE_WSI_DXGI_INTEROP)
+        NOMINMAX GRANITE_SHIPPING $<$<PLATFORM_ID:Windows>:HAVE_WSI_DXGI_INTEROP>)
     target_compile_features(reo_parallel_backend_native PRIVATE cxx_std_17)
     target_compile_definitions(reo_parallel_backend_native PRIVATE NOMINMAX GRANITE_SHIPPING)
     if(WIN32)
@@ -273,6 +279,15 @@ if(REO_BUILD_GPU_GS)
     endif()
     set_property(TARGET reo_parallel_backend_native PROPERTY UNITY_BUILD OFF)
     target_link_libraries(reo_parallel_backend_native PRIVATE ${_reo_gpu_libraries})
+    if(WIN32 AND REO_BUILD_SCANOUT_PACING_CHECK)
+        add_executable(reo_scanout_pacing_check "${_reo_adapter_source}/scanout_pacing_check.cpp")
+        get_target_property(_reo_pacing_includes reo_parallel_backend_native INCLUDE_DIRECTORIES)
+        get_target_property(_reo_pacing_definitions reo_parallel_backend_native COMPILE_DEFINITIONS)
+        target_include_directories(reo_scanout_pacing_check PRIVATE ${_reo_pacing_includes})
+        target_compile_definitions(reo_scanout_pacing_check PRIVATE ${_reo_pacing_definitions})
+        target_compile_features(reo_scanout_pacing_check PRIVATE cxx_std_20)
+        target_link_libraries(reo_scanout_pacing_check PRIVATE reo_parallel_backend_native)
+    endif()
     list(PREPEND _reo_gpu_libraries reo_parallel_backend_native)
 
     foreach(_reo_graphics_target IN ITEMS
@@ -381,6 +396,10 @@ set(PS2RECOMP_LIBS
 
 
 
+if(APPLE)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/ReoMacOS.cmake")
+endif()
+
 if(WIN32)
     enable_language(C)
     include("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/ReoAudioOutput.cmake")
@@ -410,12 +429,12 @@ set(REO_RUNTIME_SOURCES
 
 function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
-    file(GLOB RECOMP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}/*.cpp")
+    file(GLOB RECOMP_SOURCES CONFIGURE_DEPENDS "${REO_RECOMP_CONFIG_ROOT}/${OUTPUT_DIR}/*.cpp")
 
     # Sibling generated directories (output_overlay, output_extra, output_ovl) sit
     # next to OUTPUT_DIR: recomp/config for File #1, recomp/config/output_file2 for
     # File #2 (tools/local_build/generate_game.py --game file2).
-    get_filename_component(_reo_generated_root "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}" DIRECTORY)
+    get_filename_component(_reo_generated_root "${REO_RECOMP_CONFIG_ROOT}/${OUTPUT_DIR}" DIRECTORY)
 
     list(LENGTH RECOMP_SOURCES RECOMP_COUNT)
 
@@ -591,7 +610,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
                 "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/volk"
                 "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/khronos/vulkan-headers/include")
             set_property(SOURCE ${_reo_movie_game_sources} APPEND PROPERTY COMPILE_DEFINITIONS
-                NOMINMAX GRANITE_SHIPPING HAVE_WSI_DXGI_INTEROP)
+                NOMINMAX GRANITE_SHIPPING $<$<PLATFORM_ID:Windows>:HAVE_WSI_DXGI_INTEROP>)
         endif()
         list(APPEND _reo_handwritten_sources
             overrides/movie_join_observed_caller.cpp
@@ -631,7 +650,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
                 "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/volk"
                 "${REO_PARALLEL_GS_SOURCE}/Granite/third_party/khronos/vulkan-headers/include")
             set_property(SOURCE ${_reo_movie_game_sources} APPEND PROPERTY COMPILE_DEFINITIONS
-                NOMINMAX GRANITE_SHIPPING HAVE_WSI_DXGI_INTEROP)
+                NOMINMAX GRANITE_SHIPPING $<$<PLATFORM_ID:Windows>:HAVE_WSI_DXGI_INTEROP>)
         endif()
         list(APPEND _reo_handwritten_sources
             "${_reo_movie_copies}/movie_join_observed_caller.cpp"
@@ -671,6 +690,8 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     )
 
+    target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/native_netcode.cpp")
+    target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/world_sync.cpp")
     if(WIN32)
         # A direct object supplies raylib audio before its archive is considered.
         # This replaces only the host audio provider, for both game editions.
@@ -697,7 +718,8 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
             APPEND PROPERTY INCLUDE_DIRECTORIES
 
-                "${PS2RECOMP_DIR}/ps2xRuntime/src/lib" "${_reo_vu_generated_dir}")
+                "${PS2RECOMP_DIR}/ps2xRuntime/src/lib" "${_reo_vu_generated_dir}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/../tools/vu_whole_aot")
 
         set_property(SOURCE overrides/reo_vu_specialized.cpp TARGET_DIRECTORY ${TARGET_NAME}
 
@@ -757,7 +779,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
         ${PS2RECOMP_INCLUDES}
 
-        "${CMAKE_CURRENT_SOURCE_DIR}/config/${OUTPUT_DIR}"
+        "${REO_RECOMP_CONFIG_ROOT}/${OUTPUT_DIR}"
 
         "${_reo_generated_root}/output_overlay"
 
@@ -775,6 +797,15 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
 
     target_link_libraries(${TARGET_NAME} PRIVATE ${PS2RECOMP_LIBS})
+    if(APPLE)
+        target_compile_options(${TARGET_NAME} PRIVATE -O2 -ffp-contract=off)
+        target_include_directories(${TARGET_NAME} PRIVATE "${PS2RECOMP_BUILD}/_deps/sse2neon-src")
+        target_compile_definitions(${TARGET_NAME} PRIVATE USE_SSE2NEON)
+        target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/netcnf_profile.cpp")
+        target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/snap_iop_transport.cpp")
+        set_property(SOURCE overrides/reo_hw_bridge.cpp TARGET_DIRECTORY ${TARGET_NAME}
+            APPEND PROPERTY INCLUDE_DIRECTORIES "${PS2RECOMP_DIR}/ps2xRuntime/src/lib")
+    endif()
 
     if(REO_BUILD_GPU_PARENT_NATURAL_HOOKS AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
         set_property(SOURCE reo_bootstrap.cpp TARGET_DIRECTORY ${TARGET_NAME}
@@ -807,7 +838,7 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
             APPEND PROPERTY COMPILE_DEFINITIONS REO_HAVE_PARALLEL_GS=1)
 
-        if(WIN32)
+        if(WIN32 OR APPLE)
 
         reo_require_vulkan_shader_tools()
         set(_present_source "${CMAKE_CURRENT_SOURCE_DIR}/../tools/parallel_gs_backend")
@@ -852,7 +883,10 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
         endif()
 
-        target_link_libraries(${TARGET_NAME} PRIVATE ${_reo_gpu_libraries} winspool oleaut32 uuid comdlg32)
+        target_link_libraries(${TARGET_NAME} PRIVATE ${_reo_gpu_libraries})
+        if(WIN32)
+            target_link_libraries(${TARGET_NAME} PRIVATE winspool oleaut32 uuid comdlg32)
+        endif()
         if(WIN32)
             target_sources(${TARGET_NAME} PRIVATE $<TARGET_OBJECTS:reo_movie_allocator_native>)
             target_link_libraries(${TARGET_NAME} PRIVATE d3d11 dxgi dxguid)
@@ -1086,7 +1120,8 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
         WIN32_LEAN_AND_MEAN
 
-        REO_PLATFORM_WINDOWS
+        $<$<PLATFORM_ID:Windows>:REO_PLATFORM_WINDOWS>
+        $<$<PLATFORM_ID:Darwin>:REO_PLATFORM_MACOS>
 
         ${GAME_DEFINE}
 

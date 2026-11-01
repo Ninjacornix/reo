@@ -8,6 +8,8 @@
 #if defined(_WIN32)
 #include "resident_dxgi_presenter1c.h"
 #include "movie_runtime/movie_owner_service_fwd.h"
+#elif defined(REO_MACOS_METAL_PRESENT)
+#include "macos/resident_metal_presenter.h"
 #elif defined(REO_LINUX_XLIB_PRESENT)
 #include "linux/resident_xlib_presenter.h"
 #endif
@@ -89,11 +91,17 @@ class ParallelBackend final : public Backend, private SignalInterface {
     bool movieEnabled_ = false;
 #if defined(_WIN32)
     std::unique_ptr<reo_gpu_present::ResidentDxgiPresenter> presenter_;
+#elif defined(REO_MACOS_METAL_PRESENT)
+    std::unique_ptr<reo_gpu_present::ResidentMetalPresenter> presenter_;
 #elif defined(REO_LINUX_XLIB_PRESENT)
     std::unique_ptr<reo_gpu_present::ResidentXlibPresenter> presenter_;
 #endif
     reo_gpu_present::ResidentOwnerImages displayImages_;
     reo::performance::FrameTrace frameTrace_;
+    uint64_t staleScanouts_ = 0;
+    unsigned consecutiveStale_ = 0;
+    std::array<uint64_t, 2> lastScanoutMode_{};
+    bool lastScanoutProgressive_ = false;
     uint64_t normalDownloads_ = 0, outputReadbacks_ = 0;
     BufferHandle captureReadback_;
     size_t captureReadbackBytes_ = 0;
@@ -493,7 +501,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
 
   public:
     reo_parallel_backend::ResidentDiagnostics diagnostics() const {
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         const uint64_t presented = presenter_ ? presenter_->submittedFrames() : 0;
 #else
         const uint64_t presented = 0;
@@ -567,6 +575,14 @@ class ParallelBackend final : public Backend, private SignalInterface {
                                                               deviceExtensions, 1, flags);
         } else
 #endif
+#if defined(REO_MACOS_METAL_PRESENT)
+        if (config_.residentPresentation) {
+            const char* instanceExtensions[] = {"VK_KHR_surface", "VK_EXT_metal_surface"};
+            const char* deviceExtensions[] = {"VK_KHR_swapchain"};
+            initialized = context_->init_instance_and_device(instanceExtensions, 2,
+                                                              deviceExtensions, 1, flags);
+        } else
+#endif
 #if defined(REO_LINUX_XLIB_PRESENT)
         if (config_.residentPresentation) {
             const char* instanceExtensions[] = {"VK_KHR_surface", "VK_KHR_xlib_surface"};
@@ -585,7 +601,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         device_->set_context(*context_);
         device_->init_frame_contexts(4);
         initializePipelineCache();
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         if (config_.residentPresentation) {
             displayImages_.beginSession();
             if (!config_.presentationTarget || !config_.presentationEpochCurrent ||
@@ -596,6 +612,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
             }
 #if defined(_WIN32)
             presenter_ = std::make_unique<reo_gpu_present::ResidentDxgiPresenter>(
+#elif defined(REO_MACOS_METAL_PRESENT)
+            presenter_ = std::make_unique<reo_gpu_present::ResidentMetalPresenter>(
 #else
             presenter_ = std::make_unique<reo_gpu_present::ResidentXlibPresenter>(
 #endif
@@ -672,6 +690,12 @@ class ParallelBackend final : public Backend, private SignalInterface {
         ThreadIndexScope threadIndex;
         const bool saveCache = live_ && cacheReady_;
         live_ = false;
+        if (staleScanouts_)
+            std::fprintf(stderr, "[GS-PRESENT-PACING] retired_stale=%llu\n",
+                static_cast<unsigned long long>(staleScanouts_));
+        staleScanouts_ = 0;
+        consecutiveStale_ = 0;
+        lastScanoutProgressive_ = false;
         reo_parent_natural::setActualFirstEntryEnrollmentRequested(false);
         retireMovieOwner();
         if (gs_)
@@ -689,7 +713,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         fifo_.clear();
         observer_.reset();
         displayImages_.shutdown();
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         if (presenter_ && config_.residentStoppedDiagnostic)
             try {
                 config_.residentStoppedDiagnostic(displayImages_.liveImages(),
@@ -726,6 +750,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
     void reset() override {
         ThreadIndexScope threadIndex;
         requireLive();
+        consecutiveStale_ = 0;
+        lastScanoutProgressive_ = false;
         if (residentGeometry_ && !residentResetReady_)
             throw std::runtime_error("GS reset lacks real resident retirement/epoch preparation");
         residentResetReady_ = false;
@@ -741,7 +767,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         gifHalted_ = false;
         heldWork_.clear();
         displayImages_.retireEpoch();
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         if (presenter_)
             presenter_->retireSource();
 #endif
@@ -985,7 +1011,35 @@ class ParallelBackend final : public Backend, private SignalInterface {
         info.high_resolution_scanout = reo::graphics::highResolutionScanout(
             internalResolution_, capture.registers[0], capture.registers[8], capture.registers[10]);
         gs_->flush();
+        // Presentation can fall behind the guest while the queue still owns
+        // newer drawings. Retire obsolete progressive markers after submitting
+        // ALL preceding GS work; never discard a guest packet, event or DMA.
+        // Interlaced history and EXTWRITE have side effects and cannot be skipped.
+        // At most two consecutive markers may be retired, preventing starvation.
+        static const bool pace = [] {
+            const char* value = std::getenv("REO_SKIP_STALE_SCANOUT");
+            return !value || std::strcmp(value, "0") != 0;
+        }();
+        if (pace && config_.currentVsyncTick && consecutiveStale_ < 2 &&
+            lastScanoutProgressive_ && lastScanoutMode_[0] == capture.registers[1] &&
+            lastScanoutMode_[1] == capture.registers[2] &&
+            !capture.forceHostReadback && !(capture.registers[13] & 1u) &&
+            !(config_.diagnosticOutputRequested &&
+              config_.diagnosticOutputRequested(capture.tick)) &&
+            gs_->vsync_can_skip(info)) {
+            const uint64_t now = config_.currentVsyncTick();
+            if (now > capture.tick && now - capture.tick > 3) {
+                ++staleScanouts_;
+                ++consecutiveStale_;
+                // An empty frame means this marker has no new host picture.
+                // The worker keeps its last publication while retiring the marker.
+                return {};
+            }
+        }
+        consecutiveStale_ = 0;
         auto scanout = gs_->vsync(info);
+        lastScanoutProgressive_ = scanout.image && !scanout.interlaced;
+        lastScanoutMode_ = {capture.registers[1], capture.registers[2]};
         timing.scanout();
         if(scanout.image && scanoutReports_ < 16 &&
            (scanout.image->get_width()!=reportedScanoutWidth_ || scanout.image->get_height()!=reportedScanoutHeight_)) {
@@ -993,7 +1047,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
             std::fprintf(stderr,"[INTERNAL-RESOLUTION-1] image=%ux%u high-resolution=%u\n",
                          reportedScanoutWidth_,reportedScanoutHeight_,scanout.high_resolution_scanout ? 1u : 0u);
         }
-#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT)
+#if defined(_WIN32) || defined(REO_LINUX_XLIB_PRESENT) || defined(REO_MACOS_METAL_PRESENT)
         if (presenter_ && scanout.image) {
             if (!config_.presentationEpochCurrent(capture.epoch))
                 return {};

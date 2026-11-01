@@ -50,6 +50,8 @@ public static partial class Updates {
     static extern uint GetLongPathNameW(string path, StringBuilder result, uint capacity);
     public static string CanonicalDirectory(string path) {
         string absolute = Path.GetFullPath(path);
+        if (!OperatingSystem.IsWindows())
+            return Path.TrimEndingDirectorySeparator(absolute);
         var result = new StringBuilder(32768);
         uint count = GetLongPathNameW(absolute, result, (uint)result.Capacity);
         if (count == 0 || count >= result.Capacity)

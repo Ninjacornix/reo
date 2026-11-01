@@ -76,8 +76,10 @@ static partial class GameArtwork {
                         .Equals(asset.Sha256, StringComparison.OrdinalIgnoreCase))
                     throw new IOException("Cover artwork did not pass verification.");
             }
+#if !REO_CROSS_PLATFORM
             if (LoadImage(temporary, 0) == null)
                 throw new IOException("Downloaded cover artwork could not be opened.");
+#endif
             File.Move(temporary, target, true);
         } finally {
             try { File.Delete(temporary); }

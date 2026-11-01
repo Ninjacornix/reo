@@ -69,6 +69,12 @@ public sealed partial class Controller {
             return;
         }
         if (device.Kind == "keyboard") {
+#if REO_CROSS_PLATFORM
+            if (!OperatingSystem.IsWindows()) {
+                RawState = State = InputMapping.Keyboard(config.Keyboard, NativeControllers.KeyDown);
+                return;
+            }
+#endif
             GetWindowThreadProcessId(GetForegroundWindow(), out uint foreground);
             bool focused = foreground == Environment.ProcessId ||
                            (GameProcessId > 0 && foreground == GameProcessId);

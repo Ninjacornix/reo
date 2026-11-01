@@ -8,6 +8,7 @@
 #include "reo_hw_bridge.h"
 #include "../../network/native/ee_count_clock.h"
 #include "../../network/native/automatic_account.h"
+#include "../../network/native/game_netcode.h"
 #include <cstdlib>
 #include <cstring>
 #include <atomic>
@@ -77,6 +78,9 @@ void sub_001DF99C_0x1df99c(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001EA000_0x1ea000(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001C8850_0x1c8850(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001C72F0_0x1c72f0(uint8_t*, R5900Context*, PS2Runtime*);
+void o2_006647F0_0x6647f0(uint8_t*, R5900Context*, PS2Runtime*);
+void o2_0067ED50_0x67ed50(uint8_t*, R5900Context*, PS2Runtime*);
+void sub_001AFDD0_0x1afdd0(uint8_t*, R5900Context*, PS2Runtime*);
 
 namespace reo_missing_entries {
 namespace {
@@ -91,7 +95,26 @@ void nativeReliableSend(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) 
         WRITE32(0x235F60, 0x3F000000u);
         std::fprintf(stderr, "[COOP-RATE] File #1 reliable batching: 1000 -> 500 ms\n");
     }
+    reo_network::native::capture(rdram,reo_network::native::File1);
+    reo_network::native::cadence(rdram,reo_network::native::File1,
+                               reo_network::native::runtime().enhanced(reo_network::native::nowUs()));
+    reo_network::native::worldPump(rdram,ctx,runtime,false);
     sub_001C72F0_0x1c72f0(rdram, ctx, runtime);
+}
+void nativeMotionCorrection(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    reo_network::native::correction(rdram,reo_network::native::File1,GPR_U32(ctx,4));
+    o2_006647F0_0x6647f0(rdram,ctx,runtime);
+}
+void nativeMotionReceive(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    reo_network::native::MotionRecord record(rdram,reo_network::native::File1,GPR_U32(ctx,4),GPR_U32(ctx,5));
+    o2_0067ED50_0x67ed50(rdram,ctx,runtime);
+}
+void nativeEventSend(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) {
+    reo_network::native::worldObserve(rdram,false,GPR_U32(ctx,4),GPR_U32(ctx,5));
+    const auto mode=reo_network::native::reliableRefresh && GPR_U32(ctx,4)==8 ? 4u :
+        reo_network::native::eventReliability(rdram,reo_network::native::File1,GPR_U32(ctx,4),GPR_U32(ctx,5),GPR_U32(ctx,7));
+    if(mode!=GPR_U32(ctx,7)) SET_GPR_U32(ctx,7,mode);
+    sub_001AFDD0_0x1afdd0(rdram,ctx,runtime);
 }
 
 void nativeNetworkDisplay(uint8_t* rdram, R5900Context* ctx, PS2Runtime* runtime) {
@@ -368,6 +391,9 @@ void networkScenarioState(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime) 
 // Call after all generated (and overlay) registration.
 void install(PS2Runtime& runtime) {
     runtime.registerFunction(0x1C72F0, nativeReliableSend);
+    runtime.registerFunction(0x1AFDD0,nativeEventSend);
+    runtime.registerOverlayFunction(0x570000u,0x336F574Du,4u,3u,0x6647F0u,nativeMotionCorrection);
+    runtime.registerOverlayFunction(0x570000u,0x336F574Du,4u,3u,0x67ED50u,nativeMotionReceive);
     runtime.registerOverlayFunction(0x810000u,0x336F574Du,4u,10u,0x814720u,networkScenarioState);
     runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x5F8280u, nativeNetworkDisplay);
     runtime.registerOverlayFunction(0x570000u, 0x336F574Du, 4u, 4u, 0x5809B0u, nativePasswordPoll);

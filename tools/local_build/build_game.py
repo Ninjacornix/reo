@@ -10,11 +10,20 @@ import subprocess
 import sys
 import os
 
-from compile_game import compile_plan, msvc_environment
-from generate_game import generate, GAMES
-from reconstruct_vu import reconstruct
-from source_recipes import apply_plan
-from generate_queue_control import generate as generate_queue_control
+# The entry script can fit below MAX_PATH while a longer-named sibling module
+# does not. Normalize the import directory before loading any build helpers.
+from long_paths import extended
+_import_paths = sys.path[:]
+sys.path.insert(0, str(extended(Path(__file__).parent)))
+try:
+    from compile_game import compile_plan, msvc_environment
+    from generate_game import generate, GAMES
+    from reconstruct_vu import reconstruct
+    from source_recipes import apply_plan
+    from generate_queue_control import generate as generate_queue_control
+finally:
+    sys.path[:] = _import_paths
+del _import_paths
 
 
 def sha(path):
@@ -50,14 +59,6 @@ def stage(work, name, inputs, action, outputs, jobs=1):
     temporary.replace(receipt)
 
 
-def extended(path):
-    """Windows path without the 260-character limit (kit sources nest deeply)."""
-    text = str(Path(path).resolve())
-    if sys.platform != "win32" or text.startswith("\\\\?\\"):
-        return Path(text)
-    return Path("\\\\?\\UNC\\" + text[2:] if text.startswith("\\\\") else "\\\\?\\" + text)
-
-
 def game_profile(kit, requested=None):
     """Bind worker inputs to the selected kit, never to a File #1 default ELF."""
     plan = json.loads((Path(kit) / "compile-plan.json").read_text())
@@ -71,7 +72,7 @@ def game_profile(kit, requested=None):
 
 
 def build(kit, disc, work, output, jobs, game=None):
-    kit, disc, work, output = [Path(p).resolve() for p in (kit, disc, work, output)]
+    kit, disc, work, output = map(extended, (kit, disc, work, output))
     game, profile = game_profile(kit, game)
     work.mkdir(parents=True, exist_ok=True)
     if sys.platform == "linux":
@@ -98,7 +99,7 @@ def build(kit, disc, work, output, jobs, game=None):
     metadata = kit / "metadata"
     generated = project / "recomp/config"
     elf = disc / profile["elf"]
-    script = Path(__file__).parent
+    script = extended(Path(__file__).parent)
     metadata_files = [p for p in sorted(metadata.rglob("*")) if p.is_file() and p.name not in
                       {"local_queue_control.json", "local_vu_images.json"}]
 

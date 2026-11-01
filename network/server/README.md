@@ -15,12 +15,16 @@ The older export_server.py remains a maintainer tool for constructing the frozen
 reference component; its Python/dependency payload is not shipped in v1.0.6.
 
 The native clients can use [openSNAP](https://github.com/GrenderG/openSNAP), a
-separate server project. This directory contains one patch against upstream
-revision `f9af55491718a043923225a0895fe60eab76fd7c`.
+separate server project. RC2 pins upstream revision
+`1014371ba70d1caa415a09b1fa39f550b1e9cb55`, applies the patches in `patches/`,
+and adds the separately executed AGPL native companion in `native/`.
+The newer source includes reliable membership callbacks, suppression of late
+lobby echoes during gameplay, bounded endpoint state and rotating server logs.
+Our File #1 room-ID-zero correction remains applied.
 
 openSNAP and this server patch are licensed under the **GNU Affero General
 Public License, version 3**, as provided by the upstream
-[LICENSE](https://github.com/GrenderG/openSNAP/blob/f9af55491718a043923225a0895fe60eab76fd7c/LICENSE).
+[LICENSE](https://github.com/GrenderG/openSNAP/blob/1014371ba70d1caa415a09b1fa39f550b1e9cb55/LICENSE).
 The server executes separately from the native runtime. Server/vendor binaries,
 account databases and credentials are not committed to this repository.
 
@@ -29,21 +33,27 @@ account databases and credentials are not committed to this repository.
 From this repository's root, using PowerShell, Git and Python 3.11 or newer:
 
 ```powershell
-$outbreakServerPatch = (Resolve-Path 'network/server/patches/0001-outbreak-current-room-query.patch').Path
 git clone https://github.com/GrenderG/openSNAP.git build/server/openSNAP
-git -C build/server/openSNAP checkout --detach f9af55491718a043923225a0895fe60eab76fd7c
-git -C build/server/openSNAP apply --check $outbreakServerPatch
-git -C build/server/openSNAP apply $outbreakServerPatch
+git -C build/server/openSNAP checkout --detach 1014371ba70d1caa415a09b1fa39f550b1e9cb55
+python tools/local_build/export_server_source.py --checkout build/server/openSNAP --output build/server/rc2-component --root .
 
 Push-Location build/server/openSNAP
 python -m venv .venv
 & .venv/Scripts/python.exe -m pip install -r requirements.txt
-& .venv/Scripts/python.exe -m unittest tests.test_outbreak_plugin tests.test_outbreak2_plugin
+$env:PYTHONPATH = "$(Resolve-Path '../rc2-component/source');$PWD"
+& .venv/Scripts/python.exe -B -m unittest tests.test_outbreak_plugin tests.test_outbreak2_plugin tests.test_udp_reliability tests.test_udp_server_runtime -q
 Pop-Location
+& build/server/openSNAP/.venv/Scripts/python.exe -B -m unittest discover -s network/server/tests -v
+Remove-Item Env:PYTHONPATH
 ```
 
-Check whether the patch is already applied with
-`git -C build/server/openSNAP apply --reverse --check $outbreakServerPatch`.
+The exporter uses an archive of the pinned commit, applies the complete patch
+series and copies the companion; it never changes an existing server checkout.
+Run `build/server/rc2-component/source/run.py` for the patched services. Applying
+only patch 0001 supplies the roster correction, without native negotiation.
+The format-2 manifest hashes code, static APP pages and the upstream signup logo.
+Accounts, databases, Python environments and unrelated game patches are excluded.
+
 Use the upstream README for server configuration and operation. Restart the
 server after applying the patch; an existing process retains its loaded code
 and in-memory sessions.

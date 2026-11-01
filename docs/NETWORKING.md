@@ -3,6 +3,9 @@
 Online gameplay is under development. A successful socket test or an open game
 window does not demonstrate multiplayer synchronization.
 
+RC2's negotiated native motion, reliable event and world-check work is documented
+in [Native netcode](NATIVE_NETCODE.md), including compatibility and validation limits.
+
 The NTSC-U File #1 build uses SN/ACCESS (SN@P). Its original networking library
 calls SNIOPINT service `0x01270110`. The native implementation supplies Winsock
 TCP/UDP and name resolution underneath that library, preserving the game's

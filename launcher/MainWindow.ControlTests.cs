@@ -49,10 +49,11 @@ public partial class MainWindow {
         }
         void CheckMap(string edition) {
             UpdateLayout();
-            Check(ControllerDiagram.IsVisible && bindingButtons.Count == 16 && bindingValues.Count == 16 &&
+            Check(ControllerDiagram.IsVisible && bindingButtons.Count == 20 && bindingValues.Count == 20 &&
                 bindingLeaders.Count == 16 && InputMapping.Actions.All(a => bindingButtons.ContainsKey(a.Id)) &&
-                InputMapping.Camera.All(a => !bindingButtons.ContainsKey(a.Id)),
-                edition + " exposes sixteen physical PS2 targets without the camera controls below");
+                KeyboardStickBindingsPanel.IsVisible && KeyboardStickBindings.Children.Count == 4 &&
+                InputMapping.Camera.All(a => bindingButtons.ContainsKey(a.Id) && !ControllerDiagram.Children.Contains(bindingButtons[a.Id])),
+                edition + " exposes sixteen physical PS2 targets and four separate keyboard right-stick bindings");
             var boxes = InputMapping.Actions.Select(a => (a.Id, Button: bindingButtons[a.Id])).Select(a =>
                 (a.Id, Box: new Rect(Canvas.GetLeft(a.Button), Canvas.GetTop(a.Button), a.Button.ActualWidth, a.Button.ActualHeight))).ToArray();
             Check(boxes.All(a => a.Box.Left >= -1 && a.Box.Top >= -1 && a.Box.Right <= ControllerDiagram.ActualWidth + 1 &&
@@ -144,6 +145,19 @@ public partial class MainWindow {
                 Check(bindingButtons[action.Id].IsKeyboardFocused, action.Id + " returns keyboard focus to the rebuilt binding button");
                 settings.Keyboard[action.Id] = previous; BuildBindingRows();
             }
+            foreach (var action in InputMapping.Camera) {
+                await Invoke(bindingButtons[action.Id]);Key(System.Windows.Input.Key.F);await Settle();
+                var mapped=InputMapping.Keyboard(settings.Keyboard,k=>k=='F');
+                Check(settings.Keyboard[action.Id]=='F' && Stored().Keyboard[action.Id]=='F' && InputMapping.ActionPressed(mapped,action.Id) && mapped.Buttons==0 && mapped.LX==0 && mapped.LY==0,
+                    action.Id+" is editable, persists and drives only the right stick");
+                await Invoke(bindingButtons[action.Id]);await Invoke(ClearCaptureButton);
+                Check(settings.Keyboard[action.Id]==0 && Stored().Keyboard[action.Id]==0 && InputMapping.Keyboard(settings.Keyboard,k=>k=='F')==new Pad(),
+                    action.Id+" can be cleared without stale voice-command input");
+            }
+            settings.Keyboard=InputMapping.KeyboardDefaults();BuildBindingRows();
+            await Invoke(bindingButtons["Up"]);Key(System.Windows.Input.Key.Up);await Settle();
+            Check(settings.Keyboard["CameraUp"]==0 && Stored().Keyboard["CameraUp"]==0 && InputMapping.Keyboard(settings.Keyboard,k=>k==38)==new Pad(1),
+                "Assigning an arrow to D-pad clears its old right-stick binding and prevents simultaneous voice commands");
             await Invoke(ResetBindingsButton);
             Check(settings.Keyboard.OrderBy(p => p.Key).SequenceEqual(InputMapping.KeyboardDefaults().OrderBy(p => p.Key)) &&
                 Stored().Keyboard.OrderBy(p => p.Key).SequenceEqual(InputMapping.KeyboardDefaults().OrderBy(p => p.Key)),
@@ -187,28 +201,28 @@ public partial class MainWindow {
 
             // A missing import must not remove editable mappings or permit a stale async image to win.
             settings.ImportedFile2 = ""; RefreshControllerArtwork();
-            await Wait(() => controllerArtwork == null && ControllerDiagram.Visibility == Visibility.Collapsed && bindingButtons.Count == 16,
-                "Missing game data falls back to sixteen editable bindings without separate camera rows");
+            await Wait(() => controllerArtwork == null && ControllerDiagram.Visibility == Visibility.Collapsed && bindingButtons.Count == 20,
+                "Missing game data keeps all sixteen button bindings and four right-stick bindings editable");
             await Invoke(bindingButtons["Cross"]); Key(System.Windows.Input.Key.G); await Settle();
             Check(settings.Keyboard["Cross"] == 'G' && Stored().Keyboard["Cross"] == 'G' &&
                 (string)bindingButtons["Cross"].Content == "G", "Text fallback bindings retain native remapping and persistence");
             Capture("missing-import-fallback");
             settings.ImportedFile2 = file1Import; RefreshControllerArtwork();
             await Task.Delay(100);
-            Check(controllerArtwork == null && bindingButtons.Count == 16,
+            Check(controllerArtwork == null && bindingButtons.Count == 20,
                 "An unsupported edition archive leaves every fallback binding editable");
             settings.ImportedFile2 = file2Import; RefreshControllerArtwork();
             GamePicker.SelectedValue = "file1"; UpdateInputUi();
             GamePicker.SelectedValue = "file2"; UpdateInputUi();
             await Wait(() => Hash(controllerArtwork) == "2f5a177c9165a8ad9d53f18a4ff1fee81af4d95269281a7a0c50b74dfdbf0da2" &&
-                ControllerDiagram.IsVisible && bindingButtons.Count == 16, "Rapid game/import changes keep the final edition's correct controller artwork");
+                ControllerDiagram.IsVisible && bindingButtons.Count == 20, "Rapid game/import changes keep the final edition's correct controller artwork");
             await Invoke(ResetBindingsButton);
 
             var keyboard = new Dictionary<string, int>(settings.Keyboard);
             // This is a saved disconnected selection, never an emulated or injected physical controller.
             controller.Select("xbox:4294967295"); controller.Poll(); UpdateInputUi(); ShowBindings(this, new()); await Settle();
             Check(!controller.SelectedDevice.Available && LayoutTab.IsEnabled && StickSettings.Visibility == Visibility.Visible &&
-                bindingButtons.Count == 16,
+                bindingButtons.Count == 16 && KeyboardStickBindingsPanel.Visibility == Visibility.Collapsed,
                 "A disconnected Xbox profile shows sixteen pad targets and exposes its independent stick settings");
             var pad = new Dictionary<string, int>(settings.Xbox.Buttons);
             await Invoke(bindingButtons["Cross"]);

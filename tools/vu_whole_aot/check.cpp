@@ -6,8 +6,9 @@
 #include "reo_vu_whole_registered_generated.h"
 
 int main(int argc, char** argv) try {
-    if (argc != 3)
-        throw std::runtime_error("Usage: check CAPTURES FRESH_OUTPUT");
+    if (argc != 3 && (argc != 4 || std::string(argv[3]) != "--default"))
+        throw std::runtime_error("Usage: check CAPTURES FRESH_OUTPUT [--default]");
+    const bool defaultOnly = argc == 4;
     const fs::path out = argv[2];
     if (!out.parent_path().empty())
         fs::create_directories(out.parent_path());
@@ -16,6 +17,13 @@ int main(int argc, char** argv) try {
     for (const char* key : {"REO_VU1_DUMP", "REO_VU1_TIMING_AT"})
         _putenv_s(key, "");
     const auto* table = reo_vu_whole_registered_generated::programTable();
+    if (defaultOnly) {
+#if defined(REO_VU_HAS_DEFAULT_PROGRAM_TABLE)
+        table = reo_vu_whole_registered_generated::defaultProgramTable();
+#else
+        throw std::runtime_error("Supplied factory has no default program table");
+#endif
+    }
     if (!vu_whole_program::registerProgramTable(table))
         throw std::runtime_error("Table registration refused");
     std::vector<fs::path> files;
@@ -76,7 +84,8 @@ int main(int argc, char** argv) try {
         }
     }
     std::ofstream receipt(out / "result.json");
-    receipt << "{\"snapshots\":" << snapshots.size() << ",\"selected\":" << selected
+    receipt << "{\"defaultOnly\":" << (defaultOnly ? "true" : "false")
+            << ",\"snapshots\":" << snapshots.size() << ",\"selected\":" << selected
             << ",\"stateBytes\":" << sizeof(VU1State)
             << ",\"dataBytes\":16384,\"packets\":" << packets << ",\"packetBytes\":" << packetBytes
             << ",\"checksum\":" << checksum;

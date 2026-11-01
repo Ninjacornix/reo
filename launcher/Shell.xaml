@@ -227,6 +227,11 @@
         <Grid x:Name="CapturePanel" Visibility="Collapsed" Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CaptureHint" Style="{StaticResource Hint}" FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/><Button x:Name="ClearCaptureButton" Grid.Column="1" Content="Clear binding" Click="ClearCapturedBinding" Margin="0,0,8,0"/><Button x:Name="CancelCaptureButton" Grid.Column="2" Content="Cancel" Click="CancelCapture"/></Grid>
         <Canvas x:Name="ControllerDiagram" Height="470" Visibility="Collapsed" SizeChanged="ControllerDiagramSizeChanged" ClipToBounds="False"/>
         <UniformGrid x:Name="BindingRows" Columns="2"/>
+        <StackPanel x:Name="KeyboardStickBindingsPanel" Visibility="Collapsed" Margin="0,20,0,0">
+         <TextBlock Text="RIGHT STICK / VOICE COMMANDS" FontSize="14" Foreground="{StaticResource Muted}" Margin="0,0,0,8"/>
+         <TextBlock Text="D-pad keys use tank controls. Assigning a key clears its previous keyboard binding." Style="{StaticResource Hint}" FontSize="14" Margin="0,0,0,8"/>
+         <UniformGrid x:Name="KeyboardStickBindings" Columns="2"/>
+        </StackPanel>
         <Grid Margin="0,14,0,8"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
          <TextBlock Text="PS2 button mapping" FontSize="14" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
          <Button x:Name="ResetBindingsButton" Grid.Column="1" Content="Reset bindings" Click="ResetBindings" VerticalAlignment="Center"/>

@@ -1,0 +1,12 @@
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:simple="using:Avalonia.Themes.Simple" xmlns:sys="using:System" xmlns:compat="using:Outbreak.Launcher.Desktop.Compatibility" x:Class="Outbreak.Launcher.Desktop.App">
+ <Application.Styles>
+  <simple:SimpleTheme />
+  <StyleInclude Source="avares://Outbreak.Launcher/Views/Theme.axaml" />
+ </Application.Styles>
+ <Application.DataTemplates>
+  <!-- String content (buttons, combo items) measures like RC1's WPF text. -->
+  <DataTemplate DataType="sys:String">
+   <compat:Rc1TextBlock Text="{Binding}" />
+  </DataTemplate>
+ </Application.DataTemplates>
+</Application>
