@@ -36,7 +36,7 @@ class SlimLongPathTests(unittest.TestCase):
                               if f['path'] == 'tools/local_build/long_paths.py')
                 self.assertEqual(hashlib.sha256(zipped.read(helper['path'])).hexdigest(), helper['sha256'])
             result = subprocess.run([sys.executable, '-I', '-c',
-                'import sys; sys.path.insert(0, sys.argv[1]); import compile_game, long_paths',
+                'import sys; sys.path.insert(0, sys.argv[1]); import compile_game, generate_support, long_paths',
                 str(output / 'tools/local_build')], cwd=root, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
 

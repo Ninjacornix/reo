@@ -77,6 +77,14 @@ jobs:
         uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: '8.0.x'
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Test generation with ordinary Windows long paths disabled
+        env:
+          REO_REQUIRE_LONG_PATH_TESTS: '1'
+        run: python -B -m unittest discover -s tools/local_build -p 'test_long_generation_paths.py' -v
       - name: Build, test and publish launcher preview
         run: ./tools/ci/windows.ps1 -VulkanHeaders "$env:GITHUB_WORKSPACE/build-ninja/ci/vulkan-headers" -Output "$env:GITHUB_WORKSPACE/build-ninja/ci/windows" -Commit $env:GITHUB_SHA
       - name: Upload Windows reports
