@@ -97,7 +97,7 @@ public static partial class Updates {
                 () => {
                     progress?.Report(new("Unpacking", 100));
                     Extract(zip, stage, cancel);
-                    Validate(stage, release.Version, cancel);
+                    Validate(stage, release.Version, cancel, release.Tag);
                 },
                 cancel)
             .ConfigureAwait(false);

@@ -3,11 +3,11 @@ param(
     [Parameter(Mandatory=$true)][string]$KitManifest,
     [Parameter(Mandatory=$true)][string]$Server,
     [Parameter(Mandatory=$true)][string]$Output,
-    [string]$Version = '1.0.19',
+    [string]$Version = '1.0.20',
     [string]$ReleaseTag = '',
     [string]$InputsFile2 = '',
     [string]$KitManifestFile2 = '',
-    [switch]$SelfContained,
+    [switch]$SelfContained = $true,
     [string]$ValidationReport = '',
     [string]$ValidationReportFile2 = ''
 )
@@ -25,7 +25,8 @@ $Output = [IO.Path]::GetFullPath($Output)
 if (Test-Path -LiteralPath $Output) { throw 'Choose a new package directory.' }
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Use a numeric three-part version.' }
 if (!$ReleaseTag) { $ReleaseTag = 'v' + $Version }
-if ($ReleaseTag -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw 'Invalid release tag.' }
+if ($ReleaseTag -notmatch '^v(?<numericVersion>\d+\.\d+\.\d+)(-[0-9A-Za-z.-]+)?$') { throw 'Invalid release tag.' }
+if ([version]$Matches['numericVersion'] -ne [version]$Version) { throw 'ReleaseTag must match the numeric Version.' }
 $dirty = & git -C $repo status --porcelain --untracked-files=normal --ignore-submodules=dirty
 if ($dirty) { throw 'Commit corresponding project sources before packaging.' }
 $kit = Get-Content -LiteralPath $KitManifest -Raw | ConvertFrom-Json
@@ -69,12 +70,14 @@ if ($ValidationReportFile2 -and !$InputsFile2) { throw 'File #2 validation requi
 $secondValidation = if ($InputsFile2) { Read-ValidationProof $ValidationReportFile2 $KitManifestFile2 } else { $null }
 & (Join-Path $PSScriptRoot 'build.ps1')
 if ($LASTEXITCODE) { throw 'Launcher build failed.' }
+. (Join-Path $PSScriptRoot 'dotnet-sdk.ps1')
+$dotnet = Find-LauncherDotNet
 $selfContainedValue = $SelfContained.IsPresent.ToString().ToLowerInvariant()
 # Both layouts publish one launcher executable. Self-contained builds also bundle the
 # .NET and Avalonia native libraries (extracted on first start) instead of leaving ~250 loose DLLs.
 $singleFileArgs = @('/p:PublishSingleFile=true')
 if ($SelfContained) { $singleFileArgs += @('/p:IncludeNativeLibrariesForSelfExtract=true', '/p:EnableCompressionInSingleFile=true') }
-& dotnet publish (Join-Path $PSScriptRoot 'desktop/Reo.Launcher.Desktop.csproj') -c Release -r win-x64 --self-contained $selfContainedValue `
+& $dotnet publish (Join-Path $PSScriptRoot 'desktop/Reo.Launcher.Desktop.csproj') -c Release -r win-x64 --self-contained $selfContainedValue `
     -o $Output --nologo @singleFileArgs /p:SatelliteResourceLanguages=en `
     /p:DebugType=None /p:DebugSymbols=false ("/p:Version=" + $Version)
 if ($LASTEXITCODE) { throw 'Single-file launcher publish failed.' }
@@ -87,7 +90,7 @@ Copy-Item -LiteralPath $Inputs -Destination (Join-Path $Output 'build-inputs.zip
 if ($InputsFile2) { Copy-Item -LiteralPath $InputsFile2 -Destination (Join-Path $Output 'build-inputs-file2.zip') }
 if ($SelfContained) {
     # The single-file bundle embeds runtimeconfig.json; read the copy the publish build wrote.
-    $runtimeConfigPath = (& dotnet msbuild (Join-Path $PSScriptRoot 'desktop/Reo.Launcher.Desktop.csproj') -nologo `
+    $runtimeConfigPath = (& $dotnet msbuild (Join-Path $PSScriptRoot 'desktop/Reo.Launcher.Desktop.csproj') -nologo `
         -getProperty:ProjectRuntimeConfigFilePath /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true |
         Select-Object -Last 1).Trim()
     if ($LASTEXITCODE -or !(Test-Path -LiteralPath $runtimeConfigPath)) { throw 'Missing self-contained runtime configuration.' }

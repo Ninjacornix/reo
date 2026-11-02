@@ -1,6 +1,66 @@
 # Prerelease packaging
 
-Current target: **v1.0.20-rc1**, from **develop**, with numeric assembly version
+## RC2 target
+
+Prepare `v1.0.20-rc2` from `develop`, with numeric version `1.0.20`, using
+`-ReleaseTag v1.0.20-rc2 -Version 1.0.20 -SelfContained`. Keep it a prerelease.
+The macOS changes merged at `dc0fe03858c8e54198bfbbe78ddd5d1c9b385bad`.
+Windows, macOS and Linux launcher CI, parity, source checks and server
+compatibility passed for that commit. Local updater changes require their own
+verification and commit; those remote passes do not cover uncommitted work.
+
+Refresh both sealed game kits and their corresponding dependency sources for
+patches 0117 (macOS fullscreen), 0118 (audio tails), 0119 (File #2 VU selection),
+the changed File #2 VU catalogue and native bootstrap/backend changes. Preserve
+the existing modified developer SDK. Require fresh build receipts bound to the
+exact kits, then run cold setup, cached launch and game/scenario checks with the
+assembled RC2 packages. A launcher CI preview is not a playable release package.
+
+The audio-transition runner now applies patches 0113, 0115 and 0118. It first
+reverses recognized patches newest-first so a final patched SDK can be tested
+without attempting to apply a superseded 0115 hunk twice. Its fixture separately
+checks short-tail draining and immediate cuts with more than 1.5 seconds queued.
+The staged latest RPC/mixer sources passed 54 native checks on Windows against
+the existing MSVC runtime archive; this was not a cold native game build.
+PR #53 reports M2 gameplay and a 104-launch VU replay. Retain that evidence, then
+verify the assembled RC2 packages rather than carrying branch-build results
+over to different sealed inputs.
+
+## Universal launcher upgrade checks
+
+The current Windows launcher uses Avalonia and .NET 10. `package-slim.ps1`
+includes the runtime by default; keep self-contained publishing enabled for
+player releases. No .NET installation is needed for those packages. Source
+builds and packaging require the .NET 10 SDK; both select a compatible user SDK
+when an older system SDK is first on PATH.
+
+The updater compares the full release tag, so `v1.0.20-rc2` supersedes
+`v1.0.20-rc1`, and `v1.0.20` supersedes both. The numeric `distribution.json`
+version remains `1.0.20`. The downloaded package's `releaseTag` must match the
+selected GitHub release. Stable installations continue to exclude prereleases.
+
+Previously shipped RC0/RC1 updaters reject RC tags and cannot distinguish
+releases with the same numeric version. They also start the helper without
+passing the selected storage location. Updating the new launcher cannot repair
+code already installed on a player's machine. v1.0.19 additionally does not
+recognize the self-contained single-file layout. Provide a manual upgrade for
+these installations: close the launcher and game, extract the complete new
+Windows ZIP into the existing installation, and replace application files while
+keeping `data`, `storage.json` and any separately selected storage folder.
+Extracting to another folder starts with separate default storage unless the
+existing storage selection is carried over. A game rebuild may be required
+when the release changes its sealed build inputs.
+
+Run the launcher cross-tests and the published Windows `--update-worker-check`
+before release. Its optional `--legacy-launcher <old Outbreak.Launcher.exe>`
+check uses a copied historical binary in synthetic installations: it verifies
+the old storage handoff failure, then supplies explicit storage to test the
+.NET 8 to .NET 10 installer/restart independently. This checks launcher upgrade
+behavior, not a complete playable package or game rebuild.
+
+## Historical RC1 packaging
+
+The previous target was **v1.0.20-rc1**, from **develop**, with numeric assembly version
 **1.0.20**, marked prerelease. Package with
 `-ReleaseTag v1.0.20-rc1 -Version 1.0.20 -SelfContained`.
 The launcher is one self-contained single-file `Outbreak.Launcher.exe` (layout

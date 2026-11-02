@@ -100,7 +100,7 @@ public static class UpdateWorker {
             plan.Target.StartsWith(work, StringComparison.OrdinalIgnoreCase))
             throw new IOException(
                 "The updater cannot replace a source checkout or staging directory.");
-        if (Updates.ParseVersion(plan.Version) <= Updates.InstalledVersion(plan.Target))
+        if (Updates.CompareReleaseTags(plan.Version, Updates.InstalledReleaseTag(plan.Target)) <= 0)
             throw new IOException("Update would not install a newer version.");
         // Configure only after checking the plan's ownership. Do not initialize
         // storage or take its lease while waiting for the parent to exit.
@@ -113,12 +113,14 @@ public static class UpdateWorker {
         string? failure = null;
         try {
             plan = ReadPlan(file);
-            Updates.Validate(plan.Source, Updates.ParseVersion(plan.Version));
+            Updates.Validate(plan.Source, Updates.ReleaseVersion(plan.Version), expectedTag: plan.Version);
             using (var installLock = new FileStream(
                        Updates.SafePath(plan.Target, ".reo-update.lock"), FileMode.OpenOrCreate,
                        FileAccess.ReadWrite, FileShare.None)) {
-                File.WriteAllText(Path.Combine(plan.Work, "ready.json"),
+                string ready = Path.Combine(plan.Work, "ready.json");
+                File.WriteAllText(ready + ".tmp",
                                   JsonSerializer.Serialize(new { pid = Environment.ProcessId }));
+                File.Move(ready + ".tmp", ready);
                 try {
                     using var parent = Process.GetProcessById(plan.ParentPid);
                     if (parent.StartTime.ToUniversalTime().Ticks == plan.ParentStarted) {
@@ -141,7 +143,7 @@ public static class UpdateWorker {
                 await Task
                     .Run(() => InstallFiles(plan.Source, plan.Target,
                                             Path.Combine(plan.Work, "backup"),
-                                            Updates.ParseVersion(plan.Version)))
+                                            Updates.ReleaseVersion(plan.Version)))
                     .ConfigureAwait(false);
             }
         } catch (Exception error) {

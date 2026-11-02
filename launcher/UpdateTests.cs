@@ -19,9 +19,12 @@ static class UpdateTests {
                     : new HttpResponseMessage(HttpStatusCode.NotFound));
         }
     }
-    static void Fixture(string root, string version, bool obsolete = false, bool legacy = false) {
+    static void Fixture(string root, string version, bool obsolete = false, bool legacy = false,
+                        string? releaseTag = null, bool compact = false) {
         Directory.CreateDirectory(root);
-        foreach (string relative in new[] { "Outbreak.Launcher.exe", "Outbreak.Launcher.dll",
+        foreach (string relative in compact
+                     ? new[] { "Outbreak.Launcher.exe", "build-inputs.zip", "XINPUT1_4.dll", "REQUIREMENTS.md" }
+                     : new[] { "Outbreak.Launcher.exe", "Outbreak.Launcher.dll",
                                             "Outbreak.Launcher.deps.json",
                                             "Outbreak.Launcher.runtimeconfig.json", "coreclr.dll",
                                             "hostfxr.dll", "build-kit/build-kit.json",
@@ -38,7 +41,8 @@ static class UpdateTests {
                           JsonSerializer.Serialize(
                               new { format = legacy ? 1 : 2, updateFormat = legacy ? 1 : 2,
                                     installMode = legacy ? "precompiled" : "local-build", version,
-                                    platform = "win-x64", source = Updates.Repository }));
+                                    platform = "win-x64", source = Updates.Repository, releaseTag,
+                                    layout = compact ? "self-contained-single-file" : "self-contained" }));
         var files =
             Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
                 .Select(p => new PackageFile(Path.GetRelativePath(root, p).Replace('\\', '/'),
@@ -67,6 +71,16 @@ static class UpdateTests {
             check(Updates.ParseVersion("v0.10.0") > Updates.ParseVersion("v0.2.0"),
                   "Update versions compare numerically");
             Refuses(() => Updates.ParseVersion("v1.0-rc1"), "Unrecognized stable tag refused");
+            check(Updates.ReleaseVersion("v1.0.20-rc1") == Updates.ParseVersion("1.0.20"),
+                  "Prerelease tags retain the numeric package version");
+            foreach (var pair in new[] { ("v1.0.20-rc0", "v1.0.20-rc1"),
+                         ("v1.0.20-rc2", "v1.0.20-rc10"), ("v1.0.20-rc10", "v1.0.20"),
+                         ("v1.0.20", "v1.0.21-rc0"), ("v1.0.20-rc.2", "v1.0.20-rc.10") })
+                check(Updates.CompareReleaseTags(pair.Item1, pair.Item2) < 0 &&
+                      Updates.CompareReleaseTags(pair.Item2, pair.Item1) > 0,
+                      "Release precedence: " + pair.Item1 + " < " + pair.Item2);
+            foreach (string tag in new[] { "v1.0.20-", "v1.0.20-rc..1", "v1.0.20-rc1/other" })
+                Refuses(() => Updates.ReleaseVersion(tag), "Malformed release tag refused: " + tag);
             foreach (string bad in new[] { "../outside.txt", "C:/outside.txt", "dir/../../outside",
                                            "dir/aux.txt", "dir/name:stream", "dir/name.",
                                            "dir\\outside" })
@@ -172,9 +186,10 @@ static class UpdateTests {
             string assetName = "RE-Outbreak-v0.2.0-Windows-x64.zip",
                    url = Updates.Repository + "/releases/download/v0.2.0/" + assetName,
                    sha = Updates.Sha(zip);
-            string Release(string digest, bool draft = false, bool prerelease = false) =>
+            string Release(string digest, bool draft = false, bool prerelease = false,
+                           string tag = "v0.2.0") =>
                 JsonSerializer.Serialize(
-                    new { tag_name = "v0.2.0", draft, prerelease,
+                    new { tag_name = tag, draft, prerelease,
                           assets = new[] { new { name = assetName, browser_download_url = url,
                                                  size = new FileInfo(zip).Length, digest } } });
             var release =
@@ -201,6 +216,37 @@ static class UpdateTests {
                           .GetAwaiter()
                           .GetResult()!.Tag == "v0.2.0",
                   "Release API response discovers the update");
+            string rc1 = Release("sha256:" + sha, prerelease: true, tag: "v1.0.20-rc1"),
+                   rc2 = Release("sha256:" + sha, prerelease: true, tag: "v1.0.20-rc2"),
+                   rc10 = Release("sha256:" + sha, prerelease: true, tag: "v1.0.20-rc10"),
+                   stable = Release("sha256:" + sha, tag: "v1.0.20");
+            check(Updates.ParseRelease(rc2, Updates.ParseVersion("1.0.20"), true, "v1.0.20-rc1")?.Tag ==
+                  "v1.0.20-rc2", "New RCs sharing a numeric version are discovered");
+            check(Updates.ParseRelease(rc1, Updates.ParseVersion("1.0.20"), true, "v1.0.20-rc1") == null &&
+                  Updates.ParseRelease(rc1, Updates.ParseVersion("1.0.20"), true, "v1.0.20-rc2") == null &&
+                  Updates.ParseRelease(rc2, Updates.ParseVersion("1.0.20"), true, "v1.0.20") == null,
+                  "Same RCs, older RCs and stable-to-RC downgrades are refused");
+            check(Updates.ParseRelease(stable, Updates.ParseVersion("1.0.20"), true, "v1.0.20-rc1") != null &&
+                  Updates.ParseRelease(rc2, Updates.ParseVersion("1.0.19")) == null,
+                  "Stable releases supersede RCs while stable installations exclude prereleases");
+            http.Files[Updates.Repository.Replace("https://github.com/", "https://api.github.com/repos/") +
+                       "/releases?per_page=100"] = Encoding.UTF8.GetBytes("[" + rc10 + "," + rc1 + "," + rc2 + "]");
+            check(Updates.Check(client, Updates.ParseVersion("1.0.20"), default, true, "v1.0.20-rc0")
+                  .GetAwaiter().GetResult()?.Tag == "v1.0.20-rc10",
+                  "Unordered release lists select the newest RC numerically");
+
+            string rcSource = Path.Combine(root, "rc-source"), rcTarget = Path.Combine(root, "rc-target");
+            Fixture(rcSource, "1.0.20", releaseTag: "v1.0.20-rc2", compact: true);
+            Fixture(rcTarget, "1.0.20", releaseTag: "v1.0.20-rc1", compact: true);
+            check(Updates.InstalledReleaseTag(rcTarget) == "v1.0.20-rc1",
+                  "Installed release identity preserves the RC suffix");
+            Updates.Validate(rcSource, Updates.ParseVersion("1.0.20"), expectedTag: "v1.0.20-rc2");
+            Refuses(() => Updates.Validate(rcSource, Updates.ParseVersion("1.0.20"), expectedTag: "v1.0.20-rc1"),
+                    "An archive for another RC cannot satisfy the selected update");
+            UpdateWorker.InstallFiles(rcSource, rcTarget, Path.Combine(root, "rc-backup"),
+                                      Updates.ParseVersion("1.0.20"));
+            check(Updates.InstalledReleaseTag(rcTarget) == "v1.0.20-rc2",
+                  "Single-file packages update between RCs sharing a numeric version");
             var downloaded =
                 Updates.Download(client, release, Path.Combine(root, "download"), null, default)
                     .GetAwaiter()

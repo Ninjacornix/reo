@@ -84,7 +84,8 @@ public partial class MainWindow {
             using var client = Updates.Client();
             var installed = Updates.InstalledVersion(root);
             availableUpdate = await Updates.Check(client, installed, cancellation.Token,
-                                                  Updates.PrereleaseChannel(root));
+                                                  Updates.PrereleaseChannel(root),
+                                                  Updates.InstalledReleaseTag(root));
             if (availableUpdate == null) {
                 UpdateState.Text = "No newer release available.";
                 if (!quiet)

@@ -93,12 +93,20 @@ int main() try {
     ps2_cri_audio::drain(other);s.playing(other,false);s.rpc(0x409,{other});
     check(constant(render(64),0),"Destroy cancels a pending drain");
     check(ps2_cri_audio::queuedSamples(otherRing)==512,"Destroy does not consume a drained queue");
-    auto [cut,cutRing]=s.transferredStream(0x60000,2);
+    // More than 1.5 seconds remains, so this is an interrupted stream rather
+    // than a short tail accepted by the RC2 policy.
+    auto [cut,cutRing]=s.transferredStream(0x60000,10);
     check(constant(render(64),.125f),"Transferred music audible before stop");
     s.playing(cut,false);
     check(constant(render(64),0),"Stop with outstanding chunks cuts music immediately");
     check(ps2_cri_audio::queuedSamples(cutRing)==0,"Intentional cut retires old PCM");
     s.rpc(0x409,{cut});
+    auto [shortTail,shortRing]=s.transferredStream(0x80000,2);
+    s.playing(shortTail,false);
+    check(constant(render(0x4000),.125f),"Short tail survives outstanding producer chunks");
+    check(ps2_cri_audio::queuedSamples(shortRing)==0 && constant(render(64),0),
+          "Short tail stops after its accepted samples");
+    s.rpc(0x409,{shortTail});
     auto [natural,naturalRing]=s.transferredStream(0x70000,1);
     s.playing(natural,false);
     check(constant(render(0x2000),.125f),"Natural end preserves the accepted speech tail");

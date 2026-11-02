@@ -1,6 +1,6 @@
 ﻿# Run RE: Outbreak
 
-1. Keep your GPU's Vulkan driver current. The RC0 Windows download includes
+1. Keep your GPU's Vulkan driver current. The Windows release download includes
    the launcher's .NET runtime.
 2. Extract the Windows download and open **Outbreak.Launcher.exe**.
 3. Follow the **Play** page: click **Choose ISO** and select your own
