@@ -58,7 +58,8 @@ void InitAudioDevice(void)
         with tempfile.TemporaryDirectory() as temporary:
             source = Path(temporary) / 'provider.c'
             source.write_text('int main(void) { int class = 3; return _Generic(class, int: 0, default: 1); }\n')
-            result = subprocess.run([compiler, *source_flags(True, portable=True),
+            # The portable flags target the x86-64 Windows kit; name it so arm64 hosts accept them.
+            result = subprocess.run([compiler, '--target=x86_64-w64-windows-gnu', *source_flags(True, portable=True),
                                      '-fsyntax-only', str(source)], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
 

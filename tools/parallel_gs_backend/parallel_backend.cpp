@@ -62,7 +62,7 @@ struct ThreadIndexScope {
 };
 class ParallelBackend final : public Backend, private SignalInterface {
     Config config_;
-    const unsigned internalResolution_ = reo::graphics::internalResolution(std::getenv("REO_INTERNAL_RESOLUTION"));
+    unsigned internalResolution_ = reo::graphics::internalResolution(std::getenv("REO_INTERNAL_RESOLUTION"));
     uint32_t reportedScanoutWidth_ = 0, reportedScanoutHeight_ = 0, scanoutReports_ = 0;
     unsigned memoryLogFrames_ = 0;
     void reportMemory() {
@@ -630,9 +630,16 @@ class ParallelBackend final : public Backend, private SignalInterface {
         // Reject an unavailable 4x mode rather than report a lower resolution
         // as the requested quality. Match GSRenderer's X16 capability check.
         if (internalResolution_ == 4 && !device_->supports_subgroup_size_log2(true, 4, 6)) {
+#if defined(__APPLE__)
+            // Apple GPUs (MoltenVK) lack the subgroup-size control 4x needs. Falling back
+            // to the CPU renderer would make movies and gameplay slow; use 2x on the GPU.
+            std::fprintf(stderr, "[INTERNAL-RESOLUTION-1] 4x is unavailable on this GPU; using 2x\n");
+            internalResolution_ = 2;
+#else
             error = "4x internal resolution is unavailable on this GPU. Select 2x or Native.";
             close();
             return false;
+#endif
         }
         gs_ = std::make_unique<GSInterface>();
         GSOptions options{};

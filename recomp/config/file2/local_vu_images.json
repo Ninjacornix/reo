@@ -5,6 +5,7 @@
     {
       "sha256": "2ea02b3628231f113edc3fe580f80c1d6ed45c98a7c98f9f83005665f8ad32ce",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         128,
@@ -38,6 +39,7 @@
     {
       "sha256": "479c350324b47c23879136a951911f6a448f4b627f52e34e220553a2f37c9c1c",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         112,
@@ -64,6 +66,7 @@
     {
       "sha256": "5273fa3e9893df4b3833a22b1d7deec2f99a2d2af0c10f2aa0ff5b43d3b2fc25",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         88,
@@ -118,6 +121,7 @@
     {
       "sha256": "64e4b38e853353c7c78d7363b98dca04bdd8f5fe050496f2e23d8643bbba10d3",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         128,
@@ -155,6 +159,7 @@
     {
       "sha256": "65d42faf847a20b9df414f281d757b64c3932eccfe8cc18a59ed9edb527c3905",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         88,
@@ -192,6 +197,7 @@
     {
       "sha256": "819696c9d5c0c9c5a7db85e6fa354f243a52851b0796fd01841181aeb9ae0bf7",
       "bytes": 16384,
+      "enabledByDefault": true,
       "entryPcs": [
         0,
         112,
@@ -258,6 +264,38 @@
           1073224,
           3872,
           16
+        ]
+      ]
+    },
+    {
+      "sha256": "52615c88d970b0ebe75d50fb66c220b91da5239717854850d60df8fd2818c362",
+      "bytes": 16384,
+      "enabledByDefault": true,
+      "entryPcs": [
+        0,
+        112,
+        384
+      ],
+      "copies": [
+        [
+          1062512,
+          0,
+          800
+        ],
+        [
+          1105136,
+          800,
+          1248
+        ],
+        [
+          1106392,
+          2048,
+          1568
+        ],
+        [
+          1072968,
+          3616,
+          272
         ]
       ]
     }

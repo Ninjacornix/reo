@@ -329,6 +329,7 @@ public partial class MainWindow : Window {
                 }
             }
             previousRunning = true;
+            if (OperatingSystem.IsMacOS() && game.Process is { } started) HandFocusToGame(started.Id);
             LaunchButton.Content = "Game running";
             UpdateRandomizerSeed();
             Status.Text = "Game running · Keep the launcher open for input" +
@@ -496,5 +497,17 @@ public partial class MainWindow : Window {
                 Close();
             }
         }
+    }
+
+    // macOS 14+ only lets an app become active when the active app yields to it. Hand focus to
+    // the game once its window exists, so it receives keyboard and GameController input.
+    void HandFocusToGame(int pid) {
+        int attempts = 0;
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        timer.Tick += (_, _) => {
+            if (++attempts > 40 || !game.Running) { timer.Stop(); return; }
+            if (attempts >= 4 && NativeControllers.YieldActivation(pid)) timer.Stop();
+        };
+        timer.Start();
     }
 }
