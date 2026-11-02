@@ -1,0 +1,19 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -574,7 +574,14 @@
+     // Whole-program AOT (tools/vu_whole_aot, merged from m2-vu-whole-private-basic-proposal) is consulted ONLY for
+     // images without a specialized/native table, so existing native kernels keep their path. selectProgram requires
+     // exact image, registered entry, inactive capture and state/code/data disjointness; otherwise the interpreter runs.
+-    if (!specializedProgram)
++#if defined(REO_GAME_FILE2)
++    // File #2: its default whole programs are replay-validated byte for byte against this
++    // interpreter and run faster than its specialized blocks. Native kernels keep priority.
++    const bool wholeFirst = !nativeProgram;
++#else
++    const bool wholeFirst = !specializedProgram;
++#endif
++    if (wholeFirst)
+     {
+         if (const auto* wholeProgram = vu_whole_program::selectProgram(
+                 vuCode, codeSize, vuData, dataSize, m_state.pc, capture.active, &m_state))

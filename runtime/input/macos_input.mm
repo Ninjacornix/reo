@@ -138,6 +138,17 @@ void capture() {
     const bool active = NSApp.active;
     if (!active)
         keys.fill(false);
+    {
+        // Log controller visibility and focus changes so "connected but ignored" is diagnosable.
+        static long lastCount = -1;
+        static int lastActive = -1;
+        const long count = static_cast<long>(GCController.controllers.count);
+        if (count != lastCount || int(active) != lastActive) {
+            std::fprintf(stderr, "[INPUT-MACOS] controllers=%ld active=%d device=%d\n", count, int(active), config().device);
+            lastCount = count;
+            lastActive = int(active);
+        }
+    }
     std::array<DualShock2State, 2> pads;
     for (auto& pad : pads)
         pad.reset();

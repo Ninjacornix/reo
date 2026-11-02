@@ -217,6 +217,8 @@ static void print_banner(const GameDef& g) {
     printf("\n");
 }
 
+static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint32_t w, uint32_t h);
+
 #ifdef _WIN32
 
 #ifndef NOMINMAX
@@ -727,53 +729,6 @@ static void reoStartStackDump() {
 
 // times -- visual checks without access to the window.
 
-static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint32_t w,
-                        uint32_t h) {
-
-    FILE* f = fopen(path, "wb");
-
-    if (!f)
-        return;
-
-    const uint32_t rowBytes = w * 4u, dataBytes = rowBytes * h, fileBytes = 54u + dataBytes;
-
-    uint8_t hdr[54] = {'B', 'M'};
-
-    auto put32 = [&](int o, uint32_t v) { memcpy(hdr + o, &v, 4); };
-
-    put32(2, fileBytes);
-    put32(10, 54);
-    put32(14, 40);
-    put32(18, w);
-    put32(22, h);
-
-    hdr[26] = 1;
-    hdr[28] = 32;
-    put32(34, dataBytes);
-
-    fwrite(hdr, 1, 54, f);
-
-    std::vector<uint8_t> row(rowBytes);
-
-    for (uint32_t y = 0; y < h; ++y) {
-
-        const uint8_t* src = rgba.data() + static_cast<size_t>(h - 1 - y) * rowBytes;
-
-        for (uint32_t x = 0; x < w; ++x) {
-
-            row[x * 4 + 0] = src[x * 4 + 2];
-            row[x * 4 + 1] = src[x * 4 + 1];
-
-            row[x * 4 + 2] = src[x * 4 + 0];
-            row[x * 4 + 3] = 255;
-        }
-
-        fwrite(row.data(), 1, rowBytes, f);
-    }
-
-    fclose(f);
-}
-
 static void reoStartShots(PS2Runtime* runtime) {
 
     const char* e = std::getenv("REO_SHOT_AT");
@@ -928,6 +883,54 @@ static void reoStartHwWatch(uint8_t* rdram) {
 }
 
 #endif
+
+// Portable BMP writer shared by Windows shots and GPU diagnostic captures.
+static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint32_t w,
+                        uint32_t h) {
+
+    FILE* f = fopen(path, "wb");
+
+    if (!f)
+        return;
+
+    const uint32_t rowBytes = w * 4u, dataBytes = rowBytes * h, fileBytes = 54u + dataBytes;
+
+    uint8_t hdr[54] = {'B', 'M'};
+
+    auto put32 = [&](int o, uint32_t v) { memcpy(hdr + o, &v, 4); };
+
+    put32(2, fileBytes);
+    put32(10, 54);
+    put32(14, 40);
+    put32(18, w);
+    put32(22, h);
+
+    hdr[26] = 1;
+    hdr[28] = 32;
+    put32(34, dataBytes);
+
+    fwrite(hdr, 1, 54, f);
+
+    std::vector<uint8_t> row(rowBytes);
+
+    for (uint32_t y = 0; y < h; ++y) {
+
+        const uint8_t* src = rgba.data() + static_cast<size_t>(h - 1 - y) * rowBytes;
+
+        for (uint32_t x = 0; x < w; ++x) {
+
+            row[x * 4 + 0] = src[x * 4 + 2];
+            row[x * 4 + 1] = src[x * 4 + 1];
+
+            row[x * 4 + 2] = src[x * 4 + 0];
+            row[x * 4 + 3] = 255;
+        }
+
+        fwrite(row.data(), 1, rowBytes, f);
+    }
+
+    fclose(f);
+}
 
 int main(int argc, char* argv[]) {
 

@@ -3,8 +3,9 @@ synthetic signed PCM, and checks production mixer output. It reproduces a
 stream continuing to play after `PS2RNA_DESTROY`, including old-ring refill
 and destruction during a pending drain. Other voices and accepted speech tails
 must remain audible. Real SJX mailbox transfers also reproduce an interrupted
-stream draining into a transition: an outstanding producer chunk means an
-intentional cut, while an acknowledged natural ending preserves its accepted tail.
+stream draining into a transition. Under RC2's policy, an outstanding producer
+chunk with more than 1.5 seconds queued means an intentional cut; shorter tails
+and acknowledged natural endings retain their accepted samples.
 
 On a Mac with an existing native Ninja build:
 
@@ -17,7 +18,7 @@ python3 tools/audio_transition_check/run.py \
 ```
 
 The SDK must contain the existing canonical release patches. The runner stages
-only required audio/RPC files, applies patches 0113 and 0115 in that private copy, compiles
+only required audio/RPC files, applies patches 0113, 0115 and 0118 in that private copy, compiles
 the real sources with the existing runtime compiler flags, and links the fixture
 against the existing archive/platform libraries. Source SDK and game binaries
 remain unchanged. Logs and source/patch hashes are retained beneath `--out`,

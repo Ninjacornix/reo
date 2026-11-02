@@ -46,6 +46,7 @@
     <Compile Include="../BuildFailure.cs" Link="Shared/BuildFailure.cs" />
     <Compile Include="../LocalBuildPayload.cs" Link="Shared/LocalBuildPayload.cs" />
     <Compile Include="../Updates.cs" Link="Shared/Updates.cs" />
+    <Compile Include="../Updates.Versions.cs" Link="Shared/Updates.Versions.cs" />
     <Compile Include="../Updates.Download.cs" Link="Shared/Updates.Download.cs" />
     <Compile Include="../Updates.Package.cs" Link="Shared/Updates.Package.cs" />
     <Compile Include="../UpdateWorker.cs" Link="Shared/UpdateWorker.cs" />

@@ -1,0 +1,20 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -67,8 +67,14 @@
+                 std::fprintf(stderr,"[RNA-STOP] ms=%lld voice=%x cmd=%u arg=%u wasPlaying=%u rings=%x/%x pending=%u unreturned=%u unreturnedBytes=%llu queuedL=%zu queuedR=%zu nch=%u\n",
+                     (long long)ns,rna.handle,cmd,arg,rna.playEnabled?1u:0u,r0,r1,pending,unreturned,(unsigned long long)unreturnedBytes,
+                     ps2_cri_audio::queuedSamples(r0),ps2_cri_audio::queuedSamples(r1),rna.channelCount);}
+-            if (unreturned) {
+-                // The guest stopped before the producer finished: this is a cut,
++            // Host playback runs behind the guest by the queued PCM (ring preload plus device
++            // buffering), so a line's natural end can arrive with a few chunks still unreturned.
++            // Treat only a long remainder as an intentional cut; let short speech tails finish.
++            const size_t queued=std::max(ps2_cri_audio::queuedSamples(r0),r1?ps2_cri_audio::queuedSamples(r1):size_t(0));
++            const uint32_t freq=rna.sampleFreq?rna.sampleFreq:48000u;
++            const bool shortTail=queued<=size_t(freq)*3u/2u;
++            if (unreturned && !shortTail) {
++                // The guest stopped well before the producer finished: this is a cut,
+                 // not an accepted natural tail. Cancel any previous drain too.
+                 ps2_cri_audio::release(rna.handle);
+                 if (r0) ps2_cri_audio::discard(r0);

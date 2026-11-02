@@ -1,30 +1,51 @@
-# RE: Outbreak 1.0 Alpha (v1.0.17) prerelease
+# RE: Outbreak 1.0 RC2 (v1.0.20-rc2) prerelease
 
-Sharper rendering, an optional performance counter, audio controls, controller rumble and randomizer fixes.
+Testing release of the universal launcher and updated game runtime inputs.
 
 <!-- reo:requires-rebuild -->
 
-**The game rebuilds after this update.** Updated runtime inputs require a new game build. Keep about 10 GB free for the build. Your ISO, imported data and saves are retained.
+**The game rebuilds after this update.** Keep about 10 GB free for setup. Keep
+your ISO, imported data, settings and saves in their existing storage folder.
 
 ## Changes
 
-- Add **Native / 2× internal resolution** in Graphics. File #1 renders at 1024×896 at 2×, independently of the fullscreen/window resolution. Retain GPU command checkpoints as an RX 570 stability workaround.
-- Add **Show performance counter** in Graphics: display FPS, average frame time and game updates/sec appear in the top-right corner. The saved toggle applies on the next launch. Original 30 Hz gameplay and 60 Hz display pacing remain unchanged.
-- Add saved **Master, Music, Sound effects, Voice and UI volume** sliders, with live updates and a reset button. Cinematic sound follows Master volume.
-- Add native game-driven **controller rumble**, including DualSense support, and a saved on/off switch in Controls.
-- Hide the mouse over the focused fullscreen game and restore it when switching apps or returning to a window.
-- Roll a fresh 32-bit randomizer seed on every solo/host launch. Joining players continue to adopt the host's seed and pools. Progression items remain fixed; weapons, ammunition and common items use separate pools.
-- Load missing randomized weapon motions, fixing grenade launcher ready poses and shots that consumed ammunition without completing.
-- Remove the extra Mods introduction and cheat descriptions. Keep the first four readiness checks on Play.
+- Use the shared Avalonia/.NET 10 launcher. The Windows release includes its
+  runtime; players do not need to install .NET separately.
+- Integrate macOS launch focus, native fullscreen, hidden developer panel and
+  GPU fallback from unsupported 4x rendering to 2x.
+- Update File #2 VU program selection and the speech-tail handling policy.
+- Support full RC-tag comparison in the new updater and include the runtime by
+  default when packaging Windows releases.
+- Add mod-controlled timed examine messages for both games.
 
-**Verification and limits:** 445 launcher assertions, 14 performance-meter cases and 465 actual audio-mixing cases pass. Local tests cover startup and the first Outbreak room, 2×/Native, fullscreen, SMAA/direct presentation, counter on/off, live volume controls, cursor hiding and randomized grenade launcher firing. Active fullscreen 2× gameplay measured about 29.98 updates/sec. Changed native code was compiled against verified frozen inputs while unchanged game/SDK objects were reused; a complete cold first-run compilation was not repeated. The RX 570 fix is a tested compatibility workaround, with the underlying driver/ordering issue unresolved. This release does not add new multiplayer validation: the previous loopback results and limitations still apply. Separate-PC/WAN play, later-room mixed-species combat, reconnects, save/resume and full scenario completion remain unverified. Start a fresh scenario for the randomizer.
+## Upgrading from an older release
+
+RC0/RC1's installed updater cannot handle later RC tags correctly. Close the
+launcher and game, extract the complete new Windows ZIP into the existing
+installation, and replace application files. Preserve `data`, `storage.json`
+and any separately selected storage folder. v1.0.19 users should also upgrade
+manually because their updater does not recognize the new package layout.
 
 ## First setup
 
-1. Install .NET 8 Desktop Runtime x64 if needed, and update your Vulkan graphics driver.
-2. Extract `RE-Outbreak-v1.0.17-Windows-x64.zip` into a new folder and open `Outbreak.Launcher.exe`.
-3. Choose your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**, then **Build game**.
+1. Keep your Vulkan graphics driver current.
+2. Extract `RE-Outbreak-v1.0.20-rc2-Windows-x64.zip` and open
+   `Outbreak.Launcher.exe`.
+3. Select your own supported NTSC-U ISO: File #1 v2.00 (SLUS-20765) or
+   File #2 v1.05 (SLUS-20984). Choose **Build game** and then **Play**.
 
-Keep `build-inputs.zip`, `reo-movie-check.exe` and the supplied mod examples beside the launcher. PAL, Japanese, File #2 and unsupported or modified executable revisions are not supported. Game data and precompiled game binaries are not included.
+Keep both build-input ZIPs, native helpers and supplied examples beside the
+launcher. PAL, Japanese and modified executable revisions are unsupported.
+Game data and precompiled Windows game executables are not included.
 
-The dependency source download contains the frozen SDK source base; matching additional source patches are under `notices/source-updates` inside `build-inputs.zip`. Players need only the Windows x64 download.
+## Verification and limits
+
+Before publishing, replace this paragraph with receipts for the exact assembled
+RC2 packages: sealed-kit identities, cold builds, cached launches, actual
+game/scenario checks and target-machine macOS results. Distinguish launcher CI
+and controlled regressions from gameplay verification. Disclose skipped checks,
+signing/notarization status and remaining
+multiplayer limitations. Do not reuse RC1's gameplay claims for changed inputs.
+
+Publish matching dependency-source archives and SHA-256 checksums. Players need
+the application download for their platform, not the dependency sources.

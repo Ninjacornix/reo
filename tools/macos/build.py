@@ -41,7 +41,9 @@ def source_state(path, patches):
     # Include added files, which git diff does not see before staging.
     paths = sorted({line[6:] for patch in patches for line in patch.read_text().splitlines()
                     if line.startswith("+++ b/")})
-    return sha(subprocess.check_output(["git", "diff", "--binary"], cwd=path) +
+    # A nested dependency (Granite inside parallel-gs) is patched and verified by its own receipt;
+    # its dirty working tree must not invalidate the parent's receipt on later builds.
+    return sha(subprocess.check_output(["git", "diff", "--binary", "--ignore-submodules=dirty"], cwd=path) +
                b"".join(name.encode() + ((path / name).read_bytes() if (path / name).is_file()
                                          else b"<deleted>") for name in paths))
 

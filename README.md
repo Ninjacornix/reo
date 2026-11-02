@@ -38,7 +38,7 @@ physical controllers and File #2 on Mac remain unverified; no public Mac downloa
 
 ## Get started
 
-1. Keep your graphics driver current (Vulkan is required). The RC0 Windows download includes the launcher's .NET runtime.
+1. Keep your graphics driver current (Vulkan is required). The Windows release download includes the launcher's .NET runtime.
 2. Download **RE-Outbreak-v1.0.20-rc0-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
 3. The **Play** page tells you the next step. Click **Choose ISO** and pick your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**, or select File #2 and use **NTSC-U v1.05 (SLUS-20984)**. The launcher checks it and shows a green ✓ when it is supported.
 4. Click **Build game**. This one-time setup imports the disc, prepares the build tools (about 173 MB, reused if the exact compiler is already installed) and compiles the game. It needs Internet and about 10 GB of free space, and can take over an hour. Progress stays visible at the bottom of every page.
@@ -47,7 +47,7 @@ physical controllers and File #2 on Mac remain unverified; no public Mac downloa
 The Play page's **Before you play** checklist shows what is ready (✓) and what is
 missing (✗), with a button for each fix: **Get driver** opens your graphics card
 maker's driver page, **Free up space** opens Windows storage settings, **Choose ISO**
-picks your disc. The RC0 Windows package starts without a separate .NET installation.
+picks your disc. The Windows release package starts without a separate .NET installation.
 
 Later launches reuse the finished build. After a build, the launcher deletes its
 temporary generated sources and keeps only a compile cache (about 1.2 GB) so future
