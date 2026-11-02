@@ -153,6 +153,10 @@ internal static class UpdateWorkerChecks {
                 Storage.Configure(target, home);
                 await Storage.Initialize(target, false, null, default);
                 File.WriteAllText(Path.Combine(home, "keep-save.txt"), "owned save fixture");
+                // Legacy helpers omit --data-home on restart. Real installations
+                // preserve the chosen location in the locator beside the launcher.
+                File.WriteAllText(Path.Combine(target, Storage.LocatorName),
+                                  JsonSerializer.Serialize(new { format = 1, folder = home }));
                 Process? parent = null, worker = null;
                 try {
                     parent = Start(probe, "--update-parent-check", close);
@@ -183,6 +187,9 @@ internal static class UpdateWorkerChecks {
                     while (!File.Exists(restarted) && clock.Elapsed < TimeSpan.FromSeconds(15)) await Task.Delay(50);
                     Require(File.Exists(restarted) && File.ReadAllText(Path.Combine(home, "keep-save.txt")) == "owned save fixture",
                             "Runtime migration did not restart or preserve selected storage.");
+                    using var restartReport = JsonDocument.Parse(File.ReadAllText(restarted));
+                    Require(restartReport.RootElement.GetProperty("storage").GetString() == home,
+                            "Historical restart lost the persistent storage selection.");
                 } finally {
                     Storage.Close(); File.WriteAllText(close, "exit");
                     await Stop(worker); await Stop(parent);

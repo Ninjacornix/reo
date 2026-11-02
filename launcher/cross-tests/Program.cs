@@ -6,10 +6,15 @@ if (args.Length == 2 && args[0] == "--update-parent-check") {
     while (!File.Exists(args[1])) await Task.Delay(50, timeout.Token);
     return 0;
 }
-if (args.Length == 4 && args[0] is "--update-complete" or "--update-failed" && args[2] == "--data-home") {
+if ((args.Length == 2 || args.Length == 4 && args[2] == "--data-home") &&
+    args[0] is "--update-complete" or "--update-failed") {
+    string receipt = File.ReadAllText(args[1]);
+    using var result = JsonDocument.Parse(receipt);
+    string storage = args.Length == 4 ? args[3] :
+        Storage.Resolve(result.RootElement.GetProperty("target").GetString()!);
     string restarted = Path.Combine(Environment.CurrentDirectory, "restart-check.json");
     File.WriteAllText(restarted + ".tmp",
-                      JsonSerializer.Serialize(new { arguments = args, receipt = File.ReadAllText(args[1]) }));
+                      JsonSerializer.Serialize(new { arguments = args, receipt, storage }));
     File.Move(restarted + ".tmp", restarted);
     return 0;
 }
