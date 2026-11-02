@@ -7,6 +7,10 @@
 - Prefer replay-validated File #2 whole VU programs and expand the local reconstruction catalogue. Preserve short queued speech tails; update the native transition regression to cover both short tails and longer interrupted streams.
 - Add mod-controlled timed examine messages for both games.
 
+## v1.0.20-rc2-hotfix prerelease - 2026-11-03
+
+- Fix Windows RC2 showing "Build the game", dimmed game artwork and disabled game settings after a successful import/build. The launcher checked the developer `build-ninja` path instead of the completed build in the selected storage folder's `local-games` cache. Resolve both editions through the same build-kit cache path used by setup and launch, including after restarting. Existing RC2 imports and compiled games can be reused; no rebuild is required for this hotfix.
+
 ## v1.0.20-rc1 prerelease - 2026-10-31
 
 - Redesign the launcher settings pages, disc selectors, memory-card profiles, mod configuration and logs. Add a GPU-rendered animated graphics preview and separate launcher appearance settings.

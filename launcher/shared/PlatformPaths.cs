@@ -32,6 +32,9 @@ public static class PlatformPaths {
         return null;
     }
     public static string GameExecutable(string root,string game) {
+        // Windows packages compile into user storage; readiness must use the same path as setup and launch.
+        if (OperatingSystem.IsWindows() && AppLayout.Packaged(root))
+            return LocalGameBuild.TargetPath(root, game);
         if(game=="file1" && NativeRecord(root) is {} record)return record["executable"];
         if(game=="file2" && NativeRecord(root) is {} second && second.TryGetValue("file2Executable",out var file2))return file2;
         string name=game=="file2"?"reo_recomp_file2":"reo_recomp";

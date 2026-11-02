@@ -74,6 +74,7 @@ static class UpdateTests {
             check(Updates.ReleaseVersion("v1.0.20-rc1") == Updates.ParseVersion("1.0.20"),
                   "Prerelease tags retain the numeric package version");
             foreach (var pair in new[] { ("v1.0.20-rc0", "v1.0.20-rc1"),
+                         ("v1.0.20-rc2", "v1.0.20-rc2-hotfix"), ("v1.0.20-rc2-hotfix", "v1.0.20"),
                          ("v1.0.20-rc2", "v1.0.20-rc10"), ("v1.0.20-rc10", "v1.0.20"),
                          ("v1.0.20", "v1.0.21-rc0"), ("v1.0.20-rc.2", "v1.0.20-rc.10") })
                 check(Updates.CompareReleaseTags(pair.Item1, pair.Item2) < 0 &&
