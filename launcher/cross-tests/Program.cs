@@ -7,8 +7,10 @@ if (args.Length == 2 && args[0] == "--update-parent-check") {
     return 0;
 }
 if (args.Length == 4 && args[0] is "--update-complete" or "--update-failed" && args[2] == "--data-home") {
-    File.WriteAllText(Path.Combine(Environment.CurrentDirectory, "restart-check.json"),
+    string restarted = Path.Combine(Environment.CurrentDirectory, "restart-check.json");
+    File.WriteAllText(restarted + ".tmp",
                       JsonSerializer.Serialize(new { arguments = args, receipt = File.ReadAllText(args[1]) }));
+    File.Move(restarted + ".tmp", restarted);
     return 0;
 }
 string root=PlatformPaths.FindRoot(AppContext.BaseDirectory);

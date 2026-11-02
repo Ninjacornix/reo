@@ -2,26 +2,9 @@ param([switch]$Run, [string]$OutputDirectory = '')
 $ErrorActionPreference='Stop'
 Push-Location $PSScriptRoot
 try {
-    # Source builds need the SDK; the self-contained launcher needs no installed runtime.
-    # Also find a user installation when an older system dotnet is first on PATH.
-    $dotnetCandidates = @()
-    $onPath = Get-Command dotnet -CommandType Application -ErrorAction SilentlyContinue
-    if ($onPath) { $dotnetCandidates += $onPath.Source }
-    foreach ($root in @($env:DOTNET_ROOT_X64, $env:DOTNET_ROOT, (Join-Path $env:USERPROFILE '.dotnet'))) {
-        if ($root) { $dotnetCandidates += Join-Path $root 'dotnet.exe' }
-    }
-    $dotnet = $null
-    foreach ($candidate in ($dotnetCandidates | Select-Object -Unique)) {
-        if (!(Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
-        try { $sdkVersion = & $candidate --version 2>$null } catch { continue }
-        if ($LASTEXITCODE -eq 0 -and "$sdkVersion" -match '^(\d+)\.' -and [int]$Matches[1] -ge 10) {
-            $dotnet = $candidate
-            break
-        }
-    }
-    if (!$dotnet) {
-        throw '.NET 10 SDK or newer is required to build the launcher. Install it from https://dotnet.microsoft.com/download/dotnet/10.0 (the runtime alone is insufficient), then run StartLauncher.cmd again. User SDKs in %USERPROFILE%\.dotnet are also supported.'
-    }
+    . (Join-Path $PSScriptRoot 'dotnet-sdk.ps1')
+    $dotnet = Find-LauncherDotNet
+    $sdkVersion = & $dotnet --version
     Write-Host "Building with .NET SDK $sdkVersion ($dotnet)"
     $native = Join-Path $PSScriptRoot 'artifacts\native'
     New-Item -ItemType Directory -Force $native | Out-Null

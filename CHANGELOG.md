@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Move Windows, macOS and Linux to the shared Avalonia/.NET 10 launcher. Bundle the Windows runtime by default and compare complete RC tags when checking and installing updates. Older RC0/RC1 installations require a manual upgrade.
+- Integrate macOS game activation and native fullscreen, hide the developer panel during normal play, and use GPU 2x rendering when Apple hardware cannot support 4x.
+- Prefer replay-validated File #2 whole VU programs and expand the local reconstruction catalogue. Preserve short queued speech tails; update the native transition regression to cover both short tails and longer interrupted streams.
+- Add mod-controlled timed examine messages for both games.
+
 ## v1.0.20-rc1 prerelease - 2026-10-31
 
 - Redesign the launcher settings pages, disc selectors, memory-card profiles, mod configuration and logs. Add a GPU-rendered animated graphics preview and separate launcher appearance settings.
