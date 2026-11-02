@@ -1,7 +1,7 @@
 diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
 --- a/ps2xRuntime/src/lib/ps2_runtime.cpp
 +++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
-@@ -18,6 +18,20 @@
+@@ -18,6 +18,38 @@
  #include "ps2_debug_panel.h"
  #include "Kernel/Syscalls/Interrupt.h"
  #include "Kernel/Syscalls/Helpers/CriAudio.h"
@@ -10,11 +10,29 @@ diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runti
 +#include <objc/runtime.h>
 +extern "C" void *GetWindowHandle(void);
 +// raylib's GetWindowHandle returns the GLFW window's NSWindow on macOS.
++// The game is launched by the launcher; make it the active app (keyboard focus and
++// GameController input are delivered only to the active app), then enter fullscreen.
++static void reoMacActivate(void *window)
++{
++    using SendId = void *(*)(void *, SEL);
++    using SendObj = void (*)(void *, SEL, void *);
++    using SendBool = void (*)(void *, SEL, signed char);
++    void *app = reinterpret_cast<SendId>(objc_msgSend)((void *)objc_getClass("NSApplication"), sel_registerName("sharedApplication"));
++    if (!app)
++        return;
++    if (reinterpret_cast<signed char (*)(void *, SEL, SEL)>(objc_msgSend)(app, sel_registerName("respondsToSelector:"), sel_registerName("activate")))
++        reinterpret_cast<void (*)(void *, SEL)>(objc_msgSend)(app, sel_registerName("activate"));
++    else
++        reinterpret_cast<SendBool>(objc_msgSend)(app, sel_registerName("activateIgnoringOtherApps:"), 1);
++    if (window)
++        reinterpret_cast<SendObj>(objc_msgSend)(window, sel_registerName("makeKeyAndOrderFront:"), nullptr);
++}
 +static void reoMacNativeFullscreen()
 +{
 +    void *window = GetWindowHandle();
 +    if (!window)
 +        return;
++    reoMacActivate(window);
 +    using Send = void (*)(void *, SEL, void *);
 +    reinterpret_cast<Send>(objc_msgSend)(window, sel_registerName("toggleFullScreen:"), nullptr);
 +}
@@ -22,13 +40,14 @@ diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runti
  #include "ps2_log.h"
  #include "ps2_stubs.h"
  #include "ps2_syscalls.h"
-@@ -1322,7 +1336,8 @@
+@@ -1322,7 +1354,9 @@
              InitWindow(dimension("REO_WINDOW_WIDTH", HOST_WINDOW_WIDTH) + (panel ? kDebugPanelWidth : 0),
                         dimension("REO_WINDOW_HEIGHT", HOST_WINDOW_HEIGHT), title);
              const char* full = std::getenv("REO_FULLSCREEN");
 -            if (full && *full == '1') ToggleBorderlessWindowed();
 +            // Native macOS fullscreen: the window gets its own Space, as other Mac games do.
 +            if (full && *full == '1') reoMacNativeFullscreen();
++            else reoMacActivate(GetWindowHandle());
  #else
              InitWindow(HOST_WINDOW_WIDTH + (panel ? kDebugPanelWidth : 0), HOST_WINDOW_HEIGHT, title);
  #endif

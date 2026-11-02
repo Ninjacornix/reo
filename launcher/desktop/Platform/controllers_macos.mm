@@ -44,3 +44,13 @@ extern "C" void reo_controller_rumble(int index,uint16_t left,uint16_t right) {
     CHHapticPattern* pattern=[[CHHapticPattern alloc]initWithEvents:@[event] parameters:@[] error:nil];
     [[engine createPlayerWithPattern:pattern error:nil]startAtTime:CHHapticTimeImmediate error:nil];
 }
+// macOS 14+ cooperative activation: the active launcher must yield focus so the game it
+// started can become the active app (keyboard and GameController input go only there).
+extern "C" int reo_yield_activation(int pid) {
+    if(![NSThread isMainThread])return 0;
+    NSRunningApplication* target=[NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+    if(!target)return 0;
+    if(@available(macOS 14.0,*))[NSApp yieldActivationToApplication:target];
+    [target activateWithOptions:NSApplicationActivateAllWindows];
+    return 1;
+}
