@@ -60,6 +60,7 @@ public partial class MainWindow {
         DevSnapTrace.IsChecked = options.SnapTrace;
         DevFrameTiming.IsChecked = options.FrameTiming;
         DevGameClock.IsChecked = options.GameClock;
+        DevCriServer.IsChecked = options.CriServerTiming;
     }
     void DeveloperSettingChanged(object? sender, RoutedEventArgs e) {
         if (!initialized) return;
@@ -69,6 +70,7 @@ public partial class MainWindow {
         options.SnapTrace = DevSnapTrace.IsChecked == true;
         options.FrameTiming = DevFrameTiming.IsChecked == true;
         options.GameClock = DevGameClock.IsChecked == true;
+        options.CriServerTiming = DevCriServer.IsChecked == true;
         try {
             settings.Save();
         } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
@@ -77,6 +79,7 @@ public partial class MainWindow {
     }
     void RefreshDeveloperUi() {
         DevGameClock.IsEnabled = settings.Game.Id == "file1";
+        DevCriServer.IsEnabled = settings.Game.Id == "file1";
         DeveloperSessionNote.Visibility = game.Running || launching ? Visibility.Visible : Visibility.Collapsed;
     }
     void OpenSessionFolders(object? sender, RoutedEventArgs e) =>

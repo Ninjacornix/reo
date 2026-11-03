@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <filesystem>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -28,6 +29,7 @@ class CDVD {
 
     // Read raw 2048-byte sectors from the disc image (REO_ISO, or the raw volume of a
     // mounted drive root). False if no image is available or the range is outside it.
+    // Serialized internally: callers may read without holding guest execution.
     bool read_sectors(uint32_t lba, uint32_t count, void* buffer);
 
     // ISO9660 lookup of a PS2 path ("cdrom0:\\DIR\\FILE.EXT;1" or "\\DIR\\FILE.EXT;1"):
@@ -52,6 +54,8 @@ class CDVD {
     std::unordered_map<std::string, std::filesystem::path> m_file_map;
 
     void* m_image = nullptr; // FILE* (ISO) or HANDLE (raw volume)
+    // Shared image position (seek + read). Never held while acquiring guest execution.
+    std::mutex m_readMutex;
     bool m_imageIsVolume = false;
     uint64_t m_imageSize = 0;
     bool m_gamePak = false;

@@ -203,6 +203,7 @@ bool CDVD::read_file(const std::string& ps2_path, std::vector<uint8_t>& out) {
 }
 
 bool CDVD::read_sectors(uint32_t lba, uint32_t count, void* buffer) {
+    std::lock_guard<std::mutex> guard(m_readMutex);
     if (assets::active && assets::active->sector(lba, count, buffer)) return true;
     if (m_gamePak) {
         if (!buffer || count == 0 || count > 0x4000) return false;
