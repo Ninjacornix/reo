@@ -24,6 +24,7 @@ Storage.Configure(root,home);
 int passed=0;var failures=new List<string>();
 void Check(bool ok,string message){if(ok)passed++;else failures.Add(message);}
 try {
+try{await CompilerDownloadTests.Run(Check);}catch(Exception e){failures.Add("CompilerDownload: "+e);}
 try{PlatformPathsTests.Run(Check);}catch(Exception e){failures.Add("PlatformPaths: "+e);}
 if(args.Contains("--windows-services-check"))try{await WindowsServiceChecks.Run(Check);}catch(Exception e){failures.Add("WindowsServices: "+e);}
 try{await PlatformServicesTests.Run(Check);}catch(Exception e){failures.Add("PlatformServices: "+e);}
