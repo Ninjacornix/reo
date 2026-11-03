@@ -4,6 +4,17 @@
 on pushes to those branches, and through manual dispatch once the workflow is
 on the default branch. There are no path filters on its required checks.
 
+`Universal launcher` checks Windows, Linux and macOS and compares the Windows
+launcher against the published RC1 reference. New commits cancel superseded runs
+for the same pull request or branch, reducing redundant work and runner demand.
+macOS jobs can still fail before starting when GitHub has insufficient hosted
+ARM runner capacity; retry the affected job once capacity is available.
+
+Pull requests retain visual-comparison captures as `launcher-parity` artifacts.
+Only non-PR runs with captured results publish to `ci/parity-results`, and
+cancelled runs do not publish. Fork PRs therefore never need write access to the
+results branch. Artifact upload still runs after a failed comparison.
+
 | Check | Coverage |
 | --- | --- |
 | Source checks | Publication-input audit, Python local-build and asset-tool tests using synthetic inputs, native pipeline-cache checks on Ubuntu |
