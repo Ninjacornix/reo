@@ -83,7 +83,9 @@ jobs:
           python -m pip install --quiet pillow
           python tools/launcher/compare_parity.py build-launcher/parity
       - name: Publish results to ci/parity-results
-        if: always()
+        # Pull requests (including forks) keep their captures as artifacts. Their token may be
+        # read-only, and unmerged PR code must not publish to the repository's results branch.
+        if: ${{ always() && github.event_name != 'pull_request' }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

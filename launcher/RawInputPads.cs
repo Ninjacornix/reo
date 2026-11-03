@@ -2,13 +2,19 @@ using System.Runtime.InteropServices;
 
 namespace Outbreak.Launcher;
 
+public enum PadModel { DualSense, DualShock4 }
+
 // Presence comes from Windows, independently of whether a controller is sending
 // reports. RID_DEVICE_INFO_HID supplies numeric IDs over USB and Bluetooth.
 internal static class RawInputPads {
-    internal sealed record Device(nint Handle, string Path, string Transport);
+    internal sealed record Device(nint Handle, string Path, string Transport, PadModel Model);
     internal sealed record Snapshot(HashSet<nint> Handles, List<Device> Pads);
-    internal static bool Supported(uint vendor, uint product, ushort page, ushort usage) =>
-        vendor == 0x054c && (product is 0x0ce6 or 0x0df2) && page == 1 && (usage is 4 or 5);
+    internal static PadModel? Model(uint vendor, uint product, ushort page, ushort usage) =>
+        vendor != 0x054c || page != 1 || usage is not (4 or 5) ? null : product switch {
+            0x0ce6 or 0x0df2 => PadModel.DualSense,
+            0x05c4 or 0x09cc => PadModel.DualShock4,
+            _ => null
+        };
 
     internal static string Transport(string path) =>
         path.Contains("BTH", StringComparison.OrdinalIgnoreCase) ||
@@ -19,12 +25,17 @@ internal static class RawInputPads {
         if (handle == 0) return null;
         // RID_DEVICE_INFO is 32 bytes, including its largest union member.
         nint info = Marshal.AllocHGlobal(32);
+        PadModel model;
         try {
             Marshal.WriteInt32(info, 32); uint bytes = 32;
             if (GetRawInputDeviceInfo(handle, 0x2000000b, info, ref bytes) == uint.MaxValue || bytes < 24 ||
                 Marshal.ReadInt32(info, 4) != 2 ||
-                !Supported(unchecked((uint)Marshal.ReadInt32(info, 8)), unchecked((uint)Marshal.ReadInt32(info, 12)),
-                           unchecked((ushort)Marshal.ReadInt16(info, 20)), unchecked((ushort)Marshal.ReadInt16(info, 22)))) return null;
+                Model(unchecked((uint)Marshal.ReadInt32(info, 8)),
+                      unchecked((uint)Marshal.ReadInt32(info, 12)),
+                      unchecked((ushort)Marshal.ReadInt16(info, 20)),
+                      unchecked((ushort)Marshal.ReadInt16(info, 22))) is not { } found)
+                return null;
+            model = found;
         } finally { Marshal.FreeHGlobal(info); }
         uint length = 0;
         if (GetRawInputDeviceInfo(handle, 0x20000007, 0, ref length) == uint.MaxValue || length is 0 or > 8192) return null;
@@ -33,7 +44,7 @@ internal static class RawInputPads {
             Marshal.WriteInt16(name, checked((int)length * 2), 0);
             if (GetRawInputDeviceInfo(handle, 0x20000007, name, ref length) == uint.MaxValue) return null;
             string path = Marshal.PtrToStringUni(name) ?? "";
-            return path.Length == 0 ? null : new(handle, path, Transport(path));
+            return path.Length == 0 ? null : new(handle, path, Transport(path), model);
         } finally { Marshal.FreeHGlobal(name); }
     }
 
