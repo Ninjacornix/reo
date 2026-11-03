@@ -134,6 +134,7 @@ struct SnapIopTransport::Impl {
     uint16_t nextQuery = 1;
     bool ready = false;
     uint32_t target = 0;
+    uint32_t socketTarget = 0;
     uint32_t localAddress = 0;
     bool linkStarted = false;
     bool configChanged = true;
@@ -162,12 +163,18 @@ struct SnapIopTransport::Impl {
         // Explicit IPv4 configuration prevents accidental public DNS/service traffic.
         if (ready && !host.empty() && inet_pton(AF_INET, host.c_str(), &address) == 1)
             target = address.s_addr;
+        socketTarget = target;
+        // The host keeps its advertised address in DNS, bootstrap payloads and
+        // account identity, but connects to its own services without NAT loopback.
+        // A server explicitly bound to another 127/8 address must keep that address.
+        if (target && env("REO_COOP_LOCAL_SERVER") == "1" && (ntohl(target) >> 24) != 127)
+            socketTarget = htonl(INADDR_LOOPBACK);
         if (target) {
             const SocketHandle probe = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
             if (probe != InvalidSocket) {
                 sockaddr_in route{};
                 route.sin_family = AF_INET;
-                route.sin_addr.s_addr = target;
+                route.sin_addr.s_addr = socketTarget;
                 route.sin_port = htons(9091);
                 if (connect(probe, reinterpret_cast<sockaddr*>(&route), sizeof(route)) == 0) {
                     SocketLength length = sizeof(route);
@@ -325,6 +332,7 @@ struct SnapIopTransport::Impl {
                 closeSocket(entry.native);
                 return Failure;
             }
+            endpoint.sin_addr.s_addr = socketTarget;
             const int result =
                 connect(entry.native, reinterpret_cast<sockaddr*>(&endpoint), sizeof(endpoint));
             if (result != 0) {
@@ -559,6 +567,7 @@ struct SnapIopTransport::Impl {
                 peer.sin_port = u16(request, 0x24);
                 if (peer.sin_addr.s_addr != target)
                     break;
+                peer.sin_addr.s_addr = socketTarget;
                 const int sent =
                     sendto(entry->native, reinterpret_cast<const char*>(request.data() + 0x28),
                            int(length), 0, reinterpret_cast<const sockaddr*>(&peer), sizeof(peer));
@@ -611,7 +620,7 @@ struct SnapIopTransport::Impl {
                             break;
                         ++drained;
                         const bool fromNativePeer = nativeEnabled && socketId==nativeSocket &&
-                            peer.sin_addr.s_addr==target && peer.sin_port==nativePort;
+                            peer.sin_addr.s_addr==socketTarget && peer.sin_port==nativePort;
                         if (fromNativePeer) {
                             const auto now = reo_network::native::nowUs();
                             if (native.consume(packet.data(),size_t(received),now)) continue;
@@ -623,7 +632,10 @@ struct SnapIopTransport::Impl {
                         put16(reply, cursor + 2, uint16_t(received));
                         put16(reply, cursor + 4, peer.sin_port);
                         put16(reply, cursor + 6, uint16_t((4 - (received & 3)) & 3));
-                        put32(reply, cursor + 8, peer.sin_addr.s_addr);
+                        // Preserve the advertised identity expected by the original
+                        // SDK after bootstrap handoff; traces retain the actual peer.
+                        put32(reply, cursor + 8,
+                              peer.sin_addr.s_addr == socketTarget ? target : peer.sin_addr.s_addr);
                         std::copy_n(packet.begin(), received, reply.begin() + cursor + 12);
                         cursor += 12 + ((size_t(received) + 3) & ~size_t(3));
                         ++count;
@@ -721,7 +733,7 @@ struct SnapIopTransport::Impl {
         if (nativeEnabled && nativeSocket != 0xffff) {
             if (auto* entry = get(nativeSocket,true)) {
                 sockaddr_in peer{};
-                peer.sin_family=AF_INET; peer.sin_addr.s_addr=target; peer.sin_port=nativePort;
+                peer.sin_family=AF_INET; peer.sin_addr.s_addr=socketTarget; peer.sin_port=nativePort;
                 for (const auto& packet : native.poll(now))
                     sendto(entry->native,reinterpret_cast<const char*>(packet.data()),int(packet.size()),0,
                            reinterpret_cast<const sockaddr*>(&peer),sizeof(peer));

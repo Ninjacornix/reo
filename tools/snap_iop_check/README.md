@@ -13,6 +13,12 @@ DNS redirection, interface generation, and reset lifetime. The final APP check
 requires a local Capcom APP service at `127.0.0.1:10127`, and validates its real
 server-first `0x1002` opening. The isolated openSNAP research fixture can supply it.
 
+Local-host regressions advertise public, LAN and VPN addresses while binding
+fixture services only to loopback. They cover server-first TCP, original UDP,
+unchanged bootstrap handoff, game-visible peer identity, native negotiation,
+destination restrictions and reset in both auto and legacy modes. Explicit
+loopback binds are also checked, including alternate 127/8 addresses on Windows.
+
 This verifies the original SNIOPINT RPC `0x01270110` transport boundary. It does
 not establish that native game instances have joined a lobby or synchronized a
 scenario. Runtime opt-in is controlled by the caller; `REO_COOP_HOST` must be an
