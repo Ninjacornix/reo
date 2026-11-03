@@ -8,6 +8,10 @@
 // Developer > "Audio and disc service stalls" sets 20).
 // ms is wall time; own_ms subtracts this guest thread's scheduler waits (time spent
 // letting other guest threads run), matching the heartbeat's own/wait accounting.
+// Limitation: time blocked in a syscall that releases guest execution (WaitSema,
+// SleepThread) is neither owned nor a scheduler wait, so it still counts in own_ms.
+// pc_samples tells them apart: samples at a WaitSema stub (0x114664) are blocking,
+// not CPU work; a concurrent [vblank-slow] confirms a real freeze.
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
 #include "reo_game_clock_observer.h"
@@ -16,6 +20,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
+#include <mutex>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #ifdef _WIN32
 // Declared here rather than including <windows.h> (min/max macros in including TUs).
 extern "C" __declspec(dllimport) int __stdcall QueryPerformanceCounter(union _LARGE_INTEGER*);
@@ -27,6 +37,13 @@ extern void sub_00135EF0_0x135ef0(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_00137D80_0x137d80(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_00129A60_0x129a60(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_00138208_0x138208(uint8_t*, R5900Context*, PS2Runtime*);
+extern void sub_001640D8_0x1640d8(uint8_t*, R5900Context*, PS2Runtime*);
+extern void sub_001724C8_0x1724c8(uint8_t*, R5900Context*, PS2Runtime*);
+extern void sub_00163738_0x163738(uint8_t*, R5900Context*, PS2Runtime*);
+extern void sub_00164270_0x164270(uint8_t*, R5900Context*, PS2Runtime*);
+extern void sub_0013ED28_0x13ed28(uint8_t*, R5900Context*, PS2Runtime*);
+extern void sub_00138650_0x138650(uint8_t*, R5900Context*, PS2Runtime*);
+extern void sub_00139568_0x139568(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_0012D678_0x12d678(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_00134C58_0x134c58(uint8_t*, R5900Context*, PS2Runtime*);
 extern void sub_0012C798_0x12c798(uint8_t*, R5900Context*, PS2Runtime*);
@@ -95,9 +112,27 @@ inline void hle(uint8_t* memory, R5900Context* context, PS2Runtime* runtime) {
     hle_ns[slot] += now_ns() - waited_ns() - begin;
     ++hle_calls[slot];
 }
+// Id 6's callback 0x163E20 (registered by movie setup 0x15E818) runs 0x164038: a
+// 0x163738 check, 0x1640D8 for each of 8 handles, 0x164270(0), then 0x1724C8.
+inline thread_local uint32_t dispatch_id = 0;
+// Id 2's step 3 (0x13EEE8) calls 0x13ED28 per active handle, then 0x1389D8 (0x138650
+// per active entry, then 0x139568) and 0x141268 (0x139568 again). Slots 4-6.
+inline thread_local int64_t part_ns[8] = {};
+inline thread_local unsigned part_calls[8] = {};
+template <void (*original)(uint8_t*, R5900Context*, PS2Runtime*), unsigned slot>
+inline void part(uint8_t* memory, R5900Context* context, PS2Runtime* runtime) {
+    if (!in_dispatch || dispatch_id != (slot < 4 ? 6u : 2u)) {
+        original(memory, context, runtime);
+        return;
+    }
+    const int64_t begin = now_ns() - waited_ns();
+    original(memory, context, runtime);
+    part_ns[slot] += now_ns() - waited_ns() - begin;
+    ++part_calls[slot];
+}
 template <void (*original)(uint8_t*, R5900Context*, PS2Runtime*)>
 inline void step(uint8_t* memory, R5900Context* context, PS2Runtime* runtime) {
-    if (!in_dispatch || memory != ram) {
+    if (!in_dispatch || memory != ram || !step_word) {
         original(memory, context, runtime);
         return;
     }
@@ -119,6 +154,57 @@ inline void step(uint8_t* memory, R5900Context* context, PS2Runtime* runtime) {
         marks[mark_count++] = {0xffffffffu, end};
 }
 
+// Guest-PC sampler: generated code stores ctx->pc before each instruction, so sampling
+// the dispatching thread's context about every millisecond profiles a slow dispatch.
+// One slot per concurrently dispatching guest thread (threads release guest execution
+// while waiting, so dispatches on different threads can overlap).
+struct SampleSlot {
+    std::atomic<R5900Context*> context{nullptr};
+    std::unordered_map<uint32_t, unsigned> samples;
+};
+inline SampleSlot sample_slots[8];
+inline std::mutex sample_mutex;
+inline thread_local SampleSlot* my_slot = nullptr;
+inline void sampler() {
+    for (;;) {
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
+        std::lock_guard<std::mutex> lock(sample_mutex);
+        for (auto& slot : sample_slots)
+            if (R5900Context* context = slot.context.load(std::memory_order_acquire))
+                ++slot.samples[static_cast<uint32_t>(reinterpret_cast<volatile uint32_t&>(context->pc))];
+    }
+}
+inline void begin_samples(R5900Context* context) {
+    std::lock_guard<std::mutex> lock(sample_mutex);
+    my_slot = nullptr;
+    for (auto& slot : sample_slots)
+        if (!slot.context.load(std::memory_order_relaxed)) {
+            slot.samples.clear();
+            slot.context.store(context, std::memory_order_release);
+            my_slot = &slot;
+            return;
+        }
+}
+inline void end_samples() {
+    if (my_slot)
+        my_slot->context.store(nullptr, std::memory_order_release);
+}
+inline void print_samples() {
+    std::vector<std::pair<uint32_t, unsigned>> top;
+    {
+        std::lock_guard<std::mutex> lock(sample_mutex);
+        if (my_slot)
+            top.assign(my_slot->samples.begin(), my_slot->samples.end());
+    }
+    std::sort(top.begin(), top.end(), [](auto& a, auto& b) { return a.second > b.second; });
+    unsigned total = 0;
+    for (auto& entry : top)
+        total += entry.second;
+    std::fprintf(stderr, " pc_samples=%u top:", total);
+    for (size_t i = 0; i < top.size() && i < 10; ++i)
+        std::fprintf(stderr, " 0x%06x(%u)", top[i].first, top[i].second);
+}
+
 inline void configure(const char* serial, uint8_t* memory, size_t bytes) {
     if (const char* value = std::getenv("REO_CRI_SERVER_SLOW_MS"))
         threshold_ns = std::strtoll(value, nullptr, 10) * 1'000'000;
@@ -130,6 +216,7 @@ inline void configure(const char* serial, uint8_t* memory, size_t bytes) {
         reo_game_clock::word(memory, 0x141e2c) != 0xffb40020u)
         return;
     ram = memory;
+    std::thread(sampler).detach();
     std::fprintf(stderr, "[CRI-SERVER] timing enabled; reporting dispatches >= %lld ms\n",
                  static_cast<long long>(threshold_ns / 1'000'000));
 }
@@ -141,14 +228,18 @@ inline void dispatch(uint8_t* memory, R5900Context* context, PS2Runtime* runtime
     if (observe)
         for (unsigned i = 0; i < 12; ++i)
             slots[i] = reo_game_clock::word(ram, table + id * 0x30u + i * 4u);
-    const bool steps = observe && (id == 4 || id == 2) && !in_dispatch;
+    const bool steps = observe && (id == 4 || id == 2 || id == 6) && !in_dispatch;
     if (steps) {
-        step_word = id == 4 ? 0x20f390u : 0x21b754u;
+        dispatch_id = id;
+        std::memset(part_ns, 0, sizeof(part_ns));
+        std::memset(part_calls, 0, sizeof(part_calls));
+        step_word = id == 4 ? 0x20f390u : id == 2 ? 0x21b754u : 0u;
         std::memset(step_ns, 0, sizeof(step_ns));
         step3_begin = 0;
         mark_count = 0;
         std::memset(hle_ns, 0, sizeof(hle_ns));
         std::memset(hle_calls, 0, sizeof(hle_calls));
+        begin_samples(context);
         in_dispatch = true;
     }
     const int64_t begin = now_ns(), waited = waited_ns();
@@ -156,8 +247,10 @@ inline void dispatch(uint8_t* memory, R5900Context* context, PS2Runtime* runtime
     sub_00141E20_0x141e20(memory, context, runtime);
     const int64_t elapsed = now_ns() - begin;
     const int64_t owned = elapsed - (waited_ns() - waited);
-    if (steps)
+    if (steps) {
         in_dispatch = false;
+        end_samples();
+    }
     if (!observe || owned < threshold_ns || reports >= report_limit)
         return;
     ++reports;
@@ -167,10 +260,20 @@ inline void dispatch(uint8_t* memory, R5900Context* context, PS2Runtime* runtime
     for (unsigned i = 0; i < 6; ++i)
         if (slots[i * 2])
             std::fprintf(stderr, " [%u]0x%06x(0x%08x)", i, slots[i * 2], slots[i * 2 + 1]);
-    if (steps) {
+    if (steps && id == 6) {
+        std::fprintf(stderr, " parts_own_ms: check163738=%ux%.3f handles1640d8=%ux%.3f"
+                             " flush164270=%ux%.3f decode1724c8=%ux%.3f",
+                     part_calls[2], part_ns[2] / 1e6, part_calls[0], part_ns[0] / 1e6,
+                     part_calls[3], part_ns[3] / 1e6, part_calls[1], part_ns[1] / 1e6);
+    } else if (steps) {
         std::fprintf(stderr, " steps_own_ms:");
         for (unsigned i = 1; i <= (id == 4 ? 6u : 3u); ++i)
             std::fprintf(stderr, " %u=%.3f", i, step_ns[i] / 1e6);
+        if (id == 2)
+            std::fprintf(stderr, " parts_own_ms: handles13ed28=%ux%.3f entries138650=%ux%.3f"
+                                 " pump139568=%ux%.3f",
+                         part_calls[4], part_ns[4] / 1e6, part_calls[5], part_ns[5] / 1e6,
+                         part_calls[6], part_ns[6] / 1e6);
         // Step-3 timeline: each marker with owned ms since the previous point (end = return).
         if (step3_begin) {
             std::fprintf(stderr, " step3:");
@@ -186,6 +289,8 @@ inline void dispatch(uint8_t* memory, R5900Context* context, PS2Runtime* runtime
                          hle_ns[0] / 1e6, hle_calls[1], hle_ns[1] / 1e6);
         }
     }
+    if (steps)
+        print_samples();
     std::fprintf(stderr, "\n");
 }
 } // namespace reo_cri_server

@@ -1732,6 +1732,20 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
              "original CRI main server step timing");
         bind(runtime, 0x138208, reo_cri_server::marker,
              "original CRI file server marker timing");
+        bind(runtime, 0x13ED28, reo_cri_server::part<sub_0013ED28_0x13ed28, 4>,
+             "original CRI audio server part timing");
+        bind(runtime, 0x138650, reo_cri_server::part<sub_00138650_0x138650, 5>,
+             "original CRI audio server part timing");
+        bind(runtime, 0x139568, reo_cri_server::part<sub_00139568_0x139568, 6>,
+             "original CRI audio server part timing");
+        bind(runtime, 0x1640D8, reo_cri_server::part<sub_001640D8_0x1640d8, 0>,
+             "original CRI movie server part timing");
+        bind(runtime, 0x1724C8, reo_cri_server::part<sub_001724C8_0x1724c8, 1>,
+             "original CRI movie server part timing");
+        bind(runtime, 0x163738, reo_cri_server::part<sub_00163738_0x163738, 2>,
+             "original CRI movie server part timing");
+        bind(runtime, 0x164270, reo_cri_server::part<sub_00164270_0x164270, 3>,
+             "original CRI movie server part timing");
         bind(runtime, 0x12D678, reo_cri_server::step<sub_0012D678_0x12d678>,
              "original CRI audio server step timing");
         bind(runtime, 0x134C58, reo_cri_server::step<sub_00134C58_0x134c58>,
