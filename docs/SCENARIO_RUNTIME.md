@@ -731,3 +731,18 @@ Developer > "Audio and disc service stalls" (`REO_CRI_SERVER_SLOW_MS=20`) enable
 server, step times for ids 2 and 4, the game's own step-3 markers (`0x138208`)
 and HLE RPC time, plus `[HW-BRIDGE:CDN] slow read` lines. Owned time includes a
 released host read, which is neither owned nor waiting in the scheduler's terms.
+
+The observer also times parts of the movie server (id 6, callback `0x163E20`
+registered by movie setup `0x15E818`) and the audio server (id 2), and samples
+the dispatching thread's guest PC about every millisecond during each observed
+dispatch (generated code stores `ctx->pc` before every instruction). In
+automated route runs the movie server held about 0.42 s at every movie start,
+almost all in `0x1640D8`; 177 of 240 PC samples were in `WaitSema`, so that
+time is blocking with guest execution released, not a freeze, and no
+`[vblank-slow]` accompanied it. Time blocked in such syscalls still counts in
+`own_ms`; the PC samples distinguish it. The audio server occasionally held
+the CPU for 0.1-1.5 s (`[vblank-slow]` owner thread 5). Samples placed it in
+`sceSifSetDma` (`0x1149E0`) from the DTX pump, and temporary runtime timing put
+one 399 ms case entirely in the runtime's `dtxApplySjxPayload`, not in lock
+contention or stream consumption. After that capture the stall did not recur
+in 22 further route runs, so its exact sub-cause is not established.
