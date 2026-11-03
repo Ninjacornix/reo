@@ -41,6 +41,8 @@
 
 #include "overrides/reo_game_clock_observer.h"
 #include "overrides/reo_performance.h"
+#include "overrides/reo_cri_server_observer.h"
+#include "overrides/reo_cd_async.h"
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1293,6 +1295,8 @@ int main(int argc, char* argv[]) {
 
     reo_game_clock::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_performance::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+    reo_cri_server::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+    reo_cd_async::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
 
     reo_actor_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_ground_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);

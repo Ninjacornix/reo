@@ -39,6 +39,8 @@
 
 #include "reo_game_clock_observer.h"
 #include "reo_performance.h"
+#include "reo_cd_async.h"
+#include "reo_cri_server_observer.h"
 #include "actor_first_nonfinite.h"
 #include "ground_query_origin.h"
 #include "reo_dma_builder_observer.h"
@@ -1712,6 +1714,34 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
     if (reo_game_clock::enabled || reo_actor_origin::enabled || reo_performance::ram) {
         bind(runtime, 0x1B0B80, reoGameClockActorInput,
              "original actor-input clock/finite-coordinate observation");
+    }
+    if (reo_cd_async::enabled) {
+        bind(runtime, 0x1179E8, reo_cd_async::sifCallRpc,
+             "SifCallRpc (HLE) with asynchronous sceCdRead completion");
+    }
+    if (reo_cri_server::ram) {
+        bind(runtime, 0x141E20, reo_cri_server::dispatch,
+             "original CRI server dispatch timing");
+        bind(runtime, 0x130D48, reo_cri_server::step<sub_00130D48_0x130d48>,
+             "original CRI main server step timing");
+        bind(runtime, 0x135EF0, reo_cri_server::step<sub_00135EF0_0x135ef0>,
+             "original CRI main server step timing");
+        bind(runtime, 0x137D80, reo_cri_server::step<sub_00137D80_0x137d80>,
+             "original CRI main server step timing");
+        bind(runtime, 0x129A60, reo_cri_server::step<sub_00129A60_0x129a60>,
+             "original CRI main server step timing");
+        bind(runtime, 0x138208, reo_cri_server::marker,
+             "original CRI file server marker timing");
+        bind(runtime, 0x12D678, reo_cri_server::step<sub_0012D678_0x12d678>,
+             "original CRI audio server step timing");
+        bind(runtime, 0x134C58, reo_cri_server::step<sub_00134C58_0x134c58>,
+             "original CRI audio server step timing");
+        bind(runtime, 0x12C798, reo_cri_server::step<sub_0012C798_0x12c798>,
+             "original CRI audio server step timing");
+        bind(runtime, 0x117080, reo_cri_server::hle<ps2_syscalls::SifInitRpc, 0>,
+             "SifInitRpc (HLE) with CRI step timing");
+        bind(runtime, 0x1179E8, reo_cri_server::hle<reo_cd_async::sifCallRpc, 1>,
+             "SifCallRpc (HLE) with CRI step timing");
     }
     if (reo_actor_origin::enabled) {
         bind(runtime, 0x1B02D0, reoActorPassEnd,

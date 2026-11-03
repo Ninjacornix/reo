@@ -56,6 +56,10 @@ class ReoHwBridge {
         return s_instance;
     }
 
+    // cdvdfsv sector read into guest RAM (bounds-checked; CDVD serializes readers).
+    // Safe without guest execution: callers own the destination as a pending DMA.
+    bool readCdSectors(uint32_t lsn, uint32_t count, uint32_t dst, uint8_t* rdram);
+
   private:
     // PS2Memory callback: DMA channel start
     static void onDmaStart(uint32_t channelBase, uint32_t madr, uint32_t qwc, uint32_t tadr,

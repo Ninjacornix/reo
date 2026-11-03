@@ -968,6 +968,17 @@
                     </StackPanel>
                     <CheckBox x:Name="DevGameClock" IsCheckedChanged="DeveloperSettingChanged" Grid.Column="1" AutomationProperties.Name="Record game clock and position" AutomationProperties.LabeledBy="{Binding ElementName=DevClockLabel}" AutomationProperties.HelpText="File #1 only. Write the game clock, room and player position to clock.csv for the first ten minutes." Classes="ToggleSwitch" />
                   </Grid>
+                  <Grid MinHeight="62">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                      <compat:Rc1TextBlock x:Name="DevCriServerLabel" Text="Audio and disc service stalls" FontSize="18" />
+                      <compat:Rc1TextBlock Text="File #1 only" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,5,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="DevCriServer" IsCheckedChanged="DeveloperSettingChanged" Grid.Column="1" AutomationProperties.Name="Record audio and disc service stalls" AutomationProperties.LabeledBy="{Binding ElementName=DevCriServerLabel}" AutomationProperties.HelpText="File #1 only. Log CRI audio and disc service work that holds the game for 20 ms or more to stderr.log in the session folder." Classes="ToggleSwitch" />
+                  </Grid>
                 </StackPanel>
               </Grid>
               <compat:Rc1TextBlock Text="SESSION FILES" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,30,0,14" />

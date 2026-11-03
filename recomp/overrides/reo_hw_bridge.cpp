@@ -2550,6 +2550,34 @@ void reoPad2Stop() {
         g_pad2.thread.join();
 }
 
+bool ReoHwBridge::readCdSectors(uint32_t lsn, uint32_t count, uint32_t dstAddr, uint8_t* rdram) {
+    const uint32_t dst = dstAddr & ps2RamBackingMask();
+    if (!m_cdvd || !rdram || count == 0 || count > 0x4000 ||
+        static_cast<uint64_t>(dst) + static_cast<uint64_t>(count) * 2048u > ps2RamBackingBytes)
+        return false;
+    const auto begin = std::chrono::steady_clock::now();
+    const bool ok = m_cdvd->read_sectors(lsn, count, rdram + dst);
+    // Test-only: simulate a stalled host disk.
+    static const int testDelayMs = [] {
+        const char* value = std::getenv("REO_CD_READ_TEST_DELAY_MS");
+        return value ? std::atoi(value) : 0;
+    }();
+    if (testDelayMs > 0)
+        std::this_thread::sleep_for(std::chrono::milliseconds(testDelayMs));
+    // Shares the REO_CRI_SERVER_SLOW_MS threshold (unset or 0 disables).
+    static const int64_t slowNs = [] {
+        const char* value = std::getenv("REO_CRI_SERVER_SLOW_MS");
+        return (value ? std::strtoll(value, nullptr, 10) : 0) * 1'000'000;
+    }();
+    const int64_t readNs =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - begin)
+            .count();
+    static std::atomic<int> slowReads{0};
+    if (slowNs > 0 && readNs >= slowNs && slowReads.fetch_add(1) < 200)
+        fprintf(stderr, "[HW-BRIDGE:CDN] slow read lsn=%u n=%u ms=%.3f\n", lsn, count, readNs / 1e6);
+    return ok;
+}
+
 bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint32_t sendSize,
                            uint32_t recvBuf, uint32_t recvSize, uint8_t* rdram, void* user) {
     auto* self = static_cast<ReoHwBridge*>(user);
@@ -2944,11 +2972,11 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
             const uint32_t a1 = sendBuf ? rdramRead32(rdram, sendBuf + 4) : 0;
             const uint32_t a2 = sendBuf ? rdramRead32(rdram, sendBuf + 8) : 0;
             if (rpcNum == 0x01) { // Read {sector, count, dst, mode}
-                const uint32_t dst = a2 & ps2RamBackingMask();
-                bool ok = false;
-                if (self && self->m_cdvd && a1 != 0 && a1 <= 0x4000 &&
-                    static_cast<uint64_t>(dst) + static_cast<uint64_t>(a1) * 2048u <= ps2RamBackingBytes)
-                    ok = self->m_cdvd->read_sectors(a0, a1, rdram + dst);
+                // Synchronous here: SifCallRpc holds g_sif_call_rpc_mutex around this
+                // handler, so it must not release guest execution (deadlock observed
+                // 2026-11-03). File #1's sceCdRead is completed asynchronously before
+                // reaching this path by reo_cd_async.h.
+                const bool ok = self && self->readCdSectors(a0, a1, a2, rdram);
                 static const bool cdLogAllN = std::getenv("REO_CD_LOG") != nullptr;
                 if (cdLogAllN || nLog++ < 60)
                     fprintf(stderr, "[HW-BRIDGE:CDN] read lsn=%u n=%u dst=0x%08X -> %s\n", a0, a1,
