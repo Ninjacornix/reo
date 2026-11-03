@@ -15,9 +15,14 @@ public partial class MainWindow {
                                                 "Coop", "Mods", "Cheats", "Setup", "Launcher",
                                                 "Logs", "Developer" }) {
                     ShowPage(page);
+                    Status.Text = "Preparing game...";
                     var progress = BeginDiscImport();
                     progress.Report(new(1, 2, "Downloading build tools", "Preparing game"));
                     Dispatcher.UIThread.RunJobs();
+                    check(!StatusToast.IsVisible,
+                          $"Setup progress duplicates the progress bar in a toast on {page}.");
+                    check(!ImportState.IsVisible,
+                          "Active setup progress must not be duplicated above Game files.");
                     // Progress also updates inline status text on Game files. Hold that text
                     // constant so this comparison measures only the overlay's layout effect.
                     ImportActivity.IsVisible = false;
@@ -27,6 +32,16 @@ public partial class MainWindow {
                     var viewport = SettingsScroll.Viewport;
                     ImportActivity.IsVisible = true;
                     UpdateLayout();
+                    // Hit testing uses the rendered scene, including its size after a resize.
+                    using var overlayFrame = this.CaptureRenderedFrame();
+                    var detailTop = SetupDetail.TranslatePoint(default, this)!.Value.Y;
+                    var timingTop = ImportTiming.TranslatePoint(default, this)!.Value.Y;
+                    var barBottom =
+                        DiscProgress.TranslatePoint(new Point(0, DiscProgress.Bounds.Height),
+                                                    this)!.Value.Y;
+                    check(Math.Abs(detailTop - timingTop) < 1 && detailTop >= barBottom &&
+                              SetupDetail.Bounds.Right <= ImportTiming.Bounds.Left,
+                          $"Setup detail and timing must share one row below the bar at {size}.");
                     check(PageContent.Bounds == content && LauncherFooter.Bounds == footer &&
                               SettingsScroll.Viewport == viewport,
                           $"Setup progress shifts or shrinks {page} at {size}.");
@@ -40,13 +55,22 @@ public partial class MainWindow {
                     check(hit != null &&
                               (hit == button || hit.GetVisualAncestors().Contains(button)),
                           $"Page content covers the setup cancel button on {page} at {size}.");
-                    if (page == "Setup" && size.Item1 == 1320)
-                        using (var bitmap = this.CaptureRenderedFrame())
-                            bitmap!.Save(Path.Combine(output, "Setup-progress-overlay.png"));
+                    if (page == "Setup" && size.Item1 == 1320) {
+                        overlayFrame!.Save(Path.Combine(output, "Setup-progress-overlay.png"));
+                        Status.Text = "Game imported. Ready to play.";
+                        check(StatusToast.IsVisible,
+                              "Import completion must remain visible before setup ends.");
+                        Status.Text = "Could not import: test failure.";
+                        check(StatusToast.IsVisible && StatusToastTitle.Text == Status.Text,
+                              "Import errors must remain visible before setup ends.");
+                        HideStatusToast();
+                    }
                     button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                     check(importCancellation!.IsCancellationRequested,
                           $"Setup cannot be cancelled from {page} at {size}.");
                     EndDiscImport();
+                    check(ImportState.IsVisible,
+                          "Game-files guidance must return when setup ends.");
                 }
             }
         } finally {

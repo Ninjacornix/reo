@@ -1169,8 +1169,10 @@
                 <compat:Rc1TextBlock x:Name="SetupStage" FontWeight="Normal" />
               </DockPanel>
               <ProgressBar x:Name="DiscProgress" Minimum="0" Maximum="100" Height="8" Foreground="{StaticResource Accent}" Background="{StaticResource Line}" AutomationProperties.Name="Game setup progress" />
-              <compat:Rc1TextBlock x:Name="SetupDetail" Margin="0,7,0,0" Classes="Hint" />
-              <compat:Rc1TextBlock x:Name="ImportTiming" Classes="Hint" />
+              <Grid ColumnDefinitions="*,Auto" Margin="0,7,0,0">
+                <compat:Rc1TextBlock x:Name="SetupDetail" TextTrimming="CharacterEllipsis" Classes="Hint" />
+                <compat:Rc1TextBlock x:Name="ImportTiming" Grid.Column="1" Margin="12,0,0,0" Classes="Hint" />
+              </Grid>
             </StackPanel>
             <Button Grid.Column="1" Content="Cancel setup" VerticalAlignment="Center" x:Name="Action_CancelImport_114" Click="CancelImport" />
           </Grid>
