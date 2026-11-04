@@ -1,6 +1,9 @@
 #pragma once
 #include "../../runtime/audio/host_bridge.h"
-#include "Kernel/Syscalls/Helpers/CriAudio.h"
+
+// Runtime patch 0120 (Kernel/Syscalls/Helpers/CriAudio.h). Declared here so the audio
+// bridge checks build without the PS2Recomp tree.
+namespace ps2_cri_audio { void pauseNow(uint32_t voice, bool paused); }
 
 namespace reo::audio {
 // pauseAddress: CRI ADXT_Pause(adxt, on). It stores the flag at adxt+0x72 and, only for
