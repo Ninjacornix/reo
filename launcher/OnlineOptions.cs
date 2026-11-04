@@ -73,9 +73,15 @@ public static partial class OnlineOptions {
         if (!Configured(settings))
             return new();
         TryHost(settings.CoopHost, out string host);
-        return new() { ["REO_COOP_HOST"] = host, ["REO_COOP_PLATFORM_AUTH"] = "native",
-                       ["REO_COOP_USERNAME"] = settings.AccountUsername,
-                       ["REO_COOP_AUTO_ACCOUNT"] = "1", ["REO_NETCODE"] = "auto" };
+        var environment = new Dictionary<string, string> {
+            ["REO_COOP_HOST"] = host, ["REO_COOP_PLATFORM_AUTH"] = "native",
+            ["REO_COOP_USERNAME"] = settings.AccountUsername,
+            ["REO_COOP_AUTO_ACCOUNT"] = "1", ["REO_NETCODE"] = "auto" };
+        // Keep the advertised address as the account/protocol identity. Only our own
+        // game's sockets use loopback, so hosting does not require router NAT loopback.
+        if (settings.ResolvedCoopMode == "host")
+            environment["REO_COOP_LOCAL_SERVER"] = "1";
+        return environment;
     }
 
     public static string PrepareMemoryCard(Settings settings, string folder, FileStream? lease) {
