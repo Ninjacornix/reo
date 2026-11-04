@@ -851,6 +851,8 @@
       "Frame timing",
       "Game clock and position",
       "File #1 only",
+      "Audio and disc service stalls",
+      "File #1 only",
       "SESSION FILES"
     ],
     "PageSetup": [

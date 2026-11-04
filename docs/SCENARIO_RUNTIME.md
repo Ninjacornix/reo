@@ -674,3 +674,75 @@ second at 4x internal resolution with forced bilinear filtering. It exits
 normally. This verifies the additional compiled path and local compatibility;
 the reporter's exact RTX 3060 configuration remains unverified, and the
 previously documented GPU-pressure case is not declared resolved.
+
+## CRI disc-read freezes (2026-11-03)
+
+Two File #1 sessions on the RX 570 host showed isolated 157/227 ms and 187/502 ms
+freezes while guest thread 6 (entry `0x12AD70`) owned the emulated CPU. Thread 6
+runs CRI's server dispatcher `0x141E20` for server id 4 (callback `0x12A1C8` ->
+`0x12A020`). Its step 3 (`0x137D80`) issues `sceCdRead` (`0x101788`), whose HLE
+`SifCallRpc` reads sectors from the ISO synchronously in `reo_hw_bridge.cpp`.
+In the second session the host reads of 25 and 108 sectors at LSN 976584/976609
+took 187 and 502 ms (ISO on a SATA SSD, uncompressed; the cause of the host stall
+is unknown), and every other guest thread waited for them.
+
+A first candidate released guest execution (`GuestExecutionReleaseScope`)
+during the host sector read. It passed a 35-second title-boot A/B with a
+150 ms injected delay (7 vs 51 steady-state `[vblank-slow]` events), but
+deadlocked in gameplay: `SifCallRpc` holds `g_sif_call_rpc_mutex` around the
+bridge handler, so another guest thread entering an RPC during the read held the
+guest lock while waiting for that mutex, and thread 6 could not reacquire the
+guest lock (session 20261103-223413-870: vsync stopped, `pc6=0x1179E8`,
+`ra=0x101908`). The release was removed; the read is synchronous again. A correct
+fix must complete the read without holding the RPC mutex across a guest-lock
+reacquire, for example by deferring the cdvdfsv read and its end callback.
+`CDVD::read_sectors` keeps its internal mutex; the test-only
+`REO_CD_READ_TEST_DELAY_MS` adds a delay to each read.
+
+`recomp/overrides/reo_cd_async.h` now completes File #1's `sceCdRead`
+asynchronously. It binds `SifCallRpc` (`0x1179E8`) and matches only the exact
+call at return address `0x101908` (client `0x208AD0`, rpc 1, no-wait, send
+`0x207A00`/0x18, end callback `0x1004D8`, `endParam` from `sp+0`, instruction
+words checked at bootstrap). It writes the same client fields as the HLE call,
+returns 0 immediately and queues the read. A host worker reads the sectors
+without guest execution or the RPC mutex, then runs `0x1004D8(endParam)` under
+`GuestExecutionScope` on a reserved async stack, as alarm callbacks do. Until
+then `sceCdRead`'s busy word `0x207934` stays set, so `sceCdSync(1)` reports busy
+and `sceCdSync(0)` waits in `DelayThread`. Every other RPC uses the HLE.
+`REO_CD_ASYNC=0` restores the synchronous read.
+
+With 150 ms injected per read, the automated `REO_TEST_ROUTE=gameplay` run
+reached gameplay in both modes (89.2 s async, 90.9 s synchronous). After startup
+the async run logged 4 `[vblank-slow]` events (max 20 ms, none owned by thread 6)
+and 1 of 113 seconds below 55 vsyncs. The synchronous run logged 174 (max 158 ms,
+153 owned by thread 6) and 50 of 129 seconds below 55. Vsync never stopped in
+either run.
+
+A 17-minute manual session (20261103-230211-943, build `23cf2f26`, 4x internal
+resolution) used the async path for every `sceCdRead` (40 logged reads ok, no
+synchronous CDN reads) and logged no `[vblank-slow]` event. Thread 6 owned at
+most 11 ms per second (previously 161-507 ms in freeze seconds), and the longest
+original update interval was 56 ms. No host read reached 20 ms in that session,
+so it confirms stability, not behavior under a stalled host disk; the injected
+delay runs above cover that case.
+
+Developer > "Audio and disc service stalls" (`REO_CRI_SERVER_SLOW_MS=20`) enables
+`recomp/overrides/reo_cri_server_observer.h`: per-dispatch owned time for each CRI
+server, step times for ids 2 and 4, the game's own step-3 markers (`0x138208`)
+and HLE RPC time, plus `[HW-BRIDGE:CDN] slow read` lines. Owned time includes a
+released host read, which is neither owned nor waiting in the scheduler's terms.
+
+The observer also times parts of the movie server (id 6, callback `0x163E20`
+registered by movie setup `0x15E818`) and the audio server (id 2), and samples
+the dispatching thread's guest PC about every millisecond during each observed
+dispatch (generated code stores `ctx->pc` before every instruction). In
+automated route runs the movie server held about 0.42 s at every movie start,
+almost all in `0x1640D8`; 177 of 240 PC samples were in `WaitSema`, so that
+time is blocking with guest execution released, not a freeze, and no
+`[vblank-slow]` accompanied it. Time blocked in such syscalls still counts in
+`own_ms`; the PC samples distinguish it. The audio server occasionally held
+the CPU for 0.1-1.5 s (`[vblank-slow]` owner thread 5). Samples placed it in
+`sceSifSetDma` (`0x1149E0`) from the DTX pump, and temporary runtime timing put
+one 399 ms case entirely in the runtime's `dtxApplySjxPayload`, not in lock
+contention or stream consumption. After that capture the stall did not recur
+in 22 further route runs, so its exact sub-cause is not established.
