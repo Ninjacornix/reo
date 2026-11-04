@@ -20,6 +20,17 @@ handles. `REO_NET_TRACE=1` enables bounded diagnostics;
 `REO_COOP_TRACE_FILE` records RPC results and actual socket bytes. Use disposable
 test accounts when capturing authentication traffic.
 
+The launcher sets `REO_COOP_LOCAL_SERVER=1` for the hosting player's game only.
+Its TCP, original UDP and native extension traffic connects to the local server
+through loopback, while DNS and game-visible reply addresses retain the advertised
+server identity. Bootstrap handoff payloads and account credentials keep that same
+identity. This removes the host's dependency on router NAT loopback; friends still
+connect to the advertised address and need the usual forwarding/firewall setup.
+Explicit 127/8 server addresses retain their exact bind address. Joining and
+offline launches do not enable this local routing. Distributing this fix requires
+both an updated launcher and updated game build inputs/recompiled games; older
+game binaries ignore the local-server setting.
+
 The development server is [openSNAP](https://github.com/GrenderG/openSNAP), running
 as a separate AGPL-3.0 service. It provides UDP bootstrap on 9090, UDP game service
 on 9091, and the Capcom application service on TCP 10127. Server sources are not
