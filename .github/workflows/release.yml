@@ -20,7 +20,7 @@ on:
         description: Existing release containing matching verified game input kits
         type: string
         required: true
-        default: v1.0.20-rc2-hotfix
+        default: v1.0.20
       notes:
         description: Release notes preview; CI adds input provenance and validation limits
         type: string
@@ -44,7 +44,7 @@ jobs:
       # Manual dry runs only; a tag push derives the tag and kind from github.ref.
       RELEASE_TAG: ${{ inputs.tag }}
       PRERELEASE: ${{ inputs.prerelease }}
-      INPUTS_RELEASE: ${{ inputs.inputs_release || vars.RELEASE_INPUTS || 'v1.0.20-rc2-hotfix' }}
+      INPUTS_RELEASE: ${{ inputs.inputs_release || vars.RELEASE_INPUTS || 'v1.0.20' }}
       RELEASE_NOTES: ${{ inputs.notes }}
       PYTHONUTF8: '1'
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
