@@ -45,5 +45,23 @@ int main() {
     check(ps2_cri_audio::queuedSamples(left) == 48000, "later producer PCM is kept for a resume");
     ps2_cri_audio::configure(voice, left, right, 2, 48000, 256, true);
     check(audible(480) == 480, "resume continues from the retained PCM");
+    ps2_cri_audio::configure(voice, left, right, 2, 48000, 256, false); // silence it for the next case
+
+    // ADXT_Pause on a stream that is still decoding (status PLAYING): the File #1
+    // Decisions, Decisions music is started and paused 16 ms later. Hardware stops at
+    // once; draining even the queued 0.1 s was an audible blip as the FMV started.
+    const uint32_t music = 0x1e0180, musicLeft = 0x1e0080, musicRight = 0x1e00c0;
+    feed(musicLeft, 4800); feed(musicRight, 4800);
+    ps2_cri_audio::configure(music, musicLeft, musicRight, 2, 48000, 256, true);
+    check(audible(480) == 480, "primed music audible before the pause");
+    ps2_cri_audio::pauseNow(music);
+    ps2_cri_audio::drain(music);
+    ps2_cri_audio::configure(music, musicLeft, musicRight, 2, 48000, 256, false);
+    size_t blip = 0;
+    for (int block = 0; block < 10; ++block) { feed(musicLeft, 480); feed(musicRight, 480); blip += audible(480); }
+    std::printf("samples heard after a mid-stream pause: %zu\n", blip);
+    check(blip == 0, "mid-stream pause stops at once");
+    ps2_cri_audio::configure(music, musicLeft, musicRight, 2, 48000, 256, true);
+    check(audible(480) == 480, "mid-stream pause keeps its PCM for the resume");
     return failures ? 1 : 0;
 }
