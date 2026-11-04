@@ -18,18 +18,17 @@ inline void (*originalPause)(uint8_t*,R5900Context*,PS2Runtime*)=nullptr;
 // (status 3) is not an ending: hardware stops at once. File #1 Decisions, Decisions
 // starts its music and pauses it 16 ms later; draining that was an audible blip (#72).
 inline void pause(uint8_t* ram,R5900Context* ctx,PS2Runtime* runtime) {
-    if(ctx->pc==pauseAddress && GPR_U32(ctx,5)==1u) {
-        const uint32_t adxt=GPR_U32(ctx,4)&0x1fffffffu;
-        if(adxt && adxt<PS2_RAM_SIZE-0x80 && ram[adxt+0x72]!=1u && static_cast<int8_t>(ram[adxt+1])==3) {
-            uint32_t rna=0,handle=0;
-            std::memcpy(&rna,ram+adxt+0xc,4);
-            rna&=0x1fffffffu;
-            if(rna && rna<PS2_RAM_SIZE-0x24) std::memcpy(&handle,ram+rna+0x20,4);
-            if(handle) {
-                ps2_cri_audio::pauseNow(handle);
-                static unsigned reports=0;
-                if(reports++<64) std::fprintf(stderr,"[AUDIO-PAUSE-1] handle=%08x mid-stream\n",handle);
-            }
+    const uint32_t adxt=GPR_U32(ctx,4)&0x1fffffffu,on=GPR_U32(ctx,5);
+    if(ctx->pc==pauseAddress && (on==0u || on==1u) && adxt && adxt<PS2_RAM_SIZE-0x80 &&
+       ram[adxt+0x72]!=on && static_cast<int8_t>(ram[adxt+1])==3) {
+        uint32_t rna=0,handle=0;
+        std::memcpy(&rna,ram+adxt+0xc,4);
+        rna&=0x1fffffffu;
+        if(rna && rna<PS2_RAM_SIZE-0x24) std::memcpy(&handle,ram+rna+0x20,4);
+        if(handle) {
+            ps2_cri_audio::pauseNow(handle,on==1u);
+            static unsigned reports=0;
+            if(reports++<64) std::fprintf(stderr,"[AUDIO-PAUSE-1] handle=%08x mid-stream %s\n",handle,on?"pause":"resume");
         }
     }
     originalPause(ram,ctx,runtime);

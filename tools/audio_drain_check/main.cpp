@@ -54,13 +54,19 @@ int main() {
     feed(musicLeft, 4800); feed(musicRight, 4800);
     ps2_cri_audio::configure(music, musicLeft, musicRight, 2, 48000, 256, true);
     check(audible(480) == 480, "primed music audible before the pause");
-    ps2_cri_audio::pauseNow(music);
-    ps2_cri_audio::drain(music);
-    ps2_cri_audio::configure(music, musicLeft, musicRight, 2, 48000, 256, false);
+    ps2_cri_audio::pauseNow(music, true);
+    // Until the PS2RNA stop arrives (~15 ms later) the runtime re-applies the stale
+    // "playing" state every tick; the pause must hold through that.
     size_t blip = 0;
+    for (int tick = 0; tick < 3; ++tick) {
+        ps2_cri_audio::configure(music, musicLeft, musicRight, 2, 48000, 256, true);
+        feed(musicLeft, 480); feed(musicRight, 480); blip += audible(480);
+    }
+    ps2_cri_audio::drain(music); // the stop command: must not drain this pause
+    ps2_cri_audio::configure(music, musicLeft, musicRight, 2, 48000, 256, false);
     for (int block = 0; block < 10; ++block) { feed(musicLeft, 480); feed(musicRight, 480); blip += audible(480); }
     std::printf("samples heard after a mid-stream pause: %zu\n", blip);
-    check(blip == 0, "mid-stream pause stops at once");
+    check(blip == 0, "mid-stream pause stops at once and holds until the stop command");
     ps2_cri_audio::configure(music, musicLeft, musicRight, 2, 48000, 256, true);
     check(audible(480) == 480, "mid-stream pause keeps its PCM for the resume");
     return failures ? 1 : 0;
