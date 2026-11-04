@@ -1,0 +1,314 @@
+{
+  "Play": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 1.82,
+    "changedPercent": 1.54,
+    "regions": {
+      "sidebar": {
+        "mean": 0.6,
+        "changedPercent": 0.79
+      },
+      "page": {
+        "mean": 2.28,
+        "changedPercent": 1.94
+      },
+      "footer": {
+        "mean": 1.5,
+        "changedPercent": 0.72
+      }
+    }
+  },
+  "Graphics": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 1.14,
+    "changedPercent": 1.36,
+    "regions": {
+      "sidebar": {
+        "mean": 0.65,
+        "changedPercent": 0.81
+      },
+      "page": {
+        "mean": 1.33,
+        "changedPercent": 1.66
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Audio": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 2.43,
+    "changedPercent": 2.66,
+    "regions": {
+      "sidebar": {
+        "mean": 0.64,
+        "changedPercent": 0.8
+      },
+      "page": {
+        "mean": 3.3,
+        "changedPercent": 3.66
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Controller": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 3.75,
+    "changedPercent": 4.07,
+    "regions": {
+      "sidebar": {
+        "mean": 0.65,
+        "changedPercent": 0.82
+      },
+      "page": {
+        "mean": 5.31,
+        "changedPercent": 5.8
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Saves": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 1.06,
+    "changedPercent": 1.29,
+    "regions": {
+      "sidebar": {
+        "mean": 0.65,
+        "changedPercent": 0.81
+      },
+      "page": {
+        "mean": 1.21,
+        "changedPercent": 1.57
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Coop": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 0.84,
+    "changedPercent": 1.02,
+    "regions": {
+      "sidebar": {
+        "mean": 0.64,
+        "changedPercent": 0.79
+      },
+      "page": {
+        "mean": 0.88,
+        "changedPercent": 1.16
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Mods": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 0.78,
+    "changedPercent": 0.96,
+    "regions": {
+      "sidebar": {
+        "mean": 0.64,
+        "changedPercent": 0.8
+      },
+      "page": {
+        "mean": 0.77,
+        "changedPercent": 1.06
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Cheats": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 1.9,
+    "changedPercent": 2.32,
+    "regions": {
+      "sidebar": {
+        "mean": 0.64,
+        "changedPercent": 0.79
+      },
+      "page": {
+        "mean": 2.48,
+        "changedPercent": 3.15
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Setup": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 2.23,
+    "changedPercent": 2.57,
+    "regions": {
+      "sidebar": {
+        "mean": 0.61,
+        "changedPercent": 0.79
+      },
+      "page": {
+        "mean": 3.0,
+        "changedPercent": 3.53
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Launcher": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 0.72,
+    "changedPercent": 0.98,
+    "regions": {
+      "sidebar": {
+        "mean": 0.58,
+        "changedPercent": 0.76
+      },
+      "page": {
+        "mean": 0.71,
+        "changedPercent": 1.1
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Logs": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 1.68,
+    "changedPercent": 1.6,
+    "regions": {
+      "sidebar": {
+        "mean": 0.58,
+        "changedPercent": 0.76
+      },
+      "page": {
+        "mean": 2.18,
+        "changedPercent": 2.05
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  },
+  "Developer": {
+    "rc1Size": [
+      984,
+      657
+    ],
+    "commonSize": [
+      984,
+      657
+    ],
+    "mean": 1.49,
+    "changedPercent": 1.44,
+    "regions": {
+      "sidebar": {
+        "mean": 0.58,
+        "changedPercent": 0.76
+      },
+      "page": {
+        "mean": 1.88,
+        "changedPercent": 1.81
+      },
+      "footer": {
+        "mean": 1.0,
+        "changedPercent": 0.71
+      }
+    }
+  }
+}
