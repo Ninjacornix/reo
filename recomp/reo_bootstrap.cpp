@@ -1205,18 +1205,11 @@ int main(int argc, char* argv[]) {
 #endif
 #if !defined(__APPLE__) && !defined(PLATFORM_VITA)
     if (!std::getenv("REO_HEADLESS") && !reo_display_probe::openGl33Available()) {
-        fprintf(stderr, "[BOOT] OpenGL 3.3 is unavailable; not opening the game window. %s
-",
+        fprintf(stderr, "[BOOT] OpenGL 3.3 is unavailable; not opening the game window. %s\n",
                 reo_display_probe::kMessage);
 #ifdef _WIN32
-        MessageBoxW(nullptr,
-                    L"This PC's graphics driver does not provide OpenGL 3.3, which the game needs "
-                    L"to open its window.
-
-Install the latest graphics driver from your graphics "
-                    L"card maker (NVIDIA, AMD or Intel), then start the game again. Microsoft's basic "
-                    L"display driver and some remote-desktop sessions do not provide OpenGL 3.3.",
-                    L"Resident Evil Outbreak", MB_OK | MB_ICONERROR);
+        MessageBoxA(nullptr, reo_display_probe::kMessage, "Resident Evil Outbreak",
+                    MB_OK | MB_ICONERROR);
 #endif
         return 1;
     }
