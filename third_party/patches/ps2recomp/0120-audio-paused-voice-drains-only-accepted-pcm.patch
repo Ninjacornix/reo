@@ -1,0 +1,42 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -27,6 +27,7 @@ struct Voice {
+     uint32_t left=0,right=0,channels=0,frequency=48000,volume=256;
+     float mixerGain=1;
+     bool playing=false,draining=false; double phase=0; // draining: stopped by the game, plays out accepted PCM
++    uint64_t drainLeft=0; // samples still owed by a drain: only PCM queued when the game stopped the voice
+     uint64_t lateSamples=0, skippedSamples=0, startNs=0, firstNs=0, startByte=0;
+     bool firstReported=false;
+     uint64_t pathActive=0,pathValid=0,pathSignal=0,pathSkipped=0;
+@@ -72,9 +73,13 @@ void renderLocked(float* dst, unsigned frames) {
+                 li->second.pcm.pop_front();li->second.consumed+=2;
+                 if(v.channels>1){ri->second.pcm.pop_front();ri->second.consumed+=2;}
+                 --v.lateSamples;++v.skippedSamples;
++                if (v.drainLeft) --v.drainLeft;
+                 if (pathLog) ++v.pathSkipped;
+             }
+-            if (v.draining && (li==channels.end() || li->second.pcm.empty() ||
++            // A paused voice consumes nothing on hardware, so its producer stops once the
++            // ring fills. Here the producer keeps refilling a draining voice; ending the
++            // drain only on an empty queue let paused music play on forever (issue #72).
++            if (v.draining && (v.drainLeft==0 || li==channels.end() || li->second.pcm.empty() ||
+                 (v.channels>1 && (ri==channels.end() || ri->second.pcm.empty())))) {
+                 v.draining=false;v.playing=false;v.lateSamples=0;v.phase=0;continue; // drained: really stop
+             }
+@@ -97,6 +102,7 @@ void renderLocked(float* dst, unsigned frames) {
+                 if (li->second.pcm.empty() || (v.channels>1 && ri->second.pcm.empty())) break;
+                 li->second.pcm.pop_front(); li->second.consumed+=2;
+                 if (v.channels>1) { ri->second.pcm.pop_front();ri->second.consumed+=2; }
++                if (v.drainLeft) --v.drainLeft;
+                 v.phase-=1.0;
+             }
+         }
+@@ -268,6 +274,7 @@ void drain(uint32_t voice) {
+     const auto li=channels.find(it->second.left);
+     if (li==channels.end() || li->second.pcm.empty()) return;
+     it->second.draining=true;it->second.lateSamples=0;
++    it->second.drainLeft=li->second.pcm.size(); // later producer PCM waits for a resume
+ }
+ size_t queuedSamples(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);return i==channels.end()?0:i->second.pcm.size(); }
+ uint64_t consumed(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
