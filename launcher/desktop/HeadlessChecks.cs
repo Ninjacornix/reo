@@ -99,6 +99,7 @@ internal static class HeadlessChecks {
         }
         window.CheckGraphicsPreviewReentry(Check);
         window.CheckHostingSummary(Check);
+        window.CheckActivityOverlay(Check, output);
         bool mediaChecked=false;
         string? ffmpeg=null;try{ffmpeg=PlatformServices.Ffmpeg();}catch(IOException){}
         if(ffmpeg!=null) {

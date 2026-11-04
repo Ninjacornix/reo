@@ -45,6 +45,8 @@ jobs:
         run: dotnet run --project tools/keyboard_input_check | tee build-ninja/ci/source-reports/keyboard-input.log
       - name: Test local build tools
         run: python -m unittest discover -s tools/local_build -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/local-build.log
+      - name: Test release options and publication guards
+        run: python -B -m unittest discover -s tools/release -p 'test_*.py' -v
       - name: Test asset tools with synthetic inputs
         run: python -m unittest discover -s tools/assets -p 'test_*.py' -v 2>&1 | tee build-ninja/ci/source-reports/assets.log
       - name: Test unlock-only progression during gameplay
