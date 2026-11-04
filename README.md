@@ -1,218 +1,113 @@
-# RE: Outbreak — Resident Evil Outbreak Native PC Port
+# RE: Outbreak
 
 [![Latest release](https://img.shields.io/github/v/release/Ninjacornix/reo?label=release&color=b33a3a)](https://github.com/Ninjacornix/reo/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ninjacornix/reo/total?label=downloads&color=2ea44f)](https://github.com/Ninjacornix/reo/releases)
-[![Vulkan](https://img.shields.io/badge/Vulkan-required-ac162c?logo=vulkan)](REQUIREMENTS.md)
-[![Co-op](https://img.shields.io/badge/co--op-openSNAP-6f42c1)](#online-co-op)
-[![Mods](https://img.shields.io/badge/mods-supported-e36209)](docs/MODDING.md)
 [![License](https://img.shields.io/badge/license-GPL--3.0-f2c94c)](LICENSE)
 
-**Resident Evil Outbreak (PS2, *Biohazard Outbreak*) running natively on PC**, built with
-static recompilation and a PS2 compatibility runtime — not an emulator. Play **Outbreak File #1**
-from start to finish, with **online co-op** through openSNAP, a **randomizer**, **cheats**,
-**controller support** and modern **video settings** up to 4K.
+A native Windows port of Resident Evil Outbreak (PS2). The game code is statically
+recompiled from your own disc and runs on a PS2 compatibility runtime, so there is no
+emulator involved. Outbreak File #1 is playable from start to finish, including online
+co-op. File #2 works too, but is still experimental.
 
-**Prerelease: v1.0.20-rc0** | [Download for Windows](https://github.com/Ninjacornix/reo/releases/tag/v1.0.20-rc0) | [Requirements](REQUIREMENTS.md) | [All releases](https://github.com/Ninjacornix/reo/releases)
+**[Download the latest release](https://github.com/Ninjacornix/reo/releases/latest)** ·
+[Requirements](REQUIREMENTS.md) · [Report a problem](https://github.com/Ninjacornix/reo/issues)
 
-This is an unofficial fan project. You must provide your own legally obtained game data. Game files and generated game code are not included.
+This is an unofficial fan project. You need your own copy of the game; no game files or
+game code are included in the download.
 
-An **Apple Silicon macOS RC1 port** is available in this source branch, with a bundled
-desktop launcher and Vulkan-to-Metal rendering through MoltenVK. Open the locally built
-`build-macos/common-launcher/Outbreak.app`; see [shared RC1 launcher](docs/SHARED-LAUNCHER.md)
-and [Mac build and validation](docs/MACOS.md).
-File #1 gameplay, graphics, launcher and server protocol checks pass on an M2. Full multiplayer,
-physical controllers and File #2 on Mac remain unverified; no public Mac download is published.
+![The Play page with both games](docs/launcher-screenshots/launcher-play.png)
 
-![The launcher on first start: it asks for your game disc](docs/launcher-screenshots/launcher-play.png)
+## What you get
 
-## Features
+- **File #1**, playable start to finish: menus, scenarios, cutscenes, movies, audio and saves.
+- **File #2** (experimental), with its own import, build and saves.
+- **Online co-op** for up to four players. One player hosts from the launcher and the
+  others join by address or on the local network. No accounts or registration.
+- **Graphics options**: up to 4× internal resolution, 16:9, 21:9 and 32:9 display modes,
+  FXAA/SMAA, texture filtering, brightness and gamma.
+- **Audio**: separate master, music, effects, voice and interface volume, plus optional
+  spoken subtitles.
+- **Controllers**: DualSense, DualShock 4, Xbox controllers and keyboard, all remappable.
+- **Mods and cheats**: a seeded Randomizer for both games, asset replacement packs and
+  built-in cheats. See [making mods](docs/MODDING.md).
 
-- **Outbreak File #1 is fully playable** — menus, scenarios, cutscenes, movies, audio and saves, on Windows x64.
-- **Online co-op (up to 4 players)** through the bundled [openSNAP](https://github.com/GrenderG/openSNAP) server: host from the launcher, friends join by address or LAN discovery. No registration, no external account.
-- **Mods — Randomizer:** seeded weapon, ammunition, item and enemy-spawn randomization, shared from the host to every co-op player. [Create your own mod](docs/MODDING.md).
-- **Cheats:** health, infection, ammunition and progression unlocks, plus a supported subset of PCSX2 `.pnach` cheats.
-- **Controller support:** DualSense (light bar and rumble), Xbox / XInput controllers and keyboard, with full remapping.
-- **Video settings:** HD, Full HD, 2K and 4K output, 2× / 4× internal resolution, 16:9 or 4:3, FXAA / SMAA anti-aliasing, anisotropic and linear texture filtering, brightness and gamma, borderless fullscreen and a performance counter.
-- **Audio mixer:** separate live master, music, effects, voice and menu volume in File #1 and File #2, with per-game Windows audio-output selection. Spoken subtitles can be hidden while interaction prompts remain visible.
-- **One-click launcher:** checks your ISO, builds the game locally, manages memory cards, logs and updates.
+## Getting started
 
-## Get started
+1. Download `RE-Outbreak-<version>-Windows-x64.zip` from the
+   [latest release](https://github.com/Ninjacornix/reo/releases/latest), extract it to a
+   new folder and run `Outbreak.Launcher.exe`. Nothing else needs to be installed.
+2. Click **Choose ISO** and pick your disc image. Supported discs:
+   - File #1: NTSC-U v2.00 (SLUS-20765)
+   - File #2: NTSC-U v1.05 (SLUS-20984)
+3. Click **Build game**. The launcher imports the disc, downloads a compiler and builds
+   the game on your PC. This happens once, needs an internet connection and about 10 GB
+   of free space, and can take an hour or more.
+4. Click **Play**.
 
-1. Keep your graphics driver current (Vulkan is required). The Windows release download includes the launcher's .NET runtime.
-2. Download **RE-Outbreak-v1.0.20-rc0-Windows-x64.zip** from [Releases](https://github.com/Ninjacornix/reo/releases), extract it into a new folder and open `Outbreak.Launcher.exe`.
-3. The **Play** page tells you the next step. Click **Choose ISO** and pick your own **Outbreak File #1 NTSC-U v2.00 ISO (SLUS-20765)**, or select File #2 and use **NTSC-U v1.05 (SLUS-20984)**. The launcher checks it and shows a green ✓ when it is supported.
-4. Click **Build game**. This one-time setup imports the disc, prepares the build tools (about 173 MB, reused if the exact compiler is already installed) and compiles the game. It needs Internet and about 10 GB of free space, and can take over an hour. Progress stays visible at the bottom of every page.
-5. Click **Play**.
+Later launches start straight away. Keep the ISO where it is, since the game reads from
+it. Your graphics driver needs OpenGL 3.3; Vulkan is used for GPU rendering when
+available. PAL and Japanese discs are not supported.
 
-The Play page's **Before you play** checklist shows what is ready (✓) and what is
-missing (✗), with a button for each fix: **Get driver** opens your graphics card
-maker's driver page, **Free up space** opens Windows storage settings, **Choose ISO**
-picks your disc. The Windows release package starts without a separate .NET installation.
+![Graphics settings](docs/launcher-screenshots/launcher-graphics.png)
 
-Later launches reuse the finished build. After a build, the launcher deletes its
-temporary generated sources and keeps only a compile cache (about 1.2 GB) so future
-updates rebuild only what changed. **Remove game** in **Game files** deletes the
-imported disc data, the built game and that cache; your ISO stays, and saves and
-build tools are only removed if you tick those options. No compiler installation, environment variable or terminal command is needed. Keep the ISO available; the game reads it directly.
+## Co-op
 
-Already compiled the game with a compatible launcher? In **Game files**, click **Use existing build** and choose `reo_recomp.exe` from that build folder. Keep the folder complete (`local-build.json`, DLLs and the `reo-gpu-present` shaders). Your ISO is still required.
+Open **Co-op** and choose **Host a game** or **Join a game**. The host shares an address
+with friends, who either paste it in or pick the game from the local network list. The
+first time you host, the launcher sets up a small server (it downloads Python if needed);
+after that it starts immediately.
+
+![Co-op page](docs/launcher-screenshots/launcher-coop.png)
+
+Over the internet the host has to be reachable. A VPN like Tailscale or ZeroTier is the
+easiest option. Otherwise forward these ports to the host; the launcher can try to do this
+for you with UPnP.
+
+| Port | Used for |
+| --- | --- |
+| UDP 9090 | Login |
+| TCP 10127 | Game app server |
+| UDP 9091 | Game server (changeable) |
+| TCP 10128 | Player sign-up (changeable) |
+| UDP 10129 | Finding the host and sharing session settings (changeable) |
+
+Players who join can see the host's IP address. Connections behind carrier-grade NAT
+usually need a VPN. More detail is in the [server setup](network/server/SETUP.md) and
+[networking notes](docs/NETWORKING.md).
+
+## Where your data lives
+
+Settings, imported discs, builds, memory cards, mods and logs are kept in a `data`
+folder next to the launcher, so the whole thing can be moved or backed up as one
+folder. To keep them somewhere else, use **Game files → Storage → Change folder**.
+Updates keep your data.
 
 ## Status
 
-- **Outbreak: File #1:** fully playable on Windows. Performance can still vary in CPU-heavy rooms.
-- **Outbreak: File #2:** experimental Windows port with separate disc import/build, cheats and Randomizer support. Selected pickup, equipment, firing and enemy combat paths are verified; full scenario completion remains unverified. See [File #2 validation](docs/FILE2_RANDOMIZER.md).
-- **Launcher:** guided first-run setup, ISO check before import, local build with cached reuse, display and filtering options, controller remapping, memory cards, cheats, logs, co-op hosting/joining and GitHub release updates.
-- **Online co-op:** working through openSNAP for up to four players; see below.
-- **Mods:** enable the matching **Randomizer** package for File #1 or File #2 to randomize weapons, ammunition, common items and enemy spawns from separate seeded pools. Keys and starting equipment stay fixed; scripted enemies retain their original family. File #2 fits its global additions within each scenario's native model/data limits. See [Creating a mod](docs/MODDING.md). **Cheats:** built-in health, infection, ammunition, progression unlocks, maximum result points and infinite escape time for both editions, plus a supported subset of PCSX2 data cheats.
+File #1 is fully playable on Windows. Some rooms are CPU-heavy, and performance there
+depends on your processor. File #2 is experimental: opening rooms, pickups and combat have
+been tested, but no scenario has been verified start to finish yet. A macOS build exists in the
+source tree ([notes](docs/MACOS.md)) but there is no Mac download yet. Linux support is in
+progress.
 
-GPU rendering is implemented through paraLLEl-GS.
+## Building from source
 
-On keyboard, **WASD sends D-pad input for tank controls**. In **Controls → Button
-map**, the **Right stick / voice commands** section lets you remap or clear the
-arrow keys. Assigning a key to another keyboard action clears its previous
-binding, so using arrows for movement also releases their old voice commands.
+See [building on Windows](docs/BUILDING.md), [developer tools](tools/README.md) and
+[contributing](CONTRIBUTING.md). The repository is laid out as follows:
 
-**Online progression unlocks:** select **Cheats → Enable cheats → Unlock
-everything** for the chosen game, and clear other cheat selections before hosting
-or joining. Unlock-only selections are accepted for co-op launches.
-Health, ammunition, points, timer and imported data cheats require **Play alone**.
-See [online unlock behavior and verification](docs/ONLINE_UNLOCKS.md).
-
-The development build offers named window resolutions: **Native (512 × 448)**,
-**HD (1280 × 720)**, **FHD (1920 × 1080)**, **QHD / 2K (2560 × 1440)** and
-**4K (3840 × 2160)**. Existing window sizes remain available. Windows may limit
-window sizes larger than the desktop; borderless fullscreen uses the desktop
-resolution. **Internal resolution** separately chooses Native,
-**2× (1024 × 896)** or **4× (2048 × 1792)** scene rendering before output scaling;
-higher settings increase GPU load. The 4× option requires GPU sampling support;
-unsupported devices report an error instead of silently substituting 2×.
-
-The development renderer prepares the selected resolution's shaders before
-gameplay and reuses its pipeline cache on subsequent launches. The launcher
-shows preparation progress; a first run or a driver cache reset can take longer.
-Compiler work finishes before gameplay starts. On Windows, the game requests
-precise timers and opts out of process power throttling while running, restoring
-the previous policy on shutdown. These changes reduce compilation and scheduling
-hitches; they do not guarantee a constant update rate in CPU-heavy rooms.
-
-Only **File #1 NTSC-U v2.00 (SLUS-20765)** is supported. Before extraction, the
-launcher checks SYSTEM.CNF's boot executable, identifies known game/region serials
-and verifies the executable SHA-256. PAL, Japanese, File #2, unknown games and
-other/modified executable revisions get a specific error beside the ISO controls.
-The ISO filename and SYSTEM.CNF's VER field do not establish the game revision.
-
-Report problems on the [issue tracker](https://github.com/Ninjacornix/reo/issues). The previous v1.0.0 game-binary package remains withdrawn.
-
-For development builds, see [Building on Windows](docs/BUILDING.md). Existing
-local executables and generated sources are preserved for development and are
-not public release assets.
-Maintainers can follow [prerelease preparation](docs/PRERELEASE.md) for the
-repository and package requirements. Native Linux support is in development;
-no playable Linux package is currently available.
-
-## Online co-op
-
-![The Co-op page with Play alone, Host a game and Join a game](docs/launcher-screenshots/launcher-coop.png)
-
-Open **Co-op**, pick **Host a game** or **Join a game**, and enter a player name.
-There is no registration or password: the launcher creates the account on the
-host's server for you.
-
-- **Host a game** opens your game for friends right away. Choose the address they
-  should use (home network, VPN or internet) and click **Copy address**. The first
-  time, the launcher prepares the hosting server: it uses an installed Python 3.12
-  if you have one, otherwise it downloads a private copy, then installs the server
-  packages into your selected data folder. Later starts reuse it.
-- **Join a game** lists games hosted on your network, or you can type the host's
-  address.
-- With **Take me to the waiting room automatically** (on by default), pressing
-  **Play** signs in and brings you to the host's room. The host opens a room for
-  four players; friends join it. Press any button to take over at any point. The
-  host chooses **START SCENARIO**.
-
-Playing over the internet needs the host to be reachable. The easiest way is a VPN
-such as Tailscale or ZeroTier. Otherwise forward these ports to the host (the
-launcher can ask your router through UPnP):
-
-| Port | Use | Can it change? |
-| --- | --- | --- |
-| UDP 9090 | Login | No, built into the game |
-| TCP 10127 | Game app server | No, built into the game |
-| UDP 9091 | Game server | Yes, under **Ports** |
-| TCP 10128 | Player sign-up (was TCP 80 before v1.0.12) | Yes, under **Ports** |
-| UDP 10129 | Finding the host and sharing session settings | Yes |
-
-If a port is busy, the launcher names the program using it. Internet play cannot
-always work behind carrier-grade NAT without a VPN. Hosts' IP addresses are visible
-to the players who join them.
-
-What works: hosting from the launcher, automatic sign-up, joining over LAN or the
-internet, shared randomizer settings from the host, and playing a full scenario
-together. Movement, pickups, removal of collected items, duplicate-pickup
-prevention and ammunition changes stay in sync on every client, and enemies spawn
-in the same order with the same health. See [server setup](network/server/SETUP.md)
-for advanced overrides and [networking notes](docs/NETWORKING.md) for details.
-
-### Developer page (next release)
-
-The launcher's **Developer** page turns on diagnostic recordings, saved in each game's
-session folder. Leave them off for normal play.
-
-| Toggle | Setting | Records |
-| --- | --- | --- |
-| Packet timing | `REO_COOP_TRACE_FILE` | Every co-op packet's time, direction, size and header (`coop-trace.jsonl`); full payloads, including login, are removed when the game closes |
-| Network transport log | `REO_NET_TRACE` | Socket calls and results in `stderr.log` |
-| SN@P packet log | `REO_SNAP_TRACE` | The first 64 game protocol packets in `stderr.log` |
-| Frame timing | `REO_FRAME_PACING_FILE` | Per-frame timing for about 9 minutes (`frames.csv`) |
-| Game clock and player position | `REO_GAME_CLOCK_LOG` | File #1 game clock, room and player position for 10 minutes (`clock.csv`) |
-
-## Source layout
-
-| Directory | Purpose |
+| Directory | Contents |
 | --- | --- |
-| `launcher/` | Windows launcher and input adapter |
+| `launcher/` | The launcher (Avalonia/.NET) and input adapter |
 | `recomp/` | Recompilation configuration and game-specific overrides |
-| `runtime/`, `src/` | Original runtime/scaffold components |
-| `tools/parallel_gs_backend/` | Graphics backend and movie/geometry integration |
-| `tools/` | Extraction, generation, diagnostics and regression checks |
-| `third_party/` | Pinned PS2Recomp submodule and local dependency patches |
-| `game/`, `media/`, `network/` | Format, media and network components at varying implementation stages |
-
-Generated sources, captures, saves, build outputs and private handoffs remain local. See [developer tools](tools/README.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+| `runtime/` | PS2 compatibility runtime pieces |
+| `tools/` | Build, extraction, graphics backend and test tools |
+| `network/` | Co-op networking and the bundled openSNAP server |
+| `third_party/` | The pinned PS2Recomp submodule and its patches |
 
 ## License
 
-This fork's original contributions are GPL-3.0-only. Inherited upstream and third-party components retain their licenses and attribution; see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
+This fork's own code is GPL-3.0-only. Upstream and third-party components keep their
+licenses; see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
 
-Resident Evil and Outbreak are trademarks of their respective owners. This project is not affiliated with or endorsed by Capcom or Sony.
-
----
-
-*Keywords: Resident Evil Outbreak PC, Biohazard Outbreak PC port, RE Outbreak Windows, PS2
-static recompilation, PS2Recomp, Resident Evil Outbreak online co-op, openSNAP, Outbreak
-randomizer, Outbreak File 1 PC, native PS2 port.*
-
-## Portable storage
-
-The launcher keeps settings, imported game files, built games, memory cards,
-mods, hosting data, logs, download caches and working files in `data/` beside the
-launcher by default. Both File #1 and File #2 use this shared storage location.
-Keep the application in a writable folder.
-
-Use **Game files > Storage > Change folder** to choose a new or empty folder.
-The launcher copies and verifies your data, updates its paths and restarts.
-Close the game and stop hosting or setup first. The original folder remains as
-a backup; cancellation or a failed copy keeps the existing selection.
-`storage.json` beside the launcher records your choice. Locations inside the
-application folder are stored as relative paths so the folder can be moved.
-Reconnect an external drive before starting if you selected storage on that drive.
-
-Fresh packaged installations use their own data folder; they do not automatically
-copy older launcher profiles from AppData. An existing `storage.json` selection
-continues to select its configured folder. Existing files are not merged or overwritten.
-Previously selected external ISO
-files, executables and custom memory cards stay where you put them; select files
-inside your application folder if you want those to travel with it too.
-
-Updates preserve the storage folder and its locator. For isolated development
-and diagnostics, `--data-home <folder>` overrides the location for that process.
+Resident Evil and Outbreak are trademarks of their respective owners. This project is not
+affiliated with or endorsed by Capcom or Sony.
