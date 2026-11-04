@@ -5,6 +5,7 @@ param(
     [Parameter(Mandatory=$true)][string]$Output,
     [string]$Version = '1.0.20',
     [string]$ReleaseTag = '',
+    [bool]$Prerelease = $true,
     [string]$InputsFile2 = '',
     [string]$KitManifestFile2 = '',
     [switch]$SelfContained = $true,
@@ -162,7 +163,7 @@ $referenceBuildPassed = [bool]$firstValidation -and (!$InputsFile2 -or [bool]$se
 $roomRoutesPassed = [bool]$firstValidation.roomRoutePassed -and (!$InputsFile2 -or [bool]$secondValidation.roomRoutePassed)
 $distribution = @{format=2; updateFormat=2; installMode='local-build'; layout=$publishLayout;
   selfContained=[bool]$SelfContained; releaseTag=$ReleaseTag;
-  version=$Version; platform='win-x64'; source='https://github.com/Ninjacornix/reo'; prerelease=$true;
+  version=$Version; platform='win-x64'; source='https://github.com/Ninjacornix/reo'; prerelease=$Prerelease;
   bundledServer=$false; serverSourceBundled=$true; serverRuntime='external-python';
   automaticServerSetup=$true;
   automaticCompilerSetup=$true;
