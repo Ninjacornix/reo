@@ -66,7 +66,7 @@ The tag push starts **Prepare Windows release** for that commit. A suffix
 (`v1.0.20`) makes a stable release, which is refused unless the tagged commit is
 on `main`. The tag's numeric version must match the committed launcher
 `DefaultVersion`. The game kits are reused from the release named by the
-repository variable `RELEASE_INPUTS`, or `v1.0.20-rc2-hotfix` when it is unset.
+repository variable `RELEASE_INPUTS`, or `v1.0.20` when it is unset.
 
 **Actions → Prepare Windows release → Run workflow** remains available as a
 validate-only dry run. It packages and checks the selected branch but never
@@ -76,7 +76,7 @@ creates a tag or release:
 | --- | --- |
 | `tag` | Version to validate, such as `v1.0.20-rc3` or `v1.0.20`. |
 | `prerelease` | Validate as a prerelease (requires a suffix) or as stable (no suffix, branch `main`). |
-| `inputs_release` | Existing published release supplying both verified game kits and the matching dependency source archive. Defaults to `v1.0.20-rc2-hotfix`. |
+| `inputs_release` | Existing published release supplying both verified game kits and the matching dependency source archive. Defaults to `v1.0.20`. |
 | `notes` | Optional release notes preview. CI appends the source commit, reused input release and validation limits. |
 
 The workflow verifies GitHub's SHA-256 asset digests, the player package inventory,
