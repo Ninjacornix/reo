@@ -16,8 +16,7 @@ required.** The Play page also checks for a Vulkan graphics driver and about
 10 GB of free disk space.
 Movies use CPU decoding by default. GPU decoding is available after its decoder
 passes the launcher check. CPU decoding needs a reasonably modern processor for full speed.
-PAL, Japanese and other executable revisions are currently unsupported. File #2
-is experimental; full scenario completion is not verified.
+PAL, Japanese and other executable revisions are currently unsupported.
 No PS2 BIOS is needed. Keep the ISO available for game data reads.
 Both games support Master, Music, Sound effects, Voice and Interface volume
 controls. Rebuild or update an older File #2 native build to enable its separate

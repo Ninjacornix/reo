@@ -6,8 +6,8 @@
 
 A native Windows port of Resident Evil Outbreak (PS2). The game code is statically
 recompiled from your own disc and runs on a PS2 compatibility runtime, so there is no
-emulator involved. Outbreak File #1 is playable from start to finish, including online
-co-op. File #2 works too, but is still experimental.
+emulator involved. Both Outbreak File #1 and File #2 are supported, including online
+co-op.
 
 **[Download the latest release](https://github.com/Ninjacornix/reo/releases/latest)** ·
 [Requirements](REQUIREMENTS.md) · [Report a problem](https://github.com/Ninjacornix/reo/issues)
@@ -20,7 +20,7 @@ game code are included in the download.
 ## What you get
 
 - **File #1**, playable start to finish: menus, scenarios, cutscenes, movies, audio and saves.
-- **File #2** (experimental), with its own import, build and saves.
+- **File #2**, with its own import, build and saves.
 - **Online co-op** for up to four players. One player hosts from the launcher and the
   others join by address or on the local network. No accounts or registration.
 - **Graphics options**: up to 4× internal resolution, 16:9, 21:9 and 32:9 display modes,
@@ -84,9 +84,8 @@ Updates keep your data.
 
 ## Status
 
-File #1 is fully playable on Windows. Some rooms are CPU-heavy, and performance there
-depends on your processor. File #2 is experimental: opening rooms, pickups and combat have
-been tested, but no scenario has been verified start to finish yet. A macOS build exists in the
+File #1 and File #2 are both supported on Windows. Some rooms are CPU-heavy, and
+performance there depends on your processor. A macOS build exists in the
 source tree ([notes](docs/MACOS.md)) but there is no Mac download yet. Linux support is in
 progress.
 
