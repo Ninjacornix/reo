@@ -244,7 +244,10 @@ public partial class MainWindow : Window {
         BackupButton.IsEnabled = !updating && !running && !launching && !backingUp;
         RefreshCardAvailability();
         if (previousRunning && !running) {
-            Status.Text = $"Game closed · Exit code {game.Process!.ExitCode} · Session logs saved";
+            int exitCode = game.Process!.ExitCode;
+            Status.Text = exitCode == 0
+                ? "The game has closed. Your session logs have been saved."
+                : $"The game closed unexpectedly (exit code {exitCode}). Open Logs for details.";
             LaunchButton.Content = PlayButtonLabel;
             LaunchButton.IsEnabled = true;
             controller.SessionEnabled = false;
