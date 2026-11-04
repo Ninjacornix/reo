@@ -1,0 +1,880 @@
+{
+  "reference": "v1.0.20-rc1 + RC2 keyboard controls",
+  "sourceSha256": {
+    "Shell.xaml": "ab01c37414a780999502da553f0b5650a7ef13668c8b6c3132d3e2602f2f2ace",
+    "Theme.xaml": "b58cd89b05dc373c195e4e53a546dce7f72ce97b21a1ef78fa1dbfb432e911d1"
+  },
+  "actions": {
+    "NavPlay": {
+      "Click": "Navigate"
+    },
+    "NavGraphics": {
+      "Click": "Navigate"
+    },
+    "NavAudio": {
+      "Click": "Navigate"
+    },
+    "NavController": {
+      "Click": "Navigate"
+    },
+    "NavSaves": {
+      "Click": "Navigate"
+    },
+    "NavCoop": {
+      "Click": "Navigate"
+    },
+    "NavMods": {
+      "Click": "Navigate"
+    },
+    "NavCheats": {
+      "Click": "Navigate"
+    },
+    "NavSetup": {
+      "Click": "Navigate"
+    },
+    "NavLauncher": {
+      "Click": "Navigate"
+    },
+    "NavLogs": {
+      "Click": "Navigate"
+    },
+    "NavDeveloper": {
+      "Click": "Navigate"
+    },
+    "UpdateCancel": {
+      "Click": "CancelUpdate"
+    },
+    "UpdateButton": {
+      "Click": "CheckForUpdates"
+    },
+    "NextStepButton": {
+      "Click": "NextStepClicked"
+    },
+    "GameCasePicker": {
+      "SelectionChanged": "GameSelectionChanged",
+      "RequestBringIntoView": "KeepPlayViewport"
+    },
+    "Fullscreen": {
+      "Checked": "SaveSettings",
+      "Unchecked": "SaveSettings"
+    },
+    "WindowSize": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "AspectRatio": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "ScreenFit": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "InternalResolution": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "TextureFilter": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "AnisotropicFilter": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "AntiAlias": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "Filter": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "Action_ResetColor_25": {
+      "Click": "ResetColor"
+    },
+    "Brightness": {
+      "ValueChanged": "ColorChanged"
+    },
+    "Gamma": {
+      "ValueChanged": "ColorChanged"
+    },
+    "PerformanceOverlay": {
+      "Checked": "SaveSettings",
+      "Unchecked": "SaveSettings"
+    },
+    "AsyncVif": {
+      "Checked": "SaveSettings",
+      "Unchecked": "SaveSettings"
+    },
+    "GpuMovies": {
+      "Checked": "SaveSettings",
+      "Unchecked": "SaveSettings"
+    },
+    "AudioOutputPicker": {
+      "SelectionChanged": "AudioOutputChanged",
+      "DropDownOpened": "AudioOutputOpened"
+    },
+    "AudioSubtitles": {
+      "Checked": "SubtitlesChanged",
+      "Unchecked": "SubtitlesChanged"
+    },
+    "MasterVolume": {
+      "ValueChanged": "AudioChanged"
+    },
+    "MusicVolume": {
+      "ValueChanged": "AudioChanged"
+    },
+    "SfxVolume": {
+      "ValueChanged": "AudioChanged"
+    },
+    "VoiceVolume": {
+      "ValueChanged": "AudioChanged"
+    },
+    "UiVolume": {
+      "ValueChanged": "AudioChanged"
+    },
+    "ResetAudioButton": {
+      "Click": "ResetAudio"
+    },
+    "InputDevicePicker": {
+      "SelectionChanged": "InputDeviceChanged"
+    },
+    "RumbleSwitch": {
+      "Checked": "RumbleChanged",
+      "Unchecked": "RumbleChanged"
+    },
+    "BindingsTab": {
+      "Click": "ShowBindings"
+    },
+    "LayoutTab": {
+      "Click": "ShowInputLayout"
+    },
+    "ClearCaptureButton": {
+      "Click": "ClearCapturedBinding"
+    },
+    "CancelCaptureButton": {
+      "Click": "CancelCapture"
+    },
+    "ControllerDiagram": {
+      "SizeChanged": "ControllerDiagramSizeChanged"
+    },
+    "ResetBindingsButton": {
+      "Click": "ResetBindings"
+    },
+    "DeadZone": {
+      "ValueChanged": "DeadZoneChanged"
+    },
+    "SwapSticks": {
+      "Checked": "SaveInputOptions",
+      "Unchecked": "SaveInputOptions"
+    },
+    "InvertRightY": {
+      "Checked": "SaveInputOptions",
+      "Unchecked": "SaveInputOptions"
+    },
+    "CardSelection": {
+      "SelectionChanged": "CardChanged"
+    },
+    "NewCardName": {
+      "KeyDown": "CardNameKeyDown"
+    },
+    "CreateCardButton": {
+      "Click": "CreateCard"
+    },
+    "Action_BrowseCard_53": {
+      "Click": "BrowseCard"
+    },
+    "Action_OpenSaves_54": {
+      "Click": "OpenSaves"
+    },
+    "BackupButton": {
+      "Click": "BackupSaves"
+    },
+    "DeleteCardButton": {
+      "Click": "AskDeleteCard"
+    },
+    "ConfirmDeleteCardButton": {
+      "Click": "ConfirmDeleteCard"
+    },
+    "CancelDeleteCardButton": {
+      "Click": "CancelDeleteCard"
+    },
+    "ModeOffline": {
+      "Checked": "CoopModeChanged"
+    },
+    "ModeHost": {
+      "Checked": "CoopModeChanged"
+    },
+    "ModeJoin": {
+      "Checked": "CoopModeChanged"
+    },
+    "AccountUsername": {
+      "TextChanged": "OnlineSettingChanged"
+    },
+    "AutoLobby": {
+      "Checked": "OnlineSettingChanged",
+      "Unchecked": "OnlineSettingChanged"
+    },
+    "RoomName": {
+      "TextChanged": "RoomSettingChanged"
+    },
+    "RoomPlayers": {
+      "SelectionChanged": "RoomSettingChanged"
+    },
+    "RoomWait": {
+      "SelectionChanged": "RoomSettingChanged"
+    },
+    "HostAddressPicker": {
+      "SelectionChanged": "HostAddressChanged"
+    },
+    "CopyServerButton": {
+      "Click": "CopyServerAddress"
+    },
+    "StartServerButton": {
+      "Click": "StartServerClicked"
+    },
+    "FirewallButton": {
+      "Click": "AllowFirewall"
+    },
+    "AutoForward": {
+      "Checked": "OnlineSettingChanged",
+      "Unchecked": "OnlineSettingChanged"
+    },
+    "SignupPortBox": {
+      "LostKeyboardFocus": "PortsChanged",
+      "KeyDown": "PortKeyDown"
+    },
+    "GamePortBox": {
+      "LostKeyboardFocus": "PortsChanged",
+      "KeyDown": "PortKeyDown"
+    },
+    "ResetPortsButton": {
+      "Click": "ResetPorts"
+    },
+    "SearchGamesButton": {
+      "Click": "SearchGamesClicked"
+    },
+    "CoopHost": {
+      "TextChanged": "OnlineSettingChanged"
+    },
+    "ImportModButton": {
+      "Click": "ImportMod"
+    },
+    "Action_OpenModFolder_78": {
+      "Click": "OpenModFolder"
+    },
+    "Action_ReloadMods_79": {
+      "Click": "ReloadMods"
+    },
+    "EnableCheats": {
+      "Checked": "CheatToggled",
+      "Unchecked": "CheatToggled"
+    },
+    "ImportCheatsButton": {
+      "Click": "ImportCheats"
+    },
+    "Action_OpenCheatFolder_82": {
+      "Click": "OpenCheatFolder"
+    },
+    "Action_ReloadCheats_83": {
+      "Click": "ReloadCheats"
+    },
+    "LauncherFontPicker": {
+      "SelectionChanged": "LauncherAppearanceChanged"
+    },
+    "LauncherLanguagePicker": {
+      "SelectionChanged": "LauncherAppearanceChanged"
+    },
+    "LauncherBackgroundMovies": {
+      "Checked": "LauncherBackgroundMoviesChanged",
+      "Unchecked": "LauncherBackgroundMoviesChanged"
+    },
+    "DevNetworkTrace": {
+      "Checked": "DeveloperSettingChanged",
+      "Unchecked": "DeveloperSettingChanged"
+    },
+    "DevTransportLog": {
+      "Checked": "DeveloperSettingChanged",
+      "Unchecked": "DeveloperSettingChanged"
+    },
+    "DevSnapTrace": {
+      "Checked": "DeveloperSettingChanged",
+      "Unchecked": "DeveloperSettingChanged"
+    },
+    "DevFrameTiming": {
+      "Checked": "DeveloperSettingChanged",
+      "Unchecked": "DeveloperSettingChanged"
+    },
+    "DevGameClock": {
+      "Checked": "DeveloperSettingChanged",
+      "Unchecked": "DeveloperSettingChanged"
+    },
+    "OpenSessionFoldersButton": {
+      "Click": "OpenSessionFolders"
+    },
+    "DeveloperViewLogsButton": {
+      "Click": "Navigate"
+    },
+    "UseGamePakSwitch": {
+      "Checked": "GameSourceChanged",
+      "Unchecked": "GameSourceChanged"
+    },
+    "ChooseIsoButton": {
+      "Click": "BrowseFile"
+    },
+    "ImportDiscButton": {
+      "Click": "ImportDisc"
+    },
+    "ExportOriginalAssets": {
+      "Checked": "OriginalAssetOptionChanged",
+      "Unchecked": "OriginalAssetOptionChanged"
+    },
+    "ExportOriginalAssetsNow": {
+      "Click": "ExportOriginalAssetsClicked"
+    },
+    "OpenOriginalAssetExports": {
+      "Click": "OpenOriginalAssetExportsClicked"
+    },
+    "CleanOldImportsButton": {
+      "Click": "CleanOldImports"
+    },
+    "ExistingBuildButton": {
+      "Click": "UseExistingBuild"
+    },
+    "BrowseExeButton": {
+      "Click": "BrowseFile"
+    },
+    "BrowseElfButton": {
+      "Click": "BrowseFile"
+    },
+    "ChooseStorageButton": {
+      "Click": "ChangeStorageFolder"
+    },
+    "OpenStorageButton": {
+      "Click": "OpenStorageFolder"
+    },
+    "RemoveSaves": {
+      "Checked": "RemoveOptionsChanged",
+      "Unchecked": "RemoveOptionsChanged"
+    },
+    "RemoveTools": {
+      "Checked": "RemoveOptionsChanged",
+      "Unchecked": "RemoveOptionsChanged"
+    },
+    "RemoveGameButton": {
+      "Click": "RemoveGame"
+    },
+    "LogSessionPicker": {
+      "SelectionChanged": "LogSelectionChanged"
+    },
+    "LogStreamPicker": {
+      "SelectionChanged": "LogSelectionChanged"
+    },
+    "OpenLogFileButton": {
+      "Click": "BrowseLog"
+    },
+    "OpenLogFolderButton": {
+      "Click": "OpenLogs"
+    },
+    "FollowLog": {
+      "Checked": "LogFollowChanged",
+      "Unchecked": "LogFollowChanged"
+    },
+    "Action_CancelImport_114": {
+      "Click": "CancelImport"
+    },
+    "Action_CancelServerSetup_115": {
+      "Click": "CancelServerSetup"
+    },
+    "GamePicker": {
+      "SelectionChanged": "GameSelectionChanged"
+    },
+    "StopButton": {
+      "Click": "StopGame"
+    },
+    "LaunchButton": {
+      "Click": "LaunchGame"
+    },
+    "StatusToast": {
+      "MouseLeftButtonUp": "DismissStatusToast"
+    }
+  },
+  "removedWpfMechanisms": [
+    "ControlTemplate.Triggers",
+    "Grid.CacheMode",
+    "Path.Effect",
+    "TextBlock.Style",
+    "TextBox.Resources"
+  ],
+  "styleClasses": {
+    "ModOption": "CheatOption",
+    "DiscChoice": "GameChoice",
+    "CoopStatus": "Hint",
+    "GameFilePath": "CoopTextInput"
+  },
+  "rc1SourceSha256": {
+    "Shell.xaml": "58520b88d4097bc1a2b4b2c85b46cee7dc8896662c0460b5fa10618f29f21341",
+    "Theme.xaml": "b58cd89b05dc373c195e4e53a546dce7f72ce97b21a1ef78fa1dbfb432e911d1"
+  },
+  "requiredControls": [
+    "AccountStatus",
+    "AccountUsername",
+    "AnisotropicFilter",
+    "AntiAlias",
+    "ArtworkActivity",
+    "ArtworkDownloadDetail",
+    "ArtworkDownloadProgress",
+    "ArtworkLayer",
+    "AspectRatio",
+    "AsyncVif",
+    "AudioChannelNote",
+    "AudioChannels",
+    "AudioEditionLabel",
+    "AudioFooterDivider",
+    "AudioMasterRow",
+    "AudioOutputHint",
+    "AudioOutputPicker",
+    "AudioSubtitles",
+    "AudioSubtitlesLabel",
+    "AudioSubtitlesRow",
+    "AutoForward",
+    "AutoForwardLabel",
+    "AutoLobby",
+    "AutoLobbyLabel",
+    "Backdrop",
+    "BackgroundMovieA",
+    "BackgroundMovieB",
+    "BackgroundScene",
+    "BackgroundVideoActivity",
+    "BackgroundVideoDetail",
+    "BackgroundVideoLayer",
+    "BackgroundVideoProgress",
+    "BackupButton",
+    "BindingRows",
+    "BindingsTab",
+    "Brightness",
+    "BrightnessValue",
+    "BrowseElfButton",
+    "BrowseExeButton",
+    "BuildFileActions",
+    "CancelCaptureButton",
+    "CancelDeleteCardButton",
+    "CaptureHint",
+    "CapturePanel",
+    "CardBusyHint",
+    "CardControls",
+    "CardCreateError",
+    "CardInUse",
+    "CardMark",
+    "CardPath",
+    "CardRow",
+    "CardSelection",
+    "CaseBeam1",
+    "CaseBeam2",
+    "CheatControls",
+    "CheatFileActions",
+    "CheatGame",
+    "CheatList",
+    "CheatSelectionState",
+    "CheatSessionNote",
+    "CheatsEnabledLabel",
+    "ChooseIsoButton",
+    "ChooseStorageButton",
+    "CleanOldImportsButton",
+    "ClearCaptureButton",
+    "ConfirmDeleteCardButton",
+    "ControllerArtworkHint",
+    "ControllerDetail",
+    "ControllerDiagram",
+    "CoopControls",
+    "CoopHost",
+    "CoopModeBar",
+    "CoopUnavailable",
+    "CoopValidation",
+    "CopyServerButton",
+    "CreateCardButton",
+    "DeadZone",
+    "DeadZoneLabel",
+    "DebugLog",
+    "DeleteCardButton",
+    "DeleteCardPanel",
+    "DeleteCardQuestion",
+    "DevClockLabel",
+    "DevFrameLabel",
+    "DevFrameTiming",
+    "DevGameClock",
+    "DevNetworkLabel",
+    "DevNetworkTrace",
+    "DevSnapLabel",
+    "DevSnapTrace",
+    "DevTransportLabel",
+    "DevTransportLog",
+    "DeveloperFiles",
+    "DeveloperSessionNote",
+    "DeveloperViewLogsButton",
+    "DiscFileActions",
+    "DiscProgress",
+    "DiscStatus1",
+    "DiscStatus2",
+    "DiscValidationStatus",
+    "ElfPath",
+    "EnableCheats",
+    "ExePath",
+    "ExistingBuildButton",
+    "ExistingBuildHint",
+    "ExportOriginalAssets",
+    "ExportOriginalAssetsNow",
+    "Filter",
+    "FirewallButton",
+    "FirewallStatus",
+    "FollowLog",
+    "FoundGames",
+    "FoundGamesScroll",
+    "Fullscreen",
+    "GameCard1",
+    "GameCard2",
+    "GameCase1",
+    "GameCase2",
+    "GameCasePicker",
+    "GameDisc1",
+    "GameDisc2",
+    "GameFilesBuildState",
+    "GameFilesEdition",
+    "GamePicker",
+    "GamePortBox",
+    "GameRemovalControls",
+    "GameSourceLabel",
+    "Gamma",
+    "GammaValue",
+    "GpuMovies",
+    "GraphicsGpuView",
+    "GraphicsPreviewCaption",
+    "GraphicsPreviewPane",
+    "GraphicsPreviewStage",
+    "GraphicsPreviewState",
+    "GraphicsPreviewTitle",
+    "GraphicsSettingsList",
+    "GraphicsSettingsScroll",
+    "HostAddressPicker",
+    "HostDetail",
+    "HostOptions",
+    "HostPortSettings",
+    "HostSetupActivity",
+    "HostSetupDetail",
+    "HostSetupProgress",
+    "HostSetupStage",
+    "HostStatus",
+    "ImageBackdropLayer",
+    "ImageBackgroundShade",
+    "ImportActivity",
+    "ImportCheatsButton",
+    "ImportDiscButton",
+    "ImportModButton",
+    "ImportState",
+    "ImportTiming",
+    "InputBindingsPanel",
+    "InputDevicePicker",
+    "InputLayoutPanel",
+    "InternalResolution",
+    "InvertRightY",
+    "IsoPath",
+    "JoinOptions",
+    "KeyboardStickBindings",
+    "KeyboardStickBindingsPanel",
+    "LaunchButton",
+    "LauncherBackgroundMovies",
+    "LauncherFontHint",
+    "LauncherFontPicker",
+    "LauncherFooter",
+    "LauncherLanguagePicker",
+    "LauncherMoviesLabel",
+    "LayoutTab",
+    "LeftPlot",
+    "LogEmpty",
+    "LogEmptyDetail",
+    "LogFollowState",
+    "LogInfo",
+    "LogSessionPicker",
+    "LogStreamPicker",
+    "MasterVolume",
+    "MasterVolumeValue",
+    "ModControls",
+    "ModFileActions",
+    "ModGame",
+    "ModList",
+    "ModSeed",
+    "ModSelectionState",
+    "ModSessionNote",
+    "ModeHost",
+    "ModeJoin",
+    "ModeOffline",
+    "MusicVolume",
+    "MusicVolumeValue",
+    "NavAudio",
+    "NavCheats",
+    "NavController",
+    "NavCoop",
+    "NavDeveloper",
+    "NavGraphics",
+    "NavLauncher",
+    "NavLogs",
+    "NavMods",
+    "NavPlay",
+    "NavSaves",
+    "NavSetup",
+    "NavigationScroll",
+    "NewCardName",
+    "NextStep",
+    "NextStepButton",
+    "NextStepDetail",
+    "NextStepMeasure",
+    "NextStepMeasureButton",
+    "NextStepMeasureDetail",
+    "NextStepMeasureTitle",
+    "NextStepSlot",
+    "NextStepTitle",
+    "OfflinePanel",
+    "OnlinePanel",
+    "OpenLogFileButton",
+    "OpenLogFolderButton",
+    "OpenOriginalAssetExports",
+    "OpenSessionFoldersButton",
+    "OpenStorageButton",
+    "OriginalAssetOptions",
+    "OutgoingBackdrop",
+    "OutgoingPage",
+    "PageAudio",
+    "PageCheats",
+    "PageContent",
+    "PageController",
+    "PageCoop",
+    "PageDeveloper",
+    "PageGraphics",
+    "PageLauncher",
+    "PageLogs",
+    "PageMods",
+    "PagePlay",
+    "PageSaves",
+    "PageSetup",
+    "PerformanceOverlay",
+    "PlayCheatsSummary",
+    "PlayDisplaySummary",
+    "PlayInputSummary",
+    "PlayModsSummary",
+    "PlayNetworkSummary",
+    "PortStatus",
+    "PreviewEmpty",
+    "PublicAddressStatus",
+    "ReachStatus",
+    "RemoveGameButton",
+    "RemoveSaves",
+    "RemoveSavesLabel",
+    "RemoveSize",
+    "RemoveSummary",
+    "RemoveTools",
+    "RemoveToolsLabel",
+    "ResetAudioButton",
+    "ResetBindingsButton",
+    "ResetPortsButton",
+    "RightPlot",
+    "RoomName",
+    "RoomPlayers",
+    "RoomPreview",
+    "RoomSettings",
+    "RoomWait",
+    "RumbleLabel",
+    "RumbleSwitch",
+    "SaveCount",
+    "ScreenFit",
+    "SearchGamesButton",
+    "SearchStatus",
+    "SelectedBuildPath",
+    "SelectedCardName",
+    "SessionSummary",
+    "SettingsScroll",
+    "SetupCounts",
+    "SetupDetail",
+    "SetupStage",
+    "SfxVolume",
+    "SfxVolumeValue",
+    "SignupPortBox",
+    "StartServerButton",
+    "Status",
+    "StatusToast",
+    "StatusToastDetail",
+    "StatusToastTitle",
+    "StickSettings",
+    "StopButton",
+    "StoragePath",
+    "StorageStatus",
+    "SupportedDiscHint",
+    "SwapSticks",
+    "TextureFilter",
+    "UiVolume",
+    "UiVolumeValue",
+    "UpdateButton",
+    "UpdateCancel",
+    "UpdateProgress",
+    "UpdateState",
+    "UseGamePakSwitch",
+    "VersionLabel",
+    "VideoBackgroundShade",
+    "VideoVignette",
+    "VoiceVolume",
+    "VoiceVolumeValue",
+    "WindowSize"
+  ],
+  "pageCopy": {
+    "PagePlay": [
+      "#1",
+      "As a deadly viral outbreak engulfs Raccoon City, its streets descend into chaos, overrun by the undead. Follow eight ordinary survivors, each with their own background and struggles, as they fight to escape the collapsing city. With danger lurking around every corner and time running out, they must overcome unimaginable horrors to survive the nightmare before Raccoon City is lost forever.",
+      "#2",
+      "As the nightmare in Raccoon City continues, eight ordinary survivors face new horrors in their desperate struggle for survival. With the deadly T-virus spreading uncontrollably and the city on the brink of destruction, they must navigate an infested zoo, abandoned subway tunnels, a forgotten hospital, and other terrifying locations. Every moment brings them closer to either escaping the nightmare or becoming another victim of the outbreak.",
+      "PLAY MODE",
+      "DISPLAY",
+      "CONTROLLER",
+      "MODS",
+      "CHEATS"
+    ],
+    "PageGraphics": [
+      "Picture configuration",
+      "DISPLAY",
+      "Borderless fullscreen",
+      "{Binding Width}",
+      " \u00d7 ",
+      "{Binding Height}",
+      "Window resolution",
+      "Aspect ratio",
+      "Screen fit",
+      "RENDERING",
+      "Internal resolution",
+      "Texture filtering",
+      "Anisotropic filtering",
+      "Anti-aliasing",
+      "Image scaling",
+      "PICTURE",
+      "Brightness",
+      "100%",
+      "Gamma",
+      "1.00",
+      "PREVIEW",
+      "Live preview",
+      "Loading Kevin\u2026",
+      "Drag to rotate. Scroll to zoom."
+    ],
+    "PageAudio": [
+      "Sound configuration",
+      "Output device",
+      "Subtitles",
+      "Master volume",
+      "100%",
+      "Music",
+      "100%",
+      "Sound effects",
+      "100%",
+      "Voice",
+      "100%",
+      "Interface",
+      "100%"
+    ],
+    "PageController": [
+      "Control configuration",
+      "Input device",
+      "Rumble",
+      "Select a binding to change it. Right-click a binding to clear it.",
+      "Import the game to display its original controller artwork. Bindings remain available below.",
+      "RIGHT STICK / VOICE COMMANDS",
+      "D-pad keys use tank controls. Assigning a key clears its previous keyboard binding.",
+      "PS2 button mapping",
+      "Dead zone: 12%"
+    ],
+    "PageSaves": [
+      "Memory cards",
+      "YOUR CARDS",
+      "{Binding Name}",
+      "IN USE",
+      "ADD CARD",
+      "SELECTED CARD",
+      "PS2",
+      "8 MB",
+      "MEMORY CARD",
+      "PS2 MEMORY CARD",
+      "CARD LOCATION",
+      "Close the game to switch cards."
+    ],
+    "PageCoop": [
+      "Co-op",
+      "Online play is unavailable for this game.",
+      "CONNECTION MODE",
+      "Play alone",
+      "Single player",
+      "Host a game",
+      "Friends join you",
+      "Join a game",
+      "Find your group",
+      "OFFLINE SESSION",
+      "On your own",
+      "Play with AI partners. No connection needed.",
+      "PLAYER",
+      "4 to 10 letters, numbers or underscores.",
+      "WAITING ROOM",
+      "Enter automatically",
+      "Use player name",
+      "Maximum players",
+      "Waiting time",
+      "HOST CONNECTION",
+      "Friends on your network can find this game automatically.",
+      "Request port forwarding (UPnP)",
+      "PORT SETTINGS",
+      "TCP",
+      "UDP",
+      "AVAILABLE GAMES",
+      "Enter the address you got from the host."
+    ],
+    "PageMods": [
+      "Mod configuration"
+    ],
+    "PageCheats": [
+      "Cheat configuration",
+      "Enable cheats",
+      "Selections are saved automatically. Changes apply on the next launch."
+    ],
+    "PageLauncher": [
+      "Launcher",
+      "APPEARANCE",
+      "Install either game to use the Outbreak font.",
+      "BACKGROUND",
+      "Background movies"
+    ],
+    "PageDeveloper": [
+      "Developer",
+      "Changes apply to your next session.",
+      "NETWORK",
+      "Co-op only",
+      "Packet timing",
+      "Transport log",
+      "SN@P packet log",
+      "TIMING",
+      "Frame timing",
+      "Game clock and position",
+      "File #1 only",
+      "Audio and disc service stalls",
+      "File #1 only",
+      "SESSION FILES"
+    ],
+    "PageSetup": [
+      "Game files",
+      "GAME SOURCE",
+      "Use game PAK",
+      "Disc image (.iso)",
+      "Export during setup",
+      "GAME BUILD",
+      "LAUNCHER STORAGE",
+      "REMOVE GAME",
+      "Remove imported data, the game build and cache. Your ISO and launcher are kept.",
+      "Include this game's saves",
+      "Include shared build and hosting tools"
+    ],
+    "PageLogs": [
+      "Session log",
+      "SESSION",
+      "STREAM",
+      "Follow",
+      "No log available",
+      "Start the game or open an existing log file."
+    ]
+  }
+}

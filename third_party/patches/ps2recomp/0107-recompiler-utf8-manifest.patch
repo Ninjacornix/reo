@@ -1,0 +1,36 @@
+diff --git a/ps2xRecomp/CMakeLists.txt b/ps2xRecomp/CMakeLists.txt
+--- a/ps2xRecomp/CMakeLists.txt
++++ b/ps2xRecomp/CMakeLists.txt
+@@ -122,6 +122,14 @@ file(GLOB_RECURSE PS2RECOMP_EXE_SOURCES CONFIGURE_DEPENDS
+ 
+ add_executable(ps2_recomp ${PS2RECOMP_EXE_SOURCES})
+ 
++# UTF-8 active code page: game and config paths under user folders such as "El Pão"
++# open correctly through the narrow file APIs (Windows 10 1903+).
++if(MSVC)
++    target_sources(ps2_recomp PRIVATE src/runner/ps2_recomp.manifest)
++elseif(WIN32)
++    target_sources(ps2_recomp PRIVATE src/runner/ps2_recomp.rc)
++endif()
++
+ target_link_libraries(ps2_recomp
+ PRIVATE
+     ps2_recomp_lib
+diff --git a/ps2xRecomp/src/runner/ps2_recomp.manifest b/ps2xRecomp/src/runner/ps2_recomp.manifest
+new file mode 100644
+--- /dev/null
++++ b/ps2xRecomp/src/runner/ps2_recomp.manifest
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
++  <assemblyIdentity version="1.0.0.0" name="REO.Native"/>
++  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"/></requestedPrivileges></security></trustInfo>
++  <application xmlns="urn:schemas-microsoft-com:asm.v3"><windowsSettings><activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage></windowsSettings></application>
++</assembly>
+diff --git a/ps2xRecomp/src/runner/ps2_recomp.rc b/ps2xRecomp/src/runner/ps2_recomp.rc
+new file mode 100644
+--- /dev/null
++++ b/ps2xRecomp/src/runner/ps2_recomp.rc
+@@ -0,0 +1,2 @@
++// Embeds the UTF-8 active code page manifest (MinGW; MSVC embeds the .manifest itself).
++1 24 "ps2_recomp.manifest"

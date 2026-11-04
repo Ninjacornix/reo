@@ -132,8 +132,8 @@ class WindowsCompileTests(unittest.TestCase):
             changed = build(second, second / 'work')
             self.assertTrue(all(changed[name][1] != after[name][1] for name in after if name.startswith('main')))
 
-    def test_archive_link_reuse_header_edit_corruption_and_failure(self):
-        with tempfile.TemporaryDirectory(prefix='reo-compile-check-') as folder:
+    def test_archive_link_reuse_header_edit_corruption_and_failure_with_unicode_paths(self):
+        with tempfile.TemporaryDirectory(prefix='reo-compile-\u00e9-\u0416-check-') as folder:
             root = Path(folder)
             kit, generated, work, output = [root / name for name in ['kit', 'generated', 'work', 'output']]
             kit.mkdir(); generated.mkdir()

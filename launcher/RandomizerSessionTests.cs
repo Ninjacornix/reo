@@ -24,6 +24,17 @@ internal static class RandomizerSessionTests {
         byte[] empty=RandomizerSession.Create("reo01",new());
         check(RandomizerSession.ModsFor(RandomizerSession.Parse(empty)).Count==0,"Unmodded host clears guest randomizers");
         void Reject(Action action,string label) { try { action(); check(false,label); } catch(IOException) {check(true,label);} }
+        foreach (string game in new[] { "file1", "file2" }) {
+            var timing = new ModManifest { Format = 1, Id = "fixture.examine", Name = "Examine timing", Version = "1",
+                ElfSha256 = DiscImport.ExpectedElf(game), ExamineMessages = new() { DurationMultiplier = 2 } };
+            Reject(() => RandomizerSession.Create("reo01", new() { timing }, game), game + " solo examine timing cannot be shared by a host");
+            timing.ItemRandomizer = new() { Seed = 42 };
+            Reject(() => RandomizerSession.Create("reo01", new() { timing }, game), game + " randomizer package cannot silently drop its examine timing when shared");
+            var injected = System.Text.Json.Nodes.JsonNode.Parse(RandomizerSession.Create("reo01", new(), game))!;
+            injected["examineMessages"] = System.Text.Json.Nodes.JsonNode.Parse("{\"durationMultiplier\":2}");
+            Reject(() => RandomizerSession.Parse(Encoding.UTF8.GetBytes(injected.ToJsonString()), game),
+                game + " guest protocol rejects injected examine timing instead of silently inheriting it");
+        }
         Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3","\"protocol\":999"))),"Incompatible protocol rejected");
         Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3,",""))),"Missing protocol rejected");
         Reject(()=>RandomizerSession.Parse(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(config).Replace("\"protocol\":3","\"protocol\":2"))),"Old independently rolled enemy sessions rejected");
@@ -53,22 +64,39 @@ internal static class RandomizerSessionTests {
         check(fetched.SequenceEqual(config),"Real UDP host-to-guest configuration transfer");
         check(RandomizerSession.Digest(fetched)==RandomizerSession.Digest(config),"Host and guest configuration hashes match");
         using var resolveTimeout=new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var secondSample=Mods.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"examples","mods","randomizer-file2.json")));
+        secondSample.ItemRandomizer!.Seed=41; secondSample.EnemyRandomizer!.Seed=41;
+        byte[] secondConfig=RandomizerSession.Create("reo01",new() {secondSample},"file2");
         var resolveServer=Task.Run(async ()=> {
-            foreach(var body in new[] {config,empty,config}) {
+            foreach(var body in new[] {config,empty,config,secondConfig,config,secondConfig}) {
                 var request=await server.ReceiveAsync(resolveTimeout.Token);
                 await server.SendAsync(RandomizerSession.Reply(request.Buffer,body)!,request.RemoteEndPoint,resolveTimeout.Token);
             }
         });
         var guest=new Settings { CoopMode="join", CoopHost="127.0.0.1", JoinHostName="reo01", CheatsEnabled=false };
+        sample.ExamineMessages = new() { DurationMultiplier = 2 };
         var resolved=await RandomizerSession.Resolve(guest,new() {sample},resolveTimeout.Token,port);
         check(resolved.Mods.Single().EnemyRandomizer!.Seed==parsed.Enemies!.Seed &&
               resolved.Mods.Single().EnemyRandomizer!.Seed!=sample.EnemyRandomizer.Seed &&
-              resolved.Mods.Single().Effects.Count==0,"Join path replaces conflicting local mods with host settings");
+              resolved.Mods.Single().Effects.Count==0 && resolved.Mods.Single().ExamineMessages==null,
+              "Join path replaces conflicting local mods and solo examine timing with host settings");
         var cleared=await RandomizerSession.Resolve(guest,new() {sample},resolveTimeout.Token,port);
-        check(cleared.Mods.Count==0 && sample.Effects.Count==1,"Unmodded host clears session without changing installed package");
+        check(cleared.Mods.Count==0 && sample.Effects.Count==1 && sample.ExamineMessages.DurationMultiplier==2,
+            "Unmodded host clears session without changing installed package or solo examine timing");
         guest.JoinHostName="DifferentHost";
         try { await RandomizerSession.Resolve(guest,new(),resolveTimeout.Token,port); check(false,"Wrong host rejected"); }
         catch(IOException) { check(true,"Wrong host rejected"); }
+        guest.SelectedGame="file2"; guest.JoinHostName="reo01";
+        var secondResolved=await RandomizerSession.Resolve(guest,new() {sample},resolveTimeout.Token,port);
+        check(secondResolved.Bytes.SequenceEqual(secondConfig) && secondResolved.Mods.Single().ElfSha256==DiscImport.SecondElfSha256 &&
+              secondResolved.Mods.Single().ItemRandomizer!.Seed==41 &&
+              secondResolved.Mods.Single().EnemyRandomizer!.Pool.Count==secondSample.EnemyRandomizer.Pool.Count,
+              "Real UDP File #2 join adopts host seeds and complete pool, ignoring File #1 local settings");
+        try { await RandomizerSession.Resolve(guest,new(),resolveTimeout.Token,port); check(false,"File #2 UDP join rejects File #1 host"); }
+        catch(IOException) { check(true,"File #2 UDP join rejects File #1 host"); }
+        guest.SelectedGame="file1";
+        try { await RandomizerSession.Resolve(guest,new(),resolveTimeout.Token,port); check(false,"File #1 UDP join rejects File #2 host"); }
+        catch(IOException) { check(true,"File #1 UDP join rejects File #2 host"); }
         await resolveServer;
         string receipts=Path.Combine(AppContext.BaseDirectory,"test-results");
         Directory.CreateDirectory(receipts);

@@ -14,10 +14,21 @@ Keep build tools and regression checks in source control. Their output, captures
 | Performance counter | `parallel_gs_backend/performance_check.cpp` (measured present/update rates, frame intervals, duplicate actor callbacks, counter wrap/reset and stopped updates) |
 | Read-only diagnostics | `ps2_debug/`, `ext_sampler/`, timing/audio analysis scripts |
 | Native co-op | `coop_playtest/`, `snap_iop_check/`, `netcnf_profile_check/`, `usb_keyboard_check/`, `ee_count_check/` |
-| Controller rumble | `input_rumble_check/` (native libpad2 packets), launcher `--self-test` (adapter, routing and HID reports) |
+| Controller rumble | `input_rumble_check/` (native libpad2 packets), shared Windows service checks (`dotnet run --project launcher/cross-tests -c Release -- --windows-services-check`) (adapter, routing and HID reports) |
 | Fullscreen cursor | `fullscreen_cursor_check/` (native window procedure and desktop focus transitions) |
-| Audio volume | `audio_mixer_check/` (actual CRI/bank mixing, isolated gains and muted playback timing), launcher `--self-test` (settings and live-control mapping) |
+| Audio volume | `audio_mixer_check/` (actual CRI/bank mixing, isolated gains and muted playback timing), shared Windows service checks (`dotnet run --project launcher/cross-tests -c Release -- --windows-services-check`) (settings and live-control mapping) |
 
 Individual check directories describe their requirements. Several use a locally built runtime or GPU backend and are not standalone unit tests. Build against matching headers and libraries; keep game captures local.
+
+The Hellfire overlay-entry regression uses authored synthetic instructions only:
+
+```powershell
+$env:REO_TEST_RECOMPILER = '<path to the patched ps2_recomp.exe>'
+python -m unittest discover -s tools/local_build -p test_overlay_entries.py -v
+```
+
+Without `REO_TEST_RECOMPILER`, the function-map check still runs and the generator
+integration check is skipped. See [scenario runtime investigation](../docs/SCENARIO_RUNTIME.md)
+for the issue #26 evidence and remaining gameplay checks.
 
 `ps2_debug` utilities use PCSX2 PINE for reference captures. They are developer tooling, not a dependency of the native launcher. Private handoffs and agent-specific build scripts are excluded from publication.

@@ -1,0 +1,109 @@
+name: Universal launcher
+on:
+  workflow_dispatch:
+  push:
+    branches: ['develop', 'main', 'macos/**', 'launcher/**']
+    paths: ['launcher/**', 'tools/launcher/**', '.github/workflows/shared-launcher.yml']
+  pull_request:
+    paths: ['launcher/**', 'tools/launcher/**', '.github/workflows/shared-launcher.yml']
+permissions:
+  contents: read
+concurrency:
+  group: universal-launcher-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  shared:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            rid: win-x64
+          - os: macos-15
+            rid: osx-arm64
+          - os: ubuntu-24.04
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.400'
+      - name: Linux render and controller dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1 libegl1 libxkbcommon0 libsdl2-dev
+      - name: Verify launcher reference contract
+        run: python tools/launcher/check_reference.py
+      - name: Shared core regression tests
+        run: dotnet run --project launcher/cross-tests
+      - name: Publish common desktop
+        run: dotnet publish launcher/desktop/Reo.Launcher.Desktop.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o build-launcher/${{ matrix.rid }}
+      - name: Linux controller bridge
+        if: runner.os == 'Linux'
+        run: c++ -std=c++17 -shared -fPIC launcher/desktop/Platform/controllers_sdl.cpp $(sdl2-config --cflags --libs) -o build-launcher/linux-x64/libReo.Platform.so
+      - name: Mac controller bridge
+        if: runner.os == 'macOS'
+        run: clang++ -std=c++17 -dynamiclib -fobjc-arc launcher/desktop/Platform/controllers_macos.mm -framework AppKit -framework GameController -framework CoreHaptics -o build-launcher/osx-arm64/libReo.Platform.dylib
+      - name: Render all twelve RC1 pages and exercise controls
+        run: dotnet launcher/desktop/bin/Release/net10.0/${{ matrix.rid }}/Outbreak.Launcher.dll --headless-check build-launcher/captures
+      - name: Windows updater process handshake, cancellation and restart
+        if: runner.os == 'Windows'
+        run: |
+          dotnet publish launcher/cross-tests -c Release -r win-x64 --self-contained true -o "$env:RUNNER_TEMP/reo-update-probe"
+          dotnet launcher/desktop/bin/Release/net10.0/win-x64/Outbreak.Launcher.dll --update-worker-check "$env:RUNNER_TEMP/reo-update-check" "$env:RUNNER_TEMP/reo-update-probe/Reo.Launcher.CrossTests.exe"
+          Copy-Item "$env:RUNNER_TEMP/reo-update-check/report.json" build-launcher/update-worker-check.json
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: shared-launcher-${{ matrix.rid }}
+          path: build-launcher/
+  parity:
+    permissions:
+      contents: write
+    # Paired captures of the published RC1 Windows launcher and this common launcher on one
+    # Windows runner, with the same installation root and fresh data folders.
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.400'
+      - name: RC1 reference package
+        shell: pwsh
+        run: |
+          $zip = Join-Path $env:RUNNER_TEMP 'rc1.zip'
+          Invoke-WebRequest 'https://github.com/Ninjacornix/reo/releases/download/v1.0.20-rc1/RE-Outbreak-v1.0.20-rc1-Windows-x64.zip' -OutFile $zip
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne 'CAC8B8FD32C5CB42C836A9CB679C379A060E267D65432D2075853E61D208E5C3') { throw 'RC1 package hash mismatch.' }
+          Expand-Archive $zip (Join-Path $env:RUNNER_TEMP 'rc1')
+      - name: Paired captures
+        shell: pwsh
+        run: ./tools/launcher/parity.ps1 -Rc1 (Join-Path $env:RUNNER_TEMP 'rc1/Outbreak.Launcher.exe') -Output build-launcher/parity
+      - name: Compare
+        shell: pwsh
+        run: |
+          python -m pip install --quiet pillow
+          python tools/launcher/compare_parity.py build-launcher/parity
+      - name: Publish results to ci/parity-results
+        # Pull requests (including forks) keep their captures as artifacts. Their token may be
+        # read-only, and unmerged PR code must not publish to the repository's results branch.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && hashFiles('build-launcher/parity/**') != '' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Set-Location build-launcher/parity
+          Set-Content .gitignore "data-r/`ndata-c/"
+          git init -q
+          git checkout -q -b ci/parity-results
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@users.noreply.github.com'
+          git add -A
+          git commit -q -m "Parity captures for $env:GITHUB_SHA"
+          git push -q -f "https://x-access-token:$env:GH_TOKEN@github.com/$env:GITHUB_REPOSITORY.git" ci/parity-results
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: launcher-parity
+          path: build-launcher/parity/

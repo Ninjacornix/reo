@@ -1,10 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-only
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
+using SocketLength = int;
+#else
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+using SOCKET = int;
+using SocketLength = socklen_t;
+constexpr int INVALID_SOCKET = -1;
+static void closesocket(SOCKET socket) { close(socket); }
+#endif
 
 #include "../../network/native/snap_iop_transport.h"
+#include "../../network/native/native_netcode.h"
 
 #include <algorithm>
 #include <array>
@@ -12,12 +25,23 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
 
 namespace {
+// Reproduce the hardware bridge's lifetime: this owner predates the lazily
+// constructed native state and destroys its transport during process teardown.
+std::unique_ptr<SnapIopTransport> lateTransport;
+void setEnvironment(const char* key, const char* value) {
+#ifdef _WIN32
+    _putenv_s(key, value);
+#else
+    if (*value) setenv(key, value, 1); else unsetenv(key);
+#endif
+}
 unsigned checks = 0;
 void require(bool ok, const char* message) {
     ++checks;
@@ -52,7 +76,7 @@ sockaddr_in local(uint16_t port = 0) {
 }
 uint16_t boundPort(SOCKET socket) {
     auto address = local();
-    int length = sizeof(address);
+    SocketLength length = sizeof(address);
     require(getsockname(socket, reinterpret_cast<sockaddr*>(&address), &length) == 0,
             "bound host port");
     return address.sin_port;
@@ -93,13 +117,141 @@ std::vector<uint8_t> receive(SnapIopTransport& transport, int id, size_t wanted)
     require(bytes.size() == wanted, "TCP receive completes");
     return bytes;
 }
+
+void localServer(const char* advertised, const char* bindHost, bool enhanced) {
+    setEnvironment("REO_COOP_HOST", advertised);
+    setEnvironment("REO_COOP_LOCAL_SERVER", "1");
+    setEnvironment("REO_COOP_PLATFORM_AUTH", "native");
+    setEnvironment("REO_NETCODE", enhanced ? "auto" : "legacy");
+    SnapIopTransport transport;
+    in_addr identity{};
+    require(inet_pton(AF_INET, advertised, &identity) == 1, "host fixture advertised address");
+    auto bindAddress = local();
+    require(inet_pton(AF_INET, bindHost, &bindAddress.sin_addr) == 1, "host fixture bind address");
+    auto bindSocket = [&](bool udp) {
+        SOCKET socket = ::socket(AF_INET, udp ? SOCK_DGRAM : SOCK_STREAM, udp ? IPPROTO_UDP : IPPROTO_TCP);
+        require(socket != INVALID_SOCKET && bind(socket, reinterpret_cast<sockaddr*>(&bindAddress), sizeof(bindAddress)) == 0,
+                "host service binds only its local address");
+        return socket;
+    };
+    SOCKET tcp = bindSocket(false);
+    require(listen(tcp, 1) == 0, "local APP fixture listens");
+    auto tcpOpen = request();
+    put32(tcpOpen, 0x1c, identity.s_addr); put16(tcpOpen, 0x20, boundPort(tcp));
+    int tcpId = result(transport.call(7, tcpOpen, 64));
+    require(tcpId >= 0, "advertised APP endpoint opens locally");
+    connected(transport, tcpId);
+    SOCKET accepted = accept(tcp, nullptr, nullptr);
+    require(accepted != INVALID_SOCKET, "local APP accepts the host without public routing");
+    const char opening[] = "APP";
+    require(send(accepted, opening, 3, 0) == 3 && receive(transport, tcpId, 3) == std::vector<uint8_t>({'A','P','P'}),
+            "server-first APP bytes survive local host routing");
+    closesocket(accepted); closesocket(tcp);
+
+    auto dns = request(128);
+    const std::string hostname = "snap01.reo.capcom.sf.yav4.com";
+    std::copy(hostname.begin(), hostname.end(), dns.begin() + 0x1c);
+    int query = result(transport.call(0x3a, dns, 64));
+    auto answer = transport.call(0x3c, socketRequest(query), 64);
+    uint32_t resolved = 0; std::memcpy(&resolved, answer.data() + 0x20, 4);
+    require(result(answer) == 1 && resolved == identity.s_addr, "host DNS retains the advertised identity");
+
+    SOCKET bootstrap = bindSocket(true), game = bindSocket(true);
+    auto udpId = open(transport, 0x18, 0);
+    require(udpId >= 0, "local host UDP opens");
+    auto sendPacket = [&](uint32_t address, uint16_t port, const std::vector<uint8_t>& bytes) {
+        auto data = socketRequest(udpId, 0, 0x28 + bytes.size());
+        put32(data, 0x20, address); put16(data, 0x24, port); put16(data, 0x26, uint16_t(bytes.size()));
+        std::copy(bytes.begin(), bytes.end(), data.begin() + 0x28);
+        return result(transport.call(0x19, data, 64));
+    };
+    auto receivePacket = [&](SOCKET socket, sockaddr_in& source) {
+        fd_set readable; FD_ZERO(&readable); FD_SET(socket, &readable);
+        timeval timeout{2, 0};
+        require(select(int(socket) + 1, &readable, nullptr, nullptr, &timeout) > 0, "packet reaches the local host service");
+        std::vector<uint8_t> bytes(2048); SocketLength size = sizeof(source);
+        int count = recvfrom(socket, reinterpret_cast<char*>(bytes.data()), int(bytes.size()), 0,
+                             reinterpret_cast<sockaddr*>(&source), &size);
+        require(count > 0, "local service receives actual bytes"); bytes.resize(size_t(count)); return bytes;
+    };
+    auto poll = [&]() {
+        for (int i = 0; i < 500; ++i) {
+            auto frames = transport.call(0x1b, request(), 2048);
+            if (result(frames) == 0) return frames;
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+        require(false, "host receives local UDP reply"); return request();
+    };
+    require(sendPacket(identity.s_addr, boundPort(bootstrap), {42}) == 0, "bootstrap uses its advertised destination locally");
+    sockaddr_in source{};
+    require(receivePacket(bootstrap, source) == std::vector<uint8_t>({42}), "bootstrap request intact");
+    std::vector<uint8_t> handoff(6);
+    put32(handoff, 0, identity.s_addr); put16(handoff, 4, boundPort(game));
+    require(sendto(bootstrap, reinterpret_cast<const char*>(handoff.data()), int(handoff.size()), 0,
+                   reinterpret_cast<sockaddr*>(&source), sizeof(source)) == int(handoff.size()), "public-address handoff sent locally");
+    auto frames = poll();
+    uint32_t peer = 0; std::memcpy(&peer, frames.data() + 0x24, 4);
+    require(peer == identity.s_addr && read16(frames, 0x20) == boundPort(bootstrap) &&
+                std::equal(handoff.begin(), handoff.end(), frames.begin() + 0x28),
+            "guest sees advertised reply identity and unchanged bootstrap handoff");
+    uint32_t gameAddress = 0; std::memcpy(&gameAddress, frames.data() + 0x28, 4);
+    uint16_t gamePort = read16(frames, 0x2c);
+    const std::vector<uint8_t> login{0x80,0x10,0,1,0,1,7,0xd0,0,0,0,1,0,0,0,0,0xba,0x47,0x66,0x11};
+    require(sendPacket(gameAddress, gamePort, login) == 0, "advertised game handoff is routed locally");
+    require(receivePacket(game, source) == login, "game login reaches the local service");
+    auto admitted = login; admitted[3] = 0x29; admitted[4] = admitted[5] = admitted[6] = 0; admitted[7] = 42;
+    require(sendto(game, reinterpret_cast<const char*>(admitted.data()), int(admitted.size()), 0,
+                   reinterpret_cast<sockaddr*>(&source), sizeof(source)) == int(admitted.size()), "local KICS response");
+    frames = poll();
+    require(std::equal(admitted.begin(), admitted.end(), frames.begin() + 0x28), "original login response remains intact");
+    if (enhanced) {
+        auto hello = receivePacket(game, source);
+        require(hello.size() == 48 && !std::memcmp(hello.data(), "REO2", 4) && hello[5] == 1,
+                "native negotiation reaches the local game socket after original login");
+        std::vector<uint8_t> body(32);
+        std::copy_n(hello.begin() + 32, 8, body.begin());
+        put32(body, 8, htonl(3)); put32(body, 12, htonl(2)); put32(body, 16, htonl(42));
+        auto status = reo_network::native::encode(2, 42, 5, 7, 1, reo_network::native::nowUs(), body);
+        require(sendto(game, reinterpret_cast<const char*>(status.data()), int(status.size()), 0,
+                       reinterpret_cast<sockaddr*>(&source), sizeof(source)) == int(status.size()), "local native status response");
+        for (int i = 0; i < 500 && !reo_network::native::runtime().enhanced(reo_network::native::nowUs()); ++i) {
+            require(result(transport.call(0x1b, request(), 2048)) == -1, "native status never reaches the original decoder");
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+        require(reo_network::native::runtime().enhanced(reo_network::native::nowUs()), "local reply completes native negotiation under advertised identity");
+    }
+    auto wrong = tcpOpen; put32(wrong, 0x1c, htonl(0x7f000003));
+    require(result(transport.call(7, wrong, 64)) == -1 &&
+                sendPacket(htonl(0x7f000003), gamePort, {42}) == -1,
+            "host routing still rejects destinations outside its selected advertised server");
+    transport.reset();
+    require(result(transport.call(0x1a, socketRequest(udpId), 64)) == -1, "local host reset invalidates sockets");
+    require(!reo_network::native::runtime().enhanced(reo_network::native::nowUs()), "local host reset clears native negotiation");
+    closesocket(bootstrap); closesocket(game);
+    std::printf("local_host advertised=%s bind=%s mode=%s PASS\n", advertised, bindHost, enhanced ? "auto" : "legacy");
+}
 } // namespace
 
 int main(int argc, char** argv) {
     try {
-        _putenv_s("REO_COOP_HOST", "127.0.0.1");
+        const bool localOnly=argc>1 && (std::strcmp(argv[1],"--local-only")==0 || std::strcmp(argv[1],"--loopback-only")==0);
+        for (bool enhanced : {false, true}) {
+            localServer("192.0.2.1", "127.0.0.1", enhanced);
+            localServer("100.64.1.2", "127.0.0.1", enhanced);
+            localServer("192.168.1.20", "127.0.0.1", enhanced);
+            localServer("127.0.0.1", "127.0.0.1", enhanced);
+#ifdef _WIN32
+            localServer("127.8.9.10", "127.8.9.10", enhanced);
+#endif
+        }
+        setEnvironment("REO_COOP_LOCAL_SERVER", "");
+        setEnvironment("REO_COOP_PLATFORM_AUTH", "");
+        setEnvironment("REO_NETCODE", "");
+        setEnvironment("REO_COOP_HOST", "127.0.0.1");
+        lateTransport=std::make_unique<SnapIopTransport>();
+        {
         SnapIopTransport transport;
-        require(result(transport.call(0x05, request(), 64)) == 0, "actual Winsock init");
+        require(result(transport.call(0x05, request(), 64)) == 0, "actual native socket init");
         require(result(transport.call(0x10, request(), 64)) == -1,
                 "unavailable TcpSendNb rejected");
         require(result(transport.call(0xffff, request(), 64)) == -1, "unknown RPC rejected");
@@ -128,6 +280,16 @@ int main(int argc, char** argv) {
                 "released DNS query cannot be polled");
         require(result(transport.call(0x3b, socketRequest(query), 64)) == -1,
                 "double DNS release rejects unknown handle");
+        dns = request(128);
+        const std::string file2Host = "snap01.capcom.client.sf.yav4.com";
+        std::copy(file2Host.begin(), file2Host.end(), dns.begin() + 0x1c);
+        const int file2Query = result(transport.call(0x3a, dns, 64));
+        auto file2Answer = transport.call(0x3c, socketRequest(file2Query), 64);
+        std::memcpy(&address, file2Answer.data() + 0x20, 4);
+        require(file2Query > 0 && result(file2Answer) == 1 && address == htonl(INADDR_LOOPBACK),
+                "File #2 bootstrap alias resolves to the selected host");
+        require(result(transport.call(0x3b, socketRequest(file2Query), 64)) == 0,
+                "File #2 bootstrap query is released");
         dns = request(128);
         const std::string unknownHost = "gate1.us.dnas.playstation.org";
         std::copy(unknownHost.begin(), unknownHost.end(), dns.begin() + 0x1c);
@@ -164,20 +326,24 @@ int main(int argc, char** argv) {
         invalidResolver[0x1c] = '\"';
         require(result(transport.call(0x38, invalidResolver, 0x20)) == -1,
                 "invalid resolver hostname rejected");
-        _putenv_s("REO_COOP_HOST", "");
+        setEnvironment("REO_COOP_HOST", "");
         {
             SnapIopTransport unconfigured;
             require(result(unconfigured.call(0x38, resolver, 0x20)) == -1,
                     "resolver initialization fails without selected host resolver");
         }
-        _putenv_s("REO_COOP_HOST", "127.0.0.1");
+        setEnvironment("REO_COOP_HOST", "127.0.0.1");
 
         SOCKET udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         auto bindAddress = local();
         require(bind(udp, reinterpret_cast<sockaddr*>(&bindAddress), sizeof(bindAddress)) == 0,
                 "real UDP echo bind");
         const uint16_t udpPort = boundPort(udp);
+#ifdef _WIN32
         DWORD timeout = 2000;
+#else
+        timeval timeout{2, 0};
+#endif
         setsockopt(udp, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout),
                    sizeof(timeout));
         const int udpId = open(transport, 0x18, 0);
@@ -191,7 +357,7 @@ int main(int argc, char** argv) {
         require(result(transport.call(0x19, sendRequest, 64)) == 0, "UDP send success uses zero");
         std::array<char, 64> wire{};
         sockaddr_in source{};
-        int sourceLength = sizeof(source);
+        SocketLength sourceLength = sizeof(source);
         const int received = recvfrom(udp, wire.data(), int(wire.size()), 0,
                                       reinterpret_cast<sockaddr*>(&source), &sourceLength);
         require(received == 5 && std::memcmp(wire.data(), payload.data(), 5) == 0,
@@ -246,7 +412,7 @@ int main(int argc, char** argv) {
         require(result(closedStatus) == 0 && read16(closedStatus, 0x1e) == 9,
                 "closed handle status is safe without an OS socket");
         require(result(transport.call(0x12, socketRequest(tcpId, 8), 64)) == 0,
-                "closed handle receive returns EOF without Winsock access");
+                "closed handle receive returns EOF without host socket access");
         require(result(transport.call(0x4a, socketRequest(tcpId), 64)) == 0,
                 "TCP delete releases the closed tombstone");
         require(result(transport.call(0x4a, socketRequest(tcpId), 64)) == -1,
@@ -267,6 +433,7 @@ int main(int argc, char** argv) {
         }
 
         // The reviewed separate openSNAP APP process must speak first.
+        if (!localOnly) {
         const int appId = open(transport, 7, htons(10127));
         require(appId >= 0, "real Capcom APP open");
         connected(transport, appId);
@@ -277,6 +444,7 @@ int main(int argc, char** argv) {
         require(result(transport.call(0x0b, socketRequest(appId), 64)) == 0, "actual TCP close");
         require(result(transport.call(0x4a, socketRequest(appId), 64)) == 0,
                 "APP TCP delete after original close");
+        }
         if (argc > 1 && std::strcmp(argv[1], "--http") == 0) {
             const int httpId = open(transport, 7, htons(80));
             require(httpId >= 0, "legacy registration HTTP opens only selected host");
@@ -314,7 +482,15 @@ int main(int argc, char** argv) {
                 "reset invalidates old TCP handles");
         require(result(transport.call(0x1a, socketRequest(udpId), 64)) == -1,
                 "reset closes old UDP handles");
-        std::printf("PASS checks=%u real_tcp=1 real_udp=1 capcom_app=1\n", checks);
+        }
+        auto& mailbox=reo_network::native::runtime();
+        const auto stamp=reo_network::native::nowUs();
+        mailbox.status({1,1,1,3,reo_network::native::Mode::Enhanced,{1,2,0,0},stamp});
+        reo_network::native::Motion motion;
+        motion.slot=1;
+        require(mailbox.receive(2,1,stamp,stamp,motion),
+                "populated native mailbox survives global transport teardown");
+        std::printf("PASS checks=%u real_tcp=1 real_udp=1 capcom_app=%d\n", checks,localOnly?0:1);
         return 0;
     } catch (const std::exception& error) {
         std::fprintf(stderr, "FAIL checks=%u: %s\n", checks, error.what());

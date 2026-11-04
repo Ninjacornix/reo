@@ -8,7 +8,13 @@ using System.Text.RegularExpressions;
 namespace Outbreak.Launcher;
 
 public static partial class OnlineOptions {
-    public static bool Configured(Settings settings) => settings.Game.Id == "file1" &&
+    // Enable an edition only after its native login/lobby path has been verified.
+    public static bool Supported(string game) => game is "file1" or "file2";
+    internal static string ServerPlugin(string game) => game switch {
+        "file1" => "outbreak", "file2" => "outbreak2",
+        _ => throw new ArgumentException("Unknown game edition.", nameof(game))
+    };
+    public static bool Configured(Settings settings) => Supported(settings.Game.Id) &&
                                                         settings.ResolvedCoopMode != "offline" &&
                                                         TryHost(settings.CoopHost, out _) &&
                                                         ValidUsername(settings.AccountUsername);
@@ -49,15 +55,17 @@ public static partial class OnlineOptions {
         if (string.IsNullOrWhiteSpace(settings.CoopHost) &&
             string.IsNullOrWhiteSpace(settings.AccountUsername))
             return null;
-        if (settings.Game.Id != "file1")
-            return "Online play is available for File #1 only.";
+        if (!Supported(settings.Game.Id))
+            return "Online play is unavailable for this game.";
         if (!ValidUsername(settings.AccountUsername))
             return "Player name: use 4–10 letters, numbers or underscores. Underscores cannot " +
                    "start, end or repeat.";
+        if (settings.AutoLobby && settings.ResolvedCoopMode == "host" && !LobbySettings.ValidTitle(settings.ResolvedRoomName))
+            return "Room name: use up to 15 letters, numbers or underscores.";
         if (!TryHost(settings.CoopHost, out _))
             return settings.ResolvedCoopMode == "host"
                        ? "Choose the address friends will use."
-                       : "Pick a game from the list, or enter the host's address, such as 192.168.1.20.";
+                       : "Enter the address you got from the host.";
         return null;
     }
 
@@ -65,9 +73,15 @@ public static partial class OnlineOptions {
         if (!Configured(settings))
             return new();
         TryHost(settings.CoopHost, out string host);
-        return new() { ["REO_COOP_HOST"] = host, ["REO_COOP_PLATFORM_AUTH"] = "native",
-                       ["REO_COOP_USERNAME"] = settings.AccountUsername,
-                       ["REO_COOP_AUTO_ACCOUNT"] = "1" };
+        var environment = new Dictionary<string, string> {
+            ["REO_COOP_HOST"] = host, ["REO_COOP_PLATFORM_AUTH"] = "native",
+            ["REO_COOP_USERNAME"] = settings.AccountUsername,
+            ["REO_COOP_AUTO_ACCOUNT"] = "1", ["REO_NETCODE"] = "auto" };
+        // Keep the advertised address as the account/protocol identity. Only our own
+        // game's sockets use loopback, so hosting does not require router NAT loopback.
+        if (settings.ResolvedCoopMode == "host")
+            environment["REO_COOP_LOCAL_SERVER"] = "1";
+        return environment;
     }
 
     public static string PrepareMemoryCard(Settings settings, string folder, FileStream? lease) {
@@ -85,14 +99,7 @@ public static partial class OnlineOptions {
         if (Directory.Exists(directory))
             return ExistingProfileDirectory(directory);
         // Atomic creation distinguishes our new directory from an existing one.
-        if (!CreateDirectoryW(directory, 0)) {
-            int error = Marshal.GetLastWin32Error();
-            if (error == 183 && Directory.Exists(directory))
-                return ExistingProfileDirectory(directory);
-            throw new IOException(
-                "Could not prepare the online profile on the selected memory card: " +
-                new Win32Exception(error).Message);
-        }
+        Directory.CreateDirectory(directory);
         try {
             using var marker = new FileStream(Path.Combine(directory, "BWNETDCNF"),
                                               FileMode.CreateNew, FileAccess.Write, FileShare.None);

@@ -159,23 +159,37 @@ def main():
     if args.out.exists() and any(args.out.iterdir()):raise ValueError('Fresh output required')
     programs=base.load_inputs(args)
     output='#include "'+args.factory_name+'.h"\n#include "vu_whole_program.h"\n#include "vu_math_helpers.h"\nnamespace {\n'+COMMON
-    descriptors=[];ir=[]
+    descriptors=[];default_descriptors=[];ir=[]
     for n,(digest,item) in enumerate(sorted(programs.items()),1):
         starts=sorted(item['starts']);pcs,cfg=base.reachable(item['code'],starts)
         body,lowering=emit(n,item['code'],starts,pcs);output+=body
         descriptors.append(f'{{code{n},16384,16384,starts{n},{len(starts)},execute{n}}}')
+        default_starts=sorted(item['default_starts'])
+        if default_starts:
+            default_entries=f'starts{n}'
+            if default_starts!=starts:
+                default_entries=f'defaultStarts{n}'
+                output+=f'static constexpr uint32_t {default_entries}[]={{'+','.join(map(str,default_starts))+'};\n'
+            default_descriptors.append(f'{{code{n},16384,16384,{default_entries},{len(default_starts)},execute{n}}}')
         ir.append(dict(sha256=digest,entry_pcs=starts,sites=len(pcs),cfg=cfg,lowering=lowering,
+            enabled_by_default=item['enabled_by_default'],
+            default_entry_pcs=default_starts,
             provenance=sorted(item['provenance']),instructions=[base.decode(item['code'],pc) for pc in pcs]))
     output+='const reo_vu_whole_aot::Program programs[]={'+','.join(descriptors)+'};\n'
-    output+='const reo_vu_whole_aot::Table table{programs,'+str(len(programs))+'};\n}\n'
-    output+='namespace '+args.factory_name+' {\nconst vu_whole_program::Table* programTable() noexcept{return &table;}\n}\n'
+    output+='const reo_vu_whole_aot::Table table{programs,'+str(len(programs))+'};\n'
+    if default_descriptors:
+        output+='const reo_vu_whole_aot::Program defaultPrograms[]={'+','.join(default_descriptors)+'};\n'
+        output+='const reo_vu_whole_aot::Table defaultTable{defaultPrograms,'+str(len(default_descriptors))+'};\n'
+    else:output+='const reo_vu_whole_aot::Table defaultTable{nullptr,0};\n'
+    output+='}\nnamespace '+args.factory_name+' {\nconst vu_whole_program::Table* programTable() noexcept{return &table;}\n'
+    output+='const vu_whole_program::Table* defaultProgramTable() noexcept{return &defaultTable;}\n}\n'
     output=output.replace('reo_vu_whole_aot::','vu_whole_program::')
-    header='#pragma once\nnamespace vu_whole_program {struct Table;}\nnamespace '+args.factory_name+' {const vu_whole_program::Table* programTable() noexcept;}\n'
+    header='#pragma once\n#define REO_VU_HAS_DEFAULT_PROGRAM_TABLE 1\nnamespace vu_whole_program {struct Table;}\nnamespace '+args.factory_name+' {\nconst vu_whole_program::Table* programTable() noexcept;\nconst vu_whole_program::Table* defaultProgramTable() noexcept;\n}\n'
     args.out.mkdir(parents=True,exist_ok=True)
     (args.out/(args.factory_name+'.cpp')).write_text(output,encoding='utf8',newline='\n')
     (args.out/(args.factory_name+'.h')).write_text(header,encoding='utf8',newline='\n')
     (args.out/'whole-program-ir.json').write_text(json.dumps(dict(semantic_contract='baseline_interpreter_byte_semantics_not_hardware_pipeline',programs=ir),indent=2)+'\n')
-    manifest=dict(phase='complete_CFG_bounded_plain_basic_blocks_local_owned_output',programs=len(programs),
+    manifest=dict(phase='complete_CFG_bounded_plain_basic_blocks_local_owned_output',programs=len(programs),default_programs=len(default_descriptors),
         native_regions=sum(len(p['lowering']['regions']) for p in ir),plain_sites=sum(p['lowering']['plain_sites'] for p in ir),
         source_sha256=hashlib.sha256(output.encode()).hexdigest(),generator_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         helper_sha256=hashlib.sha256((Path(__file__).parent/'vu_math_helpers.h').read_bytes()).hexdigest(),

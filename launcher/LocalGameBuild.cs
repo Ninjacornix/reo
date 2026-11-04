@@ -21,18 +21,33 @@ public static partial class LocalGameBuild {
     public const string ManifestName = "build-kit.json";
     static readonly JsonSerializerOptions Json =
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
-    static string KitFolder(string root) => PayloadFolder(root);
-    public static bool Available(string root) => File.Exists(Path.Combine(KitFolder(root),
+    static string KitFolder(string root, string game = "file1") => PayloadFolder(root, game);
+    public static bool Available(string root, string game = "file1") => File.Exists(Path.Combine(KitFolder(root, game),
                                                                           ManifestName)) ||
-                                                 HasPayload(root);
+                                                 HasPayload(root, game);
+
+    // Windows will not start a program, or run one in a folder, whose path passes 259
+    // characters, even though the build scripts reach deeper files through extended paths.
+    // The build's working folder and its Python sit about 90-100 characters below the data
+    // folder, so the data folder itself must stay within 150.
+    public const int MaxDataFolderLength = 150;
+    const int MaxProcessPath = 245;
+    public static string? DataFolderProblem(string dataFolder) {
+        int length = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dataFolder)).Length;
+        return length <= MaxDataFolderLength ? null : TooDeep(length);
+    }
+    static string TooDeep(int length) =>
+        $"This folder is too deep for Windows to build the game (the data folder path is {length} characters; " +
+        $"at most {MaxDataFolderLength}). Move the launcher folder somewhere shorter, such as D:\\Outbreak, " +
+        "or choose a shorter storage folder in Game files.";
 
     public static string TargetPath(string root, string game = "file1", string? home = null) {
-        string manifest = Path.Combine(KitFolder(root), ManifestName);
+        string manifest = Path.Combine(KitFolder(root, game), ManifestName);
         string kitHash =
-            PayloadIdentity(root) ?? (File.Exists(manifest) ? Sha(manifest) : "missing-build-kit");
+            PayloadIdentity(root, game) ?? (File.Exists(manifest) ? Sha(manifest) : "missing-build-kit");
         string identity = Convert
                               .ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-                                  kitHash + "\n" + DiscImport.FirstElfSha256 + "\nwin-x64")))
+                                  kitHash + "\n" + DiscImport.ExpectedElf(game) + "\nwin-x64")))
                               .ToLowerInvariant();
         return Path.Combine(home ?? Path.Combine(Settings.Home, "local-games"), game, identity,
                             "ready", "reo_recomp.exe");
@@ -58,8 +73,9 @@ public static partial class LocalGameBuild {
             throw new IOException("The build kit path escapes its installation.");
         for (var path = new FileInfo(result) as FileSystemInfo; path != null;
              path = path is FileInfo f ? f.Directory : ((DirectoryInfo)path).Parent) {
-            if (path.Exists && (path.Attributes & FileAttributes.ReparsePoint) != 0)
-                throw new IOException("Build-kit paths must not traverse symbolic links.");
+            if (path.Exists && BuildPathLinks.Redirects(path.FullName, path.Attributes))
+                throw new IOException("Build-kit paths must not traverse symbolic links or junctions: " +
+                                      path.FullName + ". Choose a storage folder without linked files or folders in Game files.");
             if (path.FullName.Equals(parent, StringComparison.OrdinalIgnoreCase))
                 break;
         }
@@ -121,10 +137,10 @@ public static partial class LocalGameBuild {
                                       IProgress<ImportProgress>? progress = null,
                                       CancellationToken cancel = default, string? home = null,
                                       Func<ProcessStartInfo, CancellationToken, Task<int>>? runner =
-                                          null) => Task.Run(async () => {
-        ExpandPayload(root, progress, cancel);
-        return await EnsureVerified(root, disc, DiscImport.FirstElfSha256, progress, cancel, home,
-                                    runner)
+                                          null, string game = "file1") => Task.Run(async () => {
+        ExpandPayload(root, progress, cancel, game);
+        return await EnsureVerified(root, disc, DiscImport.ExpectedElf(game), progress, cancel, home,
+                                    runner, game)
             .ConfigureAwait(false);
     }, cancel);
 
@@ -132,9 +148,10 @@ public static partial class LocalGameBuild {
     EnsureVerified(string root, ImportedDisc disc, string expectedElf,
                    IProgress<ImportProgress>? progress = null, CancellationToken cancel = default,
                    string? home = null,
-                   Func<ProcessStartInfo, CancellationToken, Task<int>>? runner = null) {
-        string kitFolder = KitFolder(root);
-        if (!Available(root))
+                   Func<ProcessStartInfo, CancellationToken, Task<int>>? runner = null,
+                   string game = "file1") {
+        string kitFolder = KitFolder(root, game);
+        if (!Available(root, game))
             throw new IOException(
                 "This installation has no local build kit. The precompiled " +
                 "game download was withdrawn; a compatible build kit is required.");
@@ -143,9 +160,15 @@ public static partial class LocalGameBuild {
         string hash = Sha(Path.Combine(kitFolder, ManifestName));
         if (Sha(disc.Elf) != kit.ElfSha256)
             throw new IOException("The imported ELF does not match this build kit.");
-        string executable = TargetPath(root, home: home);
+        string executable = TargetPath(root, game, home: home);
         string ready = Path.GetDirectoryName(executable)!;
         string cache = Path.GetDirectoryName(ready)!;
+        // Fail before a long setup rather than when a build step cannot start.
+        string deepest = new[] { Path.Combine(cache, "work") }
+                             .Concat(kit.Steps.Select(step => Inside(kitFolder, step.Tool)))
+                             .MaxBy(path => path.Length)!;
+        if (deepest.Length > MaxProcessPath)
+            throw new IOException(TooDeep(Path.GetFullPath(Settings.Home).Length));
         Directory.CreateDirectory(cache);
         using var lease = new FileStream(Path.Combine(cache, "build.lock"), FileMode.OpenOrCreate,
                                          FileAccess.ReadWrite, FileShare.None);
@@ -213,8 +236,15 @@ public static partial class LocalGameBuild {
             progress?.Report(new(i, kit.Steps.Length, step.Name, "Building native code"));
             var start = new ProcessStartInfo(Inside(kitFolder, step.Tool)) {
                 WorkingDirectory = work, UseShellExecute = false, CreateNoWindow = true,
-                RedirectStandardOutput = true, RedirectStandardError = true
+                RedirectStandardOutput = true, RedirectStandardError = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding = System.Text.Encoding.UTF8
             };
+            Storage.ProcessEnvironment(start, home);
+            // Python writes piped output in the ANSI code page by default; a path outside it
+            // (Cyrillic, for example) would fail while reporting the real build error.
+            start.Environment["PYTHONUTF8"] = "1";
+            start.Environment["PYTHONIOENCODING"] = "utf-8";
             foreach (string arg in step.Arguments)
                 start.ArgumentList.Add(Expand(arg));
             string? externalCompiler =
@@ -243,9 +273,12 @@ public static partial class LocalGameBuild {
                           else if (line.StartsWith("Linking ", StringComparison.Ordinal))
                               progress?.Report(new(0, 0, "Finishing your game build", "Linking"));
                       }).ConfigureAwait(false);
-            if (code != 0)
-                throw new IOException($"Local build failed during {step.Name} (exit {code}). " +
-                                      "The completed game was not replaced. Build logs: " + cache);
+            if (code != 0) {
+                string stepLog = Path.Combine(cache, $"step-{i:D3}.log");
+                string? text = null;
+                try { text = File.ReadAllText(stepLog); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                throw new IOException(BuildFailure.Message(step.Name, code, cache, text));
+            }
         }
         cancel.ThrowIfCancellationRequested();
         // Output is admitted only after all stages succeed and its files are verified.

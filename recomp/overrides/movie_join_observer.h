@@ -1,4 +1,5 @@
 #pragma once
+#include "reo_movie_game_addresses.h"
 // Source-jointed original continuation observer. No decoded picture is read,
 // no guest register/memory is changed and no instant completion is invented.
 #include "ps2_runtime.h"
@@ -22,11 +23,11 @@ namespace reo_movie_join {
 using Function = void (*)(uint8_t*, R5900Context*, PS2Runtime*);
 constexpr uint32_t RamBytes = 0x2000000u, MaxRequests = 128, MaxCommits = 256,
                    MaxTransport = 8u * 1024u * 1024u;
-inline constexpr std::array<uint32_t, 5> CommitAliases{0x170D90, 0x170DB0, 0x170E00, 0x170E20,
-                                                       0x170E48};
-inline constexpr std::array<uint32_t, 3> InitializeAliases{0x170AE8, 0x170B3C, 0x170B48};
+inline constexpr std::array<uint32_t, 5> CommitAliases{REO_MA(0x170D90), REO_MA(0x170DB0), REO_MA(0x170E00), REO_MA(0x170E20),
+                                                       REO_MA(0x170E48)};
+inline constexpr std::array<uint32_t, 3> InitializeAliases{REO_MA(0x170AE8), REO_MA(0x170B3C), REO_MA(0x170B48)};
 inline constexpr std::array<uint32_t, 9> CallerAliases{
-    0x171D10, 0x171D4C, 0x171D90, 0x171DA8, 0x171DB0, 0x171DFC, 0x171E10, 0x171E1C, 0x171E24};
+    REO_MA(0x171D10), REO_MA(0x171D4C), REO_MA(0x171D90), REO_MA(0x171DA8), REO_MA(0x171DB0), REO_MA(0x171DFC), REO_MA(0x171E10), REO_MA(0x171E1C), REO_MA(0x171E24)};
 inline bool resolve(uint32_t address, uint32_t size, uint32_t& physical) {
     const uint32_t bank = address & 0xFE000000u;
     if (bank != 0 && bank != 0x20000000u && bank != 0x80000000u && bank != 0xA0000000u)
@@ -349,7 +350,7 @@ inline void commitRing(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
     const auto original = s.originalCommit;
     if (!original)
         std::terminate();
-    if (ctx->pc == 0x170D90)
+    if (ctx->pc == REO_MA(0x170D90))
         commitBytes(ram, ctx, runtime, GPR_U32(ctx, 4), GPR_U32(ctx, 5));
     original(ram, ctx, runtime);
 }
@@ -364,8 +365,8 @@ inline bool install(PS2Runtime& runtime) {
     for (auto pc : CallerAliases)
         if (runtime.lookupFunction(pc) != original)
             return false;
-    const auto commit = runtime.lookupFunction(0x170D90),
-               initialize = runtime.lookupFunction(0x170AE8);
+    const auto commit = runtime.lookupFunction(REO_MA(0x170D90)),
+               initialize = runtime.lookupFunction(REO_MA(0x170AE8));
     if (!commit || !initialize || commit == reo_movie_commit_observed ||
         initialize == reo_movie_initialize_observed)
         return false;

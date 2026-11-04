@@ -17,7 +17,7 @@ The public package contains the launcher, independent recompiler, source metadat
 authored runtime sources and independent upstream libraries. The user's verified
 disc supplies main/overlay instructions and VU microprogram images. The final
 executable, instrumentation copies, instruction witnesses and VU translations are
-generated and compiled in Local AppData, then cached outside the installation.
+generated, compiled and cached in the selected data folder (`data/` beside the launcher by default).
 
 The Windows release must be portable: open the launcher EXE and select an ISO,
 without a Windows installer or system toolchain installation. Independent build
@@ -26,9 +26,19 @@ verified cached outputs without compiling.
 
 The portable Windows exporter and compiler worker now support the pinned
 LLVM/MinGW UCRT toolchain. Independent libraries and the recompiler are built with
-that same toolchain; MSVC C++ archives are not reused. The full first-run game
-compilation has completed successfully. The sealed launcher's end-to-end setup
-and room route were not rerun for this build-only prerelease.
+that same toolchain; MSVC C++ archives are not reused. RC0 was tested through the extracted Windows launcher: supported-disc import,
+local generation/compilation, actual room entry and cached Play passed for both
+games. The test used a path with spaces and non-ASCII characters, an unrelated
+working directory and a system-only PATH. Compiler-unavailable cache checks
+confirmed completed games launch without compiling again. The compiler was
+restored and hash-verified afterward. The Windows ZIP bundles the launcher's
+.NET runtime; players do not need a separate .NET installation.
+
+File #2's final portable native also repeated actual randomized pickup, equip,
+firing and enemy reconstruction/combat/death checks. See
+[File #2 validation](FILE2_RANDOMIZER.md) for exact scope and remaining limits.
+These results establish the tested Windows machine and routes, rather than all
+hardware, discs, scenarios, saves or multiplayer sessions.
 Legacy MSVC development kits continue to require existing Microsoft tools; the
 launcher never installs them.
 
@@ -45,6 +55,21 @@ release, supply `--dependency-sources` and `--version` together to record the
 matching separately published source archive and its digest. See
 [the measured import comparison](IMPORT_PROFILE.md) for parity checks and the
 completed build comparisons. The script does not publish releases.
+
+RC2 networking adds compiled source units. When refreshing a pre-RC2 kit, copy
+`native_netcode.cpp/.h`, `game_netcode.h` and `world_sync.cpp/.h` from
+`network/native/` with `--add-source`, update the transport and the edition's
+network override, and add both `.cpp` units to **both** compile plans:
+
+```text
+--add-unit network/native/native_netcode.cpp=network/native/snap_iop_transport.cpp
+--add-unit network/native/world_sync.cpp=network/native/snap_iop_transport.cpp
+```
+
+Each new unit inherits the existing transport unit's audited include/define
+options. A fresh CMake export already includes these units. RC1's frozen server
+component is rejected by the RC2 exporter; use `--checkout` at the pinned server
+revision described in [the server workflow](../network/server/README.md).
 
 The exporter currently consumes the validated developer build's compilation
 database, source-unit inventory and runtime build records. It is not yet a
@@ -100,6 +125,45 @@ Build logs and reusable object receipts stay in the private workspace. A cache k
 includes the build-kit manifest, supported ELF hash and architecture. Completed
 files are hashed and admitted only after the complete pipeline succeeds.
 
+**Long paths.** Windows long paths are off by default, so Python opens files through
+the 259-character limit. Build files nest about 180 characters below the data folder
+and kit sources about 250, which broke rc0 builds in data folders over ~80 characters.
+`tools/local_build/long_paths.py` gives the rule: `build_game.py` turns its kit, disc,
+work and output roots into extended (`\\?\`) paths, so every derived Python path is
+extended; anything handed to a native tool (recompiler config/arguments, compiler
+arguments, response files, generated `#include` lines, `PATH`) goes through `native()`.
+LLVM and the patched recompiler lengthen ordinary paths themselves. Build paths only
+through `pathlib`: an extended path does not treat `/` as a separator. Windows still
+refuses to start a program, or run it in a folder, past 259 characters; the launcher
+therefore rejects data folders longer than 150 characters before building.
+
+RC1 issue [#9](https://github.com/Ninjacornix/reo/issues/9#issuecomment-6545969825)
+exposed an incomplete application of that rule. The File #1 generator found
+`coop_verified_callback_0058BFF0_0x58bff0.cpp` but could not open its 261-character
+ordinary path. Its seven supplemental groups reach this longer filename; the
+File #2 kit has no supplemental groups and avoids that particular failure.
+The worker, generator, supplemental generator and compiler now normalize their
+Python roots through the shared helper. Native compiler/recompiler arguments
+still use ordinary paths through `native()`.
+The worker also normalizes its helper import directory before loading sibling
+modules, covering kit locations where the entry script fits but a longer helper
+filename exceeds the ordinary limit.
+
+Windows CI builds a small Python host without `longPathAware`, exercising the
+limit even on machines where long paths are enabled. Tests cover the failing
+filename, deep-kit imports, supplemental generation, cleanup and stage-receipt reuse. With
+`REO_TEST_CXX` and `REO_LLVM_MINGW` set, the integration check also compiles, links,
+executes and reuses a native object beyond the path limit using the release
+toolchain. Local verification additionally reproduced the original exception
+using RC1's bundled Python and recompiler, then completed all seven real File #1
+supplemental passes with the fix. A broader full-generation attempt exhausted
+scratch disk space, so it is not a completed full-game rebuild validation.
+
+Both `refresh_inputs.py` and `export_slim_inputs.py` must include the current
+`generate_support.py` and `long_paths.py`. A source fix alone does not update
+already downloaded RC1 kits: a new sealed kit/package is required to distribute
+the corrected workers. No system-wide registry change is required.
+
 ## Linux
 
 Native Linux implementation has started in [launcher/linux](../launcher/linux/README.md),
@@ -110,9 +174,9 @@ Clang build worker and platform-specific manifest. It must generate the same gam
 code from the same supported disc; no Windows SDK libraries or game objects should
 be bundled as a shortcut.
 
-The Windows launcher is WPF; the new Linux frontend uses Qt. Windows-only input,
-display, movie decoding and thread/scheduler paths also
-need Linux implementations and gameplay validation. Running under Wine/Proton
+The universal launcher uses Avalonia on Windows, Linux and macOS. Native input,
+display, movie decoding and thread/scheduler paths still need platform-specific
+gameplay validation. Running under Wine/Proton
 would be a separate compatibility target, not evidence of a native Linux port.
 No Linux download should be offered until the same installation and room-route
 checks pass on Linux hardware.

@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 
 from source_recipes import apply_recipe, normalized
+from generate_game import GAMES
 
 
 def recipe(base, result):
@@ -57,9 +58,12 @@ def main():
     parser.add_argument("--source-root", required=True, type=Path)
     parser.add_argument("--generated", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--game", choices=GAMES, default="file1")
     parser.add_argument("--preserve-generated", action="store_true",
                         help="Retain existing authored fixes/registrations in generated translation units")
     args = parser.parse_args()
+    args.source_root = args.source_root.resolve()
+    args.generated = args.generated.resolve()
     records = []
     for unit in json.loads(args.inventory.read_text()):
         for file, kind in zip(unit["sources"], unit["kinds"]):
@@ -72,16 +76,32 @@ def main():
                 raise ValueError("Copied function lacks its source identity")
             name, address = match.groups()
             entry = int(address, 16)
-            relative = ("output/" if entry < 0x370000 else "output_ovl/" + name.split("_")[0] + "/")
-            relative += name + f"_0x{entry:x}.cpp"
+            if args.game == "file2":
+                # Ported movie wrappers retain historical File #1 header names;
+                # their original instruction comments identify the actual File #2 entry.
+                instruction = re.search(r"// 0x([0-9a-fA-F]+): 0x[0-9a-fA-F]+", source)
+                if instruction is None:
+                    raise ValueError("File #2 copied body has no original entry instruction")
+                entry = int(instruction[1], 16)
+                candidates = [p for folder in ("output", "output_ovl", "output_extra")
+                              for p in (args.generated / folder).rglob(f"*_0x{entry:x}.cpp")]
+                if len(candidates) != 1:
+                    raise ValueError("File #2 copied body must match exactly one regenerated entry")
+                relative = candidates[0].relative_to(args.generated).as_posix()
+            else:
+                relative = ("output/" if entry < 0x370000 else "output_ovl/" + name.split("_")[0] + "/")
+                relative += name + f"_0x{entry:x}.cpp"
             base = args.generated / relative
             result = recipe(base.read_text(), source)
             result.update(source=relative, destination=target.relative_to(args.source_root).as_posix())
+            if args.game == "file2":
+                result["sourceAudit"] = False
             records.append(result)
     if args.preserve_generated:
+        config = args.source_root / "recomp/config" / ("output_file2" if args.game == "file2" else "")
         for folder, pattern in [("output", "*.cpp"), ("output_ovl", "**/*.cpp"), ("output_extra", "*.cpp")]:
-            for target in sorted((args.source_root / "recomp/config" / folder).glob(pattern)):
-                relative = target.relative_to(args.source_root / "recomp/config").as_posix()
+            for target in sorted((config / folder).glob(pattern)):
+                relative = target.relative_to(config).as_posix()
                 base = args.generated / relative
                 if not base.exists():
                     raise ValueError("An existing game source was not regenerated: " + relative)
@@ -90,9 +110,11 @@ def main():
                     continue
                 result = recipe(before, after)
                 result.update(source=relative, destination="generated-overrides/" + relative)
+                if args.game == "file2":
+                    result["sourceAudit"] = False
                 records.append(result)
     args.output.write_text(json.dumps({"format": 1,
-        "elfSha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+        "elfSha256": GAMES[args.game]["sha256"],
         "recipes": records}, indent=2) + "\n")
     print(f"Exported and round-trip verified {len(records)} source recipes without original instruction comments")
 

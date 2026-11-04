@@ -812,8 +812,8 @@ in an isolated selected card, reported successful saving, and read the entire
 system data back after process restart before reaching the main menu. Storage
 checks cover persistence, separate cards, capacity, traversal, directory
 continuation, read-only handles, rename and preservation before explicit format.
-Launcher card selections persist independently per game and are locked while a
-session uses them. Backups and readiness use the selected card.
+Both games share the same selected launcher card, which is locked while a
+session uses it. Upgrades preserve old edition-specific folders as named cards. Backups and readiness use the selected card.
 
 The host window uses Alt+F4/WM_CLOSE for exit; raylib's Escape exit key is disabled.
 Ctrl+Enter toggles borderless fullscreen and restores the previous placement.

@@ -10,9 +10,13 @@
 #include <stdexcept>
 #include <vector>
 #include "smaa/resident_smaa.hpp"
+#include "movie_frame_signal.h"
 #include "runtime/gs/performance.h"
 #include <chrono>
 
+namespace ps2_ipu {
+extern std::atomic<uint32_t> g_dbgCsc; // CPU movie route: IPU colour conversions
+}
 namespace reo_gpu_present {
 // Existing GS/geometry Vulkan Device and its serialized graphics owner are
 // mandatory. This helper does not instantiate another renderer, Vulkan context,
@@ -27,6 +31,10 @@ class ResidentDxgiPresenter {
     HWND window_ = nullptr;
     unsigned width_ = 0, height_ = 0;
     uint64_t submitted_ = 0;
+    uint64_t movieFrames_ = 0;
+    bool movieLayout_ = false;
+    unsigned movieSwitches_ = 0;
+    std::chrono::steady_clock::time_point lastMovieFrame_{};
     reo::performance::Meter performance_;
     struct Parameters {
         uint32_t sourceWidth, sourceHeight, destinationWidth, destinationHeight, linear;
@@ -35,13 +43,42 @@ class ResidentDxgiPresenter {
     static uint32_t layoutFlags() {
         const char* aspect = std::getenv("REO_DISPLAY_ASPECT");
         const char* fit = std::getenv("REO_DISPLAY_FIT");
-        uint32_t ratio = aspect && std::strcmp(aspect, "16:9") == 0 ? 1u : 0u;
+        uint32_t ratio = !aspect                             ? 0u
+                        : std::strcmp(aspect, "16:9") == 0 ? 1u
+                        : std::strcmp(aspect, "21:9") == 0 ? 2u
+                        : std::strcmp(aspect, "32:9") == 0 ? 3u
+                                                           : 0u;
         uint32_t mode = !fit                               ? 0u
                         : std::strcmp(fit, "stretch") == 0 ? 1u
                         : std::strcmp(fit, "center") == 0  ? 2u
                         : std::strcmp(fit, "fill") == 0    ? 3u
                                                            : 0u;
         return (ratio << 24u) | (mode << 26u);
+    }
+    // The widescreen camera widens only 3D; movies are 4:3 pictures, so while one is
+    // being decoded (either route) they are shown at 4:3 instead of stretched.
+    uint32_t currentLayout() {
+        static const uint32_t base = layoutFlags();
+        static const bool widescreen = [] {
+            const char* value = std::getenv("REO_WIDESCREEN");
+            return value && std::strcmp(value, "1") == 0;
+        }();
+        if (!widescreen || !(base & (3u << 24u)))
+            return base;
+        const uint64_t frames = reo_gpu_present::gpuMovieFrames.load(std::memory_order_relaxed) +
+                                ps2_ipu::g_dbgCsc.load(std::memory_order_relaxed);
+        const auto now = std::chrono::steady_clock::now();
+        if (frames != movieFrames_) {
+            movieFrames_ = frames;
+            lastMovieFrame_ = now;
+        }
+        const bool movie = now - lastMovieFrame_ < std::chrono::milliseconds(250);
+        if (movie != movieLayout_ && movieSwitches_ < 64) {
+            ++movieSwitches_;
+            std::fprintf(stderr, "[WIDESCREEN-1] movie layout=%s\n", movie ? "4:3" : "wide");
+        }
+        movieLayout_ = movie;
+        return movie ? base & ~(3u << 24u) : base;
     }
     static uint32_t colorPercent(const char* name, float minimum, float maximum) {
         const char* value = std::getenv(name);
@@ -97,6 +134,35 @@ class ResidentDxgiPresenter {
         swapchain_.reset();
     }
 
+    // Swap chain creation failed: record what the window was, so a user's stderr.log
+    // tells child/main window, size, styles and Windows build apart.
+    static void describeWindow(HWND window, unsigned width, unsigned height) {
+        wchar_t name[64]{};
+        GetClassNameW(window, name, 64);
+        RECT client{};
+        GetClientRect(window, &client);
+        const HWND parent = GetParent(window);
+        wchar_t parentName[64]{};
+        if (parent)
+            GetClassNameW(parent, parentName, 64);
+        RTL_OSVERSIONINFOW os{sizeof(os)};
+        using RtlGetVersion = LONG(WINAPI*)(RTL_OSVERSIONINFOW*);
+        if (auto get = reinterpret_cast<RtlGetVersion>(
+                GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion")))
+            get(&os);
+        std::fprintf(stderr,
+                     "[GS-PRESENT-FAIL] window=%p class=%ls valid=%d visible=%d requested=%ux%u "
+                     "client=%ldx%ld style=%08lx exstyle=%08lx parent=%p parentClass=%ls "
+                     "windows=%lu.%lu.%lu\n",
+                     static_cast<void*>(window), name, IsWindow(window) ? 1 : 0,
+                     IsWindowVisible(window) ? 1 : 0, width, height, client.right - client.left,
+                     client.bottom - client.top,
+                     static_cast<unsigned long>(GetWindowLongPtrW(window, GWL_STYLE)),
+                     static_cast<unsigned long>(GetWindowLongPtrW(window, GWL_EXSTYLE)),
+                     static_cast<void*>(parent), parent ? parentName : L"-", os.dwMajorVersion,
+                     os.dwMinorVersion, os.dwBuildNumber);
+    }
+
     // CPU supplies OS window extents only. Resize/attach is ordered by the owner,
     // with a teardown fence; it is never performed from the UI message thread.
     void attach(HWND window, unsigned width, unsigned height) {
@@ -111,8 +177,10 @@ class ResidentDxgiPresenter {
         // texture decode or second PMODE/GS alpha blend is introduced. Optional
         // user brightness/gamma is applied once in the presentation shader.
         VkSurfaceFormatKHR format{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
-        if (!swapchain_->init_swapchain(window, format, width, height, 3))
+        if (!swapchain_->init_swapchain(window, format, width, height, 3)) {
+            describeWindow(window, width, height);
             throw std::runtime_error("Native DXGI swapchain unavailable");
+        }
         auto imageInfo = Vulkan::ImageCreateInfo::render_target(width, height, format.format);
         imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         imageInfo.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -160,8 +228,9 @@ class ResidentDxgiPresenter {
                            VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                            VK_ACCESS_2_MEMORY_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                            VK_ACCESS_2_SHADER_SAMPLED_READ_BIT);
+        const uint32_t layout = currentLayout();
         if (smaa_)
-            smaa_->prepare(*cmd, *merged, program_, linear, layoutFlags());
+            smaa_->prepare(*cmd, *merged, program_, linear, layout);
         cmd->acquire_image_barrier(
             *target_, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
@@ -190,7 +259,7 @@ class ResidentDxgiPresenter {
         static const uint32_t color = (colorPercent("REO_BRIGHTNESS", 0.5f, 1.5f) << 8u) |
                                       (colorPercent("REO_GAMMA", 0.5f, 2.0f) << 16u);
         Parameters parameters{source.width, source.height, width_, height_,
-                              (linear ? 1u : 0u) | (fxaa ? 2u : 0u) | color | layoutFlags()};
+                              (linear ? 1u : 0u) | (fxaa ? 2u : 0u) | color | layout};
         if (reo::performance::enabled()) {
             const auto now = uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
                 std::chrono::steady_clock::now().time_since_epoch()).count());

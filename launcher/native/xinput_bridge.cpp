@@ -89,9 +89,16 @@ static bool readPad(XINPUT_STATE& state) {
 extern "C" __declspec(dllexport) DWORD WINAPI XInputGetState(DWORD index, XINPUT_STATE* state) {
     if (!state)
         return ERROR_BAD_ARGUMENTS;
-    if (index == 0 && readPad(*state))
-        return ERROR_SUCCESS;
     ready();
+    if (privatePad) {
+        // The selected launcher device is the only game pad. Keep port zero
+        // connected and neutral during startup, disconnects and lost heartbeats
+        // so the game neither switches devices nor enables its default keyboard.
+        ZeroMemory(state, sizeof(*state));
+        if (index != 0) return ERROR_DEVICE_NOT_CONNECTED;
+        if (!readPad(*state)) ZeroMemory(state, sizeof(*state));
+        return ERROR_SUCCESS;
+    }
     auto fn = (DWORD(WINAPI*)(DWORD, XINPUT_STATE*))GetProcAddress(systemLibrary, "XInputGetState");
     return fn ? fn(index, state) : ERROR_DEVICE_NOT_CONNECTED;
 }
@@ -129,7 +136,8 @@ extern "C" __declspec(dllexport) DWORD WINAPI XInputGetCapabilities(DWORD index,
                                                                     XINPUT_CAPABILITIES* caps) {
     if (!caps) return ERROR_BAD_ARGUMENTS;
     XINPUT_STATE state{};
-    if (index == 0 && caps && readPad(state)) {
+    ready();
+    if (index == 0 && (readPad(state) || privatePad)) {
         ZeroMemory(caps, sizeof(*caps));
         caps->Type = XINPUT_DEVTYPE_GAMEPAD;
         caps->SubType = XINPUT_DEVSUBTYPE_GAMEPAD;
@@ -141,7 +149,10 @@ extern "C" __declspec(dllexport) DWORD WINAPI XInputGetCapabilities(DWORD index,
         }
         return ERROR_SUCCESS;
     }
-    ready();
+    if (privatePad) {
+        ZeroMemory(caps, sizeof(*caps));
+        return ERROR_DEVICE_NOT_CONNECTED;
+    }
     auto fn = (DWORD(WINAPI*)(DWORD, DWORD, XINPUT_CAPABILITIES*))GetProcAddress(
         systemLibrary, "XInputGetCapabilities");
     return fn ? fn(index, flags, caps) : ERROR_DEVICE_NOT_CONNECTED;

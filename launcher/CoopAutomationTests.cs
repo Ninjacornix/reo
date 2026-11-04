@@ -41,10 +41,10 @@ static class CoopAutomationTests {
               "Port validation changed");
         var hostSettings = new Settings { CoopMode = "host", CoopHost = "192.168.1.20", SignupPort = 20500 };
         var joinSettings = new Settings { CoopMode = "join", CoopHost = "192.168.1.20", JoinSignupPort = 20500 };
-        check(MainWindow.SignupEndpoint(hostSettings, null)!.ToString() ==
+        check(SignupEndpoints.For(hostSettings, null)!.ToString() ==
                   "http://127.0.0.1:20500/reweb/signup/create_id.html" &&
-                  MainWindow.SignupEndpoint(joinSettings, null)!.Port == 20500 &&
-                  MainWindow.SignupEndpoint(new Settings { CoopMode = "join", CoopHost = "192.168.1.20" }, null) == null,
+                  SignupEndpoints.For(joinSettings, null)!.Port == 20500 &&
+                  SignupEndpoints.For(new Settings { CoopMode = "join", CoopHost = "192.168.1.20" }, null) == null,
               "Sign-up must use the host's configured port");
         foreach (string bad in new[] {
                      "REO-LAN!1{\"name\":\"x\",\"address\":\"192.168.1.20\",\"version\":\"1\",\"room\":true,\"signup\":10128}",
@@ -78,6 +78,46 @@ static class CoopAutomationTests {
                                                          CancellationToken.None))
                              .GetAwaiter().GetResult();
             check(answer == game, "A hosting launcher did not answer a direct discovery query");
+        }
+
+        // File #2 uses a different query so old File #1 launchers cannot see its rooms.
+        var secondGame = game with { GameId = "file2" };
+        check(LanDiscovery.Decode(LanDiscovery.Encode(secondGame)) == secondGame,
+              "File #2 discovery preserves its edition identity");
+        check(LanDiscovery.Decode(Encoding.ASCII.GetBytes(
+            "REO-LAN!1{\"name\":\"Kevin\",\"address\":\"127.0.0.1\",\"version\":\"1\",\"room\":true,\"signup\":10128,\"game\":\"file2\"}")) == null,
+              "Legacy replies cannot advertise File #2 to File #1 clients");
+        using (new LanDiscovery.Responder(() => secondGame)) {
+            var matching = Task.Run(() => LanDiscovery.Ask("127.0.0.1", TimeSpan.FromMilliseconds(250),
+                CancellationToken.None, "file2")).GetAwaiter().GetResult();
+            var mismatched = Task.Run(() => LanDiscovery.Ask("127.0.0.1", TimeSpan.FromMilliseconds(150),
+                CancellationToken.None, "file1")).GetAwaiter().GetResult();
+            check(matching == secondGame && mismatched == null,
+                  "File #2 host answers only File #2 discovery requests");
+        }
+        using (new LanDiscovery.Responder(() => game)) {
+            var mismatched = Task.Run(() => LanDiscovery.Ask("127.0.0.1", TimeSpan.FromMilliseconds(150),
+                CancellationToken.None, "file2")).GetAwaiter().GetResult();
+            check(mismatched == null, "File #1 host cannot be joined through File #2 discovery");
+        }
+        foreach (var edition in new[] { ("file1", "outbreak"), ("file2", "outbreak2") }) {
+            var env = HostedServer.EditionEnvironment(edition.Item1, "127.0.0.1", 20001);
+            using var map = JsonDocument.Parse(env["OPENSNAP_GAME_SERVER_MAP"]);
+            var endpoint = map.RootElement.GetProperty(edition.Item2);
+            check(env["OPENSNAP_BOOTSTRAP_GAMES"] == edition.Item2 &&
+                  env["OPENSNAP_GAME_PLUGIN"] == edition.Item2 && env["OPENSNAP_WEB_GAME_PLUGIN"] == edition.Item2 &&
+                  endpoint.GetProperty("host").GetString() == "127.0.0.1" &&
+                  endpoint.GetProperty("port").GetInt32() == 20001 && map.RootElement.EnumerateObject().Count() == 1,
+                  edition.Item1 + " selects only its matching bootstrap, game and web server plugin");
+        }
+        check(HostedServer.StateFolder("test", "file1") != HostedServer.StateFolder("test", "file2"),
+              "Hosted editions use separate server databases and leases");
+        foreach (string host in new[] { "127.0.0.1", "127.8.9.10", "192.168.1.20" }) {
+            var env = HostedServer.EditionEnvironment("file2", host, 9091);
+            string expected = host.StartsWith("127.", StringComparison.Ordinal) ? host : "0.0.0.0";
+            check(new[] { "OPENSNAP_BOOTSTRAP_HOST", "OPENSNAP_GAME_HOST", "OPENSNAP_CAPCOM_APP_HOST",
+                          "OPENSNAP_WEB_HOST" }.All(key => env[key] == expected),
+                  "Loopback hosting binds all four services locally; LAN hosting remains reachable");
         }
 
         // USB keyboard reports: Shift settles in its own report; Enter closes the text.

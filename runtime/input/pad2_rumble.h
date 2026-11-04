@@ -44,4 +44,12 @@ inline Output decodeOutput(uint32_t rpc, uint32_t socket, std::span<const uint8_
     }
     return {OutputKind::Motors,motors};
 }
+// libpad2 state fallback (File #2 0x12B280 -> 0x134518, the same library as
+// File #1): when the record counter has not advanced since the last poll, the
+// game asks dbcman for the port state with 0101800C and reads reply +8 (byte
+// count), +C (state byte) and +20C (result). A zero count leaves the caller's
+// state byte uninitialized, which the game reads as a disconnect.
+inline bool isStateQuery(uint32_t rpc, std::span<const uint8_t> request) {
+    return rpc==0x8000131au && request.size()>=12 && word(request,4)==0x0101800cu;
+}
 } // namespace reo::pad2

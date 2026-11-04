@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Windows.Input;
 
 namespace Outbreak.Launcher;
 
@@ -12,7 +11,7 @@ public sealed class PadProfile {
     public bool InvertRightY { get; set; }
     public Dictionary<string, int> Buttons { get; set; } = InputMapping.PadDefaults();
 }
-public static class InputMapping {
+public static partial class InputMapping {
     public const int LeftTrigger = 0x10000, RightTrigger = 0x20000;
     public static readonly(string Id, string Label, int Code)[] Actions = {
         ("Up", "D-pad up", 1),        ("Down", "D-pad down", 2),
@@ -36,6 +35,18 @@ public static class InputMapping {
                 ["L1"] = '1',      ["R1"] = '2',        ["L2"] = '3',        ["R2"] = '4',
                 ["Start"] = 13,    ["Select"] = 8,      ["L3"] = 'Z',        ["R3"] = 'X',
                 ["CameraUp"] = 38, ["CameraDown"] = 40, ["CameraLeft"] = 37, ["CameraRight"] = 39 };
+    // One keyboard key belongs to one action. In particular, assigning arrows to
+    // the D-pad must release the old right-stick/voice-command binding.
+    public static string[] BindKeyboard(Dictionary<string,int> bindings,string action,int key) {
+        if (!Actions.Any(a => a.Id == action) && !Camera.Any(a => a.Id == action))
+            throw new ArgumentException("Unknown keyboard action.", nameof(action));
+        if (key < 0 || key > 255) throw new ArgumentOutOfRangeException(nameof(key));
+        var conflicts = key == 0 ? Array.Empty<string>() : bindings
+            .Where(pair => pair.Key != action && pair.Value == key).Select(pair => pair.Key).ToArray();
+        foreach (string conflict in conflicts) bindings[conflict] = 0;
+        bindings[action] = key;
+        return conflicts;
+    }
     public static HashSet<int> Pressed(Pad pad) {
         var result = Actions.Where(a => a.Code < LeftTrigger && (pad.Buttons & a.Code) != 0)
                          .Select(a => a.Code)
@@ -46,6 +57,16 @@ public static class InputMapping {
             result.Add(RightTrigger);
         return result;
     }
+    public static bool ActionPressed(Pad mapped, string action) => action switch {
+        "CameraUp" => mapped.RY > 0,
+        "CameraDown" => mapped.RY < 0,
+        "CameraLeft" => mapped.RX < 0,
+        "CameraRight" => mapped.RX > 0,
+        "L2" => mapped.LT > 30,
+        "R2" => mapped.RT > 30,
+        _ => Actions.Any(a => a.Id == action && a.Code < LeftTrigger &&
+                             (mapped.Buttons & a.Code) != 0)
+    };
     public static string SourceName(int code, string kind) {
         if (code == 0)
             return "Unbound";
@@ -61,7 +82,7 @@ public static class InputMapping {
                 38 => "Up arrow",
                 39 => "Right arrow",
                 40 => "Down arrow",
-                _ => KeyInterop.KeyFromVirtualKey(code).ToString()
+                _ => code is >= 65 and <= 90 ? ((char)code).ToString() : $"Key {code}"
             };
         return code switch {
             0x1000 => kind == "xbox" ? "A" : "Cross",
@@ -135,8 +156,9 @@ public static class InputMapping {
         short Axis(bool positive, bool negative) => positive == negative ? (short)0
                                                     : positive           ? (short)32767
                                                                          : (short)-32768;
-        return new(buttons, lt, rt, Axis((buttons & 8) != 0, (buttons & 4) != 0),
-                   Axis((buttons & 1) != 0, (buttons & 2) != 0),
+        // D-pad keys are digital PS2 input (tank controls). Mirroring them onto
+        // the left stick makes the game select camera-relative analog movement.
+        return new(buttons, lt, rt, 0, 0,
                    Axis(Held("CameraRight"), Held("CameraLeft")),
                    Axis(Held("CameraUp"), Held("CameraDown")));
     }

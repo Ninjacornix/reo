@@ -30,7 +30,7 @@ static class OnlineOptionsTests {
             "Offline launch ignores unfinished online settings and exports no network environment");
         var online = new Settings { CoopHost = "127.000.000.001", AccountUsername = "reo01" };
         var env = OnlineOptions.LaunchEnvironment(online);
-        check(env.Count == 4 && env["REO_COOP_HOST"] == "127.0.0.1" &&
+        check(env.Count == 5 && env["REO_COOP_HOST"] == "127.0.0.1" && env["REO_NETCODE"] == "auto" &&
                   env["REO_COOP_PLATFORM_AUTH"] == "native" && env["REO_COOP_USERNAME"] == "reo01",
               "Online launch selects genuine native platform authentication and configured " +
                   "account/server");
@@ -44,8 +44,29 @@ static class OnlineOptionsTests {
         check(OnlineOptions.LaunchEnvironment(online).Count == 0,
               "Incomplete network settings leave normal Play available offline");
         online.SelectedGame = "file2";
-        check(OnlineOptions.Error(online)?.Contains("File #1", StringComparison.Ordinal) == true,
-              "File #2 remains unsupported online");
+        online.CoopHost = "127.0.0.1";
+        var secondEnvironment = OnlineOptions.LaunchEnvironment(online);
+        check(OnlineOptions.Error(online) == null && secondEnvironment.Count == 5 &&
+                  secondEnvironment["REO_COOP_HOST"] == "127.0.0.1" &&
+                  secondEnvironment["REO_COOP_AUTO_ACCOUNT"] == "1",
+              "File #2 uses native online routing and automatic accounts");
+        foreach (string edition in new[] { "file1", "file2" }) {
+            foreach (string advertised in new[] { "203.0.113.10", "192.168.1.20", "100.64.1.2", "127.8.9.10" }) {
+                var hostSettings = new Settings { SelectedGame = edition, CoopMode = "host",
+                    CoopHost = advertised, AccountUsername = "reo01" };
+                var hostEnvironment = OnlineOptions.LaunchEnvironment(hostSettings);
+                check(hostEnvironment["REO_COOP_LOCAL_SERVER"] == "1" &&
+                          hostEnvironment["REO_COOP_HOST"] == advertised && hostSettings.CoopHost == advertised,
+                      edition + " hosts use local sockets while preserving their advertised account address: " + advertised);
+                hostSettings.CoopMode = "join";
+                var joinEnvironment = OnlineOptions.LaunchEnvironment(hostSettings);
+                check(!joinEnvironment.ContainsKey("REO_COOP_LOCAL_SERVER") && joinEnvironment["REO_COOP_HOST"] == advertised,
+                      edition + " joiners continue connecting to the remote host: " + advertised);
+                hostSettings.CoopMode = "offline";
+                check(OnlineOptions.LaunchEnvironment(hostSettings).Count == 0,
+                      edition + " offline mode does not enable local server routing");
+            }
+        }
         CheckMemoryCardPreparation(check);
     }
 

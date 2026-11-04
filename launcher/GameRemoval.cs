@@ -2,7 +2,7 @@ using System.IO;
 
 namespace Outbreak.Launcher;
 
-// "Remove game": deletes what the launcher created for a game in Local AppData. The player's
+// "Remove game": deletes what the launcher created for a game in its storage folder. The player's
 // ISO, the launcher folder and settings stay; saves and shared build tools only on request.
 internal static class GameRemoval {
     public sealed record Target(string Path, string What);
@@ -18,17 +18,29 @@ internal static class GameRemoval {
             new(Path.Combine(home, "build-kits"), "unpacked build files"),
         };
         if (saves) {
-            targets.Add(new(Path.Combine(home, "memory-cards", "default", game), "save games"));
-            string card = Path.GetFullPath(settings.CardFolder(root));
-            // Only cards the launcher manages; a folder the player picked elsewhere is theirs.
-            if (card.StartsWith(Path.GetFullPath(Path.Combine(home, "memory-cards")) +
-                                    Path.DirectorySeparatorChar,
-                                StringComparison.OrdinalIgnoreCase))
-                targets.Add(new(card, "selected memory card"));
+            // Cards can contain saves for both games, including upgraded legacy
+            // defaults. Keep the card and shared metadata; remove only this title.
+            string managed = Path.GetFullPath(Path.Combine(home, "memory-cards"));
+            string prefix = game == "file2" ? "BASLUS-20984" : "BASLUS-20765";
+            void AddTitleSaves(string folder) {
+                folder = Path.GetFullPath(folder);
+                if (!folder.StartsWith(managed + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+                    !Directory.Exists(folder)) return;
+                for (var entry = new DirectoryInfo(folder); entry != null; entry = entry.Parent) {
+                    if (entry.Attributes.HasFlag(FileAttributes.ReparsePoint)) return;
+                    if (entry.FullName.Equals(managed, StringComparison.OrdinalIgnoreCase)) break;
+                }
+                targets.AddRange(Directory.EnumerateDirectories(folder)
+                    .Where(path => Path.GetFileName(path).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    .Select(path => new Target(path, "this game's save data")));
+            }
+            AddTitleSaves(Path.Combine(managed, "default", game, "data"));
+            AddTitleSaves(Path.Combine(managed, "default", "data"));
+            AddTitleSaves(settings.CardFolder(root));
         }
         if (tools)
             foreach (string name in new[] { "toolchains", "server-python", "server-python-runtime",
-                                            "server-tools" })
+                                            "server-tools", "media-tools" })
                 targets.Add(new(Path.Combine(home, name), "build and hosting tools"));
         return targets.Where(t => Directory.Exists(t.Path))
                    .GroupBy(t => Path.GetFullPath(t.Path), StringComparer.OrdinalIgnoreCase)
@@ -52,7 +64,7 @@ internal static class GameRemoval {
         foreach (var target in targets) {
             try {
                 if ((File.GetAttributes(target.Path) & FileAttributes.ReparsePoint) != 0)
-                    Directory.Delete(target.Path); // never follow a link out of Local AppData
+                    Directory.Delete(target.Path); // never follow a link out of launcher storage
                 else
                     Directory.Delete(target.Path, true);
             } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {

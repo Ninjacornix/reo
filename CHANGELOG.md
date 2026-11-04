@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+- Fix File #1 freezes of up to half a second while the game reads from the disc image. Disc reads now complete in the background, as the PS2's CD hardware does, instead of stopping every game thread until the host read finishes. `REO_CD_ASYNC=0` restores the previous synchronous reads. Add an optional developer timing log for audio, disc and movie service stalls.
+- Fix joining a host through its advertised public address (#64).
+- Add DualShock 4 controller input over USB and Bluetooth.
+- Show an error and exit when the graphics driver does not provide OpenGL 3.3, instead of crashing while opening the game window. Vulkan remains optional; without it the game uses software rendering.
+- Show shared setup progress over the current launcher page without shrinking its content or duplicating progress in notifications or Game files. Keep detail and compact elapsed/ETA information on one line below the bar, and use a normal completion message when the game exits successfully. Import completion and error notifications remain available.
+- Resume interrupted compiler downloads, retry temporary connection failures, and time out only when network progress stops. Keep partial downloads across Import attempts and allow optional idle-timeout/retry settings or a verified manually downloaded compiler archive (#60).
+- Move Windows, macOS and Linux to the shared Avalonia/.NET 10 launcher. Bundle the Windows runtime by default and compare complete RC tags when checking and installing updates. Older RC0/RC1 installations require a manual upgrade.
+- Integrate macOS game activation and native fullscreen, hide the developer panel during normal play, and use GPU 2x rendering when Apple hardware cannot support 4x.
+- Prefer replay-validated File #2 whole VU programs and expand the local reconstruction catalogue. Preserve short queued speech tails; update the native transition regression to cover both short tails and longer interrupted streams.
+- Add mod-controlled timed examine messages for both games.
+
+## v1.0.20-rc2-hotfix prerelease - 2026-11-03
+
+- Fix Windows RC2 showing "Build the game", dimmed game artwork and disabled game settings after a successful import/build. The launcher checked the developer `build-ninja` path instead of the completed build in the selected storage folder's `local-games` cache. Resolve both editions through the same build-kit cache path used by setup and launch, including after restarting. Existing RC2 imports and compiled games can be reused; no rebuild is required for this hotfix.
+
+## v1.0.20-rc1 prerelease - 2026-10-31
+
+- Redesign the launcher settings pages, disc selectors, memory-card profiles, mod configuration and logs. Add a GPU-rendered animated graphics preview and separate launcher appearance settings.
+- Add native asset PAK exports and replacements, executable-string edits and PAK game sources for both editions.
+- Add File #2 progression unlocks and separate Master, Music, Sound effects, Voice and UI audio channels. Support Windows output-device selection and optional spoken subtitles while preserving interaction prompts.
+- Add maximum result points and infinite escape time cheats for both games. Include the File #2 Randomizer in the launcher.
+- Integrate scenario runtime, DualSense Bluetooth and build-path fixes. Stop launcher background movies while the game runs and disable game settings before installation.
+- Add required source and Windows launcher CI checks and protect develop/main. Fix portable C audio-provider compilation through the pinned clang++ driver.
+
 ## v1.0.19 prerelease - 2026-10-24
 
 - Keep compiled VU geometry active when later rooms append independent microcode to the bank. Check every byte covering the optimized blocks and native routines, reject routines outside that coverage, and interpret appended code normally. A captured-bank regression replay improved from 7.48 to 30.00 game updates/sec; full-room and scenario coverage remains limited.

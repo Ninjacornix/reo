@@ -25,8 +25,22 @@ public record UpdatePlan(string Work, string Source, string Target, string Versi
 public static partial class Updates {
     public const string Repository = "https://github.com/Ninjacornix/reo";
     public const string LatestApi = "https://api.github.com/repos/Ninjacornix/reo/releases/latest";
-    public const string DefaultVersion = "1.0.19";
-    public const string DisplayName = "1.0 Alpha";
+    public const string DefaultVersion = "1.0.20";
+    public const string DisplayName = "1.0 RC2";
+    // The exact build: a release's tag (v1.0.20-rc0 shows as 1.0.20-rc0), or a developer build.
+    public static string BuildLabel(string root) {
+        try {
+            using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "distribution.json")));
+            var d = doc.RootElement;
+            string tag = d.TryGetProperty("releaseTag", out var t) ? t.GetString() ?? "" : "";
+            if (tag.Length == 0 && d.TryGetProperty("version", out var v))
+                tag = v.GetString() ?? "";
+            if (tag.Length != 0)
+                return tag.TrimStart('v');
+        } catch (Exception error) when (error is IOException or JsonException or UnauthorizedAccessException or InvalidOperationException) {
+        }
+        return DefaultVersion + "-dev";
+    }
     public static readonly JsonSerializerOptions Json =
         new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
     public static string Home => Path.Combine(Settings.Home, "updates");
@@ -36,6 +50,8 @@ public static partial class Updates {
     static extern uint GetLongPathNameW(string path, StringBuilder result, uint capacity);
     public static string CanonicalDirectory(string path) {
         string absolute = Path.GetFullPath(path);
+        if (!OperatingSystem.IsWindows())
+            return Path.TrimEndingDirectorySeparator(absolute);
         var result = new StringBuilder(32768);
         uint count = GetLongPathNameW(absolute, result, (uint)result.Capacity);
         if (count == 0 || count >= result.Capacity)
@@ -74,15 +90,18 @@ public static partial class Updates {
                                                         StringComparison.OrdinalIgnoreCase);
     static bool Hash(string? hash) => hash != null && Regex.IsMatch(hash, @"\A[0-9a-fA-F]{64}\z");
     public static LauncherRelease? ParseRelease(string json, Version installed,
-                                                bool includePrereleases = false) {
+                                                bool includePrereleases = false,
+                                                string? installedTag = null) {
         using var doc = JsonDocument.Parse(json);
         var r = doc.RootElement;
         if (r.GetProperty("draft").GetBoolean() ||
             (!includePrereleases && r.GetProperty("prerelease").GetBoolean()))
             return null;
         string tag = r.GetProperty("tag_name").GetString() ?? "";
-        var version = ParseVersion(tag);
-        if (version <= installed)
+        var identity = ReleaseIdentity(tag);
+        var version = identity.Number;
+        if ((!includePrereleases && identity.Prerelease.Length != 0) ||
+            CompareReleaseTags(tag, installedTag ?? installed.ToString()) <= 0)
             return null;
         var assets = new List<ReleaseAsset>();
         foreach (var a in r.GetProperty("assets").EnumerateArray()) {
@@ -139,7 +158,8 @@ public static partial class Updates {
     }
     public static async Task<LauncherRelease?> Check(HttpClient client, Version installed,
                                                      CancellationToken cancel,
-                                                     bool includePrereleases = false) {
+                                                     bool includePrereleases = false,
+                                                     string? installedTag = null) {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         timeout.CancelAfter(TimeSpan.FromSeconds(20));
         string endpoint = includePrereleases
@@ -153,7 +173,7 @@ public static partial class Updates {
         response.EnsureSuccessStatusCode();
         string json = await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false);
         if (!includePrereleases)
-            return ParseRelease(json, installed);
+            return ParseRelease(json, installed, installedTag: installedTag);
         using var releases = JsonDocument.Parse(json);
         LauncherRelease? newest = null;
         foreach (var release in releases.RootElement.EnumerateArray()) {
@@ -166,8 +186,8 @@ public static partial class Updates {
                             name.Contains("win-x64", StringComparison.OrdinalIgnoreCase));
                 }))
                 continue;
-            var candidate = ParseRelease(release.GetRawText(), installed, true);
-            if (candidate != null && (newest == null || candidate.Version > newest.Version))
+            var candidate = ParseRelease(release.GetRawText(), installed, true, installedTag);
+            if (candidate != null && (newest == null || CompareReleaseTags(candidate.Tag, newest.Tag) > 0))
                 newest = candidate;
         }
         return newest;

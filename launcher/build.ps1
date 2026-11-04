@@ -1,7 +1,11 @@
-param([switch]$Run)
+param([switch]$Run, [string]$OutputDirectory = '')
 $ErrorActionPreference='Stop'
 Push-Location $PSScriptRoot
 try {
+    . (Join-Path $PSScriptRoot 'dotnet-sdk.ps1')
+    $dotnet = Find-LauncherDotNet
+    $sdkVersion = & $dotnet --version
+    Write-Host "Building with .NET SDK $sdkVersion ($dotnet)"
     $native = Join-Path $PSScriptRoot 'artifacts\native'
     New-Item -ItemType Directory -Force $native | Out-Null
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
@@ -28,17 +32,9 @@ exit /b %errorlevel%
 "@ | Set-Content -LiteralPath $build
     & cmd /c $build
     if ($LASTEXITCODE) { throw 'Controller adapter or movie decoder check build failed.' }
-    $shaderOutput = Join-Path $PSScriptRoot 'artifacts\shaders'
-    New-Item -ItemType Directory -Force $shaderOutput | Out-Null
-    $sdkBin = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
-    $fxc = Get-ChildItem -LiteralPath $sdkBin -Directory | Sort-Object Name -Descending |
-        ForEach-Object { Join-Path $_.FullName 'x64\fxc.exe' } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-    if (!$fxc) { throw 'Windows SDK shader compiler (fxc.exe) is required for the image preview.' }
-    & $fxc /nologo /T ps_2_0 /E main /Fo (Join-Path $shaderOutput 'ColorPreview.ps') (Join-Path $PSScriptRoot 'Shaders\ColorPreview.hlsl')
-    if ($LASTEXITCODE) { throw 'Image preview shader build failed.' }
-    & dotnet build Reo.Launcher.csproj -c Release --nologo
+    $output = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $PSScriptRoot 'bin\Release\net10.0\win-x64' }
+    & $dotnet build desktop/Reo.Launcher.Desktop.csproj -c Release -r win-x64 --self-contained true --nologo --output $output
     if ($LASTEXITCODE) { throw 'Launcher build failed.' }
-    $output = Join-Path $PSScriptRoot 'bin\Release\net8.0-windows'
     Copy-Item -LiteralPath (Join-Path $native 'XINPUT1_4.dll') -Destination $output -Force
     Copy-Item -LiteralPath (Join-Path $native 'reo-movie-check.exe') -Destination $output -Force
     if ($Run) { Start-Process -FilePath (Join-Path $output 'Outbreak.Launcher.exe') -WindowStyle Normal }

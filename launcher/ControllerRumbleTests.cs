@@ -35,7 +35,8 @@ internal static class ControllerRumbleTests {
         var hardware = new List<PadRumble>();
         var config = new Settings { InputDeviceId = "xbox:2" };
         using (var controller = new Controller(slot => slot == 2 ? new Pad(0x1000) : null,
-                                               (_, left, right) => hardware.Add(new(left, right)))) {
+                                               (_, left, right) => hardware.Add(new(left, right)),
+                                               () => new(new(), new()), () => Environment.TickCount64)) {
             controller.Configure(config);
             controller.SessionEnabled = true;
             using var gameMap = MemoryMappedFile.OpenExisting(controller.MapName);

@@ -1,0 +1,79 @@
+diff --git a/ps2xRuntime/include/ps2_runtime.h b/ps2xRuntime/include/ps2_runtime.h
+index 898347e..3ddedf5 100644
+--- a/ps2xRuntime/include/ps2_runtime.h
++++ b/ps2xRuntime/include/ps2_runtime.h
+@@ -560,13 +560,27 @@ public:
+     uint16_t Load16(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr);
+     uint32_t Load32(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr);
+     uint64_t Load64(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr);
+-    __m128i Load128(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr);
++    // 128-bit accesses cross the library boundary by pointer only: generated code
++    // built by clang-cl and this library built by MSVC disagree on how a member
++    // function returns __m128i (XMM0 vs hidden pointer), which shifted every
++    // argument of the out-of-line Load128. The by-value forms stay inline.
++    void Load128Into(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, __m128i *out);
++    __m128i Load128(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr)
++    {
++        __m128i value;
++        Load128Into(rdram, ctx, vaddr, &value);
++        return value;
++    }
+ 
+     void Store8(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, uint8_t value);
+     void Store16(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, uint16_t value);
+     void Store32(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, uint32_t value);
+     void Store64(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, uint64_t value);
+-    void Store128(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, __m128i value);
++    void Store128From(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, const __m128i *value);
++    void Store128(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, __m128i value)
++    {
++        Store128From(rdram, ctx, vaddr, &value);
++    }
+ 
+     static inline bool isSpecialAddress(uint32_t addr)
+     {
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index 6600b25..fc3767b 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -2785,19 +2785,26 @@ uint64_t PS2Runtime::Load64(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr)
+     }
+ }
+ 
+-__m128i PS2Runtime::Load128(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr)
++void PS2Runtime::Load128Into(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, __m128i *out)
+ {
+     try
+     {
+-        return m_memory.read128(vaddr);
++        *out = m_memory.read128(vaddr);
++        return;
+     }
+     catch (const std::exception &)
+     {
++        static std::atomic<uint32_t> reported{0};
++        if (reported.fetch_add(1, std::memory_order_relaxed) < 16) {
++            std::fprintf(stderr, "[Load128:address-error] vaddr=0x%08X pc=0x%08X ra=0x%08X\n", vaddr,
++                         ctx->pc, getRegU32(ctx, 31));
++            std::fflush(stderr);
++        }
+         ps2_ipu_native::rethrowOwnedAccessFailure(*this,vaddr);
+         reo_native_movie::rethrowOwnedAccessFailure(*this,vaddr);
+         reo_parent_natural::rethrowOwnedSourceFailure(this);
+         SignalException(ctx, EXCEPTION_ADDRESS_ERROR_LOAD);
+-        return _mm_setzero_si128();
++        *out = _mm_setzero_si128();
+     }
+ }
+ 
+@@ -3057,8 +3064,9 @@ void PS2Runtime::Store64(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, uint
+     }
+ }
+ 
+-void PS2Runtime::Store128(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, __m128i value)
++void PS2Runtime::Store128From(uint8_t *rdram, R5900Context *ctx, uint32_t vaddr, const __m128i *valuePtr)
+ {
++    const __m128i value = _mm_loadu_si128(valuePtr);
+     alignas(16) uint64_t _parts[2];
+     _mm_storeu_si128(reinterpret_cast<__m128i *>(_parts), value);
+     ps2TraceGuestWrite(rdram, vaddr, 16u, _parts[0], _parts[1], "WRITE128", ctx);

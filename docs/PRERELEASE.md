@@ -1,11 +1,192 @@
 # Prerelease packaging
 
-Current target: **v1.0.19**, shown in the launcher as **1.0 Alpha**, marked
-prerelease; release title "RE: Outbreak 1.0 Alpha (v1.0.19)". Tags stay numeric so
-installed launchers offer the update. .NET is an
-external prerequisite. The server is source-only, with Python/packages prepared
-automatically in Local AppData on first hosting (an installed Python 3.12 is
+## RC2 target
+
+Prepare `v1.0.20-rc2` from `develop`, with numeric version `1.0.20`, using
+`-ReleaseTag v1.0.20-rc2 -Version 1.0.20 -SelfContained`. Keep it a prerelease.
+The macOS changes merged at `dc0fe03858c8e54198bfbbe78ddd5d1c9b385bad`.
+Windows, macOS and Linux launcher CI, parity, source checks and server
+compatibility passed for that commit. Local updater changes require their own
+verification and commit; those remote passes do not cover uncommitted work.
+
+Refresh both sealed game kits and their corresponding dependency sources for
+patches 0117 (macOS fullscreen), 0118 (audio tails), 0119 (File #2 VU selection),
+the changed File #2 VU catalogue and native bootstrap/backend changes. Preserve
+the existing modified developer SDK. Require fresh build receipts bound to the
+exact kits, then run cold setup, cached launch and game/scenario checks with the
+assembled RC2 packages. A launcher CI preview is not a playable release package.
+
+The audio-transition runner now applies patches 0113, 0115 and 0118. It first
+reverses recognized patches newest-first so a final patched SDK can be tested
+without attempting to apply a superseded 0115 hunk twice. Its fixture separately
+checks short-tail draining and immediate cuts with more than 1.5 seconds queued.
+The staged latest RPC/mixer sources passed 54 native checks on Windows against
+the existing MSVC runtime archive; this was not a cold native game build.
+PR #53 reports M2 gameplay and a 104-launch VU replay. Retain that evidence, then
+verify the assembled RC2 packages rather than carrying branch-build results
+over to different sealed inputs.
+
+## Universal launcher upgrade checks
+
+The current Windows launcher uses Avalonia and .NET 10. `package-slim.ps1`
+includes the runtime by default; keep self-contained publishing enabled for
+player releases. No .NET installation is needed for those packages. Source
+builds and packaging require the .NET 10 SDK; both select a compatible user SDK
+when an older system SDK is first on PATH.
+
+The updater compares the full release tag, so `v1.0.20-rc2` supersedes
+`v1.0.20-rc1`, and `v1.0.20` supersedes both. The numeric `distribution.json`
+version remains `1.0.20`. The downloaded package's `releaseTag` must match the
+selected GitHub release. Stable installations continue to exclude prereleases.
+
+Previously shipped RC0/RC1 updaters reject RC tags and cannot distinguish
+releases with the same numeric version. They also start the helper without
+passing the selected storage location. Updating the new launcher cannot repair
+code already installed on a player's machine. v1.0.19 additionally does not
+recognize the self-contained single-file layout. Provide a manual upgrade for
+these installations: close the launcher and game, extract the complete new
+Windows ZIP into the existing installation, and replace application files while
+keeping `data`, `storage.json` and any separately selected storage folder.
+Extracting to another folder starts with separate default storage unless the
+existing storage selection is carried over. A game rebuild may be required
+when the release changes its sealed build inputs.
+
+Run the launcher cross-tests and the published Windows `--update-worker-check`
+before release. Its optional `--legacy-launcher <old Outbreak.Launcher.exe>`
+check uses a copied historical binary in synthetic installations: it verifies
+the old storage handoff failure, then supplies explicit storage to test the
+.NET 8 to .NET 10 installer/restart independently. This checks launcher upgrade
+behavior, not a complete playable package or game rebuild.
+
+## Historical RC1 packaging
+
+The previous target was **v1.0.20-rc1**, from **develop**, with numeric assembly version
+**1.0.20**, marked prerelease. Package with
+`-ReleaseTag v1.0.20-rc1 -Version 1.0.20 -SelfContained`.
+The launcher is one self-contained single-file `Outbreak.Launcher.exe` (layout
+`self-contained-single-file`); its .NET/WPF runtime is bundled inside, not shipped as
+loose DLLs. The first rc0 upload published a self-contained *folder* (~250 runtime
+DLLs at the package root) because `-SelfContained` disabled single-file; the rc0
+assets were replaced with the single-file package. The server is source-only, with Python/packages prepared
+automatically in the selected data folder on first hosting (an installed Python 3.12 is
 reused when present).
+
+## v1.0.20-rc1
+
+Keep RC0's single-file launcher layout and both external build-input ZIPs. RC1
+requires refreshed game inputs for the merged runtime hooks, asset packs,
+File #2 audio channels, subtitle preferences and cheats. Do not reuse RC0's sealed
+inputs or its passing validation flags for these changed kits.
+
+Replay the complete published SDK patch series in a separate checkout; preserve
+the developer's dirty submodule. Keep the reviewed movie allocator and per-game
+C audio provider as direct executable link objects. The portable worker invokes
+clang++ and must explicitly select `-x c` for that C provider.
+
+Verify both exact sealed kits, complete their portable builds, and record actual
+room-route results separately. Supply receipts bound to those manifest hashes
+through `-ValidationReport` and `-ValidationReportFile2`. Preserve interrupted
+build diagnostics; resumed objects remain subject to the normal receipt checks.
+
+Use RC0's release Markdown as the starting point, updating the changes, validation
+and known limits. Remove RC0's obsolete automatic AppData-copy warning: packaged
+RC1 starts with its own `data` folder unless a storage locator selects another
+folder. Publish the Windows ZIP, dependency sources and their SHA-256 files as
+`v1.0.20-rc1`, a testing prerelease from develop, without advancing main or marking
+it as the latest stable release.
+
+## v1.0.20-rc0
+
+Supply both independently sealed game payloads to `launcher/package-slim.ps1`:
+`-Inputs` / `-KitManifest` for File #1 and `-InputsFile2` / `-KitManifestFile2`
+for File #2. Both kits must use the corresponding game's verified ELF, original
+function maps, recipe metadata and locally reconstructed VU images. Include all
+11 presentation/helper shaders and the matching LLVM runtime DLLs.
+
+Rebuild dependencies from the complete published patch series, rather than
+assuming the developer's dirty SDK has every published fix. Preserve that
+checkout. Package the corresponding dependency source archive as
+`RE-Outbreak-v1.0.20-rc0-Dependency-Sources.zip`.
+
+The first-download test uses a fresh extracted ZIP under a path with spaces and
+non-ASCII characters, an unrelated working directory, system-only PATH and empty
+portable data. Choose each owned ISO through the actual launcher, build, launch,
+and verify cached reuse. Keep the failed first candidate: it exposed a native
+generator output path exceeding MAX_PATH and incorrectly returning success.
+Recompiler path handling and failure propagation must pass before publication.
+The next candidate also exposed missing File #2 catalogue includes during shared
+header compilation. Patch 0110 represents File #2's empty source catalogues with
+standard zero-element arrays; its kit applies the File #2 definition to every
+compilation unit. Never fill those catalogues with File #1 instruction words or
+synthetic source entries just to satisfy compilation.
+
+The shared portable graph also needs the reviewed movie allocator ownership
+provider as a direct object before the Granite archive. Validate its pinned
+upstream source and exact generated transform; never bypass its ownership
+receipt to hide an opening-movie failure. Include the shared audio host bridge
+and the full software GS register range in both kits.
+
+Completed RC0 checks cover both games' local builds, room entry and cached
+normal Play, plus the final File #2 item/enemy replays. Private bound packaging
+proofs are `build-ninja/rc0/download-test-05/file1-first-run/package-validation-file1.json` and
+`build-ninja/rc0/portable-mods-05/package-validation-file2.json`. Both refer to
+the exact sealed manifests; the game executables remain private.
+
+Release validation flags require completed-build receipts bound to the exact
+sealed manifest hashes. Missing proof remains pending; do not inherit old passing
+flags. See [File #2 verification](FILE2_RANDOMIZER.md) for the tested replacement
+paths and the remaining scenario, roster, save/resume and multiplayer limits.
+## Unreleased: asset packs
+
+`feature/asset-paks` adds streamed native-asset replacement for both editions in
+solo play. See `MODDING.md` and `ASSET_PAKS_IMPLEMENTATION.md`. A release containing
+this feature needs refreshed build kits and the launcher capability check; include
+`<!-- reo:requires-rebuild -->` in its release notes. Existing cached native builds
+cannot apply packs until rebuilt.
+
+Kit exports require SDK patch `0109-virtual-asset-archives.patch`. For an existing
+frozen kit, use `tools/local_build/refresh_inputs.py` with these arguments in
+addition to `--kit`, `--output` and `--recompiler`:
+
+```text
+--update-source runtime/cdvd/cdvd.cpp
+--update-source runtime/cdvd/cdvd.h
+--update-source recomp/overrides/reo_hw_bridge.cpp
+--update-source recomp/overrides/reo_hw_bridge.h
+--update-source recomp/reo_bootstrap.cpp
+--add-source runtime/assets/virtual_afs.h
+--add-source runtime/assets/overlay.h
+--add-source runtime/assets/executable_strings.h
+--source-patch third_party/patches/ps2recomp/0109-virtual-asset-archives.patch
+```
+
+The refresh rehashes the kit inventory and includes the SDK patch in source-update
+notices. Generate instruction catalogues from the player's ELF through the normal
+build stages before compiling runtime sources. Both private refreshed kits passed
+portable compilation of all four affected runtime units. This preflight is not a
+fresh full-game release build. Before publishing, run the complete packaging and
+cold-build checks for the final merged tree.
+
+Executable-string mods additionally require `[EXECUTABLE-STRINGS-1]` in the native
+build. The bootstrap applies only bounded, identity-checked original string slots
+before guest execution. Rebuild both editions; the launcher refuses older binaries.
+Edited original exports can now be imported under Mods, which compiles their
+changed asset payloads and translation fields into ordinary replacement layers.
+
+Opt-in executable-string padding additionally needs `[EXECUTABLE-STRINGS-2]` and
+the updated `runtime/assets/executable_strings.h`. The runtime accepts strict v1
+plans and bounded v2 plans, rechecking zero alignment space and literal pointers
+before writes. Include a native rebuild notice for this update. Export receipt
+format 5 refreshes the new padding metadata without overwriting older exports.
+The old-import cleanup action is manual and affects only reviewed, unselected,
+completed imports; it must never be called automatically after setup.
+
+PAK-as-game-source support additionally requires the updated `cdvd.h` and
+`cdvd.cpp`, and rebuilding their consumers (including `reo_hw_bridge.cpp`). The
+launcher requires `[GAME-PAK-1]` in the native image before launching in PAK mode.
+The updated original export preserves boot files and archive ranges; older
+asset-only exports need re-exporting. Game PAKs contain owned game data and must
+never be bundled in a release.
 
 ## v1.0.19
 
@@ -312,7 +493,7 @@ compile, but generation still reruns). Export a new kit only when actual
 runtime/generator inputs change.
 
 Automatic compiler setup lives in PortableCompilerSetup.cs, pins the official
-20251216 UCRT x64 ZIP SHA-256, downloads to Local AppData and admits only verified
+20251216 UCRT x64 ZIP SHA-256, downloads to the selected data folder and admits only verified
 x64 components with a complete hashed cache inventory. No user environment variable
 is changed. --test-compiler-setup <fresh-home> <receipt> checks cold download, native
 compile/link/run, cached reuse and cancellation without compiling the game.

@@ -18,6 +18,10 @@ public sealed class ModManifest {
     public WeaponShuffle? WeaponShuffle { get; set; }
     public ItemRandomizer? ItemRandomizer { get; set; }
     public EnemyRandomizer? EnemyRandomizer { get; set; }
+    public ExamineMessages? ExamineMessages { get; set; }
+}
+public sealed class ExamineMessages {
+    public double DurationMultiplier { get; set; } = 1;
 }
 public sealed class EnemyRandomizer {
     public uint Seed { get; set; }
@@ -49,7 +53,7 @@ public sealed class ModPatch {
 }
 public sealed record InstalledMod(string File, ModManifest? Manifest, string Error);
 
-public static class Mods {
+public static partial class Mods {
     const int MaxBytes = 1024 * 1024;
     public const string RandomizerId = "example.randomizer";
     static readonly HashSet<string> RetiredSamples = new(StringComparer.Ordinal) {
@@ -62,19 +66,38 @@ public static class Mods {
         WriteIndented = true
     };
     public static string Folder => Path.Combine(Settings.Home, "mods", "file1");
+    public static string FolderFor(string game) {
+        _ = DiscImport.ExpectedElf(game);
+        return Path.Combine(Settings.Home, "mods", game);
+    }
+    public static bool EnsureBundledRandomizer(Settings settings, string? folder = null) {
+        string game = settings.Game.Id;
+        settings.BundledModEditions ??= new();
+        if (settings.BundledModEditions.Contains(game)) return false;
+        folder ??= FolderFor(game);
+        if (!Load(folder, game).Any(mod => mod.Manifest?.Id == RandomizerId) &&
+            !File.Exists(Path.Combine(folder, RandomizerId + ".json"))) {
+            string sample = game == "file2" ? "randomizer-file2.json" : "randomizer.json";
+            Import(Path.Combine(AppContext.BaseDirectory, "examples", "mods", sample), folder, game);
+        }
+        // Install disabled once per edition. A user's deletion must stay deleted.
+        settings.BundledModEditions.Add(game);
+        return true;
+    }
     public static bool ConsolidateRandomizers(Settings settings, string? folder = null) {
-        folder ??= Folder;
-        var installed = Load(folder);
+        folder ??= FolderFor(settings.Game.Id);
+        var installed = Load(folder, settings.Game.Id);
         var retired = installed.Where(m => m.Manifest != null && RetiredSamples.Contains(m.Manifest.Id)).ToList();
-        if (retired.Count == 0 && !settings.EnabledMods.Any(RetiredSamples.Contains)) return false;
+        if (retired.Count == 0 && !settings.ActiveMods.Any(RetiredSamples.Contains)) return false;
 
-        bool enabled = settings.EnabledMods.Any(id => RetiredSamples.Contains(id) && id != "example.practice-mode");
+        bool enabled = settings.ActiveMods.Any(id => RetiredSamples.Contains(id) && id != "example.practice-mode");
         if (!installed.Any(m => m.Manifest?.Id == RandomizerId)) {
-            var randomizer = Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "examples", "mods", "randomizer.json")));
+            string sample = settings.Game.Id == "file2" ? "randomizer-file2.json" : "randomizer.json";
+            var randomizer = Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "examples", "mods", sample)));
             // Prefer the combined package, then enabled individual packages. Guns are
             // already part of the item pool, so a second weapon shuffle is unnecessary.
             var previous = retired.Select(m => m.Manifest!).OrderByDescending(m => m.Id == "example.outbreak-randomizer")
-                .ThenByDescending(m => settings.EnabledMods.Contains(m.Id)).ToList();
+                .ThenByDescending(m => settings.ActiveMods.Contains(m.Id)).ToList();
             randomizer.ItemRandomizer = previous.FirstOrDefault(m => m.ItemRandomizer != null)?.ItemRandomizer
                 ?? randomizer.ItemRandomizer;
             if (!previous.Any(m => m.ItemRandomizer != null) && previous.FirstOrDefault(m => m.WeaponShuffle != null)?.WeaponShuffle is {} guns)
@@ -94,10 +117,10 @@ public static class Mods {
             if (File.Exists(target)) target += "." + Guid.NewGuid().ToString("N");
             File.Move(mod.File, target);
         }
-        var updated = settings.EnabledMods.Where(id => !RetiredSamples.Contains(id)).ToList();
+        var updated = settings.ActiveMods.Where(id => !RetiredSamples.Contains(id)).ToList();
         if (enabled && !updated.Contains(RandomizerId)) updated.Add(RandomizerId);
-        if (updated.SequenceEqual(settings.EnabledMods)) return false;
-        settings.EnabledMods = updated;
+        if (updated.SequenceEqual(settings.ActiveMods)) return false;
+        settings.ActiveMods = updated;
         return true;
     }
     public static ModManifest Parse(string text) {
@@ -114,14 +137,16 @@ public static class Mods {
             string.IsNullOrWhiteSpace(m.Version) || m.Version.Length > 40 ||
             m.Description == null || m.Description.Length > 4000)
             throw new IOException("Mod needs a name and version; description is limited to 4000 characters.");
-        if (!string.Equals(m.ElfSha256, DiscImport.FirstElfSha256, StringComparison.OrdinalIgnoreCase))
-            throw new IOException("Mod must target Outbreak File #1 NTSC-U v2.00 (supported ELF SHA-256).");
+        if (!string.Equals(m.ElfSha256, DiscImport.FirstElfSha256, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(m.ElfSha256, DiscImport.SecondElfSha256, StringComparison.OrdinalIgnoreCase))
+            throw new IOException("Mod must target a supported Outbreak File #1 or File #2 ELF SHA-256.");
         if (m.Effects == null || m.Patches == null || m.Effects.Count > 3 || m.Patches.Count > 4096)
             throw new IOException("Invalid mod effects or patches (4096 patch limit).");
         if (m.Effects.Any(e => e is not ("health" or "infection" or "ammo")))
             throw new IOException("Supported effects are health, infection and ammo.");
         if (m.WeaponShuffle != null && m.ItemRandomizer != null)
             throw new IOException("Choose either an item randomizer or a weapon shuffle.");
+        if (m.ExamineMessages is {} examine) ValidateExamineMessages(examine);
         if (m.EnemyRandomizer is {} enemy) {
             if(enemy.Mode is not ("zombieProfiles" or "enemyTypes"))
                 throw new IOException("Supported enemy randomizer modes are zombieProfiles and enemyTypes.");
@@ -141,10 +166,21 @@ public static class Mods {
              randomizer.ExcludeItemTypes.Any(t => t < 0 || t >= 400) ||
              randomizer.ExcludeItemTypes.Distinct().Count() != randomizer.ExcludeItemTypes.Count))
             throw new IOException("excludeItemTypes must contain distinct ordinary item IDs from 0 to 399.");
-        if (m.Effects.Count == 0 && m.Patches.Count == 0 && m.WeaponShuffle == null && m.ItemRandomizer == null && m.EnemyRandomizer == null)
-            throw new IOException("Mod must contain an item/enemy randomizer, weapon shuffle, effect or data patch.");
+        if (m.Effects.Count == 0 && m.Patches.Count == 0 && m.WeaponShuffle == null && m.ItemRandomizer == null && m.EnemyRandomizer == null && m.ExamineMessages == null)
+            throw new IOException("Mod must contain an item/enemy randomizer, weapon shuffle, examine message timing, effect or data patch.");
         foreach (var p in m.Patches) _ = Write(p);
         return m;
+    }
+    internal static void ValidateExamineMessages(ExamineMessages examine) {
+        if (!double.IsFinite(examine.DurationMultiplier) || examine.DurationMultiplier < 1 || examine.DurationMultiplier > 10)
+            throw new IOException("examineMessages.durationMultiplier must be a finite number from 1 to 10.");
+    }
+    internal static ExamineMessages? SelectedExamineMessages(IEnumerable<ModManifest> mods) {
+        var selected = mods.Where(m => m.ExamineMessages != null).ToList();
+        if (selected.Count > 1)
+            throw new IOException("Examine message timing conflicts between " +
+                string.Join(", ", selected.Select(m => m.Name)) + ". Enable only one examine message timing mod.");
+        return selected.SingleOrDefault()?.ExamineMessages;
     }
     public static CheatWrite Write(ModPatch p) {
         if (p == null || p.When is not ("boot" or "frame") || p.Size is not (1 or 2 or 4 or 8) ||
@@ -154,14 +190,17 @@ public static class Mods {
             throw new IOException("Invalid mod patch: use boot/frame, a supported EE data address, size 1/2/4/8 and a fitting hexadecimal value. Code and overlay patches are unsupported.");
         return new(p.When == "boot" ? 0 : 1, address, p.Size, value);
     }
-    public static List<InstalledMod> Load(string? folder = null) {
-        folder ??= Folder;
+    public static List<InstalledMod> Load(string? folder = null, string game = "file1") {
+        folder ??= FolderFor(game);
         var result = new List<InstalledMod>();
         if (!Directory.Exists(folder)) return result;
         foreach (var path in Directory.EnumerateFiles(folder, "*.json").OrderBy(x => x, StringComparer.Ordinal)) {
             try {
                 if (new FileInfo(path).Length > MaxBytes) throw new IOException("Mod exceeds 1 MB.");
-                result.Add(new(path, Parse(File.ReadAllText(path)), ""));
+                var manifest = Parse(File.ReadAllText(path));
+                if (!manifest.ElfSha256.Equals(DiscImport.ExpectedElf(game), StringComparison.OrdinalIgnoreCase))
+                    throw new IOException("This mod targets a different game. Import a package for the selected game.");
+                result.Add(new(path, manifest, ""));
             } catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
                 result.Add(new(path, null, e.Message));
             }
@@ -171,14 +210,16 @@ public static class Mods {
         return result.Select(x => x.Manifest != null && duplicates.Contains(x.Manifest.Id)
             ? x with { Error = "Duplicate mod ID. Keep only one package with this ID." } : x).ToList();
     }
-    public static void Import(string source, string? folder = null) {
+    public static void Import(string source, string? folder = null, string game = "file1") {
         if (new FileInfo(source).Length > MaxBytes) throw new IOException("Mod exceeds 1 MB.");
         string text = File.ReadAllText(source);
         var m = Parse(text);
-        folder ??= Folder;
+        if (!m.ElfSha256.Equals(DiscImport.ExpectedElf(game), StringComparison.OrdinalIgnoreCase))
+            throw new IOException("This mod targets a different game. Select the matching game before importing.");
+        folder ??= FolderFor(game);
         Directory.CreateDirectory(folder);
-        if (Load(folder).Any(x => x.Manifest?.Id == m.Id))
-            throw new IOException("This mod ID is already installed. Remove the old JSON file before importing an update.");
+        if (Load(folder, game).Any(x => x.Manifest?.Id == m.Id))
+            throw new IOException("This mod ID is already installed. Delete the installed package before importing an update.");
         string target = Path.Combine(folder, m.Id + ".json");
         using var stream = new FileStream(target, FileMode.CreateNew, FileAccess.Write);
         using var writer = new StreamWriter(stream);
@@ -188,11 +229,10 @@ public static class Mods {
         // Guests adopt the host's immutable session configuration in GameSession.
         // Their own mod preferences remain saved for subsequent solo/host games.
         if (settings.ResolvedCoopMode == "join") return new();
-        if (settings.EnabledMods.Count == 0) return new();
-        if (settings.Game.Id != "file1") throw new IOException("Mods currently support File #1 only.");
-        var installed = Load(folder);
+        if (settings.ActiveMods.Count == 0) return new();
+        var installed = Load(folder, settings.Game.Id);
         var selected = new List<ModManifest>();
-        foreach (string id in settings.EnabledMods.Distinct().OrderBy(x => x, StringComparer.Ordinal)) {
+        foreach (string id in settings.ActiveMods.Distinct().OrderBy(x => x, StringComparer.Ordinal)) {
             var matches = installed.Where(x => x.Manifest?.Id == id).ToList();
             if (matches.Count != 1 || matches[0].Error.Length != 0)
                 throw new IOException("Enabled mod is missing, invalid or duplicated: " + id + ". Reload Mods and disable it or repair its JSON file.");
@@ -202,8 +242,9 @@ public static class Mods {
             throw new IOException("Enable only one pickup randomizer mod at a time.");
         if (selected.Count(m => m.EnemyRandomizer != null) > 1)
             throw new IOException("Enable only one enemy randomizer mod at a time.");
-        if (settings.ResolvedCoopMode == "host" && selected.Any(m => m.Effects.Count != 0 || m.Patches.Count != 0))
-            throw new IOException("Co-op supports host-controlled randomizers only. Disable effects and data-patch mods.");
+        _ = SelectedExamineMessages(selected);
+        if (settings.ResolvedCoopMode == "host" && selected.Any(m => m.Effects.Count != 0 || m.Patches.Count != 0 || m.ExamineMessages != null))
+            throw new IOException("Co-op supports host-controlled randomizers only. Disable effects, data-patch and examine message timing mods.");
         return selected;
     }
     public static void Append(List<ModManifest> mods, List<CheatWrite> writes, List<string> builtins) {
@@ -229,4 +270,10 @@ public static class Mods {
 }
 public sealed partial class Settings {
     public List<string> EnabledMods { get; set; } = new();
+    public List<string> File2EnabledMods { get; set; } = new();
+    [JsonIgnore]
+    public List<string> ActiveMods {
+        get => Game.Id == "file2" ? File2EnabledMods ??= new() : EnabledMods ??= new();
+        set { if (Game.Id == "file2") File2EnabledMods = value; else EnabledMods = value; }
+    }
 }

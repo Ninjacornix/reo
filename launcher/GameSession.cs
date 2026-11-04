@@ -9,6 +9,7 @@ public sealed class GameSession {
     public Process? Process { get; private set; }
     public string? Logs { get; private set; }
     public ImportedDisc? Imported { get; private set; }
+    public OriginalAssetExport? OriginalAssets { get; private set; }
     public string? NetworkStatus { get; private set; }
     volatile string? graphicsStatus;
     public string? GraphicsStatus => graphicsStatus;
@@ -16,6 +17,7 @@ public sealed class GameSession {
     internal Task WaitForGraphicsReadyAsync(TimeSpan timeout) => graphicsReady.Task.WaitAsync(timeout);
     public string? MovieStatus { get; private set; }
     internal string? AudioMapName { get; set; }
+    internal string? SubtitleMapName { get; set; }
     public string? RandomizerSeedSummary { get; private set; }
     readonly RandomizerSeeds randomizerSeeds = new();
     internal byte[]? HostRandomizerConfiguration { get; private set; }
@@ -26,23 +28,27 @@ public sealed class GameSession {
             catch (InvalidOperationException) { return false; } // Created, but not started yet.
         }
     }
-    public static string SaveFolder(string root, string game = "file1") =>
-        AppLayout.Packaged(root)
-            ? Path.Combine(Settings.Home, "memory-cards", "default", game, "data")
-            : Path.Combine(root, "build-ninja", GameDefinition.Find(game).PlayFolder, "saves");
+    public static string SaveFolder(string root, string game = "file1") => Settings.DefaultCardFolder(root);
+    internal static string LegacySaveFolder(string root, string game) =>
+        Path.Combine(Settings.Home, "memory-cards", "default", game, "data");
 
     public async Task Launch(string root, Settings settings, Controller controller,
                              string? diagnosticRoute = null,
                              IProgress<ImportProgress>? importProgress = null,
                              CancellationToken cancel = default,
                              LobbyAutomation.Options? lobby = null,
-                             uint? diagnosticSeed = null, bool diagnosticColdCache = false) {
+                             uint? diagnosticSeed = null, bool diagnosticColdCache = false,
+                             string? accountHome = null, string? workingDirectory = null) {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
+        var graphics = GraphicsOptions.From(settings);
+        OriginalAssets = null;
+        var selectedAssetPaks = AssetPaks.Selected(settings);
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
         if (diagnosticColdCache && diagnosticRoute == null)
             throw new InvalidOperationException("A private shader cache requires a diagnostic run.");
-        var selectedMods = randomizerSeeds.ForLaunch(Mods.Selected(settings), settings.ResolvedCoopMode);
+        var selectedMods = randomizerSeeds.ForLaunch(Mods.Selected(settings), settings.ResolvedCoopMode,
+                                                    configurations: settings.ActiveModConfigurations);
         if (diagnosticSeed is uint fixedSeed) {
             if (diagnosticRoute == null || settings.ResolvedCoopMode != "offline")
                 throw new InvalidOperationException("Fixed diagnostic seeds require an offline diagnostic run.");
@@ -64,22 +70,28 @@ public sealed class GameSession {
         NetworkStatus = null;
         graphicsStatus = null;
         graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        string sourceExe = settings.GetExe(), iso = settings.GetIso();
+        string sourceExe = settings.GetExe(), iso = settings.GetGameSource();
         var selectedGame = settings.Game;
-        if (selectedGame.Id != "file1")
-            throw new IOException("File #2 is not available in this release.");
-        if (!AppLayout.Packaged(root) && !File.Exists(sourceExe))
+        bool localBuildKit=AppLayout.Packaged(root);
+        localBuildKit &= OperatingSystem.IsWindows();
+        if (!localBuildKit && !File.Exists(sourceExe))
             throw new FileNotFoundException(
                 "This game build is missing. Extract the complete release archive.");
         if (!File.Exists(iso))
-            throw new FileNotFoundException("Choose the selected game's ISO in Game files.");
-        Imported = await DiscImport.Ensure(
-            iso, selectedGame, DiscImport.ExpectedElf(settings, root), importProgress, cancel);
+            throw new FileNotFoundException("Choose the selected game's " + (settings.UsesGamePak() ? "PAK" : "ISO") + " in Game files.");
+        Imported = await settings.PrepareGame(importProgress, cancel);
         cancel.ThrowIfCancellationRequested();
         settings.SetImport(Imported.Root);
-        if (AppLayout.Packaged(root))
-            sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel);
+        if (localBuildKit)
+            sourceExe = await LocalGameBuild.Ensure(root, Imported, importProgress, cancel, game: selectedGame.Id);
+        if (!settings.UsesGamePak() && settings.WantsOriginalAssetPaks(selectedGame.Id))
+            OriginalAssets = await AssetExports.Ensure(Imported, selectedGame.Id, importProgress, cancel);
         string discRoot = Path.Combine(Imported.Root, "data"), discElf = Imported.Elf;
+        string image, hash;
+        if (!OperatingSystem.IsWindows()) {
+            image = sourceExe; hash = Updates.Sha(image);
+        } else
+        {
         string proxy = Path.Combine(AppContext.BaseDirectory, "XINPUT1_4.dll");
         if (!File.Exists(proxy))
             throw new FileNotFoundException("The installation is missing its controller adapter. " +
@@ -96,7 +108,7 @@ public sealed class GameSession {
             "present_smaa_edge.frag.spv", "present_smaa_weights.frag.spv", "present_smaa_blend.frag.spv" }) {
             string input = Path.Combine(shaderSource, shader);
             if (File.Exists(input)) runtimeFiles.Add(new(input, "reo-gpu-present/" + shader));
-            else if (!shader.StartsWith("present_smaa_") || settings.ResolvedAntiAliasing == "smaa")
+            else if (!shader.StartsWith("present_smaa_") || graphics.Environment["REO_POST_AA"] == "smaa")
                 throw new FileNotFoundException("The selected build is missing its presentation shader: " + shader);
         }
         // GPU helper shaders (movies, context clears, readbacks) that the game loads from
@@ -115,21 +127,39 @@ public sealed class GameSession {
         if (File.Exists(vulkanLoader)) runtimeFiles.Add(new(vulkanLoader, "vulkan-1.dll"));
         var cached = await Task.Run(() => GameImageCache.Prepare(
             Path.Combine(Settings.Home, "game-cache"), runtimeFiles, cancel), cancel);
-        string image = cached.Image, hash = cached.Sha256;
+        image = cached.Image; hash = cached.Sha256;
+        }
+        VerifyAudioCompatibility(image, selectedGame.Id);
+        var examineEnvironment = ExamineMessageEnvironment(selectedMods,
+            selectedMods.Any(m => m.ExamineMessages != null) && SupportsExamineMessages(image));
+        if (selectedGame.Id == "file2" && selectedMods.Count > 0 &&
+            !HasMarker(image, "[MOD-FILE2-1] installed"))
+            throw new IOException("File #2 mods need the updated game build. Rebuild or update the game.");
+        if (settings.UsesGamePak() && !HasMarker(image, "[GAME-PAK-1]"))
+            throw new IOException("Playing from PAK needs an updated game build. Rebuild or update the selected game.");
         if (randomizerConfiguration != null && !HasMarker(image, RandomizerSession.Capability))
             throw new IOException("This shared session needs the updated game build with stable randomizer support.");
         Logs = Path.Combine(Settings.Home, "sessions", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
         Directory.CreateDirectory(Logs);
+        if (selectedAssetPaks.Count > 0 && !HasMarker(image, AssetPaks.Capability))
+            throw new IOException("Asset packs need an updated game build. Rebuild or update the selected game.");
+        string assetPlan = await Task.Run(() => AssetPaks.Prepare(selectedAssetPaks, discRoot, selectedGame.Id, Logs, cancel: cancel), cancel);
+        string stringPlan = Path.Combine(Logs, ExecutableStrings.PlanName);
+        if (File.Exists(stringPlan) && !HasMarker(image, ExecutableStrings.RequiredCapability(stringPlan)))
+            throw new IOException("Executable string replacements need an updated game build. Rebuild or update the selected game.");
         if (randomizerConfiguration != null) {
             File.WriteAllBytes(Path.Combine(Logs,"randomizer-session.json"),randomizerConfiguration);
             File.WriteAllText(Path.Combine(Logs,"randomizer-session.sha256"),RandomizerSession.Digest(randomizerConfiguration));
         }
-        Directory.CreateDirectory(SaveFolder(root, selectedGame.Id));
-        Directory.CreateDirectory(AppLayout.Work(root, selectedGame.Id));
+        Directory.CreateDirectory(Settings.DefaultCardFolder(root));
+        string work = workingDirectory == null ? AppLayout.Work(root, selectedGame.Id)
+                                              : Path.GetFullPath(workingDirectory);
+        Directory.CreateDirectory(work);
         var start = new ProcessStartInfo(
             image) { UseShellExecute = false, CreateNoWindow = true,
-                     WorkingDirectory = AppLayout.Work(root, selectedGame.Id),
+                     WorkingDirectory = work,
                      RedirectStandardOutput = true, RedirectStandardError = true };
+        Storage.ProcessEnvironment(start, accountHome);
         foreach (string arg in new[] { "--game", selectedGame.Id, "--elf", discElf, "--data",
                                        discRoot })
             start.ArgumentList.Add(arg);
@@ -138,8 +168,15 @@ public sealed class GameSession {
                      .ToArray())
             start.Environment.Remove(key);
         void Set(string key, string value) => start.Environment[key] = value;
+        foreach (var pair in examineEnvironment) Set(pair.Key, pair.Value);
+        if (assetPlan.Length != 0) Set("REO_ASSET_OVERLAY", assetPlan);
+        if (File.Exists(stringPlan)) Set("REO_EXECUTABLE_STRINGS", stringPlan);
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
+        Set("REO_SUBTITLES", settings.ShowSubtitles ? "1" : "0");
+        if (SubtitleMapName != null) Set("REO_SUBTITLE_MAP", SubtitleMapName);
+        if (!string.IsNullOrWhiteSpace(settings.AudioOutputId)) Set("REO_AUDIO_DEVICE", settings.AudioOutputId);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
+        PlatformRuntime.Configure(start, root, settings, controller, Logs!);
         bool automaticAccount = onlineEnvironment.Count > 0 &&
                                 await Task.Run(() => SupportsAutomaticAccount(image), cancel);
         if (onlineEnvironment.Count > 0 && !automaticAccount) {
@@ -149,6 +186,13 @@ public sealed class GameSession {
         }
         foreach (var pair in onlineEnvironment)
             Set(pair.Key, pair.Value);
+        if (onlineEnvironment.Count > 0)
+            Set("REO_NETCODE_METRICS_FILE", Path.Combine(Logs!, "network-metrics.jsonl"));
+        // Developer recordings come first so diagnostic routes below keep their own settings.
+        foreach (var pair in settings.Developer.Environment(Logs!, onlineEnvironment.Count > 0, selectedGame.Id))
+            Set(pair.Key, pair.Value);
+        if (start.Environment.ContainsKey("REO_COOP_TRACE_FILE"))
+            NetworkTrace.Start(Logs!);
         string? keyboardQueue = null;
         if (lobby != null && automaticAccount && diagnosticRoute == null) {
             // Title -> Network -> automatic sign-in uses the native route; the launcher then steers
@@ -169,9 +213,8 @@ public sealed class GameSession {
         }
         if (cheatFile.Length != 0)
         {
-            if (File.ReadLines(cheatFile).Contains("builtin unlock") &&
-                !HasMarker(image, "[CHEATS-UNLOCK-1] progression"))
-                throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
+            VerifyCheatCompatibility(image, selectedGame.Id, File.ReadLines(cheatFile),
+                                     online: settings.ResolvedCoopMode != "offline");
             Set("REO_CHEATS_FILE", cheatFile);
         }
         var itemRandomizer = selectedMods.SingleOrDefault(m => m.ItemRandomizer != null)?.ItemRandomizer;
@@ -181,7 +224,7 @@ public sealed class GameSession {
                     throw new IOException("This Randomizer needs the updated game build with global item support.");
                 if (!HasMarker(image, "[MOD-GLOBAL-MODELS-1] installed"))
                     throw new IOException("This Randomizer needs the updated game build with global item models.");
-                string catalogue = GlobalItemCatalogue.Prepare(discRoot, Logs!);
+                string catalogue = GlobalItemCatalogue.Prepare(discRoot, Logs!, selectedGame.Id);
                 Set("REO_MOD_GLOBAL_ITEM_CATALOGUE", catalogue);
             }
             if (!HasMarker(image, "[MOD-ITEM-RANDOMIZER-1] installed seed=%u"))
@@ -194,7 +237,8 @@ public sealed class GameSession {
                     t => t.ToString(System.Globalization.CultureInfo.InvariantCulture))));
             }
         }
-        Set("REO_ISO", Path.GetFullPath(iso));
+        if (settings.UsesGamePak()) Set("REO_GAME_PAK", "1");
+        else Set("REO_ISO", Path.GetFullPath(iso));
         var enemyRandomizer = selectedMods.SingleOrDefault(m => m.EnemyRandomizer != null)?.EnemyRandomizer;
         if (enemyRandomizer != null) {
             bool species = enemyRandomizer.Mode == "enemyTypes";
@@ -217,25 +261,9 @@ public sealed class GameSession {
         Set("REO_GS_GPU_PRESENT", "1");
         Set("REO_GS_DISPATCH_PACE", "2");
         Set("REO_GS_SPRITE_DEPTH_PARALLEL", "1");
-        Set("REO_VIF1_ASYNC", settings.AsyncVif ? "1" : "0");
         Set("REO_VIF1_GPU_RESIDENT", "0");
-        Set("REO_DISPLAY_ASPECT", settings.ResolvedAspect);
-        Set("REO_DISPLAY_FIT", settings.ResolvedFit);
-        Set("REO_DISPLAY_FILTER", settings.LinearFilter ? "linear" : "nearest");
-        var outputSize = DisplayOptions.Size(settings.WindowSize);
-        Set("REO_WINDOW_WIDTH", outputSize.Width.ToString());
-        Set("REO_WINDOW_HEIGHT", outputSize.Height.ToString());
-        Set("REO_TEXTURE_FILTER", settings.TextureLinear ? "linear" : "original");
-        Set("REO_INTERNAL_RESOLUTION", settings.ResolvedInternalResolution.ToString());
-        Set("REO_PERFORMANCE_OVERLAY", settings.PerformanceOverlay ? "1" : "0");
-        Set("REO_GPU_MEMORY_LOG", settings.ResolvedInternalResolution > 1 ? "1" : "0");
-        Set("REO_TEXTURE_ANISOTROPY", settings.ResolvedAnisotropy.ToString());
-        Set("REO_POST_AA", settings.ResolvedAntiAliasing);
-        Set("REO_BRIGHTNESS",
-            (settings.Brightness / 100.0)
-                .ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
-        Set("REO_GAMMA",
-            settings.Gamma.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        foreach (var pair in graphics.Environment)
+            Set(pair.Key, pair.Value);
         if (diagnosticRoute != null) {
             Set("REO_FRAME_PACING_FILE", Path.Combine(Logs, "frames.csv"));
             Set("REO_VIF_KICK_TIMING_AT", "0");
@@ -244,7 +272,7 @@ public sealed class GameSession {
             Set("REO_GS_WAIT_LOG", "1");
             Set("REO_IRQ_TIMING_LOG", "1");
             if (diagnosticColdCache) Set("REO_PIPELINE_CACHE_FILE", Path.Combine(Logs, "pipeline.cache"));
-            Set("REO_PERFORMANCE_DIAG", settings.PerformanceOverlay ? "1" : "0");
+            Set("REO_PERFORMANCE_DIAG", graphics.Environment["REO_PERFORMANCE_OVERLAY"]);
             Set("REO_AUDIO_DIAG", "1");
             Set("REO_RUMBLE_DIAG", "1");
             Set("REO_TEST_ROUTE", diagnosticRoute is "gameplay-pickup" or "gameplay-preview" or "gameplay-enemies" or "gameplay-enemy-combat" ? "gameplay" : diagnosticRoute);
@@ -274,7 +302,7 @@ public sealed class GameSession {
         // GPU movies when the rendering GPU has a hardware MPEG-2 decoder and the player left them
         // on in Graphics; otherwise the original CPU decoder.
         MovieDecoderChoice movies = await MovieDecoder.Choose(cancel);
-        bool gpuMovies = movies.Gpu && settings.GpuMovies;
+        bool gpuMovies = movies.Gpu && graphics.GpuMovies;
         MovieStatus = gpuMovies   ? "Movies: graphics card"
                       : movies.Gpu ? "Movies: processor (chosen in Graphics)"
                                    : "Movies: processor (" + movies.Reason + ")";
@@ -288,7 +316,7 @@ public sealed class GameSession {
         start.Environment["REO_MC0_ROOT"] = cardFolder;
         start.Environment["REO_MC1_ROOT"] = ":none:";
         if (!Directory.Exists(cardFolder) &&
-            !string.Equals(cardFolder, Path.GetFullPath(SaveFolder(root, selectedGame.Id)),
+            !string.Equals(cardFolder, Path.GetFullPath(Settings.DefaultCardFolder(root)),
                            StringComparison.OrdinalIgnoreCase))
             throw new DirectoryNotFoundException("The selected memory card folder no longer " +
                                                  "exists. Select another card in Save games.");
@@ -307,8 +335,8 @@ public sealed class GameSession {
         if (settings.ResolvedCoopMode == "host") HostRandomizerConfiguration = randomizerConfiguration;
         try {
             account = automaticAccount
-                          ? new AutomaticAccount(Settings.Home, settings, text => NetworkStatus = text,
-                                                 MainWindow.SignupEndpoint(settings, null))
+                          ? new AutomaticAccount(accountHome ?? Settings.Home, settings, text => NetworkStatus = text,
+                                                 SignupEndpoints.For(settings, null))
                           : null;
             account?.Bind(start);
             if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join") {
@@ -338,8 +366,12 @@ public sealed class GameSession {
         controller.GameProcessId = Process.Id;
         var lightProcess = Process;
         string lightLogs = Logs!;
-        _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
-        _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
+        // Health addresses currently describe File #1 only; keep the neutral
+        // light for File #2 rather than interpret unrelated guest memory.
+        controller.SetHealthLight(PadLight.Blue);
+        if (OperatingSystem.IsWindows() && selectedGame.Id == "file1")
+            _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
+        if (OperatingSystem.IsWindows()) _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
         _ = Pump(Process.StandardError, stderr, line => {
             ObserveGraphicsLine(line);
@@ -354,7 +386,9 @@ public sealed class GameSession {
                       source = sourceExe,
                       image,
                       sha256 = hash,
-                      iso,
+                      iso = settings.UsesGamePak() ? null : iso,
+                      gameSource = iso,
+                      gameSourceType = settings.UsesGamePak() ? "pak" : "iso",
                       discRoot,
                       networkConfigured = OnlineOptions.Configured(settings),
                       server = onlineEnvironment.GetValueOrDefault("REO_COOP_HOST"),
@@ -362,18 +396,21 @@ public sealed class GameSession {
                       networkProfileMarker,
                       automaticLobby = keyboardQueue != null,
                       inputDevice = controller.SelectedDevice.Name,
-                      fullscreen = settings.Fullscreen,
-                      resolution = DisplayOptions.Size(settings.WindowSize),
-                      linearScaling = settings.LinearFilter,
-                      textureLinear = settings.TextureLinear,
-                      internalResolution = settings.ResolvedInternalResolution,
-                      performanceOverlay = settings.PerformanceOverlay,
-                      anisotropy = settings.ResolvedAnisotropy,
-                      aspectRatio = settings.ResolvedAspect,
-                      screenFit = settings.ResolvedFit,
-                      antiAliasing = settings.ResolvedAntiAliasing,
-                      brightness = settings.Brightness,
-                      gamma = settings.Gamma,
+                      fullscreen = graphics.Fullscreen,
+                      graphicsEnvironment = graphics.Environment,
+                      resolution = graphics.Output,
+                      linearScaling = graphics.Environment["REO_DISPLAY_FILTER"] == "linear",
+                      textureLinear = graphics.Environment["REO_TEXTURE_FILTER"] == "linear",
+                      internalResolution = int.Parse(graphics.Environment["REO_INTERNAL_RESOLUTION"], System.Globalization.CultureInfo.InvariantCulture),
+                      performanceOverlay = graphics.Environment["REO_PERFORMANCE_OVERLAY"] == "1",
+                      developer = settings.Developer,
+                      anisotropy = int.Parse(graphics.Environment["REO_TEXTURE_ANISOTROPY"], System.Globalization.CultureInfo.InvariantCulture),
+                      aspectRatio = graphics.Environment["REO_DISPLAY_ASPECT"],
+                      widescreenCamera = graphics.Environment["REO_WIDESCREEN"] == "1",
+                      screenFit = graphics.Environment["REO_DISPLAY_FIT"],
+                      antiAliasing = graphics.Environment["REO_POST_AA"],
+                      brightness = (int)Math.Round(100 * double.Parse(graphics.Environment["REO_BRIGHTNESS"], System.Globalization.CultureInfo.InvariantCulture)),
+                      gamma = double.Parse(graphics.Environment["REO_GAMMA"], System.Globalization.CultureInfo.InvariantCulture),
                       memoryCard = cardFolder,
                       importedData = discRoot,
                       importReused = Imported.Reused,
@@ -381,11 +418,11 @@ public sealed class GameSession {
                       directIso = true,
                       movieDecoder = gpuMovies ? "gpu" : "cpu",
                       gpuMoviesAvailable = movies.Gpu,
-                      gpuMoviesSetting = settings.GpuMovies,
+                      gpuMoviesSetting = graphics.GpuMovies,
                       movieDecoderGpu = movies.GpuName,
                       movieDecoderReason = movies.Reason },
                 new JsonSerializerOptions { WriteIndented = true }));
-        _ = ApplyWindow(Process, settings);
+        if (OperatingSystem.IsWindows()) _ = ApplyWindow(Process, graphics);
     }
     async Task WatchRandomizerSession(Process process,string logs,string host,byte[] expected) {
         using var stopped=new CancellationTokenSource();
@@ -399,7 +436,9 @@ public sealed class GameSession {
                 randomizerStopReason=message;
                 NetworkStatus=message;
                 await File.WriteAllTextAsync(Path.Combine(logs,"randomizer-session-error.txt"),message);
-                if(!process.HasExited) process.CloseMainWindow();
+                if(!process.HasExited) {
+                    await PlatformRuntime.Stop(process);
+                }
                 return;
             } catch(OperationCanceledException) { return; }
               catch(IOException) { /* Native networking handles a disconnected host. */ }
@@ -418,12 +457,57 @@ public sealed class GameSession {
             graphicsReady.TrySetCanceled();
             cardLease.Dispose();
         }
+        await Task.Run(() => NetworkTrace.Finish(logs));
         await File.WriteAllTextAsync(Path.Combine(logs, "exit.json"), JsonSerializer.Serialize(new {
             pid = process.Id, exitCode = process.ExitCode, utc = DateTime.UtcNow
         }));
     }
     // Drain pipes independently of the UI: native window messages can wait on the game.
+    internal const string PointsCheatCapability = "[CHEATS-POINTS-1] maximum results points";
+    internal const string ExamineMessagesCapability = "[MOD-EXAMINE-TIME-1] multiplier";
+    internal static bool SupportsExamineMessages(string image) => HasMarker(image, ExamineMessagesCapability);
+    internal static Dictionary<string, string> ExamineMessageEnvironment(IEnumerable<ModManifest> mods, bool supportsCapability) {
+        var environment = new Dictionary<string, string>();
+        if (Mods.SelectedExamineMessages(mods) is not {} examine) return environment;
+        Mods.ValidateExamineMessages(examine);
+        if (!supportsCapability)
+            throw new IOException("Examine message timing needs the updated game build. Rebuild or update the selected game in Game files.");
+        // Native timing uses integer permille; round upward so the requested
+        // message duration is never shortened by conversion. The round-trip
+        // decimal avoids promoting 8.001 to 8002 through binary multiplication.
+        var invariant = System.Globalization.CultureInfo.InvariantCulture;
+        decimal multiplier = decimal.Parse(examine.DurationMultiplier.ToString("R", invariant),
+            System.Globalization.NumberStyles.Float, invariant);
+        int permille = (int)decimal.Ceiling(multiplier * 1000);
+        environment["REO_MOD_EXAMINE_TIME_SCALE"] = permille.ToString(invariant);
+        return environment;
+    }
+    internal const string File2AudioCapability = "[AUDIO-MIXER-FILE2-1] master,music,sfx,voice,ui";
+    internal static void VerifyAudioCompatibility(string image, string gameId) {
+        if (gameId == "file2" && !HasMarker(image, File2AudioCapability))
+            throw new IOException("File #2 volume controls need the updated game build. Rebuild or update File #2 in Game files.");
+    }
+    internal const string EscapeCheatCapability = "[CHEATS-ESCAPE-1] active countdown frozen";
+    internal const string OnlineUnlockCapability = "[CHEATS-ONLINE-UNLOCK-1] progression";
+    internal static void VerifyCheatCompatibility(string image, string gameId, IEnumerable<string> manifest, bool online = false) {
+        var lines = manifest.ToHashSet(StringComparer.Ordinal);
+        if (gameId == "file2" && !HasMarker(image, "[CHEATS-FILE2-1] health infection ammo data"))
+            throw new IOException("File #2 cheats need the updated game build. Rebuild or update the game.");
+        if (lines.Contains("builtin unlock") && !SupportsProgressionUnlocks(image, gameId))
+            throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
+        if (online && lines.Contains("builtin unlock") && !HasMarker(image, OnlineUnlockCapability))
+            throw new IOException("Online Unlock everything needs the updated game build. Rebuild or update the selected game in Game files.");
+        if (lines.Contains("builtin points") && !HasMarker(image, PointsCheatCapability))
+            throw new IOException("Max results points needs the updated game build. Rebuild or update the game.");
+        if (lines.Contains("builtin escape") && !HasMarker(image, EscapeCheatCapability))
+            throw new IOException("Infinite escape time needs the updated game build. Rebuild or update the game.");
+    }
     internal static bool SupportsAutomaticAccount(string image) => HasMarker(image, "[COOP-AUTO] native-password-applied %u");
+    internal static bool SupportsProgressionUnlocks(string image, string game) => game switch {
+        "file1" => HasMarker(image, "[CHEATS-UNLOCK-1] progression"),
+        "file2" => HasMarker(image, "[CHEATS-UNLOCK-FILE2-1] progression"),
+        _ => false
+    };
     internal static bool SupportsWeaponShuffle(string image) => HasMarker(image, "[MOD-WEAPON-SHUFFLE-1] installed seed=%u");
     internal static bool SupportsZombieRandomizer(string image) => HasMarker(image, "[MOD-ZOMBIE-RANDOMIZER-1] installed seed=%u");
     internal static bool SupportsEnemySpawnRandomizer(string image) =>
@@ -469,7 +553,7 @@ public sealed class GameSession {
             }
         }
     }
-    static async Task ApplyWindow(Process process, Settings settings) {
+    static async Task ApplyWindow(Process process, GraphicsOptions graphics) {
         for (int i = 0; i < 1200 && !process.HasExited; ++i) {
             await Task.Delay(100).ConfigureAwait(false);
             process.Refresh();
@@ -477,7 +561,7 @@ public sealed class GameSession {
             if (hwnd == 0)
                 continue;
             _ = GameWindowIcon.Apply(process, hwnd);
-            if (settings.Fullscreen) {
+            if (graphics.Fullscreen) {
                 long style = GetWindowLongPtr(hwnd, -16).ToInt64() & ~0x00CF0000L;
                 SetWindowLongPtr(hwnd, -16, new nint(style));
                 var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
@@ -486,7 +570,7 @@ public sealed class GameSession {
                                  info.Monitor.Right - info.Monitor.Left,
                                  info.Monitor.Bottom - info.Monitor.Top, 0x4024);
             } else {
-                var size = DisplayOptions.Size(settings.WindowSize);
+                var size = graphics.Output;
                 var rect = new Rect { Right = size.Width, Bottom = size.Height };
                 AdjustWindowRectExForDpi(ref rect, (uint)GetWindowLongPtr(hwnd, -16).ToInt64(),
                                          false, (uint)GetWindowLongPtr(hwnd, -20).ToInt64(),

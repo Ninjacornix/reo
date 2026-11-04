@@ -3,18 +3,29 @@ using System.Text.Json;
 
 namespace Outbreak.Launcher;
 public sealed partial class Settings {
-    public static string Home =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                     "OutbreakRecomp", "launcher");
+    public static string Home => Storage.Home;
     public string Exe { get; set; } = "";
     public string Iso { get; set; } = "";
     public int WindowSize { get; set; }
+    public double LauncherWidth { get; set; } = 1320;
+    public double LauncherHeight { get; set; } = 920;
+    public bool LauncherMaximized { get; set; }
+    public bool LauncherBackgroundMovies { get; set; } = true;
+    public string LauncherFont { get; set; } = "outbreak";
+    public string LauncherLanguage { get; set; } = "en";
+    public List<string> BundledModEditions { get; set; } = new();
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string ResolvedLauncherFont => LauncherFont is "segoe-ui" or "tahoma" ? LauncherFont : "outbreak";
     public bool Fullscreen { get; set; }
     public bool PerformanceOverlay { get; set; }
     public string AspectRatio { get; set; } = "4:3";
+    // Widen the game camera to the selected ratio instead of stretching the 4:3 view.
+    public bool WidescreenCamera { get; set; }
     public string ScreenFit { get; set; } = "fit";
     [System.Text.Json.Serialization.JsonIgnore]
-    public string ResolvedAspect => AspectRatio == "16:9" ? "16:9" : "4:3";
+    public string ResolvedAspect => Array.IndexOf(DisplayOptions.Aspects, AspectRatio) >= 0 ? AspectRatio : "4:3";
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool ResolvedWidescreen => WidescreenCamera && ResolvedAspect != "4:3";
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedFit => ScreenFit is "stretch" or "center" or "fill" ? ScreenFit : "fit";
     public bool LinearFilter { get; set; } = true;
@@ -29,6 +40,8 @@ public sealed partial class Settings {
     // "offline", "host" or "join"; null in settings saved by older launchers.
     public string? CoopMode { get; set; }
     public bool AutoLobby { get; set; } = true;
+    DeveloperOptions developer = new();
+    public DeveloperOptions Developer { get => developer; set => developer = value ?? new(); }
     public string JoinHostName { get; set; } = "";
     // Hosting ports the host may change; JoinSignupPort is learned from the host (0 = default).
     public int SignupPort { get; set; } = HostNetworking.SignupPort;
@@ -56,6 +69,9 @@ public sealed partial class Settings {
     public bool DualSense { get; set; } = true;
     public bool RumbleEnabled { get; set; } = true;
     public int MasterVolume { get; set; } = 100;
+    public bool ShowSubtitles { get; set; } = true;
+    public string AudioOutputId { get; set; } = "";
+    public string AudioOutputName { get; set; } = "";
     public int MusicVolume { get; set; } = 100;
     public int SfxVolume { get; set; } = 100;
     public int VoiceVolume { get; set; } = 100;
@@ -94,8 +110,13 @@ public sealed partial class Settings {
             settings.InputDeviceId = "keyboard";
         settings.EnabledCheats ??= new();
         settings.EnabledMods ??= new();
+        settings.EnabledAssetPaks ??= new();
         settings.CoopHost ??= "";
         settings.AccountUsername ??= "";
+        settings.RoomName ??= "";
+        settings.JoinRoomName ??= "";
+        settings.RoomMaxPlayers = Math.Clamp(settings.RoomMaxPlayers, 2, 4);
+        if (!new[] { 3, 5, 10, 15, 30 }.Contains(settings.RoomWaitMinutes)) settings.RoomWaitMinutes = 5;
         settings.JoinHostName ??= "";
         if (HostNetworking.PortError(settings.SignupPort, settings.GamePort) != null) {
             settings.SignupPort = HostNetworking.SignupPort;
@@ -111,6 +132,7 @@ public sealed partial class Settings {
         settings.Xbox.DeadZone = Math.Clamp(settings.Xbox.DeadZone, 0, 30);
         settings.PlayStation.Buttons ??= InputMapping.PadDefaults();
         settings.Xbox.Buttons ??= InputMapping.PadDefaults();
+        settings.UpgradeMemoryCards(root);
         return settings;
     }
     public void Save() {

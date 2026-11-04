@@ -42,6 +42,26 @@ class FakeRam:
 class ActorSnapshotTests(unittest.TestCase):
     def setUp(self): FakeRam.instances = []
 
+    def test_file2_position_profile_uses_distinct_actor_stride(self):
+        class SecondRam(FakeRam):
+            def read(self, address, size):
+                self.reads.append((address, size))
+                if address == 0x4DB3AD:
+                    return bytes([self.number - 1])
+                self.asserted = size == 12 and (address - 0x4C5E48) % 0x1100 == 0
+                if not self.asserted:
+                    raise AssertionError("Unexpected File #2 actor field")
+                return struct.pack("<fff", (address - 0x4C5E48) // 0x1100, 2, 3)
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            record, identities = fixture(folder)
+            record["game"] = "file2"
+            result = actors.snapshot_actors(folder, record, "file2", reader_factory=SecondRam,
+                                           identity_reader=identities.get)
+            self.assertEqual(result["game"], "file2")
+            self.assertEqual(result["players"][3]["actors"][3], {"slot": 3, "xyz": [3, 2, 3]})
+            self.assertTrue(all(r.closed for r in FakeRam.instances))
+
     def test_four_player_readonly_receipt_and_immutable_label(self):
         with tempfile.TemporaryDirectory() as temp:
             folder = Path(temp)

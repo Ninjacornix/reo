@@ -8,12 +8,14 @@ public static class UpdateWorker {
     public static void InstallFiles(string source, string target, string backup, Version version,
                                     Action<int>? checkpoint = null) {
         var incoming = Updates.Validate(source, version);
+        if (incoming.Any(file => Storage.ProtectedUpdatePath(target, file.Path)))
+            throw new IOException("The update package must not replace your storage folder or storage location settings.");
         var previous = Updates.Inventory(target);
         var wanted = incoming.Select(f => f.Path)
                          .Append("package-manifest.json")
                          .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var obsolete = previous
-                           .Where(f => !wanted.Contains(f.Path) &&
+                           .Where(f => !Storage.ProtectedUpdatePath(target, f.Path) && !wanted.Contains(f.Path) &&
                                        File.Exists(Updates.SafePath(target, f.Path)) &&
                                        Updates.Sha(Updates.SafePath(target, f.Path))
                                            .Equals(f.Sha256, StringComparison.OrdinalIgnoreCase))
@@ -85,7 +87,8 @@ public static class UpdateWorker {
     static UpdatePlan ReadPlan(string file) {
         var plan = JsonSerializer.Deserialize<UpdatePlan>(File.ReadAllText(file), Updates.Json) ??
                    throw new IOException("Missing update plan.");
-        string work = Path.GetFullPath(plan.Work), home = Path.GetFullPath(Updates.Home);
+        string dataHome = Storage.Resolve(plan.Target, Environment.GetEnvironmentVariable("REO_UPDATE_DATA_HOME"));
+        string work = Path.GetFullPath(plan.Work), home = Path.Combine(dataHome, "updates");
         if (!string.Equals(Path.GetDirectoryName(work), home, StringComparison.OrdinalIgnoreCase) ||
             !Guid.TryParseExact(Path.GetFileName(work), "N", out _) ||
             Path.GetFullPath(file) != Path.Combine(work, "plan.json") ||
@@ -97,8 +100,11 @@ public static class UpdateWorker {
             plan.Target.StartsWith(work, StringComparison.OrdinalIgnoreCase))
             throw new IOException(
                 "The updater cannot replace a source checkout or staging directory.");
-        if (Updates.ParseVersion(plan.Version) <= Updates.InstalledVersion(plan.Target))
+        if (Updates.CompareReleaseTags(plan.Version, Updates.InstalledReleaseTag(plan.Target)) <= 0)
             throw new IOException("Update would not install a newer version.");
+        // Configure only after checking the plan's ownership. Do not initialize
+        // storage or take its lease while waiting for the parent to exit.
+        Storage.Configure(plan.Target, dataHome);
         return plan;
     }
     public static async Task<int> Run(string file) {
@@ -107,12 +113,14 @@ public static class UpdateWorker {
         string? failure = null;
         try {
             plan = ReadPlan(file);
-            Updates.Validate(plan.Source, Updates.ParseVersion(plan.Version));
+            Updates.Validate(plan.Source, Updates.ReleaseVersion(plan.Version), expectedTag: plan.Version);
             using (var installLock = new FileStream(
                        Updates.SafePath(plan.Target, ".reo-update.lock"), FileMode.OpenOrCreate,
                        FileAccess.ReadWrite, FileShare.None)) {
-                File.WriteAllText(Path.Combine(plan.Work, "ready.json"),
+                string ready = Path.Combine(plan.Work, "ready.json");
+                File.WriteAllText(ready + ".tmp",
                                   JsonSerializer.Serialize(new { pid = Environment.ProcessId }));
+                File.Move(ready + ".tmp", ready);
                 try {
                     using var parent = Process.GetProcessById(plan.ParentPid);
                     if (parent.StartTime.ToUniversalTime().Ticks == plan.ParentStarted) {
@@ -135,15 +143,15 @@ public static class UpdateWorker {
                 await Task
                     .Run(() => InstallFiles(plan.Source, plan.Target,
                                             Path.Combine(plan.Work, "backup"),
-                                            Updates.ParseVersion(plan.Version)))
+                                            Updates.ReleaseVersion(plan.Version)))
                     .ConfigureAwait(false);
             }
         } catch (Exception error) {
             failure = error.Message;
             restored = error is not AggregateException;
             if (plan == null) {
-                Directory.CreateDirectory(Updates.Home);
-                File.WriteAllText(Path.Combine(Updates.Home, "worker-error.txt"), error.ToString());
+                // An invalid plan does not establish an owned output directory.
+                Console.Error.WriteLine(error);
                 return 1;
             }
         }
@@ -160,6 +168,9 @@ public static class UpdateWorker {
             };
             start.ArgumentList.Add(failure == null ? "--update-complete" : "--update-failed");
             start.ArgumentList.Add(receipt);
+            start.ArgumentList.Add("--data-home");
+            start.ArgumentList.Add(Settings.Home);
+            start.Environment.Remove("REO_UPDATE_DATA_HOME");
             using var restarted = Process.Start(start);
             if (restarted != null)
                 File.WriteAllText(Path.Combine(plan.Work, "restart.json"),

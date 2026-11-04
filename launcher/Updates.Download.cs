@@ -97,7 +97,7 @@ public static partial class Updates {
                 () => {
                     progress?.Report(new("Unpacking", 100));
                     Extract(zip, stage, cancel);
-                    Validate(stage, release.Version, cancel);
+                    Validate(stage, release.Version, cancel, release.Tag);
                 },
                 cancel)
             .ConfigureAwait(false);
@@ -143,7 +143,11 @@ public static partial class Updates {
             UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = helper
         };
         start.ArgumentList.Add("--apply-update");
+        Storage.ProcessEnvironment(start);
         start.ArgumentList.Add(planFile);
+        // The helper lives beneath Home/updates, so its own default data
+        // directory cannot identify the parent launcher's selected storage.
+        start.Environment["REO_UPDATE_DATA_HOME"] = Settings.Home;
         using var process =
             Process.Start(start) ?? throw new IOException("Could not start the update installer.");
         for (int i = 0; i < 600; i++) {

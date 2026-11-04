@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "example.examine-messages",
+  "name": "Longer examine messages",
+  "version": "1.0.0",
+  "description": "Extend timed examine and scripted system messages to 1.5 times their original duration. Solo play.",
+  "elfSha256": "5c0411a26247ef9974cd94b844ac5aecbcbf4705db543f51814aeed89da0fd8d",
+  "examineMessages": {
+    "durationMultiplier": 1.5
+  }
+}

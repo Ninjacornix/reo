@@ -1,13 +1,28 @@
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
 #include "overrides/reo_cheats.h"
+#include "../runtime/audio/host_bridge.h"
+#include "overrides/reo_subtitles.h"
+#include "overrides/reo_audio.h"
+#endif
+#if defined(REO_GAME_FILE1)
 #include "overrides/reo_mods.h"
 #include "overrides/reo_rumble.h"
-#include "overrides/reo_audio.h"
+#endif
+#if defined(REO_GAME_FILE2)
+#include "overrides/reo_mods_file2.h"
+#endif
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
+#include "overrides/reo_widescreen.h"
 #endif
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)
 #include "natural_dispatch.h"
 #endif
 #include "gs_priv_atomic.h"
+#include "runtime/assets/executable_strings.h"
+#ifdef __APPLE__
+#include "runtime/core/macos_run_control.h"
+#include "runtime/input/macos_input.h"
+#endif
 
 #include "gs_backend_route.h"
 #if __has_include("ps2_codegen_features.h")
@@ -26,14 +41,17 @@
 
 #include "overrides/reo_game_clock_observer.h"
 #include "overrides/reo_performance.h"
+#include "overrides/reo_cri_server_observer.h"
+#include "overrides/reo_cd_async.h"
+#include "overrides/reo_display_probe.h"
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
 #include "overrides/reo_gpu_movie_boundary.h"
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
 #include "overrides/movie_join_observer.h"
-#include "overrides/reo_memory_card.h"
 #endif
+#include "overrides/reo_memory_card.h"
 
 #include "reo_vu_specialized.h"
 
@@ -44,7 +62,7 @@
 namespace gs_backend_bridge {
 void publishPrivilegedReset(const Privileged&);
 }
-#if defined(_WIN32) && defined(REO_GAME_FILE1)
+#if defined(_WIN32) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
 #include "movie_runtime/native_movie_game.h"
 #endif
 
@@ -118,6 +136,9 @@ void installActualOriginalCpuIrqGameReceiver(PS2Runtime&);
 namespace reo_missing_entries {
 void install(PS2Runtime& runtime);
 }
+namespace reo_file2_network {
+void install(PS2Runtime& runtime);
+}
 extern bool ReoInstallPaletteOriginObserver(PS2Runtime& runtime);
 #if defined(REO_GAME_FILE1)
 extern bool ReoInstallPaletteParentFrontierObserver(PS2Runtime& runtime);
@@ -157,6 +178,13 @@ struct GameDef {
     uint32_t entry_point;
 };
 
+// Serial of the game this build's movie addresses (reo_movie_game_addresses.h) describe.
+#if defined(REO_GAME_FILE2)
+#define REO_MOVIE_SERIAL "SLUS-20984"
+#else
+#define REO_MOVIE_SERIAL "SLUS-20765"
+#endif
+
 static const GameDef s_games[] = {
 
     {"Resident Evil Outbreak", "SLUS_207.65", "SLUS-20765", "game_data", 0x00100008},
@@ -191,6 +219,8 @@ static void print_banner(const GameDef& g) {
 
     printf("\n");
 }
+
+static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint32_t w, uint32_t h);
 
 #ifdef _WIN32
 
@@ -323,6 +353,35 @@ static LONG WINAPI reoCrashFilter(EXCEPTION_POINTERS* ep) {
                             : "read",
 
                 static_cast<unsigned long long>(ep->ExceptionRecord->ExceptionInformation[1]));
+    }
+
+    // Uncaught MSVC C++ exception: walk the x64 ThrowInfo catchable types (image-relative)
+    // and print what() when the thrown object derives from std::exception.
+    if (ep->ExceptionRecord->ExceptionCode == 0xE06D7363 &&
+        ep->ExceptionRecord->NumberParameters >= 4 &&
+        ep->ExceptionRecord->ExceptionInformation[0] == 0x19930520) {
+        const auto object = ep->ExceptionRecord->ExceptionInformation[1];
+        const auto throwInfo = ep->ExceptionRecord->ExceptionInformation[2];
+        const auto image = ep->ExceptionRecord->ExceptionInformation[3];
+        const char* typeName = nullptr;
+        bool isStdException = false;
+        if (object && throwInfo && image) {
+            const auto rva = [image](uint32_t offset) { return image + offset; };
+            const auto array = rva(*reinterpret_cast<const uint32_t*>(throwInfo + 12));
+            const int count = *reinterpret_cast<const int*>(array);
+            for (int i = 0; i < count && i < 32; ++i) {
+                const auto type = rva(reinterpret_cast<const uint32_t*>(array + 4)[i]);
+                const char* name = reinterpret_cast<const char*>(
+                    rva(*reinterpret_cast<const uint32_t*>(type + 4)) + 16);
+                if (i == 0)
+                    typeName = name;
+                if (std::strcmp(name, ".?AVexception@std@@") == 0)
+                    isStdException = true;
+            }
+        }
+        fprintf(stderr, " c++ type=%s", typeName ? typeName : "?");
+        if (isStdException)
+            fprintf(stderr, " what=\"%s\"", reinterpret_cast<const std::exception*>(object)->what());
     }
 
     fprintf(stderr, "\n[CRASH] stack (module+rva):");
@@ -673,53 +732,6 @@ static void reoStartStackDump() {
 
 // times -- visual checks without access to the window.
 
-static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint32_t w,
-                        uint32_t h) {
-
-    FILE* f = fopen(path, "wb");
-
-    if (!f)
-        return;
-
-    const uint32_t rowBytes = w * 4u, dataBytes = rowBytes * h, fileBytes = 54u + dataBytes;
-
-    uint8_t hdr[54] = {'B', 'M'};
-
-    auto put32 = [&](int o, uint32_t v) { memcpy(hdr + o, &v, 4); };
-
-    put32(2, fileBytes);
-    put32(10, 54);
-    put32(14, 40);
-    put32(18, w);
-    put32(22, h);
-
-    hdr[26] = 1;
-    hdr[28] = 32;
-    put32(34, dataBytes);
-
-    fwrite(hdr, 1, 54, f);
-
-    std::vector<uint8_t> row(rowBytes);
-
-    for (uint32_t y = 0; y < h; ++y) {
-
-        const uint8_t* src = rgba.data() + static_cast<size_t>(h - 1 - y) * rowBytes;
-
-        for (uint32_t x = 0; x < w; ++x) {
-
-            row[x * 4 + 0] = src[x * 4 + 2];
-            row[x * 4 + 1] = src[x * 4 + 1];
-
-            row[x * 4 + 2] = src[x * 4 + 0];
-            row[x * 4 + 3] = 255;
-        }
-
-        fwrite(row.data(), 1, rowBytes, f);
-    }
-
-    fclose(f);
-}
-
 static void reoStartShots(PS2Runtime* runtime) {
 
     const char* e = std::getenv("REO_SHOT_AT");
@@ -759,6 +771,21 @@ static void reoStartShots(PS2Runtime* runtime) {
                                     std::chrono::steady_clock::now().time_since_epoch())
                                     .count();
 
+            // REO_SHOT_RAM=1: also dump EE RAM (32 MB per shot), with or without a CPU frame.
+
+            static const bool dumpRam = std::getenv("REO_SHOT_RAM") != nullptr;
+
+            if (const uint8_t* ram = dumpRam ? runtime->memory().getRDRAM() : nullptr) {
+
+                char rn[64];
+                snprintf(rn, sizeof(rn), "eeram_%u.bin", t);
+
+                if (FILE* rf = fopen(rn, "wb")) {
+                    fwrite(ram, 1, PS2_RAM_SIZE, rf);
+                    fclose(rf);
+                }
+            }
+
             if (runtime->gs().copyLatchedHostPresentationFrame(px, w, h) && w && h &&
                 px.size() >= size_t(w) * h * 4) {
 
@@ -792,21 +819,6 @@ static void reoStartShots(PS2Runtime* runtime) {
                     if (FILE* vf = fopen(vn, "wb")) {
                         fwrite(vram, 1, PS2_GS_VRAM_SIZE, vf);
                         fclose(vf);
-                    }
-                }
-
-                // REO_SHOT_RAM=1: also dump EE RAM (32 MB per shot).
-
-                static const bool dumpRam = std::getenv("REO_SHOT_RAM") != nullptr;
-
-                if (const uint8_t* ram = dumpRam ? runtime->memory().getRDRAM() : nullptr) {
-
-                    char rn[64];
-                    snprintf(rn, sizeof(rn), "eeram_%u.bin", t);
-
-                    if (FILE* rf = fopen(rn, "wb")) {
-                        fwrite(ram, 1, PS2_RAM_SIZE, rf);
-                        fclose(rf);
                     }
                 }
 
@@ -874,6 +886,54 @@ static void reoStartHwWatch(uint8_t* rdram) {
 }
 
 #endif
+
+// Portable BMP writer shared by Windows shots and GPU diagnostic captures.
+static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint32_t w,
+                        uint32_t h) {
+
+    FILE* f = fopen(path, "wb");
+
+    if (!f)
+        return;
+
+    const uint32_t rowBytes = w * 4u, dataBytes = rowBytes * h, fileBytes = 54u + dataBytes;
+
+    uint8_t hdr[54] = {'B', 'M'};
+
+    auto put32 = [&](int o, uint32_t v) { memcpy(hdr + o, &v, 4); };
+
+    put32(2, fileBytes);
+    put32(10, 54);
+    put32(14, 40);
+    put32(18, w);
+    put32(22, h);
+
+    hdr[26] = 1;
+    hdr[28] = 32;
+    put32(34, dataBytes);
+
+    fwrite(hdr, 1, 54, f);
+
+    std::vector<uint8_t> row(rowBytes);
+
+    for (uint32_t y = 0; y < h; ++y) {
+
+        const uint8_t* src = rgba.data() + static_cast<size_t>(h - 1 - y) * rowBytes;
+
+        for (uint32_t x = 0; x < w; ++x) {
+
+            row[x * 4 + 0] = src[x * 4 + 2];
+            row[x * 4 + 1] = src[x * 4 + 1];
+
+            row[x * 4 + 2] = src[x * 4 + 0];
+            row[x * 4 + 3] = 255;
+        }
+
+        fwrite(row.data(), 1, rowBytes, f);
+    }
+
+    fclose(f);
+}
 
 int main(int argc, char* argv[]) {
 
@@ -1032,6 +1092,36 @@ int main(int argc, char* argv[]) {
     }
     gpuConfig.validatedDrawing = true;
 
+    // Opt-in bounded GPU readback for unattended visual regression checks.
+    // Capture the final shader output without changing window focus or visibility.
+    if (const char* seconds = std::getenv("REO_GPU_SHOT_EVERY_SECONDS")) {
+        const double interval = std::atof(seconds);
+        if (std::isfinite(interval) && interval >= 1 && interval <= 120) {
+            struct Shots {
+                std::chrono::steady_clock::time_point next;
+                unsigned count = 0;
+            };
+            auto shots = std::make_shared<Shots>();
+            shots->next = std::chrono::steady_clock::now() +
+                          std::chrono::milliseconds(int64_t(interval * 1000));
+            gpuConfig.diagnosticOutputRequested = [shots](uint64_t) {
+                return shots->count < 128 && std::chrono::steady_clock::now() >= shots->next;
+            };
+            gpuConfig.diagnosticOutput = [shots, interval](uint64_t tick,
+                const std::vector<uint8_t>& bytes, uint32_t width, uint32_t height) {
+                if (bytes.size() != size_t(width) * height * 4 || !width || !height)
+                    throw std::runtime_error("GPU diagnostic frame size differs");
+                char name[64];
+                std::snprintf(name, sizeof(name), "gpu-shot-%02u.bmp", ++shots->count);
+                reoWriteBmp(name, bytes, width, height);
+                std::fprintf(stderr, "[GPU-SHOT] file=%s tick=%llu size=%ux%u\n", name,
+                    static_cast<unsigned long long>(tick), width, height);
+                shots->next = std::chrono::steady_clock::now() +
+                              std::chrono::milliseconds(int64_t(interval * 1000));
+            };
+        }
+    }
+
     gpuConfig.descriptorBuffer = false;
 
     // Match the stock PCSX2 automatic FFMD0/anti-blur presentation policy.
@@ -1041,6 +1131,8 @@ int main(int argc, char* argv[]) {
     gpuConfig.forceProgressive = true;
 
     gpuConfig.antiBlur = true;
+    if (gpuConfig.residentPresentation)
+        gpuConfig.currentVsyncTick = [] { return ps2_syscalls::GetCurrentVSyncTick(); };
 
     gpuConfig.persistentPipelineCache = true;
     if (const char* cache = std::getenv("REO_PIPELINE_CACHE_FILE"); cache && *cache)
@@ -1079,16 +1171,48 @@ int main(int argc, char* argv[]) {
 #endif
     }
 #endif
+#if defined(REO_GAME_FILE1)
     reo_gpu_enrollment::configureBeforeBoot(gpuConfig, fs::u8path(GetApplicationDirectory()),
                                             g.serial, &runtime);
+#else
+    // The resident geometry registry is pinned to File #1 code images; a File #1
+    // setting left in the user environment must not prevent File #2 from starting.
+    // Clear it for this process so the runtime's own check does not refuse either.
+    if (const char* resident = std::getenv("REO_VIF1_GPU_RESIDENT"); resident && resident[0] == '1') {
+        fprintf(stderr, "[GPU-GEOMETRY] REO_VIF1_GPU_RESIDENT cleared: resident geometry is "
+                        "File #1 only; geometry stays on the CPU VU path\n");
+#ifdef _WIN32
+        _putenv_s("REO_VIF1_GPU_RESIDENT", "");
+#else
+        unsetenv("REO_VIF1_GPU_RESIDENT");
+#endif
+    }
+#endif
 
     gs_backend_bridge::registerFactory(reo_parallel_backend::makeFactory(std::move(gpuConfig)));
 
 #endif
 
     size_t ramBackingBytes = PS2_RAM_SIZE;
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
     if (std::getenv("REO_MOD_ENEMY_SPAWN_SEED")) ramBackingBytes = 2u * PS2_RAM_SIZE;
+#endif
+#ifdef __APPLE__
+    if (!std::getenv("REO_HEADLESS") && !reo::macos_input::display_available()) {
+        fprintf(stderr,"[BOOT] No awake display is available. Wake the display and launch the game again.\n");
+        return 1;
+    }
+#endif
+#if !defined(__APPLE__) && !defined(PLATFORM_VITA)
+    if (!std::getenv("REO_HEADLESS") && !reo_display_probe::openGl33Available()) {
+        fprintf(stderr, "[BOOT] OpenGL 3.3 is unavailable; not opening the game window. %s\n",
+                reo_display_probe::kMessage);
+#ifdef _WIN32
+        MessageBoxA(nullptr, reo_display_probe::kMessage, "Resident Evil Outbreak",
+                    MB_OK | MB_ICONERROR);
+#endif
+        return 1;
+    }
 #endif
     if (!runtime.initialize(g.name, ramBackingBytes)) {
 
@@ -1172,11 +1296,19 @@ int main(int argc, char* argv[]) {
 #endif
 
     printf("[BOOT] All functions registered.\n");
+    try {
+        reo::assets::applyExecutableStrings(std::filesystem::u8path(elf_path), runtime.memory().getRDRAM(), PS2_RAM_SIZE,
+                                          std::strcmp(g.serial, "SLUS-20984") == 0);
+    } catch (const std::exception& error) {
+        std::fprintf(stderr, "Executable string replacements rejected: %s\n", error.what()); return 1;
+    }
 
     // Only normal bootstrap-owned32MiB File1 RAM can enable the private observer.
 
     reo_game_clock::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_performance::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+    reo_cri_server::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+    reo_cd_async::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
 
     reo_actor_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_ground_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
@@ -1192,24 +1324,35 @@ int main(int argc, char* argv[]) {
     printf("[BOOT] Applying game overrides (post-registration)...\n");
 
     ps2_game_overrides::applyMatching(runtime, elf_path, g.entry_point);
-#if defined(REO_GAME_FILE1)
+#if defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, "SLUS-20984") == 0)
+        reo::mc2::install(runtime, reo::mc2::File2Workers);
+#else
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
         reo::mc2::install(runtime);
 #endif
-    if (std::strcmp(g.serial, "SLUS-20765") == 0)
+    if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0)
         reo_movie_entry::install(runtime);
-    if (std::strcmp(g.serial, "SLUS-20765") == 0)
-        reo_missing_entries::install(runtime); // unregistered entries (stutter + skipped logic)
 #if defined(REO_GAME_FILE1)
     if (std::strcmp(g.serial, "SLUS-20765") == 0)
+        reo_missing_entries::install(runtime); // unregistered entries (stutter + skipped logic)
+#elif defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, "SLUS-20984") == 0) {
+        reo_file2_network::install(runtime);
+        reo::widescreen::install(runtime, reo::widescreen::File2);
+    }
+#endif
+#if defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0)
         reo_movie_join::install(runtime);
 #endif
-#if defined(_WIN32) && defined(REO_HAVE_PARALLEL_GS) && defined(REO_GAME_FILE1)
-    if (std::strcmp(g.serial, "SLUS-20765") == 0) {
+#if defined(_WIN32) && defined(REO_HAVE_PARALLEL_GS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
+    if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0) {
         const char* gpuMovie = std::getenv("REO_GPU_MOVIE");
         if (gpuMovie && std::atoi(gpuMovie) != 0 && !reo_gpu_movie::installNativeMovieGame(runtime))
             throw std::runtime_error(
                 "Native GPU movie installation refused its original GAME identities");
+#if defined(REO_GAME_FILE1)
         // REO_TRACE_171920=1 (CPU movie path only; the GPU route requires the original pointer at 0x171920):
         // log every entry into the movie demuxer's end-of-program callback, for comparing the paths.
         const char* trace = std::getenv("REO_TRACE_171920");
@@ -1235,6 +1378,7 @@ int main(int argc, char* argv[]) {
                                      rd(work + 0xa48 + 0x48), rd(work + 0x9ec));
                     sub_00171920_0x171920(rdram, ctx, rt);
                 });
+#endif
     }
 #endif
 #if defined(REO_HAVE_GPU_PARENT_NATURAL_HOOKS) && defined(REO_GAME_FILE1)
@@ -1287,16 +1431,33 @@ int main(int argc, char* argv[]) {
 
     ps2SetDebugPanelProvider(reoDebugPanelText);
 
+#if defined(REO_GAME_FILE2)
+    if (std::strcmp(g.serial, "SLUS-20984") == 0) {
+        reo::cheats::install(runtime);
+        reo::mods::install(runtime);
+        reo::audio::install(runtime);
+        reo::subtitles::install(runtime);
+    }
+#endif
 #if defined(REO_GAME_FILE1)
     if (std::strcmp(g.serial, "SLUS-20765") == 0) {
         reo::cheats::install(runtime);
         reo::mods::install(runtime);
         reo::rumble::install(runtime);
         reo::audio::install(runtime);
+        reo::widescreen::install(runtime);
+        reo::subtitles::install(runtime);
     }
 #endif
 #ifdef _WIN32
     reo::ScopedTimerResolution timerPrecision;
+#endif
+#ifdef __APPLE__
+    reo::ScopedMacRunControl macRunControl([&runtime] { runtime.requestStop(); },
+        [](const char* audio, const char* subtitles) {
+            reo::audio::applyEnvironmentLevels(audio);
+            reo::subtitles::applyEnvironment(subtitles);
+        });
 #endif
     runtime.run();
 

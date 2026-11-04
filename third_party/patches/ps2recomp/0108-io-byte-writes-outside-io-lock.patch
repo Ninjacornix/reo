@@ -1,0 +1,48 @@
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -744,6 +744,7 @@ __m128i PS2Memory::read128(uint32_t address)
+ void PS2Memory::write8(uint32_t address, uint8_t value)
+ {
+     if(!isScratchpad(address))reo_async_vif::beforeRegisterRead(*this,address&0x1fffffffu);
++    bool deferredIo = false; uint32_t deferredAddress = 0, deferredValue = 0;
+     [&]() {
+     reo_resident_live::beforeResidentMemoryAccess(*this,address,true);
+     if(reo_resident_live::writeMapped(*this,address,&value,sizeof(value)))return;
+@@ -783,16 +784,20 @@ void PS2Memory::write8(uint32_t address, uint8_t value)
+         uint32_t shift = (physAddr & 3) * 8;
+         uint32_t mask = ~(0xFF << shift);
+         uint32_t newValue = (m_ioRegisters[regAddr] & mask) | ((uint32_t)value << shift);
+-        writeIORegister(regAddr, newValue);
++        // Write the merged word after the IO lock is released, exactly as a 32-bit store
++        // does: writeIORegister may wait for the async VIF1 worker, never under the lock.
++        deferredIo = true; deferredAddress = regAddr; deferredValue = newValue;
+     }
+ 
+     }();
++    if (deferredIo) writeIORegister(deferredAddress, deferredValue);
+     reo_resident_live::finishResidentMemoryWrite(*this);
+ }
+ 
+ void PS2Memory::write16(uint32_t address, uint16_t value)
+ {
+     if(!isScratchpad(address))reo_async_vif::beforeRegisterRead(*this,address&0x1fffffffu);
++    bool deferredIo = false; uint32_t deferredAddress = 0, deferredValue = 0;
+     [&]() {
+     reo_resident_live::beforeResidentMemoryAccess(*this,address,true);
+     if(reo_resident_live::writeMapped(*this,address,&value,sizeof(value)))return;
+@@ -837,10 +842,13 @@ void PS2Memory::write16(uint32_t address, uint16_t value)
+         uint32_t shift = (physAddr & 2) * 8;
+         uint32_t mask = ~(0xFFFF << shift);
+         uint32_t newValue = (m_ioRegisters[regAddr] & mask) | ((uint32_t)value << shift);
+-        writeIORegister(regAddr, newValue);
++        // Write the merged word after the IO lock is released, exactly as a 32-bit store
++        // does: writeIORegister may wait for the async VIF1 worker, never under the lock.
++        deferredIo = true; deferredAddress = regAddr; deferredValue = newValue;
+     }
+ 
+     }();
++    if (deferredIo) writeIORegister(deferredAddress, deferredValue);
+     reo_resident_live::finishResidentMemoryWrite(*this);
+ }
+ 

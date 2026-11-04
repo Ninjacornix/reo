@@ -1,0 +1,46 @@
+diff --git a/ps2xRuntime/src/lib/irq_cpu_original_catalogue.hpp b/ps2xRuntime/src/lib/irq_cpu_original_catalogue.hpp
+--- a/ps2xRuntime/src/lib/irq_cpu_original_catalogue.hpp
++++ b/ps2xRuntime/src/lib/irq_cpu_original_catalogue.hpp
+@@ -1,10 +1,16 @@
+ #pragma once
+ #include "ps2_runtime.h"
++#include <array>
+ namespace reo_irq_integer {
+ struct Site{uint32_t pc,word,entry;};
++#if defined(REO_GAME_FILE2)
++// File #2 does not enroll the File #1 original IRQ source catalogue.
++inline constexpr std::array<Site,0> sites{};
++#else
+ inline constexpr Site sites[]{
+ #include "local_source_catalogues/irq_cpu_sites.inc"
+ };
++#endif
+ inline const Site* site(uint32_t pc,uint32_t word)noexcept{for(const auto& s:sites)if(s.pc==pc&&s.word==word)return &s;return nullptr;}
+ void ReoCpuIrq_18d160(uint8_t*,R5900Context*,PS2Runtime*);
+ void ReoCpuIrq_18dca0(uint8_t*,R5900Context*,PS2Runtime*);
+diff --git a/ps2xRuntime/src/lib/pre_entry_heap_source_scope.hpp b/ps2xRuntime/src/lib/pre_entry_heap_source_scope.hpp
+--- a/ps2xRuntime/src/lib/pre_entry_heap_source_scope.hpp
++++ b/ps2xRuntime/src/lib/pre_entry_heap_source_scope.hpp
+@@ -2,6 +2,7 @@
+ #include "pre_entry_control_journal.h"
+ #include "parent_first_entry.h"
+ #include <optional>
++#include <array>
+ void sub_0018DCE0_0x18dce0(uint8_t*,R5900Context*,PS2Runtime*);
+ void sub_0018DD40_0x18dd40(uint8_t*,R5900Context*,PS2Runtime*);
+ void sub_0018DDD0_0x18ddd0(uint8_t*,R5900Context*,PS2Runtime*);
+@@ -9,9 +10,14 @@
+ // This catalogue is instruction metadata, never an issuer or a range grant.
+ struct OriginalHeapControlSite {uint32_t entry,pc,word,address;};
+ inline const OriginalHeapControlSite* originalHeapControlSite(uint32_t pc)noexcept {
++#if defined(REO_GAME_FILE2)
++    // No File #1 heap-control source sites are admitted for File #2.
++    static constexpr std::array<OriginalHeapControlSite,0> sites{};
++#else
+     static constexpr OriginalHeapControlSite sites[]={
+ #include "local_source_catalogues/heap_control_sites.inc"
+     };
++#endif
+     for(const auto& s:sites)if(s.pc==pc)return &s;return nullptr;
+ }
+ inline PS2Runtime::RecompiledFunction originalHeapControlBody(uint32_t entry)noexcept {

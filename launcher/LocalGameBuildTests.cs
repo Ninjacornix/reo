@@ -120,6 +120,21 @@ static class LocalGameBuildTests {
             }
             check(wrongElf && calls == 3, "public build entry refuses synthetic unsupported ELF");
 
+            check(LocalGameBuild.DataFolderProblem(@"D:\Outbreak\data") == null &&
+                      LocalGameBuild.DataFolderProblem(@"D:\" + new string('x', 160)) is { } message &&
+                      message.Contains("shorter"),
+                  "Data folders too deep for Windows are reported before building");
+            // A build folder Windows cannot start programs in is refused before any step runs.
+            string tooDeep = Path.Combine(root, new string('d', 120), new string('e', 120));
+            bool deepRefused = false;
+            try {
+                await LocalGameBuild.EnsureVerified(root, disc, Sha(elf), home: tooDeep, runner: Runner);
+            } catch (IOException error) when (error.Message.Contains("too deep")) {
+                deepRefused = true;
+            }
+            check(deepRefused && calls == 3 && !Directory.Exists(tooDeep),
+                  "A too-deep build folder is refused before running the build");
+
             // An update's build adopts the previous kit's objects; finished builds keep only those.
             string games = Path.Combine(root, "handoff", "file1");
             string older = Path.Combine(games, "older"), newer = Path.Combine(games, "newer");
@@ -151,21 +166,45 @@ static class LocalGameBuildTests {
                   "cleanup keeps the object cache and finished builds, removes intermediates");
 
             // Remove game: only launcher-made folders; saves and tools only when asked.
-            string home = Path.Combine(root, "remove-home");
-            foreach (string folder in new[] { "local-games/file1/x", "imports/file1/y", "game-cache",
-                                              "memory-cards/default/file1/data", "toolchains/z",
-                                              "imports/file2/keep" })
-                Directory.CreateDirectory(Path.Combine(home, folder));
-            var outside = new Settings { MemoryCardFile1 = Path.Combine(root, "my-own-card") };
-            var plain = GameRemoval.Targets(root, outside, "file1", false, false, home);
-            var everything = GameRemoval.Targets(root, outside, "file1", true, true, home);
-            check(plain.Count == 3 && everything.Count == 5 &&
-                      everything.All(t => !t.Path.Contains("file2") && !t.Path.Contains("my-own-card")),
-                  "Remove game selects only this game's launcher folders");
-            check(GameRemoval.Remove(everything).Count == 0 &&
-                      Directory.Exists(Path.Combine(home, "imports", "file2", "keep")) &&
-                      !Directory.Exists(Path.Combine(home, "local-games", "file1")),
-                  "Remove game deletes the selected folders and nothing else");
+            foreach (string parent in new[] { "remove-home", "portable Čakovec 測試", "file2 install" }) {
+                string home = Path.Combine(root, parent);
+                foreach (string folder in new[] { "local-games/file1/x", "imports/file1/y", "game-cache",
+                                                  "memory-cards/default/file1/data", "toolchains/z",
+                                                  "imports/file2/keep" })
+                    Directory.CreateDirectory(Path.Combine(home, folder));
+                string sharedCard = Path.Combine(home, "memory-cards", "shared", "data");
+                string firstSave = Path.Combine(sharedCard, "BASLUS-20765NETBIO");
+                string secondSave = Path.Combine(sharedCard, "BASLUS-20984NETBIO");
+                Directory.CreateDirectory(firstSave); Directory.CreateDirectory(secondSave);
+                File.WriteAllText(Path.Combine(firstSave, "data"), "first");
+                File.WriteAllText(Path.Combine(secondSave, "data"), "second");
+                var shared = new Settings { MemoryCard = sharedCard };
+                var sharedTargets = GameRemoval.Targets(root, shared, "file1", true, false, home);
+                check(sharedTargets.Any(t => t.Path == firstSave) && !sharedTargets.Any(t => t.Path == sharedCard || t.Path == secondSave),
+                      "Game removal targets only its own title inside a shared card: " + parent);
+                check(GameRemoval.Remove(sharedTargets).Count == 0 && File.ReadAllText(Path.Combine(secondSave, "data")) == "second" &&
+                      Directory.Exists(sharedCard) && !Directory.Exists(firstSave),
+                      "Removing File 1 preserves File 2's exact shared-card save data: " + parent);
+                // Recreate the ordinary removal fixtures consumed above.
+                Directory.CreateDirectory(Path.Combine(home, "local-games", "file1", "x"));
+                Directory.CreateDirectory(Path.Combine(home, "imports", "file1", "y"));
+                Directory.CreateDirectory(Path.Combine(home, "game-cache"));
+                Directory.CreateDirectory(Path.Combine(home, "memory-cards", "default", "file1", "data"));
+                var outside = new Settings { MemoryCardFile1 = Path.Combine(root, "my-own-card") };
+                var plain = GameRemoval.Targets(root, outside, "file1", false, false, home);
+                var everything = GameRemoval.Targets(root, outside, "file1", true, true, home);
+                var expected = new HashSet<string>(new[] { "local-games/file1", "imports/file1", "game-cache" }
+                    .Select(relative => Path.GetFullPath(Path.Combine(home, relative))),
+                    StringComparer.OrdinalIgnoreCase);
+                bool plainMatches = expected.SetEquals(plain.Select(t => Path.GetFullPath(t.Path)));
+                expected.Add(Path.GetFullPath(Path.Combine(home, "toolchains")));
+                check(plainMatches && expected.SetEquals(everything.Select(t => Path.GetFullPath(t.Path))),
+                      "Remove game selects only this game's launcher folders: " + parent);
+                check(GameRemoval.Remove(everything).Count == 0 &&
+                          Directory.Exists(Path.Combine(home, "imports", "file2", "keep")) &&
+                          !Directory.Exists(Path.Combine(home, "local-games", "file1")),
+                      "Remove game deletes the selected folders and nothing else: " + parent);
+            }
         } finally {
             // Only this test's newly created directory can be removed.
             if (Directory.Exists(root))

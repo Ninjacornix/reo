@@ -15,6 +15,9 @@ namespace reo_network::automatic_account {
 inline std::atomic<bool> armed{false};
 inline std::atomic<bool> completed{false};
 inline std::atomic<unsigned> generation{0};
+// Set only by a verified original password-poll call site. File #2's one-frame
+// initialization can finish between host pad polls, unlike File #1's eight frames.
+inline std::atomic<unsigned> editorReadyGeneration{0};
 inline bool enabled() {
     const char* option = std::getenv("REO_COOP_AUTO_ACCOUNT");
     const char* path = std::getenv("REO_COOP_ACCOUNT_STATUS");
@@ -22,6 +25,7 @@ inline bool enabled() {
 }
 inline void arm() {
     if (enabled() && (!armed.load() || completed.exchange(false))) {
+        editorReadyGeneration.store(0);
         unsigned attempt = generation.fetch_add(1) + 1;
         armed.store(true);
         std::fprintf(stderr, "\n[COOP-AUTO] account-request %u\n", attempt);
@@ -88,12 +92,16 @@ inline void inputApplied() {
 
 enum class Button { None, Confirm, Up, Down };
 struct Menu {
+    bool gameFile2 = false;
     unsigned step = 0, substep = 0;
     int cursor = 0, delay = 0;
     int upperDelay = 0;
     unsigned choice = 0, profileStage = 0, profileCursor = 0;
+    unsigned cardStage = 0, cardDialog = 0, cardKind = 0, cardMessage = 0;
+    int cardDelay = 0;
     bool profileReady = false;
     bool keyboardValid = false, keyboardActive = false, keyboardDone = false;
+    bool originalEditorReady = false;
     unsigned keyboardDelay = 0;
     bool passwordPresent = false;
 };
@@ -127,25 +135,37 @@ class Flow {
         if (now < releaseAt_)
             return {};
         button_ = Button::None;
-        if (menu.step == 1 && menu.substep == 1 && menu.upperDelay <= 0) {
+        // File #2's 6162D0 adds a separate fade/debounce stage before the
+        // warning accepts input (6163BC); File #1 accepts it in substep 1.
+        if (menu.step == 1 && menu.substep == (menu.gameFile2 ? 2u : 1u) && menu.upperDelay <= 0) {
             button_ = Button::Confirm;
-        } else if (menu.step == 2 && (menu.substep == 4 || menu.substep == 21) && menu.upperDelay <= 0) {
+        } else if (menu.gameFile2 && menu.step == 2 && menu.substep == 1 &&
+                   menu.cardStage == 1 && menu.cardDialog == 20 && menu.cardKind == 2) {
+            // 617120's missing NET-save prompt: YES creates via 617A2C/14C690.
+            // Other card dialogs (including overwrite/format errors) are not accepted.
+            button_ = menu.choice ? Button::Up : Button::Confirm;
+        } else if (menu.gameFile2 && menu.step == 2 && menu.substep == 1 &&
+                   menu.cardStage == 1 && menu.cardDialog == 91 && menu.cardKind == 0 &&
+                   menu.cardMessage == 7 && menu.cardDelay == 0) {
+            // 617C58: successful-save informational page accepts any face button.
+            button_ = Button::Confirm;
+        } else if (!menu.gameFile2 && menu.step == 2 && (menu.substep == 4 || menu.substep == 21) && menu.upperDelay <= 0) {
             button_ = menu.choice ? Button::Up : Button::Confirm;
         } else if ((menu.step == 3 || menu.step == 4) && menu.substep == 2 && menu.delay == 0) {
             button_ = menu.cursor == 0 ? Button::Confirm : Button::Up;
         } else if (menu.step == 6 && menu.profileReady && menu.profileStage == 1) {
             button_ = menu.profileCursor == 2 ? Button::Confirm : Button::Down;
-        } else if (menu.step == 44 && menu.substep == 1 && menu.delay == 0 && !editorChosen_) {
+        } else if (menu.step == (menu.gameFile2 ? 46u : 44u) && menu.substep == 1 && menu.delay == 0 && !editorChosen_) {
             button_ = menu.cursor == 1 ? Button::Confirm : Button::Down;
             if (menu.cursor == 1)
                 editorChosen_ = true;
-        } else if (editorChosen_ && menu.step == 49 && menu.substep == 1) {
+        } else if (editorChosen_ && menu.step == (menu.gameFile2 ? 47u : 49u) && menu.substep == 1) {
             button_ = Button::Confirm;
-        } else if (editorChosen_ && menu.step == 46) {
+        } else if (editorChosen_ && menu.step == (menu.gameFile2 ? 49u : 46u)) {
             if (menu.substep == 11) {
                 if (menu.keyboardValid && menu.keyboardActive && menu.keyboardDelay > 0)
                     keyboardStarted_ = true;
-                if (keyboardStarted_ && !passwordRequested_ && menu.keyboardValid &&
+                if ((keyboardStarted_ || menu.originalEditorReady) && !passwordRequested_ && menu.keyboardValid &&
                     menu.keyboardActive && !menu.keyboardDone && menu.keyboardDelay == 0) {
                     passwordRequested_ = true;
                     return {Button::None, true};

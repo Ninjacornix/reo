@@ -14,12 +14,8 @@ public static class AppLayout {
                                              "the complete release archive to a folder.");
     }
     public static string Native(string root, string game) =>
-        Packaged(root) ? LocalGameBuild.TargetPath(root, game)
-                       : Path.Combine(root, "build-ninja", "recomp",
-                                      game == "file2" ? "reo_recomp_file2.exe" : "reo_recomp.exe");
-    public static string Work(string root, string game) =>
-        Packaged(root) ? Path.Combine(Settings.Home, "play", game)
-                       : Path.Combine(root, "build-ninja", GameDefinition.Find(game).PlayFolder);
+        PlatformPaths.GameExecutable(root, game);
+    public static string Work(string root, string game) => Path.Combine(Settings.Home, "play", game);
 }
 public sealed partial class Settings {
     public string ImportedFile1 { get; set; } = "";

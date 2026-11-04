@@ -3,6 +3,8 @@ using System.IO;
 namespace Outbreak.Launcher;
 static class ModsTests {
     public static void Run(Action<bool, string> check) {
+        File2ModsTests.Run(check);
+        ExamineMessageTests(check);
         string example = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "examples", "mods", "no-infection.json"));
         void Reject(Action action, string name) {
             try { action(); } catch (IOException) { check(true, name); return; }
@@ -163,6 +165,85 @@ static class ModsTests {
             check(File.ReadAllText(patches).Contains("1 004A5C40 2 0000000000001234"), "Data mod serialized for native runtime");
         } finally { Directory.Delete(temp, true); }
         ConsolidationTests(check, combinedJson, example);
+    }
+    static void ExamineMessageTests(Action<bool, string> check) {
+        void Reject(Action action, string name) {
+            try { action(); } catch (IOException) { check(true, name); return; }
+            check(false, name);
+        }
+        string temp = Path.Combine(Path.GetTempPath(), "reo-examine-mods-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(temp);
+        try {
+            foreach (string game in new[] { "file1", "file2" }) {
+                string Fixture(string config) => $$"""
+                    { "format": 1, "id": "fixture.examine", "name": "Longer examination", "version": "1",
+                      "elfSha256": "{{DiscImport.ExpectedElf(game)}}", {{config}} }
+                    """;
+                string timing = Fixture("\"examineMessages\": {\"durationMultiplier\": 2.3456789}");
+                check(Mods.Parse(timing).ExamineMessages?.DurationMultiplier == 2.3456789,
+                    game + " standalone examine timing preserves arbitrary fractional precision");
+                check(Mods.Parse(Fixture("\"examineMessages\": {}")).ExamineMessages?.DurationMultiplier == 1,
+                    game + " omitted duration multiplier defaults to original timing");
+                foreach (string valid in new[] { "1", "10", "1e0", "9.999999999" })
+                    check(Mods.Parse(Fixture("\"examineMessages\": {\"durationMultiplier\": " + valid + "}")).ExamineMessages != null,
+                        game + " accepts supported multiplier " + valid);
+                foreach (string invalid in new[] { "null", "\"2\"", "\"NaN\"", "\"Infinity\"", "NaN", "Infinity", "-Infinity", "1e400", "0", "0.9999999", "10.000001", "-1", "true", "[]", "{}" })
+                    Reject(() => Mods.Parse(Fixture("\"examineMessages\": {\"durationMultiplier\": " + invalid + "}")),
+                        game + " invalid examine multiplier rejected: " + invalid);
+                foreach (string invalid in new[] { "null", "\"2\"", "2", "true", "[]", "{\"durationMultipler\":2}" })
+                    Reject(() => Mods.Parse(Fixture("\"examineMessages\": " + invalid)),
+                        game + " invalid standalone examine configuration rejected: " + invalid);
+                check(Mods.Parse(Fixture("\"effects\": [\"health\"], \"examineMessages\": null")).ExamineMessages == null,
+                    game + " nullable examine configuration leaves other mod features valid");
+                check(Mods.Parse(Fixture("\"effects\": [\"health\"]")).ExamineMessages == null,
+                    game + " existing mods omit examine configuration without enabling it");
+                string folder = Path.Combine(temp, game);
+                Directory.CreateDirectory(folder);
+                File.WriteAllText(Path.Combine(folder, "timing.json"), timing);
+                string other = timing.Replace("fixture.examine", "fixture.other-examine").Replace("Longer examination", "Other examination");
+                File.WriteAllText(Path.Combine(folder, "other.json"), other);
+                string combined = timing.Replace("fixture.examine", "fixture.combined").Replace("\"examineMessages\":", "\"itemRandomizer\": {\"seed\":42}, \"examineMessages\":");
+                File.WriteAllText(Path.Combine(folder, "combined.json"), combined);
+                var settings = new Settings { SelectedGame = game, CoopMode = "offline", CheatsEnabled = false };
+                settings.ActiveMods = new() { "fixture.examine" };
+                var selected = Mods.Selected(settings, folder);
+                check(selected.Single().ExamineMessages?.DurationMultiplier == 2.3456789 && Cheats.Export(settings, temp, selected) == "",
+                    game + " timing-only mod is selected with cheats disabled and exports no cheat writes");
+                settings.ActiveMods.Add("fixture.other-examine");
+                bool namedConflict = false;
+                try { Mods.Selected(settings, folder); }
+                catch (IOException error) {
+                    namedConflict = error.Message.Contains("Longer examination") && error.Message.Contains("Other examination") && error.Message.Contains("Enable only one");
+                }
+                check(namedConflict, game + " timing conflict names both packages and explains how to resolve it");
+                foreach (string id in new[] { "fixture.examine", "fixture.combined" }) {
+                    settings.ActiveMods = new() { id };
+                    settings.CoopMode = "host";
+                    Reject(() => Mods.Selected(settings, folder), game + " host rejects examine timing even when bundled with randomizers: " + id);
+                    settings.CoopMode = "join";
+                    check(Mods.Selected(settings, folder).Count == 0 && settings.ActiveMods.Single() == id,
+                        game + " guest ignores local examine timing and retains its solo selection: " + id);
+                    settings.CoopMode = "offline";
+                }
+                var copied = new RandomizerSeeds().ForLaunch(new() { Mods.Parse(combined), Mods.Parse(timing) }, "offline", () => 123);
+                check(copied.Count == 2 && copied.All(m => m.ExamineMessages?.DurationMultiplier == 2.3456789) && copied[0].ItemRandomizer!.Seed == 123,
+                    game + " randomizer launch copies preserve combined and standalone examine timing");
+                var installed = Mods.Parse(combined);
+                var copy = new RandomizerSeeds().ForLaunch(new() { installed }, "offline", () => 123).Single();
+                copy.ExamineMessages!.DurationMultiplier = 5;
+                check(installed.ExamineMessages!.DurationMultiplier == 2.3456789 && installed.ItemRandomizer!.Seed == 42,
+                    game + " changing a launch copy cannot mutate installed examine timing");
+                Mods.SaveSession(selected, temp);
+                var receipt = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(temp, "mods.json")))!;
+                check(receipt[0]!["examineMessages"]!["durationMultiplier"]!.GetValue<double>() == 2.3456789,
+                    game + " session receipt records the selected examine configuration");
+            }
+        } finally {
+            string absolute = Path.GetFullPath(temp);
+            if (absolute.StartsWith(Path.GetFullPath(Path.GetTempPath()), StringComparison.OrdinalIgnoreCase) &&
+                Path.GetFileName(absolute).StartsWith("reo-examine-mods-", StringComparison.Ordinal))
+                Directory.Delete(absolute, true);
+        }
     }
     static void ConsolidationTests(Action<bool, string> check, string combinedJson, string customJson) {
         string temp = Path.Combine(Path.GetTempPath(), "reo-mod-upgrade-" + Guid.NewGuid().ToString("N"));

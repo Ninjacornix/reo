@@ -13,6 +13,7 @@ import coop_playtest as harness
 from lobby_driver import GuestRam
 
 STATE = 0x4BADD0        # original game-state block (same fields tools/room_playtest.py samples)
+STATE_BY_GAME = {"file1": STATE, "file2": 0x4DB390}
 PRESS_GAP = 0.6         # skip presses per player
 GAMEPLAY_STABLE = 2.0   # seconds of continuous gameplay before a player counts as in game
 
@@ -31,6 +32,9 @@ def drive(folder, record, *, timeout=240, reader_factory=GuestRam, identity_read
           pad_writer=None, monotonic=time.monotonic, sleeper=time.sleep):
     if not 10 <= timeout <= 900:
         raise ValueError("Start driver timeout must be 10..900 seconds")
+    game = record.get("game", "file1")
+    if game not in STATE_BY_GAME:
+        raise ValueError("Unsupported start-driver game profile")
     folder = Path(folder).resolve()
     run = json.loads((folder / "run.json").read_text(encoding="utf-8"))
     identities = {r["number"]: r for r in run["players"]}
@@ -45,7 +49,7 @@ def drive(folder, record, *, timeout=240, reader_factory=GuestRam, identity_read
                                                "expiresUnix": time.time() + 0.18})
     players = {p["number"]: p for p in record["players"] if p["number"] in identities}
     readers, rows = {}, {}
-    result = {"startedUtc": harness.utc(), "coopVerdict": "not-tested", "events": [], "players": []}
+    result = {"startedUtc": harness.utc(), "game": game, "coopVerdict": "not-tested", "events": [], "players": []}
     started = monotonic()
 
     def event(number, value, reason):
@@ -60,6 +64,7 @@ def drive(folder, record, *, timeout=240, reader_factory=GuestRam, identity_read
                     identity_reader(identity["pid"]) != expected):
                 raise ValueError("A start-driver process does not match its owned session identity")
             readers[number] = reader_factory(identity, record["elf"])
+            readers[number].game = game
             rows[number] = {"number": number, "status": "waiting-for-start", "skips": 0,
                             "gameplaySince": None, "expected": expected}
             result["players"].append(rows[number])
@@ -87,7 +92,7 @@ def drive(folder, record, *, timeout=240, reader_factory=GuestRam, identity_read
                     row["status"], row["reason"] = "failed", "identity-changed"
                     continue
                 try:
-                    state = game_state(readers[number].read(STATE, 0x40))
+                    state = game_state(readers[number].read(STATE_BY_GAME[game], 0x40))
                 except (OSError, ValueError):
                     row["status"], row["reason"] = "failed", "read-error"
                     continue

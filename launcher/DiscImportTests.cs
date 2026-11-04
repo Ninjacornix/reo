@@ -63,6 +63,8 @@ static class DiscImportTests {
                     Record("ASSET.BIN;1"u8.ToArray(), 24, asset.Length, false));
         File.WriteAllBytes(iso, image);
         // clang-format on
+        check(GameArtwork.DiscIdentity(1, iso) == new GameArtwork.Identity("SLUS-20765", "ntsc-u"),
+              "Artwork reads SYSTEM.CNF from the ISO without relying on its filename");
         string expected = Convert.ToHexString(SHA256.HashData(elf)).ToLowerInvariant();
         using (var disc = new DiscImage(iso))
             check(disc.Entries.Count == 5 && disc.Entries.Any(e => e.Name == "BIN/ASSET.BIN"),
@@ -74,6 +76,15 @@ static class DiscImportTests {
         check(!imported.Reused && imported.Files == 4 &&
                   File.ReadAllBytes(imported.Elf).SequenceEqual(elf),
               "Import writes original ELF and files");
+        string relocatedCache = Path.Combine(home, "relocated-cache"), relocatedImport = Path.Combine(relocatedCache, "file1", "previous-path-identity");
+        foreach (string file in Directory.EnumerateFiles(imported.Root, "*", SearchOption.AllDirectories)) {
+            string destination = Path.Combine(relocatedImport, Path.GetRelativePath(imported.Root, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Copy(file, destination);
+        }
+        var reusedRelocation = DiscImport.Ensure(iso, GameDefinition.First, expected, home: relocatedCache).GetAwaiter().GetResult();
+        check(reusedRelocation.Reused && reusedRelocation.Root == relocatedImport,
+              "A relocated valid import is reused without extracting another copy");
         check(
             imported.Verification.Contains("NTSC-U v2.00"),
             "Executable hash establishes supported revision independently of SYSTEM.CNF VER=1.00");
@@ -145,6 +156,26 @@ static class DiscImportTests {
                    "PAL (Europe/Australia)");
         RejectDisc("Japan", "SLPM_654.28", "BOOT2 = cdrom0:\\SLPM_654.28;1\r\n", "NTSC-J (Japan)");
         RejectDisc("Wrong-title", "SLUS_209.84", "BOOT2 = cdrom0:\\SLUS_209.84;1\r\n", "File #2");
+        string secondIso = Path.Combine(home, "Wrong-title USA v2.00.iso");
+        var secondDisc = DiscImport.Ensure(secondIso, GameDefinition.Second, expected,
+                                          home: Path.Combine(home, "second-title"))
+            .GetAwaiter().GetResult();
+        check(File.Exists(secondDisc.Elf) && Path.GetFileName(secondDisc.Elf) == "SLUS_209.84" &&
+                  secondDisc.Verification.Contains("File #2, NTSC-U v1.05"),
+              "File #2 import uses its own serial and verification description");
+        check(DiscImport.ExpectedElf(new Settings { SelectedGame = "file2" }, home) ==
+                  DiscImport.SecondElfSha256 && DiscImport.SecondElfSha256 != DiscImport.FirstElfSha256,
+              "File #2 has a pinned hash without needing a local reference ELF");
+        bool secondRevisionRejected = false;
+        try {
+            using var secondImage = new DiscImage(secondIso);
+            _ = DiscValidation.Check(secondImage, GameDefinition.Second, DiscImport.SecondElfSha256,
+                                     CancellationToken.None);
+        } catch (InvalidDataException error) {
+            secondRevisionRejected = error.Message.Contains("Unsupported revision") &&
+                                     error.Message.Contains("NTSC-U v1.05");
+        }
+        check(secondRevisionRejected, "Synthetic File #2 ELF cannot pass the real revision hash");
         RejectDisc("Unknown-title", "SLUS_123.45", "BOOT2 = cdrom0:\\SLUS_123.45;1\r\n",
                    "Unsupported game");
         RejectDisc("Decoy-USA-ELF", "SLES_515.89", "BOOT2 = cdrom0:\\SLES_515.89;1\r\n", "PAL",

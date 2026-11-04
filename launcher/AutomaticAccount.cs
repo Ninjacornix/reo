@@ -55,6 +55,7 @@ internal static class AccountCredentials {
     }
 
     public static string Get(string home, string host, string username) {
+        if (!OperatingSystem.IsWindows()) return PlatformCredentials.Get(host, username);
         byte[] identity = SHA256.HashData(Encoding.UTF8.GetBytes(host + "\n" + username));
         string directory = Path.Combine(home, "accounts");
         Directory.CreateDirectory(directory);

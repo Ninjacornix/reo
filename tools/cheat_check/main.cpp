@@ -5,7 +5,11 @@
 #include "weapon_shuffle_tests.h"
 #include "enemy_randomizer_tests.h"
 #include "global_item_tests.h"
+#include "file2_tests.h"
+#include "results_points_tests.h"
 int main() {
+    testResultsPointsCheats();
+    testFile2Cheats();
     testWeaponShuffle();
     testEnemyRandomizer();
     testGlobalItems();
@@ -47,6 +51,9 @@ int main() {
         "REO-CHEATS-2\nbuiltin health\nbuiltin infection\nbuiltin ammo\n1 0056FFF0 4 1\n");
     auto program = parseProgram(builtinInput);
     check(program.builtins == 7 && program.writes.size() == 1);
+    std::istringstream timedRewards("REO-CHEATS-2\nbuiltin points\nbuiltin escape\nbuiltin points\n");
+    const auto expanded = parseProgram(timedRewards);
+    check(expanded.builtins == (MaxResultsPoints | InfiniteEscapeTime) && expanded.writes.empty());
     bool unknown = false;
     try {
         std::istringstream input("REO-CHEATS-2\nbuiltin unsafe\n");
@@ -134,6 +141,7 @@ int main() {
     auto unlocked = applyBuiltins(UnlockEverything, ram.data());
     check(unlocked.unlocks && !unlocked.active);
     check((word(ram.data(), 0x323bd8) & 0x1f) == 0x1f);
+    check((word(ram.data(), 0x321ef4) & 0x1f) == 0x1f);
     check((ram[0x31fb83] & 0x0c) == 0x0c && (ram[0x31fb7f] & 5) == 5);
     for (uint32_t a = 0; a < ram.size(); ++a) {
         const bool characterBits = (a >= 0x31fb64 && a < 0x31fb6c) ||
@@ -148,6 +156,9 @@ int main() {
             if (ram[a] != (beforeUnlock[a] | 0x0c)) throw std::runtime_error("Difficulty bits changed");
         } else if (a == 0x31fb7f) {
             if (ram[a] != (beforeUnlock[a] | 5)) throw std::runtime_error("Bonus bits changed");
+        } else if (a >= 0x321ef4 && a < 0x321ef8) {
+            if (word(ram.data(), 0x321ef4) != (word(beforeUnlock.data(), 0x321ef4) | 0x1f))
+                throw std::runtime_error("Existing online scenario bits lost");
         } else if (a >= 0x323bd8 && a < 0x323bdc) {
             if (word(ram.data(), 0x323bd8) != (word(beforeUnlock.data(), 0x323bd8) | 0x1f))
                 throw std::runtime_error("Existing scenario bits lost");

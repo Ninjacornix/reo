@@ -53,7 +53,7 @@ function KitPath([string]$relative) {
     }
     $path = [IO.Path]::GetFullPath((Join-Path $Kit $relative))
     if (!$path.StartsWith($Kit.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Kit path escapes root.' }
-    if ([IO.Path]::GetFileName($relative) -in @('reo_recomp.exe','reo_launcher_game.exe') -or
+    if ([IO.Path]::GetFileName($relative) -in @('reo_recomp.exe','reo_recomp_file2.exe','reo_launcher_game.exe') -or
         [IO.Path]::GetExtension($relative) -in @('.iso','.elf','.bin','.obj')) { throw 'Private game content in build kit.' }
     return $path
 }
@@ -65,7 +65,9 @@ foreach ($file in $manifest.files) {
 }
 & (Join-Path $PSScriptRoot 'build.ps1')
 if ($LASTEXITCODE) { throw 'Launcher build failed.' }
-& dotnet publish (Join-Path $PSScriptRoot 'Reo.Launcher.csproj') -c Release -r win-x64 --self-contained true -o $Output --nologo /p:DebugType=None /p:DebugSymbols=false ("/p:Version=" + $Version)
+. (Join-Path $PSScriptRoot 'dotnet-sdk.ps1')
+$dotnet = Find-LauncherDotNet
+& $dotnet publish (Join-Path $PSScriptRoot 'desktop/Reo.Launcher.Desktop.csproj') -c Release -r win-x64 --self-contained true -o $Output --nologo /p:DebugType=None /p:DebugSymbols=false ("/p:Version=" + $Version)
 if ($LASTEXITCODE) { throw 'Launcher publish failed.' }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'artifacts/native/XINPUT1_4.dll') -Destination $Output
 $targetKit = Join-Path $Output 'build-kit'

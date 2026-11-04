@@ -25,9 +25,9 @@ inline EnemyShuffleResult shuffleZombieProfiles(uint8_t* ram, uint32_t seed,
     using namespace reo::cheats;
     EnemyShuffleResult result;
     if (!ram) return result;
-    const unsigned count = ram[0x4bae8e];
+    const unsigned count = ram[gameLayout.spawnCount];
     for (unsigned i = 0; i < count; ++i) {
-        const uint32_t a = 0x74f250u + i * 96;
+        const uint32_t a = gameLayout.spawnTable + i * 96;
         const auto health = half(ram, a + 0x1c), maximum = half(ram, a + 0x1e);
         if(filter && (!filter->behaviors[ram[a+0x2a]] || !filter->variants[ram[a+3]])) continue;
         // 6BAA40 builds the scenario records; 6BB040 creates actors from them.

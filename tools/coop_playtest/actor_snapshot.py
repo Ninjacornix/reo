@@ -15,6 +15,9 @@ ACTOR_STRIDE = 0x10E0
 ACTOR_COUNT = 4
 ACTOR_READ_SIZE = 0x210
 LOCAL_ACTOR = 0x4BADED
+# Original File #2 actor indexing uses a different stride (13BB28/13BB2C).
+LAYOUTS = {"file1": (ACTOR_BASE, ACTOR_STRIDE, LOCAL_ACTOR),
+           "file2": (0x4C5E10, 0x1100, 0x4DB3AD)}
 
 
 def decode_actor(slot, data):
@@ -31,6 +34,10 @@ def decode_actor(slot, data):
 
 def snapshot_actors(folder, record, label, *, reader_factory=GuestRam,
                     identity_reader=harness.process_identity):
+    game = record.get("game", "file1")
+    if game not in LAYOUTS:
+        raise ValueError("Unsupported actor snapshot game profile")
+    actor_base, actor_stride, local_actor = LAYOUTS[game]
     if not isinstance(label, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", label):
         raise ValueError("Snapshot label must be 1..64 ASCII letters, digits, underscores or hyphens")
     folder = Path(folder).resolve()
@@ -40,7 +47,7 @@ def snapshot_actors(folder, record, label, *, reader_factory=GuestRam,
     if not 1 <= len(players) <= 4 or len({p["number"] for p in players}) != len(players):
         raise ValueError("Actor snapshot requires one to four uniquely owned players")
     path = folder / f"actors-{label}.json"
-    result = {"utc": harness.utc(), "label": label, "status": "sampling", "readOnly": True,
+    result = {"utc": harness.utc(), "game": game, "label": label, "status": "sampling", "readOnly": True,
               "simultaneousAcrossProcesses": False, "coopVerdict": "not-tested", "players": []}
     # Reserve the immutable name before attaching; even failed captures preserve
     # their receipt and cannot be replaced by a later successful observation.
@@ -56,16 +63,23 @@ def snapshot_actors(folder, record, label, *, reader_factory=GuestRam,
                 reader = reader_factory(identity, record["elf"])
                 try:
                     reader.check()
-                    local = reader.read(LOCAL_ACTOR, 1)[0]
+                    local = reader.read(local_actor, 1)[0]
                     if local >= ACTOR_COUNT:
                         raise ValueError("Original local actor index is outside the four-player layout")
                     sample = {"number": identity["number"], "identity": expected, "utc": harness.utc(),
                               "localActor": local, "actors": []}
                     for slot in range(ACTOR_COUNT):
-                        address = ACTOR_BASE + slot * ACTOR_STRIDE
+                        address = actor_base + slot * actor_stride
                         if address + ACTOR_READ_SIZE > 0x2000000:
                             raise ValueError("Actor read exceeds EE RAM")
-                        sample["actors"].append(decode_actor(slot, reader.read(address, ACTOR_READ_SIZE)))
+                        if game == "file2":
+                            # Only the original position field is corroborated for both editions.
+                            xyz = list(struct.unpack("<fff", reader.read(address + 0x38, 12)))
+                            if not all(math.isfinite(value) for value in xyz):
+                                raise ValueError("Actor position contains non-finite fields")
+                            sample["actors"].append({"slot": slot, "xyz": xyz})
+                        else:
+                            sample["actors"].append(decode_actor(slot, reader.read(address, ACTOR_READ_SIZE)))
                     reader.check()
                     if identity_reader(identity["pid"]) != expected:
                         raise ValueError("Actor process identity changed during capture")

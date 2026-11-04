@@ -1,10 +1,24 @@
 using System.IO.MemoryMappedFiles;
 using System.Text.Json;
+using System.IO;
 
 namespace Outbreak.Launcher;
 
 internal static class AudioMixerTests {
     internal static void Run(Action<bool, string> check) {
+        string image = Path.Combine(Path.GetTempPath(), "reo-file2-audio-" + Guid.NewGuid().ToString("N"));
+        try {
+            File.WriteAllText(image, "[AUDIO-MIXER-1] master,music,sfx,voice,ui");
+            bool rejected = false;
+            try { GameSession.VerifyAudioCompatibility(image, "file2"); }
+            catch (IOException error) { rejected = error.Message.Contains("Rebuild"); }
+            check(rejected, "Older File #2 master-only builds request a rebuild before exposing ineffective category controls");
+            GameSession.VerifyAudioCompatibility(image, "file1");
+            check(true, "File #1 retains its existing native audio capability");
+            File.WriteAllText(image, GameSession.File2AudioCapability);
+            GameSession.VerifyAudioCompatibility(image, "file2");
+            check(true, "File #2 accepts its own complete native mixer capability");
+        } finally { File.Delete(image); }
         var legacy = JsonSerializer.Deserialize<Settings>("{}")!;
         check(AudioLevels.From(legacy) == new AudioLevels(100, 100, 100, 100, 100),
               "Older settings keep the original full audio level");

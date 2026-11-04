@@ -1,4 +1,5 @@
 #pragma once
+#include "reo_movie_game_addresses.h"
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
 #include "compressed_movie_lineage.h"
@@ -68,7 +69,7 @@ inline void initialized(const uint8_t* ram, R5900Context*, PS2Runtime* runtime, 
 }
 inline void selected(const uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
     metadata(runtime, "selected", [&] {
-        if (GPR_U32(ctx, 31) == 0x171978)
+        if (GPR_U32(ctx, 31) == REO_MA(0x171978))
             binding.lineage->selectedEnd(ram, reinterpret_cast<uintptr_t>(ctx), GPR_U32(ctx, 29),
                                          GPR_U32(ctx, 4), GPR_U32(ctx, 5), GPR_U32(ctx, 6),
                                          GPR_U32(ctx, 31));
@@ -92,7 +93,7 @@ inline void parsed(const uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
     });
 }
 inline void selectedResult(const uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
-    if (ctx->pc == 0x16ab1c)
+    if (ctx->pc == REO_MA(0x16ab1c))
         metadata(runtime, "selected-result", [&] {
             binding.lineage->selectedResult(ram, reinterpret_cast<uintptr_t>(ctx), GPR_U32(ctx, 29),
                                             GPR_U32(ctx, 2));

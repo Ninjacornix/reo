@@ -1,0 +1,42 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -2072,6 +2072,10 @@
+                     uint32_t handle = 0u;
+                     (void)readSendWord(0u, handle);
+                     std::lock_guard<std::mutex> lock(g_dtx_rpc_mutex);
++                    // Host voices outlive the RPC metadata unless explicitly released.
++                    // Destroy must cancel playback (including a pending natural-end drain)
++                    // before a later stream can refill or reuse the old ring.
++                    ps2_cri_audio::release(handle);
+                     g_dtx_ps2rna_by_handle.erase(handle);
+                     outWords[0] = 1u;
+                     outWordCount = 1u;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -272,6 +272,12 @@
+ size_t queuedSamples(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);return i==channels.end()?0:i->second.pcm.size(); }
+ uint64_t consumed(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
+ void discard(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);if(i!=channels.end()){i->second.pcm.clear();i->second.consumed=i->second.queued;} }
++// RNA destruction is an immediate lifecycle boundary, not a natural-end drain.
++// Keep shared channel queues and other voices intact; ring ownership is separate.
++void release(uint32_t voice) {
++    std::lock_guard<std::mutex> lock(mutex);
++    voices.erase(voice);
++}
+ void reset() { std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
+ void shutdown() {
+     if (ready && IsAudioDeviceReady()) { StopAudioStream(stream);UnloadAudioStream(stream); }
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+@@ -14,6 +14,8 @@
+ void render(float* stereo, unsigned frames);
+ void discard(uint32_t key);
+ void drain(uint32_t voice);
++// Remove one destroyed RNA voice, including pending drain/playback state.
++void release(uint32_t voice);
+ size_t queuedSamples(uint32_t key);
+ void reset();
+ void shutdown();

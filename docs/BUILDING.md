@@ -8,7 +8,13 @@ Use a short checkout path, such as `C:\dev\reo`. Full recompilation is expensive
 
 ## Launcher
 
-Requirements: Windows x64, .NET 8 SDK, Visual Studio 2022 with Desktop development with C++.
+Requirements: Windows x64, .NET 10 SDK, Visual Studio 2022 with Desktop development with C++.
+
+The build checks for a compatible SDK before compiling native helpers. It also
+finds user SDK installations in `%USERPROFILE%\.dotnet`, `DOTNET_ROOT_X64` or
+`DOTNET_ROOT` when an older system SDK is first on PATH. Install the SDK from
+[Microsoft's .NET 10 downloads](https://dotnet.microsoft.com/download/dotnet/10.0);
+the runtime alone cannot build the launcher.
 
 ```powershell
 git clone --recurse-submodules https://github.com/Ninjacornix/reo.git
@@ -32,11 +38,12 @@ never distributed.
 See [local build kits](LOCAL_BUILDS.md) for the maintainer workflow.
 
 ```powershell
-& ./launcher/bin/Release/net8.0-windows/Outbreak.Launcher.exe --self-test
+dotnet run --project launcher/cross-tests -c Release -- --windows-services-check
+& ./launcher/bin/Release/net10.0/win-x64/Outbreak.Launcher.exe --headless-check build-launcher/local-captures
 ```
 
-An unbundled source build requires the .NET 8 Desktop Runtime when the SDK is
-absent. Keep its output directory together, including the input adapter,
+The Windows launcher build is self-contained and needs no separately installed
+.NET runtime to run. Keep its output directory together, including the input adapter,
 shaders and license notices. ISO mounting is not needed. Launcher and game-window
 icons are original project artwork.
 
@@ -56,7 +63,7 @@ The setup script fetches pinned dependencies and applies the local runtime patch
 
 The ordinary target is `reo_recomp`; `reo` is the older scaffold. Experimental GPU builds depend on additional local source/library paths declared in `recomp/CMakeLists.txt`. They are not a turnkey clean-clone release pipeline. Do not reuse a private link script or mix objects compiled against different runtime interfaces.
 
-Use the launcher for normal interactive play. Its settings are under `%LOCALAPPDATA%\OutbreakRecomp\launcher`, and its save folders are `build-ninja/play/saves` and `build-ninja/play-file2/saves`.
+Use the launcher for normal interactive play. Its settings are under `data/` beside the launcher by default, and both games share the selected memory card. The default card is `data/memory-cards/default/data`. Existing edition-specific cards remain available as named entries without moving their files. Change the shared storage folder under **Game files > Launcher storage**.
 
 The launcher can start the separately licensed portable openSNAP component using
 **Host server**. Source developers must first export that component; see

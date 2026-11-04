@@ -13,7 +13,8 @@ namespace Outbreak.Launcher;
 // player presses ends the automation, so the original menus always remain usable by hand.
 public sealed class LobbyAutomation : IDisposable {
     public sealed record Options(bool Host, string Title, string HostAddress,
-                                 Action<bool>? HostRoomReady = null);
+                                 Action<bool>? HostRoomReady = null, string Game = "file1",
+                                 int MaxPlayers = 4, int WaitMinutes = 5);
 
     // Bits of the launcher pad map (XInput order, as in Controller).
     internal static readonly IReadOnlyDictionary<string, ushort> Buttons =
@@ -23,6 +24,7 @@ public sealed class LobbyAutomation : IDisposable {
 
     internal sealed record Room(int Index, int Kind, bool ContainsTitle);
     internal sealed record ServerRow(int Mode, int Backend);
+    internal sealed record RoomOption(int Index, int Minimum, int Maximum, bool Editable, IReadOnlyList<int> Values);
     internal sealed record Snapshot(
         int State, int Sub, int Menu, int Phase, int Nested, int Cursor, int SettingsCursor,
         int JoinCursor, int CharacterIndex, int CharacterCount, int AreaCursor, int AreaPage,
@@ -30,9 +32,10 @@ public sealed class LobbyAutomation : IDisposable {
         int RoomCount, string Title, int MaxPlayersIndex, int OuterStep, int OuterSub,
         int MainMode, int ServerController, int ServerWidget, int ServerWidgetSub, uint ServerCount,
         IReadOnlyList<ServerRow> ServerRows, bool KeyboardInitialized, int KeyboardDelay,
-        int KeyboardComplete, IReadOnlyList<Room> Rooms);
+        int KeyboardComplete, IReadOnlyList<Room> Rooms, int ServerControllerSub = -1,
+        RoomOption? PlayersOption = null, RoomOption? WaitingOption = null);
     internal sealed class Context {
-        public int OutsideCount;
+        public int OutsideCount, TitleReadySamples;
         public bool TitleQueued, TitleWarmupObserved, RoomFocusMoved;
     }
     internal enum Act { Wait, Button, Text, Done, Refuse }
@@ -44,9 +47,26 @@ public sealed class LobbyAutomation : IDisposable {
 
     // One action for verified idle gates only; mirrors lobby_driver.plan with goal waiting-room.
     internal static Step Plan(bool host, Snapshot s, Context context, bool hostRoomReady,
-                              string title) {
-        if (s.OuterStep == 37 && s.OuterSub == 7 && s.MainMode == 7 && s.ServerController == 3 &&
-            s.ServerWidget == 2 && s.ServerWidgetSub == 0) {
+                              string title, string game = "file1", int maxPlayers = 4, int waitMinutes = 0) {
+        if (game is not ("file1" or "file2"))
+            return new(Act.Refuse, null, "unsupported-game-lobby-layout");
+        if (host && (maxPlayers is < 2 or > 4 || (waitMinutes != 0 && !LobbySettings.WaitTimes(game).Contains(waitMinutes))))
+            return new(Act.Refuse, null, "requested-room-option-is-unavailable");
+        // File #2 lists servers directly rather than File #1's mode/backend pairs.
+        // Original 5F4D70 -> 5F53D0 -> 5F5590 accepts Confirm only at these idle gates.
+        if (game == "file2" && s.MainMode != 1) {
+            if (s.MainMode == 7 && s.ServerController == 3 && s.ServerControllerSub == 0 &&
+                s.ServerWidget == 2 && s.ServerWidgetSub == 0 && !s.Chat) {
+                if (s.ServerCount == 1 && s.Cursor == 0)
+                    return new(Act.Button, "cross", "select-original-file2-only-server");
+                if (s.ServerCount == 0)
+                    return new(Act.Wait, null, "await-original-file2-server-list");
+                return new(Act.Wait, null, "file2-select-server-in-original-menu");
+            }
+            return new(Act.Wait, null, "await-original-file2-server-selection");
+        }
+        if (game == "file1" && s.OuterStep == 37 && s.OuterSub == 7 && s.MainMode == 7 &&
+            s.ServerController == 3 && s.ServerWidget == 2 && s.ServerWidgetSub == 0) {
             var rows = s.ServerRows;
             if (s.ServerCount != rows.Count || rows.Count == 0 || s.Cursor >= rows.Count)
                 return new(Act.Refuse, null, "invalid-original-server-selection-map");
@@ -68,6 +88,16 @@ public sealed class LobbyAutomation : IDisposable {
                 return new(Act.Wait, null, "await-post-login-transition");
             return new(Act.Refuse, null, "disconnect-or-post-start-ui-is-outside-this-driver");
         }
+        if (game == "file2" && s.State == 1 && s.Sub == 0 && s.Menu == 1 && s.Phase == 2 && s.Nested == 0) {
+            // 608DB0 phase2: fixed ten difficulty areas, before the scenario area list.
+            if (s.Cursor is < 0 or >= 10)
+                return new(Act.Refuse, null, "invalid-file2-difficulty-area-cursor");
+            return new(Act.Button, s.Cursor >= 5 ? "left" : s.Cursor != 0 ? "up" : "cross",
+                       "select-original-file2-first-difficulty-area");
+        }
+        bool editorReady = s.State == 3 && s.Sub == 0 && s.Menu == 3 && s.Phase == 3 && s.Nested == 2 &&
+                           s.KeyboardInitialized && s.KeyboardDelay == 0 && s.KeyboardComplete == 0;
+        context.TitleReadySamples = editorReady ? context.TitleReadySamples + 1 : 0;
         if (WaitingRoom(s, host))
             return new(Act.Done, null, "original-waiting-room-reached");
         if (s.State == 2 && s.Sub == 0 && s.Menu == 1 && s.Phase == 0)
@@ -104,7 +134,8 @@ public sealed class LobbyAutomation : IDisposable {
         }
         if (s.State == 3 && s.Sub == 0 && s.Menu == 3 && host) {
             if (s.Phase == 3 && s.Nested == 2 && !context.TitleQueued) {
-                if (!context.TitleWarmupObserved || !s.KeyboardInitialized ||
+                if ((game == "file2" ? context.TitleReadySamples < 2 : !context.TitleWarmupObserved) ||
+                    !s.KeyboardInitialized ||
                     s.KeyboardDelay != 0 || s.KeyboardComplete != 0)
                     return new(Act.Wait, null, "await-original-title-editor-input-readiness");
                 if (s.Title.Length != 0)
@@ -120,12 +151,32 @@ public sealed class LobbyAutomation : IDisposable {
                         return new(Act.Refuse, null, "existing-room-title-needs-manual-clear");
                     return new(Act.Button, cursor != 0 ? "up" : "cross", "open-original-title-editor");
                 }
-                if (s.MaxPlayersIndex != 2) {
+                int playerTarget = maxPlayers - 2;
+                int playerIndex = s.MaxPlayersIndex;
+                if (s.PlayersOption is { } players) {
+                    playerTarget = OptionTarget(players, maxPlayers);
+                    playerIndex = players.Index;
+                    if (playerTarget < 0 || (playerIndex != playerTarget && !players.Editable))
+                        return new(Act.Refuse, null, "requested-room-option-is-unavailable");
+                }
+                if (playerIndex != playerTarget) {
                     if (cursor != 2)
                         return new(Act.Button, cursor > 2 ? "up" : "down",
                                    "select-original-no-players-option");
-                    return new(Act.Button, s.MaxPlayersIndex < 2 ? "right" : "left",
-                               "select-option-index2-four-players");
+                    return new(Act.Button, playerIndex < playerTarget ? "right" : "left",
+                               "select-requested-player-count");
+                }
+                if (waitMinutes > 0) {
+                    if (s.WaitingOption is not { } waiting)
+                        return new(Act.Refuse, null, "requested-room-option-is-unavailable");
+                    int target = OptionTarget(waiting, waitMinutes);
+                    if (target < 0 || (waiting.Index != target && !waiting.Editable))
+                        return new(Act.Refuse, null, "requested-room-option-is-unavailable");
+                    if (waiting.Index != target) {
+                        if (cursor != 3)
+                            return new(Act.Button, cursor > 3 ? "up" : "down", "select-original-waiting-time-option");
+                        return new(Act.Button, waiting.Index < target ? "right" : "left", "select-requested-waiting-time");
+                    }
                 }
                 return new(Act.Button, cursor < 10 ? "down" : cursor > 10 ? "up" : "cross",
                            "select-original-finish");
@@ -143,6 +194,14 @@ public sealed class LobbyAutomation : IDisposable {
         if (s.State == 4 && s.Sub == 0 && s.Phase == 4)
             return new(Act.Button, "cross", "confirm-original-pre-waiting-ready-stage");
         return new(Act.Wait, null, "await-known-idle-lobby-gate");
+    }
+
+    static int OptionTarget(RoomOption option, int value) {
+        if (option.Minimum < 0 || option.Maximum >= option.Values.Count || option.Minimum > option.Maximum ||
+            option.Index < option.Minimum || option.Index > option.Maximum) return -1;
+        for (int i = option.Minimum; i <= option.Maximum; i++)
+            if (option.Values[i] == value) return i;
+        return -1;
     }
 
     const double PressGap = 0.35, StableFor = 0.12, BusyRetry = 0.3;
@@ -196,14 +255,14 @@ public sealed class LobbyAutomation : IDisposable {
         double stableSince = 0, nextAction = 0, lastAsk = -10;
         double? areaGateSince = null;
         int presses = 0;
-        bool steering = false;
+        bool steering = false, manualServerReported = false;
         Task<LanDiscovery.Game?>? asking = null;
         while (!stop.IsCancellationRequested && !process.HasExited && clock.Elapsed < Limit) {
             await Task.Delay(100, stop.Token);
             double now = clock.Elapsed.TotalSeconds;
             Snapshot snapshot;
             try {
-                snapshot = memory().Read();
+                snapshot = memory().Read(options.Game, options.Title);
             } catch (InvalidDataException) {
                 continue; // title screen, sign-in or game loading: not in the lobby overlay yet
             } catch (IOException) when (!steering) {
@@ -222,7 +281,7 @@ public sealed class LobbyAutomation : IDisposable {
                 }
                 if (asking == null && now - lastAsk >= 2) {
                     lastAsk = now;
-                    asking = LanDiscovery.Ask(options.HostAddress, TimeSpan.FromSeconds(1.5), stop.Token);
+                    asking = LanDiscovery.Ask(options.HostAddress, TimeSpan.FromSeconds(1.5), stop.Token, options.Game);
                 }
             }
             if (snapshot.State == 3 && snapshot.Menu == 3 && snapshot.Phase == 3 &&
@@ -233,7 +292,12 @@ public sealed class LobbyAutomation : IDisposable {
                 stableKey = key;
                 stableSince = now;
             }
-            var step = Plan(options.Host, snapshot, context, hostRoomReady, options.Title);
+            var step = Plan(options.Host, snapshot, context, hostRoomReady, options.Title, options.Game,
+                            options.MaxPlayers, options.WaitMinutes);
+            if (step.Reason == "file2-select-server-in-original-menu" && !manualServerReported) {
+                report("Select a server in File #2's game menu. Automatic room setup will resume in the lobby.");
+                manualServerReported = true;
+            }
             if (step.Reason == "hold-area-entry-until-host-room-is-created") {
                 areaGateSince ??= now;
                 // Hosts that cannot be asked (older launcher, blocked port) still get a room: wait
@@ -250,7 +314,9 @@ public sealed class LobbyAutomation : IDisposable {
                            : "You're in the host's waiting room. The host starts the scenario.");
                 return;
             case Act.Refuse:
-                report(step.Reason == "several-rooms-match-choose-yours"
+                report(step.Reason == "requested-room-option-is-unavailable"
+                           ? "This area does not support the selected room settings. Continue in the game menus."
+                           : step.Reason == "several-rooms-match-choose-yours"
                            ? "Several rooms are open. Choose the host's room in the game."
                            : "Automatic room setup stopped (" + step.Reason + "). Continue in the game menus.");
                 return;
@@ -430,44 +496,92 @@ public sealed class LobbyAutomation : IDisposable {
                        BitConverter.ToInt16(actor, 0x546));
         }
 
-        public Snapshot Read() {
+        public Snapshot Read(string game = "file1", string targetTitle = "") => ReadSnapshot(Bytes, game, targetTitle);
+
+        internal static Snapshot ReadSnapshot(Func<uint, int, byte[]> read, string game, string targetTitle = "") {
+            byte[] Bytes(uint address, int size) => read(address, size);
+            uint Word(uint address) => BitConverter.ToUInt32(Bytes(address, 4));
+            byte Byte(uint address) => Bytes(address, 1)[0];
+            if (game is not ("file1" or "file2"))
+                throw new InvalidDataException("The lobby layout is unavailable for this game.");
+            bool second = game == "file2";
             // Throws InvalidDataException outside the BIN3 lobby overlay.
-            byte[] overlay = Bytes(0x570000, 8);
+            byte[] overlay = Bytes(second ? 0x58D000u : 0x570000u, 8);
             if (BitConverter.ToUInt32(overlay, 0) != 0x336F574D || BitConverter.ToUInt32(overlay, 4) != 4)
                 throw new InvalidDataException("The lobby is not active.");
-            byte[] raw = Bytes(Root, 0x980);
-            byte[] counts = Bytes(0x6D881E, 6);
+            byte[] raw = Bytes(second ? 0x6E2ED0u : Root, second ? 0xA00 : 0x980);
+            byte[] counts = Bytes(second ? 0x6E293Eu : 0x6D881Eu, 6);
             int areaCount = BitConverter.ToUInt16(counts, 0), roomCount = BitConverter.ToUInt16(counts, 4);
             if (areaCount > 128 || roomCount > 128)
                 throw new InvalidDataException("Lobby list counts exceed the verified bounds.");
-            byte[] title = Bytes(0x6A3DF2, 16);
+            byte[] title = Bytes(second ? 0x6B53F2u : 0x6A3DF2u, 16);
             int titleLength = Array.IndexOf(title, (byte)0);
             string titleText = Encoding.ASCII.GetString(title, 0, titleLength < 0 ? 16 : titleLength);
-            byte[] rooms = raw[0] == 3 && raw[0xE] == 1 ? Bytes(0x6CD4A0, roomCount * 0x15C)
+            byte[] rooms = raw[0] == 3 && raw[0xE] == 1 ? Bytes(second ? 0x6DEAA0u : 0x6CD4A0u, roomCount * 0x15C)
                                                          : Array.Empty<byte>();
-            uint serverCount = Word(0x699560);
-            byte[] serverBytes = Bytes(0x6994E0, (int)Math.Min(serverCount, 32) * 2);
-            uint keyboardWork = Word(0x6436D0);
+            // File #2 reads its server count as a byte (5F55E0), not a File #1 mode table.
+            uint serverCount = second ? Byte(0x8AA5D8) : Word(0x699560);
+            byte[] serverBytes = second ? Array.Empty<byte>() : Bytes(0x6994E0, (int)Math.Min(serverCount, 32) * 2);
+            uint keyboardWork = Word(second ? 0x64C160u : 0x6436D0u);
             bool keyboardValid = keyboardWork > 0 && keyboardWork < RamSize - 0x40;
             byte[] keyboard = keyboardValid ? Bytes(keyboardWork, 0x40) : new byte[0x40];
             var roomList = new List<Room>();
             for (int i = 0; i < rooms.Length / 0x15C; ++i) {
                 var row = rooms.AsSpan(i * 0x15C, 0x15C);
-                roomList.Add(new(i, row[0xE], titleText.Length != 0 &&
-                                               row.IndexOf(Encoding.ASCII.GetBytes(titleText)) >= 0));
+                // Original File #1 57AB30 / File #2 5927D0 address the room title at +18.
+                // Joiners' local creation-title buffer can be empty; match the configured host.
+                var roomTitle = row.Slice(0x18, 16);
+                int end = roomTitle.IndexOf((byte)0);
+                if (end >= 0)
+                    roomTitle = roomTitle[..end];
+                roomList.Add(new(i, row[0xE], targetTitle.Length != 0 &&
+                    roomTitle.SequenceEqual(Encoding.ASCII.GetBytes(targetTitle))));
             }
             var servers = new List<ServerRow>();
             for (int i = 0; i + 1 < serverBytes.Length; i += 2)
                 servers.Add(new(serverBytes[i], serverBytes[i + 1]));
-            return new(raw[0], raw[1], raw[0xE], raw[0xF], raw[0x10], raw[0x8DE], raw[0x8DF],
-                       raw[0x8E0], BitConverter.ToUInt16(raw, 4), BitConverter.ToUInt16(raw, 0xA),
-                       raw[0x446], raw[0x447], raw[0x444], raw[0x445],
-                       BitConverter.ToUInt16(raw, 0x452), raw[0x956],
-                       raw[0x13] != 0 || raw[0x14] != 0 || raw[0x54F] != 0, areaCount, roomCount,
-                       titleText, Byte(0x6A3E7A), Byte(0x6DF150), Byte(0x6DF151), raw[0x41A],
-                       Byte(0x6995A0), raw[0x8D8], raw[0x8D9], serverCount, servers,
-                       keyboardValid && keyboard[0x28] == 1, Byte(0x6436C8), keyboard[0x36],
-                       roomList);
+            RoomOption? playersOption = null, waitingOption = null;
+            if (raw[0] == 3 && raw[0xE] == 3 && raw[0xF] == 2 && raw[0x10] == 1) {
+                uint optionsBase = second ? 0x6B53E0u : 0x6A3DE0u;
+                int optionCount = Byte(optionsBase + 0x54);
+                if (optionCount is < 2 or > 32) throw new InvalidDataException("The room settings are not ready.");
+                playersOption = ReadRoomOption(Bytes, optionsBase);
+                waitingOption = ReadRoomOption(Bytes, optionsBase + 0x14A8);
+            }
+            // Original BIN3 instruction evidence: root 6E2ED0; cursor/settings/join
+            // 907/908/909, room/area 448..44B, member 456, host 97E, chat 56B.
+            // The structure grew non-uniformly, so these are explicit edition offsets.
+            return new(raw[0], raw[1], raw[0xE], raw[0xF], raw[0x10],
+                       raw[second ? 0x907 : 0x8DE], raw[second ? 0x908 : 0x8DF],
+                       raw[second ? 0x909 : 0x8E0], BitConverter.ToUInt16(raw, 4), BitConverter.ToUInt16(raw, 0xA),
+                       raw[second ? 0x44A : 0x446], raw[second ? 0x44B : 0x447],
+                       raw[second ? 0x448 : 0x444], raw[second ? 0x449 : 0x445],
+                       BitConverter.ToUInt16(raw, second ? 0x456 : 0x452), raw[second ? 0x97E : 0x956],
+                       raw[0x13] != 0 || raw[0x14] != 0 || raw[second ? 0x56B : 0x54F] != 0, areaCount, roomCount,
+                       titleText, Byte(second ? 0x6B547Au : 0x6A3E7Au),
+                       Byte(second ? 0x6E9490u : 0x6DF150u), Byte(second ? 0x6E9491u : 0x6DF151u), raw[0x41A],
+                       Byte(second ? 0x6A9848u : 0x6995A0u), raw[second ? 0x900 : 0x8D8],
+                       raw[second ? 0x901 : 0x8D9], serverCount, servers,
+                       keyboardValid && keyboard[0x28] == 1, Byte(second ? 0x64C148u : 0x6436C8u), keyboard[0x36],
+                       roomList, second ? Byte(0x6A9849) : -1, playersOption, waitingOption);
+        }
+
+        internal static RoomOption ReadRoomOption(Func<uint, int, byte[]> read, uint address) {
+            byte[] header = read(address + 0x97, 6);
+            int count = header[0], current = header[3], minimum = header[4], maximum = header[5];
+            if (count is < 1 or > 32 || minimum > maximum || maximum >= count || current < minimum || current > maximum)
+                throw new InvalidDataException("The original room option bounds are not ready.");
+            byte[] labels = read(address + 0xBD, count * 64);
+            var choices = new int[count];
+            for (int i = 0; i < count; i++) {
+                var bytes = labels.AsSpan(i * 64, 64);
+                int end = bytes.IndexOf((byte)0);
+                string label = Encoding.ASCII.GetString(end >= 0 ? bytes[..end] : bytes);
+                string number = new(label.SkipWhile(c => !char.IsAsciiDigit(c)).TakeWhile(char.IsAsciiDigit).ToArray());
+                if (!int.TryParse(number, out choices[i]) || choices[i] is < 1 or > 60)
+                    throw new InvalidDataException("The original room option choices are unavailable.");
+            }
+            return new(current, minimum, maximum, header[1] == 1, choices);
         }
 
         public void Dispose() => CloseHandle(handle);
