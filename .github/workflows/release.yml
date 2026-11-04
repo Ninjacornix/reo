@@ -1,0 +1,142 @@
+name: Prepare Windows release
+# A release is published only when a maintainer pushes a version tag
+# (v1.0.20-rc3 = prerelease, v1.0.20 = stable, which must be on main).
+# CI never creates or moves tags. Merges and branch pushes publish nothing.
+# The manual run is a validate-only dry run.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version to validate, e.g. v1.0.20-rc3 or v1.0.20 (dry run; nothing is tagged or published)'
+        type: string
+        required: true
+      prerelease:
+        description: Validate as a testing prerelease
+        type: boolean
+        default: true
+      inputs_release:
+        description: Existing release containing matching verified game input kits
+        type: string
+        required: true
+        default: v1.0.20-rc2-hotfix
+      notes:
+        description: Release notes preview; CI adds input provenance and validation limits
+        type: string
+        required: false
+
+permissions:
+  contents: read
+concurrency:
+  group: prepare-release-${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # Manual dry runs only; a tag push derives the tag and kind from github.ref.
+      RELEASE_TAG: ${{ inputs.tag }}
+      PRERELEASE: ${{ inputs.prerelease }}
+      INPUTS_RELEASE: ${{ inputs.inputs_release || vars.RELEASE_INPUTS || 'v1.0.20-rc2-hotfix' }}
+      RELEASE_NOTES: ${{ inputs.notes }}
+      PYTHONUTF8: '1'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      VULKAN_SDK: ${{ github.workspace }}/build-ninja/release-vulkan
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.400'
+      - name: Check release options and reuse matching verified kits
+        run: python -B tools/release/release.py prepare --work build-ninja/release
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: KhronosGroup/Vulkan-Headers
+          ref: 2cd90f9d20df57eac214c148f3aed885372ddcfe # v1.4.321
+          path: build-ninja/release-vulkan
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: GrenderG/openSNAP
+          ref: 1014371ba70d1caa415a09b1fa39f550b1e9cb55
+          path: build-ninja/release-opensnap
+          persist-credentials: false
+      - name: Prepare source-only server
+        run: |
+          python -B tools/local_build/export_server_source.py --checkout build-ninja/release-opensnap --output build-ninja/release/server --root .
+          if ($LASTEXITCODE) { throw 'Server export failed.' }
+      - name: Launcher and release regression checks
+        run: |
+          python -B tools/publication_audit.py
+          if ($LASTEXITCODE) { throw 'Publication source audit failed.' }
+          python -B -m unittest discover -s tools/release -p 'test_*.py' -v
+          if ($LASTEXITCODE) { throw 'Release regression checks failed.' }
+          dotnet run --project launcher/cross-tests -c Release
+          if ($LASTEXITCODE) { throw 'Launcher regression checks failed.' }
+      - name: Assemble complete Windows player package
+        run: |
+          $work = Join-Path $env:GITHUB_WORKSPACE 'build-ninja/release'
+          $o = Get-Content "$work/options.json" -Raw | ConvertFrom-Json
+          ./launcher/package-slim.ps1 -Inputs "$work/build-inputs.zip" -KitManifest "$work/file1-build-kit.json" -InputsFile2 "$work/build-inputs-file2.zip" -KitManifestFile2 "$work/file2-build-kit.json" -Server "$work/server" -Output "$work/staged/RE-Outbreak-$($o.tag)-Windows-x64" -Version $o.version -ReleaseTag $o.tag -Prerelease $o.prerelease -SelfContained
+      - name: Verify exact release files and test the extracted package
+        run: |
+          python -B tools/release/release.py finalize --work build-ninja/release
+          if ($LASTEXITCODE) { throw 'Release package verification failed.' }
+          $work = Join-Path $env:GITHUB_WORKSPACE 'build-ninja/release'
+          $o = Get-Content "$work/options.json" -Raw | ConvertFrom-Json
+          Expand-Archive -LiteralPath "$work/assets/RE-Outbreak-$($o.tag)-Windows-x64.zip" -DestinationPath "$work/smoke-package"
+          & "$work/smoke-package/Outbreak.Launcher.exe" --headless-check "$work/smoke-report" | Tee-Object "$work/smoke.log"
+          if ($LASTEXITCODE) { throw 'Extracted release package failed its UI checks.' }
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: prepared-release
+          path: |
+            build-ninja/release/assets/
+            build-ninja/release/release-plan.json
+            build-ninja/release/release-notes.md
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: release-check-reports
+          path: |
+            build-ninja/release/smoke-report/
+            build-ninja/release/smoke.log
+          if-no-files-found: warn
+
+  publish:
+    needs: package
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      # An optional scoped token supports release targets whose workflow files
+      # differ from the default branch; GitHub restricts that operation otherwise.
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: prepared-release
+          path: build-ninja/prepared-release
+      - name: Verify the pushed tag and create the release
+        run: python -B tools/release/release.py publish --work build-ninja/prepared-release

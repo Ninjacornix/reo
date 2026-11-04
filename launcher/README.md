@@ -17,6 +17,27 @@ beside the launcher. No terminal commands or environment variables are required.
 The compiler is shared between games; later launches reuse verified completed
 builds. Nothing is installed system-wide or added to PATH.
 
+Compiler downloads resume after an interruption or cancellation. Import retries transient
+connection failures up to three times and keeps partial data in the selected storage folder's
+`toolchains` directory for the next attempt. If the server cannot resume, the download restarts.
+There is no total download deadline: the default timeout is two minutes without network
+progress. The complete archive must pass the pinned size and SHA-256 checks before extraction.
+
+For slow connections or offline setup, these optional environment variables are available.
+Restart the launcher after setting a Windows user environment variable:
+
+| Variable | Value |
+| --- | --- |
+| `REO_COMPILER_DOWNLOAD_IDLE_SECONDS` | Seconds to wait for response headers or the next received chunk; default `120`, range `1`–`3600`. |
+| `REO_COMPILER_DOWNLOAD_RETRIES` | Automatic retries after the initial attempt; default `3`, range `0`–`10`. Cancellation stops immediately. |
+| `REO_COMPILER_ARCHIVE` | Full path to a manually downloaded `llvm-mingw-20251216-ucrt-x86_64.zip`. The launcher copies and verifies it instead of downloading. |
+
+Download that exact archive from the [official LLVM/MinGW release](https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.zip).
+Its SHA-256 is `2d96a4b758f7f8deaec5065833fe025aa53cfc5f704d0524002510984da0ccf4`.
+The original manual archive is kept. A modified or different-version archive is rejected.
+Alternatively, `REO_LLVM_MINGW` can point to an extracted compatible toolchain folder
+(the folder containing `bin`); the launcher checks it before downloading or importing an archive.
+
 After disc import, the launcher also prepares that game's two title-screen
 demonstration videos as silent H.264 MP4s at CRF 20 using the medium encoder
 preset; earlier cached encodes are regenerated once. Videos use full opacity on
@@ -66,7 +87,7 @@ build-kit instructions are in [local builds](../docs/LOCAL_BUILDS.md).
 - **Game files:** choosing an ISO runs a quick read-only check; a green ✓ enables Import, a red ✗ explains the problem. **Use existing build** imports a completed compatible build. **Remove game** deletes the imported disc data, the built game and its compile cache (optionally also saves and the shared build/hosting tools) after a confirmation; the ISO stays. Import/build progress stays visible at the bottom of every page.
 - **Graphics:** window resolution, borderless fullscreen, image scaling, 3D texture filtering, anisotropic filtering (Off/2×/4×/8×/16×), FXAA or SMAA, brightness, gamma and async geometry. Changes apply next launch.
 - **Movies:** before each launch `reo-movie-check.exe` (beside the launcher) asks whether the GPU the game renders with has a hardware MPEG-2 decoder. CPU decoding is the default. If the decoder check passes, **Graphics > Movies > Decode movies on the graphics card** becomes available; enable it to use the verified GPU decoder. Without a decoder (the AMD Radeon RX 9060 XT, for example) the box is greyed out and the game's original CPU decoder plays movies. The choice is shown in the status line and saved as `movieDecoder` in the session's `launch.json`.
-- **Controls:** choose keyboard, DualSense or Xbox/XInput; remap buttons and keys; adjust dead zones and stick options. DualSense discovery works independently of recent input and uses Windows HID identity over USB/Bluetooth. Basic, padded basic and enhanced Bluetooth reports are supported. USB and Bluetooth discovery/input are physically tested through the native game adapter; Bluetooth power-cycle/reconnect retains simulated coverage. DualSense light bar and rumble are supported; adaptive triggers are unsupported. See `docs/ISSUE_28_DUALSENSE.md` for measured checks.
+- **Controls:** choose keyboard, DualSense, DualShock 4 or Xbox/XInput; remap buttons and keys; adjust dead zones and stick options. DualSense discovery works independently of recent input and uses Windows HID identity over USB/Bluetooth. Basic, padded basic and enhanced Bluetooth reports are supported. USB and Bluetooth discovery/input are physically tested through the native game adapter; Bluetooth power-cycle/reconnect retains simulated coverage. DualSense light bar and rumble are supported; adaptive triggers are unsupported. See `docs/ISSUE_28_DUALSENSE.md` for measured checks. DualShock 4 (both revisions) is input-only over USB and Bluetooth. Bluetooth input is physically tested with a CUH-ZCT1; USB has simulated coverage.
 - **Save games:** open the selected game's memory-card folder or create a ZIP backup while the game is closed. Save/load itself remains in the game.
 - **Log:** read session debug/output logs, with optional follow mode.
 - **Co-op:** Play alone, Host a game or Join a game; player name; hosting address, ports and firewall; games found on the local network; optional automatic waiting room. See [Co-op](#co-op).
