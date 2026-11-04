@@ -43,6 +43,7 @@
 #include "overrides/reo_performance.h"
 #include "overrides/reo_cri_server_observer.h"
 #include "overrides/reo_cd_async.h"
+#include "overrides/reo_display_probe.h"
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1199,6 +1200,24 @@ int main(int argc, char* argv[]) {
 #ifdef __APPLE__
     if (!std::getenv("REO_HEADLESS") && !reo::macos_input::display_available()) {
         fprintf(stderr,"[BOOT] No awake display is available. Wake the display and launch the game again.\n");
+        return 1;
+    }
+#endif
+#if !defined(__APPLE__) && !defined(PLATFORM_VITA)
+    if (!std::getenv("REO_HEADLESS") && !reo_display_probe::openGl33Available()) {
+        fprintf(stderr, "[BOOT] OpenGL 3.3 is unavailable; not opening the game window. %s
+",
+                reo_display_probe::kMessage);
+#ifdef _WIN32
+        MessageBoxW(nullptr,
+                    L"This PC's graphics driver does not provide OpenGL 3.3, which the game needs "
+                    L"to open its window.
+
+Install the latest graphics driver from your graphics "
+                    L"card maker (NVIDIA, AMD or Intel), then start the game again. Microsoft's basic "
+                    L"display driver and some remote-desktop sessions do not provide OpenGL 3.3.",
+                    L"Resident Evil Outbreak", MB_OK | MB_ICONERROR);
+#endif
         return 1;
     }
 #endif
