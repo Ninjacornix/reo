@@ -41,8 +41,7 @@ internal static class PortableCompilerSetup {
         if (drive.AvailableFreeSpace < 1024L * 1024 * 1024)
             throw new IOException(
                 "Compiler setup needs about 1 GB of free disk space. Free some space and retry Import.");
-        string zip = LocalGameBuild.Inside(parent,
-                                           "download-" + Guid.NewGuid().ToString("N") + ".zip"),
+        string zip = LocalGameBuild.Inside(parent, Name + ".zip.part"),
                staging = LocalGameBuild.Inside(parent, "unpack-" + Guid.NewGuid().ToString("N"));
         try {
             await Download(zip, progress, cancel);
@@ -104,11 +103,10 @@ internal static class PortableCompilerSetup {
             if (Directory.Exists(folder))
                 Directory.Move(folder, folder + ".previous-" + Guid.NewGuid().ToString("N"));
             Directory.Move(staging, folder);
+            File.Delete(zip);
             progress?.Report(new(1, 1, "Compiler ready", "Preparing compiler"));
             return folder;
         } finally {
-            if (File.Exists(zip))
-                File.Delete(zip);
             if (Directory.Exists(staging) &&
                 Path.GetDirectoryName(Path.GetFullPath(staging)) == Path.GetFullPath(parent))
                 Directory.Delete(staging, true);
@@ -217,50 +215,11 @@ internal static class PortableCompilerSetup {
     }
     static async Task Download(string destination, IProgress<ImportProgress>? progress,
                                CancellationToken cancel) {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancel);
-        timeout.CancelAfter(TimeSpan.FromMinutes(15));
-        try {
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Outbreak-Launcher/" +
-                                                            Updates.DefaultVersion);
-            using var response =
-                await client.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
-            response.EnsureSuccessStatusCode();
-            if (response.Content.Headers.ContentLength is long length && length != ArchiveBytes)
-                throw new IOException("Unexpected compiler download size.");
-            await using (var input = await response.Content.ReadAsStreamAsync(timeout.Token))
-                await using (var output =
-                                 new FileStream(destination, FileMode.CreateNew, FileAccess.Write,
-                                                FileShare.None, 65536, true)) {
-                long received = 0, last = 0;
-                var buffer = new byte[65536];
-                int count;
-                progress?.Report(new(0, ArchiveBytes, "Downloading build tools automatically",
-                                     "Downloading compiler"));
-                while ((count = await input.ReadAsync(buffer, timeout.Token)) != 0) {
-                    received += count;
-                    if (received > ArchiveBytes)
-                        throw new IOException("Compiler download exceeds expected size.");
-                    await output.WriteAsync(buffer.AsMemory(0, count), timeout.Token);
-                    if (received - last >= 524288) {
-                        progress?.Report(new(received, ArchiveBytes,
-                                             "Downloading build tools automatically",
-                                             "Downloading compiler"));
-                        last = received;
-                    }
-                }
-                if (received != ArchiveBytes)
-                    throw new IOException("Compiler download was interrupted. Retry Import.");
-            }
-            progress?.Report(
-                new(ArchiveBytes, ArchiveBytes, "Download complete", "Downloading compiler"));
-            progress?.Report(new(0, 0, "Verifying compiler download", "Verifying compiler"));
-            if (await Hash(destination, cancel) != ArchiveHash)
-                throw new IOException(
-                    "Compiler download failed SHA-256 verification. Retry Import.");
-        } catch (OperationCanceledException) when (!cancel.IsCancellationRequested) {
-            throw new IOException(
-                "Compiler download timed out. Check your Internet connection and retry Import.");
-        }
+        using var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Outbreak-Launcher/" +
+                                                        Updates.DefaultVersion);
+        await CompilerDownload.Run(client, new Uri(Url), destination, ArchiveBytes, ArchiveHash,
+                                   CompilerDownloadOptions.FromEnvironment(), progress, cancel,
+                                   Environment.GetEnvironmentVariable("REO_COMPILER_ARCHIVE"));
     }
 }

@@ -17,6 +17,27 @@ beside the launcher. No terminal commands or environment variables are required.
 The compiler is shared between games; later launches reuse verified completed
 builds. Nothing is installed system-wide or added to PATH.
 
+Compiler downloads resume after an interruption or cancellation. Import retries transient
+connection failures up to three times and keeps partial data in the selected storage folder's
+`toolchains` directory for the next attempt. If the server cannot resume, the download restarts.
+There is no total download deadline: the default timeout is two minutes without network
+progress. The complete archive must pass the pinned size and SHA-256 checks before extraction.
+
+For slow connections or offline setup, these optional environment variables are available.
+Restart the launcher after setting a Windows user environment variable:
+
+| Variable | Value |
+| --- | --- |
+| `REO_COMPILER_DOWNLOAD_IDLE_SECONDS` | Seconds to wait for response headers or the next received chunk; default `120`, range `1`–`3600`. |
+| `REO_COMPILER_DOWNLOAD_RETRIES` | Automatic retries after the initial attempt; default `3`, range `0`–`10`. Cancellation stops immediately. |
+| `REO_COMPILER_ARCHIVE` | Full path to a manually downloaded `llvm-mingw-20251216-ucrt-x86_64.zip`. The launcher copies and verifies it instead of downloading. |
+
+Download that exact archive from the [official LLVM/MinGW release](https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.zip).
+Its SHA-256 is `2d96a4b758f7f8deaec5065833fe025aa53cfc5f704d0524002510984da0ccf4`.
+The original manual archive is kept. A modified or different-version archive is rejected.
+Alternatively, `REO_LLVM_MINGW` can point to an extracted compatible toolchain folder
+(the folder containing `bin`); the launcher checks it before downloading or importing an archive.
+
 After disc import, the launcher also prepares that game's two title-screen
 demonstration videos as silent H.264 MP4s at CRF 20 using the medium encoder
 preset; earlier cached encodes are regenerated once. Videos use full opacity on

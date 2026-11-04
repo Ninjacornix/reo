@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Show shared setup progress over the current launcher page without shrinking its content or duplicating progress in notifications or Game files. Keep detail and compact elapsed/ETA information on one line below the bar, and use a normal completion message when the game exits successfully. Import completion and error notifications remain available.
+- Resume interrupted compiler downloads, retry temporary connection failures, and time out only when network progress stops. Keep partial downloads across Import attempts and allow optional idle-timeout/retry settings or a verified manually downloaded compiler archive (#60).
 - Move Windows, macOS and Linux to the shared Avalonia/.NET 10 launcher. Bundle the Windows runtime by default and compare complete RC tags when checking and installing updates. Older RC0/RC1 installations require a manual upgrade.
 - Integrate macOS game activation and native fullscreen, hide the developer panel during normal play, and use GPU 2x rendering when Apple hardware cannot support 4x.
 - Prefer replay-validated File #2 whole VU programs and expand the local reconstruction catalogue. Preserve short queued speech tails; update the native transition regression to cover both short tails and longer interrupted streams.
