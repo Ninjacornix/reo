@@ -50,21 +50,34 @@ checks, scenario routes and final RC1 package validation remain separate. A gree
 CI run establishes only the coverage above. The existing Linux portable
 foundations workflow remains available for its focused Linux checks.
 
-## Windows releases and automatic tags
+## Windows releases from version tags
 
-`Prepare Windows release` is a manual workflow. Once `release.yml` is on the
-repository's default branch, select **Actions → Prepare Windows release → Run
-workflow**. Select the source branch: `develop` for testing prereleases or `main`
-for stable releases. The run uses that branch's exact dispatched commit.
+A release is published only when a maintainer pushes a version tag. Merges and
+branch pushes never create a tag, prerelease or release, and CI never creates or
+moves tags. To release, tag the exact commit and push the tag:
+
+```
+git tag v1.0.20-rc3 <commit>
+git push origin v1.0.20-rc3
+```
+
+The tag push starts **Prepare Windows release** for that commit. A suffix
+(`v1.0.20-rc3`) makes a testing prerelease that is never marked Latest; no suffix
+(`v1.0.20`) makes a stable release, which is refused unless the tagged commit is
+on `main`. The tag's numeric version must match the committed launcher
+`DefaultVersion`. The game kits are reused from the release named by the
+repository variable `RELEASE_INPUTS`, or `v1.0.20-rc2-hotfix` when it is unset.
+
+**Actions → Prepare Windows release → Run workflow** remains available as a
+validate-only dry run. It packages and checks the selected branch but never
+creates a tag or release:
 
 | Input | Meaning |
 | --- | --- |
-| `tag` | Full version, such as `v1.0.20-rc3` or `v1.0.20`. Its numeric version must match the committed launcher `DefaultVersion`. |
-| `prerelease` | Defaults to true. Prereleases require a version suffix and are never marked Latest. Stable versions require no suffix and must be prepared from `main`. |
-| `create_tag` | Defaults to true. Creates the tag at the validated commit only in draft/publish mode. Existing tags are never overwritten. Disable this to use an existing tag pointing to exactly that commit. |
-| `publication` | Defaults to **validate-only**, which uploads CI artifacts without creating any GitHub tag or release. **draft** creates the tag and an unpublished release; **publish** publishes it after upload verification. |
+| `tag` | Version to validate, such as `v1.0.20-rc3` or `v1.0.20`. |
+| `prerelease` | Validate as a prerelease (requires a suffix) or as stable (no suffix, branch `main`). |
 | `inputs_release` | Existing published release supplying both verified game kits and the matching dependency source archive. Defaults to `v1.0.20-rc2-hotfix`. |
-| `notes` | Optional release notes. CI appends the source commit, reused input release and validation limits. |
+| `notes` | Optional release notes preview. CI appends the source commit, reused input release and validation limits. |
 
 The workflow verifies GitHub's SHA-256 asset digests, the player package inventory,
 both sealed kit inventories and edition identities. Reuse is limited to unchanged
@@ -75,13 +88,13 @@ complete Windows player ZIP and dependency-source ZIP with checksums, and tests
 the extracted player package. It does not compile owned games or rerun gameplay;
 missing game validation receipts remain pending rather than inheriting old passes.
 
-The publication job tags only after successful packaging and UI checks, verifies
-all uploaded asset hashes while the release is still a draft, then applies the
-selected publication/prerelease state. Tags and published release assets are not
-replaced on reruns. A failed upload can leave a tag or draft for manual recovery.
-The normal token has repository write access only in that publication job. An
-optional `RELEASE_TOKEN` with the required contents/workflows permissions supports
-tagging source commits whose workflows differ from the default branch.
+The publication job runs only for a pushed version tag, after successful
+packaging and UI checks. It verifies that the tag still names the validated
+commit, uploads to a draft release, verifies all uploaded asset hashes, then
+publishes it. Published release assets are not replaced on reruns; a failed
+upload can leave a draft for manual recovery. The normal token has repository
+write access only in that publication job; an optional `RELEASE_TOKEN` can be
+used instead.
 
 This prepares Windows player releases only. macOS launcher validation and source
 build instructions do not constitute an automated Mac player-package pipeline.

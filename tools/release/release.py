@@ -1,4 +1,4 @@
-"""Package verified existing game inputs; publish only through an explicit dispatch."""
+"""Package verified existing game inputs; publish only for a pushed version tag."""
 import argparse
 import hashlib
 import json
@@ -37,14 +37,32 @@ def api(path, method='GET', data=None):
     return json.loads(result) if result else None
 
 
-def options(tag, prerelease, publication, create_tag):
+def options(tag, prerelease, publication):
     match = re.fullmatch(TAG, tag)
     if not match or bool(match[4]) != prerelease:
         raise ValueError('Use vMAJOR.MINOR.PATCH for stable, or add a suffix for a prerelease.')
-    if publication not in ('validate-only', 'draft', 'publish'):
+    if publication not in ('validate-only', 'publish'):
         raise ValueError('Unknown publication mode.')
     return {'tag': tag, 'version': '.'.join(match.groups()[:3]), 'prerelease': prerelease,
-            'publication': publication, 'createTag': create_tag}
+            'publication': publication}
+
+
+def requested_options():
+    """A pushed version tag publishes that tag; a manual run only validates.
+
+    CI never creates tags: a release exists only after a maintainer pushes its tag.
+    The suffix decides the kind: v1.0.20-rc3 is a prerelease, v1.0.20 is stable.
+    """
+    if os.environ.get('GITHUB_EVENT_NAME') == 'push':
+        ref = os.environ.get('GITHUB_REF', '')
+        if not ref.startswith('refs/tags/'):
+            raise ValueError('Releases are published only from a pushed version tag.')
+        tag = ref[len('refs/tags/'):]
+        match = re.fullmatch(TAG, tag)
+        if not match:
+            raise ValueError('Pushed tag is not a version tag (vMAJOR.MINOR.PATCH[-suffix]).')
+        return options(tag, bool(match[4]), 'publish')
+    return options(os.environ['RELEASE_TAG'], os.environ['PRERELEASE'] == 'true', 'validate-only')
 
 
 def sha(path):
@@ -133,22 +151,27 @@ def verify_package(path, tag=None, prerelease=None, source=None):
         if tag is not None and (distribution.get('releaseTag') != tag or
                                distribution.get('prerelease') is not prerelease or
                                distribution.get('revision') != source or
-                               distribution.get('version') != options(tag, prerelease, 'validate-only', True)['version']):
+                               distribution.get('version') != options(tag, prerelease, 'validate-only')['version']):
             raise ValueError('Player package release identity mismatch.')
         return distribution
 
 
 def prepare(root, work):
-    opts = options(os.environ['RELEASE_TAG'], os.environ['PRERELEASE'] == 'true',
-                   os.environ['PUBLICATION'], os.environ['CREATE_TAG'] == 'true')
+    opts = requested_options()
     repo, seed = os.environ['GITHUB_REPOSITORY'], os.environ['INPUTS_RELEASE']
     if not re.fullmatch(TAG, seed):
         raise ValueError('Select an existing versioned release for the game input kits.')
     source = run('git', 'rev-parse', 'HEAD', cwd=root)
     if source != os.environ['GITHUB_SHA']:
         raise ValueError('Checkout does not match the dispatched commit.')
-    if not opts['prerelease'] and os.environ['GITHUB_REF'] != 'refs/heads/main':
-        raise ValueError('Select main when preparing a stable release.')
+    if not opts['prerelease']:
+        if opts['publication'] == 'publish':
+            try:
+                run('git', 'merge-base', '--is-ancestor', source, 'refs/remotes/origin/main', cwd=root)
+            except RuntimeError:
+                raise ValueError('Stable release tags must point to a commit on main.') from None
+        elif os.environ['GITHUB_REF'] != 'refs/heads/main':
+            raise ValueError('Select main when preparing a stable release.')
     version_source = (root / 'launcher/Updates.cs').read_text(encoding='utf-8-sig')
     if not re.search(r'DefaultVersion\s*=\s*"' + re.escape(opts['version']) + '"', version_source):
         raise ValueError('Commit the matching launcher DefaultVersion before preparing this version.')
@@ -219,7 +242,7 @@ def finalize(work):
 
 def publish(work):
     opts = json.loads((work / 'release-plan.json').read_text())
-    checked = options(opts['tag'], opts['prerelease'], opts['publication'], opts['createTag'])
+    checked = options(opts['tag'], opts['prerelease'], opts['publication'])
     if checked['publication'] == 'validate-only':
         print('Validate-only: no GitHub tag or release created.')
         return
@@ -233,17 +256,15 @@ def publish(work):
         if sha(work / 'assets' / name) != asset['sha256']:
             raise ValueError('Release artifact hash mismatch: ' + name)
     repo, tag = opts['repository'], opts['tag']
-    if opts['createTag']:
-        # Creating a ref is atomic: an existing or concurrently created tag is never moved.
-        api(f'repos/{repo}/git/refs', 'POST', {'ref': 'refs/tags/' + tag, 'sha': opts['source']})
-    else:
-        ref = api(f'repos/{repo}/git/ref/tags/{tag}')['object']
-        for _ in range(8):
-            if ref['type'] != 'tag':
-                break
-            ref = api(f'repos/{repo}/git/tags/{ref["sha"]}')['object']
-        if ref['type'] != 'commit' or ref['sha'] != opts['source']:
-            raise ValueError('Existing tag does not point to the dispatched commit.')
+    # The maintainer's pushed tag must still name the validated commit; CI never moves
+    # or creates tags.
+    ref = api(f'repos/{repo}/git/ref/tags/{tag}')['object']
+    for _ in range(8):
+        if ref['type'] != 'tag':
+            break
+        ref = api(f'repos/{repo}/git/tags/{ref["sha"]}')['object']
+    if ref['type'] != 'commit' or ref['sha'] != opts['source']:
+        raise ValueError('Existing tag does not point to the validated commit.')
     files = [str(work / 'assets' / item['name']) for item in opts['assets']]
     run('gh', 'release', 'create', tag, '--repo', repo, '--verify-tag', '--target', opts['source'],
         '--title', 'RE: Outbreak ' + tag, '--draft', '--notes-file', str(work / 'release-notes.md'), *files)

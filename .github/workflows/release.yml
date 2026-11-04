@@ -1,38 +1,35 @@
 name: Prepare Windows release
+# A release is published only when a maintainer pushes a version tag
+# (v1.0.20-rc3 = prerelease, v1.0.20 = stable, which must be on main).
+# CI never creates or moves tags. Merges and branch pushes publish nothing.
+# The manual run is a validate-only dry run.
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'New version tag, e.g. v1.0.20-rc3 or v1.0.20'
+        description: 'Version to validate, e.g. v1.0.20-rc3 or v1.0.20 (dry run; nothing is tagged or published)'
         type: string
         required: true
       prerelease:
-        description: Mark this as a testing prerelease
+        description: Validate as a testing prerelease
         type: boolean
         default: true
-      create_tag:
-        description: Automatically create the tag at the selected commit (never overwrite)
-        type: boolean
-        default: true
-      publication:
-        description: Validate only, create a draft, or publish after validation
-        type: choice
-        options: [validate-only, draft, publish]
-        default: validate-only
       inputs_release:
         description: Existing release containing matching verified game input kits
         type: string
         required: true
         default: v1.0.20-rc2-hotfix
       notes:
-        description: Release notes; CI adds input provenance and validation limits
+        description: Release notes preview; CI adds input provenance and validation limits
         type: string
         required: false
 
 permissions:
   contents: read
 concurrency:
-  group: prepare-release-${{ inputs.tag }}
+  group: prepare-release-${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
   cancel-in-progress: false
 
 jobs:
@@ -44,11 +41,10 @@ jobs:
         shell: pwsh
     env:
       GH_TOKEN: ${{ github.token }}
+      # Manual dry runs only; a tag push derives the tag and kind from github.ref.
       RELEASE_TAG: ${{ inputs.tag }}
       PRERELEASE: ${{ inputs.prerelease }}
-      CREATE_TAG: ${{ inputs.create_tag }}
-      PUBLICATION: ${{ inputs.publication }}
-      INPUTS_RELEASE: ${{ inputs.inputs_release }}
+      INPUTS_RELEASE: ${{ inputs.inputs_release || vars.RELEASE_INPUTS || 'v1.0.20-rc2-hotfix' }}
       RELEASE_NOTES: ${{ inputs.notes }}
       PYTHONUTF8: '1'
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
@@ -125,7 +121,7 @@ jobs:
 
   publish:
     needs: package
-    if: inputs.publication != 'validate-only'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -142,5 +138,5 @@ jobs:
         with:
           name: prepared-release
           path: build-ninja/prepared-release
-      - name: Tag the exact validated commit and create the release
+      - name: Verify the pushed tag and create the release
         run: python -B tools/release/release.py publish --work build-ninja/prepared-release

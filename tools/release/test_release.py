@@ -48,14 +48,32 @@ class ReleaseTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
 
     def test_stable_and_prerelease_identity(self):
-        self.assertEqual(release.options('v1.0.20-rc3', True, 'validate-only', True)['version'], '1.0.20')
-        self.assertFalse(release.options('v1.0.20', False, 'draft', False)['prerelease'])
+        self.assertEqual(release.options('v1.0.20-rc3', True, 'validate-only')['version'], '1.0.20')
+        self.assertFalse(release.options('v1.0.20', False, 'publish')['prerelease'])
         for tag, kind in [('v1.0.20-rc3', False), ('v1.0.20', True), ('v01.0.20', False),
                           ('v1.0.20; echo secret', True), ('../rc3', True), ('v1.0.20\n', False)]:
             with self.subTest(tag=tag), self.assertRaises(ValueError):
-                release.options(tag, kind, 'draft', True)
-        with self.assertRaises(ValueError):
-            release.options('v1.0.20', False, 'automatic', True)
+                release.options(tag, kind, 'publish')
+        for publication in ('automatic', 'draft'):
+            with self.subTest(publication=publication), self.assertRaises(ValueError):
+                release.options('v1.0.20', False, publication)
+
+    def test_only_a_pushed_version_tag_publishes(self):
+        pushed = {'GITHUB_EVENT_NAME': 'push', 'GITHUB_REF': 'refs/tags/v1.0.20-rc3'}
+        with patch.dict(os.environ, pushed):
+            opts = release.requested_options()
+        self.assertEqual((opts['tag'], opts['prerelease'], opts['publication']),
+                         ('v1.0.20-rc3', True, 'publish'))
+        with patch.dict(os.environ, {**pushed, 'GITHUB_REF': 'refs/tags/v1.0.20'}):
+            self.assertFalse(release.requested_options()['prerelease'])
+        for ref in ('refs/heads/develop', 'refs/tags/nightly', 'refs/tags/v1.0.20;x'):
+            with self.subTest(ref=ref), patch.dict(os.environ, {**pushed, 'GITHUB_REF': ref}), \
+                    self.assertRaises(ValueError):
+                release.requested_options()
+        # A manual run is always a dry run, whatever was requested.
+        manual = {'GITHUB_EVENT_NAME': 'workflow_dispatch', 'RELEASE_TAG': 'v1.0.20-rc3', 'PRERELEASE': 'true'}
+        with patch.dict(os.environ, manual):
+            self.assertEqual(release.requested_options()['publication'], 'validate-only')
 
     def test_reuse_refuses_changed_game_sources_and_recipes(self):
         release.check_reuse(['launcher/OnlineOptions.cs', '.github/workflows/release.yml',
@@ -97,9 +115,9 @@ class ReleaseTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Private'):
                 release.verify_kit(kit, self.root / 'manifest.json', game)
 
-    def make_plan(self, publication='draft', create=True, prerelease=True):
+    def make_plan(self, publication='publish', prerelease=True):
         tag = 'v1.0.20-rc3' if prerelease else 'v1.0.20'
-        plan = release.options(tag, prerelease, publication, create)
+        plan = release.options(tag, prerelease, publication)
         plan.update(source='a' * 40, repository='owner/repo', assets=[])
         (self.root / 'assets').mkdir()
         for name in ('player.zip', 'sources.zip'):
@@ -130,27 +148,20 @@ class ReleaseTests(unittest.TestCase):
             return {}
         return api, calls
 
-    def test_tag_exact_commit_then_verify_assets_before_publication(self):
-        plan = self.make_plan(publication='publish')
+    def test_pushed_tag_verified_never_created_then_assets_before_publication(self):
+        plan = self.make_plan()
         api, calls = self.publish_spies(plan)
         with patch.dict(os.environ, {'GITHUB_SHA': plan['source'], 'GITHUB_REPOSITORY': plan['repository']}), \
                 patch.object(release, 'api', side_effect=api), patch.object(release, 'run') as run:
             release.publish(self.root)
-        self.assertEqual(calls[0][2], {'ref': 'refs/tags/v1.0.20-rc3', 'sha': plan['source']})
+        self.assertEqual(calls[0][:2], ('repos/owner/repo/git/ref/tags/v1.0.20-rc3', 'GET'))
+        self.assertFalse(any(method == 'POST' for _, method, _ in calls))
         self.assertIn('--verify-tag', run.call_args.args)
         self.assertIn('--draft', run.call_args.args)
         self.assertEqual(calls[-1][2], {'prerelease': True, 'draft': False, 'make_latest': 'false'})
 
-    def test_draft_stable_is_not_published_or_marked_latest(self):
-        plan = self.make_plan(prerelease=False)
-        api, calls = self.publish_spies(plan)
-        with patch.dict(os.environ, {'GITHUB_SHA': plan['source'], 'GITHUB_REPOSITORY': plan['repository']}), \
-                patch.object(release, 'api', side_effect=api), patch.object(release, 'run'):
-            release.publish(self.root)
-        self.assertEqual(calls[-1][2], {'prerelease': False, 'draft': True, 'make_latest': 'false'})
-
     def test_stable_publication_and_existing_annotated_tag(self):
-        plan = self.make_plan(publication='publish', create=False, prerelease=False)
+        plan = self.make_plan(prerelease=False)
         api, calls = self.publish_spies(plan, existing={'type': 'tag', 'sha': 'c' * 40})
         def annotated(path, method='GET', data=None):
             if '/git/tags/' in path:
@@ -171,7 +182,7 @@ class ReleaseTests(unittest.TestCase):
         api.assert_not_called()
 
     def test_asset_upload_mismatch_keeps_release_draft(self):
-        plan = self.make_plan(publication='publish')
+        plan = self.make_plan()
         api, calls = self.publish_spies(plan, corrupt_upload=True)
         with patch.dict(os.environ, {'GITHUB_SHA': plan['source'], 'GITHUB_REPOSITORY': plan['repository']}), \
                 patch.object(release, 'api', side_effect=api), patch.object(release, 'run'), \
@@ -180,7 +191,7 @@ class ReleaseTests(unittest.TestCase):
         self.assertFalse(any(method == 'PATCH' for _, method, _ in calls))
 
     def test_existing_tag_wrong_commit_and_artifact_tampering_refused(self):
-        plan = self.make_plan(create=False)
+        plan = self.make_plan()
         api, _ = self.publish_spies(plan, existing={'type': 'commit', 'sha': 'b' * 40})
         with patch.dict(os.environ, {'GITHUB_SHA': plan['source'], 'GITHUB_REPOSITORY': plan['repository']}), \
                 patch.object(release, 'api', side_effect=api), patch.object(release, 'run') as run:
@@ -193,10 +204,10 @@ class ReleaseTests(unittest.TestCase):
             release.publish(self.root)
         api.assert_not_called()
 
-    def test_existing_tag_collision_does_not_create_release(self):
+    def test_missing_tag_does_not_create_release(self):
         plan = self.make_plan()
         with patch.dict(os.environ, {'GITHUB_SHA': plan['source'], 'GITHUB_REPOSITORY': plan['repository']}), \
-                patch.object(release, 'api', side_effect=RuntimeError('Tag already exists')), \
+                patch.object(release, 'api', side_effect=RuntimeError('Not Found')), \
                 patch.object(release, 'run') as run, self.assertRaises(RuntimeError):
             release.publish(self.root)
         run.assert_not_called()
@@ -224,8 +235,8 @@ class ReleaseTests(unittest.TestCase):
                 (work / name).write_bytes(downloads[name])
                 return ''
             raise AssertionError(command)
-        environment = {'RELEASE_TAG': target, 'PRERELEASE': 'true', 'PUBLICATION': 'validate-only',
-                       'CREATE_TAG': 'true', 'GITHUB_REPOSITORY': 'owner/repo', 'INPUTS_RELEASE': seed,
+        environment = {'RELEASE_TAG': target, 'PRERELEASE': 'true', 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+                       'GITHUB_REPOSITORY': 'owner/repo', 'INPUTS_RELEASE': seed,
                        'GITHUB_SHA': 'a' * 40, 'GITHUB_REF': 'refs/heads/develop'}
         with patch.dict(os.environ, environment), patch.object(release, 'run', side_effect=runner), \
                 patch.object(release, 'api', return_value=metadata) as api:
@@ -247,12 +258,25 @@ class ReleaseTests(unittest.TestCase):
         api.assert_not_called()
 
     def test_stable_preparation_from_develop_refused_before_network(self):
-        environment = {'RELEASE_TAG': 'v1.0.20', 'PRERELEASE': 'false', 'PUBLICATION': 'validate-only',
-                       'CREATE_TAG': 'true', 'GITHUB_REPOSITORY': 'owner/repo',
+        environment = {'RELEASE_TAG': 'v1.0.20', 'PRERELEASE': 'false', 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+                       'GITHUB_REPOSITORY': 'owner/repo',
                        'INPUTS_RELEASE': 'v1.0.20-rc2-hotfix', 'GITHUB_SHA': 'a' * 40,
                        'GITHUB_REF': 'refs/heads/develop'}
         with patch.dict(os.environ, environment), patch.object(release, 'run', return_value='a' * 40), \
                 patch.object(release, 'api') as api, self.assertRaisesRegex(ValueError, 'Select main'):
+            release.prepare(self.root, self.root / 'work')
+        api.assert_not_called()
+
+    def test_stable_tag_off_main_refused_before_network(self):
+        environment = {'GITHUB_EVENT_NAME': 'push', 'GITHUB_REF': 'refs/tags/v1.0.20',
+                       'GITHUB_REPOSITORY': 'owner/repo', 'INPUTS_RELEASE': 'v1.0.20-rc2-hotfix',
+                       'GITHUB_SHA': 'a' * 40}
+        def runner(*command, **kwargs):
+            if command[:3] == ('git', 'merge-base', '--is-ancestor'):
+                raise RuntimeError('git failed (1): ')
+            return 'a' * 40
+        with patch.dict(os.environ, environment), patch.object(release, 'run', side_effect=runner), \
+                patch.object(release, 'api') as api, self.assertRaisesRegex(ValueError, 'on main'):
             release.prepare(self.root, self.root / 'work')
         api.assert_not_called()
 
