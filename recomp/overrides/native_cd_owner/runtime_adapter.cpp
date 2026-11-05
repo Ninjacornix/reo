@@ -13,6 +13,7 @@
 #include <exception>
 #include <memory>
 #include <mutex>
+#include <utility>
 
 #ifndef PS2_RUNTIME_HAS_EXTERNAL_WORKERS
 #error "Native CD ownership requires the matching public external-worker runtime patch"
@@ -84,6 +85,10 @@ public:
             // error -> original SRD/DVCI publication is a separate contract.
             PS2Runtime::GuestExecutionScope execution(&runtime);
             if (stopping.load(std::memory_order_acquire) || runtime.isStopRequested()) return;
+            if (word(memory, request.end_parameter) != 0 || word(memory, request.end_parameter + 4) != 0) {
+                std::fprintf(stderr, "[NATIVE-CD-OWNER] completion metadata changed; original busy state is unresolved\n");
+                return; // Work was already published: never replay it through fallback.
+            }
             R5900Context context{};
             SET_GPR_U32(&context, 28, request.gp);
             SET_GPR_U32(&context, 29, callback_stack);
@@ -135,8 +140,25 @@ private:
     std::atomic<unsigned> read_reports{0}, failure_reports{0}, completion_reports{0};
 };
 
-std::atomic<std::shared_ptr<Session>> active;
+// The bundled libc++ lacks atomic<shared_ptr<T>> and newer libstdc++ deprecates
+// its free-function predecessor. Hold this short registry lock only to retain
+// or exchange ownership; no I/O, guest execution or final destruction under it.
+std::shared_ptr<Session> active;
+std::mutex active_mutex;
 std::mutex configuration_mutex;
+
+std::shared_ptr<Session> load_active() {
+    std::lock_guard lock(active_mutex);
+    return active;
+}
+void store_active(std::shared_ptr<Session> session) {
+    { std::lock_guard lock(active_mutex); active.swap(session); }
+}
+std::shared_ptr<Session> take_active(PS2Runtime& runtime) {
+    std::lock_guard lock(active_mutex);
+    if (!active || &active->runtime != &runtime) return {};
+    return std::exchange(active, {});
+}
 
 bool identity(const char* serial, const std::uint8_t* memory, std::size_t bytes) noexcept {
     return serial && !std::strcmp(serial, "SLUS-20765") && memory && bytes == PS2_RAM_SIZE &&
@@ -161,7 +183,7 @@ void configure(const char* serial, std::uint8_t* memory, std::size_t bytes,
         !runtime.hasFunction(callback)) return;
     try {
         std::lock_guard lock(configuration_mutex);
-        if (const auto current = active.load(std::memory_order_acquire)) {
+        if (const auto current = load_active()) {
             if (&current->runtime == &runtime && current->memory == memory &&
                 !current->stopping.load(std::memory_order_acquire)) enabled = true;
             return;
@@ -178,7 +200,7 @@ void configure(const char* serial, std::uint8_t* memory, std::size_t bytes,
             std::fprintf(stderr, "[NATIVE-CD-OWNER] runtime registration refused; original HLE retained\n");
             return;
         }
-        active.store(std::move(session), std::memory_order_release);
+        store_active(std::move(session));
         enabled = true;
         std::fprintf(stderr, "[NATIVE-CD-OWNER] bounded session worker registered with runtime lifecycle\n");
     } catch (const std::exception& error) {
@@ -189,13 +211,15 @@ void configure(const char* serial, std::uint8_t* memory, std::size_t bytes,
 }
 
 void sifCallRpc(std::uint8_t* memory, R5900Context* context, PS2Runtime* runtime) {
-    const auto session = active.load(std::memory_order_acquire);
+    const auto session = load_active();
     if (session && runtime == &session->runtime && memory == session->memory &&
         runtime->memory().getRDRAM() == memory &&
         GPR_U32(context, 31) == return_address && GPR_U32(context, 4) == client &&
         GPR_U32(context, 5) == 1 && GPR_U32(context, 6) == 1 &&
         GPR_U32(context, 7) == send && GPR_U32(context, 8) == 0x18 &&
         GPR_U32(context, 9) == 0 && GPR_U32(context, 10) == 0 &&
+        memory[send + 14] == 0 && word(memory, send + 16) == 0x208A00 &&
+        word(memory, send + 20) == 0x208AC0 &&
         GPR_U32(context, 11) == callback && runtime->hasFunction(callback) &&
         runtime->lookupFunction(callback) == session->callback_function) {
         const auto stack = GPR_U32(context, 29);
@@ -204,7 +228,9 @@ void sifCallRpc(std::uint8_t* memory, R5900Context* context, PS2Runtime* runtime
         const auto bytes = std::uint64_t(request.count) * 2048;
         if (stack % 4 == 0 && stack <= PS2_RAM_SIZE - 4 && request.count > 0 &&
             request.count <= 0x4000 && request.destination > 0 &&
-            request.destination < PS2_RAM_SIZE && bytes <= PS2_RAM_SIZE - request.destination) {
+            request.destination < PS2_RAM_SIZE && bytes <= PS2_RAM_SIZE - request.destination &&
+            (std::uint64_t(request.destination) + bytes <= 0x208A00 || request.destination >= 0x208A90) &&
+            word(memory, 0x208A00) == 0 && word(memory, 0x208A04) == 0) {
             auto owned = request;
             owned.end_parameter = word(memory, stack);
             if (owned.end_parameter != 0x208A00) {
@@ -237,9 +263,8 @@ void sifCallRpc(std::uint8_t* memory, R5900Context* context, PS2Runtime* runtime
 }
 
 void finish(PS2Runtime& runtime) noexcept {
-    auto session = active.load(std::memory_order_acquire);
-    if (!session || &session->runtime != &runtime) return;
-    if (!active.compare_exchange_strong(session, {}, std::memory_order_acq_rel)) return;
+    auto session = take_active(runtime);
+    if (!session) return;
     enabled = false;
     try { runtime.requestStop(); }
     catch (...) { std::fprintf(stderr, "[NATIVE-CD-OWNER] runtime stop raised during session cleanup\n"); }

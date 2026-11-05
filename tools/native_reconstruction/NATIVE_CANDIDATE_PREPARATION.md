@@ -52,3 +52,12 @@ its compatibility filename points to the new delta for existing build drivers.
 
 A successful preparation establishes input provenance and source-plan closure,
 not successful compilation, gameplay correctness or a performance improvement.
+
+The separate build driver accepts `--cache-from <completed-private-work>` when
+starting a fresh work directory. It copies only verified `.obj`/per-unit `.json`
+pairs from a finished candidate with the same verified toolchain. No archives,
+precompiled headers, generated source or input marker is copied. The sealed
+ordinary compile worker recomputes each unit's source/options/header/ABI/compiler
+signature and object hash before accepting a hit; changed inputs rebuild. Cache
+provenance is recorded separately. A failed build can supply successful objects,
+but it never counts as a completed candidate or gameplay validation.

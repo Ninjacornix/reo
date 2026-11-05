@@ -24,6 +24,7 @@ def sha(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--cxx', default='g++')
+    parser.add_argument('--output', type=Path, default=ROOT/'build-native-sjuni/cd-owner-checks')
     parser.add_argument('--runtime-headers', type=Path,
                         help='Also compile the adapter against a supplied real patched PS2Recomp checkout; no link.')
     args = parser.parse_args()
@@ -35,7 +36,9 @@ def main():
     elf = Elf(ROOT / 'game_data/SLUS_207.65')
     if elf.sha256 != '06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46':
         raise ValueError('Owned File #1 identity mismatch')
-    output = ROOT / 'build-native-sjuni/cd-owner-checks'
+    output = args.output.resolve()
+    if not output.is_relative_to(ROOT/'build-native-sjuni') or output == ROOT/'build-native-sjuni':
+        parser.error('Use a private ignored output below build-native-sjuni')
     output.mkdir(parents=True, exist_ok=True)
     fixture = output / 'identity.bin'
     fixture.write_bytes(b''.join(struct.pack('<II', pc, length) + elf.read(pc, length)
@@ -63,7 +66,8 @@ def main():
              str(ROOT/'game/native/tasks/serial_worker.cpp'), '-o', str(executable)], 'host_adapter_build')
         for scenario in ('operations', 'refusals', 'shutdown', 'queue-full', 'callback-overlap',
                          'allocation-failure', 'no-stack', 'late-registration', 'callback-exception',
-                         'callback-continuation', 'missing-callback', 'changed-callback', 'read-exception'):
+                         'callback-continuation', 'missing-callback', 'changed-callback', 'read-exception',
+                         'changed-completion-metadata'):
             run([str(executable), str(fixture), scenario], scenario)
         if args.runtime_headers:
             dependency = args.runtime_headers.resolve()
@@ -86,7 +90,7 @@ def main():
                                   'No original instruction, CD device, SRD/DVCI, audio/movie or gameplay execution.',
                                   'The existing false-read callback policy remains; typed error publication is not reconstructed.']
         (output/'receipt.json').write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')
-    print('Receipt: build-native-sjuni/cd-owner-checks/receipt.json')
+    print('Receipt: ' + str(output/'receipt.json'))
 
 
 if __name__ == '__main__':

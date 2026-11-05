@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -44,6 +45,50 @@ def toolchain_identity(folder, plan):
             'compiler_sha256': sha(compiler), 'archive_sha256': receipt['ArchiveSha256']}
 
 
+def seed_object_cache(source, work, identity):
+    """Copy verified object/receipt pairs, never archives, PCHs or input markers.
+
+    The ordinary sealed compile worker still recomputes each input signature,
+    including headers/options/source/ABI/driver, before accepting a cache hit.
+    """
+    allowed = (ROOT / 'build-native-sjuni').resolve()
+    source = source.resolve()
+    if (source == allowed or not source.is_relative_to(allowed) or
+            source.is_relative_to(work) or work.is_relative_to(source)):
+        raise ValueError('Object cache must be a distinct private candidate work folder')
+    old_marker = source / 'candidate-build-inputs.json'
+    result_path = source / 'candidate-build-result.json'
+    old = json.loads(old_marker.read_text(encoding='utf-8'))
+    result = json.loads(result_path.read_text(encoding='utf-8'))
+    if old.get('toolchain') != identity['toolchain'] or result.get('status') not in ('passed', 'failed'):
+        raise ValueError('Object cache needs completed build and matching verified toolchain identity')
+    destination = work / 'objects'
+    if destination.exists():
+        raise ValueError('Seed only a fresh object directory; omit --cache-from when resuming')
+    destination.mkdir()
+    copied = {}
+    for receipt in sorted((source / 'objects').glob('*.json')):
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', receipt.stem):
+            raise ValueError('Invalid cached unit name')
+        obj = receipt.with_suffix('.obj')
+        if not obj.is_file():
+            continue
+        saved = json.loads(receipt.read_text(encoding='utf-8'))
+        if (not isinstance(saved, dict) or not re.fullmatch(r'[0-9a-f]{64}', saved.get('input', '')) or
+                saved.get('object') != sha(obj)):
+            raise ValueError('Invalid cached object/receipt pair: ' + receipt.stem)
+        shutil.copyfile(obj, destination / obj.name)
+        shutil.copyfile(receipt, destination / receipt.name)
+        if sha(destination / obj.name) != saved['object']:
+            raise ValueError('Cached object copy failed verification')
+        copied[receipt.stem] = dict(object_sha256=saved['object'], receipt_sha256=sha(receipt))
+    report = dict(source=str(source), source_inputs_sha256=sha(old_marker),
+                  source_result_sha256=sha(result_path), copied_objects=copied,
+                  signature_revalidation='ordinary compile worker recomputes each input signature')
+    (work / 'seeded-object-cache.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    return dict(source=str(source), copied_pairs=len(copied), receipt_sha256=sha(work / 'seeded-object-cache.json'))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--kit', required=True, type=Path)
@@ -52,6 +97,7 @@ def main():
     parser.add_argument('--work', type=Path, default=ROOT / 'build-native-sjuni/candidate-work-v1')
     parser.add_argument('--output', type=Path, default=ROOT / 'build-native-sjuni/candidate-game-v1')
     parser.add_argument('--jobs', type=int, default=2)
+    parser.add_argument('--cache-from', type=Path, help='Seed a fresh work folder with verified object/receipt pairs')
     args = parser.parse_args()
     kit, disc, compiler = args.kit.resolve(), args.disc.resolve(), args.toolchain.resolve()
     work, output = args.work.resolve(), args.output.resolve()
@@ -73,6 +119,9 @@ def main():
     marker = work / 'candidate-build-inputs.json'
     if marker.exists() and json.loads(marker.read_text(encoding='utf-8')) != identity:
         raise ValueError('Private work folder belongs to different inputs; choose another folder')
+    if args.cache_from and marker.exists():
+        raise ValueError('Use --cache-from only on a fresh work folder')
+    cache = seed_object_cache(args.cache_from, work, identity) if args.cache_from else None
     marker.write_text(json.dumps(identity, indent=2) + '\n', encoding='utf-8')
     if shutil.disk_usage(work).free < 4 * 1024 ** 3:
         raise RuntimeError('Less than 4 GiB free; candidate build not started')
@@ -105,6 +154,7 @@ def main():
                   elapsed_seconds=round(time.monotonic() - started, 3), command=command,
                   build_log_sha256=sha(log_path), game_launched=False,
                   precompiled_ps2_runtime_reused=False)
+    record['seeded_object_cache'] = cache
     executable = output / 'reo_recomp.exe'
     if result == 0:
         if not executable.is_file():

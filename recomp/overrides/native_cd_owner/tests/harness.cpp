@@ -119,6 +119,8 @@ void seed(PS2Runtime& runtime, const char* fixture) {
 R5900Context request(PS2Runtime& runtime) {
     auto* ram = runtime.memory().getRDRAM();
     put(ram, send, 77); put(ram, send + 4, 1); put(ram, send + 8, 0x500000);
+    put(ram, send + 12, 0); put(ram, send + 16, 0x208A00); put(ram, send + 20, 0x208AC0);
+    put(ram, 0x208A00, 0); put(ram, 0x208A04, 0);
     put(ram, 0x1F10000, 0x208A00);
     R5900Context context{};
     context.gpr[4] = client; context.gpr[5] = 1; context.gpr[6] = 1;
@@ -178,7 +180,7 @@ void refusals(const char* fixture) {
     ram[0x1002B0] ^= 1; configure(runtime); CHECK(!reo_cd_async::enabled); ram[0x1002B0] ^= 1;
     configure(runtime); CHECK(reo_cd_async::enabled);
     reo_cd_async::Lifetime lifetime(runtime);
-    for (unsigned which = 0; which < 10; ++which) {
+    for (unsigned which = 0; which < 19; ++which) {
         auto context = request(runtime);
         if (which == 0) context.gpr[31]++;
         if (which == 1) context.gpr[4]++;
@@ -190,6 +192,15 @@ void refusals(const char* fixture) {
         if (which == 7) context.gpr[9] = 1;
         if (which == 8) context.gpr[10] = 1;
         if (which == 9) put(ram, 0x1F10000, 0x208A04);
+        if (which == 10) ram[send + 14] = 1;
+        if (which == 11) ram[send + 14] = 2;
+        if (which == 12) ram[send + 14] = 255;
+        if (which == 13) put(ram, send + 16, 0x208A04);
+        if (which == 14) put(ram, send + 20, 0x208AC4);
+        if (which == 15) put(ram, 0x208A00, 1);
+        if (which == 16) put(ram, 0x208A04, 1);
+        if (which == 17) put(ram, send + 8, 0x208A00);
+        if (which == 18) put(ram, send + 8, 0x2089FF);
         unchanged_fallback(runtime, context);
     }
     CHECK(bridge.reads == 0 && callback_entries == 0);
@@ -298,6 +309,19 @@ void read_exception(const char* fixture) {
     // Only survival of later work is proved; the first published request has
     // unresolved completion, and is never retried after its partial effects.
 }
+void changed_completion_metadata(const char* fixture) {
+    PS2Runtime runtime; ReoHwBridge bridge; seed(runtime, fixture); configure(runtime);
+    reo_cd_async::Lifetime lifetime(runtime);
+    bridge.on_read = [&](auto, auto, auto, auto* ram) {
+        put(ram, 0x208A00, 1);
+        return true;
+    };
+    call(runtime);
+    wait_for([&] { return runtime.scope_exits.load() == 1; });
+    CHECK(bridge.reads == 1 && callback_entries == 0 && ps2_syscalls::fallback_calls == 0);
+    // A metadata change after publication must not invoke the edge-copy body or
+    // replay the read. The unresolved original busy state is diagnosed.
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -318,6 +342,7 @@ int main(int argc, char** argv) {
         else if (scenario == "missing-callback") missing_callback(argv[1]);
         else if (scenario == "changed-callback") changed_callback(argv[1]);
         else if (scenario == "read-exception") read_exception(argv[1]);
+        else if (scenario == "changed-completion-metadata") changed_completion_metadata(argv[1]);
         else throw std::runtime_error("Unknown scenario");
         std::cout << scenario << ": " << checks << " host-only checks passed\n";
         return 0;

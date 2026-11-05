@@ -30,6 +30,13 @@ or a second run. File #2 is excluded at compile time. Loaded ranges are checked:
 Admission requires the established SifCallRpc return/client/send/callback shape,
 zero receive arguments, `end_parameter=208A00`, readable aligned caller stack,
 and positive whole-sector destination fully inside normal 32 MiB RAM. Callback
+admission is limited to data-pattern byte zero (2048-byte sectors), matching
+packet pointers and zero head/tail edge-copy counts. The payload must not overlap
+the shared 0x90-byte callback metadata block. Other patterns use original HLE;
+this does not reconstruct its non-2048-byte behavior. Edge-copy counts are
+checked again under guest execution after the read, before callback dispatch.
+An unexpected change is diagnosed without replay; its busy state remains unresolved.
+Callback
 binding must exist and match the captured binding. Unknown calls remain original
 HLE responsibilities. A private callback stack is reserved before any admission;
 failure refuses the prototype instead of borrowing the main stack. No worker TLS
@@ -69,12 +76,16 @@ python recomp/overrides/native_cd_owner/tests/run_checks.py `
   --runtime-headers build-native-sjuni/dependency-workers-reapply-v2
 ```
 
-Thirteen fresh-process scenarios pass: identity/admission refusal,
+Fourteen fresh-process scenarios pass with GCC 15.2 and pinned LLVM-MinGW 20251216:
+identity/admission refusal,
 publication-before-read, callback arguments/scope, false-read callback, bounded
 overflow, shutdown during blocked I/O, callback/registry overlap, allocation
 failure, stack/registration refusal, throwing reads/callbacks, two-dispatch
 continuation and missing/changed bindings. Actual adapter compilation against
-real patched runtime headers also passes. Receipt:
+real patched runtime headers is also checked. The bundled LLVM libc++ lacks
+`atomic<shared_ptr<T>>`; the active owner uses a short registry mutex. No I/O,
+guest execution, worker join or final provider destruction occurs under it.
+Receipt:
 `build-native-sjuni/cd-owner-checks/receipt.json`.
 
 Mocks use synthetic RAM/device/dispatch services. Owned original text supplies

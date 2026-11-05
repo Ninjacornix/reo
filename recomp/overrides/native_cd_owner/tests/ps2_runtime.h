@@ -32,7 +32,7 @@ public:
         explicit GuestExecutionScope(PS2Runtime* runtime) : runtime_(runtime), lock_(runtime->guest_mutex) {
             ++runtime_->guest_depth;
         }
-        ~GuestExecutionScope() { --runtime_->guest_depth; }
+        ~GuestExecutionScope() { --runtime_->guest_depth; ++runtime_->scope_exits; }
     private:
         PS2Runtime* runtime_;
         std::unique_lock<std::recursive_mutex> lock_;
@@ -62,7 +62,7 @@ public:
     Function lookupFunction(std::uint32_t pc) const { return functions.at(pc); }
     std::unordered_map<std::uint32_t, Function> functions;
     std::atomic<bool> stopping{false}, kernel_alive{true};
-    std::atomic<unsigned> guest_depth{0};
+    std::atomic<unsigned> guest_depth{0}, scope_exits{0};
     bool registration_allowed{true}, stack_available{true};
     unsigned stack_reservations{};
 private:
