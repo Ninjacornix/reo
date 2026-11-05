@@ -6,11 +6,12 @@ isolation. This is not a completed native cvFs backend.
 The [independent serial worker](../../game/native/tasks/README.md) owns a bounded
 preallocated queue and joinable thread. Standalone checks cover FIFO, admission,
 publication, stop/drain/cancel, capture lifetime, exceptions and join rules.
-All four suites in the combined `game/native` CMake project pass.
+All ten suites currently in the combined `game/native` CMake project pass with
+GCC and the pinned LLVM toolchain.
 
 The [CD owner adapter](../../recomp/overrides/native_cd_owner/README.md) retains
 original File #1 disc request/completion behavior while replacing detached worker
-lifetime in the selected candidate. Thirteen host scenarios and real-header
+lifetime in the selected candidate. Fourteen host scenarios and real-header
 compilation pass. Callback continuation PCs retain their original context.
 
 Public [patch 0120](../../third_party/patches/ps2recomp/0120-runtime-external-worker-lifecycle.patch)
@@ -27,6 +28,14 @@ a matching linked library. The [candidate preparation workflow](../../tools/nati
 uses commit-pinned source, audited dependency inputs, current asset headers and
 the direct C audio provider absent from the old SJUNI kit. Independently supplied
 stock libraries/recompiler are retained only after identity checks.
+
+The first full build caught bundled libc++'s unsupported atomic shared-pointer
+specialization. The owner registry now uses a short mutex and the corrected
+adapter passes fourteen scenarios and real-header compilation with both GCC and
+the actual LLVM toolchain. The [candidate record](CANDIDATE_VALIDATION.md) tracks
+the failed build, isolated corrected rebuild and three scoped controlled runs.
+Native runs exit cleanly after session join and prove callback dispatcher returns;
+general mid-game lifetime, media equivalence and native payload reads remain open.
 
 Remaining gates:
 

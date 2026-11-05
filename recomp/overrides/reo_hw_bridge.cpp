@@ -53,6 +53,10 @@
 #include "runtime/input/pad2_rumble.h"
 #include "runtime/memory_card/card_rpc.h"
 #include "runtime/cdvd/cdvd.h"
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+#include "native_resource_reads/runtime_adapter.h"
+#include "game/native/resources_windows/facade_layout.hpp"
+#endif
 #include <cstdio>
 #include <cmath>
 #include <cstring>
@@ -2550,6 +2554,14 @@ void reoPad2Stop() {
         g_pad2.thread.join();
 }
 
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+bool ReoHwBridge::nativeResourceLayoutMatches(
+    const reo::native::resources::win32::MountedResources& mount) const noexcept {
+    return m_cdvd && reo::native::resources::win32::matches_plain_pak_layout(
+        *m_cdvd, mount, bool(reo::assets::active));
+}
+#endif
+
 bool ReoHwBridge::readCdSectors(uint32_t lsn, uint32_t count, uint32_t dstAddr, uint8_t* rdram) {
     const uint32_t dst = dstAddr & ps2RamBackingMask();
     if (!m_cdvd || !rdram || count == 0 || count > 0x4000 ||
@@ -2976,7 +2988,14 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 // handler, so it must not release guest execution (deadlock observed
                 // 2026-11-03). File #1's sceCdRead is completed asynchronously before
                 // reaching this path by reo_cd_async.h.
-                const bool ok = self && self->readCdSectors(a0, a1, a2, rdram);
+                bool ok = false;
+                bool nativeHandled = false;
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+                if (self)
+                    nativeHandled = reo_native_resource_reads::tryRead(rdram, self->m_runtime,
+                        sendBuf, sendSize, recvBuf, recvSize, ok);
+#endif
+                if (!nativeHandled) ok = self && self->readCdSectors(a0, a1, a2, rdram);
                 static const bool cdLogAllN = std::getenv("REO_CD_LOG") != nullptr;
                 if (cdLogAllN || nLog++ < 60)
                     fprintf(stderr, "[HW-BRIDGE:CDN] read lsn=%u n=%u dst=0x%08X -> %s\n", a0, a1,

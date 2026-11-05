@@ -61,3 +61,13 @@ ordinary compile worker recomputes each unit's source/options/header/ABI/compile
 signature and object hash before accepting a hit; changed inputs rebuild. Cache
 provenance is recorded separately. A failed build can supply successful objects,
 but it never counts as a completed candidate or gameplay validation.
+
+Two explicit preparation options add later migrations without changing the
+default worker-only candidate: `--disc-stream-adapter` adds the independent
+DVCI scalar core/adapter and its override macro; `--resource-reads` adds the
+resource core, verified Windows mount/reader and synchronous RPC adapter, plus
+Windows `bcrypt`/`runtimeobject` import libraries. The preparer requires matching
+committed installation/dispatch source and includes all authored units in its
+source-plan closure. Runtime admission remains separately off by default. The
+read prototype additionally requires actual plain PAK layout agreement and
+`REO_CD_ASYNC=0`; an enabled compilation macro does not prove native reads ran.

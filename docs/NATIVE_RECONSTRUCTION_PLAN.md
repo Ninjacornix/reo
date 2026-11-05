@@ -2,7 +2,8 @@
 
 Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapter
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
-native resource core passes isolated checks. Full transition and wider
+native resource core, bounded read owner and verified Windows mount/reader pass
+ten standalone suites with GCC and the pinned LLVM toolchain. Full transition and wider
 real-consumer validation remain in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the
@@ -33,9 +34,20 @@ not matching rebuilt libraries or safe pending-request/guest-buffer lifetime.
 The [request-owner prototype](native-resources/REQUEST_OWNER_IMPLEMENTATION.md)
 now has a bounded native worker, runtime stop/join integration and isolated
 verification. Public patch 0120 reapplies as part of the full 121-file series.
-A new commit-pinned candidate is required for linked playback/loading/shutdown
-validation before connecting native resource reads. This is the current step;
-resources/media, gameplay, rendering and final runtime removal remain required.
+The [corrected candidate](native-resources/CANDIDATE_VALIDATION.md) now builds
+and completes three bounded opt-out/native/PAK runs with clean window-close exits;
+native runs prove joined ownership and at least 256 callback returns. This does
+not establish general stop/close or audio/movie equivalence.
+
+The [original lifecycle oracle](native-resources/DVCI_LIFECYCLE_ORACLE.md)
+executes both complete stop-cap paths and subsequent slot reuse with explicit
+external hooks. It confirms why asynchronous guest-target publication needs a
+stronger incarnation/reservation contract. The current implementation cut keeps
+the original synchronous RPC/guest ownership and adds exact in-file reads from
+a verified actual plain-PAK layout. Its native mount/reader is tested separately;
+the new default-off game adapter requires a fresh linked candidate. The four-entry
+quiescent DVCI scalar adapter is also ready for that candidate. Wider resources/
+media, gameplay, rendering and final runtime removal remain required.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map

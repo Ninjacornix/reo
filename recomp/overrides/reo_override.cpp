@@ -47,6 +47,9 @@
 #if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_SJUNI_ADAPTER)
 #include "native_sjuni/runtime_adapter.h"
 #endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_DISC_STREAM)
+#include "native_disc_stream/runtime_adapter.h"
+#endif
 
 #if defined(REO_GAME_FILE1)
 // Read-only observer always delegates the original generated entry exactly once.
@@ -1858,6 +1861,9 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
 
 #if defined(REO_BUILD_NATIVE_SJUNI_ADAPTER)
     reo_native_sjuni::install(runtime);
+#endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_DISC_STREAM)
+    reo_native_disc_stream::install(runtime);
 #endif
     // Self-execution (REO_NATURAL) / REO_NO_OVERRIDES: only the libsif HLE routes above.
     // Everything below is a stub-era override that shadows real recompiled code; with

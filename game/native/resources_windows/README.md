@@ -21,11 +21,15 @@ The path is provenance; reads continue through the handle.
 The [manifest reader](README_IMPORT_MANIFEST.md) admits the launcher's existing
 File #1 V1/V2 import metadata through Windows.Data.Json, with bounded strict
 integer and relative-path rules. Parsing metadata does not open or verify files.
-An owning mount must bind actual files, virtual layout and edition before using
-the providers for game I/O.
+The [mount](README_MOUNT.md) binds actual files, virtual layout and edition;
+the [synchronous reader](README_READER.md) exposes exact in-file sector reads.
+`facade_layout.hpp` compares the native mount against the facade's actual
+captured PAK mode, route keys/LBAs/lengths/read-ahead and retained file objects.
+The first game integration rejects overlays; their isolated mount support does
+not establish ownership of the facade's mutable active-overlay state.
 
 Standalone checks are included in `game/native` CMake/CTest. GCC 15.2 and the
-pinned LLVM-MinGW 20251216 compiler build the library and pass all seven suites
+pinned LLVM-MinGW 20251216 compiler build the library and pass all ten suites
 in the combined native project. LLVM test execution requires its runtime DLL
 directory on the test process's PATH (or ordinary deployment beside the tests).
 Synthetic pinned-file

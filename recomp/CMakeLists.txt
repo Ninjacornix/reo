@@ -38,6 +38,11 @@ option(REO_BUILD_GPU_PARENT_NATURAL_HOOKS "Build connected guarded File1 parent 
 option(REO_BUILD_GUARDED_SOURCE_OVERLAY "Compile build-only guarded generated source copies" OFF)
 option(REO_BUILD_NATIVE_SJUNI_ADAPTER "Build the opt-in File1 native SJUNI migration adapter" OFF)
 option(REO_BUILD_NATIVE_RESOURCE_OWNER "Build the opt-in File1 scoped native CD worker (requires matching runtime patch)" OFF)
+option(REO_BUILD_NATIVE_DISC_STREAM "Build the opt-in File1 native DVCI scalar adapter" OFF)
+option(REO_BUILD_NATIVE_RESOURCE_READS "Build the opt-in Windows File1 synchronous exact PAK read adapter" OFF)
+if(REO_BUILD_NATIVE_RESOURCE_READS AND (NOT WIN32 OR NOT REO_BUILD_NATIVE_RESOURCE_OWNER))
+    message(FATAL_ERROR "Native resource reads require Windows and REO_BUILD_NATIVE_RESOURCE_OWNER")
+endif()
 
 set(REO_PARALLEL_GS_BUILD "${CMAKE_CURRENT_SOURCE_DIR}/../build-ninja/m2-gpu-gs-adapter/out" CACHE PATH "Built pinned paraLLEl-GS libraries")
 
@@ -706,6 +711,24 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/tasks/serial_worker.cpp"
             overrides/native_cd_owner/runtime_adapter.cpp)
         target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_RESOURCE_OWNER=1)
+    endif()
+    if(REO_BUILD_NATIVE_DISC_STREAM AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        target_sources(${TARGET_NAME} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/disc_stream/disc_stream.cpp"
+            overrides/native_disc_stream/runtime_adapter.cpp)
+        target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_DISC_STREAM=1)
+    endif()
+    if(REO_BUILD_NATIVE_RESOURCE_READS AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        target_sources(${TARGET_NAME} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/resources/resource_session.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/resources/virtual_file_view.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/resources_windows/import_manifest.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/resources_windows/pinned_file.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/resources_windows/mounted_resources.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/resources_windows/mounted_reader.cpp"
+            overrides/native_resource_reads/runtime_adapter.cpp)
+        target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_RESOURCE_READS=1)
+        target_link_libraries(${TARGET_NAME} PRIVATE bcrypt runtimeobject)
     endif()
     if(WIN32)
         # A direct object supplies raylib audio before its archive is considered.

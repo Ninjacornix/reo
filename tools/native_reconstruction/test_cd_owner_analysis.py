@@ -30,6 +30,16 @@ class OwnerProofTests(unittest.TestCase):
     def test_empty_is_not_recording(self):
         self.assertEqual(owner_records(['unrelated'])['registrations'], [])
 
+    def test_runtime_prefix_without_newline(self):
+        result = owner_records(['ELF file loaded.' + TAG + REGISTERED,
+            '[SifInitRpc] re-init' + TAG + 'read lsn=1 n=2 dst=00400000 result=ok',
+            TAG + 'completion calls=1 dispatches=1[other logger]',
+            '[run] exiting loop, activeThreads=0' + TAG + JOINED])
+        self.assertEqual(len(result['registrations']), 1)
+        self.assertEqual(len(result['joins']), 1)
+        self.assertEqual(len(result['logged_reads']), 1)
+        self.assertEqual(result['callback_return_lower_bound'], 1)
+
     def test_invalid_proof_rejects(self):
         cases = [
             [TAG + 'completion calls=1 dispatches=1'],

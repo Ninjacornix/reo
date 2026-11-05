@@ -843,6 +843,28 @@ def environment(record, player, extra):
     return env
 
 
+def pak_only_environment(folder, record, player, env):
+    """Use verified import provenance, but expose no readable ISO to the game.
+
+    Restricted to one private File1 candidate. Never rename/unmount the user's
+    image: the game sees a deliberately nonexistent private path instead.
+    """
+    folder = Path(folder).resolve()
+    allowed = Path(__file__).resolve().parents[2] / 'build-native-sjuni'
+    work = Path(player['workingDirectory']).resolve()
+    if (not folder.is_relative_to(allowed) or folder == allowed or
+            record.get('game') != 'file1' or len(record['players']) != 1 or
+            not work.is_relative_to(folder) or work == folder or record.get('mountedIso')):
+        raise ValueError('PAK-only check requires one private unmounted File1 candidate')
+    missing = work / 'intentionally-unavailable-disc.iso'
+    if missing.exists() or missing.is_symlink():
+        raise ValueError('PAK-only sentinel unexpectedly exists; use a fresh private session')
+    result = dict(env)
+    result['REO_ISO'] = str(missing)
+    result['REO_GAME_PAK'] = '1'
+    return result
+
+
 def run(args):
     folder, record = session_record(args.session)
     if (folder / "run.json").exists():
@@ -862,7 +884,10 @@ def run(args):
         extra = dict(config.get("environment", {}))
         if config.get("players"):
             extra.update(config["players"][i].get("environment", {}))
-        launches.append(environment(record, player, extra))
+        env = environment(record, player, extra)
+        if getattr(args, 'pak_only', False):
+            env = pak_only_environment(folder, record, player, env)
+        launches.append(env)
     # Online clients: write the same network-profile marker the launcher writes (launcher
     # OnlineOptions.PrepareMemoryCard), or a fresh card stops at "Select Network Configuration".
     # An existing BWNETCNF folder is left untouched.
@@ -874,6 +899,7 @@ def run(args):
                 (profile / "BWNETDCNF").write_bytes(b"REO native host profile provider v1")
     processes, publishers, handles = [], [], []
     receipt = {"startedUtc": utc(), "players": [], "coopVerdict": "not-tested",
+               "pakOnlyTest": bool(getattr(args, 'pak_only', False)),
                "networkConfig": config, "errors": []}
     started = time.monotonic()
     try:
@@ -975,6 +1001,8 @@ def main():
     p.add_argument("--session", required=True)
     p.add_argument("--seconds", type=float, default=0, help="0 runs until exit or Ctrl+C")
     p.add_argument("--config")
+    p.add_argument("--pak-only", action="store_true",
+                   help="Private File1 candidate: read imported PAK data with an unavailable ISO path")
     p.add_argument("--route", choices=("main-menu", "character", "gameplay", "network-connect", "network-account", "network-login"))
     p.set_defaults(action=run)
     p = sub.add_parser("drive-login")

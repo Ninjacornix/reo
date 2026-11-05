@@ -8,7 +8,7 @@ if(NOT TARGET reo_native_resources)
 endif()
 find_package(Threads REQUIRED)
 
-add_library(reo_native_resources_windows STATIC pinned_file.cpp import_manifest.cpp)
+add_library(reo_native_resources_windows STATIC pinned_file.cpp import_manifest.cpp mounted_resources.cpp mounted_reader.cpp)
 target_include_directories(reo_native_resources_windows PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 target_compile_features(reo_native_resources_windows PUBLIC cxx_std_20)
 target_compile_definitions(reo_native_resources_windows PRIVATE _WIN32_WINNT=0x0A00 NOMINMAX)
@@ -34,4 +34,20 @@ if(REO_NATIVE_WINDOWS_RESOURCES_TESTS)
     add_executable(import_manifest_tests import_manifest_tests.cpp)
     target_link_libraries(import_manifest_tests PRIVATE reo_native_resources_windows ole32 Threads::Threads)
     add_test(NAME native_windows_import_manifest COMMAND import_manifest_tests)
+
+    add_executable(mounted_resources_tests mounted_resources_tests.cpp ../../../runtime/cdvd/cdvd.cpp)
+    target_link_libraries(mounted_resources_tests PRIVATE reo_native_resources_windows ole32 Threads::Threads)
+    add_test(NAME native_windows_mounted_resources
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/native_reconstruction/verify_mounted_resources.py
+            --executable $<TARGET_FILE:mounted_resources_tests>
+            --output ${CMAKE_CURRENT_BINARY_DIR}/mounted-resources-checks)
+
+    add_executable(mounted_reader_tests mounted_reader_tests.cpp)
+    target_link_libraries(mounted_reader_tests PRIVATE reo_native_resources_windows ole32 Threads::Threads)
+    add_test(NAME native_windows_mounted_reader
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/native_reconstruction/verify_mounted_reader.py
+            --executable $<TARGET_FILE:mounted_reader_tests>
+            --output ${CMAKE_CURRENT_BINARY_DIR}/mounted-reader-checks)
 endif()

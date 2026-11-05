@@ -38,6 +38,9 @@ class PrivateUsbKeyboard;
 namespace reo_network {
 class NetcnfProfileService;
 }
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+namespace reo::native::resources::win32 { class MountedResources; }
+#endif
 
 class ReoHwBridge {
   public:
@@ -59,6 +62,12 @@ class ReoHwBridge {
     // cdvdfsv sector read into guest RAM (bounds-checked; CDVD serializes readers).
     // Safe without guest execution: callers own the destination as a pending DMA.
     bool readCdSectors(uint32_t lsn, uint32_t count, uint32_t dst, uint8_t* rdram);
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+    // Pre-run comparison against this bridge's actual frozen PAK map. First
+    // integration excludes overlays until their live identity also migrates.
+    bool nativeResourceLayoutMatches(
+        const reo::native::resources::win32::MountedResources& mount) const noexcept;
+#endif
 
   private:
     // PS2Memory callback: DMA channel start

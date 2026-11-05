@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 import re
 
-from analyze_sjuni_playtest import analyze as analyze_common
+from analyze_sjuni_playtest import analyze as analyze_common, sha
 
 TAG = '[NATIVE-CD-OWNER] '
 REGISTERED = 'bounded session worker registered with runtime lifecycle'
@@ -23,17 +23,21 @@ def owner_records(lines):
         if TAG not in line:
             continue
         record = dict(line=number, text=line)
-        if line == TAG + REGISTERED:
+        # Runtime iostream diagnostics omit some newlines. A complete native
+        # fprintf record can therefore follow another logger on the same line.
+        # Keep the original whole line as evidence while parsing our own tag.
+        fragment = line[line.index(TAG):]
+        if fragment.startswith(TAG + REGISTERED):
             registration.append(record)
-        elif line == TAG + JOINED:
+        elif fragment.startswith(TAG + JOINED):
             joins.append(record)
-        elif match := re.fullmatch(re.escape(TAG) + r'read lsn=(\d+) n=(\d+) dst=([0-9a-f]{8}) result=(ok|FAIL)', line):
+        elif match := re.match(re.escape(TAG) + r'read lsn=(\d+) n=(\d+) dst=([0-9a-f]{8}) result=(ok|FAIL)(?=$|\s|\[)', fragment):
             lba, count, destination, result = match.groups()
             reads.append(dict(**record, lba=int(lba), sectors=int(count),
                               destination=int(destination, 16), result=result))
             if result != 'ok':
                 errors.append(record)
-        elif match := re.fullmatch(re.escape(TAG) + r'completion calls=(\d+) dispatches=(\d+)', line):
+        elif match := re.match(re.escape(TAG) + r'completion calls=(\d+) dispatches=(\d+)(?=$|\s|\[)', fragment):
             count, dispatches = map(int, match.groups())
             if count <= previous or not 1 <= dispatches <= 256:
                 raise ValueError('Invalid or regressing completion proof on line ' + str(number))
@@ -64,12 +68,30 @@ def analyze(session):
     lines = (Path(manifest['players'][0]['logs']) / 'stderr.log').read_text(
         encoding='utf-8', errors='replace').splitlines()
     owner = owner_records(lines)
+    run = json.loads((session / 'run.json').read_text(encoding='utf-8'))
+    stdout = Path(manifest['players'][0]['logs']) / 'stdout.log'
+    output_lines = stdout.read_text(encoding='utf-8', errors='replace').splitlines()
+    report['evidence_sha256']['stdout.log'] = sha(stdout)
     if owner['registrations'] and report['environment'].get('REO_NATIVE_CD_OWNER') != '1':
         raise ValueError('Owner registration while explicit opt-in was disabled')
     clean = (report['exit_codes'] == [0] and report['stop_reason'] != 'duration-limit' and
              all(x.get('outcome') not in ('fatal-diagnostic', 'nonzero-exit')
                  for x in report['native_results']))
     report['cd_owner'] = owner
+    report['input_exercise_notices'] = [dict(line=i, text=line)
+        for i, line in enumerate(lines, 1)
+        if any(tag in line for tag in ('[TEST-INTERACT-QUIT]', '[TEST-WALK]', '[TEST-ROOM-SOAK]'))]
+    report['pak_route'] = dict(
+        explicitly_unavailable_iso_test=run.get('pakOnlyTest', False),
+        notices=[dict(line=i, text=line) for i, line in enumerate(output_lines, 1)
+                 if '[GAME-PAK-1]' in line],
+        limitation='Route notice and launch environment are scoped observations, not proof all compatibility dependencies are removed.')
+    if report['pak_route']['explicitly_unavailable_iso_test']:
+        actual_iso = Path(report['environment']['REO_ISO']).resolve()
+        work = Path(manifest['players'][0]['workingDirectory']).resolve()
+        if actual_iso.parent != work or actual_iso.name != 'intentionally-unavailable-disc.iso' or \
+                report['environment'].get('REO_GAME_PAK') != '1':
+            raise ValueError('PAK-only launch environment differs from the explicit private test mode')
     report['scoped_owner_checks'] = dict(
         native_registration_observed=bool(owner['registrations']),
         callback_return_observed=bool(owner['callback_returns']),

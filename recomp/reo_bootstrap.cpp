@@ -43,6 +43,9 @@
 #include "overrides/reo_performance.h"
 #include "overrides/reo_cri_server_observer.h"
 #include "overrides/reo_cd_async.h"
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+#include "overrides/native_resource_reads/runtime_adapter.h"
+#endif
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1317,6 +1320,10 @@ int main(int argc, char* argv[]) {
     printf("[BOOT] Applying game overrides (post-registration)...\n");
 
     ps2_game_overrides::applyMatching(runtime, elf_path, g.entry_point);
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+    reo_native_resource_reads::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE,
+                                         runtime, PS2Runtime::getIoPaths().cdRoot);
+#endif
 #if defined(REO_GAME_FILE2)
     if (std::strcmp(g.serial, "SLUS-20984") == 0)
         reo::mc2::install(runtime, reo::mc2::File2Workers);
