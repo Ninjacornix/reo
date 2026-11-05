@@ -131,7 +131,12 @@ window close exited with code zero. At least 1,024 native reads succeeded with
 no logged native failure; seek/tell/status lower bounds are 1,024/128/65,536.
 Audio reports include 16,525,554 signal frames and **54,624 underrun frames**.
 The nonzero underruns occur near movie transitions and remain an open finding;
-an unskipped opt-out session is being compared before attribution. No media
+an unskipped opt-out session was started before attribution. That session
+(`resource-cinematic-original-v3`) has an incomplete supervisor receipt and no
+known exit code after its process disappeared during the interrupted tool
+session. Its 450-second observer did not establish gameplay completion. Preserve
+it as partial evidence, and repeat rather than reporting a clean comparison.
+No media
 equivalence or absence-of-hitches claim follows. Phase 14 alone cannot distinguish
 video from an in-engine cutscene. Original log/capture/snapshot and both observer
 receipts remain in the private session.
