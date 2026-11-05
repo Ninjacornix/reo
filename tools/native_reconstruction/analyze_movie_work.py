@@ -16,6 +16,10 @@ BOUNDARIES = ('owner_control', 'decode', 'output', 'release_partial_fence', 'bat
 META = ('owner_begin_ns', 'epoch', 'slow_threshold_ns', 'event_capacity',
         'elapsed_includes_descheduling', 'dropped_slow_events', 'invalid_intervals', 'aggregates_saturated')
 HEADER = 'boundary,generation,serial,begin_ns,end_ns,elapsed_ns'
+HEADER2 = 'sequence,retention,' + HEADER
+META2 = META + ('recent_capacity', 'longest_capacity', 'slow_events_seen', 'retained_recent',
+                'retained_longest', 'retained_unique', 'missing_count_exact', 'sequence_saturated')
+RETENTIONS = ('recent', 'longest', 'recent+longest')
 AGG_HEADER = '# aggregate,boundary,calls,elapsed_sum_ns,elapsed_max_ns,slow_calls'
 UINT64 = (1 << 64) - 1
 MARKER = re.compile(r'# reo_movie_timing_schema=([0-9]+)')
@@ -32,12 +36,61 @@ def issue(section, line, message, error=True):
     section['issues'].append(dict(line=line, severity='error' if error else 'partial', message=message))
 
 
+def finish_schema2(section, complete, line):
+    meta, events = section['metadata'], section['events']
+    exact = meta.get('missing_count_exact') == 1
+    section['retention_summary'] = dict(policy='recent+longest',
+        unique_retained_declared=meta.get('retained_unique'), valid_rows_in_artifact=len(events),
+        recorder_missing_slow_events=meta.get('dropped_slow_events') if exact else None,
+        missing_count_exact=exact)
+    if any(key not in meta for key in META2):
+        return
+    rc, lc = meta['recent_capacity'], meta['longest_capacity']
+    seen, unique = meta['slow_events_seen'], meta['retained_unique']
+    recent = [event for event in events if event['retention'] in ('recent', 'recent+longest')]
+    longest = [event for event in events if event['retention'] in ('longest', 'recent+longest')]
+    if not (1 <= rc <= 4096 and 1 <= lc <= 64 and meta['event_capacity'] == rc + lc):
+        issue(section, line, 'Invalid schema2 retention capacities')
+    if (meta['retained_recent'] != min(rc, seen) or meta['retained_longest'] != min(lc, seen) or
+            not max(meta['retained_recent'], meta['retained_longest']) <= unique <= rc + lc or unique > seen):
+        issue(section, line, 'Invalid schema2 declared retention counts')
+    if meta['missing_count_exact'] not in (0, 1) or meta['sequence_saturated'] not in (0, 1):
+        issue(section, line, 'Invalid schema2 exactness/saturation flag')
+    if (meta['sequence_saturated'] != int(not exact) or
+            (not exact and (seen != UINT64 or meta['dropped_slow_events'] != UINT64 or not meta['aggregates_saturated']))):
+        issue(section, line, 'Inconsistent schema2 sequence exhaustion')
+    if exact:
+        if meta['dropped_slow_events'] != seen - unique:
+            issue(section, line, 'Schema2 missing count differs from observed minus unique retained')
+        if len(section['aggregates']) == len(BOUNDARIES) and sum(a['slow_calls'] for a in section['aggregates'].values()) != seen:
+            issue(section, line, 'Schema2 slow counters differ from event sequence count')
+    if any(event['sequence'] > seen for event in events):
+        issue(section, line, 'Schema2 event sequence exceeds observed count')
+    first_recent = seen - meta['retained_recent'] + 1
+    if any(not first_recent <= event['sequence'] <= seen for event in recent):
+        issue(section, line, 'Schema2 recent event is outside rolling completion history')
+    if len(recent) > meta['retained_recent'] or len(longest) > meta['retained_longest']:
+        issue(section, line, 'Schema2 retention source flags exceed declared counts')
+    if complete:
+        if section['declared_retained'] != unique or len(events) != unique:
+            issue(section, line, 'Schema2 unique/trailer/parsed row counts differ')
+        if len(recent) != meta['retained_recent'] or len(longest) != meta['retained_longest']:
+            issue(section, line, 'Schema2 retention source flags differ from declared counts')
+        if len(recent) != meta['retained_recent'] or any(event['sequence'] != first_recent + i for i, event in enumerate(recent)):
+            issue(section, line, 'Schema2 rolling history has missing or duplicate sequences')
+        if longest:
+            worst = min((event['elapsed_ns'], -event['sequence']) for event in longest)
+            if any((event['elapsed_ns'], -event['sequence']) > worst for event in events if event['retention'] == 'recent'):
+                issue(section, line, 'Schema2 longest retention omits a better retained recent event')
+
+
 def finish(section, end_line):
     section['end_line'] = end_line
     meta, events, aggregates = section['metadata'], section['events'], section['aggregates']
     trailer = section['declared_retained']
     complete = trailer is not None
-    missing = [key for key in META if key not in meta]
+    required = META2 if section['schema'] == 2 else META
+    missing = [key for key in required if key not in meta]
     if missing:
         issue(section, end_line, 'Missing metadata: ' + ', '.join(missing), complete)
     if not section['csv_header_seen']:
@@ -52,8 +105,9 @@ def finish(section, end_line):
         issue(section, end_line, 'Trailer retained count differs from valid retained rows')
     if meta.get('event_capacity', 0) < len(events):
         issue(section, end_line, 'Retained rows exceed declared capacity')
-    if meta.get('event_capacity', 4096) > 4096:
-        issue(section, end_line, 'Declared capacity exceeds schema1 recorder bound')
+    maximum = 4160 if section['schema'] == 2 else 4096
+    if meta.get('event_capacity', maximum) > maximum:
+        issue(section, end_line, 'Declared capacity exceeds recorder schema bound')
     if meta.get('elapsed_includes_descheduling', 1) != 1:
         issue(section, end_line, 'Unexpected elapsed-time semantics')
     if meta.get('aggregates_saturated', 0) not in (0, 1):
@@ -75,7 +129,14 @@ def finish(section, end_line):
                  (sum(event['elapsed_ns'] for event in retained) > total or
                   (threshold is not None and slow * threshold > total)))):
             issue(section, aggregate['line'], 'Retained rows conflict with aggregate for ' + boundary)
-    if complete and len(aggregates) == len(BOUNDARIES) and not meta.get('aggregates_saturated'):
+    if section['schema'] == 2:
+        finish_schema2(section, complete, end_line)
+    else:
+        exact = section['schema'] == 1 and all(key in meta for key in META) and not meta.get('aggregates_saturated')
+        section['retention_summary'] = dict(policy='first', unique_retained_declared=trailer,
+            valid_rows_in_artifact=len(events), recorder_missing_slow_events=meta.get('dropped_slow_events') if exact else None,
+            missing_count_exact=exact)
+    if section['schema'] == 1 and complete and len(aggregates) == len(BOUNDARIES) and not meta.get('aggregates_saturated'):
         if sum(value['slow_calls'] for value in aggregates.values()) != len(events) + meta.get('dropped_slow_events', 0):
             issue(section, end_line, 'Slow counts do not equal retained plus dropped events')
     section['integrity'] = ('invalid' if any(x['severity'] == 'error' for x in section['issues']) else
@@ -96,7 +157,7 @@ def read_work(text):
             current = dict(id=len(sections) + 1, schema=int(marker[1]), start_line=number,
                            metadata={}, aggregates={}, events=[], issues=[], csv_header_seen=False,
                            declared_retained=None)
-            if current['schema'] != 1:
+            if current['schema'] not in (1, 2):
                 issue(current, number, 'Unsupported timing schema; section not interpreted')
             continue
         if not line:
@@ -104,7 +165,7 @@ def read_work(text):
         if current is None:
             preamble.append(number)
             continue
-        if current['schema'] != 1:
+        if current['schema'] not in (1, 2):
             continue
         if current['declared_retained'] is not None:
             issue(current, number, 'Unexpected data after owner completion trailer')
@@ -114,7 +175,8 @@ def read_work(text):
                 current['declared_retained'] = unsigned(match[1])
             elif match := re.fullmatch(r'# (\w+)=([0-9]+)', line):
                 key, value = match.groups()
-                if key not in META or key in current['metadata'] or current['csv_header_seen']:
+                allowed = META2 if current['schema'] == 2 else META
+                if key not in allowed or key in current['metadata'] or current['csv_header_seen']:
                     raise ValueError('Unknown, duplicated or late metadata')
                 current['metadata'][key] = unsigned(value)
             elif line == AGG_HEADER:
@@ -128,16 +190,25 @@ def read_work(text):
                     raise ValueError('Unknown, duplicated or malformed aggregate')
                 current['aggregates'][values[1]] = dict(zip(
                     ('calls', 'elapsed_sum_ns', 'elapsed_max_ns', 'slow_calls'), map(unsigned, values[2:])), line=number)
-            elif line == HEADER:
+            elif line == (HEADER2 if current['schema'] == 2 else HEADER):
                 if current['csv_header_seen']:
                     raise ValueError('Duplicated event CSV header')
                 current['csv_header_seen'] = True
             else:
                 values = next(csv.reader([line]))
+                if current['schema'] == 2:
+                    if len(values) != 8 or values[1] not in RETENTIONS:
+                        raise ValueError('Unknown or malformed schema2 retention row')
+                    sequence, retention = unsigned(values[0]), values[1]
+                    if sequence == 0 or (current['events'] and sequence <= current['events'][-1]['sequence']):
+                        raise ValueError('Duplicate or regressed schema2 event sequence')
+                    values = values[2:]
                 if not current['csv_header_seen'] or len(values) != 6 or values[0] not in BOUNDARIES:
                     raise ValueError('Unknown or malformed event row')
                 event = dict(zip(('generation', 'serial', 'begin_ns', 'end_ns', 'elapsed_ns'), map(unsigned, values[1:])),
                              boundary=values[0], line=number)
+                if current['schema'] == 2:
+                    event.update(sequence=sequence, retention=retention)
                 if (event['end_ns'] < event['begin_ns'] or event['end_ns'] - event['begin_ns'] != event['elapsed_ns'] or
                         event['elapsed_ns'] < current['metadata'].get('slow_threshold_ns', 0) or
                         event['begin_ns'] < current['metadata'].get('owner_begin_ns', 0)):
@@ -145,9 +216,10 @@ def read_work(text):
                 # RAII appends on completion; nested spans may begin earlier.
                 if current['events'] and event['end_ns'] < current['events'][-1]['end_ns']:
                     raise ValueError('Completion timestamps regressed within one owner')
-                capacity = min(current['metadata'].get('event_capacity', 4096), 4096)
+                maximum = 4160 if current['schema'] == 2 else 4096
+                capacity = min(current['metadata'].get('event_capacity', maximum), maximum)
                 if len(current['events']) >= capacity:
-                    raise ValueError('Event exceeds schema1 bounded retention')
+                    raise ValueError('Event exceeds bounded retention')
                 current['events'].append(event)
         except (ValueError, csv.Error) as error:
             truncated_end = number == len(lines) and not text.endswith('\n')
@@ -244,6 +316,7 @@ def correlate(sections, frames, minimum_gap_ns=50_000_000):
                     between = max(0, min(event['end_ns'], gap['between_end_ns']) -
                                   max(event['begin_ns'], gap['between_begin_ns']))
                     overlaps.append(dict(section_id=section['id'], event_csv_line=event['line'],
+                        event_sequence=event.get('sequence'), retention=event.get('retention', 'first'),
                         boundary=event['boundary'], generation=event['generation'], serial=event['serial'],
                         event_begin_ns=event['begin_ns'], event_end_ns=event['end_ns'],
                         section_integrity=section['integrity'],
@@ -327,11 +400,13 @@ def markdown(report):
     lines = ['# Private movie work evidence', '', 'Measured elapsed evidence; cause remains unknown.', '',
         f"Executable: `{report['source_executable_sha256']}`. Exit codes: `{report['exit_codes']}`.",
         f"Work output: {work['status']}. Frame trace: {trace['status']}.", '',
-        '| Section / epoch | Integrity / export | Retained / dropped | Invalid / saturated |',
-        '| --- | --- | ---: | ---: |']
+        '| Section / epoch | Integrity / export | Unique valid / missing | Retention | Invalid / saturated |',
+        '| --- | --- | ---: | --- | ---: |']
     for section in work['sections']:
         meta = section['metadata']
-        lines.append(f"| {section['id']} / {meta.get('epoch', 'unknown')} | {section['integrity']} / {section['export_status']} | {len(section['events'])} / {meta.get('dropped_slow_events', 'unknown')} | {meta.get('invalid_intervals', 'unknown')} / {meta.get('aggregates_saturated', 'unknown')} |")
+        retention = section['retention_summary']
+        missing = retention['recorder_missing_slow_events']
+        lines.append(f"| {section['id']} / {meta.get('epoch', 'unknown')} | {section['integrity']} / {section['export_status']} | {len(section['events'])} / {missing if missing is not None else 'unknown'} | {retention['policy']} | {meta.get('invalid_intervals', 'unknown')} / {meta.get('aggregates_saturated', 'unknown')} |")
     lines += ['', '| Section | Boundary | Calls | Maximum ms | Slow calls |', '| --- | --- | ---: | ---: | ---: |']
     for section in work['sections']:
         for boundary, aggregate in section['aggregates'].items():

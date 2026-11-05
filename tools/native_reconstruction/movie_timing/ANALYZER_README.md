@@ -1,6 +1,6 @@
 # Analyze completed movie-work evidence
 
-`../analyze_movie_work.py` reads schema1 output from the optional movie timing
+`../analyze_movie_work.py` reads schema1 and schema2 output from the optional movie timing
 recorder and a completed `FrameTrace`. It opens no process, runs no game and
 does not sample threads or execute a GPU fence.
 
@@ -26,6 +26,22 @@ unsigned64 fields, interval arithmetic, retention bound, aggregate consistency,
 trailer counts, and saturation/loss metadata. It checks completion timestamp
 order within an owner; nested spans can begin earlier than the preceding row.
 Owner epochs/times may restart in a later section and are not merged.
+
+Schema1 retains its original first4096/drop-counter interpretation. Schema2
+validates the recent4096/longest64 union, positive strictly increasing completion
+sequence IDs, retention-source flags, contiguous recent sequence window,
+longest-set ranking relative to retained recent rows, unique/missing counts and
+separate sequence saturation/exactness metadata. A `recent+longest` event is one
+row; duplicate sequence rows are corruption and cannot create extra correlations.
+Unknown source rows/flags and corrupt sections retain explicit issues rather
+than being counted twice. Correlations carry sequence and retention identity.
+
+`retention_summary` distinguishes declared unique retention, valid rows actually
+present in the artifact, and recorder missing count. Partial/corrupt exports can
+have fewer valid artifact rows than the recorder declared. Sequence exhaustion
+makes missing count unknown; aggregate-sum saturation alone leaves an independent
+exact event count intact. Neither an empty recent set nor a filled longest set
+establishes that every visible hitch was measured.
 
 `owner_complete=1` only establishes a serialized trailer. The analyzer separately
 checks stderr's `exported owner` lines by path, epoch and counters. Repeated
@@ -74,9 +90,11 @@ python -m unittest discover -s tools/native_reconstruction `
   -p test_analyze_movie_work.py -v
 ```
 
-The lightweight tests cover complete/corrupt/truncated/reset sections, nested
+The lightweight tests cover both schemas, rolling/top union and duplicates,
+counter exhaustion, sum saturation with exact missing counts, complete/corrupt/truncated/reset sections, nested
 completion ordering, counter/loss/saturation checks, exact and touching overlap,
 ambiguous epochs, trailer-with-failed-export, private completed-session admission,
 output hashes and missing/invalid evidence. Fixtures are synthetic and never
-executed as a game. No V7 playback measurement is claimed by these tests or this
-document.
+executed as a game. No new V7 playback measurement is claimed by these tests.
+The recorder README separately pins the completed legacy schema1 retention-loss
+evidence that motivated schema2; the current sealed V7 binary is unchanged.

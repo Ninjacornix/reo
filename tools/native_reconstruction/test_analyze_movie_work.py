@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 from analyze_movie_pacing import read_frames
-from analyze_movie_work import (AGG_HEADER, BOUNDARIES, HEADER, UINT64, analyze,
+from analyze_movie_work import (AGG_HEADER, BOUNDARIES, HEADER, HEADER2, UINT64, analyze,
                                 associate_exports, correlate, markdown, private_path,
                                 read_export_log, read_work)
 
@@ -41,6 +41,22 @@ def receipt(path, epoch=1, retained=0, dropped=0, invalid=0, saturated=0):
             f'dropped={dropped} invalid={invalid} saturated={saturated} path={path}')
 
 
+def section2(rows, seen, recent=2, longest=1, overrides=None, exact=1, saturated=0, complete=True):
+    events=[tuple(row[2:]) for row in rows]
+    text=section(events,overrides=overrides,saturated=saturated,complete=False)
+    text=text.replace('# reo_movie_timing_schema=1','# reo_movie_timing_schema=2')
+    text=text.replace('# event_capacity=4096',f'# event_capacity={recent+longest}')
+    missing=seen-len(rows) if exact else UINT64
+    text=text.replace('# dropped_slow_events=0',f'# dropped_slow_events={missing}')
+    extra=(f'# recent_capacity={recent}\n# longest_capacity={longest}\n# slow_events_seen={seen}\n'
+           f'# retained_recent={min(recent,seen)}\n# retained_longest={min(longest,seen)}\n'
+           f'# retained_unique={len(rows)}\n# missing_count_exact={exact}\n# sequence_saturated={1-exact}\n')
+    text=text.split(HEADER+'\n')[0].replace(AGG_HEADER,extra+AGG_HEADER)+HEADER2+'\n'
+    text+=''.join(','.join(map(str,(*row,row[-1]-row[-2])))+'\n' for row in rows)
+    if complete:text+=f'# owner_complete=1 retained={len(rows)}\n'
+    return text
+
+
 class MovieWorkTests(unittest.TestCase):
     def test_nested_spans_have_completion_order_not_begin_order(self):
         events = [('batch_fence', 4, 8, 100, 2000100), ('owner_control', 4, 0, 10, 3000010)]
@@ -72,7 +88,7 @@ class MovieWorkTests(unittest.TestCase):
         self.assertEqual(len(result['events']), 1)
 
     def test_unknown_schema_and_garbage_do_not_consume_next_section(self):
-        result = read_work('old-partial-bytes\n# reo_movie_timing_schema=2\ngarbage\n' + section())
+        result = read_work('old-partial-bytes\n# reo_movie_timing_schema=3\ngarbage\n' + section())
         self.assertEqual(result['preamble_lines'], [1])
         self.assertEqual(result['sections'][0]['integrity'], 'invalid')
         self.assertEqual(result['sections'][1]['integrity'], 'complete')
@@ -159,6 +175,88 @@ class MovieWorkTests(unittest.TestCase):
         result = correlate(sections, frames)
         self.assertEqual(result['overlaps'], [])
         self.assertEqual(result['gaps'][0]['intervening_capture_rows'], 1)
+
+
+class RollingMovieWorkTests(unittest.TestCase):
+    def example(self, complete=True):
+        rows=[(1,'longest','batch_fence',4,1,50_000_000,100_000_000),
+              (3,'recent','batch_fence',4,3,298_000_000,300_000_000),
+              (4,'recent','batch_fence',4,4,393_000_000,400_000_000)]
+        return section2(rows,4,overrides={'batch_fence':dict(calls=4,slow_calls=4,elapsed_sum_ns=61_000_000)},complete=complete)
+
+    def test_old_long_spike_and_recent_history_union_have_exact_missing_count(self):
+        item=read_work(self.example())['sections'][0]
+        self.assertEqual(item['integrity'],'complete')
+        self.assertEqual([event['sequence'] for event in item['events']],[1,3,4])
+        self.assertEqual(item['retention_summary']['recorder_missing_slow_events'],1)
+        self.assertEqual(item['metadata']['retained_recent'],2)
+        self.assertEqual(item['metadata']['retained_longest'],1)
+        self.assertEqual(item['metadata']['retained_unique'],3)
+
+    def test_recent_top_duplicate_is_corruption_and_does_not_duplicate_evidence(self):
+        text=self.example().replace('# owner_complete',
+            '4,longest,batch_fence,4,4,393000000,400000000,7000000\n# owner_complete')
+        item=read_work(text)['sections'][0]
+        self.assertEqual(item['integrity'],'invalid')
+        self.assertEqual(len(item['events']),3)
+        self.assertTrue(any('Duplicate' in issue['message'] for issue in item['issues']))
+
+    def test_mixed_schema_partial_and_later_owner_are_not_lost(self):
+        text=section()+self.example(complete=False)+'5,recent,batch_fence,4'+ '\n'+section(epoch=9)
+        result=read_work(text)['sections']
+        self.assertEqual([item['schema'] for item in result],[1,2,1])
+        self.assertEqual(result[2]['integrity'],'complete')
+        self.assertEqual(len(result[1]['events']),3)
+        self.assertTrue(any(issue['message']=='Missing owner completion trailer' for issue in result[1]['issues']))
+
+    def test_rejects_corrupt_retention_flags_counters_sequence_and_top_rank(self):
+        good=self.example()
+        changes=[('1,longest','1,recent'),('4,recent','2,recent'),
+                 ('# retained_unique=3','# retained_unique=2'),
+                 ('# retained_recent=2','# retained_recent=3'),
+                 ('# dropped_slow_events=1','# dropped_slow_events=0'),
+                 ('# longest_capacity=1','# longest_capacity=65'),
+                 ('# sequence_saturated=0','# sequence_saturated=1'),
+                 ('1,longest,batch_fence,4,1,50000000,100000000,50000000',
+                  '1,longest,batch_fence,4,1,98000000,100000000,2000000')]
+        for before,after in changes:
+            with self.subTest(after=after):
+                self.assertEqual(read_work(good.replace(before,after))['sections'][0]['integrity'],'invalid')
+
+    def test_counter_exhaustion_preserves_records_but_marks_missing_unknown(self):
+        rows=[(1,'longest','batch_fence',4,1,50_000_000,100_000_000),
+              (UINT64-1,'recent','batch_fence',4,2,298_000_000,300_000_000),
+              (UINT64,'recent','batch_fence',4,3,393_000_000,400_000_000)]
+        text=section2(rows,UINT64,exact=0,saturated=1,
+            overrides={'batch_fence':dict(calls=UINT64,slow_calls=UINT64,elapsed_sum_ns=UINT64)})
+        item=read_work(text)['sections'][0]
+        self.assertEqual(item['integrity'],'complete')
+        self.assertFalse(item['retention_summary']['missing_count_exact'])
+        self.assertIsNone(item['retention_summary']['recorder_missing_slow_events'])
+        self.assertEqual(len(item['events']),3)
+
+    def test_sum_saturation_does_not_discard_exact_missing_counter(self):
+        item=read_work(self.example().replace('# aggregates_saturated=0','# aggregates_saturated=1'))['sections'][0]
+        self.assertEqual(item['integrity'],'complete')
+        self.assertTrue(item['retention_summary']['missing_count_exact'])
+        self.assertEqual(item['retention_summary']['recorder_missing_slow_events'],1)
+
+    def test_nested_union_row_is_correlated_once_with_retention_identity(self):
+        rows=[(1,'recent','batch_fence',4,8,50_000_000,100_000_000),
+              (2,'recent+longest','owner_control',4,0,50_000_000,110_000_000)]
+        sections=read_work(section2(rows,2))['sections']
+        self.assertEqual(sections[0]['integrity'],'complete')
+        _,frames=read_frames(io.StringIO('# dropped=0\ntick,begin_ns,scanout_ns,present_ns,end_ns\n'
+            '1,10,11,12,13\n2,200000000,200000001,200000002,200000003\n'))
+        result=correlate(sections,frames)
+        self.assertEqual(result['overlapping_retained_events'],2)
+        self.assertEqual([x['event_sequence'] for x in result['overlaps']],[1,2])
+        self.assertEqual(result['overlaps'][1]['retention'],'recent+longest')
+        self.assertNotIn('total_attributed_ns',result)
+
+    def test_untrusted_huge_recent_counter_never_allocates_declared_range(self):
+        text=self.example().replace('# retained_recent=2',f'# retained_recent={UINT64}')
+        self.assertEqual(read_work(text)['sections'][0]['integrity'],'invalid')
 
 
 class PrivateSessionTests(unittest.TestCase):

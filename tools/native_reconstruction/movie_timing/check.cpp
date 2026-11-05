@@ -61,17 +61,34 @@ int main(int argc, char** argv) {
         assert(recorder.exportAfterOwnerStop()); // no duplicate section
     }
     {
+        SequenceCounter counter{UINT64_MAX - 1, false};
+        assert(counter.advance() && counter.value == UINT64_MAX && !counter.saturated);
+        assert(!counter.advance() && counter.value == UINT64_MAX && counter.saturated);
+        assert(!counter.advance());
+    }
+    {
+        tick = 100;
         Recorder recorder(8, path.c_str(), clockNow);
-        for (size_t i = 0; i < Recorder::Capacity + 3; ++i)
-            recorder.observe(Boundary::BatchFence, 0, 2000000, 13, i);
-        assert(recorder.retained() == Recorder::Capacity && recorder.dropped() == 3);
-        assert(recorder.aggregate(Boundary::BatchFence).calls == Recorder::Capacity + 3);
-        assert(recorder.aggregate(Boundary::BatchFence).slowCalls == Recorder::Capacity + 3);
-        recorder.observe(Boundary::UploadFence, 0, UINT64_MAX);
-        recorder.observe(Boundary::UploadFence, 0, UINT64_MAX);
+        forbidAllocation = true;
+        constexpr auto count = Recorder::Capacity + 100;
+        for (size_t i = 0; i < count; ++i) {
+            const auto end = 1'000'000'000ull + i * 10'000'000ull;
+            const auto elapsed = i == 0 ? 50'000'000ull : i + 1 == count ? 7'000'000ull : 2'000'000ull;
+            recorder.observe(i + 1 == count ? Boundary::OwnerControl : Boundary::BatchFence,
+                             end - elapsed, end, 13, i);
+        }
+        assert(recorder.recentRetained() == Recorder::Capacity);
+        assert(recorder.longestRetained() == Recorder::LongestCapacity);
+        assert(recorder.retained() == Recorder::Capacity + Recorder::LongestCapacity - 1);
+        assert(recorder.dropped() == 37 && recorder.slowEventsSeen() == count);
+        recorder.observe(Boundary::UploadFence, 100, UINT64_MAX);
+        recorder.observe(Boundary::UploadFence, 100, UINT64_MAX);
+        forbidAllocation = false;
         assert(recorder.saturated());
         assert(recorder.aggregate(Boundary::UploadFence).elapsedSum == UINT64_MAX);
-        assert(recorder.dropped() == 5);
+        // Sum saturation does not make the independent sequence/loss count unknown.
+        assert(recorder.missingCountExact() && recorder.dropped() == 41);
+        assert(recorder.retained() == 4157);
         assert(recorder.exportAfterOwnerStop());
     }
     {

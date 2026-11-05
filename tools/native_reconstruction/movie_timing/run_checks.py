@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated recorder and actual V6 dependency header checks; no game/link/device."""
+"""Isolated recorder and supplied sealed-cohort header checks; no game/link/device."""
 import argparse
 import csv
 import hashlib
@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import sys
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
@@ -41,16 +42,28 @@ def recorder_check(compiler, output):
     assert result.stderr.count('export failed:') == 4
     assert result.stderr.count('exported owner epoch=') == 3
     text = path.read_text(encoding='utf-8')
-    assert text.count('# reo_movie_timing_schema=1') == 5  # two failure injectors wrote data
+    assert text.count('# reo_movie_timing_schema=2') == 5  # two failure injectors wrote data
     assert text.count('# owner_complete=1') == 5
-    assert '# dropped_slow_events=5' in text and '# aggregates_saturated=1' in text
-    first = text.split('# reo_movie_timing_schema=1')[1]
+    assert '# dropped_slow_events=41' in text and '# aggregates_saturated=1' in text
+    first = text.split('# reo_movie_timing_schema=2')[1]
     data = '\n'.join(line for line in first.splitlines() if line and not line.startswith('#'))
     rows = list(csv.DictReader(io.StringIO(data)))
-    assert rows == [dict(boundary='decode', generation='8', serial='10', begin_ns='100',
+    assert rows == [dict(sequence='1',retention='recent+longest',boundary='decode', generation='8', serial='10', begin_ns='100',
                          end_ns='2000100', elapsed_ns='2000000'),
-                    dict(boundary='output', generation='11', serial='12', begin_ns='100',
+                    dict(sequence='2',retention='recent+longest',boundary='output', generation='11', serial='12', begin_ns='100',
                          end_ns='3000100', elapsed_ns='3000000')]
+    sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
+    from analyze_movie_work import read_work
+    sections=read_work(text)['sections']
+    assert all(section['integrity']=='complete' for section in sections),sections
+    rolling=next(section for section in sections if section['metadata']['epoch']==8)
+    events={event['sequence']:event for event in rolling['events']}
+    assert len(events)==4157 and rolling['metadata']['slow_events_seen']==4198
+    assert rolling['metadata']['missing_count_exact']==1 and rolling['metadata']['dropped_slow_events']==41
+    assert events[1]['retention']=='longest' and events[1]['elapsed_ns']==50_000_000
+    assert events[4196]['retention']=='recent+longest' and events[4196]['elapsed_ns']==7_000_000
+    assert min(event['sequence'] for event in events.values() if event['retention']!='longest')==103
+    assert max(events)==4198
     return dict(compiler=str(compiler), compiler_sha256=sha(Path(compiler)),
                 export_sha256=sha(path), failures_checked=['open', 'write', 'flush', 'close'],
                 recorder_checks='passed')
@@ -117,7 +130,7 @@ def main():
         result['actual_headers'] = actual_header_check(args.kit.resolve(), output / 'actual-headers', args.toolchain)
     result['limitations'] = ['No game, runtime launch, device, decoder or GPU fence was executed.',
         'Supplied timestamps and export failures are deterministic synthetic checks.',
-        'Actual object compile uses the sealed V6 dependency source with copied changed headers; no link or library rebuild.',
+        'Actual object compile uses the supplied sealed dependency source with copied changed headers; no link or library rebuild.',
         'No cross-thread writer admission: production recorder belongs to one serialized GS owner.']
     (output / 'receipt.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(dict(recorder='GCC+LLVM passed', actual_headers='passed' if args.kit else 'not requested',

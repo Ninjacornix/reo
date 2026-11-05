@@ -3,6 +3,7 @@
 // No synchronization, allocation, IO, GPU query, or new wait on the record path.
 // Durations include descheduling; they never identify a CPU/GPU bottleneck.
 #include <array>
+#include <algorithm>
 #include <cerrno>
 #include <chrono>
 #include <cstdint>
@@ -29,7 +30,19 @@ struct Aggregate {
 };
 struct Event {
     Boundary boundary{};
-    uint64_t generation = 0, serial = 0, begin = 0, end = 0;
+    uint64_t sequence = 0, generation = 0, serial = 0, begin = 0, end = 0;
+};
+struct SequenceCounter {
+    uint64_t value = 0;
+    bool saturated = false;
+    bool advance() noexcept {
+        if (value == std::numeric_limits<uint64_t>::max()) {
+            saturated = true;
+            return false;
+        }
+        ++value;
+        return true;
+    }
 };
 // Export-only injection for deterministic open/write/flush/close failure checks.
 struct FileIo {
@@ -40,15 +53,18 @@ struct FileIo {
 class Recorder {
   public:
     static constexpr size_t Capacity = 4096;
+    static constexpr size_t LongestCapacity = 64;
     static constexpr uint64_t SlowThresholdNs = 2'000'000;
     using Clock = uint64_t (*)() noexcept;
 
   private:
     std::array<char, 4096> path_{};
-    std::array<Event, Capacity> events_{};
+    std::array<Event, Capacity> recent_{};
+    std::array<Event, LongestCapacity> longest_{};
     std::array<Aggregate, static_cast<unsigned>(Boundary::Count)> aggregates_{};
-    size_t retained_ = 0;
-    uint64_t epoch_ = 0, ownerBegin_ = 0, dropped_ = 0, invalid_ = 0;
+    size_t recentCount_ = 0, recentNext_ = 0, longestCount_ = 0, worst_ = 0;
+    SequenceCounter slow_{};
+    uint64_t epoch_ = 0, ownerBegin_ = 0, invalid_ = 0;
     bool saturated_ = false, enabled_ = false, exported_ = false, exportOkay_ = false;
     Clock clock_ = now;
     uint64_t add(uint64_t a, uint64_t b) noexcept {
@@ -57,6 +73,25 @@ class Recorder {
             return std::numeric_limits<uint64_t>::max();
         }
         return a + b;
+    }
+    const Event& recent(size_t index) const noexcept {
+        return recent_[(recentNext_ + Capacity - recentCount_ + index) % Capacity];
+    }
+    static bool better(const Event& a, const Event& b) noexcept {
+        const auto left = a.end - a.begin, right = b.end - b.begin;
+        return left > right || (left == right && a.sequence < b.sequence);
+    }
+    void longest(const Event& event) noexcept {
+        if (longestCount_ < LongestCapacity)
+            longest_[longestCount_++] = event;
+        else if (better(event, longest_[worst_]))
+            longest_[worst_] = event;
+        else
+            return;
+        worst_ = 0;
+        for (size_t i = 1; i < longestCount_; ++i)
+            if (better(longest_[worst_], longest_[i]))
+                worst_ = i;
     }
 
   public:
@@ -85,8 +120,23 @@ class Recorder {
     const Aggregate& aggregate(Boundary boundary) const noexcept {
         return aggregates_[static_cast<unsigned>(boundary)];
     }
-    size_t retained() const noexcept { return retained_; }
-    uint64_t dropped() const noexcept { return dropped_; }
+    size_t recentRetained() const noexcept { return recentCount_; }
+    size_t longestRetained() const noexcept { return longestCount_; }
+    uint64_t slowEventsSeen() const noexcept { return slow_.value; }
+    bool missingCountExact() const noexcept { return !slow_.saturated; }
+    size_t retained() const noexcept {
+        auto unique = recentCount_;
+        for (size_t i = 0; i < longestCount_; ++i)
+            if (!recentCount_ || longest_[i].sequence < recent(0).sequence ||
+                longest_[i].sequence > recent(recentCount_ - 1).sequence)
+                ++unique;
+        return unique;
+    }
+    // UINT64_MAX is an explicitly flagged unknown sentinel after sequence
+    // exhaustion, not a claim that exactly that many records are missing.
+    uint64_t dropped() const noexcept {
+        return missingCountExact() ? slow_.value - retained() : std::numeric_limits<uint64_t>::max();
+    }
     uint64_t invalid() const noexcept { return invalid_; }
     bool saturated() const noexcept { return saturated_; }
     void observe(Boundary boundary, uint64_t begin, uint64_t end,
@@ -107,11 +157,16 @@ class Recorder {
         if (elapsed < SlowThresholdNs)
             return;
         aggregate.slowCalls = add(aggregate.slowCalls, 1);
-        if (retained_ == events_.size()) {
-            dropped_ = add(dropped_, 1);
+        if (!slow_.advance()) {
+            saturated_ = true;
             return;
         }
-        events_[retained_++] = {boundary, generation, serial, begin, end};
+        const Event event{boundary, slow_.value, generation, serial, begin, end};
+        recent_[recentNext_] = event;
+        recentNext_ = (recentNext_ + 1) % Capacity;
+        if (recentCount_ < Capacity)
+            ++recentCount_;
+        longest(event);
     }
     // Call once after this owner has stopped/cancelled all movie work. This is
     // teardown IO, never a producer/poll path. Append preserves earlier epochs.
@@ -140,12 +195,20 @@ class Recorder {
             if (result < 0)
                 okay = false;
         };
-        emit("\n# reo_movie_timing_schema=1\n# owner_begin_ns=%llu\n# epoch=%llu\n",
+        const auto retained = this->retained();
+        const auto missing = dropped();
+        emit("\n# reo_movie_timing_schema=2\n# owner_begin_ns=%llu\n# epoch=%llu\n",
              static_cast<unsigned long long>(ownerBegin_), static_cast<unsigned long long>(epoch_));
         emit("# slow_threshold_ns=%llu\n# event_capacity=%zu\n# elapsed_includes_descheduling=1\n",
-             static_cast<unsigned long long>(SlowThresholdNs), Capacity);
+             static_cast<unsigned long long>(SlowThresholdNs), Capacity + LongestCapacity);
+        emit("# recent_capacity=%zu\n# longest_capacity=%zu\n# slow_events_seen=%llu\n",
+             Capacity, LongestCapacity, static_cast<unsigned long long>(slow_.value));
+        emit("# retained_recent=%zu\n# retained_longest=%zu\n# retained_unique=%zu\n",
+             recentCount_, longestCount_, retained);
+        emit("# missing_count_exact=%u\n# sequence_saturated=%u\n",
+             unsigned(missingCountExact()), unsigned(slow_.saturated));
         emit("# dropped_slow_events=%llu\n# invalid_intervals=%llu\n# aggregates_saturated=%u\n",
-             static_cast<unsigned long long>(dropped_), static_cast<unsigned long long>(invalid_),
+             static_cast<unsigned long long>(missing), static_cast<unsigned long long>(invalid_),
              unsigned(saturated_));
         emit("# aggregate,boundary,calls,elapsed_sum_ns,elapsed_max_ns,slow_calls\n");
         for (unsigned i = 0; i < aggregates_.size(); ++i) {
@@ -156,18 +219,33 @@ class Recorder {
                  static_cast<unsigned long long>(value.elapsedMax),
                  static_cast<unsigned long long>(value.slowCalls));
         }
-        emit("boundary,generation,serial,begin_ns,end_ns,elapsed_ns\n");
-        for (size_t i = 0; i < retained_; ++i) {
-            const auto& event = events_[i];
-            emit("%s,%llu,%llu,%llu,%llu,%llu\n", name(event.boundary),
+        emit("sequence,retention,boundary,generation,serial,begin_ns,end_ns,elapsed_ns\n");
+        auto top = longest_;
+        std::sort(top.begin(), top.begin() + longestCount_, [](const Event& a, const Event& b) {
+            return a.sequence < b.sequence;
+        });
+        auto row = [&](const Event& event, const char* retention) noexcept {
+            emit("%llu,%s,%s,%llu,%llu,%llu,%llu,%llu\n",
+                 static_cast<unsigned long long>(event.sequence), retention, name(event.boundary),
                  static_cast<unsigned long long>(event.generation),
                  static_cast<unsigned long long>(event.serial),
                  static_cast<unsigned long long>(event.begin),
                  static_cast<unsigned long long>(event.end),
                  static_cast<unsigned long long>(event.end - event.begin));
+        };
+        size_t i = 0, j = 0;
+        while (i < recentCount_ || j < longestCount_) {
+            if (j == longestCount_ || (i < recentCount_ && recent(i).sequence < top[j].sequence))
+                row(recent(i++), "recent");
+            else if (i == recentCount_ || top[j].sequence < recent(i).sequence)
+                row(top[j++], "longest");
+            else {
+                row(recent(i++), "recent+longest");
+                ++j;
+            }
         }
         // A missing trailer means partial/truncated, even if some rows parse.
-        emit("# owner_complete=1 retained=%zu\n", retained_);
+        emit("# owner_complete=1 retained=%zu\n", retained);
         okay = (std::ferror(file) == 0) && okay;
         if (io.flush(file) != 0)
             okay = false;
@@ -179,8 +257,8 @@ class Recorder {
             return false;
         }
         std::fprintf(stderr, "[MOVIE-TIMING] exported owner epoch=%llu retained=%zu dropped=%llu invalid=%llu saturated=%u path=%s\n",
-                     static_cast<unsigned long long>(epoch_), retained_,
-                     static_cast<unsigned long long>(dropped_), static_cast<unsigned long long>(invalid_),
+                     static_cast<unsigned long long>(epoch_), retained,
+                     static_cast<unsigned long long>(missing), static_cast<unsigned long long>(invalid_),
                      unsigned(saturated_), path_.data());
         exportOkay_ = true;
         return true;

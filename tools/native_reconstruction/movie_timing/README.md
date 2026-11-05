@@ -2,7 +2,8 @@
 
 `runtime/media/movie_timing.h` is a default-off, single-owner diagnostic. Set
 `REO_MOVIE_TIMING_FILE` to a session-owned output file in a future coherently
-rebuilt candidate. The existing V6 executable does not contain this addition.
+rebuilt candidate. Sealed V7 uses schema1; this schema2 change applies only to a
+future coherent rebuild. No sealed SDK/work directory was modified.
 It does not change playback clocks, scheduling, retries, queue depth, decoder
 arithmetic, fence waits, rendering or pixel readback.
 
@@ -16,14 +17,27 @@ dereference its borrowed recorder. These are existing lifecycle requirements,
 not new cross-thread lifetime proof.
 
 Every admitted span updates fixed count, elapsed-sum, maximum and slow-count
-aggregates. Only spans of at least2,000,000ns retain detail, up to4096 events per
-owner. Later slow events increment the drop counter and still update aggregates;
-unread records are not overwritten. Invalid reversed intervals/boundary IDs are
-counted separately; arithmetic saturates at UINT64_MAX and sets a visible flag.
-There is no per-span allocation, formatting, output or GPU query. Disabled spans
-read no clock and create no file. The fixed storage remains part of the owner
-object even when disabled; this is bounded diagnostic memory, not a rolling
-incident recorder.
+aggregates. Only spans of at least2,000,000ns retain detail. Schema2 keeps the
+**most recent4096 slow completions plus the longest64** over the owner lifetime.
+Each qualifying completion receives a sequence ID, starting at1 per owner. The
+recent ring replaces its oldest entry. Longest retention ranks elapsed duration
+descending, with earlier sequence winning ties. One event may occupy both sets.
+No fast poll consumes a detail slot or slow-event sequence ID.
+
+Producer operations use fixed arrays, at most64 comparisons when a longest-set
+candidate is inserted/replaced, and no allocation, formatting, I/O, lock, sort or
+GPU query. The usual full-top-set rejection is constant work. Invalid reversed
+intervals/boundary IDs are counted separately. Disabled spans read no clock and
+create no file; fixed bounded storage remains in the owner object.
+
+Unique retention is the union, never4096+64 blindly. Metadata records observed
+slow completions, recent/longest/unique counts and exact missing count
+(`slow_events_seen-retained_unique`). Aggregate-sum saturation has its own visible
+flag and does not destroy independently exact event counts. On sequence exhaustion
+the recorder cannot assign another unique ID: detail sets freeze, aggregates
+continue to saturate safely, `sequence_saturated=1`/`missing_count_exact=0` are
+exported, and `dropped_slow_events=UINT64_MAX` is an unknown sentinel. The analyzer
+reports that missing count as unknown, not as a measured UINT64_MAX loss.
 
 | Boundary | Exact measurement / identity |
 | --- | --- |
@@ -45,9 +59,14 @@ are not instrumented by this first addition.
 
 Export occurs explicitly in the target destructor **after `stop()` cancels and
 retires movie work and resets decoder resources**. No file opens during playback.
-The exporter appends owner sections with schema1, owner-start nanoseconds, epoch,
-limits/loss/invalid/saturation metadata, all boundary aggregates, a CSV header,
-slow-event rows and `# owner_complete=1 retained=...`. It then checks stream error,
+The exporter appends schema2 owner sections with owner-start nanoseconds, epoch,
+limits/retention/exactness/loss/invalid/saturation metadata and all aggregates.
+Only at teardown, it sorts a64-entry top-set copy by sequence and merges it with
+the already ordered recent ring. CSV rows are in completion sequence order and
+contain `sequence,retention,boundary,generation,serial,begin_ns,end_ns,elapsed_ns`.
+Retention is `recent`, `longest` or `recent+longest`; a shared event is exported
+once. The trailer's retained count is this unique union. The existing stderr
+success receipt also uses unique retained and missing counts. It then checks stream error,
 flush and close. A successful close produces one stderr `exported owner` line;
 open/write/flush/close failure produces `export failed` and never reports success.
 Repeated export calls retain the first result and do not duplicate a section.
@@ -67,25 +86,53 @@ dependency/compiler cohort:
 
 ```powershell
 python tools/native_reconstruction/movie_timing/run_checks.py `
-  --output build-native-sjuni/movie-timing-checks-v1 `
-  --kit build-native-sjuni/candidate-inputs-v6 `
+  --output build-native-sjuni/movie-timing-schema2-checks `
+  --kit build-native-sjuni/candidate-inputs-v7 `
   --toolchain C:/Users/Ninjacornix/AppData/Local/OutbreakRecomp/launcher/toolchains/llvm-mingw-20251216-ucrt-x86_64
 ```
 
 `--toolchain` may instead use `REO_LLVM_MINGW`. The supplied external compiler
 must match the sealed plan SHA. The actual object check copies the three changed
-headers and the unchanged sealed `movie_owner_service.cpp` into a private tree,
-then compiles against the sealed V6 include cohort. It does not edit that cohort,
+headers and the unchanged sealed `movie_owner_service.cpp` into a small private tree,
+then compiles against the sealed V7/124-patch include cohort. It does not edit that cohort,
 link libraries, construct a runtime, open a device, launch the game or execute a
 GPU fence. Tests supply timestamps and failure injection; they do not reproduce
 the user's stutter.
 
 Validation on2026-11-05: GCC and LLVM deterministic checks passed, with identical
-CSV SHA-256`8d1a6063951f2d00f0521edb4f95c54662c1bd5d65c8685bad6de330bc2efa17`.
+CSV SHA-256`45f65f8ab5118170dfbb0aeb7f803671a08a565c06c8acb2bc22d80766cb4f2e`.
 They check disabled/null/empty paths, zero producer allocation, exact threshold,
-aggregates/identities, invalid intervals, capacity loss, saturation, no file before
-export, append/idempotence, RAII unwind and open/write/flush/close failures. Actual
+aggregates/identities, invalid intervals, recent rolling order, early50ms and
+late7ms synthetic spikes after4196 events, longest/recent union deduplication,
+precise missing counts, aggregate-sum saturation with exact counts, sequence
+exhaustion, no file before export, append/idempotence, RAII unwind and all four
+export failure stages. Actual
 matching-header object compilation passed with compiler SHA-256
 `f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3`.
-Receipt: `build-native-sjuni/movie-timing-checks-v1/movie-timing-18kpnf0s/receipt.json`.
+Receipt: `build-native-sjuni/movie-timing-schema2-checks/movie-timing-f2bxmgr6/receipt.json`.
 No game or full build was run for this work.
+
+## Why the retention changed
+
+Read-only evidence from completed private `media-legacy-pcm-v7` shows the schema1
+limitation, without establishing a GPU or stutter cause. Epoch4 reports4,859,727
+owner controls,4,821,157 decode calls,9635 batch-fence calls, and19,290 total
+slow observations (nested boundaries remain separate observations). Every
+batch-fence observation met the2ms threshold. The first4096 detail rows were retained;
+15,194 later slow observations had aggregate data but no individual timestamps.
+Those late details cannot be recovered from that completed V7 file. Maximum
+elapsed values remain52.1403ms owner-control,12.7972ms decode and21.8070ms batch
+fence, each including descheduling; none identifies a GPU bottleneck by itself.
+
+Private evidence: `build-native-sjuni/playtests/media-legacy-pcm-v7/movie-work.csv`,
+233208 bytes, SHA-256
+`43fc606b3c4b4e561ff71f5c2ad269fdd5c0568307ff3a96bb26afaa67790726`.
+Its existing analysis JSON is1107915 bytes, SHA-256
+`c998a4d62ea2122dbead5e463a3712c05e7b42bb3b4ea0173287ef453a1807cd`;
+the completed run receipt SHA-256 is
+`99847e1a4069ae42f5241beefbedc1a39685af0611e0738db41dba57c5606d32`.
+The updated offline analyzer still reads schema1, including its honest losses.
+Schema2 tests are synthetic; no new playback measurement is claimed. Recent/top
+retention improves future evidence, but cannot guarantee every visible hitch:
+thresholds, uninstrumented work, finite history, hard termination and export
+failures remain explicit limits.
