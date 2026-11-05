@@ -97,6 +97,15 @@ def summarize(rows, movie_samples):
         longest_intervals=sorted(intervals, key=lambda v: v['duration_ns'], reverse=True)[:32])
 
 
+def native_audio_evidence(lines, environment):
+    try:
+        return parse_pcm(lines, environment)
+    except ValueError as error:
+        # An independently corrupt audio report must not discard valid timing
+        # evidence. Keep its counters unknown and retain the validation error.
+        return dict(status='invalid-evidence', joined_reports=[], error=str(error))
+
+
 def analyze(session):
     provenance = analyze_session(session)
     session = Path(provenance['session'])
@@ -129,7 +138,7 @@ def analyze(session):
         dropped_frame_records=dropped, movie_samples=samples,
         slow_vblank_log_events=slow_vblank[:128], slow_vblank_event_count=len(slow_vblank),
         audio_starvation_windows=starvation[:128], audio_starvation_window_count=len(starvation),
-        native_pcm=parse_pcm(iter_log(log), provenance['environment']), **result,
+        native_pcm=native_audio_evidence(iter_log(log), provenance['environment']), **result,
         limitations=['CPU presentation-return intervals do not measure actual display scanout or game-update speed.',
             'Graphics spans exclude upstream decoder, resource and game-worker work before capture begins.',
             'The scanout marker follows backend vsync work; it is not physical scanout. Its next span includes presenter preparation.',
@@ -142,6 +151,8 @@ def analyze(session):
 
 
 def audio_evidence(report):
+    if report['native_pcm']['status'] == 'invalid-evidence':
+        return 'Native PCM evidence invalid; counters unknown: ' + report['native_pcm']['error'] + '.'
     if report['environment'].get('REO_NATIVE_PCM') != '1':
         return f"Legacy audio-starvation report windows: {report['audio_starvation_window_count']}."
     reports = report['native_pcm']['joined_reports']

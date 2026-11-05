@@ -1,12 +1,22 @@
 import io
 import unittest
 
-from analyze_movie_pacing import read_frames, summarize, audio_evidence
+from analyze_movie_pacing import read_frames, summarize, audio_evidence, native_audio_evidence
 from analyze_pcm_playtest import parse as parse_pcm
 from test_analyze_pcm_playtest import INSTALL, REPORT
 
 
 class MoviePacingTests(unittest.TestCase):
+    def test_invalid_audio_does_not_invalidate_other_timing_evidence(self):
+        environment = {'REO_NATIVE_PCM': '1'}
+        native = native_audio_evidence([INSTALL, REPORT.replace('signal_frames=40000',
+                                        'signal_frames=48001')], environment)
+        self.assertEqual(native['status'], 'invalid-evidence')
+        self.assertEqual(native['joined_reports'], [])
+        self.assertIn('counters unknown', audio_evidence(dict(environment=environment, native_pcm=native)))
+        _, frames = self.parse('1,100,101,102,103\n2,80000100,80000101,80000102,80000103\n')
+        self.assertEqual(summarize(frames, [])['presentation_return_intervals']['over_50_ms'], 1)
+
     def test_native_final_starvation_is_not_hidden_by_absent_legacy_windows(self):
         environment = {'REO_NATIVE_PCM': '1'}
         report = dict(environment=environment, audio_starvation_window_count=0,
