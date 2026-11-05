@@ -1,0 +1,3051 @@
+{
+  "schema": 1,
+  "edition": "SLUS-20765",
+  "evidence_kind": "static-offline",
+  "elf_sha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "catalogue_hashes": {
+    "recomp/config/extra_functions.csv": "4b2a1873f9ba16a602b8ee0d2d91298212e7ed05b33a163c55bf2fcb83dad942",
+    "recomp/config/outbreak_ghidra_functions.csv": "d17f38cd9c5920591d24610a0f85fb18e6e3d4970c288f14d399109087bec74f",
+    "recomp/config/overlay_maps/ovl0.csv": "3b4ab1b342a509ed5ce2fcc06201e324982d518a3ffb4c7592aef9b188d6cc54",
+    "recomp/config/overlay_maps/ovl1.csv": "5ddb53072a65036addee4085996b0f4424ffdab41292885d8ff48a8a243baa30",
+    "recomp/config/overlay_maps/ovl2.csv": "f064e2e12d2c453d8144205ebb9dbce9625f8a297f2bbd9d37ca24f8a017bde3",
+    "recomp/config/overlay_maps/ovl3.csv": "de92baf786c515064c70c9cedf9ea64bc718d6b718f63e572d9274f0b9e68d66",
+    "recomp/config/overlay_maps/ovl4.csv": "ddb1825041eadb84e20adbc7bd777312a4800672afb394929e76c09f5534b42d",
+    "recomp/config/overlay_maps/ovl5.csv": "afeb64acb28bc59af76a809708b0b1c41541bf56e931bb557c4fe6c150979239",
+    "recomp/config/overlay_maps/ovl6.csv": "4a42d68d1fd53675ae43d25bea2851d62b3c99b57215371270ad9a23839c0a42",
+    "recomp/config/overlay_maps/ovl8.csv": "9a3b9f8378bf855c83fb21c05929266e823a267229813b57f23131f59a5199f6",
+    "recomp/config/overlay_maps/ovl9.csv": "df0fb199aeb3b82b08a2b1bcd3d3f7849777668b9f6cf9e0553ade3431764910"
+  },
+  "groups": {
+    "local_sjuni": [
+      1310720,
+      1310752,
+      1310832,
+      1310912,
+      1311144,
+      1311200,
+      1311208,
+      1311224,
+      1311368,
+      1311488,
+      1311800,
+      1312144,
+      1312472,
+      1312616,
+      1312680,
+      1312736
+    ],
+    "shared_lifetime": [
+      1221096,
+      1221512,
+      1435296,
+      1436160
+    ],
+    "paired_ownership": [
+      1301128,
+      1301320,
+      1302080,
+      1302304,
+      1302424,
+      1303224,
+      1304256,
+      1304432,
+      1305280
+    ],
+    "typed_local_queries_and_escape": [
+      1230048,
+      1230112,
+      1305776,
+      1305840,
+      1305896,
+      1307080,
+      1250528
+    ],
+    "generic_dma_consumers": [
+      1279568,
+      1280696,
+      1280936,
+      1280992
+    ],
+    "generic_sjx_consumers": [
+      1314584,
+      1314744,
+      1315016,
+      1315160,
+      1315984,
+      1316232,
+      1316304
+    ],
+    "remote_transport": [
+      1313688,
+      1313776,
+      1313824,
+      1313936,
+      1313984,
+      1314096,
+      1314176,
+      1314256,
+      1314336,
+      1283168
+    ],
+    "guard_and_diagnostic": [
+      1307224,
+      1307248,
+      1307272,
+      1316560,
+      1316584,
+      1316320,
+      1316416,
+      1223016,
+      1223152
+    ],
+    "guard_installation_and_dependencies": [
+      1095160,
+      1131616,
+      1131696,
+      1131792,
+      1131808,
+      1131920,
+      1131952,
+      1223560,
+      1223584,
+      1224944,
+      1225048,
+      1226296,
+      1226752,
+      1229264,
+      1229704,
+      1316864,
+      1317032,
+      1318320,
+      1318384,
+      1318408
+    ],
+    "remote_completion_dependencies": [
+      1282320,
+      1282456,
+      1307104,
+      1230176,
+      1230232
+    ]
+  },
+  "ranges": {
+    "sjuni_vtable": [
+      2264160,
+      2264208
+    ],
+    "sjuni_reference_count": [
+      2264208,
+      2264212
+    ],
+    "sjuni_objects": [
+      2264216,
+      2267288
+    ],
+    "sjuni_uuid": [
+      2349688,
+      2349704
+    ],
+    "paired_configuration": [
+      2233400,
+      2233472
+    ],
+    "paired_records": [
+      2233472,
+      2234240
+    ],
+    "paired_local_node_storage": [
+      2234240,
+      2242432
+    ],
+    "ps2rna_groups": [
+      2242688,
+      2244224
+    ],
+    "sjx_bindings": [
+      2267792,
+      2268432
+    ],
+    "dtr_records": [
+      2210824,
+      2212872
+    ]
+  },
+  "vtable": [
+    0,
+    0,
+    0,
+    1311144,
+    1311200,
+    1311224,
+    1311488,
+    1312144,
+    1311800,
+    1311368,
+    1312472,
+    1311208
+  ],
+  "verified_main_intervals": [
+    {
+      "id": "main:0x0010B5F8",
+      "start": 1095160,
+      "end": 1095604,
+      "source": "recomp/config/output/sub_0010B5F8_0x10b5f8.cpp",
+      "source_sha256": "3daf0ff295d5d7e50b65603b7e0af406f1a0b4140a25e8c9dafd798f51d97cd8",
+      "interval_sha256": "29d954c765244c138bd3993186fdd4b4d486852cada04a8288ca4c4ed95d4686",
+      "matched_comment_words": 108,
+      "omitted_zero_words": 3,
+      "label": "bounded_string_copy_zero_pad_candidate"
+    },
+    {
+      "id": "main:0x00114460",
+      "start": 1131616,
+      "end": 1131632,
+      "source": "recomp/config/output/sub_00114460_0x114460.cpp",
+      "source_sha256": "a7ba4f8ce3a73c7093b037755a5494d37f30cdf069ccf6c07d732f92dbd1cde8",
+      "interval_sha256": "ae06fb8f1b3931443d10c57f2ac37fcd968a5b49e55695a33c2872fa2e7a7ec8",
+      "matched_comment_words": 3,
+      "omitted_zero_words": 1,
+      "label": "ExitDeleteThread_kernel_wrapper_candidate"
+    },
+    {
+      "id": "main:0x001144B0",
+      "start": 1131696,
+      "end": 1131712,
+      "source": "recomp/config/output/sub_001144B0_0x1144b0.cpp",
+      "source_sha256": "09543d944134ba4c8613df2b2b6008f824e493653cc9af5b15beedd394e33682",
+      "interval_sha256": "ef7444e46d0ba0426d2ecb637caa1e6f71212d4928225852f34b19ffd94ff03b",
+      "matched_comment_words": 3,
+      "omitted_zero_words": 1,
+      "label": "ChangeThreadPriority_kernel_wrapper_candidate"
+    },
+    {
+      "id": "main:0x00114510",
+      "start": 1131792,
+      "end": 1131808,
+      "source": "recomp/config/output/sub_00114510_0x114510.cpp",
+      "source_sha256": "ca8cdf3ee4f42c148d7c8d16502f540b33d1096b39eec25ceeb033139408f870",
+      "interval_sha256": "c112eedc7463dfca16594f740970e0f84669f28330e309d1bcdb21e1a43a05aa",
+      "matched_comment_words": 3,
+      "omitted_zero_words": 1,
+      "label": "GetThreadId_kernel_wrapper_candidate"
+    },
+    {
+      "id": "main:0x00114520",
+      "start": 1131808,
+      "end": 1131824,
+      "source": "recomp/config/output/sub_00114520_0x114520.cpp",
+      "source_sha256": "181ea93532df3874dfa324a18194a0b5d7a256e2efafb4ac01300b895ed37caa",
+      "interval_sha256": "328a3a74a1552362aaab378aede3063351e9ce9ea1f22cdf29bc05d239e83752",
+      "matched_comment_words": 3,
+      "omitted_zero_words": 1,
+      "label": "ReferThreadStatus_kernel_wrapper_candidate"
+    },
+    {
+      "id": "main:0x00114590",
+      "start": 1131920,
+      "end": 1131936,
+      "source": "recomp/config/output/sub_00114590_0x114590.cpp",
+      "source_sha256": "17816ed76dad34aeb01700946c2c3be44df95fa2645eb3a825fa81f2b6274510",
+      "interval_sha256": "ce3706d3089d7149f30547798502ac48cb4ac2c6ee1c2daf6b07b32bcf50daaa",
+      "matched_comment_words": 3,
+      "omitted_zero_words": 1,
+      "label": "SuspendThread_kernel_wrapper_candidate"
+    },
+    {
+      "id": "main:0x001145B0",
+      "start": 1131952,
+      "end": 1131968,
+      "source": "recomp/config/output/sub_001145B0_0x1145b0.cpp",
+      "source_sha256": "8b6220a0b751f70475faa6ab971c497d0e5571c800ffa019dcfa92ff7674c5ff",
+      "interval_sha256": "1e35a8f1d57d3a7d4812ac9d98194947bb637a102f018dbe12f94230ada33e9f",
+      "matched_comment_words": 3,
+      "omitted_zero_words": 1,
+      "label": "ResumeThread_kernel_wrapper_candidate"
+    },
+    {
+      "id": "main:0x0012A1E8",
+      "start": 1221096,
+      "end": 1221476,
+      "source": "recomp/config/output/sub_0012A1E8_0x12a1e8.cpp",
+      "source_sha256": "407e4834f15bfc0768b3b34e82769e97507f2447f2274bcfdf045d19f9f44bb8",
+      "interval_sha256": "5fb68cb1fe398fbbeed7fd992536d7ae856d92daf65d7d501d994ce49610cb64",
+      "matched_comment_words": 80,
+      "omitted_zero_words": 15,
+      "label": "initialize_cri_services_reference_counted"
+    },
+    {
+      "id": "main:0x0012A388",
+      "start": 1221512,
+      "end": 1221720,
+      "source": "recomp/config/output/sub_0012A388_0x12a388.cpp",
+      "source_sha256": "871168b4397283a32cbab3031ccee3d15fe9822cffbf43e4f3886b582ae8f638",
+      "interval_sha256": "57fbd1436872b5ff6a356d98c6e2dd855441fead3b7f00fa358e11d33fa72906",
+      "matched_comment_words": 41,
+      "omitted_zero_words": 11,
+      "label": "release_last_CRI_file_audio_reference_and_unregister_service_slots"
+    },
+    {
+      "id": "main:0x0012A968",
+      "start": 1223016,
+      "end": 1223148,
+      "source": "recomp/config/output/sub_0012A968_0x12a968.cpp",
+      "source_sha256": "027df04ba723181f8b2badf1c5ad2d69b9a19dd92481f35fa2011c09168b9d01",
+      "interval_sha256": "173cf0829a949c1074b00a1cdd812b99a87e19ff14bb2dee77ba5f3437b6121a",
+      "matched_comment_words": 33,
+      "omitted_zero_words": 0,
+      "label": "enter_cri_outermost_priority_handoff_then_increment_nesting_candidate"
+    },
+    {
+      "id": "main:0x0012A9F0",
+      "start": 1223152,
+      "end": 1223264,
+      "source": "recomp/config/output/sub_0012A9F0_0x12a9f0.cpp",
+      "source_sha256": "59847d1e6d5855ac633f9d6ea00ad5d8d33d40bcd2b4199265f7d9388a3c8f7e",
+      "interval_sha256": "dcca4986672ca8c131ca8fe8cb442312f39dfc5f7517f9615d7362736a520fb2",
+      "matched_comment_words": 28,
+      "omitted_zero_words": 0,
+      "label": "leave_cri_priority_handoff_suspend_guard_worker_and_restore_priority_candidate"
+    },
+    {
+      "id": "main:0x0012AB88",
+      "start": 1223560,
+      "end": 1223584,
+      "source": "recomp/config/output/sub_0012AB88_0x12ab88.cpp",
+      "source_sha256": "1c5f69c6214e5a35f9bf07b2177b10950db788a9dab73c7a636fd85841f425aa",
+      "interval_sha256": "bb182ebf5ce10bdd6e756c9cc1c28cc9dbb3905da23298ca9faf08bcc32b13de",
+      "matched_comment_words": 6,
+      "omitted_zero_words": 0,
+      "label": "increment_cri_guard_worker_spin_counter_candidate"
+    },
+    {
+      "id": "main:0x0012ABA0",
+      "start": 1223584,
+      "end": 1223672,
+      "source": "recomp/config/output/sub_0012ABA0_0x12aba0.cpp",
+      "source_sha256": "27e278dbd750b0664a3e9ee064c0a84dce2e52ff43a8f3c97d717aaf7981939b",
+      "interval_sha256": "117277355d457754046e53b27cb9397142c1711dad7c4f9d51751129d219971b",
+      "matched_comment_words": 21,
+      "omitted_zero_words": 1,
+      "label": "cri_guard_worker_spin_counter_until_stop_then_ack_and_exit_candidate"
+    },
+    {
+      "id": "main:0x0012B0F0",
+      "start": 1224944,
+      "end": 1225044,
+      "source": "recomp/config/output/sub_0012B0F0_0x12b0f0.cpp",
+      "source_sha256": "7830f89b533371e33bfad40f0605b8ccc1c238f1219cbccf586deee9af1a76d6",
+      "interval_sha256": "c33b20222b99b953c4d59382c85021a03e54047c15cd4ee1c1df0ff4299962fb",
+      "matched_comment_words": 24,
+      "omitted_zero_words": 1,
+      "label": "resume_nonzero_cri_thread_only_in_status_eight_or_c_candidate"
+    },
+    {
+      "id": "main:0x0012B158",
+      "start": 1225048,
+      "end": 1225144,
+      "source": "recomp/config/output/sub_0012B158_0x12b158.cpp",
+      "source_sha256": "a75ea3646e057b5c9f93edd3aee6dfbe9ed9d0b5417424fba9bdf91271a8efa7",
+      "interval_sha256": "10fb9ca8f2a3988c1f15a1278eccff852ad56f7e413f328b3c2f606c257858e8",
+      "matched_comment_words": 24,
+      "omitted_zero_words": 0,
+      "label": "suspend_cri_worker_unless_already_status_eight_or_c_candidate"
+    },
+    {
+      "id": "main:0x0012B638",
+      "start": 1226296,
+      "end": 1226668,
+      "source": "recomp/config/output/sub_0012B638_0x12b638.cpp",
+      "source_sha256": "08d819baf52492c245d9785e6a69d005f52c6e8fd76c31d0106fc8b11be06c2e",
+      "interval_sha256": "ff74b87de2e5ab6eb79fd527e17b8a853626bcea2051ef3cffeb3244e0026e4f",
+      "matched_comment_words": 89,
+      "omitted_zero_words": 4,
+      "label": "initialize_four_cri_workers_on_first_reference_and_increment_candidate"
+    },
+    {
+      "id": "main:0x0012B800",
+      "start": 1226752,
+      "end": 1226900,
+      "source": "recomp/config/output/sub_0012B800_0x12b800.cpp",
+      "source_sha256": "57a0a98f9ec2e8686f593662822689f2df443376806d0f534834ad07fe47e9b5",
+      "interval_sha256": "afb750ac4dd015071f1d0809c1e35b23dbdeb7dd3e5edf0166695346576a8870",
+      "matched_comment_words": 32,
+      "omitted_zero_words": 5,
+      "label": "release_cri_reference_and_stop_base_worker_set_on_zero_candidate"
+    },
+    {
+      "id": "main:0x0012C1D0",
+      "start": 1229264,
+      "end": 1229700,
+      "source": "recomp/config/output/sub_0012C1D0_0x12c1d0.cpp",
+      "source_sha256": "dae408b87c22efdf19b3f34df03b44227dd67a733f749472960aa56f39734bc6",
+      "interval_sha256": "5981fab90f1b449743e10bd72cec03591438fc480b5026b3b9ac7257ce493f16",
+      "matched_comment_words": 103,
+      "omitted_zero_words": 6,
+      "label": "initialize_extended_six_worker_cri_configuration_on_first_reference_candidate"
+    },
+    {
+      "id": "main:0x0012C388",
+      "start": 1229704,
+      "end": 1229876,
+      "source": "recomp/config/output/sub_0012C388_0x12c388.cpp",
+      "source_sha256": "9c2d41c616556797d2119f4223cf1940d5f6df97141b184810b4efda4eee4149",
+      "interval_sha256": "1b59c3515a1de2ab32ade1ffcadfd7270388fa503d83369fdf0f1392dd5b303a",
+      "matched_comment_words": 36,
+      "omitted_zero_words": 7,
+      "label": "release_extended_cri_reference_and_stop_all_six_workers_on_zero_candidate"
+    },
+    {
+      "id": "main:0x0012C4E0",
+      "start": 1230048,
+      "end": 1230108,
+      "source": "recomp/config/output/sub_0012C4E0_0x12c4e0.cpp",
+      "source_sha256": "ce06eece822302df1b0e9c4472e9997badf5510e125c39d468b3b4072e046bc2",
+      "interval_sha256": "1570e59e3f11568fd0410e6ad7717803f56a089533ea7442bffaad487fc3dcea",
+      "matched_comment_words": 15,
+      "omitted_zero_words": 0,
+      "label": "query_audio_context_local_data_pool_count_in_halfword_units_candidate"
+    },
+    {
+      "id": "main:0x0012C520",
+      "start": 1230112,
+      "end": 1230172,
+      "source": "recomp/config/output/sub_0012C520_0x12c520.cpp",
+      "source_sha256": "f1aede68b50949f5f55c0511556e8e579b585a0ee26924d131b5bcb636226dc4",
+      "interval_sha256": "e05c018bb84c20750dc6485f1c00fd7ce645ed87da19035d617d3b7095e52242",
+      "matched_comment_words": 15,
+      "omitted_zero_words": 0,
+      "label": "query_audio_context_local_free_pool_count_in_halfword_units_candidate"
+    },
+    {
+      "id": "main:0x0012C560",
+      "start": 1230176,
+      "end": 1230228,
+      "source": "recomp/config/output/sub_0012C560_0x12c560.cpp",
+      "source_sha256": "f4d9083e5e25dd3c9d86802cd7e172476039b442dca31e3cd6ce4a305ce1ba36",
+      "interval_sha256": "c3d9f7bde6443fe633726c65e36b6fff96e51d6e607b899380716643d614b700",
+      "matched_comment_words": 13,
+      "omitted_zero_words": 0,
+      "label": "query_paired_remote_data_pool_count_in_halfword_units_candidate"
+    },
+    {
+      "id": "main:0x0012C598",
+      "start": 1230232,
+      "end": 1230284,
+      "source": "recomp/config/output/sub_0012C598_0x12c598.cpp",
+      "source_sha256": "855097f5a170c22624317633889a204564b6b7b100215b628652b2b39c8313e4",
+      "interval_sha256": "a1020f5adee9f7871b00f09e9b819a0cdc5412b2c201f347a4bfd3279976c7af",
+      "matched_comment_words": 13,
+      "omitted_zero_words": 0,
+      "label": "query_paired_remote_free_pool_count_in_halfword_units_candidate"
+    },
+    {
+      "id": "main:0x0012CCE0",
+      "start": 1232096,
+      "end": 1232568,
+      "source": "recomp/config/output/sub_0012CCE0_0x12cce0.cpp",
+      "source_sha256": "ae4c1b696232a159d2cd11de0be3639d2d7682ba663455acb7203bb5e593033b",
+      "interval_sha256": "3027230bd9bdc3f8478350ce97813f064a4c36da9006bcea571457c9f34cea7d",
+      "matched_comment_words": 117,
+      "omitted_zero_words": 1,
+      "label": "ADXB_DecodeHeader_from_borrowed_input_span_with_format_defer_rules_candidate"
+    },
+    {
+      "id": "main:0x0012CFD8",
+      "start": 1232856,
+      "end": 1233716,
+      "source": "recomp/config/output/sub_0012CFD8_0x12cfd8.cpp",
+      "source_sha256": "6c6329d5ab6e2498945c192e7c19fc12aed541159d9caee16419cb7a10fa2170",
+      "interval_sha256": "f659e94d5dc34ea79887c5ab155afbb646258d00b2e36ac72e711e6a9ce647c7",
+      "matched_comment_words": 213,
+      "omitted_zero_words": 2,
+      "label": "service_ADXB_input_end_marker_zero_padding_and_decode_buffer_admission_candidate"
+    },
+    {
+      "id": "main:0x0012D338",
+      "start": 1233720,
+      "end": 1234172,
+      "source": "recomp/config/output/sub_0012D338_0x12d338.cpp",
+      "source_sha256": "86f1336a7bf332debbdee7aebbe9b95fda30f215cb7dd0ec81d3c0cd1a36c40c",
+      "interval_sha256": "003927f1732877ad02c642fb4ee8668112a3650d4f83e92b3d898e732c3e5645",
+      "matched_comment_words": 111,
+      "omitted_zero_words": 2,
+      "label": "publish_ADXB_decoded_PCM_channels_and_consume_encoded_input_prefix_candidate"
+    },
+    {
+      "id": "main:0x00130800",
+      "start": 1247232,
+      "end": 1248120,
+      "source": "recomp/config/output/sub_00130800_0x130800.cpp",
+      "source_sha256": "ed01b3cdde4054d3c3092fc19d0361bdb64c6c80e4fb92f810f71f4a737df942",
+      "interval_sha256": "6cfad8d4401354f40242f504a2ac458bd57dd07871097a8f2b4c1ff60c137bc4",
+      "matched_comment_words": 219,
+      "omitted_zero_words": 3,
+      "label": "service_CRI_file_stream_read_completion_and_reserve_next_sector_chunk_candidate"
+    },
+    {
+      "id": "main:0x001314E0",
+      "start": 1250528,
+      "end": 1250780,
+      "source": "recomp/config/output/sub_001314E0_0x1314e0.cpp",
+      "source_sha256": "c9cde320f2f8b491209685517e2b5a1200c0495a35dac1ca1d957ad131201eac",
+      "interval_sha256": "4caab76711c49812c88cfaddc3766c7d9b2798c45af29c9a8edeee530ae6196e",
+      "matched_comment_words": 63,
+      "omitted_zero_words": 0,
+      "label": "print_ADXT_first_channel_local_remote_SJ_counts_and_state"
+    },
+    {
+      "id": "main:0x00133280",
+      "start": 1258112,
+      "end": 1258532,
+      "source": "recomp/config/output/sub_00133280_0x133280.cpp",
+      "source_sha256": "8106399ce5da227fd6baf93be9013659d664af550146dc1a5b52213c6ba76343",
+      "interval_sha256": "49c8ae9e25054f68a38c5a00457a489030df2e13f4a1df90e65982bc4c8e7365",
+      "matched_comment_words": 105,
+      "omitted_zero_words": 0,
+      "label": "publish_up_to_two_zero_filled_ADX_block_spans"
+    },
+    {
+      "id": "main:0x00133D10",
+      "start": 1260816,
+      "end": 1261532,
+      "source": "recomp/config/output/sub_00133D10_0x133d10.cpp",
+      "source_sha256": "14dd475aabb49dab07b09a502da4f0f5e4d4e08ba40a7bc97a45725e27699add",
+      "interval_sha256": "eec7d5e82acdfb97295123152a554981f3118fe41551d6a0089c29a25df81022",
+      "matched_comment_words": 178,
+      "omitted_zero_words": 1,
+      "label": "advance_seamless_ADXT_input_from_end_marker_to_next_ADX_header"
+    },
+    {
+      "id": "main:0x001345F0",
+      "start": 1263088,
+      "end": 1263604,
+      "source": "recomp/config/output/sub_001345F0_0x1345f0.cpp",
+      "source_sha256": "242dc42b28b6d7b0c87d103381d34292269020c4f9be572318fab38e7f4e091d",
+      "interval_sha256": "57f1916ec379e02c582da82f1ca7923423851848c9c7167c11d208afd3c88a5f",
+      "matched_comment_words": 128,
+      "omitted_zero_words": 1,
+      "label": "feed_silence_while_draining_ADXT_then_request_audio_stop"
+    },
+    {
+      "id": "main:0x00138650",
+      "start": 1279568,
+      "end": 1280460,
+      "source": "recomp/config/output/sub_00138650_0x138650.cpp",
+      "source_sha256": "d9226d373941af504ea5b6c6ec06f0cbc6dd8aacfb6df7a01bf4b22bfccfcb37",
+      "interval_sha256": "d45d830741d0e8a0e0c4eb2bc9c268fb45666c67b006438525992c7f120c86ab",
+      "matched_comment_words": 219,
+      "omitted_zero_words": 4,
+      "label": "service_DTR_reserved_stream_spans_and_submit_aligned_DMA_candidate"
+    },
+    {
+      "id": "main:0x001389D8",
+      "start": 1280472,
+      "end": 1280568,
+      "source": "recomp/config/output/sub_001389D8_0x1389d8.cpp",
+      "source_sha256": "37c55d2b6354f3ffa02b6a9f13d32795c38effeffdbaaf7c20d7683a66a2412a",
+      "interval_sha256": "a14aced78dc73743146a2fa4aabdc12cb93367baf23983a3a53863f929a66397",
+      "matched_comment_words": 24,
+      "omitted_zero_words": 0,
+      "label": "service_thirty_two_active_DTR_contexts_then_all_DTX_contexts_candidate"
+    },
+    {
+      "id": "main:0x00138A38",
+      "start": 1280568,
+      "end": 1280672,
+      "source": "recomp/config/output/sub_00138A38_0x138a38.cpp",
+      "source_sha256": "0630013fcb31d1ef6f31801df4dd6932cd91d7cedf7d060c0fb3d03fc27b4f3f",
+      "interval_sha256": "78be5b954a4b5d8892dc58b10265989e681461fe48d34ced89b9777dfe129ac0",
+      "matched_comment_words": 25,
+      "omitted_zero_words": 1,
+      "label": "acquire_DTR_module_reference_and_clear_32_contexts_on_first_use"
+    },
+    {
+      "id": "main:0x00138AB8",
+      "start": 1280696,
+      "end": 1280932,
+      "source": "recomp/config/output/sub_00138AB8_0x138ab8.cpp",
+      "source_sha256": "c79c42d265aff3cd4a56de73d96fab79ca49b893ab42eff0c31c9584091032e3",
+      "interval_sha256": "a6a6a066bcb22b22c82350849077d05dd1a1742b6c5e9e98a9eda26bbb446306",
+      "matched_comment_words": 58,
+      "omitted_zero_words": 1,
+      "label": "create_DTR_source_destination_stream_DMA_context_candidate"
+    },
+    {
+      "id": "main:0x00138BA8",
+      "start": 1280936,
+      "end": 1280976,
+      "source": "recomp/config/output/sub_00138BA8_0x138ba8.cpp",
+      "source_sha256": "fd3dfc7015e45f2f694eb830e0ffeba8f9d7c1bdbbf60af1454f545043c0fbfe",
+      "interval_sha256": "8bc262ecc281eb607b49be7b858be95b6a61afa4e9112a62bae1cc434d37f14e",
+      "matched_comment_words": 10,
+      "omitted_zero_words": 0,
+      "label": "release_DTR_context_active_slot_under_CRI_tag_one_candidate"
+    },
+    {
+      "id": "main:0x00138BE0",
+      "start": 1280992,
+      "end": 1281168,
+      "source": "recomp/config/output/sub_00138BE0_0x138be0.cpp",
+      "source_sha256": "c3255cfdef2f9728265479f9ecff992fef40ffe15aa647a5902ae499be8018dc",
+      "interval_sha256": "dd0bceb827dce70fb812aed4a48e199b6df8bf07cffc7b50e294900599dfb8a4",
+      "matched_comment_words": 44,
+      "omitted_zero_words": 0,
+      "label": "stop_DTR_and_busy_wait_for_DMA_then_return_reserved_chunks_candidate"
+    },
+    {
+      "id": "main:0x00139110",
+      "start": 1282320,
+      "end": 1282420,
+      "source": "recomp/config/output/sub_00139110_0x139110.cpp",
+      "source_sha256": "507000bd8d519344b86d0a5272643c117cd6f82f45674cafd1586443e6ef1eed",
+      "interval_sha256": "92707ed5c5629841b27c6f756e2aaccb0cb8a0621170f1a733babe04e7d0d0b8",
+      "matched_comment_words": 23,
+      "omitted_zero_words": 2,
+      "label": "disable_DTX_submission_wait_for_acknowledgement_and_destroy_context_candidate"
+    },
+    {
+      "id": "main:0x00139198",
+      "start": 1282456,
+      "end": 1282808,
+      "source": "recomp/config/output/sub_00139198_0x139198.cpp",
+      "source_sha256": "3b2b87c2fcd5231792bf4d00b03667ee6fc08718f9beec76d2dd587164172ae1",
+      "interval_sha256": "09c3d4707022c19e4bec922ed5a9d3eebde4843d7d9ef7315984a8d0eafde97d",
+      "matched_comment_words": 88,
+      "omitted_zero_words": 0,
+      "label": "service_DTX_sequence_completion_then_optionally_fill_and_submit_DMA_candidate"
+    },
+    {
+      "id": "main:0x00139460",
+      "start": 1283168,
+      "end": 1283432,
+      "source": "recomp/config/output/sub_00139460_0x139460.cpp",
+      "source_sha256": "8e4fe103d5a333202d81d821e669e06a4c35057f4d5169efb4a5b1806f92ca3b",
+      "interval_sha256": "6450ba5b6f2dce2c0ab15abf2e116490b1dc5a9e03f0fa2b8abce9223f0cf227",
+      "matched_comment_words": 65,
+      "omitted_zero_words": 1,
+      "label": "issue_synchronous_cri_remote_rpc_with_word_request_response_copies_candidate"
+    },
+    {
+      "id": "main:0x0013DA88",
+      "start": 1301128,
+      "end": 1301316,
+      "source": "recomp/config/output/sub_0013DA88_0x13da88.cpp",
+      "source_sha256": "556d9b461da29090c690a790f3b0b4bf925e01118af01e678133347458acf86c",
+      "interval_sha256": "ab18d14e1f0023fafa2e0554377f7874d0963bf24230d4b7d04877ec1c7123e5",
+      "matched_comment_words": 47,
+      "omitted_zero_words": 0,
+      "label": "PS2RNA_SetupVoice_configure_stereo_mono_pool_counts_candidate"
+    },
+    {
+      "id": "main:0x0013DB48",
+      "start": 1301320,
+      "end": 1302080,
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "source_sha256": "f425c96b8c5534defae267367f8a08340da7a0f31d062619afe1eb099f2840e8",
+      "interval_sha256": "20813b0c4b1ae8629af2a0940fe7f2e63766dd71187cc55af23da7c25941c51d",
+      "matched_comment_words": 183,
+      "omitted_zero_words": 7,
+      "label": "ps2rna_initialize_paired_local_remote_SJUNI_pools_candidate"
+    },
+    {
+      "id": "main:0x0013DE40",
+      "start": 1302080,
+      "end": 1302304,
+      "source": "recomp/config/output/sub_0013DE40_0x13de40.cpp",
+      "source_sha256": "67eb0a09bec6151c7a0fa73ffc718f87c0a95b3f6fc963447b1d131399e743f0",
+      "interval_sha256": "092a929d0e9a57b696fa98f88febfd4b49eca31a84daf4a4c55b71ce8fea60fd",
+      "matched_comment_words": 53,
+      "omitted_zero_words": 3,
+      "label": "ps2rna_destroy_paired_streams_unregister_bindings_and_release_owned_IOP_arena_candidate"
+    },
+    {
+      "id": "main:0x0013DF20",
+      "start": 1302304,
+      "end": 1302420,
+      "source": "recomp/config/output/sub_0013DF20_0x13df20.cpp",
+      "source_sha256": "f0a0d1ddeecf91e7aff26958f242d2d8966803c5f4c056dac4a2c3a3e569beda",
+      "interval_sha256": "64f8e305943e51bee0ff767b6be59319bd558d4737b0fee992ad034a4575eebd",
+      "matched_comment_words": 28,
+      "omitted_zero_words": 1,
+      "label": "reserve_first_inactive_PS2RNA_paired_stream_record_candidate"
+    },
+    {
+      "id": "main:0x0013DF98",
+      "start": 1302424,
+      "end": 1302432,
+      "source": "recomp/config/output/sub_0013DF98_0x13df98.cpp",
+      "source_sha256": "b9afab1d2c3d0fcbad71db69468a2975aba335ddfb57fdcb5eecd8eb1890ed2a",
+      "interval_sha256": "6144a3f15a395131942aba7506a03fde0a106ce41b57f60846d665d26645e45c",
+      "matched_comment_words": 2,
+      "omitted_zero_words": 0,
+      "label": "release_PS2RNA_paired_stream_reservation_candidate"
+    },
+    {
+      "id": "main:0x0013E000",
+      "start": 1302528,
+      "end": 1303224,
+      "source": "recomp/config/output/sub_0013E000_0x13e000.cpp",
+      "source_sha256": "ca63f9584bba941881775cc0e8567c7b3e22b86ef1a103af0dcbd8b75e06f50f",
+      "interval_sha256": "6bf3c5e4a79c4e56eec135986f8655b1b3c3264c4e70db05a0f126a53e9b4a54",
+      "matched_comment_words": 172,
+      "omitted_zero_words": 2,
+      "label": "serialize_PS2RNA_group_control_deltas_into_DTX_command_block_candidate"
+    },
+    {
+      "id": "main:0x0013E2B8",
+      "start": 1303224,
+      "end": 1303908,
+      "source": "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp",
+      "source_sha256": "8e300a39b2286887a4f492af9de0bbdbf59ddb53001d3ede854519352e4a5244",
+      "interval_sha256": "916ce32adbb57a28d1c3dc7fda088f4396c8235f38226df95f0c8ca70928a1f6",
+      "matched_comment_words": 167,
+      "omitted_zero_words": 4,
+      "label": "PS2RNA_Init_initialize_shared_stream_and_command_transports_candidate"
+    },
+    {
+      "id": "main:0x0013E5E8",
+      "start": 1304040,
+      "end": 1304124,
+      "source": "recomp/config/output/sub_0013E5E8_0x13e5e8.cpp",
+      "source_sha256": "7416fb5158c53cdb1ab937a566b20aed40dc0a468fd0f8833bbbabf5b3b42083",
+      "interval_sha256": "9891f61ba4310cff9f79084211931f7dfe44831b2266b5306295d0b36934d5e6",
+      "matched_comment_words": 21,
+      "omitted_zero_words": 0,
+      "label": "request_remote_Dolby_Digital_setup_once_and_set_local_requested_latch"
+    },
+    {
+      "id": "main:0x0013E640",
+      "start": 1304128,
+      "end": 1304200,
+      "source": "recomp/config/output/sub_0013E640_0x13e640.cpp",
+      "source_sha256": "9cae320fc2f2b505da7bbc6c842f453a61c0cf179638160030c92035bfd11e60",
+      "interval_sha256": "10d7a2ff50d70300d35b491ec75ad2a9cd2227d1b16dfc0b67c5fdc9b7182541",
+      "matched_comment_words": 18,
+      "omitted_zero_words": 0,
+      "label": "request_remote_Dolby_Digital_shutdown_and_clear_local_requested_latch"
+    },
+    {
+      "id": "main:0x0013E6C0",
+      "start": 1304256,
+      "end": 1304428,
+      "source": "recomp/config/output/sub_0013E6C0_0x13e6c0.cpp",
+      "source_sha256": "e6b8f5610e2ae65ad378269c944506321ae8be8531300b8004aa01e80a1c231b",
+      "interval_sha256": "14a8f7ce3fbad54ef3f52f58e0e1b9345f64272f81da165cb85be611cc71864a",
+      "matched_comment_words": 40,
+      "omitted_zero_words": 3,
+      "label": "release_PS2RNA_last_reference_and_shared_transports_candidate"
+    },
+    {
+      "id": "main:0x0013E770",
+      "start": 1304432,
+      "end": 1305280,
+      "source": "recomp/config/output/sub_0013E770_0x13e770.cpp",
+      "source_sha256": "ce24bcf707e0aa3969c67122df39b7db8947dc2e356160e84f64e3a918c5bed3",
+      "interval_sha256": "a86158ca903639e0753502c9f67e875cb486f3ff654135afcd0cd79e57cdfd12",
+      "matched_comment_words": 207,
+      "omitted_zero_words": 5,
+      "label": "create_PS2RNA_stream_group_with_remote_voice_and_DTR_channels_candidate"
+    },
+    {
+      "id": "main:0x0013EAC0",
+      "start": 1305280,
+      "end": 1305480,
+      "source": "recomp/config/output/sub_0013EAC0_0x13eac0.cpp",
+      "source_sha256": "979a37d6f002d932e0974e9310d1e17905038fa1e488f9d2d1af550fb847135b",
+      "interval_sha256": "1c7849340cdf616cd99d7b34caa2c6f3fb7ffc4734f4231a1a50fb690277dd7e",
+      "matched_comment_words": 48,
+      "omitted_zero_words": 2,
+      "label": "destroy_PS2RNA_group_DTR_channels_remote_voice_and_reservations_candidate"
+    },
+    {
+      "id": "main:0x0013ECB0",
+      "start": 1305776,
+      "end": 1305840,
+      "source": "recomp/config/output/sub_0013ECB0_0x13ecb0.cpp",
+      "source_sha256": "98f615d4ccdf1665d84d8c9099cee3049e972943d76e1e6ce87c8b472836e9da",
+      "interval_sha256": "496feae3197f18280b1677361119cc278b88e57c67d048adcae4b1d0a604bf6f",
+      "matched_comment_words": 16,
+      "omitted_zero_words": 0,
+      "label": "get_PS2RNA_first_channel_occupied_capacity_in_halfword_units_candidate"
+    },
+    {
+      "id": "main:0x0013ECF0",
+      "start": 1305840,
+      "end": 1305896,
+      "source": "recomp/config/output/sub_0013ECF0_0x13ecf0.cpp",
+      "source_sha256": "b3957533ec80b954d9a3a17b1f1ebca9f3a58c7e999454c3119423f19271b6bc",
+      "interval_sha256": "9ee3e6735ea2e9a8fa32dc0b2e3fe75b676fe40e611b9681e1b07f895b2c249f",
+      "matched_comment_words": 14,
+      "omitted_zero_words": 0,
+      "label": "get_PS2RNA_first_channel_free_capacity_in_halfword_units_candidate"
+    },
+    {
+      "id": "main:0x0013ED28",
+      "start": 1305896,
+      "end": 1306340,
+      "source": "recomp/config/output/sub_0013ED28_0x13ed28.cpp",
+      "source_sha256": "f49fa9b94a34cffa500300cd211415339d6831bfd049f4ae04d4980d74d18454",
+      "interval_sha256": "1a8e042fe11bb35ba9f4e13b04d7968aa7a11908a6ed802fe63304c1e6ce6fe0",
+      "matched_comment_words": 109,
+      "omitted_zero_words": 2,
+      "label": "start_PS2RNA_DTR_channels_only_after_all_paired_buffers_are_fully_free_candidate"
+    },
+    {
+      "id": "main:0x0013EEE8",
+      "start": 1306344,
+      "end": 1306456,
+      "source": "recomp/config/output/sub_0013EEE8_0x13eee8.cpp",
+      "source_sha256": "c62b6ee1dcb81fa7a6eb75f2863567afb5568671483b8d240372e77a0ec1df55",
+      "interval_sha256": "587707490c36f3fd597837097dbe2b57689db681b1238844ffaf6a8d3caabc90",
+      "matched_comment_words": 26,
+      "omitted_zero_words": 2,
+      "label": "service_PS2RNA_groups_DTR_transfers_and_DTX_command_transport_candidate"
+    },
+    {
+      "id": "main:0x0013F1C8",
+      "start": 1307080,
+      "end": 1307100,
+      "source": "recomp/config/output/sub_0013F1C8_0x13f1c8.cpp",
+      "source_sha256": "b2b4f1f76fcb2d7bbfbc61308ba59e0b4892d1c5a9fa5b9f596a7a4010fc9407",
+      "interval_sha256": "b7539e6cd04203b97a098257e76f822273c205a83e7992ae2ae57dc4aff0b5f2",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "get_PS2RNA_channel_local_paired_stream_candidate"
+    },
+    {
+      "id": "main:0x0013F1E0",
+      "start": 1307104,
+      "end": 1307124,
+      "source": "recomp/config/output/sub_0013F1E0_0x13f1e0.cpp",
+      "source_sha256": "86720f0b43224ba1b34b2799a7d296ef5cd9bbf7134164520086a757b7cee937",
+      "interval_sha256": "3965cc14cffa14ad2350296d2f8bd82efd000c98fb477372d3ff4b86b0f2583d",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "get_PS2RNA_channel_remote_paired_stream_handle_candidate"
+    },
+    {
+      "id": "main:0x0013F258",
+      "start": 1307224,
+      "end": 1307244,
+      "source": "recomp/config/output/sub_0013F258_0x13f258.cpp",
+      "source_sha256": "46aa90a0ea973f09ce8c0c6d0cbe64cd2b94eecf8c8d8926a0154c6aeb07a632",
+      "interval_sha256": "3e2690e6c32d166dd90306f9312624c4fca85190b58d098334577b3fd546a1af",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "enter_sjrb_shared_cri_tag_one_critical_section_candidate"
+    },
+    {
+      "id": "main:0x0013F270",
+      "start": 1307248,
+      "end": 1307268,
+      "source": "recomp/config/output/sub_0013F270_0x13f270.cpp",
+      "source_sha256": "584cb0c412748fcb8662c8f260a5e3115033c56763da79367bf194822cd925eb",
+      "interval_sha256": "4f364e2c3b6e381b80e429331fd14cbcce6d222ec485f7238816520d46ee3920",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "leave_sjrb_shared_cri_tag_one_critical_section_candidate"
+    },
+    {
+      "id": "main:0x0013F288",
+      "start": 1307272,
+      "end": 1307292,
+      "source": "recomp/config/output/sub_0013F288_0x13f288.cpp",
+      "source_sha256": "471ddd6f868aaeea354c3e1bd385ecbdcc98f8c37150284902d735808503a812",
+      "interval_sha256": "261d1e4fad5dd563b317a4c8e7dafffaf51780f5da744900908508ad4ad57813",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "forward_stream_queue_error_text_to_cri_diagnostic_candidate"
+    },
+    {
+      "id": "main:0x00140000",
+      "start": 1310720,
+      "end": 1310748,
+      "source": "recomp/config/output/sub_00140000_0x140000.cpp",
+      "source_sha256": "196d15db9ccaa62f24fea2c1eeb979063c779153f958db8f11ca0a28f262468f",
+      "interval_sha256": "a6bf32a6752c21bb8f999a0d6f95bcb3f73d811b04b5a90e7003258799925f3f",
+      "matched_comment_words": 7,
+      "omitted_zero_words": 0,
+      "label": "report_default_SJUNI_error_text_candidate"
+    },
+    {
+      "id": "main:0x00140020",
+      "start": 1310752,
+      "end": 1310828,
+      "source": "recomp/config/output/sub_00140020_0x140020.cpp",
+      "source_sha256": "05f5b9a1701236916b06a574569ec94c2ac54cc81f303d0885a5d85b81aeb7c3",
+      "interval_sha256": "3dac330f5dd2ff5a63e2ffe002e855ba7b1d47f2f22d1359a29f57abde115b50",
+      "matched_comment_words": 19,
+      "omitted_zero_words": 0,
+      "label": "initialize_sjuni_object_pool_on_first_reference_candidate"
+    },
+    {
+      "id": "main:0x00140070",
+      "start": 1310832,
+      "end": 1310908,
+      "source": "recomp/config/output/sub_00140070_0x140070.cpp",
+      "source_sha256": "85287d60cf411e2375f223a1b1e0ebcb1c2f3f7f6a577ca2decd938360b74217",
+      "interval_sha256": "f2a8f68696660202fea817a22968d42e2adeb2ce33dd0bb3448762c3e73ddbaf",
+      "matched_comment_words": 19,
+      "omitted_zero_words": 0,
+      "label": "release_sjuni_pool_reference_clear_on_exact_zero_candidate"
+    },
+    {
+      "id": "main:0x001400C0",
+      "start": 1310912,
+      "end": 1311140,
+      "source": "recomp/config/output/sub_001400C0_0x1400c0.cpp",
+      "source_sha256": "f88574b105bfe2754d6caa54351bcf8ea47fcfb24381af0ab58eb7406cb63bd2",
+      "interval_sha256": "5d9eb8b96a7d134aa2d656cf318cdbdbad33fcb3d16a720cdb2a5fd833752af5",
+      "matched_comment_words": 57,
+      "omitted_zero_words": 0,
+      "label": "create_pooled_SJUNI_over_external_chunk_node_array_candidate"
+    },
+    {
+      "id": "main:0x001401A8",
+      "start": 1311144,
+      "end": 1311196,
+      "source": "recomp/config/output/sub_001401A8_0x1401a8.cpp",
+      "source_sha256": "ad942b94240ef916935e4d5465c48c5eb6b30742907353e1daa4ff40b593233e",
+      "interval_sha256": "8cadfb71dbe16b93856c49195d895f69d6741a39000ccb988c4274442cde1529",
+      "matched_comment_words": 13,
+      "omitted_zero_words": 0,
+      "label": "destroy_sjuni_record_without_freeing_external_nodes_candidate"
+    },
+    {
+      "id": "main:0x001401E0",
+      "start": 1311200,
+      "end": 1311208,
+      "source": "recomp/config/output/sub_001401E0_0x1401e0.cpp",
+      "source_sha256": "209c64deafae2b052351c757bcbb42a90da5c23d277e7440732c6694c76e6a46",
+      "interval_sha256": "40abbd07f55cd406a62594859ce2780c8757044f8b82960f352cda7168cd26eb",
+      "matched_comment_words": 2,
+      "omitted_zero_words": 0,
+      "label": "get_sjuni_interface_identifier_pointer_candidate"
+    },
+    {
+      "id": "main:0x001401E8",
+      "start": 1311208,
+      "end": 1311220,
+      "source": "recomp/config/output/sub_001401E8_0x1401e8.cpp",
+      "source_sha256": "f0fcfe7d95148fa28d85677a0154bee955d42fd958fc9444d3ebac2c6e034274",
+      "interval_sha256": "56d0ad1facb4fbb6173de80e7c23a273dc4af693c8ac481c68cc3df109d10e61",
+      "matched_comment_words": 3,
+      "omitted_zero_words": 0,
+      "label": "set_sjuni_error_callback_and_context_candidate"
+    },
+    {
+      "id": "main:0x001401F8",
+      "start": 1311224,
+      "end": 1311364,
+      "source": "recomp/config/output/sub_001401F8_0x1401f8.cpp",
+      "source_sha256": "7bc9f3ea3c5f91fdc14bd90afcec8faf03b2b493c1ffd04b562cb41ac5ee5947",
+      "interval_sha256": "14dbf5b36d5e3420b3f7aa82610ab915002091646b67f3d428df39e92e12489a",
+      "matched_comment_words": 34,
+      "omitted_zero_words": 1,
+      "label": "reset_sjuni_external_node_free_list_and_four_queue_heads_candidate"
+    },
+    {
+      "id": "main:0x00140288",
+      "start": 1311368,
+      "end": 1311484,
+      "source": "recomp/config/output/sub_00140288_0x140288.cpp",
+      "source_sha256": "e2a45e0f890a6837b7f03fb0286f52dd57935e181fc26218237417dd40fc3ebc",
+      "interval_sha256": "27ffeda45b43074d6c3551c3971829423c5f0ad0889489b8c49e48f47472c6ff",
+      "matched_comment_words": 29,
+      "omitted_zero_words": 0,
+      "label": "sum_sjuni_selected_queue_payload_bytes_candidate"
+    },
+    {
+      "id": "main:0x00140300",
+      "start": 1311488,
+      "end": 1311796,
+      "source": "recomp/config/output/sub_00140300_0x140300.cpp",
+      "source_sha256": "2182432ed288312b8737ec3927b140a4c23e17b66283d049aad6ebe6919ff6af",
+      "interval_sha256": "a1df0f060cfc767e4ff322a567b67d1bf27d6c2e9ed23b451d9887862aabb1e5",
+      "matched_comment_words": 75,
+      "omitted_zero_words": 2,
+      "label": "get_sjuni_front_chunk_or_split_prefix_when_mode_one_candidate"
+    },
+    {
+      "id": "main:0x00140438",
+      "start": 1311800,
+      "end": 1312140,
+      "source": "recomp/config/output/sub_00140438_0x140438.cpp",
+      "source_sha256": "3c50f8eece080fb13f850f5ad4401289383d86b7f26e6ba00fedab8891d64bcd",
+      "interval_sha256": "9ff84019f58169adc141211499990da044fb68245ee2d0ccc780febc7f8249ed",
+      "matched_comment_words": 84,
+      "omitted_zero_words": 1,
+      "label": "put_sjuni_chunk_append_or_merge_adjacent_tail_candidate"
+    },
+    {
+      "id": "main:0x00140590",
+      "start": 1312144,
+      "end": 1312468,
+      "source": "recomp/config/output/sub_00140590_0x140590.cpp",
+      "source_sha256": "8bc08010bbda5a7698dd83752847d50d8e36b79baae3ea56eee2716249cc0874",
+      "interval_sha256": "7bc3ba531ec1efe3a33b78bc43f592891672a3a15dc33d20154181c0e6711b02",
+      "matched_comment_words": 80,
+      "omitted_zero_words": 1,
+      "label": "unget_sjuni_chunk_prepend_or_merge_adjacent_head_candidate"
+    },
+    {
+      "id": "main:0x001406D8",
+      "start": 1312472,
+      "end": 1312612,
+      "source": "recomp/config/output/sub_001406D8_0x1406d8.cpp",
+      "source_sha256": "daa69b92b50df2d17fea69523558775b25b8875284232f17ad6b8812eb9036c1",
+      "interval_sha256": "5f9b235eb2fc4c27936c2b274a17b55b976da2b24e98f756211c47e0cd6ab35d",
+      "matched_comment_words": 35,
+      "omitted_zero_words": 0,
+      "label": "peek_sjuni_front_length_with_mode_specific_request_match_candidate"
+    },
+    {
+      "id": "main:0x00140768",
+      "start": 1312616,
+      "end": 1312676,
+      "source": "recomp/config/output/sub_00140768_0x140768.cpp",
+      "source_sha256": "220b98d210e02a5d7fc873f572ee7736ddba97e96a22780cb5324f1e1a575bf5",
+      "interval_sha256": "b3986b3d36b933ef7cf590519b5ef84693c0da92593aa6893ecbc2d82e533024",
+      "matched_comment_words": 14,
+      "omitted_zero_words": 1,
+      "label": "count_sjuni_nodes_in_unchecked_selected_queue_candidate"
+    },
+    {
+      "id": "main:0x001407A8",
+      "start": 1312680,
+      "end": 1312732,
+      "source": "recomp/config/output/sub_001407A8_0x1407a8.cpp",
+      "source_sha256": "fbf6ffc4a7a02357dd48638f1d08a37293ed0c8c32321cda46f8db68858d8c84",
+      "interval_sha256": "d687946d16bf4417190d2dc8f096e88601c28e22bf32411030e7a28fefedd985",
+      "matched_comment_words": 12,
+      "omitted_zero_words": 1,
+      "label": "count_sjuni_free_chunk_nodes_candidate"
+    },
+    {
+      "id": "main:0x001407E0",
+      "start": 1312736,
+      "end": 1312828,
+      "source": "recomp/config/output/sub_001407E0_0x1407e0.cpp",
+      "source_sha256": "a192f901f9e9316519bbc149df202fe0dbd30d0bc51ff9d8a1b3112b9491c1b2",
+      "interval_sha256": "7686ce72fb6cc995c05c8f4498a1e746cb308ff9a8ff2d5f99d322544cffe422",
+      "matched_comment_words": 23,
+      "omitted_zero_words": 0,
+      "label": "split_borrowed_chunk_descriptor_into_prefix_and_remainder_candidate"
+    },
+    {
+      "id": "main:0x00140B98",
+      "start": 1313688,
+      "end": 1313772,
+      "source": "recomp/config/output/sub_00140B98_0x140b98.cpp",
+      "source_sha256": "a033218dbc6e819de834d92c7c745efef1710e3d92de4a5fc403bd29a952b53e",
+      "interval_sha256": "793bfbf3b996c552bcddc8d8e223f2f0beae67e182db83d04e49399abf24bd4a",
+      "matched_comment_words": 21,
+      "omitted_zero_words": 0,
+      "label": "create_remote_SJUNI_node_pool_through_rpc_22_candidate"
+    },
+    {
+      "id": "main:0x00140BF0",
+      "start": 1313776,
+      "end": 1313824,
+      "source": "recomp/config/output/sub_00140BF0_0x140bf0.cpp",
+      "source_sha256": "6513b0a42599450120a0dea589d0432d0de422e1e5449e42ac6b30846452bb0c",
+      "interval_sha256": "96761e2a0f5b9f2cb70f1ecf79a916f52907ed9ca1bb12c3af9efbf7e0724428",
+      "matched_comment_words": 12,
+      "omitted_zero_words": 0,
+      "label": "destroy_remote_stream_handle_through_rpc_23_candidate"
+    },
+    {
+      "id": "main:0x00140C20",
+      "start": 1313824,
+      "end": 1313936,
+      "source": "recomp/config/output/sub_00140C20_0x140c20.cpp",
+      "source_sha256": "1761f067719606f22172fbc3be0f25ad3d4cacfac5c03a8377ca5238dbbd922d",
+      "interval_sha256": "3bb5ae9857c2f0f0ae2219b8f110a8412d00a2eeb80386635a0cf46c45ab35e8",
+      "matched_comment_words": 28,
+      "omitted_zero_words": 0,
+      "label": "query_remote_SJ_interface_uuid_into_shared_sixteen_byte_copy"
+    },
+    {
+      "id": "main:0x00140C90",
+      "start": 1313936,
+      "end": 1313984,
+      "source": "recomp/config/output/sub_00140C90_0x140c90.cpp",
+      "source_sha256": "4430bdcfbf8be691a54d400faf04d4140540aebbae7973f9b8ad8c4fcd6e959a",
+      "interval_sha256": "e103655edffb863aebbd7e240b4c991eb1dfbf957481921f26a32e1093d943c4",
+      "matched_comment_words": 12,
+      "omitted_zero_words": 0,
+      "label": "reset_remote_SJ_stream_through_rpc_25"
+    },
+    {
+      "id": "main:0x00140CC0",
+      "start": 1313984,
+      "end": 1314092,
+      "source": "recomp/config/output/sub_00140CC0_0x140cc0.cpp",
+      "source_sha256": "f0a657a0913a03bf16d3166809719845d63063bbc89eb24a8bf2dad60d4d6c14",
+      "interval_sha256": "6009bb30951d925c01bcef4d8fd84415b56a7cd0b244d6bc06cd00b2989f4705",
+      "matched_comment_words": 27,
+      "omitted_zero_words": 0,
+      "label": "acquire_remote_SJ_chunk_and_copy_iop_pointer_length_to_caller"
+    },
+    {
+      "id": "main:0x00140D30",
+      "start": 1314096,
+      "end": 1314172,
+      "source": "recomp/config/output/sub_00140D30_0x140d30.cpp",
+      "source_sha256": "74f6ee5604434235afb9638e6a9238422bf1ce4980e621f78b7fb9235c89a2d1",
+      "interval_sha256": "7ca49a83e28b2cb0c3946cd6141c0d32004b2d12276e6b3711af0a97f745ba51",
+      "matched_comment_words": 19,
+      "omitted_zero_words": 0,
+      "label": "return_remote_SJ_chunk_to_original_pool_through_unget_rpc"
+    },
+    {
+      "id": "main:0x00140D80",
+      "start": 1314176,
+      "end": 1314252,
+      "source": "recomp/config/output/sub_00140D80_0x140d80.cpp",
+      "source_sha256": "2ba4eddc7cfc055907e84603eec620f870d8655029ed91905d8dd174edbbe954",
+      "interval_sha256": "8038d2fd65b273f097e36eca0232cb6d7983c12de9e0f8536e05df1c6a630801",
+      "matched_comment_words": 19,
+      "omitted_zero_words": 0,
+      "label": "commit_remote_SJ_chunk_to_selected_pool_through_put_rpc"
+    },
+    {
+      "id": "main:0x00140DD0",
+      "start": 1314256,
+      "end": 1314336,
+      "source": "recomp/config/output/sub_00140DD0_0x140dd0.cpp",
+      "source_sha256": "7af0024fbe8458b3333706a6d76475ed45d375eefd0263c9a14da3a0ac0226e5",
+      "interval_sha256": "8641906e3ace4770caedd0f9cfa1e4a9afd8c7ce6d7deed9796ffb762af21e21",
+      "matched_comment_words": 20,
+      "omitted_zero_words": 0,
+      "label": "query_remote_stream_pool_byte_count_through_rpc_29_candidate"
+    },
+    {
+      "id": "main:0x00140E20",
+      "start": 1314336,
+      "end": 1314440,
+      "source": "recomp/config/output/sub_00140E20_0x140e20.cpp",
+      "source_sha256": "0222d7c5d57926dfe727c052a46922342acc28a0c733c6829f64b08751b91ab5",
+      "interval_sha256": "0c8c92116cd32ee56661b6d55a4e10ca340b9344c5867483cb55b2b2bb565527",
+      "matched_comment_words": 26,
+      "omitted_zero_words": 0,
+      "label": "query_remote_SJ_chunk_availability_with_truncated_response_count"
+    },
+    {
+      "id": "main:0x00140F18",
+      "start": 1314584,
+      "end": 1314740,
+      "source": "recomp/config/output/sub_00140F18_0x140f18.cpp",
+      "source_sha256": "3618036c791868e904d44f96eab14f7eca9b4c97a0f72cb7c559dcd1ccec0861",
+      "interval_sha256": "480671764bb2123b2025bc2006aea4e651b6b362dce5d8a5960e965c5613f831",
+      "matched_comment_words": 38,
+      "omitted_zero_words": 1,
+      "label": "return_completed_SJX_transfer_spans_to_original_local_pool_candidate"
+    },
+    {
+      "id": "main:0x00140FB8",
+      "start": 1314744,
+      "end": 1315016,
+      "source": "recomp/config/output/sub_00140FB8_0x140fb8.cpp",
+      "source_sha256": "689b5bba7e77e7442005c98cf0378bc0111a93776202a3bebc3aa63c9e5120a0",
+      "interval_sha256": "b28678757337818a7efb0d9f761983f05b4939d95223b61404ad565fa8e1ed5c",
+      "matched_comment_words": 67,
+      "omitted_zero_words": 1,
+      "label": "collect_SJX_transfer_descriptors_from_thirty_two_registered_local_streams_candidate"
+    },
+    {
+      "id": "main:0x001410C8",
+      "start": 1315016,
+      "end": 1315160,
+      "source": "recomp/config/output/sub_001410C8_0x1410c8.cpp",
+      "source_sha256": "4605df7d16bcef14afcf7251b6197b71124607540d0938ba53dec64c4a08acbc",
+      "interval_sha256": "4d2f6f53748e11296f850c8ad8a4fd76dd38a2b1e766d61dc8e9cc88b1886b2f",
+      "matched_comment_words": 35,
+      "omitted_zero_words": 1,
+      "label": "publish_completed_SJX_transfer_spans_to_local_pool_one_candidate"
+    },
+    {
+      "id": "main:0x00141158",
+      "start": 1315160,
+      "end": 1315432,
+      "source": "recomp/config/output/sub_00141158_0x141158.cpp",
+      "source_sha256": "eda3c4b3313d646e12e0523f9b4ab23bcf5a6e119dad68d203605e5eb36e4b22",
+      "interval_sha256": "b28678757337818a7efb0d9f761983f05b4939d95223b61404ad565fa8e1ed5c",
+      "matched_comment_words": 67,
+      "omitted_zero_words": 1,
+      "label": "collect_SJX_transfer_descriptors_second_entry_candidate"
+    },
+    {
+      "id": "main:0x00141490",
+      "start": 1315984,
+      "end": 1316232,
+      "source": "recomp/config/output/sub_00141490_0x141490.cpp",
+      "source_sha256": "179bfd08741faeb2e9ce5b9eb8d2294bce2196d49e1b1540838a82dd1861ab5b",
+      "interval_sha256": "99da7a12505644cefe909dcce7cb4530d7a4746b55d1c5a0ff2ac42f002ab1de",
+      "matched_comment_words": 62,
+      "omitted_zero_words": 0,
+      "label": "register_SJX_local_remote_stream_pair_in_thirty_two_slot_table_candidate"
+    },
+    {
+      "id": "main:0x00141588",
+      "start": 1316232,
+      "end": 1316300,
+      "source": "recomp/config/output/sub_00141588_0x141588.cpp",
+      "source_sha256": "c2fc3b9b273fca04283ea61494d27c0850497d3e05f95abd307dff595cc2d044",
+      "interval_sha256": "065752c6154a05b6f24aa4b2bdb97349c08a2d3b3217d80fdedb08bed4cefbf0",
+      "matched_comment_words": 17,
+      "omitted_zero_words": 0,
+      "label": "unregister_SJX_binding_through_remote_id_then_clear_active_byte_candidate"
+    },
+    {
+      "id": "main:0x001415D0",
+      "start": 1316304,
+      "end": 1316320,
+      "source": "recomp/config/output/sub_001415D0_0x1415d0.cpp",
+      "source_sha256": "2fa62e500995e00a81c0e318a9f77b9d2c67a753c97a08895219d0c8be04b9ab",
+      "interval_sha256": "c7c4e5ca6523d92ea863f45d29af40fd46199fe84797af5e608d2c99582d24b6",
+      "matched_comment_words": 4,
+      "omitted_zero_words": 0,
+      "label": "increment_SJX_binding_generation_halfword_candidate"
+    },
+    {
+      "id": "main:0x001415E0",
+      "start": 1316320,
+      "end": 1316416,
+      "source": "recomp/config/output/sub_001415E0_0x1415e0.cpp",
+      "source_sha256": "85fbc1c6cb8d0d56f86b5473ed1d8d405aefdd0e10c6743188d1c4b0cc01d601",
+      "interval_sha256": "2151638dc19b6aa672e6ed9d095954bc70fa1bf679ef0c496d2b7f5c8abb8425",
+      "matched_comment_words": 24,
+      "omitted_zero_words": 0,
+      "label": "cri_enter_tagged_critical_section"
+    },
+    {
+      "id": "main:0x00141640",
+      "start": 1316416,
+      "end": 1316556,
+      "source": "recomp/config/output/sub_00141640_0x141640.cpp",
+      "source_sha256": "977d67cbd4e520ddeb1e702962861bd26f50375b5337c82b604f8ad2284a7524",
+      "interval_sha256": "a28490962e0d6f364b5038c7d3b55e171d9a60206871a21d4eaad8b62545c3f2",
+      "matched_comment_words": 34,
+      "omitted_zero_words": 1,
+      "label": "cri_leave_tagged_critical_section"
+    },
+    {
+      "id": "main:0x001416D0",
+      "start": 1316560,
+      "end": 1316584,
+      "source": "recomp/config/output/sub_001416D0_0x1416d0.cpp",
+      "source_sha256": "5f2ab4fcdcb41e6ce03146f8ba63010785eba97b6a584a2a3fb360afe3f2ac96",
+      "interval_sha256": "a268cf73feb0d3254f9f247e1e85b354770933495ab01becd145fd79d2a5978d",
+      "matched_comment_words": 6,
+      "omitted_zero_words": 0,
+      "label": "cri_enter_tag1"
+    },
+    {
+      "id": "main:0x001416E8",
+      "start": 1316584,
+      "end": 1316608,
+      "source": "recomp/config/output/sub_001416E8_0x1416e8.cpp",
+      "source_sha256": "2ddcd475f0860d1793bdb71e4246318e550f6ead01619d70afa6f16d795401b6",
+      "interval_sha256": "d8a486eca0ebe2996a12fcb8f3e04c17a4025d589a79e4c5c08d88c8e9c857e0",
+      "matched_comment_words": 6,
+      "omitted_zero_words": 0,
+      "label": "cri_leave_tag1"
+    },
+    {
+      "id": "main:0x00141800",
+      "start": 1316864,
+      "end": 1317032,
+      "source": "recomp/config/output/sub_00141800_0x141800.cpp",
+      "source_sha256": "fc70e33cabec2bd019612e8502990fcb1d0b0073fb294e774d1d69ccf2a46d76",
+      "interval_sha256": "64ed79477b05df0f2d796f8cbe14fc568c5f9698b88d225a09c6aaf91d9d58fb",
+      "matched_comment_words": 42,
+      "omitted_zero_words": 0,
+      "label": "format_and_publish_lower_cri_error_candidate"
+    },
+    {
+      "id": "main:0x001418A8",
+      "start": 1317032,
+      "end": 1317112,
+      "source": "recomp/config/output/sub_001418A8_0x1418a8.cpp",
+      "source_sha256": "b650157aee547faf2078ddaadde38fae28268bbdea20a4e97e753d01243b2aea",
+      "interval_sha256": "4e7ee9fbf1a07a873a909ff2e777ff9413339532db3a0b124ec6f4a2498a831f",
+      "matched_comment_words": 20,
+      "omitted_zero_words": 0,
+      "label": "copy_and_publish_lower_cri_error"
+    },
+    {
+      "id": "main:0x00141DB0",
+      "start": 1318320,
+      "end": 1318384,
+      "source": "recomp/config/output/sub_00141DB0_0x141db0.cpp",
+      "source_sha256": "a084c76901d0e5dc2403b99795c02b982eb4309631ce21610e12336e683a03ad",
+      "interval_sha256": "c100da1979d5ec9998661a8727ca89c0b1b89f86f75b78fd8a345d8afbeb4848",
+      "matched_comment_words": 16,
+      "omitted_zero_words": 0,
+      "label": "set_lower_cri_error_callback"
+    },
+    {
+      "id": "main:0x00141DF0",
+      "start": 1318384,
+      "end": 1318404,
+      "source": "recomp/config/output/sub_00141DF0_0x141df0.cpp",
+      "source_sha256": "7940c63edf36eb9e9de7e33b72e6e8b37e4ab92dcb46b0145cc708b093ed78c4",
+      "interval_sha256": "fda8e13ca25fb3cece69895d9274abe72397f391a4016a8431b4788c37d8b395",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "set_cri_callback_pair_2649e0"
+    },
+    {
+      "id": "main:0x00141E08",
+      "start": 1318408,
+      "end": 1318428,
+      "source": "recomp/config/output/sub_00141E08_0x141e08.cpp",
+      "source_sha256": "ca407204ca492b2599ff817da3a4240e3e5b8b9e11826a1b08a15d8622fd8954",
+      "interval_sha256": "0a84016102f3c84b506e4203081c514e555df82bb88157e31349008e310fb326",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "set_cri_callback_pair_2649e8"
+    },
+    {
+      "id": "main:0x00150C40",
+      "start": 1379392,
+      "end": 1379836,
+      "source": "recomp/config/output/sub_00150C40_0x150c40.cpp",
+      "source_sha256": "174af896e270b3c1cb45f28ec81eaeea412a7a86826b1ab37b9b85f6d4d2066c",
+      "interval_sha256": "bd909b677d5e9d9daf6e072f72e8b46f795408015111cb150fa10f1c49ef5a18",
+      "matched_comment_words": 108,
+      "omitted_zero_words": 3,
+      "label": "dispatch_M2V_start_code_chunks_and_commit_consumed_prefix_candidate"
+    },
+    {
+      "id": "main:0x001598C8",
+      "start": 1415368,
+      "end": 1417132,
+      "source": "recomp/config/output/sub_001598C8_0x1598c8.cpp",
+      "source_sha256": "db9d5a75c542f869bf610d68b078a76f89cc44d5a1d714e63a4bb38c3568915e",
+      "interval_sha256": "d5e2a8a1dad711dc8aed79f9302df4b688ac60457315998017e3bb5973bbe358",
+      "matched_comment_words": 441,
+      "omitted_zero_words": 0,
+      "label": "MPV_parse_local_sequence_geometry_rate_VBV_and_matrix_span_candidate"
+    },
+    {
+      "id": "main:0x00159FB0",
+      "start": 1417136,
+      "end": 1417840,
+      "source": "recomp/config/output/sub_00159FB0_0x159fb0.cpp",
+      "source_sha256": "6aac0ec578a8f9fae795e961fa392125a39f29c0fe782d9981ae63afb9d91552",
+      "interval_sha256": "bb2592bca827928e8c28730c67316e7715ea5728bf0384668d8dc1d9c0d19413",
+      "matched_comment_words": 176,
+      "omitted_zero_words": 0,
+      "label": "MPV_parse_local_GOP_timecode_closed_and_broken_flags_candidate"
+    },
+    {
+      "id": "main:0x0015A270",
+      "start": 1417840,
+      "end": 1419356,
+      "source": "recomp/config/output/sub_0015A270_0x15a270.cpp",
+      "source_sha256": "36dfd97835be52dfc5ab202fe7af1016e111a63e38f9785e5943cbc087bf21d4",
+      "interval_sha256": "126f6cf8fbe346cf3a5a82a8cf73261d93fc0e5be3a0122a9b6487853669411a",
+      "matched_comment_words": 379,
+      "omitted_zero_words": 0,
+      "label": "MPV_parse_local_picture_type_delay_motion_fields_and_extra_span_candidate"
+    },
+    {
+      "id": "main:0x0015A860",
+      "start": 1419360,
+      "end": 1419596,
+      "source": "recomp/config/output/sub_0015A860_0x15a860.cpp",
+      "source_sha256": "cead3f38d8494a4407c7e83f31e0f0e05fe28d34283b2deead4c6f191cb70c0a",
+      "interval_sha256": "cff66c8b9b16c284030ca9f13b11d5d44f9b85599a09890aba26bc6c82277d64",
+      "matched_comment_words": 59,
+      "omitted_zero_words": 0,
+      "label": "MPV_skip_extension_prefix_and_resynchronize_SJ_candidate"
+    },
+    {
+      "id": "main:0x0015A950",
+      "start": 1419600,
+      "end": 1419884,
+      "source": "recomp/config/output/sub_0015A950_0x15a950.cpp",
+      "source_sha256": "b5d67758f150223f79fe7f73aa5c3b9f2905168dafd550cab6141e0ba9372c58",
+      "interval_sha256": "bc08226358df2d24196f0a740abd81f60528c5072ea97c486d2f819b2511a261",
+      "matched_comment_words": 71,
+      "omitted_zero_words": 0,
+      "label": "MPV_route_userdata_chunk_then_commit_prefix_and_resynchronize_candidate"
+    },
+    {
+      "id": "main:0x0015ADE8",
+      "start": 1420776,
+      "end": 1421120,
+      "source": "recomp/config/output/sub_0015ADE8_0x15ade8.cpp",
+      "source_sha256": "5c69eca6b1535eaa7405dc225a004bcd29f71ad3c2a122816fe2a138aa29a1cc",
+      "interval_sha256": "816a4cf9f663d69813e74b406a8c370b376545290f81d173ea2696f344fb0c12",
+      "matched_comment_words": 86,
+      "omitted_zero_words": 0,
+      "label": "scan_stream_chunks_for_MPEG_start_code_preserving_three_byte_suffix_candidate"
+    },
+    {
+      "id": "main:0x0015E6A0",
+      "start": 1435296,
+      "end": 1435668,
+      "source": "recomp/config/output/sub_0015E6A0_0x15e6a0.cpp",
+      "source_sha256": "f0fe92c9177cd92eaacb5dbac29486ff438a6f657fb11fb238b7846cb7c5885e",
+      "interval_sha256": "6a65df875815e0d583727c6e942d426fba12f8a2162010b9e295dcf0c15a2806",
+      "matched_comment_words": 84,
+      "omitted_zero_words": 9,
+      "label": "mwPlyInitSfdFx_candidate"
+    },
+    {
+      "id": "main:0x0015EA00",
+      "start": 1436160,
+      "end": 1436400,
+      "source": "recomp/config/output/sub_0015EA00_0x15ea00.cpp",
+      "source_sha256": "94dd3f1aa008fecbf50ef43cdfe7ea41b718d5c071b25b9fe875d729380e998c",
+      "interval_sha256": "5e5db0e27904cf25f714f38a56b278c6b43967bcb262ceadca5fd9e8c7757f7e",
+      "matched_comment_words": 48,
+      "omitted_zero_words": 12,
+      "label": "MWSFD_decrement_reference_and_shutdown_children_at_zero_candidate"
+    },
+    {
+      "id": "main:0x00164BA0",
+      "start": 1461152,
+      "end": 1461288,
+      "source": "recomp/config/output/sub_00164BA0_0x164ba0.cpp",
+      "source_sha256": "f0badc2cfa6c507cafcff7e0863da3b3520e3341b646204c5e41c5dc05e06a9d",
+      "interval_sha256": "aa9b03a0610e03ae1d0149fce88bc5fa2a1561a5517aa85b125ad3aebbb0ea08",
+      "matched_comment_words": 33,
+      "omitted_zero_words": 1,
+      "label": "Sofdec_audio_commit_written_prefix_and_return_unused_SJ_chunk_candidate"
+    }
+  ],
+  "indexed_external_direct_edges": [
+    {
+      "caller": "main:0x0012A1E8",
+      "site": 1221152,
+      "target": 1310752,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x00140020\"]",
+      "source": "recomp/config/output/sub_0012A1E8_0x12a1e8.cpp",
+      "line": 123
+    },
+    {
+      "caller": "main:0x0015E6A0",
+      "site": 1435436,
+      "target": 1310752,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x00140020\"]",
+      "source": "recomp/config/output/sub_0015E6A0_0x15e6a0.cpp",
+      "line": 231
+    },
+    {
+      "caller": "main:0x0012A388",
+      "site": 1221680,
+      "target": 1310832,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x00140070\"]",
+      "source": "recomp/config/output/sub_0012A388_0x12a388.cpp",
+      "line": 352
+    },
+    {
+      "caller": "main:0x0015EA00",
+      "site": 1436328,
+      "target": 1310832,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x00140070\"]",
+      "source": "recomp/config/output/sub_0015EA00_0x15ea00.cpp",
+      "line": 323
+    },
+    {
+      "caller": "main:0x0013DB48",
+      "site": 1301848,
+      "target": 1310912,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001400C0\"]",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 684
+    },
+    {
+      "caller": "main:0x0012CCE0",
+      "site": 1232476,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0012CCE0_0x12cce0.cpp",
+      "line": 717
+    },
+    {
+      "caller": "main:0x0012CFD8",
+      "site": 1233148,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0012CFD8_0x12cfd8.cpp",
+      "line": 574
+    },
+    {
+      "caller": "main:0x0012CFD8",
+      "site": 1233304,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0012CFD8_0x12cfd8.cpp",
+      "line": 876
+    },
+    {
+      "caller": "main:0x0012D338",
+      "site": 1233856,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0012D338_0x12d338.cpp",
+      "line": 202
+    },
+    {
+      "caller": "main:0x0012D338",
+      "site": 1233920,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0012D338_0x12d338.cpp",
+      "line": 366
+    },
+    {
+      "caller": "main:0x00130800",
+      "site": 1247344,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00130800_0x130800.cpp",
+      "line": 197
+    },
+    {
+      "caller": "main:0x00133280",
+      "site": 1258280,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00133280_0x133280.cpp",
+      "line": 234
+    },
+    {
+      "caller": "main:0x00133280",
+      "site": 1258420,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00133280_0x133280.cpp",
+      "line": 491
+    },
+    {
+      "caller": "main:0x00133D10",
+      "site": 1261208,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00133D10_0x133d10.cpp",
+      "line": 849
+    },
+    {
+      "caller": "main:0x00133D10",
+      "site": 1261312,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00133D10_0x133d10.cpp",
+      "line": 1114
+    },
+    {
+      "caller": "main:0x001345F0",
+      "site": 1263304,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_001345F0_0x1345f0.cpp",
+      "line": 332
+    },
+    {
+      "caller": "main:0x00138650",
+      "site": 1279920,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00138650_0x138650.cpp",
+      "line": 624
+    },
+    {
+      "caller": "main:0x00138650",
+      "site": 1279968,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00138650_0x138650.cpp",
+      "line": 730
+    },
+    {
+      "caller": "main:0x00150C40",
+      "site": 1379732,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00150C40_0x150c40.cpp",
+      "line": 655
+    },
+    {
+      "caller": "main:0x001598C8",
+      "site": 1417044,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_001598C8_0x1598c8.cpp",
+      "line": 1750
+    },
+    {
+      "caller": "main:0x00159FB0",
+      "site": 1417752,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00159FB0_0x159fb0.cpp",
+      "line": 617
+    },
+    {
+      "caller": "main:0x0015A270",
+      "site": 1419272,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0015A270_0x15a270.cpp",
+      "line": 1500
+    },
+    {
+      "caller": "main:0x0015A860",
+      "site": 1419504,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0015A860_0x15a860.cpp",
+      "line": 177
+    },
+    {
+      "caller": "main:0x0015A950",
+      "site": 1419780,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0015A950_0x15a950.cpp",
+      "line": 223
+    },
+    {
+      "caller": "main:0x0015ADE8",
+      "site": 1420848,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0015ADE8_0x15ade8.cpp",
+      "line": 127
+    },
+    {
+      "caller": "main:0x0015ADE8",
+      "site": 1420940,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_0015ADE8_0x15ade8.cpp",
+      "line": 314
+    },
+    {
+      "caller": "main:0x00164BA0",
+      "site": 1461212,
+      "target": 1312736,
+      "kind": "call",
+      "resolution": "exact",
+      "candidates": "[\"main:0x001407E0\"]",
+      "source": "recomp/config/output/sub_00164BA0_0x164ba0.cpp",
+      "line": 155
+    }
+  ],
+  "indexed_global_reference_candidates": [
+    {
+      "owner": "main:0x001389D8",
+      "site": 1280488,
+      "address": 2210824,
+      "physical": 2210824,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_001389D8_0x1389d8.cpp",
+      "line": 42,
+      "regions": [
+        "dtr_records"
+      ]
+    },
+    {
+      "owner": "main:0x00138A38",
+      "site": 1280612,
+      "address": 2210824,
+      "physical": 2210824,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00138A38_0x138a38.cpp",
+      "line": 78,
+      "regions": [
+        "dtr_records"
+      ]
+    },
+    {
+      "owner": "main:0x00138AB8",
+      "site": 1280736,
+      "address": 2210824,
+      "physical": 2210824,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00138AB8_0x138ab8.cpp",
+      "line": 78,
+      "regions": [
+        "dtr_records"
+      ]
+    },
+    {
+      "owner": "main:0x00138AB8",
+      "site": 1280740,
+      "address": 2210824,
+      "physical": 2210824,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00138AB8_0x138ab8.cpp",
+      "line": 81,
+      "regions": [
+        "dtr_records"
+      ]
+    },
+    {
+      "owner": "main:0x0013DA88",
+      "site": 1301288,
+      "address": 2233440,
+      "physical": 2233440,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DA88_0x13da88.cpp",
+      "line": 199,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DA88",
+      "site": 1301292,
+      "address": 2233444,
+      "physical": 2233444,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DA88_0x13da88.cpp",
+      "line": 202,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DA88",
+      "site": 1301296,
+      "address": 2233404,
+      "physical": 2233404,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DA88_0x13da88.cpp",
+      "line": 205,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DA88",
+      "site": 1301300,
+      "address": 2233408,
+      "physical": 2233408,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DA88_0x13da88.cpp",
+      "line": 208,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DA88",
+      "site": 1301304,
+      "address": 2233400,
+      "physical": 2233400,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DA88_0x13da88.cpp",
+      "line": 211,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301328,
+      "address": 2233408,
+      "physical": 2233408,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 49,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301396,
+      "address": 2233400,
+      "physical": 2233400,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 109,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301404,
+      "address": 2233404,
+      "physical": 2233404,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 118,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301416,
+      "address": 2233412,
+      "physical": 2233412,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 135,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301420,
+      "address": 2233412,
+      "physical": 2233412,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 138,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301436,
+      "address": 2233404,
+      "physical": 2233404,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 159,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301440,
+      "address": 2233404,
+      "physical": 2233404,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 162,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301568,
+      "address": 2233420,
+      "physical": 2233420,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 326,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301572,
+      "address": 2233416,
+      "physical": 2233416,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 329,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DB48",
+      "site": 1301584,
+      "address": 2233472,
+      "physical": 2233472,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DB48_0x13db48.cpp",
+      "line": 339,
+      "regions": [
+        "paired_records"
+      ]
+    },
+    {
+      "owner": "main:0x0013DE40",
+      "site": 1302092,
+      "address": 2233400,
+      "physical": 2233400,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DE40_0x13de40.cpp",
+      "line": 41,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DE40",
+      "site": 1302120,
+      "address": 2233472,
+      "physical": 2233472,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DE40_0x13de40.cpp",
+      "line": 71,
+      "regions": [
+        "paired_records"
+      ]
+    },
+    {
+      "owner": "main:0x0013DE40",
+      "site": 1302124,
+      "address": 2233476,
+      "physical": 2233476,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DE40_0x13de40.cpp",
+      "line": 74,
+      "regions": [
+        "paired_records"
+      ]
+    },
+    {
+      "owner": "main:0x0013DE40",
+      "site": 1302240,
+      "address": 2233420,
+      "physical": 2233420,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DE40_0x13de40.cpp",
+      "line": 270,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DE40",
+      "site": 1302244,
+      "address": 2233420,
+      "physical": 2233420,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DE40_0x13de40.cpp",
+      "line": 273,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DE40",
+      "site": 1302260,
+      "address": 2233412,
+      "physical": 2233412,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DE40_0x13de40.cpp",
+      "line": 294,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DE40",
+      "site": 1302268,
+      "address": 2233412,
+      "physical": 2233412,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DE40_0x13de40.cpp",
+      "line": 302,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DF20",
+      "site": 1302312,
+      "address": 2233400,
+      "physical": 2233400,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DF20_0x13df20.cpp",
+      "line": 33,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013DF20",
+      "site": 1302328,
+      "address": 2233472,
+      "physical": 2233472,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DF20_0x13df20.cpp",
+      "line": 54,
+      "regions": [
+        "paired_records"
+      ]
+    },
+    {
+      "owner": "main:0x0013DF20",
+      "site": 1302332,
+      "address": 2233472,
+      "physical": 2233472,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013DF20_0x13df20.cpp",
+      "line": 57,
+      "regions": [
+        "paired_records"
+      ]
+    },
+    {
+      "owner": "main:0x0013E000",
+      "site": 1302544,
+      "address": 2242688,
+      "physical": 2242688,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E000_0x13e000.cpp",
+      "line": 40,
+      "regions": [
+        "ps2rna_groups"
+      ]
+    },
+    {
+      "owner": "main:0x0013E000",
+      "site": 1302584,
+      "address": 2242696,
+      "physical": 2242696,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E000_0x13e000.cpp",
+      "line": 70,
+      "regions": [
+        "ps2rna_groups"
+      ]
+    },
+    {
+      "owner": "main:0x0013E2B8",
+      "site": 1303276,
+      "address": 2233452,
+      "physical": 2233452,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp",
+      "line": 85,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E2B8",
+      "site": 1303288,
+      "address": 2233452,
+      "physical": 2233452,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp",
+      "line": 98,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E2B8",
+      "site": 1303524,
+      "address": 2233464,
+      "physical": 2233464,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp",
+      "line": 457,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E2B8",
+      "site": 1303656,
+      "address": 2233400,
+      "physical": 2233400,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp",
+      "line": 649,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E2B8",
+      "site": 1303660,
+      "address": 2233424,
+      "physical": 2233424,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp",
+      "line": 652,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E2B8",
+      "site": 1303680,
+      "address": 2233424,
+      "physical": 2233424,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp",
+      "line": 667,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E2B8",
+      "site": 1303836,
+      "address": 2233432,
+      "physical": 2233432,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp",
+      "line": 864,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E5E8",
+      "site": 1304052,
+      "address": 2233448,
+      "physical": 2233448,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E5E8_0x13e5e8.cpp",
+      "line": 36,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E5E8",
+      "site": 1304056,
+      "address": 2233448,
+      "physical": 2233448,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E5E8_0x13e5e8.cpp",
+      "line": 39,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E640",
+      "site": 1304140,
+      "address": 2233448,
+      "physical": 2233448,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E640_0x13e640.cpp",
+      "line": 36,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E640",
+      "site": 1304144,
+      "address": 2233448,
+      "physical": 2233448,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E640_0x13e640.cpp",
+      "line": 39,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E6C0",
+      "site": 1304268,
+      "address": 2233452,
+      "physical": 2233452,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E6C0_0x13e6c0.cpp",
+      "line": 42,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E6C0",
+      "site": 1304280,
+      "address": 2233452,
+      "physical": 2233452,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E6C0_0x13e6c0.cpp",
+      "line": 51,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E6C0",
+      "site": 1304292,
+      "address": 2233452,
+      "physical": 2233452,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E6C0_0x13e6c0.cpp",
+      "line": 63,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E6C0",
+      "site": 1304304,
+      "address": 2233428,
+      "physical": 2233428,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E6C0_0x13e6c0.cpp",
+      "line": 78,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E6C0",
+      "site": 1304316,
+      "address": 2233428,
+      "physical": 2233428,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E6C0_0x13e6c0.cpp",
+      "line": 89,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E6C0",
+      "site": 1304336,
+      "address": 2233460,
+      "physical": 2233460,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E6C0_0x13e6c0.cpp",
+      "line": 121,
+      "regions": [
+        "paired_configuration"
+      ]
+    },
+    {
+      "owner": "main:0x0013E770",
+      "site": 1304460,
+      "address": 2242688,
+      "physical": 2242688,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E770_0x13e770.cpp",
+      "line": 68,
+      "regions": [
+        "ps2rna_groups"
+      ]
+    },
+    {
+      "owner": "main:0x0013E770",
+      "site": 1304484,
+      "address": 2242688,
+      "physical": 2242688,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013E770_0x13e770.cpp",
+      "line": 86,
+      "regions": [
+        "ps2rna_groups"
+      ]
+    },
+    {
+      "owner": "main:0x0013EEE8",
+      "site": 1306380,
+      "address": 2242688,
+      "physical": 2242688,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_0013EEE8_0x13eee8.cpp",
+      "line": 75,
+      "regions": [
+        "ps2rna_groups"
+      ]
+    },
+    {
+      "owner": "main:0x00140020",
+      "site": 1310764,
+      "address": 2264208,
+      "physical": 2264208,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00140020_0x140020.cpp",
+      "line": 36,
+      "regions": [
+        "sjuni_reference_count"
+      ]
+    },
+    {
+      "owner": "main:0x00140020",
+      "site": 1310768,
+      "address": 2264208,
+      "physical": 2264208,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00140020_0x140020.cpp",
+      "line": 39,
+      "regions": [
+        "sjuni_reference_count"
+      ]
+    },
+    {
+      "owner": "main:0x00140020",
+      "site": 1310788,
+      "address": 2264216,
+      "physical": 2264216,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00140020_0x140020.cpp",
+      "line": 63,
+      "regions": [
+        "sjuni_objects"
+      ]
+    },
+    {
+      "owner": "main:0x00140070",
+      "site": 1310844,
+      "address": 2264208,
+      "physical": 2264208,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00140070_0x140070.cpp",
+      "line": 31,
+      "regions": [
+        "sjuni_reference_count"
+      ]
+    },
+    {
+      "owner": "main:0x00140070",
+      "site": 1310848,
+      "address": 2264208,
+      "physical": 2264208,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00140070_0x140070.cpp",
+      "line": 34,
+      "regions": [
+        "sjuni_reference_count"
+      ]
+    },
+    {
+      "owner": "main:0x00140070",
+      "site": 1310860,
+      "address": 2264208,
+      "physical": 2264208,
+      "kind": "memory_write",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00140070_0x140070.cpp",
+      "line": 46,
+      "regions": [
+        "sjuni_reference_count"
+      ]
+    },
+    {
+      "owner": "main:0x00140070",
+      "site": 1310876,
+      "address": 2264216,
+      "physical": 2264216,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00140070_0x140070.cpp",
+      "line": 64,
+      "regions": [
+        "sjuni_objects"
+      ]
+    },
+    {
+      "owner": "main:0x001400C0",
+      "site": 1310924,
+      "address": 2264216,
+      "physical": 2264216,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_001400C0_0x1400c0.cpp",
+      "line": 38,
+      "regions": [
+        "sjuni_objects"
+      ]
+    },
+    {
+      "owner": "main:0x001400C0",
+      "site": 1310944,
+      "address": 2264220,
+      "physical": 2264220,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_001400C0_0x1400c0.cpp",
+      "line": 53,
+      "regions": [
+        "sjuni_objects"
+      ]
+    },
+    {
+      "owner": "main:0x001400C0",
+      "site": 1311064,
+      "address": 2264160,
+      "physical": 2264160,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_001400C0_0x1400c0.cpp",
+      "line": 184,
+      "regions": [
+        "sjuni_vtable"
+      ]
+    },
+    {
+      "owner": "main:0x001400C0",
+      "site": 1311068,
+      "address": 2349688,
+      "physical": 2349688,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_001400C0_0x1400c0.cpp",
+      "line": 187,
+      "regions": [
+        "sjuni_uuid"
+      ]
+    },
+    {
+      "owner": "main:0x00140FB8",
+      "site": 1314812,
+      "address": 2267792,
+      "physical": 2267792,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00140FB8_0x140fb8.cpp",
+      "line": 99,
+      "regions": [
+        "sjx_bindings"
+      ]
+    },
+    {
+      "owner": "main:0x00141158",
+      "site": 1315228,
+      "address": 2267792,
+      "physical": 2267792,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00141158_0x141158.cpp",
+      "line": 99,
+      "regions": [
+        "sjx_bindings"
+      ]
+    },
+    {
+      "owner": "main:0x00141490",
+      "site": 1315996,
+      "address": 2267792,
+      "physical": 2267792,
+      "kind": "materialized_address_candidate",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00141490_0x141490.cpp",
+      "line": 39,
+      "regions": [
+        "sjx_bindings"
+      ]
+    },
+    {
+      "owner": "main:0x00141490",
+      "site": 1316028,
+      "address": 2267792,
+      "physical": 2267792,
+      "kind": "memory_read",
+      "address_class": "ram_candidate",
+      "string": null,
+      "string_evidence": "",
+      "source": "recomp/config/output/sub_00141490_0x141490.cpp",
+      "line": 63,
+      "regions": [
+        "sjx_bindings"
+      ]
+    }
+  ],
+  "main_file_backed_pointer_word_candidates": [
+    {
+      "address": 2264172,
+      "target": 1311144
+    },
+    {
+      "address": 2264176,
+      "target": 1311200
+    },
+    {
+      "address": 2264180,
+      "target": 1311224
+    },
+    {
+      "address": 2264184,
+      "target": 1311488
+    },
+    {
+      "address": 2264188,
+      "target": 1312144
+    },
+    {
+      "address": 2264192,
+      "target": 1311800
+    },
+    {
+      "address": 2264196,
+      "target": 1311368
+    },
+    {
+      "address": 2264200,
+      "target": 1312472
+    },
+    {
+      "address": 2264204,
+      "target": 1311208
+    }
+  ],
+  "native_runtime_source_context": {
+    "source_sha256": {
+      "recomp/overrides/reo_override.cpp": "3c07a747bdab6f4979198475ae31cea9ba2b4f4a1790ceccef9f763dd21aff67",
+      "recomp/CMakeLists.txt": "64f4158f9e2a1a4a5b5f7becaa2eedc83315c2214fc1380deb2ee22f715ec741",
+      "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp": "3c9f279e0431182fc6f932638c5e62e99ed91e1d33239d2a8a7af291f0a143d9",
+      "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h": "4cab412ab2c6a54e3ff14a6f619ce61c850cae8e3b80d92d86c3bef22eb1b4b8",
+      "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp": "fc575dafeb1326a27468a9e9813a9badfcdc753e42c082fb44b654110eb7aa30",
+      "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp": "e6f9f90eb6975c46b9c750c0fedb93569de22d57955581f77fe9322632075b20",
+      "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/Runtime.h": "295695b54a30ed43b3f484df492277a6d66ceefa8b024dfb4bef801c678b3ff6",
+      "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp": "d7a33d8ad3c5c348b1698f1340457301d177b94c63c66e247c445b2c7fcba985",
+      "third_party/PS2Recomp/ps2xRuntime/src/lib/ps2_runtime.cpp": "573fd491bf79cd5bcc31bf42d3c5d3af512c2bbeec6e01c319deffe8667aefe7",
+      "third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime.h": "d0f0d4811e09dde6af0c1bd025ac046241e044fd29c3dcf975b4b114530545ee",
+      "third_party/PS2Recomp/ps2xRuntime/CMakeLists.txt": "ecff1dfbbe3a5e6f87afedc8b154bfab4439d769b24568c8dd9b680312213e61"
+    },
+    "recorded_submodule": "160000 commit c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f\tthird_party/PS2Recomp",
+    "local_submodule_head": "c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f",
+    "local_submodule_status": [
+      "M ps2xRecomp/CMakeLists.txt",
+      " M ps2xRecomp/src/lib/code_generator.cpp",
+      " M ps2xRuntime/CMakeLists.txt",
+      " M ps2xRuntime/include/ps2_runtime.h",
+      " M ps2xRuntime/include/ps2_runtime_macros.h",
+      " M ps2xRuntime/include/runtime/ps2_gs_gpu.h",
+      " M ps2xRuntime/include/runtime/ps2_memory.h",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/CD.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/Common.h",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/Font.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/Helpers/Support.h",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/LibC.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/SIF.h",
+      " M ps2xRuntime/src/lib/Kernel/Stubs/VU.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Common.h",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Dispatcher.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/Runtime.h",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.h",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Lifecycle.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Sync.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/System.cpp",
+      " M ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp",
+      " M ps2xRuntime/src/lib/ps2_gif_arbiter.cpp",
+      " M ps2xRuntime/src/lib/ps2_gs_gpu.cpp",
+      " M ps2xRuntime/src/lib/ps2_gs_rasterizer.cpp",
+      " A ps2xRuntime/src/lib/ps2_guest_sched.h",
+      " M ps2xRuntime/src/lib/ps2_memory.cpp",
+      " M ps2xRuntime/src/lib/ps2_runtime.cpp",
+      " M ps2xRuntime/src/lib/ps2_vif1_interpreter.cpp",
+      " M ps2xRuntime/src/lib/ps2_vu1.cpp",
+      " M ps2xTest/src/code_generator_tests.cpp",
+      " M ps2xTest/src/ps2_memory_tests.cpp",
+      " M ps2xTest/src/ps2_sif_dma_tests.cpp",
+      " M ps2xTest/src/ps2_sif_rpc_tests.cpp",
+      "?? ps2xRecomp/src/lib/guard_generated_source.hpp",
+      "?? ps2xRecomp/src/runner/ps2_recomp.manifest",
+      "?? ps2xRecomp/src/runner/ps2_recomp.rc",
+      "?? ps2xRuntime/include/ps2_debug_panel.h",
+      "?? ps2xRuntime/include/ps2_fpu_convert.h",
+      "?? ps2xRuntime/include/ps2_plain_access_begin.hpp",
+      "?? ps2xRuntime/include/ps2_plain_access_end.hpp",
+      "?? ps2xRuntime/src/lib/Kernel/Host/",
+      "?? ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp",
+      "?? ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h",
+      "?? ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.cpp",
+      "?? ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/ReoSoundBanks.h",
+      "?? ps2xRuntime/src/lib/async_vif1.h",
+      "?? ps2xRuntime/src/lib/bounded_graphics_entry_filter.h",
+      "?? ps2xRuntime/src/lib/cri_pcm_retire.h",
+      "?? ps2xRuntime/src/lib/gpu_display_transport.h",
+      "?? ps2xRuntime/src/lib/gpu_fresh_collector.h",
+      "?? ps2xRuntime/src/lib/gpu_fresh_observer.h",
+      "?? ps2xRuntime/src/lib/gpu_resume_collector.h",
+      "?? ps2xRuntime/src/lib/gpu_resume_observer.h",
+      "?? ps2xRuntime/src/lib/gs_backend_route.cpp",
+      "?? ps2xRuntime/src/lib/gs_backend_route.h",
+      "?? ps2xRuntime/src/lib/gs_priv_atomic.h",
+      "?? ps2xRuntime/src/lib/instruction_input_evidence.hpp",
+      "?? ps2xRuntime/src/lib/ipu/",
+      "?? ps2xRuntime/src/lib/irq_cpu_control.cpp",
+      "?? ps2xRuntime/src/lib/irq_cpu_control.h",
+      "?? ps2xRuntime/src/lib/irq_cpu_game_provider.cpp",
+      "?? ps2xRuntime/src/lib/irq_cpu_game_receiver.cpp",
+      "?? ps2xRuntime/src/lib/irq_cpu_game_receiver.h",
+      "?? ps2xRuntime/src/lib/irq_cpu_original/",
+      "?? ps2xRuntime/src/lib/irq_cpu_original_access.hpp",
+      "?? ps2xRuntime/src/lib/irq_cpu_original_catalogue.hpp",
+      "?? ps2xRuntime/src/lib/irq_initializer_lifetime.hpp",
+      "?? ps2xRuntime/src/lib/literal_command_provenance.h",
+      "?? ps2xRuntime/src/lib/native_control_return.hpp",
+      "?? ps2xRuntime/src/lib/native_movie_batch.h",
+      "?? ps2xRuntime/src/lib/native_movie_image.h",
+      "?? ps2xRuntime/src/lib/native_movie_image.inl",
+      "?? ps2xRuntime/src/lib/native_movie_owner.h",
+      "?? ps2xRuntime/src/lib/native_movie_worker.inl",
+      "?? ps2xRuntime/src/lib/natural_dispatch.h",
+      "?? ps2xRuntime/src/lib/opaque_lease_upload.hpp",
+      "?? ps2xRuntime/src/lib/ordered_stream_hints.h",
+      "?? ps2xRuntime/src/lib/ordered_stream_policy.h",
+      "?? ps2xRuntime/src/lib/palette_dma_origin.h",
+      "?? ps2xRuntime/src/lib/parent_context_lifecycle.h",
+      "?? ps2xRuntime/src/lib/parent_first_entry.h",
+      "?? ps2xRuntime/src/lib/parent_natural_dispatch.cpp",
+      "?? ps2xRuntime/src/lib/parent_natural_runtime.h",
+      "?? ps2xRuntime/src/lib/parent_natural_worker.inl",
+      "?? ps2xRuntime/src/lib/parent_source_failure.h",
+      "?? ps2xRuntime/src/lib/pool_writer_scope.hpp",
+      "?? ps2xRuntime/src/lib/pose_origin_capture.cpp",
+      "?? ps2xRuntime/src/lib/pose_origin_capture.h",
+      "?? ps2xRuntime/src/lib/pre_entry_control_journal.h",
+      "?? ps2xRuntime/src/lib/pre_entry_control_journal.inl",
+      "?? ps2xRuntime/src/lib/pre_entry_heap_source_scope.hpp",
+      "?? ps2xRuntime/src/lib/pre_entry_queue_source_scope.hpp",
+      "?? ps2xRuntime/src/lib/ps2_parent_access_hooks.h",
+      "?? ps2xRuntime/src/lib/resident_backend_factory.hpp",
+      "?? ps2xRuntime/src/lib/resident_fifo_reservation.h",
+      "?? ps2xRuntime/src/lib/resident_gif_sidecar.h",
+      "?? ps2xRuntime/src/lib/resident_gif_sidecar.inl",
+      "?? ps2xRuntime/src/lib/resident_gs_worker.inl",
+      "?? ps2xRuntime/src/lib/resident_vif_commands.h",
+      "?? ps2xRuntime/src/lib/resident_vif_live_hooks.cpp",
+      "?? ps2xRuntime/src/lib/resident_vif_live_hooks.h",
+      "?? ps2xRuntime/src/lib/resident_wait_integration.h",
+      "?? ps2xRuntime/src/lib/source_instruction_access.hpp",
+      "?? ps2xRuntime/src/lib/source_instruction_origin.hpp",
+      "?? ps2xRuntime/src/lib/vblank_music_diag.h",
+      "?? ps2xRuntime/src/lib/vif_launch_overhead.cpp",
+      "?? ps2xRuntime/src/lib/vif_launch_overhead.h",
+      "?? ps2xRuntime/src/lib/vu_cost_attribution.cpp",
+      "?? ps2xRuntime/src/lib/vu_cost_attribution.h",
+      "?? ps2xRuntime/src/lib/vu_native_geometry_route.cpp",
+      "?? ps2xRuntime/src/lib/vu_native_geometry_route.h",
+      "?? ps2xRuntime/src/lib/vu_program_collection.cpp",
+      "?? ps2xRuntime/src/lib/vu_program_collection.h",
+      "?? ps2xRuntime/src/lib/vu_specialized_route.cpp",
+      "?? ps2xRuntime/src/lib/vu_specialized_route.h",
+      "?? ps2xRuntime/src/lib/vu_whole_program.cpp",
+      "?? ps2xRuntime/src/lib/vu_whole_program.h"
+    ],
+    "patch_sha256": {
+      "third_party/patches/ps2recomp/0001-sif-hle-iop-reboot-and-smflag-w1c.patch": "6f4a5046bbb9984ed5807a3858a3acba5fc86654aa423ccb185619300b78559d",
+      "third_party/patches/ps2recomp/0002-sifcallrpc-hwbridge-onsifrpc-fallback.patch": "029d12213116626c444cff51da5b43a8067596cd784defa4c58bd197c0b09fe4",
+      "third_party/patches/ps2recomp/0003-rpc-public-hleSignalSema.patch": "6f7e3d6efa52f77c7dc05ddccc47e75d5f41149aa124b5703845f63736a9ff91",
+      "third_party/patches/ps2recomp/0004-sif-hle-iop-reboot-count.patch": "a31a4bc1f837e8eb999e30b6c7c38d5362cc45d0234d2f0b48b6019e88ef0046",
+      "third_party/patches/ps2recomp/0005-ee-main-stack-top-and-heap-limit.patch": "1789afe35008e511e5efed2f08626f3ac825f3ee06bd9cfbdb9d5370916e48bb",
+      "third_party/patches/ps2recomp/0006-reo-peek-diagnostic.patch": "e752e0bbab44639dc2237bdcc95874d2c6cc16a0c6e9148e1a4fe5df745d147f",
+      "third_party/patches/ps2recomp/0007-vu0-macro-mul-acc-and-outer-product.patch": "def7a57a46e9fa57adef12bfae77fb5b8bc31bee245e9b1019815bbd42cda4d6",
+      "third_party/patches/ps2recomp/0008-vu0-madd-msub-keep-acc.patch": "b8513236f66f0db73f03c32c7b9951f235ca42f793102fe7a8ebfa1273a6e73f",
+      "third_party/patches/ps2recomp/0009-vu0-acc-writes-honor-dest-mask.patch": "8b077e95dab97982ac19c6f903c96d2618e55d3e895c7aade132e240a915bf65",
+      "third_party/patches/ps2recomp/0010-deci2call-dispatch-tty-and-reqsend.patch": "b217e7e34034baa6ecc280414ace79eae553b9b160f2d95a36055a1855585a6c",
+      "third_party/patches/ps2recomp/0011-runtime-memory-layout-io-lock-diagnostics.patch": "ebcf4a2d187ef3d375bf554715b0c206c750d75cb0e953ce3fa02759fadf0e17",
+      "third_party/patches/ps2recomp/0012-ee-priority-scheduling-vsync-oneshot-atomic-irq.patch": "c435960f07f66fb0079d3a4c115d6a03349a370544c3c961e5b85ba628811700",
+      "third_party/patches/ps2recomp/0013-pollsema-returns-sema-id-hot-ra.patch": "5758f061be35dbdd61fa713094b03704e371c65487bd64e291339c790a297521",
+      "third_party/patches/ps2recomp/0014-dmac-completion-irq-chcr-tag-kernel-returns.patch": "b4d70c43b757a3c23e2ce1c5becc5041b6fe17965dc0e9fd9bb061f4c0104342",
+      "third_party/patches/ps2recomp/0015-upstream-gfx-vif-tte-gif-image-stream.patch": "c88d021f0cd90d0f1a22051bc8a9bdfc62e2d7abaafa573f9d4558f470f928b0",
+      "third_party/patches/ps2recomp/0016-overlay-function-slots.patch": "b742f3bd04be619fb501efb57d8a352b887f5c4a5fcbcddba5756e142b34c548",
+      "third_party/patches/ps2recomp/0017-ipu-gs-interrupts-debug-panel-field-bob.patch": "64617f513c510d9a308df1616827ac9e86bf10df9710526a86eea8ae1c2a0fce",
+      "third_party/patches/ps2recomp/0018-nested-dmac-sched-diagnostics.patch": "c1ade97862f6ba3cbf05840a139ef8ec000412d0de89be57cf32fc142e91cf02",
+      "third_party/patches/ps2recomp/0019-wakeup-waitsuspend-sched-switch.patch": "42ddf84117bcc3eb5b5b821a17115009f1b140a01322b4174a5aea2f805189bf",
+      "third_party/patches/ps2recomp/0020-sound-iop-isolation-spr-dma-gs-sprite-fastpath.patch": "fff18cb7b88c300f48cb1ce6314310ff62afd454f62bf9e868fd64c93aaa3e85",
+      "third_party/patches/ps2recomp/0021-gs-worker-thread-iflushcache-dmac-wake.patch": "387b81ddaf9f1703c8af0edc3c430d605d02ba0b45d60e695a8350eada895965",
+      "third_party/patches/ps2recomp/0022-gs-pacing-blend-fastpath-parallel-vblank-present.patch": "d18974cdd22e6449ae7851eeeac0f6f823551da54f170e11a6744ba755dbae19",
+      "third_party/patches/ps2recomp/0023-postflip-present-snapshot-modal-drag-render.patch": "f41cc5d3c5767579c3723086cf773e158a89ecb31788593fc1e04c5f4f8859bf",
+      "third_party/patches/ps2recomp/0024-gs-parallel-generic-sprites.patch": "be5cbc8aec6eaa0ebf167a51cdb13b1dd0228894bc7d242086a481a500a5e1eb",
+      "third_party/patches/ps2recomp/0025-audio-dtx-diagnostics.patch": "a1d72fe481991cc95127e1849d526834ebd82147ec9e3063b105bdf55febf21a",
+      "third_party/patches/ps2recomp/0026-transition-flicker-present-pacing.patch": "3d5991f227e2a2e84bfdf0e2e31bdff37a7319605300210ef0561b3705f8ed1c",
+      "third_party/patches/ps2recomp/0027-present-gs-diagnostics.patch": "0b6bb1a100277f7a154ac67f37c74cb3cccfa067018556edfe2764ddf153c4ed",
+      "third_party/patches/ps2recomp/0028-sifinitrpc-keep-dtx-server-state.patch": "81f801f7266d64e3ec05f5dfd2516b275b3af9ba7769a385a8d8c4944d1db70a",
+      "third_party/patches/ps2recomp/0029-vu0-context-vf00-constant.patch": "51bca67610c14e5e390d84b32946fa64fb23532533ddeb513b27d49fc9177d04",
+      "third_party/patches/ps2recomp/0030-cri-pcm-playback-sjx-replies.patch": "0b5dd9e94e3e6d2b803076acc80837de68a9af679c8c246986b489ef897115c8",
+      "third_party/patches/ps2recomp/0031-r5900-sqrt-ft-operand.patch": "145cd5c01960520dc429f6ca29f429f09e10a55c871da2c7a3bde49b24d0b824",
+      "third_party/patches/ps2recomp/0032-cri-underrun-timeline-host-latency.patch": "d8d2b3ab115accdf3182285f4f4bb05fa94bc6f95d528f4580991d337709650f",
+      "third_party/patches/ps2recomp/0033-ipu-sse2-idct-exact-rounding.patch": "96a6f8245ba59890e184734c4d710616bf1b5f931efdc7a8bacc6c7dced48ae0",
+      "third_party/patches/ps2recomp/0034-ipu-byte-window-bit-reader.patch": "cd30cd8a30292a4cbcf9a5952a0d51f9fab71d354e86f0a5dcfa1b1e5d119e5f",
+      "third_party/patches/ps2recomp/0035-bounded-present-frame-capture.patch": "f961810c3140e4d95f0d6e97ba7af316846de9c885382e81c6249ec35e514394",
+      "third_party/patches/ps2recomp/0036-gs-ordered-immutable-present.patch": "d23ca559dc7493a2161e785c1b4e1c71e063221e4e1fac6fa71386ca34761a5a",
+      "third_party/patches/ps2recomp/0037-original-sound-bank-playback.patch": "e38138dd5e828152a585b5493e502805105e37a67e347fed2bcead74a7814f09",
+      "third_party/patches/ps2recomp/0038-gs-sprite-tiles-palette-feedback.patch": "88173ce464db22e52171c3fcccad5c3b35ebc6f7018b4082cc902add8556a1c0",
+      "third_party/patches/ps2recomp/0039-r5900-pcpyh-rt-operand.patch": "8d9ab0c69d407908e365a7b877c0469713a099ad1f0f89bd16010d53500b1a31",
+      "third_party/patches/ps2recomp/0040-vif1-latches-and-fragmented-payloads.patch": "ee3c1361865af771f4c9cef0f3a338b17406737124d4f359f192ff678993e1d6",
+      "third_party/patches/ps2recomp/0041-vu1-original-instruction-decoding.patch": "3b8dec13958f8320aea463050ddc7349b1ef101d183025ef733bfb35b6b27ae5",
+      "third_party/patches/ps2recomp/0042-gs-clipped-primitive-assembly.patch": "e4b7f0c7f6df7450b2ecdadaf2f2a462f291555ce23310816eeef95b26e4717d",
+      "third_party/patches/ps2recomp/0043-vu0-ctc2-integer-registers.patch": "308b1065d8adf4c3fbd6e786258e5fed85a32cd922f78b13a166a59fa79b2546",
+      "third_party/patches/ps2recomp/0044-gs-perspective-stq-interpolation.patch": "d7b8d12b6f935627e623389ea0950f5e48475a717e8882d7926330be28a2d947",
+      "third_party/patches/ps2recomp/0045-gs-pixel-depth-and-destination-alpha.patch": "035702a7db66a80441e5932fd5762c7f73d7006ff881bf48751249634bb1f8f0",
+      "third_party/patches/ps2recomp/0046-original-irq-wait-timing-diagnostics.patch": "c33499c368c1ca3375473f36f57bd8ed968afa2741591976f1b32fbf0a2fd6ac",
+      "third_party/patches/ps2recomp/0047-cri-producer-queue-diagnostics.patch": "6db92aca5599937fc636300bfc158bcba386b4159ad4a3c264e499ac6fda7cf6",
+      "third_party/patches/ps2recomp/0048-irq-timing-window-gate.patch": "03f36dcb09e7b8b6cc8cdd6044365c9536aaf809d2a4a8c59f11f234dd8e5238",
+      "third_party/patches/ps2recomp/0049-thread-wakeup-target-return.patch": "527fb5606d3510e796defe7228b5c40aee0ddec6aeaf195f953b357078e8ab4c",
+      "third_party/patches/ps2recomp/0050-vu1-late-capture-gates.patch": "e3c50cbc75aac49480705cae6db5f3bca2405f079e6b12fc845c54bee7b06d0f",
+      "third_party/patches/ps2recomp/0051-gs-texture-clamp-modes.patch": "1363a7188155f289db813f8ce7b9164a66874c7b71a7159f1aba28c67e9b5cd5",
+      "third_party/patches/ps2recomp/0052-gs-bounded-triangle-probe.patch": "7e4372389636969ba0bba958b27d005684ffadc0924ba59c86dc218fb76519f4",
+      "third_party/patches/ps2recomp/0053-gs-experimental-early-depth-rejection.patch": "2f97b79dbd684c887c3f6b06dd4b5de35eb461bb710fd8437a9973a55bf5a04c",
+      "third_party/patches/ps2recomp/0054-vu1-weighted-program-capture-filter.patch": "6b6fd885181bd3e56dd59849e4f51c565b08bf63381f74b55815d13ba0f67574",
+      "third_party/patches/ps2recomp/0055-optional-smooth-display-scaling.patch": "d0d93a686d87442f2faccd1f0d03acb474d6fb17a7cd2ccfbb437362bcbc9b2f",
+      "third_party/patches/ps2recomp/0056-vu1-character-ersqrt-instruction.patch": "765fbed54a6843be86b06ed9bf72fe144d136dddb82c820880798e12c566db03",
+      "third_party/patches/ps2recomp/0057-gs-opt-in-triangle-palette-cache.patch": "b12ba541b33cab179e6dcb926b0bd26f2651a60d8dc4a37e74414d7c4b12645d",
+      "third_party/patches/ps2recomp/0058-vu1-bounded-execution-timing.patch": "ce249b25127b3e42ab69a63cd9316736958688bf2d63026eb9255f41e76c4c21",
+      "third_party/patches/ps2recomp/0059-audio-bounded-per-path-diagnostics.patch": "d81fce5bc2d4dcecccea70d9571f16d36a2ca5ab79a788418c479254be7dfc7f",
+      "third_party/patches/ps2recomp/0060-gs-matched-publication-diagnostics.patch": "202b23fc496258b4df16db322c9fe51709a696ae54e74dd352b4636bad18a13b",
+      "third_party/patches/ps2recomp/0061-cooperative-runtime-worker-shutdown.patch": "f61493851eecbf7c24078b8b4a092ae434c5f52d505c73b003b899881c66f59f",
+      "third_party/patches/ps2recomp/0062-gs-opt-in-state-packet-pacing.patch": "f319d906b79bd1a0d2a99f8877dcd1187a4b983ada351bf23d982a0bb61ce590",
+      "third_party/patches/ps2recomp/0063-gs-opt-in-parallel-triangles.patch": "50445e8580afe6ebf6a2fb3ca97c8216ac177e839a27099daccf6304f5667b9e",
+      "third_party/patches/ps2recomp/0064-gs-opt-in-safe-dispatcher-pacing.patch": "5c38ab80a9e238c6281f1a9d019be87e952d1b45c57cc33ac107e4c5b1c2f5ff",
+      "third_party/patches/ps2recomp/0065-gs-safe-in-place-backedge-pacing.patch": "a2324b9f6a7399cd1d140dbab01998b91f864b5070e15c4536c4c13dc5a60d9f",
+      "third_party/patches/ps2recomp/0066-vu1-skip-no-op-instruction-dispatch.patch": "5faa6d3c2fe372a7b34ba0b5f4340038b59533056b739af987f892d522bc3059",
+      "third_party/patches/ps2recomp/0067-vif1-contiguous-v4-32-unpack-copy.patch": "1e273a0382d3b76eaa2f69ea83110f7492890e6407904904e07438f39551605f",
+      "third_party/patches/ps2recomp/0068-vu1-packed-broadcast-math.patch": "93aa66bdfba1ff0be9ca7e137547130071fcf1b8a96fdcba92a9ca5169bcec5d",
+      "third_party/patches/ps2recomp/0069-vif1-safe-priority-boundary-admission.patch": "2b77cab70ed064f973543d6fe88ad65a69c26a193a0965c03e6a0532ac6b2745",
+      "third_party/patches/ps2recomp/0070-vblank-atomic-capture-and-registry-retirement.patch": "b0a305fbefb465cf10b7a1b4fbf13a978979e32946fe90b3cddb4c6bb06d5db8",
+      "third_party/patches/ps2recomp/0071-gs-inline-safe-triangle-palette-hits.patch": "a9cd423d19663ac8ce3698c228cd391920750a7d3f8965fee1a3cb3821104e52",
+      "third_party/patches/ps2recomp/0072-vif1-bounded-dma-write-timing.patch": "1ce410744180d1ae27cb6bce276e2e3aaf431024b1c1d8fbf7442db43c854ea8",
+      "third_party/patches/ps2recomp/0073-gs-pipeline-diagnostic-clamp-state.patch": "6dee8e36d82460f91aa160e42d2939cc96fc6f60b7d99b842f3f05c3bc532820",
+      "third_party/patches/ps2recomp/0074-vif1-aggregate-vu-work-timing.patch": "042185e2416e5959276ffdad03fcee5fc7cd6df7a197c9b3301f27d3070214ea",
+      "third_party/patches/ps2recomp/0075-gs-opt-in-depth-aware-sprite-bands.patch": "8532c027b037286528b466ae35b4af76f5d4e97a84502d37e06f257ae3ac5ce1",
+      "third_party/patches/ps2recomp/0076-gs-depth-aware-textured-sprite-bands.patch": "d028b796893619d245c99533e1894daae343c62930f9ad340fd9dda18e1dba7d",
+      "third_party/patches/ps2recomp/0077-gs-opt-in-ordered-triangle-batches.patch": "27de2ef216057ce9664e3762094d4342be884f61f9e5c2997a99bb182c666aab",
+      "third_party/patches/ps2recomp/0078-gs-private-gpu-route-coherent-front-ntsc.patch": "bc679eadec8cd5982f2c0256e823ec584282bbfd6e20673a94d72b0b9c5a81a4",
+      "third_party/patches/ps2recomp/0079-vif-xgkick-stage-timing.patch": "210b6b73764cd4631ddbd0551870583f429c7b42577ebbe0cab4e50743f3e92b",
+      "third_party/patches/ps2recomp/0080-vu-private-native-routing-bounded-program-and-music-diagnostics.patch": "4cb246cdb2b702a9be95f194016b4061de1475ccb237d075a13fb741894ad12b",
+      "third_party/patches/ps2recomp/0081-cri-incremental-consumed-pcm-capacity.patch": "f792b475596d0dc320aa766fe28e02e4a4c1afab04846edea79b0e445d3f4291",
+      "third_party/patches/ps2recomp/0082-vu-native-geometry-loop-routing.patch": "993376f7a6f71f2f6938f51c2a38bd156f8643692a7b660d7bef1d417e42552b",
+      "third_party/patches/ps2recomp/0083-vu-bounded-native-timing-and-exact-image-capture.patch": "afbb9eb9fc9a7658e45f1961c781c57315b9e63e57c5aecf564d2122e9c28843",
+      "third_party/patches/ps2recomp/0084-vu-collision-safe-selection-and-hit-capture.patch": "3fabcd998ccbaf6aa04f9c58db8747ce08cfb32d9d9d4411174e36d042b6ff67",
+      "third_party/patches/ps2recomp/0085-vu-bounded-program-cost-attribution.patch": "96400c90eb1b11a56d1b7a8b7eb6c7ac4690b7023b552d8fad2538b1e31f9325",
+      "third_party/patches/ps2recomp/0086-vu-explicit-native-region-exits.patch": "7fd62b787bec02f1cf869adfc88a7eeb32aaa2d228147d5bf393f4af0667ffa7",
+      "third_party/patches/ps2recomp/0087-gpu-final-host-presentation-opaque-alpha.patch": "943824e7fa5c70c35678fc518fe6dd85f2bd0dcd7bd9120cecc2348d50a82acc",
+      "third_party/patches/ps2recomp/0088-bounded-vif-pose-origin-diagnostic.patch": "a5d8cf73345a18787400ee9b149d4bf317824ca38d7b505120977a7e93e72b1d",
+      "third_party/patches/ps2recomp/0089-pose-origin-retain-eight-mib-stream.patch": "9a3a08fe08aea330809ba547e3a89ac20b455ba91b140cd07f92d0256b51ed04",
+      "third_party/patches/ps2recomp/0090-gs-resident-native-presentation-transport.patch": "f160cae84225063623b82a75e4375dbeed755285185f88775a0e893848600c67",
+      "third_party/patches/ps2recomp/0091-ee-cvt-word-fixed-truncation.patch": "7aaff6b1f72ecb3683f3323bad86f9fde99df6678075218ad953717274d3c5d8",
+      "third_party/patches/ps2recomp/0092-preserve-native-stack-at-scheduler-backedge.patch": "8dfc3b3ac76722e55c231873e93f277dd6750a841b39e727e77f59cf4330e1c0",
+      "third_party/patches/ps2recomp/0093-native-runtime-and-host-integration.patch": "12b26a5f632dd827245781a21d6e8bc4a57c3420752bd9a7454324aba95503a0",
+      "third_party/patches/ps2recomp/0094-preserve-explicit-function-map-ranges.patch": "f4e98a7c8b66ec848e98ea8513b874fb9cf9e0da67be225bad032440ace87842",
+      "third_party/patches/ps2recomp/0095-linux-integer-portability.patch": "7decf20deb3f11212d636e3e2ab41984dbda89568864bcf1d0cdc171d4a882c2",
+      "third_party/patches/ps2recomp/0096-faster-source-instrumentation.patch": "9dbc74e6b3f052f40e6a3e474aa7b1d04cfe9ff53f697a9670149c087c3dee39",
+      "third_party/patches/ps2recomp/0097-clear-movie-dma-publication-on-handoff.patch": "534171b606cacc167e24ca2b91443a33a5f871772b28db5e1b7a9ad7ceb69a4e",
+      "third_party/patches/ps2recomp/0098-faster-cpu-movie-runtime.patch": "1b639ecc9f1e96d1da44aba1dbd6b1ce3d55f2c6c00f24bbd78a9ddbac37045d",
+      "third_party/patches/ps2recomp/0099-unguarded-generated-ranges.patch": "1f794cca3a89392eeb59a7df5a195a14169db59cd9350db9e0769dd075efeb3f",
+      "third_party/patches/ps2recomp/0100-optional-native-asset-bank.patch": "ff5d7cb4e9ecc6336aa1c8ca44d7fdaece2c581562b2f4ace69dc9938b3c29bf",
+      "third_party/patches/ps2recomp/0101-unbound-source-witness-fast-path.patch": "efb63f3200725ce76e8b0d165f0b4829af67ceb057026061666db125f3d1ffae",
+      "third_party/patches/ps2recomp/0102-fullscreen-cursor.patch": "e0c1977799101b1f8882d771d2361bcda193914e0f979d52477c211692f16601",
+      "third_party/patches/ps2recomp/0103-audio-volume-controls.patch": "a04308e76beffb271d08ae2482677738a5ec204e32ef61c5b2892be67dc41098",
+      "third_party/patches/ps2recomp/0104-vu-geometry-code-coverage.patch": "359de37009331529094b17b09a63c532334c99e6a38cfdb00b41f9bdbe1ff1a7",
+      "third_party/patches/ps2recomp/0105-m128-accessor-abi.patch": "bb95ca731a9071c1ff52e99a1757d2c2859e800c2ea01d822ab18528ded8fc7b",
+      "third_party/patches/ps2recomp/0106-gpu-presentation-child-window.patch": "378205da0d2e2e7f39518df9c5f000313e7c2e47bc3412e884340efe6014b4b0",
+      "third_party/patches/ps2recomp/0107-recompiler-utf8-manifest.patch": "ff6580e2c729095cabcf52ff8ecaa80bf3daa0d4f8174b6bae7bca3617ef1fcc",
+      "third_party/patches/ps2recomp/0108-io-byte-writes-outside-io-lock.patch": "98ee0b44fc7a08044e96f0d29a89d639ee4d894f797a7414b636069f473ae65b",
+      "third_party/patches/ps2recomp/0109-recompiler-long-path-output-errors.patch": "66465df61833de49590c73bbb09c1665f35855643f7502c2076785867cde4a8a",
+      "third_party/patches/ps2recomp/0109-virtual-asset-archives.patch": "ec11fb9742cae82e91e3ee947f68f3cff5d374392a2e39e76a811b46de7e72e3",
+      "third_party/patches/ps2recomp/0110-file2-empty-source-catalogues.patch": "9fff525c7a3c0e459f3ca3312e4560826d33d91a8735a303155307aa8ecd2e21",
+      "third_party/patches/ps2recomp/0111-macos-metal-presentation-target.patch": "8967e85ac17c79e7d80cc5b1b03303f500edbfb59ffb5779b00d092355bf1784",
+      "third_party/patches/ps2recomp/0112-macos-launcher-window-settings.patch": "4bc177a3e67b86b34c867cb2a5f1bee3ca04e78035226559e7dd2783ad3401f3",
+      "third_party/patches/ps2recomp/0113-cri-release-destroyed-rna-voices.patch": "ce245090b847bdfb37aa11dfc73614a3ee21641c9a854b0cc76cb9f0706cf448",
+      "third_party/patches/ps2recomp/0114-audio-retire-cancelled-bank-sequences.patch": "8c5e43def1184b8ca2020e583e0aa3dc34b9eba79bbb30c5706a8fe01cf7accc",
+      "third_party/patches/ps2recomp/0115-audio-cut-interrupted-streams.patch": "996df7ae7c30f50696300ab1dc4e9f96a7c4ac9eef0ff273822e165c52352b2a",
+      "third_party/patches/ps2recomp/0116-preserve-display-on-skipped-scanout.patch": "f34b4f66e5211a39710ebdfc45cdf3fc118de3313dc20aebd601243ab785829d",
+      "third_party/patches/ps2recomp/0117-macos-native-fullscreen.patch": "e00716b806d0e9b4943ff2317c4942fa9a50d9b73bac779c0651eca4951c6a06",
+      "third_party/patches/ps2recomp/0118-audio-keep-short-speech-tails.patch": "250c52f8a84c7e5c7468db70e640ea5f9d716e699cc30a04ae830b6f80066814",
+      "third_party/patches/ps2recomp/0119-file2-prefer-validated-vu-whole-programs.patch": "ae1444addc2d7e1e3f67b9b6e81ebf9697522598de1934c22c951f55b2ae72bc"
+    },
+    "patch_application_state": "not independently verified in this inventory",
+    "matching_compiled_library_identity": "not established; no build or running-process inspection"
+  },
+  "owned_iop_context": {
+    "module_sha256": "456f07cb55a5bed66643fd95ca6ef64874265b578630b905a9328346e01aefb7",
+    "functions": {
+      "SJUNI_Create": {
+        "start": 23220,
+        "size": 200,
+        "interval_sha256": "73ad0a472f3d915266572e22ac141c38da3542881529448a17516d7004d302c5"
+      },
+      "SJUNI_Reset": {
+        "start": 23496,
+        "size": 128,
+        "interval_sha256": "b850d0e4e6cce93e5a9fbd7cc4da9178fcbd72a96a7533c888bc0ca619d263a2"
+      },
+      "sjrmt_uni_create": {
+        "start": 25996,
+        "size": 64,
+        "interval_sha256": "c37367afdfae438926d47fec23383a41d9a40e3b9ae53bd051fe0faad9f61806"
+      },
+      "sjx_sndcbf_iop": {
+        "start": 27624,
+        "size": 288,
+        "interval_sha256": "a2fe800459cbec1553d2c24798930eb4c28ace2d3dffd79a608212027b6cfd6a"
+      },
+      "sjx_rcvcbf_iop": {
+        "start": 27452,
+        "size": 172,
+        "interval_sha256": "3f83f9feeeb21afde96056a898c967a73fc91a1f2d1f70a7743ea75abe11f36c"
+      },
+      "sjx_sndcbf": {
+        "start": 27164,
+        "size": 288,
+        "interval_sha256": "0d4d864cc47b1c2eee7d83d471984f0541aabc3e4930f7ef8ffc9ce0563ce138"
+      },
+      "SJUNI_GetNumData": {
+        "start": 23624,
+        "size": 116,
+        "interval_sha256": "885e5216e1f4e1297eca10a0559292982096862e3096acc73105f1d5830b2cd7"
+      },
+      "sjx_create_rmt": {
+        "start": 27944,
+        "size": 192,
+        "interval_sha256": "1d91ad3a10e140788a6df69d40021dc3a3bb5fe854b13a561fff7055c38ef99d"
+      },
+      "sjx_rcvcbf": {
+        "start": 26992,
+        "size": 172,
+        "interval_sha256": "6ad55412b6f3dd949975e4932f206b8a9da89275ccd575ba4758b404034eb1c8"
+      }
+    },
+    "matching_uuid": "a34f532e97afd211a5270060089448bc",
+    "evidence_kind": "owned static bytes and symbol bounds; no execution"
+  },
+  "limitations": [
+    "Selected intervals verified against original words; static behavior is not execution.",
+    "Direct edges/refs use the existing graph; pointer escapes and indirect calls need manual review.",
+    "All returned edge/ref owners are word-verified; sources outside those owners are not revalidated.",
+    "Pointer-word scan covers aligned words in main ELF PT_LOAD file bytes only, not overlays/BSS.",
+    "Generic SJ consumers may receive SJRB/SJMEM or another implementation.",
+    "No proof of complete field-access closure, native parity, synchronization or performance."
+  ]
+}

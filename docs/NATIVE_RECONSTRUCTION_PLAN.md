@@ -1,11 +1,20 @@
 # Outbreak native reconstruction plan
 
-Status: planned direction, recorded 2026-11-04.
+Status: dependency inventory started 2026-11-05; native replacement not enabled.
 
-Current sequencing, updated2026-11-04: the user requests **100% function mapping
-first**, followed by the native transition. Continue static research and record
-unresolved contracts honestly. The implementation stages below remain planned;
-do not start replacements or remove PS2 dependencies during the mapping phase.
+Current sequencing, updated 2026-11-05: the user authorized committing the
+mapping/comparison findings locally and continuing this transition plan. The
+research baseline is local commit `733a8ed`. Semantic annotations cover
+17,069/17,916 catalogue entries (95.27%); catalogue artifacts and unresolved
+purposes remain explicit in the [remaining-work report](STATIC_MAPPING_REMAINING_WORK.md).
+This replaces the earlier literal 100% mapping gate. Migration readiness is
+assessed per subsystem contract and its dependencies; the mapping percentage
+does not establish native correctness or justify removing compatibility code.
+
+The [SJUNI dependency and contract inventory](native-sjuni/README.md) records
+the first-stage evidence, native-interface proposal and integration blockers.
+Work remains static/offline during playtesting. No replacement has been enabled,
+no dependency removed and no game performance improvement measured.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map
@@ -61,8 +70,8 @@ Write down the contract before implementing it:
 Keep Outbreak's behavior authoritative where CVX differs. For example, the
 reviewed work-size conversion uses signed truncation, and the default error
 path differs from CVX's permanent loop. Close unresolved contracts needed by
-this subsystem before replacing it. The user's current sequencing also requires
-completing the mapping phase before beginning that implementation.
+this subsystem before replacing it. Record unresolved dependencies at the
+adapter boundary rather than silently treating them as native behavior.
 
 ### Implement the native core
 
@@ -170,12 +179,11 @@ reconstructed, regardless of how files or libraries are named.
 ## Related work
 
 - [Symbol mapping overview](SYMBOLS.md) and [function index](FUNCTION_INDEX.md).
-- [CVX comparison findings](recvx-crosscheck/FINDINGS.md), including Outbreak's
+- [Completed CVX comparison](recvx-crosscheck/COMPLETE_SCOPE_REPORT.md), including Outbreak's
   ring counters, DTX shutdown gates and PS2RNA control differences.
 - [Native asset rendering work](M2_NATIVE_ASSET_RENDERER.md).
 - [Native networking work](NATIVE_NETCODE.md).
 
-After the mapping milestone, the first planned implementation task is to document
-SJUNI's complete consumer and state-access inventory, then define its native
-interface and adapter boundary. Replace and validate each service before retiring
-the PS2 compatibility components that supply it.
+The current task is SJUNI's consumer and state-access inventory, followed by its
+native interface and adapter boundary. Replace and validate each service before
+retiring the PS2 compatibility components that supply it.
