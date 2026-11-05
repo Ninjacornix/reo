@@ -279,12 +279,16 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     if actual != runtime_sources(dependency):
         raise ValueError('Runtime TU closure differs; missing=' + str(sorted(runtime_sources(dependency) - actual)) +
                          ', extra=' + str(sorted(actual - runtime_sources(dependency))))
+    recipes = json.loads(commit.read('recomp/config/local_source_recipes.json'))
+    recipe_outputs = {'source/' + r['destination'] for r in recipes['recipes']}
+    for name in recipe_outputs:
+        member(kit, name)  # Validate path syntax even though reconstruction is deferred.
     for unit in plan['units']:
         for name in unit['sources']:
             if name.startswith('{work}/project/'):
                 relative = 'source/' + name.removeprefix('{work}/project/')
                 # Recipe-owned original bodies are reconstructed by build_game.
-                if relative not in source and not (kit / relative).is_file():
+                if relative not in source and not (kit / relative).is_file() and relative not in recipe_outputs:
                     raise ValueError('Compilation source is absent: ' + relative)
     source['compile-plan.json'] = (json.dumps(plan, indent=2) + '\n').encode()
     return commit, manifest, plan, receipt, compiler, source
