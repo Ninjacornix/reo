@@ -29,7 +29,11 @@ The exact raylib source is revision
 `c1ab645ca298a2801097931d1079b10ff7eb9df8`, `raudio.c` SHA-256
 `2d6a2d5b9f86b44b879605f654659c542a317d97477ddfde54683019e8bfeacc`. The
 [audio-output transform](../../tools/local_build/prepare_audio_output.py)
-changes initialization/device selection, not the callback/unload functions.
+changes initialization/device selection and now corrects device-close ordering;
+the callback/unload functions remain unchanged. The source-qualified
+[close-order fix](AUDIO_PROVIDER_CLOSE.md), [output owner](AUDIO_OUTPUT_OWNER.md)
+and [real stream provider](NATIVE_STREAM_PROVIDER.md) have separate isolated
+checks. They are not a complete installed backend.
 
 ## Versioned dispatch patch
 

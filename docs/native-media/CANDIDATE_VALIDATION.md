@@ -102,8 +102,8 @@ synchronously writes a BMP on the graphics owner. It can affect timing and is a
 confound, not a confirmed explanation of the user's symptom. The repeat
 `adx-original-pacing-v6` disables these screenshots and enables the existing
 bounded, in-memory frame timing trace; records export after graphics teardown.
-It must complete before its results can be interpreted. The matching native-on
-repeat is pending. No game speed or rendering-path change is made for these tests.
+Both the screenshot-free baseline and matching native-on repeat have now
+completed. No game speed or rendering-path change was made for these tests.
 
 The offline `tools/native_reconstruction/analyze_movie_pacing.py` reports CPU
 presentation-return intervals, capture-stage durations, record loss and exact
@@ -116,3 +116,50 @@ four focused tests cover a brief 80 ms hitch hidden among otherwise short
 intervals, missing presentation stages, clock resets/gaps and corrupt timings.
 These observations cannot establish actual display scanout, original game-update
 rate, decoder latency or a root cause. No movie-stutter fix is proven yet.
+
+### Completed screenshot-free pair
+
+Both runs used the same V6 executable, fresh private cards, character route,
+two ordinary Cross confirmations and no cinematic skips. Only the two ADX
+native switches differ, apart from the private timing output path and session
+identities. Other native subsystem switches remain off. Each reached stable
+gameplay and exited 0 after an ordinary owned window close.
+
+| Observation | `adx-original-pacing-v6` | `adx-native-pacing-v6` |
+| --- | ---: | ---: |
+| Run seconds | 371.484 | 369.531 |
+| Stable gameplay, observer seconds | 346.625 | 340.750 |
+| Frame rows / dropped | 21,362 / 0 | 21,985 / 0 |
+| Approximate movie presentation intervals | 17,748 | 17,751 |
+| Movie CPU return interval p99 | 35.7173 ms | 19.1154 ms |
+| Movie intervals above 50 ms | 22 | 2 |
+| Maximum sampled movie interval | 240.602 ms | 188.602 ms |
+| Maximum interval across whole run | 271.2678 ms | 1,343.8642 ms |
+| Audio underrun frames reported | 0 | 0 |
+| Post-commit native decoder call lower bounds | 0 | mono 32; stereo 4,096 |
+
+This pair shows a useful reduction in sampled movie presentation gaps, **not a
+controlled causal proof or complete stutter fix**. OS asset-cache state, run
+order and timing-dependent request boundaries were not independently controlled.
+Both native decoders changed together. Remaining native movie gaps of 188.602
+and 154.437 ms occur chiefly between neighboring backend frame spans. The
+1.344-second whole-run gap is outside the approximate movie classification;
+it remains recorded and unresolved rather than being discarded as irrelevant.
+No GPU/display timing or unique-picture identity was captured.
+
+The byte comparator found three identical same-name PCM artifacts: two 768,000
+byte stereo planes and one 128,128 byte mono file. The other two 768,000 byte
+files agree through byte 491,519 and then differ. Logs show that the same raw
+voice/channel IDs restart at different accumulated byte positions: original
+`startByte=622592`, native `startByte=491520`. Comparing the available 145,408
+bytes from those respective restart offsets yields **exact equality in both
+planes** (`pcm-restart-prefix-comparison.json`). This supports a changed dump
+layout at the observed restart, not an observed arithmetic defect there. The
+offsets come from playback-watermark logs, not independently asset-qualified
+queue events; do not promote this to complete waveform or asset equivalence.
+
+Full per-session reports and hashes are in `adx-analysis.json`,
+`movie-pacing-analysis.json/.md`, `pcm-comparison.json` and the bounded restart
+comparison beneath the private sessions. The
+[movie investigation](MOVIE_STUTTER_INVESTIGATION.md) separates measured
+symptoms from source-defined candidates and the missing timing boundaries.

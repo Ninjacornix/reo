@@ -4,8 +4,9 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has sixteen standalone suites, including the independent ADX
-control, mono and stereo/downmix block cores and bounded PCM owner. Full transition and wider
+project now has seventeen standalone suites, including the independent ADX
+control, mono and stereo/downmix block cores, bounded PCM owner and fenced
+host-output lifetime owner. Full transition and wider
 real-consumer validation remain in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the
@@ -54,7 +55,16 @@ remain open. The [media inventory](native-media/BOUNDARY_INVENTORY.md),
 [stereo oracle](native-media/ADX_STEREO_ORACLE.md) and
 [PCM owner extraction](native-media/PCM_OWNER_EXTRACTION.md) define the current
 decoder and host-output boundaries. The [media candidate record](native-media/CANDIDATE_VALIDATION.md)
-tracks actual decoder admission and pending live validation. Wider resources/
+tracks actual decoder admission and the completed V6 original/native opening
+movie pair. Native mono and stereo bodies execute; sampled movie presentation
+gaps decrease but unresolved movie/transition stalls remain. The
+[movie-stutter investigation](native-media/MOVIE_STUTTER_INVESTIGATION.md)
+retains the user's observation and distinguishes measured stalls from suspects.
+Complete PCM [session dispatch](native-media/PCM_BACKEND_DISPATCH.md),
+[output ownership](native-media/AUDIO_OUTPUT_OWNER.md) and the
+[pinned stream provider](native-media/NATIVE_STREAM_PROVIDER.md) have isolated
+evidence; they are not yet installed as one whole backend. The provider shutdown
+ordering fix requires a new coherent candidate. Wider resources/
 media, gameplay, rendering and final runtime removal remain required.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
