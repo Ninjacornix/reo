@@ -163,3 +163,31 @@ Full per-session reports and hashes are in `adx-analysis.json`,
 comparison beneath the private sessions. The
 [movie investigation](MOVIE_STUTTER_INVESTIGATION.md) separates measured
 symptoms from source-defined candidates and the missing timing boundaries.
+
+### Combined resource/decoder integration
+
+`media-native-pacing-v6` enables native synchronous resource reads, the SJUNI
+setting, quiescent DVCI scalar setting and both ADX decoders together, with CD
+async/worker still off. Same immutable V6 executable, PAK input, fresh private
+cards, character confirmations and no skips; periodic GPU captures absent.
+It reaches gameplay at 355.750 observer seconds and exits 0 after an ordinary
+owned close (417.609 run seconds). Setup includes verifying the imported source
+files and is slower than the decoder-only runs.
+
+Actual execution lower bounds are 1,024 successful native payload reads, 64 mono
+and 8,192 stereo calls. No native payload failure is logged. SJUNI and scalar
+settings/installation do not supply executed-body proof in this session, whose
+corresponding traces are absent. Audio reports total 19,084,800 output frames
+and zero underruns. The 17,759 approximately classified movie presentation
+intervals have p99 19.0278 ms, maximum 32.6193 ms and zero intervals above 50 ms.
+This is bounded integration evidence, not proof of universally smooth playback,
+unique-picture progress, subjective audio quality or which replacement improved
+timing. Background development checks and asset-cache/run order remain
+uncontrolled. Existing counters can miss repeated images and unsampled states.
+
+The next coherent candidate adds the reviewed provider close-order fix and
+bounded [movie-owner timing](../../tools/native_reconstruction/movie_timing/README.md).
+The offline [work analyzer](../../tools/native_reconstruction/movie_timing/ANALYZER_README.md)
+preserves partial exports and correlates measured wait/control spans with frame
+gaps; it does not add nested durations into a causal diagnosis. The V6 executable
+contains neither of these additions.
