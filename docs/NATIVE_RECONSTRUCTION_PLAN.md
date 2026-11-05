@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has twenty standalone suites, including the independent ADX
+project now has twenty-one standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -86,8 +86,13 @@ Its 123 isolated assertions pass with GCC and LLVM, including the standalone
 Release CMake target. Independent original-source comparison now matches all
 252 actions, 13,004 float words and 12,768 gain calls with both compilers, without
 changing the frozen core. The [integration review](native-media/BANK_BACKEND_INTEGRATION_REVIEW.md)
-defines aggregate PCM/bank/RPC selection and shutdown ordering; prepared-asset
-budgeting and the runtime adapter are required before installing this owner.
+defines aggregate PCM/bank/RPC selection and shutdown ordering. The subsequent
+budgeted bank pilot passes 218 accounting/lifetime assertions and the same
+original regression with both compilers; its [independent review](native-media/BANK_BUDGET_V2_REVIEW.md)
+finds no confirmed allocator/lifetime defect within the documented domain.
+Requested allocation bytes and asset counts are bounded, including retained
+control blocks and old clips; this does not claim an OS memory limit. Production
+packet capture, aggregate owner dispatch and runtime integration remain required.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map

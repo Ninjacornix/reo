@@ -1,11 +1,13 @@
 # Native bank session implementation
 
 Status: implemented isolated core in
-[game/native/audio_banks](../../game/native/audio_banks/session.hpp). No dependency,
-bootstrap, preparer, CMake or existing PCM changes; no backend installation,
-device/game run or performance claim. The independent full-source oracle
-comparison is pending. New original expected observations were not read or
-generated while implementing this candidate.
+[game/native/audio_banks](../../game/native/audio_banks/session.hpp), followed by
+the allocator-budgeted v2 pilot described below. Both pass independent full-source
+regression comparisons. Standalone CMake checks are integrated; no game dependency,
+bootstrap, preparer or existing PCM wiring changed, and no backend installation,
+device/game run or performance claim is made. The initial core was frozen before
+viewing original expected observations; v2's later allocation-policy changes
+explicitly record that those observations had already been seen.
 
 The [boundary audit](BANK_SESSION_NATIVE_BOUNDARY.md) remains the complete caller
 and guest-protocol inventory. This implementation owns host bank playback state;
@@ -247,3 +249,111 @@ selected-owner registration, whole-session prepared-asset budget, guest asset
 capture and actual provider shutdown remain to be integrated and rebuilt
 coherently. These isolated checks establish neither those boundaries nor faster
 gameplay. No game or audio device was run for these comparisons.
+
+## Allocator-accounted v2 pilot
+
+`game/native/audio_banks/v2` is a separately identified, isolated allocation and
+admission cohort. The original v1 implementation, `frozen_identity.json`, unit
+freeze and comparator remain unchanged; their committed baseline is
+`384a0cb036a34ca3578376b036d143902332412a`. Original expected observations were
+already available when v2 was implemented. Its comparison is a regression check,
+not a second blind implementation claim. Nothing selects v2 in the runtime.
+
+`derive.py` mechanically derives the four v2 algorithm/session files from the
+seven checked v1 hashes. It changes namespace, asset container allocators,
+shared allocation, capture/preparation admission and resource-preserving decoded
+buffer clearing. The numerical source expressions, event/request order and
+shared scheduler/mix include files remain unchanged. The generator refuses a
+changed baseline or an unexpected substitution count; v2 verification refuses
+generated-file drift. Upstream attribution and GPLv3 license remain those in the
+parent directory.
+
+The session now exposes `capture(submission, BankSizes)` before any internal raw
+buffer allocation. It acquires an asset-count admission, then allocates writable
+HD/BD/TQ staging buffers through the session asset allocator. An adapter fills the
+returned spans while retaining its complete Submission, then moves the capture
+into `prepare`. Caller-created unaccounted vectors cannot be passed to this API.
+The spans are borrowed until their capture is moved/destroyed; capture does not
+establish guest-memory identity, coherence or an asynchronous borrow lease.
+
+Config defaults are64MiB of asset allocation requests and128 asset admissions.
+They are explicit pilot limits, not observed game requirements. Each source part
+retains the original2MiB guard. Exceeding either budget returns `capacity`; source
+allocation failure returns `no_memory`. Neither result installs anything or
+falls back to the legacy owner. Invalid format, foreign owner and stale epochs
+retain explicit errors. Reset/stop cannot publish a late capture/preparation.
+
+The byte domain includes:
+
+- Writable staging vectors, the temporary header and Bank-owned HD/BD/TQ vector
+  capacities, including overlapping old/new buffers during reallocation.
+- Decoded PCM vector capacities, cache map nodes/buckets and their metadata.
+- AssetData, DecodedSample and asset-admission `allocate_shared` control-block
+  requests, including contained objects, allocator state and ABI padding.
+- Unsuccessful/transient preparations, caller-retained PreparedBank aliases and
+  decoded clips retained by old voices, retirement storage or weak observers.
+
+These are the actual `n * sizeof(rebound allocation type)` requests made by
+containers/control blocks, reserved under one session budget before the owned
+upstream allocator is called. They are not estimates from raw sizes or logical
+PCM length. In-flight reservations stay charged until allocation fails or is
+freed. Both byte and count checks are shared across concurrent preparations.
+The upstream heap's hidden bookkeeping/fragmentation is outside this requested
+byte measure. Fixed bounded scheduler workspace, Session/Budget administration,
+caller-owned input storage and test-observer output are separate domains; this
+is not a cap on total process resident memory.
+
+Every asset allocator itself retains strong Budget and asset-admission owners.
+Its rebound shared-control-block allocator therefore remains valid after the
+containing object is destroyed. The upstream allocation source also has a
+strong owner. Asset count is refunded by the final admission control-block's
+deallocator after its upstream free returns, rather than by its object
+destructor. This covers weak-control-block retention and the final free's
+in-flight interval. No TLS/global allocator replacement is used. Custom
+AllocationSource implementations are control-side providers and must honor the
+symmetric aligned allocation/deallocation contract.
+
+The existing fixed48-entry retirement path remains responsible for callback
+last-free avoidance. Current-bank caches retain current clips; old clips move
+to retirement storage and release on control drain. Reset, join and replacement
+release collected owners outside the data lock. Budget/upstream calls occur on
+producer/control paths; normal mix does not acquire the budget lock or allocate
+or deallocate asset storage. Refusal before install preserves the previous bank.
+Fixed scheduler allocation bounds remain those of v1.
+
+V2 unit checks compile with warnings as errors on GCC15.2 and Clang21.1.8 and
+pass218 assertions. They exercise measured exact/one-byte-under capture and
+preparation limits, refusal before upstream allocation, every preparation
+allocation failing in turn, complete refunds, retained captures/assets, reset
+against genuinely paused capture/preparation, concurrent count/byte admission,
+old-voice callback retirement, and strong resource lifetime through final weak
+control-block destruction. A paused final upstream free confirms count cannot
+be reused early. Asset-allocation guards observe no callback allocate/free;
+the unchanged v1 scheduler was independently checked with whole-allocation
+guards before this cohort.
+
+Both compiler regressions then matched the frozen original corpus exactly:
+18cases/252actions,13,004 float words and12,768 gain-call records, plus the
+complete observed metadata/clip/request/voice/envelope/clock/query state. Both
+unit and regression receipts have empty source postcheck changes. This supports
+the exercised DSP domain after the new allocation policy; budget refusal cases
+are independent native-policy checks, not claimed original behavior.
+
+Receipts are under
+`build-native-sjuni/audio-bank-budget-v2/{gcc-unit,llvm-unit,gcc-original,llvm-original}`.
+Reproduce with the analogous bundled LLVM path or:
+
+```powershell
+python game/native/audio_banks/v2/verify.py `
+  --cxx C:/msys64/mingw64/bin/g++.exe `
+  --output build-native-sjuni/audio-bank-budget-v2/gcc-unit
+python game/native/audio_banks/v2/compare_original.py `
+  --cxx C:/msys64/mingw64/bin/g++.exe `
+  --output build-native-sjuni/audio-bank-budget-v2/gcc-original
+```
+
+This closes the standalone Session's externally retained prepared-asset budget
+gap. Whole-call RPC/asset capture identity, aggregate bank/PCM selection and
+shutdown admission remain separate integration work. Packet capture and adapter
+queues must acquire their own declared bounded storage before allocation; they
+cannot be assumed covered merely because a later bank capture is charged.
