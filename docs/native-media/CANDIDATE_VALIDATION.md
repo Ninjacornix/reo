@@ -265,3 +265,12 @@ retain legacy global ownership. Reports are in each session's
 `pcm-analysis.json`, `movie-pacing-analysis.json/.md`,
 `movie-work-analysis.json/.md` and `controls-observation.json` beneath
 `build-native-sjuni/playtests/`.
+
+The [source difference review](PCM_V7_DIFFERENCE_REVIEW.md) verifies arithmetic,
+clock suppression and bank/master ordering in the selected source domain. It
+identifies repeated capacity-wide order/preflight validation and additional
+gain/control synchronization as source-work differences, without measuring their
+cost or assigning the gaps to them. Legacy dump/log work also differs despite
+equal environment values. Next performance comparisons need matched duration
+and diagnostic work plus bounded callback/queue/lock timestamps; source counts
+alone do not establish a bottleneck or a confirmed fix.
