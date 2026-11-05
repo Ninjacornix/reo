@@ -52,6 +52,13 @@
 #if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ADX_STEREO) && REO_BUILD_NATIVE_ADX_STEREO
 #include "overrides/native_adx_stereo/runtime_adapter.h"
 #endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_PCM) && REO_BUILD_NATIVE_PCM
+#include "ps2_syscalls.h"
+#include "overrides/native_pcm/runtime_adapter.h"
+#if !defined(PS2_RUNTIME_HAS_DTX_LAYOUT_SNAPSHOT) || !PS2_RUNTIME_HAS_DTX_LAYOUT_SNAPSHOT
+#error Native PCM requires the matching observed-layout dependency snapshot
+#endif
+#endif
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1341,6 +1348,21 @@ int main(int argc, char* argv[]) {
 #if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
     reo_native_resource_reads::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE,
                                          runtime, PS2Runtime::getIoPaths().cdRoot);
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_PCM) && REO_BUILD_NATIVE_PCM
+    if (const auto* requested = std::getenv("REO_NATIVE_PCM"); requested && !std::strcmp(requested, "1")) {
+        bool installed = false;
+        if (!std::strcmp(g.serial, "SLUS-20765") && g.entry_point == 0x00100008u) {
+            const auto layout = ps2_syscalls::dtxCompatLayoutSnapshot();
+            const auto proof = reo_native_pcm::ProfileProof::from_observed_file1(
+                layout.rpcSid, layout.urpcObjBase, layout.urpcObjLimit, layout.urpcObjStride,
+                layout.urpcFnTableBase, layout.urpcObjTableBase, layout.dispatcherFuncAddr);
+            if (proof)
+                installed = reo_native_pcm::install(runtime, *proof);
+        }
+        if (!installed)
+            std::fprintf(stderr, "[NATIVE-PCM] installation unavailable; inspect selection diagnostics\n");
+    }
 #endif
 #if defined(REO_GAME_FILE2)
     if (std::strcmp(g.serial, "SLUS-20984") == 0)

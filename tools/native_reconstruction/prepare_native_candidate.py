@@ -66,6 +66,13 @@ ADX_STEREO_UNITS = (
     ('native_adx_stereo_core', 'game/native/adx_stereo/adx_stereo.cpp'),
     ('native_adx_stereo_adapter', 'recomp/overrides/native_adx_stereo/runtime_adapter.cpp'),
 )
+PCM_BACKEND_UNITS = (
+    ('native_pcm_core', 'game/native/pcm/pcm.cpp'),
+    ('native_pcm_session_bridge', 'game/native/pcm_bridge/session_bridge.cpp'),
+    ('native_audio_output_owner', 'game/native/audio_output/audio_output_owner.cpp'),
+    ('native_audio_stream_provider', 'runtime/audio/native_stream_provider.cpp'),
+    ('native_pcm_backend', 'recomp/overrides/native_pcm/runtime_adapter.cpp'),
+)
 HEADER_ROOTS = ('game/', 'media/', 'network/', 'recomp/', 'runtime/', 'src/',
                 'tools/parallel_gs_backend/', 'tools/vu_whole_aot/',
                 'tools/source_instrumentation/')
@@ -222,7 +229,8 @@ def runtime_sources(dependency):
 
 
 def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolchain, raylib,
-                    disc_stream=False, resource_reads=False, adx_block=False, adx_stereo=False):
+                    disc_stream=False, resource_reads=False, adx_block=False, adx_stereo=False,
+                    pcm_backend=False):
     commit = Commit(root, revision)
     manifest, plan, compiler_proof = verify_carrier(kit)
     receipt = verify_dependency(dependency, dependency_receipt, commit, compiler_proof)
@@ -250,7 +258,7 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         source['source/third_party/PS2Recomp/' + name] = data
     selected_units = NEW_UNITS + (DISC_STREAM_UNITS if disc_stream else ()) + \
         (RESOURCE_READ_UNITS if resource_reads else ()) + (ADX_BLOCK_UNITS if adx_block else ()) + \
-        (ADX_STEREO_UNITS if adx_stereo else ())
+        (ADX_STEREO_UNITS if adx_stereo else ()) + (PCM_BACKEND_UNITS if pcm_backend else ())
     required = [n for _, n in selected_units] + [
         'recomp/overrides/native_cd_owner/runtime_adapter.h', 'game/native/tasks/serial_worker.hpp',
         'recomp/overrides/reo_cd_async.h', 'runtime/audio/reo_output_device.h']
@@ -270,6 +278,16 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         raise ValueError('Commit lacks the optional keyed mono ADX installation')
     if adx_stereo and 'reo_native_adx_stereo::install(runtime)' not in bootstrap:
         raise ValueError('Commit lacks the optional keyed stereo ADX installation')
+    if pcm_backend:
+        if 'reo_native_pcm::install(runtime,' not in bootstrap or 'dtxCompatLayoutSnapshot()' not in bootstrap:
+            raise ValueError('Commit lacks observed-profile native PCM installation')
+        syscall_header = source['source/third_party/PS2Recomp/ps2xRuntime/include/ps2_syscalls.h']
+        backend_header = source.get('source/third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h', b'')
+        if b'PS2_RUNTIME_HAS_DTX_LAYOUT_SNAPSHOT 1' not in syscall_header or b'PS2_RUNTIME_HAS_PCM_BACKEND_DISPATCH 1' not in backend_header:
+            raise ValueError('Native PCM requires matching dispatch and layout snapshot dependency source')
+        pcm_header = source['source/third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h']
+        if b'resetBeforeRuntimeRun' not in pcm_header:
+            raise ValueError('Native PCM requires the explicit pre-run configuration reset transaction')
     if resource_reads and ('reo_native_resource_reads::configure' not in bootstrap or
             'reo_native_resource_reads::tryRead' not in commit.read('recomp/overrides/reo_hw_bridge.cpp').decode('utf-8')):
         raise ValueError('Commit lacks the optional synchronous native read integration')
@@ -305,6 +323,9 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     if adx_stereo:
         for name in ('recomp/reo_bootstrap.cpp', 'recomp/overrides/reo_override.cpp'):
             unit_for(name)['options'].append('/DREO_BUILD_NATIVE_ADX_STEREO=1')
+    if pcm_backend:
+        template['options'].append('/DREO_BUILD_NATIVE_PCM=1')
+        unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_PCM=1')
     if resource_reads:
         for name in ('recomp/reo_bootstrap.cpp', 'recomp/overrides/reo_override.cpp', 'recomp/overrides/reo_hw_bridge.cpp'):
             unit_for(name)['options'].append('/DREO_BUILD_NATIVE_RESOURCE_READS=1')
@@ -315,8 +336,11 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     for identifier, name in selected_units:
         if identifier in ids or any('{work}/project/' + name in u['sources'] for u in plan['units']):
             raise ValueError('Duplicate candidate compilation unit: ' + name)
+        options = list(template['options'])
+        if (identifier, name) in PCM_BACKEND_UNITS:
+            options.append('/I{work}/project/third_party/PS2Recomp/ps2xRuntime/src/lib')
         plan['units'].append({'id': identifier, 'sources': ['{work}/project/' + name],
-                              'options': list(template['options'])})
+                              'options': options})
         ids.add(identifier)
     audio_options = [x for x in template['options'] if not x.startswith('/DREO_BUILD_NATIVE_')]
     audio_options += ['/DMA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_LOW_LATENCY=5', '/DMA_DEFAULT_PERIODS=2']
@@ -352,7 +376,7 @@ def prepare(args):
     commit, manifest, plan, receipt, compiler, updates = prepared_inputs(
         root, args.revision, kit, dependency, receipt_path, toolchain, raylib,
         disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads, adx_block=args.adx_block_adapter,
-        adx_stereo=args.adx_stereo_adapter)
+        adx_stereo=args.adx_stereo_adapter, pcm_backend=args.pcm_backend)
     result = {'schema': 1, 'root_revision': commit.revision, 'carrier_manifest_sha256': CARRIER_SHA,
               'preparer_sha256': sha(Path(__file__)),
               'dependency_receipt_sha256': sha(receipt_path), 'dependency_patch_count': receipt['applied_count'],
@@ -362,7 +386,8 @@ def prepare(args):
               'check_only': args.check_only, 'game_launched': False, 'build_started': False,
               'precompiled_ps2_runtime_reused': False}
     result['optional_adapters'] = dict(disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads,
-                                       adx_block=args.adx_block_adapter, adx_stereo=args.adx_stereo_adapter)
+                                       adx_block=args.adx_block_adapter, adx_stereo=args.adx_stereo_adapter,
+                                       pcm_backend=args.pcm_backend)
     if args.check_only:
         return result
     output.mkdir(parents=True)
@@ -433,6 +458,7 @@ def main():
     parser.add_argument('--resource-reads', action='store_true', help='Compile the opt-in synchronous exact PAK read adapter')
     parser.add_argument('--adx-block-adapter', action='store_true', help='Compile the opt-in keyed mono ADX block adapter')
     parser.add_argument('--adx-stereo-adapter', action='store_true', help='Compile the opt-in keyed stereo/downmix ADX adapters')
+    parser.add_argument('--pcm-backend', action='store_true', help='Compile the default-off bounded complete File1 PCM candidate')
     print(json.dumps(prepare(parser.parse_args()), indent=2))
 
 

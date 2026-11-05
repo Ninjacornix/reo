@@ -184,6 +184,10 @@ This is bounded integration evidence, not proof of universally smooth playback,
 unique-picture progress, subjective audio quality or which replacement improved
 timing. Background development checks and asset-cache/run order remain
 uncontrolled. Existing counters can miss repeated images and unsampled states.
+The player subsequently reported that they did not notice the earlier stutters
+in the last run. Its private `movie-smoother-user-observation.json` preserves
+that subjective observation alongside the owned process/build identity; it does
+not assign an exact timestamp or prove every playback state is covered.
 
 The next coherent candidate adds the reviewed provider close-order fix and
 bounded [movie-owner timing](../../tools/native_reconstruction/movie_timing/README.md).

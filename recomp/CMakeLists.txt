@@ -42,6 +42,7 @@ option(REO_BUILD_NATIVE_DISC_STREAM "Build the opt-in File1 native DVCI scalar a
 option(REO_BUILD_NATIVE_RESOURCE_READS "Build the opt-in Windows File1 synchronous exact PAK read adapter" OFF)
 option(REO_BUILD_NATIVE_ADX_BLOCK "Build the opt-in File1 keyed mono ADX block adapter" OFF)
 option(REO_BUILD_NATIVE_ADX_STEREO "Build the opt-in File1 keyed stereo/downmix ADX adapters" OFF)
+option(REO_BUILD_NATIVE_PCM "Build the opt-in bounded File1 native PCM backend" OFF)
 if(REO_BUILD_NATIVE_RESOURCE_READS AND (NOT WIN32 OR NOT REO_BUILD_NATIVE_RESOURCE_OWNER))
     message(FATAL_ERROR "Native resource reads require Windows and REO_BUILD_NATIVE_RESOURCE_OWNER")
 endif()
@@ -743,6 +744,26 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             overrides/native_resource_reads/runtime_adapter.cpp)
         target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_RESOURCE_READS=1)
         target_link_libraries(${TARGET_NAME} PRIVATE bcrypt runtimeobject)
+    endif()
+    if(REO_BUILD_NATIVE_PCM AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        if(NOT WIN32)
+            message(FATAL_ERROR "Native PCM candidate currently requires the pinned Windows provider")
+        endif()
+        set(_reo_native_pcm_math
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/pcm/pcm.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/pcm_bridge/session_bridge.cpp")
+        target_sources(${TARGET_NAME} PRIVATE ${_reo_native_pcm_math}
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/audio_output/audio_output_owner.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../runtime/audio/native_stream_provider.cpp"
+            overrides/native_pcm/runtime_adapter.cpp)
+        target_include_directories(${TARGET_NAME} PRIVATE
+            "${PS2RECOMP_DIR}/ps2xRuntime/src/lib")
+        target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_PCM=1)
+        if(MSVC)
+            set_property(SOURCE ${_reo_native_pcm_math} APPEND PROPERTY COMPILE_OPTIONS /fp:strict)
+        else()
+            set_property(SOURCE ${_reo_native_pcm_math} APPEND PROPERTY COMPILE_OPTIONS -ffp-contract=off)
+        endif()
     endif()
     if(WIN32)
         # A direct object supplies raylib audio before its archive is considered.

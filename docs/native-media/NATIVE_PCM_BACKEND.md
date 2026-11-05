@@ -3,8 +3,10 @@
 Status: binding and isolated checks implemented, 2026-11-05. This work does not
 show an installed native backend in a running game, actual audio-device output,
 whole-game domain admission or completed bank/RPC migration. Bootstrap/build
-wiring is a separate integration step; the reconstructed123 boot-order blocker
-below must be resolved before claiming activation.
+wiring and a matching full build remain integration requirements. The
+reconstructed123 boot-order blocker below now has the independently checked
+[explicit pre-run reset transaction](PCM_BOOT_SETUP.md) in public patch0123;
+actual game activation still needs the coherent rebuilt124 runtime/provider.
 
 The public entry is `reo_native_pcm::install(PS2Runtime&,const ProfileProof&)`
 in [runtime_adapter.h](../../recomp/overrides/native_pcm/runtime_adapter.h).
