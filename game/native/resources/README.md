@@ -31,12 +31,13 @@ sparse view can have a large 64-bit length without allocating its holes.
 
 The snapshot copies segment metadata and deep-copies referenced memory buffers,
 sharing each private copy across segments that originally shared that buffer.
-File sources are privately reopened through the existing `Source` constructor,
-with captured-size agreement checked. Private source metadata therefore cannot
-be changed by later edits to the caller's Source object. Its transient/open-on-
-demand setting is retained. Windows stored extended-path prefixes are converted
-back to constructor input form before that reopen, since reapplying the existing
-readablePath helper to its own result is not idempotent under MinGW filesystem.
+Adopted positioned providers are retained in private Source metadata, without
+reopening their diagnostic path labels. Legacy path sources are privately
+reopened through the existing `Source` constructor, with captured-size agreement
+checked. Later edits to the caller's Source metadata cannot change the view.
+Legacy transient/open-on-demand behavior is retained. Windows extended paths
+are converted back to constructor input before a legacy reopen, since applying
+the existing readablePath helper to its own result is not idempotent under MinGW.
 
 **Backing file bytes must remain externally immutable for the view lifetime.**
 This library neither snapshots file content nor continuously checks hashes,

@@ -50,9 +50,13 @@ ViewResult VirtualFileView::create(const reo::assets::VirtualFile& file) noexcep
                     return {Status::invalid_view, {}};
                 auto& source = sources[segment.source.get()];
                 if (!source) {
-                    source = std::make_shared<reo::assets::Source>(source_constructor_path(segment.source->path));
+                    if (segment.source->backend)
+                        source = std::make_shared<reo::assets::Source>(segment.source->path, segment.source->backend);
+                    else
+                        source = std::make_shared<reo::assets::Source>(source_constructor_path(segment.source->path));
                     if (source->size != segment.source->size) return {Status::source_failure, {}};
                     source->transient = segment.source->transient;
+                    source->traceReplacement = segment.source->traceReplacement;
                     if (source->transient) source->stream.close();
                 }
                 if (segment.sourceOffset > source->size || segment.size > source->size - segment.sourceOffset)

@@ -1,7 +1,9 @@
 #pragma once
 #include <algorithm>
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -9,6 +11,7 @@
 #include <memory>
 #include <mutex>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace reo::assets {
@@ -26,6 +29,18 @@ inline std::filesystem::path readablePath(const std::filesystem::path& path) {
 inline void require(bool ok, const char* message) {
     if (!ok) throw std::runtime_error(message);
 }
+// A retained provider, not an identity/immutability verifier. size() must remain
+// constant/nonblocking and bytes must remain immutable for its lifetime. read()
+// is positioned and safe across concurrent sharing Sources; it must write only
+// within the supplied n-byte output range,
+// return the actual count (never greater than n), or throw on failure. The caller
+// must retain its Source throughout a read. No provider method is called under
+// Source's legacy stream mutex.
+struct PositionedSource {
+    virtual ~PositionedSource() = default;
+    virtual uint64_t size() const noexcept = 0;
+    virtual size_t read(uint64_t offset, size_t bytes, void* out) const = 0;
+};
 struct Source {
     std::filesystem::path path;
     uint64_t size;
@@ -34,12 +49,24 @@ struct Source {
     bool traceReplacement = false;
     bool transient = false;
     mutable std::atomic<bool> traced{false};
+    const std::shared_ptr<const PositionedSource> backend;
     explicit Source(const std::filesystem::path& p)
         : path(readablePath(p)), size(std::filesystem::file_size(path)), stream(path, std::ios::binary) {
         require(stream.is_open(), "Asset source cannot be opened");
     }
+    // label is diagnostic metadata only: adoption performs no filesystem open.
+    Source(std::filesystem::path label, std::shared_ptr<const PositionedSource> provider)
+        : path(std::move(label)), size(provider ? provider->size() : 0), backend(std::move(provider)) {
+        require(bool(backend), "Asset positioned source is null");
+    }
     void read(uint64_t off, size_t n, void* out) const {
         require(off <= size && n <= size - off, "Asset read outside source");
+        if (backend) {
+            require(backend->read(off, n, out) == n, "Asset positioned source read failed or was short");
+            if (traceReplacement && !traced.exchange(true))
+                std::fprintf(stderr, "[ASSET-PAKS-1] replacement payload read: offset=%llu bytes=%zu\n", static_cast<unsigned long long>(off), n);
+            return;
+        }
         std::lock_guard guard(lock);
         stream.clear();
         if (!stream.is_open()) stream.open(path, std::ios::binary);

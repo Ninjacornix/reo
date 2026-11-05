@@ -21,8 +21,9 @@ automatic threads, runtime headers or new archive parsers.
 
 Nine focused synthetic groups pass, including owned nested subranges near the
 64-bit boundary without copying payloads. The combined standalone `game/native`
-CMake project builds four core/bridge/resource/worker suites, and all
-four pass CTest. These checks cover synthetic file/memory/gap reads, frozen
+CMake project now also includes the independent disc-stream scalar core and
+Windows file/manifest adapters. Seven suites pass CTest with both GCC and the
+pinned LLVM-MinGW compiler; these checks cover synthetic file/memory/gap reads, frozen
 metadata, malformed and 64-bit extents, failures, stale handles and provider
 lifetime while close/shutdown races an accepted read. The files backing mounted
 views must remain externally immutable; file identity/content is not continuously
@@ -52,3 +53,17 @@ The [request-owner implementation](REQUEST_OWNER_IMPLEMENTATION.md) adds the
 opt-in joinable worker and runtime stop/join boundary. Isolated checks pass;
 matching linked-candidate validation and mid-game reservation ownership remain
 pending before the new resource byte provider is connected.
+
+The [original-word DVCI oracle](DVCI_ORACLE.md) now supplies 51 cases from six
+owned function bodies. The independent
+[native controller](../../game/native/disc_stream/README.md) matches 178 calls,
+159 defined returns, 142 hook events and 462 complete state snapshots. Its hooks
+are scripted and non-reentrant; it does not own device I/O, stop or callbacks.
+
+[Retained source plumbing](../../tools/native_reconstruction/RETAINED_SOURCES.md)
+passes 84 checks, including existing-overlay byte/layout parity. A separate
+[Windows admission adapter](../../game/native/resources_windows/README.md)
+hashes and reads through one retained handle, and parses existing manifests
+through the OS JSON implementation. Its synthetic file and 121 manifest checks
+pass. Mounting verified real imports, connecting native request payload reads
+and validating actual media consumers remain separate integration gates.

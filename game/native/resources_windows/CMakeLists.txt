@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.20)
+project(reo_native_resources_windows LANGUAGES CXX)
+if(NOT WIN32)
+    message(FATAL_ERROR "This resource adapter requires Windows")
+endif()
+if(NOT TARGET reo_native_resources)
+    add_subdirectory(../resources native_resources)
+endif()
+find_package(Threads REQUIRED)
+
+add_library(reo_native_resources_windows STATIC pinned_file.cpp import_manifest.cpp)
+target_include_directories(reo_native_resources_windows PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+target_compile_features(reo_native_resources_windows PUBLIC cxx_std_20)
+target_compile_definitions(reo_native_resources_windows PRIVATE _WIN32_WINNT=0x0A00 NOMINMAX)
+target_link_libraries(reo_native_resources_windows PUBLIC reo_native_resources bcrypt runtimeobject)
+if(MSVC)
+    target_compile_options(reo_native_resources_windows PRIVATE /W4 /WX)
+else()
+    target_compile_options(reo_native_resources_windows PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
+option(REO_NATIVE_WINDOWS_RESOURCES_TESTS "Build Windows resource contract checks" ON)
+if(REO_NATIVE_WINDOWS_RESOURCES_TESTS)
+    enable_testing()
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_executable(pinned_file_tests pinned_file_tests.cpp)
+    target_compile_definitions(pinned_file_tests PRIVATE _WIN32_WINNT=0x0A00 NOMINMAX)
+    target_link_libraries(pinned_file_tests PRIVATE reo_native_resources_windows Threads::Threads)
+    add_test(NAME native_windows_pinned_file
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/native_reconstruction/verify_pinned_file.py
+            --executable $<TARGET_FILE:pinned_file_tests>)
+
+    add_executable(import_manifest_tests import_manifest_tests.cpp)
+    target_link_libraries(import_manifest_tests PRIVATE reo_native_resources_windows ole32 Threads::Threads)
+    add_test(NAME native_windows_import_manifest COMMAND import_manifest_tests)
+endif()
