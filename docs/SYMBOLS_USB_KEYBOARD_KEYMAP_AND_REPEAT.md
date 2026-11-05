@@ -1,0 +1,27 @@
+# USB keyboard key mapping and repeat queue
+
+Static File #1 US research, 2026-11-04. Main **SLUS_207.65**, SHA-256 **06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46**. Full original bodies, six512-byte halfword maps and two84-byte keypad tables reviewed. No input, game, RPC or build was run.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [0x1D6118](../recomp/config/output/sub_001D6118_0x1d6118.cpp) | `reset_keyboard_repeat_timer_and_four_entry_queue_indices_candidate` | Confirmed writes and reviewed consumers | Device record=pointer342844+38*index. Clears14 timer,34 queue count,2C producer,30 consumer. Does not clear repeat state10, last key20 or queued halfword storage. No index admission. |
+| [0x1D6148](../recomp/config/output/sub_001D6148_0x1d6148.cpp) | `enqueue_keyboard_repeat_halfword_in_four_entry_ring_candidate` | Confirmed bounded queue mechanics | Signed count34>=4 returns-1. Otherwise writes low16 a1 atrecord22+2*producer2C; increments producer, wraps when>=4, increments count, returns0. No local index, negative count/index or synchronization admission. |
+| [0x1D61B8](../recomp/config/output/sub_001D61B8_0x1d61b8.cpp) | `dequeue_keyboard_repeat_halfword_from_four_entry_ring_candidate` | Confirmed queue mechanics | Count34<=0 returns-1 without output. Reads halfrecord22+2*consumer30, writes caller half, increments/wraps consumer at4, decrements count, returns0. No device/output bounds check. |
+| [0x1D6220](../recomp/config/output/sub_001D6220_0x1d6220.cpp) | `copy_or_translate_nonzero_keyboard_halfwords_by_device_read_mode_candidate` | Confirmed dispatcher and count semantics | Record.word4==0 copies nonzero key halves unchanged;==1 calls1D6370(record.word8,low8 a1,low8 a2,key). Stops at first0 input or signed caller count, returns number processed. Unsupported mode returns0, no output. In-place conversion supported by callers; no terminator store or output-capacity admission. |
+| [0x1D6370](../recomp/config/output/sub_001D6370_0x1d6370.cpp) | `translate_keyboard_key_with_layout_shift_caps_and_keypad_markers_candidate` | Confirmed owned maps; encoding names partial | Layout0/1/2 selects256F58/257358/257758 plus200 when(a1&22)!=0. Key0->0; key>=100 returned unchanged. Otherwise map[key]:4000 calls1D64C8(low8 a2,key),8000 becomeskey|8000. a2 bit2 uppercases mapped a..z; uppercase A..Z plus bit2 and shift lowercases. Invalid layout logs owned diagnostic then can retain null table pointer; admitted callers separately bound layout<3. No host Unicode substitution proven. |
+| [0x1D64C8](../recomp/config/output/sub_001D64C8_0x1d64c8.cpp) | `map_keypad_key_by_numlock_bank_and_preserve_extended_marker_candidate` | Confirmed complete two21-record tables | a0 bit0 selects257B58 or+54, each21 records of{byte key,padding,half result}. Low8 key match returns result|4000; missing returns original low8 key. Bank0 keypad59..63 yields extended navigation codes; bank1 yields digits1..9,0 and dot. Operators54..58 map slash/star/minus/plus/newline in both. Does not remove embedded8000 markers. |
+| [0x1D6538](../recomp/config/output/sub_001D6538_0x1d6538.cpp) | `set_keyboard_raw_report_mode_and_reset_selected_local_history_fields_candidate` | Confirmed decoder field and exact reset scope | Signed device<count, unsigned mode<2, errors-B/-C. Unchanged record.C simply writes mode/returns0. Changed mode clears record14,2C,30,last key20 and global342850, then writesC. Does not clear record34 queue count or all previous report bytes in this body. Negative device index lacks local rejection. |
+| [0x1D65A8](../recomp/config/output/sub_001D65A8_0x1d65a8.cpp) | `request_usb_keyboard_rpc_six_and_clear_local_repeat_queue_candidate` | Confirmed numeric RPC; original API name unknown | Requires semaphore and unsigned device<count; locks, sends op6 async with request10 and zero response size, completion callback1D59B8. Queue failure logs existing sceUsbKbRead string and returns-2 without local unlock. Success clears device34 count,10 state,14 timer,20 last key,2C/30 queue indices. Does not record pending opcode6 or output pointer in this body; decoder table only covers1..5. Public API name not inferred from reused error string. |
+
+Offsets/sizes and key values are hexadecimal; queue capacity4, table record count21 and key count256 are decimal. All six maps have255 nonzero entries and21 keypad4000 markers. Extended8000 markers count181/181,181/180,180/180 for layouts0/1/2 unshifted/shifted respectively. Layout0 key4 maps61/41, key1F32/40; layout1 key1F32/22. Layout2 includes byte-valued characters outside ASCII, so identical numeric width does not establish Unicode encoding.
+
+| Owned map address | SHA-256 of all512 bytes |
+| --- | --- |
+|256F58|cecb0bf7699729575ee9707ac7a469e27f956edd922b2f058ca28231e1ae03c6|
+|257158|fd4399c49af8b2efc53bd462e909c2ae6392e29159ab72255bbed946c4267e69|
+|257358|1a2da8033d7e4a1f08fca22627c8e4861baec6c85b69bdb679d6a426982c8182|
+|257558|3277a264117b2a862fff2eb45acb59b28bcebf49732332881aba5d64c927deae|
+|257758|b2802a826a771065a35551e417cac48ff92d1e52461dbc00f54812becd738530|
+|257958|7bcaeb6bbfe83a1bdc62d37389954204f600cc519d96ec90eb79ebb3ca154116|
+
+Related: [keyboard reports and RPC](SYMBOLS_USB_KEYBOARD_RPC_AND_REPORTS.md), [game keyboard polling](SYMBOLS_USB_KEYBOARD_GAME_POLLING.md), [central index](FUNCTION_INDEX.md).

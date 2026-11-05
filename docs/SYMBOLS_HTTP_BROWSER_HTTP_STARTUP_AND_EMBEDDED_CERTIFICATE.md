@@ -1,0 +1,13 @@
+# HTTP overlay browser startup and embedded certificate configuration
+
+Static owned o6 `nethttp.bin`, runtime ID 6/base `6E0000`, SHA-256 `68dbc8f16c5d0cc8a43205beb86ddac405a12c1d6b843b5961211bbe6ec30117`. Three complete original catalogue bodies and the entire embedded PEM span reviewed. Values are hexadecimal. No target execution, filesystem/endpoint activity or certificate validation. External5Axxxx calls are numeric cross-overlay bindings unless a runtime image selection establishes the o3 interpretation.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o6 0x732830](../recomp/config/output_ovl/o6/o6_00732830_0x732830.cpp) | `get_first_embedded_browser_certificate_length_840` | Confirmed literal index/read and sole startup consumer | Initializes local index0, returns word739CF0[index]=348 (840 decimal). Startup pairs it with pointer7398F0. No payload parse here. |
+| [o6 0x732860](../recomp/config/output_ovl/o6/o6_00732860_0x732860.cpp) | `initialize_browser_http_transport_allocator_hooks_and_single_embedded_trust_certificate` | Confirmed full reset/setup/status/SSL-config sequence; external overlay binding qualified | Clears globals740790/788/778/780; zeros exactly oneC0-byte request slot at shared context*(67C2B0)+4F8BC. Calls resident socket-adapter init1DA370, external5A3BA0 arena initialization candidate. Installs HTTP malloc5A3D40,realloc5A3E80,free5A3E10 through6EB468/490/4B8. Calls library6E3108; negative returns-1. Builds one(pointer7398F0,length732830) record and calls6EB8F8(selector0,count1,&record,NULL,NULL), normalizes negative result to-1,nonnegative0. No request send or endpoint attachment. |
+| [o6 0x732940](../recomp/config/output_ovl/o6/o6_00732940_0x732940.cpp) | `shutdown_browser_http_ssl_globals_and_library_ignoring_child_statuses` | Confirmed complete two-child/return flow | Calls6EC140 SSL global cleanup then6E3170 HTTP subsystem/semaphore shutdown, ignores both statuses, returns0. Does not clear browser globals/request slot here. |
+
+Owned PEM `7398F0..739C38`,348 bytes, SHA-256 `90cca7afc8dd6c9b88543ec5fef2b842729106eeb47e2efb34cb1bbb33dcdd16`; begins `-----BEGIN CERTIFICATE-----` plus CRLF, ends corresponding END line plus CRLF. Four following bytes zero. The certificate's validity, issuer and actual negotiated use are not inferred from these framing bytes. [Memory certificate configuration](SYMBOLS_HTTP_SSL_SETUP_HANDSHAKE.md), [allocator hooks](SYMBOLS_HTTP_PAGE_ARENA_ALLOCATOR.md), and [HTTP lifecycle](SYMBOLS_HTTP_QUERY_LIFECYCLE.md) provide full callee contracts. No automatic connection was made.
+
+Audit: 67 verified instruction words, zero conflicts, 6 omitted zero words (NOP padding), zero omitted nonzero words.

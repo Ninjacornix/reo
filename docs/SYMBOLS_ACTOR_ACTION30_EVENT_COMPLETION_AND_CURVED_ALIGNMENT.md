@@ -1,0 +1,16 @@
+# Action30 event completion and curved pose alignment
+
+Static File #1 US owned o2 analysis, 2026-11-05. Two complete original bodies; [identity](FUNCTION_INDEX.md). Numeric offsets/phases hexadecimal, timing values decimal. No actor movement or event completion executed.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o2 0x58A210](../recomp/config/output_ovl/o2/o2_0058A210_0x58a210.cpp) | `play_action30_descriptor709298_then_complete_matching_event_and_restore_idle` | Confirmed full cancel/phase/event ordering | Everycall54A OR1F,byte32=FF,6673C0 consumedflag immediatelyidle-reset below. Normalphase0sets54F30,D10=1,savespose,A++,zero4E4XYZ,fallsphase1:A++,58C7F0 flags82,descriptor709298/f12=0/blend10,activate. Phase2tick1 signedlowbyte==1 setsA=FF. FF5A20C0 routesmatchingeventcompletion,thenidle-reset. Otherphasesreturn. Cancellationdoesnotrouteeventcompletion. |
+| [o2 0x58A3D0](../recomp/config/output_ovl/o2/o2_0058A3D0_0x58a3d0.cpp) | `align_action30_pose_to_saved_goal_plus_motion_delta_then_complete_event` | Confirmed full curved XYZ/yaw flow, timer admission and event distinction | Common54A OR1F,byte32=FF;6673C0 successimmediatelyidle-reset. Phase0setsA1,54F30,D10=1,savespose,zero4E4XYZ,cachesgoalC34/C3C fromABC/AC4,goalYfromcurrentY,goalyawC4C=lowAC8,fallsphase1. Phase1enters2,flags82,descriptor7092A0/f12=0/blend10,copiescurrentXYZ tostartC40, yawtoC4E,timer12=20 if3243CC0 else10.1925C0(out,word(model34+824),start0,end20) evaluatesmotiontranslationdifference;rotateXZby6.2831855*unsignedgoalyaw/65536,addXYZdelta togoalC34. No explicitbankactivationhere. Phase2oldtimer!=0 stores--timer,useselapsed=clockduration-newtimer andduration20/10 to665E60 XYZ curve and665FC0 wrappedyaw curve,zeroes4E4XYZ;newtimer0snapsgoalXYZ/yaw. Oldtimer0skipscurve/snap. Everyphase2callthen ticks1; signedlowbyte>0 setsA=FF. FF5A20C0 eventcompletionthenidle-reset. No timernegative rejection, time ratio clamp or alteredmotiondeltaendwhenclockduration10. |
+
+Idle-reset in both bodies clears54F and548bit1,setsprimary1/secondary0/A1/B0,savespose667370,selects5D4CF0 motion2050/f12=0/blend10,activates58C7B0. Event completion5A20C0 occurs only the normal terminalFF path, not early cancellation.
+
+1925C0 mutates a shared resource pointer while resolving motion; it is not a pure matrix translation extract.665E60 normalizesXYZdelta and uses the original cubic alignment curve;665FC0 narrows signedangle differences and guest FP conversion in their original order. A host linear interpolation would need independent equivalence work.
+
+Owned709298[16] descriptor bytes`10000000900390031000000086038603`,consumedmotionhalf6=0390/0386, SHA-256 `8929ba0813fa4eaa7d85c971df51c40aa6e2ddbbe7d23fe5fcec5d6121d5da3e`.73E068 float6.2831855 bytes`db0fc940`, SHA-256 `12d85026b5109a3119231704608d5991a63d8d397d2867a9fc522305810ddb76`.
+
+[Sibling action30 variants](SYMBOLS_ACTOR_ACTION_2A_30_MOTION_AND_RESET_VARIANTS.md), [event/task contracts](SYMBOLS_TASK_FLAGS.md), [animation](SYMBOLS_ANIMATION.md) and [pose alignment protocols](SYMBOLS_ACTOR_SIDE_PROBE_MOTION_AND_TURN_SEQUENCES.md) provide adjacent evidence. No runtime duration, visual defect or measured bottleneck is asserted.

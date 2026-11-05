@@ -1,0 +1,361 @@
+# Owned scene matrix program and key tables
+
+Static File #1 US data audit, 2026-11-04. Addresses, program/group IDs and raw
+event values hexadecimal; key counts and time values decimal. No execution,
+attachment, build or replay. Physical spans are reviewed evidence, not runtime
+index admission or original interaction names.
+
+Owned `build-function-index/owned-overlays/o2.bin`, base570000, SHA256
+`45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226`.
+
+The 36 program pointers at721AB0 refer to fixed eight-byte streams beginning
+721990. Each reviewed stream contains transform kind0..3, one or more curve
+group bytes, FF terminator and padding. Maximum referenced group is3A. The
+59 reviewed groups each have four curve variants and four optional sound lists.
+Runtime selectors are not independently bounded by the selection functions.
+
+| Physical span | SHA256 |
+| --- | --- |
+| 7218D0 length80 | `c422c85a2078a0ae6af120dcc792dbef89984e9d939a3d6efc59a3f2542ef3e3` |
+| 721950 length40 | `cb0c880ac0b359d139d8273059355eb87babc583bcb9e7f4eb8a4c5b861c5fd0` |
+| 721990 length120 | `2b470800f2b5b12201f45c0271fa6a8f3681ec4952773eaf2daf33a9873f4430` |
+| 721AB0 length90 | `f0294ad9a212fe579ae2958b2d624ec9081a8d774a2a7e1c4dfd098d7253af73` |
+| 721B40 length3B0 | `293b7a1533dcfb201f480029f19822769958466f1ca20a625617bd50f0cea640` |
+| 721FE0 length3B0 | `6ec917979d57174dce1908bec37160b3541d4b11adc80abaac5d09343c0a2c44` |
+
+Program bytes: first byte is transform mode; remaining listed bytes are curve
+groups in order. FF is a terminator, excluded from group listing.
+
+| Program | Pointer | Mode | Groups |
+| --- | --- | --- | --- |
+| 0 | 721990 | 0 | 0,F,37,38 |
+| 1 | 721998 | 0 | 1,10,39,3A |
+| 2 | 7219A0 | 0 | 2 |
+| 3 | 7219A8 | 0 | 3 |
+| 4 | 7219B0 | 2 | 6,12,7 |
+| 5 | 7219B8 | 2 | 8 |
+| 6 | 7219C0 | 2 | 9 |
+| 7 | 7219C8 | 0 | F,37,38 |
+| 8 | 7219D0 | 0 | 10,39,3A |
+| 9 | 7219D8 | 2 | 12,7 |
+| A | 7219E0 | 0 | D,F,4 |
+| B | 7219E8 | 0 | E,10,5 |
+| C | 7219F0 | 0 | 27,28,15 |
+| D | 7219F8 | 0 | 29,2A,16 |
+| E | 721A00 | 0 | 2B,2C,17 |
+| F | 721A08 | 0 | 2D,2E,18 |
+| 10 | 721A10 | 0 | 13 |
+| 11 | 721A18 | 2 | 14 |
+| 12 | 721A20 | 0 | 15 |
+| 13 | 721A28 | 0 | 16 |
+| 14 | 721A30 | 0 | 17 |
+| 15 | 721A38 | 0 | 18 |
+| 16 | 721A40 | 1 | 19,1C,1A |
+| 17 | 721A48 | 1 | 1C,1A |
+| 18 | 721A50 | 2 | 6,C |
+| 19 | 721A58 | 1 | 19,1B |
+| 1A | 721A60 | 2 | C |
+| 1B | 721A68 | 1 | 1B |
+| 1C | 721A70 | 3 | 1D |
+| 1D | 721A78 | 0 | 27,28,1E,2F,30 |
+| 1E | 721A80 | 0 | 29,2A,1F,31,32 |
+| 1F | 721A88 | 0 | 2B,2C,20,33,34 |
+| 20 | 721A90 | 0 | 2D,2E,21,35,36 |
+| 21 | 721A98 | 2 | 6,24,22 |
+| 22 | 721AA0 | 1 | 19,25,23 |
+| 23 | 721AA8 | 0 | 26,F,4 |
+
+All64 physical metadata pairs7218D0 and remap bytes721950:
+
+| Index | Metadata bytes | Direct remap |
+| --- | --- | --- |
+| 0 | 1,2 | 11 |
+| 1 | 1,2 | 11 |
+| 2 | 0,0 | 11 |
+| 3 | 0,0 | 11 |
+| 4 | 1,0 | A |
+| 5 | 1,0 | B |
+| 6 | 1,2 | 11 |
+| 7 | 1,0 | C |
+| 8 | 1,2 | 11 |
+| 9 | 1,0 | C |
+| A | 2,2 | A |
+| B | 2,2 | B |
+| C | 2,2 | C |
+| D | 1,2 | 11 |
+| E | 1,2 | 11 |
+| F | 2,2 | A |
+| 10 | 2,2 | B |
+| 11 | 0,0 | 11 |
+| 12 | 2,2 | C |
+| 13 | 0,0 | 11 |
+| 14 | 2,2 | 14 |
+| 15 | 2,2 | 15 |
+| 16 | 2,2 | 16 |
+| 17 | 2,2 | 17 |
+| 18 | 2,2 | 18 |
+| 19 | 1,2 | 11 |
+| 1A | 1,0 | 1B |
+| 1B | 2,2 | 1B |
+| 1C | 2,2 | 1B |
+| 1D | 0,0 | 11 |
+| 1E | 2,2 | 15 |
+| 1F | 2,2 | 16 |
+| 20 | 2,2 | 17 |
+| 21 | 2,2 | 18 |
+| 22 | 1,0 | C |
+| 23 | 1,0 | 1B |
+| 24 | 2,2 | C |
+| 25 | 2,2 | 1B |
+| 26 | 1,2 | 11 |
+| 27 | 1,1 | 11 |
+| 28 | 2,2 | 15 |
+| 29 | 1,1 | 11 |
+| 2A | 2,2 | 16 |
+| 2B | 1,1 | 11 |
+| 2C | 2,2 | 17 |
+| 2D | 1,1 | 11 |
+| 2E | 2,2 | 18 |
+| 2F | 2,2 | 15 |
+| 30 | 1,0 | 11 |
+| 31 | 2,2 | 16 |
+| 32 | 1,0 | 11 |
+| 33 | 2,2 | 17 |
+| 34 | 1,0 | 11 |
+| 35 | 2,2 | 18 |
+| 36 | 1,0 | 11 |
+| 37 | 2,2 | A |
+| 38 | 1,0 | 11 |
+| 39 | 2,2 | B |
+| 3A | 1,0 | 11 |
+| 3B | 0,0 | 0 |
+| 3C | 0,0 | 0 |
+| 3D | 0,0 | 0 |
+| 3E | 0,0 | 0 |
+| 3F | 0,0 | 0 |
+
+Curve and sound pointer groups:
+
+| Group | Four curve pointers | Four sound pointers (0 means absent) |
+| --- | --- | --- |
+| 0 | 720380,720460,720BD0,720D90 | 721EF0,721EF0,721EF0,721EF0 |
+| 1 | 720410,7204C0,720C70,720E20 | 721EF0,721EF0,721EF0,721EF0 |
+| 2 | 720520,720600,720CB0,720E80 | 721F00,721F00,721F00,721F00 |
+| 3 | 720590,720690,720D20,720F10 | 721F00,721F00,721F00,721F00 |
+| 4 | 720740,720740,720740,720740 | 721F10,721F10,721F10,721F10 |
+| 5 | 7207D0,7207D0,7207D0,7207D0 | 721F30,721F30,721F30,721F30 |
+| 6 | 7211C0,7211C0,7211C0,7211C0 | 721EF0,721EF0,721EF0,721EF0 |
+| 7 | 7211E0,7211E0,7211E0,7211E0 | 721F70,721F70,721F70,721F70 |
+| 8 | 721340,721340,721340,721340 | 0,0,0,0 |
+| 9 | 721420,721420,721420,721420 | 0,0,0,0 |
+| A | 720A40,720A40,720A40,720A40 | 0,0,0,0 |
+| B | 720A60,720A60,720A60,720A60 | 0,0,0,0 |
+| C | 721200,721200,721200,721200 | 0,0,0,0 |
+| D | 7210F0,7210F0,7210F0,7210F0 | 721EF0,721EF0,721EF0,721EF0 |
+| E | 721140,721140,721140,721140 | 721EF0,721EF0,721EF0,721EF0 |
+| F | 720A80,720A80,720A80,720A80 | 0,0,0,0 |
+| 10 | 720AA0,720AA0,720AA0,720AA0 | 0,0,0,0 |
+| 11 | 720AC0,720AC0,720AC0,720AC0 | 0,0,0,0 |
+| 12 | 721220,721220,721220,721220 | 0,0,0,0 |
+| 13 | 7214E0,7214E0,721540,721540 | 721F50,721F50,721F50,721F50 |
+| 14 | 7214C0,7214C0,7214C0,7214C0 | 0,0,0,0 |
+| 15 | 721700,721700,721700,721700 | 0,0,0,0 |
+| 16 | 721700,721700,721700,721700 | 0,0,0,0 |
+| 17 | 721720,721720,721720,721720 | 0,0,0,0 |
+| 18 | 721720,721720,721720,721720 | 0,0,0,0 |
+| 19 | 721280,721280,721280,721280 | 721EF0,721EF0,721EF0,721EF0 |
+| 1A | 7212A0,7212A0,7212A0,7212A0 | 721F70,721F70,721F70,721F70 |
+| 1B | 7212C0,7212C0,7212C0,7212C0 | 0,0,0,0 |
+| 1C | 7212E0,7212E0,7212E0,7212E0 | 0,0,0,0 |
+| 1D | 721510,721510,721570,721570 | 721F50,721F50,721F50,721F50 |
+| 1E | 721890,721890,721890,721890 | 0,0,0,0 |
+| 1F | 721890,721890,721890,721890 | 0,0,0,0 |
+| 20 | 7218B0,7218B0,7218B0,7218B0 | 0,0,0,0 |
+| 21 | 7218B0,7218B0,7218B0,7218B0 | 0,0,0,0 |
+| 22 | 721240,721240,721240,721240 | 721F70,721F70,721F70,721F70 |
+| 23 | 721300,721300,721300,721300 | 721F70,721F70,721F70,721F70 |
+| 24 | 721260,721260,721260,721260 | 0,0,0,0 |
+| 25 | 721320,721320,721320,721320 | 0,0,0,0 |
+| 26 | 720AE0,720B70,720FC0,721060 | 0,0,0,0 |
+| 27 | 7215A0,7215A0,7215A0,7215A0 | 721F60,721F60,721F60,721F60 |
+| 28 | 7215F0,7215F0,7215F0,7215F0 | 0,0,0,0 |
+| 29 | 7215A0,7215A0,7215A0,7215A0 | 721F60,721F60,721F60,721F60 |
+| 2A | 7215F0,7215F0,7215F0,7215F0 | 0,0,0,0 |
+| 2B | 721650,721650,721650,721650 | 721F60,721F60,721F60,721F60 |
+| 2C | 7216B0,7216B0,7216B0,7216B0 | 0,0,0,0 |
+| 2D | 721650,721650,721650,721650 | 721F60,721F60,721F60,721F60 |
+| 2E | 7216B0,7216B0,7216B0,7216B0 | 0,0,0,0 |
+| 2F | 721740,721740,721740,721740 | 0,0,0,0 |
+| 30 | 7217A0,7217A0,7217A0,7217A0 | 721FC0,721FC0,721FC0,721FC0 |
+| 31 | 721740,721740,721740,721740 | 0,0,0,0 |
+| 32 | 7217A0,7217A0,7217A0,7217A0 | 721FC0,721FC0,721FC0,721FC0 |
+| 33 | 7217C0,7217C0,7217C0,7217C0 | 0,0,0,0 |
+| 34 | 721850,721850,721850,721850 | 721FD0,721FD0,721FD0,721FD0 |
+| 35 | 7217C0,7217C0,7217C0,7217C0 | 0,0,0,0 |
+| 36 | 721850,721850,721850,721850 | 721FD0,721FD0,721FD0,721FD0 |
+| 37 | 7208B0,7208B0,7208B0,7208B0 | 721F80,721F80,721F80,721F80 |
+| 38 | 720910,720910,720910,720910 | 721F90,721F90,721F90,721F90 |
+| 39 | 720950,720950,720950,720950 | 721FA0,721FA0,721FA0,721FA0 |
+| 3A | 7209C0,7209C0,7209C0,7209C0 | 721FB0,721FB0,721FB0,721FB0 |
+
+Unique curve key intervals: every pointer and complete interval through the
+first signed time=-1 record remains inside the owned file. Every curve has
+2..27 real keys with strictly increasing real times; no zero adjacent duration
+appears in these owned curves. Float values and guest arithmetic are not
+replaced or normalized. The final sentinel record is included in each digest.
+
+| Curve | Real keys | First / last time | End exclusive | SHA256 |
+| --- | --- | --- | --- | --- |
+| 720380 | 16 | 0 / 130 | 720408 | `8e04200a5d260e08fdc23b89aca28ef7fe78f029f5ca92d778e9ba2db982b953` |
+| 720410 | 9 | 0 / 120 | 720460 | `99ffa7513a852a6421866387f598c36ed473658d4e664ddc91ec199ecb6cd136` |
+| 720460 | 11 | 0 / 160 | 7204C0 | `b70215d6556cb44ad8067b9888a2545f7a0554800a08b6383f13000c0f47c82b` |
+| 7204C0 | 11 | 0 / 100 | 720520 | `962fe9a6c62793c469c9cdeac58daa3fdc0c2e5aba615465c49d763cca4b779e` |
+| 720520 | 13 | 0 / 102 | 720590 | `1b69902a642acff8194215f9bc4fdcab5d2b3745e00de8c648a144e59f83a172` |
+| 720590 | 13 | 0 / 102 | 720600 | `83fae68eaa03b54cfa91c6d7e7ddc445bb7e1fd0b603c55dd946fd316fad3a81` |
+| 720600 | 17 | 0 / 90 | 720690 | `6a6e549a11c94a03d8ec56ac58dc18ae48eface32091f586ec4bc64dfc316eeb` |
+| 720690 | 21 | 0 / 92 | 720740 | `c0c72f477364bf4a05a747507f96f3935e9f3dc6009b4a2b4ff6502e9b023f10` |
+| 720740 | 17 | 0 / 40 | 7207D0 | `92cae7a51b1be65e9332024df09daa5cf28bd041a7897f6b0b71ee3d05e765a6` |
+| 7207D0 | 27 | 0 / 50 | 7208B0 | `281bc0e0d030fb02b1fd69b63919813f5c26313a0690ceda8842837ddcb51e01` |
+| 7208B0 | 11 | 0 / 20 | 720910 | `97fc3881bcb3a084c3b50c873d9ebb9e31155cfbd13c6949fd525b9901018366` |
+| 720910 | 7 | 0 / 19 | 720950 | `9dc3ba0645856bfe2f8a8e2249a2f41553ca69f004a74bd7fb66874a69d2a953` |
+| 720950 | 13 | 0 / 33 | 7209C0 | `c8df52808eb7aa0ccf3726e9334b63519f4f906d8b05f0f42ba7733780cc4153` |
+| 7209C0 | 15 | 0 / 16 | 720A40 | `6712c234d8451e3b77fcf0f95c6949215dd87703638cfd532ec5782235af5ab3` |
+| 720A40 | 2 | 0 / 1 | 720A58 | `91d27f5a1041fd91d8d532dc53ac4bca779704ae9a3174bf7f40c92af0739e6e` |
+| 720A60 | 2 | 0 / 1 | 720A78 | `91d27f5a1041fd91d8d532dc53ac4bca779704ae9a3174bf7f40c92af0739e6e` |
+| 720A80 | 2 | 0 / 180 | 720A98 | `f18aab22bf50708f415c8ee6260e48909e92318950d79d1b3dbe33d2e4146509` |
+| 720AA0 | 2 | 0 / 180 | 720AB8 | `f18aab22bf50708f415c8ee6260e48909e92318950d79d1b3dbe33d2e4146509` |
+| 720AC0 | 2 | 0 / 1 | 720AD8 | `6bd670a2aeae70ab4306325e0c35ae4f6797f1f8cb1c6c1e5109c3125ffb9e7d` |
+| 720AE0 | 16 | 0 / 130 | 720B68 | `8e04200a5d260e08fdc23b89aca28ef7fe78f029f5ca92d778e9ba2db982b953` |
+| 720B70 | 11 | 0 / 160 | 720BD0 | `b70215d6556cb44ad8067b9888a2545f7a0554800a08b6383f13000c0f47c82b` |
+| 720BD0 | 19 | 0 / 180 | 720C70 | `8cd608065ddae031fa3c2f2c2ff645c22789ab6730ae36e9a663420b2db4aba1` |
+| 720C70 | 6 | 0 / 136 | 720CA8 | `a99274d896dd1167ecd8431c4ca1b3e44179edfc3eaee80a3acf81b17bc4e586` |
+| 720CB0 | 13 | 0 / 102 | 720D20 | `1b69902a642acff8194215f9bc4fdcab5d2b3745e00de8c648a144e59f83a172` |
+| 720D20 | 13 | 0 / 102 | 720D90 | `83fae68eaa03b54cfa91c6d7e7ddc445bb7e1fd0b603c55dd946fd316fad3a81` |
+| 720D90 | 17 | 0 / 178 | 720E20 | `e11cf46c18b4dde626cea1ba7913ca64a08f4cc8500eecfd64119169d57f20c4` |
+| 720E20 | 10 | 0 / 134 | 720E78 | `c6df4db7de4cacebaa45f16d85919607652a39384265acae68376e439342d654` |
+| 720E80 | 17 | 0 / 90 | 720F10 | `6a6e549a11c94a03d8ec56ac58dc18ae48eface32091f586ec4bc64dfc316eeb` |
+| 720F10 | 21 | 0 / 90 | 720FC0 | `3ec8c90604e453e75aecdfcfb7efe97c46ede8f9c8a4d3a66b4a974097f0685b` |
+| 720FC0 | 19 | 0 / 180 | 721060 | `8cd608065ddae031fa3c2f2c2ff645c22789ab6730ae36e9a663420b2db4aba1` |
+| 721060 | 17 | 0 / 178 | 7210F0 | `e11cf46c18b4dde626cea1ba7913ca64a08f4cc8500eecfd64119169d57f20c4` |
+| 7210F0 | 9 | 0 / 154 | 721140 | `30d329ec35beec5fab405456370849c9500a255d45b6637eb22c292506420426` |
+| 721140 | 14 | 0 / 120 | 7211B8 | `5a0434e561b6df3f5b120804814f5b7b62ca2d5200c4ad84d6ff9c499324f45d` |
+| 7211C0 | 2 | 0 / 60 | 7211D8 | `a5e87b4eaa346e6ca9fda34835d4afcecd006859389492165c0c0d517585e844` |
+| 7211E0 | 2 | 0 / 60 | 7211F8 | `127df0b0a7124463c511b3e40a03b47749a82b69829391bf5ab9c1e0a1f8f363` |
+| 721200 | 2 | 0 / 1 | 721218 | `c4e6a166f5dd43baaf22cef7f1c247f43fad870af93f7d93a24c17fb0b4f5d6a` |
+| 721220 | 2 | 0 / 210 | 721238 | `674f4fe91f3f12651ebc69244b743037b7a461b0e2b2c56863a9cc637c16e8a5` |
+| 721240 | 2 | 0 / 70 | 721258 | `323463423c063aba06778f748bb3cd1039735f579e636bced00e66ed5122569e` |
+| 721260 | 2 | 0 / 360 | 721278 | `37c96dbc8aac89a20ec3f7f86594d8409128d51afd057ebe5bfd6b30b02d9644` |
+| 721280 | 2 | 0 / 60 | 721298 | `8747c488c50c5cfe8488274fabd453313ad8bfc3ec42d90494bea209e19ab486` |
+| 7212A0 | 2 | 0 / 60 | 7212B8 | `080344be9aee6fd85cd294d7b8155614e5e6f3814cc25906c2737e24e14ffda1` |
+| 7212C0 | 2 | 0 / 1 | 7212D8 | `81db88ed2f4403420dc0dc8a0a6483f155041e1cb3018767f2afb0151e2f091e` |
+| 7212E0 | 2 | 0 / 180 | 7212F8 | `b532eedb9f06eafdaa0639d73f5e488b49bc144f69093c1d10b253402e8ed2ce` |
+| 721300 | 2 | 0 / 70 | 721318 | `3d7e4f70e68b27d218c7748591950fbb683b98b0b37687c4cfbdb221498d2653` |
+| 721320 | 2 | 0 / 360 | 721338 | `0f1de0e16ea3337a38082a5d2b7cd000fb2936b7e95f4238bff375184279a925` |
+| 721340 | 26 | 0 / 320 | 721418 | `370fcdfd73b9497e043c07cfca87e76d60ba329867d3e773b86980547a36f720` |
+| 721420 | 19 | 0 / 270 | 7214C0 | `bd9d99b791867620df20e8ef1152d3bf5d8e11e70beb9d117149b1195098a104` |
+| 7214C0 | 2 | 0 / 1 | 7214D8 | `c4e6a166f5dd43baaf22cef7f1c247f43fad870af93f7d93a24c17fb0b4f5d6a` |
+| 7214E0 | 4 | 0 / 6 | 721508 | `663147333d76c7cc5d5d098b82e76eb6e98ef5a2289a0b81b1732cb02903d740` |
+| 721510 | 4 | 0 / 6 | 721538 | `6d8366cbc4c6d61edd643152f27a035b9407881a46baba518e4e59bd63457372` |
+| 721540 | 4 | 0 / 6 | 721568 | `5483167195fea1df450439082eca60cbac0c3c75ddee46e8a635937f2b5e09f5` |
+| 721570 | 4 | 0 / 6 | 721598 | `b25e7dd3ea1f13fe31959faafc591aee0464b77c87ddbecbe74fb328c71d7e48` |
+| 7215A0 | 9 | 0 / 74 | 7215F0 | `6352868b27a9ff6fdf3c85664b7d9341f79008fc362c36b72db34dca7484de02` |
+| 7215F0 | 10 | 0 / 75 | 721648 | `e4d4ea968ff8f4d1ba0f87a894ca6edfd6552e1a32af41ab284d2a73a594f71a` |
+| 721650 | 10 | 0 / 83 | 7216A8 | `ba29fe4e733ccffc8d1b0402a5dd316fad67975bf4e6bcc0864896754ca77c0a` |
+| 7216B0 | 9 | 0 / 52 | 721700 | `25421bf1486f542e18c8e01a2f20902fad6262062efd5ef149b653044498be76` |
+| 721700 | 2 | 0 / 1 | 721718 | `1b8f5d504cf776e74d029c300b706fa13cc4eb8e9def8f707df65ca7e5a31ad5` |
+| 721720 | 2 | 0 / 1 | 721738 | `91d27f5a1041fd91d8d532dc53ac4bca779704ae9a3174bf7f40c92af0739e6e` |
+| 721740 | 11 | 0 / 56 | 7217A0 | `c6052583081767f2ccd8423028090648a12857973569ad8c3c84c0e54c152ecf` |
+| 7217A0 | 3 | 0 / 13 | 7217C0 | `2f24c2e4e13c9e3af86420c1f45a143e8093415290d2a251070000b756d4171a` |
+| 7217C0 | 16 | 0 / 50 | 721848 | `ceed6d650c604e877c6bc26d21516cb143bb7970b406403157bbf877090fe39f` |
+| 721850 | 6 | 0 / 9 | 721888 | `5b062da39361baf727ac1504bb31b08caba53322eae2d9e56dfd2191950ddecb` |
+| 721890 | 2 | 0 / 360 | 7218A8 | `7202d870b7df09af00d397eae06c6d713184020ba98eae505d819c630406c6b3` |
+| 7218B0 | 2 | 0 / 360 | 7218C8 | `fee4d1c00e05d4030ad185f489462174c3dd5646c6fe19f2d125e69887ac80a4` |
+
+There are64 unique curve lists. Optional sound table contains124 null pointers
+and13 distinct nonnull lists. Each has1..2 real event/time records before the
+first time=-1 record, with increasing real times. Raw event words below retain
+any packed flags; no event names are invented.
+
+| Sound list | Raw event / decimal time records | End exclusive | SHA256 |
+| --- | --- | --- | --- |
+| 721EF0 | 0 / 2 | 721F00 | `0b1db87cb56114b66f5f8b45066ea574f3a9fc7959140046c26716c2abc739a4` |
+| 721F00 | 2 / 0 | 721F10 | `19be77036710f78adc6b3d78c79767b61058be7b4fad11e3fe37d4e440dd5f93` |
+| 721F10 | 7 / 0, 1 / 40 | 721F28 | `46a6eb4fcb0d616390fb84beabce20824c8062dd2739ad10d51ec174a626006b` |
+| 721F30 | 7 / 0, 1 / 50 | 721F48 | `522da12ac10ed3ef13264f94dcd5058fc894785bdea9b28a712c074100ba96e3` |
+| 721F50 | 4 / 0 | 721F60 | `7027d251f03f347020770f7296f0c7b58a30955d32b3dfc5878a67e9643b4728` |
+| 721F60 | 6 / 0 | 721F70 | `a5b6b2a6fe21addcdd829756ecff2b84fbe118b272ed87b1a7428c9aa8468dcd` |
+| 721F70 | 1 / 0 | 721F80 | `8fd6384f03e8eac17f8175fc1d993c099cd9328df3d6a8467d36fe73cf6e35f7` |
+| 721F80 | 7 / 0 | 721F90 | `67dc64050b2570c817a02fa3322aca8e6bcd0047ded331cb01177fa334d3a57d` |
+| 721F90 | 1 / 19 | 721FA0 | `79ca9a5bac18c37b80f5a05f140a24d611b6386afe5a4a5069e5f9f96e165abb` |
+| 721FA0 | 7 / 0 | 721FB0 | `67dc64050b2570c817a02fa3322aca8e6bcd0047ded331cb01177fa334d3a57d` |
+| 721FB0 | 1 / 16 | 721FC0 | `2d4ed9c5af855fb43adadbf723ca9f955e660c5aec2903965eba47c7481800e8` |
+| 721FC0 | 1 / 13 | 721FD0 | `0decf9ac26b3d6b1a5ae5e0d588cec357da94594f744a4d162cf7b9d269eea6c` |
+| 721FD0 | 1 / 9 | 721FE0 | `28de36316ebe9ab132611053bd8c050a78bb1864ddf48c539eaed56a95353ec3` |
+
+Consumer code is reviewed in [program selection](SYMBOLS_SCENE_MATRIX_PROGRAM_SELECTION.md)
+and [curve evaluation](SYMBOLS_SCENE_MATRIX_PROGRAM_EVALUATION.md). This data audit
+does not count additional functions or infer scene names from table order.
+
+Additional owned task tables (consumer lifecycles in
+[matrix tasks](SYMBOLS_SCENE_MATRIX_AND_TEXT_TASKS.md)). These physical extents
+do not establish arbitrary task-mode or owner-variant admission.
+
+| Span | Values / SHA256 |
+| --- | --- |
+| 722FD0 length38 | [722A70,722B30,722BF0,722C60,722C80,722CA0,722D70,722DD0,722CC0,722D40,722E70,722F50,722FA0,722FA0]. `56346c66d0bb5b4f6d749f29be79adaa77fff8b577bc11dae9b2be74266c0984` |
+| 7232B0 length10 | [723130,7231F0,0,0]. `1580f85c8e1cdfa61ace3c5487d039764d276af2e3bd2414be197d92caa0ae90` |
+| 723118 length18 | [7230D0,723108,723110,0,0,0]. `a1c85028f95e91ba50b8e5509e26d438bd15e026611989dfd50da9864f7d78bc` |
+| 723308 length18 | [7232F0,7232F8,723300,0,0,0]. `133654219d6c18aa390a26f355d89b80e14d003fea26042b8497a1a926067dfd` |
+| 723320 length10 | [722390,722430,722750,722390]. `f25efe0ed12f0e566af5b143e993287c7cf1011b2236a16049683c34746e2c45` |
+| 723330 length4 | [1,0,0,1]. `afa7518106309c22d325df6d2663249d158d2f36f1976269d6d4104d9198a108` |
+| 7230D0 length38 | [723010,723010,723020,723020,0,0,7230A0,723090,723030,723080,723040,723060,723010,723010]. `efd115773d2049100c36e43bb4086a539f1d51c4b89f393372fa19ab095e317f` |
+| 723108 length8 | [7230B0,7230B0]. `688f45fe433f80277447a0149e4a121ad8106bc3b26b7ae93a49be929c1e2603` |
+| 723110 length8 | [7230C0,7230C0]. `099286b659052aacaf5d071c73a8f63d8b5155c315b6494faa7074cea7510920` |
+| 7232F0 length8 | [7232C0,7232C0]. `32c5e6ac47e692fa75e04637b77aa4a918aefa9d81f338ddb3bf21d409f062f4` |
+| 7232F8 length8 | [7232D0,7232D0]. `c38ba89d1cc20df03cb67f09a2a046efbe4e76eaf220920a792abf0d0165223e` |
+| 723300 length8 | [7232E0,7232E0]. `418ca9cb3540689b59a4c91024c85490e6725e3bf4b1eeb8e7cbebe385830287` |
+
+Complete task curve intervals through signed time=-1: all real times strictly
+increase; all first times are0. The three axis-task curves referenced by723320
+have zero bits7FFF0000 in every real time word, so their owned records do not
+request packed high-word sounds. The code contract retains the extraction.
+
+| Curve | Real keys | Last time | End exclusive | SHA256 |
+| --- | --- | --- | --- | --- |
+| 722390 | 18 | 174 | 722428 | `671f1bab3f4abf2989727f7f9da1a28f63d4052a96798615e47dfb4c0432449e` |
+| 722430 | 99 | 298 | 722750 | `e79aa81c11ff385c2238619a241749c01274cebd600d0f45ae787c6f2120a7e2` |
+| 722750 | 99 | 298 | 722A70 | `e79aa81c11ff385c2238619a241749c01274cebd600d0f45ae787c6f2120a7e2` |
+| 722A70 | 23 | 96 | 722B30 | `80dd9e7b4598f10db7fdd13fc4ad2b0bdbff14efd4c53dc3a7e74a669717edcc` |
+| 722B30 | 23 | 96 | 722BF0 | `3e244957ef4c6c6616fa85363fe52cc2bf9b336c9ab1f65fdc1aedf96417670f` |
+| 722BF0 | 12 | 60 | 722C58 | `334c78a49db70ab3271a3463466981f9a64a1fd64b4c4473d628ac4c26480178` |
+| 722C60 | 3 | 52 | 722C80 | `5c3991a274add65736f28616824a675537784283c658eac80676e56a6c8491f0` |
+| 722C80 | 2 | 1 | 722C98 | `eaa18b4f885f548c07e6fe4736176318e96a1328f1b4c18a717d06fcd54f1e61` |
+| 722CA0 | 2 | 1 | 722CB8 | `c4bf77ec4ba4f81498aaee5591f61dfc9cf5e8381bf2a0ae8166832d54b4494b` |
+| 722CC0 | 14 | 90 | 722D38 | `59d9388661f6d11ca5a7a5a1a856ce52dd55968cb1210b0d4b4265981a1bd804` |
+| 722D40 | 5 | 108 | 722D70 | `c23c7eb5eac65ad2be268ee033404df8a94f209da2c5321271e7f5298b5e5f5c` |
+| 722D70 | 10 | 80 | 722DC8 | `9a9279f88962a6508e60f4ec1a1f789ca543aced3093701b8212c7a699d4d7bf` |
+| 722DD0 | 18 | 70 | 722E68 | `0a00fa8bdedc2674360102ca8afcf71bfe6b97e6db126203906accfedf311288` |
+| 722E70 | 26 | 150 | 722F48 | `69778242db81ac1dc586aec677167c4eb8392132c3626fa869307c4459acaeee` |
+| 722F50 | 9 | 160 | 722FA0 | `4fc854ae956119b5731aa4c4096a57765a93e12197ff45a73870b58e49540b54` |
+| 722FA0 | 4 | 72 | 722FC8 | `83c80d17be02849c7c2c76ab359addc117e630eeb1218844dcffdc597eaf5f83` |
+| 723130 | 23 | 58 | 7231F0 | `64eb9ed013e0d2318b4c77e5a8f268d80d1ccd91b80cf1b8af2d41b5e9bd1b68` |
+| 7231F0 | 23 | 58 | 7232B0 | `64eb9ed013e0d2318b4c77e5a8f268d80d1ccd91b80cf1b8af2d41b5e9bd1b68` |
+
+Additional task sound lists, complete through time=-1. Raw event valueshex,
+timesdecimal.
+
+| List | Event / time | End exclusive | SHA256 |
+| --- | --- | --- | --- |
+| 723010 | 7/18 | 723020 | `573158064c6f83e69b4b7c7102ebac6b0ccc36aa6337e855a274272bd5dec49b` |
+| 723020 | 7/0 | 723030 | `67dc64050b2570c817a02fa3322aca8e6bcd0047ded331cb01177fa334d3a57d` |
+| 723030 | 8/80 | 723040 | `45626c075a2575b1d93ab02764b1fca602ab658a744dbb656bc5a43727accc0c` |
+| 723040 | 7/0,8/150 | 723058 | `12dee1df0203df934f8e487fc497da1706ae20bf2b803280c0d94d3a13a53565` |
+| 723060 | 7/0,8/160 | 723078 | `4fc43b4a997455db89cde2d89b087555aab165ad2455b6e882f1625170f118da` |
+| 723080 | 8/105 | 723090 | `217e17826d368a1a7fefc86053a5eafdfabbd24045bbf318d11c7b0cc69cd9e2` |
+| 723090 | 8/50 | 7230A0 | `500f5467cec9ae7b50f206069888967f1f5b39c3834c570b782dc97a20de4fbb` |
+| 7230A0 | 8/50 | 7230B0 | `500f5467cec9ae7b50f206069888967f1f5b39c3834c570b782dc97a20de4fbb` |
+| 7230B0 | 9/18 | 7230C0 | `c7e107f6364cbb6910430a6819fe583d38db9a0286881e8b2265ea12ca378666` |
+| 7230C0 | 9C/18 | 7230D0 | `f5d4b971b96e734245695c7fda59566482ebe3a49e0d60d22edebc940de824bb` |
+| 7232C0 | D/40 | 7232D0 | `1edc7f89d0c2348ae9e34294d67dfb987e81c9545c7b8b4bcc1fe172a35896b7` |
+| 7232D0 | 52/40 | 7232E0 | `0b63019fc41eb51260740ba82280b2b7ac8758a95ea03269b238b8b994ed0c0b` |
+| 7232E0 | 54/40 | 7232F0 | `572744fd1cbce592c27cb9a8905ccb7c4403ee86abebc9e27994bc99f1235601` |

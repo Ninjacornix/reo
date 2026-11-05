@@ -1,0 +1,11 @@
+# DNAS overlay: masked digest inputs and twenty-byte feedback
+
+Static File #1 US research, 2026-11-04. Catalogue **o5**, runtime id **7**, base **0x6E0000**, owned `insdnas.bin`, SHA-256 **97174f5d367cd90bedd5ba397c6492e9fb4bbd0ec7d6021c2be524c49925d38e**. Continues [digest core](SYMBOLS_DNAS_DIGEST.md). No game, build, replay, network, attachment or timing test occurred.
+
+The clear bodies support precise byte transformations. Their generator is the previously reviewed deterministic704410 routine; filling/overwriting buffers is not a proven security property. The feedback operation is described literally because an original protocol name and live use remain unknown. Initial zero-count branch, loop tests and branch-likely break delay slots were reviewed.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o5 0x7038D0](../recomp/config/output_ovl/o5/o5_007038D0_0x7038d0.cpp) | `fill_dnas_sixteen_generator_bytes_then_xor_fixed_mask` | Confirmed loops/mask; external role partial | Makes16 calls704410, converts result through float(result)/float(4EFFFFFF)*256, stores low byte then XORs16 bytes with fixed mask70F9B8. Does not itself seed generator; no randomness/entropy claim. |
+| [o5 0x7039C0](../recomp/config/output_ovl/o5/o5_007039C0_0x7039c0.cpp) | `digest_dnas_first_masked_second_masked_first_sixteen_byte_tuple` | Confirmed byte construction/delegation | Builds48-byte tuple [first16, second16 XOR70F9B8, first16 XOR70F9B8], calls7060B8 with length48 and preserved caller output a2. Overwrites48-byte stack tuple using704410-derived bytes afterward. Digest standard conformance follows callee uncertainty; no authentication protocol identity asserted. |
+| [o5 0x703B50](../recomp/config/output_ovl/o5/o5_00703B50_0x703b50.cpp) | `xor_dnas_bytes_with_twenty_byte_key_and_previous_original_chunk` | Confirmed byte feedback; protocol unknown | For input index i: stores original byte in alternating20-byte stack banks; XORs key[i%20], and for i>=20 also XORs original input[i-20] from opposite bank. Thus modifies caller data in place with previous original chunk, not previous transformed chunk. Zero count skips input loop. Overwrites both20-byte banks using generator bytes after operation. No local key/input bound check or original algorithm name established. |

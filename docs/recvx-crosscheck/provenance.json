@@ -1,0 +1,2689 @@
+{
+  "review_date": "2026-11-05",
+  "reference_repository": "https://github.com/AshfordFamily/recvx-decomp",
+  "reference_commit": "657b0c0c9489943116c71f151804ad7304fca975",
+  "outbreak_image": "SLUS-20765 File #1 US main ELF",
+  "outbreak_elf_sha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "local_head": "b34acfd10f979241a24d6b769d53272f6b52af61",
+  "scope": "Static comparison; ELF/comment integrity is not semantic or runtime equivalence",
+  "counts": {
+    "symbol_notebooks": 1362,
+    "curated_entries": 620,
+    "notebooks_with_curated_entries": 61,
+    "reference_c_files_lexically_screened": 228,
+    "generated_files_checked": 620,
+    "instruction_comments_checked": 30173,
+    "by_status": {
+      "concept-only": 2,
+      "name-candidate": 3,
+      "related-different": 378,
+      "supported-role": 237
+    }
+  },
+  "reference_files_used_in_crosswalk": {
+    "src/cri/mwlib/ee/lib/libadxe/adx_amp.c": {
+      "sha256": "d366e62b3b91d3c4cbc49f0a6e1d8ed2e6de9a76033af00bd41c2a2b6315f91e"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_baif.c": {
+      "sha256": "560b9ae091ff0f2741d4802a46b3a6006379ad685dcba8256a5900bcf88c0c80"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_bau.c": {
+      "sha256": "a9bd3a14cf4be3bc4836a524484fcb512c93456280d42ab0814d630876bb11d1"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_bsc.c": {
+      "sha256": "7d30dcf09c4c16fce2e4c73463b533f03d0dfc2fd4d5d3003f55b13126a746b6"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_bsps.c": {
+      "sha256": "e36dc72997dd2e5aac758e77cd5f4a0da22f0e878643b5963b82462d87833013"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_bwav.c": {
+      "sha256": "e38d056311494a86fd36448929481e9fb9c8fe963fa150ba867f3c2569f1df2f"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_crs.c": {
+      "sha256": "c269d0c209ad5409701bb2f75db44a006e0e31c53d52b3d14fffec098c26db7c"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_dcd.c": {
+      "sha256": "2857cbad6948b128f1a2f8f37ea0282b7afa26b15453ce2eb2b173db84d7a50c"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_dcd3.c": {
+      "sha256": "959cd9075e4db2d6b9eefc21f6bb8e245c029fe96d06fe72206a98c5f41c8011"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_errs.c": {
+      "sha256": "8f90811da53045c899fe130264f20a943e8771b9bbe3801ef103a7a2f0e1f235"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_fcch.c": {
+      "sha256": "e7a283c96593772caab26f7bc6db54a7a4d5183cd901f328b89b732ec1fe6a50"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_fini.c": {
+      "sha256": "eb49591d2c922a3653c4990a1afa4aae25fb39609d2d431428d85fbdc854ba68"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_fs.c": {
+      "sha256": "09bccb9ddde64ef894279ca8cc35242382c8681f711ddef07119f9132e33abaf"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_inis.c": {
+      "sha256": "9b28e868d2efb9dc608566b64b6a5ec3cec96a51c85e8368e76114562bbd77bc"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_mps2.c": {
+      "sha256": "015d758f133e3746a30414b60de7c6e730a751e34b0d2f2131df7d688e424453"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_rnap.c": {
+      "sha256": "45b26353f0a10448f62183d5fd7bcad4a4352d6c5beee96694599bf590d30771"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_sjd.c": {
+      "sha256": "e53fe0629e5f47637f7f92edd088d5b3e01a79ce5424a775f503f054a017ced1"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_stmc.c": {
+      "sha256": "25abde43e9efd5b47e386a0fafbd1dfbece83b4669cc1c72731dd1e3b6a8aa35"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_sudv.c": {
+      "sha256": "9ac20d93cfa67a08bea90c65056e5f2297e3806a780daa087cd41f91665f6726"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_suht.c": {
+      "sha256": "d92e98071560e73efb408afcff2f9cfd60b62692571730c181d358c2f629f1e5"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_tlk.c": {
+      "sha256": "34041558640f6d8c2c3cc02913efc9db82f8a2d3a0f6814bf62196e08b2442c8"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_tlk2.c": {
+      "sha256": "8d096fc1938e0794bc90aba77d3b6d1e005a77cbcb0003a51fe2daea9a930199"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_tsvr.c": {
+      "sha256": "a1cabab9a1b9758c756656bf520cdc453b3a3a0d77fa6112512e3b9c6ada4e58"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_xpnd.c": {
+      "sha256": "37ec72170c8a46d8cad1676a3501ee8909912281484a9e59ba515572ec6c1441"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/cri_cvfs.c": {
+      "sha256": "ad74c6302b6d8b9a08db647f9fcab7f4874ea9a6a0bf2cc573cbcdb7e92cba35"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/dtr.c": {
+      "sha256": "8ac021ced62605b0ed25882a554af547d935495fd0ccda171c6232082c3f44d3"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/dtx.c": {
+      "sha256": "62082fe349e8e380a688eb24ea975502fccd0c2017af91c5cfcd30af1eda2906"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/dvci.c": {
+      "sha256": "e687a562fa22ad88ffbc5446773341b646ba404e6ebf5b385ff08ec1779af13d"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/dvci_sub.c": {
+      "sha256": "d25fa5b36cbedbdab2c54e2b3d638d056ca5723494ba0e13080a3f8cbf0d2038"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/htci.c": {
+      "sha256": "031074520a98613f8cf39add1c2e2337df4c63fe010b4cbfe7f8e6e9c3cc27b3"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/htci_sub.c": {
+      "sha256": "ab61da314269dc23f1791003e70fdfc10824e5d4f92aec826ed1fc7e8bf8d4f6"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/lsc.c": {
+      "sha256": "3108f3056d6b040c16305b01faee321ec0ce7abd291dc2080bbd647e147ff99e"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/lsc_crs.c": {
+      "sha256": "98c3a34439e8d3422715dbdc1ea86a5ebf69729b8f68e90eca97572d0a853129"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/lsc_err.c": {
+      "sha256": "5a93e377032f8093fbea6497d2720b5b52fe7fda718f54bcb554f0b738134327"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/lsc_ini.c": {
+      "sha256": "07e8a5848f44f7e3e1154dddf54cc68ba390d9cd6212fb26c6afd1f9061757a1"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/lsc_svr.c": {
+      "sha256": "e04e3d12c282761259930c03742b9ee07cc28af80d415ef6ad53e780451a1106"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/ps2_rna.c": {
+      "sha256": "3cb2adb41cf2d918f3da268198ad9b021b57d742020a5ea7c0fe7726c2386cd0"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/rna_crs.c": {
+      "sha256": "8ce1401486d00f3c7d9e24c0380160a8d2a3cc21f6ae48787e42aad7bd1bb113"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/sj_mem.c": {
+      "sha256": "cb43d22368a3ac62e49db5d7617ea94bfe5e14b8058589b5bcf53ca1a86eb245"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/sj_rbf.c": {
+      "sha256": "9ca694d78557aa530fee6f00132122b528f9bff983870142fbaa1bf89d9746b3"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/sj_uni.c": {
+      "sha256": "c6af30aff0b0fee52e461be44fdb1aaed599196ff8aa65f64fca51ee548251be"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/sj_utl.c": {
+      "sha256": "18ac4670ee2b40ce81b334b8ee86bce2b2759842cc6dc9a3e3ed744423b939de"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/sjr_clt.c": {
+      "sha256": "495475af98c3185b51f84ff89d47cbc4a27a4ecba8345df32a41a2c8e2242fd4"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/sjx.c": {
+      "sha256": "da24b744ec46402c0403ce096c8dee09646b9634df42c89116918e029e490871"
+    },
+    "src/ps2/veronica/prog/ps2_MovieFunc.c": {
+      "sha256": "461bc5956b5253e3d96ce323dfc997865ede7f797502d599fb80358ea29373e7"
+    }
+  },
+  "supporting_reference_files": {
+    "README.md": {
+      "sha256": "e79c1bac803de41ec7cfbc8be9447236b727ea29b5a5030560d6e186e29021b8"
+    },
+    "compile.py": {
+      "sha256": "2ec8736c3be797daba422635e0da70d9100db81e3b2c96ba2d742be79f99afa7"
+    },
+    "compile_config.json": {
+      "sha256": "df49b7433dab54ff47c69b9d791bcc1ea7a381d2fe8406b9f5eefbfc291c99c4"
+    },
+    "include/cri/mwlib/ee/lib/libadxe/cri_cvfs.h": {
+      "sha256": "85a92f9ed9d0a135b00c49cc259406dde249507eeaf5cf09b97f01e1f3415ebc"
+    },
+    "include/cri/mwlib/ee/lib/libadxe/sj_uni.h": {
+      "sha256": "5125898f67b4e74e254b68a6c5662858abe4038b7adf4f6f99b01e95ac2f716b"
+    },
+    "include/cri/mwlib/ee/lib/libadxe/sj_rbf.h": {
+      "sha256": "ab3f8e6876a75626574ce04f81656372ff221a5a2156b12821b384db2f930291"
+    },
+    "include/cri/mwlib/ee/lib/libadxe/dtx.h": {
+      "sha256": "b4bfff956a5575b18248bf7f78b37939c292ca0052c0bc21c3a1e06fb712f7a4"
+    },
+    "src/cri/mwlib/ee/lib/libadxe/adx_fsvr.c": {
+      "sha256": "4ab47c68def3229529e80b2c0df84da2dffe8868f9668180155ca589b3676065"
+    },
+    "src/ps2/veronica/prog/event.c": {
+      "sha256": "6c8f08b2f031ecbd753f1f0a814afd97315b4a380e2825a6147bee77dd16d094"
+    },
+    "src/ps2/veronica/prog/room.c": {
+      "sha256": "495088fa708ae7c7036bf8113af75357eb7135cc7f11c8d46dcf7e265264d0d3"
+    },
+    "src/ps2/veronica/prog/Motion.c": {
+      "sha256": "bb409dac2f1a08b9f613fcb78747fa3a3fa0d9a7a68d7c5c71c09c43a043bdef"
+    },
+    "src/ps2/veronica/prog/mwwrap.c": {
+      "sha256": "12415f881fcbbba885694a8e3c9818487611931f9cfa91f621417daf870e5743"
+    },
+    "src/ps2/veronica/prog/ps2_NaDraw.c": {
+      "sha256": "c3190379dd4c3575089a541a394a4e6c6ed8713849586dcb737a00fe13beeb98"
+    },
+    "src/ps2/veronica/prog/ps2_NaMatrix.c": {
+      "sha256": "1c320e554619b0ea236b7eea12e490a35d6981f132bf6c2e28f1dfaf34416a6d"
+    },
+    "src/ps2/veronica/prog/ps2_NaMath.c": {
+      "sha256": "549be367a5ef4b68ab135468fe93189e84d6fdf09797bf0860191d6ee387196d"
+    }
+  },
+  "generated_files_checked": {
+    "recomp/config/output/sub_00122720_0x122720.cpp": {
+      "sha256": "cde35f49a8f54311e09bd5d9308dec40d27368151d6bf4d68636a8bafdac1bfd",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_00122770_0x122770.cpp": {
+      "sha256": "8984f8dd6ab619d1bd610dde03ade1a86c062f510c466124810a7e3b44ff3f33",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_001227C0_0x1227c0.cpp": {
+      "sha256": "b31ef91d77eb652a7aa39940e71a9a30988d05eef4bcf010c321242932e11190",
+      "verified_instruction_comments": 74
+    },
+    "recomp/config/output/sub_001228F0_0x1228f0.cpp": {
+      "sha256": "67bce7f421857bcc66da8b2a68ee3f4884d4a6c89686e9e30ac321084be1f0c5",
+      "verified_instruction_comments": 125
+    },
+    "recomp/config/output/sub_00122940_0x122940.cpp": {
+      "sha256": "7a8f317d8c15e36da705e99864e0d13c84b4d1371b3cf8d64c37e56e0272149e",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00122948_0x122948.cpp": {
+      "sha256": "217c3f005fffef0d9136a0697572e4390120e8d871c71be8a481866aa1778e52",
+      "verified_instruction_comments": 103
+    },
+    "recomp/config/output/sub_00122AE8_0x122ae8.cpp": {
+      "sha256": "0812876df9990c5860405c1b9594caef0f0b0624699ffc7b9d4e3fa09335dcc8",
+      "verified_instruction_comments": 165
+    },
+    "recomp/config/output/sub_00122AF0_0x122af0.cpp": {
+      "sha256": "7189e2c2035f510402869ffc6e4d88b29ea948d865356963708567b83df0a4e3",
+      "verified_instruction_comments": 162
+    },
+    "recomp/config/output/sub_00122D80_0x122d80.cpp": {
+      "sha256": "4ce5277a2df3f0598ff4fe726c7692617daae73cde7f59d461a81116153474f4",
+      "verified_instruction_comments": 36
+    },
+    "recomp/config/output/sub_00122DA8_0x122da8.cpp": {
+      "sha256": "6981e4b6993617d0d80232981a8b840cc43b0b5ee10de1b888d39c3152e1c6a2",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_00122E08_0x122e08.cpp": {
+      "sha256": "0e16c4bf7a15f39a453e1ef85728ebf92e9ae7c028e70c68e678f14dbc5629b2",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00122E10_0x122e10.cpp": {
+      "sha256": "70989cdc6377e1f33d9ce432077ca05bb17b726dfb1728528f64575f549ef699",
+      "verified_instruction_comments": 96
+    },
+    "recomp/config/output/sub_00122E18_0x122e18.cpp": {
+      "sha256": "f8bb908448d0f415e82cbe15362cc4841724471b30529d1aa033d1a3db358383",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00122E20_0x122e20.cpp": {
+      "sha256": "5de9147ca24fbd35fa46610843c16405d5fa684a224858adb3f51881166047df",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00122E28_0x122e28.cpp": {
+      "sha256": "731c3e5d450aaf819938ff9e41b55f0c54888efab8a063c69826d6a9bf3904d5",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00122E30_0x122e30.cpp": {
+      "sha256": "7c8569c66ec8011cc4a25e350920785a7d0acdf23c1fbe0f58fa45ac9d79e691",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00122E38_0x122e38.cpp": {
+      "sha256": "13f07e01a4891960812618e493144a8279c5b1cde5962bdf74c78e91d17ae0d7",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_001230E0_0x1230e0.cpp": {
+      "sha256": "ffd3eee03c73a61a9d8beb49edd76740aa2497e4ac56dfce97f059ef19f281e6",
+      "verified_instruction_comments": 228
+    },
+    "recomp/config/output/sub_00123470_0x123470.cpp": {
+      "sha256": "70b4ed55775a622520c6cc5ae117bdbe36e599fc4cc6b546969fa8f2afd3ee73",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_001234D8_0x1234d8.cpp": {
+      "sha256": "6b24229c46bd28390b803534794d7ecb124db0098d80e72956a1148b8d33b831",
+      "verified_instruction_comments": 345
+    },
+    "recomp/config/output/sub_001235E8_0x1235e8.cpp": {
+      "sha256": "bb8d5f6a51bf69208a929cfeab2598ab20c18e7df888e0da9b12fbcde39dc009",
+      "verified_instruction_comments": 70
+    },
+    "recomp/config/output/sub_00123700_0x123700.cpp": {
+      "sha256": "dd5e9b5872d051893e7b1448f307bc3f9ce26ca1e973535c430e1280a74808fc",
+      "verified_instruction_comments": 102
+    },
+    "recomp/config/output/sub_00123898_0x123898.cpp": {
+      "sha256": "3cd2250ae931077e6089776d9acb2d8aee37d5d056e2f964123f77b6b315243b",
+      "verified_instruction_comments": 96
+    },
+    "recomp/config/output/sub_00123A18_0x123a18.cpp": {
+      "sha256": "1953014ba4ee3c000487fd5ac22c8216db29764c3cff11c81af3368a7db4ad86",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00123A40_0x123a40.cpp": {
+      "sha256": "1f8da46efba10a8612d17d8a81cf88947a9f4341048d7d367d9da041af1162f6",
+      "verified_instruction_comments": 197
+    },
+    "recomp/config/output/sub_00123D58_0x123d58.cpp": {
+      "sha256": "52c7469da1914265a6a4f36b00cef66dc9495f9688a417bbbf6ec72d7484bcc9",
+      "verified_instruction_comments": 21
+    },
+    "recomp/config/output/sub_00123DB0_0x123db0.cpp": {
+      "sha256": "cb5fa2b57791fd0f203bead8b42522c96db75eddf241e8ad1b7167708fbac1a4",
+      "verified_instruction_comments": 473
+    },
+    "recomp/config/output/sub_00123EC0_0x123ec0.cpp": {
+      "sha256": "f663b7b349d9200e08488891976ea63372b0c7d8555fb5a52364f679e643e1f1",
+      "verified_instruction_comments": 63
+    },
+    "recomp/config/output/sub_00123FC0_0x123fc0.cpp": {
+      "sha256": "1ace2d22af3d33f5aa0e51c22ea619fa9026e9b3d7aa303dec1a9af068563b43",
+      "verified_instruction_comments": 102
+    },
+    "recomp/config/output/sub_00124158_0x124158.cpp": {
+      "sha256": "891bb48247150613a0cd162cc4b46d4e63cc5734497fa3f12fd79cd72c0258a6",
+      "verified_instruction_comments": 96
+    },
+    "recomp/config/output/sub_001242D8_0x1242d8.cpp": {
+      "sha256": "5186d58ee67904f9b6aa1bfef80740a180a25e22e5cfa270d4a6c0422707a122",
+      "verified_instruction_comments": 106
+    },
+    "recomp/config/output/sub_00124480_0x124480.cpp": {
+      "sha256": "9e58caac192994ddeaa669a6f8cd46da509ab6968f4080c795d87978ac831a93",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_001247A0_0x1247a0.cpp": {
+      "sha256": "5b3f6bef1b2f7267c06638ab1cd71baf2e7a12ac540af49a26bba9db061b5d43",
+      "verified_instruction_comments": 44
+    },
+    "recomp/config/output/sub_00124810_0x124810.cpp": {
+      "sha256": "7ec9976cfcf56c20ec88054234dff85032c34ea8854783b5a8d9384029dbd607",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00124840_0x124840.cpp": {
+      "sha256": "2e177a8d291a449722a00010ca86b736a757e65952a90b8f29a5328561a6fb61",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_00124860_0x124860.cpp": {
+      "sha256": "8762611fb6bf602a17461b36e40e92e6debba2298e1dd012be087a7bf51374cb",
+      "verified_instruction_comments": 80
+    },
+    "recomp/config/output/sub_001249A0_0x1249a0.cpp": {
+      "sha256": "5c4566b02c4dd349916dffdefc9aecd99177d094bf9bb7cd6d692d569c75bfa5",
+      "verified_instruction_comments": 206
+    },
+    "recomp/config/output/sub_001249E8_0x1249e8.cpp": {
+      "sha256": "34ec24251057e387bf23e54947d1f0f0397001faa2192ae24919fd2d0eadad82",
+      "verified_instruction_comments": 187
+    },
+    "recomp/config/output/sub_00124CD8_0x124cd8.cpp": {
+      "sha256": "403a217c032862d64aa59769bba20f3e1970fca1ad3dc756597c9593831ea332",
+      "verified_instruction_comments": 90
+    },
+    "recomp/config/output/sub_00124E40_0x124e40.cpp": {
+      "sha256": "26878aef5f30c2e06e535e701f19366cc3e9ea62cb0e92f8cae8a5f22bbdd304",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00124E50_0x124e50.cpp": {
+      "sha256": "8a50848a5772ceebde576b1cc6dc1a381888552f5b8bfcd8cb4ffc3b8455a4b0",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_00124E60_0x124e60.cpp": {
+      "sha256": "e308ab51c95a9789544818fef724136e1226b81b45c642083f91178128b821f4",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124E68_0x124e68.cpp": {
+      "sha256": "69c72b4804c0b6fe88678dfc58cd476301c9781ac337f1ce7987abcd0b69c0e1",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00124E70_0x124e70.cpp": {
+      "sha256": "ad8391c77f16b6eb803839a93b8bfa7d7dfcb49190c5976f5344c86a23fa1583",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124E78_0x124e78.cpp": {
+      "sha256": "c1cfbb6112e214201397c4b803f6be1d608b3f8987f3f127ac45ef459645be77",
+      "verified_instruction_comments": 31
+    },
+    "recomp/config/output/sub_00124E80_0x124e80.cpp": {
+      "sha256": "470d746f614d96cc93e5d085610de16ae555d87cf84b861980bb6899829706da",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124E88_0x124e88.cpp": {
+      "sha256": "865aece5963d539b3c115a30a713f9d9d14927fc9b8178794b676880a30e8f5b",
+      "verified_instruction_comments": 23
+    },
+    "recomp/config/output/sub_00124EE8_0x124ee8.cpp": {
+      "sha256": "60c0db6c45af3c918c1e60d49eccc6c72abce861d33ef8b152275425478ccb1e",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124EF0_0x124ef0.cpp": {
+      "sha256": "edeac04f8ae331df7bb88ed910f3daafbb3d28a4a7f53613eafe7e7f92fa3c60",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124EF8_0x124ef8.cpp": {
+      "sha256": "fc4f9a9222534c45e24dcddcc8999f52afa50a58416bf4a7b7ccbff70c255a02",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_00124F00_0x124f00.cpp": {
+      "sha256": "43de6fa494d941edeaae434d21c8043f1e84cad7e11d95d7d56c99d8fa64f9f7",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124F08_0x124f08.cpp": {
+      "sha256": "915133dabd9932554e41d31610cabfc4ecee93c6ac2deef3023c3dc1def1291c",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124F10_0x124f10.cpp": {
+      "sha256": "d851cedc1a2fa8d7bedcf8c5960f843fb7cde36490d89be3b54fd65eef480068",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124F18_0x124f18.cpp": {
+      "sha256": "030b2f0f135965b870976e28516deb0e424bf695d455ca646281a34039f32cee",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124F20_0x124f20.cpp": {
+      "sha256": "89cf9a27dd708fbca71315f7342b8d15bb6bfc1eb5538e9bf79ffcab35514dc7",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00124F38_0x124f38.cpp": {
+      "sha256": "d6e98db7facb319fc50408264d4b18feb1b38df60306b8e5dca2496fbf0dca42",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00124F40_0x124f40.cpp": {
+      "sha256": "8a048567e730d307c97c2945f1bf7619cd125d379cb7385031603b80364cd575",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_001251A0_0x1251a0.cpp": {
+      "sha256": "b3ebbec30655123c50ba6d432ef82dfd4ae670fd7788ae8ebddb6d855c4d3960",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_001251A8_0x1251a8.cpp": {
+      "sha256": "5443967a04c2b3557f9d4f411ec2926cb7a515bfd6d3ebe56eaeb41631930013",
+      "verified_instruction_comments": 34
+    },
+    "recomp/config/output/sub_00125230_0x125230.cpp": {
+      "sha256": "6810bd3b859bebb0e40b97a05e0407dadf254cbf63f378e3244e46b32a75f559",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00125248_0x125248.cpp": {
+      "sha256": "65887397c1b4d919418146bfae3740fb6f9941364b68f42a92722f2cd58c47be",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00125278_0x125278.cpp": {
+      "sha256": "e212c1fa5377aee9f0448ab95414f42984df157fd305ca9a46ad07e2a6cd010c",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_001252B8_0x1252b8.cpp": {
+      "sha256": "1fd584fbc6c6150bd0c10c817f46e9bcde47d179a8777c772be2ee4a8a26c542",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_001252C0_0x1252c0.cpp": {
+      "sha256": "f2a81ba2eeb2f820bd8ccc6d30d7ec43f8bddf2e8090fa5476b0e3b9aa5394be",
+      "verified_instruction_comments": 44
+    },
+    "recomp/config/output/sub_001252C8_0x1252c8.cpp": {
+      "sha256": "38957595741b39297e36678a7ac56b473a974d8a6401e73dd3028b0ef3bd42c3",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_001252D0_0x1252d0.cpp": {
+      "sha256": "0eb58d4c4577f60ccd59d402de074e44a8bba8df5ca33fa14a14d3037531a997",
+      "verified_instruction_comments": 18
+    },
+    "recomp/config/output/sub_00125318_0x125318.cpp": {
+      "sha256": "52da959b29a19cc98070542f44fe13e778a9649e25ab6aede685b459feffbe74",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_00125370_0x125370.cpp": {
+      "sha256": "be93ac8d26dcac12ea0895a25ce903599139c01944902a68f66e46a8667cd401",
+      "verified_instruction_comments": 58
+    },
+    "recomp/config/output/sub_00125458_0x125458.cpp": {
+      "sha256": "6758cfa99adc4ffd66267df91fd523c74279887ccd10d92343be965cca4847d2",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_00125488_0x125488.cpp": {
+      "sha256": "d31a6e2885553726bacd27e366c5b24dcc398f02422ea329dce243ce300b8c82",
+      "verified_instruction_comments": 27
+    },
+    "recomp/config/output/sub_001254F8_0x1254f8.cpp": {
+      "sha256": "3c3de53ff56ebd7c34fe70a61a2862d573b80edac47819467e165d6fcf94eb76",
+      "verified_instruction_comments": 8
+    },
+    "recomp/config/output/sub_00125518_0x125518.cpp": {
+      "sha256": "188146e56d557986f082c8c213b1604de9a169a1e402337ecf975dc5435ed717",
+      "verified_instruction_comments": 147
+    },
+    "recomp/config/output/sub_00125698_0x125698.cpp": {
+      "sha256": "6030396e3caa7898d85a06a1b95c06f9cb7d6b290246642bf655a405cf906997",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_00125768_0x125768.cpp": {
+      "sha256": "224ed766061cda39bb0cd589501c27b192ed7e22753f2a7eb64ee9bb8bbcb7b6",
+      "verified_instruction_comments": 68
+    },
+    "recomp/config/output/sub_00125818_0x125818.cpp": {
+      "sha256": "4e0bb7d71753fe51ede8b1082236315db2dc0c83e6af2242641f1aaa69894422",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_00125878_0x125878.cpp": {
+      "sha256": "fbb7e89c6a1f24b5136a33925ffbbb69bc473c7e530a7e3a4a97afebf6d8e799",
+      "verified_instruction_comments": 228
+    },
+    "recomp/config/output/sub_00125998_0x125998.cpp": {
+      "sha256": "1ca383409b555fdc48d20d0a6f2635c898742b0cbf5171bcc243e2d93a98b1e6",
+      "verified_instruction_comments": 61
+    },
+    "recomp/config/output/sub_00125A90_0x125a90.cpp": {
+      "sha256": "cbd8577c235e276d4364b4226249c3b4bf2c875f48aca2fffc89d0b1df1762d8",
+      "verified_instruction_comments": 93
+    },
+    "recomp/config/output/sub_00125C08_0x125c08.cpp": {
+      "sha256": "cf6b639728169ed0136d53197c76f85349114ee512f787479409777c5ae5f030",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00125C30_0x125c30.cpp": {
+      "sha256": "faf94db3ca5b013fcfd3a1f94010dc7bd4b60a7038dc562d7e15f929998fe8ec",
+      "verified_instruction_comments": 504
+    },
+    "recomp/config/output/sub_00125E60_0x125e60.cpp": {
+      "sha256": "a849521530a21e34f14e1f19eb965a351126e14673a14bb2cef13db8b7e0a5a2",
+      "verified_instruction_comments": 63
+    },
+    "recomp/config/output/sub_00125F60_0x125f60.cpp": {
+      "sha256": "126645e7898dbc8ce05e98d58c72be4bf05bde71d5c32b9286dcc25ed0f78595",
+      "verified_instruction_comments": 93
+    },
+    "recomp/config/output/sub_001260D8_0x1260d8.cpp": {
+      "sha256": "a1248f40fdcb07cfbd60558a0fc6681830af5161a245fe70d714b6a34f81bdda",
+      "verified_instruction_comments": 101
+    },
+    "recomp/config/output/sub_00126270_0x126270.cpp": {
+      "sha256": "e70759ecf31d164b2045a3f1537fa0f9b9e7683caae5236b0038a9f1574ec4d2",
+      "verified_instruction_comments": 103
+    },
+    "recomp/config/output/sub_00126410_0x126410.cpp": {
+      "sha256": "fa58db72be9695ee7517af7d6e0e09e6b0768e1ada5c5bbbaf18e52928b2d92a",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_00126478_0x126478.cpp": {
+      "sha256": "b122de7848dd0be5694620460c8dede5b70ac65776a889931d5b26b195bfa914",
+      "verified_instruction_comments": 21
+    },
+    "recomp/config/output/sub_001264E0_0x1264e0.cpp": {
+      "sha256": "005a45d26b5ad58f85039d95709a9654647ad7865c0dd3461c1c2fcbe911b2bd",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_001264F8_0x1264f8.cpp": {
+      "sha256": "5aea1bf21791930624e2086bb28e4b0be880ef7dfe33b03c3450f232415f0a94",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00126510_0x126510.cpp": {
+      "sha256": "081a7366fbf7368d701b80c44a5d9b0cb38b2f147ff0aa067863910676ac53c5",
+      "verified_instruction_comments": 84
+    },
+    "recomp/config/output/sub_00126670_0x126670.cpp": {
+      "sha256": "7bb61ab0a081def1cf278412e96370f20b7938f167b6d76dc28632aae6348957",
+      "verified_instruction_comments": 74
+    },
+    "recomp/config/output/sub_00126798_0x126798.cpp": {
+      "sha256": "bb105f09283339cd6f2ee3a2183f7781d20f9706ff4d4450ed8f4f50197bf2ba",
+      "verified_instruction_comments": 63
+    },
+    "recomp/config/output/sub_00126898_0x126898.cpp": {
+      "sha256": "5ff58b925a5eef03aab233f85499f4997fa1f3ad08e5e76dcb27f177ac94cf89",
+      "verified_instruction_comments": 31
+    },
+    "recomp/config/output/sub_00126AC8_0x126ac8.cpp": {
+      "sha256": "4dc38182033e0108927ab60206f1b68a920b04856a3b91a2330b822f19cb95cb",
+      "verified_instruction_comments": 152
+    },
+    "recomp/config/output/sub_00126F20_0x126f20.cpp": {
+      "sha256": "3f8fae100138b3279aaa0c6577c4484364817e53031896e3193aa0d0009fd763",
+      "verified_instruction_comments": 23
+    },
+    "recomp/config/output/sub_00126FD8_0x126fd8.cpp": {
+      "sha256": "c67574fe3b78ceaca80899394c8905495363a2398750a01f424cb203b1b9aa4c",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_00126FE8_0x126fe8.cpp": {
+      "sha256": "4726d95822b4a4ebfeab8fb30107fedb137af4669baaac6724cc70186121324a",
+      "verified_instruction_comments": 91
+    },
+    "recomp/config/output/sub_00127158_0x127158.cpp": {
+      "sha256": "257a60d6f7c3122582c6ca9dcf485fabb3d782e3e86ef0ba2dfe546f37636ea2",
+      "verified_instruction_comments": 165
+    },
+    "recomp/config/output/sub_001273F0_0x1273f0.cpp": {
+      "sha256": "436ad60ccf82ee529a719a2d381260ca99d26b582149537eeca48c6b9a78b01c",
+      "verified_instruction_comments": 168
+    },
+    "recomp/config/output/sub_00127690_0x127690.cpp": {
+      "sha256": "e7aeeadd9056863f61dd112eae4e6abae0e6498e08043c8c97123664dc7c7342",
+      "verified_instruction_comments": 18
+    },
+    "recomp/config/output/sub_00128038_0x128038.cpp": {
+      "sha256": "3673b4fada3900fe61399c6ada3ae19b3bb835cfcdb089f9bdec8230f27637f4",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_00128070_0x128070.cpp": {
+      "sha256": "1691ae9eb51127db2b99db328634e69ae470abe20aceec97ad5b3d09c704a9d5",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_001280A8_0x1280a8.cpp": {
+      "sha256": "fe229547fa28261bce1354eca068b164f60dc3edc9a694109024ac0960ea3253",
+      "verified_instruction_comments": 9
+    },
+    "recomp/config/output/sub_001280D0_0x1280d0.cpp": {
+      "sha256": "09e347a70850c6e437bb74fa76466890a8a7b9aec5880acce1e56857a579b659",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_00128128_0x128128.cpp": {
+      "sha256": "3c616825bd386bc66af0dbcd71f259059e034217a04fcd8ec79bd96c1a544e9e",
+      "verified_instruction_comments": 28
+    },
+    "recomp/config/output/sub_00128198_0x128198.cpp": {
+      "sha256": "924d95176ed4efeb7b631b224f5db1174979179986eb943488b413208dc08b5d",
+      "verified_instruction_comments": 66
+    },
+    "recomp/config/output/sub_001282A0_0x1282a0.cpp": {
+      "sha256": "509868af32561cdd59da5a1058a6dbc2e5b35f17cb3990d832a67a898e932145",
+      "verified_instruction_comments": 34
+    },
+    "recomp/config/output/sub_00128328_0x128328.cpp": {
+      "sha256": "3bf6fb817d604b76cd20829bf10f127204e53bc2f54770627a5cc4ee9d4bd7c7",
+      "verified_instruction_comments": 8
+    },
+    "recomp/config/output/sub_00128348_0x128348.cpp": {
+      "sha256": "ec78ee0f86b1ef58687292981768adb57bf5b463fd61622605641e6c1cf17261",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_00128410_0x128410.cpp": {
+      "sha256": "42338090c47020133acf10cbafcc5202a989a161a40d7750a03066838f7fd39b",
+      "verified_instruction_comments": 47
+    },
+    "recomp/config/output/sub_001284F8_0x1284f8.cpp": {
+      "sha256": "5edb147d82d9eaebf29851fcd6a395bb9dfc4471db7886b6b98a3baa79845c96",
+      "verified_instruction_comments": 44
+    },
+    "recomp/config/output/sub_001285A8_0x1285a8.cpp": {
+      "sha256": "edb91068157e305e2cb222f3234421d37d0761a7f8be0fbf563b62b19e0500ed",
+      "verified_instruction_comments": 11
+    },
+    "recomp/config/output/sub_001285D8_0x1285d8.cpp": {
+      "sha256": "5254e7d9aeec69e8c6d217a395df7fbbe3972f96b34160e36373a970d1224d94",
+      "verified_instruction_comments": 54
+    },
+    "recomp/config/output/sub_00128A60_0x128a60.cpp": {
+      "sha256": "2813e1624fe68208637096033b9f4552cfba620ee0b9b26c1abe57c5dc533fab",
+      "verified_instruction_comments": 45
+    },
+    "recomp/config/output/sub_00128AB0_0x128ab0.cpp": {
+      "sha256": "e9d4f784c56ae9c0d35fc6ac3c952e49993d23a58136fb0ad1c33e530a3d2929",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00128B18_0x128b18.cpp": {
+      "sha256": "e52f4aa030174246f8e61a464c08339a87460e2f6d2d38b9a01ed08d48d757bb",
+      "verified_instruction_comments": 256
+    },
+    "recomp/config/output/sub_00128F28_0x128f28.cpp": {
+      "sha256": "515b31eeaa976cb1732a1b377d80ab07c7f936605feeb7ca8fe5327dd6eeafcc",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_00128F80_0x128f80.cpp": {
+      "sha256": "2e3bbc02e5fdcca3e470afefec540d1a5769650ba3b35b43c07039d58db710b9",
+      "verified_instruction_comments": 33
+    },
+    "recomp/config/output/sub_00129010_0x129010.cpp": {
+      "sha256": "ae8174e70277d0496989e3a435d4b37e3ccd637d2827cb818cf47e21fcc9824e",
+      "verified_instruction_comments": 45
+    },
+    "recomp/config/output/sub_001290C8_0x1290c8.cpp": {
+      "sha256": "fcf95433978a6d17029dc5ea279e1743c58caba5b31cbd65054c59b596b72ad1",
+      "verified_instruction_comments": 38
+    },
+    "recomp/config/output/sub_00129168_0x129168.cpp": {
+      "sha256": "d2ee2d9bd7cd28e07965b0d27416a9661206f98a01e52960c6034d8df29d373e",
+      "verified_instruction_comments": 54
+    },
+    "recomp/config/output/sub_00129240_0x129240.cpp": {
+      "sha256": "bb3973a16e8c2f3a29e988a132300326a1a717e1b34e5c122fee4ecc73096043",
+      "verified_instruction_comments": 38
+    },
+    "recomp/config/output/sub_001292E0_0x1292e0.cpp": {
+      "sha256": "c689092090d72396f4119fe6c9cfd4b66da27d9031c211f8b4281e320060fc24",
+      "verified_instruction_comments": 28
+    },
+    "recomp/config/output/sub_00129350_0x129350.cpp": {
+      "sha256": "21539f9b35e93c92aaa8b5c5f0b555b858f00716178acfe8d4714e25908972e0",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_00129408_0x129408.cpp": {
+      "sha256": "54db12048f419d63044d2900513c8d744b920be891591d086fe91f327bf28f40",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_00129468_0x129468.cpp": {
+      "sha256": "cf97092854999cb719bc73eb8415d96613b31c35fbb921550b5937b22d34d3b2",
+      "verified_instruction_comments": 193
+    },
+    "recomp/config/output/sub_00129568_0x129568.cpp": {
+      "sha256": "215ca37095d74ec3750aa50d7240097d248f17b4ef6236949eb9ac9457bce668",
+      "verified_instruction_comments": 32
+    },
+    "recomp/config/output/sub_00129610_0x129610.cpp": {
+      "sha256": "ec371f784eec8388478401aa70ee945731f0e96056b5cc4ed079ff5446e47105",
+      "verified_instruction_comments": 92
+    },
+    "recomp/config/output/sub_001297A0_0x1297a0.cpp": {
+      "sha256": "deffc80c3d607b163175a977b7daa87ebf95b2c4810e6e880d306d0553cf1ec2",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_001297E0_0x1297e0.cpp": {
+      "sha256": "1e28167e389f4d54e24c208de66451888ae884c4997b2048f0884251a2431bb3",
+      "verified_instruction_comments": 103
+    },
+    "recomp/config/output/sub_00129998_0x129998.cpp": {
+      "sha256": "cda90b12bb88ddfad0ffbae804b5089bb4fbc3c94f48d981a67e9b1e2974c734",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_00129A60_0x129a60.cpp": {
+      "sha256": "d9926ec81ad6bb5051413f4046629d821e0031e24fbcbf063ba812934285175f",
+      "verified_instruction_comments": 103
+    },
+    "recomp/config/output/sub_00129AC0_0x129ac0.cpp": {
+      "sha256": "09b5e3f4d884a7d8c3c2d1cbab67efbe1f559656e585e78933e119f31784658a",
+      "verified_instruction_comments": 66
+    },
+    "recomp/config/output/sub_00129BD8_0x129bd8.cpp": {
+      "sha256": "baf258d65d13fce99b85052a732aeebe2d6c07d6b680ecf56a19534251a2f527",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00129C08_0x129c08.cpp": {
+      "sha256": "b8752cf76594fb63848d270ad0c60f9db00e3d891fc5c495a0bb9d5ce63f905b",
+      "verified_instruction_comments": 78
+    },
+    "recomp/config/output/sub_00129CA8_0x129ca8.cpp": {
+      "sha256": "b22955448d27d55fd3d1a3e919116f23b12e82a4f64a8839515bfc726b19f6a2",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_00129CC8_0x129cc8.cpp": {
+      "sha256": "0344c7e26192c62c87ee0d3c5f87784f8e50b1318391276c4a309e9f7ad8bca6",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_00129D18_0x129d18.cpp": {
+      "sha256": "8466d0f3df9e51c06b0b38924f0f400c0c92935da44a03530fbf7e7222bca07a",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00129D48_0x129d48.cpp": {
+      "sha256": "9dc769638be00d99bf70ed21c2ede541c9b316d8dc6e8d1560bfd0de7b9e92a4",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00129D78_0x129d78.cpp": {
+      "sha256": "d2c7865ff62bf2ae0853ef665f812e8ef5d229a11f006e9d6f6e43189ff8431d",
+      "verified_instruction_comments": 38
+    },
+    "recomp/config/output/sub_00129DF0_0x129df0.cpp": {
+      "sha256": "43228157214d112001039051e214f87c2c492577669f5f97522c5fd277c536aa",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00129E18_0x129e18.cpp": {
+      "sha256": "56c0945f46fd8cc2e15836b2357c9059632d65b1c42017d44a5434e49455096e",
+      "verified_instruction_comments": 86
+    },
+    "recomp/config/output/sub_00129F88_0x129f88.cpp": {
+      "sha256": "356ca13f1b61cf4f2bc40776cbd542ae3e6a08500003cb0fa6efb0aba017409b",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_00129F98_0x129f98.cpp": {
+      "sha256": "b9bb3ef33f16ccf8c657f969518593682202665a34622e7f128ed6ee5cc11af6",
+      "verified_instruction_comments": 13
+    },
+    "recomp/config/output/sub_0012A0F0_0x12a0f0.cpp": {
+      "sha256": "54356109a208b89ffd130f162a23990b6ee105064547fa6c94a0454f9a0fd9f9",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_0012A130_0x12a130.cpp": {
+      "sha256": "522301e31bcfd5270751f0607eb8193adddb93a7a55a85674c087bed75407e59",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0012A1E8_0x12a1e8.cpp": {
+      "sha256": "407e4834f15bfc0768b3b34e82769e97507f2447f2274bcfdf045d19f9f44bb8",
+      "verified_instruction_comments": 89
+    },
+    "recomp/config/output/sub_0012A368_0x12a368.cpp": {
+      "sha256": "ea8a60cd7b39d0a9d9724a8469dff8a61113142c475147453146f30d83c77ebd",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0012A388_0x12a388.cpp": {
+      "sha256": "871168b4397283a32cbab3031ccee3d15fe9822cffbf43e4f3886b582ae8f638",
+      "verified_instruction_comments": 41
+    },
+    "recomp/config/output/sub_0012A968_0x12a968.cpp": {
+      "sha256": "027df04ba723181f8b2badf1c5ad2d69b9a19dd92481f35fa2011c09168b9d01",
+      "verified_instruction_comments": 33
+    },
+    "recomp/config/output/sub_0012A9F0_0x12a9f0.cpp": {
+      "sha256": "59847d1e6d5855ac633f9d6ea00ad5d8d33d40bcd2b4199265f7d9388a3c8f7e",
+      "verified_instruction_comments": 28
+    },
+    "recomp/config/output/sub_0012ABA0_0x12aba0.cpp": {
+      "sha256": "27e278dbd750b0664a3e9ee064c0a84dce2e52ff43a8f3c97d717aaf7981939b",
+      "verified_instruction_comments": 21
+    },
+    "recomp/config/output/sub_0012ABF8_0x12abf8.cpp": {
+      "sha256": "3d570412ee1126d2dc24c362dc330994d1924f151653417285c58edd8b7d3dd5",
+      "verified_instruction_comments": 38
+    },
+    "recomp/config/output/sub_0012BDB8_0x12bdb8.cpp": {
+      "sha256": "48365692a271613d136493a42ebeee457a3364f60041b323e9363caa4dac3798",
+      "verified_instruction_comments": 72
+    },
+    "recomp/config/output/sub_0012C630_0x12c630.cpp": {
+      "sha256": "d3e961830676d9fbab81efa6e2c38c1bcb7c9255e8312292f371cf3d4a67d610",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C648_0x12c648.cpp": {
+      "sha256": "c8f1b55c2f7d48fbff47e8f70e684aa48c2cb7665101d35c39f0c623123bf390",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C668_0x12c668.cpp": {
+      "sha256": "25470b234d9da54e315316636915b7b8e079b6530e7096b21cb5a5c5988b976a",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C680_0x12c680.cpp": {
+      "sha256": "e44e1d885d10834fa5a17f151153e632b3e36765ee682f3c6899e77f2a51e737",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_0012C6B8_0x12c6b8.cpp": {
+      "sha256": "1e5428d59f0e4d7207ea848dc0edb507a4b3076c69b63907ed5c6432fad17057",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_0012C6D0_0x12c6d0.cpp": {
+      "sha256": "3b30d2284d8b88b5fb09e746bdc4a66e4b3011d3fb85e900f4f5c81433664152",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_0012C6E8_0x12c6e8.cpp": {
+      "sha256": "bdffc5cdb380d6bde0d2a342be0c09db7b1de324e17f1c009e5b4d41ea152568",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C700_0x12c700.cpp": {
+      "sha256": "56ac106e2342eb1b7baa757fe18bda4c5741a1f539317e9631d66d6e925db0cd",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C718_0x12c718.cpp": {
+      "sha256": "16a72662f887fb50798ccc322e7f98175d39816814bc4b327c3783477624f7f5",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C730_0x12c730.cpp": {
+      "sha256": "36709d98e29b0dba563462660f9cd22b2aae7052dd036cacad491db2fdb101dd",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C748_0x12c748.cpp": {
+      "sha256": "009fe6fcfa421374e1a319792c3c748d69d55c608319078291de36d01832dc05",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_0012C760_0x12c760.cpp": {
+      "sha256": "d95348e67f76bb759867ffacd0265b43cfc610e6697af8ee7e6a2c09d21359f0",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0012C798_0x12c798.cpp": {
+      "sha256": "c55a22628bbb1bac1c90d85a21386ec0630a153a2e544106767fbd9e99e01a97",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0012C7B0_0x12c7b0.cpp": {
+      "sha256": "814d98a9d82a7ba58e7602f1bb9379e890154a965f838358c9d274edf906097e",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_0012C7C8_0x12c7c8.cpp": {
+      "sha256": "0f00a5a80480435c068cea260af951362609f97130aa321cf193bdd93aafa03b",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C7E0_0x12c7e0.cpp": {
+      "sha256": "0728045acd8a00b244922e0c11d9729290e1ebee1945fca5976ad549baf162cf",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C7F8_0x12c7f8.cpp": {
+      "sha256": "479a9d575d459ab90401352f27aab71552ef416bc5aff60c47089f4b0d76d01e",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C810_0x12c810.cpp": {
+      "sha256": "b64d260d8cf2430181e5564426328a0bcbdaf880675dcf78369da315a0b8b4f8",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012C830_0x12c830.cpp": {
+      "sha256": "45209592dd89dd08558ffbbb99c572d61982b0e73725080db3ab2cfe5b6d83f2",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_0012C848_0x12c848.cpp": {
+      "sha256": "f20326104f0e69d03e507f9dd60453a0a1e2593dae0bd39b8e23ca733f275829",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_0012C860_0x12c860.cpp": {
+      "sha256": "22cd0827ebc7db0f9e1d068301d8e584ac3139f634ee1c13d2d927f306819435",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_0012C878_0x12c878.cpp": {
+      "sha256": "182ce43a885cf86445f52b070f2d098a3492e2a393338cc9067b1ba98bdff35c",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_0012C898_0x12c898.cpp": {
+      "sha256": "55c937e492830596dceb81fdb3ffdfe1f5cfe0f65f6ba5e187d9669731228ccf",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_0012C8B0_0x12c8b0.cpp": {
+      "sha256": "8cde6aef21524a28700cdfb6298da7de8ed055a13ccab54f5215149cce1c4276",
+      "verified_instruction_comments": 8
+    },
+    "recomp/config/output/sub_0012C8F8_0x12c8f8.cpp": {
+      "sha256": "e2007cc0aabd34bf6fc69f6c9e445a90d6536dba1f835021cbc785aaf0f72f6f",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0012C948_0x12c948.cpp": {
+      "sha256": "731306256d3dbe56b6bfedb0f3b8b4eb47ab7fbdb89414b6e0baa5328770a195",
+      "verified_instruction_comments": 11
+    },
+    "recomp/config/output/sub_0012C978_0x12c978.cpp": {
+      "sha256": "c9a8ffa704cc873357e174688ce2aec65cd6a7b4017e75a3eed31ed03e116539",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0012C9A0_0x12c9a0.cpp": {
+      "sha256": "2d2657702ddd30122d0e940b597c87c8cbae87ce3ba063c5e1aff1d73f19b330",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_0012C9D8_0x12c9d8.cpp": {
+      "sha256": "178f28a6f21bf13d128b4474b1591affb58db424d83007edbc8ba603b32133ba",
+      "verified_instruction_comments": 96
+    },
+    "recomp/config/output/sub_0012CB58_0x12cb58.cpp": {
+      "sha256": "8477c296aa516642ff1415c0116baa9b84d50d5066d6bc4e24df62048994d22f",
+      "verified_instruction_comments": 23
+    },
+    "recomp/config/output/sub_0012CBB8_0x12cbb8.cpp": {
+      "sha256": "ea07f38e2ac241ddd9c4df9a2255dc49e39c8ff97db71fdd3b81a762b82c5b73",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0012CBC0_0x12cbc0.cpp": {
+      "sha256": "fc15184184f1e3b92caabd40f9f676bccfa1de4ce032bb9b2142e3334c121025",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_0012CC00_0x12cc00.cpp": {
+      "sha256": "7e62aaed82db54b382c74a900b51700530f03fddf7b849edf741d897ed442c58",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_0012CC10_0x12cc10.cpp": {
+      "sha256": "080b144c688c2259a57f6d1dd60f0ba8351072f92118a7fb6297bf7f722628ea",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_0012CC80_0x12cc80.cpp": {
+      "sha256": "e8a55c9c063fb64ec1b04620cbac0353992a7d60e0816d90fd3ef89ac87c74c7",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0012CCB0_0x12ccb0.cpp": {
+      "sha256": "b40dcafe9d6911dbf8f57a3d99b9d96a286547af390b7acb266e0e95268eff72",
+      "verified_instruction_comments": 201
+    },
+    "recomp/config/output/sub_0012CCE0_0x12cce0.cpp": {
+      "sha256": "ae4c1b696232a159d2cd11de0be3639d2d7682ba663455acb7203bb5e593033b",
+      "verified_instruction_comments": 117
+    },
+    "recomp/config/output/sub_0012CEB8_0x12ceb8.cpp": {
+      "sha256": "91510190abe44f9dc0a79e466f6db5d531252ee6315eab336e2639ca210278fb",
+      "verified_instruction_comments": 72
+    },
+    "recomp/config/output/sub_0012CFD8_0x12cfd8.cpp": {
+      "sha256": "6c6329d5ab6e2498945c192e7c19fc12aed541159d9caee16419cb7a10fa2170",
+      "verified_instruction_comments": 214
+    },
+    "recomp/config/output/sub_0012D338_0x12d338.cpp": {
+      "sha256": "86f1336a7bf332debbdee7aebbe9b95fda30f215cb7dd0ec81d3c0cd1a36c40c",
+      "verified_instruction_comments": 188
+    },
+    "recomp/config/output/sub_0012D590_0x12d590.cpp": {
+      "sha256": "7579367b0a3b11823ee8bd9a200a7b10be454f2b89c4c6fc9c7670ebcb68fca9",
+      "verified_instruction_comments": 40
+    },
+    "recomp/config/output/sub_0012D638_0x12d638.cpp": {
+      "sha256": "6659e47db4136723e96e06f3cba4e1db58df5c4260a56d83c73ec3ccc7883631",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_0012D678_0x12d678.cpp": {
+      "sha256": "0a5bac1624e70c561954a25459f9571c94bd45df8d20d095646c3d32cb6870c1",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_0012D6D8_0x12d6d8.cpp": {
+      "sha256": "63289d60deb53480a3f68c8559f4307a946b00c7ccf5445096002c763e48e933",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0012D6E0_0x12d6e0.cpp": {
+      "sha256": "811717bd31be5697aae56c31e1e9ab78aa1d500da46de160478d43c33e3c95b2",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0012D6E8_0x12d6e8.cpp": {
+      "sha256": "07d9e52d69ff81cc75c1dcd694ea81299a4f5ba1247cc9cd4a897aad5d354bc5",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_0012D6F0_0x12d6f0.cpp": {
+      "sha256": "240f3ef82fd4651b0da5d7599577ce54c3203b2ba94b71f2fb5a4f2160647055",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0012D728_0x12d728.cpp": {
+      "sha256": "a37a7d7b855f67de063d9be85a0e28ce929d512f11f1ddb52a9eb7038ab85890",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_0012D738_0x12d738.cpp": {
+      "sha256": "1d3adff7a9423bd7db8c54633e6d25f9af2c4c7e735c6b743ec7197862ba02a3",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_0012D748_0x12d748.cpp": {
+      "sha256": "64a1fc5dc6749305c37a2fa11f3699255525108978a4ec72d6b6a0d6cd5de2f0",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_0012D750_0x12d750.cpp": {
+      "sha256": "98f226714a020fb3e3754901a4c21ec118bc475a4a28a974c11c0bcd1a1a9f58",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0012D758_0x12d758.cpp": {
+      "sha256": "e806658a7ac9ac413fdd045f47d0fa41d9c9d3168aa164f990404940c2828837",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_0012D760_0x12d760.cpp": {
+      "sha256": "fe8ce44acd242eec33bec98ac75e4a23d85c035e4f756e447a08a0879b5da9ec",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0012D768_0x12d768.cpp": {
+      "sha256": "d0d224952cd17a1d5708f007a21a035e7bcc2bd5ad1bd54bac7205f8ce0e3f1c",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_0012D770_0x12d770.cpp": {
+      "sha256": "b9f979676ad9087c413c4c854999f68ca5dc2ebedb8f596d8ab4cc0b5f57fbee",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0012D778_0x12d778.cpp": {
+      "sha256": "d1aaba7d3b9914e6f16c16b1885961a55aa3506c07835fe9470d16ea2859f7ac",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D790_0x12d790.cpp": {
+      "sha256": "6f09ebdad7ba9c7bf7e7e901b1a2d32e773c5a1183e7b9bd144fe6179e69b7bd",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D7A8_0x12d7a8.cpp": {
+      "sha256": "736c4480ba829400a1cbca727e61c2574a6dbce58a97e19114c8cb75c784ba57",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D7C0_0x12d7c0.cpp": {
+      "sha256": "7f16b7d7c120dfd9d44a708cc7d73ce987a9536ddfb83b56a72ba57b7875d31d",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D7D8_0x12d7d8.cpp": {
+      "sha256": "83aaf3aeccf034c1414f24effa1b511df4a40793b6a76773a479cacebe81da74",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0012D7F0_0x12d7f0.cpp": {
+      "sha256": "61324e34d8aea2c7cc8a1744026a92bba5ef489e10b3fa3386c19802ac26c0f9",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D808_0x12d808.cpp": {
+      "sha256": "b066a0c5aaa57483125c9681679a6502a9c06a2e12a44e0fdd03455eabdd156e",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0012D820_0x12d820.cpp": {
+      "sha256": "aae807835aba4929ac5445938511f2dae1db6f2186588ef884e4ba8bcf0c6702",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D838_0x12d838.cpp": {
+      "sha256": "8302f350a95cce1adfe3ff7d20e03af58d11f15623855a094c51e46ba5ec5c88",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0012D850_0x12d850.cpp": {
+      "sha256": "1629105e30dc024b1a90e4ffd4d31b61016604f57828691cf8183e27c766107f",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D868_0x12d868.cpp": {
+      "sha256": "daca01d7bc16d38ff045eb926951d5e6b6720a709919f5a2e6a2839fb2effd7c",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D880_0x12d880.cpp": {
+      "sha256": "94e0933471093cf4993f773d1a921f98b711c50f83bed843400c3ef5691292ef",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0012D8B0_0x12d8b0.cpp": {
+      "sha256": "8172909bd3790e404bd78045781c06fa85750678c1c3cb0c5d99968b5d8bc732",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012D8C8_0x12d8c8.cpp": {
+      "sha256": "87a36c006106571b90f03160b5d560c8e8fa3e07db59df3f7531d94732347075",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0012DA10_0x12da10.cpp": {
+      "sha256": "edfde952c20c600cb179ac98ebce9f710cf226f875e322e5edded194a257d394",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0012DA18_0x12da18.cpp": {
+      "sha256": "028357dc1f716ca5571454ba50b5180f670f779962767ddd505c581406f90b95",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0012DA30_0x12da30.cpp": {
+      "sha256": "10566d72741a9b4b2c1607a7c9b8d394c077fe1d309429a49e5b5ecddd14cce1",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00130098_0x130098.cpp": {
+      "sha256": "3cedfbd1519404c64cb4a1f6aae7fe4317e0949ad612e9f5d2488e8103ef77bd",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_001300A8_0x1300a8.cpp": {
+      "sha256": "bd43624bc88dda1846a02c3e50136f85bce7bd3e5202c0ada1daddafb43a258f",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_001300C8_0x1300c8.cpp": {
+      "sha256": "1ec7c631e45ed83bcdf73c136db12a51fcd40995d8a8a9bb4d4b5f5df3d94e52",
+      "verified_instruction_comments": 13
+    },
+    "recomp/config/output/sub_00130108_0x130108.cpp": {
+      "sha256": "b30be9748755b5e7995c3e83bd616138d5f8365aeab08b5b58f4798e00f5b9b6",
+      "verified_instruction_comments": 67
+    },
+    "recomp/config/output/sub_00130218_0x130218.cpp": {
+      "sha256": "7b82d42f645e264a5c684f6c8ecc792bbf906f58d26afa829df103b0171e0542",
+      "verified_instruction_comments": 56
+    },
+    "recomp/config/output/sub_001302F8_0x1302f8.cpp": {
+      "sha256": "07788fb07b5c793d44ce5d375141a237fe23e0c49f371a552082146344cff632",
+      "verified_instruction_comments": 56
+    },
+    "recomp/config/output/sub_00130420_0x130420.cpp": {
+      "sha256": "509f00447f93984aa44d25a1bc7abfb5de89f0174fd6e0cdf2acb51a2f47495c",
+      "verified_instruction_comments": 21
+    },
+    "recomp/config/output/sub_001305B8_0x1305b8.cpp": {
+      "sha256": "f9da879bc8bb45eea7e36be5152206c4f70c5170faa0436e4976864c953b02c2",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_001305C0_0x1305c0.cpp": {
+      "sha256": "34d5bb7fa4d9ae66d2acd6ee789a5fde0dc6d7f8864bb32d99bdabc18b524666",
+      "verified_instruction_comments": 18
+    },
+    "recomp/config/output/sub_00130608_0x130608.cpp": {
+      "sha256": "8a07e843181a51a8e5bfdf0a72963fa773877067c1469d602039062d1346f284",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00130798_0x130798.cpp": {
+      "sha256": "aea9044f8a2a2e2a1e20d88c45e936ebd2d1cc03b4dde3e54b80f8be4ca8b475",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_001307A8_0x1307a8.cpp": {
+      "sha256": "e89bfc0aba872e4f1b686736b311bec4547d79701d15ef104d7776b5ecca8883",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_00130D48_0x130d48.cpp": {
+      "sha256": "e8265bee135cd5a4cd1ad2b3e5662a0e789d676b7925f136f8ac567af174f246",
+      "verified_instruction_comments": 52
+    },
+    "recomp/config/output/sub_00130DC8_0x130dc8.cpp": {
+      "sha256": "850eac1df1c875ed57a4477ff149f7973efc80cf9ccb45339fe196c6c1652f32",
+      "verified_instruction_comments": 11
+    },
+    "recomp/config/output/sub_00130DF8_0x130df8.cpp": {
+      "sha256": "d471c23b4e8f5cef9952c9fc19cf67f817014d4969529da62ca07206f004e1f3",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00130E10_0x130e10.cpp": {
+      "sha256": "bb880926be58705d0b479944842918c6b678bca80eedf8c1fff52de3afe7f3ff",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00130E18_0x130e18.cpp": {
+      "sha256": "a3a590eb0b9ebfe0619250b56347a1f114ffb031f8d4932114a1281685b47f4b",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00130E28_0x130e28.cpp": {
+      "sha256": "5e902f6937ad19f80f581479549d1f5812a555ef3cbc6cc7f2d8045c6bcd5632",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00130E40_0x130e40.cpp": {
+      "sha256": "791ef504237d91e688ae7f323d90efde9af3f5130c46b8b8c463cd3f6e1a65ca",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00130E58_0x130e58.cpp": {
+      "sha256": "46650f0be406dbca4f4a63b1de82b34b02e9f4ab834008ec3e2a1be92aef6732",
+      "verified_instruction_comments": 11
+    },
+    "recomp/config/output/sub_00130E98_0x130e98.cpp": {
+      "sha256": "43f3de92ec55123e8906b783c6ac5ed4a64bef9deee454d1bd65710d73d2ba5b",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_00130EF0_0x130ef0.cpp": {
+      "sha256": "441796d661de59f1d3b3b26935905ae3de0cb35c5c9da3bdf43365cad2d18137",
+      "verified_instruction_comments": 11
+    },
+    "recomp/config/output/sub_00130F20_0x130f20.cpp": {
+      "sha256": "1f5aaefcf0574a55b0198bf143b236cf0d69974ca2f22d06a27ef98c58b02d9f",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_00130FA0_0x130fa0.cpp": {
+      "sha256": "a2212032c08cb5e34e081ea1ed16e968299ba6c03e11a5e21620ac48cfcce8f0",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_00130FB0_0x130fb0.cpp": {
+      "sha256": "665af16d96c9dab6baa3dd927b25d0cee1499518cd26fbf5f5ae4a91fdd32d4e",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_00130FD0_0x130fd0.cpp": {
+      "sha256": "2a679ab2bc3ad7f29a2b543fecdd46447e672bbe364c2860dc7f01c489af5058",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_00131070_0x131070.cpp": {
+      "sha256": "b948476d39a737886db942c09db3e3bf2dfb2a2076ee54e0acf9d7dbcd82ae35",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00131088_0x131088.cpp": {
+      "sha256": "b8f7a19c7e4b5abbb8dd6e67497cdf340c6a038f9ab4056592e231ca8621c3cc",
+      "verified_instruction_comments": 65
+    },
+    "recomp/config/output/sub_00131190_0x131190.cpp": {
+      "sha256": "0b9838a473c87d1bdec1515c3ee1745623245770de1b53b0fc641464bb142a4a",
+      "verified_instruction_comments": 106
+    },
+    "recomp/config/output/sub_00131258_0x131258.cpp": {
+      "sha256": "1001a67183054471a0ffad44441ce4b55cd314a943141e1b130bfa10d980861b",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00131320_0x131320.cpp": {
+      "sha256": "fde18cedb570c317255154fbf3e2b00e37b1e75a58c32ae238dfc76aecfc3c6c",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00131338_0x131338.cpp": {
+      "sha256": "8fbdc5e4dbf7b32c7109c1040c774c723ac2bb2bfe56d6f467e05d4d1adc8448",
+      "verified_instruction_comments": 58
+    },
+    "recomp/config/output/sub_00131428_0x131428.cpp": {
+      "sha256": "08fe46c988b611eb4c707deb3cb6bcf6cd6183ba81aed1d2ba6b7c00c3f0e9fe",
+      "verified_instruction_comments": 109
+    },
+    "recomp/config/output/sub_00131490_0x131490.cpp": {
+      "sha256": "307d3ece5b7bfddecd8cffde6dca4906529347d27efef449a28160735676389a",
+      "verified_instruction_comments": 18
+    },
+    "recomp/config/output/sub_001314E0_0x1314e0.cpp": {
+      "sha256": "c9cde320f2f8b491209685517e2b5a1200c0495a35dac1ca1d957ad131201eac",
+      "verified_instruction_comments": 63
+    },
+    "recomp/config/output/sub_001315E0_0x1315e0.cpp": {
+      "sha256": "7ca12d1c03ac29d550f47d848a9b267fb385e564f19d43b43fdc2f11bf462d31",
+      "verified_instruction_comments": 186
+    },
+    "recomp/config/output/sub_00131918_0x131918.cpp": {
+      "sha256": "856599132af05d73aa7e9b4adf8719ffc477ce9e1c35c585fca9732ac97ab008",
+      "verified_instruction_comments": 139
+    },
+    "recomp/config/output/sub_00131AE8_0x131ae8.cpp": {
+      "sha256": "d334ecc1a6ffdcc3e61a9d6ab3c41e3ad726cb1b1b4edc1db996ba1ffd2ee377",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_00131B48_0x131b48.cpp": {
+      "sha256": "9b9de67fb04857c716ebd35d8d5957cf49350e26f44ac0eacf9166861cd32b1f",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00131B60_0x131b60.cpp": {
+      "sha256": "0ac8c091451be5c3738423229eb9b42c9f1d75144e65b24fe801e5ed4a626161",
+      "verified_instruction_comments": 60
+    },
+    "recomp/config/output/sub_00131C50_0x131c50.cpp": {
+      "sha256": "96618a32cc65499a3b9d9c4d1b3f713acf91df2ba978fee2c26847a221604c9a",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_00131D18_0x131d18.cpp": {
+      "sha256": "56de8525e5374b40e7f4373e45984d45baa6a515a0bb0c174f57dc2091c95f71",
+      "verified_instruction_comments": 29
+    },
+    "recomp/config/output/sub_00131D98_0x131d98.cpp": {
+      "sha256": "20cf49ce965b12bfcd46a7bdbcedb6f6f902a6f0c1c2248481655d30a0c47f86",
+      "verified_instruction_comments": 38
+    },
+    "recomp/config/output/sub_00131E38_0x131e38.cpp": {
+      "sha256": "db9df2411c4c017b72c874836d9ffb73b111f8a37661026d9af15bfc84e2d74b",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_00131EF8_0x131ef8.cpp": {
+      "sha256": "f0be7194dd2106e685b6030df27cdfc4c8249fa2c4534172a29b2499bb8c67f4",
+      "verified_instruction_comments": 76
+    },
+    "recomp/config/output/sub_00131F28_0x131f28.cpp": {
+      "sha256": "882aba5f01085330cafa51fd48bac9e232258928984ea525ddba4218f339b9a0",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_00131F60_0x131f60.cpp": {
+      "sha256": "2e840c1c5de5b522f0dfbc0149bb1fd72d8890bdc916d1d39039f91f39df9307",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_00132028_0x132028.cpp": {
+      "sha256": "9693b82729be9dd81e5f8db5430487f4bf1a25dc05664303ccf93031ac29bcaa",
+      "verified_instruction_comments": 72
+    },
+    "recomp/config/output/sub_00132160_0x132160.cpp": {
+      "sha256": "5f31ce835826bdeedcd3655518bc83d7c2041f7cd3fc1aaa10cd0d219c0767b0",
+      "verified_instruction_comments": 209
+    },
+    "recomp/config/output/sub_00132458_0x132458.cpp": {
+      "sha256": "804b8b50654ee2bdada18a82266afdd031ae34cf5a935368fdc70fdc27b54be6",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_001324A8_0x1324a8.cpp": {
+      "sha256": "ae3f1762986725f4facc98a92dcbbd96889ab044fedffe3bbeb680d678fc845c",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_001324F8_0x1324f8.cpp": {
+      "sha256": "7785ce9b6e36e21e24c734cac3d118b365520676826b522232d63296ae6e9e4b",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_00132548_0x132548.cpp": {
+      "sha256": "5730849bfb0534a8aea37d1e51a416438da9f3f8112d3868e121f0b6142ec313",
+      "verified_instruction_comments": 105
+    },
+    "recomp/config/output/sub_00132598_0x132598.cpp": {
+      "sha256": "28b51ec5d0e2941ff90d0ca979eb28d683707034e7b5a8f13c74f50eb04c83be",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_001325E8_0x1325e8.cpp": {
+      "sha256": "b1dc4d3b335c2c3dcb7b8cc16585ae1770d11d250d885335484d6aae6e3b4bf0",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_00132638_0x132638.cpp": {
+      "sha256": "991b8b01affe232252e68868c0e676e0d2da7e90287b4d811d5a4c0cb007c7fa",
+      "verified_instruction_comments": 45
+    },
+    "recomp/config/output/sub_001326F0_0x1326f0.cpp": {
+      "sha256": "318b16ce46bc6e1118ea8d370a8836b73176d2c42145d15794996ef311bc5a40",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_001327B8_0x1327b8.cpp": {
+      "sha256": "80afe3d3312ca5362d1b0eb064e49cff0944ddcfdbbf3276796c2a7aecdd8b42",
+      "verified_instruction_comments": 60
+    },
+    "recomp/config/output/sub_00132820_0x132820.cpp": {
+      "sha256": "1c4a08e98cfa37bc42930a62bba4147568b482413d9142d5d4dc2169047b80ce",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_001328B8_0x1328b8.cpp": {
+      "sha256": "b6c1e927f245454929cd3e53383883dbecc44bb791b9ec35bfc99ae8e6f01776",
+      "verified_instruction_comments": 48
+    },
+    "recomp/config/output/sub_001328E8_0x1328e8.cpp": {
+      "sha256": "5bcbbf14e4c078e368a948fc6b7150f671f9cfce910c5af89a5d6c9e00532396",
+      "verified_instruction_comments": 35
+    },
+    "recomp/config/output/sub_00132978_0x132978.cpp": {
+      "sha256": "7e9f7a2a36863f628c3c5f25f1353f3e42b8db36550cd175c7672e9d76935863",
+      "verified_instruction_comments": 36
+    },
+    "recomp/config/output/sub_001329A8_0x1329a8.cpp": {
+      "sha256": "508389811d53cfcb2eed6c9c0bc54fc43413b9232b3eb6b7c634e93c81f43643",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_00132A08_0x132a08.cpp": {
+      "sha256": "c8d8d8a69f4883ecf74e180bdf0afe59560f1adb20ec5f0443f5ab9080e05464",
+      "verified_instruction_comments": 111
+    },
+    "recomp/config/output/sub_00132A70_0x132a70.cpp": {
+      "sha256": "39eb6ebb4ca79df9c2659f5c89088ba65bf17c4bb3e6fd2c8a817fa769f25783",
+      "verified_instruction_comments": 56
+    },
+    "recomp/config/output/sub_00132B58_0x132b58.cpp": {
+      "sha256": "7340f7109fbb890aa25b06f2eca4ad8ac69305be3748d31d16e5d3ac75e8d1a3",
+      "verified_instruction_comments": 27
+    },
+    "recomp/config/output/sub_00132BC8_0x132bc8.cpp": {
+      "sha256": "56188d0426fc6da10c346eda88bb35a3c2184f3994adba9f054dfc83eae89095",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_00132BD0_0x132bd0.cpp": {
+      "sha256": "9d9941f5c3a4be420f4f28d24be121211a4555d09ced58656502553cb16b5898",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_00132C08_0x132c08.cpp": {
+      "sha256": "33ca3a927f74133c5c2f9d70f2088399bb3bdc22ef9141185d31e0b379e091c4",
+      "verified_instruction_comments": 56
+    },
+    "recomp/config/output/sub_00132CF0_0x132cf0.cpp": {
+      "sha256": "dc40b6a224aab32b6d982825c1a5a32cafee9c66fcb66da129f4f565f81488d0",
+      "verified_instruction_comments": 64
+    },
+    "recomp/config/output/sub_00132D20_0x132d20.cpp": {
+      "sha256": "412222eb52231e41b7b28814e7e090278990803d3dff570b7ef259c7327edc8d",
+      "verified_instruction_comments": 15
+    },
+    "recomp/config/output/sub_00132D60_0x132d60.cpp": {
+      "sha256": "ebb24484f9dab118441d0e1cbad7457df7aca349dc362b3f089bb5456f9dc1e5",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00132D90_0x132d90.cpp": {
+      "sha256": "9a7308f4976dff45bbd8c1e6eaa3a4e0be0a2d44ef287c62e86e2d409eb4773f",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00132DC0_0x132dc0.cpp": {
+      "sha256": "0dda050ff7c078aae521eb8162cff6c78feaedc8664468fe8f21e35c631185cd",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00132DF0_0x132df0.cpp": {
+      "sha256": "847803ef02244909ed481c5caec75211ce4898e86bef53620547aaf8e03ffd52",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00132E20_0x132e20.cpp": {
+      "sha256": "26cc92c0460819a6ef4a0de9f2d63eec06d459920e58a7dce19fc70fff6b330b",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00133040_0x133040.cpp": {
+      "sha256": "3fa5008153be155e22a0b121a091f96eaf7f1c415aa0382b65c99cc25515c73f",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00133058_0x133058.cpp": {
+      "sha256": "1b8872292e6ff9fcff46819e0434b868f34013e0fe43020ad4ce0acb777960d2",
+      "verified_instruction_comments": 58
+    },
+    "recomp/config/output/sub_00133140_0x133140.cpp": {
+      "sha256": "fc5ec6002f252204aee0e6133ed02701bf71e12ba5599e590dc95411fc0e71c7",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00133148_0x133148.cpp": {
+      "sha256": "da9af1afdabb496b20c067d736db0a4f8b3b9ef58933e80dbe6e7c7abf01a0f2",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00133150_0x133150.cpp": {
+      "sha256": "1588e5adb4a6971367934665f321366eb2bff73819110dd1e0a494146f227f81",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00133158_0x133158.cpp": {
+      "sha256": "9301bc9e2bb037a87999e934d94014f2cc09cd941c6145038518b98e5aa725df",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00133170_0x133170.cpp": {
+      "sha256": "f3f4a04998fb75b9720f93220a1e63ad3af3e8831bd17239b5d47ba766d47003",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_001331A8_0x1331a8.cpp": {
+      "sha256": "ab7b6aa058e710593a5b7745073e88997a089a8bf4620b356af4b3143a64995a",
+      "verified_instruction_comments": 38
+    },
+    "recomp/config/output/sub_00133240_0x133240.cpp": {
+      "sha256": "eebe019dccfdc0bd4a88ec9f5897197ac3b7a9fdefd4018c544d8562a7abd68e",
+      "verified_instruction_comments": 120
+    },
+    "recomp/config/output/sub_00133280_0x133280.cpp": {
+      "sha256": "8106399ce5da227fd6baf93be9013659d664af550146dc1a5b52213c6ba76343",
+      "verified_instruction_comments": 105
+    },
+    "recomp/config/output/sub_00133428_0x133428.cpp": {
+      "sha256": "c20c22688498eac75e1aff06e77b4aaacd3319698e38e4bba3fbd575ef0e9437",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00133490_0x133490.cpp": {
+      "sha256": "3fc3d33bb36649dd8086f5fc542e7418edf9babdd1a356ea0b9b880c190b672c",
+      "verified_instruction_comments": 415
+    },
+    "recomp/config/output/sub_00133580_0x133580.cpp": {
+      "sha256": "eda560bdfad6f2f06bb4a80ca1f55010157116582bff77da2ae194048d0feb65",
+      "verified_instruction_comments": 36
+    },
+    "recomp/config/output/sub_00133618_0x133618.cpp": {
+      "sha256": "7e65539836c22217b7513a835ee1a8249f83afa78db308f34e0919c3f3822394",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00133630_0x133630.cpp": {
+      "sha256": "b26f1112666ed0ad8fc7ee48dd58e80bd6bb3fe5a479ce2fd7519d584b78993f",
+      "verified_instruction_comments": 48
+    },
+    "recomp/config/output/sub_00133708_0x133708.cpp": {
+      "sha256": "afc939869ec36b97a42cced6461d7e1060b9b152b452d82e6e5b98e2522abeed",
+      "verified_instruction_comments": 86
+    },
+    "recomp/config/output/sub_00133928_0x133928.cpp": {
+      "sha256": "0954dc090943c3f1c16d7bcf3c9930cdad99af8f0b529f9d8404cda9cad36a8f",
+      "verified_instruction_comments": 98
+    },
+    "recomp/config/output/sub_00133AB8_0x133ab8.cpp": {
+      "sha256": "6eb645c632d2a110c1528ce7b52d1ee3b9cb3b54aa4ea165c9cd15c07f68a3e4",
+      "verified_instruction_comments": 34
+    },
+    "recomp/config/output/sub_00133B48_0x133b48.cpp": {
+      "sha256": "d630fe1934d6930467fe0db79ba169a5566d6db415b3c400d7bb76a378d56614",
+      "verified_instruction_comments": 292
+    },
+    "recomp/config/output/sub_00133D10_0x133d10.cpp": {
+      "sha256": "14dd475aabb49dab07b09a502da4f0f5e4d4e08ba40a7bc97a45725e27699add",
+      "verified_instruction_comments": 178
+    },
+    "recomp/config/output/sub_00133FE0_0x133fe0.cpp": {
+      "sha256": "8510c47c2dddb312be6a68c408042007d5f51d56949e7f4bdcfa036ec3afb663",
+      "verified_instruction_comments": 240
+    },
+    "recomp/config/output/sub_001343B8_0x1343b8.cpp": {
+      "sha256": "6d72b678228d480fb3e5fc12b52adcfcf1c2fee022e024ec11e5296c4eb97a32",
+      "verified_instruction_comments": 93
+    },
+    "recomp/config/output/sub_00134530_0x134530.cpp": {
+      "sha256": "3ee45ba74f15d21b2ad4f1ff6a12c64f8cd1667bd454a05b075b67adee4d2fb6",
+      "verified_instruction_comments": 47
+    },
+    "recomp/config/output/sub_001345F0_0x1345f0.cpp": {
+      "sha256": "242dc42b28b6d7b0c87d103381d34292269020c4f9be572318fab38e7f4e091d",
+      "verified_instruction_comments": 129
+    },
+    "recomp/config/output/sub_00134800_0x134800.cpp": {
+      "sha256": "b55254d8688942fa35db90a1cca2870d0c156196d2a3fd4bcbfdd08e2c91cfae",
+      "verified_instruction_comments": 230
+    },
+    "recomp/config/output/sub_001348F0_0x1348f0.cpp": {
+      "sha256": "c7bbb5a49305fb0d05199e7cbc1ab9796b5077ac24648d1a76039d5ad3ff6925",
+      "verified_instruction_comments": 143
+    },
+    "recomp/config/output/sub_00134B40_0x134b40.cpp": {
+      "sha256": "5833b42b61b0d3e6fffd146c11fd108d97580e964795601809f4c8a831edc0b1",
+      "verified_instruction_comments": 30
+    },
+    "recomp/config/output/sub_00134C58_0x134c58.cpp": {
+      "sha256": "06dcd0551bc495b2833423a052f2cfe7dd854789edae8152afa2bff7cc37b0d5",
+      "verified_instruction_comments": 68
+    },
+    "recomp/config/output/sub_00134D90_0x134d90.cpp": {
+      "sha256": "eadad5b492e19e737436647d179402760b67a9d3d7242abe748e16e8b629b18a",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00134DE0_0x134de0.cpp": {
+      "sha256": "025d7ea7c95dd16124eaf19f01509775aac0d5df145dfa607e483828be697492",
+      "verified_instruction_comments": 52
+    },
+    "recomp/config/output/sub_00134EB0_0x134eb0.cpp": {
+      "sha256": "55021593f0306eeb2311eb4b91432f1f1e956a91575a5cfa2b3c5927eec4c1ae",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00134F58_0x134f58.cpp": {
+      "sha256": "ee8bf70005e59b1a499398ca8eb8423496f3bbef4effca1bff5ae00f686d1e9c",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_00134F98_0x134f98.cpp": {
+      "sha256": "26a2e5da4375ba70c203667f344ae57c72e86801f80f217eb55381eaa1d52e2c",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00134FA0_0x134fa0.cpp": {
+      "sha256": "3507ce75439385fa790c53a643ab69b215f6f2442a22df13ad271174fa1d40e4",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00134FD0_0x134fd0.cpp": {
+      "sha256": "afa7312453e29606cc30d576d65d906f3b7be1024b87522d105eaa82148ef685",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_00135000_0x135000.cpp": {
+      "sha256": "585ad17df1beb95533be0840beb74fd1b89a9ae424e39030b796e9a04fd1d631",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00135020_0x135020.cpp": {
+      "sha256": "8cf5d0d8de7c9ded2f4072a38ebb90a89dd1bb080bd341a82c29e5e3e46f18a8",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00135048_0x135048.cpp": {
+      "sha256": "15c1e2e8835da304c3c5c2b231248bc8aab338590549914f22a696af29763e37",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00135060_0x135060.cpp": {
+      "sha256": "c7c866d776b6392656f8773de10870430cd5820fedc4895bf82726ea132809ef",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00135068_0x135068.cpp": {
+      "sha256": "328aea7904e290c8bf53ba932cdc07ca52d040d3286b21902c5f0753b20b2b84",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00135078_0x135078.cpp": {
+      "sha256": "e69fd07c571378acc70082f8f1c9e2d22402ecfadb76ed41b9108846375204e3",
+      "verified_instruction_comments": 97
+    },
+    "recomp/config/output/sub_00135170_0x135170.cpp": {
+      "sha256": "f0eae888a895c663ed7957c93f591a592d90ad8ad1ab76f1fdbd82be4766f25d",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_001351D0_0x1351d0.cpp": {
+      "sha256": "99a2fc8ba9982903887ae03d900e1e8e88a4934281bf0647026a14c938ab3bcb",
+      "verified_instruction_comments": 11
+    },
+    "recomp/config/output/sub_00135200_0x135200.cpp": {
+      "sha256": "b9612ad5dfe6095092df370061e8f799c0b2798d24223b23de73250ea122f71c",
+      "verified_instruction_comments": 126
+    },
+    "recomp/config/output/sub_00135228_0x135228.cpp": {
+      "sha256": "5f301088a8da1fb73a9996d5656932eadfceadc7bcc17ed5e31bb9f6b721045a",
+      "verified_instruction_comments": 49
+    },
+    "recomp/config/output/sub_001352F0_0x1352f0.cpp": {
+      "sha256": "8f99f42bb35d512c690eb79f879a2a748091fdba86bbee112207b75c7c4b434d",
+      "verified_instruction_comments": 65
+    },
+    "recomp/config/output/sub_001353F8_0x1353f8.cpp": {
+      "sha256": "8a93834e41f4401cf7e4ea540e4de4e8bbef1597d2c791315be7e0f98f4f1f92",
+      "verified_instruction_comments": 34
+    },
+    "recomp/config/output/sub_00135488_0x135488.cpp": {
+      "sha256": "9e874071cc94562d520402af96bfca2ac09894830e1599ca39cc188df7f053e8",
+      "verified_instruction_comments": 53
+    },
+    "recomp/config/output/sub_00135560_0x135560.cpp": {
+      "sha256": "146ad3a60b3d5724297e764f124981bb1abbf405c9d0c8ede1a7c6236597741c",
+      "verified_instruction_comments": 38
+    },
+    "recomp/config/output/sub_001355F8_0x1355f8.cpp": {
+      "sha256": "c2b27d0473a5028394701e97075ff07ba77f6e82fa0151c60d841c70aa72ce3f",
+      "verified_instruction_comments": 78
+    },
+    "recomp/config/output/sub_00135658_0x135658.cpp": {
+      "sha256": "c9a758e6040ad4811dc74e7c303014b7e21a9a59679ebc8872457b33bcc503a2",
+      "verified_instruction_comments": 53
+    },
+    "recomp/config/output/sub_00135730_0x135730.cpp": {
+      "sha256": "e45996327c6feb87d37fadeb6e318193b9f85493afc8e6701f17edc51241d79f",
+      "verified_instruction_comments": 48
+    },
+    "recomp/config/output/sub_001357F8_0x1357f8.cpp": {
+      "sha256": "bf32141403062d31c3618b16aa8ffb1e84d49fc2cb83818e30d7c32943945a08",
+      "verified_instruction_comments": 32
+    },
+    "recomp/config/output/sub_00135878_0x135878.cpp": {
+      "sha256": "897fc8da94e701a50099754e17725967c920691b6634c77f9873930dea2f2a67",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00135930_0x135930.cpp": {
+      "sha256": "f6b0ede577c173a5ab905a3f1c0c7cc900c1744aec1b2a254402c1a569ab6a23",
+      "verified_instruction_comments": 72
+    },
+    "recomp/config/output/sub_00135A58_0x135a58.cpp": {
+      "sha256": "6fd175a5ed9fec558e4735a60b4e983ba66dfb59777df003c32baeb518e1110b",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00135AC0_0x135ac0.cpp": {
+      "sha256": "28cd4ad81719690d2684294db7b1c9ff30650194d3a8a8d7b3198e42ccd708cb",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00135AD0_0x135ad0.cpp": {
+      "sha256": "450676e951e964cc82241d52ed35aa6eb6c1167b48bd31767d6eb8a8166dbd34",
+      "verified_instruction_comments": 80
+    },
+    "recomp/config/output/sub_00135C18_0x135c18.cpp": {
+      "sha256": "36916d9ca768bc6e1b2fcb2f2320d4302246e680fb266748f8f491f8abc8569c",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00135C80_0x135c80.cpp": {
+      "sha256": "a0b19e868235e7d4ed748480ceec08e98a135b6b536df5754a8d09f6e6e5f9c7",
+      "verified_instruction_comments": 30
+    },
+    "recomp/config/output/sub_00135CF8_0x135cf8.cpp": {
+      "sha256": "5b97d561887ae546ef04cb70ccffad10929c6e09941e5d76a7c6cdc407247729",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00135D60_0x135d60.cpp": {
+      "sha256": "6bf1e067b1c013d2e952586f64f1141b3610439e8470a9d9fe4413878181db53",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00135DC8_0x135dc8.cpp": {
+      "sha256": "1745324200be7a064b6b56fa9ed883c6d5e53202c21a44d9d444a588a4171f8e",
+      "verified_instruction_comments": 74
+    },
+    "recomp/config/output/sub_00135E30_0x135e30.cpp": {
+      "sha256": "86ea75861073915a94c6091b6bc2b9de4f675b4ac7bde67ebd3dd4e0befc1647",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00135E98_0x135e98.cpp": {
+      "sha256": "dc3cfdcaec50f86af3eba40860cd0b62689e7e4d67f750dbc7236739d367b4a7",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_00135EF0_0x135ef0.cpp": {
+      "sha256": "34379fdcf19d69f3f4e56131eca866de42ad8852a00c31999f2df06319e680b3",
+      "verified_instruction_comments": 23
+    },
+    "recomp/config/output/sub_00135F50_0x135f50.cpp": {
+      "sha256": "4e16bccd4cc253011e8eeed937600f4231dcd558db9b78a889d7baf2bce6e3d3",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00135FB8_0x135fb8.cpp": {
+      "sha256": "687ce6c8a85935fa469266599e4af4df2cdb1539a7549695dd1e8a4f1ccd49d0",
+      "verified_instruction_comments": 672
+    },
+    "recomp/config/output/sub_00136078_0x136078.cpp": {
+      "sha256": "f1b36a00b20a4534a6ecfd93b146ab980f56c3a8145e90a17afd96f0d9d07787",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_001361A8_0x1361a8.cpp": {
+      "sha256": "1921a24cdd34771ee27d7b594f2143b05661e931832419ea18c109ff76568b0d",
+      "verified_instruction_comments": 75
+    },
+    "recomp/config/output/sub_001362E8_0x1362e8.cpp": {
+      "sha256": "3bf85b8107321d4c7c71b5699b67abb606c921f31ad0e035a2eef080109aec21",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00136350_0x136350.cpp": {
+      "sha256": "cd9b44454fad523c3253c09fd98a38ff1b7a6acd329f924a260ecae8b19234ec",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_001363A8_0x1363a8.cpp": {
+      "sha256": "fc7808f759c31dab59f0a4c91c1eae35db4e50f52610d5ea2d79fa83ef6e1048",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00136410_0x136410.cpp": {
+      "sha256": "dabd01b3590954c967f97a1d4528952755852abfd1abeeb504d94637a36b44a9",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_001364D0_0x1364d0.cpp": {
+      "sha256": "4f38e8ab859ef5823c3b6af469b7a5c4c3974a948db715cddc569a730a3c3c3d",
+      "verified_instruction_comments": 39
+    },
+    "recomp/config/output/sub_00136578_0x136578.cpp": {
+      "sha256": "c4b0987c01c415afab3fe08618dc7ef9d6b69cbcc955d7f51d9dcd86a2ccf8d5",
+      "verified_instruction_comments": 65
+    },
+    "recomp/config/output/sub_00136688_0x136688.cpp": {
+      "sha256": "489278339dc8e24243aacacaf8ca512f0bf19b51fada21d4af17867c1def3eb5",
+      "verified_instruction_comments": 51
+    },
+    "recomp/config/output/sub_00136760_0x136760.cpp": {
+      "sha256": "f611cef30db6e1d13292ecd8e5642ae771dae0ead0751a8c72deea5e26e648b4",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_001367B8_0x1367b8.cpp": {
+      "sha256": "e7712f5eeb65aaa1d9e42612a074e73a411cf3c9ec42ff41374a1573802cad16",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_00136878_0x136878.cpp": {
+      "sha256": "3323d8884146ebf6a3e8738ee0220dd0227bee60ff23b8988427ae862ac5e913",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_00136938_0x136938.cpp": {
+      "sha256": "1575d1d143e6251ce8750b74bbf71658c3dd1fdd1f9c69619c579a9b979da965",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_001369F8_0x1369f8.cpp": {
+      "sha256": "7addf3730368375ce52b3ae5f48886d8d655690bfd44717576874223613550b7",
+      "verified_instruction_comments": 33
+    },
+    "recomp/config/output/sub_00136A80_0x136a80.cpp": {
+      "sha256": "9bf48f8257d7f2344d2dbf424a3e9d6459d75fd0b6e06027d630b456c6034966",
+      "verified_instruction_comments": 304
+    },
+    "recomp/config/output/sub_00136AA8_0x136aa8.cpp": {
+      "sha256": "5fff05786748d7a1be5377f4f2733fce543d5834478823535de6b99cdac9e56d",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00136B10_0x136b10.cpp": {
+      "sha256": "a7c2f26124743e9e6181533b2e31960ac7b86a5b71eb47223aeba266088abdb9",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00137138_0x137138.cpp": {
+      "sha256": "9cb4d5aa164649a71a96292ae84d4d50fcdf0ca379b2e6f3badd182e594e177b",
+      "verified_instruction_comments": 44
+    },
+    "recomp/config/output/sub_001371F0_0x1371f0.cpp": {
+      "sha256": "ac31dac5d1466cb70b4b5518f933ea5c9dae3f7a8bca98cb2ead9ea424d69812",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_00138650_0x138650.cpp": {
+      "sha256": "d9226d373941af504ea5b6c6ec06f0cbc6dd8aacfb6df7a01bf4b22bfccfcb37",
+      "verified_instruction_comments": 220
+    },
+    "recomp/config/output/sub_001389D8_0x1389d8.cpp": {
+      "sha256": "37c55d2b6354f3ffa02b6a9f13d32795c38effeffdbaaf7c20d7683a66a2412a",
+      "verified_instruction_comments": 55
+    },
+    "recomp/config/output/sub_00138A38_0x138a38.cpp": {
+      "sha256": "0630013fcb31d1ef6f31801df4dd6932cd91d7cedf7d060c0fb3d03fc27b4f3f",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_00138AA0_0x138aa0.cpp": {
+      "sha256": "30328cb8cd874e2c9e267f0c2692d0fa6035025431579a6c61921569594f74b4",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00138AB8_0x138ab8.cpp": {
+      "sha256": "c79c42d265aff3cd4a56de73d96fab79ca49b893ab42eff0c31c9584091032e3",
+      "verified_instruction_comments": 59
+    },
+    "recomp/config/output/sub_00138BA8_0x138ba8.cpp": {
+      "sha256": "fd3dfc7015e45f2f694eb830e0ffeba8f9d7c1bdbbf60af1454f545043c0fbfe",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00138BD0_0x138bd0.cpp": {
+      "sha256": "31ebbda18db68b49ebfefb8ed5809b916a69f949876f8130a1524701ea4a4b00",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00138BE0_0x138be0.cpp": {
+      "sha256": "c3255cfdef2f9728265479f9ecff992fef40ffe15aa647a5902ae499be8018dc",
+      "verified_instruction_comments": 125
+    },
+    "recomp/config/output/sub_00138C90_0x138c90.cpp": {
+      "sha256": "8e8a4a88a28d31039d607cefbd077fa42057feaaebf086b1ef6ec2ca4086f9a3",
+      "verified_instruction_comments": 49
+    },
+    "recomp/config/output/sub_00138D60_0x138d60.cpp": {
+      "sha256": "557046718515cf6c9dfa2d69a1443fb3cfc1061c961e9f837752556ad4a7458c",
+      "verified_instruction_comments": 32
+    },
+    "recomp/config/output/sub_00138DE8_0x138de8.cpp": {
+      "sha256": "9325a42d35b4af64b00c782f9de77c7ccc02ffcf96e4fb9444c58a7a59df7ba5",
+      "verified_instruction_comments": 28
+    },
+    "recomp/config/output/sub_00138E58_0x138e58.cpp": {
+      "sha256": "f703425f579e785970d4d80e7762f00fb37bcb19e23e1d4c993e1af1c1048f94",
+      "verified_instruction_comments": 71
+    },
+    "recomp/config/output/sub_00138EA8_0x138ea8.cpp": {
+      "sha256": "75f3219497cbc4dcdca38538df972c1db5c49f8d4c4a4396b1946272f3037632",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_00138EC0_0x138ec0.cpp": {
+      "sha256": "87a44acc5e73ccd4cccd554dc0fca8577e5dcaabb2cedfba9c744d795070db47",
+      "verified_instruction_comments": 28
+    },
+    "recomp/config/output/sub_00138F30_0x138f30.cpp": {
+      "sha256": "cb501b8894b18b1f41d3a8b8b0d18460e9981c0f1a5f05185abf0b3d820dffbc",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00138F60_0x138f60.cpp": {
+      "sha256": "783ae48e0a03fb0eaf90d44c25b0831662b6e4e95c54ba579cb5f9cc88ed66da",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00138F78_0x138f78.cpp": {
+      "sha256": "5637ec7ae3e9b7f0df5465f4e082fe91fa7ae164abb8d89ce31be7227968e1b9",
+      "verified_instruction_comments": 99
+    },
+    "recomp/config/output/sub_00139110_0x139110.cpp": {
+      "sha256": "507000bd8d519344b86d0a5272643c117cd6f82f45674cafd1586443e6ef1eed",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_00139178_0x139178.cpp": {
+      "sha256": "2cb1fde38b3127b7c2ec634c69e425d9e44b147674a921a8438e50a5753166d5",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00139188_0x139188.cpp": {
+      "sha256": "fc5cd25e913a3332e5e463163b7e1a251b79ae54aaaaffd214b4e1c7a9165913",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_00139198_0x139198.cpp": {
+      "sha256": "3b2b87c2fcd5231792bf4d00b03667ee6fc08718f9beec76d2dd587164172ae1",
+      "verified_instruction_comments": 88
+    },
+    "recomp/config/output/sub_001392F8_0x1392f8.cpp": {
+      "sha256": "39f69801ff269ac03218d625f5bcdc73ca086e1fe6b5918a9fb47bca76ab4f8c",
+      "verified_instruction_comments": 59
+    },
+    "recomp/config/output/sub_001393E8_0x1393e8.cpp": {
+      "sha256": "4667129324ef1e5f2d2743eda5e5a0452ec8a700c652d2d91c130f136a50d785",
+      "verified_instruction_comments": 30
+    },
+    "recomp/config/output/sub_00139460_0x139460.cpp": {
+      "sha256": "8e4fe103d5a333202d81d821e669e06a4c35057f4d5169efb4a5b1806f92ca3b",
+      "verified_instruction_comments": 65
+    },
+    "recomp/config/output/sub_00139568_0x139568.cpp": {
+      "sha256": "3f09ecbd5d0c3b5e4ccc46503a15485fec94ef98213779799add50ea9afdccf2",
+      "verified_instruction_comments": 36
+    },
+    "recomp/config/output/sub_001395C8_0x1395c8.cpp": {
+      "sha256": "b5dd1005b6f9eada64d8b1be2ff58b814ec962a730f4f296d6dbb886a55a6080",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_001395F8_0x1395f8.cpp": {
+      "sha256": "17e453c0391c496fd453d32d6259adb85f379271ec8258a3bc3668bc9ee22927",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_001396D0_0x1396d0.cpp": {
+      "sha256": "e93e09e443a60e06c16d0b8c6ab52721630abc3f3c3d503ccae7518fd6ccc34c",
+      "verified_instruction_comments": 47
+    },
+    "recomp/config/output/sub_00139798_0x139798.cpp": {
+      "sha256": "4567bdb5e78a77eaf6ba2a1781d0edf80e9b71a26166f1376b83fc5d4ec9f86c",
+      "verified_instruction_comments": 36
+    },
+    "recomp/config/output/sub_00139810_0x139810.cpp": {
+      "sha256": "bc22c53bd5d4e6dabd56d3e22eb9e344a9f8e0902972bf666e938f637d460e11",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00139828_0x139828.cpp": {
+      "sha256": "e4b936e451180aa461e0ed510d5cdb07ba6356193e68e8b55ee2be85f21e10f5",
+      "verified_instruction_comments": 113
+    },
+    "recomp/config/output/sub_00139928_0x139928.cpp": {
+      "sha256": "55c828f81f3f341c51c35538a8caaf9bc8b361a7c30f008a6155307b2c45cb67",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_001399F8_0x1399f8.cpp": {
+      "sha256": "5f8ecb66deb4eb045c30b948df29ad6d7992036eae82975a5b3b4639c63d5bdb",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_00139A30_0x139a30.cpp": {
+      "sha256": "384eb06138af753a819edc82fe8f168377aafe3086c461c016a6ca0c8d6c7b15",
+      "verified_instruction_comments": 279
+    },
+    "recomp/config/output/sub_00139A50_0x139a50.cpp": {
+      "sha256": "cae1bff175f99102190c4c1592932cfdaad6613cd3c558bf41351c908a1a04f5",
+      "verified_instruction_comments": 95
+    },
+    "recomp/config/output/sub_00139BD8_0x139bd8.cpp": {
+      "sha256": "99770b4d2652295f5fe737b50b5a41257eddb12a0fb7317c6c1d9d7c2538f949",
+      "verified_instruction_comments": 21
+    },
+    "recomp/config/output/sub_00139C30_0x139c30.cpp": {
+      "sha256": "3ffbf3e60ad8d6ba325e8d267c67e8511537665b8e384415b48e1720615c6ac7",
+      "verified_instruction_comments": 37
+    },
+    "recomp/config/output/sub_00139CC8_0x139cc8.cpp": {
+      "sha256": "c2de975536ad24f5b67f23f1ca7578b041fcbbc6ab4dc7c424b0536075a721ba",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_00139D00_0x139d00.cpp": {
+      "sha256": "232ef0dc0698940abeb0409cd5aefbbe5dc97c2f7d9c94d54d0187eccbaaadc7",
+      "verified_instruction_comments": 101
+    },
+    "recomp/config/output/sub_00139EA8_0x139ea8.cpp": {
+      "sha256": "05573054f1e1f1ca06ae19a720210194d5f337ca3a97e31469124857a88b4339",
+      "verified_instruction_comments": 61
+    },
+    "recomp/config/output/sub_00139FA8_0x139fa8.cpp": {
+      "sha256": "8248c5714fbaa408cba1231755553fce309e2c3212589ebd540e300aee6704fd",
+      "verified_instruction_comments": 96
+    },
+    "recomp/config/output/sub_00139FE0_0x139fe0.cpp": {
+      "sha256": "1ae1c3bfdc2a549888c463b50d5d2e8422b8defef226038f3a601a8aaac34d0e",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_00139FE8_0x139fe8.cpp": {
+      "sha256": "4e87e263322b37c7449f660ba0f09e97c0e9806ec8db71620d0988ffe270340b",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_0013A248_0x13a248.cpp": {
+      "sha256": "a173b4bee7321096fd2e908e67a4bf3650926f97c2d7ffd807b25c8b26bbd446",
+      "verified_instruction_comments": 41
+    },
+    "recomp/config/output/sub_0013A418_0x13a418.cpp": {
+      "sha256": "b88c0c0b83a5834a541f3912fb2512d7d37d136b682dff33491bf90307723e48",
+      "verified_instruction_comments": 102
+    },
+    "recomp/config/output/sub_0013A5B0_0x13a5b0.cpp": {
+      "sha256": "ddbbf68356d7de6cc928f2c66b5073e357296b6556e6c0a0a91e6157de901458",
+      "verified_instruction_comments": 93
+    },
+    "recomp/config/output/sub_0013A738_0x13a738.cpp": {
+      "sha256": "3964d9cbf95397d7d28d2081e0959ba38c0c7690c47c519c7aa193e5aadb725a",
+      "verified_instruction_comments": 116
+    },
+    "recomp/config/output/sub_0013A910_0x13a910.cpp": {
+      "sha256": "ff0b30c65afd75cb9c8f8a311e020b5625e64206edffca4faf3f080b1986d2b2",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_0013A9D8_0x13a9d8.cpp": {
+      "sha256": "0875a187814a461bfed3f8e4c8cd274420e54315d900b67e8b358731e8c3672f",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0013AA00_0x13aa00.cpp": {
+      "sha256": "c1b5ba0a298dd67b00754eb1dc57a8ce065ecb7919ebd96497bc7701339a1092",
+      "verified_instruction_comments": 44
+    },
+    "recomp/config/output/sub_0013AAB0_0x13aab0.cpp": {
+      "sha256": "d8473b45e7985c1f910f1812f289095f169f05f5be876b6e2f1baecaa04c6ca2",
+      "verified_instruction_comments": 102
+    },
+    "recomp/config/output/sub_0013ADF0_0x13adf0.cpp": {
+      "sha256": "de0f59d3b59f5f4987da8c2d40f93010923734bc15217448e83c6ece018eecbc",
+      "verified_instruction_comments": 8
+    },
+    "recomp/config/output/sub_0013AF60_0x13af60.cpp": {
+      "sha256": "e72183ab004fb10ab085f0db0f17e57232fcdbd5a10081dcdc398dd387a62e7c",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_0013AF98_0x13af98.cpp": {
+      "sha256": "c6eb32558268dfcf88a712181d1dd6c4d4f1db40bfe5e9a9eca093da5494bca5",
+      "verified_instruction_comments": 11
+    },
+    "recomp/config/output/sub_0013AFC8_0x13afc8.cpp": {
+      "sha256": "6a4aaf6b33a5a6d1f02f1b70c2d6fd72563364a3a61d24eccc1725f57e95f8bf",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0013B110_0x13b110.cpp": {
+      "sha256": "5720041d40c2a43d274da53714dfcb8300c9759641f1e5d92ea13b3531a51598",
+      "verified_instruction_comments": 47
+    },
+    "recomp/config/output/sub_0013B1D8_0x13b1d8.cpp": {
+      "sha256": "e0d973eefe7579e4646059b34f941e2c77f9805bbe2f69c862febc2c939aec0c",
+      "verified_instruction_comments": 83
+    },
+    "recomp/config/output/sub_0013B250_0x13b250.cpp": {
+      "sha256": "e7cf54a81cc6a0d4f952892203bebc923977d03c7c69e400d9f97ff93edc2cb8",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_0013B308_0x13b308.cpp": {
+      "sha256": "a1a5ff7e02452c5a830688cb3db89c48f9b2f191ffd6f8dd9e013485d7485b50",
+      "verified_instruction_comments": 8
+    },
+    "recomp/config/output/sub_0013B528_0x13b528.cpp": {
+      "sha256": "fb195854a111c02662e3de8b33a9d55dfc8566cde21dab6e204aefc6bc4434d5",
+      "verified_instruction_comments": 33
+    },
+    "recomp/config/output/sub_0013B5B0_0x13b5b0.cpp": {
+      "sha256": "df9069004ee9531f93e03ab6c962734e2fc7126221e0d2d208bcc2e1b8d311c2",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_0013B5E8_0x13b5e8.cpp": {
+      "sha256": "9677086eb6e6ffd5cf78c661460c74affe16ee84c73889e17a963a41fc28d349",
+      "verified_instruction_comments": 294
+    },
+    "recomp/config/output/sub_0013B608_0x13b608.cpp": {
+      "sha256": "4d7dc85940d009b8c0ae89681ec14dff5cd418fdad2777349f1c8405920e327c",
+      "verified_instruction_comments": 96
+    },
+    "recomp/config/output/sub_0013B790_0x13b790.cpp": {
+      "sha256": "388af14db9701a59d2aeca7447f63b307cf6ef3c8baa85219b32975bbe11beea",
+      "verified_instruction_comments": 42
+    },
+    "recomp/config/output/sub_0013B840_0x13b840.cpp": {
+      "sha256": "4e2d0fb1a2033035f6cb8d2641a3d351c6b900ddb3605e5eb7f8c2f876c3fbff",
+      "verified_instruction_comments": 37
+    },
+    "recomp/config/output/sub_0013B8D8_0x13b8d8.cpp": {
+      "sha256": "bb58ff8a98ba34aee844ba2665721851d80fe9022f443a47e073652d1e536b5e",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_0013B910_0x13b910.cpp": {
+      "sha256": "2487d29b02b806f5c33d51132bc37e9058e1029c8c53eb70a0f39bc360053eb2",
+      "verified_instruction_comments": 95
+    },
+    "recomp/config/output/sub_0013BAA0_0x13baa0.cpp": {
+      "sha256": "7956379c41447b55f73a67f1cc40067949259ccdfd27e425f18ebd1136db672b",
+      "verified_instruction_comments": 62
+    },
+    "recomp/config/output/sub_0013BBA8_0x13bba8.cpp": {
+      "sha256": "7edfbc7f055de2997c00c17f083eabddb2805f120c017ee2e1cb01ba20548740",
+      "verified_instruction_comments": 36
+    },
+    "recomp/config/output/sub_0013BBE0_0x13bbe0.cpp": {
+      "sha256": "755911febec0162862dab859aae4a0b708ca38cf744d5825f61fd00d904974ca",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013BBE8_0x13bbe8.cpp": {
+      "sha256": "ef9b4137edf81cf0ed5b19141309fad71a31418688537b4988e755b3e1d56039",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_0013BE80_0x13be80.cpp": {
+      "sha256": "8ba5c8562a471b98a4fa0a9b2d02f5314e9208fde02e391668dde0a397adc583",
+      "verified_instruction_comments": 68
+    },
+    "recomp/config/output/sub_0013C0A0_0x13c0a0.cpp": {
+      "sha256": "758a39aac004e6aa77d686dfad90fe507218fccccffad8d7d8bdfc7532609246",
+      "verified_instruction_comments": 104
+    },
+    "recomp/config/output/sub_0013C240_0x13c240.cpp": {
+      "sha256": "b5b92b9462a49b2417faa3df28327710f6a6e240924531e231969ce81a348048",
+      "verified_instruction_comments": 84
+    },
+    "recomp/config/output/sub_0013C3A0_0x13c3a0.cpp": {
+      "sha256": "c3110e1068645a7c200b6435d5e7a8ac94380fe5787609de8dfcd84d036d6eca",
+      "verified_instruction_comments": 122
+    },
+    "recomp/config/output/sub_0013C590_0x13c590.cpp": {
+      "sha256": "8dad643277530b5eb2cf4ff015efdeddc26c60d9e1107d06a41943b51a1a8941",
+      "verified_instruction_comments": 138
+    },
+    "recomp/config/output/sub_0013C6F8_0x13c6f8.cpp": {
+      "sha256": "9b4c0bab0bf1acd605d5031e21d87dcb151fcd225fb0cfee400897fa902fc76f",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_0013C7C0_0x13c7c0.cpp": {
+      "sha256": "08866cdddb2b5df48ef48c6bc1dc7f0c3167e2a7819d841c8285b287898c143a",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0013C7E8_0x13c7e8.cpp": {
+      "sha256": "2e5238784a8c0c1ec698caa1ae80bd3788b24558681fce885fdb0b2a80472789",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_0013C838_0x13c838.cpp": {
+      "sha256": "72cecfb95ae7d44f40ce1be23b0823211ffd72bf9b6456a8fd77e74b1d8b8018",
+      "verified_instruction_comments": 105
+    },
+    "recomp/config/output/sub_0013C9E8_0x13c9e8.cpp": {
+      "sha256": "f7c07eb483b943f5558c01231aa2d12b4fbddaaf5ac5233675fe5b37dc1f19d5",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0013CB50_0x13cb50.cpp": {
+      "sha256": "d616a070aab3dd306ebbc2aff4be5c964beed8514b21183f133e08f12cf01601",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_0013CBB0_0x13cbb0.cpp": {
+      "sha256": "52036d5f18d78b1812970bb41ba9ad06127434a09575f7a56e5832e8080961f2",
+      "verified_instruction_comments": 64
+    },
+    "recomp/config/output/sub_0013CCB8_0x13ccb8.cpp": {
+      "sha256": "4488812faab688ec922057eef9e2ca92e8d783e77941412fb0c9b2a8a8f20413",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_0013CD10_0x13cd10.cpp": {
+      "sha256": "e8549a968ba8f0b0eebe43044b7a4bd5eb19b938ccf520ebeeee368d9012af79",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0013CD38_0x13cd38.cpp": {
+      "sha256": "c942d540bd26bc3154ecfed7dd2a9383806945fd5894c4b3b302c28692d6afab",
+      "verified_instruction_comments": 102
+    },
+    "recomp/config/output/sub_0013CF10_0x13cf10.cpp": {
+      "sha256": "acaf05848d9b0fd23b21fa6c921e858d46ea8fa38540628c7c5053ba5a5efac1",
+      "verified_instruction_comments": 25
+    },
+    "recomp/config/output/sub_0013CF78_0x13cf78.cpp": {
+      "sha256": "3b91c06f664caa32de7b5add9825d2d7d0900bdb369522de4f0f632e5af47a8f",
+      "verified_instruction_comments": 49
+    },
+    "recomp/config/output/sub_0013D000_0x13d000.cpp": {
+      "sha256": "7a0cf3af549934be0a54aa69a2686ba01abf1b56e86b4950f4528c79882f37cc",
+      "verified_instruction_comments": 15
+    },
+    "recomp/config/output/sub_0013D040_0x13d040.cpp": {
+      "sha256": "c7a69d269012783fc4f40fdfb3d25a145e3668952fb04d3fa5caf6dbbf590feb",
+      "verified_instruction_comments": 24
+    },
+    "recomp/config/output/sub_0013D0A0_0x13d0a0.cpp": {
+      "sha256": "a393014dc66f31ed261de12c241cf1810259402f11c9aea9102800147ee3837f",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0013D0D0_0x13d0d0.cpp": {
+      "sha256": "3c31ef722b8789feb8bd2bc3fb17a47feb50a32f51b95e210a9a9f4deb6c3717",
+      "verified_instruction_comments": 162
+    },
+    "recomp/config/output/sub_0013D100_0x13d100.cpp": {
+      "sha256": "6a87f5ec61076eea22d951c752c3bf01b4c5ae0570dbfcb14ca1a63ac646aa21",
+      "verified_instruction_comments": 36
+    },
+    "recomp/config/output/sub_0013D190_0x13d190.cpp": {
+      "sha256": "60fda1f490d818e48fb095de8aff86e4ccf5ae7a6e53143f79dfd2a724de69ef",
+      "verified_instruction_comments": 37
+    },
+    "recomp/config/output/sub_0013D228_0x13d228.cpp": {
+      "sha256": "e2aad2e9a57ee9447268d30e6fd1bd8ade2c5c955055cecf09f55c68392d9133",
+      "verified_instruction_comments": 37
+    },
+    "recomp/config/output/sub_0013D2C0_0x13d2c0.cpp": {
+      "sha256": "f15d7f5e18b19b7e8044f136bdaa6aec2a60942586fa98a86a2e38f2e7485dda",
+      "verified_instruction_comments": 37
+    },
+    "recomp/config/output/sub_0013D358_0x13d358.cpp": {
+      "sha256": "861c0cc8ae329e655c4a5ae64e6c70105cd69940f76ebb916ceadca4d7318ace",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_0013D3C0_0x13d3c0.cpp": {
+      "sha256": "4b58e3db17509422f5b4ec35dce1df7128822ffff692f4e7e9a85562f1d256d2",
+      "verified_instruction_comments": 28
+    },
+    "recomp/config/output/sub_0013D3F0_0x13d3f0.cpp": {
+      "sha256": "c5b3deea08ada2f758f5a86189ac483bd1133dc8071300da899da77ea6db16c5",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_0013D430_0x13d430.cpp": {
+      "sha256": "96de190cb5786ced03660a520c98c6a725fcaa089d10f884556ebbf480d70f5a",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_0013D468_0x13d468.cpp": {
+      "sha256": "a924c10747e43806d285a0579b76e89636a3e2b560515173235d5da3b657cce6",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0013D498_0x13d498.cpp": {
+      "sha256": "eb530c1af9a4e0f3b5c88d233493b1b541d49dcb0a0f03afc0548eebb541389f",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013D4B8_0x13d4b8.cpp": {
+      "sha256": "d4643ac1053733566463875f2b22ec1c18a9d6f6829dce91020607d5083d677d",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0013D4D0_0x13d4d0.cpp": {
+      "sha256": "da8a0cca749f1c14c5c0c9962476db70f8338392e88c5aede5190faa7d96805d",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0013D4F8_0x13d4f8.cpp": {
+      "sha256": "7dbeb626774dda5d3ee53307a28c960dd6464e156d3a010ba5ccff9de4f2cddf",
+      "verified_instruction_comments": 36
+    },
+    "recomp/config/output/sub_0013D598_0x13d598.cpp": {
+      "sha256": "716d1a536bf031c12c9ea6cfbf9dd6ace92ef0b10e8be4b390c78b741b8cfdcd",
+      "verified_instruction_comments": 30
+    },
+    "recomp/config/output/sub_0013D618_0x13d618.cpp": {
+      "sha256": "8916c184079add7c4aaf3e0525d6cc36fe4f655fd276a84f6142a0deb603664f",
+      "verified_instruction_comments": 121
+    },
+    "recomp/config/output/sub_0013D6D8_0x13d6d8.cpp": {
+      "sha256": "aa51afbf0c68b0435b01bf4b5e51e603a9283d44fcd84c7d368a15d4e0d6a73b",
+      "verified_instruction_comments": 74
+    },
+    "recomp/config/output/sub_0013D800_0x13d800.cpp": {
+      "sha256": "8e633a4f01cf0341153f320f2e7da6885ee00ed49e49a568010480884958f2d5",
+      "verified_instruction_comments": 44
+    },
+    "recomp/config/output/sub_0013D8B0_0x13d8b0.cpp": {
+      "sha256": "222c210cdf18082e9c45e19b2e04c38b085f820b11ce2c20c0cece9c769c7517",
+      "verified_instruction_comments": 65
+    },
+    "recomp/config/output/sub_0013D9B8_0x13d9b8.cpp": {
+      "sha256": "66b91d9f9dc33eca6a7ca35b29d0a902982edac8906e4fbad556c2ac4c609878",
+      "verified_instruction_comments": 99
+    },
+    "recomp/config/output/sub_0013DB48_0x13db48.cpp": {
+      "sha256": "f425c96b8c5534defae267367f8a08340da7a0f31d062619afe1eb099f2840e8",
+      "verified_instruction_comments": 183
+    },
+    "recomp/config/output/sub_0013DE40_0x13de40.cpp": {
+      "sha256": "67eb0a09bec6151c7a0fa73ffc718f87c0a95b3f6fc963447b1d131399e743f0",
+      "verified_instruction_comments": 53
+    },
+    "recomp/config/output/sub_0013DF20_0x13df20.cpp": {
+      "sha256": "f0a0d1ddeecf91e7aff26958f242d2d8966803c5f4c056dac4a2c3a3e569beda",
+      "verified_instruction_comments": 29
+    },
+    "recomp/config/output/sub_0013DF98_0x13df98.cpp": {
+      "sha256": "b9afab1d2c3d0fcbad71db69468a2975aba335ddfb57fdcb5eecd8eb1890ed2a",
+      "verified_instruction_comments": 375
+    },
+    "recomp/config/output/sub_0013DFA0_0x13dfa0.cpp": {
+      "sha256": "4b3ac82f24bedf6048a82bc60fd509b85817f0e8af321566601146b18484bd99",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_0013E000_0x13e000.cpp": {
+      "sha256": "ca63f9584bba941881775cc0e8567c7b3e22b86ef1a103af0dcbd8b75e06f50f",
+      "verified_instruction_comments": 172
+    },
+    "recomp/config/output/sub_0013E2B8_0x13e2b8.cpp": {
+      "sha256": "8e300a39b2286887a4f492af9de0bbdbf59ddb53001d3ede854519352e4a5244",
+      "verified_instruction_comments": 167
+    },
+    "recomp/config/output/sub_0013E6C0_0x13e6c0.cpp": {
+      "sha256": "e6b8f5610e2ae65ad378269c944506321ae8be8531300b8004aa01e80a1c231b",
+      "verified_instruction_comments": 40
+    },
+    "recomp/config/output/sub_0013E770_0x13e770.cpp": {
+      "sha256": "ce24bcf707e0aa3969c67122df39b7db8947dc2e356160e84f64e3a918c5bed3",
+      "verified_instruction_comments": 207
+    },
+    "recomp/config/output/sub_0013EAC0_0x13eac0.cpp": {
+      "sha256": "979a37d6f002d932e0974e9310d1e17905038fa1e488f9d2d1af550fb847135b",
+      "verified_instruction_comments": 48
+    },
+    "recomp/config/output/sub_0013EB88_0x13eb88.cpp": {
+      "sha256": "6bcf0197e8c8ab64a4b0d98c63758a68c60912bfdd8e2f21b72252392b4757ff",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013EBA8_0x13eba8.cpp": {
+      "sha256": "825a868d81fbc3c5b0af6ddd03558f6ad4476c58fc87d8f5aacb02a926b34111",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_0013EBD8_0x13ebd8.cpp": {
+      "sha256": "45b08a5e5662080e5fe147149fc260a56bfa59162576bd9d09dc41d2fd955365",
+      "verified_instruction_comments": 30
+    },
+    "recomp/config/output/sub_0013EC50_0x13ec50.cpp": {
+      "sha256": "ff1bc4d049dc05d19a043260c2ce3279d52fdeec45489ca06947a4505da4a61e",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013EC60_0x13ec60.cpp": {
+      "sha256": "37293766b08f5b4c03e66d41c218f1c94c515403f06fc5486933e80398aef7e2",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013EC80_0x13ec80.cpp": {
+      "sha256": "584ac3a25a1d910a39c123b0c67a499967d2557050752c8971bedfb060c4d634",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013ECA0_0x13eca0.cpp": {
+      "sha256": "98e4bb1303b42420cfb9c5c82b8e817a4822a425090027447e39f93de7a61ec1",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_0013ECB0_0x13ecb0.cpp": {
+      "sha256": "98f615d4ccdf1665d84d8c9099cee3049e972943d76e1e6ce87c8b472836e9da",
+      "verified_instruction_comments": 16
+    },
+    "recomp/config/output/sub_0013ECF0_0x13ecf0.cpp": {
+      "sha256": "b3957533ec80b954d9a3a17b1f1ebca9f3a58c7e999454c3119423f19271b6bc",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_0013ED28_0x13ed28.cpp": {
+      "sha256": "f49fa9b94a34cffa500300cd211415339d6831bfd049f4ae04d4980d74d18454",
+      "verified_instruction_comments": 279
+    },
+    "recomp/config/output/sub_0013EEE8_0x13eee8.cpp": {
+      "sha256": "c62b6ee1dcb81fa7a6eb75f2863567afb5568671483b8d240372e77a0ec1df55",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_0013EF58_0x13ef58.cpp": {
+      "sha256": "65b46686ab94c3c60591f73e6d4717ad79bbff99f8ede8be4632984afe8d8804",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013EF78_0x13ef78.cpp": {
+      "sha256": "3a916155926c67ad5a5b2ee27ecf8a8aac787b9e22cf20da3f8b814f99e044c8",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013EF80_0x13ef80.cpp": {
+      "sha256": "ca0b80c590289d893a28f2d3253305409614a4de92d2d1d0637a60fc1efbb7af",
+      "verified_instruction_comments": 44
+    },
+    "recomp/config/output/sub_0013F038_0x13f038.cpp": {
+      "sha256": "c8961aa9b1b94e64632ff5f24a31372a2183ca94f903e3b64e4b4bcf52081a7b",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013F058_0x13f058.cpp": {
+      "sha256": "242dc370dfd408b0aaa1542b529a847ea2e751686bba979353a746c240c3a6ed",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0013F080_0x13f080.cpp": {
+      "sha256": "1b2230a4fc70d1fe3b2f253678705f184a35d6ddfb56b7ff0d54d27044f1a1ab",
+      "verified_instruction_comments": 13
+    },
+    "recomp/config/output/sub_0013F0B8_0x13f0b8.cpp": {
+      "sha256": "c0deff0f55aad6b385585cd9ad5a086813375f4f72e0b2dd0b96180b1cb72789",
+      "verified_instruction_comments": 9
+    },
+    "recomp/config/output/sub_0013F0E0_0x13f0e0.cpp": {
+      "sha256": "f9c4f067b8eba19766c1b7602fb731de11262f1e486b8ac4d64f0274707afbd3",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013F0E8_0x13f0e8.cpp": {
+      "sha256": "e5c0ea442e7c54967879db5af96b35f72a25cd7af45dbdd37434bf68eaa8d0fe",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013F0F0_0x13f0f0.cpp": {
+      "sha256": "97f17b81a5624f0760e9fdbd06f4a55e4904dcd8552a4924074afae92ee6a89d",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_0013F100_0x13f100.cpp": {
+      "sha256": "4df39580bdbf4782ecfe0f47faa8789d45821863fecad879eb353dcae500dcec",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013F108_0x13f108.cpp": {
+      "sha256": "43c8e6fb28e432e6023461cf71c4feff9a89db37828123dff7e2acb8888b142c",
+      "verified_instruction_comments": 9
+    },
+    "recomp/config/output/sub_0013F130_0x13f130.cpp": {
+      "sha256": "a6c78e2dc817b25cbd674c2ede1c0436e28fa0df6b604b6b5fa3b65953852b50",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013F158_0x13f158.cpp": {
+      "sha256": "4f08f69bef30134b4b3073dd3864a23e1517b7fe64178076725d84efc23cbcff",
+      "verified_instruction_comments": 9
+    },
+    "recomp/config/output/sub_0013F180_0x13f180.cpp": {
+      "sha256": "e49071461ea6c1860b1123a0d6b2abd0b8ee2235f5ddf06f60513b13840f5477",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013F1A0_0x13f1a0.cpp": {
+      "sha256": "1a6391117fdc21a4af2bae0bdc87a57c256f2e0c10e0318da320163b8c47f1bb",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0013F1C8_0x13f1c8.cpp": {
+      "sha256": "b2b4f1f76fcb2d7bbfbc61308ba59e0b4892d1c5a9fa5b9f596a7a4010fc9407",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0013F1E0_0x13f1e0.cpp": {
+      "sha256": "86720f0b43224ba1b34b2799a7d296ef5cd9bbf7134164520086a757b7cee937",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_0013F218_0x13f218.cpp": {
+      "sha256": "393bf9c052c0787157ffaaac30474e3ee2966a1469465246f566fdf048856285",
+      "verified_instruction_comments": 6
+    },
+    "recomp/config/output/sub_0013F230_0x13f230.cpp": {
+      "sha256": "46a2017507ff40c9d90654a46e53229972cc4b91b0536e8c137145980191713f",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_0013F2A0_0x13f2a0.cpp": {
+      "sha256": "c4f9fd7a68b24ba0cc177413cb7d6d91a89059c8036c685545e8cebbc6087cf6",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013F2C0_0x13f2c0.cpp": {
+      "sha256": "3b48f6181ca81c5ee7e727f5bcdd5b753c8bfb4bed6a1868336d2176267ac1da",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_0013F310_0x13f310.cpp": {
+      "sha256": "596114c85d2bd7e12f446814e4c1e2c94cbfe872516e05e1772f309d45aeae93",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_0013F360_0x13f360.cpp": {
+      "sha256": "c3cbd7a9a00402de54080ee9d6db4b29781af731dfdbb047e4c4988e85c1e339",
+      "verified_instruction_comments": 70
+    },
+    "recomp/config/output/sub_0013F428_0x13f428.cpp": {
+      "sha256": "ae15b9e77b5d5d0abf31bd5df598a5f7747865e736b48e5ae4786b6ce19ceaea",
+      "verified_instruction_comments": 13
+    },
+    "recomp/config/output/sub_0013F460_0x13f460.cpp": {
+      "sha256": "b41cf17a85d31ed3853f05f5276d6726e6aee4d26c82f6a6d9cfb9dd72ae6a26",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013F468_0x13f468.cpp": {
+      "sha256": "f627de1aed602cb86a2604f0459a142c2d5f5d484a5da8a4470fb72014050e62",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_0013F478_0x13f478.cpp": {
+      "sha256": "e05e67b9c7d3d5bcbd5c3dc8aad6d5a59d6528a79b0829192f1f6c6ddccc8957",
+      "verified_instruction_comments": 222
+    },
+    "recomp/config/output/sub_0013F488_0x13f488.cpp": {
+      "sha256": "984e6f76c3683a28050f22e2adb9fa939b19fd5c57c55e1d63b87dcd05dbc10e",
+      "verified_instruction_comments": 18
+    },
+    "recomp/config/output/sub_0013F4D0_0x13f4d0.cpp": {
+      "sha256": "b678c35bd4ff2ae2eaa6cf7023d94368722ab3e91e0babab1d412e67eeeb76aa",
+      "verified_instruction_comments": 47
+    },
+    "recomp/config/output/sub_0013F590_0x13f590.cpp": {
+      "sha256": "40fcea9fd99c18e37bbafd514e91ba1c0277490f66f1d4b7b4d56ff9e25cc512",
+      "verified_instruction_comments": 37
+    },
+    "recomp/config/output/sub_0013F628_0x13f628.cpp": {
+      "sha256": "0ae57684814d48d04ec18e0b6dd5a3338692c1a6d96c32e1dfb02c9210a887e9",
+      "verified_instruction_comments": 61
+    },
+    "recomp/config/output/sub_0013F720_0x13f720.cpp": {
+      "sha256": "04b00c335ee28227f1a6f23cd6b8d3bbdb662a7cb507702ed78369092c67785c",
+      "verified_instruction_comments": 41
+    },
+    "recomp/config/output/sub_0013F7C8_0x13f7c8.cpp": {
+      "sha256": "ba4d649061175feb6cfe32c37300ae47473f8953f19b6566e3bcec72f997ac20",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013F7D0_0x13f7d0.cpp": {
+      "sha256": "c206b95ebf873760ec5b65ffd3c93d692877f513d54a4299b8a3b53ea40b147d",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013F7D8_0x13f7d8.cpp": {
+      "sha256": "a7e79d0b83cb2bf394c466656be25d5b2a587833d9735fd5ceba8bc8e2829d4b",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_0013F7F8_0x13f7f8.cpp": {
+      "sha256": "81f91d9e7e07d65df01a4bdf0c3cc69f7e2685af3c4f063e868478776f612c1c",
+      "verified_instruction_comments": 23
+    },
+    "recomp/config/output/sub_0013F858_0x13f858.cpp": {
+      "sha256": "572903803d870e048a9cc90ab026d1c6a9cae9b8cf1b6bb57b49e5cc276ef1ba",
+      "verified_instruction_comments": 18
+    },
+    "recomp/config/output/sub_0013F8A8_0x13f8a8.cpp": {
+      "sha256": "0fc5474c5c2cc62f6fcb4ba18be7df032c4ce6e74b2e647b2f13490dada7867b",
+      "verified_instruction_comments": 80
+    },
+    "recomp/config/output/sub_0013F998_0x13f998.cpp": {
+      "sha256": "73bc7f025878f41130461e0d92910d6bd8aee01ba08dd00346736c3c6e53c1c7",
+      "verified_instruction_comments": 15
+    },
+    "recomp/config/output/sub_0013F9D8_0x13f9d8.cpp": {
+      "sha256": "0ae7d3f819513bacc7133ecbfdb48bf806e8c38da552f321e785b899915c825a",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013F9E0_0x13f9e0.cpp": {
+      "sha256": "f5f311407fa9d9092bd20270c0f6103757b0170bf6579dfcc52c47600b8ae452",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_0013F9F0_0x13f9f0.cpp": {
+      "sha256": "b1de09acb6a2a5d496187ea915fe50ac0a95398b0fad579b0bab9727d380c667",
+      "verified_instruction_comments": 367
+    },
+    "recomp/config/output/sub_0013FA38_0x13fa38.cpp": {
+      "sha256": "671b23aa40814a5992342329115c4e883bcf9ae3b9f3a8c6314ab59d0d897084",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_0013FA88_0x13fa88.cpp": {
+      "sha256": "9f0d9ee9e3a7ed9db1901d0d761386f70bd1e7cf66563560ca9495060cad4c4c",
+      "verified_instruction_comments": 91
+    },
+    "recomp/config/output/sub_0013FBF8_0x13fbf8.cpp": {
+      "sha256": "fdbe08015bf1517c9f69d035aced9373bbf628315cf4ac834b98aa599c95cbaa",
+      "verified_instruction_comments": 86
+    },
+    "recomp/config/output/sub_0013FD58_0x13fd58.cpp": {
+      "sha256": "a24f1cf29665b4706ffe7b2e35f765eb3df0fa45455a9c961ea5fac871683df8",
+      "verified_instruction_comments": 101
+    },
+    "recomp/config/output/sub_0013FEF0_0x13fef0.cpp": {
+      "sha256": "5d965a7af8252300d521b4a6f96bb0b3ee281ee23ba14ce24768bdd64bae835a",
+      "verified_instruction_comments": 50
+    },
+    "recomp/config/output/sub_0013FFB8_0x13ffb8.cpp": {
+      "sha256": "509a14957367c6d96e8071b1c47f5f8054c6504a2f9d770b0b47a637cc71257f",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013FFC0_0x13ffc0.cpp": {
+      "sha256": "e43601f0731b8511344f59eaf6d100fa9a9be9999529e13c8fe81933294b2812",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_0013FFC8_0x13ffc8.cpp": {
+      "sha256": "a2fad2b9064d29c61562bf89e04f3f63e77d081349f25eaa9ed2213bab681a4c",
+      "verified_instruction_comments": 8
+    },
+    "recomp/config/output/sub_00140000_0x140000.cpp": {
+      "sha256": "196d15db9ccaa62f24fea2c1eeb979063c779153f958db8f11ca0a28f262468f",
+      "verified_instruction_comments": 7
+    },
+    "recomp/config/output/sub_00140020_0x140020.cpp": {
+      "sha256": "05f5b9a1701236916b06a574569ec94c2ac54cc81f303d0885a5d85b81aeb7c3",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_00140070_0x140070.cpp": {
+      "sha256": "85287d60cf411e2375f223a1b1e0ebcb1c2f3f7f6a577ca2decd938360b74217",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_001400C0_0x1400c0.cpp": {
+      "sha256": "f88574b105bfe2754d6caa54351bcf8ea47fcfb24381af0ab58eb7406cb63bd2",
+      "verified_instruction_comments": 78
+    },
+    "recomp/config/output/sub_001401A8_0x1401a8.cpp": {
+      "sha256": "ad942b94240ef916935e4d5465c48c5eb6b30742907353e1daa4ff40b593233e",
+      "verified_instruction_comments": 13
+    },
+    "recomp/config/output/sub_001401E0_0x1401e0.cpp": {
+      "sha256": "209c64deafae2b052351c757bcbb42a90da5c23d277e7440732c6694c76e6a46",
+      "verified_instruction_comments": 2
+    },
+    "recomp/config/output/sub_001401E8_0x1401e8.cpp": {
+      "sha256": "f0fcfe7d95148fa28d85677a0154bee955d42fd958fc9444d3ebac2c6e034274",
+      "verified_instruction_comments": 3
+    },
+    "recomp/config/output/sub_001401F8_0x1401f8.cpp": {
+      "sha256": "7bc9f3ea3c5f91fdc14bd90afcec8faf03b2b493c1ffd04b562cb41ac5ee5947",
+      "verified_instruction_comments": 371
+    },
+    "recomp/config/output/sub_00140288_0x140288.cpp": {
+      "sha256": "e2a45e0f890a6837b7f03fb0286f52dd57935e181fc26218237417dd40fc3ebc",
+      "verified_instruction_comments": 29
+    },
+    "recomp/config/output/sub_00140300_0x140300.cpp": {
+      "sha256": "2182432ed288312b8737ec3927b140a4c23e17b66283d049aad6ebe6919ff6af",
+      "verified_instruction_comments": 75
+    },
+    "recomp/config/output/sub_00140438_0x140438.cpp": {
+      "sha256": "3c50f8eece080fb13f850f5ad4401289383d86b7f26e6ba00fedab8891d64bcd",
+      "verified_instruction_comments": 84
+    },
+    "recomp/config/output/sub_00140590_0x140590.cpp": {
+      "sha256": "8bc08010bbda5a7698dd83752847d50d8e36b79baae3ea56eee2716249cc0874",
+      "verified_instruction_comments": 80
+    },
+    "recomp/config/output/sub_001406D8_0x1406d8.cpp": {
+      "sha256": "daa69b92b50df2d17fea69523558775b25b8875284232f17ad6b8812eb9036c1",
+      "verified_instruction_comments": 35
+    },
+    "recomp/config/output/sub_00140768_0x140768.cpp": {
+      "sha256": "220b98d210e02a5d7fc873f572ee7736ddba97e96a22780cb5324f1e1a575bf5",
+      "verified_instruction_comments": 14
+    },
+    "recomp/config/output/sub_001407A8_0x1407a8.cpp": {
+      "sha256": "fbf6ffc4a7a02357dd48638f1d08a37293ed0c8c32321cda46f8db68858d8c84",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_001407E0_0x1407e0.cpp": {
+      "sha256": "a192f901f9e9316519bbc149df202fe0dbd30d0bc51ff9d8a1b3112b9491c1b2",
+      "verified_instruction_comments": 62
+    },
+    "recomp/config/output/sub_00140AF0_0x140af0.cpp": {
+      "sha256": "45035584e63c998413bce544d1c9abc56c82e1c1447987f0cff951009ebd792d",
+      "verified_instruction_comments": 21
+    },
+    "recomp/config/output/sub_00140B48_0x140b48.cpp": {
+      "sha256": "91758cb2a9e32177d954eb6ba22d791d708da1bbdd3f537495dbc810a28c25dc",
+      "verified_instruction_comments": 20
+    },
+    "recomp/config/output/sub_00140B98_0x140b98.cpp": {
+      "sha256": "a033218dbc6e819de834d92c7c745efef1710e3d92de4a5fc403bd29a952b53e",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_00140BF0_0x140bf0.cpp": {
+      "sha256": "6513b0a42599450120a0dea589d0432d0de422e1e5449e42ac6b30846452bb0c",
+      "verified_instruction_comments": 120
+    },
+    "recomp/config/output/sub_00140C20_0x140c20.cpp": {
+      "sha256": "1761f067719606f22172fbc3be0f25ad3d4cacfac5c03a8377ca5238dbbd922d",
+      "verified_instruction_comments": 28
+    },
+    "recomp/config/output/sub_00140C90_0x140c90.cpp": {
+      "sha256": "4430bdcfbf8be691a54d400faf04d4140540aebbae7973f9b8ad8c4fcd6e959a",
+      "verified_instruction_comments": 12
+    },
+    "recomp/config/output/sub_00140CC0_0x140cc0.cpp": {
+      "sha256": "f0a657a0913a03bf16d3166809719845d63063bbc89eb24a8bf2dad60d4d6c14",
+      "verified_instruction_comments": 27
+    },
+    "recomp/config/output/sub_00140D30_0x140d30.cpp": {
+      "sha256": "74f6ee5604434235afb9638e6a9238422bf1ce4980e621f78b7fb9235c89a2d1",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_00140D80_0x140d80.cpp": {
+      "sha256": "2ba4eddc7cfc055907e84603eec620f870d8655029ed91905d8dd174edbbe954",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_00140DD0_0x140dd0.cpp": {
+      "sha256": "7af0024fbe8458b3333706a6d76475ed45d375eefd0263c9a14da3a0ac0226e5",
+      "verified_instruction_comments": 46
+    },
+    "recomp/config/output/sub_00140E20_0x140e20.cpp": {
+      "sha256": "0222d7c5d57926dfe727c052a46922342acc28a0c733c6829f64b08751b91ab5",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00140E88_0x140e88.cpp": {
+      "sha256": "3638899e77522b13581fa784926960192db85e99e62842be9c476d9f23e6505e",
+      "verified_instruction_comments": 249
+    },
+    "recomp/config/output/sub_00140ED8_0x140ed8.cpp": {
+      "sha256": "bb266273b7e59bde4112a59e41bde9f5e98e04d884b345579bbc38c6d4c8e22b",
+      "verified_instruction_comments": 15
+    },
+    "recomp/config/output/sub_00140F18_0x140f18.cpp": {
+      "sha256": "3618036c791868e904d44f96eab14f7eca9b4c97a0f72cb7c559dcd1ccec0861",
+      "verified_instruction_comments": 38
+    },
+    "recomp/config/output/sub_00140FB8_0x140fb8.cpp": {
+      "sha256": "689b5bba7e77e7442005c98cf0378bc0111a93776202a3bebc3aa63c9e5120a0",
+      "verified_instruction_comments": 67
+    },
+    "recomp/config/output/sub_00141268_0x141268.cpp": {
+      "sha256": "562cd8b8aa283488c5a767770c894c38fb65b374bb399947b87a424381f067f9",
+      "verified_instruction_comments": 5
+    },
+    "recomp/config/output/sub_00141280_0x141280.cpp": {
+      "sha256": "b1b0abc1fd6ece8498bd0f678ce20b50a411a37dcbdd23a385adca73f1e736a5",
+      "verified_instruction_comments": 100
+    },
+    "recomp/config/output/sub_00141418_0x141418.cpp": {
+      "sha256": "119140521cd7719e96083f5266b785acc4558dbd7569498482fbaa836f65d33e",
+      "verified_instruction_comments": 29
+    },
+    "recomp/config/output/sub_00141490_0x141490.cpp": {
+      "sha256": "179bfd08741faeb2e9ce5b9eb8d2294bce2196d49e1b1540838a82dd1861ab5b",
+      "verified_instruction_comments": 62
+    },
+    "recomp/config/output/sub_00141588_0x141588.cpp": {
+      "sha256": "c2fc3b9b273fca04283ea61494d27c0850497d3e05f95abd307dff595cc2d044",
+      "verified_instruction_comments": 81
+    },
+    "recomp/config/output/sub_001415D0_0x1415d0.cpp": {
+      "sha256": "2fa62e500995e00a81c0e318a9f77b9d2c67a753c97a08895219d0c8be04b9ab",
+      "verified_instruction_comments": 4
+    },
+    "recomp/config/output/sub_001709A0_0x1709a0.cpp": {
+      "sha256": "b403732c0bcad74b89907a078bc8ded651a87cf2586a0a11c9c4c125f54b16e3",
+      "verified_instruction_comments": 19
+    },
+    "recomp/config/output/sub_001709F0_0x1709f0.cpp": {
+      "sha256": "6669adc6cdacb8679499242e23de263f8254254edc50570c678b93e0a829ca56",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00170A58_0x170a58.cpp": {
+      "sha256": "158e6d9eef16869b3b687b7217e4390284819ac86c4148590ed3f3c908e1484b",
+      "verified_instruction_comments": 26
+    },
+    "recomp/config/output/sub_00170AC0_0x170ac0.cpp": {
+      "sha256": "a9ef0e2f06ddb492719e85e4513c2b499b9544abdf130c0a7ba33a568a830a18",
+      "verified_instruction_comments": 10
+    },
+    "recomp/config/output/sub_00170B60_0x170b60.cpp": {
+      "sha256": "bfbdbd48fe7e12d0398f53a08b0ce60d823c2f995ba3a16d9a26a3c79b55291d",
+      "verified_instruction_comments": 80
+    },
+    "recomp/config/output/sub_00170CA0_0x170ca0.cpp": {
+      "sha256": "ab664e22fd01b7109f4d23c7df48f3bfe42572565d6ac7dbe3af68f9fb11d96e",
+      "verified_instruction_comments": 60
+    },
+    "recomp/config/output/sub_00170D90_0x170d90.cpp": {
+      "sha256": "fd83fafd31e1e8b1189d2a10d682d16079ce9c1621e41460f9bfb8c0daf42b2a",
+      "verified_instruction_comments": 51
+    },
+    "recomp/config/output/sub_00170E60_0x170e60.cpp": {
+      "sha256": "592ba0e8a5939acee806f3b42ae007bbb22c58966baa199fc8009baeb396b332",
+      "verified_instruction_comments": 127
+    },
+    "recomp/config/output/sub_00171060_0x171060.cpp": {
+      "sha256": "a3b6c1a8482b0bd12635702a370232bccd0e0f25ebc5a45f6b8626ab62af21d9",
+      "verified_instruction_comments": 63
+    },
+    "recomp/config/output/sub_00171160_0x171160.cpp": {
+      "sha256": "7f703aef0dd0b634edec59517490a17aa3f14bd800cbee29ec73304b5357e6df",
+      "verified_instruction_comments": 198
+    },
+    "recomp/config/output/sub_00171478_0x171478.cpp": {
+      "sha256": "5213cbfcdd969f4a12e16f4b8850d1881d11904ed958f54d567111c076e80108",
+      "verified_instruction_comments": 22
+    },
+    "recomp/config/output/sub_00171BE0_0x171be0.cpp": {
+      "sha256": "11d697fd6cf938406445134ae04bf0be2a15fb8ab19a81b900cee4c6addc4ca0",
+      "verified_instruction_comments": 76
+    }
+  }
+}

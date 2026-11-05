@@ -1,0 +1,29 @@
+# Inventory cursor placement, navigation and admission
+
+Static File #1 US research, 2026-11-04. Twelve complete original bodies reviewed,
+including dual-slot navigation branches and literal input-mask comparisons.
+Addresses/offsets hexadecimal. No game/build/replay/attachment/live-memory
+inspection. Candidate grid roles do not assign original action/button enums.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o2 0x6E1410](../recomp/config/output_ovl/o2/o2_006E1410_0x6e1410.cpp) | `open_gameplay_ui_mode_three_with_highword_argument_candidate` | High adapter; probable role | a0argument;tailcallsalready-mapped0ED0((a0<<16)\|3,local4BADED). Original32bitshift/orretained;noextraguard. |
+| [o2 0x6E1540](../recomp/config/output_ovl/o2/o2_006E1540_0x6e1540.cpp) | `place_inventory_primary_or_secondary_cursor_for_item_slot_candidate` | Probable role; full body reviewed | a0slot,a1indexbyteout,a2player,a3bank,t0secondarycursor. Findsnonlocalvisible-playerpositionby1B0190andcurrentroom,countinguntilrequestedplayer;localrank0. Bank0usesowned734280rankXY,baseX-2/baseY+48;forlow8slot<4walkspriorB8items,flag80consumestwocellsotherwiseone,52pixelgridsteps. slot>=4usescount3B29/2tofixednextrow. Bank1usesstorage2358andfixednextrow;otherbankswalkstoragefrom2410afterfirstslot. Writesindex/wideitemflag/XYto755E60+C/D/E/10or12/13/14/16;secondarysets23=1. Finallywriteslow8slotto*a1. Allbankbranchesreviewed;noindex/output-nullguard. |
+| [o2 0x6E1980](../recomp/config/output_ovl/o2/o2_006E1980_0x6e1980.cpp) | `cache_selected_inventory_item_record_byte10_candidate` | Probable role; full body reviewed | a0slot,a1bank. Bank0selects755770+20+8A0*selectedplayer5+B8*slot;nonzerobank755770+2358+B8*slot. Inactiverecord->0,active5B4380(unsignedUIbyte1)->signedrecord10;storeslow8to759C98. No localnullguardfor5B4380result. |
+| [o2 0x6E1A30](../recomp/config/output_ovl/o2/o2_006E1A30_0x6e1a30.cpp) | `populate_static_item_ui_description_and_return_text_candidate` | High adapter; probable role | a0sourceitemrecord;0880(source,7558A0),returns7558F4 (=record54description). Sharedstaticbuffer,nocopytodistinctallocation. |
+| [o2 0x6E1A60](../recomp/config/output_ovl/o2/o2_006E1A60_0x6e1a60.cpp) | `close_local_selected_inventory_on_actor_or_modal_admission_candidate` | Probable role; full body reviewed | Selected755770+5!=localreturns0. LocalactorBA0mask120calls1430close/returns1;elseactor54F!=9and4BADEE==0also closes. Finaltestliterally(4BAE86 & (1<<local))==1thenclose;notagenericnonzero-testandnotgeneralizedtoallplayers. Othercases0. Noinputhookorthreadwait. |
+| [o2 0x6E1B30](../recomp/config/output_ovl/o2/o2_006E1B30_0x6e1b30.cpp) | `tick_inventory_page_refresh_visible_players_and_snapshots_candidate` | Probable role; full body reviewed | If1A60returns1exit. Else01D0rebuildvisiblelist,for4nonFFentries0390(755770,player,0)fullsnapshot. W0==0calls6E49D0,otherstatesnothere. Increments755770half6by100eachinvocation. No countofglobalgameupdatesorhosteventloopclaim. |
+| [o2 0x6E1BF0](../recomp/config/output_ovl/o2/o2_006E1BF0_0x6e1bf0.cpp) | `move_bounded_byte_cursor_from_prioritized_direction_bits_candidate` | High mechanics; probable role | a0UIwork,a1cursorbyteptr,a2count. Readswork3CE4:bit1tries-2if>=0,bit2tries+2if<count,bit8tries+1if<last,bit4tries-1if>0,inthatprioritywithfallthroughwhenblocked. Successfulwritreturns1;none0. Combinedbitscanfallthrough;no wrap. |
+| [o2 0x6E1CB0](../recomp/config/output_ovl/o2/o2_006E1CB0_0x6e1cb0.cpp) | `move_inventory_cursor_across_single_and_double_cell_items_candidate` | Probable role; full body reviewed | a0UIwork,a1limit,a2cursorbyte. SumsvirtualcellsbeforecurrentphysicalindexfromselectedplayerB8items:flag80adds2,else1. Onlyexact(work3CE4&F)==1/2/8/4acts;combinedbitsignored. Up/downcanmoveoneortwophysicalslotsdependingcurrent/adjacentflag80andlimits;left/rightmovesoneonlyifcurrentnotwideandvirtualparityadmits. Branchdelaychangesofcandidateindexpreserved. Onactualindexchangeupdatesbyteand1B8820;otherwiseunchanged. Noitemtransfer. |
+| [o2 0x6E1F80](../recomp/config/output_ovl/o2/o2_006E1F80_0x6e1f80.cpp) | `count_four_non_sentinel_action_table_halfwords_candidate` | High; full body reviewed | a0tableindex;readsfirst4signedhalvesof734230+A*index,countsvalues!=-1. Loopcounterstarts1andstopsat5,sofourentriesread,notfive. Noindexboundoractionenumguess. |
+| [o2 0x6E1FD0](../recomp/config/output_ovl/o2/o2_006E1FD0_0x6e1fd0.cpp) | `enable_inventory_ui_selection_flag_and_clear_overlay_marker_candidate` | Probable role; full body reviewed | Stores755E78=0,755E61=1. Nootherstateorcallees. |
+| [o2 0x6E1FF0](../recomp/config/output_ovl/o2/o2_006E1FF0_0x6e1ff0.cpp) | `clear_inventory_ui_selection_flag_candidate` | High mechanics; candidate role | Stores755E61=0only. |
+| [o2 0x6E2000](../recomp/config/output_ovl/o2/o2_006E2000_0x6e2000.cpp) | `handle_inventory_item_confirm_or_cancel_and_close_candidate` | Probable role; full body reviewed | a0UIwork,a1itemUIrecord. Sets759C94=1. Input3CE0bit20:nonzero3C5630[3C*record1]signedbyte0calls681090(local,selectedplayer,recordhalf2,record1,0),1B8800;zerocalls1B8810. Decrements3B85A4,EC9D0;acceptedtypeemitsFDC0(selectedactor,0),F7E0(localactor);1430close. Afterwards independentlytestsbit10:cancel1B8810,decrementcounter,EC9D0,return0;withoutcancelreturns1evenifnoconfirm. Simultaneousbit20/10canexecute both;original sideeffects preserved. |
+
+Cursor placement and cursor movement are separate. Wide-item slot arithmetic,
+priority versus exact-mask navigation and original delay-slot behavior were
+reviewed from bodies, not inferred from visible control labels. Static numeric
+admission differences are not reproduced bugs or captured slowdown causes.
+
+Owned o2 SHA-256:45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226.
+Original words and omitted-NOP gaps verified against file-backed o2, base570000.

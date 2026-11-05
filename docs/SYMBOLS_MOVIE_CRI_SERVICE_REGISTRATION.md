@@ -1,0 +1,39 @@
+# Movie facades for CRI service callback registration and tagged guards
+
+Static File #1 US research, 2026-11-04. Main **SLUS_207.65**, SHA-256 **06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46**. Complete original bodies and already reviewed CRI callback/critical-section contracts. No callback, lock, service loop, game or build was run.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [0x163480](../recomp/config/output/sub_00163480_0x163480.cpp) | `initialize_movie_cri_service_and_clear_four_callback_slot_trackers_candidate` | Confirmed full sequence | Calls1420F8sharedserviceinitthenzeros270740/744/748/74C. Doesnotunregisterpriorcallbacksfirstorchecknestedinitcount. Trackerresetcanbeindependentofregistrycontents;noclaimofobservedlostregistration. |
+| [0x1634C0](../recomp/config/output/sub_001634C0_0x1634c0.cpp) | `release_movie_cri_service_reference_adapter_candidate` | Confirmed downstream lifecycle | Tail142138,whichdecrementsshared22A5EC,resetsonexact0. Nocallbacktrackerupdatesinadapter. |
+| [0x1634D8](../recomp/config/output/sub_001634D8_0x1634d8.cpp) | `register_movie_callback_in_cri_group_zero_and_track_slot_candidate` | Confirmed registry contract | 141B10(0,originalcallback,context),storesreturnedslot270740even-1;returnunchanged. Doesnotrejectduplicate/failedregistrationlocally. |
+| [0x163508](../recomp/config/output/sub_00163508_0x163508.cpp) | `clear_tracked_movie_cri_group_zero_callback_candidate` | Confirmed paired slot | Tail141BE0(0,270740). Doesnotcleartracker;calleeerror-reportdoesnotnecessarilyabortinvalidslotwrite. |
+| [0x163528](../recomp/config/output/sub_00163528_0x163528.cpp) | `register_movie_callback_in_cri_group_two_and_track_slot_candidate` | Confirmed group/slot identity | 141B10(2,callback,context),storesreturnedslot270744includingnegative. Noindependentarrayallocation. |
+| [0x163558](../recomp/config/output/sub_00163558_0x163558.cpp) | `set_explicit_movie_cri_group_two_callback_slot_and_track_index_candidate` | Confirmed exact argument permutation | Original(slot,callback,context)->141C58(2,slot,callback,context),thentracker270744=originalslotregardlesscalleeerror. Calleeoccupied-slotvalidationdoesnotpreventoverwrite. |
+| [0x163598](../recomp/config/output/sub_00163598_0x163598.cpp) | `clear_tracked_movie_cri_group_two_callback_candidate` | Confirmed pair | Tail141BE0(2,270744),trackerretained. |
+| [0x1635B8](../recomp/config/output/sub_001635B8_0x1635b8.cpp) | `register_movie_callback_in_cri_group_six_and_track_slot_candidate` | Confirmed pair | 141B10(6,callback,context),storesreturnedslot270748. Groupnumbersretained;notassignedaudio/IOthreadnames. |
+| [0x1635E8](../recomp/config/output/sub_001635E8_0x1635e8.cpp) | `clear_tracked_movie_cri_group_six_callback_candidate` | Confirmed pair | Tail141BE0(6,270748). Noslotreinitialization. |
+| [0x163608](../recomp/config/output/sub_00163608_0x163608.cpp) | `register_movie_callback_in_cri_group_five_and_track_slot_candidate` | Confirmed pair | 141B10(5,callback,context),storesreturnedslot27074C. Noimmediatecallbackexecution. |
+| [0x163638](../recomp/config/output/sub_00163638_0x163638.cpp) | `clear_tracked_movie_cri_group_five_callback_candidate` | Confirmed pair | Tail141BE0(5,27074C). Trackerisindex,notcallbackpointer. |
+| [0x163658](../recomp/config/output/sub_00163658_0x163658.cpp) | `enter_movie_cri_tag_two_guard_and_return_one_candidate` | Confirmed full adapter | Calls141700->1415E0(tag2),thenforcesreturn1. Notaprovenmutex-acquisitionsuccessstatus. |
+| [0x163678](../recomp/config/output/sub_00163678_0x163678.cpp) | `leave_movie_cri_tag_two_guard_candidate` | Confirmed adapter | Tail141778->141640(tag2). Underlyingoptionalcallback/depthsemanticsretained. |
+| [0x163690](../recomp/config/output/sub_00163690_0x163690.cpp) | `enter_movie_cri_tag_three_guard_and_return_one_candidate` | Confirmed adapter | Calls141718->1415E0(tag3),then1. Noretry/spinloop. |
+| [0x1636B0](../recomp/config/output/sub_001636B0_0x1636b0.cpp) | `leave_movie_cri_tag_three_guard_candidate` | Confirmed adapter | Tail141790->141640(tag3). |
+| [0x1636C8](../recomp/config/output/sub_001636C8_0x1636c8.cpp) | `enter_movie_cri_tag_four_guard_and_return_one_candidate` | Confirmed adapter | Callsalreadyreviewed141730tag4,then1. Noforceofcallbackreturncode. |
+| [0x1636E8](../recomp/config/output/sub_001636E8_0x1636e8.cpp) | `leave_movie_cri_tag_four_guard_candidate` | Confirmed adapter | Tailalreadyreviewed1417A8tag4. |
+| [0x163700](../recomp/config/output/sub_00163700_0x163700.cpp) | `enter_movie_cri_tag_five_guard_and_return_one_candidate` | Confirmed adapter | Calls141748tag5,then1. |
+| [0x163720](../recomp/config/output/sub_00163720_0x163720.cpp) | `leave_movie_cri_tag_five_guard_candidate` | Confirmed adapter | Tail1417C0tag5. |
+| [0x163738](../recomp/config/output/sub_00163738_0x163738.cpp) | `try_enter_movie_cri_shared_service_reentry_guard_candidate` | Confirmed existing guard contract | Tail142190returnsoldword!=1afterguardupdate,notuniversallyold0. Notatimedwaitorblockingloop. |
+| [0x1637E8](../recomp/config/output/sub_001637E8_0x1637e8.cpp) | `invoke_cri_service_callback_group_six_adapter_candidate` | Confirmed indexed callback | Tail141D70(6),dispatches2649A0+8*6callback/context. Distinctfromregisteringgroup6callbacks. |
+| [0x141700](../recomp/config/output/sub_00141700_0x141700.cpp) | `cri_enter_tag_two_adapter_candidate` | Confirmed context-backed tag | Tail1415E0(2). Noadditionalvalidation. |
+| [0x141718](../recomp/config/output/sub_00141718_0x141718.cpp) | `cri_enter_tag_three_adapter_candidate` | Confirmed tag | Tail1415E0(3). |
+| [0x141748](../recomp/config/output/sub_00141748_0x141748.cpp) | `cri_enter_tag_five_adapter_candidate` | Confirmed tag | Tail1415E0(5). |
+| [0x141778](../recomp/config/output/sub_00141778_0x141778.cpp) | `cri_leave_tag_two_adapter_candidate` | Confirmed tag | Tail141640(2). |
+| [0x141790](../recomp/config/output/sub_00141790_0x141790.cpp) | `cri_leave_tag_three_adapter_candidate` | Confirmed tag | Tail141640(3). |
+| [0x1417C0](../recomp/config/output/sub_001417C0_0x1417c0.cpp) | `cri_leave_tag_five_adapter_candidate` | Confirmed tag | Tail141640(5). |
+| [0x1420F8](../recomp/config/output/sub_001420F8_0x1420f8.cpp) | `initialize_cri_shared_service_on_first_reference_then_increment_candidate` | Confirmed full count semantics; reset details partial | Counter22A5EC0calls142078,thenalwaysreread/increment. ContrastswithMWSST162D20whichskipsincrementwhenalreadyinitialized. Nooverflow/atomicguardlocally. |
+| [0x142138](../recomp/config/output/sub_00142138_0x142138.cpp) | `release_cri_shared_service_reference_reset_on_exact_zero_candidate` | Confirmed full count semantics | Decrements22A5ECwithoutzero-precheck. Exactnew0calls142078thenclears2649F0[8];othercountsincludingnegativejustreturn. Resethelperpurposeboundedtocallersevidenceuntilfullreview. |
+| [0x163800](../recomp/config/output/sub_00163800_0x163800.cpp) | `register_movie_error_callback_through_cri_adapter_candidate` | Confirmed complete callback route | Tail12B620withoriginalcallback/context,then141DB0writeslowerCRIerrorcallback2649F0/F4under tag1. Doesnotformatmessageorinvokehandlerhere. |
+| [0x12B620](../recomp/config/output/sub_0012B620_0x12b620.cpp) | `forward_error_callback_registration_to_lower_cri_pair_candidate` | Confirmed existing callback target | Tail141DB0preservingcallback/context. Distinctpublicadapterwithnosavedlocalstate. |
+
+Numbersarehexadecimalexceptspelledgroup/tagnames. [Callback/slot contracts](SYMBOLS_CRI_ERRORS.md)and[initial CRI guard evidence](SYMBOLS.md)establishroles. Nocallbackfrequency,OSthreadownershiporlow-overheadwatchdogclaim. Related: [MWSST provider lifecycle](SYMBOLS_MOVIE_MWSST_CALLBACK_LIFECYCLE.md), [central index](FUNCTION_INDEX.md).
