@@ -46,13 +46,13 @@ def main():
     for name,digest in baseline.PINNED.items():
         if sha(baseline.ORACLE/name)!=digest:raise ValueError('Original oracle identity changed: '+name)
     out.mkdir(parents=True,exist_ok=True)
-    (out/'native_transport.hpp').write_text(transport(),encoding='utf-8')
+    (out/'native_transport.hpp').write_text(transport(),encoding='utf-8',newline='\n')
     observer=(baseline.ORACLE/'harness.cpp').read_text(encoding='utf-8').replace('#include "source/ReoSoundBanks.cpp"','#include "native_transport.hpp"').replace('namespace s = ps2_reo_sound;','namespace s = native_transport;').replace('s::Bank b;','auto b=s::makeProbeBank();').replace('s::DecodedSample d;','s::DecodedSample d(b.allocation_lease());')
     observer=observer.replace('template<class T>void nums(std::ostream&o,const std::vector<T>&v)','template<class T,class A>void nums(std::ostream&o,const std::vector<T,A>&v)')
-    harness=out/'transport.cpp';harness.write_text(observer,encoding='utf-8');exe=out/'transport.exe';actual=out/'actual.json'
+    harness=out/'transport.cpp';harness.write_text(observer,encoding='utf-8',newline='\n');exe=out/'transport.exe';actual=out/'actual.json'
     cmd=[cc,'-std=c++20','-O1','-ffp-contract=off','-fno-fast-math','-Wall','-Wextra','-Wpedantic','-Wno-misleading-indentation','-pthread','-I',str(HERE),str(harness),'-o',str(exe)]
     env=dict(os.environ);env['PATH']=str(Path(cc).resolve().parent)+os.pathsep+env.get('PATH','')
-    identities={p.name:sha(p) for p in HERE.iterdir() if p.is_file()}
+    identities={p.name:sha(p) for p in HERE.iterdir() if p.is_file() and (p.suffix in ('.cpp','.hpp','.py') or p.name=='cohort_identity.json')}
     receipt=dict(schema=2,status='running',original_expectations_previously_seen=True,historical_blind_baseline='384a0cb036a34ca3578376b036d143902332412a',source_oracle=baseline.PINNED,authored=identities,compiler=cc,compiler_sha256=sha(Path(cc)),command=cmd,game_run=False,device_opened=False)
     try:
         c=subprocess.run(cmd,capture_output=True,text=True,env=env,timeout=120);receipt['compile']=dict(exit_code=c.returncode,stderr=c.stderr)
@@ -60,13 +60,13 @@ def main():
         r=subprocess.run([str(exe),str(baseline.ORACLE/'input.bin'),str(actual)],capture_output=True,text=True,env=env,timeout=120);receipt['run']=dict(exit_code=r.returncode,stdout=r.stdout,stderr=r.stderr)
         if r.returncode:raise RuntimeError(r.stderr)
         expected=json.loads((baseline.ORACLE/'0/expected.json').read_text(encoding='utf-8'));observed=json.loads(actual.read_text(encoding='utf-8'));diff=list(baseline.differences(expected,observed))
-        (out/'differences.json').write_text(json.dumps(diff,indent=2)+'\n',encoding='utf-8')
+        (out/'differences.json').write_text(json.dumps(diff,indent=2)+'\n',encoding='utf-8',newline='\n')
         receipt.update(status='different' if diff else 'passed',differences=len(diff),actual_sha256=sha(actual),cases=len(expected['cases']),actions=sum(len(c['actions']) for c in expected['cases']),float_words=sum(len(a['pcm_bits']) for c in expected['cases'] for a in c['actions']),gain_calls=sum(len(a['gain_calls']) for c in expected['cases'] for a in c['actions']))
         print(json.dumps({k:receipt[k] for k in ['status','differences','cases','actions','float_words','gain_calls']}))
         for d in diff[:10]:print(json.dumps(d))
     except Exception as error:receipt.update(status='failed',failure=str(error));raise
     finally:
         receipt['postcheck_changed']=[name for name,digest in identities.items() if sha(HERE/name)!=digest]
-        (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf-8')
+        (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf-8',newline='\n')
     if diff or receipt['postcheck_changed']:raise SystemExit(1)
 if __name__=='__main__':main()

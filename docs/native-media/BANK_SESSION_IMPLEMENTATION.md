@@ -357,3 +357,34 @@ gap. Whole-call RPC/asset capture identity, aggregate bank/PCM selection and
 shutdown admission remain separate integration work. Packet capture and adapter
 queues must acquire their own declared bounded storage before allocation; they
 cannot be assumed covered merely because a later bank capture is charged.
+
+### LF cohort normalization
+
+Commit `89f8acadb3c72506889c3c667b9a75bcd1ac38f3` stored the generated v2
+algorithms/session files and synthetic fixture helper with LF endings, while the
+original private `cf5e4299...` cohort had Windows CRLF bytes. The C++/fixture
+differences were solely line endings; all seven historical v1 frozen files
+already matched their committed LF bytes and remain unchanged.
+
+The separately issued `budget-v2-lf-1` identity is
+`77b6c1bc20f6c1ea261ea19df9bcde3a5fa516c94e7b2c7d8d6503ca0f7aefca`.
+Its byte map records old private hashes and committed LF hashes. `derive.py`
+now writes deterministic LF bytes, as do generated observer/receipt outputs.
+Standalone source identity covers the explicit C++/Python inputs; root-owned
+CMake wiring belongs to its separate build cohort. This corrects reproducibility
+without a DSP or allocator C++ expression change.
+
+The old private cohort, input sources and four receipts were preserved under
+`build-native-sjuni/audio-bank-budget-v2-normalization-20261105/old-cf5e4299`;
+the original four test directories were not overwritten. The normalization
+audit and `check_cohort()` passed without compilation. After the requested
+game-test quiet period ended, fresh LF-cohort checks passed on GCC15.2 and
+Clang21.1.8:218 unit assertions each and zero original-regression differences
+across252actions/13,004 float words/12,768 gain records. All four postchecks are
+empty. Their new directories are `{gcc,llvm}-{unit,original}-lf-1` under the
+budget-v2 scratch root; none replaced the original evidence. Receipt SHA256s:
+
+- GCC unit: `048a878472fad6193593b9de21562f64ebcae63e2b799be0670e17f8fcc4cde5`.
+- LLVM unit: `b604fa85a10d6aec2489716404a14dcd2e6158fbe3cb6282d620efc4e5fff138`.
+- GCC original: `c267c958a7cfb203743f6390fcd5da84128bd738b09e4600868df993d860bde4`.
+- LLVM original: `94cfb9cfcd0388f27eff61fe7dbd73f4404f3d1847691866882818566f8b71db`.

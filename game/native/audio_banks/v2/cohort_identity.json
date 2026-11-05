@@ -4,20 +4,58 @@
   "historical_blind_baseline_commit": "384a0cb036a34ca3578376b036d143902332412a",
   "historical_blind_identity_sha256": "a3e34d2cf976b2eb59717b35cae916daddfa17914d58218be0e5cf91a6d7294c",
   "candidate_sha256": {
-    "algorithms.cpp": "8dd0a54adc0838e0fa3d555e928da3a30e5cb7a5e48483ba14ba299ba74eb24b",
-    "algorithms.hpp": "463f3f0f910ca6ee00b190818ea8cf961fe5fae2ae35b2b3d9a535e46328af00",
+    "algorithms.cpp": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e",
+    "algorithms.hpp": "4260dcc9546f3f3e17b24b8692da83e3f7d26877d9f5ee6d46c21d1b9696b0fc",
     "budget.hpp": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18",
     "budget_tests.cpp": "6e8138e46f0f4ceadddfdf139107c9958a3ae461e6fcd8c542480ce6103e4c7c",
-    "compare_original.py": "e1232e0ac51934a484cd963dac8236a3eac0265597fb96d95e07675a939fc7c6",
-    "derive.py": "1ee05b4e49566949630e75cc6d16edc6adbbce24707fb9b94ad54bb1a22f409e",
-    "session.cpp": "effb9e73154dc0ac37c9e17325c74c8824ebe3e8fd8b165849fbd68776a8f9f6",
-    "session.hpp": "0a4730e9fd27f74828d8990e5f7b953d32d8577ee0d0e6e5ea0a421b10503063",
-    "test_inputs.hpp": "f9c19b22dd574b9193b5f4f542e91d5975796944ac7d6e3b7c559919f57c7f7c",
-    "verify.py": "bd5d3585ff8c980317b7bfa46ac5ce664fd617a83e51f97f67c0202fb3ae2bcb"
+    "compare_original.py": "f78340c3510e143c91a5558afe3871f26b97f7ed4fcc1868c9512fbb4b14a22e",
+    "derive.py": "95ff19683456215a9c802216d4ecd8ccedcf42ff4b29eb75170456d3f3b6f515",
+    "session.cpp": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603",
+    "session.hpp": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+    "test_inputs.hpp": "fb07e04d22c4ba0852ce88a4813aa5c4ce6888bb6ea8aaac571bc87b68b8cb2b",
+    "verify.py": "7cd3adcf23255a4587d1c0bf320c802488a79a8b7407007099931ace55b28253"
   },
   "original_expected_observations_previously_seen": true,
   "game_run": false,
   "device_opened": false,
   "integration_installed": false,
-  "asset_byte_measure": "Actual typed allocator request bytes including rebound control blocks/nodes/buckets and concurrent/transient capacity, excludes upstream hidden bookkeeping and separately bounded scheduler administration"
+  "asset_byte_measure": "Actual typed allocator request bytes including rebound control blocks/nodes/buckets and concurrent/transient capacity, excludes upstream hidden bookkeeping and separately bounded scheduler administration",
+  "cohort": "budget-v2-lf-1",
+  "normalization_baseline_commit": "89f8acadb3c72506889c3c667b9a75bcd1ac38f3",
+  "supersedes_private_cohort_sha256": "cf5e4299be1bc3f2a804b32a9e6b0dc57d248052b1fe655b56bd77d6ccca5091",
+  "normalization": "Deterministic LF source/output; no DSP/allocator C++ expression changes; generator/verification identity handling corrected",
+  "validation_status_at_issue": "Source-only LF audit; compilation/regression receipts will be issued separately after the requested quiet period",
+  "normalization_byte_map": {
+    "algorithms.cpp": {
+      "old_private_sha256": "8dd0a54adc0838e0fa3d555e928da3a30e5cb7a5e48483ba14ba299ba74eb24b",
+      "committed_lf_sha256": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e",
+      "normalized_cpp_or_fixture_only": true
+    },
+    "algorithms.hpp": {
+      "old_private_sha256": "463f3f0f910ca6ee00b190818ea8cf961fe5fae2ae35b2b3d9a535e46328af00",
+      "committed_lf_sha256": "4260dcc9546f3f3e17b24b8692da83e3f7d26877d9f5ee6d46c21d1b9696b0fc",
+      "normalized_cpp_or_fixture_only": true
+    },
+    "session.cpp": {
+      "old_private_sha256": "effb9e73154dc0ac37c9e17325c74c8824ebe3e8fd8b165849fbd68776a8f9f6",
+      "committed_lf_sha256": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603",
+      "normalized_cpp_or_fixture_only": true
+    },
+    "session.hpp": {
+      "old_private_sha256": "0a4730e9fd27f74828d8990e5f7b953d32d8577ee0d0e6e5ea0a421b10503063",
+      "committed_lf_sha256": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+      "normalized_cpp_or_fixture_only": true
+    },
+    "test_inputs.hpp": {
+      "old_private_sha256": "f9c19b22dd574b9193b5f4f542e91d5975796944ac7d6e3b7c559919f57c7f7c",
+      "committed_lf_sha256": "fb07e04d22c4ba0852ce88a4813aa5c4ce6888bb6ea8aaac571bc87b68b8cb2b",
+      "normalized_cpp_or_fixture_only": true
+    }
+  },
+  "preserved_pre_normalization_receipts": {
+    "build-native-sjuni\\audio-bank-budget-v2\\gcc-unit\\receipt.json": "c459a6a0211dc6b04c2d65a03b157a6accea7f25965a34e6c8bfbe1f8d523422",
+    "build-native-sjuni\\audio-bank-budget-v2\\llvm-unit\\receipt.json": "4b2308616f86b5880f487b6bf4c5ceb76c86dfe7565f958d5f8b36d7fa7b04b6",
+    "build-native-sjuni\\audio-bank-budget-v2\\gcc-original\\receipt.json": "ca5e9d5965a659a1e00b9770e46a1d8b9a05624222be80517d2c002f7a88662d",
+    "build-native-sjuni\\audio-bank-budget-v2\\llvm-original\\receipt.json": "c4d4d55e08bf0f58cb76ba499ad2c439e90549640bc1eef00ba244f2927dbc26"
+  }
 }
