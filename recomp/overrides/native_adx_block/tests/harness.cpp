@@ -103,7 +103,7 @@ int main(int argc,char** argv){try{
     else if(scenario=="memory-identity"){PS2Runtime other;identity(other,argv[1]);seed(other);fallback(r,context(),false,true,nullptr,other.memory().getRDRAM());}
     else if(scenario=="refusals"){
         for(unsigned n:{4u,5u,6u,7u,8u,9u,10u,11u,29u,31u}){auto c=context();c.r[n].low|=1ULL<<32;fallback(r,c);}
-        for(std::int32_t n:{0,-1,17}){auto c=context();c.r[5].low=extended(n);fallback(r,c);}
+        for(std::int32_t n:{0,-1,513}){auto c=context();c.r[5].low=extended(n);fallback(r,c);}
         for(unsigned reg:{8u,9u,11u})for(std::int32_t n:{32768,-32769}){auto c=context();c.r[reg].low=extended(n);fallback(r,c);}
         for(unsigned reg:{4u,6u,7u,10u})for(std::uint32_t at:{0u,0xFFFFFFFEu,PS2_RAM_SIZE-1,input+1}){auto c=context();c.r[reg].low=at;fallback(r,c);}
         for(std::uint32_t at:{0u,64u,sp+8,PS2_RAM_SIZE}){auto c=context();c.r[29].low=at;fallback(r,c);}

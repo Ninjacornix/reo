@@ -76,7 +76,7 @@ bool prepare(std::uint8_t* ram,const R5900Context* c,Prepared& out) {
     if(!half_argument(c,8)||!half_argument(c,9)||!half_argument(c,11))return false;
     const auto count=std::bit_cast<std::int32_t>(GPR_U32(c,5));
     const auto sp=GPR_U32(c,29),ra=GPR_U32(c,31);
-    if(count<1||count>16||sp<80||sp%16||sp>PS2_RAM_SIZE-2||!normal({ra,4},4))return false;
+    if(count<1||count>512||sp<80||sp%16||sp>PS2_RAM_SIZE-2||!normal({ra,4},4))return false;
     const auto n=static_cast<std::uint32_t>(count);
     // The original reads a signed halfword at caller SP+0. Its following six
     // argument bytes and the final eight bytes of the80-byte frame are untouched.
@@ -173,7 +173,7 @@ bool install(PS2Runtime& runtime) noexcept {
         runtime.registerFunction(entry,dispatch);
         ps2_stubs::registerStubOverride(entry,dispatch);
         healthy.store(true,std::memory_order_release);
-        std::fprintf(stderr,"[NATIVE-ADX-BLOCK] synchronous keyed mono pilot installed count=1..16\n");
+        std::fprintf(stderr,"[NATIVE-ADX-BLOCK] synchronous keyed mono pilot installed count=1..512\n");
         return true;
     }catch(...) {healthy.store(false,std::memory_order_release);return false;}
 }

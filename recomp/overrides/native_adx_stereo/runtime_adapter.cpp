@@ -81,7 +81,7 @@ bool prepare(std::uint8_t* ram,const R5900Context* c,adx::Mode mode,Prepared& ou
     if(!half_argument(c,10)||!half_argument(c,11))return false;
     const auto count=std::bit_cast<std::int32_t>(GPR_U32(c,5));
     const auto sp=GPR_U32(c,29),ra=GPR_U32(c,31);
-    if(count<1||count>16||sp<112||sp%16||!normal({sp,18},2)||!normal({ra,4},4))return false;
+    if(count<1||count>512||sp<112||sp%16||!normal({sp,18},2)||!normal({ra,4},4))return false;
     const auto pairs=static_cast<std::uint32_t>(count/2);
     const auto key=load<std::uint32_t>(ram,sp);
     // Count one performs no encoded/output access. Two-byte anchors retain a
@@ -202,7 +202,7 @@ bool install(PS2Runtime& runtime) noexcept {
         runtime.registerFunction(normal_entry,normal_dispatch);ps2_stubs::registerStubOverride(normal_entry,normal_dispatch);
         runtime.registerFunction(downmix_entry,downmix_dispatch);ps2_stubs::registerStubOverride(downmix_entry,downmix_dispatch);
         healthy.store(true,std::memory_order_release);
-        std::fprintf(stderr,"[NATIVE-ADX-STEREO] synchronous stereo/downmix pilot installed count=1..16\n");
+        std::fprintf(stderr,"[NATIVE-ADX-STEREO] synchronous stereo/downmix pilot installed count=1..512\n");
         return true;
     }catch(...){healthy.store(false,std::memory_order_release);return false;}
 }

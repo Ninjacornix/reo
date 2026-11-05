@@ -48,7 +48,7 @@ also required. Installation itself is serialized by guest execution.
 
 ## Initial admitted call domain
 
-* Canonical sign-extended word arguments in `a0..t3`, SP and RA; count `1..16`.
+* Canonical sign-extended word arguments in `a0..t3`, SP and RA; count `1..512`.
   Register coefficients `t0/t1` and key multiplier `t3` additionally lie in signed16
   range. The original truncates these through shift/sign-extension; wider inputs
   intentionally retain original handling. Addend is the original signed halfword
@@ -81,7 +81,9 @@ retains prefix PCM/key while leaving the whole external history unchanged. A
 first marker writes neither key nor history. Defined v0 and return PC are set,
 with original final `branch_pc=1278AC`. Volatile GPR/MAC observations are not an
 ABI contract and are not reconstructed. Instruction-level preemption timing is
-also not reproduced; the initial bound limits one call to 512 PCM samples.
+also not reproduced; the expanded bound limits one call to 16,384 PCM samples
+(32,768 output bytes and 9,216 encoded bytes). This enlarges the synchronous
+region; it does not establish original intermediate preemption equivalence.
 
 ## Activity evidence and verification
 
@@ -112,8 +114,16 @@ failure then successful reuse, actual-scope admission, disabled/numeric-zero/
 File #2 builds, exact/mutated body/table, binding/RAM/runtime mismatch, late
 registration, publication failure, stop and trace sampling.
 
-Receipts: `build-native-sjuni/adx-adapter-checks/{gcc,llvm}/receipt.json`. Identity
+Current small-suite receipts:
+`build-native-sjuni/adx-block-adapter-checks/{gcc,llvm}-large-bound/receipt.json`. Identity
 bytes and synthetic expected-value transports live only in ignored output; no
 original instruction arrays are committed. These checks do not establish a linked
 game candidate, game-call activity, a performance gain, complete streaming/stop
 parity or behavior outside the stated admitted domain.
+
+The [large original-word corpus](../../../docs/native-media/ADX_LARGE_BLOCK_ORACLE.md)
+independently covers the expansion to 512. The shared
+`tests/run_large_checks.py` runner passes with GCC and LLVM: six native mono
+large/frame cases, one count-513 original-once refusal and eight expanded
+range/alias refusals. Stereo/downmix has its separate cases in the same receipt.
+No header or native decoder arithmetic changed for this expansion.

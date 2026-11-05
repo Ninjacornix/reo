@@ -59,7 +59,7 @@ are required.
 ## Admitted guest calls
 
 * Signed canonical word arguments in `a0..t3`, SP and RA; requested block count
-  **1..16**. Coefficients `t2/t3` additionally lie within signed16. Wider original
+  **1..512**. Coefficients `t2/t3` additionally lie within signed16. Wider original
   values, despite original halfword truncation, conservatively fall back.
 * Encoded `a0`; left PCM `a2`; left history `a3`; right PCM `t0`; right history
   `t1`. Key pointer is the word at **caller SP+0**. Signed multiplier/addend are
@@ -110,7 +110,9 @@ SP, RA, saved registers, upper register lanes and unrelated context remain as at
 entry. Defined `v0` and return PC are set; final `branch_pc` is `127FC0` for stereo
 and `127C74` for downmix, matching the final JR instructions. Original volatile
 GPR/MAC observations and intermediate preemption points are not reconstructed.
-The finite bound caps one call at eight pairs / 256 samples per channel.
+The finite bound caps one call at 256 pairs / 8,192 samples per channel:
+9,216 encoded bytes and two 16,384-byte output planes. The larger synchronous
+region retains the earlier no-intermediate-preemption limitation.
 
 ## Checks and activity evidence
 
@@ -155,10 +157,19 @@ These are synthetic lifecycle tests, not real teardown or linked-game evidence.
 Separate exact `REO_NATIVE_ADX_STEREO_TRACE=1` enables independent saturating
 post-commit counters for stereo and downmix, sampled at calls 1..4 and powers of
 two. Installation is logged separately. Refused or original calls never count.
-Receipts are `build-native-sjuni/adx-stereo-adapter-checks/{gcc,llvm}/receipt.json`.
+Current small-suite receipts are
+`build-native-sjuni/adx-stereo-adapter-checks/{gcc,llvm}-large-bound/receipt.json`.
 No speed, audible-quality or complete streaming/lifecycle claim follows from
 host checks. Default-off CMake/bootstrap wiring is available through
 `REO_BUILD_NATIVE_ADX_STEREO` and the sealed candidate preparer's
 `--adx-stereo-adapter`. Bootstrap installs after final function registration.
 A controlled linked-candidate test is still required before actual native
 activity can be asserted.
+
+The [large original-word corpus](../../../docs/native-media/ADX_LARGE_BLOCK_ORACLE.md)
+covers the expanded count bound. The runner in
+`../native_adx_block/tests/run_large_checks.py` passes twelve large stereo/downmix
+native cases, two count-513 original-once refusals and twelve expanded range/alias
+refusals with each compiler. Exact original frames, marker prefixes and
+odd-count returns are preserved. No header, selector or decoder arithmetic
+change accompanies the bound expansion.

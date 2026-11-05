@@ -154,7 +154,7 @@ int main(int argc,char** argv){try{
         PS2Runtime other;identity(other,argv[1]);seed(other);fallback(r,context(),-1,true,nullptr,other.memory().getRDRAM());}
     else if(scenario=="refusals")for(bool downmix:{false,true}){
         for(unsigned reg:{4u,5u,6u,7u,8u,9u,10u,11u,29u,31u}){auto c=context(downmix);c.r[reg].low|=1ULL<<32;fallback(r,c);}
-        for(std::int32_t n:{0,-1,17}){auto c=context(downmix);c.r[5].low=extended(n);fallback(r,c);}
+        for(std::int32_t n:{0,-1,513}){auto c=context(downmix);c.r[5].low=extended(n);fallback(r,c);}
         for(unsigned reg:{10u,11u})for(std::int32_t n:{32768,-32769}){auto c=context(downmix);c.r[reg].low=extended(n);fallback(r,c);}
         for(unsigned reg:{4u,6u,7u,8u,9u})for(auto at:{0u,0xFFFFFFFEu,PS2_RAM_SIZE-1,input+1}){auto c=context(downmix);c.r[reg].low=at;fallback(r,c);}
         for(auto at:{0u,PS2_RAM_SIZE-1,input+1}){seed(r);put(r.memory().getRDRAM(),sp,at);fallback(r,context(downmix));}seed(r);
