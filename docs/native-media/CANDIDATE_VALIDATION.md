@@ -108,7 +108,10 @@ repeat is pending. No game speed or rendering-path change is made for these test
 The offline `tools/native_reconstruction/analyze_movie_pacing.py` reports CPU
 presentation-return intervals, capture-stage durations, record loss and exact
 CSV/log references. Approximate movie windows require adjacent advancing clock
-samples within two seconds; resets and missing windows are unclassified. Its
+samples within two seconds; numeric resets and missing windows are unclassified.
+These logs omit decoder/generation identity, so monotonic generation changes
+cannot be excluded. The scanout marker is a backend-vsync return timestamp,
+and the following span includes presenter preparation. Its
 four focused tests cover a brief 80 ms hitch hidden among otherwise short
 intervals, missing presentation stages, clock resets/gaps and corrupt timings.
 These observations cannot establish actual display scanout, original game-update

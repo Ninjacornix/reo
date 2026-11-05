@@ -23,7 +23,7 @@ class MoviePacingTests(unittest.TestCase):
         self.assertEqual(report['frame_rows'],3)
         self.assertEqual(report['presented_rows'],2)
         self.assertEqual(report['presentation_return_intervals']['count'],1)
-        self.assertEqual(report['stages']['present_call']['count'],2)
+        self.assertEqual(report['stages']['vsync_to_present_return']['count'],2)
 
     def test_does_not_bridge_movie_reset_or_missing_samples(self):
         _, rows = self.parse('1,100,101,102,103\n2,200,201,202,203\n')
