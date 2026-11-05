@@ -143,3 +143,11 @@ installations and before execution. Optional `REO_NATIVE_MOVIE_POSITION_TRACE=1`
 records sparse post-commit body counts. Compilation/installation alone supplies
 no body-execution or live-equivalence proof. The sealed V7 candidate predates
 this wiring and is unchanged; live qualification requires a new coherent build.
+
+The subsequent coherent V8 private original/native pair now supplies bounded
+live evidence: at least 8,192 post-commit publications, movie-to-gameplay
+progression, movement/menu observations and clean owned-close exits. The
+[candidate record](../../../docs/native-media/CANDIDATE_VALIDATION.md#known-caller-movie-position-publication-v8)
+preserves build identity and both results. Seven sampled movie gaps above 50 ms
+remain in the native run. This is not an accepted speedup or a complete stutter
+fix; the option remains off by default and broader clocks/callers remain open.

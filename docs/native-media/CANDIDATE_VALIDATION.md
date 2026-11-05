@@ -274,3 +274,63 @@ cost or assigning the gaps to them. Legacy dump/log work also differs despite
 equal environment values. Next performance comparisons need matched duration
 and diagnostic work plus bounded callback/queue/lock timestamps; source counts
 alone do not establish a bottleneck or a confirmed fix.
+
+### Known-caller movie-position publication V8
+
+V8 freezes source `e12f7d3da25bada1fb43ada5f4de87b0a9b5a83d`, kit manifest
+`435ae2791088c3061ffd2caa3617924daa9d1b8815eb441512f4c9f50e5b4ea0`
+and executable `e2926816c8e1590428ec9546da33a340ab41ffe54dfb3563137d3568061cbcaa`.
+Matching 124-patch sources are retained. Preflight passes 147 units in 270.703
+seconds; the full 2,372-unit build passes in 939.031 seconds with 147 matching
+objects reused. This adds guarded movie-position publication and schema-2
+recent/longest work retention, before native bank/SJRB integration.
+
+Both runs use this binary, PAK data, fresh cards, two ordinary character
+confirmations and no skips. Native resource/SJUNI/scalar/ADX options are on;
+experimental native PCM is **off in both**. PCM dumps/path logs and periodic
+GPU screenshots are off; frame/work/clock logs are on. Only the position opt-in
+differs, apart from private identities/output paths. Sparse native post-commit
+logs provide body proof. Compiler/stress work was paused during both games;
+source drafting, OS/cache/run-order and other system activity remain confounds.
+
+| Observation | `media-legacy-position-v8` | `media-native-position-v8` |
+| --- | ---: | ---: |
+| Run seconds / exit | 383.109 / 0 | 381.750 / 0 |
+| Gameplay observed, observer seconds | 356.515 | 360.797 |
+| Approximate movie return intervals | 17,797 | 17,702 |
+| Movie interval p99 | 18.7824 ms | 18.9846 ms |
+| Sampled movie intervals above 50 ms | 0 | 7 |
+| Maximum sampled movie interval | 34.8124 ms | 337.4041 ms |
+| Whole-run maximum interval | 4,230.1981 ms | 337.4041 ms |
+| Starved PCM frames reported | 0 | 0 |
+| Native publication lower bound | not selected | 8,192 |
+
+Native installation is at stderr line 259; sparse post-commit counts reach
+8,192 at line 7,926. Original fallbacks/final exact count are unknown. Both runs
+observe changed actor coordinates after Up, modal 0 to 1 after Start and back
+to 0 after Circle, return to unpaused gameplay and close normally. This does
+not establish audio/movie pause, waveform or unique-picture equivalence. The
+independent original-word/core and guarded adapter checks retain their declared
+numeric/side-effect domain; this run supplies bounded real-consumer evidence.
+
+The native sampled movie tail is worse in this single-order pair. Its largest
+gaps, 337.4041, 304.7227, 303.4170 and 291.5463 ms, chiefly lie between capture
+spans. This does not assign responsibility to the publisher or accept a speedup.
+The original run also has 835.5233 and 641.9226 ms gaps and a 4.230-second gap
+outside tight movie classification. Around the latter, nearby clock samples
+change from an advancing position to `time=-1/1`, then restart near zero. Retain
+this transition observation: cause and expected duration remain unknown. Missing
+adjacent reliable movie samples must not hide long whole-run gaps.
+
+Schema 2 exports all sections completely with successful close receipts and no
+invalid/saturated records. Epoch 4 observes 18,417 slow events originally,
+retaining 4,158 unique recent/longest rows and explicitly missing 14,259. Native
+observes 18,429, retains 4,156 and misses 14,273. The original 835.5233 ms gap
+overlaps a retained 814.4239 ms decode span inside an 814.4256 ms owner-control
+span; nested times are not summed or assigned CPU/GPU cause. The 4.230-second
+gap has no retained overlapping work event. Retention remains bounded.
+
+The option stays off by default. Playback clocks, ADXT/SJRB ownership and broader
+media transitions remain open. Per-session `movie-position-analysis.json`,
+pacing/work reports, actor snapshots, controls and run receipts preserve hashes
+and exact references beneath `build-native-sjuni/playtests/`.
