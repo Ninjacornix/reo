@@ -127,6 +127,14 @@
       1307104,
       1230176,
       1230232
+    ],
+    "callback_boot_and_registration": [
+      1754688,
+      1754704,
+      1226272,
+      1456128,
+      1212584,
+      1257536
     ]
   },
   "ranges": {
@@ -264,6 +272,17 @@
       "label": "ResumeThread_kernel_wrapper_candidate"
     },
     {
+      "id": "main:0x001280A8",
+      "start": 1212584,
+      "end": 1212620,
+      "source": "recomp/config/output/sub_001280A8_0x1280a8.cpp",
+      "source_sha256": "fe229547fa28261bce1354eca068b164f60dc3edc9a694109024ac0960ea3253",
+      "interval_sha256": "721ac55d516e866329acfa21ddfaf4835830dcc7eb851d445fddae3dd262dbbb",
+      "matched_comment_words": 9,
+      "omitted_zero_words": 0,
+      "label": "register_cri_error_callback_and_forward"
+    },
+    {
       "id": "main:0x0012A1E8",
       "start": 1221096,
       "end": 1221476,
@@ -350,6 +369,17 @@
       "matched_comment_words": 24,
       "omitted_zero_words": 0,
       "label": "suspend_cri_worker_unless_already_status_eight_or_c_candidate"
+    },
+    {
+      "id": "main:0x0012B620",
+      "start": 1226272,
+      "end": 1226292,
+      "source": "recomp/config/output/sub_0012B620_0x12b620.cpp",
+      "source_sha256": "0b14073fb2f71faeea67fc366b7381dc7770435c9f8eeca529d557cd3fba8118",
+      "interval_sha256": "5bf9a0829ea34dd55e2cb202aca9641df099a2afce95c0fb1082b3f1abc57bcc",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "forward_error_callback_registration_to_lower_cri_pair_candidate"
     },
     {
       "id": "main:0x0012B638",
@@ -493,6 +523,17 @@
       "matched_comment_words": 63,
       "omitted_zero_words": 0,
       "label": "print_ADXT_first_channel_local_remote_SJ_counts_and_state"
+    },
+    {
+      "id": "main:0x00133040",
+      "start": 1257536,
+      "end": 1257556,
+      "source": "recomp/config/output/sub_00133040_0x133040.cpp",
+      "source_sha256": "3fa5008153be155e22a0b121a091f96eaf7f1c415aa0382b65c99cc25515c73f",
+      "interval_sha256": "c88765fff24a3953be53d30c4fb80d512bac27627d83a76acba296618ab3b587",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "register_shared_CRI_error_callback_ADXT_facade"
     },
     {
       "id": "main:0x00133280",
@@ -1408,6 +1449,17 @@
       "label": "MWSFD_decrement_reference_and_shutdown_children_at_zero_candidate"
     },
     {
+      "id": "main:0x00163800",
+      "start": 1456128,
+      "end": 1456148,
+      "source": "recomp/config/output/sub_00163800_0x163800.cpp",
+      "source_sha256": "1b6dfa71560ef660e44f6f0dbbcec2b30923bb8d02597c9b9e8174703c2aa937",
+      "interval_sha256": "1146d145269d4c156a9aef31a0ecbdc6021b00a95546d144f9cdde471d37ea5a",
+      "matched_comment_words": 5,
+      "omitted_zero_words": 0,
+      "label": "register_movie_error_callback_through_cri_adapter_candidate"
+    },
+    {
       "id": "main:0x00164BA0",
       "start": 1461152,
       "end": 1461288,
@@ -1417,6 +1469,28 @@
       "matched_comment_words": 33,
       "omitted_zero_words": 1,
       "label": "Sofdec_audio_commit_written_prefix_and_return_unused_SJ_chunk_candidate"
+    },
+    {
+      "id": "main:0x001AC640",
+      "start": 1754688,
+      "end": 1754696,
+      "source": "recomp/config/output/sub_001AC640_0x1ac640.cpp",
+      "source_sha256": "aabc5569f02d255009d9e3ba5bcce5fd3ce0d2518e945b55a4898fe3af1e2eb4",
+      "interval_sha256": "6d64edf91449c1b17746c1ef18afa2eb25c70bdf1322ab3df5a2630993b7e2f1",
+      "matched_comment_words": 1,
+      "omitted_zero_words": 1,
+      "label": ""
+    },
+    {
+      "id": "main:0x001AC650",
+      "start": 1754704,
+      "end": 1754808,
+      "source": "recomp/config/output/sub_001AC650_0x1ac650.cpp",
+      "source_sha256": "e88d6489f6f02b24f87b8ab771a6866a9ff9cea65bef53089d92696a610dda37",
+      "interval_sha256": "5b850a0ea1c5912cc00e61a56326622d4589798a7aeb9ff46d85e3f6d3b12cba",
+      "matched_comment_words": 22,
+      "omitted_zero_words": 4,
+      "label": "initialize_dvd_filesystem_movie_cri_error_callback_and_nested_archives"
     }
   ],
   "indexed_external_direct_edges": [
@@ -2723,8 +2797,15 @@
   ],
   "native_runtime_source_context": {
     "source_sha256": {
-      "recomp/overrides/reo_override.cpp": "3c07a747bdab6f4979198475ae31cea9ba2b4f4a1790ceccef9f763dd21aff67",
-      "recomp/CMakeLists.txt": "64f4158f9e2a1a4a5b5f7becaa2eedc83315c2214fc1380deb2ee22f715ec741",
+      "game/native/sjuni/sjuni.hpp": "5d2ae19d35c7a12a8827e9c7b34daaa06671bd4a7b5a12de12864d4af3e669ce",
+      "game/native/sjuni/sjuni.cpp": "243164a1459da64546ecff59877bed34239232bd8b7fa945b8eb06ebff19f67e",
+      "game/native/sjuni_adapter/guest_image.h": "6f640db10ed982b44ccdbb902f8298450da40e4244c1b9a938fd62d7fbb8ca60",
+      "game/native/sjuni_adapter/queue_bridge.h": "9d0598bb9f4a393fd510f5a68e5ccea75fd3e27e35b57bcf1b4fe785c1d70e04",
+      "game/native/sjuni_adapter/queue_bridge.cpp": "ec053e5d3a6a9e25246841adf374c7597230fd549f25616e1e309a9f95967f4a",
+      "recomp/overrides/native_sjuni/runtime_adapter.h": "2f51a8b0836e094352854a713d9e3288165e6ca14b9a031425c50bc89ed3db04",
+      "recomp/overrides/native_sjuni/runtime_adapter.cpp": "2aeb789b1967f824654f7ef7bd327faccaac0c515be1ee1e96e331a21ecc6565",
+      "recomp/overrides/reo_override.cpp": "a771d34e5e8f618decfec7cd2af48f4f19739f9f2ca70740da6551309b837398",
+      "recomp/CMakeLists.txt": "39d1b21cb5c9aa6e9347afec107beadfc5b7c94e91ebf9efc557aa42359daef6",
       "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp": "3c9f279e0431182fc6f932638c5e62e99ed91e1d33239d2a8a7af291f0a143d9",
       "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h": "4cab412ab2c6a54e3ff14a6f619ce61c850cae8e3b80d92d86c3bef22eb1b4b8",
       "third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Thread.cpp": "fc575dafeb1326a27468a9e9813a9badfcdc753e42c082fb44b654110eb7aa30",

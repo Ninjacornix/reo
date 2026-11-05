@@ -1,10 +1,12 @@
 # Local SJUNI contract and native adapter proposal
 
-2026-11-05. Proposal based on File #1 original words; no native implementation
-or replacement is claimed. The [inventory](README.md) supplies consumers and
-identity. The [original contract notebook](../SYMBOLS_CRI_SJUNI_LINKED_CHUNK_POOLS.md)
-is authoritative for guest behavior; this document separates that behavior from
-the proposed native interface.
+2026-11-05. Contract based on File #1 original words. The
+[independent core](../../game/native/sjuni/README.md) and
+[portable bridge](../../game/native/sjuni_adapter/queue_bridge.h) are implemented
+for an explicit admitted domain; complete player-path replacement is pending.
+The [inventory and validation status](README.md) supply consumers, identity and
+test evidence. The [original contract notebook](../SYMBOLS_CRI_SJUNI_LINKED_CHUNK_POOLS.md)
+remains authoritative for guest behavior outside that domain.
 
 ## Observed contract
 
@@ -81,7 +83,9 @@ set_error_handler(stream, handler)
 destroy(stream)
 ```
 
-This is an API sketch, not compiled C++ or a claim of matching ABI. Keep the
+This is the design sketch. The [compiled C++ API](../../game/native/sjuni/sjuni.hpp)
+uses `Pool::get/put/unget` for take/append/prepend and explicit preflight results;
+those results are not original guest ABI status values. Keep the
 separate descriptor-splitting helper out of the first entry-point redirection.
 It has independent MPEG/file/audio callers with different admission needs.
 
@@ -126,8 +130,9 @@ The adapter owns four conversions:
 4. Guest callback/context invocation and the shared CRI scheduling hooks, with
    writes visible at the same points as the original when callbacks reenter.
 
-Maintain a single authoritative native state for an admitted instance and mirror
-its complete externally observable representation at operation boundaries. If
+The implemented bridge imports the complete guest representation for each
+operation, uses a single authoritative native working state during that call and
+mirrors the complete externally observable queue representation at boundaries. If
 remaining consumers can directly mutate nodes/heads between operations, import
 and reconcile those mutations explicitly or migrate those accesses before
 enabling the instance. Mirroring only the four byte counts is insufficient.
@@ -139,7 +144,7 @@ the equivalence migration. A separate change can address a confirmed defect.
 
 ## Independent comparison and acceptance cases
 
-The future comparison harness must run identical admitted operation sequences
+The comparison harness runs identical admitted operation sequences
 against the preserved original and independent native core. A second copy of the
 new algorithm is not an independent oracle. Pin ELF/build/compiler identity and
 compare outputs, list/node order, free-node ownership, mirrored bytes, errors,
@@ -161,7 +166,8 @@ At minimum cover:
 - The real `13ED28` consolidation sequence and DTR/SJX completion ordering, then
   audio/movie transitions, pause/resume, repeated loading and shutdown.
 
-Those comparisons have not been executed in this stage. A standalone core build
-without PS2Recomp is required before claiming core implementation; successful
-synthetic comparisons do not replace real-consumer integration tests. Timing
-requires a separate controlled baseline/retest and is not implied by this design.
+The admitted isolated comparisons and standalone core build have passed; exact
+counts and limitations are in the [validation status](README.md). Real-consumer
+integration, original scheduler/device behavior and complete lifetime migration
+remain pending. Timing requires a separate controlled baseline/retest and is not
+implied by native correctness in the isolated domain.

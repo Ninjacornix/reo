@@ -1,6 +1,7 @@
 # Outbreak native reconstruction plan
 
-Status: dependency inventory started 2026-11-05; native replacement not enabled.
+Status: SJUNI independent core and portable adapter implemented 2026-11-05;
+conservative runtime adapter is opt-in; full transition remains in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the
 mapping/comparison findings locally and continuing this transition plan. The
@@ -12,9 +13,11 @@ assessed per subsystem contract and its dependencies; the mapping percentage
 does not establish native correctness or justify removing compatibility code.
 
 The [SJUNI dependency and contract inventory](native-sjuni/README.md) records
-the first-stage evidence, native-interface proposal and integration blockers.
-Work remains static/offline during playtesting. No replacement has been enabled,
-no dependency removed and no game performance improvement measured.
+the first-stage evidence, implemented native interface, isolated comparisons and
+remaining integration blockers. Builds/tests use standalone synthetic targets
+during playtesting; the game is not launched or rebuilt. No replacement has been
+enabled in the player's build, no dependency removed and no game performance
+improvement measured.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map
@@ -184,6 +187,7 @@ reconstructed, regardless of how files or libraries are named.
 - [Native asset rendering work](M2_NATIVE_ASSET_RENDERER.md).
 - [Native networking work](NATIVE_NETCODE.md).
 
-The current task is SJUNI's consumer and state-access inventory, followed by its
-native interface and adapter boundary. Replace and validate each service before
-retiring the PS2 compatibility components that supply it.
+The current task is extending SJUNI's admitted adapter to active CRI scheduling
+continuations and real-consumer validation. Its independent core/portable bridge
+have passed isolated checks. Replace and validate each service before retiring
+the PS2 compatibility components that supply it.

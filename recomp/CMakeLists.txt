@@ -36,6 +36,7 @@ option(REO_BUILD_SCANOUT_PACING_CHECK "Build the Windows standalone GPU scanout 
 # hard-disabled until the direct-context/upstream/reset closure is implemented.
 option(REO_BUILD_GPU_PARENT_NATURAL_HOOKS "Build connected guarded File1 parent wrappers" OFF)
 option(REO_BUILD_GUARDED_SOURCE_OVERLAY "Compile build-only guarded generated source copies" OFF)
+option(REO_BUILD_NATIVE_SJUNI_ADAPTER "Build the opt-in File1 native SJUNI migration adapter" OFF)
 
 set(REO_PARALLEL_GS_BUILD "${CMAKE_CURRENT_SOURCE_DIR}/../build-ninja/m2-gpu-gs-adapter/out" CACHE PATH "Built pinned paraLLEl-GS libraries")
 
@@ -692,6 +693,13 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
 
     target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/native_netcode.cpp")
     target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../network/native/world_sync.cpp")
+    if(REO_BUILD_NATIVE_SJUNI_ADAPTER AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        target_sources(${TARGET_NAME} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/sjuni/sjuni.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/sjuni_adapter/queue_bridge.cpp"
+            overrides/native_sjuni/runtime_adapter.cpp)
+        target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_SJUNI_ADAPTER=1)
+    endif()
     if(WIN32)
         # A direct object supplies raylib audio before its archive is considered.
         # This replaces only the host audio provider, for both game editions.

@@ -40,6 +40,8 @@ GROUPS = {
         0x12B0F0, 0x12B158, 0x12B638, 0x12B800, 0x12C1D0, 0x12C388,
         0x141800, 0x1418A8, 0x141DB0, 0x141DF0, 0x141E08],
     'remote_completion_dependencies': [0x139110, 0x139198, 0x13F1E0, 0x12C560, 0x12C598],
+    'callback_boot_and_registration': [0x1AC640, 0x1AC650, 0x12B620,
+                                        0x163800, 0x1280A8, 0x133040],
 }
 RANGES = {
     'sjuni_vtable': (0x228C60, 0x228C90),
@@ -56,6 +58,12 @@ RANGES = {
 VTABLE = [0, 0, 0, 0x1401A8, 0x1401E0, 0x1401F8, 0x140300,
           0x140590, 0x140438, 0x140288, 0x1406D8, 0x1401E8]
 CONTEXT = [
+    'game/native/sjuni/sjuni.hpp', 'game/native/sjuni/sjuni.cpp',
+    'game/native/sjuni_adapter/guest_image.h',
+    'game/native/sjuni_adapter/queue_bridge.h',
+    'game/native/sjuni_adapter/queue_bridge.cpp',
+    'recomp/overrides/native_sjuni/runtime_adapter.h',
+    'recomp/overrides/native_sjuni/runtime_adapter.cpp',
     'recomp/overrides/reo_override.cpp', 'recomp/CMakeLists.txt',
     'third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp',
     'third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/State.h',

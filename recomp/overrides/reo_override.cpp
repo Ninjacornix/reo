@@ -44,6 +44,9 @@
 #include "actor_first_nonfinite.h"
 #include "ground_query_origin.h"
 #include "reo_dma_builder_observer.h"
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_SJUNI_ADAPTER)
+#include "native_sjuni/runtime_adapter.h"
+#endif
 
 #if defined(REO_GAME_FILE1)
 // Read-only observer always delegates the original generated entry exactly once.
@@ -2024,6 +2027,9 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
 
     printf("[REO] File #1 overrides applied (%d bindings).\n", 80);
     printf("[REO] Remaining unbound stubs will log TODO_NAMED at runtime.\n");
+#if defined(REO_BUILD_NATIVE_SJUNI_ADAPTER)
+    reo_native_sjuni::install(runtime);
+#endif
 }
 
 PS2_REGISTER_GAME_OVERRIDE("RE Outbreak NTSC-U", "SLUS_207.65", 0x00100008, 0x00000000,

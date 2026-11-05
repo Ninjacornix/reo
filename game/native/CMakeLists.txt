@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.20)
+project(reo_native_subsystems LANGUAGES CXX)
+
+# Standalone contract checks: no parent game/runtime/dependency configuration.
+enable_testing()
+add_subdirectory(sjuni)
+add_library(reo_native_sjuni_bridge STATIC sjuni_adapter/queue_bridge.cpp)
+target_link_libraries(reo_native_sjuni_bridge PUBLIC reo_native_sjuni)
+target_include_directories(reo_native_sjuni_bridge PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(reo_native_sjuni_bridge PUBLIC cxx_std_20)
+
+option(REO_NATIVE_SJUNI_BRIDGE_TESTS "Build isolated SJUNI bridge contract checks" ON)
+if(REO_NATIVE_SJUNI_BRIDGE_TESTS)
+    add_executable(reo_native_sjuni_bridge_tests sjuni_adapter/queue_bridge_tests.cpp)
+    target_link_libraries(reo_native_sjuni_bridge_tests PRIVATE reo_native_sjuni_bridge)
+    add_test(NAME sjuni_bridge_contract COMMAND reo_native_sjuni_bridge_tests)
+endif()
