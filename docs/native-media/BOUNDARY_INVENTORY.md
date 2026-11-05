@@ -204,12 +204,24 @@ and [mono](../../game/native/adx_block/README.md) cores now pass their bounded
 original-code comparisons. The [stereo/downmix core](../../game/native/adx_stereo/README.md)
 also matches 522 independently generated cases with GCC and LLVM; its
 [oracle record](ADX_STEREO_ORACLE.md) describes the added isolated DIV model.
-The guarded mono adapter is committed and sealed into a separate V4 candidate,
-whose authored-unit preflight is running; no live native decode is claimed yet.
+The guarded mono and stereo adapters now have executed-body evidence from the
+completed private V6 opening-movie runs. The [candidate record](CANDIDATE_VALIDATION.md)
+also includes V7's complete native PCM backend: actual callbacks and clean joined
+shutdown, with unresolved starved frames and long movie presentation gaps.
+These bounded runs do not establish full media lifecycle equivalence or justify
+enabling experimental replacements in the player build.
 The [exact-source PCM study](PCM_OWNER_EXTRACTION.md) establishes the next owner
 boundary and separates early whole-SJ credit from buffer retirement. The list
-below retains the dependency order; completed isolated kernels do not close the
+below retains the original implementation dependency order; completed isolated kernels do not close the
 remaining publication, device and player lifecycle gates.
+
+Current next ownership cuts are described in the [ADX stream inventory](ADX_STREAM_NATIVE_BOUNDARY.md),
+[bank session](BANK_SESSION_IMPLEMENTATION.md) and
+[movie clock inventory](MOVIE_CLOCK_NATIVE_BOUNDARY.md). ADXT's actual compressed
+and PCM rings are SJRB, so the completed SJUNI pilot cannot stand in for those
+borrows, wrap-copy and publication rules. Original queue comparisons, bank DSP
+comparison, aggregate bank/RPC admission and movie-control transitions remain
+distinct validation work.
 
 1. Implement a small ordinary typed predictor-control state from the nine scalar
    helpers and compare it against these independent fixtures. Keep guest layout
