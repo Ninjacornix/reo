@@ -40,6 +40,7 @@ option(REO_BUILD_NATIVE_SJUNI_ADAPTER "Build the opt-in File1 native SJUNI migra
 option(REO_BUILD_NATIVE_RESOURCE_OWNER "Build the opt-in File1 scoped native CD worker (requires matching runtime patch)" OFF)
 option(REO_BUILD_NATIVE_DISC_STREAM "Build the opt-in File1 native DVCI scalar adapter" OFF)
 option(REO_BUILD_NATIVE_RESOURCE_READS "Build the opt-in Windows File1 synchronous exact PAK read adapter" OFF)
+option(REO_BUILD_NATIVE_ADX_BLOCK "Build the opt-in File1 keyed mono ADX block adapter" OFF)
 if(REO_BUILD_NATIVE_RESOURCE_READS AND (NOT WIN32 OR NOT REO_BUILD_NATIVE_RESOURCE_OWNER))
     message(FATAL_ERROR "Native resource reads require Windows and REO_BUILD_NATIVE_RESOURCE_OWNER")
 endif()
@@ -717,6 +718,12 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/disc_stream/disc_stream.cpp"
             overrides/native_disc_stream/runtime_adapter.cpp)
         target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_DISC_STREAM=1)
+    endif()
+    if(REO_BUILD_NATIVE_ADX_BLOCK AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        target_sources(${TARGET_NAME} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/adx_block/adx_block.cpp"
+            overrides/native_adx_block/runtime_adapter.cpp)
+        target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_ADX_BLOCK=1)
     endif()
     if(REO_BUILD_NATIVE_RESOURCE_READS AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
         target_sources(${TARGET_NAME} PRIVATE

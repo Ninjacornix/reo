@@ -58,6 +58,10 @@ RESOURCE_READ_UNITS = (
     ('native_mounted_reader', 'game/native/resources_windows/mounted_reader.cpp'),
     ('native_resource_reads_adapter', 'recomp/overrides/native_resource_reads/runtime_adapter.cpp'),
 )
+ADX_BLOCK_UNITS = (
+    ('native_adx_block_core', 'game/native/adx_block/adx_block.cpp'),
+    ('native_adx_block_adapter', 'recomp/overrides/native_adx_block/runtime_adapter.cpp'),
+)
 HEADER_ROOTS = ('game/', 'media/', 'network/', 'recomp/', 'runtime/', 'src/',
                 'tools/parallel_gs_backend/', 'tools/vu_whole_aot/',
                 'tools/source_instrumentation/')
@@ -214,7 +218,7 @@ def runtime_sources(dependency):
 
 
 def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolchain, raylib,
-                    disc_stream=False, resource_reads=False):
+                    disc_stream=False, resource_reads=False, adx_block=False):
     commit = Commit(root, revision)
     manifest, plan, compiler_proof = verify_carrier(kit)
     receipt = verify_dependency(dependency, dependency_receipt, commit, compiler_proof)
@@ -240,7 +244,8 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         if digest_bytes(data) != receipt['source_sha256'][name]:
             raise ValueError('Dependency changed during preparation: ' + name)
         source['source/third_party/PS2Recomp/' + name] = data
-    selected_units = NEW_UNITS + (DISC_STREAM_UNITS if disc_stream else ()) + (RESOURCE_READ_UNITS if resource_reads else ())
+    selected_units = NEW_UNITS + (DISC_STREAM_UNITS if disc_stream else ()) + \
+        (RESOURCE_READ_UNITS if resource_reads else ()) + (ADX_BLOCK_UNITS if adx_block else ())
     required = [n for _, n in selected_units] + [
         'recomp/overrides/native_cd_owner/runtime_adapter.h', 'game/native/tasks/serial_worker.hpp',
         'recomp/overrides/reo_cd_async.h', 'runtime/audio/reo_output_device.h']
@@ -256,6 +261,8 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         raise ValueError('Commit lacks the reviewed native CD configure/dispatch integration')
     if disc_stream and 'reo_native_disc_stream::install(runtime)' not in override:
         raise ValueError('Commit lacks the optional native disc-stream installation')
+    if adx_block and 'reo_native_adx_block::install(runtime)' not in bootstrap:
+        raise ValueError('Commit lacks the optional keyed mono ADX installation')
     if resource_reads and ('reo_native_resource_reads::configure' not in bootstrap or
             'reo_native_resource_reads::tryRead' not in commit.read('recomp/overrides/reo_hw_bridge.cpp').decode('utf-8')):
         raise ValueError('Commit lacks the optional synchronous native read integration')
@@ -285,6 +292,9 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
             options.append('/DREO_BUILD_NATIVE_RESOURCE_OWNER=1')
     if disc_stream:
         template['options'].append('/DREO_BUILD_NATIVE_DISC_STREAM=1')
+    if adx_block:
+        for name in ('recomp/reo_bootstrap.cpp', 'recomp/overrides/reo_override.cpp'):
+            unit_for(name)['options'].append('/DREO_BUILD_NATIVE_ADX_BLOCK=1')
     if resource_reads:
         for name in ('recomp/reo_bootstrap.cpp', 'recomp/overrides/reo_override.cpp', 'recomp/overrides/reo_hw_bridge.cpp'):
             unit_for(name)['options'].append('/DREO_BUILD_NATIVE_RESOURCE_READS=1')
@@ -331,7 +341,7 @@ def prepare(args):
         raise ValueError('Use a fresh independent candidate directory below build-native-sjuni')
     commit, manifest, plan, receipt, compiler, updates = prepared_inputs(
         root, args.revision, kit, dependency, receipt_path, toolchain, raylib,
-        disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads)
+        disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads, adx_block=args.adx_block_adapter)
     result = {'schema': 1, 'root_revision': commit.revision, 'carrier_manifest_sha256': CARRIER_SHA,
               'preparer_sha256': sha(Path(__file__)),
               'dependency_receipt_sha256': sha(receipt_path), 'dependency_patch_count': receipt['applied_count'],
@@ -340,7 +350,8 @@ def prepare(args):
               'compilation_units': len(plan['units']), 'updated_files': len(updates),
               'check_only': args.check_only, 'game_launched': False, 'build_started': False,
               'precompiled_ps2_runtime_reused': False}
-    result['optional_adapters'] = dict(disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads)
+    result['optional_adapters'] = dict(disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads,
+                                       adx_block=args.adx_block_adapter)
     if args.check_only:
         return result
     output.mkdir(parents=True)
@@ -409,6 +420,7 @@ def main():
     parser.add_argument('--check-only', action='store_true', help='Verify all inputs without creating output')
     parser.add_argument('--disc-stream-adapter', action='store_true', help='Compile the opt-in four-entry DVCI scalar adapter')
     parser.add_argument('--resource-reads', action='store_true', help='Compile the opt-in synchronous exact PAK read adapter')
+    parser.add_argument('--adx-block-adapter', action='store_true', help='Compile the opt-in keyed mono ADX block adapter')
     print(json.dumps(prepare(parser.parse_args()), indent=2))
 
 

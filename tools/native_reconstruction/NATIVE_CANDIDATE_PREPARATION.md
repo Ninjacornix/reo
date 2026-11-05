@@ -62,7 +62,7 @@ signature and object hash before accepting a hit; changed inputs rebuild. Cache
 provenance is recorded separately. A failed build can supply successful objects,
 but it never counts as a completed candidate or gameplay validation.
 
-Two explicit preparation options add later migrations without changing the
+Explicit preparation options add later migrations without changing the
 default worker-only candidate: `--disc-stream-adapter` adds the independent
 DVCI scalar core/adapter and its override macro; `--resource-reads` adds the
 resource core, verified Windows mount/reader and synchronous RPC adapter, plus
@@ -71,6 +71,10 @@ committed installation/dispatch source and includes all authored units in its
 source-plan closure. Runtime admission remains separately off by default. The
 read prototype additionally requires actual plain PAK layout agreement and
 `REO_CD_ASYNC=0`; an enabled compilation macro does not prove native reads ran.
+`--adx-block-adapter` adds the independently verified keyed mono core and guarded
+adapter. Its macro is supplied to the final bootstrap installer and override
+template units; original registration must be complete before installation.
+Runtime `REO_NATIVE_ADX_BLOCK=1` and successful body proof remain separate gates.
 
 For a newly prepared kit, the private build driver supports `--preflight`:
 it performs ordinary source reconstruction, then compiles all fixed authored/
