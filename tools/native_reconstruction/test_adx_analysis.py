@@ -1,12 +1,30 @@
 import unittest
 
-from analyze_adx_playtest import parse_adx, TAG, INSTALLED
+from analyze_adx_playtest import parse_adx, TAG, INSTALLED, parse_stereo, STEREO_TAG, STEREO_INSTALLED
 
 ENV = {'REO_NATIVE_ADX_BLOCK':'1', 'REO_NATIVE_ADX_BLOCK_TRACE':'1'}
 FIRST = TAG + 'native op=keyed-mono calls=1 blocks=16 marker=0'
 
 
 class AdxEvidenceTests(unittest.TestCase):
+    def test_stereo_and_downmix_counts_remain_independent(self):
+        env = {'REO_NATIVE_ADX_STEREO':'1','REO_NATIVE_ADX_STEREO_TRACE':'1'}
+        stereo = STEREO_TAG + 'native op=stereo calls=1 pairs=8 marker=0'
+        downmix = STEREO_TAG + 'native op=downmix calls=1 pairs=0 marker=2'
+        result = parse_stereo([STEREO_INSTALLED,stereo,downmix,
+            STEREO_TAG + 'native op=stereo calls=8 pairs=1 marker=1'], env)
+        self.assertEqual(result['operations']['stereo']['native_call_lower_bound'], 8)
+        self.assertEqual(result['operations']['stereo']['sampled_pcm_sample_lower_bound'], 9*64)
+        self.assertEqual(result['operations']['downmix']['sampled_pcm_sample_lower_bound'], 0)
+        self.assertFalse(parse_stereo([], env)['installations'])
+        for lines, bad_env in [([stereo],env),([STEREO_INSTALLED],{}),
+            ([STEREO_INSTALLED,stereo,stereo],env),
+            ([STEREO_INSTALLED,stereo.replace('pairs=8','pairs=9')],env),
+            ([STEREO_INSTALLED,stereo.replace('marker=0','marker=3')],env),
+            ([STEREO_INSTALLED,stereo], env | {'REO_NATIVE_ADX_STEREO_TRACE':'0'})]:
+            with self.subTest(lines=lines), self.assertRaises(ValueError):
+                parse_stereo(lines,bad_env)
+
     def test_setting_and_installation_do_not_prove_work(self):
         for lines in ([], [INSTALLED]):
             self.assertEqual(parse_adx(lines, ENV)['native_call_lower_bound'], 0)

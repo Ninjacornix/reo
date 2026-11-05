@@ -41,6 +41,7 @@ option(REO_BUILD_NATIVE_RESOURCE_OWNER "Build the opt-in File1 scoped native CD 
 option(REO_BUILD_NATIVE_DISC_STREAM "Build the opt-in File1 native DVCI scalar adapter" OFF)
 option(REO_BUILD_NATIVE_RESOURCE_READS "Build the opt-in Windows File1 synchronous exact PAK read adapter" OFF)
 option(REO_BUILD_NATIVE_ADX_BLOCK "Build the opt-in File1 keyed mono ADX block adapter" OFF)
+option(REO_BUILD_NATIVE_ADX_STEREO "Build the opt-in File1 keyed stereo/downmix ADX adapters" OFF)
 if(REO_BUILD_NATIVE_RESOURCE_READS AND (NOT WIN32 OR NOT REO_BUILD_NATIVE_RESOURCE_OWNER))
     message(FATAL_ERROR "Native resource reads require Windows and REO_BUILD_NATIVE_RESOURCE_OWNER")
 endif()
@@ -724,6 +725,12 @@ function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
             "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/adx_block/adx_block.cpp"
             overrides/native_adx_block/runtime_adapter.cpp)
         target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_ADX_BLOCK=1)
+    endif()
+    if(REO_BUILD_NATIVE_ADX_STEREO AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
+        target_sources(${TARGET_NAME} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/../game/native/adx_stereo/adx_stereo.cpp"
+            overrides/native_adx_stereo/runtime_adapter.cpp)
+        target_compile_definitions(${TARGET_NAME} PRIVATE REO_BUILD_NATIVE_ADX_STEREO=1)
     endif()
     if(REO_BUILD_NATIVE_RESOURCE_READS AND GAME_DEFINE STREQUAL "REO_GAME_FILE1")
         target_sources(${TARGET_NAME} PRIVATE

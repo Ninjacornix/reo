@@ -107,9 +107,34 @@ native failures, and scalar body counters establish at least 512 seeks,
 128 tells and 8,192 status queries. The transferred query has no body proof.
 Audio counters report 522,500 signal frames and zero underruns over 94 windows;
 this is not waveform parity. Renderer captures inspected so far show the
-loading/results flow; no room-image equivalence is claimed. The same-binary
-opt-out comparison is in progress. Evidence is retained in the session's
+loading/results flow; no room-image equivalence is claimed. Evidence is retained in the session's
 `resource-analysis.json` with source/log identities and original line references.
+
+The same-binary `resource-original-v3` comparison subsequently completed in
+108.266 seconds, reached gameplay at 49.717 seconds and returned through the
+same input-only interaction/results/main-menu flow. Exit code was zero; native
+mount/scalar/payload proofs were absent as expected with both adapters disabled.
+It recorded 516,260 audio signal frames and zero underruns over 101 windows.
+These elapsed times include different runtime/machine conditions and are not a
+performance comparison.
+
+`resource-cinematic-v3` then ran 394.688 seconds with resource/scalar enabled,
+native CD worker off, synchronous reads and the SJUNI pilot requested/installed.
+The character route stopped automatic input; an owned read-only observer sent
+only two ordinary Cross confirmations and never Start during cinematic playback.
+The initial 300-second observation ended while video was still progressing;
+this is an incomplete bounded observation, not a hang diagnosis. A separate
+observe-only follow-up saw the natural transition into stable gameplay. Direct
+renderer captures show cinematic pictures and then the rendered bar/characters.
+Actor snapshots before/after an expiring Up input show movement. The ordinary
+window close exited with code zero. At least 1,024 native reads succeeded with
+no logged native failure; seek/tell/status lower bounds are 1,024/128/65,536.
+Audio reports include 16,525,554 signal frames and **54,624 underrun frames**.
+The nonzero underruns occur near movie transitions and remain an open finding;
+an unskipped opt-out session is being compared before attribution. No media
+equivalence or absence-of-hitches claim follows. Phase 14 alone cannot distinguish
+video from an in-engine cutscene. Original log/capture/snapshot and both observer
+receipts remain in the private session.
 
 The resource adapter requires actual plain PAK facade layout agreement plus
 `REO_NATIVE_RESOURCE_READS=1`, `REO_GAME_PAK=1` and `REO_CD_ASYNC=0`. Native

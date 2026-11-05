@@ -1,7 +1,9 @@
 # Native media boundary inventory
 
-Status: static source review and bounded original-word scalar fixtures, 2026-11-05.
-No game was launched, audio captured, performance measured, or runtime path changed.
+Status: static source review and bounded original-word fixtures, 2026-11-05.
+This inventory's source audit did not launch the game or capture audio. Later
+private runtime tests are recorded separately in the resource candidate record;
+no performance improvement or whole-media migration is established.
 
 The reusable host PCM output is already substantially native. Compressed ADX input,
 decode scheduling, SJ chunk publication, playback position, looping and stop remain
@@ -16,7 +18,8 @@ mono keyed block kernel `main:001276D8`, beneath that owner. Its
 [independent native implementation](../../game/native/adx_block/README.md) now
 match 104 cases / 4,032 PCM samples with both compilers. The
 [native scalar control core](../../game/native/adx_control/README.md) also matches
-the 96 phase/window calls. Both remain unwired. Keep the original SJ/ADXT/RNA
+the 96 phase/window calls. Control remains unwired; mono has a default-off
+temporary adapter awaiting live decode proof. Keep the original SJ/ADXT/RNA
 owner, sample clock and stop policy while validating their temporary adapters.
 
 ## Source and build boundary
@@ -30,6 +33,8 @@ owner, sample clock and stop policy while validating their temporary adapters.
 | Bus/endpoint controls | [mixer.h](../../runtime/audio/mixer.h), [host_bridge.h](../../runtime/audio/host_bridge.h), [reo_output_device.h](../../runtime/audio/reo_output_device.h), [reo_audio.h](../../recomp/overrides/reo_audio.h). | Native mixer percentages, bounded stream-route table, host settings bridge and WASAPI endpoint selection. Original stream-start/frame functions are delegated, not replaced. |
 | Original compressed owner | ADXB borrows encoded and PCM spans; ADXT services predictor work and owns stream/loop/clock decisions. | Mapped source; only the bounded phase/window portion below has new executable offline fixtures. No full native player parity claim. |
 | Native movie IMAGE support | [native_movie_image.h](../../third_party/PS2Recomp/ps2xRuntime/src/lib/native_movie_image.h:12) owns prepared image epochs/bytes and GS-consumer fence obligations; lookup still takes runtime/source-event identity. | GPU image ownership is a separate boundary. It supplies no SFD packet demux, compressed-source lifetime or media clock replacement. No experimental path was enabled. |
+| Existing production movie parsing/decoding | [mpeg2_stream.h](../../tools/parallel_gs_backend/movie_runtime/mpeg2_stream.h) supplies incremental program/elementary stream parsing, bounded pending buffers, picture controls and PES timestamps; [MovieSession](../../tools/parallel_gs_backend/movie_runtime/movie_session.h) orders native decoder output and tracks real image-consumer fences. | Reusable implemented code, distinct from the unused `media/sofdec` placeholder. Windows DXVA/D3D11/Vulkan coupling and graphics-owner lifetime remain explicit; source review is not new decoder/output parity evidence. |
+| Existing original/native movie bridge | [native_movie_game.cpp](../../tools/parallel_gs_backend/movie_runtime/native_movie_game.cpp), [original_transport_route.cpp](../../tools/parallel_gs_backend/movie_runtime/original_transport_route.cpp) and [native_movie_transport.h](../../tools/parallel_gs_backend/movie_runtime/native_movie_transport.h) bind original entry/return PCs and guest source spans to generations, timestamps, original frame-return events and same-device GPU work. | Reuse the native parser/decoder/fence work. Migrate original compressed-source, playback-due, audio-clock, seek/loop and final-client-return authority before retiring these guest/runtime adapters. A successful movie picture does not establish a standalone native player. |
 
 The source search for `AdxDecoder`/`SofdecDecoder` in repository C++ headers and
 implementations, excluding the dependency checkout, found only their declarations

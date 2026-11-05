@@ -49,6 +49,9 @@
 #if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ADX_BLOCK)
 #include "overrides/native_adx_block/runtime_adapter.h"
 #endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ADX_STEREO) && REO_BUILD_NATIVE_ADX_STEREO
+#include "overrides/native_adx_stereo/runtime_adapter.h"
+#endif
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1327,6 +1330,12 @@ int main(int argc, char* argv[]) {
     if (const auto* requested = std::getenv("REO_NATIVE_ADX_BLOCK"); requested && !std::strcmp(requested, "1")) {
         if (!reo_native_adx_block::install(runtime))
             std::fprintf(stderr, "[NATIVE-ADX-BLOCK] installation unavailable; original methods retained\n");
+    }
+#endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ADX_STEREO) && REO_BUILD_NATIVE_ADX_STEREO
+    if (const auto* requested = std::getenv("REO_NATIVE_ADX_STEREO"); requested && !std::strcmp(requested, "1")) {
+        if (!reo_native_adx_stereo::install(runtime))
+            std::fprintf(stderr, "[NATIVE-ADX-STEREO] installation unavailable; original methods retained\n");
     }
 #endif
 #if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
