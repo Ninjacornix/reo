@@ -132,3 +132,14 @@ Receipts are `build-native-sjuni/movie-position-adapter-v2/{gcc,llvm}/receipt.js
 they contain source/compiler/header hashes, sparse wire hashes, commands and
 stdout/stderr. No game/full build, native clock migration or runtime integration
 was performed, and existing core/bootstrap/build preparation files were untouched.
+
+## Candidate wiring
+
+Subsequent root integration adds the default-off CMake option
+`REO_BUILD_NATIVE_MOVIE_POSITION` and private preparer flag
+`--movie-position-adapter`. Bootstrap attempts installation only for the verified
+File1 serial/entry and exact `REO_NATIVE_MOVIE_POSITION=1`, after other registry
+installations and before execution. Optional `REO_NATIVE_MOVIE_POSITION_TRACE=1`
+records sparse post-commit body counts. Compilation/installation alone supplies
+no body-execution or live-equivalence proof. The sealed V7 candidate predates
+this wiring and is unchanged; live qualification requires a new coherent build.

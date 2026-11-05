@@ -221,3 +221,10 @@ by these checks. Actual provider qualification is separately covered by
 [NATIVE_STREAM_PROVIDER.md](NATIVE_STREAM_PROVIDER.md); matching rebuilt provider
 objects, real lifecycle/audio/movie validation and whole-domain evidence remain
 necessary for an integrated candidate.
+
+The later coherent private V7 build now supplies real integration evidence in
+[CANDIDATE_VALIDATION.md](CANDIDATE_VALIDATION.md#complete-pcm-backend-v7):
+successful complete-backend selection, actual device callbacks, menu/control
+observations and joined clean exit. Its nonzero starvation and long movie gaps
+remain unresolved; these results do not accept the replacement as the default
+or retire bank/RPC producers outside this facade.

@@ -73,6 +73,10 @@ PCM_BACKEND_UNITS = (
     ('native_audio_stream_provider', 'runtime/audio/native_stream_provider.cpp'),
     ('native_pcm_backend', 'recomp/overrides/native_pcm/runtime_adapter.cpp'),
 )
+MOVIE_POSITION_UNITS = (
+    ('native_movie_position_core', 'game/native/movie_position/movie_position.cpp'),
+    ('native_movie_position_adapter', 'recomp/overrides/native_movie_position/runtime_adapter.cpp'),
+)
 HEADER_ROOTS = ('game/', 'media/', 'network/', 'recomp/', 'runtime/', 'src/',
                 'tools/parallel_gs_backend/', 'tools/vu_whole_aot/',
                 'tools/source_instrumentation/')
@@ -230,7 +234,7 @@ def runtime_sources(dependency):
 
 def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolchain, raylib,
                     disc_stream=False, resource_reads=False, adx_block=False, adx_stereo=False,
-                    pcm_backend=False):
+                    pcm_backend=False, movie_position=False):
     commit = Commit(root, revision)
     manifest, plan, compiler_proof = verify_carrier(kit)
     receipt = verify_dependency(dependency, dependency_receipt, commit, compiler_proof)
@@ -258,7 +262,8 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         source['source/third_party/PS2Recomp/' + name] = data
     selected_units = NEW_UNITS + (DISC_STREAM_UNITS if disc_stream else ()) + \
         (RESOURCE_READ_UNITS if resource_reads else ()) + (ADX_BLOCK_UNITS if adx_block else ()) + \
-        (ADX_STEREO_UNITS if adx_stereo else ()) + (PCM_BACKEND_UNITS if pcm_backend else ())
+        (ADX_STEREO_UNITS if adx_stereo else ()) + (PCM_BACKEND_UNITS if pcm_backend else ()) + \
+        (MOVIE_POSITION_UNITS if movie_position else ())
     required = [n for _, n in selected_units] + [
         'recomp/overrides/native_cd_owner/runtime_adapter.h', 'game/native/tasks/serial_worker.hpp',
         'recomp/overrides/reo_cd_async.h', 'runtime/audio/reo_output_device.h']
@@ -278,6 +283,8 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         raise ValueError('Commit lacks the optional keyed mono ADX installation')
     if adx_stereo and 'reo_native_adx_stereo::install(runtime)' not in bootstrap:
         raise ValueError('Commit lacks the optional keyed stereo ADX installation')
+    if movie_position and 'reo_native_movie_position::install(runtime)' not in bootstrap:
+        raise ValueError('Commit lacks the optional guarded movie-position installation')
     if pcm_backend:
         if 'reo_native_pcm::install(runtime,' not in bootstrap or 'dtxCompatLayoutSnapshot()' not in bootstrap:
             raise ValueError('Commit lacks observed-profile native PCM installation')
@@ -326,6 +333,9 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     if pcm_backend:
         template['options'].append('/DREO_BUILD_NATIVE_PCM=1')
         unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_PCM=1')
+    if movie_position:
+        template['options'].append('/DREO_BUILD_NATIVE_MOVIE_POSITION=1')
+        unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_MOVIE_POSITION=1')
     if resource_reads:
         for name in ('recomp/reo_bootstrap.cpp', 'recomp/overrides/reo_override.cpp', 'recomp/overrides/reo_hw_bridge.cpp'):
             unit_for(name)['options'].append('/DREO_BUILD_NATIVE_RESOURCE_READS=1')
@@ -376,7 +386,8 @@ def prepare(args):
     commit, manifest, plan, receipt, compiler, updates = prepared_inputs(
         root, args.revision, kit, dependency, receipt_path, toolchain, raylib,
         disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads, adx_block=args.adx_block_adapter,
-        adx_stereo=args.adx_stereo_adapter, pcm_backend=args.pcm_backend)
+        adx_stereo=args.adx_stereo_adapter, pcm_backend=args.pcm_backend,
+        movie_position=args.movie_position_adapter)
     result = {'schema': 1, 'root_revision': commit.revision, 'carrier_manifest_sha256': CARRIER_SHA,
               'preparer_sha256': sha(Path(__file__)),
               'dependency_receipt_sha256': sha(receipt_path), 'dependency_patch_count': receipt['applied_count'],
@@ -387,7 +398,7 @@ def prepare(args):
               'precompiled_ps2_runtime_reused': False}
     result['optional_adapters'] = dict(disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads,
                                        adx_block=args.adx_block_adapter, adx_stereo=args.adx_stereo_adapter,
-                                       pcm_backend=args.pcm_backend)
+                                       pcm_backend=args.pcm_backend, movie_position=args.movie_position_adapter)
     if args.check_only:
         return result
     output.mkdir(parents=True)
@@ -459,6 +470,7 @@ def main():
     parser.add_argument('--adx-block-adapter', action='store_true', help='Compile the opt-in keyed mono ADX block adapter')
     parser.add_argument('--adx-stereo-adapter', action='store_true', help='Compile the opt-in keyed stereo/downmix ADX adapters')
     parser.add_argument('--pcm-backend', action='store_true', help='Compile the default-off bounded complete File1 PCM candidate')
+    parser.add_argument('--movie-position-adapter', action='store_true', help='Compile the default-off guarded File1 movie position publisher')
     print(json.dumps(prepare(parser.parse_args()), indent=2))
 
 

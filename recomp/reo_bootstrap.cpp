@@ -43,6 +43,9 @@
 #include "overrides/reo_performance.h"
 #include "overrides/reo_cri_server_observer.h"
 #include "overrides/reo_cd_async.h"
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_MOVIE_POSITION) && REO_BUILD_NATIVE_MOVIE_POSITION
+#include "overrides/native_movie_position/runtime_adapter.h"
+#endif
 #if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
 #include "overrides/native_resource_reads/runtime_adapter.h"
 #endif
@@ -1448,6 +1451,15 @@ int main(int argc, char* argv[]) {
         } catch (const std::exception& e) {
             printf("[REO] original CPU IRQ receiver not registered: %s\n", e.what());
         }
+    }
+#endif
+
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_MOVIE_POSITION) && REO_BUILD_NATIVE_MOVIE_POSITION
+    // Install after other registration so admission checks the final registry.
+    if (const auto* requested = std::getenv("REO_NATIVE_MOVIE_POSITION"); requested && !std::strcmp(requested, "1")) {
+        if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u ||
+            !reo_native_movie_position::install(runtime))
+            std::fprintf(stderr, "[NATIVE-MOVIE-POSITION] installation unavailable; original publisher retained\n");
     }
 #endif
 
