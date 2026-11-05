@@ -98,6 +98,7 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT / 'build-native-sjuni/candidate-game-v1')
     parser.add_argument('--jobs', type=int, default=2)
     parser.add_argument('--cache-from', type=Path, help='Seed a fresh work folder with verified object/receipt pairs')
+    parser.add_argument('--preflight', action='store_true', help='Compile authored/runtime inputs only, without a linked game')
     args = parser.parse_args()
     kit, disc, compiler = args.kit.resolve(), args.disc.resolve(), args.toolchain.resolve()
     work, output = args.work.resolve(), args.output.resolve()
@@ -128,6 +129,10 @@ def main():
     command = [sys.executable, '-u', str(kit / 'tools/local_build/build_game.py'),
                '--kit', str(kit), '--disc', str(disc), '--work', str(work),
                '--output', str(output), '--jobs', str(args.jobs), '--game', 'file1']
+    if args.preflight:
+        if '--preflight' not in (kit / 'tools/local_build/build_game.py').read_text(encoding='utf-8'):
+            raise ValueError('Sealed worker does not support authored-unit preflight; prepare a new kit')
+        command.append('--preflight')
     env = dict(os.environ)
     env['REO_LLVM_MINGW'] = str(compiler)
     # These affect neither generation nor compilation; ensure no inherited launch
@@ -136,7 +141,7 @@ def main():
         env.pop(name, None)
     started = time.monotonic()
     print('Building a separate runtime/backend/game from matching SDK sources...', flush=True)
-    log_path = work / 'candidate-build.log'
+    log_path = work / ('candidate-preflight.log' if args.preflight else 'candidate-build.log')
     with log_path.open('w', encoding='utf-8', newline='\n') as log:
         process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
@@ -155,15 +160,19 @@ def main():
                   build_log_sha256=sha(log_path), game_launched=False,
                   precompiled_ps2_runtime_reused=False)
     record['seeded_object_cache'] = cache
+    record['preflight_only'] = args.preflight
+    record['game_linked'] = result == 0 and not args.preflight
     executable = output / 'reo_recomp.exe'
-    if result == 0:
+    if result == 0 and not args.preflight:
         if not executable.is_file():
             raise RuntimeError('Worker succeeded without expected candidate executable')
         record['executable_sha256'] = sha(executable)
         record['outputs_sha256'] = {p.relative_to(output).as_posix(): sha(p)
                                     for p in sorted(output.rglob('*')) if p.is_file()}
-    (work / 'candidate-build-result.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
-    print('Candidate build ' + record['status'] + '; log: ' + str(log_path.relative_to(ROOT)), flush=True)
+    result_path = work / ('candidate-preflight-result.json' if args.preflight else 'candidate-build-result.json')
+    result_path.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+    print(('Candidate preflight ' if args.preflight else 'Candidate build ') + record['status'] +
+          '; log: ' + str(log_path.relative_to(ROOT)), flush=True)
     raise SystemExit(result)
 
 

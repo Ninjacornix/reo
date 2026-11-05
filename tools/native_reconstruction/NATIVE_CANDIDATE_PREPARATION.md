@@ -71,3 +71,11 @@ committed installation/dispatch source and includes all authored units in its
 source-plan closure. Runtime admission remains separately off by default. The
 read prototype additionally requires actual plain PAK layout agreement and
 `REO_CD_ASYNC=0`; an enabled compilation macro does not prove native reads ran.
+
+For a newly prepared kit, the private build driver supports `--preflight`:
+it performs ordinary source reconstruction, then compiles all fixed authored/
+runtime/backend units while skipping generated game groups and linking. The
+separate `candidate-preflight-result.json` explicitly records `game_linked=false`.
+This catches integration/toolchain failures before compiling thousands of game
+units. Resume the same work directory without `--preflight` for a full build;
+the normal signature checks can reuse the successfully compiled fixed units.

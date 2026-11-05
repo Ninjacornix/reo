@@ -71,9 +71,11 @@ def game_profile(kit, requested=None):
     return game, profile
 
 
-def build(kit, disc, work, output, jobs, game=None):
+def build(kit, disc, work, output, jobs, game=None, preflight=False):
     kit, disc, work, output = map(extended, (kit, disc, work, output))
     game, profile = game_profile(kit, game)
+    if preflight and sys.platform != "win32":
+        raise ValueError("The authored-unit preflight is currently supported by the Windows compile worker")
     work.mkdir(parents=True, exist_ok=True)
     if sys.platform == "linux":
         from compile_linux import compile_plan as compile_native
@@ -139,8 +141,12 @@ def build(kit, disc, work, output, jobs, game=None):
     stage(work, "vu", [elf, metadata / "local_vu_images.json", script / "reconstruct_vu.py",
                        kit / "tools/vu_whole_aot/generate.py", kit / "tools/vu_whole_aot/decode.py"],
           generate_vu, lambda: [p for p in vu.rglob("*") if p.is_file()], jobs=jobs)
-    print("Compiling the game locally (the first build can take a while)", flush=True)
-    compile_native(kit, generated, work, output, jobs)
+    if preflight:
+        print("Checking authored/runtime compilation units before generated game compilation", flush=True)
+        compile_native(kit, generated, work, output, jobs, preflight=True)
+    else:
+        print("Compiling the game locally (the first build can take a while)", flush=True)
+        compile_native(kit, generated, work, output, jobs)
 
 
 if __name__ == "__main__":
@@ -149,5 +155,7 @@ if __name__ == "__main__":
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--jobs", type=int, default=2)
     parser.add_argument("--game", choices=sorted(GAMES), help="Must match the verified build kit")
+    parser.add_argument("--preflight", action="store_true",
+                        help="Compile authored/runtime units only; do not compile generated game groups or link")
     args = parser.parse_args()
-    build(args.kit, args.disc, args.work, args.output, args.jobs, args.game)
+    build(args.kit, args.disc, args.work, args.output, args.jobs, args.game, args.preflight)
