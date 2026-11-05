@@ -27,6 +27,7 @@ class MovieOwnerServiceTarget final : public reo_movie_owner::Target {
     Vulkan::Device& gs_;
     ParallelGS::GSInterface& renderer_;
     const uint64_t epoch_;
+    reo::movie_timing::Recorder timing_;
     std::atomic<bool> healthy_{true};
     ComPtr<ID3D11Device> decoder_;
     std::function<void(uint32_t)> imageConsumed_;
@@ -114,12 +115,16 @@ class MovieOwnerServiceTarget final : public reo_movie_owner::Target {
   public:
     MovieOwnerServiceTarget(Vulkan::Device& gs, ParallelGS::GSInterface& renderer, uint64_t epoch,
                             std::function<void(uint32_t)> imageConsumed = {})
-        : gs_(gs), renderer_(renderer), epoch_(epoch), imageConsumed_(std::move(imageConsumed)) {
+        : gs_(gs), renderer_(renderer), epoch_(epoch), timing_(epoch),
+          imageConsumed_(std::move(imageConsumed)) {
         if (!epoch)
             throw std::invalid_argument("Movie owner needs actual GS epoch");
     }
     ~MovieOwnerServiceTarget() override {
         stop();
+        // Real owner teardown has cancelled/retired movie work. Export only
+        // here; runControl/decode/output and all fence paths remain IO-free.
+        timing_.exportAfterOwnerStop();
     }
     uint64_t epoch() const noexcept override {
         return epoch_;
@@ -136,6 +141,8 @@ class MovieOwnerServiceTarget final : public reo_movie_owner::Target {
         ThreadIndexScope index;
         if (!call)
             throw std::invalid_argument("Missing native movie owner control");
+        reo::movie_timing::Span timing(&timing_, reo::movie_timing::Boundary::OwnerControl,
+                                       owner_.generation);
         call(*this);
     }
     void stop() noexcept override {
@@ -168,7 +175,7 @@ class MovieOwnerServiceTarget final : public reo_movie_owner::Target {
             initializePrograms();
             initializeDecoder();
             auto value = std::make_shared<LiveMovieProducer>(owner, inner, gs_, decoder_.Get(),
-                                                             width, height, csc_);
+                                                             width, height, csc_, &timing_);
             owner_ = owner;
             inner_ = inner;
             width_ = width;
@@ -188,6 +195,8 @@ class MovieOwnerServiceTarget final : public reo_movie_owner::Target {
     bool decode(const OriginalDecodeEvent& event, uint32_t th0, uint32_t th1,
                 NativeDecodeCompletion& completion) {
         movie(event.generation);
+        reo::movie_timing::Span timing(&timing_, reo::movie_timing::Boundary::Decode,
+                                       event.generation, event.serial);
         return movie_->decode(event, th0, th1, completion);
     }
     void acknowledgeDecode(const NativeDecodeCompletion& completion) {
@@ -196,6 +205,8 @@ class MovieOwnerServiceTarget final : public reo_movie_owner::Target {
     }
     bool output(const OriginalOutputEvent& event, NativeOutputBinding& binding) {
         movie(event.generation);
+        reo::movie_timing::Span timing(&timing_, reo::movie_timing::Boundary::Output,
+                                       event.generation, event.serial);
         return movie_->output(event, binding);
     }
     bool upload(const NativeOutputBinding& binding, const MovieUpload& original,

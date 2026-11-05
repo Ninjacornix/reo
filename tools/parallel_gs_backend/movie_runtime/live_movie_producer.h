@@ -2,6 +2,7 @@
 #include "mpeg2_stream.h"
 #include "same_owner_movie_bridge.h"
 #include "movie_session.h" // Literal MovieUpload / MovieDmaReceipt ABI.
+#include "runtime/media/movie_timing.h"
 #include <map>
 #include <mutex>
 #include <variant>
@@ -87,6 +88,9 @@ class LiveMovieProducer {
         bool final = false;
     };
     MovieSessionOwner owner_;
+    // Borrowed from the actual serialized GS owner; never used by CPU input
+    // producers. Owner stop cancels this object before recorder export/destruction.
+    reo::movie_timing::Recorder* timing_ = nullptr;
     uint32_t inner_ = 0, width_ = 0, height_ = 0;
     SameOwnerMovieBridge bridge_;
     Mpeg2ElementaryStream parser_;
@@ -218,8 +222,9 @@ class LiveMovieProducer {
     using Recorder = MovieSession::Recorder;
     LiveMovieProducer(MovieSessionOwner owner, uint32_t inner, Vulkan::Device& gs,
                       ID3D11Device* decoder, uint32_t width, uint32_t height,
-                      const std::vector<uint32_t>& shader)
-        : owner_(owner), inner_(inner), width_(width), height_(height),
+                      const std::vector<uint32_t>& shader,
+                      reo::movie_timing::Recorder* timing = nullptr)
+        : owner_(owner), timing_(timing), inner_(inner), width_(width), height_(height),
           bridge_(gs, decoder, owner.generation, width, height, shader) {
         if (!owner.generation || !owner.sofdec || !owner.work || !inner)
             throw std::invalid_argument("Missing actual original movie owner");
@@ -884,7 +889,12 @@ class LiveMovieProducer {
                 if (!job.fence || job.final)
                     throw std::logic_error(
                         "Original queue release crossed a staged/final IMAGE receipt");
-                job.fence->wait();
+                {
+                    reo::movie_timing::Span timing(timing_,
+                        reo::movie_timing::Boundary::ReleasePartialFence,
+                        owner_.generation, serial);
+                    job.fence->wait();
+                }
                 job.retired = true;
                 job.fence.reset();
             }
@@ -960,7 +970,11 @@ class LiveMovieProducer {
         uploadBatch_.reset();
         // Every staged receipt references this actual submission. Cache all
         // completions before the final receipt can free the resident ticket.
-        fence->wait();
+        {
+            reo::movie_timing::Span timing(timing_, reo::movie_timing::Boundary::BatchFence,
+                                           owner_.generation, binding.eventSerial);
+            fence->wait();
+        }
         pollUploads();
         for (const auto& receipt : receipts)
             if (!uploadComplete(receipt))
@@ -991,6 +1005,8 @@ class LiveMovieProducer {
         if (!found->second.retired) {
             if (!found->second.fence)
                 throw std::logic_error("Original IMAGE lost its actual consumer fence");
+            reo::movie_timing::Span timing(timing_, reo::movie_timing::Boundary::UploadFence,
+                                           owner_.generation, receipt.dmaSerial);
             found->second.fence->wait();
         }
         if (!uploadComplete(receipt))
