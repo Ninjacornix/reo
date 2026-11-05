@@ -295,8 +295,15 @@ comparisons are separate in `tools/native_reconstruction/`:
 `sjuni_continuation_contract.py` and `compare_sjuni_continuations.py`. The mocks
 check adapter dispatch/frame/fallback integration; they are not a second claim
 of an original queue oracle.
-No game launch, full game rebuild, live capture or performance test was performed
-for this adapter. See `docs/native-sjuni/ADAPTER_ADMISSION_REVIEW.md` for exact
+Subsequently, a separate complete SDK runtime/backend/game rebuild and four
+controlled original/native smoke runs passed their stated observations. Native
+bodies were reached during title/media and bar gameplay; all four runs exited
+normally after window-close requests. See
+[candidate validation](../../../docs/native-sjuni/CANDIDATE_VALIDATION.md) for exact
+binary/source identities, evidence counts and coverage gaps. This does not
+establish frame/waveform equivalence, general lifetime parity or a speedup.
+See `docs/native-sjuni/ADAPTER_ADMISSION_REVIEW.md` for exact
 original PCs and its earlier baseline live-hook deferral. The opt-in phase above
 implements only the newly reviewed known-hook subset; alias, lifetime, installed
-binary identity, actual playback reachability and performance remain open.
+binary identity outside that candidate, wider playback/lifetime coverage and
+performance remain open.

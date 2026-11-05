@@ -1,8 +1,9 @@
 # Outbreak native reconstruction plan
 
 Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapter
-implemented 2026-11-05; native resource core passes isolated checks. Full
-transition and real-consumer validation remain in progress.
+implemented 2026-11-05, with four bounded controlled integration smoke runs;
+native resource core passes isolated checks. Full transition and wider
+real-consumer validation remain in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the
 mapping/comparison findings locally and continuing this transition plan. The
@@ -17,7 +18,7 @@ The [SJUNI dependency and contract inventory](native-sjuni/README.md) records
 the first-stage evidence, implemented native interface, isolated comparisons and
 remaining integration blockers. The user subsequently authorized a separate
 candidate build and controlled game tests. Its coherent runtime/backend/game
-rebuild is in progress; validation results belong in the
+rebuild and four bounded original/native smoke runs passed; results are in the
 [candidate test record](native-sjuni/CANDIDATE_VALIDATION.md). No replacement has
 been enabled in the player's build, no dependency removed and no game performance
 improvement measured. The next resource boundary has an
@@ -191,7 +192,8 @@ reconstructed, regardless of how files or libraries are named.
 - [Native asset rendering work](M2_NATIVE_ASSET_RENDERER.md).
 - [Native networking work](NATIVE_NETCODE.md).
 
-The current task is extending SJUNI's admitted adapter to active CRI scheduling
-continuations and real-consumer validation. Its independent core/portable bridge
-have passed isolated checks. Replace and validate each service before retiring
+The current task is extending the native resource/file-stream boundary while
+widening SJUNI consumer and lifetime coverage. Its independent core/portable
+bridge and known-hook continuations have passed isolated checks and a separate
+candidate has passed bounded real-consumer smoke runs. Replace and validate each service before retiring
 the PS2 compatibility components that supply it.

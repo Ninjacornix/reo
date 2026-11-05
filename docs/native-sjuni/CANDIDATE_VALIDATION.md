@@ -1,7 +1,8 @@
 # Separate SJUNI candidate validation
 
-2026-11-05. Status: isolated checks passed; separate cold game build in progress.
-No live playback result is recorded yet.
+2026-11-05. Status: isolated checks, separate cold game build and four controlled
+integration smoke runs passed their stated checks. This is not full-game,
+frame/waveform equivalence or performance validation.
 
 The user authorized a separate build and controlled game tests after the isolated
 checks. Player build outputs, saves and launcher settings remain separate.
@@ -43,6 +44,13 @@ Local outputs and detailed receipts stay below ignored `build-native-sjuni/`:
   written on build completion.
 - `candidate-game-v1/`: separate executable/dependencies.
 
+The completed build compiled **2,347 units with zero cached units** and linked
+successfully. Executable SHA-256:
+`ce6a3768d215b8ee9e5ef83e0e5abb775476fd22e1f0a87a69b2336db36b23c1`.
+Runtime dependencies and helper shaders have individual hashes in the build
+receipt. The native resource core is a separate isolated target and is not part
+of this SJUNI candidate.
+
 ## Isolated evidence
 
 `verify_sjuni.py` passes the 22 Python oracle/continuation tests, 11 core and 10
@@ -78,3 +86,53 @@ prove producer/output progress within their scope, not subjective sound quality.
 A supervisor duration-limit termination is not a clean shutdown test. Record
 any unexercised consumer or lifecycle transition as pending. No performance
 improvement or full native conversion follows from a passing pilot.
+
+## Recorded controlled results
+
+The [structured receipt](controlled-test-receipt.json) retains build, executable,
+adapter, session, run and log hashes plus capture hashes and scoped counts. Full
+logs, owned-window captures, launch environment and process creation identities
+remain under `build-native-sjuni/playtests/`. No original executable bytes or
+asset payloads are included in this committed receipt.
+
+All four tests used the executable hash above. They ran one at a time, at normal
+speed with the same existing rendering/VU settings. Each received an ordinary
+`WM_CLOSE` on its identity-checked private window, exited with **code 0** and
+logged execution end, audio device/stream closure, input shutdown and renderer
+shutdown. The supervisor classified no fatal diagnostics and did not terminate
+any of them. Generic thread-manager warnings and unhandled optional SIF log lines
+occurred in the reference as well; this smoke result does not resolve those.
+
+| Private session | Wall duration | Observed route | Nonzero host audio report windows | Reported audio underrun frames |
+| --- | --- | --- | --- | --- |
+| `original-title-v1` | 86.063 s | Boot to title/media sequence; visible title capture. | 18 / 80 | 0 |
+| `native-title-v1` | 94.704 s | Boot to title/media and demonstration movie; visible captures. | 18 / 92 | 0 |
+| `original-gameplay-v1` | 229.797 s | Outbreak bar, inventory, pause/resume, Quit Game/results, return to main menu. | 139 / 224 | 0 |
+| `native-gameplay-v1` | 280.141 s | Same initial gameplay/menu path, then a second scenario load, opening movies/cutscene and bar gameplay in the same process. | 178 / 276 | 0 |
+
+Movie timing records advanced and captures showed changing title/demo/movie
+images. The gameplay route reported original mode 2/modal 0 at 49.477 seconds
+in the reference and 49.584 seconds enabled. Those single route times are
+observations, **not a speed benchmark**. Actor snapshots and owned-window captures
+support actual bar gameplay; the title demonstration alone is not gameplay
+proof. In the enabled pause check, local actor frame 20 stayed unchanged across
+two samples roughly two seconds apart, then became 32 after resume. This is a
+bounded observation of that actor, not a complete scheduler-state comparison.
+
+The enabled title run proves at least **32,768 guarded Get, 1,024 guarded Put,
+16 guarded Unget and 32 canonical byte-count bodies**. The enabled gameplay/
+reload run proves at least **131,072 guarded Get, 8,192 guarded Put, 128 guarded
+Unget and 32,768 canonical byte-count bodies**. These are separately counted
+lower bounds; many Gets are polling empty queues. No native proof appeared in
+the disabled runs. The enabled runs logged successful known-hook installation
+after the expected early missing-binding refusal, and no adapter-disable line.
+Availability and both node-count queries were covered only by isolated tests;
+these sessions produced no live proof for them.
+
+The same-process second gameplay load was exercised only in native mode; the
+reference returned to its main menu and then closed. Inputs and test durations
+were not identical after the common initial route. No waveform comparison,
+frame-exact comparison, later-room progression, save/load, co-op, File #2,
+long-session soak or stress cancellation test is claimed. The independent native
+body is reachable in real selected consumers and passed these smoke observations;
+the adapter remains opt-in while wider consumer/lifetime coverage is outstanding.

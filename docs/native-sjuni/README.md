@@ -1,8 +1,9 @@
 # SJUNI native reconstruction: dependency inventory
 
 2026-11-05. File #1 US only. Status: independent C++20 core and portable adapter
-implemented and tested; guarded runtime adapter is opt-in. Real-consumer
-validation and complete migration remain outstanding.
+implemented and tested; guarded runtime adapter is opt-in. Four separately built
+controlled integration smoke runs passed; wider consumer/lifetime validation and
+complete migration remain outstanding.
 The mapping/comparison baseline is local commit `733a8ed`.
 
 The initial pilot replaces the **local EE SJUNI metadata queues**. Remote IOP
@@ -62,7 +63,7 @@ search covers file-backed main ELF segments; it excludes overlays and BSS.
 | Portable guest adapter | Implemented and compared | [Bridge source](../../game/native/sjuni_adapter/queue_bridge.cpp); 10 adversarial groups and original-word comparisons below. |
 | Optional runtime adapter | Implemented and checked in isolation | File #1 only, default-OFF build and explicit runtime opt-in; code-identity and per-call admission gates. Thirteen host scenarios include 1,063 conservative and 2,739 guarded assertions, plus trace checks; real-header object compilation passes. [Runtime adapter](../../recomp/overrides/native_sjuni/README.md). |
 | Isolated behavior comparisons | Passed within the stated domain | 253 native calls and 225 callback-boundary images match the independent original-word oracle. |
-| Real-consumer validation | Pending separate candidate | [Build identity and controlled validation record](CANDIDATE_VALIDATION.md). Isolated checks do not establish playback correctness. |
+| Real-consumer validation | Bounded controlled smoke passed | Same independently rebuilt executable, original/native modes: title/media, bar gameplay, inventory/pause/resume, results/main-menu return and four normal code-0 exits. Enabled mode also loaded a second scenario in-process. [Exact scope/limits and identity](CANDIDATE_VALIDATION.md). |
 | Consumers migrated / dependency removed | Pending | All existing runtime dependencies remain. |
 
 ## Construction and retained-pointer map
@@ -199,7 +200,8 @@ Original CRI hooks still execute on the original runtime path; the optional nati
 body runs after a recognized enter and completes through original leave/epilogue.
 No speedup or completed native game follows from these checks.
 
-Next deliverable: validate selected real audio/movie consumers in a separately
-controlled test. Compatibility removal follows
+Next deliverable: widen consumer/lifetime coverage and migrate the file-stream
+backend boundary identified in the [resource inventory](../native-resources/README.md).
+Compatibility removal follows
 consumer migration and validation in the
 [transition plan](../NATIVE_RECONSTRUCTION_PLAN.md).
