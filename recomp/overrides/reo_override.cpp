@@ -1794,7 +1794,7 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         dtx.rpcSid = 0x90000200u;
         dtx.urpcObjBase = 0x001E0000u; // opaque SJ/RNA handles (IOP-like ids, never dereferenced)
         dtx.urpcObjLimit = 0x001EFF00u;
-        ps2_syscalls::setDtxCompatLayout(dtx);
+        ps2_syscalls::setDtxCompatLayout(dtx, &runtime);
     }
 
     if (std::getenv("REO_CRI_ERRLOG"))
@@ -2073,7 +2073,7 @@ static void applyFile2Overrides(PS2Runtime& runtime) {
         dtx.rpcSid = 0x90000200u;
         dtx.urpcObjBase = 0x001E0000u;
         dtx.urpcObjLimit = 0x001EFF00u;
-        ps2_syscalls::setDtxCompatLayout(dtx);
+        ps2_syscalls::setDtxCompatLayout(dtx, &runtime);
     }
 
     printf("[REO] File #2 overrides applied (libsif + CRI DTX HLE; game hooks not yet mapped).\n");
