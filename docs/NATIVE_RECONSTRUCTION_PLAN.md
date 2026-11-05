@@ -3,7 +3,9 @@
 Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapter
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
-ten standalone suites with GCC and the pinned LLVM toolchain. Full transition and wider
+the standalone suites with GCC and the pinned LLVM toolchain. The combined native
+project now has thirteen passing suites, including the new independent ADX
+control and mono block cores. Full transition and wider
 real-consumer validation remain in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the

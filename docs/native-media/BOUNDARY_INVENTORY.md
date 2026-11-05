@@ -11,9 +11,13 @@ to the resource core would not establish a complete media replacement.
 
 The smallest next *control* unit is the synchronous predictor phase/window helpers
 covered by the new fixture below. The first useful complete *codec* unit is the
-mono keyed block kernel `main:001276D8`, beneath that owner. Its positive PCM parity
-still needs independently verified multiply semantics. Keep the original SJ/ADXT/RNA
-owner, sample clock and stop policy while introducing that kernel.
+mono keyed block kernel `main:001276D8`, beneath that owner. Its
+[positive original-word oracle](ADX_DECODE_ORACLE.md) and
+[independent native implementation](../../game/native/adx_block/README.md) now
+match 104 cases / 4,032 PCM samples with both compilers. The
+[native scalar control core](../../game/native/adx_control/README.md) also matches
+the 96 phase/window calls. Both remain unwired. Keep the original SJ/ADXT/RNA
+owner, sample clock and stop policy while validating their temporary adapters.
 
 ## Source and build boundary
 

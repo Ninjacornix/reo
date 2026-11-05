@@ -84,3 +84,21 @@ longer media coverage and output equivalence, stop/close/reuse under controlled
 I/O pressure, co-op and File #2. The new verified mount/reader is not compiled
 into v2c. These results do not establish general mid-game buffer lifetime,
 native resource-consumer migration or speedup.
+
+## V3 resource/scalar candidate
+
+Source `42a5e4a63fe20131285ff88cde54b7fcf0686b9d` is sealed as manifest
+`13e5feb83e8affee8b80fc459fe24162f7381fe60f0e192499d5415ae31f3051`.
+It adds the default-off quiescent DVCI scalar and synchronous resource-read
+adapters. All 136 fixed runtime/backend/authored units passed the bundled LLVM
+preflight; the separate receipt explicitly says no game was linked. The full
+2,361-unit build is in progress. V3 has not been launched or validated in-game.
+
+The resource adapter requires actual plain PAK facade layout agreement plus
+`REO_NATIVE_RESOURCE_READS=1`, `REO_GAME_PAK=1` and `REO_CD_ASYNC=0`. Native
+payload counters prove successful exact reads separately from setup and scalar
+call counters. Unknown/EOF/padding routes remain original before native I/O.
+Failed native reads preserve destination, differing from legacy zero/partial
+failure writes; the old handled reply/completion still runs. Guest-visible I/O
+error/status reconstruction is open. Successful-read evidence must not be
+reported as general error-policy equivalence or completed resource migration.

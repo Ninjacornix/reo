@@ -81,3 +81,11 @@ receipt SHA-256:
 The mount digest includes local filesystem object identities; it is not a
 portable retail-image checksum. The probe did not change user assets, open an
 original ISO, launch the game, register guest functions or execute game code.
+
+The same production sources also passed the actual pinned LLVM-MinGW compiler
+and read-only probe. Its separate receipt is
+`build-native-sjuni/real-import-probe-llvm/receipt.json`. All 1,024 checks, 85 file
+hashes, 222 exact ranges, 77 partial-EOF and 85 read-ahead cases passed with zero
+native failures and the same manifest/route identities. The captured construction
+interval was 3,299,552 microseconds; different cache/run conditions prevent a
+compiler or gameplay speed comparison from those two single observations.

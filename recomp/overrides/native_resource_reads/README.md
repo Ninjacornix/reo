@@ -28,6 +28,13 @@ I/O/destination publication, leaving `ok` unchanged. `true` consumes the attempt
 the caller uses `ok` while retaining its existing reply/callback policy. Typed
 native failures return `true,ok=false` and must not restart legacy I/O.
 
+This is successful-read parity within the admitted domain. Failed-read bytes
+deliberately differ: the legacy PAK facade zeroes output before I/O and can leave
+a partial prefix, whereas ResourceSession preserves the previous destination.
+The current bridge logs `ok=false` but retains its original handled reply and
+completion callback. No guest-visible DVCI error is synthesized. Correct error/
+status publication remains an open gate before broader/default admission.
+
 Admission requires packet `207A00`/size `18`, zero receive arguments, data-pattern
 byte `packet+0E == 0`, packet pointers `+10 == 208A00` and `+14 == 208AC0`, and zero
 head/tail edge-copy counts at `208A00/+4`. Counts are positive, at most `4000`,
