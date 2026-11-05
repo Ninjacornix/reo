@@ -7,6 +7,19 @@ FIRST = TAG + 'native op=keyed-mono calls=1 blocks=16 marker=0'
 
 
 class AdxEvidenceTests(unittest.TestCase):
+    def test_large_proof_uses_actual_installed_capability(self):
+        mono = TAG + 'native op=keyed-mono calls=1 blocks=300 marker=0'
+        self.assertEqual(parse_adx([INSTALLED.replace('16','512'),mono],ENV)['sampled_pcm_sample_lower_bound'],9600)
+        stereo = STEREO_TAG + 'native op=stereo calls=1 pairs=150 marker=0'
+        env = {'REO_NATIVE_ADX_STEREO':'1','REO_NATIVE_ADX_STEREO_TRACE':'1'}
+        self.assertEqual(parse_stereo([STEREO_INSTALLED.replace('16','512'),stereo],env)
+            ['operations']['stereo']['sampled_pcm_sample_lower_bound'],9600)
+        for cap in ('160','513','1024'):
+            with self.subTest(cap=cap),self.assertRaises(ValueError):
+                parse_adx([INSTALLED.replace('16',cap)],ENV)
+        with self.assertRaises(ValueError):
+            parse_stereo([STEREO_INSTALLED,stereo],env)
+
     def test_stereo_and_downmix_counts_remain_independent(self):
         env = {'REO_NATIVE_ADX_STEREO':'1','REO_NATIVE_ADX_STEREO_TRACE':'1'}
         stereo = STEREO_TAG + 'native op=stereo calls=1 pairs=8 marker=0'

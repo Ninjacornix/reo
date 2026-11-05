@@ -42,7 +42,7 @@ def drive(folder, *, timeout=300, observe_only=False):
                   limitation='Phase 14 alone does not distinguish video from an in-engine cutscene. State/input observations supply no image, waveform or timing equivalence verdict.')
     started = time.monotonic()
     last, sealed, since_gameplay = None, observe_only, None
-    presses, next_press = {}, 0
+    presses, next_press, route_reached = {}, 0, False
     reader = None
     try:
         reader = GuestRam(identity, record['elf'])
@@ -78,19 +78,23 @@ def drive(folder, *, timeout=300, observe_only=False):
                 since_gameplay = None
             # The native route must relinquish input first. Each menu receives
             # at most four bounded retries; later phases permanently seal input.
-            route_reached = '[TEST-ROUTE] reached character ' in (
-                Path(player['logs']) / 'stderr.log').read_text(encoding='utf-8', errors='replace')
+            # The verified --route character implementation relinquishes input
+            # on this exact idle state. Latch the observed state; rereading an
+            # ever-growing movie log here can delay the controller publisher.
+            if not sealed and not route_reached and state == 0x109 and timer == 0:
+                route_reached = True
+                result['character_idle_observed_seconds'] = round(now-started,3)
             if not sealed and route_reached and now >= next_press and confirmable(phase, state, timer):
                 key = (selection, state)
                 count = presses.get(key, 0)
                 if count >= 4:
                     raise ValueError('Menu confirmation retry bound reached')
                 reader.check()
-                harness.save(player['inputFile'], dict(buttons=['cross'], expiresUnix=time.time()+0.18))
+                harness.save(player['inputFile'], dict(buttons=['cross'], expiresUnix=time.time()+0.6))
                 presses[key] = count+1
                 result['inputs'].append(dict(seconds=round(now-started,3), button='cross',
                     selection=selection, state=state, retry=count+1))
-                next_press = now+1
+                next_press = now+1.25
             harness.save(receipt, result)
             time.sleep(0.1)
     except (OSError, ValueError) as error:

@@ -91,6 +91,10 @@ class Session final {
     Session& operator=(Session&&) = delete;
     [[nodiscard]] Result<Channel> create_channel() noexcept;
     [[nodiscard]] Result<Voice> create_voice() noexcept;
+    // Complete permutation of current voice records, including paused/disabled
+    // voices. Creating/releasing a voice, cut-stop or reset invalidates it.
+    // Allows larger mixes without assuming an implicit float summation order.
+    [[nodiscard]] Status set_mix_order(std::span<const Voice>) noexcept;
     [[nodiscard]] Status close_channel(const Channel&) noexcept;
     [[nodiscard]] Status release(const Voice&) noexcept;
     [[nodiscard]] Status configure(const Voice&, const VoiceConfig&, std::int64_t now_ns) noexcept;
@@ -107,8 +111,8 @@ class Session final {
     // A cut releases the voice handle while preserving its channels.
     [[nodiscard]] StopResult stop(const Voice&, bool has_unreturned,
                                   std::uint32_t raw_rate) noexcept;
-    // At most two playing non-disabled voices for positive frame requests;
-    // larger mixes have unproved source unordered-map floating sum order.
+    // Without an explicit valid mix order, at most two playing non-disabled
+    // voices for positive frame requests. Larger implicit mixes are refused.
     [[nodiscard]] Status render(std::span<float> stereo) noexcept;
     [[nodiscard]] Status advance_frames(std::uint32_t frames) noexcept;
     [[nodiscard]] Status advance_headless(std::int64_t now_ns) noexcept;

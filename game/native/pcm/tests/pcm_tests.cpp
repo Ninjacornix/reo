@@ -315,6 +315,54 @@ void concurrency() {
     check(info.queued_bytes == 10000 && info.consumed_bytes == 10000 && info.samples == 0);
     s.shutdown(0);
 }
+void explicit_order() {
+    auto conf = small();
+    conf.max_voices = 4;
+    Session s(conf), other(conf);
+    std::array<Channel, 3> channels;
+    std::array<Voice, 3> voices;
+    const std::vector<std::int16_t> data(8, 100);
+    check(s.select_frame_clock() == Status::ok);
+    for (std::size_t i = 0; i < voices.size(); ++i) {
+        channels[i] = take(s.create_channel());
+        voices[i] = take(s.create_voice());
+        check(s.enqueue(channels[i], bytes(data), 0).status == Status::ok);
+        check(s.configure(voices[i], {channels[i], {}, Channels::mono, 48000, 256, true}, 0) == Status::ok);
+    }
+    std::array<float, 2> out{123, 123};
+    check(s.render(out) == Status::unsupported_mix && out[0] == 123);
+    std::array<Voice, 3> order{voices[2], voices[0], voices[1]};
+    refuse_allocation = true;
+    const auto declared = s.set_mix_order(order);
+    refuse_allocation = false;
+    check(declared == Status::ok);
+    auto invalid = order;
+    invalid[1] = invalid[0];
+    check(s.set_mix_order(invalid) == Status::invalid_input);
+    invalid[1] = take(other.create_voice());
+    check(s.set_mix_order(invalid) == Status::invalid_handle);
+    check(s.set_mix_order(std::span<const Voice>(order).first(2)) == Status::invalid_input);
+    check(s.render(out) == Status::ok); // Invalid declarations retain prior valid order.
+    check(take(s.inspect(channels[0])).consumed_bytes == 2);
+    const auto extra = take(s.create_voice());
+    check(s.render(out) == Status::unsupported_mix);
+    const std::array<Voice, 4> expanded{extra, voices[0], voices[2], voices[1]};
+    check(s.set_mix_order(expanded) == Status::ok);
+    check(s.advance_frames(1) == Status::ok);
+    check(s.release(extra) == Status::ok);
+    check(s.render(out) == Status::unsupported_mix);
+    check(s.set_mix_order(order) == Status::ok);
+    check(s.advance_frames(1) == Status::ok);
+    const auto replacement = take(s.create_voice());
+    check(s.set_mix_order(expanded) == Status::invalid_handle);
+    const std::array<Voice, 4> fresh{replacement, voices[0], voices[2], voices[1]};
+    check(s.set_mix_order(fresh) == Status::ok);
+    check(s.reset(0) == Status::ok);
+    check(s.set_mix_order(fresh) == Status::invalid_input);
+    check(s.set_mix_order({}) == Status::ok);
+    s.shutdown(0);
+    check(s.set_mix_order({}) == Status::closed);
+}
 int main() {
     try {
         handles();
@@ -323,6 +371,7 @@ int main() {
         unsupported_mix();
         pause_stop_and_generation();
         no_operational_allocations();
+        explicit_order();
         concurrency();
         std::cout << checks << " PCM owner checks passed\n";
         return 0;

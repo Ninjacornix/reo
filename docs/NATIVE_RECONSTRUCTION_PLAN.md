@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has fifteen standalone suites, including the independent ADX
+project now has sixteen standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores and bounded PCM owner. Full transition and wider
 real-consumer validation remain in progress.
 
@@ -53,7 +53,8 @@ scalar entries also have executed-body evidence; comparison and broader coverage
 remain open. The [media inventory](native-media/BOUNDARY_INVENTORY.md),
 [stereo oracle](native-media/ADX_STEREO_ORACLE.md) and
 [PCM owner extraction](native-media/PCM_OWNER_EXTRACTION.md) define the current
-decoder and host-output boundaries. Wider resources/
+decoder and host-output boundaries. The [media candidate record](native-media/CANDIDATE_VALIDATION.md)
+tracks actual decoder admission and pending live validation. Wider resources/
 media, gameplay, rendering and final runtime removal remain required.
 
 The objective is to reconstruct Outbreak so its game logic and platform services

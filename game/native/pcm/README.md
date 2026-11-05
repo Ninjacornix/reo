@@ -66,14 +66,32 @@ uses `min(volume,256)/256/32768` and an explicitly supplied finite gain in `[0,8
 CRI output is clamped to `[-1,1]`. Bank mixing and master gain remain external and
 must preserve the order documented in the inventory.
 
-**Positive frame requests admit at most two playing, non-disabled voices.** More
+**Implicit positive frame requests admit at most two playing, non-disabled voices.** More
 returns `unsupported_mix` before output, queues, counters or clock state change.
 The source uses unordered-map traversal; three or more terms can change float
 summation order. This conservative gate was chosen instead of promising an
-unproved mix equivalence. Voice records may exist beyond that bound. A future
-game integration must retain its entire legacy backend if this domain can be
-exceeded; it must not disable required voices or fall back per operation into an
+unproved mix equivalence. Voice records may exist beyond that bound. An
+integration without explicit ordering must select its entire legacy backend
+before use if the implicit domain can be exceeded; it must not disable required
+voices or fall back per operation into an
 unrelated legacy queue. A zero-frame request consumes no voices.
+
+`set_mix_order(span<const Voice>)` admits larger disjoint mixes by declaring a
+complete permutation of all allocated voice records, including paused/disabled
+ones. It validates membership, uniqueness and coverage before changing order,
+using preallocated storage. An invalid declaration retains the previous order.
+Create/release/cut/reset invalidates it; subsequent larger implicit rendering
+refuses before effects until the owner republishes a valid order. Channel close
+and existing-voice reconfiguration do not change record traversal.
+
+The bridge must transport the actual old/new source traversal at the correct
+operation boundary. Legacy configure ticks **before** inserting a new raw-ID
+record. Stage a new inactive native record with the old surviving order for that
+single advance, configure it once, then publish the new traversal. Advancing then
+calling another clocked operation at the same time can consume two capped
+intervals. The [original order study](../../../docs/native-media/PCM_RENDER_ORDER.md)
+documents this transaction and compiler-specific bucket differences. Native code
+does not simulate hash buckets or infer order from slot/raw-ID numbers.
 
 The standalone target disables floating-point contraction (MSVC uses strict FP);
 do not build this core with fast-math or permit different contraction rules in a
@@ -122,7 +140,7 @@ cmake --build build-native-sjuni/pcm-cmake
 ctest --test-dir build-native-sjuni/pcm-cmake --output-on-failure
 ```
 
-Standalone contract checks cover 122 assertions: stale/foreign/address-reused
+Standalone contract checks cover 149 assertions: stale/foreign/address-reused
 handles, generation retirement, finite capacities/ring wrap, alias and >2-voice
 refusal before mutation, allocation-free operations, invalid clock/counter/input,
 pause/drain/stop/release, reset/shutdown and concurrent producer/render callers.
@@ -145,11 +163,25 @@ reference implementation before the frozen native core. GCC and LLVM each match
 12 additional two-voice cases / 12 full snapshots / 192 rendered float values:
 mono/stereo, reversed configure order, distinct rates/volumes, nonbinary gain,
 drain and pause. The native core remains at SHA-256
-`6261381c762e7be05aabbc212e7c131e398d3f671a5e35d71203df07b67db0bd`.
+`6261381c762e7be05aabbc212e7c131e398d3f671a5e35d71203df07b67db0bd`
+for the original bounded core. Its explicit-order extension was independently
+frozen before the new traversal fixtures were inspected, at core SHA-256
+`5f86dd08b10b2ed8dd0bec1b0d11f83237ad0210b776d556de0b9f9a5d86f8eb`
+and header `9ad103002c108ec07fce0f1d868d6ceaa5a95f990a45bd10b86d42cd34bcef83`.
 No candidate algorithm change was needed. Original expected snapshots and
 compile-input identities are retained in
 `build-native-sjuni/pcm-mix-compare/{gcc,llvm}`; these are mocked-clock/no-device
 observations, not hardware or live-output equivalence.
+
+`tests/compare_order.py` transports the original structured actions and declared
+pre-render traversal into that unchanged frozen extension. GCC and LLVM each
+match their own original 8 cases / 49 snapshots / 44 float values, including
+three-term cancellation, mutation/reset and 32-voice rehash sequences. Complete
+queue/voice/counter fields and rendered float bits match. Native bucket counts
+and gain callback traversal are deliberately outside this API; the supplied
+gain values and actual declared order determine its output. Receipts live in
+`build-native-sjuni/pcm-order-compare/{gcc,llvm}`. Headless insertion transactions,
+shared channels, the device fence and real facade remain separate gates.
 
 The test bridge reuses only the pinned authored action transcript and exact RPC
 credit publication/retire code around native consumed-byte results. Stop and

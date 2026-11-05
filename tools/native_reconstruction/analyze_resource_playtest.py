@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 
 from analyze_cd_owner_playtest import analyze as analyze_owned
+from analyze_sjuni_playtest import iter_log
 
 READ_TAG = '[NATIVE-RESOURCE-READS] '
 SCALAR_TAG = '[NATIVE-DISC-STREAM] '
@@ -85,8 +86,7 @@ def parse_native(lines, environment):
 def analyze(session):
     report = analyze_owned(session)
     manifest = json.loads((session / 'session.json').read_text(encoding='utf-8'))
-    lines = (Path(manifest['players'][0]['logs']) / 'stderr.log').read_text(
-        encoding='utf-8', errors='replace').splitlines()
+    lines = iter_log(Path(manifest['players'][0]['logs']) / 'stderr.log')
     report['native_resource_and_scalar'] = parse_native(lines, report['environment'])
     report['limitations'] += [
         'A mount setup proves actual admitted identity; a saved setting alone proves no capability.',

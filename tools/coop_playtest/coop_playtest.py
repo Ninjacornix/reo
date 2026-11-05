@@ -829,7 +829,7 @@ def capture_window(identity, output, foreground=False, position=None):
 def environment(record, player, extra):
     env = {k: v for k, v in os.environ.items() if not k.upper().startswith("REO_")}
     env.update(REO_ISO=record["iso"], REO_MC0_ROOT=player["card"], REO_MC1_ROOT=":none:",
-               REO_LAUNCHER_PAD_MAP=player["map"], REO_NATURAL="1", REO_TURBO="1",
+               REO_LAUNCHER_PAD_MAP=player["map"], REO_COOP_TEST_INPUT="1", REO_NATURAL="1", REO_TURBO="1",
                REO_GS_BACKEND="parallel", REO_GS_THREAD="1", REO_GS_GPU_PRESENT="1",
                REO_GS_DISPATCH_PACE="2", REO_GS_SPRITE_DEPTH_PARALLEL="1",
                REO_VIF1_ASYNC="1", REO_VIF1_GPU_RESIDENT="0", REO_GPU_MOVIE="1",

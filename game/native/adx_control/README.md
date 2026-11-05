@@ -63,3 +63,29 @@ There is no compressed block decoding, PCM generation, coefficient calculation,
 resource/SJ borrow publication, looping, sample clock, device output or gameplay
 validation here. No runtime path is enabled and no performance improvement is
 claimed from these control helpers.
+
+## Synchronous predictor service
+
+`predictor_service.hpp/.cpp` extends the typed state with the complete scalar
+dispatch/publication contract of original `135078` and helper `135068`. Requested
+work enters processing; requested/processing invokes an admitted synchronous
+`Decoder`, then stores its completed word and enters ready. Mode one selects mono;
+every other raw mode takes the existing stereo selector route. Only a positive
+signed odd stereo result sets the caller's separate flag word to one. Other
+results preserve it. The selected decoder owns actual downmix choice and storage.
+
+The request snapshots scalar arguments, while history/key remain in live state.
+Scripted synchronous cancel/release mutations remain visible, but original
+completed/ready publication still follows the callback. This deliberately does
+not turn cancel into a join or add an invented incarnation check. Missing decoder
+returns new native admission metadata before processing publication; an admitted
+decoder cannot refuse or throw. A real adapter must settle storage/codec admission
+before entering this contract.
+
+The independently frozen implementation matches all 74 original cases and 54
+scripted calls with GCC and LLVM: 182 semantic state images, 2,730 context words
+and 23,296 preserved/test payload bytes; 301 unit assertions also pass per
+compiler. Original void return-register observations and guest stack/register
+ABI are excluded. See [the original oracle](../../../docs/native-media/ADX_SERVICE_ORACLE.md)
+and `tools/native_reconstruction/compare_adx_service.py`. No actual codec, source
+lease, scheduler, device or whole-player replacement is established by this test.

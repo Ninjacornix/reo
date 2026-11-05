@@ -15,7 +15,15 @@ OPERATIONS = {'get', 'put', 'unget', 'queued_bytes', 'availability', 'queued_nod
 
 
 def sha(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    with path.open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def iter_log(path):
+    """Preserve line references without retaining an entire verbose game log."""
+    with path.open(encoding='utf-8', errors='replace') as stream:
+        for line in stream:
+            yield line.rstrip('\r\n')
 
 
 def analyze(session):
@@ -35,7 +43,7 @@ def analyze(session):
     logs = Path(player['logs']).resolve()
     if not logs.is_relative_to(session):
         raise ValueError('Logs escaped private session')
-    lines = (logs / 'stderr.log').read_text(encoding='utf-8', errors='replace').splitlines()
+    lines = iter_log(logs / 'stderr.log')
     proofs, notices, audio, movies, routes = {}, [], [], [], []
     for number, line in enumerate(lines, 1):
         if '[native-sjuni]' in line:

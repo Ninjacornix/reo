@@ -36,11 +36,14 @@ struct Session::State {
     bool closed{};
     std::vector<ChannelSlot> channels;
     std::vector<VoiceSlot> voices;
+    std::vector<Ref> mix_order;
+    std::size_t mix_order_count{};
+    bool explicitly_ordered{};
     std::vector<std::int16_t> samples;
     Statistics stats;
     Clock timing;
     explicit State(Config c, std::int64_t now)
-        : config(c), channels(c.max_channels), voices(c.max_voices),
+        : config(c), channels(c.max_channels), voices(c.max_voices), mix_order(c.max_voices),
           samples(c.channel_samples * c.max_channels) {
         timing.last_tick_ns = now;
     }
@@ -78,7 +81,7 @@ struct Session::State {
         unsigned playing = 0;
         for (const auto& v : voices)
             if (v.active && v.info.playing && v.info.channels != Channels::disabled &&
-                ++playing > 2)
+                ++playing > 2 && !explicitly_ordered)
                 return Status::unsupported_mix;
         for (const auto& v : voices)
             if (v.active && v.info.playing && v.info.channels != Channels::disabled) {
@@ -98,7 +101,9 @@ struct Session::State {
         for (std::uint32_t frame = 0; frame < frames; ++frame) {
             float left = 0, right = 0;
             bool starved = false;
-            for (auto& v : voices) {
+            const auto count = explicitly_ordered ? mix_order_count : voices.size();
+            for (std::size_t position = 0; position < count; ++position) {
+                auto& v = voices[explicitly_ordered ? mix_order[position].slot : position];
                 auto& i = v.info;
                 if (!v.active || !i.playing || i.channels == Channels::disabled)
                     continue;
@@ -170,6 +175,8 @@ struct Session::State {
         return Status::ok;
     }
     void reset_locked(std::int64_t now) {
+        explicitly_ordered = false;
+        mix_order_count = 0;
         for (auto& c : channels)
             if (c.active)
                 invalidate(c);
@@ -220,6 +227,8 @@ Result<Voice> Session::create_voice() noexcept {
         if (v.active || v.retired)
             continue;
         v.active = true;
+        s.explicitly_ordered = false;
+        s.mix_order_count = 0;
         v.left = {};
         v.right = {};
         v.info = {};
@@ -237,6 +246,28 @@ Result<Voice> Session::create_voice() noexcept {
 #define VOICE_VALID(h)                                                                             \
     ((h).owner_.lock() == s.identity && (h).slot_ < s.voices.size() &&                             \
      s.voices[(h).slot_].active && s.voices[(h).slot_].generation == (h).generation_)
+Status Session::set_mix_order(std::span<const Voice> order) noexcept {
+    auto& s = *state_;
+    std::lock_guard lock(s.mutex);
+    if (s.closed)
+        return Status::closed;
+    const auto active = std::count_if(s.voices.begin(), s.voices.end(),
+                                      [](const auto& voice) { return voice.active; });
+    if (order.size() != static_cast<std::size_t>(active))
+        return Status::invalid_input;
+    for (std::size_t i = 0; i < order.size(); ++i) {
+        if (!VOICE_VALID(order[i]))
+            return Status::invalid_handle;
+        for (std::size_t j = 0; j < i; ++j)
+            if (order[i].slot_ == order[j].slot_)
+                return Status::invalid_input;
+    }
+    for (std::size_t i = 0; i < order.size(); ++i)
+        s.mix_order[i] = {order[i].slot_, order[i].generation_};
+    s.mix_order_count = order.size();
+    s.explicitly_ordered = true;
+    return Status::ok;
+}
 Status Session::close_channel(const Channel& h) noexcept {
     auto& s = *state_;
     std::lock_guard lock(s.mutex);
@@ -259,6 +290,8 @@ Status Session::release(const Voice& h) noexcept {
     if (!VOICE_VALID(h))
         return Status::invalid_handle;
     s.invalidate(s.voices[h.slot_]);
+    s.explicitly_ordered = false;
+    s.mix_order_count = 0;
     return Status::ok;
 }
 Status Session::configure(const Voice& h, const VoiceConfig& c, std::int64_t now) noexcept {
@@ -408,6 +441,8 @@ StopResult Session::stop(const Voice& h, bool unreturned, std::uint32_t raw_rate
                 c.consumed = c.queued;
             }
         s.invalidate(v);
+        s.explicitly_ordered = false;
+        s.mix_order_count = 0;
         return {Status::ok, StopAction::cut};
     }
     if (v.info.playing && left) {

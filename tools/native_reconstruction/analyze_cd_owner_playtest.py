@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 import re
 
-from analyze_sjuni_playtest import analyze as analyze_common, sha
+from analyze_sjuni_playtest import analyze as analyze_common, sha, iter_log
 
 TAG = '[NATIVE-CD-OWNER] '
 REGISTERED = 'bounded session worker registered with runtime lifecycle'
@@ -65,12 +65,11 @@ def owner_records(lines):
 def analyze(session):
     report = analyze_common(session)
     manifest = json.loads((session / 'session.json').read_text(encoding='utf-8'))
-    lines = (Path(manifest['players'][0]['logs']) / 'stderr.log').read_text(
-        encoding='utf-8', errors='replace').splitlines()
-    owner = owner_records(lines)
+    stderr = Path(manifest['players'][0]['logs']) / 'stderr.log'
+    owner = owner_records(iter_log(stderr))
     run = json.loads((session / 'run.json').read_text(encoding='utf-8'))
     stdout = Path(manifest['players'][0]['logs']) / 'stdout.log'
-    output_lines = stdout.read_text(encoding='utf-8', errors='replace').splitlines()
+    output_lines = iter_log(stdout)
     report['evidence_sha256']['stdout.log'] = sha(stdout)
     if owner['registrations'] and report['environment'].get('REO_NATIVE_CD_OWNER') != '1':
         raise ValueError('Owner registration while explicit opt-in was disabled')
@@ -79,7 +78,7 @@ def analyze(session):
                  for x in report['native_results']))
     report['cd_owner'] = owner
     report['input_exercise_notices'] = [dict(line=i, text=line)
-        for i, line in enumerate(lines, 1)
+        for i, line in enumerate(iter_log(stderr), 1)
         if any(tag in line for tag in ('[TEST-INTERACT-QUIT]', '[TEST-WALK]', '[TEST-ROOM-SOAK]'))]
     report['pak_route'] = dict(
         explicitly_unavailable_iso_test=run.get('pakOnlyTest', False),

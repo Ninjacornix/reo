@@ -12,7 +12,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[4]
 HERE = Path(__file__).resolve().parent
 TRANSCRIPT_SHA = '697194d2089779baf86074cf8cce28819607c4f7fd2e7561bcf557ac1d189183'
-CORE_SHA = '6261381c762e7be05aabbc212e7c131e398d3f671a5e35d71203df07b67db0bd'
+CORE_SHA = '5f86dd08b10b2ed8dd0bec1b0d11f83237ad0210b776d556de0b9f9a5d86f8eb'
 FIXTURE_SHA = '819470f5433c09a5549fefae5f726012ba9ab34f3cc2e4ed3545007d89bea909'
 
 CASES = r'''
