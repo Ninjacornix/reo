@@ -4,10 +4,10 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has nineteen standalone suites, including the independent ADX
+project now has twenty standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
-picture-position publication. Full transition and wider
+picture-position publication and an owned bank playback session. Full transition and wider
 real-consumer validation remain in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the
@@ -78,6 +78,15 @@ preserves counts, build identity and coverage limits. Stage 3 remains in progres
 bank/RPC producer ownership, compressed stream ownership, movie clocks and wider
 resource/media transitions still require reconstruction and validation. Gameplay,
 rendering and final runtime removal remain required afterward.
+
+The [bank session](native-media/BANK_SESSION_IMPLEMENTATION.md) reuses the
+source-qualified host bank/sequence/VAG algorithms behind explicit session state,
+whole-producer leases, reset epochs and allocation-free render scratch/retirement.
+Its 123 isolated assertions pass with GCC and LLVM, including the standalone
+Release CMake target. Independent original-source behavior comparison remains
+pending. The [integration review](native-media/BANK_BACKEND_INTEGRATION_REVIEW.md)
+defines aggregate PCM/bank/RPC selection and shutdown ordering; prepared-asset
+budgeting and the runtime adapter are required before installing this owner.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map
