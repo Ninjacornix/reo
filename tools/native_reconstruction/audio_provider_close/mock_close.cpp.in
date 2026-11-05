@@ -1,0 +1,83 @@
+// Contract mock only: never links miniaudio or opens an audio device.
+#include <condition_variable>
+#include <cstdlib>
+#include <iostream>
+#include <mutex>
+#include <thread>
+
+struct { struct { bool isReady; int lock, device, context; void* pcmBuffer;
+                  unsigned pcmBufferSize; } System; } AUDIO;
+static std::mutex state, audioLock;
+static std::condition_variable changed;
+static bool callbackEntered, releaseCallback, callbackFinished, deviceEntered;
+static bool deviceReturned, mutexDestroyed, unsafeDestroy, waitObserved;
+static unsigned frees, contexts;
+static std::thread worker, controller;
+static bool valid = true;
+static void require(bool condition) { if (!condition) valid = false; }
+
+static void ma_mutex_uninit(int*) {
+    std::lock_guard<std::mutex> guard(state);
+    // Observe the forbidden lifetime without invoking actual undefined behavior.
+    unsafeDestroy = callbackEntered && !callbackFinished;
+    mutexDestroyed = true;
+}
+static void ma_device_uninit(int*) {
+    {
+        std::unique_lock<std::mutex> guard(state);
+        deviceEntered = true;
+        changed.notify_all();
+        changed.wait(guard, [] { return callbackFinished; });
+    }
+    worker.join(); // Models pinned Windows ma_thread_wait, not just a stop request.
+    std::lock_guard<std::mutex> guard(state);
+    deviceReturned = true;
+}
+static void ma_context_uninit(int*) {
+    require(deviceReturned && mutexDestroyed);
+    ++contexts;
+}
+static void countedFree(void* buffer) { ++frees; std::free(buffer); }
+#define RL_FREE countedFree
+#define TRACELOG(...) ((void)0)
+/* EXTRACTED_CLOSE */
+
+int main() {
+    AUDIO.System.isReady = true;
+    AUDIO.System.pcmBuffer = std::malloc(4);
+    AUDIO.System.pcmBufferSize = 4;
+    worker = std::thread([] {
+        // Source-qualified obligation: real OnSendAudioDataToDevice takes lock
+        // before traversing even an empty AUDIO.Buffer list. No streams needed.
+        std::lock_guard<std::mutex> audioGuard(audioLock);
+        std::unique_lock<std::mutex> guard(state);
+        callbackEntered = true;
+        changed.notify_all();
+        changed.wait(guard, [] { return releaseCallback; });
+        callbackFinished = true;
+        changed.notify_all();
+    });
+    {
+        std::unique_lock<std::mutex> guard(state);
+        changed.wait(guard, [] { return callbackEntered; });
+    }
+    controller = std::thread([] {
+        std::unique_lock<std::mutex> guard(state);
+        changed.wait(guard, [] { return deviceEntered; });
+        waitObserved = !callbackFinished && !deviceReturned;
+        require(mutexDestroyed == !EXPECT_SAFE);
+        releaseCallback = true;
+        changed.notify_all();
+    });
+    CloseAudioDevice();
+    controller.join();
+    require(waitObserved && deviceReturned && mutexDestroyed && callbackFinished);
+    require(unsafeDestroy == !EXPECT_SAFE);
+    require(contexts == 1 && frees == 1 && !AUDIO.System.isReady);
+    require(AUDIO.System.pcmBuffer == nullptr && AUDIO.System.pcmBufferSize == 0);
+    CloseAudioDevice(); // Not-ready branch must not close/free again.
+    require(contexts == 1 && frees == 1);
+    std::cout << "unsafe_destroy=" << unsafeDestroy << " wait_observed=" << waitObserved
+              << " callback_joined=" << deviceReturned << " valid=" << valid << '\n';
+    return valid ? 0 : 1;
+}
