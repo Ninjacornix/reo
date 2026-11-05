@@ -1,7 +1,7 @@
 # SJUNI native reconstruction: dependency inventory
 
 2026-11-05. File #1 US only. Status: independent C++20 core and portable adapter
-implemented and tested; conservative runtime adapter is opt-in. Real-consumer
+implemented and tested; guarded runtime adapter is opt-in. Real-consumer
 validation and complete migration remain outstanding.
 The mapping/comparison baseline is local commit `733a8ed`.
 
@@ -60,9 +60,9 @@ search covers file-backed main ELF segments; it excludes overlays and BSS.
 | Native interface | Implemented for an explicit admitted domain | [Core API](../../game/native/sjuni/sjuni.hpp), [contract and adapter design](CONTRACT_AND_ADAPTER.md). Unsupported inputs remain original responsibilities. |
 | Core implemented | Verified standalone | 11 synthetic groups pass; independent static library; queue operations/import/reset allocate no metadata after construction. |
 | Portable guest adapter | Implemented and compared | [Bridge source](../../game/native/sjuni_adapter/queue_bridge.cpp); 10 adversarial groups and original-word comparisons below. |
-| Optional runtime adapter | Implemented and checked in isolation | File #1 only, default-OFF build and explicit runtime opt-in; code-identity and per-call admission gates. Five host scenarios include 1,063 operation assertions; real-header object compilation passes. [Runtime adapter](../../recomp/overrides/native_sjuni/README.md). |
+| Optional runtime adapter | Implemented and checked in isolation | File #1 only, default-OFF build and explicit runtime opt-in; code-identity and per-call admission gates. Thirteen host scenarios include 1,063 conservative and 2,739 guarded assertions, plus trace checks; real-header object compilation passes. [Runtime adapter](../../recomp/overrides/native_sjuni/README.md). |
 | Isolated behavior comparisons | Passed within the stated domain | 253 native calls and 225 callback-boundary images match the independent original-word oracle. |
-| Real-consumer validation | Pending | No game, audio, DMA, replay or performance run in this stage. |
+| Real-consumer validation | Pending separate candidate | [Build identity and controlled validation record](CANDIDATE_VALIDATION.md). Isolated checks do not establish playback correctness. |
 | Consumers migrated / dependency removed | Pending | All existing runtime dependencies remain. |
 
 ## Construction and retained-pointer map
@@ -163,8 +163,8 @@ reentry, error ordering, invalidated post-callback admission, word alignment,
 cycles/orphans, exact free-list order, region adjacency, signed requests and the
 different mode-zero availability/Get rules. Thirteen Python tests exercise the
 finite instruction harness and original edge cases; nine more test original
-guard-entry/continuation checkpoints. CMake/CTest builds the two native suites
-without the game or PS2Recomp.
+guard-entry/continuation checkpoints. CMake/CTest builds the core, bridge and
+resource suites without the game or PS2Recomp.
 
 The [continuation contract harness](../../tools/native_reconstruction/sjuni_continuation_contract.py)
 records original saved frames and all lower-64-bit GPRs at the post-enter PCs
@@ -172,8 +172,18 @@ records original saved frames and all lower-64-bit GPRs at the post-enter PCs
 guard preserve the exact resumed result. A negative test proves that restarting
 at the canonical entry repeats guard entry and changes queue/output state.
 Post-enter operands come from preserved `s0/s1/s2` (and Get's `s3`), not volatile
-argument registers. This is an independently tested contract for the next
-adapter step; active-hook native mutation is still pending.
+argument registers. The opt-in guarded adapter now implements the known-hook
+subset of this contract while retaining original enter, leave and frame completion.
+The hybrid comparison executes actual native Get/Put/Unget bodies between those
+original phases, including nested original queue changes during enter.
+
+The seeded continuation comparison checks 512 operations over modes 0, 1, 2
+and 257: 422 native bodies, 37 unsupported probes retaining an unchanged original
+checkpoint, and 53 original-only pre-enter returns. It compares 333 callback
+image sequences. Its 126 native error paths compare metadata and completion,
+but deliberately exclude error callback ordering because the probe has no hooks;
+the fixed fixtures test that separate contract. These are synthetic original-word
+comparisons, not live scheduler or audio tests.
 
 Repeat the source/compiler-bound offline validation with an existing GCC/Clang
 compiler:
@@ -185,12 +195,11 @@ python tools/native_reconstruction/verify_sjuni.py --cxx C:/path/to/g++.exe
 This writes binaries and a receipt under ignored `build-native-sjuni/verified`.
 The receipt identifies compiler, source and fixture hashes. Core/bridge checks
 also have a standalone [CMake project](../../game/native/CMakeLists.txt).
-Current native mutation tests use modeled synchronous callbacks; real CRI hooks
-remain on the original runtime path. No speedup or completed native game follows
-from these checks.
+Original CRI hooks still execute on the original runtime path; the optional native
+body runs after a recognized enter and completes through original leave/epilogue.
+No speedup or completed native game follows from these checks.
 
-Next deliverable: implement and independently compare post-enter continuation
-handling for active scheduling hooks, then validate selected real audio/movie
-consumers in a separately controlled test. Compatibility removal follows
+Next deliverable: validate selected real audio/movie consumers in a separately
+controlled test. Compatibility removal follows
 consumer migration and validation in the
 [transition plan](../NATIVE_RECONSTRUCTION_PLAN.md).

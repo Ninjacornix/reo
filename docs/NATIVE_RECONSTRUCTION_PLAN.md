@@ -1,7 +1,8 @@
 # Outbreak native reconstruction plan
 
-Status: SJUNI independent core and portable adapter implemented 2026-11-05;
-conservative runtime adapter is opt-in; full transition remains in progress.
+Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapter
+implemented 2026-11-05; native resource core passes isolated checks. Full
+transition and real-consumer validation remain in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the
 mapping/comparison findings locally and continuing this transition plan. The
@@ -14,10 +15,13 @@ does not establish native correctness or justify removing compatibility code.
 
 The [SJUNI dependency and contract inventory](native-sjuni/README.md) records
 the first-stage evidence, implemented native interface, isolated comparisons and
-remaining integration blockers. Builds/tests use standalone synthetic targets
-during playtesting; the game is not launched or rebuilt. No replacement has been
-enabled in the player's build, no dependency removed and no game performance
-improvement measured.
+remaining integration blockers. The user subsequently authorized a separate
+candidate build and controlled game tests. Its coherent runtime/backend/game
+rebuild is in progress; validation results belong in the
+[candidate test record](native-sjuni/CANDIDATE_VALIDATION.md). No replacement has
+been enabled in the player's build, no dependency removed and no game performance
+improvement measured. The next resource boundary has an
+[inventory and implementation status](native-resources/README.md).
 
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map

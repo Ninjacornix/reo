@@ -110,6 +110,8 @@ void run(PS2Runtime& r, unsigned i, R5900Context& c, bool native) {
     }
 }
 int main(int argc, char** argv) {
+    _putenv_s("REO_NATIVE_SJUNI_GUARDED", "");
+    _putenv_s("REO_NATIVE_SJUNI_TRACE", "");
     check(argc >= 2);
     const std::string scenario = argc > 2 ? argv[2] : "operations";
     PS2Runtime r;
@@ -284,4 +286,8 @@ int main(int argc, char** argv) {
     check(!reo_native_sjuni::install(r));
     check(r.lookupFunction(ep[0]) == orig[0]);
     std::printf("native runtime adapter synthetic checks passed: %u\n", checks);
+    for (const auto& count : reo_native_sjuni::trace_counts)
+        if (count.load() != 0)
+            throw std::logic_error("trace-disabled operation updated counter");
+    return 0;
 }

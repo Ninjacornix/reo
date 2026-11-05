@@ -8,6 +8,7 @@ build, game process, audio, device, network or live target is used.
 import argparse
 import hashlib
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[4]
 TESTS = Path(__file__).resolve().parent
 PINNED_ELF_SHA = '06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
 TEXT_SHA = '544376807278847bc0f4294c7a62238acff5a645accc2ec2dec9bf58073d5cc2'
+GUARD_RANGES = ((0x13F258, 0x2C), (0x1415E0, 0x120), (0x12A968, 0x84), (0x12A9F0, 0x70))
 
 
 def main():
@@ -38,7 +40,7 @@ def main():
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     text_path = output / 'owned_text.bin'
-    text_path.write_bytes(text)
+    text_path.write_bytes(text + b''.join(elf.read(address, size) for address, size in GUARD_RANGES))
     compiler = str(args.cxx)
     common = [compiler, '-std=c++20', '-Wall', '-Wextra', '-Werror']
     if args.check_runtime_headers:
@@ -63,7 +65,24 @@ def main():
     for scenario in ('operations', 'changed-binding', 'changed-memory', 'changed-text', 'partial-install'):
         print('Host synthetic scenario:', scenario, flush=True)
         subprocess.run([str(executable), str(text_path), scenario], cwd=ROOT, check=True)
-    print('All five host-only adapter scenarios passed; no game/runtime link performed.')
+    guarded_executable = output / ('guarded_adapter_checks.exe' if os.name == 'nt' else 'guarded_adapter_checks')
+    guarded_command = [str(TESTS/'guarded_harness.cpp') if arg == str(TESTS/'harness.cpp') else
+                       str(guarded_executable) if arg == str(executable) else arg for arg in command]
+    subprocess.run(guarded_command, cwd=ROOT, check=True)
+    for scenario in ('guarded', 'missing-primary', 'missing-enter', 'missing-leave', 'missing-epilogue', 'missing-post', 'bad-guard-hash'):
+        print('Host guarded-phase scenario:', scenario, flush=True)
+        subprocess.run([str(guarded_executable), str(text_path), scenario], cwd=ROOT, check=True)
+    print('Host guarded-phase scenario: trace-on', flush=True)
+    traced = subprocess.run([str(guarded_executable), str(text_path), 'trace-on'], cwd=ROOT,
+                            check=True, capture_output=True, text=True)
+    print(traced.stdout, end='')
+    print(traced.stderr, end='', file=sys.stderr)
+    calls = [int(x) for x in re.findall(r'^\[native-sjuni\] native op=queued_bytes guarded=0 calls=(\d+) queue=0 slot=0$', traced.stderr, re.M)]
+    if calls != [1, 2, 3, 4, 8, 16]:
+        raise AssertionError(f'Wrong bounded proof-trace cadence: {calls}')
+    if not re.search(r'\[native-sjuni\] native op=get guarded=1 calls=', traced.stderr):
+        raise AssertionError('Missing actual native guarded-body trace')
+    print('All thirteen host-only adapter scenarios passed; no game/runtime link performed.')
 
 
 if __name__ == '__main__':

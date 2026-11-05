@@ -47,6 +47,7 @@ def main():
     sources = [*sorted((ROOT / 'game/native').rglob('*.cpp')),
                *sorted((ROOT / 'game/native').rglob('*.hpp')),
                *sorted((ROOT / 'game/native').rglob('*.h')),
+               *sorted((ROOT / 'tools/native_reconstruction').glob('*.cpp')),
                *sorted((ROOT / 'tools/native_reconstruction').glob('*.py'))]
     receipt['source_sha256'] = {p.relative_to(ROOT).as_posix(): sha(p) for p in sources}
 
@@ -72,16 +73,26 @@ def main():
         ('core', [core, 'game/native/sjuni/sjuni_tests.cpp']),
         ('bridge', [core, bridge, 'game/native/sjuni_adapter/queue_bridge_tests.cpp']),
         ('original_comparison', [core, bridge, generated.relative_to(ROOT).as_posix()]),
+        ('body_probe', [core, bridge, 'tools/native_reconstruction/sjuni_body_probe.cpp']),
     ]
     for name, inputs in targets:
-        executable = output / (name + ('.exe' if sys.platform == 'win32' else ''))
+        stem = 'sjuni_body_probe' if name == 'body_probe' else name
+        executable = output / (stem + ('.exe' if sys.platform == 'win32' else ''))
         run(common + inputs + ['-o', str(executable)], name + '_build')
-        run([str(executable)], name + '_tests')
+        if name == 'body_probe':
+            run([sys.executable, 'tools/native_reconstruction/compare_sjuni_continuations.py',
+                 '--probe', str(executable)], 'original_continuation_native_body_comparison')
+            run([sys.executable, 'tools/native_reconstruction/fuzz_sjuni_continuations.py',
+                 '--probe', str(executable)], 'seeded_original_continuation_comparison')
+        else:
+            run([str(executable)], name + '_tests')
     receipt['status'] = 'passed'
     receipt['limitations'] = [
         'Original scheduling, syscalls, DMA, IOP and real audio/movie consumers are not executed.',
         '109 fixture calls provide original setup/lifecycle/helper context, not native replacements.',
         'Unsupported admissions are checked for no writes/hooks; they do not count as native execution.',
+        'Three hybrid cases run the native body between original prologue/leave/epilogue phases.',
+        'Seeded continuation fuzz omits error callback ordering on its native error paths; fixed fixtures cover that contract.',
         'Runtime wrapper registration/build identity and gameplay validation are separate checks.',
         'No performance gain or complete native transition is established.',
     ]

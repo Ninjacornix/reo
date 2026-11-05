@@ -5,10 +5,12 @@
 #include <unordered_map>
 #include <vector>
 #include <new>
+#include <stdexcept>
 constexpr std::uint32_t PS2_RAM_SIZE = 32u * 1024u * 1024u;
 struct R5900Context {
     std::array<std::uint64_t, 32> gpr{};
     std::uint32_t pc{};
+    std::uint32_t branch_pc{};
     bool in_delay_slot{};
 };
 struct MockMemory {
@@ -40,7 +42,15 @@ class PS2Runtime {
     }
     RecompiledFunction lookupFunction(std::uint32_t a) {
         auto i = functions.find(a);
-        return i == functions.end() ? nullptr : i->second;
+        return i == functions.end() ? missing : i->second;
+    }
+    // The real runtime returns a non-NULL default function when absent. A
+    // lookup pointer alone is NOT proof of an installed original binding.
+    static void missing(std::uint8_t*, R5900Context*, PS2Runtime*) {
+        throw std::logic_error("missing guest function dispatched");
+    }
+    bool hasFunction(std::uint32_t a) {
+        return functions.find(a) != functions.end();
     }
     void registerFunction(std::uint32_t a, RecompiledFunction f) {
         if (registrations_before_throw == 0)
@@ -51,6 +61,10 @@ class PS2Runtime {
 };
 #define GPR_U32(c, r) (static_cast<std::uint32_t>((c)->gpr[r]))
 #define GPR_U64(c, r) ((c)->gpr[r])
+#define SET_GPR_U64(c, r, v)                                                                       \
+    do {                                                                                           \
+        (c)->gpr[r] = static_cast<std::uint64_t>(v);                                               \
+    } while (0)
 #define SET_GPR_S32(c, r, v)                                                                       \
     do {                                                                                           \
         (c)->gpr[r] = static_cast<std::uint64_t>(static_cast<std::int64_t>(v));                    \

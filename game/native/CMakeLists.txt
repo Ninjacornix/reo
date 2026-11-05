@@ -4,6 +4,7 @@ project(reo_native_subsystems LANGUAGES CXX)
 # Standalone contract checks: no parent game/runtime/dependency configuration.
 enable_testing()
 add_subdirectory(sjuni)
+add_subdirectory(resources)
 add_library(reo_native_sjuni_bridge STATIC sjuni_adapter/queue_bridge.cpp)
 target_link_libraries(reo_native_sjuni_bridge PUBLIC reo_native_sjuni)
 target_include_directories(reo_native_sjuni_bridge PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

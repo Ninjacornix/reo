@@ -1856,6 +1856,9 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         bind(runtime, 0x12A9F0, reo_cri_unlock, "CRI unlock (trace)");
     }
 
+#if defined(REO_BUILD_NATIVE_SJUNI_ADAPTER)
+    reo_native_sjuni::install(runtime);
+#endif
     // Self-execution (REO_NATURAL) / REO_NO_OVERRIDES: only the libsif HLE routes above.
     // Everything below is a stub-era override that shadows real recompiled code; with
     // the regenerated output (Ghidra map, pinned codegen) bindings also intercept direct
@@ -2027,9 +2030,6 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
 
     printf("[REO] File #1 overrides applied (%d bindings).\n", 80);
     printf("[REO] Remaining unbound stubs will log TODO_NAMED at runtime.\n");
-#if defined(REO_BUILD_NATIVE_SJUNI_ADAPTER)
-    reo_native_sjuni::install(runtime);
-#endif
 }
 
 PS2_REGISTER_GAME_OVERRIDE("RE Outbreak NTSC-U", "SLUS_207.65", 0x00100008, 0x00000000,
