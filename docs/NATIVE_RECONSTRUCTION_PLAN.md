@@ -24,6 +24,12 @@ been enabled in the player's build, no dependency removed and no game performanc
 improvement measured. The next resource boundary has an
 [inventory and implementation status](native-resources/README.md).
 
+The next integration cut is defined by the [cvFs request review](native-resources/CVFS_REQUEST_BOUNDARY.md):
+bounded payload reads beneath retained original admission/completion ownership.
+A [fresh source audit](native-resources/DEPENDENCY_INPUT_AUDIT.md) successfully
+applied all 120 public dependency patches. It establishes reproducible inputs,
+not matching rebuilt libraries or safe pending-request/guest-buffer lifetime.
+
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map
 provides the starting evidence. Progress comes from replacing complete subsystem

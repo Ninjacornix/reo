@@ -136,3 +136,12 @@ frame-exact comparison, later-room progression, save/load, co-op, File #2,
 long-session soak or stress cancellation test is claimed. The independent native
 body is reachable in real selected consumers and passed these smoke observations;
 the adapter remains opt-in while wider consumer/lifetime coverage is outstanding.
+
+Independent read-only review rechecked the private executable hashes, candidate
+delta/source hashes and session/run/log identities. It found no new concrete
+SJUNI failure in these runs. It also confirmed two additional limits: the local
+player stayed at the opening position (AI/animation progress is not locomotion or
+interaction coverage), and sampled proof lines do not demonstrate queues 2/3 or
+every object slot. Global power-of-two sampling can hide other calls, so absent
+proof is not evidence of absence. Four normal exits likewise do not identify
+specific pool-destroy/DTX quiescence transitions; those need targeted coverage.

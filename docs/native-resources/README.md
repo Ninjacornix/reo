@@ -8,6 +8,9 @@ PAK import, cached-file/virtual AFS byte providers, ISO/sector facade, FIO/RPC
 adapters and CRI completion dependencies. It also records a discrepancy between
 the accessible dirty dependency source and the public virtual-asset patch;
 that discrepancy is not a diagnosis of the player's executable.
+The [fresh dependency audit](DEPENDENCY_INPUT_AUDIT.md) successfully reconstructs
+all 120 public patches on the recorded base; matching compiled resource-route
+inputs and libraries remain a separate gate.
 
 The [native library](../../game/native/resources/README.md) reuses existing
 `Source`/`VirtualFile` reads through immutable views. Native session handles have
@@ -39,3 +42,8 @@ owned import identities; then migrate one caller with its original completion, E
 stop ownership. Positioned reads alone do not replace CRI reservations, decoder
 control, guest callbacks, cancellation or shutdown synchronization. No dependency
 removal, original-game I/O parity or performance improvement is claimed.
+
+The [cvFs request review](CVFS_REQUEST_BOUNDARY.md) checks 33 original bodies and
+defines the next safe cut: a wholly in-range payload read beneath the existing
+request owner. Original admission, service-driven completion, borrowed SJ span
+publication and stop/close stay explicit until their contracts migrate.
