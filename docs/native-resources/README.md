@@ -74,6 +74,13 @@ whole sectors within one file, with no native retry after I/O failure. Ten nativ
 CTest suites pass with both compilers. Real imported bytes and live synchronous
 RPC integration are separately recorded when tested.
 
+The [installed-import probe](REAL_IMPORT_PROBE.md) now verifies all 85 actual
+files (4,267,473,063 bytes) through retained hash/read handles. Its 222 exact
+native/facade comparisons, 77 partial-EOF exclusions and 85 read-ahead exclusions
+pass without modifying imports or launching the game. Actual plain-PAK mode and
+filesystem-object layout match; an actual non-PAK facade is refused. This closes
+the real-source/range gate, with live RPC validation still separate.
+
 The [bounded read owner](../../game/native/resource_io/README.md) passes 119
 checks: it retains providers and owned outputs, bounds queued/active/ready
 requests and staging memory, and supports cancellation plus joined shutdown.
