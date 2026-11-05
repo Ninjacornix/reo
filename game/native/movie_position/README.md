@@ -3,11 +3,25 @@
 Independent bounded integer implementation of the File1 `16F338` publication
 slice, including the arithmetic intent of `15BA80` and the two real inner-field
 getters. It owns no game clock, decoder, playback thread, source view or guest
-memory. It is not connected to the game or included in the parent native suites.
+memory. It is not connected to the game.
 
-The implementation is frozen before viewing expected results from the separate
-original-word investigation. Synthetic unit checks are not original-code parity.
-The independent original-word corpus and cross-compiler comparison remain open.
+The implementation was frozen before viewing expected results from the separate
+[original-word investigation](../../../docs/native-media/MOVIE_POSITION_ORACLE.md).
+GCC and LLVM each pass 18 synthetic checks and match all 25 original publisher
+cases / 175 numerical fields. Real getters, ratio scaling and the complete
+421-word quotient helper execute in the original oracle; no numerical helper
+return is fabricated. Its additional 30 helper cases and partial instruction
+coverage are recorded separately, not counted as native publisher API tests.
+
+Core/header SHA-256 at the independent freeze:
+`4ba067d7c2a7e0e84c2372470d40d815b3dfb57d0dc23dd5fb15bb7ec006fb3f` /
+`fa00728b7c6ff9fe294327f0ba667e4d931b04b7984fbeafb76a16daf1256062`.
+Original fixture: `232d07ee2991cb07f25bc65247db597aa2a85f6080ef8d1bff47c45b5fa94822`.
+Private comparison receipts: `build-native-sjuni/movie-position-native-compare/{gcc,llvm}`.
+Run `compare_original.py --cxx <existing compiler> --output <private folder>`.
+This comparison checks four descriptor fields, the retained latest pair and
+observed final low-v0 bits. It does not reconstruct original stack/ABI memory
+or prove intermediate-store, alias or scheduling equivalence for an adapter.
 
 Inputs are value snapshots; adapters must separately qualify descriptor/source
 aliasing, indexing into the rate table, ownership and interleaving. The API accepts
