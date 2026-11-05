@@ -55,6 +55,19 @@ struct Session::State {
         return v.active &&
                (same(v.left, r) || (v.info.channels == Channels::stereo && same(v.right, r)));
     }
+    bool contributes(const VoiceSlot& v) const {
+        return v.active && v.info.playing && v.info.channels != Channels::disabled &&
+               v.left.slot != UINT32_MAX;
+    }
+    bool shares(const VoiceSlot& a, const VoiceSlot& b) const {
+        if (!contributes(a) || !contributes(b))
+            return false;
+        for (const auto r : {a.left, a.info.channels == Channels::stereo ? a.right : Ref{}})
+            if (valid(r) && (same(r,b.left) ||
+                (b.info.channels == Channels::stereo && same(r,b.right))))
+                return true;
+        return false;
+    }
     std::int16_t front(Ref r) const {
         return samples[std::size_t(r.slot) * config.channel_samples + channels[r.slot].head];
     }
@@ -80,11 +93,16 @@ struct Session::State {
             return Status::ok;
         unsigned playing = 0;
         for (const auto& v : voices)
-            if (v.active && v.info.playing && v.info.channels != Channels::disabled &&
+            if (contributes(v) &&
                 ++playing > 2 && !explicitly_ordered)
                 return Status::unsupported_mix;
+        if (!explicitly_ordered && config.allow_shared_channels)
+            for (std::size_t i = 0; i < voices.size(); ++i)
+                for (std::size_t j = 0; j < i; ++j)
+                    if (shares(voices[i],voices[j]))
+                        return Status::unsupported_alias;
         for (const auto& v : voices)
-            if (v.active && v.info.playing && v.info.channels != Channels::disabled) {
+            if (contributes(v)) {
                 const auto allowance = std::uint64_t(frames) * 2 + 2;
                 if (v.info.late_samples > config.max_counter ||
                     allowance > config.max_counter - v.info.late_samples)
@@ -105,7 +123,7 @@ struct Session::State {
             for (std::size_t position = 0; position < count; ++position) {
                 auto& v = voices[explicitly_ordered ? mix_order[position].slot : position];
                 auto& i = v.info;
-                if (!v.active || !i.playing || i.channels == Channels::disabled)
+                if (!contributes(v))
                     continue;
                 const bool stereo = i.channels == Channels::stereo;
                 auto available = [&] {
@@ -308,19 +326,26 @@ Status Session::configure(const Voice& h, const VoiceConfig& c, std::int64_t now
         c.left.slot_ != UINT32_MAX || c.left.generation_ != 0 || !c.left.owner_.expired();
     const bool has_right =
         c.right.slot_ != UINT32_MAX || c.right.generation_ != 0 || !c.right.owner_.expired();
-    if ((c.channels != Channels::disabled || has_left) && !CHANNEL_VALID(c.left))
+    if (has_left && !CHANNEL_VALID(c.left))
         return Status::invalid_handle;
-    if (c.channels == Channels::stereo && !CHANNEL_VALID(c.right))
+    if (c.channels != Channels::disabled && !has_left && !s.config.allow_missing_channels)
         return Status::invalid_handle;
+    if (c.channels == Channels::stereo) {
+        if (has_right && !CHANNEL_VALID(c.right))
+            return Status::invalid_handle;
+        if (!has_right && !s.config.allow_missing_channels)
+            return Status::invalid_handle;
+    }
     if (c.channels != Channels::stereo && has_right)
         return Status::invalid_input;
     const Ref left{c.left.slot_, c.left.generation_}, right{c.right.slot_, c.right.generation_};
-    if (c.channels == Channels::stereo && same(left, right))
+    if (c.channels == Channels::stereo && has_left && has_right && same(left, right))
         return Status::unsupported_alias;
-    for (std::size_t n = 0; n < s.voices.size(); ++n)
-        if (n != h.slot_ && ((has_left && s.uses(s.voices[n], left)) ||
-                             (c.channels == Channels::stereo && s.uses(s.voices[n], right))))
-            return Status::unsupported_alias;
+    if (!s.config.allow_shared_channels)
+        for (std::size_t n = 0; n < s.voices.size(); ++n)
+            if (n != h.slot_ && ((has_left && s.uses(s.voices[n], left)) ||
+                                 (c.channels == Channels::stereo && s.uses(s.voices[n], right))))
+                return Status::unsupported_alias;
     const auto advanced = s.advance_locked(now);
     if (advanced != Status::ok)
         return advanced;

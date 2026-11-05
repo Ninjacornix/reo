@@ -140,7 +140,7 @@ cmake --build build-native-sjuni/pcm-cmake
 ctest --test-dir build-native-sjuni/pcm-cmake --output-on-failure
 ```
 
-Standalone contract checks cover 149 assertions: stale/foreign/address-reused
+Standalone contract checks cover 172 assertions: stale/foreign/address-reused
 handles, generation retirement, finite capacities/ring wrap, alias and >2-voice
 refusal before mutation, allocation-free operations, invalid clock/counter/input,
 pause/drain/stop/release, reset/shutdown and concurrent producer/render callers.
@@ -182,6 +182,36 @@ and gain callback traversal are deliberately outside this API; the supplied
 gain values and actual declared order determine its output. Receipts live in
 `build-native-sjuni/pcm-order-compare/{gcc,llvm}`. Headless insertion transactions,
 shared channels, the device fence and real facade remain separate gates.
+
+## Optional missing/shared-channel domains
+
+`Config::allow_missing_channels` and `allow_shared_channels` default to false.
+With explicit admission, an empty left handle represents the source's zero-left
+skip: no PCM, phase or starvation debt advances for that voice. A nonzero latent
+channel with no queued samples, or stereo with an empty right handle, instead
+accrues debt. Foreign/stale nonempty handles are still refused. Distinct voices
+may share queues only with the sharing flag; consuming shared voices require a
+valid explicit order even when there are only two. Closing a queue still refuses
+until every configured voice releases it. Stereo self-aliasing remains refused.
+
+This extension was frozen before the new expected corpus was inspected, at
+core/header SHA-256
+`fe31c38f6c276c60c1f1f7cbf5bea2d9132b83c85fd0b49629b0ca721bf4e844` /
+`9fe0aff92070569bfd6744856ea438b92099ec38f1875dc660261ef755b659cb`.
+The [source-domain oracle](../../../docs/native-media/PCM_SOURCE_DOMAINS.md) and
+`tests/compare_source_domains.py` check 19 original cases, 36 operations,
+72 pre/post states and 228 PCM float values with GCC and LLVM. Actual native
+queue contents, watermarks, phase/debt, clock/remainder, gain cache and counters
+match. The test bridge supplies original raw-ID metadata and traversal, stages
+new inactive records across configure's single old-order tick, and preserves
+unknown-query advancement. It does not calculate expected PCM or use legacy
+queue storage. Neither an installed raw-ID bridge nor a real device is exercised.
+
+The earlier single/two/ordered corpora are retained as regression checks for
+this extension. Raw protocol generation mapping, finite-capacity error policy,
+provider callback fencing and a complete selected backend remain integration
+work. Supporting shared queues is not permission to invent defined behavior for
+the source's possible same-queue stereo empty-pop path.
 
 The test bridge reuses only the pinned authored action transcript and exact RPC
 credit publication/retire code around native consumed-byte results. Stop and

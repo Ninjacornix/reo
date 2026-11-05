@@ -10,8 +10,8 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[4]
 HERE = Path(__file__).resolve().parent
-FROZEN_CORE = '5f86dd08b10b2ed8dd0bec1b0d11f83237ad0210b776d556de0b9f9a5d86f8eb'
-FROZEN_HEADER = '9ad103002c108ec07fce0f1d868d6ceaa5a95f990a45bd10b86d42cd34bcef83'
+FROZEN_CORE = 'fe31c38f6c276c60c1f1f7cbf5bea2d9132b83c85fd0b49629b0ca721bf4e844'
+FROZEN_HEADER = '9fe0aff92070569bfd6744856ea438b92099ec38f1875dc660261ef755b659cb'
 FIXTURES = {'86aef42be64adbed4b6fcd43045348f19691a0de8b1323b13858f08c5494ee10',
             '361d4d35971e692ee4b5e62fff0edcce4f3d985f61b627f4b295a15394440c4d'}
 PREFIX = r'''

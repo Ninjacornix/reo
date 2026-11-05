@@ -44,6 +44,9 @@ struct Config {
     std::uint32_t max_render_frames{16384};
     std::uint64_t max_generation{std::numeric_limits<std::uint64_t>::max()};
     std::uint64_t max_counter{std::numeric_limits<std::uint64_t>::max()};
+    // Optional source-compatible domains. Shared consuming voices still need
+    // explicit order; same-voice stereo aliasing remains unsupported.
+    bool allow_shared_channels{}, allow_missing_channels{};
 };
 enum class Channels : std::uint32_t { disabled = 0, mono = 1, stereo = 2 };
 struct VoiceConfig {

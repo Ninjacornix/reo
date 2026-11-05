@@ -363,6 +363,43 @@ void explicit_order() {
     s.shutdown(0);
     check(s.set_mix_order({}) == Status::closed);
 }
+void optional_source_domains() {
+    auto conf = small();
+    conf.allow_shared_channels = conf.allow_missing_channels = true;
+    Session s(conf), foreign(conf);
+    const auto left = take(s.create_channel());
+    const auto second = take(s.create_channel());
+    const auto a = take(s.create_voice()), b = take(s.create_voice()), absent = take(s.create_voice());
+    check(s.select_frame_clock() == Status::ok);
+    const std::vector<std::int16_t> samples(8, 100);
+    check(s.enqueue(left,bytes(samples),0).status == Status::ok);
+    check(s.enqueue(second,bytes(samples),0).status == Status::ok);
+    check(s.configure(a,{left,{},Channels::mono,48000,256,true},0) == Status::ok);
+    check(s.configure(b,{left,{},Channels::mono,48000,256,true},0) == Status::ok);
+    std::array<float,2> output{123,123};
+    check(s.render(output) == Status::unsupported_alias && output[0] == 123);
+    check(s.statistics().output_frames == 0 && take(s.inspect(left)).consumed_bytes == 0);
+    check(s.configure(absent,{{},{},Channels::mono,48000,256,true},0) == Status::ok);
+    const std::array<Voice,3> order{absent,b,a};
+    check(s.set_mix_order(order) == Status::ok);
+    check(s.render(output) == Status::ok);
+    check(take(s.inspect(left)).consumed_bytes == 4);
+    auto no_source = take(s.inspect(absent));
+    check(no_source.phase == 0 && no_source.late_samples == 0 && no_source.playing);
+    check(s.configure(absent,{second,{},Channels::stereo,48000,256,true},0) == Status::ok);
+    check(s.advance_frames(1) == Status::ok);
+    auto missing_right = take(s.inspect(absent));
+    check(missing_right.late_samples == 1 && take(s.inspect(second)).consumed_bytes == 0);
+    check(s.configure(absent,{{},{},Channels::stereo,48000,256,true},0) == Status::ok);
+    check(s.advance_frames(1) == Status::ok);
+    check(take(s.inspect(absent)).late_samples == missing_right.late_samples);
+    check(s.configure(absent,{second,second,Channels::stereo,48000,256,true},0) == Status::unsupported_alias);
+    const auto other = take(foreign.create_channel());
+    check(s.configure(absent,{other,{},Channels::mono,48000,256,true},0) == Status::invalid_handle);
+    check(s.close_channel(left) == Status::channel_in_use);
+    check(s.release(a) == Status::ok && s.close_channel(left) == Status::channel_in_use);
+    check(s.release(b) == Status::ok && s.close_channel(left) == Status::ok);
+}
 int main() {
     try {
         handles();
@@ -372,6 +409,7 @@ int main() {
         pause_stop_and_generation();
         no_operational_allocations();
         explicit_order();
+        optional_source_domains();
         concurrency();
         std::cout << checks << " PCM owner checks passed\n";
         return 0;
