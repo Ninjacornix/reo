@@ -1,4 +1,4 @@
-"""Qualify binding against reconstructed123 headers and fake runtime/audio dispatch."""
+"""Qualify binding against reconstructed124 headers and fake runtime/audio dispatch."""
 import argparse
 import hashlib
 import json
@@ -10,6 +10,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
+BASELINE_SHA = "944b72d4cc977ac01d8e7a4459c601f0a331b06c8adbb5048bec45a2963f91cb"
 HELPERS = "ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/"
 ELF_SHA = "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
 WINDOWS = ((0x1392f8, 0x40, "48af9491776a966a35a3dd46ed6122d2aa237c85f2a1967c38f204a488517be8"),
@@ -18,6 +19,17 @@ WINDOWS = ((0x1392f8, 0x40, "48af9491776a966a35a3dd46ed6122d2aa237c85f2a1967c38f
 
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def block(source, start):
+    begin = source.index(start)
+    opening = source.index("{", begin)
+    depth = 0
+    for end in range(opening, len(source)):
+        depth += (source[end] == "{") - (source[end] == "}")
+        if depth == 0:
+            return source[begin:end + 1]
+    raise ValueError("Unterminated reviewed source block")
 
 
 def run(command, env):
@@ -29,11 +41,13 @@ def run(command, env):
 
 
 def verify(checkout, baseline, compilers, output):
+    assert sha(baseline) == BASELINE_SHA, "Unreviewed124 reconstruction receipt"
     qualification = json.loads(baseline.read_text())
-    assert qualification["status"] == "passed" and qualification["applied_count"] == 123
+    assert qualification["status"] == "passed" and qualification["applied_count"] == 124
     names = [HELPERS + name for name in ("CriAudio.cpp", "CriAudio.h", "CriAudioBackend.h",
                                          "CriAudioDispatch.h", "ReoSoundBanks.h")]
     names += ["ps2xRuntime/include/ps2_runtime.h", "ps2xRuntime/include/runtime/ps2_memory.h"]
+    names += ["ps2xRuntime/src/lib/ps2_runtime.cpp", "ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp"]
     for name in names:
         assert sha(checkout / name) == qualification["source_sha256"][name], name
     elf = ROOT / "game_data/SLUS_207.65"
@@ -58,6 +72,26 @@ def verify(checkout, baseline, compilers, output):
     snapshot = output / "snapshot"
     helpers = snapshot / "Kernel/Syscalls/Helpers"
     helpers.mkdir(parents=True, exist_ok=True)
+    runtime_header = (checkout / "ps2xRuntime/include/ps2_runtime.h").read_text()
+    runtime_source = (checkout / "ps2xRuntime/src/lib/ps2_runtime.cpp").read_text()
+    rpc = (checkout / "ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp").read_text()
+    exact = {
+        "exact_layout.inc": block(runtime_header, "struct PS2DtxCompatLayout") + ";\n",
+        "exact_lease.inc": block(runtime_header, "    class PreRunSetupLease final") + ";\n",
+        "exact_runtime_methods.inc": "\n\n".join(block(runtime_source, signature) for signature in (
+            "PS2Runtime::PreRunSetupLease::PreRunSetupLease(PreRunSetupLease&& other) noexcept",
+            "PS2Runtime::PreRunSetupLease::~PreRunSetupLease()",
+            "PS2Runtime::PreRunSetupLease PS2Runtime::acquirePreRunSetup() noexcept",
+            "void PS2Runtime::releasePreRunSetup() noexcept", "bool PS2Runtime::externalWorkerResetAllowed()",
+            "void PS2Runtime::beginExternalWorkerRun()")) + "\n",
+        "exact_rpc_methods.inc": "\n\n".join(block(rpc, signature) for signature in (
+            "        void resetDtxRpcStateUnlocked(PS2Runtime *runtime = nullptr)",
+            "    PS2DtxCompatLayout dtxCompatLayoutSnapshot()",
+            "    void setDtxCompatLayout(const PS2DtxCompatLayout &layout, PS2Runtime *runtime)",
+            "    void clearDtxCompatLayout(PS2Runtime *runtime)")) + "\n",
+    }
+    for name, contents in exact.items():
+        (snapshot / name).write_text(contents, encoding="utf-8", newline="\n")
     for name in ("CriAudio.cpp", "CriAudio.h", "CriAudioBackend.h", "CriAudioDispatch.h", "ReoSoundBanks.h"):
         shutil.copyfile(checkout / HELPERS / name, helpers / name)
     shutil.copyfile(HERE / "ps2_runtime.h", snapshot / "ps2_runtime.h")
@@ -76,7 +110,8 @@ def verify(checkout, baseline, compilers, output):
         ROOT / "game/native/pcm/pcm.hpp", ROOT / "game/native/pcm_bridge/session_bridge.hpp",
         ROOT / "recomp/overrides/native_geometry/reo_vu_native_sha256.h",
         HERE / "ps2_runtime.h", HERE / "fake_audio.h", HERE / "fake_audio.cpp", HERE / "harness.cpp", Path(__file__)]
-    result = {"dependencyReceiptSha256": sha(baseline), "appliedCount": 123,
+    result = {"dependencyReceiptSha256": sha(baseline), "appliedCount": 124,
+        "extractedInputs": {name: sha(snapshot / name) for name in exact},
         "dependencyInputs": {name: sha(checkout / name) for name in names},
         "elfSha256": ELF_SHA, "identityWindows": WINDOWS,
         "authoredInputs": {str(path.relative_to(ROOT)): sha(path) for path in authored_inputs},
@@ -100,14 +135,14 @@ def verify(checkout, baseline, compilers, output):
         run(test_command, env)
         cases = {}
         env["REO_NATIVE_PCM"] = "1"
-        for mode in ("lifecycle", "headless", "producer", "callback", "capacity", "startup",
+        for mode in ("lifecycle", "boot_setup", "headless", "producer", "callback", "capacity", "startup",
                      "alias", "outside", "huge", "gain", "install", "identity", "ram64", "boot_reset"):
             executed = run([executable, mode, identity], env)
             cases[mode] = {"stdout": executed.stdout.strip(), "stderr": executed.stderr.strip()}
             reports = [line for line in executed.stderr.splitlines() if line.startswith("[NATIVE-PCM-REPORT]")]
             if mode not in ("identity", "ram64", "boot_reset"):
                 assert len(reports) == 1, "Expected one successful joined report"
-            if mode == "lifecycle":
+            if mode in ("lifecycle", "boot_setup"):
                 completed = reports[0].split("method_completed=")[1].split()[0]
                 assert all(int(value) > 0 for value in completed.split(",")), "All eleven methods must complete"
         for value in ("", "0", "true", "01", "1 "):

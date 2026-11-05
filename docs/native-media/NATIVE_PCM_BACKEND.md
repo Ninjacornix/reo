@@ -171,41 +171,51 @@ repeat it. Its fields distinguish:
   report time and self-join refusals. A completed fence with hard faults remains
   a failed behavioral candidate, even though lifetime cleanup succeeded.
 
-## Source identity, boot blocker and checks
+## Source identity, pre-run setup and checks
 
-The isolated verification uses reconstructed123 based on PS2Recomp
+The isolated verification uses reconstructed124 based on PS2Recomp
 `c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f`, with fresh receipt SHA-256
-`8f8a001fd50b1bad9c9da8729888b1f682e75c8321bdfd1076da085db52baeb8`:
+`944b72d4cc977ac01d8e7a4459c601f0a331b06c8adbb5048bec45a2963f91cb`:
 
 | Input | SHA-256 |
 | --- | --- |
-| complete patched `CriAudio.cpp` | `aa90abf0fb6e461b3296ee03831ec4dec9680ebdcd5d679665f56590ff5af877` |
+| complete patched `CriAudio.cpp` | `c27f088eab74a7a914ddcb32efbda4923d0b174c059f9c5029e6ec20f8096580` |
 | `CriAudioBackend.h` | `b2e6cc5101ebd34fca4194c0987cd872f7fb740218a20602b1dec07227094560` |
-| `CriAudioDispatch.h` | `020f452e4c139ef89ceef5d62cc3e022fd35e35edf736fc4e40d48643372fe6a` |
+| `CriAudioDispatch.h` | `4137a159817f22f109fc21a6a3a72e73a1a9eb7f95037ac7d64eefe32ee8d8c1` |
 
-In that exact source, `setDtxCompatLayout` and `clearDtxCompatLayout` call
-`resetDtxRpcStateUnlocked`, which calls public `ps2_cri_audio::reset`. Public
-reset seals an unselected facade as legacy. Runtime `loadELF` applies matching
-overrides, including layout clear/configuration, and authored Outbreak overrides
-configure it again before the proposed later bootstrap installation. Therefore
-that existing boot sequence refuses native installation with `legacy_in_use`.
-The binding does not loosen first-use selection or silently switch a used
-legacy session. A lifecycle-qualified pre-run reset/selection solution and its
-real call-chain regression are separate required runtime changes. The tests
-explicitly preserve public-reset-before-install refusal.
+In123, layout clear/set called the public PCM reset and sealed legacy selection
+before bootstrap installation. Public patch0123 adds the separately qualified
+[pre-run reset transaction](PCM_BOOT_SETUP.md). In124, clear/set supplied the
+actual runtime try `resetBeforeRuntimeRun` under a runtime-issued setup lease.
+While the PCM registry is untouched/unselected and installation has not won,
+this resets the same legacy routes/maps/clock without selecting an owner.
+The registry reservation excludes first use during reset; runtime run sealing
+waits for setup leases. Reset hooks run outside registry/runtime mutexes.
+The existing RPC containers and their locking remain separately source-owned.
+
+The combined binding regression now executes exact extracted layout clear/set
+and snapshot bodies, exact runtime lease/run-seal bodies and complete patched
+facade/dispatch. It forms the proof from that snapshot, installs this binding,
+seals run, exercises all eleven methods and a callback, and successfully joins.
+The ordinary public reset still selects legacy and refuses later installation;
+there is no late switch from an already used legacy owner. Calls without an
+admitted actual runtime setup phase retain ordinary reset behavior. The separate
+boot suite qualifies nine lease/first-use/install/run/stop race scenarios;
+fake integration surroundings here are not a replacement for that proof.
 
 [The verifier](../../tools/native_reconstruction/native_pcm_backend/README.md)
 passes with GCC 15.2.0 (MSYS2 Rev8) and bundled Clang 21.1.8: a production object
-compiles against actual123 runtime/backend/raylib headers, and 19 isolated
+compiles against actual124 runtime/backend/raylib headers, and 20 isolated
 cases per compiler exercise the complete patched facade/dispatch with fake
 runtime/device/bank surroundings. Cases cover all eleven completed methods,
 gain/mix/watermark order, callback delivery, headless advancement, paused producer
 and callback drains, synchronous callback during play/startup, no reference
 cycle after join, legitimate queue capacity, unsupported alias/domain/gain,
 oversized-render sentinel safety, actual install API, changed text/64 MiB
-refusal, five nonexact environment values and existing boot-reset refusal.
+refusal, five nonexact environment values, qualified boot setup followed by
+complete binding execution, and ordinary public-reset refusal.
 
-Receipt: `build-native-sjuni/native-pcm-backend/receipt.json`. No device, full
+Receipt: `build-native-sjuni/native-pcm-backend-124/receipt.json`. No device, full
 runtime library, guest execution, game test or full candidate build is performed
 by these checks. Actual provider qualification is separately covered by
 [NATIVE_STREAM_PROVIDER.md](NATIVE_STREAM_PROVIDER.md); matching rebuilt provider

@@ -9,7 +9,11 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <deque>
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include "exact_runtime_methods.inc"
 
 namespace pcm = reo_native_pcm;
 #define CHECK(x) do { if (!(x)) { std::cerr << "Failed line " << __LINE__ << ": " #x "\n"; std::abort(); } } while (0)
@@ -26,6 +30,18 @@ void mix(float* output, unsigned frames) {
 }
 void reset() { ++bank_resets; }
 void reportAudioPaths() {}
+}
+namespace ps2_syscalls {
+// Only the reset functions' surrounding RPC containers are mocked. Their
+// actual clear/set/snapshot bodies are extracted from qualified124 source.
+std::mutex g_rpc_mutex, g_dtx_rpc_mutex;
+PS2DtxCompatLayout g_dtxCompatLayout;
+std::deque<int> g_pcmPending, g_sjxReplies;
+std::unordered_set<int> g_pcmRings;
+std::unordered_map<int,int> g_dtx_remote_by_id, g_dtx_transfer_by_id,
+    g_dtx_sjx_by_handle, g_dtx_ps2rna_by_handle, g_dtx_sjrmt_by_handle;
+std::uint32_t g_dtx_next_urpc_obj{};
+#include "exact_rpc_methods.inc"
 }
 struct Services final : pcm::HostServices {
     std::atomic<std::int64_t> now{0};
@@ -53,8 +69,9 @@ pcm::ProfileProof proof() {
     const auto p = pcm::ProfileProof::from_observed_file1(0x90000200,0x1e0000,0x1eff00,0x20,0,0,0);
     CHECK(p); return *p;
 }
-std::shared_ptr<pcm::Backend> build(PS2Runtime& runtime, const std::shared_ptr<Services>& services) {
-    auto result = pcm::create_candidate(proof(), services);
+std::shared_ptr<pcm::Backend> build(PS2Runtime& runtime, const std::shared_ptr<Services>& services,
+                                  const pcm::ProfileProof& checked = proof()) {
+    auto result = pcm::create_candidate(checked, services);
     if (result.status != pcm::BuildStatus::ready) std::cerr << "build_status=" << unsigned(result.status) << '\n';
     CHECK(result.status == pcm::BuildStatus::ready && result.backend);
     CHECK(ps2_cri_audio::installBackendBeforeRunV1(runtime, result.backend->registration()) ==
@@ -69,10 +86,14 @@ void queue_stereo() {
     CHECK(ps2_cri_audio::queue(right,reinterpret_cast<const std::uint8_t*>(r.data()),sizeof(r),end) && end == 16);
     ps2_cri_audio::configure(0,left,right,2,48000,256,true);
 }
-void lifecycle(PS2Runtime& runtime) {
+void lifecycle(PS2Runtime& runtime, const pcm::ProfileProof& checked = proof(), bool seal_run = false) {
     fake_audio::ready = true;
     auto services = std::make_shared<Services>();
-    auto backend = build(runtime,services);
+    auto backend = build(runtime,services,checked);
+    if (seal_run) {
+        runtime.beginExternalWorkerRun();
+        CHECK(!runtime.acquirePreRunSetup());
+    }
     ps2_cri_audio::ensureHostOutput(); // bank-only output before first PCM
     CHECK(fake_audio::loads == 1 && fake_audio::plays == 1);
     queue_stereo();
@@ -99,6 +120,22 @@ void lifecycle(PS2Runtime& runtime) {
     output[0] = output[1] = 9;
     registration.api.render(registration.owner.get(),output,1);
     CHECK(output[0] == 0 && output[1] == 0);
+}
+void boot_setup(PS2Runtime& runtime) {
+    ps2_syscalls::clearDtxCompatLayout(&runtime);
+    PS2DtxCompatLayout requested;
+    requested.rpcSid = 0x90000200;
+    requested.urpcObjBase = 0x1e0000;
+    requested.urpcObjLimit = 0x1eff00;
+    ps2_syscalls::setDtxCompatLayout(requested,&runtime);
+    CHECK(route_resets == 2 && runtime.m_preRunSetupCount == 0);
+    CHECK(ps2_cri_audio::backendStatusV1().selection == ps2_cri_audio::BackendSelectionV1::unselected);
+    const auto configured = ps2_syscalls::dtxCompatLayoutSnapshot();
+    const auto checked = pcm::ProfileProof::from_observed_file1(configured.rpcSid,
+        configured.urpcObjBase,configured.urpcObjLimit,configured.urpcObjStride,
+        configured.urpcFnTableBase,configured.urpcObjTableBase,configured.dispatcherFuncAddr);
+    CHECK(checked);
+    lifecycle(runtime,*checked,true); // Actual complete binding/table/callback/join.
 }
 void headless(PS2Runtime& runtime) {
     auto services = std::make_shared<Services>();
@@ -224,6 +261,7 @@ int main(int argc,char** argv) {
     CHECK(fixture.good());
     const std::string_view mode = argv[1];
     if (mode == "lifecycle") lifecycle(runtime);
+    else if (mode == "boot_setup") boot_setup(runtime);
     else if (mode == "headless") headless(runtime);
     else if (mode == "producer") paused_producer(runtime);
     else if (mode == "callback") paused_callback(runtime);
