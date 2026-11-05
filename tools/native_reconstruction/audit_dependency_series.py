@@ -56,7 +56,9 @@ def main():
             if applied.returncode:
                 raise RuntimeError('Patch application failed: ' + patch.name)
         receipt['source_sha256'] = {p.relative_to(checkout).as_posix(): sha(p)
-                                    for p in sorted(checkout.rglob('*')) if p.is_file() and p.name != '.git'}
+                                    for p in sorted(checkout.rglob('*')) if p.is_file() and
+                                    p.relative_to(checkout).parts[0] != '.git'}
+        receipt['source_scope'] = 'checkout source files; excludes .git administration'
         receipt['status'] = 'passed'
     except Exception as error:
         receipt['status'] = 'failed'
