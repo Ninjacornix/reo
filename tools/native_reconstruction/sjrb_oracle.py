@@ -34,6 +34,7 @@ GLOBAL, POOL_REF, POOL, POOL_BYTES = 0x224C20, 0x224C58, 0x224C60, 0x4000
 BUFFER, SLOTS, STACK, STACK_TOP, RETURN = 0x400010, 0x500004, 0x700000, 0x701000, 0xFFFFF0
 ENTER, LEAVE, MEMSET, MEMCPY, REPORT, ERROR = 0x13F258, 0x13F270, 0x107C68, 0x107AB0, 0x13F288, 0xFFFF00
 CONTEXT = 0x13572468
+MAX_CAPACITY, MAX_EXTENSION, MAX_COPY_BYTES = 16384, 192, 16384
 FIELDS = {'vtable': 0, 'active': 4, 'uuid': 8, 'data': 0xC, 'free': 0x10,
           'write': 0x14, 'read': 0x18, 'buffer': 0x1C, 'capacity': 0x20,
           'extension': 0x24, 'free_get': 0x28, 'free_put': 0x2C,
@@ -100,7 +101,7 @@ class RingMemory(Memory):
 
 class Machine(RingInstructions):
     def __init__(self, capacity=16, extension=4, elf_path=ROOT / 'game_data/SLUS_207.65'):
-        if not 0 <= capacity <= 8192 or not 0 <= extension <= 192:
+        if not 0 <= capacity <= MAX_CAPACITY or not 0 <= extension <= MAX_EXTENSION:
             raise OracleError('Finite synthetic backing domain exceeded')
         self.elf = Elf(elf_path)
         self.code = {}
@@ -170,7 +171,7 @@ class Machine(RingInstructions):
             event['kind'] = 'memcpy'
             dest, source, count = [x & MASK32 for x in self.regs[4:7]]
             start, end = BUFFER, BUFFER + self.capacity + self.extension
-            if count > 8192 or not (start <= dest <= dest + count <= end and start <= source <= source + count <= end):
+            if count > MAX_COPY_BYTES or not (start <= dest <= dest + count <= end and start <= source <= source + count <= end):
                 raise OracleError('Memcpy outside caller backing')
             if count and dest < source + count and source < dest + count:
                 raise OracleError('Overlapping memcpy has no admitted byte-copy semantics')
@@ -329,7 +330,8 @@ def corpus_inputs():
     add('pool-exhaustion', [dict(occupy_all=True), call('create', BUFFER, 16, 4)], prefix=False)
     add('zero-capacity-unget-original-break', [call('create', BUFFER, 0, 4), words(s(0), BUFFER, 1), call('unget', POOL, 1, s(0))], capacity=0, prefix=False)
     add('zero-capacity-get-undefined-div-refusal', [call('create', BUFFER, 0, 4), call('get', POOL, 0, 1, s(0))], capacity=0, prefix=False)
-    for capacity, extension, label in [(16, 0, 'no-extension'), (8192, 192, 'adxt-pcm-geometry'), (2048, 36, 'encoded-sector-geometry')]:
+    for capacity, extension, label in [(16, 0, 'no-extension'), (8192, 192, 'smaller-pcm-geometry'),
+                                      (2048, 36, 'encoded-sector-geometry'), (16384, 192, 'adxt-pcm-geometry')]:
         actions = [call('initialize'), call('create', BUFFER, capacity, extension), call('set_error', POOL, ERROR, CONTEXT),
             call('get', POOL, 0, capacity - 2, s(0)), data(BUFFER, capacity - 2), call('put', POOL, 1, s(0)),
             call('get', POOL, 1, capacity - 2, s(1)), call('put', POOL, 0, s(1)),

@@ -1,6 +1,6 @@
 # Original-word SJRB queue oracle
 
-Status: bounded synthetic original execution, 2026-11-05. No game, process,
+Status: bounded synthetic original execution, geometry corrected 2026-11-06. No game, process,
 audio device, SDK/full build, native queue implementation or runtime change.
 This closes a queue-contract pilot needed by the
 [ADX stream boundary](ADX_STREAM_NATIVE_BOUNDARY.md); it does not close an
@@ -55,7 +55,7 @@ Only these external calls are bounded hooks:
 | --- | --- |
 | `13F258/13F270` | Serialized tag1 enter/leave depth, including nested reset during create. No real CRI lock, guest scheduling or cross-thread proof. |
 | `107C68` | Byte memset within the original pool only, at most `4000` hexadecimal bytes. |
-| `107AB0` | Nonoverlapping byte memcpy entirely within the admitted backing plus extension; at most 8192 decimal bytes. Every read/write is retained. Overlap or escaped extents refuse. |
+| `107AB0` | Nonoverlapping byte memcpy entirely within the admitted backing plus extension; at most 16384 decimal bytes in v4 (8192 in retained v3). Every read/write is retained. Overlap or escaped extents refuse. |
 | `13F288` | Returning diagnostic event. The actual default `13F7D8` thunk executes before reaching this boundary. No process-termination policy is invented. |
 | Synthetic `FFFF00` | Returning error callback with actual arguments, guard depth and before-callback descriptor/object state. One explicit input script edits a descriptor length to inspect the original continuation. |
 
@@ -72,7 +72,17 @@ operations, bytes and explicit callback edits; outputs are not embedded in
 those inputs. Paths are never overwritten. No candidate native algorithm was
 read or imported to derive expected values.
 
-Final retained evidence:
+Current v4 retained evidence:
+
+- `build-native-sjuni/sjrb-oracle-v4/original-fixture-inputs.json`, SHA
+  `0fbd6dc535541105733bcc295cf0494132e52ca391df63e244f3a70b14240a35`.
+- `build-native-sjuni/sjrb-oracle-v4/original-fixture.json`, 57,167,846 bytes,
+  SHA `f59c20e67e99bdf6a1d023dd4c4e5667278ea675b27181005e4e28d4c35955c9`.
+
+Earlier v3 evidence is preserved byte-for-byte. Its 8192+192 byte case was
+incorrectly called actual PCM geometry; it is a **smaller synthetic** case.
+It does not establish the real PCM capacity. The new v4 corrects that label
+and adds the real 16384+192 byte case without rewriting any v3 evidence:
 
 - `build-native-sjuni/sjrb-oracle-v3/original-fixture-inputs.json`, SHA
   `13dc90fbcfa9a6380c3bb664f9de0ef89597023ce77eaee347064efc155f9564`.
@@ -82,9 +92,9 @@ Final retained evidence:
   harness, compiler/binary hashes and both compiler results; SHA
   `5b8eac14c2fe08aeb0c67fe163dcc0818eb6f35bf02ceebb99bb76df5a5bfb81`.
 
-The final corpus has **35 cases, 239 original calls, 10,643 instructions and
+The v4 corpus has **36 cases, 248 original calls, 11,021 instructions and
 530 unique visited words**. Two calls intentionally terminate with partial
-evidence. The other 237 return with balanced substituted guards and preserved
+evidence. The other 246 return with balanced substituted guards and preserved
 callee-saved ABI. This is finite coverage, not exhaustive behavior or a native
 parity comparison. Fifteen interval words are unvisited: padding/unreachable
 NOPs, the null-error count branch and additional zero-capacity BREAK sites.
@@ -98,7 +108,8 @@ Coverage includes:
   Both Unget branches accept a suffix pointer at `base+capacity` by modulo
   comparison; the data-pool branch executes actual `DIV1`/`MFHI1`.
 - No-extension geometry, one-sector encoded-ring geometry of 2048+36 bytes,
-  and actual ADXT PCM geometry of 8192+192 bytes. These are physical backing
+  the smaller synthetic 8192+192 case and actual ADXT PCM geometry of
+  **16384+192 bytes**. These are physical backing
   extents, not merely declared guest capacities.
 - Reset, fixed-pool exhaustion, destroy/reuse, second-object creation, module
   references, whole-pool clearing without clearing/freeing caller backing,
@@ -112,6 +123,18 @@ For a split publication/return example, an eight-byte free acquisition publishes
 five bytes and returns its three-byte suffix. Reading five bytes, returning two
 and ungetting three leaves free=13, data=3, write=5, read=2, acquisition/return
 totals `(freeGet,freePut,dataGet,dataPut)=(5,2,2,5)`.
+
+The actual PCM byte geometry is supported by owned constructor `1315E0`:
+`1316B8` loads `2000` halfwords, stored at `+30`; `1316C0` loads `2060`
+total halfwords, stored at `+34`. `13174C/131750` load those fields;
+`131760` subtracts them, `131764` doubles the extension, and `131768` doubles
+capacity before the `13F8A8` call at `131770`. Thus capacity is `4000` bytes,
+extension `C0` bytes and physical extent `40C0` bytes (16384+192=16576 decimal).
+The old 8192-byte label mistakenly treated the `2000` halfword value as bytes.
+Tests pin ten actual constructor words; this is static caller evidence, not
+complete original constructor execution. V4's oracle maps capacities through
+16384 and extensions through 192 bytes; higher values still refuse. Neither
+original DIV engine nor native ring arithmetic changed for the correction.
 
 On a mismatched Unget, the original leaves position and availability unchanged
 but **still subtracts length from its acquisition total after a returning error
@@ -144,7 +167,8 @@ No unsupported instruction was reached within the declared successful corpus.
 Unknown instructions, unowned fetches, instruction limits and unmapped accesses
 remain fail-closed. Earlier stage `sjrb-oracle-v1` preserved only its input file:
 execution completed but a relative-path reporting bug prevented result export.
-Stage v2 is the earlier 32-case pilot. They remain untouched; v3 is authoritative.
+Stage v2 is the earlier 32-case pilot. Stage v3 is the earlier 35-case cohort.
+All remain untouched; v4 is authoritative for the corrected actual PCM geometry.
 
 Cross-thread scheduling, interrupt/callback locks, arbitrary aliases, overlapping
 memcpy, arbitrary reentrant stop/reset/destroy, negative or unbounded capacities,
@@ -166,5 +190,6 @@ python tools/native_reconstruction/sjrb_oracle.py --output build-native-sjuni/sj
 python -m unittest discover -s tools/native_reconstruction -p test_sjrb_oracle.py -v
 ```
 
-All **22 tests passed**, including both compiler microchecks. Existing engines,
+All **24 tests passed**, including both compiler microchecks and static owned
+ADXT constructor-word checks. Existing engines,
 frozen corpora, runtime/native cores and game binaries were not modified.

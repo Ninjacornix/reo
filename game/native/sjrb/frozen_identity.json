@@ -1,0 +1,16 @@
+{
+  "comparison_not_yet_implemented": true,
+  "oracle_fixture_sha256": "e0cef81bc8d6c546481a0258c3a66f13ef42d9f3ec94e5a61aa2e1a52fbca021",
+  "schema": 1,
+  "source_sha256": {
+    "CMakeLists.txt": "32aff21b0392ffb519e251581340beceab710411dfc580f40f2e8effacffdbd4",
+    "sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2",
+    "sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b",
+    "sjrb_tests.cpp": "17e8692f2d42c7f515ae9c013f0aa3930ca03d079a86cbc0bfa072f47357fd98"
+  },
+  "stage": "Implementation frozen before comparator development, after author generated and inspected the independent original-word oracle.",
+  "unit_observations": {
+    "GCC": "32880 assertions passed",
+    "LLVM": "32880 assertions passed"
+  }
+}

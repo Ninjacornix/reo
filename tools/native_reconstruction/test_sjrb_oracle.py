@@ -118,7 +118,7 @@ class RingTests(unittest.TestCase):
                 expected = op['expected']
                 if expected['status'] == 'refused':
                     refused[inputs['name']] = expected['failure']['detail']
-        self.assertEqual(total, 239)
+        self.assertEqual(total, 248)
         self.assertEqual(set(refused), {'zero-capacity-unget-original-break', 'zero-capacity-get-undefined-div-refusal'})
         self.assertIn('Original BREAK at 0x13fe34 code=7', refused['zero-capacity-unget-original-break'])
         self.assertIn('Undefined architectural DIV', refused['zero-capacity-get-undefined-div-refusal'])
@@ -132,7 +132,7 @@ class RingTests(unittest.TestCase):
         inputs = s.corpus_inputs()
         self.assertEqual(s.digest(s.canonical(dict(schema=1,
             provenance='Authored bounded synthetic inputs; no captured gameplay or native implementation.', cases=inputs))),
-            '13dc90fbcfa9a6380c3bb664f9de0ef89597023ce77eaee347064efc155f9564')
+            '0fbd6dc535541105733bcc295cf0494132e52ca391df63e244f3a70b14240a35')
         self.assertNotIn('expected', json.dumps(inputs))
 
     def test_split_returns_and_exact_totals(self):
@@ -250,9 +250,32 @@ class RingTests(unittest.TestCase):
 
     def test_adxt_backing_geometry_is_real_bounded_allocation(self):
         row = self.case('adxt-pcm-geometry')
-        self.assertEqual(row['final']['fields_u32']['capacity'], 8192)
+        self.assertEqual(row['final']['fields_u32']['capacity'], 16384)
         self.assertEqual(row['final']['fields_u32']['extension'], 192)
+        self.assertEqual(len(bytes.fromhex(row['final']['backing_with_guards_hex'])) - 32, 0x40C0)
         self.assertEqual(row['operations'][-2]['expected']['after']['descriptors'][2]['bytes_i32'], 8)
+
+    def test_constructor_source_converts_pcm_halfwords_to_bytes(self):
+        # Static caller evidence, not a claim to execute complete ADXT creation.
+        elf = s.Elf(s.ROOT / 'game_data/SLUS_207.65')
+        words = {0x1316B8: 0x24082000, 0x1316C0: 0x24092060,
+                 0x1316F8: 0xAE080030, 0x131700: 0xAE090034,
+                 0x13174C: 0x8E060034, 0x131750: 0x8E050030,
+                 0x131760: 0x00C53023, 0x131764: 0x00063040,
+                 0x131768: 0x00052840, 0x131770: 0x0C04FE2A}
+        for pc, word in words.items():
+            self.assertEqual(int.from_bytes(elf.read(pc, 4), 'little'), word)
+        halfwords = words[0x1316B8] & 0xFFFF
+        total_halfwords = words[0x1316C0] & 0xFFFF
+        self.assertEqual((2 * halfwords, 2 * (total_halfwords - halfwords)), (16384, 192))
+        self.assertEqual(2 * total_halfwords, 0x40C0)
+
+    def test_finite_geometry_and_copy_limits_remain_explicit(self):
+        self.assertEqual((s.MAX_CAPACITY, s.MAX_EXTENSION, s.MAX_COPY_BYTES), (16384, 192, 16384))
+        with self.assertRaises(s.OracleError):
+            s.Machine(16385, 192)
+        with self.assertRaises(s.OracleError):
+            s.Machine(16384, 193)
 
     def test_step_cap_and_unknown_instruction_fail_closed(self):
         m = s.Machine()

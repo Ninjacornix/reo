@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has twenty-one standalone suites, including the independent ADX
+project now has twenty-two standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -93,6 +93,20 @@ finds no confirmed allocator/lifetime defect within the documented domain.
 Requested allocation bytes and asset counts are bounded, including retained
 control blocks and old clips; this does not claim an OS memory limit. Production
 packet capture, aggregate owner dispatch and runtime integration remain required.
+
+The [native SJRB ring core](native-media/SJRB_IMPLEMENTATION.md) now owns backing
+and chunk incarnations and preserves the admitted two-pool/wrap-copy contract.
+Both compilers match 30 original cases / 165 calls, including the constructor's
+actual 16,384-byte PCM capacity plus 192-byte extension. A prior smaller synthetic
+case had been mislabeled as the actual byte geometry; corrected independent
+fixtures retain the earlier evidence unchanged. Global pool/module lifetime and
+ADXT acquire/decode/publication, source/refill and playback clocks remain open.
+
+The default-off movie-position adapter also has a coherent V8 original/native
+opening pair: at least 8,192 successful native publications, movement/menu
+observations and clean closes. Its [candidate record](native-media/CANDIDATE_VALIDATION.md#known-caller-movie-position-publication-v8)
+retains seven sampled native movie gaps above 50 ms and longer original
+transition gaps; no performance improvement or complete media migration is claimed.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map

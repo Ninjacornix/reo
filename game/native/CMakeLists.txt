@@ -4,6 +4,7 @@ project(reo_native_subsystems LANGUAGES CXX)
 # Standalone contract checks: no parent game/runtime/dependency configuration.
 enable_testing()
 add_subdirectory(sjuni)
+add_subdirectory(sjrb)
 add_subdirectory(resources)
 add_subdirectory(tasks)
 add_subdirectory(resource_io)

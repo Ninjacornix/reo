@@ -1,0 +1,2 @@
+# Preserve the exact historical freeze record referenced by comparison receipts.
+frozen_identity.json -text whitespace=cr-at-eol
