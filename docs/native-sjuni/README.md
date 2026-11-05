@@ -1,8 +1,8 @@
 # SJUNI native reconstruction: dependency inventory
 
 2026-11-05. File #1 US only. Status: independent C++20 core and portable adapter
-implemented and tested; guarded runtime adapter is opt-in. Four separately built
-controlled integration smoke runs passed; wider consumer/lifetime validation and
+implemented and tested; guarded runtime adapter is opt-in. Four controlled
+integration smoke runs using a separate build passed; wider consumer/lifetime validation and
 complete migration remain outstanding.
 The mapping/comparison baseline is local commit `733a8ed`.
 

@@ -16,7 +16,8 @@ explicit close/shutdown/drain. Reads retain a provider lease outside the registr
 mutex; failed reads leave the destination unchanged. There are no guest addresses,
 automatic threads, runtime headers or new archive parsers.
 
-Eight focused synthetic groups pass. The combined standalone `game/native`
+Nine focused synthetic groups pass, including owned nested subranges near the
+64-bit boundary without copying payloads. The combined standalone `game/native`
 CMake project also builds all three native core/bridge/resource suites, and all
 three pass CTest. These checks cover synthetic file/memory/gap reads, frozen
 metadata, malformed and 64-bit extents, failures, stale handles and provider

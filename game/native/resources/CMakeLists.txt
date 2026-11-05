@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(reo_native_resources LANGUAGES CXX)
 find_package(Threads REQUIRED)
 
-add_library(reo_native_resources STATIC resource_session.cpp virtual_file_view.cpp)
+add_library(reo_native_resources STATIC resource_session.cpp virtual_file_view.cpp bounded_view.cpp)
 target_compile_features(reo_native_resources PUBLIC cxx_std_20)
 target_include_directories(reo_native_resources PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../..)

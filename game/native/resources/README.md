@@ -4,15 +4,17 @@ Status: independently built native library and synthetic contract tests. No CDVD
 FIO, CRI, decoder or game entry point has been redirected. This does not claim
 that resource consumers have migrated or that PS2 dependencies have been removed.
 
-The library contains three boundaries:
+The library contains these boundaries:
 
 - [ByteView](byte_view.hpp): an immutable-size provider of positioned byte reads.
 - [VirtualFileView](virtual_file_view.hpp): a validated snapshot backed by the
   existing `runtime/assets/virtual_afs.h` `Source`/`VirtualFile` implementation.
+- [bounded_view](bounded_view.hpp): an owned parent/subrange view with checked
+  64-bit composition and no payload copy.
 - [ResourceSession](resource_session.hpp): generation handles, bounded exact
   reads, provider leases, close and explicit shutdown/drain.
 
-There are no guest addresses/registers, guest syscall wrappers, sectors, runtime headers,
+There are no guest addresses/registers, guest syscall wrappers, sectors, PS2 runtime headers,
 environment switches, mutable global library state or automatic I/O threads.
 The session uses native synchronization; synchronous reads execute on their
 calling threads. The existing AFS parser/range engine is reused, not duplicated.
@@ -45,6 +47,13 @@ after creation; provider metadata and size must remain immutable afterward.
 
 Creation returns `invalid_view`, `source_failure` or `no_memory` with no view on
 failure. Deep-copy/mount memory is separate from the per-read limit.
+
+`bounded_view(parent, base, bytes)` admits only a nonwrapping subrange of an
+immutable parent, retains that parent and translates reads relative to the
+subrange. Nested views retain the complete parent chain. A valid empty EOF read
+performs no provider I/O. Direct view reads retain the ByteView failure policy;
+the session supplies transactional destination publication. File immutability
+and mount identity are still responsibilities of the owning service.
 
 ## Session and read contract
 
@@ -99,13 +108,15 @@ completion queue, mutable stream cursor or thread pool is supplied.
 
 ## Validation
 
-Eight focused synthetic groups cover cross-segment/file/memory/gap reads, frozen
+Nine focused synthetic groups cover cross-segment/file/memory/gap reads, frozen
 metadata/bytes, malformed/overlapping/nonwrapping extents, 64-bit sparse/EOF edges,
 bounded requests, provider partial/short/throwing failures, deterministic allocation
 failure, generation reuse/retirement/session identity, concurrent close/reuse and
 shutdown/drain while a fake provider is blocked. Weak lifetime checks verify that
 an in-flight provider remains alive until the accepted read releases it.
 Windows synthetic file-backed views also use Unicode filenames.
+The subrange group checks nested offsets near `UINT64_MAX`, EOF/overflow/invalid
+parent rejection, allocation failure and parent lifetime through the final view.
 
 The direct GCC 15.2 build passed with warnings treated as errors:
 
@@ -113,6 +124,7 @@ The direct GCC 15.2 build passed with warnings treated as errors:
 g++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -O1 -pthread -I . `
     game/native/resources/resource_session.cpp `
     game/native/resources/virtual_file_view.cpp `
+    game/native/resources/bounded_view.cpp `
     game/native/resources/resource_tests.cpp `
     -o build-native-sjuni/native_resource_tests.exe
 ./build-native-sjuni/native_resource_tests.exe
@@ -133,3 +145,12 @@ Only synthetic files/providers were used. These tests are neither original-game
 I/O parity nor resource/decoder integration or performance measurements. Mount
 identity, concrete consumer EOF/padding policy and completion/stop ownership
 remain prerequisites to connecting the library to existing adapters.
+
+The [route comparison driver](../../../tools/native_reconstruction/verify_resources.py)
+additionally checks 256 exact ranges against `Source`, the native host-file API
+and known synthetic bytes, then 36 sector-prefix/padding cases against the current
+PAK-mode CDVD facade. The native session reads only the in-file prefix; zero-filled
+sector read-ahead remains an explicit compatibility policy. Its source/compiler
+receipt is under `build-native-sjuni/resource-verification/`. The existing CDVD
+reference object alone suppresses GCC 15's C++20 `u8path` deprecation warning;
+the new library/probe builds retain all requested warnings as errors.

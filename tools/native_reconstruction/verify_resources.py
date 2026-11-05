@@ -51,7 +51,8 @@ def main():
         print(name + ': passed', flush=True)
 
     common = [compiler, '-std=c++20', '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-O1', '-pthread', '-I.']
-    library = ['game/native/resources/resource_session.cpp', 'game/native/resources/virtual_file_view.cpp']
+    library = ['game/native/resources/resource_session.cpp', 'game/native/resources/virtual_file_view.cpp',
+               'game/native/resources/bounded_view.cpp']
     suffix = '.exe' if sys.platform == 'win32' else ''
     try:
         contract = output / ('resource_contract' + suffix)

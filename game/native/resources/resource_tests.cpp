@@ -1,5 +1,6 @@
 #include "resource_session.hpp"
 #include "virtual_file_view.hpp"
+#include "bounded_view.hpp"
 #include "runtime/assets/virtual_afs.h"
 
 #include <array>
@@ -336,6 +337,52 @@ void shutdown_and_drain_retain_the_active_provider() {
     draining.get();
     REQUIRE(waited && weak.expired() && gate->destroyed);
 }
+
+class OffsetView final : public ByteView {
+public:
+    std::uint64_t size() const noexcept override { return UINT64_MAX; }
+    ReadResult read(std::uint64_t offset, std::span<std::byte> output) const override {
+        for (std::size_t i = 0; i < output.size(); ++i) output[i] = std::byte((offset + i) & 255);
+        return {Status::ok, output.size()};
+    }
+};
+
+void bounded_views_retain_parent_and_validate_composed_ranges() {
+    auto parent = std::make_shared<OffsetView>();
+    std::weak_ptr<const ByteView> weak = parent;
+    auto first = bounded_view(parent, UINT64_MAX - 100, 100);
+    REQUIRE(first.status == Status::ok && first.view->size() == 100);
+    auto nested = bounded_view(first.view, 90, 10);
+    REQUIRE(nested.status == Status::ok);
+    REQUIRE(bounded_view(first.view, 101, 0).status == Status::invalid_range);
+    REQUIRE(bounded_view(first.view, 90, 11).status == Status::invalid_range);
+    REQUIRE(bounded_view(parent, UINT64_MAX, 1).status == Status::invalid_range);
+    REQUIRE(bounded_view({}, 0, 0).status == Status::invalid_view);
+    auto empty = bounded_view(parent, UINT64_MAX, 0);
+    REQUIRE(empty.status == Status::ok && empty.view->read(0, {}) == ReadResult{Status::ok, 0});
+    fail_next_allocation = true;
+    REQUIRE(bounded_view(parent, 0, 1).status == Status::no_memory);
+    REQUIRE(!fail_next_allocation);
+    first.view.reset();
+    parent.reset();
+    REQUIRE(!weak.expired());
+    ResourceSession session;
+    const auto opened = session.open(nested.view);
+    std::array<std::byte, 10> output{};
+    REQUIRE(session.read_exact(opened.handle, 0, output) == ReadResult{Status::ok, 10});
+    for (unsigned i = 0; i < output.size(); ++i)
+        REQUIRE(output[i] == std::byte((UINT64_MAX - 10 + i) & 255));
+    output.fill(std::byte{0xCC});
+    REQUIRE(nested.view->read(1, output) == ReadResult{Status::invalid_range, 0});
+    REQUIRE(std::all_of(output.begin(), output.end(), [](auto b) { return b == std::byte{0xCC}; }));
+    REQUIRE(session.read_exact(opened.handle, 10, {}) == ReadResult{Status::ok, 0});
+    nested.view.reset();
+    REQUIRE(session.close(opened.handle) == Status::ok);
+    // The independently retained empty view still owns the same parent.
+    REQUIRE(!weak.expired());
+    empty.view.reset();
+    REQUIRE(weak.expired());
+}
 } // namespace
 
 int main() {
@@ -348,7 +395,8 @@ int main() {
         handles_reuse_retire_and_bind_to_the_session();
         close_and_reuse_during_inflight_read();
         shutdown_and_drain_retain_the_active_provider();
-        std::cout << "Native resources: 8 focused contract groups passed; synthetic providers/files only\n";
+        bounded_views_retain_parent_and_validate_composed_ranges();
+        std::cout << "Native resources: 9 focused contract groups passed; synthetic providers/files only\n";
         return 0;
     } catch (const std::exception& error) {
         fail_next_allocation = false;
