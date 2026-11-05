@@ -1296,7 +1296,12 @@ int main(int argc, char* argv[]) {
     reo_game_clock::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_performance::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_cri_server::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+#if defined(REO_BUILD_NATIVE_RESOURCE_OWNER)
+    reo_cd_async::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE, runtime);
+    reo_cd_async::Lifetime cdReadLifetime(runtime);
+#else
     reo_cd_async::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+#endif
 
     reo_actor_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_ground_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
@@ -1448,6 +1453,10 @@ int main(int argc, char* argv[]) {
         });
 #endif
     runtime.run();
+
+#if defined(REO_BUILD_NATIVE_RESOURCE_OWNER)
+    reo_cd_async::finish(runtime);
+#endif
 
     if (const char* stats = std::getenv("REO_GS_TRI_BATCH_STATS"); stats && std::atoi(stats) != 0) {
 

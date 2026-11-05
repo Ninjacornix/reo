@@ -1,0 +1,263 @@
+--- a/ps2xRuntime/include/ps2_runtime.h
++++ b/ps2xRuntime/include/ps2_runtime.h
+@@ -1,5 +1,7 @@
+ #ifndef PS2_RUNTIME_H
+ #define PS2_RUNTIME_H
++
++#define PS2_RUNTIME_HAS_EXTERNAL_WORKERS 1
+ 
+ #include <cstring>
+ #include <cstdint>
+@@ -18,6 +20,7 @@
+ #include <atomic>
+ #include <array>
+ #include <mutex>
++#include <memory>
+ #include <filesystem>
+ #include <iostream>
+ #include <iomanip>
+@@ -464,6 +467,28 @@
+     bool loadELF(const std::string &elfPath);
+     void run();
+ 
++    // initialize/loadELF/run/destruction remain owner-serialized operations.
++    // Registration may race run/requestStop; it is either retained or refused.
++    // Register after initialize/loadELF and before run. Registrations retain the
++    // worker until runtime destruction; no external worker may outlive its RAM.
++    // Workers are one-shot: registering any worker disables initialize/loadELF
++    // resets, and a stopped/executed attached runtime cannot run again.
++    class ExternalWorker
++    {
++    public:
++        virtual ~ExternalWorker() = default;
++        // Signal only: nonblocking, idempotent, safe under concurrent calls.
++        // Must not join, enter guest execution, or call runtime teardown.
++        virtual void requestStop() noexcept = 0;
++        // Called without guest/registration/kernel-registry locks. Must be
++        // idempotent; true proves no worker I/O/callback can touch this runtime.
++        // Must not invoke runtime teardown or attempt to join its calling thread.
++        virtual bool join() noexcept = 0;
++    };
++    // Null, duplicate, late, or allocation-failed registration returns false.
++    // Accepted registrations are strongly retained; there is no unregister.
++    bool registerExternalWorker(std::shared_ptr<ExternalWorker> worker) noexcept;
++
+     using RecompiledFunction = void (*)(uint8_t *, R5900Context *, PS2Runtime *);
+ 
+     class GuestExecutionScope
+@@ -659,6 +684,9 @@
+     void reacquireGuestExecution(uint32_t depth);
+ 
+     void HandleIntegerOverflow(R5900Context *ctx);
++    bool externalWorkerResetAllowed();
++    void beginExternalWorkerRun();
++    void joinExternalWorkersOrTerminate() noexcept;
+ 
+     friend class GuestExecutionScope;
+     friend class GuestExecutionReleaseScope;
+@@ -697,6 +725,12 @@
+     std::vector<OverlaySlot> m_overlaySlots;
+     const RecompiledFunction *findOverlayFunction(uint32_t address) const;
+     std::atomic<bool> m_stopRequested{false};
++    using ExternalWorkerList = std::vector<std::shared_ptr<ExternalWorker>>;
++    std::mutex m_externalWorkersMutex;
++    // Mutated only while unsealed under the mutex. A sealed list is immutable,
++    // so signal/join can retain a snapshot without allocations or held locks.
++    std::shared_ptr<ExternalWorkerList> m_externalWorkers;
++    bool m_externalWorkersSealed = false;
+ 
+     // TODO remove this later
+     std::atomic<uint32_t> m_debugPc{0};
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -77,6 +77,8 @@
+ #include <chrono>
+ #include <atomic>
+ #include <thread>
++#include <exception>
++#include <stdexcept>
+ #include <unordered_map>
+ #include <sstream>
+ #include "source_instruction_access.hpp"
+@@ -1102,6 +1104,14 @@
+ 
+ PS2Runtime::~PS2Runtime()
+ {
++    // Keep this outside the legacy cleanup catch: failed stopping/joining is
++    // fail-closed, never permission to destroy memory still owned by a worker.
++    if (!externalWorkerResetAllowed())
++    {
++        try { requestStop(); }
++        catch (...) { std::terminate(); }
++        joinExternalWorkersOrTerminate();
++    }
+     try
+     {
+         requestStop();
+@@ -1313,6 +1323,7 @@
+ 
+ bool PS2Runtime::initialize(const char *title, size_t ramBackingBytes)
+ {
++    if (!externalWorkerResetAllowed()) return false;
+     try
+     {
+         if (!m_memory.initialize(ramBackingBytes))
+@@ -1394,6 +1405,7 @@
+ 
+ bool PS2Runtime::loadELF(const std::string &elfPath)
+ {
++    if (!externalWorkerResetAllowed()) return false;
+     configureIoPathsFromElf(elfPath);
+ 
+     std::ifstream file(elfPath, std::ios::binary);
+@@ -3133,10 +3145,73 @@
+     }
+ }
+ 
++bool PS2Runtime::registerExternalWorker(std::shared_ptr<ExternalWorker> worker) noexcept
++{
++    if (!worker) return false;
++    try
++    {
++        std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
++        if (m_externalWorkersSealed || m_stopRequested.load(std::memory_order_acquire))
++            return false;
++        if (!m_externalWorkers) m_externalWorkers = std::make_shared<ExternalWorkerList>();
++        for (const auto &existing : *m_externalWorkers)
++            if (existing.get() == worker.get()) return false;
++        m_externalWorkers->push_back(std::move(worker));
++        return true;
++    }
++    catch (...) { return false; }
++}
++
++bool PS2Runtime::externalWorkerResetAllowed()
++{
++    std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
++    return !m_externalWorkers || m_externalWorkers->empty();
++}
++
++void PS2Runtime::beginExternalWorkerRun()
++{
++    std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
++    if (m_externalWorkersSealed && m_externalWorkers && !m_externalWorkers->empty())
++        throw std::logic_error("An attached external worker runtime cannot restart");
++    m_externalWorkersSealed = true;
++    // Serialized with requestStop: never reset a worker's stop after it has
++    // been signalled. No-worker runtimes retain their existing restart behavior.
++    m_stopRequested.store(false, std::memory_order_relaxed);
++}
++
++void PS2Runtime::joinExternalWorkersOrTerminate() noexcept
++{
++    try
++    {
++        std::shared_ptr<const ExternalWorkerList> workers;
++        {
++            std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
++            m_externalWorkersSealed = true;
++            workers = m_externalWorkers;
++        }
++        if (!workers || workers->empty()) return;
++        if (ps2ActualGuestExecutionDepth(this) != 0u) std::terminate();
++        // A concurrent requestStop may still be signalling its snapshot. Stop
++        // methods are idempotent/concurrent-safe, so join never waits for an
++        // unsignalled worker and no registry lock is held across user code.
++        for (const auto &worker : *workers) worker->requestStop();
++        for (const auto &worker : *workers)
++            if (!worker->join()) std::terminate();
++    }
++    catch (...) { std::terminate(); }
++}
++
+ void PS2Runtime::requestStop()
+ {
+-    if (m_stopRequested.exchange(true, std::memory_order_acq_rel))
+-        return;
++    std::shared_ptr<const ExternalWorkerList> workers;
++    {
++        std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
++        if (m_stopRequested.exchange(true, std::memory_order_acq_rel)) return;
++        m_externalWorkersSealed = true;
++        workers = m_externalWorkers;
++    }
++    if (workers)
++        for (const auto &worker : *workers) worker->requestStop();
+     ps2_sched::g_shutdown.store(true, std::memory_order_release);
+     ps2_sched::notifyAll();
+     // Cancel GS waits before waking guest scopes that need the CPU to unwind.
+@@ -3157,7 +3232,24 @@
+ 
+ void PS2Runtime::run()
+ {
+-    m_stopRequested.store(false, std::memory_order_relaxed);
++    beginExternalWorkerRun();
++    // Early setup failures must still stop/join external runtime owners. The
++    // separate game-thread guard below is declared after its captured locals.
++    struct ExternalWorkerRunUnwind
++    {
++        PS2Runtime &runtime;
++        int exceptions = std::uncaught_exceptions();
++        ~ExternalWorkerRunUnwind() noexcept
++        {
++            if (std::uncaught_exceptions() <= exceptions) return;
++            try
++            {
++                runtime.requestStop();
++                runtime.joinExternalWorkersOrTerminate();
++            }
++            catch (...) { std::terminate(); }
++        }
++    } externalWorkerRunUnwind{*this};
+     ps2_sched::g_shutdown.store(false, std::memory_order_release);
+     ps2_syscalls::prepareRuntimeWorkers();
+     ps2_stubs::resetSifState();
+@@ -3275,6 +3367,11 @@
+         }
+     };
+     static std::function<void(bool)> *s_presentFrame = nullptr;
++    struct PresentFrameLifetime
++    {
++        std::function<void(bool)> *&target;
++        ~PresentFrameLifetime() noexcept { target = nullptr; }
++    } presentFrameLifetime{s_presentFrame};
+     s_presentFrame = &presentFrame;
+     if (!reoHeadless)
+         ps2InstallModalRender(GetWindowHandle(), []() {
+@@ -3288,7 +3385,27 @@
+     g_activeThreads.store(1, std::memory_order_relaxed);
+     std::atomic<bool> gameThreadFinished{false};
+ 
+-    std::thread gameThread([&]()
++    std::thread gameThread;
++    // All lambda captures (including gameThreadFinished/presentation state)
++    // precede this guard and therefore remain alive until its join completes.
++    struct GameThreadRunUnwind
++    {
++        PS2Runtime &runtime;
++        std::thread &game;
++        int exceptions = std::uncaught_exceptions();
++        ~GameThreadRunUnwind() noexcept
++        {
++            if (std::uncaught_exceptions() <= exceptions) return;
++            try
++            {
++                runtime.requestStop();
++                runtime.joinExternalWorkersOrTerminate();
++                if (game.joinable()) game.join();
++            }
++            catch (...) { std::terminate(); }
++        }
++    } gameThreadRunUnwind{*this, gameThread};
++    gameThread = std::thread([&]()
+                            {
+         ThreadNaming::SetCurrentThreadName("GameThread");
+         try
+@@ -3613,6 +3730,7 @@
+         std::cerr << "[run] guest workers still stopping; preserving runtime until joined" << std::endl;
+     ps2_syscalls::joinInterruptWorker();
+     ps2_syscalls::joinAllGuestHostThreads();
++    joinExternalWorkersOrTerminate();
+     reo_async_vif::shutdown(m_memory);
+     ps2GsJoinWorker();
+     ps2GsJoinRasterWorkers();

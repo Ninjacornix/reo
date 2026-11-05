@@ -30,6 +30,13 @@ A [fresh source audit](native-resources/DEPENDENCY_INPUT_AUDIT.md) successfully
 applied all 120 public dependency patches. It establishes reproducible inputs,
 not matching rebuilt libraries or safe pending-request/guest-buffer lifetime.
 
+The [request-owner prototype](native-resources/REQUEST_OWNER_IMPLEMENTATION.md)
+now has a bounded native worker, runtime stop/join integration and isolated
+verification. Public patch 0120 reapplies as part of the full 121-file series.
+A new commit-pinned candidate is required for linked playback/loading/shutdown
+validation before connecting native resource reads. This is the current step;
+resources/media, gameplay, rendering and final runtime removal remain required.
+
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map
 provides the starting evidence. Progress comes from replacing complete subsystem

@@ -21,8 +21,8 @@ automatic threads, runtime headers or new archive parsers.
 
 Nine focused synthetic groups pass, including owned nested subranges near the
 64-bit boundary without copying payloads. The combined standalone `game/native`
-CMake project also builds all three native core/bridge/resource suites, and all
-three pass CTest. These checks cover synthetic file/memory/gap reads, frozen
+CMake project builds four core/bridge/resource/worker suites, and all
+four pass CTest. These checks cover synthetic file/memory/gap reads, frozen
 metadata, malformed and 64-bit extents, failures, stale handles and provider
 lifetime while close/shutdown races an accepted read. The files backing mounted
 views must remain externally immutable; file identity/content is not continuously
@@ -47,3 +47,8 @@ The [cvFs request review](CVFS_REQUEST_BOUNDARY.md) checks 33 original bodies an
 defines the next safe cut: a wholly in-range payload read beneath the existing
 request owner. Original admission, service-driven completion, borrowed SJ span
 publication and stop/close stay explicit until their contracts migrate.
+
+The [request-owner implementation](REQUEST_OWNER_IMPLEMENTATION.md) adds the
+opt-in joinable worker and runtime stop/join boundary. Isolated checks pass;
+matching linked-candidate validation and mid-game reservation ownership remain
+pending before the new resource byte provider is connected.
