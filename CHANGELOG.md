@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fix hosting startup after upgrading an older server database (#84). Migrate missing account fields and Outbreak rankings atomically, retaining existing credentials and every original result in an archive table.
 - Fix File #1 freezes of up to half a second while the game reads from the disc image. Disc reads now complete in the background, as the PS2's CD hardware does, instead of stopping every game thread until the host read finishes. `REO_CD_ASYNC=0` restores the previous synchronous reads. Add an optional developer timing log for audio, disc and movie service stalls.
 - Fix joining a host through its advertised public address (#64).
 - Add DualShock 4 controller input over USB and Bluetooth.
