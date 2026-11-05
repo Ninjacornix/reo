@@ -1,10 +1,22 @@
 import io
 import unittest
 
-from analyze_movie_pacing import read_frames, summarize
+from analyze_movie_pacing import read_frames, summarize, audio_evidence
+from analyze_pcm_playtest import parse as parse_pcm
+from test_analyze_pcm_playtest import INSTALL, REPORT
 
 
 class MoviePacingTests(unittest.TestCase):
+    def test_native_final_starvation_is_not_hidden_by_absent_legacy_windows(self):
+        environment = {'REO_NATIVE_PCM': '1'}
+        report = dict(environment=environment, audio_starvation_window_count=0,
+                      native_pcm=parse_pcm([INSTALL, REPORT], environment))
+        self.assertIn('3 starved output frames / 48000 output frames', audio_evidence(report))
+        self.assertIn('cannot be aligned', audio_evidence(report))
+        report['native_pcm'] = parse_pcm([INSTALL], environment)
+        self.assertIn('unknown', audio_evidence(report))
+        self.assertIn('do not mean zero', audio_evidence(report))
+
     def parse(self, body):
         return read_frames(io.StringIO('# dropped=7\ntick,begin_ns,scanout_ns,present_ns,end_ns\n'+body))
 

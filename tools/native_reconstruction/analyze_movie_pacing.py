@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 
 from analyze_sjuni_playtest import analyze as analyze_session, iter_log, sha
+from analyze_pcm_playtest import parse as parse_pcm
 
 FIELDS = ['tick', 'begin_ns', 'scanout_ns', 'present_ns', 'end_ns']
 MOVIE = re.compile(r'\[CRI-SYNC\] movie ns=(\d+) vsync=(\d+) time=(-?\d+)/(\d+) decoded=(-?\d+)/(\d+)')
@@ -127,15 +128,29 @@ def analyze(session):
         evidence_sha256=provenance['evidence_sha256'] | {path.name: sha(path)},
         dropped_frame_records=dropped, movie_samples=samples,
         slow_vblank_log_events=slow_vblank[:128], slow_vblank_event_count=len(slow_vblank),
-        audio_starvation_windows=starvation[:128], audio_starvation_window_count=len(starvation), **result,
+        audio_starvation_windows=starvation[:128], audio_starvation_window_count=len(starvation),
+        native_pcm=parse_pcm(iter_log(log), provenance['environment']), **result,
         limitations=['CPU presentation-return intervals do not measure actual display scanout or game-update speed.',
             'Graphics spans exclude upstream decoder, resource and game-worker work before capture begins.',
             'The scanout marker follows backend vsync work; it is not physical scanout. Its next span includes presenter preparation.',
             'Movie context is approximate, sampled about once a second without decoder/generation identity; monotonic generation changes cannot be excluded.',
             'The decoded rational is latest movie-position metadata, not a decoded-picture counter.',
             'Long CPU intervals are measured symptoms, without an automatically established bottleneck or cause.',
+            'Legacy CRI starvation windows do not cover a selected native PCM backend; native final counters have no incident timestamps.',
             'Diagnostics, warmup, scheduling and window visibility can affect timing; compare controlled runs.',
             'Buffered records appear after graphics teardown; dropped or absent records cannot exclude stutters.'])
+
+
+def audio_evidence(report):
+    if report['environment'].get('REO_NATIVE_PCM') != '1':
+        return f"Legacy audio-starvation report windows: {report['audio_starvation_window_count']}."
+    reports = report['native_pcm']['joined_reports']
+    if not reports:
+        return 'Native PCM starvation: unknown; no final joined counters. Missing legacy windows do not mean zero starvation.'
+    value = reports[0]
+    return (f"Native PCM final counters: {value['underrun_frames']} starved output frames / "
+            f"{value['frames']} output frames (stderr line {value['line']}). "
+            'No per-window timestamps; these totals cannot be aligned with a movie gap.')
 
 
 def markdown(report):
@@ -148,7 +163,8 @@ def markdown(report):
     for label,key in [('Whole observed run','presentation_return_intervals'),('Approximate sampled movie windows','sampled_movie_return_intervals')]:
         item = report[key]
         lines.append(f"| {label} | {item['count']} | {item.get('p50_ms','unknown')} | {item.get('p99_ms','unknown')} | {item.get('max_ms','unknown')} | {item.get('over_50_ms','unknown')} |")
-    lines += ['', f"Slow-vblank log events: {report['slow_vblank_event_count']}; audio-starvation report windows: {report['audio_starvation_window_count']}.",
+    lines += ['', f"Slow-vblank log events: {report['slow_vblank_event_count']}.",
+        audio_evidence(report),
         'These are separate observations; a neighboring log record does not establish causation.', '',
         'The JSON companion contains stage distributions, the longest intervals with CSV line references,',
         'log line references, process identity, environment, record loss and evidence hashes.', '',
