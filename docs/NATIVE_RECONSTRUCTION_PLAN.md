@@ -66,9 +66,18 @@ Complete PCM [session dispatch](native-media/PCM_BACKEND_DISPATCH.md),
 [pinned stream provider](native-media/NATIVE_STREAM_PROVIDER.md) have isolated
 evidence. The [raw-ID session bridge](native-media/PCM_SESSION_BRIDGE.md)
 also reproduces both toolchains' actual mix traversal and source-hook ordering;
-they are not yet installed as one whole backend. The provider shutdown
-ordering fix requires a new coherent candidate. Wider resources/
-media, gameplay, rendering and final runtime removal remain required.
+they now form a complete default-off PCM backend. Its coherent V7 build includes
+the provider shutdown ordering fix and public dependency patches through 0123.
+The private original/native opening runs both exit cleanly; the native run proves
+actual callback execution, whole-backend selection and joined output ownership.
+It also records 40,256 starved output frames and four sampled movie intervals
+above 50 ms, compared with zero in this bounded original-backend run. This is
+an unresolved regression observation, not a proven cause or an accepted default.
+The [candidate record](native-media/CANDIDATE_VALIDATION.md#complete-pcm-backend-v7)
+preserves counts, build identity and coverage limits. Stage 3 remains in progress:
+bank/RPC producer ownership, compressed stream ownership, movie clocks and wider
+resource/media transitions still require reconstruction and validation. Gameplay,
+rendering and final runtime removal remain required afterward.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
 run without a PS2 execution or hardware compatibility layer. The symbol map

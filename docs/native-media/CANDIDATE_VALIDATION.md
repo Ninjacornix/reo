@@ -195,3 +195,73 @@ The offline [work analyzer](../../tools/native_reconstruction/movie_timing/ANALY
 preserves partial exports and correlates measured wait/control spans with frame
 gaps; it does not add nested durations into a causal diagnosis. The V6 executable
 contains neither of these additions.
+
+### Complete PCM backend V7
+
+Private V7 freezes source `f4ec2248c9652834c4e6e76dd6be331993d5a6ad`,
+kit manifest `736a17112a98725e8c768d823157028c6183e0a8817e1720b7fd56ca1803511f`
+and executable `007ae82ac9538b40b27d229db6cec2e83e1ec21ced292dc915be144c0be2fa18`.
+All 124 public dependency patches were reapplied to the pinned base before
+building matching runtime libraries, game objects and backend. Preflight passes
+145 units in 271.031 seconds; the full 2,370-unit build reuses those 145 matching
+objects and passes in 866.344 seconds. The build receipt records no precompiled
+PS2 runtime reuse. Native PCM stays opt-in; the player build is unchanged.
+
+Both runs enable native synchronous PAK reads, SJUNI, DVCI scalar and ADX
+decoders. CD async/worker remain off. Only `REO_NATIVE_PCM` differs, apart from
+private identities/output paths. Fresh cards, two ordinary Cross confirmations,
+no cinematic skips, no periodic GPU screenshots. The V7 binary includes the
+reviewed provider device/mutex close ordering fix and bounded schema-1
+movie-owner timings; it does not include the later movie-position adapter.
+
+| Observation | `media-legacy-pcm-v7` | `media-native-pcm-v7` |
+| --- | ---: | ---: |
+| Run seconds / exit | 454.922 / 0 | 363.546 / 0 |
+| Gameplay observed, observer seconds | 361.875 | 345.781 |
+| Approximate movie return intervals | 18,348 | 17,749 |
+| Movie interval p99 | 17.6363 ms | 17.9097 ms |
+| Movie intervals above 50 ms | 0 | 4 |
+| Maximum sampled movie interval | 34.2693 ms | 1,098.2157 ms |
+| Output frames reported | 20,723,040 | 16,990,560 |
+| Frames with signal reported | 18,735,858 | 14,962,642 |
+| Starved output frames reported | 0 | 40,256 |
+
+The original backend supplies 431 periodic CRI windows. The native backend
+supplies its own final counters: absent legacy starvation windows are **not**
+zero native starvation. Native selection is proved by the installation at stderr
+line 259 and final joined report at line 8,284: 2,040 channel slots, 2,041 voices,
+391,680,000 PCM bytes and 4 MiB metadata. All 35,397 device callbacks complete;
+output starts and its stream fence joins. Hard failures and queue rejections are
+zero. Successful method counts are ensure 100, queue 11,188, configure 271,785,
+consumed 539,397, render 35,397, drain 5, queued-samples 8, reset 1 and shutdown 1.
+Discard and release have no executed-body coverage in this run. Successful
+callbacks and nonzero signal do not establish speaker waveform equivalence.
+
+The native run observes normal gameplay, a one-second Up input and changed local
+actor coordinates, then Start changes modal state 0 to 1 and Circle restores 0.
+It returns to unpaused gameplay and closes normally through its owned window.
+The original-run controls check occurred later, found phase 4 rather than its
+required unpaused phase 2, and sent no input. Thus this is not a matched controls,
+pause, death, restart or repeated-load comparison; menu modal state alone does
+not establish movie/audio pause semantics.
+
+The four native movie gaps are 1,098.2157, 422.8647, 297.5084 and 54.6346 ms.
+The three largest chiefly occur between neighboring graphics capture spans
+(CSV lines 12,370–12,371, 12,445–12,446 and 18,971–18,972). No retained movie-work
+event overlaps those three. Schema 1 retained only its first 4,096 slow events;
+14,369 later native events and 15,194 original events were dropped. Aggregate
+counts remain available, but missing details prevent attributing those gaps.
+The 54.6346 ms gap overlaps a 52.1549 ms owner-control span containing a
+46.7995 ms batch-fence wait; nested elapsed observations are not added or
+assigned causal responsibility. No per-window native starvation timestamps
+were recorded, so audio starvation cannot be aligned with these gaps.
+
+The native run's worse tail and starvation are unresolved and block accepting
+this backend as the default. These unequal-duration, single-order tests also
+have uncontrolled asset-cache, OS scheduling and concurrent development work;
+they do not prove native PCM caused the difference. Preserve both failures and
+clean lifecycle evidence. Bank/RPC producers still bypass the PCM facade and
+retain legacy global ownership. Reports are in each session's
+`pcm-analysis.json`, `movie-pacing-analysis.json/.md`,
+`movie-work-analysis.json/.md` and `controls-observation.json` beneath
+`build-native-sjuni/playtests/`.
