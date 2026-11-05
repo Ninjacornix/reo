@@ -92,7 +92,24 @@ Source `42a5e4a63fe20131285ff88cde54b7fcf0686b9d` is sealed as manifest
 It adds the default-off quiescent DVCI scalar and synchronous resource-read
 adapters. All 136 fixed runtime/backend/authored units passed the bundled LLVM
 preflight; the separate receipt explicitly says no game was linked. The full
-2,361-unit build is in progress. V3 has not been launched or validated in-game.
+2,361-unit build passed in 1,564.484 seconds, including 134 reused preflight
+objects; the freshly linked executable has SHA-256
+`a6dc465f26ad365b85dc9e40e80034a49da32a8fd6c6aea0e5949f93881cc4e1`.
+
+`resource-native-v3` used this private executable with the ISO unavailable,
+plain imported PAK, both native resource/scalar adapters enabled, native CD
+worker/SJUNI disabled and `REO_CD_ASYNC=0`. The 119.360-second session reached
+gameplay at 61.756 seconds and exercised movement, message, inventory,
+pause/quit, results and fresh main-menu proof. An ordinary identity-checked
+window close exited with code 0. The verified mount was observed, sampled
+payload counters prove at least 256 successful native reads with zero recorded
+native failures, and scalar body counters establish at least 512 seeks,
+128 tells and 8,192 status queries. The transferred query has no body proof.
+Audio counters report 522,500 signal frames and zero underruns over 94 windows;
+this is not waveform parity. Renderer captures inspected so far show the
+loading/results flow; no room-image equivalence is claimed. The same-binary
+opt-out comparison is in progress. Evidence is retained in the session's
+`resource-analysis.json` with source/log identities and original line references.
 
 The resource adapter requires actual plain PAK facade layout agreement plus
 `REO_NATIVE_RESOURCE_READS=1`, `REO_GAME_PAK=1` and `REO_CD_ASYNC=0`. Native

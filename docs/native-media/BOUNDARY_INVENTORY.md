@@ -194,6 +194,18 @@ words and nine omitted zero words, again zero conflicts/nonzero omissions.
 
 ## Concrete next implementation and parity gates
 
+Implementation update: the independent [control](../../game/native/adx_control/README.md)
+and [mono](../../game/native/adx_block/README.md) cores now pass their bounded
+original-code comparisons. The [stereo/downmix core](../../game/native/adx_stereo/README.md)
+also matches 522 independently generated cases with GCC and LLVM; its
+[oracle record](ADX_STEREO_ORACLE.md) describes the added isolated DIV model.
+The guarded mono adapter is committed and sealed into a separate V4 candidate,
+whose authored-unit preflight is running; no live native decode is claimed yet.
+The [exact-source PCM study](PCM_OWNER_EXTRACTION.md) establishes the next owner
+boundary and separates early whole-SJ credit from buffer retirement. The list
+below retains the dependency order; completed isolated kernels do not close the
+remaining publication, device and player lifecycle gates.
+
 1. Implement a small ordinary typed predictor-control state from the nine scalar
    helpers and compare it against these independent fixtures. Keep guest layout
    conversion in a temporary bridge, preserve exact selective writes and fallback

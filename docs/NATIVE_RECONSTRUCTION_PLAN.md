@@ -4,8 +4,8 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has thirteen passing suites, including the new independent ADX
-control and mono block cores. Full transition and wider
+project now has fourteen passing suites, including the independent ADX
+control, mono and stereo/downmix block cores. Full transition and wider
 real-consumer validation remain in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the
@@ -47,8 +47,13 @@ external hooks. It confirms why asynchronous guest-target publication needs a
 stronger incarnation/reservation contract. The current implementation cut keeps
 the original synchronous RPC/guest ownership and adds exact in-file reads from
 a verified actual plain-PAK layout. Its native mount/reader is tested separately;
-the new default-off game adapter requires a fresh linked candidate. The four-entry
-quiescent DVCI scalar adapter is also ready for that candidate. Wider resources/
+the default-off game adapter now has a linked V3 candidate and a bounded clean
+PAK session proving successful native reads. Three of the four quiescent DVCI
+scalar entries also have executed-body evidence; comparison and broader coverage
+remain open. The [media inventory](native-media/BOUNDARY_INVENTORY.md),
+[stereo oracle](native-media/ADX_STEREO_ORACLE.md) and
+[PCM owner extraction](native-media/PCM_OWNER_EXTRACTION.md) define the current
+decoder and host-output boundaries. Wider resources/
 media, gameplay, rendering and final runtime removal remain required.
 
 The objective is to reconstruct Outbreak so its game logic and platform services
