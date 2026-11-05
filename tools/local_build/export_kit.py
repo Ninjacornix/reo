@@ -123,6 +123,8 @@ def export(root, build, dependency, destination, recompiler, recipe_plan=None, g
     copy(root / "network/native/automatic_account.h", "source/network/native/automatic_account.h")
     for name in ("tools/parallel_gs_backend/resident_gs/scanout_spirv.hpp",
                  "runtime/gs/frame_pacing.h", "runtime/gs/shader_warmup.h",
+                 "runtime/gs/display_sync.h", "recomp/overrides/reo_display_sync.h",
+                 "tools/parallel_gs_backend/presentation_mode.h",
                  "runtime/timer/windows_resolution.h", "runtime/audio/host_bridge.h",
                  "runtime/audio/reo_output_device.h", "runtime/text/subtitles.h",
                  "recomp/overrides/reo_subtitles.h", "runtime/text/message_timing.h",
