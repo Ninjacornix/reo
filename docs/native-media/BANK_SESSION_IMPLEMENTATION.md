@@ -205,8 +205,45 @@ python game/native/audio_banks/verify.py `
   --output build-native-sjuni/audio-bank-session-checks/gcc
 ```
 
-Independent full-source fixtures and float/state/order comparison remain required
-before any parity admission. Then the complete bank RPC/queries/reset facade,
-runtime/session identity, selected-owner registration, guest asset capture and
-actual provider shutdown must be integrated and rebuilt coherently. These unit
-checks do not establish those missing boundaries or faster gameplay.
+The independent original comparison subsequently passed with both compilers,
+without changing any of the seven frozen candidate files. The separately
+authored qualified124 source oracle covers18 cases/252 actions. Comparison is
+exact for13,004 rendered float words,12,768 gain-call records, request/voice/
+envelope/frame-clock state, all observed sample metadata, clip ownership IDs and
+parser/load/query results. This admits the exercised standalone domain; it does
+not prove every possible bank or packet.
+
+`compare_original.py` verifies all candidate and oracle identities before reading
+expected observations. It reuses the original binary input reader and JSON
+observer formatting. `native_transport.hpp` translates the original raw packet
+inputs into public typed Session calls outside the core; Session owns all bank
+loads, commands and renders. A test-only access-control shim reads State for the
+observer, with all candidate source included in one translation unit to avoid
+differing class declarations across translation units. No expected value drives
+DSP, mutation, ordering or normalization. Low-level parser/VAG/TQ probes invoke
+the candidate's unchanged source-derived utility classes.
+
+The source's unsupported-report counts match, but original observation does not
+include diagnostic-kind events. The transport maps packet-opcode/load-id reports
+to typed `global_control`, so event-kind parity is expressly not admitted. Its
+packet parser also preserves an accepted invalid-port0x4C as a no-op without a
+report; invalid-port0x47–0x4A instead report globally. Gain-domain errors, lifecycle
+and budget policies continue to be independent native contracts tested above.
+
+Receipts are
+`build-native-sjuni/audio-bank-original-comparison/{gcc,llvm}/receipt.json`,
+SHA256 `b0764f73f6bda487a9616af4adbb7e83eb1dad36ab93c41558a3e61a32ca81c0`
+and `7b9d31fdc60affbc0fbc5dc00a4cfcc6a302a6cad7bfe474881536151820912f`.
+Both have zero differences and empty postcheck changes. Reproduce:
+
+```powershell
+python game/native/audio_banks/compare_original.py `
+  --cxx C:/msys64/mingw64/bin/g++.exe `
+  --output build-native-sjuni/audio-bank-original-comparison/gcc
+```
+
+The complete bank RPC/queries/reset facade, runtime/session identity,
+selected-owner registration, whole-session prepared-asset budget, guest asset
+capture and actual provider shutdown remain to be integrated and rebuilt
+coherently. These isolated checks establish neither those boundaries nor faster
+gameplay. No game or audio device was run for these comparisons.

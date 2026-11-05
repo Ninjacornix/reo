@@ -83,8 +83,9 @@ The [bank session](native-media/BANK_SESSION_IMPLEMENTATION.md) reuses the
 source-qualified host bank/sequence/VAG algorithms behind explicit session state,
 whole-producer leases, reset epochs and allocation-free render scratch/retirement.
 Its 123 isolated assertions pass with GCC and LLVM, including the standalone
-Release CMake target. Independent original-source behavior comparison remains
-pending. The [integration review](native-media/BANK_BACKEND_INTEGRATION_REVIEW.md)
+Release CMake target. Independent original-source comparison now matches all
+252 actions, 13,004 float words and 12,768 gain calls with both compilers, without
+changing the frozen core. The [integration review](native-media/BANK_BACKEND_INTEGRATION_REVIEW.md)
 defines aggregate PCM/bank/RPC selection and shutdown ordering; prepared-asset
 budgeting and the runtime adapter are required before installing this owner.
 
