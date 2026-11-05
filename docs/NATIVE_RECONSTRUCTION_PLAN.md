@@ -4,9 +4,9 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has seventeen standalone suites, including the independent ADX
+project now has eighteen standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
-host-output lifetime owner. Full transition and wider
+host-output lifetime owner and raw-ID PCM session bridge. Full transition and wider
 real-consumer validation remain in progress.
 
 Current sequencing, updated 2026-11-05: the user authorized committing the
@@ -63,7 +63,9 @@ retains the user's observation and distinguishes measured stalls from suspects.
 Complete PCM [session dispatch](native-media/PCM_BACKEND_DISPATCH.md),
 [output ownership](native-media/AUDIO_OUTPUT_OWNER.md) and the
 [pinned stream provider](native-media/NATIVE_STREAM_PROVIDER.md) have isolated
-evidence; they are not yet installed as one whole backend. The provider shutdown
+evidence. The [raw-ID session bridge](native-media/PCM_SESSION_BRIDGE.md)
+also reproduces both toolchains' actual mix traversal and source-hook ordering;
+they are not yet installed as one whole backend. The provider shutdown
 ordering fix requires a new coherent candidate. Wider resources/
 media, gameplay, rendering and final runtime removal remain required.
 
