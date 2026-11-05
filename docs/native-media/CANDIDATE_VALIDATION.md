@@ -18,11 +18,13 @@ No private runtime archive was substituted for this coherent source build.
 
 V5 source `6a095697abac1ce32df548d1671de7187d6c1057`, manifest
 `7f35cce0958df29167ee1f7b0d84ad197ebf4ec2ec738921824e0d4865c8c324`,
-adds the default-off stereo/downmix adapter. Its 140-unit preflight passed; the
-2,365-unit full build is running. Neither build includes the later standalone
+adds the default-off stereo/downmix adapter. Its 140-unit preflight and
+2,365-unit full build passed (140 verified objects reused). Executable SHA-256:
+`492a4315a3e3637db770adc87314b5f5ce1a08afa048920dbf98b302fb933f91`.
+Neither build includes the later standalone
 PCM owner or predictor-service extension. Those cores remain independent work.
 
-Both use the exact owned File #1 ELF, verified bundled LLVM/MinGW, reconstructed
+These builds use the exact owned File #1 ELF, verified bundled LLVM/MinGW, reconstructed
 121-patch dependency source and pinned audio provider described in the
 [resource validation record](../native-resources/CANDIDATE_VALIDATION.md).
 
@@ -37,7 +39,7 @@ tests. Native keyed mono is requested with its separate post-commit trace enable
 | --- | --- |
 | `adx-mono-pcm-v4` | 591.406 seconds, ordinary owned window close, exit 0. Mono installation recorded, **zero executed native mono proofs**. The observer could not confirm character selection; renderer capture shows that menu. Movie activity in the background does not establish the scenario opening. Audio counters: 21,490,718 signal / 2,240 underrun frames. Extremely verbose movie diagnostics and repeated whole-log reads affected the test harness; this is not performance evidence. |
 | `adx-mono-pcm-v4b` | 129.078 seconds, ordinary owned close, exit 0. Mono installation, zero native mono proofs; no confirmed cinematic/gameplay route. Signal 4,172,158, underrun 0. Bounded observer stopped after menu confirmation retries; background controller admission was absent. |
-| `adx-mono-pcm-v4c` | Repeat in progress with background private-controller admission, bounded state observation and verbose per-poll movie logging omitted. The observer has confirmed the natural transition into cinematic phase; final playback/shutdown/native-call evidence is pending. |
+| `adx-mono-pcm-v4c` | 432.437 seconds, background private-controller admission, bounded state observation and verbose per-poll movie logging omitted. Two ordinary Cross confirmations, no cinematic skip; stable gameplay observed after 346.125 observer seconds. Renderer capture shows the playable bar. Actor position changes from `(8396,13156)` to `(8337.844,13205.433)` after ordinary Up. Owned close exits 0. Two post-commit native mono calls decode 5 and 15 blocks (640 PCM samples); stereo remains original in V4. Signal 18,290,162 / underrun 115,904 frames. This establishes bounded native mono execution and progress, not waveform/timing equivalence. |
 
 The helper now latches the verified character idle state instead of reading the
 entire growing movie log on every poll. The harness supplies the existing
@@ -63,5 +65,51 @@ or completed native execution proof.
 The [large original-word corpus](ADX_LARGE_BLOCK_ORACLE.md) independently
 executes counts through 513 and long marker prefixes before any proposed 512
 bound is admitted. Expanded adapter frame/range/refusal checks and a newly
-sealed coherent linked candidate remain necessary. Keep original selection,
+sealed coherent linked candidate remain necessary for live wider admission.
+Host checks now pass both compilers: 18 admitted large original cases, three
+513-block original-once refusals and 20 expanded range/alias refusals. The
+production delta changes only both count caps and their installation messages;
+decoder arithmetic and source-header cohorts are unchanged. A private V6
+validation revision was sealed from V5 plus those two production CPP files.
+Keep original selection,
 game speed and unsupported-call fallback unchanged.
+
+## V6 wider ADX admission and movie-stutter investigation
+
+V6 private validation revision `f64a013e4a7177827e8a96b38d0505e55592aa7d`
+adds the two 512-block adapter CPP changes to V5. Manifest SHA-256:
+`5457ead9e2fbbc1faa6438a49dead4c20155db3b653756e51c7f39100ff2d504`.
+The 140-unit preflight and 2,365-unit full build passed; the latter reused the
+140 verified preflight objects. Executable SHA-256:
+`751745ca084bf7c80389de8bb6ac021d8304211736be72ff22754be9ad774a9a`.
+The compile plan and SDK headers match V5. Interrupted generation left two
+additional headers in V5's project, explaining conservative cache misses; they
+were neither excluded from hashing nor copied into V6 to fabricate cache hits.
+Future staging is outside compiler input roots. V6 remains immutable.
+
+`adx-original-pcm-v6` is the same-binary original-decoder baseline: native
+resource/CD/SJUNI/scalar and both ADX replacements disabled. Two normal Cross
+confirmations, no skip inputs; stable gameplay observed at 349.157 observer
+seconds. Ordinary owned window close exits 0. No native ADX execution is expected
+or claimed. The user reported occasional movie stutter during this run. The
+approximate observation, owned process/build identity, screenshot and frozen log
+tail are retained in `manual-incidents/movie-stutter-1.json` and its companion
+tail under that session. A single capture does not time or demonstrate a hitch.
+
+This run used `REO_GPU_SHOT_EVERY_SECONDS=5`. The diagnostic path reacquires and
+presents the shared target, waits for GPU copy completion, maps the image and
+synchronously writes a BMP on the graphics owner. It can affect timing and is a
+confound, not a confirmed explanation of the user's symptom. The repeat
+`adx-original-pacing-v6` disables these screenshots and enables the existing
+bounded, in-memory frame timing trace; records export after graphics teardown.
+It must complete before its results can be interpreted. The matching native-on
+repeat is pending. No game speed or rendering-path change is made for these tests.
+
+The offline `tools/native_reconstruction/analyze_movie_pacing.py` reports CPU
+presentation-return intervals, capture-stage durations, record loss and exact
+CSV/log references. Approximate movie windows require adjacent advancing clock
+samples within two seconds; resets and missing windows are unclassified. Its
+four focused tests cover a brief 80 ms hitch hidden among otherwise short
+intervals, missing presentation stages, clock resets/gaps and corrupt timings.
+These observations cannot establish actual display scanout, original game-update
+rate, decoder latency or a root cause. No movie-stutter fix is proven yet.
