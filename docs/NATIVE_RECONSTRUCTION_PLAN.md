@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has forty-three standalone suites, including the independent ADX
+project now has forty-four standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -318,6 +318,17 @@ The complete global ADXB/16-ADXT/RNA service order and movie-clock consumers
 remain unqualified; the already-busy branch is not a substitute for that work.
 Bank/packet aggregation, LSC, logical PAK tails and actual game/media validation
 still gate stage3, followed by stages4–6.
+
+The [verified imported source integration](native-media/IMPORTED_ADXT_SOURCE_IMPLEMENTATION.md)
+now resolves all8,910 base File1 ADX references from actual retained imported
+archives without opening the ISO. Both compilers fully decode6,706 distinct
+finite payloads through the clocked player/shared output, matching the prior
+native PCM baseline and all source/clock/join observations. This supersedes the
+earlier blanket logical-PAK-tail blocker for these full base archives: real
+sector tails are retained. Standalone replacements, overlays and other editions
+remain separate. Original global audio scheduling, bank/packet integration,
+LSC, movies and actual game/media validation still gate stage3. No runtime
+dependency has been removed, and stages4–6 remain required.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring

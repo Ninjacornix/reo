@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "status": "qualified retained native AFS hierarchy and actual imported clocked-player corpus",
+  "stage3_complete": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_iso_opened": false,
+  "production_selected": false,
+  "manifest_sha256": "142aee04a67e0746609897a1ba734cb82e49b75f6e86d2e7ce7c056161a4d04d",
+  "references": 8910,
+  "decoded_unique_finite_payloads": 6706,
+  "loop_references_not_decoded": 89,
+  "receipts": {
+    "build-native-sjuni/afs-hierarchy/qualified-gcc-v1/receipt.json": "fa732164b5263aae64a1865f1c26a9466d4e0c6d10531b0c2d39c0660f2f5920",
+    "build-native-sjuni/afs-hierarchy/qualified-llvm-v1/receipt.json": "455d2770edc3bd50f8795106e2dc7506958dd9a16c3858c0c4616639f4fbd38a",
+    "build-native-sjuni/afs-hierarchy/parent-gcc-v1/receipt.json": "524b5dc6bda480bf957e67339eb11d3ded6df076bdf516d1260b7a4fdbfee51d",
+    "build-native-sjuni/afs-hierarchy/parent-llvm-v1/receipt.json": "edc9f8063055b6b7ea9806ea7b4d129c9b5073f427c479d8e1363bfa18209f3f",
+    "build-native-sjuni/imported-adxt-player/full-gcc-v1/receipt.json": "46a9ba66995815b7a67e30ffaf917b1df3165deee3937844d358614785932bac",
+    "build-native-sjuni/imported-adxt-player/full-llvm-v1/receipt.json": "5f0714c57ef825ef2a0c4d59d6e9b4993c8df80bda81232416d6a804cb96d4f9",
+    "build-native-sjuni/imported-adxt-player/comparison-v1/receipt.json": "0190a302059b53780b92d42a0e63fc73f6c2ea67ce8592ecf3c5073433bad94c"
+  },
+  "additional_sources": {
+    "game/native/afs_hierarchy/verify.py": "ec5bcf1cc67c1221e5ae27e620e7897f25857c5e4dc42f1c58983e951b613614",
+    "tools/native_reconstruction/compare_imported_adxt_player_runs.py": "a222f68935ac2500dbbc25317bc3aaed0c7541ef152113bdede1a9cd4a862823",
+    "game/native/afs_hierarchy/README.md": "cd519c764c78783f018ab590d2cf24b54f8d7bc214a574dc29b01bb1bda7516a",
+    "docs/native-media/IMPORTED_ADXT_SOURCE_IMPLEMENTATION.md": "5f47095de00aa2249c16c6322cd189be016e569f1b50165cc1956a89fd76144c",
+    "game/native/CMakeLists.txt": "08271268c72c40a83fa7a0469054672bdbcfc3eb2fee4b70bd7dfc32941bd0ce",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "62d668db11b3ffe19729e3ae0136db69bfece3ad579ae424c8378ace06217167"
+  }
+}
