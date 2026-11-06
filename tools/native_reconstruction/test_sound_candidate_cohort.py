@@ -1,9 +1,22 @@
 import copy
+from pathlib import Path
+import re
 import unittest
-from prepare_native_candidate import apply_sound_ram_cohort
+from prepare_native_candidate import apply_sound_ram_cohort, AUDIO_BACKEND_UNITS
 
 
 class SoundCandidateCohort(unittest.TestCase):
+    def test_bank_library_matches_the_standalone_linked_source_closure(self):
+        root=Path(__file__).resolve().parents[2]
+        directory='game/native/audio_banks/v2/'
+        cmake=(root/directory/'CMakeLists.txt').read_text()
+        match=re.search(r'add_library\(reo_native_audio_banks_v2\s+STATIC\s+([^)]*)\)',cmake)
+        self.assertIsNotNone(match,'Review the candidate closure when the bank target changes')
+        sources=match[1].split()
+        self.assertTrue(sources and all(p.endswith('.cpp')for p in sources))
+        selected=[name for _,name in AUDIO_BACKEND_UNITS if name.startswith(directory)]
+        self.assertCountEqual(selected,[directory+name for name in sources])
+
     def plan(self):
         return {'units':[
             {'id':'sdk-runtime','archive':'runtime','options':['/DWIN32','/Icohort']},

@@ -74,6 +74,7 @@ PCM_BACKEND_UNITS = (
     ('native_pcm_backend', 'recomp/overrides/native_pcm/runtime_adapter.cpp'),
 )
 AUDIO_BACKEND_UNITS = PCM_BACKEND_UNITS[:-1] + (
+    ('native_audio_bank_algorithms_v2', 'game/native/audio_banks/v2/algorithms.cpp'),
     ('native_audio_bank_session_v2', 'game/native/audio_banks/v2/session.cpp'),
     ('native_audio_packet_v3', 'recomp/overrides/native_banks/v3/packet_adapter.cpp'),
     ('native_audio_aggregate_v2', 'recomp/overrides/native_audio/v2/aggregate.cpp'),

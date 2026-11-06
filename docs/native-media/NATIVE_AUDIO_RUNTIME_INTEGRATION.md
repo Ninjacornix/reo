@@ -32,18 +32,25 @@ retry. The wrapper's isolated tests exercise the relay/lifetime implementation;
 factory ordering is currently source-reviewed and compiled, not executed as a
 live Runtime test.
 
-`prepare_native_candidate.py --audio-backend` assembles twelve explicit audio
+`prepare_native_candidate.py --audio-backend` assembles thirteen explicit audio
 sources in addition to the existing resource/session candidate inputs. It
 requires committed bootstrap installation and matching RAM-companion/selected-GS
 profile headers from the complete public patch series. It rebuilds the runtime
 from that source rather than importing an older PS2 runtime archive. Every C++
 translation unit, including SDK/runtime and GPU backend units, receives the same
 `REO_BUILD_NATIVE_SOUND_RAM_CAPTURE=2` definition. Conflicting old definitions
-refuse preparation. Six planner tests verify runtime/backend and generated-group
+refuse preparation. Seven planner tests verify runtime/backend and generated-group
 inclusion, common options, idempotence and refusal before partial plan changes.
 The first V9 prepared kit omitted generated source-group definitions and was
 superseded before compilation. The corrected planner includes those dynamically
 expanded batches; it does not assume the static unit list is the whole build.
+
+The sealed V10 passed154 authored/runtime compilation units and compiled all
+2,379 full-build units, but linking refused unresolved Bank/Sequence methods:
+the candidate list omitted the existing `audio_banks/v2/algorithms.cpp`. No game
+was linked or launched. The corrected list includes both sources from the
+standalone bank library, with a cross-check against that CMake target. V10's
+failed link evidence is retained; a fresh kit/build is required for validation.
 
 Initial integration uses this sealed private candidate path. The ordinary
 recomp CMake configuration imports a separately built runtime library; it has
