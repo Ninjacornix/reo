@@ -8,6 +8,14 @@ short presentation-return gaps with periodic GPU screenshots disabled. The
 original screenshot-enabled incident also retains a separate, much longer
 VBlank-dispatch interruption and audio starvation.
 
+Player follow-up, 2026-11-06: "last time I didnt notice those stutters".
+Treat this as evidence that the perceived symptom varies between sessions.
+The message supplies no exact build/session identity or individual hitch time;
+do not assign it to one private run or interpret it as a measured zero-stutter
+baseline. Preserve earlier smooth playback as a comparison target. The later
+[V7/V8 candidate record](CANDIDATE_VALIDATION.md) retains both measured gaps and
+coverage limits; none of those runs establishes a controlled fix/retest cause.
+
 ## Evidence and identity
 
 Private artifacts below are ignored build outputs, not portable repository
