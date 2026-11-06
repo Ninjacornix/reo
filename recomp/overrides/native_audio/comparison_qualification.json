@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "aggregate_freeze_sha256": "bc33ed692ea0be697dcd0b8d3950e534c8dca3226dc62b119b8dfd3d1523a8db",
+  "production_core_changed": false,
+  "original_receipt_sha256": "b142dd116ef7c81b03c9795462a324ab413a29baa8d4147c098225adfd20da57",
+  "raw_observations_normalized": false,
+  "applicable_reference_equal": true,
+  "declared_terminal_policy_differences": 14,
+  "cases": 21,
+  "actions": 287,
+  "float_words": 9316,
+  "hooks": 10052,
+  "bank_gain_hooks": 9856,
+  "difference_scope": "shutdown_both action9 kind15 observer portState count fields0..13: original0, V2closed retains sentinel999; no other differences",
+  "transport_sha256": {
+    "oracle_transport.hpp": "67ca38ec3ad3e111b39c3bfa6e0ebb11783a93d3508b5bcbcc4bb78e9edac845",
+    "compare_original.py": "3e5da44b9a9d8325842be178a8012a9b1312c698c24ee0b48ce0bd1149c25ad8"
+  },
+  "compilers": {
+    "gcc-original-v3": {
+      "receipt_sha256": "776ec8b83c4f007d20322bb9eb693f039563e0ea42fe29f7d5903c5f0709f15e",
+      "differences_sha256": "438d30ef3fc7cd3bb1758fafd6f3f52410243b69b30a4c5a9ec51d66e12ac94a",
+      "actual_sha256": "59b21562284768df2736c1273f8837e2cb04485ffb12becd295fbb2ef0899afe",
+      "unit_receipt_sha256": "4a5335ba38cf8133d5922c4de550c32190bb0fe0f9cd5844f0e73e7627af32d1",
+      "actual_object_project_inputs": {
+        "recomp/overrides/native_audio/aggregate.cpp": "40965f93dc35d5e665a98b096044dbe553c83cd217e0990d8cea63dbdf39dd77",
+        "recomp/overrides/native_audio/aggregate.h": "681bfd778a88aef6498f7ea4497afbacdbcc20270dfaef3c8d10d3f6fbdd23be",
+        "build-native-sjuni/dependency-bank-reapply-v3/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h": "631db6363db9a8945711f5c305ed8bfb0628ca50b3625cc2492e2afb3987f126",
+        "game/native/pcm_bridge/session_bridge.hpp": "0b7c0b6f70234110035d05757aa93095ea4176b069f55fd581dee00ade31f9f3",
+        "game/native/pcm/pcm.hpp": "9fe0aff92070569bfd6744856ea438b92099ec38f1875dc660261ef755b659cb",
+        "game/native/audio_output/audio_output_owner.h": "cbc6cc13c770c1d011ad35ae9707ffe51fae171b1bbffa13dd073f9e112a2102",
+        "recomp/overrides/native_banks/packet_adapter.h": "f7fe610037b9c58ff52a53f64053e75036f977645bb9288e7afd7a54b1c4e9d7",
+        "game/native/audio_banks/v2/session.hpp": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+        "game/native/audio_banks/v2/budget.hpp": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18",
+        "build-native-sjuni/dependency-bank-reapply-v3/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h": "f051ccd2e250d9bf9bb51cdaa6a0ed7fab4c94342f822e7567fa0d158274b4cf",
+        "recomp/overrides/native_banks/backend_status.h": "3ebf14a94829b4d5e42e07cddbe0ddd5a6e627069926c4970fa71b812500287e"
+      }
+    },
+    "llvm-original-v1": {
+      "receipt_sha256": "db75dd1cf35655253f2ffcdf247571ba155ace2b6de5459f058675f7c8df503b",
+      "differences_sha256": "438d30ef3fc7cd3bb1758fafd6f3f52410243b69b30a4c5a9ec51d66e12ac94a",
+      "actual_sha256": "59b21562284768df2736c1273f8837e2cb04485ffb12becd295fbb2ef0899afe",
+      "unit_receipt_sha256": "d87f58c658e7f87ddc61763274fcf7e7151f6ad18c831bd6011a9e99d1704d4e",
+      "actual_object_project_inputs": {
+        "recomp/overrides/native_audio/aggregate.cpp": "40965f93dc35d5e665a98b096044dbe553c83cd217e0990d8cea63dbdf39dd77",
+        "recomp/overrides/native_audio/aggregate.h": "681bfd778a88aef6498f7ea4497afbacdbcc20270dfaef3c8d10d3f6fbdd23be",
+        "build-native-sjuni/dependency-bank-reapply-v3/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h": "631db6363db9a8945711f5c305ed8bfb0628ca50b3625cc2492e2afb3987f126",
+        "game/native/pcm_bridge/session_bridge.hpp": "0b7c0b6f70234110035d05757aa93095ea4176b069f55fd581dee00ade31f9f3",
+        "game/native/pcm/pcm.hpp": "9fe0aff92070569bfd6744856ea438b92099ec38f1875dc660261ef755b659cb",
+        "game/native/audio_output/audio_output_owner.h": "cbc6cc13c770c1d011ad35ae9707ffe51fae171b1bbffa13dd073f9e112a2102",
+        "recomp/overrides/native_banks/packet_adapter.h": "f7fe610037b9c58ff52a53f64053e75036f977645bb9288e7afd7a54b1c4e9d7",
+        "game/native/audio_banks/v2/session.hpp": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+        "game/native/audio_banks/v2/budget.hpp": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18",
+        "build-native-sjuni/dependency-bank-reapply-v3/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h": "f051ccd2e250d9bf9bb51cdaa6a0ed7fab4c94342f822e7567fa0d158274b4cf",
+        "recomp/overrides/native_banks/backend_status.h": "3ebf14a94829b4d5e42e07cddbe0ddd5a6e627069926c4970fa71b812500287e"
+      }
+    }
+  }
+}

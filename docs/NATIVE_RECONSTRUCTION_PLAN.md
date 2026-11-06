@@ -94,6 +94,15 @@ Requested allocation bytes and asset counts are bounded, including retained
 control blocks and old clips; this does not claim an OS memory limit. Production
 packet capture, aggregate owner dispatch and runtime integration remain required.
 
+The [injected aggregate audio owner](native-media/NATIVE_AUDIO_AGGREGATE.md)
+now supplies one complete V2 PCM/bank selection, admitted render-to-bank token,
+outer-drain/provider-fence ordering and retained pre-clear reports. Both compilers
+pass 12 lifecycle modes and actual SDK-header objects. The independent combined
+source reference matches all 9,316 output float words and 10,052 ordered hooks;
+raw observations retain 14 declared post-shutdown closed-query sentinel
+differences. This remains an inert composition requiring qualified capture,
+SDK companion integration and coherent game validation.
+
 The [native SJRB ring core](native-media/SJRB_IMPLEMENTATION.md) now owns backing
 and chunk incarnations and preserves the admitted two-pool/wrap-copy contract.
 Both compilers match 30 original cases / 165 calls, including the constructor's

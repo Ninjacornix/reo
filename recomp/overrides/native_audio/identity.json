@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "cohort": "native-audio-aggregate-1-pre-joint-expected",
+  "purpose": "Complete injected V2 composite owner over unchanged component cores; new joint original expected not read before freeze",
+  "candidate_sha256": {
+    "aggregate.h": "681bfd778a88aef6498f7ea4497afbacdbcc20270dfaef3c8d10d3f6fbdd23be",
+    "aggregate.cpp": "40965f93dc35d5e665a98b096044dbe553c83cd217e0990d8cea63dbdf39dd77",
+    "tests.cpp": "cbe8a15dbf9950112ed57908b976f2ad864f7dfe000fcc0651a47851cc03c28d",
+    "verify.py": "1947475e5e58fb8b854852f7e88da8a87332b19266d96302deba3afbc196e010"
+  },
+  "actual125_receipt_sha256": "3019662f2fd62dbe4a9b3c7b99528bd631338424597ad78d2a4a04bcebeb3d6a",
+  "bank_v2_identity_sha256": "77b6c1bc20f6c1ea261ea19df9bcde3a5fa516c94e7b2c7d8d6503ca0f7aefca",
+  "packet_adapter_identity_sha256": "2d7efe5f594096d8e1083214341451bde5aa4396d1b7b37750c0a594e9f66616",
+  "unit_receipts": {
+    "gcc-v3": "4a5335ba38cf8133d5922c4de550c32190bb0fe0f9cd5844f0e73e7627af32d1",
+    "llvm-v1": "d87f58c658e7f87ddc61763274fcf7e7151f6ad18c831bd6011a9e99d1704d4e"
+  },
+  "joint_expected_read_before_freeze": false,
+  "component_original_expectations_previously_seen": true,
+  "runtime_capture_factory_implemented": false,
+  "bootstrap_installed": false,
+  "game_run": false,
+  "device_opened": false
+}
