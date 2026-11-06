@@ -143,6 +143,12 @@ standalone CMake checks pass. Raw unpublished free-space bytes are deliberately
 outside that comparison. Window sharing, headers, loop policy and actual
 resource/player integration remain separate.
 
+The [header oracle](native-media/ADX_HEADER_ORACLE.md) adds 31 completed
+integer/short/reject cases and eight explicitly partial tag0 executions. The
+successful path remains open at coefficient FPU setup; no invented coefficient
+or trig result is used to claim header admission. This is a required remaining
+media boundary, alongside loop transitions and playback/credit clocks.
+
 Actual [disc configuration seals](native-media/CD_RAM_CONFIGURATION_SEAL.md)
 and a conservative [graphics capture gate](native-media/CPU_RAM_CAPTURE_GATE.md)
 now have dual-compiler isolated evidence. They are prerequisites for coherent
