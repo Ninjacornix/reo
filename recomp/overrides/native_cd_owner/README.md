@@ -92,3 +92,9 @@ Mocks use synthetic RAM/device/dispatch services. Owned original text supplies
 identity gates only; no original instructions are executed. The runtime patch has
 its own exact-method/race/unwind checks. Neither result is linked-game,
 original-device, audio/movie or performance validation.
+
+The actual configuration branches now also issue optional synchronous RAM-writer
+receipts and retained configuration seals. The expanded 21-scenario dual-compiler
+checks and remaining memory-authority limits are documented in
+[CD_RAM_CONFIGURATION_SEAL.md](../../../docs/native-media/CD_RAM_CONFIGURATION_SEAL.md).
+Bootstrap capture integration remains pending.

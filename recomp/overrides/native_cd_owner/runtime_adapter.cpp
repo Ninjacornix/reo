@@ -24,6 +24,15 @@
 
 namespace reo_cd_async {
 bool enabled = false; // Bootstrap registration only; never changed by the worker.
+struct RamConfigurationState {
+    PS2Runtime* runtime{};
+    const std::uint8_t* memory{};
+    std::size_t bytes{};
+    std::uint64_t generation{};
+    RamWriteMode mode{RamWriteMode::unknown};
+    bool asynchronous_ever_started{};
+    std::atomic<std::uint32_t> seals{0};
+};
 namespace {
 using reo::native::tasks::SerialWorker;
 using reo::native::tasks::StopMode;
@@ -146,6 +155,11 @@ private:
 std::shared_ptr<Session> active;
 std::mutex active_mutex;
 std::mutex configuration_mutex;
+std::shared_ptr<RamConfigurationState> configuration;
+std::uint64_t configuration_generation{};
+// Conservative process-profile exclusion. Never lose async history when a
+// replacement receipt allocation fails or another Runtime is configured.
+bool asynchronous_worker_attempted{};
 
 std::shared_ptr<Session> load_active() {
     std::lock_guard lock(active_mutex);
@@ -174,40 +188,99 @@ bool identity(const char* serial, const std::uint8_t* memory, std::size_t bytes)
 }
 } // namespace
 
-void configure(const char* serial, std::uint8_t* memory, std::size_t bytes,
-               PS2Runtime& runtime) noexcept {
-    const char* opt = std::getenv("REO_NATIVE_CD_OWNER");
-    const char* legacy = std::getenv("REO_CD_ASYNC");
-    if (!opt || std::strcmp(opt, "1") || (legacy && !std::strcmp(legacy, "0"))) return;
-    if (!identity(serial, memory, bytes) || runtime.memory().getRDRAM() != memory ||
-        !runtime.hasFunction(callback)) return;
+SyncRamWriteSeal::SyncRamWriteSeal(std::shared_ptr<RamConfigurationState> state) noexcept
+    :state_(std::move(state)) {}
+SyncRamWriteSeal::SyncRamWriteSeal(SyncRamWriteSeal&& other) noexcept = default;
+SyncRamWriteSeal& SyncRamWriteSeal::operator=(SyncRamWriteSeal&& other) noexcept {
+    if(this!=&other){release();state_=std::move(other.state_);}return *this;
+}
+SyncRamWriteSeal::~SyncRamWriteSeal(){release();}
+void SyncRamWriteSeal::release() noexcept {
+    if(state_){state_->seals.fetch_sub(1,std::memory_order_acq_rel);state_.reset();}
+}
+SyncRamWriteSeal::operator bool() const noexcept {return bool(state_);}
+bool SyncRamWriteSeal::matches(const PS2Runtime& runtime,const std::uint8_t* memory,std::size_t bytes) const noexcept {
+    return state_ && state_->runtime==&runtime && state_->memory==memory && state_->bytes==bytes;
+}
+std::uint64_t SyncRamWriteSeal::generation() const noexcept {return state_?state_->generation:0;}
+ConfigurationReceipt::ConfigurationReceipt(std::shared_ptr<RamConfigurationState> state) noexcept
+    :state_(std::move(state)) {}
+std::uint64_t ConfigurationReceipt::generation() const noexcept {return state_?state_->generation:0;}
+SyncRamWriteSeal ConfigurationReceipt::try_seal(PS2Runtime& runtime,const std::uint8_t* memory,std::size_t bytes) const noexcept {
+    auto setup=runtime.acquirePreRunSetup();
+    if(!setup)return {};
+    std::lock_guard lock(configuration_mutex);
+    if(!state_ || state_!=configuration || state_->runtime!=&runtime || state_->memory!=memory ||
+       state_->bytes!=bytes || runtime.memory().getRDRAM()!=memory ||
+       state_->mode!=RamWriteMode::synchronous || state_->asynchronous_ever_started ||
+       state_->seals.load(std::memory_order_relaxed)==UINT32_MAX || load_active())return {};
+    state_->seals.fetch_add(1,std::memory_order_relaxed);
+    return SyncRamWriteSeal(state_);
+}
+
+ConfigurationResult configureWithReceipt(const char* serial,std::uint8_t* memory,std::size_t bytes,PS2Runtime& runtime) noexcept {
+    auto setup=runtime.acquirePreRunSetup();
+    if(!setup)return {ConfigurationStatus::phase_closed,RamWriteMode::unknown,{}};
     try {
         std::lock_guard lock(configuration_mutex);
+        // Even identical configure attempts refuse while sealed: no stale
+        // receipt can silently certify a new Runtime at reused addresses.
+        if(configuration && configuration->seals.load(std::memory_order_acquire))
+            return {ConfigurationStatus::conflict,RamWriteMode::unknown,{}};
+        if(runtime.memory().getRDRAM()!=memory || !identity(serial,memory,bytes) || !runtime.hasFunction(callback))
+            return {ConfigurationStatus::invalid_identity,RamWriteMode::unknown,{}};
+        const bool prior_async=asynchronous_worker_attempted;
+        // Invalidate unsealed observations before changing/attempting a route.
+        // Failure to allocate the replacement receipt must never leave an old
+        // synchronous receipt usable after a worker was constructed.
+        configuration.reset();
+        const auto observe=[&](RamWriteMode mode,bool ever) -> ConfigurationResult {
+            if(configuration_generation==UINT64_MAX){configuration.reset();return {};}
+            auto state=std::make_shared<RamConfigurationState>();
+            state->runtime=&runtime;state->memory=memory;state->bytes=bytes;
+            state->generation=++configuration_generation;state->mode=mode;
+            state->asynchronous_ever_started=ever;
+            configuration=state;
+            return {ConfigurationStatus::observed,mode,ConfigurationReceipt(std::move(state))};
+        };
         if (const auto current = load_active()) {
-            if (&current->runtime == &runtime && current->memory == memory &&
-                !current->stopping.load(std::memory_order_acquire)) enabled = true;
-            return;
+            if (&current->runtime != &runtime || current->memory != memory)
+                return {ConfigurationStatus::conflict,RamWriteMode::unknown,{}};
+            if(!current->stopping.load(std::memory_order_acquire))enabled=true;
+            return observe(RamWriteMode::asynchronous,true);
         }
+        const char* opt=std::getenv("REO_NATIVE_CD_OWNER");
+        const char* legacy=std::getenv("REO_CD_ASYNC");
+        if(!opt || std::strcmp(opt,"1") || (legacy && !std::strcmp(legacy,"0")))
+            return observe(RamWriteMode::synchronous,prior_async);
         const auto stack = runtime.reserveAsyncCallbackStack(0x4000u, 16u);
         if (!stack) {
             std::fprintf(stderr, "[NATIVE-CD-OWNER] callback stack unavailable; original HLE retained\n");
-            return;
+            return observe(RamWriteMode::synchronous,prior_async);
         }
+        asynchronous_worker_attempted=true;
         auto session = std::make_shared<Session>(runtime, memory, stack, runtime.lookupFunction(callback));
         if (!runtime.registerExternalWorker(session)) {
             session->requestStop();
             if (!session->join()) std::terminate();
             std::fprintf(stderr, "[NATIVE-CD-OWNER] runtime registration refused; original HLE retained\n");
-            return;
+            return observe(RamWriteMode::synchronous,true);
         }
         store_active(std::move(session));
         enabled = true;
         std::fprintf(stderr, "[NATIVE-CD-OWNER] bounded session worker registered with runtime lifecycle\n");
+        return observe(RamWriteMode::asynchronous,true);
     } catch (const std::exception& error) {
-        std::fprintf(stderr, "[NATIVE-CD-OWNER] setup unavailable: %s; original HLE retained\n", error.what());
+        std::fprintf(stderr, "[NATIVE-CD-OWNER] setup/receipt unavailable: %s; current route retained\n", error.what());
     } catch (...) {
-        std::fprintf(stderr, "[NATIVE-CD-OWNER] setup unavailable; original HLE retained\n");
+        std::fprintf(stderr, "[NATIVE-CD-OWNER] setup/receipt unavailable; current route retained\n");
     }
+    return {};
+}
+void configure(const char* serial,std::uint8_t* memory,std::size_t bytes,PS2Runtime& runtime) noexcept {
+    const auto result=configureWithReceipt(serial,memory,bytes,runtime);
+    if(result.status==ConfigurationStatus::conflict)
+        std::fprintf(stderr,"[NATIVE-CD-OWNER] configuration conflict; active sealed/worker mode retained\n");
 }
 
 void sifCallRpc(std::uint8_t* memory, R5900Context* context, PS2Runtime* runtime) {

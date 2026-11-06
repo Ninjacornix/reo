@@ -40,7 +40,7 @@ void check(bool value, const char* expression) {
     ++checks;
     if (!value) throw std::runtime_error(expression);
 }
-#define CHECK(...) check((__VA_ARGS__), #__VA_ARGS__)
+#define CHECK(...) check(static_cast<bool>(__VA_ARGS__), #__VA_ARGS__)
 constexpr std::uint32_t client = 0x208AD0, send = 0x207A00, callback_pc = 0x1004D8;
 std::atomic<unsigned> callback_entries{0}, callback_completions{0};
 std::atomic<bool> callback_invalid{false}, throw_callback{false};
@@ -322,6 +322,126 @@ void changed_completion_metadata(const char* fixture) {
     // A metadata change after publication must not invoke the edge-copy body or
     // replay the read. The unresolved original busy state is diagnosed.
 }
+auto observed_config(PS2Runtime& runtime) {
+    return reo_cd_async::configureWithReceipt("SLUS-20765",runtime.memory().getRDRAM(),PS2_RAM_SIZE,runtime);
+}
+void sync_configuration_seal(const char* fixture) {
+    using namespace reo_cd_async;
+    PS2Runtime runtime; ReoHwBridge bridge;seed(runtime,fixture);
+    opt("REO_NATIVE_CD_OWNER","0");
+    auto observed=observed_config(runtime);
+    CHECK(observed.status==ConfigurationStatus::observed && observed.mode==RamWriteMode::synchronous);
+    CHECK(observed.receipt.generation()!=0 && !enabled && runtime.stack_reservations==0);
+    CHECK(runtime.setup_leases==0);
+    auto* ram=runtime.memory().getRDRAM();
+    auto seal=observed.receipt.try_seal(runtime,ram,PS2_RAM_SIZE);
+    CHECK(seal && seal.matches(runtime,ram,PS2_RAM_SIZE) && seal.generation()==observed.receipt.generation());
+    CHECK(runtime.setup_leases==0); // Persistent seal must not hold pre-run phase.
+    CHECK(!seal.matches(runtime,ram+1,PS2_RAM_SIZE));
+    CHECK(!observed.receipt.try_seal(runtime,ram,16));
+    opt("REO_NATIVE_CD_OWNER","1");
+    CHECK(observed_config(runtime).status==ConfigurationStatus::conflict);
+    CHECK(!enabled && runtime.stack_reservations==0 && bridge.reads==0);
+    opt("REO_NATIVE_CD_OWNER","0");
+    CHECK(observed_config(runtime).status==ConfigurationStatus::conflict);
+    SyncRamWriteSeal moved=std::move(seal);CHECK(!seal && moved);
+    auto second=observed.receipt.try_seal(runtime,ram,PS2_RAM_SIZE);CHECK(second);
+    moved=std::move(second);CHECK(moved && !second); // Releases replaced lease.
+    moved={};
+    auto next=observed_config(runtime);
+    CHECK(next.status==ConfigurationStatus::observed && next.receipt.generation()>observed.receipt.generation());
+    CHECK(!observed.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+    CHECK(next.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+    CHECK(runtime.setup_leases==0);
+}
+void configuration_phase_and_foreign(const char* fixture) {
+    using namespace reo_cd_async;
+    PS2Runtime runtime,foreign;ReoHwBridge bridge;seed(runtime,fixture);seed(foreign,fixture);
+    opt("REO_NATIVE_CD_OWNER","0");
+    ConfigurationReceipt empty;
+    CHECK(!empty.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
+    auto observed=observed_config(runtime);
+    CHECK(!observed.receipt.try_seal(foreign,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
+    CHECK(!observed.receipt.try_seal(runtime,foreign.memory().getRDRAM(),PS2_RAM_SIZE));
+    runtime.running=true;
+    CHECK(!observed.receipt.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
+    CHECK(observed_config(runtime).status==ConfigurationStatus::phase_closed);
+    runtime.running=false;
+    auto seal=observed.receipt.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE);CHECK(seal);
+    CHECK(observed_config(foreign).status==ConfigurationStatus::conflict);
+    runtime.requestStop();
+    CHECK(seal.matches(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
+    CHECK(!observed.receipt.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
+    CHECK(runtime.setup_leases==0 && bridge.reads==0);
+}
+void configuration_async_refusal(const char* fixture) {
+    using namespace reo_cd_async;
+    PS2Runtime runtime;ReoHwBridge bridge;seed(runtime,fixture);
+    auto observed=observed_config(runtime);Lifetime lifetime(runtime);
+    CHECK(observed.status==ConfigurationStatus::observed && observed.mode==RamWriteMode::asynchronous);
+    CHECK(!observed.receipt.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
+    opt("REO_NATIVE_CD_OWNER","0");opt("REO_CD_ASYNC","0");
+    auto later=observed_config(runtime);
+    CHECK(later.mode==RamWriteMode::asynchronous && enabled); // Never disable a working route to mint a seal.
+    CHECK(!later.receipt.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
+    CHECK(runtime.setup_leases==0 && bridge.reads==0);
+}
+void configuration_receipt_allocation_failure(const char* fixture) {
+    using namespace reo_cd_async;
+    PS2Runtime runtime;ReoHwBridge bridge;seed(runtime,fixture);opt("REO_NATIVE_CD_OWNER","0");
+    auto observed=observed_config(runtime);auto* ram=runtime.memory().getRDRAM();
+    CHECK(observed.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+    fail_allocation=true;
+    auto failed=observed_config(runtime);
+    CHECK(!fail_allocation && failed.status==ConfigurationStatus::unavailable);
+    CHECK(!observed.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+    CHECK(!enabled && bridge.reads==0 && runtime.setup_leases==0);
+    auto repaired=observed_config(runtime);
+    CHECK(repaired.status==ConfigurationStatus::observed);
+    CHECK(repaired.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+}
+void configuration_failed_registration(const char* fixture) {
+    using namespace reo_cd_async;
+    PS2Runtime runtime;ReoHwBridge bridge;seed(runtime,fixture);opt("REO_NATIVE_CD_OWNER","0");
+    auto old=observed_config(runtime);runtime.registration_allowed=false;opt("REO_NATIVE_CD_OWNER","1");
+    auto attempted=observed_config(runtime);auto* ram=runtime.memory().getRDRAM();
+    CHECK(attempted.status==ConfigurationStatus::observed && attempted.mode==RamWriteMode::synchronous);
+    CHECK(!old.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+    CHECK(!attempted.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+    opt("REO_NATIVE_CD_OWNER","0");auto later=observed_config(runtime);
+    CHECK(later.mode==RamWriteMode::synchronous && !later.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+    fail_allocation=true;auto failed=observed_config(runtime);
+    CHECK(!fail_allocation && failed.status==ConfigurationStatus::unavailable);
+    auto after_failure=observed_config(runtime);
+    CHECK(after_failure.mode==RamWriteMode::synchronous && !after_failure.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
+    CHECK(!enabled && bridge.reads==0 && runtime.setup_leases==0);
+}
+void configuration_disabled_override(const char* fixture) {
+    using namespace reo_cd_async;
+    PS2Runtime runtime;ReoHwBridge bridge;seed(runtime,fixture);opt("REO_CD_ASYNC","0");
+    auto observed=observed_config(runtime);auto* ram=runtime.memory().getRDRAM();
+    CHECK(observed.mode==RamWriteMode::synchronous && runtime.stack_reservations==0 && !enabled);
+    auto seal=observed.receipt.try_seal(runtime,ram,PS2_RAM_SIZE);CHECK(seal);
+    opt("REO_CD_ASYNC","1");
+    CHECK(observed_config(runtime).status==ConfigurationStatus::conflict);
+    CHECK(seal.matches(runtime,ram,PS2_RAM_SIZE) && !enabled && bridge.reads==0);
+}
+void configuration_seal_race(const char* fixture) {
+    using namespace reo_cd_async;
+    PS2Runtime runtime;ReoHwBridge bridge;seed(runtime,fixture);opt("REO_NATIVE_CD_OWNER","0");
+    for(unsigned i=0;i<32;++i) {
+        auto observed=observed_config(runtime);CHECK(observed.status==ConfigurationStatus::observed);
+        std::promise<void> start;auto ready=start.get_future().share();
+        auto sealing=std::async(std::launch::async,[&]{ready.wait();return observed.receipt.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE);});
+        auto configuring=std::async(std::launch::async,[&]{ready.wait();return observed_config(runtime);});
+        start.set_value();auto seal=sealing.get();auto configured=configuring.get();
+        CHECK((seal && configured.status==ConfigurationStatus::conflict) ||
+              (!seal && configured.status==ConfigurationStatus::observed));
+        if(seal)CHECK(seal.generation()==observed.receipt.generation());
+        else CHECK(configured.receipt.generation()>observed.receipt.generation());
+    }
+    CHECK(runtime.setup_leases==0 && !enabled && bridge.reads==0);
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -343,6 +463,13 @@ int main(int argc, char** argv) {
         else if (scenario == "changed-callback") changed_callback(argv[1]);
         else if (scenario == "read-exception") read_exception(argv[1]);
         else if (scenario == "changed-completion-metadata") changed_completion_metadata(argv[1]);
+        else if (scenario == "configuration-seal") sync_configuration_seal(argv[1]);
+        else if (scenario == "configuration-phase") configuration_phase_and_foreign(argv[1]);
+        else if (scenario == "configuration-async") configuration_async_refusal(argv[1]);
+        else if (scenario == "configuration-allocation") configuration_receipt_allocation_failure(argv[1]);
+        else if (scenario == "configuration-registration") configuration_failed_registration(argv[1]);
+        else if (scenario == "configuration-disabled") configuration_disabled_override(argv[1]);
+        else if (scenario == "configuration-race") configuration_seal_race(argv[1]);
         else throw std::runtime_error("Unknown scenario");
         std::cout << scenario << ": " << checks << " host-only checks passed\n";
         return 0;

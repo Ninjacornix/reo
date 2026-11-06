@@ -265,7 +265,8 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         (ADX_STEREO_UNITS if adx_stereo else ()) + (PCM_BACKEND_UNITS if pcm_backend else ()) + \
         (MOVIE_POSITION_UNITS if movie_position else ())
     required = [n for _, n in selected_units] + [
-        'recomp/overrides/native_cd_owner/runtime_adapter.h', 'game/native/tasks/serial_worker.hpp',
+        'recomp/overrides/native_cd_owner/runtime_adapter.h',
+        'recomp/overrides/native_cd_owner/ram_configuration.h', 'game/native/tasks/serial_worker.hpp',
         'recomp/overrides/reo_cd_async.h', 'runtime/audio/reo_output_device.h']
     for name in required:
         source['source/' + name] = commit.read(name)

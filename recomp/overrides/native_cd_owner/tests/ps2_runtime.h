@@ -38,6 +38,21 @@ public:
         std::unique_lock<std::recursive_mutex> lock_;
     };
     ~PS2Runtime() { stopAndFinish(); }
+    // Phase surroundings only; the dependency's real lease implementation has
+    // separate exact-method/race proofs. The adapter releases this short lease.
+    class PreRunSetupLease {
+    public:
+        PreRunSetupLease()=default;
+        explicit PreRunSetupLease(PS2Runtime* runtime):runtime_(runtime){++runtime_->setup_leases;}
+        PreRunSetupLease(PreRunSetupLease&& other) noexcept:runtime_(other.runtime_){other.runtime_=nullptr;}
+        ~PreRunSetupLease(){if(runtime_)--runtime_->setup_leases;}
+        explicit operator bool()const noexcept{return runtime_!=nullptr;}
+        PreRunSetupLease(const PreRunSetupLease&)=delete;
+    private: PS2Runtime* runtime_{};
+    };
+    PreRunSetupLease acquirePreRunSetup() noexcept {
+        return stopping.load() || running.load()?PreRunSetupLease{}:PreRunSetupLease(this);
+    }
     Memory& memory() { return memory_; }
     bool registerExternalWorker(std::shared_ptr<ExternalWorker> worker) {
         if (!registration_allowed || stopping.load()) return false;
@@ -62,6 +77,8 @@ public:
     Function lookupFunction(std::uint32_t pc) const { return functions.at(pc); }
     std::unordered_map<std::uint32_t, Function> functions;
     std::atomic<bool> stopping{false}, kernel_alive{true};
+    std::atomic<bool> running{false};
+    std::atomic<unsigned> setup_leases{0};
     std::atomic<unsigned> guest_depth{0}, scope_exits{0};
     bool registration_allowed{true}, stack_available{true};
     unsigned stack_reservations{};

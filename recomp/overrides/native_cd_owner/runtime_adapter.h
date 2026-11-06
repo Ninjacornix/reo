@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include "ram_configuration.h"
 
 class PS2Runtime;
 struct R5900Context;

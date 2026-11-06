@@ -7,6 +7,7 @@ session or runtime library is executed. Detailed receipts stay in ignored output
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import struct
@@ -27,6 +28,8 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT/'build-native-sjuni/cd-owner-checks')
     parser.add_argument('--runtime-headers', type=Path,
                         help='Also compile the adapter against a supplied real patched PS2Recomp checkout; no link.')
+    parser.add_argument('--runtime-receipt', type=Path,
+                        help='Full reapply receipt; defaults to <runtime-headers>-receipt.json.')
     args = parser.parse_args()
     compiler = shutil.which(args.cxx)
     if not compiler:
@@ -45,13 +48,15 @@ def main():
                                  for pc, length in ((0x101788, 0x1E0), (0x1004D8, 0xB8), (0x100298, 0xA0))))
     sources = [*sorted(TESTS.glob('*')), TESTS.parent / 'runtime_adapter.cpp', TESTS.parent / 'runtime_adapter.h',
                ROOT / 'game/native/tasks/serial_worker.hpp', ROOT / 'game/native/tasks/serial_worker.cpp']
-    sources.append(ROOT / 'recomp/overrides/native_geometry/reo_vu_native_sha256.h')
+    sources.extend([ROOT / 'recomp/overrides/native_geometry/reo_vu_native_sha256.h',
+                    TESTS.parent/'ram_configuration.h'])
     receipt = dict(schema=1, status='running', game_launched=False, runtime_library_linked=False,
                    elf_sha256=elf.sha256, compiler=compiler, compiler_sha256=sha(Path(compiler)),
                    source_sha256={p.relative_to(ROOT).as_posix():sha(p) for p in sources if p.is_file()}, checks=[])
 
     def run(command, name):
-        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=30)
+        env=dict(os.environ);env['PATH']=str(Path(compiler).parent)+os.pathsep+env.get('PATH','')
+        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=30,env=env)
         receipt['checks'].append(dict(name=name, exit_code=result.returncode, command=[str(x) for x in command],
                                       stdout=result.stdout, stderr=result.stderr))
         if result.returncode:
@@ -67,10 +72,22 @@ def main():
         for scenario in ('operations', 'refusals', 'shutdown', 'queue-full', 'callback-overlap',
                          'allocation-failure', 'no-stack', 'late-registration', 'callback-exception',
                          'callback-continuation', 'missing-callback', 'changed-callback', 'read-exception',
-                         'changed-completion-metadata'):
+                         'changed-completion-metadata', 'configuration-seal', 'configuration-phase',
+                         'configuration-async', 'configuration-allocation', 'configuration-registration',
+                         'configuration-disabled', 'configuration-race'):
             run([str(executable), str(fixture), scenario], scenario)
         if args.runtime_headers:
             dependency = args.runtime_headers.resolve()
+            baseline=(args.runtime_receipt or Path(str(dependency)+'-receipt.json')).resolve()
+            rebuilt=json.loads(baseline.read_bytes())
+            if (rebuilt['status']!='passed' or rebuilt['applied_count']<124 or
+                    rebuilt['base_revision']!='c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f'):
+                raise ValueError('Unqualified runtime header cohort')
+            for row in rebuilt['patches']:
+                if sha(ROOT/row['path'])!=row['sha256']:raise ValueError('Changed dependency patch input')
+            for name,digest in rebuilt['source_sha256'].items():
+                if sha(dependency/name)!=digest:raise ValueError('Changed dependency source: '+name)
+            receipt['runtime_reapply_receipt_sha256']=sha(baseline)
             runtime_header = dependency/'ps2xRuntime/include/ps2_runtime.h'
             receipt['real_runtime_header_sha256'] = sha(runtime_header)
             run([compiler, '-std=c++20', '-Wall', '-Wextra', '-Werror', '-mssse3', '-msse4.1',
@@ -80,6 +97,11 @@ def main():
                  '-I'+str(ROOT/'recomp/overrides'), '-I'+str(ROOT),
                  '-c', str(TESTS.parent/'runtime_adapter.cpp'), '-o', str(output/'real_runtime_adapter.o')],
                 'real_runtime_header_object')
+            for name,digest in rebuilt['source_sha256'].items():
+                if sha(dependency/name)!=digest:raise ValueError('Dependency changed during compilation: '+name)
+        receipt['source_postcheck']=[name for name,digest in receipt['source_sha256'].items()
+                                     if sha(ROOT/name)!=digest]
+        if receipt['source_postcheck']:raise ValueError('Adapter/test source changed during checks')
         receipt['status'] = 'passed'
     except Exception as error:
         receipt['status'] = 'failed'
