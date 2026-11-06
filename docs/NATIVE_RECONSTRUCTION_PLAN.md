@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has thirty-seven standalone suites, including the independent ADX
+project now has thirty-nine standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -273,6 +273,20 @@ incorrect native interpretation and failed comparisons remain preserved.
 This cut has a concrete phased PCM bridge, but Window2 still owns its private
 PCM graph. Output copy/consumption credits, full pause/clock composition, LSC
 replacement and actual player integration still follow.
+
+The [single-resource player composition](native-media/ADXT_PLAYER_COMPOSITION_IMPLEMENTATION.md)
+now connects the actual worker/decoder/PCM/control graph to a private native
+output session and the existing output lifetime owner. Both compilers retain
+all48 ready-flag and123 admitted original decoder clients, pass the48-case
+short/long/rate/channel matrix and concrete blocked-source/concurrent-callback/
+failed-provider retirement checks. The full finite actual-asset corpus binds
+all8,910 references and copies6,706 distinct non-looping payloads with exact
+sample/digest equality to the prior qualified native decoder, zero model
+underruns/skips and real source joins. The output provider is an offline model.
+Production output is process-wide and requires shared per-stream ownership;
+the isolated player is not installed. Logical PAK tails, LSC, complete clocks,
+movie consumers and actual game/media validation still gate stage3. Stages4–6
+remain required; no runtime dependency is removed by these standalone checks.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring
