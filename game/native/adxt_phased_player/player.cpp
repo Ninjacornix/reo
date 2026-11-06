@@ -1,4 +1,5 @@
 #include "player.hpp"
+#include "../adxt_serviced_clock/completion.hpp"
 #include <algorithm>
 #include <bit>
 #include <limits>
@@ -272,5 +273,24 @@ Status Player::retire_on_control_thread()noexcept {
     if(retired==window::Status::retirement_pending)return Status::pending;
     if(retired!=window::Status::completed)return s.fail();
     s.retired=true;return Status::completed;
+}
+ClockControl Player::discard_via(std::shared_ptr<adxt_serviced_clock::Service> service,std::uint32_t tick)noexcept{
+    auto& s=*state_;if(s.busy)return{Status::busy,clock::Status::busy};
+    if(s.fault || s.stopping)return{s.fault?Status::fault:Status::closed,clock::Status::invalid_queue};
+    if(!s.output->snapshot().active)return{Status::closed,clock::Status::invalid_queue};
+    // Only the private control session calls this method. Its outer scope
+    // excludes external control while actual group children may enter this
+    // player through their ordinary guarded phase methods.
+    try{
+        adxt_serviced_clock::Completion completion(s.shared_clock,s.clock_state,std::move(service));
+        const auto result=completion.discard(tick);
+        using C=adxt_serviced_clock::Status;
+        if(result==C::completed){s.clock_state=completion.snapshot();s.synchronize_clock();return{Status::completed,clock::Status::completed};}
+        if(result==C::busy)return{Status::busy,clock::Status::busy};
+        if(result==C::unsupported_fp)return{Status::unsupported_profile,clock::Status::unsupported_fp};
+        if(result==C::zero_divisor)return{Status::unsupported_profile,clock::Status::zero_divisor};
+        if(result==C::invalid_queue)return{Status::unsupported_profile,clock::Status::invalid_queue};
+        return{Status::fault,clock::Status::unsupported_service};
+    }catch(...){return{Status::unsupported_profile,clock::Status::unsupported_service};}
 }
 } // namespace reo::native::adxt_phased_player

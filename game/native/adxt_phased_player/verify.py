@@ -16,7 +16,7 @@ SOURCES=['sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adx
          'resources/virtual_file_view.cpp','adx_header/adx_header.cpp','adx_workspace/adx_workspace.cpp',
          'adx_pcm_store/v2/pcm_store.cpp','adx_window/v2/playback_r2/stream_window.cpp',
          'adxt_playback/playback.cpp','adxt_estimated_clock/estimated_clock.cpp',
-         'adxt_integer_clock/integer_clock.cpp','adxt_output_session/session.cpp','pcm/pcm.cpp',
+         'adxt_integer_clock/integer_clock.cpp','adxt_serviced_clock/completion.cpp','adxt_output_session/session.cpp','pcm/pcm.cpp',
          'audio_output/audio_output_owner.cpp','adxt_service_group/service_group.cpp','adxt_transfer_groups/transfer_groups.cpp']
 
 

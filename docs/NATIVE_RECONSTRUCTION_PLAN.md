@@ -374,6 +374,15 @@ base/1 behavior. One zero-frequency case stays outside native admission. The
 canonical private player/control-session service binding remains to be qualified
 before enabling that branch. This is not a completed game/media migration.
 
+The [canonical serviced-clock binding](native-media/ADXT_SERVICE_BINDING_IMPLEMENTATION.md)
+now supplies the actual private group/target and publishes into that same native
+player. Both compilers match60 measurement-derived original operations, detect12
+stale private-factory snapshots and preserve source-poll separation. The extended
+owner again passes all6,706 distinct finite imported payloads and actual lifetime
+fences. The raw player still refuses unowned service. Complete looping playback,
+LSC/seamless, bank/packet output, movies and game ABI/transition validation still
+gate stage3; gameplay, graphics/platform work and runtime removal follow.
+
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring
 getters and modulo accounting. It consumes prepared queue observations and does

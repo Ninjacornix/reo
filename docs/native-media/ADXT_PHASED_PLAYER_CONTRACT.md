@@ -32,8 +32,10 @@ closes all its ports; it never resets or joins the shared output provider.
 Per-player phase methods and clocks use the same serialized control owner and
 busy guard. The caller supplies an original-unit tick; service visits are not
 ticks. The real shared clock service word belongs to the outer group. The
-currently unowned discard/global-service branch continues to refuse until a
-service coordinator owns its complete callback/identity/lifetime boundary.
+public prepared discard entry continues to refuse unowned global service.
+The canonical control session uses a separate private
+[serviced-clock binding](ADXT_SERVICE_BINDING_CONTRACT.md), without exposing a
+caller-supplied service port or mutable player state.
 
 Finite native sources retain complete immutable views with known byte extent.
 Header/sample-limit ownership closes decoding in the qualified finite profile;

@@ -25,8 +25,9 @@ struct ClockResult {Status status{Status::invalid_key};player::ClockResult value
 struct ClockControl {Status status{Status::invalid_key};player::ClockControl value;};
 struct Snapshot {
     output::Snapshot output;
+    player::clock::Shared clock_state;
     std::uint32_t records{},retiring{},service_busy{};
-    std::uint64_t group_visits{},dtx_scans{};
+    std::uint64_t group_visits{},dtx_scans{},discard_diagnostics{};
     bool closing{},joined{},order_required{},guard_fault{};
 };
 class Session final {

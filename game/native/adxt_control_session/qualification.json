@@ -1,30 +1,27 @@
 {
   "schema": 1,
-  "status": "qualified actual native finite media control session",
+  "status": "qualified native media extension with canonical serviced-clock binding",
   "stage3_complete": false,
   "production_selected": false,
+  "native_player_binding": true,
   "game_run": false,
   "device_opened": false,
-  "original_iso_opened": false,
-  "original_whole_pipeline_parity": false,
-  "finite_matrix": 48,
-  "references": 8910,
-  "decoded_unique_finite_payloads": 6706,
-  "manifest_sha256": "f2561d2d2b5f16163d34f2af08b9b75564fa6d5093fce03cda4cd9fafe536a0e",
+  "manifest_sha256": "a52cbeea30ee900ff9be52d64881d999c4f2c207e7661aecd0ccf6b726e1e2c5",
+  "ancestor_qualification_sha256": "450e72c88df2229560bd043615c4f9f63cd5e49a2c799622aaac46b66e396774",
+  "ancestor_snapshot": "build-native-sjuni/adxt-service-binding/ancestor-v1/game/native/adxt_control_session/qualification.json",
+  "private_extension": "canonical owner supplies actual group and publishes fresh clock origin; fifteen inherited player bodies remain identical",
   "receipts": {
-    "build-native-sjuni/adxt-control-session/qualified-gcc-v1/receipt.json": "69a6d62a2d6c6ed40c96d82a397066cf76839f6a091ae5b412eb9724fc583c5f",
-    "build-native-sjuni/adxt-control-session/qualified-llvm-v1/receipt.json": "c25b6a4c2cea95236b68646308fbaaba7a1eb0969fc28ed27b7ca0ff9a3c167a",
-    "build-native-sjuni/imported-adxt-control/full-gcc-v1/receipt.json": "76130593bc7807a0a612cc033e102b1040cdaa8cc6f7c12b6bfd2ddf75f613d3",
-    "build-native-sjuni/imported-adxt-control/full-llvm-v1/receipt.json": "4e44a0fd3075a2df113f0f5bb3dd6c305e22190b8f74d378e31e1dd9bc46c0f9",
-    "build-native-sjuni/imported-adxt-control/comparison-v1/receipt.json": "9c8c1ead17781ad4e7cd546bdbd2b6c1b18ff8f2d02dddbb37021402908c5187",
-    "build-native-sjuni/adxt-control-session/parent-gcc-v1/receipt.json": "65d0bd70875653735311cdf4601f942f8fb4b8803d5a22e9d6714a5355ff0c67",
-    "build-native-sjuni/adxt-control-session/parent-llvm-v1/receipt.json": "b608130fb2761379c675a4027d5c40d39db2c72ee8317f9da96b6f4280cf256f"
+    "build-native-sjuni/adxt-control-session/qualified-gcc-v2/receipt.json": "06c2343f095f80221f260f65d766d4e68c93b34c23a746f5cf88376f1b80db64",
+    "build-native-sjuni/adxt-control-session/qualified-llvm-v2/receipt.json": "fdbbb7693160dd4cff5a4f0500dc92b723e05fba48e72be334c07f80d7646174",
+    "build-native-sjuni/adxt-service-binding/qualified-gcc-v1/receipt.json": "ba524443b66e8414e8bbbb1bdc1fec71d19729acc106d8f63c1744111600d8c2",
+    "build-native-sjuni/adxt-service-binding/qualified-llvm-v1/receipt.json": "49ec0acdf4667345b36e5d96178562149b07c87a7dec69dffc081d6403093193",
+    "build-native-sjuni/imported-adxt-control/full-gcc-v2/receipt.json": "69981acbc8fe7d0793d52810dcff97e8cb264213f96dd3969e5db3e9e36c1d98",
+    "build-native-sjuni/imported-adxt-control/full-llvm-v2/receipt.json": "b1a3fe6a0b2c93d0ba090b487f950b25ad35e5c0c365227db7d1258c664742d9",
+    "build-native-sjuni/imported-adxt-control/comparison-v2/receipt.json": "6dacf290dd80a3f6411f754003cebad5482cb18c46dbfe5d4df57ad2db39bbd0",
+    "build-native-sjuni/adxt-service-binding/parent-gcc-v2/receipt.json": "3173ffc419a16de6852ef715f9e6b78943503964a13312387ff60fa8b3e0ec78",
+    "build-native-sjuni/adxt-service-binding/parent-llvm-v2/receipt.json": "5884e0429806ec655475923a91d75fcda932f79951358e866001184a4a9af4ca"
   },
   "additional_sources": {
-    "game/native/adxt_control_session/README.md": "6fcbbf8f5e05b2b392966d6787d8b35875ee1cb98c429a216577e1b9f2f824ba",
-    "docs/native-media/ADXT_CONTROL_SESSION_IMPLEMENTATION.md": "44906c89c055ec3e54d11c564e1eb7e6a401f24796424705a5bac3158eef389d",
-    "tools/native_reconstruction/compare_imported_adxt_control_runs.py": "8f66a4efd1d043c0a7c537338d2e35a1d0a0a8e9222ee565a0a07a85b44be4f9",
-    "game/native/CMakeLists.txt": "cf29aa7c2a7b79b55dee86413bba3d5816bb1bc167852e6e2c03bb4111491186",
-    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "aeaf2d48a7632d410c1827117039d533908b616f7ad77af43b4e6ff74676b9e0"
+    "docs/native-media/ADXT_SERVICE_BINDING_IMPLEMENTATION.md": "99448b49869f667dc4d6e14378754ff1861169a15bd24ad40bbf5cb360b4056c"
   }
 }

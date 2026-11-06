@@ -1,40 +1,27 @@
 {
   "schema": 1,
-  "status": "qualified actual finite native players under global phases",
+  "status": "qualified native media extension with canonical serviced-clock binding",
   "stage3_complete": false,
   "production_selected": false,
+  "native_player_binding": true,
   "game_run": false,
   "device_opened": false,
-  "original_iso_opened": false,
-  "original_whole_pipeline_parity": false,
-  "finite_matrix": 48,
-  "references": 8910,
-  "decoded_unique_finite_payloads": 6706,
-  "manifest_sha256": "ebf7aaf5ed0355f95239736381b0936dea3a59e14af9ae72e40a00408dc8d2d1",
-  "prior_manifests": {
-    "frozen-v1": "5aacd16daf16c2e1857112026944aab99d9ce8ca37224d0cfcbe94ab12ea2830",
-    "frozen-v2": "99cf39c11553e57638226f590281748dabd4e408d9949b1ce68d37e0ea178838",
-    "frozen-v3": "081dc48eb843b585bbe1d693e1cd2ca28773b85faaa26abc34a8dc752e11540a"
-  },
-  "native_unchanged_from_actual_asset_cohort": true,
-  "changed_files_since_actual_asset_cohort": [
-    "game/native/adxt_phased_player/player_tests.cpp",
-    "game/native/adxt_phased_player/verify.py"
-  ],
+  "manifest_sha256": "c003e087bcbae6cd251050420871528ebc635330817fa184c175e24f8545f751",
+  "ancestor_qualification_sha256": "eea3dbeffd57167f4ba5ba7d35de2891abf1f8672f3502e83f8a5cab29ccf917",
+  "ancestor_snapshot": "build-native-sjuni/adxt-service-binding/ancestor-v1/game/native/adxt_phased_player/qualification.json",
+  "private_extension": "canonical owner supplies actual group and publishes fresh clock origin; fifteen inherited player bodies remain identical",
   "receipts": {
-    "build-native-sjuni/adxt-phased-player/qualified-gcc-v4/receipt.json": "0cda7cfc498d0c99c07c4810858d893f4878d3c28a94f41521139df5e2fa5c8e",
-    "build-native-sjuni/adxt-phased-player/qualified-llvm-v4/receipt.json": "8fd55f328cf7a748b129ea8129626a15ad49f0fc638f1c613f529cde95143dce",
-    "build-native-sjuni/imported-phased-adxt/full-gcc-v1/receipt.json": "bd9eee26fd9739b50eeaf038f2fb428a0c54d76244c11ea8d8b3b21dabad0cad",
-    "build-native-sjuni/imported-phased-adxt/full-llvm-v1/receipt.json": "4dbf9f7ff1c8d241cf0c57cfd9a2feaa0586b7f5b947dc1e1e495deff967fab5",
-    "build-native-sjuni/imported-phased-adxt/comparison-v1/receipt.json": "7ea044b43480d0390dd3ff15c923325260a9305d92e595e43c95bc63f11fe051",
-    "build-native-sjuni/adxt-phased-player/parent-gcc-v1/receipt.json": "41f02461cac9d2759b737da91427c8e04a8bd42346eb57ec622cdb9806a524f9",
-    "build-native-sjuni/adxt-phased-player/parent-llvm-v1/receipt.json": "15393fc48a2d3391bb8fd50f5df945234fdb5899a2b77b78ddfd24f079be1c85"
+    "build-native-sjuni/adxt-phased-player/qualified-gcc-v5/receipt.json": "442a48ca78597494b84af67738da0360cb0545f169166487d7495cf21e35fbaa",
+    "build-native-sjuni/adxt-phased-player/qualified-llvm-v5/receipt.json": "2b9a7291db33a4c7ebf8ed750a9ebf8951fdd90703df4d2cd2601f5b60299249",
+    "build-native-sjuni/adxt-service-binding/qualified-gcc-v1/receipt.json": "ba524443b66e8414e8bbbb1bdc1fec71d19729acc106d8f63c1744111600d8c2",
+    "build-native-sjuni/adxt-service-binding/qualified-llvm-v1/receipt.json": "49ec0acdf4667345b36e5d96178562149b07c87a7dec69dffc081d6403093193",
+    "build-native-sjuni/imported-adxt-control/full-gcc-v2/receipt.json": "69981acbc8fe7d0793d52810dcff97e8cb264213f96dd3969e5db3e9e36c1d98",
+    "build-native-sjuni/imported-adxt-control/full-llvm-v2/receipt.json": "b1a3fe6a0b2c93d0ba090b487f950b25ad35e5c0c365227db7d1258c664742d9",
+    "build-native-sjuni/imported-adxt-control/comparison-v2/receipt.json": "6dacf290dd80a3f6411f754003cebad5482cb18c46dbfe5d4df57ad2db39bbd0",
+    "build-native-sjuni/adxt-service-binding/parent-gcc-v2/receipt.json": "3173ffc419a16de6852ef715f9e6b78943503964a13312387ff60fa8b3e0ec78",
+    "build-native-sjuni/adxt-service-binding/parent-llvm-v2/receipt.json": "5884e0429806ec655475923a91d75fcda932f79951358e866001184a4a9af4ca"
   },
   "additional_sources": {
-    "game/native/adxt_phased_player/README.md": "ca7907058b4965190eb6202862501c1636e2e7f4a12782dd738336c68d05e1cc",
-    "docs/native-media/ADXT_PHASED_PLAYER_IMPLEMENTATION.md": "ad2a8989c6842657f544444c93b8317d2dcee7f27c2786c3dd72dd0e82d99b6d",
-    "tools/native_reconstruction/compare_imported_phased_adxt_runs.py": "4ea6865ced353b0d2389aab2fdd6a21b19e021044141d17354d9f9d797c4ad0d",
-    "game/native/CMakeLists.txt": "0fcc8695813c2f308ea01d41aeb6acb4a66c34e62d7c48c2cef946ed6a5597bf",
-    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "cf987cf655960c68d7a5150dcfb00347058c8e89decdccff4b4526361cbf2432"
+    "docs/native-media/ADXT_SERVICE_BINDING_IMPLEMENTATION.md": "99448b49869f667dc4d6e14378754ff1861169a15bd24ad40bbf5cb360b4056c"
   }
 }

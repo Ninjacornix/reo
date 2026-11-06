@@ -1,5 +1,6 @@
 #include "control_session.hpp"
 #include "../adxt_transfer_groups/transfer_groups.hpp"
+#include "../adxt_serviced_clock/completion.hpp"
 #include <array>
 #include <limits>
 #include <stdexcept>
@@ -39,7 +40,7 @@ struct Session::State {
     std::array<Record,16> records;
     std::array<std::uint32_t,16> order{};std::size_t order_count{};
     std::array<bool,16> decoders{},streams{},rnas{};std::array<bool,32> transfers{};
-    std::uint64_t visits{};bool busy{},closing{},joined{},order_required{};
+    std::uint64_t visits{},discard_diagnostics{};bool busy{},closing{},joined{},order_required{};
     State(Config c,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider)
         :config(c),clock(std::make_shared<player::clock::Shared>(c.clock)),group(clock,guards,dtr,dtx),output(c.output,std::move(slot),std::move(provider)){
         if(c.clock.in_call || c.clock.service_busy)throw std::invalid_argument("Quiescent native clock required");
@@ -57,6 +58,23 @@ struct Session::State {
         if(output.set_order(std::span(identities).first(order_count))!=output::Status::completed){order_required=true;return false;}
         return true;
     }
+    struct ClockService final:adxt_serviced_clock::Service {
+        State& owner;std::shared_ptr<player::Player> target;std::uint32_t tick{};
+        ClockService(State& state,std::shared_ptr<player::Player> player,std::uint32_t supplied_tick)
+            :owner(state),target(std::move(player)),tick(supplied_tick){}
+        const player::clock::Shared* clock_identity()const noexcept override{return owner.clock.get();}
+        player::clock::integer::Observation observation()const noexcept override{return target->snapshot().clock_observation;}
+        void discard_diagnostic()noexcept override{++owner.discard_diagnostics;}
+        adxt_serviced_clock::ServiceStatus run_and_refresh(player::clock::Stream& stream,player::clock::integer::Observation& observation)noexcept override{
+            // Original discard services the group, not file/source polling.
+            for(auto& r:owner.records)if(r.player && !r.retiring)
+                if(r.player->set_tick(tick)!=player::Status::completed)return adxt_serviced_clock::ServiceStatus::failed;
+            const auto result=owner.group.service();if(result==group::Status::completed)++owner.visits;
+            const auto fresh=target->snapshot();stream=fresh.clock;observation=fresh.clock_observation;
+            if(!fresh.clock_observation_valid || owner.guards->fault || owner.guards->cri || owner.guards->rna || owner.guards->chunk)return adxt_serviced_clock::ServiceStatus::failed;
+            return result==group::Status::completed?adxt_serviced_clock::ServiceStatus::completed:adxt_serviced_clock::ServiceStatus::busy;
+        }
+    };
 };
 Session::Session(Config config,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider)
     :state_(std::make_unique<State>(config,std::move(slot),std::move(provider))){}
@@ -125,9 +143,10 @@ Observation Session::inspect(const Key& key)const noexcept{
     return{Status::completed,state_->records[key.slot_].player->snapshot()};
 }
 Snapshot Session::snapshot()const noexcept{
-    const auto& s=*state_;Snapshot result;result.output=s.output.snapshot();result.service_busy=s.clock->service_busy;
+    const auto& s=*state_;Snapshot result;result.output=s.output.snapshot();result.clock_state=*s.clock;result.service_busy=s.clock->service_busy;
     for(const auto& r:s.records){result.records+=bool(r.player);result.retiring+=r.retiring;}
     result.group_visits=s.visits;result.dtx_scans=s.guards->scans;result.closing=s.closing;result.joined=s.joined;
+    result.discard_diagnostics=s.discard_diagnostics;
     result.order_required=s.order_required;result.guard_fault=s.guards->fault;return result;
 }
 Status Session::gain(const Key& key,float gain)noexcept{
@@ -147,8 +166,17 @@ ClockControl Session::pause(const Key& key,std::int32_t argument,std::uint32_t t
     const auto value=s.records[key.slot_].player->pause(argument,tick);return{mapped(value.status),value};
 }
 ClockControl Session::discard_rebase(const Key& key,std::uint32_t tick)noexcept{
-    auto& s=*state_;if(s.busy)return{Status::busy,{}};if(s.closing)return{Status::closed,{}};if(!valid(key))return{};Scope scope(s.busy);
-    const auto value=s.records[key.slot_].player->discard_rebase(tick);return{mapped(value.status),value};
+    auto& s=*state_;if(s.busy)return{Status::busy,{}};if(s.closing)return{Status::closed,{}};if(!valid(key))return{};
+    auto target=s.records[key.slot_].player;
+    const bool paused=target->snapshot().clock.paused!=0;
+    if(paused){unsigned active{};for(const auto& r:s.records)active+=bool(r.player && !r.retiring);
+        if(active>2 && s.order_required)return{Status::order_required,{}};}
+    Scope scope(s.busy);
+    if(!paused){const auto value=target->discard_rebase(tick);return{mapped(value.status),value};}
+    try{
+        auto service=std::make_shared<State::ClockService>(s,target,tick);
+        const auto value=target->discard_via(std::move(service),tick);return{mapped(value.status),value};
+    }catch(...){return{Status::allocation_failure,{player::Status::unsupported_profile,player::clock::Status::unsupported_service}};}
 }
 Status Session::set_time_base(const Key& key,std::uint32_t base)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);

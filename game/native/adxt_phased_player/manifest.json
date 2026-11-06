@@ -130,14 +130,16 @@
     "game/native/adxt_transfer_groups/verify.py": "e9321e74348f75c4214f2d7f7c738855beab72a4c4738e4253e0912e58252a34",
     "docs/native-media/ADXT_TRANSFER_GROUPS_CONTRACT.md": "b2fa977c1e064d99702aa5aac0e17de0b8b9bf383a45e89a7be7f7e8fef82234",
     "tools/native_reconstruction/adxt_transfer_groups_oracle.py": "cdf7275496216e0dc7009cf2be240a3169286d0c462eee7b4ceffa67aeea1776",
-    "game/native/adxt_phased_player/CMakeLists.txt": "ee74323a2924fc34b022ffe4e4652e4a5e4b079c7db8c9671c86afd93718c554",
-    "game/native/adxt_phased_player/player.cpp": "2f508475922f511bead81a52316df85e4b06b9d283f761cf7a88bce72cae51d2",
-    "game/native/adxt_phased_player/player.hpp": "c9813e1c8c31a642f44091805738710f30c91a7fd1da5e7e89d87bce286099e1",
+    "game/native/adxt_phased_player/CMakeLists.txt": "9af730f93b5c2a2838c972bbd55d378e7ccb7f7039f48423a9e848815c6ef4db",
+    "game/native/adxt_phased_player/player.cpp": "a9a91d8d3e63c3cd295786a3b871365142b25e720c68566147118090555b03b2",
+    "game/native/adxt_phased_player/player.hpp": "d5b952a85b1e7cdb0165f1a5622f0ce3a57bddbf92303ed6d5c3633e20bf95cb",
     "game/native/adxt_phased_player/player_tests.cpp": "cc04b0419796f0051c9eacc4cd4d945827f2d74a7eb64853574915471977955c",
     "game/native/adxt_phased_player/test_group.hpp": "ab02736c179cd485126f375187e864cbd2e14db6d66c4f0e4f23a9d70da2a6cf",
-    "game/native/adxt_phased_player/verify.py": "098078c60fccaddc87688e05f40b660ab102e4cd63762177c34a9969974e1ce2",
-    "docs/native-media/ADXT_PHASED_PLAYER_CONTRACT.md": "c12cead2afa1b08e7fd27aa26e5eb7c51c114596c6b76a41101875cfcbeef510",
+    "game/native/adxt_phased_player/verify.py": "081075143ce223a29f7cceb5fbc9758b52a7ef5a47f03814d1ac0f61c1012475",
+    "docs/native-media/ADXT_PHASED_PLAYER_CONTRACT.md": "cef7034edd749f76a97686f2a57b4cc994577b2077970a7e4ab34fda292c84d2",
     "tools/native_reconstruction/imported_phased_adxt_check.cpp": "8d3cfc96f3a7f9e995498d1438f02f13a2d9d2784a9de9d0940b10fcf802774b",
-    "tools/native_reconstruction/verify_imported_phased_adxt.py": "ee914de242950aaff423d1f8976d45071afab5ef8c75af686aa4dafa3b834c0a"
+    "tools/native_reconstruction/verify_imported_phased_adxt.py": "2a5494542b98565fd645f288327e9c12250a81df15c858f475110db8045e7445",
+    "game/native/adxt_serviced_clock/completion.cpp": "5c4a5d61a1cfe0244d75a31cb2a91a7d04f6de443d862a791ddcb286331d6683",
+    "game/native/adxt_serviced_clock/completion.hpp": "ec8998bd82adaedc1a5c7c095345e56e4922c58259e60a09030e64fa400ce55c"
   }
 }

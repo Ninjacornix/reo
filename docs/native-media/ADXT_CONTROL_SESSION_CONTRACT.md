@@ -36,6 +36,7 @@ evidence of ordinary bounded completion. No method belongs on the audio callback
 CRI/RNA/chunk guards retain exact nesting/order under the single serialized
 control owner; they are not a claim about original thread-priority scheduling.
 Finite native transport uses the already qualified synchronous planar copy;
-DTX visits have no device clock effect. The unowned discard/global-service clock
-branch remains refused. Game selection, bank/packet mixing, LSC/seamless, movie
-consumers and actual game/media validation remain required.
+DTX visits have no device clock effect. The canonical owner supplies the private
+[serviced-clock binding](ADXT_SERVICE_BINDING_CONTRACT.md); the raw player API
+continues to refuse unowned service. Game selection, bank/packet mixing, complete
+loop/LSC/seamless playback, movie consumers and actual media validation remain.

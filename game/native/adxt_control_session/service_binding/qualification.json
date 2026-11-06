@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "status": "qualified actual canonical serviced-clock factory and measured-input original replay",
+  "stage3_complete": false,
+  "native_player_binding": true,
+  "game_adapter_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_player_parity": false,
+  "operations_per_compiler": 60,
+  "original_instructions_per_compiler": 31080,
+  "fp_steps_per_compiler": 468,
+  "stale_factory_differences_per_compiler": 12,
+  "manifest_sha256": "1271210c9136b61c40073feffc2bf72f7126a17e7187890b096e0715bb2c551d",
+  "capture_cohort_manifest_sha256": "bf01173ccc4ef7138c10aec844c0f3f3df92e0209f24ea07ca5bb8ca9f15fb1b",
+  "post_capture_contract_changes": [
+    "docs/native-media/ADXT_PHASED_PLAYER_CONTRACT.md",
+    "docs/native-media/ADXT_CONTROL_SESSION_CONTRACT.md"
+  ],
+  "ancestor_snapshot": "build-native-sjuni/adxt-service-binding/ancestor-v1",
+  "receipts": {
+    "build-native-sjuni/adxt-service-binding/qualified-gcc-v1/receipt.json": "ba524443b66e8414e8bbbb1bdc1fec71d19729acc106d8f63c1744111600d8c2",
+    "build-native-sjuni/adxt-service-binding/qualified-llvm-v1/receipt.json": "49ec0acdf4667345b36e5d96178562149b07c87a7dec69dffc081d6403093193",
+    "build-native-sjuni/adxt-phased-player/qualified-gcc-v5/receipt.json": "442a48ca78597494b84af67738da0360cb0545f169166487d7495cf21e35fbaa",
+    "build-native-sjuni/adxt-phased-player/qualified-llvm-v5/receipt.json": "2b9a7291db33a4c7ebf8ed750a9ebf8951fdd90703df4d2cd2601f5b60299249",
+    "build-native-sjuni/adxt-control-session/qualified-gcc-v2/receipt.json": "06c2343f095f80221f260f65d766d4e68c93b34c23a746f5cf88376f1b80db64",
+    "build-native-sjuni/adxt-control-session/qualified-llvm-v2/receipt.json": "fdbbb7693160dd4cff5a4f0500dc92b723e05fba48e72be334c07f80d7646174",
+    "build-native-sjuni/imported-adxt-control/full-gcc-v2/receipt.json": "69981acbc8fe7d0793d52810dcff97e8cb264213f96dd3969e5db3e9e36c1d98",
+    "build-native-sjuni/imported-adxt-control/full-llvm-v2/receipt.json": "b1a3fe6a0b2c93d0ba090b487f950b25ad35e5c0c365227db7d1258c664742d9",
+    "build-native-sjuni/imported-adxt-control/comparison-v2/receipt.json": "6dacf290dd80a3f6411f754003cebad5482cb18c46dbfe5d4df57ad2db39bbd0",
+    "build-native-sjuni/adxt-service-binding/parent-gcc-v2/receipt.json": "3173ffc419a16de6852ef715f9e6b78943503964a13312387ff60fa8b3e0ec78",
+    "build-native-sjuni/adxt-service-binding/parent-llvm-v2/receipt.json": "5884e0429806ec655475923a91d75fcda932f79951358e866001184a4a9af4ca"
+  },
+  "additional_sources": {
+    "game/native/adxt_control_session/service_binding/README.md": "2a9d24a53e51260c7b98cec36350a0857273b80f02737f4c858fa40c15aefabe",
+    "docs/native-media/ADXT_SERVICE_BINDING_IMPLEMENTATION.md": "99448b49869f667dc4d6e14378754ff1861169a15bd24ad40bbf5cb360b4056c",
+    "game/native/CMakeLists.txt": "08e997c4beb095822d1f58b31271a698eed3b9d703a69c20a4dbce3b6e69e722",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "2f776bfb5c737814385080eec793f9aec40f2419e80e02e12e2d05005c58933d"
+  }
+}

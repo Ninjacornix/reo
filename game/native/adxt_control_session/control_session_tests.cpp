@@ -2,6 +2,7 @@
 #include "../adxt_shared_player/test_sources.hpp"
 #include "../adxt_player/test_provider.hpp"
 #include <array>
+#include <cfenv>
 #include <iostream>
 #include <thread>
 
@@ -12,12 +13,36 @@ struct Test {
     std::shared_ptr<reo::audio_output::CallbackSlot> slot=std::make_shared<reo::audio_output::CallbackSlot>();
     std::shared_ptr<reo::native::adxt_player::testing::Provider> provider=std::make_shared<reo::native::adxt_player::testing::Provider>();
     c::Session session;
-    explicit Test(unsigned streams=2):session({{streams},{}},slot,provider){check(session.start()==c::Status::completed);}
+    explicit Test(unsigned streams=2,c::player::clock::Shared initial_clock={}):session({{streams},initial_clock},slot,provider){check(session.start()==c::Status::completed);}
 };
 c::player::Config config(const std::shared_ptr<const reo::native::resources::ByteView>& file,unsigned channels){c::player::Config v;v.decoder.channels=channels;v.decoder.source_config.byte_length=static_cast<std::int32_t>(file->size());return v;}
 c::Key open(Test& t,std::shared_ptr<const reo::native::resources::ByteView> file,unsigned channels,c::Indices indices){auto result=t.session.open(config(file,channels),file,indices);check(result.status==c::Status::completed);return result.key;}
 c::Retirement retire(Test& t,const c::Key& key){for(unsigned i=0;i<100000;++i){auto r=t.session.retire(key);if(r.status==c::Status::completed){check(r.source_joined && r.evidence.output_retired && r.evidence.decoder.source.joined);return r;}check(r.status==c::Status::pending);std::this_thread::yield();}throw std::runtime_error("Retirement bound");}
 int main(){try{
+    {
+        c::player::clock::Shared initial_clock;initial_clock.mode={1,6000,17};Test t(2,initial_clock);
+        auto key=open(t,f::file(1,48000,120000),1,{0,0,0,0});auto peer=open(t,f::file(2,48000,120000),2,{1,1,1,1});
+        const auto idle=t.session.snapshot();check(t.session.discard_rebase(key,10).status==c::Status::completed);
+        check(t.session.snapshot().group_visits==idle.group_visits && t.session.snapshot().discard_diagnostics==idle.discard_diagnostics);
+        check(t.session.pause(key,1,11).status==c::Status::completed);const auto before=t.session.inspect(key).evidence;
+        check(t.session.discard_rebase(key,12).status==c::Status::completed);const auto after=t.session.inspect(key).evidence;
+        check(after.clock.tick_base==12 && after.clock.paused==1 && after.clock.rna_play==0 && after.service_visits[0]==before.service_visits[0] && after.service_visits[1]==before.service_visits[1]+1);
+        bool ready=false;for(unsigned i=0;i<100000;++i){check(t.session.service(0)==c::Status::completed);const auto target=t.session.inspect(key).evidence,other=t.session.inspect(peer).evidence;
+            if(target.configured && target.playback.phase==reo::native::adxt_playback::Phase::playing && target.output.channel[0].samples>=2048 && other.output.voice.playing && other.output.channel[0].samples>=2048){ready=true;break;}std::this_thread::yield();}check(ready);
+        const auto input=t.session.inspect(key).evidence;const auto start=t.session.snapshot();const auto callbacks=t.provider->callbacks;
+        const auto rebased=t.session.discard_rebase(key,42);check(rebased.status==c::Status::completed && rebased.value.result==c::player::clock::Status::completed);
+        const auto output=t.session.inspect(key).evidence;const auto end=t.session.snapshot();
+        check(end.group_visits==start.group_visits+1 && end.discard_diagnostics==start.discard_diagnostics+1 && end.dtx_scans==end.group_visits*2 && !end.service_busy);
+        check(output.service_visits[0]==input.service_visits[0] && output.service_visits[1]==input.service_visits[1]+1 && t.provider->callbacks==callbacks);
+        check(output.clock.tick_base==42 && output.playback.tick_base==42 && output.clock.paused==1 && !output.output.voice.playing);
+        check(t.session.pause(key,2,43).status==c::Status::completed);t.provider->step(512);
+        check(t.session.discard_rebase(key,44).status==c::Status::completed);const auto resumed=t.session.inspect(key).evidence;
+        check(resumed.clock.estimate_base==64 && resumed.clock.tick_base==44 && resumed.clock.paused==2 && resumed.clock.rna_play==1 && resumed.output.voice.playing);
+        const auto count=t.session.snapshot().group_visits;const auto round=std::fegetround();(void)std::fesetround(FE_DOWNWARD);
+        const auto refused=t.session.discard_rebase(key,45);(void)std::fesetround(round);
+        check(refused.status==c::Status::unsupported_profile && refused.value.result==c::player::clock::Status::unsupported_fp && t.session.snapshot().group_visits==count && t.session.inspect(key).evidence.clock==resumed.clock);
+        retire(t,key);retire(t,peer);check(t.session.join()==c::Status::completed);
+    }
     {
         Test t,foreign;auto file=f::file(1,48000,8192);auto key=open(t,file,1,{15,2,9,31});
         check(t.session.inspect({}).status==c::Status::invalid_key && foreign.session.inspect(key).status==c::Status::invalid_key);

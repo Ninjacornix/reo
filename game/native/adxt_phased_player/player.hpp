@@ -6,6 +6,8 @@
 #include <array>
 #include <memory>
 
+namespace reo::native::adxt_control_session {class Session;}
+namespace reo::native::adxt_serviced_clock {class Service;}
 namespace reo::native::adxt_phased_player {
 namespace window=adx_window::v2;
 namespace output=adxt_output_session;
@@ -64,6 +66,8 @@ public:
     // or bank/peer reset occurs; the caller separately owns session shutdown.
     [[nodiscard]] Status retire_on_control_thread()noexcept;
 private:
+    friend class adxt_control_session::Session;
+    [[nodiscard]] ClockControl discard_via(std::shared_ptr<adxt_serviced_clock::Service>,std::uint32_t)noexcept;
     class WorkPort;class StreamPort;
     class State;std::unique_ptr<State> state_;
 };
