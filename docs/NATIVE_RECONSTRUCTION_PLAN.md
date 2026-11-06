@@ -177,8 +177,28 @@ preserving every original input write. The
 [writer catalogue](native-media/NATIVE_SOUND_RAM_WRITER_CATALOGUE.md) records the
 remaining execution/configuration conditions; the
 [address validator](native-media/NATIVE_SOUND_ADDRESS_DOMAIN.md) refuses unsafe
-aliases without issuing read authority. The runtime capture factory and actual
-audio/backend selection are still required before a new game candidate.
+aliases without issuing read authority.
+
+Public patch0126 now supplies the [actual selected-renderer profile](native-media/GS_SOUND_RAM_PROFILE.md).
+The full127-patch source series reapplies; both compilers pass concurrency,
+cancellation, prior-audio regressions and actual source objects with qualified
+sealed inputs. The [RuntimeMemory provider](native-media/NATIVE_SOUND_RAM_MEMORY_OWNER.md)
+implements private real-capability acquisition and bounded copies, with130
+protocol assertions, real packet/bank integration and whole actual-header
+objects per compiler. Those protocol fixtures explicitly substitute acquisition
+contexts; successful live acquisition, complete composite publication and a
+coherent rebuilt game remain unvalidated. The
+[file identity helper](native-media/NATIVE_SOUND_BUILD_IDENTITY.md) records actual
+source/native file hashes without treating them as RAM authority.
+
+The [shared-window original corpus](native-media/ADX_SHARED_WINDOW_ORACLE.md)
+now executes35 returned transcripts and preserves four explicit cuts across39
+cases, including40,017-sample streams, real request sizes, two simultaneous
+consumer grants and source-order loop/target mutations. Its
+[shared-source contract](native-media/ADXT_SHARED_SOURCE_CONTRACT.md) defines the
+new ledger and canonical limit state. A new allocation-free codec workspace and
+shared source/window owner are in progress; clocks, RNA/DTR credits, LSC
+replacement and actual player integration still follow.
 
 The default-off movie-position adapter also has a coherent V8 original/native
 opening pair: at least 8,192 successful native publications, movement/menu
