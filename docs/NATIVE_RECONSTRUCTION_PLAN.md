@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has twenty-seven standalone suites, including the independent ADX
+project now has twenty-eight standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -196,8 +196,12 @@ now executes35 returned transcripts and preserves four explicit cuts across39
 cases, including40,017-sample streams, real request sizes, two simultaneous
 consumer grants and source-order loop/target mutations. Its
 [shared-source contract](native-media/ADXT_SHARED_SOURCE_CONTRACT.md) defines the
-new ledger and canonical limit state. A new allocation-free codec workspace and
-shared source/window owner are in progress; clocks, RNA/DTR credits, LSC
+new ledger and canonical limit state. The [allocation-free codec workspace](native-media/ADX_WORKSPACE_IMPLEMENTATION.md)
+now passes 284 unit assertions and 901 original comparisons with GCC and the
+actual bundled UCRT LLVM toolchain, including real request sizes and long-stream
+kernel inputs. Its prepared input remains a synchronous borrowed view; Source2
+and Window2 must supply storage, credits and effect ordering. Shared source/window
+ownership remains in progress; clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 
 The default-off movie-position adapter also has a coherent V8 original/native

@@ -135,3 +135,34 @@ transport, comparator, fixture and freeze identities:
 V1 retained a compiler-only transport indentation warning failure. V2 fixes only
 that runner formatting; the first executed paired comparison passed with the
 frozen core unchanged. Per-compiler final parity evidence is below0.47MB.
+
+## Added bundled UCRT LLVM 21.1.8 cohort
+
+The earlier `adx-header-native-parity-v2/llvm` receipt used
+`C:/msys64/mingw64/bin/clang++.exe`, SHA-256
+`1a8a4bd52c0eb56a4b95aa21865f1d6733b38b7eb1cd76263ad5349019da890a`
+(PATH LLVM 21.1.7). It was not the bundled launcher compiler; no old result is
+rewritten or relabeled.
+
+A separate run uses the actual bundled UCRT LLVM 21.1.8 executable
+`C:/Users/Ninjacornix/AppData/Local/OutbreakRecomp/launcher/toolchains/llvm-mingw-20251216-ucrt-x86_64/bin/x86_64-w64-mingw32-clang++.exe`,
+SHA-256 `f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3`.
+Its bin directory is first on every child PATH for DLL resolution. Native
+**66 assertions, all 48 original classifications (45 admitted / three explicit
+unsupported), three diagnostics and standalone CMake / CTest 1/1 pass** with
+the frozen header/key-table/dependency bytes unchanged. No FP arithmetic or
+admission change was required.
+
+Added receipts:
+
+| `build-native-sjuni/pinned-adx-qualification-v1` artifact | SHA-256 |
+| --- | --- |
+| `header/qualification.json` | `cf601e70719444c033099059e4eddff609e934d51293dbaef4dfc2f1ee5fbf6c` |
+| `header/parity/receipt.json` | `083d995d05990f4348bf3615761f2cfc11144c05997a44cc2c086ad402bb6f72` |
+
+The added **actual original-word** math/FP worker uses the same bundled compiler
+and passes its full 1,975 emitted/raw-bit comparisons plus 48 function cases;
+see [its separate qualification](ADX_HEADER_MATH_ORACLE.md). All 48 function
+objects match the prior GCC/PATH LLVM references. Toolchain-dependent signaling
+NaN results remain literal separate observations and are not admitted by this
+native header profile.

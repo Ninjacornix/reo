@@ -73,3 +73,12 @@ See [complete qualification/limits](../../../docs/native-media/ADX_HEADER_IMPLEM
 and [independent original math/header evidence](../../../docs/native-media/ADX_HEADER_MATH_ORACLE.md).
 Future Window v2 still needs shared input ownership, real1152/2240 requests and
 long totals, and complete mutating loop transitions before game integration.
+
+The original LLVM receipt above used PATH LLVM 21.1.7. A separate added cohort
+with the bundled **UCRT LLVM 21.1.8** (compiler SHA
+`f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3`)
+passes 66 units, all 48 classifications and standalone CTest 1/1. Its bundled
+bin is first on every child PATH; receipts are under
+`build-native-sjuni/pinned-adx-qualification-v1/header`. Frozen code/table and
+earlier evidence remain unchanged. The linked implementation document records
+the exact compiler path and receipts.

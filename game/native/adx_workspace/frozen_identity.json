@@ -1,0 +1,12 @@
+{
+  "files": {
+    "CMakeLists.txt": "69ee191051d9fd86843de9f495053f52c606ec0c91042037d55396ae3398f911",
+    "adx_workspace.cpp": "72de3d64a21ba50b597e7d6fbf306de302dad18b3283b54f82dbe7f59cb61422",
+    "adx_workspace.hpp": "3151d276d75ee706d64aca4e63f9d8ee95d649234413849b85f43a4ca58ef68d",
+    "adx_workspace_tests.cpp": "19443163fe9ee55ad4dfda93b3c9c863b2cbe586b3394babd3674009a501cd4a"
+  },
+  "provenance": "Authored after exposure to original scalar/window/shared oracle results. Frozen AFTER synthetic units and BEFORE new comparator development; not blind.",
+  "schema": 1,
+  "scope": "Allocation-free scalar mono/stereo/downmix only; no source/loop/window owner or runtime wiring.",
+  "source_word_authority": "SLUS_207.65 SHA06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
+}

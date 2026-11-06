@@ -150,8 +150,8 @@ open.
 
 ## Explicit exceptional-domain difference
 
-Two signaling-NaN SQRT micro probes differ across compilers. With operand
-`7FA12345`, GCC returns quiet `7FE12345`; LLVM retains `7FA12345`, for both owned
+Two signaling-NaN SQRT micro probes differ in the original v4 toolchains. With operand
+`7FA12345`, GCC returns quiet `7FE12345`; v4's PATH LLVM 21.1.7 retains `7FA12345`, for both owned
 SQRT words. Each matches that compiler's exact pinned emission, and both raw
 results are preserved. The tests require this difference; no NaN normalization
 hides it. All finite admitted whole-function/header cases remain identical.
@@ -184,3 +184,59 @@ need their own closure. ADXT loop callback scheduling, clocks and RNA credits,
 and Window's request256/total4096 limits versus real1152/2240 requests remain
 separate [owner-plan blockers](ADXT_PLAYER_OWNER_NEXT.md). This proof supplies
 evidence for that work; it does not wire or replace the player.
+
+## Added actual bundled UCRT LLVM 21.1.8 proof
+
+The original v4 LLVM worker was compiled by
+`C:/msys64/mingw64/bin/clang++.exe`, compiler SHA-256
+`1a8a4bd52c0eb56a4b95aa21865f1d6733b38b7eb1cd76263ad5349019da890a`
+(LLVM 21.1.7); its worker binary SHA is
+`5aeb89e526b6c0c7c1326f9b0532f1510f00feacd4995b9e5ba96ec96ca555b6`.
+The original GCC compiler SHA is
+`51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5`.
+Those receipts are preserved and are not described as the launcher's bundled
+compiler. "Pinned runtime" above identifies the audited emitter/macros/helper
+source; it did not establish a bundled compiler version.
+
+A new cohort actually compiles and runs the unchanged original-word math oracle
+with the bundled UCRT LLVM 21.1.8 executable:
+
+```text
+C:/Users/Ninjacornix/AppData/Local/OutbreakRecomp/launcher/toolchains/
+llvm-mingw-20251216-ucrt-x86_64/bin/x86_64-w64-mingw32-clang++.exe
+SHA-256 f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3
+```
+
+Its bin directory is first on every child PATH. Recorded target is
+`x86_64-w64-windows-gnu`, resource directory is the bundle's `lib/clang/21`.
+All **1,975 raw-bit generic-versus-actual-emission micro comparisons pass**.
+All **48 actual original function cases** execute again: 45 return and the same
+three unowned `120AE8` paths remain explicit partials, totaling 26,340 original
+instructions and 1,132 compiled FP steps. Their entire case objects match both
+original v4 GCC and v4 LLVM references, not just coefficients. Authored input SHA
+remains `ab304db5087b8c476b3e818c60d35da2fbaa9915161b71f6d0615391de0fc843`.
+
+The raw micro results match v4 GCC on every input. They differ from v4 LLVM
+21.1.7 at exactly two SQRT probes, indices 1463/1663, words `460C0004` and
+`46160504`: operand `7FA12345` yields **`7FE12345` with the bundled UCRT 21.1.8
+toolchain**, versus the retained **`7FA12345` in the older PATH LLVM 21.1.7
+cohort**. Both tools match their own exact emitted reference; no normalization,
+old-expected rewrite or claim that one NaN behavior is universal is made. This
+comparison does not isolate compiler from host-library effects. Signaling NaNs
+remain outside native header admission and unproven against PS2 hardware.
+
+Added evidence under `build-native-sjuni/pinned-adx-qualification-v1/math`:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `qualification.json`, exact compiler/commands and cross-cohort comparison | `39ab6d78c17fa9cb73d619172add50ba2ed1de588ca33ecacc43d54a20e3f291` |
+| `cohort/original-fixture.json` | `65457f7eca4eea828a294283df3790dde0137c430f4a49d8cc0fc866759c58c5` |
+| `cohort/micro-qualification.json` | `505e34926ec478464ca87abe03d231d77f6b7ba6d48910b1d0919337a9b4322f` |
+| `cohort/fp_worker.exe` | `2a0b83c2d5d8d704d549d6685bbc27c4e6a58e2a5583088bd307b10bdbd59a62` |
+| `llvm-micro-differences.json`, both literal raw observations | `5263e9984caea7b9397b02456e2b2a75d715d1976ec4a2dd36c891f0a0576569` |
+
+The emitted worker source SHA remains
+`f46aee2035e9410b0a82fcc0b48e72e067aedbf72c0f8f786e4b4ddda51d0609`.
+No original oracle, engine, native core, key table or prior fixture/receipt was
+changed. This added cohort and the matching native header/workspace pinned
+checks qualify the actual bundled toolchain without relabeling historical proof.
