@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has fifty-one standalone suites, including the independent ADX
+project now has fifty-two standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -261,7 +261,7 @@ then exercises all80 distinct loop-bearing payloads (89 references) with the
 corrected owner. Both compilers produce the same two complete cycles per
 channel and actual joins. Timing-dependent following-cycle prefixes differ on18
 rows and remain explicitly recorded. Player/output/LSC integration still gates
-stage 3 completion; stages4-6 have not been declared complete.
+stage 3 completion; stages 4-6 have not been declared complete.
 The [native buffering/drain control](native-media/ADXT_PLAYBACK_CONTROL_IMPLEMENTATION.md)
 now passes318 admitted original clients with exact final control fields, queue
 positions, traffic totals and complete physical PCM bytes on both compilers.
@@ -285,7 +285,7 @@ sample/digest equality to the prior qualified native decoder, zero model
 underruns/skips and real source joins. The output provider is an offline model.
 Production output is process-wide and requires shared per-stream ownership;
 the isolated player is not installed. Logical PAK tails, LSC, complete clocks,
-movie consumers and actual game/media validation still gate stage 3. Stages4–6
+movie consumers and actual game/media validation still gate stage 3. Stages 4–6
 remain required; no runtime dependency is removed by these standalone checks.
 
 The [shared stream output owner](native-media/ADXT_SHARED_OUTPUT_IMPLEMENTATION.md)
@@ -302,7 +302,7 @@ now connects the actual compressed players to that session. Both compilers
 validate peer progress during a blocked source join, retained decoder credit
 after a real output-copy refusal, constructor rollback, and two actual decoder
 workers through the actual provider/static slot with reviewed raylib functions
-and model device primitives. One persistent session now services all6,706
+and model device primitives. One persistent session now services all 6,706
 distinct finite payloads with exact prior native-decoder prefix digests, actual
 per-source joins and one final model-provider unload. Bank/packet ownership,
 complete clocks, LSC, logical PAK tails and actual game/media validation remain
@@ -317,7 +317,7 @@ behavior, and unsupported FP/service states refuse before output effects.
 The complete global ADXB/16-ADXT/RNA service order and movie-clock consumers
 remain unqualified; the already-busy branch is not a substitute for that work.
 Bank/packet aggregation, LSC, logical PAK tails and actual game/media validation
-still gate stage 3, followed by stages4–6.
+still gate stage 3, followed by stages 4–6.
 
 The [verified imported source integration](native-media/IMPORTED_ADXT_SOURCE_IMPLEMENTATION.md)
 now resolves all8,910 base File1 ADX references from actual retained imported
@@ -328,7 +328,7 @@ earlier blanket logical-PAK-tail blocker for these full base archives: real
 sector tails are retained. Standalone replacements, overlays and other editions
 remain separate. Original global audio scheduling, bank/packet integration,
 LSC, movies and actual game/media validation still gate stage 3. No runtime
-dependency has been removed, and stages4–6 remain required.
+dependency has been removed, and stages 4–6 remain required.
 
 The [native audio dispatch envelopes](native-media/ADXT_SERVICE_GROUP_IMPLEMENTATION.md)
 now match81 independently frozen original cases and31,169 original instructions
@@ -349,7 +349,7 @@ frame, complete audio migration or permission to remove the compatibility runtim
 
 The [actual phased finite players](native-media/ADXT_PHASED_PLAYER_IMPLEMENTATION.md)
 now bind real source/decoder/control/RNA-prime/atomic-copy work to those groups.
-Both compilers replay all6,706 unique finite imported payloads with exact native
+Both compilers replay all 6,706 unique finite imported payloads with exact native
 PCM baseline/terminal-clock results and clean actual source/producer/provider
 fences. Phase boundaries, held-credit failures, independent slots, three-peer
 order and a blocked source join are qualified. Native finite transport is an
@@ -362,7 +362,7 @@ now owns enrollment, all service memberships, clocks/keys, actual players and on
 output provider behind session/generation keys. Both compilers validate collision/
 stale-key refusal, failed-open mix-order restoration, pending-source index
 retention, peer output and provider-fence retries. Its actual imported corpus
-again matches all6,706 finite PCM payloads and terminal clock/fence observations.
+again matches all 6,706 finite PCM payloads and terminal clock/fence observations.
 This replaces the manual test driver, not the remaining guest game ABI. Serviced
 discard, bank/packet output, LSC, movies and game transitions still gate stage 3.
 
@@ -378,7 +378,7 @@ The [canonical serviced-clock binding](native-media/ADXT_SERVICE_BINDING_IMPLEME
 now supplies the actual private group/target and publishes into that same native
 player. Both compilers match60 measurement-derived original operations, detect12
 stale private-factory snapshots and preserve source-poll separation. The extended
-owner again passes all6,706 distinct finite imported payloads and actual lifetime
+owner again passes all 6,706 distinct finite imported payloads and actual lifetime
 fences. The raw player still refuses unowned service. Complete looping playback,
 LSC/seamless, bank/packet output, movies and game ABI/transition validation still
 gate stage 3; gameplay, graphics/platform work and runtime removal follow.
@@ -426,7 +426,7 @@ queued-PCM boundary refusal led to a separate request-sizing revision that
 preserves protected samples; two complete loop cycles match the prior decoder
 baseline. All 50 standalone suites and the 6,706-payload finite regression pass.
 This does not complete stage 3: LSC/seamless, bank/packet output, movie controls,
-game ABI selection and actual media transitions remain. Stages4–6 remain open.
+game ABI selection and actual media transitions remain. Stages 4–6 remain open.
 
 The [owned LSC filename queue](native-media/LSC_QUEUE_IMPLEMENTATION.md) now
 matches all 339 operations from 53 pre-native original cases with both compilers,
@@ -434,6 +434,14 @@ including mutable notification order, stale-slot queries and repeat/sequence
 wrap. Its 111 ownership checks and new parent suite pass. Lower file operations
 remain explicit ports; actual retained segment I/O and seamless/audio/movie
 consumer integration still require implementation. Stage 3 remains open.
+
+The [prepared seamless sequence owner](native-media/ADX_IMMUTABLE_SEQUENCE_IMPLEMENTATION.md)
+now passes all 6,706 distinct finite payloads across 421 actual imported sequences
+with both compilers, including complete accepted per-clip PCM, accumulated clocks
+and joined source/output ownership. Four new negative controls and all 52 parent
+suites pass. This is a fixed immutable sequence; dynamic LSC sources, bank/packet
+output, movie controls and game/media transitions still gate stage 3. Stages 4–6
+remain required.
 
 ## Target architecture
 

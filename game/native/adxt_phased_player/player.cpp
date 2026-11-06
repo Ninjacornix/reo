@@ -8,9 +8,20 @@
 
 namespace reo::native::adxt_phased_player {
 namespace {
-Config checked(Config c,const output::Producer& producer) {
-    if(c.decoder.downmix || c.decoder.seamless_enabled || c.decoder.pitch_offset ||
+Config checked(Config c,const output::Producer& producer,const resources::ByteView* view) {
+    if(c.decoder.downmix || c.decoder.pitch_offset ||
        c.decoder.channels<1 || c.decoder.channels>2)throw std::invalid_argument("Shared native player profile");
+    if(c.sequence){
+        const auto& source=c.decoder.source_config;
+        if(!c.decoder.seamless_enabled || c.decoder.loop_enabled || view!=c.sequence.get() ||
+           c.decoder.channels!=c.sequence->channels() || c.decoder.configured_key!=adx_header::Key{} ||
+           c.decoder.pans!=std::array<std::int16_t,2>{-128,-128} || source.start_sector ||
+           source.byte_length!=static_cast<std::int32_t>(c.sequence->size()) || source.capacity!=8192 ||
+           source.threshold!=8192 || source.maximum_request_bytes!=8192 || source.maximum_sectors!=4 ||
+           source.target_sectors!=-1 || source.finite_sector_limit!=0xfffff || source.retry_limit!=2 ||
+           source.maximum_id!=std::numeric_limits<std::uint64_t>::max())
+            throw std::invalid_argument("Prepared immutable sequence identity/geometry required");
+    }else if(c.decoder.seamless_enabled)throw std::invalid_argument("Prepared immutable sequence required");
     const auto s=producer.snapshot();
     if(!s.active || s.fault || s.channels!=c.decoder.channels || !s.transfer_open || s.voice.playing ||
        s.channel[0].samples || s.channel[0].queued_bytes || s.channel[1].samples || s.channel[1].queued_bytes)
@@ -32,7 +43,7 @@ public:
     bool configured{},stopping{},output_retired{},retired{},fault{},busy{};
     State(Config c,const output::Producer& producer,std::shared_ptr<const resources::ByteView> view,
           std::unique_ptr<adxt_shared_source::Backend> backend,std::shared_ptr<adx_header::KeyContext> keys,std::shared_ptr<clock::Shared> shared)
-        :config(checked(c,producer)),shared_clock(std::move(shared)),clock_state{0,c.initial_tick,0,0},time_base(c.time_base),
+        :config(checked(c,producer,view.get())),shared_clock(std::move(shared)),clock_state{0,c.initial_tick,0,0},time_base(c.time_base),
          decoder(config.decoder,std::move(view),std::move(backend),std::move(keys)),request(decoder.request()){if(!shared_clock)throw std::invalid_argument("Shared original clock context required");}
     Status fail()noexcept {
         fault=true;(void)output->stop_transfer();(void)output->play(false);clock_state.rna_play=0;return Status::fault;
@@ -42,9 +53,10 @@ public:
         o.state=playback?static_cast<std::uint8_t>(playback->state().phase):1;
         o.decoded=static_cast<std::uint32_t>(w.outer.decoded_samples);
         o.total=w.header.base.total_samples;o.frequency=w.header.base.frequency;o.base=time_base;
+        o.offset=static_cast<std::uint32_t>(w.loop.seamless_samples);
         o.output_present=true;o.output_bytes=static_cast<std::uint32_t>(w.pcm.rings[0].data);
         o.rna_free_bytes=16384-static_cast<std::uint32_t>(out.channel[0].samples)*2;
-        return o; // tag0 depth16; no admitted seamless/A4 offset in this cut.
+        return o; // tag0 depth16; actual owned seamless accumulation.
     }
     clock::integer::Observation observation()const noexcept {return observation(decoder.snapshot(),output->snapshot());}
     void synchronize_clock()noexcept {
@@ -72,7 +84,8 @@ public:
             if(output->copy(spans[0],spans[1])!=output::Status::completed)return fail();
             if(decoder.finish_pcm(*held)!=window::Status::completed)return fail();
             held.reset();copied+=static_cast<unsigned>(bytes)/2;
-            const auto prefix=std::min<std::uint64_t>(static_cast<unsigned>(bytes)/2,before.header.base.total_samples-first);
+            const auto maximum=config.sequence?config.sequence->total_samples():before.header.base.total_samples;
+            const auto prefix=std::min<std::uint64_t>(static_cast<unsigned>(bytes)/2,maximum-first);
             for(std::uint32_t c=0;c<config.decoder.channels;++c)
                 for(std::size_t i=0;i<prefix*2;++i){digest[c]^=copy[c][i];digest[c]*=1099511628211ull;}
             first+=prefix;
@@ -107,6 +120,20 @@ Status Player::service_source()noexcept{
 Status Player::service_decoder()noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping || s.retired)return Status::closed;
     s.busy=true;struct Exit{bool& b;~Exit(){b=false;}}exit{s.busy};++s.visits[1];
+    if(s.config.sequence){
+        const auto before=s.decoder.snapshot();
+        if(before.outer.phase==window::OuterPhase::decoding && before.loop.seamless_enabled &&
+           before.sample_limit>=0 && before.outer.sample_progress>=before.sample_limit){
+            const auto segments=s.config.sequence->segments();std::size_t current=0;
+            while(current+1<segments.size() && segments[current+1].sample_offset<=static_cast<std::uint32_t>(before.loop.seamless_samples))++current;
+            if(segments[current].sample_offset!=static_cast<std::uint32_t>(before.loop.seamless_samples))return s.fail();
+            if(current+1<segments.size()){
+                const auto required=segments[current+1].byte_offset+segments[current+1].header.base.header_bytes;
+                if(before.source.cumulative_bytes<0)return s.fail();
+                if(static_cast<std::uint64_t>(before.source.cumulative_bytes)<required)return Status::completed;
+            }
+        }
+    }
     const auto result=s.decoder.service(s.request);
     return result==window::Status::completed || result==window::Status::inactive || result==window::Status::backpressure?Status::completed:s.fail();
 }
@@ -267,6 +294,7 @@ Status Player::set_time_base(std::uint32_t base)noexcept {
 void Player::request_stop()noexcept{state_->stopping=true;}
 Status Player::set_loop_enabled(bool enabled)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
+    if(s.config.sequence && enabled)return Status::unsupported_profile;
     if(s.decoder.set_loop_enabled(enabled)!=window::Status::completed)return s.fail();
     s.config.decoder.loop_enabled=enabled;return Status::completed;
 }

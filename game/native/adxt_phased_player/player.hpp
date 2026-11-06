@@ -3,6 +3,7 @@
 #include "../adxt_output_session/session.hpp"
 #include "../adxt_estimated_clock/estimated_clock.hpp"
 #include "../adxt_service_group/service_group.hpp"
+#include "../adx_sequence/sequence.hpp"
 #include <array>
 #include <memory>
 
@@ -15,6 +16,7 @@ namespace clock=adxt_estimated_clock;
 enum class Status { completed, waiting_header, pending, ended, busy, closed, unsupported_profile, fault };
 struct Config {
     window::Config decoder;
+    std::shared_ptr<const adx_sequence::Sequence> sequence;
     std::uint32_t initial_tick{},time_base{};
     Config(){decoder.pans={-128,-128};}
 };

@@ -27,7 +27,60 @@ std::shared_ptr<f::File> loop_file(unsigned channels,unsigned rate,unsigned star
     for(unsigned b=0;b<blocks;++b){const auto at=header+b*18;bytes[at+1]=3;std::fill_n(bytes.begin()+at+2,16,static_cast<std::uint8_t>(0x11+b%7));}
     f::be16(bytes,end,0x8001);return file;
 }
+std::shared_ptr<f::File> sequence_file(unsigned channels,unsigned rate,unsigned samples){
+    auto file=f::file(channels,rate,samples);const auto end=96+(samples+31)/32*18*channels;
+    file->bytes.resize((end+18+2047)/2048*2048);f::be16(file->bytes,end,0x8001);f::be16(file->bytes,end+2,14);return file;
+}
+c::player::Config sequence_config(std::shared_ptr<const reo::native::adx_sequence::Sequence> sequence){
+    auto value=config(sequence,sequence->channels());value.decoder.seamless_enabled=true;value.sequence=std::move(sequence);return value;
+}
 int main(){try{
+    for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned first:{33u,8193u,20000u}){
+        Test t;std::array<std::shared_ptr<const reo::native::resources::ByteView>,3> views{
+            sequence_file(channels,rate,first),sequence_file(channels,rate,64),sequence_file(channels,rate,16385)};
+        auto prepared=reo::native::adx_sequence::Sequence::prepare(views);check(prepared.status==reo::native::adx_sequence::Status::completed);
+        auto pc=sequence_config(prepared.sequence);const auto opened=t.session.open(pc,prepared.sequence,{15,2,8,31});check(opened.status==c::Status::completed);bool ended=false;
+        check(t.session.set_loop_enabled(opened.key,true)==c::Status::unsupported_profile);
+        for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(opened.key).evidence;check(!state.fault);
+            if(state.clock_observation.state==3 && state.decoder.outer.phase==c::player::window::OuterPhase::decoding){
+                const auto clock=t.session.estimate(opened.key,0);check(clock.status==c::Status::completed && clock.value.result.ratio.numerator==state.output.channel[0].consumed_bytes/2);}
+            if(state.configured && state.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
+            if(state.output.channel[0].samples>=512)t.provider->step(512);
+            if(state.decoder.source.in_flight)std::this_thread::yield();}check(ended);
+        const auto state=t.session.inspect(opened.key).evidence;check(state.decoder.loop.seamless_samples==static_cast<std::int32_t>(first+64) && state.first_payload_samples==first+64+16385);
+        const auto clock=t.session.estimate(opened.key,0);check(clock.status==c::Status::completed && clock.value.result.ratio.numerator==first+64+16385 && clock.value.result.ratio.denominator==rate);
+        check(!t.session.snapshot().output.statistics.underrun_frames && !state.output.voice.skipped_samples);retire(t,opened.key);check(t.session.join()==c::Status::completed);
+    }
+    {
+        Test t;auto first=sequence_file(1,48000,12000);auto second=sequence_file(1,48000,4097);
+        std::array<std::shared_ptr<const reo::native::resources::ByteView>,2> views{first,second};auto prepared=reo::native::adx_sequence::Sequence::prepare(views);check(prepared.status==reo::native::adx_sequence::Status::completed);
+        auto pc=sequence_config(prepared.sequence);const auto reads=first->reads.load()+second->reads.load();
+        check(t.session.open(pc,first,{0,0,0,0}).status==c::Status::unsupported_profile);
+        pc.sequence.reset();check(t.session.open(pc,prepared.sequence,{0,0,0,0}).status==c::Status::unsupported_profile);
+        pc=sequence_config(prepared.sequence);pc.decoder.source_config.maximum_sectors=2;
+        check(t.session.open(pc,prepared.sequence,{0,0,0,0}).status==c::Status::unsupported_profile);
+        check(first->reads.load()+second->reads.load()==reads && !t.session.snapshot().records && !t.session.snapshot().output.occupied);
+        check(t.session.join()==c::Status::completed);
+    }
+    {
+        Test t;auto first=sequence_file(1,48000,12000);auto blocked=std::make_shared<f::Blocked>();blocked->bytes=sequence_file(1,48000,4097)->bytes;blocked->released=true;
+        struct Release{std::shared_ptr<f::Blocked> file;~Release(){std::lock_guard lock(file->mutex);file->released=true;file->cv.notify_all();}}release{blocked};
+        std::array<std::shared_ptr<const reo::native::resources::ByteView>,2> views{first,blocked};auto prepared=reo::native::adx_sequence::Sequence::prepare(views);check(prepared.status==reo::native::adx_sequence::Status::completed);
+        {std::lock_guard lock(blocked->mutex);blocked->released=false;blocked->entered=false;}
+        auto pc=sequence_config(prepared.sequence);const auto opened=t.session.open(pc,prepared.sequence,{0,0,0,0});check(opened.status==c::Status::completed);bool waiting=false;
+        for(unsigned i=0;i<100000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(opened.key).evidence;bool entered;{std::lock_guard lock(blocked->mutex);entered=blocked->entered;}
+            if(entered && state.decoder.outer.decoded_samples==12000){waiting=true;break;}
+            if(state.output.channel[0].samples>=512)t.provider->step(512);
+            std::this_thread::yield();}check(waiting);
+        for(unsigned i=0;i<20;++i)check(t.session.service(0)==c::Status::completed);
+        const auto held=t.session.inspect(opened.key).evidence;check(held.decoder.loop.seamless_enabled && held.decoder.loop.seamless_samples==0 && held.decoder.source.in_flight && !held.fault);
+        {std::lock_guard lock(blocked->mutex);blocked->released=true;blocked->cv.notify_all();}
+        bool ended=false;for(unsigned i=0;i<100000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(opened.key).evidence;
+            if(state.configured && state.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
+            if(state.output.channel[0].samples>=512)t.provider->step(512);
+            std::this_thread::yield();}check(ended && t.session.inspect(opened.key).evidence.decoder.loop.seamless_samples==12000);
+        retire(t,opened.key);check(t.session.join()==c::Status::completed);
+    }
     for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned start:{0u,32u,800u})for(unsigned span:{16385u,32772u}){
         Test t;auto file=loop_file(channels,rate,start,span);auto pc=config(file,channels);pc.decoder.loop_enabled=true;
         auto opened=t.session.open(pc,file,{15,2,8,31});check(opened.status==c::Status::completed);const auto key=opened.key;bool repeated=false;std::int32_t decoded{};

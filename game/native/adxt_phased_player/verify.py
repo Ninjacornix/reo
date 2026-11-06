@@ -11,7 +11,7 @@ import subprocess
 HERE=Path(__file__).resolve().parent;ROOT=HERE.parents[2]
 BASE=ROOT/'build-native-sjuni/adxt-phased-player'
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
-SOURCES=['sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adxt_refill.cpp',
+SOURCES=['adx_sequence/sequence.cpp','sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adxt_refill.cpp',
          'resource_io/async_read_owner.cpp','tasks/serial_worker.cpp','resources/resource_session.cpp',
          'resources/virtual_file_view.cpp','adx_header/adx_header.cpp','adx_workspace/adx_workspace.cpp',
          'adx_pcm_store/v2/pcm_store.cpp','adx_window/v2/queue_safe_r3/stream_window.cpp',
@@ -43,6 +43,10 @@ def main():
                    'ClockResult Player::estimate(', 'ClockResult Player::centiseconds(', 'ClockControl Player::pause(',
                    'ClockControl Player::discard_rebase(', 'Status Player::set_time_base(', 'void Player::request_stop(', 'Status Player::retire_on_control_thread(']:
         old,new=body(inherited,needle),body(current,needle)
+        if needle=='clock::integer::Observation observation(const':
+            new=new.replace('        o.offset=static_cast<std::uint32_t>(w.loop.seamless_samples);\n','').replace('actual owned seamless accumulation.','no admitted seamless/A4 offset in this cut.')
+        if needle=='Status pump()':
+            new=new.replace('            const auto maximum=config.sequence?config.sequence->total_samples():before.header.base.total_samples;\n','').replace('maximum-first','before.header.base.total_samples-first')
         if old!=new:raise ValueError('Unreviewed inherited algorithm delta '+needle)
         identical[needle]=hashlib.sha256(new.encode()).hexdigest()
     out.mkdir(parents=True);env=dict(os.environ);env['PATH']=str(Path(cc).parent)+os.pathsep+env.get('PATH','')
