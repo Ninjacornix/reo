@@ -1,5 +1,10 @@
 # Shared-source Window2
 
+The frozen implementation has a known ready-predicate defect when header
+count/alignment and enable fields differ. The separate correction
+target is `reo_native_stream_window_v2_ready_flag_r1`; select one implementation
+per executable. See the [correction record](../../../../docs/native-media/ADX_READY_FLAG_CORRECTION.md).
+
 The concrete `StreamWindowOwner` owns exactly one Source2,
 its private link, finite header state/key context, allocation-free workspace and
 phased PCMv2 store. It implements header/ready, first/repeat/seamless transitions,

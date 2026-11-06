@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has thirty-five standalone suites, including the independent ADX
+project now has thirty-six standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -250,6 +250,12 @@ binds all8,910 identified ADX references from the owned ISO and fully decodes,
 drains and joins6,706 distinct non-looping payloads with both compilers. All
 result rows and per-channel digests match between compilers. Loop-bearing
 assets, device output and complete player behavior remain separate gates.
+Independent flag/count inputs then exposed a native ready-predicate defect.
+The [separate r1 correction](native-media/ADX_READY_FLAG_IMPLEMENTATION.md) reads
+the original signed enable halfword, and passes48 new clients plus123 prior
+clients and996 inherited checks with both compilers. The frozen implementation
+differs on24 new clients and remains a documented negative control. Select
+exactly one owner implementation in an executable; the game still selects none.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 
