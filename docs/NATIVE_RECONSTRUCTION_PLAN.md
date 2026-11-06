@@ -256,6 +256,12 @@ the original signed enable halfword, and passes48 new clients plus123 prior
 clients and996 inherited checks with both compilers. The frozen implementation
 differs on24 new clients and remains a documented negative control. Select
 exactly one owner implementation in an executable; the game still selects none.
+The [actual loop-cycle run](native-media/ADX_ACTUAL_LOOP_STREAM_VALIDATION.md)
+then exercises all80 distinct loop-bearing payloads (89 references) with the
+corrected owner. Both compilers produce the same two complete cycles per
+channel and actual joins. Timing-dependent following-cycle prefixes differ on18
+rows and remain explicitly recorded. Player/output/LSC integration still gates
+stage3 completion; stages4-6 have not been declared complete.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 
