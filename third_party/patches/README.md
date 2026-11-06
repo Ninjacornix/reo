@@ -82,3 +82,15 @@ Do this after applying the runtime patch series and before compiling affected
 runtime sources. These generated `.inc` files must remain local.
 
 Patch 0100 adds optional 64 MB native memory backing for enemy assets while retaining the original 32 MB console heap, stack and reported RAM size. CPU memory helpers, disc reads and DMA paths use the configured backing size. The default remains 32 MB. The Randomizer requests the additional bank before guest execution.
+
+Patch `0124` extends the existing opt-in PCM backend registry with a complete V2
+PCM/bank owner, whole-call sound RPC/control admission and runtime/RAM-qualified
+status transfers. Existing V1 PCM registration and ordinary legacy behavior remain
+available; no backend is installed by default. Its focused diff is reproduced from
+the qualified124 source and the entire125-patch series is checked in a fresh
+pinned checkout. GCC and bundled LLVM isolated tests retain original PCM/bank
+observations and compile all five affected production objects against matching
+headers. See [the implementation and qualification report](../../docs/native-media/AUDIO_BANK_BACKEND_DISPATCH.md)
+for the exact source/receipt identities, terminal cancellation policy and remaining
+aggregate/capture/device validation. A matching rebuilt dependency is required;
+adding the header to an old sealed runtime library does not supply V2.
