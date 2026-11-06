@@ -289,6 +289,11 @@ asymmetric channels, distinguishing legal extension writes from clobbering
 queued data. See its measured total33/free96 and asymmetric64/32 cases. It is a
 composition gate, not a proven original bug or permission to truncate codec
 output silently. The private workspace alone does not close this issue.
+The separate [owned PCM store](ADX_PCM_STORE_IMPLEMENTATION.md) now qualifies
+this storage boundary, including90 original partial-tail projections and explicit
+credit/lifetime faults. Window2 must still connect it at the actual reserve,
+codec, wrap and publication phases; storage-only parity cannot stand in for
+whole-owner effect ordering or decoder equivalence.
 
 Stop closes future decode admission while accepted PCM remains drainable.
 Frame/presentation/PCM queue counters are not DAC completion. Native RNA/DTR

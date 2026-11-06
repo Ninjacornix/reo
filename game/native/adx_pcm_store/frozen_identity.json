@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "status": "implementation frozen before new storage-only original projection/comparator",
+  "original_window2_boundary_observations_previously_seen": true,
+  "whole_window2_parity": false,
+  "files": {
+    "game/native/adx_pcm_store/pcm_store.hpp": "f35df0c86868cb9252eb9be7959a775de1389db574483093a41d39a651375fe9",
+    "game/native/adx_pcm_store/pcm_store.cpp": "2ef48f108a1319794163ab2fc98000da44c48de061fc5299e46c508434ff6bfd",
+    "game/native/adx_pcm_store/CMakeLists.txt": "24cda6cc09e4d3fab01888673edf1dbb177976bffcea31e298244da97e5bfcbc",
+    "docs/native-media/ADX_PCM_STORE_CONTRACT.md": "0fefcf2e7cd2e7ceccabd7ab5e08e268d2e3fc075ef31beb2776c20c946f519f",
+    "game/native/sjrb/sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b",
+    "game/native/sjrb/sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2"
+  }
+}

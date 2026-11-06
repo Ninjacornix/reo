@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has thirty standalone suites, including the independent ADX
+project now has thirty-one standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -214,6 +214,10 @@ with identical transcripts on both compilers and all three long streams reaching
 40,017. Its native owner remains design work requiring complete transaction proof.
 The new partial-final and asymmetric PCM probes define the physical ownership
 gate; unpublished extension bytes cannot be equated with logical credit.
+The [owned PCM store](native-media/ADX_PCM_STORE_IMPLEMENTATION.md) now passes
+3,574 ownership checks and90 storage-only original projections on both compilers,
+including retained padding and injected partial-credit failure. It supplies a
+storage component, not complete Window2 or decoder equivalence.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 
