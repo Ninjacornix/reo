@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "provenance": "Source2 core authored after historical shared39/refill original evidence exposure; frozen after GCC/LLVM239 ownership assertions and post-effect fault/negative checks, BEFORE new Source2 original expected generation or comparator authoring. No blind-authoring claim.",
+  "files": {
+    "game/native/adxt_refill/adxt_refill.cpp": "a1c1a8d92c3c3e3f458ea1d46f6ead4ca96f7ada0bdf58f9a7ca6c04f9537a04",
+    "game/native/adxt_refill/adxt_refill.hpp": "36f0cfa764f94309f172f2adee5da8a3e60352c42416338597b7d4a5be14d00c",
+    "game/native/resource_io/async_read_owner.cpp": "09235718523d8fa684bbdd96957376a89482a46c906236a8e233086083b1226a",
+    "game/native/resource_io/async_read_owner.hpp": "255ecda439a4f3e7f81bf6ae25335ace563251e400cd413b4f77d774c3262b57",
+    "game/native/resources/byte_view.hpp": "967f3ef9fab63390f05a95991a46dabbb6a7c0540130c16c35ee67eb498ffddb",
+    "game/native/resources/resource_session.cpp": "40da8f56bca191c39d6bb4dc81e3a0cd82e1d09c1c83c7c702e524cc511ab0fd",
+    "game/native/resources/resource_session.hpp": "0ac5e50af8c08141fabf66b9277bf187a76f7af6bcae065f2ae2b876ce1586ad",
+    "game/native/sjrb/sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2",
+    "game/native/sjrb/sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b",
+    "game/native/tasks/serial_worker.cpp": "72911c36d42bbdfdf7ceb4f6e288caa0c8736e57f4dec91bf6465329bfa24e42",
+    "game/native/tasks/serial_worker.hpp": "72f165f722689b134f4e97d149e16f215c143dff8873108cce816c06c80c7de4",
+    "game/native/adxt_shared_source/shared_source.hpp": "cf6b8b7cbc2dff1f619e8f242332cf109ebbad1c810c463f7a3e068967fcf6a9",
+    "game/native/adxt_shared_source/shared_source.cpp": "6327fff621f01afb59506290bf710953f0423b20e46aea58ed2ff99439b55a21"
+  },
+  "unit_inputs": {
+    "shared_source_tests.cpp": "f92e5cd003bcc8ebeb324e1cd6138fed5814c61ec31a2dc964c45d9b5312229b",
+    "verify.py": "93b66d06ba704d3e2f908feeb0c37739526dd766fc36fcfa99cc544bdd6ed477",
+    "CMakeLists.txt": "6fea76d356ef2cfb40542a6b1a286ac748898c0eab5f428b25392deb61cf4647"
+  },
+  "historical_shared39_manifest_sha256": "e41b48940b06b95d5b5641160225e10b0902dd5808d9eaf1dca5b1aa0b127972",
+  "original_source2_expected_seen": false,
+  "comparator_authored": false,
+  "unit_receipts": {
+    "build-native-sjuni/adxt-shared-source/gcc-v4/receipt.json": "d950af366809919adece6c89bfe30a46313eb5c2d1c44dd48f77dbb1a9464265",
+    "build-native-sjuni/adxt-shared-source/llvm-v4/receipt.json": "a91299b7bb0a00f116252c6d99c4d77631c0c7345a0fb594f37a81444c7801b9"
+  }
+}

@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has twenty-eight standalone suites, including the independent ADX
+project now has thirty standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -200,9 +200,27 @@ new ledger and canonical limit state. The [allocation-free codec workspace](nati
 now passes 284 unit assertions and 901 original comparisons with GCC and the
 actual bundled UCRT LLVM toolchain, including real request sizes and long-stream
 kernel inputs. Its prepared input remains a synchronous borrowed view; Source2
-and Window2 must supply storage, credits and effect ordering. Shared source/window
-ownership remains in progress; clocks, RNA/DTR credits, LSC
+and Window2 must supply storage, credits and effect ordering. The
+[shared source owner](native-media/ADXT_SHARED_SOURCE_IMPLEMENTATION.md) now
+matches 30 independently authored original lifecycle/refill clients under both
+compilers, including two simultaneous consumers and pending I/O. Its raw-refill
+boundary mismatch is preserved separately; the qualified API uses the complete
+lifecycle service. The [Window2 composition contract](native-media/ADX_SHARED_WINDOW_CONTRACT.md)
+remains design work requiring new complete transaction proof. Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
+
+The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
+matches 132 original-word cases with both compilers, including actual RNA/ring
+getters and modulo accounting. It consumes prepared queue observations and does
+not own queue synchronization, the estimated floating-point/tick clock or device
+time. Those clocks and output credits remain required for the full player.
+
+The [owned asset inventory](native-media/FILE1_AUDIO_ASSET_COMPATIBILITY.md)
+identifies 8,910 ADX references within the finite header profile. The
+[bank loader map](native-media/FILE1_BANK_RESOURCE_LOADER_MAP.md) ties 103 complete
+packed HD/BD/TQ tuples to the actual original submission path; all observed
+rounded parts fit the individual limit. These are metadata/source findings,
+not parser/DSP, simultaneous-budget or live playback qualification.
 
 The default-off movie-position adapter also has a coherent V8 original/native
 opening pair: at least 8,192 successful native publications, movement/menu

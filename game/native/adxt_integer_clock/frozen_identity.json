@@ -1,0 +1,11 @@
+{
+  "files": {
+    "CMakeLists.txt": "6a2aaff7bb92ff57c4268358e5e7f2f0469fd23fb75230fa6d92f7fabaa4350f",
+    "integer_clock.cpp": "2cccf8198fff234e68a308587098594ed2e227ace7206a6812230b7d52074d4b",
+    "integer_clock.hpp": "dfffa9ba5a3866a1f0f936a4db0f979802422e5951b00772476b205b21f6c99b",
+    "integer_clock_tests.cpp": "3168b16a609688ff8b58226456fcc3de7c24a7e16962745981e454720e961fbf"
+  },
+  "provenance": "Authored after source inspection and completed 132-case original raw-clock replay; frozen before native comparator. Not blind.",
+  "schema": 1,
+  "scope": "Integer raw ratio/selector/counter only; no estimated clock or device-time owner."
+}
