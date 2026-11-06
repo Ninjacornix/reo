@@ -294,6 +294,12 @@ this storage boundary, including90 original partial-tail projections and explici
 credit/lifetime faults. Window2 must still connect it at the actual reserve,
 codec, wrap and publication phases; storage-only parity cannot stand in for
 whole-owner effect ordering or decoder equivalence.
+Use the qualified [phased PCM store v2](ADX_PCM_STORE_V2_IMPLEMENTATION.md),
+whose separate stage/publish calls expose the required encoded-input-credit
+boundary. V1's combined call cannot preserve that middle observation. V2 keeps
+all PCM credit held through staging and forbids intervening PCM mutations;
+already held readers remain readable. Future Window2 still owns the real source
+finish and decoder-state updates between those calls.
 
 Stop closes future decode admission while accepted PCM remains drainable.
 Frame/presentation/PCM queue counters are not DAC completion. Native RNA/DTR

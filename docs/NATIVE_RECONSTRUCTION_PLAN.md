@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has thirty-one standalone suites, including the independent ADX
+project now has thirty-two standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -218,6 +218,11 @@ The [owned PCM store](native-media/ADX_PCM_STORE_IMPLEMENTATION.md) now passes
 3,574 ownership checks and90 storage-only original projections on both compilers,
 including retained padding and injected partial-credit failure. It supplies a
 storage component, not complete Window2 or decoder equivalence.
+Its [phased v2](native-media/ADX_PCM_STORE_V2_IMPLEMENTATION.md) now separates raw
+stores/wrap from publication so encoded-input credit can be returned between
+them. Both compilers pass3,601 checks and90 final/intermediate original storage
+comparisons; a negative observation catches30 ordering errors despite matching
+all final results. Complete Window2 integration remains the next gate.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 

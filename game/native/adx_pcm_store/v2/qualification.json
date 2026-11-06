@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "qualified phased PCM storage only",
+  "game_run": false,
+  "whole_window2_parity": false,
+  "codec_parity": false,
+  "unit_checks_per_compiler": 3601,
+  "original_storage_clients": 90,
+  "intermediate_original_captures": 30,
+  "original_instructions_per_compiler": 283160,
+  "negative_phase_differences_per_compiler": 30,
+  "negative_final_differences_per_compiler": 0,
+  "sources": {
+    "game\\native\\adx_pcm_store\\v2\\capture_original.py": "8877bf7d8c8153f5906e99726f04e8c32b9f203fb3eb1c9833d72879ff2a8f73",
+    "game\\native\\adx_pcm_store\\v2\\compare_original.py": "7a89405c29d7b8f9e9f359f7bb2818992c87221578bc0bebc9649ff661950e33",
+    "game\\native\\adx_pcm_store\\v2\\negative_phase.py": "95cb2f78a47e178da6f227eb77a7bdccda9beee8304fabc9b7b5db319625f86c",
+    "game\\native\\adx_pcm_store\\v2\\verify.py": "aecf33bc127d2f836b1226c65c31bccc13fb0a5f664e8f1eb554b0916be43eb9",
+    "game\\native\\adx_pcm_store\\v2\\fixture_runner.cpp": "27584a68b61ee083e622ead4e72dcf16b3c38695abd298b108bfd4ea3e0085dd",
+    "game\\native\\adx_pcm_store\\v2\\pcm_store.cpp": "71842ead21abf764e0520268eceb1e3de71e1d1f319238eb4cdf92060f35bb83",
+    "game\\native\\adx_pcm_store\\v2\\pcm_store_tests.cpp": "76d0615901867abcbf2f68f0c82e07ed7c783a4bade1ba6f6af9a57ce1835f02",
+    "game\\native\\adx_pcm_store\\v2\\pcm_store.hpp": "b0f1d8adbd452415fcbfac04e19eeaa194949f4b5d120629e14b111bfd683b91",
+    "game\\native\\adx_pcm_store\\v2\\frozen_identity.json": "e22f24ad5d74a228ec031483ae7442a74c8a6435fa9d72a81983c5561020fbbc",
+    "docs\\native-media\\ADX_PCM_STORE_V2_CONTRACT.md": "214414836fb7833cd31a3a96716d82d1aa4d9c8b1e090a86a04d57dacdf47f75",
+    "docs\\native-media\\ADX_PCM_STORE_V2_IMPLEMENTATION.md": "a9cc9da9d1fec59435474d96679ab3b98d480d9770a8eb3cd2f6cad6eec026e7",
+    "game\\native\\CMakeLists.txt": "7fcda004499c6072c55f128f8d4217dc4fc56baadf833bb27c79923aefedcaf9"
+  },
+  "receipts": {
+    "build-native-sjuni\\adx-pcm-store\\v2\\gcc-v1\\receipt.json": "a2f8dd9f39b58ace1f69f3b3f880f62ade749808b641fcc113d6d5b86f9315bf",
+    "build-native-sjuni\\adx-pcm-store\\v2\\llvm-v1\\receipt.json": "d891a9e0baa02db0d2bcfb12906bac105a53098b9cd6814ad927c5f03ebc3bcf",
+    "build-native-sjuni\\adx-pcm-store\\v2\\phase-inputs-v1\\manifest.json": "6fb23e134140e0aa9102bc8d14804e9243251eba334a7b48d5652470bd53d511",
+    "build-native-sjuni\\adx-pcm-store\\v2\\phase-original-gcc-v1\\receipt.json": "a7ea02d37d2b3eda1d24458f6928dedcaae7ef53cc8b149a78f76825b1295736",
+    "build-native-sjuni\\adx-pcm-store\\v2\\phase-original-llvm-v1\\receipt.json": "5cd818df6883a16019e05789ecec7fa1dae99244768e8b6c32757e28bd2006db",
+    "build-native-sjuni\\adx-pcm-store\\v2\\parity-gcc-v1\\receipt.json": "72e4683a96646f596ac06709773f076752c83ff1e686b28a6e93cf8b97854de9",
+    "build-native-sjuni\\adx-pcm-store\\v2\\parity-llvm-v1\\receipt.json": "865fd2464b33b214601a386646fc964953f59ec6dc859cdb0fb4436630fee4f1",
+    "build-native-sjuni\\adx-pcm-store\\v2\\negative-phase-gcc-v1\\receipt.json": "9717dd94931e0b79361d1e7a4588266ae89d66af38ad617e61ca3532dabc6f77",
+    "build-native-sjuni\\adx-pcm-store\\v2\\negative-phase-llvm-v1\\receipt.json": "7b9d1a66a46f4fd9860f31f8de3649074cb14ec8e48b7144c319d9fb4d4bb220"
+  },
+  "parent_selected_tests": {
+    "cmake": {
+      "build_type": "Release",
+      "test": "adx_pcm_store_v2",
+      "result": "passed",
+      "test_log_sha256": "0c90e6a993aac4cf9c99c973492bbf56a05c4ef91b5a09d742dd001d4aa175cc",
+      "executable_sha256": "a901386826cd6706debf95c2a72845c34626987a857721209687ac4f8662d311"
+    },
+    "cmake-llvm": {
+      "build_type": "Release",
+      "test": "adx_pcm_store_v2",
+      "result": "passed",
+      "test_log_sha256": "eb4ee795c40f4c8bb07225d41ef331b357b690e4acfe951eaea48b28276eac4b",
+      "executable_sha256": "bd52153e32a8351c1476ed4b2158a947ed195e46af5b6e8222ea1b65c22e7544"
+    }
+  }
+}

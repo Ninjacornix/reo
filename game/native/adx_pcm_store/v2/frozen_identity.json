@@ -1,0 +1,15 @@
+{
+  "schema": 2,
+  "status": "phased core frozen before new original phase capture/comparator",
+  "prior_v1_freeze_sha256": "f4b7d300bac0318fc2a3879a9bc5160f1281cb426142fdcc4d332ae89a3199c0",
+  "prior_original_boundary_and_final_backing_observations_seen": true,
+  "whole_window2_parity": false,
+  "files": {
+    "game/native/adx_pcm_store/v2/pcm_store.hpp": "b0f1d8adbd452415fcbfac04e19eeaa194949f4b5d120629e14b111bfd683b91",
+    "game/native/adx_pcm_store/v2/pcm_store.cpp": "71842ead21abf764e0520268eceb1e3de71e1d1f319238eb4cdf92060f35bb83",
+    "game/native/adx_pcm_store/v2/CMakeLists.txt": "c49c7cef4cb26246909f3f20131fab49c3b09c3215dc6a272ad322aad23217b3",
+    "docs/native-media/ADX_PCM_STORE_V2_CONTRACT.md": "214414836fb7833cd31a3a96716d82d1aa4d9c8b1e090a86a04d57dacdf47f75",
+    "game/native/sjrb/sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b",
+    "game/native/sjrb/sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2"
+  }
+}
