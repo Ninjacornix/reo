@@ -78,7 +78,7 @@ Concrete boundaries from the original source:
   `126510` has floating-point/trig/exception semantics not supplied by the typed
   block kernels. Tag0 alone is not proof of the keyed18-byte/32-sample domain.
 - `12CFD8` handles finite sample limits, optional limit callback, end marker and
-  leading zero padding before ordinary decode admission. Tags`A/F` explicitly
+  zero padding on the end-marker continuation. Original-word replay confirms that ordinary leading zero input can instead enter decode (see ADX_WINDOW_ORACLE.md). Tags`A/F` explicitly
   return a span before forwarding its pointer; a uniform retained-span rule
   across every format would be wrong. A first keyed-ADX owner excludes these
   plugin routes rather than pretending they share its lifetime.
