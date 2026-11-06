@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has twenty-three standalone suites, including the independent ADX
+project now has twenty-four standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -111,6 +111,20 @@ borrowing, no allocation after observable borrowing, stale requests and accepted
 PCM drain after stop. The combined standalone CMake target passes with both
 toolchains. Header/refill/loop, playback clock and RNA credit ownership remain
 required before this can replace the complete compressed-stream player.
+
+The [original encoded-refill oracle](native-media/ADXT_REFILL_ORACLE.md) now
+executes complete refill/lifecycle and actual SJRB operations across 29 frozen
+cases. It confirms pending free grants, later accepted-prefix publication and
+deferred stop ordering, while exposing why raw reset/reuse needs a new safe
+ownership contract. Native refill integration remains separate.
+
+Actual [disc configuration seals](native-media/CD_RAM_CONFIGURATION_SEAL.md)
+and a conservative [graphics capture gate](native-media/CPU_RAM_CAPTURE_GATE.md)
+now have dual-compiler isolated evidence. They are prerequisites for coherent
+audio capture, not a qualified runtime factory. The graphics profile refuses
+backings with advanced parent ownership; grouped capture, the earlier SDK
+transport/ABI/status chain, coherent rebuilt selection and real-game validation
+remain required.
 
 The default-off movie-position adapter also has a coherent V8 original/native
 opening pair: at least 8,192 successful native publications, movement/menu

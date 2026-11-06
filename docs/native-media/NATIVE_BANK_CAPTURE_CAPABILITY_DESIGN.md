@@ -5,6 +5,14 @@ runtime factory, cohort2 adapter change, game or device test is performed here.
 This extends [the runtime capture review](NATIVE_BANK_RUNTIME_CAPTURE_REVIEW.md)
 and keeps the published0124/V2 layouts and packet cohort2 evidence intact.
 
+Implementation update: [actual native-CD mode receipts/seals](CD_RAM_CONFIGURATION_SEAL.md)
+now pass isolated qualification. The initial [CPU-authoritative graphics gate](CPU_RAM_CAPTURE_GATE.md)
+uses a deliberately narrower profile than the general active-target lease below:
+any graphics parent Service attempt excludes future CPU capture for that backing.
+Its conditional actual constructor compiles, but game integration and complete
+writer/capability qualification are still pending. General coexistence with an
+active target remains a future capability; no opaque memcpy is authorized here.
+
 ## Recommended components and source changes
 
 Implement three cooperating capabilities, not an identity-based memcpy helper:

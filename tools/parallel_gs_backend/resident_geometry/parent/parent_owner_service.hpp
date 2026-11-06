@@ -20,6 +20,9 @@
 #include <optional>
 #include <mutex>
 #include <atomic>
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE)
+#include "game/native/ram_capture/cpu_authority_gate.hpp"
+#endif
 
 extern uint32_t ps2IoRegLockDepth() noexcept;
 namespace reo_resident_live {
@@ -60,6 +63,20 @@ struct Configuration {
 // One service is constructed within the actual GS/VIF owner, once. It is not a
 // Route entry and does not construct a Device, infer origins, or perform math.
 class Service final : private protocol::Backend {
+
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE)
+    // Declared first so it is destroyed last. The conservative capture profile
+    // excludes this backing before any producer/transport can be constructed,
+    // including Services without a NativeTarget and unpublished queued work.
+    reo::native::ram_capture::GraphicsActivity captureActivity_;
+    static reo::native::ram_capture::GraphicsActivity beginCaptureExclusion(const Configuration& c) {
+        validateConfiguration(c);
+        auto result=reo::native::ram_capture::process_coordinator().begin_graphics(c.cold->ram);
+        if(result.status!=reo::native::ram_capture::Status::ok)
+            throw std::runtime_error("Parent construction cannot acquire RAM capture exclusion");
+        return std::move(result.value);
+    }
+#endif
 
     friend class reo_parent_natural::NativeTarget;
 
@@ -750,7 +767,11 @@ class Service final : private protocol::Backend {
             std::shared_ptr<reo_resident_live::ProgramBank> target,
             reo_gpu_vif_upload::ResidentVifUnpack& unpack, const Configuration& c, uint64_t epoch,
             uint64_t generation)
-        : device_(d), gs_(gs), target_(std::move(target)), configuration_(c), epoch_(epoch),
+        :
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE)
+          captureActivity_(beginCaptureExclusion(c)),
+#endif
+          device_(d), gs_(gs), target_(std::move(target)), configuration_(c), epoch_(epoch),
           generation_(generation), bridge_(*this, c.gates, c.tier) {
         validateConfiguration(c);
         if (!target_ || target_->deviceIdentity() != &device_ ||
