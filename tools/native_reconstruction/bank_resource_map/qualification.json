@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "cohort_identity_sha256": "4da055771bc3cbb89f4857007cf5a3b4fea24e2f7e4cd3a2f2d971a190b07802",
+  "documentation_sha256": "70208bee12f77bf25f0897abc47b528289416402e86bc09326b8ef595b810ba8",
+  "scan_receipt": {
+    "path": "build-native-sjuni/bank-resource-map/file1-final-v2/receipt.json",
+    "sha256": "8ed385eb7385b2d59261a7505debed6de6c75da639cebc9e59377f0cc0220d12"
+  },
+  "tests_receipt": {
+    "path": "build-native-sjuni/bank-resource-map/file1-final-v2/tests.json",
+    "sha256": "a2ab80d8b4f8535cdb32381d41c81cb7b6ee25ad7416162ca364373091d4611b"
+  },
+  "verified_original_words": 2245,
+  "function_ranges": 16,
+  "source_postcheck": [],
+  "metadata_postcheck": [],
+  "tests": 5,
+  "complete_paired_banks": 103,
+  "partial_hd_bd_resources": 28,
+  "unqualified_named_bank_indices": [
+    354
+  ],
+  "production_changes": []
+}
