@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has thirty-six standalone suites, including the independent ADX
+project now has thirty-seven standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -262,7 +262,16 @@ corrected owner. Both compilers produce the same two complete cycles per
 channel and actual joins. Timing-dependent following-cycle prefixes differ on18
 rows and remain explicitly recorded. Player/output/LSC integration still gates
 stage3 completion; stages4-6 have not been declared complete.
-Clocks, RNA/DTR credits, LSC
+The [native buffering/drain control](native-media/ADXT_PLAYBACK_CONTROL_IMPLEMENTATION.md)
+now passes318 admitted original clients with exact final control fields, queue
+positions, traffic totals and complete physical PCM bytes on both compilers.
+All330 original clients return;12 uneven-channel states remain explicit native
+exclusions. Its51 ownership checks cover pending transfer stop, wrapped silence,
+held leases, reentry and retained post-effect faults. The original inhibited
+admission still sets the started byte without starting playback; the first
+incorrect native interpretation and failed comparisons remain preserved.
+This cut has a concrete phased PCM bridge, but Window2 still owns its private
+PCM graph. Output copy/consumption credits, full pause/clock composition, LSC
 replacement and actual player integration still follow.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now

@@ -47,7 +47,7 @@ emitted1,057,943,628. Both observed the same two complete-cycle samples/digests.
 The [comparison tool](../../tools/native_reconstruction/compare_adx_loop_runs.py)
 validates input/source identities, successful raw receipts, each cycle's extent
 and digest equality, and compares every other result field. Its only exclusions
-are` samples` and`byte_digest` for those complete-stream observations. It
+are`samples` and`byte_digest` for those complete-stream observations. It
 explicitly records`full_run_byte_equality=false`.
 
 The64-bit rolling digests are noncryptographic. They provide repeat and compiler

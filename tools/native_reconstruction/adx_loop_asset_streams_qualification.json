@@ -13,8 +13,8 @@
     "tools/native_reconstruction/adx_loop_asset_stream_check.cpp": "7d9106014f0764c647d4c4431d0e6cec5a84e35c6ca577623e16ddcc30c3f617",
     "tools/native_reconstruction/verify_adx_loop_asset_streams.py": "48952eeda55b03cb1c7d2cf8cb7d6fd74e1fc3ee4ce46feea1bdd53bc69e94c0",
     "tools/native_reconstruction/compare_adx_loop_runs.py": "97aaf95f492d8b719bcdf078485823c95eda9c84a69272e1c0fa8f019db82b0f",
-    "docs/native-media/ADX_ACTUAL_LOOP_STREAM_VALIDATION.md": "bd13d029bcb70cd5a79664851c82691e2838f4ded2174694f7eeb07ae2635252",
-    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "8e0b359070a65506c633030c97ad8554e01bee250508537f5976138e09192820"
+    "docs/native-media/ADX_ACTUAL_LOOP_STREAM_VALIDATION.md": "6c4a1e4e436039c8ce6e1f277d63cbe9a97af32b34d573e686f5db540683efd5",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "2750f1a677cb4041de19412fffa5a5d6f4873fc944fe31a27c5bbe9731a331d9"
   },
   "receipts": {
     "build-native-sjuni/adx-loop-asset-streams/probe-gcc-v1/receipt.json": "8509ef29bd64252c4769b5587e1aa0a25f495c9b0fa98892d7c420d3261efe1e",
