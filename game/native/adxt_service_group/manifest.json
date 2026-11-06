@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "files": {
+    "game/native/adxt_service_group/CMakeLists.txt": "e2828daac141f48e9915255b35ce522ddf65d3a1c02d133329c4e20a367570e3",
+    "game/native/adxt_service_group/fixture_runner.cpp": "bfc3e06ed53d2176182df78fc995cb6fb8bdb03b05274b3923b2317aa96970f5",
+    "game/native/adxt_service_group/service_group.cpp": "e377b77ba3724e072b08b0ce43e44972aac1e99f8aab77f2e034bd1535587ce0",
+    "game/native/adxt_service_group/service_group.hpp": "be771665aea500320892033812db861391f80b50c6f0aef53e6f6cc66ec594f2",
+    "game/native/adxt_service_group/service_group_tests.cpp": "d8fcc7bbf7cc6c6bab2b115c8d0fd2b1eeb38edb4f2d8b8b672a911473752c4d",
+    "game/native/adxt_service_group/verify.py": "5945ef34f6a827b07dd8a1364af998593a032ccf621400218871aaf196a5084a",
+    "docs/native-media/ADXT_SERVICE_GROUP_CONTRACT.md": "72eb3386cb88b93078efd9d01bc3da1af3443b746b0ba0f697aedaa9288b47d9",
+    "tools/native_reconstruction/adxt_service_group_oracle.py": "af714f98dee8f532128a09bb99044e786df1be877d41647b95cb029368589cae",
+    "game/native/adxt_estimated_clock/estimated_clock.hpp": "4da48744e9dac493e77d57fb8130e2638bd5a8a40dcc7965652a00663cbfb66b",
+    "game/native/adxt_integer_clock/integer_clock.hpp": "dfffa9ba5a3866a1f0f936a4db0f979802422e5951b00772476b205b21f6c99b"
+  },
+  "original_freeze": "build-native-sjuni/adxt-service-group/original-freeze-v2",
+  "original_run": "build-native-sjuni/adxt-service-group/original-v2",
+  "original_freeze_sha256": "3e3d75dd728a34d582359170198a04833bcf03bc15059023b3c068f1d554b53f",
+  "original_receipt_sha256": "d5ca28253b16b28e1b9f67cd6a4aed25fd0ffba71279cfec7f2f51be51cbda8a"
+}

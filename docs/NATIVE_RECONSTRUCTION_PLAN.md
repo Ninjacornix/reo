@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has forty-four standalone suites, including the independent ADX
+project now has forty-five standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -329,6 +329,15 @@ sector tails are retained. Standalone replacements, overlays and other editions
 remain separate. Original global audio scheduling, bank/packet integration,
 LSC, movies and actual game/media validation still gate stage3. No runtime
 dependency has been removed, and stages4–6 remain required.
+
+The [native audio dispatch envelopes](native-media/ADXT_SERVICE_GROUP_IMPLEMENTATION.md)
+now match81 independently frozen original cases and31,169 original instructions
+under both compilers. Live independent slot tables, single phase dispatch,
+ordered input/error tails and busy reentry are qualified. Strong per-call leases
+survive current-slot removal; traversal allocates nothing. Children remain
+explicit ports: actual phased decoder/player/RNA and32-DTR/8-DTX ownership,
+file polling and clock consumers still require integration. This does not close
+the prepared clock's unowned-service branch or complete stage3.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring
