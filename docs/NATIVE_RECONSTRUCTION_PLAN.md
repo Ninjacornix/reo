@@ -235,6 +235,10 @@ control-boundary state, and passes explicit refusal/FP/reentry/negative controls
 with both compilers. It supplies no device timestamp or actual queue ownership.
 Stage 3 still requires final-sector/LSC source support, RNA/DTR credits, actual
 clock/player integration and media validation before advancing.
+The [source geometry/route audit](native-media/ADX_SOURCE_GEOMETRY_AND_ROUTE_GATE.md)
+finds91 whole-sector and8,819 partial-sector ADX member references. It keeps
+logical lengths separate from actual AFS/file, memory and LSC routes; no padding
+or broader source admission is inferred from the archive inventory.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 
