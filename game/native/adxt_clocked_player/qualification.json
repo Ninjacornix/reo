@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "status": "qualified bounded live clock/player composition and measured-input original comparison",
+  "game_run": false,
+  "device_opened": false,
+  "production_selected": false,
+  "global_service_qualified": false,
+  "stage3_complete": false,
+  "operations_per_compiler": 138,
+  "original_instructions_per_compiler": 20310,
+  "fp_steps_per_compiler": 1386,
+  "stale_pause_input_differences_per_compiler": 15,
+  "inherited_finite_matrix": 48,
+  "manifest_sha256": "216c3a7656ae8744b2438cfd35b300a8b13add7d968a02c9f4f49084a81a732b",
+  "prior_manifest_sha256": "64b86266f077848db36306252e61eca29a289465ab3ff3b273ad76abec465092",
+  "changed_files": [
+    "game/native/adxt_clocked_player/verify.py"
+  ],
+  "receipts": {
+    "build-native-sjuni/adxt-clocked-player/qualified-gcc-v1/receipt.json": "b59251a9b4eb4ac1e9d6706819bac494921410118f3d020f718efd3d46fd1d59",
+    "build-native-sjuni/adxt-clocked-player/qualified-llvm-v2/receipt.json": "d7979c203c8116900a7803cde1190a608cfe71d091de9c47413f3a55d5a5df60",
+    "build-native-sjuni/adxt-clocked-player/parent-gcc-v1/receipt.json": "8a24d5b6d393b3076346d55db7d258087c734d0028fce37b31deaa6165d849fd",
+    "build-native-sjuni/adxt-clocked-player/parent-llvm-v1/receipt.json": "8559699d6b93db490e8ed44ddbaf07e929c571470be55437ad840d64f8cbad78"
+  },
+  "additional_sources": {
+    "game/native/adxt_clocked_player/README.md": "e5dd3abb080b2b2bd29709497ac314ddb05f21aeabf93bd24113b59c6386b746",
+    "docs/native-media/ADXT_CLOCKED_PLAYER_IMPLEMENTATION.md": "820123cf3640922fe874751c52ca54b55087e375d3b70da5925c6dacf9898de6",
+    "game/native/CMakeLists.txt": "68fc15b90ed2f4694406d70cd165be7cfec603d35da1f9bf4482696dfe487984",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "3031ad8fce22e9cdb0a91913422a47a4320355f8e63a990ce7ca4d366dccc062"
+  }
+}
