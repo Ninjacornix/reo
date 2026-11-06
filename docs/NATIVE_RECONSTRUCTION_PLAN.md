@@ -145,9 +145,14 @@ resource/player integration remain separate.
 
 The [header oracle](native-media/ADX_HEADER_ORACLE.md) adds 31 completed
 integer/short/reject cases and eight explicitly partial tag0 executions. The
-successful path remains open at coefficient FPU setup; no invented coefficient
-or trig result is used to claim header admission. This is a required remaining
-media boundary, alongside loop transitions and playback/credit clocks.
+subsequent [bounded math/header proof](native-media/ADX_HEADER_MATH_ORACLE.md)
+executes original coefficient/cosine bodies under qualified current-runtime FP
+operations: 45 returned cases and three explicit partials, with all 48 case
+observations equal across compilers. Finite admitted headers now reach real
+prefix return/state2. No invented coefficient or trig result is substituted;
+exceptional PS2 FPU behavior and the unowned reduction paths remain unproven.
+Native header/player integration, loop transitions and playback/credit clocks
+remain required.
 
 Actual [disc configuration seals](native-media/CD_RAM_CONFIGURATION_SEAL.md)
 and a conservative [graphics capture gate](native-media/CPU_RAM_CAPTURE_GATE.md)
