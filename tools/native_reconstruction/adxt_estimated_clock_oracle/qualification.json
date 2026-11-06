@@ -1,0 +1,38 @@
+{
+  "authored_sha256": {
+    "oracle.py": "823172e32b68f1687e714e83e0f9bdce8e26ddf0f05ec47f7e009dd4e9832070",
+    "test_oracle.py": "14ef841d6d4f3b956e377c5372180fed068944d99a11c6069bb970f86e786ce0"
+  },
+  "cases": 131,
+  "device_opened": false,
+  "documentation_sha256": "be220e34ca62458fe2dee2c6c97d0a3c8463c9f6032d629e0716416afdbf32f4",
+  "engine_postcheck": [],
+  "fp_steps": 1549,
+  "frozen_input_manifest_sha256": "2f888a4513ad1968512bc032806de3fccdafbb97aff808dd8f03f5777ecd19c0",
+  "game_run": false,
+  "inputs_sha256": "5c331cac53c96fe53d3e5fef89bf65bee7fa4539f0cc044cfdd859b5fbe2f6c5",
+  "literal_micro_objects_equal": true,
+  "micro_cases": 1128,
+  "native_estimated_core_implemented": false,
+  "operations": 136,
+  "original_case_objects_equal": true,
+  "original_instructions": 18588,
+  "partial_cut": "Unowned instruction fetch0x12d678 in actual service-guard0 branch",
+  "qualified_fp_words": 41,
+  "receipts": {
+    "gcc-v1": {
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "path": "build-native-sjuni/adxt-estimated-clock/gcc-v1/receipt.json",
+      "sha256": "7e99a4b7fd3d7706836610bb24fd2fb194d08a7d52aa9d0355ffaa10d90ceb25"
+    },
+    "llvm-v1": {
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "path": "build-native-sjuni/adxt-estimated-clock/llvm-v1/receipt.json",
+      "sha256": "15f7ed715fd6dde41fab4e15b6b9721f6f8ac6763efc8e4e61a24d4457ada6c5"
+    }
+  },
+  "returned": 135,
+  "schema": 1,
+  "status": "qualified_original_evidence_only",
+  "tests": 8
+}

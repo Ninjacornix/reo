@@ -214,6 +214,12 @@ matches 132 original-word cases with both compilers, including actual RNA/ring
 getters and modulo accounting. It consumes prepared queue observations and does
 not own queue synchronization, the estimated floating-point/tick clock or device
 time. Those clocks and output credits remain required for the full player.
+The [estimated-clock original oracle](native-media/ADXT_ESTIMATED_CLOCK_ORACLE.md)
+adds 131 authored cases /136 operations under both exact toolchains:135 complete
+operations and one explicit service cut. All1,128 emitted-FP micro comparisons
+match. Native estimated-clock ownership and complete service integration remain
+open; the literal float threshold behavior is preserved without rounding it to
+nominal milliseconds.
 
 The [owned asset inventory](native-media/FILE1_AUDIO_ASSET_COMPATIBILITY.md)
 identifies 8,910 ADX references within the finite header profile. The
