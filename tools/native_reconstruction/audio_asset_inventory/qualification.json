@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "cohort_identity_sha256": "97b0b47f8aeadc320b79f6d6607f72b01e322fca9ed8ba757c9c51ae41823fd6",
+  "documentation_sha256": "f33dc7178a0022623662640ce7a1dbffa3efb0380c4db125f0c2d742817d6788",
+  "scan_receipt": {
+    "path": "build-native-sjuni/audio-asset-inventory/file1-v1/receipt.json",
+    "sha256": "765b03bca36fa7a3c78f57f8bf73bb72f0790d504dd14054e304dff29d570d23"
+  },
+  "test_receipt": {
+    "path": "build-native-sjuni/audio-asset-inventory/file1-v1/tests.json",
+    "sha256": "f91d03ed49e13ac9520bd226644fd35fba7dbeaab344b4fe5527ba59043be0b2"
+  },
+  "source_postcheck": [],
+  "metadata_postcheck": [],
+  "confirmed_adx": 8910,
+  "unique_adx_payload_hashes": 6786,
+  "tests": 11,
+  "production_changes": []
+}
