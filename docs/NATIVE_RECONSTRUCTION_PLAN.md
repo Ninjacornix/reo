@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has forty-seven standalone suites, including the independent ADX
+project now has forty-eight standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -356,6 +356,15 @@ order and a blocked source join are qualified. Native finite transport is an
 explicit replacement for hardware transfers; general guest file/LSC/RPC
 protocols are not relabeled native. Production enrollment, serviced discard
 clocks, bank/packet output, movies and game transitions still gate stage3.
+
+The [native finite media control owner](native-media/ADXT_CONTROL_SESSION_IMPLEMENTATION.md)
+now owns enrollment, all service memberships, clocks/keys, actual players and one
+output provider behind session/generation keys. Both compilers validate collision/
+stale-key refusal, failed-open mix-order restoration, pending-source index
+retention, peer output and provider-fence retries. Its actual imported corpus
+again matches all6,706 finite PCM payloads and terminal clock/fence observations.
+This replaces the manual test driver, not the remaining guest game ABI. Serviced
+discard, bank/packet output, LSC, movies and game transitions still gate stage3.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring
