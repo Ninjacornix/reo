@@ -70,6 +70,11 @@
 #include <map>
 #include <string>
 #include "source_instruction_access.hpp"
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+#include "game/native/ram_capture/v2/cpu_authority_gate.hpp"
+#include <stdexcept>
+#include <utility>
+#endif
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -104,6 +109,9 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
         return true;
     }
 
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    m_nativeRamWriterBacking = nullptr;
+#endif
     m_runtime = &runtime;
     s_instance = this;
 
@@ -198,10 +206,27 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
     // Initialize trace logger (only active if REO_TRACE=1)
     ReoTraceLogger::instance().init();
 
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    m_nativeRamWriterBacking = runtime.memory().getRDRAM();
+#endif
     return true;
 }
 
+reo::native::ram_capture::v2::Coordinator* ReoHwBridge::nativeSoundRamWriterCoordinator(PS2Runtime& runtime) const noexcept {
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    if(this==s_instance&&m_runtime==&runtime&&m_nativeRamWriterBacking&&
+       runtime.memory().getRDRAM()==m_nativeRamWriterBacking)
+        return &reo::native::ram_capture::v2::process_coordinator();
+#else
+    (void)runtime;
+#endif
+    return nullptr;
+}
+
 void ReoHwBridge::shutdown() {
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    m_nativeRamWriterBacking = nullptr;
+#endif
     reoPad2Stop();
     ReoTraceLogger::instance().shutdown();
     m_network.reset();
@@ -2306,6 +2331,33 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
     return true;
 }
 
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+reo::native::ram_capture::v2::CpuWriter pad2BeginRamWrite(uint8_t* ram,std::size_t socketCount) {
+    namespace capture=reo::native::ram_capture::v2;
+    auto& coordinator=capture::process_coordinator();
+    const auto withdraw=[&]() -> capture::CpuWriter {
+        // Preserve working input. No new reader may enter once withdrawal is
+        // announced, and every admitted bounded copy retires before writing.
+        // This is capture withdrawal, not uncoordinated fallback reads.
+        if(coordinator.withdraw_cpu_capture()!=capture::Status::ok)
+            throw std::logic_error("Pad capture withdrawal would wait on its own copy");
+        static std::atomic_flag reported=ATOMIC_FLAG_INIT;
+        if(!reported.test_and_set(std::memory_order_relaxed))
+            std::fprintf(stderr,"[NATIVE-SOUND-RAM] capture unavailable: Pad writer capacity exceeded; input continues after copy drain\n");
+        return {};
+    };
+    // New capture profile bound, not a source/game input limit. One copied
+    // batch touches at most one4B work word and64 records of at most128B.
+    // Overflow retains EVERY original input write after withdrawing capture.
+    if(socketCount>64)return withdraw();
+    auto writer=coordinator.begin_cpu_writer(ram);
+    if(writer.status==capture::Status::ok)return std::move(writer.value);
+    if(writer.status==capture::Status::capacity)return withdraw();
+    // A feeder cannot own a CPU-copy pin: bounded copies never enter input,
+    // guest functions or providers. Self-wait is a programming contract error.
+    throw std::logic_error("Pad RAM writer lacks a valid independent backing/pin");
+}
+#endif
 void pad2FeederLoop() {
     try {
         uint32_t frame = 0;
@@ -2381,6 +2433,12 @@ void pad2FeederLoop() {
             }
             if (!rd)
                 continue;
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+            // Capture the dynamic addresses first, release g_pad2.m, then
+            // announce the writer. Never reacquire g_pad2.m while this token
+            // lives. It spans work and every socket through final seq publish.
+            auto ramWriter=pad2BeginRamWrite(rd,socks.size());
+#endif
             // sceDbcGetDepNumber (EE 0x188D90) requires the port's word in the work area to be 1.
             if (work && (work & ps2RamBackingMask()) + 4 <= ps2RamBackingBytes) {
                 const uint32_t connected = 1;

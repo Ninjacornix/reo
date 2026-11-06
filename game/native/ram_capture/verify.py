@@ -22,9 +22,10 @@ KIT_SHA='435ae2791088c3061ffd2caa3617924daa9d1b8815eb441512f4c9f50e5b4ea0'
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def placement(text):
+def placement(text,version=1):
     declaration=text.index('class Service final : private protocol::Backend {')
-    gate=text.index('reo::native::ram_capture::GraphicsActivity captureActivity_;',declaration)
+    qualifier='reo::native::ram_capture::'+('v2::' if version==2 else '')
+    gate=text.index(qualifier+'GraphicsActivity captureActivity_;',declaration)
     first=text.index('mutable std::recursive_mutex hostProtocolMutex_;',declaration)
     constructor=text.index('    Service(Vulkan::Device& d,')
     initial=text.index('captureActivity_(beginCaptureExclusion(c)),',constructor)
@@ -39,6 +40,8 @@ def main():
     p.add_argument('--checkout',type=Path,required=True)
     p.add_argument('--receipt',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--service-version',type=int,choices=(1,2),default=1)
+    p.add_argument('--service-only',action='store_true',help='Compile actual Service only; versioned core has separate unit receipts.')
     a=p.parse_args();out=a.output.resolve();tree=a.checkout.resolve();cc=a.cxx.resolve()
     if not out.is_relative_to(ROOT/'build-native-sjuni') or out==ROOT/'build-native-sjuni':raise ValueError('Private output subdirectory required')
     baseline=json.loads(a.receipt.read_bytes())
@@ -49,8 +52,8 @@ def main():
         if sha(tree/name)!=digest:raise ValueError('Fresh SDK changed: '+name)
     if sha(KIT/'build-kit.json')!=KIT_SHA:raise ValueError('Sealed graphics input cohort changed')
     kitfiles={row['path']:row['sha256'] for row in json.loads((KIT/'build-kit.json').read_bytes())['files']}
-    service_text=(ROOT/SERVICE).read_text(encoding='utf-8');placement(service_text)
-    try:placement(service_text.replace('captureActivity_(beginCaptureExclusion(c)),','captureActivity_(),'))
+    service_text=(ROOT/SERVICE).read_text(encoding='utf-8');placement(service_text,a.service_version)
+    try:placement(service_text.replace('captureActivity_(beginCaptureExclusion(c)),','captureActivity_(),'),a.service_version)
     except ValueError:pass
     else:raise ValueError('Missing-constructor-gate negative control escaped source check')
     out.mkdir(parents=True,exist_ok=True)
@@ -70,6 +73,7 @@ def main():
     proof=dict(schema=1,status='running',game_run=False,device_opened=False,runtime_library_linked=False,
         compiler=str(cc),compiler_sha256=sha(cc),sdk_receipt_sha256=sha(a.receipt),
         graphics_manifest_sha256=KIT_SHA,checks=[],consumed_include_sha256={},
+        service_version=a.service_version,service_only=a.service_only,
         existing_generation_receipt_sha256=sha(generation_path),generated_include_sha256=generated_inputs,
         source_placement_negative_control='missing actual constructor gate rejected')
     authored={str(x.relative_to(ROOT)):sha(x) for x in HERE.iterdir() if x.is_file()}
@@ -82,8 +86,9 @@ def main():
     try:
         flags=[cc,'-std=c++20','-O2','-pthread','-Wall','-Wextra','-Wpedantic','-Werror']
         exe=out/'unit.exe'
-        run('compile_units',flags+[HERE/'cpu_authority_gate.cpp',HERE/'cpu_authority_gate_tests.cpp','-o',exe])
-        run('units',[exe])
+        if not a.service_only:
+            run('compile_units',flags+[HERE/'cpu_authority_gate.cpp',HERE/'cpu_authority_gate_tests.cpp','-o',exe])
+            run('units',[exe])
         # Isolate a source-placement counterexample, without racing raw bytes:
         # only the Service-shaped fixture omits its lifetime guard. Real gate
         # implementation remains unchanged. It must fail pending-state checks.
@@ -91,14 +96,16 @@ def main():
         original=':activity([&]{auto r=gate.begin_graphics(backing);if(r.status!=Status::ok)throw std::runtime_error("service gate");return std::move(r.value);}()),'
         if tests.count(original)!=1:raise ValueError('Service lifetime negative-control boundary changed')
         negative=out/'negative.cpp';negative.write_text(tests.replace(original,':activity(),'),encoding='utf-8',newline='\n')
-        bad=out/'negative.exe';run('compile_missing_service_guard',flags+['-I'+str(HERE),HERE/'cpu_authority_gate.cpp',negative,'-o',bad])
-        run('missing_service_guard_detected',[bad],expected=1)
+        bad=out/'negative.exe'
+        if not a.service_only:
+            run('compile_missing_service_guard',flags+['-I'+str(HERE),HERE/'cpu_authority_gate.cpp',negative,'-o',bad])
+            run('missing_service_guard_detected',[bad],expected=1)
         probe=out/'actual_service.cpp'
         probe.write_text('#include "'+SERVICE+'"\nreo_parent_install::Service* actual_construct(Vulkan::Device& d,ParallelGS::GSInterface& gs,std::shared_ptr<reo_resident_live::ProgramBank> target,reo_gpu_vif_upload::ResidentVifUnpack& unpack,const reo_parent_install::Configuration& c,uint64_t epoch,uint64_t generation){return new reo_parent_install::Service(d,gs,std::move(target),unpack,c,epoch,generation);}\n',encoding='utf-8',newline='\n')
         plan=json.loads((KIT/'compile-plan.json').read_bytes())
         boot=next(u for u in plan['units'] if u['sources']==['{work}/project/recomp/reo_bootstrap.cpp'])
         include=[dependency/'ps2xRuntime/include',dependency/'ps2xRuntime/src/lib',dependency/'ps2xRuntime/src/lib/Kernel',out/'cohort',out/'generated',ROOT,ROOT/'tools/parallel_gs_backend/resident_geometry']
-        defines=['REO_BUILD_NATIVE_SOUND_RAM_CAPTURE=1']
+        defines=['REO_BUILD_NATIVE_SOUND_RAM_CAPTURE='+str(a.service_version)]
         for option in boot['options']:
             if option.startswith('/I'):
                 suffix=option[2:]

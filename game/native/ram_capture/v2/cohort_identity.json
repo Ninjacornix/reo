@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "cohort": "cooperating-pad-ram-writer-v2-wait-cohort4",
+  "prior_v1_commit": "8229cc2e5133d240a693c877a3ffaeeceb4850f4",
+  "sdk_receipt_sha256": "2de11297c268e453888341b7f3ed44012ae51bdd10c9baa39a168e5cade97ec0",
+  "status": "draft source frozen for first wait/limit qualification; expectations already known",
+  "source_sha256": {
+    "game/native/ram_capture/v2/CMakeLists.txt": "2dc7c7c341b3d267ed450a98477dc4fc6bc5b1866bda552445e01cc76c8ca4b8",
+    "game/native/ram_capture/v2/cpu_authority_gate.cpp": "b703306ab49e1ede66737ca6b31313359a8d15a33316358eaa250a287ab381bb",
+    "game/native/ram_capture/v2/cpu_authority_gate.hpp": "10d6455e922cf8f8edb1ecf1d655389d25e46d84cd352124ed719aece3b0687e",
+    "game/native/ram_capture/v2/cpu_authority_gate_tests.cpp": "c9521a178b8a308c6c6ec355fad08f03b00a27ed9fb76d1b3e5ef180cc5b7a21",
+    "game/native/ram_capture/v2/pad_writer_tests.cpp": "3d5ee7694b8a43eb85b693427c1b3f18ef3a3703fc531fb916e0f8251d93afbc",
+    "game/native/ram_capture/v2/verify.py": "c3fb805471d6bcb67fe4b38e1477dae6ccdd28fb05de96c40ffc45cbeb2f6afc",
+    "recomp/overrides/reo_hw_bridge.cpp": "bc89559586915089579a4f6dc562217c41b9f12bf885132b3944ff6c81c30343",
+    "recomp/overrides/reo_hw_bridge.h": "bcbeef406f483677e4777bab8b4c6b2028f7830060deb5094e85db4d3f221130"
+  },
+  "supersedes": "8cd8d3e49973bf9d4bcdf36cc7c00d70301eb9eded70dd60fe9f96124703aa73",
+  "change": "approved fair waiting readers, cancellation, no-wrap and private exception boundary fixtures;64-socket capture withdrawal bound"
+}

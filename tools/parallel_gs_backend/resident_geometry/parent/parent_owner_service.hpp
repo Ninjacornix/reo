@@ -20,7 +20,9 @@
 #include <optional>
 #include <mutex>
 #include <atomic>
-#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE)
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+#include "game/native/ram_capture/v2/cpu_authority_gate.hpp"
+#elif defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE)
 #include "game/native/ram_capture/cpu_authority_gate.hpp"
 #endif
 
@@ -64,7 +66,16 @@ struct Configuration {
 // Route entry and does not construct a Device, infer origins, or perform math.
 class Service final : private protocol::Backend {
 
-#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE)
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    reo::native::ram_capture::v2::GraphicsActivity captureActivity_;
+    static reo::native::ram_capture::v2::GraphicsActivity beginCaptureExclusion(const Configuration& c) {
+        validateConfiguration(c);
+        auto result=reo::native::ram_capture::v2::process_coordinator().begin_graphics(c.cold->ram);
+        if(result.status!=reo::native::ram_capture::v2::Status::ok)
+            throw std::runtime_error("Parent construction cannot acquire coordinated RAM capture exclusion");
+        return std::move(result.value);
+    }
+#elif defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE)
     // Declared first so it is destroyed last. The conservative capture profile
     // excludes this backing before any producer/transport can be constructed,
     // including Services without a NativeTarget and unpublished queued work.
@@ -763,6 +774,13 @@ class Service final : private protocol::Backend {
              (!c.gates.ready() || !c.producerProofs.complete())))
             throw std::invalid_argument("Incomplete default-off parent factory source/proof scope");
     }
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    // Used only alongside the linked actual bridge writer witness and coherent
+    // build provenance. This does not authorize RAM reads or prove lifetime.
+    static reo::native::ram_capture::v2::Coordinator* nativeSoundRamCaptureCoordinatorV2() noexcept {
+        return &reo::native::ram_capture::v2::process_coordinator();
+    }
+#endif
     Service(Vulkan::Device& d, ParallelGS::GSInterface& gs,
             std::shared_ptr<reo_resident_live::ProgramBank> target,
             reo_gpu_vif_upload::ResidentVifUnpack& unpack, const Configuration& c, uint64_t epoch,

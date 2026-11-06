@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has twenty-five standalone suites, including the independent ADX
+project now has twenty-seven standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -154,6 +154,13 @@ exceptional PS2 FPU behavior and the unowned reduction paths remain unproven.
 Native header/player integration, loop transitions and playback/credit clocks
 remain required.
 
+The [native header owner](native-media/ADX_HEADER_IMPLEMENTATION.md) now shares
+the actual encoded source and preserves prefix returns, selective header effects
+and diagnostic ordering. Both compilers pass66 ownership/parser/FP assertions
+and the48-case comparison:45 admitted projections and three explicit refusals
+of unowned original math paths. This is a finite header contract, not a complete
+stream player or general PS2 FPU replacement.
+
 Actual [disc configuration seals](native-media/CD_RAM_CONFIGURATION_SEAL.md)
 and a conservative [graphics capture gate](native-media/CPU_RAM_CAPTURE_GATE.md)
 now have dual-compiler isolated evidence. They are prerequisites for coherent
@@ -161,6 +168,17 @@ audio capture, not a qualified runtime factory. The graphics profile refuses
 backings with advanced parent ownership; grouped capture, the earlier SDK
 transport/ABI/status chain, coherent rebuilt selection and real-game validation
 remain required.
+
+The [cooperating Pad writer](native-media/PAD_RAM_CAPTURE_COORDINATION.md) adds
+fair waiting-copy admission and guards the actual independent input writer.
+Both compilers pass133 assertions, actual Pad/init/shutdown fixtures and full
+bridge/Service objects. Overflow withdraws capture after draining copies while
+preserving every original input write. The
+[writer catalogue](native-media/NATIVE_SOUND_RAM_WRITER_CATALOGUE.md) records the
+remaining execution/configuration conditions; the
+[address validator](native-media/NATIVE_SOUND_ADDRESS_DOMAIN.md) refuses unsafe
+aliases without issuing read authority. The runtime capture factory and actual
+audio/backend selection are still required before a new game candidate.
 
 The default-off movie-position adapter also has a coherent V8 original/native
 opening pair: at least 8,192 successful native publications, movement/menu
