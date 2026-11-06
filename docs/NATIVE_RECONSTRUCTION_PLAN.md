@@ -92,7 +92,7 @@ original regression with both compilers; its [independent review](native-media/B
 finds no confirmed allocator/lifetime defect within the documented domain.
 Requested allocation bytes and asset counts are bounded, including retained
 control blocks and old clips; this does not claim an OS memory limit. Production
-packet capture, aggregate owner dispatch and runtime integration remain required.
+packet capture and runtime integration remain required.
 
 The [injected aggregate audio owner](native-media/NATIVE_AUDIO_AGGREGATE.md)
 now supplies one complete V2 PCM/bank selection, admitted render-to-bank token,
@@ -102,6 +102,16 @@ source reference matches all 9,316 output float words and 10,052 ordered hooks;
 raw observations retain 14 declared post-shutdown closed-query sentinel
 differences. This remains an inert composition requiring qualified capture,
 SDK companion integration and coherent game validation.
+
+The [grouped bank adapter](native-media/NATIVE_BANK_GROUP_CAPTURE.md) now captures
+HD/BD/TQ with one versioned batch after budget admission, without changing the
+frozen packet adapter or bank DSP. Both compilers preserve the original bank
+corpus and detect missing grouping/relock with negative controls. Public patch
+0125 adds the [explicit RAM companion](native-media/NATIVE_SOUND_RAM_CAPTURE_DISPATCH.md)
+for earlier ABI/transport/query/status access. Its reviewed source-order fixes,
+32 companion cases, existing regression suites and actual SDK objects pass;
+the complete126-patch series reapplies. Production writer/capture qualification
+and rebuilt game selection remain open.
 
 The [native SJRB ring core](native-media/SJRB_IMPLEMENTATION.md) now owns backing
 and chunk incarnations and preserves the admitted two-pool/wrap-copy contract.

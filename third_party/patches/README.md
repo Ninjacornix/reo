@@ -94,3 +94,13 @@ headers. See [the implementation and qualification report](../../docs/native-med
 for the exact source/receipt identities, terminal cancellation policy and remaining
 aggregate/capture/device validation. A matching rebuilt dependency is required;
 adding the header to an old sealed runtime library does not supply V2.
+
+Patch `0125` adds a separate optional native-sound RAM capture companion while
+preserving published V1/V2 layouts. Its new install transaction holds the actual
+pre-run lease through publication; selected sound RPC/status paths use explicit
+accepted-call read/control/forward-copy capabilities and bounded owned packet
+loans. No default reader or production factory is installed. The full126-patch
+series reapplies from the recorded pin, and both compiler suites compile matching
+production objects. The [qualification report](../../docs/native-media/NATIVE_SOUND_RAM_CAPTURE_DISPATCH.md)
+records exact inputs, refusal limits and reviewed completion-order corrections.
+Use a coherent rebuilt runtime and matching headers before enabling it.
