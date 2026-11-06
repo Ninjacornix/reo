@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "status": "qualified actual finite native players under global phases",
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_iso_opened": false,
+  "original_whole_pipeline_parity": false,
+  "finite_matrix": 48,
+  "references": 8910,
+  "decoded_unique_finite_payloads": 6706,
+  "manifest_sha256": "ebf7aaf5ed0355f95239736381b0936dea3a59e14af9ae72e40a00408dc8d2d1",
+  "prior_manifests": {
+    "frozen-v1": "5aacd16daf16c2e1857112026944aab99d9ce8ca37224d0cfcbe94ab12ea2830",
+    "frozen-v2": "99cf39c11553e57638226f590281748dabd4e408d9949b1ce68d37e0ea178838",
+    "frozen-v3": "081dc48eb843b585bbe1d693e1cd2ca28773b85faaa26abc34a8dc752e11540a"
+  },
+  "native_unchanged_from_actual_asset_cohort": true,
+  "changed_files_since_actual_asset_cohort": [
+    "game/native/adxt_phased_player/player_tests.cpp",
+    "game/native/adxt_phased_player/verify.py"
+  ],
+  "receipts": {
+    "build-native-sjuni/adxt-phased-player/qualified-gcc-v4/receipt.json": "0cda7cfc498d0c99c07c4810858d893f4878d3c28a94f41521139df5e2fa5c8e",
+    "build-native-sjuni/adxt-phased-player/qualified-llvm-v4/receipt.json": "8fd55f328cf7a748b129ea8129626a15ad49f0fc638f1c613f529cde95143dce",
+    "build-native-sjuni/imported-phased-adxt/full-gcc-v1/receipt.json": "bd9eee26fd9739b50eeaf038f2fb428a0c54d76244c11ea8d8b3b21dabad0cad",
+    "build-native-sjuni/imported-phased-adxt/full-llvm-v1/receipt.json": "4dbf9f7ff1c8d241cf0c57cfd9a2feaa0586b7f5b947dc1e1e495deff967fab5",
+    "build-native-sjuni/imported-phased-adxt/comparison-v1/receipt.json": "7ea044b43480d0390dd3ff15c923325260a9305d92e595e43c95bc63f11fe051",
+    "build-native-sjuni/adxt-phased-player/parent-gcc-v1/receipt.json": "41f02461cac9d2759b737da91427c8e04a8bd42346eb57ec622cdb9806a524f9",
+    "build-native-sjuni/adxt-phased-player/parent-llvm-v1/receipt.json": "15393fc48a2d3391bb8fd50f5df945234fdb5899a2b77b78ddfd24f079be1c85"
+  },
+  "additional_sources": {
+    "game/native/adxt_phased_player/README.md": "ca7907058b4965190eb6202862501c1636e2e7f4a12782dd738336c68d05e1cc",
+    "docs/native-media/ADXT_PHASED_PLAYER_IMPLEMENTATION.md": "ad2a8989c6842657f544444c93b8317d2dcee7f27c2786c3dd72dd0e82d99b6d",
+    "tools/native_reconstruction/compare_imported_phased_adxt_runs.py": "4ea6865ced353b0d2389aab2fdd6a21b19e021044141d17354d9f9d797c4ad0d",
+    "game/native/CMakeLists.txt": "0fcc8695813c2f308ea01d41aeb6acb4a66c34e62d7c48c2cef946ed6a5597bf",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "cf987cf655960c68d7a5150dcfb00347058c8e89decdccff4b4526361cbf2432"
+  }
+}

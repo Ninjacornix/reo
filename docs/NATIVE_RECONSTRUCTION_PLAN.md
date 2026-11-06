@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has forty-six standalone suites, including the independent ADX
+project now has forty-seven standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -346,6 +346,16 @@ both DTX scans per outer service. Both compilers match128 original cases and
 and allocation-free traversal. Individual transfer/credit protocols and actual
 phased native child bindings remain open. Dispatch validation is not a device
 frame, complete audio migration or permission to remove the compatibility runtime.
+
+The [actual phased finite players](native-media/ADXT_PHASED_PLAYER_IMPLEMENTATION.md)
+now bind real source/decoder/control/RNA-prime/atomic-copy work to those groups.
+Both compilers replay all6,706 unique finite imported payloads with exact native
+PCM baseline/terminal-clock results and clean actual source/producer/provider
+fences. Phase boundaries, held-credit failures, independent slots, three-peer
+order and a blocked source join are qualified. Native finite transport is an
+explicit replacement for hardware transfers; general guest file/LSC/RPC
+protocols are not relabeled native. Production enrollment, serviced discard
+clocks, bank/packet output, movies and game transitions still gate stage3.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring
