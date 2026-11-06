@@ -1,0 +1,28 @@
+{
+  "comparison_not_yet_implemented": true,
+  "dependencies_sha256": {
+    "game/native/adx_block/adx_block.cpp": "14a93abdd07a9fb029575c952b66055a2c4c3431818a6c0901e5dd2b27460495",
+    "game/native/adx_block/adx_block.hpp": "eb671ed8071ebb4e6065ba2ec3fbb41706dcdb0935c6a53c162ad233759db195",
+    "game/native/adx_control/predictor_control.cpp": "d1b654fc594275968c4f8ec3a316619b21a8dc9bf13519343678f0c60887ce1f",
+    "game/native/adx_control/predictor_control.hpp": "5a8e81ea0139029cff05a9ec026372f089c566db5c0d7c4c1ca4465fd3034567",
+    "game/native/adx_control/predictor_service.cpp": "50f3863f3f4cf623a0eefc04a6c12bc5aa025b48450af43cef7fdfe2e9dbbfdb",
+    "game/native/adx_control/predictor_service.hpp": "50e90ebc916ebdf79163f15f10e0a05e5298273dad4c77c4cd572808e8751063",
+    "game/native/adx_stereo/adx_stereo.cpp": "3a323a108772aa844594fb2d4e34fb56ef0a522006d90d8b825ead7bd168d55f",
+    "game/native/adx_stereo/adx_stereo.hpp": "6cf5c13f765c60b36cf13ac7c9fd74fd0bc09f3ea106f4d640f98bbff157df8b",
+    "game/native/sjrb/sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2",
+    "game/native/sjrb/sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b"
+  },
+  "original_fixture_sha256": "62dfa91bf99698bc10c84356e8320912967cefadbd6a83feb95f453122fafeff",
+  "schema": 1,
+  "source_sha256": {
+    "CMakeLists.txt": "15176ef8a072a1319cf44d2bedb94c445ee4829a3f1bd85a817054cc744846b9",
+    "adx_window.cpp": "479deb13ae9894158b2fcd81d35b9c400c02f0e472f8df6c47f484723a1121f3",
+    "adx_window.hpp": "a443e48c83762a1be0c814b346d48d2f250a77154c18f9c5e9af864b8c1fbffe",
+    "adx_window_tests.cpp": "c9f305e86c7c56da9eba5e2ec0c88bc87519a9c6cc12c83c376961101f198c71"
+  },
+  "stage": "Native window source frozen before comparator development, after author generated and inspected original window evidence; not blind authorship.",
+  "units": {
+    "GCC": "86 assertions passed",
+    "LLVM": "86 assertions passed"
+  }
+}

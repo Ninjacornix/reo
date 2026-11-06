@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has twenty-two standalone suites, including the independent ADX
+project now has twenty-three standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -100,7 +100,17 @@ Both compilers match 30 original cases / 165 calls, including the constructor's
 actual 16,384-byte PCM capacity plus 192-byte extension. A prior smaller synthetic
 case had been mislabeled as the actual byte geometry; corrected independent
 fixtures retain the earlier evidence unchanged. Global pool/module lifetime and
-ADXT acquire/decode/publication, source/refill and playback clocks remain open.
+the full ADXT player, source/refill and playback clocks remain open.
+
+The [native ADX window owner](native-media/ADX_WINDOW_IMPLEMENTATION.md) now
+composes those actual rings, keyed codecs and predictor control through one
+bounded acquire/decode/publication transaction. Both compilers reproduce all
+33 original cases, including 52 PCM callback boundaries and full physical-byte
+observations. Its 86 unit assertions also check allocation failure before
+borrowing, no allocation after observable borrowing, stale requests and accepted
+PCM drain after stop. The combined standalone CMake target passes with both
+toolchains. Header/refill/loop, playback clock and RNA credit ownership remain
+required before this can replace the complete compressed-stream player.
 
 The default-off movie-position adapter also has a coherent V8 original/native
 opening pair: at least 8,192 successful native publications, movement/menu
