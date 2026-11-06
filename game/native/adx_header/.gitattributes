@@ -1,0 +1,3 @@
+# Preserve the independently frozen receipt and original table carrier bytes.
+frozen_identity.json -text whitespace=cr-at-eol
+key_table.inc -text whitespace=cr-at-eol
