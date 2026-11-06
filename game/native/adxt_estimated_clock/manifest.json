@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "status": "native draft frozen before native comparisons; original evidence previously seen",
+  "original_expected_previously_seen": true,
+  "game_run": false,
+  "files": {
+    "game/native/adxt_estimated_clock/estimated_clock.hpp": "4da48744e9dac493e77d57fb8130e2638bd5a8a40dcc7965652a00663cbfb66b",
+    "game/native/adxt_estimated_clock/estimated_clock.cpp": "843d20f7d0e0fba68d4bef3fb65465b0c4ded8d85ce06ef82835e3e6e2a2d604",
+    "game/native/adxt_estimated_clock/estimated_clock_tests.cpp": "549d3aa2e52e1f219c1ab3a8ff59f4a096e61b8dca6ab379c7bb4f41a050cf68",
+    "game/native/adxt_estimated_clock/CMakeLists.txt": "e67d304e00924272fa8ccc6c9529819f4cb3aae791e3b9073eec30cfafc0b090",
+    "game/native/adxt_integer_clock/integer_clock.hpp": "dfffa9ba5a3866a1f0f936a4db0f979802422e5951b00772476b205b21f6c99b",
+    "game/native/adxt_integer_clock/integer_clock.cpp": "2cccf8198fff234e68a308587098594ed2e227ace7206a6812230b7d52074d4b",
+    "docs/native-media/ADXT_ESTIMATED_CLOCK_CONTRACT.md": "ceb2b1e6d490dcb04e692b1dfdf7c0f4c4455c99f2c7c41076680e984eba9ed2"
+  }
+}

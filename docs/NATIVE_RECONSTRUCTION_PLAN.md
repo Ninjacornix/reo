@@ -228,9 +228,13 @@ Both compilers pass 996 owner assertions, 123 admitted original clients / 8,034
 observations, private numeric/credit/lifetime failure controls and an ordering
 negative whose stable results still match. Ten original clients remain excluded;
 the documented live-grant/cache relation is not raw guest-memory ABI equivalence.
-This independent owner is in the native test suite, not the game. Stage 3 still
-requires estimated clocks, final-sector/LSC source support, RNA/DTR credits,
-full player integration and media validation before advancing.
+This independent owner is in the native test suite, not the game. The separate
+[prepared estimated clock](native-media/ADXT_ESTIMATED_CLOCK_IMPLEMENTATION.md)
+now matches127 admitted original clients /132 operations, including observed
+control-boundary state, and passes explicit refusal/FP/reentry/negative controls
+with both compilers. It supplies no device timestamp or actual queue ownership.
+Stage 3 still requires final-sector/LSC source support, RNA/DTR credits, actual
+clock/player integration and media validation before advancing.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 

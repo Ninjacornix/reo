@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "status": "qualified finite prepared estimated clock; no player/device integration",
+  "game_run": false,
+  "device_opened": false,
+  "original_cases": 131,
+  "matched_cases": 127,
+  "matched_operations": 132,
+  "excluded_cases": 4,
+  "unit_checks_per_compiler": 22,
+  "event_state_compared": true,
+  "negative_threshold_differences_per_compiler": 2,
+  "negative_refresh_differences_per_compiler": 12,
+  "parent_suite_count": 34,
+  "sources": {
+    "game/native/adxt_estimated_clock/CMakeLists.txt": "e67d304e00924272fa8ccc6c9529819f4cb3aae791e3b9073eec30cfafc0b090",
+    "game/native/adxt_estimated_clock/estimated_clock.cpp": "843d20f7d0e0fba68d4bef3fb65465b0c4ded8d85ce06ef82835e3e6e2a2d604",
+    "game/native/adxt_estimated_clock/estimated_clock.hpp": "4da48744e9dac493e77d57fb8130e2638bd5a8a40dcc7965652a00663cbfb66b",
+    "game/native/adxt_estimated_clock/estimated_clock_tests.cpp": "549d3aa2e52e1f219c1ab3a8ff59f4a096e61b8dca6ab379c7bb4f41a050cf68",
+    "game/native/adxt_estimated_clock/fixture_runner.cpp": "2af8b01f1eb91d0be7f9c0a38248c60f0b85efe32cfa96b3693fd873f2a21284",
+    "game/native/adxt_estimated_clock/manifest.json": "9b2fe26262b3bf36a18b2af3836251e46387f5af00dfaf196e20f11c4b886b25",
+    "game/native/adxt_estimated_clock/README.md": "98383404251e34057a6bc0435e5526c9e731a67b7ad9a3c69f6354285afa4cfd",
+    "game/native/adxt_estimated_clock/verify.py": "ec95d5f2b2535cef428a16b6baa918da8c3ba7a557ddb1501b6919fe2ee91503",
+    "docs/native-media/ADXT_ESTIMATED_CLOCK_CONTRACT.md": "ceb2b1e6d490dcb04e692b1dfdf7c0f4c4455c99f2c7c41076680e984eba9ed2",
+    "docs/native-media/ADXT_ESTIMATED_CLOCK_IMPLEMENTATION.md": "f58d97303275d5ba1aa80b65f4065cdec896e6c51effd453a3398b0fd55d6db7",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "0ed0b71b84ef92d0b472851de5bb0a5d0dc8ba41ff79c76b8399daa96bea4003",
+    "game/native/CMakeLists.txt": "f9ecdcc741f2e594b38707a61b6368852980a88c308e33dd0629aa0ff6e91520"
+  },
+  "receipts": {
+    "build-native-sjuni/adxt-estimated-clock/native-gcc-v2/receipt.json": "1dff6553d6102a85c21e0f49329f521c44ff700fbea67dc4a5804687d31c9664",
+    "build-native-sjuni/adxt-estimated-clock/native-llvm-v2/receipt.json": "4540572a1c2c4216049c7fe827a5532ad49d82ee75b978445113db39416cc59b",
+    "build-native-sjuni/adxt-estimated-clock/parent-gcc-v1/receipt.json": "41e04c500900a2fcac16b9e4124d80cfe96998c091f9ed5b8f02a7f221537df1",
+    "build-native-sjuni/adxt-estimated-clock/parent-llvm-v1/receipt.json": "e68683cf158930072708445077526979d16dd2629cded88045fea90e36517d64",
+    "build-native-sjuni/adxt-estimated-clock/gcc-v1/receipt.json": "7e99a4b7fd3d7706836610bb24fd2fb194d08a7d52aa9d0355ffaa10d90ceb25",
+    "build-native-sjuni/adxt-estimated-clock/llvm-v1/receipt.json": "15f7ed715fd6dde41fab4e15b6b9721f6f8ac6763efc8e4e61a24d4457ada6c5"
+  }
+}
