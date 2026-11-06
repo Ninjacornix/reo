@@ -73,6 +73,16 @@ PCM_BACKEND_UNITS = (
     ('native_audio_stream_provider', 'runtime/audio/native_stream_provider.cpp'),
     ('native_pcm_backend', 'recomp/overrides/native_pcm/runtime_adapter.cpp'),
 )
+AUDIO_BACKEND_UNITS = PCM_BACKEND_UNITS[:-1] + (
+    ('native_audio_bank_session_v2', 'game/native/audio_banks/v2/session.cpp'),
+    ('native_audio_packet_v3', 'recomp/overrides/native_banks/v3/packet_adapter.cpp'),
+    ('native_audio_aggregate_v2', 'recomp/overrides/native_audio/v2/aggregate.cpp'),
+    ('native_sound_ram_gate_v2', 'game/native/ram_capture/v2/cpu_authority_gate.cpp'),
+    ('native_sound_address', 'recomp/overrides/native_sound_ram/address_domain.cpp'),
+    ('native_sound_identity', 'recomp/overrides/native_sound_ram/build_identity.cpp'),
+    ('native_sound_memory', 'recomp/overrides/native_sound_ram/runtime_memory.cpp'),
+    ('native_sound_composite', 'recomp/overrides/native_sound_ram/composite_backend.cpp'),
+)
 MOVIE_POSITION_UNITS = (
     ('native_movie_position_core', 'game/native/movie_position/movie_position.cpp'),
     ('native_movie_position_adapter', 'recomp/overrides/native_movie_position/runtime_adapter.cpp'),
@@ -80,6 +90,19 @@ MOVIE_POSITION_UNITS = (
 HEADER_ROOTS = ('game/', 'media/', 'network/', 'recomp/', 'runtime/', 'src/',
                 'tools/parallel_gs_backend/', 'tools/vu_whole_aot/',
                 'tools/source_instrumentation/')
+
+
+def apply_sound_ram_cohort(plan):
+    """Require one instrumented class/body cohort across app AND runtime TUs."""
+    selected = [unit for unit in plan['units'] if unit.get('language') != 'c']
+    definition = '/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE=2'
+    for unit in selected:
+        existing = [x for x in unit['options'] if x.startswith('/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE')]
+        if existing and existing != [definition]:
+            raise ValueError('Conflicting sound RAM instrumentation cohort: ' + unit['id'])
+    for unit in selected:
+        if definition not in unit['options']:
+            unit['options'].append(definition)
 
 
 def digest_bytes(data):
@@ -234,7 +257,9 @@ def runtime_sources(dependency):
 
 def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolchain, raylib,
                     disc_stream=False, resource_reads=False, adx_block=False, adx_stereo=False,
-                    pcm_backend=False, movie_position=False):
+                    pcm_backend=False, movie_position=False, audio_backend=False):
+    if pcm_backend and audio_backend:
+        raise ValueError('Choose one complete audio backend candidate')
     commit = Commit(root, revision)
     manifest, plan, compiler_proof = verify_carrier(kit)
     receipt = verify_dependency(dependency, dependency_receipt, commit, compiler_proof)
@@ -263,7 +288,7 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     selected_units = NEW_UNITS + (DISC_STREAM_UNITS if disc_stream else ()) + \
         (RESOURCE_READ_UNITS if resource_reads else ()) + (ADX_BLOCK_UNITS if adx_block else ()) + \
         (ADX_STEREO_UNITS if adx_stereo else ()) + (PCM_BACKEND_UNITS if pcm_backend else ()) + \
-        (MOVIE_POSITION_UNITS if movie_position else ())
+        (MOVIE_POSITION_UNITS if movie_position else ()) + (AUDIO_BACKEND_UNITS if audio_backend else ())
     required = [n for _, n in selected_units] + [
         'recomp/overrides/native_cd_owner/runtime_adapter.h',
         'recomp/overrides/native_cd_owner/ram_configuration.h', 'game/native/tasks/serial_worker.hpp',
@@ -296,6 +321,18 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         pcm_header = source['source/third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h']
         if b'resetBeforeRuntimeRun' not in pcm_header:
             raise ValueError('Native PCM requires the explicit pre-run configuration reset transaction')
+    if audio_backend:
+        if ('sound_ram::install(runtime,' not in bootstrap or
+                'sound_ram::observe_build_identity' not in bootstrap or
+                'reo_cd_async::configureWithReceipt' not in bootstrap):
+            raise ValueError('Commit lacks complete sound identity/configuration/publication integration')
+        companion = source.get('source/third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioRamCapture.h', b'')
+        profile = source.get('source/third_party/PS2Recomp/ps2xRuntime/src/lib/gs_sound_ram_profile.h', b'')
+        route = source.get('source/third_party/PS2Recomp/ps2xRuntime/src/lib/gs_backend_route.h', b'')
+        if (b'installBackendWithNativeSoundRamBeforeRunV1' not in companion or
+                b'acquireSoundRamProfileBeforeRunV1' not in profile or
+                b'PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE 1' not in route):
+            raise ValueError('Complete sound candidate requires matching RAM companion and selected-GS profile source')
     if resource_reads and ('reo_native_resource_reads::configure' not in bootstrap or
             'reo_native_resource_reads::tryRead' not in commit.read('recomp/overrides/reo_hw_bridge.cpp').decode('utf-8')):
         raise ValueError('Commit lacks the optional synchronous native read integration')
@@ -334,12 +371,16 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     if pcm_backend:
         template['options'].append('/DREO_BUILD_NATIVE_PCM=1')
         unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_PCM=1')
+    if audio_backend:
+        template['options'].append('/DREO_BUILD_NATIVE_AUDIO=1')
+        unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_AUDIO=1')
     if movie_position:
         template['options'].append('/DREO_BUILD_NATIVE_MOVIE_POSITION=1')
         unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_MOVIE_POSITION=1')
     if resource_reads:
         for name in ('recomp/reo_bootstrap.cpp', 'recomp/overrides/reo_override.cpp', 'recomp/overrides/reo_hw_bridge.cpp'):
             unit_for(name)['options'].append('/DREO_BUILD_NATIVE_RESOURCE_READS=1')
+    if resource_reads or audio_backend:
         for library in ('bcrypt.lib', 'runtimeobject.lib'):
             if library not in plan['linkOptions']:
                 plan['linkOptions'].append(library)
@@ -348,11 +389,17 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         if identifier in ids or any('{work}/project/' + name in u['sources'] for u in plan['units']):
             raise ValueError('Duplicate candidate compilation unit: ' + name)
         options = list(template['options'])
-        if (identifier, name) in PCM_BACKEND_UNITS:
+        if (identifier, name) in PCM_BACKEND_UNITS or (identifier, name) in AUDIO_BACKEND_UNITS:
             options.append('/I{work}/project/third_party/PS2Recomp/ps2xRuntime/src/lib')
         plan['units'].append({'id': identifier, 'sources': ['{work}/project/' + name],
                               'options': options})
         ids.add(identifier)
+    if audio_backend:
+        # Service's instrumented class and source wrappers must have one coherent
+        # definition across every C++ TU, including the freshly rebuilt runtime.
+        # Reusing a precompiled SDK or setting the flag only on the bootstrap
+        # would not qualify that linked body or its layout.
+        apply_sound_ram_cohort(plan)
     audio_options = [x for x in template['options'] if not x.startswith('/DREO_BUILD_NATIVE_')]
     audio_options += ['/DMA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_LOW_LATENCY=5', '/DMA_DEFAULT_PERIODS=2']
     plan['units'].append({'id': 'audioOutputNative', 'sources': ['{work}/project/' + audio_path[7:]],
@@ -388,7 +435,7 @@ def prepare(args):
         root, args.revision, kit, dependency, receipt_path, toolchain, raylib,
         disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads, adx_block=args.adx_block_adapter,
         adx_stereo=args.adx_stereo_adapter, pcm_backend=args.pcm_backend,
-        movie_position=args.movie_position_adapter)
+        movie_position=args.movie_position_adapter, audio_backend=args.audio_backend)
     result = {'schema': 1, 'root_revision': commit.revision, 'carrier_manifest_sha256': CARRIER_SHA,
               'preparer_sha256': sha(Path(__file__)),
               'dependency_receipt_sha256': sha(receipt_path), 'dependency_patch_count': receipt['applied_count'],
@@ -399,7 +446,8 @@ def prepare(args):
               'precompiled_ps2_runtime_reused': False}
     result['optional_adapters'] = dict(disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads,
                                        adx_block=args.adx_block_adapter, adx_stereo=args.adx_stereo_adapter,
-                                       pcm_backend=args.pcm_backend, movie_position=args.movie_position_adapter)
+                                       pcm_backend=args.pcm_backend, movie_position=args.movie_position_adapter,
+                                       audio_backend=args.audio_backend)
     if args.check_only:
         return result
     output.mkdir(parents=True)
@@ -471,6 +519,7 @@ def main():
     parser.add_argument('--adx-block-adapter', action='store_true', help='Compile the opt-in keyed mono ADX block adapter')
     parser.add_argument('--adx-stereo-adapter', action='store_true', help='Compile the opt-in keyed stereo/downmix ADX adapters')
     parser.add_argument('--pcm-backend', action='store_true', help='Compile the default-off bounded complete File1 PCM candidate')
+    parser.add_argument('--audio-backend', action='store_true', help='Compile the private complete PCM/bank/RAM candidate with a coherent flag2 runtime rebuild')
     parser.add_argument('--movie-position-adapter', action='store_true', help='Compile the default-off guarded File1 movie position publisher')
     print(json.dumps(prepare(parser.parse_args()), indent=2))
 

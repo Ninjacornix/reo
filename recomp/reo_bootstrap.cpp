@@ -62,6 +62,16 @@
 #error Native PCM requires the matching observed-layout dependency snapshot
 #endif
 #endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_AUDIO) && REO_BUILD_NATIVE_AUDIO
+#include "overrides/native_sound_ram/composite_backend.h"
+#include "overrides/native_sound_ram/build_identity.h"
+#if !defined(REO_BUILD_NATIVE_RESOURCE_OWNER) || !REO_BUILD_NATIVE_RESOURCE_OWNER || !defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) || REO_BUILD_NATIVE_SOUND_RAM_CAPTURE < 2
+#error Complete native audio requires the coordinated writer and native CD configuration cohort
+#endif
+#if defined(REO_BUILD_NATIVE_PCM) && REO_BUILD_NATIVE_PCM
+#error Choose one complete native audio backend candidate
+#endif
+#endif
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1316,7 +1326,12 @@ int main(int argc, char* argv[]) {
     reo_performance::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_cri_server::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
 #if defined(REO_BUILD_NATIVE_RESOURCE_OWNER)
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_AUDIO) && REO_BUILD_NATIVE_AUDIO
+    const auto cdConfiguration = reo_cd_async::configureWithReceipt(
+        g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE, runtime);
+#else
     reo_cd_async::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE, runtime);
+#endif
     reo_cd_async::Lifetime cdReadLifetime(runtime);
 #else
     reo_cd_async::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
@@ -1365,6 +1380,22 @@ int main(int argc, char* argv[]) {
         }
         if (!installed)
             std::fprintf(stderr, "[NATIVE-PCM] installation unavailable; inspect selection diagnostics\n");
+    }
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_AUDIO) && REO_BUILD_NATIVE_AUDIO
+    if (const auto* requested = std::getenv("REO_NATIVE_AUDIO"); requested && !std::strcmp(requested, "1")) {
+        reo::native::sound_ram::InstallResult selected;
+        if (!std::strcmp(g.serial, "SLUS-20765") && g.entry_point == 0x00100008u) {
+            const auto identity = reo::native::sound_ram::observe_build_identity(
+                std::filesystem::path(std::u8string(elf_path.begin(), elf_path.end())));
+            if (identity.status == reo::native::sound_ram::IdentityStatus::observed_metadata)
+                selected = reo::native::sound_ram::install(runtime, cdConfiguration.receipt, identity.identity);
+            else
+                std::fprintf(stderr, "[NATIVE-AUDIO-ERROR] build_identity=%u\n", unsigned(identity.status));
+        }
+        if (selected.status != reo::native::sound_ram::InstallStatus::installed)
+            std::fprintf(stderr, "[NATIVE-AUDIO-ERROR] installation=%u dispatch=%u; complete candidate unavailable\n",
+                         unsigned(selected.status), unsigned(selected.dispatch_status));
     }
 #endif
 #if defined(REO_GAME_FILE2)

@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "cohort_identity_sha256": "92d659600d820b6b948961687f61f40a236d3765edc42fa43e8cc2577b70f416",
+  "documentation_sha256": "eabefcba523dd2ed121e9f490c392b0dc0b57e8d55305ed079bdd92546b962ed",
+  "receipts": {
+    "gcc-unit-final": {
+      "path": "build-native-sjuni/audio-composite-wrapper/gcc-unit-final/receipt.json",
+      "sha256": "88da459b8c1a1e97bafae5ec26e7a1a18c46a812e495312443c76b7e9f5614d8",
+      "checks": 13
+    },
+    "llvm-unit-final": {
+      "path": "build-native-sjuni/audio-composite-wrapper/llvm-unit-final/receipt.json",
+      "sha256": "b9f574578f76b4f015d1a7a41b17c7b3d045ee95e0dfe130ee0d7cdd870ac585",
+      "checks": 13
+    },
+    "gcc-objects-v1": {
+      "path": "build-native-sjuni/audio-composite-wrapper/gcc-objects-v1/receipt.json",
+      "sha256": "335eb47aeee00dfdc55dc493a35f5388ea6ce149ab7751571e39135996791f60",
+      "checks": 2
+    },
+    "llvm-objects-v1": {
+      "path": "build-native-sjuni/audio-composite-wrapper/llvm-objects-v1/receipt.json",
+      "sha256": "61fe215adf953fdb9aa34b5821b308f9550514618be2ed0dc5358b3f790704e8",
+      "checks": 2
+    }
+  },
+  "per_compiler_fixture_assertions": 73,
+  "normal_modes": 5,
+  "negative_controls": 3,
+  "full_objects_per_compiler": 1,
+  "production_changes": []
+}

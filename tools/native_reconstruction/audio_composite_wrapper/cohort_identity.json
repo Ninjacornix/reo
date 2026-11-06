@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "scope": "CompositeBackend actual relay/lifetime fixture plus complete production object qualification",
+  "production_sha256": {
+    "recomp/overrides/native_sound_ram/composite_backend.cpp": "107a9cb5784305d6ffbba7819846e937a93e6cbc22cae59d3c261fab65d0c29a",
+    "recomp/overrides/native_sound_ram/composite_backend.h": "5611469e2985be3e3221362486ebdc50c424ec98c3786320413b411b50f35f2c",
+    "recomp/overrides/native_sound_ram/runtime_memory.h": "6b6dea2942cf7c417da6ab5e55fec1067b771693bd8a20e22fa4521415290502"
+  },
+  "authored_sha256": {
+    "fake_runtime_memory.h": "4a38ff901f305155bd456da91e55025cfcf711a17a52b32caad8391a4ececad4",
+    "objects.py": "3c70e9d9617d3718ba2878cb40214640e64667f5a8b79e27df6ef0512990fce3",
+    "tests.cpp": "89a247bb59466503fab165b1533e986c8c527846c206df05d2d4521734a29194",
+    "verify.py": "23f82320d158e8e1c153d97da706f6363b56beb565184ca1b5c8ea0a2af58da9"
+  },
+  "full127_receipt_sha256": "909917fc2f766c8a43a10abbc0b94189fa24254ecfaa7f710e4eb24dc941b58a",
+  "real_factory_execution": false,
+  "real_sdk_admission": false,
+  "real_ram_authority": false,
+  "device_opened": false,
+  "game_run": false
+}
