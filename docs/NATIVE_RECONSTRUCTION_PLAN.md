@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has thirty-nine standalone suites, including the independent ADX
+project now has forty standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -287,6 +287,15 @@ Production output is process-wide and requires shared per-stream ownership;
 the isolated player is not installed. Logical PAK tails, LSC, complete clocks,
 movie consumers and actual game/media validation still gate stage3. Stages4–6
 remain required; no runtime dependency is removed by these standalone checks.
+
+The [shared stream output owner](native-media/ADXT_SHARED_OUTPUT_IMPLEMENTATION.md)
+now provides one renderer/provider with independent stream generations and
+retirement. Its isolated tests preserve peer playback and queues, reproduce
+ordered mixed float words and retain failed-fence state. An additional fixture
+uses the actual NativeStreamProvider/static slot and reviewed raylib functions
+with model device primitives. Connecting the compressed players and existing
+bank aggregate to this shared ownership remains required; it is not a selected
+runtime backend or actual-device qualification.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring

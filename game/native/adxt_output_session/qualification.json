@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "status": "qualified isolated shared producer output and actual adapter/source-model binding",
+  "game_run": false,
+  "device_opened": false,
+  "production_selected": false,
+  "player_connected": false,
+  "bank_connected": false,
+  "stage3_complete": false,
+  "unit_checks_per_compiler": 2069,
+  "negative_controls": [
+    "stale-generation",
+    "missing-order"
+  ],
+  "manifest_sha256": "fccda4e5d6cb9f9b17ea2ab6111efb7a2c976da06badcbf6f1dde7d3d6254390",
+  "receipts": {
+    "build-native-sjuni/adxt-output-session/qualified-gcc-v2/receipt.json": "037fa9a7bd965ba2a465bbb0c2645e5e19db666c6d8d3abe9f5a4e81ad7f9333",
+    "build-native-sjuni/adxt-output-session/qualified-llvm-v2/receipt.json": "042362113ca751a1c81f1c341a8dd3aaa7f20df8ad153010abfd097405c9d054",
+    "build-native-sjuni/adxt-output-session/parent-gcc-v1/receipt.json": "2338db3c5f1e8683a6905c2f6db3ce09395846c964762fafbc36c77968c0ad8f",
+    "build-native-sjuni/adxt-output-session/parent-llvm-v1/receipt.json": "5c8348e82999058465ea14d667a8ac460632562f86b9f457bcbb560b64e25fc4"
+  },
+  "additional_sources": {
+    "game/native/adxt_output_session/README.md": "4c7ee95dfd511a145ddfeb882b268369cbe50389c17af5b533978454d04e2cd4",
+    "docs/native-media/ADXT_SHARED_OUTPUT_IMPLEMENTATION.md": "41fb384c119e66a30f6fae217a08f1b525027b01a79cc3864f1e19e28c6143ee",
+    "game/native/CMakeLists.txt": "02402c502e9571d9e0e70bc2979be60f0c79125cae48c4bb15a008388b434b53",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "7bcca1c319bd4149d32a624d3856bfb2411e0454b3d291805caae9531f7ef09b"
+  }
+}

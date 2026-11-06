@@ -1,0 +1,31 @@
+{
+  "schema": 2,
+  "status": "read-only order identities frozen before second comparison",
+  "initial_tests_already_run": true,
+  "game_run": false,
+  "device_opened": false,
+  "files": {
+    "game/native/adxt_output_session/session.cpp": "2d1ab55cad08e3e8419187b65aaa23b1510d8c28453d4ee490cd160646733f29",
+    "game/native/adxt_output_session/session_tests.cpp": "1ce193d914a19d197438bff5961065a2c7596191d441f265b450c515e14d4483",
+    "game/native/adxt_output_session/session.hpp": "9d67737b575739538146c4378ce44bb91aa9c5a093aef12ce35a6ad5ed59771f",
+    "game/native/adxt_output_session/CMakeLists.txt": "c8229d639da166ca5b75a70101c461ae0f8942951a1731f1d60179087dc7226f",
+    "game/native/adxt_output_session/verify.py": "5fecd24e252a198f83c7d9d79bc05b5b01a4ed1d90f483d37809654a8138dd74",
+    "game/native/pcm/pcm.cpp": "fe31c38f6c276c60c1f1f7cbf5bea2d9132b83c85fd0b49629b0ca721bf4e844",
+    "game/native/pcm/pcm.hpp": "9fe0aff92070569bfd6744856ea438b92099ec38f1875dc660261ef755b659cb",
+    "game/native/audio_output/audio_output_owner.cpp": "ead835bd2d09fc427808e99cd374d0e6b4e8e3633c9d98324bc6f21db5f5dc16",
+    "game/native/audio_output/audio_output_owner.h": "cbc6cc13c770c1d011ad35ae9707ffe51fae171b1bbffa13dd073f9e112a2102",
+    "game/native/adxt_playback/playback.hpp": "464ce0042549145a7aaa46eefa2afb9ce6fa4d9a7ea42b75abbbabf202a19935",
+    "runtime/audio/native_stream_provider.cpp": "8bb9a6d99cd81e2b9d24f4ac8d1984ac878f447aee0962de2a631d43e19fe8bf",
+    "runtime/audio/native_stream_provider.h": "0f0aa1f4f1e0f17e3548abc40a2134082b09dff5679ae910bfc5021c41532fee",
+    "tools/native_reconstruction/audio_stream_provider/verify.py": "8f58e0c3950f9121397604d64d40e827a87837c5277f611f4e6728167d88804a",
+    "tools/native_reconstruction/audio_stream_provider/test_provider.cpp": "c794abca8124c4c20afff816e29991ce6bc973d161a2c02bba9fe70b5ad17ac5",
+    "docs/native-media/ADXT_SHARED_OUTPUT_CONTRACT.md": "2145c7a1ee15547ac41d48481f8833a220459a52ca4dbc44b1f41c623bd752f1"
+  },
+  "prior_manifest_sha256": "b236a68d2fb23391b1d87695d3e7f84b3f16fdede382e739f8da11271b837e44",
+  "changed_files": [
+    "game/native/adxt_output_session/session.cpp",
+    "game/native/adxt_output_session/session_tests.cpp",
+    "game/native/adxt_output_session/session.hpp",
+    "docs/native-media/ADXT_SHARED_OUTPUT_CONTRACT.md"
+  ]
+}
