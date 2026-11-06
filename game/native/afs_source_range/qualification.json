@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "status": "qualified bounded retained AFS index and source-range arithmetic; no player or deferred-open lifetime integration",
+  "game_run": false,
+  "device_opened": false,
+  "cases": 67,
+  "parsed_entries": 22228,
+  "original_instructions": 1226554,
+  "unit_checks_per_compiler": 23,
+  "floor_negative_differences_per_compiler": 33,
+  "logical_view_negative_detected": true,
+  "parent_suites": 35,
+  "sources": {
+    "game/native/afs_source_range/afs_source_range.cpp": "6f0808755ec7c82b5e0a95c403b45d462b27bbe1f1aec98f202fa081ddc9ce90",
+    "game/native/afs_source_range/afs_source_range.hpp": "c8e91b5580c89b38d6a2d35f9444c80d7aecf66e1bee4d9bc441fa361cea1c3b",
+    "game/native/afs_source_range/afs_source_range_tests.cpp": "576f7dce5acc216bb5cb08c56ece1c30e9398835473c092d5ad800e29f12f0f6",
+    "game/native/afs_source_range/CMakeLists.txt": "72185e55d396d050e5fb5f84628268077f767cadf2d1db29bff3d82aff9a2e6b",
+    "game/native/afs_source_range/fixture_runner.cpp": "4f9103aa33a2270c512f619f7a9a2c5687eb679c0675e36d3bb2ecc63fc710d6",
+    "game/native/afs_source_range/manifest.json": "8acea5ad1f65b142f0a283a12e6ec5e5a0a36de5c715418f222162529114178a",
+    "game/native/afs_source_range/README.md": "d641f393d59682494a4010a1b444ca657db9440b239474ac68bb51b45edb1c63",
+    "game/native/afs_source_range/verify.py": "16ccc170ad85fc1e21a5ca5b05aa1ccd3d958f63ebea93a19d3a435f46407ed7",
+    "tools/native_reconstruction/afs_source_range_oracle.py": "c53ce38e1f3b2637039445dcf4648ef8eb2ed48554944fcf181089e3bcea96c7",
+    "docs/native-media/AFS_SOURCE_RANGE_CONTRACT.md": "70185683ce8a6b298fcab1d3f48613fcf009559a642e4b192ceea78832407a15",
+    "docs/native-media/AFS_SOURCE_RANGE_IMPLEMENTATION.md": "6a88895581f1c0bfd2bcacb4d0416c7a00669e3ed9724783ba3819efdb22fe01",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "d48ae4987e1db4b5a1afc634510dff844528ef98d724866b397a5f1517b9479f",
+    "game/native/CMakeLists.txt": "b81e972a76ed76d9e0eed819aded79a3f4cdc3eef8ff88d0b0748b7f3fc30f45"
+  },
+  "receipts": {
+    "build-native-sjuni/afs-source-range/frozen-v3/manifest.json": "a7d59de4fca3993a66fb809c597372f5051b9705085125b0d5a66afe952d4eee",
+    "build-native-sjuni/afs-source-range/original-v3/receipt.json": "85c275ba2e3da3496a1b63a6cf6b17590876785896f10b77a6e4d045831ff2a2",
+    "build-native-sjuni/afs-source-range/native-gcc-v2/receipt.json": "c21b86bc7fbbe6408cdf365561509fa83ad0dad792c1fb1535deab8929b4a742",
+    "build-native-sjuni/afs-source-range/native-llvm-v2/receipt.json": "79bbf4c81ff20024c80e0b6ffbd28c9e4be214946b4aa544fc29e6bcd774d536",
+    "build-native-sjuni/afs-source-range/parent-gcc-v1/receipt.json": "12a7812184df1ab3a8ce72a41ae445fd04e1fcc2de8b39920b365b5e31c87768",
+    "build-native-sjuni/afs-source-range/parent-llvm-v1/receipt.json": "2ff232b5979e5888ba2ec6f14f267fc154e89390ff60ed9662a6b212b88043a4"
+  }
+}

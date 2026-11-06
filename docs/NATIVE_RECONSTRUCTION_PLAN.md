@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has thirty-two standalone suites, including the independent ADX
+project now has thirty-five standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -239,6 +239,12 @@ The [source geometry/route audit](native-media/ADX_SOURCE_GEOMETRY_AND_ROUTE_GAT
 finds91 whole-sector and8,819 partial-sector ADX member references. It keeps
 logical lengths separate from actual AFS/file, memory and LSC routes; no padding
 or broader source admission is inferred from the archive inventory.
+The [retained AFS range binder](native-media/AFS_SOURCE_RANGE_IMPLEMENTATION.md)
+now reconstructs original table parsing/resolution and deferred-open range
+arithmetic:67 cases and22,228 parsed entries match with both compilers. Actual
+sector extents can retain parent bytes separately from logical member lengths;
+the original sentinel branch's unsafe nonzero-start result remains flagged.
+This closes that bounded range gate, not the partition/LSC/player lifetime.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 
