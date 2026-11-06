@@ -222,7 +222,15 @@ Its [phased v2](native-media/ADX_PCM_STORE_V2_IMPLEMENTATION.md) now separates r
 stores/wrap from publication so encoded-input credit can be returned between
 them. Both compilers pass3,601 checks and90 final/intermediate original storage
 comparisons; a negative observation catches30 ordering errors despite matching
-all final results. Complete Window2 integration remains the next gate.
+all final results. The [composed Window2 owner](native-media/ADX_WINDOW_V2_IMPLEMENTATION.md)
+now joins actual Source2, header/loop control, workspace and phased PCM storage.
+Both compilers pass 996 owner assertions, 123 admitted original clients / 8,034
+observations, private numeric/credit/lifetime failure controls and an ordering
+negative whose stable results still match. Ten original clients remain excluded;
+the documented live-grant/cache relation is not raw guest-memory ABI equivalence.
+This independent owner is in the native test suite, not the game. Stage 3 still
+requires estimated clocks, final-sector/LSC source support, RNA/DTR credits,
+full player integration and media validation before advancing.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 

@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "status": "qualified bounded independent typed Window2 owner; game and device integration open",
+  "game_run": false,
+  "device_opened": false,
+  "raw_guest_memory_abi_parity": false,
+  "whole_original_corpus_parity": false,
+  "selected_original_clients_matched": 123,
+  "original_clients_excluded": 10,
+  "selected_observations_per_compiler": 8034,
+  "original_capture_clients_per_compiler": 133,
+  "original_instructions_per_compiler": 6801810,
+  "original_transcripts_unchanged": true,
+  "unit_assertions_per_compiler": 996,
+  "counter_horizon_terms": 9,
+  "numeric_bypass_negatives_per_compiler": 9,
+  "fault_negatives_per_compiler": 2,
+  "whole_order_negative_clients_per_compiler": 3,
+  "whole_order_negative_stable_results_match": true,
+  "source_live_grant_cache_relations_per_compiler": 238,
+  "parent_suite_count": 33,
+  "freeze": {
+    "path": "game/native/adx_window/v2/manifest.json",
+    "sha256": "f0f13ef6ef6d8718e9ef4c40483bf2d037c756e351801cc326801b6f11326bb2"
+  },
+  "sources": {
+    "game/native/adx_window/v2/capture_original.py": "d43f337287f5d8cb1b209359d2b0c527a19b982f1632eb4f28355f4054627b8d",
+    "game/native/adx_window/v2/CMakeLists.txt": "188f50bea152b0f16db91f138978cf3324acc9a0cb01123141233de48b9c868c",
+    "game/native/adx_window/v2/compare_original.py": "7afa2c5402ab3e595403f1999ca63ced73b6372e78357fa973d861720a76fffb",
+    "game/native/adx_window/v2/fixture_runner.cpp": "477c5ef21c5193ca1a59f39e686c5eda74389c69d107af7a18c8ed1f2c8fe4ea",
+    "game/native/adx_window/v2/manifest.json": "f0f13ef6ef6d8718e9ef4c40483bf2d037c756e351801cc326801b6f11326bb2",
+    "game/native/adx_window/v2/negative_order.py": "631038f1b1baed4042d99f40a064d0034441bbea252150a93d5e643b76369f1d",
+    "game/native/adx_window/v2/README.md": "aeae538c6e581104508c81135282c6e0c8a8e3e2d4b46a5c3bc47a6d60be3755",
+    "game/native/adx_window/v2/stream_window.cpp": "293ec56c474c0abd3a4023477e548f034f8295870c9e0c61f3c59d22f3400065",
+    "game/native/adx_window/v2/stream_window.hpp": "8449ce2305583c9b82f47938b2c526204e59786e41af3c825d3c9c508bfb85a0",
+    "game/native/adx_window/v2/stream_window_tests.cpp": "97953ac1678eb3ea19c6d57075c69661bb7a643d7ad27af40a684711c0e0e197",
+    "game/native/adx_window/v2/test_comparison_policy.py": "dc4748e5c9b5e8f312e25b0d3ad626f9e6685e176e74b90675ead5b7e97f7ef0",
+    "game/native/adx_window/v2/verify.py": "98bc7278a50371edaa188f5e2e1253fe2d53350209dc82b1bd6b376ff8fcd4fe",
+    "game/native/adx_window/v2/verify_faults.py": "445e993db1e2b1430ac46d53b34ea522ba0d376b3091ee5bbff9cc4d20e54571",
+    "docs/native-media/ADX_WINDOW_V2_IMPLEMENTATION.md": "7f5ce6b48d1ff1144708f91a265cf3b6ecb8c0350b86acfd636b5e76647b9087",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "e15e446adbb96ae0d1665cf3343c1e8e9ff1fe2dbd421076a567b7cac1687b7b",
+    "game/native/CMakeLists.txt": "47d24aaee74b15e03657b6b9a87cfd67e7406ef993628de75ea6489080ccf765"
+  },
+  "receipts": {
+    "build-native-sjuni/window2/capture-gcc-v1/receipt.json": "cebccb050361777095e764fbd9f702e877312f320c53873088ee51aaf6fa09b7",
+    "build-native-sjuni/window2/capture-llvm-v1/receipt.json": "342a8e6c5595ab9f3cbb52587329b25a6761164c980078a6aa02880a8d92fd56",
+    "build-native-sjuni/window2/units-gcc-v5/receipt.json": "8acca7aa2d0a987feedf7a0c73d939b2315636485c471fd8e6b286463270d606",
+    "build-native-sjuni/window2/units-llvm-v5/receipt.json": "87469b4326cd62a6816416af907d29937933e56a4eeab3e430dca958ea3ddd4c",
+    "build-native-sjuni/window2/faults-gcc-v2/receipt.json": "cca74e21766680789b1f82bcd942dc2d5cb0d4e2ecd4a8e89d2318167bd5a788",
+    "build-native-sjuni/window2/faults-llvm-v2/receipt.json": "fa0ae14a32b571102783a6603a2b1a27726f0e86f7eed2bcb3fcbcdab8ef599a",
+    "build-native-sjuni/window2/parity-gcc-final-v1/receipt.json": "93d89fc0ab96f4e07a480cecc3e57836d17d5df76887e27868686e86e1fe0e69",
+    "build-native-sjuni/window2/parity-llvm-final-v1/receipt.json": "b02288914e77e139fa2837dec2e4125c0e1df66764aac0693d6f6e0c318d2b1d",
+    "build-native-sjuni/window2/negative-order-gcc-v1/receipt.json": "188b3f64bc0fd1903288b3be93bd5c771bc08cad92e137d5b71aebba562bd28b",
+    "build-native-sjuni/window2/negative-order-llvm-v1/receipt.json": "29f61e4377f55136924b36cd92ef0a0373a59645274433f7e0381b466577396c",
+    "build-native-sjuni/window2/cmake-gcc-v1/receipt.json": "4d52a46df82c6a8889ed894e7c80cd75bd6bc7fc18b79aa2d5b65c52938be734",
+    "build-native-sjuni/window2/cmake-llvm-v1/receipt.json": "4301d99e81bb7af3ded4e555c2b6331a2911903792b868261f5b43a5150e23a1",
+    "build-native-sjuni/window2/parent-gcc-v1/receipt.json": "e1a6f6c39e9058f5aacb9aa2d2b6b88775b4b565d5f146c12b6314fcf499df39",
+    "build-native-sjuni/window2/parent-llvm-v1/receipt.json": "8db95dc3287ef5142804258c2070b3c40dc152ccd826e0dab5b7f75db1739f40",
+    "build-native-sjuni/window2/final-binary-gcc-v1/receipt.json": "6b8baa21e2b4888506f28e1b5c6e6543d33cf89e801c627707ded74dc13cd665",
+    "build-native-sjuni/window2/final-binary-llvm-v1/receipt.json": "0d683bd748348f8d4a3b44cb2548f8d16ba11902ae682e7b445ceff2a48322f9"
+  },
+  "parent_tests": {
+    "gcc": {
+      "build_type": "Release",
+      "selected_test": "stream_window_v2",
+      "passed": true,
+      "test_transcript_sha256": "954ecc2e595f7eed9dde5b2da259b40fcb719479775c7f9d0ce41141bd0689e2"
+    },
+    "llvm": {
+      "build_type": "Release",
+      "selected_test": "stream_window_v2",
+      "passed": true,
+      "test_transcript_sha256": "8f39f16b7c1fd6f767bf5522a38b64a24a919889eb8c25fcea487b13b1510a82"
+    }
+  },
+  "lineage": {
+    "initial_implementation": "implementation-v1",
+    "final_logic": "implementation-v3",
+    "final_tests": "implementation-v5",
+    "final_comment_only_freeze": "implementation-v6",
+    "unit_v4_failure": "allocation-denial test helper leaked into next fixture; corrected without core change",
+    "fault_v1_failure": "private ID injection changed saved config, not constructor argument; corrected injection only",
+    "failures_preserved": true,
+    "final_whitespace_only_freeze": "implementation-v7",
+    "postcheck_edit": "Removed one final empty test-source line only; executable core, assertions and compiled tokens unchanged."
+  }
+}
