@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "scope": "owned immutable LSC filename queue/control; lower file and notification ports remain explicit",
+  "files": {
+    "game/native/lsc_queue/CMakeLists.txt": "0d4db13e8d85ec27cde2fdf117dc05aceeb0c9adc332690a2f1fcc47615cda9f",
+    "game/native/lsc_queue/fixture_runner.cpp": "f76cdf1ccd279dda27fe6a7498d7c1f95f28c24f866e8805d0ef3ea4e975c5ef",
+    "game/native/lsc_queue/queue.cpp": "098d0bac9e9f57538766bda36d2441606f36441391c5ba244e8e550a6bf98392",
+    "game/native/lsc_queue/queue.hpp": "7b4435c38892f2b96990c1ff837f8da14534a709316aa312c382879e134a9b1a",
+    "game/native/lsc_queue/queue_tests.cpp": "30e3c75f65b35862a9baebcb76e1b09684c88cff88f3b59ff7337ba601f9dada",
+    "game/native/lsc_queue/verify.py": "f1378e0b8c719da31601ea5963aac326459b3a69509e58a5d398e5cc6259c25f",
+    "docs/native-media/LSC_QUEUE_CONTRACT.md": "2821dc3d22005ad6e24969a92a895537c627c5b45ee897d73c25ceee1aa07c4c",
+    "tools/native_reconstruction/lsc_queue_oracle.py": "58a0861fd2647ed3e23866ca0970d275b6e2e46093c9c97e630f7e68d2c41bf0"
+  }
+}
