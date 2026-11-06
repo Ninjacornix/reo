@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has twenty-four standalone suites, including the independent ADX
+project now has twenty-five standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -125,7 +125,13 @@ The [original encoded-refill oracle](native-media/ADXT_REFILL_ORACLE.md) now
 executes complete refill/lifecycle and actual SJRB operations across 29 frozen
 cases. It confirms pending free grants, later accepted-prefix publication and
 deferred stop ordering, while exposing why raw reset/reuse needs a new safe
-ownership contract. Native refill integration remains separate.
+ownership contract. The [native encoded-refill owner](native-media/ADXT_REFILL_IMPLEMENTATION.md)
+now owns one real ring, retained producer/consumer credits and private bounded
+asynchronous read results. Both compilers pass its ownership assertions and
+25 admitted source projections plus four explicit safety-refusal controls;
+standalone CMake checks pass. Raw unpublished free-space bytes are deliberately
+outside that comparison. Window sharing, headers, loop policy and actual
+resource/player integration remain separate.
 
 Actual [disc configuration seals](native-media/CD_RAM_CONFIGURATION_SEAL.md)
 and a conservative [graphics capture gate](native-media/CPU_RAM_CAPTURE_GATE.md)
