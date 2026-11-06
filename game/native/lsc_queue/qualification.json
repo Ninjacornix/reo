@@ -48,7 +48,7 @@
   "additional_sources": {
     "game/native/CMakeLists.txt": "47e49e67bda28870ba5dfc472bce8eea8a7e488ac523d12adccbd2bcad6e1088",
     "game/native/lsc_queue/README.md": "3d438de64ee749854c6a09874b7742669e5727c884310ac8b7a94108f6ae4090",
-    "docs/native-media/LSC_QUEUE_IMPLEMENTATION.md": "22456cf5efc031bcaaaf5e6e671c3ef6aa8cd90f48b7824e9e7de78ce65255b0"
+    "docs/native-media/LSC_QUEUE_IMPLEMENTATION.md": "07a1d4200c9b5c80da3ee50e7db0a796bfa8ffbab83aefa205b42ca02b4fed8f"
   },
   "limitations": [
     "Original lower-file/strlen/diagnostic/notification ports are explicit external boundaries.",

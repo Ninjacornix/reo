@@ -47,7 +47,7 @@
     "LSC/seamless, bank/packet output, movies, game selection and actual transitions remain."
   ],
   "additional_sources": {
-    "docs/native-media/ADXT_REGULAR_LOOP_PLAYER_IMPLEMENTATION.md": "eca1ee5ecd32cf34ae3f0d68183f5f84fe84ab28f9a725b8fd0e86ac43623563",
+    "docs/native-media/ADXT_REGULAR_LOOP_PLAYER_IMPLEMENTATION.md": "3aec72094c949e00cdf6b492793d49f8eb336283be3b985317481e6b7138b632",
     "game/native/adx_window/v2/queue_safe_r3/README.md": "219a3bb6df76c1cf24d591881d2be983612de85cea363240a50e357b568e843f",
     "game/native/adxt_control_session/regular_loops/README.md": "3c9a3030795d8b6bc721fd27c0ffd13a27023390e3da6eb7051386964a203273"
   }

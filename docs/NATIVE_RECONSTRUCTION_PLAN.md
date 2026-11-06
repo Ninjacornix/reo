@@ -285,7 +285,7 @@ sample/digest equality to the prior qualified native decoder, zero model
 underruns/skips and real source joins. The output provider is an offline model.
 Production output is process-wide and requires shared per-stream ownership;
 the isolated player is not installed. Logical PAK tails, LSC, complete clocks,
-movie consumers and actual game/media validation still gate stage 3. Stages4Ã¢â‚¬â€œ6
+movie consumers and actual game/media validation still gate stage 3. Stages4–6
 remain required; no runtime dependency is removed by these standalone checks.
 
 The [shared stream output owner](native-media/ADXT_SHARED_OUTPUT_IMPLEMENTATION.md)
@@ -317,7 +317,7 @@ behavior, and unsupported FP/service states refuse before output effects.
 The complete global ADXB/16-ADXT/RNA service order and movie-clock consumers
 remain unqualified; the already-busy branch is not a substitute for that work.
 Bank/packet aggregation, LSC, logical PAK tails and actual game/media validation
-still gate stage 3, followed by stages4Ã¢â‚¬â€œ6.
+still gate stage 3, followed by stages4–6.
 
 The [verified imported source integration](native-media/IMPORTED_ADXT_SOURCE_IMPLEMENTATION.md)
 now resolves all8,910 base File1 ADX references from actual retained imported
@@ -328,7 +328,7 @@ earlier blanket logical-PAK-tail blocker for these full base archives: real
 sector tails are retained. Standalone replacements, overlays and other editions
 remain separate. Original global audio scheduling, bank/packet integration,
 LSC, movies and actual game/media validation still gate stage 3. No runtime
-dependency has been removed, and stages4Ã¢â‚¬â€œ6 remain required.
+dependency has been removed, and stages4–6 remain required.
 
 The [native audio dispatch envelopes](native-media/ADXT_SERVICE_GROUP_IMPLEMENTATION.md)
 now match81 independently frozen original cases and31,169 original instructions
@@ -426,7 +426,7 @@ queued-PCM boundary refusal led to a separate request-sizing revision that
 preserves protected samples; two complete loop cycles match the prior decoder
 baseline. All 50 standalone suites and the 6,706-payload finite regression pass.
 This does not complete stage 3: LSC/seamless, bank/packet output, movie controls,
-game ABI selection and actual media transitions remain. Stages4Ã¢â‚¬â€œ6 remain open.
+game ABI selection and actual media transitions remain. Stages4–6 remain open.
 
 The [owned LSC filename queue](native-media/LSC_QUEUE_IMPLEMENTATION.md) now
 matches all 339 operations from 53 pre-native original cases with both compilers,

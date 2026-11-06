@@ -62,4 +62,4 @@ parent build/test logs. Principal local receipts:
 LSC/seamless ownership, combined bank/packet output, movie controls, game ABI
 selection and controlled media transitions still gate stage 3. Gameplay and
 scheduling, graphics/platform reconstruction and final runtime removal remain
-stages4â€“6. No player executable has changed as a result of these offline checks.
+stages4–6. No player executable has changed as a result of these offline checks.

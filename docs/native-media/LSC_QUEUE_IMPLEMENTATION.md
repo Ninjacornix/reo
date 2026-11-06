@@ -16,7 +16,7 @@ projection transcript SHA-256 is
 
 The original corpus covers full queues, stopped versus active start/stop,
 threshold rejection, ring and INT_MAX sequence wrap, exact-one pause and repeat
-bytes, lower states0â€“5/255, empty and unsigned-byte filenames, missing handles,
+bytes, lower states0–5/255, empty and unsigned-byte filenames, missing handles,
 and notifications that enqueue, stop/start, pause, clear repeat or withdraw the
 lower handle. Service reloads the head between poll, retire and start. It does
 not repeat whole admission or drain arbitrary numbers of entries in one visit.
@@ -65,5 +65,5 @@ external boundaries in the original execution. The native queue's retained
 ports are not proof of actual worker retirement or read completion. Module pool
 construction/destruction, actual retained segment publication, seamless decoder
 transitions, shared media output, movie controls and game integration remain
-required. No game or real audio device was opened. Stage3 and stages4â€“6 remain
+required. No game or real audio device was opened. Stage3 and stages4–6 remain
 unfinished; this work is not a measured stutter fix.
