@@ -18,7 +18,49 @@ struct Test {
 c::player::Config config(const std::shared_ptr<const reo::native::resources::ByteView>& file,unsigned channels){c::player::Config v;v.decoder.channels=channels;v.decoder.source_config.byte_length=static_cast<std::int32_t>(file->size());return v;}
 c::Key open(Test& t,std::shared_ptr<const reo::native::resources::ByteView> file,unsigned channels,c::Indices indices){auto result=t.session.open(config(file,channels),file,indices);check(result.status==c::Status::completed);return result.key;}
 c::Retirement retire(Test& t,const c::Key& key){for(unsigned i=0;i<100000;++i){auto r=t.session.retire(key);if(r.status==c::Status::completed){check(r.source_joined && r.evidence.output_retired && r.evidence.decoder.source.joined);return r;}check(r.status==c::Status::pending);std::this_thread::yield();}throw std::runtime_error("Retirement bound");}
+std::shared_ptr<f::File> loop_file(unsigned channels,unsigned rate,unsigned start,unsigned span){
+    auto file=std::make_shared<f::File>();const unsigned total=start+span,header=2048-start/32*18*channels,blocks=(total+31)/32*channels,end=header+blocks*18;
+    auto& bytes=file->bytes;bytes.resize((end+4+2047)/2048*2048);
+    f::be16(bytes,0,0x8000);f::be16(bytes,2,static_cast<std::uint16_t>(header-4));bytes[4]=3;bytes[5]=18;bytes[6]=4;bytes[7]=static_cast<std::uint8_t>(channels);
+    f::be32(bytes,8,rate);f::be32(bytes,12,total);f::be16(bytes,16,500);bytes[18]=3;
+    f::be16(bytes,20,0);f::be16(bytes,22,1);f::be16(bytes,26,1);f::be32(bytes,28,start);f::be32(bytes,32,2048);f::be32(bytes,36,total);f::be32(bytes,40,end);
+    for(unsigned b=0;b<blocks;++b){const auto at=header+b*18;bytes[at+1]=3;std::fill_n(bytes.begin()+at+2,16,static_cast<std::uint8_t>(0x11+b%7));}
+    f::be16(bytes,end,0x8001);return file;
+}
 int main(){try{
+    for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned start:{0u,32u,800u})for(unsigned span:{16385u,32772u}){
+        Test t;auto file=loop_file(channels,rate,start,span);auto pc=config(file,channels);pc.decoder.loop_enabled=true;
+        auto opened=t.session.open(pc,file,{15,2,8,31});check(opened.status==c::Status::completed);const auto key=opened.key;bool repeated=false;std::int32_t decoded{};
+        for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(key).evidence;
+            check(!state.fault && state.decoder.outer.decoded_samples>=decoded && state.clock_observation.offset==0);decoded=state.decoder.outer.decoded_samples;
+            if(state.decoder.loop.iterations>=2 && state.copied_samples>=start+2*span){repeated=true;break;}
+            if(state.output.channel[0].samples>=512)t.provider->step(512);
+            if(state.decoder.source.in_flight)std::this_thread::yield();}check(repeated);
+        const auto looped=t.session.inspect(key).evidence;check(looped.playback.phase==reo::native::adxt_playback::Phase::playing && looped.decoder.loop.saved_valid && looped.decoder.source.loop.enabled && looped.decoder.header.loop.count==0);
+        const auto clock=t.session.estimate(key,0);check(clock.status==c::Status::completed && clock.value.result.ratio.numerator==looped.output.channel[0].consumed_bytes/2 && clock.value.result.ratio.denominator==rate);
+        check(t.session.set_loop_enabled(key,false)==c::Status::completed && !t.session.inspect(key).evidence.decoder.source.loop.enabled);
+        bool ended=false;for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(key).evidence;
+            if(state.configured && state.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
+            if(state.output.channel[0].samples>=512)t.provider->step(512);
+            if(state.decoder.source.in_flight)std::this_thread::yield();}check(ended);
+        const auto terminal=t.session.estimate(key,0);check(terminal.status==c::Status::completed && terminal.value.result.ratio.numerator==start+span);
+        check(!t.session.snapshot().output.statistics.underrun_frames);retire(t,key);check(t.session.join()==c::Status::completed);
+    }
+    for(bool short_target:{false,true}){
+        Test t;auto file=loop_file(1,48000,0,short_target?257:16385);if(!short_target)f::be32(file->bytes,28,1);
+        auto pc=config(file,1);pc.decoder.loop_enabled=true;const auto opened=t.session.open(pc,file,{0,0,0,0});check(opened.status==c::Status::completed);bool fault=false;
+        for(unsigned i=0;i<100000;++i){const auto status=t.session.service(0);if(status==c::Status::fault){fault=true;break;}check(status==c::Status::completed);std::this_thread::yield();}check(fault);
+        const auto state=t.session.inspect(opened.key).evidence;check(state.fault && !state.configured && !state.output.voice.playing && !state.output.channel[0].samples);
+        retire(t,opened.key);check(t.session.join()==c::Status::completed);
+    }
+    {
+        Test t;auto file=f::file(1,48000,20000);auto pc=config(file,1);pc.decoder.loop_enabled=true;auto opened=t.session.open(pc,file,{0,0,0,0});check(opened.status==c::Status::completed);bool ended=false;
+        for(unsigned i=0;i<100000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(opened.key).evidence;
+            if(state.configured && state.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
+            if(state.output.channel[0].samples>=512)t.provider->step(512);
+            std::this_thread::yield();}check(ended && !t.session.inspect(opened.key).evidence.decoder.loop.iterations);
+        retire(t,opened.key);check(t.session.join()==c::Status::completed);
+    }
     {
         c::player::clock::Shared initial_clock;initial_clock.mode={1,6000,17};Test t(2,initial_clock);
         auto key=open(t,f::file(1,48000,120000),1,{0,0,0,0});auto peer=open(t,f::file(2,48000,120000),2,{1,1,1,1});

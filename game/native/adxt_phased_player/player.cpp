@@ -9,7 +9,7 @@
 namespace reo::native::adxt_phased_player {
 namespace {
 Config checked(Config c,const output::Producer& producer) {
-    if(c.decoder.downmix || c.decoder.seamless_enabled || c.decoder.loop_enabled || c.decoder.pitch_offset ||
+    if(c.decoder.downmix || c.decoder.seamless_enabled || c.decoder.pitch_offset ||
        c.decoder.channels<1 || c.decoder.channels>2)throw std::invalid_argument("Shared native player profile");
     const auto s=producer.snapshot();
     if(!s.active || s.fault || s.channels!=c.decoder.channels || !s.transfer_open || s.voice.playing ||
@@ -117,7 +117,18 @@ Status Player::service_control(adxt_service_group::Phase selected,std::uint32_t 
     if(selected==adxt_service_group::Phase::ready){
         const auto before=s.decoder.snapshot();
         if(before.outer.phase==window::OuterPhase::header)return Status::waiting_header;
-        if(std::bit_cast<std::int16_t>(before.header.loop.enabled)>0){s.fail();return Status::unsupported_profile;}
+        if(std::bit_cast<std::int16_t>(before.header.loop.enabled)>0){
+            const auto& h=before.header.loop.positions;
+            const auto bytes=static_cast<std::uint64_t>(s.config.decoder.source_config.byte_length);
+            const auto header=static_cast<std::uint64_t>(before.header.base.header_bytes);
+            const auto target=(std::uint64_t(h[3])+2047)/2048;
+            if(before.header.loop.enabled!=1 || h[0]%32 || h[1]%2048 || h[0]>=h[2] || h[2]>before.header.base.total_samples ||
+               h[1]!=header+std::uint64_t(h[0]/32)*18*s.config.decoder.channels ||
+               h[3]!=header+((std::uint64_t(h[2])+31)/32)*18*s.config.decoder.channels || h[3]>bytes ||
+               before.source.progress_sectors<0 || target<=static_cast<std::uint64_t>(before.source.progress_sectors)){
+                s.fail();return Status::unsupported_profile;
+            }
+        }
         if(s.decoder.configure_ready()!=window::Status::completed)return s.fail();
         const auto ready=s.decoder.snapshot();
         if(ready.ready.pitch || ready.ready.pans[0]!=(s.config.decoder.channels==1?0:-15) ||
@@ -254,6 +265,11 @@ Status Player::set_time_base(std::uint32_t base)noexcept {
     s.time_base=base;return Status::completed;
 }
 void Player::request_stop()noexcept{state_->stopping=true;}
+Status Player::set_loop_enabled(bool enabled)noexcept{
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
+    if(s.decoder.set_loop_enabled(enabled)!=window::Status::completed)return s.fail();
+    s.config.decoder.loop_enabled=enabled;return Status::completed;
+}
 Status Player::retire_on_control_thread()noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.retired)return Status::completed;
     s.busy=true;struct Exit{bool& b;~Exit(){b=false;}}exit{s.busy};s.stopping=true;

@@ -84,6 +84,9 @@ public:
     // Stage stores/wraps only. Publication and all logical credit stay pending
     // so the caller can return encoded input and update decoder state between.
     // No PCM mutation/restore/stop may intervene after successful staging.
+    // Pure sizing query for a retained reservation; no codec, bytes or credit effects.
+    [[nodiscard]] Status admit_stage(const WriteLease&, std::size_t raw_samples,
+        std::int32_t corrected_samples, std::int32_t published_samples) const noexcept;
     [[nodiscard]] Status stage(WriteLease&, Pcm,
         std::int32_t corrected_samples, std::int32_t published_samples) noexcept;
     [[nodiscard]] Status publish(WriteLease&) noexcept;

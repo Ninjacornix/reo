@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.20)
+project(reo_native_stream_window_v2_queue_safe_r3 LANGUAGES CXX)
+# ABI/header revision: every translation unit must select this local header.
+# Never link another v2 StreamWindowOwner implementation into the executable.
+foreach(dep IN ITEMS adxt_shared_source adx_header adx_workspace adxt_playback)
+  if(NOT TARGET reo_native_${dep} AND NOT TARGET reo_${dep})
+    add_subdirectory(../../../${dep} ${dep})
+  endif()
+endforeach()
+add_library(reo_native_stream_window_v2_queue_safe_r3 STATIC stream_window.cpp)
+target_compile_features(reo_native_stream_window_v2_queue_safe_r3 PUBLIC cxx_std_20)
+target_include_directories(reo_native_stream_window_v2_queue_safe_r3 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../playback_r2")
+target_link_libraries(reo_native_stream_window_v2_queue_safe_r3 PUBLIC reo_native_adxt_shared_source
+  reo_native_adx_header reo_adx_workspace reo_native_adxt_playback)
+add_executable(stream_window_v2_queue_safe_r3_tests inherited_tests.cpp)
+target_link_libraries(stream_window_v2_queue_safe_r3_tests PRIVATE reo_native_stream_window_v2_queue_safe_r3)
+foreach(target reo_native_stream_window_v2_queue_safe_r3 stream_window_v2_queue_safe_r3_tests)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off -frounding-math)
+  endif()
+endforeach()
+enable_testing()
+add_test(NAME stream_window_v2_queue_safe_r3 COMMAND stream_window_v2_queue_safe_r3_tests)

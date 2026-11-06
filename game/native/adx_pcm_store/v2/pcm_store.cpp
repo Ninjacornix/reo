@@ -156,7 +156,7 @@ bool Store::safe_writes(std::uint32_t c, std::int32_t raw, std::int32_t produced
         if (overlaps(write, held)) return false;
     return true;
 }
-Status Store::stage(WriteLease& t, Pcm pcm, std::int32_t produced, std::int32_t published) noexcept {
+Status Store::admit_stage(const WriteLease& t, std::size_t raw_samples, std::int32_t produced, std::int32_t published) const noexcept {
     if (busy_) return Status::busy;
     if (fault_) return Status::invariant_fault;
     if (retired_) return Status::closed;
@@ -164,12 +164,23 @@ Status Store::stage(WriteLease& t, Pcm pcm, std::int32_t produced, std::int32_t 
     if (phase_ != Phase::reserved) return Status::busy;
     if (!sound() || !same_grants()) return Status::invariant_fault;
     if (produced < 0 || published < 0 || published > produced || produced > (capacity + extension) / 2 ||
-        pcm.left.size() > (capacity + extension) / 2 ||
-        (config_.channels == 1 ? !pcm.right.empty() : pcm.left.size() != pcm.right.size()) ||
-        pcm.left.size() < static_cast<std::size_t>(produced)) return Status::invalid_count;
-    const auto raw = static_cast<std::int32_t>(pcm.left.size() * 2);
+        raw_samples > (capacity + extension) / 2 || raw_samples < static_cast<std::size_t>(produced)) return Status::invalid_count;
+    const auto raw = static_cast<std::int32_t>(raw_samples * 2);
     for (std::uint32_t c = 0; c < config_.channels; ++c)
         if (!safe_writes(c, raw, produced * 2, published * 2)) return Status::physical_conflict;
+    return Status::completed;
+}
+Status Store::stage(WriteLease& t, Pcm pcm, std::int32_t produced, std::int32_t published) noexcept {
+    if (busy_) return Status::busy;
+    if (fault_) return Status::invariant_fault;
+    if (retired_) return Status::closed;
+    if (!valid(t)) return Status::invalid_lease;
+    if (phase_ != Phase::reserved) return Status::busy;
+    if (!sound() || !same_grants()) return Status::invariant_fault;
+    if (config_.channels == 1 ? !pcm.right.empty() : pcm.left.size() != pcm.right.size()) return Status::invalid_count;
+    const auto admission = admit_stage(t, pcm.left.size(), produced, published);
+    if (admission != Status::completed) return admission;
+    const auto raw = static_cast<std::int32_t>(pcm.left.size() * 2);
     Scope scope(*this);
     for (std::uint32_t c = 0; c < config_.channels; ++c) {
         const auto samples = c ? pcm.right : pcm.left;

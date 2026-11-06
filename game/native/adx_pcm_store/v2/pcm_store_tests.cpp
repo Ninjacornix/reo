@@ -270,6 +270,25 @@ void staged_boundary() {
           "lost staged token neither publishes nor returns credit");
     check(lost.retire() == a::Status::busy && lost.stop() == a::Status::busy, "staged transaction retains blocked owner");
 }
+void sizing_with_queued_audio() {
+    a::Store owner({2, 2048, 14344});
+    auto held = owner.read(64); good(held.status);
+    auto write = owner.reserve(); good(write.status);
+    check(write.lease.grant(0) == a::Grant{8, 2040}, "captured loop failure geometry");
+    Backing before{}, after{}; good(owner.read_backing(0, before));
+    const auto snapshot = owner.snapshot(); deny = true;
+    check(owner.admit_stage(write.lease, 1024, 996, 996) == a::Status::physical_conflict, "raw tail must not overwrite queued samples");
+    good(owner.admit_stage(write.lease, 992, 992, 992));
+    good(owner.read_backing(0, after));
+    check(before == after && owner.snapshot().phase == snapshot.phase && owner.snapshot().write_id == snapshot.write_id &&
+          owner.snapshot().producer == snapshot.producer && owner.snapshot().rings[0].data == snapshot.rings[0].data,
+          "sizing admission is pure and retains actual credit");
+    std::array<std::int16_t, 992> samples{};
+    good(owner.stage(write.lease, {samples, samples}, 992, 992)); good(owner.publish(write.lease));
+    good(owner.finish(held.lease)); good(owner.stop());
+    while (owner.snapshot().rings[0].data) { auto read = owner.read(a::capacity); good(read.status); good(owner.finish(read.lease)); }
+    good(owner.retire()); deny = false;
+}
 void post_effect() {
     a::Store owner({2, 0, 16288}); std::array<std::int16_t, 64> samples{};
     auto write = owner.reserve(); good(write.status);
@@ -286,7 +305,7 @@ int main(int argc, char** argv) {
     else if (argc == 2 && std::string_view(argv[1]) == "ids") { exhausted_ids(); }
     else {
         check(!a::Store::admits({0}) && !a::Store::admits({3}) && !a::Store::admits({1, 1, 0}), "configuration admission");
-        partial_tail(); refusal_and_tokens(); wrap_and_held_consumer(); lifetime_and_lost_credit(); long_store(); empty_and_invalid(); cursor_matrix(); staged_boundary();
+        partial_tail(); refusal_and_tokens(); wrap_and_held_consumer(); lifetime_and_lost_credit(); long_store(); empty_and_invalid(); cursor_matrix(); staged_boundary(); sizing_with_queued_audio();
         check(attempts == 0, "zero post-construction allocations under denial");
     }
     std::printf("%u PCM ownership checks passed; allocation attempts=%u\n", checks, attempts);

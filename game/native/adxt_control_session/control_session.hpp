@@ -47,6 +47,7 @@ public:
     [[nodiscard]] ClockControl pause(const Key&,std::int32_t,std::uint32_t original_tick)noexcept;
     [[nodiscard]] ClockControl discard_rebase(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] Status set_time_base(const Key&,std::uint32_t)noexcept;
+    [[nodiscard]] Status set_loop_enabled(const Key&,bool)noexcept;
     [[nodiscard]] Retirement retire(const Key&)noexcept;
     [[nodiscard]] Status request_stop()noexcept;
     [[nodiscard]] Status join()noexcept;

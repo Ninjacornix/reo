@@ -182,6 +182,10 @@ Status Session::set_time_base(const Key& key,std::uint32_t base)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
     return mapped(s.records[key.slot_].player->set_time_base(base));
 }
+Status Session::set_loop_enabled(const Key& key,bool enabled)noexcept{
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
+    return mapped(s.records[key.slot_].player->set_loop_enabled(enabled));
+}
 Retirement Session::retire_slot(std::uint32_t slot)noexcept{
     auto& s=*state_;auto& r=s.records[slot];
     if(!r.retiring){r.retiring=true;r.player->request_stop();s.remove_ports(r);s.order_required=true;}
