@@ -42,6 +42,34 @@ class SoundCandidateCohort(unittest.TestCase):
                 apply_sound_ram_cohort(value)
             self.assertEqual(value,before)
 
+    def test_generated_batches_inherit_the_same_definition(self):
+        value=self.plan()
+        value['sourceGroups']=[{'id':'generated-main','root':'{generated}/output','options':['/O2']},
+                               {'id':'generated-overlay','root':'{generated}/overlay','options':[]}]
+        apply_sound_ram_cohort(value)
+        for group in value['sourceGroups']:
+            self.assertIn('/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE=2',group['options'])
+
+    def test_late_generated_conflict_does_not_partially_change_units(self):
+        value=self.plan()
+        value['sourceGroups']=[{'id':'generated-main','options':['/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE=1']}]
+        before=copy.deepcopy(value)
+        with self.assertRaises(ValueError):
+            apply_sound_ram_cohort(value)
+        self.assertEqual(value,before)
+
+    def test_common_definition_is_validated_and_not_duplicated(self):
+        value=self.plan()
+        value['compileOptions']=['/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE=1']
+        before=copy.deepcopy(value)
+        with self.assertRaises(ValueError):
+            apply_sound_ram_cohort(value)
+        self.assertEqual(value,before)
+        value['compileOptions']=['/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE=2']
+        before=copy.deepcopy(value)
+        apply_sound_ram_cohort(value)
+        self.assertEqual(value,before)
+
 
 if __name__=='__main__':
     unittest.main()

@@ -39,8 +39,11 @@ profile headers from the complete public patch series. It rebuilds the runtime
 from that source rather than importing an older PS2 runtime archive. Every C++
 translation unit, including SDK/runtime and GPU backend units, receives the same
 `REO_BUILD_NATIVE_SOUND_RAM_CAPTURE=2` definition. Conflicting old definitions
-refuse preparation. Three planner tests verify runtime/backend inclusion,
-idempotence and refusal before partial plan changes.
+refuse preparation. Six planner tests verify runtime/backend and generated-group
+inclusion, common options, idempotence and refusal before partial plan changes.
+The first V9 prepared kit omitted generated source-group definitions and was
+superseded before compilation. The corrected planner includes those dynamically
+expanded batches; it does not assume the static unit list is the whole build.
 
 Initial integration uses this sealed private candidate path. The ordinary
 recomp CMake configuration imports a separately built runtime library; it has

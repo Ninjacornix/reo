@@ -95,14 +95,21 @@ HEADER_ROOTS = ('game/', 'media/', 'network/', 'recomp/', 'runtime/', 'src/',
 def apply_sound_ram_cohort(plan):
     """Require one instrumented class/body cohort across app AND runtime TUs."""
     selected = [unit for unit in plan['units'] if unit.get('language') != 'c']
+    selected += [group for group in plan.get('sourceGroups', []) if group.get('language') != 'c']
+    marker = '/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE'
     definition = '/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE=2'
+    def definitions(options):
+        return [value for value in options if value == marker or value.startswith(marker + '=')]
+    common = definitions(plan.get('compileOptions', []))
+    if common and common != [definition]:
+        raise ValueError('Conflicting common sound RAM instrumentation cohort')
     for unit in selected:
-        existing = [x for x in unit['options'] if x.startswith('/DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE')]
+        existing = definitions(unit.get('options', []))
         if existing and existing != [definition]:
             raise ValueError('Conflicting sound RAM instrumentation cohort: ' + unit['id'])
     for unit in selected:
-        if definition not in unit['options']:
-            unit['options'].append(definition)
+        if not common and definition not in unit.get('options', []):
+            unit.setdefault('options', []).append(definition)
 
 
 def digest_bytes(data):
