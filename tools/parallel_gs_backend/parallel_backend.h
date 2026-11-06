@@ -2,6 +2,7 @@
 #include "gs_backend_route.h"
 #include "resident_backend_factory.hpp"
 #include <optional>
+namespace reo::native::ram_capture::v2 {class Coordinator;}
 namespace reo_parallel_backend {
 struct Config {
     reo_resident_live::OwnerConfig residentGeometry{};
@@ -49,4 +50,11 @@ ResidentDiagnostics residentDiagnostics(gs_backend_bridge::Backend&);
 // Private concrete-backend inspection/publication helper. Invoke only under
 // the same serialized owner policy as Backend, never reenter Route callbacks.
 gs_backend_bridge::Privileged snapshotPrivileged(gs_backend_bridge::Backend&);
+#if defined(PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE)
+// Pure actual selected-backend metadata. Issued through the matching factory
+// and SDK selection lease; this alone does not grant RAM/read/lifetime authority.
+bool soundRamProfileObservedV1(gs_backend_bridge::Backend&) noexcept;
+#endif
+// Linked actual Service-body witness; not a configuration/RAM lifetime lease.
+reo::native::ram_capture::v2::Coordinator* nativeSoundRamWriterCoordinatorV2() noexcept;
 } // namespace reo_parallel_backend

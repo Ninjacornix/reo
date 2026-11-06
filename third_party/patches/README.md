@@ -104,3 +104,12 @@ series reapplies from the recorded pin, and both compiler suites compile matchin
 production objects. The [qualification report](../../docs/native-media/NATIVE_SOUND_RAM_CAPTURE_DISPATCH.md)
 records exact inputs, refusal limits and reviewed completion-order corrections.
 Use a coherent rebuilt runtime and matching headers before enabling it.
+
+Patch `0126` adds a retained selected-backend profile for sound capture, with
+actual pre-run/GS-owner admission and control exclusion across renderer and RAM
+reinitialization. It preserves the concrete backend type and ordinary rendering.
+The full127-patch series reapplies; matching source objects, concurrency controls
+and prior audio observations pass on GCC and bundled LLVM. The
+[profile qualification](../../docs/native-media/GS_SOUND_RAM_PROFILE.md) records
+the exact cohort and remaining RAM/factory/device obligations. This capability
+does not itself authorize memory copies or install a native audio backend.

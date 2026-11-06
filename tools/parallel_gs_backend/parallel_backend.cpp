@@ -1,8 +1,15 @@
 #include "parallel_backend.h"
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+#include "resident_geometry/parent/parent_owner_service.hpp"
+#endif
+#if defined(PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE)
+#include "gs_sound_ram_profile.h"
+#endif
 #include "runtime/gs/internal_resolution.h"
 #include "runtime/gs/frame_pacing.h"
 #include "shader_location.hpp"
 #include "parent_first_entry.h"
+#include "parent_natural_runtime.h"
 #include "native_movie_owner.h"
 #include "resident_vif_live_hooks.h"
 #if defined(_WIN32)
@@ -517,6 +524,11 @@ class ParallelBackend final : public Backend, private SignalInterface {
         ThreadIndexScope threadIndex;
         requireLive();
         return copyPrivileged();
+    }
+    bool soundRamProfileObservedV1() const noexcept {
+        return live_ && !config_.residentGeometry.enabled &&
+            !reo_parent_natural::actualFirstEntryEnrollmentRequested() &&
+            !reo_parent_natural::anyActualOwnerBound();
     }
     explicit ParallelBackend(Config config) : config_(std::move(config)) {
 #if defined(_WIN32)
@@ -1193,8 +1205,19 @@ class ParallelBackend final : public Backend, private SignalInterface {
 };
 } // namespace
 gs_backend_bridge::Factory makeFactory(Config config) {
-    return [config = std::move(config)] { return std::make_unique<ParallelBackend>(config); };
+    gs_backend_bridge::Factory factory = [config = std::move(config)] { return std::make_unique<ParallelBackend>(config); };
+#if defined(PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE)
+    return gs_backend_bridge::withSoundRamProfileProbeV1(std::move(factory),&soundRamProfileObservedV1);
+#else
+    return factory;
+#endif
 }
+#if defined(PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE)
+bool soundRamProfileObservedV1(gs_backend_bridge::Backend& backend) noexcept {
+    auto* actual=dynamic_cast<ParallelBackend*>(&backend);
+    return actual && actual->soundRamProfileObservedV1();
+}
+#endif
 ResidentDiagnostics residentDiagnostics(gs_backend_bridge::Backend& value) {
     auto* backend = dynamic_cast<ParallelBackend*>(&value);
     if (!backend)
@@ -1206,5 +1229,12 @@ gs_backend_bridge::Privileged snapshotPrivileged(gs_backend_bridge::Backend& bac
     if (!concrete)
         throw std::invalid_argument("Not a concrete paraLLEl-GS backend");
     return concrete->snapshot();
+}
+reo::native::ram_capture::v2::Coordinator* nativeSoundRamWriterCoordinatorV2() noexcept {
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    return reo_parent_install::Service::nativeSoundRamCaptureCoordinatorV2();
+#else
+    return nullptr;
+#endif
 }
 } // namespace reo_parallel_backend

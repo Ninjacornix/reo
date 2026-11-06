@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "cohort_identity_sha256": "c2d2d7f3eed64182be837fc3dd420576a1e076c091298b2ceee31af65b8bb56f",
+  "full127_tree": "build-native-sjuni/dependency-gs-sound-profile-reapply-v4",
+  "full127_receipt_sha256": "909917fc2f766c8a43a10abbc0b94189fa24254ecfaa7f710e4eb24dc941b58a",
+  "patch_sha256": "bea5a843348b02a1b3abeeeea78ede6cb27236d2e6a64e0f19807d9ce193f38c",
+  "actual_profile_header_sha256": "d99bf2fa5724b6c152725eaa2ca9d95e87527cdf812add82f92e18a9a724be9b",
+  "app_sha256": {
+    "tools/parallel_gs_backend/parallel_backend.cpp": "92b86841b46e1b53cd5991594f98cec633c94cb4d2c9654b8fafd338c87802ab",
+    "tools/parallel_gs_backend/parallel_backend.h": "a7a536fdb2fa6498324b9182cccb7d9e2820090a7afbffd913c3a0c60b6cc134"
+  },
+  "checks": {
+    "gcc-unit-sealed": {
+      "receipt_sha256": "513c944a160e0d5cdaf3d37c90177ef2730363704423ce3a7b8d2c3a3ab37cd3",
+      "checks": 21
+    },
+    "llvm-unit-sealed": {
+      "receipt_sha256": "3dd55fde47fbd7032a375928d5e1529cf5c806153f73de9c7ab53ed9f67a3a68",
+      "checks": 21
+    },
+    "gcc-objects-final": {
+      "receipt_sha256": "35810fe7228d4c6f7e28fae698843b16aefde50795a0e4d67717bdbcc18b2020",
+      "checks": 8,
+      "objects": 4,
+      "project_inputs": 229,
+      "sealed_v8_manifest_sha256": "435ae2791088c3061ffd2caa3617924daa9d1b8815eb441512f4c9f50e5b4ea0",
+      "compile_plan_sha256": "45d04b5734479a6c97270f9fe2e6788b50dfebc049837d8eeea88cda27ef0c02",
+      "generation_receipt_sha256": "864b997e4b0db93b281a50513919232483b43ad0e43df8ad0ebd0552438aa5e3"
+    },
+    "llvm-objects-final": {
+      "receipt_sha256": "c71338244d956bab117ddfd38ba079afe9275903af2791bac8819e643467a620",
+      "checks": 8,
+      "objects": 4,
+      "project_inputs": 229,
+      "sealed_v8_manifest_sha256": "435ae2791088c3061ffd2caa3617924daa9d1b8815eb441512f4c9f50e5b4ea0",
+      "compile_plan_sha256": "45d04b5734479a6c97270f9fe2e6788b50dfebc049837d8eeea88cda27ef0c02",
+      "generation_receipt_sha256": "864b997e4b0db93b281a50513919232483b43ad0e43df8ad0ebd0552438aa5e3"
+    },
+    "gcc-regressions-final": {
+      "receipt_sha256": "7d2155aeb373bbc4dd7c5ac042dd47062ad275b79d1876798c86108830f75511",
+      "checks": 36
+    },
+    "llvm-regressions-final": {
+      "receipt_sha256": "94355ee35776789c596165c96c236a774c14d325e96ed522fbda6456ccb39ebb",
+      "checks": 36
+    }
+  }
+}
