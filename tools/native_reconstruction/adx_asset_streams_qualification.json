@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "status": "passed actual connected native asset graph; loops/player/device excluded",
+  "game_run": false,
+  "device_opened": false,
+  "references": 8910,
+  "decoded_unique_payloads": 6706,
+  "loop_references_not_decoded": 89,
+  "decoded_samples_per_channel_sum": 677073911,
+  "pcm_bytes_emitted": 2396811288,
+  "complete_compiler_result_rows_equal": true,
+  "original_gameplay_pcm_parity": false,
+  "cryptographic_pcm_digest": false,
+  "sources": {
+    "tools/native_reconstruction/adx_asset_stream_check.cpp": "86cd3793c349e7a7cfc1d241a40789a0594474c46aa14b216ca22146dafb7c5d",
+    "tools/native_reconstruction/verify_adx_asset_streams.py": "097a3ee1b6f39af6fda403f2878355fdd5aff42dd6b776f043bfd1b552f2a562",
+    "docs/native-media/ADX_ACTUAL_ASSET_STREAM_VALIDATION.md": "d1a56a2c13d00db84b0a366bdbf69744a5127ccc01b97ca25daefd60a5a5a3a9",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "b3e53f411d1876d56ec206a147fe3f7d5c3335b135cd3c4eb1ac0ac2948b4c8c"
+  },
+  "receipts": {
+    "build-native-sjuni/adx-asset-streams/probe-gcc-v1/receipt.json": "87828ef28392480615b2b56a7b56f005137c1d8f3a4c60e8424e962854809dfa",
+    "build-native-sjuni/adx-asset-streams/full-gcc-v1/receipt.json": "15e362bc1da039f20f88c7353a6e35f34250718c6350c275f73cdf8bcd97486e",
+    "build-native-sjuni/adx-asset-streams/full-llvm-v1/receipt.json": "fc74bda9d6cd70f1648c04f2b9075ae34feed4e1d47790771e807fc5c6c5e3ee"
+  },
+  "results_sha256": "43b3876e4855a7b5cce35b448b1e1fa7b1fa707c8ed6be599508b2a6b80a12b9"
+}

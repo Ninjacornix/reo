@@ -245,6 +245,11 @@ arithmetic:67 cases and22,228 parsed entries match with both compilers. Actual
 sector extents can retain parent bytes separately from logical member lengths;
 the original sentinel branch's unsafe nonzero-start result remains flagged.
 This closes that bounded range gate, not the partition/LSC/player lifetime.
+The subsequent [actual asset graph validation](native-media/ADX_ACTUAL_ASSET_STREAM_VALIDATION.md)
+binds all8,910 identified ADX references from the owned ISO and fully decodes,
+drains and joins6,706 distinct non-looping payloads with both compilers. All
+result rows and per-channel digests match between compilers. Loop-bearing
+assets, device output and complete player behavior remain separate gates.
 Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 
