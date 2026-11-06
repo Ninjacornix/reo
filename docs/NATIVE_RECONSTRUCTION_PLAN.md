@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has forty-eight standalone suites, including the independent ADX
+project now has forty-nine standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -365,6 +365,14 @@ retention, peer output and provider-fence retries. Its actual imported corpus
 again matches all6,706 finite PCM payloads and terminal clock/fence observations.
 This replaces the manual test driver, not the remaining guest game ABI. Serviced
 discard, bank/packet output, LSC, movies and game transitions still gate stage3.
+
+The [complete serviced-discard oracle and completion core](native-media/ADXT_SERVICED_DISCARD_IMPLEMENTATION.md)
+now execute93 original cases through all group envelopes and match92 admitted
+native cases under both exact FP toolchains. Fresh post-service queues and the
+actual guarded service attempt are required; the inactive raw clock retains
+base/1 behavior. One zero-frequency case stays outside native admission. The
+canonical private player/control-session service binding remains to be qualified
+before enabling that branch. This is not a completed game/media migration.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring
