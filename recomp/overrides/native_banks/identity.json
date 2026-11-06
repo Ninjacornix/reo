@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "cohort": "native-bank-packet-adapter-2",
+  "purpose": "Bounded source-qualified packet adapter over budget-v2; post-original-expectations implementation",
+  "candidate_sha256": {
+    "backend_status.h": "3ebf14a94829b4d5e42e07cddbe0ddd5a6e627069926c4970fa71b812500287e",
+    "compare_original.py": "aceaa9b0ff6bd8475ac9aaf43ad93997fc9a4b71363ad1572cee9ed0fb50911c",
+    "packet_adapter.cpp": "000d5e10d3efb9641e2feb61a0b691d507a30194da029bb1c06ada7e6b6d6c93",
+    "packet_adapter.h": "f7fe610037b9c58ff52a53f64053e75036f977645bb9288e7afd7a54b1c4e9d7",
+    "packet_adapter_tests.cpp": "f0c6d07ab9935c42338400e4cd94a924140b17fa5c9a6efeb4cd81ec15b2c51e",
+    "test_capture.h": "fcb65412df09fea4a41917b7e19bd0f8b0746bc1f05c15164434f76868c4ded5",
+    "verify.py": "cd8d815d9b2e2759610f23649362d0c9ccc4f010fa2c82d6274d6ab19d56ad81"
+  },
+  "bank_v2_identity_sha256": "77b6c1bc20f6c1ea261ea19df9bcde3a5fa516c94e7b2c7d8d6503ca0f7aefca",
+  "actual125_header_sha256": "631db6363db9a8945711f5c305ed8bfb0628ca50b3625cc2492e2afb3987f126",
+  "actual125_receipt_sha256": "3019662f2fd62dbe4a9b3c7b99528bd631338424597ad78d2a4a04bcebeb3d6a",
+  "reference_cpp_sha256": "e164ba72cc002311d4811d803be2e2df9a6228d5abcaa0c4fa419a31ee09b818",
+  "original_expected_observations_previously_seen": true,
+  "runtime_memory_provider_qualified": false,
+  "integration_installed": false,
+  "game_run": false,
+  "device_opened": false,
+  "supersedes_adapter_identity_sha256": "1d80a3bc44694d7962a05f29d43d321fadeec772e1815ff3f6c45859651e51b7",
+  "prior_artifacts": "build-native-sjuni/native-bank-packet-adapter/preserved-cohort-1",
+  "source_order_correction": "Packet load RAII reacquires transaction on EVERY exit after failed staging cleanup; direct submitBank unchanged",
+  "actual125_patch_sha256": "1c08f9667edee15dbeeb0e332b12473d0ae77433519dde22c32e1c329f7fa377"
+}

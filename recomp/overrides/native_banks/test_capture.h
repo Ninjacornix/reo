@@ -1,0 +1,68 @@
+#pragma once
+// Isolated synthetic capture provider. This is not an actual Runtime/RAM proof.
+#include "packet_adapter.h"
+#include <algorithm>
+#include <atomic>
+#include <condition_variable>
+#include <chrono>
+#include <mutex>
+
+namespace packet_test {
+namespace p=reo::native::bank_packets;
+struct Event {std::mutex mutex;std::condition_variable cv;bool ready{};void signal(){std::lock_guard lock(mutex);ready=true;cv.notify_all();}void wait(){std::unique_lock lock(mutex);cv.wait(lock,[&]{return ready;});}bool wait_for(std::chrono::milliseconds timeout){std::unique_lock lock(mutex);return cv.wait_for(lock,timeout,[&]{return ready;});}};
+inline p::MemoryIdentity identity(){p::MemoryIdentity id;id.session[0]=1;id.executable_sha256[0]=2;id.native_build_sha256[0]=3;id.runtime_incarnation=id.ram_incarnation=1;id.ram_bytes=32u*1024u*1024u;return id;}
+struct GateAllocation final:p::banks::AllocationSource {
+    p::banks::HeapSource heap;
+    std::atomic<bool> pause_allocate{},pause_free{};
+    std::atomic<std::size_t> allocations{},deallocations{},live_bytes{};
+    Event entered,resume;
+    Event empty;
+    std::atomic<bool> notify_empty{};
+    void* allocate(std::size_t bytes,std::size_t alignment)override {
+        if(pause_allocate.exchange(false)){entered.signal();resume.wait();}
+        auto* result=heap.allocate(bytes,alignment);++allocations;live_bytes+=bytes;return result;
+    }
+    void deallocate(void* ptr,std::size_t bytes,std::size_t alignment)noexcept override {
+        if(pause_free.exchange(false)){entered.signal();resume.wait();}
+        heap.deallocate(ptr,bytes,alignment);++deallocations;const auto previous=live_bytes.fetch_sub(bytes);
+        if(notify_empty&&previous==bytes)empty.signal();
+    }
+};
+struct Capture final:p::CaptureSource {
+    p::MemoryIdentity profile=packet_test::identity();
+    std::span<const std::uint8_t> packet,ram;
+    std::array<std::span<const std::uint8_t>,3> bank;
+    bool present{true},has_ram{true};
+    std::size_t ram_extent=SIZE_MAX;
+    mutable std::atomic<unsigned> packet_reads{},ram_reads{},bank_reads{};
+    mutable std::atomic<bool> changed{},pause_packet{},pause_ram{},fail_packet{},fail_ram{},fail_bank{};
+    mutable Event entered,resume;
+    mutable Event packet_copied;
+    bool notify_packet_copy{};
+    bool change_after_packet{};
+    std::shared_ptr<GateAllocation> pause_prepare;
+    p::MemoryIdentity identity()const noexcept override {auto id=profile;if(changed.load())++id.ram_incarnation;return id;}
+    bool packet_present()const noexcept override{return present;}
+    std::size_t packet_bytes()const noexcept override{return packet.size();}
+    std::size_t ram_view_bytes()const noexcept override{return ram_extent==SIZE_MAX?ram.size():ram_extent;}
+    bool ram_present()const noexcept override{return has_ram;}
+    bool copy_packet(std::span<std::uint8_t> out)const noexcept override {
+        ++packet_reads;if(pause_packet.exchange(false)){entered.signal();resume.wait();}
+        if(fail_packet||out.size()!=packet.size())return false;
+        std::copy(packet.begin(),packet.end(),out.begin());if(change_after_packet)changed=true;
+        if(notify_packet_copy)packet_copied.signal();
+        return true;
+    }
+    bool copy_ram(std::size_t offset,std::span<std::uint8_t> out)const noexcept override {
+        const auto n=ram_reads.fetch_add(1);if(pause_ram.exchange(false)){entered.signal();resume.wait();}
+        if(fail_ram||!has_ram||offset>ram.size()||out.size()>ram.size()-offset)return false;
+        if(!out.empty())std::copy_n(ram.data()+offset,out.size(),out.data());
+        if(pause_prepare&&n==2)pause_prepare->pause_allocate=true;
+        return true;
+    }
+    p::banks::BankSizes direct_bank_sizes()const noexcept override{return {bank[0].size(),bank[1].size(),bank[2].size()};}
+    bool copy_bank(p::Part part,std::span<std::uint8_t> out)const noexcept override {
+        ++bank_reads;const auto bytes=bank[unsigned(part)];if(fail_bank||bytes.size()!=out.size())return false;std::copy(bytes.begin(),bytes.end(),out.begin());return true;
+    }
+};
+} // namespace packet_test
