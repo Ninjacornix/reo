@@ -24,7 +24,7 @@
 
 namespace reo_cd_async {
 bool enabled = false; // Bootstrap registration only; never changed by the worker.
-struct RamConfigurationState {
+struct RamConfigurationState final : PS2Runtime::ExternalWorker {
     PS2Runtime* runtime{};
     const std::uint8_t* memory{};
     std::size_t bytes{};
@@ -32,6 +32,9 @@ struct RamConfigurationState {
     RamWriteMode mode{RamWriteMode::unknown};
     bool asynchronous_ever_started{};
     std::atomic<std::uint32_t> seals{0};
+    std::atomic<bool> runtime_alive{true};
+    void requestStop() noexcept override {runtime_alive.store(false,std::memory_order_release);}
+    bool join() noexcept override {return true;} // No thread or guest/storage ownership.
 };
 namespace {
 using reo::native::tasks::SerialWorker;
@@ -210,7 +213,8 @@ SyncRamWriteSeal ConfigurationReceipt::try_seal(PS2Runtime& runtime,const std::u
     auto setup=runtime.acquirePreRunSetup();
     if(!setup)return {};
     std::lock_guard lock(configuration_mutex);
-    if(!state_ || state_!=configuration || state_->runtime!=&runtime || state_->memory!=memory ||
+    if(!state_ || state_!=configuration || !state_->runtime_alive.load(std::memory_order_acquire) ||
+       state_->runtime!=&runtime || state_->memory!=memory ||
        state_->bytes!=bytes || runtime.memory().getRDRAM()!=memory ||
        state_->mode!=RamWriteMode::synchronous || state_->asynchronous_ever_started ||
        state_->seals.load(std::memory_order_relaxed)==UINT32_MAX || load_active())return {};
@@ -240,6 +244,11 @@ ConfigurationResult configureWithReceipt(const char* serial,std::uint8_t* memory
             state->runtime=&runtime;state->memory=memory;state->bytes=bytes;
             state->generation=++configuration_generation;state->mode=mode;
             state->asynchronous_ever_started=ever;
+            // A real lifecycle sentinel invalidates this observation on Runtime
+            // stop/destruction. Pointer equality cannot certify a new Runtime
+            // later constructed at the same addresses.
+            if(!runtime.registerExternalWorker(state))
+                return {ConfigurationStatus::unavailable,mode,{}};
             configuration=state;
             return {ConfigurationStatus::observed,mode,ConfigurationReceipt(std::move(state))};
         };

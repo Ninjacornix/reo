@@ -372,6 +372,10 @@ void configuration_phase_and_foreign(const char* fixture) {
     runtime.requestStop();
     CHECK(seal.matches(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
     CHECK(!observed.receipt.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
+    // Simulate recycled phase/address surroundings. Actual Runtime cannot
+    // restart; this distinguishes lifecycle invalidation from a pointer test.
+    runtime.stopping=false;
+    CHECK(!observed.receipt.try_seal(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
     CHECK(runtime.setup_leases==0 && bridge.reads==0);
 }
 void configuration_async_refusal(const char* fixture) {
@@ -405,10 +409,10 @@ void configuration_failed_registration(const char* fixture) {
     PS2Runtime runtime;ReoHwBridge bridge;seed(runtime,fixture);opt("REO_NATIVE_CD_OWNER","0");
     auto old=observed_config(runtime);runtime.registration_allowed=false;opt("REO_NATIVE_CD_OWNER","1");
     auto attempted=observed_config(runtime);auto* ram=runtime.memory().getRDRAM();
-    CHECK(attempted.status==ConfigurationStatus::observed && attempted.mode==RamWriteMode::synchronous);
+    CHECK(attempted.status==ConfigurationStatus::unavailable && attempted.mode==RamWriteMode::synchronous);
     CHECK(!old.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
     CHECK(!attempted.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
-    opt("REO_NATIVE_CD_OWNER","0");auto later=observed_config(runtime);
+    runtime.registration_allowed=true;opt("REO_NATIVE_CD_OWNER","0");auto later=observed_config(runtime);
     CHECK(later.mode==RamWriteMode::synchronous && !later.receipt.try_seal(runtime,ram,PS2_RAM_SIZE));
     fail_allocation=true;auto failed=observed_config(runtime);
     CHECK(!fail_allocation && failed.status==ConfigurationStatus::unavailable);

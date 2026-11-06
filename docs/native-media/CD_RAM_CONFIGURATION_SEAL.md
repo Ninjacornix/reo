@@ -32,7 +32,11 @@ Moving or destroying seals releases the count exactly once. Reconfiguration
 invalidates old unsealed receipts before attempting allocations or changing the
 route; a failed replacement cannot leave a stale safe-mode observation usable.
 The monotonic generation and actual receipt object identify a configuration
-incarnation. The short Runtime pre-run lease is released before returning;
+incarnation. A real registered lifecycle sentinel invalidates unsealed receipts
+on Runtime stop/destruction; a later Runtime at reused addresses cannot revive
+one by pointer equality. Sentinel registration failure makes the receipt
+unavailable, without changing the actual selected disc route. The short Runtime
+pre-run lease is released before returning;
 holding a persistent seal does not prevent `Runtime.run` from beginning.
 
 An existing accepted seal is not invalidated merely because stop is signaled.
@@ -47,7 +51,7 @@ runtime capture factory.
 
 The actual adapter plus real native SerialWorker passes **21 fresh-process
 scenarios** with both GCC and pinned LLVM: the previous 14 ownership/admission/
-callback cases and seven configuration cases. The new cases record 209 checks
+callback cases and seven configuration cases. The new cases record 210 checks
 per compiler, including 32 independently started seal-versus-configure races.
 Each race permits exactly either a retained seal plus configuration conflict,
 or a replacement configuration plus stale-receipt refusal. Other checks cover
@@ -65,8 +69,8 @@ implementation separately.
 
 | Private receipt | SHA-256 |
 | --- | --- |
-| `cd-owner-ram-configuration/gcc-v5/receipt.json` | `57c16088daaa1f6c05af4d602298f42eaee34d966ccb619518a40c5251df0232` |
-| `cd-owner-ram-configuration/llvm-v5/receipt.json` | `d222f3144e21dfb1cc04fcbd6a10c425be41751d39d1d0bd04b6e6453ccdce36` |
+| `cd-owner-ram-configuration/gcc-v6/receipt.json` | `5e8fdae5cd691d3a97e04dbeffaf7e57140096804409d979280ca3004940c207` |
+| `cd-owner-ram-configuration/llvm-v6/receipt.json` | `5545156a944866a1be90f97612a4c33a44cb508d43440894082a1df8c0841f30` |
 
 Both are below ignored `build-native-sjuni`. Earlier failed/partial cohorts are
 retained. The candidate preparer now includes the new header when packaging a
@@ -75,7 +79,7 @@ future committed candidate; no existing sealed kit or player executable changed.
 ```powershell
 python recomp/overrides/native_cd_owner/tests/run_checks.py `
   --cxx C:/msys64/mingw64/bin/g++.exe `
-  --output build-native-sjuni/cd-owner-ram-configuration/gcc-v5 `
+  --output build-native-sjuni/cd-owner-ram-configuration/gcc-v6 `
   --runtime-headers build-native-sjuni/dependency-bank-reapply-v3
 ```
 
