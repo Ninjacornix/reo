@@ -209,7 +209,12 @@ matches 30 independently authored original lifecycle/refill clients under both
 compilers, including two simultaneous consumers and pending I/O. Its raw-refill
 boundary mismatch is preserved separately; the qualified API uses the complete
 lifecycle service. The [Window2 composition contract](native-media/ADX_SHARED_WINDOW_CONTRACT.md)
-remains design work requiring new complete transaction proof. Clocks, RNA/DTR credits, LSC
+now has a [new 133-client lifecycle/PCM original corpus](native-media/ADX_WINDOW_V2_ORACLE.md),
+with identical transcripts on both compilers and all three long streams reaching
+40,017. Its native owner remains design work requiring complete transaction proof.
+The new partial-final and asymmetric PCM probes define the physical ownership
+gate; unpublished extension bytes cannot be equated with logical credit.
+Clocks, RNA/DTR credits, LSC
 replacement and actual player integration still follow.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now

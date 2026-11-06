@@ -31,6 +31,11 @@ comparison failure is retained; a new explicit lifecycle-entry source cohort
 now matches both compilers. Window2 needs a **new whole-composition original cohort**
 using the public lifecycle entry, not flag normalization or relabeling Shared39.
 Compare before/after service-request, stop and close consumption as effects.
+The [new 133-client original corpus](ADX_WINDOW_V2_ORACLE.md) now provides that
+input/replay gate: both compilers agree through6,801,810 instructions, including
+the three40,017-sample streams and four explicit partials. Native composed
+parity remains unimplemented. Its preserved first lifecycle cohort also shows
+why inherited raw-refill error stimuli cannot be relabeled as normal service.
 
 ## Owned graph and proposed surface
 
@@ -278,9 +283,10 @@ Raw block output can exceed the final published sample prefix. Preserve original
 unpublished padding and wrap/mirror effects for admitted cases; never write
 staging directly into bytes belonging to an unread PCM grant. Prove physical
 and logical write ownership, including partial final budgets and tail padding,
-before copying raw workspace PCM into Ring storage. A new original negative
-case should cover small non-block-aligned free space with a partial final budget
-to distinguish legal extension writes from clobbering queued data. It is a
+before copying raw workspace PCM into Ring storage. The new original corpus
+covers small non-block-aligned free space with partial final budgets and
+asymmetric channels, distinguishing legal extension writes from clobbering
+queued data. See its measured total33/free96 and asymmetric64/32 cases. It is a
 composition gate, not a proven original bug or permission to truncate codec
 output silently. The private workspace alone does not close this issue.
 
