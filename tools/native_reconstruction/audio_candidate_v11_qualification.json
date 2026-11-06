@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "status": "bounded_live_candidate_evidence",
+  "files_sha256": {
+    "tools/native_reconstruction/analyze_audio_candidate.py": "c14b288c62fc0bfe21c56f9a0e8a6cb81bd4e97326967ec267483166ac7206b1",
+    "tools/native_reconstruction/test_analyze_audio_candidate.py": "85c5ee83c85f211bce4dbba4317a576563d387ee2d1f9ecb71e28b8e46c0c6ef",
+    "tools/native_reconstruction/analyze_adx_playtest.py": "1b51d6301162305045de4b9c11cc65bb6b546cb113742fd87de9d819a5d6cfdf",
+    "tools/native_reconstruction/analyze_movie_pacing.py": "6269f5696e3ae316f2d58b1d69bc1c9a249b755a3cbe82da6f2d4aae22e4dc6e",
+    "tools/native_reconstruction/analyze_movie_work.py": "c6e68758e3d60613bb2ad5b082b31e8e7a2827d19233c6eb60bb50da0116dcbc",
+    "docs/native-media/COMPLETE_AUDIO_CANDIDATE_V11.md": "13a90031c0926830d298441f9993361fc5af162f5be7245879921e89b2a3887c"
+  },
+  "result": {
+    "path": "build-native-sjuni/audio-comparison-v11/result.json",
+    "sha256": "9eea25d97852624a6637ff50d123b38caf1068407cad09ba752baaf69e8522a8"
+  },
+  "build_manifest_sha256": "3f6308c2f6cd59cc5daca4d3dd5261e3b6caadb2b356910f059bb74e80d6b2f4",
+  "executable_sha256": "622559322384b8561789e8dbf9123e4203a8c42108a5426cc762e6c46375777d",
+  "parser_tests": 6,
+  "actual_installation": true,
+  "normal_retirement": true,
+  "stutter_fix_proven": false,
+  "stage3_complete": false,
+  "default_enabled": false,
+  "unresolved": [
+    "First RAM diagnostic read/unsupported lacks request identity",
+    "Native supervisor had one private input-file read permission error",
+    "Single pair and different post-movie durations; host/cache conditions uncontrolled",
+    "Whole compressed player, clocks/credits and wider game/bank coverage remain open"
+  ]
+}

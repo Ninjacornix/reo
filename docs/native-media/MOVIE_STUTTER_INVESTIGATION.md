@@ -206,6 +206,15 @@ does not provide all the elapsed times or end-to-end picture/display joins above
 
 ## Minimal next evidence, before changing scheduling
 
+The subsequent [complete-audio V11 opening pair](COMPLETE_AUDIO_CANDIDATE_V11.md)
+adds actual whole-backend/RAM acquisition and retired teardown. Native reports
+zero underruns and no sampled movie interval above50ms; original reports16,320
+underrun frames and one677.7755ms sampled movie interval. Post-movie durations
+differ, caches/host state are uncontrolled, and one unsupported read diagnostic
+remains unidentified. The longest original interval has no retained movie-work
+overlap. This is further intermittent-symptom evidence, not a confirmed fix or
+proof that all slowdowns were captured.
+
 1. Reuse the completed screenshot-free baseline and paired native-on repeat,
    preserving executable hash, input route, visibility changes, source selection,
    clock epochs and dropped-record counts. Compare symptoms first. A native-on

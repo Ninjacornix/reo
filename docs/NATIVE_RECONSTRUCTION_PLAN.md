@@ -186,8 +186,11 @@ sealed inputs. The [RuntimeMemory provider](native-media/NATIVE_SOUND_RAM_MEMORY
 implements private real-capability acquisition and bounded copies, with130
 protocol assertions, real packet/bank integration and whole actual-header
 objects per compiler. Those protocol fixtures explicitly substitute acquisition
-contexts; successful live acquisition, complete composite publication and a
-coherent rebuilt game remain unvalidated. The
+contexts; the [coherent V11 pair](native-media/COMPLETE_AUDIO_CANDIDATE_V11.md)
+now observes actual acquisition, complete publication, packet/PCM activity and
+normal retired teardown. Both runs reach gameplay/control checks and exit0.
+Native records zero underruns in this bounded run; a separate unsupported read
+diagnostic and wider domain/performance validation remain open. The
 [file identity helper](native-media/NATIVE_SOUND_BUILD_IDENTITY.md) records actual
 source/native file hashes without treating them as RAM authority.
 

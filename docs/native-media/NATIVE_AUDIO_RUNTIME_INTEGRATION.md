@@ -1,16 +1,18 @@
 # Complete audio candidate integration
 
-Status: source integration and isolated component checks, 2026-11-06. A complete
-new game build, successful actual capability acquisition and live audio/bank
-validation remain pending. No default playback or stutter fix is established.
+Status: source integration, isolated checks and a bounded coherent V11 live pair,
+2026-11-06. Actual capability acquisition, complete installation, opening/control
+progress and normal retired teardown are observed. An unsupported read diagnostic
+and wider validation remain open. No default playback or stutter fix is
+established. See the [complete build/test record](COMPLETE_AUDIO_CANDIDATE_V11.md).
 
 The private candidate joins Aggregate2, PacketAdapter3, BankSession2, the PCM
 bridge/output owner, and RuntimeMemory under one SDK V2 registration. Its
 [wrapper qualification](NATIVE_AUDIO_COMPOSITE_WRAPPER.md) preserves every child
 callback owner and the existing admitted render call. RuntimeMemory supplies
 the [actual acquisition/copy implementation](NATIVE_SOUND_RAM_MEMORY_OWNER.md).
-Its protocol fixtures substitute acquisition contexts; actual acquisition still
-needs the coherent candidate below.
+Its protocol fixtures substitute acquisition contexts; V11 additionally executes
+the actual private acquisition/factory in the game.
 
 Bootstrap records the actual CD configuration receipt, reapplies game overrides,
 observes the [actual source/native file identities](NATIVE_SOUND_BUILD_IDENTITY.md),
@@ -29,8 +31,9 @@ and retires Memory before releasing its setup lease. Ordinary published stop
 signals only the child; successful outer drain and the child/device fence must
 precede Memory retirement. A failed published fence retains the resources for
 retry. The wrapper's isolated tests exercise the relay/lifetime implementation;
-factory ordering is currently source-reviewed and compiled, not executed as a
-live Runtime test.
+V11 additionally executes successful factory publication and normal joined
+retirement in a live Runtime. Unpublished/fault paths retain their isolated and
+source-review scope; one successful close is not every shutdown race.
 
 `prepare_native_candidate.py --audio-backend` assembles thirteen explicit audio
 sources in addition to the existing resource/session candidate inputs. It
@@ -50,7 +53,8 @@ The sealed V10 passed154 authored/runtime compilation units and compiled all
 the candidate list omitted the existing `audio_banks/v2/algorithms.cpp`. No game
 was linked or launched. The corrected list includes both sources from the
 standalone bank library, with a cross-check against that CMake target. V10's
-failed link evidence is retained; a fresh kit/build is required for validation.
+failed link evidence is retained; the fresh V11 kit builds and completes the
+bounded opening pair with the corrected source list.
 
 Initial integration uses this sealed private candidate path. The ordinary
 recomp CMake configuration imports a separately built runtime library; it has
@@ -71,4 +75,6 @@ attempts/refusals and diagnostics. Its first-refusal word can include the
 deliberately absent optional packet logger; it is not automatically a gameplay
 failure or stutter cause. Reports must be interpreted with successful
 installation and actual operation counts, not merely a requested environment
-setting. No completed candidate/game observation is claimed in this document.
+setting. V11's first word is a separate unsupported read diagnostic, while all
+166 optional log calls refuse as designed; these distinct observations remain
+explicit in its linked test record.

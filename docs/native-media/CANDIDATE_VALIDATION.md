@@ -334,3 +334,15 @@ The option stays off by default. Playback clocks, ADXT/SJRB ownership and broade
 media transitions remain open. Per-session `movie-position-analysis.json`,
 pacing/work reports, actor snapshots, controls and run receipts preserve hashes
 and exact references beneath `build-native-sjuni/playtests/`.
+
+## Complete PCM/bank/RAM backend V11
+
+The [separate V11 record](COMPLETE_AUDIO_CANDIDATE_V11.md) documents the coherent
+127-patch runtime build, actual capability acquisition and complete-backend
+publication, packet/PCM activity, opening/control observations and normal joined
+retirement. The same executable completes its original-backend comparison too.
+Native reports zero underruns in this bounded run; original reports16,320 and
+one677.7755ms approximate movie interval. Different post-movie durations,
+uncontrolled cache/host state and an unidentified unsupported read diagnostic
+prevent an accepted stutter-fix or full-domain claim. Both options remain default
+off, and full ADXT/clocks/credits/player migration remains required.
