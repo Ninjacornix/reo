@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "status": "qualified isolated shared compressed players and persistent-session finite asset graph",
+  "game_run": false,
+  "device_opened": false,
+  "production_selected": false,
+  "bank_connected": false,
+  "complete_clock_connected": false,
+  "stage3_complete": false,
+  "finite_matrix": 48,
+  "references": 8910,
+  "distinct_finite_payloads": 6706,
+  "payload_pcm_bytes": 2396811288,
+  "complete_recorded_result_equality": true,
+  "session_provider_detach_stop_unload": [
+    1,
+    1,
+    1
+  ],
+  "manifest_sha256": "3c29ed6a28ce2e86c82fac8050f9d6b861581bf901ddedc39bc38f7629edf29c",
+  "prior_manifest_sha256": "d293bdb478893456715bc7e25c71c6b5a31ffcc2700189c81ca984964baf186c",
+  "changed_files": [
+    "game/native/adxt_shared_player/verify.py"
+  ],
+  "receipts": {
+    "build-native-sjuni/adxt-shared-player/qualified-gcc-v2/receipt.json": "e9215665f6aa5f7755f6bdb8be094fd8240440e76280f4f757bd01489ba9cd65",
+    "build-native-sjuni/adxt-shared-player/qualified-llvm-v2/receipt.json": "50438b0852b32700616be61b5b3e9d755dd71ceaa17db261ca05d22095323f00",
+    "build-native-sjuni/adxt-shared-player/parent-gcc-v1/receipt.json": "082501e35829751d000e2a12c7c771544f15e9aabe31525e8cf1c61775e56f55",
+    "build-native-sjuni/adxt-shared-player/parent-llvm-v1/receipt.json": "e6fcdfe9cd8ec72c1d22c72912653b792122619f68c60ffee970af1f66559ef2",
+    "build-native-sjuni/adxt-shared-player-assets/full-gcc-v1/receipt.json": "97f988a82cd2babcdd780037d7740b7625fb62ecd40a4de236816dee7ba8b4cd",
+    "build-native-sjuni/adxt-shared-player-assets/full-llvm-v1/receipt.json": "e99ef4ee3acd532123154baee205ac9ac25be389762d510eca9eab18c77c7b43",
+    "build-native-sjuni/adxt-shared-player-assets/comparison-v1/receipt.json": "384b8356fceccdbed6f1bad516b7d15f7770bb59d37c51d136e3f42175b7167a"
+  },
+  "additional_sources": {
+    "game/native/adxt_shared_player/README.md": "0a4d676886ae172a805ac570eaf14cbc02612730aecd3837014511c22d2f677a",
+    "docs/native-media/ADXT_SHARED_PLAYER_IMPLEMENTATION.md": "b3f29594289c1c5917b9f9e3cb35dcbb39cd62f53203be9c29a993d2acdee505",
+    "tools/native_reconstruction/compare_adxt_shared_player_runs.py": "efcf18c4a3c45a213e9848cf7e16a048b58b8d294e165ec38bfdd4ed92a1dd25",
+    "game/native/CMakeLists.txt": "f20b723814138faadf7c211df5857b295e6a1360bd2587931861a5f2601a855e",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "416d8e48b9acd74310cd3561a81063761cd1a533b572c8129dfe14caaa703f6a"
+  }
+}

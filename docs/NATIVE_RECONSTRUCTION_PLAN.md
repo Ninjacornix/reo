@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has forty standalone suites, including the independent ADX
+project now has forty-one standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -296,6 +296,17 @@ uses the actual NativeStreamProvider/static slot and reviewed raylib functions
 with model device primitives. Connecting the compressed players and existing
 bank aggregate to this shared ownership remains required; it is not a selected
 runtime backend or actual-device qualification.
+
+The [shared-output player composition](native-media/ADXT_SHARED_PLAYER_IMPLEMENTATION.md)
+now connects the actual compressed players to that session. Both compilers
+validate peer progress during a blocked source join, retained decoder credit
+after a real output-copy refusal, constructor rollback, and two actual decoder
+workers through the actual provider/static slot with reviewed raylib functions
+and model device primitives. One persistent session now services all6,706
+distinct finite payloads with exact prior native-decoder prefix digests, actual
+per-source joins and one final model-provider unload. Bank/packet ownership,
+complete clocks, LSC, logical PAK tails and actual game/media validation remain
+required before stage3 completes. No compatibility runtime has been removed.
 
 The [integer raw-clock extraction](native-media/ADXT_INTEGER_CLOCK.md) now
 matches 132 original-word cases with both compilers, including actual RNA/ring
