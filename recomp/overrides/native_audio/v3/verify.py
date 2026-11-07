@@ -12,7 +12,7 @@ PRIOR_SHA='80126f5d7e4fbfa353ac6197ba71855c3aa9ec08c72726749e2fdc1d21301483'
 SDK=ROOT/'build-native-sjuni/dependency-sound-rpc10-reapply-v1'
 SDK_RECEIPT=SDK.with_name(SDK.name+'-receipt.json')
 SDK_SHA='692d86d3e19c51039e58749cedf86597810fcff672e95b62a451d3b14605514b'
-SCENARIOS=('complete','between_stop','pretable','producer_stop','failed_fence','headless','contract','self','weak','boundaries','synchronous','self_owner','native_streams','native_refusals')
+SCENARIOS=('complete','between_stop','pretable','producer_stop','failed_fence','headless','contract','self','weak','boundaries','synchronous','self_owner','native_streams','native_refusals','native_owner')
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
     p=argparse.ArgumentParser();p.add_argument('--compiler',type=Path,required=True);p.add_argument('--native-receipt',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();out=a.output.resolve()
@@ -22,7 +22,7 @@ def main():
     sdk=json.loads(SDK_RECEIPT.read_bytes())
     for name,digest in sdk['source_sha256'].items():
         if sha(SDK/name)!=digest:raise ValueError('Current audited SDK drift '+name)
-    native=json.loads(a.native_receipt.read_bytes());manifest=ROOT/'tools/native_reconstruction/native_audio_submix_manifest_v4.json'
+    native=json.loads(a.native_receipt.read_bytes());manifest=ROOT/'tools/native_reconstruction/adxt_control_owner_manifest_v1.json'
     if native['status']!='native media pipeline standalone build and tests passed' or native['compiler_sha256']!=sha(a.compiler) or native['manifest_sha256']!=sha(manifest):raise ValueError('Exact native submix build required')
     sources=json.loads(manifest.read_bytes())['files']
     def verify():

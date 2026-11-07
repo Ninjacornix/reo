@@ -62,3 +62,10 @@ runtime, mount and trees disappear, matching the qualified PCM baseline. These
 tests retain explicit runtime/bridge ports; final game resource transitions and
 source/control/scheduler consumers remain required. Native integer volume and
 live host route gains are also qualified through the instance/output boundary.
+
+The [controller admission guard](ADXT_CONTROL_OWNER_RESULTS.md) closes native
+controls before source teardown, including a caller already waiting at stop.
+It passes real worker/private-render fencing and three injected faults on both
+compilers; the combined native project now has 73 passing suites. Fifteen
+aggregate scenarios include controller destruction with an accepted outer
+callback. Actual runtime registration and game callers remain unbound.

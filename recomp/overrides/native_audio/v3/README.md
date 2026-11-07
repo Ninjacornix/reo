@@ -15,3 +15,7 @@ bootstrap. See [results](../../../../docs/native-media/NATIVE_AUDIO_SUBMIX_RESUL
 mocks and current audited SDK headers. `compare_parent.py` replays unchanged
 original inputs and retains the exact raw reference differences. Both tools
 require fresh private output scopes and launch no game/audio device.
+
+The guarded native controller now also joins/destroys while an accepted outer
+callback is paused before its native submix. Banks and the outer device continue
+after the private source fence. See [controller results](../../../../docs/native-media/ADXT_CONTROL_OWNER_RESULTS.md).

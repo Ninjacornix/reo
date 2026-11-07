@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "status": "canonical native controller admission/source fence and model combined callback qualified; game binding absent",
+  "native_manifest": {
+    "path": "tools/native_reconstruction/adxt_control_owner_manifest_v1.json",
+    "sha256": "449d87e390daadfc7d9c83fda3f7f482881b18bb4ba53a67cb8f896a509ab529"
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-control-owner/build-llvm-v1/receipt.json": {
+      "sha256": "35e1f42ed9090fa831ae1a7f94477b0ebb800051b2210ff3f0e83ef2f9211493",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-control-owner/qualified-llvm-v1/receipt.json": {
+      "sha256": "24e86294ccecdc17b52a1cee4bfc410d5e2cb07c1599b2418134bdd484d3ddac",
+      "status": "native controller admission and actual source retirement qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/control-owner-llvm-v2/receipt.json": {
+      "sha256": "fa71c8dd2b6525c238cefed1e7e2efa574421f94674c5cd0eaeb6d4f75c53205",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/control-owner-parent-llvm-v1/receipt.json": {
+      "sha256": "1f8f61dc7bca0e3956f27b91b4f213453b30eae4ee6d4a9c8ccb627c826b0e16",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-control-owner/build-gcc-v1/receipt.json": {
+      "sha256": "3f00175945010ae6ae01dccf459d94cc2f73a64f4ab003ff4fe21721547c93ef",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-control-owner/qualified-gcc-v1/receipt.json": {
+      "sha256": "72aa760d25b3e4347693ea03fb8128457ca6f6d710f8fa1b1bd9a25f074eac40",
+      "status": "native controller admission and actual source retirement qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/control-owner-gcc-v2/receipt.json": {
+      "sha256": "a4216918c62e55e06b37003e474a1416593e4cedd4472f6b6f20382549ffe9d1",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/control-owner-parent-gcc-v1/receipt.json": {
+      "sha256": "37517055f7c6e82da84fe6f95f8eb212b46dd918d67116996cf0d62fc667a926",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    }
+  },
+  "runtime_shutdown_source": {
+    "path": "build-native-sjuni/dependency-sif-init-timing-reapply-v1/ps2xRuntime/src/lib/ps2_runtime.cpp",
+    "sha256": "dcccc728f7e08683b0c113a1d0e2f082eec264833fee41f4759651bd60c25591",
+    "audit_receipt_sha256": "473ad00c8fcae9966455fc8f47047f2dccd619d747077fc1ffaec2c2e3444df6",
+    "runtime_shutdown_executed_by_these_tests": false
+  },
+  "native_suites": 73,
+  "controller_workflows": 3,
+  "detected_faults_per_compiler": 3,
+  "aggregate_scenarios": 15,
+  "game_integration": false,
+  "actual_audio_device_test": false,
+  "retained_failed_scopes": [
+    "native-audio-aggregate-v3/control-owner-llvm-v1",
+    "native-audio-aggregate-v3/control-owner-gcc-v1"
+  ]
+}
