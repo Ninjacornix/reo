@@ -1,4 +1,5 @@
 #include "session.hpp"
+#include "../audio_mix_tail/mixer.hpp"
 #include <algorithm>
 #include <atomic>
 #include <limits>
@@ -35,7 +36,7 @@ struct State {
     std::array<std::uint32_t,maximum_streams> order{};
     pcm::Statistics final_statistics;
     std::atomic<bool> closing{};
-    bool provider_joined{},closed{},order_required{},render_fault{};
+    bool provider_joined{},closed{},order_required{},render_fault{},bank_mix_fault{};
     pcm::Status last_render_status{pcm::Status::ok};
     State(Config c,std::shared_ptr<audio_output::CallbackSlot> s)
         :config(checked(c)),pcm(core_config(config)),slot(std::move(s)) {
@@ -51,6 +52,14 @@ struct State {
             r.voice=std::move(voice.value);
         }
         if(!publish_order(order))throw std::logic_error("Initial stream order");
+        if(config.bank_mix && !config.bank_mix->bind())throw std::invalid_argument("One-use bank output binding required");
+    }
+    bool mix_banks(float* output,std::uint32_t frames) noexcept {
+        if(!config.bank_mix)return true;
+        const auto result=config.bank_mix->render(output,frames);
+        if(result==audio_mix_tail::Status::completed)return true;
+        if(!closing.load(std::memory_order_acquire))bank_mix_fault=true;
+        return false;
     }
     bool valid(std::uint32_t slot_index,std::uint64_t generation) const noexcept {
         return slot_index<config.streams && records[slot_index].active &&
@@ -98,7 +107,9 @@ public:
         auto out=std::span(output,std::size_t(frames)*2);
         if(s.closing.load(std::memory_order_acquire) || s.closed){std::fill(out.begin(),out.end(),0.0f);return;}
         s.last_render_status=s.pcm.render(out);
-        if(s.last_render_status!=pcm::Status::ok){s.render_fault=true;s.closing.store(true,std::memory_order_release);
+        if(s.last_render_status!=pcm::Status::ok || !s.mix_banks(output,frames)){
+            if(!s.closing.load(std::memory_order_acquire))s.render_fault=true;
+            s.closing.store(true,std::memory_order_release);
             std::fill(out.begin(),out.end(),0.0f);}
     }
 private:std::shared_ptr<State> state_;
@@ -245,10 +256,15 @@ Status Session::start() noexcept {
     const auto result=owner_->start();
     return result==audio_output::StartResult::started || result==audio_output::StartResult::already_started?Status::completed:Status::provider_refused;
 }
-void Session::request_stop() noexcept {state_->closing.store(true,std::memory_order_release);owner_->request_stop();}
+void Session::request_stop() noexcept {
+    state_->closing.store(true,std::memory_order_release);owner_->request_stop();
+    if(state_->config.bank_mix)state_->config.bank_mix->request_stop();
+}
 Status Session::join() noexcept {
     request_stop();
     if(owner_->join()!=audio_output::JoinResult::joined)return Status::pending;
+    // Provider fence first; no stream/PCM/bank data lock is held while joining.
+    if(state_->config.bank_mix && !state_->config.bank_mix->join())return Status::pending;
     auto& s=*state_;std::lock_guard lock(s.mutex);
     if(s.closed)return Status::completed;
     s.provider_joined=true;s.final_statistics=s.pcm.statistics();
@@ -260,7 +276,7 @@ Snapshot Session::snapshot() const noexcept {
     const auto& s=*state_;std::lock_guard lock(s.mutex);Snapshot result;
     result.closing=s.closing.load(std::memory_order_acquire);result.closed=s.closed;result.provider_joined=s.provider_joined;
     result.order_required=s.order_required;result.statistics=s.closed?s.final_statistics:s.pcm.statistics();
-    result.render_fault=s.render_fault;result.last_render_status=s.last_render_status;
+    result.render_fault=s.render_fault;result.last_render_status=s.last_render_status;result.bank_mix_fault=s.bank_mix_fault;
     for(std::uint32_t i=0;i<s.config.streams;++i){result.streams[i]=s.observe(i);result.occupied+=s.records[i].active;
         result.playing+=s.records[i].active && s.records[i].config.playing;}
     return result;

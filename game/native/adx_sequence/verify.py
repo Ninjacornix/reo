@@ -20,7 +20,7 @@ def main():
     def drift():return[n for n,d in frozen['files'].items()if sha(ROOT/n)!=d]
     if drift():raise ValueError('Frozen source drift '+str(drift()))
     helper=ROOT/'game/native/adxt_control_session/verify.py';spec=importlib.util.spec_from_file_location('owned_control_dependencies',helper);module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-    deps=[ROOT/'game/native'/n for n in module.SOURCES if n!='adxt_phased_player/player.cpp'];objects=[out/(p.stem+'.o')for p in deps]
+    deps=[ROOT/'game/native'/n for n in module.SOURCES if n!='adxt_phased_player/player.cpp'];objects=[out/(str(i)+'_'+p.stem+'.o')for i,p in enumerate(deps)]
     if len(set(objects))!=len(objects):raise ValueError('Dependency object collision')
     out.mkdir(parents=True);env=dict(os.environ);env['PATH']=str(Path(cc).parent)+os.pathsep+env.get('PATH','')
     control=ROOT/'game/native/adxt_control_session';phased=ROOT/'game/native/adxt_phased_player'
@@ -32,7 +32,8 @@ def main():
         if (not negative and r.returncode)or (negative and not r.returncode):raise ValueError(name+': '+r.stdout+r.stderr)
         return r.stdout.strip()
     try:
-        run('dependency-compile',flags+['-c',*deps],cwd=out);report['dependency_objects']={p.name:sha(p)for p in objects}
+        for i,(dep,obj) in enumerate(zip(deps,objects,strict=True)):run('dependency-compile-'+str(i),flags+['-c',dep,'-o',obj],cwd=out)
+        report['dependency_objects']={p.name:sha(p)for p in objects}
         binary=out/'sequence-units.exe';run('sequence-units-compile',flags+objects+[HERE/'sequence_tests.cpp','-o',binary]);report['sequence_units']=run('sequence-units',[binary])
         tests=(control/'control_session_tests.cpp').read_text(encoding='utf-8');anchor='auto pc=sequence_config(prepared.sequence);const auto reads='
         if tests.count(anchor)!=1:raise ValueError('Exact-size independent-view admission cut drift')

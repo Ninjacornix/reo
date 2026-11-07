@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has fifty-three standalone suites, including the independent ADX
+project now has fifty-five standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -453,6 +453,16 @@ counterfactuals and all 53 parent suites pass. The admitted source lifetime is
 one-use; general restart/error recovery and original global scheduler parity
 remain explicit boundaries. Bank/packet aggregation, movie controls, game ABI
 integration and actual media transitions still gate stage 3; stages 4–6 remain.
+
+The [shared stream/bank/packet output owner](native-media/SHARED_STREAM_BANK_OUTPUT_IMPLEMENTATION.md)
+now preserves stream PCM, bank addition and master gain in one fenced callback.
+Both compilers pass 298 composition assertions, five detected counterfactuals,
+an actual blocked-LSC/decoded-peer/bank owner test and all 55 standalone suites.
+Existing finite, regular-loop, fixed-sequence and live-sequence imported corpus
+regressions pass with no cross-compiler output differences. This graph is still
+isolated: game capture/gain binding, original global scheduler parity, movie
+controls/lifetimes and coherent game/media transitions remain before stage 3
+completes. No runtime component has been removed; stages 4–6 remain required.
 
 ## Target architecture
 

@@ -11,7 +11,7 @@ import subprocess
 HERE=Path(__file__).resolve().parent;ROOT=HERE.parents[2]
 BASE=ROOT/'build-native-sjuni/adxt-control-session'
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
-SOURCES=['adx_sequence/sequence.cpp','adx_sequence/clip.cpp','adxt_lsc_input/input.cpp','lsc_queue/queue.cpp','resources/bounded_view.cpp','sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adxt_refill.cpp',
+SOURCES=['audio_mix_tail/mixer.cpp', 'audio_banks/v2/session.cpp', 'audio_banks/v2/algorithms.cpp', '../../recomp/overrides/native_banks/v3/packet_adapter.cpp','adx_sequence/sequence.cpp','adx_sequence/clip.cpp','adxt_lsc_input/input.cpp','lsc_queue/queue.cpp','resources/bounded_view.cpp','sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adxt_refill.cpp',
          'resource_io/async_read_owner.cpp','tasks/serial_worker.cpp','resources/resource_session.cpp',
          'resources/virtual_file_view.cpp','adx_header/adx_header.cpp','adx_workspace/adx_workspace.cpp',
          'adx_pcm_store/v2/pcm_store.cpp','adx_window/v2/queue_safe_r3/stream_window.cpp',
@@ -39,9 +39,10 @@ def main():
         elif r.returncode:raise ValueError(name+': '+r.stdout+r.stderr)
         return r.stdout.strip()
     try:
-        objects=[out/(p.stem+'.o')for p in deps]
+        objects=[out/(str(i)+'_'+p.stem+'.o')for i,p in enumerate(deps)]
         if len(set(objects))!=len(objects):raise ValueError('Colliding dependency object names')
-        run('dependency-compile',flags+['-c',*deps],cwd=out)
+        
+        for i,(dep,obj) in enumerate(zip(deps,objects,strict=True)):run('dependency-compile-'+str(i),flags+['-c',dep,'-o',obj],cwd=out)
         report['dependency_objects']={p.name:sha(p)for p in objects}
         binary=out/'units.exe';run('units-compile',flags+objects+[HERE/'control_session.cpp',HERE/'control_session_tests.cpp','-o',binary]);report['units']=run('units',[binary]);report['executable_sha256']=sha(binary)
         mutants=[('stale-generation','r.generation==key.generation_','true'),

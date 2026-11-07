@@ -36,7 +36,7 @@ def main():
     spec.loader.exec_module(module)
     replaced = {'adxt_lsc_input/input.cpp', 'adxt_phased_player/player.cpp'}
     deps = [ROOT / 'game/native' / n for n in module.SOURCES if n not in replaced]
-    objects = [out / (p.stem + '.o') for p in deps]
+    objects = [out / (str(i) + '_' + p.stem + '.o') for i, p in enumerate(deps)]
     if len(set(objects)) != len(objects):
         raise ValueError('Dependency object collision')
     out.mkdir(parents=True)
@@ -70,7 +70,8 @@ def main():
         return result
 
     try:
-        run('dependency-compile', flags + ['-c', *deps], cwd=out)
+        for i, (dep, obj) in enumerate(zip(deps, objects, strict=True)):
+            run('dependency-compile-' + str(i), flags + ['-c', dep, '-o', obj], cwd=out)
         report['dependency_objects'] = {p.name: sha(p) for p in objects}
         report['units'] = owner('owner', HERE / 'input.cpp', phased / 'player.cpp')
         variants = [

@@ -9,11 +9,15 @@
 #include <optional>
 #include <span>
 
+namespace reo::native::audio_mix_tail { class Mixer; }
 namespace reo::native::adxt_output_session {
 inline constexpr std::uint32_t maximum_streams=16, samples_per_channel=8192;
 enum class Status { completed, closed, invalid_input, capacity, allocation_failure,
     stale_producer, copy_refused, order_required, pending, provider_refused, fault };
-struct Config { std::uint32_t streams{16}; std::uint64_t maximum_counter{UINT64_MAX}; };
+struct Config {
+    std::uint32_t streams{16};std::uint64_t maximum_counter{UINT64_MAX};
+    std::shared_ptr<audio_mix_tail::Mixer> bank_mix{};
+};
 struct StreamSnapshot {
     std::uint32_t slot{}, channels{}, frequency{48000}; std::uint64_t generation{};
     std::array<pcm::ChannelInfo,2> channel;
@@ -24,7 +28,7 @@ struct Snapshot {
     std::array<StreamSnapshot,maximum_streams> streams;
     pcm::Statistics statistics;
     std::uint32_t occupied{}, playing{};
-    bool closing{}, provider_joined{}, closed{}, order_required{}, render_fault{};
+    bool closing{}, provider_joined{}, closed{}, order_required{}, render_fault{},bank_mix_fault{};
     pcm::Status last_render_status{pcm::Status::ok};
 };
 struct State;

@@ -31,7 +31,7 @@ def main():
         elif r.returncode:raise ValueError(name+': '+r.stdout+r.stderr)
         return r.stdout.strip()
     flags=[cc,'-std=c++20','-O2','-pthread','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-misleading-indentation','-fno-fast-math','-ffp-contract=off','-frounding-math','-I'+str(ROOT),'-I'+str(HERE)]
-    deps=[ROOT/n for n in ['game/native/sjrb/sjrb.cpp','game/native/adxt_shared_source/shared_source.cpp','game/native/adxt_refill/adxt_refill.cpp',
+    deps=[ROOT/n for n in ['game/native/audio_mix_tail/mixer.cpp', 'game/native/audio_banks/v2/session.cpp', 'game/native/audio_banks/v2/algorithms.cpp', 'recomp/overrides/native_banks/v3/packet_adapter.cpp','game/native/sjrb/sjrb.cpp','game/native/adxt_shared_source/shared_source.cpp','game/native/adxt_refill/adxt_refill.cpp',
         'game/native/resource_io/async_read_owner.cpp','game/native/tasks/serial_worker.cpp','game/native/resources/resource_session.cpp',
         'game/native/resources/virtual_file_view.cpp','game/native/resources/bounded_view.cpp','game/native/adx_header/adx_header.cpp',
         'game/native/adx_workspace/adx_workspace.cpp','game/native/adx_pcm_store/v2/pcm_store.cpp','game/native/adx_window/v2/playback_r2/stream_window.cpp',

@@ -48,7 +48,7 @@ def main():
     if sha(Path(cc))!=authority['workers'][worker_name]['compiler_sha256']:raise ValueError('Unqualified exact FP compiler')
     worker=original.FP/worker_name/'fp_worker.exe';out.mkdir(parents=True);env=dict(os.environ);env['PATH']=str(Path(cc).parent)+os.pathsep+env.get('PATH','')
     helper=ROOT/'game/native/adxt_control_session/verify.py';spec=importlib.util.spec_from_file_location('control_deps',helper);deps_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(deps_module)
-    deps=[ROOT/'game/native'/n for n in deps_module.SOURCES];objects=[out/(p.stem+'.o')for p in deps]
+    deps=[ROOT/'game/native'/n for n in deps_module.SOURCES];objects=[out/(str(i)+'_'+p.stem+'.o')for i,p in enumerate(deps)]
     if len(set(objects))!=len(objects):raise ValueError('Dependency object collision')
     flags=[cc,'-std=c++20','-O2','-pthread','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-misleading-indentation','-fno-fast-math','-ffp-contract=off','-frounding-math','-I'+str(HERE.parent),'-I'+str(ROOT)]
     report=dict(schema=1,status='running',compiler=cc,compiler_sha256=sha(Path(cc)),manifest_sha256=sha(HERE/'manifest.json'),checks=[],captures={},original_cases=[],negative_controls=[],game_run=False,device_opened=False,original_whole_player_parity=False)
@@ -71,7 +71,8 @@ def main():
         if not m.applied and row['observation_after']!=row['observation_before']:raise ValueError('Unpaused measurement had unexpected queue progress')
         return dict(original=result,dispatch=m.dispatch,applied_measured_post_group=m.applied),differences
     try:
-        run('dependency-compile',flags+['-c',*deps],cwd=out);report['dependency_objects']={p.name:sha(p)for p in objects}
+        for i,(dep,obj) in enumerate(zip(deps,objects,strict=True)):run('dependency-compile-'+str(i),flags+['-c',dep,'-o',obj],cwd=out)
+        report['dependency_objects']={p.name:sha(p)for p in objects}
         source=(HERE.parent/'control_session.cpp').read_text();anchor='const auto fresh=target->snapshot();stream=fresh.clock;observation=fresh.clock_observation;'
         if source.count(anchor)!=1:raise ValueError('Actual post-group snapshot cut drift')
         scheduled=out/'scheduled.cpp';scheduled_text=source.replace('#include "control_session.hpp"','#include "control_session.hpp"\nextern void test_after_group_before_clock_snapshot() noexcept;',1).replace(anchor,'test_after_group_before_clock_snapshot();\n            '+anchor)

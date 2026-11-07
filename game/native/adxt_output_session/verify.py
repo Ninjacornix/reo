@@ -32,7 +32,7 @@ def main():
         elif result.returncode:raise ValueError(name+': '+result.stdout+result.stderr)
         return result.stdout.strip()
     flags=[cc,'-std=c++20','-O2','-pthread','-Wall','-Wextra','-Wpedantic','-Werror','-fno-fast-math','-ffp-contract=off','-I'+str(ROOT),'-I'+str(HERE)]
-    deps=[ROOT/'game/native/pcm/pcm.cpp',ROOT/'game/native/audio_output/audio_output_owner.cpp']
+    deps=[ROOT/n for n in ['game/native/audio_mix_tail/mixer.cpp', 'game/native/audio_banks/v2/session.cpp', 'game/native/audio_banks/v2/algorithms.cpp', 'recomp/overrides/native_banks/v3/packet_adapter.cpp']]+[ROOT/'game/native/pcm/pcm.cpp',ROOT/'game/native/audio_output/audio_output_owner.cpp']
     try:
         binary=out/'units.exe';run('compile',flags+[HERE/'session.cpp',HERE/'session_tests.cpp',*deps,'-o',binary])
         report['units']=run('units',[binary])
