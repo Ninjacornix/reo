@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified isolated movie audio-time filter",
-  "manifest_sha256": "e49b4bacfeadbde6e0948fafadc862ea1c806c49b8502ee3db544eacfe04e034",
+  "manifest_sha256": "df2fcee11c0df9d4c590699f0c2a94b5ef9093778ffbdeb81bac0c8c49adadab",
   "cases": 67,
   "operations": 574,
   "constructors": 67,
@@ -16,15 +16,15 @@
     "build-native-sjuni/movie-audio-filter/qualified-llvm-v3/receipt.json": "e1f423f855b082513fae60de51ae93bc4fa5297aa22fba10230ab5ff78075036"
   },
   "complete_native_transcripts_equal": true,
-  "parent_suites": 61,
+  "parent_suites": 62,
   "parent_checks": {
     "gcc": {
-      "build": "e79b6fcece4ef0061121cf1c6f1437e87f22e88b950fdea026fd4ff8472761fb",
-      "tests": "6f8556f1fa05d1ccdc316fa525d95f72d9de4326b8e0ec7b3890fa4cade3b711"
+      "build": "c6d5a53e819c76d12cc409dae419fe819e33f12cef0bf7d3557980db61577b1d",
+      "tests": "58601b729bb408c53b923250e3f5f7263687b80a3bed572a3f4cca862f3dd2da"
     },
     "llvm": {
-      "build": "58c57fdb1c0d4977ee53ba8efd05c6cd22253b0c87c64444ac09f6d2982147c2",
-      "tests": "b0f4c36f08dbe8df020f3d0e249ec9a269b1cb854630fe443574bd6fc4765ba2"
+      "build": "c220651cb1c9f41ad618ae63f1ca865df1b3ad581eb0df1c141c37fa624c6f7d",
+      "tests": "a2ffaf0131b25c97d1e3d12d1ba87524cc8d8b9f9fe4524cbb3382d3a576295b"
     }
   },
   "pre_native_original_receipt_sha256": "6564b5452b849ba68aa3bde7bf424c4bd4b9024d4372132ffdbf346200925e64",
@@ -73,6 +73,12 @@
     "qualification_sha256": "2ef86f5e3e5802d5205daeeec71a61f06cca266d5b73af1744814da8942faa93",
     "ancestor_path": "build-native-sjuni\\movie-pause\\ancestor-v1\\game\\native\\movie_audio_filter\\qualification.json",
     "ancestor_sha256": "c0a12576d1554147ecfa4fbda9d9af27ccefc91facd41872ae1cbbb23d992fea",
+    "existing_runtime_sources_unchanged": true
+  },
+  "clock_initialization_standalone_build_extension": {
+    "qualification_sha256": "6bdacf99de035e7dfad857cf5f7d5f05feed75ae0f8b2307e084cd28be831e3b",
+    "ancestor_path": "build-native-sjuni\\movie-clock-initialize\\ancestor-v1\\game\\native\\movie_audio_filter\\qualification.json",
+    "ancestor_sha256": "c915d8edfaf0a7bc111a4813da5641f98552cda1b67ab1a04e428880803c7c06",
     "existing_runtime_sources_unchanged": true
   }
 }

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified isolated movie audio clock/cache and actual native Session binding",
-  "manifest_sha256": "5ec779ac287ff2384995e5518e44cc94d5b21ac1ad14f28998227986cfbcd368",
+  "manifest_sha256": "f25e2517277adf80881468e990f8ba2d792b66ad3788b7009975d4545909aa0a",
   "cases": 89,
   "operations": 315,
   "original_instructions": 477029,
@@ -15,15 +15,15 @@
     "build-native-sjuni/movie-audio-clock/qualified-llvm-v4/receipt.json": "79cc75da0ff271ab7b7aa91088d9816fddc5f2792bc50daba66af30e12ceb8e1"
   },
   "complete_native_transcripts_equal": true,
-  "parent_suites": 61,
+  "parent_suites": 62,
   "parent_checks": {
     "gcc": {
-      "build": "e79b6fcece4ef0061121cf1c6f1437e87f22e88b950fdea026fd4ff8472761fb",
-      "tests": "6f8556f1fa05d1ccdc316fa525d95f72d9de4326b8e0ec7b3890fa4cade3b711"
+      "build": "c6d5a53e819c76d12cc409dae419fe819e33f12cef0bf7d3557980db61577b1d",
+      "tests": "58601b729bb408c53b923250e3f5f7263687b80a3bed572a3f4cca862f3dd2da"
     },
     "llvm": {
-      "build": "58c57fdb1c0d4977ee53ba8efd05c6cd22253b0c87c64444ac09f6d2982147c2",
-      "tests": "b0f4c36f08dbe8df020f3d0e249ec9a269b1cb854630fe443574bd6fc4765ba2"
+      "build": "c220651cb1c9f41ad618ae63f1ca865df1b3ad581eb0df1c141c37fa624c6f7d",
+      "tests": "a2ffaf0131b25c97d1e3d12d1ba87524cc8d8b9f9fe4524cbb3382d3a576295b"
     }
   },
   "actual_async_source_decoder_estimator_cache_owner_test": true,
@@ -69,6 +69,12 @@
     "qualification_sha256": "2ef86f5e3e5802d5205daeeec71a61f06cca266d5b73af1744814da8942faa93",
     "ancestor_path": "build-native-sjuni\\movie-pause\\ancestor-v1\\game\\native\\movie_audio_clock\\qualification.json",
     "ancestor_sha256": "42782469cb4dd5298784b32485a7226e832fdd149ed0212c520e5a1664e8959c",
+    "existing_runtime_sources_unchanged": true
+  },
+  "clock_initialization_standalone_build_extension": {
+    "qualification_sha256": "6bdacf99de035e7dfad857cf5f7d5f05feed75ae0f8b2307e084cd28be831e3b",
+    "ancestor_path": "build-native-sjuni\\movie-clock-initialize\\ancestor-v1\\game\\native\\movie_audio_clock\\qualification.json",
+    "ancestor_sha256": "fddbd40cb67e6c3ade99778838a1a38e99945fa3879d748759b07d997fefd069",
     "existing_runtime_sources_unchanged": true
   }
 }

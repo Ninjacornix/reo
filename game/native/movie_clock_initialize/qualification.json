@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "status": "qualified fresh typed complete movie clock initialization",
+  "manifest_sha256": "9d9994f0af3b1bd44ca862b407b21e8ae2c8be592e3c75a60afd9949ddb86f8f",
+  "original_cases_per_compiler": 4,
+  "original_instructions_per_compiler": 2944,
+  "original_fp_bit_move_steps_per_compiler": 12,
+  "raw_bit_qualification_cases_per_compiler": 24,
+  "normalized_words": 168,
+  "detected_counterfactuals": 8,
+  "receipts": {
+    "build-native-sjuni/movie-clock-initialize/qualified-gcc-v1/receipt.json": "95a1cd289671e4c2ef49b0dfd280b88f3c9f437a25f6335bc0454fe11f5dcbe4",
+    "build-native-sjuni/movie-clock-initialize/qualified-llvm-v1/receipt.json": "8c8c00d804639522b220c0fd6a310110f8276e95f389a67d0d9167101ff31c61"
+  },
+  "complete_native_transcripts_equal": true,
+  "original_complete_results_equal": true,
+  "parent_suites": 62,
+  "parent_checks": {
+    "gcc": {
+      "build": "c6d5a53e819c76d12cc409dae419fe819e33f12cef0bf7d3557980db61577b1d",
+      "tests": "58601b729bb408c53b923250e3f5f7263687b80a3bed572a3f4cca862f3dd2da"
+    },
+    "llvm": {
+      "build": "c220651cb1c9f41ad618ae63f1ca865df1b3ad581eb0df1c141c37fa624c6f7d",
+      "tests": "a2ffaf0131b25c97d1e3d12d1ba87524cc8d8b9f9fe4524cbb3382d3a576295b"
+    }
+  },
+  "pre_native_original_receipts": {
+    "build-native-sjuni\\movie-clock-initialize\\original-gcc-v1\\receipt.json": "6bf5fb3e5cf08de9c19922b695ae1d6b30cb77523ba470c052271bb325baf964",
+    "build-native-sjuni\\movie-clock-initialize\\original-llvm-v1\\receipt.json": "b5bd645531e3728635181262cc13831f8bd841eb07d7d7f479e39f53f42a6124"
+  },
+  "additional_sources": {
+    "game\\native\\movie_clock_initialize\\README.md": "cd04c3625540fe3e6b1d8fe0f43366f8a195adc6ee624fdbe25c0d8e5d4a7d3d"
+  },
+  "ancestor_qualifications": {
+    "game/native/adx_sequence/qualification.json": "caa4479281b7a2db18976c038cd21f724dd8fa842cc34341ea7f0d271f92d8a6",
+    "game/native/adxt_phased_player/qualification.json": "b289341e4affe110836074cb458c224bbeaa1569d6d2501019b5f0582bc6c744",
+    "game/native/adxt_control_session/qualification.json": "d4fb384840e14270c449c9db635927a166b738e480667595f14acc7524c0cf30",
+    "game/native/adxt_control_session/service_binding/qualification.json": "4faaa72d428578c0cbb2c6dd49936ca26208bedeeb23ef45a663ac6e03a535e3",
+    "game/native/adxt_control_session/regular_loops/qualification.json": "7218d3eacd61e2300234c4e9d30114d4d27831ca677d9e3d2ab22b40bb241c28",
+    "game/native/adx_window/v2/queue_safe_r3/qualification.json": "ca1ca3271e940c062ca6ef8659453beb99a3530463505c2aa17e88706d0d620e",
+    "game/native/adxt_lsc_input/qualification.json": "c6327b3a51a9333b1027e2851c346ba271f24fa9381d43e7d800e48e15f30945",
+    "game/native/adxt_output_session/qualification.json": "8db965200000cec3c3bbdfa909e4132daf9c987fa82f346cb7ccc7e93988d605",
+    "game/native/adxt_shared_player/qualification.json": "5ee565a457deafeb189b7d335b091e5808fd914ca8000fdf67994e322398d5df",
+    "game/native/adxt_clocked_player/qualification.json": "423b30d1b3a5f6ab763c04905ca4e03dfdf8ba79f0dbca6e6b8eee96215510cb",
+    "game/native/audio_mix_tail/qualification.json": "14601faba4bf4e32397bff07c08c5d0b9ff3a7f19b35c638f9c1d72ec8a9a602",
+    "game/native/movie_counter_clock/qualification.json": "109b9037eb6a304bb8cd059bde158f7b60f248847928be26158084a3fdb65fc6",
+    "game/native/movie_selected_clock/qualification.json": "8280b6b5d0e5ffdf1dc1b34a4e830a84a7ef941e4761fdd121de1f27eda07dbe",
+    "game/native/movie_audio_filter/qualification.json": "c915d8edfaf0a7bc111a4813da5641f98552cda1b67ab1a04e428880803c7c06",
+    "game/native/movie_audio_clock/qualification.json": "fddbd40cb67e6c3ade99778838a1a38e99945fa3879d748759b07d997fefd069",
+    "game/native/movie_pause/qualification.json": "2ef86f5e3e5802d5205daeeec71a61f06cca266d5b73af1744814da8942faa93"
+  },
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "limitations": [
+    "Fresh clock block only; not complete movie construction, live reset/rebuild or property restoration.",
+    "Unresolved tracker/admission payload roles remain explicit bounded fields.",
+    "Current-runtime emitted FP bit-move qualification is not a PS2 hardware measurement.",
+    "One coherent movie owner, provider/guard binding, full predicates, source/frame retirement and real transitions remain.",
+    "Gameplay, graphics/platform migration and runtime removal remain stages 4-6."
+  ]
+}

@@ -10,6 +10,6 @@
     "game/native/movie_counter_clock/verify.py": "93dc8ffc0be6e0b24eb30d65a767935453f47af4522bfbeb6e37860d215ab5fa",
     "docs/native-media/MOVIE_COUNTER_CLOCK_CONTRACT.md": "81fc18d40b0b5224b82fef9919e51123fd537a97c8ffd2e7b6cced5d52ceb621",
     "tools/native_reconstruction/movie_counter_clock_oracle.py": "1f68ef6b0c62d64e850ab5671bdde98c28ef02255e32a8d08f66541a83c641b0",
-    "game/native/CMakeLists.txt": "7b9e41118827da6242efcc730dbdd6243746b2655602226b9ee3116f064031a7"
+    "game/native/CMakeLists.txt": "ff0c24f193e1906d3f6f0eb96ec0ce245186d2e3b0f1ea2af36390ee5bd2c5e9"
   }
 }

@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "files": {
+    "docs/native-media/MOVIE_CLOCK_INITIALIZATION_CONTRACT.md": "4fe947e6c6e899730064c3aff9f824f9f33e4732c8521f581196003cc4a49e9e",
+    "game/native/CMakeLists.txt": "ff0c24f193e1906d3f6f0eb96ec0ce245186d2e3b0f1ea2af36390ee5bd2c5e9",
+    "game/native/movie_clock_initialize/CMakeLists.txt": "99486adb82c47b5372490ff97e57010e4df26d6a2e0d92495d7b2fbd8802792c",
+    "game/native/movie_clock_initialize/fixture.cpp": "33f663db36352b1ec6173f8bffcab13f39e2010031c7dce93ee26ef0b8432658",
+    "game/native/movie_clock_initialize/initialize.cpp": "ac7c0956d8ca37564ad86b6e948a8889e7e93ed2c04f1b6ecc21918bfb3b5d9e",
+    "game/native/movie_clock_initialize/initialize.hpp": "edf10305074d79ca39fd97fb90dae1611f7bcd35f3148019034c377a194df91a",
+    "game/native/movie_clock_initialize/initialize_tests.cpp": "6595c579c517adf6027aadbbfb37ad022bd994cdfc2faa87f8a99c13bf301971",
+    "game/native/movie_clock_initialize/original_clock_words.inc": "0e3f870bc6b40b29bcfac3e5da6953b251fe1aa4aba92d2e5e81b9ac2bdab03a",
+    "game/native/movie_clock_initialize/projection.hpp": "6d718be707d188b032fbf4cc2260f67ae2231c2a7b414a0c196fb13f46f515b5",
+    "game/native/movie_clock_initialize/verify.py": "a9f1afb03eac0a02bfe520684fe30753e812625826e32161306bf011e8ff5024",
+    "game/native/movie_counter_clock/clock.hpp": "5724b55787792f161cb92e226b46a798d25bf7d175e7a1cb503f52a960e975ef",
+    "game/native/movie_selected_clock/clock.hpp": "4406257af364ce44edd72cbdd1717573ba199e7890aaa9543b584c339e393f9b",
+    "tools/native_reconstruction/adx_header_math_oracle.py": "f4e60e135c0f2c0f16b7b2160a7dda26fec1334fbcf77abf997654e878d2623d",
+    "tools/native_reconstruction/adx_header_oracle.py": "087863d5c65a809baad4fb77de6d499b2ca0a1ecf6899a8cfb748dc5f6aa7f4a",
+    "tools/native_reconstruction/adx_stereo_oracle.py": "f66047d0ee59114cdf80d5d1e1bb4833aa566b35c9a7dea7e9d24930ad428c17",
+    "tools/native_reconstruction/adx_window_oracle.py": "43396670b83eb676ebc1a73d4f75ceee339fa003e45751ed7f419df2272a16fc",
+    "tools/native_reconstruction/ee_mac_oracle.py": "0466ee2828bcc268deafbb9ed93d8e7096cd0b89fa0ed489af28cae0120128cd",
+    "tools/native_reconstruction/movie_clock_initialize_oracle.py": "03811beda2c5c2fbc710c22f9909760e905046e9a567eb1aac8d9eb369091d9a",
+    "tools/native_reconstruction/movie_position_oracle.py": "d89897b841f07056c15f8e18d978b7f4c9bfe208531f1570157276df65a9b5b0",
+    "tools/native_reconstruction/sjrb_oracle.py": "22e611cd51989d63d2674daa14e9f584733eb9d88a1f326e74138a27ebe430bc",
+    "tools/native_reconstruction/sjuni_oracle.py": "9d71114ffb0d8b2826012517c8d381d5ba2cdb5dd602c1f48e12450d99697d95"
+  }
+}

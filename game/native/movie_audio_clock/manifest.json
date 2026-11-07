@@ -2,7 +2,7 @@
   "schema": 1,
   "files": {
     "docs/native-media/MOVIE_AUDIO_CLOCK_ENVELOPE_CONTRACT.md": "56af150cdde2fd376fc6dc1a228239122ebbe4af1554e98166145ed72b3e3714",
-    "game/native/CMakeLists.txt": "7b9e41118827da6242efcc730dbdd6243746b2655602226b9ee3116f064031a7",
+    "game/native/CMakeLists.txt": "ff0c24f193e1906d3f6f0eb96ec0ce245186d2e3b0f1ea2af36390ee5bd2c5e9",
     "game/native/movie_audio_clock/clock.cpp": "f12f1e4460a0b4e02741dab8361d0f7ca1875604e647d1fd970a2bd9d6601536",
     "game/native/movie_audio_clock/clock.hpp": "3b0b06c7b6959737c4bddd61fbdfe7472d60484a7013af85b8d1fc4ca30b48e5",
     "game/native/movie_audio_clock/clock_tests.cpp": "2cdca721e0d8545dfe109a72078a8ee6a695a1be9691c8aa6db630f49f57d75c",

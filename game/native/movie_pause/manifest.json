@@ -2,7 +2,7 @@
   "schema": 1,
   "files": {
     "docs/native-media/MOVIE_PAUSE_CONTROLLER_CONTRACT.md": "8e321c2128d26a5ad184a8b5430d536a69232a0eee6dee3f92bf66c88418117e",
-    "game/native/CMakeLists.txt": "7b9e41118827da6242efcc730dbdd6243746b2655602226b9ee3116f064031a7",
+    "game/native/CMakeLists.txt": "ff0c24f193e1906d3f6f0eb96ec0ce245186d2e3b0f1ea2af36390ee5bd2c5e9",
     "game/native/movie_counter_clock/clock.hpp": "5724b55787792f161cb92e226b46a798d25bf7d175e7a1cb503f52a960e975ef",
     "game/native/movie_pause/CMakeLists.txt": "e64564473144b38312b3b6f2bec761f1d1a645d8ea9904d3c6e442caf1436610",
     "game/native/movie_pause/controller.cpp": "c8055802f8b7690e6315e005d86c47fbae25caeb734999ba9c5ea21b42a4d6ba",
