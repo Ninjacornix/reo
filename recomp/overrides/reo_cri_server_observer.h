@@ -10,8 +10,10 @@
 // letting other guest threads run), matching the heartbeat's own/wait accounting.
 // Limitation: time blocked in a syscall that releases guest execution (WaitSema,
 // SleepThread) is neither owned nor a scheduler wait, so it still counts in own_ms.
-// pc_samples tells them apart: samples at a WaitSema stub (0x114664) are blocking,
-// not CPU work; a concurrent [vblank-slow] confirms a real freeze.
+// These timers do not distinguish host CPU work, blocking or descheduling.
+// Historical PC sampling read a concurrently written plain context field and
+// used an unjoined process-lifetime thread. Current observation stays entirely
+// on the dispatching owner; it makes no sampled-stack or sampled-PC claim.
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
 #include "reo_game_clock_observer.h"
@@ -20,12 +22,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
-#include <mutex>
-#include <thread>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 #ifdef _WIN32
 // Declared here rather than including <windows.h> (min/max macros in including TUs).
 extern "C" __declspec(dllimport) int __stdcall QueryPerformanceCounter(union _LARGE_INTEGER*);
@@ -154,57 +150,6 @@ inline void step(uint8_t* memory, R5900Context* context, PS2Runtime* runtime) {
         marks[mark_count++] = {0xffffffffu, end};
 }
 
-// Guest-PC sampler: generated code stores ctx->pc before each instruction, so sampling
-// the dispatching thread's context about every millisecond profiles a slow dispatch.
-// One slot per concurrently dispatching guest thread (threads release guest execution
-// while waiting, so dispatches on different threads can overlap).
-struct SampleSlot {
-    std::atomic<R5900Context*> context{nullptr};
-    std::unordered_map<uint32_t, unsigned> samples;
-};
-inline SampleSlot sample_slots[8];
-inline std::mutex sample_mutex;
-inline thread_local SampleSlot* my_slot = nullptr;
-inline void sampler() {
-    for (;;) {
-        std::this_thread::sleep_for(std::chrono::microseconds(500));
-        std::lock_guard<std::mutex> lock(sample_mutex);
-        for (auto& slot : sample_slots)
-            if (R5900Context* context = slot.context.load(std::memory_order_acquire))
-                ++slot.samples[static_cast<uint32_t>(reinterpret_cast<volatile uint32_t&>(context->pc))];
-    }
-}
-inline void begin_samples(R5900Context* context) {
-    std::lock_guard<std::mutex> lock(sample_mutex);
-    my_slot = nullptr;
-    for (auto& slot : sample_slots)
-        if (!slot.context.load(std::memory_order_relaxed)) {
-            slot.samples.clear();
-            slot.context.store(context, std::memory_order_release);
-            my_slot = &slot;
-            return;
-        }
-}
-inline void end_samples() {
-    if (my_slot)
-        my_slot->context.store(nullptr, std::memory_order_release);
-}
-inline void print_samples() {
-    std::vector<std::pair<uint32_t, unsigned>> top;
-    {
-        std::lock_guard<std::mutex> lock(sample_mutex);
-        if (my_slot)
-            top.assign(my_slot->samples.begin(), my_slot->samples.end());
-    }
-    std::sort(top.begin(), top.end(), [](auto& a, auto& b) { return a.second > b.second; });
-    unsigned total = 0;
-    for (auto& entry : top)
-        total += entry.second;
-    std::fprintf(stderr, " pc_samples=%u top:", total);
-    for (size_t i = 0; i < top.size() && i < 10; ++i)
-        std::fprintf(stderr, " 0x%06x(%u)", top[i].first, top[i].second);
-}
-
 inline void configure(const char* serial, uint8_t* memory, size_t bytes) {
     if (const char* value = std::getenv("REO_CRI_SERVER_SLOW_MS"))
         threshold_ns = std::strtoll(value, nullptr, 10) * 1'000'000;
@@ -216,8 +161,7 @@ inline void configure(const char* serial, uint8_t* memory, size_t bytes) {
         reo_game_clock::word(memory, 0x141e2c) != 0xffb40020u)
         return;
     ram = memory;
-    std::thread(sampler).detach();
-    std::fprintf(stderr, "[CRI-SERVER] timing enabled; reporting dispatches >= %lld ms\n",
+    std::fprintf(stderr, "[CRI-SERVER] owner-thread timing enabled; PC sampling unavailable; reporting dispatches >= %lld ms\n",
                  static_cast<long long>(threshold_ns / 1'000'000));
 }
 
@@ -239,7 +183,6 @@ inline void dispatch(uint8_t* memory, R5900Context* context, PS2Runtime* runtime
         mark_count = 0;
         std::memset(hle_ns, 0, sizeof(hle_ns));
         std::memset(hle_calls, 0, sizeof(hle_calls));
-        begin_samples(context);
         in_dispatch = true;
     }
     const int64_t begin = now_ns(), waited = waited_ns();
@@ -249,7 +192,6 @@ inline void dispatch(uint8_t* memory, R5900Context* context, PS2Runtime* runtime
     const int64_t owned = elapsed - (waited_ns() - waited);
     if (steps) {
         in_dispatch = false;
-        end_samples();
     }
     if (!observe || owned < threshold_ns || reports >= report_limit)
         return;
@@ -289,8 +231,6 @@ inline void dispatch(uint8_t* memory, R5900Context* context, PS2Runtime* runtime
                          hle_ns[0] / 1e6, hle_calls[1], hle_ns[1] / 1e6);
         }
     }
-    if (steps)
-        print_samples();
-    std::fprintf(stderr, "\n");
+    std::fprintf(stderr, " pc_samples=unavailable\n");
 }
 } // namespace reo_cri_server

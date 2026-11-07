@@ -31,6 +31,20 @@ The bounded evidence does not assign the large gap to a decoder, GPU fence,
 resource wait, original scheduler or host descheduling. Neighboring packet/RPC
 messages have no incident timestamps and are not causal evidence.
 
+The scheduler heartbeat supplies a narrower lead. Stderr line 7499 reports
+guest thread six owning 751 ms and main thread one waiting 773 ms in that
+counter interval; line 7489 previously reports 227 ms owned by six and 245 ms
+waiting by one. Before and afterward thread six ordinarily records about
+6–7 ms. Creation/start records at lines 531 and 534 identify six as entry
+`12AD70`, the CRI group-four dispatcher. The matching SDK's `g_ownNs` records
+elapsed time between guest execution acquire/release, not host CPU consumption;
+its totals publish at release and can cross heartbeat boundaries. These counters
+therefore point toward long shared-execution ownership in the file/disc service
+route, including possible host blocking/descheduling, without proving which
+child/read caused it. No incident-duration step-level timing was enabled.
+The earlier CRI disc-read investigation is a relevant hypothesis, not a repeated
+measurement of its historical ISO stall: this test uses verified PAK reads.
+
 The native audio report contains **18,208 underrun frames out of 17,786,880
 output frames**. It has no per-window timestamps. These totals cannot be aligned
 to this hitch. The pacing analyzer previously checked only the older native
