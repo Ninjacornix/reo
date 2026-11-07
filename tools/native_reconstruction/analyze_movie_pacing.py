@@ -13,6 +13,7 @@ import re
 
 from analyze_sjuni_playtest import analyze as analyze_session, iter_log, sha
 from analyze_pcm_playtest import parse as parse_pcm
+from analyze_audio_candidate import parse as parse_complete_audio
 
 FIELDS = ['tick', 'begin_ns', 'scanout_ns', 'present_ns', 'end_ns']
 MOVIE = re.compile(r'\[CRI-SYNC\] movie ns=(\d+) vsync=(\d+) time=(-?\d+)/(\d+) decoded=(-?\d+)/(\d+)')
@@ -106,6 +107,13 @@ def native_audio_evidence(lines, environment):
         return dict(status='invalid-evidence', joined_reports=[], error=str(error))
 
 
+def complete_audio_evidence(lines, environment):
+    try:
+        return parse_complete_audio(lines, environment)
+    except ValueError as error:
+        return dict(status='invalid-evidence', audio_reports=[], error=str(error))
+
+
 def analyze(session):
     provenance = analyze_session(session)
     session = Path(provenance['session'])
@@ -131,26 +139,38 @@ def analyze(session):
             if int(match[3]):
                 starvation.append(dict(line=line, **dict(zip(('frames','signal','underrun','queued_samples','host'),map(int,match.groups())))))
     result = summarize(rows, samples)
-    return dict(schema=1, session=str(session), source_executable_sha256=provenance['source_executable_sha256'],
+    return dict(schema=2, session=str(session), source_executable_sha256=provenance['source_executable_sha256'],
         process_identity=provenance['process_identity'], environment=provenance['environment'],
         exit_codes=provenance['exit_codes'], stop_reason=provenance['stop_reason'],
         evidence_sha256=provenance['evidence_sha256'] | {path.name: sha(path)},
         dropped_frame_records=dropped, movie_samples=samples,
         slow_vblank_log_events=slow_vblank[:128], slow_vblank_event_count=len(slow_vblank),
         audio_starvation_windows=starvation[:128], audio_starvation_window_count=len(starvation),
-        native_pcm=native_audio_evidence(iter_log(log), provenance['environment']), **result,
+        native_pcm=native_audio_evidence(iter_log(log), provenance['environment']),
+        native_complete_audio=complete_audio_evidence(iter_log(log), provenance['environment']), **result,
         limitations=['CPU presentation-return intervals do not measure actual display scanout or game-update speed.',
             'Graphics spans exclude upstream decoder, resource and game-worker work before capture begins.',
             'The scanout marker follows backend vsync work; it is not physical scanout. Its next span includes presenter preparation.',
             'Movie context is approximate, sampled about once a second without decoder/generation identity; monotonic generation changes cannot be excluded.',
             'The decoded rational is latest movie-position metadata, not a decoded-picture counter.',
             'Long CPU intervals are measured symptoms, without an automatically established bottleneck or cause.',
-            'Legacy CRI starvation windows do not cover a selected native PCM backend; native final counters have no incident timestamps.',
+            'Legacy CRI starvation windows do not cover selected native PCM or complete-audio backends; native final counters have no incident timestamps.',
             'Diagnostics, warmup, scheduling and window visibility can affect timing; compare controlled runs.',
             'Buffered records appear after graphics teardown; dropped or absent records cannot exclude stutters.'])
 
 
 def audio_evidence(report):
+    if report['environment'].get('REO_NATIVE_AUDIO') == '1':
+        native = report.get('native_complete_audio', {})
+        if native.get('status') == 'invalid-evidence':
+            return 'Native complete-audio evidence invalid; counters unknown: ' + native['error'] + '.'
+        reports = native.get('audio_reports', [])
+        if not reports or not reports[0]['owner_joined']:
+            return 'Native complete-audio starvation: unknown; no final joined counters. Missing legacy windows do not mean zero starvation.'
+        value = reports[0]
+        return (f"Native complete-audio final counters: {value['underrun_frames']} starved output frames / "
+                f"{value['frames']} output frames (stderr line {value['line']}). "
+                'No per-window timestamps; these totals cannot be aligned with a movie gap.')
     if report['native_pcm']['status'] == 'invalid-evidence':
         return 'Native PCM evidence invalid; counters unknown: ' + report['native_pcm']['error'] + '.'
     if report['environment'].get('REO_NATIVE_PCM') != '1':
@@ -187,9 +207,14 @@ def markdown(report):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--session', required=True, type=Path)
+    parser.add_argument('--output-name', default='movie-pacing-analysis')
     args = parser.parse_args()
+    if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,79}', args.output_name):
+        raise ValueError('Simple report name required')
+    output = args.session.resolve()/(args.output_name+'.json')
+    if output.exists() or output.with_suffix('.md').exists():
+        raise ValueError('Preserve previous evidence; choose a fresh output name')
     report = analyze(args.session.resolve())
-    output = args.session.resolve()/'movie-pacing-analysis.json'
     output.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     output.with_suffix('.md').write_text(markdown(report),encoding='utf-8')
     print(json.dumps({key:report[key] for key in ('frame_rows','dropped_frame_records',

@@ -67,5 +67,9 @@ ready threshold 4 capped to that slot count, selector 1, video 1/audio 0, and
 property 47 zero. These observations guide the next priming/control binding;
 they do not prove other rooms, editions or concurrent-media profiles.
 
-A matching linked candidate and controlled fix/retest remain required before
-calling the refusal resolved in the game. Stage 3 is still open.
+A matching V13 candidate now completes the same bounded cinematic/gameplay
+route with no sound RPC refusal and normal joined retirement. All remaining
+132 RAM diagnostics are optional packet-log refusals, with zero other operation
+refusals. The [V13 evidence](AUDIO_CANDIDATE_V13_STUTTER.md) also retains the
+player's late cinematic hitch and actual audio underruns; this startup reply
+does not resolve either symptom. Stage 3 is still open.

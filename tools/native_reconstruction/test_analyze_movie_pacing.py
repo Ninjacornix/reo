@@ -1,12 +1,30 @@
 import io
 import unittest
 
-from analyze_movie_pacing import read_frames, summarize, audio_evidence, native_audio_evidence
+from analyze_movie_pacing import read_frames, summarize, audio_evidence, native_audio_evidence, complete_audio_evidence
 from analyze_pcm_playtest import parse as parse_pcm
 from test_analyze_pcm_playtest import INSTALL, REPORT
 
 
 class MoviePacingTests(unittest.TestCase):
+    def test_complete_backend_underruns_survive_absent_legacy_pcm_reports(self):
+        environment = {'REO_NATIVE_AUDIO': '1', 'REO_NATIVE_PCM': '0'}
+        installed = '[NATIVE-AUDIO] complete PCM/bank/RAM candidate installed pcm_bytes=391680000'
+        final = '[NATIVE-AUDIO-REPORT] owner_joined=1 output_started=1 frames=48000 signal_frames=40000 underrun_frames=18208 hard_failures=0 queue_rejections=0'
+        report = dict(environment=environment, audio_starvation_window_count=0,
+                      native_pcm=parse_pcm([], environment),
+                      native_complete_audio=complete_audio_evidence([installed, final], environment))
+        self.assertIn('18208 starved output frames / 48000 output frames', audio_evidence(report))
+        self.assertIn('cannot be aligned', audio_evidence(report))
+        for logs in ([installed], [installed, final.replace('owner_joined=1', 'owner_joined=0')]):
+            report['native_complete_audio'] = complete_audio_evidence(logs, environment)
+            self.assertIn('unknown', audio_evidence(report))
+            self.assertIn('do not mean zero', audio_evidence(report))
+        report['native_complete_audio'] = complete_audio_evidence([installed, final.replace('frames=48000', 'frames=1')], environment)
+        self.assertIn('counters unknown', audio_evidence(report))
+        _, frames = self.parse('1,100,101,102,103\n2,80000100,80000101,80000102,80000103\n')
+        self.assertEqual(summarize(frames, [])['presentation_return_intervals']['over_50_ms'], 1)
+
     def test_invalid_audio_does_not_invalidate_other_timing_evidence(self):
         environment = {'REO_NATIVE_PCM': '1'}
         native = native_audio_evidence([INSTALL, REPORT.replace('signal_frames=40000',
