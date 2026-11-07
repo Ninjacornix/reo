@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "status": "qualified isolated movie counter and built-in rational query paths",
+  "manifest_sha256": "5384d0a326954763f428e2c50bf6c51d0f3e703da6195283d08e4d228f029c81",
+  "cases": 504,
+  "original_instructions": 11481,
+  "owned_body_count": 9,
+  "property_getter_scope": "0x47 only; callback selector 0x0F varied independently",
+  "native_boundary_checks": 7,
+  "detected_counterfactuals": 5,
+  "receipts": {
+    "build-native-sjuni/movie-counter-clock/qualified-gcc-v3/receipt.json": "6f362dfa07956f105d57e31366d56b7f0762e38809389336c334e44b3c57bf5d",
+    "build-native-sjuni/movie-counter-clock/qualified-llvm-v3/receipt.json": "a8de03163d287c7c8bdcd845157a386a0da39ef63d5795a52575351952d057b9"
+  },
+  "complete_native_transcripts_equal": true,
+  "pre_native_freezes": {
+    "build-native-sjuni\\movie-counter-clock\\original-freeze-v1\\receipt.json": "60da8a714831d896a8659a2224986421d907b5b85a5c075e6ad4d38ba38c7b8a",
+    "build-native-sjuni\\movie-counter-clock\\original-freeze-v2\\receipt.json": "e222eb6433368369b517dadd4c3a252dd7ebde3e1128e757f30ed9e3360a5fc2"
+  },
+  "expanded_post_candidate_original_freeze": {
+    "build-native-sjuni\\movie-counter-clock\\original-freeze-v3\\receipt.json": "cc38614ac4408ecf758052588262312f9bff8affc9efacc1a164f2d34844aabe"
+  },
+  "failed_candidate_receipts": {
+    "build-native-sjuni\\movie-counter-clock\\qualified-gcc-v1\\receipt.json": "919b978d165b1016b37da71b63e15706520d3f1f67603154c475f54e5e075422",
+    "build-native-sjuni\\movie-counter-clock\\qualified-llvm-v1\\receipt.json": "a50383442c839d98faa99c8f11baa161de904394e1a904309e29272fe5c56019"
+  },
+  "pre_correction_candidate_snapshot": "build-native-sjuni\\movie-counter-clock\\failed-v1-inputs",
+  "parent_suites": 56,
+  "parent_checks": {
+    "gcc": {
+      "build": "5d082bc0a8bb370034a75d02e73160edc50d22dad3b80820a9d813b6bb0bef0a",
+      "tests": "bbebeba97532b4336e15d3b2663d35a9615b6f8309dc5266b475e9c2a0572702"
+    },
+    "llvm": {
+      "build": "3dc945d1ba650caaefbeeda44ab9aa4d4b2c9e610065d6142ef2064b8e865737",
+      "tests": "c341dace73e85148c385f412cd886441e8d3550d85d71ca21245c6fac5d7add2"
+    }
+  },
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "additional_sources": {
+    "game\\native\\movie_counter_clock\\README.md": "ceddf0597ba83c37fe207926288ecb40f5197aa06e12ee0ebb52c651f72e2dc0",
+    "docs\\native-media\\MOVIE_COUNTER_CLOCK_IMPLEMENTATION.md": "22e4cfc749ad3744a7c1acbd8de80b586752f487f295f66e22a8cf821dbe23da"
+  },
+  "limitations": [
+    "Actual admitted tick-event binding/frequency is not reconstructed.",
+    "Selected clock/cache/callback registration, ADXT filter, due/skip and frame/source lifetime remain.",
+    "Game adapters/transitions and stages4-6 remain."
+  ]
+}

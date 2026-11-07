@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "scope": "nine complete original movie counter/query bodies; no full movie controller or game selection",
+  "files": {
+    "game/native/movie_counter_clock/clock.cpp": "14bd062ff0df2bc25ea8dbc95388bc5e1f23ba19328554866c1dce887357fd77",
+    "game/native/movie_counter_clock/clock.hpp": "5724b55787792f161cb92e226b46a798d25bf7d175e7a1cb503f52a960e975ef",
+    "game/native/movie_counter_clock/clock_tests.cpp": "0adf59066f792884db43ad646a1609c0d5a0bdca0cf1ec8b2456a0ca95aeb057",
+    "game/native/movie_counter_clock/CMakeLists.txt": "b03114781433d06c16f8076b203f40aca5201a65889f650a8dbb97302de4209a",
+    "game/native/movie_counter_clock/fixture.cpp": "ed354b02d22f07a0f7d8f7f0feb38c18f638e1c3918910ed209d477897a31984",
+    "game/native/movie_counter_clock/verify.py": "93dc8ffc0be6e0b24eb30d65a767935453f47af4522bfbeb6e37860d215ab5fa",
+    "docs/native-media/MOVIE_COUNTER_CLOCK_CONTRACT.md": "81fc18d40b0b5224b82fef9919e51123fd537a97c8ffd2e7b6cced5d52ceb621",
+    "tools/native_reconstruction/movie_counter_clock_oracle.py": "1f68ef6b0c62d64e850ab5671bdde98c28ef02255e32a8d08f66541a83c641b0",
+    "game/native/CMakeLists.txt": "afabc35c93328fe71b14f8fe64f45b638adf01d3da85587eba8c44becc263f10"
+  }
+}

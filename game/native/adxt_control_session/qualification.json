@@ -1,19 +1,19 @@
 {
   "schema": 1,
   "status": "qualified media graph with optional shared native bank/packet output",
-  "manifest_sha256": "5256b139d2b6e6718dc59883dc2985f8d00142402a04bcf4de1358b037ee0c4c",
+  "manifest_sha256": "70dc44a12952a6f0599a69a47d97147ecf2d12360a27a784df79e327a9174e7e",
   "ancestor_snapshot": "build-native-sjuni/audio-mix-tail/ancestor-v1/game/native/adxt_control_session/qualification.json",
   "ancestor_qualification_sha256": "accb564c8e0e8d3ac3e635b6775dcf8ea66ef559defe8d3706cfa0b750eb1d95",
-  "shared_mix_qualification_sha256": "de79286c5ec7524f141be69ed9060aa4e7314de1f45549027b304c40bb6857ad",
-  "parent_suites": 55,
+  "shared_mix_qualification_sha256": "ce3fe559d8f60e55368f134956fd547f7b9cbc3e657049f142aea30ff6143f4d",
+  "parent_suites": 56,
   "parent_checks": {
     "gcc": {
-      "build": "31b7f26933d3ff121e51f801305ebea7cbfa52b1d053e4d99cbf14d64a3f72b1",
-      "tests": "f648a3c7a05e67316aae6fa5cb23d99f8b0876838eae5ec0016c47bdf9dda297"
+      "build": "5d082bc0a8bb370034a75d02e73160edc50d22dad3b80820a9d813b6bb0bef0a",
+      "tests": "bbebeba97532b4336e15d3b2663d35a9615b6f8309dc5266b475e9c2a0572702"
     },
     "llvm": {
-      "build": "73f392a6e842aa243fb8e568273bc88809649282cb9cc40829c66e62e3e08798",
-      "tests": "78018e298f60bdc0545c282cb75cad44bf7216f5a0601c33370b98a6d6d25b07"
+      "build": "3dc945d1ba650caaefbeeda44ab9aa4d4b2c9e610065d6142ef2064b8e865737",
+      "tests": "c341dace73e85148c385f412cd886441e8d3550d85d71ca21245c6fac5d7add2"
     }
   },
   "receipts": {
@@ -64,5 +64,11 @@
   "pre_whitespace_qualification": {
     "path": "build-native-sjuni\\audio-mix-tail\\whitespace-v1\\ancestor\\game\\native\\adxt_control_session\\qualification.json",
     "sha256": "a1f9c8c2363c53ff34c6d65b9e375107115c15c8c4a14e0b59c64c1be7208c66"
+  },
+  "movie_counter_standalone_build_extension": {
+    "qualification_sha256": "e81db24af2e25440ba0cafe7391c9f65bc699d6cf03308f04f4c9084d48ffe1c",
+    "ancestor_path": "build-native-sjuni\\movie-counter-clock\\ancestor-v1\\game\\native\\adxt_control_session\\qualification.json",
+    "ancestor_sha256": "89626e5d467fc540da297495fc40cd11552728b9c5dfa338c2126b55f8356230",
+    "existing_runtime_sources_unchanged": true
   }
 }

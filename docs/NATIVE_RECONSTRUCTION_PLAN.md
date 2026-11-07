@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has fifty-five standalone suites, including the independent ADX
+project now has fifty-six standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -463,6 +463,16 @@ regressions pass with no cross-compiler output differences. This graph is still
 isolated: game capture/gain binding, original global scheduler parity, movie
 controls/lifetimes and coherent game/media transitions remain before stage 3
 completes. No runtime component has been removed; stages 4–6 remain required.
+
+The [movie counter/query core](native-media/MOVIE_COUNTER_CLOCK_IMPLEMENTATION.md)
+now matches 504 original cases through nine owned bodies with both compilers.
+Original execution caught and corrected an initial property-binding mistake:
+rebasing uses property 0x47, independently of callback selector 0x0F. Defined
+returns, raw rational words and ordered selective writes match; five detected
+counterfactuals and all 56 standalone suites pass. This does not provide selected
+callback/cache authority, ADXT filtering, due/skip policy or movie frame/source
+ownership. Those integrations and game/media transitions still gate stage 3;
+stages 4–6 remain open.
 
 ## Target architecture
 
