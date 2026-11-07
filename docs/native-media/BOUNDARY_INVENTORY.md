@@ -348,3 +348,25 @@ stop/rebuild ownership, not whole-stream playback or audible synchronization.
 Logical-to-physical command/scheduler binding, timestamp reconstruction, native
 Sofdec audio routing and real game transitions remain before media migration.
 No production path or original game speed changed, and stage 3 remains open.
+
+## 2026-11-07: reconstructed picture times and complete short GPU stream
+
+`movie_timestamp` replaces absent-per-picture PES assumptions with the original
+temporal/timecode/baseline/current/latest policy. Both compilers match 83 temporal
+and 121 joined workflows, detecting six faults in each profile. Original drop
+table/conversion irregularities remain literal. All 70 suites pass on both
+compilers and from a fresh independent native LLVM build.
+
+The actual RX 570 source/parser/timing/decoder/frame pipeline now presents all
+195 pictures of the short verified SFD, including 128 B-pictures. Rebuild waits
+for actual reader completion and reproduces first-frame pixels. This finite
+unpaced test is separate from game cadence and audible A/V validation. See the
+[results](MOVIE_TIMESTAMP_RESULTS.md) and
+[qualification](../../game/native/movie_timestamp/qualification.json).
+
+Every File #1 SFD member was hash/range/packet inventoried: 201 members,
+2,256,709,632 bytes, no incomplete routes and no C0-DF or BD audio packet member.
+The actual remaining audio integration requirement is the separate game ADX
+route. The [closure checklist](STAGE3_CLOSURE.md) retains broader profiles,
+logical/physical scheduler binding, ADX/output integration and coherent
+resource/media game transitions before stage-3 completion.

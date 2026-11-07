@@ -2,14 +2,16 @@
 #include "native_frame_surface.h"
 #include "mpeg2_stream.h"
 #include "game/native/movie_lifecycle/prepared_graph.hpp"
+#include "game/native/movie_timestamp/timecode.hpp"
 #include <limits>
+#include <bit>
 namespace reo_gpu_movie {
 namespace life=reo::native::movie_lifecycle;
 // Actual serialized graphics owner only. Uses the existing bounded MPEG parser
 // and hardware reference-surface protocol. Unsupported timestamp/profile input
 // fails closed; no guessed timestamps, software decode or original fallback.
 class NativeVideoGraph final:public life::VideoBackend {
-    Mpeg2ElementaryStream elementary_;MpegProgramStream program_{elementary_};
+    Mpeg2ElementaryStream elementary_;MpegProgramStream program_;
     std::shared_ptr<native_frames::Context> clock_;std::shared_ptr<native_frames::VideoFrames> frames_;
     std::shared_ptr<SameOwnerMovieBridge> bridge_;std::unique_ptr<NativeVideoFrames> pipeline_;
     NativeFrameSurface::Recorder record_;
@@ -17,6 +19,15 @@ class NativeVideoGraph final:public life::VideoBackend {
     int64_t watermark_=std::numeric_limits<int64_t>::min();
     struct Pending {native_frames::FrameKey key;native_frames::Words time;int64_t pts;};
     std::vector<Pending> pending_;bool ended_{},closing_{},fault_{};
+    struct Accounting {uint64_t begin,end;reo::native::movie_timestamp::Stamp stamp;};
+    std::deque<Accounting> accounting_;
+    reo::native::movie_timestamp::FlowState time_;
+    uint64_t lastGop_{},decoded_{};uint32_t rate_{};
+    void observePacket(uint8_t code,const PesTimestamp& time) {
+        if(code!=0xe0 || !time.hasPts)return;
+        if(accounting_.size()>=4096)throw std::runtime_error("Native movie timestamp accounting capacity");
+        accounting_.push_back({time.elementaryBegin,time.elementaryEnd,{static_cast<uint32_t>(time.pts33>>2),static_cast<uint32_t>(time.elementaryBegin),static_cast<uint32_t>(time.elementaryEnd-time.elementaryBegin)}});
+    }
     std::array<char,256> error_{};
     void failed(const char* reason)noexcept{fault_=true;std::snprintf(error_.data(),error_.size(),"%s",reason);}
     life::Status publish() {
@@ -33,14 +44,17 @@ class NativeVideoGraph final:public life::VideoBackend {
 public:
     NativeVideoGraph(std::shared_ptr<native_frames::Context> clock,uint64_t generation,
                      std::shared_ptr<SameOwnerMovieBridge> bridge,NativeFrameSurface::Recorder record)
-        :clock_(std::move(clock)),bridge_(std::move(bridge)),record_(std::move(record)),generation_(generation) {
+        :program_(elementary_,0xe0,[this](uint8_t code,const PesTimestamp& time,std::span<const uint8_t>){observePacket(code,time);}),clock_(std::move(clock)),bridge_(std::move(bridge)),record_(std::move(record)),generation_(generation) {
         if(!clock_ || !bridge_ || !record_ || !generation_)throw std::invalid_argument("Native timed movie graph identity");
         frames_=native_frames::VideoFrames::create(clock_,3);pipeline_=std::make_unique<NativeVideoFrames>(bridge_,frames_);
+        pending_.reserve(3);
     }
     ~NativeVideoGraph()override{drain();}
     const std::shared_ptr<native_frames::VideoFrames>& frames()const noexcept{return frames_;}
     const std::shared_ptr<native_frames::Context>& clock()const noexcept{return clock_;}
     const char* error()const noexcept{return error_.data();}
+    uint64_t decodedPictures()const noexcept{return decoded_;}
+    bool drained()const noexcept{return ended_ && !elementary_.hasPicture() && pending_.empty() && frames_->snapshot().resources==0;}
     life::Status feed(uint64_t offset,std::span<const std::byte> bytes)noexcept override {
         if(closing_)return life::Status::closed;
         if(fault_)return life::Status::provider_failure;
@@ -69,7 +83,13 @@ public:
             if(frames_->snapshot().resources)return life::Status::pending;
             if(!elementary_.hasPicture())return life::Status::completed;
             const auto& picture=elementary_.picture();
-            if(!picture.timestamp || !picture.timestamp->hasPts || picture.timestamp->pts33>uint64_t(std::numeric_limits<int32_t>::max()))throw std::runtime_error("Prepared video graph needs observed signed-32-bit 90kHz PTS");
+            if(rate_ && rate_!=picture.rate)throw std::runtime_error("Movie rate change requires a new timing generation");
+            namespace timestamps=reo::native::movie_timestamp;
+            timestamps::FlowInput timing;timing.picture={picture.rate,picture.temporalReference,picture.kind,picture.drop,picture.hours,picture.minutes,picture.seconds,picture.frames,static_cast<uint32_t>(picture.gop)};timing.changed=picture.gop!=lastGop_;
+            while(!accounting_.empty() && accounting_.front().end<=picture.begin)accounting_.pop_front();
+            for(const auto& item:accounting_)if(item.begin<=picture.begin && picture.begin<item.end){timing.accounting=item.stamp;break;}
+            auto candidate_time=time_;const auto publication=timestamps::publish(candidate_time,timing);
+            if(!publication.admitted)throw std::runtime_error("Movie timestamp profile refused");
             auto submission=picture.submission();const bool anchor=picture.kind!=3;
             const uint16_t target=anchor?(current_==0?1:0):2;
             submission.picture.wDecodedPictureIndex=target;
@@ -79,13 +99,15 @@ public:
             MoviePictureIdentity identity;identity.generation=generation_;identity.picture=picture.ordinal;identity.compressedBegin=picture.begin;identity.compressedEnd=picture.end;
             // Existing bridge compatibility tags are opaque nonzero identities,
             // never guest pointers. They do not enter the native timing core.
-            identity.sofdec=1;identity.work=1;identity.truePictureBoundaries=true;identity.truePlayerPts=true;identity.pts90k=static_cast<int64_t>(picture.timestamp->pts33);
+            identity.sofdec=1;identity.work=1;identity.truePictureBoundaries=true;identity.truePlayerPts=true;
+            identity.pts90k=int64_t(std::bit_cast<int32_t>(publication.value))*90000/publication.scale;
             if(submission.picture.wForwardRefPictureIndex!=0xffff)identity.forwardGeneration=bridge_->surfaceGeneration(submission.picture.wForwardRefPictureIndex);
             if(submission.picture.wBackwardRefPictureIndex!=0xffff)identity.backwardGeneration=bridge_->surfaceGeneration(submission.picture.wBackwardRefPictureIndex);
             const auto result=pipeline_->decode(identity,submission,0,0,std::nullopt,record_);
             if(result.status!=native_frames::FrameStatus::completed && result.status!=native_frames::FrameStatus::pending)throw std::runtime_error("Native movie graph decode failed");
             if(result.key==native_frames::FrameKey{})return life::Status::pending;
-            pending_.push_back({result.key,{static_cast<uint32_t>(identity.pts90k),90000},identity.pts90k});
+            pending_.push_back({result.key,{publication.value,publication.scale},identity.pts90k});
+            time_=candidate_time;lastGop_=picture.gop;rate_=picture.rate;++decoded_;
             if(anchor){previous_=current_;current_=target;watermark_=identity.pts90k;}
             elementary_.pop();return publish();
         }catch(const std::exception& error){failed(error.what());return life::Status::provider_failure;}

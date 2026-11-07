@@ -740,7 +740,7 @@ owners, then bind their scheduler/game adapters and validate real transitions.
 Full codec skip/recovery and representative whole-stream I/P/B validation also
 remain. Stage 3 remains open; no compatibility components have been removed.
 
-## Current checkpoint: prepared native movie lifecycle
+## Checkpoint: prepared native movie lifecycle
 
 The native lifecycle module now implements original construction/start/stop/
 rebuild/destroy orchestration and a separate physical owner that waits for source,
@@ -770,3 +770,32 @@ The next gates are source-qualified picture timestamp reconstruction and native
 Sofdec audio routing, then logical/physical scheduler binding and representative
 whole-movie/game transitions with audible A/V synchronization. Stage 3 remains
 open; stages 4-6 and compatibility removal have not been claimed complete.
+
+## Current checkpoint: native timestamps and complete short video
+
+Temporal reconciliation now matches 83 original cases/399 operations, and the
+joined timecode/baseline/latest policy matches 121 original cases/507 operations,
+under both compilers. Six deliberate faults are rejected by each comparison.
+All 70 standalone suites pass with GCC and LLVM, including a fresh independent
+LLVM native build using explicit tools and no private game-build headers.
+
+The real RX 570 pipeline decodes and presents all 195 pictures of the owned short
+SFD after graph reconstruction: 12 I, 55 P and 128 B pictures by independent
+selected-payload prefix counting. Actual producer/reader fences and matching
+first-frame readback remain checked. This removes the earlier missing-PES-time
+first-frame limit for this profile. See the
+[timestamp results](native-media/MOVIE_TIMESTAMP_RESULTS.md) and
+[qualification](../game/native/movie_timestamp/qualification.json).
+
+An all-member route inventory verifies all 201 File #1 SFD payload hashes and
+packet extents. None contains audio C0-DF or BD packets. Thus the remaining audio
+route for this edition is the separate native ADX/game-output path, not a new
+embedded SFD audio decoder. Other editions remain separately admitted.
+
+The user has asked to continue until stage 3 closes. The
+[closure checklist](native-media/STAGE3_CLOSURE.md) tracks consumer integration
+and validation gates without inventing a completion percentage. Broader movie
+profiles, logical/physical scheduler and game command binding, separate ADX/
+output integration, the retained unsupported-read diagnostic and a coherent
+candidate with resource/media transitions remain. These offline tests opened no
+game window or audio device; stage 3 is still open.
