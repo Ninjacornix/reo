@@ -81,7 +81,6 @@ Status Instances::start(const Key& key,Source source)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
     auto& r=s.records[key.slot_];
     if(source.player.initial_attenuation || (source.player.attenuation_table && source.player.attenuation_table!=r.construction.attenuation_table))return Status::invalid_input;
-    if(r.construction.attenuation_table && (source.player.sequence || source.player.lsc_input))return Status::unsupported_profile;
     if(!source.input || !source.input->size() || source.input->size()>std::uint64_t(INT32_MAX) || source.player.decoder.channels!=r.construction.channels || source.player.decoder.source_config.byte_length!=static_cast<std::int32_t>(source.input->size()))return Status::invalid_input;
     if(r.fault)return Status::fault;
     Busy lock(s.busy);r.pending=std::move(source);

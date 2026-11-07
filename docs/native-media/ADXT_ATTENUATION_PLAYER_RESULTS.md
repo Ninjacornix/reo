@@ -31,3 +31,27 @@ prepared clip invariants; it is not silently converted into successful playback.
 Actual guest source/control/reset/scheduler consumers, runtime publication and
 live A/V validation remain Step 3 work. This change does not diagnose or claim
 to fix the previously measured RPC initializer stall.
+
+## Seamless and dynamic LSC admission
+
+The V3 cohort admits table attenuation through immutable sequences and dynamic
+LSC queues. Prepared `Clip` objects already reject effective nonzero AINF
+attenuation, and their metadata cannot change after preparation. Thus these
+admitted clips cannot introduce an unhandled per-header volume offset. The
+negative metadata checks remain explicit; no new implicit gain rule was added.
+
+Both compilers pass all 74 suites with initial attenuation and live fades through
+regular loops, sequences, dynamic queue advancement, blocked reads, repeat and
+cancellation. The 15 combined aggregate scenarios now include an actual dynamic
+LSC worker with table attenuation and a separately rendering finite stereo peer.
+The 21-case null-native parent comparison is unchanged on both compilers. These
+are worker/model-callback checks, not a game/device or guest LSC callback test.
+The earlier real-import finite-source evidence remains the V1 cohort.
+
+V2 failed two new fixture expectations on both compilers: a sequence rejection
+test supplied one view below the required two-view minimum, and a player test
+asserted the configured sample rate before its header was ready. V3 corrects
+those expectations; the production player and instance code is identical between
+V2 and V3. The exact failed 403-input snapshot remains under
+`build-native-sjuni/adxt-attenuation/v2-failed-source`. Both manifests and receipts
+are retained, and V2 is not qualified.

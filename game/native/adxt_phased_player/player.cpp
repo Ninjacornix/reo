@@ -12,8 +12,11 @@ Config checked(Config c,const output::Producer& producer,const resources::ByteVi
     if(c.decoder.downmix || c.decoder.pitch_offset ||
        c.decoder.channels<1 || c.decoder.channels>2)throw std::invalid_argument("Shared native player profile");
     if(c.sequence && c.lsc_input)throw std::invalid_argument("One owned input profile required");
-    if((!c.attenuation_table && c.initial_attenuation) || (c.attenuation_table && (c.sequence || c.lsc_input)))
-        throw std::invalid_argument("Finite/regular-loop attenuation table profile required");
+    if(!c.attenuation_table && c.initial_attenuation)
+        throw std::invalid_argument("Prepared attenuation table required");
+    // Sequence/LSC inputs exclusively own sealed Clip objects. Clip::parse
+    // already refuses effective nonzero AINF attenuation, so header switches
+    // cannot change the offset between original-unit volume control calls.
     if(c.lsc_input){
         const auto& source=c.decoder.source_config;
         if(!c.decoder.seamless_enabled || c.decoder.loop_enabled || view!=c.lsc_input->origin().get() ||

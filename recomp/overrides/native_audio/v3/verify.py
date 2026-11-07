@@ -22,7 +22,7 @@ def main():
     sdk=json.loads(SDK_RECEIPT.read_bytes())
     for name,digest in sdk['source_sha256'].items():
         if sha(SDK/name)!=digest:raise ValueError('Current audited SDK drift '+name)
-    native=json.loads(a.native_receipt.read_bytes());manifest=ROOT/'tools/native_reconstruction/adxt_attenuation_player_manifest_v1.json'
+    native=json.loads(a.native_receipt.read_bytes());manifest=ROOT/'tools/native_reconstruction/adxt_attenuation_player_manifest_v3.json'
     if native['status']!='native media pipeline standalone build and tests passed' or native['compiler_sha256']!=sha(a.compiler) or native['manifest_sha256']!=sha(manifest):raise ValueError('Exact native submix build required')
     sources=json.loads(manifest.read_bytes())['files']
     def verify():

@@ -5,14 +5,14 @@
   "candidate_sha256": {
     "aggregate.cpp": "108026b7390dc1a20796bcca0b266a80eb07bc109dcdbae3a9e63809867e3538",
     "aggregate.h": "0906f56fabab112eca3a8b25c093d915c1ac056d0f9ee15b0af2d2f19f2cc3c4",
-    "compare_parent.py": "1ed3753643eb5dc878b6631d2325a8aa4d438267cfd279e09b1b76aea5647eb6",
+    "compare_parent.py": "e69d179c3ffd93b60496167dbc633ddbbe456c734975334b42df414d3f7f349c",
     "derive.py": "2d3dabacd21662ff3105e6c3ba2101a3f4f370c5431478e07ebc889db95e2ce4",
     "oracle_transport.hpp": "f85dad0cc327bd8b0edd8db60edc50bf4036db22d1c73e42186c69701929dfd6",
-    "submix_tests.cpp": "6c5b6d6038f056c374a48a4fd709b7aff5e65bf9e094d04e053634fb57dc7cc4",
+    "submix_tests.cpp": "137cc32cd8f8c8d56ca17a14fa1d5850fba8619e112834fbc09181ee2faaf80e",
     "tests.cpp": "df05284f383e33caa7476de2f706474fc1c4b802796207402329df407f04361a",
-    "verify.py": "0b1e243eef569a4f9886362bde5a774ce6b1d00b1218613892e9dac9998ca65d"
+    "verify.py": "edea93563b475d948fdbd9b75dc5850a0d794cffdcf4feb2f289ef1c3e786c7c"
   },
-  "native_cohort_sha256": "3a662e81e547ddf2e5425efb9ac7a7b7187c089f588b98e0e3118565bea00409",
+  "native_cohort_sha256": "5feef1ee737790d97eb0b8eb16473e7b998cefe2fa22a2ece7ffe713f0d6d565",
   "unit_and_parent_observations": {
     "build-native-sjuni/native-audio-aggregate-v3/qualified-llvm-v2/receipt.json": {
       "sha256": "764a7d434c5e604f3fc051b072d19b9b0b089a19eab9a39ea94aed1bea92018a",
@@ -63,7 +63,7 @@
       "status": "null-stream aggregate3 observations match qualified parent"
     }
   },
-  "prior_native_cohort_sha256": "449d87e390daadfc7d9c83fda3f7f482881b18bb4ba53a67cb8f896a509ab529",
+  "prior_native_cohort_sha256": "3a662e81e547ddf2e5425efb9ac7a7b7187c089f588b98e0e3118565bea00409",
   "gain_unit_and_parent_observations": {
     "build-native-sjuni/native-audio-aggregate-v3/gain-llvm-v1/receipt.json": {
       "sha256": "842e9a3dd062813a9b373446520de7b44c4fa88d701cf5544d44690aab7f524a",
@@ -115,6 +115,24 @@
     },
     "build-native-sjuni/native-audio-aggregate-v3/attenuation-parent-gcc-v1/receipt.json": {
       "sha256": "4e5de512410d3c7a7cda3a0428b92d94131b9c1cd1bcf86872e9a23e72c24eb2",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    }
+  },
+  "attenuation_lsc_unit_and_parent_observations": {
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-llvm-v1/receipt.json": {
+      "sha256": "ec75830700bc477a853507240722053d3ff021f7d31f61ef7535507bada3834c",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-parent-llvm-v1/receipt.json": {
+      "sha256": "68810727c7e8b592e98ed7f3304eaa901fc6113b90615990af93218e8e318066",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-gcc-v1/receipt.json": {
+      "sha256": "ea37aca6451a3626d40cd38c940dfcc8956880e65f107a0e517c15fbea4d676b",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-parent-gcc-v1/receipt.json": {
+      "sha256": "8f368575bbe31d41c2c765cb2e182af7a602c3f39c52a79a9d9bccc5ae637ef6",
       "status": "null-stream aggregate3 observations match qualified parent"
     }
   }

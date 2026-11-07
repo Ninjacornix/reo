@@ -24,10 +24,16 @@ or override this stable property; such conflicts refuse before retiring the
 active source. The table must be qualified against the actual game/edition by
 the eventual adapter.
 
-This profile admits finite and previously supported regular-loop sources.
-Immutable seamless sequences and dynamic LSC sources explicitly refuse it until
-their per-header metadata transitions are connected. Custom pan/downmix/pitch
-profiles retain their existing refusals. An honest unsupported status is not
+The second cohort also admits immutable sequences and dynamic LSC sources.
+Their private `Clip::parse` admission already rejects effective nonzero AINF
+attenuation and nondefault channel pan. `Sequence::prepare` uses that parser;
+LSC registration accepts only the same sealed immutable Clip type. A header
+transition therefore cannot change the attenuation contribution. Existing
+original-unit fades remain valid across those transitions without an invented
+per-segment gain or per-pump clock. Nonzero AINF offsets in seamless clips still
+refuse at preparation. Finite and supported regular-loop sources retain their
+first-cohort behavior. Custom pan/downmix/pitch profiles retain their existing
+refusals. An honest unsupported status is not
 silence, a guessed gain, legacy fallback after native effects, or completion.
 
 Checks must cover actual workers with nonzero AINF attenuation, pre-header and

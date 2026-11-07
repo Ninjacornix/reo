@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "native external-submix ownership and model aggregate composition qualified; game binding absent",
-  "manifest_sha256": "3a662e81e547ddf2e5425efb9ac7a7b7187c089f588b98e0e3118565bea00409",
+  "manifest_sha256": "5feef1ee737790d97eb0b8eb16473e7b998cefe2fa22a2ece7ffe713f0d6d565",
   "evidence": {
     "build-native-sjuni/submix/clean-build-llvm-v2/receipt.json": {
       "sha256": "d6a8ed0792171015b4987fb9ba2f686f8373da4ccdcff68c4df2e07b30d802f4",
@@ -162,6 +162,30 @@
     "build-native-sjuni/media-mount-handoff/attenuation-gcc-v1/receipt.json": {
       "sha256": "7fbfde6eebd7d10921e86692260046cad9a926daca65e4629709e2c755838de4",
       "status": "actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-llvm-v3/receipt.json": {
+      "sha256": "cffcd592538db272bd245934fbb48d8879a338eb0d5c352a76f7eca190e2f93f",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-llvm-v1/receipt.json": {
+      "sha256": "ec75830700bc477a853507240722053d3ff021f7d31f61ef7535507bada3834c",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-parent-llvm-v1/receipt.json": {
+      "sha256": "68810727c7e8b592e98ed7f3304eaa901fc6113b90615990af93218e8e318066",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-gcc-v3/receipt.json": {
+      "sha256": "1bcae64a4728d868e692d9fb67f73c74198c6aefe2e114ea0e750e82e40667a4",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-gcc-v1/receipt.json": {
+      "sha256": "ea37aca6451a3626d40cd38c940dfcc8956880e65f107a0e517c15fbea4d676b",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-parent-gcc-v1/receipt.json": {
+      "sha256": "8f368575bbe31d41c2c765cb2e182af7a602c3f39c52a79a9d9bccc5ae637ef6",
+      "status": "null-stream aggregate3 observations match qualified parent"
     }
   },
   "parent_suites": 74,
@@ -170,7 +194,7 @@
   "game_integration": false,
   "actual_audio_device_test": false,
   "historical_failed_cohort": "submix/clean-build-llvm-v1: fixed model-device advancement during real source-worker startup in V2; same production DSP.",
-  "prior_cohort_manifest_sha256": "449d87e390daadfc7d9c83fda3f7f482881b18bb4ba53a67cb8f896a509ab529",
+  "prior_cohort_manifest_sha256": "3a662e81e547ddf2e5425efb9ac7a7b7187c089f588b98e0e3118565bea00409",
   "startup_wire_reset": "Allowed before first native producer; post-source reset remains unsupported.",
   "integer_guest_volume_and_callback_route_factors": "qualified isolated native and model aggregate controls; no live guest binding",
   "controller_admission": {
@@ -178,5 +202,5 @@
     "detected_faults_per_compiler": 3,
     "runtime_registration": false
   },
-  "original_attenuation_profile": "finite/regular-loop native players; explicit seamless/LSC refusal in first cohort"
+  "original_attenuation_profile": "finite, regular-loop, immutable sequence and dynamic LSC native players; sealed clip admission rejects effective nonzero AINF attenuation"
 }

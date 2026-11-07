@@ -2,8 +2,8 @@
   "schema": 1,
   "status": "native player/instance attenuation profile and model combined callback qualified; guest binding absent",
   "manifest": {
-    "path": "tools/native_reconstruction/adxt_attenuation_player_manifest_v1.json",
-    "sha256": "3a662e81e547ddf2e5425efb9ac7a7b7187c089f588b98e0e3118565bea00409"
+    "path": "tools/native_reconstruction/adxt_attenuation_player_manifest_v3.json",
+    "sha256": "5feef1ee737790d97eb0b8eb16473e7b998cefe2fa22a2ece7ffe713f0d6d565"
   },
   "evidence": {
     "build-native-sjuni/adxt-attenuation/player-build-llvm-v1/receipt.json": {
@@ -45,6 +45,30 @@
     "build-native-sjuni/media-mount-handoff/attenuation-gcc-v1/receipt.json": {
       "sha256": "7fbfde6eebd7d10921e86692260046cad9a926daca65e4629709e2c755838de4",
       "status": "actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-llvm-v3/receipt.json": {
+      "sha256": "cffcd592538db272bd245934fbb48d8879a338eb0d5c352a76f7eca190e2f93f",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-llvm-v1/receipt.json": {
+      "sha256": "ec75830700bc477a853507240722053d3ff021f7d31f61ef7535507bada3834c",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-parent-llvm-v1/receipt.json": {
+      "sha256": "68810727c7e8b592e98ed7f3304eaa901fc6113b90615990af93218e8e318066",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-gcc-v3/receipt.json": {
+      "sha256": "1bcae64a4728d868e692d9fb67f73c74198c6aefe2e114ea0e750e82e40667a4",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-gcc-v1/receipt.json": {
+      "sha256": "ea37aca6451a3626d40cd38c940dfcc8956880e65f107a0e517c15fbea4d676b",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-parent-gcc-v1/receipt.json": {
+      "sha256": "8f368575bbe31d41c2c765cb2e182af7a602c3f39c52a79a9d9bccc5ae637ef6",
+      "status": "null-stream aggregate3 observations match qualified parent"
     }
   },
   "native_suites": 74,
@@ -52,8 +76,23 @@
   "instance_detected_faults_per_compiler": 4,
   "aggregate_scenarios": 15,
   "actual_import_sources": 2,
-  "seamless_lsc_profile_admitted": false,
+  "seamless_lsc_profile_admitted": true,
   "guest_binding": false,
   "game_run": false,
-  "actual_audio_device_test": false
+  "actual_audio_device_test": false,
+  "prior_manifest": {
+    "path": "tools/native_reconstruction/adxt_attenuation_player_manifest_v1.json",
+    "sha256": "3a662e81e547ddf2e5425efb9ac7a7b7187c089f588b98e0e3118565bea00409"
+  },
+  "seamless_lsc_scope": "Immutable prepared Clip rejects effective nonzero AINF attenuation; table fades admitted across sequence and dynamic LSC clips. Actual game callback/device not tested.",
+  "historical_failed_cohort": {
+    "manifest": "tools/native_reconstruction/adxt_attenuation_player_manifest_v2.json",
+    "sha256": "0d3f70e864b1bb2d328ea1acdcb5758d9deaa664b5744299b578ade9f918bbdc",
+    "snapshot": "build-native-sjuni/adxt-attenuation/v2-failed-source",
+    "failures": [
+      "new sequence negative fixture used one view below required cardinality",
+      "new table sequence fixture asserted configured rate before header readiness"
+    ],
+    "production_player_and_instance_code_unchanged_in_v3": true
+  }
 }

@@ -68,6 +68,14 @@ void native_owner(){
     std::array<std::uint32_t,reo::native::adxt_attenuation::table_words> words{};
     for(unsigned index=0;index<words.size();++index)words[index]=(999-index)*256/999;
     const auto attenuation=reo::native::adxt_attenuation::Table::from_words(words).table;check(bool(attenuation));
+    auto live=reo::native::adxt_lsc_input::Input::create({1,48000,2,2});
+    for(unsigned index=0;index<2;++index){const auto count=index?4097u:20000u;auto file=files::file(1,48000,count);
+        const auto end=96+(count+31)/32*18;file->bytes.resize((end+18+2047)/2048*2048);files::be16(file->bytes,end,0x8001);files::be16(file->bytes,end+2,14);
+        const auto clip=reo::native::adx_sequence::Clip::prepare(file);check(clip.status==reo::native::adx_sequence::Status::completed);
+        const auto asset=live->register_asset(index?"second":"first",clip.clip);check(asset.status==reo::native::adxt_lsc_input::Status::completed && live->enqueue(asset.key).status==reo::native::adxt_lsc_input::Status::completed);
+    }
+    check(live->start()==reo::native::adxt_lsc_input::Status::completed);
+    streams::Source queued;queued.input=live->origin();queued.player.lsc_input=live;queued.player.decoder.seamless_enabled=true;queued.player.decoder.source_config.byte_length=reo::native::adxt_lsc_input::byte_domain;
     auto owner=std::make_unique<control_owner::Owner>(streams::control::Config{{2},{}});
     Setup s(owner->submix());s.install();s.load();a::reset();
     streams::Key x,y;
@@ -76,7 +84,7 @@ void native_owner(){
         const auto a=players.create({1,{0,0,0,0},attenuation}),b=players.create({2,{1,1,1,1}});
         check(a.status==streams::Status::completed && b.status==streams::Status::completed);x=a.key;y=b.key;
         check(players.attenuation(x,0xffffff9c)==streams::Status::completed);
-        check(players.start(x,source(1))==streams::Status::completed && players.start(y,source(2))==streams::Status::completed);
+        check(players.start(x,std::move(queued))==streams::Status::completed && players.start(y,source(2))==streams::Status::completed);
     });
     check(owner->run(start)==control_owner::Admission::accepted);
     bool ready{};ControlOperation service([&](auto& players){
@@ -91,6 +99,7 @@ void native_owner(){
     owner->request_stop();check(owner->join()==control_owner::Join::completed);
     const auto report=owner->report();check(report.joined && report.final && report.final->session.joined &&
         report.final->session.output.submix_fenced && !report.final->session.output.provider_joined);
+    check(live->snapshot().joined && !live->snapshot().registered_assets && !live->snapshot().abandoned);
     check(s.provider->detach_calls==0 && s.provider->stop_calls==0 && s.provider->unload_calls==0);
     owner.reset();s.probe->resume.signal();callback.join();
     check(s.owner->inspect_banks().frame_clock==128 && s.provider->emit(output.data(),64));

@@ -76,3 +76,9 @@ player and stable instances. Both compilers pass 74 native suites, five instance
 workflows, 15 aggregate scenarios and real imported mono/stereo sources at the
 correct table volumes. This advances source controls; it is still separate from
 the guest API/runtime/scheduler and whole movie/audio transition gates.
+
+The attenuation profile also admits immutable sequences and dynamic LSC queues
+after checking the sealed clip metadata invariant. Both compilers pass the
+74-suite cohort and the combined callback with a dynamic source and stereo peer.
+This removes the earlier conservative native refusal; actual guest callbacks,
+runtime registration and source/service callers remain required.

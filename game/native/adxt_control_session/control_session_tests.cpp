@@ -34,6 +34,11 @@ std::shared_ptr<f::File> sequence_file(unsigned channels,unsigned rate,unsigned 
 c::player::Config sequence_config(std::shared_ptr<const reo::native::adx_sequence::Sequence> sequence){
     auto value=config(sequence,sequence->channels());value.decoder.seamless_enabled=true;value.sequence=std::move(sequence);return value;
 }
+std::shared_ptr<const reo::native::adxt_attenuation::Table> attenuation_table(){
+    std::array<std::uint32_t,1000> words{};words[0]=256;
+    std::fill(words.begin()+1,words.begin()+101,200);std::fill(words.begin()+101,words.begin()+201,100);
+    auto table=reo::native::adxt_attenuation::Table::from_words(words);check(table.status==reo::native::adxt_attenuation::Status::completed);return table.table;
+}
 int main(){try{
     {
         using I=reo::native::adxt_lsc_input::Input;using S=reo::native::adxt_lsc_input::Status;
@@ -57,13 +62,20 @@ int main(){try{
         check(!t.session.snapshot().output.statistics.underrun_frames);retire(t,opened.key);const auto done=live->snapshot();
         check(done.joined && !done.abandoned && !done.registered_assets && !done.journal_entries && !t.provider->unloaded);check(t.session.join()==c::Status::completed);
     }
-    for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned first:{33u,8193u,20000u}){
+    for(bool tabled:{false,true})for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned first:{33u,8193u,20000u}){
         Test t;std::array<std::shared_ptr<const reo::native::resources::ByteView>,3> views{
             sequence_file(channels,rate,first),sequence_file(channels,rate,64),sequence_file(channels,rate,16385)};
         auto prepared=reo::native::adx_sequence::Sequence::prepare(views);check(prepared.status==reo::native::adx_sequence::Status::completed);
-        auto pc=sequence_config(prepared.sequence);const auto opened=t.session.open(pc,prepared.sequence,{15,2,8,31});check(opened.status==c::Status::completed);bool ended=false;
+        auto pc=sequence_config(prepared.sequence);if(tabled){pc.attenuation_table=attenuation_table();pc.initial_attenuation=0xffffff9c;}
+        const auto opened=t.session.open(pc,prepared.sequence,{15,2,8,31});check(opened.status==c::Status::completed);bool ended=false,faded=false;
         check(t.session.set_loop_enabled(opened.key,true)==c::Status::unsupported_profile);
         for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(opened.key).evidence;check(!state.fault);
+            if(tabled){
+                if(!faded && state.output.voice.playing && state.decoder.loop.seamless_samples>0){check(t.session.attenuation(opened.key,0xffffff38)==c::Status::completed);faded=true;}
+                const auto current=t.session.inspect(opened.key).evidence;
+                check(current.attenuation && current.attenuation->requested==(faded?-200:-100) && current.output.voice.volume==(faded?100u:200u));
+                check(current.configured?current.output.voice.frequency==rate:!current.output.voice.playing);
+            }
             if(state.clock_observation.state==3 && state.decoder.outer.phase==c::player::window::OuterPhase::decoding){
                 const auto clock=t.session.estimate(opened.key,0);check(clock.status==c::Status::completed && clock.value.result.ratio.numerator==state.output.channel[0].consumed_bytes/2);}
             if(state.configured && state.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
@@ -103,8 +115,9 @@ int main(){try{
             std::this_thread::yield();}check(ended && t.session.inspect(opened.key).evidence.decoder.loop.seamless_samples==12000);
         retire(t,opened.key);check(t.session.join()==c::Status::completed);
     }
-    for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned start:{0u,32u,800u})for(unsigned span:{16385u,32772u}){
+    for(bool tabled:{false,true})for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned start:{0u,32u,800u})for(unsigned span:{16385u,32772u}){
         Test t;auto file=loop_file(channels,rate,start,span);auto pc=config(file,channels);pc.decoder.loop_enabled=true;
+        if(tabled){pc.attenuation_table=attenuation_table();pc.initial_attenuation=0xffffff9c;}
         auto opened=t.session.open(pc,file,{15,2,8,31});check(opened.status==c::Status::completed);const auto key=opened.key;bool repeated=false;std::int32_t decoded{};
         for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(key).evidence;
             check(!state.fault && state.decoder.outer.decoded_samples>=decoded && state.clock_observation.offset==0);decoded=state.decoder.outer.decoded_samples;
@@ -112,6 +125,8 @@ int main(){try{
             if(state.output.channel[0].samples>=512)t.provider->step(512);
             if(state.decoder.source.in_flight)std::this_thread::yield();}check(repeated);
         const auto looped=t.session.inspect(key).evidence;check(looped.playback.phase==reo::native::adxt_playback::Phase::playing && looped.decoder.loop.saved_valid && looped.decoder.source.loop.enabled && looped.decoder.header.loop.count==0);
+        if(tabled){check(looped.attenuation && looped.attenuation->requested==-100 && looped.output.voice.volume==200 && looped.output.voice.frequency==rate);
+            check(t.session.attenuation(key,0xffffff38)==c::Status::completed && t.session.inspect(key).evidence.output.voice.volume==100);}
         const auto clock=t.session.estimate(key,0);check(clock.status==c::Status::completed && clock.value.result.ratio.numerator==looped.output.channel[0].consumed_bytes/2 && clock.value.result.ratio.denominator==rate);
         check(t.session.set_loop_enabled(key,false)==c::Status::completed && !t.session.inspect(key).evidence.decoder.source.loop.enabled);
         bool ended=false;for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(key).evidence;

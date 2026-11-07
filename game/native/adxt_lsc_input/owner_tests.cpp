@@ -10,6 +10,7 @@ namespace c=reo::native::adxt_control_session;
 namespace q=reo::native::adx_sequence;
 namespace f=reo::native::adxt_shared_player::testing;
 unsigned checks{};
+bool attenuation_mode{};
 void check(bool value){++checks;if(!value)throw std::runtime_error("Live input check "+std::to_string(checks));}
 std::shared_ptr<f::File> file(unsigned samples,unsigned channels=1,unsigned rate=48000){
     auto out=f::file(channels,rate,samples);const auto end=96+(samples+31)/32*18*channels;
@@ -21,19 +22,33 @@ std::shared_ptr<const q::Clip> clip(std::shared_ptr<const reo::native::resources
 struct Test{
     std::shared_ptr<reo::audio_output::CallbackSlot> slot=std::make_shared<reo::audio_output::CallbackSlot>();
     std::shared_ptr<reo::native::adxt_player::testing::Provider> provider=std::make_shared<reo::native::adxt_player::testing::Provider>();
+    std::shared_ptr<const reo::native::adxt_attenuation::Table> attenuation;
     c::Session session;
-    Test():session({},slot,provider){check(session.start()==c::Status::completed);}
+    Test():session({},slot,provider){check(session.start()==c::Status::completed);
+        if(attenuation_mode){std::array<std::uint32_t,1000> words{};words[0]=256;
+            std::fill(words.begin()+1,words.begin()+101,200);std::fill(words.begin()+101,words.begin()+201,100);
+            attenuation=reo::native::adxt_attenuation::Table::from_words(words).table;check(bool(attenuation));}}
 };
 c::player::Config config(const std::shared_ptr<i::Input>& input){c::player::Config out;out.decoder.channels=input->channels();out.decoder.seamless_enabled=true;out.lsc_input=input;out.decoder.source_config.byte_length=i::byte_domain;return out;}
 c::Key open(Test& t,const std::shared_ptr<i::Input>& input,c::Indices indices={0,0,0,0}){
-    auto result=t.session.open(config(input),input->origin(),indices);check(result.status==c::Status::completed);return result.key;
+    auto requested=config(input);requested.attenuation_table=t.attenuation;if(t.attenuation)requested.initial_attenuation=0xffffff9c;
+    auto result=t.session.open(requested,input->origin(),indices);check(result.status==c::Status::completed);
+    if(t.attenuation)check(t.session.inspect(result.key).evidence.output.voice.volume==200);
+    return result.key;
 }
 void retire(Test& t,const c::Key& key){
     for(unsigned n=0;n<100000;++n){const auto value=t.session.retire(key);if(value.status==c::Status::completed){check(value.source_joined && value.evidence.output_retired);return;}check(value.status==c::Status::pending);std::this_thread::yield();}
     throw std::runtime_error("Live source retirement exceeded bound");
 }
 void ended(Test& t,const c::Key& key){
+    bool faded=false;
     for(unsigned n=0;n<1000000;++n){check(t.session.service(0)==c::Status::completed);const auto value=t.session.inspect(key).evidence;check(!value.fault);
+        if(t.attenuation){
+            if(!faded && value.output.voice.playing && value.decoder.loop.seamless_samples>0){check(t.session.attenuation(key,0xffffff38)==c::Status::completed);faded=true;}
+            const auto current=t.session.inspect(key).evidence;
+            check(current.attenuation && current.attenuation->requested==(faded?-200:-100) && current.output.voice.volume==(faded?100u:200u));
+            check(current.configured?current.output.voice.frequency==48000:!current.output.voice.playing);
+        }
         if(value.configured && value.playback.phase==reo::native::adxt_playback::Phase::ended)return;
         if(value.output.channel[0].samples>=512)t.provider->step(512);
         if(value.decoder.source.in_flight)std::this_thread::yield();}
@@ -51,6 +66,7 @@ struct Failure final:f::File{
     }
 };
 int main(){try{
+    for(bool mode:{false,true}){attenuation_mode=mode;
     {
         Test t;auto input=i::Input::create({1,48000,1,2});auto foreign=i::Input::create({1,48000,1,2});
         check(t.session.open(config(input),foreign->origin(),{0,0,0,0}).status==c::Status::unsupported_profile);
@@ -141,5 +157,6 @@ int main(){try{
         check(live->snapshot().error==i::Status::source_failure && !live->snapshot().published_bytes && t.session.inspect(key).evidence.output.channel[0].queued_bytes==0);
         retire(t,key);check(live->snapshot().joined && !live->snapshot().abandoned && t.session.join()==c::Status::completed);
     }
-    std::printf("%u live LSC ownership/control assertions\n",checks);return 0;
+    }
+    std::printf("%u live LSC ownership/control assertions, raw and attenuation profiles\n",checks);return 0;
 }catch(const std::exception& e){std::fprintf(stderr,"%s\n",e.what());return 1;}}

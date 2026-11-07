@@ -44,6 +44,12 @@ int main() { try {
     auto loop = file(1, 48000, 64); f::be16(loop->bytes, 22, 1);
     check(q::Clip::prepare(loop).status == q::Status::unsupported_header);
     check(q::Clip::prepare({}).status == q::Status::invalid_input);
+    auto ainf=file(1,48000,12000);f::be32(ainf->bytes,24,0x41494e46);f::be32(ainf->bytes,28,1);
+    f::be16(ainf->bytes,48,0xffff);f::be16(ainf->bytes,52,0xff80);f::be16(ainf->bytes,54,0xff80);
+    check(q::Clip::prepare(ainf).status==q::Status::incompatible_output);
+    std::array<std::shared_ptr<const r::ByteView>,2> inadmissible{ainf,two};
+    check(q::Sequence::prepare(inadmissible).status==q::Status::incompatible_output);
+    f::be16(ainf->bytes,48,0);check(q::Clip::prepare(ainf).status==q::Status::completed);
     std::array<std::shared_ptr<const r::ByteView>, 2> views{one, two};
     auto result = q::Sequence::prepare(views); check(result.status == q::Status::completed);
     std::weak_ptr<const f::File> retained = one; views = {}; one.reset();

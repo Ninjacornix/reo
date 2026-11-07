@@ -852,6 +852,7 @@ stall; no initializer fix is claimed. See [incident evidence](native-media/SIF_I
 The next closure work is actual guest audio source/control/reset/service binding
 to this canonical owner, runtime publication, movie physical/logical scheduling
 and source providers, followed by coherent game transitions and audible A/V
-validation. Seamless/LSC attenuation admission still needs its prepared clip
-invariants checked. These are required integration gates, not percentages inferred
+validation. Seamless/LSC attenuation now passes both compiler cohorts through its
+sealed clip metadata invariant, including real dynamic source workers and the
+combined model callback. These are required integration gates, not percentages inferred
 from standalone test counts. Stage 3 and stages 4-6 remain open.

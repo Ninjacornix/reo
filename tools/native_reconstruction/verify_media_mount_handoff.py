@@ -12,7 +12,7 @@ sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
     p=argparse.ArgumentParser();p.add_argument('--compiler',type=Path,required=True);p.add_argument('--data',type=Path,required=True)
     p.add_argument('--native-receipt',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
-    p.add_argument('--manifest',type=Path,default=ROOT/'tools/native_reconstruction/adxt_attenuation_player_manifest_v1.json');p.add_argument('--attenuation',action='store_true');a=p.parse_args();out=a.output.resolve()
+    p.add_argument('--manifest',type=Path,default=ROOT/'tools/native_reconstruction/adxt_attenuation_player_manifest_v3.json');p.add_argument('--attenuation',action='store_true');a=p.parse_args();out=a.output.resolve()
     if out.exists() or not out.is_relative_to(BASE):raise ValueError('Fresh owned output required')
     manifest=a.manifest;sources=json.loads(manifest.read_bytes())['files'].copy()
     native=json.loads(a.native_receipt.read_bytes())
