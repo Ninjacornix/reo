@@ -299,10 +299,9 @@ public sealed class GameSession {
             Set("REO_TEST_ENEMY_PROBE", "1");
         }
         if (diagnosticRoute == "gameplay-enemy-combat") Set("REO_TEST_WORLD_TARGET", "8180,13340,30");
-        // GPU movies when the rendering GPU has a hardware MPEG-2 decoder and the player left them
-        // on in Graphics; otherwise the original CPU decoder.
+        // Keep the existing CPU/GPU default unless the player explicitly chooses otherwise.
         MovieDecoderChoice movies = await MovieDecoder.Choose(cancel);
-        bool gpuMovies = movies.Gpu && graphics.GpuMovies;
+        bool gpuMovies = movies.UseGpu(graphics.GpuMovies, graphics.GpuMoviesChoice);
         MovieStatus = gpuMovies   ? "Movies: graphics card"
                       : movies.Gpu ? "Movies: processor (chosen in Graphics)"
                                    : "Movies: processor (" + movies.Reason + ")";
@@ -419,6 +418,7 @@ public sealed class GameSession {
                       movieDecoder = gpuMovies ? "gpu" : "cpu",
                       gpuMoviesAvailable = movies.Gpu,
                       gpuMoviesSetting = graphics.GpuMovies,
+                      gpuMoviesUserChoice = graphics.GpuMoviesChoice,
                       movieDecoderGpu = movies.GpuName,
                       movieDecoderReason = movies.Reason },
                 new JsonSerializerOptions { WriteIndented = true }));

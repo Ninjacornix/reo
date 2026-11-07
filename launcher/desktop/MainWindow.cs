@@ -58,7 +58,7 @@ public partial class MainWindow : Window {
         Fullscreen.IsChecked = settings.Fullscreen;
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
-        GpuMovies.IsChecked = settings.GpuMovies;
+        GpuMovies.IsChecked = settings.GpuMoviesChoice ?? false;
         InitializeDeveloper();
         InitializeOnline();
         TextureFilter.SelectedIndex = settings.TextureLinear ? 1 : 0;
@@ -110,23 +110,25 @@ public partial class MainWindow : Window {
     }
     MovieDecoderChoice? movieDecoder;
     async Task CheckMovieDecoderAsync() {
-        movieDecoder = await MovieDecoder.Choose(CancellationToken.None);
-        GpuMovies.IsEnabled = movieDecoder.Gpu;
-        // RC1 (Windows) reports the resulting save. Other desktops have no GPU movie decoder, so
-        // reflecting the probe there is not a user change: keep the saved choice and stay silent.
+        ApplyMovieDecoderChoice(await MovieDecoder.Choose(CancellationToken.None));
+    }
+    internal void ApplyMovieDecoderChoice(MovieDecoderChoice choice) {
+        movieDecoder = choice;
+        // Applying a recommendation must never become a persisted user choice.
         bool wasInitialized = initialized;
-        initialized = OperatingSystem.IsWindows() && initialized;
-        try { GpuMovies.IsChecked = movieDecoder.Gpu && settings.GpuMovies; }
+        initialized = false;
+        try { GpuMovies.IsChecked = choice.UseGpu(settings.GpuMovies, settings.GpuMoviesChoice); }
         finally { initialized = wasInitialized; }
         UpdateGpuMoviesHint();
     }
     void UpdateGpuMoviesHint() {
         if (movieDecoder == null)
             return;
-        // Shown on hover, including while the option is unavailable, so the reason stays visible.
         string gpu = movieDecoder.GpuName.Length != 0 ? movieDecoder.GpuName : "This graphics card";
         GpuMovies.ToolTip = !movieDecoder.Gpu
-            ? movieDecoder.Reason + ". Movies decode on the processor."
+            ? movieDecoder.Reason + (GpuMovies.IsChecked == true
+                ? ". GPU decoding selected manually. Uncheck to return to CPU decoding."
+                : ". CPU decoding is the default. You can check this option to try GPU decoding.")
             : GpuMovies.IsChecked == true
                 ? gpu + " decodes MPEG-2 video. Uncheck to decode movies on the processor."
                 : gpu + " can decode movies; the processor decodes them instead.";
@@ -189,8 +191,10 @@ public partial class MainWindow : Window {
         settings.Fullscreen = Fullscreen.IsChecked == true;
         settings.PerformanceOverlay = PerformanceOverlay.IsChecked == true;
         settings.AsyncVif = AsyncVif.IsChecked == true;
-        if (GpuMovies.IsEnabled) // greyed out on an incompatible GPU; keep the saved choice
+        if (ReferenceEquals(sender, GpuMovies)) {
             settings.GpuMovies = GpuMovies.IsChecked == true;
+            settings.GpuMoviesChoice = settings.GpuMovies;
+        }
         UpdateGpuMoviesHint();
         settings.TextureLinear = TextureFilter.SelectedIndex == 1;
         settings.InternalResolution = DisplayOptions.InternalScales[
