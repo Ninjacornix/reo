@@ -1,19 +1,19 @@
 {
   "schema": 1,
   "status": "qualified media graph with optional shared native bank/packet output",
-  "manifest_sha256": "f71fdadd3c184eadda9c19cb78476119d47c56bcea4d58146547bc5e91215e54",
+  "manifest_sha256": "d2fb911371d3ce024ce15e98fc368ec8fadc5c76229b3597131a1671b7d1dcd3",
   "ancestor_snapshot": "build-native-sjuni/audio-mix-tail/ancestor-v1/game/native/adx_window/v2/queue_safe_r3/qualification.json",
   "ancestor_qualification_sha256": "32d142698a7a4348f15eec00e873d581113bfe9db0dfe72634b155e00c4721fd",
-  "shared_mix_qualification_sha256": "15cc05af6cd61adef837561aebb7dee94feffe477776b9ea317982150d6cbe33",
-  "parent_suites": 58,
+  "shared_mix_qualification_sha256": "d87bbb92860d2b17928bee3a5eb6d70fbe69a31bb38025326a0afb588628732c",
+  "parent_suites": 60,
   "parent_checks": {
     "gcc": {
-      "build": "b780b23fe8de102deb9e6f981019953f793b39841727ee0d161579ecd2b45d08",
-      "tests": "09f342baee0f61f95fea6df818b9b8c4bac996a3fb53652b56ba635d4c7635c0"
+      "build": "bc6460c319a2c41dc9babd79bbb62bdd16f6d1debd05daf6f50426c388f4db31",
+      "tests": "3d45fd11dbca8b12931e40000470d7f05e4d2eea6ed9befd1276b72534067461"
     },
     "llvm": {
-      "build": "8bdb3d4b9959dfe1b4b62728a9ad00bd680d780217c55fc726fb682ea46f188f",
-      "tests": "e9bb99ce587a1b24cc1c67b30dc1ad7d37e255b9452a543e646650d7cdfa470a"
+      "build": "e92311b44457bfedc0430d6a3fd9bf8c708434722323904f322502c621bf6e27",
+      "tests": "5023d2b7a565f35115654c7049e7aafa6e8ad311250672c5217beee7d8e6f6ca"
     }
   },
   "receipts": {
@@ -82,6 +82,12 @@
     "qualification_sha256": "0f7993c582bb50637b5e90c545ac1817170750adee2756c5169eb7a912959599",
     "ancestor_path": "build-native-sjuni\\movie-audio-filter\\ancestor-v1\\game\\native\\adx_window\\v2\\queue_safe_r3\\qualification.json",
     "ancestor_sha256": "d8d25c0cd1e81829989e360310d266a14fe1f2f959a5428a26268f8289aa3122",
+    "existing_runtime_sources_unchanged": true
+  },
+  "audio_clock_standalone_build_extension": {
+    "qualification_sha256": "42782469cb4dd5298784b32485a7226e832fdd149ed0212c520e5a1664e8959c",
+    "ancestor_path": "build-native-sjuni\\movie-audio-clock\\ancestor-v1\\game\\native\\adx_window\\v2\\queue_safe_r3\\qualification.json",
+    "ancestor_sha256": "7053fbdbcf5ac148e7cd2e888350f2efcb90578c83001a6a61a4741aecba08a8",
     "existing_runtime_sources_unchanged": true
   }
 }

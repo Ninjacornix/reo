@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "status": "qualified isolated movie audio clock/cache and actual native Session binding",
+  "manifest_sha256": "3dc6f969f5fc86c61f58a571673df35318548de36cdedc5e681ad20e1af02bec",
+  "cases": 89,
+  "operations": 315,
+  "original_instructions": 477029,
+  "pre_native_cases": 81,
+  "post_candidate_added_signed_word_cases": 8,
+  "earlier_original_inputs_and_results_unchanged": true,
+  "provider_checks": 52,
+  "detected_counterfactuals": 7,
+  "receipts": {
+    "build-native-sjuni/movie-audio-clock/qualified-gcc-v4/receipt.json": "c965a86ab860abfa7ab3189227c309c33c83bc41fac8e66545c110e381e66f74",
+    "build-native-sjuni/movie-audio-clock/qualified-llvm-v4/receipt.json": "79cc75da0ff271ab7b7aa91088d9816fddc5f2792bc50daba66af30e12ceb8e1"
+  },
+  "complete_native_transcripts_equal": true,
+  "parent_suites": 60,
+  "parent_checks": {
+    "gcc": {
+      "build": "bc6460c319a2c41dc9babd79bbb62bdd16f6d1debd05daf6f50426c388f4db31",
+      "tests": "3d45fd11dbca8b12931e40000470d7f05e4d2eea6ed9befd1276b72534067461"
+    },
+    "llvm": {
+      "build": "e92311b44457bfedc0430d6a3fd9bf8c708434722323904f322502c621bf6e27",
+      "tests": "5023d2b7a565f35115654c7049e7aafa6e8ad311250672c5217beee7d8e6f6ca"
+    }
+  },
+  "actual_async_source_decoder_estimator_cache_owner_test": true,
+  "original_freezes": {
+    "build-native-sjuni\\movie-audio-clock\\original-freeze-v1\\receipt.json": "59e6956a74cdccc9ca18ff95a97a1c17b69b061a0f80f49884b1576ea9cce531",
+    "build-native-sjuni\\movie-audio-clock\\original-freeze-v2\\receipt.json": "53a9d7b27be02d17f3260b018ead016dbb8136a7fc44cb1a43063e255b19efbc"
+  },
+  "failed_receipts": {
+    "build-native-sjuni\\movie-audio-clock\\qualified-gcc-v1\\receipt.json": "f1f9a7ef755c172ad467adb0fee55f96a5289dc00a074b23156cbdd3e1bb07a5",
+    "build-native-sjuni\\movie-audio-clock\\qualified-gcc-v2\\receipt.json": "3e9ba372c0d386fb8c93188049abdf3f5c4b36abc4933ae6294f66e9b467aca8",
+    "build-native-sjuni\\movie-audio-clock\\qualified-llvm-v1\\receipt.json": "cb3b84300cdd8d802bebdf10ea611b03dba76bcb9f27dd4c3e1fa0a1f11d798f",
+    "build-native-sjuni\\movie-audio-clock\\qualified-llvm-v2\\receipt.json": "5b039a5929551a5abbc0cc82c67e98909d722cc47cb460e65a259deabb92fd0c"
+  },
+  "ancestor_qualifications": {
+    "game/native/adx_sequence/qualification.json": "80323aaca1c2abcb12cfb1ca3f6f52c616e0f8d58931b0953cc74b1635a9ec8c",
+    "game/native/adxt_phased_player/qualification.json": "6e7b9def56bc8b093d33966851f08f3a911318a981cc770f607b1c5ce1322069",
+    "game/native/adxt_control_session/qualification.json": "2ca90be3f9fb61a3a53da67c7a60db82ee22069827b3b47844293014533daa3d",
+    "game/native/adxt_control_session/service_binding/qualification.json": "13e066084e7af24fa3a194bfd84832e765c8c2a0d95a9958816dce7dc1596b89",
+    "game/native/adxt_control_session/regular_loops/qualification.json": "7ad88064afd51781f82eb6b45557385f25f1f28d6cb85a6bbd758b5afacf959e",
+    "game/native/adx_window/v2/queue_safe_r3/qualification.json": "7053fbdbcf5ac148e7cd2e888350f2efcb90578c83001a6a61a4741aecba08a8",
+    "game/native/adxt_lsc_input/qualification.json": "d582d2deb3e5654c66c63919310679b5e68616c1d815b40bebd00065bc8d8718",
+    "game/native/adxt_output_session/qualification.json": "6ee5854c20ca5274fd68a0089d18629182ea9ce90b42fdd209665b75df087a82",
+    "game/native/adxt_shared_player/qualification.json": "05eb190a76d97c80533d0793a1c6717e7f0244ae8c1e9e06c8531a2602ece0df",
+    "game/native/adxt_clocked_player/qualification.json": "788be3b7eeeb3efd54109b491f012e73277b1b37b559f0c028a12076c56d0627",
+    "game/native/audio_mix_tail/qualification.json": "15cc05af6cd61adef837561aebb7dee94feffe477776b9ea317982150d6cbe33",
+    "game/native/movie_counter_clock/qualification.json": "bdd9daa3fa2415f33f1d05c21f279f0c903374b03eb63191a9bdf92f48cd9133",
+    "game/native/movie_selected_clock/qualification.json": "dae23354b429d938936a0c058a91f377c8ca797dd3a23a86abf22d25d2a3986a",
+    "game/native/movie_audio_filter/qualification.json": "0f7993c582bb50637b5e90c545ac1817170750adee2756c5169eb7a912959599"
+  },
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "real_counter_provider_qualified": false,
+  "limitations": [
+    "Original ADXT estimator and hardware counter are declared sample ports; getters, filter and cache execute.",
+    "Actual native Session test uses explicit helper/tick and device models, not an original whole-game clock comparison.",
+    "Shared guards, qualified real tick/helper binding, movie lifecycle and game transitions remain.",
+    "Gameplay, graphics/platform migration and runtime removal remain stages 4-6."
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified isolated movie audio-time filter",
-  "manifest_sha256": "037b56b86a0f60b914354368e9b756c1cee1c308c137696d44fb252c0f0d1e4b",
+  "manifest_sha256": "70237f808d591930c2aef8915d7e500f7f9453cad9a25bdaad022c414950eb9b",
   "cases": 67,
   "operations": 574,
   "constructors": 67,
@@ -16,15 +16,15 @@
     "build-native-sjuni/movie-audio-filter/qualified-llvm-v3/receipt.json": "e1f423f855b082513fae60de51ae93bc4fa5297aa22fba10230ab5ff78075036"
   },
   "complete_native_transcripts_equal": true,
-  "parent_suites": 58,
+  "parent_suites": 60,
   "parent_checks": {
     "gcc": {
-      "build": "b780b23fe8de102deb9e6f981019953f793b39841727ee0d161579ecd2b45d08",
-      "tests": "09f342baee0f61f95fea6df818b9b8c4bac996a3fb53652b56ba635d4c7635c0"
+      "build": "bc6460c319a2c41dc9babd79bbb62bdd16f6d1debd05daf6f50426c388f4db31",
+      "tests": "3d45fd11dbca8b12931e40000470d7f05e4d2eea6ed9befd1276b72534067461"
     },
     "llvm": {
-      "build": "8bdb3d4b9959dfe1b4b62728a9ad00bd680d780217c55fc726fb682ea46f188f",
-      "tests": "e9bb99ce587a1b24cc1c67b30dc1ad7d37e255b9452a543e646650d7cdfa470a"
+      "build": "e92311b44457bfedc0430d6a3fd9bf8c708434722323904f322502c621bf6e27",
+      "tests": "5023d2b7a565f35115654c7049e7aafa6e8ad311250672c5217beee7d8e6f6ca"
     }
   },
   "pre_native_original_receipt_sha256": "6564b5452b849ba68aa3bde7bf424c4bd4b9024d4372132ffdbf346200925e64",
@@ -62,5 +62,11 @@
     "Bounded history and disjoint input/state profile; excluded source failures are not native failure parity.",
     "Actual ADXT/counter providers, clock binding, shared guards and movie lifecycle remain.",
     "Gameplay, graphics/platform migration and runtime removal remain stages 4-6."
-  ]
+  ],
+  "audio_clock_standalone_build_extension": {
+    "qualification_sha256": "42782469cb4dd5298784b32485a7226e832fdd149ed0212c520e5a1664e8959c",
+    "ancestor_path": "build-native-sjuni\\movie-audio-clock\\ancestor-v1\\game\\native\\movie_audio_filter\\qualification.json",
+    "ancestor_sha256": "0f7993c582bb50637b5e90c545ac1817170750adee2756c5169eb7a912959599",
+    "existing_runtime_sources_unchanged": true
+  }
 }
