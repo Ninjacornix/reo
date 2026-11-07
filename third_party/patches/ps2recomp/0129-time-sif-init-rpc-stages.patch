@@ -1,0 +1,83 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -16,6 +16,42 @@
+ {
+     namespace
+     {
++        // Owner-thread elapsed timing only. The report is emitted after RPC
++        // locks and the sound-call lease unwind. Existing init/logging behavior
++        // is unchanged; unknown host blocking/descheduling remains explicit.
++        struct SifInitTiming {
++            static uint64_t now() noexcept {
++                return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
++                    std::chrono::steady_clock::now().time_since_epoch()).count());
++            }
++            static uint64_t threshold() noexcept {
++                static const uint64_t value=[] {
++                    const char* text=std::getenv("REO_CRI_SERVER_SLOW_MS");
++                    if(!text || !*text || *text=='-')return uint64_t(0);
++                    char* end=nullptr;const auto ms=std::strtoull(text,&end,10);
++                    return end && !*end && ms && ms<=60000 ? uint64_t(ms)*1000000 : uint64_t(0);
++                }();return value;
++            }
++            uint64_t points[5]{};bool admitted{},cold{};
++            SifInitTiming() noexcept {if(threshold())points[0]=now();}
++            void mark(unsigned index) noexcept {if(points[0])points[index]=now();}
++            ~SifInitTiming() {
++                if(!points[0])return;const auto end=now();
++                if(end<points[0] || end-points[0]<threshold())return;
++                static std::atomic<unsigned> reports{0};
++                if(reports.load(std::memory_order_relaxed)>=64 || reports.fetch_add(1,std::memory_order_relaxed)>=64)return;
++                const auto audio=points[1]?points[1]-points[0]:0;
++                const auto locks=points[2]?points[2]-points[1]:0;
++                const auto work=points[3]?points[3]-points[2]:0;
++                const auto logging=points[4]?points[4]-points[3]:0;
++                const auto last=points[4]?points[4]:points[1]?points[1]:points[0];
++                std::fprintf(stderr,"[SIF-INIT-TIMING] begin_ns=%llu end_ns=%llu audio_call_ns=%llu lock_wait_ns=%llu work_ns=%llu logging_ns=%llu release_ns=%llu admitted=%u cold=%u\n",
++                    (unsigned long long)points[0],(unsigned long long)end,(unsigned long long)audio,
++                    (unsigned long long)locks,(unsigned long long)work,(unsigned long long)logging,
++                    (unsigned long long)(end-last),unsigned(admitted),unsigned(cold));
++            }
++        };
++
+         constexpr uint32_t kSoundDriverStatusSize = 0x42u;
+         constexpr uint32_t kSoundDriverSeInfoOffset = 0x00u;
+         constexpr uint32_t kSoundDriverMidiInfoOffset = 0x0Cu;
+@@ -1666,12 +1702,14 @@
+ 
+     void SifInitRpc(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
++        SifInitTiming timing;
+         // Generic SIF entry still mutates selected PCM/sound status on init.
+         // Refuse foreign/unknown/stopped V2 before ANY such shared-state write.
+-        auto audio=ps2_cri_audio::acquireSoundCall(runtime);
++        auto audio=ps2_cri_audio::acquireSoundCall(runtime);timing.mark(1);
+         if(!audio||(audio.native()&&(!runtime||rdram!=runtime->memory().getRDRAM()))){setReturnS32(ctx,-1);return;}
++        timing.admitted=true;
+         ps2_cri_audio::SoundCallScope scope(audio);
+-        std::scoped_lock lock(g_rpc_mutex, g_dtx_rpc_mutex);
++        std::scoped_lock lock(g_rpc_mutex, g_dtx_rpc_mutex);timing.mark(2);
+         if (runtime)
+         {
+             runtime->iop().init(rdram);
+@@ -1687,7 +1725,8 @@
+             resetDtxRpcStateUnlocked(nullptr,audio.native()?&audio:nullptr);
+             g_soundDriverRpcState.initialized = false;
+             g_rpc_initialized = true;
+-            RUNTIME_LOG("[SifInitRpc] Initialized");
++            timing.cold=true;timing.mark(3);
++            RUNTIME_LOG("[SifInitRpc] Initialized");timing.mark(4);
+         }
+         else
+         {
+@@ -1704,7 +1743,8 @@
+             // 0x1ab560 twice), while PCSX2 keeps cycling ~120 packets/s/channel.
+             // The sound-driver state keeps its D36-tested lazy re-init here.
+             g_soundDriverRpcState.initialized = false;
+-            RUNTIME_LOG("[SifInitRpc] re-init (DTX server state kept)" << std::endl);
++            timing.mark(3);
++            RUNTIME_LOG("[SifInitRpc] re-init (DTX server state kept)" << std::endl);timing.mark(4);
+         }
+         setReturnS32(ctx, 0);
+     }

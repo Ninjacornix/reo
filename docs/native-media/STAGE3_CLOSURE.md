@@ -39,6 +39,12 @@ reference observations. Its native-stream profile still refuses original PCM
 producer/reset operations. Actual source/control/reset binding and a coherent
 game candidate are required before this becomes an admitted game route.
 
+The [V14 incident retest](SIF_INIT_RPC_STALL.md) narrows a measured 1.45-second
+movie hitch to the host `SifInitRpc` initializer. Its inner lease/lock/logging
+cause is unresolved. The qualified bounded stage probe must be linked/retested
+before selecting a fix; the historical disc-read explanation is not substituted
+for that missing attribution.
+
 The timestamp and complete short-video gates have advanced beyond the earlier
 first-frame boundary. All 201 hash-verified File #1 SFD members (2.26 GB) contain
 no C0-DF or BD audio packets, so this edition's audio gate is its separate ADX
