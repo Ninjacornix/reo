@@ -4,6 +4,7 @@
 #include "../adxt_estimated_clock/estimated_clock.hpp"
 #include "../adxt_service_group/service_group.hpp"
 #include "../adx_sequence/sequence.hpp"
+#include "../adxt_lsc_input/input.hpp"
 #include <array>
 #include <memory>
 
@@ -17,6 +18,7 @@ enum class Status { completed, waiting_header, pending, ended, busy, closed, uns
 struct Config {
     window::Config decoder;
     std::shared_ptr<const adx_sequence::Sequence> sequence;
+    std::shared_ptr<adxt_lsc_input::Input> lsc_input;
     std::uint32_t initial_tick{},time_base{};
     Config(){decoder.pans={-128,-128};}
 };

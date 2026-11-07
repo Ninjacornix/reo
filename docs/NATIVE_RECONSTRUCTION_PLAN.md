@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has fifty-two standalone suites, including the independent ADX
+project now has fifty-three standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -442,6 +442,17 @@ and joined source/output ownership. Four new negative controls and all 52 parent
 suites pass. This is a fixed immutable sequence; dynamic LSC sources, bank/packet
 output, movie controls and game/media transitions still gate stage 3. Stages 4–6
 remain required.
+
+The [bounded live queued ADX source](native-media/ADXT_DYNAMIC_LSC_SOURCE_IMPLEMENTATION.md)
+now uses the actual native worker/ring/decoder/player graph. Both compilers pass
+all 6,706 finite payloads across 421 queued sequences, with complete per-clip PCM,
+accumulated clocks and source/output fences matching the earlier decoder baseline.
+Late enqueue, delayed next headers, queue pause/repeat, callback enqueue, foreign
+bindings, source errors and blocked retirement are covered. Four detected
+counterfactuals and all 53 parent suites pass. The admitted source lifetime is
+one-use; general restart/error recovery and original global scheduler parity
+remain explicit boundaries. Bank/packet aggregation, movie controls, game ABI
+integration and actual media transitions still gate stage 3; stages 4–6 remain.
 
 ## Target architecture
 

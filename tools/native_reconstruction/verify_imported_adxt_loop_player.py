@@ -68,7 +68,7 @@ def main():
     manifest_before=manifest_path.stat();env=dict(os.environ);env['PATH']=str(Path(cc).parent)+os.pathsep+env.get('PATH','')
     try:
         receipt['import_manifest_sha256']=sha(manifest_path)
-        sources=['game/native/adx_sequence/sequence.cpp','game/native/sjrb/sjrb.cpp','game/native/adxt_shared_source/shared_source.cpp','game/native/adxt_refill/adxt_refill.cpp',
+        sources=['game/native/adx_sequence/sequence.cpp','game/native/adx_sequence/clip.cpp','game/native/adxt_lsc_input/input.cpp','game/native/lsc_queue/queue.cpp','game/native/sjrb/sjrb.cpp','game/native/adxt_shared_source/shared_source.cpp','game/native/adxt_refill/adxt_refill.cpp',
                  'game/native/resource_io/async_read_owner.cpp','game/native/tasks/serial_worker.cpp','game/native/resources/resource_session.cpp',
                  'game/native/resources/virtual_file_view.cpp','game/native/resources/bounded_view.cpp','game/native/adx_header/adx_header.cpp',
                  'game/native/adx_workspace/adx_workspace.cpp','game/native/adx_pcm_store/v2/pcm_store.cpp','game/native/adx_window/v2/queue_safe_r3/stream_window.cpp',

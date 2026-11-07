@@ -11,7 +11,7 @@ import subprocess
 HERE=Path(__file__).resolve().parent;ROOT=HERE.parents[2]
 BASE=ROOT/'build-native-sjuni/adxt-phased-player'
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
-SOURCES=['adx_sequence/sequence.cpp','sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adxt_refill.cpp',
+SOURCES=['adx_sequence/sequence.cpp','adx_sequence/clip.cpp','adxt_lsc_input/input.cpp','lsc_queue/queue.cpp','resources/bounded_view.cpp','sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adxt_refill.cpp',
          'resource_io/async_read_owner.cpp','tasks/serial_worker.cpp','resources/resource_session.cpp',
          'resources/virtual_file_view.cpp','adx_header/adx_header.cpp','adx_workspace/adx_workspace.cpp',
          'adx_pcm_store/v2/pcm_store.cpp','adx_window/v2/queue_safe_r3/stream_window.cpp',
@@ -37,20 +37,26 @@ def main():
     manifest=json.loads((HERE/'manifest.json').read_bytes())
     def drift():return[n for n,d in manifest['files'].items()if sha(ROOT/n)!=d]
     if drift():raise ValueError('Frozen input drift '+str(drift()))
-    inherited=(ROOT/'game/native/adxt_clocked_player/player.cpp').read_text();current=(HERE/'player.cpp').read_text();identical={}
+    inherited=(ROOT/'game/native/adxt_clocked_player/player.cpp').read_text(encoding='utf-8');current=(HERE/'player.cpp').read_text(encoding='utf-8');identical={};extensions={}
     for needle in ['Status fail()noexcept','clock::integer::Observation observation(const','clock::integer::Observation observation()const',
                    'void synchronize_clock()','Status pump()', 'Player::Player(', 'Player::~Player()', 'Status Player::gain(',
                    'ClockResult Player::estimate(', 'ClockResult Player::centiseconds(', 'ClockControl Player::pause(',
                    'ClockControl Player::discard_rebase(', 'Status Player::set_time_base(', 'void Player::request_stop(', 'Status Player::retire_on_control_thread(']:
         old,new=body(inherited,needle),body(current,needle)
+        actual=new
         if needle=='clock::integer::Observation observation(const':
             new=new.replace('        o.offset=static_cast<std::uint32_t>(w.loop.seamless_samples);\n','').replace('actual owned seamless accumulation.','no admitted seamless/A4 offset in this cut.')
         if needle=='Status pump()':
-            new=new.replace('            const auto maximum=config.sequence?config.sequence->total_samples():before.header.base.total_samples;\n','').replace('maximum-first','before.header.base.total_samples-first')
+            new=new.replace('            const auto maximum=config.lsc_input?config.lsc_input->snapshot().planned_samples:\n                config.sequence?config.sequence->total_samples():before.header.base.total_samples;\n','').replace('maximum-first','before.header.base.total_samples-first')
+        if needle=='void Player::request_stop(':
+            new=new.replace('if(state_->config.lsc_input)state_->config.lsc_input->request_stop();','')
+        if needle=='Status Player::retire_on_control_thread(':
+            new=new.replace('    if(s.config.lsc_input)s.config.lsc_input->request_stop();\n','').replace('    if(s.config.lsc_input)s.config.lsc_input->after_source(s.decoder.snapshot().source,true);\n','')
         if old!=new:raise ValueError('Unreviewed inherited algorithm delta '+needle)
-        identical[needle]=hashlib.sha256(new.encode()).hexdigest()
+        if actual==old:identical[needle]=hashlib.sha256(actual.encode()).hexdigest()
+        else:extensions[needle]=dict(actual_sha256=hashlib.sha256(actual.encode()).hexdigest(),legacy_absence_normalization_sha256=hashlib.sha256(new.encode()).hexdigest())
     out.mkdir(parents=True);env=dict(os.environ);env['PATH']=str(Path(cc).parent)+os.pathsep+env.get('PATH','')
-    report=dict(schema=1,status='running',compiler=cc,compiler_sha256=sha(Path(cc)),manifest_sha256=sha(HERE/'manifest.json'),inherited_bodies=identical,checks=[],negative_controls=[],game_run=False,device_opened=False,original_whole_pipeline_parity=False)
+    report=dict(schema=1,status='running',compiler=cc,compiler_sha256=sha(Path(cc)),manifest_sha256=sha(HERE/'manifest.json'),inherited_bodies=identical,reviewed_profile_extensions=extensions,checks=[],negative_controls=[],game_run=False,device_opened=False,original_whole_pipeline_parity=False)
     flags=[cc,'-std=c++20','-O2','-pthread','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-misleading-indentation','-fno-fast-math','-ffp-contract=off','-frounding-math','-I'+str(HERE),'-I'+str(ROOT)]
     deps=[ROOT/'game/native'/n for n in SOURCES]
     def run(name,cmd,negative=False,cwd=ROOT):

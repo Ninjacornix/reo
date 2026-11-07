@@ -1,65 +1,48 @@
 {
   "schema": 1,
-  "status": "qualified media composition with prepared immutable seamless extension",
-  "manifest_sha256": "7b82dffa6dcc6b7bf92cd622f2ae32d4f20d79b6a1d07540120b4943ad42997c",
-  "ancestor_qualification_sha256": "69d6cc9b761d4c5396c2a4ce4e393c1bd5268c0286005bdf56738925cea563bd",
-  "ancestor_snapshot": "build-native-sjuni/adx-sequence/ancestor-v1/game/native/adxt_control_session/service_binding/qualification.json",
-  "sequence_qualification_sha256": "3594edce54235ff183c3d6c8704116ab1b8853edc0e226b5b4a556235738610c",
+  "status": "qualified media composition with bounded live queued source",
+  "manifest_sha256": "852ca1fe953b7097a92bd548dc556da55821763ca6cebf764e74dac66eaf3014",
+  "ancestor_qualification_sha256": "ebff640f8b2828f515e1bfc003e386087d87c3ed75a66b71dcd4b396431d91a8",
+  "ancestor_snapshot": "build-native-sjuni/adxt-lsc-input/ancestor-v1/game/native/adxt_control_session/service_binding/qualification.json",
+  "live_lsc_qualification_sha256": "b8a1867219d94964faf9aef9baa07672a67487d5f8001fc31fe44672084a528d",
   "receipts": {
-    "build-native-sjuni/adx-sequence/qualified-gcc-v1/receipt.json": "3570d210823de185f88188891bfce6f487387954f2b760d158256c9bea534a91",
-    "build-native-sjuni/adx-sequence/qualified-llvm-v1/receipt.json": "37199d31be26a2ae533d073c37a39593b57d2c8724c43183a7633eb2f3750811",
-    "build-native-sjuni/imported-adxt-sequences/full-gcc-v1/receipt.json": "d64f481d8d02721c63f897165c90bb8f57812b0600fa0296cc2e51f399db9b01",
-    "build-native-sjuni/imported-adxt-sequences/full-llvm-v1/receipt.json": "072ea38f1cba3b34bbb32b9627e71fb0639de4c4bae612e2288d10a4b1fff25b",
-    "build-native-sjuni/imported-adxt-sequences/comparison-v1/receipt.json": "945010db5d7a60f6a189acafe93bc13a85f78581691e802b0d2adee7d65523ab",
-    "build-native-sjuni/adxt-control-session/qualified-gcc-v4/receipt.json": "f26dffab6269eff118f3f9ad61d7811b78d04ed4a221e255ede22e3ad618a2b6",
-    "build-native-sjuni/adxt-control-session/qualified-llvm-v4/receipt.json": "9b7342b31300c147be293c70985f6aabd2ee57fe7b5b664b4d38451be02b2cef",
-    "build-native-sjuni/adxt-phased-player/qualified-gcc-v7/receipt.json": "9262261ca931085a48d899cdc6800758278e6bd1d799876716008ff76244307d",
-    "build-native-sjuni/adxt-phased-player/qualified-llvm-v7/receipt.json": "7b78bf8835d73548ff34473c0133c3980987e22564b53e6eb082ffd0efd58bdc",
-    "build-native-sjuni/adxt-service-binding/qualified-gcc-v3/receipt.json": "26b5a7b85cf806f443b23af3b620d72dc06286b872f70b2b2c24649aaffefaae",
-    "build-native-sjuni/adxt-service-binding/qualified-llvm-v3/receipt.json": "56d15394db416507780d122123c2da4715b8d2d226a7f7810f938a5bf62648b0",
-    "build-native-sjuni/imported-adxt-control/full-gcc-v4/receipt.json": "c0bc2de792efea6edbf53ba59f099dd66ed7bbd6ae8d073b0b96fb0c27c480fe",
-    "build-native-sjuni/imported-adxt-control/full-llvm-v4/receipt.json": "0a3e34b93bc3979bbeeae0b4e7973fd3f6f9990b71b889f3364200fcfe12e514",
-    "build-native-sjuni/imported-adxt-control/comparison-v4/receipt.json": "bcc18fab6c0f2e0420d300724d093b89b5e68a289b4a32f88a72bc591338c2ef",
-    "build-native-sjuni/imported-adxt-loop-player/full-gcc-v4/receipt.json": "53c88036cd820b2627bd57f3cbbafb8e0227687ced8f18890a1188b0d7a49358",
-    "build-native-sjuni/imported-adxt-loop-player/full-llvm-v4/receipt.json": "67a844278beec7c7bd82f6fb40da904a3c09f55533ab29c5118faccc474e4b60",
-    "build-native-sjuni/imported-adxt-loop-player/comparison-v4/receipt.json": "8b581eaa7b5ba17ea357c23b62981ff68be893f927ae2858dba9ba122fa1fcd5"
+    "build-native-sjuni/adxt-lsc-input/qualified-gcc-v2/receipt.json": "6c734961006461494a34d6def0312ee1555d3f2e332c7a2bd34d0d36acf148cf",
+    "build-native-sjuni/adxt-lsc-input/qualified-llvm-v2/receipt.json": "2e012fc9fa94040e48c47ab155a98df7d63588be9f525c88c880c7eec6aff95f",
+    "build-native-sjuni/imported-adxt-lsc/full-gcc-v1/receipt.json": "76a48859cbc27197647937476a31eb27a78fdf9627d9b4625c354bedb32657a7",
+    "build-native-sjuni/imported-adxt-lsc/full-llvm-v1/receipt.json": "eeab336deb966a19b95440408a13243e5818f4f5767567eb5196b3bbc0b14e05",
+    "build-native-sjuni/imported-adxt-lsc/comparison-v1/receipt.json": "db9dde07a30a66fa43018f50714dc4acd9397430ffab3c6e09d71ce803d7fe1e",
+    "build-native-sjuni/adxt-phased-player/qualified-gcc-v8/receipt.json": "e23ccbc7eeaf2f23ea5f149c47f40843a91c985e77be87d941987392bb7d5151",
+    "build-native-sjuni/adxt-phased-player/qualified-llvm-v8/receipt.json": "f6a47ba44661c31508fa1dd50241ed227c6d64ffe4aea84e28e9b39d343d7307",
+    "build-native-sjuni/adxt-control-session/qualified-gcc-v5/receipt.json": "b9914c7d84a1b453c48991659551c6b5e9b8b6f69ae278569d2a67421df778f3",
+    "build-native-sjuni/adxt-control-session/qualified-llvm-v5/receipt.json": "d500b974c7c6051e9d519b8633fef0f15ca4e859ee707956b09f923c91090239",
+    "build-native-sjuni/adx-sequence/qualified-gcc-v2/receipt.json": "1a32da458b43ea61019a784267f8a3e418bb338afc413afc07827013e3549124",
+    "build-native-sjuni/adx-sequence/qualified-llvm-v2/receipt.json": "aa8033ce694ccad41a3dbdf186d8fb0e1e3760c2a9e3e1359210d72d42229996",
+    "build-native-sjuni/adxt-service-binding/qualified-gcc-v4/receipt.json": "f23b8f54cde02dc3ae090ee907284e3101ad2b1ff526e05351ba08560be7294f",
+    "build-native-sjuni/adxt-service-binding/qualified-llvm-v4/receipt.json": "8182327c96f381491f0048fdb7aa65fcd323ae406d802a90f4ef01dd231e9986",
+    "build-native-sjuni/imported-adxt-control/full-gcc-v5/receipt.json": "933b285c995a834a18e6e120417e3aeef84786bcd6b7f04aa58660681c2609de",
+    "build-native-sjuni/imported-adxt-control/full-llvm-v5/receipt.json": "4fd52874f5d5adb58b117bac54de8a970c57117797d9a7aa0be17a1e87630d41",
+    "build-native-sjuni/imported-adxt-control/comparison-v5/receipt.json": "0b41cb118c6b9c821d08cb5d117ca5e1562810f0f833726dc34f45e9737a57fc",
+    "build-native-sjuni/imported-adxt-loop-player/full-gcc-v5/receipt.json": "a0c4bf9a28607ed479717757832a0d4f3354c4cb62a6d92b6e42dede2337d860",
+    "build-native-sjuni/imported-adxt-loop-player/full-llvm-v5/receipt.json": "44dfb9749d5a6c94e0f56a664db900b95eaa05ff9ce339b45050dd31e54f37e6",
+    "build-native-sjuni/imported-adxt-loop-player/comparison-v5/receipt.json": "1f9f4c9c2f79133d9dab34e13ad1c8ded7235feb57fbd831e725bac3cc4a3437",
+    "build-native-sjuni/imported-adxt-sequences/full-gcc-v2/receipt.json": "5828bf41363d6bee04049da8fd31d505985e269e011ccadf70f39a4435a71534",
+    "build-native-sjuni/imported-adxt-sequences/full-llvm-v2/receipt.json": "644802b093e9ca1b8995023f026129dab475b8623ec098f663a4d9b7a9dfb1da",
+    "build-native-sjuni/imported-adxt-sequences/comparison-v2/receipt.json": "1edcf1d67aa9ed4f04f720f7d91ec024fafd93888dfdf2358659373687e5b461"
   },
+  "parent_suites": 53,
   "parent_checks": {
     "gcc": {
-      "status": "passed complete native Release build and all 52 suites",
-      "log_sha256": {
-        "build": "3ec0f073305a8a87bd287f25808db393c38bb0e89057eaa18dc53e2ff718dfea",
-        "tests": "70d1e3abede5762dd0fd3a98ae021a9837f873c932c54b3b44fef5544477b66a"
-      },
-      "executables": {
-        "build-native-sjuni\\cmake\\adxt_phased_player\\adx_sequence\\adx_sequence_tests.exe": "af0e4b8960ccc35e6b5b980ec8563194821ed6606185690e62f02ef98d08f096",
-        "build-native-sjuni\\cmake\\adxt_phased_player\\adxt_phased_player_tests.exe": "47c6895c144afb2abd48b411208bb05732d65c6120a9e658568ce3b82ab9301a",
-        "build-native-sjuni\\cmake\\adxt_control_session\\adxt_control_session_tests.exe": "1c192b5629f455b6271e0c8c7c7d29a6a003ecb3b3ccc6c0e483692a08457be3"
-      }
+      "build": "7817be3b1b87cc6d6d4e2a5b5c2e9169002b1495d5182dc4d3a94362d05705b8",
+      "tests": "f65a76b376d19f2445ffbb544de4246039ef4fba2bbcdddd075d276d0e295712"
     },
     "llvm": {
-      "status": "passed complete native Release build and all 52 suites",
-      "log_sha256": {
-        "build": "3ec0f073305a8a87bd287f25808db393c38bb0e89057eaa18dc53e2ff718dfea",
-        "tests": "6a993fb54fcb622bc66a4c650d0a26043af005cc85a9ef99f894e74017a74155"
-      },
-      "executables": {
-        "build-native-sjuni\\cmake-llvm\\adxt_phased_player\\adx_sequence\\adx_sequence_tests.exe": "787327b79fcd82d6b1ad4130c7ff654d2bd9c12c0267ca87f1516f42924fc86e",
-        "build-native-sjuni\\cmake-llvm\\adxt_phased_player\\adxt_phased_player_tests.exe": "c8bb7e32e9f899c7a3e19ce298608b78cbcd9419a16cba71a985f622c4bb7e82",
-        "build-native-sjuni\\cmake-llvm\\adxt_control_session\\adxt_control_session_tests.exe": "0c2d9e5e114908057d261d2ac7b2b1a8761cd682d489008d67fdd55ee50970d1"
-      }
+      "build": "9b68b4ebc82d84b5e1923edb31434c0b342231f47dd72a6349e8529df68fc487",
+      "tests": "82381be8daeaa51098c521471a2df8913b9406d4b5d5ea1ae6b47e58a909e910"
     }
   },
-  "parent_suites": 52,
   "stage3_complete": false,
   "production_selected": false,
   "game_run": false,
   "device_opened": false,
-  "original_whole_player_parity": false,
-  "unchanged_inherited_player_bodies": 13,
-  "reviewed_inherited_extensions": [
-    "Actual seamless accumulation in raw clock observation.",
-    "Prepared total sample limit in accepted-copy evidence prefix."
-  ],
-  "native_player_binding": true
+  "original_whole_player_parity": false
 }

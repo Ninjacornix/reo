@@ -38,6 +38,12 @@ int main() { try {
             check(sequence.read(sequence.size(), {}) == r::ReadResult{r::Status::ok, 0});
         }
     auto one = file(1, 48000, 8193); auto two = file(1, 48000, 64);
+    auto clip = q::Clip::prepare(two); check(clip.status == q::Status::completed);
+    check(clip.clip->metadata().view == two && clip.clip->metadata().header.output_channels == 1 &&
+          clip.clip->metadata().header.base.total_samples == 64 && clip.clip->metadata().encoded_end == 132);
+    auto loop = file(1, 48000, 64); f::be16(loop->bytes, 22, 1);
+    check(q::Clip::prepare(loop).status == q::Status::unsupported_header);
+    check(q::Clip::prepare({}).status == q::Status::invalid_input);
     std::array<std::shared_ptr<const r::ByteView>, 2> views{one, two};
     auto result = q::Sequence::prepare(views); check(result.status == q::Status::completed);
     std::weak_ptr<const f::File> retained = one; views = {}; one.reset();

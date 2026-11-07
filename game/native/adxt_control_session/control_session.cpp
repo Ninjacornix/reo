@@ -97,7 +97,8 @@ Open Session::open(player::Config config,std::shared_ptr<const resources::ByteVi
     if(opened.status!=output::Status::completed)return{opened.status==output::Status::capacity?Status::capacity:Status::fault,{}};
     std::shared_ptr<player::Player> player;player::Ports ports;
     try{
-        player=std::make_shared<player::Player>(config,std::move(opened.producer),std::move(view),adxt_refill::make_async_backend(8192),s.keys,s.clock);
+        auto backend=config.lsc_input?config.lsc_input->take_backend():adxt_refill::make_async_backend(8192);
+        player=std::make_shared<player::Player>(config,std::move(opened.producer),std::move(view),std::move(backend),s.keys,s.clock);
         ports=player->make_ports();
     }catch(const std::bad_alloc&){
         player.reset();if(opened.producer)(void)opened.producer->retire();return{s.restore_order()?Status::allocation_failure:Status::fault,{}};

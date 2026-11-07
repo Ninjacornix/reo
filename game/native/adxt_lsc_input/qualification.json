@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "status": "qualified bounded live ADX LSC source and private owned player integration",
+  "manifest_sha256": "79b06cf31a4fb099be5aab59b358699c754b40c327dbcbfb7bd40cc5af97d557",
+  "production_selected": false,
+  "stage3_complete": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_iso_opened": false,
+  "original_whole_player_parity": false,
+  "complete_payloads": 6706,
+  "live_sequences": 421,
+  "complete_channel_samples": 1198405644,
+  "complete_pcm_bytes": 2396811288,
+  "new_detected_counterfactuals": 4,
+  "parent_suites": 53,
+  "parent_checks": {
+    "gcc": {
+      "build": "7817be3b1b87cc6d6d4e2a5b5c2e9169002b1495d5182dc4d3a94362d05705b8",
+      "tests": "f65a76b376d19f2445ffbb544de4246039ef4fba2bbcdddd075d276d0e295712"
+    },
+    "llvm": {
+      "build": "9b68b4ebc82d84b5e1923edb31434c0b342231f47dd72a6349e8529df68fc487",
+      "tests": "82381be8daeaa51098c521471a2df8913b9406d4b5d5ea1ae6b47e58a909e910"
+    }
+  },
+  "receipts": {
+    "build-native-sjuni/adxt-lsc-input/qualified-gcc-v2/receipt.json": "6c734961006461494a34d6def0312ee1555d3f2e332c7a2bd34d0d36acf148cf",
+    "build-native-sjuni/adxt-lsc-input/qualified-llvm-v2/receipt.json": "2e012fc9fa94040e48c47ab155a98df7d63588be9f525c88c880c7eec6aff95f",
+    "build-native-sjuni/imported-adxt-lsc/full-gcc-v1/receipt.json": "76a48859cbc27197647937476a31eb27a78fdf9627d9b4625c354bedb32657a7",
+    "build-native-sjuni/imported-adxt-lsc/full-llvm-v1/receipt.json": "eeab336deb966a19b95440408a13243e5818f4f5767567eb5196b3bbc0b14e05",
+    "build-native-sjuni/imported-adxt-lsc/comparison-v1/receipt.json": "db9dde07a30a66fa43018f50714dc4acd9397430ffab3c6e09d71ce803d7fe1e",
+    "build-native-sjuni/adxt-phased-player/qualified-gcc-v8/receipt.json": "e23ccbc7eeaf2f23ea5f149c47f40843a91c985e77be87d941987392bb7d5151",
+    "build-native-sjuni/adxt-phased-player/qualified-llvm-v8/receipt.json": "f6a47ba44661c31508fa1dd50241ed227c6d64ffe4aea84e28e9b39d343d7307",
+    "build-native-sjuni/adxt-control-session/qualified-gcc-v5/receipt.json": "b9914c7d84a1b453c48991659551c6b5e9b8b6f69ae278569d2a67421df778f3",
+    "build-native-sjuni/adxt-control-session/qualified-llvm-v5/receipt.json": "d500b974c7c6051e9d519b8633fef0f15ca4e859ee707956b09f923c91090239",
+    "build-native-sjuni/adx-sequence/qualified-gcc-v2/receipt.json": "1a32da458b43ea61019a784267f8a3e418bb338afc413afc07827013e3549124",
+    "build-native-sjuni/adx-sequence/qualified-llvm-v2/receipt.json": "aa8033ce694ccad41a3dbdf186d8fb0e1e3760c2a9e3e1359210d72d42229996",
+    "build-native-sjuni/adxt-service-binding/qualified-gcc-v4/receipt.json": "f23b8f54cde02dc3ae090ee907284e3101ad2b1ff526e05351ba08560be7294f",
+    "build-native-sjuni/adxt-service-binding/qualified-llvm-v4/receipt.json": "8182327c96f381491f0048fdb7aa65fcd323ae406d802a90f4ef01dd231e9986",
+    "build-native-sjuni/imported-adxt-control/full-gcc-v5/receipt.json": "933b285c995a834a18e6e120417e3aeef84786bcd6b7f04aa58660681c2609de",
+    "build-native-sjuni/imported-adxt-control/full-llvm-v5/receipt.json": "4fd52874f5d5adb58b117bac54de8a970c57117797d9a7aa0be17a1e87630d41",
+    "build-native-sjuni/imported-adxt-control/comparison-v5/receipt.json": "0b41cb118c6b9c821d08cb5d117ca5e1562810f0f833726dc34f45e9737a57fc",
+    "build-native-sjuni/imported-adxt-loop-player/full-gcc-v5/receipt.json": "a0c4bf9a28607ed479717757832a0d4f3354c4cb62a6d92b6e42dede2337d860",
+    "build-native-sjuni/imported-adxt-loop-player/full-llvm-v5/receipt.json": "44dfb9749d5a6c94e0f56a664db900b95eaa05ff9ce339b45050dd31e54f37e6",
+    "build-native-sjuni/imported-adxt-loop-player/comparison-v5/receipt.json": "1f9f4c9c2f79133d9dab34e13ad1c8ded7235feb57fbd831e725bac3cc4a3437",
+    "build-native-sjuni/imported-adxt-sequences/full-gcc-v2/receipt.json": "5828bf41363d6bee04049da8fd31d505985e269e011ccadf70f39a4435a71534",
+    "build-native-sjuni/imported-adxt-sequences/full-llvm-v2/receipt.json": "644802b093e9ca1b8995023f026129dab475b8623ec098f663a4d9b7a9dfb1da",
+    "build-native-sjuni/imported-adxt-sequences/comparison-v2/receipt.json": "1edcf1d67aa9ed4f04f720f7d91ec024fafd93888dfdf2358659373687e5b461"
+  },
+  "identical_inherited_player_bodies": 11,
+  "reviewed_inherited_extensions": 4,
+  "qualification_input_snapshot": "build-native-sjuni/adxt-lsc-input/qualification-inputs-v1",
+  "only_post_snapshot_change": [
+    "game/native/adxt_lsc_input/verify.py"
+  ],
+  "imported_runtime_source_hashes_unchanged": true,
+  "failed_test_design_receipts": {
+    "build-native-sjuni\\adxt-lsc-input\\qualified-gcc-v1\\receipt.json": "12211f41acac5016ed55067a9a92240aae7a62869d5bf7a280cd104f2f1ebc27",
+    "build-native-sjuni\\adxt-lsc-input\\qualified-llvm-v1\\receipt.json": "aef5ae968fb71b35b7fb4c2b67367dd2f0915724431ef5dfd8402b191ce29bf6"
+  },
+  "limitations": [
+    "One-use input lifetime; default 6553/8192 threshold profile; bound bare stop/restart and error recovery refused.",
+    "Source/LSC polling before audio group is not original global scheduler parity.",
+    "Prior native decoder waveform baseline is not original whole-game or audible parity.",
+    "Bank/packet aggregation, movie controls, game binding/transitions and stages4-6 remain."
+  ],
+  "additional_sources": {
+    "game\\native\\adxt_lsc_input\\README.md": "d0bc55db9370a8096c1b891c6138f349268715c37bebc12596225d432b8a4c2d",
+    "docs\\native-media\\ADXT_DYNAMIC_LSC_SOURCE_IMPLEMENTATION.md": "6a3e551e9b6457e5ed13ffbf1f1de5148567e3f8f86fe8dbe22ff2215f974073"
+  }
+}

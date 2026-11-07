@@ -11,7 +11,7 @@ import subprocess
 HERE=Path(__file__).resolve().parent;ROOT=HERE.parents[2]
 BASE=ROOT/'build-native-sjuni/adxt-control-session'
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
-SOURCES=['adx_sequence/sequence.cpp','sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adxt_refill.cpp',
+SOURCES=['adx_sequence/sequence.cpp','adx_sequence/clip.cpp','adxt_lsc_input/input.cpp','lsc_queue/queue.cpp','resources/bounded_view.cpp','sjrb/sjrb.cpp','adxt_shared_source/shared_source.cpp','adxt_refill/adxt_refill.cpp',
          'resource_io/async_read_owner.cpp','tasks/serial_worker.cpp','resources/resource_session.cpp',
          'resources/virtual_file_view.cpp','adx_header/adx_header.cpp','adx_workspace/adx_workspace.cpp',
          'adx_pcm_store/v2/pcm_store.cpp','adx_window/v2/queue_safe_r3/stream_window.cpp',

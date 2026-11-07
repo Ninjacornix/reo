@@ -11,7 +11,18 @@ namespace {
 Config checked(Config c,const output::Producer& producer,const resources::ByteView* view) {
     if(c.decoder.downmix || c.decoder.pitch_offset ||
        c.decoder.channels<1 || c.decoder.channels>2)throw std::invalid_argument("Shared native player profile");
-    if(c.sequence){
+    if(c.sequence && c.lsc_input)throw std::invalid_argument("One owned input profile required");
+    if(c.lsc_input){
+        const auto& source=c.decoder.source_config;
+        if(!c.decoder.seamless_enabled || c.decoder.loop_enabled || view!=c.lsc_input->origin().get() ||
+           c.decoder.channels!=c.lsc_input->channels() || c.decoder.configured_key!=adx_header::Key{} ||
+           c.decoder.pans!=std::array<std::int16_t,2>{-128,-128} || source.start_sector ||
+           source.byte_length!=static_cast<std::int32_t>(adxt_lsc_input::byte_domain) || source.capacity!=8192 ||
+           source.threshold!=8192 || source.maximum_request_bytes!=8192 || source.maximum_sectors!=4 ||
+           source.target_sectors!=-1 || source.finite_sector_limit!=0xfffff || source.retry_limit!=2 ||
+           source.maximum_id!=std::numeric_limits<std::uint64_t>::max())
+            throw std::invalid_argument("Sealed live input identity/geometry required");
+    }else if(c.sequence){
         const auto& source=c.decoder.source_config;
         if(!c.decoder.seamless_enabled || c.decoder.loop_enabled || view!=c.sequence.get() ||
            c.decoder.channels!=c.sequence->channels() || c.decoder.configured_key!=adx_header::Key{} ||
@@ -84,7 +95,8 @@ public:
             if(output->copy(spans[0],spans[1])!=output::Status::completed)return fail();
             if(decoder.finish_pcm(*held)!=window::Status::completed)return fail();
             held.reset();copied+=static_cast<unsigned>(bytes)/2;
-            const auto maximum=config.sequence?config.sequence->total_samples():before.header.base.total_samples;
+            const auto maximum=config.lsc_input?config.lsc_input->snapshot().planned_samples:
+                config.sequence?config.sequence->total_samples():before.header.base.total_samples;
             const auto prefix=std::min<std::uint64_t>(static_cast<unsigned>(bytes)/2,maximum-first);
             for(std::uint32_t c=0;c<config.decoder.channels;++c)
                 for(std::size_t i=0;i<prefix*2;++i){digest[c]^=copy[c][i];digest[c]*=1099511628211ull;}
@@ -115,11 +127,26 @@ Status Player::set_tick(std::uint32_t tick)noexcept{
 Status Player::service_source()noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping || s.retired)return Status::closed;
     s.busy=true;struct Exit{bool& b;~Exit(){b=false;}}exit{s.busy};++s.visits[0];
-    return s.decoder.service_source().status==adxt_shared_source::Status::completed?Status::completed:s.fail();
+    if(s.config.lsc_input)s.config.lsc_input->before_source(s.decoder.snapshot().source);
+    const auto source=s.decoder.service_source();
+    if(s.config.lsc_input){
+        s.config.lsc_input->after_source(s.decoder.snapshot().source,source.status==adxt_shared_source::Status::completed);
+        if(s.config.lsc_input->service_queue()!=adxt_lsc_input::Status::completed)return s.fail();
+    }
+    return source.status==adxt_shared_source::Status::completed?Status::completed:s.fail();
 }
 Status Player::service_decoder()noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping || s.retired)return Status::closed;
     s.busy=true;struct Exit{bool& b;~Exit(){b=false;}}exit{s.busy};++s.visits[1];
+    if(s.config.lsc_input){
+        const auto before=s.decoder.snapshot();
+        if(before.outer.phase==window::OuterPhase::decoding && before.loop.seamless_enabled &&
+           before.sample_limit>=0 && before.outer.sample_progress>=before.sample_limit){
+            const auto next=s.config.lsc_input->next_header(static_cast<std::uint32_t>(before.loop.seamless_samples));
+            if(next==adxt_lsc_input::Header::pending)return Status::completed;
+            if(next==adxt_lsc_input::Header::invalid)return s.fail();
+        }
+    }
     if(s.config.sequence){
         const auto before=s.decoder.snapshot();
         if(before.outer.phase==window::OuterPhase::decoding && before.loop.seamless_enabled &&
@@ -135,6 +162,9 @@ Status Player::service_decoder()noexcept{
         }
     }
     const auto result=s.decoder.service(s.request);
+    if(s.config.lsc_input){const auto after=s.decoder.snapshot();
+        s.config.lsc_input->after_decoder(after.source,static_cast<std::uint32_t>(after.loop.seamless_samples),after.outer.phase==window::OuterPhase::ended);
+        if(s.config.lsc_input->snapshot().error!=adxt_lsc_input::Status::completed)return s.fail();}
     return result==window::Status::completed || result==window::Status::inactive || result==window::Status::backpressure?Status::completed:s.fail();
 }
 Status Player::service_control(adxt_service_group::Phase selected,std::uint32_t tick)noexcept {
@@ -291,16 +321,17 @@ Status Player::set_time_base(std::uint32_t base)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
     s.time_base=base;return Status::completed;
 }
-void Player::request_stop()noexcept{state_->stopping=true;}
+void Player::request_stop()noexcept{state_->stopping=true;if(state_->config.lsc_input)state_->config.lsc_input->request_stop();}
 Status Player::set_loop_enabled(bool enabled)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
-    if(s.config.sequence && enabled)return Status::unsupported_profile;
+    if((s.config.sequence || s.config.lsc_input) && enabled)return Status::unsupported_profile;
     if(s.decoder.set_loop_enabled(enabled)!=window::Status::completed)return s.fail();
     s.config.decoder.loop_enabled=enabled;return Status::completed;
 }
 Status Player::retire_on_control_thread()noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.retired)return Status::completed;
     s.busy=true;struct Exit{bool& b;~Exit(){b=false;}}exit{s.busy};s.stopping=true;
+    if(s.config.lsc_input)s.config.lsc_input->request_stop();
     if(!s.output_retired){
         const auto retired=s.output->retire();
         if(retired!=output::Status::completed && !(retired==output::Status::closed && s.output->snapshot().retired))return s.fail();
@@ -314,6 +345,7 @@ Status Player::retire_on_control_thread()noexcept {
         if(s.decoder.finish_pcm(read.lease)!=window::Status::completed)return s.fail();
     }
     const auto retired=s.decoder.retire_on_control_thread();
+    if(s.config.lsc_input)s.config.lsc_input->after_source(s.decoder.snapshot().source,true);
     if(retired==window::Status::retirement_pending)return Status::pending;
     if(retired!=window::Status::completed)return s.fail();
     s.retired=true;return Status::completed;

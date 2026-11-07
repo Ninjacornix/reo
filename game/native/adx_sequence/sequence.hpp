@@ -1,16 +1,9 @@
 #pragma once
-#include "../resources/byte_view.hpp"
-#include "../adx_header/adx_header.hpp"
+#include "clip.hpp"
 #include <vector>
 
 namespace reo::native::adx_sequence {
 inline constexpr std::size_t maximum_segments = 16;
-enum class Status { completed, invalid_input, source_failure, unsupported_header, incompatible_output, numeric_limit, no_memory };
-struct Segment {
-    std::shared_ptr<const resources::ByteView> view;
-    adx_header::DecoderState header;
-    std::uint64_t byte_offset{}, sample_offset{}, encoded_end{};
-};
 class Sequence;
 struct Result { Status status{Status::invalid_input}; std::shared_ptr<const Sequence> sequence; };
 // Preparation performs bounded control-thread header/tail I/O. The resulting

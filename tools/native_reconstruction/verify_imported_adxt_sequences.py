@@ -65,6 +65,7 @@ def main():
     try:
         helper=ROOT/'game/native/adxt_control_session/verify.py';spec=importlib.util.spec_from_file_location('native_control_dependencies',helper);module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
         sources=[str(ROOT/'game/native'/n)for n in module.SOURCES]+[str(ROOT/n)for n in ['game/native/adxt_control_session/control_session.cpp','game/native/resources/bounded_view.cpp','game/native/afs_source_range/afs_source_range.cpp','game/native/afs_hierarchy/hierarchy.cpp','game/native/resources_windows/mounted_resources.cpp','game/native/resources_windows/import_manifest.cpp','game/native/resources_windows/pinned_file.cpp']]
+        sources=list(dict.fromkeys(sources))
         original=(ROOT/'game/native/adxt_phased_player/player.cpp').read_text(encoding='utf-8');anchor='if(output->copy(spans[0],spans[1])!=output::Status::completed)return fail();'
         if original.count(anchor)!=1:raise ValueError('Accepted-copy source drift')
         declaration='void test_after_accepted_sequence_copy(std::span<const std::byte>,std::span<const std::byte>,const reo::native::adx_window::v2::Snapshot&) noexcept;\n'

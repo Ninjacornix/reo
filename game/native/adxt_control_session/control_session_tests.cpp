@@ -35,6 +35,28 @@ c::player::Config sequence_config(std::shared_ptr<const reo::native::adx_sequenc
     auto value=config(sequence,sequence->channels());value.decoder.seamless_enabled=true;value.sequence=std::move(sequence);return value;
 }
 int main(){try{
+    {
+        using I=reo::native::adxt_lsc_input::Input;using S=reo::native::adxt_lsc_input::Status;
+        Test t;auto live=I::create({1,48000,4,2});
+        auto first=reo::native::adx_sequence::Clip::prepare(sequence_file(1,48000,12000));
+        auto second=reo::native::adx_sequence::Clip::prepare(sequence_file(1,48000,4097));
+        check(first.status==reo::native::adx_sequence::Status::completed && second.status==reo::native::adx_sequence::Status::completed);
+        const auto a=live->register_asset("first.adx",first.clip),b=live->register_asset("second.adx",second.clip);
+        check(a.status==S::completed && b.status==S::completed && live->enqueue(a.key).status==S::completed && live->enqueue(b.key).status==S::completed && live->start()==S::completed);
+        auto pc=config(live->origin(),1);pc.decoder.seamless_enabled=true;pc.lsc_input=live;
+        const auto opened=t.session.open(pc,live->origin(),{15,2,8,31});check(opened.status==c::Status::completed);bool ended=false;
+        for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(opened.key).evidence;
+            check(!state.fault && live->snapshot().error==S::completed);
+            if(state.configured && state.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
+            if(state.output.channel[0].samples>=512)t.provider->step(512);
+            if(state.decoder.source.in_flight)std::this_thread::yield();}check(ended);
+        const auto before=live->snapshot();check(before.published_bytes==before.planned_bytes && before.planned_samples==16097 && before.decoder_base==12000 && before.decoder_ended && before.completed_reads==before.accepted_reads);
+        check(before.queue.records[0].status==2 && before.queue.records[0].progress==0xfffff && before.queue.records[1].status==2 && before.queue.records[1].progress==0xfffff);
+        const auto clock=t.session.estimate(opened.key,0);check(clock.status==c::Status::completed && clock.value.result.ratio.numerator==16097 && clock.value.result.ratio.denominator==48000);
+        check(live->enqueue(a.key).status==S::closed && t.session.set_loop_enabled(opened.key,true)==c::Status::unsupported_profile);
+        check(!t.session.snapshot().output.statistics.underrun_frames);retire(t,opened.key);const auto done=live->snapshot();
+        check(done.joined && !done.abandoned && !done.registered_assets && !done.journal_entries && !t.provider->unloaded);check(t.session.join()==c::Status::completed);
+    }
     for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned first:{33u,8193u,20000u}){
         Test t;std::array<std::shared_ptr<const reo::native::resources::ByteView>,3> views{
             sequence_file(channels,rate,first),sequence_file(channels,rate,64),sequence_file(channels,rate,16385)};
