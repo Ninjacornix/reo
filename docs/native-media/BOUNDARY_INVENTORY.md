@@ -320,3 +320,31 @@ presentation test. No audio device was opened, audible A/V sync was not tested,
 and production selection remains unchanged. Movie construction/stop/rebuild,
 full codec skip/recovery, scheduler/game binding and transition tests remain
 in stage 3; stages 4-6 remain open.
+
+## 2026-11-07: native lifecycle policy and physical movie graphs
+
+`game/native/movie_lifecycle` implements construction/start/reset/stop/rebuild/
+destroy policy and separate source/audio/video graph ownership. Both compilers
+match 176 original cases/179 operations/355 snapshots; eight deliberately wrong
+policies are rejected. The indexed and nine-component dispatch bodies execute
+from the owned ELF with explicit installed-method and child-initializer ports.
+Physical tests use actual bounded source workers, native ADXT Session streams,
+timing Contexts and VideoFrames; all 69 standalone suites pass per compiler.
+
+The actual RX 570 lifecycle fixture constructs two same-device native GPU
+graphs. It proves that an unsignaled real reader fence prevents reconstruction
+and that the replacement reads/decodes the same first-frame pixels. Failed
+scopes are retained: initial harness setup omitted the native library receipt;
+the next GPU attempts exposed the prepared graph's timestamp admission gap.
+No failure was relabeled as a game reproduction. See the
+[results](MOVIE_LIFECYCLE_RESULTS.md), [contract](MOVIE_LIFECYCLE_CONTRACT.md)
+and [qualification](../../game/native/movie_lifecycle/qualification.json).
+
+Native graph construction remains prepared: audio takes an independently
+demuxed ADX view; the existing video PES parser does not implement Sofdec audio
+demux. Some later pictures in the owned clip lack individual PES timestamps,
+which the strict graph refuses. The GPU result covers first-frame decode and
+stop/rebuild ownership, not whole-stream playback or audible synchronization.
+Logical-to-physical command/scheduler binding, timestamp reconstruction, native
+Sofdec audio routing and real game transitions remain before media migration.
+No production path or original game speed changed, and stage 3 remains open.

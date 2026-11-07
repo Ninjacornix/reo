@@ -697,7 +697,7 @@ candidate has passed bounded real-consumer smoke runs. Replace and validate each
 the PS2 compatibility components that supply it.
 
 
-## Current checkpoint: native movie audio controls
+## Checkpoint: native movie audio controls
 
 The requested audio-control scope is implemented and qualified: requested and
 buffering pause/resume call the same native audio Session used by clock queries;
@@ -714,7 +714,7 @@ The subsequent video ownership/publication scope is recorded below. Complete
 movie construction/stop/rebuild, scheduler/adapter binding and representative
 in-game transitions remain in stage 3. Stages 4-6 remain open.
 
-## Current checkpoint: native timed video ownership
+## Checkpoint: native timed video ownership
 
 The prepared movie Context now owns a timed video pool. Decoded frames use its
 existing clock for hold/present and a bounded late-frame skip decision; physical
@@ -739,3 +739,34 @@ construction/stop/rebuild: compose source, demux/decode, timing, audio and video
 owners, then bind their scheduler/game adapters and validate real transitions.
 Full codec skip/recovery and representative whole-stream I/P/B validation also
 remain. Stage 3 remains open; no compatibility components have been removed.
+
+## Current checkpoint: prepared native movie lifecycle
+
+The native lifecycle module now implements original construction/start/stop/
+rebuild/destroy orchestration and a separate physical owner that waits for source,
+audio and GPU retirement before creating a new generation. Both compilers match
+176 pre-native original cases/179 operations/355 initial and final snapshots;
+eight deliberate faults are detected. All 69 standalone suites pass under both
+compilers. Actual native source/audio/frame tests cover blocked reads, pending
+rendering, stale keys, reentry, partial construction, shutdown and rebuild.
+
+An offscreen RX 570 test rebuilt two actual source/parser/clock/decoder/frame
+graphs. A real unsignaled renderer fence prevented replacement; the rebuilt
+graph decoded identical first-frame pixels. No game window or audio device was
+opened. See the [results](native-media/MOVIE_LIFECYCLE_RESULTS.md),
+[contract](native-media/MOVIE_LIFECYCLE_CONTRACT.md) and
+[qualification](../game/native/movie_lifecycle/qualification.json).
+
+This is a prepared ownership implementation. The logical original policy and
+physical owner still require their scheduler/game command adapter. The existing
+program-stream parser handles video PES, so audio currently requires an
+independently demuxed native ADX view. The hardware probe also confirmed that
+later pictures in the owned clip can lack individual PES timestamps; the strict
+prepared graph refuses those rather than guessing. The successful GPU evidence
+therefore covers first-frame decode, stop, retirement and reconstruction, not
+whole-movie playback.
+
+The next gates are source-qualified picture timestamp reconstruction and native
+Sofdec audio routing, then logical/physical scheduler binding and representative
+whole-movie/game transitions with audible A/V synchronization. Stage 3 remains
+open; stages 4-6 and compatibility removal have not been claimed complete.

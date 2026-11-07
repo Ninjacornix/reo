@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "status": "native lifecycle orchestration and prepared physical source/audio/video graph ownership qualified",
+  "manifest_sha256": "6643f12fb6f7cf6d649b69963e82490e8d01fca54f2ac0b6ea0315a3720f7b38",
+  "original_cases": 176,
+  "operations": 179,
+  "initial_and_final_snapshots": 355,
+  "original_instructions_per_compiler": 453272,
+  "all_original_cases_frozen_before_native_lifecycle": true,
+  "original_compiler_results_equal": true,
+  "native_differences": 0,
+  "detected_counterfactuals": 8,
+  "original_receipts": {
+    "build-native-sjuni/movie-lifecycle/original-gcc-v2/receipt.json": "7d87269592254211e3b6278fb6034799b24320d1a6365356c3b12ef61c144c3e",
+    "build-native-sjuni/movie-lifecycle/original-llvm-v2/receipt.json": "53e0ed74b28657975f994d9ecb41b25bf228a85a7cb84d7ad33777c2dad338a3"
+  },
+  "receipts": {
+    "build-native-sjuni/movie-lifecycle/qualified-gcc-v2/receipt.json": "e642c8274525440fe7ca2dd898a62decbe78c731a76e1e0a59cea9987a510ed0",
+    "build-native-sjuni/movie-lifecycle/qualified-llvm-v2/receipt.json": "ea5697367cb20a92b5680573ac2d5a55c883306720aa7b0112444d46eb3a2fbc"
+  },
+  "parent_suites": 69,
+  "parent_checks": {
+    "gcc": {
+      "build": {
+        "path": "build-native-sjuni/movie-lifecycle/parent-gcc-build-v2.txt",
+        "sha256": "d99a9a25a6ad5a8a25d3ca884e3028c8e91fbd2ed327df34b4d186cbfacd4c6e"
+      },
+      "tests": {
+        "path": "build-native-sjuni/movie-lifecycle/parent-gcc-tests-v2.txt",
+        "sha256": "fc8b66e18284b36af8fe5065ef19831af3ff895136cbe8dc204d91449fce5ddc"
+      }
+    },
+    "llvm": {
+      "build": {
+        "path": "build-native-sjuni/movie-lifecycle/parent-llvm-build-v2.txt",
+        "sha256": "d99a9a25a6ad5a8a25d3ca884e3028c8e91fbd2ed327df34b4d186cbfacd4c6e"
+      },
+      "tests": {
+        "path": "build-native-sjuni/movie-lifecycle/parent-llvm-tests-v2.txt",
+        "sha256": "a99fd4de16d18b0ea4d127920c81f2c0e3087a3c88bf42c28ef96b412328051f"
+      }
+    }
+  },
+  "gpu": {
+    "receipt_path": "build-native-sjuni/movie-lifecycle/gpu-v6/receipt.json",
+    "receipt_sha256": "eaf1f39cfdf702ec3b7d0228e53dd8e24e9450b0fabdb2ebec6907cda5a5954e",
+    "result": {
+      "status": "real GPU lifecycle checks passed",
+      "graphs": 2,
+      "pixel_sha256": "4eb588549f774d0691a29edd11c5a2865636f6a591245c4ed5dd21f9f8edeaa6",
+      "renderer_fence_blocked_rebuild": true,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "additional_sources": {
+      "tools\\native_reconstruction\\run_movie_lifecycle_gpu.py": "b9443a55d0495adf92f13eaadeb93d70c93f6099bb8fc8919a9fbb2719a4fa47",
+      "tools\\native_reconstruction\\movie_lifecycle_gpu_check.cpp": "d1512f0e023e5f1d88c3dc2622b5a2fa1e6331cf16546950fce2780adc624f02",
+      "tools\\parallel_gs_backend\\movie_runtime\\native_video_graph.h": "70ef3f8179d4eb29cd2b747590d1e29d0864c6fd416168c8a2b93c843b54c727",
+      "tools\\parallel_gs_backend\\movie_runtime\\native_frame_surface.h": "cddf676ebaf51ed15b9780470b5d6b78abccbced7bcd5a01d51a7cd3e9c08fef",
+      "tools\\parallel_gs_backend\\movie_runtime\\same_owner_movie_bridge.h": "a264ad2a03d5e25a400e6f580df69e04d5fd2a9119d0acdb86639a7de31af90c",
+      "tools\\parallel_gs_backend\\movie_runtime\\mpeg2_vld_core.h": "48cc80853c0497e264419278844c763feea6498bc6beb12c9c546cf26d3565c9",
+      "tools\\parallel_gs_backend\\movie_runtime\\mpeg2_stream.h": "ebab2c825546849b1955089b54d3b7ed2a8ff089afadbb9389a483d6966d793c",
+      "tools\\parallel_gs_backend\\movie_runtime\\movie_picture_identity.h": "db7761cc817713848ff30c2baa109ce6329b7929f1952e86d75cfa10685ad625",
+      "tools\\parallel_gs_backend\\movie_runtime\\import_receipt.h": "0264773d9dfcc11d1f26470d2290ae2535ada68119f8b17c3461e1c3c6521798",
+      "tools\\parallel_gs_backend\\movie_runtime\\movie_asset_sha256.h": "6ba4d27eeb6ec04b34880755fac7aff9804b563d5c2eeb4cb606526271be707e",
+      "tools\\parallel_gs_backend\\movie_runtime\\assets\\movie_ipu_csc_nv12.spv": "cb5ed3a99141ff571222c2d46c55d2bd54134033fd5f131002c419c5562d17a8",
+      "tools\\parallel_gs_backend\\movie_runtime\\import_receipt.cpp": "4cf839849653515ee984a5a79c9534f282ab95aca68b95de139347d21e0c7899"
+    },
+    "native_build_receipt_path": "build-native-sjuni/movie-lifecycle/native-build-llvm-v5.json",
+    "native_build_receipt_sha256": "260104acdc90aee886dac9bd26f394b1f2418197f979888b316ec2e9065ef4c6",
+    "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+    "kit_manifest_sha256": "736a17112a98725e8c768d823157028c6183e0a8817e1720b7fd56ca1803511f",
+    "compile_plan_sha256": "35ea487a7046f95f6bf47876b434879d1b98641a088247fa4970a5c52a4f3085",
+    "reviewed_allocator_source_sha256": "255c9b103a30416833cee37f2d06a97fb491b771062d6802e5c7154a2b1e7d59",
+    "first_frame_only": true,
+    "whole_movie_playback": false
+  },
+  "ancestor_timing_manifest": {
+    "path": "game/native/movie_timing_context/manifest.json",
+    "sha256": "a56fe9b8a59458f8c4b38a92c0e1491049756634eba330934ea79e5ce5d8b790",
+    "changed_inputs": {
+      "game/native/CMakeLists.txt": {
+        "ancestor_sha256": "2c232619e7c156ffdf80b2d5c18959e2c93909b050835fca02a06dd40496251e",
+        "current_sha256": "55737055b6847bf3f1af31ba871ca44af5be0554d905c9a514619bf303e9d656"
+      }
+    }
+  },
+  "additional_sources": {
+    "docs/native-media/MOVIE_LIFECYCLE_RESULTS.md": "41df4bab00b50beff224c9a44ceec1a6fa150cacfdafd1b9b355aa6b68571553"
+  },
+  "failed_or_superseded_receipts": {
+    "build-native-sjuni/movie-lifecycle/original-gcc-v1/receipt.json": "0e13f7aacb041331e06b22d5cf2cb5d55948d605a5ea60d947d7e8abffce8b04",
+    "build-native-sjuni/movie-lifecycle/qualified-gcc-v1/receipt.json": "3f110eb3a2f4d5f4b55a5a9c24f6efd0228228c45332c8b419d718263135d454",
+    "build-native-sjuni/movie-lifecycle/gpu-v1/receipt.json": "c26e0e463684ca4d7267000e4e0dc31acf3f33cfdc49cfb45ab3ff406f1cad36",
+    "build-native-sjuni/movie-lifecycle/gpu-v2/receipt.json": "3b97161c4a54f68243fea92e2786949d03f569dec80f419b9526efe16510a9d5",
+    "build-native-sjuni/movie-lifecycle/gpu-v3/receipt.json": "3e961579ee850bbfddf8e55947d961f8514f652ce64a57f7d0e0dd240efaa544"
+  },
+  "native_boundaries": [
+    "Opaque owner/incarnation keys; old work rejected immediately on stop",
+    "Replacement waits for native source join, per-stream audio retirement and video fences",
+    "Actual positioned native reads and one-time bounded feed/end",
+    "Native ADXT Session, shared Context and VideoFrames with explicit audio/render provider models",
+    "Construction failure retains partial native graph and retries cleanup",
+    "Reentry, callback-time owner release, foreign/stale keys and error retries",
+    "Same-device real GPU source/demux/decode/readback and unsignaled reader fence across rebuild"
+  ],
+  "limitations": [
+    "Original child initialization/cleanup and installed virtual methods remain declared ports; complete indexed/broadcast dispatch bodies execute.",
+    "Guest workspace/pointer ABI is excluded; required unwritten snapshot data is refused instead of invented.",
+    "Logical Policy and physical Session remain separate; their scheduler/game command adapter is not implemented.",
+    "Prepared native audio takes an independently demuxed ADX ByteView and service-tick owner. The current MPEG parser selects video only.",
+    "Later pictures in the owned clip may lack individual PES PTS; strict NativeVideoGraph refuses absent or out-of-domain PTS. Hardware success covers first-frame stop/rebuild only.",
+    "Actual IPU thresholds, property/provider reconciliation, timestamp reconstruction, full codec skip/recovery and representative whole-stream I/P/B validation remain.",
+    "No real game/monitor presentation, audible A/V synchronization or performance measurement was performed."
+  ],
+  "production_selected": false,
+  "game_run": false,
+  "audio_device_opened": false,
+  "stage3_complete": false,
+  "stages4_6_complete": false
+}
