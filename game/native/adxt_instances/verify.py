@@ -36,7 +36,7 @@ def main():
         for label,old,new in mutations:
             if body.count(old)!=1:raise ValueError('Mutation anchor missing '+label)
             path=out/(label+'.cpp');path.write_text(body.replace(old,new),encoding='utf-8',newline='\n');run(label,path,True);record['negative_controls'].append(dict(name=label,detected=True))
-        verify();record.update(status='stable native ADXT instance ownership qualified',workflows=4,real_source_workers=True,output_provider='explicit callback/fence model and external render-only submix')
+        verify();record.update(status='stable native ADXT instance ownership qualified',workflows=5,real_source_workers=True,output_provider='explicit callback/fence model and external render-only submix')
     finally:
         record['outputs_sha256']={p.name:sha(p) for p in out.iterdir() if p.suffix in ['.json','.txt','.cpp'] and p.name!='receipt.json'};(out/'receipt.json').write_text(json.dumps(record,indent=2)+'\n',encoding='utf-8',newline='\n')
     print(json.dumps({k:record[k] for k in ['status','workflows']}))

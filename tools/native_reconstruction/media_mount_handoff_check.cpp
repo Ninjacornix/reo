@@ -30,7 +30,7 @@ struct Case {
     std::uint64_t source_bytes{};p::Snapshot ended;bool done{};
 };
 int main(int argc,char**argv)try{
-    require(argc==5,"data/identity/plan/report arguments required");
+    require(argc==5 || argc==6,"data/identity/plan/report and optional attenuation table arguments required");
     _putenv_s("REO_NATIVE_RESOURCE_READS","1");_putenv_s("REO_GAME_PAK","1");_putenv_s("REO_CD_ASYNC","0");
     _putenv_s("REO_CRI_SERVER_SLOW_MS","0");_wputenv_s(L"REO_ASSET_OVERLAY",L"");
     api::SharedMount retained;
@@ -44,6 +44,11 @@ int main(int argc,char**argv)try{
     } // Actual native reader/mount remain; the declared test runtime/RAM are gone.
     require(retained->identity().import_version==1 && retained->routes().size()==85 && !retained->identity().overlay_plan_sha256,"retained actual import profile");
     const auto route_hash=hex(retained->identity().route_sha256),manifest_hash=hex(retained->identity().manifest_sha256);
+    std::shared_ptr<const reo::native::adxt_attenuation::Table> attenuation;
+    if(argc==6){std::array<std::uint32_t,reo::native::adxt_attenuation::table_words> words{};std::ifstream input(argv[5],std::ios::binary);
+        input.read(reinterpret_cast<char*>(words.data()),sizeof(words));require(bool(input) && input.peek()==std::char_traits<char>::eof(),"exact owned attenuation table");
+        attenuation=reo::native::adxt_attenuation::Table::from_words(words).table;require(bool(attenuation),"owned attenuation table admission");}
+    const bool attenuation_profile=bool(attenuation);
     std::array<Case,2> cases;std::ifstream plan(argv[3]);require(bool(plan),"case plan open");
     n::Instances players(n::control::Config{{2},{}});auto render=players.submix();require(players.start_output()==n::Status::completed,"native private output start");
     for(unsigned index=0;index<cases.size();++index){auto& c=cases[index];
@@ -59,12 +64,13 @@ int main(int argc,char**argv)try{
         {a::Tree tree(root->view);resolved=tree.resolve(std::span(c.path).first(c.depth));}
         require(resolved.status==a::Status::completed && resolved.logical_bytes==c.logical && resolved.hops[c.depth-1].root_byte_offset==c.offset,"native hierarchy agrees with independent inventory");
         c.source_bytes=resolved.view->size();
-        auto made=players.create({c.channels,{index,index,index,index}});require(made.status==n::Status::completed,"native instance create");c.key=made.key;
+        auto made=players.create({c.channels,{index,index,index,index},attenuation});require(made.status==n::Status::completed,"native instance create");c.key=made.key;
+        if(attenuation_profile)require(players.attenuation(c.key,index?0xffffff38u:0xffffff9cu)==n::Status::completed,"original-unit volume latch");
         n::Source source;source.input=std::move(resolved.view);source.player.decoder.channels=c.channels;source.player.decoder.source_config.byte_length=static_cast<std::int32_t>(c.source_bytes);
         require(players.start(c.key,std::move(source))==n::Status::completed,"retained source start");
     }
     std::string excess;require(!(plan>>excess) && plan.eof(),"exact two-source plan");
-    retained.reset(); // Source views, not a runtime, mount or AFS tree, retain files.
+    retained.reset();attenuation.reset(); // Instances/views own required table/files.
     const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(90);
     std::array<float,1024> samples{};unsigned finished{};
     while(finished<cases.size()){
@@ -87,8 +93,9 @@ int main(int argc,char**argv)try{
     const auto final=players.snapshot();require(final.session.joined && !final.session.records && !final.instances &&
         final.session.output.submix_fenced && !final.session.output.provider_joined && !final.session.output.render_fault && !final.session.output.statistics.underrun_frames,"private sources and output actually fenced");
     std::ofstream report(argv[4]);require(bool(report),"report open");
-    report<<"{\"manifest_sha256\":\""<<manifest_hash<<"\",\"route_sha256\":\""<<route_hash<<"\",\"runtime_destroyed_before_source_start\":true,\"mount_released_before_service\":true,\"private_fenced\":true,\"provider_joined\":false,\"output_frames\":"<<final.session.output.statistics.output_frames<<",\"underrun_frames\":0,\"members\":[";
-    for(unsigned i=0;i<cases.size();++i){const auto& c=cases[i];if(i)report<<',';report<<"{\"member\":\""<<c.name<<"\",\"source_bytes\":"<<c.source_bytes<<",\"samples\":["<<c.ended.first_payload_samples<<','<<(c.channels==2?c.ended.first_payload_samples:0)<<"],\"byte_digest\":["<<c.ended.first_payload_digest[0]<<','<<c.ended.first_payload_digest[1]<<"]}";}
+    report<<"{\"manifest_sha256\":\""<<manifest_hash<<"\",\"route_sha256\":\""<<route_hash<<"\",\"runtime_destroyed_before_source_start\":true,\"mount_released_before_service\":true,\"private_fenced\":true,\"provider_joined\":false,\"attenuation_profile\":"<<(attenuation_profile?"true":"false")<<",\"output_frames\":"<<final.session.output.statistics.output_frames<<",\"underrun_frames\":0,\"members\":[";
+    for(unsigned i=0;i<cases.size();++i){const auto& c=cases[i];if(i)report<<',';report<<"{\"member\":\""<<c.name<<"\",\"source_bytes\":"<<c.source_bytes<<",\"samples\":["<<c.ended.first_payload_samples<<','<<(c.channels==2?c.ended.first_payload_samples:0)<<"],\"byte_digest\":["<<c.ended.first_payload_digest[0]<<','<<c.ended.first_payload_digest[1]<<"],\"raw_volume\":"<<c.ended.output.voice.volume<<",\"requested_attenuation\":";
+        if(c.ended.attenuation)report<<c.ended.attenuation->requested;else report<<"null";report<<'}';}
     report<<"]}\n";require(bool(report),"complete report write");
     std::cout<<"Two actual imported native sources completed after test runtime, mount and trees retired; no device\n";
     return 0;

@@ -28,7 +28,7 @@ def main():
         if sha(ORIGINAL/name)!=digest:raise ValueError('Frozen original input changed '+name)
     expected=ORIGINAL/'0/expected.json'
     if sha(expected)!=original['compilers'][0]['expected_sha256']:raise ValueError('Frozen original observation changed')
-    native=json.loads(a.native_receipt.read_bytes());core_manifest=ROOT/'tools/native_reconstruction/adxt_control_owner_manifest_v1.json'
+    native=json.loads(a.native_receipt.read_bytes());core_manifest=ROOT/'tools/native_reconstruction/adxt_attenuation_player_manifest_v1.json'
     if native['status']!='native media pipeline standalone build and tests passed' or native['compiler_sha256']!=sha(a.compiler) or native['manifest_sha256']!=sha(core_manifest):raise ValueError('Exact native build required')
     hashes=json.loads(core_manifest.read_bytes())['files']|{p.relative_to(ROOT).as_posix():sha(p)for p in HERE.iterdir()if p.is_file() and p.suffix in ['.cpp','.h','.hpp','.py']}
     def verify():

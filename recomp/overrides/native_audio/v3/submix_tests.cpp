@@ -65,19 +65,24 @@ void native_refusals(){
     until([&]{const auto r=players.join();check(r==streams::Status::completed || r==streams::Status::pending);return r==streams::Status::completed;});s.finish();no_legacy();
 }
 void native_owner(){
+    std::array<std::uint32_t,reo::native::adxt_attenuation::table_words> words{};
+    for(unsigned index=0;index<words.size();++index)words[index]=(999-index)*256/999;
+    const auto attenuation=reo::native::adxt_attenuation::Table::from_words(words).table;check(bool(attenuation));
     auto owner=std::make_unique<control_owner::Owner>(streams::control::Config{{2},{}});
     Setup s(owner->submix());s.install();s.load();a::reset();
     streams::Key x,y;
     ControlOperation start([&](auto& players){
         check(players.start_output()==streams::Status::completed);
-        const auto a=players.create({1,{0,0,0,0}}),b=players.create({2,{1,1,1,1}});
+        const auto a=players.create({1,{0,0,0,0},attenuation}),b=players.create({2,{1,1,1,1}});
         check(a.status==streams::Status::completed && b.status==streams::Status::completed);x=a.key;y=b.key;
+        check(players.attenuation(x,0xffffff9c)==streams::Status::completed);
         check(players.start(x,source(1))==streams::Status::completed && players.start(y,source(2))==streams::Status::completed);
     });
     check(owner->run(start)==control_owner::Admission::accepted);
     bool ready{};ControlOperation service([&](auto& players){
         const auto work=players.service(17);check(work==streams::Status::completed || work==streams::Status::pending);
         const auto a=players.inspect(x).source,b=players.inspect(y).source;
+        if(a && a->configured)check(a->attenuation && a->attenuation->requested==-100 && a->output.voice.volume==words[100] && a->output.voice.frequency==48000);
         ready=a && b && a->output.voice.playing && b->output.voice.playing && a->output.channel[0].samples>=512 && b->output.channel[0].samples>=512;
     });
     until([&]{check(owner->run(service)==control_owner::Admission::accepted);return ready;});

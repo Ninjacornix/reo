@@ -161,6 +161,10 @@ Status Session::volume(const Key& key,std::uint32_t value)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
     return mapped(s.records[key.slot_].player->volume(value));
 }
+Status Session::attenuation(const Key& key,std::uint32_t value)noexcept{
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
+    return mapped(s.records[key.slot_].player->attenuation(value));
+}
 ClockResult Session::estimate(const Key& key,std::uint32_t tick)noexcept{
     auto& s=*state_;if(s.busy)return{Status::busy,{}};if(s.closing)return{Status::closed,{}};if(!valid(key))return{};Scope scope(s.busy);
     const auto value=s.records[key.slot_].player->estimate(tick);return{mapped(value.status),value};

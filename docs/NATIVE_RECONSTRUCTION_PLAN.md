@@ -824,3 +824,34 @@ five deliberate faults are detected. See the [service contract](native-media/MOV
 This policy still needs actual provider/game-owner binding. Separate ADX/output
 integration, the unsupported sound request, game transitions and audible A/V
 validation keep stage 3 open. No production selection or game speed changed.
+
+## Current checkpoint: canonical native audio ownership and attenuation
+
+The complete movie catalogue also passes with two logical frame slots after
+separating logical admission from physical decoder/reorder storage. Native ADXT
+instances now have a device-free submix in the combined PCM/bank/master model,
+a controller admission/shutdown fence, live host-route factors and exact integer
+volume controls. The native resource adapter hands off its same validated
+immutable mount, and actual imported mono/stereo workers retain sources after
+the declared runtime/mount/tree facades retire.
+
+The original ADXT attenuation setter/metadata getter/type-5 producer have now
+replayed 1,870 original cases before the native conversion was authored. Both
+compilers match 1,856 non-null cases and all 1,000 owned table indices. The
+optional table-player profile applies that value before play and across source
+replacement. Its first coherent cohort passes 74 native suites, five instance
+workflows, 15 aggregate scenarios and actual imported sources at original table
+volumes. See [attenuation results](native-media/ADXT_ATTENUATION_PLAYER_RESULTS.md)
+and the [controller fence](native-media/ADXT_CONTROL_OWNER_RESULTS.md).
+
+The earlier SID 1 / RPC 0x10 refusal is resolved by the qualified generic reply
+policy and V13 game retest. The separate movie hitch is narrowed to the host RPC
+initializer in V14. V15 links the stage probe but does not reproduce that large
+stall; no initializer fix is claimed. See [incident evidence](native-media/SIF_INIT_RPC_STALL.md).
+
+The next closure work is actual guest audio source/control/reset/service binding
+to this canonical owner, runtime publication, movie physical/logical scheduling
+and source providers, followed by coherent game transitions and audible A/V
+validation. Seamless/LSC attenuation admission still needs its prepared clip
+invariants checked. These are required integration gates, not percentages inferred
+from standalone test counts. Stage 3 and stages 4-6 remain open.

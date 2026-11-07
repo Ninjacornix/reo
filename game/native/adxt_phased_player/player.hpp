@@ -5,8 +5,10 @@
 #include "../adxt_service_group/service_group.hpp"
 #include "../adx_sequence/sequence.hpp"
 #include "../adxt_lsc_input/input.hpp"
+#include "../adxt_attenuation/attenuation.hpp"
 #include <array>
 #include <memory>
+#include <optional>
 
 namespace reo::native::adxt_control_session {class Session;}
 namespace reo::native::adxt_serviced_clock {class Service;}
@@ -19,6 +21,8 @@ struct Config {
     window::Config decoder;
     std::shared_ptr<const adx_sequence::Sequence> sequence;
     std::shared_ptr<adxt_lsc_input::Input> lsc_input;
+    std::shared_ptr<const adxt_attenuation::Table> attenuation_table;
+    std::uint32_t initial_attenuation{};
     std::uint32_t initial_tick{},time_base{};
     Config(){decoder.pans={-128,-128};}
 };
@@ -30,6 +34,7 @@ struct Snapshot {
     bool transfer_primed{};
     std::array<std::uint64_t,5> service_visits{};
     bool configured{},stop_requested{},output_retired{},retired{},fault{},clock_observation_valid{};
+    std::optional<adxt_attenuation::Result> attenuation;
 };
 // A decoder/source plus one exclusive producer in a shared output session.
 // Callback rendering never references this object. All methods on this player
@@ -59,6 +64,7 @@ public:
     [[nodiscard]] Snapshot snapshot()const noexcept;
     [[nodiscard]] Status gain(float)noexcept;
     [[nodiscard]] Status volume(std::uint32_t)noexcept;
+    [[nodiscard]] Status attenuation(std::uint32_t requested_word)noexcept;
     // Read-only identity for the session's explicit summation-order coordinator.
     [[nodiscard]] const output::Producer& output_identity()const noexcept;
     [[nodiscard]] ClockResult estimate(std::uint32_t original_tick)noexcept;

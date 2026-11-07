@@ -45,6 +45,7 @@ public:
     [[nodiscard]] std::shared_ptr<output::Submix> submix()const noexcept;
     [[nodiscard]] Status gain(const Key&,float)noexcept;
     [[nodiscard]] Status volume(const Key&,std::uint32_t)noexcept;
+    [[nodiscard]] Status attenuation(const Key&,std::uint32_t requested_word)noexcept;
     [[nodiscard]] ClockResult estimate(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] ClockResult centiseconds(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] ClockControl pause(const Key&,std::int32_t,std::uint32_t original_tick)noexcept;

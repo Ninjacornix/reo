@@ -12,6 +12,8 @@ Config checked(Config c,const output::Producer& producer,const resources::ByteVi
     if(c.decoder.downmix || c.decoder.pitch_offset ||
        c.decoder.channels<1 || c.decoder.channels>2)throw std::invalid_argument("Shared native player profile");
     if(c.sequence && c.lsc_input)throw std::invalid_argument("One owned input profile required");
+    if((!c.attenuation_table && c.initial_attenuation) || (c.attenuation_table && (c.sequence || c.lsc_input)))
+        throw std::invalid_argument("Finite/regular-loop attenuation table profile required");
     if(c.lsc_input){
         const auto& source=c.decoder.source_config;
         if(!c.decoder.seamless_enabled || c.decoder.loop_enabled || view!=c.lsc_input->origin().get() ||
@@ -52,10 +54,19 @@ public:
     std::uint64_t copied{},first{};
     std::uint32_t tick{};std::array<std::uint64_t,5> visits{};bool transfer_primed{};
     bool configured{},stopping{},output_retired{},retired{},fault{},busy{};
+    std::uint32_t requested_attenuation{};
+    std::optional<adxt_attenuation::Result> attenuation;
     State(Config c,const output::Producer& producer,std::shared_ptr<const resources::ByteView> view,
           std::unique_ptr<adxt_shared_source::Backend> backend,std::shared_ptr<adx_header::KeyContext> keys,std::shared_ptr<clock::Shared> shared)
         :config(checked(c,producer,view.get())),shared_clock(std::move(shared)),clock_state{0,c.initial_tick,0,0},time_base(c.time_base),
          decoder(config.decoder,std::move(view),std::move(backend),std::move(keys)),request(decoder.request()){if(!shared_clock)throw std::invalid_argument("Shared original clock context required");}
+    bool apply_attenuation(std::uint32_t value)noexcept {
+        if(!config.attenuation_table)return false;
+        const auto state=decoder.snapshot();
+        const auto result=config.attenuation_table->apply(value,{state.header.ainf.value,static_cast<std::uint8_t>(state.outer.phase),state.header.ainf.code});
+        if(output->volume(result.volume)!=output::Status::completed)return false;
+        requested_attenuation=value;attenuation=result;return true;
+    }
     Status fail()noexcept {
         fault=true;(void)output->stop_transfer();(void)output->play(false);clock_state.rna_play=0;return Status::fault;
     }
@@ -113,6 +124,9 @@ Player::Player(Config c,std::unique_ptr<output::Producer> output,std::shared_ptr
         // succeeds, including allocation failure before the State exists.
         state_=std::make_unique<State>(c,*output,std::move(view),std::move(backend),std::move(keys),std::move(shared));
         state_->output=std::move(output);
+        if(c.attenuation_table && !state_->apply_attenuation(c.initial_attenuation)){
+            (void)state_->output->retire();throw std::logic_error("Prepared attenuation output unavailable");
+        }
     } catch(...) { if(output)(void)output->retire();throw; }
 }
 Player::~Player(){request_stop();(void)retire_on_control_thread();}
@@ -188,11 +202,14 @@ Status Player::service_control(adxt_service_group::Phase selected,std::uint32_t 
         }
         if(s.decoder.configure_ready()!=window::Status::completed)return s.fail();
         const auto ready=s.decoder.snapshot();
-        if(ready.ready.pitch || ready.ready.pans[0]!=(s.config.decoder.channels==1?0:-15) ||
+        if((!s.config.attenuation_table && ready.ready.pitch) || ready.ready.pans[0]!=(s.config.decoder.channels==1?0:-15) ||
            (s.config.decoder.channels==2 && ready.ready.pans[1]!=15)){
             s.fail();return Status::unsupported_profile;
         }
         if(s.output->configure(static_cast<std::uint32_t>(ready.ready.frequency))!=output::Status::completed)return s.fail();
+        // The historical window field named pitch is the AINF attenuation
+        // contribution. Apply its integer table volume before play admission.
+        if(s.config.attenuation_table && !s.apply_attenuation(s.requested_attenuation))return s.fail();
         adxt_playback::State control;control.request_samples=ready.outer.max_request;control.estimate_base=s.clock_state.estimate_base;control.tick_base=s.clock_state.tick_base;control.paused=s.clock_state.paused!=0;s.playback.emplace(control);s.configured=true;
         return Status::completed;
     }
@@ -256,7 +273,7 @@ Snapshot Player::snapshot()const noexcept {
     result.transfer_primed=s.transfer_primed;result.service_visits=s.visits;
     result.configured=s.configured;result.stop_requested=s.stopping;result.output_retired=s.output_retired;
     result.retired=s.retired;result.fault=s.fault || result.output.fault;result.clock=s.clock_state;result.clock_observation=s.observation(result.decoder,result.output);
-    result.clock_observation_valid=!s.retired && !s.fault && result.output.active && !result.output.fault;return result;
+    result.clock_observation_valid=!s.retired && !s.fault && result.output.active && !result.output.fault;result.attenuation=s.attenuation;return result;
 }
 Status Player::gain(float value)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
@@ -264,7 +281,13 @@ Status Player::gain(float value)noexcept {
 }
 Status Player::volume(std::uint32_t value)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
+    if(s.config.attenuation_table)return Status::unsupported_profile;
     return s.output->volume(value)==output::Status::completed?Status::completed:Status::fault;
+}
+Status Player::attenuation(std::uint32_t value)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
+    if(!s.config.attenuation_table)return Status::unsupported_profile;
+    return s.apply_attenuation(value)?Status::completed:s.fail();
 }
 const output::Producer& Player::output_identity()const noexcept{return *state_->output;}
 ClockResult Player::estimate(std::uint32_t tick)noexcept {

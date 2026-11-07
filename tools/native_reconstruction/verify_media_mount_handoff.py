@@ -11,9 +11,10 @@ sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--compiler',type=Path,required=True);p.add_argument('--data',type=Path,required=True)
-    p.add_argument('--native-receipt',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();out=a.output.resolve()
+    p.add_argument('--native-receipt',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--manifest',type=Path,default=ROOT/'tools/native_reconstruction/adxt_attenuation_player_manifest_v1.json');p.add_argument('--attenuation',action='store_true');a=p.parse_args();out=a.output.resolve()
     if out.exists() or not out.is_relative_to(BASE):raise ValueError('Fresh owned output required')
-    manifest=ROOT/'tools/native_reconstruction/native_audio_submix_manifest_v4.json';sources=json.loads(manifest.read_bytes())['files'].copy()
+    manifest=a.manifest;sources=json.loads(manifest.read_bytes())['files'].copy()
     native=json.loads(a.native_receipt.read_bytes())
     if native['status']!='native media pipeline standalone build and tests passed' or native['manifest_sha256']!=sha(manifest) or native['compiler_sha256']!=sha(a.compiler):raise ValueError('Matching native cohort/compiler required')
     libraries={ROOT/n:d for n,d in native['libraries'].items()}
@@ -51,10 +52,11 @@ def main():
     elf=Elf(ROOT/'game_data/SLUS_207.65')
     if elf.sha256!='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46':raise ValueError('Owned ELF differs')
     (out/'identity.bin').write_bytes(b''.join(struct.pack('<II',pc,size)+elf.read(pc,size) for pc,size in [(0x101788,0x1e0),(0x1004d8,0xb8),(0x100298,0xa0)]))
+    if a.attenuation:(out/'attenuation.bin').write_bytes(elf.read(0x220498,4000))
     env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','')
     record=dict(schema=1,status='failed',compiler_sha256=sha(a.compiler),manifest_sha256=sha(manifest),native_receipt_sha256=sha(a.native_receipt),sources=sources,
         qualified_native_pcm_baseline_sha256=sha(BASELINE/'receipt.json'),inventory_sha256=sha(META/'receipt.json'),elf_sha256=elf.sha256,game_run=False,device_opened=False,
-        original_scheduler_executed=False,runtime_lifecycle='declared mock with actual adapter and native imported-file providers',checks=[])
+        original_scheduler_executed=False,attenuation_profile=a.attenuation,runtime_lifecycle='declared mock with actual adapter and native imported-file providers',checks=[])
     def run(name,command):
         result=subprocess.run(list(map(str,command)),capture_output=True,text=True,env=env,timeout=180)
         (out/(name+'.txt')).write_text(result.stdout+result.stderr,encoding='utf-8',newline='\n');record['checks'].append(dict(name=name,exit=result.returncode,command=list(map(str,command))))
@@ -64,13 +66,14 @@ def main():
         binary=out/'handoff.exe'
         flags=[a.compiler,'-std=c++20','-O1','-fno-fast-math','-ffp-contract=off','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-misleading-indentation','-pthread','-DREO_GAME_FILE1=1','-DREO_BUILD_NATIVE_RESOURCE_READS=1','-I'+str(out/'include'),'-I'+str(ROOT)]
         run('compile',flags+[fixture,tests.parent/'runtime_adapter.cpp','-Wl,--start-group',*libraries,'-Wl,--end-group','-lbcrypt','-lole32','-lruntimeobject','-o',binary])
-        run('actual-import-workers',[binary,data,out/'identity.bin',out/'plan.txt',out/'result.json'])
+        run('actual-import-workers',[binary,data,out/'identity.bin',out/'plan.txt',out/'result.json',*([out/'attenuation.bin']if a.attenuation else[])])
         result=json.loads((out/'result.json').read_bytes())
         if result['manifest_sha256']!=MANIFEST or not result['private_fenced'] or result['provider_joined'] or result['underrun_frames'] or not result['runtime_destroyed_before_source_start'] or not result['mount_released_before_service']:raise ValueError('Missing lifetime/output evidence')
-        if len(result['members'])!=len(selected):raise ValueError('Missing actual sources')
-        for actual,planned in zip(result['members'],selected):
+        if len(result['members'])!=len(selected) or result['attenuation_profile']!=a.attenuation:raise ValueError('Missing actual sources/profile')
+        for index,(actual,planned) in enumerate(zip(result['members'],selected)):
             prior=expected[planned['member']]
             if actual['member']!=planned['member'] or any(actual[n]!=prior[n]for n in ['source_bytes','samples','byte_digest']):raise ValueError('Actual source/PCM differs from qualified baseline')
+            if a.attenuation and (actual['requested_attenuation']!=(-200 if index else -100) or actual['raw_volume']!=(25 if index else 80)):raise ValueError('Actual player volume does not match original table')
         verify();record.update(status='actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline',members=result['members'],binary_sha256=sha(binary))
     finally:
         after={x['Name']:(data/x['Name']).stat()for x in entries}

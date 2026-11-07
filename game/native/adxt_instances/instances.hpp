@@ -10,7 +10,7 @@ class Key final {
 public:Key()=default;
 private:friend class Instances;std::weak_ptr<const Identity> owner_;std::uint32_t slot_{};std::uint64_t generation_{};
 };
-struct Construction {std::uint32_t channels{1};control::Indices indices;};
+struct Construction {std::uint32_t channels{1};control::Indices indices;std::shared_ptr<const adxt_attenuation::Table> attenuation_table{};};
 struct Open {Status status{Status::fault};Key key{};};
 struct Source {control::player::Config player;std::shared_ptr<const resources::ByteView> input;};
 enum class Phase {idle,active,retiring,destroying,fault};
@@ -18,6 +18,7 @@ struct Observation {
     Status status{Status::invalid_key};Phase phase{Phase::idle};bool replacement_pending{};
     std::uint64_t starts{},completed_stops{};
     std::optional<control::player::Snapshot> source;
+    std::optional<std::int16_t> requested_attenuation;
 };
 struct Snapshot {control::Snapshot session;std::uint32_t instances{},pending{},retiring{};bool closing{},order_required{};};
 // Stable public instance lifetime over replaceable, generation-scoped native
@@ -45,6 +46,7 @@ public:
     [[nodiscard]] std::shared_ptr<control::output::Submix> submix()const noexcept;
     [[nodiscard]] Status gain(const Key&,float)noexcept;
     [[nodiscard]] Status volume(const Key&,std::uint32_t)noexcept;
+    [[nodiscard]] Status attenuation(const Key&,std::uint32_t requested_word)noexcept;
     [[nodiscard]] Status pause(const Key&,std::int32_t,std::uint32_t original_tick)noexcept;
     [[nodiscard]] control::ClockResult estimate(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] Status request_stop()noexcept;

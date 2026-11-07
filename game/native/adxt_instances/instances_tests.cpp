@@ -101,5 +101,46 @@ int main(){try{
         std::array<float,64> output;output.fill(0.25f);
         check(retained->render_add(output.data(),32)==n::control::output::Status::closed && output[0]==0.25f);
     }
+    {
+        namespace attenuation=reo::native::adxt_attenuation;
+        std::array<std::uint32_t,attenuation::table_words> words{};
+        for(unsigned j=0;j<words.size();++j)words[j]=(999-j)*256/999;
+        const auto table=attenuation::Table::from_words(words).table;check(bool(table));
+        n::Instances i(n::control::Config{{2},{}});const auto a=i.create({1,{0,0,0,0},table}),b=i.create({1,{1,1,1,1}});
+        check(a.status==S::completed && b.status==S::completed && i.start_output()==S::completed);
+        check(i.inspect(a.key).requested_attenuation==0 && !i.inspect(b.key).requested_attenuation);
+        check(i.attenuation(b.key,0xffffff9c)==S::unsupported_profile && i.volume(a.key,193)==S::unsupported_profile);
+        const auto input=[](std::int16_t offset){auto file=f::file(1,48000,20000);
+            f::be32(file->bytes,24,0x41494e46);f::be32(file->bytes,28,1);f::be16(file->bytes,48,static_cast<std::uint16_t>(offset));
+            f::be16(file->bytes,52,0xff80);f::be16(file->bytes,54,0xff80);return file;};
+        auto file=input(-25);auto conflicting=source(file);conflicting.player.attenuation_table=attenuation::Table::from_words(words).table;
+        check(i.start(a.key,std::move(conflicting))==S::invalid_input && !file->reads && !i.snapshot().session.records);
+        check(i.attenuation(a.key,0xffffff9c)==S::completed && i.inspect(a.key).requested_attenuation==-100);
+        check(i.start(a.key,source(file))==S::completed && i.start(b.key,source(f::file(1,48000,20000)))==S::completed);
+        check(i.inspect(a.key).source->output.voice.volume==words[100] && !i.inspect(a.key).source->output.voice.playing);
+        check(i.attenuation(a.key,0xffffff38)==S::completed && i.inspect(a.key).source->output.voice.volume==words[200]);
+        const auto work=[&]{const auto s=i.service(42);check(s==S::completed || s==S::pending);};
+        until([&]{work();const auto x=i.inspect(a.key).source,y=i.inspect(b.key).source;
+            return x && y && x->output.voice.playing && y->output.voice.playing && x->output.channel[0].samples>=512 && y->output.channel[0].samples>=512;});
+        const auto ready=i.inspect(a.key).source;check(ready->attenuation && ready->attenuation->requested==-200 && ready->attenuation->clamped==-225 && ready->output.voice.volume==words[225]);
+        check(ready->output.voice.frequency==48000 && ready->decoder.ready.pitch==-25 && i.inspect(b.key).source->output.voice.volume==256);
+        check(i.attenuation(a.key,0xffff)==S::completed && i.inspect(a.key).requested_attenuation==-1 && i.inspect(a.key).source->output.voice.volume==words[26]);
+        check(i.attenuation(a.key,32768)==S::completed && i.inspect(a.key).source->output.voice.volume==0);
+        std::array<float,256> output{};check(i.submix()->render_add(output.data(),128)==n::control::output::Status::completed);
+        check(i.inspect(a.key).source->output.channel[0].consumed_bytes==256 && i.inspect(b.key).source->output.channel[0].consumed_bytes==256);
+        auto blocked=std::make_shared<f::Blocked>();blocked->bytes=input(-50)->bytes;Release release{blocked};
+        const auto replaced=i.start(a.key,source(blocked));check(replaced==S::completed || replaced==S::pending);
+        until([&]{work();std::lock_guard lock(blocked->mutex);return blocked->entered && i.inspect(a.key).starts==2;});
+        auto next=input(-100);check(i.start(a.key,source(next))==S::pending && !next->reads);
+        check(i.attenuation(a.key,0xfffffed4)==S::completed && i.inspect(a.key).requested_attenuation==-300 && !next->reads);
+        release.run();until([&]{work();const auto x=i.inspect(a.key);return x.starts==3 && x.source->configured;});
+        check(i.inspect(a.key).source->attenuation->clamped==-400 && i.inspect(a.key).source->output.voice.volume==words[400]);
+        const auto destroy=i.destroy(a.key);check(destroy==S::completed || destroy==S::pending);
+        until([&]{work();return i.inspect(a.key).status==S::invalid_key;});
+        const auto fresh=i.create({1,{0,0,0,0},table});check(fresh.status==S::completed && i.inspect(fresh.key).requested_attenuation==0 && i.attenuation(a.key,0)==S::invalid_key);
+        check(i.start(fresh.key,source(input(-25)))==S::completed && i.inspect(fresh.key).source->output.voice.volume==256);
+        until([&]{work();return i.inspect(fresh.key).source->configured;});check(i.inspect(fresh.key).source->output.voice.volume==words[25]);
+        until([&]{const auto s=i.join();check(s==S::completed || s==S::pending);return s==S::completed;});
+    }
     std::cout<<"Native stable ADXT instance checks "<<checks<<" passed\n";return 0;
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}}

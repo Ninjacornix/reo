@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "native external-submix ownership and model aggregate composition qualified; game binding absent",
-  "manifest_sha256": "449d87e390daadfc7d9c83fda3f7f482881b18bb4ba53a67cb8f896a509ab529",
+  "manifest_sha256": "3a662e81e547ddf2e5425efb9ac7a7b7187c089f588b98e0e3118565bea00409",
   "evidence": {
     "build-native-sjuni/submix/clean-build-llvm-v2/receipt.json": {
       "sha256": "d6a8ed0792171015b4987fb9ba2f686f8373da4ccdcff68c4df2e07b30d802f4",
@@ -122,20 +122,61 @@
     "build-native-sjuni/native-audio-aggregate-v3/control-owner-parent-gcc-v1/receipt.json": {
       "sha256": "37517055f7c6e82da84fe6f95f8eb212b46dd918d67116996cf0d62fc667a926",
       "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-llvm-v1/receipt.json": {
+      "sha256": "6b0d430c923d0d2b34fd285d1816cad5eaa48fea5cce0e10216a329327cdc7f5",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-instances/attenuation-llvm-v1/receipt.json": {
+      "sha256": "05a9259471fea0612c88922d7e36a9d37e09c7ce6191967bb1ef4cde3b4e550f",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-llvm-v1/receipt.json": {
+      "sha256": "38c0485488e84ab07e0d12bca53d0750110eb65bdb1546ba9b1933d54e0a6f74",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-parent-llvm-v1/receipt.json": {
+      "sha256": "9482b74c7f7a5289f97119b1a199a6c0d88cce74312d0bacb7bd47406e601e33",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/media-mount-handoff/attenuation-llvm-v1/receipt.json": {
+      "sha256": "b7ce5f45b3be8a35f64431d22c2a6c94304ba9ca7c850cb159201ca5d884cc8c",
+      "status": "actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-gcc-v1/receipt.json": {
+      "sha256": "2b74ce7c13d7bcc8a75c720b5009305387a28909b2a46988036e050359b0bcb2",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-instances/attenuation-gcc-v1/receipt.json": {
+      "sha256": "2a11946b642ca466c5e03f7501d7aaf940228bae27e9b64165c8bd7f6185eba1",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-gcc-v1/receipt.json": {
+      "sha256": "fc35c449474fce23be89a80ab06259ff5a8c7a9cc3b71e5a00d82e8531f0e83b",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-parent-gcc-v1/receipt.json": {
+      "sha256": "4e5de512410d3c7a7cda3a0428b92d94131b9c1cd1bcf86872e9a23e72c24eb2",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/media-mount-handoff/attenuation-gcc-v1/receipt.json": {
+      "sha256": "7fbfde6eebd7d10921e86692260046cad9a926daca65e4629709e2c755838de4",
+      "status": "actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline"
     }
   },
-  "parent_suites": 73,
-  "native_instance_workflows": 4,
+  "parent_suites": 74,
+  "native_instance_workflows": 5,
   "negative_controls": 4,
   "game_integration": false,
   "actual_audio_device_test": false,
   "historical_failed_cohort": "submix/clean-build-llvm-v1: fixed model-device advancement during real source-worker startup in V2; same production DSP.",
-  "prior_cohort_manifest_sha256": "e0c1336fa81ad9884a2da9e0e3828054a9ad6ad8134bca878b9aff5878f17bab",
+  "prior_cohort_manifest_sha256": "449d87e390daadfc7d9c83fda3f7f482881b18bb4ba53a67cb8f896a509ab529",
   "startup_wire_reset": "Allowed before first native producer; post-source reset remains unsupported.",
   "integer_guest_volume_and_callback_route_factors": "qualified isolated native and model aggregate controls; no live guest binding",
   "controller_admission": {
     "workflows": 3,
     "detected_faults_per_compiler": 3,
     "runtime_registration": false
-  }
+  },
+  "original_attenuation_profile": "finite/regular-loop native players; explicit seamless/LSC refusal in first cohort"
 }

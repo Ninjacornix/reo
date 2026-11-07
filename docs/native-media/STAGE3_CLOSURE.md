@@ -69,3 +69,10 @@ It passes real worker/private-render fencing and three injected faults on both
 compilers; the combined native project now has 73 passing suites. Fifteen
 aggregate scenarios include controller destruction with an accepted outer
 callback. Actual runtime registration and game callers remain unbound.
+
+The [attenuation integration](ADXT_ATTENUATION_PLAYER_RESULTS.md) now consumes
+the original signed volume units and owned integer table through the phased
+player and stable instances. Both compilers pass 74 native suites, five instance
+workflows, 15 aggregate scenarios and real imported mono/stereo sources at the
+correct table volumes. This advances source controls; it is still separate from
+the guest API/runtime/scheduler and whole movie/audio transition gates.
