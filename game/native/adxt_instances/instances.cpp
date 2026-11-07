@@ -30,11 +30,13 @@ struct Instances::State {
     control::Session session;std::array<Record,16> records;
     std::array<std::uint32_t,16> order{};std::uint32_t capacity{},ordered{};
     bool order_required{},closing{},busy{};
-    State(control::Config config,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider)
-        :session(config,std::move(slot),std::move(provider)),capacity(config.output.streams){}
+    State(control::Config config,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider,bool external=false)
+        :session(external?control::Session(config):control::Session(config,std::move(slot),std::move(provider))),capacity(config.output.streams){}
 };
 Instances::Instances(control::Config config,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider)
     :state_(std::make_unique<State>(config,std::move(slot),std::move(provider))){}
+Instances::Instances(control::Config config):state_(std::make_unique<State>(config,nullptr,nullptr,true)){}
+std::shared_ptr<control::output::Submix> Instances::submix()const noexcept{return state_->session.submix();}
 Instances::~Instances(){(void)request_stop();(void)join();}
 bool Instances::valid(const Key& key,bool destroying)const noexcept {
     const auto& s=*state_;if(key.owner_.lock()!=s.identity || key.slot_>=s.capacity)return false;

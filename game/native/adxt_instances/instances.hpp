@@ -26,6 +26,7 @@ struct Snapshot {control::Snapshot session;std::uint32_t instances{},pending{},r
 class Instances final {
 public:
     Instances(control::Config,std::shared_ptr<audio_output::CallbackSlot>,std::shared_ptr<audio_output::Provider>);
+    explicit Instances(control::Config);
     ~Instances();
     Instances(const Instances&)=delete;Instances& operator=(const Instances&)=delete;
     [[nodiscard]] Status start_output()noexcept;
@@ -41,6 +42,7 @@ public:
     [[nodiscard]] Status service(std::uint32_t original_tick)noexcept;
     [[nodiscard]] Observation inspect(const Key&)const noexcept;
     [[nodiscard]] Snapshot snapshot()const noexcept;
+    [[nodiscard]] std::shared_ptr<control::output::Submix> submix()const noexcept;
     [[nodiscard]] Status gain(const Key&,float)noexcept;
     [[nodiscard]] Status pause(const Key&,std::int32_t,std::uint32_t original_tick)noexcept;
     [[nodiscard]] control::ClockResult estimate(const Key&,std::uint32_t original_tick)noexcept;

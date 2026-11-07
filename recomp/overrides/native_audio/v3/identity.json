@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "cohort": "native-audio-aggregate3-native-stream-only",
+  "parent_identity_sha256": "f6e7c65162da526eeb65e8a6a71335ddad83f09f5937a517eee82eeb7cb11012",
+  "candidate_sha256": {
+    "aggregate.cpp": "1fe9f7e54ff8510a0f88e324b29eae52ccd7cdcf4d0141dcb8bcfef510aa4568",
+    "aggregate.h": "6585d48515d07c95d6e9e64c537806384fc961ccf12b37bebf9fb818dc4af094",
+    "compare_parent.py": "cb26b0ae048c229c83eed3bf72b9e887d8d5ec5858e4c0e2a31e0845be822471",
+    "derive.py": "43394cbf06ac3c1d56e39746c9aa79cb8c0775410a4239c05c2039495ed9c181",
+    "oracle_transport.hpp": "f85dad0cc327bd8b0edd8db60edc50bf4036db22d1c73e42186c69701929dfd6",
+    "submix_tests.cpp": "e0397d8c00e7538e93c5789db3e38b67d5aaf4b6628cde9ac75615d3bf0a65f3",
+    "tests.cpp": "df05284f383e33caa7476de2f706474fc1c4b802796207402329df407f04361a",
+    "verify.py": "42da724ddbc1b073d90bca189a1daf80c4e9caa3a9edcca445f4e30374f2685f"
+  },
+  "native_cohort_sha256": "51091dda8e48e9c5e11cbfb7f0d95e0e8341151cb2214973d803718330b0a253",
+  "unit_and_parent_observations": {
+    "build-native-sjuni/native-audio-aggregate-v3/qualified-llvm-v2/receipt.json": {
+      "sha256": "764a7d434c5e604f3fc051b072d19b9b0b089a19eab9a39ea94aed1bea92018a",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/qualified-gcc-v2/receipt.json": {
+      "sha256": "954fcd03846b50b2eb6e93d2d291a9084f4803b5b991c64837ead09c4dfaa276",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/parent-llvm-v1/receipt.json": {
+      "sha256": "a60a2205c7ee3c7c10fec24b52e57b7f03e3a3931e93998c153462d1af631bcd",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/parent-gcc-v1/receipt.json": {
+      "sha256": "a45a8111e0bc633587b55819b4afb80b0c5375c631b23453e37c0b0f2233a55d",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    }
+  },
+  "original_expectations_previously_known": true,
+  "parent_raw_terminal_policy_differences_preserved": 14,
+  "runtime_capture_factory_implemented": false,
+  "bootstrap_installed": false,
+  "game_run": false,
+  "device_opened": false,
+  "unsupported_native_stream_profile": [
+    "original PCM producer queue",
+    "original playing-voice configure",
+    "original PCM reset",
+    "general combined original/native PCM voice clipping and ordering"
+  ]
+}

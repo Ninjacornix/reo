@@ -33,6 +33,7 @@ struct Snapshot {
 class Session final {
 public:
     Session(Config,std::shared_ptr<audio_output::CallbackSlot>,std::shared_ptr<audio_output::Provider>);
+    explicit Session(Config);
     ~Session();
     Session(const Session&)=delete;Session& operator=(const Session&)=delete;
     [[nodiscard]] Status start()noexcept;
@@ -41,6 +42,7 @@ public:
     [[nodiscard]] Status service(std::uint32_t original_tick)noexcept;
     [[nodiscard]] Observation inspect(const Key&)const noexcept;
     [[nodiscard]] Snapshot snapshot()const noexcept;
+    [[nodiscard]] std::shared_ptr<output::Submix> submix()const noexcept;
     [[nodiscard]] Status gain(const Key&,float)noexcept;
     [[nodiscard]] ClockResult estimate(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] ClockResult centiseconds(const Key&,std::uint32_t original_tick)noexcept;

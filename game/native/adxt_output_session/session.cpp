@@ -5,6 +5,7 @@
 #include <limits>
 #include <mutex>
 #include <stdexcept>
+#include <vector>
 
 namespace reo::native::adxt_output_session {
 namespace {
@@ -38,9 +39,13 @@ struct State {
     std::atomic<bool> closing{};
     bool provider_joined{},closed{},order_required{},render_fault{},bank_mix_fault{};
     pcm::Status last_render_status{pcm::Status::ok};
-    State(Config c,std::shared_ptr<audio_output::CallbackSlot> s)
-        :config(checked(c)),pcm(core_config(config)),slot(std::move(s)) {
-        if(!slot)throw std::invalid_argument("Actual provider callback slot required");
+    const bool external_output;
+    bool submix_started{},submix_fenced{};
+    std::vector<float> scratch;
+    State(Config c,std::shared_ptr<audio_output::CallbackSlot> s,bool external=false)
+        :config(checked(c)),pcm(core_config(config)),slot(std::move(s)),external_output(external),
+         scratch(external?std::size_t(audio_output::maximum_callback_frames)*2:0) {
+        if((!slot && !external) || (external && (slot || config.bank_mix)))throw std::invalid_argument("One actual output owner and bank renderer required");
         if(pcm.select_frame_clock()!=pcm::Status::ok)throw std::logic_error("Stream frame clock");
         for(std::uint32_t i=0;i<config.streams;++i){
             order[i]=i;
@@ -114,6 +119,18 @@ public:
     }
 private:std::shared_ptr<State> state_;
 };
+}
+Status Submix::render_add(float* output,std::uint32_t frames)noexcept {
+    auto& s=*state_;std::lock_guard lock(s.mutex);
+    if(!output || frames>audio_output::maximum_callback_frames)return Status::invalid_input;
+    if(s.closing.load(std::memory_order_acquire) || s.closed)return Status::closed;
+    if(!s.submix_started)return Status::pending;
+    if(!frames)return Status::completed;
+    const auto count=std::size_t(frames)*2;
+    s.last_render_status=s.pcm.render(std::span(s.scratch).first(count));
+    if(s.last_render_status!=pcm::Status::ok){s.render_fault=true;s.closing.store(true,std::memory_order_release);return Status::fault;}
+    for(std::size_t i=0;i<count;++i)output[i]+=s.scratch[i];
+    return Status::completed;
 }
 Producer::Producer(std::shared_ptr<State> state,std::shared_ptr<Identity> identity)
     :state_(std::move(state)),identity_(std::move(identity)){}
@@ -211,6 +228,8 @@ Session::Session(Config c,std::shared_ptr<audio_output::CallbackSlot> slot,std::
      owner_(audio_output::Owner::create(*state_->slot,std::move(provider),std::make_shared<Renderer>(state_))) {
     if(!owner_)throw std::invalid_argument("Qualified session provider required");
 }
+Session::Session(Config c):state_(std::make_shared<State>(c,nullptr,true)),
+    submix_(new Submix(state_)){}
 Session::~Session(){request_stop();(void)join();}
 OpenResult Session::open(std::uint32_t channels) noexcept {
     if(channels<1 || channels>2)return{Status::invalid_input,{}};
@@ -253,21 +272,24 @@ Status Session::set_order(std::span<const Producer* const> order) noexcept {
 }
 Status Session::start() noexcept {
     if(state_->closing.load(std::memory_order_acquire))return Status::closed;
+    if(state_->external_output){std::lock_guard lock(state_->mutex);
+        if(state_->closed || state_->closing.load(std::memory_order_acquire))return Status::closed;
+        state_->submix_started=true;return Status::completed;}
     const auto result=owner_->start();
     return result==audio_output::StartResult::started || result==audio_output::StartResult::already_started?Status::completed:Status::provider_refused;
 }
 void Session::request_stop() noexcept {
-    state_->closing.store(true,std::memory_order_release);owner_->request_stop();
+    state_->closing.store(true,std::memory_order_release);if(owner_)owner_->request_stop();
     if(state_->config.bank_mix)state_->config.bank_mix->request_stop();
 }
 Status Session::join() noexcept {
     request_stop();
-    if(owner_->join()!=audio_output::JoinResult::joined)return Status::pending;
+    if(owner_ && owner_->join()!=audio_output::JoinResult::joined)return Status::pending;
     // Provider fence first; no stream/PCM/bank data lock is held while joining.
     if(state_->config.bank_mix && !state_->config.bank_mix->join())return Status::pending;
     auto& s=*state_;std::lock_guard lock(s.mutex);
     if(s.closed)return Status::completed;
-    s.provider_joined=true;s.final_statistics=s.pcm.statistics();
+    s.provider_joined=!s.external_output;s.submix_fenced=s.external_output;s.final_statistics=s.pcm.statistics();
     for(std::uint32_t i=0;i<s.config.streams;++i){auto& r=s.records[i];if(!r.active)continue;
         r.final=s.observe(i);r.final.active=false;r.final.retired=true;r.final.transfer_open=false;r.active=false;r.transfer_open=false;}
     s.pcm.shutdown(0);s.closed=true;return Status::completed;
@@ -277,6 +299,7 @@ Snapshot Session::snapshot() const noexcept {
     result.closing=s.closing.load(std::memory_order_acquire);result.closed=s.closed;result.provider_joined=s.provider_joined;
     result.order_required=s.order_required;result.statistics=s.closed?s.final_statistics:s.pcm.statistics();
     result.render_fault=s.render_fault;result.last_render_status=s.last_render_status;result.bank_mix_fault=s.bank_mix_fault;
+    result.external_output=s.external_output;result.submix_started=s.submix_started;result.submix_fenced=s.submix_fenced;
     for(std::uint32_t i=0;i<s.config.streams;++i){result.streams[i]=s.observe(i);result.occupied+=s.records[i].active;
         result.playing+=s.records[i].active && s.records[i].config.playing;}
     return result;

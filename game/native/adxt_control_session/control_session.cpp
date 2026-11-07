@@ -41,8 +41,9 @@ struct Session::State {
     std::array<std::uint32_t,16> order{};std::size_t order_count{};
     std::array<bool,16> decoders{},streams{},rnas{};std::array<bool,32> transfers{};
     std::uint64_t visits{},discard_diagnostics{};bool busy{},closing{},joined{},order_required{};
-    State(Config c,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider)
-        :config(c),clock(std::make_shared<player::clock::Shared>(c.clock)),group(clock,guards,dtr,dtx),output(c.output,std::move(slot),std::move(provider)){
+    State(Config c,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider,bool external=false)
+        :config(c),clock(std::make_shared<player::clock::Shared>(c.clock)),group(clock,guards,dtr,dtx),
+         output(external?output::Session(c.output):output::Session(c.output,std::move(slot),std::move(provider))){
         if(c.clock.in_call || c.clock.service_busy)throw std::invalid_argument("Quiescent native clock required");
     }
     void remove_ports(Record& r)noexcept{
@@ -78,6 +79,8 @@ struct Session::State {
 };
 Session::Session(Config config,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider)
     :state_(std::make_unique<State>(config,std::move(slot),std::move(provider))){}
+Session::Session(Config config):state_(std::make_unique<State>(config,nullptr,nullptr,true)){}
+std::shared_ptr<output::Submix> Session::submix()const noexcept{return state_->output.submix();}
 Session::~Session(){(void)request_stop();(void)join();}
 bool Session::valid(const Key& key,bool retiring)const noexcept{
     const auto& s=*state_;if(key.identity_.lock()!=s.identity || key.slot_>=s.records.size())return false;

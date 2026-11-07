@@ -110,4 +110,31 @@ void render_refusal(){
     check(f.session.start()==n::Status::closed && stream->copy(std::span<const std::byte>(bytes).first(64))==n::Status::closed,"render fault closes new admission");
     check(f.session.join()==n::Status::completed,"refused renderer still joins actual provider");
 }
-int main(){independent_lifetime();order_and_reference();refusals();concurrent();render_refusal();std::printf("%u shared stream output checks passed; no audio device\n",checks);}
+void external_submix(){
+    std::shared_ptr<n::Submix> retained;Fixture reference({2});
+    {
+        n::Session session(n::Config{2});retained=session.submix();
+        check(bool(retained) && !reference.session.submix(),"only external composition exposes a render-only lease");
+        std::array<float,256> values;values.fill(0.25f);
+        check(retained->render_add(values.data(),128)==n::Status::pending && values[0]==0.25f,"unstarted submix preserves prior audio");
+        auto a=session.open(2),b=session.open(1);auto ra=reference.open(2),rb=reference.open(1);
+        check(a.status==n::Status::completed && b.status==n::Status::completed,"external streams open without a provider");
+        auto left=plane(900),right=plane(-1100),mono=plane(500);
+        check(a.producer->copy(left,right)==n::Status::completed && b.producer->copy(mono)==n::Status::completed,"external actual planar copies");
+        check(ra->copy(left,right)==n::Status::completed && rb->copy(mono)==n::Status::completed,"same reference planar copies");
+        check(a.producer->play(true)==p::Status::completed && b.producer->play(true)==p::Status::completed && ra->play(true)==p::Status::completed && rb->play(true)==p::Status::completed,"same real voice controls");
+        check(session.start()==n::Status::completed && reference.session.start()==n::Status::completed,"private admission and actual model provider start");
+        check(reference.host->render(128) && retained->render_add(values.data(),128)==n::Status::completed,"external render adds to outer callback audio");
+        for(unsigned i=0;i<values.size();++i)check(std::bit_cast<uint32_t>(values[i])==std::bit_cast<uint32_t>(0.25f+reference.host->output[i]),"same private PCM plus existing outer mix");
+        check(a.producer->retire()==n::Status::completed,"external per-stream fence");values.fill(-0.125f);
+        check(retained->render_add(values.data(),128)==n::Status::completed && values[0]==-0.125f+500.0f/32768,"peer remains audible after external stream retire");
+        check(session.join()==n::Status::completed,"private submix fence completes without device join");
+        const auto snapshot=session.snapshot();
+        check(snapshot.external_output && snapshot.submix_fenced && snapshot.closed && !snapshot.provider_joined,"private fence never claims outer device retirement");
+        check(reference.host->unloads==0 && reference.slot->occupied(),"shared outer device lifetime is independent");
+        values.fill(0.5f);check(retained->render_add(values.data(),128)==n::Status::closed && values[0]==0.5f,"joined submix preserves remaining outer audio");
+    }
+    std::array<float,64> values;values.fill(0.125f);
+    check(retained->render_add(values.data(),32)==n::Status::closed && values[0]==0.125f,"retained callback lease outlives private control owner");
+}
+int main(){external_submix();independent_lifetime();order_and_reference();refusals();concurrent();render_refusal();std::printf("%u shared stream output checks passed; no audio device\n",checks);}

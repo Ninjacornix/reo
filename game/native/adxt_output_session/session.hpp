@@ -29,10 +29,22 @@ struct Snapshot {
     pcm::Statistics statistics;
     std::uint32_t occupied{}, playing{};
     bool closing{}, provider_joined{}, closed{}, order_required{}, render_fault{},bank_mix_fault{};
+    bool external_output{},submix_started{},submix_fenced{};
     pcm::Status last_render_status{pcm::Status::ok};
 };
 struct State;
 class Session;
+// Render-only lease for a shared outer device owner. It retains private stream
+// state, adds to an existing stereo mix and never opens/joins a device or renders
+// banks/master gain. Future calls after its private fence preserve the buffer.
+class Submix final {
+public:
+    [[nodiscard]] Status render_add(float* stereo,std::uint32_t frames)noexcept;
+private:
+    friend class Session;
+    explicit Submix(std::shared_ptr<State> state):state_(std::move(state)){}
+    std::shared_ptr<State> state_;
+};
 class Producer final:public adxt_playback::Output {
 public:
     ~Producer() override;
@@ -71,6 +83,10 @@ class Session final {
 public:
     Session(Config,std::shared_ptr<audio_output::CallbackSlot>,
             std::shared_ptr<audio_output::Provider>);
+    // External device composition only. Config.bank_mix must be empty: the
+    // outer owner renders banks/master once. start admits this private submix;
+    // it does not certify an actual device or callback binding.
+    explicit Session(Config);
     ~Session();
     Session(const Session&)=delete; Session& operator=(const Session&)=delete;
     [[nodiscard]] OpenResult open(std::uint32_t channels) noexcept;
@@ -81,7 +97,9 @@ public:
     void request_stop() noexcept;
     [[nodiscard]] Status join() noexcept;
     [[nodiscard]] Snapshot snapshot() const noexcept;
+    [[nodiscard]] std::shared_ptr<Submix> submix()const noexcept{return submix_;}
 private:
     std::shared_ptr<State> state_;std::shared_ptr<audio_output::Owner> owner_;
+    std::shared_ptr<Submix> submix_;
 };
 } // namespace reo::native::adxt_output_session

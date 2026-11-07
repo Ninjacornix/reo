@@ -75,5 +75,26 @@ int main(){try{
         check(!skipped->reads && last->reads>0 && i.inspect(a).completed_stops==1);
         check(i.inspect(b).starts==1);join(t);check(t.provider->unloaded && i.inspect(a).status==S::invalid_key);
     }
+    {
+        std::shared_ptr<n::control::output::Submix> retained;
+        {
+            n::Instances i(n::control::Config{{2},{}});retained=i.submix();check(bool(retained));
+            const auto a=i.create({1,{0,0,0,0}}),b=i.create({2,{1,1,1,1}});
+            check(a.status==S::completed && b.status==S::completed && i.start_output()==S::completed);
+            check(i.start(a.key,source(f::file(1,48000,20000)))==S::completed && i.start(b.key,source(f::file(2,24000,20000),2))==S::completed);
+            const auto work=[&]{const auto s=i.service(42);check(s==S::completed || s==S::pending);};
+            until([&]{work();const auto x=i.inspect(a.key).source,y=i.inspect(b.key).source;return x && y && x->output.voice.playing && y->output.voice.playing && x->output.channel[0].samples>=512 && y->output.channel[0].samples>=512;});
+            const auto before=i.inspect(b.key).source->output.channel[0].consumed_bytes;
+            std::array<float,512> output{};check(retained->render_add(output.data(),256)==n::control::output::Status::completed);
+            check(i.inspect(a.key).source->output.channel[0].consumed_bytes>0 && i.inspect(b.key).source->output.channel[0].consumed_bytes>before);
+            const auto stopped=i.stop(a.key);check(stopped==S::completed || stopped==S::pending);
+            until([&]{work();return i.inspect(a.key).phase==n::Phase::idle;});
+            check(i.inspect(b.key).source->output.voice.playing && retained->render_add(output.data(),256)==n::control::output::Status::completed);
+            until([&]{const auto s=i.join();check(s==S::completed || s==S::pending);return s==S::completed;});
+            const auto snapshot=i.snapshot().session;check(snapshot.joined && snapshot.output.external_output && snapshot.output.submix_fenced && !snapshot.output.provider_joined);
+        }
+        std::array<float,64> output;output.fill(0.25f);
+        check(retained->render_add(output.data(),32)==n::control::output::Status::closed && output[0]==0.25f);
+    }
     std::cout<<"Native stable ADXT instance checks "<<checks<<" passed\n";return 0;
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}}

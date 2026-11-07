@@ -32,6 +32,13 @@ logical capacity from decoder/reorder storage and passes all 201 owned movie
 streams with two ready pictures before playback. Actual scheduler/control/source
 binding and paced game validation are still required.
 
+The [external native submix](NATIVE_AUDIO_SUBMIX_RESULTS.md) now composes real
+native player workers with the complete bank/output model through one callback.
+It qualifies private/outer fence separation and preserves the null-profile
+reference observations. Its native-stream profile still refuses original PCM
+producer/reset operations. Actual source/control/reset binding and a coherent
+game candidate are required before this becomes an admitted game route.
+
 The timestamp and complete short-video gates have advanced beyond the earlier
 first-frame boundary. All 201 hash-verified File #1 SFD members (2.26 GB) contain
 no C0-DF or BD audio packets, so this edition's audio gate is its separate ADX

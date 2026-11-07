@@ -2,6 +2,7 @@
 #include "../adxt_shared_player/test_sources.hpp"
 #include "../adxt_player/test_provider.hpp"
 #include <cfenv>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <immintrin.h>
@@ -29,11 +30,19 @@ struct Fixture {
             host->step(64);std::this_thread::yield();}
     }
     void playing(p::Player& a,p::Player* b=nullptr){
-        for(unsigned n=0;n<10000;++n){advance(a,b);if(a.snapshot().output.voice.playing && (!b || b->snapshot().output.voice.playing))return;}
+        const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(15);
+        // The model device must not run one file to EOF while a peer's real
+        // source worker is still scheduled out. Admit both before rendering.
+        while(std::chrono::steady_clock::now()<deadline){
+            check(a.service(17)!=p::Status::fault,"clock player startup service");
+            if(b)check(b->service(17)!=p::Status::fault,"clock peer startup service");
+            if(a.snapshot().output.voice.playing && (!b || b->snapshot().output.voice.playing))return;
+            std::this_thread::yield();}
         check(false,"clock players reached playing");
     }
     void retire(p::Player& player){
-        for(unsigned n=0;n<10000;++n){const auto result=player.retire_on_control_thread();if(result==p::Status::completed)return;
+        const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(15);
+        while(std::chrono::steady_clock::now()<deadline){const auto result=player.retire_on_control_thread();if(result==p::Status::completed)return;
             check(result==p::Status::pending,"clock source join pending");std::this_thread::yield();}check(false,"bounded clock source join");
     }
 };
@@ -66,7 +75,8 @@ void live_pause(){
 void before_header(){
     Fixture f;auto a=f.make(40017,50);
     check(a->pause(1,60).status==p::Status::completed && a->snapshot().clock.paused==1,"pre-header pause stored");
-    for(unsigned n=0;n<10000 && a->snapshot().playback.phase!=reo::native::adxt_playback::Phase::playing;++n){
+    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(15);
+    while(std::chrono::steady_clock::now()<deadline && a->snapshot().playback.phase!=reo::native::adxt_playback::Phase::playing){
         check(a->service(70)!=p::Status::fault,"pre-paused buffering progresses");std::this_thread::yield();}
     const auto started=a->snapshot();
     check(started.configured && started.playback.started && !started.output.voice.playing && started.clock.tick_base==50,"paused start keeps original origin and actual output stopped");

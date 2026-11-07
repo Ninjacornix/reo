@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "status": "native external-submix ownership and model aggregate composition qualified; game binding absent",
+  "manifest_sha256": "51091dda8e48e9c5e11cbfb7f0d95e0e8341151cb2214973d803718330b0a253",
+  "evidence": {
+    "build-native-sjuni/submix/clean-build-llvm-v2/receipt.json": {
+      "sha256": "d6a8ed0792171015b4987fb9ba2f686f8373da4ccdcff68c4df2e07b30d802f4",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/submix/clean-build-gcc-v2/receipt.json": {
+      "sha256": "15cc42ea0b0503a045a2775cc3849e159b9f8029bbce347d559045fcea82b6da",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-instances/submix-qualified-llvm-v1/receipt.json": {
+      "sha256": "efb8b8f6ae19ec22955b7fc06229ca2e984859aa5e985d7722bebc52a68fee86",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/adxt-instances/submix-qualified-gcc-v1/receipt.json": {
+      "sha256": "30847cc21cae0cdaab0da8f86e9342aa46446b153588e784d2d3334c4a72a7e3",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/qualified-llvm-v2/receipt.json": {
+      "sha256": "764a7d434c5e604f3fc051b072d19b9b0b089a19eab9a39ea94aed1bea92018a",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/qualified-gcc-v2/receipt.json": {
+      "sha256": "954fcd03846b50b2eb6e93d2d291a9084f4803b5b991c64837ead09c4dfaa276",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/parent-llvm-v1/receipt.json": {
+      "sha256": "a60a2205c7ee3c7c10fec24b52e57b7f03e3a3931e93998c153462d1af631bcd",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/parent-gcc-v1/receipt.json": {
+      "sha256": "a45a8111e0bc633587b55819b4afb80b0c5375c631b23453e37c0b0f2233a55d",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    }
+  },
+  "parent_suites": 72,
+  "native_instance_workflows": 4,
+  "negative_controls": 4,
+  "game_integration": false,
+  "actual_audio_device_test": false,
+  "historical_failed_cohort": "submix/clean-build-llvm-v1: fixed model-device advancement during real source-worker startup in V2; same production DSP."
+}
