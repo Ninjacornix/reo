@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has sixty standalone suites, including the independent ADX
+project now has sixty-one standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -494,6 +494,14 @@ These comparisons corrected the earlier threshold and inactive-output contract
 annotations; failed candidates and unchanged original expectations are retained.
 Actual live clock/tick binding, movie lifecycle, game integration and stages 4–6
 remain required. Neither component is selected in the player's build.
+
+The [pause and buffering controller](../game/native/movie_pause/README.md) now
+matches all 316 original operations across 305 cases, including nested/raw pause,
+callback state updates, optional guard ordering and complete integer frame-step
+work. Ten deliberate faults and 14 provider-boundary checks are detected with
+both compilers; all 61 standalone suites pass. Complete buffer predicates,
+component/error binding, shared scheduler ownership and one coherent movie
+context remain required; this isolated controller does not complete stage 3.
 
 ## Target architecture
 

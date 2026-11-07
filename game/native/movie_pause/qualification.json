@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "status": "qualified isolated movie pause/buffering controller and complete integer frame step",
+  "manifest_sha256": "f145e8ae2bfbf378759248ca58c4dd86bcd921ec28abdd8a54c40e912dfd74c1",
+  "cases": 305,
+  "operations": 316,
+  "original_instructions": 35875,
+  "pre_native_original_receipt_sha256": "307a72f2834fa4eac93b2702b60859aa53dd1aa5ad99c17237fea8e0abda7f12",
+  "provider_boundary_checks": 14,
+  "detected_counterfactuals": 10,
+  "receipts": {
+    "build-native-sjuni/movie-pause/qualified-gcc-v2/receipt.json": "47eb40bcb1fb3fad4643629ea00c4644751dcc566d41bd517563cbcb7a9837a1",
+    "build-native-sjuni/movie-pause/qualified-llvm-v2/receipt.json": "cfd6ef16179a6d1cd1f17e6dc9340779324208e1b8899df804b54d62a1b5c9d4"
+  },
+  "complete_native_transcripts_equal": true,
+  "parent_suites": 61,
+  "parent_checks": {
+    "gcc": {
+      "build": "e79b6fcece4ef0061121cf1c6f1437e87f22e88b950fdea026fd4ff8472761fb",
+      "tests": "6f8556f1fa05d1ccdc316fa525d95f72d9de4326b8e0ec7b3890fa4cade3b711"
+    },
+    "llvm": {
+      "build": "58c57fdb1c0d4977ee53ba8efd05c6cd22253b0c87c64444ac09f6d2982147c2",
+      "tests": "b0f4c36f08dbe8df020f3d0e249ec9a269b1cb854630fe443574bd6fc4765ba2"
+    }
+  },
+  "failed_verification_receipts": {
+    "build-native-sjuni\\movie-pause\\qualified-gcc-v1\\receipt.json": "d46313cc84ca3b2be690441882f11399108945c7dc10d384a640ca0ccb88a5cd",
+    "build-native-sjuni\\movie-pause\\qualified-llvm-v1\\receipt.json": "80b1f27a71623b8945c14740d0ef3e646829295ebf49b10bb0933c04b9699356"
+  },
+  "failed_gcc_reason": "Counterfactual compilation warning; native comparison passed. Rewritten variant compiles and its behavioral fault is detected in v2.",
+  "ancestor_qualifications": {
+    "game/native/adx_sequence/qualification.json": "968758566aafb1a7543f2d484de3d8f05de58e50e34334ebd1ce8830dbefbbab",
+    "game/native/adxt_phased_player/qualification.json": "ff3b16d4711d277b04a9442b96c04b70ceed83cd50e3e92b1dd0c98ffebfda62",
+    "game/native/adxt_control_session/qualification.json": "93e6572d5fa5ebcd7c56a37bf53becde4b67b29903654549ae42fce06481b5b8",
+    "game/native/adxt_control_session/service_binding/qualification.json": "5ebe44eaa0027fed6c8598a918dbd2b070ec1f0d7c626e1427b1fd3bd2db016f",
+    "game/native/adxt_control_session/regular_loops/qualification.json": "16e13683e298e58a70fd206bdf62890eb063dfb1bf8b30c0d08129e7fea55710",
+    "game/native/adx_window/v2/queue_safe_r3/qualification.json": "534813bca73fc2025a540856e8c310817e6990f6c60b0f5b68d6e5942f915f03",
+    "game/native/adxt_lsc_input/qualification.json": "f45d306109727cf533bad1db2b470b1dd146876311a9319ff2763a803e129bd4",
+    "game/native/adxt_output_session/qualification.json": "6cdc3dd2009795a26be6b6d341f7723ebbc22677f7997de7d1147c571c3d987a",
+    "game/native/adxt_shared_player/qualification.json": "aa5e3bec4009fb98695f6f8f01566128a77d87de748200562d2aec3f2e4dec8e",
+    "game/native/adxt_clocked_player/qualification.json": "28995d805bec596e3e887fe7a099a8e9ca92f1c7c836ecc3571fab3ee124c857",
+    "game/native/audio_mix_tail/qualification.json": "d87bbb92860d2b17928bee3a5eb6d70fbe69a31bb38025326a0afb588628732c",
+    "game/native/movie_counter_clock/qualification.json": "f403bedf8199e8549309714d6a76db86ca1fdf1ffce73d367a981b00712d5e8b",
+    "game/native/movie_selected_clock/qualification.json": "72405491f18ff22c4220bd963715fc19f360aabaa66a4b4658ef2172ef29dd8c",
+    "game/native/movie_audio_filter/qualification.json": "c0a12576d1554147ecfa4fbda9d9af27ccefc91facd41872ae1cbbb23d992fea",
+    "game/native/movie_audio_clock/qualification.json": "42782469cb4dd5298784b32485a7226e832fdd149ed0212c520e5a1664e8959c"
+  },
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "limitations": [
+    "Complete buffer predicates, component dispatch and invalid-state error handling are declared ports.",
+    "Isolated paired pure guard-hook profile is not shared CRI/global scheduler or priority authority.",
+    "One coherent movie context, source/frame ownership and game transitions remain.",
+    "Gameplay, graphics/platform migration and runtime removal remain stages 4-6."
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified isolated movie counter and built-in rational query paths",
-  "manifest_sha256": "32b192e208e21ba52ae57127ff111ef86cef20448f4b042e33a7633e2f60be8f",
+  "manifest_sha256": "804b432cf3b3cd684bc062df67664b076a783e21d3471c1f4ad7deb533438c69",
   "cases": 504,
   "original_instructions": 11481,
   "owned_body_count": 9,
@@ -25,15 +25,15 @@
     "build-native-sjuni\\movie-counter-clock\\qualified-llvm-v1\\receipt.json": "a50383442c839d98faa99c8f11baa161de904394e1a904309e29272fe5c56019"
   },
   "pre_correction_candidate_snapshot": "build-native-sjuni\\movie-counter-clock\\failed-v1-inputs",
-  "parent_suites": 60,
+  "parent_suites": 61,
   "parent_checks": {
     "gcc": {
-      "build": "bc6460c319a2c41dc9babd79bbb62bdd16f6d1debd05daf6f50426c388f4db31",
-      "tests": "3d45fd11dbca8b12931e40000470d7f05e4d2eea6ed9befd1276b72534067461"
+      "build": "e79b6fcece4ef0061121cf1c6f1437e87f22e88b950fdea026fd4ff8472761fb",
+      "tests": "6f8556f1fa05d1ccdc316fa525d95f72d9de4326b8e0ec7b3890fa4cade3b711"
     },
     "llvm": {
-      "build": "e92311b44457bfedc0430d6a3fd9bf8c708434722323904f322502c621bf6e27",
-      "tests": "5023d2b7a565f35115654c7049e7aafa6e8ad311250672c5217beee7d8e6f6ca"
+      "build": "58c57fdb1c0d4977ee53ba8efd05c6cd22253b0c87c64444ac09f6d2982147c2",
+      "tests": "b0f4c36f08dbe8df020f3d0e249ec9a269b1cb854630fe443574bd6fc4765ba2"
     }
   },
   "stage3_complete": false,
@@ -66,6 +66,12 @@
     "qualification_sha256": "42782469cb4dd5298784b32485a7226e832fdd149ed0212c520e5a1664e8959c",
     "ancestor_path": "build-native-sjuni\\movie-audio-clock\\ancestor-v1\\game\\native\\movie_counter_clock\\qualification.json",
     "ancestor_sha256": "bdd9daa3fa2415f33f1d05c21f279f0c903374b03eb63191a9bdf92f48cd9133",
+    "existing_runtime_sources_unchanged": true
+  },
+  "pause_standalone_build_extension": {
+    "qualification_sha256": "2ef86f5e3e5802d5205daeeec71a61f06cca266d5b73af1744814da8942faa93",
+    "ancestor_path": "build-native-sjuni\\movie-pause\\ancestor-v1\\game\\native\\movie_counter_clock\\qualification.json",
+    "ancestor_sha256": "f403bedf8199e8549309714d6a76db86ca1fdf1ffce73d367a981b00712d5e8b",
     "existing_runtime_sources_unchanged": true
   }
 }

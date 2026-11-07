@@ -210,7 +210,7 @@
     "recomp/overrides/native_banks/v3/packet_adapter_tests.cpp": "3226ab030e1f9a1305207ac7ea5ed06992332e209f86589f4ac4135d91ff2916",
     "recomp/overrides/native_banks/v3/test_capture.h": "2f60cb0cbb0562c098dc19030d6ff5c20acd0671b9100ef0eecb53b18cfc373f",
     "recomp/overrides/native_banks/v3/verify.py": "d77119090ededf7a81605d20ac2cf1bfe3531635b0f3946bb5e47dc653ca5948",
-    "game/native/CMakeLists.txt": "4e5f74f883d682e30cd533611552cc43eeea40ee6cb5cf0440bf84939424132b",
+    "game/native/CMakeLists.txt": "7b9e41118827da6242efcc730dbdd6243746b2655602226b9ee3116f064031a7",
     "game/native/audio_banks/source_records.inc": "44ea539c47bfd2dc31271c0aa96b9876d73818c9923a9739edae50127287dc0a",
     "docs/native-media/SHARED_STREAM_BANK_OUTPUT_CONTRACT.md": "a665c2673c12deebe8110aa5081cda3a2b0d75324c1699992bdd2e7809c0e92d"
   },
