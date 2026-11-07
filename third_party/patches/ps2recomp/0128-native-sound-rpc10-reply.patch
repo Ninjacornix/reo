@@ -1,0 +1,36 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -650,6 +650,20 @@
+                 if(audio.ensure_output()!=ps2_cri_audio::BankStatusV2::ok)return true;
+                 (void)audio.submit_packet(rdram,32u*1024u*1024u,packet.data,packet.bytes);
+                 return true; // Source deliberately ignores the parser bool/status.
++            }
++            // This measured startup request used the generic host reply, not
++            // an IOP query implementation. Preserve its exact transport rules:
++            // self alias clears; a distinct short send leaves the receive tail.
++            if(sid==IOP_SID_SNDDRV_STATE&&rpcNum==0x10){
++                if(recvBuf&&recvSize){
++                    if(sendBuf&&sendSize&&sendBuf!=recvBuf){
++                        const auto bytes=std::min<std::size_t>(std::min(sendSize,recvSize),1u<<20);
++                        if(cap.forward(RamSpace::ee,sendBuf,RamSpace::ee,recvBuf,bytes)!=ps2_cri_audio::BankStatusV2::ok)return true;
++                    }else if(cap.zero(RamSpace::ee,recvBuf,std::min<std::size_t>(recvSize,1u<<20),RamControl::query_reply)!=ps2_cri_audio::BankStatusV2::ok)return true;
++                }
++                // No extra early NOWAIT signal. The normal end callback owns
++                // completion, just as in the previous generic SIF path.
++                return true;
+             }
+             const uint32_t query=rpcNum&255;
+             if(sid==IOP_SID_SNDDRV_STATE&&(query==4||query==6||query==12)){
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -144,7 +144,7 @@
+ }
+ bool coversSoundRpcV2(std::uint32_t sid,std::uint32_t rpc) noexcept {
+     const auto query=rpc&0xFFu;
+-    return (sid==0&&rpc==0)||(sid==1&&(query==4||query==6||query==0x0C||rpc==0x12||rpc==0x13));
++    return (sid==0&&rpc==0)||(sid==1&&(query==4||query==6||query==0x0C||rpc==0x10||rpc==0x12||rpc==0x13));
+ }
+ BankStatusV2 SoundCall::ensure_output() const {
+     if(status_!=BankStatusV2::ok)return status_;if(control_)return BankStatusV2::unsupported;

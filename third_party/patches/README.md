@@ -1,5 +1,12 @@
 # Dependency patches
 
+Patch `0128` admits the measured sound state RPC `0x10` and reproduces the
+existing generic reply through owned RAM transport, including alias and clamp
+rules. Existing query routes and ABI layouts are unchanged. The full 129-patch
+series, frozen reply comparisons and both compilers' affected objects pass;
+matching linked game retest remains required. See the
+[reply qualification](../../docs/native-media/SOUND_RPC10_COMPATIBILITY.md).
+
 Patch `0127` adds bounded native sound RPC refusal identity logs. It preserves
 existing request coverage, guest access, completion and published ABI layouts.
 The complete 128-patch series and both compilers' affected objects/capture
