@@ -2,7 +2,7 @@
   "schema": 1,
   "files": {
     "docs/native-media/MOVIE_CLOCK_INITIALIZATION_CONTRACT.md": "4fe947e6c6e899730064c3aff9f824f9f33e4732c8521f581196003cc4a49e9e",
-    "game/native/CMakeLists.txt": "ff0c24f193e1906d3f6f0eb96ec0ce245186d2e3b0f1ea2af36390ee5bd2c5e9",
+    "game/native/CMakeLists.txt": "764013ef697c6c731c1b48f675e3fed92af53cd2e31642a7ca07db90421c912d",
     "game/native/movie_clock_initialize/CMakeLists.txt": "99486adb82c47b5372490ff97e57010e4df26d6a2e0d92495d7b2fbd8802792c",
     "game/native/movie_clock_initialize/fixture.cpp": "33f663db36352b1ec6173f8bffcab13f39e2010031c7dce93ee26ef0b8432658",
     "game/native/movie_clock_initialize/initialize.cpp": "ac7c0956d8ca37564ad86b6e948a8889e7e93ed2c04f1b6ecc21918bfb3b5d9e",

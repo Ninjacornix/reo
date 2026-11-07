@@ -12,15 +12,15 @@
     "build-native-sjuni/movie-selected-clock/qualified-llvm-v4/receipt.json": "5e8ffed30d25a37d9c7a2e0bcf75c5cc6bbc9b7aa8b7ab5a52e9bb65794ee1b5"
   },
   "complete_native_transcripts_equal": true,
-  "parent_suites": 62,
+  "parent_suites": 63,
   "parent_checks": {
     "gcc": {
-      "build": "c6d5a53e819c76d12cc409dae419fe819e33f12cef0bf7d3557980db61577b1d",
-      "tests": "58601b729bb408c53b923250e3f5f7263687b80a3bed572a3f4cca862f3dd2da"
+      "build": "fc96e8c9e31bc503a56dd2c2b0af3cb49ffc60ea473337ed2f5c8918dd78aaaa",
+      "tests": "bee3b451bbfc8243923b539572a98febce70019343f1df7c6b27595493083dd7"
     },
     "llvm": {
-      "build": "c220651cb1c9f41ad618ae63f1ca865df1b3ad581eb0df1c141c37fa624c6f7d",
-      "tests": "a2ffaf0131b25c97d1e3d12d1ba87524cc8d8b9f9fe4524cbb3382d3a576295b"
+      "build": "6a3bde8f0a70b35d84100672dfc8f4ebc317d33c91ba5a6e87476fa96b9f87d2",
+      "tests": "85d89c455fa9aeba50442c86cbfff3c9c09c6b698e0300da44328a253dfe0bb5"
     }
   },
   "pre_native_freezes": {
@@ -47,7 +47,7 @@
     "game\\native\\movie_selected_clock\\README.md": "42f5a654adf192a9bd6a252ec41ebccae97929d44284c642561962b93443c738",
     "docs\\native-media\\MOVIE_SELECTED_CLOCK_IMPLEMENTATION.md": "84e0a71e3d91c4a1e2b5641978173fb9c5b180461172695acb5c0af6f3ad8820",
     "game\\native\\CMakeLists.txt": "a54959fe6e3fa01d9f32e2e1202af71d79a09b65c869f4ada647ad6c931df7dd",
-    "game/native/CMakeLists.txt": "ff0c24f193e1906d3f6f0eb96ec0ce245186d2e3b0f1ea2af36390ee5bd2c5e9"
+    "game/native/CMakeLists.txt": "764013ef697c6c731c1b48f675e3fed92af53cd2e31642a7ca07db90421c912d"
   },
   "limitations": [
     "Declared external sample/hook ports do not qualify a real clock source, runtime capture or thread priority.",
@@ -77,6 +77,12 @@
     "qualification_sha256": "6bdacf99de035e7dfad857cf5f7d5f05feed75ae0f8b2307e084cd28be831e3b",
     "ancestor_path": "build-native-sjuni\\movie-clock-initialize\\ancestor-v1\\game\\native\\movie_selected_clock\\qualification.json",
     "ancestor_sha256": "8280b6b5d0e5ffdf1dc1b34a4e830a84a7ef941e4761fdd121de1f27eda07dbe",
+    "existing_runtime_sources_unchanged": true
+  },
+  "admission_standalone_build_extension": {
+    "qualification_sha256": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b",
+    "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\movie_selected_clock\\qualification.json",
+    "ancestor_sha256": "9ca68d1e5fb4260c8073e05ec6f2287e9ec6593e130ec241282cff135b1fe22f",
     "existing_runtime_sources_unchanged": true
   }
 }

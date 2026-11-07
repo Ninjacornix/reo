@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has sixty-two standalone suites, including the independent ADX
+project now has sixty-three standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -511,6 +511,15 @@ detects eight deliberate faults; all 62 standalone suites pass. This is fresh
 clock construction, not live stop/rebuild, property restoration or frame/source
 retirement. One coherent movie owner and complete media transition validation
 still gate stage 3; stages 4–6 remain open.
+
+The [picture admission arithmetic](../game/native/movie_admission/README.md)
+now matches 336 original operations across 330 cases through the complete
+ratio/slack, auxiliary and hysteresis bodies. Both compilers detect 12 deliberate
+faults; 11 boundary checks preserve refusals and host FP state, and all 63
+standalone suites pass. The cached-clock query remains an explicit value
+boundary, with original incidental FP effects recorded separately. Public bypass
+policies, skip/frame-return paths, one coherent movie owner and real transition
+validation still gate stage 3. Stages 4–6 remain open.
 
 ## Target architecture
 

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified isolated movie pause/buffering controller and complete integer frame step",
-  "manifest_sha256": "a00f1961d5d5eaf0c73f17d951709ff05d2fd11f13ca4e0efcc96e66c4758b27",
+  "manifest_sha256": "d97d5080a360642ac0e3fb406743bbe5888d791c6e1bb2d7088dc14af21badd9",
   "cases": 305,
   "operations": 316,
   "original_instructions": 35875,
@@ -13,15 +13,15 @@
     "build-native-sjuni/movie-pause/qualified-llvm-v2/receipt.json": "cfd6ef16179a6d1cd1f17e6dc9340779324208e1b8899df804b54d62a1b5c9d4"
   },
   "complete_native_transcripts_equal": true,
-  "parent_suites": 62,
+  "parent_suites": 63,
   "parent_checks": {
     "gcc": {
-      "build": "c6d5a53e819c76d12cc409dae419fe819e33f12cef0bf7d3557980db61577b1d",
-      "tests": "58601b729bb408c53b923250e3f5f7263687b80a3bed572a3f4cca862f3dd2da"
+      "build": "fc96e8c9e31bc503a56dd2c2b0af3cb49ffc60ea473337ed2f5c8918dd78aaaa",
+      "tests": "bee3b451bbfc8243923b539572a98febce70019343f1df7c6b27595493083dd7"
     },
     "llvm": {
-      "build": "c220651cb1c9f41ad618ae63f1ca865df1b3ad581eb0df1c141c37fa624c6f7d",
-      "tests": "a2ffaf0131b25c97d1e3d12d1ba87524cc8d8b9f9fe4524cbb3382d3a576295b"
+      "build": "6a3bde8f0a70b35d84100672dfc8f4ebc317d33c91ba5a6e87476fa96b9f87d2",
+      "tests": "85d89c455fa9aeba50442c86cbfff3c9c09c6b698e0300da44328a253dfe0bb5"
     }
   },
   "failed_verification_receipts": {
@@ -61,6 +61,12 @@
     "qualification_sha256": "6bdacf99de035e7dfad857cf5f7d5f05feed75ae0f8b2307e084cd28be831e3b",
     "ancestor_path": "build-native-sjuni\\movie-clock-initialize\\ancestor-v1\\game\\native\\movie_pause\\qualification.json",
     "ancestor_sha256": "2ef86f5e3e5802d5205daeeec71a61f06cca266d5b73af1744814da8942faa93",
+    "existing_runtime_sources_unchanged": true
+  },
+  "admission_standalone_build_extension": {
+    "qualification_sha256": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b",
+    "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\movie_pause\\qualification.json",
+    "ancestor_sha256": "92eca6ab937c625dc8d4be6d9aa1919d80e4d6b4c9926436ecf7e4cf77e95e75",
     "existing_runtime_sources_unchanged": true
   }
 }

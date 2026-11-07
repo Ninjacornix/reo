@@ -1,19 +1,19 @@
 {
   "schema": 1,
   "status": "qualified media graph with optional shared native bank/packet output",
-  "manifest_sha256": "ce75a3b2309b8b50840f3af056e1972c6e5340383d3f485f6a2d8f3fdbe9b7b2",
+  "manifest_sha256": "7e0570f2e674d33202c587af9d064f70eb598003cb3e2789f724da300c8f40c7",
   "ancestor_snapshot": "build-native-sjuni/audio-mix-tail/ancestor-v1/game/native/adxt_control_session/qualification.json",
   "ancestor_qualification_sha256": "accb564c8e0e8d3ac3e635b6775dcf8ea66ef559defe8d3706cfa0b750eb1d95",
-  "shared_mix_qualification_sha256": "d0756dbf5289529a69d57a99539cb8b1ad851d148bc9521ffe8c5fd36e0788a8",
-  "parent_suites": 62,
+  "shared_mix_qualification_sha256": "df52bd94ecf11081602d6a5b1ccca117409e7cfcf3bcb2bb98dfa877695f4623",
+  "parent_suites": 63,
   "parent_checks": {
     "gcc": {
-      "build": "c6d5a53e819c76d12cc409dae419fe819e33f12cef0bf7d3557980db61577b1d",
-      "tests": "58601b729bb408c53b923250e3f5f7263687b80a3bed572a3f4cca862f3dd2da"
+      "build": "fc96e8c9e31bc503a56dd2c2b0af3cb49ffc60ea473337ed2f5c8918dd78aaaa",
+      "tests": "bee3b451bbfc8243923b539572a98febce70019343f1df7c6b27595493083dd7"
     },
     "llvm": {
-      "build": "c220651cb1c9f41ad618ae63f1ca865df1b3ad581eb0df1c141c37fa624c6f7d",
-      "tests": "a2ffaf0131b25c97d1e3d12d1ba87524cc8d8b9f9fe4524cbb3382d3a576295b"
+      "build": "6a3bde8f0a70b35d84100672dfc8f4ebc317d33c91ba5a6e87476fa96b9f87d2",
+      "tests": "85d89c455fa9aeba50442c86cbfff3c9c09c6b698e0300da44328a253dfe0bb5"
     }
   },
   "receipts": {
@@ -99,6 +99,12 @@
     "qualification_sha256": "6bdacf99de035e7dfad857cf5f7d5f05feed75ae0f8b2307e084cd28be831e3b",
     "ancestor_path": "build-native-sjuni\\movie-clock-initialize\\ancestor-v1\\game\\native\\adxt_control_session\\qualification.json",
     "ancestor_sha256": "d4fb384840e14270c449c9db635927a166b738e480667595f14acc7524c0cf30",
+    "existing_runtime_sources_unchanged": true
+  },
+  "admission_standalone_build_extension": {
+    "qualification_sha256": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b",
+    "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\adxt_control_session\\qualification.json",
+    "ancestor_sha256": "88484535fb2f45848ad8bf6bf3cb2565d8d4f3ac6f25d78152f3ff90d4a361fb",
     "existing_runtime_sources_unchanged": true
   }
 }
