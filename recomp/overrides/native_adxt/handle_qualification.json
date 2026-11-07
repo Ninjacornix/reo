@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "status": "read-only handle shape admission and original source-word provenance qualified; actual game binding absent",
+  "authored_sha256": {
+    "handle_profile.h": "09b60bc39d12db4b175a2a750a07ca069e24ac0f8d863e5e8e732c29333af8ae",
+    "handle_profile_tests.cpp": "06ac501aaf64e9457b74294972771b757548da2e91818afe7a89a75bd532005e",
+    "verify_handle_profile.py": "4426effa497fb4f275905a25b7a02b010efc0cde15d7ac983210119f8268c751"
+  },
+  "documentation_sha256": "0b2e65ef3d0be15ad2f2599edf262ae5922be54812b97a2d73c910d274e0163f",
+  "evidence": {
+    "build-native-sjuni/adxt-binding/handle-llvm-v1/receipt.json": {
+      "sha256": "8ee0c54b22946f0c769befab8c0de4985649fb8c93108fa7aa333bf2627cb56f",
+      "status": "File1 handle shape admission qualified with original word provenance"
+    },
+    "build-native-sjuni/adxt-binding/handle-gcc-v1/receipt.json": {
+      "sha256": "04768bcb7e0ce792ae89d1b2a6c50a5295b343cebab73688c530612726ec9d4f",
+      "status": "File1 handle shape admission qualified with original word provenance"
+    }
+  },
+  "checks_per_compiler": 210,
+  "detected_faults_per_compiler": 3,
+  "original_complete_intervals": 7,
+  "file_descriptor_capacity": 40,
+  "native_stream_index": "ADXT slot, not file descriptor slot",
+  "stereo_profile": "adjacent DTR slots, both must be reserved by future binding",
+  "original_constructors_executed": false,
+  "actual_runtime_acquisition_exercised": false,
+  "guest_binding_installed": false,
+  "game_run": false
+}
