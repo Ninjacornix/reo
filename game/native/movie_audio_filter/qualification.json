@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "status": "qualified isolated movie audio-time filter",
+  "manifest_sha256": "037b56b86a0f60b914354368e9b756c1cee1c308c137696d44fb252c0f0d1e4b",
+  "cases": 67,
+  "operations": 574,
+  "constructors": 67,
+  "snapshots": 641,
+  "original_instructions": 561990,
+  "original_owned_bodies": 20,
+  "unvisited_main_nonpadding_words": 0,
+  "detected_counterfactuals": 8,
+  "admission_checks": 10,
+  "receipts": {
+    "build-native-sjuni/movie-audio-filter/qualified-gcc-v3/receipt.json": "61df67443cc7cc84b8617a3599a1bc47179df54dc2c3c1abee51dfda111fff6b",
+    "build-native-sjuni/movie-audio-filter/qualified-llvm-v3/receipt.json": "e1f423f855b082513fae60de51ae93bc4fa5297aa22fba10230ab5ff78075036"
+  },
+  "complete_native_transcripts_equal": true,
+  "parent_suites": 58,
+  "parent_checks": {
+    "gcc": {
+      "build": "b780b23fe8de102deb9e6f981019953f793b39841727ee0d161579ecd2b45d08",
+      "tests": "09f342baee0f61f95fea6df818b9b8c4bac996a3fb53652b56ba635d4c7635c0"
+    },
+    "llvm": {
+      "build": "8bdb3d4b9959dfe1b4b62728a9ad00bd680d780217c55fc726fb682ea46f188f",
+      "tests": "e9bb99ce587a1b24cc1c67b30dc1ad7d37e255b9452a543e646650d7cdfa470a"
+    }
+  },
+  "pre_native_original_receipt_sha256": "6564b5452b849ba68aa3bde7bf424c4bd4b9024d4372132ffdbf346200925e64",
+  "isa_memset_receipt_sha256": "6e61eca6bfc7100c74b144476daafcc8f0e25dd36d0e4c9039548b754b7002f5",
+  "isa_unit_methods": 10,
+  "actual_memset_cases": 624,
+  "actual_memset_instructions": 292722,
+  "original_exclusions": 5,
+  "failed_receipts": {
+    "build-native-sjuni\\movie-audio-filter\\qualified-gcc-v1\\receipt.json": "3e08481dd245c57ad2d979bfd02c18792dbd8d20f8769e53cffcef034b5e6960",
+    "build-native-sjuni\\movie-audio-filter\\qualified-llvm-v1\\receipt.json": "954e25ba926a9168093d2b4edacf4aaa5630370e055fd8e777b7eeacd6268766"
+  },
+  "ancestor_qualifications": {
+    "game/native/adx_sequence/qualification.json": "ee2217eff5f9703bc77c0e503be6d1181dab3690c8fe836f77b7eac4c0302ba9",
+    "game/native/adxt_phased_player/qualification.json": "3d725277f024dc34d0c76b35e51101ec8bc8a82d1cbd311f8d86dbd0a5c08c64",
+    "game/native/adxt_control_session/qualification.json": "a8d13d0a1b1d45c264edbfe2919aa63ac32e74eb01d93e9ad797a7e2c1ed546b",
+    "game/native/adxt_control_session/service_binding/qualification.json": "1a63fad1c3a56dfebcc3fd6b561cbe3188a85db0015386ef489afa97a1ecacdc",
+    "game/native/adxt_control_session/regular_loops/qualification.json": "d8df0bd712736efb855e9c6f39a94d2a6cfe221f57585b7e9dfb2cfd1bcd6431",
+    "game/native/adx_window/v2/queue_safe_r3/qualification.json": "d8d25c0cd1e81829989e360310d266a14fe1f2f959a5428a26268f8289aa3122",
+    "game/native/adxt_lsc_input/qualification.json": "3898072c633ff892669dfa9948802dab228f36a8dff4cad0c1b612619c056e5e",
+    "game/native/adxt_output_session/qualification.json": "cc31c1ca7e5bd97c557fcfbd598e0d78ab288f9ec17025c48e2b3d0a104539d6",
+    "game/native/adxt_shared_player/qualification.json": "2786dc819c067d48987ae98da0b386dcd860637089df5aaf8846aba84a2fd3a8",
+    "game/native/adxt_clocked_player/qualification.json": "9e1446518abdcce47ff6597c29a7a9e72d8ffe86e72466849c1555eab73c6a43",
+    "game/native/audio_mix_tail/qualification.json": "8dd09ec9a898047a708b56349d0ae4492fd6b429c1a518cdfd518194049d5fea",
+    "game/native/movie_counter_clock/qualification.json": "951d45313ec07ed7550d8d61179208682c0b620e5009050d702975253dbb11e0",
+    "game/native/movie_selected_clock/qualification.json": "8c7870d9d6ab60b90031e6725e0d343de62e5bd53f2ed98536cba437e9813615"
+  },
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "limitations": [
+    "Null optional CSV buffer only. No formatting or software-double qualification.",
+    "Bounded history and disjoint input/state profile; excluded source failures are not native failure parity.",
+    "Actual ADXT/counter providers, clock binding, shared guards and movie lifecycle remain.",
+    "Gameplay, graphics/platform migration and runtime removal remain stages 4-6."
+  ]
+}

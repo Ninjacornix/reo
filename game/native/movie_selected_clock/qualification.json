@@ -12,15 +12,15 @@
     "build-native-sjuni/movie-selected-clock/qualified-llvm-v4/receipt.json": "5e8ffed30d25a37d9c7a2e0bcf75c5cc6bbc9b7aa8b7ab5a52e9bb65794ee1b5"
   },
   "complete_native_transcripts_equal": true,
-  "parent_suites": 57,
+  "parent_suites": 58,
   "parent_checks": {
     "gcc": {
-      "build": "d83abef4c3b3ef4370794256623da76e610ed29e3b1bcc1079ada27283cc6c93",
-      "tests": "3d67806ac65e177035df1729e997f8864bc6e9608de1155f4ee35cfa6c771606"
+      "build": "b780b23fe8de102deb9e6f981019953f793b39841727ee0d161579ecd2b45d08",
+      "tests": "09f342baee0f61f95fea6df818b9b8c4bac996a3fb53652b56ba635d4c7635c0"
     },
     "llvm": {
-      "build": "f9eab6e9723d6a3d3c67d04920b593b267606cfc072110c45e031831e05d8ccd",
-      "tests": "62a19c658be8aff66af7b89c83f61fd03b5045de5b0f81a1601a86d90210517a"
+      "build": "8bdb3d4b9959dfe1b4b62728a9ad00bd680d780217c55fc726fb682ea46f188f",
+      "tests": "e9bb99ce587a1b24cc1c67b30dc1ad7d37e255b9452a543e646650d7cdfa470a"
     }
   },
   "pre_native_freezes": {
@@ -46,12 +46,19 @@
   "additional_sources": {
     "game\\native\\movie_selected_clock\\README.md": "42f5a654adf192a9bd6a252ec41ebccae97929d44284c642561962b93443c738",
     "docs\\native-media\\MOVIE_SELECTED_CLOCK_IMPLEMENTATION.md": "84e0a71e3d91c4a1e2b5641978173fb9c5b180461172695acb5c0af6f3ad8820",
-    "game\\native\\CMakeLists.txt": "a54959fe6e3fa01d9f32e2e1202af71d79a09b65c869f4ada647ad6c931df7dd"
+    "game\\native\\CMakeLists.txt": "a54959fe6e3fa01d9f32e2e1202af71d79a09b65c869f4ada647ad6c931df7dd",
+    "game/native/CMakeLists.txt": "791da18526252d5d6781282a5ba2256dc510534b2d9dcbfebb3f639afaf9f829"
   },
   "limitations": [
     "Declared external sample/hook ports do not qualify a real clock source, runtime capture or thread priority.",
     "Point-of-use scratch is opaque input; old frame bits are not a valid timestamp claim.",
     "Shared guard ownership, ADXT filter, movie construction/reset/pause/buffering/due/skip/frame-source lifetimes and game transitions remain.",
     "Gameplay, graphics/platform migration and runtime removal remain stages4-6."
-  ]
+  ],
+  "audio_filter_standalone_build_extension": {
+    "qualification_sha256": "0f7993c582bb50637b5e90c545ac1817170750adee2756c5169eb7a912959599",
+    "ancestor_path": "build-native-sjuni\\movie-audio-filter\\ancestor-v1\\game\\native\\movie_selected_clock\\qualification.json",
+    "ancestor_sha256": "8c7870d9d6ab60b90031e6725e0d343de62e5bd53f2ed98536cba437e9813615",
+    "existing_runtime_sources_unchanged": true
+  }
 }
