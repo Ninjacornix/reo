@@ -72,6 +72,7 @@ int main(int argc,char** argv){try{
     life::GraphConfig config;config.video=videos;config.clock.audio=std::make_shared<Audio>();config.clock.helper=std::make_shared<Helper>();config.clock.ports=std::make_shared<Ports>();config.clock.facts.selector=1;
     auto owner=life::Session::create(std::make_shared<life::PreparedFactory>(config));auto run=owner->open({view,0,view->size()});check(run.status==life::Status::completed,"Construct actual source/timing/parser/GPU graph");
     auto movie=videos->latest.lock();n::Updates observed;observed.actual=4;observed.requested=4;auto prime=[&](life::Key key,const std::shared_ptr<gpu::NativeVideoGraph>& graph){
+        check(graph->frames()->snapshot().count==2,"Actual two-slot logical frame pool, independent of physical decoder storage");
         n::Updates preparing;preparing.actual=2;preparing.requested=4;
         check(graph->clock()->observe(preparing)==n::Status::completed,"Prepare before native video priming");
         until([&]{
@@ -113,6 +114,6 @@ int main(int argc,char** argv){try{
     },"Whole native video stream drain");
     const auto decoded=replacement->decodedPictures();check(decoded==presented && decoded>0,"Every decoded movie picture reached a real renderer reader");
     replacement.reset();until([&]{const auto status=owner->close();check(status==life::Status::completed || status==life::Status::pending,"Final movie close status");return status==life::Status::completed;},"Final real GPU graph retirement");
-    std::cout<<"{\"status\":\"real GPU movie priming checks passed\",\"primed_ready_pictures\":2,\"graphs\":"<<videos->created<<",\"pixel_sha256\":\""<<hash<<"\",\"width\":"<<picture.width<<",\"height\":"<<picture.height<<",\"decoded\":"<<decoded<<",\"presented\":"<<presented<<",\"whole_video_stream\":true,\"renderer_fence_blocked_rebuild\":true,\"game_run\":false,\"audio_device_opened\":false}\n";
+    std::cout<<"{\"status\":\"real GPU movie priming checks passed\",\"logical_frame_slots\":2,\"primed_ready_pictures\":2,\"graphs\":"<<videos->created<<",\"pixel_sha256\":\""<<hash<<"\",\"width\":"<<picture.width<<",\"height\":"<<picture.height<<",\"decoded\":"<<decoded<<",\"presented\":"<<presented<<",\"whole_video_stream\":true,\"renderer_fence_blocked_rebuild\":true,\"game_run\":false,\"audio_device_opened\":false}\n";
     return 0;
 }catch(const std::exception& error){std::cerr<<"GPU media pipeline check failed: "<<error.what()<<'\n';return 1;}}

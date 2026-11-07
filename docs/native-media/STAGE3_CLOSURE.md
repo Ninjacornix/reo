@@ -27,10 +27,10 @@ diagnostics must not silently select experimental rendering or VU paths.
 The stable [ADXT instance facade](ADXT_INSTANCE_OWNERSHIP_CONTRACT.md) now passes
 actual source/peer-retirement and detected-fault checks with both compilers;
 the combined project has 72 passing standalone suites. It is not a game ABI
-binding. The [priming checkpoint](MOVIE_PRIMING_RESULTS.md) prepares two ready
-pictures before playback, but still has three logical slots. The observed game
-configuration has two: logical capacity must be separated from decoder/reorder
-storage before that profile is admitted.
+binding. The [two-slot priming checkpoint](MOVIE_PRIMING_RESULTS.md) now separates
+logical capacity from decoder/reorder storage and passes all 201 owned movie
+streams with two ready pictures before playback. Actual scheduler/control/source
+binding and paced game validation are still required.
 
 The timestamp and complete short-video gates have advanced beyond the earlier
 first-frame boundary. All 201 hash-verified File #1 SFD members (2.26 GB) contain

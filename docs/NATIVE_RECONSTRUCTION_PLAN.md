@@ -1,5 +1,16 @@
 # Outbreak native reconstruction plan
 
+Current stage-3 checkpoint: stable native ADXT instances pass both compilers'
+ownership checks; all 72 standalone suites pass. The native video graph now
+separates two logical frame slots from physical reorder storage, and all 201
+File #1 movies prime/rebuild and present all 216,998 independently counted
+pictures. The [priming results](native-media/MOVIE_PRIMING_RESULTS.md) identify
+the exact cohorts. V13 resolves the identified startup sound RPC refusal in a
+bounded game retest, but the [late cinematic hitch](native-media/AUDIO_CANDIDATE_V13_STUTTER.md)
+remains. A CRI group-four ownership spike guides the next timed retest. Whole
+media consumer binding, actual transitions and audible A/V validation keep
+[stage 3 open](native-media/STAGE3_CLOSURE.md).
+
 Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapter
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass

@@ -13,13 +13,16 @@ namespace life=reo::native::movie_lifecycle;
 class NativeVideoGraph final:public life::VideoBackend {
     Mpeg2ElementaryStream elementary_;MpegProgramStream program_;
     std::shared_ptr<native_frames::Context> clock_;std::shared_ptr<native_frames::VideoFrames> frames_;
-    std::shared_ptr<SameOwnerMovieBridge> bridge_;std::unique_ptr<NativeVideoFrames> pipeline_;
+    std::shared_ptr<SameOwnerMovieBridge> bridge_;
     NativeFrameSurface::Recorder record_;
     uint64_t generation_{};uint16_t previous_=0xffff,current_=0xffff;
     int64_t watermark_=std::numeric_limits<int64_t>::min();
-    struct Pending {native_frames::FrameKey key;native_frames::Words time;int64_t pts;};
+    // Decoder/reference storage is independent of the game-visible picture
+    // pool. Holding a future anchor must not consume a logical display slot.
+    struct Pending {std::shared_ptr<NativeFrameSurface> surface;native_frames::Words time;int64_t pts;};
     std::vector<Pending> pending_;bool ended_{},closing_{},fault_{};
     std::vector<native_frames::FrameKey> published_;
+    std::vector<std::weak_ptr<NativeFrameSurface>> inflight_;
     struct Accounting {uint64_t begin,end;reo::native::movie_timestamp::Stamp stamp;};
     std::deque<Accounting> accounting_;
     reo::native::movie_timestamp::FlowState time_;
@@ -47,19 +50,23 @@ class NativeVideoGraph final:public life::VideoBackend {
         // Zero is the minimum admitted PTS. Other anchors wait until the next
         // anchor establishes the reorder watermark, or genuine parser EOF.
         if(item->pts!=0 && item->pts>=watermark_ && !(ended_ && !elementary_.hasPicture()))return life::Status::completed;
-        const auto status=pipeline_->publishTime(item->key,item->time);
+        const auto reserved=frames_->reserve();
+        if(reserved.status==native_frames::FrameStatus::pending)return life::Status::completed;
+        if(reserved.status!=native_frames::FrameStatus::completed)return life::Status::provider_failure;
+        const auto status=frames_->publish(reserved.key,item->time,item->surface);
         if(status!=native_frames::FrameStatus::completed && status!=native_frames::FrameStatus::pending)return life::Status::provider_failure;
-        published_.push_back(item->key);
+        published_.push_back(reserved.key);
         pending_.erase(item);
         return life::Status::completed;
     }
 public:
     NativeVideoGraph(std::shared_ptr<native_frames::Context> clock,uint64_t generation,
-                     std::shared_ptr<SameOwnerMovieBridge> bridge,NativeFrameSurface::Recorder record)
+                     std::shared_ptr<SameOwnerMovieBridge> bridge,NativeFrameSurface::Recorder record,
+                     uint32_t frame_slots=2)
         :program_(elementary_,0xe0,[this](uint8_t code,const PesTimestamp& time,std::span<const uint8_t>){observePacket(code,time);}),clock_(std::move(clock)),bridge_(std::move(bridge)),record_(std::move(record)),generation_(generation) {
         if(!clock_ || !bridge_ || !record_ || !generation_)throw std::invalid_argument("Native timed movie graph identity");
-        frames_=native_frames::VideoFrames::create(clock_,3);pipeline_=std::make_unique<NativeVideoFrames>(bridge_,frames_);
-        pending_.reserve(3);published_.reserve(3);
+        frames_=native_frames::VideoFrames::create(clock_,frame_slots);
+        pending_.reserve(3);published_.reserve(3);inflight_.reserve(3);
     }
     ~NativeVideoGraph()override{drain();}
     const std::shared_ptr<native_frames::VideoFrames>& frames()const noexcept{return frames_;}
@@ -114,25 +121,39 @@ public:
             identity.pts90k=int64_t(std::bit_cast<int32_t>(publication.value))*90000/publication.scale;
             if(submission.picture.wForwardRefPictureIndex!=0xffff)identity.forwardGeneration=bridge_->surfaceGeneration(submission.picture.wForwardRefPictureIndex);
             if(submission.picture.wBackwardRefPictureIndex!=0xffff)identity.backwardGeneration=bridge_->surfaceGeneration(submission.picture.wBackwardRefPictureIndex);
-            const auto result=pipeline_->decode(identity,submission,0,0,std::nullopt,record_);
-            if(result.status!=native_frames::FrameStatus::completed && result.status!=native_frames::FrameStatus::pending)throw std::runtime_error("Native movie graph decode failed");
-            if(result.key==native_frames::FrameKey{})return life::Status::pending;
-            pending_.push_back({result.key,{publication.value,publication.scale},identity.pts90k});
+            std::erase_if(inflight_,[](const auto& item){return item.expired();});
+            if(inflight_.size()==3)return life::Status::pending;
+            MovieTextureTicket ticket{};
+            if(!bridge_->enqueue(identity,submission,0,0,ticket))return life::Status::pending;
+            auto surface=std::make_shared<NativeFrameSurface>(bridge_,ticket,record_);
+            inflight_.push_back(surface);
+            pending_.push_back({std::move(surface),{publication.value,publication.scale},identity.pts90k});
             time_=candidate_time;lastGop_=picture.gop;rate_=picture.rate;++decoded_;
             if(anchor){previous_=current_;current_=target;watermark_=identity.pts90k;}
             elementary_.pop();return publish();
         }catch(const std::exception& error){failed(error.what());return life::Status::provider_failure;}
         catch(...){failed("Unknown video service failure");return life::Status::provider_failure;}
     }
-    void request_stop()noexcept override{if(closing_)return;closing_=true;(void)pipeline_->close();}
+    void request_stop()noexcept override{if(closing_)return;closing_=true;(void)frames_->close();}
     life::Status poll_retired()noexcept override {
         if(!closing_)return life::Status::invalid_input;
-        if(!pipeline_)return life::Status::completed;
-        const auto result=pipeline_->close();
+        bool pending=false;
+        for(auto item=pending_.begin();item!=pending_.end();){
+            const auto retired=item->surface->retire();
+            if(retired==native_frames::FrameStatus::completed){item=pending_.erase(item);continue;}
+            if(retired!=native_frames::FrameStatus::pending)return life::Status::provider_failure;
+            pending=true;++item;
+        }
+        const auto result=frames_->close();
         if(result==native_frames::FrameStatus::pending || result==native_frames::FrameStatus::busy)return life::Status::pending;
         if(result!=native_frames::FrameStatus::completed)return life::Status::provider_failure;
-        pending_.clear();published_.clear();bridge_->shutdown();return life::Status::completed;
+        if(pending)return life::Status::pending;
+        published_.clear();inflight_.clear();bridge_->shutdown();return life::Status::completed;
     }
-    void drain()noexcept override{request_stop();pending_.clear();published_.clear();pipeline_.reset();bridge_->shutdown();}
+    void drain()noexcept override{
+        request_stop();
+        for(const auto& item:inflight_)if(auto surface=item.lock())surface->drain();
+        pending_.clear();published_.clear();inflight_.clear();(void)frames_->close();bridge_->shutdown();
+    }
 };
 }
