@@ -104,7 +104,7 @@ def main():
         (out/(name+'-differences.json')).write_text(json.dumps(differences,indent=2)+'\n',encoding='utf-8',newline='\n');report.setdefault('executables',{})[name]=sha(exe);return differences
 
     try:
-        definitions=[('context',HERE/'context.cpp'),('buffering',HERE/'buffering.cpp')]+[(name,HERE/'..'/directory/file) for name,directory,file in [('selected','movie_selected_clock','clock.cpp'),('counter','movie_counter_clock','clock.cpp'),('audio','movie_audio_clock','clock.cpp'),('filter','movie_audio_filter','filter.cpp'),('pause','movie_pause','controller.cpp'),('admission','movie_admission','admission.cpp'),('initialize','movie_clock_initialize','initialize.cpp')]]
+        definitions=[('context',HERE/'context.cpp'),('commands',HERE/'audio_commands.cpp'),('buffering',HERE/'buffering.cpp')]+[(name,HERE/'..'/directory/file) for name,directory,file in [('selected','movie_selected_clock','clock.cpp'),('counter','movie_counter_clock','clock.cpp'),('audio','movie_audio_clock','clock.cpp'),('filter','movie_audio_filter','filter.cpp'),('pause','movie_pause','controller.cpp'),('admission','movie_admission','admission.cpp'),('initialize','movie_clock_initialize','initialize.cpp')]]
         objects={name:object('normal-'+name,source) for name,source in definitions};ordered=list(objects.values());fixture=object('fixture',HERE/'fixture.cpp');units=object('units',HERE/'context_tests.cpp')
         exe=binary('native-units',[*ordered,units]);report['units']=run('native-units',[exe]).strip();differences=compare('native',ordered);report['native_differences']=len(differences)
         if differences:raise ValueError('Joined native mismatch '+str(differences[:3]))

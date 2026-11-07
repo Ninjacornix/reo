@@ -14,6 +14,15 @@ public:
     virtual ProviderStatus status(std::uint8_t&) noexcept=0;
     virtual ProviderStatus estimate(Words&) noexcept=0;
 };
+// Optional control capability on the SAME retained audio source as queries.
+// Calls require the same serialized control owner. Discard is service/rebase,
+// never a seek; its explicit original result is separate from native status.
+class ControlledSource:public AudioSource {
+public:
+    virtual ProviderStatus sample_frequency(std::uint32_t&) noexcept=0;
+    virtual ProviderStatus pause(std::uint32_t) noexcept=0;
+    virtual ProviderStatus discard(std::uint32_t,std::uint32_t&) noexcept=0;
+};
 class HelperClock {
 public:
     virtual ~HelperClock()=default;
@@ -50,6 +59,8 @@ public:
     Clock(State,std::shared_ptr<AudioSource>,std::shared_ptr<HelperClock>);
     Clock(const Clock&)=delete;Clock& operator=(const Clock&)=delete;
     [[nodiscard]] Result execute(Operation,std::uint32_t actual,Words prior) noexcept;
+    [[nodiscard]] Status set_pause(std::uint32_t) noexcept;
+    [[nodiscard]] Status add_baseline(Words) noexcept;
     selected::Reply query(selected::State snapshot,Words prior) noexcept override;
     [[nodiscard]] Snapshot snapshot()const noexcept{return{state_,health_};}
 private:

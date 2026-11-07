@@ -49,7 +49,7 @@ real movie transitions. Stage 3 remains open.
 | Start | End (exclusive) | Owned bytes SHA-256 |
 | --- | --- | --- |
 | `0x177be0` | `0x177c30` | `4f35232db38aa599555f49d0548b7e3268c554c14c21f679fb259bbcf461c6b4` |
-| `0x166630` | `0x166680` | `01ddca9ba16b27542af27d74bc609181ffc530fec6a8c5549fcddc5d991f230f` |
+| `0x166630` | `0x166688` | `991d8c26d04cf81631d022927b2e0cfe39badc0f761e797e96c053fd06939666` |
 | `0x165e00` | `0x165ef0` | `ce30d8633eb7f04977067db01aa751fbceb44d1ca2cc7b895a9ae9fe86ffd10f` |
 | `0x165ef0` | `0x165f40` | `3aefe2cbe1442cc68489150b944ad9a7958d6522cc55407250348b6a2727a3ce` |
 | `0x165f40` | `0x165f88` | `dda5cd8290f4a254650d36b4cc47de54991ab3c15405013c27d2bc2f11eee5dd` |

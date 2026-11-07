@@ -13,6 +13,16 @@ Clock::Clock(State state,std::shared_ptr<AudioSource> audio,std::shared_ptr<Help
     :state_(state),audio_(std::move(audio)),helper_(std::move(helper)){
     if(!audio_ || !helper_)throw std::invalid_argument("Owned audio and helper-clock providers required");
 }
+Status Clock::set_pause(std::uint32_t value) noexcept {
+    if(busy_)return Status::busy;
+    filter::pause(state_.filter,value);return Status::completed;
+}
+Status Clock::add_baseline(Words value) noexcept {
+    if(busy_)return Status::busy;
+    const auto result=filter::baseline(state_.filter,{extend(value.numerator),extend(value.denominator)});
+    if(result==filter::Status::completed)return Status::completed;
+    health_={Status::filter_failure,Stage::filter,ProviderStatus::completed,result};return Status::filter_failure;
+}
 Result Clock::execute(Operation operation,std::uint32_t actual,Words prior) noexcept {
     if(busy_)return{Status::busy,prior,false,false,0};
     if(static_cast<unsigned>(operation)>static_cast<unsigned>(Operation::envelope))return{Status::invalid_input,prior,false,false,0};

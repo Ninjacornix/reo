@@ -1,4 +1,5 @@
 #include "session_source.hpp"
+#include <bit>
 #include <stdexcept>
 #include <utility>
 namespace reo::native::movie_audio_clock {
@@ -33,5 +34,25 @@ ProviderStatus SessionSource::estimate(Words& output)noexcept {
     if(value.status!=adxt_control_session::Status::completed)return map(value.status);
     if(value.value.result.status!=adxt_estimated_clock::Status::completed)return ProviderStatus::fault;
     output={value.value.result.ratio.numerator,value.value.result.ratio.denominator};return ProviderStatus::completed;
+}
+ProviderStatus SessionSource::sample_frequency(std::uint32_t& output)noexcept {
+    std::uint8_t phase{};const auto admitted=status(phase);if(admitted!=ProviderStatus::completed)return admitted;
+    const auto value=session_->inspect(key_);if(value.status!=adxt_control_session::Status::completed)return map(value.status);
+    output=std::bit_cast<std::int8_t>(phase)<2?0:value.evidence.clock_observation.frequency;return ProviderStatus::completed;
+}
+ProviderStatus SessionSource::pause(std::uint32_t argument)noexcept {
+    std::uint8_t phase{};const auto admitted=status(phase);if(admitted!=ProviderStatus::completed)return admitted;
+    std::uint32_t tick{};const auto sampled=tick_->read(tick);if(sampled!=ProviderStatus::completed)return sampled;
+    const auto value=session_->pause(key_,std::bit_cast<std::int32_t>(argument),tick);
+    if(value.status!=adxt_control_session::Status::completed)return map(value.status);
+    return value.value.result==adxt_estimated_clock::Status::completed?ProviderStatus::completed:ProviderStatus::fault;
+}
+ProviderStatus SessionSource::discard(std::uint32_t,std::uint32_t& output)noexcept {
+    std::uint8_t phase{};const auto admitted=status(phase);if(admitted!=ProviderStatus::completed)return admitted;
+    std::uint32_t tick{};const auto sampled=tick_->read(tick);if(sampled!=ProviderStatus::completed)return sampled;
+    const auto value=session_->discard_rebase(key_,tick);
+    if(value.status!=adxt_control_session::Status::completed)return map(value.status);
+    if(value.value.result!=adxt_estimated_clock::Status::completed)return ProviderStatus::fault;
+    output=0;return ProviderStatus::completed;
 }
 }

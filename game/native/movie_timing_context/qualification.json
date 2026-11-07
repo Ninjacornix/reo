@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "status": "qualified prepared movie timing context with complete native buffering profile",
-  "manifest_sha256": "bfd6725f2c41a475054c6f69d0ecb4150ba233fec6cb689d6457735bf4a00757",
+  "status": "qualified movie timing Context with complete buffering and prepared native audio commands",
+  "manifest_sha256": "9cffba45d69d5fd844861fdd854d85434c604077559a8e2d400d20ebe6e170aa",
   "original_workflows": 40,
   "original_operations": 210,
   "initial_and_final_snapshots": 250,
@@ -15,8 +15,8 @@
   "detected_counterfactuals": 10,
   "boundary_checks": 32,
   "receipts": {
-    "build-native-sjuni/movie-timing-context/qualified-gcc-buffering-v1/receipt.json": "d2e4b832b89bea742b81081f4ec774b27ebc2b480bf72dd6fb6518f412f737cb",
-    "build-native-sjuni/movie-timing-context/qualified-llvm-buffering-v1/receipt.json": "bff9bfb0c3ae0d47675e482b06c1f6ed5bcc027184b4192d6bc46cdac555ae16"
+    "build-native-sjuni/movie-timing-context/qualified-gcc-commands-v1/receipt.json": "f54a89165edbdebab3c904de592ec2484de722379b85443dfa67a7ff6c19a2fa",
+    "build-native-sjuni/movie-timing-context/qualified-llvm-commands-v1/receipt.json": "fc6cf345ec746dde1116bd393741ea9e6d1d653bffbd28c55e7105d26895bb2f"
   },
   "requalified_original_profiles": {
     "movie_selected_clock": {
@@ -38,15 +38,15 @@
   },
   "complete_native_transcripts_equal": true,
   "original_complete_results_equal": true,
-  "parent_suites": 66,
+  "parent_suites": 67,
   "parent_checks": {
     "gcc": {
-      "build": "104a337d9f8d27d4027c42e20f8143497f9fd5ec71cd1239565806a6635e9514",
-      "tests": "9f8508a0b424f0f3f7ba0452dae9f894372b59788aa9a064d4a91b4d2bbbcc9e"
+      "build": "29f4734f7954f5a2eddc8ebacc70f963b3ec5aee5827873296947df83f2a7378",
+      "tests": "af54c8d730b0e477165779a34e1fb28c85cc1d89b8597a6de3d95b418d189e43"
     },
     "llvm": {
-      "build": "104a337d9f8d27d4027c42e20f8143497f9fd5ec71cd1239565806a6635e9514",
-      "tests": "99ebd33f06b097ca832b0788620ef28950f0154b1dffe9bf3df25d3b56a3a4ac"
+      "build": "4cb79e75c200f2d1ed8212afc6cd813877015a6f514db922bfff3e5d6c487817",
+      "tests": "91e53c8532c7e740503d94ef60489696da705d0ea0eb7c8c3c84d06ac910488b"
     }
   },
   "actual_native_source_decoder_estimator_filter_context_retirement_test": true,
@@ -146,7 +146,7 @@
     "game\\native\\movie_admission\\qualification.json": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b"
   },
   "additional_sources": {
-    "game\\native\\movie_timing_context\\README.md": "2cfe04b8e6b54aae8d34aee8bafe35250a736a365def21e7d29a27965140f06f"
+    "game\\native\\movie_timing_context\\README.md": "ccbe63d2552549b3a59101c84b264df595d5af50b0bc84926d6f04ae5a117aac"
   },
   "native_provider_refusal": "Separate admitted flag; admitted nonzero original status is preserved; refused cache publication is prevented while earlier tick/callback effects remain.",
   "guard_profile": "Retained shared state for serialized paired pure hook calls, including nested selected query during buffering; not scheduler/priority authority.",
@@ -165,9 +165,15 @@
   ],
   "buffering_extension": {
     "qualification_path": "game/native/movie_timing_context/buffering_qualification.json",
-    "qualification_sha256": "e7b05bb76cfd57f7439138832bf6f8f70a5e0757f63d132e26fb43724a35576b",
+    "qualification_sha256": "5e9a7bb9278a9556723e5a4244fbd3701da2282e36f0ed3eb1a10eec2454ec24",
     "original_cases": 401,
     "detected_counterfactuals": 7,
     "boundary_checks": 29
+  },
+  "audio_commands_extension": {
+    "qualification_path": "game/native/movie_timing_context/audio_commands_qualification.json",
+    "qualification_sha256": "c340c5652876c73a9318e565f0ca7f14782cfc8bb53dc03b66d691a60c7d9179",
+    "prepared_native_session_controls_qualified": true,
+    "stage3_complete": false
   }
 }

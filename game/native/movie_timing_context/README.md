@@ -80,3 +80,14 @@ complete predicates and peek closure with declared SJ virtual-method ports.
 Current qualification details are recorded in `buffering_qualification.json`.
 The earlier 40 workflows remain a regression profile with predicate ports.
 Actual audio/video command execution and full movie lifecycle are still open.
+
+
+`Config.audio_commands` now admits the prepared channel-7/decoder-3 audio route.
+Requested pause, temporary pause and frame stepping use a control capability on
+the same source retained by clock queries. `SessionSource` binds it to actual
+native Session pause/discard operations; filter updates stay with this Context.
+See [the audio control contract](../../../docs/native-media/MOVIE_AUDIO_CONTROL_CONTRACT.md)
+and run `verify_audio_commands.py` for original policy/ordering comparisons.
+The `movie_audio_control` CTest also exercises native source/decoder/PCM owners,
+repeated buffering/user pauses, failures, stale/foreign keys and shutdown retry.
+Its output device is a model. Video/game integration remains separate.

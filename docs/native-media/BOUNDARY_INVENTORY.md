@@ -272,3 +272,23 @@ It does not close component command execution, skip/frame publication, source/
 frame lifecycle, movie construction/rebuild, scheduler binding or real game
 integration. Stage 3 remains open; stages 4-6 have not started. No game or real
 audio device was opened for this qualification.
+
+
+## 2026-11-07: joined native movie audio controls
+
+Pause/resume and frame-step commands now bind the prepared channel-7/decoder-3
+audio graph to the actual native ADXT Session and the same movie filter owner.
+Both compilers match 206 pre-native original cases/810 operations/1,016 initial
+and final snapshots. Eight deliberate faults are detected. Six actual native
+source/decoder/PCM configurations (mono/stereo at 24, 44.1 and 48 kHz) each pass
+eight buffering/user/frame/resume cycles, plus injected failures, foreign/stale
+keys and provider shutdown retry. All 67 standalone suites pass per compiler.
+See the [control contract](MOVIE_AUDIO_CONTROL_CONTRACT.md) and
+[qualification](../../game/native/movie_timing_context/audio_commands_qualification.json).
+
+The original comparison declares SDK control ports; prior independent SDK
+qualifications remain separate. Native owner tests use a device model. There
+was no real audio-device/game launch or new performance measurement. The three
+requested native audio-control items are complete within this boundary; video
+publication/ownership, movie lifecycle, scheduler and game integration remain
+in stage 3 for the next agreed scope.

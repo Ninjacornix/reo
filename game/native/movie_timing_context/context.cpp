@@ -25,7 +25,13 @@ std::shared_ptr<Context> Context::create(Config config){
 }
 Context::Context(Config config):facts_(config.facts),frequency_(config.frequency),initial_(initialize::initialize()),guard_(config.guard?std::move(config.guard):std::make_shared<selected::GuardState>()),hooks_(std::move(config.hooks)),buffering_(std::move(config.buffering)){
     if(!config.audio || !config.helper || !config.ports || !selector_profile(facts_.selector) || facts_.rate>=9)throw std::invalid_argument("Prepared owned movie timing profile required");
-    audio_=std::make_shared<audio::Clock>(audio::State{},std::move(config.audio),std::move(config.helper));
+    if(config.audio_commands){
+        controlled_audio_=std::dynamic_pointer_cast<audio::ControlledSource>(config.audio);
+        if(!controlled_audio_ || !buffering_)throw std::invalid_argument("Same-source audio controls and buffering facts required");
+        audio_commands_=config.audio_commands;
+    }
+    audio::State audio_state;if(config.audio_filter_mode)audio::filter::mode(audio_state.filter,*config.audio_filter_mode);
+    audio_=std::make_shared<audio::Clock>(audio_state,std::move(config.audio),std::move(config.helper));
     selected::Config selected;selected.frequency=frequency_;selected.guard=hooks_;selected.shared_guard=guard_;
     selected.state.counter={facts_.actual,facts_.requested,facts_.pause,facts_.buffering,facts_.property_47,initial_.active_counter,initial_.increment,initial_.elapsed_counter,initial_.elapsed_origin,initial_.external_accumulator};
     selected.state.cached=initial_.cached;selected.state.selector=facts_.selector;selected.state.pending=facts_.pending;selected.state.previous_sample=initial_.previous_external;selected.state.external_denominator=initial_.external_denominator;
@@ -73,6 +79,11 @@ bool Context::to_pause()noexcept {
 pause::Reply Context::command(pause::Call call,pause::View view)noexcept {
     if(!from_pause(view.state))return{pause::ProviderStatus::failed,0,{}};
     if(buffering_ && (call.kind==pause::Kind::pause_predicate || call.kind==pause::Kind::resume_predicate))return buffer_predicate(call.kind==pause::Kind::resume_predicate);
+    if(audio_commands_ && call.kind==pause::Kind::command && call.target==7 && call.command==8){
+        const auto value=audio_control(Operation::audio_command,call.argument);
+        incidental_audio_return_|=value.status==Status::completed && !value.return_defined;
+        return{value.status==Status::completed?pause::ProviderStatus::completed:pause::ProviderStatus::failed,value.returned,{}};
+    }
     const auto provider=ports_;Reply reply;
     if(call.kind==pause::Kind::command){Flag component(in_component_);reply=provider->call(call,snapshot());}
     else reply=provider->call(call,snapshot());
@@ -85,6 +96,7 @@ pause::Reply Context::command(pause::Call call,pause::View view)noexcept {
 View Context::snapshot()const noexcept {
     View view;view.facts=facts_;view.clock=initial_;view.audio=audio_->snapshot().state;view.audio_health=audio_->snapshot().health;view.guard=*guard_;view.validated=validated_;view.detached=detached_;
     if(buffering_)view.clock.latest=buffering_->latest;
+    view.audio_commands=audio_commands_;
     const auto clock=selected_->snapshot();const auto& state=clock.state;const auto& counter=state.counter;
     view.facts.actual=counter.actual;view.facts.requested=counter.requested;view.facts.pause=counter.pause;view.facts.buffering=counter.buffering_pause;view.facts.pending=state.pending;view.facts.selector=state.selector;view.facts.property_47=counter.property_47;
     view.clock.callbacks=clock.slots;view.clock.cached=state.cached;view.clock.active_counter=counter.active_counter;view.clock.increment=counter.increment;view.clock.elapsed_counter=counter.elapsed_counter;view.clock.elapsed_origin=counter.elapsed_origin;view.clock.external_accumulator=counter.external_accumulator;view.clock.external_denominator=state.external_denominator;view.clock.previous_external=state.previous_sample;
@@ -122,12 +134,14 @@ Result Context::execute(Operation operation,Input input)noexcept {
     const auto retained=weak_from_this().lock();
     if(!retained)return{Status::invalid_input};
     if(detached_)return{Status::detached};
-    if(static_cast<unsigned>(operation)>static_cast<unsigned>(Operation::picture_request))return{Status::invalid_input};
+    if(static_cast<unsigned>(operation)>static_cast<unsigned>(Operation::audio_command))return{Status::invalid_input};
     if(busy_){
         if(in_component_ && !nested_query_ && (operation==Operation::selected || operation==Operation::cached)){Flag nested(nested_query_);return query(operation,input);}
         return{Status::busy};
     }
     Flag busy(busy_);
+    incidental_audio_return_=false;
+    if(operation==Operation::audio_requested || operation==Operation::audio_temporary || operation==Operation::audio_command)return audio_control(operation,input.value);
     if(operation==Operation::selected || operation==Operation::cached)return query(operation,input);
     if(operation==Operation::refresh || operation==Operation::tick){
         const auto value=selected_->execute(operation==Operation::refresh?selected::Operation::refresh:selected::Operation::tick,{},{});
@@ -137,7 +151,7 @@ Result Context::execute(Operation operation,Input input)noexcept {
         if(!to_pause())return{Status::busy};
         Flag pausing(in_pause_);const auto value=pause_->execute(operation==Operation::pause?pause::Operation::pause:pause::Operation::buffer,input.value);
         if(!from_pause(pause_->snapshot().view.state))return{Status::busy};
-        Result result;result.status=value.status==pause::Status::completed?Status::completed:value.status==pause::Status::provider_failure?Status::provider_failure:Status::invalid_input;result.returned=value.returned;result.return_defined=value.return_defined;return result;
+        Result result;result.status=value.status==pause::Status::completed?Status::completed:value.status==pause::Status::provider_failure?Status::provider_failure:Status::invalid_input;result.returned=value.returned;result.return_defined=value.return_defined && !incidental_audio_return_;return result;
     }
     if(operation==Operation::admit){
         if(facts_.property_e){Result result;result.status=Status::completed;result.decision=result.returned=1;result.return_defined=true;return result;}

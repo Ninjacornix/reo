@@ -4,6 +4,7 @@
 #include "../movie_clock_initialize/initialize.hpp"
 #include "../movie_pause/controller.hpp"
 #include "buffering.hpp"
+#include "audio_commands.hpp"
 #include <memory>
 #include <optional>
 
@@ -25,6 +26,7 @@ struct Updates {
 struct View {
     Facts facts;initialize::State clock;audio::State audio;audio::Health audio_health;selected::GuardState guard;
     bool validated{},detached{};
+    std::optional<AudioCommands> audio_commands;
 };
 struct Reply {
     pause::ProviderStatus provider{pause::ProviderStatus::completed};
@@ -47,8 +49,10 @@ struct Config {
     // When supplied, complete native buffering predicates replace predicate
     // ports. Commands/errors remain explicit component-owner boundaries.
     std::optional<Buffering> buffering;
+    std::optional<AudioCommands> audio_commands;
+    std::optional<std::uint32_t> audio_filter_mode;
 };
-enum class Operation {selected,cached,refresh,tick,pause,buffer,admit,requested_admit,picture_request};
+enum class Operation {selected,cached,refresh,tick,pause,buffer,admit,requested_admit,picture_request,audio_requested,audio_temporary,audio_command};
 enum class Status {completed,busy,detached,invalid_input,provider_failure,numeric_failure};
 struct Input {Words prior,query;std::uint32_t value{};};
 struct Result {
@@ -83,6 +87,8 @@ private:
     [[nodiscard]] bool buffer_end()const noexcept;
     [[nodiscard]] bool buffer_refill(bool,bool&)noexcept;
     [[nodiscard]] bool buffer_peek(std::uint32_t,std::uint32_t&)noexcept;
+    [[nodiscard]] Result audio_control(Operation,std::uint32_t)noexcept;
+    [[nodiscard]] Result audio_pause(std::uint32_t)noexcept;
     Facts facts_;std::uint32_t frequency_{};
     initialize::State initial_;
     admission::State admission_;
@@ -93,6 +99,9 @@ private:
     std::unique_ptr<pause::Controller> pause_;
     std::shared_ptr<Ports> ports_;
     std::optional<Buffering> buffering_;
+    std::optional<AudioCommands> audio_commands_;
+    std::shared_ptr<audio::ControlledSource> controlled_audio_;
+    bool incidental_audio_return_{};
     bool busy_{},in_pause_{},in_component_{},nested_query_{},validated_{},detached_{};
 };
 }

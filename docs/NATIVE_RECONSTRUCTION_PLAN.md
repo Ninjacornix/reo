@@ -695,3 +695,21 @@ widening SJUNI consumer and lifetime coverage. Its independent core/portable
 bridge and known-hook continuations have passed isolated checks and a separate
 candidate has passed bounded real-consumer smoke runs. Replace and validate each service before retiring
 the PS2 compatibility components that supply it.
+
+
+## Current checkpoint: native movie audio controls
+
+The requested audio-control scope is implemented and qualified: requested and
+buffering pause/resume call the same native audio Session used by clock queries;
+frame stepping reconciles the original frame ratio, residual and filter; native
+owner tests cover repeated buffering/user pauses, failures, stale/foreign keys
+and shutdown retry. Both compilers match 206 original movie-policy cases/810
+operations, and all 67 standalone suites pass. See the
+[audio control contract](native-media/MOVIE_AUDIO_CONTROL_CONTRACT.md) and
+[qualification](../game/native/movie_timing_context/audio_commands_qualification.json).
+
+This is a prepared native control boundary. The production game path has not
+been switched to it, and its output-device validation uses a callback model.
+The next scope is to be chosen with the maintainer: video frame ownership and
+publication, complete movie construction/stop/rebuild, scheduler/adapter binding
+and representative in-game transitions remain in stage 3. Stages 4-6 remain open.

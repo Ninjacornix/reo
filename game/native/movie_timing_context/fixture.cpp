@@ -8,12 +8,13 @@ namespace n=reo::native::movie_timing_context;
 constexpr std::uint32_t n::Facts::* facts[]{&n::Facts::actual,&n::Facts::requested,&n::Facts::pause,&n::Facts::depth,&n::Facts::pending,&n::Facts::buffering,&n::Facts::episodes,&n::Facts::rate,&n::Facts::property_e,&n::Facts::selector,&n::Facts::property_47,&n::Facts::tolerance,&n::Facts::admit_slack,&n::Facts::requested_slack};
 constexpr std::optional<std::uint32_t> n::Updates::* updates[]{&n::Updates::actual,&n::Updates::requested,&n::Updates::pause,&n::Updates::depth,&n::Updates::pending,&n::Updates::buffering,&n::Updates::episodes,&n::Updates::rate,&n::Updates::property_e,&n::Updates::selector,&n::Updates::property_47,&n::Updates::tolerance,&n::Updates::admit_slack,&n::Updates::requested_slack};
 void print(const n::View& view){for(auto word:n::testing::project(view))std::cout<<' '<<word;}
-struct Event {unsigned kind{},nesting{};std::array<std::uint32_t,4> arguments{};n::View view;bool nested{};n::Words words;std::uint32_t returned{};};
+struct Event {unsigned kind{},nesting{};std::array<std::uint32_t,4> arguments{};n::View view;bool nested{};n::Words words;std::uint32_t returned{},device_pause{};};
 struct Data {
     std::weak_ptr<n::Context> owner;std::vector<Event> events;
     n::Words sample,nested_words{0x5A5A5A5Au,0x5A5A5A5Au};std::uint64_t counter{},frequency{};
     std::uint32_t status{},predicate{},command_status{},error_status{},nesting{};bool nested_query{};n::Updates command_updates;
-    void event(unsigned kind,std::array<std::uint32_t,4> arguments={})noexcept{events.push_back({kind,nesting,arguments,owner.lock()->snapshot(),false,{},0});}
+    std::uint32_t device_pause{},sample_frequency{48000};
+    void event(unsigned kind,std::array<std::uint32_t,4> arguments={})noexcept{events.push_back({kind,nesting,arguments,owner.lock()->snapshot(),false,{},0,device_pause});}
 };
 struct Audio final:n::audio::AudioSource {
     Data& data;explicit Audio(Data& value):data(value){}
