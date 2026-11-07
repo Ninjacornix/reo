@@ -69,6 +69,14 @@ FrameStatus VideoFrames::publish(const FrameKey& value,Words time,std::shared_pt
     const auto ready=resource.surface->ready();if(ready==FrameStatus::completed){picture.state=reference?4:2;resource.pending=false;return FrameStatus::completed;}
     return ready==FrameStatus::pending?ready:FrameStatus::provider_failure;
 }
+FrameStatus VideoFrames::published_ready(const FrameKey& value)const noexcept {
+    const auto retained=weak_from_this().lock();if(!retained)return FrameStatus::invalid_input;
+    if(busy_ || clock_->busy_)return FrameStatus::busy;
+    if(!open())return FrameStatus::closed;
+    if(!valid(value))return FrameStatus::invalid_key;
+    const auto& resource=resources_[value.slot_];if(!resource.surface)return FrameStatus::invalid_input;
+    return resource.pending?FrameStatus::pending:FrameStatus::completed;
+}
 FrameResult VideoFrames::advance()noexcept {
     Guard guard(*clock_);const auto selection=pool_.select(end_);const auto value=pool_.can_advance(*clock_);
     if(value.status!=Status::completed)return{FrameStatus::clock_failure};

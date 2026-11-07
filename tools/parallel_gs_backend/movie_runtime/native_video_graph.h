@@ -19,6 +19,7 @@ class NativeVideoGraph final:public life::VideoBackend {
     int64_t watermark_=std::numeric_limits<int64_t>::min();
     struct Pending {native_frames::FrameKey key;native_frames::Words time;int64_t pts;};
     std::vector<Pending> pending_;bool ended_{},closing_{},fault_{};
+    std::vector<native_frames::FrameKey> published_;
     struct Accounting {uint64_t begin,end;reo::native::movie_timestamp::Stamp stamp;};
     std::deque<Accounting> accounting_;
     reo::native::movie_timestamp::FlowState time_;
@@ -31,16 +32,24 @@ class NativeVideoGraph final:public life::VideoBackend {
     std::array<char,256> error_{};
     void failed(const char* reason)noexcept{fault_=true;std::snprintf(error_.data(),error_.size(),"%s",reason);}
     life::Status publish() {
-        // Publish one earliest picture, including at EOF. A later ready GPU
-        // surface must not bypass an earlier surface that is still producing.
-        // Keep the published resource until the consumer and its fence retire.
-        if(frames_->snapshot().resources || pending_.empty())return life::Status::completed;
+        // Earlier publications must be ready IN the pool before exposing a
+        // later picture. Merely probing a GPU fence here could race the pool's
+        // readiness update and let selection bypass the earlier publication.
+        for(auto item=published_.begin();item!=published_.end();){
+            const auto ready=frames_->published_ready(*item);
+            if(ready==native_frames::FrameStatus::invalid_key){item=published_.erase(item);continue;}
+            if(ready==native_frames::FrameStatus::pending)return life::Status::completed;
+            if(ready!=native_frames::FrameStatus::completed)return life::Status::provider_failure;
+            ++item;
+        }
+        if(pending_.empty())return life::Status::completed;
         const auto item=std::min_element(pending_.begin(),pending_.end(),[](const auto& a,const auto& b){return a.pts<b.pts;});
         // Zero is the minimum admitted PTS. Other anchors wait until the next
         // anchor establishes the reorder watermark, or genuine parser EOF.
         if(item->pts!=0 && item->pts>=watermark_ && !(ended_ && !elementary_.hasPicture()))return life::Status::completed;
         const auto status=pipeline_->publishTime(item->key,item->time);
         if(status!=native_frames::FrameStatus::completed && status!=native_frames::FrameStatus::pending)return life::Status::provider_failure;
+        published_.push_back(item->key);
         pending_.erase(item);
         return life::Status::completed;
     }
@@ -50,7 +59,7 @@ public:
         :program_(elementary_,0xe0,[this](uint8_t code,const PesTimestamp& time,std::span<const uint8_t>){observePacket(code,time);}),clock_(std::move(clock)),bridge_(std::move(bridge)),record_(std::move(record)),generation_(generation) {
         if(!clock_ || !bridge_ || !record_ || !generation_)throw std::invalid_argument("Native timed movie graph identity");
         frames_=native_frames::VideoFrames::create(clock_,3);pipeline_=std::make_unique<NativeVideoFrames>(bridge_,frames_);
-        pending_.reserve(3);
+        pending_.reserve(3);published_.reserve(3);
     }
     ~NativeVideoGraph()override{drain();}
     const std::shared_ptr<native_frames::VideoFrames>& frames()const noexcept{return frames_;}
@@ -81,9 +90,8 @@ public:
             const auto collected=frames_->poll();
             if(collected!=native_frames::FrameStatus::completed && collected!=native_frames::FrameStatus::pending)throw std::runtime_error("Native movie frame poll failed");
             if(publish()!=life::Status::completed)throw std::runtime_error("Native movie timed publication failed");
-            // Let the frontend consume the published frame before decoding
-            // ahead. Untimed/reorder-held slots have no published resources.
-            if(frames_->snapshot().resources)return life::Status::pending;
+            // Decode into the bounded available slots even before playback.
+            // Priming must not depend on a frontend acquiring in state two.
             if(!elementary_.hasPicture())return life::Status::completed;
             const auto& picture=elementary_.picture();
             if(rate_ && rate_!=picture.rate)throw std::runtime_error("Movie rate change requires a new timing generation");
@@ -123,8 +131,8 @@ public:
         const auto result=pipeline_->close();
         if(result==native_frames::FrameStatus::pending || result==native_frames::FrameStatus::busy)return life::Status::pending;
         if(result!=native_frames::FrameStatus::completed)return life::Status::provider_failure;
-        pending_.clear();bridge_->shutdown();return life::Status::completed;
+        pending_.clear();published_.clear();bridge_->shutdown();return life::Status::completed;
     }
-    void drain()noexcept override{request_stop();pending_.clear();pipeline_.reset();bridge_->shutdown();}
+    void drain()noexcept override{request_stop();pending_.clear();published_.clear();pipeline_.reset();bridge_->shutdown();}
 };
 }

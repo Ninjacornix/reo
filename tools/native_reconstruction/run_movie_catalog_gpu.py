@@ -11,7 +11,10 @@ def main():
     a=p.parse_args();out=a.output.resolve();data=a.data.resolve()
     if out.exists() or not out.is_relative_to(ROOT/'build-native-sjuni/movie-matrix'):raise ValueError('Fresh owned scope required')
     qualified=json.loads(a.qualified.read_bytes());binary=a.qualified.with_name('gpu_check.exe')
-    if qualified['status']!='real offscreen native movie geometry qualified' or sha(binary)!=qualified['binary_sha256']:raise ValueError('Qualified exact binary required')
+    profiles={'real offscreen native movie geometry qualified':'real GPU movie matrix checks passed',
+              'real offscreen native movie priming qualified':'real GPU movie priming checks passed'}
+    if qualified['status'] not in profiles or sha(binary)!=qualified['binary_sha256']:raise ValueError('Qualified exact binary required')
+    expected_status=profiles[qualified['status']]
     def source_check():
         for name,digest in qualified['sources'].items():
             if sha(ROOT/name)!=digest:raise ValueError('GPU source drift '+name)
@@ -35,7 +38,7 @@ def main():
             result=dict(index=index,asset=asset,exit=run.returncode,log_sha256=sha(log))
             if not run.returncode:
                 result['result']=json.loads(next(s for s in reversed(run.stdout.splitlines()) if s.startswith('{')))
-                if result['result']['status']!='real GPU movie matrix checks passed':raise ValueError('Missing GPU completion proof')
+                if result['result']['status']!=expected_status:raise ValueError('Missing GPU completion proof')
             results.append(result)
             print(json.dumps(dict(index=index,asset='/'.join(asset['names']),exit=run.returncode,decoded=result.get('result',{}).get('decoded'))),flush=True)
             (out/'receipt.json').write_text(json.dumps(record,indent=2)+'\n',encoding='utf-8',newline='\n')

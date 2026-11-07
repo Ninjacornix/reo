@@ -1,0 +1,161 @@
+#include "instances.hpp"
+#include <array>
+#include <cmath>
+#include <limits>
+#include <utility>
+
+namespace reo::native::adxt_instances {
+struct Identity {};
+namespace {
+Status mapped(control::Status value)noexcept {
+    switch(value){case control::Status::completed:return Status::completed;case control::Status::pending:return Status::pending;
+    case control::Status::closed:return Status::closed;case control::Status::busy:return Status::busy;
+    case control::Status::order_required:return Status::order_required;case control::Status::capacity:return Status::capacity;
+    case control::Status::unsupported_profile:return Status::unsupported_profile;case control::Status::invalid_indices:return Status::invalid_input;
+    case control::Status::invalid_key:return Status::invalid_key;case control::Status::occupied:return Status::occupied;
+    case control::Status::provider_refused:return Status::provider_refused;
+    default:return Status::fault;}
+}
+struct Record {
+    Construction construction;std::optional<control::Key> active;std::optional<Source> pending;
+    std::optional<control::player::Snapshot> final;
+    std::uint64_t generation{1},starts{},stops{};float gain{1};std::int32_t pause{};
+    bool owned{},destroying{},retiring{},fault{},exhausted{};
+};
+struct Busy {bool& value;explicit Busy(bool& v):value(v){value=true;}~Busy(){value=false;}};
+bool same_indices(control::Indices a,control::Indices b)noexcept{return a.decoder==b.decoder || a.stream==b.stream || a.rna==b.rna || a.transfer==b.transfer;}
+}
+struct Instances::State {
+    std::shared_ptr<const Identity> identity=std::make_shared<Identity>();
+    control::Session session;std::array<Record,16> records;
+    std::array<std::uint32_t,16> order{};std::uint32_t capacity{},ordered{};
+    bool order_required{},closing{},busy{};
+    State(control::Config config,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider)
+        :session(config,std::move(slot),std::move(provider)),capacity(config.output.streams){}
+};
+Instances::Instances(control::Config config,std::shared_ptr<audio_output::CallbackSlot> slot,std::shared_ptr<audio_output::Provider> provider)
+    :state_(std::make_unique<State>(config,std::move(slot),std::move(provider))){}
+Instances::~Instances(){(void)request_stop();(void)join();}
+bool Instances::valid(const Key& key,bool destroying)const noexcept {
+    const auto& s=*state_;if(key.owner_.lock()!=s.identity || key.slot_>=s.capacity)return false;
+    const auto& r=s.records[key.slot_];return r.owned && r.generation==key.generation_ && (destroying || !r.destroying);
+}
+Status Instances::start_output()noexcept {auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;Busy lock(s.busy);return mapped(s.session.start());}
+Open Instances::create(Construction config)noexcept {
+    auto& s=*state_;if(s.busy)return{Status::busy};if(s.closing)return{Status::closed};
+    if(config.channels<1 || config.channels>2 || config.indices.decoder>=16 || config.indices.stream>=16 || config.indices.rna>=16 || config.indices.transfer>=32)return{Status::invalid_input};
+    for(const auto& r:s.records)if(r.owned && same_indices(config.indices,r.construction.indices))return{Status::occupied};
+    for(unsigned i=0;i<s.capacity;++i){auto& r=s.records[i];if(r.owned || r.exhausted)continue;
+        r.construction=config;r.owned=true;r.fault=false;r.gain=1;r.pause=0;r.starts=r.stops=0;r.final.reset();s.order_required=true;
+        Key key;key.owner_=s.identity;key.slot_=i;key.generation_=r.generation;return{Status::completed,std::move(key)};}
+    return{Status::capacity};
+}
+void Instances::release(std::uint32_t index)noexcept {
+    auto& s=*state_;auto& r=s.records[index];r.owned=false;r.destroying=false;r.retiring=false;r.pending.reset();r.active.reset();r.final.reset();
+    if(r.generation==std::numeric_limits<std::uint64_t>::max())r.exhausted=true;else ++r.generation;
+    s.order_required=true;
+}
+Status Instances::retire(std::uint32_t index)noexcept {
+    auto& s=*state_;auto& r=s.records[index];
+    if(r.active){const auto result=s.session.retire(*r.active);
+        if(result.status!=control::Status::completed && result.status!=control::Status::pending){r.fault=true;return mapped(result.status);}
+        r.final=result.evidence;
+        if(result.status==control::Status::pending)return Status::pending;
+        r.active.reset();++r.stops;}
+    r.retiring=false;if(r.destroying)release(index);return Status::completed;
+}
+Status Instances::open(std::uint32_t index)noexcept {
+    auto& s=*state_;auto& r=s.records[index];if(!r.pending)return Status::completed;
+    auto requested=std::move(*r.pending);r.pending.reset();
+    const auto result=s.session.open(requested.player,std::move(requested.input),r.construction.indices);
+    if(result.status!=control::Status::completed){r.fault=true;return mapped(result.status);}
+    r.active=result.key;r.final.reset();++r.starts;
+    if(s.session.gain(*r.active,r.gain)!=control::Status::completed || s.session.pause(*r.active,r.pause,requested.player.initial_tick).status!=control::Status::completed){r.fault=true;r.retiring=true;(void)retire(index);return Status::fault;}
+    return Status::completed;
+}
+Status Instances::start(const Key& key,Source source)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
+    auto& r=s.records[key.slot_];
+    if(!source.input || !source.input->size() || source.input->size()>std::uint64_t(INT32_MAX) || source.player.decoder.channels!=r.construction.channels || source.player.decoder.source_config.byte_length!=static_cast<std::int32_t>(source.input->size()))return Status::invalid_input;
+    if(r.fault)return Status::fault;
+    Busy lock(s.busy);r.pending=std::move(source);
+    if(r.active){r.retiring=true;const auto status=retire(key.slot_);if(status!=Status::completed)return status;}
+    return open(key.slot_);
+}
+Status Instances::stop(const Key& key)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
+    Busy lock(s.busy);auto& r=s.records[key.slot_];r.pending.reset();r.retiring=true;return retire(key.slot_);
+}
+Status Instances::destroy(const Key& key)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key,true))return Status::invalid_key;
+    Busy lock(s.busy);auto& r=s.records[key.slot_];r.pending.reset();r.destroying=true;r.retiring=true;return retire(key.slot_);
+}
+Status Instances::set_order(std::span<const Key> keys)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;
+    unsigned count{};for(const auto& r:s.records)count+=r.owned && !r.destroying;
+    if(keys.size()!=count)return Status::invalid_input;
+    std::array<bool,16> seen{};
+    for(const auto& key:keys){if(!valid(key) || seen[key.slot_])return Status::invalid_key;seen[key.slot_]=true;}
+    for(unsigned i=0;i<keys.size();++i)s.order[i]=keys[i].slot_;
+    s.ordered=count;s.order_required=false;return Status::completed;
+}
+Status Instances::publish_order()noexcept {
+    auto& s=*state_;std::array<control::Key,16> keys;unsigned active{};
+    if(!s.order_required){for(unsigned i=0;i<s.ordered;++i){const auto& r=s.records[s.order[i]];if(r.owned && !r.retiring && r.active)keys[active++]=*r.active;}}
+    else{for(const auto& r:s.records)if(r.owned && !r.retiring && r.active)keys[active++]=*r.active;if(active>2)return Status::order_required;}
+    return mapped(s.session.set_order(std::span(keys).first(active)));
+}
+Status Instances::service(std::uint32_t tick)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;
+    unsigned prospective{};for(const auto& r:s.records)prospective+=r.owned && !r.destroying && (r.pending || (r.active && !r.retiring));
+    if(prospective>2 && s.order_required)return Status::order_required;
+    Busy lock(s.busy);bool pending=false,fault=false;
+    for(unsigned i=0;i<s.capacity;++i){auto& r=s.records[i];if(!r.owned)continue;
+        if(r.retiring){const auto status=retire(i);pending|=status==Status::pending;fault|=status!=Status::pending && status!=Status::completed;if(status!=Status::completed)continue;}
+        if(r.owned && r.pending && !r.active){const auto status=open(i);fault|=status!=Status::completed;}}
+    const auto ordered=publish_order();if(ordered!=Status::completed)return ordered;
+    const auto work=mapped(s.session.service(tick));if(work!=Status::completed)return work;
+    return fault?Status::fault:pending?Status::pending:Status::completed;
+}
+Observation Instances::inspect(const Key& key)const noexcept {
+    if(!valid(key,true))return{};
+    const auto& s=*state_;const auto& r=s.records[key.slot_];Observation out;
+    out.status=Status::completed;out.phase=r.fault?Phase::fault:r.destroying?Phase::destroying:r.retiring?Phase::retiring:r.active?Phase::active:Phase::idle;
+    out.replacement_pending=bool(r.pending);out.starts=r.starts;out.completed_stops=r.stops;
+    if(r.active){const auto value=s.session.inspect(*r.active);if(value.status!=control::Status::completed)out.status=Status::fault;else out.source=value.evidence;}else out.source=r.final;
+    if(out.source && out.source->fault)out.phase=Phase::fault;
+    return out;
+}
+Snapshot Instances::snapshot()const noexcept {
+    const auto& s=*state_;Snapshot out;out.session=s.session.snapshot();out.closing=s.closing;out.order_required=s.order_required;
+    for(const auto& r:s.records){out.instances+=r.owned;out.pending+=bool(r.pending);out.retiring+=r.retiring;}return out;
+}
+Status Instances::gain(const Key& key,float value)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
+    if(!std::isfinite(value) || value<0 || value>8)return Status::invalid_input;
+    auto& r=s.records[key.slot_];if(r.fault)return Status::fault;Busy lock(s.busy);
+    if(r.active && !r.retiring){const auto status=mapped(s.session.gain(*r.active,value));if(status!=Status::completed)return status;}
+    r.gain=value;return Status::completed;
+}
+Status Instances::pause(const Key& key,std::int32_t value,std::uint32_t tick)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
+    auto& r=s.records[key.slot_];if(r.fault)return Status::fault;Busy lock(s.busy);
+    if(r.active && !r.retiring){const auto status=mapped(s.session.pause(*r.active,value,tick).status);if(status!=Status::completed)return status;}
+    r.pause=value;return Status::completed;
+}
+control::ClockResult Instances::estimate(const Key& key,std::uint32_t tick)noexcept {
+    auto& s=*state_;if(s.busy)return{control::Status::busy,{}};if(s.closing)return{control::Status::closed,{}};if(!valid(key))return{};
+    const auto& r=s.records[key.slot_];if(r.fault)return{control::Status::fault,{}};if(!r.active || r.retiring)return{control::Status::pending,{}};
+    Busy lock(s.busy);return s.session.estimate(*r.active,tick);
+}
+Status Instances::request_stop()noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::completed;Busy lock(s.busy);s.closing=true;
+    for(auto& r:s.records){r.pending.reset();if(r.owned){r.retiring=true;r.destroying=true;}}
+    return mapped(s.session.request_stop());
+}
+Status Instances::join()noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;const auto stopped=request_stop();if(stopped!=Status::completed)return stopped;Busy lock(s.busy);
+    const auto result=mapped(s.session.join());if(result==Status::completed)for(unsigned i=0;i<s.capacity;++i)if(s.records[i].owned)release(i);
+    return result;
+}
+} // namespace reo::native::adxt_instances

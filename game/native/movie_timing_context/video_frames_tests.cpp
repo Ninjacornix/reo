@@ -44,11 +44,14 @@ int main(){try{
     {
         auto clock=n::Context::create(config(std::make_shared<Audio>()));auto frames=n::VideoFrames::create(clock,1);auto surface=std::make_shared<Surface>();surface->owner=frames;surface->produced=false;
         const auto key=publish(frames,{0,48000},surface);check(surface->busy && frames->peek().status==n::FrameStatus::empty && frames->poll()==n::FrameStatus::pending);
+        check(frames->published_ready(key)==n::FrameStatus::pending && frames->published_ready({})==n::FrameStatus::invalid_key);
         check(frames->reserve().status==n::FrameStatus::pending && !surface->drains);
-        surface->produced=true;check(frames->poll()==n::FrameStatus::completed && frames->acquire().key==key);
+        surface->produced=true;check(frames->published_ready(key)==n::FrameStatus::pending);
+        check(frames->poll()==n::FrameStatus::completed && frames->published_ready(key)==n::FrameStatus::completed && frames->acquire().key==key);
         check(frames->present(key)==n::FrameStatus::completed && surface->renders==1);check(frames->release(key)==n::FrameStatus::completed);
         check(frames->poll()==n::FrameStatus::pending && !surface->retired && !surface->drains && frames->reserve().status==n::FrameStatus::pending);
         surface->read_complete=true;check(frames->poll()==n::FrameStatus::completed && surface->retired);
+        check(frames->published_ready(key)==n::FrameStatus::invalid_key);
         const auto replacement=frames->reserve();check(replacement.status==n::FrameStatus::completed && !(replacement.key==key));
         check(frames->release(key)==n::FrameStatus::invalid_key && frames->present(key)==n::FrameStatus::invalid_key);
         check(frames->close()==n::FrameStatus::completed);

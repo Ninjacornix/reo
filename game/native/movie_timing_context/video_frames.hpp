@@ -59,6 +59,9 @@ public:
     VideoFrames(const VideoFrames&)=delete;VideoFrames& operator=(const VideoFrames&)=delete;
     [[nodiscard]] FrameResult reserve()noexcept;
     [[nodiscard]] FrameStatus publish(const FrameKey&,Words,std::shared_ptr<FrameSurface>,bool reference=false)noexcept;
+    // Known publication state after poll; never calls a producer or advances
+    // its readiness during this query. Prevents exposure racing pool selection.
+    [[nodiscard]] FrameStatus published_ready(const FrameKey&)const noexcept;
     [[nodiscard]] FrameResult acquire()noexcept;
     [[nodiscard]] FrameResult peek()noexcept;
     [[nodiscard]] FrameResult can_advance()noexcept;
