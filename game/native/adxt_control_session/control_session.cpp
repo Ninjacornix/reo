@@ -96,7 +96,7 @@ Open Session::open(player::Config config,std::shared_ptr<const resources::ByteVi
     if(s.decoders[indices.decoder] || s.streams[indices.stream] || s.rnas[indices.rna] || s.transfers[indices.transfer])return{Status::occupied,{}};
     std::uint32_t slot=0;while(slot<s.config.output.streams && (s.records[slot].player || s.records[slot].exhausted))++slot;
     if(slot==s.config.output.streams)return{Status::capacity,{}};
-    Scope scope(s.busy);auto opened=s.output.open(config.decoder.channels);
+    Scope scope(s.busy);auto opened=s.output.open(config.decoder.channels,indices.host_gain_key);
     if(opened.status!=output::Status::completed)return{opened.status==output::Status::capacity?Status::capacity:Status::fault,{}};
     std::shared_ptr<player::Player> player;player::Ports ports;
     try{
@@ -156,6 +156,10 @@ Snapshot Session::snapshot()const noexcept{
 Status Session::gain(const Key& key,float gain)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
     return mapped(s.records[key.slot_].player->gain(gain));
+}
+Status Session::volume(const Key& key,std::uint32_t value)noexcept{
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
+    return mapped(s.records[key.slot_].player->volume(value));
 }
 ClockResult Session::estimate(const Key& key,std::uint32_t tick)noexcept{
     auto& s=*state_;if(s.busy)return{Status::busy,{}};if(s.closing)return{Status::closed,{}};if(!valid(key))return{};Scope scope(s.busy);

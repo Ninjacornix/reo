@@ -58,6 +58,7 @@ public:
     [[nodiscard]] Ports make_ports();
     [[nodiscard]] Snapshot snapshot()const noexcept;
     [[nodiscard]] Status gain(float)noexcept;
+    [[nodiscard]] Status volume(std::uint32_t)noexcept;
     // Read-only identity for the session's explicit summation-order coordinator.
     [[nodiscard]] const output::Producer& output_identity()const noexcept;
     [[nodiscard]] ClockResult estimate(std::uint32_t original_tick)noexcept;

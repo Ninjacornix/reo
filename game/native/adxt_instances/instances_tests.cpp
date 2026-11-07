@@ -29,11 +29,13 @@ int main(){try{
         Test t;const auto a=create(t,0),b=create(t,1,2);auto& i=t.instances;
         check(i.snapshot().instances==2 && !i.snapshot().session.records);
         check(i.create({1,{0,2,2,2}}).status==S::occupied);
-        check(i.gain(a,0.25f)==S::completed && i.pause(a,1,40)==S::completed);
+        check(i.gain(a,0.25f)==S::completed && i.volume(a,193)==S::completed && i.pause(a,1,40)==S::completed);
         check(i.start(a,source(f::file(1,48000,20000)))==S::completed);
         check(i.start(b,source(f::file(2,24000,20000),2))==S::completed);
         until([&]{service(t);const auto x=i.inspect(a),y=i.inspect(b);return x.source && y.source && x.source->configured && y.source->configured;});
-        check(i.inspect(a).source->clock.paused==1 && i.inspect(a).source->output.voice.gain==0.25f);
+        check(i.inspect(a).source->clock.paused==1 && i.inspect(a).source->output.voice.gain==0.25f && i.inspect(a).source->output.voice.volume==193);
+        check(i.volume(a,0)==S::completed && i.inspect(a).source->output.voice.volume==0 && i.inspect(b).source->output.voice.volume==256);
+        check(i.volume(a,UINT32_MAX)==S::completed && i.inspect(a).source->output.voice.volume==UINT32_MAX);
         until([&]{service(t);const auto peer=i.inspect(b).source;return peer->output.voice.playing && peer->output.channel[0].samples>=512;});
         check(i.pause(a,0,42)==S::completed);const auto before=i.inspect(b).starts;const auto consumed=i.inspect(b).source->output.channel[0].consumed_bytes;
         const auto stopped=i.stop(a);check(stopped==S::completed || stopped==S::pending);
@@ -42,10 +44,12 @@ int main(){try{
         check(i.inspect(b).starts==before && !t.provider->unloaded && i.estimate(a,42).status==n::control::Status::pending);
         check(t.provider->step(256) && i.inspect(b).source->output.channel[0].consumed_bytes>consumed);
         check(i.gain(a,1)==S::completed && i.start(a,source(f::file(1,48000,5000)))==S::completed);
-        until([&]{service(t);return i.inspect(a).source->configured;});check(i.inspect(a).starts==2);
+        until([&]{service(t);return i.inspect(a).source->configured;});check(i.inspect(a).starts==2 && i.inspect(a).source->output.voice.volume==UINT32_MAX);
         const auto destroyed=i.destroy(a);check(destroyed==S::completed || destroyed==S::pending);
         until([&]{service(t);return i.inspect(a).status==S::invalid_key;});
-        const auto fresh=create(t,0);check(i.stop(a)==S::invalid_key && i.inspect(fresh).phase==n::Phase::idle);
+        const auto fresh=create(t,0);check(i.stop(a)==S::invalid_key && i.volume(a,0)==S::invalid_key && i.inspect(fresh).phase==n::Phase::idle);
+        check(i.start(fresh,source(f::file(1,48000,5000)))==S::completed);
+        until([&]{service(t);return i.inspect(fresh).source->configured;});check(i.inspect(fresh).source->output.voice.volume==256);
         check(i.inspect(b).status==S::completed);join(t);check(t.provider->unloaded);
     }
     {
@@ -67,12 +71,13 @@ int main(){try{
         until([&]{service(t);std::lock_guard lock(blocked->mutex);return blocked->entered;});
         auto skipped=f::file(1,48000,6000),last=f::file(1,48000,7000);
         check(i.start(a,source(skipped))==S::pending && i.start(a,source(last))==S::pending);
+        check(i.volume(a,17)==S::completed);
         check(!skipped->reads && !last->reads && i.inspect(a).replacement_pending);
         until([&]{service(t);const auto peer=i.inspect(b).source;return peer->output.voice.playing && peer->output.channel[0].samples>=512;});check(!t.provider->unloaded);
         const auto consumed=i.inspect(b).source->output.channel[0].consumed_bytes;
         check(t.provider->step(256) && i.inspect(b).source->output.channel[0].consumed_bytes>consumed);
         release.run();until([&]{service(t);const auto x=i.inspect(a);return x.starts==2 && x.source->configured;});
-        check(!skipped->reads && last->reads>0 && i.inspect(a).completed_stops==1);
+        check(!skipped->reads && last->reads>0 && i.inspect(a).completed_stops==1 && i.inspect(a).source->output.voice.volume==17);
         check(i.inspect(b).starts==1);join(t);check(t.provider->unloaded && i.inspect(a).status==S::invalid_key);
     }
     {

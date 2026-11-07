@@ -44,6 +44,7 @@ public:
     [[nodiscard]] Snapshot snapshot()const noexcept;
     [[nodiscard]] std::shared_ptr<control::output::Submix> submix()const noexcept;
     [[nodiscard]] Status gain(const Key&,float)noexcept;
+    [[nodiscard]] Status volume(const Key&,std::uint32_t)noexcept;
     [[nodiscard]] Status pause(const Key&,std::int32_t,std::uint32_t original_tick)noexcept;
     [[nodiscard]] control::ClockResult estimate(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] Status request_stop()noexcept;

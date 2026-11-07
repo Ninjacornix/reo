@@ -16,7 +16,7 @@ private:
     std::weak_ptr<const Identity> identity_;
     std::uint64_t generation_{};std::uint32_t slot_{};
 };
-struct Indices {std::uint32_t decoder{},stream{},rna{},transfer{};};
+struct Indices {std::uint32_t decoder{},stream{},rna{},transfer{},host_gain_key{};};
 struct Config {output::Config output;player::clock::Shared clock;};
 struct Open {Status status{Status::fault};Key key;};
 struct Observation {Status status{Status::invalid_key};player::Snapshot evidence;};
@@ -44,6 +44,7 @@ public:
     [[nodiscard]] Snapshot snapshot()const noexcept;
     [[nodiscard]] std::shared_ptr<output::Submix> submix()const noexcept;
     [[nodiscard]] Status gain(const Key&,float)noexcept;
+    [[nodiscard]] Status volume(const Key&,std::uint32_t)noexcept;
     [[nodiscard]] ClockResult estimate(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] ClockResult centiseconds(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] ClockControl pause(const Key&,std::int32_t,std::uint32_t original_tick)noexcept;

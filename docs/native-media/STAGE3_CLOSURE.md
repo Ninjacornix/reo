@@ -42,9 +42,11 @@ game candidate are required before this becomes an admitted game route.
 
 The [V14 incident retest](SIF_INIT_RPC_STALL.md) narrows a measured 1.45-second
 movie hitch to the host `SifInitRpc` initializer. Its inner lease/lock/logging
-cause is unresolved. The qualified bounded stage probe must be linked/retested
-before selecting a fix; the historical disc-read explanation is not substituted
-for that missing attribution.
+cause is unresolved. The qualified bounded stage probe is linked in V15. That
+run does not reproduce the large stall: sampled movie intervals peak at
+41.0778 ms and audio reports zero underruns. No initializer policy changed,
+so this is not a confirmed fix; the historical disc-read explanation is not
+substituted for missing attribution.
 
 The timestamp and complete short-video gates have advanced beyond the earlier
 first-frame boundary. All 201 hash-verified File #1 SFD members (2.26 GB) contain

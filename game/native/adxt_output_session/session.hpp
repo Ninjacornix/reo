@@ -14,9 +14,17 @@ namespace reo::native::adxt_output_session {
 inline constexpr std::uint32_t maximum_streams=16, samples_per_channel=8192;
 enum class Status { completed, closed, invalid_input, capacity, allocation_failure,
     stale_producer, copy_refused, order_required, pending, provider_refused, fault };
+class StreamGains {
+public:
+    virtual ~StreamGains()=default;
+    // Pure bounded callback, no allocation/I/O/session reentry. Key is an opaque
+    // route identity supplied by the serialized control owner, never a pointer.
+    [[nodiscard]] virtual float factor(std::uint32_t key)noexcept=0;
+};
 struct Config {
     std::uint32_t streams{16};std::uint64_t maximum_counter{UINT64_MAX};
     std::shared_ptr<audio_mix_tail::Mixer> bank_mix{};
+    std::shared_ptr<StreamGains> stream_gains{};
 };
 struct StreamSnapshot {
     std::uint32_t slot{}, channels{}, frequency{48000}; std::uint64_t generation{};
@@ -54,6 +62,7 @@ public:
     Producer(const Producer&)=delete; Producer& operator=(const Producer&)=delete;
     [[nodiscard]] Status configure(std::uint32_t frequency) noexcept;
     [[nodiscard]] Status gain(float) noexcept;
+    [[nodiscard]] Status volume(std::uint32_t) noexcept;
     // Copies the complete planar batch atomically with respect to rendering.
     // Caller still owns and must explicitly finish its decoder read lease.
     [[nodiscard]] Status copy(std::span<const std::byte> left,
@@ -92,7 +101,7 @@ public:
     explicit Session(Config);
     ~Session();
     Session(const Session&)=delete; Session& operator=(const Session&)=delete;
-    [[nodiscard]] OpenResult open(std::uint32_t channels) noexcept;
+    [[nodiscard]] OpenResult open(std::uint32_t channels,std::uint32_t gain_key=0) noexcept;
     // Exact permutation of active producers in the required summation order.
     // More than two playing streams requires an order covering the new stream.
     [[nodiscard]] Status set_order(std::span<const Producer* const>) noexcept;

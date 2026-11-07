@@ -19,7 +19,7 @@ Status mapped(control::Status value)noexcept {
 struct Record {
     Construction construction;std::optional<control::Key> active;std::optional<Source> pending;
     std::optional<control::player::Snapshot> final;
-    std::uint64_t generation{1},starts{},stops{};float gain{1};std::int32_t pause{};
+    std::uint64_t generation{1},starts{},stops{};float gain{1};std::uint32_t volume{256};std::int32_t pause{};
     bool owned{},destroying{},retiring{},fault{},exhausted{};
 };
 struct Busy {bool& value;explicit Busy(bool& v):value(v){value=true;}~Busy(){value=false;}};
@@ -48,7 +48,7 @@ Open Instances::create(Construction config)noexcept {
     if(config.channels<1 || config.channels>2 || config.indices.decoder>=16 || config.indices.stream>=16 || config.indices.rna>=16 || config.indices.transfer>=32)return{Status::invalid_input};
     for(const auto& r:s.records)if(r.owned && same_indices(config.indices,r.construction.indices))return{Status::occupied};
     for(unsigned i=0;i<s.capacity;++i){auto& r=s.records[i];if(r.owned || r.exhausted)continue;
-        r.construction=config;r.owned=true;r.fault=false;r.gain=1;r.pause=0;r.starts=r.stops=0;r.final.reset();s.order_required=true;
+        r.construction=config;r.owned=true;r.fault=false;r.gain=1;r.volume=256;r.pause=0;r.starts=r.stops=0;r.final.reset();s.order_required=true;
         Key key;key.owner_=s.identity;key.slot_=i;key.generation_=r.generation;return{Status::completed,std::move(key)};}
     return{Status::capacity};
 }
@@ -72,7 +72,7 @@ Status Instances::open(std::uint32_t index)noexcept {
     const auto result=s.session.open(requested.player,std::move(requested.input),r.construction.indices);
     if(result.status!=control::Status::completed){r.fault=true;return mapped(result.status);}
     r.active=result.key;r.final.reset();++r.starts;
-    if(s.session.gain(*r.active,r.gain)!=control::Status::completed || s.session.pause(*r.active,r.pause,requested.player.initial_tick).status!=control::Status::completed){r.fault=true;r.retiring=true;(void)retire(index);return Status::fault;}
+    if(s.session.gain(*r.active,r.gain)!=control::Status::completed || s.session.volume(*r.active,r.volume)!=control::Status::completed || s.session.pause(*r.active,r.pause,requested.player.initial_tick).status!=control::Status::completed){r.fault=true;r.retiring=true;(void)retire(index);return Status::fault;}
     return Status::completed;
 }
 Status Instances::start(const Key& key,Source source)noexcept {
@@ -138,6 +138,12 @@ Status Instances::gain(const Key& key,float value)noexcept {
     auto& r=s.records[key.slot_];if(r.fault)return Status::fault;Busy lock(s.busy);
     if(r.active && !r.retiring){const auto status=mapped(s.session.gain(*r.active,value));if(status!=Status::completed)return status;}
     r.gain=value;return Status::completed;
+}
+Status Instances::volume(const Key& key,std::uint32_t value)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
+    auto& r=s.records[key.slot_];if(r.fault)return Status::fault;Busy lock(s.busy);
+    if(r.active && !r.retiring){const auto status=mapped(s.session.volume(*r.active,value));if(status!=Status::completed)return status;}
+    r.volume=value;return Status::completed;
 }
 Status Instances::pause(const Key& key,std::int32_t value,std::uint32_t tick)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;

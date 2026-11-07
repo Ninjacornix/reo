@@ -2,6 +2,7 @@
 #include "../audio_mix_tail/mixer.hpp"
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <limits>
 #include <mutex>
 #include <stdexcept>
@@ -28,6 +29,7 @@ struct Record {
     std::array<std::uint64_t,2> byte_origin{};
     StreamSnapshot final;
     std::uint64_t generation{1};std::uint32_t channel_count{};
+    std::uint32_t gain_key{};float base_gain{1};
     bool active{}, exhausted{}, transfer_open{}, through{}, fault{}, has_voice{true};
 };
 struct State {
@@ -65,6 +67,18 @@ struct State {
         if(result==audio_mix_tail::Status::completed)return true;
         if(!closing.load(std::memory_order_acquire))bank_mix_fault=true;
         return false;
+    }
+    bool refresh_gains()noexcept {
+        if(!config.stream_gains)return true;
+        std::array<float,maximum_streams> proposed{};
+        for(unsigned i=0;i<config.streams;++i){const auto& r=records[i];if(!r.active)continue;
+            const auto factor=config.stream_gains->factor(r.gain_key);
+            const auto value=r.base_gain*factor;
+            if(!std::isfinite(factor) || factor<0 || factor>8 || !std::isfinite(value) || value<0 || value>8)return false;
+            proposed[i]=value;
+        }
+        for(unsigned i=0;i<config.streams;++i)if(records[i].active && pcm.gain(records[i].voice,proposed[i])!=pcm::Status::ok)return false;
+        return true;
     }
     bool valid(std::uint32_t slot_index,std::uint64_t generation) const noexcept {
         return slot_index<config.streams && records[slot_index].active &&
@@ -111,6 +125,7 @@ public:
         if(!output || frames>audio_output::maximum_callback_frames)return;
         auto out=std::span(output,std::size_t(frames)*2);
         if(s.closing.load(std::memory_order_acquire) || s.closed){std::fill(out.begin(),out.end(),0.0f);return;}
+        if(!s.refresh_gains()){s.render_fault=true;s.closing.store(true,std::memory_order_release);std::fill(out.begin(),out.end(),0.0f);return;}
         s.last_render_status=s.pcm.render(out);
         if(s.last_render_status!=pcm::Status::ok || !s.mix_banks(output,frames)){
             if(!s.closing.load(std::memory_order_acquire))s.render_fault=true;
@@ -126,6 +141,7 @@ Status Submix::render_add(float* output,std::uint32_t frames)noexcept {
     if(s.closing.load(std::memory_order_acquire) || s.closed)return Status::closed;
     if(!s.submix_started)return Status::pending;
     if(!frames)return Status::completed;
+    if(!s.refresh_gains()){s.render_fault=true;s.closing.store(true,std::memory_order_release);return Status::fault;}
     const auto count=std::size_t(frames)*2;
     s.last_render_status=s.pcm.render(std::span(s.scratch).first(count));
     if(s.last_render_status!=pcm::Status::ok){s.render_fault=true;s.closing.store(true,std::memory_order_release);return Status::fault;}
@@ -173,7 +189,17 @@ Status Producer::gain(float value) noexcept {
     auto& s=*state_;std::lock_guard lock(s.mutex);
     if(!s.valid(slot_,generation_))return Status::stale_producer;
     if(s.closing.load(std::memory_order_acquire))return Status::closed;
-    return s.pcm.gain(s.records[slot_].voice,value)==pcm::Status::ok?Status::completed:Status::invalid_input;
+    if(s.pcm.gain(s.records[slot_].voice,value)!=pcm::Status::ok)return Status::invalid_input;
+    s.records[slot_].base_gain=value;return Status::completed;
+}
+Status Producer::volume(std::uint32_t value)noexcept {
+    auto& s=*state_;std::lock_guard lock(s.mutex);
+    if(!s.valid(slot_,generation_))return Status::stale_producer;
+    if(s.closing.load(std::memory_order_acquire))return Status::closed;
+    auto& r=s.records[slot_];if(r.fault)return Status::fault;
+    auto proposed=r.config;proposed.volume=value;
+    if(s.pcm.configure(r.voice,proposed,0)!=pcm::Status::ok)return Status::fault;
+    r.config=proposed;return Status::completed;
 }
 StreamSnapshot Producer::snapshot() const noexcept {
     auto& s=*state_;std::lock_guard lock(s.mutex);
@@ -234,7 +260,7 @@ Session::Session(Config c,std::shared_ptr<audio_output::CallbackSlot> slot,std::
 Session::Session(Config c):state_(std::make_shared<State>(c,nullptr,true)),
     submix_(new Submix(state_)){}
 Session::~Session(){request_stop();(void)join();}
-OpenResult Session::open(std::uint32_t channels) noexcept {
+OpenResult Session::open(std::uint32_t channels,std::uint32_t gain_key) noexcept {
     if(channels<1 || channels>2)return{Status::invalid_input,{}};
     std::unique_ptr<Producer> producer;
     try{auto identity=std::make_shared<Producer::Identity>();producer.reset(new Producer(state_,std::move(identity)));}
@@ -253,6 +279,7 @@ OpenResult Session::open(std::uint32_t channels) noexcept {
             r.byte_origin[c]=info.value.queued_bytes;}
         producer->slot_=i;producer->generation_=r.generation;
         r.config=config;r.channel_count=channels;r.active=true;r.transfer_open=true;r.through=r.fault=false;
+        r.gain_key=gain_key;r.base_gain=1;
         r.producer=producer->identity_;s.order_required=true;s.source_epoch_started=true;
         return{Status::completed,std::move(producer)};
     }

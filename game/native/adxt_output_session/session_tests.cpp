@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <mutex>
+#include <limits>
 #include <thread>
 namespace n=reo::native::adxt_output_session;
 namespace o=reo::audio_output;
@@ -140,4 +141,64 @@ void external_submix(){
     std::array<float,64> values;values.fill(0.125f);
     check(retained->render_add(values.data(),32)==n::Status::closed && values[0]==0.125f,"retained callback lease outlives private control owner");
 }
-int main(){external_submix();independent_lifetime();order_and_reference();refusals();concurrent();render_refusal();std::printf("%u shared stream output checks passed; no audio device\n",checks);}
+struct Gains final:n::StreamGains {
+    std::array<std::uint32_t,2> keys{0x1e0000,0x1e0020};std::array<float,2> values{0.37f,1.41f};
+    std::array<unsigned,2> calls{};bool unknown{};
+    float factor(std::uint32_t key)noexcept override{
+        for(unsigned i=0;i<keys.size();++i)if(keys[i]==key){++calls[i];return values[i];}
+        unknown=true;return std::numeric_limits<float>::quiet_NaN();
+    }
+};
+void routed_volume_reference(){
+    auto gains=std::make_shared<Gains>();n::Config config{2};config.stream_gains=gains;Fixture f(config);
+    auto a=f.session.open(1,gains->keys[0]),b=f.session.open(2,gains->keys[1]);
+    check(a.status==n::Status::completed && b.status==n::Status::completed,"opaque host keys admitted");
+    auto mono=plane(12345),left=plane(-5432),right=plane(17777);
+    check(a.producer->copy(mono)==n::Status::completed && b.producer->copy(left,right)==n::Status::completed,"routed planes copied");
+    c::Config cfg;cfg.max_channels=3;cfg.max_voices=2;cfg.channel_samples=8192;c::Session reference(cfg);
+    check(reference.select_frame_clock()==c::Status::ok,"routed reference frame clock");
+    auto x=reference.create_channel(),y=reference.create_channel(),z=reference.create_channel();auto va=reference.create_voice(),vb=reference.create_voice();
+    check(reference.enqueue(x.value,mono,0).status==c::Status::ok && reference.enqueue(y.value,left,0).status==c::Status::ok && reference.enqueue(z.value,right,0).status==c::Status::ok,"unchanged PCM core reference copied");
+    c::VoiceConfig ca{x.value,{},c::Channels::mono,48000,193,true},cb{y.value,z.value,c::Channels::stereo,44100,73,true};
+    check(a.producer->configure(48000)==n::Status::completed && b.producer->configure(44100)==n::Status::completed &&
+        a.producer->volume(ca.volume)==n::Status::completed && b.producer->volume(cb.volume)==n::Status::completed,"integer volumes and distinct rates retained");
+    check(a.producer->play(true)==p::Status::completed && b.producer->play(true)==p::Status::completed && f.session.start()==n::Status::completed,"routed output started");
+    const std::array volumes{193u,0u,UINT32_MAX,1u};
+    for(unsigned block=0;block<volumes.size();++block){
+        ca.volume=volumes[block];cb.volume=volumes[volumes.size()-1-block];gains->values={0.37f+float(block)*0.11f,1.41f-float(block)*0.23f};
+        check(a.producer->volume(ca.volume)==n::Status::completed && b.producer->volume(cb.volume)==n::Status::completed,"live raw volume change accepted");
+        check(reference.configure(va.value,ca,0)==c::Status::ok && reference.configure(vb.value,cb,0)==c::Status::ok &&
+            reference.gain(va.value,gains->values[0])==c::Status::ok && reference.gain(vb.value,gains->values[1])==c::Status::ok,"legacy order volume and host gain reference configured");
+        std::array<float,64> expected{};check(reference.render(expected)==c::Status::ok && f.host->render(32),"routed callbacks rendered");
+        for(unsigned i=0;i<expected.size();++i)check(std::bit_cast<std::uint32_t>(expected[i])==std::bit_cast<std::uint32_t>(f.host->output[i]),"volume arithmetic and live host factors match qualified PCM bitwords");
+        check(a.producer->snapshot().voice.volume==ca.volume && b.producer->snapshot().voice.volume==cb.volume,"raw volume retained while rendering clamps");
+    }
+    check(gains->calls[0]==4 && gains->calls[1]==4 && !gains->unknown,"one factor read per active stream and callback");
+    check(a.producer->retire()==n::Status::completed,"routed source retires");gains->keys[0]=0x1e0080;
+    auto reused=f.session.open(1,gains->keys[0]);check(reused.status==n::Status::completed && reused.producer->snapshot().voice.volume==256,"reuse restores default volume and fresh key");
+    check(reused.producer->copy(mono)==n::Status::completed && reused.producer->play(true)==p::Status::completed && f.host->render(32),"fresh route participates in next callback");
+    check(!gains->unknown && gains->calls[0]==5 && gains->calls[1]==5 && reused.producer->snapshot().voice.gain==gains->values[0],"retired routing key never reused implicitly");
+    check(a.producer->volume(0)==n::Status::stale_producer && f.session.join()==n::Status::completed,"retired volume cannot affect reused voice");
+}
+void routed_gain_refusal(){
+    for(float bad:{-0.1f,std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::infinity(),8.01f}){
+        auto gains=std::make_shared<Gains>();n::Config config{2};config.stream_gains=gains;n::Session session(config);
+        auto a=session.open(1,gains->keys[0]),b=session.open(1,gains->keys[1]);auto bytes=plane(25);
+        check(a.producer->copy(bytes)==n::Status::completed && b.producer->copy(bytes)==n::Status::completed && a.producer->play(true)==p::Status::completed && b.producer->play(true)==p::Status::completed,"invalid factor fixture queued");
+        check(session.start()==n::Status::completed,"invalid factor submix started");std::array<float,64> out{};
+        check(session.submix()->render_add(out.data(),32)==n::Status::completed,"valid first factors applied");
+        const auto before_a=a.producer->snapshot(),before_b=b.producer->snapshot();gains->values={0.91f,bad};out.fill(0.25f);
+        check(session.submix()->render_add(out.data(),32)==n::Status::fault,"invalid factor is explicit bounded callback fault");
+        const auto after_a=a.producer->snapshot(),after_b=b.producer->snapshot();
+        check(after_a.voice.gain==before_a.voice.gain && after_b.voice.gain==before_b.voice.gain &&
+            after_a.channel[0].consumed_bytes==before_a.channel[0].consumed_bytes && after_b.channel[0].consumed_bytes==before_b.channel[0].consumed_bytes,"all factors validated before either gain or PCM consumption changes");
+        for(auto value:out)check(value==0.25f,"submix refusal preserves complete outer buffer");
+        check(session.snapshot().render_fault && session.snapshot().closing && session.join()==n::Status::completed,"gain fault closes safely and still joins");
+    }
+    auto gains=std::make_shared<Gains>();n::Config config{1};config.stream_gains=gains;Fixture f(config);
+    auto a=f.session.open(1,gains->keys[0]);auto bytes=plane(25);gains->values[0]=2;
+    check(a.producer->gain(8)==n::Status::completed && a.producer->copy(bytes)==n::Status::completed && a.producer->play(true)==p::Status::completed && f.session.start()==n::Status::completed,"combined gain limit fixture active");
+    check(f.host->render(32) && f.session.snapshot().render_fault && a.producer->snapshot().channel[0].consumed_bytes==0,"combined native and host gain outside core domain refuses without consumption");
+    for(unsigned i=0;i<64;++i)check(f.host->output[i]==0,"ordinary renderer silences refused callback");
+}
+int main(){routed_volume_reference();routed_gain_refusal();external_submix();independent_lifetime();order_and_reference();refusals();concurrent();render_refusal();std::printf("%u shared stream output checks passed; no audio device\n",checks);}

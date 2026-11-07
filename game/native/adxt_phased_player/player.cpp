@@ -262,6 +262,10 @@ Status Player::gain(float value)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
     return s.output->gain(value)==output::Status::completed?Status::completed:Status::unsupported_profile;
 }
+Status Player::volume(std::uint32_t value)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
+    return s.output->volume(value)==output::Status::completed?Status::completed:Status::fault;
+}
 const output::Producer& Player::output_identity()const noexcept{return *state_->output;}
 ClockResult Player::estimate(std::uint32_t tick)noexcept {
     auto& s=*state_;if(s.busy)return{Status::busy,{clock::Status::busy,{},0}};

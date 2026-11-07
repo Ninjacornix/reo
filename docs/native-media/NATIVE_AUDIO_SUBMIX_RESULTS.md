@@ -84,3 +84,20 @@ validation remain stage-three gates. The aggregate's old PCM counters describe
 its raw-ID bridge; they must not be presented as the new native streams' counters.
 Those come from the canonical native control/output owner. No player default,
 game speed, rendering or VU selection changes with these isolated APIs.
+
+The V4 native cohort adds integer guest volume through the player/Session/stable
+instance owners and callback-time factors selected by opaque host route keys.
+Both compilers pass all 72 standalone suites and 14 aggregate scenarios with
+real mono/stereo source workers. Volume changes include zero, nonbinary levels,
+values above 256, idle/retiring replacement latches and fresh construction.
+Two streams with distinct rates and live route factors match the unchanged PCM
+core sample bitwords. Invalid finite/nonfinite factors refuse the entire private
+render before gains or consumption change; external prior audio is preserved.
+The actual model callback refreshes native route gains with no allocation/free.
+
+Both null-native-profile replays still match the qualified parent across 21
+cases, 287 actions, 9,316 float words and 10,052 hooks. The same 14 declared raw
+terminal-policy differences remain visible. This is ownership/arithmetic/model
+callback evidence, not live game volume/RNA binding or audible A/V validation.
+V4 identities and receipts extend the existing qualification without replacing
+the historical source cohorts or their observations.

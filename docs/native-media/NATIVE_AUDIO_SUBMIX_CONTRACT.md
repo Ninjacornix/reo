@@ -32,3 +32,25 @@ retirement, real mono/stereo source workers through the instance owner, no
 claimed external device fence, and safe retained callbacks after private owner
 destruction. A model caller is not proof of actual callback integration or A/V
 equivalence. Game consumers and the coherent backend remain stage-3 work.
+
+The output configuration can retain a pure, bounded `StreamGains` provider.
+Each producer carries an opaque route key chosen by its controller, rather
+than a guest pointer. The actual rendering call refreshes factors for all
+active native streams. Every finite factor and combined native/host gain must
+be within the qualified PCM range [0,8]; all factors are checked before any
+voice changes or samples are consumed. A failure closes private admission and
+records a render fault. The external submix preserves the complete prior
+buffer; the ordinary standalone renderer returns silence. Neither blocks on
+guest service, allocates nor invokes the controller. The provider must not
+reenter these owners or perform I/O, and lives at least as long as the render
+lease. Outer settings polling and the bank/master tails retain their owners.
+
+Guest volume uses a separate unsigned integer control, forwarded through the
+player, Session and stable instance. It preserves the PCM expression
+`min(volume,256)/256.0f/32768.0f * gain`; converting it into a second float gain
+would change rounding. Raw values above 256 remain observable and clamp only
+for rendering, matching the existing core. Volume latches while an instance
+is idle or retiring and applies before its replacement is serviced. Destroy
+and recreate resets it to 256, while stale keys cannot change the new voice.
+Producer reuse also resets the scalar gain and binds the new opaque key.
+This is a qualified control boundary, not proof of a live guest API binding.
