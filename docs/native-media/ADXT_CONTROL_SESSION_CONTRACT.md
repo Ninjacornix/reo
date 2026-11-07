@@ -40,3 +40,7 @@ DTX visits have no device clock effect. The canonical owner supplies the private
 [serviced-clock binding](ADXT_SERVICE_BINDING_CONTRACT.md); the raw player API
 continues to refuse unowned service. Game selection, bank/packet mixing, complete
 loop/LSC/seamless playback, movie consumers and actual media validation remain.
+
+The [game control bridge](ADXT_GAME_CONTROL_BRIDGE.md) adds a typed shared-clock
+configuration import excluding native guard fields, plus the existing qualified
+integer observation query. Both run only under the session control guard.

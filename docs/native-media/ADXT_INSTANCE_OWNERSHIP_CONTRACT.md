@@ -41,3 +41,9 @@ in these isolated tests is an explicit callback/fence model, not a real device.
 The parent source/decoder/control implementations retain their existing
 independent original comparisons. Game ABI/source/control consumers, full
 live output and A/V validation remain separate stage-3 gates.
+
+The [game control bridge](ADXT_GAME_CONTROL_BRIDGE.md) exposes raw ratios,
+centiseconds, paused discard and stable time-base/loop properties through this
+same owner. Explicit properties persist across replacement; unset properties
+preserve source configuration and fresh instance keys reset the overrides.
+Shared clock imports exclude native guard state and refuse reentry.

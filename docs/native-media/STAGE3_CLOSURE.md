@@ -90,3 +90,10 @@ production-header object checks. Its acquisition/device ports remain declared
 fixtures, and the bootstrap still selects the prior route. A complete guest
 source/control/clock/reset adapter is required before this factory can be used
 for the coherent game candidate.
+
+The [stable game-control bridge](ADXT_GAME_CONTROL_RESULTS.md) now exposes the
+qualified clocks, quiescent global import, paused discard and persistent
+time-base/loop controls. Both compilers pass 75 suites, three detected admission/
+replacement faults, 12 combined factory scenarios and production-header checks.
+The original public ABI and idle-handle semantics still need their actual guest
+binding; native API coverage alone does not close that boundary.

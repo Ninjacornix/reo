@@ -49,6 +49,12 @@ public:
     [[nodiscard]] Status attenuation(const Key&,std::uint32_t requested_word)noexcept;
     [[nodiscard]] Status pause(const Key&,std::int32_t,std::uint32_t original_tick)noexcept;
     [[nodiscard]] control::ClockResult estimate(const Key&,std::uint32_t original_tick)noexcept;
+    [[nodiscard]] control::ClockResult centiseconds(const Key&,std::uint32_t original_tick)noexcept;
+    [[nodiscard]] control::RatioResult ratio(const Key&,control::player::clock::integer::Query)noexcept;
+    [[nodiscard]] control::ClockControl discard_rebase(const Key&,std::uint32_t original_tick)noexcept;
+    [[nodiscard]] Status configure_clock(control::ClockConfiguration)noexcept;
+    [[nodiscard]] Status set_time_base(const Key&,std::uint32_t)noexcept;
+    [[nodiscard]] Status set_loop_enabled(const Key&,bool)noexcept;
     [[nodiscard]] Status request_stop()noexcept;
     [[nodiscard]] Status join()noexcept;
 private:

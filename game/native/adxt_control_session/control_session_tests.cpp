@@ -39,23 +39,33 @@ std::shared_ptr<const reo::native::adxt_attenuation::Table> attenuation_table(){
     std::fill(words.begin()+1,words.begin()+101,200);std::fill(words.begin()+101,words.begin()+201,100);
     auto table=reo::native::adxt_attenuation::Table::from_words(words);check(table.status==reo::native::adxt_attenuation::Status::completed);return table.table;
 }
+struct ClockImportProbe final:reo::native::adxt_lsc_input::Notification {
+    c::Session& session;bool armed{};unsigned calls{};
+    explicit ClockImportProbe(c::Session& value):session(value){}
+    void empty(reo::native::adxt_lsc_input::Input&)noexcept override{
+        if(!armed)return;
+        ++calls;const auto before=session.snapshot().clock_state;
+        check(session.configure_clock({{2,5000,123},1,0xdeadbeef})==c::Status::busy);
+        const auto after=session.snapshot().clock_state;check(before.mode==after.mode && before.rebase_selector==after.rebase_selector && before.drift_bits==after.drift_bits && before.service_busy==after.service_busy && before.in_call==after.in_call);
+    }
+};
 int main(){try{
     {
         using I=reo::native::adxt_lsc_input::Input;using S=reo::native::adxt_lsc_input::Status;
-        Test t;auto live=I::create({1,48000,4,2});
+        Test t;auto notification=std::make_shared<ClockImportProbe>(t.session);auto live=I::create({1,48000,4,2},notification);
         auto first=reo::native::adx_sequence::Clip::prepare(sequence_file(1,48000,12000));
         auto second=reo::native::adx_sequence::Clip::prepare(sequence_file(1,48000,4097));
         check(first.status==reo::native::adx_sequence::Status::completed && second.status==reo::native::adx_sequence::Status::completed);
         const auto a=live->register_asset("first.adx",first.clip),b=live->register_asset("second.adx",second.clip);
         check(a.status==S::completed && b.status==S::completed && live->enqueue(a.key).status==S::completed && live->enqueue(b.key).status==S::completed && live->start()==S::completed);
         auto pc=config(live->origin(),1);pc.decoder.seamless_enabled=true;pc.lsc_input=live;
-        const auto opened=t.session.open(pc,live->origin(),{15,2,8,31});check(opened.status==c::Status::completed);bool ended=false;
+        const auto opened=t.session.open(pc,live->origin(),{15,2,8,31});check(opened.status==c::Status::completed);bool ended=false;notification->armed=true;
         for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(opened.key).evidence;
             check(!state.fault && live->snapshot().error==S::completed);
             if(state.configured && state.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
             if(state.output.channel[0].samples>=512)t.provider->step(512);
             if(state.decoder.source.in_flight)std::this_thread::yield();}check(ended);
-        const auto before=live->snapshot();check(before.published_bytes==before.planned_bytes && before.planned_samples==16097 && before.decoder_base==12000 && before.decoder_ended && before.completed_reads==before.accepted_reads);
+        const auto before=live->snapshot();check(before.published_bytes==before.planned_bytes && before.planned_samples==16097 && before.decoder_base==12000 && before.decoder_ended && before.completed_reads==before.accepted_reads && notification->calls>0);
         check(before.queue.records[0].status==2 && before.queue.records[0].progress==0xfffff && before.queue.records[1].status==2 && before.queue.records[1].progress==0xfffff);
         const auto clock=t.session.estimate(opened.key,0);check(clock.status==c::Status::completed && clock.value.result.ratio.numerator==16097 && clock.value.result.ratio.denominator==48000);
         check(live->enqueue(a.key).status==S::closed && t.session.set_loop_enabled(opened.key,true)==c::Status::unsupported_profile);

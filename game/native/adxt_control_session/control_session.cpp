@@ -173,6 +173,17 @@ ClockResult Session::centiseconds(const Key& key,std::uint32_t tick)noexcept{
     auto& s=*state_;if(s.busy)return{Status::busy,{}};if(s.closing)return{Status::closed,{}};if(!valid(key))return{};Scope scope(s.busy);
     const auto value=s.records[key.slot_].player->centiseconds(tick);return{mapped(value.status),value};
 }
+RatioResult Session::ratio(const Key& key,player::clock::integer::Query query)noexcept{
+    auto& s=*state_;if(s.busy)return{Status::busy};if(s.closing)return{Status::closed};if(!valid(key))return{};Scope scope(s.busy);
+    const auto source=s.records[key.slot_].player->snapshot();if(!source.clock_observation_valid)return{Status::fault};
+    const auto value=player::clock::integer::query(query,source.clock_observation);
+    return{value.status==player::clock::integer::Status::completed?Status::completed:Status::unsupported_profile,value};
+}
+Status Session::configure_clock(ClockConfiguration value)noexcept{
+    auto& s=*state_;if(s.busy || s.clock->in_call || s.clock->service_busy)return Status::busy;if(s.closing)return Status::closed;Scope scope(s.busy);
+    s.clock->mode=value.mode;s.clock->rebase_selector=value.rebase_selector;s.clock->drift_bits=value.drift_bits;
+    return Status::completed;
+}
 ClockControl Session::pause(const Key& key,std::int32_t argument,std::uint32_t tick)noexcept{
     auto& s=*state_;if(s.busy)return{Status::busy,{}};if(s.closing)return{Status::closed,{}};if(!valid(key))return{};Scope scope(s.busy);
     const auto value=s.records[key.slot_].player->pause(argument,tick);return{mapped(value.status),value};

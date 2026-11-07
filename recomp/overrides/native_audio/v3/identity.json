@@ -12,7 +12,7 @@
     "tests.cpp": "df05284f383e33caa7476de2f706474fc1c4b802796207402329df407f04361a",
     "verify.py": "edea93563b475d948fdbd9b75dc5850a0d794cffdcf4feb2f289ef1c3e786c7c"
   },
-  "native_cohort_sha256": "5feef1ee737790d97eb0b8eb16473e7b998cefe2fa22a2ece7ffe713f0d6d565",
+  "native_cohort_sha256": "aa1a03a4fd91bd7ab32c8034219ff8406dd4fb00592dfba65ce86beec84c80c9",
   "unit_and_parent_observations": {
     "build-native-sjuni/native-audio-aggregate-v3/qualified-llvm-v2/receipt.json": {
       "sha256": "764a7d434c5e604f3fc051b072d19b9b0b089a19eab9a39ea94aed1bea92018a",
@@ -63,7 +63,7 @@
       "status": "null-stream aggregate3 observations match qualified parent"
     }
   },
-  "prior_native_cohort_sha256": "3a662e81e547ddf2e5425efb9ac7a7b7187c089f588b98e0e3118565bea00409",
+  "prior_native_cohort_sha256": "5feef1ee737790d97eb0b8eb16473e7b998cefe2fa22a2ece7ffe713f0d6d565",
   "gain_unit_and_parent_observations": {
     "build-native-sjuni/native-audio-aggregate-v3/gain-llvm-v1/receipt.json": {
       "sha256": "842e9a3dd062813a9b373446520de7b44c4fa88d701cf5544d44690aab7f524a",
@@ -137,5 +137,6 @@
     }
   },
   "runtime_factory_protocol_qualification": "tools/native_reconstruction/native_audio_media_factory_qualification.json",
-  "actual_runtime_factory_acquisition_exercised": false
+  "actual_runtime_factory_acquisition_exercised": false,
+  "stable_game_controls_qualification": "tools/native_reconstruction/adxt_game_control_qualification.json"
 }

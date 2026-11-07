@@ -864,3 +864,9 @@ compilers pass 12 declared-port protocol scenarios and complete production-heade
 checks. The candidate preparer includes its canonical dependency set. Actual
 game selection awaits the guest source/control/clock/reset binding; this factory
 checkpoint is not whole-game native audio admission or Step 3 completion.
+
+The [stable control bridge](native-media/ADXT_GAME_CONTROL_RESULTS.md) now exposes
+the qualified clock/discard paths and time-base/loop properties through the same
+instance owner. Both compilers pass 75 suites and the combined factory with the
+updated libraries. Guest ABI/source/callback/reset binding and actual movie
+scheduling/providers still precede the coherent game and audible A/V gates.

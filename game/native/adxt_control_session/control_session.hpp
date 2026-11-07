@@ -23,6 +23,10 @@ struct Observation {Status status{Status::invalid_key};player::Snapshot evidence
 struct Retirement {Status status{Status::invalid_key};player::Snapshot evidence;bool source_joined{};};
 struct ClockResult {Status status{Status::invalid_key};player::ClockResult value;};
 struct ClockControl {Status status{Status::invalid_key};player::ClockControl value;};
+struct RatioResult {Status status{Status::invalid_key};player::clock::integer::Result value{player::clock::integer::Status::invalid_query,{}};};
+// Actual game-owned timing globals only. Native service/reentry guards cannot
+// be imported by a guest adapter or overwritten by a stale shared snapshot.
+struct ClockConfiguration {player::clock::integer::Mode mode;std::uint32_t rebase_selector{},drift_bits{};};
 struct Snapshot {
     output::Snapshot output;
     player::clock::Shared clock_state;
@@ -48,6 +52,8 @@ public:
     [[nodiscard]] Status attenuation(const Key&,std::uint32_t requested_word)noexcept;
     [[nodiscard]] ClockResult estimate(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] ClockResult centiseconds(const Key&,std::uint32_t original_tick)noexcept;
+    [[nodiscard]] RatioResult ratio(const Key&,player::clock::integer::Query)noexcept;
+    [[nodiscard]] Status configure_clock(ClockConfiguration)noexcept;
     [[nodiscard]] ClockControl pause(const Key&,std::int32_t,std::uint32_t original_tick)noexcept;
     [[nodiscard]] ClockControl discard_rebase(const Key&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] Status set_time_base(const Key&,std::uint32_t)noexcept;
