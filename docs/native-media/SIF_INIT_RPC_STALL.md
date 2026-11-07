@@ -68,3 +68,31 @@ The active dependency checkout is preserved.
 the exact patch and SDK object receipts. A matching linked probe and live retest
 remain required. Stage 3 is open; the new native source/movie owners are not
 bound by this diagnostic candidate.
+
+## Linked stage-probe retest
+
+V15 uses isolated source revision `65afff90`, based on V14's `d7e69686` game
+source plus the qualified probe files/patch. The active development branch is
+unchanged. All 2,380 game units link, with 2,379 verified cache reuses; only the
+SDK RPC translation unit changes. The executable is
+`593bbe196266ffb25cf6952d4e3d4f99de05f9beead9fc1d3a5b53d95c55d5b9`.
+
+The same route observes gameplay without skips and exits normally. No build or
+offscreen GPU test runs concurrently. The frame trace drops no rows; sampled
+movie return intervals have maximum **41.0778 ms**, with none above 50 ms.
+Whole-run maximum is 127.9105 ms outside those sampled windows. Native output
+reports zero underrun frames out of 21,828,480 frames, with clean audio/RAM
+retirement, no hard failures or queue rejections, and only the existing optional
+packet-log refusals.
+
+The linked image contains the stage probe and the captured launch requests its
+20 ms threshold, but it emits no slow stage records. This is a non-reproduction
+of the large initializer stall, not a maximum-duration measurement from complete
+call records or a controlled fix/retest. The probe changes no init/logging/lock
+policy; run order, cache/host state and observer effects remain confounds.
+Neither the mutex nor logging hypothesis is promoted to confirmed cause.
+
+Exact build/run/input identities are in
+`build-native-sjuni/sif-init-timing/playtest-v15/observations.json`. The unresolved
+initializer bottleneck and the bounded probe are retained for subsequent native
+integration tests; they do not substitute for binding the new game media owners.
