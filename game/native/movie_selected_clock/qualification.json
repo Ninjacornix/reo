@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "status": "qualified isolated selected movie clock/cache/external history owner",
+  "manifest_sha256": "2359ccd4048ab94fb3010eaa4f82257cf5d69a966764a5eb5d9208a9ec4f032b",
+  "cases": 546,
+  "original_instructions": 70201,
+  "owned_body_count": 22,
+  "native_boundary_checks": 13,
+  "detected_counterfactuals": 7,
+  "receipts": {
+    "build-native-sjuni/movie-selected-clock/qualified-gcc-v4/receipt.json": "5c6bda66b8d66edf74c9de8398f80c2cf2b710f9462d2c3c1712a2a80683adab",
+    "build-native-sjuni/movie-selected-clock/qualified-llvm-v4/receipt.json": "5e8ffed30d25a37d9c7a2e0bcf75c5cc6bbc9b7aa8b7ab5a52e9bb65794ee1b5"
+  },
+  "complete_native_transcripts_equal": true,
+  "parent_suites": 57,
+  "parent_checks": {
+    "gcc": {
+      "build": "d83abef4c3b3ef4370794256623da76e610ed29e3b1bcc1079ada27283cc6c93",
+      "tests": "3d67806ac65e177035df1729e997f8864bc6e9608de1155f4ee35cfa6c771606"
+    },
+    "llvm": {
+      "build": "f9eab6e9723d6a3d3c67d04920b593b267606cfc072110c45e031831e05d8ccd",
+      "tests": "62a19c658be8aff66af7b89c83f61fd03b5045de5b0f81a1601a86d90210517a"
+    }
+  },
+  "pre_native_freezes": {
+    "build-native-sjuni\\movie-selected-clock\\original-freeze-v1\\receipt.json": "4ac39f7fb1bdbb3f503012181ff267b23800fecbaf8fa6dfe877c23b20fb29fa",
+    "build-native-sjuni\\movie-selected-clock\\original-freeze-v2\\receipt.json": "fbaa8b3d40e5b56689d9c1f1b031dbfa6a2b650eab6c5db1edd4600d267af89a"
+  },
+  "post_candidate_scratch_observation_freeze": {
+    "build-native-sjuni\\movie-selected-clock\\original-freeze-v3\\receipt.json": "2222c67232104f85caf3a025f2bb2cf20ca6d1b9733b313f9052e4bfb0511f7d"
+  },
+  "pre_native_results_unchanged_beyond_added_read_only_scratch_observation": true,
+  "failed_receipts": {
+    "build-native-sjuni\\movie-selected-clock\\qualified-gcc-v1\\receipt.json": "734d6e06cd2e2ec3eb91126dfdec1859d0283a3e4686e47676a7b70763b886f4",
+    "build-native-sjuni\\movie-selected-clock\\qualified-llvm-v1\\receipt.json": "b947d23b1027c49572788a9734693626b50cf665a7c7832abac9421a229b2abb",
+    "build-native-sjuni\\movie-selected-clock\\qualified-gcc-v2\\receipt.json": "33d8c8be7ee1d86fd6ce7ba4bcb19378dc73247f2b39cea185856b1a188fffdc",
+    "build-native-sjuni\\movie-selected-clock\\qualified-llvm-v2\\receipt.json": "c07c0ffa5f17f8b7ab797c1da31d058aa4f4932e64a4f81e6ab146fb5856fd9e"
+  },
+  "guard_profile": "isolated initial depth/tag; paired pure serialized hook ports; not shared CRI/global priority authority",
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "additional_sources": {
+    "game\\native\\movie_selected_clock\\README.md": "42f5a654adf192a9bd6a252ec41ebccae97929d44284c642561962b93443c738",
+    "docs\\native-media\\MOVIE_SELECTED_CLOCK_IMPLEMENTATION.md": "84e0a71e3d91c4a1e2b5641978173fb9c5b180461172695acb5c0af6f3ad8820",
+    "game\\native\\CMakeLists.txt": "a54959fe6e3fa01d9f32e2e1202af71d79a09b65c869f4ada647ad6c931df7dd"
+  },
+  "limitations": [
+    "Declared external sample/hook ports do not qualify a real clock source, runtime capture or thread priority.",
+    "Point-of-use scratch is opaque input; old frame bits are not a valid timestamp claim.",
+    "Shared guard ownership, ADXT filter, movie construction/reset/pause/buffering/due/skip/frame-source lifetimes and game transitions remain.",
+    "Gameplay, graphics/platform migration and runtime removal remain stages4-6."
+  ]
+}

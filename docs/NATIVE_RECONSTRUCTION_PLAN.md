@@ -4,7 +4,7 @@ Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapt
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has fifty-six standalone suites, including the independent ADX
+project now has fifty-seven standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider
@@ -473,6 +473,16 @@ counterfactuals and all 56 standalone suites pass. This does not provide selecte
 callback/cache authority, ADXT filtering, due/skip policy or movie frame/source
 ownership. Those integrations and game/media transitions still gate stage 3;
 stages 4–6 remain open.
+
+The [owned selected movie clock](native-media/MOVIE_SELECTED_CLOCK_IMPLEMENTATION.md)
+now matches 546 original cases through 22 owned bodies with both compilers,
+including cache, external history, raw status, callback-time facts and guard
+snapshots. Callback self-removal remains fenced; seven detected counterfactuals
+and all 57 standalone suites pass. Actual local scratch is an explicit opaque
+input, and guard seeds describe the isolated serialized profile. Real ADXT audio
+filtering, shared CRI guard/scheduler integration, movie construction/reset,
+pause/buffering, due/skip, frame/source lifetime and game transitions still gate
+stage 3. No movie override is enabled, and stages 4–6 remain open.
 
 ## Target architecture
 
