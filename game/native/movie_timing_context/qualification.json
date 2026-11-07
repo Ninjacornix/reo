@@ -1,0 +1,166 @@
+{
+  "schema": 1,
+  "status": "qualified prepared owned movie timing context with shared serialized guard and actual native audio-source integration",
+  "manifest_sha256": "15ab0b061d4070306709ecf88eae3d8293d3c78f7c58958db9683963cc2e46d7",
+  "original_workflows": 40,
+  "original_operations": 210,
+  "initial_and_final_snapshots": 250,
+  "original_instructions_per_compiler": 221073,
+  "original_fp_steps_per_compiler": 508,
+  "joined_emitted_word_cases_per_compiler": 64,
+  "pre_native_workflows": 37,
+  "pre_native_operations": 200,
+  "post_candidate_added_workflows": 3,
+  "earlier_original_inputs_and_results_unchanged": true,
+  "detected_counterfactuals": 10,
+  "boundary_checks": 32,
+  "receipts": {
+    "build-native-sjuni/movie-timing-context/qualified-gcc-v1/receipt.json": "c078f2210fa986bf83d13a6adde6072d348900343dc7cb32c8a5446359d2909d",
+    "build-native-sjuni/movie-timing-context/qualified-llvm-v1/receipt.json": "3e183d6bd708d0800328ab3f710c31fd475d0830f78555a4ec5a0375b9cd8d66"
+  },
+  "requalified_original_profiles": {
+    "movie_selected_clock": {
+      "build-native-sjuni/movie-selected-clock/qualified-gcc-context-v1/receipt.json": "02d8bbd19c2baf4253fd3e64d3e584ae6da6341e940bbea2eff146a3d9644660",
+      "build-native-sjuni/movie-selected-clock/qualified-llvm-context-v1/receipt.json": "280c42f5ef2acf1f7f7dd3a3b0fec6dc62b7940b2f2a78a8078dd156aa3b0877"
+    },
+    "movie_audio_clock": {
+      "build-native-sjuni/movie-audio-clock/qualified-gcc-context-v1/receipt.json": "b0e92d84b92da632e703339e9916ec9ad302a1d447cf59a47a85991b86a0e8f9",
+      "build-native-sjuni/movie-audio-clock/qualified-llvm-context-v1/receipt.json": "121db4506613866975bf7344ff17cfd087e16d4b4d81d4354bd8a8aebc9f33ea"
+    },
+    "movie_pause": {
+      "build-native-sjuni/movie-pause/qualified-gcc-context-v1/receipt.json": "9b193a2085ad09168637a8be6619ce3610bf3fd7f2c4afb16315d62e0696bed4",
+      "build-native-sjuni/movie-pause/qualified-llvm-context-v1/receipt.json": "2cf3eff2d97744d1f0e750780deaa3ff5e9f90c313fe5d284c44161c97bf8597"
+    },
+    "movie_clock_initialize": {
+      "build-native-sjuni/movie-clock-initialize/qualified-gcc-context-v1/receipt.json": "7852be07884b6c9f9f49f6953747017c9cb3d9363991c590253d792f39558f4e",
+      "build-native-sjuni/movie-clock-initialize/qualified-llvm-context-v1/receipt.json": "3120efa1d5cd14ece406ad9b3abe7471bc153c5d219a4ec815a54eb0c62aab9b"
+    }
+  },
+  "complete_native_transcripts_equal": true,
+  "original_complete_results_equal": true,
+  "parent_suites": 65,
+  "parent_checks": {
+    "gcc": {
+      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
+      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
+    },
+    "llvm": {
+      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
+      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
+    }
+  },
+  "actual_native_source_decoder_estimator_filter_context_retirement_test": true,
+  "original_freezes": {
+    "build-native-sjuni\\movie-timing-context\\original-gcc-v2\\receipt.json": "be4dcc2be36ce9af01f639344fcd541848566e1f5926ad8d6174e358f294cc26",
+    "build-native-sjuni\\movie-timing-context\\original-gcc-v3\\receipt.json": "e9981ac67aa3d902f3c564e9215259d7971ad4aaf0f7dd4db628787e95589042",
+    "build-native-sjuni\\movie-timing-context\\original-llvm-v2\\receipt.json": "00ef4f423a3322601cd528713e33eb8bd11f2d42a3aa5b92cb497bfdee415ac8",
+    "build-native-sjuni\\movie-timing-context\\original-llvm-v3\\receipt.json": "cc142ee7c12017ab0a4b76090b6df6ff5da3041a352303f9aebca589a2a16007"
+  },
+  "failed_original_runner_receipts": {
+    "build-native-sjuni\\movie-timing-context\\original-gcc-v1\\receipt.json": "71e139eb3209f6d8867b23fa9e52506f67c48b851214ca67ff4034a2bf447b9a",
+    "build-native-sjuni\\movie-timing-context\\original-llvm-v1\\receipt.json": "71e139eb3209f6d8867b23fa9e52506f67c48b851214ca67ff4034a2bf447b9a"
+  },
+  "failed_original_runner_reason": "Nested callee-save validation incorrectly used top-level entry registers; corrected to each actual call entry.",
+  "control_source_drifts": {
+    "adx_sequence": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adxt_phased_player": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adxt_control_session": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adxt_control_session/service_binding": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adxt_control_session/regular_loops": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adx_window/v2/queue_safe_r3": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adxt_lsc_input": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adxt_output_session": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adxt_shared_player": [
+      "game/native/CMakeLists.txt"
+    ],
+    "adxt_clocked_player": [
+      "game/native/CMakeLists.txt"
+    ],
+    "audio_mix_tail": [
+      "game/native/CMakeLists.txt"
+    ],
+    "movie_counter_clock": [
+      "game/native/CMakeLists.txt"
+    ],
+    "movie_selected_clock": [
+      "game/native/movie_selected_clock/clock.cpp",
+      "game/native/movie_selected_clock/clock.hpp"
+    ],
+    "movie_audio_filter": [
+      "game/native/CMakeLists.txt"
+    ],
+    "movie_audio_clock": [
+      "game/native/CMakeLists.txt",
+      "game/native/movie_audio_clock/clock.cpp",
+      "game/native/movie_selected_clock/clock.cpp",
+      "game/native/movie_selected_clock/clock.hpp"
+    ],
+    "movie_pause": [
+      "game/native/CMakeLists.txt",
+      "game/native/movie_pause/controller.cpp",
+      "game/native/movie_pause/controller.hpp",
+      "game/native/movie_selected_clock/clock.hpp"
+    ],
+    "movie_clock_initialize": [
+      "game/native/CMakeLists.txt",
+      "game/native/movie_selected_clock/clock.hpp"
+    ],
+    "movie_admission": [
+      "game/native/CMakeLists.txt"
+    ]
+  },
+  "ancestor_qualifications": {
+    "game\\native\\adx_sequence\\qualification.json": "92e9255440be99ee9a470fca4e062c02a5d2910ec6cd12d1275c28c3a60d5a41",
+    "game\\native\\adxt_phased_player\\qualification.json": "ba3cd11f75cd8d5fb15d68d5af9d4d5309a4fe882c0baf378b9ed01b990edc8f",
+    "game\\native\\adxt_control_session\\qualification.json": "104760d64ee17f15a057b16257f15772ed1c688264fa33fe85e13bb43aff83d6",
+    "game\\native\\adxt_control_session\\service_binding\\qualification.json": "ed757ab3c80396ead9aaf5b74192890ef5089a73547273a9063246d096213207",
+    "game\\native\\adxt_control_session\\regular_loops\\qualification.json": "1869160da657dcd8f2f09dd42444afedb223b807f25511621e4f3c6921d0fd64",
+    "game\\native\\adx_window\\v2\\queue_safe_r3\\qualification.json": "25e5906c712db808a00d6d9459168e89c974373e59832588396c4364d222f8fe",
+    "game\\native\\adxt_lsc_input\\qualification.json": "3773e6e9e4e0984eacdb9b663d4ff4831de95b8ee3acb5c6ae20e50f38f759e4",
+    "game\\native\\adxt_output_session\\qualification.json": "bb293a75012361a0bfb12415a28df8ac7c499fcc15028d42ebb3b3bdb50ea852",
+    "game\\native\\adxt_shared_player\\qualification.json": "0edf60e781fbe84847200dd1df1596a5225618b2ea2dd13c249dd9dc12b94812",
+    "game\\native\\adxt_clocked_player\\qualification.json": "298046e892ff86c46975c85d9bf29a535ce70b2db9d7a0a179ff76cf655d01fa",
+    "game\\native\\audio_mix_tail\\qualification.json": "df52bd94ecf11081602d6a5b1ccca117409e7cfcf3bcb2bb98dfa877695f4623",
+    "game\\native\\movie_counter_clock\\qualification.json": "f497f2d685bcf8efe9f7a315b6ca9990b5fbbaf6f0765b1349639b8950990fd5",
+    "game\\native\\movie_selected_clock\\qualification.json": "ecc1ce44cf7b43297d86e1100ae116b77feef4c39cb356c8b3ec3e1345bdcd4f",
+    "game\\native\\movie_audio_filter\\qualification.json": "5d5061de00e4d81e1ab91f2b815a6e09480b671d22d26df8dd74e392113aad84",
+    "game\\native\\movie_audio_clock\\qualification.json": "b5f15270a05f88e54f5f4c60cf6f226922fa04d8f04b9726d62401750d467cfd",
+    "game\\native\\movie_pause\\qualification.json": "3616a6cc0271d940769dd461eeae2eb07a1cc247fe37103ba45c759a4f608d08",
+    "game\\native\\movie_clock_initialize\\qualification.json": "afada592561140a2281d2a065b9321a8e5d1129a79674f9793e494afeb3e3eef",
+    "game\\native\\movie_admission\\qualification.json": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b"
+  },
+  "additional_sources": {
+    "game\\native\\movie_timing_context\\README.md": "e7cce37d14e48438a7bd8369e243f246b22e9a35a5a8092d46f7dd4a7e86ff16"
+  },
+  "native_provider_refusal": "Separate admitted flag; admitted nonzero original status is preserved; refused cache publication is prevented while earlier tick/callback effects remain.",
+  "guard_profile": "Retained shared state for serialized paired pure hook calls, including nested selected query during buffering; not scheduler/priority authority.",
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "limitations": [
+    "Prepared selectors 0,1,2,5 and rate codes0-8; state/property observations do not replace original property admission or movie lifecycle.",
+    "Estimator/helper, full predicates, component dispatch and errors remain declared ports in original workflows.",
+    "Timing-query detach retains providers; it is not a movie/source/device/frame stop fence.",
+    "Diagnostic pointer scopes and incidental FPR/FCR/caller storage do not establish complete guest ABI parity.",
+    "Global scheduler/priority, full movie/source/frame lifetime, real component bindings and game transitions remain.",
+    "Gameplay, graphics/platform migration and complete compatibility removal remain stages4-6."
+  ]
+}

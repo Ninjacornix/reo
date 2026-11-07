@@ -18,7 +18,7 @@ struct Updates {
 enum class Kind {command,pause_predicate,resume_predicate,error};
 enum class ProviderStatus {completed,failed};
 struct Call {Kind kind;std::uint32_t target{},command{},argument{},extra{};};
-struct Guard {std::uint32_t depth{},tag{};bool operator==(const Guard&)const=default;};
+using Guard=movie_selected_clock::GuardState;
 struct View {State state;Guard guard;};
 struct Reply {ProviderStatus provider{ProviderStatus::completed};std::uint32_t status{};Updates updates;};
 class Ports {
@@ -33,6 +33,7 @@ struct Config {
     std::shared_ptr<Ports> ports;
     std::shared_ptr<movie_selected_clock::GuardHooks> hooks;
     std::uint32_t enter_parameter{0x11223344},leave_parameter{0x55667788};
+    std::shared_ptr<Guard> shared_guard;
 };
 enum class Operation {pause,nested,forward,buffer,step};
 enum class Status {completed,busy,invalid_input,invalid_rate,provider_failure};
@@ -45,8 +46,11 @@ public:
     explicit Controller(Config);
     Controller(const Controller&)=delete;Controller& operator=(const Controller&)=delete;
     [[nodiscard]] Result execute(Operation,std::uint32_t argument)noexcept;
-    [[nodiscard]] Snapshot snapshot()const noexcept{return{{config_.state,config_.guard},status_};}
+    [[nodiscard]] Status update(const Updates&)noexcept;
+    [[nodiscard]] Snapshot snapshot()const noexcept{return{{config_.state,guard()},status_};}
 private:
+    [[nodiscard]] Guard& guard()noexcept{return config_.shared_guard?*config_.shared_guard:config_.guard;}
+    [[nodiscard]] const Guard& guard()const noexcept{return config_.shared_guard?*config_.shared_guard:config_.guard;}
     void apply(const Updates&)noexcept;
     std::uint32_t invoke(Call)noexcept;
     void enter()noexcept;

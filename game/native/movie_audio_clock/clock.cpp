@@ -54,6 +54,7 @@ selected::Reply Clock::query(selected::State snapshot,Words prior) noexcept {
     const auto value=execute(Operation::slot,snapshot.counter.actual,prior);
     selected::Reply reply;reply.words=value.words;reply.status=value.callback_status;
     reply.numerator=reply.denominator=value.status==Status::completed && value.written;
+    reply.admitted=value.status==Status::completed;
     return reply;
 }
 }

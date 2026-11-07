@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified isolated movie counter and built-in rational query paths",
-  "manifest_sha256": "6208ead9ac6e73ac33e8f1cbc7267bedaaad75ada8906215facfc4082b643dd4",
+  "manifest_sha256": "522de1a5943b166823e66dafc97ce1fa837af756a52ec0480609fa98e6acf13a",
   "cases": 504,
   "original_instructions": 11481,
   "owned_body_count": 9,
@@ -25,15 +25,15 @@
     "build-native-sjuni\\movie-counter-clock\\qualified-llvm-v1\\receipt.json": "a50383442c839d98faa99c8f11baa161de904394e1a904309e29272fe5c56019"
   },
   "pre_correction_candidate_snapshot": "build-native-sjuni\\movie-counter-clock\\failed-v1-inputs",
-  "parent_suites": 63,
+  "parent_suites": 65,
   "parent_checks": {
     "gcc": {
-      "build": "fc96e8c9e31bc503a56dd2c2b0af3cb49ffc60ea473337ed2f5c8918dd78aaaa",
-      "tests": "bee3b451bbfc8243923b539572a98febce70019343f1df7c6b27595493083dd7"
+      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
+      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
     },
     "llvm": {
-      "build": "6a3bde8f0a70b35d84100672dfc8f4ebc317d33c91ba5a6e87476fa96b9f87d2",
-      "tests": "85d89c455fa9aeba50442c86cbfff3c9c09c6b698e0300da44328a253dfe0bb5"
+      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
+      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
     }
   },
   "stage3_complete": false,
@@ -85,5 +85,13 @@
     "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\movie_counter_clock\\qualification.json",
     "ancestor_sha256": "b71860957941dfdded8a86d128f766de2a8bdca3e795a819fc7caef528998aaa",
     "existing_runtime_sources_unchanged": true
+  },
+  "timing_context_extension": {
+    "qualification_sha256": "63e9afdcc67a49e3286f83c60c6d76c137fd70a8a7dfbb95e8f9c551107d990c",
+    "ancestor_path": "build-native-sjuni\\movie-timing-context\\ancestor-pre-control-v1\\game\\native\\movie_counter_clock\\qualification.json",
+    "ancestor_sha256": "f497f2d685bcf8efe9f7a315b6ca9990b5fbbaf6f0765b1349639b8950990fd5",
+    "source_files_changed": [],
+    "existing_runtime_sources_unchanged": true,
+    "requalified_original_profiles": {}
   }
 }

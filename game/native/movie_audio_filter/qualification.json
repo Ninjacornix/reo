@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified isolated movie audio-time filter",
-  "manifest_sha256": "bf0fdd8a82bed81f87ddc5790870002c636f693210307780c8774974c098a54b",
+  "manifest_sha256": "a5ba5a2d35d041cd4ec147bb38d6157f98cf30ce8151ac113c9424fa8eaa5f0d",
   "cases": 67,
   "operations": 574,
   "constructors": 67,
@@ -16,15 +16,15 @@
     "build-native-sjuni/movie-audio-filter/qualified-llvm-v3/receipt.json": "e1f423f855b082513fae60de51ae93bc4fa5297aa22fba10230ab5ff78075036"
   },
   "complete_native_transcripts_equal": true,
-  "parent_suites": 63,
+  "parent_suites": 65,
   "parent_checks": {
     "gcc": {
-      "build": "fc96e8c9e31bc503a56dd2c2b0af3cb49ffc60ea473337ed2f5c8918dd78aaaa",
-      "tests": "bee3b451bbfc8243923b539572a98febce70019343f1df7c6b27595493083dd7"
+      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
+      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
     },
     "llvm": {
-      "build": "6a3bde8f0a70b35d84100672dfc8f4ebc317d33c91ba5a6e87476fa96b9f87d2",
-      "tests": "85d89c455fa9aeba50442c86cbfff3c9c09c6b698e0300da44328a253dfe0bb5"
+      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
+      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
     }
   },
   "pre_native_original_receipt_sha256": "6564b5452b849ba68aa3bde7bf424c4bd4b9024d4372132ffdbf346200925e64",
@@ -86,5 +86,13 @@
     "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\movie_audio_filter\\qualification.json",
     "ancestor_sha256": "951a34e09a7ae08666deac917d2aadd025353fa9cc110065dd75a8b56f5ef2d0",
     "existing_runtime_sources_unchanged": true
+  },
+  "timing_context_extension": {
+    "qualification_sha256": "63e9afdcc67a49e3286f83c60c6d76c137fd70a8a7dfbb95e8f9c551107d990c",
+    "ancestor_path": "build-native-sjuni\\movie-timing-context\\ancestor-pre-control-v1\\game\\native\\movie_audio_filter\\qualification.json",
+    "ancestor_sha256": "5d5061de00e4d81e1ab91f2b815a6e09480b671d22d26df8dd74e392113aad84",
+    "source_files_changed": [],
+    "existing_runtime_sources_unchanged": true,
+    "requalified_original_profiles": {}
   }
 }

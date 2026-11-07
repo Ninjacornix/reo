@@ -2,7 +2,7 @@
   "schema": 1,
   "files": {
     "docs/native-media/MOVIE_ADMISSION_ARITHMETIC_CONTRACT.md": "4b93dd3837681b808bd88b02405ef46c92b876e9a2098cef26dc4eea4105ce08",
-    "game/native/CMakeLists.txt": "764013ef697c6c731c1b48f675e3fed92af53cd2e31642a7ca07db90421c912d",
+    "game/native/CMakeLists.txt": "2c232619e7c156ffdf80b2d5c18959e2c93909b050835fca02a06dd40496251e",
     "game/native/movie_admission/admission.cpp": "2ef6eb91785c435b819178aaf769ddc630b2992384654844bc00ee15390da303",
     "game/native/movie_admission/admission.hpp": "321b61c9c908168a0a8dae25587b8d6faef118dc24bf4b91e4b8af23f973bbca",
     "game/native/movie_admission/admission_tests.cpp": "95c6820334641d1894b6ab93c2c8659210f8c6401b822d3748ce022fbc04578e",

@@ -1,19 +1,19 @@
 {
   "schema": 1,
   "status": "qualified shared stream/bank/packet output and actual owned media source integration",
-  "manifest_sha256": "7e750c28e235fa6efc3ad9cdcb245b8d6e906351fb3c81bee75e66fc47613fad",
+  "manifest_sha256": "604462070636e0e137d72e62d63957893b9d23fd57c4038a42c0b1f16eeb65e8",
   "checks_per_compiler": 298,
   "new_detected_counterfactuals": 5,
   "actual_source_owner_test": true,
-  "parent_suites": 63,
+  "parent_suites": 65,
   "parent_checks": {
     "gcc": {
-      "build": "fc96e8c9e31bc503a56dd2c2b0af3cb49ffc60ea473337ed2f5c8918dd78aaaa",
-      "tests": "bee3b451bbfc8243923b539572a98febce70019343f1df7c6b27595493083dd7"
+      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
+      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
     },
     "llvm": {
-      "build": "6a3bde8f0a70b35d84100672dfc8f4ebc317d33c91ba5a6e87476fa96b9f87d2",
-      "tests": "85d89c455fa9aeba50442c86cbfff3c9c09c6b698e0300da44328a253dfe0bb5"
+      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
+      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
     }
   },
   "receipts": {
@@ -120,5 +120,13 @@
     "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\audio_mix_tail\\qualification.json",
     "ancestor_sha256": "d0756dbf5289529a69d57a99539cb8b1ad851d148bc9521ffe8c5fd36e0788a8",
     "existing_runtime_sources_unchanged": true
+  },
+  "timing_context_extension": {
+    "qualification_sha256": "63e9afdcc67a49e3286f83c60c6d76c137fd70a8a7dfbb95e8f9c551107d990c",
+    "ancestor_path": "build-native-sjuni\\movie-timing-context\\ancestor-pre-control-v1\\game\\native\\audio_mix_tail\\qualification.json",
+    "ancestor_sha256": "df52bd94ecf11081602d6a5b1ccca117409e7cfcf3bcb2bb98dfa877695f4623",
+    "source_files_changed": [],
+    "existing_runtime_sources_unchanged": true,
+    "requalified_original_profiles": {}
   }
 }

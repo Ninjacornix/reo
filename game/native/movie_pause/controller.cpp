@@ -21,15 +21,19 @@ void Controller::apply(const Updates& updates)noexcept {
     APPLY(active_counter);APPLY(elapsed_counter);APPLY(external_accumulator);APPLY(external_denominator);
 #undef APPLY
 }
+Status Controller::update(const Updates& updates)noexcept {
+    if(busy_)return Status::busy;
+    apply(updates);return Status::completed;
+}
 std::uint32_t Controller::invoke(Call call)noexcept {
-    const auto provider=config_.ports;const auto reply=provider->call(call,{config_.state,config_.guard});
+    const auto provider=config_.ports;const auto reply=provider->call(call,{config_.state,guard()});
     apply(reply.updates);if(reply.provider!=ProviderStatus::completed)status_=Status::provider_failure;return reply.status;
 }
 void Controller::enter()noexcept {
-    if(config_.hooks){config_.hooks->enter(config_.enter_parameter);if(!config_.guard.depth)config_.guard.tag=1;++config_.guard.depth;}
+    if(config_.hooks){config_.hooks->enter(config_.enter_parameter);if(!guard().depth)guard().tag=1;++guard().depth;}
 }
 void Controller::leave()noexcept {
-    if(config_.hooks){--config_.guard.depth;if(!config_.guard.depth)config_.guard.tag=0;config_.hooks->leave(config_.leave_parameter);}
+    if(config_.hooks){--guard().depth;if(!guard().depth)guard().tag=0;config_.hooks->leave(config_.leave_parameter);}
 }
 void Controller::step(std::uint32_t mode)noexcept {
     if(mode!=2)return;

@@ -1,19 +1,19 @@
 {
   "schema": 1,
   "status": "qualified media graph with optional shared native bank/packet output",
-  "manifest_sha256": "bd533fbb0d1e728417a56109090bad8100fce7af1a70b37babe16c3168d73572",
+  "manifest_sha256": "6ae9ea2620f37469161823d10889d608549fa2e573655c02299919e167dd714e",
   "ancestor_snapshot": "build-native-sjuni/audio-mix-tail/ancestor-v1/game/native/adx_window/v2/queue_safe_r3/qualification.json",
   "ancestor_qualification_sha256": "32d142698a7a4348f15eec00e873d581113bfe9db0dfe72634b155e00c4721fd",
-  "shared_mix_qualification_sha256": "df52bd94ecf11081602d6a5b1ccca117409e7cfcf3bcb2bb98dfa877695f4623",
-  "parent_suites": 63,
+  "shared_mix_qualification_sha256": "6abc3696bf7cfd7efcef872175fbccf2cfd00404d5f195ed1791a3472ba7bed0",
+  "parent_suites": 65,
   "parent_checks": {
     "gcc": {
-      "build": "fc96e8c9e31bc503a56dd2c2b0af3cb49ffc60ea473337ed2f5c8918dd78aaaa",
-      "tests": "bee3b451bbfc8243923b539572a98febce70019343f1df7c6b27595493083dd7"
+      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
+      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
     },
     "llvm": {
-      "build": "6a3bde8f0a70b35d84100672dfc8f4ebc317d33c91ba5a6e87476fa96b9f87d2",
-      "tests": "85d89c455fa9aeba50442c86cbfff3c9c09c6b698e0300da44328a253dfe0bb5"
+      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
+      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
     }
   },
   "receipts": {
@@ -107,5 +107,13 @@
     "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\adx_window\\v2\\queue_safe_r3\\qualification.json",
     "ancestor_sha256": "2df118226e7c458120710756775a9e7a09972aaf7b816481f112648132e5cd68",
     "existing_runtime_sources_unchanged": true
+  },
+  "timing_context_extension": {
+    "qualification_sha256": "63e9afdcc67a49e3286f83c60c6d76c137fd70a8a7dfbb95e8f9c551107d990c",
+    "ancestor_path": "build-native-sjuni\\movie-timing-context\\ancestor-pre-control-v1\\game\\native\\adx_window\\v2\\queue_safe_r3\\qualification.json",
+    "ancestor_sha256": "25e5906c712db808a00d6d9459168e89c974373e59832588396c4364d222f8fe",
+    "source_files_changed": [],
+    "existing_runtime_sources_unchanged": true,
+    "requalified_original_profiles": {}
   }
 }
