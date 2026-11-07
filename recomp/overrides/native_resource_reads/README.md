@@ -59,6 +59,15 @@ after join. Configure is a bootstrap operation, not live reconfiguration; an
 attached runtime remains one-shot under the external-worker patch. The caller
 must keep runtime/RAM alive through calls and serialize/synchronize destinations.
 
+`retain_mount_before_run` hands media consumers the same validated immutable
+mount. It takes the runtime's real pre-run setup lease, checks the configured
+runtime/RAM incarnation and refuses guest execution, late/stopped setup and
+foreign identities. The aliasing strong handle retains the existing reader's
+mount and files, without another mount, environment lookup or read. It exposes
+no runtime, RAM or guest callback. Consumers resolve retained native ByteViews
+and own their worker stop/join; a file-only lease may outlive the runtime.
+See [the resource handoff evidence](../../../docs/native-media/NATIVE_MEDIA_RESOURCE_HANDOFF.md).
+
 Sampled payload counters are emitted only after exact successful native reads.
 They prove payload attempts, not the later original reply/callback, SRD/DVCI/SJ
 publication, complete route coverage or a performance improvement.

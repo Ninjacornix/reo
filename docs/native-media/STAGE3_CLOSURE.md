@@ -54,3 +54,11 @@ no C0-DF or BD audio packets, so this edition's audio gate is its separate ADX
 game-consumer route. Native embedded-audio demux is not substituted for that
 actual integration requirement. The next work is broader video coverage and
 logical/physical game scheduling, alongside separate ADX/output integration.
+
+The [resource mount handoff](NATIVE_MEDIA_RESOURCE_HANDOFF.md) now gives media
+consumers the same validated immutable source ownership. Both compilers check
+late/foreign refusal and real mono/stereo imported sources after the declared
+runtime, mount and trees disappear, matching the qualified PCM baseline. These
+tests retain explicit runtime/bridge ports; final game resource transitions and
+source/control/scheduler consumers remain required. Native integer volume and
+live host route gains are also qualified through the instance/output boundary.

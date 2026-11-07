@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <utility>
 
 constexpr std::uint32_t PS2_RAM_SIZE = 32u * 1024u * 1024u;
 class PS2Runtime;
@@ -36,6 +37,21 @@ public:
     ~PS2Runtime() { requestStop(); if (!joinWorkers()) std::terminate(); }
     Memory& memory() noexcept { return memory_; }
     bool isStopRequested() const noexcept { return stopping.load(); }
+    class PreRunSetupLease {
+        PS2Runtime* owner_{};
+        friend class PS2Runtime;
+        explicit PreRunSetupLease(PS2Runtime* owner):owner_(owner){++owner_->setup_leases;}
+    public:
+        PreRunSetupLease()=default;
+        PreRunSetupLease(const PreRunSetupLease&)=delete;
+        PreRunSetupLease(PreRunSetupLease&& other)noexcept:owner_(std::exchange(other.owner_,nullptr)){}
+        ~PreRunSetupLease(){if(owner_)--owner_->setup_leases;}
+        explicit operator bool()const noexcept{return owner_!=nullptr;}
+    };
+    PreRunSetupLease acquirePreRunSetup()noexcept {
+        ++setup_attempts;
+        return setup_allowed && !stopping.load()?PreRunSetupLease(this):PreRunSetupLease();
+    }
     bool registerExternalWorker(std::shared_ptr<ExternalWorker> worker) noexcept {
         if (!registration_allowed || stopping.load()) return false;
         try {
@@ -53,6 +69,8 @@ public:
         return true;
     }
     bool registration_allowed = true;
+    bool setup_allowed=true;
+    unsigned setup_leases{},setup_attempts{};
     std::atomic<bool> stopping{false};
     unsigned registrations{};
 private:

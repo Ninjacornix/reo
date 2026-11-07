@@ -212,6 +212,18 @@ void configure(const char* serial, std::uint8_t* ram, std::size_t bytes,
     }
 }
 
+SharedMount retain_mount_before_run(PS2Runtime& runtime,const std::uint8_t* ram,std::size_t bytes)noexcept {
+    try {
+        if(!ram || bytes!=PS2_RAM_SIZE || runtime.memory().getRDRAM()!=ram ||
+           ps2ActualGuestExecutionDepth(&runtime))return {};
+        auto setup=runtime.acquirePreRunSetup();if(!setup)return {};
+        const auto session=load_active();
+        if(!session || &session->runtime!=&runtime || session->ram!=ram ||
+           session->stopping.load(std::memory_order_acquire) || runtime.isStopRequested())return {};
+        return SharedMount(session->reader,&session->reader->mount());
+    }catch(...){return {};}
+}
+
 bool tryRead(std::uint8_t* ram, PS2Runtime* runtime,
              std::uint32_t send_buffer, std::uint32_t send_size,
              std::uint32_t receive_buffer, std::uint32_t receive_size, bool& ok) noexcept {

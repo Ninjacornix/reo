@@ -132,6 +132,42 @@ void refusals(const char* fixture) {
     CHECK(native::mock::reads == 0 && native::mock::io_calls == 0);
 }
 
+void mount_handoff(const char* fixture) {
+    api::SharedMount retained;std::weak_ptr<native::MountedReader> reader;
+    {
+        PS2Runtime runtime,foreign;ReoHwBridge bridge;auto* ram=runtime.memory().getRDRAM();
+        CHECK(!api::retain_mount_before_run(runtime,ram,PS2_RAM_SIZE));
+        seed(runtime,fixture);configure(runtime);reader=native::mock::last_reader;
+        retained=api::retain_mount_before_run(runtime,ram,PS2_RAM_SIZE);
+        auto actual=reader.lock();CHECK(retained && actual && retained.get()==&actual->mount());
+        CHECK(!retained.owner_before(actual) && !actual.owner_before(retained));
+        CHECK(runtime.setup_leases==0 && native::mock::opens==1 && native::mock::reads==0);
+        CHECK(!api::retain_mount_before_run(foreign,ram,PS2_RAM_SIZE));
+        CHECK(!api::retain_mount_before_run(foreign,foreign.memory().getRDRAM(),PS2_RAM_SIZE));
+        CHECK(!api::retain_mount_before_run(runtime,ram+1,PS2_RAM_SIZE));
+        CHECK(!api::retain_mount_before_run(runtime,nullptr,PS2_RAM_SIZE));
+        CHECK(!api::retain_mount_before_run(runtime,ram,PS2_RAM_SIZE-1));
+        {PS2Runtime::GuestExecutionScope guest(&runtime);
+            CHECK(!api::retain_mount_before_run(runtime,ram,PS2_RAM_SIZE));}
+        runtime.setup_allowed=false;const auto attempts=runtime.setup_attempts;
+        CHECK(!api::retain_mount_before_run(runtime,ram,PS2_RAM_SIZE) && runtime.setup_attempts==attempts+1);
+        runtime.setup_allowed=true;
+        CHECK(api::retain_mount_before_run(runtime,ram,PS2_RAM_SIZE).get()==retained.get());
+        runtime.requestStop();CHECK(runtime.joinWorkers());
+        CHECK(!api::retain_mount_before_run(runtime,ram,PS2_RAM_SIZE));
+        CHECK(runtime.setup_leases==0 && foreign.setup_leases==0 && !reader.expired());
+    }
+    CHECK(!reader.expired() && native::mock::deaths==0);
+    {
+        PS2Runtime next;ReoHwBridge bridge;seed(next,fixture);configure(next);
+        auto fresh=api::retain_mount_before_run(next,next.memory().getRDRAM(),PS2_RAM_SIZE);
+        CHECK(fresh && retained.get()!=fresh.get() && native::mock::opens==2 && native::mock::reads==0);
+        CHECK(!retained.owner_before(reader.lock()) && !reader.lock().owner_before(retained));
+    }
+    CHECK(!reader.expired() && native::mock::deaths==1);
+    retained.reset();CHECK(reader.expired() && native::mock::deaths==2);
+}
+
 void reader_results(const char* fixture) {
     PS2Runtime runtime; ReoHwBridge bridge;
     seed(runtime, fixture); request(runtime); configure(runtime);
@@ -239,6 +275,7 @@ int main(int argc, char** argv) {
         const std::string scenario = argv[2];
         if (scenario == "operations") operations(argv[1]);
         else if (scenario == "refusals") refusals(argv[1]);
+        else if (scenario == "mount-handoff") mount_handoff(argv[1]);
         else if (scenario == "reader-results") reader_results(argv[1]);
         else if (scenario == "shutdown") shutdown(argv[1], false);
         else if (scenario == "self-join") shutdown(argv[1], true);
@@ -260,6 +297,7 @@ int main(int argc, char** argv) {
         } else if (scenario == "disabled") {
             PS2Runtime runtime; ReoHwBridge bridge; seed(runtime, argv[1]); request(runtime); configure(runtime);
             CHECK(runtime.registrations == 0 && native::mock::opens == 0);
+            CHECK(!api::retain_mount_before_run(runtime,runtime.memory().getRDRAM(),PS2_RAM_SIZE));
             PS2Runtime::GuestExecutionScope guest(&runtime); untouched_refusal(runtime);
         } else setup_refusal(argv[1], scenario);
         std::cout << scenario << ": " << checks << " host-only checks passed\n";

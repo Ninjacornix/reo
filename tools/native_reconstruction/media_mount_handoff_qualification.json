@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "status": "validated immutable mount handoff and two real native sources qualified with declared runtime/bridge ports; game binding absent",
+  "sources": {
+    "recomp/overrides/native_resource_reads/runtime_adapter.cpp": "dbd8d2892eb74837edc38d012997274111d41e2c352520c0d7473fc1c7d018cf",
+    "recomp/overrides/native_resource_reads/runtime_adapter.h": "d55e3e1e56fd2b89d53860f0a448253715674560bf7df6c889190e64c42b454d",
+    "recomp/overrides/native_resource_reads/README.md": "8866f8ba4bc6289921080bfc6b09e7abd572a8f91da178f714e540574fbee7e5",
+    "tools/native_reconstruction/media_mount_handoff_check.cpp": "265b676bcaeae582f615db7ec180699a894a458a790c443d8086b7a1fbea2404",
+    "tools/native_reconstruction/verify_media_mount_handoff.py": "72bc2f463031070c1e22f5da0305bc6946f3fd4584f3d38d07bd497dba7c46f0",
+    "docs/native-media/NATIVE_MEDIA_RESOURCE_HANDOFF.md": "88a89a149ba5cf31ccc49c007a1a6d1f7c140b69ff67a26686ee4e05eaa5ad8d",
+    "recomp/overrides/native_resource_reads/tests/game/native/resources_windows/mounted_reader.hpp": "34cb4a3e5aee690551682697f14731720d1f80d5e633e7da9300fb892b3d2291",
+    "recomp/overrides/native_resource_reads/tests/harness.cpp": "6bc52d16188a59d79e74011d3a9d08f1c917da5670b8ff9a69d895a980a04d76",
+    "recomp/overrides/native_resource_reads/tests/ps2_runtime.h": "24f6b128ae6961e1c42dd9388a3a243fee48a315191076e0384046f0dc9d6b5a",
+    "recomp/overrides/native_resource_reads/tests/reo_hw_bridge.h": "92c4822cc1fffeb8f69ceeea389eeac3e546b86cf780c27d840b9399cdfe65f1",
+    "recomp/overrides/native_resource_reads/tests/run_checks.py": "dde4ef3f09bad8b9dd8875c3e5988a476f27295de1739a3a587f36287d77761e"
+  },
+  "native_manifest": {
+    "path": "tools/native_reconstruction/native_audio_submix_manifest_v4.json",
+    "sha256": "e0c1336fa81ad9884a2da9e0e3828054a9ad6ad8134bca878b9aff5878f17bab"
+  },
+  "audited_runtime_receipt": {
+    "path": "build-native-sjuni/dependency-sif-init-timing-reapply-v1-receipt.json",
+    "sha256": "473ad00c8fcae9966455fc8f47047f2dccd619d747077fc1ffaec2c2e3444df6"
+  },
+  "evidence": {
+    "build-native-sjuni/native-payload-checks/mount-handoff-llvm-v1/receipt.json": {
+      "sha256": "00955a55a8e51c210ad111e09eaaa033b925963acdd311c341e2618aece98001",
+      "status": "passed"
+    },
+    "build-native-sjuni/media-mount-handoff/import-llvm-v1/receipt.json": {
+      "sha256": "4c6b34f65e6e079bbd0abefb7d7c75bda1c0974b56cf7af5175f19082e81137f",
+      "status": "actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline"
+    },
+    "build-native-sjuni/native-payload-checks/mount-handoff-gcc-v1/receipt.json": {
+      "sha256": "d8a268ac5ba266faf764419a8cccd2759f285d6d73a866e6461232b737538f6b",
+      "status": "passed"
+    },
+    "build-native-sjuni/media-mount-handoff/import-gcc-v1/receipt.json": {
+      "sha256": "bc54661fb8e5bb58462f68a7f38ae1800e82bb09a35b95497d8e941fac935f07",
+      "status": "actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline"
+    }
+  },
+  "adapter_checks_per_compiler": 25,
+  "actual_import_sources_per_compiler": 2,
+  "game_run": false,
+  "actual_audio_device_test": false,
+  "original_scheduler_executed": false
+}

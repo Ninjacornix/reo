@@ -39,7 +39,9 @@ def main():
     allowed = (ROOT / 'build-native-sjuni').resolve()
     if output == allowed or not output.is_relative_to(allowed):
         parser.error('Use an ignored output below build-native-sjuni')
-    output.mkdir(parents=True, exist_ok=True)
+    if output.exists():
+        parser.error('Use a fresh output directory to preserve prior evidence')
+    output.mkdir(parents=True)
     sys.path.insert(0, str(ROOT / 'tools/function_index'))
     from index import Elf
     elf = Elf(args.elf.resolve())
@@ -76,7 +78,7 @@ def main():
         static = [] if 'clang' in compiler.name.lower() else ['-static-libgcc', '-static-libstdc++']
         executable = output / 'native_payload_checks.exe'
         run('mock_adapter_build', [*common, *defines, *inputs, *static, '-o', executable])
-        scenarios = ('operations', 'refusals', 'reader-results', 'shutdown', 'self-join', 'overlay',
+        scenarios = ('operations', 'refusals', 'mount-handoff', 'reader-results', 'shutdown', 'self-join', 'overlay',
                      'flag-off', 'pak-off', 'async-on', 'async-unset', 'mount-failure', 'null-mount',
                      'layout-mismatch', 'missing-bridge', 'registration-refused', 'stopped', 'identity', 'wrong-edition',
                      'timing', 'timing-invalid')
