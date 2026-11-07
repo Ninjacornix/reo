@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified complete buffering predicates inside owned movie timing context",
-  "manifest_sha256": "9cffba45d69d5fd844861fdd854d85434c604077559a8e2d400d20ebe6e170aa",
+  "manifest_sha256": "a56fe9b8a59458f8c4b38a92c0e1491049756634eba330934ea79e5ce5d8b790",
   "original_cases": 401,
   "operations": 804,
   "initial_and_final_snapshots": 1205,
@@ -12,8 +12,8 @@
   "boundary_checks": 29,
   "detected_counterfactuals": 7,
   "receipts": {
-    "build-native-sjuni/movie-buffering/qualified-gcc-commands-v1/receipt.json": "6e479ce29b5c77c3c148d635107f6a5906d8c909350f08595236446ed67c2d05",
-    "build-native-sjuni/movie-buffering/qualified-llvm-commands-v1/receipt.json": "d96b2553c4528c33f6335c46d48a5c2ceb8d8d71147425104370e18b8b5087ec"
+    "build-native-sjuni/movie-buffering/qualified-gcc-video-v1/receipt.json": "ca1cceeb8b6ffefd18bbc7c092ae920a1b3f4e3347c03f287b7d5957d15fc2b4",
+    "build-native-sjuni/movie-buffering/qualified-llvm-video-v1/receipt.json": "f8424f7f85f310a20e84836bb3aef7d8bf3192fec9500a878d6631ce02f93803"
   },
   "original_receipts": {
     "build-native-sjuni/movie-buffering/original-gcc-v4/receipt.json": "14705c5deb059b904bd85d7855eb110a4b21d248d08090defe40cdea3ea38dc9",
@@ -22,15 +22,15 @@
     "build-native-sjuni/movie-buffering/original-llvm-v5/receipt.json": "ae87088f92a25db7f95edfe52402681446759793cb50dbb0bb00a9509f9eff2b"
   },
   "complete_native_transcripts_equal": true,
-  "parent_suites": 67,
+  "parent_suites": 68,
   "parent_checks": {
     "gcc": {
-      "build": "29f4734f7954f5a2eddc8ebacc70f963b3ec5aee5827873296947df83f2a7378",
-      "tests": "af54c8d730b0e477165779a34e1fb28c85cc1d89b8597a6de3d95b418d189e43"
+      "build": "90230072575018902f272c43260a5699190e5391dc8a27041905b40fdba5664c",
+      "tests": "6ea55970d44b0a9c93105d2724548eb7fa0dd1406a382a6143c24a2e23b39897"
     },
     "llvm": {
-      "build": "4cb79e75c200f2d1ed8212afc6cd813877015a6f514db922bfff3e5d6c487817",
-      "tests": "91e53c8532c7e740503d94ef60489696da705d0ea0eb7c8c3c84d06ac910488b"
+      "build": "a63689ca965a277759487df42363189a6a8c4250840018da252f91fa54c4daed",
+      "tests": "cc15886f204db494795ed76b5c11cb6dba48874b21e76135e78057e6f1de5551"
     }
   },
   "ancestor_qualification_path": "build-native-sjuni/movie-buffering/ancestor-v1/game/native/movie_timing_context/qualification.json",
@@ -42,15 +42,29 @@
   "limitations": [
     "Serialized stable movie facts; SJ virtual methods are declared ports in original execution. Actual native SJUNI/SJRB adapters are exercised separately.",
     "Selected clock profile remains selectors 0,1,2,5; the extra audio-clock workflows preserve the first 202 originals.",
-    "Prepared audio commands are qualified separately. Video commands, skip/frame publication, scheduler, full movie construction/stop/rebuild and coherent game transition tests remain.",
+    "Prepared audio commands and timed video ownership are qualified separately. Full decode-skip/recovery, scheduler, movie construction/stop/rebuild and coherent game transition tests remain.",
     "No new game run, audiovisual validation, performance measurement or stage-3 completion claim."
   ],
   "audio_commands_extension": {
     "qualification_path": "game/native/movie_timing_context/audio_commands_qualification.json",
-    "qualification_sha256": "c340c5652876c73a9318e565f0ca7f14782cfc8bb53dc03b66d691a60c7d9179",
+    "qualification_sha256": "238776b7cc02ae44c3756a5eb8e16773353babf213353ac5d66d1453bcbddee3",
     "prepared_native_session_controls_qualified": true,
     "stage3_complete": false
   },
   "ancestor_before_audio_commands_path": "build-native-sjuni/movie-audio-commands/ancestor-v1/game/native/movie_timing_context/buffering_qualification.json",
-  "ancestor_before_audio_commands_sha256": "e7b05bb76cfd57f7439138832bf6f8f70a5e0757f63d132e26fb43724a35576b"
+  "ancestor_before_audio_commands_sha256": "e7b05bb76cfd57f7439138832bf6f8f70a5e0757f63d132e26fb43724a35576b",
+  "parent_log_paths": {
+    "gcc": {
+      "build": "build-native-sjuni/movie-video-frames/parent-gcc-build-v1.txt",
+      "tests": "build-native-sjuni/movie-video-frames/parent-gcc-tests-v1.txt"
+    },
+    "llvm": {
+      "build": "build-native-sjuni/movie-video-frames/parent-llvm-build-v1.txt",
+      "tests": "build-native-sjuni/movie-video-frames/parent-llvm-tests-v1.txt"
+    }
+  },
+  "ancestor_before_video": {
+    "path": "build-native-sjuni/movie-video-frames/ancestor-v1/game/native/movie_timing_context/buffering_qualification.json",
+    "sha256": "5e9a7bb9278a9556723e5a4244fbd3701da2282e36f0ed3eb1a10eec2454ec24"
+  }
 }

@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "status": "prepared native timed video ownership and real offscreen GPU adapter qualified",
+  "manifest_sha256": "a56fe9b8a59458f8c4b38a92c0e1491049756634eba330934ea79e5ce5d8b790",
+  "requested_items": {
+    "decoded_frames_join_shared_clock": true,
+    "present_hold_and_bounded_skip": true,
+    "retire_only_after_real_gpu_fences": true,
+    "pause_resume_frame_step_and_audio_session_policy_checked": true
+  },
+  "original_cases": 218,
+  "original_operations": 662,
+  "initial_and_final_snapshots": 880,
+  "original_instructions_per_compiler": 812213,
+  "pre_native_cases": 199,
+  "post_candidate_added_public_cases": 19,
+  "earlier_original_inputs_and_results_unchanged": true,
+  "original_compiler_results_equal": true,
+  "native_compiler_transcripts_equal": true,
+  "native_differences": 0,
+  "detected_counterfactuals": 8,
+  "receipts": {
+    "build-native-sjuni/movie-video-frames/qualified-gcc-v1/receipt.json": "7a37ec21aadc1b42056fae300c517a308d34d347c7765019fba2f665a8419518",
+    "build-native-sjuni/movie-video-frames/qualified-llvm-v1/receipt.json": "e713c9b7c8907b3c26862e0edb260210b425956b417db0fb162fe681e8e43ac0"
+  },
+  "original_receipts": {
+    "build-native-sjuni/movie-video-frames/original-gcc-v2/receipt.json": "5515dc5cbe2a97d16edfe94563e68824ac464f3b1054f98315fa688e775ebba0",
+    "build-native-sjuni/movie-video-frames/original-llvm-v2/receipt.json": "43e2d6a771fb4b17a7325c307a5a8140657cb75c4163d870469812a41734c1b1",
+    "build-native-sjuni/movie-video-frames/original-gcc-v3/receipt.json": "85a8c1cc807d6a4c3a5f18553b53fc0328e6037e377fc9ac8a67d6f0856381bf",
+    "build-native-sjuni/movie-video-frames/original-llvm-v3/receipt.json": "b80daaed55ae1a865c3555361a1b2d35d33f0c973dda7e48f114a5c286494f35",
+    "build-native-sjuni/movie-video-frames/original-gcc-v4/receipt.json": "f271a89576a24def8880e7c71e8f280d9d63de3ea791c27d588b611a55cd89b0",
+    "build-native-sjuni/movie-video-frames/original-llvm-v4/receipt.json": "9d2a652768f6527ca6b32737ce1b2c478018532bc026f16d32c33aa5eb3d0d4d"
+  },
+  "failed_scopes": {
+    "build-native-sjuni/movie-video-frames/original-gcc-v1/receipt.json": "aec1b71f72ea2051c89fe70816656d5487e78a57d57cc8b9f3a98f23a7b1fd9b",
+    "build-native-sjuni/movie-video-frames/gpu-v1/receipt.json": "decf5878ccd9a80419430d8e8b19de54319e77a10ec4c7297cf702b52304dc4a"
+  },
+  "runner_corrections": [
+    "Original v1 omitted the 170998 return-delay slot; v2 admitted the complete body before native video existed.",
+    "GPU v1 omitted the sealed source-preserving allocator provider at link; v2 compiled that reviewed provider and receipt instead of stubbing its identity."
+  ],
+  "parent_suites": 68,
+  "parent_checks": {
+    "gcc": {
+      "build": "90230072575018902f272c43260a5699190e5391dc8a27041905b40fdba5664c",
+      "tests": "6ea55970d44b0a9c93105d2724548eb7fa0dd1406a382a6143c24a2e23b39897"
+    },
+    "llvm": {
+      "build": "a63689ca965a277759487df42363189a6a8c4250840018da252f91fa54c4daed",
+      "tests": "cc15886f204db494795ed76b5c11cb6dba48874b21e76135e78057e6f1de5551"
+    }
+  },
+  "parent_log_paths": {
+    "gcc": {
+      "build": "build-native-sjuni/movie-video-frames/parent-gcc-build-v1.txt",
+      "tests": "build-native-sjuni/movie-video-frames/parent-gcc-tests-v1.txt"
+    },
+    "llvm": {
+      "build": "build-native-sjuni/movie-video-frames/parent-llvm-build-v1.txt",
+      "tests": "build-native-sjuni/movie-video-frames/parent-llvm-tests-v1.txt"
+    }
+  },
+  "requalified_profiles": {
+    "movie-timing-context": {
+      "build-native-sjuni/movie-timing-context/qualified-gcc-video-v1/receipt.json": "861fabac03979682e83babe3dc5ad36ad68676b37b728528e36641709cea10f2",
+      "build-native-sjuni/movie-timing-context/qualified-llvm-video-v1/receipt.json": "a43facac00bc445bd4b9e9334dce06636c00ce3b17a4a8c660c26859a22131ed"
+    },
+    "movie-buffering": {
+      "build-native-sjuni/movie-buffering/qualified-gcc-video-v1/receipt.json": "ca1cceeb8b6ffefd18bbc7c092ae920a1b3f4e3347c03f287b7d5957d15fc2b4",
+      "build-native-sjuni/movie-buffering/qualified-llvm-video-v1/receipt.json": "f8424f7f85f310a20e84836bb3aef7d8bf3192fec9500a878d6631ce02f93803"
+    },
+    "movie-audio-commands": {
+      "build-native-sjuni/movie-audio-commands/qualified-gcc-video-v1/receipt.json": "afc4f85f6a5462c326dc5c7eed52643a8f1afdcc56ab8ff34594876ac9ca7244",
+      "build-native-sjuni/movie-audio-commands/qualified-llvm-video-v1/receipt.json": "dae54c8be5dfedc120722a3e643f968ab9c447b9c7d0e9a1d2448feeb256f0c4"
+    }
+  },
+  "ancestor_qualifications": {
+    "qualification.json": {
+      "path": "build-native-sjuni/movie-video-frames/ancestor-v1/game/native/movie_timing_context/qualification.json",
+      "sha256": "63b62d4dc6e73e93b56e2276ae1f2f25304a5bda66b7f727dbcfecc793438672"
+    },
+    "buffering_qualification.json": {
+      "path": "build-native-sjuni/movie-video-frames/ancestor-v1/game/native/movie_timing_context/buffering_qualification.json",
+      "sha256": "5e9a7bb9278a9556723e5a4244fbd3701da2282e36f0ed3eb1a10eec2454ec24"
+    },
+    "audio_commands_qualification.json": {
+      "path": "build-native-sjuni/movie-video-frames/ancestor-v1/game/native/movie_timing_context/audio_commands_qualification.json",
+      "sha256": "c340c5652876c73a9318e565f0ca7f14782cfc8bb53dc03b66d691a60c7d9179"
+    }
+  },
+  "native_owner_checks": [
+    "Producer readiness and bounded backpressure",
+    "Stale/foreign incarnations, duplicate publication and one owner per Context",
+    "Held/reference transitions remain separate from physical retirement",
+    "Original cached clock, user pause/resume, frame stepping and bounded late skip",
+    "Actual native source/decoder/PCM Session remains paused during video hold/step; output callback model",
+    "Provider failure, callback reentry, callback-time owner release and shutdown retry"
+  ],
+  "gpu_adapter": {
+    "receipt_path": "build-native-sjuni/movie-video-frames/gpu-v3/receipt.json",
+    "receipt_sha256": "4f757e54299841e8f70adcf26746400d8e79dc9ad4698131576c0baa290dc3ba",
+    "additional_sources": {
+      "tools\\native_reconstruction\\run_movie_video_gpu.py": "ba1e6bf29dbe0287f7c4e4f713384f32492c6058f5ec224cc3dae593588d451f",
+      "tools\\native_reconstruction\\movie_video_gpu_check.cpp": "eaefdd4311c596b203cd854bcbf2e8b5f7a465608001184e3f2c7b9837d839da",
+      "tools\\parallel_gs_backend\\movie_runtime\\native_frame_surface.h": "cddf676ebaf51ed15b9780470b5d6b78abccbced7bcd5a01d51a7cd3e9c08fef",
+      "tools\\parallel_gs_backend\\movie_runtime\\same_owner_movie_bridge.h": "a264ad2a03d5e25a400e6f580df69e04d5fd2a9119d0acdb86639a7de31af90c",
+      "tools\\parallel_gs_backend\\movie_runtime\\mpeg2_vld_core.h": "48cc80853c0497e264419278844c763feea6498bc6beb12c9c546cf26d3565c9",
+      "tools\\parallel_gs_backend\\movie_runtime\\mpeg2_stream.h": "ebab2c825546849b1955089b54d3b7ed2a8ff089afadbb9389a483d6966d793c",
+      "tools\\parallel_gs_backend\\movie_runtime\\movie_picture_identity.h": "db7761cc817713848ff30c2baa109ce6329b7929f1952e86d75cfa10685ad625",
+      "tools\\parallel_gs_backend\\movie_runtime\\import_receipt.h": "0264773d9dfcc11d1f26470d2290ae2535ada68119f8b17c3461e1c3c6521798",
+      "tools\\parallel_gs_backend\\movie_runtime\\movie_asset_sha256.h": "6ba4d27eeb6ec04b34880755fac7aff9804b563d5c2eeb4cb606526271be707e",
+      "tools\\parallel_gs_backend\\movie_runtime\\assets\\movie_ipu_csc_nv12.spv": "cb5ed3a99141ff571222c2d46c55d2bd54134033fd5f131002c419c5562d17a8",
+      "tools\\parallel_gs_backend\\movie_runtime\\import_receipt.cpp": "4cf839849653515ee984a5a79c9534f282ab95aca68b95de139347d21e0c7899"
+    },
+    "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+    "kit_manifest_sha256": "736a17112a98725e8c768d823157028c6183e0a8817e1720b7fd56ca1803511f",
+    "compile_plan_sha256": "35ea487a7046f95f6bf47876b434879d1b98641a088247fa4970a5c52a4f3085",
+    "reviewed_allocator_source_sha256": "255c9b103a30416833cee37f2d06a97fb491b771062d6802e5c7154a2b1e7d59",
+    "owned_payload_sha256": "f003fe27fc6c402e9e2142a3786828a492bcb26c4b933b8f1a2a944a6d1e94bb",
+    "result": {
+      "status": "real GPU video ownership checks passed",
+      "checks": 24500,
+      "width": 512,
+      "height": 320,
+      "vendor": 4098,
+      "device": 26591,
+      "pixel_sha256": "4eb588549f774d0691a29edd11c5a2865636f6a591245c4ed5dd21f9f8edeaa6",
+      "real_renderer_gate_prevented_reuse": true,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "pending_timestamp_close_checked": true,
+    "checks_include_variable_fence_poll_iterations": true,
+    "visible_window_created": false,
+    "audio_device_opened": false
+  },
+  "production_selected": false,
+  "game_run": false,
+  "audio_device_opened": false,
+  "stage3_complete": false,
+  "limitations": [
+    "Primitive numeric policy excludes pure guard observations; joined public-frame comparisons include guard/callback snapshots.",
+    "Legacy public payload and guest-pointer ABI are excluded from the typed pixel API.",
+    "The 167BD8 source-selection transport tail is a declared port; actual public get/map/copy/admission/release bodies execute from the owned ELF.",
+    "Bounded skip executes the pool advance/get/release policy, not full codec decode-skip/recovery.",
+    "The real GPU check decodes an owned progressive I frame, reads actual rendered pixels and verifies actual producer/consumer fences. It does not establish whole-stream I/P/B parity or monitor display timing.",
+    "Deferred timing cases deliberately withhold observed timing to test the authority protocol; they do not establish new original timestamp interpretation.",
+    "A/V policy checks use the native audio Session with an output-device model; audible A/V synchronization and coherent in-game transitions remain unvalidated.",
+    "Movie construction/stop/rebuild and scheduler/game adapter binding remain in stage 3; stages 4-6 remain open."
+  ],
+  "additional_sources": {
+    "docs/native-media/MOVIE_VIDEO_FRAMES_RESULTS.md": "73f999ab8b08c31169d3099c216f61c3d742c7c686fd43fd6679e807b3655fb5"
+  }
+}

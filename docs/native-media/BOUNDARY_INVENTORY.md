@@ -292,3 +292,31 @@ was no real audio-device/game launch or new performance measurement. The three
 requested native audio-control items are complete within this boundary; video
 publication/ownership, movie lifecycle, scheduler and game integration remain
 in stage 3 for the next agreed scope.
+
+## 2026-11-07: timed video ownership and actual GPU fences
+
+The prepared native movie Context now owns video selection/publication through
+opaque frame keys. Its existing cached clock decides hold/present and bounded
+late skip. Both compilers match 218 original cases/662 operations/880 snapshots,
+including public get/release, previous-picture publication and cached-clock
+frame stepping. The first 199 cases preceded the native video candidate;
+eight deliberate faults are rejected. All 68 standalone suites pass per
+compiler, including native audio Session hold/step/resume with a device model.
+
+The same-owner D3D11/Vulkan adapter retains exact decoder export tickets, keeps
+untimed frames unpublished, and uses actual producer/consumer fences to retire
+storage. An offscreen RX 570 test decoded a verified File #1 compressed I frame,
+copied real GPU pixels, blocked reuse behind a host-controlled renderer fence,
+then verified retirement/reuse and close with a pending timestamp. Production
+polling never substitutes elapsed time for completion. See the
+[results](MOVIE_VIDEO_FRAMES_RESULTS.md), [contract](MOVIE_VIDEO_FRAMES_CONTRACT.md)
+and [qualification](../../game/native/movie_timing_context/video_qualification.json).
+
+The original semantic comparison excludes the legacy pixel payload/pointer ABI
+and pure guard observations in primitive pool cases; joined public cases compare
+guard/callback snapshots. The GPU fixture is separate evidence for real image
+and fence ownership. It is not a whole-stream I/P/B comparison or a game/monitor
+presentation test. No audio device was opened, audible A/V sync was not tested,
+and production selection remains unchanged. Movie construction/stop/rebuild,
+full codec skip/recovery, scheduler/game binding and transition tests remain
+in stage 3; stages 4-6 remain open.

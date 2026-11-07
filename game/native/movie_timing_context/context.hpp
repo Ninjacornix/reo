@@ -72,6 +72,7 @@ public:
     [[nodiscard]] Status detach_queries()noexcept;
     [[nodiscard]] View snapshot()const noexcept;
 private:
+    friend class VideoFrames;
     class Bridge;
     explicit Context(Config);
     void finish(std::shared_ptr<Ports>);
@@ -102,6 +103,7 @@ private:
     std::optional<AudioCommands> audio_commands_;
     std::shared_ptr<audio::ControlledSource> controlled_audio_;
     bool incidental_audio_return_{};
+    std::weak_ptr<class VideoFrames> video_;
     bool busy_{},in_pause_{},in_component_{},nested_query_{},validated_{},detached_{};
 };
 }

@@ -710,6 +710,32 @@ operations, and all 67 standalone suites pass. See the
 
 This is a prepared native control boundary. The production game path has not
 been switched to it, and its output-device validation uses a callback model.
-The next scope is to be chosen with the maintainer: video frame ownership and
-publication, complete movie construction/stop/rebuild, scheduler/adapter binding
-and representative in-game transitions remain in stage 3. Stages 4-6 remain open.
+The subsequent video ownership/publication scope is recorded below. Complete
+movie construction/stop/rebuild, scheduler/adapter binding and representative
+in-game transitions remain in stage 3. Stages 4-6 remain open.
+
+## Current checkpoint: native timed video ownership
+
+The prepared movie Context now owns a timed video pool. Decoded frames use its
+existing clock for hold/present and a bounded late-frame skip decision; physical
+storage remains retained until actual producer and renderer fences complete.
+Opaque owner/incarnation keys protect reuse, and close also retires frames still
+waiting for authoritative timestamps. Pause/resume and frame-step tests join the
+actual native audio Session with an output-device model.
+
+Both GCC and LLVM match 218 original cases, 662 operations and 880 initial/final
+snapshots, with eight deliberate faults detected. The first 199 cases were frozen
+before the native candidate. All 68 standalone suites pass on both compilers.
+An offscreen hardware test decoded an owned 512x320 File #1 movie I frame on the
+Radeon RX 570 and proved that a real unsignaled renderer fence prevents reuse;
+it also checked safe reuse, shared-clock hold/step and deferred-timestamp close.
+See the [results and reproduction notes](native-media/MOVIE_VIDEO_FRAMES_RESULTS.md)
+and [qualification](../game/native/movie_timing_context/video_qualification.json).
+
+This closes the prepared video queue/ownership scope. It has not been selected
+by the production game, and neither monitor presentation nor audible A/V sync
+has been validated. The next implementation scope is complete movie
+construction/stop/rebuild: compose source, demux/decode, timing, audio and video
+owners, then bind their scheduler/game adapters and validate real transitions.
+Full codec skip/recovery and representative whole-stream I/P/B validation also
+remain. Stage 3 remains open; no compatibility components have been removed.
