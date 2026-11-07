@@ -1,5 +1,11 @@
 # Dependency patches
 
+Patch `0127` adds bounded native sound RPC refusal identity logs. It preserves
+existing request coverage, guest access, completion and published ABI layouts.
+The complete 128-patch series and both compilers' affected objects/capture
+checks pass; a matching rebuilt runtime is required. See the
+[diagnostic evidence](../../docs/native-media/SOUND_RPC_DIAGNOSTIC_IDENTITY.md).
+
 These patches change dependency checkouts; they are stored here so the dependency source and local changes remain reproducible and reviewable.
 
 ## PS2Recomp
