@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "qualified shared stream/bank/packet output and actual owned media source integration",
-  "manifest_sha256": "92c58d645567bb5c3918f035701b11e770fa002da8495f9380a3b767f418341c",
+  "manifest_sha256": "79485566ed4bf7c638fbe624bc0930f6f3a9e84f85a5022ce645c13335e6c1e2",
   "checks_per_compiler": 298,
   "new_detected_counterfactuals": 5,
   "actual_source_owner_test": true,
@@ -62,5 +62,21 @@
     "Synthetic bank fixtures and modeled provider callbacks; no actual game capture/gain binding or audible device run.",
     "Packet control pool remains retained until last owned graph reference; bank assets clear after actual fence/join.",
     "Original global scheduler parity, movie controls/source/frame lifetimes, game integration/transitions and stages4-6 remain."
-  ]
+  ],
+  "verifier_whitespace_only": {
+    "game/native/adxt_control_session/verify.py": {
+      "before": "acdf2338ab5c7d7e6a7fd7a8fad398d0486876abc0e0de624b973fb5ba061ed0",
+      "after": "1cbfe54c687583b86a995b17bd045d702daa5d83bdbf5dcd15e8ca261e601ae8",
+      "ast_identical": true
+    },
+    "game/native/adxt_phased_player/verify.py": {
+      "before": "418928262dfcd8a08fbc139fb5bf498085f3f9ae5b4b775d8358583a6814ab2b",
+      "after": "a664234fcf8d6e9d1acec61bb804fa8ae5da96c6db3c0de84a2f8fbcf4c7beab",
+      "ast_identical": true
+    }
+  },
+  "pre_whitespace_qualification": {
+    "path": "build-native-sjuni\\audio-mix-tail\\whitespace-v1\\ancestor\\game\\native\\audio_mix_tail\\qualification.json",
+    "sha256": "2e5b21818585b3a7fe1bc1e321d69ea337a140f2f8b95d9128a453792623e679"
+  }
 }

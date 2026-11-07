@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "status": "qualified media graph with optional shared native bank/packet output",
-  "manifest_sha256": "b9746bb4f0f6fb4b37459543483341c43094f4240075a9c3542ef044b425b8c2",
+  "manifest_sha256": "95fa1fa087747873626c4a41300b32f5c21b99bdb9e71f00bc668510f9c87db6",
   "ancestor_snapshot": "build-native-sjuni/audio-mix-tail/ancestor-v1/game/native/adxt_lsc_input/qualification.json",
   "ancestor_qualification_sha256": "b8a1867219d94964faf9aef9baa07672a67487d5f8001fc31fe44672084a528d",
-  "shared_mix_qualification_sha256": "2e5b21818585b3a7fe1bc1e321d69ea337a140f2f8b95d9128a453792623e679",
+  "shared_mix_qualification_sha256": "de79286c5ec7524f141be69ed9060aa4e7314de1f45549027b304c40bb6857ad",
   "parent_suites": 55,
   "parent_checks": {
     "gcc": {
@@ -51,5 +51,21 @@
   "original_whole_game_parity": false,
   "unique_payloads": 6706,
   "sequences": 421,
-  "prior_owner_negative_controls_unchanged": true
+  "prior_owner_negative_controls_unchanged": true,
+  "verifier_whitespace_only": {
+    "game/native/adxt_control_session/verify.py": {
+      "before": "acdf2338ab5c7d7e6a7fd7a8fad398d0486876abc0e0de624b973fb5ba061ed0",
+      "after": "1cbfe54c687583b86a995b17bd045d702daa5d83bdbf5dcd15e8ca261e601ae8",
+      "ast_identical": true
+    },
+    "game/native/adxt_phased_player/verify.py": {
+      "before": "418928262dfcd8a08fbc139fb5bf498085f3f9ae5b4b775d8358583a6814ab2b",
+      "after": "a664234fcf8d6e9d1acec61bb804fa8ae5da96c6db3c0de84a2f8fbcf4c7beab",
+      "ast_identical": true
+    }
+  },
+  "pre_whitespace_qualification": {
+    "path": "build-native-sjuni\\audio-mix-tail\\whitespace-v1\\ancestor\\game\\native\\adxt_lsc_input\\qualification.json",
+    "sha256": "abce7a18f5af7dbdc9d12fbc00e2ff537ba4412e2a7c21a393deb004699c6084"
+  }
 }

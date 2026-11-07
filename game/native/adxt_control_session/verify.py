@@ -41,7 +41,7 @@ def main():
     try:
         objects=[out/(str(i)+'_'+p.stem+'.o')for i,p in enumerate(deps)]
         if len(set(objects))!=len(objects):raise ValueError('Colliding dependency object names')
-        
+
         for i,(dep,obj) in enumerate(zip(deps,objects,strict=True)):run('dependency-compile-'+str(i),flags+['-c',dep,'-o',obj],cwd=out)
         report['dependency_objects']={p.name:sha(p)for p in objects}
         binary=out/'units.exe';run('units-compile',flags+objects+[HERE/'control_session.cpp',HERE/'control_session_tests.cpp','-o',binary]);report['units']=run('units',[binary]);report['executable_sha256']=sha(binary)
