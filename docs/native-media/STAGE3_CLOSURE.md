@@ -35,8 +35,9 @@ binding and paced game validation are still required.
 The [external native submix](NATIVE_AUDIO_SUBMIX_RESULTS.md) now composes real
 native player workers with the complete bank/output model through one callback.
 It qualifies private/outer fence separation and preserves the null-profile
-reference observations. Its native-stream profile still refuses original PCM
-producer/reset operations. Actual source/control/reset binding and a coherent
+reference observations. Its native-stream profile admits cold wire reset before
+the first native producer, but still refuses original PCM production and later
+reset. Actual source/control/reset binding and a coherent
 game candidate are required before this becomes an admitted game route.
 
 The [V14 incident retest](SIF_INIT_RPC_STALL.md) narrows a measured 1.45-second

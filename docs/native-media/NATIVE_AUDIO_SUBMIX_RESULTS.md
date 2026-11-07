@@ -1,5 +1,18 @@
 # Native streams through the complete output callback
 
+Current extension: cold wire reset is now admitted before the first native
+producer is published. A read-only, mutex-protected source-epoch observation
+latches permanently at publication; source retirement never reopens startup
+admission. The serialized game controller may reset the existing raw-ID bridge
+while no migrated source exists. Post-source reset remains an explicit refusal.
+The startup test checks actual bridge reset and retained bank state, then starts
+real native sources and checks that a later reset refuses before effects.
+All 72 suites and the 14 aggregate scenarios pass with both compilers for
+`native_audio_submix_manifest_v3.json`. Null-profile replay still produces the
+same 21 original-input cases and 14 declared terminal differences. Exact new
+receipts extend `native_audio_submix_qualification.json`; the initial evidence
+below remains the earlier V2 cohort.
+
 The device-free native submix and aggregate-three composition pass isolated
 checks with GCC and LLVM. All 72 standalone native suites pass in fresh V2
 builds. Four instance workflows exercise actual mono/stereo source workers,
@@ -15,8 +28,8 @@ detachment, stop and unload. Callback allocation/free counters remain zero.
 Banks advance once per callback, including after the private streams have
 joined. The private join never claims that the outer provider has joined.
 
-The native-stream profile explicitly refuses original PCM queue publication,
-playing-voice configuration and PCM reset before their effects. It cannot
+The initial native-stream profile explicitly refuses original PCM queue
+publication, playing-voice configuration and PCM reset before their effects. It cannot
 arbitrarily add two independently clipped PCM voice domains while preserving
 the original mixing order. A game binding must migrate the actual stream
 consumers and implement their reset/control behavior before enabling this

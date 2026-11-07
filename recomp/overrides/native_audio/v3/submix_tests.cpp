@@ -10,6 +10,7 @@ template<class F>void until(F&& done){const auto end=std::chrono::steady_clock::
 streams::Source source(unsigned channels){streams::Source s;s.input=files::file(channels,48000,20000);s.player.decoder.channels=channels;s.player.decoder.source_config.byte_length=static_cast<std::int32_t>(s.input->size());return s;}
 void native_streams(){
     streams::Instances players(streams::control::Config{{2},{}});Setup s(players.submix());s.install();s.load();
+    a::reset();check(!s.owner->report().hard_failures && s.hooks->route_resets==1 && s.owner->inspect_banks().ports[0].loaded);
     check(players.start_output()==streams::Status::completed);const auto x=players.create({1,{0,0,0,0}}),y=players.create({2,{1,1,1,1}});
     check(x.status==streams::Status::completed && y.status==streams::Status::completed);
     check(players.start(x.key,source(1))==streams::Status::completed && players.start(y.key,source(2))==streams::Status::completed);
@@ -32,13 +33,16 @@ void native_streams(){
 }
 void native_refusals(){
     streams::Instances players(streams::control::Config{{1},{}});Setup s(players.submix());s.install();
+    a::reset();check(!s.owner->report().hard_failures && !players.submix()->source_epoch_started());
     const std::array<std::int16_t,32> pcm{};std::uint64_t end=77;
     check(!a::queue(1,reinterpret_cast<const uint8_t*>(pcm.data()),sizeof(pcm),end) && end==77);
     check(!s.owner->inspect_channel(1).source_visible);
     a::configure(2,1,0,1,48000,256,true);check(!s.owner->inspect_voice(2).info.playing);
     a::configure(2,1,0,1,48000,256,false);check(!s.owner->inspect_voice(2).info.playing);
+    const auto key=players.create({1,{0,0,0,0}});check(key.status==streams::Status::completed);
+    check(players.start(key.key,source(1))==streams::Status::completed && players.submix()->source_epoch_started());
     a::reset();const auto report=s.owner->report();check(report.hard_failures==3 && report.native_submix_calls==0);
-    check(players.join()==streams::Status::completed);s.finish();no_legacy();
+    until([&]{const auto r=players.join();check(r==streams::Status::completed || r==streams::Status::pending);return r==streams::Status::completed;});s.finish();no_legacy();
 }
 int main(int argc,char** argv)try{
     if(argc!=2)return 2;const std::string name=argv[1];

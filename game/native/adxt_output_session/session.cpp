@@ -40,7 +40,7 @@ struct State {
     bool provider_joined{},closed{},order_required{},render_fault{},bank_mix_fault{};
     pcm::Status last_render_status{pcm::Status::ok};
     const bool external_output;
-    bool submix_started{},submix_fenced{};
+    bool submix_started{},submix_fenced{},source_epoch_started{};
     std::vector<float> scratch;
     State(Config c,std::shared_ptr<audio_output::CallbackSlot> s,bool external=false)
         :config(checked(c)),pcm(core_config(config)),slot(std::move(s)),external_output(external),
@@ -131,6 +131,9 @@ Status Submix::render_add(float* output,std::uint32_t frames)noexcept {
     if(s.last_render_status!=pcm::Status::ok){s.render_fault=true;s.closing.store(true,std::memory_order_release);return Status::fault;}
     for(std::size_t i=0;i<count;++i)output[i]+=s.scratch[i];
     return Status::completed;
+}
+bool Submix::source_epoch_started()const noexcept {
+    const auto& s=*state_;std::lock_guard lock(s.mutex);return s.source_epoch_started;
 }
 Producer::Producer(std::shared_ptr<State> state,std::shared_ptr<Identity> identity)
     :state_(std::move(state)),identity_(std::move(identity)){}
@@ -250,7 +253,7 @@ OpenResult Session::open(std::uint32_t channels) noexcept {
             r.byte_origin[c]=info.value.queued_bytes;}
         producer->slot_=i;producer->generation_=r.generation;
         r.config=config;r.channel_count=channels;r.active=true;r.transfer_open=true;r.through=r.fault=false;
-        r.producer=producer->identity_;s.order_required=true;
+        r.producer=producer->identity_;s.order_required=true;s.source_epoch_started=true;
         return{Status::completed,std::move(producer)};
     }
     return{Status::capacity,{}};

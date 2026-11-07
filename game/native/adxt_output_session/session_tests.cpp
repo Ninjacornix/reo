@@ -115,9 +115,11 @@ void external_submix(){
     {
         n::Session session(n::Config{2});retained=session.submix();
         check(bool(retained) && !reference.session.submix(),"only external composition exposes a render-only lease");
+        check(!retained->source_epoch_started(),"no native source epoch before first producer");
         std::array<float,256> values;values.fill(0.25f);
         check(retained->render_add(values.data(),128)==n::Status::pending && values[0]==0.25f,"unstarted submix preserves prior audio");
         auto a=session.open(2),b=session.open(1);auto ra=reference.open(2),rb=reference.open(1);
+        check(retained->source_epoch_started(),"native producer publication latches the epoch");
         check(a.status==n::Status::completed && b.status==n::Status::completed,"external streams open without a provider");
         auto left=plane(900),right=plane(-1100),mono=plane(500);
         check(a.producer->copy(left,right)==n::Status::completed && b.producer->copy(mono)==n::Status::completed,"external actual planar copies");
@@ -129,6 +131,7 @@ void external_submix(){
         check(a.producer->retire()==n::Status::completed,"external per-stream fence");values.fill(-0.125f);
         check(retained->render_add(values.data(),128)==n::Status::completed && values[0]==-0.125f+500.0f/32768,"peer remains audible after external stream retire");
         check(session.join()==n::Status::completed,"private submix fence completes without device join");
+        check(retained->source_epoch_started(),"retirement never reopens startup reset admission");
         const auto snapshot=session.snapshot();
         check(snapshot.external_output && snapshot.submix_fenced && snapshot.closed && !snapshot.provider_joined,"private fence never claims outer device retirement");
         check(reference.host->unloads==0 && reference.slot->occupied(),"shared outer device lifetime is independent");

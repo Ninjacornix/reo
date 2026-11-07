@@ -78,8 +78,9 @@ struct Inputs {
     // Strong stable slot lease; provider/factory must qualify actual trampoline
     // lifetime. A fabricated shared_ptr or matching hash is not that proof.
     std::shared_ptr<output::CallbackSlot> slot;
-    // When present, original PCM producers/reset are unsupported. The game
-    // binding must migrate every stream and retain its controls/source owners.
+    // Original PCM producers and post-source reset are unsupported. Startup
+    // wire reset is allowed before the first native producer is published.
+    // Native source/reset control requires one serialized game controller.
     std::shared_ptr<adxt_output_session::Submix> native_streams;
     bank::Config banks;
     packet::Config packets;

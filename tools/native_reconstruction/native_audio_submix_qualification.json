@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "native external-submix ownership and model aggregate composition qualified; game binding absent",
-  "manifest_sha256": "51091dda8e48e9c5e11cbfb7f0d95e0e8341151cb2214973d803718330b0a253",
+  "manifest_sha256": "0ef2239b0ac37c2b8ba331950b717c9fb0e947a0fe6aa4153bd0e94eb4018bb7",
   "evidence": {
     "build-native-sjuni/submix/clean-build-llvm-v2/receipt.json": {
       "sha256": "d6a8ed0792171015b4987fb9ba2f686f8373da4ccdcff68c4df2e07b30d802f4",
@@ -34,6 +34,30 @@
     "build-native-sjuni/native-audio-aggregate-v3/parent-gcc-v1/receipt.json": {
       "sha256": "a45a8111e0bc633587b55819b4afb80b0c5375c631b23453e37c0b0f2233a55d",
       "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/submix/clean-build-llvm-v3/receipt.json": {
+      "sha256": "cc954f332ce933b68c97998e1a363bfb896d9f3bb9bf0f4a75a0fe931c35a32e",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/submix/clean-build-gcc-v3/receipt.json": {
+      "sha256": "25c2e38f3661aa490eabef6377396b63de701bcada52184054281f82d00bdcf8",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-llvm-v1/receipt.json": {
+      "sha256": "c5b234796712a46baafd21db9ffc501f630187e4609aed6236d03df0d966a93d",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-gcc-v1/receipt.json": {
+      "sha256": "7fa5052ebff2420dc613e147195309bef07cb86d153d15c9b855727f019cee01",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-parent-llvm-v1/receipt.json": {
+      "sha256": "2b15fe5f549259ddf3f9fc487adc513b01089ffe6a59db4ac7af430a042e044e",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-parent-gcc-v1/receipt.json": {
+      "sha256": "27ee62f211fedb2b3200169c7a4f4e9a2633a3bef860c3c3236aa3fad8d73c39",
+      "status": "null-stream aggregate3 observations match qualified parent"
     }
   },
   "parent_suites": 72,
@@ -41,5 +65,7 @@
   "negative_controls": 4,
   "game_integration": false,
   "actual_audio_device_test": false,
-  "historical_failed_cohort": "submix/clean-build-llvm-v1: fixed model-device advancement during real source-worker startup in V2; same production DSP."
+  "historical_failed_cohort": "submix/clean-build-llvm-v1: fixed model-device advancement during real source-worker startup in V2; same production DSP.",
+  "prior_cohort_manifest_sha256": "51091dda8e48e9c5e11cbfb7f0d95e0e8341151cb2214973d803718330b0a253",
+  "startup_wire_reset": "Allowed before first native producer; post-source reset remains unsupported."
 }

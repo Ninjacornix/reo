@@ -22,7 +22,7 @@ def main():
     sdk=json.loads(SDK_RECEIPT.read_bytes())
     for name,digest in sdk['source_sha256'].items():
         if sha(SDK/name)!=digest:raise ValueError('Current audited SDK drift '+name)
-    native=json.loads(a.native_receipt.read_bytes());manifest=ROOT/'tools/native_reconstruction/native_audio_submix_manifest_v2.json'
+    native=json.loads(a.native_receipt.read_bytes());manifest=ROOT/'tools/native_reconstruction/native_audio_submix_manifest_v3.json'
     if native['status']!='native media pipeline standalone build and tests passed' or native['compiler_sha256']!=sha(a.compiler) or native['manifest_sha256']!=sha(manifest):raise ValueError('Exact native submix build required')
     sources=json.loads(manifest.read_bytes())['files']
     def verify():
@@ -39,7 +39,7 @@ def main():
         path='ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/'+name
         if sha(out/'snapshot/Kernel/Syscalls/Helpers'/name)!=sdk['source_sha256'][path]:raise ValueError('Mock API differs from actual SDK '+name)
     for name in ['tests.cpp','submix_tests.cpp']:shutil.copyfile(HERE/name,out/name)
-    authored={p.relative_to(ROOT).as_posix():sha(p)for p in HERE.iterdir()if p.is_file()}
+    authored={p.relative_to(ROOT).as_posix():sha(p)for p in HERE.iterdir()if p.is_file() and p.suffix in ['.cpp','.h','.hpp','.py']}
     env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','')
     for key in list(env):
         if key.startswith(('REO_CRI_','REO_AUDIO_PATH','REO_RNA_STOP')):env.pop(key,None)

@@ -3,16 +3,16 @@
   "cohort": "native-audio-aggregate3-native-stream-only",
   "parent_identity_sha256": "f6e7c65162da526eeb65e8a6a71335ddad83f09f5937a517eee82eeb7cb11012",
   "candidate_sha256": {
-    "aggregate.cpp": "1fe9f7e54ff8510a0f88e324b29eae52ccd7cdcf4d0141dcb8bcfef510aa4568",
-    "aggregate.h": "6585d48515d07c95d6e9e64c537806384fc961ccf12b37bebf9fb818dc4af094",
-    "compare_parent.py": "cb26b0ae048c229c83eed3bf72b9e887d8d5ec5858e4c0e2a31e0845be822471",
-    "derive.py": "43394cbf06ac3c1d56e39746c9aa79cb8c0775410a4239c05c2039495ed9c181",
+    "aggregate.cpp": "108026b7390dc1a20796bcca0b266a80eb07bc109dcdbae3a9e63809867e3538",
+    "aggregate.h": "0906f56fabab112eca3a8b25c093d915c1ac056d0f9ee15b0af2d2f19f2cc3c4",
+    "compare_parent.py": "7d598b3182605fcbdd9076d110cfa0fa886b8ddb07a86b58f72db36b6e5612a1",
+    "derive.py": "2d3dabacd21662ff3105e6c3ba2101a3f4f370c5431478e07ebc889db95e2ce4",
     "oracle_transport.hpp": "f85dad0cc327bd8b0edd8db60edc50bf4036db22d1c73e42186c69701929dfd6",
-    "submix_tests.cpp": "e0397d8c00e7538e93c5789db3e38b67d5aaf4b6628cde9ac75615d3bf0a65f3",
+    "submix_tests.cpp": "d384af32a32cdc9bed421b021f300bfb04f64c2bdcd0a40e69438a37e5e74981",
     "tests.cpp": "df05284f383e33caa7476de2f706474fc1c4b802796207402329df407f04361a",
-    "verify.py": "42da724ddbc1b073d90bca189a1daf80c4e9caa3a9edcca445f4e30374f2685f"
+    "verify.py": "c30401f52dcb394378f64fa995d646c4a7a1aeeb5bacfb968cb51ebf664bab98"
   },
-  "native_cohort_sha256": "51091dda8e48e9c5e11cbfb7f0d95e0e8341151cb2214973d803718330b0a253",
+  "native_cohort_sha256": "0ef2239b0ac37c2b8ba331950b717c9fb0e947a0fe6aa4153bd0e94eb4018bb7",
   "unit_and_parent_observations": {
     "build-native-sjuni/native-audio-aggregate-v3/qualified-llvm-v2/receipt.json": {
       "sha256": "764a7d434c5e604f3fc051b072d19b9b0b089a19eab9a39ea94aed1bea92018a",
@@ -40,7 +40,27 @@
   "unsupported_native_stream_profile": [
     "original PCM producer queue",
     "original playing-voice configure",
-    "original PCM reset",
+    "post-source original PCM reset",
     "general combined original/native PCM voice clipping and ordering"
-  ]
+  ],
+  "initial_identity_sha256": "a63dea20e35a40f204bf2b12764a462fa065f505552a9209985c44b425a922d9",
+  "startup_wire_reset_admitted_before_first_producer": true,
+  "startup_unit_and_parent_observations": {
+    "build-native-sjuni/native-audio-aggregate-v3/startup-llvm-v1/receipt.json": {
+      "sha256": "c5b234796712a46baafd21db9ffc501f630187e4609aed6236d03df0d966a93d",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-gcc-v1/receipt.json": {
+      "sha256": "7fa5052ebff2420dc613e147195309bef07cb86d153d15c9b855727f019cee01",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-parent-llvm-v1/receipt.json": {
+      "sha256": "2b15fe5f549259ddf3f9fc487adc513b01089ffe6a59db4ac7af430a042e044e",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-parent-gcc-v1/receipt.json": {
+      "sha256": "27ee62f211fedb2b3200169c7a4f4e9a2633a3bef860c3c3236aa3fad8d73c39",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    }
+  }
 }

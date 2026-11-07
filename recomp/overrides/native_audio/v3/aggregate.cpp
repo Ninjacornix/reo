@@ -225,7 +225,7 @@ void Aggregate::discard(std::uint32_t id)noexcept {auto& s=*state_;OperationFram
 void Aggregate::drain(std::uint32_t id)noexcept {auto& s=*state_;OperationFrame f(*s.metrics,Operation::drain,&s);if(s.raw(Operation::drain,id))s.metrics->checked(Operation::drain,s.bridge.drain(id),id);}
 void Aggregate::release(std::uint32_t id)noexcept {auto& s=*state_;OperationFrame f(*s.metrics,Operation::release,&s);if(s.raw(Operation::release,id))s.metrics->checked(Operation::release,s.bridge.release(id),id);}
 std::size_t Aggregate::queued_samples(std::uint32_t id)noexcept {auto& s=*state_;OperationFrame f(*s.metrics,Operation::queued_samples,&s);if(!s.raw(Operation::queued_samples,id))return 0;auto r=s.bridge.queuedSamples(id);return s.metrics->checked(Operation::queued_samples,r.status,id)?r.value:0;}
-void Aggregate::reset_pcm()noexcept {auto& s=*state_;OperationFrame f(*s.metrics,Operation::reset,&s);if(s.inputs.native_streams){s.metrics->refuse(Operation::reset,249);return;}s.metrics->checked(Operation::reset,s.bridge.reset());}
+void Aggregate::reset_pcm()noexcept {auto& s=*state_;OperationFrame f(*s.metrics,Operation::reset,&s);if(s.inputs.native_streams && s.inputs.native_streams->source_epoch_started()){s.metrics->refuse(Operation::reset,249);return;}s.metrics->checked(Operation::reset,s.bridge.reset());}
 namespace {
 struct PacketWork final:PacketOperation {
     packet::PacketAdapter& adapter;packet::Call& call;unsigned invocations{};packet::PacketResult result;

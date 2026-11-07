@@ -17,7 +17,7 @@ def derived(name):
     if name=='aggregate.h':
         body=replace(body,'#include "game/native/pcm_bridge/session_bridge.hpp"','#include "game/native/pcm_bridge/session_bridge.hpp"\n#include "game/native/adxt_output_session/session.hpp"')
         body=replace(body,'    bank::Snapshot banks{};','    std::uint64_t native_submix_calls{},native_submix_frames{},native_submix_failures{};\n    bool native_streams_bound{};\n    bank::Snapshot banks{};')
-        body=replace(body,'    bank::Config banks;','    // When present, original PCM producers/reset are unsupported. The game\n    // binding must migrate every stream and retain its controls/source owners.\n    std::shared_ptr<adxt_output_session::Submix> native_streams;\n    bank::Config banks;')
+        body=replace(body,'    bank::Config banks;','    // Original PCM producers and post-source reset are unsupported. Startup\n    // wire reset is allowed before the first native producer is published.\n    // Native source/reset control requires one serialized game controller.\n    std::shared_ptr<adxt_output_session::Submix> native_streams;\n    bank::Config banks;')
     if name=='aggregate.cpp':
         body=replace(body,'    packet::Status checked(Operation op,packet::Status status)noexcept {','    std::atomic<std::uint64_t> native_calls{},native_frames{},native_failures{};\n    packet::Status checked(Operation op,packet::Status status)noexcept {')
         body=replace(body,'    std::shared_ptr<TestRenderProbe> test_probe;','    std::shared_ptr<TestRenderProbe> test_probe;\n    std::shared_ptr<adxt_output_session::Submix> native_streams;')
@@ -36,7 +36,7 @@ def derived(name):
         # PCM sums cannot reproduce arbitrary interleaved original voice order.
         body=replace(body,'if(!s.raw(Operation::queue,id))return false;','if(s.inputs.native_streams){s.metrics->refuse(Operation::queue,249,id);return false;}if(!s.raw(Operation::queue,id))return false;')
         body=replace(body,'    if(s.raw(Operation::configure,id)', '    if(s.inputs.native_streams && playing){s.metrics->refuse(Operation::configure,249,id);return;}\n    if(s.raw(Operation::configure,id)')
-        body=replace(body,'OperationFrame f(*s.metrics,Operation::reset,&s);s.metrics->checked', 'OperationFrame f(*s.metrics,Operation::reset,&s);if(s.inputs.native_streams){s.metrics->refuse(Operation::reset,249);return;}s.metrics->checked')
+        body=replace(body,'OperationFrame f(*s.metrics,Operation::reset,&s);s.metrics->checked', 'OperationFrame f(*s.metrics,Operation::reset,&s);if(s.inputs.native_streams && s.inputs.native_streams->source_epoch_started()){s.metrics->refuse(Operation::reset,249);return;}s.metrics->checked')
     if name=='tests.cpp':
         body=replace(body,'    Setup(){hooks->runtime=', '    Setup(std::shared_ptr<reo::native::adxt_output_session::Submix> streams={}){hooks->runtime=')
         body=replace(body,'inputs.slot=slot;inputs.banks.path_counters=', 'inputs.slot=slot;inputs.native_streams=std::move(streams);inputs.banks.path_counters=')

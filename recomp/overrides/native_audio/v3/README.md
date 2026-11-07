@@ -5,8 +5,9 @@ with an optional render-only native submix. The null-submix profile preserves
 the qualified parent observations, including its declared terminal differences.
 
 The new profile adds native stream PCM before the existing bank and master tail
-in the same callback. Original PCM producer and reset operations explicitly
-refuse in that profile: general mixed PCM clipping/order and guest reset/control
+in the same callback. Original PCM producer and post-source reset operations
+explicitly refuse. Cold wire reset is admitted before the first native producer
+under one serialized controller. General mixed PCM clipping/order and guest reset/control
 binding are not implemented. It is not installed by a runtime factory or game
 bootstrap. See [results](../../../../docs/native-media/NATIVE_AUDIO_SUBMIX_RESULTS.md).
 

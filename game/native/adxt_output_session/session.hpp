@@ -40,6 +40,9 @@ class Session;
 class Submix final {
 public:
     [[nodiscard]] Status render_add(float* stereo,std::uint32_t frames)noexcept;
+    // Latched when the first native producer is published. A serialized outer
+    // controller can admit its cold wire reset before any native source exists.
+    [[nodiscard]] bool source_epoch_started()const noexcept;
 private:
     friend class Session;
     explicit Submix(std::shared_ptr<State> state):state_(std::move(state)){}
