@@ -234,6 +234,7 @@ int main(int argc, char** argv) {
     try {
         CHECK(argc == 3);
         opt("REO_NATIVE_RESOURCE_READS", "1"); opt("REO_GAME_PAK", "1"); opt("REO_CD_ASYNC", "0");
+        opt("REO_CRI_SERVER_SLOW_MS", "0");
         _wputenv_s(L"REO_ASSET_OVERLAY", L"");
         const std::string scenario = argv[2];
         if (scenario == "operations") operations(argv[1]);
@@ -241,7 +242,18 @@ int main(int argc, char** argv) {
         else if (scenario == "reader-results") reader_results(argv[1]);
         else if (scenario == "shutdown") shutdown(argv[1], false);
         else if (scenario == "self-join") shutdown(argv[1], true);
-        else if (scenario == "overlay") {
+        else if (scenario == "timing" || scenario == "timing-invalid") {
+            opt("REO_CRI_SERVER_SLOW_MS",scenario=="timing"?"1":"18446744073709551616");
+            PS2Runtime runtime;ReoHwBridge bridge;seed(runtime,argv[1]);request(runtime);configure(runtime);
+            native::mock::action=[](std::uint32_t lba,std::uint32_t count,std::span<std::byte> output){
+                CHECK(lba==77 && count==1);++native::mock::io_calls;std::this_thread::sleep_for(2ms);
+                std::fill(output.begin(),output.end(),std::byte{0x63});
+                return native::MountedReadResult{native::ReaderDisposition::ok,reo::native::resources::Status::ok,output.size()};
+            };
+            {PS2Runtime::GuestExecutionScope guest(&runtime);
+                for(unsigned n=0;n<66;++n){bool ok=false;CHECK(read(runtime,ok) && ok);CHECK(runtime.memory().getRDRAM()[destination]==0x63);}}
+            CHECK(native::mock::reads==66 && native::mock::io_calls==66 && runtime.joinWorkers());
+        } else if (scenario == "overlay") {
             _wputenv_s(L"REO_ASSET_OVERLAY", L"synthetic-\u6e2c\u8a66.plan");
             PS2Runtime runtime; ReoHwBridge bridge; seed(runtime, argv[1]); request(runtime); configure(runtime);
             CHECK(runtime.registrations == 1 && native::mock::captured_overlay == std::filesystem::path(L"synthetic-\u6e2c\u8a66.plan"));

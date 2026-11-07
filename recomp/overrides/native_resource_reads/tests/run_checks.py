@@ -67,6 +67,7 @@ def main():
         if result.returncode:
             raise RuntimeError(name + ' failed:\n' + result.stdout + result.stderr)
         print(name + ': passed', flush=True)
+        return result
 
     try:
         common = [compiler, '-std=c++20', '-O1', '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-pthread']
@@ -77,9 +78,13 @@ def main():
         run('mock_adapter_build', [*common, *defines, *inputs, *static, '-o', executable])
         scenarios = ('operations', 'refusals', 'reader-results', 'shutdown', 'self-join', 'overlay',
                      'flag-off', 'pak-off', 'async-on', 'async-unset', 'mount-failure', 'null-mount',
-                     'layout-mismatch', 'missing-bridge', 'registration-refused', 'stopped', 'identity', 'wrong-edition')
+                     'layout-mismatch', 'missing-bridge', 'registration-refused', 'stopped', 'identity', 'wrong-edition',
+                     'timing', 'timing-invalid')
         for scenario in scenarios:
-            run(scenario, [executable, fixture, scenario])
+            result=run(scenario, [executable, fixture, scenario])
+            count=result.stderr.count('[NATIVE-RESOURCE-READS] slow begin_ns=')
+            if count!=(64 if scenario=='timing' else 0):
+                raise ValueError('Unexpected bounded read-timing output '+scenario)
         disabled = output / 'native_payload_disabled_checks.exe'
         run('numeric_feature_zero_build', [*common, '-DREO_GAME_FILE1=1', '-DREO_BUILD_NATIVE_RESOURCE_READS=0',
                                            *inputs, *static, '-o', disabled])

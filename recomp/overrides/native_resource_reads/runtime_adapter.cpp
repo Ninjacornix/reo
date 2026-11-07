@@ -9,6 +9,7 @@
 #include "../native_geometry/reo_vu_native_sha256.h"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
@@ -32,6 +33,17 @@ namespace {
 namespace native = reo::native::resources::win32;
 constexpr std::uint32_t packet = 0x207A00, client = 0x208AD0, end_block = 0x208A00;
 constexpr std::size_t max_read_bytes = 8u * 1024u * 1024u;
+
+std::uint64_t slow_threshold_ns() noexcept {
+    const char* text=std::getenv("REO_CRI_SERVER_SLOW_MS");
+    if(!text || !*text || *text=='-')return 0;
+    char* end=nullptr;const auto value=std::strtoull(text,&end,10);
+    return end && !*end && value && value<=60000 ? value*1000000u : 0;
+}
+std::uint64_t now_ns() noexcept {
+    return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count());
+}
 
 std::uint32_t word(const std::uint8_t* memory, std::uint32_t address) noexcept {
     std::uint32_t result;
@@ -101,6 +113,8 @@ public:
     PS2Runtime& runtime;
     std::uint8_t* const ram;
     const std::shared_ptr<native::MountedReader> reader;
+    const std::uint64_t slow_ns=slow_threshold_ns();
+    std::atomic<unsigned> slow_reports{0};
     std::atomic<bool> stopping{false};
     std::atomic<std::uint64_t> successes{0}, failures{0};
 private:
@@ -217,8 +231,18 @@ bool tryRead(std::uint8_t* ram, PS2Runtime* runtime,
             !safe_destination(destination, bytes) || !session->enter()) return false;
         ReadLease lease(*session);
         attempted = true;
+        const auto begin=session->slow_ns ? now_ns() : 0;
         const auto result = session->reader->read_sectors(lba, count,
             {reinterpret_cast<std::byte*>(ram + destination), static_cast<std::size_t>(bytes)});
+        if(begin){
+            const auto end=now_ns();
+            if(end>=begin && end-begin>=session->slow_ns &&
+                session->slow_reports.load(std::memory_order_relaxed)<64 &&
+                session->slow_reports.fetch_add(1,std::memory_order_relaxed)<64)
+                std::fprintf(stderr,"[NATIVE-RESOURCE-READS] slow begin_ns=%llu end_ns=%llu lba=%u sectors=%u destination=%08x disposition=%u resource=%u bytes=%zu\n",
+                    static_cast<unsigned long long>(begin),static_cast<unsigned long long>(end),lba,count,destination,
+                    static_cast<unsigned>(result.disposition),static_cast<unsigned>(result.resource_status),result.bytes);
+        }
         if (result.disposition == native::ReaderDisposition::not_covered) return false;
         // From here on an I/O attempt is consumed. Even a provider/ABI failure
         // must not restart the legacy path or duplicate original completion.
