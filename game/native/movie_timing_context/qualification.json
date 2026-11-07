@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "status": "qualified prepared owned movie timing context with shared serialized guard and actual native audio-source integration",
-  "manifest_sha256": "15ab0b061d4070306709ecf88eae3d8293d3c78f7c58958db9683963cc2e46d7",
+  "status": "qualified prepared movie timing context with complete native buffering profile",
+  "manifest_sha256": "bfd6725f2c41a475054c6f69d0ecb4150ba233fec6cb689d6457735bf4a00757",
   "original_workflows": 40,
   "original_operations": 210,
   "initial_and_final_snapshots": 250,
@@ -15,8 +15,8 @@
   "detected_counterfactuals": 10,
   "boundary_checks": 32,
   "receipts": {
-    "build-native-sjuni/movie-timing-context/qualified-gcc-v1/receipt.json": "c078f2210fa986bf83d13a6adde6072d348900343dc7cb32c8a5446359d2909d",
-    "build-native-sjuni/movie-timing-context/qualified-llvm-v1/receipt.json": "3e183d6bd708d0800328ab3f710c31fd475d0830f78555a4ec5a0375b9cd8d66"
+    "build-native-sjuni/movie-timing-context/qualified-gcc-buffering-v1/receipt.json": "d2e4b832b89bea742b81081f4ec774b27ebc2b480bf72dd6fb6518f412f737cb",
+    "build-native-sjuni/movie-timing-context/qualified-llvm-buffering-v1/receipt.json": "bff9bfb0c3ae0d47675e482b06c1f6ed5bcc027184b4192d6bc46cdac555ae16"
   },
   "requalified_original_profiles": {
     "movie_selected_clock": {
@@ -38,15 +38,15 @@
   },
   "complete_native_transcripts_equal": true,
   "original_complete_results_equal": true,
-  "parent_suites": 65,
+  "parent_suites": 66,
   "parent_checks": {
     "gcc": {
-      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
-      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
+      "build": "104a337d9f8d27d4027c42e20f8143497f9fd5ec71cd1239565806a6635e9514",
+      "tests": "9f8508a0b424f0f3f7ba0452dae9f894372b59788aa9a064d4a91b4d2bbbcc9e"
     },
     "llvm": {
-      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
-      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
+      "build": "104a337d9f8d27d4027c42e20f8143497f9fd5ec71cd1239565806a6635e9514",
+      "tests": "99ebd33f06b097ca832b0788620ef28950f0154b1dffe9bf3df25d3b56a3a4ac"
     }
   },
   "actual_native_source_decoder_estimator_filter_context_retirement_test": true,
@@ -146,7 +146,7 @@
     "game\\native\\movie_admission\\qualification.json": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b"
   },
   "additional_sources": {
-    "game\\native\\movie_timing_context\\README.md": "e7cce37d14e48438a7bd8369e243f246b22e9a35a5a8092d46f7dd4a7e86ff16"
+    "game\\native\\movie_timing_context\\README.md": "2cfe04b8e6b54aae8d34aee8bafe35250a736a365def21e7d29a27965140f06f"
   },
   "native_provider_refusal": "Separate admitted flag; admitted nonzero original status is preserved; refused cache publication is prevented while earlier tick/callback effects remain.",
   "guard_profile": "Retained shared state for serialized paired pure hook calls, including nested selected query during buffering; not scheduler/priority authority.",
@@ -157,10 +157,17 @@
   "original_whole_movie_parity": false,
   "limitations": [
     "Prepared selectors 0,1,2,5 and rate codes0-8; state/property observations do not replace original property admission or movie lifecycle.",
-    "Estimator/helper, full predicates, component dispatch and errors remain declared ports in original workflows.",
+    "Estimator/helper, predicate decisions, component dispatch and errors remain ports in the earlier 40 timing workflows; the complete buffering extension executes actual predicates and peek closure with SJ virtual-method ports.",
     "Timing-query detach retains providers; it is not a movie/source/device/frame stop fence.",
     "Diagnostic pointer scopes and incidental FPR/FCR/caller storage do not establish complete guest ABI parity.",
     "Global scheduler/priority, full movie/source/frame lifetime, real component bindings and game transitions remain.",
     "Gameplay, graphics/platform migration and complete compatibility removal remain stages4-6."
-  ]
+  ],
+  "buffering_extension": {
+    "qualification_path": "game/native/movie_timing_context/buffering_qualification.json",
+    "qualification_sha256": "e7b05bb76cfd57f7439138832bf6f8f70a5e0757f63d132e26fb43724a35576b",
+    "original_cases": 401,
+    "detected_counterfactuals": 7,
+    "boundary_checks": 29
+  }
 }

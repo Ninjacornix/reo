@@ -51,6 +51,7 @@ bool read_updates(n::Updates& value){
     for(unsigned n=0;n<14;++n){std::uint32_t word{};if(!(std::cin>>word))return false;if(mask&(1u<<n))value.*updates[n]=word;}
     return true;
 }
+#ifndef REO_TIMING_FIXTURE_SUPPORT_ONLY
 int main(){
     Data data;data.events.reserve(64);std::shared_ptr<n::Context> owner;unsigned identity{},index{};std::string command;
     n::Words caller{0x5A5A5A5Au,0x5A5A5A5Au};std::uint32_t decision=0x5A5A5A5Au;
@@ -83,3 +84,4 @@ int main(){
     }
     return std::cin.eof()?0:9;
 }
+#endif

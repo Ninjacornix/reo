@@ -23,7 +23,7 @@ public:
 std::shared_ptr<Context> Context::create(Config config){
     auto ports=config.ports;auto owner=std::shared_ptr<Context>(new Context(std::move(config)));owner->finish(std::move(ports));return owner;
 }
-Context::Context(Config config):facts_(config.facts),frequency_(config.frequency),initial_(initialize::initialize()),guard_(config.guard?std::move(config.guard):std::make_shared<selected::GuardState>()),hooks_(std::move(config.hooks)){
+Context::Context(Config config):facts_(config.facts),frequency_(config.frequency),initial_(initialize::initialize()),guard_(config.guard?std::move(config.guard):std::make_shared<selected::GuardState>()),hooks_(std::move(config.hooks)),buffering_(std::move(config.buffering)){
     if(!config.audio || !config.helper || !config.ports || !selector_profile(facts_.selector) || facts_.rate>=9)throw std::invalid_argument("Prepared owned movie timing profile required");
     audio_=std::make_shared<audio::Clock>(audio::State{},std::move(config.audio),std::move(config.helper));
     selected::Config selected;selected.frequency=frequency_;selected.guard=hooks_;selected.shared_guard=guard_;
@@ -72,6 +72,7 @@ bool Context::to_pause()noexcept {
 }
 pause::Reply Context::command(pause::Call call,pause::View view)noexcept {
     if(!from_pause(view.state))return{pause::ProviderStatus::failed,0,{}};
+    if(buffering_ && (call.kind==pause::Kind::pause_predicate || call.kind==pause::Kind::resume_predicate))return buffer_predicate(call.kind==pause::Kind::resume_predicate);
     const auto provider=ports_;Reply reply;
     if(call.kind==pause::Kind::command){Flag component(in_component_);reply=provider->call(call,snapshot());}
     else reply=provider->call(call,snapshot());
@@ -83,6 +84,7 @@ pause::Reply Context::command(pause::Call call,pause::View view)noexcept {
 }
 View Context::snapshot()const noexcept {
     View view;view.facts=facts_;view.clock=initial_;view.audio=audio_->snapshot().state;view.audio_health=audio_->snapshot().health;view.guard=*guard_;view.validated=validated_;view.detached=detached_;
+    if(buffering_)view.clock.latest=buffering_->latest;
     const auto clock=selected_->snapshot();const auto& state=clock.state;const auto& counter=state.counter;
     view.facts.actual=counter.actual;view.facts.requested=counter.requested;view.facts.pause=counter.pause;view.facts.buffering=counter.buffering_pause;view.facts.pending=state.pending;view.facts.selector=state.selector;view.facts.property_47=counter.property_47;
     view.clock.callbacks=clock.slots;view.clock.cached=state.cached;view.clock.active_counter=counter.active_counter;view.clock.increment=counter.increment;view.clock.elapsed_counter=counter.elapsed_counter;view.clock.elapsed_origin=counter.elapsed_origin;view.clock.external_accumulator=counter.external_accumulator;view.clock.external_denominator=state.external_denominator;view.clock.previous_external=state.previous_sample;

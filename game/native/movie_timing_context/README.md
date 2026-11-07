@@ -70,3 +70,13 @@ predicates, actual audio/video commands, source/frame ownership, full movie
 construction/stop/rebuild, real scheduler binding, coherent game adapter and
 representative transitions still gate stage 3. Gameplay, graphics/platform and
 complete compatibility removal remain stages 4–6.
+
+
+The complete buffering profile now replaces scripted predicate decisions inside
+this same Context, including native SJUNI/SJRB two-span queue observations.
+Run `verify_buffering.py` with an exact `--cxx` and a fresh output under
+`build-native-sjuni/movie-buffering`. Its frozen original profile executes the
+complete predicates and peek closure with declared SJ virtual-method ports.
+Current qualification details are recorded in `buffering_qualification.json`.
+The earlier 40 workflows remain a regression profile with predicate ports.
+Actual audio/video command execution and full movie lifecycle are still open.

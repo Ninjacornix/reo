@@ -3,6 +3,7 @@
 #include "../movie_audio_clock/clock.hpp"
 #include "../movie_clock_initialize/initialize.hpp"
 #include "../movie_pause/controller.hpp"
+#include "buffering.hpp"
 #include <memory>
 #include <optional>
 
@@ -43,6 +44,9 @@ struct Config {
     std::shared_ptr<Ports> ports;
     std::shared_ptr<selected::GuardHooks> hooks;
     std::shared_ptr<selected::GuardState> guard;
+    // When supplied, complete native buffering predicates replace predicate
+    // ports. Commands/errors remain explicit component-owner boundaries.
+    std::optional<Buffering> buffering;
 };
 enum class Operation {selected,cached,refresh,tick,pause,buffer,admit,requested_admit,picture_request};
 enum class Status {completed,busy,detached,invalid_input,provider_failure,numeric_failure};
@@ -59,6 +63,7 @@ public:
     [[nodiscard]] static std::shared_ptr<Context> create(Config);
     Context(const Context&)=delete;Context& operator=(const Context&)=delete;
     [[nodiscard]] Status observe(const Updates&)noexcept;
+    [[nodiscard]] Status observe_buffering(Buffering)noexcept;
     [[nodiscard]] Result execute(Operation,Input={})noexcept;
     [[nodiscard]] Status detach_queries()noexcept;
     [[nodiscard]] View snapshot()const noexcept;
@@ -74,6 +79,10 @@ private:
     [[nodiscard]] Result query(Operation,Input)noexcept;
     [[nodiscard]] Result due(Words,bool)noexcept;
     [[nodiscard]] Result error(std::uint32_t,std::uint32_t)noexcept;
+    [[nodiscard]] pause::Reply buffer_predicate(bool)noexcept;
+    [[nodiscard]] bool buffer_end()const noexcept;
+    [[nodiscard]] bool buffer_refill(bool,bool&)noexcept;
+    [[nodiscard]] bool buffer_peek(std::uint32_t,std::uint32_t&)noexcept;
     Facts facts_;std::uint32_t frequency_{};
     initialize::State initial_;
     admission::State admission_;
@@ -83,6 +92,7 @@ private:
     std::unique_ptr<selected::Clock> selected_;
     std::unique_ptr<pause::Controller> pause_;
     std::shared_ptr<Ports> ports_;
+    std::optional<Buffering> buffering_;
     bool busy_{},in_pause_{},in_component_{},nested_query_{},validated_{},detached_{};
 };
 }

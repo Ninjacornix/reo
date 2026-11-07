@@ -253,3 +253,22 @@ This boundary permits a real native CPU decode replacement without first replaci
 stream ownership or movie timing. It does not establish that decode is a measured
 slowdown bottleneck, that gameplay/cutscene speed will improve, or that media has
 already migrated.
+
+
+## 2026-11-07: connected movie buffering
+
+The prepared native timing Context now executes complete pause/resume buffering
+predicates against its authoritative cached clock and retained native queue
+adapters. Both compilers match 401 original workflows (804 operations; 1,205
+initial/final snapshots). Seven deliberate faults are rejected; 29 ownership and
+refusal checks and all 66 standalone suites pass. The first 202 original cases
+preceded native buffering; 199 explicit audio-clock cases were then added without
+changing those earlier inputs/results. See the
+[buffering qualification](../../game/native/movie_timing_context/buffering_qualification.json)
+and [integration contract](MOVIE_TIMING_CONTEXT_CONTRACT.md).
+
+This closes complete buffering predicates in the serialized prepared profile.
+It does not close component command execution, skip/frame publication, source/
+frame lifecycle, movie construction/rebuild, scheduler binding or real game
+integration. Stage 3 remains open; stages 4-6 have not started. No game or real
+audio device was opened for this qualification.
