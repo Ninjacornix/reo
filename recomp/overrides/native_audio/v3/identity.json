@@ -33,7 +33,7 @@
   },
   "original_expectations_previously_known": true,
   "parent_raw_terminal_policy_differences_preserved": 14,
-  "runtime_capture_factory_implemented": false,
+  "runtime_capture_factory_implemented": true,
   "bootstrap_installed": false,
   "game_run": false,
   "device_opened": false,
@@ -135,5 +135,7 @@
       "sha256": "8f368575bbe31d41c2c765cb2e182af7a602c3f39c52a79a9d9bccc5ae637ef6",
       "status": "null-stream aggregate3 observations match qualified parent"
     }
-  }
+  },
+  "runtime_factory_protocol_qualification": "tools/native_reconstruction/native_audio_media_factory_qualification.json",
+  "actual_runtime_factory_acquisition_exercised": false
 }

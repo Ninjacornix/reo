@@ -82,3 +82,11 @@ after checking the sealed clip metadata invariant. Both compilers pass the
 74-suite cohort and the combined callback with a dynamic source and stereo peer.
 This removes the earlier conservative native refusal; actual guest callbacks,
 runtime registration and source/service callers remain required.
+
+The explicit [native source runtime factory](NATIVE_AUDIO_MEDIA_FACTORY.md)
+now registers the canonical source owner alongside the same real RAM/device
+composition. Both compiler protocol cohorts pass 12 scenarios and complete
+production-header object checks. Its acquisition/device ports remain declared
+fixtures, and the bootstrap still selects the prior route. A complete guest
+source/control/clock/reset adapter is required before this factory can be used
+for the coherent game candidate.

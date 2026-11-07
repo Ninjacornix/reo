@@ -78,12 +78,39 @@ AUDIO_BACKEND_UNITS = PCM_BACKEND_UNITS[:-1] + (
     ('native_audio_bank_session_v2', 'game/native/audio_banks/v2/session.cpp'),
     ('native_audio_packet_v3', 'recomp/overrides/native_banks/v3/packet_adapter.cpp'),
     ('native_audio_aggregate_v2', 'recomp/overrides/native_audio/v2/aggregate.cpp'),
+    ('native_audio_aggregate_v3', 'recomp/overrides/native_audio/v3/aggregate.cpp'),
     ('native_sound_ram_gate_v2', 'game/native/ram_capture/v2/cpu_authority_gate.cpp'),
     ('native_sound_address', 'recomp/overrides/native_sound_ram/address_domain.cpp'),
     ('native_sound_identity', 'recomp/overrides/native_sound_ram/build_identity.cpp'),
     ('native_sound_memory', 'recomp/overrides/native_sound_ram/runtime_memory.cpp'),
     ('native_sound_composite', 'recomp/overrides/native_sound_ram/composite_backend.cpp'),
-)
+    ('native_resources_bounded_view', 'game/native/resources/bounded_view.cpp'),
+    ('native_resource_io', 'game/native/resource_io/async_read_owner.cpp'),
+    ('native_sjrb', 'game/native/sjrb/sjrb.cpp'),
+    ('native_adx_header', 'game/native/adx_header/adx_header.cpp'),
+    ('native_adxt_refill', 'game/native/adxt_refill/adxt_refill.cpp'),
+    ('native_adx_pcm_store_v2', 'game/native/adx_pcm_store/v2/pcm_store.cpp'),
+    ('native_adx_workspace', 'game/native/adx_workspace/adx_workspace.cpp'),
+    ('native_adxt_estimated_clock', 'game/native/adxt_estimated_clock/estimated_clock.cpp'),
+    ('native_adxt_integer_clock', 'game/native/adxt_integer_clock/integer_clock.cpp'),
+    ('native_audio_mix_tail', 'game/native/audio_mix_tail/mixer.cpp'),
+    ('native_adxt_output_session', 'game/native/adxt_output_session/session.cpp'),
+    ('native_adx_sequence', 'game/native/adx_sequence/sequence.cpp'),
+    ('native_adx_clip', 'game/native/adx_sequence/clip.cpp'),
+    ('native_adxt_attenuation', 'game/native/adxt_attenuation/attenuation.cpp'),
+    ('native_adxt_lsc_input', 'game/native/adxt_lsc_input/input.cpp'),
+    ('native_adxt_shared_source', 'game/native/adxt_shared_source/shared_source.cpp'),
+    ('native_lsc_queue', 'game/native/lsc_queue/queue.cpp'),
+    ('native_adxt_phased_player', 'game/native/adxt_phased_player/player.cpp'),
+    ('native_adx_queue_safe_window', 'game/native/adx_window/v2/queue_safe_r3/stream_window.cpp'),
+    ('native_adxt_playback', 'game/native/adxt_playback/playback.cpp'),
+    ('native_adxt_service_group', 'game/native/adxt_service_group/service_group.cpp'),
+    ('native_adxt_serviced_clock', 'game/native/adxt_serviced_clock/completion.cpp'),
+    ('native_adxt_transfer_groups', 'game/native/adxt_transfer_groups/transfer_groups.cpp'),
+    ('native_adxt_control_session', 'game/native/adxt_control_session/control_session.cpp'),
+    ('native_adxt_instances', 'game/native/adxt_instances/instances.cpp'),
+    ('native_adxt_control_owner', 'game/native/adxt_control_owner/owner.cpp'),
+) + RESOURCE_READ_UNITS[:2]
 MOVIE_POSITION_UNITS = (
     ('native_movie_position_core', 'game/native/movie_position/movie_position.cpp'),
     ('native_movie_position_adapter', 'recomp/overrides/native_movie_position/runtime_adapter.cpp'),
@@ -297,6 +324,9 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         (RESOURCE_READ_UNITS if resource_reads else ()) + (ADX_BLOCK_UNITS if adx_block else ()) + \
         (ADX_STEREO_UNITS if adx_stereo else ()) + (PCM_BACKEND_UNITS if pcm_backend else ()) + \
         (MOVIE_POSITION_UNITS if movie_position else ()) + (AUDIO_BACKEND_UNITS if audio_backend else ())
+    # Native ADXT and native file payloads share the same resource-view bodies.
+    # Keep exact tuple duplicates once; conflicting paths/IDs still fail below.
+    selected_units = tuple(dict.fromkeys(selected_units))
     required = [n for _, n in selected_units] + [
         'recomp/overrides/native_cd_owner/runtime_adapter.h',
         'recomp/overrides/native_cd_owner/ram_configuration.h', 'game/native/tasks/serial_worker.hpp',

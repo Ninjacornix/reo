@@ -856,3 +856,11 @@ validation. Seamless/LSC attenuation now passes both compiler cohorts through it
 sealed clip metadata invariant, including real dynamic source workers and the
 combined model callback. These are required integration gates, not percentages inferred
 from standalone test counts. Stage 3 and stages 4-6 remain open.
+
+The explicit [native media factory](native-media/NATIVE_AUDIO_MEDIA_FACTORY.md)
+now connects the canonical source owner to the existing RAM authority and one
+outer output composition, with actual runtime worker registration code. Both
+compilers pass 12 declared-port protocol scenarios and complete production-header
+checks. The candidate preparer includes its canonical dependency set. Actual
+game selection awaits the guest source/control/clock/reset binding; this factory
+checkpoint is not whole-game native audio admission or Step 3 completion.

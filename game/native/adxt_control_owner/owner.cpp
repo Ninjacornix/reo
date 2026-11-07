@@ -33,6 +33,7 @@ Admission Owner::run(Operation& operation)noexcept {
     ControlScope scope;++s.admitted;operation.run(s.players);return Admission::accepted;
 }
 void Owner::request_stop()noexcept{state_->stopping.store(true,std::memory_order_release);}
+bool Owner::join_allowed_on_current_thread()noexcept{return !inside_control;}
 Join Owner::join()noexcept {
     auto& s=*state_;
     if(inside_control){++s.scoped_join_refused;return Join::busy;}

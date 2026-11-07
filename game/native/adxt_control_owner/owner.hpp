@@ -33,6 +33,9 @@ public:
     // Blocking teardown, outside every guest/provider/controller scope. No
     // elapsed-time completion or forced source reuse. A fault retains state.
     [[nodiscard]] Join join()noexcept;
+    // Outer runtime/device owners check this BEFORE fencing their own child.
+    // A controller borrow may not synchronously join any source owner.
+    [[nodiscard]] static bool join_allowed_on_current_thread()noexcept;
     [[nodiscard]] std::shared_ptr<instances::control::output::Submix> submix()const noexcept;
     [[nodiscard]] Report report()const noexcept;
 private:

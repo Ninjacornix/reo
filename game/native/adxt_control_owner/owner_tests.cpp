@@ -33,13 +33,16 @@ i::Source source(std::shared_ptr<const reo::native::resources::ByteView> bytes,u
 }
 void reentry(){
     n::Owner owner(i::control::Config{{1},{}}),other(i::control::Config{{1},{}});
+    check(n::Owner::join_allowed_on_current_thread(),"outer owner can prepare a join outside controls");
     unsigned effects{};Operation nested([&](auto&){++effects;});
     Operation outer([&](auto&){
+        check(!n::Owner::join_allowed_on_current_thread(),"outer owner can reject join before device effects");
         check(owner.run(nested)==n::Admission::busy && other.run(nested)==n::Admission::busy,"same and cross-owner nested controls refuse");
         check(owner.join()==n::Join::busy && other.join()==n::Join::busy,"all scoped joins refuse before locks");
         check(!owner.report().stopping && !other.report().stopping,"refused join never closes admission");
     });
     check(owner.run(outer)==n::Admission::accepted && effects==0,"borrow completed without nested effects");
+    check(n::Owner::join_allowed_on_current_thread(),"join eligibility restores after control borrow");
     check(other.run(nested)==n::Admission::accepted && effects==1,"separate owner remains usable after refusal");
     check(owner.report().scoped_join_refused==1 && other.report().scoped_join_refused==1,"scoped join refusal diagnostics");
     check(owner.join()==n::Join::completed && owner.join()==n::Join::completed && other.join()==n::Join::completed,"idle joins are idempotent");

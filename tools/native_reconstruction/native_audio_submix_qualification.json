@@ -200,7 +200,9 @@
   "controller_admission": {
     "workflows": 3,
     "detected_faults_per_compiler": 3,
-    "runtime_registration": false
+    "runtime_registration": true,
+    "actual_runtime_registration_exercised": false
   },
-  "original_attenuation_profile": "finite, regular-loop, immutable sequence and dynamic LSC native players; sealed clip admission rejects effective nonzero AINF attenuation"
+  "original_attenuation_profile": "finite, regular-loop, immutable sequence and dynamic LSC native players; sealed clip admission rejects effective nonzero AINF attenuation",
+  "runtime_factory_protocol_qualification": "tools/native_reconstruction/native_audio_media_factory_qualification.json"
 }
