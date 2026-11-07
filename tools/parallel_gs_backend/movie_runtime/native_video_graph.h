@@ -31,14 +31,17 @@ class NativeVideoGraph final:public life::VideoBackend {
     std::array<char,256> error_{};
     void failed(const char* reason)noexcept{fault_=true;std::snprintf(error_.data(),error_.size(),"%s",reason);}
     life::Status publish() {
-        for(auto item=pending_.begin();item!=pending_.end();){
-            // Zero is the minimum admitted PTS in this nonnegative prepared
-            // domain. It needs no later reference to establish ordering.
-            if(item->pts!=0 && item->pts>=watermark_ && !(ended_ && !elementary_.hasPicture())){++item;continue;}
-            const auto status=pipeline_->publishTime(item->key,item->time);
-            if(status!=native_frames::FrameStatus::completed && status!=native_frames::FrameStatus::pending)return life::Status::provider_failure;
-            item=pending_.erase(item);
-        }
+        // Publish one earliest picture, including at EOF. A later ready GPU
+        // surface must not bypass an earlier surface that is still producing.
+        // Keep the published resource until the consumer and its fence retire.
+        if(frames_->snapshot().resources || pending_.empty())return life::Status::completed;
+        const auto item=std::min_element(pending_.begin(),pending_.end(),[](const auto& a,const auto& b){return a.pts<b.pts;});
+        // Zero is the minimum admitted PTS. Other anchors wait until the next
+        // anchor establishes the reorder watermark, or genuine parser EOF.
+        if(item->pts!=0 && item->pts>=watermark_ && !(ended_ && !elementary_.hasPicture()))return life::Status::completed;
+        const auto status=pipeline_->publishTime(item->key,item->time);
+        if(status!=native_frames::FrameStatus::completed && status!=native_frames::FrameStatus::pending)return life::Status::provider_failure;
+        pending_.erase(item);
         return life::Status::completed;
     }
 public:

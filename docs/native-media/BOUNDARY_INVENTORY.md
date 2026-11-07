@@ -370,3 +370,17 @@ The actual remaining audio integration requirement is the separate game ADX
 route. The [closure checklist](STAGE3_CLOSURE.md) retains broader profiles,
 logical/physical scheduler binding, ADX/output integration and coherent
 resource/media game transitions before stage-3 completion.
+
+## Current checkpoint: complete movie catalogue and pending service
+
+The native GPU graph now passes all 201 File #1 movie payloads, all six observed
+geometries and 216,998 independently counted I/P/B pictures. Broader testing
+found and fixed an EOF producer-readiness ordering defect without clamping
+timestamps or dropping pictures. See [catalogue results](MOVIE_CATALOG_GPU_RESULTS.md).
+
+Native pending-service orchestration matches 515 original cases and 518 visits
+on both compilers, including callback state changes and rescheduled work;
+five deliberate faults are detected. See the [service contract](MOVIE_SERVICE_CONTRACT.md).
+This policy still needs actual provider/game-owner binding. Separate ADX/output
+integration, the unsupported sound request, game transitions and audible A/V
+validation keep stage 3 open. No production selection or game speed changed.

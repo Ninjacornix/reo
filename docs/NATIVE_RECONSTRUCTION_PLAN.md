@@ -285,7 +285,7 @@ sample/digest equality to the prior qualified native decoder, zero model
 underruns/skips and real source joins. The output provider is an offline model.
 Production output is process-wide and requires shared per-stream ownership;
 the isolated player is not installed. Logical PAK tails, LSC, complete clocks,
-movie consumers and actual game/media validation still gate stage 3. Stages 4–6
+movie consumers and actual game/media validation still gate stage 3. Stages 4â€“6
 remain required; no runtime dependency is removed by these standalone checks.
 
 The [shared stream output owner](native-media/ADXT_SHARED_OUTPUT_IMPLEMENTATION.md)
@@ -317,7 +317,7 @@ behavior, and unsupported FP/service states refuse before output effects.
 The complete global ADXB/16-ADXT/RNA service order and movie-clock consumers
 remain unqualified; the already-busy branch is not a substitute for that work.
 Bank/packet aggregation, LSC, logical PAK tails and actual game/media validation
-still gate stage 3, followed by stages 4–6.
+still gate stage 3, followed by stages 4â€“6.
 
 The [verified imported source integration](native-media/IMPORTED_ADXT_SOURCE_IMPLEMENTATION.md)
 now resolves all8,910 base File1 ADX references from actual retained imported
@@ -328,7 +328,7 @@ earlier blanket logical-PAK-tail blocker for these full base archives: real
 sector tails are retained. Standalone replacements, overlays and other editions
 remain separate. Original global audio scheduling, bank/packet integration,
 LSC, movies and actual game/media validation still gate stage 3. No runtime
-dependency has been removed, and stages 4–6 remain required.
+dependency has been removed, and stages 4â€“6 remain required.
 
 The [native audio dispatch envelopes](native-media/ADXT_SERVICE_GROUP_IMPLEMENTATION.md)
 now match81 independently frozen original cases and31,169 original instructions
@@ -426,7 +426,7 @@ queued-PCM boundary refusal led to a separate request-sizing revision that
 preserves protected samples; two complete loop cycles match the prior decoder
 baseline. All 50 standalone suites and the 6,706-payload finite regression pass.
 This does not complete stage 3: LSC/seamless, bank/packet output, movie controls,
-game ABI selection and actual media transitions remain. Stages 4–6 remain open.
+game ABI selection and actual media transitions remain. Stages 4â€“6 remain open.
 
 The [owned LSC filename queue](native-media/LSC_QUEUE_IMPLEMENTATION.md) now
 matches all 339 operations from 53 pre-native original cases with both compilers,
@@ -440,7 +440,7 @@ now passes all 6,706 distinct finite payloads across 421 actual imported sequenc
 with both compilers, including complete accepted per-clip PCM, accumulated clocks
 and joined source/output ownership. Four new negative controls and all 52 parent
 suites pass. This is a fixed immutable sequence; dynamic LSC sources, bank/packet
-output, movie controls and game/media transitions still gate stage 3. Stages 4–6
+output, movie controls and game/media transitions still gate stage 3. Stages 4â€“6
 remain required.
 
 The [bounded live queued ADX source](native-media/ADXT_DYNAMIC_LSC_SOURCE_IMPLEMENTATION.md)
@@ -452,7 +452,7 @@ bindings, source errors and blocked retirement are covered. Four detected
 counterfactuals and all 53 parent suites pass. The admitted source lifetime is
 one-use; general restart/error recovery and original global scheduler parity
 remain explicit boundaries. Bank/packet aggregation, movie controls, game ABI
-integration and actual media transitions still gate stage 3; stages 4–6 remain.
+integration and actual media transitions still gate stage 3; stages 4â€“6 remain.
 
 The [shared stream/bank/packet output owner](native-media/SHARED_STREAM_BANK_OUTPUT_IMPLEMENTATION.md)
 now preserves stream PCM, bank addition and master gain in one fenced callback.
@@ -462,7 +462,7 @@ Existing finite, regular-loop, fixed-sequence and live-sequence imported corpus
 regressions pass with no cross-compiler output differences. This graph is still
 isolated: game capture/gain binding, original global scheduler parity, movie
 controls/lifetimes and coherent game/media transitions remain before stage 3
-completes. No runtime component has been removed; stages 4–6 remain required.
+completes. No runtime component has been removed; stages 4â€“6 remain required.
 
 The [movie counter/query core](native-media/MOVIE_COUNTER_CLOCK_IMPLEMENTATION.md)
 now matches 504 original cases through nine owned bodies with both compilers.
@@ -472,7 +472,7 @@ returns, raw rational words and ordered selective writes match; five detected
 counterfactuals and all 56 standalone suites pass. This does not provide selected
 callback/cache authority, ADXT filtering, due/skip policy or movie frame/source
 ownership. Those integrations and game/media transitions still gate stage 3;
-stages 4–6 remain open.
+stages 4â€“6 remain open.
 
 The [owned selected movie clock](native-media/MOVIE_SELECTED_CLOCK_IMPLEMENTATION.md)
 now matches 546 original cases through 22 owned bodies with both compilers,
@@ -482,7 +482,7 @@ and all 57 standalone suites pass. Actual local scratch is an explicit opaque
 input, and guard seeds describe the isolated serialized profile. Real ADXT audio
 filtering, shared CRI guard/scheduler integration, movie construction/reset,
 pause/buffering, due/skip, frame/source lifetime and game transitions still gate
-stage 3. No movie override is enabled, and stages 4–6 remain open.
+stage 3. No movie override is enabled, and stages 4â€“6 remain open.
 
 The [movie audio filter](../game/native/movie_audio_filter/README.md) now matches
 67 constructors and 574 stateful operations through actual original integer,
@@ -492,7 +492,7 @@ retains the real native Session through an opaque stream key. Its separate
 source/decoder/estimator/cache owner check and all 60 standalone suites pass.
 These comparisons corrected the earlier threshold and inactive-output contract
 annotations; failed candidates and unchanged original expectations are retained.
-Actual live clock/tick binding, movie lifecycle, game integration and stages 4–6
+Actual live clock/tick binding, movie lifecycle, game integration and stages 4â€“6
 remain required. Neither component is selected in the player's build.
 
 The [pause and buffering controller](../game/native/movie_pause/README.md) now
@@ -510,7 +510,7 @@ stale-memory cases. Native construction matches all 168 normalized words and
 detects eight deliberate faults; all 62 standalone suites pass. This is fresh
 clock construction, not live stop/rebuild, property restoration or frame/source
 retirement. One coherent movie owner and complete media transition validation
-still gate stage 3; stages 4–6 remain open.
+still gate stage 3; stages 4â€“6 remain open.
 
 The [picture admission arithmetic](../game/native/movie_admission/README.md)
 now matches 336 original operations across 330 cases through the complete
@@ -519,7 +519,7 @@ faults; 11 boundary checks preserve refusals and host FP state, and all 63
 standalone suites pass. The cached-clock query remains an explicit value
 boundary, with original incidental FP effects recorded separately. Public bypass
 policies, skip/frame-return paths, one coherent movie owner and real transition
-validation still gate stage 3. Stages 4–6 remain open.
+validation still gate stage 3. Stages 4â€“6 remain open.
 
 The [prepared owned timing context](../game/native/movie_timing_context/README.md)
 now joins clock construction, selection/cache, audio filtering, pause/buffering,
@@ -799,3 +799,17 @@ profiles, logical/physical scheduler and game command binding, separate ADX/
 output integration, the retained unsupported-read diagnostic and a coherent
 candidate with resource/media transitions remain. These offline tests opened no
 game window or audio device; stage 3 is still open.
+
+## Current checkpoint: complete movie catalogue and pending service
+
+The native GPU graph now passes all 201 File #1 movie payloads, all six observed
+geometries and 216,998 independently counted I/P/B pictures. Broader testing
+found and fixed an EOF producer-readiness ordering defect without clamping
+timestamps or dropping pictures. See [catalogue results](native-media/MOVIE_CATALOG_GPU_RESULTS.md).
+
+Native pending-service orchestration matches 515 original cases and 518 visits
+on both compilers, including callback state changes and rescheduled work;
+five deliberate faults are detected. See the [service contract](native-media/MOVIE_SERVICE_CONTRACT.md).
+This policy still needs actual provider/game-owner binding. Separate ADX/output
+integration, the unsupported sound request, game transitions and audible A/V
+validation keep stage 3 open. No production selection or game speed changed.
