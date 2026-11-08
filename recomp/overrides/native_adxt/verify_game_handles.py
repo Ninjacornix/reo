@@ -35,7 +35,7 @@ def main():
         ):
             if body.count(old)!=1:raise ValueError('Mutation anchor '+label)
             changed=out/(label+'.cpp');changed.write_text(body.replace(old,new),encoding='utf-8',newline='\n');run(label,changed,True);record['detected_faults'].append(label)
-        verify();record.update(status='native game handle ownership and source retirement qualified',workflows=3)
+        verify();record.update(status='native game handle ownership and source retirement qualified',workflows=4)
     finally:
         record['outputs_sha256']={p.name:sha(p)for p in out.iterdir()if p.suffix in('.txt','.cpp')};(out/'receipt.json').write_text(json.dumps(record,indent=2)+'\n',encoding='utf-8',newline='\n')
     print(json.dumps({'status':record['status'],'receipt_sha256':sha(out/'receipt.json')}))

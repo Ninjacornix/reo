@@ -78,6 +78,14 @@ S GameHandles::with(const GameKey& key,HandleOperation& operation)noexcept{
     S result=S::fault;Operation invoke([&](auto& p){if(p.inspect(r.native).status!=S::completed)return;operation.run(p,r.native,r.guest);result=S::completed;});
     const auto admitted=s.owner->run(invoke);return admission(admitted,result);
 }
+movie_instance_audio::Capture GameHandles::capture_audio(const GameKey& key,
+        std::shared_ptr<movie_audio_clock::ServiceTick> tick)noexcept{
+    auto& s=*state_;using P=movie_audio_clock::ProviderStatus;
+    if(s.cleared)return{P::closed,{}};
+    if(!valid(key))return{P::invalid_key,{}};
+    const auto& r=s.records[key.slot_];
+    return movie_instance_audio::Source::capture(s.owner,r.native,std::move(tick));
+}
 S GameHandles::destroy(const GameKey& key)noexcept{
     auto& s=*state_;if(s.cleared)return S::closed;if(!valid(key,true))return S::invalid_key;auto& r=s.records[key.slot_];
     S result=S::fault;Operation destroy([&](auto& p){

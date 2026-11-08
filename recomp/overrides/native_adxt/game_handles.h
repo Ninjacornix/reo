@@ -1,6 +1,7 @@
 #pragma once
 #include "handle_profile.h"
 #include "game/native/adxt_control_owner/owner.hpp"
+#include "game/native/movie_instance_audio/source.hpp"
 
 namespace reo::native::adxt_binding {
 namespace instances=adxt_instances;
@@ -33,6 +34,12 @@ public:
     [[nodiscard]] Adoption adopt(const HandleResult&,std::shared_ptr<const adxt_attenuation::Table>)noexcept;
     [[nodiscard]] GameKey find(const HandleResult&)const noexcept;
     [[nodiscard]] instances::Status with(const GameKey&,HandleOperation&)noexcept;
+    // Capture the currently active source for a movie consumer. Requires the
+    // same serialized guest controller as other map operations; callers first
+    // validate the current guest shape with find(). No Session/key alias leaves
+    // this map, and capture itself runs outside any canonical control borrow.
+    [[nodiscard]] movie_instance_audio::Capture capture_audio(const GameKey&,
+        std::shared_ptr<movie_audio_clock::ServiceTick>)noexcept;
     // Original destruction must not free/reuse children until completed. A
     // pending result retains BOTH original DTR reservations and the game key.
     [[nodiscard]] instances::Status destroy(const GameKey&)noexcept;

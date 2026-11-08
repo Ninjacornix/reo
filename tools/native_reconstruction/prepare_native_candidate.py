@@ -118,6 +118,7 @@ MOVIE_POSITION_UNITS = (
 )
 ORDINARY_ADXT_UNITS = (
     ('native_afs_source_range', 'game/native/afs_source_range/afs_source_range.cpp'),
+    ('native_movie_instance_audio', 'game/native/movie_instance_audio/source.cpp'),
     ('native_adxt_game_handles', 'recomp/overrides/native_adxt/game_handles.cpp'),
     ('native_adxt_file_source', 'recomp/overrides/native_adxt/source_profile.cpp'),
     ('native_adxt_ordinary_runtime', 'recomp/overrides/native_adxt/ordinary_runtime.cpp'),

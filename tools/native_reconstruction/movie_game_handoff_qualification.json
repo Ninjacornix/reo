@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "game handle capability and prepared graph composition qualified; no game integration",
+  "source_manifest": "tools/native_reconstruction/movie_game_handoff_manifest_v1.json",
+  "source_manifest_sha256": "6d0f3ae28df369fed4f15559c97c09d939de8bfb8d8ffb00d31a4ef0fab3654a",
+  "receipts": {
+    "build-native-sjuni/movie-handoff/llvm-v1/receipt.json": "b2fa21c98376af3cad00390a5587edb531250929d3b31f081c89b3986c6c3761",
+    "build-native-sjuni/movie-handoff/gcc-v1/receipt.json": "dafc0b6c44e45ca86f4ebacbea1f3ddc11f966df2c018cb3b98b11e45d6cf497",
+    "build-native-sjuni/movie-graph-handoff/llvm-v2/receipt.json": "5067d971f27856f91eef85ece6ccd07b56f56b4be6b335eb72a0b3285728dcd4",
+    "build-native-sjuni/movie-graph-handoff/gcc-v2/receipt.json": "dedad9a963e8eddba7c9ef09ae841952bf484a9cc02112387ec6e41bfda7ea9e"
+  },
+  "handle_workflows_per_compiler": 4,
+  "handle_runtime_faults_per_compiler": [
+    "file-slot-is-stream-slot",
+    "release-pending-children",
+    "ignore-secondary-transfer",
+    "ignore-game-key",
+    "capture-inside-borrow"
+  ],
+  "prepared_graph_workflows_per_compiler": 1,
+  "actual_native_audio_workers": true,
+  "actual_graph_read_worker": true,
+  "actual_video_provider": false,
+  "actual_game_hooks": false,
+  "game_run": false,
+  "device_opened": false,
+  "full_native_cohort_rebuilt": false,
+  "stage3_complete": false
+}
