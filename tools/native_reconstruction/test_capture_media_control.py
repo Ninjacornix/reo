@@ -2,7 +2,7 @@ import struct,unittest
 import capture_media_control as capture
 
 class Reader:
-    def __init__(self):self.spans={};self.reads=[];self.changing=False;self.changing_c4=False;self.changing_rna=False;self.changing_lsc=False
+    def __init__(self):self.spans={};self.reads=[];self.changing=False;self.changing_c4=False;self.changing_rna=False;self.changing_lsc=False;self.changing_callback=False
     def put(self,at,data):self.spans[at]=data
     def read(self,at,size):
         self.reads.append((at,size))
@@ -13,9 +13,10 @@ class Reader:
             return bytes(value)
         if self.changing_rna and at==0x223880 and size==0x60 and self.reads.count((at,size))==2:return bytes(size)
         if self.changing_lsc and at==0x21e110 and size==0x238 and self.reads.count((at,size))==2:return bytes(size)
+        if self.changing_callback and at==0x21dfd8 and size==12 and self.reads.count((at,size))==2:return bytes(size)
         if at in self.spans:
             value=self.spans[at];assert len(value)==size;return value
-        allowed=[(0x4BADD0,0x40),(0x20F3C4,4),(0x22F138,4),(0x20F3C8,16*0xC4),(0x22F18C,32)]
+        allowed=[(0x4BADD0,0x40),(0x20F3C4,4),(0x22F138,4),(0x20F3C8,16*0xC4),(0x22F18C,32),(0x21dfd8,12)]
         allowed += [(0x800044,20),(0x802AB0,4),(0x8009A0,400),(0x800B30,400),(0x800CC0,0x298),(0x900DA4,8)]
         allowed += [(0x801AA0+68*i,8) for i in range(9)]
         if (at,size) not in allowed:raise AssertionError('Unexpected process-memory range')
@@ -68,5 +69,9 @@ class CaptureTests(unittest.TestCase):
         r=self.lsc();r.changing_lsc=True;v=capture.sample(r)['adxt'][0]['lsc'];self.assertTrue(v['active_links_match']);self.assertFalse(v['end_matches'])
     def test_lsc_link_mismatch_is_retained(self):
         r=self.lsc();data=bytearray(r.spans[0x21e110]);struct.pack_into('<I',data,8,0x12345678);r.put(0x21e110,bytes(data));v=capture.sample(r)['adxt'][0]['lsc'];self.assertFalse(v['active_links_match']);self.assertTrue(v['end_matches']);self.assertNotIn((0x12345678,0x238),r.reads)
+    def test_global_callback_words_are_metadata_only(self):
+        r=Reader();r.put(0x21dfd8,struct.pack('<III',0xffffffff,0x12345678,0x87654321));v=capture.sample(r);self.assertEqual(v['lsc_callback_words'],[0xffffffff,0x12345678,0x87654321]);self.assertTrue(v['lsc_callback_end_matches']);self.assertFalse(any(at in (0xffffffff,0x12345678,0x87654321)for at,_ in r.reads))
+    def test_changed_global_callback_is_retained_as_unstable(self):
+        r=Reader();r.put(0x21dfd8,struct.pack('<III',1,2,3));r.changing_callback=True;v=capture.sample(r);self.assertEqual(v['lsc_callback_words'],[1,2,3]);self.assertFalse(v['lsc_callback_end_matches'])
 
 if __name__=='__main__':unittest.main()

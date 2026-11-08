@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "status": "bounded callback metadata observations pass15 isolated tests; new live capture pending",
+  "source_sha256": {
+    "tools/native_reconstruction/capture_media_control.py": "adc5279f6a45b91ad3d382f1319f9a060db3499c772b12d58f1973d04af795db",
+    "tools/native_reconstruction/test_capture_media_control.py": "989dd15cfb73c037f6dfbe07a6e0658266152c6b6f6c7939e8ef6550875de3f3",
+    "docs/native-media/MEDIA_CONTROL_OBSERVATION.md": "8f1412f796ddf3ed7a449bf83f900acd03e578d0008fe49fef4caba829d0d016"
+  },
+  "tests": 15,
+  "game_run": false,
+  "guest_writes": false,
+  "threads_suspended": false,
+  "atomic": false,
+  "native_source_admission": false
+}

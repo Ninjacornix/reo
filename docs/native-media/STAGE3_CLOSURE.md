@@ -1,5 +1,28 @@
 # Stage 3 closure checklist
 
+Current direction, 2026-11-08: [modernize and remove PS2-specific systems](../NATIVE_MODERNIZATION_DIRECTION.md).
+The older checklist below records the reconstruction route. A complete modern
+replacement can retire those internal requirements; preserving old movie ring,
+transfer and scheduler implementations is not a closure requirement by itself.
+
+Current results: [V22](ADXT_CANDIDATE_V22_AUDIO.md) passes the previous three-source
+route failure and reaches gameplay with joined native audio and zero recorded
+source underruns. The larger buffer profile passes its separate native cohort.
+A new short-clip experiment converts an owned movie to H.264 MP4 and decodes all
+195 pictures through Windows Media Foundation without a PS2 runtime. It has no
+on-screen player or game integration yet.
+
+Step 3 now closes on native resource/media consumers working in the game,
+converted assets where useful, complete playback and audible synchronization,
+pause/skip/repeat/error/shutdown and room transitions, measured stutter retests,
+and retirement of the replaced PS2 media paths. A temporary game ABI bridge must
+remain explicit until its callers migrate. Do not require an unused legacy
+profile merely because a historical test or implementation modeled it.
+Step 3 remains incomplete; the conditional PC sleep action has not run.
+
+## Historical reconstruction checklist and checkpoints
+
+
 Status: active work, starting at local commit `959d2198`. This is a gate checklist,
 not a weighted percentage. Passing more isolated tests does not substitute for
 consumer integration or game transition evidence.

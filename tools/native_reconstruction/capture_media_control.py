@@ -19,6 +19,7 @@ def sample(reader):
     phase=reader.read(0x4BADD0,0x40)
     clocks=dict(adxt=words(reader.read(0x20F3C4,4))[0],sofdec=words(reader.read(0x22F138,4))[0])
     pool=reader.read(0x20F3C8,16*0xC4);instances=[]
+    lsc_callback=words(reader.read(0x21dfd8,12))
     for slot in range(16):
         row=pool[slot*0xC4:(slot+1)*0xC4]
         if row[0]:
@@ -59,6 +60,7 @@ def sample(reader):
         record['control_end_matches']=reader.read(main+0x44,20)==scalars and words(reader.read(main+0x2AB0,4))[0]==shared
         movies.append(record)
     return dict(phase=phase[0],modal=phase[0x1E],paused=phase[0x28],clocks=clocks,adxt=instances,movies=movies,
+                lsc_callback_words=lsc_callback,lsc_callback_end_matches=words(reader.read(0x21dfd8,12))==lsc_callback,
                 registry_end_matches=words(reader.read(0x22F18C,32))==registry,atomic=False)
 def main():
     p=argparse.ArgumentParser();p.add_argument('--session',type=Path,required=True);p.add_argument('--seconds',type=float,default=30);p.add_argument('--interval',type=float,default=0.2);p.add_argument('--name',default='media-control');a=p.parse_args()

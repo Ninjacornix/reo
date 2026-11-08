@@ -1,5 +1,17 @@
 # Outbreak native reconstruction plan
 
+Authoritative direction, updated 2026-11-08: **modernize the game and remove
+PS2-specific machinery**. Replace complete systems with native implementations
+and convert imported assets where useful, then delete obsolete paths and their
+build dependencies. Internal PS2/CRI routine parity is not the destination or
+an extra gate for a modern replacement. The [modernization direction](NATIVE_MODERNIZATION_DIRECTION.md)
+defines the revised stages and immediate native MP4 playback route. The older
+checkpoints below retain historical reconstruction evidence; requirements to
+recreate internal media machinery are superseded when its consumers move to a
+complete native replacement. Step 3 is still incomplete, and the whole game
+still requires stages 4-6 before PS2 runtime removal can be claimed.
+
+
 Latest stage-3 checkpoint, 2026-11-08: the [V22 game retest](native-media/ADXT_CANDIDATE_V22_AUDIO.md)
 passes the previous three-source route failure and reaches responsive bar
 gameplay. Its joined private native source produces32,026,716 signal frames

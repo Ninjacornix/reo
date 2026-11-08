@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "status": "read-only LSC child profile passes both compilers; no game source admission",
+  "checks_per_compiler": 158,
+  "receipts": {
+    "build-native-sjuni/adxt-binding/lsc-profile/gcc-v1/receipt.json": "d0f522ffa0c8e09718013535397a089ec600328273c583a79aca6379fd4226d1",
+    "build-native-sjuni/adxt-binding/lsc-profile/llvm-v1/receipt.json": "ef4b064aefae6a7eec276710e8934ef1d99a377e3055254e848fc71dbc31f828"
+  },
+  "source_sha256": {
+    "recomp/overrides/native_adxt/lsc_profile.h": "81e026543c0d0ae496b53f00e673047f6af0a80e75d18feefe8c2e1df34049a4",
+    "recomp/overrides/native_adxt/lsc_profile_tests.cpp": "3fa12fe95026adcf1330788a201a63c1a74b027727a4f3cca43cd4729972c579",
+    "recomp/overrides/native_adxt/handle_profile.h": "09b60bc39d12db4b175a2a750a07ca069e24ac0f8d863e5e8e732c29333af8ae",
+    "recomp/overrides/native_adxt/handle_profile_tests.cpp": "06ac501aaf64e9457b74294972771b757548da2e91818afe7a89a75bd532005e",
+    "tools/native_reconstruction/verify_lsc_profile.py": "3c6b81c0027a44e731ddba5a8a9739bfa987f8e7fd0040763a3f75ef7ca8262f",
+    "docs/native-media/LSC_PROFILE_READER.md": "800111de956a6a4efbb6b6a77490586300d3475fa2d2dbf7c94347a995a67ce5"
+  },
+  "runtime_admission": false,
+  "source_capability": false,
+  "game_run": false,
+  "guest_writes": false
+}

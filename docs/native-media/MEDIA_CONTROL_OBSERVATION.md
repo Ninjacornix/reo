@@ -16,6 +16,7 @@ No capture has been completed merely by adding this tool.
 | `20F3C8`, sixteen `C4` records | ADXT active/state/source-mode/channel bytes, pause byte `72`, and literal control record |
 | `223880`, sixteen RNA records at stride `60` | Bounded C4+C child, literal RNA bytes, active/channel fields and route at `20` |
 | `21E110`, sixteen LSC records at stride `238` | Bounded C4+94 child, full literal record, input/file links, state and queue/capacity/minimum fields |
+| `21DFD8..21DFE3`, three words | Global LSC notification function/arguments as metadata only, with a final stability read |
 | `22F138` | Sofdec global raw tick, not presentation FPS |
 | `22F18C`, eight pointers | Registered movie owners |
 | Movie `44..57` | Pending, actual, requested, explicit pause and nesting words |
@@ -43,7 +44,8 @@ Large capacities/minimums are diagnostic values, not native source admission.
 
 Duration is bounded at 600 seconds and interval at 0.1..5 seconds. JSONL and a
 hashed receipt stay inside the private session directory, using fresh names.
-Thirteen isolated tests cover empty pools, literal fields, invalid main/shared/RNA/LSC
-pointers, exact child fields, mismatched links and changing C4/RNA/LSC/movie records. Live validation
+Fifteen isolated tests cover empty pools, literal fields, invalid main/shared/RNA/LSC
+pointers, exact child fields, mismatched links, changing C4/RNA/LSC/movie records,
+and literal/changing global callback words without following them. Live validation
 is a separate gate. V20 retains five observations before its game refusal; its
 original failed capture receipt is not rewritten as a completed recording.

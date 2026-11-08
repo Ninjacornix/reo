@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "status": "one complete converted movie decodes through Windows native reader at declared cadence",
+  "receipt": "build-native-sjuni/mp4-movie-probe/continue-gcc-v3/receipt.json",
+  "receipt_sha256": "5295033bad0135ce3d86b6d314c8391ee16248c570025c463e775d6fa0467176",
+  "source_sha256": {
+    "tools/native_reconstruction/probe_mp4_movie.py": "c2a71ee5779de9f1ba76f618023c04a083850c30fc6d76a6f9c72dfb20ada976",
+    "tools/native_reconstruction/mp4_decode_probe.cpp": "e3a8b6f8dcaec68e104a58b35f52722788e7d13639e68b74c28a3a36f8851b4d",
+    "docs/NATIVE_MODERNIZATION_DIRECTION.md": "766d8b74d861ce1cdf09f1911b792c2ee1f0821b2babd12a75eec3eaec00411f"
+  },
+  "frames": 195,
+  "source_bytes": 299008,
+  "mp4_bytes": 31730,
+  "dimensions": [
+    512,
+    320
+  ],
+  "pixel_aspect": [
+    5,
+    6
+  ],
+  "all_source_pictures_retained": true,
+  "cadence_policy": "one picture per 1001/30000 seconds from sequence-header rate code4; raw SFD demux PTS normalized",
+  "native_timestamps_match_mp4": true,
+  "raw_pts_preserved": false,
+  "lossless": false,
+  "game_hooks_installed": false,
+  "game_run": false,
+  "screen_presentation": false,
+  "audible_sync_tested": false,
+  "stage3_complete": false,
+  "failed_experiments": [
+    "build-native-sjuni/mp4-movie-probe/continue-gcc-v1",
+    "build-native-sjuni/mp4-movie-probe/continue-gcc-v2"
+  ]
+}
