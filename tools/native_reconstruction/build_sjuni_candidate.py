@@ -150,9 +150,9 @@ def verified_audio_cache_retry(kit, work, identity, manifest):
                 sha(work / 'objects' / (name + '.json')) != saved['receipt_sha256']):
             raise ValueError('Cached retry object/receipt changed: ' + name)
     return dict(source=str(parent), copied_pairs=len(objects), receipt_sha256=sha(seed_path),
-                verified_retry=True, changed_inputs=sorted(changed), minimum_free_bytes=2 * 1024 ** 3,
+                verified_retry=True, changed_inputs=sorted(changed), minimum_free_bytes=4 * 1024 ** 3,
                 parent_materialized_bytes=materialized_bytes, estimated_additional_bytes_with_margin=estimated_bytes,
-                limitation='Only this bounded implementation retry; compiler still validates all ordinary input signatures')
+                limitation='Bounded implementation retry only; estimate excludes whole-machine disk demand and peak compiler use; ordinary signatures and normal 4 GiB reserve remain required')
 
 
 def main():
@@ -165,7 +165,7 @@ def main():
     parser.add_argument('--jobs', type=int, default=2)
     parser.add_argument('--cache-from', type=Path, help='Seed a fresh work folder with verified object/receipt pairs')
     parser.add_argument('--verified-audio-cache-retry', action='store_true',
-                        help='Resume a complete verified cache with one small ADXT CPP change and identical plan/other inputs; retain 2 GiB reserve')
+                        help='Resume a complete verified cache with one small ADXT CPP change and identical plan/other inputs; retain normal 4 GiB reserve')
     parser.add_argument('--preflight', action='store_true', help='Compile authored/runtime inputs only, without a linked game')
     args = parser.parse_args()
     if args.verified_audio_cache_retry and (args.cache_from or args.preflight):

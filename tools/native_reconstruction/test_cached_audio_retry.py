@@ -68,9 +68,9 @@ class CachedAudioRetryTests(unittest.TestCase):
     def run_policy(self):
         return candidate.verified_audio_cache_retry(self.kit, self.work, self.identity, self.manifest_value)
 
-    def test_bounded_retry_records_complete_cache_and_two_gib_reserve(self):
+    def test_bounded_retry_records_complete_cache_and_normal_four_gib_reserve(self):
         result = self.run_policy()
-        self.assertEqual(result['minimum_free_bytes'], 2 * 1024 ** 3)
+        self.assertEqual(result['minimum_free_bytes'], 4 * 1024 ** 3)
         self.assertEqual(result['copied_pairs'], 1)
         self.assertTrue(result['verified_retry'])
 
