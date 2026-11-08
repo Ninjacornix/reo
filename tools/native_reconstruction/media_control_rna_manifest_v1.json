@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "files": {
+    "tools/native_reconstruction/capture_media_control.py": "642940237591d30c61806b2e6ad933d46a98a0b3440203a9a9ec857b6b9fad07",
+    "tools/native_reconstruction/test_capture_media_control.py": "cc568dd30ce0c2dce70507a186b13370391ec111103f4bc645e8fd419f0894fb",
+    "docs/native-media/MEDIA_CONTROL_OBSERVATION.md": "536213ea0ccae794890871a7760cadb9b8f14b180e049f0f0a276d6fed824417",
+    "recomp/overrides/native_adxt/handle_profile.h": "09b60bc39d12db4b175a2a750a07ca069e24ac0f8d863e5e8e732c29333af8ae"
+  }
+}

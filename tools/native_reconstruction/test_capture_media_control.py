@@ -2,11 +2,16 @@ import struct,unittest
 import capture_media_control as capture
 
 class Reader:
-    def __init__(self):self.spans={};self.reads=[];self.changing=False
+    def __init__(self):self.spans={};self.reads=[];self.changing=False;self.changing_c4=False;self.changing_rna=False
     def put(self,at,data):self.spans[at]=data
     def read(self,at,size):
         self.reads.append((at,size))
         if self.changing and at==0x800044 and self.reads.count((at,size))==2:return struct.pack('<5I',1,4,6,0,0)
+        if 0x20F3C8<=at<0x20F3C8+16*0xC4 and (at-0x20F3C8)%0xC4==0 and size==0xC4:
+            value=bytearray(self.spans.get(0x20F3C8,bytes(16*0xC4))[at-0x20F3C8:at-0x20F3C8+0xC4])
+            if self.changing_c4:value[1]^=1
+            return bytes(value)
+        if self.changing_rna and at==0x223880 and size==0x60 and self.reads.count((at,size))==2:return bytes(size)
         if at in self.spans:
             value=self.spans[at];assert len(value)==size;return value
         allowed=[(0x4BADD0,0x40),(0x20F3C4,4),(0x22F138,4),(0x20F3C8,16*0xC4),(0x22F18C,32)]
@@ -33,5 +38,19 @@ class CaptureTests(unittest.TestCase):
         self.assertIn('shared_reason',v['movies'][0]);self.assertNotIn('shared_source_flags',v['movies'][0])
     def test_changed_control_is_retained_as_unstable(self):
         r=self.movie();r.changing=True;v=capture.sample(r);self.assertFalse(v['movies'][0]['control_end_matches']);self.assertFalse(v['atomic'])
+    def audio(self,child=0x223880):
+        r=Reader();pool=bytearray(16*0xC4);pool[:4]=bytes([1,3,1,2]);struct.pack_into('<I',pool,12,child);r.put(0x20F3C8,bytes(pool));return r
+    def test_exact_rna_child_fields(self):
+        r=self.audio();rna=bytearray(0x60);rna[0]=1;struct.pack_into('<I',rna,4,2);struct.pack_into('<I',rna,0x20,0x1e0140);r.put(0x223880,bytes(rna));v=capture.sample(r)['adxt'][0]
+        self.assertEqual(v['rna']['route'],0x1e0140);self.assertTrue(v['rna']['active_channels_match']);self.assertTrue(v['rna']['end_matches']);self.assertTrue(v['c4_end_matches'])
+    def test_invalid_rna_pointer_is_never_followed(self):
+        for child in (0,0x223881,0x223880+16*0x60,0xFFFFFFFF):
+            with self.subTest(child=child):
+                r=self.audio(child);v=capture.sample(r)['adxt'][0];self.assertIn('rna_unavailable',v);self.assertNotIn((child,0x60),r.reads)
+    def test_rna_torn_read_is_preserved_as_unstable(self):
+        r=self.audio();rna=bytearray(0x60);rna[0]=1;struct.pack_into('<I',rna,4,2);r.put(0x223880,bytes(rna));r.changing_rna=True
+        v=capture.sample(r)['adxt'][0];self.assertTrue(v['rna']['active_channels_match']);self.assertFalse(v['rna']['end_matches'])
+    def test_changed_c4_is_preserved_as_unstable(self):
+        r=self.audio(0);r.changing_c4=True;v=capture.sample(r)['adxt'][0];self.assertFalse(v['c4_end_matches'])
 
 if __name__=='__main__':unittest.main()

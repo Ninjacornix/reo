@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "status": "bounded read-only C4/RNA/movie observation checks passed",
+  "source_manifest": "tools/native_reconstruction/media_control_rna_manifest_v1.json",
+  "source_manifest_sha256": "f5563b601288d163fa2611631ef56b49fce620af65ca37afe707e0a978b7ed79",
+  "receipt": "build-native-sjuni/media-control-rna-check-v1/receipt.json",
+  "receipt_sha256": "24136124d2c808731398773cc71deab11764d7fa6790364ccf193d0f60b920f9",
+  "tests": 9,
+  "actual_process_attached": false,
+  "stage3_complete": false
+}

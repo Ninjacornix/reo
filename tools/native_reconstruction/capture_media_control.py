@@ -21,7 +21,18 @@ def sample(reader):
     pool=reader.read(0x20F3C8,16*0xC4);instances=[]
     for slot in range(16):
         row=pool[slot*0xC4:(slot+1)*0xC4]
-        if row[0]:instances.append(dict(slot=slot,active=row[0],state=row[1],source_mode=row[2],channels=row[3],pause=row[0x72],raw_hex=row.hex()))
+        if row[0]:
+            record=dict(slot=slot,active=row[0],state=row[1],source_mode=row[2],channels=row[3],pause=row[0x72],raw_hex=row.hex())
+            child=struct.unpack_from('<I',row,12)[0];record['rna_pointer']=child
+            # Exact verified File1 RNA pool only. This is diagnostic data, not
+            # source authority; never chase arbitrary children from a torn C4.
+            if row[0]==1 and row[3] in (1,2) and 0x223880<=child<0x223880+16*0x60 and (child-0x223880)%0x60==0:
+                rna=reader.read(child,0x60);channels=struct.unpack_from('<I',rna,4)[0]
+                record['rna']=dict(raw_hex=rna.hex(),active=rna[0],channels=channels,route=struct.unpack_from('<I',rna,0x20)[0],
+                                   active_channels_match=rna[0]==1 and channels==row[3],end_matches=reader.read(child,0x60)==rna)
+            else:record['rna_unavailable']='outside exact active File1 RNA pool/profile'
+            record['c4_end_matches']=reader.read(0x20F3C8+slot*0xC4,0xC4)==row
+            instances.append(record)
     registry=words(reader.read(0x22F18C,32));movies=[]
     for slot,main in enumerate(registry):
         if not main:continue
