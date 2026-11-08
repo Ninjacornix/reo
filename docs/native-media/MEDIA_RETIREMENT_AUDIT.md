@@ -34,3 +34,11 @@ game candidate. Stages 4/5 migrate the remaining game/renderer callers; stage 6
 removes their obsolete execution and build dependencies. Renaming a bridge or
 deleting checks cannot supply that evidence. Subjective A/V synchronization
 remains unconfirmed while the user is away.
+
+A bounded member-header search checks the first 16 bytes of 17,989 sufficiently
+large members from the 18,732-member inventory. It reads 287,824 bytes and finds
+no `.mov`/`eff_mov` names or headers matching the searched positive, block-aligned
+geometry and contained length profile. This excludes only that profile at those
+member starts. Embedded/unnamed/compressed payloads, other layouts and actual
+call reachability remain unresolved; this is not permission to delete IPU
+support. The report is `build-native-sjuni/effect-member-header-search-v1.json`.

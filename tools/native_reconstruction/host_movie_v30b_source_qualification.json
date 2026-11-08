@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "status": "repeat source-detail run clean; historical shortage not reproduced; no fix claimed",
+  "runtime_revision": "58c7e0c9b5bd22b8b6db9955afd9c7c05f1e8700",
+  "launcher_base_revision": "a622a0eb",
+  "launcher_GameSession_sha256": "333214c8b0a57b740c8e906dbcbbdcc18377608a4159a7a68fa54c8bc7e65ac7",
+  "launcher_change": "Existing REO_CRI_SERVER_SLOW_MS=20 enabled only for explicit native diagnostic route.",
+  "executable_sha256": "ccaf6c508a63e48aae0225c9bfda07a1386c00da6abf859004aab32b9e2159f2",
+  "evidence_sha256": {
+    "tools/native_reconstruction/audio_control_trace_v2_qualification.json": "5ae784ad1f51e14a5df447eac20f12cfb2b3e3629c61c1c1602a801838015eb0",
+    "build-native-sjuni/candidate-work-v30/candidate-build-result.json": "9ec5c18da17eab2d48a3c46736a4f519425313074031e4443331439783d89eeb",
+    "build-native-sjuni/native-media-game-v30/native-media-package-receipt.json": "a9de64a0df232b287da4b1f034886a36953861b06e707cd50e9b44661c1e79ca",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/controller-health.jsonl": "50b7175e0c5a8e9c5f1b750cdfb094249751f0af0ea9ed8ef38480c9d979c291",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/controller-rumble.jsonl": "2d78bf1cd81dc349de4486c8b5934d47bb0b3f917857a1223eb55f34744b72aa",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/exit.json": "2766d2e0c5ce91419d5d7f3dc6cd24e6acb0da534b3461161f8ce0c18151b718",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/frames.csv": "bbf9aba8558b141388f3bb69e029b17df611fb58e01ae5ca3ee70f4018228648",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/frames.csv.warmup.csv": "15c6122e0483846352116446a5030201c8b01ba1d6959c273e8587f3f1b72c82",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launch.json": "641dba329fc54441ee9e206780a032f1f9088514e138c6bfb9cd2ebc69f2f5be",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-000.bmp": "28e615eca88bf7873ce8dd27917c263879135c0d06d71518ff4fc04d9c403d6f",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-000.json": "dc76868d537a35d096602f6e9192f2e1177072674593513cb4f326cf3a250bca",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-060.bmp": "3ce99e69a97ea075166cc97425b5c09230dc5b946c97b234f0ef24939d930c74",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-060.json": "f048b69173596bafb21547e83748e2b1231336a0e42750de9be34a6835a17c95",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-120.bmp": "b6b06d050b1a9819c7c83b3ea4d1945f90d4e933a39c31d27d65459b855e2ad4",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-120.json": "6c84c5819d655aba6ed1993b2d63121a48f2f5cce8d0f71f26acb41365c72acb",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-180.bmp": "94017c27558f1c52b8be44bec2fe5cc78fe8c789da453f21cdf84a493264fce2",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-180.json": "3207cc04274571085043540d03e04e04ce9c96bc73c356cc438955d87670ac3c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-240.bmp": "43125f8b4e4b17bfaa8822d401e57bf8a230c79505473664fd49037968ad28d6",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-frame-240.json": "41b787951dc372026bb8ddf504ea5b9eb85a6c6b3ce53a4ee5258d930fdf6a50",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-media-analysis.json": "f652a4e37ae2e1efe25021ed1c9a6e60609a9fd8e323a13f1c615e66d04889c4",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-media.jsonl": "fcdd2475ec72668fe90120c3a4f752048869ea4adbb11bf3811a8118ddb26549",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-movie-progress.csv": "05864f45db1489551715d655c2fef0bd8c1641ff629ed51048ff5218b50c6a4b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-observer-receipt.json": "ee460bb4f328ec6d9e227763e45eed8a78cba3b59cb06f78ed439463a09fc21b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-process-audio-command.json": "e30a00699cc6af4e802853e3c9820c78fb272e3bc7519b90bfc81d4b921bb1e0",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-process-audio-result.json": "13e98088cf09f5906b123fafc86ef9de8b632ba5b8eeb44cf8b4c63b32cb29d4",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-process-audio.wav": "fe5c148e50857be47685f09d72ed6bc90036a78eb841b85374bdee7d82aab17d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/launcher-process-audio.wav.packets.csv": "7daa2a3b8be88329fc9dcc182f9a2401db805aafbc7c14923b85321c60255a96",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/mods.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/native-audio-control-analysis.json": "536d3c2af58ac9a1b9f615c8a72ec20f25e4a59ca2def20363d681eadb65ac31",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/native-audio-control.csv": "e2a694d84149448a76e3f35e371799b671c236ba901738bec70d47be3a3e64d6",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/native-game-session-check.json": "7df50b7ac6cac464f7938a1152b126132bac39c3a294a817d343e75692d85081",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/native-movie-consumer.csv": "d231ebc0a98fd6ef783aa9faf94ecba8702d1f32e0c671fbde82ccadd4950bcf",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/native-movie-prepare.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/native-movie-prepare.stdout.log": "2a480519dd0249149db1151ca9ebaef3cf479fa97b1348713cb6f64ddc9840aa",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/native-movie-producer.csv": "4148c9aa1812a7f4d135bd8e71955ad86d59b5dc6eaf46316365e20c961cd7b7",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/stderr.log": "54f06945cc08b1b1a00b0cac755239d6376648620cf71aad5bb5501488f01eca",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/stdout.log": "d356380793d3892c995ae89d44002589f69c9a89ffd993dc472ff32c38c41597",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-213448-449/window-visibility-focused.json": "b18f923efbb8f89f695ba7d7c892cc3abf4f4d15f71f185907992287061ae29f"
+  },
+  "control_snapshots": 28763,
+  "dropped_snapshots": 0,
+  "source_known_rows": 38420,
+  "measured_underrun_increase": 0,
+  "service_max_gap_ms": 21.9068,
+  "native_audio": {
+    "status": "retired",
+    "installations": [
+      {
+        "line": 260,
+        "pcm_bytes": 391680000
+      }
+    ],
+    "audio_reports": [
+      {
+        "line": 5540,
+        "owner_joined": 1,
+        "output_started": 1,
+        "frames": 22994880,
+        "signal_frames": 20974791,
+        "underrun_frames": 0,
+        "hard_failures": 0,
+        "queue_rejections": 0
+      }
+    ],
+    "ram_reports": [
+      {
+        "line": 5541,
+        "retired": 1,
+        "active_slots": 0,
+        "active_operations": 0,
+        "diagnostic_reports": 205,
+        "first_refusal_or_diagnostic": 1540,
+        "operations": {
+          "begin": {
+            "attempts": 229,
+            "refused": 0
+          },
+          "end": {
+            "attempts": 229,
+            "refused": 0
+          },
+          "read": {
+            "attempts": 1168,
+            "refused": 0
+          },
+          "control": {
+            "attempts": 498,
+            "refused": 0
+          },
+          "forward": {
+            "attempts": 0,
+            "refused": 0
+          },
+          "snapshot": {
+            "attempts": 205,
+            "refused": 0
+          },
+          "log": {
+            "attempts": 205,
+            "refused": 205
+          },
+          "packet": {
+            "attempts": 205,
+            "refused": 0
+          },
+          "bank": {
+            "attempts": 0,
+            "refused": 0
+          },
+          "pcm": {
+            "attempts": 0,
+            "refused": 0
+          },
+          "retire": {
+            "attempts": 1,
+            "refused": 0
+          }
+        }
+      }
+    ],
+    "errors": [],
+    "limitations": [
+      "Final totals have no per-window timestamps; cannot attribute an underrun to a movie gap.",
+      "Diagnostic reports and optional packet-log refusals are separate from audio failures; neither may be silently cleared.",
+      "Aggregate first diagnostic lacks RPC/request identity; unrecorded diagnostic details remain unknown.",
+      "Installation and joined output are not waveform, all-bank, every-room, clock or performance-equivalence proof."
+    ]
+  },
+  "movie_reports": [
+    {
+      "joined": 1,
+      "sources": 5,
+      "delivered_frames": 11659,
+      "error": "none"
+    }
+  ],
+  "opening": [
+    {
+      "generation": 4,
+      "clip": 0,
+      "publications": 6144,
+      "unique_ordinals": 6144,
+      "first_ordinal": 0,
+      "last_ordinal": 6143,
+      "first_line": 2763,
+      "last_line": 8906,
+      "first_publication_ns": 265210944623800,
+      "last_publication_ns": 265415909483400,
+      "max_publication_gap_ms": 40.7023,
+      "max_backpressure": 0
+    }
+  ],
+  "process_audio": {
+    "scope": "owned-process-tree-only",
+    "pid": 289392,
+    "creation_filetime": 134386436978012860,
+    "frames": 11682720,
+    "nonzero_pcm_frames": 11466257,
+    "peak_pcm16": 22529,
+    "rms_pcm16": 3111.281312,
+    "discontinuous_packets": 0,
+    "timestamp_errors": 0,
+    "process_exited": true,
+    "elapsed_seconds": 244.620461
+  },
+  "original_player_slot_samples": 253,
+  "original_player_slot_nonzero_samples": 0,
+  "subjective_av_confirmation": false,
+  "stutter_fix_confirmed": false,
+  "step3_complete": false,
+  "limitations": [
+    "No change to audio buffering or scheduling; a clean repeat is not a treatment effect.",
+    "External observer/audio capture starts late; native trace covers the launch and retains zero-drop accounting.",
+    "Source metadata is an asynchronously observed cache; output slots and C4/group indices are separate domains.",
+    "No Avalonia window constructed; no subjective synchronization confirmation; Step 3 remains open."
+  ]
+}

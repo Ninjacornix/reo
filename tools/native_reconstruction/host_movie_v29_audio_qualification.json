@@ -49,7 +49,10 @@
     "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-203823-363/native-movie-producer.csv": "2939df5084bc090d2d6bc6052daf7f66574071d962145e6ac9dc0c37ea6a1d7d",
     "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-203823-363/stderr.log": "8111f60baaef5d5c0254a04c847a2cfee178afb17cc6f69d0060ee089a4549d6",
     "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-203823-363/stdout.log": "e10b9fd0b95c0fc61c07635be71ca45c489ef152dcbad42f8ee1155df28d0c2d",
-    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-203823-363/window-visibility-focused.json": "a7c9ccb4767b39edd835a94766684209fdc6e455211a91ad141f897c400f5b5e"
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-203823-363/window-visibility-focused.json": "a7c9ccb4767b39edd835a94766684209fdc6e455211a91ad141f897c400f5b5e",
+    "build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261108-203823-363\\audio-shortage-timeline.png": "77945db0e4650028300d3b771a0cd806c067d30801e63185bfa1d6694bc47277",
+    "build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261108-203823-363\\audio-shortage-timeline.svg": "4825192e6ce5b8aed8f9a97159f449e97c153d27817f28825e45c5ec1e5bcb41",
+    "build-native-sjuni\\plot_v29_shortage.py": "af645e0d67940f614bfff518eb812fc17b3384499e037394dcdf076661c6c36c"
   },
   "control_snapshots": 28682,
   "dropped_snapshots": 0,
@@ -71,7 +74,7 @@
     "native_request_start_sector": 10413,
     "native_request_sector_count": 2546,
     "inventory_candidate": "NETBIO01.DAT/0/10: adxsnd.afs/s010100a.adx",
-    "mapping_limit": "Nearest asynchronous C4 samples retain that request; independent inventory has one matching root-relative extent. Canonical filename was not separately traced."
+    "mapping_limit": "Only one C4 source is in playback in the nearest observations, retaining that request; the inventory has one matching root-relative extent. Native output slots and C4 indices are separate domains; canonical filename/binding was not separately traced."
   },
   "native_audio": {
     "status": "retired",
@@ -205,5 +208,6 @@
     "Smaller total underruns than V28 are not proof of improvement; only diagnostic sampling changed.",
     "Movie, audio and memory observations have different coverage; partial observer teardown is retained.",
     "No Avalonia launcher window is constructed and no subjective A/V synchronization is confirmed."
-  ]
+  ],
+  "analyzer_revision": "ea53f1d4"
 }

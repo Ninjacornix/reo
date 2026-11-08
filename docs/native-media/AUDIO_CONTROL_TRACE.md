@@ -10,9 +10,10 @@ ordinary native ADX adapter. Each service visit reuses the snapshot already
 obtained for native clock publication. A steady-clock interval brackets that
 snapshot. Records include the game tick, output/signal/underrun counters, and
 each active native stream's slot/generation, queue depths, playing/draining
-state, late/skipped samples, volume, gain and frequency. Native stream slots
-correspond to the adapter's admitted ADXT stream domain; they must not be
-confused with file-descriptor or raw PCM traversal slots.
+state, late/skipped samples, volume, gain and frequency. These are native output
+slot/generation identities. Game ADXT group indices, C4 handles, file descriptors
+and raw PCM traversal slots are separate domains; matching numeric slots alone
+does not establish a source association.
 
 Storage is reserved before gameplay. Recording copies value records under the
 existing serialized canonical controller admission. It adds no output-callback

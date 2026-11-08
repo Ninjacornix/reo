@@ -54,6 +54,14 @@ unsupported required profiles. Step 3 remains open.
 
 ## Historical reconstruction checklist and checkpoints
 
+The [V29 trace](NATIVE_MP4_CANDIDATE_V29.md) localizes 17,376 source-underrun
+frames to 383.3659 ms while controller service continues every 16.6-16.8 ms.
+The [V30 source-detail runs](NATIVE_MP4_CANDIDATE_V30.md) complete twice with zero
+recorded underruns, without changing refill or scheduling policy. The incident
+does not reproduce and its cause remains unknown. Source-detail telemetry is
+now available for another occurrence. Neither clean run establishes a fix or
+subjective A/V synchronization.
+
 
 Status: active work, starting at local commit `959d2198`. This is a gate checklist,
 not a weighted percentage. Passing more isolated tests does not substitute for
