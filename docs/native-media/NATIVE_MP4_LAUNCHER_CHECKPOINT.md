@@ -1,7 +1,7 @@
 # Native media launcher preparation checkpoint
 
 The launcher preparation integration is committed locally on
-`fix/launcher-progress-overlay`, commit `700d5a7d`. Its isolated checkout is
+`fix/launcher-progress-overlay`, through commit `bec6ebe1`. Its isolated checkout is
 `C:/Users/Ninjacornix/reo-launcher-native-media`; the media branch retains the
 runtime/helper and private packaging tool. Neither branch has been pushed.
 
@@ -22,6 +22,10 @@ The .NET 10 shared library and Windows Avalonia desktop build succeed. A private
 Windows dependency lock is used because the existing desktop lock targets
 macOS; the checked-in lock is preserved. Thirteen tests pass, including actual
 owned subprocess success/error and cancellation of a helper with a child.
+The extended suite now passes 20 checks, including verified SDK publication,
+concurrent helper reuse, required native resource selection for ISO launches,
+and error status that a later movie selection cannot erase. The existing local
+build suite independently passes 35 checks.
 
 The production .NET preparation method runs the actual qualified helper against
 the owned File #1 import. It verifies/reuses all 201 references (200 unique
@@ -36,8 +40,20 @@ logs and fixture metadata. `native-media-game-v27` contains the identified game,
 runtime/shader files, helper and profile, with no extracted movie/audio payloads.
 The packaging receipt and the game build receipt identify the exact cohort.
 
-This first packaging contract supports a direct game folder. A normal release
-SDK must declare its locally compiled image after its verified build completes;
-that integration remains. Actual UI-launched native gameplay, broader resource/
+The normal SDK build path now validates declared helper metadata against the
+verified SDK file manifest and publishes a declaration bound to the actual
+locally built image. A qualified V27 SDK and ready-game publication pass the
+production path without including extracted movie or audio payloads. The
+media branch's `package_native_media_sdk.py` derives that SDK from a coherent
+candidate and also verifies the helper's corresponding compiled-source cohort.
+
+The V28 `GameSession.Launch` check exposed a missing resource-mount setting for
+ISO sources. Native movie selection alone hid an audio installation refusal.
+The launcher fix explicitly selects the imported mount and preserves media
+error status. The original overly permissive smoke receipt is retained but
+superseded; movie selection alone is not accepted as complete native media.
+The stricter real-launch retest is recorded separately.
+
+Actual UI-launched native gameplay, broader resource/
 room transitions, active-movie error/pause controls, audible synchronization and
 retirement of the remaining media bridges still keep Step 3 open.
