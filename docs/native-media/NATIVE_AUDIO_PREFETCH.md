@@ -42,5 +42,6 @@ compilers pass all 28 declared-port adapter scenarios and detect all 10 injected
 faults. Their actual adapter traces report the selected 65,536-byte source ring.
 Evidence hashes and coverage are pinned in
 `tools/native_reconstruction/native_finite_prefetch_qualification_v1.json`.
-A new coherent game retest is in progress; these checks alone do not complete
-Step 3 or confirm audible sync.
+The [V31 game retest](NATIVE_MP4_CANDIDATE_V31.md) now completes opening/scenario
+playback, bar gameplay and joined shutdown with the actual 64 KiB source profile
+and zero recorded underruns. It does not complete Step 3 or confirm audible sync.
