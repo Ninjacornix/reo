@@ -78,3 +78,11 @@ EOF while an accepted next clip is still preparing. Both compilers pass 79 nativ
 suites; two private fault removals fail the intended checks. This supplies the
 next binding's preparation and playback boundary, not the engine command
 integration or a real-cue admission audit. Those remain required.
+
+The subsequent [cue-controller binding](NATIVE_AUDIO_CUE_CONTROLLER.md) replaces
+finite enqueue/start/count/repeat/reset/stop consumers and passes 80 native
+suites plus six real-asset adapter cases on both compilers. The table's 18-entry
+refusal profile describes V31; the new 22-entry implementation is awaiting its
+coherent game retest. The independent catalogue audit and its 89 inline-loop
+refusals remain explicit. This does not retire arbitrary SJ callbacks or prove
+the effect consumer unreachable.

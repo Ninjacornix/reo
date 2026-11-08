@@ -23,7 +23,7 @@ struct Record {
     std::optional<control::player::Snapshot> final;
     std::optional<std::uint32_t> time_base;std::optional<bool> loop_enabled;std::optional<std::int32_t> service_divisor;
     std::uint64_t generation{1},starts{},stops{};float gain{1};std::uint32_t volume{256},attenuation{};std::int32_t pause{};
-    bool owned{},destroying{},retiring{},fault{},exhausted{},start_inhibit{};
+    bool owned{},destroying{},retiring{},fault{},exhausted{},start_inhibit{},active_playlist{};
 };
 struct Busy {bool& value;explicit Busy(bool& v):value(v){value=true;}~Busy(){value=false;}};
 bool same_indices(control::Indices a,control::Indices b)noexcept{return a.decoder==b.decoder || a.stream==b.stream || a.rna==b.rna || a.transfer==b.transfer;}
@@ -75,17 +75,19 @@ Status Instances::open(std::uint32_t index)noexcept {
     requested.player.attenuation_table=r.construction.attenuation_table;requested.player.initial_attenuation=r.attenuation;
     if(r.time_base)requested.player.time_base=*r.time_base;
     if(r.service_divisor)requested.player.decoder.service_divisor=*r.service_divisor;
-    if(r.loop_enabled)requested.player.decoder.loop_enabled=*r.loop_enabled;
+    // The stable inline-loop preference belongs to ordinary assets. Finite
+    // playlists own repeat separately and contain no admitted inline loops.
+    if(r.loop_enabled && !requested.player.sequence && !requested.player.lsc_input)requested.player.decoder.loop_enabled=*r.loop_enabled;
     const auto result=s.session.open(requested.player,std::move(requested.input),r.construction.indices);
     if(result.status!=control::Status::completed){r.fault=true;return mapped(result.status);}
-    r.active=result.key;r.final.reset();++r.starts;
+    r.active=result.key;r.active_playlist=bool(requested.player.sequence || requested.player.lsc_input);r.final.reset();++r.starts;
     if(s.session.gain(*r.active,r.gain)!=control::Status::completed || (!r.construction.attenuation_table && s.session.volume(*r.active,r.volume)!=control::Status::completed) || s.session.set_start_inhibit(*r.active,r.start_inhibit)!=control::Status::completed || s.session.pause(*r.active,r.pause,requested.player.initial_tick).status!=control::Status::completed){r.fault=true;r.retiring=true;(void)retire(index);return Status::fault;}
     return Status::completed;
 }
 Status Instances::start(const Key& key,Source source)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
     auto& r=s.records[key.slot_];
-    if((source.player.sequence || source.player.lsc_input) && r.loop_enabled.value_or(source.player.decoder.loop_enabled))return Status::unsupported_profile;
+    if((source.player.sequence || source.player.lsc_input) && source.player.decoder.loop_enabled)return Status::unsupported_profile;
     if(source.player.initial_attenuation || (source.player.attenuation_table && source.player.attenuation_table!=r.construction.attenuation_table))return Status::invalid_input;
     if(!source.input || !source.input->size() || source.input->size()>std::uint64_t(INT32_MAX) || source.player.decoder.channels!=r.construction.channels || source.player.decoder.source_config.byte_length!=static_cast<std::int32_t>(source.input->size()))return Status::invalid_input;
     if(r.service_divisor.value_or(source.player.decoder.service_divisor)<=0)return Status::unsupported_profile;
@@ -200,9 +202,8 @@ Status Instances::set_time_base(const Key& key,std::uint32_t value)noexcept {
 Status Instances::set_loop_enabled(const Key& key,bool value)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
     auto& r=s.records[key.slot_];if(r.fault)return Status::fault;
-    if(value && r.pending && (r.pending->player.sequence || r.pending->player.lsc_input))return Status::unsupported_profile;
     Busy lock(s.busy);
-    if(r.active && !r.retiring){const auto status=mapped(s.session.set_loop_enabled(*r.active,value));if(status!=Status::completed)return status;}
+    if(r.active && !r.retiring && !r.active_playlist){const auto status=mapped(s.session.set_loop_enabled(*r.active,value));if(status!=Status::completed)return status;}
     r.loop_enabled=value;return Status::completed;
 }
 Status Instances::set_service_divisor(const Key& key,std::int32_t value)noexcept {

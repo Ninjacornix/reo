@@ -99,6 +99,7 @@ AUDIO_BACKEND_UNITS = PCM_BACKEND_UNITS[:-1] + (
     ('native_adx_sequence', 'game/native/adx_sequence/sequence.cpp'),
     ('native_adx_clip', 'game/native/adx_sequence/clip.cpp'),
     ('native_audio_clip_loader', 'game/native/audio_clip_loader/loader.cpp'),
+    ('native_audio_cue_queue', 'game/native/audio_cue_queue/queue.cpp'),
     ('native_adxt_attenuation', 'game/native/adxt_attenuation/attenuation.cpp'),
     ('native_adxt_lsc_input', 'game/native/adxt_lsc_input/input.cpp'),
     ('native_adxt_shared_source', 'game/native/adxt_shared_source/shared_source.cpp'),

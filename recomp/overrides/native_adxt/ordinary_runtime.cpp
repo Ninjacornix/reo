@@ -3,6 +3,7 @@
 #include "recomp/overrides/native_sound_ram/composite_backend.h"
 #include "game_handles.h"
 #include "source_profile.h"
+#include "game/native/audio_cue_queue/queue.hpp"
 #include "recomp/overrides/native_resource_reads/runtime_adapter.h"
 #include "recomp/overrides/native_geometry/reo_vu_native_sha256.h"
 #include "ps2_runtime.h"
@@ -36,7 +37,9 @@ float reoAudioStreamGain(std::uint32_t);
 namespace reo::native::adxt_binding {
 namespace {
 using S=instances::Status;using Function=PS2Runtime::RecompiledFunction;
-enum class Action {group,stop,destroy_child,pause,discard,rna_ratio,raw_ratio,estimate,centiseconds,total,frequency,channels,callback,unsupported};
+enum class Action {group,stop,destroy_child,pause,discard,rna_ratio,raw_ratio,estimate,centiseconds,total,frequency,channels,callback,unsupported,
+    enqueue_file,enqueue_afs,start_queue,repeat_queue,count_queue,reset_queue,start_file_loop};
+namespace cues=audio_cue_queue;
 struct Closing {};
 template<class F>struct Operation final:control_owner::Operation {F fn;explicit Operation(F f):fn(std::move(f)){}void run(instances::Instances& value)noexcept override{fn(value);}};
 template<class F>struct HandleWork final:HandleOperation {F fn;explicit HandleWork(F f):fn(std::move(f)){}void run(instances::Instances& p,const instances::Key& key,const Handle& h)noexcept override{fn(p,key,h);}};
@@ -100,7 +103,7 @@ struct AudioTrace {
 };
 class Binding final:public PS2Runtime::ExternalWorker {
 public:
-    struct Record {GameKey key;Handle handle;Controls controls;bool owned{},source{};std::uint64_t expected_start{};};
+    struct Record {GameKey key;Handle handle;Controls controls;bool owned{},source{};std::uint64_t expected_start{};std::unique_ptr<cues::Queue> queue{};};
     PS2Runtime* const runtime;std::uint8_t* const ram;
     std::shared_ptr<control_owner::Owner> source_owner;
     std::shared_ptr<const resources::win32::MountedResources> mount;
@@ -109,6 +112,7 @@ public:
     std::shared_ptr<const sound_ram::MediaInstallResult::PcmOrder> order;
     std::atomic<bool> active{},stopping{};
     AudioTrace trace;
+    std::shared_ptr<audio_clip_loader::Loader> cue_loader=std::make_shared<audio_clip_loader::Loader>(audio_clip_loader::Config{64,64});
     Binding(PS2Runtime& r,std::uint8_t* bytes,std::shared_ptr<control_owner::Owner> owner,
             std::shared_ptr<const resources::win32::MountedResources> resource,
             std::shared_ptr<const adxt_attenuation::Table> volume)
@@ -126,6 +130,7 @@ public:
         runtime->requestStop();throw std::runtime_error("Unadmitted ordinary native ADXT boundary");
     }
     void require(S status,const char* what,std::uint32_t address=0){if(status!=S::completed && status!=S::pending)fail(what,address,unsigned(status));}
+    void require_cue(cues::Status status,const char* what,std::uint32_t address=0){if(status!=cues::Status::completed && status!=cues::Status::pending)fail(what,address,unsigned(status));}
     template<class F>void control(F fn){Operation op(std::move(fn));const auto admitted=source_owner->run(op);if(admitted!=control_owner::Admission::accepted)fail("controller",0,unsigned(admitted));}
     template<class F>void with(Record& record,F fn){HandleWork op(std::move(fn));require(mapped.with(record.key,op),"handle",record.handle.address);}
     std::uint32_t tick()const noexcept{return load<std::uint32_t>(ram,0x20f3c4);}
@@ -157,7 +162,7 @@ public:
             // Original construction may yield before all opaque children exist.
             // It cannot publish a pending ordinary start until it completes.
             if(h.status!=HandleStatus::ready){if(ram[at+0xac] || ram[at+1])fail("incomplete-active-handle",at,unsigned(h.status));continue;}
-            const auto admitted=mapped.adopt(h,table);require(admitted.status,"adopt",at);r={admitted.key,h.value,controls(at),true,false,0};
+            const auto admitted=mapped.adopt(h,table);require(admitted.status,"adopt",at);r={admitted.key,h.value,controls(at),true,false,0,{}};
             S result=S::fault;with(r,[&](auto& p,const auto& key,const auto&){
                 result=p.attenuation(key,r.controls.attenuation);if(result!=S::completed)return;
                 result=p.set_time_base(key,r.controls.base);if(result!=S::completed)return;
@@ -208,6 +213,7 @@ public:
     }
     void start_pending(Record& r){
         const auto at=r.handle.address;if(!ram[at+0xac])return;if(ram[at+2]!=1 || ram[at+1]!=1)fail("pending-source-kind",at);
+        if(r.queue){cues::Status stopped{};with(r,[&](auto& p,const auto&,const auto&){stopped=r.queue->stop(p);});require_cue(stopped,"queue-to-file",at);r.queue.reset();}
         const auto name=load<std::uint32_t>(ram,at+0xb4);if(!name || name>ram_bytes-256)fail("filename-pointer",at);
         std::array<char,256> text{};unsigned n{};for(;n<text.size();++n){text[n]=static_cast<char>(ram[name+n]);if(!text[n])break;}if(n==text.size())fail("filename-length",at);
         auto prepared=prepare_file_source(mount,{std::string_view(text.data(),n),load<std::uint32_t>(ram,at+0xb8),load<std::uint32_t>(ram,at+0xbc),load<std::uint32_t>(ram,at+0xc0)});
@@ -224,11 +230,16 @@ public:
     }
     void service(){
         import_clock();adopt();for(auto& r:records)if(r.owned)synchronize(r);set_order();for(auto& r:records)if(r.owned)start_pending(r);
+        for(auto& r:records)if(r.owned && r.queue){cues::Status result{};with(r,[&](auto& p,const auto&,const auto&){result=r.queue->service(p,tick());});require_cue(result,"queued-source",r.handle.address);}
         require(mapped.service(tick()),"group");for(auto& r:records)if(r.owned)mirror(r);publish_clock(true);
     }
-    void stop(Record& r){S result=S::fault;with(r,[&](auto& p,const auto& key,const auto&){result=p.stop(key);});require(result,"stop",r.handle.address);r.source=false;}
+    void stop(Record& r){
+        if(r.queue){cues::Status result{};with(r,[&](auto& p,const auto&,const auto&){result=r.queue->stop(p);});require_cue(result,"queued-stop",r.handle.address);}
+        else{S result=S::fault;with(r,[&](auto& p,const auto& key,const auto&){result=p.stop(key);});require(result,"stop",r.handle.address);}r.source=false;
+    }
     void destroy(std::uint32_t rna){
         for(auto& r:records)if(r.owned && r.handle.rna==rna){
+            if(r.queue){cues::Status result{};with(r,[&](auto& p,const auto&,const auto&){result=r.queue->close(p);});require_cue(result,"queued-destroy",r.handle.address);r.queue.reset();}
             for(;;){const auto result=mapped.destroy(r.key);if(result==S::completed){r={};return;}
                 if(result==S::closed && source_owner->report().joined){r={};return;}
                 require(result,"destroy",r.handle.address);
@@ -246,12 +257,77 @@ public:
         // not invent atomic-snapshot equivalence for self-mutating pointers.
         if(at>=0x20b958 && at<0x224d00)fail("query-state-alias",raw);return at;
     }
+    std::string cue_string(std::uint32_t address){
+        if(address<0x10000 || address>ram_bytes-256)fail("cue-string",address);
+        std::string text;for(unsigned i=0;i<256;++i){const auto c=ram[address+i];if(!c)return text;text.push_back(static_cast<char>(c));}
+        fail("cue-string-length",address);
+    }
+    FileSource cue_file(std::uint32_t filename){
+        const auto name=cue_string(filename);auto source=prepare_file_source(mount,{name,0,0,0xfffff});
+        if(source.status!=FileStatus::ready)fail("queued-filename",filename,unsigned(source.status));return source;
+    }
+    FileSource cue_afs(std::uint32_t partition,std::uint32_t member){
+        if(partition>=256)fail("queued-partition",partition);
+        const auto descriptor=load<std::uint32_t>(ram,0x20cd00+partition*4);
+        if(descriptor<0x10000 || descriptor>ram_bytes-0x11c)fail("queued-descriptor",descriptor);
+        const auto count=load<std::uint32_t>(ram,descriptor+8);const auto mode=ram[descriptor+15];
+        if(!count || count>65536 || member>=count || mode>1 || load<std::uint32_t>(ram,descriptor+0x110))fail("queued-archive-profile",descriptor);
+        const auto stride=mode==1?4u:2u;
+        if(0x118ull+stride*(count+1ull)>ram_bytes-descriptor)fail("queued-index-bounds",descriptor);
+        const auto value=[&](std::uint32_t index){return mode==1?load<std::uint32_t>(ram,descriptor+0x118+index*4):std::uint32_t(load<std::uint16_t>(ram,descriptor+0x118+index*2));};
+        std::uint64_t sector=load<std::uint32_t>(ram,descriptor+0x114);for(std::uint32_t i=0;i<=member;++i)sector+=value(i);
+        const auto sectors=value(member+1);if(sector>UINT32_MAX || !sectors)fail("queued-member-range",descriptor);
+        const auto name=cue_string(descriptor+16);auto source=prepare_file_source(mount,{name,0,static_cast<std::uint32_t>(sector),sectors});
+        if(source.status!=FileStatus::ready || std::uint64_t(source.bytes)!=std::uint64_t(sectors)*2048)fail("queued-native-range",descriptor,unsigned(source.status));
+        return source;
+    }
+    cues::Queue& queue_for(Record& record){
+        if(!record.queue){auto queue=std::make_unique<cues::Queue>(cues::Config{record.handle.channels,65536},cue_loader);
+            cues::Status result{};with(record,[&](auto& p,const auto& key,const auto&){result=queue->bind(p,key);});require_cue(result,"queue-bind",record.handle.address);record.queue=std::move(queue);}
+        return *record.queue;
+    }
+    void enqueue_cue(Record& record,FileSource source,R5900Context& context){
+        const auto id=source.canonical_key+"@"+std::to_string(source.start_sector)+":"+std::to_string(source.bytes);
+        auto& queue=queue_for(record);cues::Entry result;
+        with(record,[&](auto& p,const auto&,const auto&){result=queue.enqueue(p,id,std::move(source.view));});
+        require_cue(result.status,"queued-enqueue",record.handle.address);
+        if(result.receipt>INT32_MAX)fail("queued-receipt-limit",record.handle.address);
+        SET_GPR_S32((&context),2,static_cast<std::int32_t>(result.receipt));
+    }
+    void start_queue(Record& record){
+        auto& queue=queue_for(record);cues::Status result{};std::uint64_t expected{};
+        with(record,[&](auto& p,const auto& key,const auto&){
+            if(queue.snapshot().play_requested){result=queue.stop(p);if(result!=cues::Status::completed && result!=cues::Status::pending)return;}
+            else{const auto stopped=p.stop(key);if(stopped!=S::completed && stopped!=S::pending){result=cues::Status::fault;return;}}
+            expected=p.inspect(key).starts+1;result=queue.start(p,tick());
+        });require_cue(result,"queued-start",record.handle.address);
+        record.expected_start=expected;record.source=true;const auto at=record.handle.address;
+        ram[at+1]=1;ram[at+2]=4;ram[at+0x71]=0;ram[at+0x98]=1;ram[at+0xac]=0;
+    }
+    bool dispatch_queue(Action action,std::uint32_t at,R5900Context& context){
+        adopt();auto* record=find(at);if(!record)fail("queued-handle",at);
+        import_clock();synchronize(*record);
+        auto& queue=queue_for(*record);
+        const auto argument=[&](unsigned i){return GPR_U32((&context),i);};
+        if(action==Action::enqueue_afs){enqueue_cue(*record,cue_afs(argument(5),argument(6)),context);return true;}
+        if(action==Action::enqueue_file){enqueue_cue(*record,cue_file(argument(5)),context);return true;}
+        if(action==Action::start_queue){start_queue(*record);return true;}
+        if(action==Action::start_file_loop){
+            stop(*record);enqueue_cue(*record,cue_file(argument(5)),context);cues::Status result{};
+            with(*record,[&](auto& p,const auto&,const auto&){result=queue.repeat(p,true);});require_cue(result,"queued-file-loop",at);start_queue(*record);return true;
+        }
+        if(action==Action::count_queue){cues::Snapshot state;with(*record,[&](auto&,const auto&,const auto&){state=queue.snapshot();});SET_GPR_S32((&context),2,static_cast<std::int32_t>(state.queued));return true;}
+        if(action==Action::repeat_queue){cues::Status result{};with(*record,[&](auto& p,const auto&,const auto&){result=queue.repeat(p,(argument(5)&255)==1);});require_cue(result,"queued-repeat",at);return true;}
+        if(action==Action::reset_queue){if(ram[at+1]==0){cues::Status result{};with(*record,[&](auto& p,const auto&,const auto&){result=queue.clear(p);});require_cue(result,"queued-clear",at);}return true;}
+        fail("queued-action",at);
+    }
     bool dispatch(Action action,std::uint32_t address,R5900Context& c){
         const auto at=GPR_U32((&c),4);
         if(action==Action::group){service();return true;}
         if(action==Action::destroy_child){destroy(at);return false;}
         if(action==Action::unsupported)fail("unsupported-producer",address);
         if(action==Action::callback){if(GPR_U32((&c),5))fail("before-pcm-callback",address);return false;}
+        if(action==Action::enqueue_file || action==Action::enqueue_afs || action==Action::start_queue || action==Action::repeat_queue || action==Action::count_queue || action==Action::reset_queue || action==Action::start_file_loop)return dispatch_queue(action,at,c);
         auto* record=find(at);if(!record)return false;
         if(action==Action::stop){stop(*record);return false;}
         import_clock();synchronize(*record);
@@ -293,6 +369,21 @@ public:
     }
 };
 std::mutex installed_mutex;std::shared_ptr<Binding> installed;
+// Registered after the source/device owners. Closing their canonical admission
+// drains all accepted queue controls before the independent header worker joins.
+class CueFinalizer final:public PS2Runtime::ExternalWorker {
+    std::shared_ptr<Binding> binding;
+public:
+    explicit CueFinalizer(std::shared_ptr<Binding> value):binding(std::move(value)){}
+    void requestStop()noexcept override{}
+    bool join()noexcept override{
+        if(!binding->source_owner->report().joined){std::fputs("[NATIVE-AUDIO-CUE-ERROR] controller owner not joined\n",stderr);return false;}
+        const auto joined=binding->cue_loader->join();const auto report=binding->cue_loader->snapshot();
+        std::fprintf(stderr,"[NATIVE-AUDIO-CUE-REPORT] joined=%u accepted=%llu finished=%llu records=%u failures=%llu\n",unsigned(joined),
+            (unsigned long long)report.accepted,(unsigned long long)report.finished,report.records,(unsigned long long)report.worker_failures);
+        return joined;
+    }
+};
 // Registered AFTER the source/output workers. Their joined owner admission
 // drains every accepted writer before export; no game RAM is read here.
 class TraceExporter final:public PS2Runtime::ExternalWorker {
@@ -331,6 +422,7 @@ sound_ram::InstallResult install_ordinary_before_run(PS2Runtime& runtime,const r
         std::array<std::uint32_t,adxt_attenuation::table_words> words{};std::memcpy(words.data(),ram+0x220498,sizeof(words));const auto table=adxt_attenuation::Table::from_words(words);if(!table.table)return{I::unsupported_layout};
         adxt_control_session::Config config;config.output.stream_gains=std::make_shared<Gains>();auto owner=std::make_shared<control_owner::Owner>(std::move(config));
         binding=std::make_shared<Binding>(runtime,ram,std::move(owner),std::move(mount),table.table);
+        auto cue_finalizer=std::make_shared<CueFinalizer>(binding);
         S started=S::fault;binding->control([&](auto& p){started=p.start_output();});binding->require(started,"submix-start");
         if(!runtime.registerExternalWorker(binding)){(void)binding->source_owner->join();return{I::publication_refused};}
         {std::lock_guard lock(installed_mutex);installed=binding;}
@@ -339,18 +431,19 @@ sound_ram::InstallResult install_ordinary_before_run(PS2Runtime& runtime,const r
         for(const auto& entry:entries){runtime.registerFunction(entry.address,entry.wrapper);++changed;}
         auto media=sound_ram::install_prepared_native_sources(runtime,cd,identity,binding->source_owner);
         if(media.backend.status!=I::installed){
-            binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,entries[i].original);(void)binding->source_owner->join();return media.backend;
+            binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,entries[i].original);(void)binding->source_owner->join();(void)binding->cue_loader->join();return media.backend;
         }
         selected=true;binding->order=std::move(media.pcm_order);if(!binding->order){std::fputs("[NATIVE-ADXT-FATAL] selected factory omitted order capability\n",stderr);std::abort();}
+        if(!runtime.registerExternalWorker(std::move(cue_finalizer))){std::fputs("[NATIVE-ADXT-FATAL] selected factory lacks queued-source teardown ownership\n",stderr);std::abort();}
         if(binding->trace.enabled()){
             bool registered{};try{registered=runtime.registerExternalWorker(std::make_shared<TraceExporter>(binding));}catch(...){}
             if(!registered){binding->trace.path.clear();std::fputs("[NATIVE-ADXT-TRACE-ERROR] export worker unavailable\n",stderr);}
         }
         binding->active.store(true,std::memory_order_release);
-        std::fprintf(stderr,"[NATIVE-ADXT] ordinary-file binding selected entries=%zu source_owner=canonical original_pcm=refused lsc_sj_callbacks=unsupported\n",std::size(entries));return media.backend;
+        std::fprintf(stderr,"[NATIVE-ADXT] ordinary-file binding selected entries=%zu source_owner=canonical original_pcm=refused queued_assets=finite_native sj_callbacks=unsupported\n",std::size(entries));return media.backend;
     }catch(...){
         if(selected){std::fputs("[NATIVE-ADXT-FATAL] exception after backend selection\n",stderr);std::abort();}
-        if(binding){binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,entries[i].original);(void)binding->source_owner->join();}
+        if(binding){binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,entries[i].original);(void)binding->source_owner->join();(void)binding->cue_loader->join();}
         return{I::allocation_failed};
     }
 }

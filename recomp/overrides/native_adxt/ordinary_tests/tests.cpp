@@ -88,7 +88,7 @@ void construct(Memory& memory,unsigned slot,unsigned channels){
     b::store(memory.bytes,f.handle+0x38,30);b::store(memory.bytes,f.handle+0x42,std::int16_t(-128));if(channels==2)b::store(memory.bytes,f.handle+0x44,std::int16_t(-128));memory.bytes[f.handle+0x6c]=1;
 }
 struct Asset {std::uint32_t start{},count{},channels{},rate{},total{};std::array<std::uint64_t,2> digest{};};
-std::array<Asset,2> assets;
+std::array<Asset,3> assets;
 void pending(Memory& memory,unsigned slot,unsigned asset){
     const auto at=b::handles.base+slot*b::handles.stride;const auto& data=assets[asset];
     memory.bytes[at+1]=1;memory.bytes[at+2]=1;memory.bytes[at+0xac]=1;
@@ -98,8 +98,50 @@ void pending(Memory& memory,unsigned slot,unsigned asset){
 void close(PS2Runtime& runtime){runtime.requestStop();depth=0;check(runtime.join());depth=1;}
 template<class F>void until(F&& done){const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(30);while(!done()){check(std::chrono::steady_clock::now()<end);std::this_thread::yield();}}
 void group(PS2Runtime& runtime){b::store(runtime.storage.ram,0x20f3c4,b::load<std::uint32_t>(runtime.storage.ram,0x20f3c4)+1);(void)call(runtime,0x132c08);}
-void install(PS2Runtime& runtime){const auto result=b::install_ordinary_before_run(runtime,{},{});check(result.status==sr::InstallStatus::installed && factory_calls==1 && runtime.workers.size()==(b::current()->trace.enabled()?3u:2u) && b::current()->active);}
+void install(PS2Runtime& runtime){const auto result=b::install_ordinary_before_run(runtime,{},{});check(result.status==sr::InstallStatus::installed && factory_calls==1 && runtime.workers.size()==(b::current()->trace.enabled()?4u:3u) && b::current()->active);}
 void prepare_handles(Memory& memory){for(unsigned i=0;i<3;++i)construct(memory,i,i==2?1:2);declared_order->routes={0x1e0100,0x1e0000,0x1e0080};b::store(memory.bytes,0x21b788,6000u);}
+void cue_descriptor(Memory& memory,bool invalid_member=false,unsigned asset=0){
+    constexpr std::uint32_t descriptor=0x1910000;
+    b::store(memory.bytes,0x20cd00+3*4,descriptor);b::store(memory.bytes,descriptor+8,1u);memory.bytes[descriptor+15]=1;
+    std::memcpy(memory.bytes+descriptor+16,"netbio01.dat",12);
+    b::store(memory.bytes,descriptor+0x110,0u);b::store(memory.bytes,descriptor+0x114,0u);
+    b::store(memory.bytes,descriptor+0x118,assets[asset].start);b::store(memory.bytes,descriptor+0x11c,invalid_member?0u:assets[asset].count);
+}
+void queued(Memory& memory,PS2Runtime& runtime,const std::string& mode){
+    install(runtime);prepare_handles(memory);
+    const auto& expected=assets[mode=="queue_e3"?2:0];cue_descriptor(memory,false,mode=="queue_e3"?2:0);const auto handle=b::handles.base;
+    const auto initial_count=call(runtime,0x12a8f0,{handle});check(GPR_U32((&initial_count),2)==0);
+    const auto entered=call(runtime,0x12a6b8,{handle,3,0});check(GPR_U32((&entered),2)==1);
+    if(mode=="queue_append"){const auto second=call(runtime,0x12a6b8,{handle,3,0});check(GPR_U32((&second),2)==2);}
+    if(mode=="queue_repeat")(void)call(runtime,0x12a830,{handle,1});
+    const auto count=call(runtime,0x12a8f0,{handle});check(GPR_U32((&count),2)==(mode=="queue_append"?2u:1u));
+    (void)call(runtime,0x12a780,{handle});check(memory.bytes[handle+1]==1 && memory.bytes[handle+2]==4 && original_calls==0);
+    const auto binding=b::current();
+    until([&]{group(runtime);const auto s=binding->inspect(binding->records[0]).source;return s && s->configured && s->output.channel[0].samples>=1024;});
+    (void)call(runtime,0x132e50,{handle,1});const auto paused=binding->inspect(binding->records[0]).source->output.channel[0].consumed_bytes;
+    std::array<float,1024> output{};check(binding->source_owner->submix()->render_add(output.data(),512)==reo::native::adxt_output_session::Status::completed);
+    check(binding->inspect(binding->records[0]).source->output.channel[0].consumed_bytes==paused);
+    (void)call(runtime,0x132e50,{handle,0});bool repeated{};
+    until([&]{group(runtime);const auto s=binding->inspect(binding->records[0]).source;if(!s)return false;
+        if(mode=="queue_repeat" && !repeated && s->first_payload_samples>=std::uint64_t(expected.total)*2){(void)call(runtime,0x12a830,{handle,0});repeated=true;}
+        if(s->playback.phase==reo::native::adxt_playback::Phase::ended)return true;
+        if(s->output.channel[0].samples>=512){output.fill(0);check(binding->source_owner->submix()->render_add(output.data(),512)==reo::native::adxt_output_session::Status::completed);}return false;
+    });
+    const auto terminal=binding->inspect(binding->records[0]).source;
+    if(mode=="queue_finite" || mode=="queue_e3")check(terminal->first_payload_samples==expected.total && terminal->first_payload_digest==expected.digest);
+    else if(mode=="queue_append")check(terminal->first_payload_samples==std::uint64_t(expected.total)*2);
+    else check(repeated && terminal->first_payload_samples>=std::uint64_t(expected.total)*2);
+    check(original_calls==0 && binding->records[0].queue && binding->cue_loader->snapshot().records==0);
+    const auto emptied=call(runtime,0x12a8f0,{handle});check(GPR_U32((&emptied),2)==0);
+    (void)call(runtime,0x131d98,{handle});(void)call(runtime,0x12a928,{handle});check(memory.bytes[handle+1]==0 && original_stops==1);
+    memory.protect(PAGE_NOACCESS);close(runtime);check(binding->source_owner->report().joined && binding->cue_loader->snapshot().joined);memory.protect(PAGE_READWRITE);
+}
+void queued_refusal(Memory& memory,PS2Runtime& runtime,const std::string& mode){
+    install(runtime);prepare_handles(memory);
+    cue_descriptor(memory,mode=="queue_bad_member");if(mode=="queue_bad_descriptor")b::store(memory.bytes,0x20cd00+3*4,b::ram_bytes-4);
+    bool refused{};try{(void)call(runtime,0x12a6b8,{b::handles.base,3,0});}catch(const std::runtime_error&){refused=true;}
+    check(refused && runtime.stopped && original_calls==0 && b::current()->cue_loader->snapshot().accepted==0);
+}
 void ordinary(Memory& memory,PS2Runtime& runtime,bool recover=false){
     install(runtime);prepare_handles(memory);for(unsigned i=0;i<3;++i)pending(memory,i,i==2?1:0);
     if(recover){recovered_routes=declared_order->routes;declared_order->routes.clear();metadata_recover=true;}
@@ -240,6 +282,8 @@ int main(int argc,char** argv)try{
         ordinary(memory,runtime,mode=="metadata_three");
         if(mode=="trace"){check(b::current()->source_owner->report().joined && b::current()->trace.saved && !b::current()->trace.rows.empty());check(std::filesystem::file_size(trace_path)>100);}
     }
+    else if(mode=="queue_finite" || mode=="queue_e3" || mode=="queue_append" || mode=="queue_repeat")queued(memory,runtime,mode);
+    else if(mode=="queue_bad_descriptor" || mode=="queue_bad_member")queued_refusal(memory,runtime,mode);
     else if(mode=="missing_one" || mode=="missing_two")missing_order(memory,runtime,mode=="missing_one"?1:2);
     else if(mode=="phase" || mode=="image" || mode=="entry" || mode=="mount" || mode=="worker" || mode=="registry" || mode=="factory")admission(mode,memory,runtime);
     else refusal(mode,memory,runtime);

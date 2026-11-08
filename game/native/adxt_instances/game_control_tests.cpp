@@ -65,10 +65,11 @@ void seamless_admission(){
     n::Instances p(n::control::Config{{1},{}});check(p.start_output()==S::completed);auto key=p.create({1,{0,0,0,0}}).key;
     check(p.set_loop_enabled(key,true)==S::completed && p.start(key,source(f::file(1,48000,20000)))==S::completed);
     auto queued=source(prepared.sequence);queued.player.sequence=prepared.sequence;queued.player.decoder.seamless_enabled=true;
-    check(p.start(key,queued)==S::unsupported_profile && p.inspect(key).starts==1 && p.inspect(key).phase==n::Phase::active);
-    check(p.set_loop_enabled(key,false)==S::completed);const auto start=p.start(key,std::move(queued));check(start==S::completed || start==S::pending);
+    auto invalid=queued;invalid.player.decoder.loop_enabled=true;
+    check(p.start(key,std::move(invalid))==S::unsupported_profile && p.inspect(key).starts==1 && p.inspect(key).phase==n::Phase::active);
+    const auto start=p.start(key,std::move(queued));check(start==S::completed || start==S::pending);
     until([&]{service(p);return p.inspect(key).starts==2 && p.inspect(key).source->configured;});
-    check(p.set_loop_enabled(key,true)==S::unsupported_profile && !p.inspect(key).source->fault);
+    check(p.set_loop_enabled(key,true)==S::completed && !p.inspect(key).source->fault && !p.inspect(key).source->decoder.source.loop.enabled);
     join(p);
 }
 void start_gate(){

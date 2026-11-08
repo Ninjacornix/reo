@@ -2,7 +2,7 @@
 
 The native cue-preparation worker and delayed-next-header handoff are implemented
 and qualified. This advances the remaining queued-audio boundary; it is not yet
-bound to the game's cue commands and does not complete Step 3. The latest game
+bound to the game's cue commands at this checkpoint and does not complete Step 3. The latest game
 executable remains the separately tested V31 candidate.
 
 `audio_clip_loader::Loader` accepts retained immutable source views and prepares
@@ -59,3 +59,7 @@ by deleting those checks or by running the original LSC producer underneath it.
 Where required content needs conversion, prepare a modern native asset and its
 metadata during import. Game-visible controls remain temporary interfaces;
 the old physical queue layouts and device protocols are not the destination.
+
+The subsequent [native cue-controller checkpoint](NATIVE_AUDIO_CUE_CONTROLLER.md)
+implements that command binding and qualifies its native owner and real imported
+finite cues on both compilers. A new coherent game retest remains separate.

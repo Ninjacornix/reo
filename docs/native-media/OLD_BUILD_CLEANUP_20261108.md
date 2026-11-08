@@ -78,3 +78,19 @@ preservation rule. Physical free-space changes differ from logical byte totals.
 No directory was recursively deleted, and the normal build-space reserve was
 not reduced. The latest measured free space before V31 preparation is about
 4.76 GiB. This cleanup is not Step 3 completion or permission to sleep the PC.
+
+The following queued-cue qualification pass removes another 3,285 superseded
+compiler/test leaves (355,335,072 logical bytes), recorded in
+`superseded-native-compiler-leaves-20261109-v1.jsonl`. This includes V30 compiler
+objects; the V31 object cache, archives, sources and reports remain. Historical
+claims above about retaining the V30 cache apply to their earlier checkpoint.
+
+It also consolidates 91 identical, old synthetic `large.bin` fixture payloads
+with an existing immutable 268,435,459-byte copy. Every path and SHA-256 is
+preserved. The duplicate logical total is 24,427,626,769 bytes, not a claim of
+equal physical savings. Their content hash is
+`4eaf48af4ee6b10004ffed3fa5def5c7e15ee120b7ddd3cea6bad9b5746ca833`;
+`synthetic-large-file-dedup-20261109-v1.jsonl` records each prior inode and path.
+Only fixtures older than the active qualification are selected. Future tests
+must continue creating fresh fixture directories, and must not mutate these
+retained shared payloads. Measured free space afterward is about 17.9 GiB.
