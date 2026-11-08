@@ -1,5 +1,6 @@
 #include "composite_backend.h"
 #include "recomp/overrides/native_adxt/runtime_observer.h"
+#include "recomp/overrides/native_adxt/ordinary_runtime.h"
 #include "runtime_memory.h"
 #include "capture_provider_v3.h"
 #include "game/native/adxt_control_owner/owner.hpp"
@@ -301,6 +302,15 @@ private:
 };
 InstallResult install(PS2Runtime& runtime,const reo_cd_async::ConfigurationReceipt& cd,
                       bank_packets::v3::MemoryIdentity identity) noexcept {
+    const auto* ordinary=std::getenv("REO_NATIVE_ADXT");
+    if(ordinary && !std::strcmp(ordinary,"1")){
+#if defined(REO_BUILD_NATIVE_RESOURCE_READS) && REO_BUILD_NATIVE_RESOURCE_READS
+        return adxt_binding::install_ordinary_before_run(runtime,cd,identity);
+#else
+        std::fputs("[NATIVE-ADXT-ERROR] ordinary source candidate requires the coherent native resource handoff build\n",stderr);
+        return {InstallStatus::unsupported_layout};
+#endif
+    }
     const auto result=CompositeBackend::install(runtime,cd,identity);
     if(result.status==InstallStatus::installed){
         const auto* path=std::getenv("REO_ADXT_OBSERVE_PATH");

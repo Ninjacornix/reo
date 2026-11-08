@@ -116,6 +116,11 @@ MOVIE_POSITION_UNITS = (
     ('native_movie_position_core', 'game/native/movie_position/movie_position.cpp'),
     ('native_movie_position_adapter', 'recomp/overrides/native_movie_position/runtime_adapter.cpp'),
 )
+ORDINARY_ADXT_UNITS = (
+    ('native_adxt_game_handles', 'recomp/overrides/native_adxt/game_handles.cpp'),
+    ('native_adxt_file_source', 'recomp/overrides/native_adxt/source_profile.cpp'),
+    ('native_adxt_ordinary_runtime', 'recomp/overrides/native_adxt/ordinary_runtime.cpp'),
+)
 HEADER_ROOTS = ('game/', 'media/', 'network/', 'recomp/', 'runtime/', 'src/',
                 'tools/parallel_gs_backend/', 'tools/vu_whole_aot/',
                 'tools/source_instrumentation/')
@@ -324,7 +329,8 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     selected_units = NEW_UNITS + (DISC_STREAM_UNITS if disc_stream else ()) + \
         (RESOURCE_READ_UNITS if resource_reads else ()) + (ADX_BLOCK_UNITS if adx_block else ()) + \
         (ADX_STEREO_UNITS if adx_stereo else ()) + (PCM_BACKEND_UNITS if pcm_backend else ()) + \
-        (MOVIE_POSITION_UNITS if movie_position else ()) + (AUDIO_BACKEND_UNITS if audio_backend else ())
+        (MOVIE_POSITION_UNITS if movie_position else ()) + (AUDIO_BACKEND_UNITS if audio_backend else ()) + \
+        (ORDINARY_ADXT_UNITS if resource_reads and audio_backend else ())
     # Native ADXT and native file payloads share the same resource-view bodies.
     # Keep exact tuple duplicates once; conflicting paths/IDs still fail below.
     selected_units = tuple(dict.fromkeys(selected_units))

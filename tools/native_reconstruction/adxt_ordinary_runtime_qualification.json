@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "private ordinary ADXT adapter declared-port and production-header qualification passed",
+  "source_manifest_sha256": "51644839de45c59084e385e94112c82d47d509e07910033d100d08c0b1546e88",
+  "native_archive_manifest_sha256": "0ef1c6d137b649e0c7b1f5cb905f8d2bf84735cabbadd59e2037d18e9e39e59b",
+  "adapter_scenarios": 16,
+  "factory_scenarios": 21,
+  "detected_faults": [
+    "drop-child-retirement",
+    "fallback-unsupported-producer",
+    "ignore-child-replacement"
+  ],
+  "evidence": {
+    "build-native-sjuni/adxt-binding/ordinary-protocol-llvm-v3/receipt.json": "5fadf5149aee3e09b29aaaf7d642ed4d3d590a5f2056c616b850bb52c05d579d",
+    "build-native-sjuni/audio-media-factory/ordinary-llvm-v2/receipt.json": "e24bcc14c82efa6b7a36a8fa780d13785cbd895bbc6f44448594fa7102a153b3",
+    "build-native-sjuni/adxt-binding/ordinary-actual130-llvm-v2/receipt.json": "d1944dbe9f63905030a4a95fc5849d20de645a9114702c590328d4596a104121",
+    "build-native-sjuni/adxt-binding/ordinary-protocol-gcc-v3/receipt.json": "447e1ffc53dbf26eca719287beeec09e3d72e0564d7131161b3c36895610dc8e",
+    "build-native-sjuni/audio-media-factory/ordinary-gcc-v2/receipt.json": "591370e61aecda14b65a971d0cfd06883155ec6e36f66d70e2e7fd679f79470a",
+    "build-native-sjuni/adxt-binding/ordinary-actual130-gcc-v2/receipt.json": "36cb2897055cf0b80364367a95b5894ccf12610a35b7da8be755a0767df5be31"
+  },
+  "actual_native_workers": true,
+  "actual_immutable_import": true,
+  "original_guest_bodies_executed": false,
+  "actual_runtime_acquisition": false,
+  "native_source_game_activation_proven": false,
+  "game_run": false,
+  "device_opened": false,
+  "stage3_complete": false
+}

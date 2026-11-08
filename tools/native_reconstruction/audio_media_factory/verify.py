@@ -70,7 +70,7 @@ def main():
     write(out/'source/runtime_memory.h',fake.replace(old,new))
     kit=ROOT/'build-native-sjuni/candidate-inputs-v8'
     raylib=kit/'source/third_party/PS2Recomp/out/build/_deps/raylib-src/src'
-    flags=[a.compiler,'-std=c++20','-O1','-pthread','-ffp-contract=off','-fno-fast-math','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-misleading-indentation','-Wno-unused-function','-DNOMINMAX','-DWIN32_LEAN_AND_MEAN','-DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE=2','-DREO_GAME_FILE1','-I'+str(out),'-I'+str(out/'snapshot'),'-I'+str(ROOT),'-I'+str(raylib)]
+    flags=[a.compiler,'-std=c++20','-O1','-pthread','-ffp-contract=off','-fno-fast-math','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-misleading-indentation','-Wno-unused-function','-DNOMINMAX','-DWIN32_LEAN_AND_MEAN','-DREO_BUILD_NATIVE_SOUND_RAM_CAPTURE=2','-DREO_BUILD_NATIVE_RESOURCE_READS=1','-DREO_GAME_FILE1','-I'+str(out),'-I'+str(out/'snapshot'),'-I'+str(ROOT),'-I'+str(raylib)]
     env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','')
     for key in list(env):
         if key.startswith(('REO_CRI_','REO_AUDIO_PATH','REO_RNA_STOP')):env.pop(key,None)
@@ -82,12 +82,12 @@ def main():
     # This declared-port factory fixture does not exercise the optional actual
     # guest observer. Its separate adapter checks use the real SDK headers and
     # a dedicated original-call/lifetime fixture. No observe path is enabled.
-    write(out/'observer_stub.cpp','#include "recomp/overrides/native_adxt/runtime_observer.h"\nnamespace reo::native::adxt_binding {bool observe_before_run(PS2Runtime&)noexcept{return false;}}\n')
+    write(out/'observer_stub.cpp','#include "source/composite_backend.h"\n#include "recomp/overrides/native_adxt/runtime_observer.h"\n#include "recomp/overrides/native_adxt/ordinary_runtime.h"\nextern unsigned ordinary_selected_calls;\nnamespace reo::native::adxt_binding {bool observe_before_run(PS2Runtime&)noexcept{return false;}\nsound_ram::InstallResult install_ordinary_before_run(PS2Runtime&,const reo_cd_async::ConfigurationReceipt&,bank_packets::v3::MemoryIdentity)noexcept{++ordinary_selected_calls;return {sound_ram::InstallStatus::unsupported_layout};}}\n')
     try:
         binary=out/'factory.exe'
         run('compile',flags+[ROOT/'recomp/overrides/native_audio/v2/aggregate.cpp',ROOT/'recomp/overrides/native_audio/v4/aggregate.cpp',out/'observer_stub.cpp',HERE/'tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-o',binary])
-        for case in ('live','blocked','scoped','device_fence','legacy','disabled','phase','layout','memory','provider','registration','publication','pcm_order','source_reset','prepared_live','prepared_null','prepared_phase','prepared_occupied','prepared_scoped'):run(case,[binary,case])
-        verify();record.update(status='native media factory protocol passed',scenarios=19,binary_sha256=sha(binary))
+        for case in ('live','blocked','scoped','device_fence','legacy','disabled','phase','layout','memory','provider','registration','publication','pcm_order','source_reset','prepared_live','prepared_null','prepared_phase','prepared_occupied','prepared_scoped','ordinary_selection','ordinary_nonexact'):run(case,[binary,case])
+        verify();record.update(status='native media factory protocol passed',scenarios=21,binary_sha256=sha(binary))
     finally:
         record['outputs_sha256']={p.name:sha(p)for p in out.iterdir()if p.is_file() and p.suffix=='.txt'};write(out/'receipt.json',json.dumps(record,indent=2)+'\n')
     print(json.dumps({'status':record['status'],'receipt_sha256':sha(out/'receipt.json')}))

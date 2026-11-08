@@ -24,6 +24,7 @@ namespace file=reo::native::adxt_shared_player::testing;
 namespace pkt=reo::native::bank_packets::v3;
 thread_local unsigned guest_depth{},io_depth{};
 unsigned prepared{},attached{},detached{},stopped{},unloaded{},polls{},masters{},bank_gains{},route_resets{},route_calls{};
+unsigned ordinary_selected_calls{};
 std::uint32_t last_route{};float route_factor=0.37f;
 bool layout_ok=true,prepare_ok=true,provider_ok=true,detach_ok=true;
 std::weak_ptr<sr::RuntimeMemory> prepared_memory;
@@ -204,8 +205,14 @@ void prepared_sources(const std::string& mode){
     Operation create([&](auto& p){check(p.start_output()==inst::Status::completed);auto made=p.create({1,{0,0,0,0}});check(made.status==inst::Status::completed);check(p.start(made.key,source(file::file(1,48000,20000),1))==inst::Status::completed);});
     check(prepared->run(create)==own::Admission::accepted);f.finish();check(prepared->report().joined);
 }
+void ordinary_selection(bool exact){
+    Fixture f;_putenv_s("REO_NATIVE_ADXT",exact?"1":"01");
+    const auto result=sr::install(f.runtime,f.cd,packet_test::identity());
+    if(exact){check(ordinary_selected_calls==1 && result.status==sr::InstallStatus::unsupported_layout && !prepared && !attached && f.runtime.workers.empty());}
+    else{check(ordinary_selected_calls==0 && result.status==sr::InstallStatus::installed && f.runtime.workers.size()==1);f.runtime.stop();check(f.runtime.join());}
+}
 int main(int argc,char** argv)try{
-    check(argc==2);_putenv_s("REO_NATIVE_AUDIO","1");std::string mode=argv[1];
-    if(mode=="live")live();else if(mode=="blocked")blocked_source();else if(mode=="scoped")scoped_join();else if(mode=="device_fence")device_fence();else if(mode=="legacy")legacy();else if(mode=="pcm_order")pcm_order();else if(mode=="source_reset")source_reset();else if(mode.starts_with("prepared_"))prepared_sources(mode);else refusals(mode);
+    check(argc==2);_putenv_s("REO_NATIVE_AUDIO","1");_putenv_s("REO_NATIVE_ADXT","");std::string mode=argv[1];
+    if(mode=="live")live();else if(mode=="blocked")blocked_source();else if(mode=="scoped")scoped_join();else if(mode=="device_fence")device_fence();else if(mode=="legacy")legacy();else if(mode=="pcm_order")pcm_order();else if(mode=="source_reset")source_reset();else if(mode.starts_with("prepared_"))prepared_sources(mode);else if(mode=="ordinary_selection")ordinary_selection(true);else if(mode=="ordinary_nonexact")ordinary_selection(false);else refusals(mode);
     std::cout<<"media factory checks="<<checks<<'\n';return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
