@@ -12,8 +12,13 @@ The [new native MP4 player](../../game/native/host_movie/README.md) delivers all
 pictures through Windows Media Engine and D3D11 textures on both compilers,
 including native window presentation under LLVM. Pause/resume, EOF/restart,
 loop, replacement, stale-command refusal, corrupt-source errors and recovery
-pass. Native asset preparation, game cue/compositor integration and audible
-synchronization remain open; no game has selected this player yet.
+pass. The [native preparation helper](../../tools/native_media_import/README.md) now
+converts/reuses the full201-reference SFD catalogue and the OS reader validates
+all216,998 decoded pictures and nominal cadence. The [asset preflight catalogue](../../game/native/movie_assets/README.md)
+passes real-file leases and native player handoff on both compilers. Packaging/
+automatic invocation, game cue/compositor integration and audible synchronization
+remain open; no game has selected this player yet. The separate effect-MOV
+consumer must also be accounted for before shared IPU support is removed.
 
 Step 3 now closes on native resource/media consumers working in the game,
 converted assets where useful, complete playback and audible synchronization,

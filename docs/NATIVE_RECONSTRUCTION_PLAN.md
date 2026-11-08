@@ -12,6 +12,16 @@ complete native replacement. Step 3 is still incomplete, and the whole game
 still requires stages 4-6 before PS2 runtime removal can be claimed.
 
 
+Native asset checkpoint, 2026-11-08: the [native movie preparation helper](../tools/native_media_import/README.md)
+converts all201 owned File1 SFD references into200 shared native MP4 assets.
+All216,998 pictures match native Windows decoder counts and normalized cadence;
+a repeat preparation reuses all201 references without encoding. The [runtime
+asset catalogue](../game/native/movie_assets/README.md) preflights hashes and real
+read-only leases and hands a prepared asset to the native player on both compilers.
+Automatic prelaunch packaging, game cue/compositor binding, audible synchronization
+and game transition/stutter retests remain open. The separate numbered effect-MOV
+consumer also remains in the shared-IPU removal dependency audit. Step3 is not done.
+
 Native modernization checkpoint, 2026-11-08: the [Windows-native MP4 player](../game/native/host_movie/README.md)
 now delivers all195 converted pictures through the native playback clock and
 D3D11 textures on both compilers. Pause/resume, EOF/restart, looping, replacement,
