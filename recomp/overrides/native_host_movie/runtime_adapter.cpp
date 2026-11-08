@@ -1,4 +1,5 @@
 #include "runtime_adapter.h"
+#include "game/native/host_movie/playback_time.hpp"
 #include "render_bridge.h"
 #include "recomp/overrides/native_geometry/reo_vu_native_sha256.h"
 #include "ps2_runtime.h"
@@ -311,7 +312,12 @@ public:
         case Action::pause:if(started)require(session.pause(generation,argument(5)!=0),"pause-admission");return true;
         case Action::unlink:return true;
         case Action::status:SET_GPR_U32((&ctx),2,status());return true;
-        case Action::time:{const auto numerator=argument(5),denominator=argument(6);output(numerator,4);output(denominator,4);const auto frame=session.frame(generation);store(ram,numerator,frame?static_cast<std::uint32_t>(frame->ordinal):0u);store(ram,denominator,1u);SET_GPR_U32((&ctx),2,0);return true;}
+        case Action::time:{const auto numerator=argument(5),denominator=argument(6);output(numerator,4);output(denominator,4);
+            const auto value=started?host_movie::playback_time(session.snapshot().position_seconds):std::optional<host_movie::RationalTime>{{0,1}};
+            require(bool(value),"native-time-range");store(ram,numerator,value->count);store(ram,denominator,value->units);
+            // The original public wrapper returns the count it writes, not a
+            // constant success code. Its callers receive a native clock pair.
+            SET_GPR_S32((&ctx),2,load<std::int32_t>(ram,numerator));return true;}
         case Action::information:{output(argument(5),20);std::memset(ram+argument(5),0xff,20);return true;}
         case Action::frame:{FrameTiming timing;const bool tracing=!trace_path.empty();if(tracing){timing.begin=now();timing.generation=generation;timing.caller=argument(31);}
             const auto out=argument(5);output(out,76);std::memset(ram+out,0,76);require(!held,"nested-renderer-acquire");auto frame=session.frame(generation);if(tracing)timing.borrowed=now();if(!frame||frame->serial<=released){if(tracing){timing.copied=timing.released=timing.borrowed;record(timing);}return true;}

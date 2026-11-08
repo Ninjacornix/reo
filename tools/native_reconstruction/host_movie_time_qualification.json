@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "status": "native rational time conversion passes both compilers; corrected public adapter compiles against SDK131; game retest pending",
+  "sha256": {
+    "game/native/host_movie/playback_time.hpp": "454e2805fb43d0ab4e9947c25bae454a900f5431ea98b527a284e12f785054c2",
+    "recomp/overrides/native_host_movie/runtime_adapter.cpp": "411ea4367e82c189821932f1e6031368b311d9dbd067bd52daa63af301e9e0b1",
+    "tools/native_reconstruction/host_movie_time_check.cpp": "ee1e223652b09e9343a02e6649aac593c090285d9099faf3251f683897b71ebe",
+    "build-native-sjuni/host-movie/time-contract-v1/receipt.json": "1c5b5e807156989bca50c30402a4161a24ea268706bea55ab2b73e2ac368e6b8",
+    "build-native-sjuni/host-movie/sdk-objects-llvm-v6/receipt.json": "11f7f90545dfdd7dc6c4139ad6da29e27d3bb08476958c9f407f05c4f5cd54d0"
+  },
+  "game_run": false,
+  "step3_complete": false,
+  "stutter_cause_confirmed": false
+}
