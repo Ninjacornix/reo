@@ -67,6 +67,49 @@ struct Failure final:f::File{
 };
 int main(){try{
     for(bool mode:{false,true}){attenuation_mode=mode;
+    for(std::int32_t minimum:{0,1,6144,8192}){
+        Test t;auto live=i::Input::create({1,48000,1,2});auto payload=file(20000);
+        const auto prepared=live->register_asset("threshold",clip(payload));
+        check(live->minimum(minimum)==i::Status::completed && live->snapshot().queue.minimum==static_cast<std::uint32_t>(minimum));
+        check(live->minimum(-1)==i::Status::completed && live->minimum(8193)==i::Status::completed);
+        check(live->snapshot().queue.minimum==static_cast<std::uint32_t>(minimum) && live->snapshot().diagnostics==2);
+        check(live->enqueue(prepared.key).status==i::Status::completed && live->start()==i::Status::completed);
+        const auto key=open(t,live);
+        if(minimum==0){
+            // Strict occupied < minimum admits no work at zero. There must be
+            // no fabricated completion, decoded sample or output signal.
+            for(unsigned n=0;n<64;++n)check(t.session.service(0)==c::Status::completed);
+            const auto observed=live->snapshot();
+            check(observed.planned_bytes==payload->size() && !observed.accepted_reads && !observed.completed_reads && !observed.published_bytes && observed.unavailable_reads);
+            check(!t.session.inspect(key).evidence.first_payload_samples && !t.session.snapshot().output.statistics.signal_frames);
+            // Changing the queue minimum does not revise an already opened
+            // lower file's threshold or authorize accepted progress.
+            check(live->minimum(8192)==i::Status::completed);
+            for(unsigned n=0;n<64;++n)check(t.session.service(0)==c::Status::completed);
+            check(!live->snapshot().accepted_reads && !live->snapshot().published_bytes);
+        }else if(minimum==1){
+            // The byte count may leave a partial encoded block. Strict
+            // occupied < 1 cannot admit its missing suffix. Preserve the
+            // stalled state instead of fabricating EOF or bypassing the gate.
+            bool stalled=false;
+            for(unsigned n=0;n<100000;++n){
+                check(t.session.service(0)==c::Status::completed);const auto player=t.session.inspect(key).evidence;
+                if(player.output.channel[0].samples>=512)t.provider->step(512);
+                const auto observed=live->snapshot();
+                if(observed.completed_reads && !player.decoder.source.in_flight && player.decoder.source.ring.data>0 && player.decoder.source.ring.data<18){stalled=true;break;}
+                std::this_thread::yield();
+            }
+            check(stalled);const auto before=live->snapshot();
+            for(unsigned n=0;n<64;++n){check(t.session.service(0)==c::Status::completed);if(t.session.inspect(key).evidence.output.channel[0].samples>=512)t.provider->step(512);}
+            const auto after=live->snapshot();
+            check(after.published_bytes==before.published_bytes && after.accepted_reads==before.accepted_reads && after.published_bytes<after.planned_bytes && after.error==i::Status::completed);
+        }else{
+            ended(t,key);const auto observed=live->snapshot();const auto player=t.session.inspect(key).evidence;
+            check(observed.published_bytes==payload->size() && observed.completed_reads && observed.error==i::Status::completed);
+            check(player.first_payload_samples==20000 && !player.output.voice.skipped_samples && !t.session.snapshot().output.statistics.underrun_frames);
+        }
+        retire(t,key);check(live->minimum(6144)==i::Status::closed && t.session.join()==c::Status::completed);
+    }
     {
         Test t;auto input=i::Input::create({1,48000,1,2});auto foreign=i::Input::create({1,48000,1,2});
         check(t.session.open(config(input),foreign->origin(),{0,0,0,0}).status==c::Status::unsupported_profile);

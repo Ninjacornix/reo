@@ -62,6 +62,10 @@ public:
     [[nodiscard]] Status stop() noexcept;
     [[nodiscard]] Status pause(std::int32_t) noexcept;
     [[nodiscard]] Status repeat(std::int32_t) noexcept;
+    // Original queue minimum semantics: signed invalid values diagnose and
+    // retain the previous value. Applied to the lower file on its next open,
+    // not retroactively to an already accepted read/current file.
+    [[nodiscard]] Status minimum(std::int32_t) noexcept;
     [[nodiscard]] Snapshot snapshot() const noexcept;
     [[nodiscard]] std::shared_ptr<const resources::ByteView> origin() const noexcept;
     [[nodiscard]] std::uint32_t channels() const noexcept;

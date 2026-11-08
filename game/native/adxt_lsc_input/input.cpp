@@ -118,7 +118,7 @@ struct Input::State : std::enable_shared_from_this<State> {
         void set_limit(std::uint32_t value) noexcept override { if (auto s = owner_.lock()) s->configured_limit = value; }
         void thresholds(std::uint32_t minimum, std::uint32_t capacity) noexcept override {
             if (auto s = owner_.lock()) {
-                if (capacity != 8192 || minimum != 6553) { s->fail(Status::unsupported_profile); return; }
+                if (capacity != 8192 || minimum > capacity) { s->fail(Status::unsupported_profile); return; }
                 s->threshold = minimum; s->request_limit = capacity;
             }
         }
@@ -238,6 +238,7 @@ Status Input::stop() noexcept {
 }
 Status Input::pause(std::int32_t value) noexcept { if (state_->report.closing) return Status::closed; state_->queue->pause(value); return Status::completed; }
 Status Input::repeat(std::int32_t value) noexcept { if (state_->report.closing) return Status::closed; state_->queue->repeat(value); return Status::completed; }
+Status Input::minimum(std::int32_t value) noexcept { if (state_->report.closing) return Status::closed; state_->queue->minimum(value); return Status::completed; }
 Snapshot Input::snapshot() const noexcept { auto out = state_->report; out.queue = state_->queue->snapshot(); return out; }
 std::shared_ptr<const resources::ByteView> Input::origin() const noexcept { return state_->origin; }
 std::uint32_t Input::channels() const noexcept { return state_->config.channels; }

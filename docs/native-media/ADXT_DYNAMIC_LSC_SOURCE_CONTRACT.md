@@ -74,8 +74,12 @@ fences. Preserve original lower-file envelopes as explicit boundaries until thei
 remaining EOF/error/replacement paths are independently closed. Bank/packet
 output, movies, game integration and stages4–6 remain separate requirements.
 
-The initial admitted profile fixes the request capacity at 8192 bytes and the
-minimum threshold at 6553 bytes. Clips must use the sealed non-looping ADX profile,
+The admitted profile fixes the request capacity at 8192 bytes and defaults the
+minimum threshold to 6553 bytes. Explicit original queue minimum controls admit
+0..8192 for the next lower-file open; signed invalid values diagnose without
+changing that queue minimum. An already opened lower file and accepted request
+retain their preceding thresholds. Zero preserves strict occupied-byte admission
+and therefore admits no refill. Clips must use the sealed non-looping ADX profile,
 with matching channels/rate/pan and actual sector-backed tails. The catalogue
 contains at most 8192 assets, the queue 16 names, and the journal 2–16 boundaries.
 Regular decoder loops remain a separate input mode. Byte/sample exhaustion is
