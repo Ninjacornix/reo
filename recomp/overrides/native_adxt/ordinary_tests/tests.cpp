@@ -74,7 +74,7 @@ void construct(Memory& memory,unsigned slot,unsigned channels){
     Fixture f(slot,channels);const auto copy=[&](std::uint32_t at,std::size_t n){std::memcpy(memory.bytes+at,f.ram.data()+at,n);};
     copy(f.handle,0xc4);copy(f.decoder,0x9c);copy(f.file,0x5c);copy(f.rna,0x60);copy(0x221438,4);
     for(unsigned c=0;c<channels;++c){copy(f.dtr[c],0x40);copy(f.psj[c],0x18);}
-    b::store(memory.bytes,f.handle+0x38,30);b::store(memory.bytes,f.handle+0x42,std::int16_t(-128));b::store(memory.bytes,f.handle+0x44,std::int16_t(-128));memory.bytes[f.handle+0x6c]=1;
+    b::store(memory.bytes,f.handle+0x38,30);b::store(memory.bytes,f.handle+0x42,std::int16_t(-128));if(channels==2)b::store(memory.bytes,f.handle+0x44,std::int16_t(-128));memory.bytes[f.handle+0x6c]=1;
 }
 struct Asset {std::uint32_t start{},count{},channels{},rate{},total{};std::array<std::uint64_t,2> digest{};};
 std::array<Asset,2> assets;
@@ -93,6 +93,10 @@ void ordinary(Memory& memory,PS2Runtime& runtime){
     install(runtime);prepare_handles(memory);for(unsigned i=0;i<3;++i)pending(memory,i,i==2?1:0);
     memory.bytes[b::handles.base+0x70]=1;
     group(runtime);check(original_calls==0 && b::current()->mapped.counts().mapped==3);
+    // Original mono construction leaves this second-channel field untouched.
+    // Both the real zero value and later stale bytes must be irrelevant.
+    check(b::load<std::int16_t>(memory.bytes,b::handles.base+2*b::handles.stride+0x44)==0);
+    b::store(memory.bytes,b::handles.base+2*b::handles.stride+0x44,std::int16_t(0x4321));
     const auto binding=b::current();bool ready{};
     until([&]{group(runtime);ready=true;for(auto& r:binding->records)if(r.owned){const auto s=binding->inspect(r).source;ready&=s && s->output.channel[0].samples>=1024 && (r.handle.slot==0?s->playback.started:s->output.voice.playing);}return ready;});
     const auto first=b::handles.base;const auto peer=b::handles.base+b::handles.stride;
@@ -165,7 +169,9 @@ void refusal(const std::string& mode,Memory& memory,PS2Runtime& runtime){
     }
     group(runtime);const auto before=original_calls;bool refused{};
     try{
-        if(mode=="callback")(void)call(runtime,0x133158,{b::handles.base,0x100100});
+        if(mode=="stereo_pan"){b::store(memory.bytes,b::handles.base+0x44,std::int16_t(0));group(runtime);}
+        else if(mode=="mono_pan"){b::store(memory.bytes,b::handles.base+2*b::handles.stride+0x42,std::int16_t(0));group(runtime);}
+        else if(mode=="callback")(void)call(runtime,0x133158,{b::handles.base,0x100100});
         else if(mode=="producer")(void)call(runtime,0x131d18,{b::handles.base,0x1800000});
         else if(mode=="changed_child"){
             const auto child=b::current()->records[0].handle.rna;b::store(memory.bytes,child+0x20,0x1e0200u);(void)call(runtime,0x132548,{b::handles.base});

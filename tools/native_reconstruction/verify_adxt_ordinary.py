@@ -7,7 +7,7 @@ sys.path.insert(0,str(ROOT/'tools/function_index'));from index import Elf
 PORTS=ROOT/'build-native-sjuni/audio-media-factory/prepared-llvm-v1'
 PORTS_SHA='948c0bf63919cb7a8ba9e6f193ee4a6a49265b86c9410b54208538c380606e8c'
 META=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1'
-SCENARIOS=('ordinary','phase','image','entry','mount','worker','registry','factory','partial','callback','producer','changed_child','order','foreign','guest_depth','query_alias')
+SCENARIOS=('ordinary','phase','image','entry','mount','worker','registry','factory','partial','callback','producer','changed_child','order','foreign','guest_depth','query_alias','stereo_pan','mono_pan')
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def write(path,body):path.write_text(body,encoding='utf-8',newline='\n')
 def main():
@@ -75,6 +75,12 @@ def main():
         faults['omit-native-discard']=(
             'result=p.discard_rebase(key,tick());',
             '(void)p;(void)key;result.status=adxt_control_session::Status::completed;', 'ordinary')
+        faults['require-unused-mono-pan']=(
+            '(ram[at+3]==2 && load<std::int16_t>(ram,at+0x44)!=-128)',
+            'load<std::int16_t>(ram,at+0x44)!=-128', 'ordinary')
+        faults['ignore-active-stereo-pan']=(
+            '(ram[at+3]==2 && load<std::int16_t>(ram,at+0x44)!=-128)',
+            'false', 'stereo_pan')
         for name,(anchor,replacement,case) in faults.items():
             if body.count(anchor)!=1:raise ValueError('Unique adapter mutation anchor '+name)
             folder=out/name;folder.mkdir();changed=folder/'ordinary_runtime_body.cpp';write(changed,body.replace(anchor,replacement));fixture=out/(name+'-tests.cpp');write(fixture,test.replace('#include "ordinary_runtime_body.cpp"','#include "'+name+'/ordinary_runtime_body.cpp"'))

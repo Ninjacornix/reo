@@ -84,7 +84,9 @@ public:
     void publish_clock(){adxt_estimated_clock::Shared shared;control([&](auto& p){shared=p.snapshot().session.clock_state;});store(ram,0x21b75c,shared.mode.resynchronizations);store(ram,0x21b78c,shared.drift_bits);}
     Controls controls(std::uint32_t at){
         const auto loop=ram[at+0x6c];
-        if(loop>1 || load<std::int16_t>(ram,at+0x42)!=-128 || load<std::int16_t>(ram,at+0x44)!=-128 || load<std::int16_t>(ram,at+0x46))fail("loop-pan-pitch-profile",at);
+        // The original constructor initializes only the active channel pans.
+        // In a mono handle +44 is unused and may retain any previous bytes.
+        if(loop>1 || load<std::int16_t>(ram,at+0x42)!=-128 || (ram[at+3]==2 && load<std::int16_t>(ram,at+0x44)!=-128) || load<std::int16_t>(ram,at+0x46))fail("loop-pan-pitch-profile",at);
         const auto divisor=load<std::int32_t>(ram,at+0x38);if(divisor<=0)fail("service-divisor",at);
         return {static_cast<std::uint32_t>(load<std::int16_t>(ram,at+0x40)),load<std::uint32_t>(ram,at+0x88),divisor,loop,ram[at+0x70],ram[at+0x72]};
     }
