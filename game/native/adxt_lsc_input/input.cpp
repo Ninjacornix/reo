@@ -244,6 +244,13 @@ Status Input::stop() noexcept {
 Status Input::pause(std::int32_t value) noexcept { if (state_->report.closing) return Status::closed; state_->queue->pause(value); return Status::completed; }
 Status Input::repeat(std::int32_t value) noexcept { if (state_->report.closing) return Status::closed; state_->queue->repeat(value); return Status::completed; }
 Status Input::minimum(std::int32_t value) noexcept { if (state_->report.closing) return Status::closed; state_->queue->minimum(value); return Status::completed; }
+Status Input::preparing_assets(std::uint32_t count) noexcept {
+    auto& s = *state_;
+    if (s.report.closing || s.report.decoder_ended) return Status::closed;
+    if (count > lsc_queue::slots) return Status::capacity;
+    s.report.preparing_assets = count;
+    return Status::completed;
+}
 Snapshot Input::snapshot() const noexcept { auto out = state_->report; out.queue = state_->queue->snapshot(); return out; }
 std::shared_ptr<const resources::ByteView> Input::origin() const noexcept { return state_->origin; }
 std::uint32_t Input::channels() const noexcept { return state_->config.channels; }
@@ -279,7 +286,7 @@ Header Input::next_header(std::uint32_t actual_base) const noexcept {
             return s.report.published_bytes >= next.byte_begin + metadata.header.base.header_bytes ? Header::ready : Header::pending;
         }
         const auto queue = s.queue->snapshot();
-        if (s.report.published_bytes < entry.byte_end || s.pending_asset || queue.count > 1 ||
+        if (s.report.published_bytes < entry.byte_end || s.pending_asset || s.report.preparing_assets || queue.count > 1 ||
             (queue.count && queue.repeat == 1 && queue.paused != 1)) return Header::pending;
         return Header::ready;
     }
@@ -287,6 +294,6 @@ Header Input::next_header(std::uint32_t actual_base) const noexcept {
 }
 void Input::request_stop() noexcept {
     auto& s = *state_; if (s.report.closing) return;
-    s.report.closing = true; s.wanted = false; s.pending_asset.reset(); s.queue->stop();
+    s.report.closing = true; s.report.preparing_assets = 0; s.wanted = false; s.pending_asset.reset(); s.queue->stop();
 }
 }

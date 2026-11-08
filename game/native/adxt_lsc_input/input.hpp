@@ -41,7 +41,7 @@ struct Snapshot {
     lsc_queue::Snapshot queue;
     std::array<Journal,16> journal;
     std::uint32_t journal_entries{}, registered_assets{}, planned_bytes{}, planned_samples{},
-        published_bytes{}, consumed_bytes{}, decoder_base{}, file_state{}, file_progress{};
+        published_bytes{}, consumed_bytes{}, decoder_base{}, file_state{}, file_progress{}, preparing_assets{};
     std::uint64_t accepted_reads{}, completed_reads{}, unavailable_reads{}, notifications{}, diagnostics{};
     Status error{Status::completed};
     bool bound{}, started{}, decoder_ended{}, closing{}, joined{}, abandoned{};
@@ -67,6 +67,9 @@ public:
     // retain the previous value. Applied to the lower file on its next open,
     // not retroactively to an already accepted read/current file.
     [[nodiscard]] Status minimum(std::int32_t) noexcept;
+    // An accepted next clip being prepared on a native worker holds the decoder
+    // at its header boundary instead of reporting EOF. This is not progress.
+    [[nodiscard]] Status preparing_assets(std::uint32_t) noexcept;
     [[nodiscard]] Snapshot snapshot() const noexcept;
     [[nodiscard]] std::shared_ptr<const resources::ByteView> origin() const noexcept;
     [[nodiscard]] std::uint32_t channels() const noexcept;

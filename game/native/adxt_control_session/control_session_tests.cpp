@@ -1,6 +1,7 @@
 #include "control_session.hpp"
 #include "../adxt_shared_player/test_sources.hpp"
 #include "../adxt_player/test_provider.hpp"
+#include "../audio_clip_loader/loader.hpp"
 #include <array>
 #include <cfenv>
 #include <chrono>
@@ -102,7 +103,52 @@ std::uint64_t prefetch_read_stall(unsigned capacity){
     check(t.session.retire(opened.key).status==c::Status::pending);
     file->release();retire(t,opened.key);check(t.session.join()==c::Status::completed);return shortage;
 }
+std::array<std::uint64_t,2> prepared_cue_boundary(bool delayed){
+    namespace loading=reo::native::audio_clip_loader;namespace queued=reo::native::adxt_lsc_input;
+    loading::Loader metadata({2,2});Test t;
+    auto second=std::make_shared<f::Blocked>();second->bytes=sequence_file(2,48000,20000)->bytes;second->released=!delayed;
+    struct Release {std::shared_ptr<f::Blocked> file;~Release(){std::lock_guard lock(file->mutex);file->released=true;file->cv.notify_all();}}release{second};
+    const auto wait=[&](const loading::Key& key){
+        const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
+        for(;;){auto r=metadata.poll(key);if(r.status!=loading::Status::pending){check(r.status==loading::Status::ready);return r.clip;}
+            if(std::chrono::steady_clock::now()>=deadline){throw std::runtime_error("Cue header preparation deadline");}std::this_thread::yield();}
+    };
+    const auto first=metadata.prepare(sequence_file(2,48000,12000));check(first.status==loading::Status::accepted);const auto first_clip=wait(first.key);
+    const auto next=metadata.prepare(second);check(next.status==loading::Status::accepted);
+    auto input=queued::Input::create({2,48000,4,2,65536});
+    const auto a=input->register_asset("first",first_clip);check(a.status==queued::Status::completed && input->enqueue(a.key).status==queued::Status::completed);
+    check(input->preparing_assets(1)==queued::Status::completed && input->preparing_assets(17)==queued::Status::capacity && input->snapshot().preparing_assets==1);
+    const auto publish_next=[&]{const auto prepared=wait(next.key);const auto b=input->register_asset("second",prepared);
+        check(b.status==queued::Status::completed && input->enqueue(b.key).status==queued::Status::completed && input->preparing_assets(0)==queued::Status::completed);};
+    if(!delayed)publish_next();
+    check(input->start()==queued::Status::completed);
+    auto pc=config(input->origin(),2);pc.decoder.seamless_enabled=true;pc.lsc_input=input;
+    pc.decoder.source_capacity=reo::native::adxt_shared_source::CapacityProfile::bounded_sectors;
+    pc.decoder.source_config.capacity=pc.decoder.source_config.threshold=pc.decoder.source_config.maximum_request_bytes=65536;pc.decoder.source_config.maximum_sectors=32;
+    const auto opened=t.session.open(pc,input->origin(),{15,2,8,31});check(opened.status==c::Status::completed);
+    if(delayed){
+        {std::unique_lock lock(second->mutex);check(second->cv.wait_for(lock,std::chrono::seconds(5),[&]{return second->entered;}));}
+        bool boundary{};
+        for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto s=t.session.inspect(opened.key).evidence;check(!s.fault);
+            if(s.decoder.engine.decoded_total>=12000 && s.first_payload_samples==12000){boundary=true;break;}
+            if(s.output.channel[0].samples>=512){check(t.provider->step(512));}std::this_thread::yield();}
+        check(boundary);
+        for(unsigned i=0;i<100;++i)check(t.session.service(0)==c::Status::completed);
+        const auto held=t.session.inspect(opened.key).evidence;
+        check(metadata.poll(next.key).status==loading::Status::pending && !input->snapshot().decoder_ended && !held.fault && held.playback.phase!=reo::native::adxt_playback::Phase::ended);
+        {std::lock_guard lock(second->mutex);second->released=true;second->cv.notify_all();}publish_next();
+    }
+    bool ended{};
+    for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto s=t.session.inspect(opened.key).evidence;check(!s.fault);
+        if(s.configured && s.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
+        if(s.output.channel[0].samples>=512){check(t.provider->step(512));}std::this_thread::yield();}
+    const auto terminal=t.session.inspect(opened.key).evidence;
+    check(ended && terminal.first_payload_samples==32000 && !t.session.snapshot().output.statistics.underrun_frames && input->snapshot().decoder_ended);
+    check(input->preparing_assets(0)==queued::Status::closed);
+    const auto digest=terminal.first_payload_digest;retire(t,opened.key);check(t.session.join()==c::Status::completed && metadata.join());return digest;
+}
 int main(){try{
+    check(prepared_cue_boundary(false)==prepared_cue_boundary(true));
     const auto baseline_shortage=prefetch_read_stall(8192),prefetch_shortage=prefetch_read_stall(65536);
     std::cout<<"48128 frames blocked source: 8KiB underruns="<<baseline_shortage<<", 64KiB underruns="<<prefetch_shortage<<"\n";
     check(baseline_shortage>0 && prefetch_shortage==0);
