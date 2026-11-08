@@ -67,3 +67,16 @@ Next validation must select this owner in the game, play the full opening with
 its native audio, exercise skip/pause/repeat/error and room transitions, inspect
 joined shutdown, and compare the reported cinematic stutter. No performance
 improvement or Step 3 completion is claimed before those tests.
+
+The private audio observer uses Windows process loopback for the identity-checked
+test process tree, following Microsoft's
+[application-loopback interface](https://github.com/microsoft/Windows-classic-samples/tree/main/Samples/ApplicationLoopback).
+It does not select an endpoint mix or microphone. The native helper independently
+checks the held process's creation time and executable, writes a bounded PCM WAV
+and per-packet QPC/device-position/flag CSV, and reports capture errors explicitly.
+Wrong creation-time and executable tests refuse before opening capture/output.
+The actual silent-process test completes with 48,000 frames, peak PCM16 value 1,
+RMS 0.479, zero discontinuity flags and zero timestamp errors. Nonzero values at
+that amplitude are conversion dither, not an audible-signal claim. Evidence:
+`build-native-sjuni/host-movie/process-audio-self-v2/receipt.json`. This is capture
+plumbing evidence; actual game soundtrack/synchronization still needs validation.

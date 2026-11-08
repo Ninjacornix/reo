@@ -11,6 +11,15 @@ recreate internal media machinery are superseded when its consumers move to a
 complete native replacement. Step 3 is still incomplete, and the whole game
 still requires stages 4-6 before PS2 runtime removal can be claimed.
 
+Native game-owner checkpoint, 2026-11-08: the
+[MP4 integration](native-media/NATIVE_MP4_GAME_INTEGRATION.md) has a native owner
+thread, bounded immutable frame leases, preloaded playlists and recoverable
+source errors, tested on both compilers. Its guarded game-cue adapter compiles
+against the audited SDK131 dependency. Candidate V23 is sealed from local commit
+`a057c5f2` and rebuilding; game playback, audible synchronization and retirement
+proof remain pending. The native library has no PS2 dependency. Its temporary
+game/renderer bridge remains explicit until stages 4/5 migrate those consumers.
+
 
 Native asset checkpoint, 2026-11-08: the [native movie preparation helper](../tools/native_media_import/README.md)
 converts all201 owned File1 SFD references into200 shared native MP4 assets.
