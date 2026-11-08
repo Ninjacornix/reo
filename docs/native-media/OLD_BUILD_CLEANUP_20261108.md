@@ -32,5 +32,5 @@ retain their original identity; those removed artifacts are no longer locally
 available for direct replay.
 
 The storage gate was sufficient to prepare and run V20 and resume native checks.
-Its actual game result remains a failure at `active-raw-route-missing`, rather
+V20 and the later V21 game results remain failures at `active-raw-route-missing`, rather
 than evidence that Stage 3 is complete. The PC has not been put to sleep.

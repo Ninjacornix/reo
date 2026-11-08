@@ -1,0 +1,73 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
+@@ -16,6 +16,18 @@
+     void SifSetRpcQueue(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void SifRemoveRpcQueue(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
+     void SifRemoveRpc(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime);
++    // Explicit native-source adapter operation. Replays only muted voice
++    // metadata in the actual RNA container order. Never consumes/queues PCM,
++    // updates a progress clock or enables an original source. The subsequent
++    // PCM order copy remains the authority for successfully registered routes.
++    enum class RnaMetadataStatusV1 : uint32_t {
++        ok, control_refused, unselected, invalid_metadata, playing_legacy, failed
++    };
++    struct RnaMetadataResultV1 {
++        RnaMetadataStatusV1 status{RnaMetadataStatusV1::control_refused};
++        uint32_t rows{}, requests{}, bad_handle{};
++    };
++    RnaMetadataResultV1 refreshMutedRnaMetadataV1(PS2Runtime*) noexcept;
+     void noteDtxSifDmaTransfer(uint8_t *rdram, uint32_t srcAddr, uint32_t dstAddr, uint32_t sizeBytes);
+     bool handleSoundDriverRpcService(uint8_t *rdram, PS2Runtime *runtime,
+                                      uint32_t sid, uint32_t rpcNum,
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1344,6 +1344,47 @@
+ 
+     } // namespace
+ 
++    RnaMetadataResultV1 refreshMutedRnaMetadataV1(PS2Runtime* runtime) noexcept
++    {
++        RnaMetadataResultV1 result;
++        try {
++            if (!runtime) return result;
++            auto audio=ps2_cri_audio::acquireSoundControlCall(runtime);
++            if (!audio) return result;
++            if (!audio.native() || !ps2_cri_audio::nativeSoundRamSelectedV1()) {
++                result.status=RnaMetadataStatusV1::unselected;return result;
++            }
++            ps2_cri_audio::SoundCallScope scope(audio);
++            std::lock_guard<std::mutex> lock(g_dtx_rpc_mutex);
++            result.rows=static_cast<uint32_t>(g_dtx_ps2rna_by_handle.size());
++            const auto& layout=g_dtxCompatLayout;
++            if (result.rows>2041u || !layout.hasUrpcObjectRange()) {
++                result.status=RnaMetadataStatusV1::invalid_metadata;return result;
++            }
++            // Validate the complete table before the first facade request.
++            // In particular, never reuse the legacy playing/consumption path.
++            for (const auto& entry:g_dtx_ps2rna_by_handle) {
++                const auto& rna=entry.second;result.bad_handle=entry.first;
++                if (entry.first!=rna.handle || rna.handle<layout.urpcObjBase ||
++                    rna.handle>=layout.urpcObjLimit ||
++                    (rna.handle-layout.urpcObjBase)%layout.urpcObjStride ||
++                    !rna.channelCount || rna.channelCount>2u ||
++                    rna.maxChannels<rna.channelCount || rna.maxChannels>2u) {
++                    result.status=RnaMetadataStatusV1::invalid_metadata;return result;
++                }
++                if (rna.playEnabled) {
++                    result.status=RnaMetadataStatusV1::playing_legacy;return result;
++                }
++            }
++            result.bad_handle=0;
++            for (const auto& entry:g_dtx_ps2rna_by_handle) {
++                configurePcmVoice(entry.second);++result.requests;
++            }
++            result.status=RnaMetadataStatusV1::ok;
++        } catch (...) { result.status=RnaMetadataStatusV1::failed; }
++        return result;
++    }
++
+     void noteDtxSifDmaTransfer(uint8_t *rdram, uint32_t srcAddr, uint32_t dstAddr, uint32_t sizeBytes)
+     {
+         if (!rdram || sizeBytes < 64u)

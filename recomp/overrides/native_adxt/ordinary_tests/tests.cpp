@@ -27,6 +27,16 @@ struct Order final:sr::MediaInstallResult::PcmOrder {
     }
 };
 std::shared_ptr<Order> declared_order=std::make_shared<Order>();
+bool metadata_allowed=true,metadata_recover=false;unsigned metadata_calls{};
+std::vector<std::uint32_t> recovered_routes;
+namespace ps2_syscalls {
+RnaMetadataResultV1 refreshMutedRnaMetadataV1(PS2Runtime* runtime)noexcept{
+    ++metadata_calls;
+    if(!metadata_allowed || runtime!=prepared_runtime)return{RnaMetadataStatusV1::control_refused,0,0,0};
+    if(metadata_recover){declared_order->routes.swap(recovered_routes);metadata_recover=false;}
+    return{RnaMetadataStatusV1::ok,0,0,0};
+}
+}
 class SourceWorker final:public PS2Runtime::ExternalWorker {
     std::shared_ptr<own::Owner> owner_;
 public:explicit SourceWorker(std::shared_ptr<own::Owner> owner):owner_(std::move(owner)){}
@@ -89,10 +99,11 @@ template<class F>void until(F&& done){const auto end=std::chrono::steady_clock::
 void group(PS2Runtime& runtime){b::store(runtime.storage.ram,0x20f3c4,b::load<std::uint32_t>(runtime.storage.ram,0x20f3c4)+1);(void)call(runtime,0x132c08);}
 void install(PS2Runtime& runtime){const auto result=b::install_ordinary_before_run(runtime,{},{});check(result.status==sr::InstallStatus::installed && factory_calls==1 && runtime.workers.size()==2 && b::current()->active);}
 void prepare_handles(Memory& memory){for(unsigned i=0;i<3;++i)construct(memory,i,i==2?1:2);declared_order->routes={0x1e0100,0x1e0000,0x1e0080};b::store(memory.bytes,0x21b788,6000u);}
-void ordinary(Memory& memory,PS2Runtime& runtime){
+void ordinary(Memory& memory,PS2Runtime& runtime,bool recover=false){
     install(runtime);prepare_handles(memory);for(unsigned i=0;i<3;++i)pending(memory,i,i==2?1:0);
+    if(recover){recovered_routes=declared_order->routes;declared_order->routes.clear();metadata_recover=true;}
     memory.bytes[b::handles.base+0x70]=1;
-    group(runtime);check(original_calls==0 && b::current()->mapped.counts().mapped==3);
+    group(runtime);check(original_calls==0 && b::current()->mapped.counts().mapped==3 && metadata_calls && !metadata_recover);
     // Original mono construction leaves this second-channel field untouched.
     // Both the real zero value and later stale bytes must be irrelevant.
     check(b::load<std::int16_t>(memory.bytes,b::handles.base+2*b::handles.stride+0x44)==0);
@@ -183,7 +194,8 @@ void refusal(const std::string& mode,Memory& memory,PS2Runtime& runtime){
     }
     group(runtime);const auto before=original_calls;bool refused{};
     try{
-        if(mode=="stereo_pan"){b::store(memory.bytes,b::handles.base+0x44,std::int16_t(0));group(runtime);}
+        if(mode=="metadata"){metadata_allowed=false;group(runtime);}
+        else if(mode=="stereo_pan"){b::store(memory.bytes,b::handles.base+0x44,std::int16_t(0));group(runtime);}
         else if(mode=="mono_pan"){b::store(memory.bytes,b::handles.base+2*b::handles.stride+0x42,std::int16_t(0));group(runtime);}
         else if(mode=="callback")(void)call(runtime,0x133158,{b::handles.base,0x100100});
         else if(mode=="producer")(void)call(runtime,0x131d18,{b::handles.base,0x1800000});
@@ -209,7 +221,7 @@ int main(int argc,char** argv)try{
     auto opened=res::MountedResources::open_file1_windows(std::filesystem::path(argv[2]));check(opened.status==res::MountStatus::ok);prepared_mount=std::move(opened.mount);
     std::ifstream plan(argv[3]);for(auto& asset:assets){plan>>asset.start>>asset.count>>asset.channels>>asset.rate>>asset.total>>asset.digest[0]>>asset.digest[1];check(bool(plan));}
     const std::string mode=argv[4];
-    if(mode=="ordinary")ordinary(memory,runtime);
+    if(mode=="ordinary" || mode=="metadata_three")ordinary(memory,runtime,mode=="metadata_three");
     else if(mode=="missing_one" || mode=="missing_two")missing_order(memory,runtime,mode=="missing_one"?1:2);
     else if(mode=="phase" || mode=="image" || mode=="entry" || mode=="mount" || mode=="worker" || mode=="registry" || mode=="factory")admission(mode,memory,runtime);
     else refusal(mode,memory,runtime);

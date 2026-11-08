@@ -7,7 +7,7 @@ sys.path.insert(0,str(ROOT/'tools/function_index'));from index import Elf
 PORTS=ROOT/'build-native-sjuni/audio-media-factory/prepared-llvm-v1'
 PORTS_SHA='948c0bf63919cb7a8ba9e6f193ee4a6a49265b86c9410b54208538c380606e8c'
 META=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1'
-SCENARIOS=('ordinary','missing_one','missing_two','phase','image','entry','mount','worker','registry','factory','partial','callback','producer','changed_child','order','order_partial','foreign','guest_depth','query_alias','stereo_pan','mono_pan')
+SCENARIOS=('ordinary','metadata_three','metadata','missing_one','missing_two','phase','image','entry','mount','worker','registry','factory','partial','callback','producer','changed_child','order','order_partial','foreign','guest_depth','query_alias','stereo_pan','mono_pan')
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def write(path,body):path.write_text(body,encoding='utf-8',newline='\n')
 def main():
@@ -42,7 +42,7 @@ def main():
     fixture=HERE/'handle_profile_tests.cpp';proof=json.loads((HERE/'handle_qualification.json').read_bytes())
     if sha(fixture)!=proof['authored_sha256']['handle_profile_tests.cpp']:raise ValueError('Qualified independent handle fixture required')
     inputs={n:d for n,d in manifest['files'].items() if n.startswith('game/native/') or n.startswith('recomp/overrides/native_banks/')}
-    paths=[HERE/'ordinary_runtime.cpp',HERE/'ordinary_runtime.h',HERE/'ordinary_entries.inc',HERE/'game_handles.cpp',HERE/'game_handles.h',HERE/'source_profile.cpp',HERE/'source_profile.h',fixture,HERE/'handle_profile.h',Path(__file__),*sorted((HERE/'ordinary_tests').iterdir())]
+    paths=[HERE/'ordinary_runtime.cpp',HERE/'ordinary_runtime.h',HERE/'ordinary_entries.inc',HERE/'game_handles.cpp',HERE/'game_handles.h',HERE/'source_profile.cpp',HERE/'source_profile.h',fixture,HERE/'handle_profile.h',Path(__file__),*sorted((HERE/'ordinary_tests').rglob('*'))]
     inputs.update({p.relative_to(ROOT).as_posix():sha(p) for p in paths if p.is_file()})
     def verify():
         for n,d in {**inputs,**native['libraries'],**original}.items():
@@ -87,6 +87,12 @@ def main():
         faults['ignore-three-source-order']=(
             'prospective>2 && (r.source || ram[r.handle.address+0xac])',
             'prospective>16 && (r.source || ram[r.handle.address+0xac])', 'order_partial')
+        faults['omit-muted-metadata-refresh']=(
+            'ps2_syscalls::refreshMutedRnaMetadataV1(runtime)',
+            'ps2_syscalls::RnaMetadataResultV1{ps2_syscalls::RnaMetadataStatusV1::ok,0,0,0}', 'metadata_three')
+        faults['ignore-muted-metadata-refusal']=(
+            'metadata.status!=ps2_syscalls::RnaMetadataStatusV1::ok',
+            'false', 'metadata')
         for name,(anchor,replacement,case) in faults.items():
             if body.count(anchor)!=1:raise ValueError('Unique adapter mutation anchor '+name)
             folder=out/name;folder.mkdir();changed=folder/'ordinary_runtime_body.cpp';write(changed,body.replace(anchor,replacement));fixture=out/(name+'-tests.cpp');write(fixture,test.replace('#include "ordinary_runtime_body.cpp"','#include "'+name+'/ordinary_runtime_body.cpp"'))

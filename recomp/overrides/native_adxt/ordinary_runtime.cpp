@@ -7,6 +7,7 @@
 #include "recomp/overrides/native_geometry/reo_vu_native_sha256.h"
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
+#include "Kernel/Syscalls/RPC.h"
 #include <algorithm>
 #include <atomic>
 #include <bit>
@@ -136,6 +137,12 @@ public:
         store(ram,at+0x9c,s.clock.estimate_base);store(ram,at+0xa0,s.clock.tick_base);ram[at+0x72]=s.clock.paused;
     }
     void set_order(){
+        // Reproduce the original muted RNA metadata traversal outside native
+        // owner admission/output callbacks. The raw bridge's subsequent copy,
+        // rather than request count or RNA slot order, remains authoritative.
+        const auto metadata=ps2_syscalls::refreshMutedRnaMetadataV1(runtime);
+        if(metadata.status!=ps2_syscalls::RnaMetadataStatusV1::ok)
+            fail("muted-rna-metadata",metadata.bad_handle,unsigned(metadata.status));
         std::array<std::uint32_t,2041> raw{};const auto copied=order->copy(raw);if(copied.status!=pcm_bridge::Status::ok || copied.value>raw.size())fail("raw-order",0,unsigned(copied.status));
         // The replaced RNA group need not have published a raw PCM voice for a
         // pending native source. The qualified private mixer admits <=2 source

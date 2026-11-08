@@ -8,6 +8,7 @@
 #include "runtime/audio/native_stream_provider.h"
 #include "ps2_runtime.h"
 #include "ps2_syscalls.h"
+#include <atomic>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -89,8 +90,17 @@ public:
     void requestStop()noexcept override{owner_->request_stop();}
     bool join()noexcept override{
         if(ps2ActualGuestExecutionDepth(runtime_) || ps2IoRegLockDepth() || !sources::Owner::join_allowed_on_current_thread())return false;
-        return owner_->join()==sources::Join::completed;
+        if(owner_->join()!=sources::Join::completed)return false;
+        const auto report=owner_->report();
+        if(report.final && !reported_.exchange(true,std::memory_order_relaxed)){
+            const auto& stats=report.final->session.output.statistics;
+            std::fprintf(stderr,"[NATIVE-ADXT-SOURCE-REPORT] joined=%u frames=%llu signal_frames=%llu underrun_frames=%llu\n",
+                unsigned(report.joined),(unsigned long long)stats.output_frames,
+                (unsigned long long)stats.signal_frames,(unsigned long long)stats.underrun_frames);
+        }
+        return true;
     }
+private:std::atomic<bool> reported_{};
 };
 class MediaPcmOrder final:public MediaInstallResult::PcmOrder {
     std::shared_ptr<media::Aggregate> owner_;

@@ -1,5 +1,12 @@
 # Dependency patches
 
+Patch `0130` adds an explicit versioned muted RNA metadata refresh for the
+native-source adapter. It retains exact runtime sound-control admission and
+actual unsorted RNA traversal, validates every row before requesting voice
+configuration, and never queues original PCM or changes playback clocks. The
+complete 131-patch series reapplies at the recorded pin. A matching rebuilt
+runtime is required. See [the handoff and qualification limits](../../docs/native-media/MUTED_RNA_METADATA.md).
+
 Patch `0128` admits the measured sound state RPC `0x10` and reproduces the
 existing generic reply through owned RAM transport, including alias and clamp
 rules. Existing query routes and ABI layouts are unchanged. The full 129-patch
