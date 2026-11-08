@@ -33,15 +33,15 @@ template<class T>struct Com {
 enum class Action {start,append,pause,loop,stop};
 struct Command {Action action;Generation generation;std::vector<std::shared_ptr<const movie_assets::Asset>> assets;std::uint32_t width{512};bool value{};};
 struct PipelineTrace {
-    struct Row {std::uint64_t wake_begin{},wake_end{},controls_end{},state_end{},transfer_end{},readback_end{},publish_end{},end{},generation{},clip{},serial{},ordinal{},backpressure{};bool updated{};};
-    std::filesystem::path path;std::vector<Row> rows;std::uint64_t dropped{};bool saved{};
+    struct Row {std::uint64_t wake_begin{},wake_end{},controls_end{},state_end{},transfer_end{},readback_end{},publish_end{},end{},generation{},clip{},serial{},ordinal{},backpressure{},events{};double position_seconds{};State state{};bool updated{};};
+    std::filesystem::path path;std::vector<Row> rows;std::uint64_t dropped{},last_record{};bool saved{};
     static std::uint64_t now(){return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());}
     PipelineTrace()noexcept{try{if(const auto* name=_wgetenv(L"REO_NATIVE_HOST_MOVIE_TRACE_FILE");name&&*name){path=std::filesystem::path(name);rows.reserve(32768);}}catch(...){path.clear();std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] trace allocation unavailable\n");}}
-    void record(const Row& row)noexcept{if(path.empty())return;if(rows.size()<32768)rows.push_back(row);else ++dropped;}
+    void record(const Row& row)noexcept{if(path.empty())return;last_record=row.end;if(rows.size()<32768)rows.push_back(row);else ++dropped;}
     void save()noexcept{if(saved||path.empty())return;saved=true;
         const auto fd=_wopen(path.c_str(),_O_WRONLY|_O_CREAT|_O_EXCL|_O_BINARY,_S_IREAD|_S_IWRITE);auto* file=fd<0?nullptr:_fdopen(fd,"wb");if(!file){if(fd>=0)_close(fd);std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] fresh output could not be opened\n");return;}
-        std::fprintf(file,"# dropped=%llu\nwake_begin_ns,wake_end_ns,controls_end_ns,state_end_ns,transfer_end_ns,readback_end_ns,publish_end_ns,end_ns,generation,clip,serial,ordinal,backpressure,updated\n",static_cast<unsigned long long>(dropped));
-        for(const auto& r:rows)std::fprintf(file,"%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%u\n",static_cast<unsigned long long>(r.wake_begin),static_cast<unsigned long long>(r.wake_end),static_cast<unsigned long long>(r.controls_end),static_cast<unsigned long long>(r.state_end),static_cast<unsigned long long>(r.transfer_end),static_cast<unsigned long long>(r.readback_end),static_cast<unsigned long long>(r.publish_end),static_cast<unsigned long long>(r.end),static_cast<unsigned long long>(r.generation),static_cast<unsigned long long>(r.clip),static_cast<unsigned long long>(r.serial),static_cast<unsigned long long>(r.ordinal),static_cast<unsigned long long>(r.backpressure),unsigned(r.updated));
+        std::fprintf(file,"# dropped=%llu\nwake_begin_ns,wake_end_ns,controls_end_ns,state_end_ns,transfer_end_ns,readback_end_ns,publish_end_ns,end_ns,generation,clip,serial,ordinal,backpressure,updated,events,position_seconds,state\n",static_cast<unsigned long long>(dropped));
+        for(const auto& r:rows)std::fprintf(file,"%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%u,%llu,%.9f,%u\n",static_cast<unsigned long long>(r.wake_begin),static_cast<unsigned long long>(r.wake_end),static_cast<unsigned long long>(r.controls_end),static_cast<unsigned long long>(r.state_end),static_cast<unsigned long long>(r.transfer_end),static_cast<unsigned long long>(r.readback_end),static_cast<unsigned long long>(r.publish_end),static_cast<unsigned long long>(r.end),static_cast<unsigned long long>(r.generation),static_cast<unsigned long long>(r.clip),static_cast<unsigned long long>(r.serial),static_cast<unsigned long long>(r.ordinal),static_cast<unsigned long long>(r.backpressure),unsigned(r.updated),static_cast<unsigned long long>(r.events),r.position_seconds,unsigned(r.state));
         const auto failed=std::ferror(file);const auto closed=std::fclose(file);if(failed||closed)std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] trace export incomplete\n");
     }
 };
@@ -116,7 +116,7 @@ struct Session::Impl {
                     checked(device->CreateTexture2D(&desc,nullptr,&readback.p),"Native movie renderer handoff failed");
                     for(auto& slot:pool){slot=std::make_shared<CpuFrame>();slot->width=width;slot->height=height;slot->pitch=width*4;slot->bgra.resize(std::size_t(width)*height*4);}
                 }
-                if(tracing)timing.state_end=PipelineTrace::now();
+                if(tracing){timing.state_end=PipelineTrace::now();timing.events=state.events;timing.position_seconds=state.position_seconds;timing.state=state.state;}
                 if(target.p) {
                     const auto due=player->transfer(engine_generation,target.p);
                     if(tracing){timing.updated=due.updated;timing.transfer_end=PipelineTrace::now();}
@@ -137,7 +137,7 @@ struct Session::Impl {
                     }
                 }
                 {std::lock_guard lock(mutex);if(report.generation==generation){report.state=index&&latest&&state.state==State::loading?State::playing:state.state;report.paused=paused;report.loop=repeat;report.frames=serial;report.backpressure=backpressure;report.clip_index=index;report.queued_clips=assets.size();report.position_seconds=completed_frames*1001.0/30000.0+state.position_seconds;report.duration_seconds=state.duration_seconds;}}
-                if(tracing){timing.end=PipelineTrace::now();timing.generation=generation;timing.clip=index;timing.serial=serial;timing.backpressure=backpressure;if(timing.updated||timing.end-timing.wake_begin>=10000000)trace.record(timing);}
+                if(tracing){timing.end=PipelineTrace::now();timing.generation=generation;timing.clip=index;timing.serial=serial;timing.backpressure=backpressure;if(timing.updated||timing.end-timing.wake_begin>=10000000||timing.end-trace.last_record>=50000000)trace.record(timing);}
               }catch(const std::exception& error){
                 // A failed source retires its pipeline, not the control owner.
                 // A later start can use the same device with a fresh engine.

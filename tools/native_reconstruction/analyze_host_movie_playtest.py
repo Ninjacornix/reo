@@ -18,6 +18,48 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
+def read_trace(path):
+    if not path.exists():
+        return None
+    with path.open() as stream:
+        retention = next(stream).strip()
+        rows = []
+        for number, row in enumerate(csv.DictReader(stream), 3):
+            values = {k: float(v) if k == 'position_seconds' else int(v) for k, v in row.items()}
+            values['line'] = number
+            rows.append(values)
+    return dict(file=path.name, retention=retention, rows=rows)
+
+
+def correlate_pipeline(incident, producer, consumer):
+    begin, end = incident['begin_ns'], incident['end_ns']
+    result = {}
+    if consumer:
+        requests = [r for r in consumer['rows'] if begin <= r['begin_ns'] <= end]
+        result['consumer'] = dict(file=consumer['file'], retention=consumer['retention'],
+            requests=len(requests), fresh_frames=sum(r['available'] for r in requests),
+            first_line=requests[0]['line'] if requests else None,
+            last_line=requests[-1]['line'] if requests else None,
+            max_request_gap_ms=max(((b['begin_ns']-a['begin_ns'])/1e6 for a, b in zip(requests, requests[1:])), default=None),
+            max_borrow_ms=max(((r['borrowed_ns']-r['begin_ns'])/1e6 for r in requests), default=None))
+    if producer:
+        rows = producer['rows']
+        published = [r for r in rows if r['publish_end_ns']]
+        previous = next((r for r in reversed(published) if r['publish_end_ns'] <= begin), None)
+        following = next((r for r in published if r['publish_end_ns'] > begin), None)
+        same_source = bool(previous and following and
+            (previous['generation'], previous['clip']) == (following['generation'], following['clip']))
+        surrounding = [r for r in rows if begin-100_000_000 <= r['end_ns'] <= end+100_000_000]
+        result['producer'] = dict(file=producer['file'], retention=producer['retention'],
+            previous_publication=previous, next_publication=following,
+            same_source=same_source,
+            publication_gap_ms=(following['publish_end_ns']-previous['publish_end_ns'])/1e6 if same_source else None,
+            observed_iterations=len(surrounding),
+            max_recorded_iteration_ms=max(((r['end_ns']-r['wake_begin_ns'])/1e6 for r in surrounding), default=None),
+            periodic_heartbeat_available=bool(rows and 'position_seconds' in rows[0]))
+    return result
+
+
 def analyze(folder):
     manifest = json.loads((folder / 'session.json').read_text())
     run = json.loads((folder / 'run.json').read_text())
@@ -51,6 +93,7 @@ def analyze(folder):
     with pacing.open() as stream:
         retained = next(stream).strip()
         frames = [{k: int(v) for k, v in row.items()} for row in csv.DictReader(stream)]
+    producer, consumer = (read_trace(folder / name) for name in ('producer.csv', 'consumer.csv'))
     incidents = sorted((r for r in changes if r['gap_ms'] >= 50), key=lambda r: r['gap_ms'], reverse=True)[:32]
     for incident in incidents:
         samples = [r for r in rows if incident['begin_ns'] <= r['qpc_ns'] <= incident['end_ns']]
@@ -62,12 +105,14 @@ def analyze(folder):
             max_span_ms=max(((r['end_ns']-r['begin_ns'])/1e6 for r in window), default=None))
         incident['classification'] = 'measured public-frame handoff gap; cause unknown'
         incident['evidence'] = dict(progress=progress.name, pacing=pacing.name)
+        incident['pipeline'] = correlate_pipeline(incident, producer, consumer)
     controls = folder / 'native-controls-v1.jsonl'
     observed = [json.loads(line) for line in controls.read_text().splitlines() if line]
     diagnostics = owned.classify_native_logs(logs)
     files = [folder / 'run.json', folder / 'session.json', progress, pacing, controls,
              folder / 'native-progress-v1-receipt.json', folder / 'native-controls-v1-receipt.json',
              folder / 'native-audio-v1-receipt.json', logs / 'stderr.log']
+    files += [folder / trace['file'] for trace in (producer, consumer) if trace]
     audio = json.loads((folder / 'audio-candidate-analysis.json').read_text())['native_audio']
     return dict(schema=1, executable_sha256=manifest['sourceSha256'], identity=run['players'][0],
         source_starts=source_starts, final_reports=unique_reports, duplicate_report_lines=len(reports)-len(unique_reports),
@@ -84,18 +129,22 @@ def analyze(folder):
             'The progress observer retains its teardown WinError 299 and partial receipt.',
             'Native audio aggregate underruns cannot be assigned to a video incident without per-event timing.',
             'Normal guest-thread shutdown is reclassified by the corrected analyzer; historical run.json remains intact.',
-            'The native producer and game-side consumer need separate timestamps to locate the handoff stall.',
+            'Pipeline timestamps include host descheduling; short recorded calls do not prove continuous worker execution.',
+            'Older producer traces omit fast empty polls; absent records cannot distinguish engine starvation from worker preemption.',
             'This exercised route does not complete Step 3.'])
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--session', type=Path, required=True)
+    parser.add_argument('--output-name', default='native-movie-analysis.json')
     args = parser.parse_args()
     folder = args.session.resolve()
     if not folder.is_relative_to(ROOT / 'build-native-sjuni/playtests'):
         raise ValueError('Private owned test evidence required')
-    output = folder / 'native-movie-analysis.json'
+    if Path(args.output_name).name != args.output_name or not args.output_name.endswith('.json'):
+        raise ValueError('A local JSON output filename is required')
+    output = folder / args.output_name
     if output.exists():
         raise ValueError('Preserve existing analysis')
     result = analyze(folder)

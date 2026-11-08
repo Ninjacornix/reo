@@ -13,6 +13,11 @@ multi-clip scenario and looping backgrounds and reaches gameplay with original
 MWSFD slots inactive in all samples. A 528.55ms handoff stall and 100,736 source
 audio underrun frames remain measured and unresolved. Native-producer/consumer
 timing, audible synchronization, additional controls and packaging keep Step 3 open.
+The [V26 producer/consumer capture](NATIVE_MP4_CANDIDATE_V26.md) reproduces an
+830.546ms freeze while consumers keep requesting frames and native publications
+stop for 841.3405ms. It locates the bottleneck upstream of conversion/upload;
+decoder versus worker scheduling remains unknown. Software/WIC native playback
+and periodic producer heartbeats pass isolated checks; their game retest is next.
 The [new native MP4 player](../../game/native/host_movie/README.md) delivers all195
 pictures through Windows Media Engine and D3D11 textures on both compilers,
 including native window presentation under LLVM. Pause/resume, EOF/restart,

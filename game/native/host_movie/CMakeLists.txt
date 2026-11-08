@@ -9,7 +9,7 @@ target_include_directories(reo_native_host_movie PUBLIC "${CMAKE_CURRENT_SOURCE_
 if(NOT TARGET reo_native_movie_assets)
   add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../movie_assets" "${CMAKE_CURRENT_BINARY_DIR}/movie-assets")
 endif()
-target_link_libraries(reo_native_host_movie PUBLIC reo_native_movie_assets mfplat mfuuid ole32 oleaut32 shlwapi d3d11 dxguid)
+target_link_libraries(reo_native_host_movie PUBLIC reo_native_movie_assets mfplat mfuuid ole32 oleaut32 shlwapi d3d11 dxguid windowscodecs)
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(reo_native_host_movie PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()

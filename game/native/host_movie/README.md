@@ -30,7 +30,8 @@ The first source must come from a prepared local MP4 cache. Runtime transcoding
 on the game or graphics thread is not part of this design. `Session` now owns
 the native thread, prepared asset playlist, consecutive-source priming and a
 bounded immutable CPU frame handoff. The temporary game cue/renderer adapter
-compiles, but has not passed in-game validation yet. Do not instantiate the old
+plays the opening, looping backgrounds and scenario playlist in V25/V26, with
+measured stalls and source-audio underruns still unresolved. Do not instantiate the old
 Sofdec/IPU path for a movie claimed by this replacement. See
 [native game integration](../../../docs/native-media/NATIVE_MP4_GAME_INTEGRATION.md)
 for actual worker evidence and the remaining Step 3 validation.
@@ -68,3 +69,24 @@ Platform references:
 [native video ticks](https://learn.microsoft.com/en-us/windows/win32/api/mfmediaengine/nf-mfmediaengine-imfmediaengine-onvideostreamtick),
 [frame transfer and letterboxing](https://learn.microsoft.com/en-us/windows/win32/api/mfmediaengine/nf-mfmediaengine-imfmediaengine-transfervideoframe),
 [display-size semantics](https://learn.microsoft.com/en-us/windows/win32/api/mfmediaengine/nf-mfmediaengine-imfmediaengine-getnativevideosize).
+
+## Controlled frame-path comparison
+
+The private `REO_NATIVE_HOST_MOVIE_SOFTWARE=1` comparison omits the Media Engine
+DXGI manager, transfers into a reusable WIC BGRA bitmap, then uploads into the
+same caller texture. Native Media Engine retains scheduling, playback controls
+and source lifetime. The default remains the DXGI-enabled path. A DXGI manager
+does not prove that hardware decoding was actually used.
+
+Both compiler cohorts pass 390-frame software-path playlists and lifecycle
+checks. Separate player tests validate clock-paced output and actual GPU
+readbacks. These are candidate checks, not a demonstrated fix for the
+[V26 opening freeze](../../../docs/native-media/NATIVE_MP4_CANDIDATE_V26.md).
+The extra CPU upload/readback is a controlled comparison, not the intended final
+native compositor design.
+
+Optional producer timing now includes a state/clock/event heartbeat at least
+every 50 ms while its worker is running a movie, as well as fresh frames and
+iterations lasting at least 10 ms. A missed heartbeat is evidence of missing
+worker observations, not proof of decoder starvation. Traces stay bounded and
+export after worker join; they are not live CSV streams.

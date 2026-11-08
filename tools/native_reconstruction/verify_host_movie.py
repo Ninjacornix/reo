@@ -19,6 +19,7 @@ def main():
     sources=[ROOT/'game/native/host_movie'/n for n in ['player.hpp','player.cpp','CMakeLists.txt']]+[Path(__file__),Path(__file__).with_name('host_movie_check.cpp')]
     result=dict(schema=1,status='failed',compiler_sha256=sha(a.compiler),movie_receipt_sha256=sha(a.movie_receipt),mp4_sha256=sha(clip),source_sha256={s.relative_to(ROOT).as_posix():sha(s)for s in sources},checks=[],game_run=False,audible_sync_tested=False)
     env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','')
+    result['frame_path']='software-WIC' if env.get('REO_NATIVE_HOST_MOVIE_SOFTWARE')=='1' else 'DXGI-enabled'
     def run(label,cmd,seconds):
         begin=time.monotonic();r=subprocess.run(list(map(str,cmd)),capture_output=True,text=True,env=env,timeout=seconds)
         (out/(label+'.log')).write_text(r.stdout+r.stderr,encoding='utf-8',newline='\n');result['checks'].append(dict(label=label,command=list(map(str,cmd)),exit_code=r.returncode,seconds=round(time.monotonic()-begin,6)))
@@ -26,7 +27,7 @@ def main():
         return r.stdout
     try:
         binary=out/'host-movie-check.exe'
-        run('compile',[a.compiler,'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-municode','-I'+str(ROOT),ROOT/'tools/native_reconstruction/host_movie_check.cpp',ROOT/'game/native/host_movie/player.cpp','-o',binary,'-lmfplat','-lmfuuid','-lole32','-loleaut32','-lshlwapi','-ld3d11','-ldxguid'],90)
+        run('compile',[a.compiler,'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-municode','-I'+str(ROOT),ROOT/'tools/native_reconstruction/host_movie_check.cpp',ROOT/'game/native/host_movie/player.cpp','-o',binary,'-lmfplat','-lmfuuid','-lole32','-loleaut32','-lshlwapi','-ld3d11','-ldxguid','-lwindowscodecs'],90)
         observation=json.loads(run('playback',[binary,clip,corrupt]+(['--window']if a.window else []),60))
         result.update(status=observation['status'],observation=observation,binary_sha256=sha(binary),screen_presentation=a.window)
     finally:(out/'receipt.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8',newline='\n')

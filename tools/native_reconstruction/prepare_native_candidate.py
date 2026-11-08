@@ -484,7 +484,7 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     if host_movie:
         template['options'].append('/DREO_BUILD_NATIVE_HOST_MOVIE=1')
         unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_HOST_MOVIE=1')
-        for library in ('mfplat.lib', 'mfuuid.lib', 'ole32.lib', 'oleaut32.lib', 'shlwapi.lib', 'd3d11.lib', 'dxguid.lib'):
+        for library in ('mfplat.lib', 'mfuuid.lib', 'ole32.lib', 'oleaut32.lib', 'shlwapi.lib', 'd3d11.lib', 'dxguid.lib', 'windowscodecs.lib'):
             if library not in plan['linkOptions']:
                 plan['linkOptions'].append(library)
     if resource_reads:

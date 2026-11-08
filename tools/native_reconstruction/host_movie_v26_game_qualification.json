@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "status": "movie publication gap measured upstream of game conversion; internal cause and source-audio underruns unresolved",
+  "source_revision": "0c9fa680911faad6a573ee2ad6f46f17bd64886f",
+  "executable_sha256": "9cd40bc4ffc13fd28aae0652d2bb77e32a515ee936ac61ea1e10187a6ca508a3",
+  "analyzer_sha256": {
+    "tools/native_reconstruction/analyze_host_movie_playtest.py": "241cad5a02db73177c10cac2eb618ede55546d4a61d1c07590ec53e85ee0bb06",
+    "tools/native_reconstruction/test_host_movie_analysis.py": "2a355bdf0f5339245431c3ae3ddbf13967196ad37ed3de617bf16c0751ee977f"
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/candidate-work-v26/candidate-build-result.json": "70b8075c759888177c4bc8b9c7c71dfa6e9ee62731caa779a17ac2773cbf9374",
+    "build-native-sjuni/candidate-work-v26/seeded-object-cache.json": "7410a0caee119248f29fd6b81b1ecfe7038bbdf9d4053f4f9aecdfcdf81b5c34",
+    "build-native-sjuni/playtests/native-mp4-v26/native-movie-analysis-v2.json": "92c2c78148d53848a8ccafa5ffba1cf7e8bb0f640400ceb011e2b0fd697d7666",
+    "build-native-sjuni/playtests/native-mp4-v26/audio-candidate-analysis.json": "844d0bed791bdd79f9237a80164b051c65b7febc19e6d2b537a60abdc31c3782",
+    "build-native-sjuni/playtests/native-mp4-v26/native-audio-v1-receipt.json": "5d397b3a728fb9efb8e3401151cba8814d55454f4f427606e1699ed2478b25f7",
+    "build-native-sjuni/playtests/native-mp4-v26/producer.csv": "af809891f79a452fa8e0de88189b49e41c4bd73e771d019bd0e6a7d6b64f9459",
+    "build-native-sjuni/playtests/native-mp4-v26/consumer.csv": "11511329cafee0ee8b3611c1cb8f2e9e70f52ccbf131617ed14d399cf9ff73e4"
+  },
+  "step3_complete": false,
+  "subjective_av_confirmation": false
+}

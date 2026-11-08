@@ -43,10 +43,11 @@ def main():
     command = [str(compiler), '-std=c++20', '-O2', '-Wall', '-Wextra', '-Wpedantic', '-Werror',
                '-municode', '-I' + str(ROOT), *[str(ROOT / s) for s in SOURCES], '-o', str(executable),
                '-lruntimeobject', '-lbcrypt', '-lmfplat', '-lmfuuid', '-lole32', '-loleaut32',
-               '-lshlwapi', '-ld3d11', '-ldxguid']
+               '-lshlwapi', '-ld3d11', '-ldxguid', '-lwindowscodecs']
     env = dict(os.environ, PATH=str(compiler.parent) + os.pathsep + os.environ['PATH'])
     receipt = dict(schema=1, compiler=str(compiler), compiler_sha256=digest(compiler),
-                   sources={s: digest(ROOT / s) for s in SOURCES}, game_run=False, checks=[])
+                   sources={s: digest(ROOT / s) for s in SOURCES}, game_run=False,
+                   frame_path='software-WIC' if env.get('REO_NATIVE_HOST_MOVIE_SOFTWARE') == '1' else 'DXGI-enabled', checks=[])
     started = time.monotonic()
     try:
         for name, cmd, timeout in [('compile', command, 180),

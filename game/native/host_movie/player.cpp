@@ -5,6 +5,7 @@
 #include <d3d10.h>
 #include <mfapi.h>
 #include <mfmediaengine.h>
+#include <wincodec.h>
 #include <shlwapi.h>
 #include <atomic>
 #include <cmath>
@@ -78,6 +79,8 @@ struct Player::Impl {
     Com<IMFMediaEngineClassFactory> factory;
     Com<IMFMediaEngine> engine;
     Com<Notify> notify;
+    Com<IWICImagingFactory> wic_factory;Com<IWICBitmap> bitmap;Com<ID3D11DeviceContext> upload;
+    bool software{};std::uint32_t bitmap_width{},bitmap_height{};
     Generation current{},next{};std::uint64_t frames{};HRESULT shutdown_error{S_OK};
     explicit Impl(ID3D11Device* graphics):device(graphics) {
         constexpr auto required=D3D11_CREATE_DEVICE_VIDEO_SUPPORT|D3D11_CREATE_DEVICE_BGRA_SUPPORT;
@@ -86,6 +89,8 @@ struct Player::Impl {
         UINT token{};check(MFCreateDXGIDeviceManager(&token,manager.out()),"device manager");
         check(manager->ResetDevice(graphics,token),"device manager binding");
         check(CoCreateInstance(CLSID_MFMediaEngineClassFactory,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(factory.out())),"media engine factory");
+        const auto* requested=_wgetenv(L"REO_NATIVE_HOST_MOVIE_SOFTWARE");software=requested&&requested[0]==L'1'&&!requested[1];
+        if(software){check(CoCreateInstance(CLSID_WICImagingFactory,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(wic_factory.out())),"native WIC factory");graphics->GetImmediateContext(upload.out());}
     }
     void thread()const{if(std::this_thread::get_id()!=owner)throw std::logic_error("Native movie call is outside its graphics owner");}
     void selected(Generation generation)const{thread();if(!engine.get()||!generation||generation!=current)throw std::invalid_argument("Stale native movie generation");}
@@ -102,7 +107,7 @@ Generation Player::open(const std::filesystem::path& path,Options options) {
     if(p.next==std::numeric_limits<Generation>::max())throw std::overflow_error("Native movie generation exhausted");
     Com<Notify> notify;*notify.out()=new Notify;
     Com<IMFAttributes> attributes;check(MFCreateAttributes(attributes.out(),3),"engine attributes");
-    check(attributes->SetUnknown(MF_MEDIA_ENGINE_DXGI_MANAGER,p.manager.get()),"engine device");
+    if(!p.software)check(attributes->SetUnknown(MF_MEDIA_ENGINE_DXGI_MANAGER,p.manager.get()),"engine device");
     check(attributes->SetUnknown(MF_MEDIA_ENGINE_CALLBACK,notify.get()),"engine callback");
     check(attributes->SetUINT32(MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT,DXGI_FORMAT_B8G8R8A8_UNORM),"engine frame format");
     Com<IMFMediaEngine> engine;check(p.factory->CreateInstance(0,attributes.get(),engine.out()),"engine creation");
@@ -151,7 +156,15 @@ Frame Player::transfer(Generation generation,ID3D11Texture2D* target) {
     LONGLONG pts{};const auto ready=p.engine->OnVideoStreamTick(&pts);check(ready,"video stream tick");
     if(ready==S_FALSE)return{false,generation,0};
     RECT destination{0,0,static_cast<LONG>(desc.Width),static_cast<LONG>(desc.Height)};MFARGB border{0,0,0,255};
-    check(p.engine->TransferVideoFrame(target,nullptr,&destination,&border),"video frame transfer");++p.frames;return{true,generation,pts};
+    if(p.software){
+        if(!p.bitmap.get()||p.bitmap_width!=desc.Width||p.bitmap_height!=desc.Height){p.bitmap.reset();check(p.wic_factory->CreateBitmap(desc.Width,desc.Height,GUID_WICPixelFormat32bppBGRA,WICBitmapCacheOnLoad,p.bitmap.out()),"native CPU video bitmap");p.bitmap_width=desc.Width;p.bitmap_height=desc.Height;}
+        check(p.engine->TransferVideoFrame(p.bitmap.get(),nullptr,&destination,&border),"native software video transfer");
+        WICRect rect{0,0,static_cast<INT>(desc.Width),static_cast<INT>(desc.Height)};Com<IWICBitmapLock> locked;check(p.bitmap->Lock(&rect,WICBitmapLockRead,locked.out()),"native CPU video lock");
+        UINT pitch{},bytes{};BYTE* pixels{};check(locked->GetStride(&pitch),"native CPU video stride");check(locked->GetDataPointer(&bytes,&pixels),"native CPU video data");
+        if(pitch<desc.Width*4||bytes<std::uint64_t(pitch)*(desc.Height-1)+std::uint64_t(desc.Width)*4)throw std::runtime_error("Native CPU video bitmap bounds");
+        p.upload->UpdateSubresource(target,0,nullptr,pixels,pitch,0);
+    }else check(p.engine->TransferVideoFrame(target,nullptr,&destination,&border),"video frame transfer");
+    ++p.frames;return{true,generation,pts};
 }
 void Player::close()noexcept{if(impl_)impl_->close();}
 }
