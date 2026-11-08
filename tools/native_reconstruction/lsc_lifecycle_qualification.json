@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "status": "owned LSC lifecycle observations and constraints verified",
+  "source_sha256": {
+    "tools/native_reconstruction/lsc_lifecycle_oracle.py": "cb6e4ac471207968bbf54b2931a0069e52bf137c51673b128d8db0637181fe68",
+    "tools/native_reconstruction/verify_lsc_lifecycle.py": "ac8b32d863a04643d4523d85110732fa7b426c56f5f5f23c4198dc041d4a0a60",
+    "docs/native-media/LSC_CHILD_LIFECYCLE.md": "bed8dd8ada24bfb69ace4a4563270a8525a33ae7fb742d19b4c132195961e8df",
+    "docs/native-media/LSC_GAME_BINDING_RESEARCH.md": "74f5c17538525517ecf4955b67d6ba70e75a5cd26c3587ff29936fe5678b62ea"
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/lsc-lifecycle/original-v2/receipt.json": "b5dc204f32a6560d5c973373e0bc627fab159bc344e54ce4b6267267750a57d6",
+    "build-native-sjuni/lsc-lifecycle/constraints-v1/receipt.json": "dc01c48b329fd2b3107aa9c0fea8113efff9b16469d9e5bf51092f27bf21c132"
+  },
+  "cases": 42,
+  "operations": 93,
+  "original_instructions": 11358,
+  "constraints": 358,
+  "game_run": false,
+  "native_comparison": false,
+  "stage3_complete": false
+}

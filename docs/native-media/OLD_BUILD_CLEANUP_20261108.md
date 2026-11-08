@@ -34,3 +34,9 @@ available for direct replay.
 The storage gate was sufficient to prepare and run V20 and resume native checks.
 V20 and the later V21 game results remain failures at `active-raw-route-missing`, rather
 than evidence that Stage 3 is complete. The PC has not been put to sleep.
+
+During the later V22 build, four individually identified obsolete RC2 launcher
+executables were also removed from the four RC2 `dist` package folders. No RC2
+directory was recursively removed. Original paths, sizes, hashes and deletion
+results are in `build-native-sjuni/old-rc2-launcher-removal-v1.json`. The installed
+AppData launcher is unaffected.

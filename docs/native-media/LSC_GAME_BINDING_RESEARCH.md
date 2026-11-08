@@ -46,3 +46,9 @@ Still to establish: real caller queue/repeat/callback profiles, precise original
 LSC child construction/reuse admission, source mode/error/EOF/restart behavior,
 and the complete game service schedule. The current ordinary profile continues
 to refuse unsupported LSC producers before original producer effects.
+
+The later [owned child lifecycle observations](LSC_CHILD_LIFECYCLE.md) establish
+the separate 16-entry `21E110` pool, actual construction/attachment links,
+status-word initialization and original stop/clear/reuse behavior. They also
+identify the live input's missing variable minimum threshold. Native child
+admission, worker-fenced reuse and complete game service integration remain open.
