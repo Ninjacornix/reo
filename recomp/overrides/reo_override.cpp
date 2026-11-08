@@ -1192,6 +1192,14 @@ static void reo_sfd_feed_end_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime
         return;
     sub_00162750_0x162750(rdram, ctx, runtime);
 }
+// Exact reviewed registry alternatives for the transitional native movie owner.
+// Arbitrary wrappers remain refused; unclaimed calls retain these original
+// continuation/timing adapters, including rollback after an incomplete install.
+bool reoNativeHostMovieReviewedEntry(std::uint32_t address, PS2Runtime::RecompiledFunction function)noexcept {
+    if(address==0x1627a8)return function==reo_sfd_feed_end_entry;
+    if(address==0x1640d8)return function==reo_cri_server::part<sub_001640D8_0x1640d8,0>;
+    return false;
+}
 void sub_0010A830_0x10a830(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001D3B90_0x1d3b90(uint8_t*, R5900Context*, PS2Runtime*);
 // Original 0x1D3BC0 selects the result asset through the common 0x1D3BE0

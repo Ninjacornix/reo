@@ -4,14 +4,17 @@
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
 #include <atomic>
+#include <array>
 #include <bit>
 #include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <mutex>
+#include <map>
 #include <thread>
 
 extern std::uint32_t ps2ActualGuestExecutionDepth(PS2Runtime*)noexcept;
+extern bool reoNativeHostMovieReviewedEntry(std::uint32_t,PS2Runtime::RecompiledFunction)noexcept;
 #define X(address,name,action) void name(std::uint8_t*,R5900Context*,PS2Runtime*);
 #include "entries.inc"
 #undef X
@@ -29,6 +32,7 @@ public:
     PS2Runtime* const runtime;std::uint8_t* const ram;
     std::shared_ptr<const movie_assets::Catalogue> catalogue;
     host_movie::Session session;
+    std::map<std::uint32_t,Function> originals;
     std::atomic<bool> active{},closing{};
     std::uint32_t proxy{},pixels{},width{},height{};
     bool alive{},repeat{},started{};
@@ -88,9 +92,9 @@ public:
 };
 std::mutex installed_mutex;std::shared_ptr<Binding> installed;
 std::shared_ptr<Binding> current(){std::lock_guard lock(installed_mutex);return installed;}
-template<Action What,std::uint32_t Address,Function Original>void route(std::uint8_t* ram,R5900Context* ctx,PS2Runtime* runtime){const auto binding=current();if(!binding||!binding->active.load()){Original(ram,ctx,runtime);return;}if(binding->closing.load()){if(ctx)ctx->pc=0;return;}
+template<Action What,std::uint32_t Address,Function Original>void route(std::uint8_t* ram,R5900Context* ctx,PS2Runtime* runtime){const auto binding=current();const auto original=binding&&binding->originals.contains(Address)?binding->originals.at(Address):Original;if(!binding||!binding->active.load()){original(ram,ctx,runtime);return;}if(binding->closing.load()){if(ctx)ctx->pc=0;return;}
     binding->require(ctx&&binding->ram==ram&&binding->runtime==runtime&&ps2ActualGuestExecutionDepth(runtime),"guest-identity",Address);
-    if(binding->dispatch(What,Address,*ctx))ctx->pc=GPR_U32(ctx,31);else Original(ram,ctx,runtime);
+    if(binding->dispatch(What,Address,*ctx))ctx->pc=GPR_U32(ctx,31);else original(ram,ctx,runtime);
 }
 struct Entry {std::uint32_t address;Function original,wrapper;};
 const Entry entries[]{
@@ -100,22 +104,23 @@ const Entry entries[]{
 };
 }
 bool install_before_run(PS2Runtime& runtime,const std::filesystem::path& cache)noexcept {
-    std::shared_ptr<Binding> binding;std::size_t changed{};
+    std::shared_ptr<Binding> binding;std::size_t changed{};std::array<Function,std::size(entries)> previous{};
     try {
         std::unique_lock publication(installed_mutex);
         if(installed&&installed->active.load())return false;
-        auto setup=runtime.acquirePreRunSetup();if(!setup)return false;auto* ram=runtime.memory().getRDRAM();
-        if(!ram||load<std::uint32_t>(ram,vtable+0x14)!=0x15d1d0||load<std::uint32_t>(ram,vtable+0x20)!=0x160060)return false;
+        auto setup=runtime.acquirePreRunSetup();if(!setup){std::fprintf(stderr,"[NATIVE-HOST-MOVIE] pre-run setup unavailable\n");return false;}auto* ram=runtime.memory().getRDRAM();
+        if(!ram||load<std::uint32_t>(ram,vtable+0x14)!=0x15d1d0||load<std::uint32_t>(ram,vtable+0x20)!=0x160060){std::fprintf(stderr,"[NATIVE-HOST-MOVIE] public method table mismatch\n");return false;}
         constexpr reo_native_image_identity::Digest expected{0x58,0x59,0xa4,0x9d,0x20,0xf2,0x49,0x2c,0x00,0xfa,0x81,0xab,0xce,0xef,0x49,0x85,0xe8,0xb2,0xb9,0xdb,0xb0,0x3d,0x58,0x5c,0xfe,0xf2,0x48,0xe4,0x05,0x47,0x65,0x42};
-        if(reo_native_image_identity::sha256(ram+0x15bf48,0x164128-0x15bf48)!=expected)return false;
-        for(const auto& entry:entries)if(!runtime.hasFunction(entry.address)||runtime.lookupFunction(entry.address)!=entry.original)return false;
+        if(reo_native_image_identity::sha256(ram+0x15bf48,0x164128-0x15bf48)!=expected){std::fprintf(stderr,"[NATIVE-HOST-MOVIE] owned code identity mismatch\n");return false;}
+        for(std::size_t i=0;i<std::size(entries);++i){const auto& entry=entries[i];previous[i]=runtime.lookupFunction(entry.address);if(!runtime.hasFunction(entry.address)||(previous[i]!=entry.original&&!reoNativeHostMovieReviewedEntry(entry.address,previous[i]))){std::fprintf(stderr,"[NATIVE-HOST-MOVIE] registry mismatch at %08x\n",entry.address);return false;}}
         auto assets=movie_assets::Catalogue::open(cache);binding=std::make_shared<Binding>(runtime,ram,std::move(assets));
+        for(std::size_t i=0;i<std::size(entries);++i)binding->originals.emplace(entries[i].address,previous[i]);
         const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(10);for(;;){const auto s=binding->session.snapshot();if(!s.error.empty()||s.joined)return false;if(s.device_ready)break;if(std::chrono::steady_clock::now()>end)return false;std::this_thread::sleep_for(std::chrono::milliseconds(1));}
         if(!runtime.registerExternalWorker(binding))return false;
         installed=binding;
         for(const auto& entry:entries){runtime.registerFunction(entry.address,entry.wrapper);++changed;}
         binding->active.store(true);std::fprintf(stderr,"[NATIVE-HOST-MOVIE] selected entries=%zu cache_entries=%zu decoder=windows-media-engine original_sfd=unused renderer=temporary-game-bridge\n",std::size(entries),binding->catalogue->entries().size());return true;
-    }catch(const std::exception& error){std::fprintf(stderr,"[NATIVE-HOST-MOVIE] installation failed: %s\n",error.what());if(binding)binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,entries[i].original);return false;}
-    catch(...){if(binding)binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,entries[i].original);return false;}
+    }catch(const std::exception& error){std::fprintf(stderr,"[NATIVE-HOST-MOVIE] installation failed: %s\n",error.what());if(binding)binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,previous[i]);return false;}
+    catch(...){if(binding)binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,previous[i]);return false;}
 }
 }

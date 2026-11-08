@@ -9,7 +9,7 @@
     "game/native/movie_assets/catalogue.hpp": "ff6d60331dd2be72ac4b9dd033d1308b62ff23f6754adbdfe924ad9ca013d024",
     "game/native/movie_assets/catalogue.cpp": "cefa444ace96b91078499652d307ec0e5c63ed7582852ae25fa2562f3446a666",
     "recomp/overrides/native_host_movie/runtime_adapter.h": "885996aa9be0becb19f0d84a3b8d54dcb71f1c53039003dd3abb0f102bef62ff",
-    "recomp/overrides/native_host_movie/runtime_adapter.cpp": "f230092316c62c5a7cc467b617f546762c0058acc55ce6385f89459c692067ab",
+    "recomp/overrides/native_host_movie/runtime_adapter.cpp": "d1c2b206f14ce5f06c588d5a93f3b044ef880e2a45c4d6387264fdf51ff95dd9",
     "recomp/overrides/native_host_movie/entries.inc": "5c4e8f0542cfc70a31fc1e07a28809bdf47962ec708f4d784c35c645b782d241",
     "recomp/overrides/native_host_movie/render_bridge.h": "b26988d242201d5d67e9c15e9a722a0b2126614b9c489bbe2ad8f55d58872a20",
     "tools/native_reconstruction/host_movie_session_check.cpp": "db95789c09843d680079ed5564fc85c6ecfae2622e1b7e31f74d2c8aa1f6925b",
@@ -18,12 +18,14 @@
   "evidence_sha256": {
     "build-native-sjuni/host-movie/session-gcc-v2/receipt.json": "aec3856c45758f6c72bfa38bfefa32e8f3dddad9b07559756fda15517dd04d70",
     "build-native-sjuni/host-movie/session-llvm-v2/receipt.json": "a63d235862c41f9aa28c800f5d3cbfe56464007969aadc99a36ce733dc453d7f",
-    "build-native-sjuni/host-movie/sdk-objects-llvm-v1/receipt.json": "b8f2b6985328b55d7f7fc00e770301634eff20f816e6ca3c65b8e250fbef5e64"
+    "build-native-sjuni/host-movie/sdk-objects-llvm-v1/receipt.json": "b8f2b6985328b55d7f7fc00e770301634eff20f816e6ca3c65b8e250fbef5e64",
+    "build-native-sjuni/playtests/native-mp4-v23/run.json": "3f4056dc2d4a4b0eb505e9a331312ccd5d49f12eaf7b840bf8e17d17cc2cdd24"
   },
   "game_run": false,
   "limitations": [
     "No game has selected this native worker yet.",
     "Game renderer bridge and cue behavior require an actual coherent build and game validation.",
-    "No independent scanout or audible A/V synchronization measurement."
+    "No independent scanout or audible A/V synchronization measurement.",
+    "V23 startup refused the reviewed feed-end/timing wrappers; the guarded correction is pending a matching game rebuild."
   ]
 }
