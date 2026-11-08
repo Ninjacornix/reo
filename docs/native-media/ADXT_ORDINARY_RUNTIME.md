@@ -3,8 +3,10 @@
 Step 3 remains open. The ordinary source adapter is implemented and selectable
 in a coherent private candidate with exact `REO_NATIVE_ADXT=1`, alongside
 `REO_NATIVE_AUDIO=1` and the native resource mount. V19 startup proves backend
-selection but refuses the original mono pan layout before playback. The corrected
-admission is being retested. The player's launcher/build defaults are unchanged.
+selection but refuses the original mono pan layout before playback. V20 passes
+that guard, then stops at missing raw mixer order before the first native source.
+The bounded order correction is under qualification. The player's launcher/build
+defaults are unchanged.
 The native movie logical/physical graph, broader audio consumers and whole-game
 transition/error/A-V checks remain required.
 
@@ -42,11 +44,13 @@ idle/unconfigured behavior remains retained. Ratio destinations must be bounded,
 distinct RAM words outside the fixed audio state pools; aliasing profiles remain
 excluded. This is not a bitwise comparison of every caller-saved guest register.
 
-Active native routes must appear in the selected aggregate's actual unsorted
-voice order. Only unused idle instances may be appended to make the required
-complete permutation. The adapter does not manufacture a playing source order
-from C4 slot or raw UID sorting. Old retiring snapshots cannot overwrite the
-public state of a new pending source generation.
+Three or more current/pending native sources require every source route in the
+selected aggregate's actual unsorted voice order. With at most two source
+records, the existing qualified private mixer admits the missing traversal;
+unused idle instances may also complete the required permutation. The adapter
+does not manufacture an order for three or more sources from C4 slot or raw UID
+sorting. Old retiring snapshots cannot overwrite the public state of a new
+pending source generation. See [V20 order evidence](ADXT_CANDIDATE_V20_ORDER.md).
 
 Internal stop retains the original public callback ordering. The first child
 destruction barrier uses the retained native identity even after the original
@@ -67,7 +71,7 @@ selected complete backend.
 
 LSC entry/start, external-SJ start and direct original lower-file start refuse
 before original producer effects. Nonzero before-PCM registration, changed child
-identity, missing active raw order, unsupported metadata and native source errors
+identity, missing required three-source order, unsupported metadata and native source errors
 stop the private candidate with a clear boundary diagnostic. They do not fall
 back after native selection, invent completion or claim original error recovery.
 These exclusions are outstanding integration work, not evidence that the

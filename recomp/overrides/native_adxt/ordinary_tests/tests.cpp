@@ -148,6 +148,20 @@ void ordinary(Memory& memory,PS2Runtime& runtime){
     // immutable native views, and binding join never waits for guest work.
     memory.protect(PAGE_NOACCESS);close(runtime);check(binding->source_owner->report().joined);memory.protect(PAGE_READWRITE);
 }
+void missing_order(Memory& memory,PS2Runtime& runtime,unsigned streams){
+    install(runtime);prepare_handles(memory);declared_order->routes.clear();
+    const std::array<unsigned,2> available{0,2};const auto active=std::span(available).first(streams);
+    for(unsigned slot:active)pending(memory,slot,slot==0?0:1);
+    const auto binding=b::current();bool ready{};
+    until([&]{group(runtime);ready=true;for(unsigned slot:active){const auto s=binding->inspect(binding->records[slot]).source;ready&=s && s->output.voice.playing && s->output.channel[0].samples>=1024;}return ready;});
+    check(original_calls==0 && binding->mapped.counts().mapped==3);
+    unsigned records{};binding->control([&](auto& p){records=p.snapshot().session.records;});check(records==streams);
+    std::array<float,1024> output{};check(binding->source_owner->submix()->render_add(output.data(),512)==reo::native::adxt_output_session::Status::completed && std::any_of(output.begin(),output.end(),[](float x){return x!=0;}));
+    for(unsigned slot:active)check(binding->inspect(binding->records[slot]).source->output.channel[0].consumed_bytes==1024);
+    until([&]{group(runtime);bool ended=true,ready=true;for(unsigned slot:active){const auto s=binding->inspect(binding->records[slot]).source;check(s && !s->fault);ended&=s->playback.phase==reo::native::adxt_playback::Phase::ended;if(s->output.voice.playing)ready&=s->output.channel[0].samples>=512;}
+        if(!ended && ready){output.fill(0);check(binding->source_owner->submix()->render_add(output.data(),512)==reo::native::adxt_output_session::Status::completed);}return ended;});
+    for(unsigned slot:active){const auto s=binding->inspect(binding->records[slot]).source;const auto& a=assets[slot==0?0:1];check(s->first_payload_samples==a.total && s->first_payload_digest==a.digest);}
+}
 void admission(const std::string& mode,Memory& memory,PS2Runtime& runtime){
     if(mode=="phase")runtime.phase_open=false;
     if(mode=="image")memory.bytes[0x1315e0]^=1;
@@ -175,8 +189,9 @@ void refusal(const std::string& mode,Memory& memory,PS2Runtime& runtime){
         else if(mode=="producer")(void)call(runtime,0x131d18,{b::handles.base,0x1800000});
         else if(mode=="changed_child"){
             const auto child=b::current()->records[0].handle.rna;b::store(memory.bytes,child+0x20,0x1e0200u);(void)call(runtime,0x132548,{b::handles.base});
-        }else if(mode=="order"){
-            declared_order->routes.clear();pending(memory,0,0);group(runtime);
+        }else if(mode=="order" || mode=="order_partial"){
+            declared_order->routes.clear();if(mode=="order_partial")declared_order->routes={0x1e0000,0x1e0080};
+            for(unsigned slot=0;slot<3;++slot)pending(memory,slot,slot==2?1:0);group(runtime);
         }else if(mode=="foreign"){
             PS2Runtime foreign;foreign.storage.ram=memory.bytes;R5900Context c{};c.pc=0x132c08;c.r[31][0]=0x100008;runtime.lookupFunction(0x132c08)(memory.bytes,&c,&foreign);
         }else if(mode=="guest_depth"){
@@ -195,6 +210,7 @@ int main(int argc,char** argv)try{
     std::ifstream plan(argv[3]);for(auto& asset:assets){plan>>asset.start>>asset.count>>asset.channels>>asset.rate>>asset.total>>asset.digest[0]>>asset.digest[1];check(bool(plan));}
     const std::string mode=argv[4];
     if(mode=="ordinary")ordinary(memory,runtime);
+    else if(mode=="missing_one" || mode=="missing_two")missing_order(memory,runtime,mode=="missing_one"?1:2);
     else if(mode=="phase" || mode=="image" || mode=="entry" || mode=="mount" || mode=="worker" || mode=="registry" || mode=="factory")admission(mode,memory,runtime);
     else refusal(mode,memory,runtime);
     close(runtime);std::cout<<"ordinary ABI declared-port "<<mode<<" checks="<<checks<<'\n';return 0;

@@ -137,9 +137,14 @@ public:
     }
     void set_order(){
         std::array<std::uint32_t,2041> raw{};const auto copied=order->copy(raw);if(copied.status!=pcm_bridge::Status::ok || copied.value>raw.size())fail("raw-order",0,unsigned(copied.status));
+        // The replaced RNA group need not have published a raw PCM voice for a
+        // pending native source. The qualified private mixer admits <=2 source
+        // records without traversal authority. Three or more still require ALL
+        // source routes in the real unsorted map; never infer that float order.
+        unsigned prospective{};for(const auto& r:records)if(r.owned && (r.source || ram[r.handle.address+0xac]))++prospective;
         std::array<GameKey,16> keys;std::array<bool,16> seen{};unsigned count{};
         for(unsigned i=0;i<copied.value;++i)for(unsigned slot=0;slot<records.size();++slot){auto& r=records[slot];if(r.owned && raw[i]==r.handle.route){if(seen[slot])fail("duplicate-raw-route",r.handle.address);seen[slot]=true;keys[count++]=r.key;}}
-        for(unsigned slot=0;slot<records.size();++slot){auto& r=records[slot];if(!r.owned || seen[slot])continue;if(r.source || ram[r.handle.address+0xac])fail("active-raw-route-missing",r.handle.address);keys[count++]=r.key;}
+        for(unsigned slot=0;slot<records.size();++slot){auto& r=records[slot];if(!r.owned || seen[slot])continue;if(prospective>2 && (r.source || ram[r.handle.address+0xac]))fail("active-raw-route-missing",r.handle.address);keys[count++]=r.key;}
         require(mapped.set_order(std::span(keys).first(count)),"source-order");
     }
     void start_pending(Record& r){
