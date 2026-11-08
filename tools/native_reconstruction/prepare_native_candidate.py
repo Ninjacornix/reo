@@ -171,6 +171,33 @@ def git(root, *arguments):
     return subprocess.check_output(['git', '-C', str(root), *arguments])
 
 
+def decode_blob_batch(identities, output):
+    """Read raw cat-file frames, verifying object identity before publication."""
+    offset = 0
+    result = {}
+    for expected in identities:
+        end = output.find(b'\n', offset)
+        if end < 0:
+            raise ValueError('Truncated Git blob header')
+        fields = output[offset:end].split()
+        if len(fields) != 3 or fields[0] != expected.encode('ascii') or fields[1] != b'blob':
+            raise ValueError('Unexpected Git blob identity/type')
+        if not fields[2].isdigit():
+            raise ValueError('Invalid Git blob length')
+        length = int(fields[2]); offset = end + 1
+        data = output[offset:offset + length]
+        if len(data) != length or output[offset + length:offset + length + 1] != b'\n':
+            raise ValueError('Truncated Git blob body/separator')
+        identity = hashlib.sha1(b'blob ' + str(length).encode('ascii') + b'\0' + data).hexdigest()
+        if identity != expected:
+            raise ValueError('Git blob content does not match requested identity')
+        result[expected] = data
+        offset += length + 1
+    if offset != len(output):
+        raise ValueError('Unexpected trailing Git batch output')
+    return result
+
+
 class Commit:
     def __init__(self, root, revision):
         if not re.fullmatch(r'[0-9a-fA-F]{7,40}', revision):
@@ -190,6 +217,22 @@ class Commit:
                 member(root, name)
                 self.entries[name] = identity
         self.cache = {}
+
+    def preload(self, names):
+        requested = {}
+        for name in names:
+            if name not in self.entries:
+                raise ValueError('Required file is absent from committed revision: ' + name)
+            if name not in self.cache:
+                requested.setdefault(self.entries[name], []).append(name)
+        if not requested:
+            return
+        # communicate drains stdout while sending requests, avoiding a pipe
+        # deadlock when a large header fills stdout before all OIDs are sent.
+        output = subprocess.check_output(['git', '-C', str(self.root), 'cat-file', '--batch'],
+            input=('\n'.join(requested) + '\n').encode('ascii'))
+        blobs = decode_blob_batch(requested, output)
+        self.cache.update({name: blobs[identity] for identity, names in requested.items() for name in names})
 
     def read(self, name):
         if name not in self.entries:
@@ -307,6 +350,10 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     manifest, plan, compiler_proof = verify_carrier(kit)
     receipt = verify_dependency(dependency, dependency_receipt, commit, compiler_proof)
     compiler = verify_toolchain(toolchain)
+    # Avoid a Git process per committed header on Windows. Batch the exact same
+    # immutable blobs; dirty working files still cannot supply input.
+    commit.preload(name for name in commit.entries
+                   if name.startswith(HEADER_ROOTS) and PurePosixPath(name).suffix in ('.h', '.hpp', '.inl', '.inc'))
     source = {}
     # Refresh every authored carrier member which exists in the selected commit,
     # plus the full committed header cohort used by its runtime/backend units.
