@@ -97,7 +97,7 @@ void pending(Memory& memory,unsigned slot,unsigned asset){
 void close(PS2Runtime& runtime){runtime.requestStop();depth=0;check(runtime.join());depth=1;}
 template<class F>void until(F&& done){const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(30);while(!done()){check(std::chrono::steady_clock::now()<end);std::this_thread::yield();}}
 void group(PS2Runtime& runtime){b::store(runtime.storage.ram,0x20f3c4,b::load<std::uint32_t>(runtime.storage.ram,0x20f3c4)+1);(void)call(runtime,0x132c08);}
-void install(PS2Runtime& runtime){const auto result=b::install_ordinary_before_run(runtime,{},{});check(result.status==sr::InstallStatus::installed && factory_calls==1 && runtime.workers.size()==2 && b::current()->active);}
+void install(PS2Runtime& runtime){const auto result=b::install_ordinary_before_run(runtime,{},{});check(result.status==sr::InstallStatus::installed && factory_calls==1 && runtime.workers.size()==(b::current()->trace.enabled()?3u:2u) && b::current()->active);}
 void prepare_handles(Memory& memory){for(unsigned i=0;i<3;++i)construct(memory,i,i==2?1:2);declared_order->routes={0x1e0100,0x1e0000,0x1e0080};b::store(memory.bytes,0x21b788,6000u);}
 void ordinary(Memory& memory,PS2Runtime& runtime,bool recover=false){
     install(runtime);prepare_handles(memory);for(unsigned i=0;i<3;++i)pending(memory,i,i==2?1:0);
@@ -221,7 +221,23 @@ int main(int argc,char** argv)try{
     auto opened=res::MountedResources::open_file1_windows(std::filesystem::path(argv[2]));check(opened.status==res::MountStatus::ok);prepared_mount=std::move(opened.mount);
     std::ifstream plan(argv[3]);for(auto& asset:assets){plan>>asset.start>>asset.count>>asset.channels>>asset.rate>>asset.total>>asset.digest[0]>>asset.digest[1];check(bool(plan));}
     const std::string mode=argv[4];
-    if(mode=="ordinary" || mode=="metadata_three")ordinary(memory,runtime,mode=="metadata_three");
+    std::filesystem::path trace_path=std::filesystem::path(argv[0]).parent_path()/(mode+".csv");
+    if(mode.starts_with("trace"))check(_wputenv_s(L"REO_NATIVE_ADXT_TRACE_FILE",trace_path.c_str())==0);
+    if(mode=="trace_bounds" || mode=="trace_existing" || mode=="trace_unjoined"){
+        b::AudioTrace trace;check(trace.enabled());reo::native::adxt_output_session::Snapshot value;
+        value.statistics={4800,4500,13};auto& stream=value.streams[2];stream.slot=2;stream.generation=7;stream.active=true;stream.voice.playing=true;stream.channel[0].samples=17;stream.voice.late_samples=9;
+        const unsigned count=mode=="trace_bounds"?32770:1;
+        for(unsigned i=0;i<count;++i)trace.record(b::AudioTrace::now(),i,value);
+        check(trace.rows.size()==std::min(count,32768u) && trace.dropped==count-trace.rows.size());
+        check(trace.rows.front().output.streams[2].channel[0].samples==17 && trace.rows.front().output.statistics.underrun_frames==13);
+        if(mode=="trace_existing"){std::ofstream(trace_path)<<"preserve prior evidence";trace.save(true);std::ifstream in(trace_path);std::string line;std::getline(in,line);check(line=="preserve prior evidence");}
+        else if(mode=="trace_unjoined"){trace.save(false);check(!std::filesystem::exists(trace_path));}
+        else {trace.save(true);check(std::filesystem::file_size(trace_path)>1000);}
+    }
+    else if(mode=="ordinary" || mode=="metadata_three" || mode=="trace"){
+        ordinary(memory,runtime,mode=="metadata_three");
+        if(mode=="trace"){check(b::current()->source_owner->report().joined && b::current()->trace.saved && !b::current()->trace.rows.empty());check(std::filesystem::file_size(trace_path)>100);}
+    }
     else if(mode=="missing_one" || mode=="missing_two")missing_order(memory,runtime,mode=="missing_one"?1:2);
     else if(mode=="phase" || mode=="image" || mode=="entry" || mode=="mount" || mode=="worker" || mode=="registry" || mode=="factory")admission(mode,memory,runtime);
     else refusal(mode,memory,runtime);

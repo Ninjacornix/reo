@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "status": "bounded serialized audio-control trace qualifies on both compilers; actual SDK131 object passes; game capture pending",
+  "source_sha256": {
+    "recomp/overrides/native_adxt/ordinary_runtime.cpp": "1f36ea74f579ea7e5dbf03cdd05158fb9819b7f1a91b50c24499f4b56ab75cbd",
+    "recomp/overrides/native_adxt/ordinary_tests/tests.cpp": "871627fba304aaece508362955025ea0288dc7fbf9504cafd207e155977e613f",
+    "tools/native_reconstruction/verify_adxt_ordinary.py": "d72adc98d47653d289104801ab91c2298997d7dcf0472e3608463ec43ba998d7",
+    "tools/native_reconstruction/native_audio_trace_manifest_v1.json": "81c810fc438b525c0069588d0f99c29c9c8e2d0725bcc67a360214e824ff4264"
+  },
+  "receipt_sha256": {
+    "build-native-sjuni/media-audio-trace-results-llvm-v1/receipt.json": "8f78643122321af73114b39d659042ef28b409d8226987cb336718e20198b6bf",
+    "build-native-sjuni/adxt-binding/ordinary-audio-trace-llvm-v1/receipt.json": "8d17b458a7ddd21d5f06abe705acb2fc08ffb0e516f49c7fdfbb0e7ee292eece",
+    "build-native-sjuni/media-audio-trace-results-gcc-v1/receipt.json": "3eabd359352b88619df81c471673b21c3376d64a58e09f47fdbd1f3f734ee9af",
+    "build-native-sjuni/adxt-binding/ordinary-audio-trace-gcc-v1/receipt.json": "f226f205fc5cb166dc4b8fa2aaccd9028461d6c7a80ccc46be479c5d5b182303",
+    "build-native-sjuni/adxt-binding/ordinary-audio-trace-actual131-llvm-v1/receipt.json": "3077289f5f4635fdac6485fd6b6ac1f0d03c4794a25e46b834c3c3dbc547bd6a"
+  },
+  "cohorts": {
+    "llvm": {
+      "native_suites": 78,
+      "adapter_scenarios": 27,
+      "detected_faults": [
+        "drop-child-retirement",
+        "fallback-unsupported-producer",
+        "ignore-child-replacement",
+        "omit-native-discard",
+        "require-unused-mono-pan",
+        "ignore-active-stereo-pan",
+        "require-raw-order-for-two",
+        "ignore-three-source-order",
+        "omit-muted-metadata-refresh",
+        "ignore-muted-metadata-refusal"
+      ]
+    },
+    "gcc": {
+      "native_suites": 78,
+      "adapter_scenarios": 27,
+      "detected_faults": [
+        "drop-child-retirement",
+        "fallback-unsupported-producer",
+        "ignore-child-replacement",
+        "omit-native-discard",
+        "require-unused-mono-pan",
+        "ignore-active-stereo-pan",
+        "require-raw-order-for-two",
+        "ignore-three-source-order",
+        "omit-muted-metadata-refresh",
+        "ignore-muted-metadata-refusal"
+      ]
+    }
+  },
+  "trace_fixture": {
+    "llvm-trace": {
+      "retention": "# dropped=0; owner_joined=1; control_snapshots=1",
+      "rows": 1221,
+      "sha256": "66bffe9cae95f6d22762498759bc00a8577ad62ed312dc13794a5dc0d7842189"
+    },
+    "llvm-trace_bounds": {
+      "retention": "# dropped=2; owner_joined=1; control_snapshots=1",
+      "rows": 32768,
+      "sha256": "5aed0791759e99a56780508df6f65fc472494ad4d1ad0e6db72294207a56756f"
+    },
+    "gcc-trace": {
+      "retention": "# dropped=0; owner_joined=1; control_snapshots=1",
+      "rows": 1692,
+      "sha256": "226705e2b3abb8b674e5b8685bd1f9b27a2c27e699fdd377b2c7c687a6ae070e"
+    },
+    "gcc-trace_bounds": {
+      "retention": "# dropped=2; owner_joined=1; control_snapshots=1",
+      "rows": 32768,
+      "sha256": "2655a632162cc3b3ef8e563926463cdc20ae26ec660444028a9bec5f8a954ff7"
+    }
+  },
+  "maximum_control_snapshots": 32768,
+  "recording_allocates": false,
+  "output_callback_instrumentation": false,
+  "live_file_io": false,
+  "guest_reads_at_export": false,
+  "game_run": false,
+  "stutter_cause_confirmed": false,
+  "step3_complete": false,
+  "limitations": [
+    "Controller snapshots bracket observations; they do not timestamp individual audio-callback underruns.",
+    "The next coherent game capture must correlate source counters and service gaps with movie traces.",
+    "Declared runtime/factory ports exercise real native workers but are not a linked-game execution."
+  ]
+}

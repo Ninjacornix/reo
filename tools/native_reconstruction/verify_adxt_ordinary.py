@@ -7,7 +7,7 @@ sys.path.insert(0,str(ROOT/'tools/function_index'));from index import Elf
 PORTS=ROOT/'build-native-sjuni/audio-media-factory/prepared-llvm-v1'
 PORTS_SHA='948c0bf63919cb7a8ba9e6f193ee4a6a49265b86c9410b54208538c380606e8c'
 META=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1'
-SCENARIOS=('ordinary','metadata_three','metadata','missing_one','missing_two','phase','image','entry','mount','worker','registry','factory','partial','callback','producer','changed_child','order','order_partial','foreign','guest_depth','query_alias','stereo_pan','mono_pan')
+SCENARIOS=('ordinary','metadata_three','metadata','missing_one','missing_two','phase','image','entry','mount','worker','registry','factory','partial','callback','producer','changed_child','order','order_partial','foreign','guest_depth','query_alias','stereo_pan','mono_pan','trace','trace_bounds','trace_existing','trace_unjoined')
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def write(path,body):path.write_text(body,encoding='utf-8',newline='\n')
 def main():
@@ -57,7 +57,7 @@ def main():
     if body.count(anchor)!=1:raise ValueError('Independent fixture extraction anchor')
     write(out/'handle_fixture.hpp','#pragma once\n'+body[:body.index(anchor)])
     (out/'ordinary_runtime_body.cpp').write_bytes((HERE/'ordinary_runtime.cpp').read_bytes())
-    env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','')
+    env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','');env.pop('REO_NATIVE_ADXT_TRACE_FILE',None)
     record=dict(schema=1,status='failed',sources=inputs,original_source_sha256=original,compiler_sha256=sha(a.compiler),native_receipt_sha256=sha(a.native_receipt),native_manifest_sha256=sha(a.manifest),elf_sha256=elf.sha256,factory_ports_receipt_sha256=PORTS_SHA,inventory_receipt_sha256=sha(META/'receipt.json'),finite_baseline_sha256=sha(baseline),actual_game_bodies_executed=False,actual_runtime_acquisition=False,actual_native_workers=True,actual_immutable_import=True,actual_backend_selection=False,game_run=False,device_opened=False,checks=[])
     def run(label,command,negative=False):
         result=subprocess.run(list(map(str,command)),env=env,capture_output=True,text=True,timeout=100);write(out/(label+'.txt'),result.stdout+result.stderr);record['checks'].append(dict(label=label,exit=result.returncode,negative=negative))

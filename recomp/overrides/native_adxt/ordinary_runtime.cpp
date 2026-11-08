@@ -17,6 +17,12 @@
 #include <mutex>
 #include <stdexcept>
 #include <thread>
+#include <chrono>
+#include <filesystem>
+#include <vector>
+#include <fcntl.h>
+#include <io.h>
+#include <sys/stat.h>
 
 #if !defined(REO_BUILD_NATIVE_RESOURCE_READS) || !REO_BUILD_NATIVE_RESOURCE_READS
 #error Ordinary native sources require the actual immutable resource mount handoff
@@ -51,6 +57,32 @@ struct Controls {
     std::uint32_t attenuation{},base{};std::int32_t divisor{};std::uint8_t loop{},inhibit{},pause{};
     friend bool operator==(const Controls&,const Controls&)=default;
 };
+// Optional controller-side observations. No output-callback instrumentation,
+// allocation while recording, guest writes or live file I/O. Snapshot copies
+// happen under the same canonical control admission already used for clocks.
+struct AudioTrace {
+    struct Row {std::uint64_t begin{},end{};std::uint32_t tick{};adxt_output_session::Snapshot output;};
+    std::filesystem::path path;std::vector<Row> rows;std::uint64_t dropped{};bool saved{};
+    static std::uint64_t now()noexcept{return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());}
+    AudioTrace()noexcept{try{if(const auto* name=_wgetenv(L"REO_NATIVE_ADXT_TRACE_FILE");name&&*name){path=name;rows.reserve(32768);}}catch(...){path.clear();std::fputs("[NATIVE-ADXT-TRACE-ERROR] allocation unavailable\n",stderr);}}
+    bool enabled()const noexcept{return !path.empty();}
+    void record(std::uint64_t begin,std::uint32_t tick,const adxt_output_session::Snapshot& value)noexcept{
+        if(!enabled())return;if(rows.size()==32768){++dropped;return;}rows.push_back({begin,now(),tick,value});
+    }
+    void save(bool joined)noexcept{
+        if(saved||!enabled())return;saved=true;
+        if(!joined){std::fputs("[NATIVE-ADXT-TRACE-ERROR] owner not joined; export refused\n",stderr);return;}
+        const auto fd=_wopen(path.c_str(),_O_WRONLY|_O_CREAT|_O_EXCL|_O_BINARY,_S_IREAD|_S_IWRITE);auto* file=fd<0?nullptr:_fdopen(fd,"wb");
+        if(!file){if(fd>=0)_close(fd);std::fputs("[NATIVE-ADXT-TRACE-ERROR] fresh output unavailable\n",stderr);return;}
+        std::fprintf(file,"# dropped=%llu; owner_joined=1; control_snapshots=1\nbegin_ns,end_ns,game_tick,output_frames,signal_frames,underrun_frames,slot,generation,active,playing,draining,queued_left,queued_right,late_samples,skipped_samples,volume,gain,frequency\n",static_cast<unsigned long long>(dropped));
+        for(const auto& r:rows){bool any{};for(const auto& s:r.output.streams){if(!s.active&&!s.voice.playing)continue;any=true;
+            std::fprintf(file,"%llu,%llu,%u,%llu,%llu,%llu,%u,%llu,%u,%u,%u,%zu,%zu,%llu,%llu,%u,%.9g,%u\n",
+                (unsigned long long)r.begin,(unsigned long long)r.end,r.tick,(unsigned long long)r.output.statistics.output_frames,(unsigned long long)r.output.statistics.signal_frames,(unsigned long long)r.output.statistics.underrun_frames,
+                s.slot,(unsigned long long)s.generation,unsigned(s.active),unsigned(s.voice.playing),unsigned(s.voice.draining),s.channel[0].samples,s.channel[1].samples,(unsigned long long)s.voice.late_samples,(unsigned long long)s.voice.skipped_samples,s.voice.volume,double(s.voice.gain),s.frequency);
+        }if(!any)std::fprintf(file,"%llu,%llu,%u,%llu,%llu,%llu,-1,0,0,0,0,0,0,0,0,0,0,0\n",(unsigned long long)r.begin,(unsigned long long)r.end,r.tick,(unsigned long long)r.output.statistics.output_frames,(unsigned long long)r.output.statistics.signal_frames,(unsigned long long)r.output.statistics.underrun_frames);}
+        const auto failed=std::ferror(file);const auto closed=std::fclose(file);if(failed||closed)std::fputs("[NATIVE-ADXT-TRACE-ERROR] export incomplete\n",stderr);
+    }
+};
 class Binding final:public PS2Runtime::ExternalWorker {
 public:
     struct Record {GameKey key;Handle handle;Controls controls;bool owned{},source{};std::uint64_t expected_start{};};
@@ -61,6 +93,7 @@ public:
     GameHandles mapped;std::array<Record,16> records;
     std::shared_ptr<const sound_ram::MediaInstallResult::PcmOrder> order;
     std::atomic<bool> active{},stopping{};
+    AudioTrace trace;
     Binding(PS2Runtime& r,std::uint8_t* bytes,std::shared_ptr<control_owner::Owner> owner,
             std::shared_ptr<const resources::win32::MountedResources> resource,
             std::shared_ptr<const adxt_attenuation::Table> volume)
@@ -82,7 +115,11 @@ public:
     template<class F>void with(Record& record,F fn){HandleWork op(std::move(fn));require(mapped.with(record.key,op),"handle",record.handle.address);}
     std::uint32_t tick()const noexcept{return load<std::uint32_t>(ram,0x20f3c4);}
     void import_clock(){S result=S::fault;control([&](auto& p){result=p.configure_clock({{load<std::uint32_t>(ram,0x21b750),load<std::uint32_t>(ram,0x21b788),load<std::uint32_t>(ram,0x21b75c)},load<std::uint32_t>(ram,0x21b760),load<std::uint32_t>(ram,0x21b78c)});});require(result,"clock-import");}
-    void publish_clock(){adxt_estimated_clock::Shared shared;control([&](auto& p){shared=p.snapshot().session.clock_state;});store(ram,0x21b75c,shared.mode.resynchronizations);store(ram,0x21b78c,shared.drift_bits);}
+    void publish_clock(bool trace_service=false){adxt_estimated_clock::Shared shared;control([&](auto& p){
+        const auto begin=trace_service&&trace.enabled()?AudioTrace::now():0;
+        const auto snapshot=p.snapshot().session;shared=snapshot.clock_state;
+        if(begin)trace.record(begin,tick(),snapshot.output);
+    });store(ram,0x21b75c,shared.mode.resynchronizations);store(ram,0x21b78c,shared.drift_bits);}
     Controls controls(std::uint32_t at){
         const auto loop=ram[at+0x6c];
         // The original constructor initializes only the active channel pans.
@@ -167,7 +204,7 @@ public:
     }
     void service(){
         import_clock();adopt();for(auto& r:records)if(r.owned)synchronize(r);set_order();for(auto& r:records)if(r.owned)start_pending(r);
-        require(mapped.service(tick()),"group");for(auto& r:records)if(r.owned)mirror(r);publish_clock();
+        require(mapped.service(tick()),"group");for(auto& r:records)if(r.owned)mirror(r);publish_clock(true);
     }
     void stop(Record& r){S result=S::fault;with(r,[&](auto& p,const auto& key,const auto&){result=p.stop(key);});require(result,"stop",r.handle.address);r.source=false;}
     void destroy(std::uint32_t rna){
@@ -236,6 +273,15 @@ public:
     }
 };
 std::mutex installed_mutex;std::shared_ptr<Binding> installed;
+// Registered AFTER the source/output workers. Their joined owner admission
+// drains every accepted writer before export; no game RAM is read here.
+class TraceExporter final:public PS2Runtime::ExternalWorker {
+    std::shared_ptr<Binding> binding;
+public:
+    explicit TraceExporter(std::shared_ptr<Binding> value):binding(std::move(value)){}
+    void requestStop()noexcept override{}
+    bool join()noexcept override{binding->trace.save(binding->source_owner->report().joined);return true;}
+};
 std::shared_ptr<Binding> current(){std::lock_guard lock(installed_mutex);return installed;}
 template<Action What,std::uint32_t Address,Function Original>
 void dispatch(std::uint8_t* ram,R5900Context* c,PS2Runtime* runtime){
@@ -276,6 +322,10 @@ sound_ram::InstallResult install_ordinary_before_run(PS2Runtime& runtime,const r
             binding->requestStop();for(std::size_t i=0;i<changed;++i)runtime.registerFunction(entries[i].address,entries[i].original);(void)binding->source_owner->join();return media.backend;
         }
         selected=true;binding->order=std::move(media.pcm_order);if(!binding->order){std::fputs("[NATIVE-ADXT-FATAL] selected factory omitted order capability\n",stderr);std::abort();}
+        if(binding->trace.enabled()){
+            bool registered{};try{registered=runtime.registerExternalWorker(std::make_shared<TraceExporter>(binding));}catch(...){}
+            if(!registered){binding->trace.path.clear();std::fputs("[NATIVE-ADXT-TRACE-ERROR] export worker unavailable\n",stderr);}
+        }
         binding->active.store(true,std::memory_order_release);
         std::fprintf(stderr,"[NATIVE-ADXT] ordinary-file binding selected entries=%zu source_owner=canonical original_pcm=refused lsc_sj_callbacks=unsupported\n",std::size(entries));return media.backend;
     }catch(...){
