@@ -6,6 +6,8 @@ namespace reo::native::adxt_instances {
 namespace control=adxt_control_session;
 enum class Status {completed,pending,closed,busy,invalid_key,invalid_input,occupied,capacity,order_required,unsupported_profile,provider_refused,fault};
 struct Identity;
+class SourceKey;
+struct SourceCapture;
 class Key final {
 public:Key()=default;
 private:friend class Instances;std::weak_ptr<const Identity> owner_;std::uint32_t slot_{};std::uint64_t generation_{};
@@ -57,6 +59,13 @@ public:
     [[nodiscard]] Status set_loop_enabled(const Key&,bool)noexcept;
     [[nodiscard]] Status set_service_divisor(const Key&,std::int32_t)noexcept;
     [[nodiscard]] Status set_start_inhibit(const Key&,bool)noexcept;
+    // Opaque current-source identity, distinct from the stable instance key.
+    // Replacement/stop/destruction invalidates it. No Session/key alias escapes.
+    [[nodiscard]] SourceCapture capture_source(const Key&)const noexcept;
+    [[nodiscard]] control::Observation inspect_source(const SourceKey&)const noexcept;
+    [[nodiscard]] control::ClockResult estimate_source(const SourceKey&,std::uint32_t original_tick)noexcept;
+    [[nodiscard]] control::ClockControl pause_source(const SourceKey&,std::int32_t,std::uint32_t original_tick)noexcept;
+    [[nodiscard]] control::ClockControl discard_source(const SourceKey&,std::uint32_t original_tick)noexcept;
     [[nodiscard]] Status request_stop()noexcept;
     [[nodiscard]] Status join()noexcept;
 private:
@@ -65,6 +74,7 @@ private:
     Status retire(std::uint32_t)noexcept;
     Status open(std::uint32_t)noexcept;
     Status publish_order()noexcept;
+    [[nodiscard]] Status source_status(const SourceKey&)const noexcept;
     void release(std::uint32_t)noexcept;
 };
 } // namespace reo::native::adxt_instances

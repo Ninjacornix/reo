@@ -1,4 +1,5 @@
 #include "instances.hpp"
+#include "source_key.hpp"
 #include <array>
 #include <bit>
 #include <cmath>
@@ -225,5 +226,67 @@ Status Instances::join()noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;const auto stopped=request_stop();if(stopped!=Status::completed)return stopped;Busy lock(s.busy);
     const auto result=mapped(s.session.join());if(result==Status::completed)for(unsigned i=0;i<s.capacity;++i)if(s.records[i].owned)release(i);
     return result;
+}
+namespace {
+control::Status source_control_status(Status value)noexcept {
+    switch(value){
+    case Status::completed:return control::Status::completed;
+    case Status::busy:return control::Status::busy;
+    case Status::closed:return control::Status::closed;
+    case Status::invalid_key:return control::Status::invalid_key;
+    default:return control::Status::fault;
+    }
+}
+}
+Status Instances::source_status(const SourceKey& key)const noexcept {
+    const auto& s=*state_;
+    if(s.busy)return Status::busy;
+    if(s.closing)return Status::closed;
+    if(!valid(key.instance_))return Status::invalid_key;
+    const auto& record=s.records[key.instance_.slot_];
+    if(record.fault)return Status::fault;
+    if(!record.active || record.retiring || record.pending)return Status::closed;
+    const auto observed=s.session.inspect(key.source_);
+    if(observed.status!=control::Status::completed)return mapped(observed.status);
+    if(observed.evidence.fault)return Status::fault;
+    if(observed.evidence.stop_requested || observed.evidence.output_retired || observed.evidence.retired)return Status::closed;
+    if(!observed.evidence.clock_observation_valid)return Status::fault;
+    return Status::completed;
+}
+SourceCapture Instances::capture_source(const Key& instance)const noexcept {
+    const auto& s=*state_;
+    if(s.busy)return{Status::busy,{}};
+    if(s.closing)return{Status::closed,{}};
+    if(!valid(instance))return{};
+    const auto& record=s.records[instance.slot_];
+    if(record.fault)return{Status::fault,{}};
+    if(!record.active || record.retiring || record.pending)return{Status::closed,{}};
+    SourceKey key;key.instance_=instance;key.source_=*record.active;
+    const auto status=source_status(key);
+    if(status!=Status::completed)return{status,{}};
+    return{Status::completed,std::move(key)};
+}
+control::Observation Instances::inspect_source(const SourceKey& key)const noexcept {
+    const auto status=source_status(key);
+    if(status!=Status::completed)return{source_control_status(status),{}};
+    return state_->session.inspect(key.source_);
+}
+control::ClockResult Instances::estimate_source(const SourceKey& key,std::uint32_t tick)noexcept {
+    const auto status=source_status(key);
+    if(status!=Status::completed)return{source_control_status(status),{}};
+    auto& s=*state_;Busy scope(s.busy);return s.session.estimate(key.source_,tick);
+}
+control::ClockControl Instances::pause_source(const SourceKey& key,std::int32_t argument,std::uint32_t tick)noexcept {
+    const auto status=source_status(key);
+    if(status!=Status::completed)return{source_control_status(status),{}};
+    // Preserve the stable instance's persistent pause policy for a later start.
+    auto& s=*state_;Busy scope(s.busy);const auto result=s.session.pause(key.source_,argument,tick);
+    if(result.status==control::Status::completed)s.records[key.instance_.slot_].pause=argument;
+    return result;
+}
+control::ClockControl Instances::discard_source(const SourceKey& key,std::uint32_t tick)noexcept {
+    const auto status=source_status(key);
+    if(status!=Status::completed)return{source_control_status(status),{}};
+    auto& s=*state_;Busy scope(s.busy);return s.session.discard_rebase(key.source_,tick);
 }
 } // namespace reo::native::adxt_instances
