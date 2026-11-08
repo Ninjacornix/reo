@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "62 captured ordinary sources passed offline native playback on both compilers",
+  "sources": {
+    "tools/native_reconstruction/adxt_captured_sources.cpp": "9105b04a9d271aaa225ae31e6b16bf6794be683468196d819b8bc7ff7bfff7ea",
+    "tools/native_reconstruction/verify_adxt_captured_sources.py": "00d4a6e5271c368c932143d2a94d7e6cedf645283ee6060323046d4d31bd345d",
+    "recomp/overrides/native_adxt/source_profile.h": "7cb45a68ebe5042e97a4a0358d42755abe1e5c6008d2bc832bbb18edfa8e5c32",
+    "recomp/overrides/native_adxt/source_profile.cpp": "9860708cc2d787e03516f94b54d114eac590f973cd59ace0994bf9a98f9136fe",
+    "tools/native_reconstruction/analyze_adxt_observer.py": "fea4797c5258998c72adc8680632d6eced5f5171f8545a773dcc3fad673d333f",
+    "docs/native-media/ADXT_CAPTURED_SOURCE_REPLAY.md": "4befc1f4d37b029578f79177834ec189baba9f9cd0f61eaed2d42bdd650f6ab4"
+  },
+  "evidence": {
+    "build-native-sjuni/candidate-work-v17/candidate-build-result.json": "d2aab186887dea378387d9584cd6cd6beac7d141d420f37c5b0e9854c72f9ee2",
+    "build-native-sjuni/playtests/adxt-observe-v17b/run.json": "7980018feef97c07880042e9e6638e8987109b93deb47ca1b165292affc464f0",
+    "build-native-sjuni/playtests/adxt-observe-v17b/adxt-original.jsonl": "7638b2f922695d496b2f290c7ee85455d64811aa1f9b81f8d44e736fd2abdec1",
+    "build-native-sjuni/playtests/adxt-observe-v17b/player1/logs/stderr.log": "c9c43c69e5dc2f5c00047e54dc72f2cfc8c596df5b1c6100b8d9584c70bf5edc",
+    "build-native-sjuni/adxt-binding/actual-v17b-analysis-v1/findings.json": "2fd2ca50e1b9ff3edcfeed9cfcaf94101bb2b88603adef87b329a85cc76be0ee",
+    "build-native-sjuni/adxt-binding/captured-llvm-v1/receipt.json": "c21a3373d5292063b9ba3b12f76e98ccecdcfd380257024a7135c67ea70a7ea3",
+    "build-native-sjuni/adxt-binding/captured-gcc-v1/receipt.json": "4ffc5378d93c26dbc1b3df15d1339bbbdb50c78345d4880c014f3ac39892b89d"
+  },
+  "finite_pcm_baselines_compared": 57,
+  "two_iteration_loops": 5,
+  "game_capture": true,
+  "native_source_game_binding": false,
+  "original_gameplay_pcm_parity": false,
+  "original_timing_replayed": false,
+  "original_mix_order_replayed": false,
+  "stage3_complete": false
+}
