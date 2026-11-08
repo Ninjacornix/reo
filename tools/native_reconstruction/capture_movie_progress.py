@@ -51,15 +51,15 @@ def main():
     started = time.perf_counter_ns()
     try:
         with closing(GuestRam(identity, manifest['elf'])) as reader, output.open('x', newline='') as stream:
-            stream.write('qpc_ns,read_ns,handle,status,frame,width,height,paused\n')
+            stream.write('qpc_ns,read_ns,handle,status,frame,width,height,game_flag_4badf8\n')
             last_flush = started
             while time.perf_counter_ns() - started < args.seconds * 1_000_000_000:
                 begin = time.perf_counter_ns()
                 public = reader.read(0x340a40, 0x98)
                 frame = struct.unpack('<I', reader.read(0x56bad8, 4))[0]
-                paused = reader.read(0x4badf8, 1)[0]
+                game_flag = reader.read(0x4badf8, 1)[0]
                 end = time.perf_counter_ns()
-                stream.write(f'{begin},{end-begin},{struct.unpack_from("<I", public)[0]},{public[0x80]},{frame},{struct.unpack_from("<H", public, 0x8c)[0]},{struct.unpack_from("<H", public, 0x8e)[0]},{paused}\n')
+                stream.write(f'{begin},{end-begin},{struct.unpack_from("<I", public)[0]},{public[0x80]},{frame},{struct.unpack_from("<H", public, 0x8c)[0]},{struct.unpack_from("<H", public, 0x8e)[0]},{game_flag}\n')
                 result['records'] += 1
                 if end - last_flush >= 1_000_000_000:
                     reader.check()

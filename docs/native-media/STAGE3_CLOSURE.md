@@ -8,6 +8,11 @@ transfer and scheduler implementations is not a closure requirement by itself.
 Current results: [V22](ADXT_CANDIDATE_V22_AUDIO.md) passes the previous three-source
 route failure and reaches gameplay with joined native audio and zero recorded
 source underruns. The larger buffer profile passes its separate native cohort.
+The [V25 native MP4 game test](NATIVE_MP4_CANDIDATE_V25.md) now plays the opening,
+multi-clip scenario and looping backgrounds and reaches gameplay with original
+MWSFD slots inactive in all samples. A 528.55ms handoff stall and 100,736 source
+audio underrun frames remain measured and unresolved. Native-producer/consumer
+timing, audible synchronization, additional controls and packaging keep Step 3 open.
 The [new native MP4 player](../../game/native/host_movie/README.md) delivers all195
 pictures through Windows Media Engine and D3D11 textures on both compilers,
 including native window presentation under LLVM. Pause/resume, EOF/restart,
@@ -16,11 +21,10 @@ pass. The [native preparation helper](../../tools/native_media_import/README.md)
 converts/reuses the full201-reference SFD catalogue and the OS reader validates
 all216,998 decoded pictures and nominal cadence. The [asset preflight catalogue](../../game/native/movie_assets/README.md)
 passes real-file leases and native player handoff on both compilers. Packaging/
-automatic invocation, game cue/compositor integration and audible synchronization
-remain open; no game has selected this player yet. The
-[native owner and game adapter](NATIVE_MP4_GAME_INTEGRATION.md) now pass actual
-worker/lifecycle tests and an audited SDK131 object compile; a fresh game
-candidate is next. The separate effect-MOV
+automatic invocation, a fully native compositor and audible synchronization
+remain open. The [native owner and game adapter](NATIVE_MP4_GAME_INTEGRATION.md)
+now run in V25; separate producer/consumer timing is qualified for the next
+incident retest. The separate effect-MOV
 consumer must also be accounted for before shared IPU support is removed.
 
 Step 3 now closes on native resource/media consumers working in the game,

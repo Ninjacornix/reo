@@ -8,6 +8,10 @@
 #include <bit>
 #include <chrono>
 #include <cstdio>
+#include <fcntl.h>
+#include <io.h>
+#include <sys/stat.h>
+#include <cstdlib>
 #include <cstring>
 #include <mutex>
 #include <map>
@@ -235,6 +239,7 @@ constexpr Cue file1_cues[]{
 // END GENERATED NATIVE MOVIE CUES
 class Binding final:public PS2Runtime::ExternalWorker {
 public:
+    struct FrameTiming {std::uint64_t begin{},borrowed{},copied{},released{},generation{},serial{},ordinal{};std::uint32_t caller{};bool available{};};
     PS2Runtime* const runtime;std::uint8_t* const ram;
     std::shared_ptr<const movie_assets::Catalogue> catalogue;
     host_movie::Session session;
@@ -246,9 +251,19 @@ public:
     std::uint64_t released{},sources{},frames{};
     std::vector<std::shared_ptr<const movie_assets::Asset>> playlist;
     std::shared_ptr<const host_movie::CpuFrame> held;
-    Binding(PS2Runtime& r,std::uint8_t* bytes,std::shared_ptr<const movie_assets::Catalogue> assets):runtime(&r),ram(bytes),catalogue(std::move(assets)){}
+    std::mutex trace_mutex;std::filesystem::path trace_path;std::vector<FrameTiming> frame_timings;FrameTiming pending_timing{};std::uint64_t trace_dropped{};bool trace_saved{};
+    static std::uint64_t now(){return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());}
+    Binding(PS2Runtime& r,std::uint8_t* bytes,std::shared_ptr<const movie_assets::Catalogue> assets):runtime(&r),ram(bytes),catalogue(std::move(assets)){
+        try{if(const auto* name=_wgetenv(L"REO_NATIVE_HOST_MOVIE_CONSUMER_TRACE_FILE");name&&*name){trace_path=std::filesystem::path(name);frame_timings.reserve(32768);}}catch(...){trace_path.clear();std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] consumer allocation unavailable\n");}
+    }
+    void record(FrameTiming timing){if(trace_path.empty())return;std::lock_guard lock(trace_mutex);if(frame_timings.size()<32768)frame_timings.push_back(timing);else ++trace_dropped;}
+    void save_trace()noexcept{std::lock_guard lock(trace_mutex);if(trace_saved||trace_path.empty())return;trace_saved=true;const auto fd=_wopen(trace_path.c_str(),_O_WRONLY|_O_CREAT|_O_EXCL|_O_BINARY,_S_IREAD|_S_IWRITE);auto* file=fd<0?nullptr:_fdopen(fd,"wb");if(!file){if(fd>=0)_close(fd);std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] fresh consumer output unavailable\n");return;}
+        std::fprintf(file,"# dropped=%llu\nbegin_ns,borrowed_ns,copied_ns,released_ns,generation,serial,ordinal,caller,available\n",static_cast<unsigned long long>(trace_dropped));
+        for(const auto& t:frame_timings)std::fprintf(file,"%llu,%llu,%llu,%llu,%llu,%llu,%llu,%u,%u\n",static_cast<unsigned long long>(t.begin),static_cast<unsigned long long>(t.borrowed),static_cast<unsigned long long>(t.copied),static_cast<unsigned long long>(t.released),static_cast<unsigned long long>(t.generation),static_cast<unsigned long long>(t.serial),static_cast<unsigned long long>(t.ordinal),t.caller,unsigned(t.available));
+        const auto failed=std::ferror(file);const auto closed=std::fclose(file);if(failed||closed)std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] consumer export incomplete\n");
+    }
     void requestStop()noexcept override{closing.store(true);session.request_stop();}
-    bool join()noexcept override{requestStop();session.join();const auto s=session.snapshot();std::fprintf(stderr,"[NATIVE-HOST-MOVIE-REPORT] joined=%u sources=%llu delivered_frames=%llu error=%s\n",unsigned(s.joined),static_cast<unsigned long long>(sources),static_cast<unsigned long long>(frames),s.error.empty()?"none":s.error.c_str());return s.joined;}
+    bool join()noexcept override{requestStop();session.join();save_trace();const auto s=session.snapshot();std::fprintf(stderr,"[NATIVE-HOST-MOVIE-REPORT] joined=%u sources=%llu delivered_frames=%llu error=%s\n",unsigned(s.joined),static_cast<unsigned long long>(sources),static_cast<unsigned long long>(frames),s.error.empty()?"none":s.error.c_str());return s.joined;}
     [[noreturn]]void fail(const char* reason,std::uint32_t address=0){std::fprintf(stderr,"[NATIVE-HOST-MOVIE-REFUSAL] boundary=%s address=%08x\n",reason,address);runtime->requestStop();throw std::runtime_error("Native movie game boundary refused");}
     void require(bool condition,const char* reason,std::uint32_t at=0){if(!condition)fail(reason,at);}
     std::string string(std::uint32_t at){require(extent(at,256),"string-range",at);std::string out;for(unsigned i=0;i<256;++i){const auto c=ram[at+i];if(!c)return out;require(c>=32&&c<127,"string-profile",at);out+=char(c);}fail("string-length",at);}
@@ -298,9 +313,11 @@ public:
         case Action::status:SET_GPR_U32((&ctx),2,status());return true;
         case Action::time:{const auto numerator=argument(5),denominator=argument(6);output(numerator,4);output(denominator,4);const auto frame=session.frame(generation);store(ram,numerator,frame?static_cast<std::uint32_t>(frame->ordinal):0u);store(ram,denominator,1u);SET_GPR_U32((&ctx),2,0);return true;}
         case Action::information:{output(argument(5),20);std::memset(ram+argument(5),0xff,20);return true;}
-        case Action::frame:{const auto out=argument(5);output(out,76);std::memset(ram+out,0,76);require(!held,"nested-renderer-acquire");auto frame=session.frame(generation);if(!frame||frame->serial<=released)return true;
-            copy_for_legacy_renderer(*frame,width,height,{ram+pixels,std::size_t(width)*height*4});held=std::move(frame);store(ram,out,pixels);store(ram,out+4,3u);store(ram,out+8,width);store(ram,out+12,height);store(ram,out+16,width*4);store(ram,out+24,1u);store(ram,out+28,30000u);store(ram,out+32,static_cast<std::uint32_t>(held->ordinal));store(ram,out+40,1001u);store(ram,out+48,static_cast<std::uint32_t>(held->ordinal));store(ram,out+72,2u);++frames;return true;}
-        case Action::release:if(held){released=held->serial;held.reset();}return true;
+        case Action::frame:{FrameTiming timing;const bool tracing=!trace_path.empty();if(tracing){timing.begin=now();timing.generation=generation;timing.caller=argument(31);}
+            const auto out=argument(5);output(out,76);std::memset(ram+out,0,76);require(!held,"nested-renderer-acquire");auto frame=session.frame(generation);if(tracing)timing.borrowed=now();if(!frame||frame->serial<=released){if(tracing){timing.copied=timing.released=timing.borrowed;record(timing);}return true;}
+            copy_for_legacy_renderer(*frame,width,height,{ram+pixels,std::size_t(width)*height*4});held=std::move(frame);store(ram,out,pixels);store(ram,out+4,3u);store(ram,out+8,width);store(ram,out+12,height);store(ram,out+16,width*4);store(ram,out+24,1u);store(ram,out+28,30000u);store(ram,out+32,static_cast<std::uint32_t>(held->ordinal));store(ram,out+40,1001u);store(ram,out+48,static_cast<std::uint32_t>(held->ordinal));store(ram,out+72,2u);++frames;
+            if(tracing){timing.copied=now();timing.serial=held->serial;timing.ordinal=held->ordinal;timing.available=true;pending_timing=timing;}return true;}
+        case Action::release:if(held){released=held->serial;held.reset();if(!trace_path.empty()){pending_timing.released=now();record(pending_timing);}}return true;
         case Action::unsupported:fail("unsupported-public-api",address);
         case Action::size:case Action::create:break;
         }return false;

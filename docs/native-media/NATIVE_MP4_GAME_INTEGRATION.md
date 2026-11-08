@@ -1,8 +1,9 @@
 # Native MP4 game integration
 
-Status: native worker tested; game adapter selects and creates a movie object.
-The first two game candidates expose registry and cue lookup refusals, described
-below. Successful in-game playback is still pending. Step 3 is incomplete.
+Status: [V25](NATIVE_MP4_CANDIDATE_V25.md) plays native MP4s through the actual
+game and reaches gameplay. A measured handoff stall, source-audio underruns,
+additional controls and packaging keep Step 3 incomplete. The first two
+candidates' registry/cue refusals remain recorded below.
 
 The replacement owns Windows Media Engine and D3D11 on a native thread. Game
 movie cues select prepared, hash-verified MP4 assets. Playback no longer needs
@@ -40,7 +41,8 @@ descriptor's physical container and sector range to an imported native key.
 It does not open or stream that source range. The generated map covers all 201
 owned references and preflight verifies every required native key/frame count.
 This is a temporary game cue boundary; native playback still uses only the
-prepared MP4. In-game validation of this correction is pending.
+prepared MP4. V25 validates the title/character loops, opening, scenario playlist
+and gameplay transition through that corrected range lookup.
 
 The game still renders through its existing graphics pipeline. A separate,
 explicit bridge converts native BGRA square-pixel frames into that renderer's
@@ -98,3 +100,13 @@ RMS 0.479, zero discontinuity flags and zero timestamp errors. Nonzero values at
 that amplitude are conversion dither, not an audible-signal claim. Evidence:
 `build-native-sjuni/host-movie/process-audio-self-v2/receipt.json`. This is capture
 plumbing evidence; actual game soundtrack/synchronization still needs validation.
+
+The next private timing mode records bounded in-memory producer rows for wake,
+controls, source/state preparation, native transfer, readback and publication.
+The consumer records frame borrowing, pixel conversion and the renderer release
+boundary on its actual serialized caller. Export happens after join, with
+exclusive file creation and explicit export errors; no per-frame file writes
+are introduced. Both compiler cohorts export ordered producer timestamps while
+passing the existing worker/lifecycle tests. The updated consumer compiles
+against SDK131. These elapsed spans include descheduling and do not alone prove
+CPU ownership or a cause. Actual traced game evidence is still required.

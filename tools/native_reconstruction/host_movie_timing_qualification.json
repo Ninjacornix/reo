@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "status": "production native timing export and worker lifecycle passed; game consumer timing pending",
+  "source_sha256": {
+    "game/native/host_movie/session.cpp": "bb1c869eac9f2d24f08fa14e3796cfff63cae130730ba5a142a103cc110fa201",
+    "recomp/overrides/native_host_movie/runtime_adapter.cpp": "80bad5e5c6cf90bb467a817e0fe16dfc52b3d5dd1bb48c1534a421ece2c5378a"
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/host-movie/session-trace-gcc-v3/receipt.json": "d5454747091df746ce5ed005cec63dcc0c159f3134f77e7191d713c22250cb86",
+    "build-native-sjuni/host-movie/session-trace-gcc-v3/pipeline.csv": "fe705873c2fc2513853b8f971d2e9d377a38e0ba31d9a33720de3467af977a62",
+    "build-native-sjuni/host-movie/session-trace-llvm-v1/receipt.json": "e73e86dbe90e29f3b9f74e129db46c035545b3d8f9e74f2c30d4583c44c724a7",
+    "build-native-sjuni/host-movie/session-trace-llvm-v1/pipeline.csv": "e808fdf61428df47cd46ade985a87e62cf98b9ab44a5407a9430be47f2621969",
+    "build-native-sjuni/host-movie/sdk-objects-llvm-v5/receipt.json": "563c479b51964cf3f855afefb075e67a456fb59f7d5f04e429519ee6af450028"
+  },
+  "game_run": false,
+  "limitations": [
+    "Traced game retest required to locate the measured V25 handoff stall.",
+    "Timing measures elapsed spans, including descheduling; it does not alone establish CPU ownership or root cause."
+  ]
+}

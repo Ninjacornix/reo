@@ -45,6 +45,11 @@ class NativeDiagnosticsTests(unittest.TestCase):
         self.assertFalse(result['fatal'])
         self.assertEqual(result['findings'], [])
 
+    def test_normal_guest_thread_exit_is_not_execution_failure(self):
+        result = self.classify('Error during program execution: PS2 Thread Exit\n')
+        self.assertFalse(result['fatal'])
+        self.assertEqual(harness.native_outcome(0, result), 'exited-no-fatal-diagnostic')
+
 
 if __name__ == '__main__':
     unittest.main()

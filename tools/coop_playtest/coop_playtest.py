@@ -352,6 +352,10 @@ def classify_native_logs(logs):
                 for line_number, line in enumerate(stream, 1):
                     lower = line.lower()
                     categories = sorted({kind for kind, needle in FATAL_DIAGNOSTICS if needle in lower})
+                    # Runtime reports this exact normal guest shutdown through
+                    # the same catch as actual execution errors.
+                    if lower.strip() == 'error during program execution: ps2 thread exit':
+                        categories = [kind for kind in categories if kind != 'game-execution-error']
                     if categories:
                         total += 1
                         if len(findings) < 100:

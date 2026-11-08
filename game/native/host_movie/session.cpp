@@ -8,6 +8,11 @@
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <cstdio>
+#include <fcntl.h>
+#include <io.h>
+#include <sys/stat.h>
+#include <cstdlib>
 #include <cstring>
 #include <deque>
 #include <limits>
@@ -27,15 +32,29 @@ template<class T>struct Com {
 };
 enum class Action {start,append,pause,loop,stop};
 struct Command {Action action;Generation generation;std::vector<std::shared_ptr<const movie_assets::Asset>> assets;std::uint32_t width{512};bool value{};};
+struct PipelineTrace {
+    struct Row {std::uint64_t wake_begin{},wake_end{},controls_end{},state_end{},transfer_end{},readback_end{},publish_end{},end{},generation{},clip{},serial{},ordinal{},backpressure{};bool updated{};};
+    std::filesystem::path path;std::vector<Row> rows;std::uint64_t dropped{};bool saved{};
+    static std::uint64_t now(){return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());}
+    PipelineTrace()noexcept{try{if(const auto* name=_wgetenv(L"REO_NATIVE_HOST_MOVIE_TRACE_FILE");name&&*name){path=std::filesystem::path(name);rows.reserve(32768);}}catch(...){path.clear();std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] trace allocation unavailable\n");}}
+    void record(const Row& row)noexcept{if(path.empty())return;if(rows.size()<32768)rows.push_back(row);else ++dropped;}
+    void save()noexcept{if(saved||path.empty())return;saved=true;
+        const auto fd=_wopen(path.c_str(),_O_WRONLY|_O_CREAT|_O_EXCL|_O_BINARY,_S_IREAD|_S_IWRITE);auto* file=fd<0?nullptr:_fdopen(fd,"wb");if(!file){if(fd>=0)_close(fd);std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] fresh output could not be opened\n");return;}
+        std::fprintf(file,"# dropped=%llu\nwake_begin_ns,wake_end_ns,controls_end_ns,state_end_ns,transfer_end_ns,readback_end_ns,publish_end_ns,end_ns,generation,clip,serial,ordinal,backpressure,updated\n",static_cast<unsigned long long>(dropped));
+        for(const auto& r:rows)std::fprintf(file,"%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%u\n",static_cast<unsigned long long>(r.wake_begin),static_cast<unsigned long long>(r.wake_end),static_cast<unsigned long long>(r.controls_end),static_cast<unsigned long long>(r.state_end),static_cast<unsigned long long>(r.transfer_end),static_cast<unsigned long long>(r.readback_end),static_cast<unsigned long long>(r.publish_end),static_cast<unsigned long long>(r.end),static_cast<unsigned long long>(r.generation),static_cast<unsigned long long>(r.clip),static_cast<unsigned long long>(r.serial),static_cast<unsigned long long>(r.ordinal),static_cast<unsigned long long>(r.backpressure),unsigned(r.updated));
+        const auto failed=std::ferror(file);const auto closed=std::fclose(file);if(failed||closed)std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TRACE-ERROR] trace export incomplete\n");
+    }
+};
 }
 struct Session::Impl {
     mutable std::mutex mutex;std::condition_variable wake;
     std::deque<Command> commands;SessionSnapshot report;
     std::shared_ptr<const CpuFrame> latest;
     std::atomic<bool> closing{};Generation next{};
+    PipelineTrace trace;
     std::thread worker;
     Impl():worker([this]{run();}){}
-    ~Impl(){closing.store(true);wake.notify_all();if(worker.joinable())worker.join();}
+    ~Impl(){closing.store(true);wake.notify_all();if(worker.joinable())worker.join();trace.save();}
     bool post(Command command){std::lock_guard lock(mutex);if(closing.load()||report.joined||commands.size()==64||!command.generation||command.generation!=report.generation)return false;commands.push_back(std::move(command));wake.notify_one();return true;}
     void run()noexcept {
         try {
@@ -55,8 +74,10 @@ struct Session::Impl {
             };
             while(!closing.load()) {
               try {
+                PipelineTrace::Row timing;const bool tracing=!trace.path.empty();if(tracing)timing.wake_begin=PipelineTrace::now();
                 std::deque<Command> ready;
                 {std::unique_lock lock(mutex);if(commands.empty())wake.wait_for(lock,std::chrono::milliseconds(1),[&]{return closing.load()||!commands.empty();});ready.swap(commands);}
+                if(tracing)timing.wake_end=PipelineTrace::now();
                 for(auto& command:ready) {
                     if(command.action==Action::stop){if(command.generation==generation){player->close();standby->close();primed.reset();running=false;assets.clear();target.reset();readback.reset();pool={};generation=0;}continue;}
                     {std::lock_guard lock(mutex);if(command.generation!=report.generation)continue;}
@@ -74,6 +95,7 @@ struct Session::Impl {
                     }
                 }
                 if(!running)continue;
+                if(tracing)timing.controls_end=PipelineTrace::now();
                 const bool has_next=assets.size()>1&&(index+1<assets.size()||repeat);
                 const auto next_index=(index+1)%assets.size();
                 if(has_next&&(!primed||*primed!=next_index)){primed_generation=standby->open(assets[next_index]->path(),{false,true,0.0});primed=next_index;}
@@ -94,8 +116,10 @@ struct Session::Impl {
                     checked(device->CreateTexture2D(&desc,nullptr,&readback.p),"Native movie renderer handoff failed");
                     for(auto& slot:pool){slot=std::make_shared<CpuFrame>();slot->width=width;slot->height=height;slot->pitch=width*4;slot->bgra.resize(std::size_t(width)*height*4);}
                 }
+                if(tracing)timing.state_end=PipelineTrace::now();
                 if(target.p) {
                     const auto due=player->transfer(engine_generation,target.p);
+                    if(tracing){timing.updated=due.updated;timing.transfer_end=PipelineTrace::now();}
                     if(due.updated) {
                         if(!first_pts)first_pts=due.pts_100ns;
                         auto free=std::find_if(pool.begin(),pool.end(),[](const auto& p){return p.use_count()==1;});
@@ -105,12 +129,15 @@ struct Session::Impl {
                             checked(context->Map(readback.p,0,D3D11_MAP_READ,0,&mapped),"Native movie frame readback failed");
                             for(unsigned y=0;y<height;++y)std::memcpy(frame.bgra.data()+std::size_t(y)*frame.pitch,static_cast<const std::uint8_t*>(mapped.pData)+std::size_t(y)*mapped.RowPitch,frame.pitch);
                             context->Unmap(readback.p,0);frame.generation=generation;frame.serial=++serial;frame.pts_100ns=due.pts_100ns-*first_pts;
+                            if(tracing)timing.readback_end=PipelineTrace::now();
                             const auto relative=frame.pts_100ns<0?0:static_cast<std::uint64_t>(frame.pts_100ns);frame.ordinal=completed_frames+(relative*30000+5000000ull*1001)/(10000000ull*1001);
                             std::lock_guard lock(mutex);if(report.generation==generation)latest=*free;
+                            if(tracing){timing.ordinal=frame.ordinal;timing.publish_end=PipelineTrace::now();}
                         }
                     }
                 }
                 {std::lock_guard lock(mutex);if(report.generation==generation){report.state=index&&latest&&state.state==State::loading?State::playing:state.state;report.paused=paused;report.loop=repeat;report.frames=serial;report.backpressure=backpressure;report.clip_index=index;report.queued_clips=assets.size();report.position_seconds=completed_frames*1001.0/30000.0+state.position_seconds;report.duration_seconds=state.duration_seconds;}}
+                if(tracing){timing.end=PipelineTrace::now();timing.generation=generation;timing.clip=index;timing.serial=serial;timing.backpressure=backpressure;if(timing.updated||timing.end-timing.wake_begin>=10000000)trace.record(timing);}
               }catch(const std::exception& error){
                 // A failed source retires its pipeline, not the control owner.
                 // A later start can use the same device with a fresh engine.
@@ -139,5 +166,5 @@ bool Session::stop(Generation generation){auto& p=*impl_;std::lock_guard lock(p.
 SessionSnapshot Session::snapshot()const{std::lock_guard lock(impl_->mutex);return impl_->report;}
 std::shared_ptr<const CpuFrame> Session::frame(Generation generation)const{std::lock_guard lock(impl_->mutex);return generation==impl_->report.generation?impl_->latest:nullptr;}
 void Session::request_stop()noexcept{impl_->closing.store(true);impl_->wake.notify_all();}
-void Session::join()noexcept{request_stop();if(impl_->worker.joinable())impl_->worker.join();}
+void Session::join()noexcept{request_stop();if(impl_->worker.joinable())impl_->worker.join();impl_->trace.save();}
 }
