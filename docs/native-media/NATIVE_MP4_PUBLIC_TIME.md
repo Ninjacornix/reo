@@ -28,7 +28,9 @@ Both compiler checks cover zero, a 30000/1001 frame interval, the long opening,
 a longer movie and a 96,000-second playlist, with less than 1 ms truncation.
 Negative, infinity, NaN and signed-count overflow refuse. The actual adapter
 compiles against the audited SDK131 header cohort. This is not linked-game
-evidence; the next coherent candidate must include and retest the correction.
+evidence on their own. [V28](NATIVE_MP4_CANDIDATE_V28.md) links the correction
+and completes the opening/scenario and gameplay route through `GameSession`.
+That test does not identify a particular live time-query invocation.
 
 Evidence: `build-native-sjuni/host-movie/time-contract-v1/receipt.json` and
 `build-native-sjuni/host-movie/sdk-objects-llvm-v6/receipt.json`.

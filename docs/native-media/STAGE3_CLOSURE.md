@@ -43,6 +43,15 @@ remain explicit until its callers migrate. Do not require an unused legacy
 profile merely because a historical test or implementation modeled it.
 Step 3 remains incomplete; the conditional PC sleep action has not run.
 
+The [V28 real launcher-core test](NATIVE_MP4_CANDIDATE_V28.md) now completes
+opening/scenario and bar gameplay through verified native package preparation.
+It fixes an ISO-source mount omission and confirms complete audio installation
+and joined retirement. All opening pictures publish with a maximum 39.1872 ms
+interval, but 120,448 native source-underrun frames remain measured. Their timing
+and source are not yet located. The user is away; audible sync remains unknown.
+The [retirement audit](MEDIA_RETIREMENT_AUDIT.md) lists remaining interfaces and
+unsupported required profiles. Step 3 remains open.
+
 ## Historical reconstruction checklist and checkpoints
 
 
