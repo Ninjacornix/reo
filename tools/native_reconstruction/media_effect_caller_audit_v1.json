@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "status": "static effect caller chain and bounded prior observer checked; no path retirement or new game execution",
+  "evidence_sha256": {
+    "recomp/config/output_ovl/o0/o0_00371A10_0x371a10.cpp": "f61aff9439dc61b3937a6b19093aca70ab3caf98f51122680369c5b85d6fd123",
+    "recomp/config/output_ovl/o0/o0_00371A90_0x371a90.cpp": "1110be7324fe0a0107a331037b988d57c2d00cee0c183807e4adf6a235b01c74",
+    "recomp/config/output_ovl/o2/o2_00576F90_0x576f90.cpp": "5a5b708177d3c7603f37351493c41a54b3378ebf97809449c9fccb7c8abf7acc",
+    "recomp/config/output/sub_001CC2D0_0x1cc2d0.cpp": "fd801398c76ab87f57b9b54099a226b43b1b9576e4c226581c214d0f41b5ada7",
+    "recomp/config/output/sub_001CC8F0_0x1cc8f0.cpp": "f2abb56f5a1c2d96988620bf2fac6f2166301ab3d0e05b747d5be2a23000f2da",
+    "recomp/config/output/sub_0018DAB0_0x18dab0.cpp": "fa30bfeb2d8b5a763fe0bb91449331eca90d5304e331176c15a5d9176a5dc96d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-221600-845/launcher-media.jsonl": "4865c7f92f3c15e3040c2d769913fe27f6893066274a480c832e0d42697ccfce"
+  },
+  "effect_state_samples": 427,
+  "nonzero_effect_state_samples": 0,
+  "active_audio_samples": 479,
+  "observed_audio_modes": [
+    1
+  ],
+  "corrected_instruction": {
+    "pc": "0x371ab0",
+    "word": "0x94240ad4",
+    "operation": "lhu",
+    "result": "zero extension"
+  },
+  "game_run": false,
+  "guest_writes": false,
+  "step3_complete": false,
+  "limitations": [
+    "Source caller links across overlays require the correct active image; no new overlay execution is claimed.",
+    "No suitable effect descriptor or payload has been established.",
+    "The direct-disc size query and scenario-resource read are separate, so direct filename absence does not prove payload absence."
+  ]
+}

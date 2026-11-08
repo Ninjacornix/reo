@@ -86,3 +86,20 @@ refusal profile describes V31; the new 22-entry implementation is awaiting its
 coherent game retest. The independent catalogue audit and its 89 inline-loop
 refusals remain explicit. This does not retire arbitrary SJ callbacks or prove
 the effect consumer unreachable.
+
+The later caller check connects scene texture initialization
+`o2:576F90 -> o0:371A10 -> o0:371A90 -> 1CC2D0`: a descriptor whose first
+byte is neither `FF` nor high-bit-set arms effect ID 1; scenario 0 / room 1
+overrides that stored ID to 128. This is a static conditional caller chain,
+not proof that such a descriptor occurs in an admitted room. The service
+loads the ID with `lhu` at `371AB0` (word `94240AD4`); the earlier mapping's
+"signed halfword" wording is corrected to zero extension. The effect loader
+queries an uppercase `cdrom0:` path, then passes the returned length to the
+separate scenario-resource reader. Absence of a direct ISO filename alone
+therefore does not establish that its resource payload is absent.
+
+The retained V31 observer contains 427 public effect-state samples, all with
+state/ID `(0,0)`, and 479 active ADXT observations, all ordinary source mode 1.
+This bounds the observed opening/scenario route, not later-room reachability
+or execution of the new native queue binding. Source/caller evidence is pinned
+in `tools/native_reconstruction/media_effect_caller_audit_v1.json`.

@@ -83702,7 +83702,7 @@
           "line": 147
         }
       ],
-      "rationale": "When byte 0x340AD2 equals one, calls 0x1CC2D0 with signed halfword 0x340AD4, then sets the byte to two regardless of the callee result. Other states do nothing."
+      "rationale": "When byte 0x340AD2 equals one, calls 0x1CC2D0 with zero-extended halfword 0x340AD4, then sets the byte to two regardless of the callee result. Other states do nothing."
     },
     {
       "id": "o0:0x00371AD0",
