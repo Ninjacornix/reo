@@ -2,8 +2,9 @@
 
 `tools/native_reconstruction/observe_media_playtest.py` is an external, read-only
 sampler for an already running, private File #1 test session. It checks the
-session's copied executable hash, PID, process creation identity and loaded ELF
-signature before sampling, and retains the opened process handle. Every sample
+session's copied executable hash, PID, process creation identity, complete owned
+File #1 ELF hash and loaded ELF signature before sampling, and retains the opened
+process handle. Every sample
 checks that same process identity before and after reading. It does not attach
 by process name, write game memory, suspend threads or send input.
 

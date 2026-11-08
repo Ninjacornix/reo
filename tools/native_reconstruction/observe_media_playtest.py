@@ -95,6 +95,8 @@ def main():
     if (manifest.get('game', 'file1') != 'file1' or len(run['players']) != 1 or
             len(manifest['players']) != 1 or run.get('finishedUtc')):
         raise ValueError('One running owned File #1 process is required')
+    if sha(manifest['elf']) != owned.EXPECTED_ELF:
+        raise ValueError('Exact owned File #1 ELF identity is required')
     player = run['players'][0]
     identity = {key: player[key] for key in ('pid', 'image', 'creationFileTime')}
     image = Path(identity['image']).resolve()
@@ -108,6 +110,7 @@ def main():
     if output.exists() or receipt.exists():
         raise ValueError('Observation outputs must be fresh')
     result = dict(status='sampling', identity=identity, source_sha256=manifest['sourceSha256'],
+                  elf_sha256=owned.EXPECTED_ELF,
                   script_sha256=sha(__file__), started_utc=owned.utc(), hz=args.hz,
                   duration_limit=args.seconds, read_only=True, atomic_snapshot=False,
                   interpretation='Samples do not establish call counts, tick frequency or root cause',
