@@ -8,9 +8,12 @@ transfer and scheduler implementations is not a closure requirement by itself.
 Current results: [V22](ADXT_CANDIDATE_V22_AUDIO.md) passes the previous three-source
 route failure and reaches gameplay with joined native audio and zero recorded
 source underruns. The larger buffer profile passes its separate native cohort.
-A new short-clip experiment converts an owned movie to H.264 MP4 and decodes all
-195 pictures through Windows Media Foundation without a PS2 runtime. It has no
-on-screen player or game integration yet.
+The [new native MP4 player](../../game/native/host_movie/README.md) delivers all195
+pictures through Windows Media Engine and D3D11 textures on both compilers,
+including native window presentation under LLVM. Pause/resume, EOF/restart,
+loop, replacement, stale-command refusal, corrupt-source errors and recovery
+pass. Native asset preparation, game cue/compositor integration and audible
+synchronization remain open; no game has selected this player yet.
 
 Step 3 now closes on native resource/media consumers working in the game,
 converted assets where useful, complete playback and audible synchronization,

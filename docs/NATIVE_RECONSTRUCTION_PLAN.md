@@ -12,6 +12,14 @@ complete native replacement. Step 3 is still incomplete, and the whole game
 still requires stages 4-6 before PS2 runtime removal can be claimed.
 
 
+Native modernization checkpoint, 2026-11-08: the [Windows-native MP4 player](../game/native/host_movie/README.md)
+now delivers all195 converted pictures through the native playback clock and
+D3D11 textures on both compilers. Pause/resume, EOF/restart, looping, replacement,
+invalid/stale controls, corrupt-file error and recovery pass. The LLVM run also
+presents through a real native DXGI window. This library contains no PS2 runtime
+or CRI/MPEG-2 scheduler. Asset-cache preparation, game movie cues/compositor and
+separate audio synchronization are still unintegrated; Step3 remains open.
+
 Latest stage-3 checkpoint, 2026-11-08: the [V22 game retest](native-media/ADXT_CANDIDATE_V22_AUDIO.md)
 passes the previous three-source route failure and reaches responsive bar
 gameplay. Its joined private native source produces32,026,716 signal frames
