@@ -42,3 +42,32 @@ geometry and contained length profile. This excludes only that profile at those
 member starts. Embedded/unnamed/compressed payloads, other layouts and actual
 call reachability remain unresolved; this is not permission to delete IPU
 support. The report is `build-native-sjuni/effect-member-header-search-v1.json`.
+
+## Queued audio consumer boundary
+
+The ordinary adapter's five producer refusals are not all unreferenced codec
+internals. Existing complete source findings identify actual engine wrappers:
+`1AE9F0` resolves a sound name and calls `12A6B8` to enqueue an AFS member;
+`1AEA70` calls the queue-count query, repeat control and `12A780` start.
+The special E3 movie setup in o1 also uses the enqueue/restart route. These are
+static caller facts from [stream channels](../SYMBOLS_STREAM_CHANNELS.md),
+[queued source APIs](../SYMBOLS_ADXT_SEAMLESS_LSC_SOURCE_CONTROLS.md) and
+[o1 movie options](../SYMBOLS_O1_OPTIONS_MOVIE.md). They establish that a required
+consumer audit cannot simply classify the whole interface as unused. They do
+not establish that an E3/debug route is a required retail scenario, or that one
+of these functions executed in V28-V31.
+
+The existing native `adxt_lsc_input::Input` already owns prepared assets,
+enqueue/repeat/start/stop, bounded journals and source retirement. The next
+integration should resolve game cues into retained native resource extents and
+use that native owner, with original game-visible status/return behavior only at
+the temporary caller interface. It should not execute the original queue/file
+producer behind a native label. Required cue profiles must be checked against
+`adx_sequence::Clip` admission, which currently refuses inline-loop metadata
+and incompatible output/attenuation. Ordinary finite-file success does not
+remove those separate admission limits.
+
+Game/renderer interfaces remain staged migrations. The first-room captures show
+allocated original LSC children staying idle, not proof that all later scenarios
+avoid queued audio. This boundary remains open independently of the measured
+finite-file read-ahead improvement.
