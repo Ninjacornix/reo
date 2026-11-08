@@ -90,6 +90,12 @@ public:
         return owner_->join()==sources::Join::completed;
     }
 };
+class MediaPcmOrder final:public MediaInstallResult::PcmOrder {
+    std::shared_ptr<media::Aggregate> owner_;
+public:
+    explicit MediaPcmOrder(std::shared_ptr<media::Aggregate> owner):owner_(std::move(owner)){}
+    pcm_bridge::Result<std::size_t> copy(std::span<std::uint32_t> out)const noexcept override{return owner_->copy_order(out);}
+};
 bool observed_layout_supported() {
     const auto value=ps2_syscalls::dtxCompatLayoutSnapshot();
     return value.rpcSid==0x90000200 && value.urpcObjBase==0x001e0000 &&
@@ -106,7 +112,8 @@ class CompositeBackend final:public std::enable_shared_from_this<CompositeBacken
 public:
     static InstallResult install(PS2Runtime& runtime,const reo_cd_async::ConfigurationReceipt& cd,
                                  bank_packets::v3::MemoryIdentity identity,
-                                 std::shared_ptr<sources::Owner> native_sources={}) noexcept {
+                                 std::shared_ptr<sources::Owner> native_sources={},
+                                 std::shared_ptr<const MediaInstallResult::PcmOrder>* order_result=nullptr) noexcept {
         const auto* requested=std::getenv("REO_NATIVE_AUDIO");
         if(!requested || std::strcmp(requested,"1")) return {};
         try {
@@ -150,6 +157,10 @@ public:
                 if(built.status!=audio::BuildStatus::ready_composition || !built.owner)return {InstallStatus::aggregate_unavailable};
                 child=built.owner->registration();
             }
+            // Allocate the read-only capability BEFORE publication. Failure
+            // cannot leave an installed backend without its required adapter.
+            std::shared_ptr<const MediaInstallResult::PcmOrder> order;
+            if(media_owner && order_result)order=std::make_shared<MediaPcmOrder>(media_owner);
             auto owner=std::shared_ptr<CompositeBackend>(new CompositeBackend(runtime,memory,std::move(child),native_sources,std::move(media_owner)));
             // Runtime requests every stop before joining workers in registration
             // order. Sources precede the SDK/device binding, including teardown
@@ -168,6 +179,7 @@ public:
                 return {InstallStatus::publication_refused,selected};
             }
             cleanup.installed=true;
+            if(order_result)*order_result=std::move(order);
             std::fprintf(stderr,"[NATIVE-AUDIO] complete PCM/bank/RAM candidate installed pcm_bytes=%llu native_sources=%u\n",
                          static_cast<unsigned long long>(audio::production_pcm_bytes),unsigned(bool(native_sources)));
             return {InstallStatus::installed,selected};
@@ -291,9 +303,10 @@ MediaInstallResult install_native_sources(PS2Runtime& runtime,const reo_cd_async
     try{
         adxt_control_session::Config config;config.output.stream_gains=std::make_shared<RuntimeStreamGains>();
         owner=std::make_shared<sources::Owner>(std::move(config));
-        const auto result=CompositeBackend::install(runtime,cd,identity,owner);
-        if(result.status==InstallStatus::installed)return {result,std::move(owner)};
-        (void)owner->join();return {result,{}};
-    }catch(...){if(owner)(void)owner->join();return {{InstallStatus::allocation_failed},{}};}
+        std::shared_ptr<const MediaInstallResult::PcmOrder> order;
+        const auto result=CompositeBackend::install(runtime,cd,identity,owner,&order);
+        if(result.status==InstallStatus::installed)return {result,std::move(owner),std::move(order)};
+        (void)owner->join();return {result,{},{}};
+    }catch(...){if(owner)(void)owner->join();return {{InstallStatus::allocation_failed},{},{}};}
 }
 } // namespace reo::native::sound_ram

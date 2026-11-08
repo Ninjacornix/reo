@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "status": "same-aggregate read-only order capability passed both compiler factory and actual SDK object cohorts",
+  "sources": {
+    "recomp/overrides/native_sound_ram/composite_backend.h": "3a2023d584df4544d1cf4395c1c52abaaa49cd36c72915f4abd7dd1e9e457a29",
+    "recomp/overrides/native_sound_ram/composite_backend.cpp": "21ef69c846128b183a9d8dbe902ac07a02c2ee49efbd21245f2532f1887d5a96",
+    "tools/native_reconstruction/audio_media_factory/tests.cpp": "5bd06fff893fdaead8172b84e052a8c6b9092f3bc46e27f6ec39bfc33fb9f8e2",
+    "tools/native_reconstruction/audio_media_factory/verify.py": "0f2fb2268de62aa73aaf0696dacc59e152f4084a90315208bf55196fe96cb27c",
+    "docs/native-media/ADXT_PCM_ORDER_HANDOFF.md": "fb3dfe7562dfc7cba21837fab111995ece4641474b8f388a1d4c3692d6769483"
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-binding/pcm-order-factory-v2-manifest.json": "4244c85319733b14f2e700cb5661ae3683e6624ba4d8573bbd7fad5329280d0c",
+    "build-native-sjuni/audio-media-factory/pcm-order-llvm-v2/receipt.json": "d3ccd4dbd2bac339b9fed096c0a874ce7ea81b14037cf5809d777c3fcc376483",
+    "build-native-sjuni/audio-media-factory/pcm-order-gcc-v2/receipt.json": "ad2be04f0a3bdacdb12c2c39ba01d5bf3ca140b63b19a260ba6aa51f94699800",
+    "build-native-sjuni/adxt-binding/pcm-order-actual130-llvm-v1/receipt.json": "2661dd231b9ec8fe3901a6fb629c5b94db5bbcdf47287f7335bf7d2a989e236f",
+    "build-native-sjuni/adxt-binding/pcm-order-actual130-gcc-v1/receipt.json": "52e867e6179d97b58ee5525a6e5e99fec796891ab2446c39556a6084c03228c9"
+  },
+  "scenarios": 13,
+  "order_scenario_checks": 237,
+  "acquisition_ports": "declared protocol fixture",
+  "native_archive_bodies_changed": false,
+  "game_run": false,
+  "live_mix_order_parity": false,
+  "stage3_complete": false
+}

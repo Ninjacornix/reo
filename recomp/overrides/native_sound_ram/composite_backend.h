@@ -22,6 +22,17 @@ InstallResult install(PS2Runtime&,const reo_cd_async::ConfigurationReceipt&,
 struct MediaInstallResult {
     InstallResult backend;
     std::shared_ptr<adxt_control_owner::Owner> sources;
+    class PcmOrder;
+    std::shared_ptr<const PcmOrder> pcm_order;
+};
+// Read-only capability to the SAME selected aggregate's raw voice container.
+// Its bridge copies under its data lock. No independent/sorted map, mutable
+// aggregate alias, SDK call or native-controller admission is exposed. Copy
+// before entering source-owner controls; never call from an output callback.
+class MediaInstallResult::PcmOrder {
+public:
+    virtual ~PcmOrder()=default;
+    [[nodiscard]] virtual pcm_bridge::Result<std::size_t> copy(std::span<std::uint32_t>)const noexcept=0;
 };
 // Explicit alternative for the complete native ADXT game adapter. Uses the same
 // real RAM authority, one outer device/bank/master callback, and a separately

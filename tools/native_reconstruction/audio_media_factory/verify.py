@@ -29,7 +29,7 @@ def main():
     # remain byte-identical. This permits the optional original ABI observer
     # branch without rebuilding unchanged decoder/output archives.
     fixture_only={'tools/native_reconstruction/audio_media_factory/tests.cpp','tools/native_reconstruction/audio_media_factory/verify.py',
-        'recomp/overrides/native_sound_ram/composite_backend.cpp','tools/native_reconstruction/prepare_native_candidate.py'}
+        'recomp/overrides/native_sound_ram/composite_backend.cpp','recomp/overrides/native_sound_ram/composite_backend.h','tools/native_reconstruction/prepare_native_candidate.py'}
     compatible_changes={n for n,d in native_manifest['files'].items()if manifest['files'].get(n)!=d}
     if not compatible_changes.issubset(fixture_only):raise ValueError('Native cohort production inputs differ: '+str(compatible_changes))
     def verify():
@@ -86,8 +86,8 @@ def main():
     try:
         binary=out/'factory.exe'
         run('compile',flags+[ROOT/'recomp/overrides/native_audio/v2/aggregate.cpp',ROOT/'recomp/overrides/native_audio/v3/aggregate.cpp',out/'observer_stub.cpp',HERE/'tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-o',binary])
-        for case in ('live','blocked','scoped','device_fence','legacy','disabled','phase','layout','memory','provider','registration','publication'):run(case,[binary,case])
-        verify();record.update(status='native media factory protocol passed',scenarios=12,binary_sha256=sha(binary))
+        for case in ('live','blocked','scoped','device_fence','legacy','disabled','phase','layout','memory','provider','registration','publication','pcm_order'):run(case,[binary,case])
+        verify();record.update(status='native media factory protocol passed',scenarios=13,binary_sha256=sha(binary))
     finally:
         record['outputs_sha256']={p.name:sha(p)for p in out.iterdir()if p.is_file() and p.suffix=='.txt'};write(out/'receipt.json',json.dumps(record,indent=2)+'\n')
     print(json.dumps({'status':record['status'],'receipt_sha256':sha(out/'receipt.json')}))

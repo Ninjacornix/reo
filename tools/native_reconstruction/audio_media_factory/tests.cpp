@@ -6,6 +6,7 @@
 #include <future>
 #include <iostream>
 #include <thread>
+#include <unordered_map>
 #include "ps2_runtime.h"
 #include "recomp/overrides/native_banks/v3/test_capture.h"
 #include "game/native/adxt_shared_player/test_sources.hpp"
@@ -56,7 +57,7 @@ template<class F>void until(F&& done){const auto end=std::chrono::steady_clock::
 struct Fixture {
     PS2Runtime runtime;reo_cd_async::ConfigurationReceipt cd;
     sr::MediaInstallResult result;
-    void install(){result=sr::install_native_sources(runtime,cd,packet_test::identity());check(result.backend.status==sr::InstallStatus::installed && bool(result.sources));}
+    void install(){result=sr::install_native_sources(runtime,cd,packet_test::identity());check(result.backend.status==sr::InstallStatus::installed && bool(result.sources) && bool(result.pcm_order));}
     void finish(){runtime.stop();check(runtime.join());check(result.sources->report().joined);}
 };
 inst::Source source(std::shared_ptr<const reo::native::resources::ByteView> view,unsigned channels){inst::Source s;s.input=std::move(view);s.player.decoder.channels=channels;s.player.decoder.source_config.byte_length=static_cast<std::int32_t>(s.input->size());return s;}
@@ -130,8 +131,33 @@ void legacy(){
     std::array<float,128> buffer{};check(callback_slot->dispatch(buffer.data(),64));check(sdk::consumed(0x1e0000)==128);
     f.runtime.stop();check(f.runtime.join());auto memory=prepared_memory.lock();check(memory && memory->stats.retired);
 }
+void pcm_order(){
+    Fixture f;f.install();std::array<std::uint32_t,32> actual{};
+    auto copy=[&](const auto& expected){
+        actual.fill(0xdeadbeef);const auto result=f.result.pcm_order->copy(actual);
+        check(result.status==reo::native::pcm_bridge::Status::ok && result.value==expected.size());
+        unsigned i{};for(const auto& row:expected)check(actual[i++]==row.first);
+        check(actual[i]==0xdeadbeef);
+    };
+    std::unordered_map<std::uint32_t,unsigned> expected;copy(expected);
+    // Enough real facade configurations to cross the host STL's default bucket
+    // growth, plus replacement, release and cold reset. All shadow voices are
+    // muted and carry no PCM. The capability must observe actual container
+    // history, not caller insertion order or a sorted list.
+    for(unsigned i=0;i<16;++i){const auto id=0x1e0100+i*0x20;sdk::configure(id,0x1e0000,0,1,48000,256,false);expected.emplace(id,i);copy(expected);}
+    std::array<std::uint32_t,1> short_buffer{0x12345678};const auto short_copy=f.result.pcm_order->copy(short_buffer);
+    check(short_copy.status==reo::native::pcm_bridge::Status::invalid_input && short_copy.value==16 && short_buffer[0]==0x12345678);
+    sdk::configure(0x1e0160,0x1e0000,0,1,24000,128,false);copy(expected);
+    sdk::release(0x1e0160);expected.erase(0x1e0160);copy(expected);
+    sdk::configure(0x1e0160,0x1e0000,0,1,48000,256,false);expected.emplace(0x1e0160,3);copy(expected);
+    sdk::reset();expected.clear();copy(expected);check(route_resets==1);
+    sdk::configure(0x1e0040,0x1e0000,0,1,48000,256,false);expected.emplace(0x1e0040,0);copy(expected);
+    // The capability retains only fenced aggregate state after ordinary join.
+    auto retained=f.result.pcm_order;f.finish();expected.clear();copy(expected);
+    f.result={};check(retained->copy(actual).status==reo::native::pcm_bridge::Status::ok && retained->copy(actual).value==0);
+}
 int main(int argc,char** argv)try{
     check(argc==2);_putenv_s("REO_NATIVE_AUDIO","1");std::string mode=argv[1];
-    if(mode=="live")live();else if(mode=="blocked")blocked_source();else if(mode=="scoped")scoped_join();else if(mode=="device_fence")device_fence();else if(mode=="legacy")legacy();else refusals(mode);
+    if(mode=="live")live();else if(mode=="blocked")blocked_source();else if(mode=="scoped")scoped_join();else if(mode=="device_fence")device_fence();else if(mode=="legacy")legacy();else if(mode=="pcm_order")pcm_order();else refusals(mode);
     std::cout<<"media factory checks="<<checks<<'\n';return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
