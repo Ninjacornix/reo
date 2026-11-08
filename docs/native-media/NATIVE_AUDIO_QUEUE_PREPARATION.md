@@ -47,8 +47,11 @@ Native cohorts are under
 `build-native-sjuni/media-queued-preparation-results-{llvm,gcc}-v2`; private fault
 evidence is under `build-native-sjuni/queued-audio-checks/preparation-faults-llvm-v4`.
 
-Next work is the actual consumer replacement: audit required owned cue extents
-against clip admission, resolve AFS/name cues into native resource IDs, bind
+The [owned catalogue audit](OWNED_AUDIO_CUE_ADMISSION.md) now admits 8,821 of
+8,910 structural ADX assets and retains 89 explicit inline-loop refusals. This
+does not itself establish queued use or correct playlist behavior for those
+looped assets. Next work is actual consumer replacement: resolve AFS/name cues
+into native resource IDs, bind
 enqueue/start/count/repeat/reset/stop to the native owner, and test its source
 retirement and game transitions. Existing clip admission still refuses certain
 headers, inline-loop metadata and incompatible output. Do not enable the route
