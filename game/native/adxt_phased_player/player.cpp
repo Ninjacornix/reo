@@ -9,7 +9,7 @@
 namespace reo::native::adxt_phased_player {
 namespace {
 Config checked(Config c,const output::Producer& producer,const resources::ByteView* view) {
-    if(c.decoder.downmix || c.decoder.pitch_offset ||
+    if(c.decoder.service_divisor <= 0 || c.decoder.downmix || c.decoder.pitch_offset ||
        c.decoder.channels<1 || c.decoder.channels>2)throw std::invalid_argument("Shared native player profile");
     if(c.sequence && c.lsc_input)throw std::invalid_argument("One owned input profile required");
     if(!c.attenuation_table && c.initial_attenuation)
@@ -358,6 +358,12 @@ Status Player::set_loop_enabled(bool enabled)noexcept{
     if((s.config.sequence || s.config.lsc_input) && enabled)return Status::unsupported_profile;
     if(s.decoder.set_loop_enabled(enabled)!=window::Status::completed)return s.fail();
     s.config.decoder.loop_enabled=enabled;return Status::completed;
+}
+Status Player::set_service_divisor(std::int32_t value)noexcept{
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
+    if(value<=0)return Status::unsupported_profile;
+    if(s.decoder.set_service_divisor(value)!=window::Status::completed)return s.fail();
+    s.config.decoder.service_divisor=value;return Status::completed;
 }
 Status Player::set_start_inhibit(bool value)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;

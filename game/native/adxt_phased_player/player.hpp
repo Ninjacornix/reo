@@ -1,5 +1,5 @@
 #pragma once
-#include "../adx_window/v2/playback_r2/stream_window.hpp"
+#include "../adx_window/v2/service_r4/stream_window.hpp"
 #include "../adxt_output_session/session.hpp"
 #include "../adxt_estimated_clock/estimated_clock.hpp"
 #include "../adxt_service_group/service_group.hpp"
@@ -13,7 +13,7 @@
 namespace reo::native::adxt_control_session {class Session;}
 namespace reo::native::adxt_serviced_clock {class Service;}
 namespace reo::native::adxt_phased_player {
-namespace window=adx_window::v2;
+namespace window=adx_window::service_r4;
 namespace output=adxt_output_session;
 namespace clock=adxt_estimated_clock;
 enum class Status { completed, waiting_header, pending, ended, busy, closed, unsupported_profile, fault };
@@ -73,6 +73,7 @@ public:
     [[nodiscard]] ClockControl discard_rebase(std::uint32_t original_tick)noexcept;
     [[nodiscard]] Status set_time_base(std::uint32_t)noexcept;
     [[nodiscard]] Status set_loop_enabled(bool)noexcept;
+    [[nodiscard]] Status set_service_divisor(std::int32_t)noexcept;
     [[nodiscard]] Status set_start_inhibit(bool)noexcept;
     void request_stop()noexcept;
     // Per-stream output fence, then actual source join. No shared provider join

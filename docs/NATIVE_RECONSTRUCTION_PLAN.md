@@ -1,10 +1,13 @@
 # Outbreak native reconstruction plan
 
-Current stage-3 checkpoint, 2026-11-08: both compilers pass **75 standalone
+Current stage-3 checkpoint, 2026-11-08: both compilers pass **77 standalone
 suites**, the explicit native-source runtime factory's 12 declared-port
 scenarios, and the stable clock/control bridge's three detected faults. The
 [control results](native-media/ADXT_GAME_CONTROL_RESULTS.md) identify the current
-cohort. All 201 File #1 movies also prime/rebuild and present all 216,998
+cohort. The [service-divisor results](native-media/ADXT_SERVICE_DIVISOR_RESULTS.md)
+add the game's 30 Hz control and larger decode window, compared with 96
+original ready rows and checked through stable source replacement.
+All 201 File #1 movies also prime/rebuild and present all 216,998
 independently counted pictures through the native GPU graph with two logical
 slots and separate physical reorder storage. The [priming results](native-media/MOVIE_PRIMING_RESULTS.md)
 identify those cohorts. V13 resolves the startup sound RPC refusal. V14 narrows

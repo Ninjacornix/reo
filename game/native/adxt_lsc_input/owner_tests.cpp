@@ -95,7 +95,7 @@ int main(){try{
             std::this_thread::yield();}check(waiting);
         const auto pending=live->snapshot();check(pending.planned_samples==32001 && pending.published_bytes==file(20000)->size() && pending.file_progress==0);
         for(unsigned n=0;n<32;++n){check(t.session.service(0)==c::Status::completed);const auto value=t.session.inspect(key).evidence;
-            check(!value.fault && value.decoder.loop.seamless_samples==0 && value.decoder.outer.phase==reo::native::adx_window::v2::OuterPhase::decoding);}
+            check(!value.fault && value.decoder.loop.seamless_samples==0 && value.decoder.outer.phase==reo::native::adxt_phased_player::window::OuterPhase::decoding);}
         {std::lock_guard lock(blocked->mutex);blocked->released=true;blocked->cv.notify_all();}
         ended(t,key);check(live->snapshot().decoder_base==20000 && live->snapshot().planned_samples==32001);
         const auto clock=t.session.estimate(key,0);check(clock.status==c::Status::completed && clock.value.result.ratio.numerator==32001);

@@ -20,7 +20,7 @@ Status mapped(control::Status value)noexcept {
 struct Record {
     Construction construction;std::optional<control::Key> active;std::optional<Source> pending;
     std::optional<control::player::Snapshot> final;
-    std::optional<std::uint32_t> time_base;std::optional<bool> loop_enabled;
+    std::optional<std::uint32_t> time_base;std::optional<bool> loop_enabled;std::optional<std::int32_t> service_divisor;
     std::uint64_t generation{1},starts{},stops{};float gain{1};std::uint32_t volume{256},attenuation{};std::int32_t pause{};
     bool owned{},destroying{},retiring{},fault{},exhausted{},start_inhibit{};
 };
@@ -50,7 +50,7 @@ Open Instances::create(Construction config)noexcept {
     if(config.channels<1 || config.channels>2 || config.indices.decoder>=16 || config.indices.stream>=16 || config.indices.rna>=16 || config.indices.transfer>=32)return{Status::invalid_input};
     for(const auto& r:s.records)if(r.owned && same_indices(config.indices,r.construction.indices))return{Status::occupied};
     for(unsigned i=0;i<s.capacity;++i){auto& r=s.records[i];if(r.owned || r.exhausted)continue;
-        r.construction=config;r.owned=true;r.fault=false;r.gain=1;r.volume=256;r.attenuation=0;r.pause=0;r.start_inhibit=false;r.starts=r.stops=0;r.final.reset();r.time_base.reset();r.loop_enabled.reset();s.order_required=true;
+        r.construction=config;r.owned=true;r.fault=false;r.gain=1;r.volume=256;r.attenuation=0;r.pause=0;r.start_inhibit=false;r.starts=r.stops=0;r.final.reset();r.time_base.reset();r.loop_enabled.reset();r.service_divisor.reset();s.order_required=true;
         Key key;key.owner_=s.identity;key.slot_=i;key.generation_=r.generation;return{Status::completed,std::move(key)};}
     return{Status::capacity};
 }
@@ -73,6 +73,7 @@ Status Instances::open(std::uint32_t index)noexcept {
     auto requested=std::move(*r.pending);r.pending.reset();
     requested.player.attenuation_table=r.construction.attenuation_table;requested.player.initial_attenuation=r.attenuation;
     if(r.time_base)requested.player.time_base=*r.time_base;
+    if(r.service_divisor)requested.player.decoder.service_divisor=*r.service_divisor;
     if(r.loop_enabled)requested.player.decoder.loop_enabled=*r.loop_enabled;
     const auto result=s.session.open(requested.player,std::move(requested.input),r.construction.indices);
     if(result.status!=control::Status::completed){r.fault=true;return mapped(result.status);}
@@ -86,6 +87,7 @@ Status Instances::start(const Key& key,Source source)noexcept {
     if((source.player.sequence || source.player.lsc_input) && r.loop_enabled.value_or(source.player.decoder.loop_enabled))return Status::unsupported_profile;
     if(source.player.initial_attenuation || (source.player.attenuation_table && source.player.attenuation_table!=r.construction.attenuation_table))return Status::invalid_input;
     if(!source.input || !source.input->size() || source.input->size()>std::uint64_t(INT32_MAX) || source.player.decoder.channels!=r.construction.channels || source.player.decoder.source_config.byte_length!=static_cast<std::int32_t>(source.input->size()))return Status::invalid_input;
+    if(r.service_divisor.value_or(source.player.decoder.service_divisor)<=0)return Status::unsupported_profile;
     if(r.fault)return Status::fault;
     Busy lock(s.busy);r.pending=std::move(source);
     if(r.active){r.retiring=true;const auto status=retire(key.slot_);if(status!=Status::completed)return status;}
@@ -201,6 +203,12 @@ Status Instances::set_loop_enabled(const Key& key,bool value)noexcept {
     Busy lock(s.busy);
     if(r.active && !r.retiring){const auto status=mapped(s.session.set_loop_enabled(*r.active,value));if(status!=Status::completed)return status;}
     r.loop_enabled=value;return Status::completed;
+}
+Status Instances::set_service_divisor(const Key& key,std::int32_t value)noexcept {
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;
+    auto& r=s.records[key.slot_];if(r.fault)return Status::fault;if(value<=0)return Status::unsupported_profile;Busy lock(s.busy);
+    if(r.active && !r.retiring){const auto status=mapped(s.session.set_service_divisor(*r.active,value));if(status!=Status::completed)return status;}
+    r.service_divisor=value;return Status::completed;
 }
 Status Instances::set_start_inhibit(const Key& key,bool value)noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;

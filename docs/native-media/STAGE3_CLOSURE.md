@@ -116,3 +116,9 @@ player through the stable facade. Both compiler cohorts preserve buffering,
 readiness, exact release tick and replacement/pause behavior. This closes a
 missing native control exposed by the engine caller audit; the guest hook and
 the remaining source/service/ABI work are still required.
+
+The [game service-divisor control](ADXT_SERVICE_DIVISOR_RESULTS.md) now preserves
+the engine's explicit 30 Hz setting. Both compilers pass 77 native suites,
+96 original ready rows, 192 native channel cases and three detected faults.
+The distinct window ABI supports the larger loop request through the existing
+bounded workspace; the guest hook remains uninstalled.

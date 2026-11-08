@@ -10,7 +10,7 @@
 namespace p=reo::native::adxt_phased_player;
 namespace o=reo::native::adxt_output_session;
 namespace s=reo::native::adxt_shared_player::testing;
-namespace w=reo::native::adx_window::v2;
+namespace w=reo::native::adxt_phased_player::window;
 namespace control=reo::native::adxt_service_group;
 unsigned checks{};
 void require(bool b){++checks;if(!b)throw std::runtime_error("Phased player check "+std::to_string(checks));}

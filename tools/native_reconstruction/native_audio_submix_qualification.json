@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "native external-submix ownership and model aggregate composition qualified; game binding absent",
-  "manifest_sha256": "65209de7c8c75a3b1625169dbc5a00dbc809749b22dccf640cac7b5fe67e28ba",
+  "manifest_sha256": "40fb6372508627806234753ac8ff9dc32f821ce44d8c5ff049cb1ae2dcdd2975",
   "evidence": {
     "build-native-sjuni/submix/clean-build-llvm-v2/receipt.json": {
       "sha256": "d6a8ed0792171015b4987fb9ba2f686f8373da4ccdcff68c4df2e07b30d802f4",
@@ -278,5 +278,7 @@
   "original_attenuation_profile": "finite, regular-loop, immutable sequence and dynamic LSC native players; sealed clip admission rejects effective nonzero AINF attenuation",
   "runtime_factory_protocol_qualification": "tools/native_reconstruction/native_audio_media_factory_qualification.json",
   "stable_game_controls_qualification": "tools/native_reconstruction/adxt_game_control_qualification.json",
-  "start_gate_qualification": "tools/native_reconstruction/adxt_start_gate_qualification.json"
+  "start_gate_qualification": "tools/native_reconstruction/adxt_start_gate_qualification.json",
+  "prior_service_divisor_cohort_sha256": "65209de7c8c75a3b1625169dbc5a00dbc809749b22dccf640cac7b5fe67e28ba",
+  "service_divisor_qualification": "tools/native_reconstruction/adxt_service_divisor_qualification.json"
 }

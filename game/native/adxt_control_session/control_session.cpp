@@ -209,6 +209,10 @@ Status Session::set_loop_enabled(const Key& key,bool enabled)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
     return mapped(s.records[key.slot_].player->set_loop_enabled(enabled));
 }
+Status Session::set_service_divisor(const Key& key,std::int32_t value)noexcept{
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
+    return mapped(s.records[key.slot_].player->set_service_divisor(value));
+}
 Status Session::set_start_inhibit(const Key& key,bool value)noexcept{
     auto& s=*state_;if(s.busy)return Status::busy;if(s.closing)return Status::closed;if(!valid(key))return Status::invalid_key;Scope scope(s.busy);
     return mapped(s.records[key.slot_].player->set_start_inhibit(value));

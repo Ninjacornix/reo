@@ -102,7 +102,7 @@ AUDIO_BACKEND_UNITS = PCM_BACKEND_UNITS[:-1] + (
     ('native_adxt_shared_source', 'game/native/adxt_shared_source/shared_source.cpp'),
     ('native_lsc_queue', 'game/native/lsc_queue/queue.cpp'),
     ('native_adxt_phased_player', 'game/native/adxt_phased_player/player.cpp'),
-    ('native_adx_queue_safe_window', 'game/native/adx_window/v2/queue_safe_r3/stream_window.cpp'),
+    ('native_adx_service_window', 'game/native/adx_window/v2/service_r4/stream_window.cpp'),
     ('native_adxt_playback', 'game/native/adxt_playback/playback.cpp'),
     ('native_adxt_service_group', 'game/native/adxt_service_group/service_group.cpp'),
     ('native_adxt_serviced_clock', 'game/native/adxt_serviced_clock/completion.cpp'),

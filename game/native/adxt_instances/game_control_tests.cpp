@@ -50,10 +50,10 @@ std::shared_ptr<f::File> looping(){
 }
 void loop_control(){
     n::Instances p(n::control::Config{{1},{}});check(p.start_output()==S::completed);auto key=p.create({1,{0,0,0,0}}).key;
-    check(p.set_loop_enabled(key,true)==S::completed && p.set_time_base(key,7)==S::completed && p.start(key,source(looping(),99))==S::completed);
+    check(p.set_service_divisor(key,30)==S::completed && p.set_loop_enabled(key,true)==S::completed && p.set_time_base(key,7)==S::completed && p.start(key,source(looping(),99))==S::completed);
     std::array<float,1024> buffer{};
     until([&]{service(p);const auto s=p.inspect(key).source;check(s && !s->fault);if(s->output.channel[0].samples>=512)check(p.submix()->render_add(buffer.data(),512)==n::control::output::Status::completed);return s->decoder.loop.iterations>=2;});
-    const auto running=p.inspect(key).source;check(running->decoder.source.loop.enabled && running->clock_observation.base==7);
+    const auto running=p.inspect(key).source;check(running->decoder.source.loop.enabled && running->clock_observation.base==7 && running->playback.request_samples==4864);
     const auto ratio=p.ratio(key,integer::Query::decoded_minus_queued);check(ratio.status==n::control::Status::completed && ratio.value.ratio.numerator==running->output.channel[0].consumed_bytes/2+7 && ratio.value.ratio.denominator==48000);
     check(p.set_loop_enabled(key,false)==S::completed && !p.inspect(key).source->decoder.source.loop.enabled);
     until([&]{service(p);const auto s=p.inspect(key).source;if(s->output.channel[0].samples>=512)check(p.submix()->render_add(buffer.data(),512)==n::control::output::Status::completed);return s->playback.phase==reo::native::adxt_playback::Phase::ended;});join(p);
@@ -96,4 +96,34 @@ void start_gate(){
     check(p.set_start_inhibit(a.key,true)==S::invalid_key);auto fresh=p.create({1,{0,0,0,0}});check(fresh.status==S::completed && p.start(fresh.key,source(f::file(1,48000,20000)))==S::completed && !p.inspect(fresh.key).source->playback.inhibit);
     join(p);check(p.set_start_inhibit(fresh.key,false)==S::closed);
 }
-int main()try{clocks_and_replacement();loop_control();seamless_admission();start_gate();std::cout<<"native game control checks="<<checks<<'\n';return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
+void service_divisor(){
+    n::Instances p(n::control::Config{{1},{}});check(p.start_output()==S::completed);
+    auto key=p.create({2,{0,0,0,0}}).key;
+    auto first=source(f::file(2,48000,20000));first.player.decoder.channels=2;
+    check(p.start(key,first)==S::completed && p.set_service_divisor(key,30)==S::completed);
+    check(p.set_service_divisor(key,0)==S::unsupported_profile && p.set_service_divisor(key,INT32_MIN)==S::unsupported_profile);
+    until([&]{service(p);return p.inspect(key).source->configured;});
+    const auto before=p.inspect(key).source;check(before->decoder.service_divisor==30 && before->playback.request_samples==2432);
+    check(p.set_service_divisor(key,24)==S::completed && p.inspect(key).source->playback.request_samples==2432);
+    auto second=source(f::file(2,48000,20000));second.player.decoder.channels=2;
+    const auto started=p.start(key,std::move(second));check(started==S::completed || started==S::pending);
+    check(p.set_service_divisor(key,30)==S::completed);
+    until([&]{service(p);return p.inspect(key).starts==2 && p.inspect(key).source->configured;});
+    check(p.inspect(key).source->playback.request_samples==2432 && p.inspect(key).source->decoder.service_divisor==30);
+    auto bad=source(f::file(2,48000,20000));bad.player.decoder.channels=2;bad.player.decoder.service_divisor=0;
+    // A stable explicit setting overrides source defaults, including replacement.
+    const auto replaced=p.start(key,std::move(bad));check(replaced==S::completed || replaced==S::pending);
+    until([&]{service(p);return p.inspect(key).starts==3 && p.inspect(key).source->configured;});
+    check(p.inspect(key).source->playback.request_samples==2432);
+    const auto destroyed=p.destroy(key);check(destroyed==S::completed || destroyed==S::pending);
+    until([&]{service(p);return p.inspect(key).status==S::invalid_key;});
+    check(p.set_service_divisor(key,30)==S::invalid_key);
+    key=p.create({1,{0,0,0,0}}).key;
+    auto invalid=source(f::file(1,48000,20000));invalid.player.decoder.service_divisor=0;
+    check(p.start(key,std::move(invalid))==S::unsupported_profile && p.inspect(key).phase==n::Phase::idle);
+    check(p.start(key,source(f::file(1,48000,20000)))==S::completed);
+    until([&]{service(p);return p.inspect(key).source->configured;});
+    check(p.inspect(key).source->decoder.service_divisor==60 && p.inspect(key).source->playback.request_samples==1216);
+    join(p);check(p.set_service_divisor(key,30)==S::closed);
+}
+int main()try{clocks_and_replacement();loop_control();seamless_admission();start_gate();service_divisor();std::cout<<"native game control checks="<<checks<<'\n';return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

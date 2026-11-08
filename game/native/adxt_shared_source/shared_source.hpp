@@ -6,6 +6,7 @@
 #include <span>
 
 namespace reo::native::adx_window::v2 {class StreamWindowOwner;}
+namespace reo::native::adx_window::service_r4 {class StreamWindowOwner;}
 namespace reo::native::adxt_shared_source {
 
 enum class Status {completed,busy,closed,invalid_configuration,invalid_source,
@@ -45,6 +46,7 @@ public:
 private:
     friend class SharedEncodedSource;
     friend class reo::native::adx_window::v2::StreamWindowOwner;
+    friend class reo::native::adx_window::service_r4::StreamWindowOwner;
     std::shared_ptr<LoopDomain> domain_;std::uint64_t epoch_{};
     [[nodiscard]] Status configure(HeaderGeometry,std::int32_t sample_limit,
         std::int32_t target_sectors,FileTargetAction,DecoderLimitAction)noexcept;
