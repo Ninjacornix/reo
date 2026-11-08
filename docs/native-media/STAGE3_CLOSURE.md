@@ -5,35 +5,24 @@ The older checklist below records the reconstruction route. A complete modern
 replacement can retire those internal requirements; preserving old movie ring,
 transfer and scheduler implementations is not a closure requirement by itself.
 
-Current results: [V22](ADXT_CANDIDATE_V22_AUDIO.md) passes the previous three-source
-route failure and reaches gameplay with joined native audio and zero recorded
-source underruns. The larger buffer profile passes its separate native cohort.
-The [V25 native MP4 game test](NATIVE_MP4_CANDIDATE_V25.md) now plays the opening,
-multi-clip scenario and looping backgrounds and reaches gameplay with original
-MWSFD slots inactive in all samples. A 528.55ms handoff stall and 100,736 source
-audio underrun frames remain measured and unresolved. Native-producer/consumer
-timing, audible synchronization, additional controls and packaging keep Step 3 open.
-The [V26 producer/consumer capture](NATIVE_MP4_CANDIDATE_V26.md) reproduces an
-830.546ms freeze while consumers keep requesting frames and native publications
-stop for 841.3405ms. It locates the bottleneck upstream of conversion/upload;
-decoder versus worker scheduling remains unknown. The [V27 matched comparison](NATIVE_MP4_CANDIDATE_V27.md)
-then plays both native frame paths through the complete opening/scenario and
-gameplay, with all 6,144 opening publications and zero source-audio underruns in
-each run. The earlier large stall does not reproduce, so its cause remains
-unconfirmed. Observer stalls are now separated from healthy consumer delivery.
-The [new native MP4 player](../../game/native/host_movie/README.md) delivers all195
-pictures through Windows Media Engine and D3D11 textures on both compilers,
-including native window presentation under LLVM. Pause/resume, EOF/restart,
-loop, replacement, stale-command refusal, corrupt-source errors and recovery
-pass. The [native preparation helper](../../tools/native_media_import/README.md) now
-converts/reuses the full201-reference SFD catalogue and the OS reader validates
-all216,998 decoded pictures and nominal cadence. The [asset preflight catalogue](../../game/native/movie_assets/README.md)
-passes real-file leases and native player handoff on both compilers. Packaging/
-automatic invocation, a fully native compositor and audible synchronization
-remain open. The [native owner and game adapter](NATIVE_MP4_GAME_INTEGRATION.md)
-now run in V25; separate producer/consumer timing is qualified for the next
-incident retest. The separate effect-MOV
-consumer must also be accounted for before shared IPU support is removed.
+Current File #1 status:
+
+| Boundary | Established evidence | Remaining work |
+| --- | --- | --- |
+| Resource/audio ownership | Coherent native mount, ordinary ADX workers and PCM/bank/RAM composition install and join through the real launcher-core route. | Representative resource/room transitions beyond the first room; required queued-source and callback consumers must be accounted for. |
+| Converted movies | [Preparation](../../tools/native_media_import/README.md) covers 201 references / 200 physical movies; the native OS reader validates 216,998 pictures. Full game opening/scenario/looping backgrounds and bar gameplay run with original MWSFD slots zero in observations. | Final coherent candidate control/error/transition coverage and A/V synchronization. Sampling is not proof that every old path is unreachable. |
+| Native controls | [Player/session](../../game/native/host_movie/README.md) pause/resume, EOF/restart, loop, replacement, stale-command refusal, decode error and recovery pass on both compilers. [Game input](NATIVE_MP4_V27_GAME_CONTROLS.md) validates movie skips and gameplay Pause/Exit/movement. | Account for required game-facing active-movie pause/error callers; standalone behavior does not itself validate those callers. |
+| Packaging | [V28](NATIVE_MP4_CANDIDATE_V28.md) completes the real launcher-core route with automatic verified preparation; SDK profile publication is implemented. | Avalonia UI route is separate from the tested core harness. Do not continue listing automatic preparation as unimplemented. |
+| Audio resilience | [Native read-ahead](NATIVE_AUDIO_PREFETCH.md) passes 78 native suites, 28 adapter scenarios and 10 detected injected faults on each compiler; controlled blocked-read tolerance improves. | New V31 coherent game retest is in progress. This is not a confirmed explanation of a historical incident. |
+| Retirement | Ordinary native workers replace their old producer/transport path on the tested route. [Audit](MEDIA_RETIREMENT_AUDIT.md) records the remaining shared initializer and effect-MOV consumer. | Account for required effect/queued-source consumers before retiring their shared support. Guest control and renderer interfaces remain explicit until stages 4/5; final build dependency removal belongs to stage 6. |
+
+The [V26 capture](NATIVE_MP4_CANDIDATE_V26.md) retains an 830.546 ms public movie
+freeze with an 841.3405 ms producer-publication gap. Later matched and repeated
+runs do not reproduce it; its cause is unconfirmed. The [V29 trace](NATIVE_MP4_CANDIDATE_V29.md)
+localizes 17,376 audio-underrun frames to 383.3659 ms while controller service
+continues every 16.6-16.8 ms. The [V30 runs](NATIVE_MP4_CANDIDATE_V30.md) are clean
+without a refill/scheduling change. Useful source-detail telemetry is now
+available for another occurrence; clean runs do not supply a root cause.
 
 Step 3 now closes on native resource/media consumers working in the game,
 converted assets where useful, complete playback and audible synchronization,
@@ -43,25 +32,12 @@ remain explicit until its callers migrate. Do not require an unused legacy
 profile merely because a historical test or implementation modeled it.
 Step 3 remains incomplete; the conditional PC sleep action has not run.
 
-The [V28 real launcher-core test](NATIVE_MP4_CANDIDATE_V28.md) now completes
-opening/scenario and bar gameplay through verified native package preparation.
-It fixes an ISO-source mount omission and confirms complete audio installation
-and joined retirement. All opening pictures publish with a maximum 39.1872 ms
-interval, but 120,448 native source-underrun frames remain measured. Their timing
-and source are not yet located. The user is away; audible sync remains unknown.
-The [retirement audit](MEDIA_RETIREMENT_AUDIT.md) lists remaining interfaces and
-unsupported required profiles. Step 3 remains open.
+The user is away; subjective A/V synchronization remains unconfirmed. In-engine
+cutscene rendering belongs to the gameplay/rendering migration, not MP4 asset
+conversion. The temporary tiled renderer interface is a stage 5 migration item,
+not a claim of fully native presentation or a reason to reconstruct PS2 media.
 
 ## Historical reconstruction checklist and checkpoints
-
-The [V29 trace](NATIVE_MP4_CANDIDATE_V29.md) localizes 17,376 source-underrun
-frames to 383.3659 ms while controller service continues every 16.6-16.8 ms.
-The [V30 source-detail runs](NATIVE_MP4_CANDIDATE_V30.md) complete twice with zero
-recorded underruns, without changing refill or scheduling policy. The incident
-does not reproduce and its cause remains unknown. Source-detail telemetry is
-now available for another occurrence. Neither clean run establishes a fix or
-subjective A/V synchronization.
-
 
 Status: active work, starting at local commit `959d2198`. This is a gate checklist,
 not a weighted percentage. Passing more isolated tests does not substitute for

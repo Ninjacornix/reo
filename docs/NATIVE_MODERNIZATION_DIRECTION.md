@@ -90,10 +90,15 @@ internal routine in a replacement, or completing unused old codec/control
 profiles before implementing a modern boundary. Add tests for the native design's
 actual correctness, resource lifetime and game-facing behavior.
 
-Step 3 remains incomplete: native MP4 playback now works in the game, including
-the full opening and scenario playlist, but measured frame-delivery stalls,
-source-audio underruns, broader controls/resource transitions and packaging
-remain. See the [V26 capture](native-media/NATIVE_MP4_CANDIDATE_V26.md).
+Step 3 remains incomplete. Native MP4 playback, the full opening/scenario route,
+verified automatic asset preparation and SDK/game packaging are implemented.
+Historical intermittent video/audio incidents remain unexplained; two V30 runs
+are clean without a buffering/scheduling change. A qualified native read-ahead
+change is undergoing its separate V31 game retest. Required remaining work is
+A/V validation, broader game-facing controls/resource transitions and accounting
+for remaining media consumers. See the current
+[closure checklist](native-media/STAGE3_CLOSURE.md), rather than treating older
+checkpoint requirements as the present implementation status.
 The user's conditional
 sleep request still applies only after Step 3 actually completes. Stages 4-6
 remain required for the whole native game.
