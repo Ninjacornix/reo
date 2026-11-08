@@ -17,7 +17,10 @@ converts/reuses the full201-reference SFD catalogue and the OS reader validates
 all216,998 decoded pictures and nominal cadence. The [asset preflight catalogue](../../game/native/movie_assets/README.md)
 passes real-file leases and native player handoff on both compilers. Packaging/
 automatic invocation, game cue/compositor integration and audible synchronization
-remain open; no game has selected this player yet. The separate effect-MOV
+remain open; no game has selected this player yet. The
+[native owner and game adapter](NATIVE_MP4_GAME_INTEGRATION.md) now pass actual
+worker/lifecycle tests and an audited SDK131 object compile; a fresh game
+candidate is next. The separate effect-MOV
 consumer must also be accounted for before shared IPU support is removed.
 
 Step 3 now closes on native resource/media consumers working in the game,

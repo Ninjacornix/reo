@@ -123,6 +123,12 @@ ORDINARY_ADXT_UNITS = (
     ('native_adxt_file_source', 'recomp/overrides/native_adxt/source_profile.cpp'),
     ('native_adxt_ordinary_runtime', 'recomp/overrides/native_adxt/ordinary_runtime.cpp'),
 )
+HOST_MOVIE_UNITS = (
+    ('native_host_movie_player', 'game/native/host_movie/player.cpp'),
+    ('native_host_movie_session', 'game/native/host_movie/session.cpp'),
+    ('native_movie_assets', 'game/native/movie_assets/catalogue.cpp'),
+    ('native_host_movie_adapter', 'recomp/overrides/native_host_movie/runtime_adapter.cpp'),
+)
 HEADER_ROOTS = ('game/', 'media/', 'network/', 'recomp/', 'runtime/', 'src/',
                 'tools/parallel_gs_backend/', 'tools/vu_whole_aot/',
                 'tools/source_instrumentation/')
@@ -343,9 +349,11 @@ def runtime_sources(dependency):
 
 def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolchain, raylib,
                     disc_stream=False, resource_reads=False, adx_block=False, adx_stereo=False,
-                    pcm_backend=False, movie_position=False, audio_backend=False):
+                    pcm_backend=False, movie_position=False, audio_backend=False, host_movie=False):
     if pcm_backend and audio_backend:
         raise ValueError('Choose one complete audio backend candidate')
+    if host_movie and not resource_reads:
+        raise ValueError('Native MP4 candidate requires the pinned native asset resources')
     commit = Commit(root, revision)
     manifest, plan, compiler_proof = verify_carrier(kit)
     receipt = verify_dependency(dependency, dependency_receipt, commit, compiler_proof)
@@ -379,7 +387,7 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         (RESOURCE_READ_UNITS if resource_reads else ()) + (ADX_BLOCK_UNITS if adx_block else ()) + \
         (ADX_STEREO_UNITS if adx_stereo else ()) + (PCM_BACKEND_UNITS if pcm_backend else ()) + \
         (MOVIE_POSITION_UNITS if movie_position else ()) + (AUDIO_BACKEND_UNITS if audio_backend else ()) + \
-        (ORDINARY_ADXT_UNITS if resource_reads and audio_backend else ())
+        (ORDINARY_ADXT_UNITS if resource_reads and audio_backend else ()) + (HOST_MOVIE_UNITS if host_movie else ())
     # Native ADXT and native file payloads share the same resource-view bodies.
     # Keep exact tuple duplicates once; conflicting paths/IDs still fail below.
     selected_units = tuple(dict.fromkeys(selected_units))
@@ -405,6 +413,8 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
         raise ValueError('Commit lacks the optional keyed stereo ADX installation')
     if movie_position and 'reo_native_movie_position::install(runtime)' not in bootstrap:
         raise ValueError('Commit lacks the optional guarded movie-position installation')
+    if host_movie and 'host_movie_binding::install_before_run(runtime,' not in bootstrap:
+        raise ValueError('Commit lacks the native MP4 owner installation')
     if pcm_backend:
         if 'reo_native_pcm::install(runtime,' not in bootstrap or 'dtxCompatLayoutSnapshot()' not in bootstrap:
             raise ValueError('Commit lacks observed-profile native PCM installation')
@@ -471,6 +481,12 @@ def prepared_inputs(root, revision, kit, dependency, dependency_receipt, toolcha
     if movie_position:
         template['options'].append('/DREO_BUILD_NATIVE_MOVIE_POSITION=1')
         unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_MOVIE_POSITION=1')
+    if host_movie:
+        template['options'].append('/DREO_BUILD_NATIVE_HOST_MOVIE=1')
+        unit_for('recomp/reo_bootstrap.cpp')['options'].append('/DREO_BUILD_NATIVE_HOST_MOVIE=1')
+        for library in ('mfplat.lib', 'mfuuid.lib', 'ole32.lib', 'oleaut32.lib', 'shlwapi.lib', 'd3d11.lib', 'dxguid.lib'):
+            if library not in plan['linkOptions']:
+                plan['linkOptions'].append(library)
     if resource_reads:
         for name in ('recomp/reo_bootstrap.cpp', 'recomp/overrides/reo_override.cpp', 'recomp/overrides/reo_hw_bridge.cpp'):
             unit_for(name)['options'].append('/DREO_BUILD_NATIVE_RESOURCE_READS=1')
@@ -529,7 +545,7 @@ def prepare(args):
         root, args.revision, kit, dependency, receipt_path, toolchain, raylib,
         disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads, adx_block=args.adx_block_adapter,
         adx_stereo=args.adx_stereo_adapter, pcm_backend=args.pcm_backend,
-        movie_position=args.movie_position_adapter, audio_backend=args.audio_backend)
+        movie_position=args.movie_position_adapter, audio_backend=args.audio_backend, host_movie=args.host_movie)
     result = {'schema': 1, 'root_revision': commit.revision, 'carrier_manifest_sha256': CARRIER_SHA,
               'preparer_sha256': sha(Path(__file__)),
               'dependency_receipt_sha256': sha(receipt_path), 'dependency_patch_count': receipt['applied_count'],
@@ -541,7 +557,7 @@ def prepare(args):
     result['optional_adapters'] = dict(disc_stream=args.disc_stream_adapter, resource_reads=args.resource_reads,
                                        adx_block=args.adx_block_adapter, adx_stereo=args.adx_stereo_adapter,
                                        pcm_backend=args.pcm_backend, movie_position=args.movie_position_adapter,
-                                       audio_backend=args.audio_backend)
+                                       audio_backend=args.audio_backend, host_movie=args.host_movie)
     if args.check_only:
         return result
     output.mkdir(parents=True)
@@ -615,6 +631,7 @@ def main():
     parser.add_argument('--pcm-backend', action='store_true', help='Compile the default-off bounded complete File1 PCM candidate')
     parser.add_argument('--audio-backend', action='store_true', help='Compile the private complete PCM/bank/RAM candidate with a coherent flag2 runtime rebuild')
     parser.add_argument('--movie-position-adapter', action='store_true', help='Compile the default-off guarded File1 movie position publisher')
+    parser.add_argument('--host-movie', action='store_true', help='Compile the native Windows MP4 owner; replaces the original SFD player when selected')
     print(json.dumps(prepare(parser.parse_args()), indent=2))
 
 

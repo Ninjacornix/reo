@@ -24,7 +24,12 @@ private:
     std::string key_;std::filesystem::path path_;std::uint32_t frames_{};std::uint64_t bytes_{};
     std::shared_ptr<const resources::win32::PinnedFile> lease_;
 };
-struct Entry {std::string label;std::shared_ptr<const Asset> asset;};
+struct Entry {
+    std::string label;std::shared_ptr<const Asset> asset;
+    // Import metadata used by the temporary game-cue adapter, never an I/O
+    // address or permission to read the original archive during playback.
+    std::uint32_t imported_member_index{};
+};
 // Preflight before gameplay: parse the prepared manifest, verify actual output
 // files, and retain their leases. No archive access, decoder, process spawn,
 // runtime transcoding, guest address or lazy game-thread hashing exists here.

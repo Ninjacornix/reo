@@ -85,7 +85,7 @@ std::shared_ptr<const Catalogue> Catalogue::open(const std::filesystem::path& fo
             require(opened.status==files::PinnedStatus::ok&&bool(opened.file),"Prepared movie file identity/hash mismatch");
             asset=std::shared_ptr<const Asset>(new Asset(key,path,frames,bytes,std::move(opened.file)));pinned.emplace(key,asset);hashes.emplace(key,native_hash);
         }
-        result->entries_.push_back({label,std::move(asset)});
+        result->entries_.push_back({label,std::move(asset),integer(row,L"member_index")});
     }
     return result;
 }

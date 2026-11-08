@@ -27,11 +27,13 @@ target/compositor rectangle with the intended display aspect and display the
 result with square pixels; do not apply the source pixel-aspect correction twice.
 
 The first source must come from a prepared local MP4 cache. Runtime transcoding
-on the game or graphics thread is not part of this design. Source preparation,
-game movie cues, playlists, the compositor binding and separate game ADX audio
-cues still need integration. Do not instantiate the old Sofdec/IPU path for a
-movie claimed by this replacement. This library is not selected by a game build
-yet and does not complete Step 3.
+on the game or graphics thread is not part of this design. `Session` now owns
+the native thread, prepared asset playlist, consecutive-source priming and a
+bounded immutable CPU frame handoff. The temporary game cue/renderer adapter
+compiles, but has not passed in-game validation yet. Do not instantiate the old
+Sofdec/IPU path for a movie claimed by this replacement. See
+[native game integration](../../../docs/native-media/NATIVE_MP4_GAME_INTEGRATION.md)
+for actual worker evidence and the remaining Step 3 validation.
 
 ## Actual platform checks
 

@@ -43,6 +43,9 @@
 #include "overrides/reo_performance.h"
 #include "overrides/reo_cri_server_observer.h"
 #include "overrides/reo_cd_async.h"
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
+#include "overrides/native_host_movie/runtime_adapter.h"
+#endif
 #if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_MOVIE_POSITION) && REO_BUILD_NATIVE_MOVIE_POSITION
 #include "overrides/native_movie_position/runtime_adapter.h"
 #endif
@@ -1423,7 +1426,13 @@ int main(int argc, char* argv[]) {
 #if defined(_WIN32) && defined(REO_HAVE_PARALLEL_GS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
     if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0) {
         const char* gpuMovie = std::getenv("REO_GPU_MOVIE");
-        if (gpuMovie && std::atoi(gpuMovie) != 0 && !reo_gpu_movie::installNativeMovieGame(runtime))
+        const char* hostMovie = std::getenv("REO_NATIVE_HOST_MOVIE");
+        const bool useHostMovie = hostMovie && !std::strcmp(hostMovie, "1");
+#if !defined(REO_GAME_FILE1) || !defined(REO_BUILD_NATIVE_HOST_MOVIE) || !REO_BUILD_NATIVE_HOST_MOVIE
+        if (useHostMovie)
+            throw std::runtime_error("This game build does not include the native MP4 owner");
+#endif
+        if (!useHostMovie && gpuMovie && std::atoi(gpuMovie) != 0 && !reo_gpu_movie::installNativeMovieGame(runtime))
             throw std::runtime_error(
                 "Native GPU movie installation refused its original GAME identities");
 #if defined(REO_GAME_FILE1)
@@ -1487,10 +1496,21 @@ int main(int argc, char* argv[]) {
 
 #if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_MOVIE_POSITION) && REO_BUILD_NATIVE_MOVIE_POSITION
     // Install after other registration so admission checks the final registry.
-    if (const auto* requested = std::getenv("REO_NATIVE_MOVIE_POSITION"); requested && !std::strcmp(requested, "1")) {
+    const auto* hostMovieSelection = std::getenv("REO_NATIVE_HOST_MOVIE");
+    if (const auto* requested = std::getenv("REO_NATIVE_MOVIE_POSITION"); requested && !std::strcmp(requested, "1") &&
+        !(hostMovieSelection && !std::strcmp(hostMovieSelection, "1"))) {
         if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u ||
             !reo_native_movie_position::install(runtime))
             std::fprintf(stderr, "[NATIVE-MOVIE-POSITION] installation unavailable; original publisher retained\n");
+    }
+#endif
+
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
+    if (const auto* requested = std::getenv("REO_NATIVE_HOST_MOVIE"); requested && !std::strcmp(requested, "1")) {
+        const auto* cache = std::getenv("REO_NATIVE_HOST_MOVIE_CACHE");
+        if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u || !cache || !*cache ||
+            !reo::native::host_movie_binding::install_before_run(runtime, std::filesystem::u8path(cache)))
+            throw std::runtime_error("Selected native MP4 movie owner unavailable; inspect cache and build identity");
     }
 #endif
 
