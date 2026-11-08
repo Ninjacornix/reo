@@ -4,6 +4,17 @@ Status: active work, starting at local commit `959d2198`. This is a gate checkli
 not a weighted percentage. Passing more isolated tests does not substitute for
 consumer integration or game transition evidence.
 
+Latest checkpoint (2026-11-08): V19 selects the ordinary native audio backend
+but stops at an admission refusal before source playback. The mono-pan
+correction is qualified and [V20 links](ADXT_CANDIDATE_V20_BUILD.md); V20 has not
+been run. The [canonical movie audio capability](MOVIE_CANONICAL_AUDIO_SOURCE.md)
+and [game handle/prepared-graph handoff](MOVIE_GAME_HANDLE_HANDOFF.md) pass both
+compiler cohorts with real source workers and declared video/component ports.
+They are not actual movie hooks or paced GPU/A-V evidence. Required game testing
+and the next coherent build are blocked while C: has approximately 0.5 GB free.
+The full new native CMake cohort has not been rerun. Stage 3 is incomplete; the
+user's conditional PC sleep request has not been executed.
+
 The reconstruction plan requires matching resource loading/completion behavior,
 audio/movie output and lifecycle transitions. Its first selected edition is
 File #1 US. File #2 admission requires its own address/behavior validation.
