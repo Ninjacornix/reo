@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "status": "native external-submix ownership and model aggregate composition qualified; game binding absent",
-  "manifest_sha256": "aa1a03a4fd91bd7ab32c8034219ff8406dd4fb00592dfba65ce86beec84c80c9",
+  "manifest_sha256": "65209de7c8c75a3b1625169dbc5a00dbc809749b22dccf640cac7b5fe67e28ba",
   "evidence": {
     "build-native-sjuni/submix/clean-build-llvm-v2/receipt.json": {
       "sha256": "d6a8ed0792171015b4987fb9ba2f686f8373da4ccdcff68c4df2e07b30d802f4",
@@ -218,6 +218,46 @@
     "build-native-sjuni/audio-media-factory/game-controls-actual130-gcc-v1/receipt.json": {
       "sha256": "f77caa8c624199097b66ac9caf4b88a5ade2130dcc886aef6f7d574f1180c01a",
       "status": "passed"
+    },
+    "build-native-sjuni/adxt-start-gate/native-llvm-v1/receipt.json": {
+      "sha256": "74d9c155574af9bd18ac5015e3aa1fff84f324dff144668114cd325b6118497a",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/start-gate-llvm-v1/receipt.json": {
+      "sha256": "6efbf3a3fed2f78d7328e792a6b2207d60b1ba77ab4d29bf02f31c73a1825aa1",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-llvm-v1/receipt.json": {
+      "sha256": "93fa26bbd64b54cd2b0fa69ef80c79f379287053bbdb182dcde09fe3f1b4a1b8",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/start-gate-llvm-v1/receipt.json": {
+      "sha256": "4e0164a7ed0544451fc682a15e2ef61f2fd3725d4aa4353320cbb01659f1fd78",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-actual130-llvm-v1/receipt.json": {
+      "sha256": "4180b46b57932bec0a605d314a4b708ce22746832cb2334d43794282df616406",
+      "status": "passed"
+    },
+    "build-native-sjuni/adxt-start-gate/native-gcc-v1/receipt.json": {
+      "sha256": "57788c062a97170f3ef77b450e8b165aab9c61271f44141bae5e139d6c717dd9",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/start-gate-gcc-v1/receipt.json": {
+      "sha256": "7c95e23a952a9ed2a0add7a8eaba7c0037ebbc0e483706c78f3208b98e58c613",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-gcc-v1/receipt.json": {
+      "sha256": "ca07cfad74c0404255cb9cdc74d888f141b31aa0b8d2dcd9034b78199e1b8c9e",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/start-gate-gcc-v1/receipt.json": {
+      "sha256": "bf68ce12a52f71b304daf1348cc7781375ce59283d111d340201aeb04a467910",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-actual130-gcc-v1/receipt.json": {
+      "sha256": "e3cd7ccbf622e467a5a385ea0788a0c3ae9ca4c5b0237b278fc367707c08950b",
+      "status": "passed"
     }
   },
   "parent_suites": 75,
@@ -226,7 +266,7 @@
   "game_integration": false,
   "actual_audio_device_test": false,
   "historical_failed_cohort": "submix/clean-build-llvm-v1: fixed model-device advancement during real source-worker startup in V2; same production DSP.",
-  "prior_cohort_manifest_sha256": "5feef1ee737790d97eb0b8eb16473e7b998cefe2fa22a2ece7ffe713f0d6d565",
+  "prior_cohort_manifest_sha256": "aa1a03a4fd91bd7ab32c8034219ff8406dd4fb00592dfba65ce86beec84c80c9",
   "startup_wire_reset": "Allowed before first native producer; post-source reset remains unsupported.",
   "integer_guest_volume_and_callback_route_factors": "qualified isolated native and model aggregate controls; no live guest binding",
   "controller_admission": {
@@ -237,5 +277,6 @@
   },
   "original_attenuation_profile": "finite, regular-loop, immutable sequence and dynamic LSC native players; sealed clip admission rejects effective nonzero AINF attenuation",
   "runtime_factory_protocol_qualification": "tools/native_reconstruction/native_audio_media_factory_qualification.json",
-  "stable_game_controls_qualification": "tools/native_reconstruction/adxt_game_control_qualification.json"
+  "stable_game_controls_qualification": "tools/native_reconstruction/adxt_game_control_qualification.json",
+  "start_gate_qualification": "tools/native_reconstruction/adxt_start_gate_qualification.json"
 }

@@ -71,4 +71,29 @@ void seamless_admission(){
     check(p.set_loop_enabled(key,true)==S::unsupported_profile && !p.inspect(key).source->fault);
     join(p);
 }
-int main()try{clocks_and_replacement();loop_control();seamless_admission();std::cout<<"native game control checks="<<checks<<'\n';return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
+void start_gate(){
+    n::Instances p(n::control::Config{{2},{}});check(p.start_output()==S::completed);
+    auto a=p.create({1,{0,0,0,0}}),b=p.create({1,{1,1,1,1}});check(a.status==S::completed && b.status==S::completed);
+    check(p.set_start_inhibit(a.key,true)==S::completed);
+    check(p.start(a.key,source(f::file(1,48000,20000)))==S::completed && p.start(b.key,source(f::file(1,48000,20000)))==S::completed);
+    check(p.inspect(a.key).source->playback.inhibit && !p.inspect(a.key).source->configured);
+    until([&]{service(p);const auto own=p.inspect(a.key).source,peer=p.inspect(b.key).source;return own->configured && own->playback.started && peer->output.voice.playing && peer->output.channel[0].samples>=512;});
+    auto own=p.inspect(a.key).source;check(own->playback.inhibit && own->playback.phase==reo::native::adxt_playback::Phase::buffering && !own->output.voice.playing && !own->clock.rna_play);
+    std::array<float,128> buffer{};check(p.submix()->render_add(buffer.data(),64)==n::control::output::Status::completed);
+    check(!p.inspect(a.key).source->output.channel[0].consumed_bytes && p.inspect(b.key).source->output.channel[0].consumed_bytes==128);
+    check(p.set_start_inhibit(a.key,false)==S::completed && p.service(77)==S::completed);
+    own=p.inspect(a.key).source;check(!own->playback.inhibit && own->playback.phase==reo::native::adxt_playback::Phase::playing && own->output.voice.playing && own->clock.tick_base==77);
+    check(p.set_start_inhibit(a.key,true)==S::completed && p.service(88)==S::completed && p.inspect(a.key).source->output.voice.playing && !p.inspect(a.key).source->clock.paused);
+    check(p.submix()->render_add(buffer.data(),64)==n::control::output::Status::completed && p.inspect(a.key).source->output.channel[0].consumed_bytes==128);
+    const auto stopped=p.stop(a.key);check(stopped==S::completed || stopped==S::pending);
+    check(p.set_start_inhibit(a.key,true)==S::completed);const auto replaced=p.start(a.key,source(f::file(1,48000,20000)));check(replaced==S::completed || replaced==S::pending);
+    until([&]{service(p);const auto s=p.inspect(a.key);return s.starts==2 && s.source->configured && s.source->playback.started;});
+    own=p.inspect(a.key).source;check(own->playback.inhibit && own->playback.phase==reo::native::adxt_playback::Phase::buffering && !own->output.voice.playing);
+    check(p.pause(a.key,1,90)==S::completed && p.set_start_inhibit(a.key,false)==S::completed && p.service(99)==S::completed);
+    own=p.inspect(a.key).source;check(own->playback.phase==reo::native::adxt_playback::Phase::playing && own->clock.paused==1 && !own->output.voice.playing);
+    check(p.pause(a.key,0,123)==S::completed && p.inspect(a.key).source->output.voice.playing && p.inspect(a.key).source->clock.tick_base==123);
+    const auto destroyed=p.destroy(a.key);check(destroyed==S::completed || destroyed==S::pending);until([&]{service(p);return p.inspect(a.key).status==S::invalid_key;});
+    check(p.set_start_inhibit(a.key,true)==S::invalid_key);auto fresh=p.create({1,{0,0,0,0}});check(fresh.status==S::completed && p.start(fresh.key,source(f::file(1,48000,20000)))==S::completed && !p.inspect(fresh.key).source->playback.inhibit);
+    join(p);check(p.set_start_inhibit(fresh.key,false)==S::closed);
+}
+int main()try{clocks_and_replacement();loop_control();seamless_admission();start_gate();std::cout<<"native game control checks="<<checks<<'\n';return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

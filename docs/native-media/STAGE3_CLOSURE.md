@@ -110,3 +110,9 @@ identities to the same native instance owner. Both compilers pass real-worker
 mapping/reuse tests and detect three ownership faults. It retains both stereo
 transfer reservations and awaits actual source join before reuse. Its original
 ABI hooks and runtime admission are not installed, and it is outside V16's kit.
+
+The [wait-for-start control](ADXT_START_GATE_RESULTS.md) now reaches the native
+player through the stable facade. Both compiler cohorts preserve buffering,
+readiness, exact release tick and replacement/pause behavior. This closes a
+missing native control exposed by the engine caller audit; the guest hook and
+the remaining source/service/ABI work are still required.

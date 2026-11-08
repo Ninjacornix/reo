@@ -56,7 +56,7 @@ public:
     std::array<std::uint64_t,2> digest{1469598103934665603ull,1469598103934665603ull};
     std::uint64_t copied{},first{};
     std::uint32_t tick{};std::array<std::uint64_t,5> visits{};bool transfer_primed{};
-    bool configured{},stopping{},output_retired{},retired{},fault{},busy{};
+    bool configured{},stopping{},output_retired{},retired{},fault{},busy{},start_inhibit{};
     std::uint32_t requested_attenuation{};
     std::optional<adxt_attenuation::Result> attenuation;
     State(Config c,const output::Producer& producer,std::shared_ptr<const resources::ByteView> view,
@@ -213,7 +213,7 @@ Status Player::service_control(adxt_service_group::Phase selected,std::uint32_t 
         // The historical window field named pitch is the AINF attenuation
         // contribution. Apply its integer table volume before play admission.
         if(s.config.attenuation_table && !s.apply_attenuation(s.requested_attenuation))return s.fail();
-        adxt_playback::State control;control.request_samples=ready.outer.max_request;control.estimate_base=s.clock_state.estimate_base;control.tick_base=s.clock_state.tick_base;control.paused=s.clock_state.paused!=0;s.playback.emplace(control);s.configured=true;
+        adxt_playback::State control;control.request_samples=ready.outer.max_request;control.estimate_base=s.clock_state.estimate_base;control.tick_base=s.clock_state.tick_base;control.paused=s.clock_state.paused!=0;control.inhibit=s.start_inhibit;s.playback.emplace(control);s.configured=true;
         return Status::completed;
     }
     const auto ready=s.decoder.snapshot();const auto previous=s.playback->state();
@@ -272,6 +272,7 @@ Ports Player::make_ports(){
 Snapshot Player::snapshot()const noexcept {
     const auto& s=*state_;Snapshot result;result.decoder=s.decoder.snapshot();result.output=s.output->snapshot();
     if(s.playback)result.playback=s.playback->state();
+    result.playback.inhibit=s.start_inhibit;
     result.first_payload_digest=s.digest;result.copied_samples=s.copied;result.first_payload_samples=s.first;
     result.transfer_primed=s.transfer_primed;result.service_visits=s.visits;
     result.configured=s.configured;result.stop_requested=s.stopping;result.output_retired=s.output_retired;
@@ -357,6 +358,11 @@ Status Player::set_loop_enabled(bool enabled)noexcept{
     if((s.config.sequence || s.config.lsc_input) && enabled)return Status::unsupported_profile;
     if(s.decoder.set_loop_enabled(enabled)!=window::Status::completed)return s.fail();
     s.config.decoder.loop_enabled=enabled;return Status::completed;
+}
+Status Player::set_start_inhibit(bool value)noexcept{
+    auto& s=*state_;if(s.busy)return Status::busy;if(s.fault)return Status::fault;if(s.stopping)return Status::closed;
+    if(s.playback && s.playback->set_start_inhibit(value)!=adxt_playback::Status::completed)return s.fail();
+    s.start_inhibit=value;return Status::completed;
 }
 Status Player::retire_on_control_thread()noexcept {
     auto& s=*state_;if(s.busy)return Status::busy;if(s.retired)return Status::completed;

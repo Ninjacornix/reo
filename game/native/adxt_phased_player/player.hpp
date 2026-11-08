@@ -73,6 +73,7 @@ public:
     [[nodiscard]] ClockControl discard_rebase(std::uint32_t original_tick)noexcept;
     [[nodiscard]] Status set_time_base(std::uint32_t)noexcept;
     [[nodiscard]] Status set_loop_enabled(bool)noexcept;
+    [[nodiscard]] Status set_start_inhibit(bool)noexcept;
     void request_stop()noexcept;
     // Per-stream output fence, then actual source join. No shared provider join
     // or bank/peer reset occurs; the caller separately owns session shutdown.

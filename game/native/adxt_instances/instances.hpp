@@ -55,6 +55,7 @@ public:
     [[nodiscard]] Status configure_clock(control::ClockConfiguration)noexcept;
     [[nodiscard]] Status set_time_base(const Key&,std::uint32_t)noexcept;
     [[nodiscard]] Status set_loop_enabled(const Key&,bool)noexcept;
+    [[nodiscard]] Status set_start_inhibit(const Key&,bool)noexcept;
     [[nodiscard]] Status request_stop()noexcept;
     [[nodiscard]] Status join()noexcept;
 private:
