@@ -80,8 +80,11 @@ does not prove that hardware decoding was actually used.
 
 Both compiler cohorts pass 390-frame software-path playlists and lifecycle
 checks. Separate player tests validate clock-paced output and actual GPU
-readbacks. These are candidate checks, not a demonstrated fix for the
-[V26 opening freeze](../../../docs/native-media/NATIVE_MP4_CANDIDATE_V26.md).
+readbacks. The [V27 comparison](../../../docs/native-media/NATIVE_MP4_CANDIDATE_V27.md)
+also completes the opening/scenario and gameplay in both paths, with all 6,144
+opening publications and zero source-audio underruns. The earlier
+[V26 opening freeze](../../../docs/native-media/NATIVE_MP4_CANDIDATE_V26.md)
+does not reproduce; a frame-path fix is not confirmed.
 The extra CPU upload/readback is a controlled comparison, not the intended final
 native compositor design.
 

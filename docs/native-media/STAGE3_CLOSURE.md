@@ -16,8 +16,11 @@ timing, audible synchronization, additional controls and packaging keep Step 3 o
 The [V26 producer/consumer capture](NATIVE_MP4_CANDIDATE_V26.md) reproduces an
 830.546ms freeze while consumers keep requesting frames and native publications
 stop for 841.3405ms. It locates the bottleneck upstream of conversion/upload;
-decoder versus worker scheduling remains unknown. Software/WIC native playback
-and periodic producer heartbeats pass isolated checks; their game retest is next.
+decoder versus worker scheduling remains unknown. The [V27 matched comparison](NATIVE_MP4_CANDIDATE_V27.md)
+then plays both native frame paths through the complete opening/scenario and
+gameplay, with all 6,144 opening publications and zero source-audio underruns in
+each run. The earlier large stall does not reproduce, so its cause remains
+unconfirmed. Observer stalls are now separated from healthy consumer delivery.
 The [new native MP4 player](../../game/native/host_movie/README.md) delivers all195
 pictures through Windows Media Engine and D3D11 textures on both compilers,
 including native window presentation under LLVM. Pause/resume, EOF/restart,

@@ -38,6 +38,8 @@ def correlate_pipeline(incident, producer, consumer):
         requests = [r for r in consumer['rows'] if begin <= r['begin_ns'] <= end]
         result['consumer'] = dict(file=consumer['file'], retention=consumer['retention'],
             requests=len(requests), fresh_frames=sum(r['available'] for r in requests),
+            first_request_offset_ms=(requests[0]['begin_ns']-begin)/1e6 if requests else None,
+            last_request_offset_ms=(end-requests[-1]['begin_ns'])/1e6 if requests else None,
             first_line=requests[0]['line'] if requests else None,
             last_line=requests[-1]['line'] if requests else None,
             max_request_gap_ms=max(((b['begin_ns']-a['begin_ns'])/1e6 for a, b in zip(requests, requests[1:])), default=None),
@@ -50,14 +52,59 @@ def correlate_pipeline(incident, producer, consumer):
         same_source = bool(previous and following and
             (previous['generation'], previous['clip']) == (following['generation'], following['clip']))
         surrounding = [r for r in rows if begin-100_000_000 <= r['end_ns'] <= end+100_000_000]
+        heartbeat = bool(rows and 'position_seconds' in rows[0])
+        heartbeat_rows = [r for r in surrounding if previous and
+            (r['generation'], r['clip']) == (previous['generation'], previous['clip'])]
         result['producer'] = dict(file=producer['file'], retention=producer['retention'],
             previous_publication=previous, next_publication=following,
             same_source=same_source,
             publication_gap_ms=(following['publish_end_ns']-previous['publish_end_ns'])/1e6 if same_source else None,
             observed_iterations=len(surrounding),
             max_recorded_iteration_ms=max(((r['end_ns']-r['wake_begin_ns'])/1e6 for r in surrounding), default=None),
-            periodic_heartbeat_available=bool(rows and 'position_seconds' in rows[0]))
+            periodic_heartbeat_available=heartbeat,
+            max_unobserved_interval_ms=max((max(0, b['wake_begin_ns']-a['end_ns'])/1e6
+                for a, b in zip(heartbeat_rows, heartbeat_rows[1:])), default=None) if heartbeat else None,
+            empty_poll_observations=sum(not r['updated'] for r in heartbeat_rows) if heartbeat else None,
+            native_clock_advance_seconds=(heartbeat_rows[-1]['position_seconds']-heartbeat_rows[0]['position_seconds'])
+                if heartbeat and len(heartbeat_rows)>1 else None,
+            native_event_count_change=(heartbeat_rows[-1]['events']-heartbeat_rows[0]['events'])
+                if heartbeat and len(heartbeat_rows)>1 else None)
     return result
+
+
+def classify_incident(incident):
+    consumer = incident['pipeline'].get('consumer', {})
+    if (incident['observer_max_gap_ms'] is not None and incident['observer_max_gap_ms'] >= 50 and
+            consumer.get('requests', 0) >= 3 and consumer['fresh_frames'] == consumer['requests'] and
+            consumer['retention'] == '# dropped=0' and consumer['max_request_gap_ms'] <= 50 and
+            consumer['first_request_offset_ms'] <= 50 and consumer['last_request_offset_ms'] <= 50):
+        return 'observer sampling gap with continued fresh consumer frames; pipeline freeze not established'
+    return 'measured public-frame observation gap; cause unknown'
+
+
+def producer_epochs(trace):
+    if not trace:
+        return []
+    epochs, current, previous = [], [], None
+    for row in trace['rows']:
+        if not row['publish_end_ns']:
+            continue
+        identity = (row['generation'], row['clip'])
+        if previous and (identity != (previous['generation'], previous['clip']) or row['ordinal'] < previous['ordinal']):
+            epochs.append(current)
+            current = []
+        current.append(row)
+        previous = row
+    if current:
+        epochs.append(current)
+    return [dict(generation=rows[0]['generation'], clip=rows[0]['clip'],
+        publications=len(rows), unique_ordinals=len({r['ordinal'] for r in rows}),
+        first_ordinal=rows[0]['ordinal'], last_ordinal=rows[-1]['ordinal'],
+        first_line=rows[0]['line'], last_line=rows[-1]['line'],
+        first_publication_ns=rows[0]['publish_end_ns'], last_publication_ns=rows[-1]['publish_end_ns'],
+        max_publication_gap_ms=max(((b['publish_end_ns']-a['publish_end_ns'])/1e6
+            for a, b in zip(rows, rows[1:])), default=None),
+        max_backpressure=max(r['backpressure'] for r in rows)) for rows in epochs]
 
 
 def analyze(folder):
@@ -103,9 +150,9 @@ def analyze(folder):
         incident['presentation_loop'] = dict(observations=len(window),
             max_begin_gap_ms=max(((b['begin_ns']-a['begin_ns'])/1e6 for a, b in zip(window, window[1:])), default=None),
             max_span_ms=max(((r['end_ns']-r['begin_ns'])/1e6 for r in window), default=None))
-        incident['classification'] = 'measured public-frame handoff gap; cause unknown'
         incident['evidence'] = dict(progress=progress.name, pacing=pacing.name)
         incident['pipeline'] = correlate_pipeline(incident, producer, consumer)
+        incident['classification'] = classify_incident(incident)
     controls = folder / 'native-controls-v1.jsonl'
     observed = [json.loads(line) for line in controls.read_text().splitlines() if line]
     diagnostics = owned.classify_native_logs(logs)
@@ -121,6 +168,7 @@ def analyze(folder):
         original_player_slot_samples=len(observed),
         original_player_slot_nonzero_samples=sum(any(r['original_mwsfd_player_active']) for r in observed),
         progress_samples=len(rows), progress_changes=len(changes), frame_trace_retention=retained,
+        producer_epochs=producer_epochs(producer),
         incidents=incidents, native_audio=audio,
         process_audio_capture=json.loads((folder / 'native-audio-v1-receipt.json').read_text())['capture'],
         evidence_sha256={str(p.relative_to(folder)): sha(p) for p in files},
