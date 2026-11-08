@@ -71,3 +71,10 @@ Game/renderer interfaces remain staged migrations. The first-room captures show
 allocated original LSC children staying idle, not proof that all later scenarios
 avoid queued audio. This boundary remains open independently of the measured
 finite-file read-ahead improvement.
+
+The [native preparation/handoff implementation](NATIVE_AUDIO_QUEUE_PREPARATION.md)
+now keeps cue header reads off the game thread and prevents premature decoder
+EOF while an accepted next clip is still preparing. Both compilers pass 79 native
+suites; two private fault removals fail the intended checks. This supplies the
+next binding's preparation and playback boundary, not the engine command
+integration or a real-cue admission audit. Those remain required.

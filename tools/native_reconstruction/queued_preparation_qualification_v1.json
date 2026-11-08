@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "status": "native asynchronous cue preparation and delayed-next-header playback pass both complete native cohorts; premature EOF and stale-result faults detected in private LLVM source copies",
+  "implementation_revision": "3e0163f4ce1faf1760713338609c86306f2fb9b4",
+  "source_sha256": {
+    "game/native/CMakeLists.txt": "6f0cd9a805cdb9f201785e38cd3b55359c506f256ebdd71930194225f3f6164f",
+    "game/native/adxt_control_session/CMakeLists.txt": "3cf20879e12e09eab376abaadb8564cb7482c92a3d7c1a4fd433a4cb1a7fad2d",
+    "game/native/adxt_control_session/control_session_tests.cpp": "9865950292b653127d18c3b4b8e81d9ef0576557ffb4fff270346b230ee86bb1",
+    "game/native/adxt_lsc_input/input.cpp": "f5c01840fc96bc716d59de0226f8ac1d842a97d803f198542662eaf06310fb95",
+    "game/native/adxt_lsc_input/input.hpp": "1a5b77914db1327a4ebebb9b075ddc6ccfaf344c77f86b18daeeec8790c9b0dd",
+    "game/native/audio_clip_loader/CMakeLists.txt": "2a3b0de6533a6ec2409487f1f63ee3ceefff4869a48d20dec84a1595dfc9864e",
+    "game/native/audio_clip_loader/README.md": "24f4290748c08dea443557d2fd8f62be26d32cf1f7b519b18b717e31e382e975",
+    "game/native/audio_clip_loader/loader.cpp": "68e93ccbe839e93f9d07c5c9fd5270a149f1a8b1e5c85b294a23acd59ddc1bcd",
+    "game/native/audio_clip_loader/loader.hpp": "f35a90d409a8333b074272391d3d556a5afaffa4e0383fde42af22b5e0db7e74",
+    "game/native/audio_clip_loader/loader_tests.cpp": "a5a02ae89c97872db0fe4b2337de999b83247665f0d3b9addeb094ddc41d3cbb",
+    "tools/native_reconstruction/prepare_native_candidate.py": "01a133b4a24ad54a0ef9a44eda0732a10e4a5107f956cf98e73080e738531adb",
+    "tools/native_reconstruction/verify_queued_preparation_faults.py": "a9b44e1991c95fedbf28aee98e71cfdacd5fd5ee3597aeb84bb712a8c1203ada"
+  },
+  "native_cohort_manifest_sha256": "9cb59abeb89b98eb1f33e00e80940dc785a59a149a9d56b910639f829e67d4fe",
+  "evidence_sha256": {
+    "tools/native_reconstruction/native_queued_preparation_manifest_v2.json": "9cb59abeb89b98eb1f33e00e80940dc785a59a149a9d56b910639f829e67d4fe",
+    "build-native-sjuni/media-queued-preparation-results-llvm-v2/receipt.json": "76ded9c613fdaeb8e475e967c74ab5455a6391bbf207763204cd8dcd1ff53b77",
+    "build-native-sjuni/media-queued-preparation-llvm-v2/Testing/Temporary/LastTest.log": "9c0d2da9fe026b17c4f36e3d1489af96b008fba3b9553a8c46f82df0036f96f3",
+    "build-native-sjuni/media-queued-preparation-results-llvm-v2/tests.txt": "2b8753e3b1a8f000be6be7464cd76f53564f4d059f594f241ee96d740609d0f6",
+    "build-native-sjuni/media-queued-preparation-results-gcc-v2/receipt.json": "065841238e582a04817647c4381a15f5ff0fbaac208ba245d608d98b917cca85",
+    "build-native-sjuni/media-queued-preparation-gcc-v2/Testing/Temporary/LastTest.log": "24d2ee5c3142b3cb28720dc884c6d546b3bc0c38f004957cd4b544fd603b49f0",
+    "build-native-sjuni/media-queued-preparation-results-gcc-v2/tests.txt": "30bf5a3b9dd027364a14c9ba01aa5fc1ac52c0ca7d16b67b9d14756201f95747",
+    "build-native-sjuni/queued-audio-checks/preparation-faults-llvm-v4/receipt.json": "24c5a9ccc352756020971a29abe935c7eddc161287fb73c4839e5a6c8fdc1080",
+    "build-native-sjuni/queued-audio-checks/preparation-faults-llvm-v4/baseline-test.txt": "e4cdc3b207a3d36183508f08ac3c95248a1b639cdc3b9b3335d69c31d19a24c4",
+    "build-native-sjuni/queued-audio-checks/preparation-faults-llvm-v4/premature-eof-test.txt": "93ee1fbf6fb99549573b940688fe061e5d80ca24eef52c095c7322476aa55235",
+    "build-native-sjuni/queued-audio-checks/preparation-faults-llvm-v4/stale-publication-test.txt": "ed843566ab05542253a831110c0993065acc70ad046379bb223099d8da674192",
+    "build-native-sjuni/queued-audio-checks/preparation-faults-llvm-v4/premature-eof-input.cpp": "e2469bc5c334ba49496b892a6cdd7222797a73f2c15e4656e2ffb6219dec039f",
+    "build-native-sjuni/queued-audio-checks/preparation-faults-llvm-v4/stale-publication-loader.cpp": "63f0fabac072fad2d56ad082d29026da852c6dc1bc18d3216053d3131c76a368"
+  },
+  "cohorts": {
+    "llvm": {
+      "suites": 79,
+      "loader_checks": 148,
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3"
+    },
+    "gcc": {
+      "suites": 79,
+      "loader_checks": 148,
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5"
+    }
+  },
+  "paired_playback_samples": 32000,
+  "paired_channel_digests_equal": true,
+  "negative_checks": [
+    "premature-eof",
+    "stale-publication"
+  ],
+  "inherited_manifest_supplement": {
+    "recomp/overrides/native_banks/v3/packet_adapter.cpp": "9d1027a61fea8259670dd32df998bb7731b433472558bfd9ffc4c5700cd25cbb",
+    "recomp/overrides/native_banks/v3/packet_adapter.h": "74d60e96820978ddc5125b0bdf1db56b47abe2f62c7af76de50defcebc3e8d07",
+    "recomp/overrides/native_banks/v3/test_capture.h": "2f60cb0cbb0562c098dc19030d6ff5c20acd0671b9100ef0eecb53b18cfc373f",
+    "recomp/overrides/native_geometry/reo_vu_native_sha256.h": "4f22a79783e2ae4ba4d0f32ae63203b52a100cd40f4163683bad7fb499e40a03",
+    "runtime/assets/overlay.h": "8163e96a2d4f80ef5f2a2533d186a7411a66abd4c2fb0e8100f0bbfbb962690c",
+    "runtime/assets/virtual_afs.h": "8fa06c0e1da74b44f225510d81463fc510e868f917cad42d86221288c9905598",
+    "runtime/cdvd/cdvd.cpp": "aff60bf1c8dd40e8d8d9b3f9b9b667f218dd331e524e6125330972529de91f46",
+    "runtime/cdvd/cdvd.h": "5a68462c2fdb518fe31693bd22a49723b192940d4c915f3da6cf20fb377d398f",
+    "runtime/core/host_file.h": "4b50318f357371735cddf5ebb2e89cd66e4dcef73d50971569eba4cc5a7a8416",
+    "tools/native_reconstruction/verify_queued_preparation_faults.py": "a9b44e1991c95fedbf28aee98e71cfdacd5fd5ee3597aeb84bb712a8c1203ada"
+  },
+  "game_cue_binding": false,
+  "owned_asset_catalogue_admission_audit": false,
+  "game_run": false,
+  "step3_complete": false,
+  "limitations": [
+    "Preparation and native playback are integrated in standalone tests; actual engine cue commands are not yet bound.",
+    "Clip admission retains explicit inline-loop/output/header restrictions; required owned game cues must be audited before selecting that profile.",
+    "Join waits for an actual active read; no low-latency guarantee is made for shutdown on a failed storage provider.",
+    "The native-suite manifest omitted nine inherited project dependencies outside game/native; the negative-check source copy explicitly pins them. This does not claim the old manifest already covered those files.",
+    "Earlier GCC formatting and source-copy configuration failures remain preserved; final v2 native cohorts and v4 negative checks supersede those attempts.",
+    "The game executable remains V31 until this native cue path is bound and a new coherent candidate is built."
+  ]
+}

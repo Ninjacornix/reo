@@ -20,11 +20,24 @@ def main():
     if out.exists() or not out.is_relative_to(BASE/'queued-audio-checks'):
         raise ValueError('Fresh private fault-check output required')
     manifest=json.loads(args.manifest.read_bytes())
+    # These existing native test dependencies live outside game/native and
+    # were absent from the inherited native-only manifest. Pin them explicitly
+    # before copying/building; the verifier's revision is independently pinned.
+    additions=('recomp/overrides/native_banks/v3/packet_adapter.cpp',
+        'recomp/overrides/native_banks/v3/packet_adapter.h',
+        'recomp/overrides/native_banks/v3/test_capture.h',
+        'recomp/overrides/native_geometry/reo_vu_native_sha256.h',
+        'runtime/assets/overlay.h','runtime/assets/virtual_afs.h',
+        'runtime/cdvd/cdvd.cpp','runtime/cdvd/cdvd.h',
+        'runtime/core/host_file.h',
+        Path(__file__).relative_to(ROOT).as_posix())
+    extra_inputs={name:sha(ROOT/name) for name in additions}
+    inputs={**manifest['files'],**extra_inputs}
     def verify():
-        for name,digest in manifest['files'].items():
+        for name,digest in inputs.items():
             if sha(ROOT/name)!=digest:raise ValueError('Root source drift: '+name)
     verify();out.mkdir(parents=True);snapshot=out/'snapshot';build=out/'build'
-    for name,digest in manifest['files'].items():
+    for name,digest in inputs.items():
         target=snapshot/name
         if not target.resolve().is_relative_to(snapshot):raise ValueError('Escaped source copy')
         target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/name,target)
@@ -32,6 +45,7 @@ def main():
     environment=dict(os.environ);environment['PATH']=str(args.compiler.resolve().parent)+os.pathsep+environment.get('PATH','')
     record=dict(schema=1,status='failed',manifest_sha256=sha(args.manifest),verifier_sha256=sha(Path(__file__)),
         compiler_sha256=sha(args.compiler),cmake_sha256=sha(args.cmake),ninja_sha256=sha(args.ninja),
+        supplemental_or_revised_inputs_sha256=extra_inputs,
         root_sources_modified=False,game_run=False,checks=[],phases=[])
     def run(label,command,negative=False):
         result=subprocess.run(list(map(str,command)),capture_output=True,text=True,env=environment,timeout=180)
