@@ -42,4 +42,12 @@ public:
 // quiescence after every instance was destroyed and its actual workers joined.
 MediaInstallResult install_native_sources(PS2Runtime&,
     const reo_cd_async::ConfigurationReceipt&,bank_packets::v3::MemoryIdentity)noexcept;
+// Combined guest adapters prepare their complete, inert binding BEFORE SDK
+// selection. The supplied device-free Owner must be empty, open and exclusively
+// controlled by that adapter; its host gain hooks are a caller obligation.
+// Validation refusal leaves it untouched. After publication is attempted,
+// failure may have stopped/joined it; the caller retains failure cleanup.
+MediaInstallResult install_prepared_native_sources(PS2Runtime&,
+    const reo_cd_async::ConfigurationReceipt&,bank_packets::v3::MemoryIdentity,
+    const std::shared_ptr<adxt_control_owner::Owner>&)noexcept;
 } // namespace reo::native::sound_ram

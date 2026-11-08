@@ -183,8 +183,29 @@ void source_reset(){
     check(callback_slot);std::array<float,128> output{};check(callback_slot->dispatch(output.data(),64));
     f.finish();check(attached==1 && detached==1 && stopped==1 && unloaded==1);
 }
+void prepared_sources(const std::string& mode){
+    Fixture f;auto prepared=std::make_shared<own::Owner>(inst::control::Config{{1},{}});
+    if(mode=="prepared_phase")f.runtime.sealed=true;
+    if(mode=="prepared_occupied"){
+        Operation create([&](auto& p){check(p.create({1,{0,0,0,0}}).status==inst::Status::completed);});
+        check(prepared->run(create)==own::Admission::accepted);
+    }
+    if(mode=="prepared_scoped"){
+        Operation scope([&](auto&){f.result=sr::install_prepared_native_sources(f.runtime,f.cd,packet_test::identity(),prepared);});
+        check(prepared->run(scope)==own::Admission::accepted);
+    }else f.result=sr::install_prepared_native_sources(f.runtime,f.cd,packet_test::identity(),mode=="prepared_null"?std::shared_ptr<own::Owner>{}:prepared);
+    if(mode!="prepared_live"){
+        check(f.result.backend.status!=sr::InstallStatus::installed && !f.result.sources && !f.result.pcm_order);
+        check(f.runtime.workers.empty() && !prepared->report().stopping && !attached && prepared_memory.expired());
+        check(prepared->join()==own::Join::completed && f.runtime.join());return;
+    }
+    check(f.result.backend.status==sr::InstallStatus::installed && f.result.sources==prepared && f.result.pcm_order && f.runtime.workers.size()==2 && !attached);
+    sdk::reset();check(route_resets==1);
+    Operation create([&](auto& p){check(p.start_output()==inst::Status::completed);auto made=p.create({1,{0,0,0,0}});check(made.status==inst::Status::completed);check(p.start(made.key,source(file::file(1,48000,20000),1))==inst::Status::completed);});
+    check(prepared->run(create)==own::Admission::accepted);f.finish();check(prepared->report().joined);
+}
 int main(int argc,char** argv)try{
     check(argc==2);_putenv_s("REO_NATIVE_AUDIO","1");std::string mode=argv[1];
-    if(mode=="live")live();else if(mode=="blocked")blocked_source();else if(mode=="scoped")scoped_join();else if(mode=="device_fence")device_fence();else if(mode=="legacy")legacy();else if(mode=="pcm_order")pcm_order();else if(mode=="source_reset")source_reset();else refusals(mode);
+    if(mode=="live")live();else if(mode=="blocked")blocked_source();else if(mode=="scoped")scoped_join();else if(mode=="device_fence")device_fence();else if(mode=="legacy")legacy();else if(mode=="pcm_order")pcm_order();else if(mode=="source_reset")source_reset();else if(mode.starts_with("prepared_"))prepared_sources(mode);else refusals(mode);
     std::cout<<"media factory checks="<<checks<<'\n';return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

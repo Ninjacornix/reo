@@ -315,10 +315,27 @@ MediaInstallResult install_native_sources(PS2Runtime& runtime,const reo_cd_async
     try{
         adxt_control_session::Config config;config.output.stream_gains=std::make_shared<RuntimeStreamGains>();
         owner=std::make_shared<sources::Owner>(std::move(config));
+        auto result=install_prepared_native_sources(runtime,cd,identity,owner);
+        if(result.backend.status==InstallStatus::installed)return result;
+        (void)owner->join();return result;
+    }catch(...){if(owner)(void)owner->join();return {{InstallStatus::allocation_failed},{},{}};}
+}
+MediaInstallResult install_prepared_native_sources(PS2Runtime& runtime,const reo_cd_async::ConfigurationReceipt& cd,
+    bank_packets::v3::MemoryIdentity identity,const std::shared_ptr<sources::Owner>& owner)noexcept{
+    try{
+        auto setup=runtime.acquirePreRunSetup();if(!setup)return {{InstallStatus::phase_closed},{},{}};
+        if(!owner)return {{InstallStatus::aggregate_unavailable},{},{}};
+        struct Check final:sources::Operation {
+            bool empty{};
+            void run(adxt_instances::Instances& players)noexcept override{
+                const auto state=players.snapshot();empty=!state.closing && !state.instances && !state.pending && !state.retiring && !state.session.records && !state.session.retiring && !state.session.service_busy && !state.session.guard_fault && !state.session.output.occupied;
+            }
+        } check;
+        if(owner->run(check)!=sources::Admission::accepted || !check.empty)return {{InstallStatus::aggregate_unavailable},{},{}};
         std::shared_ptr<const MediaInstallResult::PcmOrder> order;
         const auto result=CompositeBackend::install(runtime,cd,identity,owner,&order);
-        if(result.status==InstallStatus::installed)return {result,std::move(owner),std::move(order)};
-        (void)owner->join();return {result,{},{}};
-    }catch(...){if(owner)(void)owner->join();return {{InstallStatus::allocation_failed},{},{}};}
+        if(result.status==InstallStatus::installed)return {result,owner,std::move(order)};
+        return {result,{},{}};
+    }catch(...){return {{InstallStatus::allocation_failed},{},{}};}
 }
 } // namespace reo::native::sound_ram

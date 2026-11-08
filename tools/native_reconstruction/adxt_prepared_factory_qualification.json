@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "status": "prepared canonical source owner factory qualified on both compilers",
+  "manifest_sha256": "51601b3e444323d5a3605815724ea5d6d699d444c099e7f93fcaceb21da5f7c8",
+  "evidence": {
+    "build-native-sjuni/audio-media-factory/prepared-llvm-v1/receipt.json": "948c0bf63919cb7a8ba9e6f193ee4a6a49265b86c9410b54208538c380606e8c",
+    "build-native-sjuni/adxt-binding/prepared-actual130-llvm-v1/receipt.json": "0bd9abbc537ec6f4f69eecbd5744009f4d8b4bd60e10339b3b64b70178f9fb1f",
+    "build-native-sjuni/audio-media-factory/prepared-gcc-v1/receipt.json": "92abb8928be55894f0a39d1bc7569d555a6cf943b9e5b65963efdb1a933dd994",
+    "build-native-sjuni/adxt-binding/prepared-actual130-gcc-v1/receipt.json": "9d12884275e15291103bd5ba862db03e789b460a884afa2f074d3806a05fe41b"
+  },
+  "scenarios": 19,
+  "game_run": false,
+  "device_opened": false,
+  "guest_binding": false,
+  "stage3_complete": false
+}
