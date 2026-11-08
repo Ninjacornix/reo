@@ -84,6 +84,7 @@ AUDIO_BACKEND_UNITS = PCM_BACKEND_UNITS[:-1] + (
     ('native_sound_identity', 'recomp/overrides/native_sound_ram/build_identity.cpp'),
     ('native_sound_memory', 'recomp/overrides/native_sound_ram/runtime_memory.cpp'),
     ('native_sound_composite', 'recomp/overrides/native_sound_ram/composite_backend.cpp'),
+    ('native_adxt_runtime_observer', 'recomp/overrides/native_adxt/runtime_observer.cpp'),
     ('native_resources_bounded_view', 'game/native/resources/bounded_view.cpp'),
     ('native_resource_io', 'game/native/resource_io/async_read_owner.cpp'),
     ('native_sjrb', 'game/native/sjrb/sjrb.cpp'),

@@ -23,9 +23,13 @@ def main():
     proof=json.loads(PROOF.read_bytes());native=json.loads(a.native_receipt.read_bytes());manifest=json.loads(a.manifest.read_bytes())
     native_path=a.native_manifest or a.manifest;native_manifest=json.loads(native_path.read_bytes())
     if native['status']!='native media pipeline standalone build and tests passed' or native['compiler_sha256']!=sha(a.compiler) or native['manifest_sha256']!=sha(native_path):raise ValueError('Matching complete native build required')
-    # A fixture-only correction need not rebuild all native archives. Every
-    # production input, native test and contract must remain byte-identical.
-    fixture_only={'tools/native_reconstruction/audio_media_factory/tests.cpp','tools/native_reconstruction/audio_media_factory/verify.py'}
+    # The native archives do not contain this runtime factory or candidate-plan
+    # writer. Rebuild the actual factory bodies here and in the production-header
+    # object cohort, while requiring every archive body/header/test/contract to
+    # remain byte-identical. This permits the optional original ABI observer
+    # branch without rebuilding unchanged decoder/output archives.
+    fixture_only={'tools/native_reconstruction/audio_media_factory/tests.cpp','tools/native_reconstruction/audio_media_factory/verify.py',
+        'recomp/overrides/native_sound_ram/composite_backend.cpp','tools/native_reconstruction/prepare_native_candidate.py'}
     compatible_changes={n for n,d in native_manifest['files'].items()if manifest['files'].get(n)!=d}
     if not compatible_changes.issubset(fixture_only):raise ValueError('Native cohort production inputs differ: '+str(compatible_changes))
     def verify():
@@ -75,9 +79,13 @@ def main():
         r=subprocess.run(list(map(str,command)),env=env,capture_output=True,text=True,timeout=120);write(out/(label+'.txt'),r.stdout+r.stderr);record['checks'].append(dict(label=label,exit=r.returncode,command=list(map(str,command))))
         if r.returncode:raise ValueError(label+' failed; see owned log')
         print(label+': passed',flush=True)
+    # This declared-port factory fixture does not exercise the optional actual
+    # guest observer. Its separate adapter checks use the real SDK headers and
+    # a dedicated original-call/lifetime fixture. No observe path is enabled.
+    write(out/'observer_stub.cpp','#include "recomp/overrides/native_adxt/runtime_observer.h"\nnamespace reo::native::adxt_binding {bool observe_before_run(PS2Runtime&)noexcept{return false;}}\n')
     try:
         binary=out/'factory.exe'
-        run('compile',flags+[ROOT/'recomp/overrides/native_audio/v2/aggregate.cpp',ROOT/'recomp/overrides/native_audio/v3/aggregate.cpp',HERE/'tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-o',binary])
+        run('compile',flags+[ROOT/'recomp/overrides/native_audio/v2/aggregate.cpp',ROOT/'recomp/overrides/native_audio/v3/aggregate.cpp',out/'observer_stub.cpp',HERE/'tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-o',binary])
         for case in ('live','blocked','scoped','device_fence','legacy','disabled','phase','layout','memory','provider','registration','publication'):run(case,[binary,case])
         verify();record.update(status='native media factory protocol passed',scenarios=12,binary_sha256=sha(binary))
     finally:

@@ -1,4 +1,5 @@
 #include "composite_backend.h"
+#include "recomp/overrides/native_adxt/runtime_observer.h"
 #include "runtime_memory.h"
 #include "capture_provider_v3.h"
 #include "game/native/adxt_control_owner/owner.hpp"
@@ -276,7 +277,13 @@ private:
 };
 InstallResult install(PS2Runtime& runtime,const reo_cd_async::ConfigurationReceipt& cd,
                       bank_packets::v3::MemoryIdentity identity) noexcept {
-    return CompositeBackend::install(runtime,cd,identity);
+    const auto result=CompositeBackend::install(runtime,cd,identity);
+    if(result.status==InstallStatus::installed){
+        const auto* path=std::getenv("REO_ADXT_OBSERVE_PATH");
+        if(path && *path && !adxt_binding::observe_before_run(runtime))
+            std::fprintf(stderr,"[ADXT-OBSERVE-ERROR] original ABI observation unavailable\n");
+    }
+    return result;
 }
 MediaInstallResult install_native_sources(PS2Runtime& runtime,const reo_cd_async::ConfigurationReceipt& cd,
                                            bank_packets::v3::MemoryIdentity identity)noexcept{
