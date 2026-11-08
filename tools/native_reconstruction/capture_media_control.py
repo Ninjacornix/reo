@@ -17,6 +17,15 @@ def words(value):return list(struct.unpack('<'+'I'*(len(value)//4),value))
 def address(at,size):return at>=0x10000 and at%4==0 and at<=0x2000000 and 0<=size<=0x2000000-at
 def sample(reader):
     phase=reader.read(0x4BADD0,0x40)
+    # Fixed public game workspace, valid for both old and native movie owners.
+    # Never interpret the public handle as an old decoder object or follow it.
+    public=reader.read(0x340a40,0x98)
+    public_movie=dict(handle=struct.unpack_from('<I',public)[0],status=public[0x80],
+        renderer_width=struct.unpack_from('<H',public,0x8c)[0],renderer_height=struct.unpack_from('<H',public,0x8e)[0],
+        effect_state=public[0x92],effect_id=struct.unpack_from('<H',public,0x94)[0],
+        renderer_frame=words(reader.read(0x56bad8,4))[0])
+    old_pool=reader.read(0x22dec0,8*0x210)
+    old_player_active=[struct.unpack_from('<I',old_pool,slot*0x210+4)[0] for slot in range(8)]
     clocks=dict(adxt=words(reader.read(0x20F3C4,4))[0],sofdec=words(reader.read(0x22F138,4))[0])
     pool=reader.read(0x20F3C8,16*0xC4);instances=[]
     lsc_callback=words(reader.read(0x21dfd8,12))
@@ -60,6 +69,7 @@ def sample(reader):
         record['control_end_matches']=reader.read(main+0x44,20)==scalars and words(reader.read(main+0x2AB0,4))[0]==shared
         movies.append(record)
     return dict(phase=phase[0],modal=phase[0x1E],paused=phase[0x28],clocks=clocks,adxt=instances,movies=movies,
+                public_movie=public_movie,original_mwsfd_player_active=old_player_active,
                 lsc_callback_words=lsc_callback,lsc_callback_end_matches=words(reader.read(0x21dfd8,12))==lsc_callback,
                 registry_end_matches=words(reader.read(0x22F18C,32))==registry,atomic=False)
 def main():

@@ -17,6 +17,7 @@ class Reader:
         if at in self.spans:
             value=self.spans[at];assert len(value)==size;return value
         allowed=[(0x4BADD0,0x40),(0x20F3C4,4),(0x22F138,4),(0x20F3C8,16*0xC4),(0x22F18C,32),(0x21dfd8,12)]
+        allowed += [(0x340a40,0x98),(0x56bad8,4),(0x22dec0,8*0x210)]
         allowed += [(0x800044,20),(0x802AB0,4),(0x8009A0,400),(0x800B30,400),(0x800CC0,0x298),(0x900DA4,8)]
         allowed += [(0x801AA0+68*i,8) for i in range(9)]
         if (at,size) not in allowed:raise AssertionError('Unexpected process-memory range')
@@ -27,6 +28,12 @@ class CaptureTests(unittest.TestCase):
         r=Reader();r.put(0x22F18C,struct.pack('<8I',0x800000,0,0,0,0,0,0,0));return r
     def test_empty_has_no_pointer_following(self):
         r=Reader();value=capture.sample(r);self.assertEqual(value['movies'],[]);self.assertEqual(value['adxt'],[]);self.assertFalse(value['atomic'])
+    def test_public_movie_does_not_dereference_foreign_native_handle(self):
+        r=Reader();work=bytearray(0x98);struct.pack_into('<I',work,0,0xffffffff);work[0x80]=2
+        struct.pack_into('<HH',work,0x8c,512,320);work[0x92]=1;struct.pack_into('<H',work,0x94,128)
+        r.put(0x340a40,bytes(work));r.put(0x56bad8,struct.pack('<I',772));pool=bytearray(8*0x210);struct.pack_into('<I',pool,7*0x210+4,1);r.put(0x22dec0,bytes(pool))
+        value=capture.sample(r);self.assertEqual(value['public_movie'],dict(handle=0xffffffff,status=2,renderer_width=512,renderer_height=320,effect_state=1,effect_id=128,renderer_frame=772))
+        self.assertEqual(value['original_mwsfd_player_active'],[0,0,0,0,0,0,0,1]);self.assertFalse(any(at==0xffffffff for at,_ in r.reads))
     def test_pool_fields_and_cached_words(self):
         r=self.movie();pool=bytearray(16*0xC4);pool[2*0xC4:2*0xC4+4]=bytes([1,3,2,2]);pool[2*0xC4+0x72]=1;r.put(0x20F3C8,bytes(pool))
         r.put(0x801AA0+68*6,struct.pack('<2I',7,9));v=capture.sample(r)
