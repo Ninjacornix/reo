@@ -17,7 +17,6 @@
   "evidence_sha256": {
     "build-native-sjuni/candidate-work-v28/candidate-build-result.json": "c09ccf61f04dad33db53bab09d694139745fee3a61d651ddc949b8c18910a600",
     "build-native-sjuni/native-media-game-v28/native-media-package-receipt.json": "4d9d19e2ff3ea19226cbfc88e946fa5052111a8ba192b1a642b290c64c935438",
-    "build-native-sjuni/launcher-native-prep-v1/native-game-session-check.json": "1abd71bc0498df45a588b8be0d6a619948472ba17f0a667bd85d789f29196360",
     "build-native-sjuni/launcher-native-prep-v1/native-game-session-check.json.first-audio-refusal.json": "9208f8f75f1749047ce84884a02e0f9b847b17c316fba340f26ddb9a8eb8824b",
     "build-native-sjuni/launcher-native-prep-v1/native-game-session-check.json.second-focus-limited.json": "691b2291db38f9a84243607aca5ffcbf9ccc1f1d48f2a8a117def143079f49e4",
     "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-194707-685/controller-health.jsonl": "a8c1cc25c37bbcf213158572a68a7f0b49de28dc52d8d54af14de3461fe81e9f",
@@ -57,7 +56,8 @@
     "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-194707-685/native-movie-producer.csv": "a5a990f75a65a6b9f54233548151cd4af3ec8f639bce015d7b9b336e701c8274",
     "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-194707-685/stderr.log": "f79b7acbbaf57192433c4bf2bc3453319490cf679abb305a14fb9dd8c3e53099",
     "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-194707-685/stdout.log": "e10b9fd0b95c0fc61c07635be71ca45c489ef152dcbad42f8ee1155df28d0c2d",
-    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-194707-685/window-visibility-focused.json": "c1daf9ea6e3c01bff3e6356e4a550908948b45df068e3a65b561e87922a3224d"
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-194707-685/window-visibility-focused.json": "c1daf9ea6e3c01bff3e6356e4a550908948b45df068e3a65b561e87922a3224d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-194707-685/native-game-session-check.json": "1abd71bc0498df45a588b8be0d6a619948472ba17f0a667bd85d789f29196360"
   },
   "opening": [
     {
