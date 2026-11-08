@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 namespace b=reo::native::adxt_binding;
 namespace sr=reo::native::sound_ram;
@@ -223,16 +224,17 @@ int main(int argc,char** argv)try{
     const std::string mode=argv[4];
     std::filesystem::path trace_path=std::filesystem::path(argv[0]).parent_path()/(mode+".csv");
     if(mode.starts_with("trace"))check(_wputenv_s(L"REO_NATIVE_ADXT_TRACE_FILE",trace_path.c_str())==0);
-    if(mode=="trace_bounds" || mode=="trace_existing" || mode=="trace_unjoined"){
+    if(mode=="trace_bounds" || mode=="trace_existing" || mode=="trace_unjoined" || mode=="trace_generation"){
         b::AudioTrace trace;check(trace.enabled());reo::native::adxt_output_session::Snapshot value;
         value.statistics={4800,4500,13};auto& stream=value.streams[2];stream.slot=2;stream.generation=7;stream.active=true;stream.voice.playing=true;stream.channel[0].samples=17;stream.voice.late_samples=9;
+        trace.sources[2]={mode=="trace_generation"?8u:7u,123,9,448,2,1,4096,4096,8192,4,8192,480};
         const unsigned count=mode=="trace_bounds"?32770:1;
         for(unsigned i=0;i<count;++i)trace.record(b::AudioTrace::now(),i,value);
         check(trace.rows.size()==std::min(count,32768u) && trace.dropped==count-trace.rows.size());
         check(trace.rows.front().output.streams[2].channel[0].samples==17 && trace.rows.front().output.statistics.underrun_frames==13);
         if(mode=="trace_existing"){std::ofstream(trace_path)<<"preserve prior evidence";trace.save(true);std::ifstream in(trace_path);std::string line;std::getline(in,line);check(line=="preserve prior evidence");}
         else if(mode=="trace_unjoined"){trace.save(false);check(!std::filesystem::exists(trace_path));}
-        else {trace.save(true);check(std::filesystem::file_size(trace_path)>1000);}
+        else {trace.save(true);check(std::filesystem::file_size(trace_path)>100);std::ifstream in(trace_path);std::string line;for(unsigned i=0;i<3;++i)check(bool(std::getline(in,line)));std::istringstream record(line);std::string field;for(unsigned i=0;i<=18;++i)check(bool(std::getline(record,field,',')));check(field==(mode=="trace_generation"?"0":"1"));}
     }
     else if(mode=="ordinary" || mode=="metadata_three" || mode=="trace"){
         ordinary(memory,runtime,mode=="metadata_three");

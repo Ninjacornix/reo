@@ -7,12 +7,13 @@ sys.path.insert(0,str(ROOT/'tools/function_index'));from index import Elf
 PORTS=ROOT/'build-native-sjuni/audio-media-factory/prepared-llvm-v1'
 PORTS_SHA='948c0bf63919cb7a8ba9e6f193ee4a6a49265b86c9410b54208538c380606e8c'
 META=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1'
-SCENARIOS=('ordinary','metadata_three','metadata','missing_one','missing_two','phase','image','entry','mount','worker','registry','factory','partial','callback','producer','changed_child','order','order_partial','foreign','guest_depth','query_alias','stereo_pan','mono_pan','trace','trace_bounds','trace_existing','trace_unjoined')
+SCENARIOS=('ordinary','metadata_three','metadata','missing_one','missing_two','phase','image','entry','mount','worker','registry','factory','partial','callback','producer','changed_child','order','order_partial','foreign','guest_depth','query_alias','stereo_pan','mono_pan','trace','trace_bounds','trace_existing','trace_unjoined','trace_generation')
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def write(path,body):path.write_text(body,encoding='utf-8',newline='\n')
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     for name in ('compiler','manifest','native-receipt','data','output'):p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--trace-only',action='store_true',help='Run only bounded diagnostic/lifetime cases; preserve full regression mode by default')
     a=p.parse_args();out=a.output.resolve();native=json.loads(a.native_receipt.read_bytes());manifest=json.loads(a.manifest.read_bytes())
     if out.exists() or not out.is_relative_to(ROOT/'build-native-sjuni/adxt-binding'):raise ValueError('Fresh owned output required')
     if native['status']!='native media pipeline standalone build and tests passed' or native['compiler_sha256']!=sha(a.compiler) or native['manifest_sha256']!=sha(a.manifest):raise ValueError('Matching complete native archive cohort required')
@@ -66,7 +67,8 @@ def main():
     try:
         exe=out/'ordinary.exe';flags=[a.compiler,'-std=c++20','-O2','-pthread','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-misleading-indentation','-fno-fast-math','-ffp-contract=off','-DNOMINMAX','-DWIN32_LEAN_AND_MEAN','-DREO_GAME_FILE1','-DREO_BUILD_NATIVE_RESOURCE_READS=1','-I'+str(HERE/'ordinary_tests'),'-I'+str(out),'-I'+str(HERE),'-I'+str(PORTS/'snapshot'),'-I'+str(ROOT)]
         run('compile',flags+[HERE/'game_handles.cpp',HERE/'source_profile.cpp',HERE/'ordinary_tests/tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-lbcrypt','-lole32','-lruntimeobject','-o',exe])
-        for case in SCENARIOS:run(case,[exe,out/'qualified-image.bin',data,out/'plan.txt',case])
+        cases=tuple(case for case in SCENARIOS if not a.trace_only or case.startswith('trace'))
+        for case in cases:run(case,[exe,out/'qualified-image.bin',data,out/'plan.txt',case])
         body=(HERE/'ordinary_runtime.cpp').read_text();test=(HERE/'ordinary_tests/tests.cpp').read_text();mutations={}
         faults={
             'drop-child-retirement':('if(action==Action::destroy_child){destroy(at);return false;}','if(action==Action::destroy_child){return false;}','ordinary'),
@@ -93,11 +95,12 @@ def main():
         faults['ignore-muted-metadata-refusal']=(
             'metadata.status!=ps2_syscalls::RnaMetadataStatusV1::ok',
             'false', 'metadata')
+        if a.trace_only:faults={}
         for name,(anchor,replacement,case) in faults.items():
             if body.count(anchor)!=1:raise ValueError('Unique adapter mutation anchor '+name)
             folder=out/name;folder.mkdir();changed=folder/'ordinary_runtime_body.cpp';write(changed,body.replace(anchor,replacement));fixture=out/(name+'-tests.cpp');write(fixture,test.replace('#include "ordinary_runtime_body.cpp"','#include "'+name+'/ordinary_runtime_body.cpp"'))
             binary=out/(name+'.exe');run(name+'-compile',flags+[HERE/'game_handles.cpp',HERE/'source_profile.cpp',fixture,'-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-lbcrypt','-lole32','-lruntimeobject','-o',binary]);run(name,[binary,out/'qualified-image.bin',data,out/'plan.txt',case],True);mutations[name]=sha(changed)
-        verify();record.update(status='ordinary game ABI declared-port checks passed',scenarios=len(SCENARIOS),binary_sha256=sha(exe),detected_faults=list(faults),fault_source_sha256=mutations)
+        verify();record.update(status='ordinary game ABI declared-port checks passed',scenarios=len(cases),trace_only=a.trace_only,binary_sha256=sha(exe),detected_faults=list(faults),fault_source_sha256=mutations)
     except Exception as error:record['failure']=str(error);raise
     finally:
         record['source_stats_unchanged']=all((s.st_size,s.st_mtime_ns,s.st_ino)==((t:=(data/n).stat()).st_size,t.st_mtime_ns,t.st_ino) for n,s in before.items());record['import_manifest_unchanged']=sha(imported)=='ae3668c7e98defe0eb16ce107490078451e9c2f57cb2fb87c162f37520f2600b'

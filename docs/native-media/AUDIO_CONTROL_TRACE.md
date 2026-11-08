@@ -45,3 +45,14 @@ they do not timestamp an individual output callback or establish whether missing
 service, source work or host scheduling caused a shortage. Correlate with native
 movie delivery and retained per-stream state before proposing a controlled fix.
 Step 3 remains open.
+
+The version-2 extension (`control_snapshots=2`) adds timestamped native source
+state: encoded ring availability/capacity, in-flight request ID, sector/byte
+progress, decoded samples and copied samples. Existing source inspection already
+obtains these values. Copies remain under canonical controller admission; a
+generation mismatch exports unknown source detail rather than another source's
+cached state. The analyzer accepts both versions and retains source timestamps.
+Five focused diagnostic/lifetime cases pass on each compiler, including stale
+generation refusal; an actual SDK131 object check and eight analyzer tests pass.
+These are additional focused checks, not a second claim of the complete earlier
+regression suite. See `audio_control_trace_v2_qualification.json`.

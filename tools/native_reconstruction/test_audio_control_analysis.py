@@ -3,7 +3,7 @@ import io
 import tempfile
 from pathlib import Path
 import unittest
-from analyze_audio_control_trace import COLUMNS, read_trace, analyze
+from analyze_audio_control_trace import COLUMNS, DETAIL_COLUMNS, read_trace, analyze
 
 
 def row(t, frames, underruns=0, slot=0, generation=1, late=0, skipped=0):
@@ -11,11 +11,11 @@ def row(t, frames, underruns=0, slot=0, generation=1, late=0, skipped=0):
 
 
 class Analysis(unittest.TestCase):
-    def parse(self, rows, dropped=0, extra=''):
+    def parse(self, rows, dropped=0, extra='',version=1):
         with tempfile.TemporaryDirectory() as folder:
             path=Path(folder)/'trace.csv'
-            stream=io.StringIO();stream.write(f'# dropped={dropped}; owner_joined=1; control_snapshots=1\n')
-            writer=csv.writer(stream);writer.writerow(COLUMNS);writer.writerows(rows)
+            stream=io.StringIO();stream.write(f'# dropped={dropped}; owner_joined=1; control_snapshots={version}\n')
+            writer=csv.writer(stream);writer.writerow(COLUMNS+(DETAIL_COLUMNS if version==2 else []));writer.writerows(rows)
             path.write_text(stream.getvalue()+extra)
             return analyze(read_trace(path))
 
@@ -54,6 +54,14 @@ class Analysis(unittest.TestCase):
     def test_missing_counter_moves_from_late_to_skipped(self):
         result=self.parse([row(1000,4800,13,late=13),row(100_001_000,9600,13,skipped=13)])
         self.assertEqual(result['measured_underrun_increase'],0)
+
+    def test_v2_source_detail_is_retained(self):
+        detail=[1,1000,2,1,0,8192,8192,4,8192,9,480,448]
+        result=self.parse([row(1000,0)+detail,row(100_001_000,4800,13,late=13)+detail],version=2)
+        state=result['largest_shortage_windows'][0]['missing_counter_increases'][0]['after']
+        self.assertEqual(result['trace_version'],2)
+        self.assertEqual(state['source_request_id'],9)
+        self.assertEqual(state['encoded_buffered'],0)
 
 
 if __name__=='__main__':unittest.main()

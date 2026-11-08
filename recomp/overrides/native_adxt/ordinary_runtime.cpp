@@ -61,25 +61,40 @@ struct Controls {
 // allocation while recording, guest writes or live file I/O. Snapshot copies
 // happen under the same canonical control admission already used for clocks.
 struct AudioTrace {
-    struct Row {std::uint64_t begin{},end{};std::uint32_t tick{};adxt_output_session::Snapshot output;};
+    struct SourceState {
+        std::uint64_t generation{},observed{},request{},copied{};
+        std::int32_t state{},in_flight{},buffered{},free{},capacity{},progress{},cumulative{},decoded{};
+    };
+    struct Row {std::uint64_t begin{},end{};std::uint32_t tick{};adxt_output_session::Snapshot output;std::array<SourceState,16> source;};
+    std::array<SourceState,16> sources{};
     std::filesystem::path path;std::vector<Row> rows;std::uint64_t dropped{};bool saved{};
     static std::uint64_t now()noexcept{return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());}
     AudioTrace()noexcept{try{if(const auto* name=_wgetenv(L"REO_NATIVE_ADXT_TRACE_FILE");name&&*name){path=name;rows.reserve(32768);}}catch(...){path.clear();std::fputs("[NATIVE-ADXT-TRACE-ERROR] allocation unavailable\n",stderr);}}
     bool enabled()const noexcept{return !path.empty();}
+    void observe(const instances::Observation& value)noexcept{
+        if(!enabled() || !value.source || !value.source->output.active)return;
+        const auto& s=*value.source;if(s.output.slot>=sources.size())return;
+        const auto& input=s.decoder.source;
+        sources[s.output.slot]={s.output.generation,now(),input.request_id,s.copied_samples,input.state,int(input.in_flight),
+            input.ring.data,input.ring.free,input.ring.capacity,input.progress_sectors,input.cumulative_bytes,s.decoder.engine.decoded_total};
+    }
     void record(std::uint64_t begin,std::uint32_t tick,const adxt_output_session::Snapshot& value)noexcept{
-        if(!enabled())return;if(rows.size()==32768){++dropped;return;}rows.push_back({begin,now(),tick,value});
+        if(!enabled())return;if(rows.size()==32768){++dropped;return;}rows.push_back({begin,now(),tick,value,sources});
     }
     void save(bool joined)noexcept{
         if(saved||!enabled())return;saved=true;
         if(!joined){std::fputs("[NATIVE-ADXT-TRACE-ERROR] owner not joined; export refused\n",stderr);return;}
         const auto fd=_wopen(path.c_str(),_O_WRONLY|_O_CREAT|_O_EXCL|_O_BINARY,_S_IREAD|_S_IWRITE);auto* file=fd<0?nullptr:_fdopen(fd,"wb");
         if(!file){if(fd>=0)_close(fd);std::fputs("[NATIVE-ADXT-TRACE-ERROR] fresh output unavailable\n",stderr);return;}
-        std::fprintf(file,"# dropped=%llu; owner_joined=1; control_snapshots=1\nbegin_ns,end_ns,game_tick,output_frames,signal_frames,underrun_frames,slot,generation,active,playing,draining,queued_left,queued_right,late_samples,skipped_samples,volume,gain,frequency\n",static_cast<unsigned long long>(dropped));
+        std::fprintf(file,"# dropped=%llu; owner_joined=1; control_snapshots=2\nbegin_ns,end_ns,game_tick,output_frames,signal_frames,underrun_frames,slot,generation,active,playing,draining,queued_left,queued_right,late_samples,skipped_samples,volume,gain,frequency,source_known,source_observed_ns,source_state,source_in_flight,encoded_buffered,encoded_free,encoded_capacity,source_progress_sectors,source_cumulative_bytes,source_request_id,decoded_samples,copied_samples\n",static_cast<unsigned long long>(dropped));
         for(const auto& r:rows){bool any{};for(const auto& s:r.output.streams){if(!s.active&&!s.voice.playing)continue;any=true;
-            std::fprintf(file,"%llu,%llu,%u,%llu,%llu,%llu,%u,%llu,%u,%u,%u,%zu,%zu,%llu,%llu,%u,%.9g,%u\n",
+            std::fprintf(file,"%llu,%llu,%u,%llu,%llu,%llu,%u,%llu,%u,%u,%u,%zu,%zu,%llu,%llu,%u,%.9g,%u",
                 (unsigned long long)r.begin,(unsigned long long)r.end,r.tick,(unsigned long long)r.output.statistics.output_frames,(unsigned long long)r.output.statistics.signal_frames,(unsigned long long)r.output.statistics.underrun_frames,
                 s.slot,(unsigned long long)s.generation,unsigned(s.active),unsigned(s.voice.playing),unsigned(s.voice.draining),s.channel[0].samples,s.channel[1].samples,(unsigned long long)s.voice.late_samples,(unsigned long long)s.voice.skipped_samples,s.voice.volume,double(s.voice.gain),s.frequency);
-        }if(!any)std::fprintf(file,"%llu,%llu,%u,%llu,%llu,%llu,-1,0,0,0,0,0,0,0,0,0,0,0\n",(unsigned long long)r.begin,(unsigned long long)r.end,r.tick,(unsigned long long)r.output.statistics.output_frames,(unsigned long long)r.output.statistics.signal_frames,(unsigned long long)r.output.statistics.underrun_frames);}
+            const auto known=s.slot<r.source.size() && r.source[s.slot].observed && r.source[s.slot].generation==s.generation;
+            const auto detail=known?r.source[s.slot]:SourceState{};
+            std::fprintf(file,",%u,%llu,%d,%d,%d,%d,%d,%d,%d,%llu,%d,%llu\n",unsigned(known),(unsigned long long)detail.observed,detail.state,detail.in_flight,detail.buffered,detail.free,detail.capacity,detail.progress,detail.cumulative,(unsigned long long)detail.request,detail.decoded,(unsigned long long)detail.copied);
+        }if(!any)std::fprintf(file,"%llu,%llu,%u,%llu,%llu,%llu,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n",(unsigned long long)r.begin,(unsigned long long)r.end,r.tick,(unsigned long long)r.output.statistics.output_frames,(unsigned long long)r.output.statistics.signal_frames,(unsigned long long)r.output.statistics.underrun_frames);}
         const auto failed=std::ferror(file);const auto closed=std::fclose(file);if(failed||closed)std::fputs("[NATIVE-ADXT-TRACE-ERROR] export incomplete\n",stderr);
     }
 };
@@ -164,7 +179,7 @@ public:
             if(next.pause!=r.controls.pause)result=p.pause(key,std::bit_cast<std::int8_t>(next.pause),tick());
         });require(result,"controls",r.handle.address);r.controls=next;
     }
-    instances::Observation inspect(Record& r){instances::Observation result;with(r,[&](auto& p,const auto& key,const auto&){result=p.inspect(key);});require(result.status,"inspect",r.handle.address);return result;}
+    instances::Observation inspect(Record& r){instances::Observation result;with(r,[&](auto& p,const auto& key,const auto&){result=p.inspect(key);trace.observe(result);});require(result.status,"inspect",r.handle.address);return result;}
     void mirror(Record& r){
         if(!r.source)return;const auto observed=inspect(r);if(observed.starts!=r.expected_start)return;
         if(!observed.source || observed.source->fault)fail("source-fault",r.handle.address);

@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "status": "source/decoder detail extension passes focused diagnostic cases on both compilers and actual SDK131 object check; game capture pending",
+  "source_sha256": {
+    "recomp/overrides/native_adxt/ordinary_runtime.cpp": "ef29d69e2ed42f7cb2d6502d86ebb186bed830bba453f64d7b8671b3f7a47419",
+    "recomp/overrides/native_adxt/ordinary_tests/tests.cpp": "85037a8d35826d58abda81f486cd8d53f4e895a4a788d26b166e8c6a769ae5ee",
+    "tools/native_reconstruction/verify_adxt_ordinary.py": "88d16acce3976db34988a3ccfeff68814ecc7e584474b6612a32b9e2768728b5",
+    "tools/native_reconstruction/analyze_audio_control_trace.py": "874becefd4b2eb77c4011ab5993fe461123967a283974038f7b932f7bb3ea3da",
+    "tools/native_reconstruction/test_audio_control_analysis.py": "10b555fa3492f701ccef688277cb8d0101ea2babe10aefd021c1e2e4c87365fe"
+  },
+  "receipt_sha256": {
+    "build-native-sjuni/adxt-binding/ordinary-audio-trace-llvm-v2/receipt.json": "c066ba51f1bc43a972cdf11b208f97ec8d00498afdc8bdc9dda6942ca96f53a6",
+    "build-native-sjuni/adxt-binding/ordinary-audio-trace-gcc-v2/receipt.json": "2a8eefe78c2206774f80644f53494001b19e18d255992a588ccfbd530c2adcb6",
+    "build-native-sjuni/adxt-binding/ordinary-audio-trace-actual131-llvm-v2/receipt.json": "5f0ec2e55ca9eb2fcb4a8cc41e0490b8ab0755a27c6dd9b8463fe69055dd338b"
+  },
+  "fixtures": {
+    "llvm-trace": {
+      "rows": 404,
+      "retention": "# dropped=0; owner_joined=1; control_snapshots=2",
+      "sha256": "da0c3b5a0601bc04073034c5eca6718afa8934312ed0bc8000a5d44a01e4ad5d"
+    },
+    "llvm-trace_bounds": {
+      "rows": 32768,
+      "retention": "# dropped=2; owner_joined=1; control_snapshots=2",
+      "sha256": "279c76ada3ec5166bc734039c4a61b410c7344c479296a3dab9f5478761bec66"
+    },
+    "llvm-trace_generation": {
+      "rows": 1,
+      "retention": "# dropped=0; owner_joined=1; control_snapshots=2",
+      "sha256": "5f64fafb1b2a4b9d1d4898687a3ccd308f108982cd2b05771dd36658102485b0"
+    },
+    "gcc-trace": {
+      "rows": 389,
+      "retention": "# dropped=0; owner_joined=1; control_snapshots=2",
+      "sha256": "72d6ae26f9178ca9355a5d9af638799857da470158e1adc5770563d694c57698"
+    },
+    "gcc-trace_bounds": {
+      "rows": 32768,
+      "retention": "# dropped=2; owner_joined=1; control_snapshots=2",
+      "sha256": "db1465190a58326d8d1ac2ad49c03f86437895b33c1de70ae32229e19ed3c7cc"
+    },
+    "gcc-trace_generation": {
+      "rows": 1,
+      "retention": "# dropped=0; owner_joined=1; control_snapshots=2",
+      "sha256": "f74d1be0f8e416bd7ca1dfb51f7e5a0dccc2e9112d755b4daa8942ead80c973b"
+    }
+  },
+  "inherited_full_regression": "tools/native_reconstruction/audio_control_trace_qualification.json",
+  "inherited_full_regression_sha256": "ed01f6328fe2bd8b234687c3ba8ab07e1018e26451460fb83dad8f1751fe79e3",
+  "adapter_diagnostic_cases_per_compiler": 5,
+  "offline_analyzer_tests": 8,
+  "game_run": false,
+  "stutter_fix_confirmed": false,
+  "step3_complete": false,
+  "limitations": [
+    "Adds diagnostic copies only; does not change source or decoder servicing.",
+    "Source observations are cached under canonical controller admission; timestamps and generation agreement bound their validity.",
+    "Prior complete regressions remain separate; this extension runs five focused cases rather than claiming another complete regression run."
+  ]
+}

@@ -9,17 +9,19 @@ from pathlib import Path
 import re
 
 COLUMNS = 'begin_ns,end_ns,game_tick,output_frames,signal_frames,underrun_frames,slot,generation,active,playing,draining,queued_left,queued_right,late_samples,skipped_samples,volume,gain,frequency'.split(',')
+DETAIL_COLUMNS = 'source_known,source_observed_ns,source_state,source_in_flight,encoded_buffered,encoded_free,encoded_capacity,source_progress_sectors,source_cumulative_bytes,source_request_id,decoded_samples,copied_samples'.split(',')
 
 
 def read_trace(path):
     snapshots, errors, current = [], [], None
     with Path(path).open() as stream:
         retention = next(stream).strip()
-        match = re.fullmatch(r'# dropped=(\d+); owner_joined=1; control_snapshots=1', retention)
+        match = re.fullmatch(r'# dropped=(\d+); owner_joined=1; control_snapshots=([12])', retention)
         if not match:
             raise ValueError('Unsupported audio-control trace header')
         rows = csv.DictReader(stream)
-        if rows.fieldnames != COLUMNS:
+        version=int(match[2])
+        if rows.fieldnames != COLUMNS + (DETAIL_COLUMNS if version==2 else []):
             raise ValueError('Unsupported audio-control columns')
         for line, raw in enumerate(rows, 3):
             try:
@@ -34,6 +36,8 @@ def read_trace(path):
                     raise ValueError('Invalid aggregate counters')
                 if any(row[k] not in (0, 1) for k in ('active', 'playing', 'draining')):
                     raise ValueError('Invalid stream flag')
+                if version==2 and any(row[k] not in (0,1) for k in ('source_known','source_in_flight')):
+                    raise ValueError('Invalid source observation flag')
                 identity = tuple(row[k] for k in ('begin_ns', 'end_ns', 'game_tick'))
                 if current is None or current['identity'] != identity:
                     if current:
@@ -51,7 +55,7 @@ def read_trace(path):
                 errors.append(dict(line=line, reason=str(error)))
         if current:
             snapshots.append(current)
-    return dict(file=str(path), retention=retention, dropped=int(match[1]), snapshots=snapshots, invalid_rows=errors)
+    return dict(file=str(path), retention=retention, trace_version=version, dropped=int(match[1]), snapshots=snapshots, invalid_rows=errors)
 
 
 def analyze(trace):
@@ -81,7 +85,7 @@ def analyze(trace):
             missing_counter_increases=increases,
             finding='measured aggregate audio shortage between controller observations; cause unconfirmed'))
     return dict(schema=1, status='limited observations' if trace['dropped'] or trace['invalid_rows'] or resets else 'observations parsed',
-        file=trace['file'], retention=trace['retention'], dropped_snapshots=trace['dropped'], invalid_rows=trace['invalid_rows'],
+        file=trace['file'], retention=trace['retention'],trace_version=trace['trace_version'], dropped_snapshots=trace['dropped'], invalid_rows=trace['invalid_rows'],
         counter_or_time_resets=resets, snapshots=len(rows),
         first_observation={k:rows[0][k] for k in ('begin_ns', 'output_frames', 'underrun_frames')} if rows else None,
         last_observation={k:rows[-1][k] for k in ('end_ns', 'output_frames', 'underrun_frames')} if rows else None,
