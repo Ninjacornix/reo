@@ -20,9 +20,9 @@ activating the hooks. The installer finishes preparing the binding and changing
 registry entries before publication.
 A stopped earlier active binding does not authorize another runtime incarnation.
 
-Seventeen entries cover the group service, internal stop, first RNA child
+Eighteen entries cover the group service, internal stop, first RNA child
 destruction, pause, public ratios/estimated clock/centiseconds/header queries,
-before-PCM registration and unsupported producer boundaries. Original
+before-PCM registration, serviced discard/rebase and unsupported producer boundaries. Original
 constructors, AFS/Fname resolution and simple metadata controls remain retained.
 The group adopts complete constructor tuples; an incomplete idle constructor may
 finish later, while an incomplete active source refuses. Every later access
@@ -103,7 +103,15 @@ includes its matching private factory declaration. Failed inputs and logs remain
 retained. No original/native runtime behavior was inferred from that fixture
 compile failure.
 
-The [qualification](../../tools/native_reconstruction/adxt_ordinary_runtime_qualification.json)
+The initial [qualification](../../tools/native_reconstruction/adxt_ordinary_runtime_qualification.json)
 identifies exact sources and evidence. The next gate is a coherent linked game
 build and explicit native-source handshake through the ordinary cinematic/room
 route, followed by broader required consumers and native movie integration.
+
+The [serviced-discard follow-up](ADXT_ORDINARY_DISCARD.md) adds the eighteenth
+entry and checks the original zero return, unused argument, raw pause policy,
+actual group service and clock publication. Both compilers pass all 16 adapter
+scenarios and four detected faults, plus production SDK130 object checks. The
+first seventeen-entry qualification and sealed V18 kit remain historical inputs;
+this addition is outside V18. The follow-up retains its own source manifest and
+qualification instead of relabeling the earlier game candidate.

@@ -72,6 +72,9 @@ def main():
             'drop-child-retirement':('if(action==Action::destroy_child){destroy(at);return false;}','if(action==Action::destroy_child){return false;}','ordinary'),
             'fallback-unsupported-producer':('if(action==Action::unsupported)fail("unsupported-producer",address);','if(action==Action::unsupported)return false;','producer'),
             'ignore-child-replacement':('fail("replaced-child-identity",address);','(void)0;','changed_child')}
+        faults['omit-native-discard']=(
+            'result=p.discard_rebase(key,tick());',
+            '(void)p;(void)key;result.status=adxt_control_session::Status::completed;', 'ordinary')
         for name,(anchor,replacement,case) in faults.items():
             if body.count(anchor)!=1:raise ValueError('Unique adapter mutation anchor '+name)
             folder=out/name;folder.mkdir();changed=folder/'ordinary_runtime_body.cpp';write(changed,body.replace(anchor,replacement));fixture=out/(name+'-tests.cpp');write(fixture,test.replace('#include "ordinary_runtime_body.cpp"','#include "'+name+'/ordinary_runtime_body.cpp"'))

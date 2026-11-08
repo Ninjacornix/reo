@@ -29,7 +29,7 @@ float reoAudioStreamGain(std::uint32_t);
 namespace reo::native::adxt_binding {
 namespace {
 using S=instances::Status;using Function=PS2Runtime::RecompiledFunction;
-enum class Action {group,stop,destroy_child,pause,rna_ratio,raw_ratio,estimate,centiseconds,total,frequency,channels,callback,unsupported};
+enum class Action {group,stop,destroy_child,pause,discard,rna_ratio,raw_ratio,estimate,centiseconds,total,frequency,channels,callback,unsupported};
 struct Closing {};
 template<class F>struct Operation final:control_owner::Operation {F fn;explicit Operation(F f):fn(std::move(f)){}void run(instances::Instances& value)noexcept override{fn(value);}};
 template<class F>struct HandleWork final:HandleOperation {F fn;explicit HandleWork(F f):fn(std::move(f)){}void run(instances::Instances& p,const instances::Key& key,const Handle& h)noexcept override{fn(p,key,h);}};
@@ -191,6 +191,19 @@ public:
         const auto observed=inspect(*record);
         if(!record->source || observed.starts!=record->expected_start || !observed.source)return false;
         const auto& state=*observed.source;
+        if(action==Action::discard){
+            // The original second argument is unused; this operation is not a
+            // seek or a request to consume that many samples. The canonical
+            // Session services the actual group only for a nonzero pause byte,
+            // then rebases from fresh queues. It does not poll source workers.
+            // Refresh the actual voice permutation before that group visit.
+            if(state.clock.paused){adopt();for(auto& r:records)if(r.owned)synchronize(r);set_order();}
+            adxt_control_session::ClockControl result;
+            with(*record,[&](auto& p,const auto& key,const auto&){result=p.discard_rebase(key,tick());});
+            if(result.status!=adxt_control_session::Status::completed)fail("discard-rebase",at,unsigned(result.status));
+            for(auto& r:records)if(r.owned)mirror(r);publish_clock();
+            SET_GPR_S32((&c),2,0);return true;
+        }
         if(action==Action::total || action==Action::frequency || action==Action::channels){
             std::uint32_t value{};if(ram[at+1]>=2)value=action==Action::total?state.decoder.header.base.total_samples:action==Action::frequency?state.decoder.header.base.frequency:state.decoder.header.base.channels;
             SET_GPR_S32((&c),2,std::bit_cast<std::int32_t>(value));return true;
