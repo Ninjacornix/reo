@@ -156,8 +156,35 @@ void pcm_order(){
     auto retained=f.result.pcm_order;f.finish();expected.clear();copy(expected);
     f.result={};check(retained->copy(actual).status==reo::native::pcm_bridge::Status::ok && retained->copy(actual).value==0);
 }
+void source_reset(){
+    Fixture f;f.install();sdk::reset();check(route_resets==1);
+    auto bytes=std::make_shared<file::Blocked>();bytes->bytes=file::file(1,48000,20000)->bytes;inst::Key key;
+    Operation create([&](auto& p){check(p.start_output()==inst::Status::completed);const auto made=p.create({1,{0,0,0,0}});check(made.status==inst::Status::completed);key=made.key;});
+    check(f.result.sources->run(create)==own::Admission::accepted);
+    sdk::configure(0x1e0040,0x1e0000,0,1,48000,256,false);std::array<std::uint32_t,8> order{};
+    auto unchanged=[&]{const auto r=f.result.pcm_order->copy(order);check(r.status==reo::native::pcm_bridge::Status::ok && r.value==1 && order[0]==0x1e0040);};
+    sdk::reset();check(route_resets==1);unchanged(); // Even idle constructed handles exclude reset.
+    Operation start([&](auto& p){check(p.start(key,source(bytes,1))==inst::Status::completed && p.service(17)==inst::Status::completed);});
+    check(f.result.sources->run(start)==own::Admission::accepted);
+    {std::unique_lock lock(bytes->mutex);check(bytes->cv.wait_for(lock,std::chrono::seconds(5),[&]{return bytes->entered;}));}
+    Operation destroy([&](auto& p){check(p.destroy(key)==inst::Status::pending && !p.snapshot().session.output.occupied && p.snapshot().instances==1);});
+    check(f.result.sources->run(destroy)==own::Admission::accepted);
+    sdk::reset();check(route_resets==1 && !f.result.sources->report().stopping);unchanged(); // Source has NOT joined.
+    {std::lock_guard lock(bytes->mutex);bytes->released=true;bytes->cv.notify_all();}
+    bool retired{};Operation service([&](auto& p){const auto r=p.service(17);check(r==inst::Status::completed || r==inst::Status::pending);retired=p.inspect(key).status==inst::Status::invalid_key;});
+    until([&]{check(f.result.sources->run(service)==own::Admission::accepted);return retired;});
+    sdk::reset();check(route_resets==2 && f.result.pcm_order->copy(order).value==0 && !f.result.sources->report().stopping);
+    // The same source owner and actual output remain usable in the new epoch.
+    check(f.result.sources->run(create)==own::Admission::accepted);
+    Operation restart([&](auto& p){check(p.start(key,source(file::file(1,48000,20000),1))==inst::Status::completed);});
+    check(f.result.sources->run(restart)==own::Admission::accepted);
+    bool ready{};Operation playable([&](auto& p){check(p.service(17)==inst::Status::completed);const auto s=p.inspect(key).source;ready=s && s->output.voice.playing && s->output.channel[0].samples>=512;});
+    until([&]{check(f.result.sources->run(playable)==own::Admission::accepted);return ready;});
+    check(callback_slot);std::array<float,128> output{};check(callback_slot->dispatch(output.data(),64));
+    f.finish();check(attached==1 && detached==1 && stopped==1 && unloaded==1);
+}
 int main(int argc,char** argv)try{
     check(argc==2);_putenv_s("REO_NATIVE_AUDIO","1");std::string mode=argv[1];
-    if(mode=="live")live();else if(mode=="blocked")blocked_source();else if(mode=="scoped")scoped_join();else if(mode=="device_fence")device_fence();else if(mode=="legacy")legacy();else if(mode=="pcm_order")pcm_order();else refusals(mode);
+    if(mode=="live")live();else if(mode=="blocked")blocked_source();else if(mode=="scoped")scoped_join();else if(mode=="device_fence")device_fence();else if(mode=="legacy")legacy();else if(mode=="pcm_order")pcm_order();else if(mode=="source_reset")source_reset();else refusals(mode);
     std::cout<<"media factory checks="<<checks<<'\n';return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

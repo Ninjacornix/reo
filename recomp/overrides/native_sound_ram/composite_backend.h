@@ -38,7 +38,8 @@ public:
 // real RAM authority, one outer device/bank/master callback, and a separately
 // registered canonical source owner. Never selected by the legacy entry above.
 // Successful callers bind ALL admitted guest PCM/source/control consumers before
-// run; original PCM production and post-source reset are still refused.
+// run. Original PCM production refuses; later reset requires canonical source
+// quiescence after every instance was destroyed and its actual workers joined.
 MediaInstallResult install_native_sources(PS2Runtime&,
     const reo_cd_async::ConfigurationReceipt&,bank_packets::v3::MemoryIdentity)noexcept;
 } // namespace reo::native::sound_ram

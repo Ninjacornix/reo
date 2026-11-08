@@ -85,9 +85,9 @@ def main():
     write(out/'observer_stub.cpp','#include "recomp/overrides/native_adxt/runtime_observer.h"\nnamespace reo::native::adxt_binding {bool observe_before_run(PS2Runtime&)noexcept{return false;}}\n')
     try:
         binary=out/'factory.exe'
-        run('compile',flags+[ROOT/'recomp/overrides/native_audio/v2/aggregate.cpp',ROOT/'recomp/overrides/native_audio/v3/aggregate.cpp',out/'observer_stub.cpp',HERE/'tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-o',binary])
-        for case in ('live','blocked','scoped','device_fence','legacy','disabled','phase','layout','memory','provider','registration','publication','pcm_order'):run(case,[binary,case])
-        verify();record.update(status='native media factory protocol passed',scenarios=13,binary_sha256=sha(binary))
+        run('compile',flags+[ROOT/'recomp/overrides/native_audio/v2/aggregate.cpp',ROOT/'recomp/overrides/native_audio/v4/aggregate.cpp',out/'observer_stub.cpp',HERE/'tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-o',binary])
+        for case in ('live','blocked','scoped','device_fence','legacy','disabled','phase','layout','memory','provider','registration','publication','pcm_order','source_reset'):run(case,[binary,case])
+        verify();record.update(status='native media factory protocol passed',scenarios=14,binary_sha256=sha(binary))
     finally:
         record['outputs_sha256']={p.name:sha(p)for p in out.iterdir()if p.is_file() and p.suffix=='.txt'};write(out/'receipt.json',json.dumps(record,indent=2)+'\n')
     print(json.dumps({'status':record['status'],'receipt_sha256':sha(out/'receipt.json')}))

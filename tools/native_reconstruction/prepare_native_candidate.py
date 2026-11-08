@@ -78,7 +78,7 @@ AUDIO_BACKEND_UNITS = PCM_BACKEND_UNITS[:-1] + (
     ('native_audio_bank_session_v2', 'game/native/audio_banks/v2/session.cpp'),
     ('native_audio_packet_v3', 'recomp/overrides/native_banks/v3/packet_adapter.cpp'),
     ('native_audio_aggregate_v2', 'recomp/overrides/native_audio/v2/aggregate.cpp'),
-    ('native_audio_aggregate_v3', 'recomp/overrides/native_audio/v3/aggregate.cpp'),
+    ('native_audio_aggregate_v4', 'recomp/overrides/native_audio/v4/aggregate.cpp'),
     ('native_sound_ram_gate_v2', 'game/native/ram_capture/v2/cpu_authority_gate.cpp'),
     ('native_sound_address', 'recomp/overrides/native_sound_ram/address_domain.cpp'),
     ('native_sound_identity', 'recomp/overrides/native_sound_ram/build_identity.cpp'),

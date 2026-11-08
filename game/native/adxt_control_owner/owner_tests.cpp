@@ -20,6 +20,10 @@ template<class F>struct Operation final:n::Operation {
     F fn;explicit Operation(F work):fn(std::move(work)){}
     void run(i::Instances& value)noexcept override{fn(value);}
 };
+template<class F>struct EmptyOperation final:n::EmptyOperation {
+    F fn;explicit EmptyOperation(F work):fn(std::move(work)){}
+    void run(const n::Quiescent& proof)noexcept override{fn(proof);}
+};
 template<class F>void until(F&& done){const auto end=std::chrono::steady_clock::now()+15s;while(!done()){check(std::chrono::steady_clock::now()<end,"bounded test completion");std::this_thread::yield();}}
 struct Gate {
     std::mutex mutex;std::condition_variable cv;bool entered{},released{};
@@ -97,4 +101,34 @@ void source_shutdown(){
     std::array<float,64> samples;samples.fill(0.25f);
     check(retained->render_add(samples.data(),32)==i::control::output::Status::closed && std::all_of(samples.begin(),samples.end(),[](float v){return v==0.25f;}),"render lease safely outlives controller destruction");
 }
-int main(){reentry();serialization();source_shutdown();std::printf("%u native controller admission/source fence checks passed; no device\n",checks.load());}
+void quiescent_reset(){
+    n::Owner owner(i::control::Config{{1},{}}),other(i::control::Config{{1},{}});unsigned resets{};
+    EmptyOperation reset([&](const n::Quiescent& proof){
+        check(proof.authorizes(owner.submix()) && !proof.authorizes(other.submix()) && !proof.authorizes({}),"only same submix has a scoped reset proof");
+        bool foreign{};std::thread probe([&]{foreign=proof.authorizes(owner.submix());});probe.join();check(!foreign,"reset proof is thread-bound");
+        Operation nested([](auto&){});check(owner.run(nested)==n::Admission::busy && other.run(nested)==n::Admission::busy,"quiescent reset excludes nested source admission");
+        check(owner.join()==n::Join::busy && !owner.report().stopping,"quiescent reset cannot join or close its owner");++resets;
+    });
+    check(owner.when_empty(reset)==n::Empty::completed && resets==1,"cold empty owner admits reset");
+    i::Key key;Operation create([&](auto& p){check(p.start_output()==i::Status::completed,"start reset fixture submix");auto made=p.create({1,{0,0,0,0}});check(made.status==i::Status::completed,"create reset fixture instance");key=made.key;});
+    check(owner.run(create)==n::Admission::accepted && owner.when_empty(reset)==n::Empty::occupied && resets==1,"idle constructed handle excludes reset");
+    auto blocked=std::make_shared<f::Blocked>();blocked->bytes=f::file(1,48000,20000)->bytes;
+    Operation start([&](auto& p){check(p.start(key,source(blocked,1))==i::Status::completed && p.service(7)==i::Status::completed,"start real reset fixture source");});
+    check(owner.run(start)==n::Admission::accepted,"admit reset fixture source");
+    {std::unique_lock lock(blocked->mutex);check(blocked->cv.wait_for(lock,5s,[&]{return blocked->entered;}),"actual read entered before retirement");}
+    Operation destroy([&](auto& p){check(p.destroy(key)==i::Status::pending && !p.snapshot().session.output.occupied && p.snapshot().instances==1,"output fence is NOT actual source join");});
+    check(owner.run(destroy)==n::Admission::accepted && owner.when_empty(reset)==n::Empty::occupied && resets==1,"blocked retiring source excludes reset despite empty output");
+    {std::lock_guard lock(blocked->mutex);blocked->released=true;blocked->cv.notify_all();}
+    bool retired{};Operation service([&](auto& p){const auto result=p.service(7);check(result==i::Status::completed || result==i::Status::pending,"advance joined destruction");retired=p.inspect(key).status==i::Status::invalid_key;});
+    until([&]{check(owner.run(service)==n::Admission::accepted,"admit ordinary destruction service");return retired;});
+    check(owner.when_empty(reset)==n::Empty::completed && resets==2,"actual joined destruction admits later reset");
+    Gate gate;EmptyOperation paused([&](const n::Quiescent& proof){check(proof.authorizes(owner.submix()),"serialized reset starts with proof");gate.block();});
+    auto resetting=std::async(std::launch::async,[&]{return owner.when_empty(paused);});gate.wait();
+    unsigned created{};Operation late([&](auto& p){auto made=p.create({1,{0,0,0,0}});check(made.status==i::Status::completed,"later source creates after reset");++created;});
+    auto creating=std::async(std::launch::async,[&]{return owner.run(late);});until([&]{return owner.report().waiting==1;});
+    check(!created,"source creation cannot cross quiescent reset");gate.release();
+    check(resetting.get()==n::Empty::completed && creating.get()==n::Admission::accepted && created==1,"reset and later source serialize");
+    owner.request_stop();check(owner.when_empty(reset)==n::Empty::closed && resets==2,"closed reset refuses before callback");
+    check(owner.join()==n::Join::completed && other.join()==n::Join::completed,"reset fixture joins");
+}
+int main(){reentry();serialization();source_shutdown();quiescent_reset();std::printf("%u native controller admission/source fence checks passed; no device\n",checks.load());}

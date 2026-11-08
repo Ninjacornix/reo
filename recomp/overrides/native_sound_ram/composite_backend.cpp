@@ -3,6 +3,7 @@
 #include "runtime_memory.h"
 #include "capture_provider_v3.h"
 #include "game/native/adxt_control_owner/owner.hpp"
+#include "recomp/overrides/native_audio/v4/aggregate.h"
 #include "runtime/audio/native_stream_provider.h"
 #include "ps2_runtime.h"
 #include "ps2_syscalls.h"
@@ -32,7 +33,7 @@ namespace reo::native::sound_ram {
 namespace audio=audio_aggregate::v2;
 namespace sdk=ps2_cri_audio;
 namespace output=reo::audio_output;
-namespace media=audio_aggregate::v3;
+namespace media=audio_aggregate::v4;
 namespace sources=adxt_control_owner;
 namespace {
 class RuntimeHooks final:public audio::HostHooks {
@@ -244,6 +245,17 @@ private:
         } operation{table_,channel,end};
         return memory_->with_pcm(bytes,count,operation);
     }
+    void reset_pcm()noexcept {
+        if(!sources_){table_.api.pcm.reset(table_.owner.get());return;}
+        struct Reset final:sources::EmptyOperation {
+            media::Aggregate& media;
+            explicit Reset(media::Aggregate& value):media(value){}
+            void run(const sources::Quiescent& proof)noexcept override{(void)media.reset_native(&proof);}
+        } reset(*media_);
+        // Void SDK reset retains its diagnostic refusal on an occupied/closed
+        // source owner; it cannot clear mappings or imply source completion.
+        if(sources_->when_empty(reset)!=sources::Empty::completed)(void)media_->reset_native(nullptr);
+    }
     sdk::BackendRegistrationV2 registration() noexcept {
         auto result=table_.api;
         auto& p=result.pcm;
@@ -256,7 +268,7 @@ private:
         p.drain=[](void* x,std::uint32_t k) noexcept {auto& s=*static_cast<CompositeBackend*>(x);s.table_.api.pcm.drain(s.table_.owner.get(),k);};
         p.release=[](void* x,std::uint32_t k) noexcept {auto& s=*static_cast<CompositeBackend*>(x);s.table_.api.pcm.release(s.table_.owner.get(),k);};
         p.queued_samples=[](void* x,std::uint32_t k) noexcept {auto& s=*static_cast<CompositeBackend*>(x);return s.table_.api.pcm.queued_samples(s.table_.owner.get(),k);};
-        p.reset=[](void* x) noexcept {auto& s=*static_cast<CompositeBackend*>(x);s.table_.api.pcm.reset(s.table_.owner.get());};
+        p.reset=[](void* x) noexcept {static_cast<CompositeBackend*>(x)->reset_pcm();};
         p.shutdown=[](void* x) noexcept {auto& s=*static_cast<CompositeBackend*>(x);if(s.sources_)s.sources_->request_stop();s.table_.api.pcm.shutdown(s.table_.owner.get());};
         p.request_stop=[](void* x) noexcept {auto& s=*static_cast<CompositeBackend*>(x);if(s.sources_)s.sources_->request_stop();s.table_.api.pcm.request_stop(s.table_.owner.get());};
         p.join=[](void* x) noexcept {return static_cast<CompositeBackend*>(x)->join();};
