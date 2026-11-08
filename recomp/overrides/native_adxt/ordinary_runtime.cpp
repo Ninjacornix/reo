@@ -213,6 +213,11 @@ public:
         auto prepared=prepare_file_source(mount,{std::string_view(text.data(),n),load<std::uint32_t>(ram,at+0xb8),load<std::uint32_t>(ram,at+0xbc),load<std::uint32_t>(ram,at+0xc0)});
         if(prepared.status!=FileStatus::ready)fail("file-source",at,unsigned(prepared.status));
         instances::Source source;source.input=std::move(prepared.view);source.player.decoder.channels=r.handle.channels;source.player.initial_tick=tick();source.player.decoder.source_config.byte_length=static_cast<std::int32_t>(prepared.bytes);
+        // Owned immutable files use native read-ahead, independent of the old
+        // game's 8 KiB encoded ring. PCM priming and playback clocks are unchanged.
+        source.player.decoder.source_capacity=adxt_shared_source::CapacityProfile::bounded_sectors;
+        auto& refill=source.player.decoder.source_config;
+        refill.capacity=refill.threshold=65536;
         S result=S::fault;std::uint64_t expected{};
         with(r,[&](auto& p,const auto& key,const auto&){expected=p.inspect(key).starts+1;result=p.start(key,std::move(source));});require(result,"start",at);
         r.expected_start=expected;r.source=true;ram[at+0xac]=0;ram[at+0x71]=0;

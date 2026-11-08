@@ -3,6 +3,7 @@
 #include "../adxt_player/test_provider.hpp"
 #include <array>
 #include <cfenv>
+#include <chrono>
 #include <iostream>
 #include <thread>
 
@@ -49,7 +50,80 @@ struct ClockImportProbe final:reo::native::adxt_lsc_input::Notification {
         const auto after=session.snapshot().clock_state;check(before.mode==after.mode && before.rebase_selector==after.rebase_selector && before.drift_bits==after.drift_bits && before.service_busy==after.service_busy && before.in_call==after.in_call);
     }
 };
+// Finite files can use native prefetch geometry without changing decoded
+// samples, output priming, clocks or the existing sequence/live-input profiles.
+std::array<std::uint64_t,2> finite_prefetch(unsigned capacity,unsigned channels,unsigned rate,unsigned samples){
+    Test t;auto file=f::file(channels,rate,samples);auto pc=config(file,channels);
+    if(capacity!=8192){pc.decoder.source_capacity=reo::native::adxt_shared_source::CapacityProfile::bounded_sectors;
+        pc.decoder.source_config.capacity=pc.decoder.source_config.threshold=static_cast<std::int32_t>(capacity);}
+    const auto opened=t.session.open(pc,file,{15,2,8,31});check(opened.status==c::Status::completed);bool ended{};
+    for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(opened.key).evidence;check(!state.fault);
+        if(state.configured && state.playback.phase==reo::native::adxt_playback::Phase::ended){ended=true;break;}
+        if(state.output.channel[0].samples>=512)t.provider->step(512);
+        if(state.decoder.source.in_flight)std::this_thread::yield();}
+    check(ended);const auto state=t.session.inspect(opened.key).evidence;
+    check(state.first_payload_samples==samples && !state.output.voice.skipped_samples && !t.session.snapshot().output.statistics.underrun_frames);
+    const auto digest=state.first_payload_digest;retire(t,opened.key);check(t.session.join()==c::Status::completed);return digest;
+}
+// Block the actual asynchronous source read, while control service and output
+// callbacks continue. The duration is measured in output frames, not sleeps.
+std::uint64_t prefetch_read_stall(unsigned capacity){
+    struct Gated final:f::File {
+        mutable std::mutex mutex;mutable std::condition_variable cv;bool armed{};
+        mutable bool entered{},released{};
+        reo::native::resources::ReadResult read(std::uint64_t at,std::span<std::byte> out)const override{
+            {std::unique_lock lock(mutex);if(armed){entered=true;cv.notify_all();cv.wait(lock,[&]{return released;});}}
+            return File::read(at,out);
+        }
+        void release(){std::lock_guard lock(mutex);released=true;cv.notify_all();}
+    };
+    Test t;auto file=std::make_shared<Gated>();file->bytes=f::file(2,48000,200000)->bytes;
+    struct Release {std::shared_ptr<Gated> file;~Release(){file->release();}}release{file};
+    auto pc=config(file,2);
+    if(capacity!=8192){pc.decoder.source_capacity=reo::native::adxt_shared_source::CapacityProfile::bounded_sectors;
+        pc.decoder.source_config.capacity=pc.decoder.source_config.threshold=static_cast<std::int32_t>(capacity);}
+    const auto opened=t.session.open(pc,file,{15,2,8,31});check(opened.status==c::Status::completed);bool primed{};
+    for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto s=t.session.inspect(opened.key).evidence;check(!s.fault);
+        if(s.output.voice.playing && s.output.channel[0].samples==8192 && !s.decoder.source.in_flight && s.decoder.source.ring.data>=static_cast<std::int32_t>(capacity)-2048){primed=true;break;}
+        std::this_thread::yield();}
+    if(!primed){const auto s=t.session.inspect(opened.key).evidence;std::cerr<<"Prefetch prime: capacity="<<capacity<<", playing="<<s.output.voice.playing<<", in_flight="<<s.decoder.source.in_flight<<", encoded="<<s.decoder.source.ring.data<<", output="<<s.output.channel[0].samples<<"\n";}
+    check(primed);{std::lock_guard lock(file->mutex);file->armed=true;}
+    bool blocked{};
+    for(unsigned i=0;i<10000;++i){check(t.session.service(0)==c::Status::completed);
+        {std::unique_lock lock(file->mutex);if(t.session.inspect(opened.key).evidence.decoder.source.in_flight){
+            file->cv.wait_for(lock,std::chrono::milliseconds(100),[&]{return file->entered;});}blocked=file->entered;}if(blocked)break;
+        check(t.provider->step(512));std::this_thread::yield();}
+    check(blocked);const auto before=t.session.snapshot().output.statistics.underrun_frames;
+    for(unsigned frame=0;frame<48000;frame+=512){
+        for(unsigned service=0;service<16;++service)check(t.session.service(0)==c::Status::completed);
+        check(t.provider->step(512));check(!t.session.inspect(opened.key).evidence.fault);
+    }
+    const auto shortage=t.session.snapshot().output.statistics.underrun_frames-before;
+    check(t.session.retire(opened.key).status==c::Status::pending);
+    file->release();retire(t,opened.key);check(t.session.join()==c::Status::completed);return shortage;
+}
 int main(){try{
+    const auto baseline_shortage=prefetch_read_stall(8192),prefetch_shortage=prefetch_read_stall(65536);
+    std::cout<<"48128 frames blocked source: 8KiB underruns="<<baseline_shortage<<", 64KiB underruns="<<prefetch_shortage<<"\n";
+    check(baseline_shortage>0 && prefetch_shortage==0);
+    for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,48000u})for(unsigned samples:{33u,200000u}){
+        const auto baseline=finite_prefetch(8192,channels,rate,samples);
+        for(unsigned capacity:{16384u,65536u,262144u})check(finite_prefetch(capacity,channels,rate,samples)==baseline);
+    }
+    {
+        Test t;auto file=f::file(2,48000,20000);auto pc=config(file,2);
+        pc.decoder.source_capacity=reo::native::adxt_shared_source::CapacityProfile::bounded_sectors;
+        pc.decoder.source_config.capacity=pc.decoder.source_config.threshold=65536;
+        for(unsigned variant=0;variant<4;++variant){auto bad=pc;
+            if(variant==0)bad.decoder.source_config.byte_length-=2048;
+            if(variant==1)bad.decoder.source_config.start_sector=1;
+            if(variant==2)bad.decoder.source_config.maximum_sectors=32;
+            if(variant==3)bad.decoder.source_config.threshold=8192;
+            check(t.session.open(bad,file,{15,2,8,31}).status==c::Status::unsupported_profile);
+            check(!t.session.snapshot().output.occupied);
+        }
+        check(t.session.join()==c::Status::completed);
+    }
     {
         using I=reo::native::adxt_lsc_input::Input;using S=reo::native::adxt_lsc_input::Status;
         Test t;auto notification=std::make_shared<ClockImportProbe>(t.session);auto live=I::create({1,48000,4,2},notification);
@@ -125,11 +199,15 @@ int main(){try{
             std::this_thread::yield();}check(ended && t.session.inspect(opened.key).evidence.decoder.loop.seamless_samples==12000);
         retire(t,opened.key);check(t.session.join()==c::Status::completed);
     }
-    for(bool tabled:{false,true})for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned start:{0u,32u,800u})for(unsigned span:{16385u,32772u}){
+    for(unsigned capacity:{8192u,65536u})for(bool tabled:{false,true})for(unsigned channels:{1u,2u})for(unsigned rate:{24000u,44100u,48000u})for(unsigned start:{0u,32u,800u})for(unsigned span:{16385u,32772u}){
+        const auto loop_check_begin=checks;
+        try{
         Test t;auto file=loop_file(channels,rate,start,span);auto pc=config(file,channels);pc.decoder.loop_enabled=true;
+        if(capacity!=8192){pc.decoder.source_capacity=reo::native::adxt_shared_source::CapacityProfile::bounded_sectors;
+            pc.decoder.source_config.capacity=pc.decoder.source_config.threshold=static_cast<std::int32_t>(capacity);}
         if(tabled){pc.attenuation_table=attenuation_table();pc.initial_attenuation=0xffffff9c;}
         auto opened=t.session.open(pc,file,{15,2,8,31});check(opened.status==c::Status::completed);const auto key=opened.key;bool repeated=false;std::int32_t decoded{};
-        for(unsigned i=0;i<1000000;++i){check(t.session.service(0)==c::Status::completed);const auto state=t.session.inspect(key).evidence;
+        for(unsigned i=0;i<1000000;++i){const auto status=t.session.service(0);if(status!=c::Status::completed){const auto s=t.session.inspect(key).evidence;std::cerr<<"Loop service status="<<unsigned(status)<<", fault="<<s.fault<<", iteration="<<s.decoder.loop.iterations<<", decoded="<<s.decoder.outer.decoded_samples<<", encoded="<<s.decoder.source.ring.data<<"\n";}check(status==c::Status::completed);const auto state=t.session.inspect(key).evidence;
             check(!state.fault && state.decoder.outer.decoded_samples>=decoded && state.clock_observation.offset==0);decoded=state.decoder.outer.decoded_samples;
             if(state.decoder.loop.iterations>=2 && state.copied_samples>=start+2*span){repeated=true;break;}
             if(state.output.channel[0].samples>=512)t.provider->step(512);
@@ -145,6 +223,7 @@ int main(){try{
             if(state.decoder.source.in_flight)std::this_thread::yield();}check(ended);
         const auto terminal=t.session.estimate(key,0);check(terminal.status==c::Status::completed && terminal.value.result.ratio.numerator==start+span);
         check(!t.session.snapshot().output.statistics.underrun_frames);retire(t,key);check(t.session.join()==c::Status::completed);
+        }catch(...){std::cerr<<"Loop capacity="<<capacity<<", channels="<<channels<<", rate="<<rate<<", start="<<start<<", span="<<span<<", initial_check="<<loop_check_begin<<"\n";throw;}
     }
     for(bool short_target:{false,true}){
         Test t;auto file=loop_file(1,48000,0,short_target?257:16385);if(!short_target)f::be32(file->bytes,28,1);

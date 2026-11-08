@@ -12,8 +12,18 @@ Config checked_source(Config c,const resources::ByteView* view) {
     if(c.decoder.service_divisor <= 0 || c.decoder.downmix || c.decoder.pitch_offset ||
        c.decoder.channels<1 || c.decoder.channels>2)throw std::invalid_argument("Shared native player profile");
     if(c.sequence && c.lsc_input)throw std::invalid_argument("One owned input profile required");
-    if(!c.lsc_input && c.decoder.source_capacity!=adxt_shared_source::CapacityProfile::fixed_8k)
-        throw std::invalid_argument("Extended source geometry requires owned LSC input");
+    if(!c.lsc_input && c.decoder.source_capacity!=adxt_shared_source::CapacityProfile::fixed_8k){
+        const auto& source=c.decoder.source_config;
+        // Ordinary immutable extents may prefetch beyond the historical 8 KiB
+        // geometry. This does not change output priming, rate or sample clocks.
+        if(c.sequence || c.decoder.source_capacity!=adxt_shared_source::CapacityProfile::bounded_sectors ||
+           !view || !adxt_shared_source::admits_capacity(source.capacity,c.decoder.source_capacity) || source.capacity<=8192 ||
+           source.start_sector || source.byte_length<=0 || source.byte_length%2048 || std::uint64_t(source.byte_length)!=view->size() ||
+           source.threshold!=source.capacity || source.maximum_request_bytes!=8192 || source.maximum_sectors!=4 ||
+           source.target_sectors!=-1 || source.finite_sector_limit!=0xfffff || source.retry_limit!=2 ||
+           source.maximum_id!=std::numeric_limits<std::uint64_t>::max())
+            throw std::invalid_argument("Bounded finite input identity/geometry required");
+    }
     if(!c.attenuation_table && c.initial_attenuation)
         throw std::invalid_argument("Prepared attenuation table required");
     // Sequence/LSC inputs exclusively own sealed Clip objects. Clip::parse
