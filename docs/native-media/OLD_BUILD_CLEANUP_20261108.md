@@ -40,3 +40,15 @@ executables were also removed from the four RC2 `dist` package folders. No RC2
 directory was recursively removed. Original paths, sizes, hashes and deletion
 results are in `build-native-sjuni/old-rc2-launcher-removal-v1.json`. The installed
 AppData launcher is unaffected.
+
+After the V22 game test, 6,597 EXE/DLL/PDB files were removed individually from
+15 explicitly named older packages under `dist`. All paths, lengths, SHA-256
+values and deletion results are in
+`build-native-sjuni/old-packaged-binary-removal-v1.json`; all removals succeeded.
+No directory was recursively removed. Package source archives and other data
+were preserved. `StartLauncher.cmd` selects
+`launcher/bin/Release/net10.0/win-x64/Outbreak.Launcher.exe`, outside this scope;
+installed AppData launchers, imported discs, cards and Step 3 evidence remain.
+Measured free space afterward is 7,382,831,104 bytes. The preceding whole-machine
+free-space changes are not attributed to bundle recordings or paging without a
+corresponding allocation measurement.
