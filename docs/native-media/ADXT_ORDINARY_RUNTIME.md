@@ -2,8 +2,9 @@
 
 Step 3 remains open. The ordinary source adapter is implemented and selectable
 in a coherent private candidate with exact `REO_NATIVE_ADXT=1`, alongside
-`REO_NATIVE_AUDIO=1` and the native resource mount. No completed game run has yet
-proved this new selection. The player's launcher/build defaults are unchanged.
+`REO_NATIVE_AUDIO=1` and the native resource mount. V19 startup proves backend
+selection but refuses the original mono pan layout before playback. The corrected
+admission is being retested. The player's launcher/build defaults are unchanged.
 The native movie logical/physical graph, broader audio consumers and whole-game
 transition/error/A-V checks remain required.
 
@@ -115,3 +116,10 @@ scenarios and four detected faults, plus production SDK130 object checks. The
 first seventeen-entry qualification and sealed V18 kit remain historical inputs;
 this addition is outside V18. The follow-up retains its own source manifest and
 qualification instead of relabeling the earlier game candidate.
+
+The [active-channel admission correction](ADXT_CHANNEL_PAN_ADMISSION.md) fixes
+the startup guard's check of the unused second mono pan. The original capture
+and constructor loop establish that distinction. Both compilers pass 18 adapter
+scenarios, six runtime fault detections and actual SDK130 object checks. The
+corrected profile still needs live playback validation; V19's clean retirement
+after refusal is not successful playback.

@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "status": "active ADXT channel admission declared-port and production-header qualification passed",
+  "source_manifest_path": "tools/native_reconstruction/adxt_ordinary_runtime_manifest_v4.json",
+  "source_manifest_sha256": "d765ece7ff3e1c175bf9f356135f56a0a4f3cc91cc480d77f38e5224a77066c9",
+  "parent_qualification_sha256": "bf32d1a9c4b8d553d476ea0ba70069976c29663e8c01a10a4d55cf4b3ce40d20",
+  "native_archive_manifest_sha256": "0ef1c6d137b649e0c7b1f5cb905f8d2bf84735cabbadd59e2037d18e9e39e59b",
+  "native_archives_rebuilt": false,
+  "adapter_scenarios": 18,
+  "detected_faults": [
+    "drop-child-retirement",
+    "fallback-unsupported-producer",
+    "ignore-child-replacement",
+    "omit-native-discard",
+    "require-unused-mono-pan",
+    "ignore-active-stereo-pan"
+  ],
+  "evidence": {
+    "build-native-sjuni/adxt-binding/ordinary-channel-pan-llvm-v1/receipt.json": "d68c4efab6ab0fdc04acfff54365502ad74a85d995721253781de555741d4f97",
+    "build-native-sjuni/adxt-binding/ordinary-channel-pan-actual130-llvm-v1/receipt.json": "b56d23a30a38c6c5f90ff20f332751c31bd29e353d991b23bbc0e335aa9d4426",
+    "build-native-sjuni/adxt-binding/ordinary-channel-pan-gcc-v1/receipt.json": "89dc17faf81621c55d6b8828583d3b268d6180f5bf03c4963141abab8c81581c",
+    "build-native-sjuni/adxt-binding/ordinary-channel-pan-actual130-gcc-v1/receipt.json": "94ebfea77a0dc4797448727bab7d6797698d6642c9bea34f4fa448fd4ce37552",
+    "build-native-sjuni/candidate-work-v18/candidate-build-result.json": "61dc8303125d548df06dd816595cb2880da2ce32945795ae4feeafe108796f7e",
+    "build-native-sjuni/candidate-work-v19/candidate-build-result.json": "0bcbed1ba6a4e00bf07e034202b47f7da7d8906e988fe93cb58b07613c05827a",
+    "build-native-sjuni/candidate-v19-source-comparison.json": "e3b2cf7e57f1457923a9331ac5d664bc3bb308425c0864377bf0cb044c6ff872",
+    "build-native-sjuni/private-mono-v20-revision.json": "973d4806bf9bd9517dbe7741f0864a1ffa8c369e23e89ba60d723843acc833b2",
+    "build-native-sjuni/playtests/adxt-ordinary-v19/run.json": "1aa01d34b33876d8512b285098226f466fc9bfad2977b35cc606d40a93a8e55a",
+    "build-native-sjuni/playtests/adxt-ordinary-v19/native-adxt-refusal-analysis.json": "3f3a0e5e5e945158a7d97464ae641c791b8e908fa7185d3fcd41e04caec8c922",
+    "build-native-sjuni/playtests/adxt-ordinary-v19/player1/logs/stderr.log": "af6fef38dae4e6259b1f978aae6f81b2714892f06c1e4b70d77f933d8082d120",
+    "build-native-sjuni/playtests/adxt-observe-v17b/adxt-original.jsonl": "7638b2f922695d496b2f290c7ee85455d64811aa1f9b81f8d44e736fd2abdec1"
+  },
+  "actual_native_workers": true,
+  "actual_immutable_import": true,
+  "original_guest_bodies_executed_in_adapter_fixture": false,
+  "actual_runtime_acquisition_in_adapter_fixture": false,
+  "prior_v19_native_selection_proven": true,
+  "prior_v19_status": "startup refused before menus; no source PCM signal",
+  "corrected_profile_live_playback_proven": false,
+  "corrected_profile_game_run": false,
+  "stage3_complete": false
+}
