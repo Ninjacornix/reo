@@ -1,21 +1,24 @@
 # Outbreak native reconstruction plan
 
-Current stage-3 checkpoint: stable native ADXT instances pass both compilers'
-ownership checks; all 72 standalone suites pass. The native video graph now
-separates two logical frame slots from physical reorder storage, and all 201
-File #1 movies prime/rebuild and present all 216,998 independently counted
-pictures. The [priming results](native-media/MOVIE_PRIMING_RESULTS.md) identify
-the exact cohorts. V13 resolves the identified startup sound RPC refusal in a
-bounded game retest, but the [late cinematic hitch](native-media/AUDIO_CANDIDATE_V13_STUTTER.md)
-remains. A CRI group-four ownership spike guides the next timed retest. Whole
-media consumer binding, actual transitions and audible A/V validation keep
-[stage 3 open](native-media/STAGE3_CLOSURE.md).
+Current stage-3 checkpoint, 2026-11-08: both compilers pass **75 standalone
+suites**, the explicit native-source runtime factory's 12 declared-port
+scenarios, and the stable clock/control bridge's three detected faults. The
+[control results](native-media/ADXT_GAME_CONTROL_RESULTS.md) identify the current
+cohort. All 201 File #1 movies also prime/rebuild and present all 216,998
+independently counted pictures through the native GPU graph with two logical
+slots and separate physical reorder storage. The [priming results](native-media/MOVIE_PRIMING_RESULTS.md)
+identify those cohorts. V13 resolves the startup sound RPC refusal. V14 narrows
+the separate late cinematic hitch to `SifInitRpc`; V15 does not reproduce that
+large stall, and no initializer fix is claimed. See the [incident evidence](native-media/SIF_INIT_RPC_STALL.md).
+Guest ABI/source/control/callback/reset binding, actual movie scheduling and
+providers, coherent game transitions and audible A/V validation keep
+[stage 3 open](native-media/STAGE3_CLOSURE.md). Stages 4-6 remain separate.
 
 Status: SJUNI independent core, portable bridge and guarded opt-in runtime adapter
 implemented 2026-11-05, with four bounded controlled integration smoke runs;
 native resource core, bounded read owner and verified Windows mount/reader pass
 the standalone suites with GCC and the pinned LLVM toolchain. The combined native
-project now has sixty-five standalone suites, including the independent ADX
+project at that earlier checkpoint had sixty-five standalone suites, including the independent ADX
 control, mono and stereo/downmix block cores, bounded PCM owner and fenced
 host-output lifetime owner, raw-ID PCM session bridge and independent movie
 picture-position publication and an owned bank playback session. Full transition and wider

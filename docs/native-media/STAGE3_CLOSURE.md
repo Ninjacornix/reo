@@ -97,3 +97,16 @@ time-base/loop controls. Both compilers pass 75 suites, three detected admission
 replacement faults, 12 combined factory scenarios and production-header checks.
 The original public ABI and idle-handle semantics still need their actual guest
 binding; native API coverage alone does not close that boundary.
+
+The [V16 production preflight](NATIVE_MEDIA_COHERENT_PREFLIGHT_V16.md) passes all
+182 authored/runtime units with the actual bundled toolchain and coordinated
+130-patch SDK source cohort. It links no game and installs no new source hooks.
+The [handle admission reader](ADXT_GAME_HANDLE_ADMISSION.md) separately checks
+actual constructor layouts' independent 16/40/32 slot domains; live guest
+admission and the remaining ABI/lifetime boundary are still required.
+
+The [guest handle router](ADXT_GAME_HANDLE_ROUTER.md) now connects prepared game
+identities to the same native instance owner. Both compilers pass real-worker
+mapping/reuse tests and detect three ownership faults. It retains both stereo
+transfer reservations and awaits actual source join before reuse. Its original
+ABI hooks and runtime admission are not installed, and it is outside V16's kit.

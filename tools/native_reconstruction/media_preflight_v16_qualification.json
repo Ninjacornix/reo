@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "status": "coherent production authored/runtime compilation passed; no linked game or new source hook execution",
+  "root_revision": "885c67f66d76c526bc451f895c5072d69dea86bd",
+  "candidate_manifest_sha256": "a4598294513fab6edcee293881ac2763c6b0d13bc95fdd0fee84ab545c772a3b",
+  "receipt": {
+    "path": "build-native-sjuni/candidate-work-v16-preflight/candidate-preflight-result.json",
+    "sha256": "de139d74a3fbf31941aab86921626734f73ff69962e99528a801a817aad89cc1"
+  },
+  "compilation_units": 182,
+  "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+  "dependency_receipt_sha256": "473ad00c8fcae9966455fc8f47047f2dccd619d747077fc1ffaec2c2e3444df6",
+  "precompiled_runtime_used": false,
+  "seeded_object_cache": false,
+  "game_linked": false,
+  "game_run": false,
+  "native_guest_source_hooks_installed": false,
+  "later_game_handle_router_in_kit": false,
+  "documentation_sha256": "47096fdd115579eff607bd8af54f93c8c81d7968b670e2d9503ba782f298fe55"
+}
