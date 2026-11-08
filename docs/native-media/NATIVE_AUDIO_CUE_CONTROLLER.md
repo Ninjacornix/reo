@@ -53,6 +53,10 @@ Evidence is under `build-native-sjuni/media-cue-controller-results-{llvm,gcc}-v2
 and `build-native-sjuni/adxt-binding/ordinary-cue-controller-{llvm,gcc}-v1`.
 The adapter also compiles against the actual audited SDK131 headers in
 `ordinary-queued-cues-actual131-llvm-v2`. Complete ordinary-adapter regression
-and the next coherent game retest are separate follow-up gates. The existing
+now passes all 34 scenarios and detects all 10 injected faults on each compiler;
+its immutable-import statistics and manifest remain unchanged. Evidence is in
+`ordinary-cue-controller-regression-{llvm,gcc}-v1` and
+`tools/native_reconstruction/native_cue_controller_qualification_v1.json`.
+The next coherent game retest remains a separate gate. The existing
 89 inline-loop asset refusals remain unchanged; this finite profile does not
 claim their queued playback or establish their actual game usage.

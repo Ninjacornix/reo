@@ -95,6 +95,9 @@ verified automatic asset preparation and SDK/game packaging are implemented.
 Historical intermittent video/audio incidents remain unexplained; two V30 runs
 are clean without a buffering/scheduling change. A qualified native read-ahead
 change also completes its separate V31 game retest with zero recorded underruns.
+The subsequent [finite queued-cue binding](native-media/NATIVE_AUDIO_CUE_CONTROLLER.md)
+passes both complete native and real-asset adapter cohorts; its coherent V32
+game build/retest is the next integration gate.
 Required remaining work is
 A/V validation, broader game-facing controls/resource transitions and accounting
 for remaining media consumers. See the current
