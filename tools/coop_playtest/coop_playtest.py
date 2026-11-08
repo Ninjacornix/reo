@@ -328,6 +328,8 @@ def owned_stop_provenance(folder, identity, exit_code):
 
 
 FATAL_DIAGNOSTICS = (
+    ("native-media-admission-refused", "[native-adxt-refusal]"),
+    ("native-media-failure", "[native-adxt-fatal]"),
     ("unimplemented-guest-function", "called unimplemented function at address"),
     ("native-crash", "[crash]"),
     ("graphics-backend-failure", "[gs-backend-fail]"),
