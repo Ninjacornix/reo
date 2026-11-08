@@ -31,6 +31,18 @@ def sample(reader):
                 record['rna']=dict(raw_hex=rna.hex(),active=rna[0],channels=channels,route=struct.unpack_from('<I',rna,0x20)[0],
                                    active_channels_match=rna[0]==1 and channels==row[3],end_matches=reader.read(child,0x60)==rna)
             else:record['rna_unavailable']='outside exact active File1 RNA pool/profile'
+            child=struct.unpack_from('<I',row,0x94)[0];record['lsc_pointer']=child
+            # Independently audited 13CB50/13CBB0/13CD08 child pool and links.
+            # Copy metadata only; never follow queued names or the lower file.
+            if row[0]==1 and row[3] in (1,2) and 0x21e110<=child<0x21e110+16*0x238 and (child-0x21e110)%0x238==0:
+                lsc=reader.read(child,0x238);input_pointer=struct.unpack_from('<I',lsc,8)[0];file_pointer=struct.unpack_from('<I',lsc,0x28)[0]
+                record['lsc']=dict(raw_hex=lsc.hex(),active=lsc[0],state=lsc[1],transferring=lsc[2],repeat=lsc[3],paused=lsc[4],
+                    minimum_bytes=struct.unpack_from('<I',lsc,0x14)[0],capacity_bytes=struct.unpack_from('<I',lsc,0x18)[0],
+                    tail=struct.unpack_from('<I',lsc,0x1c)[0],head=struct.unpack_from('<I',lsc,0x20)[0],count=struct.unpack_from('<I',lsc,0x24)[0],
+                    input_pointer=input_pointer,file_pointer=file_pointer,
+                    active_links_match=lsc[0]==1 and input_pointer==struct.unpack_from('<I',row,0x10)[0] and file_pointer==struct.unpack_from('<I',row,8)[0],
+                    end_matches=reader.read(child,0x238)==lsc)
+            else:record['lsc_unavailable']='outside exact active File1 LSC pool/profile'
             record['c4_end_matches']=reader.read(0x20F3C8+slot*0xC4,0xC4)==row
             instances.append(record)
     registry=words(reader.read(0x22F18C,32));movies=[]

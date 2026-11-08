@@ -2,7 +2,7 @@ import struct,unittest
 import capture_media_control as capture
 
 class Reader:
-    def __init__(self):self.spans={};self.reads=[];self.changing=False;self.changing_c4=False;self.changing_rna=False
+    def __init__(self):self.spans={};self.reads=[];self.changing=False;self.changing_c4=False;self.changing_rna=False;self.changing_lsc=False
     def put(self,at,data):self.spans[at]=data
     def read(self,at,size):
         self.reads.append((at,size))
@@ -12,6 +12,7 @@ class Reader:
             if self.changing_c4:value[1]^=1
             return bytes(value)
         if self.changing_rna and at==0x223880 and size==0x60 and self.reads.count((at,size))==2:return bytes(size)
+        if self.changing_lsc and at==0x21e110 and size==0x238 and self.reads.count((at,size))==2:return bytes(size)
         if at in self.spans:
             value=self.spans[at];assert len(value)==size;return value
         allowed=[(0x4BADD0,0x40),(0x20F3C4,4),(0x22F138,4),(0x20F3C8,16*0xC4),(0x22F18C,32)]
@@ -52,5 +53,20 @@ class CaptureTests(unittest.TestCase):
         v=capture.sample(r)['adxt'][0];self.assertTrue(v['rna']['active_channels_match']);self.assertFalse(v['rna']['end_matches'])
     def test_changed_c4_is_preserved_as_unstable(self):
         r=self.audio(0);r.changing_c4=True;v=capture.sample(r)['adxt'][0];self.assertFalse(v['c4_end_matches'])
+    def lsc(self,child=0x21e110):
+        r=self.audio(0);pool=bytearray(r.spans[0x20F3C8]);struct.pack_into('<I',pool,8,0x21a8c0);struct.pack_into('<I',pool,0x10,0x224c60);struct.pack_into('<I',pool,0x94,child);r.put(0x20F3C8,bytes(pool))
+        data=bytearray(0x238);data[0]=1;struct.pack_into('<I',data,8,0x224c60);struct.pack_into('<I',data,0x28,0x21a8c0);struct.pack_into('<II',data,0x14,51200,61440);r.put(child,bytes(data));return r
+    def test_exact_lsc_links_and_large_metadata(self):
+        for child in (0x21e110,0x21e110+15*0x238):
+            with self.subTest(child=child):
+                r=self.lsc(child);v=capture.sample(r)['adxt'][0]['lsc'];self.assertEqual((v['minimum_bytes'],v['capacity_bytes']),(51200,61440));self.assertTrue(v['active_links_match']);self.assertTrue(v['end_matches'])
+    def test_invalid_lsc_pointer_is_never_followed(self):
+        for child in (0,0x21e111,0x21e110+16*0x238,0x223880,0xffffffff):
+            with self.subTest(child=child):
+                r=self.lsc(child);v=capture.sample(r)['adxt'][0];self.assertIn('lsc_unavailable',v);self.assertNotIn((child,0x238),r.reads)
+    def test_lsc_torn_read_remains_unstable(self):
+        r=self.lsc();r.changing_lsc=True;v=capture.sample(r)['adxt'][0]['lsc'];self.assertTrue(v['active_links_match']);self.assertFalse(v['end_matches'])
+    def test_lsc_link_mismatch_is_retained(self):
+        r=self.lsc();data=bytearray(r.spans[0x21e110]);struct.pack_into('<I',data,8,0x12345678);r.put(0x21e110,bytes(data));v=capture.sample(r)['adxt'][0]['lsc'];self.assertFalse(v['active_links_match']);self.assertTrue(v['end_matches']);self.assertNotIn((0x12345678,0x238),r.reads)
 
 if __name__=='__main__':unittest.main()

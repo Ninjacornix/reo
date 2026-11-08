@@ -15,6 +15,7 @@ No capture has been completed merely by adding this tool.
 | `20F3C4` | ADXT raw tick, with no assumed frame/time unit |
 | `20F3C8`, sixteen `C4` records | ADXT active/state/source-mode/channel bytes, pause byte `72`, and literal control record |
 | `223880`, sixteen RNA records at stride `60` | Bounded C4+C child, literal RNA bytes, active/channel fields and route at `20` |
+| `21E110`, sixteen LSC records at stride `238` | Bounded C4+94 child, full literal record, input/file links, state and queue/capacity/minimum fields |
 | `22F138` | Sofdec global raw tick, not presentation FPS |
 | `22F18C`, eight pointers | Registered movie owners |
 | Movie `44..57` | Pending, actual, requested, explicit pause and nesting words |
@@ -34,9 +35,15 @@ with a false stability marker. Separate reads never become an atomic snapshot,
 even if those final markers match. These are observations, not ordered original
 service calls, synchronization proof, bottlenecks or A/V equivalence evidence.
 
+LSC children additionally require the exact pool independently established by
+the owned allocation/construction/destruction oracle. Input and lower-file links
+are compared with the parent C4; their pointed objects and queued filenames are
+never followed. Before/after child stability is separate from link agreement.
+Large capacities/minimums are diagnostic values, not native source admission.
+
 Duration is bounded at 600 seconds and interval at 0.1..5 seconds. JSONL and a
 hashed receipt stay inside the private session directory, using fresh names.
-Nine isolated tests cover empty pools, literal fields, invalid main/shared/RNA
-pointers, exact child fields and changing C4/RNA/movie records. Live validation
+Thirteen isolated tests cover empty pools, literal fields, invalid main/shared/RNA/LSC
+pointers, exact child fields, mismatched links and changing C4/RNA/LSC/movie records. Live validation
 is a separate gate. V20 retains five observations before its game refusal; its
 original failed capture receipt is not rewritten as a completed recording.
