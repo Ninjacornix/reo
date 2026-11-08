@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "status": "native finite-file read-ahead passes full native and declared-port adapter cohorts on both compilers; SDK131 object compiles",
+  "implementation_revision": "ac8109f3e0c4577edf8828eed59625a0111c1372",
+  "manifest_sha256": "696ca3937017808248c466e32820b1e81f842bc54290fb5c8af970c2d032c1ad",
+  "evidence_sha256": {
+    "build-native-sjuni/media-finite-prefetch-results-llvm-v2/receipt.json": "82bf41fe6d46293dadc9c00c76e824baffd90d95c58dbf7bebc66eae089a80eb",
+    "build-native-sjuni/adxt-binding/ordinary-finite-prefetch-llvm-v1/receipt.json": "0c0c2b001357d21cdc33b7f949e1f794be85b72af8767a6876f2b04c27044a6e",
+    "build-native-sjuni/media-finite-prefetch-llvm-v1/Testing/Temporary/LastTest.log": "83211e193c86b29a96ea2b927978cbe49d3edb471e962109c33703f5512d4863",
+    "build-native-sjuni/adxt-binding/ordinary-finite-prefetch-llvm-v1/trace.csv": "3dc942e5d10f4f045a6b54ef0b422aaa0798abb8f6ab3398ccdeb8626aa4a6fd",
+    "build-native-sjuni/media-finite-prefetch-results-gcc-v2/receipt.json": "4bf0c2f6dfb67ee3bfe171fb5d78059ea5ef0f60375f574a9329b15327f621d2",
+    "build-native-sjuni/adxt-binding/ordinary-finite-prefetch-gcc-v1/receipt.json": "dab74672776019fd3c744e75096fda29875f85fa81b5b9119367ecaad89f831f",
+    "build-native-sjuni/media-finite-prefetch-gcc-v1/Testing/Temporary/LastTest.log": "7f0c864fe03990075d668845fb41508caa5e0c1328b8cd3389b8077f2e9c17a0",
+    "build-native-sjuni/adxt-binding/ordinary-finite-prefetch-gcc-v1/trace.csv": "08c00245ea1066e70a4d943c182a98aa6185ea5be9c6bf79edd55d6c6ecb0586",
+    "build-native-sjuni/adxt-binding/ordinary-finite-prefetch-actual131-llvm-v1/receipt.json": "a7b72b274289d1c1c09d000e502368a65e16235ac64446d0149f2e4138f5ff50"
+  },
+  "cohorts": {
+    "llvm": {
+      "native_suites": 78,
+      "adapter_scenarios": 28,
+      "detected_injected_faults": 10,
+      "source_capacities": [
+        65536
+      ],
+      "stalled_output_frames": 48128,
+      "baseline_underrun_frames": 27648,
+      "prefetch_underrun_frames": 0
+    },
+    "gcc": {
+      "native_suites": 78,
+      "adapter_scenarios": 28,
+      "detected_injected_faults": 10,
+      "source_capacities": [
+        65536
+      ],
+      "stalled_output_frames": 48128,
+      "baseline_underrun_frames": 27648,
+      "prefetch_underrun_frames": 0
+    }
+  },
+  "ordinary_capacity_bytes": 65536,
+  "maximum_request_bytes": 8192,
+  "default_standalone_capacity_bytes": 8192,
+  "finite_sample_comparisons": 32,
+  "regular_loop_matrix_cases": 144,
+  "game_run": false,
+  "historical_stutter_fix_confirmed": false,
+  "step3_complete": false,
+  "limitations": [
+    "Controlled blocked-read tolerance does not identify the historical input/decoder/worker bottleneck.",
+    "Prefetch is bounded and does not prevent arbitrary stalls or provide resilience before initial priming.",
+    "Game-facing control ABI, metadata and shared initializer remain migration boundaries.",
+    "Actual game retest and audible synchronization are separate gates."
+  ]
+}

@@ -52,3 +52,29 @@ installed AppData launchers, imported discs, cards and Step 3 evidence remain.
 Measured free space afterward is 7,382,831,104 bytes. The preceding whole-machine
 free-space changes are not attributed to bundle recordings or paging without a
 corresponding allocation measurement.
+
+Later V28-V31 work required more space. Authorized leaf-file cleanup removed
+superseded candidate objects, precompiled headers, old test executables and
+selected old private game images. Historical statements above that all sealed
+binaries/caches remained available describe those earlier checkpoints. Deleted
+artifacts are recorded with original path, length, hash and result in the
+`old-*-removal-20261108*.jsonl` ledgers under `build-native-sjuni`; sources,
+libraries, reports, owned imports and the current V30 object cache are retained.
+The final V28/V29 object cleanup removes 4,833 files / 442,293,362 logical bytes.
+After the new 78-suite cohorts pass on both compilers, 480 superseded trace-test
+objects/executables / 80,356,685 logical bytes are also removed. Their old static
+archives and test logs remain available.
+
+Identical older images and SDK payloads are additionally consolidated with NTFS
+hardlinks, preserving their paths and bytes. The image ledgers are
+`retained-media-image-dedup-20261108*.jsonl`; the first invocation was interrupted
+and its ledger remains, followed by the bounded explicit-path invocation. There
+are 12 unique selected image paths, not 24 distinct savings. The sealed-kit
+ledger records 2,885 identical payloads / 1,403,943,384 logical bytes consolidated
+against V30. These retained historical payloads must be treated as immutable;
+future changes must replace a file rather than modify a shared inode in place.
+Identical RC2 dependency archives were consolidated separately with the same
+preservation rule. Physical free-space changes differ from logical byte totals.
+No directory was recursively deleted, and the normal build-space reserve was
+not reduced. The latest measured free space before V31 preparation is about
+4.76 GiB. This cleanup is not Step 3 completion or permission to sleep the PC.

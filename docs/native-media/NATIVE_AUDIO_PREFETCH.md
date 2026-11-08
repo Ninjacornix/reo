@@ -37,6 +37,10 @@ Full native receipts are in
 `build-native-sjuni/media-finite-prefetch-results-{llvm,gcc}-v2/receipt.json`.
 The exact source cohort is pinned by
 `tools/native_reconstruction/native_finite_prefetch_manifest_v1.json`.
-The actual SDK131 ordinary adapter object also compiles successfully. Broader
-declared-port adapter regression checks and a new coherent game retest are in
-progress; native unit tests alone do not complete Step 3 or confirm audible sync.
+The actual SDK131 ordinary adapter object also compiles successfully. Both
+compilers pass all 28 declared-port adapter scenarios and detect all 10 injected
+faults. Their actual adapter traces report the selected 65,536-byte source ring.
+Evidence hashes and coverage are pinned in
+`tools/native_reconstruction/native_finite_prefetch_qualification_v1.json`.
+A new coherent game retest is in progress; these checks alone do not complete
+Step 3 or confirm audible sync.
