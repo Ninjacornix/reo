@@ -1,7 +1,8 @@
 # Native MP4 game integration
 
-Status: native worker tested; guarded game adapter compiles. Actual candidate
-build and in-game playback are still pending. Step 3 is incomplete.
+Status: native worker tested; game adapter selects and creates a movie object.
+The first two game candidates expose registry and cue lookup refusals, described
+below. Successful in-game playback is still pending. Step 3 is incomplete.
 
 The replacement owns Windows Media Engine and D3D11 on a native thread. Game
 movie cues select prepared, hash-verified MP4 assets. Playback no longer needs
@@ -23,6 +24,23 @@ children. Imported archive/member numbers only resolve existing game cues to
 native resource IDs: playback performs no source-archive reads or conversion.
 The admitted File #1 executable window, public method pointers, configuration,
 arena, runtime and current game-thread identity are checked before selection.
+
+V23 freshly builds all 2,415 units in 1,311.922 seconds, then refuses startup
+because its all-original registry expectation excludes the existing exact
+feed-end continuation and CRI timing wrappers. V24 preserves and admits those
+reviewed entries, rebuilding two units and revalidating/reusing 2,413 objects.
+It selects the native owner and creates a 512x448 game movie object, then refuses
+member 419 before starting a source. The lookup incorrectly compared the stored
+physical container path with the logical AFS label. Its native source/audio/
+output owners join, with no movie source started. Its zero exit code is not
+successful playback: the retained log contains the refusal and runtime error.
+
+The corrected cue adapter resolves the bounded, read-only public partition
+descriptor's physical container and sector range to an imported native key.
+It does not open or stream that source range. The generated map covers all 201
+owned references and preflight verifies every required native key/frame count.
+This is a temporary game cue boundary; native playback still uses only the
+prepared MP4. In-game validation of this correction is pending.
 
 The game still renders through its existing graphics pipeline. A separate,
 explicit bridge converts native BGRA square-pixel frames into that renderer's

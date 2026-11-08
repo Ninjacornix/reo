@@ -29,6 +29,15 @@ class NativeDiagnosticsTests(unittest.TestCase):
         self.assertTrue(result['fatal'])
         self.assertEqual(result['findings'][0]['categories'], ['native-media-failure'])
 
+    def test_native_movie_refusal_is_failure_even_with_zero_exit_and_join(self):
+        result = self.classify(
+            '[NATIVE-HOST-MOVIE-REFUSAL] boundary=unprepared-archive-cue address=000001a3\n'
+            'Error during program execution: Native movie game boundary refused\n'
+            '[NATIVE-HOST-MOVIE-REPORT] joined=1 sources=0 delivered_frames=0 error=none\n')
+        self.assertTrue(result['fatal'])
+        self.assertEqual(result['fatalLineCount'], 2)
+        self.assertEqual(harness.native_outcome(0, result), 'fatal-diagnostic')
+
     def test_installation_and_clean_retirement_are_not_refusals(self):
         result = self.classify(
             '[NATIVE-ADXT] ordinary-file binding selected entries=17\n'
