@@ -45,6 +45,9 @@ struct Ports {
     std::shared_ptr<adxt_service_group::ActiveWork> decoder,rna,transfer;
     std::shared_ptr<adxt_service_group::Stream> stream;
 };
+// Pure owned-input profile preflight; no provider reads, binding, publication
+// or source authority. The canonical session calls it before taking LSC input.
+[[nodiscard]] bool admits_source(const Config&,const resources::ByteView*)noexcept;
 class Player final:public std::enable_shared_from_this<Player> {
 public:
     Player(Config,std::unique_ptr<output::Producer>,std::shared_ptr<const resources::ByteView>,

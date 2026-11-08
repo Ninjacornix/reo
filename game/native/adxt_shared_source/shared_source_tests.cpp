@@ -253,6 +253,24 @@ void injected_posteffect_failure(){
     check(f.source->finish_batch(batch,{s::FinishKind::restore_reverse,0})==s::Status::invariant_fault);
     ok(f.source->begin_shutdown());check(!f.source->finalize_shutdown_and_join());
 }
+void bounded_capacities(){
+    for(std::int32_t capacity:{53248,272384,s::maximum_encoded_capacity}){
+        check(!s::admits_capacity(capacity,s::CapacityProfile::fixed_8k));
+        auto view=std::make_shared<View>(static_cast<std::size_t>(capacity)*2);
+        s::Config config;config.capacity=config.threshold=config.maximum_request_bytes=capacity;config.maximum_sectors=capacity/2048;config.byte_length=capacity*2;
+        std::array<std::uint8_t,64> seed{};for(unsigned n=0;n<seed.size();++n)seed[n]=static_cast<std::uint8_t>(view->data[n]);
+        auto backend=std::make_unique<Script>();
+        s::SharedEncodedSource source(config,view,std::move(backend),{},{capacity-20,0,seed},{},s::CapacityProfile::bounded_sectors);
+        const auto before=source.snapshot();check(before.ring.capacity==capacity && before.ring.data==64 && before.ring.free==capacity-64);
+        auto batch=take(source.borrow_batch({s::BatchShape::two,INT32_MAX,INT32_MAX}));check(batch.count()==2 && batch.bytes(0)==56 && batch.bytes(1)==8);
+        std::array<std::uint8_t,64> copied{};ok(batch.read_into(0,std::span(copied).first(56)));ok(batch.read_into(1,std::span(copied).subspan(56)));check(copied==seed);
+        check(source.finish_batch(batch,{s::FinishKind::consume_second_prefix_consume_first,9})==s::Status::invalid_count);
+        ok(source.finish_batch(batch,{s::FinishKind::consume_second_prefix_consume_first,8}));const auto after=source.snapshot();check(!after.ring.data && after.ring.free==capacity);
+        ok(source.begin_shutdown());check(source.finalize_shutdown_and_join());
+    }
+    for(auto capacity:{-1,0,2047,2049,s::maximum_encoded_capacity+2048})check(!s::admits_capacity(capacity,s::CapacityProfile::bounded_sectors));
+    check(!s::admits_capacity(8192,static_cast<s::CapacityProfile>(99)));
+}
 int main(int argc,char** argv){if(argc==2&&std::string_view(argv[1])=="posteffect"){injected_posteffect_failure();std::cout<<"posteffect_assertions="<<assertions<<"\n";return 0;}
-    batch_plans();lease_lifetime();producer_and_consumers();target_actions();stop_and_failure();actual_provider();limits_and_allocation();ring_completed_is_not_position_proof();
+    batch_plans();lease_lifetime();producer_and_consumers();target_actions();stop_and_failure();actual_provider();limits_and_allocation();ring_completed_is_not_position_proof();bounded_capacities();
     std::cout<<"shared_source_assertions="<<assertions<<" real_async_backend=exercised\n";}

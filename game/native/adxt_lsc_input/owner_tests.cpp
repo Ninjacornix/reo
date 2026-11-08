@@ -4,6 +4,7 @@
 #include "../adxt_player/test_provider.hpp"
 #include <cstdio>
 #include <thread>
+#include <source_location>
 
 namespace i=reo::native::adxt_lsc_input;
 namespace c=reo::native::adxt_control_session;
@@ -11,7 +12,7 @@ namespace q=reo::native::adx_sequence;
 namespace f=reo::native::adxt_shared_player::testing;
 unsigned checks{};
 bool attenuation_mode{};
-void check(bool value){++checks;if(!value)throw std::runtime_error("Live input check "+std::to_string(checks));}
+void check(bool value,std::source_location location=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Live input line "+std::to_string(location.line())+" check "+std::to_string(checks));}
 std::shared_ptr<f::File> file(unsigned samples,unsigned channels=1,unsigned rate=48000){
     auto out=f::file(channels,rate,samples);const auto end=96+(samples+31)/32*18*channels;
     out->bytes.resize((end+18+2047)/2048*2048);f::be16(out->bytes,end,0x8001);f::be16(out->bytes,end+2,14);return out;
@@ -29,7 +30,9 @@ struct Test{
             std::fill(words.begin()+1,words.begin()+101,200);std::fill(words.begin()+101,words.begin()+201,100);
             attenuation=reo::native::adxt_attenuation::Table::from_words(words).table;check(bool(attenuation));}}
 };
-c::player::Config config(const std::shared_ptr<i::Input>& input){c::player::Config out;out.decoder.channels=input->channels();out.decoder.seamless_enabled=true;out.lsc_input=input;out.decoder.source_config.byte_length=i::byte_domain;return out;}
+c::player::Config config(const std::shared_ptr<i::Input>& input){c::player::Config out;out.decoder.channels=input->channels();out.decoder.seamless_enabled=true;out.lsc_input=input;out.decoder.source_config.byte_length=i::byte_domain;
+    const auto bytes=static_cast<std::int32_t>(input->capacity());out.decoder.source_config.capacity=out.decoder.source_config.threshold=out.decoder.source_config.maximum_request_bytes=bytes;out.decoder.source_config.maximum_sectors=bytes/2048;
+    out.decoder.source_capacity=bytes==8192?reo::native::adxt_shared_source::CapacityProfile::fixed_8k:reo::native::adxt_shared_source::CapacityProfile::bounded_sectors;return out;}
 c::Key open(Test& t,const std::shared_ptr<i::Input>& input,c::Indices indices={0,0,0,0}){
     auto requested=config(input);requested.attenuation_table=t.attenuation;if(t.attenuation)requested.initial_attenuation=0xffffff9c;
     auto result=t.session.open(requested,input->origin(),indices);check(result.status==c::Status::completed);
@@ -65,8 +68,37 @@ struct Failure final:f::File{
         return File::read(at,out);
     }
 };
+std::array<std::uint64_t,2> capacity_waveform(unsigned channels,unsigned capacity,unsigned minimum){
+    Test t;auto live=i::Input::create({channels,48000,2,2,capacity});
+    auto first=file(500003,channels),second=file(120001,channels);
+    const auto a=live->register_asset("large-first",clip(first)),b=live->register_asset("large-second",clip(second));
+    check(a.status==i::Status::completed && b.status==i::Status::completed && live->capacity()==capacity);
+    check(live->minimum(static_cast<std::int32_t>(minimum))==i::Status::completed && live->snapshot().queue.minimum==minimum);
+    check(live->enqueue(a.key).status==i::Status::completed && live->enqueue(b.key).status==i::Status::completed && live->start()==i::Status::completed);
+    if(capacity!=8192){
+        auto wrong=config(live);wrong.decoder.source_config.capacity=8192;
+        check(t.session.open(wrong,live->origin(),{0,0,0,0}).status==c::Status::unsupported_profile);
+        check(!live->snapshot().bound && !live->snapshot().abandoned && !t.session.snapshot().records && !t.session.snapshot().output.occupied);
+        wrong=config(live);wrong.decoder.source_capacity=reo::native::adxt_shared_source::CapacityProfile::fixed_8k;
+        check(t.session.open(wrong,live->origin(),{0,0,0,0}).status==c::Status::unsupported_profile && !live->snapshot().bound);
+    }
+    const auto key=open(t,live);ended(t,key);const auto source=live->snapshot();const auto player=t.session.inspect(key).evidence;
+    check(source.error==i::Status::completed && source.published_bytes==first->size()+second->size() && source.planned_samples==620004);
+    check(player.first_payload_samples==620004 && player.decoder.source.ring.capacity==static_cast<std::int32_t>(capacity));
+    check(!player.output.voice.skipped_samples && !t.session.snapshot().output.statistics.underrun_frames);
+    const auto digest=player.first_payload_digest;retire(t,key);check(live->snapshot().joined && !live->snapshot().abandoned && t.session.join()==c::Status::completed);
+    return digest;
+}
 int main(){try{
     for(bool mode:{false,true}){attenuation_mode=mode;
+    for(unsigned channels:{1u,2u}){
+        const auto baseline=capacity_waveform(channels,8192,6553);
+        check(capacity_waveform(channels,channels==1?53248:272384,channels==1?45056:51200)==baseline);
+        check(capacity_waveform(channels,1048576,838860)==baseline);
+    }
+    for(unsigned capacity:{0u,2047u,2049u,1048576u+2048u,0xffffffffu}){
+        bool refused=false;try{(void)i::Input::create({1,48000,1,2,capacity});}catch(const std::invalid_argument&){refused=true;}check(refused);
+    }
     for(std::int32_t minimum:{0,1,6144,8192}){
         Test t;auto live=i::Input::create({1,48000,1,2});auto payload=file(20000);
         const auto prepared=live->register_asset("threshold",clip(payload));

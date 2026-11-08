@@ -8,6 +8,8 @@
 namespace reo::native::adx_workspace {
 
 inline constexpr std::size_t maximum_encoded_bytes = 8228;
+inline constexpr std::size_t maximum_source_encoded_bytes = 1024*1024+36;
+enum class SpanProfile {fixed_8k,bounded_source};
 inline constexpr std::size_t maximum_pcm_samples_per_plane = 8288;
 inline constexpr std::size_t encoded_bytes_per_block = 18;
 inline constexpr std::size_t samples_per_block = 32;
@@ -61,6 +63,7 @@ private:
     std::size_t consumed_, inspected_;
     Stop stop_;
     friend Admission prepare_into(Route, std::span<const std::uint8_t>, std::int32_t, PcmOutput) noexcept;
+    friend Admission prepare_into(Route, std::span<const std::uint8_t>, std::int32_t, PcmOutput,SpanProfile) noexcept;
     friend Result execute(Prepared, State, Parameters) noexcept;
 };
 struct Admission {
@@ -76,6 +79,11 @@ struct Admission {
 [[nodiscard]] Admission prepare_into(Route, std::span<const std::uint8_t> encoded,
                                      std::int32_t requested_encoded_blocks,
                                      PcmOutput output) noexcept;
+// Explicit larger stable source span. This changes only physical admission;
+// requested work and PCM output bounds remain identical. It grants no source
+// ownership or permission to read an unvalidated provider.
+[[nodiscard]] Admission prepare_into(Route,std::span<const std::uint8_t>,
+                                    std::int32_t,PcmOutput,SpanProfile)noexcept;
 
 // No admission, allocation, callback, I/O or failure result. Requires the valid
 // stable Prepared described above. All scalar inputs are VALUES, so PCM stores

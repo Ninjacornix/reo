@@ -1,9 +1,17 @@
 # Shared encoded source
 
-Source2 owns one8192+36-byte SJRB ring, one retained private-result producer and
+Source2 defaults to one8192+36-byte SJRB ring, one retained private-result producer and
 one move-only consumer batch with one or two actual grants. It reuses the frozen
 refill backend. It does not implement Window2, decode, audio devices, runtime
 hooks, filename replacement, live reset or SJMEM.
+
+An explicit `CapacityProfile::bounded_sectors` admits sector-aligned2048..1048576
+byte rings with the same36-byte extension and ownership protocol. The existing
+constructor defaults to `fixed_8k`. Larger worker budgets require the separate
+explicit read profile; they are not selected by changing a numeric limit alone.
+The [larger-profile qualification](../../../docs/native-media/LSC_CAPACITY_PROFILE.md)
+records complete current source/adapter cohorts. The historical frozen commands
+below require their frozen revision and intentionally reject later source edits.
 
 `service()` is the complete original130B78 lifecycle wrapper reaching130800
 refill, including accepted-result drain and deferred stop/close. It is not a

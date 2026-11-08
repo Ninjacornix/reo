@@ -9,6 +9,7 @@
 #include <new>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace { bool deny{}; unsigned attempts{}, checks{}; }
 #if defined(__GNUC__)
@@ -185,5 +186,19 @@ int main() {
     static_assert(!std::is_default_constructible_v<a::Prepared> && !std::is_copy_constructible_v<a::Prepared>);
     static_assert(std::is_nothrow_move_constructible_v<a::Prepared>);
     base_and_order();markers();signed_counts_and_mix();no_effect_refusals();physical_and_real_requests();
+    {
+        std::vector<std::uint8_t> input(a::maximum_source_encoded_bytes+1,0x12);
+        input[0]=input[1]=0;std::array<std::int16_t,32> expected{},actual{};
+        const auto baseline=run(a::Route::mono,std::span(input).first(18),1,{expected,{}});
+        for(std::size_t length:{53248u,272384u,static_cast<unsigned>(a::maximum_source_encoded_bytes)}){
+            check(a::prepare_into(a::Route::mono,std::span(input).first(length),1,{actual,{}}).status==a::Status::physical_span,"legacy span ceiling retained");
+            deny=true;auto admitted=a::prepare_into(a::Route::mono,std::span(input).first(length),1,{actual,{}},a::SpanProfile::bounded_source);
+            check(admitted.status==a::Status::admitted && admitted.prepared.has_value(),"explicit source span admitted");
+            const auto value=a::execute(std::move(*admitted.prepared),{},{});deny=false;
+            check(actual==expected && value.state==baseline.state && value.samples_per_plane==32 && value.encoded_bytes_consumed==18 && value.encoded_bytes_inspected==18,"large tail does not change one original block");
+        }
+        check(a::prepare_into(a::Route::mono,input,0,{{},{}},a::SpanProfile::bounded_source).status==a::Status::physical_span,"extended span bound retained before zero work");
+        check(a::prepare_into(a::Route::mono,{},0,{{},{}},static_cast<a::SpanProfile>(99)).status==a::Status::physical_span,"unknown span profile refused");
+    }
     std::printf("ADX workspace passed %u assertions; allocation attempts=%u\n",checks,attempts);
 }

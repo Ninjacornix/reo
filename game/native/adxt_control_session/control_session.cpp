@@ -96,6 +96,7 @@ Open Session::open(player::Config config,std::shared_ptr<const resources::ByteVi
     if(s.decoders[indices.decoder] || s.streams[indices.stream] || s.rnas[indices.rna] || s.transfers[indices.transfer])return{Status::occupied,{}};
     std::uint32_t slot=0;while(slot<s.config.output.streams && (s.records[slot].player || s.records[slot].exhausted))++slot;
     if(slot==s.config.output.streams)return{Status::capacity,{}};
+    if(config.lsc_input && !player::admits_source(config,view.get()))return{Status::unsupported_profile,{}};
     Scope scope(s.busy);auto opened=s.output.open(config.decoder.channels,indices.host_gain_key);
     if(opened.status!=output::Status::completed)return{opened.status==output::Status::capacity?Status::capacity:Status::fault,{}};
     std::shared_ptr<player::Player> player;player::Ports ports;

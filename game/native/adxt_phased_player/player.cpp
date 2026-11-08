@@ -8,10 +8,12 @@
 
 namespace reo::native::adxt_phased_player {
 namespace {
-Config checked(Config c,const output::Producer& producer,const resources::ByteView* view) {
+Config checked_source(Config c,const resources::ByteView* view) {
     if(c.decoder.service_divisor <= 0 || c.decoder.downmix || c.decoder.pitch_offset ||
        c.decoder.channels<1 || c.decoder.channels>2)throw std::invalid_argument("Shared native player profile");
     if(c.sequence && c.lsc_input)throw std::invalid_argument("One owned input profile required");
+    if(!c.lsc_input && c.decoder.source_capacity!=adxt_shared_source::CapacityProfile::fixed_8k)
+        throw std::invalid_argument("Extended source geometry requires owned LSC input");
     if(!c.attenuation_table && c.initial_attenuation)
         throw std::invalid_argument("Prepared attenuation table required");
     // Sequence/LSC inputs exclusively own sealed Clip objects. Clip::parse
@@ -19,11 +21,13 @@ Config checked(Config c,const output::Producer& producer,const resources::ByteVi
     // cannot change the offset between original-unit volume control calls.
     if(c.lsc_input){
         const auto& source=c.decoder.source_config;
+        const auto capacity=static_cast<std::int32_t>(c.lsc_input->capacity());
+        const auto profile=capacity==adxt_shared_source::encoded_capacity?adxt_shared_source::CapacityProfile::fixed_8k:adxt_shared_source::CapacityProfile::bounded_sectors;
         if(!c.decoder.seamless_enabled || c.decoder.loop_enabled || view!=c.lsc_input->origin().get() ||
            c.decoder.channels!=c.lsc_input->channels() || c.decoder.configured_key!=adx_header::Key{} ||
            c.decoder.pans!=std::array<std::int16_t,2>{-128,-128} || source.start_sector ||
-           source.byte_length!=static_cast<std::int32_t>(adxt_lsc_input::byte_domain) || source.capacity!=8192 ||
-           source.threshold!=8192 || source.maximum_request_bytes!=8192 || source.maximum_sectors!=4 ||
+           source.byte_length!=static_cast<std::int32_t>(adxt_lsc_input::byte_domain) || source.capacity!=capacity ||
+           c.decoder.source_capacity!=profile || source.threshold!=capacity || source.maximum_request_bytes!=capacity || source.maximum_sectors!=capacity/2048 ||
            source.target_sectors!=-1 || source.finite_sector_limit!=0xfffff || source.retry_limit!=2 ||
            source.maximum_id!=std::numeric_limits<std::uint64_t>::max())
             throw std::invalid_argument("Sealed live input identity/geometry required");
@@ -38,12 +42,19 @@ Config checked(Config c,const output::Producer& producer,const resources::ByteVi
            source.maximum_id!=std::numeric_limits<std::uint64_t>::max())
             throw std::invalid_argument("Prepared immutable sequence identity/geometry required");
     }else if(c.decoder.seamless_enabled)throw std::invalid_argument("Prepared immutable sequence required");
+    return c;
+}
+Config checked(Config c,const output::Producer& producer,const resources::ByteView* view) {
+    c=checked_source(std::move(c),view);
     const auto s=producer.snapshot();
     if(!s.active || s.fault || s.channels!=c.decoder.channels || !s.transfer_open || s.voice.playing ||
        s.channel[0].samples || s.channel[0].queued_bytes || s.channel[1].samples || s.channel[1].queued_bytes)
         throw std::invalid_argument("Prepared producer does not match decoder");
     return c;
 }
+}
+bool admits_source(const Config& config,const resources::ByteView* view)noexcept{
+    try{(void)checked_source(config,view);return true;}catch(...){return false;}
 }
 class Player::State {
 public:

@@ -12,6 +12,7 @@ inline constexpr std::uint32_t byte_domain = 0x7ffff800;
 inline constexpr std::uint32_t sample_domain = 0x7fffffe0;
 struct Config {
     std::uint32_t channels{1}, frequency{48000}, catalogue_entries{8192}, journal_entries{8};
+    std::uint32_t encoded_capacity{8192};
 };
 enum class Status { completed, closed, busy, invalid_asset, invalid_key, capacity, numeric_limit,
     unsupported_profile, no_memory, source_failure, already_bound, fault };
@@ -70,6 +71,7 @@ public:
     [[nodiscard]] std::shared_ptr<const resources::ByteView> origin() const noexcept;
     [[nodiscard]] std::uint32_t channels() const noexcept;
     [[nodiscard]] std::uint32_t frequency() const noexcept;
+    [[nodiscard]] std::uint32_t capacity() const noexcept;
 private:
     friend class adxt_phased_player::Player;
     friend class adxt_control_session::Session;

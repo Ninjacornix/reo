@@ -19,8 +19,8 @@ bool selectors(FileTargetAction f,DecoderLimitAction d)noexcept {
         unsigned(d)<=unsigned(DecoderLimitAction::seamless);
 }
 bool target(std::int32_t t,std::int32_t sectors)noexcept{return t==-1||t==INT32_MAX||(t>=0&&t<=sectors);}
-std::int32_t checked_capacity(const Config& c) {
-    if(c.capacity!=encoded_capacity||c.start_sector<0||c.start_sector>INT32_MAX/sector||
+std::int32_t checked_capacity(const Config& c,CapacityProfile profile) {
+    if(!admits_capacity(c.capacity,profile)||c.start_sector<0||c.start_sector>INT32_MAX/sector||
         c.byte_length<0||c.byte_length%sector||c.threshold<0||c.threshold>c.capacity||
         c.maximum_request_bytes<0||c.maximum_request_bytes>c.capacity||c.maximum_sectors<0||c.maximum_sectors>512||
         !target(c.target_sectors,c.byte_length/sector)||c.finite_sector_limit<0||c.finite_sector_limit>0xfffff||
@@ -78,8 +78,8 @@ public:
 private:SharedEncodedSource& s_;bool entered_;
 };
 SharedEncodedSource::SharedEncodedSource(Config c,std::shared_ptr<const resources::ByteView> view,
-    std::unique_ptr<Backend> backend,InitialLoop loop,PreparedPrefix prefix,Hooks hooks)
-    :config_(c),hooks_(hooks),ring_(checked_capacity(c),encoded_extension,{},0xa5),view_(std::move(view)),backend_(std::move(backend)),
+    std::unique_ptr<Backend> backend,InitialLoop loop,PreparedPrefix prefix,Hooks hooks,CapacityProfile profile)
+    :config_(c),hooks_(hooks),ring_(checked_capacity(c,profile),encoded_extension,{},0xa5),view_(std::move(view)),backend_(std::move(backend)),
      leases_(std::make_shared<LeaseDomain>()),loop_(std::make_shared<LoopDomain>()) {
     const auto begin=std::uint64_t(c.start_sector)*sector;
     if(!backend_||!view_||begin>view_->size()||std::uint64_t(c.byte_length)>view_->size()-begin||

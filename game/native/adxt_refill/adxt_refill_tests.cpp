@@ -262,6 +262,14 @@ void admission_and_owner_destruction() {
 }
 } // namespace
 int main() {
+    for(std::size_t bytes:std::array<std::size_t,3>{0,2049,r::maximum_source_read_bytes+2048}){
+        bool refused=false;try{(void)r::make_async_backend(bytes,r::ReadProfile::bounded_source);}catch(const std::invalid_argument&){refused=true;}
+        check(refused,"extended worker rejects invalid budget before a request");
+    }
+    for(auto profile:{r::ReadProfile::fixed_8k,static_cast<r::ReadProfile>(99)}){
+        bool refused=false;try{(void)r::make_async_backend(8193,profile);}catch(const std::invalid_argument&){refused=true;}
+        check(refused,"legacy/unknown worker profile cannot admit large request budget");
+    }
     basic_and_leases(); partial_wrap_consumer(); rejected_and_protocol(); control_and_incarnations();
     actual_async_lifetime(); actual_provider_failures(); admission_and_owner_destruction();
     std::printf("Native encoded-source checks passed: %d assertions\n",assertions);

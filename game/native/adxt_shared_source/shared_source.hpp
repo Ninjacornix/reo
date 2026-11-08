@@ -15,6 +15,12 @@ enum class Status {completed,busy,closed,invalid_configuration,invalid_source,
 using Backend=adxt_refill::Backend;
 using Config=adxt_refill::Config;
 inline constexpr std::int32_t encoded_capacity=8192,encoded_extension=36;
+inline constexpr std::int32_t maximum_encoded_capacity=static_cast<std::int32_t>(adxt_refill::maximum_source_read_bytes);
+enum class CapacityProfile {fixed_8k,bounded_sectors};
+[[nodiscard]] constexpr bool admits_capacity(std::int32_t value,CapacityProfile profile)noexcept{
+    return profile==CapacityProfile::fixed_8k?value==encoded_capacity:
+        profile==CapacityProfile::bounded_sectors && value>=2048 && value<=maximum_encoded_capacity && value%2048==0;
+}
 enum class FileTargetAction {none,file_loop};
 enum class DecoderLimitAction {none,first_snapshot,repeat,seamless};
 struct HeaderGeometry {
@@ -109,7 +115,7 @@ struct ServiceResult {Status status{Status::completed};bool published{},target_i
 class SharedEncodedSource final {
 public:
     SharedEncodedSource(Config,std::shared_ptr<const resources::ByteView>,
-        std::unique_ptr<Backend>,InitialLoop={},PreparedPrefix={},Hooks={});
+        std::unique_ptr<Backend>,InitialLoop={},PreparedPrefix={},Hooks={},CapacityProfile=CapacityProfile::fixed_8k);
     ~SharedEncodedSource(); // Control-thread emergency backend fence, not stop.
     SharedEncodedSource(const SharedEncodedSource&)=delete;
     SharedEncodedSource& operator=(const SharedEncodedSource&)=delete;

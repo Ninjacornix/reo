@@ -74,9 +74,10 @@ fences. Preserve original lower-file envelopes as explicit boundaries until thei
 remaining EOF/error/replacement paths are independently closed. Bank/packet
 output, movies, game integration and stages4–6 remain separate requirements.
 
-The admitted profile fixes the request capacity at 8192 bytes and defaults the
-minimum threshold to 6553 bytes. Explicit original queue minimum controls admit
-0..8192 for the next lower-file open; signed invalid values diagnose without
+The default profile uses an8192-byte capacity and6553-byte minimum. An explicit
+owned sector profile admits2048..1048576 bytes with a default minimum of eight
+tenths of capacity. Source, one-request worker and staging budgets must match.
+Explicit original queue minimum controls admit0..capacity for the next lower-file open; signed invalid values diagnose without
 changing that queue minimum. An already opened lower file and accepted request
 retain their preceding thresholds. Zero preserves strict occupied-byte admission
 and therefore admits no refill. Clips must use the sealed non-looping ADX profile,

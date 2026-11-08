@@ -1,6 +1,17 @@
 # Outbreak native reconstruction plan
 
-Current stage-3 checkpoint, 2026-11-08: both compilers pass **77 standalone
+Latest stage-3 checkpoint, 2026-11-08: the [V22 game retest](native-media/ADXT_CANDIDATE_V22_AUDIO.md)
+passes the previous three-source route failure and reaches responsive bar
+gameplay. Its joined private native source produces32,026,716 signal frames
+with zero underruns. Separately, [larger owned source buffers](native-media/LSC_CAPACITY_PROFILE.md)
+pass78 suites on both compilers from404 recorded inputs, original ring-word
+comparisons,21 factory scenarios,23 adapter scenarios/ten detected faults, and
+five production SDK131 object checks. The larger profile is not yet selected
+by game LSC controls. Complete LSC/external-SJ/callback/restart binding, actual
+native movie graph integration, full A/V transitions and the reported movie
+stutter remain open. Step3 is incomplete; stages4–6 are not complete.
+
+Earlier stage-3 checkpoint: both compilers pass **77 standalone
 suites**, the explicit native-source runtime factory's 12 declared-port
 scenarios, and the stable clock/control bridge's three detected faults. The
 [control results](native-media/ADXT_GAME_CONTROL_RESULTS.md) identify the current

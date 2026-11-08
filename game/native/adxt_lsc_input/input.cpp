@@ -39,9 +39,12 @@ struct Input::State : std::enable_shared_from_this<State> {
     State(Config c, std::shared_ptr<Notification> n) : config(c), notification(std::move(n)) {
         if ((c.channels != 1 && c.channels != 2) ||
             (c.frequency != 24000 && c.frequency != 44100 && c.frequency != 48000) ||
-            !c.catalogue_entries || c.catalogue_entries > 8192 || c.journal_entries < 2 || c.journal_entries > 16)
+            !c.catalogue_entries || c.catalogue_entries > 8192 || c.journal_entries < 2 || c.journal_entries > 16 ||
+            c.encoded_capacity>static_cast<std::uint32_t>(adxt_shared_source::maximum_encoded_capacity) ||
+            !adxt_shared_source::admits_capacity(static_cast<std::int32_t>(c.encoded_capacity),adxt_shared_source::CapacityProfile::bounded_sectors))
             throw std::invalid_argument("Bounded live LSC input profile");
         assets.resize(c.catalogue_entries);
+        threshold=c.encoded_capacity*8u/10u;request_limit=c.encoded_capacity;
     }
     void fail(Status error) noexcept { report.error = error; report.file_state = 4; }
     void sweep() noexcept {
@@ -52,7 +55,9 @@ struct Input::State : std::enable_shared_from_this<State> {
         }
     }
     void observe(const adxt_shared_source::Snapshot& source) noexcept {
-        if (source.cumulative_bytes < 0 || source.ring.data < 0 || source.ring.free < 0 || source.ring.free > 8192) {
+        if (source.cumulative_bytes < 0 || source.ring.data < 0 || source.ring.free < 0 ||
+            source.ring.capacity!=static_cast<std::int32_t>(config.encoded_capacity) ||
+            source.ring.free>static_cast<std::int32_t>(config.encoded_capacity)) {
             fail(Status::fault); return;
         }
         std::uint64_t held = 0;
@@ -68,7 +73,7 @@ struct Input::State : std::enable_shared_from_this<State> {
         const auto consumed = published - static_cast<std::uint32_t>(unconsumed);
         if (consumed < report.consumed_bytes) { fail(Status::fault); return; }
         report.published_bytes = published; report.consumed_bytes = consumed;
-        occupied = 8192 - static_cast<std::uint32_t>(source.ring.free);
+        occupied = config.encoded_capacity - static_cast<std::uint32_t>(source.ring.free);
         if (current_file && report.file_state == 2) {
             report.file_progress = (published - current_file->byte_begin) / 2048;
             if (published >= current_file->byte_end) report.file_state = 3;
@@ -118,7 +123,7 @@ struct Input::State : std::enable_shared_from_this<State> {
         void set_limit(std::uint32_t value) noexcept override { if (auto s = owner_.lock()) s->configured_limit = value; }
         void thresholds(std::uint32_t minimum, std::uint32_t capacity) noexcept override {
             if (auto s = owner_.lock()) {
-                if (capacity != 8192 || minimum > capacity) { s->fail(Status::unsupported_profile); return; }
+                if (capacity != s->config.encoded_capacity || minimum > capacity) { s->fail(Status::unsupported_profile); return; }
                 s->threshold = minimum; s->request_limit = capacity;
             }
         }
@@ -201,7 +206,7 @@ std::shared_ptr<Input> Input::create(Config config, std::shared_ptr<Notification
     auto state = std::make_shared<State>(config, std::move(notification));
     auto input = std::shared_ptr<Input>(new Input(state)); state->owner = input;
     auto port = std::make_shared<State::Port>(state);
-    state->queue = std::make_unique<lsc_queue::Queue>(lsc_queue::Config{}, port, port, port); return input;
+    state->queue = std::make_unique<lsc_queue::Queue>(lsc_queue::Config{config.encoded_capacity}, port, port, port); return input;
 }
 Input::~Input() = default;
 bool Input::valid(const AssetKey& key) const noexcept {
@@ -243,10 +248,12 @@ Snapshot Input::snapshot() const noexcept { auto out = state_->report; out.queue
 std::shared_ptr<const resources::ByteView> Input::origin() const noexcept { return state_->origin; }
 std::uint32_t Input::channels() const noexcept { return state_->config.channels; }
 std::uint32_t Input::frequency() const noexcept { return state_->config.frequency; }
+std::uint32_t Input::capacity() const noexcept { return state_->config.encoded_capacity; }
 std::unique_ptr<adxt_refill::Backend> Input::take_backend() {
     auto& s = *state_;
     if (s.report.bound || s.report.closing) throw std::invalid_argument("One-use live input binding");
-    auto inner = adxt_refill::make_async_backend(8192);
+    auto inner = adxt_refill::make_async_backend(state_->config.encoded_capacity,
+        state_->config.encoded_capacity==8192?adxt_refill::ReadProfile::fixed_8k:adxt_refill::ReadProfile::bounded_source);
     auto backend = std::make_unique<Backend>(state_, std::move(inner)); s.report.bound = true; return backend;
 }
 void Input::before_source(const adxt_shared_source::Snapshot& source) noexcept { state_->observe(source); state_->activate(); }

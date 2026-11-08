@@ -42,6 +42,11 @@ public:
 // Real implementation: one unchanged AsyncReadOwner/SerialWorker, one request,
 // double-byte exact-read budget. Constructor allocation/thread failure throws.
 [[nodiscard]] std::unique_ptr<Backend> make_async_backend(std::size_t maximum_read_bytes);
+enum class ReadProfile {fixed_8k,bounded_source};
+inline constexpr std::size_t maximum_source_read_bytes=1024*1024;
+// Explicit larger one-request worker budget; provider identity, private result
+// ownership and join protocol are unchanged. Default factory stays <=8192.
+[[nodiscard]] std::unique_ptr<Backend> make_async_backend(std::size_t,ReadProfile);
 
 struct Config {
     std::int32_t capacity{4096};

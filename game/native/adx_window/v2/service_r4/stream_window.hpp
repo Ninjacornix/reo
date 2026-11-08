@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <vector>
 
 // Independent composed owner. See the composition contract and implementation
 // qualification for the admitted profile; game/player integration is separate.
@@ -76,6 +77,7 @@ struct Config {
     adx_header::Key configured_key{};
     std::int32_t service_divisor{60};
     std::int16_t pitch_offset{}; std::array<std::int16_t, 2> pans{};
+    source::CapacityProfile source_capacity{source::CapacityProfile::fixed_8k};
 };
 struct Bootstrap {
     source::PreparedPrefix source;
@@ -130,7 +132,7 @@ private:
     pcm::Store pcm_;
     adxt_playback::StorePcm padding_;
     bool padding_active_{};
-    std::array<std::uint8_t, adx_workspace::maximum_encoded_bytes> encoded_{};
+    std::vector<std::uint8_t> encoded_;
     std::array<std::uint8_t, 4096> header_bytes_{};
     std::array<std::int16_t, adx_workspace::maximum_pcm_samples_per_plane> left_{}, right_{};
     std::unique_ptr<source::SharedEncodedSource> source_;

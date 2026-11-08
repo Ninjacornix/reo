@@ -7,10 +7,11 @@
 #include <utility>
 
 namespace reo::native::adx_window::service_r4 {
+static_assert(adx_workspace::maximum_source_encoded_bytes==source::maximum_encoded_capacity+source::encoded_extension);
 namespace {
 Config checked(Config c) {
-    if (c.service_divisor <= 0 || c.channels < 1 || c.channels > 2 || c.source_config.capacity != source::encoded_capacity)
-        throw std::invalid_argument("Window2 fixed physical geometry");
+    if (c.service_divisor <= 0 || c.channels < 1 || c.channels > 2 || !source::admits_capacity(c.source_config.capacity,c.source_capacity))
+        throw std::invalid_argument("Window2 admitted physical geometry");
     return c;
 }
 bool bounded(std::int64_t n) noexcept { return n >= 0 && n <= INT32_MAX; }
@@ -29,7 +30,8 @@ private: StreamWindowOwner& owner_;
 StreamWindowOwner::StreamWindowOwner(Config c, std::shared_ptr<const resources::ByteView> view,
     std::unique_ptr<source::Backend> backend, std::shared_ptr<adx_header::KeyContext> keys, Hooks hooks, Bootstrap initial)
     : config_(checked(c)), hooks_(hooks), keys_(std::move(keys)), identity_(std::make_shared<Identity>()),
-      pcm_({c.channels, initial.pcm_cursor, initial.queued_pcm_bytes}, {this, pcm_guard, pcm_publication}, 0xa5), padding_(pcm_, c.channels) {
+      pcm_({c.channels, initial.pcm_cursor, initial.queued_pcm_bytes}, {this, pcm_guard, pcm_publication}, 0xa5), padding_(pcm_, c.channels),
+      encoded_(static_cast<std::size_t>(config_.source_config.capacity)+source::encoded_extension) {
     if (!keys_) throw std::invalid_argument("Window2 retained key context required");
     header_.configured_key = c.configured_key; header_.output_channels = static_cast<std::int32_t>(c.channels);
     header_.borrowed_pcm = {pcm::capacity / 2, (pcm::capacity + pcm::extension) / 2, 1};
@@ -38,7 +40,7 @@ StreamWindowOwner::StreamWindowOwner(Config c, std::shared_ptr<const resources::
     // source or consuming its one-use link. No allocation follows that effect.
     source_ = std::make_unique<source::SharedEncodedSource>(c.source_config, std::move(view), std::move(backend),
         source::InitialLoop{{}, -1, source::FileTargetAction::none, source::DecoderLimitAction::none, c.loop_enabled},
-        initial.source, source::Hooks{this, source_target, {this, source_enter, source_leave, source_error}});
+        initial.source, source::Hooks{this, source_target, {this, source_enter, source_leave, source_error}},c.source_capacity);
     auto linked = source_->take_window_link();
     if (linked.status != source::Status::completed) throw std::logic_error("Fresh Window2 source link");
     link_.emplace(std::move(linked.link));
@@ -358,7 +360,7 @@ Status StreamWindowOwner::decode_impl() noexcept {
         if (length > n) return finish_input({source::FinishKind::consume_single_prefix, 0}) ? Status::completed : fail(Status::source_failure);
         outer_.encoded.bytes = length;
         if (!finish_input({source::FinishKind::consume_single_prefix, length})) return fail(Status::source_failure);
-        for (std::int32_t pass = 0; pass <= source::encoded_capacity; ++pass) {
+        for (std::int32_t pass = 0; pass <= config_.source_config.capacity; ++pass) {
             if (!borrow_one(INT32_MAX, true)) return fail(Status::source_failure);
             n = input_->bytes(0);
             if (n < 0 || n > static_cast<std::int32_t>(encoded_.size()) ||
@@ -416,7 +418,8 @@ Status StreamWindowOwner::decode_impl() noexcept {
     phase_ = Phase::codec;
     const auto route = channels == 1 ? adx_workspace::Route::mono : config_.downmix ? adx_workspace::Route::downmix_7_over_10 : adx_workspace::Route::stereo;
     auto admission = adx_workspace::prepare_into(route, std::span<const std::uint8_t>(encoded_).first(static_cast<std::size_t>(n)), units,
-        {left_, channels == 1 ? std::span<std::int16_t>{} : std::span<std::int16_t>(right_)});
+        {left_, channels == 1 ? std::span<std::int16_t>{} : std::span<std::int16_t>(right_)},
+        config_.source_capacity==source::CapacityProfile::bounded_sectors?adx_workspace::SpanProfile::bounded_source:adx_workspace::SpanProfile::fixed_8k);
     if (admission.status != adx_workspace::Status::admitted || !admission.prepared) return fail(Status::codec_refusal);
     predictor_.input_offset = input_->offset(0); predictor_.requested_units = units;
     predictor_.channels = config_.channels; predictor_.configured = true;

@@ -22,15 +22,17 @@ std::int32_t checked_capacity(const Config& c) {
     if (!valid_config(c)) throw std::invalid_argument("Unsupported encoded-source configuration");
     return c.capacity;
 }
-resource_io::Config read_config(std::size_t bytes) {
-    if (!bytes || bytes > 8192) throw std::invalid_argument("Bounded encoded-source read limit");
+resource_io::Config read_config(std::size_t bytes,ReadProfile profile) {
+    const bool admitted=profile==ReadProfile::fixed_8k?bytes && bytes<=8192:
+        profile==ReadProfile::bounded_source && bytes && bytes<=maximum_source_read_bytes && bytes%2048==0;
+    if (!admitted) throw std::invalid_argument("Bounded encoded-source read limit");
     resource_io::Config config;
     config.max_requests = 1; config.max_read_bytes = bytes; config.byte_budget = bytes * 2;
     return config;
 }
 class AsyncBackend final : public Backend {
 public:
-    explicit AsyncBackend(std::size_t bytes) : reader_(read_config(bytes)) {}
+    AsyncBackend(std::size_t bytes,ReadProfile profile) : reader_(read_config(bytes,profile)) {}
     Acceptance submit(std::shared_ptr<const resources::ByteView> view, std::uint64_t offset,
                       std::uint32_t sectors, std::uint64_t id) noexcept override {
         if (pending_ || closed_) return {0, false};
@@ -73,7 +75,8 @@ private:
     EncodedSource& owner_; bool entered_;
 };
 
-std::unique_ptr<Backend> make_async_backend(std::size_t bytes) { return std::make_unique<AsyncBackend>(bytes); }
+std::unique_ptr<Backend> make_async_backend(std::size_t bytes) { return make_async_backend(bytes,ReadProfile::fixed_8k); }
+std::unique_ptr<Backend> make_async_backend(std::size_t bytes,ReadProfile profile) { return std::make_unique<AsyncBackend>(bytes,profile); }
 DataLease::DataLease(DataLease&& other) noexcept : identity_(std::move(other.identity_)),
     chunk_(std::move(other.chunk_)), epoch_(other.epoch_), id_(std::exchange(other.id_, 0)) {}
 std::int32_t DataLease::bytes() const noexcept { return id_ ? chunk_.bytes() : 0; }

@@ -56,9 +56,15 @@ Prepared::Prepared(Route route, std::span<const std::uint8_t> encoded, PcmOutput
 
 Admission prepare_into(Route route, std::span<const std::uint8_t> encoded,
                        std::int32_t requested, PcmOutput output) noexcept {
+    return prepare_into(route,encoded,requested,output,SpanProfile::fixed_8k);
+}
+Admission prepare_into(Route route, std::span<const std::uint8_t> encoded,
+                       std::int32_t requested,PcmOutput output,SpanProfile profile)noexcept {
     if (route != Route::mono && route != Route::stereo && route != Route::downmix_7_over_10)
         return {Status::unsupported_route, {}};
-    if (encoded.size() > maximum_encoded_bytes || output.left.size() > maximum_pcm_samples_per_plane ||
+    const auto limit=profile==SpanProfile::fixed_8k?maximum_encoded_bytes:
+        profile==SpanProfile::bounded_source?maximum_source_encoded_bytes:0;
+    if (!limit || encoded.size() > limit || output.left.size() > maximum_pcm_samples_per_plane ||
         output.right.size() > maximum_pcm_samples_per_plane || (route == Route::mono && !output.right.empty()))
         return {Status::physical_span, {}};
     Extent input, left, right;
