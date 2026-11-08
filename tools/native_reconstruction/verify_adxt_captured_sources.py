@@ -34,10 +34,11 @@ def main():
     for r in recipes:
         root=r['path'].upper();m=indexed[(root,r['start_sector']*2048)];meta=m['adx']
         if r['parent'] or r['channels']!=meta['channels'] or r['sector_count']*2048!=(m['bytes']+2047)//2048*2048:raise ValueError('Unmatched captured recipe')
+        if r['loop_enabled'] not in (0,1):raise ValueError('Unsupported captured loop control')
         loop=bool(r['loop_enabled'] and meta['loop'].get('enabled'))
-        plan.append(' '.join(map(str,(r['line'],handles.index(r['handle']),r['path'],r['start_sector'],r['sector_count'],r['channels'],meta['frequency'],meta['total_samples'],int(loop),r['service_divisor'],m['member']))))
+        plan.append(' '.join(map(str,(r['line'],handles.index(r['handle']),r['path'],r['start_sector'],r['sector_count'],r['channels'],meta['frequency'],meta['total_samples'],int(loop),r['loop_enabled'],r['service_divisor'],m['member']))))
         expected=None if loop else finite_by_hash[m['sha256']]
-        cases.append(dict(line=r['line'],member=m['member'],loop=loop,payload_sha256=m['sha256'],expected=expected))
+        cases.append(dict(line=r['line'],member=m['member'],loop=loop,loop_control=r['loop_enabled'],payload_sha256=m['sha256'],expected=expected))
     if not cases:raise ValueError('Empty capture')
     inputs={n:d for n,d in manifest['files'].items() if n.startswith('game/native/') or n.startswith('recomp/overrides/native_banks/')}
     for path in (Path(__file__),Path(__file__).with_name('analyze_adxt_observer.py'),Path(__file__).with_name('adxt_captured_sources.cpp'),ROOT/'recomp/overrides/native_adxt/source_profile.h',ROOT/'recomp/overrides/native_adxt/source_profile.cpp'):inputs[path.relative_to(ROOT).as_posix()]=sha(path)
@@ -60,7 +61,7 @@ def main():
         results=list(map(json.loads,(out/'results.jsonl').read_text().splitlines()))
         if len(results)!=len(cases):raise ValueError('Incomplete replay')
         for row,case in zip(results,cases):
-            if row['line']!=case['line'] or row['member']!=case['member'] or row['status']!='passed' or not row['joined']:raise ValueError('Replay identity/fence mismatch')
+            if row['line']!=case['line'] or row['member']!=case['member'] or row['loop_control']!=case['loop_control'] or row['status']!='passed' or not row['joined']:raise ValueError('Replay identity/control/fence mismatch')
             if case['expected'] and (row['samples']!=case['expected']['samples'][0] or row['byte_digest']!=case['expected']['byte_digest']):raise ValueError('Finite PCM baseline mismatch at '+case['member'])
         verify();record.update(status='captured ordinary file sources passed native offline playback',sources_replayed=len(results),finite_pcm_baselines_compared=sum(not c['loop'] for c in cases),two_iteration_loops=sum(c['loop'] for c in cases),executable_sha256=sha(exe))
     except Exception as e:record['failure']=str(e);raise

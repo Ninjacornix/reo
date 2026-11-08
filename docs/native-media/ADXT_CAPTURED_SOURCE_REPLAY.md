@@ -53,6 +53,10 @@ It generates a replay plan only from post-call `133490` recipes, excluding the
 duplicate lower-start observations. It resolves each range through
 `prepare_file_source` on the immutable import and plays it through canonical
 native `Instances`, using the captured channels and service divisor.
+The V2 replay also preserves the raw game loop-control byte for every source,
+including finite headers without loop metadata. Its separate effective-loop
+flag selects bounded test termination only. The retained V1 replay normalized
+that control to zero on finite headers; V2 closes that exact control-input gap.
 
 Both LLVM and GCC pass all 62 source starts with the stable three-instance
 construction and replacement path. All 57 finite clips match the independently

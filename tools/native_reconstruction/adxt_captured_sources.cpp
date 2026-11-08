@@ -24,15 +24,15 @@ int main(int argc,char** argv)try{
     // Only ONE source plays at a time. This order is a fixture choice and is
     // deliberately not claimed to reproduce original unordered-map summation.
     require(players.set_order(keys)==n::Status::completed,"fixture order rejected");
-    unsigned line,slot,start,count,channels,rate,total,loop,divisor;std::string member,path;unsigned done{};
-    while(plan>>line>>slot>>path>>start>>count>>channels>>rate>>total>>loop>>divisor>>member){
+    unsigned line,slot,start,count,channels,rate,total,loop,loop_control,divisor;std::string member,path;unsigned done{};
+    while(plan>>line>>slot>>path>>start>>count>>channels>>rate>>total>>loop>>loop_control>>divisor>>member){
         require(slot<keys.size(),"invalid captured handle slot");
-        report<<"{\"line\":"<<line<<",\"member\":\""<<member<<"\",\"loop_enabled\":"<<loop;
+        report<<"{\"line\":"<<line<<",\"member\":\""<<member<<"\",\"loop_enabled\":"<<loop<<",\"loop_control\":"<<loop_control;
         try{
             const auto prepared=b::prepare_file_source(mounted.mount,{path,0,start,count});
             require(prepared.status==b::FileStatus::ready,"captured source preparation failed");
             require(players.set_service_divisor(keys[slot],static_cast<std::int32_t>(divisor))==n::Status::completed,"captured divisor rejected");
-            require(players.set_loop_enabled(keys[slot],loop!=0)==n::Status::completed,"captured loop rejected");
+            require(players.set_loop_enabled(keys[slot],loop_control!=0)==n::Status::completed,"captured loop rejected");
             n::Source source;source.input=prepared.view;source.player.decoder.channels=channels;
             source.player.decoder.source_config.byte_length=static_cast<std::int32_t>(prepared.bytes);
             require(accepted(players.start(keys[slot],std::move(source))),"captured start rejected");
