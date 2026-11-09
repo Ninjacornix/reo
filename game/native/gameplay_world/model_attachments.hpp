@@ -7,6 +7,11 @@
 namespace reo::native::gameplay_world {
 class ResourceModels;
 class ResourceModelWork;
+struct ResourcePartPoses {
+    std::int16_t asset_index{};
+    std::uint16_t count{};
+    std::array<animation::Matrix,6> poses;
+};
 struct AttachmentMetadata {
     std::uint8_t kind{};
     std::array<animation::Vector, 2> offsets;
@@ -41,6 +46,7 @@ class ResourceModel final : public gameplay_scenario::SceneAttachment {
     std::array<std::uint8_t,6> part_enabled{};
     std::array<animation::Matrix,6> parts{};
     std::array<std::uint16_t,3> angles{};
+    std::shared_ptr<const ResourcePartPoses> base_parts;
     std::shared_ptr<ResourceModelWork> work;
   private:
     bool retired_{};

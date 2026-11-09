@@ -32,6 +32,7 @@ public:
     ResourceModelStatus retire(const ResourceModelId&)noexcept;
     std::shared_ptr<ResourceModel> retain(const ResourceModelId&)const noexcept;
     std::optional<std::uint8_t> physical_slot(const ResourceModelId&)const noexcept;
+    ResourceModelId identity_of(const ResourceModel&)const noexcept;
     std::size_t available()const noexcept{return free_count_;}
     ResourceModelId head()const noexcept;
     ResourceModelId tail()const noexcept;

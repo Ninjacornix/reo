@@ -4,7 +4,7 @@ namespace reo::native::gameplay_world {
 void ResourceModel::retire_data()noexcept{
     retired_=true;correction={};pose={};position={};flags=0;program={};
     active=visible=false;physical_slot=resource_slot=draw_layer=0;asset_index=0;
-    part_enabled={};parts={};angles={};work.reset();
+    part_enabled={};parts={};angles={};base_parts.reset();work.reset();
 }
 ResourceModels::ResourceModels(){for(unsigned i=0;i<64;++i)free_[i]=std::uint8_t(i);}
 ResourceModels::~ResourceModels(){if(close()==ResourceModelStatus::busy)std::terminate();}
@@ -48,6 +48,11 @@ std::optional<std::uint8_t> ResourceModels::physical_slot(const ResourceModelId&
     return{};
 }
 ResourceModelId ResourceModels::head()const noexcept{return head_?slots_[*head_]->id:ResourceModelId{};}
+ResourceModelId ResourceModels::identity_of(const ResourceModel& model)const noexcept{
+    if(closed_||!model.current())return{};
+    for(const auto& node:slots_)if(node&&node->model.get()==&model)return node->id;
+    return{};
+}
 ResourceModelId ResourceModels::tail()const noexcept{return tail_?slots_[*tail_]->id:ResourceModelId{};}
 ResourceModelId ResourceModels::previous(const ResourceModelId& id)const noexcept{const auto node=find(id);return node&&node->previous?slots_[*node->previous]->id:ResourceModelId{};}
 ResourceModelId ResourceModels::next(const ResourceModelId& id)const noexcept{const auto node=find(id);return node&&node->next?slots_[*node->next]->id:ResourceModelId{};}

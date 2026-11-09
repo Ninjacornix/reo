@@ -89,6 +89,13 @@ The distinct [64-primary-resource model owner](RESOURCE_MODELS.md) now also
 preserves allocation, retirement and mutation-sensitive update ordering. Its
 actual visual callbacks and resource factory/release composition remain open.
 
+The [resource frame consumers](RESOURCE_FRAMES.md) now supply canonical primary
+visibility/retirement and full admitted WMD playback through that 64-model pass.
+The primary-only release composition is compared; shared secondary release,
+extended owners, room pulses, required rebuild, nonattached pose updates and
+the real asset/resource factory remain open. This is a component checkpoint;
+the installed game is still V39 and the stage remains incomplete.
+
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a
 guest-addressed RAM model. Renderer/model submission remains an explicit Stage 5
