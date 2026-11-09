@@ -226,6 +226,21 @@ void offline_tests(){
         check(coordinator.tick(native,0,true,party,9,detached,flags,p).status==vm::Status::provider_unavailable);check(detached==2);check(native.channels()[0].current==old);
         actors.world.retire_primary(2);check(coordinator.tick(native,0,true,party,9,actors.world.selected_actor,flags,p).status==vm::Status::provider_unavailable);check(actors.world.selected_actor==2);check(native.channels()[0].current==old);
     }
+    for(const auto op:{0xb0u,0xb1u,0xb4u})for(unsigned profile=0;profile<8;++profile)for(unsigned category=0;category<5;++category)for(unsigned relation=0;relation<3;++relation){
+        assertion_context="scene model offline op="+std::to_string(op)+" profile="+std::to_string(profile)+" category="+std::to_string(category)+" relation="+std::to_string(relation);
+        for(const auto authored:{3u,31u,32u,255u}){std::vector<std::byte> b;emit(b,op,{authored,profile});emit(b,0xa);std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;ram[0x4baded]=2;
+            fixture_write(ram.data(),0x75a4b0,category);fixture_write(ram.data(),0x75a4c0,relation);ModelFixture models(profile==7&&op!=0xb4?255u:profile);models.export_original(ram);
+            vm::Interpreter native;install_offline_program(native,ram,0,b);original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers p;p.flags=&flags;p.canonical_flags=&flags;p.models=&models.owner;
+            check(native.tick_offline_channel(0,{true,false,2},{category,relation,0},p).status==vm::Status::yielded);compare_offline_channels(native,ram);models.compare_original(ram);
+        }
+    }
+    {std::vector<std::byte> b;emit(b,1);emit(b,0xb0,{7});emit(b,0xb1,{3});emit(b,0xb4,{7,4});emit(b,0xa);std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;fixture_write<std::uint16_t>(ram.data(),0x3243dc,9);ram[0x4baded]=2;
+        std::array<vm::OfflinePartyActor,3> party;for(unsigned i=0;i<3;++i){party[i]={true,0,9};ram[0x4a5c30+i*0x10e0]=0x80;ram[0x4a5c33+i*0x10e0]=0;fixture_write<std::uint16_t>(ram.data(),0x4a5c30+i*0x10e0+0x1e2,9);}
+        ModelFixture models;models.export_original(ram);vm::Interpreter native;install_offline_program(native,ram,1,b);vm::FlagState flags;vm::OfflineCoordinator coordinator;vm::Providers p;p.models=&models.owner;std::uint8_t selected=2;
+        original_offline_call(ram,1,true);const auto r=coordinator.tick(native,1,true,party,9,selected,flags,p);check(r.status==vm::Status::completed);check(r.invocations==3);compare_offline_channels(native,ram);models.compare_original(ram);check(selected==ram[0x4baded]);
+        const auto old=native.channels()[1].current;selected=2;p.models=nullptr;check(coordinator.tick(native,1,true,party,9,selected,flags,p).status==vm::Status::provider_unavailable);check(selected==2);check(native.channels()[1].current==old);
+        ModelFixture invalid(255);p.models=&invalid.owner;auto remap=invalid.owner.remap();remap[7]=255;invalid.owner.room_remap(remap);check(coordinator.tick(native,1,true,party,9,selected,flags,p).status==vm::Status::provider_unavailable);check(selected==2);check(native.channels()[1].current==old);
+    }
     // Actual optional audio tick reaches both wrapper routes, including every
     // active actor when a shared authored channel reenters its saved record.
     for(const auto tick:{0u,1234u})for(const auto requested:{0u,1u}){

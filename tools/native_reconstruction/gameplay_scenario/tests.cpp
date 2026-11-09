@@ -9,6 +9,7 @@
 #include "game/native/gameplay_scenario/saved_controls.hpp"
 #include "game/native/gameplay_scenario/action_choices.hpp"
 #include "game/native/gameplay_world/world.hpp"
+#include "game/native/gameplay_scenario/scene_models.hpp"
 #include <bit>
 #include "original_fixture.hpp"
 #include "original_declarations.inc"
@@ -105,7 +106,8 @@ void compare(vm::Interpreter& native,std::vector<std::uint8_t>& ram,std::size_t 
 #include "control_vm_fixture.inc"
 #include "stream_vm_fixture.inc"
 #include "actor_vm_fixture.inc"
-void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false,unsigned scene_profile=0,unsigned sequence_profile=0,unsigned control_profile=0,unsigned stream_profile=0,std::uint32_t stream_tick=1234,unsigned actor_profile=0){
+#include "model_vm_fixture.inc"
+void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false,unsigned scene_profile=0,unsigned sequence_profile=0,unsigned control_profile=0,unsigned stream_profile=0,std::uint32_t stream_tick=1234,unsigned actor_profile=0,unsigned model_profile=0){
     assertion_context="run first="+std::to_string(fixture_read<std::uint32_t>(reinterpret_cast<const std::uint8_t*>(blocks[0].data()),0)&0xffffff)+" channel="+std::to_string(channel)+" actor="+std::to_string(actor)+" control="+std::to_string(control_profile)+" actorprofile="+std::to_string(actor_profile);
     std::vector<std::uint8_t> ram(0x800000);for(std::size_t i=0;i<blocks.size();++i){std::memcpy(ram.data()+0x10000+i*0x10000,blocks[i].data(),blocks[i].size());fixture_write<std::uint32_t>(ram.data(),0x90000+4*i,0x10000+std::uint32_t(i)*0x10000);}
     std::memcpy(ram.data()+0x717830,original_opcode_table.data(),original_opcode_table.size()*4);
@@ -119,6 +121,7 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     ControlFixture controls(control_profile);controls.export_original(ram);
     StreamFixture streams(stream_profile,stream_tick);streams.export_original(ram);
     ActorFixture actors(actor_profile,actor);actors.export_original(ram);
+    ModelFixture models(model_profile);models.export_original(ram);
     ram[0x3243e8]=1;ram[0x4baded]=actor;fixture_write<std::uint32_t>(ram.data(),0x4bace0+4*channel,0x10000);
     fixture_write<std::uint32_t>(ram.data(),0x4bad28+4*channel,0x10000+saved.block*0x10000+saved.offset);
     fixture_write<std::uint32_t>(ram.data(),0x4bad40+4*channel,0x90000);
@@ -130,7 +133,7 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     auto program=std::make_shared<const vm::Program>(std::move(blocks));vm::Channel state{program,{0,0},saved,0,0,0};check(native.restore_channel(channel,state)==vm::Status::completed);
     for(unsigned i=0;i<ticks;++i){R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
         o2_0068C660_0x68c660(ram.data(),&ctx,&runtime);check(ctx.pc==0xdeadbeef);
-        vm::Providers providers{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters,&sequence.owner,&lighting.owner,&scene_channels,&controls.owner,&controls,&streams.owner,&streams};providers.world=&actors.world;providers.action_choices=&actors.choices;
+        vm::Providers providers{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters,&sequence.owner,&lighting.owner,&scene_channels,&controls.owner,&controls,&streams.owner,&streams};providers.world=&actors.world;providers.action_choices=&actors.choices;providers.models=&models.owner;
         const auto result=native.tick(channel,{true,false,actor,9,stream_tick},providers);check(result.status==vm::Status::yielded);
         compare(native,ram,channel,flags,timers,signals);scene.compare_original(ram);++invocations;
         sequence.compare_original(ram);
@@ -139,6 +142,7 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
         controls.compare_original(ram);
         streams.compare_original(ram);
         actors.compare_original(ram);
+        models.compare_original(ram);
         check(std::memcmp(session_counters.snapshot().data(),ram.data()+0x4bad70,24)==0);
     }
 }
@@ -279,10 +283,21 @@ int main()try{
             if(op!=0x180){actor.world.retire_primary(0);check(vm.tick(0,{},p).status==vm::Status::provider_unavailable);check(vm.counters()[0]==0);}
         }
     }
+    for(unsigned profile=0;profile<8;++profile)for(const auto authored:{0u,3u,31u,32u,255u,0xffff0103u}){
+        std::vector<std::byte> b;emit(b,0xb0,{authored});emit(b,4,{1});emit(b,0xb1,{authored});const auto end=emit(b,0xa);run({b},{0,end},2,profile%6,0,false,0,0,0,0,1234,0,profile==7?255u:profile);
+    }
+    for(unsigned profile=0;profile<16;++profile)for(unsigned preset=0;preset<8;++preset)for(const auto authored:{0u,7u,31u,32u,255u}){
+        std::vector<std::byte> b;emit(b,0xb4,{authored,preset});const auto end=emit(b,0xa);run({b},{0,end},1,profile%6,0,false,0,0,0,0,1234,0,profile);
+    }
+    {std::vector<std::byte> b;emit(b,0x110,{0,88});emit(b,0xb4,{3,0});emit(b,0xa);vm::Interpreter interpreter;check(interpreter.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
+        check(interpreter.tick(0,{}).status==vm::Status::provider_unavailable);check(interpreter.counters()[0]==0);ModelFixture models(255);vm::Providers p;p.models=&models.owner;
+        check(interpreter.tick(0,{},p).status==vm::Status::provider_unavailable);check(interpreter.counters()[0]==0);
+        b.clear();emit(b,0xb4,{0,8});bool refused=false;try{const vm::Program program({b});}catch(const std::invalid_argument&){refused=true;}check(refused);
+    }
     // Complete main1B3C30 is return-only in the pinned File1 ELF. Observe all
     // registers/context plus the whole bounded memory before/after the cohort.
     {std::vector<std::uint8_t> ram(0x800000,0xa5),before=ram;std::uint32_t seed=0x1234abcd;for(unsigned i=0;i<4096;++i){R5900Context context;PS2Runtime runtime;
-            for(auto& reg:context.gpr)for(auto& w:reg.words){seed=seed*1664525u+1013904223u;w=(std::uint64_t(seed)<<32)|~seed;}
+            for(auto& reg:context.r)for(auto& w:reg.lane){seed=seed*1664525u+1013904223u;w=(std::uint64_t(seed)<<32)|~seed;}
             context.pc=0x1b3c30;auto expected=context;expected.pc=GPR_U32(&context,31);sub_001B3C30_0x1b3c30(ram.data(),&context,&runtime);
             check(std::memcmp(&context,&expected,sizeof(context))==0);}
         check(ram==before);}

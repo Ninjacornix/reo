@@ -9,6 +9,7 @@
 #include "stream_channels.hpp"
 #include "saved_controls.hpp"
 #include "action_choices.hpp"
+#include "scene_models.hpp"
 #include "../gameplay_world/world.hpp"
 #include <algorithm>
 #include <bit>
@@ -23,7 +24,7 @@ std::uint32_t word(const std::byte* p)noexcept{
         (std::to_integer<std::uint32_t>(p[2])<<16)|(std::to_integer<std::uint32_t>(p[3])<<24);
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
-    switch(op){case 0x135:return 20;case 0x155:return 8;case 0x180:return 4;
+    switch(op){case 0xb0:case 0xb1:return 1;case 0xb4:return 8;case 0x135:return 20;case 0x155:return 8;case 0x180:return 4;
     case 0x50:case 0x54:case 0x55:case 0x104:case 0x105:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
@@ -67,11 +68,12 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0x13||op==0x15)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native sequence selector profile");
             if(!noop&&(op==0x23||op==0x24)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native lighting entry profile");
             if(!noop&&op==0x70&&std::bit_cast<std::int32_t>(word(b.data()+at+4))<0)throw std::invalid_argument("Native stream member profile");
+            if(!noop&&op==0xb4){if(word(b.data()+at+8)>=8)throw std::invalid_argument("Native model transform preset profile");adjusted_models_.push_back(std::to_integer<std::uint8_t>(b[at+4]));}
             flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
             scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;
             sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;
             scene_controls_|=coverage[op].scene_controls_required;streams_|=coverage[op].streams_required;saved_controls_|=coverage[op].saved_controls_required;
-            world_|=coverage[op].world_required;selected_actor_|=coverage[op].selected_actor_required;action_choices_|=coverage[op].action_choices_required;at+=bytes;
+            world_|=coverage[op].world_required;selected_actor_|=coverage[op].selected_actor_required;action_choices_|=coverage[op].action_choices_required;models_|=coverage[op].models_required;at+=bytes;
         }
     }
 }
@@ -100,6 +102,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(const auto i:{0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
+    for(const auto i:{0xb0,0xb1,0xb4}){out[i].native_algorithm=true;out[i].models_required=true;}
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef&&i!=0x104&&i!=0x105)out[i]={};
@@ -155,6 +158,8 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_world()&&(!providers.world||providers.world->selected_actor!=context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_models()&&!providers.models)return{Status::provider_unavailable,0,{},0};
+    for(const auto authored:c.program->adjusted_models())if(providers.models->resolve(authored)>=128)return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -229,6 +234,8 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0xa0:case 0xa1:providers.scene_channels->bit(value(0),opcode==0xa0);break;
         case 0xa2:case 0xa3:providers.scene_channels->all(opcode==0xa2);break;
         case 0x190:break; // File1 main1B3C30 is the checked return-only body.
+        case 0xb0:case 0xb1:providers.models->visibility(std::to_integer<std::uint8_t>(payload[0]),opcode==0xb1);break;
+        case 0xb4:if(providers.models->adjust(std::to_integer<std::uint8_t>(payload[0]),value(4))!=ModelStatus::completed)return result(Status::provider_unavailable);break;
         case 0x70:{const auto audio=providers.streams->request(0,std::bit_cast<std::int32_t>(value(0)),0,*context.stream_tick,*providers.stream_backend);
             if(!stream_accepted(audio.status))return result(Status::provider_unavailable);
             break;}

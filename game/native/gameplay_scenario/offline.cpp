@@ -1,5 +1,6 @@
 #include "offline.hpp"
 #include "../gameplay_world/world.hpp"
+#include "scene_models.hpp"
 
 namespace reo::native::gameplay_scenario {
 Status OfflineCoordinator::restore(const OfflineState& value)noexcept{
@@ -18,6 +19,8 @@ OfflineResult OfflineCoordinator::tick(Interpreter& vm,std::size_t requested,boo
     if(requested!=1){if(!admitted(requested)){out.status=Status::invalid_program;return out;}}
     else for(const auto& actor:party)if(actor.active&&(actor.script_class>=class_channel.size()||!admitted(class_channel[actor.script_class]))){out.status=Status::invalid_program;return out;}
     const auto missing_stream=[&](std::size_t channel,std::size_t owner){const auto& program=*vm.channels()[channel].program;
+        if(program.needs_models()&&!providers.models)return true;
+        for(const auto authored:program.adjusted_models())if(providers.models->resolve(authored)>=128)return true;
         return (program.needs_streams()&&(!stream_tick||!providers.streams||!providers.stream_backend))||
             (program.needs_saved_controls()&&(!providers.saved_controls||owner>=3))||
             (program.needs_world()&&(!providers.world||&selected!=&providers.world->selected_actor))||
