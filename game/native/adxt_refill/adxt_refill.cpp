@@ -4,6 +4,13 @@
 #include <stdexcept>
 #include <utility>
 
+namespace reo::native::resources {
+// Private resource implementations establish this capability only after the
+// complete immutable copy exists. Probing performs no provider I/O and never
+// grants arbitrary ByteView implementations permission to read inline.
+bool is_resident_view(const std::shared_ptr<const ByteView>&) noexcept;
+}
+
 namespace reo::native::adxt_refill {
 namespace {
 constexpr std::int32_t sector_bytes = 2048;
@@ -32,11 +39,31 @@ resource_io::Config read_config(std::size_t bytes,ReadProfile profile) {
 }
 class AsyncBackend final : public Backend {
 public:
-    AsyncBackend(std::size_t bytes,ReadProfile profile) : reader_(read_config(bytes,profile)) {}
+    AsyncBackend(std::size_t bytes,ReadProfile profile)
+        : reader_(read_config(bytes,profile)), maximum_read_bytes_(bytes) {}
     Acceptance submit(std::shared_ptr<const resources::ByteView> view, std::uint64_t offset,
                       std::uint32_t sectors, std::uint64_t id) noexcept override {
         if (pending_ || closed_) return {0, false};
         if (!sectors) return {0, false};
+        if (resources::is_resident_view(view)) {
+            // This runs under the native control owner, never the real-time
+            // output callback. Ready resident views can only copy owned memory;
+            // a lazy view's first full load still uses the async reader below.
+            if (sectors > maximum_read_bytes_ / sector_bytes) return {0, true};
+            const auto bytes=std::size_t(sectors)*sector_bytes;
+            const auto size=view->size();
+            if (offset>size || bytes>size-offset) return {0, true};
+            id_=id;pending_=resident_result_=true;resident_error_=false;
+            try {
+                resident_bytes_.resize(bytes);
+                const auto copied=view->read(offset,resident_bytes_);
+                resident_error_=copied.status!=resources::Status::ok || copied.bytes!=bytes;
+            } catch (...) { resident_error_=true; }
+            if (resident_error_)resident_bytes_.clear();
+            // Even an allocation/read failure is one accepted result, delivered
+            // once by poll, with the same request identity and source drain path.
+            return {static_cast<std::int32_t>(sectors),false};
+        }
         const auto result = reader_.submit(std::move(view), offset, std::size_t(sectors) * sector_bytes);
         if (result.status != resource_io::SubmitStatus::accepted) return {0, true};
         ticket_ = result.ticket; id_ = id; pending_ = true;
@@ -44,6 +71,11 @@ public:
     }
     Completion poll() noexcept override {
         if (!pending_) return {};
+        if (resident_result_) {
+            pending_=resident_result_=false;
+            if (resident_error_)return {BackendState::error,id_,{}};
+            return {BackendState::complete,id_,std::move(resident_bytes_)};
+        }
         auto result = reader_.poll(ticket_);
         if (result.status == resource_io::PollStatus::pending) return {BackendState::pending, id_, {}};
         pending_ = false;
@@ -57,9 +89,11 @@ public:
     }
 private:
     resource_io::AsyncReadOwner reader_;
+    const std::size_t maximum_read_bytes_;
     resource_io::Ticket ticket_;
+    std::vector<std::byte> resident_bytes_;
     std::uint64_t id_{};
-    bool pending_{}, closed_{};
+    bool pending_{}, closed_{}, resident_result_{}, resident_error_{};
 };
 } // namespace
 

@@ -3,6 +3,11 @@
 #include <climits>
 #include <new>
 
+namespace reo::native::resources {
+// Internal native preparation capability. Construction performs no provider
+// read; the first asynchronous/header read materializes the immutable view.
+std::shared_ptr<const ByteView> retain_resident_view(std::shared_ptr<const ByteView>,std::string);
+}
 namespace reo::native::adxt_binding {
 namespace {
 bool canonical(std::string_view name,std::string& result){
@@ -40,7 +45,11 @@ FileSource prepare_file_source(const std::shared_ptr<const resources::win32::Mou
         if(!range.byte_length){result.status=FileStatus::empty_range;return result;}
         const auto view=resources::bounded_view(root->view,std::uint64_t(range.start_sector)*2048,range.byte_length);
         if(view.status!=resources::Status::ok){result.status=view.status==resources::Status::no_memory?FileStatus::no_memory:FileStatus::unsupported_range;return result;}
-        result.view=view.view;result.status=FileStatus::ready;return result;
+        std::string identity="native-audio:";identity.reserve(384);
+        constexpr char hex[]="0123456789abcdef";
+        for(const auto byte:mount->identity().route_sha256){identity.push_back(hex[byte>>4]);identity.push_back(hex[byte&15]);}
+        identity+=':';identity+=result.canonical_key;identity+='@';identity+=std::to_string(range.start_sector);identity+=':';identity+=std::to_string(range.byte_length);
+        result.view=resources::retain_resident_view(view.view,std::move(identity));result.status=FileStatus::ready;return result;
     }catch(const std::bad_alloc&){return{FileStatus::no_memory};}
      catch(...){return{FileStatus::unsupported_range};}
 }

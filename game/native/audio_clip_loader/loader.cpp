@@ -6,6 +6,11 @@
 #include <limits>
 #include <mutex>
 #include <stdexcept>
+#include <string>
+
+namespace reo::native::resources {
+std::shared_ptr<const ByteView> retain_resident_view(std::shared_ptr<const ByteView>,std::string);
+}
 
 namespace reo::native::audio_clip_loader {
 struct Identity {};
@@ -70,7 +75,22 @@ Request Loader::prepare(std::shared_ptr<const resources::ByteView> view) noexcep
                 }
                 ++shared->report.preparations;
             }
-            auto prepared = adx_sequence::Clip::prepare(view);
+            adx_sequence::ClipResult prepared;
+            try{
+                // Production callers already supply a lazy resident wrapper
+                // keyed by validated canonical source/range identity. Generic
+                // finite callers get a fresh private identity, never a guessed
+                // filename or provider-pointer alias. Wrappers are reused.
+                static std::atomic<std::uint64_t> anonymous{};
+                auto id=anonymous.load(std::memory_order_relaxed);
+                while(id!=std::numeric_limits<std::uint64_t>::max() &&
+                      !anonymous.compare_exchange_weak(id,id+1,std::memory_order_relaxed)){}
+                if(id==std::numeric_limits<std::uint64_t>::max())throw std::length_error("Anonymous resident identity exhausted");
+                auto resident=resources::retain_resident_view(view,":native-loader-anonymous:"+std::to_string(id));
+                prepared=adx_sequence::Clip::prepare(std::move(resident));
+            }catch(const std::bad_alloc&){prepared.status=adx_sequence::Status::no_memory;}
+            catch(const std::length_error&){prepared.status=adx_sequence::Status::numeric_limit;}
+            catch(...){prepared.status=adx_sequence::Status::source_failure;}
             {
                 std::lock_guard lock(shared->mutex);
                 ++shared->report.finished;

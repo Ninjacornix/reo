@@ -6,6 +6,10 @@
 #include <iostream>
 #include <thread>
 
+namespace reo::native::resources {
+bool is_resident_view(const std::shared_ptr<const ByteView>&)noexcept;
+}
+
 namespace loader=reo::native::audio_clip_loader;
 namespace fixtures=reo::native::adxt_shared_player::testing;
 using Status=loader::Status;
@@ -47,10 +51,21 @@ int main() try {
         check(request.status==Status::accepted);
         auto result=wait(owner,request.key);check(result.status==Status::ready && result.detail==reo::native::adx_sequence::Status::completed && result.clip);
         check(result.clip->metadata().header.base.total_samples==samples && result.clip->metadata().header.active_channels==static_cast<int>(channels));
-        check(result.clip->metadata().header.base.frequency==rate && result.clip->metadata().view==file);
+        check(result.clip->metadata().header.base.frequency==rate &&
+              reo::native::resources::is_resident_view(result.clip->metadata().view));
+        const auto original=file->bytes;
+        std::vector<std::byte> copied(original.size());
+        check(result.clip->metadata().view->read(0,copied)==reo::native::resources::ReadResult{reo::native::resources::Status::ok,copied.size()});
+        check(std::equal(copied.begin(),copied.end(),original.begin(),[](std::byte a,std::uint8_t b){return std::to_integer<std::uint8_t>(a)==b;}));
+        check(file->reads==1); // Full immutable body, not header/tail-only reads.
         check(owner.release(request.key)==Status::completed && owner.poll(request.key).status==Status::invalid_key);
         check(result.clip->metadata().header.base.total_samples==samples); // Borrow survives ticket release.
-        check(owner.join() && owner.join());const auto done=owner.snapshot();
+        check(owner.join() && owner.join());
+        std::weak_ptr<const reo::native::resources::ByteView> prior=file;file.reset();
+        check(prior.expired());
+        check(result.clip->metadata().view->read(0,copied)==reo::native::resources::ReadResult{reo::native::resources::Status::ok,copied.size()});
+        check(std::equal(copied.begin(),copied.end(),original.begin(),[](std::byte a,std::uint8_t b){return std::to_integer<std::uint8_t>(a)==b;}));
+        const auto done=owner.snapshot();
         check(done.joined && done.closing && !done.records && !done.worker_failures && done.accepted==1 && done.finished==1 && done.preparations==1 && done.published==1 && !done.discarded);
     }
     {

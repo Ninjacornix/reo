@@ -36,7 +36,9 @@ int main(int argc,char** argv)try{
     check(empty.status==b::FileStatus::empty_range && empty.start_sector==sectors && empty.bytes==0 && !empty.view);
     const auto zero=b::prepare_file_source(mount,{"NETBIO01.DAT",0,0,0});check(zero.status==b::FileStatus::empty_range && !zero.view);
     const auto whole=b::prepare_file_source(mount,{"NETBIO01.DAT",0,0,0xfffff});
-    check(whole.status==b::FileStatus::ready && whole.bytes==root->bytes && whole.view->size()==root->bytes);
+    // The finite resident audio profile refuses an archive-sized range; it
+    // never truncates that request into a playable prefix.
+    check(whole.status==b::FileStatus::unsupported_range && !whole.view);
     const auto sentinel=b::prepare_file_source(mount,{"NETBIO01.DAT",0,1,0xfffff});
     check(sentinel.status==b::FileStatus::unsupported_range && sentinel.start_sector==1 && sentinel.bytes==root->bytes && !sentinel.view);
     check(b::prepare_file_source(mount,{"NETBIO01.DAT",0,0x100000,1}).status==b::FileStatus::unsupported_range);

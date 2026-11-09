@@ -1,6 +1,8 @@
 #include "adxt_refill.hpp"
+#include "../resources/bounded_view.hpp"
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <cstdio>
@@ -9,6 +11,12 @@
 #include <optional>
 #include <stdexcept>
 #include <thread>
+#include <string>
+
+namespace reo::native::resources {
+std::shared_ptr<const ByteView> retain_resident_view(std::shared_ptr<const ByteView>,std::string);
+bool is_resident_view(const std::shared_ptr<const ByteView>&) noexcept;
+}
 
 namespace r = reo::native::adxt_refill;
 namespace resources = reo::native::resources;
@@ -260,6 +268,99 @@ void admission_and_owner_destruction() {
     std::array<std::uint8_t,2> output{};
     check(retained->read_into(output)==r::Status::invalid_lease,"destroyed owner closes token while storage stays retained");
 }
+class GuardedResidentBody final:public PatternView {
+public:
+    mutable std::mutex mutex;
+    mutable std::condition_variable wake;
+    mutable bool entered{},released{};
+    mutable std::atomic<unsigned> reads{};
+    mutable std::atomic<std::size_t> full_read_bytes{};
+    mutable std::atomic<bool> forbid{},forbidden_body_entered{};
+    resources::ReadResult read(std::uint64_t offset,std::span<std::byte> out)const override{
+        ++reads;
+        if(forbid.load(std::memory_order_acquire)){
+            forbidden_body_entered.store(true,std::memory_order_release);
+            std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+            return {resources::Status::source_failure,0};
+        }
+        {
+            std::unique_lock lock(mutex);entered=true;wake.notify_all();
+            wake.wait(lock,[&]{return released;});
+        }
+        full_read_bytes.store(out.size(),std::memory_order_release);
+        return PatternView::read(offset,out);
+    }
+    void release()const {std::lock_guard lock(mutex);released=true;wake.notify_all();}
+};
+void resident_adaptive_backend(){
+    auto body=std::make_shared<GuardedResidentBody>();
+    const auto resident=resources::retain_resident_view(body,"refill-test-resident-body-v1");
+    check(bool(resident)&&!resources::is_resident_view(resident)&&body->reads==0,"resident construction/probe never reads unprepared source");
+    const auto slice=resources::bounded_view(resident,2048,8192);
+    check(slice.status==resources::Status::ok&&!resources::is_resident_view(slice.view),"bounded capability remains false before whole body ready");
+    auto backend=r::make_async_backend(4096);
+    check(backend->submit(slice.view,0,2,41).sectors==2,"lazy first request accepted through async backend");
+    {
+        std::unique_lock lock(body->mutex);
+        check(body->wake.wait_for(lock,std::chrono::seconds(3),[&]{return body->entered;}),"first full source read runs on real worker");
+    }
+    check(!resources::is_resident_view(resident)&&backend->poll().state==r::BackendState::pending,"unready full-copy read remains pending");
+    check(backend->submit(slice.view,0,1,42).sectors==0&&!backend->shutdown_and_join(),"one accepted request holds slot and retirement fence");
+    body->release();
+    r::Completion first;
+    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
+    do {first=backend->poll();if(first.state==r::BackendState::pending)std::this_thread::yield();}
+    while(first.state==r::BackendState::pending&&std::chrono::steady_clock::now()<deadline);
+    check(first.state==r::BackendState::complete&&first.request_id==41&&first.bytes.size()==4096,"first async completion keeps exact request identity and byte count");
+    check(resources::is_resident_view(resident)&&resources::is_resident_view(slice.view)&&body->reads==1&&body->full_read_bytes==body->size(),"readiness means entire original body copied, including through bounded parent");
+    check(backend->poll().state==r::BackendState::idle,"first result transfers once");
+    body->forbid.store(true,std::memory_order_release);
+    // An untrusted view that looks like memory still uses the real async path.
+    // Its armed body sleeps 2.5 seconds if invoked; prepared resident reads must
+    // not invoke that body or wait for any queued read completion.
+    auto untrusted=r::make_async_backend(4096);
+    const auto began=std::chrono::steady_clock::now();
+    check(untrusted->submit(body,0,2,99).sectors==2,"ordinary custom view remains async after a separate cache is ready");
+    const auto body_deadline=began+std::chrono::seconds(3);
+    while(!body->forbidden_body_entered.load(std::memory_order_acquire)&&std::chrono::steady_clock::now()<body_deadline)std::this_thread::yield();
+    check(body->forbidden_body_entered.load(std::memory_order_acquire)&&untrusted->poll().state==r::BackendState::pending,"2.5-second ordinary body is pending rather than executed inline");
+    check(untrusted->submit(slice.view,0,1,1000).sectors==0&&!untrusted->shutdown_and_join(),"ready memory cannot overtake an already accepted async request");
+    const auto reads=body->reads.load();
+    for(std::uint64_t id=100;id<132;++id){
+        check(backend->submit(slice.view,4096,2,id).sectors==2,"resident bounded memory request accepted");
+        check(backend->submit(slice.view,0,1,id+1000).sectors==0,"resident ready result preserves single pending slot");
+        check(!backend->shutdown_and_join(),"resident accepted result must still drain before join");
+        const auto result=backend->poll();
+        check(result.state==r::BackendState::complete&&result.request_id==id&&result.bytes.size()==4096,"resident result immediately available without worker poll wait");
+        for(std::size_t i=0;i<result.bytes.size();++i)check(result.bytes[i]==std::byte((6144+i)*37+(6144+i)/2048*19),"resident slice payload exact");
+        check(backend->poll().state==r::BackendState::idle,"resident completion delivered exactly once");
+    }
+    check(body->reads==reads,"prepared data never calls original body again");
+    check(backend->submit(slice.view,0,0,700).sectors==0,"zero-sector resident submission unchanged");
+    check(backend->submit(slice.view,0,3,701).error,"resident maximum read budget still enforced");
+    check(backend->submit(slice.view,8191,1,702).error,"resident subrange overflow refused");
+    check(backend->submit(slice.view,std::numeric_limits<std::uint64_t>::max(),1,703).error,"resident offset overflow refused");
+    check(backend->submit(slice.view,0,std::numeric_limits<std::uint32_t>::max(),704).error,"resident sector multiplication bounded before allocation");
+    check(backend->shutdown_and_join()&&backend->submit(slice.view,0,1,705).sectors==0,"resident backend closes and joins normally");
+    r::Completion failed;
+    do {failed=untrusted->poll();if(failed.state==r::BackendState::pending)std::this_thread::yield();}
+    while(failed.state==r::BackendState::pending&&std::chrono::steady_clock::now()-began<std::chrono::seconds(5));
+    check(failed.state==r::BackendState::error&&failed.request_id==99&&failed.bytes.empty(),"untrusted delayed failure preserves result identity and no partial bytes");
+    check(std::chrono::steady_clock::now()-began>=std::chrono::milliseconds(2400),"ordinary body actually imposed its 2.5-second blocked read");
+    check(untrusted->submit(slice.view,0,1,1001).sectors==1,"same backend admits prepared memory after retiring its async request");
+    const auto transitioned=untrusted->poll();
+    check(transitioned.state==r::BackendState::complete&&transitioned.request_id==1001&&transitioned.bytes.size()==2048,"async-to-resident transition has immediate one-shot completion");
+    check(untrusted->shutdown_and_join(),"ordinary delayed provider really joined");
+    // A normal source close still drains its already accepted completion; the
+    // adaptive memory path must not invent cancellation or drop accepted PCM.
+    r::EncodedSource source({},resident,r::make_async_backend(4096));
+    check(source.service()==r::Status::completed&&source.snapshot().in_flight,"resident source retains accepted request until poll");
+    check(source.request_close()==r::Status::completed,"normal resident close signals source-view retirement");
+    check(source.begin_shutdown()==r::Status::completed&&!source.finalize_shutdown_and_join(),"source shutdown cannot skip accepted resident result");
+    check(source.service()==r::Status::completed&&!source.snapshot().in_flight&&source.snapshot().ring.data==4096,"accepted resident bytes drain through normal ring publication");
+    check(source.service()==r::Status::completed&&!source.snapshot().source_open&&source.finalize_shutdown_and_join(),"source close and native join remain quiescent");
+    check(body->reads==reads,"resident source drain/close makes no backing body read");
+}
 } // namespace
 int main() {
     for(std::size_t bytes:std::array<std::size_t,3>{0,2049,r::maximum_source_read_bytes+2048}){
@@ -272,5 +373,6 @@ int main() {
     }
     basic_and_leases(); partial_wrap_consumer(); rejected_and_protocol(); control_and_incarnations();
     actual_async_lifetime(); actual_provider_failures(); admission_and_owner_destruction();
+    resident_adaptive_backend();
     std::printf("Native encoded-source checks passed: %d assertions\n",assertions);
 }

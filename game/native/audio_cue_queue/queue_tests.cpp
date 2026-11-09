@@ -104,27 +104,35 @@ int main()try{
         const auto terminal=drive(rig,ended);check(terminal.starts==1 && terminal.source->first_payload_samples==4097 && rig.queue.snapshot().accepted==2);
     }
     {
-        struct StreamingGate final:f::File {
-            mutable std::mutex mutex;mutable std::condition_variable cv;mutable unsigned calls{};
-            mutable bool entered{},released{};
+        // The resident profile retires runtime provider reads after readiness.
+        // Arm the backing provider then compare every source payload digest
+        // against an unarmed ordinary preparation of the same complete clip.
+        Rig reference;
+        check(reference.queue.enqueue(reference.playback,"reference-body",clip(2,20000)).status==cue::Status::completed && accepted(reference.queue.start(reference.playback,0)));
+        const auto expected=drive(reference,ended).source->first_payload_digest;
+        struct BackingProbe final:f::File {
+            mutable std::atomic<unsigned> calls{};
+            mutable std::atomic<std::size_t> last_size{};
+            std::atomic<bool> armed{};
             reo::native::resources::ReadResult read(std::uint64_t at,std::span<std::byte> out)const override{
-                {std::unique_lock lock(mutex);if(++calls>2){entered=true;cv.notify_all();cv.wait(lock,[&]{return released;});}}
+                ++calls;last_size=out.size();
+                if(armed.load())throw std::runtime_error("Original provider must not be read after full readiness");
                 return File::read(at,out);
             }
         };
-        Rig rig;auto blocked=std::make_shared<StreamingGate>();blocked->bytes=clip()->bytes;
-        struct ReleaseStream {std::shared_ptr<StreamingGate> file;~ReleaseStream(){std::lock_guard lock(file->mutex);file->released=true;file->cv.notify_all();}}release{blocked};
-        check(rig.queue.enqueue(rig.playback,"blocked-stream",blocked).status==cue::Status::completed && accepted(rig.queue.start(rig.playback,0)));
-        bool entered{};const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
-        while(!entered && std::chrono::steady_clock::now()<deadline){(void)rig.step();std::lock_guard lock(blocked->mutex);entered=blocked->entered;}
-        check(entered && rig.playback.inspect(rig.key).starts==1);
-        check(rig.queue.stop(rig.playback)==cue::Status::pending && rig.queue.snapshot().retirement_status==inst::Status::pending);
-        check(rig.playback.inspect(rig.key).phase==inst::Phase::retiring);
+        Rig rig;auto provider=std::make_shared<BackingProbe>();provider->bytes=clip(2,20000)->bytes;
+        check(rig.queue.enqueue(rig.playback,"resident-body",provider).status==cue::Status::completed);
+        const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
+        while(rig.loader->snapshot().finished!=1 && std::chrono::steady_clock::now()<deadline)std::this_thread::yield();
+        check(rig.loader->snapshot().finished==1 && provider->calls==1 && provider->last_size==provider->bytes.size());
+        provider->armed=true;
+        check(accepted(rig.queue.start(rig.playback,0)));
+        const auto completed=drive(rig,ended);
+        check(completed.starts==1 && completed.source->first_payload_samples==20000 && completed.source->first_payload_digest==expected && provider->calls==1);
+        check(!rig.playback.snapshot().session.output.statistics.underrun_frames && accepted(rig.queue.stop(rig.playback)));
         check(rig.queue.enqueue(rig.playback,"replacement-stream",clip(2,4097)).status==cue::Status::completed && accepted(rig.queue.start(rig.playback,0)));
-        for(unsigned i=0;i<100;++i)(void)rig.step(false);
-        check(rig.playback.inspect(rig.key).starts==1);
-        {std::lock_guard lock(blocked->mutex);blocked->released=true;blocked->cv.notify_all();}
-        const auto terminal=drive(rig,ended);check(terminal.starts==2 && terminal.source->first_payload_samples==4097 && rig.queue.snapshot().retirement_status==inst::Status::completed);
+        const auto terminal=drive(rig,[](const auto& state){return state.starts==2 && ended(state);});
+        check(terminal.source->first_payload_samples==4097 && rig.queue.snapshot().retirement_status==inst::Status::completed && provider->calls==1);
     }
     {
         Rig rig;auto blocked=std::make_shared<f::Blocked>();blocked->bytes=clip()->bytes;Release release{blocked};
