@@ -17,8 +17,9 @@ struct DecodedMotion {
 // become native index arrays; consumed bytes are owned metadata, not guest RAM.
 class File1MotionDescriptors final {
 public:
-    static constexpr std::size_t descriptor_count=568;
+    static constexpr std::size_t descriptor_count=1112;
     const PackedMotion& at(std::size_t)const;
+    std::uint8_t resource_class(std::uint16_t)const;
     const PackedMotion& resolve(const MotionIdentity&,std::uint32_t encoded_key)const;
     DecodedMotion unpack(const MotionIdentity&,const PackedMotion&)const;
 };

@@ -7,7 +7,7 @@
 namespace a=reo::native::animation;
 #include "owned_constants.hpp"
 #include "functions.h"
-std::uint64_t checks{},helper_calls{},clip_cases{},curve_cases{},sample_cases{},parameter_cases{},admission_cases{};
+std::uint64_t checks{},helper_calls{},clip_cases{},curve_cases{},sample_cases{},parameter_cases{},admission_cases{},unused_tangent_cases{},used_tangent_refusals{};
 void check(bool yes,const std::string& why){++checks;if(!yes)throw std::runtime_error(why);}
 template<class T>T get(const std::uint8_t* p,std::uint32_t at){return transform_read<T>(p,at);}
 template<class T>void put(std::uint8_t* p,std::uint32_t at,T v){transform_write(p,at,v);}
@@ -55,7 +55,18 @@ std::vector<std::byte> synthetic(unsigned format){
 int main(int argc,char** argv)try{
  check(argc==2,"owned clips input required");const auto old=_mm_getcsr();struct Reset{unsigned old;~Reset(){_mm_setcsr(old);}}reset{old};_mm_setcsr(0x1f80);std::vector<std::uint8_t> ram(0x2000000);owned_constants(ram.data());
  for(unsigned format:{0x11u,0x12u,0x13u,0x21u,0x22u,0x23u}){auto raw=synthetic(format);compare_clip(ram,raw);}
+ // Complete original sole-key branch never reads cubic/mixed tangent payloads.
+ for(unsigned format:{0x22u,0x23u})for(std::uint32_t payload:{0xffc00000u,0x7f800000u,0xff800000u}){
+  const unsigned stride=format==0x22?16:20;auto raw=synthetic(format);raw.resize(44+stride);
+  const auto write=[&](unsigned at,std::uint32_t v){std::memcpy(raw.data()+at,&v,4);};
+  write(8,unsigned(raw.size()));write(28,24+stride);write(36,1);write(40,12+stride);
+  const unsigned tangent=44+(format==0x23?4:0)+8;write(tangent,payload);write(tangent+4,payload);
+  compare_clip(ram,raw);++unused_tangent_cases;
+  auto used=synthetic(format);std::memcpy(used.data()+tangent,&payload,4);bool refused{};
+  try{(void)a::Clip::import_raw(used);}catch(const std::domain_error&){refused=true;}
+  check(refused,"actually used multi-key nonfinite tangent remains refused");++used_tangent_refusals;
+ }
  std::ifstream f(argv[1],std::ios::binary);std::uint32_t count{};f.read(reinterpret_cast<char*>(&count),4);check(count==59,"bounded owned corpus identity");for(unsigned i=0;i<count;++i){std::uint32_t size{};f.read(reinterpret_cast<char*>(&size),4);check(size>0&&size<0x400000,"bounded owned clip extent");std::vector<std::byte> raw(size);f.read(reinterpret_cast<char*>(raw.data()),size);check(bool(f),"complete owned clip bytes");try{compare_clip(ram,raw);}catch(const std::exception& e){throw std::runtime_error("Owned clip "+std::to_string(i)+": "+e.what());}}
  for(unsigned mode=0;mode<5;++mode){auto raw=synthetic(0x12);if(mode==0)raw.resize(19);if(mode==1){std::uint32_t zero=0;std::memcpy(raw.data()+36,&zero,4);}if(mode==2){std::uint32_t inactive=0x00120008;std::memcpy(raw.data()+32,&inactive,4);}if(mode==3){std::int16_t t=-1;std::memcpy(raw.data()+44+8+2,&t,2);}if(mode==4){std::uint32_t unsupported=0x80140008;std::memcpy(raw.data()+32,&unsupported,4);}bool refused{};try{(void)a::Clip::import_raw(raw);}catch(const std::invalid_argument&){refused=true;}check(refused,"malformed/undefined clip admission is explicit");++admission_cases;}
- std::cout<<"{\"checks\":"<<checks<<",\"clips\":"<<clip_cases<<",\"curves\":"<<curve_cases<<",\"samples\":"<<sample_cases<<",\"parameter_cases\":"<<parameter_cases<<",\"admission_cases\":"<<admission_cases<<",\"original_helper_calls\":"<<helper_calls<<",\"owned_clips\":"<<count<<",\"game_run\":false}\n";
+ std::cout<<"{\"checks\":"<<checks<<",\"clips\":"<<clip_cases<<",\"curves\":"<<curve_cases<<",\"samples\":"<<sample_cases<<",\"parameter_cases\":"<<parameter_cases<<",\"admission_cases\":"<<admission_cases<<",\"original_helper_calls\":"<<helper_calls<<",\"unused_tangent_cases\":"<<unused_tangent_cases<<",\"used_tangent_refusals\":"<<used_tangent_refusals<<",\"owned_clips\":"<<count<<",\"game_run\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

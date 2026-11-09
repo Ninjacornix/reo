@@ -8,6 +8,12 @@ float finite(float value){if(!std::isfinite(value))throw std::domain_error("Nati
 float weighted(float a,float b,float x,float y){const float first=finite(a*x),second=finite(b*y);return finite(first+second);}
 }
 std::shared_ptr<Instance> PoseBlend::create_sibling(const Instance& source){return std::make_shared<Instance>(source.skeleton_);}
+Vector PoseBlend::root_reference(const Instance& model)noexcept{return model.previous_root_translation_;}
+void PoseBlend::root_reference(Instance& model,Vector value){finite(value.x);finite(value.y);finite(value.z);model.invalidate();model.previous_root_translation_=value;}
+void PoseBlend::bind_all(Instance& model,std::shared_ptr<const Clip> clip){
+    if(!clip||clip->tracks().size()!=model.nodes_.size())throw std::invalid_argument("Native whole-model motion cardinality mismatch");
+    model.invalidate();std::size_t ordinal{};for(auto i:model.skeleton_->traversal())model.bindings_[i]=Instance::Binding{clip,ordinal++};
+}
 void PoseBlend::capture_pose(Instance& destination,const Instance& source,std::uint16_t track){
     if(destination.skeleton_!=source.skeleton_||source.nodes_.size()>255)throw std::invalid_argument("Native flat pose capture requires corresponding bounded model banks");
     destination.invalidate();for(std::size_t i=0;i<source.nodes_.size();++i)if(source.skeleton_->nodes()[i].track==track){destination.nodes_[i].local=source.nodes_[i].local;for(unsigned c=0;c<3;++c)destination.nodes_[i].parameters[c]=source.nodes_[i].parameters[c];}

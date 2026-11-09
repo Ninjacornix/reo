@@ -9,7 +9,7 @@
 #include <optional>
 #include <vector>
 
-namespace reo::native::animation {class Instance;class Constraints;}
+namespace reo::native::animation {class Instance;class Constraints;class Playback;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
@@ -39,6 +39,9 @@ struct Actor : actors::Entity,actors::HitActor {
     bool active{},visible{};
     std::uint8_t ai_control{},normalized_marker{};
     std::uint8_t character{};
+    std::uint8_t motion_subtype{},motion_style{},previous_motion_class{};
+    float motion_rate{1};
+    std::uint16_t resource_action{};
     std::uint16_t contact_flags{},pending_notice{};
     std::uint16_t action_flags{};
     float surface_blend_weight{},surface_blend_rate{};
@@ -69,6 +72,7 @@ struct Actor : actors::Entity,actors::HitActor {
     gameplay_collision::delivery::Component contact;
     std::shared_ptr<animation::Instance> model;
     std::shared_ptr<animation::Constraints> constraints;
+    std::shared_ptr<animation::Playback> animation;
     ControlRequest control_request;
     std::uint8_t control_pending{};
     input::Frame input;

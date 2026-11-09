@@ -35,7 +35,9 @@ Curve Curve::import(std::uint8_t format,std::uint8_t channel,std::span<const std
     const bool compact=(format&0xf0)==0x10,mixed=(format&0xf)==3,cubic=(format&0xf)==2;
     for(std::size_t i=0;i<count;++i){
         const auto at=i*step+(mixed?4:0);const auto scalar=[&](unsigned j){return compact?float(read<std::int16_t>(bytes,at+2*j)):read<float>(bytes,at+4*j);};
-        Key key;key.value=finite(scalar(0));key.time=finite(scalar(1));if(cubic||mixed){key.incoming=finite(scalar(2));key.outgoing=finite(scalar(3));}if(mixed)key.kind=read<std::uint32_t>(bytes,i*step);else key.kind=cubic?0x20000:0x10000;
+        Key key;key.value=finite(scalar(0));key.time=finite(scalar(1));// A sole key returns its value before interpolation; its authored tangent
+        // payload is never read by the original sampler (some retail clips use NaNs).
+        if((cubic||mixed)&&count>1){key.incoming=finite(scalar(2));key.outgoing=finite(scalar(3));}if(mixed)key.kind=read<std::uint32_t>(bytes,i*step);else key.kind=cubic?0x20000:0x10000;
         if(!curve.keys_.empty()&&curve.keys_.back().time>key.time)throw std::invalid_argument("Native curve keys require nondecreasing finite times");
         curve.keys_.push_back(key);
     }
