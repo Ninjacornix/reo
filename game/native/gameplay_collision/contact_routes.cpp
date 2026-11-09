@@ -5,9 +5,13 @@ bool closed(std::uint16_t mask, std::uint32_t edge) {
     return (std::uint32_t(mask) & (1u << (edge & 31))) != 0;
 }
 } // namespace
-RouteReport consume_routes(std::span<const std::int16_t, 32> pending,
-                           const std::uint16_t& current_room, RouteServices& services) {
+RouteReport consume_routes(std::span<const std::int16_t> pending, const std::uint16_t& current_room,
+                           RouteServices& services) {
     RouteReport report;
+    if (pending.size() < 24) {
+        report.status = RouteStatus::unadmitted_pending;
+        return report;
+    }
     std::array<RouteEntry, 10> batch;
     for (std::uint8_t edge = 0; edge < 24; ++edge) {
         ++report.visited;

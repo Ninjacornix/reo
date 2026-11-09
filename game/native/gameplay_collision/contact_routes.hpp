@@ -41,7 +41,13 @@ class RouteServices {
     // Implementations copy the entries if delivery outlives this call.
     virtual bool send(std::span<const RouteEntry>) = 0;
 };
-enum class RouteStatus { completed, unadmitted_room, unavailable_owner, provider_failed };
+enum class RouteStatus {
+    completed,
+    unadmitted_pending,
+    unadmitted_room,
+    unavailable_owner,
+    provider_failed
+};
 struct RouteReport {
     RouteStatus status{RouteStatus::completed};
     std::uint8_t visited{}, applied{}, finished{}, batched{};
@@ -50,6 +56,6 @@ struct RouteReport {
 // Reads exactly original indices0..23, preserves pending values, and stops
 // immediately when its ten-entry batch fills. Session room is canonical and
 // may change synchronously during an apply callback; no room copy is retained.
-RouteReport consume_routes(std::span<const std::int16_t, 32> pending,
-                           const std::uint16_t& current_room, RouteServices&);
+RouteReport consume_routes(std::span<const std::int16_t> pending, const std::uint16_t& current_room,
+                           RouteServices&);
 } // namespace reo::native::gameplay_collision::delivery

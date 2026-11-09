@@ -165,6 +165,19 @@ int main() {
               "native unavailable profile/owner/effect preserves prior work and pending state");
         ++refusals;
     }
+    {
+        std::uint16_t room = 0;
+        Services services(room);
+        std::array<std::int16_t, 24> exact{};
+        check(d::consume_routes(std::span<const std::int16_t>(exact).first(23), room, services)
+                          .status == d::RouteStatus::unadmitted_pending &&
+                  services.trace.empty(),
+              "short pending owner refuses before effects");
+        const auto complete = d::consume_routes(exact, room, services);
+        check(complete.status == d::RouteStatus::completed && complete.visited == 24 &&
+                  services.trace.empty(),
+              "actual24-slot owner consumed directly without shadow copy");
+    }
     std::printf("{\"checks\":%u,\"cases\":%u,\"full_batches\":%u,\"changed_targets\":%u,"
                 "\"refusals\":%u,\"game_launched\":false}\n",
                 checks, cases, full_batches, changed_targets, refusals);
