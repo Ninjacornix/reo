@@ -1,14 +1,18 @@
 #include "object_lifetime.hpp"
 #include <bit>
 #include <cmath>
+#include "../transform_math/transform_math.hpp"
 namespace reo::native::gameplay_collision::room_objects {
 namespace {
-actors::Basis yaw_basis(std::uint16_t turn) {
-    float angle = (3.1415927410125732f * (0.0054931640625f * float(turn))) / 180.f;
-    if (angle > 3.1415927410125732f)
-        angle += -6.2831854820251465f;
-    const auto sine = std::sin(angle), cosine = std::cos(angle);
-    return {{cosine, 0, -sine}, {0, 1, 0}, {sine, 0, cosine}, {}};
+bool numeric_ready()noexcept {
+    try{transform_math::require_profile();return true;}catch(const std::exception&){return false;}
+}
+void set_yaw(ObjectInstance& object) {
+    auto matrix=transform_math::identity();
+    transform_math::reset_euler_axes(matrix,{0,object.yaw,0});
+    object.basis.x={matrix[0][0],matrix[0][1],matrix[0][2]};
+    object.basis.y={matrix[1][0],matrix[1][1],matrix[1][2]};
+    object.basis.z={matrix[2][0],matrix[2][1],matrix[2][2]};
 }
 std::int8_t narrow(int value) {
     return std::bit_cast<std::int8_t>(std::uint8_t(value));
@@ -51,7 +55,7 @@ void InteractionOwner::Lifetime::refresh_quad(const ownership::Handle& handle, c
     }
 }
 InstanceStatus InteractionOwner::Lifetime::publish_center(const ObjectId& id) {
-    if (closed_)
+    if (closed_ || closing_)
         return InstanceStatus::closed;
     auto* o = interactions_.edit(id);
     if (!o)
@@ -73,7 +77,7 @@ InstanceStatus InteractionOwner::Lifetime::publish_center(const ObjectId& id) {
     return InstanceStatus::complete;
 }
 InstanceResult InteractionOwner::Lifetime::recreate_proxies(const ObjectId& id) {
-    if (closed_)
+    if (closed_ || closing_)
         return {InstanceStatus::closed};
     auto* o = interactions_.edit(id);
     if (!o)
@@ -112,7 +116,7 @@ InstanceResult InteractionOwner::Lifetime::recreate_proxies(const ObjectId& id) 
     return result;
 }
 InstanceResult InteractionOwner::Lifetime::create(const ObjectId& id) {
-    if (closed_)
+    if (closed_ || closing_)
         return {InstanceStatus::closed};
     auto* o = interactions_.edit(id);
     if (!o)
@@ -126,8 +130,12 @@ InstanceResult InteractionOwner::Lifetime::create(const ObjectId& id) {
         return {InstanceStatus::already_bound, o->instance};
     if (scene_.size() >= 64)
         return {InstanceStatus::pool_full};
+    if (!numeric_ready())
+        return {InstanceStatus::numeric_refused};
     const auto* type = owner.type(o->type);
     const auto ordinal = interactions_.source_ordinal(id);
+    if ((o->control_flags & 8) && !bindings_.admit(std::uint8_t(type->model_slot),ModelOperation::create))
+        return {InstanceStatus::model_refused};
     auto instance = std::make_unique<ObjectInstance>();
     instance->object = id;
     instance->type = o->type;
@@ -146,13 +154,21 @@ InstanceResult InteractionOwner::Lifetime::create(const ObjectId& id) {
         bindings_.mark(index);
         if (index != 255)
             bindings_.bind(index, created.id);
+        if (!bindings_.healthy()) {
+            if (index != 255)
+                bindings_.unbind(index);
+            (void)scene_.retire(created.id);
+            o->instance = {};
+            owned_[*ordinal] = {};
+            return {InstanceStatus::model_refused};
+        }
     }
-    live->basis = yaw_basis(live->yaw);
+    set_yaw(*live);
     (void)publish_center(id);
     return recreate_proxies(id);
 }
 void InteractionOwner::Lifetime::rebuild_dynamic() {
-    if (closed_)
+    if (closed_ || closing_)
         return;
     const auto& owner = interactions_.owner_;
     if (!owner.grid_)
@@ -160,12 +176,19 @@ void InteractionOwner::Lifetime::rebuild_dynamic() {
     dynamic_ = room_geometry::build_dynamic(owner, owner.room_, walls_, {});
 }
 InstanceResult InteractionOwner::Lifetime::enable(std::int8_t key) {
-    if (closed_)
+    if (closed_ || closing_)
         return {InstanceStatus::closed};
     const auto id = external(key);
     if (!id)
         return {InstanceStatus::invalid_object};
     auto* o = interactions_.edit(*id);
+    if (o->room == interactions_.owner_.room_ && !o->instance && !numeric_ready())
+        return {InstanceStatus::numeric_refused};
+    if (o->room == interactions_.owner_.room_ && !o->instance && (o->control_flags & 8)) {
+        const auto* type=interactions_.owner_.type(o->type);
+        if (!bindings_.admit(std::uint8_t(type->model_slot),ModelOperation::create))
+            return {InstanceStatus::model_refused};
+    }
     o->control_flags |= 1;
     InstanceResult result{InstanceStatus::complete, o->instance};
     if (o->room == interactions_.owner_.room_ && !o->instance)
@@ -174,12 +197,14 @@ InstanceResult InteractionOwner::Lifetime::enable(std::int8_t key) {
     return result;
 }
 InstanceStatus InteractionOwner::Lifetime::disable(std::int8_t key) {
-    if (closed_)
+    if (closed_ || closing_)
         return InstanceStatus::closed;
     const auto id = external(key);
     if (!id)
         return InstanceStatus::invalid_object;
     auto* o = interactions_.edit(*id);
+    if (const auto live=acquire(o->instance);live && (live->flags&8) && !bindings_.admit(live->model_slot,ModelOperation::retire))
+        return InstanceStatus::model_refused;
     o->control_flags &= ~1u;
     auto result = InstanceStatus::complete;
     if (o->instance) {
@@ -190,7 +215,9 @@ InstanceStatus InteractionOwner::Lifetime::disable(std::int8_t key) {
             if (live->flags & 8) {
                 const auto index = bindings_.resolve(live->model_slot);
                 bindings_.unbind(index);
-                bindings_.retain_pose(index, live->basis);
+                bindings_.retain_pose_full(index, live->basis,live->pose_w);
+                if (!bindings_.healthy())
+                    result=InstanceStatus::model_refused;
             }
             for (unsigned slot = 0; slot < 3; ++slot)
                 if (o->proxies[slot])
@@ -204,7 +231,7 @@ InstanceStatus InteractionOwner::Lifetime::disable(std::int8_t key) {
     return result;
 }
 InstanceUpdate InteractionOwner::Lifetime::update(gameplay_actors::EntityId id) {
-    if (closed_)
+    if (closed_ || closing_)
         return {InstanceStatus::closed};
     const auto instance = acquire(id);
     if (!instance)
@@ -261,7 +288,7 @@ InstanceUpdate InteractionOwner::Lifetime::update(gameplay_actors::EntityId id) 
     return result;
 }
 InstanceStatus InteractionOwner::Lifetime::reset_requests(std::uint8_t slot) {
-    if (closed_)
+    if (closed_ || closing_)
         return InstanceStatus::closed;
     if (slot >= 32)
         return InstanceStatus::invalid_object;
@@ -280,15 +307,25 @@ InstanceStatus InteractionOwner::Lifetime::reset_requests(std::uint8_t slot) {
     return result;
 }
 void InteractionOwner::Lifetime::close() noexcept {
+    (void)close_checked();
+}
+InstanceStatus InteractionOwner::Lifetime::close_checked() noexcept {
     if (closed_)
-        return;
+        return close_status_;
+    if (closing_)
+        return InstanceStatus::busy;
+    closing_=true;
+    if (!bindings_.healthy())close_status_=InstanceStatus::model_refused;
     for (auto& entry : owned_) {
         if (auto* o = interactions_.edit(entry.object)) {
             if (const auto instance = acquire(o->instance))
                 if (instance->flags & 8) {
-                    const auto index = bindings_.resolve(instance->model_slot);
-                    bindings_.unbind(index);
-                    bindings_.retain_pose(index, instance->basis);
+                    if (bindings_.admit(instance->model_slot,ModelOperation::retire)) {
+                        const auto index = bindings_.resolve(instance->model_slot);
+                        bindings_.unbind(index);
+                        bindings_.retain_pose_full(index, instance->basis,instance->pose_w);
+                    } else close_status_=InstanceStatus::model_refused;
+                    if (!bindings_.healthy())close_status_=InstanceStatus::model_refused;
                 }
             for (auto& proxy : o->proxies) {
                 if (proxy)
@@ -303,5 +340,7 @@ void InteractionOwner::Lifetime::close() noexcept {
     }
     dynamic_ = {};
     closed_ = true;
+    closing_=false;
+    return close_status_;
 }
 } // namespace reo::native::gameplay_collision::room_objects

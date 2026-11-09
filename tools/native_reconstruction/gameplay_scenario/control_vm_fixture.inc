@@ -8,7 +8,7 @@ void export_control(std::uint8_t* ram,std::uint32_t at,const vm::SceneControl& r
         else if constexpr(std::is_same_v<T,vm::ControlTypeTwo>){ram[at+0x30]=2;fixture_write(ram,at+0x50,v.selector);fixture_write(ram,at+0x6c,v.parameter);fixture_write(ram,at+0x68,v.half_parameter);ram[at+0x72]=v.byte_parameter;ram[at+0x71]=v.refresh_parameter;}
         else if constexpr(std::is_same_v<T,vm::ControlTypeThree>){ram[at+0x30]=3;fixture_write(ram,at+0x44,v.mode);fixture_write(ram,at+0x58,v.parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeFour>){ram[at+0x30]=4;fixture_write(ram,at+0x64,v.mode);fixture_write(ram,at+0x44,v.selector);}
-        else if constexpr(std::is_same_v<T,vm::ControlTypeFive>){ram[at+0x30]=5;fixture_write(ram,at+0x50,v.selector);fixture_write(ram,at+0x6a,v.duration);fixture_write(ram,at+0x6c,v.countdown);fixture_write(ram,at+0x74,v.completion);ram[at+0x58]=v.byte_parameter;fixture_write(ram,at+0x56,v.secondary_parameter);fixture_write(ram,at+0x52,v.reset_sentinel);ram[at+0x59]=v.reset_byte_a;ram[at+0x6e]=v.reset_byte_b;}
+        else if constexpr(std::is_same_v<T,vm::ControlTypeFive>){ram[at+0x30]=5;fixture_write(ram,at+0x50,v.selector);fixture_write(ram,at+0x6a,v.duration);fixture_write(ram,at+0x6c,v.countdown);fixture_write(ram,at+0x74,v.completion);ram[at+0x58]=v.byte_parameter;fixture_write(ram,at+0x56,v.secondary_parameter);fixture_write(ram,at+0x52,v.reset_sentinel);ram[at+0x59]=v.reset_byte_a;ram[at+0x6e]=v.reset_byte_b;fixture_write(ram,at+0x44,v.position);fixture_write(ram,at+0x54,v.effect_parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeNine>){ram[at+0x30]=9;fixture_write(ram,at+0x44,v.parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeThirteen>){ram[at+0x30]=13;fixture_write(ram,at+0x44,v.selector);fixture_write(ram,at+0x62,v.parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeSix>){ram[at+0x30]=6;fixture_write(ram,at+0x54,v.selector);}
@@ -24,7 +24,7 @@ struct ControlFixture final:vm::ControlEffects {
         add(vm::ControlTypeZero{1,2,3,4});add(vm::ControlTypeOne{5});add(vm::ControlTypeTwo{7,6,8,9,10});add(vm::ControlTypeTwo{0,6,8,9,10});
         for(unsigned i=0;i<5;++i)add(vm::ControlTypeThree{i,0xbeef});
         for(unsigned i=0;i<3;++i)add(vm::ControlTypeFour{i,i==2?42u:i});
-        add(vm::ControlTypeFive{1,2,3,4,5,6,0x8172,0x91,0xa2});add(vm::ControlTypeNine{7});
+        add(vm::ControlTypeFive{1,2,3,4,5,6,0x8172,0x91,0xa2,{1.25f,-9,17.5f},0xbeef});add(vm::ControlTypeNine{7});
         add(vm::ControlTypeThirteen{42,8},99);add(vm::ControlOther{17});add(vm::ControlTypeZero{8,9,10,11},43);
         add(vm::ControlTypeSix{42},99);add(vm::ControlTypeSeven{43},99);add(vm::ControlTypeEleven{},43);
         add(vm::ControlTypeFive{8,7,6,5,4,3,2,1,0});

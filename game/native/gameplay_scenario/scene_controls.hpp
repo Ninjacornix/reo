@@ -34,7 +34,9 @@ struct ControlTypeFour {std::uint32_t mode{},selector{};};
 struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondary_parameter{};std::uint32_t completion{};std::uint8_t byte_parameter{};
     // Additional fields written by the complete reset. Their consumer roles
     // remain unresolved; they are typed state, not raw guest-layout storage.
-    std::uint16_t reset_sentinel{};std::uint8_t reset_byte_a{},reset_byte_b{};};
+    std::uint16_t reset_sentinel{};std::uint8_t reset_byte_a{},reset_byte_b{};
+    std::array<float,3> position{};
+    std::uint16_t effect_parameter{};};
 struct ControlTypeNine {std::uint32_t parameter{};};
 struct ControlTypeSix {std::uint32_t selector{};};
 struct ControlTypeSeven {std::uint32_t selector{};};

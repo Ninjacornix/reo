@@ -9,15 +9,22 @@ struct ObjectInstance final : gameplay_actors::Entity {
     std::uint32_t flags{};
     Vec3 position, scale{1, 1, 1};
     actors::Basis basis;
+    // Complete external model pose: source constructors initialize identity,
+    // bind copies all four W lanes, and yaw updates preserve them.
+    std::array<float,4> pose_w{0,0,0,1};
 };
+enum class ModelOperation {create,retire};
 class ModelBindings {
   public:
     virtual ~ModelBindings() = default;
     virtual std::uint8_t resolve(std::uint8_t authored_model_slot) const noexcept = 0;
+    virtual bool admit(std::uint8_t,ModelOperation) noexcept {return healthy();}
+    virtual bool healthy() const noexcept {return true;}
     virtual void mark(std::uint8_t resolved_slot) noexcept = 0;
     virtual void bind(std::uint8_t resolved_slot, gameplay_actors::EntityId) noexcept = 0;
     virtual void unbind(std::uint8_t resolved_slot) noexcept = 0;
     virtual void retain_pose(std::uint8_t resolved_slot, const actors::Basis&) noexcept = 0;
+    virtual void retain_pose_full(std::uint8_t resolved_slot,const actors::Basis& basis,const std::array<float,4>&)noexcept {retain_pose(resolved_slot,basis);}
 };
 enum class InstanceStatus {
     complete,
@@ -28,7 +35,10 @@ enum class InstanceStatus {
     pool_full,
     allocation_failed,
     stale_instance,
-    closed
+    closed,
+    model_refused,
+    busy,
+    numeric_refused
 };
 struct InstanceResult {
     InstanceStatus status{InstanceStatus::complete};
@@ -63,6 +73,7 @@ class InteractionOwner::Lifetime final {
     }
     void rebuild_dynamic();
     void close() noexcept;
+    InstanceStatus close_checked()noexcept;
 
   private:
     InteractionOwner& interactions_;
@@ -77,7 +88,8 @@ class InteractionOwner::Lifetime final {
     };
     std::array<Owned, 32> owned_;
     room_geometry::Dynamic dynamic_;
-    bool closed_{};
+    bool closed_{},closing_{};
+    InstanceStatus close_status_{InstanceStatus::complete};
     std::optional<ObjectId> external(std::int8_t) const noexcept;
     void refresh_quad(const ownership::Handle&, const Quad&);
 };

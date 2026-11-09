@@ -28,6 +28,7 @@ public:
     void room_remap(const RoomModelRemap& value)noexcept{remap_=value;}
     std::uint8_t resolve(std::uint32_t authored)const noexcept;
     void visibility(std::uint32_t authored,bool set)noexcept;
+    void mark_slot_byte(std::uint8_t resolved,std::uint8_t value)noexcept;
     ModelStatus style(std::uint32_t authored,std::uint32_t word)noexcept;
     void reset_styles()noexcept;
     std::optional<ModelMatrix> pose(std::uint32_t slot)const noexcept;

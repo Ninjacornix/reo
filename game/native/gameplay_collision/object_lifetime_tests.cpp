@@ -1,17 +1,23 @@
 #include "object_lifetime.hpp"
 #include "ownership_reference.hpp"
+#include "../gameplay_scenario/scene_model_bindings.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
 #include <set>
 #include <sstream>
+#include <cfenv>
 namespace c = reo::native::gameplay_collision;
 namespace r = c::room_objects;
 namespace a = reo::native::gameplay_actors;
 unsigned checks{}, rooms{}, created{}, updates{}, disables{}, retained_tops{}, dynamic_checks{},
     pool_full_cases{};
 float maximum_error{};
+namespace model=reo::native::gameplay_scenario;
+bool use_real_model_provider{};
+model::RoomModelRemap real_model_map;
+unsigned real_binding_rooms{},real_binding_instances{},real_model_refusal_cases{},real_numeric_refusal_cases{};
 std::vector<std::uint8_t> memory(0x800000);
 std::set<unsigned> initialized_centers;
 void check(bool value, const char* why) {
@@ -51,24 +57,53 @@ struct Bindings : r::ModelBindings {
     mutable std::vector<std::pair<unsigned, unsigned>> events;
     std::array<bool, 256> marked{};
     std::array<c::actors::Basis, 256> saved;
+    std::unique_ptr<model::SceneModels> models;
+    std::unique_ptr<model::SceneModelBindings> real;
+    void initialize(a::EntityStore& scene){
+        if(!use_real_model_provider)return;
+        model::SceneModelState state;for(unsigned i=0;i<128;++i){state.poses[i]=reo::native::transform_math::identity();state.styles[i]=0x8a123456u+i;state.visibility[i]=std::uint8_t(i*7);}
+        models=std::make_unique<model::SceneModels>(state,real_model_map);real=std::make_unique<model::SceneModelBindings>(*models,scene);
+        ref_write(memory.data(),0x324424,0x680000u);ref_write(memory.data(),0x688004,0x689000u);std::memcpy(memory.data()+0x689000,real_model_map.data(),32);
+        std::memcpy(memory.data()+0x49f790,state.visibility.data(),128);std::memcpy(memory.data()+0x49f810,state.styles.data(),512);std::memcpy(memory.data()+0x49fa10,state.poses.data(),8192);
+        std::memset(memory.data()+0x4a1b60,0,16);std::memset(memory.data()+0x4a1b70,0,512);
+    }
+    bool healthy()const noexcept override{return !real||real->healthy();}
+    bool admit(std::uint8_t slot,r::ModelOperation op)noexcept override{return !real||real->admit(slot,op);}
     std::uint8_t resolve(std::uint8_t slot) const noexcept override {
+        if(real)return real->resolve(slot);
         events.emplace_back(0, slot);
         return lifetime_fixture::missing_model ? 255 : std::uint8_t(slot + 3);
     }
     void mark(std::uint8_t slot) noexcept override {
+        if(real){real->mark(slot);return;}
         marked[slot] = true;
     }
-    void bind(std::uint8_t slot, a::EntityId) noexcept override {
+    void bind(std::uint8_t slot, a::EntityId id) noexcept override {
+        if(real){real->bind(slot,id);return;}
         events.emplace_back(1, slot);
     }
     void unbind(std::uint8_t slot) noexcept override {
+        if(real){real->unbind(slot);return;}
         events.emplace_back(2, slot);
     }
     void retain_pose(std::uint8_t slot, const c::actors::Basis& basis) noexcept override {
+        if(real){real->retain_pose(slot,basis);return;}
         saved[slot] = basis;
+    }
+    void retain_pose_full(std::uint8_t slot,const c::actors::Basis& basis,const std::array<float,4>& w)noexcept override{
+        if(real)real->retain_pose_full(slot,basis,w);else retain_pose(slot,basis);
     }
 };
 void binding_events(Bindings& bindings) {
+    if(bindings.real){
+        check(bindings.real->healthy(),"real native model owner remains healthy");const auto& s=bindings.models->state();const auto mask=bindings.real->mask();
+        check(std::memcmp(s.visibility.data(),memory.data()+0x49f790,128)==0,"actual source model mark bytes");check(std::memcmp(s.styles.data(),memory.data()+0x49f810,512)==0,"actual source mark/style alias");check(std::memcmp(mask.data(),memory.data()+0x4a1b60,16)==0,"actual source binding masks");
+        for(unsigned i=0;i<128;++i){const auto at=0x49fa10+64*i;const auto& m=s.poses[i];
+            for(unsigned col=0;col<4;++col){equal({m[col][0],m[col][1],m[col][2]},ref_read<c::Vec3>(memory.data(),at+16*col));check(std::bit_cast<std::uint32_t>(m[col][3])==ref_read<std::uint32_t>(memory.data(),at+16*col+12),"actual source retained W bits");}
+            check(bool(bindings.real->target(std::uint8_t(i)))==bool(ref_read<std::uint32_t>(memory.data(),0x4a1b70+4*i)),"actual source registered target presence");
+        }
+        return;
+    }
     check(bindings.events == lifetime_fixture::events, "source model lookup/bind/unbind order");
     for (const auto& event : bindings.events)
         if (event.first == 2) {
@@ -134,6 +169,8 @@ void compare(const r::Owner& owner, const r::InteractionOwner& interactions,
             equal(instance->basis.x, ref_read<c::Vec3>(memory.data(), raw + 0x1c0));
             equal(instance->basis.y, ref_read<c::Vec3>(memory.data(), raw + 0x1d0));
             equal(instance->basis.z, ref_read<c::Vec3>(memory.data(), raw + 0x1e0));
+            for(unsigned lane=0;lane<4;++lane)
+                check(std::bit_cast<std::uint32_t>(instance->pose_w[lane])==ref_read<std::uint32_t>(memory.data(),raw+0x1cc+16*lane),"canonical external model W lane");
         }
         for (unsigned part = 0; part < 4; ++part) {
             const auto raw_proxy = ref_read<std::uint32_t>(memory.data(), at + 0x2c + part * 4);
@@ -217,6 +254,7 @@ void room(const char* type_path, const char* sto_path, unsigned room, const char
     a::EntityStore scene({64});
     c::ownership::Proxies proxies;
     Bindings bindings;
+    bindings.initialize(scene);
     r::InteractionOwner::Lifetime life(interactions, scene, proxies, bindings, walls, floors);
     lifetime_fixture::missing_model = variant == 2;
     std::vector<r::ObjectId> chosen;
@@ -236,6 +274,7 @@ void room(const char* type_path, const char* sto_path, unsigned room, const char
             chosen.push_back(id);
             initialized_centers.insert(slot);
             ++created;
+            if(bindings.real)++real_binding_instances;
         }
         binding_events(bindings);
         compare(owner, interactions, life, proxies);
@@ -289,6 +328,9 @@ void room(const char* type_path, const char* sto_path, unsigned room, const char
             continue;
         const auto old = o->instance;
         const auto top = o->proxies[3];
+        if(bindings.real){const auto live=life.acquire(o->instance);const auto raw=ref_read<std::uint32_t>(memory.data(),0x3c4580+60*unsigned(*interactions.source_ordinal(id))+0x28);
+            for(unsigned lane=0;lane<4;++lane){const auto bits=0x7fc01234u+unsigned(*interactions.source_ordinal(id))*4+lane;live->pose_w[lane]=std::bit_cast<float>(bits);ref_write(memory.data(),raw+0x1cc+16*lane,bits);}
+        }
         check(life.disable(std::int8_t(o->external_id)) == r::InstanceStatus::complete,
               "native disable admission");
         invoke(0x6ae390, o->external_id);
@@ -323,14 +365,30 @@ void room(const char* type_path, const char* sto_path, unsigned room, const char
         ++pool_full_cases;
         break;
     }
-    life.close();
+    if(bindings.real){
+        // Required model failures refuse before publication and remain visible
+        // to explicit teardown even after every ordinary instance was retired.
+        for(const auto& id:owner.objects()){const auto* o=owner.get(id);if(o->instance||o->external_id==0||o->room!=room||(o->control_flags&4)||!(o->control_flags&8))continue;
+            const auto authored=std::uint8_t(owner.type(o->type)->model_slot);if(authored>=32)continue;
+            const auto flags=o->control_flags;const auto count_before=scene.size();const auto rounding=std::fegetround();check(std::fesetround(FE_TOWARDZERO)==0,"test-only numeric refusal input");
+            const auto numeric=life.enable(std::int8_t(o->external_id));check(std::fesetround(rounding)==0,"restore test-only rounding mode");
+            check(numeric.status==r::InstanceStatus::numeric_refused&&!o->instance&&o->control_flags==flags&&scene.size()==count_before&&bindings.real->healthy(),"numeric refusal precedes flags/allocation and preserves model owner");++real_numeric_refusal_cases;
+            auto map=bindings.models->remap();map[authored]=128;bindings.models->room_remap(map);
+            check(life.enable(std::int8_t(o->external_id)).status==r::InstanceStatus::model_refused,"real model failure reaches room-object caller");
+            check(!o->instance&&o->control_flags==flags&&scene.size()==count_before,"model refusal precedes flags/allocation");++real_model_refusal_cases;break;
+        }
+        const bool failed=!bindings.real->healthy();check(life.close_checked()==(failed?r::InstanceStatus::model_refused:r::InstanceStatus::complete),"checked close preserves model failure and drains");++real_binding_rooms;
+    }else life.close();
     check(proxies.size() == 0 && scene.size() == other_instances,
           "explicit native scene close releases retained proxies and instances");
     check(life.create({}).status == r::InstanceStatus::closed,
           "closed lifetime rejects new publication");
     ++rooms;
 }
-int main(int argc, char** argv) {
+#ifndef REO_OBJECT_LIFETIME_TEST_ENTRY
+#define REO_OBJECT_LIFETIME_TEST_ENTRY main
+#endif
+int REO_OBJECT_LIFETIME_TEST_ENTRY(int argc, char** argv) {
     check(argc == 4, "owned room/profile/geometry arguments");
     const auto tables = load(argv[3]);
     std::memcpy(memory.data() + 0x719900, tables.data(), tables.size());
@@ -364,4 +422,5 @@ int main(int argc, char** argv) {
                 "error\":%.9g,\"game_launched\":false}\n",
                 checks, rooms, created, updates, disables, retained_tops, dynamic_checks,
                 pool_full_cases, double(maximum_error));
+    return 0;
 }

@@ -26,7 +26,7 @@ void export_record(std::uint8_t* ram,std::uint32_t at,const vm::SceneControl& re
         else if constexpr(std::is_same_v<T,vm::ControlTypeThree>){ram[at+0x30]=3;fixture_write(ram,at+0x44,v.mode);fixture_write(ram,at+0x58,v.parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeFour>){ram[at+0x30]=4;fixture_write(ram,at+0x64,v.mode);fixture_write(ram,at+0x44,v.selector);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeFive>){ram[at+0x30]=5;fixture_write(ram,at+0x50,v.selector);fixture_write(ram,at+0x6a,v.duration);fixture_write(ram,at+0x6c,v.countdown);fixture_write(ram,at+0x74,v.completion);ram[at+0x58]=v.byte_parameter;fixture_write(ram,at+0x56,v.secondary_parameter);
-            fixture_write(ram,at+0x52,v.reset_sentinel);ram[at+0x59]=v.reset_byte_a;ram[at+0x6e]=v.reset_byte_b;}
+            fixture_write(ram,at+0x52,v.reset_sentinel);ram[at+0x59]=v.reset_byte_a;ram[at+0x6e]=v.reset_byte_b;fixture_write(ram,at+0x44,v.position);fixture_write(ram,at+0x54,v.effect_parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeNine>){ram[at+0x30]=9;fixture_write(ram,at+0x44,v.parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeThirteen>){ram[at+0x30]=13;fixture_write(ram,at+0x44,v.selector);fixture_write(ram,at+0x62,v.parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeSix>){ram[at+0x30]=6;fixture_write(ram,at+0x54,v.selector);}
