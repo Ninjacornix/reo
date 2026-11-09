@@ -25,6 +25,14 @@ ControlStatus SceneControls::replace(const SceneControlId& id,SceneControl value
     const auto node=acquire(id);if(!node)return ControlStatus::invalid_identity;
     node->value=std::move(value);return ControlStatus::completed;
 }
+ControlStatus SceneControls::reset_five(const SceneControlId& id)noexcept{
+    const auto node=acquire(id);if(!node)return ControlStatus::invalid_identity;
+    auto* five=std::get_if<ControlTypeFive>(&node->value.body);if(!five)return ControlStatus::invalid_profile;
+    node->value.enabled=0;five->selector=0;five->reset_sentinel=UINT16_MAX;
+    five->reset_byte_a=0;five->reset_byte_b=0;five->duration=0;five->countdown=0;
+    five->completion=UINT32_MAX;five->byte_parameter=UINT8_MAX;five->secondary_parameter=0;
+    return ControlStatus::completed;
+}
 ControlStatus SceneControls::erase(const SceneControlId& id)noexcept{
     const auto node=acquire(id);if(!node)return ControlStatus::invalid_identity;
     if(head_==node)head_=node->next;
@@ -46,14 +54,12 @@ void SceneControls::clear()noexcept{
 ControlResult SceneControls::apply(ControlCommand command,const ControlArguments& a,ControlEffects* effects,std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
     if(!enabled_)return result;
-    const bool reset=command==ControlCommand::restart_five||command==ControlCommand::reset_five||command==ControlCommand::restart_five_byte;
     // Missing dependencies refuse before any record in this operation mutates.
-    if(!effects&&(reset||command==ControlCommand::refresh_zero_two)){
+    if(!effects&&command==ControlCommand::refresh_zero_two){
         for(auto node=head_;node;node=node->next)if(node->value.authored_id==a.authored_id){
             const auto& body=node->value.body;
-            if((reset&&std::holds_alternative<ControlTypeFive>(body))||
-               (command==ControlCommand::refresh_zero_two&&(std::holds_alternative<ControlTypeZero>(body)||
-                (std::holds_alternative<ControlTypeTwo>(body)&&std::get<ControlTypeTwo>(body).selector!=0)))){
+            if(std::holds_alternative<ControlTypeZero>(body)||
+                (std::holds_alternative<ControlTypeTwo>(body)&&std::get<ControlTypeTwo>(body).selector!=0)){
                 result.status=ControlStatus::provider_unavailable;return result;
             }
         }
@@ -81,7 +87,8 @@ ControlResult SceneControls::apply(ControlCommand command,const ControlArguments
         case ControlCommand::zero_word_byte:if(zero){zero->parameter=a.parameter;zero->byte_parameter=std::uint8_t(a.selector);matched=true;}break;
         case ControlCommand::restart_five:case ControlCommand::reset_five:case ControlCommand::restart_five_byte:
             if(std::holds_alternative<ControlTypeFive>(body)){
-                effects->reset(*this,node->id);auto* five=std::get_if<ControlTypeFive>(&node->value.body);
+                if(effects)effects->reset(*this,node->id);else reset_five(node->id);
+                auto* five=std::get_if<ControlTypeFive>(&node->value.body);
                 if(!five){result.status=ControlStatus::invalid_profile;return result;}
                 if(command!=ControlCommand::reset_five){node->value.enabled=1;five->selector=std::uint16_t(a.parameter);
                     if(command==ControlCommand::restart_five){five->duration=std::uint16_t(a.selector);five->countdown=0;five->completion=UINT32_MAX;}

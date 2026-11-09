@@ -5,6 +5,7 @@
 #include "sequence_control.hpp"
 #include "lighting.hpp"
 #include "scene_channels.hpp"
+#include "scene_controls.hpp"
 #include <algorithm>
 #include <bit>
 #include <stdexcept>
@@ -18,12 +19,24 @@ std::uint32_t word(const std::byte* p)noexcept{
         (std::to_integer<std::uint32_t>(p[2])<<16)|(std::to_integer<std::uint32_t>(p[3])<<24);
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
-    switch(op){case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
+    switch(op){case 0x50:case 0x54:case 0x55:return 12;case 0x57:return 16;
+    case 0x51:case 0x52:case 0x58:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
+    case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
+    case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
     case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
     case 0xe3:case 0xe6:case 0xe8:case 0xe9:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
     case 0x30:case 0x31:case 0x32:case 0x33:case 0x34:case 0x35:return 2;case 0x37:return 5;case 0x36:return 10;
     case 5:case 0xb:return 9;case 0xc:case 0x46:case 0x113:case 0xb7:case 0xb8:return 12;case 0x45:return 16;default:return 0;}
+}
+std::optional<ControlCommand> control_command(std::uint32_t op)noexcept{
+    switch(op){case 0x50:return ControlCommand::zero_two_parameter;case 0x51:return ControlCommand::type_one_parameter;
+    case 0x52:return ControlCommand::enable_even;case 0x53:return ControlCommand::disable_even;case 0x54:return ControlCommand::zero_word_byte;
+    case 0x55:return ControlCommand::restart_five;case 0x56:return ControlCommand::reset_five;case 0x57:return ControlCommand::restart_five_byte;
+    case 0x58:return ControlCommand::enable_odd;case 0x59:return ControlCommand::disable_odd;case 0x5b:return ControlCommand::enable_one;
+    case 0x5c:return ControlCommand::disable_one;case 0x5d:return ControlCommand::enable_zero_two;case 0x5e:return ControlCommand::disable_zero_two;
+    case 0x5f:return ControlCommand::zero_two_half;case 0x72:return ControlCommand::enable_nine;
+    case 0xb5:return ControlCommand::refresh_zero_two;case 0xf6:return ControlCommand::enable_thirteen;default:return{};}
 }
 bool opener(std::uint32_t op)noexcept{
     constexpr std::array<std::uint32_t,32> values{0xe6,8,0xe3,0x34,0xe9,0xea,0xec,0xed,0x14,0x113,0x150,0x151,0x152,0x153,0x155,0x156,0xc2,0xc3,0xee,0x36,0x47,0x48,0x49,0x4d,0xb7,0xb8,0x158,0x180,0x159,0x17,0x1aa,0x1ac};
@@ -50,7 +63,8 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0x23||op==0x24)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native lighting entry profile");
             flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
             scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;
-            sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;at+=bytes;
+            sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;
+            scene_controls_|=coverage[op].scene_controls_required;at+=bytes;
         }
     }
 }
@@ -72,6 +86,8 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0x10;i<=0x17;++i)out[i]={true,false,false,false,false,false,true};
     for(const auto i:{0x20,0x23,0x24,0x25})out[i]={true,false,false,false,false,false,false,true};
     for(std::size_t i=0xa0;i<=0xa3;++i)out[i]={true,false,false,false,false,false,false,false,true};
+    out[0x190].native_algorithm=true;
+    for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef)out[i]={};
@@ -120,6 +136,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_sequences()&&!providers.sequences)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_lighting()&&!providers.lighting)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scene_channels()&&!providers.scene_channels)return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_scene_controls()&&!providers.scene_controls)return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -193,6 +210,16 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x25:if(!providers.lighting->create_all())return result(Status::provider_unavailable);break;
         case 0xa0:case 0xa1:providers.scene_channels->bit(value(0),opcode==0xa0);break;
         case 0xa2:case 0xa3:providers.scene_channels->all(opcode==0xa2);break;
+        case 0x190:break; // File1 main1B3C30 is the checked return-only body.
+        case 0x50:case 0x51:case 0x52:case 0x53:case 0x54:case 0x55:case 0x56:case 0x57:
+        case 0x58:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:case 0x5f:case 0x72:case 0xb5:case 0xf6:{
+            const auto bytes=payload_minimum(opcode);ControlArguments arguments;arguments.authored_id=value(0);
+            if(bytes>=8)arguments.parameter=value(4);
+            if(bytes>=12)arguments.selector=value(8);
+            if(bytes>=16)arguments.extra=std::uint16_t(value(12));
+            const auto applied=providers.scene_controls->apply(*control_command(opcode),arguments,providers.control_effects);
+            if(applied.status!=ControlStatus::completed)return result(applied.status==ControlStatus::budget_exhausted?Status::budget_exhausted:Status::provider_unavailable);
+            break;}
         case 0x13:if(!providers.sequences->select(std::to_integer<std::uint8_t>(payload[0]),std::uint16_t(value(4))))return result(Status::provider_unavailable);break;
         case 0x15:if(!providers.sequences->cancel_if_selected(std::to_integer<std::uint8_t>(payload[0])))return result(Status::provider_unavailable);break;
         case 0x16:providers.sequences->percentage(std::to_integer<std::uint8_t>(payload[0]),signed_half(4),signed_half(8),value(12));break;

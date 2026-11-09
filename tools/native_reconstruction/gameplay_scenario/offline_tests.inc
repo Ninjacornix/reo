@@ -166,6 +166,17 @@ void offline_tests(){
         check(native.tick_offline_channel(0,{true,false,2},{category,relation,0},providers).status==vm::Status::yielded);compare_offline_channels(native,ram);
         check(channels.mask()==fixture_read<std::uint32_t>(ram.data(),0x4b9d0c));
     }
+    for(const auto op:{0x51u,0x55u,0x56u,0x57u,0x5fu,0x72u,0xb5u,0x190u})for(unsigned category=0;category<5;++category)for(unsigned relation=0;relation<3;++relation){
+        assertion_context="linked control offline op="+std::to_string(op)+" category="+std::to_string(category)+" relation="+std::to_string(relation);
+        std::vector<std::byte> b;emit(b,op,{42,0xffff8172,7,0xffff87fe});emit(b,0xa);std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;ram[0x4baded]=2;
+        fixture_write(ram.data(),0x75a4b0,category);fixture_write(ram.data(),0x75a4c0,relation);ControlFixture controls;controls.export_original(ram);
+        vm::Interpreter native;install_offline_program(native,ram,0,b);original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers providers;providers.flags=&flags;providers.canonical_flags=&flags;providers.scene_controls=&controls.owner;providers.control_effects=&controls;
+        check(native.tick_offline_channel(0,{true,false,2},{category,relation,0},providers).status==vm::Status::yielded);compare_offline_channels(native,ram);controls.compare_original(ram);
+    }
+    for(const auto op:{0x50u,0x52u,0x53u,0x54u,0x58u,0x59u,0x5bu,0x5cu,0x5du,0x5eu,0xf6u}){
+        std::vector<std::byte> b;emit(b,op,{42,1,7,3});emit(b,0xa);vm::Interpreter native;
+        check(native.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b},vm::DispatchProfile::offline_actor))==vm::Status::unsupported_opcode);
+    }
 }
 }
 void sub_00107AB0_0x107ab0(std::uint8_t* r,R5900Context* c,PS2Runtime*){std::memmove(r+GPR_U32(c,4),r+GPR_U32(c,5),GPR_U32(c,6));SET_GPR_U32(c,2,GPR_U32(c,4));done(c);}

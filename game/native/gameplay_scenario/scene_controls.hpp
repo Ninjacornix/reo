@@ -26,7 +26,10 @@ struct ControlTypeOne {std::uint16_t parameter{};};
 struct ControlTypeTwo {std::uint32_t selector{},parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};};
 struct ControlTypeThree {std::uint32_t mode{};std::uint16_t parameter{};};
 struct ControlTypeFour {std::uint32_t mode{};};
-struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondary_parameter{};std::uint32_t completion{};std::uint8_t byte_parameter{};};
+struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondary_parameter{};std::uint32_t completion{};std::uint8_t byte_parameter{};
+    // Additional fields written by the complete reset. Their consumer roles
+    // remain unresolved; they are typed state, not raw guest-layout storage.
+    std::uint16_t reset_sentinel{};std::uint8_t reset_byte_a{},reset_byte_b{};};
 struct ControlTypeNine {std::uint32_t parameter{};};
 struct ControlTypeThirteen {std::uint32_t selector{};std::uint16_t parameter{};};
 struct ControlOther {std::uint8_t type{};};
@@ -56,6 +59,7 @@ public:
     std::optional<SceneControl> get(const SceneControlId&)const noexcept;
     ControlStatus replace(const SceneControlId&,SceneControl)noexcept;
     ControlStatus erase(const SceneControlId&)noexcept;
+    ControlStatus reset_five(const SceneControlId&)noexcept;
     void clear()noexcept;
     void enabled(bool value)noexcept{enabled_=value;}
     bool enabled()const noexcept{return enabled_;}

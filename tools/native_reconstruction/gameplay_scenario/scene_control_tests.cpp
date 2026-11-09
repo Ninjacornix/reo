@@ -25,7 +25,8 @@ void export_record(std::uint8_t* ram,std::uint32_t at,const vm::SceneControl& re
         else if constexpr(std::is_same_v<T,vm::ControlTypeTwo>){ram[at+0x30]=2;fixture_write(ram,at+0x50,v.selector);fixture_write(ram,at+0x6c,v.parameter);fixture_write(ram,at+0x68,v.half_parameter);ram[at+0x72]=v.byte_parameter;ram[at+0x71]=v.refresh_parameter;}
         else if constexpr(std::is_same_v<T,vm::ControlTypeThree>){ram[at+0x30]=3;fixture_write(ram,at+0x44,v.mode);fixture_write(ram,at+0x58,v.parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeFour>){ram[at+0x30]=4;fixture_write(ram,at+0x64,v.mode);}
-        else if constexpr(std::is_same_v<T,vm::ControlTypeFive>){ram[at+0x30]=5;fixture_write(ram,at+0x50,v.selector);fixture_write(ram,at+0x6a,v.duration);fixture_write(ram,at+0x6c,v.countdown);fixture_write(ram,at+0x74,v.completion);ram[at+0x58]=v.byte_parameter;fixture_write(ram,at+0x56,v.secondary_parameter);}
+        else if constexpr(std::is_same_v<T,vm::ControlTypeFive>){ram[at+0x30]=5;fixture_write(ram,at+0x50,v.selector);fixture_write(ram,at+0x6a,v.duration);fixture_write(ram,at+0x6c,v.countdown);fixture_write(ram,at+0x74,v.completion);ram[at+0x58]=v.byte_parameter;fixture_write(ram,at+0x56,v.secondary_parameter);
+            fixture_write(ram,at+0x52,v.reset_sentinel);ram[at+0x59]=v.reset_byte_a;ram[at+0x6e]=v.reset_byte_b;}
         else if constexpr(std::is_same_v<T,vm::ControlTypeNine>){ram[at+0x30]=9;fixture_write(ram,at+0x44,v.parameter);}
         else if constexpr(std::is_same_v<T,vm::ControlTypeThirteen>){ram[at+0x30]=13;fixture_write(ram,at+0x44,v.selector);fixture_write(ram,at+0x62,v.parameter);}
         else ram[at+0x30]=v.type;
@@ -84,10 +85,14 @@ int main()try{
         check(result.visited==(disabled?0:initial.size()));check(provider.calls==effects);
         for(std::size_t i=0;i<ids.size();++i){export_record(expected.data(),first_node+std::uint32_t(i)*stride,*native.get(ids[i]));check(std::memcmp(expected.data()+first_node+i*stride,ram.data()+first_node+i*stride,stride)==0);}
     }
-    // Missing native effects refuse the whole operation before any matching
-    // record changes. Disabled lists and nonmatching records need no provider.
+    // Actual type-five reset is now native. Refresh still requires its actual
+    // scene-program effect provider before any record in the operation mutates.
     vm::SceneControls native;const auto id=*native.append({42,0,vm::ControlTypeFive{}});const auto before=*native.get(id);
-    check(native.apply(vm::ControlCommand::restart_five,{42,1,2,3},nullptr).status==vm::ControlStatus::provider_unavailable);check(native.get(id)->enabled==before.enabled);
+    check(native.apply(vm::ControlCommand::restart_five,{42,1,2,3},nullptr).status==vm::ControlStatus::completed);check(native.get(id)->enabled==1);
+    const auto zero=*native.append({42,0,vm::ControlTypeZero{}});const auto zero_before=*native.get(zero);
+    check(native.apply(vm::ControlCommand::refresh_zero_two,{42,1,2,3},nullptr).status==vm::ControlStatus::provider_unavailable);check(native.get(zero)->enabled==zero_before.enabled);
+    check(std::get<vm::ControlTypeZero>(native.get(zero)->body).refresh_parameter==std::get<vm::ControlTypeZero>(zero_before.body).refresh_parameter);
+    check(before.enabled==0);
     check(native.apply(vm::ControlCommand::restart_five,{99,1,2,3},nullptr).status==vm::ControlStatus::completed);
     native.enabled(false);check(native.apply(vm::ControlCommand::restart_five,{42,1,2,3},nullptr).status==vm::ControlStatus::completed);native.enabled(true);
     // Post-callback traversal follows the current node's updated next link.

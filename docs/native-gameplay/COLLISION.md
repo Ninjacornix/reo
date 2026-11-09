@@ -126,11 +126,10 @@ all tested stock traversals fit the original scratch. Scalar math/acos/vector
 surroundings are declared ports. Qualification:
 `tools/native_reconstruction/native_gameplay_collision_trace_qualification_v1.json`.
 
-Remaining collision contracts: radius traces and actor hit-region traces; authored room-object footprint clipping57C0B0; full6636D0 postmove
-height/surface rules and scenario callback dispatch; actual native actor/scenario
-integration. The modules above do not claim those consumers have been replaced
-in a running game, nor that the whole Stage4 is complete. Further companions
-preserve the qualified cohorts.
+Further companions below qualify the authored footprint, full postmove policy,
+room geometry and actor hit-region traces. Radius-grid/directed-volume traces and
+actual native actor/scenario integration remain separate work. No isolated
+module claims that the whole Stage4 is complete.
 
 The `room_objects` companion is a distinct native32-record scenario owner,
 reserving allocator slot0 and separating external IDs from object identity.
@@ -149,8 +148,8 @@ This owner does not yet construct model instances/proxies, rebuild dynamic
 triangles or actor occupancy, or replace every room-object interaction caller.
 Odd/missing original height-layer indices and missing outside-floor providers
 are explicit unknown capabilities; the comparison does not claim parity with
-uninitialized original table reads. The new footprint companion remains active
-work until its original comparisons pass. These distinctions keep the resource
+uninitialized original table reads. The footprint companion is qualified below.
+These distinctions keep the resource
 owner, geometric solver and complete game consumer migration separately visible.
 
 The `footprint` companion now implements the full57C0B0 movement policy using
@@ -213,3 +212,24 @@ native instance's currentY, not the room origin. The API emits descriptions;
 actual native model-instance lifetime and moving-object interaction consumers
 must own and reconcile those descriptions with the shared proxy owner.
 See `native_gameplay_room_geometry_qualification_v1.json`.
+
+The `spatial` companion owns segment/sphere, margin and overlap queries, the
+original sphere/edge admission rule, recipient masks and ordered actor hit-region
+selection. LLVM passes209,839checks and GCC209,886checks, both with zero error:
+7003primitive cases,4096policy cases,2000original scan cases and67,089edges from
+all366stock grid resources. Synthetic scan targets exercise global-nearest versus
+per-actor selection, first versus nearest regions, exclusions and controlled
+occlusion. Each fixture executes unchanged original scan bodies with declared
+scalar math, neutral damage and controlled occlusion ports. The differing check
+totals reflect compiler-specific argument evaluation order in randomized primitive
+input generation; both run the same fixed case counts and source comparisons.
+
+Contacts carry opaque EntityId references independently of authored category and
+contact ID. Overlap output is tagged as a zero-origin vector because the original
+57AB70 does not produce a world point. Last-scanned identity is distinct from
+selected-target identity. The original global margin response can read an
+advanced one-past-region pointer for its later direction; that direction remains
+explicitly unknown here. The spatial module does not mutate canonical HitActor
+effects, invoke generated senders or manufacture guest packets. Region pose,
+enrollment and radius-grid/directed-volume contracts remain separate work.
+Qualification: `native_gameplay_spatial_qualification_v1.json`.
