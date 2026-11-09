@@ -142,6 +142,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_WEAPON_RESOURCES
 #include "tools/native_reconstruction/weapon_resources_tests.inc"
 #endif
+#ifdef REO_EQUIPMENT_RESOURCES
+#include "tools/native_reconstruction/equipment_resources_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -243,6 +246,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
+#ifdef REO_EQUIPMENT_RESOURCES
+    compare_equipment_resources(argv[4],argv[2],ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
@@ -273,6 +279,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads
+#endif
+#ifdef REO_EQUIPMENT_RESOURCES
+    <<",\"equipment_cases\":"<<equipment_cases<<",\"equipment_full_cases\":"<<equipment_full_cases<<",\"equipment_refusals\":"<<equipment_refusals
 #endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;

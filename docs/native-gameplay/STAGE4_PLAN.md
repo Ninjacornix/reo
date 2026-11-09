@@ -22,7 +22,9 @@ The current resource and inventory implementation includes:
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler
 comparisons with actual ROM/SND assets and background decode/PCM checks.
-Equipment/use/recipe/transfer, extended actors, special companions, actual
+[Equipment attachment construction](EQUIPMENT_ATTACHMENTS.md) also passes with
+actual model/secondary release, canonical weapon refresh and natural full-pool
+side effects. Equipment selection/use/recipe/transfer, extended actors, special companions, actual
 installation and game acceptance remain open; the stage is still incomplete.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is

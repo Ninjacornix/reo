@@ -1,0 +1,35 @@
+#include "game/native/gameplay_weapon_resources/equipment.hpp"
+unsigned equipment_cases{},equipment_full_cases{},equipment_refusals{};
+void compare_equipment_resources(const char* iso_path,const char* static_path,std::vector<std::uint8_t>& ram){
+    using namespace weapon_fixture;using delayed_fixture::Fixture;
+    const auto pinned=r::win32::PinnedFile::open_verified(std::filesystem::path(iso_path),owned_iso_bytes,owned_iso_sha);check(pinned.status==r::win32::PinnedStatus::ok);
+    const auto archive=[&](std::uint64_t offset,std::uint64_t bytes){reo::assets::VirtualFile file;file.size=bytes;file.segments.push_back({0,bytes,offset,std::make_shared<reo::assets::Source>(pinned.file->identity().final_path,pinned.file),{}});const auto view=r::VirtualFileView::create(file);check(view.status==r::Status::ok);const auto result=af::Archive::open(view.view,0,bytes);check(result.status==af::Status::completed);return result.archive;};
+    const auto catalogue=w::Catalogue::prepare_file1_rom(archive(17065984,477052928));const auto snd=archive(924106752,1062582272);const auto assets=factory_load(static_path,16);
+    const auto encoded=[](unsigned selector,bool flag){std::vector<std::byte> data(56);const auto put=[&](unsigned offset,unsigned value){std::memcpy(data.data()+offset,&value,4);};put(0,3);put(4,1);put(16,32);put(32,flag?1:0);data[46]=std::byte(selector);return data;};
+    for(unsigned slot=0;slot<4;++slot)for(unsigned population:{0u,2u,4u})for(unsigned selected:{0u,3u,255u})for(bool active:{false,true})for(bool flag:{false,true})for(bool owner_present:{false,true})for(unsigned old=0;old<3;++old){
+        const auto& weapon=owned_weapons[(equipment_cases*7)%owned_weapons.size()];Fixture q(ram,assets[0],encoded(unsigned(weapon.selector),flag));
+        auto engine=std::make_shared<b::Session>();auto audio=std::make_shared<a::Owner>(engine,q.world.session().random);l::Loader loader(audio,snd);w::Owner weapons(q.world,q.resources,q.templates,catalogue,audio,loader);w::Equipment equipment(weapons,q.factory);
+        for(unsigned i=0;i<4;++i){auto actor=std::make_unique<g::Actor>();actor->slot=std::uint8_t(i);actor->selected_resource=std::uint8_t(selected);actor->weapon_programs=catalogue->cleared();const auto id=q.world.spawn_primary(i,std::move(actor)).id;check(bool(id));q.memory[0x4a5c30+0x10e0*i+3]=std::uint8_t(i);q.memory[0x4a5c30+0x10e0*i+0xc7c]=std::uint8_t(selected);}
+        q.world.session().primary_population=population;put(q.memory,0x4baea0,population);s::SceneDescriptor d;d.active=std::uint8_t(active);d.instance_index=8;d.ownership_tag=owner_present?std::uint16_t(slot+1):0;d.attachment_id=0;d.template_index=0;d.flags=0x1234;
+        std::shared_ptr<g::ResourceModel> previous;
+        if(old==1){const auto source=call(q.memory,0x591230,{0});const auto native=q.factory.create(0);check(native.status==g::ResourceModelStatus::completed&&GPR_U32(&source,2)==q.address(native.id));d.primary=native.model;previous=native.model;}q.sync(d);
+        if(old==2){call(q.memory,0x591860,{delayed_fixture::descriptor});check(q.collisions.replace(*q.resources.slot(3)).status==s::ResourceCollisionStatus::completed);}
+        const auto original=call(q.memory,0x5b18d0,{3});const auto actual=equipment.attach(3);check(actual.primary.status==g::ResourceModelStatus::completed&&GPR_U32(&original,2)==q.address(actual.primary.id));q.compare_world();
+        const bool created=active&&owner_present;check(bool(actual.primary.model)==created);if(previous)check(previous->current()==!created);
+        const bool refreshed=created&&flag&&slot+1<=population;check(bool(actual.weapons)==refreshed);const bool changed=refreshed&&selected==3;const auto actor=q.world.primary(slot);check(actor->weapon_programs==(changed?catalogue->find(std::int8_t(weapon.selector)):catalogue->cleared()));
+        std::array<std::uint8_t,2048> buffer{};if(changed)std::copy(weapon.bytes.begin(),weapon.bytes.end(),buffer.begin());
+        if(std::memcmp(buffer.data(),q.memory+0x749180+2048*slot,buffer.size())!=0)throw std::runtime_error("Equipment source WMD mismatch case="+std::to_string(equipment_cases)+" selector="+std::to_string(weapon.selector)+" slot="+std::to_string(slot)+" population="+std::to_string(population)+" selected="+std::to_string(selected)+" active="+std::to_string(active)+" flag="+std::to_string(flag)+" owner="+std::to_string(owner_present)+" old="+std::to_string(old));
+        check(q.memory[0x2b3841]==unsigned(changed));
+        if(changed){check(actual.weapons->audio&&actual.weapons->audio->status==l::LoadStatus::accepted&&loader.cancel(actual.weapons->audio->ticket));}++equipment_cases;
+    }
+    // Natural full primary pool still executes the subsequent weapon refresh.
+    for(unsigned selector:{0u,1u,51u}){
+        Fixture q(ram,assets[0],encoded(selector,true));auto actor=std::make_unique<g::Actor>();actor->slot=0;actor->selected_resource=3;actor->weapon_programs=catalogue->cleared();check(bool(q.world.spawn_primary(0,std::move(actor)).id));q.memory[0x4a5c30+0xc7c]=3;q.world.session().primary_population=4;put(q.memory,0x4baea0,4u);
+        auto engine=std::make_shared<b::Session>();auto audio=std::make_shared<a::Owner>(engine,q.world.session().random);l::Loader loader(audio,snd);w::Owner weapons(q.world,q.resources,q.templates,catalogue,audio,loader);w::Equipment equipment(weapons,q.factory);
+        for(unsigned i=0;i<64;++i){const auto original=call(q.memory,0x591230,{0});const auto native=q.factory.create(0);check(native.status==g::ResourceModelStatus::completed&&GPR_U32(&original,2)==q.address(native.id));}
+        s::SceneDescriptor d;d.active=1;d.instance_index=8;d.ownership_tag=1;d.template_index=0;q.sync(d);const auto original=call(q.memory,0x5b18d0,{3});const auto actual=equipment.attach(3);check(!GPR_U32(&original,2)&&actual.primary.status==g::ResourceModelStatus::full&&!actual.primary.model&&actual.weapons&&actual.weapons->programs_changed&&actual.weapons->audio&&loader.cancel(actual.weapons->audio->ticket));check(q.world.primary(0)->weapon_programs==catalogue->find(std::int8_t(selector)));q.compare_world();++equipment_full_cases;
+    }
+    // Refusal preserves the already published model/flag prefix.
+    for(unsigned refusal=0;refusal<3;++refusal){Fixture q(ram,assets[0],encoded(1,true));auto engine=std::make_shared<b::Session>();auto audio=std::make_shared<a::Owner>(engine,q.world.session().random);l::Loader loader(audio,snd);w::Owner weapons(q.world,q.resources,q.templates,catalogue,audio,loader);w::Equipment equipment(weapons,q.factory);s::SceneDescriptor d;d.active=1;d.instance_index=8;d.ownership_tag=refusal==2?5:1;d.template_index=0;q.sync(d);if(refusal)q.world.session().primary_population=8;const auto actual=equipment.attach(3);const auto descriptor=q.resources.get(*q.resources.slot(3));check(actual.primary.status==g::ResourceModelStatus::unavailable&&actual.primary.model&&actual.primary.model==descriptor->primary&&(descriptor->flags&0x20000u));++equipment_refusals;}
+    placement_floors=nullptr;
+}

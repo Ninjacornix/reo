@@ -2,6 +2,7 @@
 #include "resource_models.hpp"
 #include "../gameplay_scenario/periodic_effects.hpp"
 #include "../gameplay_scenario/scene_record_attachment.hpp"
+namespace reo::native::gameplay_weapon_resources {class Equipment;}
 namespace reo::native::gameplay_world {
 // Concrete primary-resource frame consumers. Borrowed canonical owners outlive
 // these simulation-thread calls. Extended actors and missing required asset
@@ -19,6 +20,7 @@ public:
 private:
     friend class ResourceFactory;
     friend class WorldInventory;
+    friend class gameplay_weapon_resources::Equipment;
     World& world_;
     gameplay_scenario::SceneResources& resources_;
     ResourceModels& models_;

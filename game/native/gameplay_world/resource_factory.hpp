@@ -35,6 +35,7 @@ public:
         const gameplay_scenario::SceneResourceId&,gameplay_scenario::SceneEffect,std::uint8_t)noexcept override;
 private:
     friend class DelayedResourceWork;
+    friend class gameplay_weapon_resources::Equipment;
     ResourceModels& models_;
     ResourceFrames& frames_;
     const gameplay_scenario::ResourceTemplates& templates_;
