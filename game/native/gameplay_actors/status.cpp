@@ -29,7 +29,7 @@ void tick_status(StatusActor& a,StatusSession& s,StatusServices& services,gamepl
     if(s.paused || (a.status&0x400000))return;
     if((a.status&0x18) && a.current!=0)a.status&=~std::uint32_t(0x18);
     if((a.status&1) && a.current>=2){
-        if(s.feedback_phase%4==0 && s.feedback_suppressed==0)services.feedback(a,s,6);
+        if(s.timer_seconds()%4==0 && s.timer_subseconds()==0)services.feedback(a,s,6);
         a.damage_interval_one=std::min(a.damage_interval_one,interval_one);
         if(a.damage_interval_one==0)a.damage_interval_one=interval_one;
         else if(--a.damage_interval_one==0)apply_health(a,s,services,1,0);

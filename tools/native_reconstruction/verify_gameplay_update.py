@@ -13,7 +13,7 @@ def main():
  assert not out.exists() and out.is_relative_to(ROOT/'build-native-sjuni')
  overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';raw=overlay.read_bytes()
  elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';main_read=elf_reader(elf.read_bytes())
- sources=[next((ROOT/'recomp/config/output_ovl/o2').glob('o2_'+n+'_*')).relative_to(ROOT).as_posix() for n in ['005FED00','0068C8D0','005FEE60']];proof=[]
+ sources=[next((ROOT/'recomp/config/output_ovl/o2').glob('o2_'+n+'_*')).relative_to(ROOT).as_posix() for n in ['005FED00','0068C8D0','005FEE60','005FEA30','005FEE70','005FEE80']];proof=[]
  for src in sources:
   begin,end=[int(x,16) for x in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/src).read_text()).groups()]
   read=main_read if begin<0x570000 else lambda at,n:raw[at-0x570000:at-0x570000+n]

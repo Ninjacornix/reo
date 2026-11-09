@@ -8,10 +8,21 @@ struct StatusActor : HealthState {
     std::uint16_t damage_interval_one{}, damage_interval_two{}, status_duration{}, recovery_timer{};
     std::uint8_t primary{}, secondary{}, phase{}, subphase{}, motion_class{}, response_class{};
 };
+class StatusTiming {
+public:
+    virtual ~StatusTiming()=default;
+    virtual std::uint8_t seconds()const noexcept=0;
+    virtual std::uint8_t subseconds()const noexcept=0;
+};
 struct StatusSession : HealthSession {
     bool paused{};
     std::uint8_t clock_mode{}, feedback_phase{}, feedback_suppressed{};
     std::int16_t session_state{};
+    // Standalone value profiles retain the two bytes above. A canonical update
+    // owner binds its real simulation clock so status never uses a shadow time.
+    const StatusTiming* timing{};
+    std::uint8_t timer_seconds()const noexcept{return timing?timing->seconds():feedback_phase;}
+    std::uint8_t timer_subseconds()const noexcept{return timing?timing->subseconds():feedback_suppressed;}
 };
 class StatusServices : public HealthServices {
 public:

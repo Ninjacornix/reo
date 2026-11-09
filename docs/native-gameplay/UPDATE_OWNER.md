@@ -49,8 +49,37 @@ Earlier failed setup cohorts included an active, separate audio-adapter source
 outside this snapshot's dependency closure; the isolated source list now names
 the qualified scenario core explicitly. No production warning was suppressed.
 
-The outer5FEA30 phase/UI/transition service still controls whether play time is
-committed after the worker chain. This pass deliberately does not advance the
-clock or use host elapsed time. That caller, task factories/payloads, remaining
-worker owners, scene providers and game installation are still Stage4 gates.
-Representative scripts here are admitted fixtures, not complete retail banks.
+The subsequent native `advance` method now reconstructs the outer5FEA30
+phase/transition service too. Required UI/audio/phase effects remain explicit
+native interfaces. It preserves the initial primary-input/armed-control route,
+request-state2 early exit, post-worker pause/transition gates, ordinary clock
+commit, exit notification/phase3, conditional150/360counter adjustments,
+secondary-input pause latch and the final primary-input/mode/session/control
+toggle rules. Effects may change state synchronously, so later gates reread it.
+
+Only an admitted ordinary update commits play time, once, in the original
+one/two-sixtieth units. Worker calls alone still do not advance it. Both compiler
+cohorts compare4096phase cases/234506ordered trace words against the complete
+original5FEA30 and its actual5FEE80 clock body;440ordinary updates commit.
+The existing2048worker cases remain, with explicit qualified native child ports
+and no active actors. Native owner checks additionally exercise clock binding,
+duplicate-owner refusal and detachment on close.
+
+An ownership audit identified that status feedback reads the same original
+seconds/subsecond bytes. `StatusTiming` now binds the canonical native update
+clock directly to World health/status consumers; standalone value profiles
+retain their explicitly supplied clock bytes. The native owner refuses a second
+timing owner and detaches before its clock can be destroyed. Seven full original
+status bodies were rechecked on both compilers after the accessor change.
+
+Close now preflights and seals both child task stores before releasing either
+store's payloads. Cross-store destructor callbacks therefore cannot publish new
+tasks into a sibling that has already been cleared. The lifecycle cohort checks
+both event/linked admission refusal during owner destruction; no deliberate
+active-owner destruction crash test was run.
+
+The newer [phase/clock qualification](../../tools/native_reconstruction/native_gameplay_update_qualification_v2.json)
+binds these cohorts separately from the earlier worker-only checkpoint.
+Task factories/payloads, remaining worker and UI/audio/scene effect owners and
+game installation are still Stage4 gates. Representative scripts here are
+admitted fixtures, not complete retail banks. Neither path uses host-time catchup.

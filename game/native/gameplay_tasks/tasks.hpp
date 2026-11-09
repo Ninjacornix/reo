@@ -59,6 +59,10 @@ public:
     // removals affect this pass, unlike a snapshot/vector job dispatch.
     PassResult run(Pass, std::size_t maximum_visits = 1024) noexcept;
     Status clear() noexcept;
+    bool idle()const noexcept{return !running_ && !clearing_;}
+    // Seal admission without releasing payloads, allowing a composite owner to
+    // seal all child stores before any cross-store destructor callback runs.
+    Status seal()noexcept{if(!idle())return Status::busy;closed_=true;return Status::completed;}
 private:
     struct Node;
     std::shared_ptr<const Domain> domain_;

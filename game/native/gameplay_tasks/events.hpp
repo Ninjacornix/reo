@@ -38,6 +38,8 @@ public:
     std::size_t size() const noexcept { return size_; }
     PassResult run(EventMode, OwnerSelection&) noexcept;
     Status clear() noexcept;
+    bool idle()const noexcept{return !running_ && !clearing_;}
+    Status seal()noexcept{if(!idle())return Status::busy;closed_=true;return Status::completed;}
 private:
     struct Node;
     std::shared_ptr<const Domain> domain_;

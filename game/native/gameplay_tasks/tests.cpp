@@ -146,6 +146,9 @@ void event_slots(){
     check(owner.install(0,0,observe).status==g::Status::completed,"borrowed event owner install");
     check(owner.run(g::EventMode::shared_bank,borrowed).called==1&&canonical==21,"shared borrowed selection retained");
     check(owner.run(g::EventMode::owner_banks,borrowed).called==1&&canonical==0,"borrowed owner banks normalize canonical selection");
+    check(owner.seal()==g::Status::completed && owner.size()==1,"sealing retains payloads until the composite owner releases them");
+    check(owner.install(0,1,observe).status==g::Status::closed && owner.run(g::EventMode::shared_bank,borrowed).status==g::Status::closed,"sealed event pass/admission stay closed");
+    check(owner.clear()==g::Status::completed && owner.size()==0,"sealed event payloads can retire after composite sealing");
 }
 }
 int main(){ordering();mutation_and_lifetime();oldest_and_bounds();timer_edges_and_events();clocks();event_slots();std::printf("Native gameplay ownership/order/timer/clock checks passed: %u assertions\n",checks);}

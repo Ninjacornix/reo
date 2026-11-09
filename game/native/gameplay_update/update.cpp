@@ -1,6 +1,7 @@
 #include "update.hpp"
 #include <bit>
 #include <exception>
+#include <stdexcept>
 
 namespace reo::native::gameplay_update {
 namespace {
@@ -16,11 +17,17 @@ struct FlagExpiry final:tasks::FlagSink {
 };
 bool script_ok(scenario::Status s){return s==scenario::Status::completed || s==scenario::Status::yielded || s==scenario::Status::disabled;}
 }
-Owner::Owner(world::World& world,scenario::FlagNotifications& notifications):world_(world),flags_(&notifications){}
+Owner::Owner(world::World& world,scenario::FlagNotifications& notifications):world_(world),flags_(&notifications){
+    if(world_.session().timing)throw std::invalid_argument("Native world already has a timing owner");
+    world_.session().timing=this;
+}
 Owner::~Owner(){if(running_)std::terminate();(void)close();}
 Status Owner::close()noexcept{
-    if(running_)return Status::busy;
-    closed_=true;(void)events_.clear();(void)linked_.clear();return Status::completed;
+    if(running_ || !events_.idle() || !linked_.idle())return Status::busy;
+    closed_=true;(void)events_.seal();(void)linked_.seal();
+    (void)events_.clear();(void)linked_.clear();
+    if(world_.session().timing==this)world_.session().timing=nullptr;
+    return Status::completed;
 }
 Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::size_t budget,Result& result)noexcept{
     providers.flags=&flags_;providers.canonical_flags=&flags_;providers.timers=&timers_;
@@ -50,7 +57,12 @@ Result Owner::run_workers(Services& services,world::Services& actors,scenario::P
     if(running_){Result busy;busy.status=Status::busy;return busy;}
     if(closed_){Result closed;closed.status=Status::closed;return closed;}
     running_=true;
-    struct Reset{bool& value;~Reset(){value=false;}}reset{running_};Result result;
+    struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
+    return workers(services,actors,providers,script_budget,task_budget);
+}
+Result Owner::workers(Services& services,world::Services& actors,scenario::Providers providers,
+                       std::size_t script_budget,std::size_t task_budget){
+    Result result;
     const auto work=[&](Worker stage){services.run(stage,*this);++result.worker_calls;};
     work(Worker::reset_entity_queues);work(Worker::armed_request);
     result.status=script_service(services,providers,script_budget,result);if(result.status!=Status::completed)return result;
@@ -74,6 +86,58 @@ Result Owner::run_workers(Services& services,world::Services& actors,scenario::P
         for(const auto stage:{Worker::room_occupancy,Worker::contact_candidates,Worker::contact_packets,
                              Worker::room_entity_ownership,Worker::actor_action_publication,Worker::transition_control})work(stage);
         work(Worker::scenario_events);
+    }
+    return result;
+}
+Result Owner::advance(PhaseServices& services,world::Services& actors,scenario::Providers providers,
+                       std::size_t script_budget,std::size_t task_budget){
+    Result result;
+    if(running_){result.status=Status::busy;return result;}
+    if(closed_){result.status=Status::closed;return result;}
+    running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
+    const auto effect=[&](PhaseEffect operation,std::uint32_t argument=0){services.effect(operation,*this,argument);};
+    bool work=true;
+    if(services.button(Button::primary,*this))state.control_armed=0;
+    else if(state.control_armed){
+        effect(PhaseEffect::request_actor_ui,world_.selected_actor);effect(PhaseEffect::update_ui);
+        if(state.control_state==2){
+            effect(PhaseEffect::finish_request);effect(PhaseEffect::reset_audio_request);
+            effect(PhaseEffect::stop_audio_group,3);effect(PhaseEffect::enter_phase,15);return result;
+        }
+        work=false;
+    }
+    if(work){
+        result=workers(services,actors,providers,script_budget,task_budget);
+        if(result.status!=Status::completed)return result;
+        if(world_.paused){
+            effect(PhaseEffect::paused_transition);effect(PhaseEffect::finish_request);
+            effect(PhaseEffect::enter_phase,4);return result;
+        }
+        if(state.transition_gate){
+            effect(PhaseEffect::finish_request);effect(PhaseEffect::stop_streams);
+            effect(PhaseEffect::finish_audio);effect(PhaseEffect::enter_phase,12);return result;
+        }
+        if(clock_.commit_update(world_.session().clock_mode?tasks::ClockStep::two:tasks::ClockStep::one)!=tasks::Status::completed){result.status=Status::task_failure;return result;}
+        result.clock_committed=true;
+        if(state.exit_requested){
+            effect(PhaseEffect::close_ui);effect(PhaseEffect::publish_statistics);state.notification_pending=1;
+            effect(PhaseEffect::enter_phase,3);
+            if(world_.mode!=0)clock_.adjust_update_counter(state.short_exit_adjustment?150:360);
+        }
+        if(services.button(Button::secondary,*this) && (state.request_flags&0x100))state.pause_latched=1;
+        if(state.pause_latched){
+            state.notification_pending=state.transition_gate=1;
+            effect(PhaseEffect::finish_request);effect(PhaseEffect::enter_phase,12);return result;
+        }
+    }
+    if(services.button(Button::primary,*this) || world_.mode==1 || world_.session().session_state!=0)return result;
+    if(state.control_state==1)state.control_armed=1;
+    else if(services.transition_request(*this)){
+        if(state.control_armed)effect(PhaseEffect::close_ui);
+        state.control_armed=0;
+    }else if(state.control_flags&0x4000){
+        if(state.control_armed)effect(PhaseEffect::close_ui);
+        state.control_armed^=1;
     }
     return result;
 }

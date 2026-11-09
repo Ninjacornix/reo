@@ -27,10 +27,24 @@ public:
     virtual ~Services()=default;
     virtual void run(Worker,Owner&)=0;
 };
+enum class Button {primary,secondary};
+enum class PhaseEffect {
+    request_actor_ui,update_ui,finish_request,reset_audio_request,stop_audio_group,
+    close_ui,publish_statistics,enter_phase,paused_transition,stop_streams,finish_audio
+};
+class PhaseServices : public Services {
+public:
+    virtual bool button(Button,Owner&)=0;
+    virtual bool transition_request(Owner&)=0;
+    virtual void effect(PhaseEffect,Owner&,std::uint32_t argument=0)=0;
+};
 struct State {
     bool limit_override{};
     bool scripts_enabled{true};
     std::int16_t session_work_gate{};
+    std::uint8_t control_armed{},control_state{},exit_requested{},short_exit_adjustment{};
+    std::uint8_t notification_pending{},transition_gate{},pause_latched{};
+    std::uint32_t request_flags{},control_flags{};
 };
 enum class Status {completed,busy,closed,actor_failure,script_failure,task_failure,flag_failure};
 struct Result {
@@ -38,8 +52,9 @@ struct Result {
     std::size_t worker_calls{},script_operations{};
     world::Result actors;
     tasks::PassResult linked,events;
+    bool clock_committed{};
 };
-class Owner final {
+class Owner final:public world::actors::StatusTiming {
 public:
     // Borrowed native world and notification target must outlive this owner.
     Owner(world::World&,scenario::FlagNotifications&);
@@ -48,12 +63,16 @@ public:
     Owner& operator=(const Owner&)=delete;
     Result run_workers(Services&,world::Services&,scenario::Providers={},
                        std::size_t script_budget=4096,std::size_t task_budget=1024);
+    Result advance(PhaseServices&,world::Services&,scenario::Providers={},
+                   std::size_t script_budget=4096,std::size_t task_budget=1024);
     Status close()noexcept;
     world::World& world()noexcept{return world_;}
     tasks::Scheduler& linked()noexcept{return linked_;}
     tasks::EventTasks& events()noexcept{return events_;}
     tasks::FlagTimers& timers()noexcept{return timers_;}
     tasks::SimulationClock& clock()noexcept{return clock_;}
+    std::uint8_t seconds()const noexcept override{return clock_.play_time().seconds;}
+    std::uint8_t subseconds()const noexcept override{return clock_.play_time().sixtieths;}
     scenario::Interpreter& scripts()noexcept{return scripts_;}
     scenario::OfflineCoordinator& offline()noexcept{return offline_;}
     scenario::FlagState& flags()noexcept{return flags_;}
@@ -70,5 +89,6 @@ private:
     bool running_{},closed_{};
     Status run_script(std::size_t,scenario::Providers,std::size_t,Result&)noexcept;
     Status script_service(Services&,scenario::Providers,std::size_t,Result&);
+    Result workers(Services&,world::Services&,scenario::Providers,std::size_t,std::size_t);
 };
 }

@@ -37,6 +37,15 @@ recovery and action snapshots remain explicit provider ports. Pending-hit damage
 inventory and full actor behavior still require migration. These comparisons
 are not actual gameplay integration or completion of Stage 4.
 
+The native update owner now supplies a `StatusTiming` view of its canonical
+simulation clock. The two historical feedback bytes are seconds and sixtieth
+units: periodic feedback requires seconds divisible by4 and subsecond zero.
+They are not an independent wall-time phase/suppression clock. Standalone status
+profiles still admit their explicit native values; the composed World uses the
+same clock that the admitted outer phase advances. Its owner binds and detaches
+that view synchronously. The refreshed full seven-body status comparisons and
+phase-clock binding checks are recorded in [update qualification v2](../../tools/native_reconstruction/native_gameplay_update_qualification_v2.json).
+
 Native `EntityStore` separately owns typed actor payload lifetimes. Domain and
 generation identities reject stale or foreign actors. Retiring an actor
 unpublishes it before destruction; a strong invocation lease can retain its
