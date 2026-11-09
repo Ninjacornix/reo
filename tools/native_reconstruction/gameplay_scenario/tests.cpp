@@ -10,6 +10,7 @@
 #include "game/native/gameplay_scenario/action_choices.hpp"
 #include "game/native/gameplay_world/world.hpp"
 #include "game/native/gameplay_scenario/scene_models.hpp"
+#include "game/native/gameplay_scenario/room_scene_owner.hpp"
 #include <bit>
 #include "original_fixture.hpp"
 #include "original_declarations.inc"
@@ -192,8 +193,10 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "room_object_vm_tests.inc"
 #include "actor_request_vm_tests.inc"
 #include "periodic_control_vm_tests.inc"
+#include "no_model_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==2);
+    no_model_vm_tests();
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -329,7 +332,7 @@ int main(int argc,char** argv)try{
     {std::vector<std::byte> b;emit(b,0x110,{0,123});emit(b,0x30,{42});emit(b,0xa);vm::Interpreter n;
         check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
         check(n.tick(0,{}).status==vm::Status::provider_unavailable);check(n.counters()[0]==0);}
-    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"room_rule_original_invocations\":"<<room_rule_invocations<<",\"room_rule_dispatches\":"<<room_rule_dispatches<<",\"room_object_dispatches\":"<<room_object_dispatches<<",\"actor_request_consumers\":"<<actor_request_consumers<<",\"actor_request_dispatches\":"<<actor_request_dispatches<<",\"actor_request_profile_refusals\":"<<actor_request_profile_refusals<<",\"periodic_dispatches\":"<<periodic_dispatches<<",\"periodic_factories\":"<<periodic_factories<<",\"periodic_live_frames\":"<<periodic_live_frames<<",\"coverage\":{";
+    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"no_model_vm_cases\":"<<no_model_vm_cases<<",\"room_rule_original_invocations\":"<<room_rule_invocations<<",\"room_rule_dispatches\":"<<room_rule_dispatches<<",\"room_object_dispatches\":"<<room_object_dispatches<<",\"actor_request_consumers\":"<<actor_request_consumers<<",\"actor_request_dispatches\":"<<actor_request_dispatches<<",\"actor_request_profile_refusals\":"<<actor_request_profile_refusals<<",\"periodic_dispatches\":"<<periodic_dispatches<<",\"periodic_factories\":"<<periodic_factories<<",\"periodic_live_frames\":"<<periodic_live_frames<<",\"coverage\":{";
     bool first_profile=true;
     for(const auto profile:{vm::DispatchProfile::ordinary,vm::DispatchProfile::offline_actor}){
         if(!first_profile)std::cout<<',';

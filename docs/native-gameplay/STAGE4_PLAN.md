@@ -26,6 +26,10 @@ and the [bounded room importer](SCENARIO_ROOM_SCENE_IMPORT.md) now have original
 comparisons. The importer admits163 of166 owned rooms under controlled external
 poses; three authoredFF rooms remain an explicit modernization/acceptance gate.
 Their counter/pointer aliases must not become a native guest-memory model.
+The [explicit authored NoModel repair](SCENARIO_AUTHORED_NO_MODEL_REPAIR.md)
+admits all166 controlled room inputs when opted in, with measured source
+deviations and lease revocation checks. It stays disabled by default and still
+requires actual affected-room acceptance and the remaining matrix consumers.
 Full room model/resource construction and actual game installation remain open.
 
 Completion requires native ownership and migrated real consumers across every

@@ -23,7 +23,8 @@ OfflineResult OfflineCoordinator::tick(Interpreter& vm,std::size_t requested,boo
     const auto missing_stream=[&](std::size_t channel,std::size_t owner){const auto& program=*vm.channels()[channel].program;
         if(program.needs_room_objects()&&(!providers.room_objects||!providers.room_objects->ready(program.needs_room_object_lifetime(),program.needs_room_object_queries())))return true;
         if(program.needs_models()&&!providers.models)return true;
-        for(const auto authored:program.adjusted_models())if(providers.models->resolve(authored)>=128)return true;
+        for(const auto authored:program.adjusted_models())if(!providers.models->admits_adjustment(authored))return true;
+        for(const auto authored:program.visibility_models())if(!providers.models->admits_visibility(authored))return true;
         if(program.needs_periodic_effects()&&(!providers.periodic_effects||!providers.scene_controls||!providers.world||
             !providers.periodic_effects->admitted()||!providers.periodic_effects->bound_to(*providers.scene_controls,flags,providers.world->session().random)))return true;
         return (program.needs_streams()&&(!stream_tick||!providers.streams||!providers.stream_backend))||

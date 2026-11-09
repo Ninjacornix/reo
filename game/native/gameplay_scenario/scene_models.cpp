@@ -37,7 +37,21 @@ std::span<const ModelTransformPreset,8> stock_model_transform_presets()noexcept{
 std::uint8_t SceneModels::resolve(std::uint32_t authored)const noexcept{
     const auto id=std::uint8_t(authored);return id<32?remap_[id]:0;
 }
-void SceneModels::visibility(std::uint32_t authored,bool set)noexcept{
+ModelReference SceneModels::reference(std::uint32_t authored)const noexcept{
+    const auto mapped=resolve(authored);
+    const auto id=std::uint8_t(authored);
+    return absent_origin_&&id<32&&(absent_authored_&(std::uint32_t(1)<<id))?ModelReference::authored(mapped,absent_origin_):ModelReference(mapped);
+}
+void SceneModels::room_remap(const RoomModelRemap& value)noexcept{
+    remap_=value;
+    if(const auto lease=absent_lease_.lock();lease&&lease->mapping_!=value)absent_lease_.reset();
+}
+bool SceneModels::admits_visibility(std::uint32_t authored)const noexcept{
+    const auto ref=reference(authored);return !ref.absent()||admits(ref);
+}
+ModelStatus SceneModels::visibility(std::uint32_t authored,bool set)noexcept{
+    const auto ref=reference(authored);
+    if(ref.absent())return admits(ref)?ModelStatus::completed:ModelStatus::invalid_pose_slot;
     const auto slot=resolve(authored);
     if(slot<128){auto& byte=state_.visibility[slot];byte=set?std::uint8_t(byte|0x80u):std::uint8_t(byte&0x7fu);}
     else{
@@ -47,6 +61,7 @@ void SceneModels::visibility(std::uint32_t authored,bool set)noexcept{
         const unsigned index=(slot-128u)/4,shift=7u+8u*((slot-128u)%4);const auto mask=std::uint32_t(1)<<shift;
         auto& word=state_.styles[index];word=set?word|mask:word&~mask;
     }
+    return ModelStatus::completed;
 }
 ModelStatus SceneModels::style(std::uint32_t authored,std::uint32_t word)noexcept{
     const auto id=std::uint8_t(authored);if(id>=32)return ModelStatus::invalid_authored_id;
@@ -74,6 +89,8 @@ ModelStatus SceneModels::pose(std::uint32_t slot,const ModelMatrix& matrix)noexc
 }
 ModelStatus SceneModels::adjust(std::uint32_t authored,std::size_t index,std::span<const ModelTransformPreset> presets)noexcept{
     if(index>=presets.size())return ModelStatus::invalid_preset;
+    const auto reference_value=reference(authored);
+    if(reference_value.absent()&&admits(reference_value))return ModelStatus::completed;
     const auto slot=resolve(authored);if(slot>=128)return ModelStatus::invalid_pose_slot;
     try{
         transform_math::require_profile();const auto& old=state_.poses[slot];const auto& preset=presets[index];
@@ -82,5 +99,38 @@ ModelStatus SceneModels::adjust(std::uint32_t authored,std::size_t index,std::sp
         next[3][0]=finite_add(old[3][0],offset.x);next[3][1]=finite_add(old[3][1],offset.y);next[3][2]=finite_add(old[3][2],offset.z);
         state_.poses[slot]=next;return ModelStatus::completed;
     }catch(const std::exception&){return ModelStatus::unsupported_numeric;}
+}
+bool SceneModels::admits(const ModelReference& ref)const noexcept{
+    if(ref.slot())return true;
+    if(!ref.absent())return false;
+    const auto lease=absent_lease_.lock();return lease&&lease->origin_==ref.origin_;
+}
+bool SceneModels::admits_channel(const ModelReference& ref,std::size_t index)const noexcept{
+    if(index>=16)return false;
+    if(ref.slot())return true;
+    const auto lease=absent_lease_.lock();
+    return ref.absent()&&lease&&lease->origin_==ref.origin_&&(lease->channels_&(std::uint16_t(1)<<index));
+}
+void SceneModels::authored_absence(std::shared_ptr<const AuthoredModelLease> lease)noexcept{
+    absent_origin_=lease?lease->origin_:nullptr;absent_authored_=0;
+    if(lease)for(unsigned i=0;i<32;++i)if(lease->mapping_[i]==255)absent_authored_|=std::uint32_t(1)<<i;
+    absent_lease_=std::move(lease);state_.absent_sound_resource.reset();
+}
+std::optional<ModelMatrix> SceneModels::pose(const ModelReference& ref)const noexcept{
+    if(const auto slot=ref.slot())return pose(std::uint32_t(*slot));
+    return admits(ref)?std::optional<ModelMatrix>(ModelMatrix{}):std::nullopt;
+}
+ModelStatus SceneModels::pose(const ModelReference& ref,const ModelMatrix& value)noexcept{
+    if(const auto slot=ref.slot())return pose(std::uint32_t(*slot),value);
+    return admits(ref)?ModelStatus::completed:ModelStatus::invalid_pose_slot;
+}
+std::optional<std::uint8_t> SceneModels::sound_resource(const ModelReference& ref)const noexcept{
+    if(const auto slot=ref.slot())return state_.sound_resources[*slot];
+    return admits(ref)?state_.absent_sound_resource:std::nullopt;
+}
+ModelStatus SceneModels::sound_resource(const ModelReference& ref,std::uint8_t value)noexcept{
+    if(const auto slot=ref.slot())return sound_resource(std::uint32_t(*slot),value);
+    if(!admits(ref))return ModelStatus::invalid_pose_slot;
+    state_.absent_sound_resource=value;return ModelStatus::completed;
 }
 } // namespace reo::native::gameplay_scenario

@@ -18,7 +18,7 @@ def main(a):
   proof.append(compare_source('complete scene-model body or required initialization/import authority',name,begin,end,read if begin<0x570000 else lambda at,size:raw[at-0x570000:at-0x570000+size]))
  mathq=ROOT/'tools/native_reconstruction/native_transform_math_qualification_v1.json';assert mathq.exists();qualified_math=json.loads(mathq.read_text())
  for name in ['game/native/transform_math/transform_math.hpp','game/native/transform_math/transform_math.cpp','tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp']:assert sha(ROOT/name)==qualified_math['source_sha256'][name]
- native=['game/native/gameplay_scenario/scene_models.hpp','game/native/gameplay_scenario/scene_models.cpp','game/native/gameplay_scenario/model_transform_presets.inc','game/native/gameplay_scenario/content.hpp','game/native/gameplay_scenario/content.cpp','game/native/transform_math/transform_math.hpp','game/native/transform_math/transform_math.cpp']
+ native=['game/native/gameplay_scenario/model_reference.hpp','game/native/gameplay_scenario/scene_models.hpp','game/native/gameplay_scenario/scene_models.cpp','game/native/gameplay_scenario/model_transform_presets.inc','game/native/gameplay_scenario/content.hpp','game/native/gameplay_scenario/content.cpp','game/native/transform_math/transform_math.hpp','game/native/transform_math/transform_math.cpp']
  helpers=['tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp','tools/native_reconstruction/gameplay_scenario/scene_model_tests.cpp','tools/native_reconstruction/gameplay_scenario/verify_scene_models.py']
  before={n:sha(ROOT/n)for n in authority+native+helpers}
  for name in before:
@@ -45,7 +45,7 @@ def main(a):
  assert len(sections)==166
  (out/'owned_room_sections.bin').write_bytes(struct.pack('<I',len(sections))+b''.join(struct.pack('<I',len(s))+s for s in sections))
  env=dict(os.environ);env['PATH']=str(cc.parent)+os.pathsep+env.get('PATH','');binary=out/'checks.exe'
- command=[str(cc),'-std=c++20','-O2','-msse4.1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source')]+[str(out/'source'/p)for p in [native[1],native[4],native[6]]]+[str(out/'tests.cpp'),'-o',str(binary)]
+ command=[str(cc),'-std=c++20','-O2','-msse4.1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source')]+[str(out/'source'/p)for p in ['game/native/gameplay_scenario/scene_models.cpp','game/native/gameplay_scenario/content.cpp','game/native/transform_math/transform_math.cpp']]+[str(out/'tests.cpp'),'-o',str(binary)]
  record=dict(status='failed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_owned_bodies=proof,constant_content=constants,owned_preset_bytes=raw[0x7174f0-0x570000:0x7175b0-0x570000].hex(),owned_preset_sha256=hashlib.sha256(raw[0x7174f0-0x570000:0x7175b0-0x570000]).hexdigest(),owned_assets=assets,source_math_qualification=dict(path=mathq.relative_to(ROOT).as_posix(),sha256=sha(mathq)),game_launched=False,live_process_access=False,installed_in_game=False,physical_ps2_exceptional_parity=False,command=command)
  try:
   result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=180);(out/'compile.txt').write_text(result.stdout+result.stderr);assert result.returncode==0,'compile failed; see '+str(out/'compile.txt')

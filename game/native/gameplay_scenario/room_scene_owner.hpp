@@ -18,6 +18,7 @@ enum class RoomSceneStatus {
   pool_full,
   no_memory
 };
+enum class NoModelRepair {disabled,authored_absent};
 class RoomSceneOwner;
 struct RoomSceneInstalled {
   RoomSceneStatus status{RoomSceneStatus::completed};
@@ -29,7 +30,7 @@ public:
                                     SceneControls &,
                                     gameplay_collision::ownership::Proxies &,
                                     SceneModels &, SceneMatrixPrograms &,
-                                    RoomSceneGlobals &) noexcept;
+                                    RoomSceneGlobals &,NoModelRepair=NoModelRepair::disabled) noexcept;
   ~RoomSceneOwner();
   RoomSceneOwner(const RoomSceneOwner &) = delete;
   RoomSceneOwner &operator=(const RoomSceneOwner &) = delete;
@@ -47,6 +48,7 @@ private:
                  std::shared_ptr<gameplay_scene::Records>);
   std::shared_ptr<const RoomSceneInput> input_;
   std::shared_ptr<gameplay_scene::Records> records_;
+  std::shared_ptr<const AuthoredModelLease> absent_lease_;
   std::vector<gameplay_scene::RecordId> ids_;
   std::vector<std::pair<gameplay_scene::RecordId, std::size_t>> definitions_;
 };

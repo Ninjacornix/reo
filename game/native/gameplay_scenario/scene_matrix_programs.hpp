@@ -7,8 +7,9 @@
 namespace reo::native::gameplay_scenario {
 struct SceneMatrixChannel {
     gameplay_collision::delivery::RouteChannel contact;
-    std::uint8_t interaction{}, progress{}, playback{}, model_slot{}, program{},
-        cursor{}, curve{}, transform{};
+    std::uint8_t interaction{}, progress{}, playback{};
+    ModelReference model_slot{};
+    std::uint8_t program{}, cursor{}, curve{}, transform{};
     std::int16_t time{}, segment{}, sound_cursor{};
     std::uint8_t source_type{};
     ModelMatrix matrix{};
@@ -71,6 +72,7 @@ class SceneMatrixPrograms final
                                       SceneMatrixSoundSink *) noexcept;
     SceneMatrixStatus source_type(std::size_t,std::uint8_t) noexcept;
     bool bound_to(const SceneControls& controls,const SceneModels& models)const noexcept{return !closed_ && &controls_==&controls && &models_==&models;}
+    bool authored_absence_reset_ready()const noexcept;
     void close() noexcept { closed_ = true; }
 
   private:

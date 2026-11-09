@@ -45,7 +45,7 @@ struct Sounds final:vm::SceneMatrixSoundSink {
 };
 constexpr std::uint32_t channel_base=0x4a3620;
 void project(std::uint8_t* m,std::uint32_t at,const vm::SceneMatrixChannel& c) {
-    m[at+1]=c.contact.gate;m[at+2]=c.interaction;m[at+3]=c.progress;m[at+4]=c.playback;m[at+6]=c.model_slot;m[at+7]=c.program;m[at+8]=c.cursor;m[at+9]=c.curve;m[at+10]=c.transform;m[at+11]=c.contact.active;
+    m[at+1]=c.contact.gate;m[at+2]=c.interaction;m[at+3]=c.progress;m[at+4]=c.playback;m[at+6]=std::uint8_t(c.model_slot.encoded());m[at+7]=c.program;m[at+8]=c.cursor;m[at+9]=c.curve;m[at+10]=c.transform;m[at+11]=c.contact.active;
     fixture_write(m,at+12,c.time);fixture_write(m,at+14,c.segment);fixture_write(m,at+16,c.sound_cursor);m[at+20]=c.source_type;std::memcpy(m+at+32,c.matrix.data(),64);
 }
 void compare(const std::vector<std::uint8_t>& ram,const vm::SceneMatrixPrograms& native) {

@@ -10,7 +10,7 @@ enum class RoomProxyHelper {
   reproject_middle
 };
 struct RoomProxyModelSetup {
-  std::uint8_t slot{};
+  ModelReference slot{};
   std::optional<std::uint8_t> sound_resource;
   RoomProxyHelper helper{};
 };
@@ -35,6 +35,8 @@ public:
 
 private:
   std::array<std::array<std::uint8_t, 32>, 2> maps_;
+  std::shared_ptr<const AuthoredModelDomain> model_domain_;
+  friend class RoomSceneOwner;
   std::vector<RoomProxyDefinition> records_;
 };
 } // namespace reo::native::gameplay_scenario

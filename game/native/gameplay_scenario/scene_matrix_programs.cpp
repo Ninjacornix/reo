@@ -81,7 +81,7 @@ SceneMatrixPrograms::evaluate_first(std::size_t index) noexcept {
     if (index >= 16)
         return SceneMatrixStatus::invalid_channel;
     auto &channel = *channels_[index];
-    if (channel.curve >= 236 || channel.model_slot >= 128)
+    if (channel.curve >= 236 || !models_.admits_channel(channel.model_slot,index))
         return SceneMatrixStatus::unadmitted_profile;
     const auto &group = tables_.groups[channel.curve / 4];
     const auto keys = tables_.curves[group.curves[channel.curve % 4]];
@@ -125,26 +125,27 @@ SceneMatrixPrograms::select(std::uint32_t authored,
     const auto record = controls_.get(*found.id);
     if (!record)
         return {SceneMatrixStatus::unavailable_control};
-    std::uint8_t model{}, kind{};
+    ModelReference model{};
+    std::uint8_t kind{};
     std::uint32_t descriptor{};
     std::uint8_t mode{};
     if (const auto *zero = std::get_if<ControlTypeZero>(&record->body)) {
         if (!zero->matrix_program)
             return {SceneMatrixStatus::unavailable_control, true};
-        model = zero->matrix_program->model_slot;
+        model = zero->matrix_program->model_slot.byte_view();
         kind = zero->matrix_program->resource_class;
         descriptor = zero->matrix_program->descriptor;
         mode = zero->refresh_parameter;
     } else if (const auto *two = std::get_if<ControlTypeTwo>(&record->body)) {
         if (!two->model_reference || !two->matrix_resource_class)
             return {SceneMatrixStatus::unavailable_control, true};
-        model = std::uint8_t(two->model_reference->model);
+        model = two->model_reference->model.byte_view();
         kind = *two->matrix_resource_class;
         descriptor = two->model_reference->descriptor;
         mode = two->refresh_parameter;
     } else
         return {SceneMatrixStatus::unavailable_control, true};
-    if (model >= 128)
+    if (!models_.admits_channel(model,index))
         return {SceneMatrixStatus::unadmitted_profile, true};
     auto &channel = *channels_[index];
     auto program = channel.program;

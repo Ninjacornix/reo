@@ -7,6 +7,16 @@ std::int16_t increment(std::int16_t value) noexcept {
     return std::bit_cast<std::int16_t>(std::uint16_t(std::uint16_t(value) + 1u));
 }
 }
+bool SceneMatrixPrograms::authored_absence_reset_ready()const noexcept{
+    if(closed_||!bindings_.healthy()||bindings_.mask()!=std::array<std::uint32_t,4>{})return false;
+    const auto& previous=*channels_[9];const auto& current=*channels_[10];
+    for(const auto value:previous.matrix[3])if(std::bit_cast<std::uint32_t>(value)!=0)return false;
+    for(const auto value:current.matrix[0])if(std::bit_cast<std::uint32_t>(value)!=0)return false;
+    return current.contact.gate==0&&current.contact.active==0&&current.interaction==0&&
+        current.progress==0&&current.playback==0&&current.model_slot==0u&&current.program==0&&
+        current.cursor==0&&current.curve==0&&current.transform==0&&current.time==0&&
+        current.segment==0&&current.sound_cursor==0&&current.source_type==0;
+}
 SceneMatrixStatus SceneMatrixPrograms::source_type(std::size_t index,std::uint8_t value) noexcept {
     if(closed_)return SceneMatrixStatus::closed;
     if(index>=channels_.size())return SceneMatrixStatus::invalid_channel;
@@ -26,7 +36,7 @@ SceneMatrixPlaybackResult SceneMatrixPrograms::advance(
     auto &channel = *channels_[index];
     if (channel.playback != 1 && channel.playback != 2)
         return result;
-    if (channel.curve >= 236 || channel.model_slot >= 128) {
+    if (channel.curve >= 236 || !models_.admits_channel(channel.model_slot,index)) {
         result.status = SceneMatrixStatus::unadmitted_profile;
         return result;
     }
@@ -35,7 +45,7 @@ SceneMatrixPlaybackResult SceneMatrixPrograms::advance(
     const auto sounds = sound_index < 0 ? std::span<const SceneMatrixSound>{}
                                        : tables_.sounds[std::size_t(sound_index)];
     if (!sounds.empty() && (!sound || !sound->admitted() ||
-                            !models_.state().sound_resources[channel.model_slot])) {
+                            !models_.sound_resource(channel.model_slot))) {
         result.status = SceneMatrixStatus::unavailable_sound;
         return result;
     }
@@ -53,7 +63,7 @@ SceneMatrixPlaybackResult SceneMatrixPrograms::advance(
         }
         const unsigned count = double_quantum ? 2 : 1;
         for (unsigned quantum = 0; quantum < count; ++quantum) {
-            if (channel.curve >= 236 || channel.model_slot >= 128) {
+            if (channel.curve >= 236 || !models_.admits_channel(channel.model_slot,index)) {
                 result.status = SceneMatrixStatus::unadmitted_profile;
                 return result;
             }
@@ -63,7 +73,7 @@ SceneMatrixPlaybackResult SceneMatrixPrograms::advance(
             const auto current_sounds = current_sound_index < 0 ? std::span<const SceneMatrixSound>{}
                 : tables_.sounds[std::size_t(current_sound_index)];
             if (!current_sounds.empty() && (!sound || !sound->admitted() ||
-                                            !models_.state().sound_resources[channel.model_slot])) {
+                                            !models_.sound_resource(channel.model_slot))) {
                 result.status = SceneMatrixStatus::unavailable_sound;
                 return result;
             }
@@ -96,7 +106,7 @@ SceneMatrixPlaybackResult SceneMatrixPrograms::advance(
                 if (event.time < channel.time) {
                     const auto &position = channel.matrix[3];
                     if (!sound->emit({position[0], position[1], position[2]},
-                                     *models_.state().sound_resources[channel.model_slot],
+                                     *models_.sound_resource(channel.model_slot),
                                      std::uint16_t(event.event))) {
                         result.status = SceneMatrixStatus::sound_refused;
                         return result;

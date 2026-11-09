@@ -73,6 +73,54 @@ std::optional<ModelMatrix> SceneModelBindings::live_pose(std::uint8_t slot)noexc
     if(binding.matrix)return *binding.matrix;
     return models_.pose(slot);
 }
+bool SceneModelBindings::admit_reference(const ModelReference& ref,gameplay_collision::room_objects::ModelOperation operation)noexcept{
+    if(ref.absent()&&operation==gameplay_collision::room_objects::ModelOperation::retire)return true;
+    const auto code=std::uint8_t(ref.encoded());
+    if(closed_){fail(ModelBindingError::closed,code);return false;}
+    if(busy_){fail(ModelBindingError::busy,code);return false;}
+    if(!healthy())return false;
+    if(!models_.admits(ref)){fail(ref.absent()?ModelBindingError::foreign_or_stale:ModelBindingError::invalid_slot,code);return false;}
+    return true;
+}
+void SceneModelBindings::mark(const ModelReference& ref)noexcept{
+    if(const auto slot=ref.slot()){mark(*slot);return;}
+    if(!enter(std::uint8_t(ref.encoded())))return;
+    const Exit exit{busy_};if(!models_.admits(ref))fail(ref.absent()?ModelBindingError::foreign_or_stale:ModelBindingError::invalid_slot,std::uint8_t(ref.encoded()));
+}
+void SceneModelBindings::bind(const ModelReference& ref,EntityId id)noexcept{
+    if(const auto slot=ref.slot()){bind(*slot,std::move(id));return;}
+    if(!enter(std::uint8_t(ref.encoded())))return;
+    const Exit exit{busy_};if(!models_.admits(ref))fail(ref.absent()?ModelBindingError::foreign_or_stale:ModelBindingError::invalid_slot,std::uint8_t(ref.encoded()));
+}
+void SceneModelBindings::retain_pose_full(const ModelReference& ref,const gameplay_collision::actors::Basis& value,const std::array<float,4>& w)noexcept{
+    if(const auto slot=ref.slot()){retain_pose_full(*slot,value,w);return;}
+    if(ref.absent())return; // no mesh/pose storage exists, including at teardown
+    if(!enter(std::uint8_t(ref.encoded()),true))return;
+    const Exit exit{busy_};fail(ModelBindingError::invalid_slot,std::uint8_t(ref.encoded()));
+}
+bool SceneModelBindings::bind_pose(const ModelReference& ref,std::shared_ptr<ModelMatrix> target)noexcept{
+    if(const auto slot=ref.slot())return bind_pose(*slot,std::move(target));
+    if(!enter(std::uint8_t(ref.encoded())))return false;
+    const Exit exit{busy_};
+    const auto pose=models_.pose(ref);if(!pose){fail(ref.absent()?ModelBindingError::foreign_or_stale:ModelBindingError::invalid_slot,std::uint8_t(ref.encoded()));return false;}
+    if(!target){fail(ModelBindingError::missing_target,255);return false;}
+    *target=*pose;return failure_.code==ModelBindingError::none;
+}
+void SceneModelBindings::unbind(const ModelReference& ref)noexcept{
+    if(const auto slot=ref.slot()){unbind(*slot);return;}
+    // NoModel has no registered target or mask to release, including after its
+    // installation lease expires. Cleanup cannot touch an unrelated owner.
+    if(ref.absent())return;
+    if(!enter(std::uint8_t(ref.encoded()),true))return;
+    const Exit exit{busy_};fail(ModelBindingError::invalid_slot,std::uint8_t(ref.encoded()));
+}
+std::optional<ModelMatrix> SceneModelBindings::live_pose(const ModelReference& ref)noexcept{
+    if(const auto slot=ref.slot())return live_pose(*slot);
+    if(!enter(std::uint8_t(ref.encoded())))return{};
+    const Exit exit{busy_};const auto pose=models_.pose(ref);
+    if(!pose)fail(ref.absent()?ModelBindingError::foreign_or_stale:ModelBindingError::invalid_slot,std::uint8_t(ref.encoded()));
+    return pose;
+}
 std::array<std::uint32_t,4> SceneModelBindings::mask()const noexcept{
     std::array<std::uint32_t,4> result{};for(unsigned i=0;i<128;++i)if(bindings_[i].object||bindings_[i].matrix)result[i/32]|=std::uint32_t(1)<<(i%32);return result;
 }

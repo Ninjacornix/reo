@@ -73,6 +73,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0x23||op==0x24)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native lighting entry profile");
             if(!noop&&op==0x70&&std::bit_cast<std::int32_t>(word(b.data()+at+4))<0)throw std::invalid_argument("Native stream member profile");
             if(!noop&&op==0xb4){if(word(b.data()+at+8)>=8)throw std::invalid_argument("Native model transform preset profile");adjusted_models_.push_back(std::to_integer<std::uint8_t>(b[at+4]));}
+            if(!noop&&(op==0xb0||op==0xb1))visibility_models_.push_back(std::to_integer<std::uint8_t>(b[at+4]));
             if(!noop&&(op==0xc2||op==0xc3)&&std::to_integer<unsigned>(b[at+4])>=8)throw std::invalid_argument("Native cached room-object index profile");
             room_objects_|=coverage[op].room_objects_required;room_object_lifetime_|=coverage[op].room_object_lifetime_required;room_object_queries_|=coverage[op].room_object_queries_required;
             if(!noop&&(op==0x100||op==0x109)&&!actor_request_kind_supported(std::to_integer<std::uint8_t>(b[at+4])))throw std::invalid_argument("Native actor request callback profile");
@@ -179,7 +180,8 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         !providers.periodic_effects->bound_to(*providers.scene_controls,*providers.canonical_flags,providers.world->session().random)))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_room_objects()&&(!providers.room_objects||!providers.room_objects->ready(c.program->needs_room_object_lifetime(),c.program->needs_room_object_queries())))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_models()&&!providers.models)return{Status::provider_unavailable,0,{},0};
-    for(const auto authored:c.program->adjusted_models())if(providers.models->resolve(authored)>=128)return{Status::provider_unavailable,0,{},0};
+    for(const auto authored:c.program->adjusted_models())if(!providers.models->admits_adjustment(authored))return{Status::provider_unavailable,0,{},0};
+    for(const auto authored:c.program->visibility_models())if(!providers.models->admits_visibility(authored))return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -266,7 +268,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x191:{const auto status=apply_scenario_room_rules(*providers.world,*providers.canonical_flags,*providers.scene_controls);
             if(status!=RoomRuleStatus::completed)return result(status==RoomRuleStatus::budget_exhausted?Status::budget_exhausted:Status::provider_unavailable);
             break;}
-        case 0xb0:case 0xb1:providers.models->visibility(std::to_integer<std::uint8_t>(payload[0]),opcode==0xb1);break;
+        case 0xb0:case 0xb1:if(providers.models->visibility(std::to_integer<std::uint8_t>(payload[0]),opcode==0xb1)!=ModelStatus::completed)return result(Status::provider_unavailable);break;
         case 0xb4:if(providers.models->adjust(std::to_integer<std::uint8_t>(payload[0]),value(4))!=ModelStatus::completed)return result(Status::provider_unavailable);break;
         case 0x70:{const auto audio=providers.streams->request(0,std::bit_cast<std::int32_t>(value(0)),0,*context.stream_tick,*providers.stream_backend);
             if(!stream_accepted(audio.status))return result(Status::provider_unavailable);

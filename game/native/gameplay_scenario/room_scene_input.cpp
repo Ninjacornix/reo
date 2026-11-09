@@ -31,6 +31,7 @@ constexpr std::array<std::uint8_t, 14> priorities{2, 2, 2, 1, 1, 5, 2,
 RoomSceneInput::RoomSceneInput(std::span<const std::byte> input,
                                const content::ScriptBank &bank,
                                gameplay_collision::ImportContext context) {
+  model_domain_=std::make_shared<AuthoredModelDomain>();
   if (bank.format() != content::BankFormat::room_section)
     throw std::invalid_argument("Room proxy requires room script section");
   const auto first = bank.object(0), second = bank.object(1);
@@ -77,7 +78,7 @@ RoomSceneInput::RoomSceneInput(std::span<const std::byte> input,
       if (record.authored_id >= 32)
         throw std::invalid_argument(
             "Unadmitted room proxy authored remap index");
-      return maps_[map][record.authored_id];
+      return ModelReference::authored(maps_[map][record.authored_id],model_domain_);
     };
     switch (tag) {
     case 0: {

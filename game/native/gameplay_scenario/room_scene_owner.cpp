@@ -17,7 +17,7 @@ RoomSceneOwner::~RoomSceneOwner() { close(); }
 RoomSceneInstalled RoomSceneOwner::install(
     std::shared_ptr<const RoomSceneInput> input, SceneControls &controls,
     gameplay_collision::ownership::Proxies &proxies, SceneModels &models,
-    SceneMatrixPrograms &programs, RoomSceneGlobals &globals) noexcept {
+    SceneMatrixPrograms &programs, RoomSceneGlobals &globals,NoModelRepair repair) noexcept {
   using namespace gameplay_collision;
   if (!input || controls.records() != proxies.records() ||
       !programs.bound_to(controls, models))
@@ -29,6 +29,17 @@ RoomSceneInstalled RoomSceneOwner::install(
       gameplay_scene::Record base;
       std::optional<Proxy> helper;
     };
+    bool needs_absence=false;std::uint16_t absent_channels{};
+    for(const auto& d:input->records())if(d.model&&d.model->slot.absent()&&(d.model->sound_resource||d.model->helper!=RoomProxyHelper::none))needs_absence=true;
+    for(const auto& d:input->records())if(d.model&&d.model->slot.absent()&&(gameplay_scene::kind(d.initial.body)==0||gameplay_scene::kind(d.initial.body)==2)&&d.initial.authored_id<16)absent_channels|=std::uint16_t(std::uint16_t(1)<<d.initial.authored_id);
+    if(needs_absence){
+      if(repair!=NoModelRepair::authored_absent||!programs.authored_absence_reset_ready())return {RoomSceneStatus::unadmitted_model,{}};
+      // The admitted stock cases cannot select alias channels9/10 through
+      // either a route ID or the first-match model-to-channel mapping.
+      for(const auto& d:input->records())if((gameplay_scene::kind(d.initial.body)==0||gameplay_scene::kind(d.initial.body)==2)&&(d.initial.authored_id==9||d.initial.authored_id==10))return {RoomSceneStatus::unadmitted_model,{}};
+      const auto& map=input->mapping(0);
+      for(unsigned i=9;i<=10;++i){bool earlier=false;for(unsigned j=0;j<i;++j)if(map[j]==map[i])earlier=true;if(!earlier)return {RoomSceneStatus::unadmitted_model,{}};}
+    }
     std::vector<Prepared> prepared;
     prepared.reserve(input->records().size());
     std::size_t total = input->records().size();
@@ -40,32 +51,20 @@ RoomSceneInstalled RoomSceneOwner::install(
         return {RoomSceneStatus::unadmitted_channel, {}};
       if (definition.model) {
         const auto &setup = *definition.model;
-        // The original FF accesses alias other global work; no native
-        // model identity is fabricated for that distinct source case.
-        if (setup.slot >= 128 &&
-            (setup.sound_resource || setup.helper != RoomProxyHelper::none))
-          return {RoomSceneStatus::unadmitted_model, {}};
-        if (setup.helper != RoomProxyHelper::none) {
-          const auto pose = models.pose(setup.slot);
-          if (!pose)
-            return {RoomSceneStatus::unadmitted_model, {}};
-          const auto b = basis(*pose);
-          const auto geometry = gameplay_scene::collision_view(p.base);
-          if (setup.helper == RoomProxyHelper::depth_extension)
-            p.helper = ownership::depth_extension(geometry, b);
-          else if (setup.helper == RoomProxyHelper::depth_sixty)
-            p.helper = ownership::depth_sixty(geometry, b);
-          else {
-            const auto updated =
-                ownership::reproject_middle(geometry.bounds, b);
-            if (!updated)
-              return {RoomSceneStatus::unsupported_numeric, {}};
-            p.base.collision->bounds = *updated;
-          }
-          if (setup.helper != RoomProxyHelper::reproject_middle) {
-            if (!p.helper)
-              return {RoomSceneStatus::unsupported_numeric, {}};
-            ++total;
+        const bool absent=setup.slot.absent()&&needs_absence;
+        if(!setup.slot.slot()&&!absent&&(setup.sound_resource||setup.helper!=RoomProxyHelper::none))return {RoomSceneStatus::unadmitted_model,{}};
+        if(setup.helper!=RoomProxyHelper::none){
+          const auto geometry=gameplay_scene::collision_view(p.base);
+          if(absent){
+            if(setup.helper==RoomProxyHelper::reproject_middle){p.base.collision->bounds[1]={};p.base.collision->bounds[2]={};}
+            else {Proxy empty;empty.bounds={};empty.lower=geometry.lower;empty.upper=geometry.upper;empty.kind=setup.helper==RoomProxyHelper::depth_extension?0x84:0x85;empty.query_class=1;empty.priority=geometry.priority;empty.active=setup.helper==RoomProxyHelper::depth_extension;p.helper=empty;++total;}
+          }else{
+            const auto pose=models.pose(setup.slot);if(!pose)return {RoomSceneStatus::unadmitted_model,{}};
+            const auto b=basis(*pose);
+            if(setup.helper==RoomProxyHelper::depth_extension)p.helper=ownership::depth_extension(geometry,b);
+            else if(setup.helper==RoomProxyHelper::depth_sixty)p.helper=ownership::depth_sixty(geometry,b);
+            else {const auto updated=ownership::reproject_middle(geometry.bounds,b);if(!updated)return {RoomSceneStatus::unsupported_numeric,{}};p.base.collision->bounds=*updated;}
+            if(setup.helper!=RoomProxyHelper::reproject_middle){if(!p.helper)return {RoomSceneStatus::unsupported_numeric,{}};++total;}
           }
         }
       }
@@ -75,6 +74,7 @@ RoomSceneInstalled RoomSceneOwner::install(
       return {RoomSceneStatus::pool_full, {}};
     auto owner = std::unique_ptr<RoomSceneOwner>(
         new RoomSceneOwner(input, controls.records()));
+    if(needs_absence)owner->absent_lease_=std::shared_ptr<const AuthoredModelLease>(new AuthoredModelLease(input->model_domain_,input->mapping(1),absent_channels));
     owner->ids_.reserve(total);
     owner->definitions_.reserve(prepared.size());
     for (std::size_t i = 0; i < prepared.size(); ++i) {
@@ -103,6 +103,8 @@ RoomSceneInstalled RoomSceneOwner::install(
     // All native allocation, identity and arithmetic admission completed
     // before these nonthrowing side writes. The simulation owner serializes
     // the operation; no callbacks can close a borrowed owner mid-publish.
+    models.authored_absence(owner->absent_lease_);
+    models.room_remap(input->mapping(1));
     for (const auto &definition : input->records()) {
       const auto kind = gameplay_scene::kind(definition.initial.body);
       if (definition.model && definition.model->sound_resource)
@@ -134,5 +136,6 @@ void RoomSceneOwner::close() noexcept {
     (void)records_->retire(*it);
   ids_.clear();
   definitions_.clear();
+  absent_lease_.reset();
 }
 } // namespace reo::native::gameplay_scenario

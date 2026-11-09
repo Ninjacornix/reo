@@ -26,6 +26,15 @@ public:
     void retain_pose(std::uint8_t,const gameplay_collision::actors::Basis&)noexcept override;
     void retain_pose_full(std::uint8_t,const gameplay_collision::actors::Basis&,const std::array<float,4>&)noexcept override;
     bool bind_pose(std::uint8_t,std::shared_ptr<ModelMatrix>)noexcept;
+    ModelReference reference(std::uint8_t authored)const noexcept{return models_.reference(authored);}
+    bool admit_reference(const ModelReference&,gameplay_collision::room_objects::ModelOperation)noexcept;
+    void mark(const ModelReference&)noexcept;
+    void bind(const ModelReference&,EntityId)noexcept;
+    void retain_pose_full(const ModelReference&,const gameplay_collision::actors::Basis&,const std::array<float,4>&)noexcept;
+    EntityId target(const ModelReference& ref)const noexcept{return ref.slot()?target(*ref.slot()):EntityId{};}
+    bool bind_pose(const ModelReference&,std::shared_ptr<ModelMatrix>)noexcept;
+    void unbind(const ModelReference&)noexcept;
+    std::optional<ModelMatrix> live_pose(const ModelReference&)noexcept;
     std::optional<ModelMatrix> live_pose(std::uint8_t)noexcept;
     std::array<std::uint32_t,4> mask()const noexcept;
     EntityId target(std::uint8_t)const noexcept;

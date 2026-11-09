@@ -41,7 +41,7 @@ void project(std::uint8_t *m, std::uint32_t at,
     m[at + 2] = c.interaction;
     m[at + 3] = c.progress;
     m[at + 4] = c.playback;
-    m[at + 6] = c.model_slot;
+    m[at + 6] = std::uint8_t(c.model_slot.encoded());
     m[at + 7] = c.program;
     m[at + 8] = c.cursor;
     m[at + 9] = c.curve;
