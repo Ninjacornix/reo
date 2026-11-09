@@ -1,0 +1,170 @@
+{
+  "schema": "reo.native.scene_matrix.programs.qualification.v1",
+  "status": "qualified_partial_native_selection_and_terminal_consumer",
+  "complete": false,
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_launched": false,
+  "live_process_access": false,
+  "physical_ps2_exceptional_parity": false,
+  "source_snapshot_sha256": {
+    "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+    "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_collision/object_interactions.hpp": "f887304538249c6ffa0d4cc40d64891d7faff20bea06703671e39a1461f21ac8",
+    "game/native/gameplay_collision/object_lifetime.hpp": "18b49cc6be21fcee894287ee9769074069a98ff8b657801dc86f2f3e9174633e",
+    "game/native/gameplay_collision/ownership.hpp": "76b7569576762e8eaf8204a9276fd87c32b81d925d2f46406808c227fb11e8e8",
+    "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+    "game/native/gameplay_collision/room_damage.hpp": "42dae423275df41f4817096b6d18138944e17974ab3836e1ae4b96b0c403a03e",
+    "game/native/gameplay_collision/room_geometry.hpp": "0ab8279213fbd3b1f9e5c2b378066464bb930fe38441dfe2258a63affa25e0c9",
+    "game/native/gameplay_collision/room_objects.hpp": "6d77920aecce311a2a94cd71baddcd0fc3b79b45ce04a6df3cdb7de48972af6b",
+    "game/native/gameplay_collision/sweep.hpp": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39",
+    "game/native/gameplay_collision/trace.hpp": "494a53ef88e2a916d99ed2b2cfb503a3a9ea5235c6fdef053054f58adb1c7170",
+    "game/native/gameplay_scenario/action_choices.hpp": "c315448949c2871f01ac954c1c991c026a01e0183717dfca6fe86377230de9be",
+    "game/native/gameplay_scenario/content.cpp": "4c195166de79323a9aed3295693c799696f519f292e10915b252e7330f52dc47",
+    "game/native/gameplay_scenario/content.hpp": "376eb5f856288c728980fdc7393120f21a69fa640a33df8a6d7b5b994b07ce98",
+    "game/native/gameplay_scenario/flags.cpp": "539bf411176e58db5ad45722cb753f39ddf527b467347e5c21c18749a9158968",
+    "game/native/gameplay_scenario/flags.hpp": "a84a096e2e6efa673c6b824713ad2b102a0a4376600a4c08f73acd22306400a0",
+    "game/native/gameplay_scenario/interpreter.hpp": "644a41e15be99b4be519a5117cd7bbb91ae9b6db06bd239b1969e82b96e6ddb0",
+    "game/native/gameplay_scenario/model_transform_presets.inc": "1d4049b22be0920234b3efd915fc1b4ddc447a037baf8e76b98e1104a4deab31",
+    "game/native/gameplay_scenario/saved_controls.hpp": "543fd46f4540d24b93895ed72607464b5931641078891df085b8c860aea01d27",
+    "game/native/gameplay_scenario/scene_controls.cpp": "2e26368499f21cb7b1c4fc898a8323a5c938dfec7ebd744830126ef222e51934",
+    "game/native/gameplay_scenario/scene_controls.hpp": "d7471fab0e7dfda2797c3724487fd9755d8b69dd25d3cfeb5a0f7129ed62118a",
+    "game/native/gameplay_scenario/scene_matrix_program_tables.inc": "870d43b3ff76a817e8778f8c76e823c1b1a347b251807787e587869dda105556",
+    "game/native/gameplay_scenario/scene_matrix_programs.cpp": "01c7f4c94d7212809cd1cdc0f8517c9f4f6bf98b44d6dc66286ba03337dfcf53",
+    "game/native/gameplay_scenario/scene_matrix_programs.hpp": "82b2ddd2059b3da3dc8408fba604fe2dbda4e0d30c480a063cff39566f61a581",
+    "game/native/gameplay_scenario/scene_matrix_tables.cpp": "fc8db8b27924c06462a35f4099205fb3844cbb5eb7530064b943f7c5d49a3033",
+    "game/native/gameplay_scenario/scene_matrix_tables.hpp": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1",
+    "game/native/gameplay_scenario/scene_model_bindings.cpp": "f9785c3e121c0891df4830b1239dc632106d17e7560921056b2c6d3e2b629ff3",
+    "game/native/gameplay_scenario/scene_model_bindings.hpp": "638396d4521b48995846162054a3e5a3b5a5be68a033d5f19879bc4cf47d5430",
+    "game/native/gameplay_scenario/scene_models.cpp": "33ef506048d261a71be5ca981e0f3f724fdcf4d9cdfb9014c66c7b17307b2f88",
+    "game/native/gameplay_scenario/scene_models.hpp": "33116961ed6b68b37050323a52e5b26be3289a125c909385a9b8ec50dd905708",
+    "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_tasks/tasks.hpp": "0de4de843f60d0dab82258de8ba2f6e34aa805dbc88a53215e6b150292b5d097",
+    "game/native/transform_math/transform_math.cpp": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+    "tools/native_reconstruction/gameplay_scenario/control_vm_fixture.inc": "f5f5c1537d8e1a2152e8adc46268e5f683ca37d3c9ada2e39ac311a28b3a910c",
+    "tools/native_reconstruction/gameplay_scenario/scene_matrix_program_tests.cpp": "ee2f83724d5a30c8e0fc8dfbee6f444ae59c9b68761785fa65a7aa5893731773",
+    "tools/native_reconstruction/gameplay_scenario/verify_scene_matrix_programs.py": "b7076f84ab02c39a7ec9c439c6aa5f73979e7357cf9190c3036bb7e6489908a3",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/gameplay_scenario/verify_scene_matrix_tables.py": "f18de2a2771d528abdab803fd469327d45eef1652c70a4f4426517697e300bbb",
+    "tools/native_reconstruction/gameplay_scenario/scene_matrix_table_tests.cpp": "9bd60d3826d5d270f1dbb7fc73ae6358a5fc62301d3cdf93be0459b2fedb2b6e",
+    "tools/native_reconstruction/gameplay_scenario/collect_scene_matrix_tables.py": "cb20825dde7d204333a49a13bcdfe05220113a36b1107660a6db307e14d62f9b"
+  },
+  "pinned_shared_commit": "fcc285f6",
+  "pinned_sources_sha256": {
+    "game/native/gameplay_scenario/scene_controls.hpp": "d7471fab0e7dfda2797c3724487fd9755d8b69dd25d3cfeb5a0f7129ed62118a",
+    "game/native/gameplay_scenario/scene_controls.cpp": "2e26368499f21cb7b1c4fc898a8323a5c938dfec7ebd744830126ef222e51934",
+    "game/native/gameplay_scenario/interpreter.hpp": "644a41e15be99b4be519a5117cd7bbb91ae9b6db06bd239b1969e82b96e6ddb0"
+  },
+  "shared_header_changed_after_seal": {
+    "game/native/gameplay_tasks/tasks.hpp": {
+      "compiled_snapshot_sha256": "0de4de843f60d0dab82258de8ba2f6e34aa805dbc88a53215e6b150292b5d097",
+      "current_sha256": "41f711d4754c3bfe4651348c8e2c460c52c3b354c5027804c4cab24a88df2b5f",
+      "change": "Parent added only Scheduler.closed accessor after the immutable private cohort snapshot."
+    }
+  },
+  "documentation_and_tools_sha256": {
+    "docs/native-gameplay/SCENARIO_MATRIX_PROGRAM_SELECTION.md": "15b97919f62e27e82d1a2bceabe76b0019c2a08430ca321833a011a848d0d769",
+    "tools/native_reconstruction/gameplay_scenario/qualify_scene_matrix_programs_v1.py": "01c831950831895bb91e6946e87c427a686cb46c871d99d81ab3406ece0df9ef"
+  },
+  "owned_data_receipt": {
+    "path": "build-native-sjuni/gameplay-scene-matrix-tables-v1/receipt.json",
+    "sha256": "c35f0ae51b431c28ad5ab207f11293659cfca14e38d8600fd5b9bbd330ef8520"
+  },
+  "owned_image_sha256": {
+    "main": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+    "o2": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+    "o0": "bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2"
+  },
+  "receipts": [
+    {
+      "path": "build-native-sjuni/gameplay-scene-matrix-programs-llvm-v7/receipt.json",
+      "sha256": "64e23cf9e85b46f13d8a46d248fe3fff0cb433d6011d9f9bc54d70cd3c161114",
+      "compiler": "C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "result": {
+        "status": "passed",
+        "checks": 10959860,
+        "original_selection_calls": 81908,
+        "terminal_calls": 16384,
+        "profile_refusals": 12,
+        "actual_first_evaluations": 256,
+        "actual_bindings": 65780,
+        "game_launched": false
+      },
+      "checked_native_values": null,
+      "current_pinned_source_drift": {
+        "game/native/gameplay_scenario/interpreter.hpp": "e7efe06e83cc4155c80c4fcefa205fcca546fee52b776d8412f27c3fd6e8db75",
+        "game/native/gameplay_scenario/scene_controls.cpp": "7cb8eeb12f12a699b608fad7322d70ac9321ce79258ebefc8fc396089bcef256",
+        "game/native/gameplay_scenario/scene_controls.hpp": "3de70286bedec9e430f39e61ea418df48ae1b4d11ec33bec4c273356fc625138"
+      }
+    },
+    {
+      "path": "build-native-sjuni/gameplay-scene-matrix-programs-gcc-v1/receipt.json",
+      "sha256": "a2cd0f97e5cd75308a87b3347474ebcda6a96f67b10833f90490748862569854",
+      "compiler": "C:\\msys64\\mingw64\\bin\\g++.exe",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "result": {
+        "status": "passed",
+        "checks": 10959860,
+        "original_selection_calls": 81908,
+        "terminal_calls": 16384,
+        "profile_refusals": 12,
+        "actual_first_evaluations": 256,
+        "actual_bindings": 65780,
+        "game_launched": false
+      },
+      "checked_native_values": null,
+      "current_pinned_source_drift": {
+        "game/native/gameplay_scenario/interpreter.hpp": "e7efe06e83cc4155c80c4fcefa205fcca546fee52b776d8412f27c3fd6e8db75",
+        "game/native/gameplay_scenario/scene_controls.cpp": "7cb8eeb12f12a699b608fad7322d70ac9321ce79258ebefc8fc396089bcef256",
+        "game/native/gameplay_scenario/scene_controls.hpp": "3de70286bedec9e430f39e61ea418df48ae1b4d11ec33bec4c273356fc625138"
+      }
+    },
+    {
+      "path": "build-native-sjuni/gameplay-scene-matrix-tables-llvm-v1/receipt.json",
+      "sha256": "9d315408f5d6882db9579ca28f6990bddac4b8eb97511453f1f103d0592ee100",
+      "compiler": "C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "result": null,
+      "checked_native_values": 2227,
+      "current_pinned_source_drift": {}
+    },
+    {
+      "path": "build-native-sjuni/gameplay-scene-matrix-tables-gcc-v1/receipt.json",
+      "sha256": "8e9ad4a38298fdab55b3cb745fa4fbf441088faf4827e706f116d8e2f3016e95",
+      "compiler": "C:\\msys64\\mingw64\\bin\\g++.exe",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "result": null,
+      "checked_native_values": 2227,
+      "current_pinned_source_drift": {}
+    }
+  ],
+  "contract": {
+    "channels": 16,
+    "programs": 36,
+    "groups": 59,
+    "curves": 64,
+    "keys": 582,
+    "sound_lists": 13,
+    "sound_events": 15,
+    "descriptor_profile": 4,
+    "single_contact_gate_and_active_owner": true,
+    "real_native_model_binding": true,
+    "full64_base_copy_at_bind": true,
+    "other_classes_retain_program_or_terminal_noop": true,
+    "actual_terminal_math_chain": true
+  },
+  "limitations": [
+    "Only the five selection boundaries and terminal first-segment evaluation are qualified; periodic advancement/sound service and the outer scene worker remain open.",
+    "Shared headers are compiled from pinned private snapshots; later parent interpreter/provider changes are not part of this comparison.",
+    "Descriptor and channel bounds are explicit native admission profiles, not proof of arbitrary source indexing.",
+    "Full shared128 control/proxy identity/capacity/order and room importing remain required before installation.",
+    "Counts overlap and are not unique instruction or complete gameplay coverage.",
+    "No new opcode mask or complete Stage4/game/co-op/render validation is claimed."
+  ]
+}

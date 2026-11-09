@@ -2,6 +2,8 @@
 import argparse,hashlib,json,re,struct
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
+from audit_retail_effect_descriptors import compare_source
+from import_gameplay_contact_content import owned_overlay,BASE,BANKS
 def sha(data):return hashlib.sha256(data).hexdigest()
 def triangles(data):
  def word(at):
@@ -27,6 +29,15 @@ def main():
  if out.exists()or not out.is_relative_to(allowed):raise ValueError('Fresh private evidence output required')
  inventory=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1/members.json';raw=inventory.read_bytes()
  if sha(raw)!='276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2':raise ValueError('Owned member inventory changed')
+ owned,_=owned_overlay(ROOT/'iso/Resident Evil - Outbreak (v2.00).iso')
+ conversion_source=ROOT/'recomp/config/output_ovl/o2/o2_006175C0_0x6175c0.cpp'
+ conversion_audit=compare_source('returned-contact-type-conversion',str(conversion_source.relative_to(ROOT)),0x6175c0,0x6175dc,lambda at,size:owned[at-BASE:at-BASE+size])
+ active_sweeps=[]
+ for bank,(root,count,shapes)in enumerate(BANKS):
+  for ordinal in range(count):
+   descriptor=owned[root-BASE+32*ordinal:root-BASE+32*(ordinal+1)];tag,at=struct.unpack_from('<II',owned,shapes-BASE+8*descriptor[14])
+   if descriptor[1]and tag==2 and descriptor[12]&16 and not descriptor[22]&8:
+    geometry=owned[at-BASE:at-BASE+16];active_sweeps.append(dict(bank=bank,ordinal=ordinal,key=descriptor[19]if bank==0 else ordinal&255,mask=descriptor[12],query_flags=descriptor[22],radius=struct.unpack_from('<H',geometry,12)[0],descriptor_sha256=sha(descriptor),geometry_sha256=sha(geometry)))
  assets=[];upper=[];sweep_upper=[];sweep_edges={};counts=dict(w=0,g=0,triangles=0,routable_triangles=0,upper_routes=0,upper_beyond23=0,sweep_primary_candidates=0,sweep_primary_beyond23=0)
  with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb')as stream:
   for entry in json.loads(raw):
@@ -37,22 +48,23 @@ def main():
    records=triangles(data);kind=names[0][0];counts[kind]+=1;counts['triangles']+=len(records)
    encodings={}
    for relative,flags in records.items():
-    # 5DB320 primary radius query uses include24002: types1/14 plus
-    # high20000. It decodes a route UNCONDITIONALLY on that query's hit,
-    # unlike the later line/angular4002 test. This is only static admission.
-    if kind=='w' and flags&255 in (1,14) and flags&0x20000:
-     counts['sweep_primary_candidates']+=1;sweep_edge=((flags>>24)&15)+(0 if flags&2 else 16)
-     sweep_edges[sweep_edge]=sweep_edges.get(sweep_edge,0)+1
-     if sweep_edge>=24:
-      counts['sweep_primary_beyond23']+=1;sweep_upper.append(dict(names=names,relative=relative,flags=flags,edge=sweep_edge,kind=kind))
-    if not flags&0x4002:continue
-    counts['routable_triangles']+=1;encoded=(flags>>24)&15;edge=encoded if flags&2 else encoded+16
-    encodings[edge]=encodings.get(edge,0)+1
-    if flags&2==0:
+    # Both wall wrappers report6175C0's one-hot LOWTYPE, not raw triangle
+    # low bits. Raw1=>returned2 (lower), raw14=>returned4000 (upper).
+    reported=(flags&0xffff0000)|(1<<(flags&15));raw_type=flags&255
+    if kind!='w' or raw_type>=16 or not flags&0x20000 or not reported&0x4002:continue
+    encoded=(reported>>24)&15;edge=encoded if reported&2 else encoded+16
+    counts['routable_triangles']+=1;encodings[edge]=encodings.get(edge,0)+1
+    if not reported&2:
      counts['upper_routes']+=1
      if edge>=24:
-      counts['upper_beyond23']+=1;upper.append(dict(names=names,relative=relative,flags=flags,edge=edge,kind=kind))
+      counts['upper_beyond23']+=1;upper.append(dict(names=names,relative=relative,raw_flags=flags,reported_type=reported,edge=edge,kind=kind))
+    # The primary radius query includes lowtypes1/14. Its unconditional
+    # route decode is equivalent for admitted static hits after conversion.
+    if raw_type in (1,14):
+     counts['sweep_primary_candidates']+=1;sweep_edges[edge]=sweep_edges.get(edge,0)+1
+     if edge>=24:
+      counts['sweep_primary_beyond23']+=1;sweep_upper.append(dict(names=names,relative=relative,raw_flags=flags,reported_type=reported,edge=edge,kind=kind))
    assets.append(dict(names=names,bytes=entry['bytes'],sha256=entry['sha256'],triangles=len(records),route_edges=encodings))
- record=dict(schema=2,status='owned static line/angular and sweep-primary route admission audit; no live reachability claim',game_launched=False,process_attached=False,inventory_sha256=sha(raw),tool_sha256=sha(Path(__file__).read_bytes()),grid_import_source_sha256=sha((ROOT/'game/native/gameplay_collision/response.cpp').read_bytes()),counts=counts,assets=assets,line_angular_upper_beyond23=upper,sweep_primary_edges=sweep_edges,sweep_primary_beyond23=sweep_upper,limits=['Only static w/g members in the verified File1 inventory are covered','Line/angular flags4002 and sweep-primary include24002 are different admission paths','Dynamic authored polygons, transformed scene records and gameplay query filters remain separate admission gates','A potential encoded route does not prove a stock runtime query reaches that branch'])
+ record=dict(schema=3,status='owned static route audit after complete6175C0 returned-type conversion; no live reachability claim',game_launched=False,process_attached=False,inventory_sha256=sha(raw),tool_sha256=sha(Path(__file__).read_bytes()),grid_import_source_sha256=sha((ROOT/'game/native/gameplay_collision/response.cpp').read_bytes()),stock_primary_sweep_definitions=active_sweeps,type_conversion_word_audit=conversion_audit,type_conversion_source_sha256=sha(conversion_source.read_bytes()),counts=counts,assets=assets,line_angular_upper_beyond23=upper,sweep_primary_edges=sweep_edges,sweep_primary_beyond23=sweep_upper,limits=['Only static w/g members in the verified File1 inventory are covered','All raw triangle types pass through audited6175C0 conversion before route decoding; earlier raw-bit audits are superseded','Dynamic authored polygons, transformed scene records and gameplay query filters remain separate admission gates','A potential encoded route does not prove a stock runtime query reaches that branch'])
  out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(record,indent=2)+'\n');print(json.dumps(counts))
 if __name__=='__main__':main()
