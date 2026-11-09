@@ -279,6 +279,9 @@ void room(const char* type_path, const char* sto_path, unsigned room, const char
         binding_events(bindings);
         compare(owner, interactions, life, proxies);
     }
+#ifdef REO_ROOM_OBJECT_COMMANDS_TEST
+    test_room_object_commands(owner,interactions,life,proxies);
+#endif
     for (const auto& id : chosen) {
         const auto slot = *interactions.source_ordinal(id);
         const auto at = 0x3c4580 + 60 * unsigned(slot);

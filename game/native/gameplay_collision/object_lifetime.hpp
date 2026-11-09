@@ -66,6 +66,11 @@ class InteractionOwner::Lifetime final {
     InstanceStatus disable(std::int8_t external_id);
     InstanceUpdate update(gameplay_actors::EntityId);
     InstanceStatus publish_center(const ObjectId&);
+    bool owns(const Owner&)const noexcept;
+    bool available()const noexcept;
+    // Complete C4 move: first active external match, coordinate admission and
+    // the existing center/instance/material/proxy publication consumer.
+    InstanceStatus move_external(std::uint8_t external_id,std::uint8_t x,std::uint8_t z);
     InstanceStatus reset_requests(std::uint8_t full_source_slot);
     std::shared_ptr<ObjectInstance> acquire(gameplay_actors::EntityId) const noexcept;
     const room_geometry::Dynamic& dynamic() const noexcept {

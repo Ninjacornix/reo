@@ -54,6 +54,25 @@ void InteractionOwner::Lifetime::refresh_quad(const ownership::Handle& handle, c
         (void)proxies_.replace(handle, std::move(next));
     }
 }
+bool InteractionOwner::Lifetime::owns(const Owner& owner)const noexcept {
+    return &owner==&interactions_.owner_;
+}
+bool InteractionOwner::Lifetime::available()const noexcept {
+    return !closed_&&!closing_&&bool(interactions_.owner_.grid_);
+}
+InstanceStatus InteractionOwner::Lifetime::move_external(std::uint8_t external_id,std::uint8_t x,std::uint8_t z) {
+    if(closed_||closing_)return InstanceStatus::closed;
+    auto& owner=interactions_.owner_;
+    if(!owner.grid_)return InstanceStatus::missing_grid;
+    if(external_id>=32||std::int32_t(x)>=owner.grid_->width||std::int32_t(z)>=owner.grid_->depth)return InstanceStatus::complete;
+    for(unsigned slot=0;slot<32;++slot){
+        auto& object=owner.objects_[slot];
+        if(!object.active||object.external_id!=external_id)continue;
+        if(!owner.move_external(external_id,x,z))return InstanceStatus::invalid_object;
+        return publish_center(owner.id(slot));
+    }
+    return InstanceStatus::complete;
+}
 InstanceStatus InteractionOwner::Lifetime::publish_center(const ObjectId& id) {
     if (closed_ || closing_)
         return InstanceStatus::closed;

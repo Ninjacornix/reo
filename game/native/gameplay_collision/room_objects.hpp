@@ -59,6 +59,7 @@ public:
     const Type* type(std::uint16_t)const noexcept;
     bool install_grid(std::uint16_t room,std::span<const std::byte>);
     const Grid* grid()const noexcept{return grid_?&*grid_:nullptr;}
+    bool initialized()const noexcept{return initialized_;}
     Cell cell_at(Vec3)const noexcept;
     Rectangle footprint(const Object&)const;
     Vec3 center(const Object&)const;
@@ -79,6 +80,7 @@ private:
     std::array<Object,32> objects_{};
     std::array<Type,32> types_{};
     std::size_t count_{},type_count_{};
+    bool initialized_{};
     std::optional<Grid> grid_;
     std::uint16_t room_{};
     std::array<Grid::Mask,4> layers_{};

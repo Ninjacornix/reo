@@ -46,7 +46,7 @@ Owner Owner::import(std::span<const std::byte> types,std::span<const std::byte> 
         if(object.control_flags&4){object.width=signed_byte(b,7);object.height=signed_byte(b,8);object.depth=signed_byte(b,9);}else{const auto& p=profiles[std::size_t(t.profile)];object.width=p[16];object.height=p[17];object.depth=p[18];}
         if(t.capacity==0)object.height=7;
         object.control_flags|=t.flags;object.parameter=t.parameter4;
-    }return result;
+    }result.initialized_=true;return result;
 }
 ObjectId Owner::id(std::uint32_t slot)const noexcept{ObjectId result;result.domain_=domain_;result.slot_=slot;return result;}
 const Object* Owner::get(const ObjectId& handle)const noexcept{return handle&&handle.domain_==domain_&&handle.slot_<32&&objects_[handle.slot_].active?&objects_[handle.slot_]:nullptr;}

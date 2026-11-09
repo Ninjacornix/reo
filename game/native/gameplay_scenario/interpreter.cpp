@@ -11,6 +11,7 @@
 #include "action_choices.hpp"
 #include "scene_models.hpp"
 #include "room_rules.hpp"
+#include "room_object_commands.hpp"
 #include "../gameplay_world/world.hpp"
 #include <algorithm>
 #include <bit>
@@ -25,7 +26,7 @@ std::uint32_t word(const std::byte* p)noexcept{
         (std::to_integer<std::uint32_t>(p[2])<<16)|(std::to_integer<std::uint32_t>(p[3])<<24);
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
-    switch(op){case 0xb0:case 0xb1:return 1;case 0xb4:return 8;case 0x135:return 20;case 0x155:return 8;case 0x180:return 4;
+    switch(op){case 0xc2:case 0xc3:return 5;case 0xc4:return 9;case 0xc5:case 0xc6:case 0xc7:return 1;case 0xb0:case 0xb1:return 1;case 0xb4:return 8;case 0x135:return 20;case 0x155:return 8;case 0x180:return 4;
     case 0x50:case 0x54:case 0x55:case 0x104:case 0x105:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
@@ -70,6 +71,8 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0x23||op==0x24)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native lighting entry profile");
             if(!noop&&op==0x70&&std::bit_cast<std::int32_t>(word(b.data()+at+4))<0)throw std::invalid_argument("Native stream member profile");
             if(!noop&&op==0xb4){if(word(b.data()+at+8)>=8)throw std::invalid_argument("Native model transform preset profile");adjusted_models_.push_back(std::to_integer<std::uint8_t>(b[at+4]));}
+            if(!noop&&(op==0xc2||op==0xc3)&&std::to_integer<unsigned>(b[at+4])>=8)throw std::invalid_argument("Native cached room-object index profile");
+            room_objects_|=coverage[op].room_objects_required;room_object_lifetime_|=coverage[op].room_object_lifetime_required;room_object_queries_|=coverage[op].room_object_queries_required;
             flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
             scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;
             sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;
@@ -105,6 +108,8 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
     for(const auto i:{0xb0,0xb1,0xb4}){out[i].native_algorithm=true;out[i].models_required=true;}
+    for(const auto i:{0xc2,0xc3,0xc4,0xc5,0xc6,0xc7}){out[i].native_algorithm=true;out[i].room_objects_required=true;}
+    out[0xc4].room_object_lifetime_required=true;out[0xc2].room_object_queries_required=true;out[0xc3].room_object_queries_required=true;
     out[0x191].native_algorithm=true;out[0x191].world_required=true;out[0x191].scenario_required=true;out[0x191].canonical_flags_required=true;out[0x191].scene_controls_required=true;
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
@@ -163,6 +168,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_canonical_flags()&&(!providers.canonical_flags||providers.flags!=providers.canonical_flags))return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_room_objects()&&(!providers.room_objects||!providers.room_objects->ready(c.program->needs_room_object_lifetime(),c.program->needs_room_object_queries())))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_models()&&!providers.models)return{Status::provider_unavailable,0,{},0};
     for(const auto authored:c.program->adjusted_models())if(providers.models->resolve(authored)>=128)return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
@@ -239,6 +245,11 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0xa0:case 0xa1:providers.scene_channels->bit(value(0),opcode==0xa0);break;
         case 0xa2:case 0xa3:providers.scene_channels->all(opcode==0xa2);break;
         case 0x190:break; // File1 main1B3C30 is the checked return-only body.
+        case 0xc2:case 0xc3:{++c.condition;const auto index=std::to_integer<std::uint8_t>(payload[0]);
+            const bool pass=opcode==0xc2?providers.room_objects->matches(index,std::bit_cast<std::int8_t>(std::to_integer<std::uint8_t>(payload[4]))):providers.room_objects->presence(index,payload[4]!=std::byte{});
+            if(!pass){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
+        case 0xc4:if(!providers.room_objects->move(std::to_integer<std::uint8_t>(payload[0]),std::to_integer<std::uint8_t>(payload[4]),std::to_integer<std::uint8_t>(payload[8])))return result(Status::provider_unavailable);break;
+        case 0xc5:case 0xc6:case 0xc7:providers.room_objects->flags(std::to_integer<std::uint8_t>(payload[0]),opcode==0xc5?16u:opcode==0xc7?32u:0u,opcode==0xc6?16u:0u);break;
         case 0x191:{const auto status=apply_scenario_room_rules(*providers.world,*providers.canonical_flags,*providers.scene_controls);
             if(status!=RoomRuleStatus::completed)return result(status==RoomRuleStatus::budget_exhausted?Status::budget_exhausted:Status::provider_unavailable);
             break;}

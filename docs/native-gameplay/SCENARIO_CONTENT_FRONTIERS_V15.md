@@ -1,0 +1,11 @@
+# Owned script frontiers after native room-object commands
+
+Status, 2026-11-09: both compiler inventory receipts agree on every output hash against the v15 native ledger. All 171 selected members were hash-verified (166 RDT and five EVB, with 347 declared code candidates). Conservative unresolved banks remain 156 ordinary and 157 offline; ordinary prefix candidate opcodes remain 103 and offline grows to 150. The remaining 15/14 prefix graphs have no frontier under this bounded model, which does not admit complete native Programs or prove full payload/provider availability or runtime execution.
+
+C2?C7 now follow the [actual canonical room-object providers and complete C4 publication consumer](SCENARIO_ROOM_OBJECT_COMMANDS.md). The inventory models both possible C2/C3 condition paths and rejects cached-query indices outside the native zero-through-seven profile. Missing actual query grids and native lifetime providers remain runtime admission requirements; a dispatch mask alone cannot establish them. C0/C1 are still unsupported.
+
+Leading frontiers remain ordinary `131`, `0D0`, `100`, `094`, and offline `0F2`, `0D0`, `058`, `100`, `166`, `131`, `094`. Unsupported predecessor handlers hide additional content. A separate [actor request producer audit](../../tools/native_reconstruction/gameplay_scenario/audit_actor_request_kinds.py) inspects only bounded prefix records with verified member identities: observed ordinary kinds zero/five; offline also eight, `17` and `28` (hex). The latter resolves beyond the earlier documented 24-pointer window; that window cannot be a native kind admission bound. These are conservative alternatives, not measured gameplay frequencies or proof that the wider original dispatcher is safe for arbitrary byte kinds.
+
+Five SGL files, 81 unnamed members, indirect references, initial saved entries, unsupported handlers/providers, broader variants, actual stock Program installation and co-op/save validation remain open. No game, window or live process was accessed. Stage 4 remains incomplete.
+
+Evidence: `build-native-sjuni/gameplay-script-content-{llvm,gcc}-v12/receipt.json`, `build-native-sjuni/gameplay-actor-request-kinds-v1/receipt.json` and [v15 qualification](../../tools/native_reconstruction/gameplay_scenario_qualification_v15.json).

@@ -15,6 +15,7 @@ namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
 struct Position {float x{},y{},z{};};
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
+struct ControlRequest {std::uint8_t pending{},kind{};std::uint16_t parameter{};};
 struct ActorCollision {
     gameplay_collision::Vec3 local_center,previous_center_offset,displacement;
     gameplay_collision::Vec3 previous_local_center,interpolation_step;
@@ -66,6 +67,7 @@ struct Actor : actors::Entity,actors::HitActor {
     gameplay_collision::delivery::Component contact;
     std::shared_ptr<animation::Instance> model;
     std::shared_ptr<animation::Constraints> constraints;
+    ControlRequest control_request;
     input::Frame input;
 };
 struct Session : actors::HitSession {
