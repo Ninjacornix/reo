@@ -70,6 +70,7 @@ class SceneMatrixPrograms final
     SceneMatrixPlaybackResult advance(std::size_t, bool double_quantum,
                                       SceneMatrixSoundSink *) noexcept;
     SceneMatrixStatus source_type(std::size_t,std::uint8_t) noexcept;
+    bool bound_to(const SceneControls& controls,const SceneModels& models)const noexcept{return !closed_ && &controls_==&controls && &models_==&models;}
     void close() noexcept { closed_ = true; }
 
   private:

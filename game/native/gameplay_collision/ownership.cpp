@@ -33,7 +33,7 @@ gameplay_scene::Record canonical_record(Record value){
         result.body=zero;result.door=gameplay_scene::DoorDetails{value.door->selector};
     }
     result.collision=gameplay_scene::CollisionShape{p.bounds,p.lower,p.upper,p.query_class,p.busy,p.object};
-    result.other_content=p.content_id;
+    if(!std::holds_alternative<ControlTypeZero>(result.body))result.other_content=p.content_id;
     result.other_resource_class=value.door?std::uint32_t(value.door->heading):(p.bypass_slot_guard?2u:0u);
     result.owner=std::move(value.owner);result.source=std::move(value.source);
     result.owner_snapshot=value.owner_snapshot;result.extra=value.extra;
@@ -86,9 +86,11 @@ bool Proxies::replace(const Handle& id,Record value)noexcept{
             record.other_resource_class=value.door->heading;
             if(zero->matrix_program)zero->matrix_program->resource_class=value.door->selector;else record.door->selector_without_matrix=value.door->selector;}
     }else if(auto* two=std::get_if<gameplay_scenario::ControlTypeTwo>(&record.body);two&&two->model_reference)two->model_reference->descriptor=p.content_id;
-    else record.other_content=p.content_id;
+    else if(!std::holds_alternative<gameplay_scenario::ControlTypeZero>(record.body)&&!std::holds_alternative<gameplay_scenario::ControlTypeTwo>(record.body))record.other_content=p.content_id;
+    if(std::holds_alternative<gameplay_scenario::ControlTypeZero>(record.body)||std::holds_alternative<gameplay_scenario::ControlTypeTwo>(record.body))record.other_content.reset();
     if(auto* two=std::get_if<gameplay_scenario::ControlTypeTwo>(&record.body)){
         if((two->matrix_resource_class==2)!=p.bypass_slot_guard)two->matrix_resource_class=p.bypass_slot_guard?2u:0u;
+        record.other_resource_class.reset();
     }else if((record.other_resource_class==2)!=p.bypass_slot_guard)record.other_resource_class=p.bypass_slot_guard?2u:0u;
     record.owner=std::move(value.owner);record.source=std::move(value.source);record.owner_snapshot=value.owner_snapshot;record.extra=value.extra;
     return true;

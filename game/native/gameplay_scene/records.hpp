@@ -23,7 +23,7 @@ struct Record : gameplay_scenario::SceneControl {
     std::optional<std::uint8_t> owner_snapshot, extra;
     // Used only for tags whose +48 has no existing semantic typed projection.
     // Type0 destination and type2 descriptor always use their body field.
-    std::uint32_t other_content{};
+    std::optional<std::uint32_t> other_content;
     // Full-word native admission field. The matrix selector consumes a byte;
     // collision consumes equality with the complete word. A missing value is
     // distinct from an authored zero.
@@ -49,16 +49,17 @@ inline std::uint8_t kind(const gameplay_scenario::SceneControlBody& body)noexcep
         else return v.type;
     },body);
 }
-inline std::uint32_t content(const Record& record)noexcept {
+inline std::optional<std::uint32_t> content(const Record& record)noexcept {
     using namespace gameplay_scenario;
-    if(const auto* zero=std::get_if<ControlTypeZero>(&record.body);zero&&zero->destination)return zero->destination->edge;
-    if(const auto* two=std::get_if<ControlTypeTwo>(&record.body);two&&two->model_reference)return two->model_reference->descriptor;
+    if(const auto* zero=std::get_if<ControlTypeZero>(&record.body))return zero->destination?std::optional<std::uint32_t>(zero->destination->edge):std::nullopt;
+    if(const auto* two=std::get_if<ControlTypeTwo>(&record.body))return two->model_reference?std::optional<std::uint32_t>(two->model_reference->descriptor):std::nullopt;
     return record.other_content;
 }
 inline gameplay_collision::Proxy collision_view(const Record& record)noexcept {
     gameplay_collision::Proxy p;
     p.kind=kind(record.body);p.priority=record.counter;p.active=record.enabled!=0;
-    p.identifier=record.authored_id;p.content_id=content(record);
+    p.identifier=record.authored_id;const auto value=content(record);p.content_id=value.value_or(0);
+    if(!value)p.active=false;
     if(const auto* two=std::get_if<gameplay_scenario::ControlTypeTwo>(&record.body))p.bypass_slot_guard=two->matrix_resource_class==2;
     else p.bypass_slot_guard=record.other_resource_class==2;
     if(record.collision){const auto& shape=*record.collision;p.bounds=shape.bounds;p.lower=shape.lower;p.upper=shape.upper;p.query_class=shape.query_class;p.busy=shape.busy;p.object=shape.object;}

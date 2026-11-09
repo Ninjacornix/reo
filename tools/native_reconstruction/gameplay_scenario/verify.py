@@ -18,7 +18,11 @@ IDS += ['00690AC0','00690B80','00690C40','00690D40','00690DD0','00690E60','006B0
 IDS += ['00691FA0','00692630','0064AE50','006261D0','00626310','006263D0','0057E840','006269B0','00667370']
 IDS += ['00692B10','005D9630','00573890']
 
-def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+PINNED={};PIN_COMMITS={}
+def source_bytes(p):
+    path=p.resolve();name=path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else None
+    return PINNED[name] if name in PINNED else p.read_bytes()
+def sha(p):return hashlib.sha256(source_bytes(p)).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)
     (out/(label+'.stdout.txt')).write_text(p.stdout);(out/(label+'.stderr.txt')).write_text(p.stderr)
@@ -26,6 +30,12 @@ def invoke(command,out,label):
     return dict(command=command,exit_code=p.returncode,stdout_sha256=sha(out/(label+'.stdout.txt')),stderr_sha256=sha(out/(label+'.stderr.txt')))
 def main(a):
     cc=Path(a.compiler).resolve();out=a.output.resolve();assert cc.exists() and not out.exists() and out.is_relative_to(ROOT/'build-native-sjuni');out.mkdir(parents=True)
+    groups=[]
+    if a.pin_domain_commit:groups.append((a.pin_domain_commit,['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_scenario/scene_resources.hpp','game/native/gameplay_scenario/scene_resources.cpp']))
+    if a.pin_effects_commit:groups.append((a.pin_effects_commit,['game/native/gameplay_effects/'+base+suffix for base in ['periodic_visuals','geometry','tracks']for suffix in ['.hpp','.cpp']]))
+    for commit,names in groups:
+        for name in names:
+            PINNED[name]=subprocess.run(['git','show',commit+':'+name],cwd=ROOT,capture_output=True,check=True).stdout;PIN_COMMITS[name]=commit
     raw=(ROOT/'build-function-index/owned-overlays/o2.bin').read_bytes();assert hashlib.sha256(raw).hexdigest()=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226'
     assert raw[0x717820-0x570000:0x717830-0x570000]==bytes([0,0,1,1,0,0,1,1,2,2,3,3,2,2,3,3])
     texts=[];sources={};words=0
@@ -118,13 +128,13 @@ def main(a):
     pending=list(source_paths);closure=set(p.resolve() for p in source_paths)
     while pending:
         path=pending.pop()
-        for included in re.findall(r'#include "([^"]+)"',path.read_text()):
+        for included in re.findall(r'#include "([^"]+)"',source_bytes(path).decode()):
             candidate=next((p.resolve() for p in [path.parent/included,ROOT/included] if p.exists()),None)
             if candidate and candidate.is_relative_to(ROOT/'game/native') and candidate not in closure:closure.add(candidate);pending.append(candidate)
     source_paths=sorted(closure)
     before={p.relative_to(ROOT).as_posix():sha(p) for p in source_paths}
     for p in source_paths:
-        target=out/'source'/p.relative_to(ROOT);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target)
+        target=out/'source'/p.relative_to(ROOT);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(source_bytes(p))
     corpus=ROOT/'build-native-sjuni/effect-geometry-owned-v1';corpus_receipt=json.loads((corpus/'receipt.json').read_bytes());assert len(corpus_receipt['assets'])==12 and sha(corpus/'owned_effect_geometry.bin')==corpus_receipt['package_sha256'];shutil.copyfile(corpus/'owned_effect_geometry.bin',out/'owned_effect_geometry.bin')
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-msse4.1','-pthread','-fno-fast-math','-ffp-contract=off','-I'+str(out/'source'),'-I'+str(out)]
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
@@ -134,9 +144,9 @@ def main(a):
     checks.append(invoke([str(cc)]+[str(out/'original.o')]+[str(out/(n+'.o')) for n,p in units]+['-o',str(out/'checks.exe')],out,'link'))
     checks.append(invoke([str(out/'checks.exe'),str(out/'owned_effect_geometry.bin')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
-        oracle_profile=dict(reference_sha256=sha(reference),sdk131_sign_extended_word_setter=True,finite_simd=True,transitive_native_headers=True,compiled_private_source_snapshot=True,periodic_scheduler_allocation_declared_port=True,actual_native_periodic_visual_owner=True),periodic_effect_corpus=dict(receipt=str((corpus/'receipt.json').relative_to(ROOT)),sha256=sha(corpus/'receipt.json'),package_sha256=corpus_receipt['package_sha256']),executable_sha256=sha(out/'checks.exe'),generated_fixture_sha256=sha(out/'original_fixture.hpp'),generated_original_sha256=sha(out/'original.cpp'),original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),
+        pinned_shared_sources={name:dict(commit=PIN_COMMITS[name],sha256=hashlib.sha256(data).hexdigest())for name,data in PINNED.items()},pinned_current_source_drift={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest()for name,data in PINNED.items()if (ROOT/name).read_bytes()!=data},oracle_profile=dict(reference_sha256=sha(reference),sdk131_sign_extended_word_setter=True,finite_simd=True,transitive_native_headers=True,compiled_private_source_snapshot=True,periodic_scheduler_allocation_declared_port=True,actual_native_periodic_visual_owner=True),periodic_effect_corpus=dict(receipt=str((corpus/'receipt.json').relative_to(ROOT)),sha256=sha(corpus/'receipt.json'),package_sha256=corpus_receipt['package_sha256']),executable_sha256=sha(out/'checks.exe'),generated_fixture_sha256=sha(out/'original_fixture.hpp'),generated_original_sha256=sha(out/'original.cpp'),original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),
         original_table_sha256=hashlib.sha256(struct.pack('<432I',*table)).hexdigest(),checks=checks,result=json.loads((out/'test.stdout.txt').read_text()),
         installed_in_game=False,game_launched=False,live_process_access=False,limitations=['Native opcode algorithm coverage is partial; entire programs with unsupported handlers are refused before native install.','Canonical flag storage and offline actor-delta merging are native; actual game caller/content import, notification delivery and message services remain external integration gates.','Actual original dispatcher and handler bodies are used only in the test oracle, with bounded memory/register scaffolding. No MIPS execution ships in native core.'])
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(dict(status='passed',checks=receipt['result']['checks'],original_invocations=receipt['result']['original_dispatch_invocations'],coverage={k:v['count'] for k,v in receipt['result']['coverage'].items()},instruction_comments=words,output=str(out))))
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--compiler',required=True);p.add_argument('--output',required=True,type=Path);main(p.parse_args())
+    p=argparse.ArgumentParser();p.add_argument('--compiler',required=True);p.add_argument('--output',required=True,type=Path);p.add_argument('--pin-domain-commit');p.add_argument('--pin-effects-commit');main(p.parse_args())

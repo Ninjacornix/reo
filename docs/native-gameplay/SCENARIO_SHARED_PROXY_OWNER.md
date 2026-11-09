@@ -1,6 +1,6 @@
 # Canonical native scenario controls and collision proxies
 
-Status, 2026-11-09: the two native consumers now share one qualified owner. The complete `5C1390` room importer and actual gameplay installation remain open. Stage 4 is incomplete; no game was launched for this work.
+Status, 2026-11-09: the two native consumers share one qualified owner. The [native room initializer profile](SCENARIO_ROOM_SCENE_IMPORT.md) now imports its admitted typed state and helpers; full stock coverage and actual gameplay installation remain open. Stage4 is incomplete; no game was launched for this work. The counts below preserve the first shared-owner checkpoint; the later initializer cohort refreshes shared views to41,984 checks and clears the optional P48 fallback when typed metadata owns that field.
 
 `gameplay_scene::Records` owns at most128 records, one free stack, one linked order and one domain/generation identity. `SceneControlId` and collision `ownership::Handle` are aliases of that identity. Construct `SceneControls` and `Proxies` with the same `shared_ptr<Records>`; their default constructors remain independent standalone fixtures and must not be mistaken for an installed shared room.
 

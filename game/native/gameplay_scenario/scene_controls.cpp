@@ -24,7 +24,10 @@ std::optional<SceneControl> SceneControls::get(const SceneControlId& id)const no
 }
 ControlStatus SceneControls::replace(const SceneControlId& id,SceneControl value)noexcept{
     const auto node=acquire(id);if(!node)return ControlStatus::invalid_identity;
-    pool_->touch();static_cast<SceneControl&>(node->value)=std::move(value);return ControlStatus::completed;
+    pool_->touch();static_cast<SceneControl&>(node->value)=std::move(value);
+    if(std::holds_alternative<ControlTypeZero>(node->value.body)||std::holds_alternative<ControlTypeTwo>(node->value.body))node->value.other_content.reset();
+    if(std::holds_alternative<ControlTypeTwo>(node->value.body))node->value.other_resource_class.reset();
+    return ControlStatus::completed;
 }
 ControlStatus SceneControls::reset_five(const SceneControlId& id)noexcept{
     const auto node=acquire(id);if(!node)return ControlStatus::invalid_identity;

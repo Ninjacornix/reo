@@ -58,6 +58,12 @@ int main(){
         check(controls.replace(*second,record)==sc::ControlStatus::completed);
         check(proxies.get(*second)->geometry.bypass_slot_guard);
         check(proxies.get(*second)->geometry.content_id==12);
+        auto missing=*controls.get(*second);std::get<sc::ControlTypeTwo>(missing.body).model_reference.reset();
+        records->acquire(*second)->value.other_content=0xdeadbeef;records->touch();
+        check(controls.replace(*second,missing)==sc::ControlStatus::completed);
+        check(!records->acquire(*second)->value.other_content);
+        check(!proxies.get(*second)->geometry.active&&proxies.get(*second)->geometry.content_id==0);
+
         controls.clear();check(proxies.size()==0&&records->size()==0);
         for(unsigned n=0;n<64;++n)check(bool(controls.append({n,1,sc::ControlOther{3},0})));
         for(unsigned n=0;n<64;++n)check(bool(proxies.create({})));
