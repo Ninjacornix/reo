@@ -1,0 +1,172 @@
+{
+  "schema": 1,
+  "status": "actual ordinary native queue feeder binding focused checks passed on both compilers",
+  "game_run": false,
+  "process_access": false,
+  "device_opened": false,
+  "production_composite_worker_linked": false,
+  "callback_registration_port_declared": true,
+  "actual_native_owner_queue_metadata_and_decoder": true,
+  "guest_ram_protection": "PAGE_NOACCESS for native reader/work/service phases plus full byte comparison",
+  "cached_actual_guest_tick_held": true,
+  "finite_samples_per_channel": 189476,
+  "independent_pcm_digests_match": true,
+  "pending_header_committed_without_guest_group": true,
+  "pause_resume": true,
+  "stop_reset": true,
+  "queue_to_file_feeder_removed": true,
+  "destroy_feeder_removed_before_invalid_key": true,
+  "foreign_owner_and_null_context_refused": true,
+  "uninitialized_tick_and_closing_refused": true,
+  "pending_order_deferred_without_queue_poison": true,
+  "private_removed_registration_fault_detected_both": true,
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/receipt.json",
+      "sha256": "0f909d73f986f17f06199ac30e89277b72455fca9b5767faeda641c5a12d1a03",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "checks": [
+        {
+          "label": "compile",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "native_queue_feed",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "native_queue_destroy",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "native_queue_order",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "missing-feeder-compile",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "missing-feeder-detected",
+          "exit": 1,
+          "negative": true
+        }
+      ],
+      "unlinked_source_drift": {
+        "game/native/host_movie/session.cpp": {
+          "archive_cohort_source_sha256": "5b4d5b6dc4d0808cd4c98ace8d49d3ea700f0af48079f966f125e8ad8665eb70",
+          "current_sha256": "7df89065b4f0f62905639f0bf4cbc206ffa1c06e0c31a316feb8f756181393de"
+        }
+      },
+      "excluded_libraries": [
+        "build-native-sjuni/media-cue-capacity-llvm-v2/host_movie/libreo_native_host_movie.a"
+      ]
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/receipt.json",
+      "sha256": "b53217a79295441950e5d383c6b7714011b25761f248f0fca1c58a57c646d46e",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "checks": [
+        {
+          "label": "compile",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "native_queue_feed",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "native_queue_destroy",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "native_queue_order",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "missing-feeder-compile",
+          "exit": 0,
+          "negative": false
+        },
+        {
+          "label": "missing-feeder-detected",
+          "exit": 1,
+          "negative": true
+        }
+      ],
+      "unlinked_source_drift": {
+        "game/native/host_movie/session.cpp": {
+          "archive_cohort_source_sha256": "5b4d5b6dc4d0808cd4c98ace8d49d3ea700f0af48079f966f125e8ad8665eb70",
+          "current_sha256": "7df89065b4f0f62905639f0bf4cbc206ffa1c06e0c31a316feb8f756181393de"
+        }
+      },
+      "excluded_libraries": [
+        "build-native-sjuni/media-cue-capacity-gcc-v2/host_movie/libreo_native_host_movie.a"
+      ]
+    }
+  },
+  "compiled_adapter_sha256": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+  "compiled_fixture_sha256": "6ea2726ee924dfa5b2dabed44695a9a38617a9125484a3ca48af426abe45bcdd",
+  "evidence_sha256": {
+    "recomp/overrides/native_adxt/ordinary_tests/tests.cpp": "6ea2726ee924dfa5b2dabed44695a9a38617a9125484a3ca48af426abe45bcdd",
+    "tools/native_reconstruction/verify_adxt_native_queue_feeder.py": "3b9b65a9e84f885dd8fb0d731fba0435eb97d7f803108a884e06bd4087349607",
+    "docs/native-media/NATIVE_AUDIO_QUEUE_WORKER_BINDING.md": "fca2593e768f84eb94ac397cc7ee5f0101fc0783cfd02abb22cc99ce62c22a19",
+    "recomp/overrides/native_adxt/ordinary_runtime.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "recomp/overrides/native_adxt/game_handles.cpp": "1dbcc4954f91bb7fb2c700917cd34cb602623bd5784a9bcf1984c04c64b9a269",
+    "game/native/audio_cue_queue/queue.cpp": "e77bfaf6d4317d33258b713ebec5c5200fed3b545ac1b22ae785f7615f03a0e6",
+    "tools/native_reconstruction/native_cue_capacity_manifest_v2.json": "6cd0fcaeddaf4972131a6f5f35716e3747fca380ada3cf63feea15815af5d187",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/handle_fixture.hpp": "963001241ca7061c7141c32644b9050e56f77b5fab36c257101f3655f2f338c7",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/missing-feeder-body.cpp": "6a25cf67a8de68675a685f1a2a1fc6d73404dbc196666e2e148c09174f46a686",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/missing-feeder-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/missing-feeder-detected.txt": "49a89c43d071eb9c1f565a428f7a1f21a8c30b6368927ce4dc1b34634c2e9990",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/missing-feeder-tests.cpp": "2fd08a72b7ed9a75f5b3d1a1d5982598a50878b6e48ec88f2aa5c2c20312d3ac",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/missing-feeder.exe": "ff1dd9ccc749d91005f883950be88ea8b990c2d6bbab97d7345d237c521f9e01",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/native-queue.exe": "c2aa1d83d60d831ae75bbed6c338ef8d4c7090dc856b8dd2bdb6970b14005ad6",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/native_queue_destroy.txt": "37e582a92be2b0a7a8137ab0ae3d2b4431ee502ff1607cfc38da99671756ea49",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/native_queue_feed.txt": "a709912167ad5c2185b170b149b34c476c76e4e93b14b28d9e947b6544cdd548",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/native_queue_order.txt": "ba7e0f16d28286f571da20629ba70ac88d86b29ad21b8021485c416c484eedeb",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/ordinary_runtime_body.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/plan.txt": "6c53bb732d1040eb6c05403dc94444a85a5e116963e41c562285df6e3e1ea9a2",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/qualified-image.bin": "df5c697e9c5f8873135a7e23d4de1dd9bd160e7c3b0a899c4d385b3766b9c59d",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/tests.cpp": "6ea2726ee924dfa5b2dabed44695a9a38617a9125484a3ca48af426abe45bcdd",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v2/receipt.json": "0f909d73f986f17f06199ac30e89277b72455fca9b5767faeda641c5a12d1a03",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-llvm-v1/receipt.json": "ee7226cd766ee632aa6affdf038382306aa0f283682d0ce7f014c74e2bd40361",
+    "build-native-sjuni/media-cue-capacity-results-llvm-v2/receipt.json": "49b1cff4e0e2cf6d15402286fbe885f9c5d7d564d93059d35c5e9ebb67ae41e4",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/handle_fixture.hpp": "963001241ca7061c7141c32644b9050e56f77b5fab36c257101f3655f2f338c7",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/missing-feeder-body.cpp": "6a25cf67a8de68675a685f1a2a1fc6d73404dbc196666e2e148c09174f46a686",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/missing-feeder-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/missing-feeder-detected.txt": "540a8d053bc6e80b1bbbdb596a656ec9149451e05e98582c2620fbf506a3107d",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/missing-feeder-tests.cpp": "2fd08a72b7ed9a75f5b3d1a1d5982598a50878b6e48ec88f2aa5c2c20312d3ac",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/missing-feeder.exe": "9a305945ef4d8c69e6c99c17bf628b35946403c8fb4e737c0d6c238f8eb9eafc",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/native-queue.exe": "c562f46bb80ffc3c6e4401eb3ba9b59e26eea3154a9e1ef8a6afffbad8a780f5",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/native_queue_destroy.txt": "e80e825437ddb273570e07caf361c828917a6683f49fe756f683289711ac966c",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/native_queue_feed.txt": "193d755426885b9f6b2f39092c6f0119d23689b7bb117e5123ae93fc9785480e",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/native_queue_order.txt": "13f24affa6f4130721139760f805e6d895672fbc896abec2e2abe4691b76f23e",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/ordinary_runtime_body.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/plan.txt": "6c53bb732d1040eb6c05403dc94444a85a5e116963e41c562285df6e3e1ea9a2",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/qualified-image.bin": "df5c697e9c5f8873135a7e23d4de1dd9bd160e7c3b0a899c4d385b3766b9c59d",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/tests.cpp": "6ea2726ee924dfa5b2dabed44695a9a38617a9125484a3ca48af426abe45bcdd",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v2/receipt.json": "b53217a79295441950e5d383c6b7714011b25761f248f0fca1c58a57c646d46e",
+    "build-native-sjuni/adxt-binding/native-queue-feeder-gcc-v1/receipt.json": "03f09cf40b3a345f41b7707f1948a834af5e1c2021262ef01b99d1c8bb5b57ab",
+    "build-native-sjuni/media-cue-capacity-results-gcc-v2/receipt.json": "a33122e31778c83aca255721ca5affa82d643dc30181645f0e682e926017ad36"
+  },
+  "step3_complete": false,
+  "game_incident_fix_confirmed": false,
+  "limitations": [
+    "Fixture declares runtime/factory/callback registration ports; production composite worker is not linked here.",
+    "Pending-order case has one queued playing source plus two constructed keys, not three simultaneously playing queued sources.",
+    "Qualified audio/core archives are reused; the separately drifted old host-movie archive is excluded.",
+    "Independent worker timing, full ordinary regression and final candidate/game tests remain separate."
+  ]
+}

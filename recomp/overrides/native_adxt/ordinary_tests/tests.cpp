@@ -20,6 +20,17 @@ float reoAudioStreamGain(std::uint32_t){return 1;}
 PS2Runtime* prepared_runtime{};std::uint8_t* prepared_ram{};
 std::shared_ptr<const res::MountedResources> prepared_mount;
 bool mount_allowed=true,factory_allowed=true;unsigned mount_calls{},factory_calls{},original_calls{},original_stops{},original_children{};
+b::NativeTickReader declared_tick_reader{};
+b::NativeServiceWork declared_native_work{};
+unsigned callback_registrations{};
+bool callbacks_allowed=true;
+namespace reo::native::adxt_binding {
+bool register_native_service_callbacks(NativeTickReader reader,NativeServiceWork work)noexcept{
+    ++callback_registrations;
+    if(!callbacks_allowed || !reader || !work)return false;
+    declared_tick_reader=reader;declared_native_work=work;return true;
+}
+}
 struct Order final:sr::MediaInstallResult::PcmOrder {
     std::vector<std::uint32_t> routes;
     reo::native::pcm_bridge::Result<std::size_t> copy(std::span<std::uint32_t> out)const noexcept override{
@@ -141,6 +152,129 @@ void queued_refusal(Memory& memory,PS2Runtime& runtime,const std::string& mode){
     cue_descriptor(memory,mode=="queue_bad_member");if(mode=="queue_bad_descriptor")b::store(memory.bytes,0x20cd00+3*4,b::ram_bytes-4);
     bool refused{};try{(void)call(runtime,0x12a6b8,{b::handles.base,3,0});}catch(const std::runtime_error&){refused=true;}
     check(refused && runtime.stopped && original_calls==0 && b::current()->cue_loader->snapshot().accepted==0);
+}
+// Block one real metadata-loader task before the queued ABI request is made.
+// The selected queue still receives its actual immutable imported member.
+class MetadataGate final:public reo::native::resources::ByteView {
+    std::shared_ptr<const reo::native::resources::ByteView> source_;
+public:
+    mutable std::atomic<bool> entered{},released{};
+    explicit MetadataGate(std::shared_ptr<const reo::native::resources::ByteView> source):source_(std::move(source)){}
+    std::uint64_t size()const noexcept override{return source_->size();}
+    reo::native::resources::ReadResult read(std::uint64_t offset,std::span<std::byte> destination)const override{
+        entered.store(true,std::memory_order_release);
+        while(!released.load(std::memory_order_acquire))std::this_thread::yield();
+        return source_->read(offset,destination);
+    }
+};
+void native_queue_case(Memory& memory,PS2Runtime& runtime,const std::string& mode){
+    install(runtime);prepare_handles(memory);const auto binding=b::current();
+    check(callback_registrations==1 && declared_tick_reader && declared_native_work);
+    std::uint32_t observed_tick{};std::shared_ptr<void> context;
+    check(!declared_tick_reader(binding->source_owner.get(),observed_tick,context));
+    auto foreign=std::make_shared<own::Owner>(reo::native::adxt_control_session::Config{});
+    b::Operation foreign_order([](auto& players){check(players.set_order({})==inst::Status::completed);});
+    check(foreign->run(foreign_order)==own::Admission::accepted);
+    check(!declared_tick_reader(foreign.get(),observed_tick,context));
+    const auto third_address=b::handles.base+2*b::handles.stride;
+    const auto third_decoder=b::load<std::uint32_t>(memory.bytes,third_address+0xc);
+    if(mode=="native_queue_order")b::store(memory.bytes,third_address+0xc,0u);
+    group(runtime);const auto frozen_tick=b::load<std::uint32_t>(memory.bytes,0x20f3c4);
+    if(mode=="native_queue_order"){
+        check(binding->mapped.counts().mapped==2);
+        b::store(memory.bytes,third_address+0xc,third_decoder);binding->adopt();
+        check(binding->mapped.counts().mapped==3);
+    }
+    std::array<inst::Key,3> published_order;
+    for(unsigned i=0;i<3;++i)binding->with(binding->records[i],[&](auto&,const auto& key,const auto&){published_order[i]=key;});
+    check(declared_tick_reader(binding->source_owner.get(),observed_tick,context) && observed_tick==frozen_tick && context.get()==binding.get());
+    const auto source=b::prepare_file_source(binding->mount,{"netbio01.dat",0,assets[0].start,assets[0].count});
+    check(source.status==b::FileStatus::ready);
+    const auto gate=std::make_shared<MetadataGate>(source.view);
+    struct Release{std::shared_ptr<MetadataGate> gate;~Release(){gate->released.store(true,std::memory_order_release);}}release{gate};
+    const auto blocking=binding->cue_loader->prepare(gate);
+    check(blocking.status==reo::native::audio_clip_loader::Status::accepted);
+    until([&]{return gate->entered.load(std::memory_order_acquire);});
+    cue_descriptor(memory);const auto handle=b::handles.base;
+    const auto enqueued=call(runtime,0x12a6b8,{handle,3,0});check(GPR_U32((&enqueued),2)==1);
+    (void)call(runtime,0x12a780,{handle});
+    const auto queue=binding->records[0].queue;check(bool(queue));
+    inst::Key key;binding->with(binding->records[0],[&](auto&,const auto& native_key,const auto&){key=native_key;});
+    reo::native::audio_cue_queue::Snapshot queue_state;
+    inst::Observation observation;
+    auto inspect=[&]{binding->control([&](auto& p){queue_state=queue->snapshot();observation=p.inspect(key);});};
+    inspect();check(queue_state.preparing==1 && queue_state.play_requested && !queue_state.source_submitted);
+    std::vector<std::uint8_t> before(memory.bytes,memory.bytes+b::ram_bytes);
+    auto pass=[&](const std::shared_ptr<own::Owner>& owner,const std::shared_ptr<void>& selected){
+        inst::Status feeder=inst::Status::fault,serviced=inst::Status::fault;
+        b::Operation operation([&](auto& players){feeder=declared_native_work(selected,players,frozen_tick);
+            if(feeder==inst::Status::completed)serviced=players.service(frozen_tick);
+            if(owner==binding->source_owner){queue_state=queue->snapshot();observation=players.inspect(key);}
+        });
+        check(owner->run(operation)==own::Admission::accepted);
+        if(feeder==inst::Status::completed)check(serviced==inst::Status::completed || serviced==inst::Status::pending);
+        return feeder;
+    };
+    memory.protect(PAGE_NOACCESS);
+    const auto before_header=pass(binding->source_owner,context);
+    check(before_header==(mode=="native_queue_order"?inst::Status::order_required:inst::Status::completed) && queue_state.preparing==1 && !queue_state.source_submitted);
+    check(pass(foreign,context)==inst::Status::fault);
+    check(pass(binding->source_owner,{})==inst::Status::fault);
+    gate->released.store(true,std::memory_order_release);
+    until([&]{return binding->cue_loader->poll(blocking.key).status==reo::native::audio_clip_loader::Status::ready;});
+    check(binding->cue_loader->release(blocking.key)==reo::native::audio_clip_loader::Status::completed);
+    until([&]{return binding->cue_loader->snapshot().finished>=2;});
+    if(mode=="native_queue_order"){
+        check(pass(binding->source_owner,context)==inst::Status::order_required && queue_state.preparing==1 && !queue_state.source_submitted && !queue_state.failed);
+        binding->control([&](auto& players){check(players.set_order(published_order)==inst::Status::completed);});
+    }
+    check(pass(binding->source_owner,context)==inst::Status::completed && queue_state.preparing==0 && queue_state.source_submitted);
+    until([&]{check(declared_tick_reader(binding->source_owner.get(),observed_tick,context) && observed_tick==frozen_tick);
+        check(pass(binding->source_owner,context)==inst::Status::completed);
+        return observation.source && observation.source->configured && observation.source->output.channel[0].samples>=1024;
+    });
+    check(queue_state.preparing==0 && queue_state.source_submitted && queue_state.registered_assets==1);
+    memory.protect(PAGE_READWRITE);check(std::equal(before.begin(),before.end(),memory.bytes));
+    (void)call(runtime,0x132e50,{handle,1});inspect();const auto paused=observation.source->output.channel[0].consumed_bytes;
+    before.assign(memory.bytes,memory.bytes+b::ram_bytes);memory.protect(PAGE_NOACCESS);
+    std::array<float,1024> output{};
+    for(unsigned i=0;i<12;++i){check(pass(binding->source_owner,context)==inst::Status::completed);
+        check(binding->source_owner->submix()->render_add(output.data(),512)==reo::native::adxt_output_session::Status::completed);
+    }
+    check(pass(binding->source_owner,context)==inst::Status::completed && observation.source->output.channel[0].consumed_bytes==paused);
+    memory.protect(PAGE_READWRITE);check(std::equal(before.begin(),before.end(),memory.bytes));
+    (void)call(runtime,0x132e50,{handle,0});
+    if(mode!="native_queue_destroy"){
+        before.assign(memory.bytes,memory.bytes+b::ram_bytes);memory.protect(PAGE_NOACCESS);
+        until([&]{check(pass(binding->source_owner,context)==inst::Status::completed);
+            if(observation.source && observation.source->playback.phase==reo::native::adxt_playback::Phase::ended)return true;
+            if(observation.source && observation.source->output.channel[0].samples>=512){output.fill(0);check(binding->source_owner->submix()->render_add(output.data(),512)==reo::native::adxt_output_session::Status::completed);}return false;
+        });
+        check(observation.source->first_payload_samples==assets[0].total && observation.source->first_payload_digest==assets[0].digest);
+        memory.protect(PAGE_READWRITE);check(std::equal(before.begin(),before.end(),memory.bytes));
+        (void)call(runtime,0x131d98,{handle});(void)call(runtime,0x12a928,{handle});
+        memory.protect(PAGE_NOACCESS);check(pass(binding->source_owner,context)==inst::Status::completed && !queue_state.play_requested && !queue_state.preparing);
+        memory.protect(PAGE_READWRITE);
+        pending(memory,0,0);group(runtime);
+        check(!binding->records[0].queue);
+        binding->control([&](auto&){check(!binding->native_queues[0]);});
+        memory.protect(PAGE_NOACCESS);check(pass(binding->source_owner,context)==inst::Status::completed);
+        memory.protect(PAGE_READWRITE);
+    }else{
+        check(mode=="native_queue_destroy");const auto rna=binding->records[0].handle.rna;
+        (void)call(runtime,0x12c680,{rna});check(original_children==1 && !binding->records[0].owned);
+        binding->control([&](auto&){check(!binding->native_queues[0] && queue->snapshot().closed);});
+        memory.protect(PAGE_NOACCESS);const auto after_destroy=pass(binding->source_owner,context);
+        check((after_destroy==inst::Status::completed || after_destroy==inst::Status::order_required) && observation.status==inst::Status::invalid_key);
+        memory.protect(PAGE_READWRITE);
+    }
+    check(b::load<std::uint32_t>(memory.bytes,0x20f3c4)==frozen_tick+(mode!="native_queue_destroy"?1:0));
+    check(original_calls==original_stops+original_children && binding->cue_loader->snapshot().records==0);
+    binding->stopping.store(true,std::memory_order_release);
+    check(!declared_tick_reader(binding->source_owner.get(),observed_tick,context));
+    check(pass(binding->source_owner,context)==inst::Status::closed);
+    memory.protect(PAGE_NOACCESS);close(runtime);check(binding->source_owner->report().joined && binding->cue_loader->snapshot().joined);
+    memory.protect(PAGE_READWRITE);check(foreign->join()==own::Join::completed);
 }
 void ordinary(Memory& memory,PS2Runtime& runtime,bool recover=false){
     install(runtime);prepare_handles(memory);for(unsigned i=0;i<3;++i)pending(memory,i,i==2?1:0);
@@ -284,6 +418,7 @@ int main(int argc,char** argv)try{
     }
     else if(mode=="queue_finite" || mode=="queue_e3" || mode=="queue_append" || mode=="queue_repeat")queued(memory,runtime,mode);
     else if(mode=="queue_bad_descriptor" || mode=="queue_bad_member")queued_refusal(memory,runtime,mode);
+    else if(mode=="native_queue_feed" || mode=="native_queue_destroy" || mode=="native_queue_order")native_queue_case(memory,runtime,mode);
     else if(mode=="missing_one" || mode=="missing_two")missing_order(memory,runtime,mode=="missing_one"?1:2);
     else if(mode=="phase" || mode=="image" || mode=="entry" || mode=="mount" || mode=="worker" || mode=="registry" || mode=="factory")admission(mode,memory,runtime);
     else refusal(mode,memory,runtime);

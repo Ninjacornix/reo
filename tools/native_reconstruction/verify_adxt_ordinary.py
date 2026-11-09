@@ -13,6 +13,8 @@ def write(path,body):path.write_text(body,encoding='utf-8',newline='\n')
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     for name in ('compiler','manifest','native-receipt','data','output'):p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--exclude-unused-host-movie',action='store_true',
+        help='Exclude the unreferenced movie archive; permit only the exact identified V36 movie-session test-fault source delta')
     scope=p.add_mutually_exclusive_group()
     scope.add_argument('--trace-only',action='store_true',help='Run only bounded diagnostic/lifetime cases; preserve full regression mode by default')
     scope.add_argument('--queue-only',action='store_true',help='Run only native queued-cue boundary cases')
@@ -47,9 +49,22 @@ def main():
     inputs={n:d for n,d in manifest['files'].items() if n.startswith('game/native/') or n.startswith('recomp/overrides/native_banks/')}
     paths=[HERE/'ordinary_runtime.cpp',HERE/'ordinary_runtime.h',HERE/'ordinary_entries.inc',HERE/'game_handles.cpp',HERE/'game_handles.h',HERE/'source_profile.cpp',HERE/'source_profile.h',fixture,HERE/'handle_profile.h',Path(__file__),*sorted((HERE/'ordinary_tests').rglob('*'))]
     inputs.update({p.relative_to(ROOT).as_posix():sha(p) for p in paths if p.is_file()})
+    host_source='game/native/host_movie/session.cpp'
+    old_host_sha='5b4d5b6dc4d0808cd4c98ace8d49d3ea700f0af48079f966f125e8ad8665eb70'
+    test_fault_host_sha='7df89065b4f0f62905639f0bf4cbc206ffa1c06e0c31a316feb8f756181393de'
+    unlinked_source_drift={}
+    excluded_libraries=[n for n in native['libraries'] if a.exclude_unused_host_movie and n.endswith('/host_movie/libreo_native_host_movie.a')]
+    if a.exclude_unused_host_movie and len(excluded_libraries)!=1:
+        raise ValueError('Exactly one identified unused host-movie archive must be excluded')
     def verify():
         for n,d in {**inputs,**native['libraries'],**original}.items():
-            if sha(ROOT/n)!=d:raise ValueError('Source/archive drift '+n)
+            actual=sha(ROOT/n)
+            if actual==d:continue
+            if a.exclude_unused_host_movie and n==host_source and d==old_host_sha and actual==test_fault_host_sha:
+                unlinked_source_drift[n]=dict(archive_cohort_source_sha256=d,current_sha256=actual,
+                    reason='V36 private movie-worker fault; complete host-movie archive excluded from ordinary-audio link')
+                continue
+            raise ValueError('Source/archive drift '+n)
     verify();data=a.data.resolve();imported=data.parent/'import.json'
     if sha(imported)!='ae3668c7e98defe0eb16ce107490078451e9c2f57cb2fb87c162f37520f2600b':raise ValueError('Actual File1 import required')
     before={row['Name']:(data/row['Name']).stat() for row in json.loads(imported.read_bytes())['Files']}
@@ -62,13 +77,17 @@ def main():
     (out/'ordinary_runtime_body.cpp').write_bytes((HERE/'ordinary_runtime.cpp').read_bytes())
     env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','');env.pop('REO_NATIVE_ADXT_TRACE_FILE',None)
     record=dict(schema=1,status='failed',sources=inputs,original_source_sha256=original,compiler_sha256=sha(a.compiler),native_receipt_sha256=sha(a.native_receipt),native_manifest_sha256=sha(a.manifest),elf_sha256=elf.sha256,factory_ports_receipt_sha256=PORTS_SHA,inventory_receipt_sha256=sha(META/'receipt.json'),finite_baseline_sha256=sha(baseline),actual_game_bodies_executed=False,actual_runtime_acquisition=False,actual_native_workers=True,actual_immutable_import=True,actual_backend_selection=False,game_run=False,device_opened=False,checks=[])
+    record.update(exclude_unused_host_movie=a.exclude_unused_host_movie,excluded_libraries=excluded_libraries,
+        unlinked_source_drift=unlinked_source_drift,
+        all_archive_hashes_verified=True,
+        linked_libraries={n:d for n,d in native['libraries'].items() if n not in excluded_libraries})
     def run(label,command,negative=False):
         result=subprocess.run(list(map(str,command)),env=env,capture_output=True,text=True,timeout=100);write(out/(label+'.txt'),result.stdout+result.stderr);record['checks'].append(dict(label=label,exit=result.returncode,negative=negative))
         if (result.returncode==0)==negative:raise ValueError(label+' unexpected result; see retained log')
         print(label+': '+('fault detected' if negative else 'passed'),flush=True)
     try:
         exe=out/'ordinary.exe';flags=[a.compiler,'-std=c++20','-O2','-pthread','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-misleading-indentation','-fno-fast-math','-ffp-contract=off','-DNOMINMAX','-DWIN32_LEAN_AND_MEAN','-DREO_GAME_FILE1','-DREO_BUILD_NATIVE_RESOURCE_READS=1','-I'+str(HERE/'ordinary_tests'),'-I'+str(out),'-I'+str(HERE),'-I'+str(PORTS/'snapshot'),'-I'+str(ROOT)]
-        run('compile',flags+[HERE/'game_handles.cpp',HERE/'source_profile.cpp',HERE/'ordinary_tests/tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-lbcrypt','-lole32','-lruntimeobject','-o',exe])
+        run('compile',flags+[HERE/'game_handles.cpp',HERE/'source_profile.cpp',HERE/'ordinary_tests/tests.cpp','-Wl,--start-group',*[ROOT/n for n in native['libraries'] if n not in excluded_libraries],'-Wl,--end-group','-lbcrypt','-lole32','-lruntimeobject','-o',exe])
         cases=tuple(case for case in SCENARIOS if (not a.trace_only or case.startswith('trace')) and (not a.queue_only or case.startswith('queue_')))
         for case in cases:run(case,[exe,out/'qualified-image.bin',data,out/'plan.txt',case])
         body=(HERE/'ordinary_runtime.cpp').read_text();test=(HERE/'ordinary_tests/tests.cpp').read_text();mutations={}
@@ -101,7 +120,7 @@ def main():
         for name,(anchor,replacement,case) in faults.items():
             if body.count(anchor)!=1:raise ValueError('Unique adapter mutation anchor '+name)
             folder=out/name;folder.mkdir();changed=folder/'ordinary_runtime_body.cpp';write(changed,body.replace(anchor,replacement));fixture=out/(name+'-tests.cpp');write(fixture,test.replace('#include "ordinary_runtime_body.cpp"','#include "'+name+'/ordinary_runtime_body.cpp"'))
-            binary=out/(name+'.exe');run(name+'-compile',flags+[HERE/'game_handles.cpp',HERE/'source_profile.cpp',fixture,'-Wl,--start-group',*[ROOT/n for n in native['libraries']],'-Wl,--end-group','-lbcrypt','-lole32','-lruntimeobject','-o',binary]);run(name,[binary,out/'qualified-image.bin',data,out/'plan.txt',case],True);mutations[name]=sha(changed)
+            binary=out/(name+'.exe');run(name+'-compile',flags+[HERE/'game_handles.cpp',HERE/'source_profile.cpp',fixture,'-Wl,--start-group',*[ROOT/n for n in native['libraries'] if n not in excluded_libraries],'-Wl,--end-group','-lbcrypt','-lole32','-lruntimeobject','-o',binary]);run(name,[binary,out/'qualified-image.bin',data,out/'plan.txt',case],True);mutations[name]=sha(changed)
         verify();record.update(status='ordinary game ABI declared-port checks passed',scenarios=len(cases),trace_only=a.trace_only,queue_only=a.queue_only,binary_sha256=sha(exe),detected_faults=list(faults),fault_source_sha256=mutations)
     except Exception as error:record['failure']=str(error);raise
     finally:
