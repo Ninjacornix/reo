@@ -17,7 +17,15 @@ def main():
   source=ROOT/f'recomp/config/output_ovl/{overlay}/{overlay}_{number}_0x{start:x}.cpp';sources.append(source)
   audits.append(compare_source('response-original',str(source.relative_to(ROOT)),start,end,lambda at,n:data[at-base:at-base+n]));text=source.read_text();bodies.append(text[text.index('// Function:'):])
  paths=[ROOT/'game/native/gameplay_collision/response.hpp',ROOT/'game/native/gameplay_collision/response.cpp',ROOT/'game/native/gameplay_collision/response_tests.cpp',ROOT/'tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp',ROOT/'tools/native_reconstruction/gameplay_collision_oracle/reference.hpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h',Path(__file__),*sources]
- inputs={f.relative_to(ROOT).as_posix():sha(f) for f in paths};out.mkdir();original=out/'original.cpp';original.write_text('#include "tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp"\n'+'\n'.join(bodies))
+ # Preserve the precise source/header closure; historical receipts stay intact.
+ for f in paths:
+  for include in re.findall(r'^\s*#include "([^"]+)"',f.read_text(),re.M):
+   local=(f.parent/include).resolve();target=local if local.is_file() else (ROOT/include).resolve()
+   if target.is_file() and target.is_relative_to(ROOT) and target not in paths:paths.append(target)
+ inputs={f.relative_to(ROOT).as_posix():sha(f) for f in paths};out.mkdir()
+ for f in paths:
+  target=out/'source'/f.relative_to(ROOT);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(f.read_bytes())
+ original=out/'original.cpp';original.write_text('#include "tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp"\n'+'\n'.join(bodies))
  inventory=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1/members.json'
  if sha(inventory)!='276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2':raise ValueError('Pinned inventory changed')
  members=json.loads(inventory.read_bytes());assets=[];scenarios={'r001.afs','r002.afs','r028.afs','r035.afs','r041.afs'}
@@ -31,7 +39,7 @@ def main():
    destination.write_bytes(body);assets.append((destination,entry))
  asset_list=out/'asset-list.txt';asset_list.write_text('\n'.join(str(path) for path,_ in assets)+'\n')
  compiler=COMPILERS[a.compiler];env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','');exe=out/'response.exe';record=dict(schema=1,status='failed',compiler_sha256=sha(compiler),source_sha256=inputs,original_word_audits=audits,game_launched=False,checks=[])
- command=[str(compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-parameter','-ffp-contract=off','-I'+str(ROOT),str(ROOT/'game/native/gameplay_collision/response.cpp'),str(ROOT/'game/native/gameplay_collision/response_tests.cpp'),str(original),'-o',str(exe)]
+ command=[str(compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-parameter','-ffp-contract=off','-I'+str(out/'source'),str(out/'source/game/native/gameplay_collision/response.cpp'),str(out/'source/game/native/gameplay_collision/response_tests.cpp'),str(original),'-o',str(exe)]
  try:
   record['owned_assets']=[entry for _,entry in assets]
   for name,cmd in [('compile',command),('test',[str(exe),str(asset_list)])]:
@@ -42,6 +50,6 @@ def main():
    if sha(ROOT/name)!=digest:raise ValueError('Changed source: '+name)
   record['status']='native capsule/floor/grid response focused comparisons passed'
  finally:
-  record['output_sha256']={f.name:sha(f) for f in out.iterdir() if f.is_file()};(out/'receipt.json').write_text(json.dumps(record,indent=2)+'\n')
+  record['output_sha256']={f.relative_to(out).as_posix():sha(f) for f in out.rglob('*') if f.is_file()};(out/'receipt.json').write_text(json.dumps(record,indent=2)+'\n')
  print(json.dumps(record['results']))
 if __name__=='__main__':main()

@@ -74,9 +74,15 @@ int main(int argc,char** argv){
     for(unsigned i=0;i<5000;++i){r::Filter filter;filter.include=random();filter.exclude=random();filter.disabled=random();filter.dynamic_kind_gate=random()%2;
         for(auto& slot:filter.slots){slot.kind=std::uint8_t(random()%4);slot.state=std::uint8_t(random()%4);}const auto flags=std::uint32_t(random());check(r::admits(flags,filter)==original_filter(flags,filter),"original collision type/flag/dynamic-slot masks");}
     const std::array<r::Triangle,3> triangles{{{0x00420102,{{{0,0,0},{100,0,0},{0,0,100}}},{0,1,0},-20},{0x01010303,{{{0,0,0},{100,0,0},{0,0,100}}},{0,1,0},-40},{0x01010383,{{{0,0,0},{100,0,0},{0,0,100}}},{0,1,0},-60}}};
-    for(int x=-1;x<=101;++x)for(float y:{-100.0f,-60.0f,0.0f,100.0f})for(std::uint8_t required:{std::uint8_t(255),std::uint8_t(2),std::uint8_t(3)}){
+    for(int x=-1;x<=101;++x)for(float y:{-100.0f,-60.0f,0.0f,100.0f})for(std::uint8_t required:{std::uint8_t(255),std::uint8_t(2),std::uint8_t(3),std::uint8_t(0x83)}){
         const c::Vec3 point{float(x),y,20};const auto native=r::floor_at(point,triangles,required),reference=original_floor(point,triangles,required);
         check(native.height==reference.height&&native.type==reference.type&&native.material==reference.material&&native.attributes==reference.attributes&&native.normal.y==reference.normal.y,"original floor selection and metadata");}
+    for(unsigned type=0;type<256;++type)for(unsigned requested=0;requested<256;++requested){
+        auto triangle=triangles[0];triangle.flags=(triangle.flags&0xffffff00u)|type;
+        const std::array one{triangle};const c::Vec3 point{20,0,20};
+        const auto native=r::floor_at(point,one,std::uint8_t(requested)),reference=original_floor(point,one,std::uint8_t(requested));
+        check(native.height==reference.height&&native.type==reference.type&&native.material==reference.material&&native.attributes==reference.attributes&&native.normal.y==reference.normal.y,"all source floor type/request bytes including explicit high-bit surfaces");
+    }
     std::vector<std::byte> raw(176);const auto put=[&](std::size_t at,std::uint32_t value){for(unsigned k=0;k<4;++k)raw[at+k]=std::byte(value>>(8*k));};
     put(8,100);put(12,100);put(16,2);put(20,1);put(32,32);put(36,56);put(40,40);put(44,48);put(48,0);put(52,0xffffffff);put(56,56);put(60,0xffffffff);
     std::memcpy(raw.data()+64,&triangles[0],56);std::memcpy(raw.data()+120,&triangles[1],56);const auto original_bytes=raw;const auto grid=r::Grid::import(raw);

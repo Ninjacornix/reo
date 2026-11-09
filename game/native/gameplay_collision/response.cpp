@@ -107,7 +107,9 @@ std::optional<Contact> capsules(Capsule a,Capsule b)noexcept{
 Floor floor_at(Vec3 p,std::span<const Triangle> triangles,std::uint8_t required)noexcept{
     Floor result;result.height=p.y;
     for(std::size_t i=0;i<triangles.size();++i){const auto& t=triangles[i];
-        if((required!=255&&std::uint8_t(t.flags)!=required)||(t.flags&0x80)||t.normal.y<=0||!triangle_contains(t.vertices,p))continue;
+        // An explicit type request bypasses the generic high-bit exclusion.
+        // Water queries request0x81; applying both tests makes them impossible.
+        if((required==255?bool(t.flags&0x80):std::uint8_t(t.flags)!=required)||t.normal.y<=0||!triangle_contains(t.vertices,p))continue;
         const auto y=-((t.normal.x*p.x+t.normal.z*p.z)+t.plane_d)/t.normal.y;
         if(y<p.y+100&&(!result.triangle||result.height<y))result={y,t.normal,std::uint8_t(t.flags),std::uint8_t(t.flags>>8),std::uint16_t(t.flags>>16),std::uint32_t(i)};
     }
