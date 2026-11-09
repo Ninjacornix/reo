@@ -1,6 +1,8 @@
 #pragma once
 #include "geometry.hpp"
+#include "work.hpp"
 #include "../gameplay_scenario/periodic_effects.hpp"
+#include "../gameplay_scenario/fog.hpp"
 #include <list>
 #include <mutex>
 namespace reo::native::gameplay_effects {
@@ -17,6 +19,7 @@ public:
     const Tracks& tracks()const noexcept{return *tracks_;}
     const MaterialTracks& materials()const noexcept{return *materials_;}
     const VisualBinding* periodic(std::uint16_t descriptor)const noexcept;
+    VisualBinding bind(std::uint16_t descriptor,std::int16_t variant)const;
     std::shared_ptr<const Geometry> geometry_owner()const noexcept{return geometry_;}
 private:
     EffectBank()=default;
@@ -46,15 +49,21 @@ struct VisualReport {VisualStatus status{VisualStatus::completed};std::size_t vi
 // Canonical native visual/resource owner for the admitted periodic family.
 // Simulation calls are serialized; only immutable frame acquisition is shared
 // with rendering. A retained frame/visual cannot retarget a recycled native ID.
-class PeriodicVisuals final:public gameplay_scenario::PeriodicEmitter {
+class PeriodicVisuals final:public gameplay_scenario::PeriodicEmitter,public WorkBackend {
 public:
     explicit PeriodicVisuals(std::shared_ptr<const EffectBank>);
+    PeriodicVisuals(std::shared_ptr<const EffectBank>,gameplay_session::Random&);
+    PeriodicVisuals(std::shared_ptr<const EffectBank>,gameplay_session::Random&,gameplay_scenario::Fog&);
     ~PeriodicVisuals();
     PeriodicVisuals(const PeriodicVisuals&)=delete;
     PeriodicVisuals& operator=(const PeriodicVisuals&)=delete;
     bool admitted()const noexcept override;
+    bool bound_to(const gameplay_session::Random&)const noexcept override;
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
+    WorkCreated create(const WorkRequest&)noexcept override;
+    WorkStatus refresh_companion()noexcept override;
     VisualReport update(transform_math::Vector camera)noexcept;
+    VisualReport update_with_view(transform_math::Vector camera,const transform_math::Matrix&)noexcept;
     bool retire(const gameplay_actors::EntityId&)noexcept;
     void close()noexcept;
     std::shared_ptr<const EffectFrame> retain()const noexcept;
@@ -63,11 +72,16 @@ public:
     VisualStatus failure()const noexcept{return failure_;}
 private:
     struct Node;
+    struct Editing;
+    class Edit;
     struct Piece {bool active{};PieceOutput output;};
     gameplay_actors::EntityStore entities_{{168}};
     std::list<gameplay_actors::EntityId> order_;
     std::array<Piece,256> pieces_;
     std::shared_ptr<const EffectBank> bank_;
+    gameplay_session::Random* random_{};
+    gameplay_scenario::Fog* fog_{};
+    std::shared_ptr<Editing> editing_;
     mutable std::mutex publication_;
     std::shared_ptr<const EffectFrame> published_;
     std::size_t piece_count_{};
@@ -76,6 +90,7 @@ private:
     VisualStatus failure_{VisualStatus::completed};
     bool retire_node(gameplay_actors::EntityId)noexcept;
     void publish(std::shared_ptr<const EffectFrame>)noexcept;
+    VisualReport update_impl(transform_math::Vector,const std::optional<transform_math::Matrix>&)noexcept;
 };
 // Complete652CE0/370420/370FE0 finite SDK-profile position policy. No host
 // clock or PS2 vector/register state is used by the production implementation.

@@ -37,6 +37,9 @@ private:
     std::array<std::uint8_t,512> mapping_;
     std::array<std::int8_t,512> variants_;
     std::vector<Group> groups_;
+    // Some owned banks have a bounded empty header at the literal byte255
+    // index. The original constructor consumes it without an FF guard.
+    std::optional<Group> maximum_byte_group_;
 };
 // Complete5903E0 channel policy; caller-owned channels not written by the
 // authored group retain their values, including the fourth rotation halfword.

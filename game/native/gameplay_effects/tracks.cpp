@@ -89,19 +89,22 @@ std::shared_ptr<const Tracks> Tracks::import(std::span<const std::byte> bytes){
             group.parts.push_back(std::move(part));
         }
     }
+    if(count<=255&&bytes.size()>=base+256*20&&read<std::uint16_t>(bytes,base+255*20+12)==0){
+        Group empty;empty.lifetime=read<std::int16_t>(bytes,base+255*20+18);tracks->maximum_byte_group_=std::move(empty);
+    }
     return tracks;
 }
 std::optional<std::size_t> Tracks::resolve(std::uint16_t logical,std::int16_t variant)const noexcept{
-    if(logical>=mapping_.size()||mapping_[logical]==255)return{};
+    if(logical>=mapping_.size()||(mapping_[logical]==255&&variant!=0))return{};
     const auto selected=std::int32_t(mapping_[logical])+variant;
-    if(selected<0||std::size_t(selected)>=groups_.size())return{};
+    if(selected<0||!group(std::size_t(selected)))return{};
     return std::size_t(selected);
 }
 std::int8_t Tracks::variants(std::uint16_t logical)const{
     if(logical>=variants_.size())throw std::out_of_range("Native effect logical ID outside admitted mapping");
     return variants_[logical];
 }
-const Group* Tracks::group(std::size_t index)const noexcept{return index<groups_.size()?&groups_[index]:nullptr;}
+const Group* Tracks::group(std::size_t index)const noexcept{return index<groups_.size()?&groups_[index]:index==255&&maximum_byte_group_?&*maximum_byte_group_:nullptr;}
 void sample_transform(std::span<const Channel> channels,std::int16_t time,Parameters& output){
     transform_math::require_profile();
     for(const auto& channel:channels){

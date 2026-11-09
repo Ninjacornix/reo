@@ -54,7 +54,7 @@ def main():
     units = ['game/native/gameplay_effects/' + n + '.cpp' for n in ['periodic_visuals', 'geometry', 'tracks']]
     units += ['game/native/animation/' + n + '.cpp' for n in ['model', 'model_math', 'curves']]
     units += ['game/native/transform_math/transform_math.cpp', 'game/native/gameplay_actors/entity.cpp']
-    units += ['game/native/gameplay_scenario/' + n + '.cpp' for n in ['periodic_effects', 'scene_controls', 'flags']]
+    units += ['game/native/gameplay_scenario/' + n + '.cpp' for n in ['periodic_effects', 'scene_controls', 'flags', 'fog']]
     units += ['game/native/gameplay_session/session.cpp', 'game/native/gameplay_tasks/tasks.cpp']
     files = list(units)
     frozen = {}

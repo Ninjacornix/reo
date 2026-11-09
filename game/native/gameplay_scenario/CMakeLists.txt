@@ -2,6 +2,7 @@ add_library(reo_native_gameplay_scenario STATIC interpreter.cpp flags.cpp offlin
 target_compile_features(reo_native_gameplay_scenario PUBLIC cxx_std_20)
 target_sources(reo_native_gameplay_scenario PRIVATE resource_templates.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE room_scene_input.cpp room_scene_owner.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE fog.cpp)
 target_include_directories(reo_native_gameplay_scenario PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_tasks reo_native_adxt_control_owner reo_native_afs_source_range reo_native_gameplay_world reo_native_transform_math)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

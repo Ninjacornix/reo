@@ -21,10 +21,12 @@ File #1 US is the selected edition; File #2 requires a separate validation.
 
 The [shared scenario-control/collision-proxy pool](SCENARIO_SHARED_PROXY_POOL.md)
 is an explicit installation gate: the original 128 records form one identity,
-capacity, order and retirement owner. Current standalone native projections do
-not close that gate. After the actual 16-channel matrix-program consumer, port
-the full bounded `5C1390` room-record importer and unify typed logical payloads
-with retained collision proxy records before more isolated opcode families.
+capacity, order and retirement owner. That [shared native owner](SCENARIO_SHARED_PROXY_OWNER.md)
+and the [bounded room importer](SCENARIO_ROOM_SCENE_IMPORT.md) now have original
+comparisons. The importer admits163 of166 owned rooms under controlled external
+poses; three authoredFF rooms remain an explicit modernization/acceptance gate.
+Their counter/pointer aliases must not become a native guest-memory model.
+Full room model/resource construction and actual game installation remain open.
 
 Completion requires native ownership and migrated real consumers across every
 row, with source/build identities, behavioral comparisons and game acceptance.
@@ -39,6 +41,19 @@ corrects the earlier scalar track field labels; the [scenario command](SCENARIO_
 uses the canonical scheduler/flags/RNG with full ownership checks. These are
 qualified components. The game's installed gameplay still remains the V39
 guarded save/session checkpoint, with the new World/scenario owners uninstalled.
+
+Further qualified components now include [matrix curve playback](SCENARIO_MATRIX_PLAYBACK.md),
+[actor motion selection/playback](ANIMATION_PLAYBACK.md), [resource attachments](ANIMATION_RESOURCE_ATTACHMENTS.md),
+the [single World-owned linked model pool](ANIMATION_LINKED_MODELS.md), and
+[active constrained attachment composition](ANIMATION_CONSTRAINED_ATTACHMENTS.md).
+The [ground fixture correction](ANIMATION_GROUND_FIELD_AUDIT.md) supersedes an
+earlier coverage claim; it did not require a production solver change.
+Contact effects now use the corrected mask/variant contract and checked canonical
+RNG binding, with a generation-checked World/model/room interface. The
+[shared effect work and fog owner](EFFECT_WORK_AND_FOG.md) supplies actual general
+visual consumers and the fog companion through the same168/256 domains.
+These do not close actual animation-event, resource-creation, scene/audio/input,
+network, save-owner, stock-script and game-acceptance gates.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a
