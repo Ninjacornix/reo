@@ -47,6 +47,7 @@ public:
     void rebuild(const Matrix& parent);
     std::shared_ptr<const JointSnapshot> retain()const noexcept{return snapshot_;}
 private:
+    friend class Constraints;
     struct Binding {std::shared_ptr<const Clip> clip;std::size_t track{};};
     std::shared_ptr<const Skeleton> skeleton_;
     std::vector<NodePose> nodes_;
@@ -55,6 +56,7 @@ private:
     std::shared_ptr<const JointSnapshot> snapshot_;
     std::uint64_t revision_{};
     void sample_node(std::size_t,float);
+    void publish_snapshot();
     void invalidate()noexcept{snapshot_.reset();}
 };
 // Complete58BF50 timing policy, advanced by the original caller's game step.

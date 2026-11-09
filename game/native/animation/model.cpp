@@ -77,6 +77,9 @@ Vector Instance::translation_difference(std::size_t node,float start,float end){
 }
 void Instance::rebuild(const Matrix& parent){
     invalidate();const auto walk=[&](auto&& self,std::size_t i,const Matrix& incoming,Vector scale)->void{auto& n=nodes_[i];n.world=hierarchical_pose(n,incoming,scale);const auto& definition=skeleton_->nodes()[i];if(definition.child)self(self,*definition.child,n.world,Vector{n.parameters[0],n.parameters[1],n.parameters[2]});if(definition.sibling)self(self,*definition.sibling,incoming,scale);};walk(walk,0,parent,{1,1,1});
+    publish_snapshot();
+}
+void Instance::publish_snapshot(){
     if(revision_==UINT64_MAX)throw std::overflow_error("Native model snapshot revision exhausted");
     auto snapshot=std::make_shared<JointSnapshot>();snapshot->revision=++revision_;snapshot->joints.reserve(nodes_.size());for(const auto& n:nodes_)snapshot->joints.push_back(n.world);snapshot_=std::move(snapshot);
 }
