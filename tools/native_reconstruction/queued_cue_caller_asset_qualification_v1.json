@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "status": "owned static cue tables checked against qualified native preparation",
+  "summary": {
+    "scene_table_rows": 323,
+    "scene_unique_names": 236,
+    "gallery_records": 69,
+    "gallery_max_listed_cues": 4,
+    "gallery_max_resolved_cues": 3,
+    "unique_resolved_members": 245,
+    "scene_output_formats": [
+      [
+        2,
+        48000
+      ]
+    ],
+    "refused_named_cues": 0,
+    "inline_loop_named_cues": 0,
+    "absent_names": [
+      "s359900a.adx"
+    ]
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/queued-cue-caller-tables-v3/receipt.json": "a58d6a8021f334c4434f99329f24807d977515dfe2097faadd54413d9b2bac7a",
+    "build-native-sjuni/queued-cue-caller-tables-v3/callers.json": "2fed328c503108a6a5d4145014bbee4aa8b35fc20d50158508238766d71dd147",
+    "tools/native_reconstruction/audit_queued_cue_callers.py": "3e8e998080f8233cb35ef05bbf2b4f1b9f61a4a4b2e61a75f330440629c997a4"
+  },
+  "limitations": [
+    "Static table names and header admission, not PCM or actual game execution.",
+    "Scene list length and order are runtime descriptor data; no universal capacity proof.",
+    "Only these direct caller families; no arbitrary indirect-call absence claim.",
+    "The one absent gallery name is reported, not synthesized or enqueued.",
+    "Other queued uses of the 89 looped catalogue assets are not ruled out."
+  ],
+  "game_launched": false,
+  "step3_complete": false
+}
