@@ -15,7 +15,7 @@ public:
     virtual std::uint8_t subseconds()const noexcept=0;
 };
 struct StatusSession : HealthSession {
-    bool paused{};
+    std::int8_t paused{};
     std::uint8_t clock_mode{}, feedback_phase{}, feedback_suppressed{};
     std::int16_t session_state{};
     // Standalone value profiles retain the two bytes above. A canonical update

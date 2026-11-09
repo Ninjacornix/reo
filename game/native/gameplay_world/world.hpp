@@ -12,9 +12,14 @@ namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
 struct Position {float x{},y{},z{};};
+struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
 struct ActorCollision {
     gameplay_collision::Vec3 local_center,previous_center_offset,displacement;
+    gameplay_collision::Vec3 previous_local_center,interpolation_step;
     float radius{};
+    float previous_radius{};
+    std::uint8_t interpolation_ticks{};
+    std::optional<CollisionShapeTarget> interpolation_target;
     bool contact{},pose_ready{};
     std::optional<gameplay_collision::Vec3> point,normal,joint_two_position;
     std::uint16_t route_ticks{};
@@ -35,6 +40,8 @@ struct Actor : actors::Entity,actors::HitActor {
     Position previous_position{};
     std::array<std::int16_t,4> orientation{},previous_orientation{};
     std::uint32_t action_elapsed{},control_elapsed{};
+    Position saved_action_position{};
+    std::int16_t saved_action_yaw{};
     float sampled_surface_height{};
     bool sampled_surface_valid{};
     std::uint8_t surface_kind{255},surface_material{255};
@@ -101,7 +108,7 @@ public:
     // functions too. No per-callback import/export or shadow session is needed.
     std::uint8_t& mode;
     std::uint8_t& selected_actor;
-    bool& paused;
+    std::int8_t& paused;
     bool& filter_nonselected_input;
     std::uint16_t& room;
     std::uint8_t selected_frame_marker{};
