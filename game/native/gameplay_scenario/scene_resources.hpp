@@ -24,6 +24,9 @@ private:
 class SceneAttachment {
 public:
     virtual ~SceneAttachment()=default;
+};
+class SceneFlagAttachment:public SceneAttachment {
+public:
     virtual void flag(std::uint32_t mask,bool set)noexcept=0;
 };
 struct SceneDescriptor {

@@ -16,7 +16,7 @@ def main():
     assert sha(elf) == '06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     assert sha(overlay) == '45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226'
     read = elf_reader(elf.read_bytes()); raw = overlay.read_bytes()
-    addresses = [0x590be0,0x590c70,0x590d80,0x590ea0,0x5932f0,0x592770,0x5b1850,0x5b1a90,
+    addresses = [0x590be0,0x590c70,0x590d80,0x590ea0,0x5932f0,0x592770,0x5b1850,0x5b1a90,0x5c1120,0x5c11b0,0x5c12a0,
                  0x6b4420,0x6b45c0,0x6b4a30,0x1902d0,0x18fe20,0x18f570,0x1900e0,0x190060,
                  0x1904a0,0x191f80,0x190020,0x18feb0,0x1913e0]
     originals=[]; bodies=[]; proof=[]
@@ -33,6 +33,7 @@ def main():
         'gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp',
         'gameplay_collision/contact_packets.cpp','gameplay_collision/contact_content.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp',
         'gameplay_collision/actors.cpp','gameplay_collision/actor_views.cpp','gameplay_session/session.cpp',
+        'gameplay_collision/ownership.cpp','gameplay_collision/sweep.cpp',
         'gameplay_scenario/scene_resources.cpp','animation/weapon_program.cpp','animation/model_math.cpp',
         'gameplay_scenario/periodic_effects.cpp','gameplay_scenario/scene_controls.cpp','gameplay_scenario/flags.cpp','gameplay_tasks/tasks.cpp',
         'animation/model.cpp','animation/curves.cpp','animation/constraints.cpp','animation/constraint_math.cpp',

@@ -71,7 +71,7 @@ SceneStatus SceneResources::flag800(const SceneResourceId& id,std::int8_t value)
     auto& d=descriptors_[id.slot_];if(!d.active||!d.kind)return SceneStatus::completed;
     d.flags=value?d.flags|0x800u:d.flags&~0x800u;
     const auto primary=d.primary;
-    if(primary)primary->flag(0x800u,value!=0);
+    if(primary){const auto flags=std::dynamic_pointer_cast<SceneFlagAttachment>(primary);if(!flags)return SceneStatus::provider_unavailable;flags->flag(0x800u,value!=0);}
     return SceneStatus::completed;
 }
 SceneStatus SceneResources::detach(const AttachedSceneResource& attached,SceneEffects* effects,SceneOwners* owners)noexcept{

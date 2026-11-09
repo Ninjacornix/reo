@@ -1,5 +1,6 @@
 #include "game/native/gameplay_world/resource_frames.hpp"
 #include "game/native/gameplay_world/resource_programs.hpp"
+#include "game/native/gameplay_collision/ownership.hpp"
 #include "reference.hpp"
 #include "owned_constants.hpp"
 #include <fstream>
@@ -10,7 +11,7 @@ namespace g=reo::native::gameplay_world;
 namespace a=reo::native::animation;
 namespace s=reo::native::gameplay_scenario;
 constexpr unsigned pool=0x3f4010,stride=0x250,descriptor_at=0x3c5630+3*60,bank_at=0x749180;
-std::uint64_t checks{},common_cases{},weapon_cases{},sequence_frames{},source_calls{},refusals{},passes{},pose_cases{};
+std::uint64_t checks{},common_cases{},weapon_cases{},sequence_frames{},source_calls{},refusals{},passes{},pose_cases{},release_cases{};
 std::string active_case;
 void check(bool value,const std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(active_case+" line "+std::to_string(at.line()));
@@ -79,6 +80,7 @@ struct Fixture {
     void compare(){const auto& model=*created.model;const auto descriptor=resources.get(*resources.slot(3));check(bool(descriptor));
         check(model.current()==(models.available()==63));check(model.active==bool(ram[raw]));check(model.visible==bool(ram[raw+1]));check(model.flags==read<std::uint32_t>(ram.data(),raw+0x23c));check(model.draw_layer==ram[raw+0x241]);
         check(descriptor->flags==read<std::uint32_t>(ram.data(),descriptor_at+24));check(bool(descriptor->primary)==bool(read<unsigned>(ram.data(),descriptor_at+28)));
+        check(bool(descriptor->secondary)==bool(read<unsigned>(ram.data(),descriptor_at+32)));
         check(model.program.phase==ram[raw+9]&&model.program.elapsed==read<std::int16_t>(ram.data(),raw+0x10));
         check(std::memcmp(model.program.completed.data(),ram.data()+raw+0x38,7)==0);
         check(std::memcmp(model.part_enabled.data(),ram.data()+raw+0x30,6)==0);
@@ -111,14 +113,14 @@ int main(int argc,char** argv)try{
     for(unsigned bank_index=0;bank_index<count;++bank_index){
         unsigned size{};file.read(reinterpret_cast<char*>(&size),4);check(size&&size<=2048);std::array<std::byte,2048> bytes{};file.read(reinterpret_cast<char*>(bytes.data()),size);check(bool(file));const auto bank=a::WeaponProgramBank::import(std::span(bytes).first(size));Fixture f;
         for(unsigned select=0;select<10;++select){if(bank->selection(select).kind!=a::WeaponSelectionKind::program)continue;
-            for(unsigned owner=1;owner<=4;++owner)for(unsigned pattern=0;pattern<8;++pattern){
+            for(unsigned owner=1;owner<=4;++owner)for(unsigned pattern=0;pattern<9;++pattern){
                 active_case="weapon bank="+std::to_string(bank_index)+" selection="+std::to_string(select)+" owner="+std::to_string(owner)+" pattern="+std::to_string(pattern);f.reset(owner,0x20000,pattern!=5);const auto actor=f.world.primary(owner-1);actor->weapon_programs=bank;actor->motion_style=std::uint8_t(select%2);f.sync(owner-1);
                 for(unsigned slot=0;slot<4;++slot)std::memcpy(f.ram.data()+bank_at+2048*slot,bytes.data(),2048);
                 const auto descriptor_id=*f.resources.slot(3);auto descriptor=*f.resources.get(descriptor_id);descriptor.parameter=select<2?1:0;check(f.resources.replace(descriptor_id,descriptor)==s::SceneStatus::completed);put(f.ram.data(),descriptor_at+36,descriptor.parameter);
                 const unsigned mode=select<2||select>=8?0:select/2;g::WorldResourcePrograms programs(f.world,f.resources);programs.select(*actor,mode);call(f.ram.data(),0x6b4420,0x4a5c30+0x10e0*(owner-1),mode);
                 auto& state=f.created.model->program;state.elapsed=pattern==1?-3:pattern==2?32766:pattern==3?-32768:0;put(f.ram.data(),f.raw+0x10,state.elapsed);
                 state.completed.fill(pattern==4?63:pattern==6?0x15:pattern==7?0xff:0);std::memcpy(f.ram.data()+f.raw+0x38,state.completed.data(),7);
-                if(pattern==5){actor->status=0x200;f.sync(owner-1);}f.compare();
+                if(pattern==5||pattern==8){actor->status=0x200;f.sync(owner-1);}f.compare();
                 for(unsigned frame=0;frame<96;++frame){f.step(true);++sequence_frames;}
                 ++weapon_cases;
             }
@@ -127,8 +129,8 @@ int main(int argc,char** argv)try{
     for(unsigned phase:{0u,2u,255u})for(unsigned owner:{0u,1u,4u,32769u,65535u}){
         active_case="weapon phase/invalid owner";Fixture f;f.reset(owner);f.created.model->program.phase=std::uint8_t(phase);f.ram[f.raw+9]=std::uint8_t(phase);f.step(true);++weapon_cases;
     }
-    for(unsigned count=0;count<=6;++count)for(unsigned phase:{0u,2u}){
-        active_case="static part copy count="+std::to_string(count);Fixture f;f.reset(1,0x20000,false);f.bases->count=std::uint16_t(count);put(f.ram.data(),0x3dbb14+2*2,std::int16_t(count));f.world.primary(0)->status=0x200;f.sync(0);f.created.model->program.phase=std::uint8_t(phase);f.ram[f.raw+9]=std::uint8_t(phase);f.step(true);++weapon_cases;
+    for(unsigned count=0;count<=6;++count)for(unsigned phase:{0u,2u})for(bool active:{false,true}){
+        active_case="static part copy count="+std::to_string(count);Fixture f;f.reset(1,0x20000,active);f.bases->count=std::uint16_t(count);put(f.ram.data(),0x3dbb14+2*2,std::int16_t(count));f.world.primary(0)->status=0x200;f.sync(0);f.created.model->program.phase=std::uint8_t(phase);f.ram[f.raw+9]=std::uint8_t(phase);f.step(true);++weapon_cases;
     }
     {
         active_case="nonattached1904A0 XZY/scaling";Fixture f;f.reset(1,0x80000);
@@ -146,6 +148,29 @@ int main(int argc,char** argv)try{
         call(f.ram.data(),0x590ea0);const auto result=f.models.update(false);check(result.status==g::ResourceModelStatus::completed&&result.called==1);check(!f.created.model->current()&&!f.models.retain(f.created.id));f.compare();++passes;
     }
     {
+        for(bool primary:{false,true})for(bool secondary:{false,true})for(bool active:{false,true})for(bool clear_flag:{false,true})for(unsigned victim=0;victim<8;++victim){
+            active_case="shared secondary release";Fixture f;f.reset();auto records=std::make_shared<reo::native::gameplay_scene::Records>();g::ResourceFrames frames(f.world,f.resources,f.models,nullptr,records);
+            reo::native::gameplay_collision::ownership::Proxies proxies(records);s::SceneControls controls(records);call(f.ram.data(),0x5c1120);
+            std::vector<std::pair<reo::native::gameplay_scene::RecordId,unsigned>> live;
+            for(unsigned i=0;i<8;++i){reo::native::gameplay_scene::Record record;record.authored_id=100+i;record.enabled=1;const auto id=records->create(record,i%2?reo::native::gameplay_scene::Placement::oldest:reo::native::gameplay_scene::Placement::newest);const auto source=call(f.ram.data(),0x5c11b0,i%2);check(bool(id)&&GPR_U32(&source,2));const auto at=GPR_U32(&source,2);put(f.ram.data(),at+0x40,record.authored_id);live.emplace_back(*id,at);}
+            const auto old=live[victim].first;const auto lease=proxies.acquire(old);check(bool(lease));auto capability=std::make_shared<s::SceneRecordAttachment>(records,old);
+            const auto descriptor_id=*f.resources.slot(3);auto descriptor=*f.resources.get(descriptor_id);descriptor.active=std::uint8_t(active);descriptor.primary=primary?f.created.model:nullptr;descriptor.secondary=secondary?capability:nullptr;check(f.resources.replace(descriptor_id,descriptor)==s::SceneStatus::completed);
+            f.ram[descriptor_at]=std::uint8_t(active);put(f.ram.data(),descriptor_at+28,primary?f.raw:0u);put(f.ram.data(),descriptor_at+32,secondary?live[victim].second:0u);
+            call(f.ram.data(),clear_flag?0x5b1a90:0x5b1850,3);frames.release(3,clear_flag);f.compare();
+            const bool retired=active&&secondary;check(capability->current()!=retired&&bool(controls.get(old))!=retired&&bool(proxies.acquire(old))!=retired&&bool(lease));
+            if(retired){live.erase(live.begin()+victim);check(!capability->retire());reo::native::gameplay_scene::Record replacement;replacement.authored_id=999;const auto next=records->create(replacement);const auto source=call(f.ram.data(),0x5c11b0);check(next&&*next!=old&&!capability->current()&&!proxies.acquire(old));put(f.ram.data(),GPR_U32(&source,2)+0x40,999u);live.emplace_back(*next,GPR_U32(&source,2));}
+            check(records->size()==live.size()&&read<std::uint16_t>(f.ram.data(),0x3b5150)==128-records->size());
+            auto at=read<unsigned>(f.ram.data(),0x3b5160);for(auto node=records->first();node;node=node->next){check(at&&node->value.authored_id==read<unsigned>(f.ram.data(),at+0x40));at=read<unsigned>(f.ram.data(),at+0x28);}check(!at);++release_cases;
+        }
+    }
+    {
+        for(unsigned status:{0u,0x20u,0x40u,0x80u,0x100u,0x400u}){
+            active_case="complete shared release during model pass";Fixture f;f.reset();auto records=std::make_shared<reo::native::gameplay_scene::Records>();g::ResourceFrames frames(f.world,f.resources,f.models,nullptr,records);call(f.ram.data(),0x5c1120);const auto id=records->create({});const auto source=call(f.ram.data(),0x5c11b0);check(bool(id));auto capability=std::make_shared<s::SceneRecordAttachment>(records,*id);
+            auto descriptor=*f.resources.get(*f.resources.slot(3));descriptor.secondary=capability;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);put(f.ram.data(),descriptor_at+32,GPR_U32(&source,2));f.world.primary(0)->active=status!=0;f.world.primary(0)->status=status;f.sync(0);f.created.model->work=std::make_shared<g::WeaponModelWork>(frames);put(f.ram.data(),f.raw+0x14,0x6b45c0u);
+            call(f.ram.data(),0x590ea0);const auto pass=f.models.update(false);check(pass.status==g::ResourceModelStatus::completed&&pass.called==1&&!f.created.model->current()&&!capability->current()&&records->size()==0);f.compare();check(read<std::uint16_t>(f.ram.data(),0x3b5150)==128);++release_cases;++passes;
+        }
+    }
+    {
         active_case="native safety refusals";Fixture f;f.reset();g::ResourceModels foreign;const auto other=foreign.create();bool refused{};try{f.frames.common(other.id,*other.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
         for(unsigned owner:{5u,128u,32768u}){f.reset(owner);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;}
         f.reset(1,0x800u);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
@@ -160,7 +185,11 @@ int main(int argc,char** argv)try{
         f.reset();std::array<std::byte,40> empty{};auto first=a::WeaponProgramBank::import(empty),second=a::WeaponProgramBank::import(empty);f.created.model->program.phase=1;f.created.model->program.source=first;f.created.model->program.selected=std::make_shared<a::WeaponProgram>();f.world.primary(0)->weapon_programs=second;
         refused=false;try{f.frames.weapon(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
         f.reset();auto descriptor=*f.resources.get(*f.resources.slot(3));descriptor.secondary=other.model;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);f.world.primary(0)->active=false;refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused&&f.created.model->current());++refusals;
+        auto shared=std::make_shared<reo::native::gameplay_scene::Records>();auto wrong=std::make_shared<reo::native::gameplay_scene::Records>();const auto secondary=shared->create({});check(bool(secondary));auto capability=std::make_shared<s::SceneRecordAttachment>(shared,*secondary);f.reset();descriptor=*f.resources.get(*f.resources.slot(3));descriptor.secondary=capability;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);g::ResourceFrames wrong_frames(f.world,f.resources,f.models,nullptr,wrong);refused=false;try{wrong_frames.release(3);}catch(const std::runtime_error&){refused=true;}check(refused&&f.created.model->current()&&capability->current());++refusals;
+        check(shared->retire(*secondary));g::ResourceFrames right_frames(f.world,f.resources,f.models,nullptr,shared);refused=false;try{right_frames.release(3);}catch(const std::runtime_error&){refused=true;}check(refused&&f.created.model->current());++refusals;
+        refused=false;try{(void)std::make_shared<s::SceneRecordAttachment>(wrong,*secondary);}catch(const std::invalid_argument&){refused=true;}check(refused);++refusals;
+        f.reset();descriptor=*f.resources.get(*f.resources.slot(3));descriptor.kind=1;descriptor.primary=capability;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);check(f.resources.flag800(*f.resources.slot(3),1)==s::SceneStatus::provider_unavailable);++refusals;
         f.reset();check(f.models.retire(f.created.id)==g::ResourceModelStatus::completed);refused=false;try{f.frames.weapon(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
     }
-    std::cout<<"{\"checks\":"<<checks<<",\"common_cases\":"<<common_cases<<",\"weapon_cases\":"<<weapon_cases<<",\"sequence_frames\":"<<sequence_frames<<",\"source_calls\":"<<source_calls<<",\"passes\":"<<passes<<",\"refusals\":"<<refusals<<",\"pose_cases\":"<<pose_cases<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"common_cases\":"<<common_cases<<",\"weapon_cases\":"<<weapon_cases<<",\"sequence_frames\":"<<sequence_frames<<",\"source_calls\":"<<source_calls<<",\"passes\":"<<passes<<",\"refusals\":"<<refusals<<",\"pose_cases\":"<<pose_cases<<",\"release_cases\":"<<release_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

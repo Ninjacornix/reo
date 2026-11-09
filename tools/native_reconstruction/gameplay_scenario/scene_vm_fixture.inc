@@ -3,7 +3,7 @@
 constexpr std::uint32_t scene_at=0x3c5630+60*100,scene_live=0x500000;
 std::vector<std::tuple<unsigned,std::uint32_t>> scene_effects;
 struct SceneEntity final:reo::native::gameplay_actors::Entity {};
-struct SceneLive final:vm::SceneAttachment{
+struct SceneLive final:vm::SceneFlagAttachment{
     std::uint32_t flags{0xa5a50000};void flag(std::uint32_t mask,bool set)noexcept override{flags=set?flags|mask:flags&~mask;}
 };
 struct SceneFixture final:vm::SceneEffects,vm::SceneOwners{

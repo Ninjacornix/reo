@@ -24,7 +24,7 @@ class File1AttachmentProfiles final {
 // The concrete native primary attachment capability retained by SceneResources.
 // Construction requires the real resource owner's admitted matrices/position;
 // this adapter does not invent a resource or turn absence into an identity pose.
-class ResourceModel final : public gameplay_scenario::SceneAttachment {
+class ResourceModel final : public gameplay_scenario::SceneFlagAttachment {
   public:
     ResourceModel(animation::Matrix adjustment, animation::Matrix initial_pose,
                   animation::Vector initial_position, std::uint32_t initial_flags)

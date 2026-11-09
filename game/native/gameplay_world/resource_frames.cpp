@@ -12,16 +12,19 @@ gameplay_scenario::SceneDescriptor ResourceFrames::descriptor(std::uint8_t slot)
     return *value;
 }
 void ResourceFrames::release(std::uint8_t slot,bool clear_owner_flag){
+    if(world_.closed())throw std::runtime_error("Native resource release world closed");
     const auto id=resources_.slot(slot);auto current=id?resources_.get(*id):std::nullopt;
     if(!current)throw std::runtime_error("Native resource release identity unavailable");
     if(!current->active)return;
-    if(current->secondary)throw std::runtime_error("Native resource secondary release consumer unavailable");
+    const auto secondary=std::dynamic_pointer_cast<gameplay_scenario::SceneRecordAttachment>(current->secondary);
+    if(current->secondary&&(!secondary||!scene_records_||!secondary->bound_to(*scene_records_)||!secondary->current()))throw std::runtime_error("Native resource secondary release owner unavailable, foreign or retired");
     if(current->primary){
         const auto model=std::dynamic_pointer_cast<ResourceModel>(current->primary);
         const auto owned=model?models_.identity_of(*model):ResourceModelId{};
         if(!owned||models_.retire(owned)!=ResourceModelStatus::completed)throw std::runtime_error("Native resource release primary owner unavailable");
         current->primary.reset();
     }
+    if(secondary){if(!secondary->retire())throw std::runtime_error("Native resource secondary retirement failed");current->secondary.reset();}
     if(clear_owner_flag)current->flags&=~0x20000u;
     if(resources_.replace(*id,*current)!=gameplay_scenario::SceneStatus::completed)throw std::runtime_error("Native resource release descriptor changed");
 }

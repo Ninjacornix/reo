@@ -13,7 +13,7 @@ constexpr std::uint32_t descriptor=0x3c5630+60*100,live=0x500000;
 std::vector<std::tuple<vm::SceneEffect,std::uint8_t>> original_effects;
 bool mutate_instance_indices{};
 void done(R5900Context* c){c->pc=GPR_U32(c,31);}
-struct Attachment final:vm::SceneAttachment{
+struct Attachment final:vm::SceneFlagAttachment{
     std::uint32_t flags{};
     void flag(std::uint32_t mask,bool set)noexcept override{flags=set?flags|mask:flags&~mask;}
 };
