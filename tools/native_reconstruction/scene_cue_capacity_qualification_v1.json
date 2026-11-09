@@ -1,0 +1,603 @@
+{
+  "schema": 1,
+  "date": "2026-11-09",
+  "status": "offline original-word producer bounds; universal content and concurrency capacity unresolved",
+  "report": "docs/native-media/SCENE_QUEUED_AUDIO_CAPACITY.md",
+  "report_sha256": "17d2f261db661e996e7e53ae8e000db20f4222515f73f80205df708b3683875f",
+  "evidence_sha256": {
+    "build-function-index/owned-overlays/o2.bin": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+    "game_data/SLUS_207.65": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+    "recomp/config/output_ovl/o2/o2_006D7470_0x6d7470.cpp": "e14c4383c3ea1517bafaa5a7cfde981712a42c02586c5c75fe1ec9116a26642f",
+    "recomp/config/output_ovl/o2/o2_005F0380_0x5f0380.cpp": "147cacf3bcd22911f54f37077ad65328679804f7c7c89cb7a4fbf4e57ae93e1d",
+    "recomp/config/output_ovl/o2/o2_005F0150_0x5f0150.cpp": "8bb87ca11f8c365f5ae597ce820ab4717ba9892998a5df0c4c17a1370b42335a",
+    "recomp/config/output_ovl/o2/o2_005F0230_0x5f0230.cpp": "3180ece88f713ff73020219e7898e17de5bee3d22749326a3738af88387d01fa",
+    "recomp/config/output_ovl/o2/o2_005ECA90_0x5eca90.cpp": "ec2c2e471e1c4de664f4a20dcb2f82561e50762c4ee44a11842829104e13b93d",
+    "recomp/config/output_ovl/o2/o2_005FFBB0_0x5ffbb0.cpp": "7aec557596c59ea4f3314e9d1b354b5b9dfce6607d883177b43e31db7bdbdce0",
+    "recomp/config/output_ovl/o2/o2_00600150_0x600150.cpp": "0e77dfb7755b49dae5cd651b3d7a9ad5ebf5265e59ec7487305baf8238179c7a",
+    "recomp/config/output_ovl/o2/o2_0068F010_0x68f010.cpp": "76bb01e567f8f127d6dbebef72955fd11c2ad141ce1840aaa7b0fd8a9fd9dc3f",
+    "tools/function_index/index.py": "af758d0ebb8e2cea9631e5c1df1e5ada34f106e3f0d48cd4f8ce3784d0ad07af",
+    "tools/native_reconstruction/audit_queued_cue_callers.py": "3e8e998080f8233cb35ef05bbf2b4f1b9f61a4a4b2e61a75f330440629c997a4",
+    "tools/native_reconstruction/queued_cue_caller_asset_qualification_v1.json": "c1ebb8108f19d2a39fc714f8d072f18375b9f9a51852d858c3b7a964ccef3ccd",
+    "build-native-sjuni/audio-asset-inventory/file1-v1/members.json": "276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2",
+    "build-native-sjuni/scene-cue-capacity-correction-baseline-v1/SYMBOLS_SCENARIO_ADX_NAME_SELECTION.md": "e9d1143fe0122f7e4bb4ab0aea053dd5d8142988fb8bec970da97932c03833d3",
+    "build-native-sjuni/scene-cue-capacity-correction-baseline-v1/annotations.json": "269c351b2d7c84f2bae051640d41abd4c438ad85cd0004dc64c47c053053b4b5"
+  },
+  "verified_functions": [
+    {
+      "image": "o2",
+      "entry": "0x006D7470",
+      "source": "recomp/config/output_ovl/o2/o2_006D7470_0x6d7470.cpp",
+      "source_sha256": "e14c4383c3ea1517bafaa5a7cfde981712a42c02586c5c75fe1ec9116a26642f",
+      "range_start": "0x006D7470",
+      "range_end_exclusive": "0x006D751C",
+      "verified_instruction_comments": 43,
+      "unlisted_words_verified_zero": [],
+      "original_range_sha256": "2e25beb1e2e202dc9eee85609b090f763d308bbd7b6ae04539663b38aad72705"
+    },
+    {
+      "image": "o2",
+      "entry": "0x005F0380",
+      "source": "recomp/config/output_ovl/o2/o2_005F0380_0x5f0380.cpp",
+      "source_sha256": "147cacf3bcd22911f54f37077ad65328679804f7c7c89cb7a4fbf4e57ae93e1d",
+      "range_start": "0x005F0380",
+      "range_end_exclusive": "0x005F0608",
+      "verified_instruction_comments": 154,
+      "unlisted_words_verified_zero": [
+        "0x005F0458",
+        "0x005F047C",
+        "0x005F04E8",
+        "0x005F0504",
+        "0x005F05BC",
+        "0x005F05C4",
+        "0x005F05CC",
+        "0x005F05DC"
+      ],
+      "original_range_sha256": "fe955ba81b14e0a7aaafe5314d2c214da50426507e4bdbd25b03a83a88a2e523"
+    },
+    {
+      "image": "o2",
+      "entry": "0x005F0150",
+      "source": "recomp/config/output_ovl/o2/o2_005F0150_0x5f0150.cpp",
+      "source_sha256": "8bb87ca11f8c365f5ae597ce820ab4717ba9892998a5df0c4c17a1370b42335a",
+      "range_start": "0x005F0150",
+      "range_end_exclusive": "0x005F0228",
+      "verified_instruction_comments": 54,
+      "unlisted_words_verified_zero": [],
+      "original_range_sha256": "816e48efef6cd1974055762a5009b75c152ab8ff656d5a475de50ebd8767f3c2"
+    },
+    {
+      "image": "o2",
+      "entry": "0x005F0230",
+      "source": "recomp/config/output_ovl/o2/o2_005F0230_0x5f0230.cpp",
+      "source_sha256": "3180ece88f713ff73020219e7898e17de5bee3d22749326a3738af88387d01fa",
+      "range_start": "0x005F0230",
+      "range_end_exclusive": "0x005F037C",
+      "verified_instruction_comments": 79,
+      "unlisted_words_verified_zero": [
+        "0x005F025C",
+        "0x005F0264",
+        "0x005F02D0",
+        "0x005F0378"
+      ],
+      "original_range_sha256": "358adf68c1fec8c979532d62d15163c35931000492bfb47a03f179a43ccfad1d"
+    },
+    {
+      "image": "o2",
+      "entry": "0x005ECA90",
+      "source": "recomp/config/output_ovl/o2/o2_005ECA90_0x5eca90.cpp",
+      "source_sha256": "ec2c2e471e1c4de664f4a20dcb2f82561e50762c4ee44a11842829104e13b93d",
+      "range_start": "0x005ECA90",
+      "range_end_exclusive": "0x005ECADC",
+      "verified_instruction_comments": 19,
+      "unlisted_words_verified_zero": [],
+      "original_range_sha256": "8d024f18df21b317ad584e5efaa98278eb393b4adddfe820700db2eb1af7e0d7"
+    },
+    {
+      "image": "o2",
+      "entry": "0x005FFBB0",
+      "source": "recomp/config/output_ovl/o2/o2_005FFBB0_0x5ffbb0.cpp",
+      "source_sha256": "7aec557596c59ea4f3314e9d1b354b5b9dfce6607d883177b43e31db7bdbdce0",
+      "range_start": "0x005FFBB0",
+      "range_end_exclusive": "0x00600150",
+      "verified_instruction_comments": 311,
+      "unlisted_words_verified_zero": [
+        "0x005FFBD0",
+        "0x005FFC08",
+        "0x005FFC10",
+        "0x005FFC28",
+        "0x005FFC30",
+        "0x005FFC58",
+        "0x005FFC74",
+        "0x005FFC90",
+        "0x005FFCA4",
+        "0x005FFCBC",
+        "0x005FFCCC",
+        "0x005FFCE4",
+        "0x005FFCEC",
+        "0x005FFCF4",
+        "0x005FFD04",
+        "0x005FFD50",
+        "0x005FFD58",
+        "0x005FFD60",
+        "0x005FFD7C",
+        "0x005FFD8C",
+        "0x005FFDB0",
+        "0x005FFDB8",
+        "0x005FFDC0",
+        "0x005FFDDC",
+        "0x005FFE20",
+        "0x005FFE28",
+        "0x005FFE44",
+        "0x005FFE54",
+        "0x005FFE7C",
+        "0x005FFE84",
+        "0x005FFEC4",
+        "0x005FFECC",
+        "0x005FFED4",
+        "0x005FFEDC",
+        "0x005FFEE4",
+        "0x005FFEF4",
+        "0x005FFF44",
+        "0x005FFF4C",
+        "0x005FFF8C",
+        "0x005FFF94",
+        "0x005FFFAC",
+        "0x005FFFE8",
+        "0x005FFFF0",
+        "0x00600080",
+        "0x00600088",
+        "0x006000C8",
+        "0x006000D0",
+        "0x006000E8",
+        "0x00600120"
+      ],
+      "original_range_sha256": "f8cd075ec47d8464ffe3057f391768d4403fd8d9a6dcbbe1b86b33e5095c8cec"
+    },
+    {
+      "image": "o2",
+      "entry": "0x00600150",
+      "source": "recomp/config/output_ovl/o2/o2_00600150_0x600150.cpp",
+      "source_sha256": "0e77dfb7755b49dae5cd651b3d7a9ad5ebf5265e59ec7487305baf8238179c7a",
+      "range_start": "0x00600150",
+      "range_end_exclusive": "0x00600860",
+      "verified_instruction_comments": 386,
+      "unlisted_words_verified_zero": [
+        "0x0060018C",
+        "0x0060019C",
+        "0x006001A4",
+        "0x006001AC",
+        "0x006001B4",
+        "0x006001E0",
+        "0x006001E8",
+        "0x00600208",
+        "0x00600214",
+        "0x0060021C",
+        "0x00600230",
+        "0x0060024C",
+        "0x0060027C",
+        "0x00600294",
+        "0x006002A4",
+        "0x006002BC",
+        "0x006002C4",
+        "0x006002CC",
+        "0x006002DC",
+        "0x006002F4",
+        "0x00600314",
+        "0x00600360",
+        "0x00600368",
+        "0x00600370",
+        "0x0060038C",
+        "0x0060039C",
+        "0x006003C0",
+        "0x006003C8",
+        "0x006003F0",
+        "0x00600434",
+        "0x0060043C",
+        "0x00600458",
+        "0x00600468",
+        "0x0060048C",
+        "0x00600494",
+        "0x006004C0",
+        "0x006004E8",
+        "0x006004F0",
+        "0x00600514",
+        "0x0060051C",
+        "0x00600538",
+        "0x00600540",
+        "0x00600558",
+        "0x00600560",
+        "0x0060057C",
+        "0x00600584",
+        "0x0060058C",
+        "0x00600594",
+        "0x006005C4",
+        "0x006005CC",
+        "0x006005E8",
+        "0x006005F8",
+        "0x00600600",
+        "0x00600608",
+        "0x0060065C",
+        "0x00600664",
+        "0x006006A4",
+        "0x006006AC",
+        "0x006006C4",
+        "0x00600700",
+        "0x00600708",
+        "0x00600798",
+        "0x006007D8",
+        "0x006007E0",
+        "0x006007F8",
+        "0x00600830"
+      ],
+      "original_range_sha256": "60aaad866e1f4c3162151f97d3c3f57ab1888d7028881a528913daa32ea85ef5"
+    },
+    {
+      "image": "o2",
+      "entry": "0x0068F010",
+      "source": "recomp/config/output_ovl/o2/o2_0068F010_0x68f010.cpp",
+      "source_sha256": "76bb01e567f8f127d6dbebef72955fd11c2ad141ce1840aaa7b0fd8a9fd9dc3f",
+      "range_start": "0x0068F010",
+      "range_end_exclusive": "0x0068F140",
+      "verified_instruction_comments": 74,
+      "unlisted_words_verified_zero": [
+        "0x0068F04C",
+        "0x0068F11C"
+      ],
+      "original_range_sha256": "0baea9cab17b1fda8b44b7cfec6f8b718cb84b17c342730f27bbb6d4fe79365a"
+    }
+  ],
+  "selected_original_words": [
+    {
+      "image": "o2",
+      "pc": "0x006D7484",
+      "word": "0x3C02004C"
+    },
+    {
+      "image": "o2",
+      "pc": "0x006D7488",
+      "word": "0x2442ADD0"
+    },
+    {
+      "image": "o2",
+      "pc": "0x006D7498",
+      "word": "0x90460066"
+    },
+    {
+      "image": "o2",
+      "pc": "0x006D74A0",
+      "word": "0x90470067"
+    },
+    {
+      "image": "o2",
+      "pc": "0x006D74A4",
+      "word": "0x90480068"
+    },
+    {
+      "image": "o2",
+      "pc": "0x006D74EC",
+      "word": "0x9022AE0B"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F046C",
+      "word": "0xA020AE0B"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F048C",
+      "word": "0x0000302D"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F04C0",
+      "word": "0xA027AE0B"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F04C8",
+      "word": "0xA024AE36"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F04D0",
+      "word": "0xA023AE37"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F04DC",
+      "word": "0xA022AE38"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F04E0",
+      "word": "0x842227D0"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F04E4",
+      "word": "0x10A2002D"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0500",
+      "word": "0x10400026"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F052C",
+      "word": "0xA0440066"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0544",
+      "word": "0xA0440067"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0564",
+      "word": "0x24C60001"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0568",
+      "word": "0x30A5000F"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F057C",
+      "word": "0xA0620068"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F058C",
+      "word": "0xA022AE0B"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0590",
+      "word": "0x28C20010"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0594",
+      "word": "0x1440FFD2"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0218",
+      "word": "0x3063000F"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0224",
+      "word": "0xA42327D0"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F0430",
+      "word": "0x3042000F"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005F043C",
+      "word": "0xA42227D8"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005ECAA0",
+      "word": "0xA42027D0"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005ECAB8",
+      "word": "0xA42027D8"
+    },
+    {
+      "image": "o2",
+      "pc": "0x005FFD10",
+      "word": "0xA024AE0B"
+    },
+    {
+      "image": "o2",
+      "pc": "0x006002EC",
+      "word": "0x24020001"
+    },
+    {
+      "image": "o2",
+      "pc": "0x00600320",
+      "word": "0xA022AE0B"
+    },
+    {
+      "image": "o2",
+      "pc": "0x0068F0D4",
+      "word": "0x8C820000"
+    },
+    {
+      "image": "o2",
+      "pc": "0x0068F108",
+      "word": "0x0C17C054"
+    }
+  ],
+  "observations": {
+    "list_count_address": "0x004BAE0B",
+    "audio_dm_movie_triple_base": "0x004BAE36",
+    "original_base_register": "0x004BADD0",
+    "triple_stride_bytes": 3,
+    "ring_base": "0x003B26D0",
+    "ring_record_bytes": 16,
+    "ring_slots": 16,
+    "producer_index": "0x003B27D0",
+    "consumer_index": "0x003B27D8",
+    "request_payload": "Opcode 0x62 handler 0x68F010 narrows five payload words to halfwords, appends three zero halfwords, calls 0x5F0150; actor admission/substitution applies.",
+    "direct_count_writers": [
+      {
+        "owner": "o2:0x005F0380",
+        "source": "recomp/config/output_ovl/o2/o2_005F0380_0x5f0380.cpp",
+        "line": 232,
+        "pc": "0x005F046C"
+      },
+      {
+        "owner": "o2:0x005F0380",
+        "source": "recomp/config/output_ovl/o2/o2_005F0380_0x5f0380.cpp",
+        "line": 299,
+        "pc": "0x005F04C0"
+      },
+      {
+        "owner": "o2:0x005F0380",
+        "source": "recomp/config/output_ovl/o2/o2_005F0380_0x5f0380.cpp",
+        "line": 487,
+        "pc": "0x005F058C"
+      },
+      {
+        "owner": "o2:0x005FFBB0",
+        "source": "recomp/config/output_ovl/o2/o2_005FFBB0_0x5ffbb0.cpp",
+        "line": 616,
+        "pc": "0x005FFD10"
+      },
+      {
+        "owner": "o2:0x00600150",
+        "source": "recomp/config/output_ovl/o2/o2_00600150_0x600150.cpp",
+        "line": 757,
+        "pc": "0x00600320"
+      }
+    ],
+    "direct_writer_scope": "Static index resolved direct references plus bounded generated-instruction search across main, extra and overlays; not an indirect or bulk-memory write census.",
+    "collector_selector_has_stores_or_calls": false,
+    "collector_backward_branch_preemption_source_line": 505,
+    "audio_consumer_backward_branch_preemption_source_line": 216
+  },
+  "dispatch_slots": [
+    {
+      "address": "0x007179B8",
+      "word": "0x0068F010"
+    },
+    {
+      "address": "0x0073CEF0",
+      "word": "0x0068F010"
+    }
+  ],
+  "bounds": {
+    "stable_normalized_producer_index": {
+      "maximum": 16,
+      "nonempty_entry_maximum": 15,
+      "reason": "Initial entry plus at most fifteen modulo16 advances until equality with fixed producer.",
+      "arithmetic_index_pairs_checked": 256,
+      "content_maximum_observed": false
+    },
+    "changing_producer_index": {
+      "local_collector_maximum": 17,
+      "reason": "Initial entry plus up to sixteen additional iterations; producer is reread each iteration.",
+      "assumptions": [
+        "Count is not independently overwritten during collection.",
+        "Local iteration state is preserved across guest preemption."
+      ],
+      "runtime_reachability_established": false
+    },
+    "universal_sixteen_bound_established": false,
+    "actual_authored_maximum": null
+  },
+  "correction_targets": [
+    {
+      "path": "docs/SYMBOLS_SCENARIO_ADX_NAME_SELECTION.md",
+      "line": 11,
+      "old": "4BAD30+3*i+66/67/68",
+      "correct": "4BADD0+3*i+66/67/68 = 4BAE36+3*i"
+    },
+    {
+      "path": "tools/function_index/annotations.json",
+      "line": 146660,
+      "id": "o2:0x006D7470",
+      "old": "4BAD30+3*i+66/67/68",
+      "correct": "4BADD0+3*i+66/67/68 = 4BAE36+3*i"
+    }
+  ],
+  "named_evb_members_verified_against_owned_iso": [
+    {
+      "member": "NETBIO00.DAT/1/1680",
+      "names": [
+        "r001.afs",
+        "r001.evb"
+      ],
+      "iso_offset": 603228160,
+      "parent_relative_offset": 109109248,
+      "bytes": 15892,
+      "sha256": "79ca71c484ac46ea98c361dd1b27c356b57fb0b35f6fc5c7823ccb8e285431ea",
+      "container_sha256": "93f04f81a2d9c46ea4bc6ff7dc7788ae9249fb2a90f1079325023334816fca55"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1163",
+      "names": [
+        "r002.afs",
+        "r002.evb"
+      ],
+      "iso_offset": 656820224,
+      "parent_relative_offset": 52893696,
+      "bytes": 12200,
+      "sha256": "7a5698d4b0ae7f395e766ec245d8faa4b1bc22ca36f6a26477bbeefefe1261e8",
+      "container_sha256": "93f04f81a2d9c46ea4bc6ff7dc7788ae9249fb2a90f1079325023334816fca55"
+    },
+    {
+      "member": "NETBIO00.DAT/5/937",
+      "names": [
+        "r028.afs",
+        "r028.evb"
+      ],
+      "iso_offset": 720750592,
+      "parent_relative_offset": 63680512,
+      "bytes": 9440,
+      "sha256": "032004a5ed17e9a2108d7a17d5135c6e6850eba66f0b7ed47df25c7d7bdf46ee",
+      "container_sha256": "93f04f81a2d9c46ea4bc6ff7dc7788ae9249fb2a90f1079325023334816fca55"
+    },
+    {
+      "member": "NETBIO00.DAT/7/1042",
+      "names": [
+        "r035.afs",
+        "r035.evb"
+      ],
+      "iso_offset": 785575936,
+      "parent_relative_offset": 64460800,
+      "bytes": 12140,
+      "sha256": "e78f38ff6b912a40ad5742f6fcb45cdcceee860ab219f65e9523b83bc6114995",
+      "container_sha256": "93f04f81a2d9c46ea4bc6ff7dc7788ae9249fb2a90f1079325023334816fca55"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1908",
+      "names": [
+        "r041.afs",
+        "r041.evb"
+      ],
+      "iso_offset": 905461760,
+      "parent_relative_offset": 119433216,
+      "bytes": 23644,
+      "sha256": "bfcaa48175c3c9728d8ffdcf2e5dc7829ef3691767b797752240c0acaa878f8f",
+      "container_sha256": "93f04f81a2d9c46ea4bc6ff7dc7788ae9249fb2a90f1079325023334816fca55"
+    }
+  ],
+  "content_extraction_recipe": [
+    "Verify member bytes against inventory hashes; preserve unknown/unnamed assets as unresolved.",
+    "Recover EVB pointer and stream structure using original 0x68C260, including its nested pointer-array relocation.",
+    "Decode VM records using 0x68C660 low24 opcode and header-high-byte span with guest shift semantics; include room-bank 0x7006D0.",
+    "Trace opcode62 admission, request ring wrap/overwrite, selector resolution, collection boundaries, conditions and scheduling alternatives.",
+    "Resolve final triples through 0x6D7520 and the resident sound lookup; record feasible maximum, source byte ranges and unresolved paths."
+  ],
+  "capacity_policy": "Preserve admitted bursts of sixteen; larger bursts must produce explicit capacity failure, never silent truncation/drop or a successful-playback claim. No guard changes made.",
+  "limitations": [
+    "Static original instructions, not runtime observation.",
+    "No unconditional exclusion of other guest producers during collection.",
+    "No universal indirect/bulk-memory count-writer exclusion.",
+    "Named EVB extraction inputs verified; their scripts were not fully decoded for an authored maximum.",
+    "No claim that unnamed assets are unused or that other queued-audio callers are excluded.",
+    "The scene count bound does not establish native queue occupancy when a prior generation remains admitted."
+  ],
+  "game_launched": false,
+  "build_started": false,
+  "live_attachment": false,
+  "window_actions": false,
+  "existing_files_edited": false,
+  "step3_complete": false,
+  "precorrection_input_copies": {
+    "docs/SYMBOLS_SCENARIO_ADX_NAME_SELECTION.md": "build-native-sjuni/scene-cue-capacity-correction-baseline-v1/SYMBOLS_SCENARIO_ADX_NAME_SELECTION.md",
+    "tools/function_index/annotations.json": "build-native-sjuni/scene-cue-capacity-correction-baseline-v1/annotations.json"
+  },
+  "mapping_corrections_applied": true
+}

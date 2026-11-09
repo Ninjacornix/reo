@@ -14,7 +14,10 @@ output fences complete. Close/stop before destroying the controller; its bound
 instance owner remains responsible for final source join. The shared loader is
 closed/joined only after all accepted controller operations have drained.
 
-The queue holds at most 16 outstanding cues. Preparation errors, incompatible
+The queue holds at most 17 outstanding cues, covering the game collector's one
+initial cue plus sixteen additional iterations. A prepared tail waits for space
+in the 16-slot transfer queue; pending metadata still holds the decoder boundary.
+Preparation errors, incompatible
 channels/rates and unsupported clip headers remain errors. An invalid preload
 does not stop an existing ordinary source that this controller has not submitted.
 Playback repeat is explicit queue control, separate from embedded ADX loop

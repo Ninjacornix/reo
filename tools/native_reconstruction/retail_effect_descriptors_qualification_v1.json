@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "pinned File1 five-scenario retail room-script descriptor cohort",
+  "tool": {
+    "path": "tools/native_reconstruction/audit_retail_effect_descriptors.py",
+    "sha256": "fd8dd4aec1e8a1a9e89fce2393c60583c44b96a6690400bec914e21e5d890d95"
+  },
+  "documentation": {
+    "path": "docs/native-media/RETAIL_EFFECT_DESCRIPTOR_AUDIT.md",
+    "sha256": "eb4b6b7bde9f9ed9f3a848687c6e02846d34e907543eb0973cd94bdaa3e5bf0e"
+  },
+  "audit": {
+    "path": "build-native-sjuni/retail-effect-descriptors-v1/audit.json",
+    "sha256": "3cdc541ee2ae313977f5c8c4d29147e27131ebd0922572d3e16e52d8e052bdb7",
+    "members_fully_hashed": 265,
+    "payload_bytes_hashed": 579504,
+    "descriptor_rows": 74,
+    "nonempty_members": 34,
+    "effect_arm_rows": 0,
+    "first_byte_range": "0x80..0x87",
+    "producer_matched_instruction_comments": 228,
+    "producer_omitted_zero_words": 7,
+    "consumer_matched_instruction_comments": 70,
+    "consumer_omitted_zero_words": 4,
+    "source_word_conflicts": 0
+  },
+  "checks": {
+    "python_syntax": "passed",
+    "pinned_input_hashes": "passed",
+    "selected_full_payload_hashes": "passed",
+    "complete_interval_word_comparison": "passed",
+    "existing_output_refused_without_report_change": "passed"
+  },
+  "game_run": false,
+  "live_process_access": false,
+  "window_actions": false,
+  "existing_files_modified": false,
+  "limitations": [
+    "No indirect writer, runtime mutation, alternate root, mod, or other build is excluded.",
+    "No effect movie payload or decoded output is established.",
+    "This does not authorize global effect/IPU retirement."
+  ]
+}

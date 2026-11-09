@@ -85982,7 +85982,7 @@
           "line": 27
         }
       ],
-      "rationale": "Modes0/1 return1 when37A9B0==2,and pause/transition audio through1ADF50 when mode nonzero. Mode2substate0 waits1AE910 then37ABD0(1),increments substate;substate1 waits movie status2 then1AE9A0(1),increments again. Returns1 through admitted transition state,0 when required gate not met;opaque SDK audio states retained."
+      "rationale": "Modes0/1 return1 when37A9B0==2,and restore current level and unpause audio through1ADF50 when mode nonzero. Mode2substate0 waits1AE910 then37ABD0(1),increments substate;substate1 waits movie status2 then1AE9A0(1),increments again. Returns1 through admitted transition state,0 when required gate not met;opaque SDK audio states retained."
     },
     {
       "id": "o1:0x005705D0",
@@ -146657,7 +146657,7 @@
           "line": 11
         }
       ],
-      "rationale": "Pretestedcount unsigned4BAE0B;eachindex reads scene triples at4BAD30+3*i+66/67/68,formatskey/resolves7520. Nonnullformatsdemo ADXpath and1AE9F0(1,path). Afterallentries1AEA70(1),1ADF00(1). Zerocountstillcallsrestart/finalcall; doesnotvalidateeachstreamentryorwaitforcompletion."
+      "rationale": "Pretestedcount unsigned4BAE0B;eachindex reads scene triples at4BADD0+3*i+66/67/68 (base4BAE36),formatskey/resolves7520. Nonnullformatsdemo ADXpath and1AE9F0(1,path). Afterallentries1AEA70(1),1ADF00(1). Zerocountstillcallsrestart/finalcall; doesnotvalidateeachstreamentryorwaitforcompletion."
     },
     {
       "id": "o2:0x006D7520",

@@ -12,7 +12,9 @@ struct Queue::State {
     struct Pending { std::string id; loading::Key key; };
     Config config;
     std::shared_ptr<loading::Loader> loader;
-    std::array<Pending,16> pending;
+    // The game collector permits one initial cue plus sixteen appended cues.
+    // Retain the extra prepared cue until the transfer queue has a free slot.
+    std::array<Pending,17> pending;
     std::uint32_t head{},count{};
     instances::Instances* identity{};
     instances::Key key;
@@ -78,6 +80,7 @@ Status Queue::service(instances::Instances& owner,std::uint32_t tick) noexcept {
         s.report.retirement_status=instances::Status::completed;
     try {
         while(s.count){
+            if(s.source && s.source->snapshot().queue.count>=lsc_queue::slots)break;
             auto& entry=s.pending[s.head];const auto prepared=s.loader->poll(entry.key);
             s.report.preparation_status=prepared.status;s.report.clip_status=prepared.detail;
             if(prepared.status==loading::Status::pending)break;

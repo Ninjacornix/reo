@@ -60,8 +60,33 @@ std::array<std::uint64_t,2> playlist(bool delayed){
     const auto resumed=drive(rig,[](const auto& state){return state.starts==2 && state.source && state.source->configured;});
     check(resumed.source->decoder.source.loop.enabled);return digest;
 }
+std::array<std::uint64_t,2> seventeen(bool delayed) {
+    Rig rig;auto last=std::make_shared<f::Blocked>();last->bytes=clip(2,4097)->bytes;
+    last->released=!delayed;Release release{last};
+    for(unsigned i=0;i<17;++i)
+        check(rig.queue.enqueue(rig.playback,"burst:"+std::to_string(i),i==16?last:clip(2,4097)).status==cue::Status::completed);
+    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
+    while(rig.loader->snapshot().finished<(delayed?16u:17u) && std::chrono::steady_clock::now()<deadline)std::this_thread::yield();
+    check(rig.loader->snapshot().finished==(delayed?16u:17u));
+    check(accepted(rig.queue.start(rig.playback,0)));
+    // A full lower queue must retain the seventeenth preparation, not fail,
+    // discard it, or repeatedly register the same asset while waiting.
+    check(rig.queue.snapshot().preparing==1 && rig.queue.snapshot().registered_assets==16);
+    if(delayed) {
+        // A partial ADPCM block can remain behind the next-header fence.
+        // Earlier clips must progress while the final header is unavailable.
+        const auto held=drive(rig,[](const auto& state){return state.source && state.source->first_payload_samples>=15u*4097u;});
+        check(!ended(held) && rig.queue.snapshot().preparing==1);
+        {std::lock_guard lock(last->mutex);last->released=true;last->cv.notify_all();}
+    }
+    const auto terminal=drive(rig,ended);
+    check(terminal.source->first_payload_samples==17u*4097u && rig.queue.snapshot().registered_assets==17 &&
+          rig.queue.snapshot().submitted_sources==1 && !rig.queue.snapshot().failed);
+    return terminal.source->first_payload_digest;
+}
 int main()try{
     check(playlist(false)==playlist(true));
+    check(seventeen(false)==seventeen(true));
     {
         Rig rig;check(rig.queue.repeat(rig.playback,true)==cue::Status::completed);
         check(rig.queue.enqueue(rig.playback,"repeat",clip()).status==cue::Status::completed && accepted(rig.queue.start(rig.playback,0)));
@@ -103,8 +128,8 @@ int main()try{
     }
     {
         Rig rig;auto blocked=std::make_shared<f::Blocked>();blocked->bytes=clip()->bytes;Release release{blocked};
-        for(unsigned i=0;i<16;++i)check(rig.queue.enqueue(rig.playback,"pending",blocked).status==cue::Status::completed);
-        check(rig.queue.enqueue(rig.playback,"overflow",clip()).status==cue::Status::capacity && rig.queue.snapshot().queued==16);
+        for(unsigned i=0;i<17;++i)check(rig.queue.enqueue(rig.playback,"pending",blocked).status==cue::Status::completed);
+        check(rig.queue.enqueue(rig.playback,"overflow",clip()).status==cue::Status::capacity && rig.queue.snapshot().queued==17);
         check(rig.queue.clear(rig.playback)==cue::Status::completed && !rig.queue.snapshot().queued);
     }
     for(bool wrong_channels:{false,true}){
