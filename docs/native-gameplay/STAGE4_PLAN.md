@@ -126,6 +126,10 @@ The [model slot-reuse follow-up](RESOURCE_MODEL_REUSE.md) removes the earlier
 unadmitted-reuse gate for valid construction callbacks. Traversal follows the
 new occupant's continuation while old model capabilities remain retired.
 Actual factory and delayed callback composition remain open.
+The [resource correction-matrix fix](RESOURCE_CORRECTION_MATRIX.md) joins the
+weapon part5 and attachment correction views to one actual matrix. Current
+frame and attachment regressions pass; this fixes native composition before
+installation and is not a measured cause of the historical slowdown.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

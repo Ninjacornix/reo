@@ -3,7 +3,7 @@
 namespace reo::native::gameplay_world {
 void ResourceModel::retire_data()noexcept{
     retired_=true;correction={};pose={};position={};flags=0;program={};
-    active=visible=false;physical_slot=resource_slot=draw_layer=0;asset_index=0;
+    active=visible=false;category=0;draw_tag=0;physical_slot=resource_slot=draw_layer=0;asset_index=0;
     part_enabled={};parts={};angles={};axis_scale={};content_id=0;pulse_phase=0;pulse_timer=pulse_packed=0;pulse_distance=0;base_parts.reset();work.reset();
 }
 ResourceModels::ResourceModels(){for(unsigned i=0;i<64;++i)free_[i]=std::uint8_t(i);}

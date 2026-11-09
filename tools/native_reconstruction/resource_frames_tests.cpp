@@ -86,6 +86,7 @@ struct Fixture {
         check(std::memcmp(model.program.completed.data(),ram.data()+raw+0x38,7)==0);
         check(std::memcmp(model.part_enabled.data(),ram.data()+raw+0x30,6)==0);
         check(std::memcmp(&model.pose,ram.data()+raw+0x1c0,sizeof model.pose)==0);
+        check(&model.correction==&model.parts[5]&&std::memcmp(&model.correction,ram.data()+raw+0x180,64)==0);
         for(unsigned part=0;part<6;++part)for(unsigned column=0;column<4;++column)for(unsigned lane=0;lane<4;++lane){
             const auto observed=read<std::uint32_t>(ram.data(),raw+0x40+64*part+16*column+4*lane);
             if(std::bit_cast<std::uint32_t>(model.parts[part][column][lane])!=observed)throw std::runtime_error(active_case+" matrix part="+std::to_string(part)+" col="+std::to_string(column)+" lane="+std::to_string(lane)+" expected="+std::to_string(observed)+" got="+std::to_string(std::bit_cast<std::uint32_t>(model.parts[part][column][lane])));
