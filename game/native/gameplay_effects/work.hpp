@@ -3,6 +3,7 @@
 #include "../transform_math/transform_math.hpp"
 #include <memory>
 #include <optional>
+namespace reo::native::gameplay_session {class Random;}
 namespace reo::native::gameplay_effects {
 enum class WorkUpdate {ordinary,oriented,scaled};
 struct WorkRequest {
@@ -10,7 +11,7 @@ struct WorkRequest {
     std::optional<transform_math::Vector> position;
     std::int16_t variant{};
     std::uint16_t effect{};
-    std::uint32_t mode{},flags{0x1a193}; // mode is the source child admission mask.
+    std::uint32_t child_mask{},flags{0x1a193};
     WorkUpdate update{WorkUpdate::ordinary};
 };
 // A retained invocation lease keeps storage alive; each mutation must also
@@ -32,6 +33,7 @@ struct WorkCreated {WorkStatus status{WorkStatus::unavailable};std::shared_ptr<W
 class WorkBackend {
 public:
     virtual ~WorkBackend()=default;
+    virtual bool bound_to(const gameplay_session::Random&)const noexcept=0;
     virtual bool admitted()const noexcept=0;
     virtual WorkCreated create(const WorkRequest&)noexcept=0;
     // Find active type1D and refresh byte8=10, or allocate its actual lifecycle

@@ -61,12 +61,13 @@ struct Backend final : e::WorkBackend {
     bool admitted() const noexcept override {
         return supported;
     }
+    bool bound_to(const s::Random& value) const noexcept override {
+        return &value == &random;
+    }
     e::WorkCreated create(const e::WorkRequest& request) noexcept override {
         const bool failed = ((pattern >> creations.size()) & 1) != 0;
         auto edit = failed ? nullptr : std::make_shared<Edit>();
         creations.push_back({request, edit});
-        if (edit && request.variant == -1)
-            (void)random.request(1);
         return {edit ? e::WorkStatus::completed
                      : (pattern & 4 ? e::WorkStatus::resource_missing : e::WorkStatus::pool_full),
                 edit};
@@ -180,8 +181,8 @@ int main(int argc, char** argv) {
             const auto& original = po::creations[i];
             const auto& a = actual.request;
             const auto& b = original.request;
-            check(a.variant == b.variant && a.effect == b.effect && a.mode == b.mode &&
-                      a.flags == b.flags && a.update == b.update,
+            check(a.variant == 0 && a.variant == b.variant && a.effect == b.effect &&
+                      a.child_mask == b.child_mask && a.flags == b.flags && a.update == b.update,
                   "exact flags/variants/effect/updater/order");
             check(a.basis == b.basis && bool(a.position) == bool(b.position),
                   "optional basis copy remains distinct from actor identity");
@@ -192,6 +193,9 @@ int main(int argc, char** argv) {
             check(bool(actual.edit) == bool(original.at), "declared natural constructor result");
             if (actual.edit) {
                 const auto& edit = *actual.edit;
+                check(a.variant == ref_read<std::int16_t>(m, original.at + 0x290) &&
+                          a.child_mask == ref_read<std::uint32_t>(m, original.at + 0x294),
+                      "actual6525D0 independently forwards t0 variant and a2 child mask");
                 check(edit.angle == ref_read<std::int16_t>(m, original.at + 0x94) &&
                           edit.attributes == ref_read<std::uint16_t>(m, original.at + 0x23e),
                       "exact third angle and SET versus OR attributes");
@@ -212,7 +216,7 @@ int main(int argc, char** argv) {
         check(random.state().primary == ref_read<std::uint16_t>(m, 0x3244b0) &&
                   random.state().secondary == seed.secondary &&
                   random.state().observed == seed.observed,
-              "actual original RNG including constructor seam interleaving");
+              "actual original policy RNG; every stock constructor variant is zero");
         check(backend.refreshes == po::companion_lookup,
               "companion attempted even when selected effect allocation fails");
         check(backend.active == m[po::companion] && backend.phase == m[po::companion + 1] &&
@@ -224,6 +228,9 @@ int main(int argc, char** argv) {
         for (unsigned i = 0; i < parameters.calls.size(); ++i) {
             const auto& a = parameters.calls[i];
             const auto& b = po::sounds[i];
+            if (a.slot != b.slot || a.event != b.event)
+                std::fprintf(stderr, "n%u native%u/%u original%u/%u s4%x actorbyte%u\n", n, a.slot,
+                             a.event, b.slot, b.event, GPR_U32(&ctx, 20), m[address(1) + 3]);
             check(a.slot == b.slot && a.event == b.event, "full authored actor slot/event");
             equal(a.point, b.point, "sound position basis translation plus mutated point");
             ++sounds;
@@ -241,6 +248,16 @@ int main(int argc, char** argv) {
     check(unavailable.oriented(matrix, point, 1) == d::Status::unadmitted_content &&
               missing.creations.empty() && point.x == 1 && point.z == 3,
           "unknown backend refuses before mutation");
+    ++refusals;
+    s::Random foreign_random;
+    bool rejected_foreign = false;
+    try {
+        d::ContactVisuals foreign(missing, foreign_random, parameters);
+    } catch (const std::invalid_argument&) {
+        rejected_foreign = true;
+    }
+    check(rejected_foreign && missing.creations.empty(),
+          "foreign RNG backend refuses before effects");
     ++refusals;
     check(unavailable.oriented(matrix, point, 0) == d::Status::completed &&
               unavailable.surface(*roster.find(roster.subjects[1].id), {}, point, 255) ==

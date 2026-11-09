@@ -12,7 +12,8 @@ class ImpactParameters {
 };
 // The two distinct stock contact populations (5DD6F0 /5DD9D0). They use the
 // session's actual RNG and the SAME effect work/piece owner as other emitters.
-// The backend also consumes constructor RNG, before the policy's success RNG.
+// Every stock call has constructor variant0; authored masks are separate.
+// A foreign RNG binding is rejected before this provider can emit anything.
 class ContactVisuals final : public ImpactVisuals {
   public:
     ContactVisuals(gameplay_effects::WorkBackend&, gameplay_session::Random&, ImpactParameters&);

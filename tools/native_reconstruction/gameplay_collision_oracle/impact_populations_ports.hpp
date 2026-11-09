@@ -8,6 +8,7 @@ struct Creation {
     std::uint32_t at;
 };
 inline std::vector<Creation> creations;
+inline std::optional<e::WorkRequest> pending_request;
 struct Sound {
     std::uint8_t slot;
     V point;
@@ -21,9 +22,8 @@ inline bool fail(unsigned n) {
     return ((pattern >> n) & 1) != 0;
 }
 } // namespace population_oracle
-inline void o2_006525D0_0x6525d0(std::uint8_t* m, R5900Context* c, PS2Runtime* runtime) {
+inline void population_constructor_probe(std::uint8_t* m, R5900Context* c, PS2Runtime* runtime) {
     using namespace population_oracle;
-    const auto index = attempt++, at = 0x510000 + 0x400 * index;
     const auto callback = GPR_U32(c, 10);
     e::WorkRequest request;
     if (GPR_U32(c, 4))
@@ -32,32 +32,53 @@ inline void o2_006525D0_0x6525d0(std::uint8_t* m, R5900Context* c, PS2Runtime* r
         const auto v = ref_read<V>(m, GPR_U32(c, 5));
         request.position = {v.x, v.y, v.z};
     }
-    request.variant = std::bit_cast<std::int16_t>(std::uint16_t(GPR_U32(c, 6)));
+    request.variant = std::bit_cast<std::int16_t>(std::uint16_t(GPR_U32(c, 8)));
     request.effect = std::uint16_t(GPR_U32(c, 7));
-    request.mode = GPR_U32(c, 8);
+    request.child_mask = GPR_U32(c, 6);
     request.flags = GPR_U32(c, 9);
     request.update = callback == 0x653010   ? e::WorkUpdate::ordinary
                      : callback == 0x6531d0 ? e::WorkUpdate::oriented
                                             : e::WorkUpdate::scaled;
     if (callback != 0x653010 && callback != 0x6531d0 && callback != 0x653e80)
         throw std::runtime_error("Unknown population updater");
-    creations.push_back({request, fail(index) ? 0u : at});
+    pending_request = request;
+    o2_006525D0_0x6525d0(m, c, runtime);
+    pending_request.reset();
+}
+inline void o2_00652390_0x652390(std::uint8_t* m, R5900Context* c, PS2Runtime*) {
+    using namespace population_oracle;
+    if (!pending_request || pending_request->effect != GPR_U32(c, 4))
+        throw std::runtime_error("Full constructor resource identity");
+    const auto index = attempt++, at = 0x510000 + 0x400 * index;
+    creations.push_back({*pending_request, fail(index) ? 0u : at});
     if (!fail(index)) {
         std::memset(m + at, 0, 0x300);
         ref_write(m, at + 0x23e, std::uint16_t(0x8000));
         ref_write(m, at + 0xb4, 1.0f);
         ref_write(m, at + 0xb8, 1.0f);
         ref_write(m, at + 0xbc, 1.0f);
-        // Declared constructor seam consumes one RNG request for a chosen -1 profile.
-        // The real constructor and its resource-specific variant counts are root-owned.
-        if (request.variant == -1) {
-            R5900Context rng;
-            SET_GPR_U32(&rng, 4, 1);
-            SET_GPR_U32(&rng, 31, 0x1234);
-            sub_001AEC80_0x1aec80(m, &rng, runtime);
-        }
     }
     SET_GPR_U32(c, 2, fail(index) ? 0 : at);
+    c->pc = GPR_U32(c, 31);
+}
+inline void o2_00652E20_0x652e20(std::uint8_t* m, R5900Context* c, PS2Runtime*) {
+    using namespace population_oracle;
+    const auto variant = std::bit_cast<std::int16_t>(std::uint16_t(GPR_U32(c, 6)));
+    if (!pending_request || variant != pending_request->variant || variant != 0)
+        throw std::runtime_error("Full6525D0 variant forwarding must come from t0 and equal zero");
+    ref_write(m, GPR_U32(c, 4) + 0x290, variant);
+    c->pc = GPR_U32(c, 31);
+}
+inline void o2_00590760_0x590760(std::uint8_t* m, R5900Context* c, PS2Runtime*) {
+    ref_write(m, GPR_U32(c, 5), 0x560000u);
+    ref_write(m, GPR_U32(c, 5) + 4, 0x570000u);
+    c->pc = GPR_U32(c, 31);
+}
+inline void o2_00652470_0x652470(std::uint8_t* m, R5900Context* c, PS2Runtime*) {
+    using namespace population_oracle;
+    if (!pending_request || GPR_U32(c, 7) != pending_request->child_mask)
+        throw std::runtime_error("Full6525D0 child admission mask must come from a2");
+    ref_write(m, GPR_U32(c, 4) + 0x294, GPR_U32(c, 7));
     c->pc = GPR_U32(c, 31);
 }
 inline void o2_00652F90_0x652f90(std::uint8_t* m, R5900Context* c, PS2Runtime*) {
