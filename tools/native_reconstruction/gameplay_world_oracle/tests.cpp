@@ -16,7 +16,7 @@ template<class T>void put(std::uint8_t* ram,std::uint32_t at,T value){oracle_wri
 std::unique_ptr<g::World> read_world(const std::uint8_t* ram){
     auto result=std::make_unique<g::World>(fixture_profile(),std::make_shared<g::Session>());auto& w=*result;w.mode=get<std::uint8_t>(ram,0x3243f2);const auto sub=get<std::int8_t>(ram,0x3243fb);
     w.filter_nonselected_input=sub==1 || sub==2;
-    w.paused=get<std::int8_t>(ram,0x4badf8)!=0;w.room=get<std::uint16_t>(ram,0x3243dc);
+    w.paused=get<std::int8_t>(ram,0x4badf8);w.room=get<std::uint16_t>(ram,0x3243dc);
     w.selected_actor=get<std::uint8_t>(ram,0x4baded);w.selected_frame_marker=get<std::uint8_t>(ram,0x4bae89);w.frame_shared_counter=get<std::uint16_t>(ram,0x744638);
     w.session().options.controller_profile=get<std::uint8_t>(ram,0x3243ec);
     for(std::uint32_t i=0;i<w.controllers().size();++i){auto& c=w.controllers()[i];c.held=get<std::uint32_t>(ram,0x324248+48*i);c.analog=get<std::array<std::int16_t,8>>(ram,0x324260+48*i);}
@@ -32,7 +32,7 @@ std::unique_ptr<g::World> read_world(const std::uint8_t* ram){
     }return result;
 }
 void write_world(std::uint8_t* ram,const g::World& w){
-    put(ram,0x3243f2,w.mode);put<std::uint8_t>(ram,0x3243fb,w.filter_nonselected_input?1:0);put<std::uint8_t>(ram,0x4badf8,w.paused?1:0);put(ram,0x3243dc,w.room);put(ram,0x4baded,w.selected_actor);put(ram,0x4bae89,w.selected_frame_marker);put(ram,0x744638,w.frame_shared_counter);
+    put(ram,0x3243f2,w.mode);put<std::uint8_t>(ram,0x3243fb,w.filter_nonselected_input?1:0);put(ram,0x4badf8,w.paused);put(ram,0x3243dc,w.room);put(ram,0x4baded,w.selected_actor);put(ram,0x4bae89,w.selected_frame_marker);put(ram,0x744638,w.frame_shared_counter);
     put(ram,0x3243ec,w.session().options.controller_profile);
     for(std::uint32_t i=0;i<w.controllers().size();++i){const auto& c=w.controllers()[i];put(ram,0x324248+48*i,c.held);put(ram,0x324260+48*i,c.analog);}
     put(ram,0x2b8e90,w.controller_bindings);
@@ -110,7 +110,7 @@ int main()try{
     }
     std::uint64_t cases{},calls{};std::uint32_t random=0x8ac1e37b;
     for(std::uint32_t seed=0;seed<4096;++seed){
-        g::World world(fixture_profile(),std::make_shared<g::Session>());world.mode=std::uint8_t(seed%4);world.paused=(seed&4)!=0;world.filter_nonselected_input=(seed&16)!=0;world.room=std::uint16_t(seed%8);world.selected_actor=std::uint8_t((seed>>5)%8);world.selected_frame_marker=0xff;world.frame_shared_counter=0x37;
+        g::World world(fixture_profile(),std::make_shared<g::Session>());world.mode=std::uint8_t(seed%4);world.paused=std::bit_cast<std::int8_t>(std::uint8_t(seed));world.filter_nonselected_input=(seed&16)!=0;world.room=std::uint16_t(seed%8);world.selected_actor=std::uint8_t((seed>>5)%8);world.selected_frame_marker=0xff;world.frame_shared_counter=0x37;
         for(std::size_t i=0;i<8;++i){auto owned=std::make_unique<g::Actor>();auto& a=*owned;a.active=(random_word(random)&3)!=0;a.visible=(seed+i)%2;a.slot=std::uint8_t(i);a.ai_control=std::uint8_t((seed+i)%2);a.normalized_marker=(seed+i)%3==0?0xff:0x42;a.room=std::uint16_t((seed+i)%8);
             a.contact_flags=0xffff;a.pending_notice=0xfedc;a.status=random_word(random);a.auxiliary_status=random_word(random);a.response_mask=random_word(random);a.response_value=random_word(random);a.motion_override=17;a.interaction_marker=18;a.room_marker=19;a.movement_enabled=20;a.frame_value_a=0x1234;a.frame_value_b=0x5678;a.transient_marker=21;a.grid=std::uint8_t(random_word(random));a.grid_response=float(seed%100)*.25f;a.position={float(i),20,float(seed)};std::array<std::uint32_t,12> words;words.fill(0x12345678u+std::uint32_t(i));a.input=std::bit_cast<g::input::Frame>(words);
             if(world.spawn_primary(i,std::move(owned)).status!=g::actors::EntityStatus::completed)throw std::runtime_error("Primary creation");

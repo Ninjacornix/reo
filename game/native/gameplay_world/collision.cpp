@@ -24,7 +24,7 @@ CollisionPass update_primary_collision(World& world,const CollisionRoom& room){
     CollisionPass pass;
     for(std::size_t i=0;i<World::primary_capacity;++i){
         auto actor=world.primary(i);if(!actor)continue;++pass.visited;
-        const auto step=update_collision(*actor,{world.room,world.paused,room.objects_enabled,room.height_layers},room);
+        const auto step=update_collision(*actor,{world.room,world.paused!=0,room.objects_enabled,room.height_layers},room);
         pass.last=step.policy;pass.eligible+=step.policy.eligible;
         pass.source_face_recoveries+=step.policy.wall_status==collision::sweep::Status::source_face_recovered;
         if(step.status!=CollisionStatus::completed){pass.status=step.status;pass.failed_actor=world.identity(i);return pass;}

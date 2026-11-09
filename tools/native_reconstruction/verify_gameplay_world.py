@@ -14,6 +14,7 @@ def main():
   read=read_main if begin<0x570000 else lambda at,n:raw[at-0x570000:at-0x570000+n]
   proof.append(compare_source('native owned actor frame and direct input',src,begin,end,read))
  files=sources+['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_world/tests.cpp','game/native/gameplay_actors/entity.hpp','game/native/gameplay_actors/entity.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/health.cpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_session/session.hpp','tools/native_reconstruction/gameplay_actor_oracle/runtime.hpp','tools/native_reconstruction/gameplay_world_oracle/tests.cpp','tools/native_reconstruction/verify_gameplay_world.py']
+ files += ['game/native/gameplay_collision/'+n for n in ['actors.hpp','response.hpp','collision.hpp']]
  before={n:sha(ROOT/n) for n in files};out.mkdir(parents=True)
  record=dict(schema=1,status='failed',compiler_sha256=sha(a.compiler),source_sha256=before,original_owned_body=proof,original_body_executed=True,declared_callee_ports=True,actual_game_run=False,stage4_complete=False)
  try:
