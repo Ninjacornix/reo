@@ -80,8 +80,30 @@ BankResult Owner::install_parts(BankTicket ticket, const Descriptors& descriptor
     if (status != banks::Status::ok)
         return {Status::unavailable, status};
     bank.descriptors = std::move(rows);
+    bank.installed_generation=ticket.generation_;
     bank.requested = false;
     return {Status::completed, status};
+}
+bool Owner::current(BankTicket ticket)const noexcept {
+    std::lock_guard lock(gate_);
+    if(ticket.domain_!=domain_||ticket.slot_>=banks_.size())return false;
+    const auto& bank=banks_[ticket.slot_];
+    return ticket.generation_&&bank.generation==ticket.generation_&&bank.installed_generation==ticket.generation_&&!bank.requested&&bool(bank.descriptors);
+}
+BankResult Owner::cancel(BankTicket ticket) noexcept {
+    std::lock_guard lock(gate_);
+    if(ticket.domain_!=domain_||ticket.slot_>=banks_.size())return {Status::stale,banks::Status::stale_generation};
+    auto& bank=banks_[ticket.slot_];
+    if(!ticket.generation_||bank.generation!=ticket.generation_||!bank.requested)return {Status::stale,banks::Status::stale_generation};
+    bank.requested=false;
+    return {Status::completed,banks::Status::ok};
+}
+BankResult Owner::stop(unsigned slot) noexcept {
+    if(slot>=banks::port_count)return {Status::invalid_input};
+    std::lock_guard lock(gate_);
+    const banks::Command command=banks::StopPort{slot,false};
+    const auto result=engine_->apply({&command,1});
+    return {result.status==banks::Status::ok?Status::completed:Status::unavailable,result.status};
 }
 BankResult Owner::unload(unsigned slot) noexcept {
     if (slot >= banks::port_count)
@@ -96,6 +118,7 @@ BankResult Owner::unload(unsigned slot) noexcept {
         return {Status::unavailable, result.status};
     ++bank.generation;
     bank.descriptors.reset();
+    bank.installed_generation=0;
     bank.requested = false;
     return {Status::completed, result.status};
 }

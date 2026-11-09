@@ -79,6 +79,9 @@ use canonical scene/model/session state and the actual bank mixer. Actual room
 bank/model assignment and the remaining event/resource consumers remain open.
 The [scene matrix bank consumer](SCENE_BANK_AUDIO.md) also connects real native
 channel playback to the same bank mixer with complete source consumer checks.
+The [bounded named bank loader](NAMED_BANK_LOADING.md) now supplies actual
+archive reads and off-thread bank preparation for direct SND loads. Combined
+enemy/staged banks and real game caller installation remain open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

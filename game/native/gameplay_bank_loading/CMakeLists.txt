@@ -1,0 +1,7 @@
+add_library(reo_native_gameplay_bank_loading STATIC aliases.cpp loader.cpp)
+target_compile_features(reo_native_gameplay_bank_loading PUBLIC cxx_std_20)
+target_include_directories(reo_native_gameplay_bank_loading PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+target_link_libraries(reo_native_gameplay_bank_loading PUBLIC reo_native_gameplay_audio reo_native_afs_source_range reo_native_resource_io)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_gameplay_bank_loading PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

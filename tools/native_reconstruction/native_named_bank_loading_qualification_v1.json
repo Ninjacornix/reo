@@ -1,0 +1,449 @@
+{
+  "schema": 1,
+  "status": "bounded original sound aliases and actual native named bank loading qualified on both compilers",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_bank_loading/aliases.cpp": "e95d8a6728f2e131fd6144780d3d918785bd973f2c91aaba413930e7e6620dca",
+    "game/native/gameplay_bank_loading/loader.cpp": "3a710604fbc95a6299c2bd1e90bcb568ea2d1ee2916b6e27dfd72c5c652f5a83",
+    "game/native/gameplay_audio/owner.cpp": "6990a7fdbec1291f6d0b9e0040b0552727dbe944677c2b262c18b72b73cff105",
+    "game/native/gameplay_audio/import.cpp": "2d53fcca50d8027319a01841f94647e721b36b655caf0ff486fe89d6109ce4aa",
+    "game/native/gameplay_audio/routing.cpp": "9a4d2203db6811f61c47e3754caa6a6b50d8aa45974a8a7882b06d6033564e7b",
+    "game/native/gameplay_audio/spatial.cpp": "99205d3008b1ce7beca1017defe97e16dd50f5550383a28f74d6553ce78ebbb6",
+    "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "game/native/audio_banks/v2/session.cpp": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603",
+    "game/native/audio_banks/v2/algorithms.cpp": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e",
+    "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+    "game/native/resources/virtual_file_view.cpp": "969576395f7a8b0210a836712258ffb11fd2cc846a6934b39374181510c32b98",
+    "game/native/resources/resource_session.cpp": "40da8f56bca191c39d6bb4dc81e3a0cd82e1d09c1c83c7c702e524cc511ab0fd",
+    "game/native/resources_windows/pinned_file.cpp": "48a8b40920cf5588a29d85fb89f22d62d7d73efe2ba8b5ee5d71404abd9b7bfc",
+    "game/native/resource_io/async_read_owner.cpp": "09235718523d8fa684bbdd96957376a89482a46c906236a8e233086083b1226a",
+    "game/native/afs_source_range/afs_source_range.cpp": "6f0808755ec7c82b5e0a95c403b45d462b27bbe1f1aec98f202fa081ddc9ce90",
+    "game/native/tasks/serial_worker.cpp": "72911c36d42bbdfdf7ceb4f6e288caa0c8736e57f4dec91bf6465329bfa24e42",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/bank_loading_tests.cpp": "2251e0271b2fcb01fcf54db66caac99f0e04dae64ba47db8ba3162a5ff00ede1",
+    "tools/native_reconstruction/verify_bank_loading.py": "12ac2f0bcaa4c13537047dee941f307a51040f4d6fa94d843e22909ce14d44ef",
+    "tools/native_reconstruction/generate_bank_aliases.py": "5f5582081f9c0e5152f49bbcec1ad5e46aa82f6809b83e06d32fec404a5fbabd",
+    "game/native/gameplay_bank_loading/CMakeLists.txt": "f0d5727c2a532de5614218f31d407a93f91433b4741530b695f62ba284c1cf4e",
+    "game/native/CMakeLists.txt": "a1d61afc30cfd53f37fc34d94956261c04876f3674cf454286ab94c944b46d63",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_runtime_macros.h": "763baab6071c4a10c418a2f9f968e92e4da2e62a1e5ace642593a38d4c734287",
+    "recomp/config/output/sub_001AB050_0x1ab050.cpp": "7074183f79f2e7db5abfff792577dd4a49714e6df92eb61e61d0c2a945d8e250",
+    "recomp/config/output/sub_001AB310_0x1ab310.cpp": "5fe2d28f62b3be99a72ba7bbe2769e9dd09b0e08910216a0024ae2aac41503cc",
+    "recomp/config/output/sub_0010AFC0_0x10afc0.cpp": "4849bec60c460ddca3a8ee0db4639acc9632858bdbb0139887a904b67a05c834",
+    "recomp/config/output/sub_0010B158_0x10b158.cpp": "53d1e664d44a93129fd8bf4117afc9267d8116321976a0c292d508a7b5329caa",
+    "recomp/config/output/sub_0010AE78_0x10ae78.cpp": "d6ffafc6ae6036a7cfb5cdc9994e4dfbae0727d7a6a9828e28e7e59f41c51984",
+    "recomp/config/output/sub_0010CDA8_0x10cda8.cpp": "58e48189d5b1de27c0f7d120ca5df1f905d79ddf6e86752faad86eedbde18715",
+    "game/native/gameplay_bank_loading/aliases.hpp": "ac509a61c661abc7c6b313b945f1129300a556c715d6f932401788d82290c934",
+    "game/native/gameplay_bank_loading/aliases_profile.inc": "a2d367e8f66166ab64c44a12c1e70b5d9682c76926ceeede8eb5dea5f1b78df6",
+    "game/native/gameplay_bank_loading/loader.hpp": "aab68f11d0b11def1f330db2890736d9cf6ff89bcdf80a54fa56435ed96db10e",
+    "game/native/resource_io/async_read_owner.hpp": "255ecda439a4f3e7f81bf6ae25335ace563251e400cd413b4f77d774c3262b57",
+    "game/native/tasks/serial_worker.hpp": "72f165f722689b134f4e97d149e16f215c143dff8873108cce816c06c80c7de4",
+    "game/native/gameplay_audio/owner.hpp": "5ea9e80b795a5746eda478aca755ce5ce3cf10b2110666ee27e6136fac110d33",
+    "game/native/gameplay_audio/import.hpp": "faf724ccec4041f9811b664a3f3f9268c5151dd356e849f0d344947b9184a40e",
+    "game/native/gameplay_audio/routing.hpp": "68a07a142e4a4dfb24543a71f46b7bb3cbdc14808a4058c92d4d95b6f05ca697",
+    "game/native/gameplay_audio/spatial.hpp": "4068b3f26004927a161451c394507a4338b362edf6ade0fc65d94981ba9a25ba",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/audio_banks/v2/session.hpp": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+    "game/native/audio_banks/v2/algorithms.hpp": "4260dcc9546f3f3e17b24b8692da83e3f7d26877d9f5ee6d46c21d1b9696b0fc",
+    "game/native/audio_banks/source_records.inc": "44ea539c47bfd2dc31271c0aa96b9876d73818c9923a9739edae50127287dc0a",
+    "game/native/audio_banks/source_members.inc": "15a9255f036a2658b173ada284a12385e929b66731618f227fe4770eb63c7f71",
+    "game/native/audio_banks/source_mix.inc": "d28e10cdcc91cd4ae2941dd018c17ee902953c92d24a0fdc109fac3ec291f328",
+    "game/native/resources/bounded_view.hpp": "badad2eeb0a9d43f4dd842b1d8253b8e5f620a130e576a09598fb52801000b04",
+    "game/native/resources/virtual_file_view.hpp": "e550406fcc5a685c095767df796843c7f9008f80ad064ecd61bc8596687ccb29",
+    "runtime/assets/virtual_afs.h": "8fa06c0e1da74b44f225510d81463fc510e868f917cad42d86221288c9905598",
+    "game/native/resources/resource_session.hpp": "0ac5e50af8c08141fabf66b9277bf187a76f7af6bcae065f2ae2b876ce1586ad",
+    "game/native/resources_windows/pinned_file.hpp": "27a6834acc078cdf8ffbdda8a971d9a72971366a0a1babc5e004a6ccd09c4659",
+    "game/native/afs_source_range/afs_source_range.hpp": "c8e91b5580c89b38d6a2d35f9444c80d7aecf66e1bee4d9bc441fa361cea1c3b",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_fpu_convert.h": "1316f8a9143191bc4633d43fc75ddcdc3eaeda765e300cd7e596d2de8bdf9925",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_runtime.h": "eba72ce2d25e3a82e6a3026195f2f4b3b624bea83d3d571c67ab0da5c59cfa1e",
+    "recomp/config/output/ps2_recompiled_functions.h": "6ea443c9d8dab5114a3bacb5e321570eb62327338fcb3193ea233529bc5cc848",
+    "recomp/config/output/ps2_recompiled_stubs.h": "858fea391e2c1865f4265981b6a3858e395ed12e5894508e5d5f490ae89674f4",
+    "game/native/resources/byte_view.hpp": "967f3ef9fab63390f05a95991a46dabbb6a7c0540130c16c35ee67eb498ffddb",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "game/native/audio_banks/v2/budget.hpp": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18",
+    "game/native/resources_windows/types.hpp": "ce93260bfcd8e5b62fc300495cf192b061f526606f9da4580a5b278853e8fda6",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_log.h": "75c68f444de69b06285a2d6a26c12ecff3bf2b0c00c9194454962dd5ad271c78",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gif_arbiter.h": "fb38ea5732d3420fdecd9d4aef39d5daea7d9c630a75fae7affac4f31118dfb6",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_memory.h": "c7a333c12fc5e279453c614453e4ca8bc226304d09fe1f0e9a5b95fa943b8ae0",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gs_gpu.h": "002920eeec31f9b1408b9c9ae06a0f05c11707df5c92d464f0f98f06524606c4",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_iop.h": "e10cfedb0c86382bb57679bcc1a9bf7d92a9da5b9711f8b67db72d5437110b35",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_vu1.h": "356ca978fd62b610cb2723c54b788f67a28b8c67ea9a13c5664f2200c807c7dc",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_audio.h": "6e715433dd32cfb529cad2256906bb471b8f18ae10777b53939839b4dbafd767",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_pad.h": "3ee7ebe45356ccf5914df5b3124422c8c1ab2c2c4a03066eb7cb9c8a0d7e6a0e",
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gs_rasterizer.h": "aee4af3e64a23159b46aa3d8883296667ce7b21b5f0533d02fdd1fbdeab2da2c",
+    "docs/native-gameplay/NAMED_BANK_LOADING.md": "ba9073d5ef52f8b16cc4da4ad859e4b351d24fa426f50943244a6522a36311b4",
+    "tools/native_reconstruction/qualify_named_bank_loading_v1.py": "ffb2bbf503ab3f40bd1b41a36a80161b59267c96dc95986e0ca8fda4e0dad20b"
+  },
+  "immutable_source_evidence": {
+    "game/native/gameplay_bank_loading/aliases.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_bank_loading/aliases.cpp",
+      "sha256": "e95d8a6728f2e131fd6144780d3d918785bd973f2c91aaba413930e7e6620dca"
+    },
+    "game/native/gameplay_bank_loading/loader.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_bank_loading/loader.cpp",
+      "sha256": "3a710604fbc95a6299c2bd1e90bcb568ea2d1ee2916b6e27dfd72c5c652f5a83"
+    },
+    "game/native/gameplay_audio/owner.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_audio/owner.cpp",
+      "sha256": "6990a7fdbec1291f6d0b9e0040b0552727dbe944677c2b262c18b72b73cff105"
+    },
+    "game/native/gameplay_audio/import.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_audio/import.cpp",
+      "sha256": "2d53fcca50d8027319a01841f94647e721b36b655caf0ff486fe89d6109ce4aa"
+    },
+    "game/native/gameplay_audio/routing.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_audio/routing.cpp",
+      "sha256": "9a4d2203db6811f61c47e3754caa6a6b50d8aa45974a8a7882b06d6033564e7b"
+    },
+    "game/native/gameplay_audio/spatial.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_audio/spatial.cpp",
+      "sha256": "99205d3008b1ce7beca1017defe97e16dd50f5550383a28f74d6553ce78ebbb6"
+    },
+    "game/native/gameplay_session/session.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_session/session.cpp",
+      "sha256": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87"
+    },
+    "game/native/audio_banks/v2/session.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/audio_banks/v2/session.cpp",
+      "sha256": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603"
+    },
+    "game/native/audio_banks/v2/algorithms.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/audio_banks/v2/algorithms.cpp",
+      "sha256": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e"
+    },
+    "game/native/resources/bounded_view.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources/bounded_view.cpp",
+      "sha256": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84"
+    },
+    "game/native/resources/virtual_file_view.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources/virtual_file_view.cpp",
+      "sha256": "969576395f7a8b0210a836712258ffb11fd2cc846a6934b39374181510c32b98"
+    },
+    "game/native/resources/resource_session.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources/resource_session.cpp",
+      "sha256": "40da8f56bca191c39d6bb4dc81e3a0cd82e1d09c1c83c7c702e524cc511ab0fd"
+    },
+    "game/native/resources_windows/pinned_file.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources_windows/pinned_file.cpp",
+      "sha256": "48a8b40920cf5588a29d85fb89f22d62d7d73efe2ba8b5ee5d71404abd9b7bfc"
+    },
+    "game/native/resource_io/async_read_owner.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resource_io/async_read_owner.cpp",
+      "sha256": "09235718523d8fa684bbdd96957376a89482a46c906236a8e233086083b1226a"
+    },
+    "game/native/afs_source_range/afs_source_range.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/afs_source_range/afs_source_range.cpp",
+      "sha256": "6f0808755ec7c82b5e0a95c403b45d462b27bbe1f1aec98f202fa081ddc9ce90"
+    },
+    "game/native/tasks/serial_worker.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/tasks/serial_worker.cpp",
+      "sha256": "72911c36d42bbdfdf7ceb4f6e288caa0c8736e57f4dec91bf6465329bfa24e42"
+    },
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp",
+      "sha256": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+    },
+    "tools/native_reconstruction/bank_loading_tests.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/tools/native_reconstruction/bank_loading_tests.cpp",
+      "sha256": "2251e0271b2fcb01fcf54db66caac99f0e04dae64ba47db8ba3162a5ff00ede1"
+    },
+    "tools/native_reconstruction/verify_bank_loading.py": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/tools/native_reconstruction/verify_bank_loading.py",
+      "sha256": "12ac2f0bcaa4c13537047dee941f307a51040f4d6fa94d843e22909ce14d44ef"
+    },
+    "tools/native_reconstruction/generate_bank_aliases.py": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/tools/native_reconstruction/generate_bank_aliases.py",
+      "sha256": "5f5582081f9c0e5152f49bbcec1ad5e46aa82f6809b83e06d32fec404a5fbabd"
+    },
+    "game/native/gameplay_bank_loading/CMakeLists.txt": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_bank_loading/CMakeLists.txt",
+      "sha256": "f0d5727c2a532de5614218f31d407a93f91433b4741530b695f62ba284c1cf4e"
+    },
+    "game/native/CMakeLists.txt": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/CMakeLists.txt",
+      "sha256": "a1d61afc30cfd53f37fc34d94956261c04876f3674cf454286ab94c944b46d63"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_runtime_macros.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_runtime_macros.h",
+      "sha256": "763baab6071c4a10c418a2f9f968e92e4da2e62a1e5ace642593a38d4c734287"
+    },
+    "recomp/config/output/sub_001AB050_0x1ab050.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/recomp/config/output/sub_001AB050_0x1ab050.cpp",
+      "sha256": "7074183f79f2e7db5abfff792577dd4a49714e6df92eb61e61d0c2a945d8e250"
+    },
+    "recomp/config/output/sub_001AB310_0x1ab310.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/recomp/config/output/sub_001AB310_0x1ab310.cpp",
+      "sha256": "5fe2d28f62b3be99a72ba7bbe2769e9dd09b0e08910216a0024ae2aac41503cc"
+    },
+    "recomp/config/output/sub_0010AFC0_0x10afc0.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/recomp/config/output/sub_0010AFC0_0x10afc0.cpp",
+      "sha256": "4849bec60c460ddca3a8ee0db4639acc9632858bdbb0139887a904b67a05c834"
+    },
+    "recomp/config/output/sub_0010B158_0x10b158.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/recomp/config/output/sub_0010B158_0x10b158.cpp",
+      "sha256": "53d1e664d44a93129fd8bf4117afc9267d8116321976a0c292d508a7b5329caa"
+    },
+    "recomp/config/output/sub_0010AE78_0x10ae78.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/recomp/config/output/sub_0010AE78_0x10ae78.cpp",
+      "sha256": "d6ffafc6ae6036a7cfb5cdc9994e4dfbae0727d7a6a9828e28e7e59f41c51984"
+    },
+    "recomp/config/output/sub_0010CDA8_0x10cda8.cpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/recomp/config/output/sub_0010CDA8_0x10cda8.cpp",
+      "sha256": "58e48189d5b1de27c0f7d120ca5df1f905d79ddf6e86752faad86eedbde18715"
+    },
+    "game/native/gameplay_bank_loading/aliases.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_bank_loading/aliases.hpp",
+      "sha256": "ac509a61c661abc7c6b313b945f1129300a556c715d6f932401788d82290c934"
+    },
+    "game/native/gameplay_bank_loading/aliases_profile.inc": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_bank_loading/aliases_profile.inc",
+      "sha256": "a2d367e8f66166ab64c44a12c1e70b5d9682c76926ceeede8eb5dea5f1b78df6"
+    },
+    "game/native/gameplay_bank_loading/loader.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_bank_loading/loader.hpp",
+      "sha256": "aab68f11d0b11def1f330db2890736d9cf6ff89bcdf80a54fa56435ed96db10e"
+    },
+    "game/native/resource_io/async_read_owner.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resource_io/async_read_owner.hpp",
+      "sha256": "255ecda439a4f3e7f81bf6ae25335ace563251e400cd413b4f77d774c3262b57"
+    },
+    "game/native/tasks/serial_worker.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/tasks/serial_worker.hpp",
+      "sha256": "72f165f722689b134f4e97d149e16f215c143dff8873108cce816c06c80c7de4"
+    },
+    "game/native/gameplay_audio/owner.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_audio/owner.hpp",
+      "sha256": "5ea9e80b795a5746eda478aca755ce5ce3cf10b2110666ee27e6136fac110d33"
+    },
+    "game/native/gameplay_audio/import.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_audio/import.hpp",
+      "sha256": "faf724ccec4041f9811b664a3f3f9268c5151dd356e849f0d344947b9184a40e"
+    },
+    "game/native/gameplay_audio/routing.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_audio/routing.hpp",
+      "sha256": "68a07a142e4a4dfb24543a71f46b7bb3cbdc14808a4058c92d4d95b6f05ca697"
+    },
+    "game/native/gameplay_audio/spatial.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_audio/spatial.hpp",
+      "sha256": "4068b3f26004927a161451c394507a4338b362edf6ade0fc65d94981ba9a25ba"
+    },
+    "game/native/gameplay_session/session.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/gameplay_session/session.hpp",
+      "sha256": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd"
+    },
+    "game/native/audio_banks/v2/session.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/audio_banks/v2/session.hpp",
+      "sha256": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19"
+    },
+    "game/native/audio_banks/v2/algorithms.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/audio_banks/v2/algorithms.hpp",
+      "sha256": "4260dcc9546f3f3e17b24b8692da83e3f7d26877d9f5ee6d46c21d1b9696b0fc"
+    },
+    "game/native/audio_banks/source_records.inc": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/audio_banks/source_records.inc",
+      "sha256": "44ea539c47bfd2dc31271c0aa96b9876d73818c9923a9739edae50127287dc0a"
+    },
+    "game/native/audio_banks/source_members.inc": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/audio_banks/source_members.inc",
+      "sha256": "15a9255f036a2658b173ada284a12385e929b66731618f227fe4770eb63c7f71"
+    },
+    "game/native/audio_banks/source_mix.inc": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/audio_banks/source_mix.inc",
+      "sha256": "d28e10cdcc91cd4ae2941dd018c17ee902953c92d24a0fdc109fac3ec291f328"
+    },
+    "game/native/resources/bounded_view.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources/bounded_view.hpp",
+      "sha256": "badad2eeb0a9d43f4dd842b1d8253b8e5f620a130e576a09598fb52801000b04"
+    },
+    "game/native/resources/virtual_file_view.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources/virtual_file_view.hpp",
+      "sha256": "e550406fcc5a685c095767df796843c7f9008f80ad064ecd61bc8596687ccb29"
+    },
+    "runtime/assets/virtual_afs.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/runtime/assets/virtual_afs.h",
+      "sha256": "8fa06c0e1da74b44f225510d81463fc510e868f917cad42d86221288c9905598"
+    },
+    "game/native/resources/resource_session.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources/resource_session.hpp",
+      "sha256": "0ac5e50af8c08141fabf66b9277bf187a76f7af6bcae065f2ae2b876ce1586ad"
+    },
+    "game/native/resources_windows/pinned_file.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources_windows/pinned_file.hpp",
+      "sha256": "27a6834acc078cdf8ffbdda8a971d9a72971366a0a1babc5e004a6ccd09c4659"
+    },
+    "game/native/afs_source_range/afs_source_range.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/afs_source_range/afs_source_range.hpp",
+      "sha256": "c8e91b5580c89b38d6a2d35f9444c80d7aecf66e1bee4d9bc441fa361cea1c3b"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_fpu_convert.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_fpu_convert.h",
+      "sha256": "1316f8a9143191bc4633d43fc75ddcdc3eaeda765e300cd7e596d2de8bdf9925"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_runtime.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_runtime.h",
+      "sha256": "eba72ce2d25e3a82e6a3026195f2f4b3b624bea83d3d571c67ab0da5c59cfa1e"
+    },
+    "recomp/config/output/ps2_recompiled_functions.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/recomp/config/output/ps2_recompiled_functions.h",
+      "sha256": "6ea443c9d8dab5114a3bacb5e321570eb62327338fcb3193ea233529bc5cc848"
+    },
+    "recomp/config/output/ps2_recompiled_stubs.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/recomp/config/output/ps2_recompiled_stubs.h",
+      "sha256": "858fea391e2c1865f4265981b6a3858e395ed12e5894508e5d5f490ae89674f4"
+    },
+    "game/native/resources/byte_view.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources/byte_view.hpp",
+      "sha256": "967f3ef9fab63390f05a95991a46dabbb6a7c0540130c16c35ee67eb498ffddb"
+    },
+    "game/native/transform_math/transform_math.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/transform_math/transform_math.hpp",
+      "sha256": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35"
+    },
+    "game/native/audio_banks/v2/budget.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/audio_banks/v2/budget.hpp",
+      "sha256": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18"
+    },
+    "game/native/resources_windows/types.hpp": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/game/native/resources_windows/types.hpp",
+      "sha256": "ce93260bfcd8e5b62fc300495cf192b061f526606f9da4580a5b278853e8fda6"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_log.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_log.h",
+      "sha256": "75c68f444de69b06285a2d6a26c12ecff3bf2b0c00c9194454962dd5ad271c78"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gif_arbiter.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gif_arbiter.h",
+      "sha256": "fb38ea5732d3420fdecd9d4aef39d5daea7d9c630a75fae7affac4f31118dfb6"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_memory.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_memory.h",
+      "sha256": "c7a333c12fc5e279453c614453e4ca8bc226304d09fe1f0e9a5b95fa943b8ae0"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gs_gpu.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gs_gpu.h",
+      "sha256": "002920eeec31f9b1408b9c9ae06a0f05c11707df5c92d464f0f98f06524606c4"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_iop.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_iop.h",
+      "sha256": "e10cfedb0c86382bb57679bcc1a9bf7d92a9da5b9711f8b67db72d5437110b35"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_vu1.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_vu1.h",
+      "sha256": "356ca978fd62b610cb2723c54b788f67a28b8c67ea9a13c5664f2200c807c7dc"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_audio.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_audio.h",
+      "sha256": "6e715433dd32cfb529cad2256906bb471b8f18ae10777b53939839b4dbafd767"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_pad.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_pad.h",
+      "sha256": "3ee7ebe45356ccf5914df5b3124422c8c1ab2c2c4a03066eb7cb9c8a0d7e6a0e"
+    },
+    "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gs_rasterizer.h": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/source/build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/runtime/ps2_gs_rasterizer.h",
+      "sha256": "aee4af3e64a23159b46aa3d8883296667ce7b21b5f0533d02fdd1fbdeab2da2c"
+    },
+    "docs/native-gameplay/NAMED_BANK_LOADING.md": {
+      "path": "build-native-sjuni/named-bank-loading-seal-v1/source/docs/native-gameplay/NAMED_BANK_LOADING.md",
+      "sha256": "ba9073d5ef52f8b16cc4da4ad859e4b351d24fa426f50943244a6522a36311b4"
+    },
+    "tools/native_reconstruction/qualify_named_bank_loading_v1.py": {
+      "path": "build-native-sjuni/named-bank-loading-seal-v1/source/tools/native_reconstruction/qualify_named_bank_loading_v1.py",
+      "sha256": "ffb2bbf503ab3f40bd1b41a36a80161b59267c96dc95986e0ca8fda4e0dad20b"
+    }
+  },
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/named-bank-loading-llvm-v4/receipt.json",
+      "sha256": "60afe3dfeb91eda89538b0d3305ad3606c7109580b699dff3b2ca9d341ff5df2",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "results": {
+        "checks": 23491,
+        "lookup_cases": 4356,
+        "original_calls": 2098790,
+        "stock_banks": 103,
+        "stock_commands": 2166,
+        "mixed_frames": 277248,
+        "signal_samples": 11682,
+        "contract_cases": 12,
+        "game_launched": false
+      },
+      "owned_iso_sha256": "69ae2c48e6f01e2605659feabb54eb9b82c63a809bdc8a78ad2d160b3c59a4a1"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/named-bank-loading-gcc-v2/receipt.json",
+      "sha256": "0e29e3a0c41d421f10eb0c950e07f376b104bff9b6d5138f1f8d4e98a9e64b38",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "results": {
+        "checks": 23491,
+        "lookup_cases": 4356,
+        "original_calls": 2098790,
+        "stock_banks": 103,
+        "stock_commands": 2166,
+        "mixed_frames": 277248,
+        "signal_samples": 11682,
+        "contract_cases": 12,
+        "game_launched": false
+      },
+      "owned_iso_sha256": "69ae2c48e6f01e2605659feabb54eb9b82c63a809bdc8a78ad2d160b3c59a4a1"
+    }
+  },
+  "core_regressions": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-audio-loader-regression-llvm-v1/receipt.json",
+      "sha256": "cfa34d12d8c03c41ac390a38f8089330a825f4197050fb2c682173a9d604d042",
+      "results": {
+        "checks": 891629,
+        "route_cases": 32768,
+        "import_cases": 512,
+        "spatial_cases": 16384,
+        "positional_cases": 4096,
+        "settings_cases": 256,
+        "stock_banks": 103,
+        "refused_banks": 1,
+        "stock_events": 4332,
+        "mixed_frames": 866400,
+        "original_calls": 574448,
+        "game_launched": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-audio-loader-regression-gcc-v1/receipt.json",
+      "sha256": "60c64021a502c49b9e652153deb2e65a667043182417788b9d1b5393d79d0618",
+      "results": {
+        "checks": 891629,
+        "route_cases": 32768,
+        "import_cases": 512,
+        "spatial_cases": 16384,
+        "positional_cases": 4096,
+        "settings_cases": 256,
+        "stock_banks": 103,
+        "refused_banks": 1,
+        "stock_events": 4332,
+        "mixed_frames": 866400,
+        "original_calls": 574448,
+        "game_launched": false
+      }
+    }
+  },
+  "dependencies": {
+    "native_gameplay_audio_qualification_v1.json": {
+      "path": "tools/native_reconstruction/native_gameplay_audio_qualification_v1.json",
+      "sha256": "0852be24200075fbf490499fd92acabc2b6ab871f90bae5a18daaac78395b0ec"
+    }
+  },
+  "parent_builds": {
+    "build-native-sjuni/stage4-named-bank-parent-llvm-v2.txt": "887d529ec83ca530bedbae1e428c5200c356abb2b5197294472521673cec5ef4",
+    "build-native-sjuni/stage4-named-bank-parent-gcc-v2.txt": "665bde5b07ba70860b340302479ce6eb68a60de15ea5c771e497cc588b1e04c9"
+  },
+  "limits": [
+    "Complete original alias lookup executes; bounded native queue ownership is an explicit modernization, not exact legacy pointer-alias execution.",
+    "Actual pinned owned archive feeds native async reading, preparation and bank mixer; direct-bank PCM comparison reuses independently qualified native bank semantics.",
+    "Staged/combined enemy banks, original session-mode gate, caller migration and whole-game acceptance remain open."
+  ],
+  "preserved_draft_failures": [
+    "build-native-sjuni/named-bank-loading-llvm-v1/receipt.json",
+    "build-native-sjuni/named-bank-loading-gcc-v1/receipt.json"
+  ]
+}

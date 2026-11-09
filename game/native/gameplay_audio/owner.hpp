@@ -45,6 +45,9 @@ class Owner final {
     BankResult install_parts(BankTicket, const Descriptors&,
                              std::array<std::span<const std::uint8_t>, 3>) noexcept;
     BankResult unload(unsigned slot) noexcept;
+    BankResult stop(unsigned slot) noexcept;
+    BankResult cancel(BankTicket) noexcept;
+    bool current(BankTicket)const noexcept;
     Status state(unsigned slot) const noexcept;
     Result request(Request) noexcept;
     Result positional(Request, Vector, const SpatialContext&, unsigned selector = 1) noexcept;
@@ -54,6 +57,7 @@ class Owner final {
   private:
     struct Bank {
         std::uint64_t generation{};
+        std::uint64_t installed_generation{};
         bool requested{};
         std::shared_ptr<const Descriptors> descriptors;
     };
