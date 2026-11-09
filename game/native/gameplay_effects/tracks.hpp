@@ -21,7 +21,7 @@ struct Channel {std::int16_t kind{};std::optional<Curve> curve;};
 struct Part {std::uint8_t resource{},material{},selector{};std::vector<Channel> channels;};
 struct Group {std::int16_t lifetime{};std::vector<Part> parts;};
 struct Parameters {
-    transform_math::Vector scale{1,1,1},translation;
+    transform_math::Vector translation,scale{1,1,1};
     std::array<std::int16_t,4> rotation{};
 };
 // Native owned File1 efdata tracks. The logical mapping and immutable curve

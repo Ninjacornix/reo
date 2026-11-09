@@ -108,9 +108,9 @@ void sample_transform(std::span<const Channel> channels,std::int16_t time,Parame
         if(channel.kind<0||channel.kind>8)continue;
         if(!channel.curve)throw std::invalid_argument("Native effect transform curve unavailable");
         const auto value=channel.curve->sample(time);
-        if(channel.kind<3)component(output.translation,unsigned(channel.kind))=value/16.f;
+        if(channel.kind<3)component(output.scale,unsigned(channel.kind))=value/16.f;
         else if(channel.kind<6)output.rotation[unsigned(channel.kind-3)]=angle(value);
-        else component(output.scale,unsigned(channel.kind-6))=value/16.f;
+        else component(output.translation,unsigned(channel.kind-6))=value/16.f;
     }
 }
 }

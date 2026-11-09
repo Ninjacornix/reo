@@ -5,3 +5,12 @@ target_link_libraries(reo_native_gameplay_effects PUBLIC reo_native_transform_ma
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(reo_native_gameplay_effects PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+
+find_package(Threads REQUIRED)
+add_library(reo_native_periodic_visuals STATIC periodic_visuals.cpp)
+target_compile_features(reo_native_periodic_visuals PUBLIC cxx_std_20)
+target_include_directories(reo_native_periodic_visuals PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+target_link_libraries(reo_native_periodic_visuals PUBLIC reo_native_gameplay_effects reo_native_gameplay_scenario reo_native_gameplay_actors Threads::Threads)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_periodic_visuals PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
