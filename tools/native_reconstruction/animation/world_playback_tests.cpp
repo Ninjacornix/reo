@@ -7,18 +7,21 @@
 namespace g = reo::native::gameplay_world;
 std::uint64_t lifetime_cases{}, special_frame_cases{}, selection_cases{}, dual_cases{},
     world_cases{}, resource_cases{}, prelude_native{}, world_refusals{}, profile_cases{};
+std::vector<std::uint32_t> native_prelude_steps, original_prelude_steps;
 g::Profile world_profile() {
     return {{g::input::Remap{0x100, 0x20, 0x10}}, 4, {16, UINT64_MAX}};
 }
 struct Prelude final : g::MotionPrelude {
-    void run(g::World&, g::Actor& actor) override {
+    void run(g::World&, g::Actor& actor, float step) override {
+        native_prelude_steps.push_back(bits(step));
         ++prelude_native;
         actor.animation->channel(a::ModelBank::primary, 1).skip_flags = 1;
         actor.animation->progress_threshold = 2;
         actor.input.held = 0xf3f;
     }
 };
-void original_prelude(std::uint8_t* memory, R5900Context*) {
+void original_prelude(std::uint8_t* memory, R5900Context* context) {
+    original_prelude_steps.push_back(bits(context->f[12]));
     memory[actor + 0x21e] = 1;
     memory[actor + 0xce3] = 2;
     put(memory, actor + 0xf80, std::uint32_t(0xf3f));
@@ -303,8 +306,9 @@ int main(int argc, char** argv) try {
         player.activate(5);
         call(ram.data(), 0x58c7b0, actor);
         prelude_hook = original_prelude;
-        const auto boundary = animations.tick(id, 1);
-        const auto original = call(ram.data(), 0x58c300, actor, 0, 0, 0, 1);
+        const float original_step = std::array<float, 4>{-1.f, .125f, -0.f, 2.5f}[variant % 4];
+        const auto boundary = animations.tick(id, original_step);
+        const auto original = call(ram.data(), 0x58c300, actor, 0, 0, 0, original_step);
         prelude_hook = nullptr;
         check(boundary == std::int8_t(GPR_U32(&original, 2)),
               "actual required prelude effects precede ordered native channel service");
@@ -343,8 +347,10 @@ int main(int argc, char** argv) try {
             body_equal(*current, ram);
             ++dual_cases;
             prelude_hook = original_prelude;
-            const auto r = animations.tick_blended(id, 1, .375f);
-            const auto o = call(ram.data(), 0x5d57d0, actor, 0, 0, 0, 1, .375f);
+            const float original_dual_step =
+                std::array<float, 4>{0.f, -.5f, .25f, 2.f}[variant % 4];
+            const auto r = animations.tick_blended(id, original_dual_step, .375f);
+            const auto o = call(ram.data(), 0x5d57d0, actor, 0, 0, 0, original_dual_step, .375f);
             prelude_hook = nullptr;
             check(r == std::int8_t(GPR_U32(&o, 2)),
                   "actual World four-bank service follows required observed prelude");
@@ -623,7 +629,7 @@ int main(int argc, char** argv) try {
         } observed;
         struct ObservedPrelude final : g::MotionPrelude {
             std::function<void()> effect;
-            void run(g::World&, g::Actor&) override {
+            void run(g::World&, g::Actor&, float) override {
                 effect();
             }
         } observed_prelude;
@@ -656,6 +662,14 @@ int main(int argc, char** argv) try {
         ++lifetime_cases;
     }
     check(special_frame_cases > 0, "live real motion demonstrates special initial-frame branch");
+    check(native_prelude_steps == original_prelude_steps &&
+              native_prelude_steps.size() == prelude_native,
+          "exact callerstep bits observed atactualoriginalandnativeprelude");
+    check(std::find(native_prelude_steps.begin(), native_prelude_steps.end(), bits(-1.f)) !=
+                  native_prelude_steps.end() &&
+              std::find(native_prelude_steps.begin(), native_prelude_steps.end(), bits(.125f)) !=
+                  native_prelude_steps.end(),
+          "arbitrary negative/fractional originalsteps are forwarded");
     check(prelude_native >= 64, "required native prelude invoked once per World tick");
     std::cout << "{\"checks\":" << checks << ",\"lifetime_cases\":" << lifetime_cases
               << ",\"world_application_cases\":" << world_cases

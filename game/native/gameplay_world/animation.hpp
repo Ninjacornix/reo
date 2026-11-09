@@ -8,7 +8,8 @@ class MotionPrelude {
     virtual ~MotionPrelude() = default;
     // Original573430 category-specific animation events/behavior effects. The
     // concrete owner must implement it; there is no successful default path.
-    virtual void run(World&, Actor&) = 0;
+    // step is the exact caller argument preserved by58C300/5D57D0.
+    virtual void run(World&, Actor&, float step) = 0;
 };
 class WorldAnimation final {
   public:

@@ -132,7 +132,7 @@ void WorldAnimation::apply_blended(const actors::EntityId& id,
 }
 std::int8_t WorldAnimation::tick(const actors::EntityId& id, float step) {
     const auto actor = retain(world_, id);
-    prelude_.run(world_, *actor);
+    prelude_.run(world_, *actor, step);
     if (world_.resolve(id) != actor)
         throw std::runtime_error("Native animation actor retired during required prelude");
     auto& state = playback(*actor);
@@ -142,7 +142,7 @@ std::int8_t WorldAnimation::tick(const actors::EntityId& id, float step) {
 }
 std::int8_t WorldAnimation::tick_blended(const actors::EntityId& id, float step, float weight) {
     const auto actor = retain(world_, id);
-    prelude_.run(world_, *actor);
+    prelude_.run(world_, *actor, step);
     if (world_.resolve(id) != actor)
         throw std::runtime_error("Native animation actor retired during required prelude");
     auto& state = playback(*actor);
