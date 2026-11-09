@@ -43,12 +43,13 @@ struct SceneDescriptor {
     std::int8_t shape_profile{},orientation_variant{};
 };
 enum class SceneEffect { construct_primary,construct_alternate,release,retire_instance };
+enum class SceneStatus;
 class SceneEffects {
 public:
     virtual ~SceneEffects()=default;
     // Construct effects receive the stable descriptor identity. Release also
     // preserves the original byte-sized instance index, including zero.
-    virtual void apply(SceneResources&,const SceneResourceId&,SceneEffect,std::uint8_t instance_index)noexcept=0;
+    virtual SceneStatus apply(SceneResources&,const SceneResourceId&,SceneEffect,std::uint8_t instance_index)noexcept=0;
 };
 enum class SceneCommand { enable,disable,force_enable,alternate_enable };
 enum class SceneStatus { completed,invalid_identity,provider_unavailable,invalid_slot,generation_exhausted,full };

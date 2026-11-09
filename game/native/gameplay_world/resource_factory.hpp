@@ -16,7 +16,7 @@ private:
 //591230 primary construction for the concrete common/weapon work families.
 // The six special5DF450 companion routes are unavailable
 // until their actual consumers are supplied; no successful provider substitutes.
-class ResourceFactory final {
+class ResourceFactory final:public gameplay_scenario::SceneEffects {
 public:
     ResourceFactory(ResourceModels&,ResourceFrames&,
         const gameplay_scenario::ResourceTemplates&,
@@ -31,6 +31,8 @@ public:
     bool bind_scene(gameplay_scenario::ResourceCollisions&,
         std::shared_ptr<const gameplay_collision::response::Grid>,std::uint16_t room)noexcept;
     ResourceModelCreated place(const gameplay_scenario::SceneResourceId&);
+    gameplay_scenario::SceneStatus apply(gameplay_scenario::SceneResources&,
+        const gameplay_scenario::SceneResourceId&,gameplay_scenario::SceneEffect,std::uint8_t)noexcept override;
 private:
     friend class DelayedResourceWork;
     ResourceModels& models_;

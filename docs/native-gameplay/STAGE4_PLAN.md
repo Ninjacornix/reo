@@ -23,6 +23,11 @@ The [delayed-resource follow-up](RESOURCE_DELAYED.md) now supplies591400 and
 and same-pass continuation. It also corrects the new factory's insertion end;
 fresh comparisons explicitly cover multi-model list order. Scenario-command
 binding, special companions and actual game installation remain open.
+The [resource scenario-command follow-up](RESOURCE_SCENARIO_ACTIONS.md) now binds
+the actual native construction/release/deactivation owners to SceneEffects and
+propagates unavailable effects to the interpreter. Current unpinned scenario
+regressions pass on both compilers. Actor inventory/extended ownership, special
+companions and the actual game installer remain separate gates.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners

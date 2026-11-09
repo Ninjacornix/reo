@@ -79,7 +79,7 @@ SceneStatus SceneResources::command(const SceneResourceId& id,SceneCommand comma
     const auto index=d.instance_index;
     // No reference is used after the external effect; it may replace/retire the
     // descriptor through its native owner without invalidating a borrowed view.
-    if(invoke)effects->apply(*this,id,effect,index);
+    if(invoke)return effects->apply(*this,id,effect,index);
     return SceneStatus::completed;
 }
 std::optional<bool> SceneResources::inactive_or_flag29(const SceneResourceId& id)const noexcept{
@@ -101,15 +101,14 @@ SceneStatus SceneResources::detach(const AttachedSceneResource& attached,SceneEf
     // The owner selection is the lookup's value captured before release. Byte
     // instance indices are reread after each effect, as in the original body.
     auto current=get(attached.id);
-    if(current->primary)effects->apply(*this,attached.id,SceneEffect::release,current->instance_index);
+    if(current->primary){const auto status=effects->apply(*this,attached.id,SceneEffect::release,current->instance_index);if(status!=SceneStatus::completed)return status;}
     const auto entity=owners->resolve(attached.owner);
     if(!entity||!bool(*entity))return SceneStatus::provider_unavailable;
     current=get(attached.id);if(!current)return SceneStatus::invalid_identity;
     owners->detach(*this,*entity,current->instance_index);
     owners->refresh(*this,*entity);
     current=get(attached.id);if(!current)return SceneStatus::invalid_identity;
-    effects->apply(*this,attached.id,SceneEffect::retire_instance,current->instance_index);
-    return SceneStatus::completed;
+    return effects->apply(*this,attached.id,SceneEffect::retire_instance,current->instance_index);
 }
 bool SceneResources::compare_attached(std::int16_t id,std::int16_t expected,std::int16_t operation)const noexcept{
     const auto attached=lookup_attached(id);if(!attached)return false;

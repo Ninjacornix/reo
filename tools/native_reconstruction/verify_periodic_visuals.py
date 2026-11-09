@@ -23,10 +23,12 @@ def main():
     p.add_argument('--resource-factory', action='store_true')
     p.add_argument('--resource-placement', action='store_true')
     p.add_argument('--resource-delayed', action='store_true')
+    p.add_argument('--resource-actions', action='store_true')
     args = p.parse_args()
     assert not args.resource_factory or args.resource_static
     assert not args.resource_placement or args.resource_factory
     assert not args.resource_delayed or args.resource_placement
+    assert not args.resource_actions or args.resource_delayed
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
     corpus = args.corpus.resolve()
@@ -72,6 +74,9 @@ def main():
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_delayed:
         at=0x591400;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_actions:
+        for at in [0x592900,0x592960,0x592a10,0x592b00,0x592b90,0x5b1850,0x591be0]:
+            entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     originals = list(entries.values())
     proof = []
     for at, name in entries.items():
@@ -116,6 +121,8 @@ def main():
         name='tools/native_reconstruction/resource_placement_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_delayed:
         name='tools/native_reconstruction/resource_delayed_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_actions:
+        name='tools/native_reconstruction/resource_actions_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
                   selected_visual_family='variant0 logical36/37/38, flags1A193, null parent, complete6535C0 callback',
@@ -210,6 +217,7 @@ def main():
         if args.resource_factory: command.insert(1,'-DREO_RESOURCE_FACTORY=1')
         if args.resource_placement: command.insert(1,'-DREO_RESOURCE_PLACEMENT=1')
         if args.resource_delayed: command.insert(1,'-DREO_RESOURCE_DELAYED=1')
+        if args.resource_actions: command.insert(1,'-DREO_RESOURCE_ACTIONS=1')
         record['command'] = command
         for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else []))]:
             result = subprocess.run(cmd, env=env, capture_output=True, timeout=180)

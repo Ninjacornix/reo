@@ -19,10 +19,11 @@ struct Attachment final:vm::SceneFlagAttachment{
 };
 struct Effects final:vm::SceneEffects{
     std::vector<std::tuple<vm::SceneEffect,std::uint8_t>> events;
-    void apply(vm::SceneResources& resources,const vm::SceneResourceId& id,vm::SceneEffect effect,std::uint8_t index)noexcept override{
+    vm::SceneStatus apply(vm::SceneResources& resources,const vm::SceneResourceId& id,vm::SceneEffect effect,std::uint8_t index)noexcept override{
         events.emplace_back(effect,index);auto d=*resources.get(id);d.flags^=0x40000000u;
         if(mutate_instance_indices&&effect==vm::SceneEffect::release)d.instance_index=17;
         resources.replace(id,d);
+        return vm::SceneStatus::completed;
     }
 };
 void effect(std::uint8_t* ram,R5900Context* c,vm::SceneEffect kind){

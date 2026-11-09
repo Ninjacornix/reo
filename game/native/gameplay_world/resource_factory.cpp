@@ -134,4 +134,22 @@ ResourceModelCreated ResourceFactory::place(const gameplay_scenario::SceneResour
         return result;
     }catch(const std::exception&){result.status=ResourceModelStatus::unavailable;return result;}
 }
+gameplay_scenario::SceneStatus ResourceFactory::apply(gameplay_scenario::SceneResources& resources,
+    const gameplay_scenario::SceneResourceId& id,gameplay_scenario::SceneEffect effect,std::uint8_t index)noexcept{
+    using namespace gameplay_scenario;
+    if(&resources!=&frames_.resources_||!resources.get(id))return SceneStatus::invalid_identity;
+    if(!frames_.open())return SceneStatus::provider_unavailable;
+    try{
+        switch(effect){
+        case SceneEffect::construct_primary:{const auto result=place(id);return result.status==ResourceModelStatus::completed||result.status==ResourceModelStatus::full?SceneStatus::completed:SceneStatus::provider_unavailable;}
+        case SceneEffect::construct_alternate:{
+            if(!collisions_||scene_room_!=frames_.world_.room)return SceneStatus::provider_unavailable;
+            const auto result=collisions_->replace(id);return result.status==ResourceCollisionStatus::completed||result.status==ResourceCollisionStatus::full?SceneStatus::completed:SceneStatus::provider_unavailable;
+        }
+        case SceneEffect::release:frames_.release(index,false);return SceneStatus::completed;
+        case SceneEffect::retire_instance:{const auto target=resources.slot(index);return target?resources.deactivate(*target):SceneStatus::invalid_slot;}
+        }
+    }catch(const std::exception&){return SceneStatus::provider_unavailable;}
+    return SceneStatus::provider_unavailable;
+}
 }

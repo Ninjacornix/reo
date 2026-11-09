@@ -23,9 +23,10 @@ struct SceneFixture final:vm::SceneEffects,vm::SceneOwners{
         fixture_write(ram.data(),scene_live+0x23c,primary->flags);scene_effects.clear();scene_effects.reserve(100);
     }
     void compare_original(const std::vector<std::uint8_t>& ram){check(resources.get(id)->flags==fixture_read<std::uint32_t>(ram.data(),scene_at+24));check(primary->flags==fixture_read<std::uint32_t>(ram.data(),scene_live+0x23c));check(effects==scene_effects);}
-    void apply(vm::SceneResources&,const vm::SceneResourceId& resource,vm::SceneEffect effect,std::uint8_t index)noexcept override{
+    vm::SceneStatus apply(vm::SceneResources&,const vm::SceneResourceId& resource,vm::SceneEffect effect,std::uint8_t index)noexcept override{
         if(resource!=id)std::terminate();
         effects.emplace_back(unsigned(effect),index);
+        return vm::SceneStatus::completed;
     }
     std::optional<reo::native::gameplay_actors::EntityId> resolve(vm::SceneOwnerReference owner)noexcept override{
         if(owner.family==vm::SceneOwnerFamily::extended)effects.emplace_back(4,owner.index);
