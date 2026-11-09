@@ -29,6 +29,7 @@ public:
     ~Loader();
     Loader(const Loader&)=delete;
     Loader& operator=(const Loader&)=delete;
+    bool bound_to(const gameplay_audio::Owner&)const noexcept;
     // Original queued name copy: first15 bytes, then append ".snd" for lookup.
     Submitted enqueue(std::string_view name,unsigned port)noexcept;
     void service()noexcept;

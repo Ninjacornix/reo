@@ -4,36 +4,26 @@ Status, 2026-11-09: implementation started; **Stage 4 is incomplete**. The user
 requested the whole stage and explicitly revoked the earlier conditional
 PC-sleep action for this work. Do not request sleep after this stage.
 
-The [primary resource factory](RESOURCE_FACTORY.md) now constructs admitted
-common/weapon resource models from owned NBD poses and ITEM templates through
-the canonical64-model owner. Both compiler comparisons and parent builds pass.
-Special companions, delayed work, scene placement and actual game installation
-remain open; this does not close Stage4.
-The [placed-resource collision consumer](RESOURCE_COLLISIONS.md) now supplies
-the alternate591860/5C62F0 constructor through the existing shared128 scene
-owner, with full turn-domain comparisons and parent checks on both compilers.
-Primary placement and delayed reconstruction composition remain open.
-The [primary scene-placement follow-up](RESOURCE_PLACEMENT.md) now connects
-591620 to real native models, template offsets, shared collision construction,
-session RNG and floor queries. Both compiler comparisons include actual pool
-exhaustion. Delayed callbacks, special companions and game installation remain
-open; this is not full Stage4 completion.
-The [delayed-resource follow-up](RESOURCE_DELAYED.md) now supplies591400 and
-593550/class2 through those real construction owners, including self-replacement
-and same-pass continuation. It also corrects the new factory's insertion end;
-fresh comparisons explicitly cover multi-model list order. Scenario-command
-binding, special companions and actual game installation remain open.
-The [resource scenario-command follow-up](RESOURCE_SCENARIO_ACTIONS.md) now binds
-the actual native construction/release/deactivation owners to SceneEffects and
-propagates unavailable effects to the interpreter. Current unpinned scenario
-regressions pass on both compilers. Actor inventory/extended ownership, special
-companions and the actual game installer remain separate gates.
-The [canonical inventory follow-up](INVENTORY_PRIMARY_OWNER.md) now owns carried/
-storage handles on the real native Actor and supplies find/removal/insertion/
-compaction plus primary SceneOwners detach/refresh through actual resource
-release. Both compiler comparisons and current scenario regressions pass.
-Equipment/use/recipe/transfer, extended actors and actual installation remain
-open; the stage is still incomplete.
+The current resource and inventory implementation includes:
+
+- [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
+  templates through the canonical64-model owner.
+- [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128
+  scene owner and [primary placement](RESOURCE_PLACEMENT.md) through actual
+  models, template offsets, session RNG and floor queries.
+- [Delayed construction and callbacks](RESOURCE_DELAYED.md), including
+  self-replacement, same-pass continuation and the corrected factory insertion
+  end. Fresh comparisons cover multi-model list order.
+- [Scenario commands](RESOURCE_SCENARIO_ACTIONS.md) bound to actual construction,
+  release and deactivation owners, with failure status propagated to the VM.
+- [Canonical inventory primitives](INVENTORY_PRIMARY_OWNER.md), including actual
+  primary SceneOwners detach/refresh.
+
+Those components pass both compiler comparisons and parent checks. The
+[weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler
+comparisons with actual ROM/SND assets and background decode/PCM checks.
+Equipment/use/recipe/transfer, extended actors, special companions, actual
+installation and game acceptance remain open; the stage is still incomplete.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners

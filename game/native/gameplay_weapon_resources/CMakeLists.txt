@@ -1,0 +1,7 @@
+add_library(reo_native_gameplay_weapon_resources STATIC weapon_resources.cpp)
+target_compile_features(reo_native_gameplay_weapon_resources PUBLIC cxx_std_20)
+target_include_directories(reo_native_gameplay_weapon_resources PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+target_link_libraries(reo_native_gameplay_weapon_resources PUBLIC reo_native_gameplay_world reo_native_gameplay_bank_loading reo_native_animation reo_native_resources)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_gameplay_weapon_resources PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

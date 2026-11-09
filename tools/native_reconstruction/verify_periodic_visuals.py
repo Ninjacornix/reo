@@ -25,12 +25,14 @@ def main():
     p.add_argument('--resource-delayed', action='store_true')
     p.add_argument('--resource-actions', action='store_true')
     p.add_argument('--resource-inventory', action='store_true')
+    p.add_argument('--weapon-resources', action='store_true')
     args = p.parse_args()
     assert not args.resource_factory or args.resource_static
     assert not args.resource_placement or args.resource_factory
     assert not args.resource_delayed or args.resource_placement
     assert not args.resource_actions or args.resource_delayed
     assert not args.resource_inventory or args.resource_actions
+    assert not args.weapon_resources or args.resource_inventory
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
     corpus = args.corpus.resolve()
@@ -82,6 +84,10 @@ def main():
     if args.resource_inventory:
         for at in [0x5f2120,0x5f2180,0x5f22c0,0x5f2330,0x5f27b0,0x5b43f0,0x5b1a90,0x592ca0,0x5b4a50]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.weapon_resources:
+        for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
+            folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
+            entries[at]=next(folder.glob(f'{"sub" if at<0x370000 else "o2"}_{at:08X}_*')).relative_to(ROOT).as_posix()
     originals = list(entries.values())
     proof = []
     for at, name in entries.items():
@@ -101,6 +107,9 @@ def main():
         units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_world/resource_factory.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','gameplay_scenario/resource_collisions.cpp','animation/weapon_program.cpp']]
     units=list(dict.fromkeys(units))
     if args.resource_inventory: units+=['game/native/gameplay_world/inventory.cpp']
+    if args.weapon_resources:
+        units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
+        units=list(dict.fromkeys(units))
     files = list(units)
     frozen = {}
     for name in files:
@@ -109,7 +118,7 @@ def main():
         for include in re.findall(r'^\s*#include "([^"]+)"', body.decode(), re.M):
             local = ((ROOT / name).parent / include).resolve()
             target = local if local.is_file() else (ROOT / include).resolve()
-            assert target.is_relative_to(ROOT / 'game/native') and target.is_file(), (name, include)
+            assert target.is_relative_to(ROOT) and target.is_file(), (name, include)
             relative = target.relative_to(ROOT).as_posix()
             if relative not in files:
                 files.append(relative)
@@ -131,6 +140,8 @@ def main():
         name='tools/native_reconstruction/resource_actions_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_inventory:
         name='tools/native_reconstruction/resource_inventory_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.weapon_resources:
+        name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
                   selected_visual_family='variant0 logical36/37/38, flags1A193, null parent, complete6535C0 callback',
@@ -157,6 +168,8 @@ def main():
         record['placement_profile']=dict(shape_rows=20,orientation_rows=8,template_angle_columns=3,game_installed=False)
     if args.resource_inventory:
         record['declared_ports'].append('18DBB0 bounded29-byte source stack-to-character7 inventory copy; no source arena alias emulation')
+    if args.weapon_resources:
+        record['declared_ports']+=['10A830 bounded formatting of two exact owned weapon format strings','1CC8F0 copies owned WMD bytes into the bounded original cleared buffer; unused return not compared','107AB0 bounded16-byte source queue name copy','Native bank loader and PCM mixer internals are independently qualified; this checks their concrete composition']
     try:
         for name, body in frozen.items():
             target = out / 'source' / name
@@ -196,6 +209,10 @@ def main():
         if args.resource_placement:
             for at,size in [(0x723340,800),(0x723660,224)]:
                 raw=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('placement_constants',{})[hex(at)]=raw.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in raw)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+        if args.weapon_resources:
+            for at,value in [(0x256648,main_read(0x256648,11)),(0x740c90,overlay['o2'][0x740c90-0x570000:0x740c90-0x570000+34])]:
+                assert value in [b'weapon%02d\0',b'data/rom/motion/weapon/wp%02d.wmd\0']
+                record.setdefault('weapon_constants',{})[hex(at)]=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:
@@ -216,6 +233,17 @@ def main():
                 data.write(struct.pack('<I',len(selected)))
                 for member in selected:
                     iso.seek(member['iso_offset']);payload=iso.read(member['bytes']);assert hashlib.sha256(payload).hexdigest()==member['sha256'];offset,size=struct.unpack_from('<II',payload);assert offset+size<=len(payload);section=payload[offset:offset+size];data.write(struct.pack('<I',len(section))+section)
+        if args.weapon_resources:
+            selectors=[0,1,2,4,5,7,8,9,12,18,22,23,24,25,26,51]
+            selected=[next(m for m in json.loads(inventory.read_bytes()) if m['member']==f'NETBIO00.DAT/0/{1260+i}')for i in range(16)]
+            record['weapon_assets']=selected
+            values=[]
+            with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb') as iso:
+                for selector,member in zip(selectors,selected):
+                    iso.seek(member['iso_offset']);payload=iso.read(member['bytes']);assert hashlib.sha256(payload).hexdigest()==member['sha256'];values.append('{'+str(selector)+',{'+','.join(str(v)for v in payload)+'}}')
+            (out/'owned_weapons.hpp').write_text('struct OwnedWeapon {int selector;std::vector<std::uint8_t> bytes;};\ninline const std::array<OwnedWeapon,16> owned_weapons{{'+','.join(values)+'}};\n')
+            digest='69ae2c48e6f01e2605659feabb54eb9b82c63a809bdc8a78ad2d160b3c59a4a1'
+            (out/'owned_iso.hpp').write_text('constexpr std::uint64_t owned_iso_bytes=4698767360ull;\nconstexpr reo::native::resources::win32::Digest owned_iso_sha{'+','.join(str(v)for v in bytes.fromhex(digest))+'};\n')
         env = dict(os.environ)
         env['PATH'] = str(args.compiler.resolve().parent) + os.pathsep + env.get('PATH', '')
         binary = out / 'checks.exe'
@@ -229,9 +257,10 @@ def main():
         if args.resource_delayed: command.insert(1,'-DREO_RESOURCE_DELAYED=1')
         if args.resource_actions: command.insert(1,'-DREO_RESOURCE_ACTIONS=1')
         if args.resource_inventory: command.insert(1,'-DREO_RESOURCE_INVENTORY=1')
+        if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1');command.insert(-2,'-lbcrypt')
         record['command'] = command
-        for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else []))]:
-            result = subprocess.run(cmd, env=env, capture_output=True, timeout=180)
+        for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else [])+([str(ROOT/'iso/Resident Evil - Outbreak (v2.00).iso')] if args.weapon_resources else []))]:
+            result = subprocess.run(cmd, env=env, capture_output=True, timeout=240 if args.weapon_resources else 180)
             (out / (label + '.stdout.txt')).write_bytes(result.stdout)
             (out / (label + '.stderr.txt')).write_bytes(result.stderr)
             assert result.returncode == 0, label + ' failed; see retained logs'

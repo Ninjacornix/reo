@@ -7,6 +7,13 @@
 #include <iostream>
 #include <source_location>
 #include <thread>
+#ifdef REO_WEAPON_RESOURCES
+#include "owned_weapons.hpp"
+#include <cstdio>
+#include <string>
+unsigned weapon_file_reads{};
+std::string weapon_string(const std::uint8_t* memory,unsigned at){if(at>0x2000000-128)throw std::runtime_error("Invalid weapon string");for(unsigned n=0;n<128;++n)if(!memory[at+n])return {reinterpret_cast<const char*>(memory+at),n};throw std::runtime_error("Unbounded weapon string");}
+#endif
 #ifdef REO_RESOURCE_PLACEMENT
 #include "game/native/gameplay_world/resource_factory.hpp"
 const reo::native::gameplay_collision::response::Grid* placement_floors{};
@@ -18,7 +25,7 @@ namespace m=reo::native::transform_math;
 unsigned checks{},calls{},banks{},updates{},created{},expired{},piece_cases{},camera_cases{},heap_allocations{},heap_releases{};
 unsigned signed_timer_cases{},task_cases{};
 void check(bool value,std::source_location at=std::source_location::current()){
-    ++checks;if(!value)throw std::runtime_error("Periodic visual check "+std::to_string(checks)+" line "+std::to_string(at.line()));
+    ++checks;if(!value)throw std::runtime_error("Periodic visual check "+std::to_string(checks)+" at "+at.file_name()+":"+std::to_string(at.line()));
 }
 template<class T>T get(const std::uint8_t* memory,std::uint32_t at){return transform_read<T>(memory,at);}
 template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transform_write(memory,at,value);}
@@ -32,6 +39,9 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at);std::memset(memory+at,std::uint8_t(GPR_U32(context,5)),n);SET_GPR_U32(context,2,at);done();return;}
 #ifdef REO_RESOURCE_FACTORY
     case 0x107ab0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);
+#ifdef REO_WEAPON_RESOURCES
+        if(size==16&&dst>=0x2b3864&&dst<=0x2b38d4){check(src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
 #ifdef REO_RESOURCE_PLACEMENT
         if(size==32&&dst>=0x3e10f0&&dst<0x3e72f0){check(src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
 #endif
@@ -42,6 +52,10 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
 #endif
 #ifdef REO_RESOURCE_INVENTORY
     case 0x18dbb0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);check(size==29&&dst>=0x4a5c30&&dst<0x4aa000&&src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
+#ifdef REO_WEAPON_RESOURCES
+    case 0x10a830:{const auto dst=GPR_U32(context,4);const auto format=weapon_string(memory,GPR_U32(context,5));check(dst>=0x1e00000&&dst<0x2000000-128&&(format=="weapon%02d"||format=="data/rom/motion/weapon/wp%02d.wmd"));const auto n=std::snprintf(reinterpret_cast<char*>(memory+dst),128,format.c_str(),std::bit_cast<std::int32_t>(GPR_U32(context,6)));check(n>=0&&n<128);SET_GPR_U32(context,2,n);done();return;}
+    case 0x1cc8f0:{const auto name=weapon_string(memory,GPR_U32(context,4));const auto dst=GPR_U32(context,5);check(dst>=0x749180&&dst<0x74b180&&(dst-0x749180)%2048==0&&GPR_U32(context,6)==1&&GPR_U32(context,7)==0);bool found{};for(const auto& weapon:owned_weapons){std::array<char,128> expected{};std::snprintf(expected.data(),expected.size(),"data/rom/motion/weapon/wp%02d.wmd",weapon.selector);if(name==expected.data()){check(weapon.bytes.size()<=2048);std::memcpy(memory+dst,weapon.bytes.data(),weapon.bytes.size());found=true;break;}}check(found);++weapon_file_reads;SET_GPR_U32(context,2,0);done();return;}
 #endif
     case 0x18dc50:check(!allocated&&GPR_U32(context,5)==4&&GPR_U32(context,4)<0x100000);allocated=true;++heap_allocations;SET_GPR_U32(context,2,1);done();return;
     case 0x18dca0:check(allocated&&GPR_U32(context,4)==1);SET_GPR_U32(context,2,heap);done();return;
@@ -125,10 +139,15 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_INVENTORY
 #include "tools/native_reconstruction/resource_inventory_tests.inc"
 #endif
+#ifdef REO_WEAPON_RESOURCES
+#include "tools/native_reconstruction/weapon_resources_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
-#ifdef REO_RESOURCE_FACTORY
+#ifdef REO_WEAPON_RESOURCES
+    5
+#elif defined(REO_RESOURCE_FACTORY)
         4
 #else
         3
@@ -221,6 +240,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_INVENTORY
     compare_resource_inventory(argv[2],argv[3],ram);
 #endif
+#ifdef REO_WEAPON_RESOURCES
+    compare_weapon_resources(argv[4],ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
@@ -248,6 +270,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_INVENTORY
     <<",\"inventory_lookups\":"<<inventory_lookups<<",\"inventory_removals\":"<<inventory_removals<<",\"inventory_compactions\":"<<inventory_compactions<<",\"inventory_insertions\":"<<inventory_insertions<<",\"inventory_detachments\":"<<inventory_detachments<<",\"inventory_refusals\":"<<inventory_refusals
+#endif
+#ifdef REO_WEAPON_RESOURCES
+    <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads
 #endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;

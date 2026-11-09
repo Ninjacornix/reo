@@ -46,6 +46,7 @@ Loader::Loader(std::shared_ptr<gameplay_audio::Owner> owner,std::shared_ptr<cons
     state_=std::make_unique<State>(std::move(owner),std::move(archive));
 }
 Loader::~Loader(){shutdown();if(!join())std::terminate();}
+bool Loader::bound_to(const gameplay_audio::Owner& owner)const noexcept{return state_->owner.get()==&owner;}
 std::optional<std::size_t> Loader::locate(const LoadTicket& ticket)const noexcept{
     if(!ticket.id_||ticket.domain_.lock()!=domain_)return{};
     for(std::size_t i=0;i<state_->slots.size();++i)if(state_->slots[i].id==ticket.id_&&state_->slots[i].phase!=State::Phase::empty)return i;
