@@ -1,5 +1,6 @@
 #include "game/native/gameplay_scenario/interpreter.hpp"
 #include "game/native/gameplay_scenario/scene_resources.hpp"
+#include "game/native/gameplay_scenario/session_counters.hpp"
 #include "original_fixture.hpp"
 #include "original_declarations.inc"
 #include <algorithm>
@@ -22,6 +23,7 @@ std::vector<std::tuple<std::uint32_t,std::uint32_t,bool,std::uint8_t>> strided_n
 std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint32_t>> messages;
 std::vector<std::uint32_t> queries;
 std::int32_t predicate_value{};
+std::uint32_t fixture_session_mode{};
 struct Flags final:vm::Flags {
     std::array<std::array<std::uint32_t,4>,6> banks{};
     std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint8_t>> notices;
@@ -59,7 +61,7 @@ struct Signals final:vm::Signals {
     std::optional<std::int32_t> query(std::uint32_t id)noexcept override{asked.push_back(id);return predicate_value;}
 };
 void done(R5900Context* c){c->pc=GPR_U32(c,31);}
-void mode(std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U32(c,2,0);done(c);}
+void mode(std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U32(c,2,fixture_session_mode);done(c);}
 void flag(std::uint8_t* ram,std::uint32_t id,bool value){auto bits=fixture_read<std::uint32_t>(ram,addresses[0]+(id/32)*4);if(value)bits|=1u<<(id&31);else bits&=~(1u<<(id&31));fixture_write(ram,addresses[0]+(id/32)*4,bits);}
 void fixture_scenario(std::uint8_t* ram,R5900Context* c,bool selected){
     const auto id=GPR_U32(c,4);const auto value=std::uint8_t(GPR_U32(c,5));flag(ram,id,value!=0);
@@ -90,6 +92,7 @@ void compare(vm::Interpreter& native,std::vector<std::uint8_t>& ram,std::size_t 
 }
 #include "scene_vm_fixture.inc"
 void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false,unsigned scene_profile=0){
+    fixture_session_mode=0;
     std::vector<std::uint8_t> ram(0x800000);for(std::size_t i=0;i<blocks.size();++i){std::memcpy(ram.data()+0x10000+i*0x10000,blocks[i].data(),blocks[i].size());fixture_write<std::uint32_t>(ram.data(),0x90000+4*i,0x10000+std::uint32_t(i)*0x10000);}
     std::memcpy(ram.data()+0x717830,original_opcode_table.data(),original_opcode_table.size()*4);
     std::memcpy(ram.data()+0x717600,original_opener_table.data(),original_opener_table.size()*4);
@@ -103,12 +106,13 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     flags.strided_flags[2][2]=0x8001;fixture_write<std::uint16_t>(ram.data(),0x4b9e20+24+4,0x8001);
     Signals signals;signals.sent.reserve(100);signals.asked.reserve(100);
     notifications.clear();notifications.reserve(100);strided_notifications.clear();strided_notifications.reserve(100);messages.clear();messages.reserve(100);queries.clear();queries.reserve(100);
-    tasks::FlagTimers timers;vm::Interpreter native;
+    tasks::FlagTimers timers;vm::SessionCounters session_counters;vm::Interpreter native;
     auto program=std::make_shared<const vm::Program>(std::move(blocks));vm::Channel state{program,{0,0},saved,0,0,0};check(native.restore_channel(channel,state)==vm::Status::completed);
     for(unsigned i=0;i<ticks;++i){R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
         o2_0068C660_0x68c660(ram.data(),&ctx,&runtime);check(ctx.pc==0xdeadbeef);
-        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene});check(result.status==vm::Status::yielded);
+        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters});check(result.status==vm::Status::yielded);
         compare(native,ram,channel,flags,timers,signals);scene.compare_original(ram);++invocations;
+        check(std::memcmp(session_counters.snapshot().data(),ram.data()+0x4bad70,24)==0);
     }
 }
 }
@@ -184,6 +188,12 @@ int main()try{
         for(const auto opcode:{0xb7u,0xb8u}){emit(b,opcode,{2,bit,wanted});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);}
         emit(b,0xf5,{2,bit});const auto end=emit(b,0xa);run({b},{0,end},2);
     }
+    for(const auto value:{0u,1u,2u,0x80000000u,0xffffffffu})for(const auto wanted:{0u,1u,0xffffffffu})for(unsigned actor=0;actor<4;++actor){
+        std::vector<std::byte> b;
+        for(unsigned index=0;index<2;++index){emit(b,0xe8,{index,value});emit(b,0xe9,{index,wanted});emit(b,0x110,{index,3});emit(b,0xe4);emit(b,0x110,{index,4});emit(b,0xe5);}
+        const auto end=emit(b,0xa);run({b},{0,end},2,actor%6,std::uint8_t(actor));
+    }
+    {std::vector<std::byte> b;emit(b,0xe8,{2,123});bool rejected=false;try{const vm::Program p({b});}catch(const std::invalid_argument&){rejected=true;}check(rejected);}
     {std::vector<std::byte> b;emit(b,0x110,{0,123});emit(b,0x30,{42});emit(b,0xa);vm::Interpreter n;
         check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
         check(n.tick(0,{}).status==vm::Status::provider_unavailable);check(n.counters()[0]==0);}

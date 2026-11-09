@@ -70,7 +70,9 @@ void compare_offline_channels(vm::Interpreter& vm,const std::vector<std::uint8_t
 }
 void original_offline_call(std::vector<std::uint8_t>& ram,unsigned channel,bool wrapper){
     R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
+    const auto saved_mode=fixture_session_mode;fixture_session_mode=1;
     if(wrapper)o2_007003E0_0x7003e0(ram.data(),&ctx,&runtime);else o2_007006D0_0x7006d0(ram.data(),&ctx,&runtime);
+    fixture_session_mode=saved_mode;
     check(ctx.pc==0xdeadbeef);++invocations;
 }
 void offline_tests(){
@@ -129,6 +131,20 @@ void offline_tests(){
         std::vector<std::byte> b;emit(b,opcode);emit(b,0xa);vm::Interpreter n;
         const auto p=std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b},vm::DispatchProfile::offline_actor);
         check(n.install(0,p)==vm::Status::unsupported_opcode);
+    }
+    // Mode-one helper calls select the actual authored owner counter bank.
+    // Save the condition as the next invocation entry so consumption is checked
+    // repeatedly across nonzero-to-zero and uint32 wrap boundaries.
+    for(const auto value:{0u,1u,2u,0x80000000u,0xffffffffu})for(const auto wanted:{0u,1u,0xffffffffu})for(unsigned owner=0;owner<3;++owner){
+        std::vector<std::byte> b;emit(b,0xe8,{1,value});emit(b,1);emit(b,0xe9,{1,wanted});emit(b,0x110,{0,3});emit(b,0xe4);emit(b,0x110,{0,4});emit(b,0xe5);emit(b,0xa);
+        std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;ram[0x4baded]=std::uint8_t(owner);
+        vm::Interpreter native;install_offline_program(native,ram,0,b);vm::FlagState flags;vm::SessionCounters counters;
+        const vm::Providers providers{&flags,nullptr,nullptr,&flags,nullptr,nullptr,nullptr,&counters};
+        for(unsigned iteration=0;iteration<4;++iteration){
+            original_offline_call(ram,0,false);const auto r=native.tick_offline_channel(0,{true,false,std::uint8_t(owner)},{0,0,0},providers);
+            check(r.status==vm::Status::yielded);compare_offline_channels(native,ram);check(std::memcmp(counters.snapshot().data(),ram.data()+0x4bad70,24)==0);
+        }
+        const auto before=counters.snapshot();check(native.tick_offline_channel(0,{true,false,3},{0,0,0},providers).status==vm::Status::invalid_program);check(before==counters.snapshot());
     }
 }
 }

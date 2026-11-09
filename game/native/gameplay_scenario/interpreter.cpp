@@ -1,6 +1,7 @@
 #include "interpreter.hpp"
 #include "flags.hpp"
 #include "scene_resources.hpp"
+#include "session_counters.hpp"
 #include <algorithm>
 #include <bit>
 #include <stdexcept>
@@ -15,7 +16,7 @@ std::uint32_t word(const std::byte* p)noexcept{
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op){case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
-    case 0xe3:case 0xe6:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
+    case 0xe3:case 0xe6:case 0xe8:case 0xe9:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
     case 0x30:case 0x31:case 0x32:case 0x33:case 0x34:case 0x35:return 2;case 0x37:return 5;case 0x36:return 10;
     case 5:case 0xb:return 9;case 0xc:case 0x46:case 0x113:case 0xb7:case 0xb8:return 12;case 0x45:return 16;default:return 0;}
@@ -39,8 +40,9 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!bytes||bytes>b.size()-at||op>=432||(!noop&&bytes-4<payload_minimum(op)))throw std::invalid_argument("Invalid script record");
             boundaries_[i].push_back(static_cast<std::uint32_t>(at));unsupported_|=!coverage[op].native_algorithm;
             if(!noop&&(op==5||op==6)){if(word(b.data()+at+4)>=4)throw std::invalid_argument("Actor event slot extent");actor_events_=true;}
+            if(!noop&&(op==0xe8||op==0xe9)&&word(b.data()+at+4)>=2)throw std::invalid_argument("Native session counter profile");
             flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
-            scene_resources_|=coverage[op].scene_resources_required;at+=bytes;
+            scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;at+=bytes;
         }
     }
 }
@@ -58,6 +60,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(const auto i:{0x46,0x47,0x48})out[i]={true,false,false,true};
     out[0x45]={true,false,true,false};
     for(std::size_t i=0x30;i<=0x37;++i)out[i]={true,false,false,false,true};
+    for(const auto i:{0xe8,0xe9})out[i]={true,false,false,false,false,true};
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef)out[i]={};
@@ -101,6 +104,8 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if((c.program->needs_flags()&&!providers.flags)||(c.program->needs_timers()&&!providers.timers))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_signals()&&!providers.signals)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scene_resources()&&!providers.scene_resources)return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_session_counters()&&!providers.session_counters)return{Status::provider_unavailable,0,{},0};
+    if(offline&&c.program->needs_session_counters()&&context.selected_actor>=3)return{Status::invalid_program,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -210,6 +215,10 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(!flag)return result(Status::provider_unavailable);
             if(*flag!=(value(8)!=0)){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
         case 0xf4:case 0xf5:if(!providers.flags->strided(value(0),value(4),5,opcode==0xf4,false))return result(Status::provider_unavailable);break;
+        case 0xe8:if(!providers.session_counters->store(offline?context.selected_actor:0,value(0),value(4)))return result(Status::provider_unavailable);break;
+        case 0xe9:{++c.condition;const auto matches=providers.session_counters->consume(offline?context.selected_actor:0,value(0),value(4)!=0);
+            if(!matches)return result(Status::provider_unavailable);
+            if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
         case 0x44:if(value(0)<128&&!providers.flags->write(FlagBank::bounded_byte,value(0),true))return result(Status::provider_unavailable);break;
         case 0x40:case 0x41:case 0x42:case 0x43:
             if(!providers.flags->strided(value(0),value(4),0,opcode==0x40||opcode==0x42,opcode==0x42||opcode==0x43))return result(Status::provider_unavailable);

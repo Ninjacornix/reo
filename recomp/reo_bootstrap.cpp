@@ -43,6 +43,9 @@
 #include "overrides/reo_performance.h"
 #include "overrides/reo_cri_server_observer.h"
 #include "overrides/reo_cd_async.h"
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_GAMEPLAY_SAVE) && REO_BUILD_NATIVE_GAMEPLAY_SAVE
+#include "overrides/native_gameplay/save_session.hpp"
+#endif
 #if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
 #include "overrides/native_host_movie/runtime_adapter.h"
 #endif
@@ -1547,6 +1550,16 @@ int main(int argc, char* argv[]) {
         if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u || !cache || !*cache ||
             !reo::native::host_movie_binding::install_before_run(runtime, std::filesystem::u8path(cache)))
             throw std::runtime_error("Selected native MP4 movie owner unavailable; inspect cache and build identity");
+    }
+#endif
+
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_GAMEPLAY_SAVE) && REO_BUILD_NATIVE_GAMEPLAY_SAVE
+    if (const auto* requested = std::getenv("REO_NATIVE_GAMEPLAY_SAVE"); requested && !std::strcmp(requested, "1")) {
+        using namespace reo::native::native_gameplay;
+        if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u ||
+            install_save_session_before_run(runtime, true).status != InstallStatus::installed)
+            throw std::runtime_error("Selected native gameplay save/session owner unavailable; inspect build identity");
+        std::fprintf(stdout, "[NATIVE-GAMEPLAY-SAVE] nine native save/session entries installed\n");
     }
 #endif
 
