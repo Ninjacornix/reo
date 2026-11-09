@@ -1,0 +1,43 @@
+{
+  "status": "short background/no-capture close timeout reproduced",
+  "check": {
+    "status": "native GameSession check failed",
+    "selected": true,
+    "audio_selected": true,
+    "resource_selected": true,
+    "native_error": false,
+    "duration_completed": true,
+    "cue_owner_joined": false,
+    "media_error": false,
+    "forced_cleanup": true,
+    "exit_code": -1,
+    "movie_status": "Movies: native MP4",
+    "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-011606-369",
+    "elapsed_seconds": 105.5682209,
+    "game_launched": true,
+    "ui_window_constructed": false,
+    "route": "main-menu",
+    "subjective_av_confirmation": false,
+    "step3_complete": false
+  },
+  "printwindow_called": false,
+  "window_capture_called": false,
+  "final_host_heartbeat": "[perf] hostLoop=420 elapsedms=6000 hostms=1000 vsync=420(+60) snap=420(+60) presentTry=+60 presentOk=+60 csc=0 bdec=0 own/wait ms: t1=45/9 t5=5/1 t6=4/7 t7=2/0 dmac raised/handled: ch0=0/0 ch1=30/30 ch2=30/0 ch3=0/0 ch4=0/0 ch8=120/0 ch9=120/0 sprKpx(untex/pt/bil/pt1:1/bil1:1/abe): 0/0/0/0/0/0 modalPresents=0 present-runs(1..7+): 0/0/0/0/0/0/0",
+  "native_teardown_reports_present": false,
+  "evidence_sha256": {
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/controller-health.jsonl": "75f0b8493c9dd64ef5fb732b23893c4568febd9982fa3e665ac1929fb7659d00",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/controller-rumble.jsonl": "8ef8591ab1bf69f1399e2462324d4f16e1afad03e303f94b656cadae549b19c8",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/exit.json": "73fe2d6b8471f6d41e247d09c6e922affb7a588907690fc85bc1af5426556280",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/frames.csv.warmup.csv": "15c6122e0483846352116446a5030201c8b01ba1d6959c273e8587f3f1b72c82",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/launch.json": "c3349715ba4008bb111624683e1978564c5c091bdc3bcf018bfc91633cd99a49",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/mods.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/native-game-session-check.json": "bdf3b465e7fecb8e911ece892f26338d5c84bdedf13f3535e714daba1feeb5ba",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/native-game-session-running.json": "f3e83fc20fa011daf71c919a0e6de195fa78dd872ece3dc91d652d2f52279d03",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/native-movie-prepare.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/native-movie-prepare.stdout.log": "2a480519dd0249149db1151ca9ebaef3cf479fa97b1348713cb6f64ddc9840aa",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/stderr.log": "b2741575c3059ad96c17bcc85db67aa82cb3a0c09d3c041b51505dbe115e2f77",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-011606-369/stdout.log": "fcc783dbd39a385707ed53c10fc7690ff3416c47e65daec29c558804b646ae1a"
+  },
+  "cause": "unknown pending live window/stack evidence",
+  "step3_complete": false
+}

@@ -1234,12 +1234,36 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 #endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
+    const char* nativeMovieRequest = std::getenv("REO_NATIVE_HOST_MOVIE");
+    const bool nativeMediaWindow = nativeMovieRequest && !std::strcmp(nativeMovieRequest, "1");
+    const char* backgroundRequest = std::getenv("REO_NATIVE_MEDIA_BACKGROUND_TEST");
+    const bool backgroundMediaTest = nativeMediaWindow && backgroundRequest &&
+        !std::strcmp(backgroundRequest, "1") && !std::getenv("REO_HEADLESS");
+    if (nativeMediaWindow) {
+        // raylib otherwise waits inside PollInputEvents while minimized, before
+        // copying GLFW's close flag. Keep the existing vblank pacing in run().
+        SetConfigFlags(FLAG_WINDOW_ALWAYS_RUN);
+        // Explicit developer fixture only: never activate a test on the user's
+        // desktop. Create hidden, then show minimized without activation below.
+        if (backgroundMediaTest) SetConfigFlags(FLAG_WINDOW_HIDDEN);
+    }
+#endif
     if (!runtime.initialize(g.name, ramBackingBytes)) {
 
         fprintf(stderr, "[BOOT] Failed to initialize runtime\n");
 
         return 1;
     }
+
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
+    if (nativeMediaWindow && IsWindowReady()) {
+        if (backgroundMediaTest)
+            ShowWindow(static_cast<HWND>(GetWindowHandle()), SW_SHOWMINNOACTIVE);
+        fprintf(stderr, "[NATIVE-MEDIA-WINDOW] minimized_event_pump=enabled background_test=%d capability=REO_NATIVE_MEDIA_BACKGROUND_TEST_V1\n",
+                backgroundMediaTest ? 1 : 0);
+    }
+#endif
 
     // Configure I/O paths
 
