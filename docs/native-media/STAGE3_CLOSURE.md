@@ -1,63 +1,14 @@
 # Stage 3 closure checklist
 
-Current direction, 2026-11-08: [modernize and remove PS2-specific systems](../NATIVE_MODERNIZATION_DIRECTION.md).
-The older checklist below records the reconstruction route. A complete modern
-replacement can retire those internal requirements; preserving old movie ring,
-transfer and scheduler implementations is not a closure requirement by itself.
+Current status, 2026-11-09: **Step 3 is complete for the selected stock File #1 US native resource/media profile**, using the source-identified V38 candidate. Both complete compiler cohorts, cold first playback with bounded digital A/V checks, actual movie error/recovery, independent audio servicing, an ordinary-input room 1 to room 4 transition and joined retirement pass.
 
-Current File #1 status:
+The authoritative result, package identity, evidence table, unsupported profiles and measured limits are in [final validation](STAGE3_FINAL_VALIDATION.md). Occasional single-picture renderer handoff misses and historical unknowns remain explicit; completion does not mean stutter-free presentation, physical lip-sync certification or a fully native whole game. Game/guest callers, rendering and final dependency removal belong to Stages 4, 5 and 6.
 
-| Boundary | Established evidence | Remaining work |
-| --- | --- | --- |
-| Resource/audio ownership | Coherent native mount, ordinary ADX workers and PCM/bank/RAM composition install and join through the real launcher-core route. [Queued preparation](NATIVE_AUDIO_QUEUE_PREPARATION.md) and the [engine cue binding](NATIVE_AUDIO_CUE_CONTROLLER.md) pass 80 native suites, 34 real-asset adapter cases and 10 detected faults on each compiler. V32 completes opening/scenario/bar with the new binding installed, zero measured underruns and joined retirement, but zero queued commands. [Caller assets](NATIVE_AUDIO_CUE_CALLER_ASSETS.md) check 245 resolved scene/gallery members; none requires the refused inline-loop profile. | Actual queued caller execution, runtime list capacity and retirement/representative resource and room transitions. Other indirect callers remain outside the static name-table audit. |
-| Converted movies | [Preparation](../../tools/native_media_import/README.md) covers 201 references / 200 physical movies; the native OS reader validates 216,998 pictures. Full game opening/scenario/looping backgrounds and bar gameplay run with original MWSFD slots zero in observations. | Final coherent candidate control/error/transition coverage and A/V synchronization. Sampling is not proof that every old path is unreachable. |
-| Native controls | [Player/session](../../game/native/host_movie/README.md) pause/resume, EOF/restart, loop, replacement, stale-command refusal, decode error and recovery pass on both compilers. [Game input](NATIVE_MP4_V27_GAME_CONTROLS.md) validates movie skips and gameplay Pause/Exit/movement. | Account for required game-facing active-movie pause/error callers; standalone behavior does not itself validate those callers. |
-| Packaging | [V28](NATIVE_MP4_CANDIDATE_V28.md) completes the real launcher-core route with automatic verified preparation; SDK profile publication is implemented. | Avalonia UI route is separate from the tested core harness. Do not continue listing automatic preparation as unimplemented. |
-| Audio resilience | [Native read-ahead](NATIVE_AUDIO_PREFETCH.md) passes 78 native suites, 28 adapter scenarios and 10 detected injected faults on each compiler; controlled blocked-read tolerance improves. [V31](NATIVE_MP4_CANDIDATE_V31.md) completes the game route with the actual 64 KiB profile and zero recorded underruns. | Historical incident cause remains unknown; one clean retest does not establish its fix. |
-| Retirement | Ordinary native workers replace their old producer/transport path on the tested route. [Audit](MEDIA_RETIREMENT_AUDIT.md) records the remaining shared initializer and effect-MOV consumer. | Account for required effect/queued-source consumers before retiring their shared support. Guest control and renderer interfaces remain explicit until stages 4/5; final build dependency removal belongs to stage 6. |
-| Background window lifecycle | [Exact-library regression](NATIVE_MEDIA_BACKGROUND_CLOSE.md) proves the minimized event-pump defect and its public configuration fix. V33's first minimized game run closes normally, with joined media owners and no foreground window in 57 observations. | Repeat with real menu/media transitions. Failed V32 cases lack stack evidence to confirm they share this cause; DXGI waits remain an alternative if a hang recurs. |
+Direction: [modernize and remove PS2-specific systems](../NATIVE_MODERNIZATION_DIRECTION.md). Native replacements retire the replaced media internals; rebuilding unused old CRI ring/scheduler implementations is not an additional closure gate.
 
-The [V26 capture](NATIVE_MP4_CANDIDATE_V26.md) retains an 830.546 ms public movie
-freeze with an 841.3405 ms producer-publication gap. Later matched and repeated
-runs do not reproduce it; its cause is unconfirmed. The [V29 trace](NATIVE_MP4_CANDIDATE_V29.md)
-localizes 17,376 audio-underrun frames to 383.3659 ms while controller service
-continues every 16.6-16.8 ms. The [V30 runs](NATIVE_MP4_CANDIDATE_V30.md) are clean
-without a refill/scheduling change. Useful source-detail telemetry is now
-available for another occurrence; clean runs do not supply a root cause.
+## Historical reconstruction checkpoints
 
-Step 3 now closes on native resource/media consumers working in the game,
-converted assets where useful, complete playback and audible synchronization,
-pause/skip/repeat/error/shutdown and room transitions, measured stutter retests,
-and retirement of the replaced PS2 media paths. A temporary game ABI bridge must
-remain explicit until its callers migrate. Do not require an unused legacy
-profile merely because a historical test or implementation modeled it.
-Step 3 remains incomplete; the conditional PC sleep action has not run.
-
-The user is away; subjective A/V synchronization remains unconfirmed. In-engine
-cutscene rendering belongs to the gameplay/rendering migration, not MP4 asset
-conversion. The temporary tiled renderer interface is a stage 5 migration item,
-not a claim of fully native presentation or a reason to reconstruct PS2 media.
-
-## Historical reconstruction checklist and checkpoints
-
-Status: active work, starting at local commit `959d2198`. This is a gate checklist,
-not a weighted percentage. Passing more isolated tests does not substitute for
-consumer integration or game transition evidence.
-
-Latest checkpoint (2026-11-08): V19 selects the ordinary native audio backend
-but stops at an admission refusal before source playback. The mono-pan
-correction is qualified and [V20 links](ADXT_CANDIDATE_V20_BUILD.md). Its game run
-passes mono admission but [stops at missing mixer order](ADXT_CANDIDATE_V20_ORDER.md)
-before native source PCM playback. The [canonical movie audio capability](MOVIE_CANONICAL_AUDIO_SOURCE.md)
-and [game handle/prepared-graph handoff](MOVIE_GAME_HANDLE_HANDOFF.md) pass both
-compiler cohorts with real source workers and declared video/component ports.
-They are not actual movie hooks or paced GPU/A-V evidence. User-authorized
-[old build cleanup](OLD_BUILD_CLEANUP_20261108.md) cleared the storage gate.
-Both compilers pass the full 78-suite native cohort, the bounded order adapter's
-21 scenarios/eight runtime faults, and five actual SDK130 units. A new matching
-game candidate and live retest are next. Three-source order is required by the
-earlier original capture and is still unresolved. Stage 3 is incomplete; the
-user's conditional PC sleep request has not been executed.
+The following dated notes describe earlier source cohorts and incomplete states. Their remaining-work statements are historical, not the current V38 completion checklist.
 
 The reconstruction plan requires matching resource loading/completion behavior,
 audio/movie output and lifecycle transitions. Its first selected edition is

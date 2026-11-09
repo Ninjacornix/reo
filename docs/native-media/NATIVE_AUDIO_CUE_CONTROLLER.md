@@ -1,15 +1,19 @@
 # Native queued-audio consumer binding
 
 The finite queued-cue controller and File #1 engine command adapter are
-implemented. Both compilers pass the complete 80-suite native project. Private
-declared-port tests exercise real imported audio through the adapter; this is
-not yet evidence that a new game candidate exercised those queued commands.
-Step 3 remains open.
+implemented. Both compilers pass the complete 80-suite native project and the
+34 real-asset adapter cases plus ten detected faults. The actual V35 gallery
+also completes full playback, EOF, replay, skip and playlist controls with three
+accepted/finished queued commands and joined ownership. See the
+[game evidence](NATIVE_MEDIA_BACKGROUND_GALLERY_RESULTS.md) and
+[final Step 3 validation](STAGE3_FINAL_VALIDATION.md) for current closure status.
 
 `audio_cue_queue::Queue` accepts retained native resource views and cue IDs,
-prepares metadata on the shared bounded loader, and feeds ready clips to the
+prepares complete finite bodies and metadata on the shared bounded loader, and feeds ready clips to the
 native player. Its pending-header fence preserves accepted next clips while
-their preparation is incomplete. At most 16 cues are outstanding. The controller
+their preparation is incomplete. The [qualified capacity extension](NATIVE_AUDIO_CUE_CAPACITY_RESULTS.md)
+allows 17 outstanding cues while preserving the lower sixteen transfer slots.
+The controller
 contains no guest pointers, emulated queue objects, original file producers,
 RPC or hardware transport. Its operations share the native instance owner's
 serialized admission and never wait for source reads there.
@@ -57,6 +61,8 @@ now passes all 34 scenarios and detects all 10 injected faults on each compiler;
 its immutable-import statistics and manifest remain unchanged. Evidence is in
 `ordinary-cue-controller-regression-{llvm,gcc}-v1` and
 `tools/native_reconstruction/native_cue_controller_qualification_v1.json`.
-The next coherent game retest remains a separate gate. The existing
+That component checkpoint preceded the coherent game retest. The current V38
+cold-gallery and error/recovery cases complete the actual queued-caller gate;
+see final validation above. The existing
 89 inline-loop asset refusals remain unchanged; this finite profile does not
 claim their queued playback or establish their actual game usage.

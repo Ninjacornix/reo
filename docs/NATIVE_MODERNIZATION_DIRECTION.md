@@ -90,24 +90,9 @@ internal routine in a replacement, or completing unused old codec/control
 profiles before implementing a modern boundary. Add tests for the native design's
 actual correctness, resource lifetime and game-facing behavior.
 
-Step 3 remains incomplete. Native MP4 playback, the full opening/scenario route,
-verified automatic asset preparation and SDK/game packaging are implemented.
-Historical intermittent video/audio incidents remain unexplained; two V30 runs
-are clean without a buffering/scheduling change. A qualified native read-ahead
-change also completes its separate V31 game retest with zero recorded underruns.
-The subsequent [finite queued-cue binding](native-media/NATIVE_AUDIO_CUE_CONTROLLER.md)
-passes both complete native and real-asset adapter cohorts. Its coherent V32
-game retest completes the opening/scenario/bar route with joined retirement,
-but accepts zero queued preparations. V33 fixes the independently reproduced
-minimized event-pump bug and passes its first minimized shutdown retest.
-Required remaining work is
-A/V validation, broader game-facing controls/resource transitions and accounting
-for remaining media consumers. See the current
-[closure checklist](native-media/STAGE3_CLOSURE.md), rather than treating older
-checkpoint requirements as the present implementation status.
-The user's conditional
-sleep request still applies only after Step 3 actually completes. Stages 4-6
-remain required for the whole native game.
+Step 3 is complete for the selected stock File #1 US native resource/media profile, as recorded in [final validation](native-media/STAGE3_FINAL_VALIDATION.md). V38 passes the coherent cold-gallery, movie error/recovery, controlled guest-service stall, ordinary-input room transition and joined-shutdown cases, matching both full compiler cohorts and launcher/SDK publication. Native source pictures and PCM retain their measured accounting; bounded digital A/V checks and remaining renderer/capture limitations are explicit.
+
+This is not completion of the whole native game. Temporary game/guest interfaces migrate in Stage 4, native rendering and the measured latest-picture handoff pacing issue in Stage 5, and compatibility/runtime/build dependency deletion in Stage 6. Physical display/speaker timing, subjective lip sync, unsupported profiles and historical incident internals are not claimed proven. The user's conditional PC-sleep request now follows final validation and the local closure commit.
 
 Platform references: [Microsoft MPEG-4 support](https://learn.microsoft.com/en-us/windows/win32/medfound/mpeg-4-support-in-media-foundation),
 [source reader scope](https://learn.microsoft.com/en-us/windows/win32/medfound/source-reader),

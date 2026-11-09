@@ -1,5 +1,18 @@
 # Media retirement audit
 
+Current evidence, 2026-11-09: V38 exercises the native queued caller in the actual
+gallery, and ordinary input reaches interactive room 4 with native owners joined
+and zero measured audio underruns. The selected Step 3 profile is complete;
+temporary game/renderer bridges and final dependency deletion remain staged work.
+The [retail descriptor audit](RETAIL_EFFECT_DESCRIPTOR_AUDIT.md) resolves the
+required stock effect admission question: all 74 descriptors select animated
+textures, none arms the legacy movie consumer. The
+[control caller audit](MEDIA_CONTROL_CALLER_CLOSURE.md) distinguishes DVD gallery
+controls from the unadmitted HDD-maintenance pause route. See
+[final validation](STAGE3_FINAL_VALIDATION.md) for completion and remaining limits.
+
+## Historical audit checkpoint
+
 2026-11-08, File #1 US only. This distinguishes replaced workers from the
 temporary interfaces used by game callers that still run through the translated
 engine. It does not declare Step 3 complete or remove the PS2 runtime.
