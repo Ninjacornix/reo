@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "status": "exact production native refill worker passes controlled ordinary/queued guest-service withholding on both compilers",
+  "game_launched": false,
+  "device_opened": false,
+  "step3_complete": false,
+  "cohorts": {
+    "llvm": {
+      "receipt_sha256": "eb33de0c0a59bb092d68a18ac92b11fea91dc28506e0a18ad707391f819bedf9",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "native_core_receipt_sha256": "49b1cff4e0e2cf6d15402286fbe885f9c5d7d564d93059d35c5e9ebb67ae41e4",
+      "production_worker_block_sha256": "88ea82608db31dcfc8a50837516582cf9ea8073b1db6d8fb4102abec21e5f1e2",
+      "fixture_sha256": "fd23ab8e217b3630996b43a6d38c91686d2faf195e1bae66be75eae72f3b3137",
+      "verifier_sha256": "2a92edc18f65d1b55eab532837f6f5369fe783abdfc1404423288b97de16acba",
+      "results": {
+        "checks": 4338,
+        "baseline_underruns": 87808,
+        "candidate_underruns": 0,
+        "candidate_skipped": 0,
+        "candidate_pcm_max_error": 0,
+        "inhibited_underruns": 0,
+        "reference_vs_ffmpeg_max_error": 589,
+        "queue_without_feeder_underruns": 30464,
+        "queue_with_feeder_underruns": 0
+      }
+    },
+    "gcc": {
+      "receipt_sha256": "ce113ba31d510bdb5f082de86193e5f7c3ebc93c808631fe739a4fe1bdc898af",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "native_core_receipt_sha256": "a33122e31778c83aca255721ca5affa82d643dc30181645f0e682e926017ad36",
+      "production_worker_block_sha256": "88ea82608db31dcfc8a50837516582cf9ea8073b1db6d8fb4102abec21e5f1e2",
+      "fixture_sha256": "fd23ab8e217b3630996b43a6d38c91686d2faf195e1bae66be75eae72f3b3137",
+      "verifier_sha256": "2a92edc18f65d1b55eab532837f6f5369fe783abdfc1404423288b97de16acba",
+      "results": {
+        "checks": 3589,
+        "baseline_underruns": 87808,
+        "candidate_underruns": 0,
+        "candidate_skipped": 0,
+        "candidate_pcm_max_error": 0,
+        "inhibited_underruns": 0,
+        "reference_vs_ffmpeg_max_error": 589,
+        "queue_without_feeder_underruns": 30464,
+        "queue_with_feeder_underruns": 0
+      }
+    }
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/native-audio-service-worker-llvm-v9/receipt.json": "eb33de0c0a59bb092d68a18ac92b11fea91dc28506e0a18ad707391f819bedf9",
+    "build-native-sjuni/native-audio-service-worker-llvm-v9/worker_block.inc": "88ea82608db31dcfc8a50837516582cf9ea8073b1db6d8fb4102abec21e5f1e2",
+    "build-native-sjuni/native-audio-service-worker-llvm-v9/fixture.cpp": "fd23ab8e217b3630996b43a6d38c91686d2faf195e1bae66be75eae72f3b3137",
+    "build-native-sjuni/native-audio-service-worker-llvm-v9/production-source.cpp": "8be820507fb4c41b256e1d88cdfbb0e9815d861aa251e4268e082822b1cfff97",
+    "build-native-sjuni/native-audio-service-worker-llvm-v9/compile.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/native-audio-service-worker-llvm-v9/compile.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/native-audio-service-worker-llvm-v9/test.stdout.txt": "e09dab303ae5154088c3248023fe3704cf98d69654717370715e0ac82607e2c4",
+    "build-native-sjuni/native-audio-service-worker-llvm-v9/test.stderr.txt": "26f79d7c345e87052d2f8a224069e223a3c47743ee7134e82bf889eea340891c",
+    "build-native-sjuni/native-audio-service-worker-gcc-v4/receipt.json": "ce113ba31d510bdb5f082de86193e5f7c3ebc93c808631fe739a4fe1bdc898af",
+    "build-native-sjuni/native-audio-service-worker-gcc-v4/worker_block.inc": "88ea82608db31dcfc8a50837516582cf9ea8073b1db6d8fb4102abec21e5f1e2",
+    "build-native-sjuni/native-audio-service-worker-gcc-v4/fixture.cpp": "fd23ab8e217b3630996b43a6d38c91686d2faf195e1bae66be75eae72f3b3137",
+    "build-native-sjuni/native-audio-service-worker-gcc-v4/production-source.cpp": "8be820507fb4c41b256e1d88cdfbb0e9815d861aa251e4268e082822b1cfff97",
+    "build-native-sjuni/native-audio-service-worker-gcc-v4/compile.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/native-audio-service-worker-gcc-v4/compile.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/native-audio-service-worker-gcc-v4/test.stdout.txt": "a91a99933dfa15e176497dbdc3b828290fbf02ee567f7fc55545096a41f8006c",
+    "build-native-sjuni/native-audio-service-worker-gcc-v4/test.stderr.txt": "26f79d7c345e87052d2f8a224069e223a3c47743ee7134e82bf889eea340891c",
+    "recomp/overrides/native_sound_ram/composite_backend.cpp": "8be820507fb4c41b256e1d88cdfbb0e9815d861aa251e4268e082822b1cfff97",
+    "tools/native_reconstruction/native_audio_service_worker_tests.cpp": "fd23ab8e217b3630996b43a6d38c91686d2faf195e1bae66be75eae72f3b3137",
+    "tools/native_reconstruction/verify_native_audio_service_worker.py": "2a92edc18f65d1b55eab532837f6f5369fe783abdfc1404423288b97de16acba",
+    "build-native-sjuni/gallery-e3-digital-clock-v1/E3-Bio_Mix.adx": "0b6b3f99920fd0f966000dae6e4dab2737eadcd352ec42e9080de822436497cb",
+    "build-native-sjuni/gallery-e3-digital-clock-v1/expected.pcm": "625c18e02d2409b6548a57dbb9fff50e404e6b8298292dda7cfa47ae02b8bb21",
+    "build-native-sjuni/gallery-e3-digital-clock-v1/decode.json": "93c60df0838775d30b41d8e9365db9bcb38ca1f54b9bf6cd32484333695fa70f",
+    "build-native-sjuni/media-cue-capacity-results-llvm-v2/receipt.json": "49b1cff4e0e2cf6d15402286fbe885f9c5d7d564d93059d35c5e9ebb67ae41e4",
+    "build-native-sjuni/media-cue-capacity-results-gcc-v2/receipt.json": "a33122e31778c83aca255721ca5affa82d643dc30181645f0e682e926017ad36"
+  },
+  "controlled_game_fix_confirmed": false,
+  "coverage": [
+    "Exact marked production worker block extracted, compiled with strict warnings and linked to unchanged qualified native-core libraries.",
+    "Real owned E3 stereo48kHz ADX asynchronous source worker and native Submix callback, with rendered480frameblocks paced10ms for96000frames.",
+    "Ordinary baseline has no guest control service for2seconds; candidate services asynchronously using same real guest tick7 and original divisor30.",
+    "Candidate samples exactly equal a synchronously serviced native graph reference; comparison to independentFFmpeg remains separately recorded at589maximumintegerPCMerror. No codec behavior was changed.",
+    "Startinhibit, pausewithunconsumedqueue, resumeactualPCM, explicitthree-sourceorder, pausedthirdpeer, unknownorderdeferral, foreignownerclockrefusal.",
+    "Canonicaladmissionclose while worker waits behind acceptedoperation: threadjoin waits untilrelease, queuedservice hasnoeffects aftershutdown, actualsourcesjoin.",
+    "Synthetic seventeen4097sampleclips with blocked seventeenthactualmetadataread released300msinto2secondswithoutguestservice. Decoder-onlypump loses30464frames; feedercallbackcommitsheader, reachesall69649payloadsamples andEOF withzero measuredshortage."
+  ],
+  "limitations": [
+    "No game, Windowsdevice, physicalaudio/display or fullcoherentcandidate testedbythisqualification. Root performs separateactualSDK/object and controlledgameacceptance.",
+    "Production ordinaryBinding callbackregistry/context registration and source-adoption mirror integration are separate from this exactworkerblock regression; nativequeuework is supplied by a declaredfixturecallback.",
+    "Two-second ordinarysamplecomparison uses unchangednativegraph as exactreference. IndependentFFmpeg differs byup to589PCMunits before this servicepolicychange; test doesnotclaim industrydecoderbitequality.",
+    "The17clipdelayedheadertest uses structural syntheticADX to cross the boundary quickly; theordinarytimingcase uses verified ownedretailaudio.",
+    "Fourmillisecondwake is requested, not a guaranteed host scheduling deadline. Wholeprocess/OS scheduling or insufficientencodedinput canstillstarve playback.",
+    "Initialfailedfixtures usedoversized960framecallback andincorrectFFmpeg<=1PCMunitassumption; their logs/source remainprivate. They werenot evidence of a productionworkerfailure.",
+    "Historical unexplainedincidents are not all proven fixed. Only controlled withholding of guestservice is tested here; actualcoldresource-load retests remain separate."
+  ]
+}
