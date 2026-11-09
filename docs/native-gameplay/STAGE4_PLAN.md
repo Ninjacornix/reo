@@ -98,6 +98,11 @@ the installed game is still V39 and the stage remains incomplete.
 The [nonattached pose follow-up](RESOURCE_POSES.md) closes the1904A0 XZY/axis-scale
 branch with full turn-domain comparisons and current weapon-frame regression.
 The other resource factory and integration gates above remain open.
+The [resource periodic-visual follow-up](RESOURCE_PULSES.md) also closes5925C0
+through the actual existing168/256 visual owner and canonical RNG. Its complete
+source comparison includes natural pool exhaustion; this emits visuals rather
+than querying room regions. Secondary retirement, extended actors, required
+reconstruction, construction/loading and installed gameplay remain open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

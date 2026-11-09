@@ -5,21 +5,21 @@
 namespace reo::native::gameplay_scenario {
 namespace {
 std::int16_t half(std::int32_t value)noexcept{return std::bit_cast<std::int16_t>(std::uint16_t(std::uint32_t(value)));}
-PeriodicStatus emit_periodic(PeriodicState& state,gameplay_session::Random& random,PeriodicEmitter& emitter)noexcept{
+}
+PeriodicStatus emit_periodic(EffectPosition position,std::int16_t& state_packed,gameplay_session::Random& random,PeriodicEmitter& emitter)noexcept{
     const auto descriptor=std::uint16_t(random.request(1)%3+0x24);
-    const auto result=emitter.emit({descriptor,state.position,0x1a193});
+    const auto result=emitter.emit({descriptor,position,0x1a193});
     if(result.status==EmissionStatus::pool_full)return PeriodicStatus::completed;
     if(result.status!=EmissionStatus::completed || !result.visual)return PeriodicStatus::emitter_unavailable;
-    auto& visual=*result.visual;visual.position=state.position;visual.delay=0;visual.scale=30;
-    const auto old_phase=std::int32_t(state.packed)>>12;
+    auto& visual=*result.visual;visual.position=position;visual.delay=0;visual.scale=30;
+    const auto old_phase=std::int32_t(state_packed)>>12;
     const auto next=half(old_phase==2?0:old_phase+1);
     auto packed=std::uint16_t(std::uint32_t(std::int32_t(next)*4096));
     const auto duration=std::int32_t(visual.remaining)/2;
     auto delay=half(duration+30*(next==0?std::int32_t(next):std::int32_t(next)+1)-4);
     if(delay<0)delay=0;
-    packed=std::uint16_t(packed|std::bit_cast<std::uint16_t>(delay));state.packed=std::bit_cast<std::int16_t>(packed);
+    packed=std::uint16_t(packed|std::bit_cast<std::uint16_t>(delay));state_packed=std::bit_cast<std::int16_t>(packed);
     return PeriodicStatus::completed;
-}
 }
 PeriodicStep update_periodic(PeriodicState& state,std::uint16_t stop,FlagState& flags,
     gameplay_session::Random& random,PeriodicEmitter& emitter)noexcept{
@@ -31,7 +31,7 @@ PeriodicStep update_periodic(PeriodicState& state,std::uint16_t stop,FlagState& 
     if(state.phase==1){
         state.timer=half(std::int32_t(state.timer)-1);
         if(state.timer<0){
-            const auto status=emit_periodic(state,random,emitter);
+            const auto status=emit_periodic(state.position,state.packed,random,emitter);
             if(status!=PeriodicStatus::completed)return{status,false};
             ++state.phase;state.timer=0;
         }

@@ -46,6 +46,10 @@ class ResourceModel final : public gameplay_scenario::SceneAttachment {
     std::array<std::uint8_t,6> part_enabled{};
     std::array<animation::Matrix,6> parts{};
     std::array<std::uint16_t,3> angles{};
+    std::uint16_t content_id{}; // original resource model36, not asset_index242
+    std::uint8_t pulse_phase{};
+    std::int16_t pulse_timer{},pulse_packed{};
+    float pulse_distance{};
     animation::Vector axis_scale{}; // source22C, independent of the position at200
     std::shared_ptr<const ResourcePartPoses> base_parts;
     std::shared_ptr<ResourceModelWork> work;

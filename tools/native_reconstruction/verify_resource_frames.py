@@ -34,6 +34,7 @@ def main():
         'gameplay_collision/contact_packets.cpp','gameplay_collision/contact_content.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp',
         'gameplay_collision/actors.cpp','gameplay_collision/actor_views.cpp','gameplay_session/session.cpp',
         'gameplay_scenario/scene_resources.cpp','animation/weapon_program.cpp','animation/model_math.cpp',
+        'gameplay_scenario/periodic_effects.cpp','gameplay_scenario/scene_controls.cpp','gameplay_scenario/flags.cpp','gameplay_tasks/tasks.cpp',
         'animation/model.cpp','animation/curves.cpp','animation/constraints.cpp','animation/constraint_math.cpp',
         'transform_math/transform_math.cpp']]
     tests=ROOT/'tools/native_reconstruction/resource_frames_tests.cpp'

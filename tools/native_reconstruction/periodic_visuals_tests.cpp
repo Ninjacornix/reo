@@ -63,6 +63,7 @@ struct CapturingEmitter final:s::PeriodicEmitter {
     e::PeriodicVisuals& owner;std::vector<Live>& live;std::uint8_t* memory;
     CapturingEmitter(e::PeriodicVisuals& o,std::vector<Live>& l,std::uint8_t* m):owner(o),live(l),memory(m){}
     bool admitted()const noexcept override{return owner.admitted();}
+    bool bound_to(const reo::native::gameplay_session::Random& random)const noexcept override{return owner.bound_to(random);}
     s::EmissionResult emit(const s::PeriodicEmission& request)noexcept override{
         auto result=owner.emit(request);if(result.status==s::EmissionStatus::completed){live.insert(live.begin(),{get<std::uint32_t>(memory,0x3b5848),result.visual});++created;}return result;
     }
@@ -85,6 +86,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
     }
     check(owner.piece_count()==count);check(std::size_t(256-get<std::uint16_t>(memory,0x3b5820))==count);check(std::size_t(168-get<std::uint16_t>(memory,0x3b5828))==live.size());
 }
+#ifdef REO_RESOURCE_PULSES
+#include "tools/native_reconstruction/resource_pulses_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==2);const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
     for(unsigned asset=0;asset<corpus.size();asset+=2){
@@ -150,12 +154,23 @@ int main(int argc,char** argv)try{
             }
         }
     }
+#ifdef REO_RESOURCE_PULSES
+    compare_resource_pulses(corpus,ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
     std::thread reader([&]{std::uint64_t revision{};while(!done.load()){const auto frame=owner.retain();if(!frame){std::this_thread::yield();continue;}if(frame->revision<revision)bad=true;revision=frame->revision;for(const auto& visual:frame->visuals)if(!visual.bank||visual.bank->geometry().roots().empty())bad=true;++reads;}});
     for(unsigned i=0;i<2000;++i){if(i%5==0)check(owner.emit({36,{}}).status==s::EmissionStatus::completed);check(owner.update({10,20,30}).status==e::VisualStatus::completed);if(i%10==0)std::this_thread::yield();}
     done=true;reader.join();check(!bad&&reads>0);owner.close();bank.reset();check(!owner.retain());
-    std::cout<<"{\"checks\":"<<checks<<",\"banks\":"<<banks<<",\"updates\":"<<updates<<",\"created\":"<<created<<",\"expired\":"<<expired<<",\"piece_cases\":"<<piece_cases<<",\"camera_cases\":"<<camera_cases<<",\"signed_timer_cases\":"<<signed_timer_cases<<",\"task_cases\":"<<task_cases<<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"banks\":"<<banks<<",\"updates\":"<<updates<<",\"created\":"<<created<<",\"expired\":"<<expired<<",\"piece_cases\":"<<piece_cases<<",\"camera_cases\":"<<camera_cases<<",\"signed_timer_cases\":"<<signed_timer_cases<<",\"task_cases\":"<<task_cases
+#ifdef REO_RESOURCE_PULSES
+    <<",\"resource_pulse_frames\":"<<resource_pulse_frames<<",\"resource_pulse_emissions\":"<<resource_pulse_emissions<<",\"resource_pulse_refusals\":"<<resource_pulse_refusals
+#endif
+    <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;
-}catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
+}catch(const std::exception& error){std::cerr<<error.what()
+#ifdef REO_RESOURCE_PULSES
+    <<" pulse frames="<<resource_pulse_frames<<" emissions="<<resource_pulse_emissions
+#endif
+    <<'\n';return 1;}

@@ -25,9 +25,13 @@ public:
     // Required actual native visual/resource owner. A true admission requires
     // all three descriptors and the native periodic visual callback consumer.
     virtual bool admitted()const noexcept=0;
+    virtual bool bound_to(const gameplay_session::Random&)const noexcept{return false;}
     virtual EmissionResult emit(const PeriodicEmission&)noexcept=0;
 };
 enum class PeriodicStatus {completed,flag_unavailable,emitter_unavailable,invalid_control,closed,no_memory,task_unavailable};
+// Complete5DDC70 policy shared by scenario tasks and resource pulses.
+PeriodicStatus emit_periodic(EffectPosition,std::int16_t& packed,
+    gameplay_session::Random&,PeriodicEmitter&)noexcept;
 struct PeriodicState {
     std::uint8_t phase{};
     std::int16_t timer{},packed{};

@@ -1,5 +1,6 @@
 #include "resource_frames.hpp"
 #include <bit>
+#include <cmath>
 #include <stdexcept>
 namespace reo::native::gameplay_world {
 void ResourceFrames::admit(const ResourceModelId& id,const ResourceModel& model)const{
@@ -28,6 +29,30 @@ const ResourcePartPoses& ResourceFrames::bases(const ResourceModel& model)const{
     if(!model.base_parts||model.asset_index<0||model.base_parts->asset_index!=model.asset_index||model.base_parts->count>6)throw std::runtime_error("Native resource asset base poses unavailable");
     return *model.base_parts;
 }
+void ResourceFrames::pulse(ResourceModel& model){
+    if(model.content_id==0x27a6||model.content_id==0x12c||model.content_id==0x12d||model.content_id==0x12e)return;
+    const auto half=[](std::int32_t value){return std::bit_cast<std::int16_t>(std::uint16_t(value));};
+    if(model.pulse_phase==0){
+        model.pulse_timer=half(std::int32_t(model.pulse_timer)-1);
+        if(model.pulse_timer>=0)return;
+        model.flags|=0x1000;model.pulse_phase=1;model.pulse_timer=0;
+        if(!emitter_||!emitter_->admitted()||!emitter_->bound_to(world_.session().random))throw std::runtime_error("Native resource periodic visual owner unavailable or RNG foreign");
+        auto position=model.position;
+        if(model.pulse_distance!=0&&model.angles[2]){
+            const auto finite=[](float value){if(!std::isfinite(value))throw std::domain_error("Native resource pulse finite arithmetic required");return value;};
+            const auto angle=[](std::uint16_t turn){return std::bit_cast<float>(0x38c90fdbu)*float(turn);};
+            const auto yaw=transform_math::sin_cos(angle(model.angles[1]));
+            const auto pitch=transform_math::sin_cos(angle(model.angles[2]));
+            position.x=finite(position.x+finite(model.pulse_distance*finite(yaw.cosine*pitch.cosine)));
+            position.y=finite(position.y+finite((-model.pulse_distance)*pitch.sine));
+            position.z=finite(position.z+finite(model.pulse_distance*finite(yaw.sine*pitch.cosine)));
+        }
+        if(gameplay_scenario::emit_periodic(position,model.pulse_packed,world_.session().random,*emitter_)!=gameplay_scenario::PeriodicStatus::completed)throw std::runtime_error("Native resource periodic visual emission unavailable");
+    }else if(model.pulse_phase==1){
+        model.pulse_timer=half(std::int32_t(model.pulse_timer)+1);
+        if(model.pulse_timer>=4){model.flags&=~0x1000u;model.pulse_timer=std::int16_t(std::uint16_t(model.pulse_packed)&0xfffu);model.pulse_phase=0;}
+    }
+}
 void ResourceFrames::common(const ResourceModelId& id,ResourceModel& model){
     admit(id,model);
     if(!model.active)return;
@@ -44,7 +69,7 @@ void ResourceFrames::common(const ResourceModelId& id,ResourceModel& model){
         model.draw_layer=actor->surface_material;
         return;
     }
-    if((model.flags&0x800u)&&!(model.flags&0x400u))throw std::runtime_error("Native resource room pulse consumer unavailable");
+    if((model.flags&0x800u)&&!(model.flags&0x400u))pulse(model);
     if((model.flags&0x100000u)&&(model.flags&0x40000000u))throw std::runtime_error("Native resource reconstruction consumer unavailable");
     if(model.flags&0x80000u){
         auto next=model.pose;transform_math::reset_euler_axes_xzy(next,model.angles);
