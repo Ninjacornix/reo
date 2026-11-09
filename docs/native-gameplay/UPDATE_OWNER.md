@@ -83,3 +83,17 @@ binds these cohorts separately from the earlier worker-only checkpoint.
 Task factories/payloads, remaining worker and UI/audio/scene effect owners and
 game installation are still Stage4 gates. Representative scripts here are
 admitted fixtures, not complete retail banks. Neither path uses host-time catchup.
+
+The subsequent [signed pause and audio-tick cohort](../../tools/native_reconstruction/native_gameplay_update_qualification_v3.json)
+compares all 256 raw pause patterns across 2,048 worker and 4,096 outer cases.
+Both compilers match 97,354 worker and 287,578 phase trace words; 686 ordinary
+updates commit. This cohort explicitly pins scenario source to local commit
+`7d304de9` while the next script component is developed independently.
+
+The native owner now forwards an optional actual audio/SDK tick to ordinary and
+offline script execution. Twelve additional real-caller cases cover both script
+channels, both dispatch profiles and tick values 0, 17 and UINT32_MAX. Without
+that tick, the stream command fails admission before stream effects or script
+movement. With it, start and resume receive that exact tick and the simulation
+counter stays independent. These are caller integration checks, not a new
+physical audio or game-performance measurement.

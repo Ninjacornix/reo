@@ -3,6 +3,7 @@
 #include "../gameplay_actors/hit.hpp"
 #include "../gameplay_actors/input.hpp"
 #include "../gameplay_collision/actors.hpp"
+#include "../gameplay_collision/contact_component.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -36,6 +37,8 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t ai_control{},normalized_marker{};
     std::uint8_t character{};
     std::uint16_t contact_flags{},pending_notice{};
+    std::uint16_t action_flags{};
+    float surface_blend_weight{},surface_blend_rate{};
     std::uint32_t response_mask{},response_value{};
     std::uint8_t motion_override{},interaction_marker{},room_marker{},movement_enabled{};
     std::uint16_t frame_value_a{},frame_value_b{};
@@ -56,6 +59,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint16_t surface_attributes{};
     Position surface_normal{0,1,0};
     ActorCollision collision;
+    gameplay_collision::delivery::Component contact;
     input::Frame input;
 };
 struct Session : actors::HitSession {

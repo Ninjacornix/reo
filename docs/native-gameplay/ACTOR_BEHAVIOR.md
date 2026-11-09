@@ -67,3 +67,11 @@ Fresh behavior and canonical-world regressions pass after the floor integration.
 The frame-composition check supplies a native empty floor and confirms behavior
 executes without calling the old surface effects. Qualification:
 [native surface composition](../../tools/native_reconstruction/native_gameplay_surfaces_qualification_v1.json).
+
+The subsequent action-snapshot cohort replaces the direct phase-FF snapshot
+provider with native `save_action_pose`. Its original `667370` body executes
+alongside the complete behavior body; position D94 and yaw DA0 are compared,
+including preservation when no snapshot occurs. Both compilers pass 32,768
+cases and 2,562,408 ordered trace words. Status/hit child effects retain their
+separate declared provider scope. Evidence:
+[behavior qualification v2](../../tools/native_reconstruction/native_gameplay_behavior_qualification_v2.json).

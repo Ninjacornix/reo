@@ -1,4 +1,5 @@
 #include "behavior.hpp"
+#include "motion.hpp"
 #include <limits>
 
 namespace reo::native::gameplay_world {
@@ -46,7 +47,7 @@ void update_behavior(World& w,Actor& a,BehaviorServices& services,
                 services.run(BehaviorStage::consume_control_request,w,a);
             else services.dispatch(ActionPass::primary,a.primary,w,a);
             if(a.primary!=s.previous_primary || a.secondary!=s.previous_secondary || a.phase==0xff){
-                if(a.phase==0xff)services.snapshot(a,s);
+                if(a.phase==0xff)save_action_pose(a);
                 if(a.primary==3 || a.primary==4 || a.primary==5)services.publish(a,s,5);
                 else if(!services.suppress_action_notice(w,a,s.previous_primary,s.previous_secondary))
                     services.publish(a,s,1);

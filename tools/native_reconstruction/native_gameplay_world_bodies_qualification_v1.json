@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Actual native motion caller registers body work with class a1 and mask a2, canonical body refs, owned actor/pose leases and explicit reentry/failure contracts.",
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-world-bodies-llvm-v2/receipt.json",
+      "sha256": "67534e2b900a7135338d41c8e769dc2858775ae8b3bfcba3c17cdca183c5cdc6",
+      "result": {
+        "checks": 39,
+        "status": "passed",
+        "game_run": false
+      },
+      "source_snapshot": "build-native-sjuni/gameplay-world-bodies-llvm-v2/source"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-world-bodies-gcc-v2/receipt.json",
+      "sha256": "09e7850db38349c0cea4cd397081c08b18e0d73650ddb7254305cf5890029746",
+      "result": {
+        "checks": 39,
+        "status": "passed",
+        "game_run": false
+      },
+      "source_snapshot": "build-native-sjuni/gameplay-world-bodies-gcc-v2/source"
+    }
+  },
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_run": false,
+  "remaining": [
+    "Native pose/model import owner and complete action/effect providers",
+    "Native whole-game installation and acceptance"
+  ],
+  "original_solver_dependency": {
+    "path": "tools/native_reconstruction/native_gameplay_actor_views_qualification_v1.json",
+    "sha256": "c2ae3fa1af91bd399706932da6f23bb79adba8b1726e37e91baf341cddd92ec4"
+  },
+  "original_bodies_executed_in_this_cohort": false
+}

@@ -45,6 +45,9 @@ struct State {
     std::uint8_t control_armed{},control_state{},exit_requested{},short_exit_adjustment{};
     std::uint8_t notification_pending{},transition_gate{},pause_latched{};
     std::uint32_t request_flags{},control_flags{};
+    // Supplied by the actual native audio/SDK tick owner. Simulation updates
+    // and presentation counts are not substitutes; an absent tick stays absent.
+    std::optional<std::uint32_t> audio_tick;
 };
 enum class Status {completed,busy,closed,actor_failure,script_failure,task_failure,flag_failure};
 struct Result {

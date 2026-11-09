@@ -34,10 +34,12 @@ Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::
     if(world_.mode==0){
         std::array<scenario::OfflinePartyActor,3> party;
         for(std::size_t i=0;i<party.size();++i){const auto actor=world_.primary(i);if(actor)party[i]={actor->active,actor->slot,actor->room};}
-        const auto step=offline_.tick(scripts_,channel,state.scripts_enabled,party,world_.room,world_.selected_actor,flags_,providers,budget);
+        const auto step=offline_.tick(scripts_,channel,state.scripts_enabled,party,world_.room,world_.selected_actor,flags_,providers,budget,state.audio_tick);
         result.script_operations+=step.operations;return script_ok(step.status)?Status::completed:Status::script_failure;
     }
-    const auto step=scripts_.tick(channel,{state.scripts_enabled,false,world_.selected_actor,world_.room},providers,budget);
+    auto context=scenario::TickContext{state.scripts_enabled,false,world_.selected_actor,world_.room};
+    context.stream_tick=state.audio_tick;
+    const auto step=scripts_.tick(channel,context,providers,budget);
     result.script_operations+=step.operations;return script_ok(step.status)?Status::completed:Status::script_failure;
 }
 Status Owner::script_service(Services& services,scenario::Providers providers,std::size_t budget,Result& result){

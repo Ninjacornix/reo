@@ -1,6 +1,8 @@
 #include "game/native/gameplay_update/update.hpp"
+#include "game/native/gameplay_scenario/stream_channels.hpp"
 #include "runtime.hpp"
 #include <algorithm>
+#include <bit>
 #include <functional>
 #include <iostream>
 #include <vector>
@@ -22,7 +24,7 @@ struct Workers final:u::Services {
     std::function<void(u::Owner&)> on_reset;
     void run(u::Worker stage,u::Owner& owner)override{
         if(stage==u::Worker::reset_entity_queues && on_reset)on_reset(owner);
-        trace->insert(trace->end(),{addresses[std::size_t(stage)],owner.world().selected_actor,owner.world().paused,owner.clock().update_counter()});
+        trace->insert(trace->end(),{addresses[std::size_t(stage)],owner.world().selected_actor,std::uint32_t(std::int32_t(owner.world().paused)),owner.clock().update_counter()});
         if(stage==u::Worker::clear_interaction_activity && seed%3==0)owner.world().paused=!owner.world().paused;
         if(stage==u::Worker::target_caches && seed%5==0)owner.world().mode=std::uint8_t(seed%3);
         if(stage==u::Worker::sequences && seed%7==0)owner.state.session_work_gate=1;
@@ -59,7 +61,7 @@ struct Event final:t::EventTask {
 template<class T>T get(const std::uint8_t* r,std::uint32_t at){return oracle_read<T>(r,at);}
 template<class T>void put(std::uint8_t* r,std::uint32_t at,T value){oracle_write<T>(r,at,value);}
 void read(std::uint8_t* r,u::Owner& o){
-    o.world().mode=r[0x3243f2];o.world().paused=r[0x4badf8]!=0;o.world().selected_actor=r[0x4baded];
+    o.world().mode=r[0x3243f2];o.world().paused=std::bit_cast<std::int8_t>(r[0x4badf8]);o.world().selected_actor=r[0x4baded];
     o.state.limit_override=r[0x4bae77]!=0;o.state.session_work_gate=get<std::int16_t>(r,0x3241f8);
     auto& state=o.state;state.control_armed=r[0x4bae94];state.control_state=r[0x4bae97];state.exit_requested=r[0x3243d8];state.short_exit_adjustment=r[0x324477];
     state.notification_pending=r[0x4badfb];state.transition_gate=r[0x4bae76];state.pause_latched=r[0x4badf9];state.request_flags=get<std::uint32_t>(r,0x324330);state.control_flags=get<std::uint32_t>(r,0x324300);
@@ -67,7 +69,7 @@ void read(std::uint8_t* r,u::Owner& o){
     if(o.clock().restore({r[0x4bae00],r[0x4bae01],r[0x4bae02],r[0x4bae03]},get<std::uint32_t>(r,0x4bade8))!=t::Status::completed)std::terminate();
 }
 void write(std::uint8_t* r,u::Owner& o){
-    r[0x3243f2]=o.world().mode;r[0x4badf8]=o.world().paused?1:0;r[0x4baded]=o.world().selected_actor;
+    r[0x3243f2]=o.world().mode;r[0x4badf8]=std::bit_cast<std::uint8_t>(o.world().paused);r[0x4baded]=o.world().selected_actor;
     r[0x4bae77]=o.state.limit_override?1:0;put(r,0x3241f8,o.state.session_work_gate);put(r,0x4bade8,o.clock().update_counter());
     const auto& state=o.state;r[0x4bae94]=state.control_armed;r[0x4bae97]=state.control_state;r[0x3243d8]=state.exit_requested;r[0x324477]=state.short_exit_adjustment;
     r[0x4badfb]=state.notification_pending;r[0x4bae76]=state.transition_gate;r[0x4badf9]=state.pause_latched;put(r,0x324330,state.request_flags);put(r,0x324300,state.control_flags);
@@ -154,12 +156,56 @@ void install(u::Owner& o,s::DispatchProfile profile){
     const auto program=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{{std::byte{0xa},std::byte{},std::byte{},std::byte{}}},profile);
     for(std::size_t i=0;i<6;++i){s::Channel channel{program,{0,0},{0,0},0,0,0};if(o.scripts().restore_channel(i,channel)!=s::Status::completed)throw std::runtime_error("Fixture script admission");}
 }
+struct AudioTickBackend final:s::StreamBackend {
+    unsigned starts{},pauses{},attenuations{};std::uint32_t start_tick{},pause_tick{};
+    s::StreamValue phase(std::uint8_t)noexcept override{return{s::StreamStatus::completed,0};}
+    s::StreamStatus start(std::uint8_t channel,s::StreamRequest request,std::uint32_t tick)noexcept override{
+        if(channel!=0 || request.member!=42 || request.archive!=0)std::terminate();
+        ++starts;start_tick=tick;return s::StreamStatus::completed;
+    }
+    s::StreamStatus pause(std::uint8_t channel,bool paused,std::uint32_t tick)noexcept override{
+        if(channel!=0 || paused)std::terminate();
+        ++pauses;pause_tick=tick;return s::StreamStatus::completed;
+    }
+    s::StreamStatus stop(std::uint8_t)noexcept override{return s::StreamStatus::completed;}
+    s::StreamStatus attenuation(std::uint8_t,std::int32_t)noexcept override{++attenuations;return s::StreamStatus::completed;}
+    s::StreamStatus service(std::uint32_t)noexcept override{return s::StreamStatus::completed;}
+};
+unsigned check_audio_ticks(){
+    unsigned cases{};
+    for(const bool offline:{false,true})for(const bool actor_channel:{false,true})
+        for(const auto tick:{0u,17u,0xffffffffu}){
+            w::Profile profile;profile.layouts.resize(1);w::World world(profile,std::make_shared<w::Session>());
+            world.mode=offline?0:1;world.paused=1;Notifications notify;u::Owner owner(world,notify);
+            const auto dispatch=offline?s::DispatchProfile::offline_actor:s::DispatchProfile::ordinary;install(owner,dispatch);
+            if(offline && actor_channel){auto actor=std::make_unique<w::Actor>();actor->active=true;
+                if(world.spawn_primary(0,std::move(actor)).status!=w::actors::EntityStatus::completed)throw std::runtime_error("Audio caller actor admission");}
+            std::vector<std::byte> bytes{std::byte{0x70},std::byte{},std::byte{},std::byte{1},std::byte{42},std::byte{},std::byte{},std::byte{},std::byte{0xa},std::byte{},std::byte{},std::byte{}};
+            const auto program=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{bytes},dispatch);
+            const auto channel=actor_channel?1u:0u;
+            if(owner.scripts().install(channel,program)!=s::Status::completed)throw std::runtime_error("Audio caller program admission");
+            s::StreamChannels streams(s::file1_stream_gain_curve());AudioTickBackend backend;
+            s::Providers providers;providers.streams=&streams;providers.stream_backend=&backend;providers.world=&world;
+            Workers workers;workers.seed=1;std::vector<std::uint32_t> observed;trace=&observed;ActorPorts actor_ports;
+            // The absent clock is a capability failure before stream effects or script movement.
+            const auto missing=owner.run_workers(workers,actor_ports,providers);
+            if(missing.status!=u::Status::script_failure || backend.starts || backend.pauses || backend.attenuations ||
+                owner.scripts().channels()[channel].current.offset!=0)throw std::runtime_error("Absent audio tick invented or partially executed");
+            owner.state.audio_tick=tick;const auto counter=owner.clock().update_counter();
+            const auto result=owner.run_workers(workers,actor_ports,providers);
+            if(result.status!=u::Status::completed || backend.starts!=1 || backend.pauses!=1 || backend.attenuations!=1 ||
+                backend.start_tick!=tick || backend.pause_tick!=tick || owner.clock().update_counter()!=counter)
+                throw std::runtime_error("Actual native audio tick not forwarded independently of simulation");
+            ++cases;
+        }
+    return cases;
+}
 int main()try{
     std::vector<std::uint8_t> ram(0x2000000,0xa5),expected(ram);std::uint64_t cases{},words{},paused{},limited{},phase_cases{},phase_words{},committed{};
     w::Profile profile;profile.layouts.resize(1);w::World native_world(profile,std::make_shared<w::Session>()),reference_world(profile,std::make_shared<w::Session>());
     Notifications native_notify,reference_notify;u::Owner native(native_world,native_notify),reference(reference_world,reference_notify);original_owner=&reference;
     for(std::uint32_t seed=0;seed<2048;++seed){
-        native_world.mode=std::uint8_t(seed%3);native_world.paused=seed%2;native_world.selected_actor=std::uint8_t(seed%4);
+        native_world.mode=std::uint8_t(seed%3);native_world.paused=std::bit_cast<std::int8_t>(std::uint8_t(seed));native_world.selected_actor=std::uint8_t(seed%4);
         native.state.limit_override=seed%5==0;native.state.session_work_gate=std::int16_t(seed%2);
         const std::uint32_t counters[]{0,0x83d5f,0x83d60,0x83d61,UINT32_MAX,0x80000000};native.clock().restore({},counters[(seed/4)%6]);
         write(ram.data(),native);read(ram.data(),reference);reference.state=native.state;
@@ -185,10 +231,10 @@ int main()try{
         if(get<std::int16_t>(ram.data(),0x3241f8)!=native.state.session_work_gate||get<std::uint32_t>(ram.data(),0x4bade8)!=native.clock().update_counter())throw std::runtime_error("Worker counter/gate");
         for(std::size_t i=0;i<8;++i)if(native.timers().snapshot()[i].remaining!=reference.timers().snapshot()[i].remaining)throw std::runtime_error("Timer ordering");
         if(native.flags().snapshot().shared.scenario!=reference.flags().snapshot().shared.scenario||native.flags().snapshot().primary!=reference.flags().snapshot().primary)throw std::runtime_error("Native flag publication");
-        ++cases;words+=native_trace.size();paused+=native_world.paused;limited+=result.script_operations==0;
+        ++cases;words+=native_trace.size();paused+=native_world.paused!=0;limited+=result.script_operations==0;
     }
     for(std::uint32_t seed=0;seed<4096;++seed){
-        native_world.mode=std::uint8_t(seed%3);native_world.paused=(seed/3)%3==0;native_world.selected_actor=std::uint8_t(seed%4);
+        native_world.mode=std::uint8_t(seed%3);native_world.paused=std::bit_cast<std::int8_t>(std::uint8_t(seed/3));native_world.selected_actor=std::uint8_t(seed%4);
         native_world.session().clock_mode=std::uint8_t((seed/7)%3);native_world.session().session_state=std::int16_t((seed/13)%3);
         native.state={};auto& state=native.state;state.control_armed=std::uint8_t(seed%3);state.control_state=std::uint8_t((seed/7)%3);
         state.exit_requested=std::uint8_t((seed/11)%2);state.short_exit_adjustment=std::uint8_t(seed%2);state.transition_gate=std::uint8_t((seed/17)%2);
@@ -247,6 +293,7 @@ int main()try{
         check(retiring.linked().create(destructor).status==t::Status::completed);destructor.reset();
     }
     check(destructor_reentry);
-    std::cout<<"{\"status\":\"passed\",\"cases\":"<<cases<<",\"trace_words\":"<<words<<",\"paused_after\":"<<paused<<",\"limit_paths\":"<<limited<<",\"native_owner_checks\":"<<checks<<",\"phase_cases\":"<<phase_cases<<",\"phase_trace_words\":"<<phase_words<<",\"committed_updates\":"<<committed<<"}\n";
+    const auto audio_tick_cases=check_audio_ticks();
+    std::cout<<"{\"status\":\"passed\",\"cases\":"<<cases<<",\"trace_words\":"<<words<<",\"paused_after\":"<<paused<<",\"limit_paths\":"<<limited<<",\"native_owner_checks\":"<<checks<<",\"phase_cases\":"<<phase_cases<<",\"phase_trace_words\":"<<phase_words<<",\"committed_updates\":"<<committed<<",\"audio_tick_cases\":"<<audio_tick_cases<<"}\n";
     return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

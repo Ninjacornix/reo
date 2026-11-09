@@ -8,11 +8,13 @@ gw::Actor read_actor(const std::uint8_t* r){
     gw::Actor a;static_cast<g::HitActor&>(a)=read(r);
     a.position=get<gw::Position>(r,base+0x38);a.previous_position=get<gw::Position>(r,base+0x44);
     a.orientation=get<std::array<std::int16_t,4>>(r,base+0x90);a.previous_orientation=get<std::array<std::int16_t,4>>(r,base+0xa0);
+    a.saved_action_position=get<gw::Position>(r,base+0xd94);a.saved_action_yaw=get<std::int16_t>(r,base+0xda0);
     a.action_elapsed=get<std::uint32_t>(r,base+0xd2c);a.control_elapsed=get<std::uint32_t>(r,base+0xd28);return a;
 }
 void write_actor(std::uint8_t* r,const gw::Actor& a){
     write(r,a);put(r,base+0x38,a.position);put(r,base+0x44,a.previous_position);
     put(r,base+0x90,a.orientation);put(r,base+0xa0,a.previous_orientation);
+    put(r,base+0xd94,a.saved_action_position);put(r,base+0xda0,a.saved_action_yaw);
     put(r,base+0xd2c,a.action_elapsed);put(r,base+0xd28,a.control_elapsed);
 }
 void read_world(std::uint8_t* r,gw::World& w){
@@ -81,6 +83,7 @@ struct BehaviorPorts final:gw::BehaviorServices {
 
 void o2_00666D60_0x666d60(std::uint8_t*,R5900Context*,PS2Runtime*);
 void o2_00666DB0_0x666db0(std::uint8_t*,R5900Context*,PS2Runtime*);
+void o2_00667370_0x667370(std::uint8_t*,R5900Context*,PS2Runtime*);
 void sub_001B0310_0x1b0310(std::uint8_t*,R5900Context*,PS2Runtime*);
 BehaviorPorts* original_ports{};gw::World* reference_world{};
 constexpr std::int16_t timer_amounts[]{500,300,1000};
@@ -88,6 +91,7 @@ void original_port(std::uint8_t* r,R5900Context* c,PS2Runtime* runtime){
     switch(c->pc){
     case 0x666d60:o2_00666D60_0x666d60(r,c,runtime);return;
     case 0x666db0:o2_00666DB0_0x666db0(r,c,runtime);return;
+    case 0x667370:o2_00667370_0x667370(r,c,runtime);return;
     case 0x1b0310:sub_001B0310_0x1b0310(r,c,runtime);return;
     default:break;
     }
@@ -104,7 +108,6 @@ void original_port(std::uint8_t* r,R5900Context* c,PS2Runtime* runtime){
     case 0x6607d0:g::select_zero_health_action(a,w.session(),p);break;
     case 0x660af0:g::consume_pending_hit(a,w.session(),p,timer_amounts);break;
     case 0x1b0340:SET_GPR_U32(c,2,p.locally_controlled(a,w.session()));break;
-    case 0x667370:p.snapshot(a,w.session());break;
     case 0x6651f0:SET_GPR_U32(c,2,p.suppress_action_notice(w,a,std::uint8_t(GPR_U32(c,5)),std::uint8_t(GPR_U32(c,6))));break;
     case 0x67e230:p.publish(a,w.session(),std::uint8_t(GPR_U32(c,5)));break;
     case 0x100000:case 0x200000:p.dispatch(at==0x100000?gw::ActionPass::primary:gw::ActionPass::secondary,a.primary,w,a);break;
@@ -139,6 +142,7 @@ int main()try{
         a.primary=std::uint8_t((seed/3)%6);a.secondary=std::uint8_t(seed%256);a.phase=seed%5?std::uint8_t(seed):0xff;
         a.subphase=19;a.motion_class=0;a.response_lock=std::uint8_t(seed%2);a.pending_hit=0;
         a.position={float(seed%100),float(seed%40),float(seed%50)};a.previous_position={-1,-2,-3};
+        a.saved_action_position={-13,-14,-15};a.saved_action_yaw=-300;
         a.orientation={1,2,3,4};a.previous_orientation={-1,-2,-3,-4};
         a.action_elapsed=seed%5?seed:UINT32_MAX;a.control_elapsed=seed%7?UINT32_MAX-1:UINT32_MAX;
         auto& s=w.session();s=gw::Session{};s.mode=std::uint8_t(seed%3);s.room=std::uint16_t((seed/8)%3);
