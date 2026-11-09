@@ -1,6 +1,6 @@
 # Shared scenario control and collision-proxy installation gate
 
-Status, 2026-11-09: open Stage 4 integration requirement. The existing native SceneControls and collision ownership::Proxies are independently qualified projections. Their standalone receipts do not establish a coherent shared owner or installation into the game.
+Status, 2026-11-09: the canonical shared owner is now implemented and independently qualified; see [shared owner results](SCENARIO_SHARED_PROXY_OWNER.md). The complete room importer and actual game installation remain open Stage 4 gates. The following design rationale records why historical standalone projections were insufficient.
 
 The original global pool is shared: `5C1120` clears exactly 128 records of `C4` bytes, resets the signed free count at `3B5150` to 128 and the list pointers at `3B5158/3B5160`. `5C11B0` allocates and links those records; `5C12A0` retires them. `5C1390` populates geometry plus type-dependent payloads from relative room records. The script handlers and `5819C0` traverse the same `3B5160` list and consume those payloads. Native logical control and collision geometry must therefore share one identity, activation/type state, capacity budget, order and retirement policy when installed. Copying them into parallel mutable registries would violate that ownership requirement.
 

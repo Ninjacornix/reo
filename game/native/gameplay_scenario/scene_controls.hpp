@@ -4,51 +4,19 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <unordered_map>
+#include "scene_control_types.hpp"
+#include "../gameplay_scene/records.hpp"
 #include <variant>
 
 namespace reo::native::gameplay_scenario {
-struct SceneControlDomain;
 class SceneControls;
 class ActionChoices;
 class PeriodicEffects;
 }
 namespace reo::native::gameplay_session { class Random; }
 namespace reo::native::gameplay_scenario {
-class SceneControlId final {
-public:
-    SceneControlId()=default;
-    explicit operator bool()const noexcept{return bool(domain_);}
-    friend bool operator==(const SceneControlId&,const SceneControlId&)=default;
-private:
-    std::shared_ptr<const SceneControlDomain> domain_;
-    std::uint64_t serial_{};
-    friend class SceneControls;
-};
-// Type numbers are observed content tags, not guessed subsystem names. Typed
-// values project only fields owned by these commands; no original byte layout.
-struct ControlRouteDestination {std::uint32_t room{},edge{};friend bool operator==(const ControlRouteDestination&,const ControlRouteDestination&)=default;};
-struct ControlModelReference {std::uint32_t model{},descriptor{};friend bool operator==(const ControlModelReference&,const ControlModelReference&)=default;};
-struct ControlMatrixProgramResource {std::uint8_t model_slot{};std::uint32_t descriptor{};std::uint8_t resource_class{};};
-struct ControlTypeZero {std::uint32_t parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};std::optional<ControlRouteDestination> destination{};std::optional<ControlMatrixProgramResource> matrix_program{};};
-struct ControlTypeOne {std::uint16_t parameter{};};
-struct ControlTypeTwo {std::uint32_t selector{},parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};std::optional<ControlModelReference> model_reference{};std::optional<std::uint8_t> matrix_resource_class{};};
-struct ControlTypeThree {std::uint32_t mode{};std::uint16_t parameter{};};
-struct ControlTypeFour {std::uint32_t mode{},selector{};};
-struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondary_parameter{};std::uint32_t completion{};std::uint8_t byte_parameter{};
-    // Additional fields written by the complete reset. Their consumer roles
-    // remain unresolved; they are typed state, not raw guest-layout storage.
-    std::uint16_t reset_sentinel{};std::uint8_t reset_byte_a{},reset_byte_b{};
-    std::array<float,3> position{};
-    std::uint16_t effect_parameter{};};
-struct ControlTypeNine {std::uint32_t parameter{};};
-struct ControlTypeSix {std::uint32_t selector{};};
-struct ControlTypeSeven {std::uint32_t selector{};};
-struct ControlTypeEleven {};
-struct ControlTypeThirteen {std::uint32_t selector{};std::uint16_t parameter{};};
-struct ControlOther {std::uint8_t type{};};
-using SceneControlBody=std::variant<ControlTypeZero,ControlTypeOne,ControlTypeTwo,ControlTypeThree,ControlTypeFour,ControlTypeFive,ControlTypeNine,ControlTypeThirteen,ControlOther,ControlTypeSix,ControlTypeSeven,ControlTypeEleven>;
-struct SceneControl {std::uint32_t authored_id{};std::uint8_t enabled{};SceneControlBody body;std::uint8_t counter{};};
+using SceneControlId=gameplay_scene::RecordId;
+
 enum class ControlCommand { zero_two_parameter,type_one_parameter,enable_even,disable_even,zero_word_byte,
     restart_five,reset_five,restart_five_byte,enable_odd,disable_odd,enable_one,disable_one,
     enable_zero_two,disable_zero_two,zero_two_half,enable_nine,enable_thirteen,refresh_zero_two };
@@ -67,7 +35,9 @@ public:
 // next link across a callback that retires it. Traversal reads next AFTER effect.
 class SceneControls final {
 public:
-    explicit SceneControls(std::size_t maximum=1024);
+    explicit SceneControls(std::size_t maximum=128);
+    explicit SceneControls(std::shared_ptr<gameplay_scene::Records>);
+    std::shared_ptr<gameplay_scene::Records> records()const noexcept{return pool_;}
     ~SceneControls();
     SceneControls(const SceneControls&)=delete;
     SceneControls& operator=(const SceneControls&)=delete;
@@ -79,7 +49,7 @@ public:
     void clear()noexcept;
     void enabled(bool value)noexcept{enabled_=value;}
     bool enabled()const noexcept{return enabled_;}
-    std::size_t size()const noexcept{return records_.size();}
+    std::size_t size()const noexcept{return pool_->size();}
     ControlResult apply(ControlCommand,const ControlArguments&,ControlEffects*,std::size_t maximum_visits=4096)noexcept;
     ControlResult apply_typed(bool enable,std::uint32_t type,std::uint32_t authored_id,std::uint32_t selector,std::size_t maximum_visits=4096)noexcept;
     ControlResult choose_five(std::uint32_t authored_id,const std::array<std::uint32_t,4>& choices,ActionChoices&,std::uint8_t character,bool permitted,gameplay_session::Random&,std::size_t maximum_visits=4096)noexcept;
@@ -89,12 +59,8 @@ public:
     ControlResult disable_three(std::size_t maximum_visits=4096)noexcept;
     ControlResult start_periodic(const PeriodicControlArguments&,PeriodicEffects&,std::size_t maximum_visits=4096)noexcept;
 private:
-    struct Node {SceneControlId id;SceneControl value;std::shared_ptr<Node> next;};
-    std::shared_ptr<const SceneControlDomain> domain_;
-    std::shared_ptr<Node> head_,tail_;
-    std::unordered_map<std::uint64_t,std::weak_ptr<Node>> records_;
-    std::uint64_t next_serial_{1};
-    std::size_t maximum_;
+    using Node=gameplay_scene::Records::Node;
+    std::shared_ptr<gameplay_scene::Records> pool_;
     bool enabled_{true},clearing_{};
     std::shared_ptr<Node> acquire(const SceneControlId&)const noexcept;
 };

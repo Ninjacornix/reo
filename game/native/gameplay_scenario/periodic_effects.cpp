@@ -85,7 +85,8 @@ ControlResult SceneControls::start_periodic(const PeriodicControlArguments& args
     if(!enabled_)return result;
     if(!(args.stop&0x8000)&&args.stop>=128){result.status=ControlStatus::invalid_profile;return result;}
     if(!effects.bound_to(*this)||!effects.admitted()){result.status=ControlStatus::provider_unavailable;return result;}
-    for(auto node=head_;node;node=node->next){
+    pool_->touch();
+    for(auto node=pool_->first();node;node=node->next){
         if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
         ++result.visited;if(node->value.authored_id!=args.authored_id)continue;
         auto* five=std::get_if<ControlTypeFive>(&node->value.body);

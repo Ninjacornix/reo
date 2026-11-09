@@ -1,22 +1,11 @@
 #pragma once
 #include "actors.hpp"
 #include "sweep.hpp"
+#include "../gameplay_scene/records.hpp"
 #include <memory>
 
 namespace reo::native::gameplay_collision::ownership {
-struct Domain;
-class Proxies;
-class Handle final {
-public:
-    Handle()=default;
-    explicit operator bool()const noexcept{return bool(domain_);}
-    friend bool operator==(const Handle&,const Handle&)=default;
-private:
-    std::shared_ptr<const Domain> domain_;
-    std::uint64_t generation_{};
-    std::uint32_t slot_{};
-    friend class Proxies;
-};
+using Handle=gameplay_scene::RecordId;
 struct Record {
     Proxy geometry;
     gameplay_actors::EntityId owner;
@@ -30,7 +19,18 @@ struct Selected {Handle proxy;gameplay_actors::EntityId actor;std::uint8_t query
 class Proxies final {
 public:
     explicit Proxies(std::uint32_t capacity=128,std::uint64_t maximum_generation=UINT64_MAX);
+    explicit Proxies(std::shared_ptr<gameplay_scene::Records>);
     ~Proxies();
+    std::shared_ptr<gameplay_scene::Records> records()const noexcept{return pool_;}
+    class InvocationLease final {
+    public:
+        explicit operator bool()const noexcept{return bool(node_);}
+        const gameplay_scene::Record* canonical()const noexcept{return node_?&node_->value:nullptr;}
+    private:
+        std::shared_ptr<const gameplay_scene::Records::Node> node_;
+        friend class Proxies;
+    };
+    InvocationLease acquire(const Handle&)const noexcept;
     Proxies(const Proxies&)=delete;
     Proxies& operator=(const Proxies&)=delete;
     std::optional<Handle> create(Record,bool prepend=false);
@@ -40,17 +40,15 @@ public:
     std::vector<Handle> ordered()const;
     std::optional<Selected> select(const ActorQuery&,gameplay_actors::EntityId,
                                   std::span<const ProxyState>)const;
-    std::size_t size()const noexcept{return order_.size();}
+    std::size_t size()const noexcept{return pool_->size();}
     void clear() noexcept;
 private:
-    struct Slot{std::optional<Record> record;std::uint64_t generation{};};
-    std::shared_ptr<const Domain> domain_;
-    std::vector<Slot> slots_;
-    std::vector<std::uint32_t> free_,order_;
-    std::uint64_t maximum_generation_;
+    std::shared_ptr<gameplay_scene::Records> pool_;
+    struct Projection {Handle id;std::optional<Record> value;};
+    mutable std::array<Projection,128> projections_{};
+    mutable std::uint64_t projection_revision_{UINT64_MAX},snapshot_revision_{UINT64_MAX};
     mutable std::optional<World> snapshot_;
-    bool matches(const Handle&)const noexcept;
-    Handle handle(std::uint32_t)const noexcept;
+
 };
 
 // Model-space constructors retain the original scaled-orthogonal inverse

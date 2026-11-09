@@ -4,7 +4,6 @@
 #include <stdexcept>
 
 namespace reo::native::gameplay_collision::ownership {
-struct Domain {};
 namespace {
 Vec3 add(Vec3 a,Vec3 b){return{a.x+b.x,a.y+b.y,a.z+b.z};}
 Vec3 sub(Vec3 a,Vec3 b){return{a.x-b.x,a.y-b.y,a.z-b.z};}
@@ -22,36 +21,91 @@ std::optional<Quad> world(const std::array<Vec3,4>& points,const actors::Basis& 
     Quad result;for(unsigned i=0;i<4;++i){const auto point=integer_xz(basis.point(points[i]));if(!point)return{};result[i]=*point;}return result;
 }
 }
-Proxies::Proxies(std::uint32_t capacity,std::uint64_t maximum):domain_(std::make_shared<Domain>()),slots_(capacity),maximum_generation_(maximum){
-    if(!capacity||capacity>128||!maximum)throw std::invalid_argument("Invalid native proxy capacity/generation");
-    free_.reserve(capacity);order_.reserve(capacity);for(std::uint32_t i=0;i<capacity;++i)free_.push_back(i);
+namespace {
+gameplay_scene::Record canonical_record(Record value){
+    using namespace gameplay_scenario;
+    gameplay_scene::Record result;
+    const auto& p=value.geometry;
+    result.authored_id=p.identifier;result.enabled=p.active?1:0;result.counter=p.priority;
+    result.body=ControlOther{p.kind};
+    if(p.kind==0&&value.door){
+        ControlTypeZero zero;zero.destination=ControlRouteDestination{value.door->destination_room,value.door->destination_door};
+        result.body=zero;result.door=gameplay_scene::DoorDetails{value.door->selector};
+    }
+    result.collision=gameplay_scene::CollisionShape{p.bounds,p.lower,p.upper,p.query_class,p.busy,p.object};
+    result.other_content=p.content_id;
+    result.other_resource_class=value.door?std::uint32_t(value.door->heading):(p.bypass_slot_guard?2u:0u);
+    result.owner=std::move(value.owner);result.source=std::move(value.source);
+    result.owner_snapshot=value.owner_snapshot;result.extra=value.extra;
+    return result;
+}
+Record projected_record(const gameplay_scene::Record& source){
+    Record result;result.geometry=gameplay_scene::collision_view(source);
+    result.owner=source.owner;result.source=source.source;
+    result.owner_snapshot=source.owner_snapshot;result.extra=source.extra;
+    if(source.door){
+        const auto* zero=std::get_if<gameplay_scenario::ControlTypeZero>(&source.body);
+        if(zero&&zero->destination&&source.other_resource_class){
+            const auto selector=zero->matrix_program?std::optional<std::uint32_t>(zero->matrix_program->resource_class):source.door->selector_without_matrix;
+            if(selector)result.door=Door{source.authored_id,zero->destination->room,zero->destination->edge,std::uint16_t(*source.other_resource_class),*selector};
+        }
+    }
+    return result;
+}
+}
+Proxies::Proxies(std::uint32_t capacity,std::uint64_t maximum):pool_(std::make_shared<gameplay_scene::Records>(capacity,maximum)){}
+Proxies::Proxies(std::shared_ptr<gameplay_scene::Records> pool):pool_(std::move(pool)){
+    if(!pool_)throw std::invalid_argument("Missing canonical scene record owner");
 }
 Proxies::~Proxies()=default;
-bool Proxies::matches(const Handle& id)const noexcept{return id.domain_==domain_&&id.slot_<slots_.size()&&id.generation_!=0&&slots_[id.slot_].generation==id.generation_&&bool(slots_[id.slot_].record);}
-Handle Proxies::handle(std::uint32_t slot)const noexcept{Handle id;id.domain_=domain_;id.slot_=slot;id.generation_=slots_[slot].generation;return id;}
-std::optional<Handle> Proxies::create(Record record,bool prepend){
-    if(free_.empty())return{};
-    snapshot_.reset();
-    const auto slot=free_.back();free_.pop_back();auto& target=slots_[slot];++target.generation;target.record=std::move(record);
-    if(prepend)order_.insert(order_.begin(),slot);else order_.push_back(slot);return handle(slot);
+Proxies::InvocationLease Proxies::acquire(const Handle& id)const noexcept{InvocationLease lease;lease.node_=pool_->acquire(id);return lease;}
+std::optional<Handle> Proxies::create(Record record,bool prepend){return pool_->create(canonical_record(std::move(record)),prepend?gameplay_scene::Placement::oldest:gameplay_scene::Placement::newest);}
+bool Proxies::retire(const Handle& id)noexcept{return pool_->retire(id);}
+const Record* Proxies::get(const Handle& id)const noexcept{
+    const auto node=pool_->acquire(id);if(!node)return nullptr;
+    if(projection_revision_!=pool_->revision()){
+        for(auto& item:projections_)item.value.reset();
+        projection_revision_=pool_->revision();
+    }
+    for(const auto& item:projections_)if(item.value&&item.id==id)return &*item.value;
+    for(auto& item:projections_)if(!item.value){item.id=id;item.value=projected_record(node->value);return &*item.value;}
+    return nullptr;
 }
-bool Proxies::retire(const Handle& id)noexcept{
-    if(!matches(id))return false;
-    snapshot_.reset();
-    auto& slot=slots_[id.slot_];slot.record.reset();order_.erase(std::find(order_.begin(),order_.end(),id.slot_));
-    if(slot.generation<maximum_generation_)free_.push_back(id.slot_);
+bool Proxies::replace(const Handle& id,Record value)noexcept{
+    const auto node=pool_->acquire(id);if(!node)return false;
+    // A geometry/ownership edit cannot erase script-owned parameters. Update
+    // only the shared fields actually exposed by the collision projection.
+    auto& record=node->value;const auto& p=value.geometry;
+    if(p.kind!=gameplay_scene::kind(record.body))return false;
+    pool_->touch();record.authored_id=p.identifier;record.counter=p.priority;
+    if((record.enabled!=0)!=p.active)record.enabled=p.active?1:0;
+    record.collision=gameplay_scene::CollisionShape{p.bounds,p.lower,p.upper,p.query_class,p.busy,p.object};
+    if(auto* zero=std::get_if<gameplay_scenario::ControlTypeZero>(&record.body);zero&&zero->destination){
+        zero->destination->edge=p.content_id;
+        if(value.door){zero->destination=gameplay_scenario::ControlRouteDestination{value.door->destination_room,value.door->destination_door};record.door=gameplay_scene::DoorDetails{};
+            record.other_resource_class=value.door->heading;
+            if(zero->matrix_program)zero->matrix_program->resource_class=value.door->selector;else record.door->selector_without_matrix=value.door->selector;}
+    }else if(auto* two=std::get_if<gameplay_scenario::ControlTypeTwo>(&record.body);two&&two->model_reference)two->model_reference->descriptor=p.content_id;
+    else record.other_content=p.content_id;
+    if(auto* two=std::get_if<gameplay_scenario::ControlTypeTwo>(&record.body)){
+        if((two->matrix_resource_class==2)!=p.bypass_slot_guard)two->matrix_resource_class=p.bypass_slot_guard?2u:0u;
+    }else if((record.other_resource_class==2)!=p.bypass_slot_guard)record.other_resource_class=p.bypass_slot_guard?2u:0u;
+    record.owner=std::move(value.owner);record.source=std::move(value.source);record.owner_snapshot=value.owner_snapshot;record.extra=value.extra;
     return true;
 }
-const Record* Proxies::get(const Handle& id)const noexcept{return matches(id)?&*slots_[id.slot_].record:nullptr;}
-bool Proxies::replace(const Handle& id,Record record)noexcept{if(!matches(id))return false;snapshot_.reset();slots_[id.slot_].record=std::move(record);return true;}
-std::vector<Handle> Proxies::ordered()const{std::vector<Handle> result;result.reserve(order_.size());for(const auto slot:order_)result.push_back(handle(slot));return result;}
+std::vector<Handle> Proxies::ordered()const{return pool_->ordered();}
 std::optional<Selected> Proxies::select(const ActorQuery& query,gameplay_actors::EntityId actor,std::span<const ProxyState> states)const{
-    if(!actor||states.size()!=order_.size())return{};
-    if(!snapshot_){std::vector<Proxy> proxies;proxies.reserve(order_.size());for(const auto slot:order_)proxies.push_back(slots_[slot].record->geometry);snapshot_.emplace(1,std::move(proxies));}
+    if(!actor||states.size()!=pool_->size())return{};
+    const auto order=pool_->ordered();
+    if(!snapshot_||snapshot_revision_!=pool_->revision()){
+        std::vector<Proxy> proxies;proxies.reserve(order.size());
+        for(const auto& id:order)proxies.push_back(gameplay_scene::collision_view(pool_->acquire(id)->value));
+        snapshot_.emplace(1,std::move(proxies));snapshot_revision_=pool_->revision();
+    }
     const auto selected=snapshot_->select(query,states);if(!selected)return{};
-    return Selected{handle(order_[selected->id.index]),std::move(actor),selected->query_class};
+    return Selected{order[selected->id.index],std::move(actor),selected->query_class};
 }
-void Proxies::clear()noexcept{while(!order_.empty())(void)retire(handle(order_.back()));}
+void Proxies::clear()noexcept{pool_->clear();}
 std::optional<Proxy> depth_extension(const Proxy& source,const actors::Basis& basis)noexcept{
     auto points=local(source.bounds,basis);if(!points)return{};std::array<unsigned,2> selected{4,4};
     for(unsigned scan=0;scan<2;++scan){float best=10000;for(unsigned i=0;i<4;++i){if(scan&&i==selected[0])continue;const auto value=std::abs((*points)[i].z);if(value<best){best=value;selected[scan]=i;}}if(selected[scan]==4)return{};}

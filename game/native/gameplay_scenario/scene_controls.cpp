@@ -3,20 +3,20 @@
 #include <utility>
 
 namespace reo::native::gameplay_scenario {
-struct SceneControlDomain {};
-SceneControls::SceneControls(std::size_t maximum):domain_(std::make_shared<SceneControlDomain>()),maximum_(maximum){}
-SceneControls::~SceneControls(){clear();}
-std::shared_ptr<SceneControls::Node> SceneControls::acquire(const SceneControlId& id)const noexcept{
-    if(id.domain_!=domain_)return{};
-    const auto found=records_.find(id.serial_);return found==records_.end()?nullptr:found->second.lock();
+SceneControls::SceneControls(std::size_t maximum):pool_(std::make_shared<gameplay_scene::Records>(std::uint32_t(maximum))){
+    if(maximum>128)throw std::invalid_argument("Native scene pool exceeds 128 records");
 }
+SceneControls::SceneControls(std::shared_ptr<gameplay_scene::Records> pool):pool_(std::move(pool)){
+    if(!pool_)throw std::invalid_argument("Missing canonical scene record owner");
+}
+SceneControls::~SceneControls()=default;
+std::shared_ptr<SceneControls::Node> SceneControls::acquire(const SceneControlId& id)const noexcept{return pool_->acquire(id);}
 std::optional<SceneControlId> SceneControls::append(SceneControl value){
-    if(clearing_||!next_serial_||records_.size()>=maximum_)return{};
-    SceneControlId id;id.domain_=domain_;id.serial_=next_serial_;
-    auto node=std::make_shared<Node>(Node{id,std::move(value),{}});
-    records_.emplace(next_serial_,node);++next_serial_;
-    if(tail_)tail_->next=node;else head_=node;
-    tail_=node;return id;
+    if(clearing_)return{};
+    gameplay_scene::Record record;static_cast<SceneControl&>(record)=std::move(value);
+    // Standalone append preserves its established traversal order. The room
+    // importer explicitly uses newest, as original 5C11B0(0) does.
+    return pool_->create(std::move(record),gameplay_scene::Placement::oldest);
 }
 std::optional<SceneControl> SceneControls::get(const SceneControlId& id)const noexcept{
     const auto node=acquire(id);if(!node)return{};
@@ -24,38 +24,25 @@ std::optional<SceneControl> SceneControls::get(const SceneControlId& id)const no
 }
 ControlStatus SceneControls::replace(const SceneControlId& id,SceneControl value)noexcept{
     const auto node=acquire(id);if(!node)return ControlStatus::invalid_identity;
-    node->value=std::move(value);return ControlStatus::completed;
+    pool_->touch();static_cast<SceneControl&>(node->value)=std::move(value);return ControlStatus::completed;
 }
 ControlStatus SceneControls::reset_five(const SceneControlId& id)noexcept{
     const auto node=acquire(id);if(!node)return ControlStatus::invalid_identity;
     auto* five=std::get_if<ControlTypeFive>(&node->value.body);if(!five)return ControlStatus::invalid_profile;
-    node->value.enabled=0;five->selector=0;five->reset_sentinel=UINT16_MAX;
+    pool_->touch();node->value.enabled=0;five->selector=0;five->reset_sentinel=UINT16_MAX;
     five->reset_byte_a=0;five->reset_byte_b=0;five->duration=0;five->countdown=0;
     five->completion=UINT32_MAX;five->byte_parameter=UINT8_MAX;five->secondary_parameter=0;
     return ControlStatus::completed;
 }
-ControlStatus SceneControls::erase(const SceneControlId& id)noexcept{
-    const auto node=acquire(id);if(!node)return ControlStatus::invalid_identity;
-    if(head_==node)head_=node->next;
-    else{auto previous=head_;while(previous&&previous->next!=node)previous=previous->next;
-        if(!previous)return ControlStatus::invalid_identity;
-        previous->next=node->next;
-        if(tail_==node)tail_=previous;
-    }
-    if(tail_==node)tail_=head_;
-    records_.erase(id.serial_);return ControlStatus::completed;
-}
+ControlStatus SceneControls::erase(const SceneControlId& id)noexcept{return pool_->retire(id)?ControlStatus::completed:ControlStatus::invalid_identity;}
 void SceneControls::clear()noexcept{
     if(clearing_)return;
-    clearing_=true;records_.clear();tail_.reset();
-    auto current=std::move(head_);
-    while(current){auto next=std::move(current->next);current.reset();current=std::move(next);}
-    clearing_=false;
+    clearing_=true;pool_->clear();clearing_=false;
 }
 ControlRouteResult SceneControls::first_route(std::uint8_t authored_id,std::size_t maximum_visits)const noexcept{
     ControlRouteResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
     if(!enabled_)return result;
-    for(auto node=head_;node;node=node->next){
+    for(auto node=pool_->first();node;node=node->next){
         if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
         ++result.visited;const auto* other=std::get_if<ControlOther>(&node->value.body);
         const bool type=std::holds_alternative<ControlTypeZero>(node->value.body)||std::holds_alternative<ControlTypeTwo>(node->value.body)||(other&&(other->type==0||other->type==2));
@@ -65,8 +52,9 @@ ControlRouteResult SceneControls::first_route(std::uint8_t authored_id,std::size
 }
 ControlResult SceneControls::disable_three(std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    pool_->touch();
     if(!enabled_)return result;
-    for(auto node=head_;node;node=node->next){
+    for(auto node=pool_->first();node;node=node->next){
         if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
         ++result.visited;const auto* other=std::get_if<ControlOther>(&node->value.body);
         if(std::holds_alternative<ControlTypeThree>(node->value.body)||(other&&other->type==3)){node->value.enabled=0;++result.matched;}
@@ -75,11 +63,12 @@ ControlResult SceneControls::disable_three(std::size_t maximum_visits)noexcept{
 }
 ControlResult SceneControls::choose_five(std::uint32_t authored_id,const std::array<std::uint32_t,4>& choices,ActionChoices& selection,std::uint8_t character,bool permitted,gameplay_session::Random& random,std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    pool_->touch();
     if(!enabled_||!permitted)return result;
-    for(auto node=head_;node;node=node->next)if(node->value.authored_id==authored_id){
+    for(auto node=pool_->first();node;node=node->next)if(node->value.authored_id==authored_id){
         if(const auto* other=std::get_if<ControlOther>(&node->value.body);other&&other->type==5){result.status=ControlStatus::invalid_profile;return result;}
     }
-    for(auto node=head_;node;node=node->next){
+    for(auto node=pool_->first();node;node=node->next){
         if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
         ++result.visited;
         if(node->value.authored_id!=authored_id||!std::holds_alternative<ControlTypeFive>(node->value.body))continue;
@@ -92,14 +81,15 @@ ControlResult SceneControls::choose_five(std::uint32_t authored_id,const std::ar
 }
 ControlResult SceneControls::apply_typed(bool enable,std::uint32_t type,std::uint32_t authored_id,std::uint32_t selector,std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    pool_->touch();
     if(!enabled_)return result;
     const bool supported=type==0||type==1||type==2||type==3||type==4||type==6||type==7||type==11||type==13;
     // An opaque tag does not supply the fields required by a typed command.
     // Refuse before mutating earlier records, rather than inventing values.
-    if(supported)for(auto node=head_;node;node=node->next){
+    if(supported)for(auto node=pool_->first();node;node=node->next){
         if(const auto* other=std::get_if<ControlOther>(&node->value.body);other&&other->type==type){result.status=ControlStatus::invalid_profile;return result;}
     }
-    for(auto node=head_;node;node=node->next){
+    for(auto node=pool_->first();node;node=node->next){
         if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
         ++result.visited;auto& record=node->value;const auto& body=record.body;bool match=false;
         switch(type){
@@ -120,10 +110,11 @@ ControlResult SceneControls::apply_typed(bool enable,std::uint32_t type,std::uin
 }
 ControlResult SceneControls::apply(ControlCommand command,const ControlArguments& a,ControlEffects* effects,std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    pool_->touch();
     if(!enabled_)return result;
     // Missing dependencies refuse before any record in this operation mutates.
     if(!effects&&command==ControlCommand::refresh_zero_two){
-        for(auto node=head_;node;node=node->next)if(node->value.authored_id==a.authored_id){
+        for(auto node=pool_->first();node;node=node->next)if(node->value.authored_id==a.authored_id){
             const auto& body=node->value.body;
             if(std::holds_alternative<ControlTypeZero>(body)||
                 (std::holds_alternative<ControlTypeTwo>(body)&&std::get<ControlTypeTwo>(body).selector!=0)){
@@ -131,7 +122,7 @@ ControlResult SceneControls::apply(ControlCommand command,const ControlArguments
             }
         }
     }
-    for(auto node=head_;node;node=node->next){
+    for(auto node=pool_->first();node;node=node->next){
         if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
         ++result.visited;auto& record=node->value;
         if(command==ControlCommand::enable_thirteen){const auto* thirteen=std::get_if<ControlTypeThirteen>(&record.body);if(!thirteen||thirteen->selector!=a.authored_id)continue;}
@@ -155,6 +146,7 @@ ControlResult SceneControls::apply(ControlCommand command,const ControlArguments
         case ControlCommand::restart_five:case ControlCommand::reset_five:case ControlCommand::restart_five_byte:
             if(std::holds_alternative<ControlTypeFive>(body)){
                 if(effects)effects->reset(*this,node->id);else reset_five(node->id);
+                pool_->touch(); // effects may have observed the reset activation
                 auto* five=std::get_if<ControlTypeFive>(&node->value.body);
                 if(!five){result.status=ControlStatus::invalid_profile;return result;}
                 if(command!=ControlCommand::reset_five){node->value.enabled=1;five->selector=std::uint16_t(a.parameter);
