@@ -43,7 +43,7 @@ void update_behavior(World& w,Actor& a,BehaviorServices& services,
             services.run(BehaviorStage::prepare_control,w,a);
             services.run(BehaviorStage::analog_control,w,a);
             services.run(BehaviorStage::cooperation,w,a);
-            if(services.locally_controlled(a,s) && s.inventory_modal)
+            if(services.locally_controlled(a,s) && s.inventory_owner)
                 services.run(BehaviorStage::consume_control_request,w,a);
             else services.dispatch(ActionPass::primary,a.primary,w,a);
             if(a.primary!=s.previous_primary || a.secondary!=s.previous_secondary || a.phase==0xff){

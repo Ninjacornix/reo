@@ -6,6 +6,7 @@ separately. This is not a claim of transitive original action/provider coverage.
 import argparse,hashlib,json,os,re,subprocess
 from pathlib import Path
 from audit_retail_effect_descriptors import compare_source,elf_reader
+from effect_work_sources import SURFACE_WORLD_UNITS
 ROOT=Path(__file__).resolve().parents[2]
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
@@ -18,10 +19,19 @@ def main():
   begin,end=[int(x,16) for x in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/src).read_text()).groups()]
   read=main_read if begin<0x570000 else lambda at,n:raw[at-0x570000:at-0x570000+n]
   proof.append(compare_source('complete canonical actor behavior orchestration',src,begin,end,read))
- native=['game/native/gameplay_world/'+n for n in ['world.hpp','world.cpp','behavior.hpp','behavior.cpp','surfaces.hpp','surfaces.cpp','motion.hpp','motion.cpp']]
+ units=['game/native/'+n for n in ['gameplay_world/world.cpp','gameplay_world/behavior.cpp','gameplay_world/motion.cpp','gameplay_world/surfaces.cpp','gameplay_collision/response.cpp','gameplay_collision/collision.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_actors/status.cpp','gameplay_actors/hit.cpp','gameplay_session/session.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp']]
+ units=list(dict.fromkeys(units+SURFACE_WORLD_UNITS))
+ native=units+['game/native/gameplay_world/'+n for n in ['world.hpp','behavior.hpp','surfaces.hpp','motion.hpp']]
  native += [p.relative_to(ROOT).as_posix() for d in ['gameplay_actors','gameplay_session'] for p in (ROOT/'game/native'/d).glob('*') if p.suffix in ['.hpp','.cpp']]
  fixture=['tools/native_reconstruction/gameplay_world_oracle/behavior_tests.cpp','tools/native_reconstruction/gameplay_world_oracle/hit_fixture.hpp','tools/native_reconstruction/gameplay_actor_oracle/status_runtime.hpp','tools/native_reconstruction/verify_gameplay_behavior.py']
  native += ['game/native/gameplay_collision/'+n for n in ['collision.cpp','collision.hpp','response.cpp','response.hpp','actors.hpp','contact_component.hpp','hit_regions.hpp','spatial.hpp']]
+ for name in native:
+  for include in re.findall(r'^\s*#include "([^"]+)"',(ROOT/name).read_text(),re.M):
+   local=((ROOT/name).parent/include).resolve();target=local if local.is_file() else (ROOT/include).resolve()
+   assert target.is_file() and target.is_relative_to(ROOT),(name,include)
+   relative=target.relative_to(ROOT).as_posix()
+   if relative not in native:native.append(relative)
+ native=list(dict.fromkeys(native))
  files=sources+native+fixture;before={n:sha(ROOT/n) for n in files};out.mkdir(parents=True)
  record=dict(schema=1,status='failed',compiler=str(a.compiler),compiler_sha256=sha(a.compiler),source_sha256=before,original_owned_bodies=proof,full_original_behavior_body=True,declared_child_native_ports=['660310 status','6607D0 zero-health','660AF0 pending-hit'],declared_action_and_surface_providers=True,game_launched=False,installed_in_game=False,stage4_complete=False)
  try:
@@ -37,8 +47,7 @@ def main():
   (out/'functions.h').write_text('#pragma once\n'+declarations)
   for name in ['o2_functions.h','ps2_recompiled_functions.h']:(out/name).write_text('#pragma once\n#include "functions.h"\n')
   env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','');binary=out/'native-behavior.exe'
-  units=['gameplay_world/world.cpp','gameplay_world/behavior.cpp','gameplay_world/motion.cpp','gameplay_world/surfaces.cpp','gameplay_collision/response.cpp','gameplay_collision/collision.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_actors/status.cpp','gameplay_actors/hit.cpp','gameplay_session/session.cpp']
-  command=[str(a.compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source')]+[str(out/'source/game/native'/n) for n in units]+[str(out/'tests.cpp'),'-o',str(binary)];record['command']=command
+  command=[str(a.compiler),'-std=c++20','-O2','-msse4.1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source')]+[str(out/'source'/n) for n in units]+[str(out/'tests.cpp'),'-o',str(binary)];record['command']=command
   result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=180);(out/'compile.txt').write_text(result.stdout+result.stderr,encoding='utf8');assert result.returncode==0,'compile failed; see compile.txt'
   result=subprocess.run([str(binary)],env=env,capture_output=True,text=True,timeout=90);(out/'run.txt').write_text(result.stdout+result.stderr,encoding='utf8');assert result.returncode==0,'comparison failed; see run.txt'
   record['result']=json.loads(result.stdout);assert record['result']['cases']==32768

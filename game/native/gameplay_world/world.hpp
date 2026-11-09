@@ -93,7 +93,7 @@ struct Session : actors::HitSession {
     gameplay_session::Random random{};
     gameplay_session::Options options;
     std::uint8_t previous_primary{},previous_secondary{};
-    bool inventory_modal{};
+    std::uint8_t inventory_owner{}; // source4BADEE: zero inactive,1..4 primary owner tags
     std::uint8_t control_notice{};
     std::optional<std::uint16_t> scenario;
     std::optional<std::uint16_t> last_scenario_audio; // original316550, written even when a bank request is rejected

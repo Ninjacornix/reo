@@ -20,11 +20,11 @@ void write_actor(std::uint8_t* r,const gw::Actor& a){
 void read_world(std::uint8_t* r,gw::World& w){
     static_cast<g::HitSession&>(w.session())=read_session(r);
     w.session().previous_primary=r[0x744648];w.session().previous_secondary=r[0x744640];
-    w.session().inventory_modal=r[0x4badee]!=0;
+    w.session().inventory_owner=r[0x4badee];
     w.session().random.restore({get<std::uint16_t>(r,0x234ba8),get<std::uint16_t>(r,0x234baa),r[0x234bac]});
 }
 void write_world(std::uint8_t* r,const gw::World& w){
-    const auto& s=w.session();write_session(r,s);r[0x744648]=s.previous_primary;r[0x744640]=s.previous_secondary;r[0x4badee]=s.inventory_modal?1:0;
+    const auto& s=w.session();write_session(r,s);r[0x744648]=s.previous_primary;r[0x744640]=s.previous_secondary;r[0x4badee]=s.inventory_owner;
     const auto rng=s.random.state();put(r,0x234ba8,rng.primary);put(r,0x234baa,rng.secondary);r[0x234bac]=rng.observed;
 }
 struct BehaviorPorts final:gw::BehaviorServices {
@@ -39,7 +39,7 @@ struct BehaviorPorts final:gw::BehaviorServices {
         if(stage==gw::BehaviorStage::progression && core.seed%11==0)a.category=1;
         if(stage==gw::BehaviorStage::interaction && core.seed%13==0)w.session().authority_filter=!w.session().authority_filter;
         if(stage==gw::BehaviorStage::terminal_timer && core.seed%17==0)a.category=0;
-        if(stage==gw::BehaviorStage::cooperation && core.seed%19==0)w.session().inventory_modal=true;
+        if(stage==gw::BehaviorStage::cooperation && core.seed%19==0)w.session().inventory_owner=std::uint8_t(1+core.seed%4);
         if(stage==gw::BehaviorStage::consume_control_request)a.secondary=7;
         if(stage==gw::BehaviorStage::update_attachment && core.seed%3==0)a.status^=0x80;
     }
@@ -147,7 +147,7 @@ int main()try{
         a.action_elapsed=seed%5?seed:UINT32_MAX;a.control_elapsed=seed%7?UINT32_MAX-1:UINT32_MAX;
         auto& s=w.session();s=gw::Session{};s.mode=std::uint8_t(seed%3);s.room=std::uint16_t((seed/8)%3);
         s.selected_actor=std::uint8_t((seed/7)%4);s.authority_filter=seed%2;s.paused=seed%7==0;s.clock_mode=std::uint8_t(seed%2);
-        s.inventory_modal=seed%3==0;s.previous_primary=17;s.previous_secondary=18;s.random.restore({std::uint16_t(seed),23,17});
+        s.inventory_owner=std::uint8_t(seed/3);s.previous_primary=17;s.previous_secondary=18;s.random.restore({std::uint16_t(seed),23,17});
         write_actor(ram.data(),a);write_world(ram.data(),w);std::copy(ram.begin()+base,ram.begin()+base+0x10e0,expected.begin()+base);
         // Reset the bounded observed ranges, retaining guard bytes elsewhere.
         std::copy(ram.begin()+0x234ba0,ram.begin()+0x234bb0,expected.begin()+0x234ba0);

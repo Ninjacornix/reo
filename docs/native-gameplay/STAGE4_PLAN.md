@@ -1,8 +1,9 @@
 # Stage 4: native gameplay and scheduling
 
-Status, 2026-11-09: implementation started; **Stage 4 is incomplete**. The user
-requested the whole stage and explicitly revoked the earlier conditional
-PC-sleep action for this work. Do not request sleep after this stage.
+Status, 2026-11-10: implementation started; **Stage 4 is incomplete**. The user
+requested the whole stage. Their latest instruction authorizes PC sleep only
+after the entire stage is complete and validated; do not sleep at a component
+checkpoint or while required work remains.
 
 The current resource and inventory implementation includes:
 
@@ -28,6 +29,9 @@ side effects. [Primary equipment selection](EQUIPMENT_SELECTION.md) also compare
 through actual attachment construction and signed action publication, including
 full model and sound capacity. Equipment use/recipe/transfer, extended actors, special companions, actual
 installation and game acceptance remain open; the stage is still incomplete.
+The [inventory owner correction](INVENTORY_OWNER_TAG.md) preserves the modal
+owner byte rather than collapsing player identities to a boolean. Current
+behavior comparisons cover all256 values; the actual inventory UI remains open.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners
