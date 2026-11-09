@@ -1,0 +1,172 @@
+#include "game/native/gameplay_scenario/interpreter.hpp"
+#include "original_fixture.hpp"
+#include "original_declarations.inc"
+#include <algorithm>
+#include <iostream>
+#include <tuple>
+namespace vm=reo::native::gameplay_scenario;
+namespace tasks=reo::native::gameplay_tasks;
+namespace {
+std::size_t checks{},invocations{};
+std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint8_t>> notifications;
+void check(bool ok){++checks;if(!ok)throw std::runtime_error("Scenario differential assertion "+std::to_string(checks));}
+void put(std::vector<std::byte>& bytes,std::uint32_t value){for(unsigned i=0;i<4;++i)bytes.push_back(std::byte((value>>(8*i))&255));}
+std::uint32_t emit(std::vector<std::byte>& bytes,std::uint32_t opcode,std::initializer_list<std::uint32_t> payload={},unsigned minimum_exponent=0){
+    unsigned exponent=minimum_exponent;while((4u<<exponent)<4+payload.size()*4)++exponent;
+    const auto begin=static_cast<std::uint32_t>(bytes.size());put(bytes,(exponent<<24)|opcode);for(auto v:payload)put(bytes,v);
+    bytes.resize(begin+(4u<<exponent));return begin;
+}
+constexpr std::uint32_t addresses[]={0x4b9c00,0x4b9a80,0x4b9b40,0x4b9c40,0x4b9c80,0x4bac50};
+std::vector<std::tuple<std::uint32_t,std::uint32_t,bool,std::uint8_t>> strided_notifications;
+std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint32_t>> messages;
+std::vector<std::uint32_t> queries;
+std::int32_t predicate_value{};
+struct Flags final:vm::Flags {
+    std::array<std::array<std::uint32_t,4>,6> banks{};
+    std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint8_t>> notices;
+    std::array<std::array<std::uint16_t,6>,4> strided_flags{};
+    std::vector<std::tuple<std::uint32_t,std::uint32_t,bool,std::uint8_t>> strided_notices;
+    std::optional<bool> get(vm::FlagBank bank,std::uint32_t id)const noexcept override{
+        if(id>=128)return{};
+        return bool(banks[static_cast<unsigned>(bank)][id/32]&(1u<<(id&31)));
+    }
+    bool write(vm::FlagBank bank,std::uint32_t id,bool enabled)noexcept override{
+        if(id>=128)return false;
+        auto& word=banks[static_cast<unsigned>(bank)][id/32];const auto mask=1u<<(id&31);
+        if(enabled)word|=mask;else word&=~mask;return true;
+    }
+    bool scenario(std::uint32_t id,std::uint8_t raw,vm::NotifyOwner,std::uint8_t actor_owner)noexcept override{
+        if(!write(vm::FlagBank::scenario,id,raw!=0))return false;
+        notices.emplace_back(id,raw,actor_owner);return true;
+    }
+    bool strided(std::uint32_t record,std::uint32_t bit,std::uint8_t slot,bool set,bool notify)noexcept override{
+        if(record>=4||slot>=6)return false;
+        auto& flags=strided_flags[record][slot];const auto mask=std::uint16_t(1u<<(bit&31));
+        flags=set?std::uint16_t(flags|mask):std::uint16_t(flags&~mask);
+        if(notify)strided_notices.emplace_back(record,bit,set,slot);
+        return true;
+    }
+};
+struct Signals final:vm::Signals {
+    std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint32_t>> sent;
+    std::vector<std::uint32_t> asked;
+    bool send(const vm::SignalMessage& m)noexcept override{sent.emplace_back(m.id,m.value,m.parameter);return true;}
+    std::optional<std::int32_t> query(std::uint32_t id)noexcept override{asked.push_back(id);return predicate_value;}
+};
+void done(R5900Context* c){c->pc=GPR_U32(c,31);}
+void mode(std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U32(c,2,0);done(c);}
+void flag(std::uint8_t* ram,std::uint32_t id,bool value){auto bits=fixture_read<std::uint32_t>(ram,addresses[0]+(id/32)*4);if(value)bits|=1u<<(id&31);else bits&=~(1u<<(id&31));fixture_write(ram,addresses[0]+(id/32)*4,bits);}
+void fixture_scenario(std::uint8_t* ram,R5900Context* c,bool selected){
+    const auto id=GPR_U32(c,4);const auto value=std::uint8_t(GPR_U32(c,5));flag(ram,id,value!=0);
+    notifications.emplace_back(id,value,selected?std::uint8_t(ram[0x4baded]+1):0);SET_GPR_U32(c,2,0);done(c);
+}
+void compare(vm::Interpreter& native,std::vector<std::uint8_t>& ram,std::size_t channel,const Flags& flags,const tasks::FlagTimers& timers,const Signals& signals){
+    const auto& c=native.channels()[channel];const auto original_position=[&](vm::Position p){return p.block==UINT32_MAX?0u:0x10000u+p.block*0x10000u+p.offset;};
+    check(fixture_read<std::uint32_t>(ram.data(),0x4bace0+4*channel)==original_position(c.current));
+    check(fixture_read<std::uint32_t>(ram.data(),0x4bacf8+4*channel)==c.countdown);
+    check(fixture_read<std::uint32_t>(ram.data(),0x4bad10+4*channel)==c.block_index);
+    check(fixture_read<std::uint32_t>(ram.data(),0x4bad28+4*channel)==original_position(c.saved));
+    check(fixture_read<std::uint32_t>(ram.data(),0x4bad58+4*channel)==c.condition);
+    check(ram[0x4badc1]==native.selected_channel());
+    for(std::size_t bank=0;bank<6;++bank)for(std::size_t i=0;i<4;++i)check(fixture_read<std::uint32_t>(ram.data(),addresses[bank]+4*i)==flags.banks[bank][i]);
+    check(notifications==flags.notices);
+    check(strided_notifications==flags.strided_notices);check(messages==signals.sent);check(queries==signals.asked);
+    for(std::size_t i=0;i<4;++i){check(native.counters()[i]==fixture_read<std::uint32_t>(ram.data(),0x4bada8+4*i));
+        for(std::size_t slot=0;slot<6;++slot)check(flags.strided_flags[i][slot]==fixture_read<std::uint16_t>(ram.data(),0x4b9e20+12*i+2*slot));
+    }
+    for(std::size_t actor=0;actor<4;++actor)for(std::size_t slot=0;slot<4;++slot){const auto& e=native.actor_events()[actor][slot];
+        check(ram[0x4bac94+16*actor+slot]==e.active);check(ram[0x4bac98+16*actor+slot]==e.kind);
+        check(fixture_read<std::uint16_t>(ram.data(),0x4bac9c+16*actor+2*slot)==e.value);
+    }
+    for(std::size_t i=0;i<8;++i){const auto& t=timers.snapshot()[i];check(fixture_read<std::int16_t>(ram.data(),0x4bad88+2*i)==t.remaining);
+        const auto expected=std::uint16_t(t.target.id|(t.target.scope==tasks::FlagScope::session_owner_zero?0x8000:0));
+        check(fixture_read<std::uint16_t>(ram.data(),0x4bad98+2*i)==expected);
+    }
+}
+void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false){
+    std::vector<std::uint8_t> ram(0x800000);for(std::size_t i=0;i<blocks.size();++i){std::memcpy(ram.data()+0x10000+i*0x10000,blocks[i].data(),blocks[i].size());fixture_write<std::uint32_t>(ram.data(),0x90000+4*i,0x10000+std::uint32_t(i)*0x10000);}
+    std::memcpy(ram.data()+0x717830,original_opcode_table.data(),original_opcode_table.size()*4);
+    std::memcpy(ram.data()+0x717600,original_opener_table.data(),original_opener_table.size()*4);
+    std::memcpy(ram.data()+0x7408d0,original_counter_comparisons.data(),original_counter_comparisons.size()*4);
+    ram[0x3243e8]=1;ram[0x4baded]=actor;fixture_write<std::uint32_t>(ram.data(),0x4bace0+4*channel,0x10000);
+    fixture_write<std::uint32_t>(ram.data(),0x4bad28+4*channel,0x10000+saved.block*0x10000+saved.offset);
+    fixture_write<std::uint32_t>(ram.data(),0x4bad40+4*channel,0x90000);
+    Flags flags;flags.notices.reserve(100);flags.strided_notices.reserve(100);if(condition){flags.banks[0][0]=1;fixture_write<std::uint32_t>(ram.data(),0x4b9c00,1);}
+    Signals signals;signals.sent.reserve(100);signals.asked.reserve(100);
+    notifications.clear();notifications.reserve(100);strided_notifications.clear();strided_notifications.reserve(100);messages.clear();messages.reserve(100);queries.clear();queries.reserve(100);
+    tasks::FlagTimers timers;vm::Interpreter native;
+    auto program=std::make_shared<const vm::Program>(std::move(blocks));vm::Channel state{program,{0,0},saved,0,0,0};check(native.restore_channel(channel,state)==vm::Status::completed);
+    for(unsigned i=0;i<ticks;++i){R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
+        o2_0068C660_0x68c660(ram.data(),&ctx,&runtime);check(ctx.pc==0xdeadbeef);
+        const auto result=native.tick(channel,{true,false,actor},{&flags,&timers,&signals});check(result.status==vm::Status::yielded);
+        compare(native,ram,channel,flags,timers,signals);++invocations;
+    }
+}
+}
+void o2_005703E0_0x5703e0(std::uint8_t* r,R5900Context* c,PS2Runtime*){fixture_scenario(r,c,true);}
+void o2_00570450_0x570450(std::uint8_t* r,R5900Context* c,PS2Runtime*){fixture_scenario(r,c,false);}
+void o2_00570970_0x570970(std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto id=GPR_U32(c,4);if(id<128)r[0x4b9c80+id/8]|=std::uint8_t(1u<<(id&7));SET_GPR_U32(c,2,0);done(c);}
+void strided_fixture(std::uint8_t* r,R5900Context* c,bool set,bool notify){
+    const auto record=GPR_U32(c,4),bit=GPR_U32(c,5);const auto slot=std::uint8_t(GPR_U32(c,6));
+    const auto mask=std::uint16_t(1u<<(bit&31));auto flags=fixture_read<std::uint16_t>(r,0x4b9e20+12*record+2*slot);
+    flags=set?std::uint16_t(flags|mask):std::uint16_t(flags&~mask);fixture_write(r,0x4b9e20+12*record+2*slot,flags);
+    if(notify)strided_notifications.emplace_back(record,bit,set,slot);
+    SET_GPR_U32(c,2,0);done(c);
+}
+void o2_00570670_0x570670(std::uint8_t* r,R5900Context* c,PS2Runtime*){strided_fixture(r,c,true,false);}
+void o2_00570620_0x570620(std::uint8_t* r,R5900Context* c,PS2Runtime*){strided_fixture(r,c,false,false);}
+void o2_005706B0_0x5706b0(std::uint8_t* r,R5900Context* c,PS2Runtime*){strided_fixture(r,c,true,true);}
+void o2_00570700_0x570700(std::uint8_t* r,R5900Context* c,PS2Runtime*){strided_fixture(r,c,false,true);}
+void o2_005709E0_0x5709e0(std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto id=GPR_U32(c,4);if(id<16){auto f=fixture_read<std::uint16_t>(r,0x4bac50);fixture_write(r,0x4bac50,std::uint16_t(f|(1u<<id)));}SET_GPR_U32(c,2,0);done(c);}
+void o2_00680220_0x680220(std::uint8_t*,R5900Context* c,PS2Runtime*){messages.emplace_back(GPR_U32(c,4),std::uint8_t(GPR_U32(c,5)),GPR_U32(c,6));SET_GPR_U32(c,2,0);done(c);}
+void o2_00680850_0x680850(std::uint8_t*,R5900Context* c,PS2Runtime*){queries.push_back(GPR_U32(c,4));SET_GPR_S32(c,2,predicate_value);done(c);}
+PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
+    if(at==0x1b02d0)return mode;
+    switch(at){
+#include "original_lookup.inc"
+    default:throw std::runtime_error("Unqualified original VM dispatch "+std::to_string(at));
+    }
+}
+#include "offline_tests.inc"
+int main()try{
+    {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
+    for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
+    {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
+    for(bool wanted:{false,true}){std::vector<std::byte> b;emit(b,8,{0,1});emit(b,0xb,{1,5,0xff});emit(b,0xe4);emit(b,0xb,{1,6,1});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},3,2,1,wanted);}
+    for(unsigned selector:{0u,1u,2u,3u})for(unsigned actor=0;actor<4;++actor){
+        std::vector<std::byte> b;emit(b,0xb,{selector,3,0xff});emit(b,0xb,{selector,3,0});emit(b,0xc,{0,5,1});emit(b,0xc,{1,7,1});
+        emit(b,5,{3,0x12345678,0xff});emit(b,5,{3,9,4});emit(b,6,{3});emit(b,5,{3,0xfffe,0x81});
+        emit(b,0x44,{127});emit(b,0x44,{128});emit(b,0x45,{selector,0x8123,7,0x1ffff});emit(b,0x45,{0,1,8,4});const auto end=emit(b,0xa);
+        run({b},{0,end},2,(selector+actor)%6,std::uint8_t(actor));
+    }
+    {std::vector<std::byte> b;for(std::size_t i=0;i<original_opcode_table.size();++i)if(original_opcode_table[i]==0x68cd80||i==0x192)emit(b,std::uint32_t(i),{},unsigned(i%6));const auto end=emit(b,0xa);run({b},{0,end},1);}
+    for(auto p:{-1,0,1,2})for(auto op:{0x47u,0x48u})for(auto wanted:{0u,1u,0xffffffffu}){
+        predicate_value=p;std::vector<std::byte> b;emit(b,0x46,{17,0x1234ff81,0x76543210});emit(b,op,{99,wanted});
+        emit(b,0xb,{1,11,1});emit(b,0xe4);emit(b,0xb,{1,12,1});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);
+    }
+    for(auto bit:{0u,15u,16u,31u,32u,0xffffffffu}){
+        std::vector<std::byte> b;for(auto op:{0x40u,0x41u,0x42u,0x43u})emit(b,op,{2,bit});
+        emit(b,0x44,{127});emit(b,0x49,{127,1});emit(b,0xe5);emit(b,0x4c,{bit});emit(b,0x4d,{bit,1});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);
+    }
+    for(auto operation:{0u,1u,2u,3u,4u,5u,6u})for(auto actual:{0u,1u,0x80000000u,0xffffffffu})for(auto expected:{0u,1u,0x80000000u,0xffffffffu}){
+        std::vector<std::byte> b;emit(b,0x110,{0,actual});emit(b,0x111,{1,0xffffffff});emit(b,0x111,{1,2});emit(b,0x112,{2,1});
+        emit(b,0x113,{0,expected,operation});emit(b,0xb,{1,9,1});emit(b,0xe4);emit(b,0xb,{1,10,1});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},1);
+    }
+    {std::vector<std::byte> b;emit(b,0x110,{3,0xffffffff});emit(b,0x110,{4,123});emit(b,0x114);emit(b,0x113,{4,0,0});const auto end=emit(b,0xa);run({b},{0,end},2);}
+    for(unsigned exponent=0;exponent<256;++exponent)check(vm::Program::record_bytes(exponent<<24)==std::uint32_t((1u<<(exponent&31))*4u));
+    // Admission cannot execute a few native handlers then silently fall back.
+    {std::vector<std::byte> b;emit(b,1);emit(b,0x180,{},2);emit(b,0xa);vm::Interpreter n;const auto p=std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b});check(n.install(0,p)==vm::Status::unsupported_opcode);}
+    {std::vector<std::byte> b;emit(b,3,{0});vm::Interpreter n;check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);check(n.tick(0,{}, {},8).status==vm::Status::budget_exhausted);}
+    offline_tests();
+    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"coverage\":{";
+    bool first_profile=true;
+    for(const auto profile:{vm::DispatchProfile::ordinary,vm::DispatchProfile::offline_actor}){
+        if(!first_profile)std::cout<<',';
+        first_profile=false;
+        std::cout<<'"'<<(profile==vm::DispatchProfile::ordinary?"ordinary":"offline_actor")<<"\":{\"native_algorithm\":[";
+        const auto coverage=vm::Interpreter::coverage(profile);unsigned count=0;
+        for(std::size_t i=0;i<coverage.size();++i){if(i)std::cout<<',';std::cout<<(coverage[i].native_algorithm?"true":"false");count+=coverage[i].native_algorithm?1u:0u;}
+        std::cout<<"],\"count\":"<<count<<",\"total\":432}";
+    }
+    std::cout<<"},\"game_launched\":false}\n";
+}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
