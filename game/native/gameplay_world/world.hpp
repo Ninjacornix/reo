@@ -43,6 +43,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t selected_resource{},secondary_resource{},model_pose_class{};
     float motion_rate{1};
     std::uint16_t resource_action{};
+    std::uint16_t linked_model_variant{};
     std::uint16_t contact_flags{},pending_notice{};
     std::uint16_t action_flags{};
     float surface_blend_weight{},surface_blend_rate{};
@@ -97,6 +98,7 @@ enum class Stage {
     refresh_grid_position,finish_actor,publish_notice
 };
 class World;
+class LinkedModelPool;
 class Services {
 public:
     virtual ~Services()=default;
@@ -122,6 +124,9 @@ public:
     World& operator=(const World&)=delete;
     actors::EntityCreated spawn_primary(std::size_t,std::unique_ptr<Actor>)noexcept;
     actors::EntityStatus retire_primary(std::size_t)noexcept;
+    actors::EntityCreated spawn_linked(std::unique_ptr<Actor>)noexcept;
+    actors::EntityStatus retire_linked(const actors::EntityId&)noexcept;
+    LinkedModelPool& linked_models();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
     std::shared_ptr<Actor> resolve(const actors::EntityId&)const noexcept;
     actors::EntityId identity(std::size_t)const noexcept;
@@ -147,6 +152,7 @@ public:
 private:
     actors::EntityStore entities_;
     std::array<actors::EntityId,8> primary_;
+    std::unique_ptr<LinkedModelPool> linked_models_;
     std::vector<input::Remap> layouts_;
     std::vector<input::ControllerFrame> controllers_;
     bool updating_{},closed_{};

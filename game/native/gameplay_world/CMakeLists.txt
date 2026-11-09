@@ -1,5 +1,6 @@
 add_library(reo_native_gameplay_world STATIC world.cpp behavior.cpp surfaces.cpp collision.cpp collision_phase.cpp motion.cpp motion_transforms.cpp bodies.cpp surface_orientation.cpp surface_orientation_math.cpp model_poses.cpp model_constraints.cpp animation.cpp motion_selection.cpp motion_profiles.cpp motion_resources.cpp)
 target_compile_features(reo_native_gameplay_world PUBLIC cxx_std_20)
+target_sources(reo_native_gameplay_world PRIVATE linked_models.cpp)
 target_include_directories(reo_native_gameplay_world PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(reo_native_gameplay_world PUBLIC reo_native_gameplay_actors reo_native_gameplay_session reo_native_gameplay_collision reo_native_transform_math reo_native_animation)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

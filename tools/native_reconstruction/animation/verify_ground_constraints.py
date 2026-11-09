@@ -27,7 +27,7 @@ def main():
  originals=list(entries.values());proof=[]
  for n in originals:
   begin,end=[int(v,16)for v in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/n).read_text()).groups()];proof.append(compare_source('complete original skeleton/model/frame/root or math body',n,begin,end,read if begin<0x370000 else (lambda at,size:o0raw[at-0x370000:at-0x370000+size])if begin<0x570000 else lambda at,size:overlay[at-0x570000:at-0x570000+size]))
- native_cpp=['game/native/'+n for n in ['animation/constraints.cpp','animation/constraint_math.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp','gameplay_world/model_poses.cpp','gameplay_world/model_constraints.cpp','gameplay_world/world.cpp','gameplay_world/bodies.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp','gameplay_collision/actors.cpp','gameplay_collision/actor_views.cpp']]
+ native_cpp=['game/native/'+n for n in ['animation/constraints.cpp','animation/constraint_math.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp','gameplay_world/model_poses.cpp','gameplay_world/model_constraints.cpp','gameplay_world/linked_models.cpp','gameplay_world/world.cpp','gameplay_world/bodies.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp','gameplay_collision/actors.cpp','gameplay_collision/actor_views.cpp']]
  native=set(native_cpp);pending=list(native_cpp)
  while pending:
   n=pending.pop()

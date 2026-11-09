@@ -30,13 +30,16 @@ void initialize_model_constraints(World& world,Actor& actor){
     actor.constraints->initialize_mirrored(world.paused,{actor.model_scale.x,actor.model_scale.y,actor.model_scale.z});
 }
 ModelConstraintReport rebuild_model_constraints(World& world,Actor& actor,ModelPoseKind kind,const ModelCorrectionScales& scales,const gameplay_collision::response::Grid* floors){
-    ModelConstraintReport report;
-    if(!actor.active)return report;
-    report.visited=true;
+    if(!actor.active)return {};
     if(!actor.model)throw std::runtime_error("Required canonical native model unavailable");
     actor.collision.basis.translation={actor.position.x,actor.position.y,actor.position.z};
     actor.model->root_scale({actor.model_scale.x,actor.model_scale.y,actor.model_scale.z});
     correct_model_height(world,actor,scales);
+    return rebuild_model_after_prelude(world,actor,kind,scales,floors);
+}
+ModelConstraintReport rebuild_model_after_prelude(World& world,Actor& actor,ModelPoseKind kind,const ModelCorrectionScales& scales,const gameplay_collision::response::Grid* floors){
+    ModelConstraintReport report;report.visited=true;
+    if(!actor.model)throw std::runtime_error("Required canonical native model unavailable");
     const auto parent=matrix(actor.collision.basis);
     if(kind==ModelPoseKind::linked_actor||(actor.contact_flags&0x12)||world.paused!=0){actor.model->rebuild(parent);joint_two(actor);return report;}
     if(!actor.constraints||actor.constraints->model()!=actor.model)throw std::runtime_error("Native model constraint owner missing, foreign or stale");

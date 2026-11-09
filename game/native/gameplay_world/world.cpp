@@ -1,4 +1,5 @@
 #include "world.hpp"
+#include "linked_models.hpp"
 #include <bit>
 #include <exception>
 #include <stdexcept>
@@ -21,7 +22,7 @@ World::World(Profile profile,std::shared_ptr<Session> session):session_(admitted
 World::~World(){
     // Destroying an owner during its own active member call is a violated C++
     // lifetime precondition. It cannot be repaired by returning to that call.
-    if(updating_)std::terminate();
+    if(updating_||(linked_models_&&linked_models_->busy()))std::terminate();
     (void)close(); // Reentrant actor destruction sees a sealed, intact owner.
 }
 actors::EntityCreated World::spawn_primary(std::size_t index,std::unique_ptr<Actor> actor)noexcept{
@@ -37,6 +38,21 @@ actors::EntityStatus World::retire_primary(std::size_t index)noexcept{
     auto id=std::exchange(primary_[index],{});
     return entities_.retire(id);
 }
+actors::EntityCreated World::spawn_linked(std::unique_ptr<Actor> actor)noexcept{
+    if(closed_)return{actors::EntityStatus::closed,{}};
+    if(!actor)return{actors::EntityStatus::invalid,{}};
+    return entities_.create(std::move(actor));
+}
+actors::EntityStatus World::retire_linked(const actors::EntityId& id)noexcept{
+    if(closed_)return actors::EntityStatus::closed;
+    for(const auto& primary:primary_)if(primary==id)return actors::EntityStatus::invalid;
+    return entities_.retire(id);
+}
+LinkedModelPool& World::linked_models(){
+    if(closed_)throw std::runtime_error("Native linked model owner is closed");
+    if(!linked_models_)linked_models_.reset(new LinkedModelPool(*this));
+    return *linked_models_;
+}
 std::shared_ptr<Actor> World::resolve(const actors::EntityId& id)const noexcept{
     if(closed_)return{};
     return std::dynamic_pointer_cast<Actor>(entities_.acquire(id));
@@ -48,8 +64,10 @@ actors::EntityId World::identity(std::size_t index)const noexcept{
     return index<primary_.size()?primary_[index]:actors::EntityId{};
 }
 Status World::close()noexcept{
-    if(updating_)return Status::busy;
-    closed_=true;primary_.fill({});entities_.shutdown();return Status::completed;
+    if(updating_||(linked_models_&&linked_models_->busy()))return Status::busy;
+    closed_=true;primary_.fill({});
+    if(linked_models_)(void)linked_models_->close();
+    entities_.shutdown();return Status::completed;
 }
 Result World::update_primary(Services& services){
     if(closed_)return{Status::closed};

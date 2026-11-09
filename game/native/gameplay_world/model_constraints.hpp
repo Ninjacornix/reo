@@ -15,6 +15,10 @@ void initialize_model_constraints(World&,Actor&);
 // Full5D6400 policy after the common model prelude. A missing Grid is permitted
 // only for actual branches that do not query it. Active attachments remain a
 // separate required frameModel phase after this model/constraint publication.
+// Actual5D6400/standard publication after the caller has performed its own
+// admission, basis/root-scale and type-specific model prelude. No activity test.
+ModelConstraintReport rebuild_model_after_prelude(World&,Actor&,ModelPoseKind,
+    const ModelCorrectionScales&,const gameplay_collision::response::Grid* floors);
 ModelConstraintReport rebuild_model_constraints(World&,Actor&,ModelPoseKind,
     const ModelCorrectionScales&,const gameplay_collision::response::Grid* floors);
 } // namespace reo::native::gameplay_world
