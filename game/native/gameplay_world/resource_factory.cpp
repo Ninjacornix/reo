@@ -11,12 +11,18 @@ constexpr std::array<std::array<std::uint32_t,7>,8> orientations{{
 float finite(float value){if(!std::isfinite(value))throw std::domain_error("Native resource placement finite arithmetic required");return value;}
 }
 ResourceFactory::ResourceFactory(ResourceModels& models,ResourceFrames& frames,
-    const gameplay_scenario::ResourceTemplates& templates,std::shared_ptr<const ResourceStaticAssets> assets):models_(models),frames_(frames),templates_(templates),assets_(std::move(assets)){
+    const gameplay_scenario::ResourceTemplates& templates,std::shared_ptr<const ResourceStaticAssets> assets):models_(models),frames_(frames),templates_(templates),assets_(std::move(assets)),token_(std::make_shared<ResourceFactoryToken>(ResourceFactoryToken{this})){
     if(!assets_||!frames_.open()||!frames_.bound_to(models_)||!frames_.templates_bound_to(templates_))throw std::invalid_argument("Native resource factory owners unavailable or foreign");
+}
+ResourceFactory::~ResourceFactory(){token_->owner=nullptr;}
+DelayedResourceWork::DelayedResourceWork(ResourceFactory& factory):owner_(factory.token_){}
+void DelayedResourceWork::update(ResourceModels& models,const ResourceModelId& id,ResourceModel& model){
+    const auto token=owner_.lock();if(!token||!token->owner)throw std::runtime_error("Native delayed resource factory retired");
+    token->owner->delayed_frame(models,id,model);
 }
 ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t){
     if(!frames_.open())return{ResourceModelStatus::closed,{},{}};
-    auto created=models_.create(ResourceModelPlacement::back);
+    auto created=models_.create(ResourceModelPlacement::front);
     if(created.status!=ResourceModelStatus::completed)return created;
     try{
         const auto selector=std::bit_cast<std::uint8_t>(templates_.selector(std::bit_cast<std::int16_t>(content)));
@@ -25,7 +31,7 @@ ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t){
             if(selector>=templates_.state().templates.size())throw std::runtime_error("Native resource callback template unavailable");
             callback_class=std::to_integer<std::uint8_t>(templates_.state().templates[selector].encoded[20]);
         }
-        if(callback_class!=0&&callback_class!=1&&callback_class!=3)throw std::runtime_error("Native resource factory callback consumer unavailable");
+        if(callback_class>3)throw std::runtime_error("Native resource factory callback consumer unavailable");
         switch(content){case 0x75:case 0x135:case 0x1d:case 0x1c:case 0x3200:case 0x72:throw std::runtime_error("Native resource companion visual consumer unavailable");default:break;}
         const auto index=assets_->find(std::bit_cast<std::int16_t>(content));
         auto& model=*created.model;
@@ -36,10 +42,42 @@ ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t){
             for(unsigned part=0;part<model.base_parts->count;++part){model.parts[part]=model.base_parts->poses[part];model.part_enabled[part]=1;}
         }
         if(callback_class==1)model.work=std::make_shared<WeaponModelWork>(frames_);
+        else if(callback_class==2)model.work=std::make_shared<DelayedResourceWork>(*this);
         else model.work=std::make_shared<CommonModelWork>(frames_);
         return created;
     }catch(const std::bad_alloc&){(void)models_.retire(created.id);return{ResourceModelStatus::no_memory,{},{}};}
     catch(const std::exception&){(void)models_.retire(created.id);return{ResourceModelStatus::unavailable,{},{}};}
+}
+ResourceModelCreated ResourceFactory::create_delayed(std::uint16_t content,std::int16_t ticks){
+    if(!frames_.open())return{ResourceModelStatus::closed,{},{}};
+    auto result=models_.create(ResourceModelPlacement::front);if(result.status!=ResourceModelStatus::completed)return result;
+    try{
+        auto& model=*result.model;model.active=true;model.category=8;model.content_id=content;model.draw_tag=255;model.asset_index=assets_->find(std::bit_cast<std::int16_t>(content));
+        model.program.elapsed=frames_.world_.session().clock_mode?std::int16_t(ticks/2):ticks;model.pose=transform_math::identity();model.axis_scale={1,1,1};model.work=std::make_shared<DelayedResourceWork>(*this);return result;
+    }catch(const std::bad_alloc&){(void)models_.retire(result.id);return{ResourceModelStatus::no_memory,{},{}};}
+    catch(const std::exception&){(void)models_.retire(result.id);return{ResourceModelStatus::unavailable,{},{}};}
+}
+void ResourceFactory::delayed_frame(ResourceModels& models,const ResourceModelId& id,ResourceModel& model){
+    using namespace gameplay_scenario;
+    if(&models!=&models_)throw std::runtime_error("Native delayed resource model owner foreign");
+    frames_.admit(id,model);
+    model.visible=false;model.program.elapsed=std::bit_cast<std::int16_t>(std::uint16_t(std::int32_t(model.program.elapsed)-1));
+    if(model.program.elapsed)return;
+    const auto descriptor_id=frames_.resources_.slot(model.resource_slot);auto descriptor=descriptor_id?frames_.resources_.get(*descriptor_id):std::nullopt;
+    if(!descriptor)throw std::runtime_error("Native delayed resource descriptor unavailable");
+    if(!descriptor->active)return;
+    if(descriptor->room==frames_.world_.room&&!descriptor->ownership_tag){
+        const auto placed=place(*descriptor_id);if(placed.status!=ResourceModelStatus::completed&&placed.status!=ResourceModelStatus::full)throw std::runtime_error("Native delayed resource primary construction unavailable");
+        descriptor=frames_.resources_.get(*descriptor_id);if(!descriptor)throw std::runtime_error("Native delayed resource descriptor changed");
+        if(!(descriptor->flags&0x200000u))return;
+        descriptor->flags&=~0x200000u;if(frames_.resources_.replace(*descriptor_id,*descriptor)!=SceneStatus::completed)throw std::runtime_error("Native delayed resource descriptor changed");
+        if(!descriptor->ownership_tag){
+            if(!collisions_||scene_room_!=frames_.world_.room)throw std::runtime_error("Native delayed resource secondary owner unavailable");
+            const auto secondary=collisions_->replace(*descriptor_id);if(secondary.status!=ResourceCollisionStatus::completed&&secondary.status!=ResourceCollisionStatus::full)throw std::runtime_error("Native delayed resource secondary construction unavailable");
+        }
+    }else{
+        descriptor->flags&=~0x200000u;if(frames_.resources_.replace(*descriptor_id,*descriptor)!=SceneStatus::completed)throw std::runtime_error("Native delayed resource descriptor changed");
+    }
 }
 bool ResourceFactory::bind_scene(gameplay_scenario::ResourceCollisions& collisions,
     std::shared_ptr<const gameplay_collision::response::Grid> floors,std::uint16_t room)noexcept{

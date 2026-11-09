@@ -18,6 +18,11 @@ The [primary scene-placement follow-up](RESOURCE_PLACEMENT.md) now connects
 session RNG and floor queries. Both compiler comparisons include actual pool
 exhaustion. Delayed callbacks, special companions and game installation remain
 open; this is not full Stage4 completion.
+The [delayed-resource follow-up](RESOURCE_DELAYED.md) now supplies591400 and
+593550/class2 through those real construction owners, including self-replacement
+and same-pass continuation. It also corrects the new factory's insertion end;
+fresh comparisons explicitly cover multi-model list order. Scenario-command
+binding, special companions and actual game installation remain open.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners

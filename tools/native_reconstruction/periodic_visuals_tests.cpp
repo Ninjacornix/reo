@@ -113,6 +113,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_PLACEMENT
 #include "tools/native_reconstruction/resource_placement_tests.inc"
 #endif
+#ifdef REO_RESOURCE_DELAYED
+#include "tools/native_reconstruction/resource_delayed_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -200,6 +203,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_PLACEMENT
     compare_resource_placement(argv[2],argv[3],ram);
 #endif
+#ifdef REO_RESOURCE_DELAYED
+    compare_resource_delayed(argv[2],argv[3],ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
@@ -219,6 +225,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_PLACEMENT
     <<",\"placement_cases\":"<<placement_cases<<",\"placement_owned\":"<<placement_owned<<",\"placement_refusals\":"<<placement_refusals<<",\"placement_full\":"<<placement_full<<",\"placement_floor_queries\":"<<placement_floor_queries
 #endif
+#ifdef REO_RESOURCE_DELAYED
+    <<",\"delayed_constructors\":"<<delayed_constructors<<",\"delayed_frames\":"<<delayed_frames<<",\"delayed_rebuilds\":"<<delayed_rebuilds<<",\"delayed_refusals\":"<<delayed_refusals<<",\"delayed_full_cases\":"<<delayed_full_cases
+#endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;
 }catch(const std::exception& error){std::cerr<<error.what()
@@ -230,5 +239,8 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_FACTORY
     <<" factory cases="<<factory_cases
+#endif
+#ifdef REO_RESOURCE_DELAYED
+    <<" delayed constructors="<<delayed_constructors<<" frames="<<delayed_frames<<" rebuilds="<<delayed_rebuilds
 #endif
     <<'\n';return 1;}
