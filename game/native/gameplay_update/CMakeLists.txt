@@ -1,0 +1,7 @@
+add_library(reo_native_gameplay_update STATIC update.cpp)
+target_compile_features(reo_native_gameplay_update PUBLIC cxx_std_20)
+target_link_libraries(reo_native_gameplay_update PUBLIC reo_native_gameplay_world reo_native_gameplay_tasks reo_native_gameplay_scenario)
+target_include_directories(reo_native_gameplay_update PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_gameplay_update PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

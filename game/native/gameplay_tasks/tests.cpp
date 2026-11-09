@@ -137,6 +137,15 @@ void event_slots(){
     check(pass.visited==10&&pass.called==2&&log==std::vector<int>({1,0,5,2,4,0,6,4}),"live later event slot executes same pass with callback-modified owner selection");
     check(!owner.contains(first.handle)&&owner.contains(third.handle),"event lifecycle invalidates only retired task");
     check(owner.clear()==g::Status::completed&&owner.size()==0&&!owner.contains(third.handle),"event ownership clears without stale aliases");
+    std::uint8_t canonical=9;auto borrowed=g::OwnerSelection::borrow(canonical);
+    auto observe=std::make_shared<EventWork>(5,log);
+    observe->action=[&](auto&,const auto&,auto context){
+        check(&context.owner.actor==&canonical,"event owner is canonical session storage");
+        context.owner.actor=21;check(canonical==21,"callback selection publication is synchronous");
+    };
+    check(owner.install(0,0,observe).status==g::Status::completed,"borrowed event owner install");
+    check(owner.run(g::EventMode::shared_bank,borrowed).called==1&&canonical==21,"shared borrowed selection retained");
+    check(owner.run(g::EventMode::owner_banks,borrowed).called==1&&canonical==0,"borrowed owner banks normalize canonical selection");
 }
 }
 int main(){ordering();mutation_and_lifetime();oldest_and_bounds();timer_edges_and_events();clocks();event_slots();std::printf("Native gameplay ownership/order/timer/clock checks passed: %u assertions\n",checks);}

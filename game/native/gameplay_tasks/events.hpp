@@ -4,7 +4,19 @@
 namespace reo::native::gameplay_tasks {
 // Session-owned native selection, explicitly passed instead of an implicit
 // mutable global. Shared-bank callbacks see the caller's incoming selection.
-struct OwnerSelection { std::uint8_t actor{}; };
+class OwnerSelection {
+    std::uint8_t owned_{};
+    struct Borrow {};
+    OwnerSelection(std::uint8_t& value,Borrow)noexcept:actor(value){}
+public:
+    explicit OwnerSelection(std::uint8_t value=0)noexcept:owned_(value),actor(owned_){}
+    // Bind directly to the canonical native session. Selection writes during a
+    // callback must be visible to other session consumers before it returns.
+    static OwnerSelection borrow(std::uint8_t& value)noexcept{return OwnerSelection(value,Borrow{});}
+    OwnerSelection(const OwnerSelection&)=delete;
+    OwnerSelection& operator=(const OwnerSelection&)=delete;
+    std::uint8_t& actor;
+};
 struct EventContext { std::uint8_t bank{}, slot{}; OwnerSelection& owner; };
 enum class EventMode { shared_bank, owner_banks };
 class EventTask {
