@@ -1,0 +1,46 @@
+#include "game/native/animation/motion_bank.hpp"
+#include "reference.hpp"
+#include <fstream>
+#include <iostream>
+#include <vector>
+namespace a=reo::native::animation;
+#include "constants.hpp"
+#include "functions.h"
+std::uint64_t checks{},calls{},constructed{},releases{},bank_cases{},live_slots{},lookup_cases{},lifetime_cases{},refusal_cases{};
+void check(bool yes,const std::string& why){++checks;if(!yes)throw std::runtime_error(why);}
+template<class T>T get(const std::uint8_t* p,std::uint32_t at){return transform_read<T>(p,at);}
+template<class T>void put(std::uint8_t* p,std::uint32_t at,T v){transform_write(p,at,v);}
+constexpr std::uint32_t raw_base=0x800000;
+struct Token{unsigned asset{};std::size_t offset{};};std::vector<Token> tokens(1);Token pending;unsigned current_asset{};
+void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
+ ++calls;
+ if(context->pc==0x1d3550){const auto raw=GPR_U32(context,6);check(raw>=raw_base,"original pack seam identifies owned raw block");pending={current_asset,raw-raw_base};context->pc=GPR_U32(context,31);return;}
+ if(context->pc==0x192500){check(tokens.size()<65536,"bounded fixture token identity");tokens.push_back(pending);SET_GPR_U32(context,2,std::uint32_t(tokens.size()-1));++constructed;context->pc=GPR_U32(context,31);return;}
+ if(context->pc==0x1925a0){check(GPR_U32(context,4)>0&&GPR_U32(context,4)<tokens.size(),"release preserves valid old token identity");++releases;context->pc=GPR_U32(context,31);return;}
+ switch(context->pc){
+#include "original_dispatch.hpp"
+ default:throw std::runtime_error("unadmitted original bank helper "+std::to_string(context->pc));
+ }
+}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#include "original_banks.cpp"
+#pragma GCC diagnostic pop
+void call(std::uint8_t* ram,std::uint32_t at,std::uint32_t arg0,std::uint32_t arg1=0,std::uint32_t arg2=0,std::uint32_t arg3=0,std::uint32_t arg4=0){R5900Context c;c.pc=at;SET_GPR_U32(&c,4,arg0);SET_GPR_U32(&c,5,arg1);SET_GPR_U32(&c,6,arg2);SET_GPR_U32(&c,7,arg3);SET_GPR_U32(&c,8,arg4);SET_GPR_U32(&c,29,0x1f00000);SET_GPR_U32(&c,31,0xabcdef);PS2Runtime r;original_transform_port(ram,&c,&r);check(c.pc==0xabcdef&&GPR_U32(&c,29)==0x1f00000,"complete original constructor returned");}
+std::vector<std::vector<std::byte>> load(const char* path){std::ifstream f(path,std::ios::binary);std::uint32_t n{};f.read(reinterpret_cast<char*>(&n),4);check(n==5,"five owned whole bank assets");std::vector<std::vector<std::byte>> result;for(unsigned i=0;i<n;++i){std::uint32_t size{};f.read(reinterpret_cast<char*>(&size),4);check(size&&size<0x400000,"owned bank size");result.emplace_back(size);f.read(reinterpret_cast<char*>(result.back().data()),size);check(bool(f),"complete original bank bytes");}return result;}
+void compare(const a::MotionBank& bank,const std::vector<std::uint8_t>& ram,std::uint32_t at){
+ check(bank.first_track()==ram[at]&&bank.track_count()==ram[at+1]&&unsigned(bank.kind())==ram[at+2],"source bank header");
+ for(unsigned i=0;i<2000;++i){const auto token=get<std::uint16_t>(ram.data(),at+4+2*i);const auto block=bank.slots()[i];check(bool(block)==bool(token),"actual sparse/strided live slot "+std::to_string(i));if(token){check(token<tokens.size(),"slot token provenance");const auto expected=tokens[token];check(block->source_offset()==expected.offset&&block->source_identity()==std::to_string(expected.asset),"owned raw block identity through original memoization and overwrite");++live_slots;}if(bank.kind()==a::MotionBankKind::sparse)check(bank.rows()[i]==get<std::uint16_t>(ram.data(),at+0xfa4+2*i),"complete original logical-row map");}
+ for(unsigned key=0;key<2000;++key)for(unsigned track=0;track<bank.track_count();++track){const auto slot=bank.kind()==a::MotionBankKind::sparse?std::size_t(get<std::uint16_t>(ram.data(),at+0xfa4+2*key))+track:200ull*(key/100)+(key%100)*bank.track_count()+track;if(slot>=2000)continue;const auto expected=get<std::uint16_t>(ram.data(),at+4+2*slot);check(bank.find(key,std::uint16_t(track))==bank.slots()[slot]&&bool(bank.find(key,std::uint16_t(track)))==bool(expected),"actual original query-index formula");++lookup_cases;}
+ ++bank_cases;
+}
+int main(int argc,char** argv)try{
+ check(argc==2,"whole owned bank package required");std::vector<std::uint8_t> ram(0x2000000);constants(ram.data());put(ram.data(),0x32440c,raw_base);const auto assets=load(argv[1]);std::array<a::MotionBank,2> native;std::shared_ptr<const a::MotionBlock> retained;
+ for(unsigned cycle=0;cycle<5;++cycle){current_asset=cycle%2;const auto& bytes=assets[current_asset];std::memcpy(ram.data()+raw_base,bytes.data(),bytes.size());const auto mode=cycle?1u:0u;native[0].load_sparse(bytes,8,std::uint8_t(mode),std::to_string(current_asset));native[1].load_sparse(bytes,168,std::uint8_t(mode),std::to_string(current_asset));call(ram.data(),0x1d19d0,raw_base,std::uint32_t(bytes.size()),mode);compare(native[0],ram,0x4e8970);compare(native[1],ram,0x4e6a20);if(!retained)for(const auto& block:native[0].slots())if(block){retained=block;break;}check(retained&&!retained->bytes().empty(),"native raw-block lease survives bank overwrite");++lifetime_cases;}
+ // Real cutscene-format assets use the actual strided construction path; no
+ // room identity is inferred from a duplicate basename in the archive.
+ for(current_asset=2;current_asset<assets.size();++current_asset){for(unsigned kind=0;kind<2;++kind){const auto& bytes=assets[current_asset];std::memcpy(ram.data()+raw_base,bytes.data(),bytes.size());constexpr std::uint32_t destination=0x200000;std::fill_n(ram.data()+destination,0x1f44,0);a::MotionBank bank;bank.load_strided(bytes,kind?500:200,0,std::to_string(current_asset));if(kind)call(ram.data(),0x1d1990,raw_base,destination,std::uint32_t(bytes.size()));else call(ram.data(),0x1d1960,raw_base,destination,std::uint32_t(bytes.size()),200);compare(bank,ram,destination);}}
+ {current_asset=0;const auto& bytes=assets[0];std::memcpy(ram.data()+raw_base,bytes.data(),bytes.size());constexpr std::uint32_t destination=0x200000;std::fill_n(ram.data()+destination,0x1f44,0);a::MotionBank bank;bank.load_sparse(bytes,8,2,"0");call(ram.data(),0x1d1940,raw_base,destination,std::uint32_t(bytes.size()),2);compare(bank,ram,destination);auto held=bank.slots()[5];const auto before=std::vector<std::shared_ptr<const a::MotionBlock>>(bank.slots().begin(),bank.slots().end());auto malformed=bytes;std::uint32_t zero=0;std::memcpy(malformed.data()+4,&zero,4);bool refused{};try{bank.load_sparse(malformed,8,0,"bad-width");}catch(const std::invalid_argument&){refused=true;}check(refused&&std::equal(before.begin(),before.end(),bank.slots().begin()),"malformed asset refuses without replacing existing owned slots");++refusal_cases;refused=false;try{bank.load_sparse(bytes,8,3,"unknown-mode");}catch(const std::invalid_argument&){refused=true;}check(refused&&bank.slots()[5]==held,"unsupported mode retains admitted bank owner");++refusal_cases;}
+ {a::MotionBank temporary;temporary.load_sparse(assets[0],8,0,"retained");auto held=temporary.slots()[5];check(held!=nullptr,"real initial sparse row");const auto data=std::vector<std::byte>(held->bytes().begin(),held->bytes().end());temporary=a::MotionBank{};check(std::equal(data.begin(),data.end(),held->bytes().begin(),held->bytes().end()),"immutable raw lease survives native bank destruction");++lifetime_cases;}
+ check(constructed>0&&releases>0&&live_slots>0,"real original allocation/memoization/release and native ownership exercised");std::cout<<"{\"checks\":"<<checks<<",\"bank_cases\":"<<bank_cases<<",\"live_slots\":"<<live_slots<<",\"query_cases\":"<<lookup_cases<<",\"packed_block_seam_calls\":"<<constructed<<",\"release_seam_calls\":"<<releases<<",\"refusal_cases\":"<<refusal_cases<<",\"lifetime_cases\":"<<lifetime_cases<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
+}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

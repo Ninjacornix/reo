@@ -48,6 +48,7 @@ public:
     std::shared_ptr<const JointSnapshot> retain()const noexcept{return snapshot_;}
 private:
     friend class Constraints;
+    friend class PoseBlend;
     struct Binding {std::shared_ptr<const Clip> clip;std::size_t track{};};
     std::shared_ptr<const Skeleton> skeleton_;
     std::vector<NodePose> nodes_;
