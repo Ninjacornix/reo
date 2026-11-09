@@ -9,6 +9,7 @@
 #include <optional>
 #include <vector>
 
+namespace reo::native::animation {class Instance;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
@@ -39,6 +40,9 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint16_t contact_flags{},pending_notice{};
     std::uint16_t action_flags{};
     float surface_blend_weight{},surface_blend_rate{};
+    std::int8_t model_correction_skip{};
+    float model_height_correction{};
+    std::uint16_t model_variant{};
     std::uint32_t response_mask{},response_value{};
     std::uint8_t motion_override{},interaction_marker{},room_marker{},movement_enabled{};
     std::uint16_t frame_value_a{},frame_value_b{};
@@ -60,6 +64,7 @@ struct Actor : actors::Entity,actors::HitActor {
     Position surface_normal{0,1,0};
     ActorCollision collision;
     gameplay_collision::delivery::Component contact;
+    std::shared_ptr<animation::Instance> model;
     input::Frame input;
 };
 struct Session : actors::HitSession {

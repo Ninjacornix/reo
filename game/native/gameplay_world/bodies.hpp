@@ -24,6 +24,7 @@ struct RegistrationCounts {std::uint64_t accepted{},full{},retired_or_foreign{},
 class WorldBodies final:public MotionServices {
 public:
     explicit WorldBodies(World& w):world_(w){}
+    World& world()const noexcept{return world_;}
     void enqueue(World&,Actor&,std::uint16_t collision_class,std::uint16_t source_mask)override;
     bool add(gameplay_collision::actors::Registration);
     BodyReport solve(BodyPoses&,actors::EntityId selected,bool limit_repeated,bool fast_tick,
