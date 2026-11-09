@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "status": "qualified native periodic task timing and request producer; actual visual/resource consumer still required",
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_run": false,
+  "full_visual_pipeline": false,
+  "vm_opcode_131_installed": false,
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/periodic-effects-llvm-v5/receipt.json",
+      "sha256": "1da9c0a9de857d222e0caefd2e879498dd2166bef4b4a6640ba37b5b915804ef",
+      "result": {
+        "status": "passed",
+        "checks": 920608,
+        "cases": 131072,
+        "emissions": 69715,
+        "retirements": 51907,
+        "game_run": false
+      },
+      "scenario_source_commit": "ab4e10fdbbe01bd0db8a89c8f878f96a2e66f5d3",
+      "source_snapshot": "build-native-sjuni/periodic-effects-llvm-v5/source"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/periodic-effects-gcc-v5/receipt.json",
+      "sha256": "41e6c9f8ca35b66d5869d16ec783e1fbeeeb031aa4a3aa66c2b010ea0aa40e62",
+      "result": {
+        "status": "passed",
+        "checks": 920608,
+        "cases": 131072,
+        "emissions": 69715,
+        "retirements": 51907,
+        "game_run": false
+      },
+      "scenario_source_commit": "ab4e10fdbbe01bd0db8a89c8f878f96a2e66f5d3",
+      "source_snapshot": "build-native-sjuni/periodic-effects-gcc-v5/source"
+    }
+  },
+  "actual_original": [
+    "5D9630 factory",
+    "573890 factory metadata",
+    "5D9680 periodic task",
+    "5DDC70 emission request/timer packing",
+    "5709B0 and570A10 stop flags",
+    "1AEC80 shared RNG"
+  ],
+  "declared_ports": [
+    "573630/573740 qualified native scheduler profile",
+    "6525D0 required native visual/resource consumer, supplied only as an explicit fixture here"
+  ],
+  "remaining": [
+    "Actual effect asset import, native visual instance/presentation/update owner",
+    "Opcode131 full caller integration and stock content admission",
+    "Whole native game acceptance"
+  ]
+}
