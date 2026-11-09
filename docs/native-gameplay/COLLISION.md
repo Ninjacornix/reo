@@ -152,3 +152,64 @@ are explicit unknown capabilities; the comparison does not claim parity with
 uninitialized original table reads. The new footprint companion remains active
 work until its original comparisons pass. These distinctions keep the resource
 owner, geometric solver and complete game consumer migration separately visible.
+
+The `footprint` companion now implements the full57C0B0 movement policy using
+the native room-object owner: radius49.5/20 selection, original initial-object
+escape side order, room-boundary admission, exact next-cell boundary selection,
+ordered five/front and three/fallback probes, directional rollback and bounded
+four-pass correction. Both compilers pass19,037 checks over6335cases, including
+3385nontrivial elevated slide cases, with zero difference. The elevated platforms
+are source-admitted synthetic inputs; actual-object checks use allseven stock
+room-object sections. Native capability failures remain explicit when a source
+classification depends on an absent height layer or floor provider. This is a
+qualified solver boundary, not proof that every native actor now invokes it.
+See `native_gameplay_footprint_qualification_v1.json`.
+
+The `regions` companion imports all164nonempty authored-region sections across
+the five stock scenario archives, retaining944regions and278auxiliary records.
+It owns native integer vertices and caches the six original normalized planes;
+selection retains Y+10, strict highest priority and first equal-priority record.
+Both compilers pass25,771checks including8496queries with identical outcomes.
+The actual source importer and geometry/selection bodies remain unchanged in the
+oracle. Zero-category fixtures additionally correct an older mapping mistake:
+573DE0 jumps to573E84 and573F00 before entering either category loop. They are
+pretested loops; a zero category does not process a spurious record. The old
+SYMBOLS_TASK_FLAGS.md do/while statement is incorrect. Qualification:
+`native_gameplay_regions_qualification_v1.json`.
+
+The `postmove` companion now supplies the full6636D0 native actor collision/height
+policy. It composes the qualified wall, floor, authored-region and footprint
+providers through typed state, preserving eligibility, disabled-wall center
+refresh, special mask admission, displacement timing, source surface arithmetic,
+route-height gates, material/region selection and pose flags. In particular,
+kind14uses joint2and skips ordinaryheightcopy;616F60publishes the floor material
+byte via t1, independently of its height return. Both compilers pass36,010checks
+across2400controlcases using actual first-room assets, with zero difference:
+1857eligible,101contacts and371joint2specialpaths. The unchanged full caller uses
+separately-qualified native child-provider ports in this fixture. Qualification:
+`native_gameplay_postmove_qualification_v1.json`.
+
+Actual native actor-loop adaptation remains the integration owner's work.
+Room-object model instances/proxies, dynamic triangle rebuilding, actor occupancy
+and radius/contact-packet traces remain concrete collision consumer gaps. The
+qualified components do not claim those consumers have been retired in game.
+
+The `room_geometry` companion constructs expanded/paired/exact object quads,
+typed instance-owned proxy descriptions, combined actor occupancy and the bounded
+31-triangle dynamic prism set. Both compilers pass131,791checks with zero
+difference across39quad cases,41proxy records,400occupancy cases and8dynamic
+builds. The actual retail data supplies27object observations in seven rooms;
+12synthetic admitted variants additionally cover rotations, all ten footprint
+profiles, explicit shapes, capacity/request gates and the31-triangle partial sink.
+The synthetic12object build matches96attempts and65drops; no retail overflow
+incident is claimed. The four90-unit side probes preserve their order and
+previously-admitted dynamic geometry. Original geometry/occupancy/prism/sink
+bodies use declared scalar Y-matrix and qualified trace-provider ports.
+
+Two distinct identities remain deliberate: the proxy snapshot is the object's
+physical ordinal from native instance metadata, while the authored external ID
+and native EntityId generation serve separate purposes. Proxy heights use the
+native instance's currentY, not the room origin. The API emits descriptions;
+actual native model-instance lifetime and moving-object interaction consumers
+must own and reconcile those descriptions with the shared proxy owner.
+See `native_gameplay_room_geometry_qualification_v1.json`.

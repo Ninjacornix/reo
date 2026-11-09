@@ -1,0 +1,97 @@
+#pragma once
+#include "../gameplay_actors/entity.hpp"
+#include "../gameplay_actors/hit.hpp"
+#include "../gameplay_actors/input.hpp"
+#include <array>
+#include <memory>
+#include <optional>
+#include <vector>
+
+namespace reo::native::gameplay_world {
+namespace actors=gameplay_actors;
+namespace input=gameplay_actors::input;
+struct Position {float x{},y{},z{};};
+// One canonical native actor. The health/status/hit fields are inherited once;
+// native functions operate on this same object, not mirrored byte records.
+struct Actor : actors::Entity,actors::HitActor {
+    bool active{},visible{};
+    std::uint8_t ai_control{},normalized_marker{};
+    std::uint16_t contact_flags{},pending_notice{};
+    std::uint32_t response_mask{},response_value{};
+    std::uint8_t motion_override{},interaction_marker{},room_marker{},movement_enabled{};
+    std::uint16_t frame_value_a{},frame_value_b{};
+    std::uint8_t transient_marker{},grid{};
+    float grid_response{};
+    Position position{};
+    input::Frame input;
+};
+struct Session : actors::HitSession {
+    gameplay_session::Random random;
+    gameplay_session::Options options;
+};
+struct Profile {
+    std::vector<input::Remap> layouts;
+    std::size_t controller_count{4};
+    actors::EntityConfig entities;
+};
+enum class Stage {
+    offline_ai,leave_room,prepare_contacts,prepare_authority,update_behavior,
+    update_local_motion,update_pose,update_auxiliary_motion,finish_motion,
+    refresh_grid_position,finish_actor,publish_notice
+};
+class World;
+class Services {
+public:
+    virtual ~Services()=default;
+    virtual void begin_offline_frame(World&)=0;
+    virtual void run(Stage,World&,Actor&)=0;
+    virtual bool remote_motion(World&,Actor&)=0;
+    virtual bool find_grid(World&,Actor&,std::int8_t&)=0;
+    virtual void switch_grid(World&,std::int32_t next,std::int32_t previous)=0;
+    virtual float grid_response(World&,std::uint8_t)=0;
+};
+enum class Status {completed,busy,closed,input_unavailable};
+struct Result {Status status{Status::completed};std::size_t visited{},updated{};};
+class World final {
+    std::shared_ptr<Session> session_;
+public:
+    // World, its Session and borrowed controller spans are simulation-owner
+    // thread only. Actor leases may outlive retirement, but must not keep/use a
+    // raw World reference after that owner's lifetime ends.
+    static constexpr std::size_t primary_capacity=8;
+    explicit World(Profile,std::shared_ptr<Session>);
+    ~World();
+    World(const World&)=delete;
+    World& operator=(const World&)=delete;
+    actors::EntityCreated spawn_primary(std::size_t,std::unique_ptr<Actor>)noexcept;
+    actors::EntityStatus retire_primary(std::size_t)noexcept;
+    std::shared_ptr<Actor> primary(std::size_t)const noexcept;
+    std::shared_ptr<Actor> resolve(const actors::EntityId&)const noexcept;
+    actors::EntityId identity(std::size_t)const noexcept;
+    std::optional<std::size_t> executing_primary()const noexcept{return executing_;}
+    Result update_primary(Services&);
+    Status close()noexcept;
+    Session& session()noexcept{return *session_;}
+    const Session& session()const noexcept{return *session_;}
+    std::span<input::ControllerFrame> controllers()noexcept{return controllers_;}
+    std::span<const input::ControllerFrame> controllers()const noexcept{return controllers_;}
+    std::span<const input::Remap> layouts()const noexcept{return layouts_;}
+    std::array<std::int8_t,8> controller_bindings{-1,-1,-1,-1,-1,-1,-1,-1};
+    // Aliases refer to the one canonical native session used by health/hit
+    // functions too. No per-callback import/export or shadow session is needed.
+    std::uint8_t& mode;
+    std::uint8_t& selected_actor;
+    bool& paused;
+    bool& filter_nonselected_input;
+    std::uint16_t& room;
+    std::uint8_t selected_frame_marker{};
+    std::uint16_t frame_shared_counter{};
+private:
+    actors::EntityStore entities_;
+    std::array<actors::EntityId,8> primary_;
+    std::vector<input::Remap> layouts_;
+    std::vector<input::ControllerFrame> controllers_;
+    bool updating_{},closed_{};
+    std::optional<std::size_t> executing_;
+};
+} // namespace reo::native::gameplay_world

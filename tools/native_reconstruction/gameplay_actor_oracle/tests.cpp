@@ -63,7 +63,7 @@ struct Ports final:g::Services {
     bool remote_motion(g::World& w,g::Actor& a)override{current=std::uint32_t(&a-w.actors.data());events.push_back({0x6647f0,current});return (seed+current)%3==1;}
     bool find_grid(g::World& w,g::Actor& a,std::int8_t& selected)override{current=std::uint32_t(&a-w.actors.data());events.push_back({0x6afd70,current});selected=std::bit_cast<std::int8_t>(std::uint8_t(seed+current*31));return (seed+current)%4<2;}
     void switch_grid(g::World&,std::int32_t next,std::int32_t previous)override{events.push_back({0x6afae0,current,std::uint32_t(next),std::uint32_t(previous)});}
-    float grid_response(g::World&,std::uint8_t selected)override{events.push_back({0x6afe10,current,selected});return float(std::int32_t(selected)-128)*.125f;}
+    float grid_response(g::World& w,std::uint8_t selected)override{events.push_back({0x6afe10,current,selected});if(seed&32)w.actors[current].grid_response=51.25f;return float(std::int32_t(selected)-128)*.125f;}
 };
 Ports* original_ports{};
 void original_port(std::uint8_t* ram,R5900Context* ctx,PS2Runtime*){

@@ -65,7 +65,8 @@ void update_primary_actors(World& world,Services& services) {
             if(std::int32_t(actor.grid)!=std::int32_t(selected))
                 services.switch_grid(world,selected,signed_grid(actor.grid));
             actor.grid=std::bit_cast<std::uint8_t>(selected);
-            actor.grid_response=actor.grid_response+services.grid_response(world,actor.grid);
+            const auto response=services.grid_response(world,actor.grid);
+            actor.grid_response=actor.grid_response+response;
             actor.contact_flags|=1;
         } else {
             if((actor.status&0x4000) && !(actor.contact_flags&2)) {

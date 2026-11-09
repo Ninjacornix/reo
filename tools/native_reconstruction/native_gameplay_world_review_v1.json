@@ -1,0 +1,1480 @@
+{
+  "schema": 1,
+  "status": "read-only native world ownership/order review; root component tests and integration remain separate",
+  "frozen_review_sources": {
+    "build-native-sjuni\\native-gameplay\\world-review-v1\\game\\native\\gameplay_world\\world.hpp": "ac0372e7341611ef811f77a5cb1d20bd39d4536838e5d4e1b1d631cd450b560b",
+    "build-native-sjuni\\native-gameplay\\world-review-v1\\game\\native\\gameplay_world\\world.cpp": "cd762f94701b343e8f884c844bc9d4502c416f82c864c97e67e540ca9c4e0e42",
+    "build-native-sjuni\\native-gameplay\\world-review-v1\\game\\native\\gameplay_actors\\entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "build-native-sjuni\\native-gameplay\\world-review-v1\\game\\native\\gameplay_actors\\entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+    "build-native-sjuni\\native-gameplay\\world-review-v1\\game\\native\\gameplay_actors\\frame.cpp": "7380ac16e7c55179bfb0fcbb2e5df6dff0d82a202ac05ee64559fa2238b5a2d5",
+    "build-native-sjuni\\native-gameplay\\world-review-v1\\recomp\\config\\output_ovl\\o2\\o2_00669F30_0x669f30.cpp": "4682116f450825f1b1c763b34a8e0d236fa6d84cf97c6e592cb9b9b57e111790"
+  },
+  "review_document": {
+    "path": "docs/native-gameplay/WORLD_OWNER_REVIEW.md",
+    "sha256": "44b370ae355c06ed167f0cb0c48fe74621112781ef62aae6b86614815bae08ab"
+  },
+  "original_proof": {
+    "role": "world ordering source review",
+    "path": "recomp/config/output_ovl/o2/o2_00669F30_0x669f30.cpp",
+    "sha256": "4682116f450825f1b1c763b34a8e0d236fa6d84cf97c6e592cb9b9b57e111790",
+    "start": "0x669f30",
+    "end_exclusive": "0x66a2dc",
+    "matched_comments": 221,
+    "omitted_zero_words": 14,
+    "conflicts": 0,
+    "comparisons": [
+      {
+        "pc": "0x00669f30",
+        "owned_word": "0x27bdffc0",
+        "comment_word": "0x27bdffc0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f34",
+        "owned_word": "0xffbf0020",
+        "comment_word": "0xffbf0020",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f38",
+        "owned_word": "0x7fb10010",
+        "comment_word": "0x7fb10010",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f3c",
+        "owned_word": "0x0c06c0b4",
+        "comment_word": "0x0c06c0b4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f40",
+        "owned_word": "0x7fb00000",
+        "comment_word": "0x7fb00000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f44",
+        "owned_word": "0x24030001",
+        "comment_word": "0x24030001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f48",
+        "owned_word": "0x14430004",
+        "comment_word": "0x14430004",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f4c",
+        "owned_word": "0x0000882d",
+        "comment_word": "0x0000882d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f50",
+        "owned_word": "0x0c2048ac",
+        "comment_word": "0x0c2048ac",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f54",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x00669f58",
+        "owned_word": "0x0000882d",
+        "comment_word": "0x0000882d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f5c",
+        "owned_word": "0x322400ff",
+        "comment_word": "0x322400ff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f60",
+        "owned_word": "0x3c02004a",
+        "comment_word": "0x3c02004a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f64",
+        "owned_word": "0x00041900",
+        "comment_word": "0x00041900",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f68",
+        "owned_word": "0x24425c30",
+        "comment_word": "0x24425c30",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f6c",
+        "owned_word": "0x00642023",
+        "comment_word": "0x00642023",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f70",
+        "owned_word": "0x000418c0",
+        "comment_word": "0x000418c0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f74",
+        "owned_word": "0x00831821",
+        "comment_word": "0x00831821",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f78",
+        "owned_word": "0x00031940",
+        "comment_word": "0x00031940",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f7c",
+        "owned_word": "0x00438021",
+        "comment_word": "0x00438021",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f80",
+        "owned_word": "0x82020000",
+        "comment_word": "0x82020000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f84",
+        "owned_word": "0x104000c6",
+        "comment_word": "0x104000c6",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f88",
+        "owned_word": "0x26220001",
+        "comment_word": "0x26220001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f8c",
+        "owned_word": "0x3c010074",
+        "comment_word": "0x3c010074",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f90",
+        "owned_word": "0x3c020001",
+        "comment_word": "0x3c020001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f94",
+        "owned_word": "0x3443ffff",
+        "comment_word": "0x3443ffff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f98",
+        "owned_word": "0xa4204638",
+        "comment_word": "0xa4204638",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669f9c",
+        "owned_word": "0xae030190",
+        "comment_word": "0xae030190",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fa0",
+        "owned_word": "0x3c02ddfd",
+        "comment_word": "0x3c02ddfd",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fa4",
+        "owned_word": "0xae000194",
+        "comment_word": "0xae000194",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fa8",
+        "owned_word": "0x3445ffff",
+        "comment_word": "0x3445ffff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fac",
+        "owned_word": "0xa2000c82",
+        "comment_word": "0xa2000c82",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fb0",
+        "owned_word": "0x2404ffbf",
+        "comment_word": "0x2404ffbf",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fb4",
+        "owned_word": "0xa6000d92",
+        "comment_word": "0xa6000d92",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fb8",
+        "owned_word": "0x24030001",
+        "comment_word": "0x24030001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fbc",
+        "owned_word": "0xa2000b9e",
+        "comment_word": "0xa2000b9e",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fc0",
+        "owned_word": "0x240200ff",
+        "comment_word": "0x240200ff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fc4",
+        "owned_word": "0xa600054a",
+        "comment_word": "0xa600054a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fc8",
+        "owned_word": "0xa6000bdc",
+        "comment_word": "0xa6000bdc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fcc",
+        "owned_word": "0xa6000bde",
+        "comment_word": "0xa6000bde",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fd0",
+        "owned_word": "0x8e060ba0",
+        "comment_word": "0x8e060ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fd4",
+        "owned_word": "0x00c52824",
+        "comment_word": "0x00c52824",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fd8",
+        "owned_word": "0xae050ba0",
+        "comment_word": "0xae050ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fdc",
+        "owned_word": "0x8e050ba4",
+        "comment_word": "0x8e050ba4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fe0",
+        "owned_word": "0x00a42024",
+        "comment_word": "0x00a42024",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fe4",
+        "owned_word": "0xae040ba4",
+        "comment_word": "0xae040ba4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fe8",
+        "owned_word": "0xa2030553",
+        "comment_word": "0xa2030553",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669fec",
+        "owned_word": "0x92030032",
+        "comment_word": "0x92030032",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669ff0",
+        "owned_word": "0x14620002",
+        "comment_word": "0x14620002",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669ff4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x00669ff8",
+        "owned_word": "0xa2000032",
+        "comment_word": "0xa2000032",
+        "status": "matched"
+      },
+      {
+        "pc": "0x00669ffc",
+        "owned_word": "0x0c06c0b4",
+        "comment_word": "0x0c06c0b4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a000",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a004",
+        "owned_word": "0x24030001",
+        "comment_word": "0x24030001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a008",
+        "owned_word": "0x14430009",
+        "comment_word": "0x14430009",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a00c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a010",
+        "owned_word": "0x92020003",
+        "comment_word": "0x92020003",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a014",
+        "owned_word": "0x3c01004c",
+        "comment_word": "0x3c01004c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a018",
+        "owned_word": "0xa022aded",
+        "comment_word": "0xa022aded",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a01c",
+        "owned_word": "0x92020ff0",
+        "comment_word": "0x92020ff0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a020",
+        "owned_word": "0x10400003",
+        "comment_word": "0x10400003",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a024",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a028",
+        "owned_word": "0x0c204918",
+        "comment_word": "0x0c204918",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a02c",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a030",
+        "owned_word": "0x3c01004c",
+        "comment_word": "0x3c01004c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a034",
+        "owned_word": "0x8022adf8",
+        "comment_word": "0x8022adf8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a038",
+        "owned_word": "0x14400023",
+        "comment_word": "0x14400023",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a03c",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a040",
+        "owned_word": "0x3c010032",
+        "comment_word": "0x3c010032",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a044",
+        "owned_word": "0x960301e2",
+        "comment_word": "0x960301e2",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a048",
+        "owned_word": "0x942243dc",
+        "comment_word": "0x942243dc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a04c",
+        "owned_word": "0x10620018",
+        "comment_word": "0x10620018",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a050",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a054",
+        "owned_word": "0x0c06c0b4",
+        "comment_word": "0x0c06c0b4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a058",
+        "owned_word": "0xa2000001",
+        "comment_word": "0xa2000001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a05c",
+        "owned_word": "0x24030001",
+        "comment_word": "0x24030001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a060",
+        "owned_word": "0x14430003",
+        "comment_word": "0x14430003",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a064",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a068",
+        "owned_word": "0x0c19a59c",
+        "comment_word": "0x0c19a59c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a06c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a070",
+        "owned_word": "0xa2000c53",
+        "comment_word": "0xa2000c53",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a074",
+        "owned_word": "0x3c02ff7f",
+        "comment_word": "0x3c02ff7f",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a078",
+        "owned_word": "0x8e050ba0",
+        "comment_word": "0x8e050ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a07c",
+        "owned_word": "0x3444ffff",
+        "comment_word": "0x3444ffff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a080",
+        "owned_word": "0x3c02fa9c",
+        "comment_word": "0x3c02fa9c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a084",
+        "owned_word": "0x2403bfff",
+        "comment_word": "0x2403bfff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a088",
+        "owned_word": "0x3442feff",
+        "comment_word": "0x3442feff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a08c",
+        "owned_word": "0x00a42024",
+        "comment_word": "0x00a42024",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a090",
+        "owned_word": "0xae040ba0",
+        "comment_word": "0xae040ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a094",
+        "owned_word": "0x8e040ba0",
+        "comment_word": "0x8e040ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a098",
+        "owned_word": "0x00831824",
+        "comment_word": "0x00831824",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a09c",
+        "owned_word": "0xae030ba0",
+        "comment_word": "0xae030ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0a0",
+        "owned_word": "0x8e030ba4",
+        "comment_word": "0x8e030ba4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0a4",
+        "owned_word": "0x00621024",
+        "comment_word": "0x00621024",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0a8",
+        "owned_word": "0x1000007c",
+        "comment_word": "0x1000007c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0ac",
+        "owned_word": "0xae020ba4",
+        "comment_word": "0xae020ba4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0b0",
+        "owned_word": "0x8e020ba0",
+        "comment_word": "0x8e020ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0b4",
+        "owned_word": "0x30420100",
+        "comment_word": "0x30420100",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0b8",
+        "owned_word": "0x14400002",
+        "comment_word": "0x14400002",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0bc",
+        "owned_word": "0x24020001",
+        "comment_word": "0x24020001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0c0",
+        "owned_word": "0xa2020001",
+        "comment_word": "0xa2020001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0c4",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0c8",
+        "owned_word": "0x0c1869a8",
+        "comment_word": "0x0c1869a8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0cc",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a0d0",
+        "owned_word": "0x0c06c2e0",
+        "comment_word": "0x0c06c2e0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0d4",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0d8",
+        "owned_word": "0x8e030ba4",
+        "comment_word": "0x8e030ba4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0dc",
+        "owned_word": "0x3c02fa9d",
+        "comment_word": "0x3c02fa9d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0e0",
+        "owned_word": "0x3442ffff",
+        "comment_word": "0x3442ffff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0e4",
+        "owned_word": "0x00621024",
+        "comment_word": "0x00621024",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0e8",
+        "owned_word": "0x0c06c0c4",
+        "comment_word": "0x0c06c0c4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0ec",
+        "owned_word": "0xae020ba4",
+        "comment_word": "0xae020ba4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0f0",
+        "owned_word": "0x24030001",
+        "comment_word": "0x24030001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0f4",
+        "owned_word": "0x1443000a",
+        "comment_word": "0x1443000a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0f8",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a0fc",
+        "owned_word": "0x3c01004c",
+        "comment_word": "0x3c01004c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a100",
+        "owned_word": "0x92030003",
+        "comment_word": "0x92030003",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a104",
+        "owned_word": "0x9022aded",
+        "comment_word": "0x9022aded",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a108",
+        "owned_word": "0x10620004",
+        "comment_word": "0x10620004",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a10c",
+        "owned_word": "0x26040f78",
+        "comment_word": "0x26040f78",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a110",
+        "owned_word": "0x0000282d",
+        "comment_word": "0x0000282d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a114",
+        "owned_word": "0x0c041f1a",
+        "comment_word": "0x0c041f1a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a118",
+        "owned_word": "0x24060030",
+        "comment_word": "0x24060030",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a11c",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a120",
+        "owned_word": "0x0c19a5e4",
+        "comment_word": "0x0c19a5e4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a124",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a128",
+        "owned_word": "0x0c19ad40",
+        "comment_word": "0x0c19ad40",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a12c",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a130",
+        "owned_word": "0x0c1991fc",
+        "comment_word": "0x0c1991fc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a134",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a138",
+        "owned_word": "0x10400007",
+        "comment_word": "0x10400007",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a13c",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a140",
+        "owned_word": "0x0c197928",
+        "comment_word": "0x0c197928",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a144",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a148",
+        "owned_word": "0x9602054a",
+        "comment_word": "0x9602054a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a14c",
+        "owned_word": "0x34420004",
+        "comment_word": "0x34420004",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a150",
+        "owned_word": "0x10000005",
+        "comment_word": "0x10000005",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a154",
+        "owned_word": "0xa602054a",
+        "comment_word": "0xa602054a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a158",
+        "owned_word": "0x0c1978e8",
+        "comment_word": "0x0c1978e8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a15c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a160",
+        "owned_word": "0x0c197928",
+        "comment_word": "0x0c197928",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a164",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a168",
+        "owned_word": "0x0c19799c",
+        "comment_word": "0x0c19799c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a16c",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a170",
+        "owned_word": "0x0c197970",
+        "comment_word": "0x0c197970",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a174",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a178",
+        "owned_word": "0x8e030ba4",
+        "comment_word": "0x8e030ba4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a17c",
+        "owned_word": "0x3c020800",
+        "comment_word": "0x3c020800",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a180",
+        "owned_word": "0x00621024",
+        "comment_word": "0x00621024",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a184",
+        "owned_word": "0x10400008",
+        "comment_word": "0x10400008",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a188",
+        "owned_word": "0x27a4003f",
+        "comment_word": "0x27a4003f",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a18c",
+        "owned_word": "0x3c02f7ff",
+        "comment_word": "0x3c02f7ff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a190",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a194",
+        "owned_word": "0x3442ffff",
+        "comment_word": "0x3442ffff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a198",
+        "owned_word": "0x00621024",
+        "comment_word": "0x00621024",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a19c",
+        "owned_word": "0x0c0ddb6c",
+        "comment_word": "0x0c0ddb6c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1a0",
+        "owned_word": "0xae020ba4",
+        "comment_word": "0xae020ba4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1a4",
+        "owned_word": "0x27a4003f",
+        "comment_word": "0x27a4003f",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1a8",
+        "owned_word": "0x0c1abf5c",
+        "comment_word": "0x0c1abf5c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1ac",
+        "owned_word": "0x26050038",
+        "comment_word": "0x26050038",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1b0",
+        "owned_word": "0x10400015",
+        "comment_word": "0x10400015",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1b4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a1b8",
+        "owned_word": "0x8e020ba0",
+        "comment_word": "0x8e020ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1bc",
+        "owned_word": "0x34424000",
+        "comment_word": "0x34424000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1c0",
+        "owned_word": "0xae020ba0",
+        "comment_word": "0xae020ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1c4",
+        "owned_word": "0x83a4003f",
+        "comment_word": "0x83a4003f",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1c8",
+        "owned_word": "0x92020cb0",
+        "comment_word": "0x92020cb0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1cc",
+        "owned_word": "0x10440005",
+        "comment_word": "0x10440005",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1d0",
+        "owned_word": "0x00022e3c",
+        "comment_word": "0x00022e3c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1d4",
+        "owned_word": "0x0c1abeb8",
+        "comment_word": "0x0c1abeb8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1d8",
+        "owned_word": "0x00052e3f",
+        "comment_word": "0x00052e3f",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1dc",
+        "owned_word": "0x83a2003f",
+        "comment_word": "0x83a2003f",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1e0",
+        "owned_word": "0xa2020cb0",
+        "comment_word": "0xa2020cb0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1e4",
+        "owned_word": "0x0c1abf84",
+        "comment_word": "0x0c1abf84",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1e8",
+        "owned_word": "0x92040cb0",
+        "comment_word": "0x92040cb0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1ec",
+        "owned_word": "0xc6010170",
+        "comment_word": "0xc6010170",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1f0",
+        "owned_word": "0x46000800",
+        "comment_word": "0x46000800",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1f4",
+        "owned_word": "0xe6000170",
+        "comment_word": "0xe6000170",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1f8",
+        "owned_word": "0x9602054a",
+        "comment_word": "0x9602054a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a1fc",
+        "owned_word": "0x34420001",
+        "comment_word": "0x34420001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a200",
+        "owned_word": "0x10000011",
+        "comment_word": "0x10000011",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a204",
+        "owned_word": "0xa602054a",
+        "comment_word": "0xa602054a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a208",
+        "owned_word": "0x8e020ba0",
+        "comment_word": "0x8e020ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a20c",
+        "owned_word": "0x30424000",
+        "comment_word": "0x30424000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a210",
+        "owned_word": "0x10400009",
+        "comment_word": "0x10400009",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a214",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a218",
+        "owned_word": "0x9602054a",
+        "comment_word": "0x9602054a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a21c",
+        "owned_word": "0x30420002",
+        "comment_word": "0x30420002",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a220",
+        "owned_word": "0x14400005",
+        "comment_word": "0x14400005",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a224",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a228",
+        "owned_word": "0x82050cb0",
+        "comment_word": "0x82050cb0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a22c",
+        "owned_word": "0x0c1abeb8",
+        "comment_word": "0x0c1abeb8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a230",
+        "owned_word": "0x2404ffff",
+        "comment_word": "0x2404ffff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a234",
+        "owned_word": "0xa2000cb0",
+        "comment_word": "0xa2000cb0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a238",
+        "owned_word": "0x8e030ba0",
+        "comment_word": "0x8e030ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a23c",
+        "owned_word": "0x2402bfff",
+        "comment_word": "0x2402bfff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a240",
+        "owned_word": "0x00621024",
+        "comment_word": "0x00621024",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a244",
+        "owned_word": "0xae020ba0",
+        "comment_word": "0xae020ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a248",
+        "owned_word": "0x0c19957c",
+        "comment_word": "0x0c19957c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a24c",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a250",
+        "owned_word": "0x96020d92",
+        "comment_word": "0x96020d92",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a254",
+        "owned_word": "0x10400004",
+        "comment_word": "0x10400004",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a258",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a25c",
+        "owned_word": "0x0c19f88c",
+        "comment_word": "0x0c19f88c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a260",
+        "owned_word": "0x24050007",
+        "comment_word": "0x24050007",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a264",
+        "owned_word": "0xa6000d92",
+        "comment_word": "0xa6000d92",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a268",
+        "owned_word": "0xa2000c53",
+        "comment_word": "0xa2000c53",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a26c",
+        "owned_word": "0x3c02ffbf",
+        "comment_word": "0x3c02ffbf",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a270",
+        "owned_word": "0xa20010a9",
+        "comment_word": "0xa20010a9",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a274",
+        "owned_word": "0x3442ffff",
+        "comment_word": "0x3442ffff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a278",
+        "owned_word": "0x8e030ba0",
+        "comment_word": "0x8e030ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a27c",
+        "owned_word": "0x3c01004c",
+        "comment_word": "0x3c01004c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a280",
+        "owned_word": "0x00621024",
+        "comment_word": "0x00621024",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a284",
+        "owned_word": "0xae020ba0",
+        "comment_word": "0xae020ba0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a288",
+        "owned_word": "0x92030003",
+        "comment_word": "0x92030003",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a28c",
+        "owned_word": "0x9022aded",
+        "comment_word": "0x9022aded",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a290",
+        "owned_word": "0x14620002",
+        "comment_word": "0x14620002",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a294",
+        "owned_word": "0x3c01004c",
+        "comment_word": "0x3c01004c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a298",
+        "owned_word": "0xa020ae89",
+        "comment_word": "0xa020ae89",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a29c",
+        "owned_word": "0x26220001",
+        "comment_word": "0x26220001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2a0",
+        "owned_word": "0x305100ff",
+        "comment_word": "0x305100ff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2a4",
+        "owned_word": "0x2a220008",
+        "comment_word": "0x2a220008",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2a8",
+        "owned_word": "0x1440ff2d",
+        "comment_word": "0x1440ff2d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2ac",
+        "owned_word": "0x322400ff",
+        "comment_word": "0x322400ff",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2b0",
+        "owned_word": "0x0c06c0b4",
+        "comment_word": "0x0c06c0b4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2b4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x0066a2b8",
+        "owned_word": "0x24030001",
+        "comment_word": "0x24030001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2bc",
+        "owned_word": "0x14430002",
+        "comment_word": "0x14430002",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2c0",
+        "owned_word": "0x3c01004c",
+        "comment_word": "0x3c01004c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2c4",
+        "owned_word": "0xa020aded",
+        "comment_word": "0xa020aded",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2c8",
+        "owned_word": "0xdfbf0020",
+        "comment_word": "0xdfbf0020",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2cc",
+        "owned_word": "0x7bb10010",
+        "comment_word": "0x7bb10010",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2d0",
+        "owned_word": "0x7bb00000",
+        "comment_word": "0x7bb00000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2d4",
+        "owned_word": "0x03e00008",
+        "comment_word": "0x03e00008",
+        "status": "matched"
+      },
+      {
+        "pc": "0x0066a2d8",
+        "owned_word": "0x27bd0040",
+        "comment_word": "0x27bd0040",
+        "status": "matched"
+      }
+    ]
+  },
+  "owned_overlay_sha256": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+  "grid_order": {
+    "call_pc": "0x66a1e4",
+    "load_accumulator_pc": "0x66a1ec",
+    "add_pc": "0x66a1f0",
+    "word_bytes_hex": "84bf1a0cb00c0492700101c600080046700100e6"
+  },
+  "findings": [
+    {
+      "kind": "lifetime",
+      "observation": "Initial implicit World destructor did not seal before member teardown",
+      "disposition": "Explicit destructor/close observed in retained corrected snapshot; root tests pending"
+    },
+    {
+      "kind": "ordering",
+      "observation": "Accumulator load follows grid response callback in the original",
+      "disposition": "New World ordering matches; older frame helper made explicit by root; mutation test pending"
+    },
+    {
+      "kind": "contract",
+      "observation": "input_unavailable/throwing callbacks are partial frames",
+      "disposition": "No rollback/retry/fallback may be inferred from guard cleanup"
+    },
+    {
+      "kind": "contract",
+      "observation": "Retired actor lease and current primary-slot replacement differ",
+      "disposition": "Use admitted Actor/identity; slot-only lookup can target replacement"
+    },
+    {
+      "kind": "contract",
+      "observation": "Mutable World/Session/controller spans are owner-thread only",
+      "disposition": "Concurrent input/publication requires a reviewed handoff"
+    }
+  ],
+  "game_run": false,
+  "live_process_access": false,
+  "window_access": false,
+  "world_source_edited": false,
+  "build_run": false,
+  "original_body_executed_by_this_review": false,
+  "world_installed": false,
+  "stage4_complete": false
+}

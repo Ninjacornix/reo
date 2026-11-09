@@ -32,6 +32,7 @@ def main():
    'freeze-paused-actors':('if(world.mode==0)services.begin_offline_frame(world);','if(world.paused)return;\n    if(world.mode==0)services.begin_offline_frame(world);'),
    'omit-remote-input-clear':('if(world.filter_nonselected_input && actor.slot!=world.selected_actor)','if(false && actor.slot!=world.selected_actor)'),
    'retain-missing-grid-flag':('actor.status&=~std::uint32_t(0x4000);','actor.status|=0;'),
+   'read-grid-before-observer':('const auto response=services.grid_response(world,actor.grid);\n            actor.grid_response=actor.grid_response+response;','const auto previous=actor.grid_response;\n            const auto response=services.grid_response(world,actor.grid);\n            actor.grid_response=previous+response;'),
   }
   detected=[];core_body=(core/'frame.cpp').read_text()
   for label,(anchor,replacement) in faults.items():
