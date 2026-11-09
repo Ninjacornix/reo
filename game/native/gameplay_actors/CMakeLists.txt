@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+project(reo_native_gameplay_actors LANGUAGES CXX)
+add_library(reo_native_gameplay_actors STATIC frame.cpp)
+target_include_directories(reo_native_gameplay_actors PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(reo_native_gameplay_actors PUBLIC cxx_std_20)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_gameplay_actors PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

@@ -8,8 +8,16 @@ an extra gate for a modern replacement. The [modernization direction](NATIVE_MOD
 defines the revised stages and immediate native MP4 playback route. The older
 checkpoints below retain historical reconstruction evidence; requirements to
 recreate internal media machinery are superseded when its consumers move to a
-complete native replacement. Step 3 is still incomplete, and the whole game
-still requires stages 4-6 before PS2 runtime removal can be claimed.
+complete native replacement. Stage 3 is complete for its selected stock File #1 US
+profile; see [final validation](native-media/STAGE3_FINAL_VALIDATION.md).
+[Stage 4](native-gameplay/STAGE4_PLAN.md) is in progress and incomplete. Stages 4-6
+are required before PS2 runtime removal can be claimed. The current user instruction
+is to complete Stage 4 and leave the PC awake afterward.
+
+## Historical checkpoints
+
+The dated checkpoints below describe their own earlier state; their open Stage 3
+items are superseded by the final validation linked above.
 
 Native game-owner checkpoint, 2026-11-08: the
 [MP4 integration](native-media/NATIVE_MP4_GAME_INTEGRATION.md) has a native owner

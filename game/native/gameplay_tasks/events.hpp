@@ -1,0 +1,38 @@
+#pragma once
+#include "tasks.hpp"
+
+namespace reo::native::gameplay_tasks {
+// Session-owned native selection, explicitly passed instead of an implicit
+// mutable global. Shared-bank callbacks see the caller's incoming selection.
+struct OwnerSelection { std::uint8_t actor{}; };
+struct EventContext { std::uint8_t bank{}, slot{}; OwnerSelection& owner; };
+enum class EventMode { shared_bank, owner_banks };
+class EventTask {
+public:
+    virtual ~EventTask() = default;
+    virtual void update(EventTasks&, const Handle&, EventContext) noexcept = 0;
+};
+class EventTasks {
+public:
+    static constexpr std::size_t banks = 3, slots_per_bank = 10;
+    EventTasks();
+    ~EventTasks();
+    EventTasks(const EventTasks&) = delete;
+    EventTasks& operator=(const EventTasks&) = delete;
+    Created install(std::size_t bank, std::size_t slot, std::shared_ptr<EventTask>) noexcept;
+    Status erase(const Handle&) noexcept;
+    Status enabled(const Handle&, bool) noexcept;
+    bool contains(const Handle&) const noexcept;
+    std::size_t size() const noexcept { return size_; }
+    PassResult run(EventMode, OwnerSelection&) noexcept;
+    Status clear() noexcept;
+private:
+    struct Node;
+    std::shared_ptr<const Domain> domain_;
+    std::array<std::shared_ptr<Node>, banks * slots_per_bank> slots_{};
+    std::uint64_t next_serial_{};
+    std::size_t size_{};
+    bool running_{}, clearing_{}, closed_{};
+    std::shared_ptr<Node> find(const Handle&) const noexcept;
+};
+} // namespace reo::native::gameplay_tasks
