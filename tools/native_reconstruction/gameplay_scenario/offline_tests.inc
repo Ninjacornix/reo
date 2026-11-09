@@ -146,6 +146,17 @@ void offline_tests(){
         }
         const auto before=counters.snapshot();check(native.tick_offline_channel(0,{true,false,3},{0,0,0},providers).status==vm::Status::invalid_program);check(before==counters.snapshot());
     }
+    for(unsigned profile=0;profile<6;++profile)for(const auto desired:{0u,1u,2u,0xffffffffu})for(unsigned category=0;category<5;++category){
+        std::vector<std::byte> b;emit(b,0x12);emit(b,0x14,{desired});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);
+        emit(b,0x10,{255});emit(b,0x11,{0});emit(b,0x13,{255,0x1234});emit(b,0x15,{255});emit(b,0x16,{0x81,0x8001,0x7fff,0x80000001});
+        emit(b,0x17,{profile+1,desired});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);emit(b,0xa);
+        std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;ram[0x4baded]=2;
+        fixture_write<std::uint32_t>(ram.data(),0x75a4b0,category);fixture_write<std::uint32_t>(ram.data(),0x75a4c0,0);
+        vm::Interpreter native;install_offline_program(native,ram,0,b);SequenceFixture sequence(profile);sequence.export_original(ram);
+        original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers providers;providers.flags=&flags;providers.canonical_flags=&flags;providers.sequences=&sequence.owner;
+        const auto r=native.tick_offline_channel(0,{true,false,2},{category,0,0},providers);check(r.status==vm::Status::yielded);
+        compare_offline_channels(native,ram);sequence.compare_original(ram);
+    }
 }
 }
 void sub_00107AB0_0x107ab0(std::uint8_t* r,R5900Context* c,PS2Runtime*){std::memmove(r+GPR_U32(c,4),r+GPR_U32(c,5),GPR_U32(c,6));SET_GPR_U32(c,2,GPR_U32(c,4));done(c);}

@@ -1,0 +1,52 @@
+{
+  "schema": "reo.native.gameplay.scene_controls.qualification.v1",
+  "status": "qualified_partial_domain_boundary",
+  "complete": false,
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "new_interpreter_bindings_admitted": false,
+  "game_launched": false,
+  "source_sha256": {
+    "tools/native_reconstruction/gameplay_scenario/scene_control_tests.cpp": "0691005aafdb102bc776150768dd25b539407487dcb6b401e1c2d58d837a0ec2",
+    "tools/native_reconstruction/gameplay_scenario/verify_scene_controls.py": "c2cafdd708699aa7fe77c0c6acc23ca6c8c3df23e830d70c0c00834b8a1e5f51",
+    "game/native/gameplay_scenario/scene_controls.hpp": "d6d78a63038b99e07e258c59dd47e896ca990b93f9d3485641152d9bfad71313",
+    "game/native/gameplay_scenario/scene_controls.cpp": "f40faceabeffa5896c596200aa56c948967464d3e1148dd6c0d0e91dffbf64e8"
+  },
+  "documentation_sha256": {
+    "docs/native-gameplay/SCENARIO_LINKED_CONTROLS.md": "0f8a581f9cef673c5959a724fe34d027727242798f3a54e3a2a2eab95eeb0ef5"
+  },
+  "receipts": [
+    {
+      "path": "build-native-sjuni/gameplay-scene-controls-llvm-v3/receipt.json",
+      "sha256": "8668a464d15a9a812201b92c2c0602276b29a6712d005b2a6b102d5dbcc748b4",
+      "result": {
+        "status": "passed",
+        "checks": 38900,
+        "original_invocations": 1621,
+        "game_launched": false
+      },
+      "compiler": "C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "checked_owned_instruction_comments": 572
+    },
+    {
+      "path": "build-native-sjuni/gameplay-scene-controls-gcc-v3/receipt.json",
+      "sha256": "912c9208b29e8e752e6532a7cbd5deb22d5715b6c28e96e4ef46c8ee4ca98cda",
+      "result": {
+        "status": "passed",
+        "checks": 38900,
+        "original_invocations": 1621,
+        "game_launched": false
+      },
+      "compiler": "C:\\msys64\\mingw64\\bin\\g++.exe",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "checked_owned_instruction_comments": 572
+    }
+  ],
+  "limitations": [
+    "Original reset and refresh effect implementations and actual native consumer/content integration remain unavailable.",
+    "No interpreter binding is newly admitted by this owner-only qualification.",
+    "Eleven of eighteen corresponding offline handlers differ and several access another fixed record bank not modeled here.",
+    "Native bounded capacity/traversal and typed state are explicit supported profiles; no stock content admission or performance claim."
+  ]
+}

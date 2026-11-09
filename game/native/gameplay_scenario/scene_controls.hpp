@@ -1,0 +1,74 @@
+#pragma once
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <unordered_map>
+#include <variant>
+
+namespace reo::native::gameplay_scenario {
+struct SceneControlDomain;
+class SceneControls;
+class SceneControlId final {
+public:
+    SceneControlId()=default;
+    explicit operator bool()const noexcept{return bool(domain_);}
+    friend bool operator==(const SceneControlId&,const SceneControlId&)=default;
+private:
+    std::shared_ptr<const SceneControlDomain> domain_;
+    std::uint64_t serial_{};
+    friend class SceneControls;
+};
+// Type numbers are observed content tags, not guessed subsystem names. Typed
+// values project only fields owned by these commands; no original byte layout.
+struct ControlTypeZero {std::uint32_t parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};};
+struct ControlTypeOne {std::uint16_t parameter{};};
+struct ControlTypeTwo {std::uint32_t selector{},parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};};
+struct ControlTypeThree {std::uint32_t mode{};std::uint16_t parameter{};};
+struct ControlTypeFour {std::uint32_t mode{};};
+struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondary_parameter{};std::uint32_t completion{};std::uint8_t byte_parameter{};};
+struct ControlTypeNine {std::uint32_t parameter{};};
+struct ControlTypeThirteen {std::uint32_t selector{};std::uint16_t parameter{};};
+struct ControlOther {std::uint8_t type{};};
+using SceneControlBody=std::variant<ControlTypeZero,ControlTypeOne,ControlTypeTwo,ControlTypeThree,ControlTypeFour,ControlTypeFive,ControlTypeNine,ControlTypeThirteen,ControlOther>;
+struct SceneControl {std::uint32_t authored_id{};std::uint8_t enabled{};SceneControlBody body;};
+enum class ControlCommand { zero_two_parameter,type_one_parameter,enable_even,disable_even,zero_word_byte,
+    restart_five,reset_five,restart_five_byte,enable_odd,disable_odd,enable_one,disable_one,
+    enable_zero_two,disable_zero_two,zero_two_half,enable_nine,enable_thirteen,refresh_zero_two };
+struct ControlArguments {std::uint32_t authored_id{},parameter{},selector{};std::uint16_t extra{};};
+enum class ControlStatus { completed,invalid_identity,provider_unavailable,invalid_profile,closed,full,budget_exhausted };
+struct ControlResult {ControlStatus status{ControlStatus::completed};std::size_t visited{},matched{};};
+class ControlEffects {
+public:
+    virtual ~ControlEffects()=default;
+    virtual void reset(SceneControls&,const SceneControlId&)noexcept=0;
+    virtual void refresh(SceneControls&,const SceneControlId&,std::uint8_t authored_id)noexcept=0;
+};
+// Simulation-owner thread only. Invocation leases preserve the current node's
+// next link across a callback that retires it. Traversal reads next AFTER effect.
+class SceneControls final {
+public:
+    explicit SceneControls(std::size_t maximum=1024);
+    ~SceneControls();
+    SceneControls(const SceneControls&)=delete;
+    SceneControls& operator=(const SceneControls&)=delete;
+    std::optional<SceneControlId> append(SceneControl);
+    std::optional<SceneControl> get(const SceneControlId&)const noexcept;
+    ControlStatus replace(const SceneControlId&,SceneControl)noexcept;
+    ControlStatus erase(const SceneControlId&)noexcept;
+    void clear()noexcept;
+    void enabled(bool value)noexcept{enabled_=value;}
+    bool enabled()const noexcept{return enabled_;}
+    std::size_t size()const noexcept{return records_.size();}
+    ControlResult apply(ControlCommand,const ControlArguments&,ControlEffects*,std::size_t maximum_visits=4096)noexcept;
+private:
+    struct Node {SceneControlId id;SceneControl value;std::shared_ptr<Node> next;};
+    std::shared_ptr<const SceneControlDomain> domain_;
+    std::shared_ptr<Node> head_,tail_;
+    std::unordered_map<std::uint64_t,std::weak_ptr<Node>> records_;
+    std::uint64_t next_serial_{1};
+    std::size_t maximum_;
+    bool enabled_{true},clearing_{};
+    std::shared_ptr<Node> acquire(const SceneControlId&)const noexcept;
+};
+} // namespace reo::native::gameplay_scenario

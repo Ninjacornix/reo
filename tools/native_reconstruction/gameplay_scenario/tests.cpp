@@ -1,6 +1,8 @@
 #include "game/native/gameplay_scenario/interpreter.hpp"
 #include "game/native/gameplay_scenario/scene_resources.hpp"
 #include "game/native/gameplay_scenario/session_counters.hpp"
+#include "game/native/gameplay_scenario/sequence_control.hpp"
+#include <bit>
 #include "original_fixture.hpp"
 #include "original_declarations.inc"
 #include <algorithm>
@@ -91,7 +93,8 @@ void compare(vm::Interpreter& native,std::vector<std::uint8_t>& ram,std::size_t 
     }
 }
 #include "scene_vm_fixture.inc"
-void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false,unsigned scene_profile=0){
+#include "sequence_vm_fixture.inc"
+void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false,unsigned scene_profile=0,unsigned sequence_profile=0){
     fixture_session_mode=0;
     std::vector<std::uint8_t> ram(0x800000);for(std::size_t i=0;i<blocks.size();++i){std::memcpy(ram.data()+0x10000+i*0x10000,blocks[i].data(),blocks[i].size());fixture_write<std::uint32_t>(ram.data(),0x90000+4*i,0x10000+std::uint32_t(i)*0x10000);}
     std::memcpy(ram.data()+0x717830,original_opcode_table.data(),original_opcode_table.size()*4);
@@ -99,6 +102,7 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     std::memcpy(ram.data()+0x7408d0,original_counter_comparisons.data(),original_counter_comparisons.size()*4);
     std::memcpy(ram.data()+0x740890,original_signed_comparisons.data(),original_signed_comparisons.size()*4);
     SceneFixture scene(scene_profile);scene.export_original(ram);fixture_write<std::uint16_t>(ram.data(),0x3243dc,9);
+    SequenceFixture sequence(sequence_profile);sequence.export_original(ram);
     ram[0x3243e8]=1;ram[0x4baded]=actor;fixture_write<std::uint32_t>(ram.data(),0x4bace0+4*channel,0x10000);
     fixture_write<std::uint32_t>(ram.data(),0x4bad28+4*channel,0x10000+saved.block*0x10000+saved.offset);
     fixture_write<std::uint32_t>(ram.data(),0x4bad40+4*channel,0x90000);
@@ -110,8 +114,9 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     auto program=std::make_shared<const vm::Program>(std::move(blocks));vm::Channel state{program,{0,0},saved,0,0,0};check(native.restore_channel(channel,state)==vm::Status::completed);
     for(unsigned i=0;i<ticks;++i){R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
         o2_0068C660_0x68c660(ram.data(),&ctx,&runtime);check(ctx.pc==0xdeadbeef);
-        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters});check(result.status==vm::Status::yielded);
+        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters,&sequence.owner});check(result.status==vm::Status::yielded);
         compare(native,ram,channel,flags,timers,signals);scene.compare_original(ram);++invocations;
+        sequence.compare_original(ram);
         check(std::memcmp(session_counters.snapshot().data(),ram.data()+0x4bad70,24)==0);
     }
 }
@@ -194,6 +199,22 @@ int main()try{
         const auto end=emit(b,0xa);run({b},{0,end},2,actor%6,std::uint8_t(actor));
     }
     {std::vector<std::byte> b;emit(b,0xe8,{2,123});bool rejected=false;try{const vm::Program p({b});}catch(const std::invalid_argument&){rejected=true;}check(rejected);}
+    for(unsigned profile=0;profile<24;++profile)for(const auto desired:{0u,1u,2u,0xffffffffu}){
+        std::vector<std::byte> b;emit(b,0x12);emit(b,0x14,{desired});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);
+        emit(b,0x10,{255});emit(b,0x11,{0});emit(b,0x13,{0x123400ff,0xffff1234});emit(b,0x15,{254});emit(b,0x15,{255});
+        emit(b,0x16,{0x12340081,0xffff8001,0x12347fff,0xffffffff});emit(b,0x17,{profile%2?profile+1:profile,desired});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);
+        const auto end=emit(b,0xa);run({b},{0,end},2,profile%6,std::uint8_t(profile%4),false,0,profile);
+    }
+    {std::vector<std::byte> b;emit(b,0x10,{256});bool rejected=false;try{const vm::Program p({b});}catch(const std::invalid_argument&){rejected=true;}check(rejected);}
+    // Independent complete opcode16/helper execution, including precision edges
+    // around the signed boundary, odd values and all exponent-scale regions.
+    {std::vector<std::uint8_t> ram(0x800000);vm::SequenceControl native;std::uint32_t seed=0x4f31a9b2;
+        for(unsigned i=0;i<65536;++i){seed=seed*1664525u+1013904223u;const auto amount=i<1024?0x80000000u-512u+i:i<2048?0xffffffffu-(i-1024):seed;
+            fixture_write<std::uint32_t>(ram.data(),0x10000,0xffffff81u);fixture_write<std::uint32_t>(ram.data(),0x10004,0x12348001);fixture_write<std::uint32_t>(ram.data(),0x10008,0xffff7fff);fixture_write(ram.data(),0x1000c,amount);
+            R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,0x10000);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);o2_0068D4E0_0x68d4e0(ram.data(),&ctx,&runtime);
+            check(ctx.pc==0xdeadbeef);native.percentage(0x81,std::int16_t(-32767),32767,amount);check(std::bit_cast<std::uint32_t>(native.snapshot().fraction)==fixture_read<std::uint32_t>(ram.data(),0x3ddde0));
+        }
+    }
     {std::vector<std::byte> b;emit(b,0x110,{0,123});emit(b,0x30,{42});emit(b,0xa);vm::Interpreter n;
         check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
         check(n.tick(0,{}).status==vm::Status::provider_unavailable);check(n.counters()[0]==0);}
@@ -207,5 +228,5 @@ int main()try{
         for(std::size_t i=0;i<coverage.size();++i){if(i)std::cout<<',';std::cout<<(coverage[i].native_algorithm?"true":"false");count+=coverage[i].native_algorithm?1u:0u;}
         std::cout<<"],\"count\":"<<count<<",\"total\":432}";
     }
-    std::cout<<"},\"game_launched\":false}\n";
+    std::cout<<"},\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
