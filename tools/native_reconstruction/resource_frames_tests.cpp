@@ -10,7 +10,7 @@ namespace g=reo::native::gameplay_world;
 namespace a=reo::native::animation;
 namespace s=reo::native::gameplay_scenario;
 constexpr unsigned pool=0x3f4010,stride=0x250,descriptor_at=0x3c5630+3*60,bank_at=0x749180;
-std::uint64_t checks{},common_cases{},weapon_cases{},sequence_frames{},source_calls{},refusals{},passes{};
+std::uint64_t checks{},common_cases{},weapon_cases{},sequence_frames{},source_calls{},refusals{},passes{},pose_cases{};
 std::string active_case;
 void check(bool value,const std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(active_case+" line "+std::to_string(at.line()));
@@ -52,6 +52,9 @@ struct Fixture {
         check(created.model->current());auto& model=*created.model;
         model.active=active;model.visible=true;model.flags=flags;model.resource_slot=3;model.draw_layer=77;model.asset_index=2;model.program={};model.program.phase=2;model.program.elapsed=123;model.program.completed.fill(0x55);
         bases->asset_index=2;bases->count=6;model.base_parts=bases;
+        model.axis_scale={1.25f,-.75f,0};model.angles={1234,43210,16384};
+        for(unsigned column=0;column<4;++column)for(unsigned lane=0;lane<4;++lane)model.pose[column][lane]=float(17+column*4+lane)*.25f;
+        put(ram.data(),raw+0x1c0,model.pose);put(ram.data(),raw+0x22c,model.axis_scale);for(unsigned axis=0;axis<3;++axis)put(ram.data(),raw+0x21c+2*axis,model.angles[axis]);
         put(ram.data(),raw,std::uint8_t(active));put(ram.data(),raw+1,std::uint8_t(1));put(ram.data(),raw+0x23c,flags);put(ram.data(),raw+0x240,std::uint8_t(3));put(ram.data(),raw+0x241,std::uint8_t(77));put(ram.data(),raw+0x242,std::int16_t(2));
         ram[raw+9]=2;put(ram.data(),raw+0x10,std::int16_t(123));std::fill_n(ram.data()+raw+0x38,7,0x55);put(ram.data(),raw+0x24,0u);put(ram.data(),raw+0x28,0u);
         for(unsigned part=0;part<6;++part){
@@ -79,6 +82,7 @@ struct Fixture {
         check(model.program.phase==ram[raw+9]&&model.program.elapsed==read<std::int16_t>(ram.data(),raw+0x10));
         check(std::memcmp(model.program.completed.data(),ram.data()+raw+0x38,7)==0);
         check(std::memcmp(model.part_enabled.data(),ram.data()+raw+0x30,6)==0);
+        check(std::memcmp(&model.pose,ram.data()+raw+0x1c0,sizeof model.pose)==0);
         for(unsigned part=0;part<6;++part)for(unsigned column=0;column<4;++column)for(unsigned lane=0;lane<4;++lane){
             const auto observed=read<std::uint32_t>(ram.data(),raw+0x40+64*part+16*column+4*lane);
             if(std::bit_cast<std::uint32_t>(model.parts[part][column][lane])!=observed)throw std::runtime_error(active_case+" matrix part="+std::to_string(part)+" col="+std::to_string(column)+" lane="+std::to_string(lane)+" expected="+std::to_string(observed)+" got="+std::to_string(std::bit_cast<std::uint32_t>(model.parts[part][column][lane])));
@@ -127,13 +131,24 @@ int main(int argc,char** argv)try{
         active_case="static part copy count="+std::to_string(count);Fixture f;f.reset(1,0x20000,false);f.bases->count=std::uint16_t(count);put(f.ram.data(),0x3dbb14+2*2,std::int16_t(count));f.world.primary(0)->status=0x200;f.sync(0);f.created.model->program.phase=std::uint8_t(phase);f.ram[f.raw+9]=std::uint8_t(phase);f.step(true);++weapon_cases;
     }
     {
+        active_case="nonattached1904A0 XZY/scaling";Fixture f;f.reset(1,0x80000);
+        for(unsigned profile=0;profile<4;++profile)for(unsigned bits=0;bits<65536;++bits){
+            if(profile<3){f.created.model->angles={0,0,0};f.created.model->angles[profile]=std::uint16_t(bits);}
+            else f.created.model->angles={std::uint16_t(bits),std::uint16_t(bits*123u+77u),std::uint16_t(bits*3343u+43u)};
+            const auto sign=bits%8;f.created.model->axis_scale={sign&1?-.75f:1.25f,sign&2?0.f:2.f,sign&4?-0.f:.5f};
+            for(unsigned axis=0;axis<3;++axis)put(f.ram.data(),f.raw+0x21c+2*axis,f.created.model->angles[axis]);
+            put(f.ram.data(),f.raw+0x22c,f.created.model->axis_scale);
+            active_case="resource pose profile="+std::to_string(profile)+" bits="+std::to_string(bits);f.step(false);++pose_cases;
+        }
+    }
+    {
         active_case="actual ResourceModels update callback and self retirement";Fixture f;f.reset();f.created.model->work=std::make_shared<g::WeaponModelWork>(f.frames);f.world.primary(0)->active=false;f.sync(0);put(f.ram.data(),f.raw+0x14,0x6b45c0u);
         call(f.ram.data(),0x590ea0);const auto result=f.models.update(false);check(result.status==g::ResourceModelStatus::completed&&result.called==1);check(!f.created.model->current()&&!f.models.retain(f.created.id));f.compare();++passes;
     }
     {
         active_case="native safety refusals";Fixture f;f.reset();g::ResourceModels foreign;const auto other=foreign.create();bool refused{};try{f.frames.common(other.id,*other.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
         for(unsigned owner:{5u,128u,32768u}){f.reset(owner);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;}
-        for(unsigned flags:{0x800u,0x80000u}){f.reset(1,flags);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;}
+        f.reset(1,0x800u);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
         for(unsigned failure=0;failure<4;++failure){f.reset(1,0x20000,false);f.world.primary(0)->status=0x200;
             if(failure==0)f.created.model->base_parts.reset();
             if(failure==1)f.bases->asset_index=7;
@@ -147,5 +162,5 @@ int main(int argc,char** argv)try{
         f.reset();auto descriptor=*f.resources.get(*f.resources.slot(3));descriptor.secondary=other.model;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);f.world.primary(0)->active=false;refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused&&f.created.model->current());++refusals;
         f.reset();check(f.models.retire(f.created.id)==g::ResourceModelStatus::completed);refused=false;try{f.frames.weapon(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
     }
-    std::cout<<"{\"checks\":"<<checks<<",\"common_cases\":"<<common_cases<<",\"weapon_cases\":"<<weapon_cases<<",\"sequence_frames\":"<<sequence_frames<<",\"source_calls\":"<<source_calls<<",\"passes\":"<<passes<<",\"refusals\":"<<refusals<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"common_cases\":"<<common_cases<<",\"weapon_cases\":"<<weapon_cases<<",\"sequence_frames\":"<<sequence_frames<<",\"source_calls\":"<<source_calls<<",\"passes\":"<<passes<<",\"refusals\":"<<refusals<<",\"pose_cases\":"<<pose_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

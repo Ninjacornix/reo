@@ -16,6 +16,8 @@ float radians(std::uint16_t turn);
 SinCos sin_cos(float);
 // Reset only axis XYZ, preserving W and the fourth column, then apply X,Y,Z.
 void reset_euler_axes(Matrix&,Angles);
+// Resource1904A0 order: X,Z,Y. Preserve W and the fourth column.
+void reset_euler_axes_xzy(Matrix&,Angles);
 // Compose those same rotations onto existing axis XYZ; preserve W/column4.
 void compose_euler_axes(Matrix&,Angles);
 Matrix scale(Vector);

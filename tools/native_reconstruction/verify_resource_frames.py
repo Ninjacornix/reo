@@ -17,7 +17,8 @@ def main():
     assert sha(overlay) == '45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226'
     read = elf_reader(elf.read_bytes()); raw = overlay.read_bytes()
     addresses = [0x590be0,0x590c70,0x590d80,0x590ea0,0x5932f0,0x592770,0x5b1850,0x5b1a90,
-                 0x6b4420,0x6b45c0,0x6b4a30,0x1902d0,0x18fe20,0x18f570,0x1900e0,0x190060]
+                 0x6b4420,0x6b45c0,0x6b4a30,0x1902d0,0x18fe20,0x18f570,0x1900e0,0x190060,
+                 0x1904a0,0x191f80,0x190020,0x18feb0,0x1913e0]
     originals=[]; bodies=[]; proof=[]
     for at in addresses:
         directory='recomp/config/output' if at<0x570000 else 'recomp/config/output_ovl/o2'

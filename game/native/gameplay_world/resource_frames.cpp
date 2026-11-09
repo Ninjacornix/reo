@@ -46,7 +46,17 @@ void ResourceFrames::common(const ResourceModelId& id,ResourceModel& model){
     }
     if((model.flags&0x800u)&&!(model.flags&0x400u))throw std::runtime_error("Native resource room pulse consumer unavailable");
     if((model.flags&0x100000u)&&(model.flags&0x40000000u))throw std::runtime_error("Native resource reconstruction consumer unavailable");
-    if(model.flags&0x80000u)throw std::runtime_error("Native resource1904A0 pose profile unavailable");
+    if(model.flags&0x80000u){
+        auto next=model.pose;transform_math::reset_euler_axes_xzy(next,model.angles);
+        const auto scale=transform_math::scale(model.axis_scale);
+        //190020 builds a scale matrix then1913E0 composes XYZ axes only.
+        // Source22C is not a position or a replacement translation.
+        for(unsigned column=0;column<3;++column){
+            const auto value=transform_math::direction(scale,{next[column][0],next[column][1],next[column][2]});
+            next[column][0]=value.x;next[column][1]=value.y;next[column][2]=value.z;
+        }
+        model.pose=next;
+    }
 }
 void ResourceFrames::weapon(const ResourceModelId& id,ResourceModel& model){
     common(id,model);

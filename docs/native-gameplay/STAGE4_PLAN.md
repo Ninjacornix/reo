@@ -95,6 +95,9 @@ The primary-only release composition is compared; shared secondary release,
 extended owners, room pulses, required rebuild, nonattached pose updates and
 the real asset/resource factory remain open. This is a component checkpoint;
 the installed game is still V39 and the stage remains incomplete.
+The [nonattached pose follow-up](RESOURCE_POSES.md) closes the1904A0 XZY/axis-scale
+branch with full turn-domain comparisons and current weapon-frame regression.
+The other resource factory and integration gates above remain open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

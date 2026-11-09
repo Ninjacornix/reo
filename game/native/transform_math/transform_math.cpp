@@ -88,6 +88,17 @@ void reset_euler_axes(Matrix& matrix,Angles angles){
     for(unsigned col=0;col<3;++col)for(unsigned lane=0;lane<3;++lane)next[col][lane]=float(col==lane);
     compose(next,angles);matrix=next;
 }
+void reset_euler_axes_xzy(Matrix& matrix,Angles angles){
+    require_profile();auto next=matrix;
+    for(unsigned col=0;col<3;++col)for(unsigned lane=0;lane<3;++lane)next[col][lane]=float(col==lane);
+    const auto x=sin_cos(radians(angles[0]));
+    rotate_axes(next,{{{1,0,0},{0,add(0,x.cosine),add(0,x.sine)},{0,subtract(0,x.sine),add(0,x.cosine)}}});
+    const auto z=sin_cos(radians(angles[2]));
+    rotate_axes(next,{{{add(0,z.cosine),add(0,z.sine),0},{subtract(0,z.sine),add(0,z.cosine),0},{0,0,1}}});
+    const auto y=sin_cos(radians(angles[1]));
+    rotate_axes(next,{{{add(0,y.cosine),0,subtract(0,y.sine)},{0,1,0},{add(0,y.sine),0,add(0,y.cosine)}}});
+    matrix=next;
+}
 void compose_euler_axes(Matrix& matrix,Angles angles){
     require_profile();auto next=matrix;compose(next,angles);matrix=next;
 }
