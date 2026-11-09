@@ -1,0 +1,155 @@
+{
+  "schema": 1,
+  "status": "bounded resident asset cache, full-body clip preparation and queue playback checks passed on both compilers",
+  "game_launched": false,
+  "device_opened": false,
+  "step3_complete": false,
+  "limits": {
+    "per_view_bytes": 33554432,
+    "shared_live_reserved_bytes": 2147483648
+  },
+  "cohorts": {
+    "llvm": {
+      "receipt_sha256": "03ebcdd2b57cf932c69f0002268cf9ce5927ae51e121c4997fcdea6e0b81cdfb",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "native_receipt_sha256": "49b1cff4e0e2cf6d15402286fbe885f9c5d7d564d93059d35c5e9ebb67ae41e4",
+      "resident_results": {
+        "checks": 242,
+        "device_opened": false,
+        "game_launched": false
+      },
+      "loader_stdout": "220 native clip loader checks",
+      "queue_stdout": "5145 native cue controller checks",
+      "source_sha256": {
+        "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+        "game/native/audio_clip_loader/loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+        "tools/native_reconstruction/resident_resource_tests.cpp": "c35ebcdd875c7c03a9536fe7bb54c7fa470e8fa7ea9fd3872fda6b24b2829dfa",
+        "game/native/audio_clip_loader/loader_tests.cpp": "f7682cab2684c29fbd8bbeac23e6beb848791374d8337c8b86b9cc68e32de7e8",
+        "game/native/audio_cue_queue/queue_tests.cpp": "c6b4b32e251f26a00007f2cad030c80ef1b91345e442c6027ace2b64248b77a2",
+        "tools/native_reconstruction/verify_resident_resources.py": "c76faf2de9eeb269299c82f84a4fe3e1904142fa7f499e7d05fb3802e50d98d2"
+      }
+    },
+    "gcc": {
+      "receipt_sha256": "d141b1e8c643ff8468617077c9237a4bb0432f0eed2a5654c5aada8c03d265e6",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "native_receipt_sha256": "a33122e31778c83aca255721ca5affa82d643dc30181645f0e682e926017ad36",
+      "resident_results": {
+        "checks": 193,
+        "device_opened": false,
+        "game_launched": false
+      },
+      "loader_stdout": "220 native clip loader checks",
+      "queue_stdout": "4030 native cue controller checks",
+      "source_sha256": {
+        "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+        "game/native/audio_clip_loader/loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+        "tools/native_reconstruction/resident_resource_tests.cpp": "c35ebcdd875c7c03a9536fe7bb54c7fa470e8fa7ea9fd3872fda6b24b2829dfa",
+        "game/native/audio_clip_loader/loader_tests.cpp": "f7682cab2684c29fbd8bbeac23e6beb848791374d8337c8b86b9cc68e32de7e8",
+        "game/native/audio_cue_queue/queue_tests.cpp": "c6b4b32e251f26a00007f2cad030c80ef1b91345e442c6027ace2b64248b77a2",
+        "tools/native_reconstruction/verify_resident_resources.py": "c76faf2de9eeb269299c82f84a4fe3e1904142fa7f499e7d05fb3802e50d98d2"
+      }
+    }
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/resident-resource-tests-llvm-v4/receipt.json": "03ebcdd2b57cf932c69f0002268cf9ce5927ae51e121c4997fcdea6e0b81cdfb",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/resources-bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/audio_clip_loader-loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/audio_clip_loader-loader_tests.cpp": "f7682cab2684c29fbd8bbeac23e6beb848791374d8337c8b86b9cc68e32de7e8",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/audio_cue_queue-queue_tests.cpp": "c6b4b32e251f26a00007f2cad030c80ef1b91345e442c6027ace2b64248b77a2",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/native_reconstruction-resident_resource_tests.cpp": "c35ebcdd875c7c03a9536fe7bb54c7fa470e8fa7ea9fd3872fda6b24b2829dfa",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/resident-test.stdout.txt": "78ea5a2789f7d5f2b55c987388ee096d919b99ff44c67284bd995f08fd4421e9",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/resident-test.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/loader-test.stdout.txt": "2d80c26515dff497e8a80a1d632297a6feafa5de4b8fb5ca7e1600b90ea84e25",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/loader-test.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/queue-test.stdout.txt": "6743bcd3a0c0a3cf8550d44b67cdf3df81643c5a37c1e13866965c87740f1b73",
+    "build-native-sjuni/resident-resource-tests-llvm-v4/queue-test.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/receipt.json": "d141b1e8c643ff8468617077c9237a4bb0432f0eed2a5654c5aada8c03d265e6",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/resources-bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/audio_clip_loader-loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/audio_clip_loader-loader_tests.cpp": "f7682cab2684c29fbd8bbeac23e6beb848791374d8337c8b86b9cc68e32de7e8",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/audio_cue_queue-queue_tests.cpp": "c6b4b32e251f26a00007f2cad030c80ef1b91345e442c6027ace2b64248b77a2",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/native_reconstruction-resident_resource_tests.cpp": "c35ebcdd875c7c03a9536fe7bb54c7fa470e8fa7ea9fd3872fda6b24b2829dfa",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/resident-test.stdout.txt": "19088f3e0545197f15aab0a33945282ec97b69559b72bc9fccf9b42de4be4058",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/resident-test.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/loader-test.stdout.txt": "2d80c26515dff497e8a80a1d632297a6feafa5de4b8fb5ca7e1600b90ea84e25",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/loader-test.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/queue-test.stdout.txt": "997c962740fa028e4ac1671a09907b02c37e7705e72e8f9f81e0c27326159c3c",
+    "build-native-sjuni/resident-resource-tests-gcc-v3/queue-test.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+    "game/native/audio_clip_loader/loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+    "game/native/audio_clip_loader/loader_tests.cpp": "f7682cab2684c29fbd8bbeac23e6beb848791374d8337c8b86b9cc68e32de7e8",
+    "game/native/audio_cue_queue/queue_tests.cpp": "c6b4b32e251f26a00007f2cad030c80ef1b91345e442c6027ace2b64248b77a2",
+    "tools/native_reconstruction/resident_resource_tests.cpp": "c35ebcdd875c7c03a9536fe7bb54c7fa470e8fa7ea9fd3872fda6b24b2829dfa",
+    "tools/native_reconstruction/verify_resident_resources.py": "c76faf2de9eeb269299c82f84a4fe3e1904142fa7f499e7d05fb3802e50d98d2",
+    "build-native-sjuni/resident-resource-baseline-v1/queue_tests.cpp": "1a8f396f2b0371d767791d36883b4e039906787465d52550e31d13d927d1fb3f",
+    "build-native-sjuni/audio-asset-inventory/file1-v1/receipt.json": "765b03bca36fa7a3c78f57f8bf73bb72f0790d504dd14054e304dff29d570d23",
+    "build-native-sjuni/audio-asset-inventory/file1-v1/members.json": "276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2"
+  },
+  "owned_inventory_size_audit": {
+    "recognized_adx_members": 8916,
+    "largest_member": {
+      "container": "NETBIO01.DAT",
+      "member": "NETBIO01.DAT/0/280",
+      "names": [
+        "adxsnd.afs",
+        "s413900a.adx"
+      ],
+      "iso_offset": 1455419392,
+      "parent_relative_offset": 531312640,
+      "bytes": 22366854,
+      "container_sha256": "067b0bd9e32f9c3628520faad70f0961874d618f1bb56b7e834f8fd0a41017c2",
+      "sha256": "fb532481a6123297069b8a379a3a01bacd98bf4fbbe11b19e1f33ebfb7a5fc0b",
+      "recognition": "adx_structural_header",
+      "adx": {
+        "recognition": "adx_structural_header",
+        "cri_marker": true,
+        "header_bytes": 36,
+        "encoding": 3,
+        "block_bytes": 18,
+        "bits": 4,
+        "channels": 2,
+        "frequency": 48000,
+        "total_samples": 19881599,
+        "filter": 500,
+        "version": 3,
+        "version_control": 0,
+        "loop": {
+          "status": "header_too_short_for_loop"
+        },
+        "finite_header_profile": true,
+        "profile_checks": {
+          "encoding": true,
+          "block_bytes": true,
+          "bits": true,
+          "channels": true,
+          "version": true,
+          "rate_filter": true,
+          "header_extent": true,
+          "history_extent": true
+        },
+        "reasons": []
+      }
+    },
+    "over_per_view_limit": 0,
+    "scope": "all recognized ADX entries in verified owned File1 inventory; not a claim every header/profile is admitted"
+  },
+  "coverage": [
+    "Lazy factory and non-I/O readiness probe; known nested bounded slices preserve source offsets and propagate only actual full-copy readiness.",
+    "Concurrent same-identity/size factories share one resident object, concurrent readers execute one complete provider copy.",
+    "Failed/partial and allocation-failing copies never expose caller output or readiness, retry, or fall back to original source.",
+    "64 lazy 32 MiB views reserve exactly 2 GiB without allocating bodies; overflow refuses, deduplication needs no extra reservation, a retained slice holds its parent charge until actual destruction, and released charge permits readmission.",
+    "Backing provider destruction can reenter the cache without registry/load-lock deadlock. Unrelated constructors complete while another asset body read is blocked.",
+    "The actual Loader reports pending until the entire gated body arrives; two loaders share one canonical body, and complete byte equality and original-provider release/lifetime are checked.",
+    "All 220 existing Loader checks still cover invalid headers, channel/rate/sample matrices, allocation/source failures, key generation/cancellation, worker queue admission and joined-provider lifetime.",
+    "The CueQueue full-body test arms the original provider to throw after readiness; complete native payload digests match an unarmed reference, no original reads occur, and replacement waits for actual new-source EOF."
+  ],
+  "limitations": [
+    "These regressions compile actual cache/Loader CPPs directly against unchanged qualified native-core libraries; the other agent separately tests the adaptive resident read backend and root tests actual source-profile/game integration.",
+    "Identity labels are caller-validated resource/route identities, not a content-hash verification performed by the generic cache. Production source-profile integration prefixes validated mount route and canonical file/range identity.",
+    "The 2 GiB ceiling accounts for resident reservations, including lazy/failed views still alive, rather than total process, OS or provider memory.",
+    "Ready publication may wait for cold full-body I/O. Actual movie/audio startup synchronization and complete gameplay acceptance require separate new-candidate retests.",
+    "Existing direct Clip::prepare calls outside Loader retain their original source behavior; unknown file-backed views must not be treated as resident.",
+    "An earlier queue fixture matched old retained EOF before replacement metadata completed; the final predicate requires the second start and new EOF. Old source and failed logs are retained.",
+    "No physical audio, display, game or claimed root cause for old Windows read/worker delays is established by this cache qualification."
+  ]
+}

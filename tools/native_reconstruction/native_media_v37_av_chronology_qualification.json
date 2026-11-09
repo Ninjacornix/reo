@@ -1,0 +1,209 @@
+{
+  "schema": 1,
+  "status": "unexpected V37 audio shortage remains while native video continues; external collector gaps separately identified",
+  "session": "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488",
+  "source_revision": "c8928c05ab3276a8c0a666bff9508b60b686aa17",
+  "executable_sha256": "0d1b9faa538d7a052a4b87fcee0e6c7ceecc614993445078904311850971ab51",
+  "game_run": false,
+  "process_access": false,
+  "window_actions": false,
+  "source_edited": false,
+  "build_run": false,
+  "step3_complete": false,
+  "root_cause_confirmed": false,
+  "fix_confirmed": false,
+  "underrun_frames": 107328,
+  "shortage_windows": 134,
+  "shortage_interval_ns": [
+    292677056549600,
+    292679623174800
+  ],
+  "movie_generation6": {
+    "generation": 6,
+    "clip": 0,
+    "publications": 6144,
+    "unique_ordinals": 6144,
+    "first_ordinal": 0,
+    "last_ordinal": 6143,
+    "first_line": 496,
+    "last_line": 6639,
+    "first_publication_ns": 292502798150100,
+    "last_publication_ns": 292707761833400,
+    "max_publication_gap_ms": 40.8889,
+    "max_backpressure": 0
+  },
+  "native_during_shortage": {
+    "producer": {
+      "retention": "# dropped=0",
+      "records_in_interval": 77,
+      "fresh_frames": 77,
+      "first": {
+        "wake_begin_ns": 292677062913200,
+        "wake_end_ns": 292677063913700,
+        "controls_end_ns": 292677063913700,
+        "state_end_ns": 292677063916700,
+        "transfer_end_ns": 292677064175800,
+        "readback_end_ns": 292677065004600,
+        "publish_end_ns": 292677065004800,
+        "end_ns": 292677065004900,
+        "generation": 6,
+        "clip": 0,
+        "serial": 5224,
+        "ordinal": 5223,
+        "backpressure": 0,
+        "updated": 1,
+        "events": 693,
+        "position_seconds": 174.3417864,
+        "state": 3,
+        "line": 5719
+      },
+      "last": {
+        "wake_begin_ns": 292679597509200,
+        "wake_end_ns": 292679599361700,
+        "controls_end_ns": 292679599361800,
+        "state_end_ns": 292679599372700,
+        "transfer_end_ns": 292679599742100,
+        "readback_end_ns": 292679604797100,
+        "publish_end_ns": 292679604797400,
+        "end_ns": 292679604797500,
+        "generation": 6,
+        "clip": 0,
+        "serial": 5300,
+        "ordinal": 5299,
+        "backpressure": 0,
+        "updated": 1,
+        "events": 703,
+        "position_seconds": 176.8772368,
+        "state": 3,
+        "line": 5795
+      },
+      "maximum_overlapping_gap_ms": 38.135
+    },
+    "consumer": {
+      "retention": "# dropped=0",
+      "records_in_interval": 77,
+      "fresh_frames": 77,
+      "first": {
+        "begin_ns": 292677056911200,
+        "borrowed_ns": 292677056911300,
+        "copied_ns": 292677059453200,
+        "released_ns": 292677059742200,
+        "generation": 6,
+        "serial": 5223,
+        "ordinal": 5222,
+        "caller": 3647220,
+        "available": 1,
+        "line": 5702
+      },
+      "last": {
+        "begin_ns": 292679590002800,
+        "borrowed_ns": 292679590002900,
+        "copied_ns": 292679592897100,
+        "released_ns": 292679593248000,
+        "generation": 6,
+        "serial": 5299,
+        "ordinal": 5298,
+        "caller": 3647220,
+        "available": 1,
+        "line": 5778
+      },
+      "maximum_overlapping_gap_ms": 34.3279
+    }
+  },
+  "intentional_fault_is_earlier": true,
+  "shortage_is_before_eof": true,
+  "wgc_largest_overlapping_gap": {
+    "gap_ms": 450.3657,
+    "before": {
+      "index": 4230,
+      "system_100ns": 2926768218934,
+      "observed_qpc_100ns": 2926768107019,
+      "width": 642,
+      "height": 487,
+      "foreground": 0,
+      "iconic": 0
+    },
+    "after": {
+      "index": 4231,
+      "system_100ns": 2926772722591,
+      "observed_qpc_100ns": 2926772590058,
+      "width": 642,
+      "height": 487,
+      "foreground": 0,
+      "iconic": 0
+    }
+  },
+  "loopback_largest_overlapping_gap": {
+    "gap_ms": 440.0,
+    "before": {
+      "qpc_100ns": 2926767685015,
+      "device_frames": 0,
+      "frames": 480,
+      "flags": 0
+    },
+    "after": {
+      "qpc_100ns": 2926772085015,
+      "device_frames": 0,
+      "frames": 480,
+      "flags": 0
+    }
+  },
+  "window_central_distinct_frames": 47,
+  "game_maximum_overlapping_presentation_gap": {
+    "gap_ms": 17.6039,
+    "before": {
+      "tick": 13289,
+      "begin_ns": 292678172767700,
+      "scanout_ns": 292678173251700,
+      "present_ns": 292678173517800,
+      "end_ns": 292678173525800
+    },
+    "after": {
+      "tick": 13290,
+      "begin_ns": 292678190371600,
+      "scanout_ns": 292678190718400,
+      "present_ns": 292678190993500,
+      "end_ns": 292678191002700
+    }
+  },
+  "zero_capture_flags_imply_continuity": false,
+  "physical_endpoint_or_scanout_measured": false,
+  "evidence_sha256": {
+    "build-native-sjuni/native-media-v37-av-chronology-v1/analysis.json": "dcf1cc41d69057f7f0acc0057cccfcd88fb3fac276b585df1d1a0bb483addbee",
+    "docs/native-media/NATIVE_MEDIA_V37_AV_CHRONOLOGY.md": "6bea77eefaaec0fe3e0e7572c2b67dc893c47541422cdc5c76891f4488867c8c",
+    "tools/native_reconstruction/analyze_host_movie_playtest.py": "39ae42dd1815d925f8179a4e318840d05283f36fd80c31dffaf572d192070f90",
+    "tools/native_reconstruction/analyze_audio_control_trace.py": "874becefd4b2eb77c4011ab5993fe461123967a283974038f7b932f7bb3ea3da",
+    "tools/native_reconstruction/capture_process_audio.cpp": "885bd2150402f1ce53478442a8ee18ba469a365f300089dfbda75e578b381474",
+    "build-native-sjuni/capture_launcher_audio_v2.py": "d166657bea24d251b4731360b767add8802de8318fd418cdcd5ea065feb6c906",
+    "build-native-sjuni/capture_owned_window_sequence_v1.cpp": "0f6f35ea60a49bdf891db2b29528a547beb5cfa5633ec4fac221d8629dbfbfb4",
+    "build-native-sjuni/candidate-work-v37/candidate-build-result.json": "c78046841ddcc52e8234379e8315ccd3869836b8a8a4b039e8be48d4a5ec98fc",
+    "build-native-sjuni/native-media-game-v37/native-media-package-receipt.json": "136bf2d0dc8768fa30bc1093d210e7df9be52bf57797f39e0bc570eb2829d788",
+    "build-native-sjuni/candidate-inputs-v37/notices/native-candidate-source-delta.json": "6f618ea0a47838bf6a3315f85eb5e5f63629aa71e190a492b7bc46f66d1cc36c",
+    "build-native-sjuni/candidate-inputs-v37/source/game/native/host_movie/session.cpp": "7df89065b4f0f62905639f0bf4cbc206ffa1c06e0c31a316feb8f756181393de",
+    "build-native-sjuni/candidate-inputs-v37/source/recomp/overrides/native_host_movie/runtime_adapter.cpp": "1731faa717600ce05dc94e37d3f24a5041196a1029e70b920bf97757ad44a6a3",
+    "build-native-sjuni/candidate-inputs-v37/source/recomp/overrides/native_adxt/ordinary_runtime.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/native-audio-control.csv": "53413e51c3b269683f5f6d43351c3d76bed4a43ea52000abfde7428b73fd1dea",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/native-movie-producer.csv": "ed5aab22c2b8df288001e3d664ac90ceabd63bd781bb7229fa29ea812ebc39a8",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/native-movie-consumer.csv": "ad4125a8e7ef3f684f41b63430d588a33164ba0918811b7ef39c924b85b5f553",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/window-sequence-v1/frames.csv": "1303b9f1754ba326a2b8b8b40de195909b985c1f0bd7477a9b59a62b8c54085b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/window-sequence-v1/gray.bin": "aa5897e17163d0a7bd285caa3ea22ecd485771948e835ac8c09f523b871da588",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/window-sequence-command-v1.json": "9c82ff46ac07c711cb1948063c7f6bf1d4154ea4e3c38a826d5b4e51bc79c18c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/launcher-process-audio.wav.packets.csv": "6ede0b11a2ad7461e3e178d26abe0d92a4e884090574f96042c87a6632fc7fa7",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/launcher-process-audio-result.json": "e33a332d31a3c0431e56cff59799480b1abc15bab70ef610ba8d720568d435e0",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/launcher-process-audio-command.json": "9db54a93c241b868e68c04b09a92a767365291ae0bbf57bc45d7ecaa933b1831",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/frames.csv": "b68dafa3dba1f4b4d282e47d4fbf7d3e4dfc3acd0235b946f8365d5d4c9fa6c2",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/stderr.log": "1ccbc1e0fa76e02dea8284229b14e8f50f577f146f39b7751cfb405be7ed457d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/native-game-session-check.json": "d922171c8a7eccb144856106b0207119cff99484ed24b0a6e1547290017ac85c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/native-game-session-running.json": "7dcbe56b1038d7a4f6e81aad4b72d8779eca6da55d41cc82c88406154566e511",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/launch.json": "5aaf930ce59481cc750aa6fcbf070af05ad3a960acc124ae8884cbab2c2e195a",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-051101-488/gallery-fault-driver-v5.json": "1cded1bac0da4b0433988f548a8712b6a758e37f2c01b5d0793063b465b7fe12",
+    "build-native-sjuni/capture_owned_window_sequence_v1.exe": "066af8c327643ae23c5e8f356fe6f5391b7bbff27f85fad9c5eab3da79611351",
+    "build-native-sjuni/host-movie/capture-process-audio-llvm-v3.exe": "37af9c8f9c681656efeb43682c6f280ccb0911050698cd80bbf655195e6b8aea"
+  },
+  "limitations": [
+    "No exact decoder/GPU/driver/file/OS scheduling root cause is established.",
+    "Capture-only gaps are not a measured native movie/game freeze or physical output loss.",
+    "WGC SystemRelativeTime and observed QPC differ, sometimes with the former ahead; do not interpret that raw difference as physical transfer latency.",
+    "A deliberate earlier movie failure does not account for a later unexpected native audio underrun."
+  ]
+}
