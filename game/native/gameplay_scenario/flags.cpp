@@ -38,6 +38,16 @@ bool FlagState::strided(std::uint32_t record,std::uint32_t bit,std::uint8_t slot
     if(notify)notifications_->changed(StridedFlagChange{record,bit,slot,set});
     return true;
 }
+std::optional<bool> FlagState::test_strided(std::uint32_t record,std::uint32_t bit,std::uint8_t slot)const noexcept{
+    if(record>=state_.strided.size()||slot>=6)return{};
+    return bool(state_.strided[record][slot]&std::uint16_t(1u<<(bit&31)));
+}
+std::optional<bool> FlagState::actor_flag(ActorFlagFamily family,std::uint8_t category,std::uint32_t id)const noexcept{
+    if(category>4||id>=512)return{};
+    const auto& actors=family==ActorFlagFamily::primary?state_.primary:state_.auxiliary;
+    const auto& values=category==0?actors[0]:category<=3?actors[category-1]:family==ActorFlagFamily::primary?state_.auxiliary[0]:state_.shared.scenario;
+    return bool(values[id/32]&(1u<<(id&31)));
+}
 bool FlagState::actor_flag(ActorFlagFamily family,ActorFlagSelection selected,std::uint32_t id,bool set)noexcept {
     if(id>=512||(!selected.all_three&&selected.bank>3))return false;
     const auto update=[&](FlagWords& values){auto& word=values[id/32];const auto mask=1u<<(id&31);word=set?word|mask:word&~mask;};

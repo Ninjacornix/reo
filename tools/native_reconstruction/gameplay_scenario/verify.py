@@ -5,6 +5,7 @@ ROOT=Path(__file__).resolve().parents[3];HERE=Path(__file__).resolve().parent
 IDS=['0068C660','0068C950','0068C990','0068C9E0','0068CBE0','0068CD80','0068CD90','0068CDF0','0068CE30','0068CE90','0068CEC0','0068CF40','0068CF70','0068CFE0','0068D0B0','0068D0F0','0068D1B0','0068D2A0','0068E110','0068E140','0068E170','0068E1A0','0068E1D0','0068E1F0','0068E250','0068E280','0068E310','0068E3A0','0068E570','0068E590','00691240','00691260','00692710','00692750','00692790','006927D0','00692970','00694E90']
 IDS += ['007003E0','007006D0','007009A0','00700A50','00700B00','00700BB0','00700E70','00700F00']
 IDS += ['0068D670','0068D690','0068D6B0','0068D6D0','0068D6F0','0068D760','0068D780','0068D8F0','00592900','00592960','00592A10','00592B00','00592B90','00592C20','00592D50','005B4A50','00592CA0']
+IDS += ['00691170','00691290','006918C0','006919D0','00691C10','006908E0','006909B0','00691E70','00691EB0','00701D10','00701DA0','00701E60','007008C0','00700930']
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)
@@ -37,7 +38,7 @@ def main(a):
     (out/'original_lookup.inc').write_text('\n'.join('case 0x'+n.split('_')[-1].removeprefix('0x')+':return '+n+';' for n in names)+'\n')
     fixture=(ROOT/'tools/native_reconstruction/gameplay_save/original_fixture.hpp').read_text().replace('0x400000','0x800000').replace('#include <cstdint>','#include <cstdint>\n#include <array>')
     fixture=fixture.replace('Function lookupFunction(std::uint32_t)const{throw std::runtime_error("Unexpected original dynamic dispatch");}','Function lookupFunction(std::uint32_t)const;')
-    fixture+='\n#define SRL32(a,b) (std::uint32_t(std::uint32_t(a)>>(std::uint32_t(b)&31)))\n#define SUB32(a,b) (std::uint32_t(std::uint32_t(a)-std::uint32_t(b)))\n#define WRITE32(a,v) fixture_write<std::uint32_t>(rdram,a,v)\n'
+    fixture+='\n#define SRL32(a,b) (std::uint32_t(std::uint32_t(a)>>(std::uint32_t(b)&31)))\n#define SRA32(a,b) (std::int32_t(std::int32_t(a)>>(std::uint32_t(b)&31)))\n#define SUB32(a,b) (std::uint32_t(std::uint32_t(a)-std::uint32_t(b)))\n#define WRITE32(a,v) fixture_write<std::uint32_t>(rdram,a,v)\n'
     (out/'original_fixture.hpp').write_text(fixture);(out/'original.cpp').write_text('#include "original_fixture.hpp"\n#include "original_declarations.inc"\n'+text)
     shutil.copyfile(HERE/'tests.cpp',out/'tests.cpp')
     shutil.copyfile(HERE/'offline_tests.inc',out/'offline_tests.inc')

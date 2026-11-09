@@ -47,6 +47,10 @@ struct Flags final:vm::Flags {
         if(notify)strided_notices.emplace_back(record,bit,set,slot);
         return true;
     }
+    std::optional<bool> test_strided(std::uint32_t record,std::uint32_t bit,std::uint8_t slot)const noexcept override{
+        if(record>=4||slot>=6)return{};
+        return bool(strided_flags[record][slot]&std::uint16_t(1u<<(bit&31)));
+    }
 };
 struct Signals final:vm::Signals {
     std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint32_t>> sent;
@@ -96,6 +100,7 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     fixture_write<std::uint32_t>(ram.data(),0x4bad28+4*channel,0x10000+saved.block*0x10000+saved.offset);
     fixture_write<std::uint32_t>(ram.data(),0x4bad40+4*channel,0x90000);
     Flags flags;flags.notices.reserve(100);flags.strided_notices.reserve(100);if(condition){flags.banks[0][0]=1;fixture_write<std::uint32_t>(ram.data(),0x4b9c00,1);}
+    flags.strided_flags[2][2]=0x8001;fixture_write<std::uint16_t>(ram.data(),0x4b9e20+24+4,0x8001);
     Signals signals;signals.sent.reserve(100);signals.asked.reserve(100);
     notifications.clear();notifications.reserve(100);strided_notifications.clear();strided_notifications.reserve(100);messages.clear();messages.reserve(100);queries.clear();queries.reserve(100);
     tasks::FlagTimers timers;vm::Interpreter native;
@@ -168,6 +173,16 @@ int main()try{
         emit(b,0x34,{42});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);
         emit(b,0x36,{19,0xfffffff9,operation});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);
         emit(b,0x35,{19});const auto end=emit(b,0xa);run({b},{0,end},2,profile%6,std::uint8_t(profile%4),false,profile);
+    }
+    for(const auto opcode:{0xe3u,0xe6u,0xecu,0xedu,0xefu})for(unsigned state=0;state<4;++state)for(const auto wanted:{0u,1u,0x100u}){
+        std::vector<std::byte> b;emit(b,0xb,{0,127,state&1});emit(b,0xb,{1,127,state&1});emit(b,0xc,{0,127,state&2});emit(b,0xc,{1,127,state&2});
+        emit(b,opcode,{opcode==0xef?0x1234007fu:127u,wanted});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);
+        const auto end=emit(b,0xa);run({b},{0,end},2);
+    }
+    for(const auto bit:{0u,15u,16u,31u,32u,0xffffffffu})for(const auto wanted:{0u,1u}){
+        std::vector<std::byte> b;emit(b,0x40,{2,bit});emit(b,0xf4,{2,bit});
+        for(const auto opcode:{0xb7u,0xb8u}){emit(b,opcode,{2,bit,wanted});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);}
+        emit(b,0xf5,{2,bit});const auto end=emit(b,0xa);run({b},{0,end},2);
     }
     {std::vector<std::byte> b;emit(b,0x110,{0,123});emit(b,0x30,{42});emit(b,0xa);vm::Interpreter n;
         check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);

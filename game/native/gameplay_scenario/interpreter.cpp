@@ -15,9 +15,10 @@ std::uint32_t word(const std::byte* p)noexcept{
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op){case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
+    case 0xe3:case 0xe6:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
     case 0x30:case 0x31:case 0x32:case 0x33:case 0x34:case 0x35:return 2;case 0x37:return 5;case 0x36:return 10;
-    case 5:case 0xb:return 9;case 0xc:case 0x46:case 0x113:return 12;case 0x45:return 16;default:return 0;}
+    case 5:case 0xb:return 9;case 0xc:case 0x46:case 0x113:case 0xb7:case 0xb8:return 12;case 0x45:return 16;default:return 0;}
 }
 bool opener(std::uint32_t op)noexcept{
     constexpr std::array<std::uint32_t,32> values{0xe6,8,0xe3,0x34,0xe9,0xea,0xec,0xed,0x14,0x113,0x150,0x151,0x152,0x153,0x155,0x156,0xc2,0xc3,0xee,0x36,0x47,0x48,0x49,0x4d,0xb7,0xb8,0x158,0x180,0x159,0x17,0x1aa,0x1ac};
@@ -53,13 +54,13 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     std::array<OpcodeCoverage,432> out{};
     for(std::size_t i=0;i<out.size();++i)out[i].native_algorithm=original_noops[i];
     for(const auto i:{1,2,3,4,5,6,7,0xa,0xd,0xe4,0xe5,0x110,0x111,0x112,0x113,0x114})out[i].native_algorithm=true;
-    for(const auto i:{8,0xb,0xc,0x40,0x41,0x42,0x43,0x44,0x49,0x4c,0x4d})out[i]={true,true,false,false};
+    for(const auto i:{8,0xb,0xc,0x40,0x41,0x42,0x43,0x44,0x49,0x4c,0x4d,0xe3,0xe6,0xec,0xed,0xef,0xb7,0xb8,0xf4,0xf5})out[i]={true,true,false,false};
     for(const auto i:{0x46,0x47,0x48})out[i]={true,false,false,true};
     out[0x45]={true,false,true,false};
     for(std::size_t i=0x30;i<=0x37;++i)out[i]={true,false,false,false,true};
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
-        else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc)out[i]={};
+        else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef)out[i]={};
     }
     return out;
 }
@@ -182,6 +183,33 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x37:{const auto id=providers.scene_resources->lookup(signed_half(0));
             if(id&&providers.scene_resources->flag800(*id,std::bit_cast<std::int8_t>(std::to_integer<std::uint8_t>(payload[4])))!=SceneStatus::completed)return result(Status::provider_unavailable);
             break;}
+        case 0xe3:case 0xe6:case 0xec:case 0xed:case 0xef:{++c.condition;
+            const auto actor_flag=[&](ActorFlagFamily family,std::uint32_t id){return offline?
+                providers.canonical_flags->actor_flag(family,static_cast<std::uint8_t>(offline->actor_category),id):
+                providers.flags->get(family==ActorFlagFamily::primary?FlagBank::local_primary:FlagBank::local_auxiliary,id);};
+            const auto id=opcode==0xef&&!offline?std::to_integer<std::uint32_t>(payload[0]):value(0);
+            const bool wanted=opcode==0xef&&!offline?payload[4]!=std::byte{}:value(4)!=0;
+            std::optional<bool> flag;
+            if(opcode==0xe3)flag=actor_flag(ActorFlagFamily::primary,id);
+            else if(opcode==0xef)flag=actor_flag(ActorFlagFamily::auxiliary,id);
+            else if(opcode==0xe6)flag=providers.flags->get(FlagBank::secondary,id);
+            else{
+                const auto first=opcode==0xec?providers.flags->get(FlagBank::scenario,id):actor_flag(ActorFlagFamily::primary,id);
+                if(!first)return result(Status::provider_unavailable);
+                // Preserve the original short circuit: the second bank is not
+                // read if the first bit is clear.
+                if(!*first)flag=false;
+                else{const auto second=opcode==0xec?providers.flags->get(FlagBank::secondary,id):actor_flag(ActorFlagFamily::auxiliary,id);
+                    if(!second)return result(Status::provider_unavailable);
+                    flag=!*second;
+                }
+            }
+            if(!flag)return result(Status::provider_unavailable);
+            if(*flag!=wanted){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
+        case 0xb7:case 0xb8:{++c.condition;const auto flag=providers.flags->test_strided(value(0),value(4),opcode==0xb7?2:0);
+            if(!flag)return result(Status::provider_unavailable);
+            if(*flag!=(value(8)!=0)){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
+        case 0xf4:case 0xf5:if(!providers.flags->strided(value(0),value(4),5,opcode==0xf4,false))return result(Status::provider_unavailable);break;
         case 0x44:if(value(0)<128&&!providers.flags->write(FlagBank::bounded_byte,value(0),true))return result(Status::provider_unavailable);break;
         case 0x40:case 0x41:case 0x42:case 0x43:
             if(!providers.flags->strided(value(0),value(4),0,opcode==0x40||opcode==0x42,opcode==0x42||opcode==0x43))return result(Status::provider_unavailable);

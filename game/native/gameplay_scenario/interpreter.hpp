@@ -58,6 +58,7 @@ public:
     // Preserve raw notification value as well as the local Boolean bit write.
     virtual bool scenario(std::uint32_t,std::uint8_t,NotifyOwner,std::uint8_t actor_owner)noexcept=0;
     virtual bool strided(std::uint32_t record,std::uint32_t bit,std::uint8_t slot,bool set,bool notify)noexcept=0;
+    virtual std::optional<bool> test_strided(std::uint32_t,std::uint32_t,std::uint8_t)const noexcept{return{};}
 };
 struct SignalMessage {std::uint32_t id{};std::uint8_t value{};std::uint32_t parameter{};};
 class Signals {

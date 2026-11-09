@@ -29,6 +29,14 @@ std::vector<std::byte> offline_script(unsigned id){
     std::vector<std::byte> b;emit(b,5);emit(b,6); // Offline no-op bindings require no actor-event payload.
     emit(b,0xb,{1,id,0xff});emit(b,0xc,{1,id+1,1});emit(b,0xb,{0,id+2,0x81});emit(b,0xc,{0,id+3,0});
     emit(b,0x47,{37,1});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);emit(b,0xa);
+    // Insert the remaining local/shared predicates before the final yield.
+    b.resize(b.size()-4);
+    for(const auto opcode:{0xe3u,0xe6u,0xecu,0xedu,0xefu}){
+        emit(b,opcode,{opcode==0xef?257u:id,0x100});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);
+    }
+    emit(b,0xf4,{2,15});emit(b,0xf5,{2,31});
+    for(const auto opcode:{0xb7u,0xb8u}){emit(b,opcode,{2,15,0});emit(b,0x110,{2,5});emit(b,0xe4);emit(b,0x110,{2,6});emit(b,0xe5);}
+    emit(b,0xa);
     return b;
 }
 std::uint32_t last_record(const std::vector<std::byte>& bytes){
