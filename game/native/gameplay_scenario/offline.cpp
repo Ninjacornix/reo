@@ -1,4 +1,5 @@
 #include "offline.hpp"
+#include "../gameplay_world/world.hpp"
 
 namespace reo::native::gameplay_scenario {
 Status OfflineCoordinator::restore(const OfflineState& value)noexcept{
@@ -16,11 +17,14 @@ OfflineResult OfflineCoordinator::tick(Interpreter& vm,std::size_t requested,boo
     const auto admitted=[&](std::size_t channel){const auto& c=vm.channels()[channel];return c.program&&c.program->profile()==DispatchProfile::offline_actor;};
     if(requested!=1){if(!admitted(requested)){out.status=Status::invalid_program;return out;}}
     else for(const auto& actor:party)if(actor.active&&(actor.script_class>=class_channel.size()||!admitted(class_channel[actor.script_class]))){out.status=Status::invalid_program;return out;}
-    const auto missing_stream=[&](std::size_t channel){const auto& program=*vm.channels()[channel].program;
+    const auto missing_stream=[&](std::size_t channel,std::size_t owner){const auto& program=*vm.channels()[channel].program;
         return (program.needs_streams()&&(!stream_tick||!providers.streams||!providers.stream_backend))||
-            (program.needs_saved_controls()&&(!providers.saved_controls||(requested!=1&&selected>=3)));};
-    if(requested!=1){if(missing_stream(requested)){out.status=Status::provider_unavailable;return out;}}
-    else for(const auto& actor:party)if(actor.active&&missing_stream(class_channel[actor.script_class])){out.status=Status::provider_unavailable;return out;}
+            (program.needs_saved_controls()&&(!providers.saved_controls||owner>=3))||
+            (program.needs_world()&&(!providers.world||&selected!=&providers.world->selected_actor))||
+            (program.needs_selected_actor()&&(!providers.world||!providers.world->primary(owner)))||
+            (program.needs_action_choices()&&!providers.action_choices);};
+    if(requested!=1){if(missing_stream(requested,selected)){out.status=Status::provider_unavailable;return out;}}
+    else for(std::size_t i=0;i<party.size();++i)if(party[i].active&&missing_stream(class_channel[party[i].script_class],i)){out.status=Status::provider_unavailable;return out;}
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     if(requested!=1){
         out.actors[0]=vm.tick_offline_channel(requested,{enabled,false,selected,current_room,stream_tick},{0,0,0},providers,budget);

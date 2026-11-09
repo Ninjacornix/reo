@@ -70,9 +70,7 @@ void compare_offline_channels(vm::Interpreter& vm,const std::vector<std::uint8_t
 }
 void original_offline_call(std::vector<std::uint8_t>& ram,unsigned channel,bool wrapper){
     R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
-    const auto saved_mode=fixture_session_mode;fixture_session_mode=1;
     if(wrapper)o2_007003E0_0x7003e0(ram.data(),&ctx,&runtime);else o2_007006D0_0x7006d0(ram.data(),&ctx,&runtime);
-    fixture_session_mode=saved_mode;
     check(ctx.pc==0xdeadbeef);++invocations;
 }
 void offline_tests(){
@@ -198,6 +196,35 @@ void offline_tests(){
         fixture_write(ram.data(),0x75a4b0,category);fixture_write(ram.data(),0x75a4c0,relation);StreamFixture streams(profile,0);streams.export_original(ram);
         vm::Interpreter native;install_offline_program(native,ram,0,b);original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers providers;providers.flags=&flags;providers.canonical_flags=&flags;providers.streams=&streams.owner;providers.stream_backend=&streams;
         check(native.tick_offline_channel(0,{true,false,2,9,0u},{category,relation,0},providers).status==vm::Status::yielded);compare_offline_channels(native,ram);streams.compare_original(ram);
+    }
+    for(unsigned profile=0;profile<72;++profile)for(unsigned owner=0;owner<3;++owner)for(unsigned category=0;category<5;++category)for(unsigned relation=0;relation<3;++relation){
+        assertion_context="native actor choices offline profile="+std::to_string(profile)+" owner="+std::to_string(owner)+" category="+std::to_string(category)+" relation="+std::to_string(relation);
+        std::vector<std::byte> b;emit(b,0x135,{42,0x8002a,0x80002,UINT32_MAX,0x80190});
+        emit(b,0x155,{profile%10,profile%3});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);
+        emit(b,0x180,{profile%4});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);emit(b,0xa);
+        std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;fixture_write(ram.data(),0x75a4b0,category);fixture_write(ram.data(),0x75a4c0,relation);
+        ActorFixture actors(profile,std::uint8_t(owner),true);actors.export_original(ram);ControlFixture controls(profile);controls.export_original(ram);
+        vm::Interpreter native;install_offline_program(native,ram,0,b);original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers p;p.flags=&flags;p.canonical_flags=&flags;p.world=&actors.world;p.action_choices=&actors.choices;p.scene_controls=&controls.owner;
+        check(native.tick_offline_channel(0,{true,false,std::uint8_t(owner)},{category,relation,0},p).status==vm::Status::yielded);
+        compare_offline_channels(native,ram);controls.compare_original(ram);actors.compare_original(ram);
+    }
+    for(unsigned profile=0;profile<8;++profile){
+        std::vector<std::byte> b;emit(b,1);emit(b,0x135,{42,0x8002a,0x8002a,0x8002a,0x8002a});emit(b,0x155,{0,1});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);emit(b,0x180,{0});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);emit(b,0xa);
+        std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;fixture_write<std::uint16_t>(ram.data(),0x3243dc,9);
+        ActorFixture actors(profile,2,true);actors.export_original(ram);ControlFixture controls;controls.export_original(ram);vm::Interpreter native;std::array<vm::OfflinePartyActor,3> party;
+        for(unsigned i=0;i<3;++i){party[i]={true,std::uint8_t(i),9};ram[0x4a5c30+i*0x10e0]=0x80;ram[0x4a5c33+i*0x10e0]=std::uint8_t(i);actors.world.primary(i)->slot=std::uint8_t(i);fixture_write<std::uint16_t>(ram.data(),0x4a5c30+i*0x10e0+0x1e2,9);install_offline_program(native,ram,i+1,b);}
+        vm::FlagState flags;vm::OfflineCoordinator coordinator;vm::Providers p;p.world=&actors.world;p.action_choices=&actors.choices;p.scene_controls=&controls.owner;
+        original_offline_call(ram,1,true);const auto r=coordinator.tick(native,1,true,party,9,actors.world.selected_actor,flags,p);check(r.status==vm::Status::completed);check(r.invocations==3);compare_offline_channels(native,ram);controls.compare_original(ram);actors.compare_original(ram);
+        const auto first=native.channels()[1].current;const auto counter=native.counters();actors.world.selected_actor=2;actors.world.retire_primary(1);
+        check(coordinator.tick(native,1,true,party,9,actors.world.selected_actor,flags,p).status==vm::Status::provider_unavailable);check(actors.world.selected_actor==2);check(native.channels()[1].current==first);check(native.counters()==counter);
+    }
+    // The wrapper must borrow the canonical selected-owner byte, not silently
+    // update a detached copy before invoking actor-dependent programs.
+    {std::vector<std::byte> b;emit(b,0x135,{42,0x8002a,0x8002a,0x8002a,0x8002a});emit(b,0xa);vm::Interpreter native;vm::FlagState flags;vm::OfflineCoordinator coordinator;ActorFixture actors(0,2,true);ControlFixture controls;
+        std::vector<std::uint8_t> ram(0x800000);install_offline_program(native,ram,0,b);vm::Providers p;p.world=&actors.world;p.action_choices=&actors.choices;p.scene_controls=&controls.owner;
+        std::array<vm::OfflinePartyActor,3> party{};std::uint8_t detached=2;const auto old=native.channels()[0].current;
+        check(coordinator.tick(native,0,true,party,9,detached,flags,p).status==vm::Status::provider_unavailable);check(detached==2);check(native.channels()[0].current==old);
+        actors.world.retire_primary(2);check(coordinator.tick(native,0,true,party,9,actors.world.selected_actor,flags,p).status==vm::Status::provider_unavailable);check(actors.world.selected_actor==2);check(native.channels()[0].current==old);
     }
     // Actual optional audio tick reaches both wrapper routes, including every
     // active actor when a shared authored channel reenters its saved record.

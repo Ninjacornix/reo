@@ -370,3 +370,35 @@ Scalar probe transforms and the previously qualified actor occupancy provider
 are declared math surroundings. Actual canonical game consumers remain the
 integration owner's work. Qualification:
 `native_gameplay_object_queries_qualification_v1.json`.
+
+The `actor_views` companion now supplies the ordered32-entry body solver and
+auxiliary boundary through direct scalar references. Generic XYZ refs accept
+different native vector types without casts; byte flags bind the existingC53and
+10A9fields without introducing duplicate contact/boundary state. Shape definitions,
+priorities, counters, native peer identity and summaries can bind canonical actor
+components while model-joint poses remain borrowed for the synchronous call.
+Caller admits live identity-qualified views and retains their owner/pose leases;
+the registry validates required IDs, unique roster identity and joint ranges
+before writes, then retains only registration IDs until its drain point.
+
+Both compilers pass the generic81,831-check corpus:1000four-actor solves,
+200ordered boundary cases and three explicit generic-vector/byte-flag cases.
+The separate canonical World corpus passes49,080checks on each compiler using
+World-spawned actors and strong leases:1000four-actor solves,200boundary cases
+and a retirement/replacement case. Position, previous and candidate direction,
+body definitions/priority/counter/peer/summary, C53room_marker and10A9transient_marker
+are direct canonical bindings. Missing old-generation admission refuses writes
+to the replacement while an existing lease keeps the retired actor alive.
+
+All compared outputs match unchanged original actor solver/boundary bodies with
+the existing declared scalar shape/math surroundings. Pose/shape data is admitted
+synthetic content in this corpus; a stock model-pose importer and actual game-loop
+installation are separate responsibilities. The historical owning Actor API and
+its source cohort remain unchanged. Qualification:
+`native_gameplay_actor_views_qualification_v1.json`.
+
+## Standalone actor metadata
+
+`actor_metadata.hpp/.cpp` implements the separate `6F14F0` post-pose summary through the same borrowed native actor view. A missing definition preserves the old summary. A sphere stores its sampled X/Z with exactly zero half-length and heading; this differs from the registry's `6F1430` sphere heading convention. Capsules retain the original midpoint, horizontal half-length narrowing and heading conversion. This path never consumes the registry's accumulated push.
+
+The LLVM and GCC cohorts each compare 8,000 cases and 27,766 checks against the unchanged, owned-byte-audited original body and qualified shape samplers: 3,765 spheres, 3,764 capsules and 471 absent definitions, with zero error. The cases include nonpositive radii, paired joints, root centers and nonzero stale registry scratch. Native production keeps actor fields by reference. Synthetic pose admission is qualified; stock model/pose import and installation in the running actor schedule remain separate gates. Evidence: `tools/native_reconstruction/native_gameplay_actor_metadata_qualification_v1.json`.

@@ -8,6 +8,8 @@
 #include "scene_controls.hpp"
 #include "stream_channels.hpp"
 #include "saved_controls.hpp"
+#include "action_choices.hpp"
+#include "../gameplay_world/world.hpp"
 #include <algorithm>
 #include <bit>
 #include <stdexcept>
@@ -21,7 +23,8 @@ std::uint32_t word(const std::byte* p)noexcept{
         (std::to_integer<std::uint32_t>(p[2])<<16)|(std::to_integer<std::uint32_t>(p[3])<<24);
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
-    switch(op){case 0x50:case 0x54:case 0x55:case 0x104:case 0x105:return 12;case 0x57:return 16;
+    switch(op){case 0x135:return 20;case 0x155:return 8;case 0x180:return 4;
+    case 0x50:case 0x54:case 0x55:case 0x104:case 0x105:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
     case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
@@ -67,7 +70,8 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
             scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;
             sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;
-            scene_controls_|=coverage[op].scene_controls_required;streams_|=coverage[op].streams_required;saved_controls_|=coverage[op].saved_controls_required;at+=bytes;
+            scene_controls_|=coverage[op].scene_controls_required;streams_|=coverage[op].streams_required;saved_controls_|=coverage[op].saved_controls_required;
+            world_|=coverage[op].world_required;selected_actor_|=coverage[op].selected_actor_required;action_choices_|=coverage[op].action_choices_required;at+=bytes;
         }
     }
 }
@@ -93,6 +97,9 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
+    for(const auto i:{0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
+    out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef&&i!=0x104&&i!=0x105)out[i]={};
@@ -145,6 +152,9 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_scene_controls()&&!providers.scene_controls)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_streams()&&(!providers.streams||!providers.stream_backend||!context.stream_tick))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_saved_controls()&&(!providers.saved_controls||context.selected_actor>=SavedControlRecords::owner_count))return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_world()&&(!providers.world||providers.world->selected_actor!=context.selected_actor))return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -234,6 +244,16 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             }
             if(offline&&!providers.saved_controls->apply(context.selected_actor,enable,value(0),value(4),value(8)))return result(Status::provider_unavailable);
             break;}
+        case 0x135:{const auto actor=providers.world->primary(providers.world->selected_actor);if(!actor)return result(Status::provider_unavailable);
+            const bool permitted=actor->category==0&&actor->slot==(providers.world->mode==0?0:providers.world->selected_actor);
+            const auto applied=providers.scene_controls->choose_five(value(0),{value(4),value(8),value(12),value(16)},*providers.action_choices,actor->character,permitted,providers.world->session().random);
+            if(applied.status!=ControlStatus::completed)return result(applied.status==ControlStatus::budget_exhausted?Status::budget_exhausted:Status::provider_unavailable);
+            break;}
+        case 0x155:case 0x180:{++c.condition;bool matches=false;
+            if(opcode==0x155){const auto actor=providers.world->primary(providers.world->selected_actor);if(!actor)return result(Status::provider_unavailable);
+                const bool equal=actor->character==std::to_integer<std::uint8_t>(payload[0]);matches=value(4)!=0?equal:!equal;
+            }else matches=(value(0)==0&&providers.world->mode==0)||(value(0)==1&&providers.world->mode!=0);
+            if(!matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
         case 0x50:case 0x51:case 0x52:case 0x53:case 0x54:case 0x55:case 0x56:case 0x57:
         case 0x58:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:case 0x5f:case 0x72:case 0xb5:case 0xf6:{
             const auto bytes=payload_minimum(opcode);ControlArguments arguments;arguments.authored_id=value(0);

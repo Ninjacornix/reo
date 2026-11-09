@@ -24,12 +24,13 @@ def main(a):
     fixture+='\n#define WRITE32(a,v) fixture_write<std::uint32_t>(rdram,a,v)\n'
     (out/'original_fixture.hpp').write_text(fixture);(out/'original.cpp').write_text('#include "original_fixture.hpp"\n#include "original_declarations.inc"\n'+text)
     paths=[HERE/'scene_control_tests.cpp',Path(__file__),ROOT/'game/native/gameplay_scenario/scene_controls.hpp',ROOT/'game/native/gameplay_scenario/scene_controls.cpp']
+    paths += [ROOT/'game/native/gameplay_session/session.hpp',ROOT/'game/native/gameplay_session/session.cpp',ROOT/'game/native/gameplay_scenario/action_choices.hpp']
     before={p.relative_to(ROOT).as_posix():sha(p) for p in paths}
     for p in paths:shutil.copyfile(p,out/p.name)
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-I'+str(ROOT),'-I'+str(out)]
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
-    for label,path in [('core',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('tests',out/'scene_control_tests.cpp')]:checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(path),'-o',str(out/(label+'.o'))],out,'compile-'+label))
-    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','tests']]+['-o',str(out/'checks.exe')],out,'link'))
+    for label,path in [('session',ROOT/'game/native/gameplay_session/session.cpp'),('core',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('tests',out/'scene_control_tests.cpp')]:checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(path),'-o',str(out/(label+'.o'))],out,'compile-'+label))
+    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','session','core','tests']]+['-o',str(out/'checks.exe')],out,'link'))
     checks.append(invoke([str(out/'checks.exe')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,checks=checks,result=json.loads((out/'test.stdout.txt').read_text()),
         installed_in_game=False,game_launched=False,limitations=['Native typed linked-control state and command algorithms only; actual content importer, renderer and consumers are not migrated.','No new interpreter opcode is admitted by this independent owner qualification.','Reset and refresh implementations are explicit effect doubles, not original implementations in production.'])

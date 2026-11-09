@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -9,6 +10,10 @@
 namespace reo::native::gameplay_scenario {
 struct SceneControlDomain;
 class SceneControls;
+class ActionChoices;
+}
+namespace reo::native::gameplay_session { class Random; }
+namespace reo::native::gameplay_scenario {
 class SceneControlId final {
 public:
     SceneControlId()=default;
@@ -37,7 +42,7 @@ struct ControlTypeEleven {};
 struct ControlTypeThirteen {std::uint32_t selector{};std::uint16_t parameter{};};
 struct ControlOther {std::uint8_t type{};};
 using SceneControlBody=std::variant<ControlTypeZero,ControlTypeOne,ControlTypeTwo,ControlTypeThree,ControlTypeFour,ControlTypeFive,ControlTypeNine,ControlTypeThirteen,ControlOther,ControlTypeSix,ControlTypeSeven,ControlTypeEleven>;
-struct SceneControl {std::uint32_t authored_id{};std::uint8_t enabled{};SceneControlBody body;};
+struct SceneControl {std::uint32_t authored_id{};std::uint8_t enabled{};SceneControlBody body;std::uint8_t counter{};};
 enum class ControlCommand { zero_two_parameter,type_one_parameter,enable_even,disable_even,zero_word_byte,
     restart_five,reset_five,restart_five_byte,enable_odd,disable_odd,enable_one,disable_one,
     enable_zero_two,disable_zero_two,zero_two_half,enable_nine,enable_thirteen,refresh_zero_two };
@@ -69,6 +74,7 @@ public:
     std::size_t size()const noexcept{return records_.size();}
     ControlResult apply(ControlCommand,const ControlArguments&,ControlEffects*,std::size_t maximum_visits=4096)noexcept;
     ControlResult apply_typed(bool enable,std::uint32_t type,std::uint32_t authored_id,std::uint32_t selector,std::size_t maximum_visits=4096)noexcept;
+    ControlResult choose_five(std::uint32_t authored_id,const std::array<std::uint32_t,4>& choices,ActionChoices&,std::uint8_t character,bool permitted,gameplay_session::Random&,std::size_t maximum_visits=4096)noexcept;
 private:
     struct Node {SceneControlId id;SceneControl value;std::shared_ptr<Node> next;};
     std::shared_ptr<const SceneControlDomain> domain_;

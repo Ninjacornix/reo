@@ -12,7 +12,7 @@ IDS += ['0068D5D0','0068D5F0','0068D610','0068D630','006B1DC0','006B1EC0','006B1
 IDS += ['00690340','00690370','006903A0','006903C0']
 IDS += ['00694E50','005C45C0','0068E630','0068E6D0','0068E730','0068E800','0068E8B0','0068E920','0068E9E0','0068EA70','0068EB30','0068EBF0','0068ECC0','0068ED30','0068EDA0','0068EE30','0068EEC0','0068F5C0','00691F00','00690810']
 IDS += ['0068F570','0068F5A0']
-IDS += ['006920E0','006922B0','007020E0','00702380']
+IDS += ['006920E0','006922B0','007020E0','00702380','00693020','00693840','00694DA0']
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)
@@ -22,6 +22,7 @@ def invoke(command,out,label):
 def main(a):
     cc=Path(a.compiler).resolve();out=a.output.resolve();assert cc.exists() and not out.exists() and out.is_relative_to(ROOT/'build-native-sjuni');out.mkdir(parents=True)
     raw=(ROOT/'build-function-index/owned-overlays/o2.bin').read_bytes();assert hashlib.sha256(raw).hexdigest()=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226'
+    assert raw[0x717820-0x570000:0x717830-0x570000]==bytes([0,0,1,1,0,0,1,1,2,2,3,3,2,2,3,3])
     texts=[];sources={};words=0
     for ident in IDS:
         p=next((ROOT/'recomp/config/output_ovl/o2').glob('o2_'+ident+'_*'));text=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
@@ -37,7 +38,7 @@ def main(a):
     segment=next(p for p in loads if p[2]<=0x1b3c30 and 0x1b3c38<=p[2]+p[4]);body=elf[segment[1]+0x1b3c30-segment[2]:segment[1]+0x1b3c38-segment[2]]
     assert struct.unpack('<II',body)==(0x03e00008,0);texts.append('\n'.join(l for l in main_text.splitlines() if not l.startswith('#include')))
     previous_names=set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
-    stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190'];stream_functions=set()
+    stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80'];stream_functions=set()
     for ident in stream_main:
         p=next((ROOT/'recomp/config/output').glob('sub_'+ident+'_*'));source=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
         for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',source):
@@ -76,15 +77,17 @@ def main(a):
     shutil.copyfile(HERE/'lighting_vm_fixture.inc',out/'lighting_vm_fixture.inc')
     shutil.copyfile(HERE/'control_vm_fixture.inc',out/'control_vm_fixture.inc')
     shutil.copyfile(HERE/'stream_vm_fixture.inc',out/'stream_vm_fixture.inc')
-    source_paths=[HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
+    shutil.copyfile(HERE/'actor_vm_fixture.inc',out/'actor_vm_fixture.inc')
+    source_paths=[HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
     source_paths += list((ROOT/'game/native/gameplay_scenario').glob('*.hpp'))+list((ROOT/'game/native/gameplay_scenario').glob('*.cpp'))+list((ROOT/'game/native/gameplay_scenario').glob('*.inc'))
+    source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     before={p.relative_to(ROOT).as_posix():sha(p) for p in source_paths}
     for p in source_paths:shutil.copyfile(p,out/(p.parent.name+'-'+p.name))
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-I'+str(ROOT),'-I'+str(out)]
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
-    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('controls',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('streams',ROOT/'game/native/gameplay_scenario/stream_channels.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('tests',out/'tests.cpp')]
+    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('controls',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('streams',ROOT/'game/native/gameplay_scenario/stream_channels.cpp'),('world',ROOT/'game/native/gameplay_world/world.cpp'),('input',ROOT/'game/native/gameplay_actors/input.cpp'),('session',ROOT/'game/native/gameplay_session/session.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('tests',out/'tests.cpp')]
     for label,path in units:checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(path),'-o',str(out/(label+'.o'))],out,'compile-'+label))
-    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','flags','offline','scene','sequence','lighting','controls','streams','entities','tasks','tests']]+['-o',str(out/'checks.exe')],out,'link'))
+    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','flags','offline','scene','sequence','lighting','controls','streams','world','input','session','entities','tasks','tests']]+['-o',str(out/'checks.exe')],out,'link'))
     checks.append(invoke([str(out/'checks.exe')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
         original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),

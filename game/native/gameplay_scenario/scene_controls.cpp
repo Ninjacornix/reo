@@ -1,4 +1,5 @@
 #include "scene_controls.hpp"
+#include "action_choices.hpp"
 #include <utility>
 
 namespace reo::native::gameplay_scenario {
@@ -50,6 +51,23 @@ void SceneControls::clear()noexcept{
     auto current=std::move(head_);
     while(current){auto next=std::move(current->next);current.reset();current=std::move(next);}
     clearing_=false;
+}
+ControlResult SceneControls::choose_five(std::uint32_t authored_id,const std::array<std::uint32_t,4>& choices,ActionChoices& selection,std::uint8_t character,bool permitted,gameplay_session::Random& random,std::size_t maximum_visits)noexcept{
+    ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    if(!enabled_||!permitted)return result;
+    for(auto node=head_;node;node=node->next)if(node->value.authored_id==authored_id){
+        if(const auto* other=std::get_if<ControlOther>(&node->value.body);other&&other->type==5){result.status=ControlStatus::invalid_profile;return result;}
+    }
+    for(auto node=head_;node;node=node->next){
+        if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
+        ++result.visited;
+        if(node->value.authored_id!=authored_id||!std::holds_alternative<ControlTypeFive>(node->value.body))continue;
+        const auto selected=selection.choose(choices,character,random);if(!selected)return result;
+        (void)reset_five(node->id);node->value.enabled=1;--node->value.counter;
+        std::get<ControlTypeFive>(node->value.body).reset_sentinel=std::uint16_t(*selected|0x4000u);
+        result.matched=1;return result;
+    }
+    return result;
 }
 ControlResult SceneControls::apply_typed(bool enable,std::uint32_t type,std::uint32_t authored_id,std::uint32_t selector,std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}

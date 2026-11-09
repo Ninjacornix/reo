@@ -24,12 +24,17 @@ struct ActorCollision {
     std::optional<gameplay_collision::Vec3> point,normal,joint_two_position;
     std::uint16_t route_ticks{};
     gameplay_collision::actors::Basis basis;
+    std::optional<gameplay_collision::actors::ShapeDefinition> body_definition;
+    std::uint8_t body_priority{},separation_count{};
+    actors::EntityId body_peer;
+    gameplay_collision::actors::Summary body_summary;
 };
 // One canonical native actor. The health/status/hit fields are inherited once;
 // native functions operate on this same object, not mirrored byte records.
 struct Actor : actors::Entity,actors::HitActor {
     bool active{},visible{};
     std::uint8_t ai_control{},normalized_marker{};
+    std::uint8_t character{};
     std::uint16_t contact_flags{},pending_notice{};
     std::uint32_t response_mask{},response_value{};
     std::uint8_t motion_override{},interaction_marker{},room_marker{},movement_enabled{};
@@ -37,6 +42,9 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t transient_marker{},grid{};
     float grid_response{};
     Position position{};
+    Position candidate_direction{};
+    Position model_scale{1,1,1},local_impulse{},world_impulse{},root_motion_delta{};
+    float motion_multiplier{1};
     Position previous_position{};
     std::array<std::int16_t,4> orientation{},previous_orientation{};
     std::uint32_t action_elapsed{},control_elapsed{};

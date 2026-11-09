@@ -1,0 +1,6 @@
+add_library(reo_native_transform_math STATIC transform_math.cpp)
+target_compile_features(reo_native_transform_math PUBLIC cxx_std_20)
+target_include_directories(reo_native_transform_math PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_transform_math PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

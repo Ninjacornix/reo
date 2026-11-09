@@ -1,0 +1,262 @@
+{
+  "schema": 1,
+  "status": "native original-polynomial trig/reset-compose Euler/ordered matrix/direction math qualifies bit-for-bit under declared finite FP32 profile on both compilers",
+  "stage4_complete": false,
+  "game_run": false,
+  "installed_in_game": false,
+  "physical_ps2_exceptional_parity": false,
+  "native_cpu_context": false,
+  "native_instruction_execution": false,
+  "host_sin_cos_substitution": false,
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/transform-math-llvm-v3/receipt.json",
+      "sha256": "be5a94358004723091525ddb4f1dd119c544def7be068fbce495afd82032b86c",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 2998328,
+        "angle_cases": 65536,
+        "trig_cases": 73744,
+        "euler_cases": 131072,
+        "matrix_cases": 4096,
+        "direction_cases": 4096,
+        "scale_cases": 4096,
+        "original_helper_calls": 983040,
+        "original_body_executed": true,
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/transform-math-gcc-v2/receipt.json",
+      "sha256": "31d56927146aa863ab8c07752cb28b89a3a3af21b35959578051bc64f67968eb",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 2998328,
+        "angle_cases": 65536,
+        "trig_cases": 73744,
+        "euler_cases": 131072,
+        "matrix_cases": 4096,
+        "direction_cases": 4096,
+        "scale_cases": 4096,
+        "original_helper_calls": 983040,
+        "original_body_executed": true,
+        "game_run": false
+      }
+    }
+  },
+  "source_sha256": {
+    "recomp/config/output/sub_0018F570_0x18f570.cpp": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698",
+    "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c",
+    "recomp/config/output/sub_0018FE20_0x18fe20.cpp": "c37e8a9cb5a79f6eb9874072120f69c7704070a297e018002b111ad122d12b8d",
+    "recomp/config/output/sub_0018FE60_0x18fe60.cpp": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c",
+    "recomp/config/output/sub_001902D0_0x1902d0.cpp": "8de1b3de26bd7eafeb9b80cfeca183114429bd3e2801927b573a04f9ff9aaebd",
+    "recomp/config/output/sub_00190A10_0x190a10.cpp": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484",
+    "recomp/config/output/sub_00191300_0x191300.cpp": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da",
+    "recomp/config/output/sub_001919D0_0x1919d0.cpp": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388",
+    "recomp/config/output/sub_00191F80_0x191f80.cpp": "fff926facac28b24a62fc590cc966c8983479d90374697b01cbe6eecaaf56adf",
+    "recomp/config/output_ovl/o0/o0_00370220_0x370220.cpp": "736ecbdb8448f8ccb1b14539c9fdae9bdad6e11a2d1a9dac30f7316ac5852059",
+    "recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp": "03396a3da3197a3c0b8a5a02a5400837cb4b9cd71361bb30b6648e35d6c79036",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "game/native/transform_math/transform_math.cpp": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_math_tests.cpp": "507334daf964b7dbbd84033d5a50c9413af9b648acc6829da13dfa4f14825ead",
+    "tools/native_reconstruction/verify_transform_math.py": "591d44a9f453b4a741fc3ed235ff7c5de4cb5d25e7c9c0253b8b0affe174e1b0",
+    "recomp/config/output/sub_00195E50_0x195e50.cpp": "210b41cbb6bb69e99208f4a273dcd13fd1de1dc7287e00119c63b12629650452"
+  },
+  "immutable_source_evidence": {
+    "llvm": {
+      "recomp/config/output/sub_0018F570_0x18f570.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_0018F570_0x18f570.cpp",
+        "sha256": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698"
+      },
+      "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_0018FDF0_0x18fdf0.cpp",
+        "sha256": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c"
+      },
+      "recomp/config/output/sub_0018FE20_0x18fe20.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_0018FE20_0x18fe20.cpp",
+        "sha256": "c37e8a9cb5a79f6eb9874072120f69c7704070a297e018002b111ad122d12b8d"
+      },
+      "recomp/config/output/sub_0018FE60_0x18fe60.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_0018FE60_0x18fe60.cpp",
+        "sha256": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c"
+      },
+      "recomp/config/output/sub_001902D0_0x1902d0.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_001902D0_0x1902d0.cpp",
+        "sha256": "8de1b3de26bd7eafeb9b80cfeca183114429bd3e2801927b573a04f9ff9aaebd"
+      },
+      "recomp/config/output/sub_00190A10_0x190a10.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_00190A10_0x190a10.cpp",
+        "sha256": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484"
+      },
+      "recomp/config/output/sub_00191300_0x191300.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_00191300_0x191300.cpp",
+        "sha256": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da"
+      },
+      "recomp/config/output/sub_001919D0_0x1919d0.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_001919D0_0x1919d0.cpp",
+        "sha256": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388"
+      },
+      "recomp/config/output/sub_00191F80_0x191f80.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_00191F80_0x191f80.cpp",
+        "sha256": "fff926facac28b24a62fc590cc966c8983479d90374697b01cbe6eecaaf56adf"
+      },
+      "recomp/config/output_ovl/o0/o0_00370220_0x370220.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output_ovl/o0/o0_00370220_0x370220.cpp",
+        "sha256": "736ecbdb8448f8ccb1b14539c9fdae9bdad6e11a2d1a9dac30f7316ac5852059"
+      },
+      "recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp",
+        "sha256": "03396a3da3197a3c0b8a5a02a5400837cb4b9cd71361bb30b6648e35d6c79036"
+      },
+      "game/native/transform_math/transform_math.hpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/game/native/transform_math/transform_math.hpp",
+        "sha256": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35"
+      },
+      "game/native/transform_math/transform_math.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/game/native/transform_math/transform_math.cpp",
+        "sha256": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449"
+      },
+      "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp",
+        "sha256": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+      },
+      "tools/native_reconstruction/gameplay_world_oracle/transform_math_tests.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/tools/native_reconstruction/gameplay_world_oracle/transform_math_tests.cpp",
+        "sha256": "507334daf964b7dbbd84033d5a50c9413af9b648acc6829da13dfa4f14825ead"
+      },
+      "tools/native_reconstruction/verify_transform_math.py": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/tools/native_reconstruction/verify_transform_math.py",
+        "sha256": "591d44a9f453b4a741fc3ed235ff7c5de4cb5d25e7c9c0253b8b0affe174e1b0"
+      },
+      "recomp/config/output/sub_00195E50_0x195e50.cpp": {
+        "path": "build-native-sjuni/transform-math-llvm-v3/source/recomp/config/output/sub_00195E50_0x195e50.cpp",
+        "sha256": "210b41cbb6bb69e99208f4a273dcd13fd1de1dc7287e00119c63b12629650452"
+      }
+    },
+    "gcc": {
+      "recomp/config/output/sub_0018F570_0x18f570.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_0018F570_0x18f570.cpp",
+        "sha256": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698"
+      },
+      "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_0018FDF0_0x18fdf0.cpp",
+        "sha256": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c"
+      },
+      "recomp/config/output/sub_0018FE20_0x18fe20.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_0018FE20_0x18fe20.cpp",
+        "sha256": "c37e8a9cb5a79f6eb9874072120f69c7704070a297e018002b111ad122d12b8d"
+      },
+      "recomp/config/output/sub_0018FE60_0x18fe60.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_0018FE60_0x18fe60.cpp",
+        "sha256": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c"
+      },
+      "recomp/config/output/sub_001902D0_0x1902d0.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_001902D0_0x1902d0.cpp",
+        "sha256": "8de1b3de26bd7eafeb9b80cfeca183114429bd3e2801927b573a04f9ff9aaebd"
+      },
+      "recomp/config/output/sub_00190A10_0x190a10.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_00190A10_0x190a10.cpp",
+        "sha256": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484"
+      },
+      "recomp/config/output/sub_00191300_0x191300.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_00191300_0x191300.cpp",
+        "sha256": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da"
+      },
+      "recomp/config/output/sub_001919D0_0x1919d0.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_001919D0_0x1919d0.cpp",
+        "sha256": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388"
+      },
+      "recomp/config/output/sub_00191F80_0x191f80.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_00191F80_0x191f80.cpp",
+        "sha256": "fff926facac28b24a62fc590cc966c8983479d90374697b01cbe6eecaaf56adf"
+      },
+      "recomp/config/output_ovl/o0/o0_00370220_0x370220.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output_ovl/o0/o0_00370220_0x370220.cpp",
+        "sha256": "736ecbdb8448f8ccb1b14539c9fdae9bdad6e11a2d1a9dac30f7316ac5852059"
+      },
+      "recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp",
+        "sha256": "03396a3da3197a3c0b8a5a02a5400837cb4b9cd71361bb30b6648e35d6c79036"
+      },
+      "game/native/transform_math/transform_math.hpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/game/native/transform_math/transform_math.hpp",
+        "sha256": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35"
+      },
+      "game/native/transform_math/transform_math.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/game/native/transform_math/transform_math.cpp",
+        "sha256": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449"
+      },
+      "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp",
+        "sha256": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+      },
+      "tools/native_reconstruction/gameplay_world_oracle/transform_math_tests.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/tools/native_reconstruction/gameplay_world_oracle/transform_math_tests.cpp",
+        "sha256": "507334daf964b7dbbd84033d5a50c9413af9b648acc6829da13dfa4f14825ead"
+      },
+      "tools/native_reconstruction/verify_transform_math.py": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/tools/native_reconstruction/verify_transform_math.py",
+        "sha256": "591d44a9f453b4a741fc3ed235ff7c5de4cb5d25e7c9c0253b8b0affe174e1b0"
+      },
+      "recomp/config/output/sub_00195E50_0x195e50.cpp": {
+        "path": "build-native-sjuni/transform-math-gcc-v2/source/recomp/config/output/sub_00195E50_0x195e50.cpp",
+        "sha256": "210b41cbb6bb69e99208f4a273dcd13fd1de1dc7287e00119c63b12629650452"
+      }
+    }
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/native-transform-qualified-profile-v1/TRANSFORM_MATH.md": "0e1e17d2312c4d0122f1760df3e0edeb5fbaa6263acc584c94cfab01af5dd102",
+    "build-native-sjuni/native-transform-qualified-profile-v1/ps2_runtime_macros.h": "763baab6071c4a10c418a2f9f968e92e4da2e62a1e5ace642593a38d4c734287",
+    "build-native-sjuni/transform-math-gcc-v1/receipt.json": "1654926217e16df246e9ddbe173cf3db6a8228e18344a65eb44103e5ecd45c4f",
+    "build-native-sjuni/native-transform-qualified-profile-v1/dependency-source-receipt.json": "9f1e67e084ed94fb3e41bf6b1a3f013dcb43aaef15b6a82b06f56a261573a67c"
+  },
+  "documentation": {
+    "path": "docs/native-gameplay/TRANSFORM_MATH.md",
+    "sha256_at_qualification": "0e1e17d2312c4d0122f1760df3e0edeb5fbaa6263acc584c94cfab01af5dd102",
+    "immutable_copy": "build-native-sjuni/native-transform-qualified-profile-v1/TRANSFORM_MATH.md"
+  },
+  "constant_content": {
+    "0x22fe20": {
+      "bytes": "83f9a23edb0f49400000000000000000149c2e361fb24fb93e87083ca4aa2abe",
+      "sha256": "24797677dd43afce22bbb45b4b13994bc9594bcc3cb5db4979de183824c85a3a"
+    },
+    "0x241c78": {
+      "bytes": "db0fc9c000000000610b364300000000db0f494000000000db0f49c000000000",
+      "sha256": "d8b4e49c4d8d34d159c1ffefe2ecf75880b64b0c080635ef7b2450491b84a62c"
+    }
+  },
+  "reference_sdk_profile": {
+    "immutable_macro_path": "build-native-sjuni/native-transform-qualified-profile-v1/ps2_runtime_macros.h",
+    "sha256": "763baab6071c4a10c418a2f9f968e92e4da2e62a1e5ace642593a38d4c734287",
+    "original_source": "build-native-sjuni/dependency-muted-rna-reapply-v1/ps2xRuntime/include/ps2_runtime_macros.h",
+    "audited_dependency_receipt": "build-native-sjuni/dependency-muted-rna-reapply-v1-receipt.json",
+    "sign_extended_u32_setter": true,
+    "separate_finite_simd_rounding": true,
+    "audited_dependency_receipt_sha256": "9f1e67e084ed94fb3e41bf6b1a3f013dcb43aaef15b6a82b06f56a261573a67c",
+    "immutable_dependency_receipt": "build-native-sjuni/native-transform-qualified-profile-v1/dependency-source-receipt.json"
+  },
+  "profile": {
+    "binary32": true,
+    "rounding": "nearest",
+    "gradual_underflow": true,
+    "fast_math": false,
+    "contraction": false,
+    "turn_input": "unsigned16 through original low16 wrappers",
+    "trig_radian_domain": "finite[-2*pi,2*pi]",
+    "identity": "owned constant admitted from original runtime initialization195E50;294E00 is BSS",
+    "preserved_unused_lanes": "arbitrary bits, with no exceptional arithmetic claim"
+  },
+  "rotation_contract": "Both paths rotate X thenY thenZ;370320 resets axisXYZ first,370220 composes existing axisXYZ. Both retainW and column4.",
+  "refused_profiles": [
+    "nonnearest rounding",
+    "FTZ or DAZ",
+    "wider radian range",
+    "nonfinite arithmetic or overflow result"
+  ],
+  "limits": [
+    "Complete original primary entries and helper calls execute; alternate merged entrypoints are not dynamically qualified.",
+    "Reference SIMD/register machinery is test-only; production uses ordinary floats, owned values and immutable polynomial words.",
+    "No physical PS2 exceptional values/flags/accumulator precision, initializer retirement, game installation, visual match or speedup is claimed."
+  ]
+}

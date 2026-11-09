@@ -12,7 +12,7 @@ std::size_t checks{},calls{};
 void check(bool v){++checks;if(!v)throw std::runtime_error("Typed controls check "+std::to_string(checks));}
 constexpr std::uint32_t base=0x500000,stride=256,saved_base=0x700000;
 void project(std::uint8_t* ram,std::uint32_t at,const vm::SceneControl& r){
-    fixture_write(ram,at+0x40,r.authored_id);ram[at+0x3c]=r.enabled;
+    fixture_write(ram,at+0x40,r.authored_id);ram[at+0x3c]=r.enabled;ram[at+0x32]=r.counter;
     std::visit([&](const auto& b){using T=std::decay_t<decltype(b)>;
         if constexpr(std::is_same_v<T,vm::ControlTypeZero>)ram[at+0x30]=0;
         else if constexpr(std::is_same_v<T,vm::ControlTypeOne>)ram[at+0x30]=1;

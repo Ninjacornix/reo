@@ -1,7 +1,7 @@
 constexpr std::uint32_t control_node=0x580000,control_stride=256;
 std::vector<std::uint8_t> original_control_refreshes;
 void export_control(std::uint8_t* ram,std::uint32_t at,const vm::SceneControl& record){
-    fixture_write(ram,at+0x40,record.authored_id);ram[at+0x3c]=record.enabled;
+    fixture_write(ram,at+0x40,record.authored_id);ram[at+0x3c]=record.enabled;ram[at+0x32]=record.counter;
     std::visit([&](const auto& v){using T=std::decay_t<decltype(v)>;
         if constexpr(std::is_same_v<T,vm::ControlTypeZero>){ram[at+0x30]=0;fixture_write(ram,at+0x6c,v.parameter);fixture_write(ram,at+0x68,v.half_parameter);ram[at+0x72]=v.byte_parameter;ram[at+0x71]=v.refresh_parameter;}
         else if constexpr(std::is_same_v<T,vm::ControlTypeOne>){ram[at+0x30]=1;fixture_write(ram,at+0x86,v.parameter);}
@@ -20,13 +20,14 @@ void export_control(std::uint8_t* ram,std::uint32_t at,const vm::SceneControl& r
 struct ControlFixture final:vm::ControlEffects {
     vm::SceneControls owner;std::vector<vm::SceneControlId> ids;std::vector<std::uint8_t> refreshes;
     explicit ControlFixture(unsigned profile=0){
-        const auto add=[&](vm::SceneControlBody body,std::uint32_t id=42){ids.push_back(*owner.append({id,0x80,std::move(body)}));};
+        const auto add=[&](vm::SceneControlBody body,std::uint32_t id=42){ids.push_back(*owner.append({id,0x80,std::move(body),std::uint8_t(profile*7)}));};
         add(vm::ControlTypeZero{1,2,3,4});add(vm::ControlTypeOne{5});add(vm::ControlTypeTwo{7,6,8,9,10});add(vm::ControlTypeTwo{0,6,8,9,10});
         for(unsigned i=0;i<5;++i)add(vm::ControlTypeThree{i,0xbeef});
         for(unsigned i=0;i<3;++i)add(vm::ControlTypeFour{i,i==2?42u:i});
         add(vm::ControlTypeFive{1,2,3,4,5,6,0x8172,0x91,0xa2});add(vm::ControlTypeNine{7});
         add(vm::ControlTypeThirteen{42,8},99);add(vm::ControlOther{17});add(vm::ControlTypeZero{8,9,10,11},43);
         add(vm::ControlTypeSix{42},99);add(vm::ControlTypeSeven{43},99);add(vm::ControlTypeEleven{},43);
+        add(vm::ControlTypeFive{8,7,6,5,4,3,2,1,0});
         owner.enabled((profile&1)==0);refreshes.reserve(128);
     }
     void reset(vm::SceneControls& controls,const vm::SceneControlId& id)noexcept override{if(controls.reset_five(id)!=vm::ControlStatus::completed)std::terminate();}

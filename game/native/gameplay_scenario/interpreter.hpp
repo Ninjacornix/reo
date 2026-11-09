@@ -7,6 +7,7 @@
 #include <optional>
 #include <span>
 #include <vector>
+namespace reo::native::gameplay_world { class World; }
 
 namespace reo::native::gameplay_scenario {
 class FlagState;
@@ -22,6 +23,7 @@ class ControlEffects;
 class StreamChannels;
 class StreamBackend;
 class SavedControlRecords;
+class ActionChoices;
 enum class DispatchProfile { ordinary,offline_actor };
 enum class Status { completed,yielded,disabled,invalid_channel,invalid_program,invalid_record,unsupported_opcode,
     provider_unavailable,alternate_mode_unavailable,budget_exhausted,busy };
@@ -51,11 +53,14 @@ public:
     bool needs_scene_controls()const noexcept{return scene_controls_;}
     bool needs_streams()const noexcept{return streams_;}
     bool needs_saved_controls()const noexcept{return saved_controls_;}
+    bool needs_world()const noexcept{return world_;}
+    bool needs_selected_actor()const noexcept{return selected_actor_;}
+    bool needs_action_choices()const noexcept{return action_choices_;}
     DispatchProfile profile()const noexcept{return profile_;}
 private:
     std::vector<std::vector<std::byte>> blocks_;
     std::vector<std::vector<std::uint32_t>> boundaries_;
-    bool unsupported_{},flags_{},timers_{},actor_events_{},signals_{},scene_resources_{},session_counters_{},sequences_{},lighting_{},scene_channels_{},scene_controls_{},streams_{},saved_controls_{};
+    bool unsupported_{},flags_{},timers_{},actor_events_{},signals_{},scene_resources_{},session_counters_{},sequences_{},lighting_{},scene_channels_{},scene_controls_{},streams_{},saved_controls_{},world_{},selected_actor_{},action_choices_{};
     DispatchProfile profile_{};
 };
 struct Channel {
@@ -84,14 +89,14 @@ public:
     virtual std::optional<std::int32_t> query(std::uint32_t id)noexcept=0;
 };
 struct Providers {Flags* flags{};gameplay_tasks::FlagTimers* timers{};Signals* signals{};FlagState* canonical_flags{};
-    SceneResources* scene_resources{};SceneEffects* scene_effects{};SceneOwners* scene_owners{};SessionCounters* session_counters{};SequenceControl* sequences{};Lighting* lighting{};SceneChannels* scene_channels{};SceneControls* scene_controls{};ControlEffects* control_effects{};StreamChannels* streams{};StreamBackend* stream_backend{};SavedControlRecords* saved_controls{};};
+    SceneResources* scene_resources{};SceneEffects* scene_effects{};SceneOwners* scene_owners{};SessionCounters* session_counters{};SequenceControl* sequences{};Lighting* lighting{};SceneChannels* scene_channels{};SceneControls* scene_controls{};ControlEffects* control_effects{};StreamChannels* streams{};StreamBackend* stream_backend{};SavedControlRecords* saved_controls{};gameplay_world::World* world{};ActionChoices* action_choices{};};
 struct TickContext {bool enabled{true};bool alternate_mode{};std::uint8_t selected_actor{};std::uint16_t current_room{};
     // Caller-provided actual SDK/audio service tick, distinct from task passes
     // or the simulation clock. Never inferred from host elapsed time.
     std::optional<std::uint32_t> stream_tick{};};
 struct OfflineDispatch {std::uint32_t actor_category{},room_relation{};std::uint16_t actor_room{};};
 struct TickResult {Status status{Status::completed};std::size_t operations{};Position position;std::uint32_t opcode{};};
-struct OpcodeCoverage {bool native_algorithm{};bool flags_required{},timers_required{},signals_required{},scene_resources_required{},session_counters_required{},sequences_required{},lighting_required{},scene_channels_required{},scene_controls_required{},streams_required{},saved_controls_required{};};
+struct OpcodeCoverage {bool native_algorithm{};bool flags_required{},timers_required{},signals_required{},scene_resources_required{},session_counters_required{},sequences_required{},lighting_required{},scene_channels_required{},scene_controls_required{},streams_required{},saved_controls_required{},world_required{},selected_actor_required{},action_choices_required{};};
 class Interpreter {
 public:
     static constexpr std::size_t channel_count=6;

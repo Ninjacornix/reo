@@ -18,7 +18,7 @@ void reset_body(vm::SceneControl& record){
     auto& five=std::get<vm::ControlTypeFive>(record.body);record.enabled=0x81;five.selector=0x9191;five.duration=0x8282;five.countdown=0x7373;five.completion=0xabcdefff;five.byte_parameter=0x64;five.secondary_parameter=0x5555;
 }
 void export_record(std::uint8_t* ram,std::uint32_t at,const vm::SceneControl& record){
-    fixture_write(ram,at+0x40,record.authored_id);ram[at+0x3c]=record.enabled;
+    fixture_write(ram,at+0x40,record.authored_id);ram[at+0x3c]=record.enabled;ram[at+0x32]=record.counter;
     std::visit([&](const auto& v){using T=std::decay_t<decltype(v)>;
         if constexpr(std::is_same_v<T,vm::ControlTypeZero>){ram[at+0x30]=0;fixture_write(ram,at+0x6c,v.parameter);fixture_write(ram,at+0x68,v.half_parameter);ram[at+0x72]=v.byte_parameter;ram[at+0x71]=v.refresh_parameter;}
         else if constexpr(std::is_same_v<T,vm::ControlTypeOne>){ram[at+0x30]=1;fixture_write(ram,at+0x86,v.parameter);}
