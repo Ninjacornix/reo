@@ -70,6 +70,10 @@ The [A8 scenario effect command](SCENARIO_SURFACE_EFFECTS.md) additionally
 compares the current World/scenario/shared effect owners together without
 historical source pins. This closes that bounded composition check, not game
 installation or the remaining script families.
+The [actor/resource animation audio frontends](ANIMATION_AUDIO_FRONTENDS.md)
+now supply real canonical bank consumers for their qualified routes, including
+exact PCM comparison. Surface/node/scenario-remapped routes and actual room
+bank installation remain explicit work.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

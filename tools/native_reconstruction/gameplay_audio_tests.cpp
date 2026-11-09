@@ -1,6 +1,9 @@
 #include "game/native/gameplay_audio/owner.hpp"
 #include "game/native/gameplay_audio/options.hpp"
 #include "game/native/gameplay_audio/stream_levels.hpp"
+#ifdef REO_ANIMATION_AUDIO_TESTS
+#include "game/native/gameplay_world/animation_audio.hpp"
+#endif
 #include "audio_reference.hpp"
 #include <fstream>
 #include <future>
@@ -103,6 +106,11 @@ void original_transform_port(std::uint8_t* m, R5900Context* c, PS2Runtime* r) {
             return sub_001B93D0_0x1b93d0(m, c, r);
         case 0x1b94b0:
             return sub_001B94B0_0x1b94b0(m, c, r);
+#ifdef REO_ANIMATION_AUDIO_TESTS
+        case 0x1b8bb0:return sub_001B8BB0_0x1b8bb0(m,c,r);
+        case 0x1b8b20:return sub_001B8B20_0x1b8b20(m,c,r);
+        case 0x5b4ce0:return o2_005B4CE0_0x5b4ce0(m,c,r);
+#endif
         case 0x1aceb0:
             return sub_001ACEB0_0x1aceb0(m, c, r);
         case 0x107c68:
@@ -782,10 +790,19 @@ void stock_composition(std::vector<std::uint8_t>& m, const char* path) {
         ++stock_banks;
     }
 }
+#ifdef REO_ANIMATION_AUDIO_TESTS
+#include "animation_audio_tests.inc"
+#endif
 int main(int argc, char** argv) {
     try {
         check(argc == 3);
         std::vector<std::uint8_t> memory(0x2000000);
+#ifdef REO_ANIMATION_AUDIO_TESTS
+        compare_positional(memory,argv[2]);
+        compare_animation_frontends(memory);
+        std::cout<<"{\"checks\":"<<checks<<",\"frontend_cases\":"<<frontend_cases<<",\"frontend_commands\":"<<frontend_commands<<",\"frontend_family_commands\":["<<frontend_family_commands[0]<<','<<frontend_family_commands[1]<<','<<frontend_family_commands[2]<<"],\"frontend_mixed_frames\":"<<frontend_mixed_frames<<",\"frontend_signal_samples\":"<<frontend_signal_samples<<",\"frontend_refusals\":"<<frontend_refusals<<",\"original_calls\":"<<calls<<",\"game_launched\":false}\n";
+        return 0;
+#endif
         compare_route(memory);
         compare_import(memory);
         compare_spatial(memory);
