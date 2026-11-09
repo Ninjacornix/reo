@@ -48,14 +48,31 @@ inline void shape_angular_probe(std::uint8_t* m, R5900Context* c, PS2Runtime* ru
     query.result = GPR_U32(c, 2);
     shape_oracle::angular_queries.push_back(query);
 }
-inline void o2_005DD580_0x5dd580(std::uint8_t* m, R5900Context* c, PS2Runtime*) {
-    const auto packet = GPR_U32(c, 4);
-    const auto event = m[packet + 0x1b];
-    using V = shape_oracle::V;
-    shape_oracle::surfaces.push_back({event,
-                                      event == 2 ? std::uint8_t(GPR_U32(c, 8)) : std::uint8_t(0),
-                                      ref_read<V>(m, event == 1 ? packet + 0x1c : GPR_U32(c, 5)),
-                                      ref_read<V>(m, event == 1 ? GPR_U32(c, 6) : GPR_U32(c, 7))});
+namespace shape_oracle {
+using Matrix = reo::native::transform_math::Matrix;
+struct Visual {
+    std::uint8_t kind, key;
+    std::uint32_t actor;
+    Matrix matrix;
+    V point;
+};
+inline std::vector<Visual> visuals;
+} // namespace shape_oracle
+inline void o2_005DD6F0_0x5dd6f0(std::uint8_t* m, R5900Context* c, PS2Runtime*) {
+    const auto at = GPR_U32(c, 6);
+    const auto point = ref_read<shape_oracle::V>(m, at);
+    shape_oracle::visuals.push_back({1, std::uint8_t(GPR_U32(c, 7)), 0,
+                                     ref_read<shape_oracle::Matrix>(m, GPR_U32(c, 5)), point});
+    ref_write(m, at, shape_oracle::V{point.x + 2, point.y + 3, point.z + 5});
+    c->pc = GPR_U32(c, 31);
+}
+inline void o2_005DD9D0_0x5dd9d0(std::uint8_t* m, R5900Context* c, PS2Runtime*) {
+    if (GPR_U32(c, 5))
+        throw std::runtime_error("Source5DD580 surface helper must pass null basis");
+    const auto at = GPR_U32(c, 6);
+    const auto point = ref_read<shape_oracle::V>(m, at);
+    shape_oracle::visuals.push_back({2, std::uint8_t(GPR_U32(c, 7)), GPR_U32(c, 4), {}, point});
+    ref_write(m, at, shape_oracle::V{point.x + 2, point.y + 3, point.z + 5});
     c->pc = GPR_U32(c, 31);
 }
 inline void sub_001B82A0_0x1b82a0(std::uint8_t*, R5900Context* c, PS2Runtime*) {

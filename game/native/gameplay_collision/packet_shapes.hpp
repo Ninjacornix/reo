@@ -36,7 +36,8 @@ class PacketShapeEffects {
     virtual ~PacketShapeEffects() = default;
     // Required typed5DD580 policy. Event1 uses wall normal and packet impact;
     // event2 uses floor point/normal/type. Unused caller locals are not inputs.
-    virtual Status scene_contact(const Packet&, PacketOwner, const std::optional<trace::Hit>& wall,
+    virtual Status scene_contact(const Packet&, PacketOwner, Vec3& packet_impact,
+                                 const std::optional<trace::Hit>& wall,
                                  const std::optional<trace::Hit>& floor) = 0;
     virtual bool debug_enabled() = 0;
     virtual Status debug_line(Vec3 start, Vec3 end) = 0;

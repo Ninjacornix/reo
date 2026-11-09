@@ -134,7 +134,8 @@ ShapeResult sweep_query(PacketState& packet, PacketOwner owner, const SweepShape
     }
     if (packet.delivery.event &&
         !(packet.delivery.response.query_flags & (1u << packet.delivery.event))) {
-        const auto status = effects.scene_contact(packet.delivery, owner, wall, floor);
+        const auto status =
+            effects.scene_contact(packet.delivery, owner, packet.impact, wall, floor);
         if (status != Status::completed)
             return {status, result.contact, result.route};
     }
@@ -286,7 +287,8 @@ ShapeResult ShapePipeline::query(PacketState& packet, PacketOwner owner) {
         result.route.reset();
     } else if (packet.delivery.event &&
                !(packet.delivery.response.query_flags & (1u << packet.delivery.event))) {
-        const auto status = effects_.scene_contact(packet.delivery, owner, wall, floor);
+        const auto status =
+            effects_.scene_contact(packet.delivery, owner, packet.impact, wall, floor);
         if (status != Status::completed)
             return {status, result.contact, result.route};
     }

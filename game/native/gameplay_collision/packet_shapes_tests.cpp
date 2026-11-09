@@ -1,4 +1,4 @@
-#include "packet_shapes.hpp"
+#include "impact_shape_effects.hpp"
 #include "shapes_support.hpp"
 unsigned shape_cases{}, wall_contacts{}, floor_contacts{}, actor_contacts{}, routes{},
     upper_routes{}, debug_lines{};
@@ -102,25 +102,33 @@ struct ScanEffects final : d::Effects {
         check(false, "shape fixture disables scanner traced mark");
     }
 };
-struct ShapeEffects final : d::PacketShapeEffects {
-    std::vector<shape_oracle::Surface> surfaces;
-    std::vector<std::array<c::Vec3, 2>> lines;
-    unsigned queries{};
-    d::Status scene_contact(const d::Packet& packet, d::PacketOwner,
-                            const std::optional<c::trace::Hit>& wall,
-                            const std::optional<c::trace::Hit>& floor) override {
-        const auto& hit = packet.event == 1 ? wall : floor;
-        check(bool(hit), "effect consumes only known selected surface inputs");
-        surfaces.push_back({packet.event,
-                            packet.event == 2 ? std::uint8_t(hit->type) : std::uint8_t(0),
-                            hit->point, hit->normal});
+struct Visuals final : d::ImpactVisuals {
+    Roster& roster;
+    std::vector<shape_oracle::Visual> calls;
+    explicit Visuals(Roster& r) : roster(r) {}
+    d::Status oriented(const reo::native::transform_math::Matrix& matrix, c::Vec3& point,
+                       std::uint8_t key) override {
+        calls.push_back({1, key, 0, matrix, point});
+        point = {point.x + 2, point.y + 3, point.z + 5};
         return d::Status::completed;
     }
-    bool debug_enabled() override {
+    d::Status surface(d::View owner,
+                      const std::optional<reo::native::transform_math::Matrix>& basis,
+                      c::Vec3& point, std::uint8_t key) override {
+        check(!basis, "source event2 surface helper null basis");
+        calls.push_back({2, key, address(roster.index(owner.id)), {}, point});
+        point = {point.x + 2, point.y + 3, point.z + 5};
+        return d::Status::completed;
+    }
+};
+struct Debug final : d::ShapeDebug {
+    std::vector<std::array<c::Vec3, 2>> lines;
+    unsigned queries{};
+    bool enabled() override {
         ++queries;
         return shape_oracle::debug;
     }
-    d::Status debug_line(c::Vec3 a, c::Vec3 b) override {
+    d::Status line(c::Vec3 a, c::Vec3 b) override {
         lines.push_back({a, b});
         return d::Status::completed;
     }
@@ -217,7 +225,13 @@ void one(Roster& roster, unsigned n) {
         definition->geometry = d::AngularShape{origin, direction, extent, range, joint};
     d::PacketState packet;
     packet.definition = definition;
-    packet.delivery = {source.id, {}, definition->response, 0, std::uint8_t(n % 100), 0};
+    packet.delivery = {source.id,
+                       n % 3 == 0 ? a::EntityId{} : roster.subjects[2].id,
+                       definition->response,
+                       0,
+                       std::uint8_t(n % 100),
+                       0};
+    roster.subjects[2].actor.category = n % 7 == 0 ? 2 : 0;
     packet.mask = n % 9 == 0 ? 0 : 0xff;
     packet.previous_valid = (n / 4) % 2 ? 0 : 137;
     packet.previous = {1000, 100, 1000};
@@ -248,6 +262,7 @@ void one(Roster& roster, unsigned n) {
     m[address(0) + 0x188] = poses.surface;
     write_template(raw);
     write_packet(packet.delivery, roster);
+    ref_write(m, 0x3102c, packet.delivery.cached_related ? address(2) : 0u);
     ref_write(m, 0x31010, 0x32000u);
     m[0x31019] = packet.mask;
     m[0x31028] = packet.contacts;
@@ -275,7 +290,7 @@ void one(Roster& roster, unsigned n) {
         ref_write(m, address(1) + 0xaec, target.position);
     }
     ref_write(m, 0x719a6c + 68 * packet.delivery.key, 0.0f);
-    shape_oracle::surfaces.clear();
+    shape_oracle::visuals.clear();
     shape_oracle::wall_queries.clear();
     shape_oracle::angular_queries.clear();
     shape_oracle::lines.clear();
@@ -310,7 +325,9 @@ void one(Roster& roster, unsigned n) {
     if (n >= 2400)
         targets.add(target.id);
     d::Context environment{roster, tables, random, feedback, masks, false, 0, nullptr};
-    ShapeEffects effects;
+    Visuals visuals(roster);
+    Debug debug;
+    d::ImpactShapeEffects effects(roster, visuals, debug);
     Scene scene(walls, floors, channels);
     d::ShapePipeline pipeline(environment, targets, poses, scene, effects);
     const auto result = pipeline.query(packet, {source.view(), true});
@@ -384,20 +401,27 @@ void one(Roster& roster, unsigned n) {
     }
     check(random.state().primary == ref_read<std::uint16_t>(m, 0x3244b0),
           "actual composed response RNG state");
-    check(effects.surfaces.size() == shape_oracle::surfaces.size() &&
-              effects.queries == shape_oracle::debug_queries &&
-              effects.lines.size() == shape_oracle::lines.size(),
+    check(visuals.calls.size() == shape_oracle::visuals.size() &&
+              debug.queries == shape_oracle::debug_queries &&
+              debug.lines.size() == shape_oracle::lines.size(),
           "selected effect/debug service gates");
-    for (unsigned i = 0; i < effects.surfaces.size(); ++i) {
-        const auto& a = effects.surfaces[i];
-        const auto& b = shape_oracle::surfaces[i];
-        check(a.event == b.event && a.type == b.type, "known selected surface event/type");
-        vector_equal(a.point, b.point, "selected effect point");
-        vector_equal(a.normal, b.normal, "selected effect normal");
+    for (unsigned i = 0; i < visuals.calls.size(); ++i) {
+        const auto& a = visuals.calls[i];
+        const auto& b = shape_oracle::visuals[i];
+        check(a.kind == b.kind && a.key == b.key && a.actor == b.actor,
+              "actual5DD580 child/owner/style dispatch");
+        vector_equal(a.point, b.point, "actual5DD580 selected mutable/local point");
+        if (a.kind == 1)
+            for (unsigned column = 0; column < 4; ++column) {
+                vector_equal({a.matrix[column][0], a.matrix[column][1], a.matrix[column][2]},
+                             {b.matrix[column][0], b.matrix[column][1], b.matrix[column][2]},
+                             "actual composed orientation");
+                check(a.matrix[column][3] == b.matrix[column][3], "composed basis W");
+            }
     }
-    for (unsigned i = 0; i < effects.lines.size(); ++i) {
-        vector_equal(effects.lines[i][0], shape_oracle::lines[i][0], "debug start");
-        vector_equal(effects.lines[i][1], shape_oracle::lines[i][1], "debug end");
+    for (unsigned i = 0; i < debug.lines.size(); ++i) {
+        vector_equal(debug.lines[i][0], shape_oracle::lines[i][0], "debug start");
+        vector_equal(debug.lines[i][1], shape_oracle::lines[i][1], "debug end");
         ++debug_lines;
     }
     if (packet.delivery.event == 1)
