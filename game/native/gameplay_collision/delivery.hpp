@@ -36,7 +36,6 @@ struct Template {
     std::uint8_t max_contacts{}, cooldown{}, flags{}, actor_sound{};
     std::uint8_t kind{}, response_code{}, value_id{}, query_flags{}, response_flags{};
     std::uint8_t progression{}, scene_sound{}, probability{};
-    std::uint8_t recipient_mask{};
 };
 Template import_template(std::span<const std::byte>);
 struct Packet {

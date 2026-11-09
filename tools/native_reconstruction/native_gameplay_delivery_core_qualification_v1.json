@@ -6,8 +6,8 @@
   "installed_in_game": false,
   "cohorts": {
     "llvm": {
-      "receipt": "build-native-sjuni/gameplay-delivery-core-llvm-v4/receipt.json",
-      "receipt_sha256": "1229fea1861fafb7876f1e17abb9fe85a4aee468519de712ff28750c4029aa3b",
+      "receipt": "build-native-sjuni/gameplay-delivery-core-llvm-v5/receipt.json",
+      "receipt_sha256": "7afbeba36eb886e5347b7e39ba65cef800215f22859dab4298ff6589373fcde5",
       "status": "native contact core passes original comparisons",
       "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
       "results": {
@@ -20,8 +20,8 @@
         "game_launched": false
       },
       "source_sha256": {
-        "game/native/gameplay_collision/delivery.hpp": "a9fe3443005752cab8c795ecf24dcf512c1aeecf0aee4944b8d00364b5f69ad7",
-        "game/native/gameplay_collision/delivery.cpp": "a473b92d347b333c95412e12bc8a2c9f807decfd3819ee84cd265fa76d6b8d9e",
+        "game/native/gameplay_collision/delivery.hpp": "48682babcf6f1bd25cbb48a905acefc7952a1d2d43b9c8cf7d4a0842f76a828a",
+        "game/native/gameplay_collision/delivery.cpp": "b3c367f70fe0716237a04a05b14f4c8ab8630a6955c3569684830d942fe88450",
         "game/native/gameplay_collision/delivery_core_tests.cpp": "9d2611d69f5a3c78046971cf5c08f903e2d69328b9908dd6d50a7785d19ba4f8",
         "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
         "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
@@ -13812,8 +13812,8 @@
       ]
     },
     "gcc": {
-      "receipt": "build-native-sjuni/gameplay-delivery-core-gcc-v4/receipt.json",
-      "receipt_sha256": "986aa51d0087ef990381f81e7c4e11c5ef53d8c115f4e4493d3a291920f53ca7",
+      "receipt": "build-native-sjuni/gameplay-delivery-core-gcc-v5/receipt.json",
+      "receipt_sha256": "c5d7263c50b7d42412cf2b1dc3738b6305b88dc0ab1f6de3fb537bcb5d076913",
       "status": "native contact core passes original comparisons",
       "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
       "results": {
@@ -13826,8 +13826,8 @@
         "game_launched": false
       },
       "source_sha256": {
-        "game/native/gameplay_collision/delivery.hpp": "a9fe3443005752cab8c795ecf24dcf512c1aeecf0aee4944b8d00364b5f69ad7",
-        "game/native/gameplay_collision/delivery.cpp": "a473b92d347b333c95412e12bc8a2c9f807decfd3819ee84cd265fa76d6b8d9e",
+        "game/native/gameplay_collision/delivery.hpp": "48682babcf6f1bd25cbb48a905acefc7952a1d2d43b9c8cf7d4a0842f76a828a",
+        "game/native/gameplay_collision/delivery.cpp": "b3c367f70fe0716237a04a05b14f4c8ab8630a6955c3569684830d942fe88450",
         "game/native/gameplay_collision/delivery_core_tests.cpp": "9d2611d69f5a3c78046971cf5c08f903e2d69328b9908dd6d50a7785d19ba4f8",
         "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
         "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
@@ -27630,5 +27630,6 @@
     "Admission tests use synthetic native decoded content tables. Actual stock descriptor/table bank extraction and native model/pose ownership remain later integration work.",
     "Host sqrt distance surroundings and declared authority/vibration services remain explicit; original RNG1AEC80 executes and its state is compared.",
     "Native views borrow HitActor and ContactComponent; this cohort does not install the complete contact packet/scanner service in the running World."
-  ]
+  ],
+  "mask_schema_note": "Recipient/scene mask is packet byte19 (descriptorC), not response-template byte5; no speculative template member is retained."
 }

@@ -100,7 +100,7 @@ Template import_template(std::span<const std::byte> bytes) {
             byte(bytes, 7),    byte(bytes, 8),    byte(bytes, 0xa),  byte(bytes, 0xb),
             byte(bytes, 0xd),  byte(bytes, 0xf),  byte(bytes, 0x11), byte(bytes, 0x12),
             byte(bytes, 0x13), byte(bytes, 0x16), byte(bytes, 0x17), byte(bytes, 0x18),
-            byte(bytes, 0x19), byte(bytes, 0x1a), byte(bytes, 5)};
+            byte(bytes, 0x19), byte(bytes, 0x1a)};
 }
 Status record_provenance(View receiver, const Packet& packet, Actors& actors) {
     auto source = actors.find(packet.source);
