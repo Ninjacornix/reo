@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_world STATIC world.cpp behavior.cpp surfaces.cpp collision.cpp motion.cpp motion_transforms.cpp bodies.cpp)
+add_library(reo_native_gameplay_world STATIC world.cpp behavior.cpp surfaces.cpp collision.cpp motion.cpp motion_transforms.cpp bodies.cpp surface_orientation.cpp surface_orientation_math.cpp)
 target_compile_features(reo_native_gameplay_world PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_world PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(reo_native_gameplay_world PUBLIC reo_native_gameplay_actors reo_native_gameplay_session reo_native_gameplay_collision reo_native_transform_math)
