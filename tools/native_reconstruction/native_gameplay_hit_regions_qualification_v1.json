@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "status": "native hit-region pose and queue/reset pass original-body comparisons on both compilers",
+  "whole_stage4_complete": false,
+  "game_launched": false,
+  "canonical_hit_actor_fields_used": true,
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/gameplay-hit-regions-llvm-v1/receipt.json",
+      "receipt_sha256": "62ac52fb79081475a65b23ddb78b2444adcef6088162988600118b401bc70937",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "results": {
+        "checks": 149044,
+        "pose_cases": 3000,
+        "queue_cases": 1536,
+        "maximum_error": 0,
+        "game_launched": false
+      },
+      "source_sha256": {
+        "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+        "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+        "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+        "game/native/gameplay_collision/hit_regions.cpp": "9dadf291bdbe6afb087eb12dc104b1481c0d88a51b2bc104a928a730a86a8bcf",
+        "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+        "game/native/gameplay_collision/hit_regions_tests.cpp": "e4bb9f5ca9e2c995d1f8356b86c03b6dd76e1d5c963065ceb822c084185bb8ad",
+        "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
+        "tools/native_reconstruction/verify_gameplay_hit_regions.py": "5f5521deb39b5f821be35aa93e65f38482bb229d70c1390a6aab737e0ddaf2a1",
+        "tools/native_reconstruction/gameplay_collision_oracle/hit_regions_ports.hpp": "1fc5cf6ee8fd7276cef119e4df4b7aaf0c13c5232a348209c224bd23aa2b6eef",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+        "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+        "game/native/gameplay_actors/hit.hpp": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495",
+        "game/native/gameplay_actors/status.hpp": "a9451b70fd9cfc8d8ed3ef9224beaeb5cf858db158dfe24ee5342ba1e5975104",
+        "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+        "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+        "recomp/config/output_ovl/o2/o2_005DC1B0_0x5dc1b0.cpp": "fea61a15245ea268296fe3c19601105007932a292085055929ad0785e9a2b515",
+        "recomp/config/output_ovl/o2/o2_005DC2A0_0x5dc2a0.cpp": "28ea3b0adf08986ee50cacc5f07642986ed21ac50db89d5ac77b9cea6034784f",
+        "recomp/config/output_ovl/o2/o2_005DC3A0_0x5dc3a0.cpp": "21f0890a5dbfb121bfbbd71e4f807a56d7766c8f08cf94470605cf038e761704"
+      },
+      "original_intervals": [
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DC1B0_0x5dc1b0.cpp",
+          "start": "0x5dc1b0",
+          "end_exclusive": "0x5dc29c",
+          "sha256": "fea61a15245ea268296fe3c19601105007932a292085055929ad0785e9a2b515",
+          "matched_comments": 58,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DC2A0_0x5dc2a0.cpp",
+          "start": "0x5dc2a0",
+          "end_exclusive": "0x5dc398",
+          "sha256": "28ea3b0adf08986ee50cacc5f07642986ed21ac50db89d5ac77b9cea6034784f",
+          "matched_comments": 62,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DC3A0_0x5dc3a0.cpp",
+          "start": "0x5dc3a0",
+          "end_exclusive": "0x5dc430",
+          "sha256": "21f0890a5dbfb121bfbbd71e4f807a56d7766c8f08cf94470605cf038e761704",
+          "matched_comments": 30,
+          "omitted_zero_words": 6,
+          "conflicts": 0
+        }
+      ]
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/gameplay-hit-regions-gcc-v1/receipt.json",
+      "receipt_sha256": "74f4f1ba5f648c0c7362ecfa53773f36ebad8b79ff3b656e4bae476c7435a016",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "results": {
+        "checks": 149044,
+        "pose_cases": 3000,
+        "queue_cases": 1536,
+        "maximum_error": 0,
+        "game_launched": false
+      },
+      "source_sha256": {
+        "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+        "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+        "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+        "game/native/gameplay_collision/hit_regions.cpp": "9dadf291bdbe6afb087eb12dc104b1481c0d88a51b2bc104a928a730a86a8bcf",
+        "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+        "game/native/gameplay_collision/hit_regions_tests.cpp": "e4bb9f5ca9e2c995d1f8356b86c03b6dd76e1d5c963065ceb822c084185bb8ad",
+        "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
+        "tools/native_reconstruction/verify_gameplay_hit_regions.py": "5f5521deb39b5f821be35aa93e65f38482bb229d70c1390a6aab737e0ddaf2a1",
+        "tools/native_reconstruction/gameplay_collision_oracle/hit_regions_ports.hpp": "1fc5cf6ee8fd7276cef119e4df4b7aaf0c13c5232a348209c224bd23aa2b6eef",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+        "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+        "game/native/gameplay_actors/hit.hpp": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495",
+        "game/native/gameplay_actors/status.hpp": "a9451b70fd9cfc8d8ed3ef9224beaeb5cf858db158dfe24ee5342ba1e5975104",
+        "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+        "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+        "recomp/config/output_ovl/o2/o2_005DC1B0_0x5dc1b0.cpp": "fea61a15245ea268296fe3c19601105007932a292085055929ad0785e9a2b515",
+        "recomp/config/output_ovl/o2/o2_005DC2A0_0x5dc2a0.cpp": "28ea3b0adf08986ee50cacc5f07642986ed21ac50db89d5ac77b9cea6034784f",
+        "recomp/config/output_ovl/o2/o2_005DC3A0_0x5dc3a0.cpp": "21f0890a5dbfb121bfbbd71e4f807a56d7766c8f08cf94470605cf038e761704"
+      },
+      "original_intervals": [
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DC1B0_0x5dc1b0.cpp",
+          "start": "0x5dc1b0",
+          "end_exclusive": "0x5dc29c",
+          "sha256": "fea61a15245ea268296fe3c19601105007932a292085055929ad0785e9a2b515",
+          "matched_comments": 58,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DC2A0_0x5dc2a0.cpp",
+          "start": "0x5dc2a0",
+          "end_exclusive": "0x5dc398",
+          "sha256": "28ea3b0adf08986ee50cacc5f07642986ed21ac50db89d5ac77b9cea6034784f",
+          "matched_comments": 62,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DC3A0_0x5dc3a0.cpp",
+          "start": "0x5dc3a0",
+          "end_exclusive": "0x5dc430",
+          "sha256": "21f0890a5dbfb121bfbbd71e4f807a56d7766c8f08cf94470605cf038e761704",
+          "matched_comments": 30,
+          "omitted_zero_words": 6,
+          "conflicts": 0
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Actual HitActor damage/progression/pending fields; separate ContactState cooldown/priority/serial, no duplicate session or hit-effect owner",
+    "Synthetic admitted definitions; no live game or stock model content import claimed",
+    "Full original traversal and queue/reset bodies unchanged; vector/basis math1919D0 is a declared scalar port",
+    "Caller owns eligibility, traversal order, queue clearing and independently scheduled pose refresh",
+    "Native actor-loop/world integration is not claimed"
+  ]
+}

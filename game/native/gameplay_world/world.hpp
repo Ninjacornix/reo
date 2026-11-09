@@ -26,6 +26,11 @@ struct Actor : actors::Entity,actors::HitActor {
     Position previous_position{};
     std::array<std::int16_t,4> orientation{},previous_orientation{};
     std::uint32_t action_elapsed{},control_elapsed{};
+    float sampled_surface_height{};
+    bool sampled_surface_valid{};
+    std::uint8_t surface_kind{255},surface_material{255};
+    std::uint16_t surface_attributes{};
+    Position surface_normal{0,1,0};
     input::Frame input;
 };
 struct Session : actors::HitSession {

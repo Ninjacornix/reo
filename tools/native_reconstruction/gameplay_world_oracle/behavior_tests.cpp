@@ -163,7 +163,8 @@ int main()try{
     auto owned=std::make_unique<gw::Actor>();owned->active=true;owned->category=0;owned->primary=1;owned->current=owned->maximum=100;
     if(composed.spawn_primary(0,std::move(owned)).status!=g::EntityStatus::completed)throw std::runtime_error("Composition actor creation");
     auto actor=composed.primary(0);BehaviorPorts behavior;behavior.core.current=actor.get();behavior.core.seed=23;FramePorts frame;
-    gw::BehaviorFrameServices composed_ports(frame,behavior,timer_amounts);
+    const reo::native::gameplay_collision::response::Grid floors{};
+    gw::BehaviorFrameServices composed_ports(frame,behavior,floors,timer_amounts);
     const auto result=composed.update_primary(composed_ports);
     if(result.status!=gw::Status::completed || result.updated!=1 || frame.behavior_forwarded || frame.forwarded!=9 || actor->action_elapsed!=1 || actor->control_elapsed!=1 || behavior.core.trace.empty())
         throw std::runtime_error("Native frame/behavior composition");

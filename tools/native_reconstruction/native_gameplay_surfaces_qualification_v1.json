@@ -1,0 +1,151 @@
+{
+  "schema": "reo.native.gameplay.surfaces.qualification.v1",
+  "status": "qualified_native_floor_actor_behavior_composition",
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_launched": false,
+  "source_sha256": {
+    "recomp/config/output_ovl/o2/o2_00666580_0x666580.cpp": "433bf4657fb3be3068cb33417043fa3806e49fc13c297087bff2a6a7edfbaaf1",
+    "recomp/config/output_ovl/o2/o2_00666450_0x666450.cpp": "482bfb31417e64335011da215ed766bed3e6562f8adaca1c72d6151c7364ad8d",
+    "recomp/config/output_ovl/o2/o2_00616ED0_0x616ed0.cpp": "60c202dae19c358f2b296509130e8a9059a6adc37529109c20a9e2fcea81a912",
+    "recomp/config/output_ovl/o2/o2_00616F20_0x616f20.cpp": "d565c9b0069b3e4b978e5278a18853c16b9d2bfcdc59819160584288f38cacaa",
+    "game/native/gameplay_world/behavior.cpp": "d71b0c9f325d07434c1bf6c55ba86f556e8896d35b403c8424eb0533749b67a8",
+    "game/native/gameplay_world/behavior.hpp": "9a14fbe2426b32c579160d5c5c1aa4a4602f058a6ba85ab606877d0ba9be70c4",
+    "game/native/gameplay_world/surfaces.cpp": "8e6acc454dd982e3a45297870ff2c34ffd6ffa9bbef0b059c9196b93c7f6ce25",
+    "game/native/gameplay_world/surfaces.hpp": "45021409637aa4ea07efea5b8a421253c6a8bb61be183dd9332ca010debb55d2",
+    "game/native/gameplay_world/tests.cpp": "138d79e1f9b8d7f2187150cfef8c33beacce5220595589f907487d96bf890ba1",
+    "game/native/gameplay_world/world.cpp": "cd762f94701b343e8f884c844bc9d4502c416f82c864c97e67e540ca9c4e0e42",
+    "game/native/gameplay_world/world.hpp": "bb4dd67b4e350f122e1cde0afaee790bdb1969d19c1541f1bff7a0d08a89c7eb",
+    "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+    "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "game/native/gameplay_actors/entity_tests.cpp": "69275c4afcf5b6f729e08ac20f3ab4da0f307e63f5b265fd2cc19ae1edd569f6",
+    "game/native/gameplay_actors/frame.cpp": "7380ac16e7c55179bfb0fcbb2e5df6dff0d82a202ac05ee64559fa2238b5a2d5",
+    "game/native/gameplay_actors/frame.hpp": "9135d54b3cdc2c57db67208519b9bcb905bd1ff82a139b7f73a3df15dd2fbd1c",
+    "game/native/gameplay_actors/health.cpp": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7",
+    "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "game/native/gameplay_actors/health_class.cpp": "39ce61146e9652184375002efc4105259525bea6fc9e3588243e0e381a36139b",
+    "game/native/gameplay_actors/health_class.hpp": "4c1f2278383c28759a1756fbdd81a5917ae799c277ea4797d3993ff5dcb8c19c",
+    "game/native/gameplay_actors/hit.cpp": "b7b3818df013363b71a6b624949435de480b62d9ca8c647c74ad27b38a25ec13",
+    "game/native/gameplay_actors/hit.hpp": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495",
+    "game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+    "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "game/native/gameplay_actors/status.cpp": "60d5640935b019e9bed7dacca2f3b06e55de92796bd00c26cf1532eb8dea89df",
+    "game/native/gameplay_actors/status.hpp": "a9451b70fd9cfc8d8ed3ef9224beaeb5cf858db158dfe24ee5342ba1e5975104",
+    "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+    "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+    "tools/native_reconstruction/gameplay_world_oracle/surface_tests.cpp": "f1c60c75b8ad783a90428af0a284514b3b84717041d14136d8c3eb5b7e34b343",
+    "tools/native_reconstruction/gameplay_actor_oracle/status_runtime.hpp": "6b729176bfaeab634e654b462464877c108892c87bf2d35f7f4fa570c353dc9d",
+    "tools/native_reconstruction/verify_gameplay_surfaces.py": "1794400157cacee573d923a5750357ea2e9fb4284ae6140106359e1a6ca6dde5",
+    "recomp/config/output_ovl/o2/o2_0066B500_0x66b500.cpp": "3e974328843ebfc55ebefe7bbbcea47e22757def5e66f2bf6379bf555772c69a",
+    "recomp/config/output_ovl/o2/o2_00666D60_0x666d60.cpp": "65d75c939686c907eca5948f2c5649d666d9416040b081cdc55cef8fe3ce8754",
+    "recomp/config/output_ovl/o2/o2_00666DB0_0x666db0.cpp": "c3b5ec57b7689edbc5b61b99a9fea7a7d48741926d5c7cc1b9849146ca00c279",
+    "recomp/config/output/sub_001B0310_0x1b0310.cpp": "5433621577d0b55090377ff5bec839dcc77bf56538c7991104061c782995b18e",
+    "tools/native_reconstruction/gameplay_world_oracle/behavior_tests.cpp": "7a7c4452c9938c6d17768e1a143a053673561af42bd18fa7816a96ddb29d43a3",
+    "tools/native_reconstruction/gameplay_world_oracle/hit_fixture.hpp": "b0ea4b6cecd218addac1a17a038927f1edfab806ca333f3388d4204923e4eb40",
+    "tools/native_reconstruction/verify_gameplay_behavior.py": "c2625357e2df9fd1b10bef222f1de99f1d2f08da93566b24a4e82e18477288ce",
+    "recomp/config/output_ovl/o2/o2_00669F30_0x669f30.cpp": "4682116f450825f1b1c763b34a8e0d236fa6d84cf97c6e592cb9b9b57e111790",
+    "recomp/config/output/sub_001B0B80_0x1b0b80.cpp": "e20c4c4332f320df1fcb20ed29fbfe3f90fa0a6b7290b2482f8b1ae279000656",
+    "tools/native_reconstruction/gameplay_actor_oracle/runtime.hpp": "1db4b8e775d2c128c1b4d860af00e03deea60fd295ab73d60a8ecf190e76ea3f",
+    "tools/native_reconstruction/gameplay_world_oracle/tests.cpp": "f8f82f879b8b937b1959132832576f2e418b51c0649b720c41021d9799880448",
+    "tools/native_reconstruction/verify_gameplay_world.py": "2ef1bf5020c6ce09537dc1dcfe2c12a2dc9abe139fb2e4aed380d8472cd0ff61"
+  },
+  "receipts": [
+    {
+      "path": "build-native-sjuni/gameplay-surfaces-llvm-v3/receipt.json",
+      "sha256": "b03ddf3c4417c08bde9d16371dde7d601222bf89e4785659dde14ab187212b74",
+      "result": {
+        "status": "passed",
+        "cases": 16384,
+        "special_surfaces": 3129,
+        "transform_rollbacks": 2331
+      },
+      "checked_owned_instruction_comments": 138
+    },
+    {
+      "path": "build-native-sjuni/gameplay-surfaces-gcc-v2/receipt.json",
+      "sha256": "4ec09c36aae4f51268f2212bd4381ea044368da312f3fa70cceb9c822e2510a1",
+      "result": {
+        "status": "passed",
+        "cases": 16384,
+        "special_surfaces": 3129,
+        "transform_rollbacks": 2331
+      },
+      "checked_owned_instruction_comments": 138
+    },
+    {
+      "path": "build-native-sjuni/gameplay-behavior-llvm-v6/receipt.json",
+      "sha256": "e116f3f37a49222e59f7a351aaa5b751717fbc9b3f798a475390302f0dc81555",
+      "result": {
+        "status": "passed",
+        "cases": 32768,
+        "trace_words": 2573649
+      },
+      "checked_owned_instruction_comments": 225
+    },
+    {
+      "path": "build-native-sjuni/gameplay-behavior-gcc-v4/receipt.json",
+      "sha256": "db556c73d4b1710bed5d046bd55077613b92f59e38194d5091249a9fafde7954",
+      "result": {
+        "status": "passed",
+        "cases": 32768,
+        "trace_words": 2573649
+      },
+      "checked_owned_instruction_comments": 225
+    },
+    {
+      "path": "build-native-sjuni/gameplay-world-llvm-v5/receipt.json",
+      "sha256": "a31d91a9f9dfc224f7dccea1ed41c15a34c030d2d437da8d01228d0f1d9acfea",
+      "result": {
+        "cases": 4096,
+        "ordered_calls": 169700,
+        "original_body_executed": true,
+        "game_run": false,
+        "native_lifetime": {
+          "checks": 75,
+          "status": "passed",
+          "game_run": false
+        }
+      },
+      "checked_owned_instruction_comments": null
+    },
+    {
+      "path": "build-native-sjuni/gameplay-world-gcc-v3/receipt.json",
+      "sha256": "651d9c23f79cc0a68accc63cd678fb47a147bd0109f3788207577a07b855ebc4",
+      "result": {
+        "cases": 4096,
+        "ordered_calls": 169700,
+        "original_body_executed": true,
+        "game_run": false,
+        "native_lifetime": {
+          "checks": 75,
+          "status": "passed",
+          "game_run": false
+        }
+      },
+      "checked_owned_instruction_comments": null
+    }
+  ],
+  "documentation_and_tools_sha256": {
+    "docs/native-gameplay/ACTOR_BEHAVIOR.md": "04cbc564a3270485b04a19fd42ee6e29a5072c3ec19cfcd307a86ccecce0c385",
+    "docs/native-gameplay/PRIMARY_WORLD.md": "1680c70842a3a4521987eb9da5930563f598fc7f57dd04d9a59d158d6b16b38f",
+    "tools/native_reconstruction/qualify_gameplay_surfaces_v1.py": "97b215d4265a1a6d7b060f35a60e57d34e87be0724df423f2dc6244227bad18e"
+  },
+  "surface_scope": {
+    "original_cases": 16384,
+    "special_surfaces": 3129,
+    "transform_rollbacks": 2331,
+    "native_floor_query_is_declared_port": true,
+    "synthetic_grids": true
+  },
+  "limitations": [
+    "Complete666580/666450/616ED0/616F20 execute with a declared independently qualified617000 query. Surface type81 filtering is preserved without inventing its gameplay purpose.",
+    "Complete original66B500/666D60/666DB0/1B0310 execute in the behavior cohort. Status/zerohealth/hit child calls use declared qualified native fixture ports; this is not their transitive original execution.",
+    "Individual action table destinations, progression, control/cooperation and attachments remain explicit providers; supplied native floors retire the two surface effects.",
+    "World frame comparisons execute complete669F30 and1B0B80 with declared remaining services. Actor lifetime policy is native.",
+    "No game installation, game speed/performance claim, full actor family coverage or Stage4 completion is established."
+  ]
+}

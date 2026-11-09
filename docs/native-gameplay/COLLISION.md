@@ -233,3 +233,38 @@ explicitly unknown here. The spatial module does not mutate canonical HitActor
 effects, invoke generated senders or manufacture guest packets. Region pose,
 enrollment and radius-grid/directed-volume contracts remain separate work.
 Qualification: `native_gameplay_spatial_qualification_v1.json`.
+
+The `hit_regions` companion now owns bounded terminated20-byte region definitions,
+retained native spheres and model-joint versus actor-basis pose transforms. A
+missing descriptor preserves the previous sphere count; an immediate sentinel
+publishes an empty set. Missing native joints fail before pose publication.
+It supplies the64-entry native identity queue and prepares canonical HitActor
+damage/progression/pending fields alongside a supplemental ContactState holding
+cooldown, priority and serial. Reset occurs before cooldown/capacity admission;
+FF remains permanent, and1-to0 skips enrollment for that update. The caller owns
+traversal order, queue reset and pose scheduling independently of enrollment.
+
+Both compilers pass149,044checks over3000pose and1536queue cases with zero
+difference against unchanged5DC1B0,5DC2A0and5DC3A0bodies. The matrix-vector product
+is an explicitly declared scalar port, not a new VU execution equivalence claim.
+These fixtures are synthetic admitted actor definitions, not live gameplay.
+Qualification: `native_gameplay_hit_regions_qualification_v1.json`.
+
+The `radius` companion now owns57D960list and57DC70grid radius traces. It retains
+partial rejected-plane point writes, direct/offset-plane/three-edge order,
+list-local nearest selection, repeated segment cell lists, the original four-cell
+endpoint stencil even for large radii, dynamic-last order and first successful
+list behavior. Both compilers pass613,230checks with zero defined-output error:
+44,727list cases and22,363wrapper cases over all366owned collision grids. Floor
+grids are admitted as geometry in this corpus; no stock floor-radius caller is
+claimed. The quadrant table70EF10is verified against the owned overlay.
+
+The source has a concrete undefined point case:371070writes no point, and the
+two preceding plane attempts can reject before writing. A backface edge overlap
+then consumes uninitialized stackXYZ. Seeded-scratch list comparisons preserve
+the exact defined source behavior; the normal native call reports
+`uninitialized_point` and withholds an invented nearest point.319generated stock
+geometry probes reach that unknown capability. They are offline synthetic
+queries, not measured retail incidents or evidence that a live caller reaches
+the case. No closest-point repair is silently introduced. Qualification:
+`native_gameplay_radius_qualification_v1.json`.

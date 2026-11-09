@@ -20,6 +20,7 @@ def main():
   proof.append(compare_source('complete canonical actor behavior orchestration',src,begin,end,read))
  native=[p.relative_to(ROOT).as_posix() for d in ['gameplay_world','gameplay_actors','gameplay_session'] for p in (ROOT/'game/native'/d).glob('*') if p.suffix in ['.hpp','.cpp']]
  fixture=['tools/native_reconstruction/gameplay_world_oracle/behavior_tests.cpp','tools/native_reconstruction/gameplay_world_oracle/hit_fixture.hpp','tools/native_reconstruction/gameplay_actor_oracle/status_runtime.hpp','tools/native_reconstruction/verify_gameplay_behavior.py']
+ native += ['game/native/gameplay_collision/'+n for n in ['collision.cpp','collision.hpp','response.cpp','response.hpp']]
  files=sources+native+fixture;before={n:sha(ROOT/n) for n in files};out.mkdir(parents=True)
  record=dict(schema=1,status='failed',compiler=str(a.compiler),compiler_sha256=sha(a.compiler),source_sha256=before,original_owned_bodies=proof,full_original_behavior_body=True,declared_child_native_ports=['660310 status','6607D0 zero-health','660AF0 pending-hit'],declared_action_and_surface_providers=True,game_launched=False,installed_in_game=False,stage4_complete=False)
  try:
@@ -35,7 +36,7 @@ def main():
   (out/'functions.h').write_text('#pragma once\n'+declarations)
   for name in ['o2_functions.h','ps2_recompiled_functions.h']:(out/name).write_text('#pragma once\n#include "functions.h"\n')
   env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','');binary=out/'native-behavior.exe'
-  units=['gameplay_world/world.cpp','gameplay_world/behavior.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_actors/status.cpp','gameplay_actors/hit.cpp','gameplay_session/session.cpp']
+  units=['gameplay_world/world.cpp','gameplay_world/behavior.cpp','gameplay_world/surfaces.cpp','gameplay_collision/response.cpp','gameplay_collision/collision.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_actors/status.cpp','gameplay_actors/hit.cpp','gameplay_session/session.cpp']
   command=[str(a.compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source')]+[str(out/'source/game/native'/n) for n in units]+[str(out/'tests.cpp'),'-o',str(binary)];record['command']=command
   result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=180);(out/'compile.txt').write_text(result.stdout+result.stderr,encoding='utf8');assert result.returncode==0,'compile failed; see compile.txt'
   result=subprocess.run([str(binary)],env=env,capture_output=True,text=True,timeout=90);(out/'run.txt').write_text(result.stdout+result.stderr,encoding='utf8');assert result.returncode==0,'comparison failed; see run.txt'

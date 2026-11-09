@@ -5,9 +5,12 @@ namespace reo::native::gameplay_world {
 BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
     std::span<const std::int16_t> amounts):frame_(frame),behavior_(behavior),
     hit_timer_amounts_(amounts.begin(),amounts.end()){}
+BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
+    const gameplay_collision::response::Grid& floors,std::span<const std::int16_t> amounts):
+    BehaviorFrameServices(frame,behavior,amounts){floors_=&floors;}
 void BehaviorFrameServices::begin_offline_frame(World& w){frame_.begin_offline_frame(w);}
 void BehaviorFrameServices::run(Stage stage,World& w,Actor& a){
-    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_);
+    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_);
     else frame_.run(stage,w,a);
 }
 bool BehaviorFrameServices::remote_motion(World& w,Actor& a){return frame_.remote_motion(w,a);}
@@ -15,10 +18,14 @@ bool BehaviorFrameServices::find_grid(World& w,Actor& a,std::int8_t& grid){retur
 void BehaviorFrameServices::switch_grid(World& w,std::int32_t next,std::int32_t previous){frame_.switch_grid(w,next,previous);}
 float BehaviorFrameServices::grid_response(World& w,std::uint8_t grid){return frame_.grid_response(w,grid);}
 void update_behavior(World& w,Actor& a,BehaviorServices& services,
-                     std::span<const std::int16_t> hit_timer_amounts){
+                     std::span<const std::int16_t> hit_timer_amounts,
+                     const gameplay_collision::response::Grid* floors){
     auto& s=w.session();
-    services.run(BehaviorStage::sample_surface,w,a);
-    services.run(BehaviorStage::resolve_surface,w,a);
+    if(floors){sample_surface(a,*floors);resolve_surface(a,*floors);}
+    else{
+        services.run(BehaviorStage::sample_surface,w,a);
+        services.run(BehaviorStage::resolve_surface,w,a);
+    }
     a.previous_position=a.position;a.previous_orientation=a.orientation;
     if(a.category==0 && a.action_elapsed!=std::numeric_limits<std::uint32_t>::max())++a.action_elapsed;
     if(a.category==0 && a.control_elapsed!=std::numeric_limits<std::uint32_t>::max())++a.control_elapsed;
