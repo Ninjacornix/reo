@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "status": "owned temporary save/resume source paths qualified; no actual gameplay test",
+  "files_sha256": {
+    "docs/native-gameplay/SAVE_RESUME_CALLER_PATHS.md": "b05c6cd98927f908dc8c466632440869ac26dc05a6a50d581f41c35bd9f7abcb",
+    "tools/native_reconstruction/save_resume_caller_paths.py": "aa45399f651832efa4943d916b89e22c602be8837d571417993cbe96765a344f",
+    "build-native-sjuni/native-gameplay/save-resume-caller-paths-v1.json": "4ec7ef717ecf2bc8b84918a863fd22beabb0561d2aeb90fa50d2dea6ed9aab24"
+  },
+  "game_run": false,
+  "live_process_access": false,
+  "guest_writes": false,
+  "stock_event_trigger_located": false,
+  "active_resolver_binding_observed": false,
+  "gameplay_resume_proven": false,
+  "stage4_complete": false
+}

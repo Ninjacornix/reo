@@ -1,0 +1,766 @@
+{
+  "schema": 1,
+  "status": "seven actual V39 background menu/autoload/control cases passed stated gates; four harness failures preserved; gameplay options and temporary resume remain open",
+  "stage4_complete": false,
+  "game_runs": true,
+  "read_only_process_observation": true,
+  "guest_writes": false,
+  "focus_requested": false,
+  "window_writes": false,
+  "desktop_capture": false,
+  "player_card_selected": false,
+  "source_commit": "77f7e59c01946fb9cffa9c984cf3a1cda06752ca",
+  "candidate_manifest_sha256": "cd07baf62ac2789d78cb12f317d212b65afcd98060703fa5c7a72dca4dc5ffb2",
+  "executable_sha256": "bbf7d5915bac85dda9305b88db44d9103912a1b242acb2aeba2825e4bbff6b44",
+  "helper_sha256": "051052e70f1ce6ee1f34f280c86f09105db0a93e6dc10d79983db7c91efe38e9",
+  "analysis": {
+    "path": "build-native-sjuni/native-gameplay/v39-save-live-analysis-v3.json",
+    "sha256": "e353789bd85f78d0deb733dd3f9e8634cabd783b76644f9c48522343e85edb9b"
+  },
+  "passing_cases": [
+    {
+      "label": "v39-quiet-legacy-v3",
+      "session": "20261109-111451-565",
+      "rows": 659,
+      "native_totals": {
+        "0x1c5410": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c55c0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c5630": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec50": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec80": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aed60": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aedb0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aee40": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1badf0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        }
+      },
+      "native_joins": {},
+      "milestones": {
+        "boot_autoload_route": {
+          "seconds": 3.3429999999934807,
+          "phase": 0,
+          "message": 0
+        },
+        "interactive_title_menu": {
+          "seconds": 35.04599999997299,
+          "brightness": 128
+        }
+      }
+    },
+    {
+      "label": "v39-quiet-native-v1",
+      "session": "20261109-111719-959",
+      "rows": 646,
+      "native_totals": {
+        "0x1c5410": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c55c0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c5630": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec50": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec80": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aed60": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aedb0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aee40": {
+          "accepted": 2,
+          "completed": 2,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1badf0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        }
+      },
+      "native_joins": {
+        "1": {
+          "schema": 1,
+          "binding": 1,
+          "joined": 1,
+          "installed": 1,
+          "restore_ok": 0,
+          "restore_error": 0,
+          "trace_rows": 10,
+          "trace_overwritten": 0,
+          "rng_rows": 0
+        }
+      },
+      "milestones": {
+        "boot_autoload_route": {
+          "seconds": 0.7660000000032596,
+          "phase": 0,
+          "message": 0
+        },
+        "interactive_title_menu": {
+          "seconds": 32.54700000002049,
+          "brightness": 128
+        }
+      }
+    },
+    {
+      "label": "v39-menu-save-load-v2",
+      "session": "20261109-113203-007",
+      "rows": 1511,
+      "native_totals": {
+        "0x1c5410": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c55c0": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c5630": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec50": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec80": {
+          "accepted": 29,
+          "completed": 29,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aed60": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aedb0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aee40": {
+          "accepted": 2,
+          "completed": 2,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1badf0": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        }
+      },
+      "native_joins": {
+        "1": {
+          "schema": 1,
+          "binding": 1,
+          "joined": 1,
+          "installed": 1,
+          "restore_ok": 1,
+          "restore_error": 0,
+          "trace_rows": 45,
+          "trace_overwritten": 0,
+          "rng_rows": 0
+        }
+      },
+      "milestones": {
+        "boot_autoload_route": {
+          "seconds": 0.75,
+          "phase": 1,
+          "message": 8
+        },
+        "interactive_title_menu": {
+          "seconds": 32.5,
+          "brightness": 128
+        },
+        "manual_save": {
+          "seconds": 44.35899999999674,
+          "brightness": 128,
+          "saved_options": "00070700018000000100000000000000"
+        },
+        "ordinary_option_changed": {
+          "seconds": 49.40600000001723,
+          "brightness": 129
+        },
+        "explicit_load": {
+          "seconds": 56.76500000001397,
+          "brightness": 128,
+          "saved_options": "00070700018000000100000000000000"
+        }
+      }
+    },
+    {
+      "label": "v39-menu-policy-v2",
+      "session": "20261109-113940-381",
+      "rows": 921,
+      "native_totals": {
+        "0x1c5410": {
+          "accepted": 2,
+          "completed": 2,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c55c0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c5630": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec50": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec80": {
+          "accepted": 20,
+          "completed": 20,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aed60": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aedb0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aee40": {
+          "accepted": 2,
+          "completed": 2,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1badf0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        }
+      },
+      "native_joins": {
+        "1": {
+          "schema": 1,
+          "binding": 1,
+          "joined": 1,
+          "installed": 1,
+          "restore_ok": 0,
+          "restore_error": 0,
+          "trace_rows": 30,
+          "trace_overwritten": 0,
+          "rng_rows": 0
+        }
+      },
+      "milestones": {
+        "boot_autoload_route": {
+          "seconds": 0.7660000000032596,
+          "phase": 1,
+          "message": 8
+        },
+        "interactive_title_menu": {
+          "seconds": 32.45299999997951,
+          "brightness": 128
+        },
+        "policy_save": {
+          "seconds": 45.75,
+          "brightness": 128,
+          "saved_options": "00070700018000000100000000000000"
+        },
+        "automatic_save": {
+          "seconds": 48.64100000000326,
+          "brightness": 128,
+          "saved_options": "00070700018000000100000000000000"
+        }
+      }
+    },
+    {
+      "label": "v39-autoload-valid-v1",
+      "session": "20261109-114210-075",
+      "rows": 645,
+      "native_totals": {
+        "0x1c5410": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c55c0": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c5630": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec50": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec80": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aed60": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aedb0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aee40": {
+          "accepted": 2,
+          "completed": 2,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1badf0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        }
+      },
+      "native_joins": {
+        "1": {
+          "schema": 1,
+          "binding": 1,
+          "joined": 1,
+          "installed": 1,
+          "restore_ok": 1,
+          "restore_error": 0,
+          "trace_rows": 24,
+          "trace_overwritten": 0,
+          "rng_rows": 0
+        }
+      },
+      "milestones": {
+        "boot_autoload_route": {
+          "seconds": 0.4529999999795109,
+          "phase": 1,
+          "message": 8
+        },
+        "interactive_title_menu": {
+          "seconds": 34.32799999997951,
+          "brightness": 128
+        }
+      }
+    },
+    {
+      "label": "v39-autoload-checksum-v1",
+      "session": "20261109-114418-564",
+      "rows": 943,
+      "native_totals": {
+        "0x1c5410": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c55c0": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c5630": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec50": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec80": {
+          "accepted": 4,
+          "completed": 4,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aed60": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aedb0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aee40": {
+          "accepted": 2,
+          "completed": 2,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1badf0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        }
+      },
+      "native_joins": {
+        "1": {
+          "schema": 1,
+          "binding": 1,
+          "joined": 1,
+          "installed": 1,
+          "restore_ok": 0,
+          "restore_error": 1,
+          "trace_rows": 13,
+          "trace_overwritten": 0,
+          "rng_rows": 0
+        }
+      },
+      "milestones": {
+        "boot_autoload_route": {
+          "seconds": 0.6869999999762513,
+          "phase": 0,
+          "message": 0
+        },
+        "boot_decode_error_dialog": {
+          "seconds": 1.0929999999934807,
+          "message": 57,
+          "backend_result": 0
+        },
+        "interactive_title_menu": {
+          "seconds": 34.18699999997625,
+          "brightness": 128
+        }
+      }
+    },
+    {
+      "label": "v39-autoload-magic-v1",
+      "session": "20261109-114658-009",
+      "rows": 934,
+      "native_totals": {
+        "0x1c5410": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c55c0": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1c5630": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec50": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aec80": {
+          "accepted": 4,
+          "completed": 4,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aed60": {
+          "accepted": 1,
+          "completed": 1,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aedb0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1aee40": {
+          "accepted": 2,
+          "completed": 2,
+          "failed": 0,
+          "rejected": 0
+        },
+        "0x1badf0": {
+          "accepted": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        }
+      },
+      "native_joins": {
+        "1": {
+          "schema": 1,
+          "binding": 1,
+          "joined": 1,
+          "installed": 1,
+          "restore_ok": 0,
+          "restore_error": 1,
+          "trace_rows": 12,
+          "trace_overwritten": 0,
+          "rng_rows": 0
+        }
+      },
+      "milestones": {
+        "boot_autoload_route": {
+          "seconds": 0.7809999999590218,
+          "phase": 0,
+          "message": 0
+        },
+        "boot_decode_error_dialog": {
+          "seconds": 1.1869999999762513,
+          "message": 57,
+          "backend_result": 0
+        },
+        "interactive_title_menu": {
+          "seconds": 34.20299999997951,
+          "brightness": 128
+        }
+      }
+    }
+  ],
+  "failed_case_labels": [
+    "v39-quiet-legacy-v1",
+    "v39-quiet-legacy-v2",
+    "v39-menu-save-load-v1",
+    "v39-menu-policy-v1"
+  ],
+  "observed_rows": 6259,
+  "foreground_rows": 0,
+  "actual_save_ui_bodies": 5,
+  "reviewed_save_ui_bodies": 7,
+  "native_hook_entries_live": 8,
+  "native_hook_entries_total": 9,
+  "remaining_live_hook": "1AEDB0 ordinary in-game options caller6ED6A8",
+  "native_world_installed": false,
+  "temporary_gameplay_save_resume_proven": false,
+  "exact_guest_callsite_trace": false,
+  "frozen_harness": {
+    "tools/native_reconstruction/gameplay_save_live/run.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-checkpoint-v1/tools/native_reconstruction/gameplay_save_live/run.py",
+      "sha256": "75385866033fee087047a0206d3accffa8aa36aefeed886b6874e5cdbaaa12bb"
+    },
+    "tools/native_reconstruction/gameplay_save_live/drive.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-checkpoint-v1/tools/native_reconstruction/gameplay_save_live/drive.py",
+      "sha256": "8950c359791d768090d36bb4b84cca6709569518217b2a79358208047faaf29c"
+    },
+    "tools/native_reconstruction/gameplay_save_live/inventory.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-checkpoint-v1/tools/native_reconstruction/gameplay_save_live/inventory.py",
+      "sha256": "0f78874c456da71ddae798a868ef8609fe857e4a20adda36dab13261d48f2d7f"
+    },
+    "tools/native_reconstruction/gameplay_save_live/summarize.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-checkpoint-v1/tools/native_reconstruction/gameplay_save_live/summarize.py",
+      "sha256": "8073d1b007277533d3af82109a2b273e8897d238c40a801eecc2ae3a782201c7"
+    },
+    "tools/native_reconstruction/native_gameplay_save_live_preparation_qualification.json": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-checkpoint-v1/tools/native_reconstruction/native_gameplay_save_live_preparation_qualification.json",
+      "sha256": "db1504a7055e3885b3787c2c348b90ff2f940216662d597fa5ea78e051a31f94"
+    },
+    "docs/native-gameplay/SAVE_SESSION_LIVE_VALIDATION_PLAN.md": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-checkpoint-v1/docs/native-gameplay/SAVE_SESSION_LIVE_VALIDATION_PLAN.md",
+      "sha256": "1e7d041753958240941be1c83c9f22c694b5587dec1a903c8f4dac26892c2bdb"
+    }
+  },
+  "sealed_production": {
+    "recomp/overrides/native_gameplay/save_session.hpp": {
+      "workspace_sha256": "e9aa01fd04f4cba002817dde9da311d433c9122eab2fbfd9011dfcb90295ab49",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/recomp/overrides/native_gameplay/save_session.hpp",
+      "sealed_sha256": "8cdda58af6cbe060dea158b10d18d1463607db7163d5f7f19d38459241d6213a",
+      "normalized_newlines_equal": true
+    },
+    "recomp/overrides/native_gameplay/save_session.cpp": {
+      "workspace_sha256": "06c2968c6ed004d4cb01120a61c9647e310b2160f39d4110092d67db2080e31d",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/recomp/overrides/native_gameplay/save_session.cpp",
+      "sealed_sha256": "42456a4c0d60d3c542e11a255cb7864c6a90ef4f71d1ad655ab30fea82abbc8f",
+      "normalized_newlines_equal": true
+    },
+    "recomp/overrides/native_gameplay/entries.inc": {
+      "workspace_sha256": "96a882a0f33252eb62003cae0ff4e80a04c3441f6d0c00f3c68d5546931adc21",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/recomp/overrides/native_gameplay/entries.inc",
+      "sealed_sha256": "96a882a0f33252eb62003cae0ff4e80a04c3441f6d0c00f3c68d5546931adc21",
+      "normalized_newlines_equal": true
+    },
+    "recomp/overrides/native_gameplay/providers.inc": {
+      "workspace_sha256": "e9fc5906a1f34a4d695f1d6d1f88cc5883635fb35faee4d37fbe36f9fa147e01",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/recomp/overrides/native_gameplay/providers.inc",
+      "sealed_sha256": "e9fc5906a1f34a4d695f1d6d1f88cc5883635fb35faee4d37fbe36f9fa147e01",
+      "normalized_newlines_equal": true
+    },
+    "recomp/overrides/native_gameplay/image.inc": {
+      "workspace_sha256": "09e5b6f5e908cc680ad1e20d715ac623b6fc2ab434fc628e618920c05864d906",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/recomp/overrides/native_gameplay/image.inc",
+      "sealed_sha256": "09e5b6f5e908cc680ad1e20d715ac623b6fc2ab434fc628e618920c05864d906",
+      "normalized_newlines_equal": true
+    },
+    "game/native/gameplay_save/snapshot.hpp": {
+      "workspace_sha256": "195bb7df2af6fdf4e349c3c67e3e908c6c4f0c70d433af5d86d1ebd37738003c",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/game/native/gameplay_save/snapshot.hpp",
+      "sealed_sha256": "195bb7df2af6fdf4e349c3c67e3e908c6c4f0c70d433af5d86d1ebd37738003c",
+      "normalized_newlines_equal": true
+    },
+    "game/native/gameplay_save/snapshot.cpp": {
+      "workspace_sha256": "1fd7201ba0d949bb4c8cd3d86ba3eb735cf1850101fff8f4d9da4cb23458919e",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/game/native/gameplay_save/snapshot.cpp",
+      "sealed_sha256": "1fd7201ba0d949bb4c8cd3d86ba3eb735cf1850101fff8f4d9da4cb23458919e",
+      "normalized_newlines_equal": true
+    },
+    "game/native/gameplay_session/session.hpp": {
+      "workspace_sha256": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/game/native/gameplay_session/session.hpp",
+      "sealed_sha256": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+      "normalized_newlines_equal": true
+    },
+    "game/native/gameplay_session/session.cpp": {
+      "workspace_sha256": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+      "sealed_path": "build-native-sjuni/candidate-inputs-v39/source/game/native/gameplay_session/session.cpp",
+      "sealed_sha256": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+      "normalized_newlines_equal": true
+    }
+  },
+  "evidence_sha256": {
+    "docs/native-gameplay/SAVE_SESSION_V39_LIVE.md": "819129f1997e4af73560d6685d949110c67e5ad43dfb9ff4650e440787254a4e",
+    "tools/native_reconstruction/native_gameplay_save_session_adapter_qualification.json": "edb01e4c5bfd80315881dfd342abc8da2fa1430f3e80bdf50c790b2875d76331",
+    "tools/native_reconstruction/save_resume_caller_paths_qualification_v1.json": "baf6e32002ce8f256ffe6c661ee5dc8754b5376169088d3e905473ccf19cbe11",
+    "build-native-sjuni/candidate-work-v39/candidate-build-result.json": "5da39e193123285394a947ee4a7e124434e61a686a84bc565c8de9eb3dc0e95d",
+    "build-native-sjuni/candidate-inputs-v39/notices/native-sjuni-candidate.json": "e6137f3a4e2ed5c01e0919b072972504dfb08b3882b542fab6df77746aa0c7b7",
+    "build-native-sjuni/native-gameplay/live-inventory-v2.json": "917014e3e3eaf8be8df75c87acdf32ed4d1fcec6aaa7d8d584b8eb44ab8eb324",
+    "build-native-sjuni/native-gameplay/live-harness-checkpoint-v1/tools/native_reconstruction/native_gameplay_save_live_preparation_qualification.json": "db1504a7055e3885b3787c2c348b90ff2f940216662d597fa5ea78e051a31f94"
+  },
+  "preserved_before_corrections_sha256": {
+    "build-native-sjuni/native-gameplay/live/v39-quiet-legacy-v1/harness-before-ready-fix/drive.py": "413b4f0daa2fb50f128086ab188fa38300e47145afe596f8eefc5d21bab8f4f6",
+    "build-native-sjuni/native-gameplay/live/v39-quiet-legacy-v1/harness-before-ready-fix/native_gameplay_save_live_preparation_qualification.json": "cc7fdc7c4e146f82aa5ce246c44e40e732718600c7721691d72f4e31a70c39dd",
+    "build-native-sjuni/native-gameplay/live/v39-quiet-legacy-v2/harness-before-deadline-fix/drive.py": "7fcd51ae12ae3c88d51f8b04493a2ff7ba97c2ba664cd5e20d46ef4f370b6a54",
+    "build-native-sjuni/native-gameplay/live/v39-quiet-legacy-v2/harness-before-deadline-fix/native_gameplay_save_live_preparation_qualification.json": "9031ff101e1b300fb79e31d76ccd6aad368d8c707428736d01c8af06c7614957",
+    "build-native-sjuni/native-gameplay/live/v39-menu-save-load-v1/harness-before-brightness-fix/drive.py": "165574315bf445fb2e8e2353eb46a4ce8cda5ccda5057bcbf89c5ebd9c6b9f0b",
+    "build-native-sjuni/native-gameplay/live/v39-menu-save-load-v1/harness-before-brightness-fix/native_gameplay_save_live_preparation_qualification.json": "3fd44f5cff3c030a174c843ecae6f8dbf8d5463cb605146c60842023a02a657a",
+    "build-native-sjuni/native-gameplay/live/v39-menu-policy-v1/harness-before-phase-and-publish-fix/drive.py": "bfbd93b9fe10ad6dffc56edb72de1acc15f4a1a5e479d4e386354136b9f0deb6",
+    "build-native-sjuni/native-gameplay/live/v39-menu-policy-v1/harness-before-phase-and-publish-fix/native_gameplay_save_live_preparation_qualification.json": "b5332e2492f274ba4bf779584b9c02ae0c301567f6684e1fffe9c62667fa7e7e",
+    "build-native-sjuni/native-gameplay/live/v39-menu-policy-v1/harness-before-phase-and-publish-fix/summarize.py": "528824085310fccc3e5ed168ae6d01ba40b2682f8067b82701663ebdd7a8fb74"
+  },
+  "limits": [
+    "Actual handler identification combines source root-state mapping with native invocation and card/backend evidence, not guest PC traces.",
+    "All successful cases have zero native audio signal frames; this is menu acceptance, not an audio stress or performance benchmark.",
+    "All native restore results are final drained counters. Result-1 in two damaged copies is expected data rejection, not fatal native failure.",
+    "The native snapshot/session owns its core values while the adapter still projects legacy guest state; fully native world ownership is not complete.",
+    "No player-card file was selected; only fresh private cases and copies of an actual successful private save were used."
+  ],
+  "qualification_revision": 2,
+  "reference_correction": "Preparation evidence points to its exact archived revision6 file after working preparation advances for the separate gameplay case; measurements unchanged."
+}
