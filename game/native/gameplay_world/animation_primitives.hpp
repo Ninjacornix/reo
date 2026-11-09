@@ -3,6 +3,7 @@
 #include "../animation/frame_events.hpp"
 #include "../gameplay_collision/contact_packets.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
+namespace reo::native::gameplay_world {class WorldResourcePrograms;}
 namespace reo::native::gameplay_world::animation_events {
 // Concrete implementations must route through the canonical native audio
 // owner. A recording implementation is useful only as a declared test seam.
@@ -24,9 +25,10 @@ class NativeConsumer final : public Consumer {
     NativeConsumer(World& world, const Metadata& metadata, Audio* audio = nullptr,
                    gameplay_collision::delivery::Packets* packets = nullptr,
                    const gameplay_collision::delivery::Catalog* catalog = nullptr,
-                   gameplay_scenario::SceneResources* resources = nullptr)
+                   gameplay_scenario::SceneResources* resources = nullptr,
+                   WorldResourcePrograms* programs = nullptr)
         : world_(world), metadata_(metadata), audio_(audio), packets_(packets), catalog_(catalog),
-          resources_(resources) {}
+          resources_(resources),programs_(programs) {}
     void apply(Actor&, const Event&, float step) override;
 
   private:
@@ -36,6 +38,7 @@ class NativeConsumer final : public Consumer {
     gameplay_collision::delivery::Packets* packets_;
     const gameplay_collision::delivery::Catalog* catalog_;
     gameplay_scenario::SceneResources* resources_;
+    WorldResourcePrograms* programs_;
     Audio& audio();
     bool crosses(Actor&, const Event&, float, unsigned channel);
     void attach(Actor&, std::uint8_t key);

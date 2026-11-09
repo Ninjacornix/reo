@@ -1,6 +1,7 @@
 #pragma once
 #include "model_constraints.hpp"
 #include "../animation/model_math.hpp"
+#include "../animation/weapon_program.hpp"
 #include "../gameplay_scenario/resource_templates.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
 namespace reo::native::gameplay_world {
@@ -28,6 +29,7 @@ class ResourceModel final : public gameplay_scenario::SceneAttachment {
     animation::Matrix correction, pose;
     animation::Vector position;
     std::uint32_t flags{};
+    animation::WeaponProgramState program;
 };
 class WorldResourceAttachments final {
   public:

@@ -82,6 +82,9 @@ channel playback to the same bank mixer with complete source consumer checks.
 The [bounded named bank loader](NAMED_BANK_LOADING.md) now supplies actual
 archive reads and off-thread bank preparation for direct SND loads. Combined
 enemy/staged banks and real game caller installation remain open.
+The [weapon program selector and scalar sampler](WEAPON_PROGRAMS.md) now use
+actual owned WMD data and the existing native actor/resource owners. Resource
+visual callbacks and loading on weapon changes remain separate work.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

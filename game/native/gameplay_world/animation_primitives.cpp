@@ -1,4 +1,5 @@
 #include "animation_primitives.hpp"
+#include "resource_programs.hpp"
 #include <bit>
 #include <stdexcept>
 namespace reo::native::gameplay_world::animation_events {
@@ -50,12 +51,14 @@ bool NativeConsumer::resource_present(const Actor& actor) const {
         unavailable("Native animation resource identity stale");
     return bool(descriptor->primary);
 }
-void NativeConsumer::resource_program(Actor& actor, unsigned) {
+void NativeConsumer::resource_program(Actor& actor, unsigned mode) {
     if (!actor.selected_resource)
         return;
     if (!resource_present(actor))
         return;
-    unavailable("Native animation mutable resource matrix-program owner not implemented");
+    if(!programs_||!programs_->bound_to(world_,*resources_))
+        unavailable("Native animation resource program owner unavailable or foreign");
+    programs_->select(actor,mode);
 }
 void NativeConsumer::apply(Actor& actor, const Event& event, float step) {
     const auto id = world_.identity_of(actor);

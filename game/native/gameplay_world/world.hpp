@@ -10,7 +10,7 @@
 #include <optional>
 #include <vector>
 
-namespace reo::native::animation {class Instance;class Constraints;class Playback;}
+namespace reo::native::animation {class Instance;class Constraints;class Playback;class WeaponProgramBank;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
@@ -81,6 +81,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::shared_ptr<animation::Instance> model;
     std::shared_ptr<animation::Constraints> constraints;
     std::shared_ptr<animation::Playback> animation;
+    std::shared_ptr<const animation::WeaponProgramBank> weapon_programs;
     ControlRequest control_request;
     std::uint8_t control_pending{};
     input::Frame input;

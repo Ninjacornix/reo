@@ -3,6 +3,10 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#ifdef REO_WEAPON_PROGRAMS
+#include "game/native/gameplay_world/resource_programs.hpp"
+#include <set>
+#endif
 namespace g = reo::native::gameplay_world;
 namespace e = g::animation_events;
 namespace a = reo::native::animation;
@@ -62,10 +66,12 @@ void original_transform_port(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* r
             ++allocation_count;
             SET_GPR_U32(ctx, 2, allocation_full ? 0 : packet_at);
             break;
+#ifndef REO_WEAPON_PROGRAMS
         case 0x6b4420:
             check(ram[actor_at + 0xc7c] == 0,
                   "declared original resource-program no-resource seam only");
             break;
+#endif
         default:
             throw std::runtime_error("undeclared reached original primitive provider " +
                                      std::to_string(ctx->pc));
@@ -121,8 +127,11 @@ std::vector<std::byte> load(const char* name) {
     check(bool(f), "complete owned asset");
     return bytes;
 }
+#ifdef REO_WEAPON_PROGRAMS
+#include "source/tools/native_reconstruction/animation/weapon_program_tests.inc"
+#endif
 int main(int argc, char** argv) try {
-    check(argc == 4, "owned overlay/skeleton/catalog required");
+    check(argc == 4 || argc==5, "owned overlay/skeleton/catalog required");
     std::vector<std::uint8_t> ram(0x2000000);
     {
         std::ifstream f(argv[1], std::ios::binary);
@@ -360,10 +369,15 @@ int main(int argc, char** argv) try {
     check(world.close() == g::Status::completed && !world.identity_of(*actor),
           "closed World reverse identity unavailable");
     ++identities;
+#ifdef REO_WEAPON_PROGRAMS
+    check(argc==5,"owned WMD corpus required");compare_weapon_programs(ram,argv[4],skeleton);
+    std::cout<<"{\"checks\":"<<checks<<",\"primitive_cases\":"<<cases<<",\"weapon_banks\":"<<weapon_banks<<",\"weapon_selector_cases\":"<<weapon_selector_cases<<",\"weapon_curves\":"<<weapon_curves<<",\"weapon_curve_cases\":"<<weapon_curve_cases<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_event_cases\":"<<weapon_event_cases<<",\"game_run\":false}\n";
+#else
     std::cout << "{\"checks\":" << checks << ",\"primitive_cases\":" << cases
               << ",\"stock_contact_attachments\":" << attachments
               << ",\"equipment_cases\":" << equipment_cases << ",\"identity_cases\":" << identities
               << ",\"refusal_cases\":" << refusals << ",\"game_run\":false}\n";
+#endif
 } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
     return 1;
