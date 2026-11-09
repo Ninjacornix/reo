@@ -3,6 +3,7 @@
 #include "scene_models.hpp"
 #include "room_object_commands.hpp"
 #include "periodic_effects.hpp"
+#include "surface_effects.hpp"
 
 namespace reo::native::gameplay_scenario {
 Status OfflineCoordinator::restore(const OfflineState& value)noexcept{
@@ -27,6 +28,7 @@ OfflineResult OfflineCoordinator::tick(Interpreter& vm,std::size_t requested,boo
         for(const auto authored:program.visibility_models())if(!providers.models->admits_visibility(authored))return true;
         if(program.needs_periodic_effects()&&(!providers.periodic_effects||!providers.scene_controls||!providers.world||
             !providers.periodic_effects->admitted()||!providers.periodic_effects->bound_to(*providers.scene_controls,flags,providers.world->session().random)))return true;
+        if(program.needs_surface_effects()&&(!providers.surface_effects||!providers.world||!providers.surface_effects->bound_to(*providers.world)))return true;
         return (program.needs_streams()&&(!stream_tick||!providers.streams||!providers.stream_backend))||
             (program.needs_saved_controls()&&(!providers.saved_controls||owner>=3))||
             (program.needs_world()&&(!providers.world||&selected!=&providers.world->selected_actor))||

@@ -66,6 +66,10 @@ The [explicit floor-type correction](FLOOR_EXPLICIT_SURFACE_TYPES.md) restores
 specific high-bit surface queries while preserving generic floor filtering.
 These have paired source comparisons; they do not establish a fully migrated
 scene/resource/input/network/save owner or native game acceptance.
+The [A8 scenario effect command](SCENARIO_SURFACE_EFFECTS.md) additionally
+compares the current World/scenario/shared effect owners together without
+historical source pins. This closes that bounded composition check, not game
+installation or the remaining script families.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

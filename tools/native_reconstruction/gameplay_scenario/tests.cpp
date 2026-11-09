@@ -24,6 +24,8 @@ namespace {
 std::size_t checks{},invocations{};
 unsigned original_periodic_used{};
 std::vector<std::uint32_t> original_periodic_tasks;
+unsigned original_surface_used{},original_surface_attempts{};
+std::vector<std::uint32_t> original_surface_nodes;
 std::string assertion_context;
 std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint8_t>> notifications;
 void check(bool ok,const std::source_location at=std::source_location::current()){++checks;if(!ok)throw std::runtime_error("Scenario differential assertion "+std::to_string(checks)+" "+assertion_context+" "+at.file_name()+":"+std::to_string(at.line()));}
@@ -173,6 +175,14 @@ void o2_00573630_0x573630(std::uint8_t* r,R5900Context* c,PS2Runtime*){
     if(original_periodic_used<32){at=0x7a0000+256*original_periodic_used++;std::memset(r+at,0,256);original_periodic_tasks.push_back(at);}
     SET_GPR_U32(c,2,at);done(c);
 }
+// Declared test-only shared allocator seam. Complete651A30/factory/168-pool
+// behavior is independently qualified by the shared surface work cohort.
+void o2_00651A30_0x651a30(std::uint8_t* r,R5900Context* c,PS2Runtime*){
+    check(GPR_U32(c,4)==0&&GPR_U32(c,5)==0&&GPR_U32(c,6)==1);++original_surface_attempts;
+    std::uint32_t at{};
+    if(original_surface_used<168){at=0x760000+0x240*original_surface_used++;std::memset(r+at,0,0x240);original_surface_nodes.push_back(at);}
+    SET_GPR_U32(c,2,at);done(c);
+}
 void sub_00131E38_0x131e38(std::uint8_t* r,R5900Context* c,PS2Runtime*){stream_original_event(r,2,stream_original_channel(c));done(c);}
 void sub_00131EF8_0x131ef8(std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto index=stream_original_channel(c);stream_original_event(r,0,index);SET_GPR_S32(c,2,original_stream_fixture->phases[index]);done(c);}
 void sub_001327B8_0x1327b8(std::uint8_t* r,R5900Context* c,PS2Runtime*){stream_original_event(r,4,stream_original_channel(c),GPR_S32(c,5));done(c);}
@@ -194,9 +204,11 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "actor_request_vm_tests.inc"
 #include "periodic_control_vm_tests.inc"
 #include "no_model_vm_tests.inc"
+#include "surface_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==2);
     no_model_vm_tests();
+    surface_vm_tests(argv[1]);
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -332,7 +344,7 @@ int main(int argc,char** argv)try{
     {std::vector<std::byte> b;emit(b,0x110,{0,123});emit(b,0x30,{42});emit(b,0xa);vm::Interpreter n;
         check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
         check(n.tick(0,{}).status==vm::Status::provider_unavailable);check(n.counters()[0]==0);}
-    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"no_model_vm_cases\":"<<no_model_vm_cases<<",\"room_rule_original_invocations\":"<<room_rule_invocations<<",\"room_rule_dispatches\":"<<room_rule_dispatches<<",\"room_object_dispatches\":"<<room_object_dispatches<<",\"actor_request_consumers\":"<<actor_request_consumers<<",\"actor_request_dispatches\":"<<actor_request_dispatches<<",\"actor_request_profile_refusals\":"<<actor_request_profile_refusals<<",\"periodic_dispatches\":"<<periodic_dispatches<<",\"periodic_factories\":"<<periodic_factories<<",\"periodic_live_frames\":"<<periodic_live_frames<<",\"coverage\":{";
+    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"no_model_vm_cases\":"<<no_model_vm_cases<<",\"surface_vm_cases\":"<<surface_vm_cases<<",\"room_rule_original_invocations\":"<<room_rule_invocations<<",\"room_rule_dispatches\":"<<room_rule_dispatches<<",\"room_object_dispatches\":"<<room_object_dispatches<<",\"actor_request_consumers\":"<<actor_request_consumers<<",\"actor_request_dispatches\":"<<actor_request_dispatches<<",\"actor_request_profile_refusals\":"<<actor_request_profile_refusals<<",\"periodic_dispatches\":"<<periodic_dispatches<<",\"periodic_factories\":"<<periodic_factories<<",\"periodic_live_frames\":"<<periodic_live_frames<<",\"coverage\":{";
     bool first_profile=true;
     for(const auto profile:{vm::DispatchProfile::ordinary,vm::DispatchProfile::offline_actor}){
         if(!first_profile)std::cout<<',';

@@ -17,6 +17,7 @@ IDS += ['00690AC0','00690B80','00690C40','00690D40','00690DD0','00690E60','006B0
 
 IDS += ['00691FA0','00692630','0064AE50','006261D0','00626310','006263D0','0057E840','006269B0','00667370']
 IDS += ['00692B10','005D9630','00573890']
+IDS += ['00690490','005DFA90']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -104,6 +105,7 @@ def main(a):
     (out/'original_fixture.hpp').write_text(fixture);(out/'original.cpp').write_text('#include "original_fixture.hpp"\n#include "original_declarations.inc"\n'+text)
     shutil.copyfile(HERE/'tests.cpp',out/'tests.cpp')
     shutil.copyfile(HERE/'no_model_vm_tests.inc',out/'no_model_vm_tests.inc')
+    shutil.copyfile(HERE/'surface_vm_tests.inc',out/'surface_vm_tests.inc')
     shutil.copyfile(HERE/'offline_tests.inc',out/'offline_tests.inc')
     shutil.copyfile(HERE/'actor_request_vm_tests.inc',out/'actor_request_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
@@ -121,9 +123,17 @@ def main(a):
     units += [('effect_'+n,ROOT/'game/native/gameplay_effects'/(n+'.cpp'))for n in ['periodic_visuals','geometry','tracks']]
     units += [('animation_'+n,ROOT/'game/native/animation'/(n+'.cpp'))for n in ['model','model_math','curves']]
     units += [('periodic_tasks',ROOT/'game/native/gameplay_scenario/periodic_effects.cpp')]
+    if not a.pin_effects_commit:
+        import sys
+        sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
+        from effect_work_sources import SURFACE_WORLD_UNITS
+        for i,name in enumerate(SURFACE_WORLD_UNITS+['game/native/gameplay_scenario/fog.cpp']):
+            path=ROOT/name
+            if path not in [p for _,p in units]:units.append(('surface_dependency_'+str(i),path))
     source_paths=[HERE/'no_model_vm_tests.inc',HERE/'actor_request_vm_tests.inc',HERE/'room_object_vm_tests.inc',HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'room_rule_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'model_vm_fixture.inc',reference,HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
     source_paths += [path for label,path in units if not path.is_relative_to(ROOT/'build-native-sjuni')]
     source_paths.append(HERE/'periodic_control_vm_tests.inc')
+    source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']
     pending=list(source_paths);closure=set(p.resolve() for p in source_paths)
@@ -138,6 +148,7 @@ def main(a):
         target=out/'source'/p.relative_to(ROOT);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(source_bytes(p))
     corpus=ROOT/'build-native-sjuni/effect-geometry-owned-v1';corpus_receipt=json.loads((corpus/'receipt.json').read_bytes());assert len(corpus_receipt['assets'])==12 and sha(corpus/'owned_effect_geometry.bin')==corpus_receipt['package_sha256'];shutil.copyfile(corpus/'owned_effect_geometry.bin',out/'owned_effect_geometry.bin')
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-msse4.1','-pthread','-fno-fast-math','-ffp-contract=off','-I'+str(out/'source'),'-I'+str(out)]
+    if a.pin_effects_commit:base+=['-DREO_VM_PINNED_EFFECTS=1']
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
     for label,path in units:
         frozen=out/'source'/path.relative_to(ROOT)if not path.is_relative_to(ROOT/'build-native-sjuni')else path
