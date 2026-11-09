@@ -6,7 +6,7 @@
 #include <vector>
 namespace g=reo::native::gameplay_world;
 constexpr unsigned pool=0x3f4010,stride=0x250,work_entry=0x110000;
-std::uint64_t checks{},operations{},passes{},source_calls{},refusals{};
+std::uint64_t checks{},operations{},passes{},source_calls{},refusals{},reuse_cases{};
 std::string active_case;
 std::function<void(unsigned)> source_work;
 std::vector<unsigned> source_order,native_order;
@@ -75,7 +75,7 @@ int main()try{
         std::uint32_t random=0x5122;
         for(unsigned step=0;step<4096;++step){random=random*1664525u+1013904223u;const unsigned slot=(random>>16)%64;if(f.owner.retain(f.ids[slot]))f.retire(slot);else(void)f.create(random&1);}
     }
-    for(unsigned action=0;action<7;++action)for(unsigned trigger=0;trigger<8;++trigger)for(bool skip:{false,true}){
+    for(unsigned action=0;action<10;++action)for(unsigned trigger=0;trigger<8;++trigger)for(bool skip:{false,true}){
         active_case="mutation action="+std::to_string(action)+" trigger="+std::to_string(trigger)+" skip="+std::to_string(skip);Fixture f;for(unsigned i=0;i<8;++i)(void)f.create(i%2!=0);
         bool source_done{},native_done{};const unsigned target=56+trigger;
         source_work=[&](unsigned at){if(source_done||(at-pool)/stride!=target)return;source_done=true;
@@ -83,12 +83,14 @@ int main()try{
             if(action==2||action==3){const auto neighbor=read<unsigned>(f.ram.data(),at+(action==2?0x1c:0x20));if(neighbor)(void)call(f.ram.data(),0x590d80,neighbor);}
             if(action==4||action==5){const auto created=call(f.ram.data(),0x590c70,action==4);put(f.ram.data(),GPR_U32(&created,2)+0x14,work_entry);}
             if(action==6)f.ram[0x745d50]=1;
+            if(action>=7){(void)call(f.ram.data(),0x590d80,at);const auto created=call(f.ram.data(),0x590c70,action==8);const auto next=GPR_U32(&created,2);put(f.ram.data(),next+0x14,work_entry);if(action==9){const auto again=call(f.ram.data(),0x590c70);put(f.ram.data(),GPR_U32(&again,2)+0x14,work_entry);}}
         };
         f.work->action=[&](g::ResourceModels& owner,const g::ResourceModelId& id,g::ResourceModel&){const auto slot=owner.physical_slot(id);check(slot.has_value());if(native_done||*slot!=target)return;native_done=true;
             if(action==1)check(owner.retire(id)==g::ResourceModelStatus::completed);
             if(action==2||action==3){const auto neighbor=action==2?owner.previous(id):owner.next(id);if(neighbor)check(owner.retire(neighbor)==g::ResourceModelStatus::completed);}
             if(action==4||action==5){const auto created=owner.create(action==4?g::ResourceModelPlacement::front:g::ResourceModelPlacement::back);check(created.status==g::ResourceModelStatus::completed);created.model->work=f.work;f.ids[*owner.physical_slot(created.id)]=created.id;}
             if(action==6)owner.request_refresh();
+            if(action>=7){const auto retired=owner.retain(id);check(owner.retire(id)==g::ResourceModelStatus::completed&&!retired->current()&&!owner.retain(id));const auto created=owner.create(action==8?g::ResourceModelPlacement::front:g::ResourceModelPlacement::back);check(created.status==g::ResourceModelStatus::completed&&created.id!=id&&created.model!=retired);created.model->work=f.work;f.ids[*owner.physical_slot(created.id)]=created.id;if(action==9){const auto again=owner.create();check(again.status==g::ResourceModelStatus::completed);again.model->work=f.work;f.ids[*owner.physical_slot(again.id)]=again.id;}++reuse_cases;}
         };
         source_order.clear();native_order.clear();source_post=native_post=0;f.ram[0x4bae9a]=skip?7:0;f.ram[0x745d50]=1;f.owner.request_refresh();
         call(f.ram.data(),0x590ea0);Post post;const auto result=f.owner.update(skip,&post);check(result.status==g::ResourceModelStatus::completed&&result.called==source_order.size()&&source_order==native_order&&source_post==native_post&&f.owner.refresh_requested()==bool(f.ram[0x745d50]));f.compare();++passes;
@@ -99,8 +101,8 @@ int main()try{
         f.owner.retain(f.ids[*slot])->work.reset();check(f.owner.update(false).status==g::ResourceModelStatus::unavailable);++refusals;
         f.owner.retain(f.ids[*slot])->work=f.work;check(f.owner.update(false,nullptr,0).status==g::ResourceModelStatus::budget_exhausted);++refusals;
         f.work->action=[&](g::ResourceModels& owner,const g::ResourceModelId& id,g::ResourceModel&){check(owner.retire(id)==g::ResourceModelStatus::completed);const auto next=owner.create();check(next.status==g::ResourceModelStatus::completed);next.model->work=f.work;};
-        check(f.owner.update(false).status==g::ResourceModelStatus::unadmitted_reuse);++refusals;
+        check(f.owner.update(false).status==g::ResourceModelStatus::completed);++reuse_cases;
         auto live=f.owner.retain(f.owner.head());check(f.owner.close()==g::ResourceModelStatus::completed&&!live->current()&&f.owner.create().status==g::ResourceModelStatus::closed&&f.owner.update(false).status==g::ResourceModelStatus::closed);++refusals;
     }
-    std::cout<<"{\"checks\":"<<checks<<",\"operations\":"<<operations<<",\"passes\":"<<passes<<",\"source_calls\":"<<source_calls<<",\"refusals\":"<<refusals<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"operations\":"<<operations<<",\"passes\":"<<passes<<",\"source_calls\":"<<source_calls<<",\"refusals\":"<<refusals<<",\"reuse_cases\":"<<reuse_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

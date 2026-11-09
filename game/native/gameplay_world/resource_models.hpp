@@ -15,7 +15,7 @@ public:
     virtual ~ResourceModelPostUpdate()=default;
     virtual void apply(ResourceModels&)=0;
 };
-enum class ResourceModelStatus {completed,full,no_memory,unavailable,foreign_or_stale,busy,closed,budget_exhausted,unadmitted_reuse};
+enum class ResourceModelStatus {completed,full,no_memory,unavailable,foreign_or_stale,busy,closed,budget_exhausted};
 enum class ResourceModelPlacement {front,back};
 struct ResourceModelCreated {ResourceModelStatus status{ResourceModelStatus::unavailable};ResourceModelId id;std::shared_ptr<ResourceModel> model;};
 struct ResourceModelPass {ResourceModelStatus status{ResourceModelStatus::completed};std::size_t called{};};

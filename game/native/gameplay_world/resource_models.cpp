@@ -67,8 +67,11 @@ ResourceModelPass ResourceModels::update(bool skip,ResourceModelPostUpdate* post
         const auto slot=physical_slot(node->id);
         const auto work=node->model->work;if(!work)return {ResourceModelStatus::unavailable,result.called};
         work->update(*this,node->id,*node->model);++result.called;
-        if(slot&&slots_[*slot]&&slots_[*slot]!=node)return {ResourceModelStatus::unadmitted_reuse,result.called};
-        node=node->previous?slots_[*node->previous]:nullptr;
+        // The source reads the physical row's continuation AFTER work. A
+        // callback can retire and recreate that row. Observe its new occupant
+        // only to choose continuation; never retarget the old model/ID lease.
+        const auto continuation=slot&&slots_[*slot]?slots_[*slot]:node;
+        node=continuation->previous?slots_[*continuation->previous]:nullptr;
     }
     if(refresh_){if(!post)return {ResourceModelStatus::unavailable,result.called};post->apply(*this);}
     return result;

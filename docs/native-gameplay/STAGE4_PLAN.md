@@ -122,6 +122,10 @@ owned NBD forests into immutable primary part poses, with full signed lookup
 comparisons. This removes the need for controlled matrices on admitted roots
 when construction adopts it. Two larger-part roots remain explicit unavailable
 cells under the current six-part primary contract; the factory is still open.
+The [model slot-reuse follow-up](RESOURCE_MODEL_REUSE.md) removes the earlier
+unadmitted-reuse gate for valid construction callbacks. Traversal follows the
+new occupant's continuation while old model capabilities remain retired.
+Actual factory and delayed callback composition remain open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a
