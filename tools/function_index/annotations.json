@@ -85103,16 +85103,16 @@
       "id": "o0:0x0037AA40",
       "image": "o0",
       "address": "0x0037AA40",
-      "proposed_name": "service_movie_worker_and_io_pumps_candidate",
+      "proposed_name": "pause_current_movie_and_suspend_support_services_candidate",
       "confidence": "probable",
-      "confidence_detail": "Probable role; stated mechanics verified",
+      "confidence_detail": "Verified pause dispatch; support-call roles bounded",
       "evidence": [
         {
           "path": "docs/SYMBOLS_MOVIE_FLOW.md",
           "line": 44
         }
       ],
-      "rationale": "If handle exists invokes vtable+28(handle, 1), then 0x1AE280, 1A9840, 128AB0, 1AB790, 18D650 sequentially. These pumps can perform substantial work; method names not independently recovered here."
+      "rationale": "When handle exists,37AA60 loads public vtable22DCE8 slot28=15F3F0 and37AA64/68 calls pause(handle,1). Then calls1AE280,1A9840,128AB0,1AB790,18D650. Reviewed direct caller1BD170 belongs to HDD maintenance worker1BD160 after SleepThread. Static dispatch/support sequence confirmed; broader suspension roles and runtime reachability remain bounded."
     },
     {
       "id": "o0:0x0037AAA0",

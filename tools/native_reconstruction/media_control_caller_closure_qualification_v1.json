@@ -4,7 +4,7 @@
   "game_run": false,
   "process_access": false,
   "window_actions": false,
-  "existing_files_edited": false,
+  "existing_files_edited": true,
   "step3_complete": false,
   "original_words": {
     "matched_comments": 671,
@@ -29,7 +29,10 @@
     "game/native/host_movie/session.hpp": "bc9e274052815c9a900afd8bdc6662b0f927c76b0fdd68db37ba47391ba99a80",
     "docs/native-media/RETAIL_EFFECT_DESCRIPTOR_AUDIT.md": "eb4b6b7bde9f9ed9f3a848687c6e02846d34e907543eb0973cd94bdaa3e5bf0e",
     "tools/native_reconstruction/retail_effect_descriptors_qualification_v1.json": "5d92705592a19bf5742513b807f38cae316d2211af74400a432831b1dcfd4689",
-    "docs/native-media/MEDIA_CONTROL_CALLER_CLOSURE.md": "16c05005224672ce54cbe8010f1cc72c18821772fb3f2ea04df36a8c4a6c952b"
+    "docs/native-media/MEDIA_CONTROL_CALLER_CLOSURE.md": "a4da11643f179763d572eee4379d0873f08d16632825d09b0df963bddec1118b",
+    "docs/SYMBOLS_MOVIE_FLOW.md": "1437697339e558b086be4b2b4853566ac6f932544bfa4890c61f9f4d4ed1d634",
+    "tools/function_index/annotations.json": "d10ee1eb4932d9ecfb351606de1e19815534eebe36be9f254a3d978b54fc8b86",
+    "build-native-sjuni/media-control-mapping-correction-baseline-v1/mapping-correction.json": "78f9ffc4b72fcb06bfbd191caf246b30b99c5f0bde256969ab4cf94f2dc2fddb"
   },
   "limitations": [
     "Static audit only; no game-facing injected error/recovery or HDD pause executed.",
@@ -37,5 +40,65 @@
     "Eight original bodies and all discovered direct calls checked against owned words; this is not a whole-binary reachability proof.",
     "Temporary guest/renderer bridge migration and final dependency deletion remain Stages4/5/6.",
     "Step3 final coherent tests and A/V synchronization remain owned by root task."
-  ]
+  ],
+  "static_audit_existing_files_edited": false,
+  "mapping_corrections_applied": true,
+  "mapping_corrections": {
+    "schema": 1,
+    "precorrection_copies": {
+      "docs/SYMBOLS_MOVIE_FLOW.md": {
+        "copy": "build-native-sjuni/media-control-mapping-correction-baseline-v1/SYMBOLS_MOVIE_FLOW.md",
+        "sha256": "6a81a27776e169922da6fa34a0b9b58f02adeff29ee5731dc366f7d7e8e0ceeb"
+      },
+      "tools/function_index/annotations.json": {
+        "copy": "build-native-sjuni/media-control-mapping-correction-baseline-v1/annotations.json",
+        "sha256": "acc6e1a01c42f76298e89119940c0f27476a608937b882c344b0cf1d9a55ae70"
+      },
+      "docs/native-media/MEDIA_CONTROL_CALLER_CLOSURE.md": {
+        "copy": "build-native-sjuni/media-control-mapping-correction-baseline-v1/MEDIA_CONTROL_CALLER_CLOSURE.md",
+        "sha256": "16c05005224672ce54cbe8010f1cc72c18821772fb3f2ea04df36a8c4a6c952b"
+      },
+      "tools/native_reconstruction/media_control_caller_closure_qualification_v1.json": {
+        "copy": "build-native-sjuni/media-control-mapping-correction-baseline-v1/media_control_caller_closure_qualification_v1.json",
+        "sha256": "823f65cd6fec504b87d949860d606f46c20dd4663a090c546a0b7eef0bca66c8"
+      }
+    },
+    "database_before_sha256": "a1d0e8ec616026a356cfc289cc886228dd8d580364f0232a9f485d564a6258d7",
+    "changed_entry": "o0:0x0037AA40",
+    "changed_fields": [
+      "proposed_name",
+      "confidence_detail",
+      "rationale"
+    ],
+    "confidence_kept": "probable",
+    "source_word_audit": "build-native-sjuni/media-control-caller-audit-v3/audit.json",
+    "source_word_audit_sha256": "583ef61e0cc3c7f8b40fe0917dd0dd5048414e37a35c990ac080da21a07ff1c1",
+    "graph_and_source_before": {
+      "sha256": "c4616ea89fe376005d451a4c82f6bb30e76f16a9b6a2cd9d6cfa387a795d6fd5",
+      "rows": {
+        "functions_static": 17916,
+        "edges": 71688,
+        "edge_targets": 69285,
+        "refs": 43423,
+        "metadata_static": 11
+      }
+    },
+    "graph_and_source_after": {
+      "sha256": "c4616ea89fe376005d451a4c82f6bb30e76f16a9b6a2cd9d6cfa387a795d6fd5",
+      "rows": {
+        "functions_static": 17916,
+        "edges": 71688,
+        "edge_targets": 69285,
+        "refs": 43423,
+        "metadata_static": 11
+      }
+    },
+    "graph_and_source_unchanged": true,
+    "annotations_refreshed": 17069,
+    "postcorrection_sha256": {
+      "docs/SYMBOLS_MOVIE_FLOW.md": "1437697339e558b086be4b2b4853566ac6f932544bfa4890c61f9f4d4ed1d634",
+      "tools/function_index/annotations.json": "d10ee1eb4932d9ecfb351606de1e19815534eebe36be9f254a3d978b54fc8b86",
+      "docs/native-media/MEDIA_CONTROL_CALLER_CLOSURE.md": "a4da11643f179763d572eee4379d0873f08d16632825d09b0df963bddec1118b"
+    }
+  }
 }
