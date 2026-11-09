@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include "../transform_math/transform_math.hpp"
 
 namespace reo::native::gameplay_scenario {
 struct SceneResourceDomain;
@@ -37,6 +38,9 @@ struct SceneDescriptor {
     std::uint32_t flags{};
     std::shared_ptr<SceneAttachment> primary,secondary;
     std::uint8_t template_index{255}; // original descriptor byte2B, independent of kind
+    transform_math::Vector position;
+    std::uint16_t tilt{},yaw{};
+    std::int8_t shape_profile{},orientation_variant{};
 };
 enum class SceneEffect { construct_primary,construct_alternate,release,retire_instance };
 class SceneEffects {

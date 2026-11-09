@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "status": "native placed-resource collision construction qualified on both compilers",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/resource_collisions.cpp": "0dbf0f75e1571fcdb2351e71420aa747994712a4c64e195ff226d4262d26c1db",
+    "game/native/gameplay_scenario/scene_resources.cpp": "03cea3ce8a077a7fe4522630adfdae23d911dd1b16eaf4aca8386ec8dd033be0",
+    "game/native/gameplay_scenario/resource_templates.cpp": "e168e085bf541ffc828ef918c994ea006b32f00416319e7e0aa9e8887a3d2139",
+    "game/native/transform_math/transform_math.cpp": "9f639f8b5003bf30ec6e9b8c35e869cc98f2026c58496c71d44d5a95700bfc16",
+    "tools/native_reconstruction/resource_collisions_tests.cpp": "d0f613ba645d749a7a041a53737821cb912a63a0cac1836c7f5f2771af2ee53a",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/verify_resource_collisions.py": "78f50c691a414b70d091985e093070718c1f6c49e7ab910d36f9edfae071b957",
+    "recomp/config/output_ovl/o2/o2_005C1120_0x5c1120.cpp": "b034fa696f3713a0512552321c289a9cd09872b62345eede21228b7a522a7bc0",
+    "recomp/config/output_ovl/o2/o2_005C62F0_0x5c62f0.cpp": "e0cee1932903105fc70060f3060b49db83d73928cb1d5d581148f7c49d20fdf1",
+    "recomp/config/output_ovl/o2/o2_005C11B0_0x5c11b0.cpp": "f17de57695c98d4e405957f0287aae8a890d759705b05437be584fd33cc87a2c",
+    "recomp/config/output_ovl/o2/o2_005927F0_0x5927f0.cpp": "3bca769cdd36369b5501b29478d007f52f681785f9ba689db3c7603a181a4221",
+    "recomp/config/output/sub_00191A40_0x191a40.cpp": "4868f2c14997fcf49287f4c63daf774d998e9aef639f8470b420541eb7f81025",
+    "recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp": "03396a3da3197a3c0b8a5a02a5400837cb4b9cd71361bb30b6648e35d6c79036",
+    "recomp/config/output/sub_001902D0_0x1902d0.cpp": "8de1b3de26bd7eafeb9b80cfeca183114429bd3e2801927b573a04f9ff9aaebd",
+    "recomp/config/output/sub_0018F570_0x18f570.cpp": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698",
+    "recomp/config/output/sub_00191280_0x191280.cpp": "848a8f2f95854dec5b1d2f10c545da4feec1ce65fef9b3abef4ab2587124bc33",
+    "recomp/config/output/sub_0018F7E0_0x18f7e0.cpp": "6da086df77b56a1aa5c2367925487c0d25065adadc4bd4ccf373b2599f695103",
+    "recomp/config/output/sub_00191500_0x191500.cpp": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9",
+    "recomp/config/output/sub_0018F710_0x18f710.cpp": "2d646d5d6754cf66d3a81d6207751ba3f7e1629dcc4b8343c0f4ced962795acc",
+    "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c",
+    "recomp/config/output/sub_001921B0_0x1921b0.cpp": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc",
+    "recomp/config/output/sub_0018FE20_0x18fe20.cpp": "c37e8a9cb5a79f6eb9874072120f69c7704070a297e018002b111ad122d12b8d",
+    "recomp/config/output/sub_00191F80_0x191f80.cpp": "fff926facac28b24a62fc590cc966c8983479d90374697b01cbe6eecaaf56adf",
+    "recomp/config/output_ovl/o2/o2_00591860_0x591860.cpp": "932ae5e066c812ba99205eb6011393e5f7172d418c1ea1730c2f2b818e63d68a",
+    "recomp/config/output_ovl/o2/o2_005C12A0_0x5c12a0.cpp": "801bbb58ead4e143966d283bd2c70783e233ebfe176214a9f2b0459786aafcba",
+    "game/native/gameplay_scenario/resource_collisions.hpp": "efff7eedbe71527aad150b469a66a1e3711f1b691f21bfb16e459f52b7b30e23",
+    "game/native/gameplay_scenario/resource_collision_profile.inc": "16a75a02a87a5ea00672e874d63f6e2ece10783e4718c342bd92bd1c61b6d1bb",
+    "game/native/gameplay_scenario/scene_resources.hpp": "649a4b0dc6e7e0732572adaea84b40a079e7facea5cbc630f851cf8fa96154f9",
+    "game/native/gameplay_scenario/resource_templates.hpp": "cb718717fa931a22b761f7c1d5b7af142599801d94e462b7ba92b2a8c207d12c",
+    "game/native/transform_math/transform_math.hpp": "04cc24b68e06088f627ab287ab61290ed3991fb541406548790e50609356970c",
+    "recomp/config/output_ovl/o2/o2_functions.h": "c2c9e3a21bd6693ec7e6e65e53d31b98d2b4e48f6831575de682bb986c575360",
+    "recomp/config/output_ovl/o2/ps2_recompiled_stubs.h": "57b7f2b6a58aee9c60d56dcd17065fb2062786d5707026b14825db6c66829a14",
+    "recomp/config/output/ps2_recompiled_functions.h": "6ea443c9d8dab5114a3bacb5e321570eb62327338fcb3193ea233529bc5cc848",
+    "recomp/config/output/ps2_recompiled_stubs.h": "858fea391e2c1865f4265981b6a3858e395ed12e5894508e5d5f490ae89674f4",
+    "recomp/config/output_ovl/o0/o0_functions.h": "5824ea1af467c3b1d38ecdf1873f403ab9c179f303988d7d9eac63452b466162",
+    "recomp/config/output_ovl/o0/ps2_recompiled_stubs.h": "57b7f2b6a58aee9c60d56dcd17065fb2062786d5707026b14825db6c66829a14",
+    "game/native/gameplay_scenario/scene_record_attachment.hpp": "65acdd267224d1f0e5ca78a0b1fdd9b95dcb7d27e0ca8ce35f7ac4634fdca3c0",
+    "game/native/gameplay_actors/entity.hpp": "21189b7febb8685ce68db664960c7567704f4f6d3b602dfc817d663bef2d5268",
+    "game/native/gameplay_scene/records.hpp": "8f4059ff5be0c27c8ee4b555575816e605448719f875cfc9e9e41cc74c693972",
+    "game/native/gameplay_scene/record_pool.hpp": "80547b7a98e4f8d311985882c31e8ea6e7692c35d160670e47a3a29fefd6593e",
+    "game/native/gameplay_scenario/scene_control_types.hpp": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_scenario/model_reference.hpp": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907"
+  },
+  "comparisons": {
+    "llvm": {
+      "path": "build-native-sjuni/resource-collisions-llvm-v4/receipt.json",
+      "sha256": "3887b8e824d3e4b0d1ea8ddc087187e1168da9993781aa40631d7d81372122a4",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 2625426,
+        "footprints": 1310720,
+        "constructions": 128,
+        "replacements": 128,
+        "refusals": 12,
+        "source_calls": 53751726,
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/resource-collisions-gcc-v4/receipt.json",
+      "sha256": "6de47dc7f6254d24a88a78b0ba9185115ab17b3d79ebce42ee5dd865784a58a1",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 2625426,
+        "footprints": 1310720,
+        "constructions": 128,
+        "replacements": 128,
+        "refusals": 12,
+        "source_calls": 53751726,
+        "game_run": false
+      }
+    }
+  },
+  "parent_checks": {
+    "build-native-sjuni/stage4-resource-collisions-parent-llvm-v1.txt": "0959ff857c6b14521892b5cc4e984cfef264ff97a0b939c7b321d4e8045bd381",
+    "build-native-sjuni/stage4-resource-collisions-tests-llvm-v1.txt": "dc4b3e440534d86b5a1dfd3f39b97013bec6e6d247a142bc7802dc55856c08d2",
+    "build-native-sjuni/stage4-resource-collisions-parent-gcc-v1.txt": "5927c3cf86b6d2e8f44e3c28b93db0f94962a05c37975f796042b7d3b73beaf8",
+    "build-native-sjuni/stage4-resource-collisions-tests-gcc-v1.txt": "aac08b3db6a369af2361aa3f3e5963f33a67af6df80af4763516fb5088038ed2"
+  },
+  "limits": [
+    "20-row bounded owned shape profile; no claim that source has a local count guard.",
+    "Finite in-int32 conversions only; invalid native input refuses before retiring valid state.",
+    "Canonical shared128 owner supplies actual records; no separate collision pool.",
+    "Primary placement, delayed construction, source asset loading callers and native gameplay installation remain open."
+  ]
+}

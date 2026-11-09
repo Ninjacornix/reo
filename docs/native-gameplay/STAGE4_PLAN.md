@@ -9,6 +9,10 @@ common/weapon resource models from owned NBD poses and ITEM templates through
 the canonical64-model owner. Both compiler comparisons and parent builds pass.
 Special companions, delayed work, scene placement and actual game installation
 remain open; this does not close Stage4.
+The [placed-resource collision consumer](RESOURCE_COLLISIONS.md) now supplies
+the alternate591860/5C62F0 constructor through the existing shared128 scene
+owner, with full turn-domain comparisons and parent checks on both compilers.
+Primary placement and delayed reconstruction composition remain open.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners
