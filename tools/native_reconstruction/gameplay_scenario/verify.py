@@ -11,6 +11,7 @@ IDS += ['0068D310','0068D350','0068D380','0068D3D0','0068D400','0068D450','0068D
 IDS += ['0068D5D0','0068D5F0','0068D610','0068D630','006B1DC0','006B1EC0','006B1FE0','006B2020','006B2170','006B2FA0','006B3020','006B3090']
 IDS += ['00690340','00690370','006903A0','006903C0']
 IDS += ['00694E50','005C45C0','0068E630','0068E6D0','0068E730','0068E800','0068E8B0','0068E920','0068E9E0','0068EA70','0068EB30','0068EBF0','0068ECC0','0068ED30','0068EDA0','0068EE30','0068EEC0','0068F5C0','00691F00','00690810']
+IDS += ['0068F570','0068F5A0']
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)
@@ -34,14 +35,26 @@ def main(a):
         at=int(pc,16);segment=next(p for p in loads if p[2]<=at and at+4<=p[2]+p[4]);assert struct.unpack_from('<I',elf,segment[1]+at-segment[2])[0]==int(opcode,16);words+=1
     segment=next(p for p in loads if p[2]<=0x1b3c30 and 0x1b3c38<=p[2]+p[4]);body=elf[segment[1]+0x1b3c30-segment[2]:segment[1]+0x1b3c38-segment[2]]
     assert struct.unpack('<II',body)==(0x03e00008,0);texts.append('\n'.join(l for l in main_text.splitlines() if not l.startswith('#include')))
-    text='\n'.join(texts);names=sorted(set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(',text))|{'sub_00107AB0_0x107ab0'})
+    previous_names=set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
+    stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190'];stream_functions=set()
+    for ident in stream_main:
+        p=next((ROOT/'recomp/config/output').glob('sub_'+ident+'_*'));source=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
+        for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',source):
+            at=int(pc,16);segment=next(p for p in loads if p[2]<=at and at+4<=p[2]+p[4]);assert struct.unpack_from('<I',elf,segment[1]+at-segment[2])[0]==int(opcode,16);words+=1
+        texts.append('\n'.join(l for l in source.splitlines() if not l.startswith('#include')));stream_functions.add('sub_'+ident+'_0x'+format(int(ident,16),'x'))
+    stream_ports={f'sub_{a:08X}_0x{a:x}' for a in [0x131e38,0x131ef8,0x1327b8,0x132e50,0x133490,0x1b82a0,0x12bef8]}
+    text='\n'.join(texts);names=sorted(set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(',text))|previous_names|stream_ports)
+    unexecuted=set(names)-previous_names-stream_functions-stream_ports
+    text+='\n'+'\n'.join('void '+name+'(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexecuted main stream dependency '+name+'");}' for name in sorted(unexecuted))
     declarations=['void '+n+'(std::uint8_t*,R5900Context*,PS2Runtime*);' for n in names]
     table=struct.unpack_from('<432I',raw,0x717830-0x570000)
     opener=[];at=0x717600-0x570000
     while True:
         value=struct.unpack_from('<I',raw,at)[0];at+=4;opener.append(value)
         if value==0xffffffff:break
-    declarations+=['inline constexpr std::array<std::uint32_t,432> original_opcode_table{'+','.join(hex(v) for v in table)+'};',
+    segment=next(p for p in loads if p[2]<=0x234060 and 0x234260<=p[2]+p[4]);curve=elf[segment[1]+0x234060-segment[2]:segment[1]+0x234260-segment[2]];assert hashlib.sha256(curve).hexdigest()=='36fb2dc8488a843da5b2ff8d7538afee1af1edbdb005746582e79cdd80032387'
+    declarations+=['inline constexpr std::array<std::int32_t,128> original_stream_curve{'+','.join(str(v) for v in struct.unpack('<128i',curve))+'};',
+        'inline constexpr std::array<std::uint32_t,432> original_opcode_table{'+','.join(hex(v) for v in table)+'};',
         'inline constexpr std::array<std::uint32_t,6> original_signed_comparisons{'+','.join(hex(v) for v in struct.unpack_from('<6I',raw,0x740890-0x570000))+'};',
         'inline constexpr std::array<std::uint32_t,'+str(len(opener))+'> original_opener_table{'+','.join(hex(v) for v in opener)+'};',
         'inline constexpr std::array<std::uint32_t,6> original_counter_comparisons{'+','.join(hex(v) for v in struct.unpack_from('<6I',raw,0x7408d0-0x570000))+'};',
@@ -52,6 +65,7 @@ def main(a):
     fixture=(ROOT/'tools/native_reconstruction/gameplay_save/original_fixture.hpp').read_text().replace('0x400000','0x800000').replace('#include <cstdint>','#include <cstdint>\n#include <array>\n#include <bit>')
     fixture=fixture.replace('std::uint64_t lo{},hi{};','std::uint64_t lo{},hi{};float f[32]{};std::uint32_t fcr31{};')
     fixture=fixture.replace('Function lookupFunction(std::uint32_t)const{throw std::runtime_error("Unexpected original dynamic dispatch");}','Function lookupFunction(std::uint32_t)const;')
+    shutil.copyfile(ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h',out/'word_conversion.hpp');fixture+='#include "word_conversion.hpp"\n#define FPU_CVT_W_S(a) Ps2FpuConvertWord(float(a))\n#define FPU_SUB_S(a,b) (float(a)-float(b))\n#define FPU_MUL_S(a,b) (float(a)*float(b))\n#define FPU_DIV_S(a,b) (float(a)/float(b))\n#define FPU_MOV_S(a) (float(a))\n#define FPU_C_EQ_S(a,b) (float(a)==float(b))\n#define FPU_C_OLT_S(a,b) (float(a)<float(b))\n'
     fixture+='\n#define FPU_C_OLE_S(a,b) ((a)<=(b))\n#define FPU_CVT_S_W(a) (float(std::int32_t(a)))\n#define FPU_ADD_S(a,b) (float(a)+float(b))\n#define SRL32(a,b) (std::uint32_t(std::uint32_t(a)>>(std::uint32_t(b)&31)))\n#define SRA32(a,b) (std::int32_t(std::int32_t(a)>>(std::uint32_t(b)&31)))\n#define SUB32(a,b) (std::uint32_t(std::uint32_t(a)-std::uint32_t(b)))\n#define WRITE32(a,v) fixture_write<std::uint32_t>(rdram,a,v)\n'
     (out/'original_fixture.hpp').write_text(fixture);(out/'original.cpp').write_text('#include "original_fixture.hpp"\n#include "original_declarations.inc"\n'+text)
     shutil.copyfile(HERE/'tests.cpp',out/'tests.cpp')
@@ -60,15 +74,16 @@ def main(a):
     shutil.copyfile(HERE/'sequence_vm_fixture.inc',out/'sequence_vm_fixture.inc')
     shutil.copyfile(HERE/'lighting_vm_fixture.inc',out/'lighting_vm_fixture.inc')
     shutil.copyfile(HERE/'control_vm_fixture.inc',out/'control_vm_fixture.inc')
-    source_paths=[HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h']
+    shutil.copyfile(HERE/'stream_vm_fixture.inc',out/'stream_vm_fixture.inc')
+    source_paths=[HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
     source_paths += list((ROOT/'game/native/gameplay_scenario').glob('*.hpp'))+list((ROOT/'game/native/gameplay_scenario').glob('*.cpp'))+list((ROOT/'game/native/gameplay_scenario').glob('*.inc'))
     before={p.relative_to(ROOT).as_posix():sha(p) for p in source_paths}
     for p in source_paths:shutil.copyfile(p,out/(p.parent.name+'-'+p.name))
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-I'+str(ROOT),'-I'+str(out)]
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
-    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('controls',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('tests',out/'tests.cpp')]
+    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('controls',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('streams',ROOT/'game/native/gameplay_scenario/stream_channels.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('tests',out/'tests.cpp')]
     for label,path in units:checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(path),'-o',str(out/(label+'.o'))],out,'compile-'+label))
-    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','flags','offline','scene','sequence','lighting','controls','entities','tasks','tests']]+['-o',str(out/'checks.exe')],out,'link'))
+    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','flags','offline','scene','sequence','lighting','controls','streams','entities','tasks','tests']]+['-o',str(out/'checks.exe')],out,'link'))
     checks.append(invoke([str(out/'checks.exe')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
         original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),

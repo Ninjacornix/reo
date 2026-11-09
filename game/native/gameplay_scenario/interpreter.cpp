@@ -6,6 +6,7 @@
 #include "lighting.hpp"
 #include "scene_channels.hpp"
 #include "scene_controls.hpp"
+#include "stream_channels.hpp"
 #include <algorithm>
 #include <bit>
 #include <stdexcept>
@@ -22,7 +23,7 @@ std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op){case 0x50:case 0x54:case 0x55:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
-    case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
+    case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
     case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
     case 0xe3:case 0xe6:case 0xe8:case 0xe9:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
@@ -61,10 +62,11 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0x10||op==0x11)&&word(b.data()+at+4)>=32)throw std::invalid_argument("Native sequence index profile");
             if(!noop&&(op==0x13||op==0x15)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native sequence selector profile");
             if(!noop&&(op==0x23||op==0x24)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native lighting entry profile");
+            if(!noop&&op==0x70&&std::bit_cast<std::int32_t>(word(b.data()+at+4))<0)throw std::invalid_argument("Native stream member profile");
             flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
             scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;
             sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;
-            scene_controls_|=coverage[op].scene_controls_required;at+=bytes;
+            scene_controls_|=coverage[op].scene_controls_required;streams_|=coverage[op].streams_required;at+=bytes;
         }
     }
 }
@@ -88,6 +90,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0xa0;i<=0xa3;++i)out[i]={true,false,false,false,false,false,false,false,true};
     out[0x190].native_algorithm=true;
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
+    for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef)out[i]={};
@@ -137,6 +140,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_lighting()&&!providers.lighting)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scene_channels()&&!providers.scene_channels)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scene_controls()&&!providers.scene_controls)return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_streams()&&(!providers.streams||!providers.stream_backend||!context.stream_tick))return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -211,6 +215,10 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0xa0:case 0xa1:providers.scene_channels->bit(value(0),opcode==0xa0);break;
         case 0xa2:case 0xa3:providers.scene_channels->all(opcode==0xa2);break;
         case 0x190:break; // File1 main1B3C30 is the checked return-only body.
+        case 0x70:{const auto audio=providers.streams->request(0,std::bit_cast<std::int32_t>(value(0)),0,*context.stream_tick,*providers.stream_backend);
+            if(!stream_accepted(audio.status))return result(Status::provider_unavailable);
+            break;}
+        case 0x71:if(!stream_accepted(providers.streams->stop(0,*providers.stream_backend)))return result(Status::provider_unavailable);break;
         case 0x50:case 0x51:case 0x52:case 0x53:case 0x54:case 0x55:case 0x56:case 0x57:
         case 0x58:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:case 0x5f:case 0x72:case 0xb5:case 0xf6:{
             const auto bytes=payload_minimum(opcode);ControlArguments arguments;arguments.authored_id=value(0);

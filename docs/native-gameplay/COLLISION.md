@@ -347,3 +347,26 @@ retained handles and only this component's instances, preserving unrelated scene
 occupancy. This is an owned native scene boundary; canonical SceneOwner/game-loop
 installation and directional approach/occupancy consumers remain separate work.
 Qualification: `native_gameplay_object_lifetime_qualification_v1.json`.
+
+The `object_queries` companion now covers padded static-mask checks, four leading
+edges, actor-combined occupancy admission, direction classes, elevated lookup,
+entry/exit height and capacity rules, approach coordinates, transformed probes
+and nonexplicit height offsets. Canonical combined occupancy is passed by
+reference and changes only after the source admission gates. Native object
+identity and full authored selector tokens remain separate.
+
+Both compilers pass1,275,110checks over2112queries in seven retail resource sets
+plus seven positive-capacity/direction variants, with zero error and no unknown
+mask reads in this corpus.1056blocked-entry comparisons correct a prior notebook
+claim:6AF8F0clears v0 in the unconditional branch delay slot, so6AF8B0returns zero
+when transitioning or already at capacity, not an inherited selector. A separate
+31-object fixture proves the source49.5-height case: positive height band but
+failed elevated lookup leaves unsignedFF, which resolves physical31and can
+decrement its count. The native result flags that fallback explicitly.
+
+Out-of-owned-mask or unrepresentable positions have explicit capability statuses;
+this corpus does not claim parity with unrelated out-of-bounds source reads.
+Scalar probe transforms and the previously qualified actor occupancy provider
+are declared math surroundings. Actual canonical game consumers remain the
+integration owner's work. Qualification:
+`native_gameplay_object_queries_qualification_v1.json`.

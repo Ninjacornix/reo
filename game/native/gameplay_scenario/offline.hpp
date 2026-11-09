@@ -17,7 +17,8 @@ public:
     // deliberately retained. Other channels use zeroed dispatch context once.
     OfflineResult tick(Interpreter&,std::size_t requested_channel,bool enabled,
         std::span<const OfflinePartyActor,3>,std::uint16_t current_room,std::uint8_t& selected_actor,
-        FlagState&,Providers={},std::size_t maximum_operations=4096)noexcept;
+        FlagState&,Providers={},std::size_t maximum_operations=4096,
+        std::optional<std::uint32_t> stream_tick={})noexcept;
 private:
     OfflineState state_{};
     bool running_{};

@@ -177,6 +177,24 @@ void offline_tests(){
         std::vector<std::byte> b;emit(b,op,{42,1,7,3});emit(b,0xa);vm::Interpreter native;
         check(native.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b},vm::DispatchProfile::offline_actor))==vm::Status::unsupported_opcode);
     }
+    for(unsigned profile=0;profile<12;++profile)for(unsigned category=0;category<5;++category)for(unsigned relation=0;relation<3;++relation){
+        assertion_context="stream offline profile="+std::to_string(profile)+" category="+std::to_string(category)+" relation="+std::to_string(relation);
+        std::vector<std::byte> b;emit(b,0x70,{69});emit(b,0x71);emit(b,0xa);std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;ram[0x4baded]=2;
+        fixture_write(ram.data(),0x75a4b0,category);fixture_write(ram.data(),0x75a4c0,relation);StreamFixture streams(profile,0);streams.export_original(ram);
+        vm::Interpreter native;install_offline_program(native,ram,0,b);original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers providers;providers.flags=&flags;providers.canonical_flags=&flags;providers.streams=&streams.owner;providers.stream_backend=&streams;
+        check(native.tick_offline_channel(0,{true,false,2,9,0u},{category,relation,0},providers).status==vm::Status::yielded);compare_offline_channels(native,ram);streams.compare_original(ram);
+    }
+    // Actual optional audio tick reaches both wrapper routes, including every
+    // active actor when a shared authored channel reenters its saved record.
+    for(const auto tick:{0u,1234u})for(const auto requested:{0u,1u}){
+        std::vector<std::byte> b;emit(b,1);emit(b,0x70,{69});emit(b,0xa);std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;fixture_write<std::uint16_t>(ram.data(),0x3243dc,9);ram[0x4baded]=2;
+        std::array<vm::OfflinePartyActor,3> party;for(unsigned i=0;i<3;++i){party[i]={true,0,9};ram[0x4a5c30+0x10e0*i]=0x80;ram[0x4a5c33+0x10e0*i]=0;fixture_write<std::uint16_t>(ram.data(),0x4a5c30+0x10e0*i+0x1e2,9);}
+        StreamFixture streams(0,tick);streams.export_original(ram);vm::Interpreter native;install_offline_program(native,ram,requested,b);vm::FlagState flags;vm::OfflineCoordinator coordinator;vm::Providers providers;providers.streams=&streams.owner;providers.stream_backend=&streams;std::uint8_t selected=2;
+        original_offline_call(ram,requested,true);const auto result=coordinator.tick(native,requested,true,party,9,selected,flags,providers,4096,tick);
+        check(result.status==(requested==1?vm::Status::completed:vm::Status::yielded));check(result.invocations==(requested==1?3u:1u));compare_offline_channels(native,ram);streams.compare_original(ram);check(selected==ram[0x4baded]);
+        streams.events.clear();selected=2;const auto old_pc=native.channels()[requested].current;
+        check(coordinator.tick(native,requested,true,party,9,selected,flags,providers).status==vm::Status::provider_unavailable);check(selected==2);check(native.channels()[requested].current==old_pc);check(streams.events.empty());
+    }
 }
 }
 void sub_00107AB0_0x107ab0(std::uint8_t* r,R5900Context* c,PS2Runtime*){std::memmove(r+GPR_U32(c,4),r+GPR_U32(c,5),GPR_U32(c,6));SET_GPR_U32(c,2,GPR_U32(c,4));done(c);}
