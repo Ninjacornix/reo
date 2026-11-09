@@ -9,6 +9,7 @@ IDS += ['00691170','00691290','006918C0','006919D0','00691C10','006908E0','00690
 IDS += ['006915C0','00691630']
 IDS += ['0068D310','0068D350','0068D380','0068D3D0','0068D400','0068D450','0068D4E0','0068D550','005BF0F0','005BF1B0']
 IDS += ['0068D5D0','0068D5F0','0068D610','0068D630','006B1DC0','006B1EC0','006B1FE0','006B2020','006B2170','006B2FA0','006B3020','006B3090']
+IDS += ['00690340','00690370','006903A0','006903C0']
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)

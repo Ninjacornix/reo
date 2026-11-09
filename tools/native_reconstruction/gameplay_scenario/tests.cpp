@@ -3,6 +3,7 @@
 #include "game/native/gameplay_scenario/session_counters.hpp"
 #include "game/native/gameplay_scenario/sequence_control.hpp"
 #include "game/native/gameplay_scenario/lighting.hpp"
+#include "game/native/gameplay_scenario/scene_channels.hpp"
 #include <bit>
 #include "original_fixture.hpp"
 #include "original_declarations.inc"
@@ -13,8 +14,9 @@ namespace vm=reo::native::gameplay_scenario;
 namespace tasks=reo::native::gameplay_tasks;
 namespace {
 std::size_t checks{},invocations{};
+std::string assertion_context;
 std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint8_t>> notifications;
-void check(bool ok){++checks;if(!ok)throw std::runtime_error("Scenario differential assertion "+std::to_string(checks));}
+void check(bool ok){++checks;if(!ok)throw std::runtime_error("Scenario differential assertion "+std::to_string(checks)+" "+assertion_context);}
 void put(std::vector<std::byte>& bytes,std::uint32_t value){for(unsigned i=0;i<4;++i)bytes.push_back(std::byte((value>>(8*i))&255));}
 std::uint32_t emit(std::vector<std::byte>& bytes,std::uint32_t opcode,std::initializer_list<std::uint32_t> payload={},unsigned minimum_exponent=0){
     unsigned exponent=minimum_exponent;while((4u<<exponent)<4+payload.size()*4)++exponent;
@@ -106,6 +108,7 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     SceneFixture scene(scene_profile);scene.export_original(ram);fixture_write<std::uint16_t>(ram.data(),0x3243dc,9);
     SequenceFixture sequence(sequence_profile);sequence.export_original(ram);
     LightingFixture lighting;lighting.export_original(ram);
+    vm::SceneChannels scene_channels;scene_channels.restore(0xa5a58000u);fixture_write(ram.data(),0x4b9d0c,scene_channels.mask());
     ram[0x3243e8]=1;ram[0x4baded]=actor;fixture_write<std::uint32_t>(ram.data(),0x4bace0+4*channel,0x10000);
     fixture_write<std::uint32_t>(ram.data(),0x4bad28+4*channel,0x10000+saved.block*0x10000+saved.offset);
     fixture_write<std::uint32_t>(ram.data(),0x4bad40+4*channel,0x90000);
@@ -117,10 +120,11 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     auto program=std::make_shared<const vm::Program>(std::move(blocks));vm::Channel state{program,{0,0},saved,0,0,0};check(native.restore_channel(channel,state)==vm::Status::completed);
     for(unsigned i=0;i<ticks;++i){R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
         o2_0068C660_0x68c660(ram.data(),&ctx,&runtime);check(ctx.pc==0xdeadbeef);
-        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters,&sequence.owner,&lighting.owner});check(result.status==vm::Status::yielded);
+        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters,&sequence.owner,&lighting.owner,&scene_channels});check(result.status==vm::Status::yielded);
         compare(native,ram,channel,flags,timers,signals);scene.compare_original(ram);++invocations;
         sequence.compare_original(ram);
         lighting.compare_original(ram);
+        check(scene_channels.mask()==fixture_read<std::uint32_t>(ram.data(),0x4b9d0c));
         check(std::memcmp(session_counters.snapshot().data(),ram.data()+0x4bad70,24)==0);
     }
 }
@@ -221,6 +225,11 @@ int main()try{
         for(unsigned i=0;i<32;++i)emit(b,0x24,{i});
         emit(b,0x23,{7});const auto end=emit(b,0xa);run({b},{0,end},2,bank%6);}
     for(const auto op:{0x23u,0x24u})for(const auto index:{32u,255u}){std::vector<std::byte> b;emit(b,op,{index});bool refused=false;try{const vm::Program p({b});}catch(const std::invalid_argument&){refused=true;}check(refused);}
+    for(const auto index:{0u,1u,31u,32u,63u,0x80000000u,0xffffffffu})for(unsigned channel=0;channel<6;++channel){std::vector<std::byte> b;
+        emit(b,0xa0,{index});emit(b,4,{1});emit(b,0xa1,{index});emit(b,4,{1});emit(b,0xa2);emit(b,4,{1});emit(b,0xa3);const auto end=emit(b,0xa);run({b},{0,end},5,channel);}
+    {std::vector<std::byte> b;emit(b,0x110,{0,88});emit(b,0xa2);emit(b,0xa);vm::Interpreter interpreter;
+        check(interpreter.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
+        check(interpreter.tick(0,{}).status==vm::Status::provider_unavailable);check(interpreter.counters()[0]==0);}
     // Independent complete opcode16/helper execution, including precision edges
     // around the signed boundary, odd values and all exponent-scale regions.
     {std::vector<std::uint8_t> ram(0x800000);vm::SequenceControl native;std::uint32_t seed=0x4f31a9b2;

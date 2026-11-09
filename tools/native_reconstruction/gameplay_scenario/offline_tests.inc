@@ -157,6 +157,15 @@ void offline_tests(){
         const auto r=native.tick_offline_channel(0,{true,false,2},{category,0,0},providers);check(r.status==vm::Status::yielded);
         compare_offline_channels(native,ram);sequence.compare_original(ram);
     }
+    for(const auto op:{0xa0u,0xa1u,0xa2u,0xa3u})for(const auto index:{0u,31u,32u,0x80000000u,0xffffffffu})for(unsigned category=0;category<5;++category)for(unsigned relation=0;relation<3;++relation){
+        assertion_context="scene channel offline op="+std::to_string(op)+" index="+std::to_string(index)+" category="+std::to_string(category)+" relation="+std::to_string(relation);
+        std::vector<std::byte> b;emit(b,op,{index});emit(b,0xa);std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;ram[0x4baded]=2;
+        fixture_write(ram.data(),0x75a4b0,category);fixture_write(ram.data(),0x75a4c0,relation);fixture_write<std::uint32_t>(ram.data(),0x4b9d0c,0xa5a58000u);
+        vm::Interpreter native;install_offline_program(native,ram,0,b);vm::SceneChannels channels;channels.restore(0xa5a58000u);
+        original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers providers;providers.flags=&flags;providers.canonical_flags=&flags;providers.scene_channels=&channels;
+        check(native.tick_offline_channel(0,{true,false,2},{category,relation,0},providers).status==vm::Status::yielded);compare_offline_channels(native,ram);
+        check(channels.mask()==fixture_read<std::uint32_t>(ram.data(),0x4b9d0c));
+    }
 }
 }
 void sub_00107AB0_0x107ab0(std::uint8_t* r,R5900Context* c,PS2Runtime*){std::memmove(r+GPR_U32(c,4),r+GPR_U32(c,5),GPR_U32(c,6));SET_GPR_U32(c,2,GPR_U32(c,4));done(c);}
