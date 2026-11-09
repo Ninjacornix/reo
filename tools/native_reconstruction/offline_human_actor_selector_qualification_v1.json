@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "status": "offline human-input selector and transient actor index verified statically",
+  "game_run": false,
+  "process_access": false,
+  "window_actions": false,
+  "existing_files_modified": false,
+  "original_words": {
+    "complete_bodies_or_leaves": 7,
+    "matched_comments": 534,
+    "omitted_zero_words": 46,
+    "mismatches": 0
+  },
+  "selector": {
+    "session_mode_address": "0x3243f2",
+    "session_mode_width": "unsigned byte",
+    "admitted_mode": 0,
+    "actor_base": "0x4a5c30",
+    "actor_stride": "0x10e0",
+    "conservative_scan_count": 4,
+    "original_loop_count": 8,
+    "input_admission": "actor+0xff0 == 0 in session mode 0; port 0",
+    "original_input_class_guard": false,
+    "physical_slot_identity": "actor byte+3",
+    "human_count": "unsigned byte 0x316684",
+    "ai_count": "unsigned byte 0x316685",
+    "transient_index": "0x4baded",
+    "transient_index_is_permanent_human": false,
+    "fixed_slot_zero_proven_unconditionally": false
+  },
+  "evidence_sha256": {
+    "tools/native_reconstruction/audit_offline_human_actor_selector.py": "1bb450bfe1f7b9968b6370bc4b91009b176f2a9d08f5d37d0eac5c77872a98a0",
+    "docs/native-media/OFFLINE_HUMAN_ACTOR_SELECTION.md": "850bd3921b17181584afa506d781ba1e809d0f38c359361627e865efc9c74108",
+    "build-native-sjuni/offline-human-selection-v1/audit.json": "a1606a8066d2aefae723f9da97e33759ad2a6e876ef75ccc8658b63d58e62659",
+    "game_data/SLUS_207.65": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+    "build-function-index/owned-overlays/o2.bin": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+    "recomp/config/output/sub_001B0300_0x1b0300.cpp": "34178874b104851edaa2bbb5311e7a79a83ccb8361d5f0be1ccb2b2d55fdf2bb",
+    "recomp/config/output/sub_001B02D0_0x1b02d0.cpp": "a091812b9c8cd9dce7cafac70faac4cce4da1b7a2e516dae350337e3b84ca2ab",
+    "recomp/config/output/sub_001B0B80_0x1b0b80.cpp": "e20c4c4332f320df1fcb20ed29fbfe3f90fa0a6b7290b2482f8b1ae279000656",
+    "recomp/config/output/sub_001B0AA0_0x1b0aa0.cpp": "9d6ca06fd3ac40e2e0e786ef4ccea59b9eb566306e109803def3c9602cb13ac4",
+    "recomp/config/output_ovl/o2/o2_005EB0D0_0x5eb0d0.cpp": "c99cb1de9a44c9f114e63948485d268c3902a8f3a9392a6c1aa2793785b43712",
+    "recomp/config/output_ovl/o2/o2_005EB520_0x5eb520.cpp": "850845f9e8969549422794929d30bd12a3ec8a7c65f3d5f6a8f05e5c92379421",
+    "recomp/config/output_ovl/o2/o2_00669F30_0x669f30.cpp": "4682116f450825f1b1c763b34a8e0d236fa6d84cf97c6e592cb9b9b57e111790"
+  },
+  "limitations": [
+    "No new runtime values or character identity were observed.",
+    "Use unique active FF0-zero actor plus stable identity and explicit mode-zero admission; ambiguity must fail.",
+    "Four-player scan and optional class-zero filter are conservative diagnostic admission, not extra original router predicates.",
+    "Slot zero follows only if the actual launch human count is one and its initialized actor remains eligible.",
+    "Network mode one and modes two/three use different routing; this selector does not admit them."
+  ]
+}
