@@ -77,6 +77,8 @@ also reuses canonical room regions and adds bounded footwear profiles.
 The [node/scenario position routes](ANIMATION_NODE_POSITION_AUDIO.md) now also
 use canonical scene/model/session state and the actual bank mixer. Actual room
 bank/model assignment and the remaining event/resource consumers remain open.
+The [scene matrix bank consumer](SCENE_BANK_AUDIO.md) also connects real native
+channel playback to the same bank mixer with complete source consumer checks.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

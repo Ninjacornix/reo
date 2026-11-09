@@ -8,3 +8,11 @@ target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_ta
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(reo_native_gameplay_scenario PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+
+add_library(reo_native_scene_audio STATIC bank_audio.cpp)
+target_compile_features(reo_native_scene_audio PUBLIC cxx_std_20)
+target_include_directories(reo_native_scene_audio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+target_link_libraries(reo_native_scene_audio PUBLIC reo_native_gameplay_scenario reo_native_gameplay_audio)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_scene_audio PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

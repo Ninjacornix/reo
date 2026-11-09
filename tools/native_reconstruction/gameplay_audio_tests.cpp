@@ -11,6 +11,11 @@
 #include <thread>
 #include <vector>
 #include <source_location>
+#ifdef REO_SCENE_AUDIO_TESTS
+#include "game/native/gameplay_scenario/bank_audio.hpp"
+#include <filesystem>
+#include <functional>
+#endif
 #ifdef REO_NODE_POSITION_AUDIO_TESTS
 #include "game/native/gameplay_audio/scenario_cues.hpp"
 #include "game/native/animation/model.hpp"
@@ -127,6 +132,10 @@ void original_transform_port(std::uint8_t* m, R5900Context* c, PS2Runtime* r) {
 #ifdef REO_NODE_POSITION_AUDIO_TESTS
         case 0x1b8870:return sub_001B8870_0x1b8870(m,c,r);
         case 0x1b8a10:return sub_001B8A10_0x1b8a10(m,c,r);
+        case 0x1b93b0:return sub_001B93B0_0x1b93b0(m,c,r);
+#endif
+#ifdef REO_SCENE_AUDIO_TESTS
+        case 0x1b9360:return sub_001B9360_0x1b9360(m,c,r);
         case 0x1b93b0:return sub_001B93B0_0x1b93b0(m,c,r);
 #endif
 #ifdef REO_SURFACE_AUDIO_TESTS
@@ -821,12 +830,20 @@ void stock_composition(std::vector<std::uint8_t>& m, const char* path) {
 #ifdef REO_NODE_POSITION_AUDIO_TESTS
 #include "node_position_audio_tests.inc"
 #endif
+#ifdef REO_SCENE_AUDIO_TESTS
+#include "scene_bank_audio_tests.inc"
+#endif
 int main(int argc, char** argv) {
     try {
         check(argc == 3);
         std::vector<std::uint8_t> memory(0x2000000);
 #ifdef REO_ANIMATION_AUDIO_TESTS
         compare_positional(memory,argv[2]);
+#ifdef REO_SCENE_AUDIO_TESTS
+        compare_scene_audio(memory,std::filesystem::path(argv[1]).parent_path());
+        std::cout<<"{\"checks\":"<<checks<<",\"direct_cases\":"<<scene_audio_cases<<",\"playback_cases\":"<<scene_audio_playbacks<<",\"playback_frames\":"<<scene_audio_frames<<",\"playback_sounds\":"<<scene_audio_sounds<<",\"commands\":"<<scene_audio_commands<<",\"mixed_frames\":"<<scene_audio_mixed_frames<<",\"signal_samples\":"<<scene_audio_signal<<",\"refusals\":"<<scene_audio_refusals<<",\"original_calls\":"<<calls<<",\"game_launched\":false}\n";
+        return 0;
+#endif
 #ifdef REO_NODE_POSITION_AUDIO_TESTS
         compare_node_position_audio(memory,std::filesystem::path(argv[1]).parent_path());
         std::cout<<"{\"checks\":"<<checks<<",\"node_cases\":"<<node_cases<<",\"position_cases\":"<<position_cases<<",\"remap_cases\":"<<remap_cases<<",\"commands\":"<<node_position_commands<<",\"mixed_frames\":"<<node_position_mixed_frames<<",\"signal_samples\":"<<node_position_signal<<",\"refusals\":"<<node_position_refusals<<",\"original_calls\":"<<calls<<",\"game_launched\":false}\n";

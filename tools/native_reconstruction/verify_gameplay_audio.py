@@ -24,8 +24,9 @@ def main():
     parser.add_argument('--animation-frontends',action='store_true')
     parser.add_argument('--surface-frontends',action='store_true')
     parser.add_argument('--node-position-frontends',action='store_true')
+    parser.add_argument('--scene-frontends',action='store_true')
     args = parser.parse_args()
-    args.animation_frontends=args.animation_frontends or args.surface_frontends or args.node_position_frontends
+    args.animation_frontends=args.animation_frontends or args.surface_frontends or args.node_position_frontends or args.scene_frontends
     out = args.output.resolve()
     allowed = (ROOT / 'build-native-sjuni').resolve()
     if out.exists() or out == allowed or not out.is_relative_to(allowed):
@@ -40,6 +41,7 @@ def main():
     if args.animation_frontends:addresses += [0x1b8bb0,0x1b8b20,0x1b8c70]
     if args.surface_frontends:addresses += [0x1b8d70,0x1b8f40]
     if args.node_position_frontends:addresses += [0x1b8870,0x1b8930,0x1b8a10,0x1b93b0]
+    if args.scene_frontends:addresses += [0x1b9360,0x1b93b0]
     bodies, originals, audits = [], [], []
     for at in addresses:
         source = ROOT / f'recomp/config/output/sub_{at:08X}_0x{at:x}.cpp'
@@ -59,6 +61,11 @@ def main():
             source=ROOT/'recomp/config/output_ovl/o2/o2_00595F10_0x595f10.cpp';text=source.read_text()
             end=int(re.search(r'// Address: 0x[0-9a-fA-F]+ - 0x([0-9a-fA-F]+)',text)[1],16)
             audits.append(compare_source('actual node sound frontend',source.relative_to(ROOT).as_posix(),0x595f10,end,lambda at,n:raw[at-0x570000:at-0x570000+n]))
+            originals.append(source);bodies.append(text[text.index('// Function:'):])
+        if args.scene_frontends:
+            source=ROOT/'recomp/config/output_ovl/o2/o2_006B60E0_0x6b60e0.cpp';text=source.read_text()
+            end=int(re.search(r'// Address: 0x[0-9a-fA-F]+ - 0x([0-9a-fA-F]+)',text)[1],16)
+            audits.append(compare_source('actual scene matrix sound consumer',source.relative_to(ROOT).as_posix(),0x6b60e0,end,lambda at,n:raw[at-0x570000:at-0x570000+n]))
             originals.append(source);bodies.append(text[text.index('// Function:'):])
     production = list((ROOT/'game/native/gameplay_audio').glob('*'))
     dependencies = [ROOT/'game/native'/d/n for d,n in [
@@ -86,6 +93,9 @@ def main():
         paths += frontend_units+[ROOT/'tools/native_reconstruction/surface_audio_tests.inc',ROOT/'game/native/gameplay_world/model_scale_profile.inc',ROOT/'tools/native_reconstruction/generate_footwear_profile.py']
     if args.node_position_frontends:
         paths += [ROOT/'tools/native_reconstruction/node_position_audio_tests.inc',ROOT/'tools/native_reconstruction/generate_scenario_audio_profile.py',ROOT/'build-native-sjuni/animation-owned-corpus-v2/owned_skeletons.bin']
+    if args.scene_frontends:
+        frontend_units += [ROOT/'game/native/gameplay_scenario'/n for n in ['bank_audio.cpp','scene_matrix_playback.cpp','scene_matrix_programs.cpp','scene_matrix_tables.cpp','scene_model_bindings.cpp','flags.cpp','scene_controls.cpp']]
+        paths += frontend_units+[ROOT/'tools/native_reconstruction/scene_bank_audio_tests.inc',ROOT/'tools/native_reconstruction/generate_scene_audio_profile.py',ROOT/'game/native/gameplay_scenario/CMakeLists.txt']
     paths=list(dict.fromkeys(paths))
     for source in paths:
         if source.suffix=='.bin':continue
@@ -96,6 +106,7 @@ def main():
     names={f'sub_{at:08X}_0x{at:x}' for at in addresses}
     if args.animation_frontends:names.add('o2_005B4CE0_0x5b4ce0')
     if args.node_position_frontends:names.add('o2_00595F10_0x595f10')
+    if args.scene_frontends:names.add('o2_006B60E0_0x6b60e0')
     all_calls=set(re.findall(r'\b((?:sub|o2)_[0-9A-F]+_0x[0-9a-f]+)\(', '\n'.join(bodies)))
     header=helper.read_text().replace('Register r[32];','Register r[32];std::uint64_t hi{},lo{};')
     header+='\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define SRA32(a,b) (std::bit_cast<std::int32_t>(std::uint32_t(a)) >> unsigned(b))\n#define FPU_CVT_W_S(a) _mm_cvttss_si32(_mm_set_ss(a))\n'
@@ -125,6 +136,9 @@ def main():
         raw=(ROOT/'build-function-index/owned-overlays/o2.bin').read_bytes()
         (out/'owned_scenario_audio.bin').write_bytes(raw[0x730ba0-0x570000:0x7313c0-0x570000])
         (out/'owned_skeletons.bin').write_bytes((ROOT/'build-native-sjuni/animation-owned-corpus-v2/owned_skeletons.bin').read_bytes())
+    if args.scene_frontends:
+        raw=(ROOT/'build-function-index/owned-overlays/o2.bin').read_bytes()
+        (out/'owned_scene_audio.bin').write_bytes(raw[0x730aa0-0x570000:0x730ba0-0x570000])
     (out/'audio_reference.hpp').write_text(header)
     original=out/'original.cpp'
     original.write_text('#include "audio_reference.hpp"\n#pragma GCC diagnostic ignored "-Wunused-variable"\n'+'\n'.join(bodies))
@@ -138,6 +152,7 @@ def main():
     if args.animation_frontends:command+=['-DREO_ANIMATION_AUDIO_TESTS=1']
     if args.surface_frontends:command+=['-DREO_SURFACE_AUDIO_TESTS=1']
     if args.node_position_frontends:command+=['-DREO_NODE_POSITION_AUDIO_TESTS=1']
+    if args.scene_frontends:command+=['-DREO_SCENE_AUDIO_TESTS=1']
     record=dict(schema=1,status='failed',source_sha256=inputs,compiler_sha256=sha(compiler),original_word_audits=audits,game_launched=False,checks=[])
     env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
     try:
