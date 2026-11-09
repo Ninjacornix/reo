@@ -32,6 +32,7 @@ struct SceneDescriptor {
     std::int16_t parameter{};
     std::uint32_t flags{};
     std::shared_ptr<SceneAttachment> primary,secondary;
+    std::uint8_t template_index{255}; // original descriptor byte2B, independent of kind
 };
 enum class SceneEffect { construct_primary,construct_alternate,release,retire_instance };
 class SceneEffects {
@@ -62,6 +63,8 @@ public:
     SceneResources(const SceneResources&)=delete;
     SceneResources& operator=(const SceneResources&)=delete;
     std::optional<SceneResourceId> load(std::size_t,SceneDescriptor);
+    // Exact resource-table slot, including inactive descriptors. No authored-ID search.
+    std::optional<SceneResourceId> slot(std::size_t)const noexcept;
     std::optional<SceneResourceId> lookup(std::int16_t authored_id)const noexcept;
     std::optional<AttachedSceneResource> lookup_attached(std::int16_t attachment_id)const noexcept;
     std::optional<SceneDescriptor> get(const SceneResourceId&)const noexcept;

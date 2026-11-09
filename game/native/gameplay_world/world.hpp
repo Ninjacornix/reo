@@ -40,6 +40,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t ai_control{},normalized_marker{};
     std::uint8_t character{};
     std::uint8_t motion_subtype{},motion_style{},previous_motion_class{};
+    std::uint8_t selected_resource{},secondary_resource{},model_pose_class{};
     float motion_rate{1};
     std::uint16_t resource_action{};
     std::uint16_t contact_flags{},pending_notice{};

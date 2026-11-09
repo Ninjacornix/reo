@@ -14,6 +14,10 @@ std::optional<SceneResourceId> SceneResources::load(std::size_t slot,SceneDescri
     if(slot>=capacity||generations_[slot]==UINT64_MAX)return{};
     ++generations_[slot];descriptors_[slot]=std::move(descriptor);return identity(slot);
 }
+std::optional<SceneResourceId> SceneResources::slot(std::size_t index)const noexcept{
+    if(index>=capacity)return{};
+    return identity(index);
+}
 std::optional<SceneResourceId> SceneResources::lookup(std::int16_t authored)const noexcept{
     if(authored<=0)return{};
     for(std::size_t i=0;i<capacity;++i)if(descriptors_[i].authored_id==std::uint16_t(authored))return identity(i);
