@@ -1,0 +1,15 @@
+# Native player animation event schedules
+
+The native event scheduler now implements the complete normal player families5965A0 and59A820, their fresh59EBB0 common tail, and complete573430/5958B0/5959D0/5A8FD0 family selection. It uses the canonical Actor and Playback fields. CE0/CE1 are Playback.source_kind/source_slot, not a second copy in Actor. True no-work branches, including the actual extended5/23 empty leaves, are admitted. Other selected real families explicitly refuse until implemented.
+
+The large player routines were reconstructed offline into ordinary C++ selector switches and typed event requests. The production138,703-byte schedule contains no guest addresses, register context, CPU emulator or guest instruction executor. Independent LLVM/GCC extraction produced identical schedules from1,245,184 complete-original traces. Each16-bit selector was covered, including default ranges. Extraction retains late category, motion-class39 and action-metadata20 conditions; upper and common-tail selectors are read again after preceding synchronous actions.
+
+Fresh LLVM and GCC native/original comparisons each passed3,672,198 checks:1,048,576 complete player schedule cases,2,048 mutable-consumer cases,261,120 family-selection cases and actual metadata checks. The mutable consumer changes the next selector, category, motion class and resource action while the routine is running. Exact event order, signed frame, semantic arguments and arbitrary supplied step bits match the complete original bodies. A replaced animation/model owner refuses later native actions. The two empty original leaves execute in the oracle rather than being assumed empty.
+
+The first paired schedule fixture passed schedule/dispatch comparisons but selected a genuine no-event input for its replacement-refusal test. Those failed runs remain preserved. The corrected guard test selects an actual event. This was a fixture coverage issue, with no observed game symptom or production algorithm correction.
+
+`Consumer` is an explicit remaining effect boundary. These comparisons qualify scheduling and routing; they do not claim that a recording test sink implements game audio, contact, visual resources or callback tasks. Concrete primitive consumers are subsequent work. The real audio owner is being built separately over the existing native bank Session; contact events will reuse the canonical64-packet owner. Resource matrix programs, callback allocation, remaining event families and native game installation remain open.
+
+Two source-proven Actor fields were added for the forthcoming real65E710 consumer: equipment_notice_flags (originalD92) and equipment_notice_slot (DA2). They are distinct from saved_action_yaw atDA0 and existing equipment_slot atC7F. This checkpoint records their exact header snapshot without claiming that primitive is already installed.
+
+All source/owned-body/extraction identities and immutable copies are bound by `native_animation_player_events_qualification_v1.json`. No game run, performance measurement or Stage4 completion is claimed.

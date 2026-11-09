@@ -1,0 +1,604 @@
+{
+  "schema": 1,
+  "status": "complete normal player schedules and family dispatch qualified; concrete event effects remain explicit consumer boundary",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "concrete_effect_consumer_complete": false,
+  "source_sha256": {
+    "game/native/animation/constraint_math.cpp": "5c87b5248ebeeef3c5853d41f1ff18c06332dd85caad6189899d4d63aa267416",
+    "game/native/animation/constraint_math.hpp": "25a148646b33c3c22e5f26a137e21ba5aae11ef01a8d563c230ddd16469935e4",
+    "game/native/animation/constraints.cpp": "7ee5adc664a46a31450602201dbce4cc37bb9d48fd3f0645b222d53131fc897f",
+    "game/native/animation/constraints.hpp": "dff5ae4fcb83a83e6bc73976661118ff49f7b45fd654538ddf2b5911b164f606",
+    "game/native/animation/curves.cpp": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b",
+    "game/native/animation/curves.hpp": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2",
+    "game/native/animation/model.cpp": "c5a1b46de9fd4504f0ed0a5ee89c39c9f182abb14c2321f69cd9dde58ef06440",
+    "game/native/animation/model.hpp": "754180959bf0362bfec15dd08678bff976601a9583cabb581c7cdb0556c55ab8",
+    "game/native/animation/model_blend.cpp": "6f173902f992e7f2d0a1fb398c2bb82432e9b40ade818284bf781d3591a73d6d",
+    "game/native/animation/model_blend.hpp": "6d12a543261a52eb5e2c4690bf020d0be8c1ad6e24bb6cedd6e275728b5bb617",
+    "game/native/animation/model_math.cpp": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe",
+    "game/native/animation/model_math.hpp": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb",
+    "game/native/animation/motion_bank.cpp": "f824b6163e26cb9093fbc57f05e9afeb9354e40e5209043f45dfaaa20e4d29ee",
+    "game/native/animation/motion_bank.hpp": "8888cc253ffc2275b42c96a7e14f2633baa9d41449588ea6c4f0a97b1ea84ccc",
+    "game/native/animation/motion_descriptors.hpp": "9ff35638c9c3e37f796770a10c1652ca358a29920d4a6380ecd19aa47e4cdf89",
+    "game/native/animation/playback.cpp": "30308fe739ed612d6a88cc5071ae714e2ef7cb4c64f586979435d21314826565",
+    "game/native/animation/playback.hpp": "d57dd6a48206ad3fd53a75914edb51951e6f037902288d9151e4a9ca39073e26",
+    "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "game/native/gameplay_actors/hit.hpp": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495",
+    "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "game/native/gameplay_actors/status.hpp": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170",
+    "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
+    "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+    "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+    "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_world/animation.hpp": "db9654f7335cb3867bb0ded568ea0a52d172f3923dcf4d7f0be663d2cc3b5916",
+    "game/native/gameplay_world/animation_event_metadata.inc": "da2885b29ebd0a18acea42031eb666439a783dddaf2ec77d4878b785c53cabb2",
+    "game/native/gameplay_world/animation_events.cpp": "925235f793f4c36d8edd5dca88e9a3994c8de1ebef18e40279a562032c084712",
+    "game/native/gameplay_world/animation_events.hpp": "e23b7b6832c2ca18979d4b1329902cef9a86b276032e31df5184598f776255c9",
+    "game/native/gameplay_world/motion_profiles.hpp": "863f946891dea1306d1c29a0ab9e093c5019b933d3a636cb8b9462de1cc303e9",
+    "game/native/gameplay_world/motion_resources.hpp": "6e8a01e176adb845c76476f40076fc80fa89cd487604aafdd1595b2e9db5b740",
+    "game/native/gameplay_world/player_event_schedule.inc": "4eb63f9591539a1faad571795b390f96ccd153c940bff6ff09ddd039410d77b0",
+    "game/native/gameplay_world/world.hpp": "547439c913fe5b805ffcc87539bf08b830821f48a575bf959bbb1613550d4219",
+    "game/native/transform_math/transform_math.cpp": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/animation/player_event_tests.cpp": "aa8065548fcf7ddc831c449052a458b958cb383897ede79de31542eb3ecaacc7",
+    "tools/native_reconstruction/animation/verify_player_events.py": "2b7f9d77593b69d03b584b5177d0ce300b972686ce28ca28a2361b12b6a0a669",
+    "recomp/config/output_ovl/o2/o2_00573430_0x573430.cpp": "3767251d8e0d334e75f6dc59b9d9b92c89278383c07be63bfb8cc13a794ea7e0",
+    "recomp/config/output_ovl/o2/o2_005958B0_0x5958b0.cpp": "3c0dd0afe1bb2823475a2fbedf2d79cb0d9c5741dd9a5fde34e1853bddcaaf66",
+    "recomp/config/output_ovl/o2/o2_005959D0_0x5959d0.cpp": "821159240e3d01415c980253dd59537df4de8304de0ce92a9d7ba078d0f0d4fe",
+    "recomp/config/output_ovl/o2/o2_005A8FD0_0x5a8fd0.cpp": "3d2622b33445a5c99ea6d967ac40cde11ed581eb860e9febaf43b99687c6cd72",
+    "recomp/config/output_ovl/o2/o2_005965A0_0x5965a0.cpp": "20d1d41a057ae281df9da66799f9f132989c6cdc7ac603f70966fbc98635302e",
+    "recomp/config/output_ovl/o2/o2_0059A820_0x59a820.cpp": "a54659c72750cd1a586c1905d5123bea191e118d6c98a4c615977b0cbefd8d79",
+    "recomp/config/output_ovl/o2/o2_0059EBB0_0x59ebb0.cpp": "1c98a8ed9a42a644bdfb61d94ab4ac5bf89d8820947a7592ff6b74a8dde4158a",
+    "recomp/config/output_ovl/o2/o2_0059FCA0_0x59fca0.cpp": "255555886b8b9c677033d0bfad2b352e092c19f433e701f802a0422fc0dd6093",
+    "recomp/config/output_ovl/o2/o2_005A04E0_0x5a04e0.cpp": "a20155f1d82305e103350e2c325a177c5491853ad415a0d0c58a55e7363e714c",
+    "tools/native_reconstruction/animation/schedule_extract.cpp": "52d65c2c86012a0f29d1c17ded3e02800b2cae6b41f56651fb2a653d6dbc101e",
+    "tools/native_reconstruction/animation/extract_player_schedules.py": "3f4b221ffd886096d927ee7d14a5bac08a570ea834cba0861ac7e79ab5b888c8",
+    "docs/native-gameplay/ANIMATION_PLAYER_EVENTS.md": "1eed1d4c4c90209107eb6f12af8d975b7b5a08fbba7fe5d3920e64b2eea9ec78",
+    "tools/native_reconstruction/animation/qualify_player_events_v1.py": "5a6294b05e50f7c8a1600e3f63a80efc887cc8570646e42864673198e7fc0447"
+  },
+  "immutable_source_evidence": {
+    "game/native/animation/constraint_math.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/constraint_math.cpp",
+      "sha256": "5c87b5248ebeeef3c5853d41f1ff18c06332dd85caad6189899d4d63aa267416"
+    },
+    "game/native/animation/constraint_math.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/constraint_math.hpp",
+      "sha256": "25a148646b33c3c22e5f26a137e21ba5aae11ef01a8d563c230ddd16469935e4"
+    },
+    "game/native/animation/constraints.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/constraints.cpp",
+      "sha256": "7ee5adc664a46a31450602201dbce4cc37bb9d48fd3f0645b222d53131fc897f"
+    },
+    "game/native/animation/constraints.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/constraints.hpp",
+      "sha256": "dff5ae4fcb83a83e6bc73976661118ff49f7b45fd654538ddf2b5911b164f606"
+    },
+    "game/native/animation/curves.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/curves.cpp",
+      "sha256": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b"
+    },
+    "game/native/animation/curves.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/curves.hpp",
+      "sha256": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2"
+    },
+    "game/native/animation/model.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/model.cpp",
+      "sha256": "c5a1b46de9fd4504f0ed0a5ee89c39c9f182abb14c2321f69cd9dde58ef06440"
+    },
+    "game/native/animation/model.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/model.hpp",
+      "sha256": "754180959bf0362bfec15dd08678bff976601a9583cabb581c7cdb0556c55ab8"
+    },
+    "game/native/animation/model_blend.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/model_blend.cpp",
+      "sha256": "6f173902f992e7f2d0a1fb398c2bb82432e9b40ade818284bf781d3591a73d6d"
+    },
+    "game/native/animation/model_blend.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/model_blend.hpp",
+      "sha256": "6d12a543261a52eb5e2c4690bf020d0be8c1ad6e24bb6cedd6e275728b5bb617"
+    },
+    "game/native/animation/model_math.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/model_math.cpp",
+      "sha256": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe"
+    },
+    "game/native/animation/model_math.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/model_math.hpp",
+      "sha256": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb"
+    },
+    "game/native/animation/motion_bank.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/motion_bank.cpp",
+      "sha256": "f824b6163e26cb9093fbc57f05e9afeb9354e40e5209043f45dfaaa20e4d29ee"
+    },
+    "game/native/animation/motion_bank.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/motion_bank.hpp",
+      "sha256": "8888cc253ffc2275b42c96a7e14f2633baa9d41449588ea6c4f0a97b1ea84ccc"
+    },
+    "game/native/animation/motion_descriptors.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/motion_descriptors.hpp",
+      "sha256": "9ff35638c9c3e37f796770a10c1652ca358a29920d4a6380ecd19aa47e4cdf89"
+    },
+    "game/native/animation/playback.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/playback.cpp",
+      "sha256": "30308fe739ed612d6a88cc5071ae714e2ef7cb4c64f586979435d21314826565"
+    },
+    "game/native/animation/playback.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/animation/playback.hpp",
+      "sha256": "d57dd6a48206ad3fd53a75914edb51951e6f037902288d9151e4a9ca39073e26"
+    },
+    "game/native/gameplay_actors/entity.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_actors/entity.hpp",
+      "sha256": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3"
+    },
+    "game/native/gameplay_actors/health.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_actors/health.hpp",
+      "sha256": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e"
+    },
+    "game/native/gameplay_actors/hit.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_actors/hit.hpp",
+      "sha256": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495"
+    },
+    "game/native/gameplay_actors/input.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_actors/input.hpp",
+      "sha256": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22"
+    },
+    "game/native/gameplay_actors/status.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_actors/status.hpp",
+      "sha256": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170"
+    },
+    "game/native/gameplay_collision/actors.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_collision/actors.hpp",
+      "sha256": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78"
+    },
+    "game/native/gameplay_collision/collision.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_collision/collision.hpp",
+      "sha256": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da"
+    },
+    "game/native/gameplay_collision/contact_component.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_collision/contact_component.hpp",
+      "sha256": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c"
+    },
+    "game/native/gameplay_collision/hit_regions.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_collision/hit_regions.hpp",
+      "sha256": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0"
+    },
+    "game/native/gameplay_collision/response.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_collision/response.hpp",
+      "sha256": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d"
+    },
+    "game/native/gameplay_collision/spatial.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_collision/spatial.hpp",
+      "sha256": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258"
+    },
+    "game/native/gameplay_session/session.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_session/session.hpp",
+      "sha256": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd"
+    },
+    "game/native/gameplay_world/animation.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_world/animation.hpp",
+      "sha256": "db9654f7335cb3867bb0ded568ea0a52d172f3923dcf4d7f0be663d2cc3b5916"
+    },
+    "game/native/gameplay_world/animation_event_metadata.inc": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_world/animation_event_metadata.inc",
+      "sha256": "da2885b29ebd0a18acea42031eb666439a783dddaf2ec77d4878b785c53cabb2"
+    },
+    "game/native/gameplay_world/animation_events.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_world/animation_events.cpp",
+      "sha256": "925235f793f4c36d8edd5dca88e9a3994c8de1ebef18e40279a562032c084712"
+    },
+    "game/native/gameplay_world/animation_events.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_world/animation_events.hpp",
+      "sha256": "e23b7b6832c2ca18979d4b1329902cef9a86b276032e31df5184598f776255c9"
+    },
+    "game/native/gameplay_world/motion_profiles.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_world/motion_profiles.hpp",
+      "sha256": "863f946891dea1306d1c29a0ab9e093c5019b933d3a636cb8b9462de1cc303e9"
+    },
+    "game/native/gameplay_world/motion_resources.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_world/motion_resources.hpp",
+      "sha256": "6e8a01e176adb845c76476f40076fc80fa89cd487604aafdd1595b2e9db5b740"
+    },
+    "game/native/gameplay_world/player_event_schedule.inc": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_world/player_event_schedule.inc",
+      "sha256": "4eb63f9591539a1faad571795b390f96ccd153c940bff6ff09ddd039410d77b0"
+    },
+    "game/native/gameplay_world/world.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/gameplay_world/world.hpp",
+      "sha256": "547439c913fe5b805ffcc87539bf08b830821f48a575bf959bbb1613550d4219"
+    },
+    "game/native/transform_math/transform_math.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/transform_math/transform_math.cpp",
+      "sha256": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449"
+    },
+    "game/native/transform_math/transform_math.hpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/game/native/transform_math/transform_math.hpp",
+      "sha256": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35"
+    },
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": {
+      "path": "build-native-sjuni/player-event-schedule-extract-gcc-v2/source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp",
+      "sha256": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+    },
+    "tools/native_reconstruction/animation/player_event_tests.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/tools/native_reconstruction/animation/player_event_tests.cpp",
+      "sha256": "aa8065548fcf7ddc831c449052a458b958cb383897ede79de31542eb3ecaacc7"
+    },
+    "tools/native_reconstruction/animation/verify_player_events.py": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/tools/native_reconstruction/animation/verify_player_events.py",
+      "sha256": "2b7f9d77593b69d03b584b5177d0ce300b972686ce28ca28a2361b12b6a0a669"
+    },
+    "recomp/config/output_ovl/o2/o2_00573430_0x573430.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/recomp/config/output_ovl/o2/o2_00573430_0x573430.cpp",
+      "sha256": "3767251d8e0d334e75f6dc59b9d9b92c89278383c07be63bfb8cc13a794ea7e0"
+    },
+    "recomp/config/output_ovl/o2/o2_005958B0_0x5958b0.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/recomp/config/output_ovl/o2/o2_005958B0_0x5958b0.cpp",
+      "sha256": "3c0dd0afe1bb2823475a2fbedf2d79cb0d9c5741dd9a5fde34e1853bddcaaf66"
+    },
+    "recomp/config/output_ovl/o2/o2_005959D0_0x5959d0.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/recomp/config/output_ovl/o2/o2_005959D0_0x5959d0.cpp",
+      "sha256": "821159240e3d01415c980253dd59537df4de8304de0ce92a9d7ba078d0f0d4fe"
+    },
+    "recomp/config/output_ovl/o2/o2_005A8FD0_0x5a8fd0.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/recomp/config/output_ovl/o2/o2_005A8FD0_0x5a8fd0.cpp",
+      "sha256": "3d2622b33445a5c99ea6d967ac40cde11ed581eb860e9febaf43b99687c6cd72"
+    },
+    "recomp/config/output_ovl/o2/o2_005965A0_0x5965a0.cpp": {
+      "path": "build-native-sjuni/player-event-schedule-extract-gcc-v2/source/recomp/config/output_ovl/o2/o2_005965A0_0x5965a0.cpp",
+      "sha256": "20d1d41a057ae281df9da66799f9f132989c6cdc7ac603f70966fbc98635302e"
+    },
+    "recomp/config/output_ovl/o2/o2_0059A820_0x59a820.cpp": {
+      "path": "build-native-sjuni/player-event-schedule-extract-gcc-v2/source/recomp/config/output_ovl/o2/o2_0059A820_0x59a820.cpp",
+      "sha256": "a54659c72750cd1a586c1905d5123bea191e118d6c98a4c615977b0cbefd8d79"
+    },
+    "recomp/config/output_ovl/o2/o2_0059EBB0_0x59ebb0.cpp": {
+      "path": "build-native-sjuni/player-event-schedule-extract-gcc-v2/source/recomp/config/output_ovl/o2/o2_0059EBB0_0x59ebb0.cpp",
+      "sha256": "1c98a8ed9a42a644bdfb61d94ab4ac5bf89d8820947a7592ff6b74a8dde4158a"
+    },
+    "recomp/config/output_ovl/o2/o2_0059FCA0_0x59fca0.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/recomp/config/output_ovl/o2/o2_0059FCA0_0x59fca0.cpp",
+      "sha256": "255555886b8b9c677033d0bfad2b352e092c19f433e701f802a0422fc0dd6093"
+    },
+    "recomp/config/output_ovl/o2/o2_005A04E0_0x5a04e0.cpp": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/source/recomp/config/output_ovl/o2/o2_005A04E0_0x5a04e0.cpp",
+      "sha256": "a20155f1d82305e103350e2c325a177c5491853ad415a0d0c58a55e7363e714c"
+    },
+    "tools/native_reconstruction/animation/schedule_extract.cpp": {
+      "path": "build-native-sjuni/player-event-schedule-extract-gcc-v2/source/tools/native_reconstruction/animation/schedule_extract.cpp",
+      "sha256": "52d65c2c86012a0f29d1c17ded3e02800b2cae6b41f56651fb2a653d6dbc101e"
+    },
+    "tools/native_reconstruction/animation/extract_player_schedules.py": {
+      "path": "build-native-sjuni/player-event-schedule-extract-gcc-v2/source/tools/native_reconstruction/animation/extract_player_schedules.py",
+      "sha256": "3f4b221ffd886096d927ee7d14a5bac08a570ea834cba0861ac7e79ab5b888c8"
+    },
+    "docs/native-gameplay/ANIMATION_PLAYER_EVENTS.md": {
+      "path": "build-native-sjuni/animation-player-events-seal-v1/source/docs/native-gameplay/ANIMATION_PLAYER_EVENTS.md",
+      "sha256": "1eed1d4c4c90209107eb6f12af8d975b7b5a08fbba7fe5d3920e64b2eea9ec78"
+    },
+    "tools/native_reconstruction/animation/qualify_player_events_v1.py": {
+      "path": "build-native-sjuni/animation-player-events-seal-v1/source/tools/native_reconstruction/animation/qualify_player_events_v1.py",
+      "sha256": "5a6294b05e50f7c8a1600e3f63a80efc887cc8570646e42864673198e7fc0447"
+    }
+  },
+  "cohorts": {
+    "schedule_llvm": {
+      "path": "build-native-sjuni/animation-player-events-llvm-v3/receipt.json",
+      "sha256": "ffcbf275456c749dbab3b544dea879ffd7465c6165cec055dfbaaec3d2a05f72",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "original_owned_bodies": [
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_00573430_0x573430.cpp",
+          "sha256": "3767251d8e0d334e75f6dc59b9d9b92c89278383c07be63bfb8cc13a794ea7e0",
+          "start": "0x573430",
+          "end_exclusive": "0x57347c",
+          "matched_comments": 15,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005958B0_0x5958b0.cpp",
+          "sha256": "3c0dd0afe1bb2823475a2fbedf2d79cb0d9c5741dd9a5fde34e1853bddcaaf66",
+          "start": "0x5958b0",
+          "end_exclusive": "0x5959c4",
+          "matched_comments": 44,
+          "omitted_zero_words": 25,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005959D0_0x5959d0.cpp",
+          "sha256": "821159240e3d01415c980253dd59537df4de8304de0ce92a9d7ba078d0f0d4fe",
+          "start": "0x5959d0",
+          "end_exclusive": "0x595b6c",
+          "matched_comments": 66,
+          "omitted_zero_words": 37,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005A8FD0_0x5a8fd0.cpp",
+          "sha256": "3d2622b33445a5c99ea6d967ac40cde11ed581eb860e9febaf43b99687c6cd72",
+          "start": "0x5a8fd0",
+          "end_exclusive": "0x5a9248",
+          "matched_comments": 100,
+          "omitted_zero_words": 58,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005965A0_0x5965a0.cpp",
+          "sha256": "20d1d41a057ae281df9da66799f9f132989c6cdc7ac603f70966fbc98635302e",
+          "start": "0x5965a0",
+          "end_exclusive": "0x59a81c",
+          "matched_comments": 4024,
+          "omitted_zero_words": 231,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059A820_0x59a820.cpp",
+          "sha256": "a54659c72750cd1a586c1905d5123bea191e118d6c98a4c615977b0cbefd8d79",
+          "start": "0x59a820",
+          "end_exclusive": "0x59eba4",
+          "matched_comments": 4075,
+          "omitted_zero_words": 246,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059EBB0_0x59ebb0.cpp",
+          "sha256": "1c98a8ed9a42a644bdfb61d94ab4ac5bf89d8820947a7592ff6b74a8dde4158a",
+          "start": "0x59ebb0",
+          "end_exclusive": "0x59f604",
+          "matched_comments": 609,
+          "omitted_zero_words": 52,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059FCA0_0x59fca0.cpp",
+          "sha256": "255555886b8b9c677033d0bfad2b352e092c19f433e701f802a0422fc0dd6093",
+          "start": "0x59fca0",
+          "end_exclusive": "0x59fca8",
+          "matched_comments": 1,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005A04E0_0x5a04e0.cpp",
+          "sha256": "a20155f1d82305e103350e2c325a177c5491853ad415a0d0c58a55e7363e714c",
+          "start": "0x5a04e0",
+          "end_exclusive": "0x5a04e8",
+          "matched_comments": 1,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        }
+      ],
+      "observed": {
+        "checks": 3672198,
+        "schedule_cases": 1048576,
+        "mutable_consumer_cases": 2048,
+        "family_cases": 261120,
+        "game_run": false
+      }
+    },
+    "schedule_gcc": {
+      "path": "build-native-sjuni/animation-player-events-gcc-v3/receipt.json",
+      "sha256": "a0a157ddec39475150f6487774a425666019acb7821869c38a94e86346441021",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "original_owned_bodies": [
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_00573430_0x573430.cpp",
+          "sha256": "3767251d8e0d334e75f6dc59b9d9b92c89278383c07be63bfb8cc13a794ea7e0",
+          "start": "0x573430",
+          "end_exclusive": "0x57347c",
+          "matched_comments": 15,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005958B0_0x5958b0.cpp",
+          "sha256": "3c0dd0afe1bb2823475a2fbedf2d79cb0d9c5741dd9a5fde34e1853bddcaaf66",
+          "start": "0x5958b0",
+          "end_exclusive": "0x5959c4",
+          "matched_comments": 44,
+          "omitted_zero_words": 25,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005959D0_0x5959d0.cpp",
+          "sha256": "821159240e3d01415c980253dd59537df4de8304de0ce92a9d7ba078d0f0d4fe",
+          "start": "0x5959d0",
+          "end_exclusive": "0x595b6c",
+          "matched_comments": 66,
+          "omitted_zero_words": 37,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005A8FD0_0x5a8fd0.cpp",
+          "sha256": "3d2622b33445a5c99ea6d967ac40cde11ed581eb860e9febaf43b99687c6cd72",
+          "start": "0x5a8fd0",
+          "end_exclusive": "0x5a9248",
+          "matched_comments": 100,
+          "omitted_zero_words": 58,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005965A0_0x5965a0.cpp",
+          "sha256": "20d1d41a057ae281df9da66799f9f132989c6cdc7ac603f70966fbc98635302e",
+          "start": "0x5965a0",
+          "end_exclusive": "0x59a81c",
+          "matched_comments": 4024,
+          "omitted_zero_words": 231,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059A820_0x59a820.cpp",
+          "sha256": "a54659c72750cd1a586c1905d5123bea191e118d6c98a4c615977b0cbefd8d79",
+          "start": "0x59a820",
+          "end_exclusive": "0x59eba4",
+          "matched_comments": 4075,
+          "omitted_zero_words": 246,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059EBB0_0x59ebb0.cpp",
+          "sha256": "1c98a8ed9a42a644bdfb61d94ab4ac5bf89d8820947a7592ff6b74a8dde4158a",
+          "start": "0x59ebb0",
+          "end_exclusive": "0x59f604",
+          "matched_comments": 609,
+          "omitted_zero_words": 52,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059FCA0_0x59fca0.cpp",
+          "sha256": "255555886b8b9c677033d0bfad2b352e092c19f433e701f802a0422fc0dd6093",
+          "start": "0x59fca0",
+          "end_exclusive": "0x59fca8",
+          "matched_comments": 1,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "role": "complete animation family/player schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005A04E0_0x5a04e0.cpp",
+          "sha256": "a20155f1d82305e103350e2c325a177c5491853ad415a0d0c58a55e7363e714c",
+          "start": "0x5a04e0",
+          "end_exclusive": "0x5a04e8",
+          "matched_comments": 1,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        }
+      ],
+      "observed": {
+        "checks": 3672198,
+        "schedule_cases": 1048576,
+        "mutable_consumer_cases": 2048,
+        "family_cases": 261120,
+        "game_run": false
+      }
+    },
+    "extraction_llvm": {
+      "path": "build-native-sjuni/player-event-schedule-extract-llvm-v2/receipt.json",
+      "sha256": "c5dd6aa1da71affa87400bdc627167e29a77067b0c4c1877cb72cc245bb8ce8a",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "original_owned_bodies": [
+        {
+          "role": "complete player frame-event schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005965A0_0x5965a0.cpp",
+          "sha256": "20d1d41a057ae281df9da66799f9f132989c6cdc7ac603f70966fbc98635302e",
+          "start": "0x5965a0",
+          "end_exclusive": "0x59a81c",
+          "matched_comments": 4024,
+          "omitted_zero_words": 231,
+          "conflicts": 0
+        },
+        {
+          "role": "complete player frame-event schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059A820_0x59a820.cpp",
+          "sha256": "a54659c72750cd1a586c1905d5123bea191e118d6c98a4c615977b0cbefd8d79",
+          "start": "0x59a820",
+          "end_exclusive": "0x59eba4",
+          "matched_comments": 4075,
+          "omitted_zero_words": 246,
+          "conflicts": 0
+        },
+        {
+          "role": "complete player frame-event schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059EBB0_0x59ebb0.cpp",
+          "sha256": "1c98a8ed9a42a644bdfb61d94ab4ac5bf89d8820947a7592ff6b74a8dde4158a",
+          "start": "0x59ebb0",
+          "end_exclusive": "0x59f604",
+          "matched_comments": 609,
+          "omitted_zero_words": 52,
+          "conflicts": 0
+        }
+      ],
+      "rows": 1245184,
+      "groups": {
+        "common_tail": 46,
+        "lower_zero": 11,
+        "lower_one": 13,
+        "upper_zero": 187,
+        "upper_one": 198
+      }
+    },
+    "extraction_gcc": {
+      "path": "build-native-sjuni/player-event-schedule-extract-gcc-v2/receipt.json",
+      "sha256": "230841e3fd4a9d566ad1449bcc5d3902647d041584d75f022b2086d0e121448b",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "original_owned_bodies": [
+        {
+          "role": "complete player frame-event schedule",
+          "path": "recomp/config/output_ovl/o2/o2_005965A0_0x5965a0.cpp",
+          "sha256": "20d1d41a057ae281df9da66799f9f132989c6cdc7ac603f70966fbc98635302e",
+          "start": "0x5965a0",
+          "end_exclusive": "0x59a81c",
+          "matched_comments": 4024,
+          "omitted_zero_words": 231,
+          "conflicts": 0
+        },
+        {
+          "role": "complete player frame-event schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059A820_0x59a820.cpp",
+          "sha256": "a54659c72750cd1a586c1905d5123bea191e118d6c98a4c615977b0cbefd8d79",
+          "start": "0x59a820",
+          "end_exclusive": "0x59eba4",
+          "matched_comments": 4075,
+          "omitted_zero_words": 246,
+          "conflicts": 0
+        },
+        {
+          "role": "complete player frame-event schedule",
+          "path": "recomp/config/output_ovl/o2/o2_0059EBB0_0x59ebb0.cpp",
+          "sha256": "1c98a8ed9a42a644bdfb61d94ab4ac5bf89d8820947a7592ff6b74a8dde4158a",
+          "start": "0x59ebb0",
+          "end_exclusive": "0x59f604",
+          "matched_comments": 609,
+          "omitted_zero_words": 52,
+          "conflicts": 0
+        }
+      ],
+      "rows": 1245184,
+      "groups": {
+        "common_tail": 46,
+        "lower_zero": 11,
+        "lower_one": 13,
+        "upper_zero": 187,
+        "upper_one": 198
+      }
+    }
+  },
+  "metadata": {
+    "owned_image": "build-function-index/owned-overlays/o2.bin",
+    "sha256": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+    "address": "0x719a60",
+    "count": 64,
+    "stride": 68,
+    "selected_bytes_sha256": "28b07ee57563cbb2f5bc1f830232ca6a9d036c2ada319679b73894a9c5d35d4b"
+  },
+  "preserved_fixture_failures": [
+    "build-native-sjuni/animation-player-events-llvm-v1/receipt.json",
+    "build-native-sjuni/animation-player-events-gcc-v1/receipt.json"
+  ],
+  "limits": [
+    "Complete original schedule/dispatch routing and declared recording-consumer oracle only; actual audio/contact/visual/task/resource-program implementation is not supplied by the recording sink.",
+    "Other real selected event families explicitly refuse; known no-work branches are admitted.",
+    "No game/performance/Stage4 completion claim."
+  ]
+}

@@ -43,6 +43,9 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t selected_resource{},secondary_resource{},model_pose_class{};
     float motion_rate{1};
     std::uint16_t resource_action{};
+    // Original65E710 equipment-selection notification, D92/DA2.
+    std::uint16_t equipment_notice_flags{};
+    std::uint8_t equipment_notice_slot{};
     std::uint16_t linked_model_variant{};
     std::uint16_t contact_flags{},pending_notice{};
     std::uint16_t action_flags{};
