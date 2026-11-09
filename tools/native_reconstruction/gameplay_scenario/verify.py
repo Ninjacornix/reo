@@ -8,6 +8,7 @@ IDS += ['0068D670','0068D690','0068D6B0','0068D6D0','0068D6F0','0068D760','0068D
 IDS += ['00691170','00691290','006918C0','006919D0','00691C10','006908E0','006909B0','00691E70','00691EB0','00701D10','00701DA0','00701E60','007008C0','00700930']
 IDS += ['006915C0','00691630']
 IDS += ['0068D310','0068D350','0068D380','0068D3D0','0068D400','0068D450','0068D4E0','0068D550','005BF0F0','005BF1B0']
+IDS += ['0068D5D0','0068D5F0','0068D610','0068D630','006B1DC0','006B1EC0','006B1FE0','006B2020','006B2170','006B2FA0','006B3020','006B3090']
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)
@@ -41,21 +42,22 @@ def main(a):
     fixture=(ROOT/'tools/native_reconstruction/gameplay_save/original_fixture.hpp').read_text().replace('0x400000','0x800000').replace('#include <cstdint>','#include <cstdint>\n#include <array>\n#include <bit>')
     fixture=fixture.replace('std::uint64_t lo{},hi{};','std::uint64_t lo{},hi{};float f[32]{};std::uint32_t fcr31{};')
     fixture=fixture.replace('Function lookupFunction(std::uint32_t)const{throw std::runtime_error("Unexpected original dynamic dispatch");}','Function lookupFunction(std::uint32_t)const;')
-    fixture+='\n#define FPU_CVT_S_W(a) (float(std::int32_t(a)))\n#define FPU_ADD_S(a,b) (float(a)+float(b))\n#define SRL32(a,b) (std::uint32_t(std::uint32_t(a)>>(std::uint32_t(b)&31)))\n#define SRA32(a,b) (std::int32_t(std::int32_t(a)>>(std::uint32_t(b)&31)))\n#define SUB32(a,b) (std::uint32_t(std::uint32_t(a)-std::uint32_t(b)))\n#define WRITE32(a,v) fixture_write<std::uint32_t>(rdram,a,v)\n'
+    fixture+='\n#define FPU_C_OLE_S(a,b) ((a)<=(b))\n#define FPU_CVT_S_W(a) (float(std::int32_t(a)))\n#define FPU_ADD_S(a,b) (float(a)+float(b))\n#define SRL32(a,b) (std::uint32_t(std::uint32_t(a)>>(std::uint32_t(b)&31)))\n#define SRA32(a,b) (std::int32_t(std::int32_t(a)>>(std::uint32_t(b)&31)))\n#define SUB32(a,b) (std::uint32_t(std::uint32_t(a)-std::uint32_t(b)))\n#define WRITE32(a,v) fixture_write<std::uint32_t>(rdram,a,v)\n'
     (out/'original_fixture.hpp').write_text(fixture);(out/'original.cpp').write_text('#include "original_fixture.hpp"\n#include "original_declarations.inc"\n'+text)
     shutil.copyfile(HERE/'tests.cpp',out/'tests.cpp')
     shutil.copyfile(HERE/'offline_tests.inc',out/'offline_tests.inc')
     shutil.copyfile(HERE/'scene_vm_fixture.inc',out/'scene_vm_fixture.inc')
     shutil.copyfile(HERE/'sequence_vm_fixture.inc',out/'sequence_vm_fixture.inc')
-    source_paths=[HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h']
+    shutil.copyfile(HERE/'lighting_vm_fixture.inc',out/'lighting_vm_fixture.inc')
+    source_paths=[HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h']
     source_paths += list((ROOT/'game/native/gameplay_scenario').glob('*.hpp'))+list((ROOT/'game/native/gameplay_scenario').glob('*.cpp'))+list((ROOT/'game/native/gameplay_scenario').glob('*.inc'))
     before={p.relative_to(ROOT).as_posix():sha(p) for p in source_paths}
     for p in source_paths:shutil.copyfile(p,out/(p.parent.name+'-'+p.name))
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-I'+str(ROOT),'-I'+str(out)]
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
-    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('tests',out/'tests.cpp')]
+    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('tests',out/'tests.cpp')]
     for label,path in units:checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(path),'-o',str(out/(label+'.o'))],out,'compile-'+label))
-    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','flags','offline','scene','sequence','entities','tasks','tests']]+['-o',str(out/'checks.exe')],out,'link'))
+    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','flags','offline','scene','sequence','lighting','entities','tasks','tests']]+['-o',str(out/'checks.exe')],out,'link'))
     checks.append(invoke([str(out/'checks.exe')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
         original_table_sha256=hashlib.sha256(struct.pack('<432I',*table)).hexdigest(),checks=checks,result=json.loads((out/'test.stdout.txt').read_text()),

@@ -148,7 +148,7 @@ void offline_tests(){
     }
     for(unsigned profile=0;profile<6;++profile)for(const auto desired:{0u,1u,2u,0xffffffffu})for(unsigned category=0;category<5;++category){
         std::vector<std::byte> b;emit(b,0x12);emit(b,0x14,{desired});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);
-        emit(b,0x10,{255});emit(b,0x11,{0});emit(b,0x13,{255,0x1234});emit(b,0x15,{255});emit(b,0x16,{0x81,0x8001,0x7fff,0x80000001});
+        emit(b,0x10,{31});emit(b,0x11,{0});emit(b,0x13,{31,0x1234});emit(b,0x15,{31});emit(b,0x16,{0x81,0x8001,0x7fff,0x80000001});
         emit(b,0x17,{profile+1,desired});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);emit(b,0xa);
         std::vector<std::uint8_t> ram(0x800000);install_original_tables(ram);ram[0x3243e8]=1;ram[0x4baded]=2;
         fixture_write<std::uint32_t>(ram.data(),0x75a4b0,category);fixture_write<std::uint32_t>(ram.data(),0x75a4c0,0);

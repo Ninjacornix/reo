@@ -5,7 +5,9 @@
 
 namespace reo::native::gameplay_scenario {
 struct SequenceControlState {
-    std::array<std::uint8_t,256> active{};
+    // 5BE3E0 clears a 0x34-byte header and 32 records of 0x198 bytes.
+    // The byte-sized script selector does not establish 256 owned records.
+    std::array<std::uint8_t,32> active{};
     std::int8_t count{};
     std::uint8_t restart_byte{},condition_id{},selected_id{},phase{},mode{};
     std::uint16_t selection{},parameter_a{},parameter_b{};
@@ -16,11 +18,14 @@ struct SequenceControlState {
 class SequenceControl final {
 public:
     const SequenceControlState& snapshot()const noexcept{return state_;}
-    void restore(const SequenceControlState& value)noexcept{state_=value;}
+    bool restore(const SequenceControlState& value)noexcept{
+        if(value.count>std::int8_t(value.active.size()))return false;
+        state_=value;return true;
+    }
     bool active(std::uint32_t index,bool value)noexcept;
     void enable_all()noexcept;
-    void select(std::uint8_t id,std::uint16_t selection)noexcept;
-    void cancel_if_selected(std::uint8_t id)noexcept;
+    bool select(std::uint8_t id,std::uint16_t selection)noexcept;
+    bool cancel_if_selected(std::uint8_t id)noexcept;
     void percentage(std::uint8_t mode,std::int16_t first,std::int16_t second,std::uint32_t amount)noexcept;
     bool phase_matches(std::uint32_t desired)const noexcept{return (state_.phase!=4)==(desired!=0);}
     bool id_matches(std::uint32_t expected,std::uint32_t desired)const noexcept{

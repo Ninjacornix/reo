@@ -1,0 +1,9 @@
+# Owned script frontiers after native lighting state v6
+
+The bounded owned-content inventory was rerun against the exact [v6 ledger](SCENARIO_LIGHTING_STATE.md), including the corrected32-record sequence profile. Both LLVM/GCC probes pass identical171 hash-verified RDT/EVB members,26 native boundary/ownership fixtures and669 source-authority instruction comments. The reusable `inventory_content_v3.py` retains earlier drivers and receipts unchanged.
+
+Ordinary020 is no longer an unsupported algorithm frontier. The next first frontier is **0A2 in160 banks**, followed by054 in five,065 in two and050/062/069/0F2 in one each. Ordinary candidate prefixes now contain12 distinct opcodes. **All171 banks still remain open**; no complete stock Program is admitted. Offline actor alternatives expose143 distinct candidate opcodes, with their existing context gates and unresolved handler paths retained.
+
+This inventory follows configured roots and declared object bounds; the next declared object remains an upper bound, not an inferred bytecode length. It stops when handler semantics are unsupported, retains conservative condition/context alternatives and reports unknown initial saved pointers. Full payload profile checks, production providers and runtime reachability are not established. Five named SGL files,81 unnamed archive members and indirect or otherwise unlocated code remain unknown. Advancing one prefix frontier is not a percentage of native game completion.
+
+Private receipts: `build-native-sjuni/gameplay-script-content-{llvm,gcc}-v3/receipt.json`. Source/compiler/ledger/input/output hashes are retained in [content qualification v3](../../tools/native_reconstruction/gameplay_script_content_qualification_v3.json). No game, window, live process, capture, full game build or performance measurement was used.

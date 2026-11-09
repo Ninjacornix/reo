@@ -2,6 +2,7 @@
 #include "game/native/gameplay_scenario/scene_resources.hpp"
 #include "game/native/gameplay_scenario/session_counters.hpp"
 #include "game/native/gameplay_scenario/sequence_control.hpp"
+#include "game/native/gameplay_scenario/lighting.hpp"
 #include <bit>
 #include "original_fixture.hpp"
 #include "original_declarations.inc"
@@ -94,6 +95,7 @@ void compare(vm::Interpreter& native,std::vector<std::uint8_t>& ram,std::size_t 
 }
 #include "scene_vm_fixture.inc"
 #include "sequence_vm_fixture.inc"
+#include "lighting_vm_fixture.inc"
 void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false,unsigned scene_profile=0,unsigned sequence_profile=0){
     fixture_session_mode=0;
     std::vector<std::uint8_t> ram(0x800000);for(std::size_t i=0;i<blocks.size();++i){std::memcpy(ram.data()+0x10000+i*0x10000,blocks[i].data(),blocks[i].size());fixture_write<std::uint32_t>(ram.data(),0x90000+4*i,0x10000+std::uint32_t(i)*0x10000);}
@@ -103,6 +105,7 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     std::memcpy(ram.data()+0x740890,original_signed_comparisons.data(),original_signed_comparisons.size()*4);
     SceneFixture scene(scene_profile);scene.export_original(ram);fixture_write<std::uint16_t>(ram.data(),0x3243dc,9);
     SequenceFixture sequence(sequence_profile);sequence.export_original(ram);
+    LightingFixture lighting;lighting.export_original(ram);
     ram[0x3243e8]=1;ram[0x4baded]=actor;fixture_write<std::uint32_t>(ram.data(),0x4bace0+4*channel,0x10000);
     fixture_write<std::uint32_t>(ram.data(),0x4bad28+4*channel,0x10000+saved.block*0x10000+saved.offset);
     fixture_write<std::uint32_t>(ram.data(),0x4bad40+4*channel,0x90000);
@@ -114,9 +117,10 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     auto program=std::make_shared<const vm::Program>(std::move(blocks));vm::Channel state{program,{0,0},saved,0,0,0};check(native.restore_channel(channel,state)==vm::Status::completed);
     for(unsigned i=0;i<ticks;++i){R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
         o2_0068C660_0x68c660(ram.data(),&ctx,&runtime);check(ctx.pc==0xdeadbeef);
-        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters,&sequence.owner});check(result.status==vm::Status::yielded);
+        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene,&session_counters,&sequence.owner,&lighting.owner});check(result.status==vm::Status::yielded);
         compare(native,ram,channel,flags,timers,signals);scene.compare_original(ram);++invocations;
         sequence.compare_original(ram);
+        lighting.compare_original(ram);
         check(std::memcmp(session_counters.snapshot().data(),ram.data()+0x4bad70,24)==0);
     }
 }
@@ -140,6 +144,8 @@ void o2_00680220_0x680220(std::uint8_t*,R5900Context* c,PS2Runtime*){messages.em
 void o2_00680850_0x680850(std::uint8_t*,R5900Context* c,PS2Runtime*){queries.push_back(GPR_U32(c,4));SET_GPR_S32(c,2,predicate_value);done(c);}
 PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
     if(at==0x1b02d0)return mode;
+    if(at==0x107ab0)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),s=GPR_U32(c,5),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d&&s<=0x800000&&n<=0x800000-s);std::memmove(r+d,r+s,n);done(c);};
+    if(at==0x107c68)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d);std::memset(r+d,int(GPR_U32(c,5)&255),n);done(c);};
     switch(at){
 #include "original_lookup.inc"
     default:throw std::runtime_error("Unqualified original VM dispatch "+std::to_string(at));
@@ -201,11 +207,20 @@ int main()try{
     {std::vector<std::byte> b;emit(b,0xe8,{2,123});bool rejected=false;try{const vm::Program p({b});}catch(const std::invalid_argument&){rejected=true;}check(rejected);}
     for(unsigned profile=0;profile<24;++profile)for(const auto desired:{0u,1u,2u,0xffffffffu}){
         std::vector<std::byte> b;emit(b,0x12);emit(b,0x14,{desired});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);
-        emit(b,0x10,{255});emit(b,0x11,{0});emit(b,0x13,{0x123400ff,0xffff1234});emit(b,0x15,{254});emit(b,0x15,{255});
+        emit(b,0x10,{31});emit(b,0x11,{0});emit(b,0x13,{0x1234001f,0xffff1234});emit(b,0x15,{30});emit(b,0x15,{31});
         emit(b,0x16,{0x12340081,0xffff8001,0x12347fff,0xffffffff});emit(b,0x17,{profile%2?profile+1:profile,desired});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);
         const auto end=emit(b,0xa);run({b},{0,end},2,profile%6,std::uint8_t(profile%4),false,0,profile);
     }
-    {std::vector<std::byte> b;emit(b,0x10,{256});bool rejected=false;try{const vm::Program p({b});}catch(const std::invalid_argument&){rejected=true;}check(rejected);}
+    for(const auto op:{0x10u,0x11u,0x13u,0x15u})for(const auto index:{32u,127u,255u}){
+        std::vector<std::byte> b;emit(b,op,{index,123});bool rejected=false;try{const vm::Program p({b});}catch(const std::invalid_argument&){rejected=true;}check(rejected);}
+    {vm::SequenceControl owner;vm::SequenceControlState invalid;invalid.count=33;check(!owner.restore(invalid));
+        check(owner.snapshot().count==0);check(!owner.active(32,true));check(!owner.select(255,7));check(!owner.cancel_if_selected(255));}
+    for(unsigned bank=0;bank<8;++bank){std::vector<std::byte> b;emit(b,0x20,{bank});if(bank>=4)emit(b,0x20,{0});
+        for(unsigned i=0;i<32;++i)emit(b,0x23,{0x12340000u|i});
+        emit(b,0x25);
+        for(unsigned i=0;i<32;++i)emit(b,0x24,{i});
+        emit(b,0x23,{7});const auto end=emit(b,0xa);run({b},{0,end},2,bank%6);}
+    for(const auto op:{0x23u,0x24u})for(const auto index:{32u,255u}){std::vector<std::byte> b;emit(b,op,{index});bool refused=false;try{const vm::Program p({b});}catch(const std::invalid_argument&){refused=true;}check(refused);}
     // Independent complete opcode16/helper execution, including precision edges
     // around the signed boundary, odd values and all exponent-scale regions.
     {std::vector<std::uint8_t> ram(0x800000);vm::SequenceControl native;std::uint32_t seed=0x4f31a9b2;
