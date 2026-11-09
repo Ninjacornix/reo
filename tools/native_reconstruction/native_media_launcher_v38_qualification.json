@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "status": "V38 matching SDK publication, launcher media checks and headless desktop checks passed",
+  "launcher_worktree": "C:\\Users\\Ninjacornix\\reo-launcher-native-media",
+  "launcher_branch": "fix/launcher-progress-overlay",
+  "launcher_revision": "e860b8b612a62cfcdcaca66f619f5fdc0ea84a43",
+  "launcher_tracked_worktree_clean": true,
+  "executable_sha256": "1f6853aad57b6125d6ed3f20d5ed0ddd853fc67fb5a1330da7e8da5b5aa597a5",
+  "media_checks": {
+    "command": [
+      "dotnet",
+      "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-media-build-v10\\bin\\Reo.Launcher.CrossTests\\debug\\Reo.Launcher.CrossTests.dll",
+      "--native-media-only"
+    ],
+    "exit_code": 0,
+    "observed_output": {
+      "passed": 34,
+      "failures": []
+    },
+    "output_capture": "structured tool return retained in session; this record transcribes that exact observed result"
+  },
+  "desktop_headless": {
+    "passed": true,
+    "pages": 12,
+    "checks": 63,
+    "mediaChecked": false
+  },
+  "source_sha256": {
+    "launcher/GameSession.cs": "59cd3acba1cea0dbb45ad18f53d70dcd0a1a950d288f0259c6addcb761e6b638",
+    "launcher/NativeMoviePreparation.cs": "2054c96e7a22386c2cde57ba811054a3f0a68265e74c25eb59ab302921c5ef16",
+    "launcher/cross-tests/NativeGameSessionCheck.cs": "d4b57bf8d360897820f2e2b17e1f1f62331c569e9343e990f062447acfa32389",
+    "launcher/cross-tests/NativeMoviePreparationTests.cs": "b99de84cb179c7a59c570456c224982d6a34f71cc99cc97df3f9623ee053f027",
+    "launcher/cross-tests/Program.cs": "c76ec1433eb15205340118f8c0c8fb38eba578cb9a8ed5e263af420e1613bdfc",
+    "launcher/desktop/HeadlessChecks.cs": "ad04aa31aef294ac61819198adbbb1651d949ec130c73553d2c53e7246f40ed0",
+    "launcher/desktop/Program.cs": "a61a47805a25edf4bfc3d9bf7b24f6d5f4c0710613fca0de287b427493bab080",
+    "launcher/desktop/Reo.Launcher.Desktop.csproj": "7338c4fa2f5f019e02a947bf619f1f0fb79326a035b4e26408e2ca54474b4555",
+    "launcher/desktop/packages.lock.json": "91be6b1b7a10ef677c92476b74c6c725f665ebfa91d4a5f1a4776e6be906b9a3"
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/launcher-desktop-headless-v2/report.json": "83aa88ae9fcf7fe7a8db8346645b8639ab2f9df9cf225ceba33076cd7174aec5",
+    "build-native-sjuni/native-media-sdk-published-v38/sdk-publication-check.json": "86d40529d0480fba183e7f15edd7d80bdd283c60d0112f84433d9e555e750538",
+    "build-native-sjuni/candidate-work-v38-retry1/candidate-build-result.json": "a72f174f9e281a890618b2fae763c2cdd9779f6b13ec4eacda538b9c8e724640",
+    "build-native-sjuni/native-media-sdk-v38/native-media-sdk-packaging-receipt.json": "4e0fcfbcbd9739a467d3710cfc3f18c6d3ed168a449231c91d21973275cc77d6",
+    "build-native-sjuni/native-media-sdk-published-v38/native-media.json": "01ae4494474cab5497f15faaac4a640e6f26938cb797d60108f928668f284261",
+    "build-native-sjuni/launcher-media-build-v10/bin/Reo.Launcher.CrossTests/debug/Reo.Launcher.CrossTests.dll": "c1931c88efab19476cc918be57a8e25b63a75603d19808438fdf9d98dd895e29",
+    "build-native-sjuni/launcher-media-build-v10/bin/Reo.Launcher.CrossTests/debug/Reo.Launcher.Core.dll": "2604c916faac77865a3bd91e4459558b39cb582ef08eb9b6dc52786a806aabd2",
+    "build-native-sjuni/launcher-media-build-v10/bin/Reo.Launcher.CrossTests/debug/XINPUT1_4.dll": "165ff92734de167053ceef84780e43a94c8bb5a92851282f01c80550f9f8f5ed",
+    "build-native-sjuni/launcher-desktop-final-v2/bin/Reo.Launcher.Desktop/debug/Outbreak.Launcher.dll": "20176094b0a9ba7d1bafdc0edde91c3afb07fc04d692ccf0752eba2958d8f0dc",
+    "build-native-sjuni/launcher-desktop-final-v2/desktop-restored-packages.lock.json": "8ebe44a559204065dbd048af14cd079b514757a88a6f39c09569c9d29a2a56d4"
+  },
+  "step3_complete": false,
+  "limitations": [
+    "The headless run renders isolated Avalonia pages and checks controls; it does not execute a physical desktop click or the game through a constructed launcher window.",
+    "Actual game launch evidence uses the same GameSession core through its explicit headless developer entry point.",
+    "Desktop restore removed an unrelated osx-arm64 lock section. The resulting lock is retained in evidence and only that generated change was restored; the launcher working tree is clean.",
+    "This qualification records launcher/package checks only; coherent game/audio/video acceptance is separate."
+  ]
+}
