@@ -2,6 +2,7 @@
 #include "../gameplay_actors/entity.hpp"
 #include "../gameplay_actors/hit.hpp"
 #include "../gameplay_actors/input.hpp"
+#include "../gameplay_collision/actors.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -11,6 +12,14 @@ namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
 struct Position {float x{},y{},z{};};
+struct ActorCollision {
+    gameplay_collision::Vec3 local_center,previous_center_offset,displacement;
+    float radius{};
+    bool contact{},pose_ready{};
+    std::optional<gameplay_collision::Vec3> point,normal,joint_two_position;
+    std::uint16_t route_ticks{};
+    gameplay_collision::actors::Basis basis;
+};
 // One canonical native actor. The health/status/hit fields are inherited once;
 // native functions operate on this same object, not mirrored byte records.
 struct Actor : actors::Entity,actors::HitActor {
@@ -31,6 +40,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t surface_kind{255},surface_material{255};
     std::uint16_t surface_attributes{};
     Position surface_normal{0,1,0};
+    ActorCollision collision;
     input::Frame input;
 };
 struct Session : actors::HitSession {
