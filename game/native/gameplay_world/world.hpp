@@ -23,11 +23,16 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t transient_marker{},grid{};
     float grid_response{};
     Position position{};
+    Position previous_position{};
+    std::array<std::int16_t,4> orientation{},previous_orientation{};
+    std::uint32_t action_elapsed{},control_elapsed{};
     input::Frame input;
 };
 struct Session : actors::HitSession {
-    gameplay_session::Random random;
+    gameplay_session::Random random{};
     gameplay_session::Options options;
+    std::uint8_t previous_primary{},previous_secondary{};
+    bool inventory_modal{};
 };
 struct Profile {
     std::vector<input::Remap> layouts;

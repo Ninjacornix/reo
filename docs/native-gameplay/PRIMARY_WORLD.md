@@ -53,3 +53,10 @@ These are source/fixture findings, not a live slowdown diagnosis.
 Actual actor/scenario callers, full behavior/animation/resource providers,
 enemy/auxiliary families, semantic save snapshots and game acceptance remain
 Stage 4 gates. This owner has not been installed into the game candidate.
+
+The subsequent [native behavior consumer](ACTOR_BEHAVIOR.md) now connects this
+primary frame to native behavior orchestration and the native status/hit cores.
+It adds transform history, saturating action/control invocation counters and
+shared action snapshots to these canonical objects. Individual action/effect
+providers and game installation remain explicit gaps; the newer qualification
+includes a fresh regression of this owner's original-frame/lifetime comparisons.
