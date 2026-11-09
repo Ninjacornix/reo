@@ -89,8 +89,17 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_PULSES
 #include "tools/native_reconstruction/resource_pulses_tests.inc"
 #endif
+#ifdef REO_RESOURCE_STATIC
+#include "tools/native_reconstruction/resource_static_tests.inc"
+#endif
 int main(int argc,char** argv)try{
-    check(argc==2);const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
+    check(argc==
+#ifdef REO_RESOURCE_STATIC
+        3
+#else
+        2
+#endif
+    );const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
     for(unsigned asset=0;asset<corpus.size();asset+=2){
         auto bank=e::EffectBank::import(corpus[asset],corpus[asset+1]);++banks;
         for(unsigned profile=0;profile<3;++profile){
@@ -157,6 +166,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_PULSES
     compare_resource_pulses(corpus,ram);
 #endif
+#ifdef REO_RESOURCE_STATIC
+    compare_resource_static(argv[2],ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
@@ -167,10 +179,16 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_PULSES
     <<",\"resource_pulse_frames\":"<<resource_pulse_frames<<",\"resource_pulse_emissions\":"<<resource_pulse_emissions<<",\"resource_pulse_refusals\":"<<resource_pulse_refusals
 #endif
+#ifdef REO_RESOURCE_STATIC
+    <<",\"static_banks\":"<<static_banks<<",\"static_roots\":"<<static_roots<<",\"static_matrices\":"<<static_matrices<<",\"static_lookups\":"<<static_lookups<<",\"static_large_roots\":"<<static_large_roots<<",\"static_refusals\":"<<static_refusals
+#endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;
 }catch(const std::exception& error){std::cerr<<error.what()
 #ifdef REO_RESOURCE_PULSES
     <<" pulse frames="<<resource_pulse_frames<<" emissions="<<resource_pulse_emissions
+#endif
+#ifdef REO_RESOURCE_STATIC
+    <<" static bank="<<static_banks<<" root="<<static_roots
 #endif
     <<'\n';return 1;}

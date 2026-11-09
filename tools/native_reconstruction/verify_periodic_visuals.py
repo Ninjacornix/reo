@@ -18,6 +18,7 @@ def main():
     p.add_argument('--corpus', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--resource-pulses', action='store_true')
+    p.add_argument('--resource-static', action='store_true')
     args = p.parse_args()
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
@@ -34,6 +35,7 @@ def main():
         overlay[bank] = path.read_bytes()
     pending = [0x1d3350, 0x1a31b0, 0x1a34b0, 0x1a3500, 0x6525d0, 0x6535c0, 0x651850, 0x652ce0, 0x5d9680]
     if args.resource_pulses: pending += [0x5925c0]
+    if args.resource_static: pending += [0x1d3100,0x372490]
     ports = [0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
     entries = {}
     while pending:
@@ -66,6 +68,7 @@ def main():
     units=list(dict.fromkeys(units+SURFACE_WORLD_UNITS))
     if args.resource_pulses:
         units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_scenario/scene_resources.cpp','animation/weapon_program.cpp']]
+    if args.resource_static: units += ['game/native/gameplay_world/resource_static_assets.cpp']
     files = list(units)
     frozen = {}
     for name in files:
@@ -84,6 +87,8 @@ def main():
         frozen[name] = (ROOT / name).read_bytes()
     if args.resource_pulses:
         name='tools/native_reconstruction/resource_pulses_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_static:
+        name='tools/native_reconstruction/resource_static_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
                   selected_visual_family='variant0 logical36/37/38, flags1A193, null parent, complete6535C0 callback',
@@ -106,7 +111,7 @@ def main():
         (out / 'tests.cpp').write_bytes(frozen[fixture])
         reference = frozen[helper].decode().replace('pc{},branch_pc{},fcr31{}', 'pc{},branch_pc{},fcr31{},vu0_vpu_stat{}')
         reference = reference.replace('Register r[32];', 'Register r[32];std::uint64_t lo{},hi{};')
-        if args.resource_pulses: reference += '\n#define FPU_C_EQ_S(a,b) ((a)==(b))\n'
+        if args.resource_pulses or args.resource_static: reference += '\n#define FPU_C_EQ_S(a,b) ((a)==(b))\n'
         reference += '\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define SRA32(a,b) (static_cast<std::int32_t>(a) >> (static_cast<std::uint32_t>(b)&31))\n#define FPU_CVT_W_S(a) static_cast<std::int32_t>(a)\n#define PS2_VOPMUL(a,b) _mm_mul_ps(_mm_shuffle_ps((a),(a),_MM_SHUFFLE(3,0,2,1)),_mm_shuffle_ps((b),(b),_MM_SHUFFLE(3,1,0,2)))\n'
         (out / 'reference.hpp').write_text(reference)
         body = '\n'.join(frozen[n].decode() for n in originals)
@@ -126,13 +131,24 @@ def main():
         raw = overlay['o2'][0x73e110 - 0x570000:0x73e110 - 0x570000 + 36]
         record['owned_transform_switch_table'] = dict(address='0x73e110', bytes=raw.hex())
         init='inline void owned_constants(std::uint8_t* memory){const std::uint8_t bytes[]{' + ','.join(str(v) for v in raw) + '};std::memcpy(memory+0x73e110,bytes,sizeof bytes);'
-        if args.resource_pulses:
+        if args.resource_pulses or args.resource_static:
             record['pulse_math_constants']={}
             for at,size in [(0x22fe20,32),(0x241c78,40),(0x38b290,4)]:
                 value=main_read(at,size) if at<0x370000 else overlay['o0'][at-0x370000:at-0x370000+size]
                 record['pulse_math_constants'][hex(at)]=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
+        if args.resource_static:
+            inventory=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1/members.json';assert sha(inventory)=='276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2'
+            members=json.loads(inventory.read_bytes());selected=[m for m in members if m.get('names') and m['names'][-1].upper().startswith('DEF') and m['names'][-1].upper().endswith('.NBD')]
+            assert len(selected)==4
+            obj=json.loads((ROOT/'build-native-sjuni/resource-static-asset-audit-v1.json').read_bytes());assert len(obj)==12
+            selected += [entry['asset'] for entry in obj]
+            record['static_assets']=selected;record['static_asset_audit_sha256']=sha(ROOT/'build-native-sjuni/resource-static-asset-audit-v1.json')
+            with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb') as iso,(out/'owned_static_nbd.bin').open('wb') as data:
+                data.write(len(selected).to_bytes(4,'little'))
+                for member in selected:
+                    iso.seek(member['iso_offset']);payload=iso.read(member['bytes']);assert hashlib.sha256(payload).hexdigest()==member['sha256'];data.write(len(payload).to_bytes(4,'little')+payload)
         env = dict(os.environ)
         env['PATH'] = str(args.compiler.resolve().parent) + os.pathsep + env.get('PATH', '')
         binary = out / 'checks.exe'
@@ -140,8 +156,9 @@ def main():
                    '-Wno-unused-label', '-Wno-unused-parameter', '-fno-fast-math', '-ffp-contract=off', '-I' + str(out), '-I' + str(out / 'source')]
         command += [str(out / 'source' / name) for name in units] + [str(out / 'tests.cpp'), '-o', str(binary)]
         if args.resource_pulses: command.insert(1,'-DREO_RESOURCE_PULSES=1')
+        if args.resource_static: command.insert(1,'-DREO_RESOURCE_STATIC=1')
         record['command'] = command
-        for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')])]:
+        for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else []))]:
             result = subprocess.run(cmd, env=env, capture_output=True, timeout=180)
             (out / (label + '.stdout.txt')).write_bytes(result.stdout)
             (out / (label + '.stderr.txt')).write_bytes(result.stderr)

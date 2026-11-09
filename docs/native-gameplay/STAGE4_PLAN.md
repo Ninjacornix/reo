@@ -117,6 +117,11 @@ closes591AE0/5B42B0 in the canonical table and template owners, with all five
 owned item-template sections and the complete signed selector domain compared.
 The allocator preserves reserved slot0 and the255-active gate. This supplies
 descriptor creation; actual instance/resource factories remain open.
+The [static resource asset follow-up](RESOURCE_STATIC_ASSETS.md) imports actual
+owned NBD forests into immutable primary part poses, with full signed lookup
+comparisons. This removes the need for controlled matrices on admitted roots
+when construction adopts it. Two larger-part roots remain explicit unavailable
+cells under the current six-part primary contract; the factory is still open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a
