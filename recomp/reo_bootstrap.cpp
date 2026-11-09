@@ -1239,13 +1239,15 @@ int main(int argc, char* argv[]) {
     const bool nativeMediaWindow = nativeMovieRequest && !std::strcmp(nativeMovieRequest, "1");
     const char* backgroundRequest = std::getenv("REO_NATIVE_MEDIA_BACKGROUND_TEST");
     const bool backgroundMediaTest = nativeMediaWindow && backgroundRequest &&
-        !std::strcmp(backgroundRequest, "1") && !std::getenv("REO_HEADLESS");
+        (!std::strcmp(backgroundRequest, "1") || !std::strcmp(backgroundRequest, "2")) &&
+        !std::getenv("REO_HEADLESS");
+    const bool captureBackgroundMediaTest = backgroundMediaTest && !std::strcmp(backgroundRequest, "2");
     if (nativeMediaWindow) {
         // raylib otherwise waits inside PollInputEvents while minimized, before
         // copying GLFW's close flag. Keep the existing vblank pacing in run().
         SetConfigFlags(FLAG_WINDOW_ALWAYS_RUN);
         // Explicit developer fixture only: never activate a test on the user's
-        // desktop. Create hidden, then show minimized without activation below.
+        // desktop. Create hidden, then show without activation below.
         if (backgroundMediaTest) SetConfigFlags(FLAG_WINDOW_HIDDEN);
     }
 #endif
@@ -1258,10 +1260,20 @@ int main(int argc, char* argv[]) {
 
 #if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
     if (nativeMediaWindow && IsWindowReady()) {
-        if (backgroundMediaTest)
-            ShowWindow(static_cast<HWND>(GetWindowHandle()), SW_SHOWMINNOACTIVE);
+        if (backgroundMediaTest) {
+            if (captureBackgroundMediaTest) {
+                // Window-only compositor capture needs a non-minimized surface.
+                // Keep its original geometry and place it behind other windows.
+                if (!SetWindowPos(static_cast<HWND>(GetWindowHandle()), HWND_BOTTOM, 0, 0, 0, 0,
+                                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW)) {
+                    fprintf(stderr, "[NATIVE-HOST-MOVIE-ERROR] background capture window setup failed\n");
+                    return 1;
+                }
+                fprintf(stderr, "[NATIVE-MEDIA-WINDOW] capability=REO_NATIVE_MEDIA_BACKGROUND_CAPTURE_V1\n");
+            } else ShowWindow(static_cast<HWND>(GetWindowHandle()), SW_SHOWMINNOACTIVE);
+        }
         fprintf(stderr, "[NATIVE-MEDIA-WINDOW] minimized_event_pump=enabled background_test=%d capability=REO_NATIVE_MEDIA_BACKGROUND_TEST_V1\n",
-                backgroundMediaTest ? 1 : 0);
+                backgroundMediaTest ? (captureBackgroundMediaTest ? 2 : 1) : 0);
     }
 #endif
 

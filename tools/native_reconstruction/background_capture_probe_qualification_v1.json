@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "status": "owned background window captured through compositor without activation",
+  "source_sha256": "75977f0517dbec553a207e62dc015f85457a88c7043c7eff3d3b62cf4ed21e56",
+  "receipt_sha256": "bbb0ee5a765bebf463cdc8d2dcc82534a68db3d9cd772fdcffc585f1aec8a595",
+  "capture_sha256": "b973a4f571af6df93d73a102e40c069e04967f594096c068afe06659723305d8",
+  "window_geometry_changed": false,
+  "focus_requested": false,
+  "desktop_read": false,
+  "game_launched": false,
+  "limitations": [
+    "Synthetic raylib window; native game compositor capture is a separate test.",
+    "Foreground compared at probe/capture boundaries, not continuous activation history."
+  ]
+}
