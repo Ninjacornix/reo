@@ -10,6 +10,7 @@ struct SceneMatrixChannel {
     std::uint8_t interaction{}, progress{}, playback{}, model_slot{}, program{},
         cursor{}, curve{}, transform{};
     std::int16_t time{}, segment{}, sound_cursor{};
+    std::uint8_t source_type{};
     ModelMatrix matrix{};
 };
 enum class SceneMatrixSelection {
@@ -27,7 +28,22 @@ enum class SceneMatrixStatus {
     unadmitted_profile,
     binding_refused,
     unsupported_numeric,
+    unavailable_sound,
+    sound_refused,
     closed
+};
+class SceneMatrixSoundSink {
+  public:
+    virtual ~SceneMatrixSoundSink() = default;
+    virtual bool admitted() const noexcept = 0;
+    // Selected6B60E0 request: current matrix translation, model sound resource,
+    // and low event halfword. The actual room/audio owner resolves the cue.
+    virtual bool emit(transform_math::Vector, std::uint8_t sound_resource,
+                      std::uint16_t event) = 0;
+};
+struct SceneMatrixPlaybackResult {
+    SceneMatrixStatus status{SceneMatrixStatus::completed};
+    std::size_t quanta{}, sounds{};
 };
 struct SceneMatrixResult {
     SceneMatrixStatus status{SceneMatrixStatus::completed};
@@ -51,6 +67,9 @@ class SceneMatrixPrograms final
     SceneMatrixResult select(std::uint32_t authored,
                              SceneMatrixSelection) noexcept;
     SceneMatrixStatus evaluate_first(std::size_t) noexcept;
+    SceneMatrixPlaybackResult advance(std::size_t, bool double_quantum,
+                                      SceneMatrixSoundSink *) noexcept;
+    SceneMatrixStatus source_type(std::size_t,std::uint8_t) noexcept;
     void close() noexcept { closed_ = true; }
 
   private:
@@ -63,5 +82,7 @@ class SceneMatrixPrograms final
     std::array<std::shared_ptr<ModelMatrix>, 16> matrices_;
     const SceneMatrixTables &tables_;
     bool closed_{};
+    static ModelMatrix evaluate_value(const ModelMatrix &, std::uint8_t,
+                                      float);
 };
 } // namespace reo::native::gameplay_scenario

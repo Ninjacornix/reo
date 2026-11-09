@@ -16,6 +16,9 @@ struct SceneModelState {
     std::array<std::uint8_t,128> visibility{};
     std::array<std::uint32_t,128> styles{};
     std::array<ModelMatrix,128> poses{};
+    // Room importer5C1390 owns this model-indexed sound resource map once.
+    // Missing means not imported; a zero byte remains a valid authored value.
+    std::array<std::optional<std::uint8_t>,128> sound_resources;
 };
 enum class ModelStatus {completed,invalid_authored_id,invalid_pose_slot,invalid_preset,unsupported_numeric};
 // Canonical scene data, simulation-owner thread only. Renderer submission and
@@ -29,6 +32,7 @@ public:
     std::uint8_t resolve(std::uint32_t authored)const noexcept;
     void visibility(std::uint32_t authored,bool set)noexcept;
     void mark_slot_byte(std::uint8_t resolved,std::uint8_t value)noexcept;
+    ModelStatus sound_resource(std::uint32_t model,std::uint8_t value)noexcept;
     ModelStatus style(std::uint32_t authored,std::uint32_t word)noexcept;
     void reset_styles()noexcept;
     std::optional<ModelMatrix> pose(std::uint32_t slot)const noexcept;

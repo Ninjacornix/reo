@@ -53,6 +53,10 @@ ModelStatus SceneModels::style(std::uint32_t authored,std::uint32_t word)noexcep
     const auto slot=remap_[id];if(slot>=128)return ModelStatus::invalid_pose_slot;
     state_.styles[slot]=word;return ModelStatus::completed;
 }
+ModelStatus SceneModels::sound_resource(std::uint32_t model,std::uint8_t value)noexcept{
+    if(model>=128)return ModelStatus::invalid_pose_slot;
+    state_.sound_resources[model]=value;return ModelStatus::completed;
+}
 void SceneModels::mark_slot_byte(std::uint8_t slot,std::uint8_t byte)noexcept{
     if(slot<128)state_.visibility[slot]=byte;
     else{const unsigned index=(slot-128u)/4,shift=8u*((slot-128u)%4);const auto mask=std::uint32_t(255)<<shift;

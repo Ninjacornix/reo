@@ -16,7 +16,8 @@ std::uint16_t turn(float radians) {
         throw std::domain_error("Native scene turn profile");
     return std::uint16_t(std::int64_t(scaled));
 }
-ModelMatrix evaluate(const ModelMatrix &base, std::uint8_t mode, float value) {
+} // namespace
+ModelMatrix SceneMatrixPrograms::evaluate_value(const ModelMatrix &base, std::uint8_t mode, float value) {
     transform_math::require_profile();
     if (!std::isfinite(value))
         throw std::domain_error("Native scene curve finite profile");
@@ -49,7 +50,6 @@ ModelMatrix evaluate(const ModelMatrix &base, std::uint8_t mode, float value) {
             throw std::domain_error("Native scene position finite profile");
     return matrix;
 }
-} // namespace
 SceneMatrixPrograms::SceneMatrixPrograms(
     SceneControls &controls, SceneModels &models, SceneModelBindings &bindings,
     FlagState &flags, const std::uint16_t &room, const State &initial)
@@ -96,7 +96,7 @@ SceneMatrixPrograms::evaluate_first(std::size_t index) noexcept {
     const float divided = product / float(keys[1].time - keys[0].time);
     const float value = divided + keys[0].value;
     try {
-        channel.matrix = evaluate(*base, channel.transform, value);
+        channel.matrix = evaluate_value(*base, channel.transform, value);
         return SceneMatrixStatus::completed;
     } catch (const std::exception &) {
         return SceneMatrixStatus::unsupported_numeric;
