@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+from effect_work_sources import SURFACE_WORLD_UNITS
 from audit_retail_effect_descriptors import compare_source, elf_reader
 ROOT = Path(__file__).resolve().parents[2]
 sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
@@ -56,6 +57,7 @@ def main():
     units += ['game/native/transform_math/transform_math.cpp', 'game/native/gameplay_actors/entity.cpp']
     units += ['game/native/gameplay_scenario/' + n + '.cpp' for n in ['periodic_effects', 'scene_controls', 'flags', 'fog']]
     units += ['game/native/gameplay_session/session.cpp', 'game/native/gameplay_tasks/tasks.cpp']
+    units=list(dict.fromkeys(units+SURFACE_WORLD_UNITS))
     files = list(units)
     frozen = {}
     for name in files:

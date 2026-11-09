@@ -1,10 +1,13 @@
 #pragma once
 #include "geometry.hpp"
 #include "work.hpp"
+#include "surface_work.hpp"
+#include "../gameplay_scenario/surface_effects.hpp"
 #include "../gameplay_scenario/periodic_effects.hpp"
 #include "../gameplay_scenario/fog.hpp"
 #include <list>
 #include <mutex>
+namespace reo::native::gameplay_contact_world {class RoomResources;}
 namespace reo::native::gameplay_effects {
 struct PieceBinding {std::size_t root{},mesh{};std::uint8_t material{},selector{};};
 struct VisualBinding {std::size_t group{};std::vector<PieceBinding> pieces;};
@@ -49,7 +52,7 @@ struct VisualReport {VisualStatus status{VisualStatus::completed};std::size_t vi
 // Canonical native visual/resource owner for the admitted periodic family.
 // Simulation calls are serialized; only immutable frame acquisition is shared
 // with rendering. A retained frame/visual cannot retarget a recycled native ID.
-class PeriodicVisuals final:public gameplay_scenario::PeriodicEmitter,public WorkBackend {
+class PeriodicVisuals final:public gameplay_scenario::PeriodicEmitter,public WorkBackend,public SurfaceVisuals,public gameplay_scenario::SurfaceEffects {
 public:
     explicit PeriodicVisuals(std::shared_ptr<const EffectBank>);
     PeriodicVisuals(std::shared_ptr<const EffectBank>,gameplay_session::Random&);
@@ -59,8 +62,17 @@ public:
     PeriodicVisuals& operator=(const PeriodicVisuals&)=delete;
     bool admitted()const noexcept override;
     bool bound_to(const gameplay_session::Random&)const noexcept override;
+    bool bound_to(const gameplay_world::World&)const noexcept override;
+    // Borrowed room/modulation owners outlive this visual owner and callbacks.
+    // The World lease owns canonical actors/session; this creates no shadows.
+    bool bind_surfaces(std::shared_ptr<gameplay_world::World>,gameplay_contact_world::RoomResources&,Modulation&,SurfaceProfile)noexcept;
+    bool configure_surface(std::uint32_t,const std::array<std::uint32_t,4>&)noexcept override;
+    struct SurfaceCreated {WorkStatus status{WorkStatus::unavailable};std::size_t attempted{},created{};std::array<gameplay_actors::EntityId,8> identities;};
+    SurfaceCreated create_surface_work()noexcept;
+    std::optional<SurfaceState> surface_state(const gameplay_actors::EntityId&)const noexcept;
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
     WorkCreated create(const WorkRequest&)noexcept override;
+    WorkStatus emit_surface(const SurfaceEmission&)noexcept override;
     WorkStatus refresh_companion()noexcept override;
     VisualReport update(transform_math::Vector camera)noexcept;
     VisualReport update_with_view(transform_math::Vector camera,const transform_math::Matrix&)noexcept;
@@ -74,6 +86,8 @@ private:
     struct Node;
     struct Editing;
     class Edit;
+    struct SurfaceRuntime;
+    class SurfaceSink;
     struct Piece {bool active{};PieceOutput output;};
     gameplay_actors::EntityStore entities_{{168}};
     std::list<gameplay_actors::EntityId> order_;
@@ -81,6 +95,7 @@ private:
     std::shared_ptr<const EffectBank> bank_;
     gameplay_session::Random* random_{};
     gameplay_scenario::Fog* fog_{};
+    std::unique_ptr<SurfaceRuntime> surfaces_;
     std::shared_ptr<Editing> editing_;
     mutable std::mutex publication_;
     std::shared_ptr<const EffectFrame> published_;
@@ -91,6 +106,8 @@ private:
     bool retire_node(gameplay_actors::EntityId)noexcept;
     void publish(std::shared_ptr<const EffectFrame>)noexcept;
     VisualReport update_impl(transform_math::Vector,const std::optional<transform_math::Matrix>&)noexcept;
+    WorkCreated create_impl(const WorkRequest&,bool internal)noexcept;
+    WorkStatus emit_surface_impl(const SurfaceEmission&,bool internal)noexcept;
 };
 // Complete652CE0/370420/370FE0 finite SDK-profile position policy. No host
 // clock or PS2 vector/register state is used by the production implementation.

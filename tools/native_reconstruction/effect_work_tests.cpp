@@ -9,6 +9,11 @@
 #include <thread>
 #include <set>
 #include <tuple>
+#ifdef REO_SURFACE_WORK_TESTS
+#include <filesystem>
+#include "game/native/gameplay_contact_world/contacts.hpp"
+std::string surface_test_directory;
+#endif
 namespace e=reo::native::gameplay_effects;
 namespace s=reo::native::gameplay_scenario;
 namespace m=reo::native::transform_math;
@@ -91,8 +96,17 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 }
 #include "effect_work_tests.inc"
 #include "fog_tests.inc"
+#ifdef REO_SURFACE_WORK_TESTS
+#include "surface_work_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==3);const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
+#ifdef REO_SURFACE_WORK_TESTS
+    surface_test_directory=std::filesystem::path(argv[1]).parent_path().string();
+    compare_surface_work(memory,corpus);
+    std::cout<<"{\"checks\":"<<checks<<",\"surface_frames\":"<<surface_frames<<",\"surface_emissions\":"<<surface_emissions<<",\"surface_factory_cases\":"<<surface_factory_cases<<",\"surface_owner_frames\":"<<surface_owner_frames<<",\"modulation_cases\":"<<modulation_cases<<",\"original_helper_calls\":"<<calls<<",\"game_run\":false}\n";
+    return 0;
+#endif
     compare_general_work(memory,corpus);
     compare_fog(memory,corpus,argv[2]);
     for(unsigned asset=0;asset<corpus.size();asset+=2){

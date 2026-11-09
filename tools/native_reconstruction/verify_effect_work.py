@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import subprocess
 from audit_retail_effect_descriptors import compare_source, elf_reader
+from effect_work_sources import SURFACE_WORLD_UNITS
 ROOT = Path(__file__).resolve().parents[2]
 sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -17,6 +18,8 @@ def main():
     p.add_argument('--corpus', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--fog-corpus',type=Path,required=True)
+    p.add_argument('--surface-work',action='store_true')
+    p.add_argument('--trace-surface',action='store_true',help='Debug-only branch observation; never a qualification cohort')
     args = p.parse_args()
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
@@ -32,6 +35,7 @@ def main():
         assert sha(path) == digest
         overlay[bank] = path.read_bytes()
     pending = [0x1d3350, 0x1a31b0, 0x1a34b0, 0x1a3500, 0x654d90,0x6b2200,0x6b23e0,0x5e0680,0x6525d0, 0x653010, 0x6531d0, 0x653e80, 0x5ead70, 0x6535c0, 0x651850, 0x652ce0, 0x5d9680]
+    if args.surface_work:pending += [0x5ea970,0x690490,0x5dfa90,0x616f20,0x617000,0x616310]
     ports = [0x107ab0,0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
     entries = {}
     while pending:
@@ -57,6 +61,8 @@ def main():
     units += ['game/native/transform_math/transform_math.cpp', 'game/native/gameplay_actors/entity.cpp']
     units += ['game/native/gameplay_scenario/' + n + '.cpp' for n in ['periodic_effects', 'scene_controls', 'flags', 'fog']]
     units += ['game/native/gameplay_session/session.cpp', 'game/native/gameplay_tasks/tasks.cpp']
+    units=list(dict.fromkeys(units+SURFACE_WORLD_UNITS))
+    if args.surface_work:units+=['game/native/gameplay_collision/room_objects.cpp']
     files = list(units)
     frozen = {}
     for name in files:
@@ -73,6 +79,8 @@ def main():
     helper = 'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
     for name in originals + [fixture, 'tools/native_reconstruction/effect_work_tests.inc', 'tools/native_reconstruction/fog_tests.inc', helper, Path(__file__).relative_to(ROOT).as_posix()]:
         frozen[name] = (ROOT / name).read_bytes()
+    frozen['tools/native_reconstruction/effect_work_sources.py']=(ROOT/'tools/native_reconstruction/effect_work_sources.py').read_bytes()
+    if args.surface_work:frozen['tools/native_reconstruction/surface_work_tests.inc']=(ROOT/'tools/native_reconstruction/surface_work_tests.inc').read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
                   selected_visual_family='periodic regression plus shared ordinary/oriented/scaled source work callbacks',
@@ -95,11 +103,21 @@ def main():
         (out / 'tests.cpp').write_bytes(frozen[fixture])
         (out / 'effect_work_tests.inc').write_bytes(frozen['tools/native_reconstruction/effect_work_tests.inc'])
         (out / 'fog_tests.inc').write_bytes(frozen['tools/native_reconstruction/fog_tests.inc'])
+        if args.surface_work:
+            (out/'surface_work_tests.inc').write_bytes(frozen['tools/native_reconstruction/surface_work_tests.inc'])
+            skeletons=ROOT/'build-native-sjuni/animation-owned-corpus-v2/owned_skeletons.bin'
+            sr=ROOT/'build-native-sjuni/animation-owned-corpus-v2/receipt.json';sk=json.loads(sr.read_bytes());assert sha(skeletons)==sk['output_sha256']['owned_skeletons.bin']
+            record['surface_skeletons']={'path':str(skeletons),'sha256':sha(skeletons),'receipt_sha256':sha(sr)}
+            (out/'owned_skeletons.bin').write_bytes(skeletons.read_bytes())
         reference = frozen[helper].decode().replace('pc{},branch_pc{},fcr31{}', 'pc{},branch_pc{},fcr31{},vu0_vpu_stat{}')
         reference = reference.replace('Register r[32];', 'Register r[32];std::uint64_t lo{},hi{};')
         reference += '\n#define FPU_C_EQ_S(a,b) ((a)==(b))\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define SRA32(a,b) (static_cast<std::int32_t>(a) >> (static_cast<std::uint32_t>(b)&31))\n#define FPU_CVT_W_S(a) static_cast<std::int32_t>(a)\n#define PS2_VOPMUL(a,b) _mm_mul_ps(_mm_shuffle_ps((a),(a),_MM_SHUFFLE(3,0,2,1)),_mm_shuffle_ps((b),(b),_MM_SHUFFLE(3,1,0,2)))\n'
         (out / 'reference.hpp').write_text(reference)
         body = '\n'.join(frozen[n].decode() for n in originals)
+        if args.trace_surface:
+            assert args.surface_work
+            body=body.replace('label_5eab2c:','label_5eab2c:\n if(general_context=="surface asset=4 case=2 tick=1")std::cerr<<"TRACE joint="<<GPR_U32(ctx,16)<<" upper="<<ctx->f[2]<<" floor="<<ctx->f[21]<<" current="<<transform_read<float>(rdram,GPR_U32(ctx,29)+196)<<" previous="<<transform_read<float>(rdram,GPR_U32(ctx,19)+12*GPR_U32(ctx,16)+4)<<" mask="<<GPR_U32(ctx,18)<<"\\n";\n')
+            record['debug_trace_instrumentation']=True
         (out / 'original_visuals.cpp').write_text(body)
         actual = {Path(n).stem for n in originals}
         names = set(re.findall(r'\b((?:sub|o0|o2)_[0-9A-Fa-f]+_0x[0-9a-f]+)\(rdram', body))
@@ -123,6 +141,14 @@ def main():
             for address,size in [(0x22fe20,32),(0x241c78,32),(0x740200,4),(0x740208,4)]:
                 data=main_read(address,size) if address<0x370000 else overlay['o2'][address-0x570000:address-0x570000+size];target.write('{const std::uint8_t data[]{'+','.join(str(v)for v in data)+'};std::memcpy(memory+'+str(address)+',data,sizeof data);}')
             target.write('}\n')
+        if args.surface_work:
+            with (out/'owned_constants.hpp').open('a') as target:
+                data=overlay['o2'][0x70bf48-0x570000:0x70bf48-0x570000+264]
+                masks=overlay['o2'][0x7123d3-0x570000:0x7123d3-0x570000+4]
+                target.write('inline constexpr std::uint8_t surface_records[]{'+','.join(str(v) for v in data)+'};\n')
+                target.write('inline constexpr std::uint8_t surface_first_mask='+str(masks[3])+',surface_second_mask='+str(masks[0])+';\n')
+                target.write('inline void owned_surface_constants(std::uint8_t* memory){std::memcpy(memory+0x70bf48,surface_records,sizeof surface_records);memory[0x7123d6]=surface_first_mask;memory[0x7123d3]=surface_second_mask;}\n')
+                record['surface_constants']={'table_address':'0x70bf48','table_bytes':data.hex(),'table_sha256':hashlib.sha256(data).hexdigest(),'first_mask':masks[3],'second_mask':masks[0]}
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         fog=args.fog_corpus.resolve();fr=json.loads((fog/'receipt.json').read_bytes());assert len(fr['assets'])==229 and sha(fog/'owned_fog.bin')==fr['package_sha256']
         record['fog_corpus']=dict(receipt=str(fog/'receipt.json'),sha256=sha(fog/'receipt.json'))
@@ -132,6 +158,7 @@ def main():
         binary = out / 'checks.exe'
         command = [str(args.compiler), '-std=c++20', '-O2', '-msse4.1', '-pthread', '-Wall', '-Wextra', '-Wpedantic', '-Werror',
                    '-Wno-unused-label', '-Wno-unused-parameter', '-fno-fast-math', '-ffp-contract=off', '-I' + str(out), '-I' + str(out / 'source')]
+        if args.surface_work:command+=['-DREO_SURFACE_WORK_TESTS=1']
         command += [str(out / 'source' / name) for name in units] + [str(out / 'tests.cpp'), '-o', str(binary)]
         record['command'] = command
         for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin'),str(out/'owned_fog.bin')])]:

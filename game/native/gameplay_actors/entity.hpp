@@ -44,6 +44,7 @@ public:
     EntityStore& operator=(const EntityStore&)=delete;
     EntityCreated create(std::unique_ptr<Entity>) noexcept;
     std::shared_ptr<Entity> acquire(const EntityId&)const noexcept;
+    EntityId identity_of(const Entity&)const noexcept;
     EntityStatus retire(const EntityId&) noexcept;
     std::vector<EntityId> identities()const;
     std::size_t size()const noexcept{return size_;}

@@ -55,6 +55,14 @@ visual consumers and the fog companion through the same168/256 domains.
 These do not close actual animation-event, resource-creation, scene/audio/input,
 network, save-owner, stock-script and game-acceptance gates.
 
+Further component checkpoints include [frame crossings and caller timing](ANIMATION_FRAME_EVENTS.md),
+[player event schedules](ANIMATION_PLAYER_EVENTS.md), [reached event primitives](ANIMATION_EVENT_PRIMITIVES.md),
+[native bank audio routing](AUDIO.md), and [shared water-surface effect work](EFFECT_SURFACE_WORK.md).
+The [explicit floor-type correction](FLOOR_EXPLICIT_SURFACE_TYPES.md) restores
+specific high-bit surface queries while preserving generic floor filtering.
+These have paired source comparisons; they do not establish a fully migrated
+scene/resource/input/network/save owner or native game acceptance.
+
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a
 guest-addressed RAM model. Renderer/model submission remains an explicit Stage 5

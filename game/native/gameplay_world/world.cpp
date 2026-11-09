@@ -57,6 +57,9 @@ std::shared_ptr<Actor> World::resolve(const actors::EntityId& id)const noexcept{
     if(closed_)return{};
     return std::dynamic_pointer_cast<Actor>(entities_.acquire(id));
 }
+actors::EntityId World::identity_of(const Actor& actor)const noexcept{
+    return closed_?actors::EntityId{}:entities_.identity_of(actor);
+}
 std::shared_ptr<Actor> World::primary(std::size_t index)const noexcept{
     return index<primary_.size()?resolve(primary_[index]):nullptr;
 }

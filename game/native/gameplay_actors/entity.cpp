@@ -39,6 +39,16 @@ EntityStatus EntityStore::retire(const EntityId& id)noexcept{
     auto old=std::move(slots_[id.slot_].entity);--size_;old.reset();
     return EntityStatus::completed;
 }
+EntityId EntityStore::identity_of(const Entity& entity)const noexcept{
+    if(closed_)return{};
+    for(std::size_t i=0;i<slots_.size();++i){
+        const auto& slot=slots_[i];
+        if(slot.entity.get()!=&entity)continue;
+        EntityId id;id.domain_=domain_;id.slot_=std::uint32_t(i);id.generation_=slot.generation;
+        return id;
+    }
+    return{};
+}
 std::vector<EntityId> EntityStore::identities()const{
     std::vector<EntityId> result;if(closed_)return result;result.reserve(size_);
     for(std::size_t i=0;i<slots_.size();++i)if(slots_[i].entity){

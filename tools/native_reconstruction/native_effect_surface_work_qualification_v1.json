@@ -1,0 +1,1230 @@
+{
+  "schema": 1,
+  "status": "actual native shared-pool factory, World/room surface callback and scaled children qualified on both compilers",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_effects/periodic_visuals.cpp": "a4e59a22855b944448a5393ee7853c114855620a0722881c5eae0c0b2fdf8f55",
+    "game/native/gameplay_effects/geometry.cpp": "bfe578a45ee31a795f02a33eb46f0668e4da7bc68d347f3796eab41f420e6fdd",
+    "game/native/gameplay_effects/tracks.cpp": "a0983fdbee8f653c9e6f82e062e66ea5bdeaf7171d91d108a747ce6497e3ae25",
+    "game/native/animation/model.cpp": "c5a1b46de9fd4504f0ed0a5ee89c39c9f182abb14c2321f69cd9dde58ef06440",
+    "game/native/animation/model_math.cpp": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe",
+    "game/native/animation/curves.cpp": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b",
+    "game/native/transform_math/transform_math.cpp": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449",
+    "game/native/gameplay_actors/entity.cpp": "ade589a09f0065b946c61d48f4fc976146731d83190e5ce727196829e19b9982",
+    "game/native/gameplay_scenario/periodic_effects.cpp": "0763deb462ead59e39c5c3caf8686bbd3a925afa6b7372441361dc7aa18a8443",
+    "game/native/gameplay_scenario/scene_controls.cpp": "c1fe39d72c305b280bda44c25d0f5bbf6d4a73bf9461b483725691615023a6ad",
+    "game/native/gameplay_scenario/flags.cpp": "539bf411176e58db5ad45722cb753f39ddf527b467347e5c21c18749a9158968",
+    "game/native/gameplay_scenario/fog.cpp": "2da0d2d64736838dde88885deeba2d215c68876691c032ac2b998995e8da6103",
+    "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "game/native/gameplay_tasks/tasks.cpp": "68299c19460aad4a3d9f850ad162ae8064ef140b0cc675dbb570e8fc07cf959a",
+    "game/native/gameplay_effects/surface_work.cpp": "f735c8e749fba5a17e51b62f2ca1d5ecdf53a23313e148118440dca1d03efc66",
+    "game/native/gameplay_world/world.cpp": "40ee7b9c0b8c57e455207b0b72a0d0547d27952009a9cf92000a8117aa076658",
+    "game/native/gameplay_world/linked_models.cpp": "6ce4cf67fe58aa6e8b8eebc936fde9ed7feab1424d0c8366b07d3e267ebaba60",
+    "game/native/gameplay_world/bodies.cpp": "9cb9bd0d5f7e18e14aeccdd481acc609ea2d2d6d886b08072ce4fcb48d8afeb0",
+    "game/native/gameplay_world/model_poses.cpp": "4451cc9df3176681a663f3c266844d50976d3df3c37715ab9f0ba83e23638fdc",
+    "game/native/gameplay_world/model_constraints.cpp": "7a2dad002ac8d3202fc0ba9a5f88d840d63780c7d71043768d2b52b9f840789c",
+    "game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+    "game/native/gameplay_actors/health.cpp": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7",
+    "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+    "game/native/gameplay_collision/response.cpp": "2fb4d52dcb9b51899a05def4a3734f85559e8c2a2a5327203f6e9c5e44aa698c",
+    "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+    "game/native/gameplay_collision/actor_views.cpp": "80a54e075da6b10c9586d084a93ff9f651e7e0ff8b04569a2ec0f55bd7f90fa3",
+    "game/native/animation/constraints.cpp": "7ee5adc664a46a31450602201dbce4cc37bb9d48fd3f0645b222d53131fc897f",
+    "game/native/animation/constraint_math.cpp": "5c87b5248ebeeef3c5853d41f1ff18c06332dd85caad6189899d4d63aa267416",
+    "game/native/gameplay_collision/room_objects.cpp": "7f52c043381e0078f375645f36f44c3e3c05fc5f545a0a4321244e6c8e2d1031",
+    "game/native/gameplay_effects/periodic_visuals.hpp": "347e95724b9d7934e4f1575afda8392f01cb4a46991de0968f55bbb4477c193d",
+    "game/native/gameplay_contact_world/contacts.hpp": "f6ade07d0549d4fe9b6b72786ae157eee16dfa86ef3d42a1890a5ece46400c90",
+    "game/native/gameplay_effects/geometry.hpp": "37cfc83bd8620994b1207cc6080605a7781ee4fb8fd0fa3bd75afc1da46342f9",
+    "game/native/gameplay_effects/tracks.hpp": "897f2d845a548e8acf2ea68c0b0198d9afe23a3c8dfe8ad659a6c2a9df84c360",
+    "game/native/animation/model.hpp": "754180959bf0362bfec15dd08678bff976601a9583cabb581c7cdb0556c55ab8",
+    "game/native/animation/model_math.hpp": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb",
+    "game/native/animation/curves.hpp": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "game/native/gameplay_actors/entity.hpp": "21189b7febb8685ce68db664960c7567704f4f6d3b602dfc817d663bef2d5268",
+    "game/native/gameplay_scenario/periodic_effects.hpp": "9989be9da6e6c1cfd793d9d8c402333066946a9a2ee67d3d8c210e2640da5cdd",
+    "game/native/gameplay_scenario/scene_controls.hpp": "d006f22268a33e3e60c2b37be1e71e965d4960bf65433a8fe401ffc656416ec6",
+    "game/native/gameplay_scenario/action_choices.hpp": "c315448949c2871f01ac954c1c991c026a01e0183717dfca6fe86377230de9be",
+    "game/native/gameplay_scenario/flags.hpp": "a84a096e2e6efa673c6b824713ad2b102a0a4376600a4c08f73acd22306400a0",
+    "game/native/gameplay_scenario/fog.hpp": "0193135175b1122d61d75b075b5f7c4e0816493173d94a375102f12f758fb112",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_tasks/tasks.hpp": "41f711d4754c3bfe4651348c8e2c460c52c3b354c5027804c4cab24a88df2b5f",
+    "game/native/gameplay_effects/surface_work.hpp": "f47c9efc2b9be5f2e83b3f1ccbbcce6c42bab326154c7e6bceaaf2aca91f7511",
+    "game/native/gameplay_world/world.hpp": "ef3832236b0856fb7714e6d7b6245613f2b92780862193c2c8f04e18b81b9a39",
+    "game/native/gameplay_world/linked_models.hpp": "e86d2fd7fa3110b4e25b49506cf50f35b88e937e5655936d22f295de801a6629",
+    "game/native/gameplay_world/linked_model_profile.inc": "4a400a1f8b270d1a0e3702b1d9cfedbf6d07e8f6761d7afb0541138cbf2c7a25",
+    "game/native/gameplay_world/bodies.hpp": "8bb53c9bbf2f2ed1124d7d45cf11ab337d2bcf486e0be37037783399010edeff",
+    "game/native/gameplay_world/model_poses.hpp": "c9d7b12d549e2b92dddd188021eb4ba91d093cb78f3f1ff34be5e93038619710",
+    "game/native/gameplay_world/model_scale_profile.inc": "3dbc9f9dd2c143807cd7b04772de729322a0af3ad1c892bca07077672d88ea1e",
+    "game/native/gameplay_world/model_constraints.hpp": "07d2699fd3c68b2da1ae71e4f7673be321f7013954c5bdb66f7eb5aab972fe91",
+    "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+    "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+    "game/native/gameplay_collision/actor_views.hpp": "c79a6f6afca089408fbdd2fedf6dc99338021fc1e03a25948e40baa0200f45cd",
+    "game/native/animation/constraints.hpp": "dff5ae4fcb83a83e6bc73976661118ff49f7b45fd654538ddf2b5911b164f606",
+    "game/native/animation/constraint_math.hpp": "25a148646b33c3c22e5f26a137e21ba5aae11ef01a8d563c230ddd16469935e4",
+    "game/native/gameplay_collision/room_objects.hpp": "6d77920aecce311a2a94cd71baddcd0fc3b79b45ce04a6df3cdb7de48972af6b",
+    "game/native/gameplay_effects/work.hpp": "5aab1632803b1eb5c5ff4c609296f2f76a71cacb1d62d31f7e939f0ce81752de",
+    "game/native/gameplay_scenario/surface_effects.hpp": "40636c39e98c3825f2129613e1f0f8a52fb4f4f269a9a99f880a7e120b510ec7",
+    "game/native/gameplay_collision/impact_populations.hpp": "1f5a9b781bf68e13292d85c8d3812f4e17f39b58b809295677df17477e072649",
+    "game/native/gameplay_collision/impact_shape_effects.hpp": "eba8a9d4f4dbd6403707deb8b43964606e9a0147836ebcc88105a331d26c639c",
+    "game/native/gameplay_world/collision.hpp": "6bd12b66066d521a48d11198039518856a73518580a9c875d701f8f084fd978e",
+    "game/native/gameplay_scenario/scene_matrix_programs.hpp": "43ed6c0defd01fd9a0f8bc1ea8f6aa5ffd635e38c1c7c726347833e4c9df1786",
+    "game/native/gameplay_scenario/scene_control_types.hpp": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841",
+    "game/native/gameplay_scene/records.hpp": "8f4059ff5be0c27c8ee4b555575816e605448719f875cfc9e9e41cc74c693972",
+    "game/native/gameplay_scenario/interpreter.hpp": "024b21e6392e9c118b48ff1a7a6a63e6020998e331108857d80798a2aa91f7d5",
+    "game/native/gameplay_actors/hit.hpp": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495",
+    "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
+    "game/native/gameplay_world/motion.hpp": "ab2035e7ba54bea2269404dd2946f11f5c9c28f762b310d2aab878165c5515fa",
+    "game/native/gameplay_collision/postmove_view.hpp": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316",
+    "game/native/gameplay_collision/ownership.hpp": "5958fb126cb878e3cd849d1583d9b95e19d9b940b444702f8e78f3ee3e2080d6",
+    "game/native/gameplay_collision/impact_policy.hpp": "8fa6b5faf4decaaadf4fa600720e609f4aa1523ff4a25878109e1c0526b56e0e",
+    "game/native/gameplay_collision/packet_shapes.hpp": "550d71ecf7920e2cff1c647cfcabb7a201311d096d9db9aad9821b3a9c750ff9",
+    "game/native/gameplay_collision/room_damage.hpp": "42dae423275df41f4817096b6d18138944e17974ab3836e1ae4b96b0c403a03e",
+    "game/native/gameplay_scenario/scene_matrix_tables.hpp": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1",
+    "game/native/gameplay_scenario/scene_model_bindings.hpp": "c5ca218f5645af66f166099021ff586671100c5fc824ae205fa6d5c735fd605e",
+    "game/native/gameplay_scenario/model_reference.hpp": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907",
+    "game/native/gameplay_scene/record_pool.hpp": "80547b7a98e4f8d311985882c31e8ea6e7692c35d160670e47a3a29fefd6593e",
+    "game/native/gameplay_actors/status.hpp": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170",
+    "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+    "game/native/gameplay_collision/postmove.hpp": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6",
+    "game/native/gameplay_collision/sweep.hpp": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39",
+    "game/native/gameplay_collision/delivery.hpp": "48682babcf6f1bd25cbb48a905acefc7952a1d2d43b9c8cf7d4a0842f76a828a",
+    "game/native/gameplay_collision/trace.hpp": "494a53ef88e2a916d99ed2b2cfb503a3a9ea5235c6fdef053054f58adb1c7170",
+    "game/native/gameplay_collision/packet_service.hpp": "15623b19e66745ef1ad4d7fcd241076542101f0671db6071a15d8d71538be7b1",
+    "game/native/gameplay_collision/contact_scan.hpp": "d011fa289609b6cee650409d4a7a98eb9746c67229886788fd662b12dd3c9d82",
+    "game/native/gameplay_collision/radius.hpp": "c672d1bd5dca76394eefb1cdf748d557994745d84a1d6acd1c1a65dcad36e4ea",
+    "game/native/gameplay_scenario/scene_models.hpp": "664bf06e62518a1b57a92ecd254dc3a73c87137c5b0615a67063a38325437811",
+    "game/native/gameplay_collision/object_lifetime.hpp": "18b49cc6be21fcee894287ee9769074069a98ff8b657801dc86f2f3e9174633e",
+    "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+    "game/native/gameplay_collision/footprint.hpp": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c",
+    "game/native/gameplay_collision/regions.hpp": "7de95d63c00dbbdadb9c739c42fc81b5f7a6fd05ef817eb7a86acbd7a8cdf8e1",
+    "game/native/gameplay_collision/contact_packets.hpp": "260438d1bd3081bb99bc62b56b2abe57a36bd20ed1595197a46c3b966d1072a9",
+    "game/native/gameplay_collision/directed.hpp": "1cc938a1dabd5525fd930d6520d423affed812d2a08d5625beb3c3a009edbe38",
+    "game/native/gameplay_scenario/content.hpp": "376eb5f856288c728980fdc7393120f21a69fa640a33df8a6d7b5b994b07ce98",
+    "game/native/gameplay_collision/object_interactions.hpp": "f887304538249c6ffa0d4cc40d64891d7faff20bea06703671e39a1461f21ac8",
+    "game/native/gameplay_collision/contact_content.hpp": "351e1c2f0d21e77d8f659f23d9fe7cd3f2208cd3f8556c0aa8fb7cc6706f2856",
+    "game/native/gameplay_collision/room_geometry.hpp": "0ab8279213fbd3b1f9e5c2b378066464bb930fe38441dfe2258a63affa25e0c9",
+    "recomp/config/output_ovl/o2/o2_00616310_0x616310.cpp": "150b8fe11586566dac0ffd224f2c9c0105a7f2f0cd3e64eac3ad3c38ead4859f",
+    "recomp/config/output_ovl/o2/o2_00617000_0x617000.cpp": "500e8781325897594f493879a93ebd8adc7d51e330c7cb5efa4b43ac948159c8",
+    "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c",
+    "recomp/config/output_ovl/o0/o0_00371480_0x371480.cpp": "7890f92b5e072583fd236a017298d07fb44708beb9de6eb5d1698059001e598f",
+    "recomp/config/output/sub_00191E50_0x191e50.cpp": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7",
+    "recomp/config/output/sub_00191D80_0x191d80.cpp": "277437ba1a570ba3766882385019f266975221e9e0e609cb1799e1f63bcc44d6",
+    "recomp/config/output_ovl/o0/o0_00370C70_0x370c70.cpp": "ca717e41fe8dff11338600c8ee2939fbc9c9faf9f97f90d86abb8ef5e0ea89ef",
+    "recomp/config/output_ovl/o0/o0_00370B00_0x370b00.cpp": "dd7cba008760e6304771406c18422c4130e07a380bd01def85b0bdbb8045d6ef",
+    "recomp/config/output_ovl/o0/o0_00370AC0_0x370ac0.cpp": "7c9d1c7c9cad3b5561937836e3349f51bea3ef4e0b3aa9217c464f7f816af78d",
+    "recomp/config/output_ovl/o2/o2_006172F0_0x6172f0.cpp": "1f455b5b864183d33b6dc48e3b2623ed5161e399a085d4872b766290d3628fa5",
+    "recomp/config/output_ovl/o2/o2_00616720_0x616720.cpp": "e2b6f323fcc97c7a27fcab5625402d31985c3999bd5bb2058d5f9f865949ba8d",
+    "recomp/config/output_ovl/o2/o2_00616F20_0x616f20.cpp": "d565c9b0069b3e4b978e5278a18853c16b9d2bfcdc59819160584288f38cacaa",
+    "recomp/config/output_ovl/o2/o2_005DFA90_0x5dfa90.cpp": "ef933d9ee05464b5b1a121a3fc875eda62f052fb7c263e5447e1349f943f7c57",
+    "recomp/config/output_ovl/o2/o2_00651A30_0x651a30.cpp": "02c6d55de17af5d73757a8ab5a49cbf329eb860a58a48dfe0ce41d4dd93a55f3",
+    "recomp/config/output_ovl/o2/o2_00651C60_0x651c60.cpp": "4437084c705c4520d2a7ebf360502702856e0c346557f9df2fd81959bdb9acec",
+    "recomp/config/output_ovl/o2/o2_00651CB0_0x651cb0.cpp": "b0992181e0e8297352322473dfea5d5c6ca3aa752fc5d0285e6d578b3aaa8bbc",
+    "recomp/config/output_ovl/o2/o2_00651BF0_0x651bf0.cpp": "f527aa79e989c4e5c13c5cd47c8d00f09dc2f92804be35bb76f215f8257f80a0",
+    "recomp/config/output_ovl/o2/o2_00651B80_0x651b80.cpp": "c95d5e46a53246890659660c8bd263b88786f47a4782bb93ec336e1ec3694226",
+    "recomp/config/output_ovl/o2/o2_00690490_0x690490.cpp": "75042ad05bd9e6aab50d02f1e55e2e2bbb37b818919987936ed283c3fcfac6fc",
+    "recomp/config/output_ovl/o2/o2_005EA970_0x5ea970.cpp": "7d725b9392bccc4255a183a8c637db06236200d392159ce35f25f0daf7879e6e",
+    "recomp/config/output_ovl/o2/o2_005EAD70_0x5ead70.cpp": "dccdcb0862b7c35e61b299d1114950376d7ba4941691b852de350001d572d200",
+    "recomp/config/output_ovl/o2/o2_00652F90_0x652f90.cpp": "a21e02ba7022025bafcbe34b7f6e88d43956326c94555739f1e8924aced229ea",
+    "recomp/config/output_ovl/o2/o2_006525D0_0x6525d0.cpp": "abab55015aa2dc1ae2f4a4883de7fa704cd4f6d49a0ab7afd125c87e7e7f6510",
+    "recomp/config/output_ovl/o2/o2_00652470_0x652470.cpp": "5511d79a9f9dec8083566b996b6b4295a761506563c8cebdd764deb271fe38c3",
+    "recomp/config/output_ovl/o0/o0_00372720_0x372720.cpp": "185cfc011a14485a5ac4f469cca6cd05a6da3ab7d48a4d1462f429c68839b229",
+    "recomp/config/output_ovl/o2/o2_00651E00_0x651e00.cpp": "adbf7f487d78e2d4eae214e78cede5501a3b1a3d118c3392a92748b3b6848e61",
+    "recomp/config/output/sub_00191500_0x191500.cpp": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9",
+    "recomp/config/output_ovl/o2/o2_00590760_0x590760.cpp": "27e72a9981c131164cdea8c9411f436b1c3177bb3fed56921e220c5625d0bd8d",
+    "recomp/config/output_ovl/o2/o2_00652E20_0x652e20.cpp": "902bc6fa0cf79f3031075e438dc01e0b79a6e98d7893d7a619a99ad1133f7953",
+    "recomp/config/output/sub_001AEC80_0x1aec80.cpp": "3161c709c4844d8e192f7a9555f08fad7de6d0907c8f13a618fb38f53535aacd",
+    "recomp/config/output_ovl/o2/o2_00652390_0x652390.cpp": "f232017b730af178416982869e67790ccecedffbdf036267503d276c7d0e04e0",
+    "recomp/config/output_ovl/o2/o2_00652F00_0x652f00.cpp": "26b7c9316a6761e32d8231e7c694bab99665bad0cdde23e3009f3f8ad0ed5050",
+    "recomp/config/output_ovl/o0/o0_00371880_0x371880.cpp": "231254d575eb9d7d6de5198cc50d0faceb73eb9cefe24030ceefa7f119e97c96",
+    "recomp/config/output/sub_00192220_0x192220.cpp": "21fead5766f4f7b348d7473876e437ff826ec0e402074d0317761791e763dbce",
+    "recomp/config/output_ovl/o2/o2_00651D00_0x651d00.cpp": "4311737a1e8a0f06cafcaec2d748dc9a8e90e555e1de41e6313ecf6d0f48ae7e",
+    "recomp/config/output_ovl/o2/o2_005D9680_0x5d9680.cpp": "425c376dab360ace2d5cf91182764154f59c0fdce540a54be54387ec254e444c",
+    "recomp/config/output_ovl/o2/o2_005DDC70_0x5ddc70.cpp": "847161751aa66dfd399e0cb5b4b307b1ccb1b89e8c7dfc6d0cc24480dc118432",
+    "recomp/config/output_ovl/o2/o2_005709B0_0x5709b0.cpp": "ac06615a790176b28c6dec1d87ef2b9e41c363d1bed8e26661b37142d7b8020e",
+    "recomp/config/output_ovl/o2/o2_00570A10_0x570a10.cpp": "38dfbf246bab2cc0cf56f1516b1498be6178497058511ef59723aa4d4f1a62c5",
+    "recomp/config/output_ovl/o2/o2_00652CE0_0x652ce0.cpp": "f3f45f809d5ba08f4fdb6942cc559170158f958b46ef66c07db386300d3b5173",
+    "recomp/config/output_ovl/o0/o0_00370FE0_0x370fe0.cpp": "f11fff59efc17b751a708857a24970e317e0ccf70371220dbf9ce6ed9829981e",
+    "recomp/config/output/sub_00191ED0_0x191ed0.cpp": "7cbb6ad768ab95f24687e9f64934c44d9391eee78dbae58ae393057d1e151e8b",
+    "recomp/config/output_ovl/o0/o0_00370420_0x370420.cpp": "68ca2f2f974735e546042e281013d215315ebdadcaecf368f74313951c6f9d69",
+    "recomp/config/output_ovl/o2/o2_00651850_0x651850.cpp": "cb9c1a3c05177eece419cdaa9b2bad775e2e5777a14d418343e39875ce6b101d",
+    "recomp/config/output_ovl/o2/o2_006519A0_0x6519a0.cpp": "c3b6140113be724534784866ed9e8777b4d125315150199d434400d1c1e9066c",
+    "recomp/config/output_ovl/o2/o2_006535C0_0x6535c0.cpp": "bcf0557a2fef881e120c00a69c1610c9c609d70065e9bc3ba4344b4a4075b2a8",
+    "recomp/config/output_ovl/o2/o2_006526F0_0x6526f0.cpp": "4ac75cb6debee0295523d7295224240bbf7964d8f6c1f3ff36be206d5489fdec",
+    "recomp/config/output/sub_00191A40_0x191a40.cpp": "4868f2c14997fcf49287f4c63daf774d998e9aef639f8470b420541eb7f81025",
+    "recomp/config/output/sub_00191430_0x191430.cpp": "58aaff2d98c3cfb7d4854fbb78f11fe7677176e10df68e6584e5a08f73121adc",
+    "recomp/config/output/sub_001919D0_0x1919d0.cpp": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388",
+    "recomp/config/output_ovl/o2/o2_00590790_0x590790.cpp": "973a8954e601e6605d9f6de25c0fc89f9d6d9ee70e38ea85c4a5fb460e1337c0",
+    "recomp/config/output_ovl/o2/o2_00590B10_0x590b10.cpp": "f153f76953fd4146507efc20017bf285dc29b9ec0415ec1d36ee58f30fccee1c",
+    "recomp/config/output_ovl/o2/o2_005903E0_0x5903e0.cpp": "24e8481eb31d4c806cb476270f26b668e882f738fedf5c555e4b8fc9c9889ebd",
+    "recomp/config/output_ovl/o2/o2_00652D60_0x652d60.cpp": "9fad9731b9583f76fc3a465133ee8c953b4e29c16d1e402c4e1e160bf3cb947d",
+    "recomp/config/output_ovl/o2/o2_00651E70_0x651e70.cpp": "3cd756d82f8d45b9e15ef25b5a69ac681474df7eac287ec0ceb063884b1d59f0",
+    "recomp/config/output_ovl/o2/o2_00653E80_0x653e80.cpp": "3b8cc8e39c171fbd2f3104f1cf33bd68f2a3b0237318bfc56a556f210e43278f",
+    "recomp/config/output_ovl/o2/o2_00652880_0x652880.cpp": "595b12aacb1f608661e40da58a146b75a8696e7519599d5488c2cb79d16448b3",
+    "recomp/config/output_ovl/o2/o2_005908B0_0x5908b0.cpp": "6a74cdd586340807d27bb619764135835698b80217fe360b08ab11c3add932e7",
+    "recomp/config/output_ovl/o2/o2_006531D0_0x6531d0.cpp": "1e38930f97283a39d9aa901e9f433ac9276ab9a3cd6e48f0f4e483d249e5069f",
+    "recomp/config/output_ovl/o2/o2_00653010_0x653010.cpp": "58e7e3286e185250865303a318cff8cfac311b668da0245734dc6a366ed6bb69",
+    "recomp/config/output_ovl/o2/o2_005E0680_0x5e0680.cpp": "48bfcb5f67783e6fcfa11198f08325082610641a3f0b6bcc96f64dcfb6d5228d",
+    "recomp/config/output_ovl/o2/o2_006B23E0_0x6b23e0.cpp": "7325603a6ad8052e8df589d175d994e18b3796f504a3e94b7d805d8dd1d05f3d",
+    "recomp/config/output_ovl/o2/o2_006B2200_0x6b2200.cpp": "b5dbfebf74d2532a05a0e26c0bf405e99ec1d79148f2ed1ffe3f795de7cbf676",
+    "recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp": "03396a3da3197a3c0b8a5a02a5400837cb4b9cd71361bb30b6648e35d6c79036",
+    "recomp/config/output/sub_001902D0_0x1902d0.cpp": "8de1b3de26bd7eafeb9b80cfeca183114429bd3e2801927b573a04f9ff9aaebd",
+    "recomp/config/output/sub_0018F570_0x18f570.cpp": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698",
+    "recomp/config/output/sub_00191280_0x191280.cpp": "848a8f2f95854dec5b1d2f10c545da4feec1ce65fef9b3abef4ab2587124bc33",
+    "recomp/config/output/sub_0018F7E0_0x18f7e0.cpp": "6da086df77b56a1aa5c2367925487c0d25065adadc4bd4ccf373b2599f695103",
+    "recomp/config/output/sub_0018F710_0x18f710.cpp": "2d646d5d6754cf66d3a81d6207751ba3f7e1629dcc4b8343c0f4ced962795acc",
+    "recomp/config/output/sub_001921B0_0x1921b0.cpp": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc",
+    "recomp/config/output/sub_0018FE20_0x18fe20.cpp": "c37e8a9cb5a79f6eb9874072120f69c7704070a297e018002b111ad122d12b8d",
+    "recomp/config/output/sub_00191F80_0x191f80.cpp": "fff926facac28b24a62fc590cc966c8983479d90374697b01cbe6eecaaf56adf",
+    "recomp/config/output_ovl/o2/o2_00654D90_0x654d90.cpp": "d41c1cf2fd79dc3bdb0e0285e039c18f87dc25e5b13cd48f8a9a7960868dfd9f",
+    "recomp/config/output/sub_001A3500_0x1a3500.cpp": "0980a7cbb94ea027dc1836559bf527d1aa84afc71cee56e8ef3d91dfbba1c2fd",
+    "recomp/config/output/sub_001A35F0_0x1a35f0.cpp": "13cd6dff61df716b94f3ce45fcb23f59202249adf04feb2dddba8fb95d635354",
+    "recomp/config/output/sub_001A3210_0x1a3210.cpp": "0ac0abf720895b34f690dd9758afb6169d7b4e81403db86ab01d6b840b5b62ce",
+    "recomp/config/output/sub_001A35A0_0x1a35a0.cpp": "d8f285b224f13afe2b08573f3846ba0b9b6945e80903e216ed911657ddb0406b",
+    "recomp/config/output/sub_001A3590_0x1a3590.cpp": "ffd4ee61b894b256d9d7ff2f073c85607196ddd2e1c12ea9a1e3f0dabc2d2db5",
+    "recomp/config/output/sub_001A34B0_0x1a34b0.cpp": "6623021829d2eda97e81e8ecddd56bdcdadb418b1bbbc1fc4e162c6bf0eddc0e",
+    "recomp/config/output/sub_001A31B0_0x1a31b0.cpp": "41512c1100de41f7c8b38e2e5ddb8a0682ae219cbce2fc5ad2ddaa44fc34de20",
+    "recomp/config/output/sub_001D3350_0x1d3350.cpp": "ee680c2547bd3cff352569639e01e34509e5e812d97025aa29a948135bc6efac",
+    "recomp/config/output/sub_00192580_0x192580.cpp": "bdda053a1b2d84f62ad3822ba9dcb949713744b5b01fe82533998a8d674f6d83",
+    "recomp/config/output/sub_00193380_0x193380.cpp": "c3ff02700683de603e092b0de9015cac19fd1c08f1adb86791df8edeffa3c295",
+    "recomp/config/output/sub_00193880_0x193880.cpp": "b377eaba5c4f107a4fae6936608d8cf594c611fe3a17c18e4a7bc020142852f7",
+    "recomp/config/output/sub_001938A0_0x1938a0.cpp": "94a33b3dbd03eff820b37733658d9977946ed07167a0597b4dce1daaf1bba78a",
+    "recomp/config/output/sub_00193AF0_0x193af0.cpp": "cd3415eaf5294b51e55709c8b81475375bd4b143957b2606d953b92b08378833",
+    "recomp/config/output/sub_00191300_0x191300.cpp": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da",
+    "recomp/config/output/sub_00190A10_0x190a10.cpp": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484",
+    "recomp/config/output/sub_00191DF0_0x191df0.cpp": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb",
+    "recomp/config/output/sub_0018FE60_0x18fe60.cpp": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c",
+    "recomp/config/output/sub_001939A0_0x1939a0.cpp": "5c0592e9c1c59a5ff9c944ecf06474a8c17a5805eebce58ae0239096f7d82024",
+    "recomp/config/output/sub_00193770_0x193770.cpp": "f3bbab365563a895dec15b5f8c8f981d9862ac13597bc1ec9d893f84e0d9d260",
+    "recomp/config/output/sub_00193790_0x193790.cpp": "61ff43d0260626958a418d0c13f8a23713fa31a1db1580172b8a04767ad0c3de",
+    "recomp/config/output/sub_00193A00_0x193a00.cpp": "53722957d11b4e0d9448ae57499eb04f8b789794771babec1c1c48b523aac31d",
+    "recomp/config/output/sub_001934C0_0x1934c0.cpp": "3bebf1f5cb70bcacd7ce6d569de76b89fe5b21c2aeba4514dce048c6ec29f65d",
+    "recomp/config/output/sub_00193BD0_0x193bd0.cpp": "7388fdcaaf1641b823e1e48b6a5d5e39421502c395eb28f82425d6b34fd7a2f3",
+    "recomp/config/output/sub_00192480_0x192480.cpp": "bf6e6541b436715afbc5ac79f8be2ab0f589ff354760c129f0a56931622760f2",
+    "recomp/config/output/sub_001D3540_0x1d3540.cpp": "5d7b51b926620314a7b7d1d36a247e1c083e3fd0fa687dede5a5583fedc26ef3",
+    "recomp/config/output/sub_001A2E00_0x1a2e00.cpp": "9608d9a38167bdd82eae5137876eb675ac714fb366176c122de5bb9452b1a0a1",
+    "recomp/config/output/sub_001A2D70_0x1a2d70.cpp": "8cfdb628705470bd5676fe49a9d9cb1b26ea1b7eebb1eefda425156d6e22cb4c",
+    "recomp/config/output/sub_001A2CF0_0x1a2cf0.cpp": "1200edd2692974e6afe89af6655ce19b1d3dfd1d09aca29b526c4294872891e3",
+    "recomp/config/output/sub_001A2C80_0x1a2c80.cpp": "ef44241e073505fe4f15e4f8c4fec6cd3d6157aaaad6e7b73e7b7e044fbced4d",
+    "recomp/config/output/sub_001A2B60_0x1a2b60.cpp": "a9fc6846d10fe1884327a84b6fc0c3e25801ca8154df323730e96a6c587514ba",
+    "recomp/config/output/sub_001A2C90_0x1a2c90.cpp": "782e90be851b0dbae572d4423e073ab00c6d2ac50e5fe41c2ca99073e7b20055",
+    "recomp/config/output/sub_001A2BB0_0x1a2bb0.cpp": "ac5583a81c70ddbf078c8cd55b3a31251375cd2021cf011a795a251a830d2294",
+    "recomp/config/output/sub_001A2BE0_0x1a2be0.cpp": "c3851eb3e2a4e9d98270dd26ba2e804ce351e75f85f83b76d69e769e12f22174",
+    "recomp/config/output/sub_001A2C10_0x1a2c10.cpp": "c19ab7449014d464f77cc60e42e5458434abc818ef49b453935128fbbbe53d27",
+    "recomp/config/output/sub_001A2DA0_0x1a2da0.cpp": "8e45d4186de392749e83b4f9adf2086788e2d670fcbd7c16f5d3515682add651",
+    "recomp/config/output/sub_001A2B30_0x1a2b30.cpp": "dc5ca50ec6ca8eca1ff8ba90455c2c87cfd671973e24e3c1e43c2f58aac29f7a",
+    "recomp/config/output/sub_001A2AF0_0x1a2af0.cpp": "b2066aa3a78e03213ded55d0ea6a19460ca637c4fa90b0a3dd90998128939c7a",
+    "tools/native_reconstruction/effect_work_tests.cpp": "ac9182d1d9e98b2e33bbf294170565597b2d3a5939d2ad16249826bd64d75905",
+    "tools/native_reconstruction/effect_work_tests.inc": "ffd914e903595958378d1e690493f8688fa078a08b02c1d4489799fef6bc11c5",
+    "tools/native_reconstruction/fog_tests.inc": "fa825fa8afc7ade1b059b2dc3727c59dee5baad89398bf20f6f19d295f4525a7",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/verify_effect_work.py": "075f839f7164ebdd49845e9a95545bd719b166aef9c720bbb02085602ae3791b",
+    "tools/native_reconstruction/effect_work_sources.py": "bc174c437121e940c5aed5aeb7d59ff261e26f063313e1b094faefeab56982e5",
+    "tools/native_reconstruction/surface_work_tests.inc": "3e27fbcf3841e6a00b26f855e57f38c874477a748580395618895ee4f4d91f64",
+    "docs/native-gameplay/EFFECT_SURFACE_WORK.md": "1e9aabbf47ff1358be0ea6e7608187f65ab92f8bff320a57d8da6242686cfa6f",
+    "tools/native_reconstruction/qualify_surface_work_v1.py": "378843ca4f7d8780dcda675662baa6c2e7a684f2340e5a4630034bf8eacb7624"
+  },
+  "immutable_source_evidence": {
+    "game/native/gameplay_effects/periodic_visuals.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/periodic_visuals.cpp",
+      "sha256": "a4e59a22855b944448a5393ee7853c114855620a0722881c5eae0c0b2fdf8f55"
+    },
+    "game/native/gameplay_effects/geometry.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/geometry.cpp",
+      "sha256": "bfe578a45ee31a795f02a33eb46f0668e4da7bc68d347f3796eab41f420e6fdd"
+    },
+    "game/native/gameplay_effects/tracks.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/tracks.cpp",
+      "sha256": "a0983fdbee8f653c9e6f82e062e66ea5bdeaf7171d91d108a747ce6497e3ae25"
+    },
+    "game/native/animation/model.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/model.cpp",
+      "sha256": "c5a1b46de9fd4504f0ed0a5ee89c39c9f182abb14c2321f69cd9dde58ef06440"
+    },
+    "game/native/animation/model_math.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/model_math.cpp",
+      "sha256": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe"
+    },
+    "game/native/animation/curves.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/curves.cpp",
+      "sha256": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b"
+    },
+    "game/native/transform_math/transform_math.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/transform_math/transform_math.cpp",
+      "sha256": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449"
+    },
+    "game/native/gameplay_actors/entity.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_actors/entity.cpp",
+      "sha256": "ade589a09f0065b946c61d48f4fc976146731d83190e5ce727196829e19b9982"
+    },
+    "game/native/gameplay_scenario/periodic_effects.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/periodic_effects.cpp",
+      "sha256": "0763deb462ead59e39c5c3caf8686bbd3a925afa6b7372441361dc7aa18a8443"
+    },
+    "game/native/gameplay_scenario/scene_controls.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/scene_controls.cpp",
+      "sha256": "c1fe39d72c305b280bda44c25d0f5bbf6d4a73bf9461b483725691615023a6ad"
+    },
+    "game/native/gameplay_scenario/flags.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/flags.cpp",
+      "sha256": "539bf411176e58db5ad45722cb753f39ddf527b467347e5c21c18749a9158968"
+    },
+    "game/native/gameplay_scenario/fog.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/fog.cpp",
+      "sha256": "2da0d2d64736838dde88885deeba2d215c68876691c032ac2b998995e8da6103"
+    },
+    "game/native/gameplay_session/session.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_session/session.cpp",
+      "sha256": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87"
+    },
+    "game/native/gameplay_tasks/tasks.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_tasks/tasks.cpp",
+      "sha256": "68299c19460aad4a3d9f850ad162ae8064ef140b0cc675dbb570e8fc07cf959a"
+    },
+    "game/native/gameplay_effects/surface_work.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/surface_work.cpp",
+      "sha256": "f735c8e749fba5a17e51b62f2ca1d5ecdf53a23313e148118440dca1d03efc66"
+    },
+    "game/native/gameplay_world/world.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/world.cpp",
+      "sha256": "40ee7b9c0b8c57e455207b0b72a0d0547d27952009a9cf92000a8117aa076658"
+    },
+    "game/native/gameplay_world/linked_models.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/linked_models.cpp",
+      "sha256": "6ce4cf67fe58aa6e8b8eebc936fde9ed7feab1424d0c8366b07d3e267ebaba60"
+    },
+    "game/native/gameplay_world/bodies.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/bodies.cpp",
+      "sha256": "9cb9bd0d5f7e18e14aeccdd481acc609ea2d2d6d886b08072ce4fcb48d8afeb0"
+    },
+    "game/native/gameplay_world/model_poses.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/model_poses.cpp",
+      "sha256": "4451cc9df3176681a663f3c266844d50976d3df3c37715ab9f0ba83e23638fdc"
+    },
+    "game/native/gameplay_world/model_constraints.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/model_constraints.cpp",
+      "sha256": "7a2dad002ac8d3202fc0ba9a5f88d840d63780c7d71043768d2b52b9f840789c"
+    },
+    "game/native/gameplay_actors/input.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_actors/input.cpp",
+      "sha256": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497"
+    },
+    "game/native/gameplay_actors/health.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_actors/health.cpp",
+      "sha256": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7"
+    },
+    "game/native/gameplay_collision/collision.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/collision.cpp",
+      "sha256": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f"
+    },
+    "game/native/gameplay_collision/response.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/response.cpp",
+      "sha256": "2fb4d52dcb9b51899a05def4a3734f85559e8c2a2a5327203f6e9c5e44aa698c"
+    },
+    "game/native/gameplay_collision/actors.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/actors.cpp",
+      "sha256": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c"
+    },
+    "game/native/gameplay_collision/actor_views.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/actor_views.cpp",
+      "sha256": "80a54e075da6b10c9586d084a93ff9f651e7e0ff8b04569a2ec0f55bd7f90fa3"
+    },
+    "game/native/animation/constraints.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/constraints.cpp",
+      "sha256": "7ee5adc664a46a31450602201dbce4cc37bb9d48fd3f0645b222d53131fc897f"
+    },
+    "game/native/animation/constraint_math.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/constraint_math.cpp",
+      "sha256": "5c87b5248ebeeef3c5853d41f1ff18c06332dd85caad6189899d4d63aa267416"
+    },
+    "game/native/gameplay_collision/room_objects.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/game/native/gameplay_collision/room_objects.cpp",
+      "sha256": "7f52c043381e0078f375645f36f44c3e3c05fc5f545a0a4321244e6c8e2d1031"
+    },
+    "game/native/gameplay_effects/periodic_visuals.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/periodic_visuals.hpp",
+      "sha256": "347e95724b9d7934e4f1575afda8392f01cb4a46991de0968f55bbb4477c193d"
+    },
+    "game/native/gameplay_contact_world/contacts.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_contact_world/contacts.hpp",
+      "sha256": "f6ade07d0549d4fe9b6b72786ae157eee16dfa86ef3d42a1890a5ece46400c90"
+    },
+    "game/native/gameplay_effects/geometry.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/geometry.hpp",
+      "sha256": "37cfc83bd8620994b1207cc6080605a7781ee4fb8fd0fa3bd75afc1da46342f9"
+    },
+    "game/native/gameplay_effects/tracks.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/tracks.hpp",
+      "sha256": "897f2d845a548e8acf2ea68c0b0198d9afe23a3c8dfe8ad659a6c2a9df84c360"
+    },
+    "game/native/animation/model.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/model.hpp",
+      "sha256": "754180959bf0362bfec15dd08678bff976601a9583cabb581c7cdb0556c55ab8"
+    },
+    "game/native/animation/model_math.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/model_math.hpp",
+      "sha256": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb"
+    },
+    "game/native/animation/curves.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/curves.hpp",
+      "sha256": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2"
+    },
+    "game/native/transform_math/transform_math.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/transform_math/transform_math.hpp",
+      "sha256": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35"
+    },
+    "game/native/gameplay_actors/entity.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_actors/entity.hpp",
+      "sha256": "21189b7febb8685ce68db664960c7567704f4f6d3b602dfc817d663bef2d5268"
+    },
+    "game/native/gameplay_scenario/periodic_effects.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/periodic_effects.hpp",
+      "sha256": "9989be9da6e6c1cfd793d9d8c402333066946a9a2ee67d3d8c210e2640da5cdd"
+    },
+    "game/native/gameplay_scenario/scene_controls.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/scene_controls.hpp",
+      "sha256": "d006f22268a33e3e60c2b37be1e71e965d4960bf65433a8fe401ffc656416ec6"
+    },
+    "game/native/gameplay_scenario/action_choices.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/action_choices.hpp",
+      "sha256": "c315448949c2871f01ac954c1c991c026a01e0183717dfca6fe86377230de9be"
+    },
+    "game/native/gameplay_scenario/flags.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/flags.hpp",
+      "sha256": "a84a096e2e6efa673c6b824713ad2b102a0a4376600a4c08f73acd22306400a0"
+    },
+    "game/native/gameplay_scenario/fog.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/fog.hpp",
+      "sha256": "0193135175b1122d61d75b075b5f7c4e0816493173d94a375102f12f758fb112"
+    },
+    "game/native/gameplay_session/session.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_session/session.hpp",
+      "sha256": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd"
+    },
+    "game/native/gameplay_tasks/tasks.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_tasks/tasks.hpp",
+      "sha256": "41f711d4754c3bfe4651348c8e2c460c52c3b354c5027804c4cab24a88df2b5f"
+    },
+    "game/native/gameplay_effects/surface_work.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/surface_work.hpp",
+      "sha256": "f47c9efc2b9be5f2e83b3f1ccbbcce6c42bab326154c7e6bceaaf2aca91f7511"
+    },
+    "game/native/gameplay_world/world.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/world.hpp",
+      "sha256": "ef3832236b0856fb7714e6d7b6245613f2b92780862193c2c8f04e18b81b9a39"
+    },
+    "game/native/gameplay_world/linked_models.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/linked_models.hpp",
+      "sha256": "e86d2fd7fa3110b4e25b49506cf50f35b88e937e5655936d22f295de801a6629"
+    },
+    "game/native/gameplay_world/linked_model_profile.inc": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/linked_model_profile.inc",
+      "sha256": "4a400a1f8b270d1a0e3702b1d9cfedbf6d07e8f6761d7afb0541138cbf2c7a25"
+    },
+    "game/native/gameplay_world/bodies.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/bodies.hpp",
+      "sha256": "8bb53c9bbf2f2ed1124d7d45cf11ab337d2bcf486e0be37037783399010edeff"
+    },
+    "game/native/gameplay_world/model_poses.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/model_poses.hpp",
+      "sha256": "c9d7b12d549e2b92dddd188021eb4ba91d093cb78f3f1ff34be5e93038619710"
+    },
+    "game/native/gameplay_world/model_scale_profile.inc": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/model_scale_profile.inc",
+      "sha256": "3dbc9f9dd2c143807cd7b04772de729322a0af3ad1c892bca07077672d88ea1e"
+    },
+    "game/native/gameplay_world/model_constraints.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/model_constraints.hpp",
+      "sha256": "07d2699fd3c68b2da1ae71e4f7673be321f7013954c5bdb66f7eb5aab972fe91"
+    },
+    "game/native/gameplay_actors/input.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_actors/input.hpp",
+      "sha256": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22"
+    },
+    "game/native/gameplay_actors/health.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_actors/health.hpp",
+      "sha256": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e"
+    },
+    "game/native/gameplay_collision/collision.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/collision.hpp",
+      "sha256": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da"
+    },
+    "game/native/gameplay_collision/response.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/response.hpp",
+      "sha256": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d"
+    },
+    "game/native/gameplay_collision/actors.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/actors.hpp",
+      "sha256": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78"
+    },
+    "game/native/gameplay_collision/actor_views.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/actor_views.hpp",
+      "sha256": "c79a6f6afca089408fbdd2fedf6dc99338021fc1e03a25948e40baa0200f45cd"
+    },
+    "game/native/animation/constraints.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/constraints.hpp",
+      "sha256": "dff5ae4fcb83a83e6bc73976661118ff49f7b45fd654538ddf2b5911b164f606"
+    },
+    "game/native/animation/constraint_math.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/animation/constraint_math.hpp",
+      "sha256": "25a148646b33c3c22e5f26a137e21ba5aae11ef01a8d563c230ddd16469935e4"
+    },
+    "game/native/gameplay_collision/room_objects.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/room_objects.hpp",
+      "sha256": "6d77920aecce311a2a94cd71baddcd0fc3b79b45ce04a6df3cdb7de48972af6b"
+    },
+    "game/native/gameplay_effects/work.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_effects/work.hpp",
+      "sha256": "5aab1632803b1eb5c5ff4c609296f2f76a71cacb1d62d31f7e939f0ce81752de"
+    },
+    "game/native/gameplay_scenario/surface_effects.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/surface_effects.hpp",
+      "sha256": "40636c39e98c3825f2129613e1f0f8a52fb4f4f269a9a99f880a7e120b510ec7"
+    },
+    "game/native/gameplay_collision/impact_populations.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/impact_populations.hpp",
+      "sha256": "1f5a9b781bf68e13292d85c8d3812f4e17f39b58b809295677df17477e072649"
+    },
+    "game/native/gameplay_collision/impact_shape_effects.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/impact_shape_effects.hpp",
+      "sha256": "eba8a9d4f4dbd6403707deb8b43964606e9a0147836ebcc88105a331d26c639c"
+    },
+    "game/native/gameplay_world/collision.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/collision.hpp",
+      "sha256": "6bd12b66066d521a48d11198039518856a73518580a9c875d701f8f084fd978e"
+    },
+    "game/native/gameplay_scenario/scene_matrix_programs.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/scene_matrix_programs.hpp",
+      "sha256": "43ed6c0defd01fd9a0f8bc1ea8f6aa5ffd635e38c1c7c726347833e4c9df1786"
+    },
+    "game/native/gameplay_scenario/scene_control_types.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/scene_control_types.hpp",
+      "sha256": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841"
+    },
+    "game/native/gameplay_scene/records.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scene/records.hpp",
+      "sha256": "8f4059ff5be0c27c8ee4b555575816e605448719f875cfc9e9e41cc74c693972"
+    },
+    "game/native/gameplay_scenario/interpreter.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/interpreter.hpp",
+      "sha256": "024b21e6392e9c118b48ff1a7a6a63e6020998e331108857d80798a2aa91f7d5"
+    },
+    "game/native/gameplay_actors/hit.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_actors/hit.hpp",
+      "sha256": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495"
+    },
+    "game/native/gameplay_collision/contact_component.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/contact_component.hpp",
+      "sha256": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c"
+    },
+    "game/native/gameplay_world/motion.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_world/motion.hpp",
+      "sha256": "ab2035e7ba54bea2269404dd2946f11f5c9c28f762b310d2aab878165c5515fa"
+    },
+    "game/native/gameplay_collision/postmove_view.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/postmove_view.hpp",
+      "sha256": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316"
+    },
+    "game/native/gameplay_collision/ownership.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/ownership.hpp",
+      "sha256": "5958fb126cb878e3cd849d1583d9b95e19d9b940b444702f8e78f3ee3e2080d6"
+    },
+    "game/native/gameplay_collision/impact_policy.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/impact_policy.hpp",
+      "sha256": "8fa6b5faf4decaaadf4fa600720e609f4aa1523ff4a25878109e1c0526b56e0e"
+    },
+    "game/native/gameplay_collision/packet_shapes.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/packet_shapes.hpp",
+      "sha256": "550d71ecf7920e2cff1c647cfcabb7a201311d096d9db9aad9821b3a9c750ff9"
+    },
+    "game/native/gameplay_collision/room_damage.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/room_damage.hpp",
+      "sha256": "42dae423275df41f4817096b6d18138944e17974ab3836e1ae4b96b0c403a03e"
+    },
+    "game/native/gameplay_scenario/scene_matrix_tables.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/scene_matrix_tables.hpp",
+      "sha256": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1"
+    },
+    "game/native/gameplay_scenario/scene_model_bindings.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/scene_model_bindings.hpp",
+      "sha256": "c5ca218f5645af66f166099021ff586671100c5fc824ae205fa6d5c735fd605e"
+    },
+    "game/native/gameplay_scenario/model_reference.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/model_reference.hpp",
+      "sha256": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907"
+    },
+    "game/native/gameplay_scene/record_pool.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scene/record_pool.hpp",
+      "sha256": "80547b7a98e4f8d311985882c31e8ea6e7692c35d160670e47a3a29fefd6593e"
+    },
+    "game/native/gameplay_actors/status.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_actors/status.hpp",
+      "sha256": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170"
+    },
+    "game/native/gameplay_collision/hit_regions.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/hit_regions.hpp",
+      "sha256": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0"
+    },
+    "game/native/gameplay_collision/postmove.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/postmove.hpp",
+      "sha256": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6"
+    },
+    "game/native/gameplay_collision/sweep.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/sweep.hpp",
+      "sha256": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39"
+    },
+    "game/native/gameplay_collision/delivery.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/delivery.hpp",
+      "sha256": "48682babcf6f1bd25cbb48a905acefc7952a1d2d43b9c8cf7d4a0842f76a828a"
+    },
+    "game/native/gameplay_collision/trace.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/trace.hpp",
+      "sha256": "494a53ef88e2a916d99ed2b2cfb503a3a9ea5235c6fdef053054f58adb1c7170"
+    },
+    "game/native/gameplay_collision/packet_service.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/packet_service.hpp",
+      "sha256": "15623b19e66745ef1ad4d7fcd241076542101f0671db6071a15d8d71538be7b1"
+    },
+    "game/native/gameplay_collision/contact_scan.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/contact_scan.hpp",
+      "sha256": "d011fa289609b6cee650409d4a7a98eb9746c67229886788fd662b12dd3c9d82"
+    },
+    "game/native/gameplay_collision/radius.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/radius.hpp",
+      "sha256": "c672d1bd5dca76394eefb1cdf748d557994745d84a1d6acd1c1a65dcad36e4ea"
+    },
+    "game/native/gameplay_scenario/scene_models.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/scene_models.hpp",
+      "sha256": "664bf06e62518a1b57a92ecd254dc3a73c87137c5b0615a67063a38325437811"
+    },
+    "game/native/gameplay_collision/object_lifetime.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/object_lifetime.hpp",
+      "sha256": "18b49cc6be21fcee894287ee9769074069a98ff8b657801dc86f2f3e9174633e"
+    },
+    "game/native/gameplay_collision/spatial.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/spatial.hpp",
+      "sha256": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258"
+    },
+    "game/native/gameplay_collision/footprint.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/footprint.hpp",
+      "sha256": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c"
+    },
+    "game/native/gameplay_collision/regions.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/regions.hpp",
+      "sha256": "7de95d63c00dbbdadb9c739c42fc81b5f7a6fd05ef817eb7a86acbd7a8cdf8e1"
+    },
+    "game/native/gameplay_collision/contact_packets.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/contact_packets.hpp",
+      "sha256": "260438d1bd3081bb99bc62b56b2abe57a36bd20ed1595197a46c3b966d1072a9"
+    },
+    "game/native/gameplay_collision/directed.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/directed.hpp",
+      "sha256": "1cc938a1dabd5525fd930d6520d423affed812d2a08d5625beb3c3a009edbe38"
+    },
+    "game/native/gameplay_scenario/content.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_scenario/content.hpp",
+      "sha256": "376eb5f856288c728980fdc7393120f21a69fa640a33df8a6d7b5b994b07ce98"
+    },
+    "game/native/gameplay_collision/object_interactions.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/object_interactions.hpp",
+      "sha256": "f887304538249c6ffa0d4cc40d64891d7faff20bea06703671e39a1461f21ac8"
+    },
+    "game/native/gameplay_collision/contact_content.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/contact_content.hpp",
+      "sha256": "351e1c2f0d21e77d8f659f23d9fe7cd3f2208cd3f8556c0aa8fb7cc6706f2856"
+    },
+    "game/native/gameplay_collision/room_geometry.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/game/native/gameplay_collision/room_geometry.hpp",
+      "sha256": "0ab8279213fbd3b1f9e5c2b378066464bb930fe38441dfe2258a63affa25e0c9"
+    },
+    "recomp/config/output_ovl/o2/o2_00616310_0x616310.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o2/o2_00616310_0x616310.cpp",
+      "sha256": "150b8fe11586566dac0ffd224f2c9c0105a7f2f0cd3e64eac3ad3c38ead4859f"
+    },
+    "recomp/config/output_ovl/o2/o2_00617000_0x617000.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o2/o2_00617000_0x617000.cpp",
+      "sha256": "500e8781325897594f493879a93ebd8adc7d51e330c7cb5efa4b43ac948159c8"
+    },
+    "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_0018FDF0_0x18fdf0.cpp",
+      "sha256": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c"
+    },
+    "recomp/config/output_ovl/o0/o0_00371480_0x371480.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o0/o0_00371480_0x371480.cpp",
+      "sha256": "7890f92b5e072583fd236a017298d07fb44708beb9de6eb5d1698059001e598f"
+    },
+    "recomp/config/output/sub_00191E50_0x191e50.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191E50_0x191e50.cpp",
+      "sha256": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7"
+    },
+    "recomp/config/output/sub_00191D80_0x191d80.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191D80_0x191d80.cpp",
+      "sha256": "277437ba1a570ba3766882385019f266975221e9e0e609cb1799e1f63bcc44d6"
+    },
+    "recomp/config/output_ovl/o0/o0_00370C70_0x370c70.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o0/o0_00370C70_0x370c70.cpp",
+      "sha256": "ca717e41fe8dff11338600c8ee2939fbc9c9faf9f97f90d86abb8ef5e0ea89ef"
+    },
+    "recomp/config/output_ovl/o0/o0_00370B00_0x370b00.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o0/o0_00370B00_0x370b00.cpp",
+      "sha256": "dd7cba008760e6304771406c18422c4130e07a380bd01def85b0bdbb8045d6ef"
+    },
+    "recomp/config/output_ovl/o0/o0_00370AC0_0x370ac0.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o0/o0_00370AC0_0x370ac0.cpp",
+      "sha256": "7c9d1c7c9cad3b5561937836e3349f51bea3ef4e0b3aa9217c464f7f816af78d"
+    },
+    "recomp/config/output_ovl/o2/o2_006172F0_0x6172f0.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o2/o2_006172F0_0x6172f0.cpp",
+      "sha256": "1f455b5b864183d33b6dc48e3b2623ed5161e399a085d4872b766290d3628fa5"
+    },
+    "recomp/config/output_ovl/o2/o2_00616720_0x616720.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o2/o2_00616720_0x616720.cpp",
+      "sha256": "e2b6f323fcc97c7a27fcab5625402d31985c3999bd5bb2058d5f9f865949ba8d"
+    },
+    "recomp/config/output_ovl/o2/o2_00616F20_0x616f20.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o2/o2_00616F20_0x616f20.cpp",
+      "sha256": "d565c9b0069b3e4b978e5278a18853c16b9d2bfcdc59819160584288f38cacaa"
+    },
+    "recomp/config/output_ovl/o2/o2_005DFA90_0x5dfa90.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o2/o2_005DFA90_0x5dfa90.cpp",
+      "sha256": "ef933d9ee05464b5b1a121a3fc875eda62f052fb7c263e5447e1349f943f7c57"
+    },
+    "recomp/config/output_ovl/o2/o2_00651A30_0x651a30.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651A30_0x651a30.cpp",
+      "sha256": "02c6d55de17af5d73757a8ab5a49cbf329eb860a58a48dfe0ce41d4dd93a55f3"
+    },
+    "recomp/config/output_ovl/o2/o2_00651C60_0x651c60.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651C60_0x651c60.cpp",
+      "sha256": "4437084c705c4520d2a7ebf360502702856e0c346557f9df2fd81959bdb9acec"
+    },
+    "recomp/config/output_ovl/o2/o2_00651CB0_0x651cb0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651CB0_0x651cb0.cpp",
+      "sha256": "b0992181e0e8297352322473dfea5d5c6ca3aa752fc5d0285e6d578b3aaa8bbc"
+    },
+    "recomp/config/output_ovl/o2/o2_00651BF0_0x651bf0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651BF0_0x651bf0.cpp",
+      "sha256": "f527aa79e989c4e5c13c5cd47c8d00f09dc2f92804be35bb76f215f8257f80a0"
+    },
+    "recomp/config/output_ovl/o2/o2_00651B80_0x651b80.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651B80_0x651b80.cpp",
+      "sha256": "c95d5e46a53246890659660c8bd263b88786f47a4782bb93ec336e1ec3694226"
+    },
+    "recomp/config/output_ovl/o2/o2_00690490_0x690490.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o2/o2_00690490_0x690490.cpp",
+      "sha256": "75042ad05bd9e6aab50d02f1e55e2e2bbb37b818919987936ed283c3fcfac6fc"
+    },
+    "recomp/config/output_ovl/o2/o2_005EA970_0x5ea970.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o2/o2_005EA970_0x5ea970.cpp",
+      "sha256": "7d725b9392bccc4255a183a8c637db06236200d392159ce35f25f0daf7879e6e"
+    },
+    "recomp/config/output_ovl/o2/o2_005EAD70_0x5ead70.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_005EAD70_0x5ead70.cpp",
+      "sha256": "dccdcb0862b7c35e61b299d1114950376d7ba4941691b852de350001d572d200"
+    },
+    "recomp/config/output_ovl/o2/o2_00652F90_0x652f90.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00652F90_0x652f90.cpp",
+      "sha256": "a21e02ba7022025bafcbe34b7f6e88d43956326c94555739f1e8924aced229ea"
+    },
+    "recomp/config/output_ovl/o2/o2_006525D0_0x6525d0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_006525D0_0x6525d0.cpp",
+      "sha256": "abab55015aa2dc1ae2f4a4883de7fa704cd4f6d49a0ab7afd125c87e7e7f6510"
+    },
+    "recomp/config/output_ovl/o2/o2_00652470_0x652470.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00652470_0x652470.cpp",
+      "sha256": "5511d79a9f9dec8083566b996b6b4295a761506563c8cebdd764deb271fe38c3"
+    },
+    "recomp/config/output_ovl/o0/o0_00372720_0x372720.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o0/o0_00372720_0x372720.cpp",
+      "sha256": "185cfc011a14485a5ac4f469cca6cd05a6da3ab7d48a4d1462f429c68839b229"
+    },
+    "recomp/config/output_ovl/o2/o2_00651E00_0x651e00.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651E00_0x651e00.cpp",
+      "sha256": "adbf7f487d78e2d4eae214e78cede5501a3b1a3d118c3392a92748b3b6848e61"
+    },
+    "recomp/config/output/sub_00191500_0x191500.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191500_0x191500.cpp",
+      "sha256": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9"
+    },
+    "recomp/config/output_ovl/o2/o2_00590760_0x590760.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00590760_0x590760.cpp",
+      "sha256": "27e72a9981c131164cdea8c9411f436b1c3177bb3fed56921e220c5625d0bd8d"
+    },
+    "recomp/config/output_ovl/o2/o2_00652E20_0x652e20.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00652E20_0x652e20.cpp",
+      "sha256": "902bc6fa0cf79f3031075e438dc01e0b79a6e98d7893d7a619a99ad1133f7953"
+    },
+    "recomp/config/output/sub_001AEC80_0x1aec80.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001AEC80_0x1aec80.cpp",
+      "sha256": "3161c709c4844d8e192f7a9555f08fad7de6d0907c8f13a618fb38f53535aacd"
+    },
+    "recomp/config/output_ovl/o2/o2_00652390_0x652390.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00652390_0x652390.cpp",
+      "sha256": "f232017b730af178416982869e67790ccecedffbdf036267503d276c7d0e04e0"
+    },
+    "recomp/config/output_ovl/o2/o2_00652F00_0x652f00.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00652F00_0x652f00.cpp",
+      "sha256": "26b7c9316a6761e32d8231e7c694bab99665bad0cdde23e3009f3f8ad0ed5050"
+    },
+    "recomp/config/output_ovl/o0/o0_00371880_0x371880.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output_ovl/o0/o0_00371880_0x371880.cpp",
+      "sha256": "231254d575eb9d7d6de5198cc50d0faceb73eb9cefe24030ceefa7f119e97c96"
+    },
+    "recomp/config/output/sub_00192220_0x192220.cpp": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/recomp/config/output/sub_00192220_0x192220.cpp",
+      "sha256": "21fead5766f4f7b348d7473876e437ff826ec0e402074d0317761791e763dbce"
+    },
+    "recomp/config/output_ovl/o2/o2_00651D00_0x651d00.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651D00_0x651d00.cpp",
+      "sha256": "4311737a1e8a0f06cafcaec2d748dc9a8e90e555e1de41e6313ecf6d0f48ae7e"
+    },
+    "recomp/config/output_ovl/o2/o2_005D9680_0x5d9680.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_005D9680_0x5d9680.cpp",
+      "sha256": "425c376dab360ace2d5cf91182764154f59c0fdce540a54be54387ec254e444c"
+    },
+    "recomp/config/output_ovl/o2/o2_005DDC70_0x5ddc70.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_005DDC70_0x5ddc70.cpp",
+      "sha256": "847161751aa66dfd399e0cb5b4b307b1ccb1b89e8c7dfc6d0cc24480dc118432"
+    },
+    "recomp/config/output_ovl/o2/o2_005709B0_0x5709b0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_005709B0_0x5709b0.cpp",
+      "sha256": "ac06615a790176b28c6dec1d87ef2b9e41c363d1bed8e26661b37142d7b8020e"
+    },
+    "recomp/config/output_ovl/o2/o2_00570A10_0x570a10.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00570A10_0x570a10.cpp",
+      "sha256": "38dfbf246bab2cc0cf56f1516b1498be6178497058511ef59723aa4d4f1a62c5"
+    },
+    "recomp/config/output_ovl/o2/o2_00652CE0_0x652ce0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00652CE0_0x652ce0.cpp",
+      "sha256": "f3f45f809d5ba08f4fdb6942cc559170158f958b46ef66c07db386300d3b5173"
+    },
+    "recomp/config/output_ovl/o0/o0_00370FE0_0x370fe0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o0/o0_00370FE0_0x370fe0.cpp",
+      "sha256": "f11fff59efc17b751a708857a24970e317e0ccf70371220dbf9ce6ed9829981e"
+    },
+    "recomp/config/output/sub_00191ED0_0x191ed0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191ED0_0x191ed0.cpp",
+      "sha256": "7cbb6ad768ab95f24687e9f64934c44d9391eee78dbae58ae393057d1e151e8b"
+    },
+    "recomp/config/output_ovl/o0/o0_00370420_0x370420.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o0/o0_00370420_0x370420.cpp",
+      "sha256": "68ca2f2f974735e546042e281013d215315ebdadcaecf368f74313951c6f9d69"
+    },
+    "recomp/config/output_ovl/o2/o2_00651850_0x651850.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651850_0x651850.cpp",
+      "sha256": "cb9c1a3c05177eece419cdaa9b2bad775e2e5777a14d418343e39875ce6b101d"
+    },
+    "recomp/config/output_ovl/o2/o2_006519A0_0x6519a0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_006519A0_0x6519a0.cpp",
+      "sha256": "c3b6140113be724534784866ed9e8777b4d125315150199d434400d1c1e9066c"
+    },
+    "recomp/config/output_ovl/o2/o2_006535C0_0x6535c0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_006535C0_0x6535c0.cpp",
+      "sha256": "bcf0557a2fef881e120c00a69c1610c9c609d70065e9bc3ba4344b4a4075b2a8"
+    },
+    "recomp/config/output_ovl/o2/o2_006526F0_0x6526f0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_006526F0_0x6526f0.cpp",
+      "sha256": "4ac75cb6debee0295523d7295224240bbf7964d8f6c1f3ff36be206d5489fdec"
+    },
+    "recomp/config/output/sub_00191A40_0x191a40.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191A40_0x191a40.cpp",
+      "sha256": "4868f2c14997fcf49287f4c63daf774d998e9aef639f8470b420541eb7f81025"
+    },
+    "recomp/config/output/sub_00191430_0x191430.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191430_0x191430.cpp",
+      "sha256": "58aaff2d98c3cfb7d4854fbb78f11fe7677176e10df68e6584e5a08f73121adc"
+    },
+    "recomp/config/output/sub_001919D0_0x1919d0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001919D0_0x1919d0.cpp",
+      "sha256": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388"
+    },
+    "recomp/config/output_ovl/o2/o2_00590790_0x590790.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00590790_0x590790.cpp",
+      "sha256": "973a8954e601e6605d9f6de25c0fc89f9d6d9ee70e38ea85c4a5fb460e1337c0"
+    },
+    "recomp/config/output_ovl/o2/o2_00590B10_0x590b10.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00590B10_0x590b10.cpp",
+      "sha256": "f153f76953fd4146507efc20017bf285dc29b9ec0415ec1d36ee58f30fccee1c"
+    },
+    "recomp/config/output_ovl/o2/o2_005903E0_0x5903e0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_005903E0_0x5903e0.cpp",
+      "sha256": "24e8481eb31d4c806cb476270f26b668e882f738fedf5c555e4b8fc9c9889ebd"
+    },
+    "recomp/config/output_ovl/o2/o2_00652D60_0x652d60.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00652D60_0x652d60.cpp",
+      "sha256": "9fad9731b9583f76fc3a465133ee8c953b4e29c16d1e402c4e1e160bf3cb947d"
+    },
+    "recomp/config/output_ovl/o2/o2_00651E70_0x651e70.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00651E70_0x651e70.cpp",
+      "sha256": "3cd756d82f8d45b9e15ef25b5a69ac681474df7eac287ec0ceb063884b1d59f0"
+    },
+    "recomp/config/output_ovl/o2/o2_00653E80_0x653e80.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00653E80_0x653e80.cpp",
+      "sha256": "3b8cc8e39c171fbd2f3104f1cf33bd68f2a3b0237318bfc56a556f210e43278f"
+    },
+    "recomp/config/output_ovl/o2/o2_00652880_0x652880.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00652880_0x652880.cpp",
+      "sha256": "595b12aacb1f608661e40da58a146b75a8696e7519599d5488c2cb79d16448b3"
+    },
+    "recomp/config/output_ovl/o2/o2_005908B0_0x5908b0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_005908B0_0x5908b0.cpp",
+      "sha256": "6a74cdd586340807d27bb619764135835698b80217fe360b08ab11c3add932e7"
+    },
+    "recomp/config/output_ovl/o2/o2_006531D0_0x6531d0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_006531D0_0x6531d0.cpp",
+      "sha256": "1e38930f97283a39d9aa901e9f433ac9276ab9a3cd6e48f0f4e483d249e5069f"
+    },
+    "recomp/config/output_ovl/o2/o2_00653010_0x653010.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00653010_0x653010.cpp",
+      "sha256": "58e7e3286e185250865303a318cff8cfac311b668da0245734dc6a366ed6bb69"
+    },
+    "recomp/config/output_ovl/o2/o2_005E0680_0x5e0680.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_005E0680_0x5e0680.cpp",
+      "sha256": "48bfcb5f67783e6fcfa11198f08325082610641a3f0b6bcc96f64dcfb6d5228d"
+    },
+    "recomp/config/output_ovl/o2/o2_006B23E0_0x6b23e0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_006B23E0_0x6b23e0.cpp",
+      "sha256": "7325603a6ad8052e8df589d175d994e18b3796f504a3e94b7d805d8dd1d05f3d"
+    },
+    "recomp/config/output_ovl/o2/o2_006B2200_0x6b2200.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_006B2200_0x6b2200.cpp",
+      "sha256": "b5dbfebf74d2532a05a0e26c0bf405e99ec1d79148f2ed1ffe3f795de7cbf676"
+    },
+    "recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp",
+      "sha256": "03396a3da3197a3c0b8a5a02a5400837cb4b9cd71361bb30b6648e35d6c79036"
+    },
+    "recomp/config/output/sub_001902D0_0x1902d0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001902D0_0x1902d0.cpp",
+      "sha256": "8de1b3de26bd7eafeb9b80cfeca183114429bd3e2801927b573a04f9ff9aaebd"
+    },
+    "recomp/config/output/sub_0018F570_0x18f570.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_0018F570_0x18f570.cpp",
+      "sha256": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698"
+    },
+    "recomp/config/output/sub_00191280_0x191280.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191280_0x191280.cpp",
+      "sha256": "848a8f2f95854dec5b1d2f10c545da4feec1ce65fef9b3abef4ab2587124bc33"
+    },
+    "recomp/config/output/sub_0018F7E0_0x18f7e0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_0018F7E0_0x18f7e0.cpp",
+      "sha256": "6da086df77b56a1aa5c2367925487c0d25065adadc4bd4ccf373b2599f695103"
+    },
+    "recomp/config/output/sub_0018F710_0x18f710.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_0018F710_0x18f710.cpp",
+      "sha256": "2d646d5d6754cf66d3a81d6207751ba3f7e1629dcc4b8343c0f4ced962795acc"
+    },
+    "recomp/config/output/sub_001921B0_0x1921b0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001921B0_0x1921b0.cpp",
+      "sha256": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc"
+    },
+    "recomp/config/output/sub_0018FE20_0x18fe20.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_0018FE20_0x18fe20.cpp",
+      "sha256": "c37e8a9cb5a79f6eb9874072120f69c7704070a297e018002b111ad122d12b8d"
+    },
+    "recomp/config/output/sub_00191F80_0x191f80.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191F80_0x191f80.cpp",
+      "sha256": "fff926facac28b24a62fc590cc966c8983479d90374697b01cbe6eecaaf56adf"
+    },
+    "recomp/config/output_ovl/o2/o2_00654D90_0x654d90.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output_ovl/o2/o2_00654D90_0x654d90.cpp",
+      "sha256": "d41c1cf2fd79dc3bdb0e0285e039c18f87dc25e5b13cd48f8a9a7960868dfd9f"
+    },
+    "recomp/config/output/sub_001A3500_0x1a3500.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A3500_0x1a3500.cpp",
+      "sha256": "0980a7cbb94ea027dc1836559bf527d1aa84afc71cee56e8ef3d91dfbba1c2fd"
+    },
+    "recomp/config/output/sub_001A35F0_0x1a35f0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A35F0_0x1a35f0.cpp",
+      "sha256": "13cd6dff61df716b94f3ce45fcb23f59202249adf04feb2dddba8fb95d635354"
+    },
+    "recomp/config/output/sub_001A3210_0x1a3210.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A3210_0x1a3210.cpp",
+      "sha256": "0ac0abf720895b34f690dd9758afb6169d7b4e81403db86ab01d6b840b5b62ce"
+    },
+    "recomp/config/output/sub_001A35A0_0x1a35a0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A35A0_0x1a35a0.cpp",
+      "sha256": "d8f285b224f13afe2b08573f3846ba0b9b6945e80903e216ed911657ddb0406b"
+    },
+    "recomp/config/output/sub_001A3590_0x1a3590.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A3590_0x1a3590.cpp",
+      "sha256": "ffd4ee61b894b256d9d7ff2f073c85607196ddd2e1c12ea9a1e3f0dabc2d2db5"
+    },
+    "recomp/config/output/sub_001A34B0_0x1a34b0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A34B0_0x1a34b0.cpp",
+      "sha256": "6623021829d2eda97e81e8ecddd56bdcdadb418b1bbbc1fc4e162c6bf0eddc0e"
+    },
+    "recomp/config/output/sub_001A31B0_0x1a31b0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A31B0_0x1a31b0.cpp",
+      "sha256": "41512c1100de41f7c8b38e2e5ddb8a0682ae219cbce2fc5ad2ddaa44fc34de20"
+    },
+    "recomp/config/output/sub_001D3350_0x1d3350.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001D3350_0x1d3350.cpp",
+      "sha256": "ee680c2547bd3cff352569639e01e34509e5e812d97025aa29a948135bc6efac"
+    },
+    "recomp/config/output/sub_00192580_0x192580.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00192580_0x192580.cpp",
+      "sha256": "bdda053a1b2d84f62ad3822ba9dcb949713744b5b01fe82533998a8d674f6d83"
+    },
+    "recomp/config/output/sub_00193380_0x193380.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00193380_0x193380.cpp",
+      "sha256": "c3ff02700683de603e092b0de9015cac19fd1c08f1adb86791df8edeffa3c295"
+    },
+    "recomp/config/output/sub_00193880_0x193880.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00193880_0x193880.cpp",
+      "sha256": "b377eaba5c4f107a4fae6936608d8cf594c611fe3a17c18e4a7bc020142852f7"
+    },
+    "recomp/config/output/sub_001938A0_0x1938a0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001938A0_0x1938a0.cpp",
+      "sha256": "94a33b3dbd03eff820b37733658d9977946ed07167a0597b4dce1daaf1bba78a"
+    },
+    "recomp/config/output/sub_00193AF0_0x193af0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00193AF0_0x193af0.cpp",
+      "sha256": "cd3415eaf5294b51e55709c8b81475375bd4b143957b2606d953b92b08378833"
+    },
+    "recomp/config/output/sub_00191300_0x191300.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191300_0x191300.cpp",
+      "sha256": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da"
+    },
+    "recomp/config/output/sub_00190A10_0x190a10.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00190A10_0x190a10.cpp",
+      "sha256": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484"
+    },
+    "recomp/config/output/sub_00191DF0_0x191df0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00191DF0_0x191df0.cpp",
+      "sha256": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb"
+    },
+    "recomp/config/output/sub_0018FE60_0x18fe60.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_0018FE60_0x18fe60.cpp",
+      "sha256": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c"
+    },
+    "recomp/config/output/sub_001939A0_0x1939a0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001939A0_0x1939a0.cpp",
+      "sha256": "5c0592e9c1c59a5ff9c944ecf06474a8c17a5805eebce58ae0239096f7d82024"
+    },
+    "recomp/config/output/sub_00193770_0x193770.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00193770_0x193770.cpp",
+      "sha256": "f3bbab365563a895dec15b5f8c8f981d9862ac13597bc1ec9d893f84e0d9d260"
+    },
+    "recomp/config/output/sub_00193790_0x193790.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00193790_0x193790.cpp",
+      "sha256": "61ff43d0260626958a418d0c13f8a23713fa31a1db1580172b8a04767ad0c3de"
+    },
+    "recomp/config/output/sub_00193A00_0x193a00.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00193A00_0x193a00.cpp",
+      "sha256": "53722957d11b4e0d9448ae57499eb04f8b789794771babec1c1c48b523aac31d"
+    },
+    "recomp/config/output/sub_001934C0_0x1934c0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001934C0_0x1934c0.cpp",
+      "sha256": "3bebf1f5cb70bcacd7ce6d569de76b89fe5b21c2aeba4514dce048c6ec29f65d"
+    },
+    "recomp/config/output/sub_00193BD0_0x193bd0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00193BD0_0x193bd0.cpp",
+      "sha256": "7388fdcaaf1641b823e1e48b6a5d5e39421502c395eb28f82425d6b34fd7a2f3"
+    },
+    "recomp/config/output/sub_00192480_0x192480.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_00192480_0x192480.cpp",
+      "sha256": "bf6e6541b436715afbc5ac79f8be2ab0f589ff354760c129f0a56931622760f2"
+    },
+    "recomp/config/output/sub_001D3540_0x1d3540.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001D3540_0x1d3540.cpp",
+      "sha256": "5d7b51b926620314a7b7d1d36a247e1c083e3fd0fa687dede5a5583fedc26ef3"
+    },
+    "recomp/config/output/sub_001A2E00_0x1a2e00.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2E00_0x1a2e00.cpp",
+      "sha256": "9608d9a38167bdd82eae5137876eb675ac714fb366176c122de5bb9452b1a0a1"
+    },
+    "recomp/config/output/sub_001A2D70_0x1a2d70.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2D70_0x1a2d70.cpp",
+      "sha256": "8cfdb628705470bd5676fe49a9d9cb1b26ea1b7eebb1eefda425156d6e22cb4c"
+    },
+    "recomp/config/output/sub_001A2CF0_0x1a2cf0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2CF0_0x1a2cf0.cpp",
+      "sha256": "1200edd2692974e6afe89af6655ce19b1d3dfd1d09aca29b526c4294872891e3"
+    },
+    "recomp/config/output/sub_001A2C80_0x1a2c80.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2C80_0x1a2c80.cpp",
+      "sha256": "ef44241e073505fe4f15e4f8c4fec6cd3d6157aaaad6e7b73e7b7e044fbced4d"
+    },
+    "recomp/config/output/sub_001A2B60_0x1a2b60.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2B60_0x1a2b60.cpp",
+      "sha256": "a9fc6846d10fe1884327a84b6fc0c3e25801ca8154df323730e96a6c587514ba"
+    },
+    "recomp/config/output/sub_001A2C90_0x1a2c90.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2C90_0x1a2c90.cpp",
+      "sha256": "782e90be851b0dbae572d4423e073ab00c6d2ac50e5fe41c2ca99073e7b20055"
+    },
+    "recomp/config/output/sub_001A2BB0_0x1a2bb0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2BB0_0x1a2bb0.cpp",
+      "sha256": "ac5583a81c70ddbf078c8cd55b3a31251375cd2021cf011a795a251a830d2294"
+    },
+    "recomp/config/output/sub_001A2BE0_0x1a2be0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2BE0_0x1a2be0.cpp",
+      "sha256": "c3851eb3e2a4e9d98270dd26ba2e804ce351e75f85f83b76d69e769e12f22174"
+    },
+    "recomp/config/output/sub_001A2C10_0x1a2c10.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2C10_0x1a2c10.cpp",
+      "sha256": "c19ab7449014d464f77cc60e42e5458434abc818ef49b453935128fbbbe53d27"
+    },
+    "recomp/config/output/sub_001A2DA0_0x1a2da0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2DA0_0x1a2da0.cpp",
+      "sha256": "8e45d4186de392749e83b4f9adf2086788e2d670fcbd7c16f5d3515682add651"
+    },
+    "recomp/config/output/sub_001A2B30_0x1a2b30.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2B30_0x1a2b30.cpp",
+      "sha256": "dc5ca50ec6ca8eca1ff8ba90455c2c87cfd671973e24e3c1e43c2f58aac29f7a"
+    },
+    "recomp/config/output/sub_001A2AF0_0x1a2af0.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/recomp/config/output/sub_001A2AF0_0x1a2af0.cpp",
+      "sha256": "b2066aa3a78e03213ded55d0ea6a19460ca637c4fa90b0a3dd90998128939c7a"
+    },
+    "tools/native_reconstruction/effect_work_tests.cpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/tools/native_reconstruction/effect_work_tests.cpp",
+      "sha256": "ac9182d1d9e98b2e33bbf294170565597b2d3a5939d2ad16249826bd64d75905"
+    },
+    "tools/native_reconstruction/effect_work_tests.inc": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/tools/native_reconstruction/effect_work_tests.inc",
+      "sha256": "ffd914e903595958378d1e690493f8688fa078a08b02c1d4489799fef6bc11c5"
+    },
+    "tools/native_reconstruction/fog_tests.inc": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/tools/native_reconstruction/fog_tests.inc",
+      "sha256": "fa825fa8afc7ade1b059b2dc3727c59dee5baad89398bf20f6f19d295f4525a7"
+    },
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp",
+      "sha256": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+    },
+    "tools/native_reconstruction/verify_effect_work.py": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/tools/native_reconstruction/verify_effect_work.py",
+      "sha256": "075f839f7164ebdd49845e9a95545bd719b166aef9c720bbb02085602ae3791b"
+    },
+    "tools/native_reconstruction/effect_work_sources.py": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/source/tools/native_reconstruction/effect_work_sources.py",
+      "sha256": "bc174c437121e940c5aed5aeb7d59ff261e26f063313e1b094faefeab56982e5"
+    },
+    "tools/native_reconstruction/surface_work_tests.inc": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/source/tools/native_reconstruction/surface_work_tests.inc",
+      "sha256": "3e27fbcf3841e6a00b26f855e57f38c874477a748580395618895ee4f4d91f64"
+    },
+    "docs/native-gameplay/EFFECT_SURFACE_WORK.md": {
+      "path": "build-native-sjuni/surface-work-seal-v1/source/docs/native-gameplay/EFFECT_SURFACE_WORK.md",
+      "sha256": "1e9aabbf47ff1358be0ea6e7608187f65ab92f8bff320a57d8da6242686cfa6f"
+    },
+    "tools/native_reconstruction/qualify_surface_work_v1.py": {
+      "path": "build-native-sjuni/surface-work-seal-v1/source/tools/native_reconstruction/qualify_surface_work_v1.py",
+      "sha256": "378843ca4f7d8780dcda675662baa6c2e7a684f2340e5a4630034bf8eacb7624"
+    }
+  },
+  "cohorts": {
+    "surface_llvm": {
+      "path": "build-native-sjuni/surface-work-llvm-v10/receipt.json",
+      "sha256": "d6d45339bb5b62e10be315587e52d022827a22bae96224d1138f26a6b930ecff",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 767347,
+        "surface_frames": 8076,
+        "surface_emissions": 3513,
+        "surface_factory_cases": 216,
+        "surface_owner_frames": 384,
+        "modulation_cases": 16400,
+        "original_helper_calls": 4851851,
+        "game_run": false
+      }
+    },
+    "surface_gcc": {
+      "path": "build-native-sjuni/surface-work-gcc-v2/receipt.json",
+      "sha256": "68645ae8f881be646247beb9a94d5ae963562c9eca30aa57e02698c2a63b2fe5",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 767347,
+        "surface_frames": 8076,
+        "surface_emissions": 3513,
+        "surface_factory_cases": 216,
+        "surface_owner_frames": 384,
+        "modulation_cases": 16400,
+        "original_helper_calls": 4851851,
+        "game_run": false
+      }
+    },
+    "regression_llvm": {
+      "path": "build-native-sjuni/effect-work-llvm-v16/receipt.json",
+      "sha256": "3552efa936d387056e32e276a58e640cb774a2136605d51494c444b1bbf97469",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 3888287,
+        "banks": 6,
+        "updates": 7200,
+        "created": 2808,
+        "expired": 2286,
+        "piece_cases": 32532,
+        "camera_cases": 65536,
+        "signed_timer_cases": 65536,
+        "task_cases": 8688,
+        "original_helper_calls": 20425446,
+        "heap_allocations": 97674,
+        "heap_releases": 97674,
+        "general_created": 732,
+        "general_frames": 24316,
+        "general_missing": 492,
+        "general_unknown_profiles": 0,
+        "fog_imports": 687,
+        "fog_selections": 175872,
+        "fog_frames": 3496,
+        "fog_companions": 2,
+        "concurrent_reader_pass": true,
+        "game_run": false
+      }
+    },
+    "regression_gcc": {
+      "path": "build-native-sjuni/effect-work-gcc-v3/receipt.json",
+      "sha256": "fb3bc954a976a759748ebef63d1a36784232388a863901c67027c2165d495191",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 3888287,
+        "banks": 6,
+        "updates": 7200,
+        "created": 2808,
+        "expired": 2286,
+        "piece_cases": 32532,
+        "camera_cases": 65536,
+        "signed_timer_cases": 65536,
+        "task_cases": 8688,
+        "original_helper_calls": 20425446,
+        "heap_allocations": 97674,
+        "heap_releases": 97674,
+        "general_created": 732,
+        "general_frames": 24316,
+        "general_missing": 492,
+        "general_unknown_profiles": 0,
+        "fog_imports": 687,
+        "fog_selections": 175872,
+        "fog_frames": 3496,
+        "fog_companions": 2,
+        "concurrent_reader_pass": true,
+        "game_run": false
+      }
+    }
+  },
+  "limits": [
+    "Original SDK finite arithmetic profile, not physical exceptional parity.",
+    "Native model rebuilds provide controlled external poses; independent model qualification is reused.",
+    "Resource allocation/cache and bounded memory are declared test-only surroundings.",
+    "Actor generation retirement replaces original pointer-slot retargeting explicitly.",
+    "Actual runtime room installer, aggregate room reset, scenario dispatcher installation and game acceptance remain open."
+  ],
+  "preserved_initial_cohorts": [
+    "build-native-sjuni/surface-work-llvm-v1/receipt.json",
+    "build-native-sjuni/surface-work-llvm-v2/receipt.json",
+    "build-native-sjuni/surface-work-llvm-v3/receipt.json",
+    "build-native-sjuni/surface-work-llvm-v4/receipt.json",
+    "build-native-sjuni/surface-work-llvm-v5/receipt.json",
+    "build-native-sjuni/surface-work-llvm-v6/receipt.json",
+    "build-native-sjuni/surface-work-llvm-v7/receipt.json",
+    "build-native-sjuni/surface-work-llvm-v8/receipt.json",
+    "build-native-sjuni/surface-work-llvm-v9/receipt.json",
+    "build-native-sjuni/surface-work-gcc-v1/receipt.json"
+  ]
+}

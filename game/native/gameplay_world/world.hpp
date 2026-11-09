@@ -89,6 +89,9 @@ struct Session : actors::HitSession {
     bool inventory_modal{};
     std::uint8_t control_notice{};
     std::optional<std::uint16_t> scenario;
+    // Authored primary population count, source4BAEA0. Unknown is not zero;
+    // storage/registration and the active byte remain independent concepts.
+    std::optional<std::uint32_t> primary_population;
 };
 struct Profile {
     std::vector<input::Remap> layouts;
@@ -132,12 +135,14 @@ public:
     LinkedModelPool& linked_models();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
     std::shared_ptr<Actor> resolve(const actors::EntityId&)const noexcept;
+    actors::EntityId identity_of(const Actor&)const noexcept;
     actors::EntityId identity(std::size_t)const noexcept;
     std::optional<std::size_t> executing_primary()const noexcept{return executing_;}
     Result update_primary(Services&);
     Status close()noexcept;
     Session& session()noexcept{return *session_;}
     const Session& session()const noexcept{return *session_;}
+    bool closed()const noexcept{return closed_;}
     std::span<input::ControllerFrame> controllers()noexcept{return controllers_;}
     std::span<const input::ControllerFrame> controllers()const noexcept{return controllers_;}
     std::span<const input::Remap> layouts()const noexcept{return layouts_;}

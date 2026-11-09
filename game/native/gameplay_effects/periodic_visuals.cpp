@@ -1,4 +1,5 @@
 #include "periodic_visuals.hpp"
+#include "../gameplay_contact_world/contacts.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -96,6 +97,21 @@ struct PeriodicVisuals::Node final:gameplay_scenario::PeriodicVisual {
     std::optional<transform_math::Matrix> basis;
     VisualBinding binding;
     std::optional<gameplay_scenario::FogPulse> pulse;
+    std::optional<SurfaceState> surface;
+    gameplay_actors::EntityId surface_actor;
+};
+struct PeriodicVisuals::SurfaceRuntime {
+    std::shared_ptr<gameplay_world::World> world;
+    gameplay_contact_world::RoomResources* rooms;
+    Modulation* modulation;
+    SurfaceProfile profile;
+};
+class PeriodicVisuals::SurfaceSink final:public SurfaceVisuals {
+    PeriodicVisuals& owner_;
+public:
+    explicit SurfaceSink(PeriodicVisuals& owner):owner_(owner){}
+    bool bound_to(const gameplay_session::Random& random)const noexcept override{return owner_.bound_to(random);}
+    WorkStatus emit_surface(const SurfaceEmission& request)noexcept override{return owner_.emit_surface_impl(request,true);}
 };
 struct PeriodicVisuals::Editing {PeriodicVisuals* owner;};
 class PeriodicVisuals::Edit final:public WorkEdit {
@@ -135,8 +151,49 @@ void PeriodicVisuals::publish(std::shared_ptr<const EffectFrame> frame)noexcept{
 }
 bool PeriodicVisuals::admitted()const noexcept{return !closed_&&failure_==VisualStatus::completed;}
 bool PeriodicVisuals::bound_to(const gameplay_session::Random& random)const noexcept{return admitted()&&random_==&random;}
+bool PeriodicVisuals::bound_to(const gameplay_world::World& world)const noexcept{
+    if(!admitted()||world.closed()||!surfaces_||surfaces_->world.get()!=&world||!bound_to(world.session().random))return false;
+    const auto count=world.session().primary_population;
+    if(!count||*count>gameplay_world::World::primary_capacity)return false;
+    for(std::uint32_t i=0;i<*count;++i)if(!world.primary(i))return false;
+    return true;
+}
+bool PeriodicVisuals::bind_surfaces(std::shared_ptr<gameplay_world::World> world,gameplay_contact_world::RoomResources& rooms,Modulation& modulation,SurfaceProfile profile)noexcept{
+    if(!world||surfaces_||busy_||!admitted()||!bound_to(world->session().random))return false;
+    try{surfaces_=std::make_unique<SurfaceRuntime>(SurfaceRuntime{std::move(world),&rooms,&modulation,std::move(profile)});return true;}
+    catch(const std::bad_alloc&){return false;}
+}
+bool PeriodicVisuals::configure_surface(std::uint32_t selector,const std::array<std::uint32_t,4>& words)noexcept{
+    if(selector!=1)return admitted()&&!busy_;
+    if(busy_||!surfaces_||!bound_to(*surfaces_->world))return false;
+    (void)surfaces_->modulation->configure(selector,words);
+    return create_surface_work().status!=WorkStatus::unavailable;
+}
+PeriodicVisuals::SurfaceCreated PeriodicVisuals::create_surface_work()noexcept{
+    SurfaceCreated result;
+    if(busy_||!surfaces_||!bound_to(*surfaces_->world))return result;
+    result.status=WorkStatus::completed;
+    const auto count=*surfaces_->world->session().primary_population;
+    for(std::uint32_t i=0;i<count;++i){
+        ++result.attempted;
+        if(entities_.size()==168){result.status=WorkStatus::pool_full;continue;}
+        gameplay_actors::EntityId id;
+        try{
+            auto node=std::make_unique<Node>();node->periodic=false;node->bank=bank_;node->surface.emplace();node->surface_actor=surfaces_->world->identity(i);
+            const auto created=entities_.create(std::move(node));
+            if(created.status!=gameplay_actors::EntityStatus::completed){result.status=created.status==gameplay_actors::EntityStatus::full?WorkStatus::pool_full:WorkStatus::unavailable;if(result.status==WorkStatus::unavailable)return result;continue;}
+            id=created.id;order_.push_front(id);result.identities[i]=id;++result.created;
+        }catch(const std::bad_alloc&){if(id)retire_node(id);failure_=VisualStatus::no_memory;result.status=WorkStatus::unavailable;return result;}
+    }return result;
+}
+std::optional<SurfaceState> PeriodicVisuals::surface_state(const gameplay_actors::EntityId& id)const noexcept{
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));return node?node->surface:std::optional<SurfaceState>{};
+}
 WorkCreated PeriodicVisuals::create(const WorkRequest& request)noexcept{
-    if(!admitted()||busy_)return{};
+    return create_impl(request,false);
+}
+WorkCreated PeriodicVisuals::create_impl(const WorkRequest& request,bool internal)noexcept{
+    if(!admitted()||(busy_&&!internal))return{};
     if(!bank_->geometry().resolve(std::bit_cast<std::int16_t>(request.effect)))return{WorkStatus::resource_missing,{}};
     if(request.effect>=512)return{};
     if(!request.position||!finite(*request.position)||(request.flags!=0x1a193&&request.flags!=0x1a993&&request.flags!=0x9a993))return{};
@@ -164,6 +221,19 @@ WorkCreated PeriodicVisuals::create(const WorkRequest& request)noexcept{
         return{WorkStatus::completed,std::make_shared<Edit>(editing_,std::move(value),id)};
     }catch(const std::bad_alloc&){if(id)retire_node(id);failure_=VisualStatus::no_memory;return{};}
     catch(const std::exception&){if(id)retire_node(id);return{};}
+}
+WorkStatus PeriodicVisuals::emit_surface(const SurfaceEmission& request)noexcept{return emit_surface_impl(request,false);}
+WorkStatus PeriodicVisuals::emit_surface_impl(const SurfaceEmission& request,bool internal)noexcept{
+    if(!finite(request.scale)||!finite(request.color)||!std::isfinite(request.intensity)||
+       request.work.update!=WorkUpdate::scaled)return WorkStatus::unavailable;
+    const auto created=create_impl(request.work,internal);if(created.status!=WorkStatus::completed)return created.status;
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(created.edit->identity()));
+    if(!node)return WorkStatus::unavailable;
+    node->uniform=request.scale;node->attributes=request.attributes;
+    if(request.second_angle)node->angles[1]=*request.second_angle;
+    node->flags|=0x40;node->parameters208=request.color;node->feedback_scale=request.intensity;node->attributes|=0x100;
+    for(const auto slot:node->pieces){auto& output=pieces_[slot].output;output.flags|=0x40;output.parameters208=request.color;}
+    return WorkStatus::completed;
 }
 WorkStatus PeriodicVisuals::refresh_companion()noexcept{
     if(!admitted()||busy_||!fog_||!fog_->ready())return WorkStatus::unavailable;
@@ -223,6 +293,20 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
             const auto id=*cursor++;const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));
             if(!node)throw std::logic_error("Native periodic visual identity unexpectedly stale");
             ++report.visited;
+            if(node->surface){
+                if(!surfaces_)throw std::logic_error("Native surface work owner unavailable");
+                const auto actor=surfaces_->world->resolve(node->surface_actor);
+                // Native generation retirement replaces unsafe slot-pointer reuse.
+                if(!actor){retire_node(id);++report.retired;continue;}
+                const auto gate=prepare_surface(*node->surface,*surfaces_->modulation,*actor,surfaces_->world->room);
+                if(gate==SurfaceGate::retire){retire_node(id);++report.retired;continue;}
+                if(gate==SurfaceGate::skip)continue;
+                const auto room=surfaces_->rooms->retain(surfaces_->world->room);
+                if(!room||!room->current(room->identity())||room->room_number()!=surfaces_->world->room)throw std::domain_error("Native surface room lease unavailable");
+                SurfaceSink sink(*this);const auto step=advance_surface(*node->surface,surfaces_->profile,*surfaces_->modulation,*actor,surfaces_->world->room,room->geometry().floors,*random_,sink);
+                if(step.status!=SurfaceStatus::completed)throw std::domain_error("Native surface work profile unavailable");
+                if(step.retire){retire_node(id);++report.retired;}continue;
+            }
             if(node->pulse){
                 if(!fog_)throw std::logic_error("Native fog effect owner unavailable");
                 const auto step=fog_->advance(*node->pulse);
@@ -307,5 +391,6 @@ void PeriodicVisuals::close()noexcept{
     while(!order_.empty())retire_node(order_.front());
     closed_=true;entities_.shutdown();publish({});
     editing_->owner=nullptr;
+    surfaces_.reset();
 }
 }
