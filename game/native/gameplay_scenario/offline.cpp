@@ -25,6 +25,7 @@ OfflineResult OfflineCoordinator::tick(Interpreter& vm,std::size_t requested,boo
             (program.needs_saved_controls()&&(!providers.saved_controls||owner>=3))||
             (program.needs_world()&&(!providers.world||&selected!=&providers.world->selected_actor))||
             (program.needs_selected_actor()&&(!providers.world||!providers.world->primary(owner)))||
+            (program.needs_scenario()&&(!providers.world||!providers.world->scenario))||
             (program.needs_action_choices()&&!providers.action_choices);};
     if(requested!=1){if(missing_stream(requested,selected)){out.status=Status::provider_unavailable;return out;}}
     else for(std::size_t i=0;i<party.size();++i)if(party[i].active&&missing_stream(class_channel[party[i].script_class],i)){out.status=Status::provider_unavailable;return out;}

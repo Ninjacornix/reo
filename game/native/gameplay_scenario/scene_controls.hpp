@@ -77,6 +77,7 @@ public:
     ControlResult apply(ControlCommand,const ControlArguments&,ControlEffects*,std::size_t maximum_visits=4096)noexcept;
     ControlResult apply_typed(bool enable,std::uint32_t type,std::uint32_t authored_id,std::uint32_t selector,std::size_t maximum_visits=4096)noexcept;
     ControlResult choose_five(std::uint32_t authored_id,const std::array<std::uint32_t,4>& choices,ActionChoices&,std::uint8_t character,bool permitted,gameplay_session::Random&,std::size_t maximum_visits=4096)noexcept;
+    ControlResult disable_three(std::size_t maximum_visits=4096)noexcept;
 private:
     struct Node {SceneControlId id;SceneControl value;std::shared_ptr<Node> next;};
     std::shared_ptr<const SceneControlDomain> domain_;

@@ -10,6 +10,7 @@
 #include "saved_controls.hpp"
 #include "action_choices.hpp"
 #include "scene_models.hpp"
+#include "room_rules.hpp"
 #include "../gameplay_world/world.hpp"
 #include <algorithm>
 #include <bit>
@@ -73,7 +74,8 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;
             sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;
             scene_controls_|=coverage[op].scene_controls_required;streams_|=coverage[op].streams_required;saved_controls_|=coverage[op].saved_controls_required;
-            world_|=coverage[op].world_required;selected_actor_|=coverage[op].selected_actor_required;action_choices_|=coverage[op].action_choices_required;models_|=coverage[op].models_required;at+=bytes;
+            world_|=coverage[op].world_required;selected_actor_|=coverage[op].selected_actor_required;action_choices_|=coverage[op].action_choices_required;models_|=coverage[op].models_required;
+            scenario_|=coverage[op].scenario_required;canonical_flags_|=coverage[op].canonical_flags_required;at+=bytes;
         }
     }
 }
@@ -103,6 +105,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
     for(const auto i:{0xb0,0xb1,0xb4}){out[i].native_algorithm=true;out[i].models_required=true;}
+    out[0x191].native_algorithm=true;out[0x191].world_required=true;out[0x191].scenario_required=true;out[0x191].canonical_flags_required=true;out[0x191].scene_controls_required=true;
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef&&i!=0x104&&i!=0x105)out[i]={};
@@ -158,6 +161,8 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_world()&&(!providers.world||providers.world->selected_actor!=context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_canonical_flags()&&(!providers.canonical_flags||providers.flags!=providers.canonical_flags))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_models()&&!providers.models)return{Status::provider_unavailable,0,{},0};
     for(const auto authored:c.program->adjusted_models())if(providers.models->resolve(authored)>=128)return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
@@ -234,6 +239,9 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0xa0:case 0xa1:providers.scene_channels->bit(value(0),opcode==0xa0);break;
         case 0xa2:case 0xa3:providers.scene_channels->all(opcode==0xa2);break;
         case 0x190:break; // File1 main1B3C30 is the checked return-only body.
+        case 0x191:{const auto status=apply_scenario_room_rules(*providers.world,*providers.canonical_flags,*providers.scene_controls);
+            if(status!=RoomRuleStatus::completed)return result(status==RoomRuleStatus::budget_exhausted?Status::budget_exhausted:Status::provider_unavailable);
+            break;}
         case 0xb0:case 0xb1:providers.models->visibility(std::to_integer<std::uint8_t>(payload[0]),opcode==0xb1);break;
         case 0xb4:if(providers.models->adjust(std::to_integer<std::uint8_t>(payload[0]),value(4))!=ModelStatus::completed)return result(Status::provider_unavailable);break;
         case 0x70:{const auto audio=providers.streams->request(0,std::bit_cast<std::int32_t>(value(0)),0,*context.stream_tick,*providers.stream_backend);

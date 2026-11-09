@@ -12,7 +12,7 @@ IDS += ['0068D5D0','0068D5F0','0068D610','0068D630','006B1DC0','006B1EC0','006B1
 IDS += ['00690340','00690370','006903A0','006903C0']
 IDS += ['00694E50','005C45C0','0068E630','0068E6D0','0068E730','0068E800','0068E8B0','0068E920','0068E9E0','0068EA70','0068EB30','0068EBF0','0068ECC0','0068ED30','0068EDA0','0068EE30','0068EEC0','0068F5C0','00691F00','00690810']
 IDS += ['0068F570','0068F5A0']
-IDS += ['006920E0','006922B0','007020E0','00702380','00693020','00693840','00694DA0','00581830','00690600','00690640','00690700']
+IDS += ['006920E0','006922B0','007020E0','00702380','00693020','00693840','00694DA0','00581830','00690600','00690640','00690700','00694E70','005705F0','005704B0','00570550']
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)
@@ -38,7 +38,7 @@ def main(a):
     segment=next(p for p in loads if p[2]<=0x1b3c30 and 0x1b3c38<=p[2]+p[4]);body=elf[segment[1]+0x1b3c30-segment[2]:segment[1]+0x1b3c38-segment[2]]
     assert struct.unpack('<II',body)==(0x03e00008,0);texts.append('\n'.join(l for l in main_text.splitlines() if not l.startswith('#include')))
     previous_names=set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
-    stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80','0018F570','0018FDF0','00190A10','001913E0','00191530','001919D0'];stream_functions=set()
+    stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80','0018F570','0018FDF0','00190A10','001913E0','00191530','001919D0','001B3C40'];stream_functions=set()
     for ident in stream_main:
         p=next((ROOT/'recomp/config/output').glob('sub_'+ident+'_*'));source=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
         for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',source):
@@ -69,7 +69,11 @@ def main(a):
     presets=struct.unpack_from('<48I',raw,0x7174f0-0x570000);initialization+='const std::array<std::uint32_t,48> presets{'+','.join(hex(v)+'u'for v in presets)+'};std::memcpy(p+0x7174f0,presets.data(),192);\n}\n'
     declarations.append(initialization)
     (out/'original_declarations.inc').write_text('\n'.join(declarations)+'\n')
-    (out/'original_lookup.inc').write_text('\n'.join('case 0x'+n.split('_')[-1].removeprefix('0x')+':return '+n+';' for n in names)+'\n')
+    actual_definitions=set(re.findall(r'^void ((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts),re.M));lookup={}
+    for n in names:
+        at=int(n.split('_')[-1],16)
+        if at not in lookup or n in actual_definitions:lookup[at]=n
+    (out/'original_lookup.inc').write_text('\n'.join(f'case 0x{at:x}:return {n};'for at,n in sorted(lookup.items()))+'\n')
     reference=ROOT/'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
     fixture=reference.read_text().replace('float vu0_q{};','float vu0_q{};std::uint64_t lo{},hi{};')
     fixture=fixture.replace('Function lookupFunction(std::uint32_t)const noexcept{return original_transform_port;}','Function lookupFunction(std::uint32_t)const;')
@@ -81,6 +85,7 @@ def main(a):
     (out/'original_fixture.hpp').write_text(fixture);(out/'original.cpp').write_text('#include "original_fixture.hpp"\n#include "original_declarations.inc"\n'+text)
     shutil.copyfile(HERE/'tests.cpp',out/'tests.cpp')
     shutil.copyfile(HERE/'offline_tests.inc',out/'offline_tests.inc')
+    shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'scene_vm_fixture.inc',out/'scene_vm_fixture.inc')
     shutil.copyfile(HERE/'sequence_vm_fixture.inc',out/'sequence_vm_fixture.inc')
     shutil.copyfile(HERE/'lighting_vm_fixture.inc',out/'lighting_vm_fixture.inc')
@@ -88,8 +93,8 @@ def main(a):
     shutil.copyfile(HERE/'stream_vm_fixture.inc',out/'stream_vm_fixture.inc')
     shutil.copyfile(HERE/'actor_vm_fixture.inc',out/'actor_vm_fixture.inc')
     shutil.copyfile(HERE/'model_vm_fixture.inc',out/'model_vm_fixture.inc')
-    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('controls',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('streams',ROOT/'game/native/gameplay_scenario/stream_channels.cpp'),('models',ROOT/'game/native/gameplay_scenario/scene_models.cpp'),('content',ROOT/'game/native/gameplay_scenario/content.cpp'),('math',ROOT/'game/native/transform_math/transform_math.cpp'),('world',ROOT/'game/native/gameplay_world/world.cpp'),('input',ROOT/'game/native/gameplay_actors/input.cpp'),('session',ROOT/'game/native/gameplay_session/session.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('tests',out/'tests.cpp')]
-    source_paths=[HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'model_vm_fixture.inc',reference,HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
+    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('controls',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('streams',ROOT/'game/native/gameplay_scenario/stream_channels.cpp'),('rules',ROOT/'game/native/gameplay_scenario/room_rules.cpp'),('models',ROOT/'game/native/gameplay_scenario/scene_models.cpp'),('content',ROOT/'game/native/gameplay_scenario/content.cpp'),('math',ROOT/'game/native/transform_math/transform_math.cpp'),('world',ROOT/'game/native/gameplay_world/world.cpp'),('input',ROOT/'game/native/gameplay_actors/input.cpp'),('session',ROOT/'game/native/gameplay_session/session.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('tests',out/'tests.cpp')]
+    source_paths=[HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'room_rule_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'model_vm_fixture.inc',reference,HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
     source_paths += [path for label,path in units if not path.is_relative_to(ROOT/'build-native-sjuni')]
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']
@@ -105,7 +110,7 @@ def main(a):
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-msse4.1','-fno-fast-math','-ffp-contract=off','-I'+str(ROOT),'-I'+str(out)]
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
     for label,path in units:checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(path),'-o',str(out/(label+'.o'))],out,'compile-'+label))
-    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','flags','offline','scene','sequence','lighting','controls','streams','models','content','math','world','input','session','entities','tasks','tests']]+['-o',str(out/'checks.exe')],out,'link'))
+    checks.append(invoke([str(cc)]+[str(out/(n+'.o')) for n in ['original','core','flags','offline','scene','sequence','lighting','controls','streams','rules','models','content','math','world','input','session','entities','tasks','tests']]+['-o',str(out/'checks.exe')],out,'link'))
     checks.append(invoke([str(out/'checks.exe')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
         oracle_profile=dict(reference_sha256=sha(reference),sdk131_sign_extended_word_setter=True,finite_simd=True,transitive_native_headers=True),executable_sha256=sha(out/'checks.exe'),generated_fixture_sha256=sha(out/'original_fixture.hpp'),generated_original_sha256=sha(out/'original.cpp'),original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),

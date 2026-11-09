@@ -58,12 +58,14 @@ public:
     bool needs_selected_actor()const noexcept{return selected_actor_;}
     bool needs_action_choices()const noexcept{return action_choices_;}
     bool needs_models()const noexcept{return models_;}
+    bool needs_scenario()const noexcept{return scenario_;}
+    bool needs_canonical_flags()const noexcept{return canonical_flags_;}
     std::span<const std::uint8_t> adjusted_models()const noexcept{return adjusted_models_;}
     DispatchProfile profile()const noexcept{return profile_;}
 private:
     std::vector<std::vector<std::byte>> blocks_;
     std::vector<std::vector<std::uint32_t>> boundaries_;
-    bool unsupported_{},flags_{},timers_{},actor_events_{},signals_{},scene_resources_{},session_counters_{},sequences_{},lighting_{},scene_channels_{},scene_controls_{},streams_{},saved_controls_{},world_{},selected_actor_{},action_choices_{},models_{};
+    bool unsupported_{},flags_{},timers_{},actor_events_{},signals_{},scene_resources_{},session_counters_{},sequences_{},lighting_{},scene_channels_{},scene_controls_{},streams_{},saved_controls_{},world_{},selected_actor_{},action_choices_{},models_{},scenario_{},canonical_flags_{};
     std::vector<std::uint8_t> adjusted_models_;
     DispatchProfile profile_{};
 };
@@ -100,7 +102,7 @@ struct TickContext {bool enabled{true};bool alternate_mode{};std::uint8_t select
     std::optional<std::uint32_t> stream_tick{};};
 struct OfflineDispatch {std::uint32_t actor_category{},room_relation{};std::uint16_t actor_room{};};
 struct TickResult {Status status{Status::completed};std::size_t operations{};Position position;std::uint32_t opcode{};};
-struct OpcodeCoverage {bool native_algorithm{};bool flags_required{},timers_required{},signals_required{},scene_resources_required{},session_counters_required{},sequences_required{},lighting_required{},scene_channels_required{},scene_controls_required{},streams_required{},saved_controls_required{},world_required{},selected_actor_required{},action_choices_required{},models_required{};};
+struct OpcodeCoverage {bool native_algorithm{};bool flags_required{},timers_required{},signals_required{},scene_resources_required{},session_counters_required{},sequences_required{},lighting_required{},scene_channels_required{},scene_controls_required{},streams_required{},saved_controls_required{},world_required{},selected_actor_required{},action_choices_required{},models_required{},scenario_required{},canonical_flags_required{};};
 class Interpreter {
 public:
     static constexpr std::size_t channel_count=6;

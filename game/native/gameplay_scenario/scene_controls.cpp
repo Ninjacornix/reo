@@ -52,6 +52,16 @@ void SceneControls::clear()noexcept{
     while(current){auto next=std::move(current->next);current.reset();current=std::move(next);}
     clearing_=false;
 }
+ControlResult SceneControls::disable_three(std::size_t maximum_visits)noexcept{
+    ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    if(!enabled_)return result;
+    for(auto node=head_;node;node=node->next){
+        if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
+        ++result.visited;const auto* other=std::get_if<ControlOther>(&node->value.body);
+        if(std::holds_alternative<ControlTypeThree>(node->value.body)||(other&&other->type==3)){node->value.enabled=0;++result.matched;}
+    }
+    return result;
+}
 ControlResult SceneControls::choose_five(std::uint32_t authored_id,const std::array<std::uint32_t,4>& choices,ActionChoices& selection,std::uint8_t character,bool permitted,gameplay_session::Random& random,std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
     if(!enabled_||!permitted)return result;
