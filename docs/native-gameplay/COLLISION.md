@@ -114,9 +114,41 @@ bodies. Degenerate inverse geometry or the original no-near-depth invalid index
 is rejected. Qualification:
 `tools/native_reconstruction/native_gameplay_collision_ownership_qualification_v1.json`.
 
-Remaining collision contracts: segment/radius traces and sampled grid-list
-ordering; authored room-object footprint clipping57C0B0; full6636D0 postmove
+The `trace` companion now implements segment/triangle angle-sum containment,
+rejected-branch partial outputs, strict endpoint admission, the0.001 startward
+inset, repeated-cell sample order, nearest-in-list selection, endpoint shortening,
+first-hit queries and two-sided floor query/type filters. Both compilers pass
+482,015 checks with zero difference across all366 stock resources and22,363
+triangles. The full original wrappers are compared, including their distinct
+first-successful-list versus progressively-shortened behavior. Sampling exposes
+capacity/nonprogress errors rather than overflowing an unbounded output buffer;
+all tested stock traversals fit the original scratch. Scalar math/acos/vector
+surroundings are declared ports. Qualification:
+`tools/native_reconstruction/native_gameplay_collision_trace_qualification_v1.json`.
+
+Remaining collision contracts: radius traces and actor hit-region traces; authored room-object footprint clipping57C0B0; full6636D0 postmove
 height/surface rules and scenario callback dispatch; actual native actor/scenario
 integration. The modules above do not claim those consumers have been replaced
 in a running game, nor that the whole Stage4 is complete. Further companions
 preserve the qualified cohorts.
+
+The `room_objects` companion is a distinct native32-record scenario owner,
+reserving allocator slot0 and separating external IDs from object identity.
+It imports allthree stock object-type files andthree placement files, plus the
+seven owned RDTsectionE rooms containing those objects. Both compilers pass
+15,903 checks with zero difference against unchanged original allocation,
+placement, footprint, occupancy, cached mapping and classification bodies.
+There are11unique placements; the27placement observations repeat them across
+room cases. Ten immutable source footprint profiles are individually retained.
+The four native occupancy layers, first containing object, type/flag defaults,
+2100in-grid height classifications, and C2..C7-facing typed helper contracts
+are covered. Actual bytecode-handler integration is qualified by its own owner.
+See `native_gameplay_room_objects_qualification_v1.json`.
+
+This owner does not yet construct model instances/proxies, rebuild dynamic
+triangles or actor occupancy, or replace every room-object interaction caller.
+Odd/missing original height-layer indices and missing outside-floor providers
+are explicit unknown capabilities; the comparison does not claim parity with
+uninitialized original table reads. The new footprint companion remains active
+work until its original comparisons pass. These distinctions keep the resource
+owner, geometric solver and complete game consumer migration separately visible.

@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "stage4_complete": false,
+  "game_run": false,
+  "actual_gameplay_callers_migrated": false,
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-health-class-llvm-v2/receipt.json",
+      "sha256": "216a01c1e71c5dafc56d769e3a92eb3ab394037858562dbc9a1fef289870f23e",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "cases": 589824,
+        "zero_maximum_cases": 64,
+        "original_bodies_executed": 1,
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-health-class-gcc-v1/receipt.json",
+      "sha256": "ec32a28a07060ed882db6ff74d7808de916b6472005ef422c85247402fe44bfa",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "cases": 589824,
+        "zero_maximum_cases": 64,
+        "original_bodies_executed": 1,
+        "game_run": false
+      }
+    }
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/gameplay-health-class-llvm-v2/receipt.json": "216a01c1e71c5dafc56d769e3a92eb3ab394037858562dbc9a1fef289870f23e",
+    "recomp/config/output_ovl/o2/o2_0065FAB0_0x65fab0.cpp": "7c7e0747d354f42e78f477105be72cb7512d62233c3afbf9ab165e7c2b2f7297",
+    "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "game/native/gameplay_actors/health_class.hpp": "4c1f2278383c28759a1756fbdd81a5917ae799c277ea4797d3993ff5dcb8c19c",
+    "game/native/gameplay_actors/health_class.cpp": "39ce61146e9652184375002efc4105259525bea6fc9e3588243e0e381a36139b",
+    "tools/native_reconstruction/gameplay_actor_oracle/class_runtime.hpp": "8dedda763a3f07ad255955951c2335af4653ffc93e7535476c4cfb9d03ed07e4",
+    "tools/native_reconstruction/gameplay_actor_oracle/health_class_tests.cpp": "5f983782b2efd6563c13b22669d4347d5863d968092a64376bbc0446fd177508",
+    "tools/native_reconstruction/verify_gameplay_actor_health_class.py": "66f8537e1fd2df86690f4820756c9479bcaacc1e3bfc9ce84cec95d46f47e676",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/actor-health-class.exe": "81c7bf892ae9bebb4d3d1f1238e76a95b55c43293549906a7579aaf709e1257a",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/class_runtime.hpp": "8dedda763a3f07ad255955951c2335af4653ffc93e7535476c4cfb9d03ed07e4",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/o2_functions.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/original_class.cpp": "c62ac86f3d21a4172c785c3f7f484903ce07569b31f8d26f82f743540a999a7c",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/ps2_recompiled_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/ps2_runtime.h": "fabf0d2c7bb8b5518646d34f6d54e729f2c52fc6fe6c5636a5a518135ac64230",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/ps2_runtime_macros.h": "fabf0d2c7bb8b5518646d34f6d54e729f2c52fc6fe6c5636a5a518135ac64230",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/ps2_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/ps2_syscalls.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/run.txt": "124a853dadc866d94535294bef9abcf3a9af6d251f6645d19cd857a0fe75bea9",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/tests.cpp": "5f983782b2efd6563c13b22669d4347d5863d968092a64376bbc0446fd177508",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/source/game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/source/game/native/gameplay_actors/health_class.cpp": "39ce61146e9652184375002efc4105259525bea6fc9e3588243e0e381a36139b",
+    "build-native-sjuni/gameplay-health-class-llvm-v2/source/game/native/gameplay_actors/health_class.hpp": "4c1f2278383c28759a1756fbdd81a5917ae799c277ea4797d3993ff5dcb8c19c",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/receipt.json": "ec32a28a07060ed882db6ff74d7808de916b6472005ef422c85247402fe44bfa",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/actor-health-class.exe": "63d08cd9934b9d1cfb70b6036017e8eb10538f5e4a0369e7b6bfe2586c18463d",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/class_runtime.hpp": "8dedda763a3f07ad255955951c2335af4653ffc93e7535476c4cfb9d03ed07e4",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/o2_functions.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/original_class.cpp": "c62ac86f3d21a4172c785c3f7f484903ce07569b31f8d26f82f743540a999a7c",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/ps2_recompiled_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/ps2_runtime.h": "fabf0d2c7bb8b5518646d34f6d54e729f2c52fc6fe6c5636a5a518135ac64230",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/ps2_runtime_macros.h": "fabf0d2c7bb8b5518646d34f6d54e729f2c52fc6fe6c5636a5a518135ac64230",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/ps2_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/ps2_syscalls.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/run.txt": "124a853dadc866d94535294bef9abcf3a9af6d251f6645d19cd857a0fe75bea9",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/tests.cpp": "5f983782b2efd6563c13b22669d4347d5863d968092a64376bbc0446fd177508",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/source/game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/source/game/native/gameplay_actors/health_class.cpp": "39ce61146e9652184375002efc4105259525bea6fc9e3588243e0e381a36139b",
+    "build-native-sjuni/gameplay-health-class-gcc-v1/source/game/native/gameplay_actors/health_class.hpp": "4c1f2278383c28759a1756fbdd81a5917ae799c277ea4797d3993ff5dcb8c19c"
+  },
+  "status": "native health class matches complete original on admitted finite ratios",
+  "limits": [
+    "Finite signed health/max ratios and actual50/25 source thresholds compared; zero-maximum division is explicitly unadmitted.",
+    "No actual game consumers replaced by this comparison."
+  ]
+}
