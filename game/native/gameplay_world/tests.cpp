@@ -54,6 +54,8 @@ int main()try{
         g::World w(profile(),session);w.mode=1;require(session->mode==1);session->paused=true;require(w.paused);w.paused=false;
         w.selected_actor=0;require(session->selected_actor==0);w.filter_nonselected_input=true;require(session->authority_filter);w.filter_nonselected_input=false;
         w.room=3;require(session->room==3);w.room=0;
+        require(!w.scenario);w.scenario=0;require(session->scenario && *session->scenario==0);
+        session->scenario=0x0102;require(*w.scenario==0x0102);
         auto made=w.spawn_primary(0,actor(0));require(made.status==g::actors::EntityStatus::completed);auto a=w.resolve(made.id);require(bool(a));
         require(w.spawn_primary(0,actor(0)).status==g::actors::EntityStatus::invalid);
         w.controllers()[0].held=0x110;w.controllers()[0].analog[0]=-127;Ports p;p.reenter=true;p.grid=true;

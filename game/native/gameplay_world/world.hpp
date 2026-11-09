@@ -9,7 +9,7 @@
 #include <optional>
 #include <vector>
 
-namespace reo::native::animation {class Instance;}
+namespace reo::native::animation {class Instance;class Constraints;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
@@ -65,6 +65,7 @@ struct Actor : actors::Entity,actors::HitActor {
     ActorCollision collision;
     gameplay_collision::delivery::Component contact;
     std::shared_ptr<animation::Instance> model;
+    std::shared_ptr<animation::Constraints> constraints;
     input::Frame input;
 };
 struct Session : actors::HitSession {
@@ -72,6 +73,7 @@ struct Session : actors::HitSession {
     gameplay_session::Options options;
     std::uint8_t previous_primary{},previous_secondary{};
     bool inventory_modal{};
+    std::optional<std::uint16_t> scenario;
 };
 struct Profile {
     std::vector<input::Remap> layouts;
@@ -128,6 +130,7 @@ public:
     std::int8_t& paused;
     bool& filter_nonselected_input;
     std::uint16_t& room;
+    std::optional<std::uint16_t>& scenario;
     std::uint8_t selected_frame_marker{};
     std::uint16_t frame_shared_counter{};
 private:
