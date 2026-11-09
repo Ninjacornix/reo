@@ -34,10 +34,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--compiler', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--consumer', choices=['bodies', 'heights'], default='bodies')
     args = parser.parse_args()
     output = args.output.resolve()
     assert output.is_relative_to(ROOT / 'build-native-sjuni') and not output.exists()
-    paths = [f'game/native/{group}/{name}' for group, names in GROUPS.items() for name in names]
+    groups = {group: list(names) for group, names in GROUPS.items()}
+    if args.consumer == 'heights':
+        groups['gameplay_world'] = ['world.hpp', 'world.cpp', 'collision.hpp', 'collision.cpp',
+                                    'collision_phase.hpp', 'collision_phase.cpp', 'collision_phase_tests.cpp']
+        groups['gameplay_collision'] += [name + '.cpp' for name in
+            ['sweep', 'ownership', 'trace', 'room_objects', 'footprint', 'regions', 'postmove',
+             'postmove_view', 'secondary_ground']]
+        groups['transform_math'] = ['transform_math.hpp', 'transform_math.cpp']
+    paths = [f'game/native/{group}/{name}' for group, names in groups.items() for name in names]
     # Retain the complete local include closure, including borrowed view types.
     for name in paths:
         for include in re.findall(r'^\s*#include "([^"]+)"', (ROOT / name).read_text(), re.M):
@@ -51,7 +60,9 @@ def main():
     output.mkdir(parents=True)
     record = dict(schema=1, status='failed', stage4_complete=False, game_run=False,
                   installed_in_game=False, original_bodies_executed=False,
-                  scope='real motion registration, canonical body state and native lifetime contracts',
+                  scope=('real motion registration, canonical body state and native lifetime contracts'
+                         if args.consumer == 'bodies' else
+                         'ordered native primary, auxiliary and secondary collision-height consumer'),
                   source_sha256={name: digest(body) for name, body in frozen.items()},
                   compiler_sha256=digest(args.compiler.read_bytes()))
     try:
