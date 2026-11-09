@@ -268,3 +268,36 @@ geometry probes reach that unknown capability. They are offline synthetic
 queries, not measured retail incidents or evidence that a live caller reaches
 the case. No closest-point repair is silently introduced. Qualification:
 `native_gameplay_radius_qualification_v1.json`.
+
+The `directed` companion now implements6F0FE0directed-volume geometry and the
+full57B6F0ordered region selection policy. Two positive extents feed
+atan2(second,first); the original1921B0and18F570bodies execute unchanged in the
+private comparison to establish pair order and the owned polynomial. Atan2 and
+ordinary finite float SIMD are declared math surroundings; no original libc or
+PS2 hardware execution equivalence is claimed. The coefficient bytes22FE30are
+verified against the owned main executable.
+
+Both compilers pass110,933checks with zero error:18,003primitive,18,000trig-pair
+and1000full scan cases. Synthetic inputs exercise both world-point surface and
+zero-origin side-boundary outputs; the native result tags them distinctly.
+Per-actor mode retains the first region, global mode retains strict nearest
+selection, and occlusion/class/exclusion rules retain source order. The advanced
+region pointer used by later global response direction remains explicitly
+unknown, as in the other spatial cohort. Native canonical HIT consumption and
+actual actor-loop installation remain separate responsibilities. Qualification:
+`native_gameplay_directed_qualification_v1.json`.
+
+The `postmove_view` companion now provides direct synchronous references to
+canonical actor fields. VectorRef borrows individual XYZ scalars without casting
+unrelated vector types, while FlagRef supports the original byte553flag and bool
+fixtures without normalizing an untouched nonzero byte. Disabled-wall state is
+derived from controls; the dynamic-kind gate is a derived value. The historical
+owning-State API remains unchanged for its frozen comparison.
+
+Both compilers pass72,010checks, including2400actual native World::Actor views
+and the unchanged full6636D0oracle with separately qualified child providers.
+There are1857eligible cases,101wall contacts and371special joint2routes, all with
+zero error. Position/previous, health/status flags, controls, room, surface fields
+and byte flags bind directly; only derived collision data uses a component.
+This verifies the reusable native actor boundary, not its installation into a
+running game. Qualification: `native_gameplay_postmove_view_qualification_v1.json`.
