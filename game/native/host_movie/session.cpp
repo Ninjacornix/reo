@@ -66,6 +66,13 @@ struct Session::Impl {
             Generation generation{},engine_generation{};std::uint32_t width{512},height{};
             std::size_t index{};std::uint64_t completed_frames{},serial{},backpressure{};
             bool repeat{},paused{},running{};std::optional<std::int64_t> first_pts;
+            // Deliberate one-shot worker failure for the private background
+            // acceptance route. Normal launches never set either variable.
+            const auto* test_key=std::getenv("REO_NATIVE_HOST_MOVIE_TEST_FAIL_KEY");
+            const auto* background=std::getenv("REO_NATIVE_MEDIA_BACKGROUND_TEST");
+            const bool test_fault=test_key&&std::strcmp(test_key,"fe761807bc7493769dd7f9720ce6d1cc969f596f76fefc9b5add5385952b153b")==0&&background&&
+                (std::strcmp(background,"1")==0||std::strcmp(background,"2")==0);
+            bool test_fault_consumed{};
             std::optional<std::size_t> primed;Generation primed_generation{};
             {std::lock_guard lock(mutex);report.device_ready=true;}
             auto open=[&]{
@@ -133,6 +140,11 @@ struct Session::Impl {
                             const auto relative=frame.pts_100ns<0?0:static_cast<std::uint64_t>(frame.pts_100ns);frame.ordinal=completed_frames+(relative*30000+5000000ull*1001)/(10000000ull*1001);
                             std::lock_guard lock(mutex);if(report.generation==generation)latest=*free;
                             if(tracing){timing.ordinal=frame.ordinal;timing.publish_end=PipelineTrace::now();}
+                            if(test_fault&&!test_fault_consumed&&frame.ordinal>=120&&assets[index]->key()==test_key){
+                                test_fault_consumed=true;
+                                std::fprintf(stderr,"[NATIVE-HOST-MOVIE-TEST] capability=REO_NATIVE_HOST_MOVIE_TEST_FAIL_V1 generation=%llu key=%s ordinal=%llu fault=one-shot-worker-failure\n",static_cast<unsigned long long>(generation),test_key,static_cast<unsigned long long>(frame.ordinal));
+                                throw std::runtime_error("Injected native movie acceptance worker failure");
+                            }
                         }
                     }
                 }

@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "status": "static File1 movie control caller audit passed",
+  "game_run": false,
+  "process_access": false,
+  "window_actions": false,
+  "existing_files_edited": false,
+  "step3_complete": false,
+  "original_words": {
+    "matched_comments": 671,
+    "omitted_zero": 69,
+    "complete_bodies": 8,
+    "mismatches": 0
+  },
+  "findings": {
+    "gallery_active_pause_input_found": false,
+    "engine_indirect_pause_caller": "o0:37AA40 -> vtable22DCE8+28 -> 15F3F0; direct call main1BD170 in HDD worker",
+    "error_consumer": "o0:37A674 -> 37A790 -> 37A4E0",
+    "native_pause_hook": true,
+    "native_error_status": 4
+  },
+  "evidence_sha256": {
+    "tools/native_reconstruction/audit_media_control_callers.py": "4285de7da69d4deff07754aee260f372d356f8b36c85542539d0d1e31073d8e1",
+    "tools/native_reconstruction/audit_retail_effect_descriptors.py": "fd8dd4aec1e8a1a9e89fce2393c60583c44b96a6690400bec914e21e5d890d95",
+    "build-native-sjuni/media-control-caller-audit-v3/audit.json": "583ef61e0cc3c7f8b40fe0917dd0dd5048414e37a35c990ac080da21a07ff1c1",
+    "recomp/overrides/native_host_movie/entries.inc": "5c4e8f0542cfc70a31fc1e07a28809bdf47962ec708f4d784c35c645b782d241",
+    "recomp/overrides/native_host_movie/runtime_adapter.cpp": "1731faa717600ce05dc94e37d3f24a5041196a1029e70b920bf97757ad44a6a3",
+    "game/native/host_movie/session.cpp": "7df89065b4f0f62905639f0bf4cbc206ffa1c06e0c31a316feb8f756181393de",
+    "game/native/host_movie/session.hpp": "bc9e274052815c9a900afd8bdc6662b0f927c76b0fdd68db37ba47391ba99a80",
+    "docs/native-media/RETAIL_EFFECT_DESCRIPTOR_AUDIT.md": "eb4b6b7bde9f9ed9f3a848687c6e02846d34e907543eb0973cd94bdaa3e5bf0e",
+    "tools/native_reconstruction/retail_effect_descriptors_qualification_v1.json": "5d92705592a19bf5742513b807f38cae316d2211af74400a432831b1dcfd4689",
+    "docs/native-media/MEDIA_CONTROL_CALLER_CLOSURE.md": "16c05005224672ce54cbe8010f1cc72c18821772fb3f2ea04df36a8c4a6c952b"
+  },
+  "limitations": [
+    "Static audit only; no game-facing injected error/recovery or HDD pause executed.",
+    "Generated direct-call search cannot exclude indirect callers or runtime changes.",
+    "Eight original bodies and all discovered direct calls checked against owned words; this is not a whole-binary reachability proof.",
+    "Temporary guest/renderer bridge migration and final dependency deletion remain Stages4/5/6.",
+    "Step3 final coherent tests and A/V synchronization remain owned by root task."
+  ]
+}

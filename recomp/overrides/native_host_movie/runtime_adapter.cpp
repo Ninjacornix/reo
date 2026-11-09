@@ -302,7 +302,10 @@ public:
         if(handle!=proxy)return false;
         validate();
         switch(action) {
-        case Action::destroy:stop();alive=false;store(ram,proxy+4,0u);return true;
+        case Action::destroy:
+            if(started&&session.snapshot().state==host_movie::State::error)
+                std::fprintf(stderr,"[NATIVE-HOST-MOVIE] failed source destroyed generation=%llu caller=%08x\n",static_cast<unsigned long long>(generation),argument(31));
+            stop();alive=false;store(ram,proxy+4,0u);return true;
         case Action::enqueue_afs:enqueue(afs(argument(5),argument(6)));return true;
         case Action::start_afs:case Action::repeat_afs:stop();repeat=action==Action::repeat_afs;enqueue(afs(argument(5),argument(6)));start();return true;
         case Action::filename:stop();enqueue(filename(argument(5)));start();return true;
