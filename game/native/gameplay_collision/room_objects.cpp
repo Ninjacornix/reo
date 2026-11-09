@@ -50,6 +50,8 @@ Owner Owner::import(std::span<const std::byte> types,std::span<const std::byte> 
 }
 ObjectId Owner::id(std::uint32_t slot)const noexcept{ObjectId result;result.domain_=domain_;result.slot_=slot;return result;}
 const Object* Owner::get(const ObjectId& handle)const noexcept{return handle&&handle.domain_==domain_&&handle.slot_<32&&objects_[handle.slot_].active?&objects_[handle.slot_]:nullptr;}
+Object* Owner::mutable_object(const ObjectId& handle)noexcept{return get(handle)?&objects_[handle.slot_]:nullptr;}
+std::optional<std::uint8_t> Owner::ordinal(const ObjectId& handle)const noexcept{return get(handle)?std::optional<std::uint8_t>(std::uint8_t(handle.slot_)):std::nullopt;}
 std::vector<ObjectId> Owner::objects()const{std::vector<ObjectId> result;for(unsigned i=0;i<32;++i)if(objects_[i].active)result.push_back(id(i));return result;}
 const Type* Owner::type(std::uint16_t index)const noexcept{return index<types_.size()?&types_[index]:nullptr;}
 bool Owner::install_grid(std::uint16_t room,std::span<const std::byte> bytes){if(!count_)return false;bool present{};for(const auto& object:objects_)if(object.active&&object.room==room)present=true;if(!present)return false;auto imported=Grid::import(bytes);room_=room;grid_=std::move(imported);for(auto& object:objects_)if(object.active&&object.room==room_)object.center=center(object);rebuild();return true;}

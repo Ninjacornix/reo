@@ -3,6 +3,7 @@
 namespace reo::native::gameplay_collision::room_objects {
 struct Domain;
 class Owner;
+class InteractionOwner;
 class ObjectId final {
 public:
     ObjectId()=default;
@@ -73,6 +74,7 @@ public:
     Classified refine(Vec3,bool height_layers,std::optional<ObjectId> excluded,const response::Grid* floors=nullptr)const;
     const std::array<Grid::Mask,4>& layers()const noexcept{return layers_;}
 private:
+    friend class InteractionOwner;
     std::shared_ptr<const Domain> domain_;
     std::array<Object,32> objects_{};
     std::array<Type,32> types_{};
@@ -83,5 +85,7 @@ private:
     std::array<std::optional<ObjectId>,8> mappings_;
     ObjectId id(std::uint32_t)const noexcept;
     Object* active_external(std::uint8_t)noexcept;
+    Object* mutable_object(const ObjectId&)noexcept;
+    std::optional<std::uint8_t> ordinal(const ObjectId&)const noexcept;
 };
 }

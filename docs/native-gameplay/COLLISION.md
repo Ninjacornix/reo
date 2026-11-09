@@ -301,3 +301,22 @@ zero error. Position/previous, health/status flags, controls, room, surface fiel
 and byte flags bind directly; only derived collision data uses a component.
 This verifies the reusable native actor boundary, not its installation into a
 running game. Qualification: `native_gameplay_postmove_view_qualification_v1.json`.
+
+The `object_interactions` companion now mutates the existing canonical32-record
+owner through one restricted friend, with checked mutable access and ordinal
+resolution kept private. It implements capacity counts, transition admission,
+primary requests, secondary claims, decay, signed-selector transfers and type
+parameter queries. Authored selector equality precedes masking, so33and1retain
+distinct transfer behavior even when they address the same physical record.
+The parameter fallback3C4CC8is exactly physical record31.type, while native
+ObjectIds retain domain checks independently of those source ordinals.
+
+Both compilers pass622,794checks across45,640actions in seven retail resource
+sets plus seven synthetic type/direction variants. Seven explicit alias-transfer
+cases and14signed request wraps are compared against unchanged original bodies.
+The private-access addition also passes the unchanged import/occupancy corpus
+on both compilers:15,903checks, seven rooms and2100classifications. Prior
+qualifications preserve their recorded source cohorts; this refreshed cohort
+records the additive private owner interface. Instance lifetime, directional
+occupancy/approach consumers and game installation remain separate work.
+Qualification: `native_gameplay_object_interactions_qualification_v1.json`.
