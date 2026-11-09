@@ -1,6 +1,7 @@
 #include "directed.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 namespace reo::native::gameplay_collision::directed {
 namespace {
 Vec3 add(Vec3 a,Vec3 b){return{a.x+b.x,a.y+b.y,a.z+b.z};}
@@ -27,7 +28,7 @@ std::optional<spatial::Point> contact(Sphere sphere,Vec3 origin,Vec3 direction,E
     direction=normalize(direction);const auto delta=sub(sphere.center,origin);const auto shifted=add(mul(direction,sphere.radius/pair.first),delta);const auto axis=dot(shifted,direction);const auto cos_square=pair.second*pair.second;
     if(axis<=0||axis*axis<square(shifted)*cos_square)return{};
     const auto delta_square=square(delta),back=-dot(delta,direction);if(back>0&&!(back*back<delta_square*(pair.first*pair.first))&&!(delta_square<=sphere.radius*sphere.radius))return{};
-    const auto surface=[&]{return spatial::Point{add(sphere.center,mul(delta,-(sphere.radius/std::sqrt(delta_square))))};};
+    const auto surface=[&]{const auto distance=std::sqrt(delta_square);const auto scale=distance==0?std::numeric_limits<float>::max():sphere.radius/distance;return spatial::Point{add(sphere.center,mul(delta,-scale))};};
     if(delta_square<=sphere.radius*sphere.radius)return surface();
     const auto projection=dot(delta,direction);if(!(projection*projection<delta_square*cos_square)&&!(projection<=0))return surface();
     const auto perpendicular=std::sqrt(std::abs(delta_square-projection*projection));const auto along=pair.second*projection+pair.first*perpendicular;const auto travel=along-std::sqrt(sphere.radius*sphere.radius+(along*along-delta_square));const auto radial=add(mul(direction,-projection),delta);const auto scale=pair.first/perpendicular;
