@@ -10,6 +10,13 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#ifdef REO_SURFACE_AUDIO_TESTS
+#include "game/native/gameplay_contact_world/contacts.hpp"
+#include "game/native/gameplay_world/footwear.hpp"
+#include <filesystem>
+const reo::native::gameplay_collision::regions::World* original_audio_regions{};
+std::string audio_test_directory;
+#endif
 namespace a = reo::native::gameplay_audio;
 namespace b = reo::native::audio_banks::v2;
 namespace s = reo::native::gameplay_session;
@@ -110,6 +117,10 @@ void original_transform_port(std::uint8_t* m, R5900Context* c, PS2Runtime* r) {
         case 0x1b8bb0:return sub_001B8BB0_0x1b8bb0(m,c,r);
         case 0x1b8b20:return sub_001B8B20_0x1b8b20(m,c,r);
         case 0x5b4ce0:return o2_005B4CE0_0x5b4ce0(m,c,r);
+#endif
+#ifdef REO_SURFACE_AUDIO_TESTS
+        case 0x1b8f40:return sub_001B8F40_0x1b8f40(m,c,r);
+        case 0x574680:{check(original_audio_regions!=nullptr);const auto p=read<reo::native::gameplay_collision::Vec3>(m,GPR_U32(c,4));SET_GPR_U32(c,2,original_audio_regions->select(p));return;}
 #endif
         case 0x1aceb0:
             return sub_001ACEB0_0x1aceb0(m, c, r);
@@ -793,12 +804,21 @@ void stock_composition(std::vector<std::uint8_t>& m, const char* path) {
 #ifdef REO_ANIMATION_AUDIO_TESTS
 #include "animation_audio_tests.inc"
 #endif
+#ifdef REO_SURFACE_AUDIO_TESTS
+#include "surface_audio_tests.inc"
+#endif
 int main(int argc, char** argv) {
     try {
         check(argc == 3);
         std::vector<std::uint8_t> memory(0x2000000);
 #ifdef REO_ANIMATION_AUDIO_TESTS
         compare_positional(memory,argv[2]);
+#ifdef REO_SURFACE_AUDIO_TESTS
+        audio_test_directory=std::filesystem::path(argv[1]).parent_path().string();
+        compare_surface_audio(memory);
+        std::cout<<"{\"checks\":"<<checks<<",\"surface_audio_cases\":"<<surface_audio_cases<<",\"footwear_cases\":"<<footwear_cases<<",\"surface_audio_commands\":"<<surface_audio_commands<<",\"surface_audio_mixed_frames\":"<<surface_audio_mixed_frames<<",\"surface_audio_refusals\":"<<surface_audio_refusals<<",\"original_calls\":"<<calls<<",\"game_launched\":false}\n";
+        return 0;
+#endif
         compare_animation_frontends(memory);
         std::cout<<"{\"checks\":"<<checks<<",\"frontend_cases\":"<<frontend_cases<<",\"frontend_commands\":"<<frontend_commands<<",\"frontend_family_commands\":["<<frontend_family_commands[0]<<','<<frontend_family_commands[1]<<','<<frontend_family_commands[2]<<"],\"frontend_mixed_frames\":"<<frontend_mixed_frames<<",\"frontend_signal_samples\":"<<frontend_signal_samples<<",\"frontend_refusals\":"<<frontend_refusals<<",\"original_calls\":"<<calls<<",\"game_launched\":false}\n";
         return 0;

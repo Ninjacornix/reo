@@ -2,14 +2,18 @@
 #include "animation_primitives.hpp"
 #include "../gameplay_audio/owner.hpp"
 #include "../gameplay_scenario/resource_templates.hpp"
+namespace reo::native::gameplay_contact_world {class RoomResources;}
 namespace reo::native::gameplay_world::animation_events {
-// Concrete original1B8BB0/1B8B20/1B8C70 frontends over the existing native bank
-// owner. Surface-region, node-surface and scenario-remap routes remain explicit
-// unsupported operations; they are not replaced by a guessed sound request.
+// Concrete actor/resource/surface frontends over the existing native bank
+// owner and canonical room region owner. All borrowed owners outlive this
+// component. Node/scenario-remap routes remain explicit reached refusals.
 class BasicAudio final : public Audio {
   public:
     BasicAudio(World&, gameplay_audio::Owner&, const gameplay_audio::SpatialContext&,
                gameplay_scenario::SceneResources&, const gameplay_scenario::ResourceTemplates&);
+    BasicAudio(World&, gameplay_audio::Owner&, const gameplay_audio::SpatialContext&,
+               gameplay_scenario::SceneResources&, const gameplay_scenario::ResourceTemplates&,
+               gameplay_contact_world::RoomResources&);
     void surface(Actor&, std::int8_t) override;
     void actor(Actor&, std::uint32_t event, bool alternate) override;
     void resource(Actor&, std::uint16_t event) override;
@@ -21,6 +25,7 @@ class BasicAudio final : public Audio {
     const std::optional<gameplay_audio::Result>& last_result() const noexcept {
         return last_;
     }
+    std::span<const gameplay_audio::Result> last_surface_results()const noexcept{return {surface_results_.data(),surface_count_};}
 
   private:
     World& world_;
@@ -29,6 +34,9 @@ class BasicAudio final : public Audio {
     gameplay_scenario::SceneResources& resources_;
     const gameplay_scenario::ResourceTemplates& templates_;
     std::optional<gameplay_audio::Result> last_;
+    gameplay_contact_world::RoomResources* rooms_{};
+    std::array<gameplay_audio::Result,2> surface_results_{};
+    std::size_t surface_count_{};
     void admit(const Actor&) const;
     void request(const Actor&, std::uint32_t bank, std::uint32_t event);
 };

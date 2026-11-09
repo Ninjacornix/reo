@@ -22,7 +22,9 @@ def main():
     parser.add_argument('--compiler', choices=COMPILERS, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--animation-frontends',action='store_true')
+    parser.add_argument('--surface-frontends',action='store_true')
     args = parser.parse_args()
+    args.animation_frontends=args.animation_frontends or args.surface_frontends
     out = args.output.resolve()
     allowed = (ROOT / 'build-native-sjuni').resolve()
     if out.exists() or out == allowed or not out.is_relative_to(allowed):
@@ -35,6 +37,7 @@ def main():
                  0x1a7310,0x1a7430,0x1a7550,0x1b8d40,0x1b93d0,0x1b94b0,
                  0x191ab0,0x1aceb0,0x1acf60,0x1b86f0,0x1b8780]
     if args.animation_frontends:addresses += [0x1b8bb0,0x1b8b20,0x1b8c70]
+    if args.surface_frontends:addresses += [0x1b8d70,0x1b8f40]
     bodies, originals, audits = [], [], []
     for at in addresses:
         source = ROOT / f'recomp/config/output/sub_{at:08X}_0x{at:x}.cpp'
@@ -69,8 +72,11 @@ def main():
     if args.animation_frontends:
         from effect_work_sources import SURFACE_WORLD_UNITS
         frontend_units=[ROOT/n for n in SURFACE_WORLD_UNITS if '/gameplay_effects/' not in n]
-        frontend_units += [ROOT/'game/native'/n for n in ['gameplay_world/animation_audio.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','gameplay_actors/entity.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp']]
+        frontend_units += [ROOT/'game/native'/n for n in ['gameplay_world/animation_audio.cpp','gameplay_world/footwear.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','gameplay_collision/regions.cpp','gameplay_actors/entity.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp']]
         paths += frontend_units+[ROOT/'tools/native_reconstruction/animation_audio_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
+    if args.surface_frontends:
+        frontend_units += [ROOT/'game/native/gameplay_collision'/n for n in ['regions.cpp','room_objects.cpp']]
+        paths += frontend_units+[ROOT/'tools/native_reconstruction/surface_audio_tests.inc',ROOT/'game/native/gameplay_world/model_scale_profile.inc',ROOT/'tools/native_reconstruction/generate_footwear_profile.py']
     paths=list(dict.fromkeys(paths))
     for source in paths:
         for include in re.findall(r'^\s*#include "([^"]+)"',source.read_text(),re.M):
@@ -100,6 +106,10 @@ def main():
         owned_tables+=read(at,68)
     owned_tables+=read(0x250230,4)
     (out/'owned_attenuation.bin').write_bytes(owned_tables)
+    if args.surface_frontends:
+        raw=(ROOT/'build-function-index/owned-overlays/o2.bin').read_bytes()
+        (out/'owned_footwear.bin').write_bytes(raw[0x7313c0-0x570000:0x7313c0-0x570000+2*208])
+        receipt=ROOT/'build-native-sjuni/footwear-profile-v1/receipt.json';profile=json.loads(receipt.read_bytes());assert profile['output_sha256']==sha(ROOT/'game/native/gameplay_world/footwear_profile.inc')
     (out/'audio_reference.hpp').write_text(header)
     original=out/'original.cpp'
     original.write_text('#include "audio_reference.hpp"\n#pragma GCC diagnostic ignored "-Wunused-variable"\n'+'\n'.join(bodies))
@@ -111,6 +121,7 @@ def main():
     sources=[out/'source'/p.relative_to(ROOT) if p.is_relative_to(ROOT) and not p.is_relative_to(out) else p for p in sources]
     command=[str(compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-parameter','-fno-fast-math','-ffp-contract=off','-msse4.1','-I'+str(out/'source'),'-I'+str(out),*[str(p) for p in sources],'-o',str(executable)]
     if args.animation_frontends:command+=['-DREO_ANIMATION_AUDIO_TESTS=1']
+    if args.surface_frontends:command+=['-DREO_SURFACE_AUDIO_TESTS=1']
     record=dict(schema=1,status='failed',source_sha256=inputs,compiler_sha256=sha(compiler),original_word_audits=audits,game_launched=False,checks=[])
     env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
     try:

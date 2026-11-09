@@ -1,0 +1,928 @@
+{
+  "schema": 1,
+  "status": "canonical surface animation audio through real bank Session qualified on both compilers",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_audio/CMakeLists.txt": "1e8c23e45fc0ecc7dd233bcdae56f6d2dd8e54386bc440d4a886651b4bd7f104",
+    "game/native/gameplay_audio/import.cpp": "2d53fcca50d8027319a01841f94647e721b36b655caf0ff486fe89d6109ce4aa",
+    "game/native/gameplay_audio/import.hpp": "faf724ccec4041f9811b664a3f3f9268c5151dd356e849f0d344947b9184a40e",
+    "game/native/gameplay_audio/options.cpp": "8cb31bc60f46dde83887e7f8e6e679cc11a73c79261eb960b5131a7b700fb32a",
+    "game/native/gameplay_audio/options.hpp": "170a559680dae5612e159d345f69627bf8b715f73b74187279e8b2afa2e8abff",
+    "game/native/gameplay_audio/owner.cpp": "a6a3bc7a40be0b6826ebbdd964e6a91c38e183a0439376e123dd6cc6a4984785",
+    "game/native/gameplay_audio/owner.hpp": "359867b6f11dfb5a86bc400b1585b2f319db35054fca5fa016515fe9bb99cd98",
+    "game/native/gameplay_audio/routing.cpp": "9a4d2203db6811f61c47e3754caa6a6b50d8aa45974a8a7882b06d6033564e7b",
+    "game/native/gameplay_audio/routing.hpp": "68a07a142e4a4dfb24543a71f46b7bb3cbdc14808a4058c92d4d95b6f05ca697",
+    "game/native/gameplay_audio/spatial.cpp": "99205d3008b1ce7beca1017defe97e16dd50f5550383a28f74d6553ce78ebbb6",
+    "game/native/gameplay_audio/spatial.hpp": "4068b3f26004927a161451c394507a4338b362edf6ade0fc65d94981ba9a25ba",
+    "game/native/gameplay_audio/stream_levels.hpp": "c3e37d3f74d10f25fc15f7fd414bdf1824c8081e531fe153668aab08b453e5d0",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "game/native/transform_math/transform_math.cpp": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449",
+    "game/native/audio_banks/v2/algorithms.hpp": "4260dcc9546f3f3e17b24b8692da83e3f7d26877d9f5ee6d46c21d1b9696b0fc",
+    "game/native/audio_banks/v2/budget.hpp": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18",
+    "game/native/audio_banks/v2/session.hpp": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+    "game/native/audio_banks/v2/test_inputs.hpp": "fb07e04d22c4ba0852ce88a4813aa5c4ce6888bb6ea8aaac571bc87b68b8cb2b",
+    "game/native/audio_banks/v2/algorithms.cpp": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e",
+    "game/native/audio_banks/v2/session.cpp": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603",
+    "game/native/audio_banks/source_members.inc": "15a9255f036a2658b173ada284a12385e929b66731618f227fe4770eb63c7f71",
+    "game/native/audio_banks/source_mix.inc": "d28e10cdcc91cd4ae2941dd018c17ee902953c92d24a0fdc109fac3ec291f328",
+    "game/native/audio_banks/source_records.inc": "44ea539c47bfd2dc31271c0aa96b9876d73818c9923a9739edae50127287dc0a",
+    "game/native/gameplay_scenario/stream_channels.hpp": "6b9dda39228d221ae1fc629ca82a8c1feb0b74e95ebe8815ca83059bd2b790e6",
+    "game/native/gameplay_scenario/stream_channels.cpp": "08676fc7bec4468f2d041b3587ccd305f39f0259d0f3d6dd8e2db4191ff34a03",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/gameplay_audio_tests.cpp": "4a5beaab5ceef99477c021a9e4d557459a8a6b09c55917ba67e9c9586184c693",
+    "tools/native_reconstruction/verify_gameplay_audio.py": "0c3284be97effdc040f1b71db0f2ba417b27ee450a6061bef42d3b2034fb6e7c",
+    "build-native-sjuni/audio-asset-inventory/file1-v1/members.json": "276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2",
+    "recomp/config/output/sub_001AC7F0_0x1ac7f0.cpp": "3f19ca868d54d14e7b5bad3de9292985c245e2320540d3db4c365e9e99d7e326",
+    "recomp/config/output/sub_001ACB60_0x1acb60.cpp": "9eab8245a0615eebf3cb889e8d40f4a8460c93bc9592921f0a9558a3a9dbfd7e",
+    "recomp/config/output/sub_001AEC80_0x1aec80.cpp": "3161c709c4844d8e192f7a9555f08fad7de6d0907c8f13a618fb38f53535aacd",
+    "recomp/config/output/sub_001ACFB0_0x1acfb0.cpp": "e368980738c2d1f2ac54565b07ac88cf3ede25f9a6e5ddcb8327d01e284ab85a",
+    "recomp/config/output/sub_001AD220_0x1ad220.cpp": "645b6e3df703c6836da5182902d8af82f275208c8638f89ad61b3aec25722a88",
+    "recomp/config/output/sub_001A7310_0x1a7310.cpp": "aad12df3b7cc7c97efab1bc11408b0b5dd518fb75e91a553a3c3e263ad3fd3c3",
+    "recomp/config/output/sub_001A7430_0x1a7430.cpp": "7bd3f90d2a99bacbe76608ec3ea9d564f491f018439db7ec90f2b0bf9393178b",
+    "recomp/config/output/sub_001A7550_0x1a7550.cpp": "fed73905eb08bdfd0c40074a6d0507ab5fb5262fcc91126e6ef2f7ea9bc79ef2",
+    "recomp/config/output/sub_001B8D40_0x1b8d40.cpp": "ff625ac667492ba165b6675c9c867942bf05e5108f1a58b24b82eab6494f2d6f",
+    "recomp/config/output/sub_001B93D0_0x1b93d0.cpp": "b7c402e088e20163b81816e39d33cbacbe0b4900d36e8a1ee89556be82d8d832",
+    "recomp/config/output/sub_001B94B0_0x1b94b0.cpp": "e3555c06099edc80962355843e5dffe773f8a5847f524340ce393fd7bdef8492",
+    "recomp/config/output/sub_00191AB0_0x191ab0.cpp": "8e83d1eec2de911a5283de8a1ca8e3db0a96be9a4deb7e4bc8dab09057bdd16e",
+    "recomp/config/output/sub_001ACEB0_0x1aceb0.cpp": "fda5b68d3ff0b3cdb626320256b03ac7da6db3751762d29d0eb3c85a738a1de2",
+    "recomp/config/output/sub_001ACF60_0x1acf60.cpp": "7c1ad3a1e91d394b9c78c0e129189ddceebd3cfe94a92c453dfed466367e49b9",
+    "recomp/config/output/sub_001B86F0_0x1b86f0.cpp": "b1e1910117820c2b9f6bc6dc3db934d41dc10d88a550ad70e549b84d3a54c248",
+    "recomp/config/output/sub_001B8780_0x1b8780.cpp": "5ccee73fd27d058fa098a51582685cca482ffd00e85ae15c22b98bedf6b87209",
+    "recomp/config/output/sub_001B8BB0_0x1b8bb0.cpp": "e34bb4df1e717bee059838465fa1ef5a3565d153e5a3a2277b40c9e82c4b4f38",
+    "recomp/config/output/sub_001B8B20_0x1b8b20.cpp": "742abf721658f723ef896c08eb9933324091448e6670b5a0faf86a4323c39af3",
+    "recomp/config/output/sub_001B8C70_0x1b8c70.cpp": "e68da930b316406d29cf4dd0162b76a77a444bc33a6e8ebe17516f2a038e4f0e",
+    "recomp/config/output/sub_001B8D70_0x1b8d70.cpp": "a1d2cb9531c963f6bfc5fbb34b5a1e2de8e8a9b2a9b9cb948f538f63d27aa421",
+    "recomp/config/output/sub_001B8F40_0x1b8f40.cpp": "bfed400559eb8266717171d4a54c16a6687262b9ed21dc94f7accbb41e9e1f50",
+    "recomp/config/output_ovl/o2/o2_005B4CE0_0x5b4ce0.cpp": "4421c3e368402608a416d14e13b675b07da0ea8ed1619b1437b9725d2146c069",
+    "game/native/gameplay_world/world.cpp": "40ee7b9c0b8c57e455207b0b72a0d0547d27952009a9cf92000a8117aa076658",
+    "game/native/gameplay_world/linked_models.cpp": "6ce4cf67fe58aa6e8b8eebc936fde9ed7feab1424d0c8366b07d3e267ebaba60",
+    "game/native/gameplay_world/bodies.cpp": "9cb9bd0d5f7e18e14aeccdd481acc609ea2d2d6d886b08072ce4fcb48d8afeb0",
+    "game/native/gameplay_world/model_poses.cpp": "4451cc9df3176681a663f3c266844d50976d3df3c37715ab9f0ba83e23638fdc",
+    "game/native/gameplay_world/model_constraints.cpp": "7a2dad002ac8d3202fc0ba9a5f88d840d63780c7d71043768d2b52b9f840789c",
+    "game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+    "game/native/gameplay_actors/health.cpp": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7",
+    "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+    "game/native/gameplay_collision/response.cpp": "2fb4d52dcb9b51899a05def4a3734f85559e8c2a2a5327203f6e9c5e44aa698c",
+    "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+    "game/native/gameplay_collision/actor_views.cpp": "80a54e075da6b10c9586d084a93ff9f651e7e0ff8b04569a2ec0f55bd7f90fa3",
+    "game/native/animation/constraints.cpp": "7ee5adc664a46a31450602201dbce4cc37bb9d48fd3f0645b222d53131fc897f",
+    "game/native/animation/constraint_math.cpp": "5c87b5248ebeeef3c5853d41f1ff18c06332dd85caad6189899d4d63aa267416",
+    "game/native/gameplay_world/animation_audio.cpp": "515129b59dabd95510716be3fe23417087c3aac6402d701086e6a4aa91e0d3c5",
+    "game/native/gameplay_world/footwear.cpp": "ac51ad6bed6e67c3ac21fe8225d253720033e609208cc929d86ac431b7916808",
+    "game/native/gameplay_scenario/scene_resources.cpp": "41ebe45412f2d37003e9e330cf45dadf946a3be8dea43ae0efc7109fd9615d3d",
+    "game/native/gameplay_scenario/resource_templates.cpp": "7d7ba0d534fb2520c37d3878193e3c81c0d7a87b9a3be3e1f6278f57009fb4b0",
+    "game/native/gameplay_collision/regions.cpp": "f03b26532cc46a402513e81e751ed6e6ba41fd25781f94c83127514037ad2f4c",
+    "game/native/gameplay_actors/entity.cpp": "ade589a09f0065b946c61d48f4fc976146731d83190e5ce727196829e19b9982",
+    "game/native/animation/model.cpp": "c5a1b46de9fd4504f0ed0a5ee89c39c9f182abb14c2321f69cd9dde58ef06440",
+    "game/native/animation/model_math.cpp": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe",
+    "game/native/animation/curves.cpp": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b",
+    "tools/native_reconstruction/animation_audio_tests.inc": "a27cc7a037391a31acf92620ad4d4f4c352c08e13f1573ed1a38342dffde633d",
+    "tools/native_reconstruction/effect_work_sources.py": "bc174c437121e940c5aed5aeb7d59ff261e26f063313e1b094faefeab56982e5",
+    "game/native/gameplay_collision/room_objects.cpp": "7f52c043381e0078f375645f36f44c3e3c05fc5f545a0a4321244e6c8e2d1031",
+    "tools/native_reconstruction/surface_audio_tests.inc": "cccb0122f28e5dab55311fe011f5ba0eef08c8d296a64aaeb23deefc6c19ca59",
+    "game/native/gameplay_world/model_scale_profile.inc": "3dbc9f9dd2c143807cd7b04772de729322a0af3ad1c892bca07077672d88ea1e",
+    "tools/native_reconstruction/generate_footwear_profile.py": "7ad6fda82301392586bd45817aebaf58644ead27b16ec7f1736e4855ec6892a8",
+    "game/native/gameplay_scenario/stream_gain_curve.inc": "98e59700ba81e120e80def2366b9257ca8c7a1e062f73140a691d7980f21cb7b",
+    "game/native/gameplay_world/animation_audio.hpp": "bd2a0f6044c312aa9a1e1565b7cf5c548e3768bafd345b2ffb320fd8c8836fd3",
+    "game/native/gameplay_contact_world/contacts.hpp": "f6ade07d0549d4fe9b6b72786ae157eee16dfa86ef3d42a1890a5ece46400c90",
+    "game/native/gameplay_world/footwear.hpp": "d03abb07970cc7b6e6d2ba502e1b8fb46095bbf972c4e0fe4348c64b0a2931d9",
+    "recomp/config/output/ps2_recompiled_functions.h": "6ea443c9d8dab5114a3bacb5e321570eb62327338fcb3193ea233529bc5cc848",
+    "recomp/config/output/ps2_recompiled_stubs.h": "858fea391e2c1865f4265981b6a3858e395ed12e5894508e5d5f490ae89674f4",
+    "recomp/config/output_ovl/o2/o2_functions.h": "c2c9e3a21bd6693ec7e6e65e53d31b98d2b4e48f6831575de682bb986c575360",
+    "recomp/config/output_ovl/o2/ps2_recompiled_stubs.h": "57b7f2b6a58aee9c60d56dcd17065fb2062786d5707026b14825db6c66829a14",
+    "game/native/gameplay_world/world.hpp": "ceda7d8de7fd26f62e24ce4e60c879300fe9bf497d57c1b5727974211c2e28ba",
+    "game/native/gameplay_world/linked_models.hpp": "e86d2fd7fa3110b4e25b49506cf50f35b88e937e5655936d22f295de801a6629",
+    "game/native/gameplay_world/linked_model_profile.inc": "4a400a1f8b270d1a0e3702b1d9cfedbf6d07e8f6761d7afb0541138cbf2c7a25",
+    "game/native/gameplay_world/bodies.hpp": "8bb53c9bbf2f2ed1124d7d45cf11ab337d2bcf486e0be37037783399010edeff",
+    "game/native/gameplay_world/model_poses.hpp": "c9d7b12d549e2b92dddd188021eb4ba91d093cb78f3f1ff34be5e93038619710",
+    "game/native/gameplay_world/model_constraints.hpp": "07d2699fd3c68b2da1ae71e4f7673be321f7013954c5bdb66f7eb5aab972fe91",
+    "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+    "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+    "game/native/gameplay_collision/actor_views.hpp": "c79a6f6afca089408fbdd2fedf6dc99338021fc1e03a25948e40baa0200f45cd",
+    "game/native/animation/constraints.hpp": "dff5ae4fcb83a83e6bc73976661118ff49f7b45fd654538ddf2b5911b164f606",
+    "game/native/animation/constraint_math.hpp": "25a148646b33c3c22e5f26a137e21ba5aae11ef01a8d563c230ddd16469935e4",
+    "game/native/gameplay_world/footwear_profile.inc": "1867d93fdc722b1fcc7b6e3829854a2f7bcd5e2cd4eeb6af3edcebfa465846fc",
+    "game/native/gameplay_scenario/scene_resources.hpp": "64b6ce39c6d55a6b8a67e066d5d78ad7cbeb46e8921fde13cb0f019ade9d5f4b",
+    "game/native/gameplay_scenario/resource_templates.hpp": "42fffe91f99e4b9f1c1b0a09d019f99d744d4cf9a391a610b987e5b862067e13",
+    "game/native/gameplay_collision/regions.hpp": "7de95d63c00dbbdadb9c739c42fc81b5f7a6fd05ef817eb7a86acbd7a8cdf8e1",
+    "game/native/gameplay_actors/entity.hpp": "21189b7febb8685ce68db664960c7567704f4f6d3b602dfc817d663bef2d5268",
+    "game/native/animation/model.hpp": "754180959bf0362bfec15dd08678bff976601a9583cabb581c7cdb0556c55ab8",
+    "game/native/animation/model_math.hpp": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb",
+    "game/native/animation/curves.hpp": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2",
+    "game/native/gameplay_collision/room_objects.hpp": "6d77920aecce311a2a94cd71baddcd0fc3b79b45ce04a6df3cdb7de48972af6b",
+    "game/native/gameplay_world/animation_primitives.hpp": "aac414e730167db56d1ddd0adf944e72ff26e360a1aed288965f1c7082c64599",
+    "game/native/gameplay_collision/impact_populations.hpp": "1f5a9b781bf68e13292d85c8d3812f4e17f39b58b809295677df17477e072649",
+    "game/native/gameplay_collision/impact_shape_effects.hpp": "eba8a9d4f4dbd6403707deb8b43964606e9a0147836ebcc88105a331d26c639c",
+    "game/native/gameplay_world/collision.hpp": "6bd12b66066d521a48d11198039518856a73518580a9c875d701f8f084fd978e",
+    "game/native/gameplay_scenario/scene_matrix_programs.hpp": "43ed6c0defd01fd9a0f8bc1ea8f6aa5ffd635e38c1c7c726347833e4c9df1786",
+    "game/native/gameplay_actors/hit.hpp": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495",
+    "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
+    "game/native/gameplay_world/motion.hpp": "ab2035e7ba54bea2269404dd2946f11f5c9c28f762b310d2aab878165c5515fa",
+    "game/native/gameplay_collision/postmove_view.hpp": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316",
+    "game/native/gameplay_collision/ownership.hpp": "5958fb126cb878e3cd849d1583d9b95e19d9b940b444702f8e78f3ee3e2080d6",
+    "game/native/gameplay_world/animation_events.hpp": "e23b7b6832c2ca18979d4b1329902cef9a86b276032e31df5184598f776255c9",
+    "game/native/animation/frame_events.hpp": "3e48037551b5ae4da4d4f4f9298ea13f8c84f04708c06299c48afc0cb6225328",
+    "game/native/gameplay_collision/contact_packets.hpp": "260438d1bd3081bb99bc62b56b2abe57a36bd20ed1595197a46c3b966d1072a9",
+    "game/native/gameplay_collision/impact_policy.hpp": "8fa6b5faf4decaaadf4fa600720e609f4aa1523ff4a25878109e1c0526b56e0e",
+    "game/native/gameplay_effects/work.hpp": "5aab1632803b1eb5c5ff4c609296f2f76a71cacb1d62d31f7e939f0ce81752de",
+    "game/native/gameplay_collision/packet_shapes.hpp": "550d71ecf7920e2cff1c647cfcabb7a201311d096d9db9aad9821b3a9c750ff9",
+    "game/native/gameplay_collision/room_damage.hpp": "42dae423275df41f4817096b6d18138944e17974ab3836e1ae4b96b0c403a03e",
+    "game/native/gameplay_scenario/flags.hpp": "a84a096e2e6efa673c6b824713ad2b102a0a4376600a4c08f73acd22306400a0",
+    "game/native/gameplay_scenario/scene_controls.hpp": "d006f22268a33e3e60c2b37be1e71e965d4960bf65433a8fe401ffc656416ec6",
+    "game/native/gameplay_scenario/scene_matrix_tables.hpp": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1",
+    "game/native/gameplay_scenario/scene_model_bindings.hpp": "c5ca218f5645af66f166099021ff586671100c5fc824ae205fa6d5c735fd605e",
+    "game/native/gameplay_actors/status.hpp": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170",
+    "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+    "game/native/gameplay_collision/postmove.hpp": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6",
+    "game/native/gameplay_collision/sweep.hpp": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39",
+    "game/native/gameplay_scene/records.hpp": "8f4059ff5be0c27c8ee4b555575816e605448719f875cfc9e9e41cc74c693972",
+    "game/native/gameplay_world/animation.hpp": "db9654f7335cb3867bb0ded568ea0a52d172f3923dcf4d7f0be663d2cc3b5916",
+    "game/native/gameplay_collision/contact_content.hpp": "351e1c2f0d21e77d8f659f23d9fe7cd3f2208cd3f8556c0aa8fb7cc6706f2856",
+    "game/native/gameplay_collision/delivery.hpp": "48682babcf6f1bd25cbb48a905acefc7952a1d2d43b9c8cf7d4a0842f76a828a",
+    "game/native/gameplay_collision/trace.hpp": "494a53ef88e2a916d99ed2b2cfb503a3a9ea5235c6fdef053054f58adb1c7170",
+    "game/native/gameplay_collision/packet_service.hpp": "15623b19e66745ef1ad4d7fcd241076542101f0671db6071a15d8d71538be7b1",
+    "game/native/gameplay_collision/contact_scan.hpp": "d011fa289609b6cee650409d4a7a98eb9746c67229886788fd662b12dd3c9d82",
+    "game/native/gameplay_collision/radius.hpp": "c672d1bd5dca76394eefb1cdf748d557994745d84a1d6acd1c1a65dcad36e4ea",
+    "game/native/gameplay_scenario/interpreter.hpp": "cbeb27ba5eb942373db02f3df4253662e74dbd4ba30caeb2f8e461c634414baf",
+    "game/native/gameplay_scenario/scene_control_types.hpp": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841",
+    "game/native/gameplay_scenario/scene_models.hpp": "bc649bb75fd935cc42c693070c97b7b1c2d78745f5833f5a72f6e7ddc9c129c8",
+    "game/native/gameplay_collision/object_lifetime.hpp": "18b49cc6be21fcee894287ee9769074069a98ff8b657801dc86f2f3e9174633e",
+    "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+    "game/native/gameplay_collision/footprint.hpp": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c",
+    "game/native/gameplay_scene/record_pool.hpp": "80547b7a98e4f8d311985882c31e8ea6e7692c35d160670e47a3a29fefd6593e",
+    "game/native/gameplay_world/motion_profiles.hpp": "863f946891dea1306d1c29a0ab9e093c5019b933d3a636cb8b9462de1cc303e9",
+    "game/native/gameplay_world/motion_resources.hpp": "6e8a01e176adb845c76476f40076fc80fa89cd487604aafdd1595b2e9db5b740",
+    "game/native/animation/motion_descriptors.hpp": "9ff35638c9c3e37f796770a10c1652ca358a29920d4a6380ecd19aa47e4cdf89",
+    "game/native/gameplay_collision/directed.hpp": "1cc938a1dabd5525fd930d6520d423affed812d2a08d5625beb3c3a009edbe38",
+    "game/native/gameplay_tasks/tasks.hpp": "41f711d4754c3bfe4651348c8e2c460c52c3b354c5027804c4cab24a88df2b5f",
+    "game/native/gameplay_scenario/model_reference.hpp": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907",
+    "game/native/gameplay_scenario/content.hpp": "376eb5f856288c728980fdc7393120f21a69fa640a33df8a6d7b5b994b07ce98",
+    "game/native/gameplay_collision/object_interactions.hpp": "f887304538249c6ffa0d4cc40d64891d7faff20bea06703671e39a1461f21ac8",
+    "game/native/animation/playback.hpp": "d57dd6a48206ad3fd53a75914edb51951e6f037902288d9151e4a9ca39073e26",
+    "game/native/gameplay_collision/room_geometry.hpp": "0ab8279213fbd3b1f9e5c2b378066464bb930fe38441dfe2258a63affa25e0c9",
+    "game/native/animation/motion_bank.hpp": "8888cc253ffc2275b42c96a7e14f2633baa9d41449588ea6c4f0a97b1ea84ccc",
+    "game/native/animation/model_blend.hpp": "6d12a543261a52eb5e2c4690bf020d0be8c1ad6e24bb6cedd6e275728b5bb617",
+    "docs/native-gameplay/ANIMATION_SURFACE_AUDIO.md": "5363222b4aaa5072f1c6a1b2f54c27267695727551c64d56dc9e45f2994b96e0",
+    "tools/native_reconstruction/qualify_surface_audio_v1.py": "422965b514d37ff8d10f07581056ac77bc6fa2e85e7e2829d8b99a18176849b3"
+  },
+  "immutable_source_evidence": {
+    "game/native/gameplay_audio/CMakeLists.txt": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/CMakeLists.txt",
+      "sha256": "1e8c23e45fc0ecc7dd233bcdae56f6d2dd8e54386bc440d4a886651b4bd7f104"
+    },
+    "game/native/gameplay_audio/import.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/import.cpp",
+      "sha256": "2d53fcca50d8027319a01841f94647e721b36b655caf0ff486fe89d6109ce4aa"
+    },
+    "game/native/gameplay_audio/import.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/import.hpp",
+      "sha256": "faf724ccec4041f9811b664a3f3f9268c5151dd356e849f0d344947b9184a40e"
+    },
+    "game/native/gameplay_audio/options.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/options.cpp",
+      "sha256": "8cb31bc60f46dde83887e7f8e6e679cc11a73c79261eb960b5131a7b700fb32a"
+    },
+    "game/native/gameplay_audio/options.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/options.hpp",
+      "sha256": "170a559680dae5612e159d345f69627bf8b715f73b74187279e8b2afa2e8abff"
+    },
+    "game/native/gameplay_audio/owner.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/owner.cpp",
+      "sha256": "a6a3bc7a40be0b6826ebbdd964e6a91c38e183a0439376e123dd6cc6a4984785"
+    },
+    "game/native/gameplay_audio/owner.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/owner.hpp",
+      "sha256": "359867b6f11dfb5a86bc400b1585b2f319db35054fca5fa016515fe9bb99cd98"
+    },
+    "game/native/gameplay_audio/routing.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/routing.cpp",
+      "sha256": "9a4d2203db6811f61c47e3754caa6a6b50d8aa45974a8a7882b06d6033564e7b"
+    },
+    "game/native/gameplay_audio/routing.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/routing.hpp",
+      "sha256": "68a07a142e4a4dfb24543a71f46b7bb3cbdc14808a4058c92d4d95b6f05ca697"
+    },
+    "game/native/gameplay_audio/spatial.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/spatial.cpp",
+      "sha256": "99205d3008b1ce7beca1017defe97e16dd50f5550383a28f74d6553ce78ebbb6"
+    },
+    "game/native/gameplay_audio/spatial.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/spatial.hpp",
+      "sha256": "4068b3f26004927a161451c394507a4338b362edf6ade0fc65d94981ba9a25ba"
+    },
+    "game/native/gameplay_audio/stream_levels.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_audio/stream_levels.hpp",
+      "sha256": "c3e37d3f74d10f25fc15f7fd414bdf1824c8081e531fe153668aab08b453e5d0"
+    },
+    "game/native/gameplay_session/session.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_session/session.hpp",
+      "sha256": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd"
+    },
+    "game/native/gameplay_session/session.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_session/session.cpp",
+      "sha256": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87"
+    },
+    "game/native/transform_math/transform_math.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/transform_math/transform_math.hpp",
+      "sha256": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35"
+    },
+    "game/native/transform_math/transform_math.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/transform_math/transform_math.cpp",
+      "sha256": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449"
+    },
+    "game/native/audio_banks/v2/algorithms.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/v2/algorithms.hpp",
+      "sha256": "4260dcc9546f3f3e17b24b8692da83e3f7d26877d9f5ee6d46c21d1b9696b0fc"
+    },
+    "game/native/audio_banks/v2/budget.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/v2/budget.hpp",
+      "sha256": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18"
+    },
+    "game/native/audio_banks/v2/session.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/v2/session.hpp",
+      "sha256": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19"
+    },
+    "game/native/audio_banks/v2/test_inputs.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/v2/test_inputs.hpp",
+      "sha256": "fb07e04d22c4ba0852ce88a4813aa5c4ce6888bb6ea8aaac571bc87b68b8cb2b"
+    },
+    "game/native/audio_banks/v2/algorithms.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/v2/algorithms.cpp",
+      "sha256": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e"
+    },
+    "game/native/audio_banks/v2/session.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/v2/session.cpp",
+      "sha256": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603"
+    },
+    "game/native/audio_banks/source_members.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/source_members.inc",
+      "sha256": "15a9255f036a2658b173ada284a12385e929b66731618f227fe4770eb63c7f71"
+    },
+    "game/native/audio_banks/source_mix.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/source_mix.inc",
+      "sha256": "d28e10cdcc91cd4ae2941dd018c17ee902953c92d24a0fdc109fac3ec291f328"
+    },
+    "game/native/audio_banks/source_records.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/audio_banks/source_records.inc",
+      "sha256": "44ea539c47bfd2dc31271c0aa96b9876d73818c9923a9739edae50127287dc0a"
+    },
+    "game/native/gameplay_scenario/stream_channels.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/stream_channels.hpp",
+      "sha256": "6b9dda39228d221ae1fc629ca82a8c1feb0b74e95ebe8815ca83059bd2b790e6"
+    },
+    "game/native/gameplay_scenario/stream_channels.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/stream_channels.cpp",
+      "sha256": "08676fc7bec4468f2d041b3587ccd305f39f0259d0f3d6dd8e2db4191ff34a03"
+    },
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp",
+      "sha256": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+    },
+    "tools/native_reconstruction/gameplay_audio_tests.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/tools/native_reconstruction/gameplay_audio_tests.cpp",
+      "sha256": "4a5beaab5ceef99477c021a9e4d557459a8a6b09c55917ba67e9c9586184c693"
+    },
+    "tools/native_reconstruction/verify_gameplay_audio.py": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/tools/native_reconstruction/verify_gameplay_audio.py",
+      "sha256": "0c3284be97effdc040f1b71db0f2ba417b27ee450a6061bef42d3b2034fb6e7c"
+    },
+    "build-native-sjuni/audio-asset-inventory/file1-v1/members.json": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/build-native-sjuni/audio-asset-inventory/file1-v1/members.json",
+      "sha256": "276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2"
+    },
+    "recomp/config/output/sub_001AC7F0_0x1ac7f0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001AC7F0_0x1ac7f0.cpp",
+      "sha256": "3f19ca868d54d14e7b5bad3de9292985c245e2320540d3db4c365e9e99d7e326"
+    },
+    "recomp/config/output/sub_001ACB60_0x1acb60.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001ACB60_0x1acb60.cpp",
+      "sha256": "9eab8245a0615eebf3cb889e8d40f4a8460c93bc9592921f0a9558a3a9dbfd7e"
+    },
+    "recomp/config/output/sub_001AEC80_0x1aec80.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001AEC80_0x1aec80.cpp",
+      "sha256": "3161c709c4844d8e192f7a9555f08fad7de6d0907c8f13a618fb38f53535aacd"
+    },
+    "recomp/config/output/sub_001ACFB0_0x1acfb0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001ACFB0_0x1acfb0.cpp",
+      "sha256": "e368980738c2d1f2ac54565b07ac88cf3ede25f9a6e5ddcb8327d01e284ab85a"
+    },
+    "recomp/config/output/sub_001AD220_0x1ad220.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001AD220_0x1ad220.cpp",
+      "sha256": "645b6e3df703c6836da5182902d8af82f275208c8638f89ad61b3aec25722a88"
+    },
+    "recomp/config/output/sub_001A7310_0x1a7310.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001A7310_0x1a7310.cpp",
+      "sha256": "aad12df3b7cc7c97efab1bc11408b0b5dd518fb75e91a553a3c3e263ad3fd3c3"
+    },
+    "recomp/config/output/sub_001A7430_0x1a7430.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001A7430_0x1a7430.cpp",
+      "sha256": "7bd3f90d2a99bacbe76608ec3ea9d564f491f018439db7ec90f2b0bf9393178b"
+    },
+    "recomp/config/output/sub_001A7550_0x1a7550.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001A7550_0x1a7550.cpp",
+      "sha256": "fed73905eb08bdfd0c40074a6d0507ab5fb5262fcc91126e6ef2f7ea9bc79ef2"
+    },
+    "recomp/config/output/sub_001B8D40_0x1b8d40.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B8D40_0x1b8d40.cpp",
+      "sha256": "ff625ac667492ba165b6675c9c867942bf05e5108f1a58b24b82eab6494f2d6f"
+    },
+    "recomp/config/output/sub_001B93D0_0x1b93d0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B93D0_0x1b93d0.cpp",
+      "sha256": "b7c402e088e20163b81816e39d33cbacbe0b4900d36e8a1ee89556be82d8d832"
+    },
+    "recomp/config/output/sub_001B94B0_0x1b94b0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B94B0_0x1b94b0.cpp",
+      "sha256": "e3555c06099edc80962355843e5dffe773f8a5847f524340ce393fd7bdef8492"
+    },
+    "recomp/config/output/sub_00191AB0_0x191ab0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_00191AB0_0x191ab0.cpp",
+      "sha256": "8e83d1eec2de911a5283de8a1ca8e3db0a96be9a4deb7e4bc8dab09057bdd16e"
+    },
+    "recomp/config/output/sub_001ACEB0_0x1aceb0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001ACEB0_0x1aceb0.cpp",
+      "sha256": "fda5b68d3ff0b3cdb626320256b03ac7da6db3751762d29d0eb3c85a738a1de2"
+    },
+    "recomp/config/output/sub_001ACF60_0x1acf60.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001ACF60_0x1acf60.cpp",
+      "sha256": "7c1ad3a1e91d394b9c78c0e129189ddceebd3cfe94a92c453dfed466367e49b9"
+    },
+    "recomp/config/output/sub_001B86F0_0x1b86f0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B86F0_0x1b86f0.cpp",
+      "sha256": "b1e1910117820c2b9f6bc6dc3db934d41dc10d88a550ad70e549b84d3a54c248"
+    },
+    "recomp/config/output/sub_001B8780_0x1b8780.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B8780_0x1b8780.cpp",
+      "sha256": "5ccee73fd27d058fa098a51582685cca482ffd00e85ae15c22b98bedf6b87209"
+    },
+    "recomp/config/output/sub_001B8BB0_0x1b8bb0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B8BB0_0x1b8bb0.cpp",
+      "sha256": "e34bb4df1e717bee059838465fa1ef5a3565d153e5a3a2277b40c9e82c4b4f38"
+    },
+    "recomp/config/output/sub_001B8B20_0x1b8b20.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B8B20_0x1b8b20.cpp",
+      "sha256": "742abf721658f723ef896c08eb9933324091448e6670b5a0faf86a4323c39af3"
+    },
+    "recomp/config/output/sub_001B8C70_0x1b8c70.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B8C70_0x1b8c70.cpp",
+      "sha256": "e68da930b316406d29cf4dd0162b76a77a444bc33a6e8ebe17516f2a038e4f0e"
+    },
+    "recomp/config/output/sub_001B8D70_0x1b8d70.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B8D70_0x1b8d70.cpp",
+      "sha256": "a1d2cb9531c963f6bfc5fbb34b5a1e2de8e8a9b2a9b9cb948f538f63d27aa421"
+    },
+    "recomp/config/output/sub_001B8F40_0x1b8f40.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/sub_001B8F40_0x1b8f40.cpp",
+      "sha256": "bfed400559eb8266717171d4a54c16a6687262b9ed21dc94f7accbb41e9e1f50"
+    },
+    "recomp/config/output_ovl/o2/o2_005B4CE0_0x5b4ce0.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output_ovl/o2/o2_005B4CE0_0x5b4ce0.cpp",
+      "sha256": "4421c3e368402608a416d14e13b675b07da0ea8ed1619b1437b9725d2146c069"
+    },
+    "game/native/gameplay_world/world.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/world.cpp",
+      "sha256": "40ee7b9c0b8c57e455207b0b72a0d0547d27952009a9cf92000a8117aa076658"
+    },
+    "game/native/gameplay_world/linked_models.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/linked_models.cpp",
+      "sha256": "6ce4cf67fe58aa6e8b8eebc936fde9ed7feab1424d0c8366b07d3e267ebaba60"
+    },
+    "game/native/gameplay_world/bodies.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/bodies.cpp",
+      "sha256": "9cb9bd0d5f7e18e14aeccdd481acc609ea2d2d6d886b08072ce4fcb48d8afeb0"
+    },
+    "game/native/gameplay_world/model_poses.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/model_poses.cpp",
+      "sha256": "4451cc9df3176681a663f3c266844d50976d3df3c37715ab9f0ba83e23638fdc"
+    },
+    "game/native/gameplay_world/model_constraints.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/model_constraints.cpp",
+      "sha256": "7a2dad002ac8d3202fc0ba9a5f88d840d63780c7d71043768d2b52b9f840789c"
+    },
+    "game/native/gameplay_actors/input.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_actors/input.cpp",
+      "sha256": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497"
+    },
+    "game/native/gameplay_actors/health.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_actors/health.cpp",
+      "sha256": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7"
+    },
+    "game/native/gameplay_collision/collision.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/collision.cpp",
+      "sha256": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f"
+    },
+    "game/native/gameplay_collision/response.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/response.cpp",
+      "sha256": "2fb4d52dcb9b51899a05def4a3734f85559e8c2a2a5327203f6e9c5e44aa698c"
+    },
+    "game/native/gameplay_collision/actors.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/actors.cpp",
+      "sha256": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c"
+    },
+    "game/native/gameplay_collision/actor_views.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/actor_views.cpp",
+      "sha256": "80a54e075da6b10c9586d084a93ff9f651e7e0ff8b04569a2ec0f55bd7f90fa3"
+    },
+    "game/native/animation/constraints.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/constraints.cpp",
+      "sha256": "7ee5adc664a46a31450602201dbce4cc37bb9d48fd3f0645b222d53131fc897f"
+    },
+    "game/native/animation/constraint_math.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/constraint_math.cpp",
+      "sha256": "5c87b5248ebeeef3c5853d41f1ff18c06332dd85caad6189899d4d63aa267416"
+    },
+    "game/native/gameplay_world/animation_audio.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/animation_audio.cpp",
+      "sha256": "515129b59dabd95510716be3fe23417087c3aac6402d701086e6a4aa91e0d3c5"
+    },
+    "game/native/gameplay_world/footwear.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/footwear.cpp",
+      "sha256": "ac51ad6bed6e67c3ac21fe8225d253720033e609208cc929d86ac431b7916808"
+    },
+    "game/native/gameplay_scenario/scene_resources.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/scene_resources.cpp",
+      "sha256": "41ebe45412f2d37003e9e330cf45dadf946a3be8dea43ae0efc7109fd9615d3d"
+    },
+    "game/native/gameplay_scenario/resource_templates.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/resource_templates.cpp",
+      "sha256": "7d7ba0d534fb2520c37d3878193e3c81c0d7a87b9a3be3e1f6278f57009fb4b0"
+    },
+    "game/native/gameplay_collision/regions.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/regions.cpp",
+      "sha256": "f03b26532cc46a402513e81e751ed6e6ba41fd25781f94c83127514037ad2f4c"
+    },
+    "game/native/gameplay_actors/entity.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_actors/entity.cpp",
+      "sha256": "ade589a09f0065b946c61d48f4fc976146731d83190e5ce727196829e19b9982"
+    },
+    "game/native/animation/model.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/model.cpp",
+      "sha256": "c5a1b46de9fd4504f0ed0a5ee89c39c9f182abb14c2321f69cd9dde58ef06440"
+    },
+    "game/native/animation/model_math.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/model_math.cpp",
+      "sha256": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe"
+    },
+    "game/native/animation/curves.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/curves.cpp",
+      "sha256": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b"
+    },
+    "tools/native_reconstruction/animation_audio_tests.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/tools/native_reconstruction/animation_audio_tests.inc",
+      "sha256": "a27cc7a037391a31acf92620ad4d4f4c352c08e13f1573ed1a38342dffde633d"
+    },
+    "tools/native_reconstruction/effect_work_sources.py": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/tools/native_reconstruction/effect_work_sources.py",
+      "sha256": "bc174c437121e940c5aed5aeb7d59ff261e26f063313e1b094faefeab56982e5"
+    },
+    "game/native/gameplay_collision/room_objects.cpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/room_objects.cpp",
+      "sha256": "7f52c043381e0078f375645f36f44c3e3c05fc5f545a0a4321244e6c8e2d1031"
+    },
+    "tools/native_reconstruction/surface_audio_tests.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/tools/native_reconstruction/surface_audio_tests.inc",
+      "sha256": "cccb0122f28e5dab55311fe011f5ba0eef08c8d296a64aaeb23deefc6c19ca59"
+    },
+    "game/native/gameplay_world/model_scale_profile.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/model_scale_profile.inc",
+      "sha256": "3dbc9f9dd2c143807cd7b04772de729322a0af3ad1c892bca07077672d88ea1e"
+    },
+    "tools/native_reconstruction/generate_footwear_profile.py": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/tools/native_reconstruction/generate_footwear_profile.py",
+      "sha256": "7ad6fda82301392586bd45817aebaf58644ead27b16ec7f1736e4855ec6892a8"
+    },
+    "game/native/gameplay_scenario/stream_gain_curve.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/stream_gain_curve.inc",
+      "sha256": "98e59700ba81e120e80def2366b9257ca8c7a1e062f73140a691d7980f21cb7b"
+    },
+    "game/native/gameplay_world/animation_audio.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/animation_audio.hpp",
+      "sha256": "bd2a0f6044c312aa9a1e1565b7cf5c548e3768bafd345b2ffb320fd8c8836fd3"
+    },
+    "game/native/gameplay_contact_world/contacts.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_contact_world/contacts.hpp",
+      "sha256": "f6ade07d0549d4fe9b6b72786ae157eee16dfa86ef3d42a1890a5ece46400c90"
+    },
+    "game/native/gameplay_world/footwear.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/footwear.hpp",
+      "sha256": "d03abb07970cc7b6e6d2ba502e1b8fb46095bbf972c4e0fe4348c64b0a2931d9"
+    },
+    "recomp/config/output/ps2_recompiled_functions.h": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/ps2_recompiled_functions.h",
+      "sha256": "6ea443c9d8dab5114a3bacb5e321570eb62327338fcb3193ea233529bc5cc848"
+    },
+    "recomp/config/output/ps2_recompiled_stubs.h": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output/ps2_recompiled_stubs.h",
+      "sha256": "858fea391e2c1865f4265981b6a3858e395ed12e5894508e5d5f490ae89674f4"
+    },
+    "recomp/config/output_ovl/o2/o2_functions.h": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output_ovl/o2/o2_functions.h",
+      "sha256": "c2c9e3a21bd6693ec7e6e65e53d31b98d2b4e48f6831575de682bb986c575360"
+    },
+    "recomp/config/output_ovl/o2/ps2_recompiled_stubs.h": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/recomp/config/output_ovl/o2/ps2_recompiled_stubs.h",
+      "sha256": "57b7f2b6a58aee9c60d56dcd17065fb2062786d5707026b14825db6c66829a14"
+    },
+    "game/native/gameplay_world/world.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/world.hpp",
+      "sha256": "ceda7d8de7fd26f62e24ce4e60c879300fe9bf497d57c1b5727974211c2e28ba"
+    },
+    "game/native/gameplay_world/linked_models.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/linked_models.hpp",
+      "sha256": "e86d2fd7fa3110b4e25b49506cf50f35b88e937e5655936d22f295de801a6629"
+    },
+    "game/native/gameplay_world/linked_model_profile.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/linked_model_profile.inc",
+      "sha256": "4a400a1f8b270d1a0e3702b1d9cfedbf6d07e8f6761d7afb0541138cbf2c7a25"
+    },
+    "game/native/gameplay_world/bodies.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/bodies.hpp",
+      "sha256": "8bb53c9bbf2f2ed1124d7d45cf11ab337d2bcf486e0be37037783399010edeff"
+    },
+    "game/native/gameplay_world/model_poses.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/model_poses.hpp",
+      "sha256": "c9d7b12d549e2b92dddd188021eb4ba91d093cb78f3f1ff34be5e93038619710"
+    },
+    "game/native/gameplay_world/model_constraints.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/model_constraints.hpp",
+      "sha256": "07d2699fd3c68b2da1ae71e4f7673be321f7013954c5bdb66f7eb5aab972fe91"
+    },
+    "game/native/gameplay_actors/input.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_actors/input.hpp",
+      "sha256": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22"
+    },
+    "game/native/gameplay_actors/health.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_actors/health.hpp",
+      "sha256": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e"
+    },
+    "game/native/gameplay_collision/collision.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/collision.hpp",
+      "sha256": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da"
+    },
+    "game/native/gameplay_collision/response.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/response.hpp",
+      "sha256": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d"
+    },
+    "game/native/gameplay_collision/actors.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/actors.hpp",
+      "sha256": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78"
+    },
+    "game/native/gameplay_collision/actor_views.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/actor_views.hpp",
+      "sha256": "c79a6f6afca089408fbdd2fedf6dc99338021fc1e03a25948e40baa0200f45cd"
+    },
+    "game/native/animation/constraints.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/constraints.hpp",
+      "sha256": "dff5ae4fcb83a83e6bc73976661118ff49f7b45fd654538ddf2b5911b164f606"
+    },
+    "game/native/animation/constraint_math.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/constraint_math.hpp",
+      "sha256": "25a148646b33c3c22e5f26a137e21ba5aae11ef01a8d563c230ddd16469935e4"
+    },
+    "game/native/gameplay_world/footwear_profile.inc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/footwear_profile.inc",
+      "sha256": "1867d93fdc722b1fcc7b6e3829854a2f7bcd5e2cd4eeb6af3edcebfa465846fc"
+    },
+    "game/native/gameplay_scenario/scene_resources.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/scene_resources.hpp",
+      "sha256": "64b6ce39c6d55a6b8a67e066d5d78ad7cbeb46e8921fde13cb0f019ade9d5f4b"
+    },
+    "game/native/gameplay_scenario/resource_templates.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/resource_templates.hpp",
+      "sha256": "42fffe91f99e4b9f1c1b0a09d019f99d744d4cf9a391a610b987e5b862067e13"
+    },
+    "game/native/gameplay_collision/regions.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/regions.hpp",
+      "sha256": "7de95d63c00dbbdadb9c739c42fc81b5f7a6fd05ef817eb7a86acbd7a8cdf8e1"
+    },
+    "game/native/gameplay_actors/entity.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_actors/entity.hpp",
+      "sha256": "21189b7febb8685ce68db664960c7567704f4f6d3b602dfc817d663bef2d5268"
+    },
+    "game/native/animation/model.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/model.hpp",
+      "sha256": "754180959bf0362bfec15dd08678bff976601a9583cabb581c7cdb0556c55ab8"
+    },
+    "game/native/animation/model_math.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/model_math.hpp",
+      "sha256": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb"
+    },
+    "game/native/animation/curves.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/curves.hpp",
+      "sha256": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2"
+    },
+    "game/native/gameplay_collision/room_objects.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/room_objects.hpp",
+      "sha256": "6d77920aecce311a2a94cd71baddcd0fc3b79b45ce04a6df3cdb7de48972af6b"
+    },
+    "game/native/gameplay_world/animation_primitives.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/animation_primitives.hpp",
+      "sha256": "aac414e730167db56d1ddd0adf944e72ff26e360a1aed288965f1c7082c64599"
+    },
+    "game/native/gameplay_collision/impact_populations.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/impact_populations.hpp",
+      "sha256": "1f5a9b781bf68e13292d85c8d3812f4e17f39b58b809295677df17477e072649"
+    },
+    "game/native/gameplay_collision/impact_shape_effects.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/impact_shape_effects.hpp",
+      "sha256": "eba8a9d4f4dbd6403707deb8b43964606e9a0147836ebcc88105a331d26c639c"
+    },
+    "game/native/gameplay_world/collision.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/collision.hpp",
+      "sha256": "6bd12b66066d521a48d11198039518856a73518580a9c875d701f8f084fd978e"
+    },
+    "game/native/gameplay_scenario/scene_matrix_programs.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/scene_matrix_programs.hpp",
+      "sha256": "43ed6c0defd01fd9a0f8bc1ea8f6aa5ffd635e38c1c7c726347833e4c9df1786"
+    },
+    "game/native/gameplay_actors/hit.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_actors/hit.hpp",
+      "sha256": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495"
+    },
+    "game/native/gameplay_collision/contact_component.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/contact_component.hpp",
+      "sha256": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c"
+    },
+    "game/native/gameplay_world/motion.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/motion.hpp",
+      "sha256": "ab2035e7ba54bea2269404dd2946f11f5c9c28f762b310d2aab878165c5515fa"
+    },
+    "game/native/gameplay_collision/postmove_view.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/postmove_view.hpp",
+      "sha256": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316"
+    },
+    "game/native/gameplay_collision/ownership.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/ownership.hpp",
+      "sha256": "5958fb126cb878e3cd849d1583d9b95e19d9b940b444702f8e78f3ee3e2080d6"
+    },
+    "game/native/gameplay_world/animation_events.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/animation_events.hpp",
+      "sha256": "e23b7b6832c2ca18979d4b1329902cef9a86b276032e31df5184598f776255c9"
+    },
+    "game/native/animation/frame_events.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/frame_events.hpp",
+      "sha256": "3e48037551b5ae4da4d4f4f9298ea13f8c84f04708c06299c48afc0cb6225328"
+    },
+    "game/native/gameplay_collision/contact_packets.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/contact_packets.hpp",
+      "sha256": "260438d1bd3081bb99bc62b56b2abe57a36bd20ed1595197a46c3b966d1072a9"
+    },
+    "game/native/gameplay_collision/impact_policy.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/impact_policy.hpp",
+      "sha256": "8fa6b5faf4decaaadf4fa600720e609f4aa1523ff4a25878109e1c0526b56e0e"
+    },
+    "game/native/gameplay_effects/work.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_effects/work.hpp",
+      "sha256": "5aab1632803b1eb5c5ff4c609296f2f76a71cacb1d62d31f7e939f0ce81752de"
+    },
+    "game/native/gameplay_collision/packet_shapes.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/packet_shapes.hpp",
+      "sha256": "550d71ecf7920e2cff1c647cfcabb7a201311d096d9db9aad9821b3a9c750ff9"
+    },
+    "game/native/gameplay_collision/room_damage.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/room_damage.hpp",
+      "sha256": "42dae423275df41f4817096b6d18138944e17974ab3836e1ae4b96b0c403a03e"
+    },
+    "game/native/gameplay_scenario/flags.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/flags.hpp",
+      "sha256": "a84a096e2e6efa673c6b824713ad2b102a0a4376600a4c08f73acd22306400a0"
+    },
+    "game/native/gameplay_scenario/scene_controls.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/scene_controls.hpp",
+      "sha256": "d006f22268a33e3e60c2b37be1e71e965d4960bf65433a8fe401ffc656416ec6"
+    },
+    "game/native/gameplay_scenario/scene_matrix_tables.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/scene_matrix_tables.hpp",
+      "sha256": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1"
+    },
+    "game/native/gameplay_scenario/scene_model_bindings.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/scene_model_bindings.hpp",
+      "sha256": "c5ca218f5645af66f166099021ff586671100c5fc824ae205fa6d5c735fd605e"
+    },
+    "game/native/gameplay_actors/status.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_actors/status.hpp",
+      "sha256": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170"
+    },
+    "game/native/gameplay_collision/hit_regions.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/hit_regions.hpp",
+      "sha256": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0"
+    },
+    "game/native/gameplay_collision/postmove.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/postmove.hpp",
+      "sha256": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6"
+    },
+    "game/native/gameplay_collision/sweep.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/sweep.hpp",
+      "sha256": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39"
+    },
+    "game/native/gameplay_scene/records.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scene/records.hpp",
+      "sha256": "8f4059ff5be0c27c8ee4b555575816e605448719f875cfc9e9e41cc74c693972"
+    },
+    "game/native/gameplay_world/animation.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/animation.hpp",
+      "sha256": "db9654f7335cb3867bb0ded568ea0a52d172f3923dcf4d7f0be663d2cc3b5916"
+    },
+    "game/native/gameplay_collision/contact_content.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/contact_content.hpp",
+      "sha256": "351e1c2f0d21e77d8f659f23d9fe7cd3f2208cd3f8556c0aa8fb7cc6706f2856"
+    },
+    "game/native/gameplay_collision/delivery.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/delivery.hpp",
+      "sha256": "48682babcf6f1bd25cbb48a905acefc7952a1d2d43b9c8cf7d4a0842f76a828a"
+    },
+    "game/native/gameplay_collision/trace.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/trace.hpp",
+      "sha256": "494a53ef88e2a916d99ed2b2cfb503a3a9ea5235c6fdef053054f58adb1c7170"
+    },
+    "game/native/gameplay_collision/packet_service.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/packet_service.hpp",
+      "sha256": "15623b19e66745ef1ad4d7fcd241076542101f0671db6071a15d8d71538be7b1"
+    },
+    "game/native/gameplay_collision/contact_scan.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/contact_scan.hpp",
+      "sha256": "d011fa289609b6cee650409d4a7a98eb9746c67229886788fd662b12dd3c9d82"
+    },
+    "game/native/gameplay_collision/radius.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/radius.hpp",
+      "sha256": "c672d1bd5dca76394eefb1cdf748d557994745d84a1d6acd1c1a65dcad36e4ea"
+    },
+    "game/native/gameplay_scenario/interpreter.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/interpreter.hpp",
+      "sha256": "cbeb27ba5eb942373db02f3df4253662e74dbd4ba30caeb2f8e461c634414baf"
+    },
+    "game/native/gameplay_scenario/scene_control_types.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/scene_control_types.hpp",
+      "sha256": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841"
+    },
+    "game/native/gameplay_scenario/scene_models.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/scene_models.hpp",
+      "sha256": "bc649bb75fd935cc42c693070c97b7b1c2d78745f5833f5a72f6e7ddc9c129c8"
+    },
+    "game/native/gameplay_collision/object_lifetime.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/object_lifetime.hpp",
+      "sha256": "18b49cc6be21fcee894287ee9769074069a98ff8b657801dc86f2f3e9174633e"
+    },
+    "game/native/gameplay_collision/spatial.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/spatial.hpp",
+      "sha256": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258"
+    },
+    "game/native/gameplay_collision/footprint.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/footprint.hpp",
+      "sha256": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c"
+    },
+    "game/native/gameplay_scene/record_pool.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scene/record_pool.hpp",
+      "sha256": "80547b7a98e4f8d311985882c31e8ea6e7692c35d160670e47a3a29fefd6593e"
+    },
+    "game/native/gameplay_world/motion_profiles.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/motion_profiles.hpp",
+      "sha256": "863f946891dea1306d1c29a0ab9e093c5019b933d3a636cb8b9462de1cc303e9"
+    },
+    "game/native/gameplay_world/motion_resources.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_world/motion_resources.hpp",
+      "sha256": "6e8a01e176adb845c76476f40076fc80fa89cd487604aafdd1595b2e9db5b740"
+    },
+    "game/native/animation/motion_descriptors.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/motion_descriptors.hpp",
+      "sha256": "9ff35638c9c3e37f796770a10c1652ca358a29920d4a6380ecd19aa47e4cdf89"
+    },
+    "game/native/gameplay_collision/directed.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/directed.hpp",
+      "sha256": "1cc938a1dabd5525fd930d6520d423affed812d2a08d5625beb3c3a009edbe38"
+    },
+    "game/native/gameplay_tasks/tasks.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_tasks/tasks.hpp",
+      "sha256": "41f711d4754c3bfe4651348c8e2c460c52c3b354c5027804c4cab24a88df2b5f"
+    },
+    "game/native/gameplay_scenario/model_reference.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/model_reference.hpp",
+      "sha256": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907"
+    },
+    "game/native/gameplay_scenario/content.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_scenario/content.hpp",
+      "sha256": "376eb5f856288c728980fdc7393120f21a69fa640a33df8a6d7b5b994b07ce98"
+    },
+    "game/native/gameplay_collision/object_interactions.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/object_interactions.hpp",
+      "sha256": "f887304538249c6ffa0d4cc40d64891d7faff20bea06703671e39a1461f21ac8"
+    },
+    "game/native/animation/playback.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/playback.hpp",
+      "sha256": "d57dd6a48206ad3fd53a75914edb51951e6f037902288d9151e4a9ca39073e26"
+    },
+    "game/native/gameplay_collision/room_geometry.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/gameplay_collision/room_geometry.hpp",
+      "sha256": "0ab8279213fbd3b1f9e5c2b378066464bb930fe38441dfe2258a63affa25e0c9"
+    },
+    "game/native/animation/motion_bank.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/motion_bank.hpp",
+      "sha256": "8888cc253ffc2275b42c96a7e14f2633baa9d41449588ea6c4f0a97b1ea84ccc"
+    },
+    "game/native/animation/model_blend.hpp": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/source/game/native/animation/model_blend.hpp",
+      "sha256": "6d12a543261a52eb5e2c4690bf020d0be8c1ad6e24bb6cedd6e275728b5bb617"
+    },
+    "docs/native-gameplay/ANIMATION_SURFACE_AUDIO.md": {
+      "path": "build-native-sjuni/surface-audio-frontends-seal-v1/source/docs/native-gameplay/ANIMATION_SURFACE_AUDIO.md",
+      "sha256": "5363222b4aaa5072f1c6a1b2f54c27267695727551c64d56dc9e45f2994b96e0"
+    },
+    "tools/native_reconstruction/qualify_surface_audio_v1.py": {
+      "path": "build-native-sjuni/surface-audio-frontends-seal-v1/source/tools/native_reconstruction/qualify_surface_audio_v1.py",
+      "sha256": "422965b514d37ff8d10f07581056ac77bc6fa2e85e7e2829d8b99a18176849b3"
+    }
+  },
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/surface-audio-frontends-llvm-v3/receipt.json",
+      "sha256": "b171f26d58e4929144510151824f1f0a0076afff0bc0376355bde3b952f96e0e",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "results": {
+        "checks": 725494,
+        "surface_audio_cases": 26820,
+        "footwear_cases": 149,
+        "surface_audio_commands": 24585,
+        "surface_audio_mixed_frames": 858240,
+        "surface_audio_refusals": 4,
+        "original_calls": 437050,
+        "game_launched": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/surface-audio-frontends-gcc-v2/receipt.json",
+      "sha256": "bf46dd31cbfd2a321a32f132210f1258188ac244d6641516e2a5aa2d3392722e",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "results": {
+        "checks": 725494,
+        "surface_audio_cases": 26820,
+        "footwear_cases": 149,
+        "surface_audio_commands": 24585,
+        "surface_audio_mixed_frames": 858240,
+        "surface_audio_refusals": 4,
+        "original_calls": 437050,
+        "game_launched": false
+      }
+    }
+  },
+  "actor_resource_regressions": {
+    "llvm": {
+      "path": "build-native-sjuni/animation-audio-surface-regression-llvm-v1/receipt.json",
+      "sha256": "ff0a460c484a4a20482fb859e522ed58cb15f0a05e97d8d87605e932d4552ccd",
+      "results": {
+        "checks": 404221,
+        "frontend_cases": 1680,
+        "frontend_commands": 312,
+        "frontend_family_commands": [
+          96,
+          96,
+          120
+        ],
+        "frontend_mixed_frames": 107520,
+        "frontend_signal_samples": 7456,
+        "frontend_refusals": 7,
+        "original_calls": 55092,
+        "game_launched": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/animation-audio-surface-regression-gcc-v1/receipt.json",
+      "sha256": "640a9c8a93f592666a869c0cac09d928feac983b99c38c60d3d28c9577312ec8",
+      "results": {
+        "checks": 404221,
+        "frontend_cases": 1680,
+        "frontend_commands": 312,
+        "frontend_family_commands": [
+          96,
+          96,
+          120
+        ],
+        "frontend_mixed_frames": 107520,
+        "frontend_signal_samples": 7456,
+        "frontend_refusals": 7,
+        "original_calls": 55092,
+        "game_launched": false
+      }
+    }
+  },
+  "dependencies": {
+    "native_gameplay_audio_qualification_v1.json": {
+      "path": "tools/native_reconstruction/native_gameplay_audio_qualification_v1.json",
+      "sha256": "0852be24200075fbf490499fd92acabc2b6ab871f90bae5a18daaac78395b0ec"
+    },
+    "native_gameplay_regions_qualification_v1.json": {
+      "path": "tools/native_reconstruction/native_gameplay_regions_qualification_v1.json",
+      "sha256": "cd6b70bf7ef6a3453793574b774332d79b00a2e61b622ebb47e502641e0337b5"
+    }
+  },
+  "limits": [
+    "Region selection reuses the independently qualified native owner; no second region oracle claim.",
+    "Controlled bank/room inputs and canonical camera surroundings; runtime named-bank installation remains open.",
+    "Node/scenario-remapped audio and whole game acceptance remain open."
+  ]
+}

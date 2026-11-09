@@ -19,7 +19,7 @@ add_test(NAME native_gameplay_collision_phase COMMAND gameplay_collision_phase_t
 
 add_library(reo_native_model_attachments STATIC model_attachments.cpp)
 add_library(reo_native_animation_event_consumers STATIC animation_primitives.cpp)
-add_library(reo_native_animation_audio STATIC animation_audio.cpp)
+add_library(reo_native_animation_audio STATIC animation_audio.cpp footwear.cpp)
 target_compile_features(reo_native_animation_audio PUBLIC cxx_std_20)
 target_include_directories(reo_native_animation_audio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(reo_native_animation_audio PUBLIC reo_native_animation_event_consumers reo_native_gameplay_audio)

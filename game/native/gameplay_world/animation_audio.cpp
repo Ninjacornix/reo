@@ -1,4 +1,6 @@
 #include "animation_audio.hpp"
+#include "footwear.hpp"
+#include "../gameplay_contact_world/contacts.hpp"
 #include <bit>
 #include <stdexcept>
 namespace reo::native::gameplay_world::animation_events {
@@ -12,6 +14,9 @@ BasicAudio::BasicAudio(World& world, gameplay_audio::Owner& owner,
         throw std::invalid_argument(
             "Native animation audio requires the canonical World RNG/owner");
 }
+BasicAudio::BasicAudio(World& world,gameplay_audio::Owner& owner,const gameplay_audio::SpatialContext& spatial,
+    gameplay_scenario::SceneResources& resources,const gameplay_scenario::ResourceTemplates& templates,
+    gameplay_contact_world::RoomResources& rooms):BasicAudio(world,owner,spatial,resources,templates){rooms_=&rooms;}
 void BasicAudio::admit(const Actor& actor) const {
     if (world_.closed() || !owner_.bound_to(world_.session().random) || !world_.identity_of(actor))
         throw std::runtime_error(
@@ -62,10 +67,32 @@ void BasicAudio::resource(Actor& actor, std::uint16_t event) {
     // bank number. All other signed byte values take the same identity bank.
     request(actor, unsigned(actor.slot) + 8u, event);
 }
-void BasicAudio::surface(Actor& actor, std::int8_t) {
+void BasicAudio::surface(Actor& actor, std::int8_t kind) {
     admit(actor);
     last_.reset();
-    throw std::runtime_error("Native animation surface-audio region/variant owner not implemented");
+    surface_count_=0;
+    std::uint16_t cue;
+    switch(kind){
+        case 0:case 1:cue=std::uint16_t(2*kind+(world_.session().random.request(1)&1));break;
+        case 2:cue=4;break;
+        case 3:cue=5;break;
+        case 4:cue=std::uint16_t(6+(world_.session().random.request(1)&1));break;
+        default:throw std::domain_error("Original surface kind depends on an unassigned caller register");
+    }
+    bool listener_position{};
+    if(actor.category==0){cue=std::uint16_t(int(cue)+footwear_offset(actor));listener_position=actor.motion_class==0x2b&&actor.secondary==0x6d;}
+    if(!rooms_)throw std::runtime_error("Native animation surface room owner unavailable");
+    const auto room=rooms_->retain(world_.room);
+    if(!room||!room->identity()||!room->current(room->identity())||room->room_number()!=world_.room)throw std::runtime_error("Native animation surface room lease unavailable");
+    const gameplay_collision::Vec3 position{actor.position.x,actor.position.y,actor.position.z};
+    const auto selector=room->geometry().regions.select(position);
+    const gameplay_audio::Vector point=listener_position?spatial_.listener:gameplay_audio::Vector{position.x,position.y,position.z};
+    const auto emit=[&](std::uint8_t tag){
+        const auto result=owner_.positional({3,cue,UINT32_MAX,UINT32_MAX,tag},point,spatial_,1);
+        surface_results_[surface_count_++]=result;last_=result;
+    };
+    emit(std::uint8_t(selector));
+    if(selector>>8)emit(std::uint8_t(selector>>8));
 }
 void BasicAudio::node(Actor& actor, std::uint16_t) {
     admit(actor);
