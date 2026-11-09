@@ -35,6 +35,9 @@ float reoAudioStreamGain(std::uint32_t);
 #undef X
 
 namespace reo::native::adxt_binding {
+using NativeTickReader=bool(*)(const adxt_control_owner::Owner*,std::uint32_t&,std::shared_ptr<void>&)noexcept;
+using NativeServiceWork=adxt_instances::Status(*)(const std::shared_ptr<void>&,adxt_instances::Instances&,std::uint32_t)noexcept;
+bool register_native_service_callbacks(NativeTickReader,NativeServiceWork)noexcept;
 namespace {
 using S=instances::Status;using Function=PS2Runtime::RecompiledFunction;
 enum class Action {group,stop,destroy_child,pause,discard,rna_ratio,raw_ratio,estimate,centiseconds,total,frequency,channels,callback,unsupported,
@@ -103,14 +106,26 @@ struct AudioTrace {
 };
 class Binding final:public PS2Runtime::ExternalWorker {
 public:
-    struct Record {GameKey key;Handle handle;Controls controls;bool owned{},source{};std::uint64_t expected_start{};std::unique_ptr<cues::Queue> queue{};};
+    struct Record {GameKey key;Handle handle;Controls controls;bool owned{},source{};std::uint64_t expected_start{};std::shared_ptr<cues::Queue> queue{};};
     PS2Runtime* const runtime;std::uint8_t* const ram;
     std::shared_ptr<control_owner::Owner> source_owner;
     std::shared_ptr<const resources::win32::MountedResources> mount;
     std::shared_ptr<const adxt_attenuation::Table> table;
     GameHandles mapped;std::array<Record,16> records;
+    // Only canonical native admission accesses this feeder registry. The
+    // independent worker never reads game records, handles or guest memory.
+    std::array<std::shared_ptr<cues::Queue>,16> native_queues;
     std::shared_ptr<const sound_ram::MediaInstallResult::PcmOrder> order;
     std::atomic<bool> active{},stopping{};
+    std::atomic<std::uint64_t> service_tick{};
+    static bool background_test_option(const char* name)noexcept{
+        const auto* background=std::getenv("REO_NATIVE_MEDIA_BACKGROUND_TEST");
+        const auto* option=std::getenv(name);
+        return background&&(std::strcmp(background,"1")==0||std::strcmp(background,"2")==0)&&option&&std::strcmp(option,"1")==0;
+    }
+    const bool test_stall=background_test_option("REO_NATIVE_ADXT_TEST_CONTROL_STALL");
+    const bool test_service_disabled=background_test_option("REO_NATIVE_ADXT_TEST_DISABLE_SERVICE");
+    bool test_stall_done{};
     AudioTrace trace;
     std::shared_ptr<audio_clip_loader::Loader> cue_loader=std::make_shared<audio_clip_loader::Loader>(audio_clip_loader::Config{64,64});
     Binding(PS2Runtime& r,std::uint8_t* bytes,std::shared_ptr<control_owner::Owner> owner,
@@ -213,7 +228,7 @@ public:
     }
     void start_pending(Record& r){
         const auto at=r.handle.address;if(!ram[at+0xac])return;if(ram[at+2]!=1 || ram[at+1]!=1)fail("pending-source-kind",at);
-        if(r.queue){cues::Status stopped{};with(r,[&](auto& p,const auto&,const auto&){stopped=r.queue->stop(p);});require_cue(stopped,"queue-to-file",at);r.queue.reset();}
+        if(r.queue){cues::Status stopped{};with(r,[&](auto& p,const auto&,const auto&){stopped=r.queue->stop(p);if(stopped==cues::Status::completed||stopped==cues::Status::pending)native_queues[r.handle.slot].reset();});require_cue(stopped,"queue-to-file",at);r.queue.reset();}
         const auto name=load<std::uint32_t>(ram,at+0xb4);if(!name || name>ram_bytes-256)fail("filename-pointer",at);
         std::array<char,256> text{};unsigned n{};for(;n<text.size();++n){text[n]=static_cast<char>(ram[name+n]);if(!text[n])break;}if(n==text.size())fail("filename-length",at);
         auto prepared=prepare_file_source(mount,{std::string_view(text.data(),n),load<std::uint32_t>(ram,at+0xb8),load<std::uint32_t>(ram,at+0xbc),load<std::uint32_t>(ram,at+0xc0)});
@@ -229,9 +244,31 @@ public:
         r.expected_start=expected;r.source=true;ram[at+0xac]=0;ram[at+0x71]=0;
     }
     void service(){
+        // Publish only an actual guest clock observation. The native refill
+        // worker never reads RAM or advances this game clock independently.
+        service_tick.store((std::uint64_t{1}<<32)|tick(),std::memory_order_release);
         import_clock();adopt();for(auto& r:records)if(r.owned)synchronize(r);set_order();for(auto& r:records)if(r.owned)start_pending(r);
         for(auto& r:records)if(r.owned && r.queue){cues::Status result{};with(r,[&](auto& p,const auto&,const auto&){result=r.queue->service(p,tick());});require_cue(result,"queued-source",r.handle.address);}
-        require(mapped.service(tick()),"group");for(auto& r:records)if(r.owned)mirror(r);publish_clock(true);
+        require(mapped.service(tick()),"group");
+        if(test_stall&&!test_stall_done&&ram[0x4badd0]==2&&!ram[0x4badee]&&!ram[0x755ec4]&&!ram[0x4badf8]&&load<std::uint16_t>(ram,0x3243da)==1&&load<std::uint16_t>(ram,0x3243dc)==1){
+            std::uint64_t before_frames{},before_underruns{};std::size_t before_queued{};
+            control([&](auto& p){const auto out=p.snapshot().session.output;before_frames=out.statistics.output_frames;before_underruns=out.statistics.underrun_frames;
+                for(const auto& stream:out.streams)if(stream.active&&stream.voice.playing)before_queued=std::max(before_queued,stream.channel[0].samples);
+            });
+            if(before_frames>=48000&&before_queued>=8000){
+                test_stall_done=true;const auto original_tick=tick();const auto begin=AudioTrace::now();
+                std::fprintf(stderr,"[NATIVE-ADXT-TEST] capability=REO_NATIVE_AUDIO_SERVICE_TEST_V1 stall_ms=2000 phase=begin native_service_disabled=%u tick=%u begin_ns=%llu output_frames=%llu underrun_frames=%llu queued_samples=%zu\n",unsigned(test_service_disabled),original_tick,(unsigned long long)begin,(unsigned long long)before_frames,(unsigned long long)before_underruns,before_queued);
+                // Deliberately hold guest progress, with NO native admission
+                // held. This is a private acceptance fault, never a player option.
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+                std::uint64_t after_frames{},after_underruns{};std::size_t after_queued{};
+                control([&](auto& p){const auto out=p.snapshot().session.output;after_frames=out.statistics.output_frames;after_underruns=out.statistics.underrun_frames;
+                    for(const auto& stream:out.streams)if(stream.active&&stream.voice.playing)after_queued=std::max(after_queued,stream.channel[0].samples);
+                });
+                std::fprintf(stderr,"[NATIVE-ADXT-TEST] stall_ms=2000 phase=end native_service_disabled=%u tick=%u end_ns=%llu output_frames=%llu underrun_frames=%llu queued_samples=%zu\n",unsigned(test_service_disabled),tick(),(unsigned long long)AudioTrace::now(),(unsigned long long)after_frames,(unsigned long long)after_underruns,after_queued);
+            }
+        }
+        for(auto& r:records)if(r.owned)mirror(r);publish_clock(true);
     }
     void stop(Record& r){
         if(r.queue){cues::Status result{};with(r,[&](auto& p,const auto&,const auto&){result=r.queue->stop(p);});require_cue(result,"queued-stop",r.handle.address);}
@@ -239,7 +276,7 @@ public:
     }
     void destroy(std::uint32_t rna){
         for(auto& r:records)if(r.owned && r.handle.rna==rna){
-            if(r.queue){cues::Status result{};with(r,[&](auto& p,const auto&,const auto&){result=r.queue->close(p);});require_cue(result,"queued-destroy",r.handle.address);r.queue.reset();}
+            if(r.queue){cues::Status result{};with(r,[&](auto& p,const auto&,const auto&){result=r.queue->close(p);if(result==cues::Status::completed||result==cues::Status::pending)native_queues[r.handle.slot].reset();});require_cue(result,"queued-destroy",r.handle.address);r.queue.reset();}
             for(;;){const auto result=mapped.destroy(r.key);if(result==S::completed){r={};return;}
                 if(result==S::closed && source_owner->report().joined){r={};return;}
                 require(result,"destroy",r.handle.address);
@@ -282,8 +319,8 @@ public:
         return source;
     }
     cues::Queue& queue_for(Record& record){
-        if(!record.queue){auto queue=std::make_unique<cues::Queue>(cues::Config{record.handle.channels,65536},cue_loader);
-            cues::Status result{};with(record,[&](auto& p,const auto& key,const auto&){result=queue->bind(p,key);});require_cue(result,"queue-bind",record.handle.address);record.queue=std::move(queue);}
+        if(!record.queue){auto queue=std::make_shared<cues::Queue>(cues::Config{record.handle.channels,65536},cue_loader);
+            cues::Status result{};with(record,[&](auto& p,const auto& key,const auto&){result=queue->bind(p,key);if(result==cues::Status::completed)native_queues[record.handle.slot]=queue;});require_cue(result,"queue-bind",record.handle.address);record.queue=std::move(queue);}
         return *record.queue;
     }
     void enqueue_cue(Record& record,FileSource source,R5900Context& context){
@@ -410,6 +447,27 @@ const Entry entries[]{
 #undef X
 };
 }
+bool read_native_service_tick(const control_owner::Owner* owner,std::uint32_t& tick,std::shared_ptr<void>& context)noexcept{
+    const auto binding=current(); // Release registry lock before controller admission.
+    if(!binding || binding->source_owner.get()!=owner || !binding->active.load(std::memory_order_acquire) || binding->stopping.load(std::memory_order_acquire)||binding->test_service_disabled)return false;
+    const auto packed=binding->service_tick.load(std::memory_order_acquire);
+    if(!(packed&(std::uint64_t{1}<<32)))return false;
+    tick=static_cast<std::uint32_t>(packed);context=binding;return true;
+}
+instances::Status service_native_queue_work(const std::shared_ptr<void>& context,instances::Instances& players,std::uint32_t tick)noexcept{
+    const auto binding=std::static_pointer_cast<Binding>(context);
+    if(!binding)return instances::Status::fault;
+    if(binding->stopping.load(std::memory_order_acquire))return instances::Status::closed;
+    // Game controls publish the actual source summation order. A queued header
+    // can become ready between adoption and that publication; defer its start
+    // rather than poisoning the queue or inventing an order in this worker.
+    if(players.snapshot().order_required)return instances::Status::order_required;
+    for(const auto& queue:binding->native_queues)if(queue){
+        const auto result=queue->service(players,tick);
+        if(result!=cues::Status::completed&&result!=cues::Status::pending)return instances::Status::fault;
+    }
+    return instances::Status::completed;
+}
 sound_ram::InstallResult install_ordinary_before_run(PS2Runtime& runtime,const reo_cd_async::ConfigurationReceipt& cd,bank_packets::v3::MemoryIdentity identity)noexcept{
     using I=sound_ram::InstallStatus;std::shared_ptr<Binding> binding;std::size_t changed{};bool selected{};
     try{
@@ -424,6 +482,7 @@ sound_ram::InstallResult install_ordinary_before_run(PS2Runtime& runtime,const r
         binding=std::make_shared<Binding>(runtime,ram,std::move(owner),std::move(mount),table.table);
         auto cue_finalizer=std::make_shared<CueFinalizer>(binding);
         S started=S::fault;binding->control([&](auto& p){started=p.start_output();});binding->require(started,"submix-start");
+        if(!register_native_service_callbacks(read_native_service_tick,service_native_queue_work)){(void)binding->source_owner->join();return{I::publication_refused};}
         if(!runtime.registerExternalWorker(binding)){(void)binding->source_owner->join();return{I::publication_refused};}
         {std::lock_guard lock(installed_mutex);installed=binding;}
         // Known existing registry slots are replaced while the pre-run lease

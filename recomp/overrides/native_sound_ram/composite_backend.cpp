@@ -10,10 +10,12 @@
 #include "ps2_syscalls.h"
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mutex>
+#include <thread>
 #include <utility>
 
 #if !defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) || REO_BUILD_NATIVE_SOUND_RAM_CAPTURE < 2
@@ -30,6 +32,29 @@ std::uint32_t ps2IoRegLockDepth()noexcept;
 std::uint32_t ps2ActualGuestExecutionDepth(PS2Runtime*)noexcept;
 void reoAudioResetStreams();
 void reoAudioPoll();
+
+namespace reo::native::adxt_binding {
+using NativeTickReader=bool(*)(const adxt_control_owner::Owner*,std::uint32_t&,std::shared_ptr<void>&)noexcept;
+using NativeServiceWork=adxt_instances::Status(*)(const std::shared_ptr<void>&,adxt_instances::Instances&,std::uint32_t)noexcept;
+namespace {
+struct ServiceCallbacks {NativeTickReader reader;NativeServiceWork work;};
+std::atomic<const ServiceCallbacks*> service_callbacks{};
+}
+bool register_native_service_callbacks(NativeTickReader reader,NativeServiceWork work)noexcept{
+    if(!reader || !work)return false;
+    static const ServiceCallbacks callbacks{reader,work};
+    if(callbacks.reader!=reader || callbacks.work!=work)return false;
+    service_callbacks.store(&callbacks,std::memory_order_release);return true;
+}
+bool read_registered_tick(const adxt_control_owner::Owner* owner,std::uint32_t& tick,std::shared_ptr<void>& context)noexcept{
+    const auto* callbacks=service_callbacks.load(std::memory_order_acquire);
+    return callbacks && callbacks->reader(owner,tick,context);
+}
+adxt_instances::Status run_registered_service(const std::shared_ptr<void>& context,adxt_instances::Instances& players,std::uint32_t tick)noexcept{
+    const auto* callbacks=service_callbacks.load(std::memory_order_acquire);
+    return callbacks?callbacks->work(context,players,tick):adxt_instances::Status::fault;
+}
+}
 
 namespace reo::native::sound_ram {
 namespace audio=audio_aggregate::v2;
@@ -83,16 +108,82 @@ public:
     // Raw legacy PCM stats are empty in the native-source profile.
     void report_joined(const media::Report&)noexcept override{}
 };
+// REO_NATIVE_SOURCE_SERVICE_BEGIN
+// This exact block is compiled by the isolated control-starvation regression.
+// All mutable native player work uses the canonical admission fence. It never
+// borrows guest state, invokes a guest control or invents a clock tick.
+class NativeSourceService final {
+public:
+    using TickReader=bool(*)(const sources::Owner*,std::uint32_t&,std::shared_ptr<void>&)noexcept;
+    using Work=adxt_instances::Status(*)(const std::shared_ptr<void>&,adxt_instances::Instances&,std::uint32_t)noexcept;
+    using Failure=void(*)(void*)noexcept;
+    NativeSourceService(std::shared_ptr<sources::Owner> owner,TickReader reader,Work work,Failure failure,void* context)
+        :owner_(std::move(owner)),reader_(reader),work_(work),failure_(failure),context_(context),worker_([this]{run();}){}
+    ~NativeSourceService(){request_stop();join();}
+    NativeSourceService(const NativeSourceService&)=delete;
+    NativeSourceService& operator=(const NativeSourceService&)=delete;
+    void request_stop()noexcept{stopping_.store(true,std::memory_order_release);wake_.notify_all();}
+    void join()noexcept{if(worker_.joinable())worker_.join();}
+    std::uint64_t visits()const noexcept{return visits_.load(std::memory_order_relaxed);}
+    std::uint64_t order_deferrals()const noexcept{return deferrals_.load(std::memory_order_relaxed);}
+private:
+    struct Pump final:sources::Operation {
+        std::uint32_t tick;Work work;std::shared_ptr<void> context;adxt_instances::Status status{adxt_instances::Status::completed};
+        Pump(std::uint32_t value,Work fn,std::shared_ptr<void> retained):tick(value),work(fn),context(std::move(retained)){}
+        void run(adxt_instances::Instances& players)noexcept override{
+            status=work(context,players,tick);
+            if(status==adxt_instances::Status::completed || status==adxt_instances::Status::pending)status=players.service(tick);
+        }
+    };
+    void run()noexcept{
+        while(!stopping_.load(std::memory_order_acquire)){
+            std::uint32_t tick{};std::shared_ptr<void> context;
+            if(reader_(owner_.get(),tick,context)){
+                // The snapshot retains native feeder ownership BEFORE admission;
+                // no registry lock or guest-state lookup occurs under the gate.
+                Pump pump(tick,work_,std::move(context));const auto admission=owner_->run(pump);
+                if(admission==sources::Admission::closed)break;
+                if(admission==sources::Admission::accepted && pump.status==adxt_instances::Status::closed)break;
+                if(admission==sources::Admission::accepted){
+                    if(pump.status==adxt_instances::Status::order_required)++deferrals_;
+                    else if(pump.status==adxt_instances::Status::completed || pump.status==adxt_instances::Status::pending)++visits_;
+                }
+                if(admission==sources::Admission::accepted && pump.status!=adxt_instances::Status::completed &&
+                   pump.status!=adxt_instances::Status::pending && pump.status!=adxt_instances::Status::order_required){
+                    if(!stopping_.load(std::memory_order_acquire))failure_(context_);
+                    break;
+                }
+                // A third source can be between guest adoption and explicit
+                // order publication. Defer; never synthesize a summation order.
+            }
+            std::unique_lock lock(wait_);
+            wake_.wait_for(lock,std::chrono::milliseconds(4),[this]{return stopping_.load(std::memory_order_acquire);});
+        }
+    }
+    std::shared_ptr<sources::Owner> owner_;TickReader reader_;Work work_;Failure failure_;void* context_;
+    std::atomic<bool> stopping_{};std::mutex wait_;std::condition_variable wake_;
+    std::atomic<std::uint64_t> visits_{},deferrals_{};
+    std::thread worker_;
+};
+// REO_NATIVE_SOURCE_SERVICE_END
 class SourceWorker final:public PS2Runtime::ExternalWorker {
     PS2Runtime* runtime_;std::shared_ptr<sources::Owner> owner_;
+    NativeSourceService service_;
 public:
-    SourceWorker(PS2Runtime& runtime,std::shared_ptr<sources::Owner> owner):runtime_(&runtime),owner_(std::move(owner)){}
-    void requestStop()noexcept override{owner_->request_stop();}
+    SourceWorker(PS2Runtime& runtime,std::shared_ptr<sources::Owner> owner):runtime_(&runtime),owner_(std::move(owner)),
+        service_(owner_,adxt_binding::read_registered_tick,adxt_binding::run_registered_service,[](void* context)noexcept{
+            std::fputs("[NATIVE-AUDIO-SERVICE-ERROR] native refill service failed; stopping candidate\n",stderr);
+            static_cast<PS2Runtime*>(context)->requestStop();
+        },&runtime){}
+    void requestStop()noexcept override{service_.request_stop();owner_->request_stop();}
     bool join()noexcept override{
         if(ps2ActualGuestExecutionDepth(runtime_) || ps2IoRegLockDepth() || !sources::Owner::join_allowed_on_current_thread())return false;
+        requestStop();service_.join();
         if(owner_->join()!=sources::Join::completed)return false;
         const auto report=owner_->report();
         if(report.final && !reported_.exchange(true,std::memory_order_relaxed)){
+            std::fprintf(stderr,"[NATIVE-AUDIO-SERVICE-REPORT] joined=1 visits=%llu order_deferrals=%llu\n",
+                (unsigned long long)service_.visits(),(unsigned long long)service_.order_deferrals());
             const auto& stats=report.final->session.output.statistics;
             std::fprintf(stderr,"[NATIVE-ADXT-SOURCE-REPORT] joined=%u frames=%llu signal_frames=%llu underrun_frames=%llu\n",
                 unsigned(report.joined),(unsigned long long)stats.output_frames,
