@@ -10,6 +10,12 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <source_location>
+#ifdef REO_NODE_POSITION_AUDIO_TESTS
+#include "game/native/gameplay_audio/scenario_cues.hpp"
+#include "game/native/animation/model.hpp"
+#include <filesystem>
+#endif
 #ifdef REO_SURFACE_AUDIO_TESTS
 #include "game/native/gameplay_contact_world/contacts.hpp"
 #include "game/native/gameplay_world/footwear.hpp"
@@ -30,10 +36,10 @@ std::uint64_t checks{}, calls{}, route_cases{}, import_cases{}, spatial_cases{},
 unsigned fail_at = UINT32_MAX;
 a::SpatialContext spatial;
 std::string active_case;
-void check(bool value) {
+void check(bool value,const std::source_location& where=std::source_location::current()) {
     ++checks;
     if (!value)
-        throw std::runtime_error("audio check " + std::to_string(checks) + " " + active_case);
+        throw std::runtime_error("audio check " + std::to_string(checks) + " " + active_case+" at "+where.file_name()+":"+std::to_string(where.line()));
 }
 template <class T> T read(const std::uint8_t* m, unsigned at) {
     return transform_read<T>(m, at);
@@ -117,6 +123,11 @@ void original_transform_port(std::uint8_t* m, R5900Context* c, PS2Runtime* r) {
         case 0x1b8bb0:return sub_001B8BB0_0x1b8bb0(m,c,r);
         case 0x1b8b20:return sub_001B8B20_0x1b8b20(m,c,r);
         case 0x5b4ce0:return o2_005B4CE0_0x5b4ce0(m,c,r);
+#endif
+#ifdef REO_NODE_POSITION_AUDIO_TESTS
+        case 0x1b8870:return sub_001B8870_0x1b8870(m,c,r);
+        case 0x1b8a10:return sub_001B8A10_0x1b8a10(m,c,r);
+        case 0x1b93b0:return sub_001B93B0_0x1b93b0(m,c,r);
 #endif
 #ifdef REO_SURFACE_AUDIO_TESTS
         case 0x1b8f40:return sub_001B8F40_0x1b8f40(m,c,r);
@@ -807,12 +818,20 @@ void stock_composition(std::vector<std::uint8_t>& m, const char* path) {
 #ifdef REO_SURFACE_AUDIO_TESTS
 #include "surface_audio_tests.inc"
 #endif
+#ifdef REO_NODE_POSITION_AUDIO_TESTS
+#include "node_position_audio_tests.inc"
+#endif
 int main(int argc, char** argv) {
     try {
         check(argc == 3);
         std::vector<std::uint8_t> memory(0x2000000);
 #ifdef REO_ANIMATION_AUDIO_TESTS
         compare_positional(memory,argv[2]);
+#ifdef REO_NODE_POSITION_AUDIO_TESTS
+        compare_node_position_audio(memory,std::filesystem::path(argv[1]).parent_path());
+        std::cout<<"{\"checks\":"<<checks<<",\"node_cases\":"<<node_cases<<",\"position_cases\":"<<position_cases<<",\"remap_cases\":"<<remap_cases<<",\"commands\":"<<node_position_commands<<",\"mixed_frames\":"<<node_position_mixed_frames<<",\"signal_samples\":"<<node_position_signal<<",\"refusals\":"<<node_position_refusals<<",\"original_calls\":"<<calls<<",\"game_launched\":false}\n";
+        return 0;
+#endif
 #ifdef REO_SURFACE_AUDIO_TESTS
         audio_test_directory=std::filesystem::path(argv[1]).parent_path().string();
         compare_surface_audio(memory);

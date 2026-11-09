@@ -4,6 +4,7 @@
 #include "../gameplay_actors/input.hpp"
 #include "../gameplay_collision/actors.hpp"
 #include "../gameplay_collision/contact_component.hpp"
+#include "../gameplay_scenario/model_reference.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -42,6 +43,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t appearance_variant{}; // original BBC; separate from character B98 and model_variant BB4
     std::uint8_t motion_subtype{},motion_style{},previous_motion_class{};
     std::uint8_t selected_resource{},secondary_resource{},model_pose_class{};
+    gameplay_scenario::ModelReference scene_model{128}; // resolved ABB model identity, not an authored remap index
     float motion_rate{1};
     std::uint16_t resource_action{};
     // Original65E710 equipment-selection notification, D92/DA2.
@@ -90,6 +92,7 @@ struct Session : actors::HitSession {
     bool inventory_modal{};
     std::uint8_t control_notice{};
     std::optional<std::uint16_t> scenario;
+    std::optional<std::uint16_t> last_scenario_audio; // original316550, written even when a bank request is rejected
     // Authored primary population count, source4BAEA0. Unknown is not zero;
     // storage/registration and the active byte remain independent concepts.
     std::optional<std::uint32_t> primary_population;

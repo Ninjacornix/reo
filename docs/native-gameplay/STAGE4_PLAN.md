@@ -74,7 +74,9 @@ The [actor/resource animation audio frontends](ANIMATION_AUDIO_FRONTENDS.md)
 now supply real canonical bank consumers for their qualified routes, including
 exact PCM comparison. The [surface audio route](ANIMATION_SURFACE_AUDIO.md)
 also reuses canonical room regions and adds bounded footwear profiles.
-Node/scenario-remapped routes and actual room bank installation remain open.
+The [node/scenario position routes](ANIMATION_NODE_POSITION_AUDIO.md) now also
+use canonical scene/model/session state and the actual bank mixer. Actual room
+bank/model assignment and the remaining event/resource consumers remain open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

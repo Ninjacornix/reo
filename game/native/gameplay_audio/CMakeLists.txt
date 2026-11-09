@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_audio STATIC routing.cpp import.cpp spatial.cpp owner.cpp options.cpp)
+add_library(reo_native_gameplay_audio STATIC routing.cpp import.cpp spatial.cpp owner.cpp options.cpp scenario_cues.cpp)
 target_compile_features(reo_native_gameplay_audio PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_audio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 target_link_libraries(reo_native_gameplay_audio PUBLIC reo_native_audio_banks_v2 reo_native_gameplay_session reo_native_transform_math)

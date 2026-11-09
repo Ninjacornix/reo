@@ -23,8 +23,9 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--animation-frontends',action='store_true')
     parser.add_argument('--surface-frontends',action='store_true')
+    parser.add_argument('--node-position-frontends',action='store_true')
     args = parser.parse_args()
-    args.animation_frontends=args.animation_frontends or args.surface_frontends
+    args.animation_frontends=args.animation_frontends or args.surface_frontends or args.node_position_frontends
     out = args.output.resolve()
     allowed = (ROOT / 'build-native-sjuni').resolve()
     if out.exists() or out == allowed or not out.is_relative_to(allowed):
@@ -38,6 +39,7 @@ def main():
                  0x191ab0,0x1aceb0,0x1acf60,0x1b86f0,0x1b8780]
     if args.animation_frontends:addresses += [0x1b8bb0,0x1b8b20,0x1b8c70]
     if args.surface_frontends:addresses += [0x1b8d70,0x1b8f40]
+    if args.node_position_frontends:addresses += [0x1b8870,0x1b8930,0x1b8a10,0x1b93b0]
     bodies, originals, audits = [], [], []
     for at in addresses:
         source = ROOT / f'recomp/config/output/sub_{at:08X}_0x{at:x}.cpp'
@@ -53,6 +55,11 @@ def main():
         end=int(re.search(r'// Address: 0x[0-9a-fA-F]+ - 0x([0-9a-fA-F]+)',text)[1],16)
         audits.append(compare_source('actual resource sound selector',source.relative_to(ROOT).as_posix(),0x5b4ce0,end,lambda at,n:raw[at-0x570000:at-0x570000+n]))
         originals.append(source);bodies.append(text[text.index('// Function:'):])
+        if args.node_position_frontends:
+            source=ROOT/'recomp/config/output_ovl/o2/o2_00595F10_0x595f10.cpp';text=source.read_text()
+            end=int(re.search(r'// Address: 0x[0-9a-fA-F]+ - 0x([0-9a-fA-F]+)',text)[1],16)
+            audits.append(compare_source('actual node sound frontend',source.relative_to(ROOT).as_posix(),0x595f10,end,lambda at,n:raw[at-0x570000:at-0x570000+n]))
+            originals.append(source);bodies.append(text[text.index('// Function:'):])
     production = list((ROOT/'game/native/gameplay_audio').glob('*'))
     dependencies = [ROOT/'game/native'/d/n for d,n in [
         ('gameplay_session','session.hpp'),('gameplay_session','session.cpp'),
@@ -72,19 +79,23 @@ def main():
     if args.animation_frontends:
         from effect_work_sources import SURFACE_WORLD_UNITS
         frontend_units=[ROOT/n for n in SURFACE_WORLD_UNITS if '/gameplay_effects/' not in n]
-        frontend_units += [ROOT/'game/native'/n for n in ['gameplay_world/animation_audio.cpp','gameplay_world/footwear.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','gameplay_collision/regions.cpp','gameplay_actors/entity.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp']]
+        frontend_units += [ROOT/'game/native'/n for n in ['gameplay_world/animation_audio.cpp','gameplay_world/footwear.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','gameplay_scenario/scene_models.cpp','gameplay_scenario/content.cpp','gameplay_collision/regions.cpp','gameplay_actors/entity.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp']]
         paths += frontend_units+[ROOT/'tools/native_reconstruction/animation_audio_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     if args.surface_frontends:
         frontend_units += [ROOT/'game/native/gameplay_collision'/n for n in ['regions.cpp','room_objects.cpp']]
         paths += frontend_units+[ROOT/'tools/native_reconstruction/surface_audio_tests.inc',ROOT/'game/native/gameplay_world/model_scale_profile.inc',ROOT/'tools/native_reconstruction/generate_footwear_profile.py']
+    if args.node_position_frontends:
+        paths += [ROOT/'tools/native_reconstruction/node_position_audio_tests.inc',ROOT/'tools/native_reconstruction/generate_scenario_audio_profile.py',ROOT/'build-native-sjuni/animation-owned-corpus-v2/owned_skeletons.bin']
     paths=list(dict.fromkeys(paths))
     for source in paths:
+        if source.suffix=='.bin':continue
         for include in re.findall(r'^\s*#include "([^"]+)"',source.read_text(),re.M):
             local=(source.parent/include).resolve();target=local if local.is_file() else (ROOT/include).resolve()
             if target.is_file() and target.is_relative_to(ROOT) and target not in paths:paths.append(target)
     inputs={p.relative_to(ROOT).as_posix():sha(p) for p in paths}
     names={f'sub_{at:08X}_0x{at:x}' for at in addresses}
     if args.animation_frontends:names.add('o2_005B4CE0_0x5b4ce0')
+    if args.node_position_frontends:names.add('o2_00595F10_0x595f10')
     all_calls=set(re.findall(r'\b((?:sub|o2)_[0-9A-F]+_0x[0-9a-f]+)\(', '\n'.join(bodies)))
     header=helper.read_text().replace('Register r[32];','Register r[32];std::uint64_t hi{},lo{};')
     header+='\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define SRA32(a,b) (std::bit_cast<std::int32_t>(std::uint32_t(a)) >> unsigned(b))\n#define FPU_CVT_W_S(a) _mm_cvttss_si32(_mm_set_ss(a))\n'
@@ -110,18 +121,23 @@ def main():
         raw=(ROOT/'build-function-index/owned-overlays/o2.bin').read_bytes()
         (out/'owned_footwear.bin').write_bytes(raw[0x7313c0-0x570000:0x7313c0-0x570000+2*208])
         receipt=ROOT/'build-native-sjuni/footwear-profile-v1/receipt.json';profile=json.loads(receipt.read_bytes());assert profile['output_sha256']==sha(ROOT/'game/native/gameplay_world/footwear_profile.inc')
+    if args.node_position_frontends:
+        raw=(ROOT/'build-function-index/owned-overlays/o2.bin').read_bytes()
+        (out/'owned_scenario_audio.bin').write_bytes(raw[0x730ba0-0x570000:0x7313c0-0x570000])
+        (out/'owned_skeletons.bin').write_bytes((ROOT/'build-native-sjuni/animation-owned-corpus-v2/owned_skeletons.bin').read_bytes())
     (out/'audio_reference.hpp').write_text(header)
     original=out/'original.cpp'
     original.write_text('#include "audio_reference.hpp"\n#pragma GCC diagnostic ignored "-Wunused-variable"\n'+'\n'.join(bodies))
     compiler=COMPILERS[args.compiler]
     executable=out/'audio.exe'
-    sources=[ROOT/'game/native/gameplay_audio'/n for n in ['routing.cpp','import.cpp','spatial.cpp','owner.cpp','options.cpp']]
+    sources=[ROOT/'game/native/gameplay_audio'/n for n in ['routing.cpp','import.cpp','spatial.cpp','owner.cpp','options.cpp','scenario_cues.cpp']]
     sources += [ROOT/'game/native/gameplay_session/session.cpp',ROOT/'game/native/audio_banks/v2/session.cpp',ROOT/'game/native/audio_banks/v2/algorithms.cpp',ROOT/'game/native/gameplay_scenario/stream_channels.cpp',tests,original]
     sources=list(dict.fromkeys(sources+frontend_units))
     sources=[out/'source'/p.relative_to(ROOT) if p.is_relative_to(ROOT) and not p.is_relative_to(out) else p for p in sources]
     command=[str(compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-parameter','-fno-fast-math','-ffp-contract=off','-msse4.1','-I'+str(out/'source'),'-I'+str(out),*[str(p) for p in sources],'-o',str(executable)]
     if args.animation_frontends:command+=['-DREO_ANIMATION_AUDIO_TESTS=1']
     if args.surface_frontends:command+=['-DREO_SURFACE_AUDIO_TESTS=1']
+    if args.node_position_frontends:command+=['-DREO_NODE_POSITION_AUDIO_TESTS=1']
     record=dict(schema=1,status='failed',source_sha256=inputs,compiler_sha256=sha(compiler),original_word_audits=audits,game_launched=False,checks=[])
     env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
     try:

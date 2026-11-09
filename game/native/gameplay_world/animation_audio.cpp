@@ -1,5 +1,7 @@
 #include "animation_audio.hpp"
 #include "footwear.hpp"
+#include "../gameplay_audio/scenario_cues.hpp"
+#include "../animation/model.hpp"
 #include "../gameplay_contact_world/contacts.hpp"
 #include <bit>
 #include <stdexcept>
@@ -94,15 +96,28 @@ void BasicAudio::surface(Actor& actor, std::int8_t kind) {
     emit(std::uint8_t(selector));
     if(selector>>8)emit(std::uint8_t(selector>>8));
 }
-void BasicAudio::node(Actor& actor, std::uint16_t) {
+void BasicAudio::node(Actor& actor, std::uint16_t kind) {
     admit(actor);
     last_.reset();
-    throw std::runtime_error("Native animation node/surface audio profile not implemented");
+    if(!models_)throw std::runtime_error("Native animation node audio scene owner unavailable");
+    const auto sound=models_->sound_resource(actor.scene_model);
+    if(!sound)throw std::runtime_error("Native animation node audio scene model unavailable");
+    unsigned cue=kind==0?11u:kind==1?13u:0u;
+    if(*sound==1)cue+=8;
+    if(!cue)return;
+    const auto pose=actor.model?actor.model->retain():nullptr;
+    if(!pose||pose->joints.size()<=15)throw std::runtime_error("Native animation node15 audio pose unavailable");
+    const auto& node=pose->joints[15];
+    last_=owner_.positional({1,cue},{node[3][0],node[3][1],node[3][2]},spatial_,1);
 }
-void BasicAudio::position(Actor& actor, std::uint32_t) {
+void BasicAudio::position(Actor& actor, std::uint32_t event) {
     admit(actor);
     last_.reset();
-    throw std::runtime_error(
-        "Native animation scenario-remapped audio/cache owner not implemented");
+    auto& session=world_.session();
+    if(!session.scenario)throw std::runtime_error("Native scenario audio identity unavailable");
+    const auto cue=gameplay_audio::scenario_cue(*session.scenario,event);
+    if(cue==255)return;
+    request(actor,2,cue);
+    session.last_scenario_audio=std::uint16_t(cue);
 }
 } // namespace reo::native::gameplay_world::animation_events
