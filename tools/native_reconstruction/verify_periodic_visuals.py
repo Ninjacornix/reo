@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import struct
 from effect_work_sources import SURFACE_WORLD_UNITS
 from audit_retail_effect_descriptors import compare_source, elf_reader
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,7 +20,9 @@ def main():
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--resource-pulses', action='store_true')
     p.add_argument('--resource-static', action='store_true')
+    p.add_argument('--resource-factory', action='store_true')
     args = p.parse_args()
+    assert not args.resource_factory or args.resource_static
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
     corpus = args.corpus.resolve()
@@ -36,6 +39,7 @@ def main():
     pending = [0x1d3350, 0x1a31b0, 0x1a34b0, 0x1a3500, 0x6525d0, 0x6535c0, 0x651850, 0x652ce0, 0x5d9680]
     if args.resource_pulses: pending += [0x5925c0]
     if args.resource_static: pending += [0x1d3100,0x372490]
+    if args.resource_factory: pending += [0x18fdf0,0x191530]
     ports = [0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
     entries = {}
     while pending:
@@ -54,6 +58,9 @@ def main():
         # Do not recursively admit the unused common/release callback families.
         for at in [0x5932f0,0x590be0,0x590c70]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_factory:
+        for at in [0x591230,0x590be0,0x590c70,0x590d80,0x590ea0,0x5b42b0,0x5921d0,0x5df450,0x5932f0,0x6b45c0,0x6b4a30]:
+            entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     originals = list(entries.values())
     proof = []
     for at, name in entries.items():
@@ -69,6 +76,9 @@ def main():
     if args.resource_pulses:
         units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_scenario/scene_resources.cpp','animation/weapon_program.cpp']]
     if args.resource_static: units += ['game/native/gameplay_world/resource_static_assets.cpp']
+    if args.resource_factory:
+        units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_world/resource_factory.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','animation/weapon_program.cpp']]
+    units=list(dict.fromkeys(units))
     files = list(units)
     frozen = {}
     for name in files:
@@ -89,6 +99,8 @@ def main():
         name='tools/native_reconstruction/resource_pulses_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_static:
         name='tools/native_reconstruction/resource_static_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_factory:
+        name='tools/native_reconstruction/resource_factory_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
                   selected_visual_family='variant0 logical36/37/38, flags1A193, null parent, complete6535C0 callback',
@@ -103,6 +115,13 @@ def main():
                   native_modernization=['Immutable native frame/resource leases replace work pointers in renderer handoff.',
                                         'Unused fourth stack rotation halfword is not an invented native angle.',
                                         'New native ownership clears all256 piece states; original reset clears only168 active bytes; fresh zeroed source-pool profile compared.'])
+    if args.resource_factory:
+        record['declared_ports'].append('107AB0 bounded byte copy for owned version3 template sections')
+        record['factory_profile'] = dict(owned_static_banks=16, owned_template_banks=5,
+            controlled_static_banks=1, controlled_template_banks=1,
+            controlled_root_parts=6, controlled_callback_classes=[0,1,2,3,4,255],
+            unsupported_classes=[2,4,255], source_calls_on_unsupported_profiles=False,
+            unadmitted_companion_contents=['0x75','0x135','0x1d','0x1c','0x3200','0x72'])
     try:
         for name, body in frozen.items():
             target = out / 'source' / name
@@ -136,6 +155,9 @@ def main():
             for at,size in [(0x22fe20,32),(0x241c78,40),(0x38b290,4)]:
                 value=main_read(at,size) if at<0x370000 else overlay['o0'][at-0x370000:at-0x370000+size]
                 record['pulse_math_constants'][hex(at)]=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+        if args.resource_factory:
+            raw_callbacks=overlay['o2'][0x709580-0x570000:0x709580-0x570000+16];assert struct.unpack('<4I',raw_callbacks)==(0x5932f0,0x6b45c0,0x593550,0x5932f0)
+            record['resource_callback_table']=raw_callbacks.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in raw_callbacks)+'};std::memcpy(memory+0x709580,data,sizeof data);}'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:
@@ -149,6 +171,13 @@ def main():
                 data.write(len(selected).to_bytes(4,'little'))
                 for member in selected:
                     iso.seek(member['iso_offset']);payload=iso.read(member['bytes']);assert hashlib.sha256(payload).hexdigest()==member['sha256'];data.write(len(payload).to_bytes(4,'little')+payload)
+        if args.resource_factory:
+            inventory=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1/members.json';assert sha(inventory)=='276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2'
+            selected=[m for m in json.loads(inventory.read_bytes()) if any(n.lower().startswith('item') and n.lower().endswith('.dat') for n in m.get('names',[]))];assert len(selected)==5;record['template_assets']=selected
+            with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb') as iso,(out/'owned_templates.bin').open('wb') as data:
+                data.write(struct.pack('<I',len(selected)))
+                for member in selected:
+                    iso.seek(member['iso_offset']);payload=iso.read(member['bytes']);assert hashlib.sha256(payload).hexdigest()==member['sha256'];offset,size=struct.unpack_from('<II',payload);assert offset+size<=len(payload);section=payload[offset:offset+size];data.write(struct.pack('<I',len(section))+section)
         env = dict(os.environ)
         env['PATH'] = str(args.compiler.resolve().parent) + os.pathsep + env.get('PATH', '')
         binary = out / 'checks.exe'
@@ -157,8 +186,9 @@ def main():
         command += [str(out / 'source' / name) for name in units] + [str(out / 'tests.cpp'), '-o', str(binary)]
         if args.resource_pulses: command.insert(1,'-DREO_RESOURCE_PULSES=1')
         if args.resource_static: command.insert(1,'-DREO_RESOURCE_STATIC=1')
+        if args.resource_factory: command.insert(1,'-DREO_RESOURCE_FACTORY=1')
         record['command'] = command
-        for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else []))]:
+        for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else []))]:
             result = subprocess.run(cmd, env=env, capture_output=True, timeout=180)
             (out / (label + '.stdout.txt')).write_bytes(result.stdout)
             (out / (label + '.stderr.txt')).write_bytes(result.stderr)

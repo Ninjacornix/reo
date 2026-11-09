@@ -11,6 +11,7 @@ public:
     ResourceFrames(World& world,gameplay_scenario::SceneResources& resources,ResourceModels& models,gameplay_scenario::PeriodicEmitter* emitter=nullptr,std::shared_ptr<gameplay_scene::Records> scene_records={},const gameplay_scenario::ResourceTemplates* templates=nullptr):world_(world),resources_(resources),models_(models),emitter_(emitter),scene_records_(std::move(scene_records)),templates_(templates){}
     bool bound_to(const ResourceModels& value)const noexcept{return &models_==&value;}
     bool templates_bound_to(const gameplay_scenario::ResourceTemplates& value)const noexcept{return templates_==&value;}
+    bool open()const noexcept{return !world_.closed();}
     void common(const ResourceModelId&,ResourceModel&);
     void weapon(const ResourceModelId&,ResourceModel&);
     //5B1850 or5B1A90; the descriptor identity survives instance retirement.

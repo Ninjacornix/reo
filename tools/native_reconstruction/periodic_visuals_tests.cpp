@@ -25,6 +25,9 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     switch(context->pc){
     case 0x573740:check(GPR_U32(context,4)==0x10000);task_retired=true;done();return;
     case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at);std::memset(memory+at,std::uint8_t(GPR_U32(context,5)),n);SET_GPR_U32(context,2,at);done();return;}
+#ifdef REO_RESOURCE_FACTORY
+    case 0x107ab0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);check(src>=0x100000&&src<=0x110000&&size<=0x110000-src);check((dst==0x74bb50&&size<=129*24)||(dst==0x74b940&&size<=129*4)||(dst==0x74c770&&size<=128*4)||(dst==0x74c970&&size<=384*2));std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
     case 0x18dc50:check(!allocated&&GPR_U32(context,5)==4&&GPR_U32(context,4)<0x100000);allocated=true;++heap_allocations;SET_GPR_U32(context,2,1);done();return;
     case 0x18dca0:check(allocated&&GPR_U32(context,4)==1);SET_GPR_U32(context,2,heap);done();return;
     case 0x18dc90:check(allocated&&GPR_U32(context,4)==1);allocated=false;++heap_releases;done();return;
@@ -92,10 +95,17 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_STATIC
 #include "tools/native_reconstruction/resource_static_tests.inc"
 #endif
+#ifdef REO_RESOURCE_FACTORY
+#include "tools/native_reconstruction/resource_factory_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
+#ifdef REO_RESOURCE_FACTORY
+        4
+#else
         3
+#endif
 #else
         2
 #endif
@@ -169,6 +179,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_STATIC
     compare_resource_static(argv[2],ram);
 #endif
+#ifdef REO_RESOURCE_FACTORY
+    compare_resource_factory(argv[2],argv[3],ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
@@ -182,6 +195,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_STATIC
     <<",\"static_banks\":"<<static_banks<<",\"static_roots\":"<<static_roots<<",\"static_matrices\":"<<static_matrices<<",\"static_lookups\":"<<static_lookups<<",\"static_large_roots\":"<<static_large_roots<<",\"static_refusals\":"<<static_refusals
 #endif
+#ifdef REO_RESOURCE_FACTORY
+    <<",\"factory_cases\":"<<factory_cases<<",\"factory_visible\":"<<factory_visible<<",\"factory_missing_geometry\":"<<factory_missing_geometry<<",\"factory_passes\":"<<factory_passes<<",\"factory_refusals\":"<<factory_refusals
+#endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;
 }catch(const std::exception& error){std::cerr<<error.what()
@@ -190,5 +206,8 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_STATIC
     <<" static bank="<<static_banks<<" root="<<static_roots
+#endif
+#ifdef REO_RESOURCE_FACTORY
+    <<" factory cases="<<factory_cases
 #endif
     <<'\n';return 1;}

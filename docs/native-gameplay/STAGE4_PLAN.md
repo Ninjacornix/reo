@@ -4,6 +4,12 @@ Status, 2026-11-09: implementation started; **Stage 4 is incomplete**. The user
 requested the whole stage and explicitly revoked the earlier conditional
 PC-sleep action for this work. Do not request sleep after this stage.
 
+The [primary resource factory](RESOURCE_FACTORY.md) now constructs admitted
+common/weapon resource models from owned NBD poses and ITEM templates through
+the canonical64-model owner. Both compiler comparisons and parent builds pass.
+Special companions, delayed work, scene placement and actual game installation
+remain open; this does not close Stage4.
+
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners
 are reused. Their temporary guest consumers do not qualify as migrated gameplay.
