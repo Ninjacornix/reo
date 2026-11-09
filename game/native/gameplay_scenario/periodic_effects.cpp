@@ -72,9 +72,32 @@ PeriodicEffects::PeriodicEffects(gameplay_tasks::Scheduler& tasks,SceneControls&
 PeriodicEffects::~PeriodicEffects(){close();}
 bool PeriodicEffects::admitted()const noexcept{
     const auto& owner=*shared_;
-    if(owner.closed||owner.fault!=PeriodicStatus::completed)return false;
+    if(owner.closed||owner.tasks.closed()||owner.fault!=PeriodicStatus::completed)return false;
     const bool admitted=owner.emitter.admitted();
     return admitted&&!owner.closed&&owner.fault==PeriodicStatus::completed;
+}
+bool PeriodicEffects::bound_to(const SceneControls& controls,const FlagState& flags,const gameplay_session::Random& random)const noexcept{
+    return &shared_->controls==&controls && &shared_->flags==&flags && &shared_->random==&random;
+}
+bool PeriodicEffects::bound_to(const SceneControls& controls)const noexcept{return &shared_->controls==&controls;}
+ControlResult SceneControls::start_periodic(const PeriodicControlArguments& args,PeriodicEffects& effects,std::size_t maximum_visits)noexcept{
+    ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    if(!enabled_)return result;
+    if(!(args.stop&0x8000)&&args.stop>=128){result.status=ControlStatus::invalid_profile;return result;}
+    if(!effects.bound_to(*this)||!effects.admitted()){result.status=ControlStatus::provider_unavailable;return result;}
+    for(auto node=head_;node;node=node->next){
+        if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
+        ++result.visited;if(node->value.authored_id!=args.authored_id)continue;
+        auto* five=std::get_if<ControlTypeFive>(&node->value.body);
+        if(!five){const auto* other=std::get_if<ControlOther>(&node->value.body);if(other&&other->type==5){result.status=ControlStatus::invalid_profile;return result;}continue;}
+        ++result.matched;
+        if(reset_five(node->id)!=ControlStatus::completed){result.status=ControlStatus::invalid_profile;return result;}
+        node->value.enabled=1;node->value.counter=std::uint8_t(node->value.counter-1u);
+        five->selector=args.selector;five->reset_sentinel=args.stop;five->effect_parameter=args.parameter;
+        const auto created=effects.create(node->id);
+        if(created.status!=PeriodicStatus::completed){result.status=ControlStatus::provider_unavailable;return result;}
+    }
+    return result;
 }
 bool PeriodicEffects::healthy()const noexcept{return !shared_->closed&&shared_->fault==PeriodicStatus::completed;}
 PeriodicStatus PeriodicEffects::failure()const noexcept{return shared_->fault;}
@@ -84,6 +107,7 @@ PeriodicCreated PeriodicEffects::create(const SceneControlId& id)noexcept{
     if(!admitted())return{PeriodicStatus::emitter_unavailable};
     const auto parent=owner.controls.get(id);if(!parent)return{PeriodicStatus::invalid_control};
     const auto five=std::get_if<ControlTypeFive>(&parent->body);if(!five)return{PeriodicStatus::invalid_control};
+    if(!(five->reset_sentinel&0x8000)&&five->reset_sentinel>=128)return{PeriodicStatus::flag_unavailable};
     try{
         std::erase_if(owner.entries,[&](const auto& entry){return !owner.tasks.contains(entry.handle);});
         auto state=std::make_shared<PeriodicState>();state->position={five->position[0],five->position[1],five->position[2]};

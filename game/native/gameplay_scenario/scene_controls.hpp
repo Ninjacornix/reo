@@ -11,6 +11,7 @@ namespace reo::native::gameplay_scenario {
 struct SceneControlDomain;
 class SceneControls;
 class ActionChoices;
+class PeriodicEffects;
 }
 namespace reo::native::gameplay_session { class Random; }
 namespace reo::native::gameplay_scenario {
@@ -52,6 +53,7 @@ enum class ControlCommand { zero_two_parameter,type_one_parameter,enable_even,di
     restart_five,reset_five,restart_five_byte,enable_odd,disable_odd,enable_one,disable_one,
     enable_zero_two,disable_zero_two,zero_two_half,enable_nine,enable_thirteen,refresh_zero_two };
 struct ControlArguments {std::uint32_t authored_id{},parameter{},selector{};std::uint16_t extra{};};
+struct PeriodicControlArguments {std::uint32_t authored_id{};std::uint16_t selector{},stop{},parameter{};};
 enum class ControlStatus { completed,invalid_identity,provider_unavailable,invalid_profile,closed,full,budget_exhausted };
 struct ControlResult {ControlStatus status{ControlStatus::completed};std::size_t visited{},matched{};};
 struct ControlRouteResult {ControlStatus status{ControlStatus::completed};std::optional<SceneControlId> id;std::size_t visited{};};
@@ -85,6 +87,7 @@ public:
     // Enabled flags do not filter; callers re-get(id) after synchronous effects.
     ControlRouteResult first_route(std::uint8_t authored_id,std::size_t maximum_visits=4096)const noexcept;
     ControlResult disable_three(std::size_t maximum_visits=4096)noexcept;
+    ControlResult start_periodic(const PeriodicControlArguments&,PeriodicEffects&,std::size_t maximum_visits=4096)noexcept;
 private:
     struct Node {SceneControlId id;SceneControl value;std::shared_ptr<Node> next;};
     std::shared_ptr<const SceneControlDomain> domain_;

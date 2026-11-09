@@ -21,6 +21,8 @@ namespace vm=reo::native::gameplay_scenario;
 namespace tasks=reo::native::gameplay_tasks;
 namespace {
 std::size_t checks{},invocations{};
+unsigned original_periodic_used{};
+std::vector<std::uint32_t> original_periodic_tasks;
 std::string assertion_context;
 std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint8_t>> notifications;
 void check(bool ok,const std::source_location at=std::source_location::current()){++checks;if(!ok)throw std::runtime_error("Scenario differential assertion "+std::to_string(checks)+" "+assertion_context+" "+at.file_name()+":"+std::to_string(at.line()));}
@@ -165,6 +167,11 @@ void o2_005709E0_0x5709e0(std::uint8_t* r,R5900Context* c,PS2Runtime*){const aut
 void o2_00680220_0x680220(std::uint8_t*,R5900Context* c,PS2Runtime*){messages.emplace_back(GPR_U32(c,4),std::uint8_t(GPR_U32(c,5)),GPR_U32(c,6));SET_GPR_U32(c,2,0);done(c);}
 void o2_00680850_0x680850(std::uint8_t*,R5900Context* c,PS2Runtime*){queries.push_back(GPR_U32(c,4));SET_GPR_S32(c,2,predicate_value);done(c);}
 void o2_006B5E10_0x6b5e10(std::uint8_t*,R5900Context* c,PS2Runtime*){original_control_refreshes.push_back(std::uint8_t(GPR_U32(c,4)));done(c);}
+void o2_00573630_0x573630(std::uint8_t* r,R5900Context* c,PS2Runtime*){
+    check(GPR_U32(c,4)==1);std::uint32_t at{};
+    if(original_periodic_used<32){at=0x7a0000+256*original_periodic_used++;std::memset(r+at,0,256);original_periodic_tasks.push_back(at);}
+    SET_GPR_U32(c,2,at);done(c);
+}
 void sub_00131E38_0x131e38(std::uint8_t* r,R5900Context* c,PS2Runtime*){stream_original_event(r,2,stream_original_channel(c));done(c);}
 void sub_00131EF8_0x131ef8(std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto index=stream_original_channel(c);stream_original_event(r,0,index);SET_GPR_S32(c,2,original_stream_fixture->phases[index]);done(c);}
 void sub_001327B8_0x1327b8(std::uint8_t* r,R5900Context* c,PS2Runtime*){stream_original_event(r,4,stream_original_channel(c),GPR_S32(c,5));done(c);}
@@ -184,7 +191,9 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "room_rule_tests.inc"
 #include "room_object_vm_tests.inc"
 #include "actor_request_vm_tests.inc"
-int main()try{
+#include "periodic_control_vm_tests.inc"
+int main(int argc,char** argv)try{
+    check(argc==2);
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -211,12 +220,13 @@ int main()try{
     {std::vector<std::byte> b;emit(b,0x110,{3,0xffffffff});emit(b,0x110,{4,123});emit(b,0x114);emit(b,0x113,{4,0,0});const auto end=emit(b,0xa);run({b},{0,end},2);}
     for(unsigned exponent=0;exponent<256;++exponent)check(vm::Program::record_bytes(exponent<<24)==std::uint32_t((1u<<(exponent&31))*4u));
     // Admission cannot execute a few native handlers then silently fall back.
-    {std::vector<std::byte> b;emit(b,1);emit(b,0x131,{},2);emit(b,0xa);vm::Interpreter n;const auto p=std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b});check(n.install(0,p)==vm::Status::unsupported_opcode);}
+    {std::vector<std::byte> b;emit(b,1);emit(b,0x132,{},2);emit(b,0xa);vm::Interpreter n;const auto p=std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b});check(n.install(0,p)==vm::Status::unsupported_opcode);}
     {std::vector<std::byte> b;emit(b,3,{0});vm::Interpreter n;check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);check(n.tick(0,{}, {},8).status==vm::Status::budget_exhausted);}
     offline_tests();
     room_rules_tests();
     room_objects_vm_tests();
     actor_requests_vm_tests();
+    periodic_control_vm_tests(argv[1]);
     for(unsigned profile=0;profile<16;++profile)for(const auto operation:{0u,1u,2u,3u,4u,5u,6u,0xffffffffu}){
         std::vector<std::byte> b;for(const auto opcode:{0x30u,0x31u,0x32u,0x33u})emit(b,opcode,{42});
         emit(b,0x37,{42,0xffffff81});emit(b,0x37,{42,0});
@@ -319,7 +329,7 @@ int main()try{
     {std::vector<std::byte> b;emit(b,0x110,{0,123});emit(b,0x30,{42});emit(b,0xa);vm::Interpreter n;
         check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
         check(n.tick(0,{}).status==vm::Status::provider_unavailable);check(n.counters()[0]==0);}
-    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"room_rule_original_invocations\":"<<room_rule_invocations<<",\"room_rule_dispatches\":"<<room_rule_dispatches<<",\"room_object_dispatches\":"<<room_object_dispatches<<",\"actor_request_consumers\":"<<actor_request_consumers<<",\"actor_request_dispatches\":"<<actor_request_dispatches<<",\"actor_request_profile_refusals\":"<<actor_request_profile_refusals<<",\"coverage\":{";
+    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"room_rule_original_invocations\":"<<room_rule_invocations<<",\"room_rule_dispatches\":"<<room_rule_dispatches<<",\"room_object_dispatches\":"<<room_object_dispatches<<",\"actor_request_consumers\":"<<actor_request_consumers<<",\"actor_request_dispatches\":"<<actor_request_dispatches<<",\"actor_request_profile_refusals\":"<<actor_request_profile_refusals<<",\"periodic_dispatches\":"<<periodic_dispatches<<",\"periodic_factories\":"<<periodic_factories<<",\"periodic_live_frames\":"<<periodic_live_frames<<",\"coverage\":{";
     bool first_profile=true;
     for(const auto profile:{vm::DispatchProfile::ordinary,vm::DispatchProfile::offline_actor}){
         if(!first_profile)std::cout<<',';

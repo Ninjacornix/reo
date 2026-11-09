@@ -60,6 +60,7 @@ public:
     PassResult run(Pass, std::size_t maximum_visits = 1024) noexcept;
     Status clear() noexcept;
     bool idle()const noexcept{return !running_ && !clearing_;}
+    bool closed()const noexcept{return closed_;}
     // Seal admission without releasing payloads, allowing a composite owner to
     // seal all child stores before any cross-store destructor callback runs.
     Status seal()noexcept{if(!idle())return Status::busy;closed_=true;return Status::completed;}

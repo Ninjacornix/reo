@@ -32,6 +32,14 @@ An isolated module, hook into a native function, mirrored guest layout, or
 generated-body count alone does not close this stage. Callback/provider seams
 must identify their remaining owners and be removed as those callers migrate.
 
+The current periodic-effect checkpoint supplies the actual native resource,
+material, pose, camera-offset and visual lifetime consumer behind opcode131,
+with both compiler comparisons passing. Its [visual contract](PERIODIC_VISUALS.md)
+corrects the earlier scalar track field labels; the [scenario command](SCENARIO_PERIODIC_EFFECTS.md)
+uses the canonical scheduler/flags/RNG with full ownership checks. These are
+qualified components. The game's installed gameplay still remains the V39
+guarded save/session checkpoint, with the new World/scenario owners uninstalled.
+
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a
 guest-addressed RAM model. Renderer/model submission remains an explicit Stage 5

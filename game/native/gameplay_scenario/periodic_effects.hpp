@@ -53,6 +53,8 @@ public:
     PeriodicEffects& operator=(const PeriodicEffects&)=delete;
     PeriodicCreated create(const SceneControlId&)noexcept;
     bool admitted()const noexcept;
+    bool bound_to(const SceneControls&,const FlagState&,const gameplay_session::Random&)const noexcept;
+    bool bound_to(const SceneControls&)const noexcept;
     bool healthy()const noexcept;
     std::optional<PeriodicState> snapshot(const gameplay_tasks::Handle&)const noexcept;
     PeriodicStatus failure()const noexcept;
