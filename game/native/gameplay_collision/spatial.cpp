@@ -1,4 +1,5 @@
 #include "spatial.hpp"
+#include "nearest.hpp"
 #include <cmath>
 namespace reo::native::gameplay_collision::spatial {
 namespace {
@@ -33,8 +34,8 @@ Scan scan(std::span<const Target> targets,const Source& source,Policy policy,Vec
     for(const auto& target:targets){result.last_scanned=target.entity;if(target.entity==source.entity||target.entity==source.related||!admits(target,policy,result.status))continue;result.advanced_direction_owner=target.entity;std::optional<Contact> actor_best;float actor_distance{};
         for(std::size_t i=0;i<target.regions.size();++i){const auto& region=target.regions[i];if(mode==Mode::segment&&policy.occlusion&&obstacles&&obstacles->blocked(start,region.center))continue;
             const auto point=mode==Mode::margin?(equal(start,end)?overlap(region,end,margin):sphere_margin(start,end,region,margin)):(margin<=0?sphere_segment(start,end,region):sphere_margin(start,end,region,margin));if(!point)continue;++result.region_hits;Contact contact{target.entity,target.identity,std::uint8_t(i),*point,region.center};const auto distance=length(sub(start,point->value));
-            if(policy.per_actor){if(!actor_best||!(actor_distance<=distance)){actor_distance=distance;actor_best=contact;}if(mode==Mode::margin)break;}
-            else if(!best||!(best_distance<=distance)){best_distance=distance;best=contact;}
+            if(policy.per_actor){if(detail::replaces(bool(actor_best),distance,actor_distance)){actor_distance=distance;actor_best=contact;}if(mode==Mode::margin)break;}
+            else if(detail::replaces(bool(best),distance,best_distance)){best_distance=distance;best=contact;}
         }
         if(actor_best)result.deliveries.push_back(*actor_best);
     }

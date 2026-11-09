@@ -9,9 +9,8 @@
   "candidate_is_original_parity": false,
   "cohorts": {
     "llvm": {
-      "receipt": "build-native-sjuni/gameplay-contact-scan-llvm-v15/receipt.json",
-      "receipt_sha256": "8f64c7328a194cb82957e4aefbaae6dd66cb9ebfda0f54349a6c0b5157063a4e",
-      "status": "native full contact scans and canonical response writes pass original comparisons",
+      "receipt": "build-native-sjuni/gameplay-contact-scan-llvm-v20/receipt.json",
+      "receipt_sha256": "2d97e30814cee15580ed1a5372d358b0c1ff086e3ec3560763ef9cfad5f3b947",
       "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
       "results": {
         "checks": 133529,
@@ -27,7 +26,7 @@
         "game/native/gameplay_collision/contact_scan.hpp": "d011fa289609b6cee650409d4a7a98eb9746c67229886788fd662b12dd3c9d82",
         "game/native/gameplay_collision/contact_scan.cpp": "35531613af7792bb38875ac67ba66acc7a6eb8252f989973eb878c8145d8100b",
         "game/native/gameplay_collision/contact_scan_tests.cpp": "141c3dae2431c1c711eec1bdd00f50203c825fb9ee0fdf8676bfb575ba4b21cd",
-        "game/native/gameplay_collision/spatial.cpp": "2d0b8c7f2439b8609e064562ce2cddace5fc22e4c915f63347f4aa1cdaa3b090",
+        "game/native/gameplay_collision/spatial.cpp": "0df1eb61f91b1e02a01682e7e558a0433936c15474a51a1e91f9cc64358b6321",
         "game/native/gameplay_collision/directed.cpp": "3f3e28339488677f09b708347f7add4f35c552b4000a9584deb215af4f71ef1a",
         "game/native/gameplay_collision/directed.hpp": "1cc938a1dabd5525fd930d6520d423affed812d2a08d5625beb3c3a009edbe38",
         "game/native/gameplay_collision/delivery.hpp": "48682babcf6f1bd25cbb48a905acefc7952a1d2d43b9c8cf7d4a0842f76a828a",
@@ -37,6 +36,7 @@
         "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
         "game/native/gameplay_collision/hit_regions.cpp": "9dadf291bdbe6afb087eb12dc104b1481c0d88a51b2bc104a928a730a86a8bcf",
         "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+        "game/native/gameplay_collision/nearest.hpp": "8296b447679f7bed646ad668e89fba339f192aed2fa0f548b8ee389e6cb2b00c",
         "game/native/gameplay_collision/postmove_view.hpp": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316",
         "game/native/gameplay_collision/postmove.hpp": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6",
         "game/native/gameplay_collision/footprint.hpp": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c",
@@ -61,9 +61,9 @@
         "tools/native_reconstruction/gameplay_collision_oracle/delivery_ports.hpp": "dfb73ca42d75a44bd898dc264b0f479720479ecaacb445efe24bae03b8ee091a",
         "tools/native_reconstruction/gameplay_collision_oracle/contact_scan_ports.hpp": "fba55129c16a7e969779952b8173904c549877b81e48fa575ef06ca907c087fb",
         "tools/native_reconstruction/gameplay_collision_oracle/directed_ports.hpp": "351e06d0cad9c6fd2304ba5acabb8c6a7107df431c84ad0aa46a574c9fb50b38",
-        "tools/native_reconstruction/verify_gameplay_directed.py": "ca2fa1f31f9d6607f18aefcbae0e909c07fb64fc86d4efe210fd36ff6f609372",
+        "tools/native_reconstruction/verify_gameplay_directed.py": "8adf10d7d3ab2a939874d1a50542b5eaff8555b3a8a022a4e3f3e91208897e54",
         "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
-        "tools/native_reconstruction/verify_gameplay_contact_scan.py": "b4bb51cf38b69a4c89a006be072850393c92f9e8aaa4ea32fe5f32dd9acf3c4a",
+        "tools/native_reconstruction/verify_gameplay_contact_scan.py": "6e1bb4e54c7dd293371000fc43f0d06015ffd39aa1f71949e40540e75100a527",
         "recomp/config/output_ovl/o2/o2_006F00D0_0x6f00d0.cpp": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
         "recomp/config/output_ovl/o2/o2_006F0310_0x6f0310.cpp": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
         "recomp/config/output_ovl/o2/o2_006F0E00_0x6f0e00.cpp": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
@@ -38865,9 +38865,8 @@
       ]
     },
     "gcc": {
-      "receipt": "build-native-sjuni/gameplay-contact-scan-gcc-v15/receipt.json",
-      "receipt_sha256": "ca049a3b80d7cfa8d8d305ca557ba673572741fde05353379bcd07ee2f8421b6",
-      "status": "native full contact scans and canonical response writes pass original comparisons",
+      "receipt": "build-native-sjuni/gameplay-contact-scan-gcc-v20/receipt.json",
+      "receipt_sha256": "802efcddb7628766b21b4c9c42f090c790fbabe27787ea69c99e045282468c0b",
       "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
       "results": {
         "checks": 133529,
@@ -38883,7 +38882,7 @@
         "game/native/gameplay_collision/contact_scan.hpp": "d011fa289609b6cee650409d4a7a98eb9746c67229886788fd662b12dd3c9d82",
         "game/native/gameplay_collision/contact_scan.cpp": "35531613af7792bb38875ac67ba66acc7a6eb8252f989973eb878c8145d8100b",
         "game/native/gameplay_collision/contact_scan_tests.cpp": "141c3dae2431c1c711eec1bdd00f50203c825fb9ee0fdf8676bfb575ba4b21cd",
-        "game/native/gameplay_collision/spatial.cpp": "2d0b8c7f2439b8609e064562ce2cddace5fc22e4c915f63347f4aa1cdaa3b090",
+        "game/native/gameplay_collision/spatial.cpp": "0df1eb61f91b1e02a01682e7e558a0433936c15474a51a1e91f9cc64358b6321",
         "game/native/gameplay_collision/directed.cpp": "3f3e28339488677f09b708347f7add4f35c552b4000a9584deb215af4f71ef1a",
         "game/native/gameplay_collision/directed.hpp": "1cc938a1dabd5525fd930d6520d423affed812d2a08d5625beb3c3a009edbe38",
         "game/native/gameplay_collision/delivery.hpp": "48682babcf6f1bd25cbb48a905acefc7952a1d2d43b9c8cf7d4a0842f76a828a",
@@ -38893,6 +38892,7 @@
         "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
         "game/native/gameplay_collision/hit_regions.cpp": "9dadf291bdbe6afb087eb12dc104b1481c0d88a51b2bc104a928a730a86a8bcf",
         "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+        "game/native/gameplay_collision/nearest.hpp": "8296b447679f7bed646ad668e89fba339f192aed2fa0f548b8ee389e6cb2b00c",
         "game/native/gameplay_collision/postmove_view.hpp": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316",
         "game/native/gameplay_collision/postmove.hpp": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6",
         "game/native/gameplay_collision/footprint.hpp": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c",
@@ -38917,9 +38917,9 @@
         "tools/native_reconstruction/gameplay_collision_oracle/delivery_ports.hpp": "dfb73ca42d75a44bd898dc264b0f479720479ecaacb445efe24bae03b8ee091a",
         "tools/native_reconstruction/gameplay_collision_oracle/contact_scan_ports.hpp": "fba55129c16a7e969779952b8173904c549877b81e48fa575ef06ca907c087fb",
         "tools/native_reconstruction/gameplay_collision_oracle/directed_ports.hpp": "351e06d0cad9c6fd2304ba5acabb8c6a7107df431c84ad0aa46a574c9fb50b38",
-        "tools/native_reconstruction/verify_gameplay_directed.py": "ca2fa1f31f9d6607f18aefcbae0e909c07fb64fc86d4efe210fd36ff6f609372",
+        "tools/native_reconstruction/verify_gameplay_directed.py": "8adf10d7d3ab2a939874d1a50542b5eaff8555b3a8a022a4e3f3e91208897e54",
         "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
-        "tools/native_reconstruction/verify_gameplay_contact_scan.py": "b4bb51cf38b69a4c89a006be072850393c92f9e8aaa4ea32fe5f32dd9acf3c4a",
+        "tools/native_reconstruction/verify_gameplay_contact_scan.py": "6e1bb4e54c7dd293371000fc43f0d06015ffd39aa1f71949e40540e75100a527",
         "recomp/config/output_ovl/o2/o2_006F00D0_0x6f00d0.cpp": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
         "recomp/config/output_ovl/o2/o2_006F0310_0x6f0310.cpp": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
         "recomp/config/output_ovl/o2/o2_006F0E00_0x6f0e00.cpp": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
@@ -77739,5 +77739,6 @@
     "Required source-unknown direction remains a default refusal pending a proven native storage profile or explicit controlled candidate acceptance.",
     "Occlusion, authority/vibration, class2 C94bit1000 and traced-mark emission are declared typed services. No original senders or guest packets are invoked by production.",
     "No live incident, performance improvement, physical PS2 exceptional behavior or whole Stage4 completion is claimed."
-  ]
+  ],
+  "strict_selection_revision": "Pure spatial scans now share a private strict candidate<selected policy; first/equal/unordered selection is separately compared with unchanged original scanner control flow under controlled geometry outputs."
 }

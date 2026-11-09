@@ -5,8 +5,8 @@
   "game_launched": false,
   "cohorts": {
     "llvm": {
-      "receipt": "build-native-sjuni/gameplay-directed-llvm-v20/receipt.json",
-      "receipt_sha256": "6541fba612f0bc86883b28d5dbc28fe63f5c7865a7eff1178a906ef88c032b0e",
+      "receipt": "build-native-sjuni/gameplay-directed-llvm-v21/receipt.json",
+      "receipt_sha256": "2706c39166e996dfd95c1d5602cf092a0d6387f571215104448094fa970ef5c3",
       "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
       "results": {
         "checks": 110933,
@@ -25,8 +25,9 @@
         "game/native/gameplay_collision/directed_tests.cpp": "989a23c3a0b9059279e1fa975c84b09a8824599d0a3608695dc5da7ab960db30",
         "game/native/gameplay_collision/trace.cpp": "12066af8bf21b9e1441b7e453ff4da27b6dd1c809afba325a5d3156913eecfa5",
         "game/native/gameplay_collision/trace.hpp": "494a53ef88e2a916d99ed2b2cfb503a3a9ea5235c6fdef053054f58adb1c7170",
-        "game/native/gameplay_collision/spatial.cpp": "2d0b8c7f2439b8609e064562ce2cddace5fc22e4c915f63347f4aa1cdaa3b090",
+        "game/native/gameplay_collision/spatial.cpp": "0df1eb61f91b1e02a01682e7e558a0433936c15474a51a1e91f9cc64358b6321",
         "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+        "game/native/gameplay_collision/nearest.hpp": "8296b447679f7bed646ad668e89fba339f192aed2fa0f548b8ee389e6cb2b00c",
         "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
         "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
         "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
@@ -39,7 +40,7 @@
         "tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp": "674e6224558fe924ac0b14dfdaed30c1144bc4eb45cf5405fe5c9925f04bac24",
         "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
         "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
-        "tools/native_reconstruction/verify_gameplay_directed.py": "ca2fa1f31f9d6607f18aefcbae0e909c07fb64fc86d4efe210fd36ff6f609372",
+        "tools/native_reconstruction/verify_gameplay_directed.py": "8adf10d7d3ab2a939874d1a50542b5eaff8555b3a8a022a4e3f3e91208897e54",
         "recomp/config/output_ovl/o2/o2_006F00D0_0x6f00d0.cpp": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
         "recomp/config/output_ovl/o2/o2_006F0310_0x6f0310.cpp": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
         "recomp/config/output_ovl/o2/o2_006F0E00_0x6f0e00.cpp": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
@@ -35649,8 +35650,8 @@
       ]
     },
     "gcc": {
-      "receipt": "build-native-sjuni/gameplay-directed-gcc-v20/receipt.json",
-      "receipt_sha256": "5bd3dc00b008c28908b3e3db4a41e25ab5e3614020531078c6c9b672267eafaa",
+      "receipt": "build-native-sjuni/gameplay-directed-gcc-v21/receipt.json",
+      "receipt_sha256": "80d9ccc03853accc5414a71581d800d45a96d2ec98421ae18a4e7fe76c19bf87",
       "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
       "results": {
         "checks": 110933,
@@ -35669,8 +35670,9 @@
         "game/native/gameplay_collision/directed_tests.cpp": "989a23c3a0b9059279e1fa975c84b09a8824599d0a3608695dc5da7ab960db30",
         "game/native/gameplay_collision/trace.cpp": "12066af8bf21b9e1441b7e453ff4da27b6dd1c809afba325a5d3156913eecfa5",
         "game/native/gameplay_collision/trace.hpp": "494a53ef88e2a916d99ed2b2cfb503a3a9ea5235c6fdef053054f58adb1c7170",
-        "game/native/gameplay_collision/spatial.cpp": "2d0b8c7f2439b8609e064562ce2cddace5fc22e4c915f63347f4aa1cdaa3b090",
+        "game/native/gameplay_collision/spatial.cpp": "0df1eb61f91b1e02a01682e7e558a0433936c15474a51a1e91f9cc64358b6321",
         "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+        "game/native/gameplay_collision/nearest.hpp": "8296b447679f7bed646ad668e89fba339f192aed2fa0f548b8ee389e6cb2b00c",
         "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
         "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
         "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
@@ -35683,7 +35685,7 @@
         "tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp": "674e6224558fe924ac0b14dfdaed30c1144bc4eb45cf5405fe5c9925f04bac24",
         "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
         "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
-        "tools/native_reconstruction/verify_gameplay_directed.py": "ca2fa1f31f9d6607f18aefcbae0e909c07fb64fc86d4efe210fd36ff6f609372",
+        "tools/native_reconstruction/verify_gameplay_directed.py": "8adf10d7d3ab2a939874d1a50542b5eaff8555b3a8a022a4e3f3e91208897e54",
         "recomp/config/output_ovl/o2/o2_006F00D0_0x6f00d0.cpp": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
         "recomp/config/output_ovl/o2/o2_006F0310_0x6f0310.cpp": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
         "recomp/config/output_ovl/o2/o2_006F0E00_0x6f0e00.cpp": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
@@ -71308,5 +71310,6 @@
     "Later global response direction from advanced region pointer remains unknown; canonical HIT side effects/RNG/player damage estimates not claimed",
     "Native actor-loop installation remains separate work"
   ],
-  "zero_center_revision": "Native surface point uses finite maximum scale for exact zero denominator, matching inline original6F127C divide guard; complete original191D80 now executes rather than a scalar-only normalize port."
+  "zero_center_revision": "Native surface point uses finite maximum scale for exact zero denominator, matching inline original6F127C divide guard; complete original191D80 now executes rather than a scalar-only normalize port.",
+  "strict_selection_revision": "Pure spatial scans now share a private strict candidate<selected policy; first/equal/unordered selection is separately compared with unchanged original scanner control flow under controlled geometry outputs."
 }
