@@ -25,6 +25,7 @@ class ResourceTemplates final {
         return state_;
     }
     std::int8_t action_kind(std::uint8_t template_index) const;
+    std::uint32_t flags(std::uint8_t template_index) const;
 
   private:
     ResourceTemplateState state_;

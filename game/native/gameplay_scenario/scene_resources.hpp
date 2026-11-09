@@ -72,6 +72,9 @@ public:
     std::optional<AttachedSceneResource> lookup_attached(std::int16_t attachment_id)const noexcept;
     std::optional<SceneDescriptor> get(const SceneResourceId&)const noexcept;
     SceneStatus replace(const SceneResourceId&,SceneDescriptor)noexcept;
+    // Complete591BE0. Count is a derived view of this same canonical table.
+    SceneStatus deactivate(const SceneResourceId&)noexcept;
+    std::uint16_t active_count()const noexcept;
     SceneStatus command(const SceneResourceId&,SceneCommand,std::uint16_t current_room,SceneEffects*)noexcept;
     std::optional<bool> inactive_or_flag29(const SceneResourceId&)const noexcept;
     SceneStatus flag800(const SceneResourceId&,std::int8_t value)noexcept;

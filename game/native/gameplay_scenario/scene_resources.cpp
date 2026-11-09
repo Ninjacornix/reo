@@ -40,6 +40,15 @@ SceneStatus SceneResources::replace(const SceneResourceId& id,SceneDescriptor de
     if(!valid(id))return SceneStatus::invalid_identity;
     descriptors_[id.slot_]=std::move(descriptor);return SceneStatus::completed;
 }
+SceneStatus SceneResources::deactivate(const SceneResourceId& id)noexcept{
+    if(!valid(id))return SceneStatus::invalid_identity;
+    auto& descriptor=descriptors_[id.slot_];
+    if(descriptor.active){descriptor.active=0;descriptor.flags=(descriptor.flags&~1u)|0x20000000u;}
+    return SceneStatus::completed;
+}
+std::uint16_t SceneResources::active_count()const noexcept{
+    std::uint16_t count{};for(const auto& descriptor:descriptors_)if(descriptor.active)++count;return count;
+}
 SceneStatus SceneResources::command(const SceneResourceId& id,SceneCommand command,std::uint16_t room,SceneEffects* effects)noexcept{
     if(!valid(id))return SceneStatus::invalid_identity;
     auto& d=descriptors_[id.slot_];if(!d.active||!d.kind)return SceneStatus::completed;

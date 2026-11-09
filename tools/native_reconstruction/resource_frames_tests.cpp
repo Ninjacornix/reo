@@ -11,7 +11,7 @@ namespace g=reo::native::gameplay_world;
 namespace a=reo::native::animation;
 namespace s=reo::native::gameplay_scenario;
 constexpr unsigned pool=0x3f4010,stride=0x250,descriptor_at=0x3c5630+3*60,bank_at=0x749180;
-std::uint64_t checks{},common_cases{},weapon_cases{},sequence_frames{},source_calls{},refusals{},passes{},pose_cases{},release_cases{};
+std::uint64_t checks{},common_cases{},weapon_cases{},sequence_frames{},source_calls{},refusals{},passes{},pose_cases{},release_cases{},deactivation_cases{},template_flag_cases{};
 std::string active_case;
 void check(bool value,const std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(active_case+" line "+std::to_string(at.line()));
@@ -68,7 +68,7 @@ struct Fixture {
         }
         put(ram.data(),0x3dbb14+2*2,std::int16_t(6));
         s::SceneDescriptor descriptor;descriptor.active=1;descriptor.ownership_tag=std::uint16_t(owner);descriptor.flags=0x24000;descriptor.primary=created.model;descriptor.parameter=1;
-        check(bool(resources.load(3,descriptor)));ram[descriptor_at]=1;put(ram.data(),descriptor_at+24,descriptor.flags);put(ram.data(),descriptor_at+28,raw);put(ram.data(),descriptor_at+32,0u);put(ram.data(),descriptor_at+36,descriptor.parameter);put(ram.data(),descriptor_at+40,descriptor.ownership_tag);
+        check(bool(resources.load(3,descriptor)));ram[descriptor_at]=1;put(ram.data(),descriptor_at+24,descriptor.flags);put(ram.data(),descriptor_at+28,raw);put(ram.data(),descriptor_at+32,0u);put(ram.data(),descriptor_at+36,descriptor.parameter);put(ram.data(),descriptor_at+40,descriptor.ownership_tag);ram[descriptor_at+43]=255;
         world.room=5;world.selected_actor=0;world.session().resource_hide_selected=world.session().resource_hide_others=0;
         for(unsigned slot=0;slot<4;++slot){auto actor=world.primary(slot);actor->active=actor->visible=true;actor->room=5;actor->status=0;actor->surface_material=std::uint8_t(11+slot);actor->selected_resource=3;actor->category=0;actor->slot=std::uint8_t(slot);actor->motion_style=0;sync(slot);}
         sync_session();
@@ -79,7 +79,7 @@ struct Fixture {
     void sync_session(){put(ram.data(),0x3243dc,world.room);ram[0x4baded]=world.selected_actor;ram[0x4b9d10]=world.session().resource_hide_selected;ram[0x4b9d11]=world.session().resource_hide_others;}
     void compare(){const auto& model=*created.model;const auto descriptor=resources.get(*resources.slot(3));check(bool(descriptor));
         check(model.current()==(models.available()==63));check(model.active==bool(ram[raw]));check(model.visible==bool(ram[raw+1]));check(model.flags==read<std::uint32_t>(ram.data(),raw+0x23c));check(model.draw_layer==ram[raw+0x241]);
-        check(descriptor->flags==read<std::uint32_t>(ram.data(),descriptor_at+24));check(bool(descriptor->primary)==bool(read<unsigned>(ram.data(),descriptor_at+28)));
+        check(descriptor->active==ram[descriptor_at]&&descriptor->flags==read<std::uint32_t>(ram.data(),descriptor_at+24));check(bool(descriptor->primary)==bool(read<unsigned>(ram.data(),descriptor_at+28)));
         check(bool(descriptor->secondary)==bool(read<unsigned>(ram.data(),descriptor_at+32)));
         check(model.program.phase==ram[raw+9]&&model.program.elapsed==read<std::int16_t>(ram.data(),raw+0x10));
         check(std::memcmp(model.program.completed.data(),ram.data()+raw+0x38,7)==0);
@@ -106,8 +106,7 @@ int main(int argc,char** argv)try{
     }
     for(std::uint32_t flags:{0u,0x80000000u,0x400u,0xc00u,0x100000u,0x40100000u})for(bool active:{false,true}){
         active_case="nonattached gates";Fixture f;f.reset(1,flags,active);
-        if(active&&flags==0x40100000u){bool refused{};try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;}
-        else{f.step(false);++common_cases;}
+        f.step(false);++common_cases;
     }
     std::ifstream file(argv[1],std::ios::binary);unsigned count{};file.read(reinterpret_cast<char*>(&count),4);check(count==16);
     for(unsigned bank_index=0;bank_index<count;++bank_index){
@@ -171,6 +170,35 @@ int main(int argc,char** argv)try{
         }
     }
     {
+        active_case="canonical template flags";s::ResourceTemplates templates;std::vector<std::byte> data(32+129*24);
+        const auto encoded=[&](unsigned at,auto value){std::memcpy(data.data()+at,&value,sizeof value);};encoded(0,3u);encoded(4,129u);encoded(16,32u);
+        for(unsigned i=0;i<129;++i){encoded(32+24*i,(i&1?0x80800000u:0x40001u)^(i*0x100u));}
+        check(templates.load(data));
+        Fixture f;f.reset();std::memcpy(f.ram.data()+0x74bb50,data.data()+32,129*24);
+        for(unsigned index=0;index<256;++index)for(bool active:{false,true})for(unsigned mask:{0u,0x40000u,0x80000000u,UINT32_MAX}){
+            f.ram[descriptor_at]=std::uint8_t(active);f.ram[descriptor_at+43]=std::uint8_t(index);
+            if(active&&index>=129&&index<255){bool refused{};try{(void)templates.flags(std::uint8_t(index));}catch(const std::out_of_range&){refused=true;}check(refused);++refusals;continue;}
+            const auto expected=call(f.ram.data(),0x5b43f0,3,mask);check(GPR_U32(&expected,2)==(active?(templates.flags(std::uint8_t(index))&mask):0u));++template_flag_cases;
+        }
+        for(int parameter:{-32768,-1,0,1,32767})for(unsigned index:{0u,1u,128u,255u})for(bool active:{false,true})for(bool primary:{false,true})for(bool secondary:{false,true})for(bool action:{false,true}){
+            active_case="conditional resource deactivation";Fixture q;q.reset(1,action?0x40100000u:0x100000u);auto records=std::make_shared<reo::native::gameplay_scene::Records>();g::ResourceFrames frames(q.world,q.resources,q.models,nullptr,records,&templates);std::memcpy(q.ram.data()+0x74bb50,data.data()+32,129*24);call(q.ram.data(),0x5c1120);const auto record=records->create({});const auto original=call(q.ram.data(),0x5c11b0);check(bool(record));auto capability=std::make_shared<s::SceneRecordAttachment>(records,*record);
+            const auto id=*q.resources.slot(3);auto descriptor=*q.resources.get(id);descriptor.active=std::uint8_t(active);descriptor.parameter=std::int16_t(parameter);descriptor.template_index=std::uint8_t(index);descriptor.primary=primary?q.created.model:nullptr;descriptor.secondary=secondary?capability:nullptr;check(q.resources.replace(id,descriptor)==s::SceneStatus::completed);
+            q.ram[descriptor_at]=descriptor.active;put(q.ram.data(),descriptor_at+36,descriptor.parameter);q.ram[descriptor_at+43]=descriptor.template_index;put(q.ram.data(),descriptor_at+28,primary?q.raw:0u);put(q.ram.data(),descriptor_at+32,secondary?GPR_U32(&original,2):0u);
+            for(unsigned slot=12;slot<17;++slot){s::SceneDescriptor other;other.active=1;check(bool(q.resources.load(slot,other)));q.ram[0x3c5630+60*slot]=1;}
+            put(q.ram.data(),0x743128,std::uint32_t(q.resources.active_count()));call(q.ram.data(),0x5932f0,q.raw);frames.common(q.created.id,*q.created.model);q.compare();check(q.resources.active_count()==read<unsigned>(q.ram.data(),0x743128));check(capability->current()==!(active&&secondary&&action));++deactivation_cases;
+        }
+    }
+    {
+        active_case="complete descriptor deactivate count";Fixture f;
+        for(unsigned i=0;i<256;++i){s::SceneDescriptor value;value.active=std::uint8_t(i%3?1:128);value.flags=i*34341u;check(bool(f.resources.load(i,value)));f.ram[0x3c5630+60*i]=value.active;put(f.ram.data(),0x3c5630+60*i+24,value.flags);}
+        put(f.ram.data(),0x743128,256u);check(f.resources.active_count()==256);
+        for(unsigned pass=0;pass<2;++pass)for(unsigned i=0;i<256;++i){const auto slot=(i*197+31)%256;const auto id=*f.resources.slot(slot);call(f.ram.data(),0x591be0,slot);check(f.resources.deactivate(id)==s::SceneStatus::completed);const auto value=*f.resources.get(id);check(value.active==f.ram[0x3c5630+60*slot]&&value.flags==read<unsigned>(f.ram.data(),0x3c5630+60*slot+24)&&f.resources.active_count()==read<unsigned>(f.ram.data(),0x743128));++deactivation_cases;}
+        s::SceneResources other;check(f.resources.deactivate(*other.slot(0))==s::SceneStatus::invalid_identity);++refusals;
+    }
+    {
+        active_case="required deactivation assets refuse after release";Fixture f;f.reset(1,0x40100000);auto descriptor=*f.resources.get(*f.resources.slot(3));descriptor.parameter=0;descriptor.template_index=0;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);bool refused{};try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused&&!f.created.model->current()&&!f.resources.get(*f.resources.slot(3))->primary);++refusals;
+    }
+    {
         active_case="native safety refusals";Fixture f;f.reset();g::ResourceModels foreign;const auto other=foreign.create();bool refused{};try{f.frames.common(other.id,*other.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
         for(unsigned owner:{5u,128u,32768u}){f.reset(owner);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;}
         f.reset(1,0x800u);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
@@ -191,5 +219,5 @@ int main(int argc,char** argv)try{
         f.reset();descriptor=*f.resources.get(*f.resources.slot(3));descriptor.kind=1;descriptor.primary=capability;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);check(f.resources.flag800(*f.resources.slot(3),1)==s::SceneStatus::provider_unavailable);++refusals;
         f.reset();check(f.models.retire(f.created.id)==g::ResourceModelStatus::completed);refused=false;try{f.frames.weapon(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
     }
-    std::cout<<"{\"checks\":"<<checks<<",\"common_cases\":"<<common_cases<<",\"weapon_cases\":"<<weapon_cases<<",\"sequence_frames\":"<<sequence_frames<<",\"source_calls\":"<<source_calls<<",\"passes\":"<<passes<<",\"refusals\":"<<refusals<<",\"pose_cases\":"<<pose_cases<<",\"release_cases\":"<<release_cases<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"common_cases\":"<<common_cases<<",\"weapon_cases\":"<<weapon_cases<<",\"sequence_frames\":"<<sequence_frames<<",\"source_calls\":"<<source_calls<<",\"passes\":"<<passes<<",\"refusals\":"<<refusals<<",\"pose_cases\":"<<pose_cases<<",\"release_cases\":"<<release_cases<<",\"deactivation_cases\":"<<deactivation_cases<<",\"template_flag_cases\":"<<template_flag_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

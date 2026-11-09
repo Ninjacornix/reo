@@ -4,11 +4,11 @@
 #include "../gameplay_scenario/scene_record_attachment.hpp"
 namespace reo::native::gameplay_world {
 // Concrete primary-resource frame consumers. Borrowed canonical owners outlive
-// these simulation-thread calls. Unmigrated extended actors/rebuild paths
-// refuse when reached; they do not invoke a legacy callback or a no-op.
+// these simulation-thread calls. Extended actors and missing required asset
+// bindings refuse when reached; they do not invoke a legacy callback or a no-op.
 class ResourceFrames final {
 public:
-    ResourceFrames(World& world,gameplay_scenario::SceneResources& resources,ResourceModels& models,gameplay_scenario::PeriodicEmitter* emitter=nullptr,std::shared_ptr<gameplay_scene::Records> scene_records={}):world_(world),resources_(resources),models_(models),emitter_(emitter),scene_records_(std::move(scene_records)){}
+    ResourceFrames(World& world,gameplay_scenario::SceneResources& resources,ResourceModels& models,gameplay_scenario::PeriodicEmitter* emitter=nullptr,std::shared_ptr<gameplay_scene::Records> scene_records={},const gameplay_scenario::ResourceTemplates* templates=nullptr):world_(world),resources_(resources),models_(models),emitter_(emitter),scene_records_(std::move(scene_records)),templates_(templates){}
     bool bound_to(const ResourceModels& value)const noexcept{return &models_==&value;}
     void common(const ResourceModelId&,ResourceModel&);
     void weapon(const ResourceModelId&,ResourceModel&);
@@ -20,7 +20,9 @@ private:
     ResourceModels& models_;
     gameplay_scenario::PeriodicEmitter* emitter_;
     std::shared_ptr<gameplay_scene::Records> scene_records_;
+    const gameplay_scenario::ResourceTemplates* templates_;
     void pulse(ResourceModel&);
+    void deactivate(ResourceModel&);
     void admit(const ResourceModelId&,const ResourceModel&)const;
     gameplay_scenario::SceneDescriptor descriptor(std::uint8_t)const;
     const ResourcePartPoses& bases(const ResourceModel&)const;

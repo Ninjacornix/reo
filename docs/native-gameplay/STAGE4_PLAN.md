@@ -108,6 +108,10 @@ closes5B1850/5B1A90 through the actual64-primary and shared128 scene owners,
 including self-retirement during a real model pass. Current frame, pulse,
 scene-resource and full scenario regressions pass on both compilers.592770's
 remaining action is conditional deactivation, not a reconstruction factory.
+The [conditional deactivation follow-up](RESOURCE_DEACTIVATION.md) now closes
+that592770/591BE0 branch through canonical descriptors, templates and instance
+retirement. Active count is a derived table view. Extended actors, actual asset/
+resource construction and installed native gameplay acceptance remain open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

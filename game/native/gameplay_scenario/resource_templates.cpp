@@ -62,4 +62,9 @@ std::int8_t ResourceTemplates::action_kind(std::uint8_t index) const {
     return std::bit_cast<std::int8_t>(
         std::to_integer<std::uint8_t>(state_.templates[index].encoded[15]));
 }
+std::uint32_t ResourceTemplates::flags(std::uint8_t index) const {
+    if(index==255)return 0;
+    if(index>=state_.templates.size())throw std::out_of_range("Native resource flag template index unavailable");
+    return read<std::uint32_t>(state_.templates[index].encoded,0);
+}
 } // namespace reo::native::gameplay_scenario

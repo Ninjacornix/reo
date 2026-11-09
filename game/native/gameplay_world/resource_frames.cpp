@@ -56,6 +56,15 @@ void ResourceFrames::pulse(ResourceModel& model){
         if(model.pulse_timer>=4){model.flags&=~0x1000u;model.pulse_timer=std::int16_t(std::uint16_t(model.pulse_packed)&0xfffu);model.pulse_phase=0;}
     }
 }
+void ResourceFrames::deactivate(ResourceModel& model){
+    if(!(model.flags&0x40000000u))return;
+    const auto slot=model.resource_slot;release(slot,false);
+    const auto id=resources_.slot(slot);const auto entry=id?resources_.get(*id):std::nullopt;
+    if(!entry)throw std::runtime_error("Native resource deactivation descriptor unavailable");
+    if(entry->parameter>0||!entry->active||entry->template_index==255)return;
+    if(!templates_)throw std::runtime_error("Native resource deactivation templates unavailable");
+    if((templates_->flags(entry->template_index)&0x40000u)&&resources_.deactivate(*id)!=gameplay_scenario::SceneStatus::completed)throw std::runtime_error("Native resource deactivation identity changed");
+}
 void ResourceFrames::common(const ResourceModelId& id,ResourceModel& model){
     admit(id,model);
     if(!model.active)return;
@@ -73,7 +82,7 @@ void ResourceFrames::common(const ResourceModelId& id,ResourceModel& model){
         return;
     }
     if((model.flags&0x800u)&&!(model.flags&0x400u))pulse(model);
-    if((model.flags&0x100000u)&&(model.flags&0x40000000u))throw std::runtime_error("Native resource reconstruction consumer unavailable");
+    if(model.flags&0x100000u)deactivate(model);
     if(model.flags&0x80000u){
         auto next=model.pose;transform_math::reset_euler_axes_xzy(next,model.angles);
         const auto scale=transform_math::scale(model.axis_scale);
