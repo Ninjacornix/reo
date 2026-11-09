@@ -1,0 +1,217 @@
+{
+  "schema": 1,
+  "status": "V36 native audio resilience gate failed: measured service starvation and underruns",
+  "session": "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-035604-197",
+  "executable_sha256": "eb50b048f8ce4b42101e277ecce20734117b7613d59f4433edcd2f485d3d6229",
+  "game_run": false,
+  "process_access": false,
+  "window_actions": false,
+  "existing_files_edited": false,
+  "step3_complete": false,
+  "root_cause_confirmed": false,
+  "fix_implemented_by_this_audit": false,
+  "fix_confirmed": false,
+  "audio": {
+    "snapshots": 27550,
+    "dropped_snapshots": 0,
+    "invalid_rows": [],
+    "counter_or_time_resets": [],
+    "shortage_windows": 12,
+    "measured_underrun_increase": 90208,
+    "underrun_48khz_seconds": 1.8793333333333333,
+    "affected": [
+      {
+        "slot": 0,
+        "generation": 6
+      },
+      {
+        "slot": 1,
+        "generation": 2
+      }
+    ],
+    "paused_or_not_playing_peer": {
+      "slot": 2,
+      "generation": 18
+    },
+    "first_two_windows": [
+      {
+        "before_line": 31185,
+        "after_line": 31188,
+        "begin_ns": 288179283391900,
+        "end_ns": 288179832299600,
+        "service_observation_gap_ms": 548.9063,
+        "underrun_delta": 18208,
+        "output_frame_delta": 26400
+      },
+      {
+        "before_line": 31188,
+        "after_line": 31191,
+        "begin_ns": 288179832298200,
+        "end_ns": 288181232800300,
+        "service_observation_gap_ms": 1400.5004,
+        "underrun_delta": 67200,
+        "output_frame_delta": 67200
+      }
+    ]
+  },
+  "resource_read": [
+    {
+      "line": 4579,
+      "begin_ns": 288179283533100,
+      "end_ns": 288179831798400,
+      "duration_ms": 548.2653,
+      "lba": 17543824,
+      "sectors": 133,
+      "destination": "00ba23c0",
+      "text": "[NATIVE-RESOURCE-READS] slow begin_ns=288179283533100 end_ns=288179831798400 lba=17543824 sectors=133 destination=00ba23c0 disposition=1 resource=0 bytes=272384"
+    }
+  ],
+  "resource_assets": [
+    {
+      "route": {
+        "Name": "NETBIO00.DAT",
+        "Length": 907040768,
+        "Sha256": "93f04f81a2d9c46ea4bc6ff7dc7788ae9249fb2a90f1079325023334816fca55",
+        "virtual_lba": 17440187
+      },
+      "offset": 212248576,
+      "member": {
+        "container": "NETBIO00.DAT",
+        "member": "NETBIO00.DAT/0/516",
+        "names": [
+          "romdata_usa.afs",
+          "itemicon.img"
+        ],
+        "iso_offset": 229312512,
+        "parent_relative_offset": 212246528,
+        "bytes": 271616,
+        "container_sha256": "93f04f81a2d9c46ea4bc6ff7dc7788ae9249fb2a90f1079325023334816fca55",
+        "sha256": "1cc0786c41d16d94eeb72a9ab0d7625c35fa44def3069c895936c40eddbfde6f",
+        "recognition": "opaque_unparsed"
+      },
+      "read_bytes": 272384,
+      "padded_read_sha256": "469e031cdd6b438f4005bce444ee95fc409981204a28178cc32a0c814149e912",
+      "padding_bytes": 768,
+      "padding_all_zero": true
+    }
+  ],
+  "actor_clock_maximum_local_gap": {
+    "gap_ms": 2024.5933,
+    "before": {
+      "n": 10446,
+      "elapsed_ns": 164159136700,
+      "clock_units": 8950,
+      "room_counter": 4475,
+      "actor": 4873264,
+      "animation_bits": 1110441984,
+      "x_bits": 1175286377,
+      "z_bits": 1179217172,
+      "event_root": 4083248,
+      "manager": 4907824,
+      "skeleton": 5473728,
+      "room": 1,
+      "destination": 0,
+      "main_service16": 6208,
+      "step": 2,
+      "phase": 2,
+      "subphase": 0,
+      "paused": 0,
+      "selected": 0,
+      "request": 3,
+      "door": 0,
+      "cache_scenario": 1,
+      "cache_room": 1,
+      "cache_variant": 0
+    },
+    "after": {
+      "n": 10447,
+      "elapsed_ns": 166183730000,
+      "clock_units": 8950,
+      "room_counter": 4475,
+      "actor": 4881904,
+      "animation_bits": 1096810496,
+      "x_bits": 1175450370,
+      "z_bits": 1179463870,
+      "event_root": 4083248,
+      "manager": 4918272,
+      "skeleton": 5416128,
+      "room": 1,
+      "destination": 0,
+      "main_service16": 6208,
+      "step": 2,
+      "phase": 2,
+      "subphase": 0,
+      "paused": 0,
+      "selected": 2,
+      "request": 3,
+      "door": 0,
+      "cache_scenario": 1,
+      "cache_room": 1,
+      "cache_variant": 0
+    }
+  },
+  "presentation_maximum_local_gap": {
+    "before_line": 12963,
+    "after_line": 12964,
+    "gap_ms": 1400.6559,
+    "before": {
+      "tick": 12966,
+      "begin_ns": 288179831988300,
+      "scanout_ns": 288179832341900,
+      "present_ns": 0,
+      "end_ns": 288179832378000
+    },
+    "after": {
+      "tick": 12967,
+      "begin_ns": 288181232644200,
+      "scanout_ns": 288181233012800,
+      "present_ns": 0,
+      "end_ns": 288181233048500
+    }
+  },
+  "candidate": "Independent native refill under Owner serialization with cached actual guest tick; no guest RAM access or synthetic clock advance",
+  "evidence_sha256": {
+    "build-native-sjuni/native-media-v36-audio-incident-v1/incident-evidence.json": "259da2d3217e6f9c9ff61aacb9c62ac83500e2d46104de9d68d0e550a3d9fb6d",
+    "build-native-sjuni/native-media-v36-audio-incident-v1/audio-control-analysis.json": "25d432ab9e639c5e53accd356a5dc511c06c1d23a9d2a598e3f7a7bc1d21b6b2",
+    "build-native-sjuni/native-media-v36-audio-incident-v1/game-clock-analysis.json": "2d8435e1e5ed8286e139103b648253f645c356d457eb0002be1cf25b39d3446c",
+    "tools/native_reconstruction/analyze_media_audio_stall.py": "9697e62df1ebad79342150e58fa1bf710b81fe7ac8854714ebf1316b34c8cec7",
+    "tools/native_reconstruction/analyze_audio_control_trace.py": "874becefd4b2eb77c4011ab5993fe461123967a283974038f7b932f7bb3ea3da",
+    "tools/analyze_game_clock.py": "d1f24c5edbd984be346a0199a715d58bbfe01eec1537e9e0ff1d4a25734d4d34",
+    "docs/native-media/NATIVE_AUDIO_V36_RESOURCE_STALL.md": "1428455b6552821fbe8742bad8c6422c838e59ccde3034923b94b2d7319e0a89",
+    "docs/native-media/NATIVE_MP4_CANDIDATE_V29.md": "fe56dd5bced90b7648c09e0641085238b4e8b1d24722e41e9decf7db74942037",
+    "docs/SYMBOLS_ITEM_MESSAGE_TEXTURE_CACHES.md": "2abcb315d5e629c3ce632022f34566980c86edbf8bd4846d0c9660b1eacf9ad7",
+    "build-native-sjuni/candidate-work-v36/candidate-build-result.json": "c3109002b250caccc6b0616858be6026593634d2e44bc1ac7e214b71f49e59c7",
+    "build-native-sjuni/native-media-game-v36/native-media-package-receipt.json": "777828ffc61c5c00eaa3abcec08e459cafe2d3cf9f526027879798392624a78a",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-035604-197/native-game-session-check.json": "58c184f18aecf85e357b473ff22c101f920cc994e7a13a89da18889689c42284",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-035604-197/native-game-session-running.json": "2412cc8f7fca539bb96e24891a6b01ec2b4bad9710e447b434f8d76376fd0958",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-035604-197/launch.json": "80105a3483b63a0e1cfdf0c91e606d6754020380849b50679f10ea241153aff9",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-035604-197/stderr.log": "2b5326ed7f55bf3669b8d58e0b23277006c1950ff8567e5cccb4d32d2d563146",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-035604-197/native-audio-control.csv": "940686089bf47b85aed08f5daf3ccbf5e39d85a478a31678610c6e3411b77e9b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-035604-197/clock.csv": "52e6684f4c5c10ef2cad01f308ec2d36663b66de5be8b8d0acd65495c5048f89",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-035604-197/frames.csv": "eeeb0e8b473e9ba56b93558e0f75a37e553459f45451324e225bf7ce2c68e98c",
+    "build-native-sjuni/audio-asset-inventory/file1-v1/members.json": "276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2",
+    "build-native-sjuni/audio-asset-inventory/file1-v1/containers.json": "a676c502bad1088b2e4858027b020400a9951e5dc70d60dc493b2b7016cba20b",
+    "build-native-sjuni/candidate-inputs-v36/source/recomp/overrides/native_adxt/ordinary_runtime.cpp": "a9018b238bfa0e9a55bd679ab25946d0ca8e91c7bbb36cf94e9945408d5f1b36",
+    "build-native-sjuni/candidate-inputs-v36/source/recomp/overrides/native_adxt/ordinary_entries.inc": "dcabc1129f622eeb009fa6a8ceff403705993120c4a5a4d7abe3d90c22b60e25",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/adxt_control_owner/owner.cpp": "94f13f8ec88bf1a48728b471676ef4a5d3c9f582f0ae189b8561b125f1371e5d",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/adxt_control_session/control_session.cpp": "224fdbcc10e65c32637e94132ce1f6ae8e1b924e3018dce95eb3cacc7a70c338",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/adxt_instances/instances.cpp": "e0f9f8e30f3dc05e457f2b90297a87acfc399faabdb82f7161d1f3530fd4c44e",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/adxt_phased_player/player.cpp": "7e3c93a3a5f663e43fd847f523e5ed970ff6525029759f4a61a8be03903411e5",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/adxt_service_group/service_group.cpp": "e377b77ba3724e072b08b0ce43e44972aac1e99f8aab77f2e034bd1535587ce0",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/adxt_playback/playback.cpp": "57ca0798c83b72763a79406b5c2d03c24682333d7d8100c9969095365e0c26fe",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/adx_window/v2/service_r4/stream_window.cpp": "4e8ea3da80db13f512a9092067f1d14fd827501dd28f0c9059a52072411ab1db",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/resources_windows/mounted_reader.cpp": "04ad35506ef1cb1f1a4aef545e3961e9e9c0ff18a2a344a5d0a6f2916626da0b",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/resources_windows/mounted_resources.cpp": "717474b3c6a23d946f13c596d9be6e8718c3afe71ae1098a6adf0c7827936183",
+    "build-native-sjuni/candidate-inputs-v36/source/game/native/resources_windows/pinned_file.cpp": "48a8b40920cf5588a29d85fb89f22d62d7d73efe2ba8b5ee5d71404abd9b7bfc",
+    "build-native-sjuni/candidate-inputs-v36/source/recomp/overrides/native_resource_reads/runtime_adapter.cpp": "dbd8d2892eb74837edc38d012997274111d41e2c352520c0d7473fc1c7d018cf",
+    "build-native-sjuni/launcher-native-prep-v1/imports/file1/25e64b631bbaa0cac9a4822cb66174ff14c3531851d1e502c0a06704379bf446/import.json": "ae3668c7e98defe0eb16ce107490078451e9c2f57cb2fb87c162f37520f2600b"
+  },
+  "limitations": [
+    "Resource-operation duration includes native locks/provider work/I/O/scheduling; physical storage is not isolated.",
+    "The second 1.4-second ownership gap has no inner stack evidence.",
+    "Actor callbacks repeat global clock values; do not count callbacks as updates or ignore journal drops/eligibility.",
+    "Two affected streams share an aggregate output shortage; do not double the aggregate count.",
+    "The native refill candidate is a source-level proposal, not implemented/tested by this audit.",
+    "A normal process exit and joined shutdown do not cancel observed audio underruns."
+  ]
+}
