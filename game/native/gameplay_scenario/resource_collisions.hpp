@@ -18,6 +18,8 @@ struct ResourceCollisionCreated {
 class ResourceCollisions final {
 public:
     ResourceCollisions(SceneResources&,std::shared_ptr<gameplay_scene::Records>);
+    bool bound_to(const SceneResources& value)const noexcept{return &resources_==&value;}
+    const std::shared_ptr<gameplay_scene::Records>& records()const noexcept{return records_;}
     ResourceCollisionCreated replace(const SceneResourceId&)noexcept;
 private:
     SceneResources& resources_;

@@ -17,6 +17,7 @@ public:
     //5B1850 or5B1A90; the descriptor identity survives instance retirement.
     void release(std::uint8_t,bool clear_owner_flag=false);
 private:
+    friend class ResourceFactory;
     World& world_;
     gameplay_scenario::SceneResources& resources_;
     ResourceModels& models_;

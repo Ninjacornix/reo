@@ -7,6 +7,11 @@
 #include <iostream>
 #include <source_location>
 #include <thread>
+#ifdef REO_RESOURCE_PLACEMENT
+#include "game/native/gameplay_world/resource_factory.hpp"
+const reo::native::gameplay_collision::response::Grid* placement_floors{};
+unsigned placement_floor_queries{};
+#endif
 namespace e=reo::native::gameplay_effects;
 namespace s=reo::native::gameplay_scenario;
 namespace m=reo::native::transform_math;
@@ -26,7 +31,14 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     case 0x573740:check(GPR_U32(context,4)==0x10000);task_retired=true;done();return;
     case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at);std::memset(memory+at,std::uint8_t(GPR_U32(context,5)),n);SET_GPR_U32(context,2,at);done();return;}
 #ifdef REO_RESOURCE_FACTORY
-    case 0x107ab0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);check(src>=0x100000&&src<=0x110000&&size<=0x110000-src);check((dst==0x74bb50&&size<=129*24)||(dst==0x74b940&&size<=129*4)||(dst==0x74c770&&size<=128*4)||(dst==0x74c970&&size<=384*2));std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+    case 0x107ab0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);
+#ifdef REO_RESOURCE_PLACEMENT
+        if(size==32&&dst>=0x3e10f0&&dst<0x3e72f0){check(src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
+        check(src>=0x100000&&src<=0x110000&&size<=0x110000-src);check((dst==0x74bb50&&size<=129*24)||(dst==0x74b940&&size<=129*4)||(dst==0x74c770&&size<=128*4)||(dst==0x74c970&&size<=384*2));std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+    case 0x616f60:{check(placement_floors);const auto at=GPR_U32(context,4),out=GPR_U32(context,5);check(at<=0x2000000-12&&out<0x2000000);const auto floor=placement_floors->floor(get<reo::native::gameplay_collision::Vec3>(memory,at),std::uint8_t(GPR_U32(context,6)));memory[out]=floor.material;context->f[0]=floor.height;++placement_floor_queries;done();return;}
 #endif
     case 0x18dc50:check(!allocated&&GPR_U32(context,5)==4&&GPR_U32(context,4)<0x100000);allocated=true;++heap_allocations;SET_GPR_U32(context,2,1);done();return;
     case 0x18dca0:check(allocated&&GPR_U32(context,4)==1);SET_GPR_U32(context,2,heap);done();return;
@@ -97,6 +109,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #endif
 #ifdef REO_RESOURCE_FACTORY
 #include "tools/native_reconstruction/resource_factory_tests.inc"
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+#include "tools/native_reconstruction/resource_placement_tests.inc"
 #endif
 int main(int argc,char** argv)try{
     check(argc==
@@ -182,6 +197,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_FACTORY
     compare_resource_factory(argv[2],argv[3],ram);
 #endif
+#ifdef REO_RESOURCE_PLACEMENT
+    compare_resource_placement(argv[2],argv[3],ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
@@ -197,6 +215,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_FACTORY
     <<",\"factory_cases\":"<<factory_cases<<",\"factory_visible\":"<<factory_visible<<",\"factory_missing_geometry\":"<<factory_missing_geometry<<",\"factory_passes\":"<<factory_passes<<",\"factory_refusals\":"<<factory_refusals
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+    <<",\"placement_cases\":"<<placement_cases<<",\"placement_owned\":"<<placement_owned<<",\"placement_refusals\":"<<placement_refusals<<",\"placement_full\":"<<placement_full<<",\"placement_floor_queries\":"<<placement_floor_queries
 #endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;

@@ -21,8 +21,10 @@ def main():
     p.add_argument('--resource-pulses', action='store_true')
     p.add_argument('--resource-static', action='store_true')
     p.add_argument('--resource-factory', action='store_true')
+    p.add_argument('--resource-placement', action='store_true')
     args = p.parse_args()
     assert not args.resource_factory or args.resource_static
+    assert not args.resource_placement or args.resource_factory
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
     corpus = args.corpus.resolve()
@@ -40,6 +42,7 @@ def main():
     if args.resource_pulses: pending += [0x5925c0]
     if args.resource_static: pending += [0x1d3100,0x372490]
     if args.resource_factory: pending += [0x18fdf0,0x191530]
+    if args.resource_placement: pending += [0x370320,0x191a40,0x1aec80]
     ports = [0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
     entries = {}
     while pending:
@@ -61,6 +64,9 @@ def main():
     if args.resource_factory:
         for at in [0x591230,0x590be0,0x590c70,0x590d80,0x590ea0,0x5b42b0,0x5921d0,0x5df450,0x5932f0,0x6b45c0,0x6b4a30]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_placement:
+        for at in [0x591620,0x591860,0x5b4380,0x5927f0,0x5c62f0,0x5c1120,0x5c11b0,0x5c12a0]:
+            entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     originals = list(entries.values())
     proof = []
     for at, name in entries.items():
@@ -77,7 +83,7 @@ def main():
         units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_scenario/scene_resources.cpp','animation/weapon_program.cpp']]
     if args.resource_static: units += ['game/native/gameplay_world/resource_static_assets.cpp']
     if args.resource_factory:
-        units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_world/resource_factory.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','animation/weapon_program.cpp']]
+        units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_world/resource_factory.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','gameplay_scenario/resource_collisions.cpp','animation/weapon_program.cpp']]
     units=list(dict.fromkeys(units))
     files = list(units)
     frozen = {}
@@ -101,6 +107,8 @@ def main():
         name='tools/native_reconstruction/resource_static_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_factory:
         name='tools/native_reconstruction/resource_factory_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_placement:
+        name='tools/native_reconstruction/resource_placement_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
                   selected_visual_family='variant0 logical36/37/38, flags1A193, null parent, complete6535C0 callback',
@@ -122,6 +130,9 @@ def main():
             controlled_root_parts=6, controlled_callback_classes=[0,1,2,3,4,255],
             unsupported_classes=[2,4,255], source_calls_on_unsupported_profiles=False,
             unadmitted_companion_contents=['0x75','0x135','0x1d','0x1c','0x3200','0x72'])
+    if args.resource_placement:
+        record['declared_ports'].append('616F60 actual native Grid.floor consumer; independently qualified floor policy, not another comparison of its internals')
+        record['placement_profile']=dict(shape_rows=20,orientation_rows=8,template_angle_columns=3,game_installed=False)
     try:
         for name, body in frozen.items():
             target = out / 'source' / name
@@ -158,6 +169,9 @@ def main():
         if args.resource_factory:
             raw_callbacks=overlay['o2'][0x709580-0x570000:0x709580-0x570000+16];assert struct.unpack('<4I',raw_callbacks)==(0x5932f0,0x6b45c0,0x593550,0x5932f0)
             record['resource_callback_table']=raw_callbacks.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in raw_callbacks)+'};std::memcpy(memory+0x709580,data,sizeof data);}'
+        if args.resource_placement:
+            for at,size in [(0x723340,800),(0x723660,224)]:
+                raw=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('placement_constants',{})[hex(at)]=raw.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in raw)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:
@@ -187,6 +201,7 @@ def main():
         if args.resource_pulses: command.insert(1,'-DREO_RESOURCE_PULSES=1')
         if args.resource_static: command.insert(1,'-DREO_RESOURCE_STATIC=1')
         if args.resource_factory: command.insert(1,'-DREO_RESOURCE_FACTORY=1')
+        if args.resource_placement: command.insert(1,'-DREO_RESOURCE_PLACEMENT=1')
         record['command'] = command
         for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else []))]:
             result = subprocess.run(cmd, env=env, capture_output=True, timeout=180)

@@ -13,6 +13,11 @@ The [placed-resource collision consumer](RESOURCE_COLLISIONS.md) now supplies
 the alternate591860/5C62F0 constructor through the existing shared128 scene
 owner, with full turn-domain comparisons and parent checks on both compilers.
 Primary placement and delayed reconstruction composition remain open.
+The [primary scene-placement follow-up](RESOURCE_PLACEMENT.md) now connects
+591620 to real native models, template offsets, shared collision construction,
+session RNG and floor queries. Both compiler comparisons include actual pool
+exhaustion. Delayed callbacks, special companions and game installation remain
+open; this is not full Stage4 completion.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners
