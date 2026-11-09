@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "status": "source-only save/session background validation preparation and launcher checks passed; actual game cases pending",
+  "game_run": false,
+  "live_process_access": false,
+  "desktop_access": false,
+  "guest_writes": false,
+  "stage4_complete": false,
+  "launcher_worktree": "C:\\Users\\Ninjacornix\\reo-launcher-native-media",
+  "launcher_branch": "fix/launcher-progress-overlay",
+  "launcher_commit": "2686c9dd9aa7ca323c96f36931d6181522eecd13",
+  "launcher_commits": [
+    "1e6deb7c",
+    "f1ee8bce",
+    "7417b879",
+    "2686c9dd"
+  ],
+  "launcher_sources_sha256": {
+    "C:\\Users\\Ninjacornix\\reo-launcher-native-media\\launcher\\GameSession.cs": "474971db039898ed24cc40f1646df1865fe38f6600d5f24b1a7e2fbe5f7de6b8",
+    "C:\\Users\\Ninjacornix\\reo-launcher-native-media\\tools\\native_reconstruction\\gameplay_save_live\\DiagnosticTests.cs": "e2199b580012cbcf61847b77e174d7bb9f9c6f38710e03cb2e373b4e5d7a6f0a",
+    "C:\\Users\\Ninjacornix\\reo-launcher-native-media\\tools\\native_reconstruction\\gameplay_save_live\\GameplaySaveCheck.csproj": "06f5de49d5bee1547246cd84e3817a11373830f42bf27b9ca2e0135fb87352af",
+    "C:\\Users\\Ninjacornix\\reo-launcher-native-media\\tools\\native_reconstruction\\gameplay_save_live\\Program.cs": "5eaf62af4c9c87f9326798d29ca16bd71c3daa6eb5f533ef2d360c3b9859efae",
+    "C:\\Users\\Ninjacornix\\reo-launcher-native-media\\tools\\native_reconstruction\\gameplay_save_live\\README.md": "6ae61fad65125e089b883f1bde357f46f26cb67ac1f61b4ac4fb95e4d8c34de9"
+  },
+  "game_sources_sha256": {
+    "tools/native_reconstruction/gameplay_save_live/drive.py": "bb149cea3da5d43e70e4558eda9addb552afc537e63a2c4db36391e680c39deb",
+    "tools/native_reconstruction/gameplay_save_live/inventory.py": "0f78874c456da71ddae798a868ef8609fe857e4a20adda36dab13261d48f2d7f",
+    "tools/native_reconstruction/gameplay_save_live/run.py": "3d46b4deebaac13f6a54824d9800919a6d156bbbab95e81533784b67056f2e47",
+    "docs/native-gameplay/SAVE_SESSION_LIVE_VALIDATION_PLAN.md": "1e7d041753958240941be1c83c9f22c694b5587dec1a903c8f4dac26892c2bdb",
+    "tools/native_reconstruction/gameplay_save_live/gameplay_source.py": "b881c85273eb93810d66b292d6856c85f457e4825f632f1bcb8b3bb8929606ac",
+    "tools/native_reconstruction/gameplay_save_live/default_route_source.py": "a425927f6fffc376e41f583f8e4635c252ef11e8d88500c2d750add55a49a1ea"
+  },
+  "source_inventory": {
+    "path": "build-native-sjuni/native-gameplay/live-inventory-v2.json",
+    "sha256": "917014e3e3eaf8be8df75c87acdf32ed4d1fcec6aaa7d8d584b8eb44ab8eb324",
+    "callers": 7,
+    "direct_sites": 19,
+    "historical_missing_autoload_site": "0x1c2ef8"
+  },
+  "checks": {
+    "focused": {
+      "path": "build-native-sjuni/launcher-gameplay-launcher-checks-v1/focused-v4.txt",
+      "sha256": "8969e4ed33fc40494e9ba584468a98bd44269dff09018fa5915ccadb40214989",
+      "result": {
+        "status": "passed",
+        "checks": 30,
+        "game_launched": false,
+        "window_created": false
+      }
+    },
+    "native_media": {
+      "path": "build-native-sjuni/launcher-gameplay-launcher-checks-v1/media.txt",
+      "sha256": "970a470229b8343cc11004fccd877b81aba3b14ca6ce5897ddd37f5d8d3e1fe5",
+      "result": {
+        "passed": 34,
+        "failures": []
+      }
+    },
+    "headless": {
+      "path": "build-native-sjuni/launcher-gameplay-launcher-checks-v1/headless/report.json",
+      "sha256": "83aa88ae9fcf7fe7a8db8346645b8639ab2f9df9cf225ceba33076cd7174aec5",
+      "result": {
+        "passed": true,
+        "pages": 12,
+        "checks": 63,
+        "mediaChecked": false
+      }
+    }
+  },
+  "helper_outputs_sha256": {
+    "build-native-sjuni/launcher-gameplay-save-helper-v4/bin/GameplaySaveCheck/debug/Reo.Launcher.Core.dll": "724aefaf427428c91b8878e7c4fb70557b2ba33e81d3c7abfe884b10748a45ee",
+    "build-native-sjuni/launcher-gameplay-save-helper-v4/bin/GameplaySaveCheck/debug/Reo.Launcher.CrossTests.deps.json": "1f2d19a04ea2c6be9880fca367d1389b9b8667b7b871abe94aa3de27cfa10d10",
+    "build-native-sjuni/launcher-gameplay-save-helper-v4/bin/GameplaySaveCheck/debug/Reo.Launcher.CrossTests.dll": "051052e70f1ce6ee1f34f280c86f09105db0a93e6dc10d79983db7c91efe38e9",
+    "build-native-sjuni/launcher-gameplay-save-helper-v4/bin/GameplaySaveCheck/debug/Reo.Launcher.CrossTests.exe": "51bbff535a57d82b3e0baa68dedeb5121d66bb55e515c6af7937bba7112e1641",
+    "build-native-sjuni/launcher-gameplay-save-helper-v4/bin/GameplaySaveCheck/debug/Reo.Launcher.CrossTests.runtimeconfig.json": "256dda2706e1151bb95987b6b5be610bf68d64e058285b19e7e958222fc90414",
+    "build-native-sjuni/launcher-gameplay-save-helper-v4/bin/GameplaySaveCheck/debug/XINPUT1_4.dll": "165ff92734de167053ceef84780e43a94c8bb5a92851282f01c80550f9f8f5ed"
+  },
+  "headless_output": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-gameplay-launcher-checks-v1\\headless",
+  "actual_game_coverage": {
+    "autoload": false,
+    "explicit_load": false,
+    "save_create_overwrite": false,
+    "save_policy_toggle": false,
+    "automatic_save": false,
+    "temporary_load_rewrite": false,
+    "resume_selection": false
+  },
+  "limits": [
+    "Root must provide the approved V39 executable identity before launch.",
+    "Source-identified ordinary menu steering is implemented but has not been tested against a running game.",
+    "Actual gameplay save/reload/resume triggers and resolver37B950 remain open; menu save is not a substitute.",
+    "Launcher installation/request/retirement metadata is not native invocation proof.",
+    "No user save was accessed/copied/changed; future fixtures admit only new owned private case/card paths."
+  ],
+  "revision": 8,
+  "controller_adapter": {
+    "sha256": "165ff92734de167053ceef84780e43a94c8bb5a92851282f01c80550f9f8f5ed",
+    "bytes": 107008,
+    "source": "build-native-sjuni/launcher-media-build-v10/bin/Reo.Launcher.CrossTests/debug/XINPUT1_4.dll",
+    "successful_v38_copy": "build-native-sjuni/launcher-native-prep-v1/game-cache/eab8715b4c55b18e067ee26d5c1c7082123365a66797831b3ab102f51cff5b28/XINPUT1_4.dll",
+    "rebuilt": false
+  },
+  "harness_readiness_correction": {
+    "prior_preparation_sha256": "cc7fdc7c4e146f82aa5ce246c44e40e732718600c7721691d72f4e31a70c39dd",
+    "retained_source": "build-native-sjuni/native-gameplay/live/v39-quiet-legacy-v1/harness-before-ready-fix",
+    "failed_case": "build-native-sjuni/native-gameplay/live/v39-quiet-legacy-v1",
+    "observation": "Driver attempted RAM acquisition immediately after running identity; missing qualified native startup handshake. Game retired normally exit0 without force and audio underruns0; zero driver actions/observations.",
+    "change": "Wait for actual native ordinary-audio handshake, plus actual save installation if requested, before RAM acquisition; no game/source/helper change."
+  },
+  "harness_deadline_correction": {
+    "retained_source": "build-native-sjuni/native-gameplay/live/v39-quiet-legacy-v2/harness-before-deadline-fix",
+    "failed_case": "build-native-sjuni/native-gameplay/live/v39-quiet-legacy-v2",
+    "observation": "706 valid background-only owned observations then WinError299 during normal RAM retirement; helper exit0/no force/underruns0. Driver duration had incorrectly started after startup wait.",
+    "change": "Anchor observation deadline before startup wait, within total case duration and before normal close. No game/helper/source change."
+  },
+  "harness_brightness_correction": {
+    "preserved_inputs": "build-native-sjuni\\native-gameplay\\live\\v39-menu-save-load-v1\\harness-before-brightness-fix",
+    "original_source": "recomp/config/output_ovl/o1/o1_005711D0_0x5711d0.cpp",
+    "source_sha256": "79e8f9a73e5d0d2c8d539c99d937b7e2d6919e9116aa8da75bff3ff08b12a80e",
+    "reason": "Owned table590D60 state2 initializes; state3 accepts brightness controls. First menu case saved natively but issued no brightness adjustment or load. Terminal result acknowledgements now use route-specific original states. No game/helper/native source change."
+  },
+  "harness_phase_publish_correction": {
+    "preserved_inputs": "build-native-sjuni\\native-gameplay\\live\\v39-menu-policy-v1\\harness-before-phase-and-publish-fix",
+    "source": "recomp/config/output/sub_001C4970_0x1c4970.cpp",
+    "source_sha256": "1e095ef7b004ec1273767b1d449f385a0d500a3b59a9ce5d29036938bce469ee",
+    "automatic_success_phase": "0x62 (98)",
+    "error_phase": "0x63 (99)",
+    "publisher": "Reuse qualified coop_playtest.save bounded atomic replacement retry. Original v1 policy observed success but missed numeric phase; later private input atomic rename denied once. No identity/admission/game failure or native source change."
+  },
+  "frozen_prior_actual_checkpoint": {
+    "qualification": "tools/native_reconstruction/native_gameplay_save_v39_live_qualification_v1.json",
+    "sha256": "a89a21f59a8258dfd723c4fbaa47366e6215506aa26cffb069228d83ff0b8a49",
+    "harness": "build-native-sjuni/native-gameplay/live-harness-checkpoint-v1"
+  },
+  "ordinary_gameplay_options_extension": {
+    "scope": "same V39 candidate, fresh private card, ordinary pad only, observed movement before/after, source-qualified UI4/brightnessrow5/EXITrow10, actual final native captureOptions completion required",
+    "game_run_at_preparation": false,
+    "source_inventory": "build-native-sjuni/native-gameplay/gameplay-options-source-v1.json",
+    "source_inventory_sha256": "1f13286ed291a6034506fffec931b7a1d8cc0ddbdbf7ef532a97625fce5909c1",
+    "guest_writes": false,
+    "native_world_installed": false
+  },
+  "ordinary_default_chapter_harness_correction": {
+    "preserved_case": "build-native-sjuni/native-gameplay/live/v39-gameplay-options-v1",
+    "source_inventory": "build-native-sjuni/native-gameplay/gameplay-default-route-source-v1.json",
+    "source_inventory_sha256": "b1993b0eb1dd1da7fb81bc3595c3c47b4142516f02aa58a51fbf045864beea67",
+    "reason": "Fresh private card has one naturally unlocked default chapter. Built-in optional selector explicitly disabled because it requires five. Source-verified ordinary pad confirms cursor0/count1, character and difficulty; START only admitted cinematic substates. No unlock flags, guest calls, guest writes or helper/game changes. Existing character +20 timer guard is preserved; mode/difficulty do not acquire that unrelated guard."
+  }
+}

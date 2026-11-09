@@ -320,3 +320,30 @@ qualifications preserve their recorded source cohorts; this refreshed cohort
 records the additive private owner interface. Instance lifetime, directional
 occupancy/approach consumers and game installation remain separate work.
 Qualification: `native_gameplay_object_interactions_qualification_v1.json`.
+
+The `object_lifetime` companion now owns typed Entity-derived room-object
+instances in a borrowed native scene-instance domain. Logical ObjectId, native
+EntityId, authored model slot and physical object ordinal remain distinct.
+It constructs and publishes pose/material state, reconciles actual shared proxy
+handles in source release/create order, processes6AEBE0motion completion and
+6B1010request reset, and implements enable/first-disable with dynamic rebuilding.
+Model lookup/binding is an explicit native service. Instance1F0XYZ is the
+translation row of basis1C0, not a second previous-position field; hidden-instance
+updates publish position200XYZ into that native pose translation.
+
+Both compilers pass87,478checks with zero error:21room/variant cases,33instances,
+264updates,21first-disables,14retained top proxies,153dynamic rebuild comparisons
+and21full64-instance pool cases. Seven retail resource sets plus capacity/
+direction and missing-model variants execute unchanged constructor,64resource
+pool,128proxy pool, movement, disable and rebuild bodies. Floor, model-binding,
+scalar matrix and previously qualified trace surroundings are declared providers.
+Owner-derived center caches are compared after the original publish operation.
+
+The source disable retires proxies0/1/2without clearing their record handles and
+does not retire slot3. Native retains those tokens and the old top proxy, while
+generation checks reject stale ownership. Raw repeated-release/reuse after that
+point is not claimed as defined equivalence. Explicit native scene close releases
+retained handles and only this component's instances, preserving unrelated scene
+occupancy. This is an owned native scene boundary; canonical SceneOwner/game-loop
+installation and directional approach/occupancy consumers remain separate work.
+Qualification: `native_gameplay_object_lifetime_qualification_v1.json`.
