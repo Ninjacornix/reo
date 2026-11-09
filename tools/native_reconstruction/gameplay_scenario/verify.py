@@ -12,6 +12,7 @@ IDS += ['0068D5D0','0068D5F0','0068D610','0068D630','006B1DC0','006B1EC0','006B1
 IDS += ['00690340','00690370','006903A0','006903C0']
 IDS += ['00694E50','005C45C0','0068E630','0068E6D0','0068E730','0068E800','0068E8B0','0068E920','0068E9E0','0068EA70','0068EB30','0068EBF0','0068ECC0','0068ED30','0068EDA0','0068EE30','0068EEC0','0068F5C0','00691F00','00690810']
 IDS += ['0068F570','0068F5A0']
+IDS += ['006920E0','006922B0','007020E0','00702380']
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)
@@ -62,7 +63,7 @@ def main(a):
         'inline constexpr std::array<std::uint32_t,4> original_party_channels{'+','.join(hex(v) for v in struct.unpack_from('<4I',raw,0x73cbd0-0x570000))+'};']
     (out/'original_declarations.inc').write_text('\n'.join(declarations)+'\n')
     (out/'original_lookup.inc').write_text('\n'.join('case 0x'+n.split('_')[-1].removeprefix('0x')+':return '+n+';' for n in names)+'\n')
-    fixture=(ROOT/'tools/native_reconstruction/gameplay_save/original_fixture.hpp').read_text().replace('0x400000','0x800000').replace('#include <cstdint>','#include <cstdint>\n#include <array>\n#include <bit>')
+    fixture=(ROOT/'tools/native_reconstruction/gameplay_save/original_fixture.hpp').read_text().replace('0x400000','0x900000').replace('#include <cstdint>','#include <cstdint>\n#include <array>\n#include <bit>')
     fixture=fixture.replace('std::uint64_t lo{},hi{};','std::uint64_t lo{},hi{};float f[32]{};std::uint32_t fcr31{};')
     fixture=fixture.replace('Function lookupFunction(std::uint32_t)const{throw std::runtime_error("Unexpected original dynamic dispatch");}','Function lookupFunction(std::uint32_t)const;')
     shutil.copyfile(ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h',out/'word_conversion.hpp');fixture+='#include "word_conversion.hpp"\n#define FPU_CVT_W_S(a) Ps2FpuConvertWord(float(a))\n#define FPU_SUB_S(a,b) (float(a)-float(b))\n#define FPU_MUL_S(a,b) (float(a)*float(b))\n#define FPU_DIV_S(a,b) (float(a)/float(b))\n#define FPU_MOV_S(a) (float(a))\n#define FPU_C_EQ_S(a,b) (float(a)==float(b))\n#define FPU_C_OLT_S(a,b) (float(a)<float(b))\n'

@@ -7,6 +7,7 @@
 #include "scene_channels.hpp"
 #include "scene_controls.hpp"
 #include "stream_channels.hpp"
+#include "saved_controls.hpp"
 #include <algorithm>
 #include <bit>
 #include <stdexcept>
@@ -20,7 +21,7 @@ std::uint32_t word(const std::byte* p)noexcept{
         (std::to_integer<std::uint32_t>(p[2])<<16)|(std::to_integer<std::uint32_t>(p[3])<<24);
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
-    switch(op){case 0x50:case 0x54:case 0x55:return 12;case 0x57:return 16;
+    switch(op){case 0x50:case 0x54:case 0x55:case 0x104:case 0x105:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
     case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
@@ -66,7 +67,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
             scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;
             sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;
-            scene_controls_|=coverage[op].scene_controls_required;streams_|=coverage[op].streams_required;at+=bytes;
+            scene_controls_|=coverage[op].scene_controls_required;streams_|=coverage[op].streams_required;saved_controls_|=coverage[op].saved_controls_required;at+=bytes;
         }
     }
 }
@@ -91,9 +92,11 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     out[0x190].native_algorithm=true;
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
+    for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
-        else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef)out[i]={};
+        else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef&&i!=0x104&&i!=0x105)out[i]={};
+        if(i==0x104||i==0x105)out[i].saved_controls_required=true;
     }
     return out;
 }
@@ -141,6 +144,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_scene_channels()&&!providers.scene_channels)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scene_controls()&&!providers.scene_controls)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_streams()&&(!providers.streams||!providers.stream_backend||!context.stream_tick))return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_saved_controls()&&(!providers.saved_controls||context.selected_actor>=SavedControlRecords::owner_count))return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -219,6 +223,17 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(!stream_accepted(audio.status))return result(Status::provider_unavailable);
             break;}
         case 0x71:if(!stream_accepted(providers.streams->stop(0,*providers.stream_backend)))return result(Status::provider_unavailable);break;
+        case 0x104:case 0x105:{
+            const bool enable=opcode==0x104;
+            if(!offline||offline->room_relation==0){
+                const auto applied=providers.scene_controls->apply_typed(enable,value(0),value(4),value(8));
+                if(applied.status!=ControlStatus::completed)return result(applied.status==ControlStatus::budget_exhausted?Status::budget_exhausted:Status::provider_unavailable);
+                // The original shared-list sentinel returns before its saved
+                // descriptor loop; it is not just a live-list-only filter.
+                if(!providers.scene_controls->enabled())break;
+            }
+            if(offline&&!providers.saved_controls->apply(context.selected_actor,enable,value(0),value(4),value(8)))return result(Status::provider_unavailable);
+            break;}
         case 0x50:case 0x51:case 0x52:case 0x53:case 0x54:case 0x55:case 0x56:case 0x57:
         case 0x58:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:case 0x5f:case 0x72:case 0xb5:case 0xf6:{
             const auto bytes=payload_minimum(opcode);ControlArguments arguments;arguments.authored_id=value(0);

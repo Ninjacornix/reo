@@ -51,6 +51,34 @@ void SceneControls::clear()noexcept{
     while(current){auto next=std::move(current->next);current.reset();current=std::move(next);}
     clearing_=false;
 }
+ControlResult SceneControls::apply_typed(bool enable,std::uint32_t type,std::uint32_t authored_id,std::uint32_t selector,std::size_t maximum_visits)noexcept{
+    ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    if(!enabled_)return result;
+    const bool supported=type==0||type==1||type==2||type==3||type==4||type==6||type==7||type==11||type==13;
+    // An opaque tag does not supply the fields required by a typed command.
+    // Refuse before mutating earlier records, rather than inventing values.
+    if(supported)for(auto node=head_;node;node=node->next){
+        if(const auto* other=std::get_if<ControlOther>(&node->value.body);other&&other->type==type){result.status=ControlStatus::invalid_profile;return result;}
+    }
+    for(auto node=head_;node;node=node->next){
+        if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
+        ++result.visited;auto& record=node->value;const auto& body=record.body;bool match=false;
+        switch(type){
+        case 0:match=std::holds_alternative<ControlTypeZero>(body)&&record.authored_id==authored_id;break;
+        case 1:match=std::holds_alternative<ControlTypeOne>(body)&&record.authored_id==authored_id;break;
+        case 2:if(const auto* v=std::get_if<ControlTypeTwo>(&body))match=record.authored_id==authored_id&&v->selector==selector;break;
+        case 3:if(const auto* v=std::get_if<ControlTypeThree>(&body))match=record.authored_id==authored_id&&(v->mode&1u)==selector;break;
+        case 4:if(const auto* v=std::get_if<ControlTypeFour>(&body))match=v->selector==authored_id;break;
+        case 6:if(const auto* v=std::get_if<ControlTypeSix>(&body))match=v->selector==authored_id;break;
+        case 7:if(const auto* v=std::get_if<ControlTypeSeven>(&body))match=v->selector==authored_id;break;
+        case 11:match=std::holds_alternative<ControlTypeEleven>(body)&&record.authored_id==authored_id;break;
+        case 13:if(const auto* v=std::get_if<ControlTypeThirteen>(&body))match=v->selector==authored_id;break;
+        default:break;
+        }
+        if(match){record.enabled=enable?1:0;++result.matched;}
+    }
+    return result;
+}
 ControlResult SceneControls::apply(ControlCommand command,const ControlArguments& a,ControlEffects* effects,std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
     if(!enabled_)return result;

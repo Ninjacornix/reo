@@ -16,7 +16,9 @@ OfflineResult OfflineCoordinator::tick(Interpreter& vm,std::size_t requested,boo
     const auto admitted=[&](std::size_t channel){const auto& c=vm.channels()[channel];return c.program&&c.program->profile()==DispatchProfile::offline_actor;};
     if(requested!=1){if(!admitted(requested)){out.status=Status::invalid_program;return out;}}
     else for(const auto& actor:party)if(actor.active&&(actor.script_class>=class_channel.size()||!admitted(class_channel[actor.script_class]))){out.status=Status::invalid_program;return out;}
-    const auto missing_stream=[&](std::size_t channel){return vm.channels()[channel].program->needs_streams()&&(!stream_tick||!providers.streams||!providers.stream_backend);};
+    const auto missing_stream=[&](std::size_t channel){const auto& program=*vm.channels()[channel].program;
+        return (program.needs_streams()&&(!stream_tick||!providers.streams||!providers.stream_backend))||
+            (program.needs_saved_controls()&&(!providers.saved_controls||(requested!=1&&selected>=3)));};
     if(requested!=1){if(missing_stream(requested)){out.status=Status::provider_unavailable;return out;}}
     else for(const auto& actor:party)if(actor.active&&missing_stream(class_channel[actor.script_class])){out.status=Status::provider_unavailable;return out;}
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};

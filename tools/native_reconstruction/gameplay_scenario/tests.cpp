@@ -6,6 +6,7 @@
 #include "game/native/gameplay_scenario/scene_channels.hpp"
 #include "game/native/gameplay_scenario/scene_controls.hpp"
 #include "game/native/gameplay_scenario/stream_channels.hpp"
+#include "game/native/gameplay_scenario/saved_controls.hpp"
 #include <bit>
 #include "original_fixture.hpp"
 #include "original_declarations.inc"
@@ -250,6 +251,9 @@ int main()try{
         std::vector<std::byte> b;for(const auto op:{0x50u,0x51u,0x52u,0x53u,0x54u,0x55u,0x56u,0x57u,0x58u,0x59u,0x5bu,0x5cu,0x5du,0x5eu,0x5fu,0x72u,0xb5u,0xf6u}){
             emit(b,op,{42,parameter,selector,0xffff87fe});emit(b,4,{1});}
         emit(b,0x190,{0x12345678});const auto end=emit(b,0xa);run({b},{0,end},20,parameter%6,std::uint8_t(selector&3),false,0,0,disabled);
+    }
+    for(const auto op:{0x104u,0x105u})for(const auto type:{0u,1u,2u,3u,4u,5u,6u,7u,9u,11u,13u,255u,UINT32_MAX})for(const auto id:{0u,42u,43u,UINT32_MAX})for(const auto selector:{0u,1u,7u,UINT32_MAX})for(unsigned disabled=0;disabled<2;++disabled){
+        std::vector<std::byte> b;emit(b,op,{type,id,selector});const auto end=emit(b,0xa);run({b},{0,end},1,selector%6,0,false,0,0,disabled);
     }
     for(unsigned profile=0;profile<32;++profile)for(const auto tick:{0u,1234u}){std::vector<std::byte> b;emit(b,0x70,{69});emit(b,4,{1});emit(b,0x70,{69});emit(b,4,{1});emit(b,0x71);emit(b,4,{1});emit(b,0x70,{42});const auto end=emit(b,0xa);run({b},{0,end},5,profile%6,std::uint8_t(profile%4),false,0,0,0,profile,tick);}
     {std::vector<std::byte> b;emit(b,0x110,{0,88});emit(b,0x70,{69});emit(b,0xa);vm::Interpreter interpreter;StreamFixture streams;

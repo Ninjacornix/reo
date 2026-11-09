@@ -25,15 +25,18 @@ struct ControlTypeZero {std::uint32_t parameter{};std::uint16_t half_parameter{}
 struct ControlTypeOne {std::uint16_t parameter{};};
 struct ControlTypeTwo {std::uint32_t selector{},parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};};
 struct ControlTypeThree {std::uint32_t mode{};std::uint16_t parameter{};};
-struct ControlTypeFour {std::uint32_t mode{};};
+struct ControlTypeFour {std::uint32_t mode{},selector{};};
 struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondary_parameter{};std::uint32_t completion{};std::uint8_t byte_parameter{};
     // Additional fields written by the complete reset. Their consumer roles
     // remain unresolved; they are typed state, not raw guest-layout storage.
     std::uint16_t reset_sentinel{};std::uint8_t reset_byte_a{},reset_byte_b{};};
 struct ControlTypeNine {std::uint32_t parameter{};};
+struct ControlTypeSix {std::uint32_t selector{};};
+struct ControlTypeSeven {std::uint32_t selector{};};
+struct ControlTypeEleven {};
 struct ControlTypeThirteen {std::uint32_t selector{};std::uint16_t parameter{};};
 struct ControlOther {std::uint8_t type{};};
-using SceneControlBody=std::variant<ControlTypeZero,ControlTypeOne,ControlTypeTwo,ControlTypeThree,ControlTypeFour,ControlTypeFive,ControlTypeNine,ControlTypeThirteen,ControlOther>;
+using SceneControlBody=std::variant<ControlTypeZero,ControlTypeOne,ControlTypeTwo,ControlTypeThree,ControlTypeFour,ControlTypeFive,ControlTypeNine,ControlTypeThirteen,ControlOther,ControlTypeSix,ControlTypeSeven,ControlTypeEleven>;
 struct SceneControl {std::uint32_t authored_id{};std::uint8_t enabled{};SceneControlBody body;};
 enum class ControlCommand { zero_two_parameter,type_one_parameter,enable_even,disable_even,zero_word_byte,
     restart_five,reset_five,restart_five_byte,enable_odd,disable_odd,enable_one,disable_one,
@@ -65,6 +68,7 @@ public:
     bool enabled()const noexcept{return enabled_;}
     std::size_t size()const noexcept{return records_.size();}
     ControlResult apply(ControlCommand,const ControlArguments&,ControlEffects*,std::size_t maximum_visits=4096)noexcept;
+    ControlResult apply_typed(bool enable,std::uint32_t type,std::uint32_t authored_id,std::uint32_t selector,std::size_t maximum_visits=4096)noexcept;
 private:
     struct Node {SceneControlId id;SceneControl value;std::shared_ptr<Node> next;};
     std::shared_ptr<const SceneControlDomain> domain_;

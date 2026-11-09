@@ -173,6 +173,21 @@ void offline_tests(){
         vm::Interpreter native;install_offline_program(native,ram,0,b);original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers providers;providers.flags=&flags;providers.canonical_flags=&flags;providers.scene_controls=&controls.owner;providers.control_effects=&controls;
         check(native.tick_offline_channel(0,{true,false,2},{category,relation,0},providers).status==vm::Status::yielded);compare_offline_channels(native,ram);controls.compare_original(ram);
     }
+    for(const auto op:{0x104u,0x105u})for(unsigned owner=0;owner<3;++owner)for(unsigned category=0;category<5;++category)for(unsigned relation=0;relation<3;++relation)for(unsigned disabled=0;disabled<2;++disabled)
+    for(const auto type:{0u,2u,3u,4u,6u,7u,11u,13u,15u}){
+        assertion_context="typed controls offline op="+std::to_string(op)+" type="+std::to_string(type)+" owner="+std::to_string(owner)+" category="+std::to_string(category)+" relation="+std::to_string(relation)+" disabled="+std::to_string(disabled);
+        std::vector<std::byte> b;emit(b,op,{type,42,1});emit(b,0xa);std::vector<std::uint8_t> ram(0x900000);install_original_tables(ram);ram[0x3243e8]=1;ram[0x4baded]=std::uint8_t(owner);
+        fixture_write(ram.data(),0x75a4b8,owner);fixture_write(ram.data(),0x75a4b0,category);fixture_write(ram.data(),0x75a4c0,relation);ControlFixture controls(disabled);controls.export_original(ram);SavedControlFixture saved;saved.export_original(ram);
+        vm::Interpreter native;install_offline_program(native,ram,0,b);original_offline_call(ram,0,false);vm::FlagState flags;vm::Providers providers;providers.flags=&flags;providers.canonical_flags=&flags;providers.scene_controls=&controls.owner;providers.saved_controls=&saved.owner;
+        check(native.tick_offline_channel(0,{true,false,std::uint8_t(owner)},{category,relation,0},providers).status==vm::Status::yielded);compare_offline_channels(native,ram);controls.compare_original(ram);saved.compare_original(ram);
+    }
+    {std::vector<std::byte> b;emit(b,0x110,{0,88});emit(b,0x104,{0,42,0});emit(b,0xa);vm::Interpreter native;vm::SceneControls controls;vm::FlagState flags;vm::Providers providers;providers.flags=&flags;providers.canonical_flags=&flags;providers.scene_controls=&controls;
+        check(native.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b},vm::DispatchProfile::offline_actor))==vm::Status::completed);
+        check(native.tick_offline_channel(0,{},{},providers).status==vm::Status::provider_unavailable);check(native.counters()[0]==0);
+        vm::OfflineCoordinator coordinator;std::array<vm::OfflinePartyActor,3> party{};std::uint8_t selected=2;
+        check(coordinator.tick(native,0,true,party,9,selected,flags,providers).status==vm::Status::provider_unavailable);check(selected==2);check(native.counters()[0]==0);
+        vm::SavedControlRecords saved;providers.saved_controls=&saved;check(native.tick_offline_channel(0,{true,false,3},{},providers).status==vm::Status::provider_unavailable);check(native.counters()[0]==0);
+    }
     for(const auto op:{0x50u,0x52u,0x53u,0x54u,0x58u,0x59u,0x5bu,0x5cu,0x5du,0x5eu,0xf6u}){
         std::vector<std::byte> b;emit(b,op,{42,1,7,3});emit(b,0xa);vm::Interpreter native;
         check(native.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b},vm::DispatchProfile::offline_actor))==vm::Status::unsupported_opcode);
