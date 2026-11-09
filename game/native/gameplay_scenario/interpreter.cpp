@@ -1,5 +1,6 @@
 #include "interpreter.hpp"
 #include "flags.hpp"
+#include "scene_resources.hpp"
 #include <algorithm>
 #include <bit>
 #include <stdexcept>
@@ -15,6 +16,7 @@ std::uint32_t word(const std::byte* p)noexcept{
 std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op){case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
+    case 0x30:case 0x31:case 0x32:case 0x33:case 0x34:case 0x35:return 2;case 0x37:return 5;case 0x36:return 10;
     case 5:case 0xb:return 9;case 0xc:case 0x46:case 0x113:return 12;case 0x45:return 16;default:return 0;}
 }
 bool opener(std::uint32_t op)noexcept{
@@ -36,7 +38,8 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!bytes||bytes>b.size()-at||op>=432||(!noop&&bytes-4<payload_minimum(op)))throw std::invalid_argument("Invalid script record");
             boundaries_[i].push_back(static_cast<std::uint32_t>(at));unsupported_|=!coverage[op].native_algorithm;
             if(!noop&&(op==5||op==6)){if(word(b.data()+at+4)>=4)throw std::invalid_argument("Actor event slot extent");actor_events_=true;}
-            flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;at+=bytes;
+            flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
+            scene_resources_|=coverage[op].scene_resources_required;at+=bytes;
         }
     }
 }
@@ -53,6 +56,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(const auto i:{8,0xb,0xc,0x40,0x41,0x42,0x43,0x44,0x49,0x4c,0x4d})out[i]={true,true,false,false};
     for(const auto i:{0x46,0x47,0x48})out[i]={true,false,false,true};
     out[0x45]={true,false,true,false};
+    for(std::size_t i=0x30;i<=0x37;++i)out[i]={true,false,false,false,true};
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc)out[i]={};
@@ -95,6 +99,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_actor_events()&&context.selected_actor>=4)return{Status::invalid_program,0,{},0};
     if((c.program->needs_flags()&&!providers.flags)||(c.program->needs_timers()&&!providers.timers))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_signals()&&!providers.signals)return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_scene_resources()&&!providers.scene_resources)return{Status::provider_unavailable,0,{},0};
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -119,6 +124,8 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         if(operations>=budget)return result(Status::budget_exhausted);
         ++operations;opcode=record->opcode;const auto payload=record->payload;
         auto value=[&](std::size_t offset){return word(payload.data()+offset);};
+        auto signed_half=[&](std::size_t offset){return std::bit_cast<std::int16_t>(std::uint16_t(std::to_integer<std::uint16_t>(payload[offset])|
+            (std::to_integer<std::uint16_t>(payload[offset+1])<<8)));};
         unsigned flow=0;
         bool skipped=false;
         if(offline){const auto& binding=offline_bindings[opcode];
@@ -157,6 +164,23 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             offline?providers.canonical_flags->actor_flag(ActorFlagFamily::auxiliary,{offline->actor_category==0,static_cast<std::uint8_t>(offline->actor_category-1)},value(4),value(8)!=0):
                 providers.flags->write(FlagBank::local_auxiliary,value(4),value(8)!=0);
             if(!ok)return result(Status::provider_unavailable);
+            break;}
+        case 0x30:case 0x31:case 0x32:case 0x33:{const auto id=providers.scene_resources->lookup(signed_half(0));
+            if(id&&providers.scene_resources->command(*id,SceneCommand(opcode-0x30),context.current_room,providers.scene_effects)!=SceneStatus::completed)return result(Status::provider_unavailable);
+            break;}
+        case 0x34:{++c.condition;const auto id=providers.scene_resources->lookup(signed_half(0));
+            const bool matches=id&&providers.scene_resources->inactive_or_flag29(*id).value_or(false);
+            if(!matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
+        case 0x35:{const auto attached=providers.scene_resources->lookup_attached(signed_half(0));
+            if(attached&&providers.scene_resources->detach(*attached,providers.scene_effects,providers.scene_owners)!=SceneStatus::completed)return result(Status::provider_unavailable);
+            break;}
+        case 0x36:{
+            // Unlike the other conditional handlers this original body does
+            // NOT increment the condition ordinal before calling the scanner.
+            const bool matches=providers.scene_resources->compare_attached(signed_half(0),signed_half(4),signed_half(8));
+            if(!matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
+        case 0x37:{const auto id=providers.scene_resources->lookup(signed_half(0));
+            if(id&&providers.scene_resources->flag800(*id,std::bit_cast<std::int8_t>(std::to_integer<std::uint8_t>(payload[4])))!=SceneStatus::completed)return result(Status::provider_unavailable);
             break;}
         case 0x44:if(value(0)<128&&!providers.flags->write(FlagBank::bounded_byte,value(0),true))return result(Status::provider_unavailable);break;
         case 0x40:case 0x41:case 0x42:case 0x43:

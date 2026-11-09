@@ -18,7 +18,7 @@ OfflineResult OfflineCoordinator::tick(Interpreter& vm,std::size_t requested,boo
     else for(const auto& actor:party)if(actor.active&&(actor.script_class>=class_channel.size()||!admitted(class_channel[actor.script_class]))){out.status=Status::invalid_program;return out;}
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     if(requested!=1){
-        out.actors[0]=vm.tick_offline_channel(requested,{enabled,false,selected},{0,0,0},providers,budget);
+        out.actors[0]=vm.tick_offline_channel(requested,{enabled,false,selected,current_room},{0,0,0},providers,budget);
         out.invocations=1;out.operations=out.actors[0].operations;out.status=out.actors[0].status;return out;
     }
     auto baseline=flags.shared();
@@ -26,7 +26,7 @@ OfflineResult OfflineCoordinator::tick(Interpreter& vm,std::size_t requested,boo
         selected=static_cast<std::uint8_t>(i);const auto& actor=party[i];if(!actor.active)continue;
         flags.shared(baseline);
         const OfflineDispatch dispatch{std::uint32_t(actor.script_class)+1,actor.room==current_room?0u:1u,actor.room};
-        out.actors[i]=vm.tick_offline_channel(class_channel[actor.script_class],{enabled,false,selected},dispatch,providers,budget-out.operations);
+        out.actors[i]=vm.tick_offline_channel(class_channel[actor.script_class],{enabled,false,selected,current_room},dispatch,providers,budget-out.operations);
         ++out.invocations;out.operations+=out.actors[i].operations;
         if(out.actors[i].status!=Status::yielded&&out.actors[i].status!=Status::disabled){out.status=out.actors[i].status;return out;}
         const auto after=flags.shared();auto& delta=state_.actors[i];

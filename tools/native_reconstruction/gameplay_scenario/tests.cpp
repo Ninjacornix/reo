@@ -1,4 +1,5 @@
 #include "game/native/gameplay_scenario/interpreter.hpp"
+#include "game/native/gameplay_scenario/scene_resources.hpp"
 #include "original_fixture.hpp"
 #include "original_declarations.inc"
 #include <algorithm>
@@ -83,11 +84,14 @@ void compare(vm::Interpreter& native,std::vector<std::uint8_t>& ram,std::size_t 
         check(fixture_read<std::uint16_t>(ram.data(),0x4bad98+2*i)==expected);
     }
 }
-void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false){
+#include "scene_vm_fixture.inc"
+void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned ticks,std::size_t channel=0,std::uint8_t actor=0,bool condition=false,unsigned scene_profile=0){
     std::vector<std::uint8_t> ram(0x800000);for(std::size_t i=0;i<blocks.size();++i){std::memcpy(ram.data()+0x10000+i*0x10000,blocks[i].data(),blocks[i].size());fixture_write<std::uint32_t>(ram.data(),0x90000+4*i,0x10000+std::uint32_t(i)*0x10000);}
     std::memcpy(ram.data()+0x717830,original_opcode_table.data(),original_opcode_table.size()*4);
     std::memcpy(ram.data()+0x717600,original_opener_table.data(),original_opener_table.size()*4);
     std::memcpy(ram.data()+0x7408d0,original_counter_comparisons.data(),original_counter_comparisons.size()*4);
+    std::memcpy(ram.data()+0x740890,original_signed_comparisons.data(),original_signed_comparisons.size()*4);
+    SceneFixture scene(scene_profile);scene.export_original(ram);fixture_write<std::uint16_t>(ram.data(),0x3243dc,9);
     ram[0x3243e8]=1;ram[0x4baded]=actor;fixture_write<std::uint32_t>(ram.data(),0x4bace0+4*channel,0x10000);
     fixture_write<std::uint32_t>(ram.data(),0x4bad28+4*channel,0x10000+saved.block*0x10000+saved.offset);
     fixture_write<std::uint32_t>(ram.data(),0x4bad40+4*channel,0x90000);
@@ -98,8 +102,8 @@ void run(std::vector<std::vector<std::byte>> blocks,vm::Position saved,unsigned 
     auto program=std::make_shared<const vm::Program>(std::move(blocks));vm::Channel state{program,{0,0},saved,0,0,0};check(native.restore_channel(channel,state)==vm::Status::completed);
     for(unsigned i=0;i<ticks;++i){R5900Context ctx;PS2Runtime runtime;SET_GPR_U32(&ctx,4,channel);SET_GPR_U32(&ctx,29,0x7f0000);SET_GPR_U32(&ctx,31,0xdeadbeef);
         o2_0068C660_0x68c660(ram.data(),&ctx,&runtime);check(ctx.pc==0xdeadbeef);
-        const auto result=native.tick(channel,{true,false,actor},{&flags,&timers,&signals});check(result.status==vm::Status::yielded);
-        compare(native,ram,channel,flags,timers,signals);++invocations;
+        const auto result=native.tick(channel,{true,false,actor,9},{&flags,&timers,&signals,nullptr,&scene.resources,&scene,&scene});check(result.status==vm::Status::yielded);
+        compare(native,ram,channel,flags,timers,signals);scene.compare_original(ram);++invocations;
     }
 }
 }
@@ -158,6 +162,16 @@ int main()try{
     {std::vector<std::byte> b;emit(b,1);emit(b,0x180,{},2);emit(b,0xa);vm::Interpreter n;const auto p=std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b});check(n.install(0,p)==vm::Status::unsupported_opcode);}
     {std::vector<std::byte> b;emit(b,3,{0});vm::Interpreter n;check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);check(n.tick(0,{}, {},8).status==vm::Status::budget_exhausted);}
     offline_tests();
+    for(unsigned profile=0;profile<16;++profile)for(const auto operation:{0u,1u,2u,3u,4u,5u,6u,0xffffffffu}){
+        std::vector<std::byte> b;for(const auto opcode:{0x30u,0x31u,0x32u,0x33u})emit(b,opcode,{42});
+        emit(b,0x37,{42,0xffffff81});emit(b,0x37,{42,0});
+        emit(b,0x34,{42});emit(b,0x110,{0,1});emit(b,0xe4);emit(b,0x110,{0,2});emit(b,0xe5);
+        emit(b,0x36,{19,0xfffffff9,operation});emit(b,0x110,{1,3});emit(b,0xe4);emit(b,0x110,{1,4});emit(b,0xe5);
+        emit(b,0x35,{19});const auto end=emit(b,0xa);run({b},{0,end},2,profile%6,std::uint8_t(profile%4),false,profile);
+    }
+    {std::vector<std::byte> b;emit(b,0x110,{0,123});emit(b,0x30,{42});emit(b,0xa);vm::Interpreter n;
+        check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
+        check(n.tick(0,{}).status==vm::Status::provider_unavailable);check(n.counters()[0]==0);}
     std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"coverage\":{";
     bool first_profile=true;
     for(const auto profile:{vm::DispatchProfile::ordinary,vm::DispatchProfile::offline_actor}){

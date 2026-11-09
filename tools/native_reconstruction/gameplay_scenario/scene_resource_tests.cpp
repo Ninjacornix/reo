@@ -11,6 +11,7 @@ std::size_t checks=0,invocations=0;
 void check(bool value){++checks;if(!value)throw std::runtime_error("Scene resource check "+std::to_string(checks));}
 constexpr std::uint32_t descriptor=0x3c5630+60*100,live=0x500000;
 std::vector<std::tuple<vm::SceneEffect,std::uint8_t>> original_effects;
+bool mutate_instance_indices{};
 void done(R5900Context* c){c->pc=GPR_U32(c,31);}
 struct Attachment final:vm::SceneAttachment{
     std::uint32_t flags{};
@@ -19,15 +20,18 @@ struct Attachment final:vm::SceneAttachment{
 struct Effects final:vm::SceneEffects{
     std::vector<std::tuple<vm::SceneEffect,std::uint8_t>> events;
     void apply(vm::SceneResources& resources,const vm::SceneResourceId& id,vm::SceneEffect effect,std::uint8_t index)noexcept override{
-        events.emplace_back(effect,index);auto d=*resources.get(id);d.flags^=0x40000000u;resources.replace(id,d);
+        events.emplace_back(effect,index);auto d=*resources.get(id);d.flags^=0x40000000u;
+        if(mutate_instance_indices&&effect==vm::SceneEffect::release)d.instance_index=17;
+        resources.replace(id,d);
     }
 };
 void effect(std::uint8_t* ram,R5900Context* c,vm::SceneEffect kind){
-    const auto at=GPR_U32(c,4);const auto index=kind==vm::SceneEffect::release?std::uint8_t(at):ram[at+2];
+    const auto at=GPR_U32(c,4);const auto index=(kind==vm::SceneEffect::release||kind==vm::SceneEffect::retire_instance)?std::uint8_t(at):ram[at+2];
     original_effects.emplace_back(kind,index);
     const auto flags=fixture_read<std::uint32_t>(ram,descriptor+24);fixture_write(ram,descriptor+24,flags^0x40000000u);done(c);
+    if(mutate_instance_indices&&kind==vm::SceneEffect::release)ram[descriptor+2]=17;
 }
-std::uint32_t call(PS2Runtime::Function fn,std::vector<std::uint8_t>& ram,std::int16_t id,std::int8_t value=0){
+std::uint32_t call(PS2Runtime::Function fn,std::vector<std::uint8_t>& ram,std::int32_t id,std::int8_t value=0){
     R5900Context c;PS2Runtime runtime;SET_GPR_S32(&c,4,id);SET_GPR_S32(&c,5,value);SET_GPR_U32(&c,29,0x7f0000);SET_GPR_U32(&c,31,0xdeadbeef);
     fn(ram.data(),&c,&runtime);check(c.pc==0xdeadbeef);++invocations;return GPR_U32(&c,2);
 }
@@ -35,11 +39,13 @@ void export_descriptor(std::vector<std::uint8_t>& ram,const vm::SceneDescriptor&
     std::fill(ram.begin()+descriptor,ram.begin()+descriptor+60,0);ram[descriptor]=d.active;ram[descriptor+1]=d.room;ram[descriptor+2]=d.instance_index;ram[descriptor+3]=d.kind;
     fixture_write(ram.data(),descriptor+4,d.authored_id);fixture_write(ram.data(),descriptor+24,d.flags);fixture_write(ram.data(),descriptor+28,d.primary?live:0u);
     fixture_write(ram.data(),descriptor+32,d.secondary?live+0x1000:0u);fixture_write(ram.data(),descriptor+40,d.ownership_tag);
+    fixture_write(ram.data(),descriptor+6,d.attachment_id);fixture_write(ram.data(),descriptor+36,d.parameter);
 }
 }
 void o2_00591620_0x591620(std::uint8_t* r,R5900Context* c,PS2Runtime*){effect(r,c,vm::SceneEffect::construct_primary);}
 void o2_00591860_0x591860(std::uint8_t* r,R5900Context* c,PS2Runtime*){effect(r,c,vm::SceneEffect::construct_alternate);}
 void o2_005B1850_0x5b1850(std::uint8_t* r,R5900Context* c,PS2Runtime*){effect(r,c,vm::SceneEffect::release);}
+#include "scene_resource_attachment_tests.inc"
 int main()try{
     std::vector<std::uint8_t> ram(0x800000);vm::SceneResources resources;vm::SceneDescriptor d;d.authored_id=42;d.instance_index=255;
     auto identity=resources.load(100,d);check(bool(identity));
@@ -82,5 +88,6 @@ int main()try{
     const auto stale=*identity;identity=resources.load(100,d);check(bool(identity));check(stale!=*identity);check(!resources.get(stale));
     vm::SceneResources another;check(!another.get(*identity));check(!resources.get({}));check(!resources.load(256,d));
     check(resources.flag800(stale,1)==vm::SceneStatus::invalid_identity);check(!resources.inactive_or_flag29(stale));
+    attachment_tests();
     std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_invocations\":"<<invocations<<",\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
