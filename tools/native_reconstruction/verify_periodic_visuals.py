@@ -27,6 +27,7 @@ def main():
     p.add_argument('--resource-inventory', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
+    p.add_argument('--equipment-selection', action='store_true')
     args = p.parse_args()
     assert not args.resource_factory or args.resource_static
     assert not args.resource_placement or args.resource_factory
@@ -35,6 +36,7 @@ def main():
     assert not args.resource_inventory or args.resource_actions
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
+    assert not args.equipment_selection or args.equipment_resources
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
     corpus = args.corpus.resolve()
@@ -93,6 +95,9 @@ def main():
     if args.equipment_resources:
         for at in [0x5b18d0,0x5b4320]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.equipment_selection:
+        for at in [0x666de0,0x5f1f70,0x5b4d50]:
+            entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     originals = list(entries.values())
     proof = []
     for at, name in entries.items():
@@ -150,6 +155,8 @@ def main():
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
         name='tools/native_reconstruction/equipment_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.equipment_selection:
+        name='tools/native_reconstruction/equipment_selection_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
                   selected_visual_family='variant0 logical36/37/38, flags1A193, null parent, complete6535C0 callback',
@@ -267,6 +274,7 @@ def main():
         if args.resource_inventory: command.insert(1,'-DREO_RESOURCE_INVENTORY=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1');command.insert(-2,'-lbcrypt')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
+        if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')
         record['command'] = command
         for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else [])+([str(ROOT/'iso/Resident Evil - Outbreak (v2.00).iso')] if args.weapon_resources else []))]:
             result = subprocess.run(cmd, env=env, capture_output=True, timeout=240 if args.weapon_resources else 180)

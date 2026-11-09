@@ -37,8 +37,8 @@ hashes and full retained comparison receipts. The first fixture used4CAEA0
 instead of4BAEA0 for the original population word; its failed cohorts remain
 preserved. That correction changed the fixture, not production gameplay.
 
-The next selection caller is666DE0. Source inspection establishes these details
-for the next implementation, without claiming it is migrated yet:
+The [primary selection caller666DE0](EQUIPMENT_SELECTION.md) is now qualified.
+Its source contracts include:
 
 - Zero input skips all work. Eligibility queries descriptor flags through the
   requested descriptor's self-index, not automatically its physical slot.

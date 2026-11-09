@@ -24,7 +24,9 @@ Those components pass both compiler comparisons and parent checks. The
 comparisons with actual ROM/SND assets and background decode/PCM checks.
 [Equipment attachment construction](EQUIPMENT_ATTACHMENTS.md) also passes with
 actual model/secondary release, canonical weapon refresh and natural full-pool
-side effects. Equipment selection/use/recipe/transfer, extended actors, special companions, actual
+side effects. [Primary equipment selection](EQUIPMENT_SELECTION.md) also compares
+through actual attachment construction and signed action publication, including
+full model and sound capacity. Equipment use/recipe/transfer, extended actors, special companions, actual
 installation and game acceptance remain open; the stage is still incomplete.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is

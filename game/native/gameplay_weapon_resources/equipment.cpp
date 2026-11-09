@@ -39,4 +39,29 @@ Attached Equipment::attach(std::uint8_t slot)noexcept{
     catch(const std::exception&){result.primary.status=ResourceModelStatus::unavailable;}
     return result;
 }
+Selected Equipment::select(const gameplay_actors::EntityId& id,std::uint8_t slot)noexcept{
+    using namespace gameplay_scenario;using gameplay_world::ResourceModelStatus;
+    Selected result;if(!slot)return result;
+    auto& frames=factory_.frames_;
+    if(!frames.open()){result.status=SceneStatus::provider_unavailable;return result;}
+    const auto actor=frames.world_.resolve(id);if(!actor){result.status=SceneStatus::invalid_identity;return result;}
+    try{
+        const auto target_id=frames.resources_.slot(slot);auto target=target_id?frames.resources_.get(*target_id):std::nullopt;
+        if(!target)throw std::runtime_error("Native equipment selection descriptor unavailable");
+        const auto metadata_id=frames.resources_.slot(target->instance_index);const auto metadata=metadata_id?frames.resources_.get(*metadata_id):std::nullopt;
+        if(!metadata)throw std::runtime_error("Native equipment selection self-index unavailable");
+        if(!metadata->active||metadata->template_index==255||!(factory_.templates_.flags(metadata->template_index)&1u))return result;
+        if(actor->slot>=4||frames.world_.primary(actor->slot)!=actor)throw std::runtime_error("Native equipment selection primary owner unavailable");
+        actor->selected_resource=slot;result.changed=true;
+        target->ownership_tag=std::uint16_t(actor->slot+1);
+        if(frames.resources_.replace(*target_id,*target)!=SceneStatus::completed)throw std::runtime_error("Native equipment selection descriptor retired");
+        result.attachment=attach(slot);
+        if(result.attachment->primary.status!=ResourceModelStatus::completed&&result.attachment->primary.status!=ResourceModelStatus::full)throw std::runtime_error("Native equipment selection attachment unavailable");
+        const auto selected_id=frames.resources_.slot(actor->selected_resource);const auto selected=selected_id?frames.resources_.get(*selected_id):std::nullopt;
+        if(!selected)throw std::runtime_error("Native equipment selected action descriptor unavailable");
+        const auto action=actor->selected_resource&&selected->active&&selected->template_index!=255?factory_.templates_.action_kind(selected->template_index):std::int8_t(0);
+        actor->resource_action=std::uint16_t(std::int16_t(action));
+    }catch(const std::exception&){result.status=SceneStatus::provider_unavailable;}
+    return result;
+}
 }
