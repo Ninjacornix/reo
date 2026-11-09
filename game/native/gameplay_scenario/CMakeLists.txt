@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_scenario STATIC interpreter.cpp flags.cpp offline.cpp scene_resources.cpp scene_controls.cpp content.cpp sequence_control.cpp lighting.cpp stream_channels.cpp stream_instances.cpp scene_models.cpp scene_model_bindings.cpp periodic_effects.cpp room_rules.cpp room_object_commands.cpp)
+add_library(reo_native_gameplay_scenario STATIC interpreter.cpp flags.cpp offline.cpp scene_resources.cpp scene_controls.cpp content.cpp sequence_control.cpp lighting.cpp stream_channels.cpp stream_instances.cpp scene_models.cpp scene_model_bindings.cpp periodic_effects.cpp room_rules.cpp room_object_commands.cpp actor_requests.cpp)
 target_compile_features(reo_native_gameplay_scenario PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_scenario PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_tasks reo_native_adxt_control_owner reo_native_afs_source_range reo_native_gameplay_world reo_native_transform_math)

@@ -19,6 +19,13 @@ File #1 US is the selected edition; File #2 requires a separate validation.
 | Input, networking and media consumers | Native input/action frames, world/authority events and direct native resource/audio/movie interfaces. | Qualified independent actor/menu edges, remapping and repeat core. Actual input/network/media callers and platform sampling still require migration. |
 | Integration/validation | A coherent native gameplay candidate, representative scenarios/rooms, controls, save/reload, pause/resume, co-op and joined shutdown. | V39 exercises all nine guarded save/session hooks across eight successful background cases, including save/load, corrupt-save dialogs and gameplay options with resumed movement. New native World/Update/scenario components are not yet installed in the game. This is not a coherent native gameplay candidate. |
 
+The [shared scenario-control/collision-proxy pool](SCENARIO_SHARED_PROXY_POOL.md)
+is an explicit installation gate: the original 128 records form one identity,
+capacity, order and retirement owner. Current standalone native projections do
+not close that gate. After the actual 16-channel matrix-program consumer, port
+the full bounded `5C1390` room-record importer and unify typed logical payloads
+with retained collision proxy records before more isolated opcode families.
+
 Completion requires native ownership and migrated real consumers across every
 row, with source/build identities, behavioral comparisons and game acceptance.
 An isolated module, hook into a native function, mirrored guest layout, or

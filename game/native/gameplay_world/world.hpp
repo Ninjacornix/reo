@@ -16,6 +16,7 @@ namespace input=gameplay_actors::input;
 struct Position {float x{},y{},z{};};
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
 struct ControlRequest {std::uint8_t pending{},kind{};std::uint16_t parameter{};};
+struct ProjectileContact {gameplay_collision::Vec3 point,normal;};
 struct ActorCollision {
     gameplay_collision::Vec3 local_center,previous_center_offset,displacement;
     gameplay_collision::Vec3 previous_local_center,interpolation_step;
@@ -64,10 +65,12 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint16_t surface_attributes{};
     Position surface_normal{0,1,0};
     ActorCollision collision;
+    ProjectileContact projectile_contact;
     gameplay_collision::delivery::Component contact;
     std::shared_ptr<animation::Instance> model;
     std::shared_ptr<animation::Constraints> constraints;
     ControlRequest control_request;
+    std::uint8_t control_pending{};
     input::Frame input;
 };
 struct Session : actors::HitSession {
@@ -75,6 +78,7 @@ struct Session : actors::HitSession {
     gameplay_session::Options options;
     std::uint8_t previous_primary{},previous_secondary{};
     bool inventory_modal{};
+    std::uint8_t control_notice{};
     std::optional<std::uint16_t> scenario;
 };
 struct Profile {

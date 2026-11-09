@@ -32,6 +32,10 @@ public:
     bool scenario(std::uint32_t,std::uint8_t,NotifyOwner,std::uint8_t)noexcept override;
     bool strided(std::uint32_t,std::uint32_t,std::uint8_t,bool,bool)noexcept override;
     std::optional<bool> test_strided(std::uint32_t,std::uint32_t,std::uint8_t)const noexcept override;
+    std::optional<std::uint16_t> strided_half(std::uint32_t record,std::uint32_t slot)const noexcept{
+        if(record>=state_.strided.size()||slot>=state_.strided[0].size())return{};
+        return state_.strided[record][slot];
+    }
     bool actor_flag(ActorFlagFamily,ActorFlagSelection,std::uint32_t,bool)noexcept;
     std::optional<bool> actor_flag(ActorFlagFamily,std::uint8_t category,std::uint32_t id)const noexcept;
     const FlagStateSnapshot& snapshot()const noexcept{return state_;}

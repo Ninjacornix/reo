@@ -15,6 +15,8 @@ IDS += ['0068F570','0068F5A0']
 IDS += ['006920E0','006922B0','007020E0','00702380','00693020','00693840','00694DA0','00581830','00690600','00690640','00690700','00694E70','005705F0','005704B0','00570550']
 IDS += ['00690AC0','00690B80','00690C40','00690D40','00690DD0','00690E60','006B0780','006AD260','006AD360','006AD310']
 
+IDS += ['00691FA0','00692630','0064AE50','006261D0','00626310','006263D0','0057E840','006269B0','00667370']
+
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(command,out,label):
     p=subprocess.run(command,capture_output=True,text=True,timeout=120)
@@ -71,6 +73,8 @@ def main(a):
     presets=struct.unpack_from('<48I',raw,0x7174f0-0x570000);initialization+='const std::array<std::uint32_t,48> presets{'+','.join(hex(v)+'u'for v in presets)+'};std::memcpy(p+0x7174f0,presets.data(),192);\n}\n'
     footprint=raw[0x723740-0x570000:0x723740-0x570000+200];assert hashlib.sha256(footprint).hexdigest()=='c49896573cdc5137476866c5b6ac54566e95893b9a0e97b786ee31eabc403659'
     initialization+='inline void owned_object_constants(std::uint8_t* p){const std::array<std::uint8_t,200> b{'+','.join(str(x) for x in footprint)+'};std::memcpy(p+0x723740,b.data(),b.size());}\n'
+    request_table=struct.unpack_from('<43I',raw,0x711960-0x570000);assert request_table[0x28]==0x6269b0 and struct.unpack_from('<I',raw,0x711960-0x570000+43*4)[0]==0
+    initialization+='inline void owned_request_constants(std::uint8_t* p){const std::array<std::uint32_t,43> b{'+','.join(hex(x)+'u' for x in request_table)+'};std::memcpy(p+0x711960,b.data(),sizeof(b));}\n'
     declarations.append(initialization)
     (out/'original_declarations.inc').write_text('\n'.join(declarations)+'\n')
     actual_definitions=set(re.findall(r'^void ((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts),re.M));lookup={}
@@ -89,6 +93,7 @@ def main(a):
     (out/'original_fixture.hpp').write_text(fixture);(out/'original.cpp').write_text('#include "original_fixture.hpp"\n#include "original_declarations.inc"\n'+text)
     shutil.copyfile(HERE/'tests.cpp',out/'tests.cpp')
     shutil.copyfile(HERE/'offline_tests.inc',out/'offline_tests.inc')
+    shutil.copyfile(HERE/'actor_request_vm_tests.inc',out/'actor_request_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
     shutil.copyfile(HERE/'scene_vm_fixture.inc',out/'scene_vm_fixture.inc')
@@ -98,9 +103,9 @@ def main(a):
     shutil.copyfile(HERE/'stream_vm_fixture.inc',out/'stream_vm_fixture.inc')
     shutil.copyfile(HERE/'actor_vm_fixture.inc',out/'actor_vm_fixture.inc')
     shutil.copyfile(HERE/'model_vm_fixture.inc',out/'model_vm_fixture.inc')
-    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('controls',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('streams',ROOT/'game/native/gameplay_scenario/stream_channels.cpp'),('rules',ROOT/'game/native/gameplay_scenario/room_rules.cpp'),('models',ROOT/'game/native/gameplay_scenario/scene_models.cpp'),('content',ROOT/'game/native/gameplay_scenario/content.cpp'),('math',ROOT/'game/native/transform_math/transform_math.cpp'),('world',ROOT/'game/native/gameplay_world/world.cpp'),('input',ROOT/'game/native/gameplay_actors/input.cpp'),('session',ROOT/'game/native/gameplay_session/session.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('object_commands',ROOT/'game/native/gameplay_scenario/room_object_commands.cpp'),('tests',out/'tests.cpp')]
+    units=[('core',ROOT/'game/native/gameplay_scenario/interpreter.cpp'),('flags',ROOT/'game/native/gameplay_scenario/flags.cpp'),('offline',ROOT/'game/native/gameplay_scenario/offline.cpp'),('scene',ROOT/'game/native/gameplay_scenario/scene_resources.cpp'),('sequence',ROOT/'game/native/gameplay_scenario/sequence_control.cpp'),('lighting',ROOT/'game/native/gameplay_scenario/lighting.cpp'),('controls',ROOT/'game/native/gameplay_scenario/scene_controls.cpp'),('streams',ROOT/'game/native/gameplay_scenario/stream_channels.cpp'),('rules',ROOT/'game/native/gameplay_scenario/room_rules.cpp'),('models',ROOT/'game/native/gameplay_scenario/scene_models.cpp'),('content',ROOT/'game/native/gameplay_scenario/content.cpp'),('math',ROOT/'game/native/transform_math/transform_math.cpp'),('world',ROOT/'game/native/gameplay_world/world.cpp'),('input',ROOT/'game/native/gameplay_actors/input.cpp'),('session',ROOT/'game/native/gameplay_session/session.cpp'),('entities',ROOT/'game/native/gameplay_actors/entity.cpp'),('tasks',ROOT/'game/native/gameplay_tasks/tasks.cpp'),('actor_requests',ROOT/'game/native/gameplay_scenario/actor_requests.cpp'),('motion',ROOT/'game/native/gameplay_world/motion.cpp'),('object_commands',ROOT/'game/native/gameplay_scenario/room_object_commands.cpp'),('tests',out/'tests.cpp')]
     units += [('object_'+n,ROOT/'game/native/gameplay_collision'/(n+'.cpp'))for n in ['collision','response','sweep','actors','ownership','room_objects','footprint','trace','room_geometry','object_interactions','object_lifetime']]
-    source_paths=[HERE/'room_object_vm_tests.inc',HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'room_rule_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'model_vm_fixture.inc',reference,HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
+    source_paths=[HERE/'actor_request_vm_tests.inc',HERE/'room_object_vm_tests.inc',HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'room_rule_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'model_vm_fixture.inc',reference,HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
     source_paths += [path for label,path in units if not path.is_relative_to(ROOT/'build-native-sjuni')]
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

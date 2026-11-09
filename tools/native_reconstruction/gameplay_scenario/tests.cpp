@@ -183,6 +183,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "offline_tests.inc"
 #include "room_rule_tests.inc"
 #include "room_object_vm_tests.inc"
+#include "actor_request_vm_tests.inc"
 int main()try{
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
@@ -215,6 +216,7 @@ int main()try{
     offline_tests();
     room_rules_tests();
     room_objects_vm_tests();
+    actor_requests_vm_tests();
     for(unsigned profile=0;profile<16;++profile)for(const auto operation:{0u,1u,2u,3u,4u,5u,6u,0xffffffffu}){
         std::vector<std::byte> b;for(const auto opcode:{0x30u,0x31u,0x32u,0x33u})emit(b,opcode,{42});
         emit(b,0x37,{42,0xffffff81});emit(b,0x37,{42,0});
@@ -317,7 +319,7 @@ int main()try{
     {std::vector<std::byte> b;emit(b,0x110,{0,123});emit(b,0x30,{42});emit(b,0xa);vm::Interpreter n;
         check(n.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{b}))==vm::Status::completed);
         check(n.tick(0,{}).status==vm::Status::provider_unavailable);check(n.counters()[0]==0);}
-    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"room_rule_original_invocations\":"<<room_rule_invocations<<",\"room_rule_dispatches\":"<<room_rule_dispatches<<",\"room_object_dispatches\":"<<room_object_dispatches<<",\"coverage\":{";
+    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"original_dispatch_invocations\":"<<invocations<<",\"room_rule_original_invocations\":"<<room_rule_invocations<<",\"room_rule_dispatches\":"<<room_rule_dispatches<<",\"room_object_dispatches\":"<<room_object_dispatches<<",\"actor_request_consumers\":"<<actor_request_consumers<<",\"actor_request_dispatches\":"<<actor_request_dispatches<<",\"actor_request_profile_refusals\":"<<actor_request_profile_refusals<<",\"coverage\":{";
     bool first_profile=true;
     for(const auto profile:{vm::DispatchProfile::ordinary,vm::DispatchProfile::offline_actor}){
         if(!first_profile)std::cout<<',';
