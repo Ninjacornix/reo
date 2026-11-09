@@ -85,6 +85,9 @@ enemy/staged banks and real game caller installation remain open.
 The [weapon program selector and scalar sampler](WEAPON_PROGRAMS.md) now use
 actual owned WMD data and the existing native actor/resource owners. Resource
 visual callbacks and loading on weapon changes remain separate work.
+The distinct [64-primary-resource model owner](RESOURCE_MODELS.md) now also
+preserves allocation, retirement and mutation-sensitive update ordering. Its
+actual visual callbacks and resource factory/release composition remain open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

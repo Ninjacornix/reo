@@ -48,6 +48,7 @@ void WorldResourceAttachments::bind(const actors::EntityId& id, std::uint32_t fu
     const auto target = std::dynamic_pointer_cast<ResourceModel>(descriptor->primary);
     if (!target)
         throw std::runtime_error("Native resource attachment capability kind unavailable");
+    if(!target->current())throw std::runtime_error("Native resource attachment retired");
     const auto actor = world_.resolve(id);
     if (!actor)
         throw std::runtime_error("Native attachment actor foreign or retired");

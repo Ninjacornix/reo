@@ -5,6 +5,8 @@
 #include "../gameplay_scenario/resource_templates.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
 namespace reo::native::gameplay_world {
+class ResourceModels;
+class ResourceModelWork;
 struct AttachmentMetadata {
     std::uint8_t kind{};
     std::array<animation::Vector, 2> offsets;
@@ -23,6 +25,9 @@ class ResourceModel final : public gameplay_scenario::SceneAttachment {
                   animation::Vector initial_position, std::uint32_t initial_flags)
         : correction(adjustment), pose(initial_pose), position(initial_position),
           flags(initial_flags) {}
+    ResourceModel(const ResourceModel&)=delete;
+    ResourceModel& operator=(const ResourceModel&)=delete;
+    bool current()const noexcept{return !retired_;}
     void flag(std::uint32_t mask, bool set) noexcept override {
         flags = set ? flags | mask : flags & ~mask;
     }
@@ -30,6 +35,17 @@ class ResourceModel final : public gameplay_scenario::SceneAttachment {
     animation::Vector position;
     std::uint32_t flags{};
     animation::WeaponProgramState program;
+    bool active{},visible{};
+    std::uint8_t physical_slot{},resource_slot{},draw_layer{};
+    std::int16_t asset_index{};
+    std::array<std::uint8_t,6> part_enabled{};
+    std::array<animation::Matrix,6> parts{};
+    std::array<std::uint16_t,3> angles{};
+    std::shared_ptr<ResourceModelWork> work;
+  private:
+    bool retired_{};
+    void retire_data()noexcept;
+    friend class ResourceModels;
 };
 class WorldResourceAttachments final {
   public:

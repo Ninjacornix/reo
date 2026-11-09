@@ -9,6 +9,7 @@ void WorldResourcePrograms::select(Actor& actor,std::uint32_t mode){
     if(!descriptor->primary)return;
     const auto target=std::dynamic_pointer_cast<ResourceModel>(descriptor->primary);
     if(!target)throw std::runtime_error("Native resource program primary capability unavailable");
+    if(!target->current())throw std::runtime_error("Native resource program primary retired");
     auto& state=target->program;
     if(actor.category!=0){state.phase=0;return;}
     state.phase=1;
