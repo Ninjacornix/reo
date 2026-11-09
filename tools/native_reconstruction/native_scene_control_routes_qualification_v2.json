@@ -1,0 +1,73 @@
+{
+  "schema": "reo.native.scene_control.routes.qualification.v2",
+  "status": "qualified_partial_native_route_identity_and_destination_state",
+  "complete": false,
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_launched": false,
+  "live_process_access": false,
+  "source_sha256": {
+    "tools/native_reconstruction/gameplay_scenario/route_control_tests.cpp": "d77fbae2deb0d9f70156a93b48b84391f9010b7e37a6ffe74e69ee8e2441ffd2",
+    "tools/native_reconstruction/gameplay_scenario/verify_route_controls.py": "e13a3ad2645399c85ccff9204e1f5579b1f91ca0972bcadaffde1ce618c76750",
+    "game/native/gameplay_scenario/scene_controls.hpp": "dae80d052c1f45a1f32ca824e2ecbf7558acc3a4e4a09d23d7f19ac6fccd5903",
+    "game/native/gameplay_scenario/scene_controls.cpp": "7cb8eeb12f12a699b608fad7322d70ac9321ce79258ebefc8fc396089bcef256",
+    "tools/native_reconstruction/gameplay_scenario/control_vm_fixture.inc": "2cff589da16f9c4f4ca16ed6af3881d1de237d2c8b921bd10bffb3557ba7a4ce",
+    "game/native/gameplay_scenario/saved_controls.hpp": "543fd46f4540d24b93895ed72607464b5931641078891df085b8c860aea01d27",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "game/native/gameplay_scenario/action_choices.hpp": "c315448949c2871f01ac954c1c991c026a01e0183717dfca6fe86377230de9be"
+  },
+  "documentation_sha256": {
+    "docs/native-gameplay/SCENARIO_CONTROL_ROUTES_V2.md": "903c06de9e973dd533c214d587914043bd9a769c6175969336663ad226b78fc4",
+    "tools/native_reconstruction/gameplay_scenario/qualify_routes_v2.py": "82907e8a6bb9edab107661932670de981f4d50eba1b52741602ca615f126ea81"
+  },
+  "receipts": [
+    {
+      "path": "build-native-sjuni/gameplay-route-controls-llvm-v3/receipt.json",
+      "sha256": "036b1bbbba96ab76cbd688915d444c6edc847c2f465742fbb69513a448d9e527",
+      "compiler": "C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "result": {
+        "status": "passed",
+        "checks": 12600,
+        "original_query_invocations": 4096,
+        "game_launched": false
+      },
+      "checked_owned_instruction_comments": 28
+    },
+    {
+      "path": "build-native-sjuni/gameplay-route-controls-gcc-v2/receipt.json",
+      "sha256": "0e5bfbfe482c20d5d529341b4bb9a8ef80b1cf2e48731c7263a82812767f2215",
+      "compiler": "C:\\msys64\\mingw64\\bin\\g++.exe",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "result": {
+        "status": "passed",
+        "checks": 12600,
+        "original_query_invocations": 4096,
+        "game_launched": false
+      },
+      "checked_owned_instruction_comments": 28
+    }
+  ],
+  "contract": {
+    "first_type_zero_or_two": true,
+    "enabled_irrelevant": true,
+    "request_unsigned_low_byte": true,
+    "authored_id_fullword": true,
+    "disabled_list_sentinel_preserved": true,
+    "optional_fullword_destination": true,
+    "existing_parameter_independent": true,
+    "checked_requery_after_effect": true,
+    "stale_identity_refused": true
+  },
+  "limitations": [
+    "No actual route callback/game caller is installed by this primitive owner qualification.",
+    "Missing destination data is unavailable; generic tag-only nodes are not fabricated destination records.",
+    "Dangling original pointer reuse is not reproduced.",
+    "No new native opcode entry, renderer or whole-game completion is claimed."
+  ],
+  "previous_qualification": {
+    "path": "tools/native_reconstruction/native_scene_control_routes_qualification_v1.json",
+    "sha256": "7476682bd1fbec7b2cef912c352ad789ff7a7e01e4c9fafa46233d9a4908f8b6"
+  }
+}

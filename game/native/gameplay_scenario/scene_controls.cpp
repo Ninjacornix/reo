@@ -52,6 +52,17 @@ void SceneControls::clear()noexcept{
     while(current){auto next=std::move(current->next);current.reset();current=std::move(next);}
     clearing_=false;
 }
+ControlRouteResult SceneControls::first_route(std::uint8_t authored_id,std::size_t maximum_visits)const noexcept{
+    ControlRouteResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
+    if(!enabled_)return result;
+    for(auto node=head_;node;node=node->next){
+        if(result.visited>=maximum_visits){result.status=ControlStatus::budget_exhausted;return result;}
+        ++result.visited;const auto* other=std::get_if<ControlOther>(&node->value.body);
+        const bool type=std::holds_alternative<ControlTypeZero>(node->value.body)||std::holds_alternative<ControlTypeTwo>(node->value.body)||(other&&(other->type==0||other->type==2));
+        if(type&&node->value.authored_id==authored_id){result.id=node->id;return result;}
+    }
+    return result;
+}
 ControlResult SceneControls::disable_three(std::size_t maximum_visits)noexcept{
     ControlResult result;if(clearing_){result.status=ControlStatus::closed;return result;}
     if(!enabled_)return result;

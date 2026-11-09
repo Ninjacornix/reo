@@ -26,9 +26,10 @@ private:
 };
 // Type numbers are observed content tags, not guessed subsystem names. Typed
 // values project only fields owned by these commands; no original byte layout.
-struct ControlTypeZero {std::uint32_t parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};};
+struct ControlRouteDestination {std::uint32_t room{},edge{};friend bool operator==(const ControlRouteDestination&,const ControlRouteDestination&)=default;};
+struct ControlTypeZero {std::uint32_t parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};std::optional<ControlRouteDestination> destination{};};
 struct ControlTypeOne {std::uint16_t parameter{};};
-struct ControlTypeTwo {std::uint32_t selector{},parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};};
+struct ControlTypeTwo {std::uint32_t selector{},parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};std::optional<ControlRouteDestination> destination{};};
 struct ControlTypeThree {std::uint32_t mode{};std::uint16_t parameter{};};
 struct ControlTypeFour {std::uint32_t mode{},selector{};};
 struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondary_parameter{};std::uint32_t completion{};std::uint8_t byte_parameter{};
@@ -51,6 +52,7 @@ enum class ControlCommand { zero_two_parameter,type_one_parameter,enable_even,di
 struct ControlArguments {std::uint32_t authored_id{},parameter{},selector{};std::uint16_t extra{};};
 enum class ControlStatus { completed,invalid_identity,provider_unavailable,invalid_profile,closed,full,budget_exhausted };
 struct ControlResult {ControlStatus status{ControlStatus::completed};std::size_t visited{},matched{};};
+struct ControlRouteResult {ControlStatus status{ControlStatus::completed};std::optional<SceneControlId> id;std::size_t visited{};};
 class ControlEffects {
 public:
     virtual ~ControlEffects()=default;
@@ -77,6 +79,9 @@ public:
     ControlResult apply(ControlCommand,const ControlArguments&,ControlEffects*,std::size_t maximum_visits=4096)noexcept;
     ControlResult apply_typed(bool enable,std::uint32_t type,std::uint32_t authored_id,std::uint32_t selector,std::size_t maximum_visits=4096)noexcept;
     ControlResult choose_five(std::uint32_t authored_id,const std::array<std::uint32_t,4>& choices,ActionChoices&,std::uint8_t character,bool permitted,gameplay_session::Random&,std::size_t maximum_visits=4096)noexcept;
+    // First source type0/2 with fullword id matching the narrowed request.
+    // Enabled flags do not filter; callers re-get(id) after synchronous effects.
+    ControlRouteResult first_route(std::uint8_t authored_id,std::size_t maximum_visits=4096)const noexcept;
     ControlResult disable_three(std::size_t maximum_visits=4096)noexcept;
 private:
     struct Node {SceneControlId id;SceneControl value;std::shared_ptr<Node> next;};
