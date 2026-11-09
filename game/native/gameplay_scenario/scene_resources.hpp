@@ -8,6 +8,7 @@
 namespace reo::native::gameplay_scenario {
 struct SceneResourceDomain;
 class SceneResources;
+class ResourceTemplates;
 class SceneResourceId final {
 public:
     SceneResourceId()=default;
@@ -46,7 +47,8 @@ public:
     virtual void apply(SceneResources&,const SceneResourceId&,SceneEffect,std::uint8_t instance_index)noexcept=0;
 };
 enum class SceneCommand { enable,disable,force_enable,alternate_enable };
-enum class SceneStatus { completed,invalid_identity,provider_unavailable,invalid_slot,generation_exhausted };
+enum class SceneStatus { completed,invalid_identity,provider_unavailable,invalid_slot,generation_exhausted,full };
+struct SceneAllocated {SceneStatus status{SceneStatus::full};std::optional<SceneResourceId> id;std::uint8_t slot{};};
 enum class SceneOwnerFamily { primary,extended };
 struct SceneOwnerReference {SceneOwnerFamily family{};std::uint16_t index{};friend bool operator==(const SceneOwnerReference&,const SceneOwnerReference&)=default;};
 struct AttachedSceneResource {SceneResourceId id;SceneOwnerReference owner;};
@@ -66,6 +68,9 @@ public:
     SceneResources(const SceneResources&)=delete;
     SceneResources& operator=(const SceneResources&)=delete;
     std::optional<SceneResourceId> load(std::size_t,SceneDescriptor);
+    // Complete591AE0 scans1..255, preserving slot0 and the255-active gate.
+    SceneAllocated allocate(std::uint8_t room,std::uint16_t authored_id,
+        std::uint16_t attachment_id,const ResourceTemplates&);
     // Exact resource-table slot, including inactive descriptors. No authored-ID search.
     std::optional<SceneResourceId> slot(std::size_t)const noexcept;
     std::optional<SceneResourceId> lookup(std::int16_t authored_id)const noexcept;

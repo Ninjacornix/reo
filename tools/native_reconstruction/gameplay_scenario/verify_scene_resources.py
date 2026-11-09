@@ -25,7 +25,7 @@ def main(a):
     fixture=(ROOT/'tools/native_reconstruction/gameplay_save/original_fixture.hpp').read_text().replace('0x400000','0x800000').replace('#include <cstdint>','#include <cstdint>\n#include <array>')
     fixture+='\n#define WRITE32(a,v) fixture_write<std::uint32_t>(rdram,a,v)\n#define SUB32(a,b) (std::uint32_t(std::uint32_t(a)-std::uint32_t(b)))\n'
     (out/'original_fixture.hpp').write_text(fixture);(out/'original.cpp').write_text('#include "original_fixture.hpp"\n#include "original_declarations.inc"\n'+text)
-    paths=[HERE/'scene_resource_tests.cpp',HERE/'scene_resource_attachment_tests.inc',Path(__file__),ROOT/'game/native/gameplay_scenario/scene_resources.hpp',ROOT/'game/native/gameplay_scenario/scene_resources.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp']
+    paths=[HERE/'scene_resource_tests.cpp',HERE/'scene_resource_attachment_tests.inc',Path(__file__),ROOT/'game/native/gameplay_scenario/scene_resources.hpp',ROOT/'game/native/gameplay_scenario/scene_resources.cpp',ROOT/'game/native/gameplay_scenario/resource_templates.hpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp']
     before={p.relative_to(ROOT).as_posix():sha(p) for p in paths}
     for p in paths:shutil.copyfile(p,out/p.name)
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-I'+str(ROOT),'-I'+str(out)]

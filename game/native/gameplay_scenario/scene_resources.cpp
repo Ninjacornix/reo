@@ -1,4 +1,5 @@
 #include "scene_resources.hpp"
+#include "resource_templates.hpp"
 #include <utility>
 
 namespace reo::native::gameplay_scenario {
@@ -13,6 +14,17 @@ SceneResourceId SceneResources::identity(std::size_t slot)const noexcept{
 std::optional<SceneResourceId> SceneResources::load(std::size_t slot,SceneDescriptor descriptor){
     if(slot>=capacity||generations_[slot]==UINT64_MAX)return{};
     ++generations_[slot];descriptors_[slot]=std::move(descriptor);return identity(slot);
+}
+SceneAllocated SceneResources::allocate(std::uint8_t room,std::uint16_t authored,std::uint16_t attachment,const ResourceTemplates& templates){
+    if(active_count()>=255)return{};
+    for(std::size_t index=1;index<capacity;++index){
+        if(descriptors_[index].active)continue;
+        SceneDescriptor value;value.active=1;value.kind=1;value.room=room;value.instance_index=std::uint8_t(index);
+        value.authored_id=authored;value.attachment_id=attachment;value.template_index=std::bit_cast<std::uint8_t>(templates.selector(std::bit_cast<std::int16_t>(attachment)));
+        const auto id=load(index,value);
+        return{id?SceneStatus::completed:SceneStatus::generation_exhausted,id,std::uint8_t(index)};
+    }
+    return{};
 }
 std::optional<SceneResourceId> SceneResources::slot(std::size_t index)const noexcept{
     if(index>=capacity)return{};

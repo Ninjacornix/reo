@@ -112,6 +112,11 @@ The [conditional deactivation follow-up](RESOURCE_DEACTIVATION.md) now closes
 that592770/591BE0 branch through canonical descriptors, templates and instance
 retirement. Active count is a derived table view. Extended actors, actual asset/
 resource construction and installed native gameplay acceptance remain open.
+The [descriptor allocation follow-up](RESOURCE_DESCRIPTOR_ALLOCATION.md)
+closes591AE0/5B42B0 in the canonical table and template owners, with all five
+owned item-template sections and the complete signed selector domain compared.
+The allocator preserves reserved slot0 and the255-active gate. This supplies
+descriptor creation; actual instance/resource factories remain open.
 
 Ordinary game-script bytecode and asset encodings may remain. The new gameplay
 core must not execute MIPS, contain a simulated register file or depend on a

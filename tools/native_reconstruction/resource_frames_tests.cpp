@@ -11,7 +11,7 @@ namespace g=reo::native::gameplay_world;
 namespace a=reo::native::animation;
 namespace s=reo::native::gameplay_scenario;
 constexpr unsigned pool=0x3f4010,stride=0x250,descriptor_at=0x3c5630+3*60,bank_at=0x749180;
-std::uint64_t checks{},common_cases{},weapon_cases{},sequence_frames{},source_calls{},refusals{},passes{},pose_cases{},release_cases{},deactivation_cases{},template_flag_cases{};
+std::uint64_t checks{},common_cases{},weapon_cases{},sequence_frames{},source_calls{},refusals{},passes{},pose_cases{},release_cases{},deactivation_cases{},template_flag_cases{},owned_template_banks{},selector_cases{},descriptor_allocations{};
 std::string active_case;
 void check(bool value,const std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(active_case+" line "+std::to_string(at.line()));
@@ -23,12 +23,13 @@ void original_transform_port(std::uint8_t* ram,R5900Context* ctx,PS2Runtime* run
     switch(ctx->pc){
 #include "dispatch.inc"
         case 0x107c68:std::memset(ram+GPR_U32(ctx,4),GPR_U32(ctx,5)&255,GPR_U32(ctx,6));break;
+        case 0x107ab0:{const auto dst=GPR_U32(ctx,4),src=GPR_U32(ctx,5),size=GPR_U32(ctx,6);check(src>=0x400000&&src<=0x410000&&size<=0x410000-src);check((dst==0x74bb50&&size<=129*24)||(dst==0x74b940&&size<=129*4)||(dst==0x74c770&&size<=128*4)||(dst==0x74c970&&size<=384*2));std::memmove(ram+dst,ram+src,size);SET_GPR_U32(ctx,2,dst);break;}
         default:throw std::runtime_error("Unadmitted resource frame dependency "+std::to_string(ctx->pc));
     }
     ctx->pc=GPR_U32(ctx,31);
 }
-R5900Context call(std::uint8_t* ram,unsigned entry,unsigned argument=0,unsigned arg1=0){
-    R5900Context ctx;PS2Runtime runtime;ctx.pc=entry;SET_GPR_U32(&ctx,4,argument);SET_GPR_U32(&ctx,5,arg1);
+R5900Context call(std::uint8_t* ram,unsigned entry,unsigned argument=0,unsigned arg1=0,unsigned arg2=0){
+    R5900Context ctx;PS2Runtime runtime;ctx.pc=entry;SET_GPR_U32(&ctx,4,argument);SET_GPR_U32(&ctx,5,arg1);SET_GPR_U32(&ctx,6,arg2);
     SET_GPR_U32(&ctx,29,0x1f00000);SET_GPR_U32(&ctx,31,0xabcdef);original_transform_port(ram,&ctx,&runtime);
     check(ctx.pc==0xabcdef&&GPR_U32(&ctx,29)==0x1f00000);return ctx;
 }
@@ -94,7 +95,7 @@ struct Fixture {
     void step(bool weapon){call(ram.data(),weapon?0x6b45c0:0x5932f0,raw);if(weapon)frames.weapon(created.id,*created.model);else frames.common(created.id,*created.model);compare();}
 };
 int main(int argc,char** argv)try{
-    check(argc==2);const auto old=_mm_getcsr();struct Reset{unsigned old;~Reset(){_mm_setcsr(old);}}restore{old};_mm_setcsr(0x1f80);
+    check(argc==3);const auto old=_mm_getcsr();struct Reset{unsigned old;~Reset(){_mm_setcsr(old);}}restore{old};_mm_setcsr(0x1f80);
     for(unsigned owner:{0u,1u,2u,3u,4u,32769u,65535u})for(unsigned mode=0;mode<14;++mode)for(bool active:{false,true}){
         active_case="common owner="+std::to_string(owner)+" mode="+std::to_string(mode)+" active="+std::to_string(active);Fixture f;f.reset(owner,0x20000|(mode&1?0x80000000u:0u),active);
         const auto slot=owner>=1&&owner<=4?owner-1:0;auto actor=f.world.primary(slot);
@@ -199,6 +200,30 @@ int main(int argc,char** argv)try{
         active_case="required deactivation assets refuse after release";Fixture f;f.reset(1,0x40100000);auto descriptor=*f.resources.get(*f.resources.slot(3));descriptor.parameter=0;descriptor.template_index=0;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);bool refused{};try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused&&!f.created.model->current()&&!f.resources.get(*f.resources.slot(3))->primary);++refusals;
     }
     {
+        active_case="owned template selectors and descriptor allocation";std::ifstream templates_file(argv[2],std::ios::binary);unsigned banks{};templates_file.read(reinterpret_cast<char*>(&banks),4);check(banks==5);
+        for(unsigned bank=0;bank<banks;++bank){
+            unsigned size{};templates_file.read(reinterpret_cast<char*>(&size),4);check(size&&size<=65536);std::vector<std::byte> data(size);templates_file.read(reinterpret_cast<char*>(data.data()),size);check(bool(templates_file));Fixture f;s::ResourceTemplates templates;
+            std::fill_n(f.ram.data()+0x74bb50,129*24,0);std::fill_n(f.ram.data()+0x74b940,129*4,0);std::fill_n(f.ram.data()+0x74c770,128*4,0);std::fill_n(f.ram.data()+0x74c970,384*2,0);std::fill_n(f.ram.data()+0x74b6e0,600,255);put(f.ram.data(),0x74ccf0,std::uint16_t(0));
+            std::memcpy(f.ram.data()+0x400000,data.data(),data.size());check(templates.load(data));const auto loaded=call(f.ram.data(),0x5921d0,0x400000);check(GPR_U32(&loaded,2)==1&&templates.state().count==read<std::uint16_t>(f.ram.data(),0x74ccf0));check(std::memcmp(templates.state().templates.data(),f.ram.data()+0x74bb50,129*24)==0&&std::memcmp(templates.state().selectors.data(),f.ram.data()+0x74b6e0,600)==0);++owned_template_banks;
+            for(unsigned bits=0;bits<65536;++bits){const auto result=call(f.ram.data(),0x5b42b0,bits|0xa5000000u);const auto selected=templates.selector(std::bit_cast<std::int16_t>(std::uint16_t(bits)));check(GPR_U32(&result,2)==std::uint32_t(std::int32_t(selected)));++selector_cases;}
+            for(unsigned index=0;index<129;++index){const auto descriptor=descriptor_at;f.ram[descriptor]=1;f.ram[descriptor+43]=std::uint8_t(index);const auto result=call(f.ram.data(),0x5b43f0,3,UINT32_MAX);check(templates.flags(std::uint8_t(index))==GPR_U32(&result,2));++template_flag_cases;}
+            s::SceneResources resources;std::fill_n(f.ram.data()+0x3c5630,256*60,0);put(f.ram.data(),0x743128,0u);
+            const auto allocate=[&](unsigned serial){const unsigned room=serial*117u+0x12340000u,authored=serial*7757u+0x88880000u,content=serial*11713u+0xf0000000u;const auto original=call(f.ram.data(),0x591ae0,room,authored,content);const auto native=resources.allocate(std::uint8_t(room),std::uint16_t(authored),std::uint16_t(content),templates);const auto raw=GPR_U32(&original,2);
+                check(bool(native.id)==bool(raw));check(resources.active_count()==read<unsigned>(f.ram.data(),0x743128));if(!raw){check(native.status==s::SceneStatus::full);return native;}
+                check(native.status==s::SceneStatus::completed&&raw==0x3c5630u+60u*native.slot);
+                const auto value=resources.get(*native.id);check(bool(value));
+                check(value->active==f.ram[raw]&&value->room==f.ram[raw+1]&&value->instance_index==f.ram[raw+2]&&value->kind==f.ram[raw+3]);
+                check(value->authored_id==read<std::uint16_t>(f.ram.data(),raw+4)&&value->attachment_id==read<std::uint16_t>(f.ram.data(),raw+6));
+                check(!value->primary&&!value->secondary&&value->flags==read<unsigned>(f.ram.data(),raw+24)&&value->parameter==0&&value->ownership_tag==0&&value->template_index==f.ram[raw+43]);++descriptor_allocations;return native;
+            };
+            std::array<s::SceneResourceId,256> ids;for(unsigned i=0;i<255;++i){const auto created=allocate(i);check(created.id&&created.slot==i+1);ids[i+1]=*created.id;}check(!allocate(255).id&&resources.active_count()==255);
+            for(unsigned slot:{1u,51u,117u,255u}){call(f.ram.data(),0x591be0,slot);check(resources.deactivate(ids[slot])==s::SceneStatus::completed);}
+            for(unsigned slot:{1u,51u,117u,255u}){const auto created=allocate(1000+slot);check(created.id&&created.slot==slot&&*created.id!=ids[slot]&&!resources.get(ids[slot]));}check(!allocate(256).id);
+            // Coherent counts enforce255-active refusal even though reserved0 is free.
+            check(resources.active_count()==255&&!allocate(3000).id);
+        }
+    }
+    {
         active_case="native safety refusals";Fixture f;f.reset();g::ResourceModels foreign;const auto other=foreign.create();bool refused{};try{f.frames.common(other.id,*other.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
         for(unsigned owner:{5u,128u,32768u}){f.reset(owner);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;}
         f.reset(1,0x800u);refused=false;try{f.frames.common(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
@@ -219,5 +244,5 @@ int main(int argc,char** argv)try{
         f.reset();descriptor=*f.resources.get(*f.resources.slot(3));descriptor.kind=1;descriptor.primary=capability;check(f.resources.replace(*f.resources.slot(3),descriptor)==s::SceneStatus::completed);check(f.resources.flag800(*f.resources.slot(3),1)==s::SceneStatus::provider_unavailable);++refusals;
         f.reset();check(f.models.retire(f.created.id)==g::ResourceModelStatus::completed);refused=false;try{f.frames.weapon(f.created.id,*f.created.model);}catch(const std::runtime_error&){refused=true;}check(refused);++refusals;
     }
-    std::cout<<"{\"checks\":"<<checks<<",\"common_cases\":"<<common_cases<<",\"weapon_cases\":"<<weapon_cases<<",\"sequence_frames\":"<<sequence_frames<<",\"source_calls\":"<<source_calls<<",\"passes\":"<<passes<<",\"refusals\":"<<refusals<<",\"pose_cases\":"<<pose_cases<<",\"release_cases\":"<<release_cases<<",\"deactivation_cases\":"<<deactivation_cases<<",\"template_flag_cases\":"<<template_flag_cases<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"common_cases\":"<<common_cases<<",\"weapon_cases\":"<<weapon_cases<<",\"sequence_frames\":"<<sequence_frames<<",\"source_calls\":"<<source_calls<<",\"passes\":"<<passes<<",\"refusals\":"<<refusals<<",\"pose_cases\":"<<pose_cases<<",\"release_cases\":"<<release_cases<<",\"deactivation_cases\":"<<deactivation_cases<<",\"template_flag_cases\":"<<template_flag_cases<<",\"owned_template_banks\":"<<owned_template_banks<<",\"selector_cases\":"<<selector_cases<<",\"descriptor_allocations\":"<<descriptor_allocations<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

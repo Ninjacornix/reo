@@ -16,7 +16,7 @@ def main():
     assert sha(elf) == '06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     assert sha(overlay) == '45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226'
     read = elf_reader(elf.read_bytes()); raw = overlay.read_bytes()
-    addresses = [0x590be0,0x590c70,0x590d80,0x590ea0,0x5932f0,0x592770,0x591be0,0x5b43f0,0x5b1850,0x5b1a90,0x5c1120,0x5c11b0,0x5c12a0,
+    addresses = [0x590be0,0x590c70,0x590d80,0x590ea0,0x5932f0,0x592770,0x591be0,0x5b43f0,0x5b1850,0x5b1a90,0x5c1120,0x5c11b0,0x5c12a0,0x591ae0,0x5b42b0,0x5921d0,
                  0x6b4420,0x6b45c0,0x6b4a30,0x1902d0,0x18fe20,0x18f570,0x1900e0,0x190060,
                  0x1904a0,0x191f80,0x190020,0x18feb0,0x1913e0]
     originals=[]; bodies=[]; proof=[]
@@ -71,16 +71,23 @@ def main():
             iso.seek(member['iso_offset']); payload=iso.read(member['bytes'])
             assert hashlib.sha256(payload).hexdigest()==member['sha256']
             data.write(struct.pack('<I',len(payload))+payload)
+    template_members=[m for m in json.loads(inventory.read_bytes()) if any(n.lower().startswith('item') and n.lower().endswith('.dat') for n in m.get('names',[]))]
+    assert len(template_members)==5
+    with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb') as iso,(out/'owned_templates.bin').open('wb') as data:
+        data.write(struct.pack('<I',len(template_members)))
+        for member in template_members:
+            iso.seek(member['iso_offset']);payload=iso.read(member['bytes']);assert hashlib.sha256(payload).hexdigest()==member['sha256']
+            offset,size=struct.unpack_from('<II',payload,0);assert offset+size<=len(payload);section=payload[offset:offset+size];data.write(struct.pack('<I',len(section))+section)
     cc=COMPILERS[args.compiler]; exe=out/'frames.exe'
     command=[str(cc),'-std=c++20','-O2','-msse4.1','-Wall','-Wextra','-Wpedantic','-Werror',
              '-Wno-unused-parameter','-Wno-unused-label','-fno-fast-math','-ffp-contract=off',
              '-I'+str(out/'source'),'-I'+str(out),*[str(out/'source'/n.relative_to(ROOT)) for n in units],
              str(out/'source'/tests.relative_to(ROOT)),str(out/'original.cpp'),'-o',str(exe)]
     record=dict(schema=1,status='failed',game_run=False,source_sha256=before,original_word_audits=proof,
-                compiler_sha256=sha(cc),owned_constants=constants,weapon_assets=members,checks=[])
+                compiler_sha256=sha(cc),owned_constants=constants,weapon_assets=members,template_assets=template_members,checks=[])
     env=dict(os.environ); env['PATH']=str(cc.parent)+os.pathsep+env.get('PATH','')
     try:
-        for label,cmd in [('compile',command),('test',[str(exe),str(out/'owned_wmd.bin')])]:
+        for label,cmd in [('compile',command),('test',[str(exe),str(out/'owned_wmd.bin'),str(out/'owned_templates.bin')])]:
             result=subprocess.run(cmd,capture_output=True,env=env,timeout=180)
             (out/(label+'.stdout.txt')).write_bytes(result.stdout); (out/(label+'.stderr.txt')).write_bytes(result.stderr)
             record['checks'].append(dict(label=label,exit=result.returncode,command=cmd))

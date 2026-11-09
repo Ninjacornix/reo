@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -26,6 +27,12 @@ class ResourceTemplates final {
     }
     std::int8_t action_kind(std::uint8_t template_index) const;
     std::uint32_t flags(std::uint8_t template_index) const;
+    // Complete5B42B0. Invalid content returns0; a tableFF is signed-1.
+    std::int8_t selector(std::int16_t content) const noexcept {
+        std::int32_t index=content;
+        if(index>=10000)index=index%100+500;
+        return index<0||index>=600?std::int8_t(0):std::bit_cast<std::int8_t>(state_.selectors[unsigned(index)]);
+    }
 
   private:
     ResourceTemplateState state_;
