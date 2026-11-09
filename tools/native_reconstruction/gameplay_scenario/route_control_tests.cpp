@@ -14,7 +14,7 @@ int main()try{
     for(unsigned profile=0;profile<16;++profile){
         ControlFixture controls(profile);const auto add=[&](vm::SceneControlBody body,std::uint32_t id,std::uint8_t enabled){controls.ids.push_back(*controls.owner.append({id,enabled,std::move(body)}));};
         add(vm::ControlTypeZero{1,2,3,4,vm::ControlRouteDestination{0xfedcba98,0x76543210}},7,0);
-        add(vm::ControlTypeTwo{5,6,7,8,9,vm::ControlRouteDestination{0x87654321,0xabcdef01}},7,0xff);
+        add(vm::ControlTypeTwo{5,6,7,8,9,vm::ControlModelReference{0x87654321,0xabcdef01}},7,0xff);
         add(vm::ControlTypeZero{1,2,3,4,vm::ControlRouteDestination{0,0}},0x10000007,1);
         add(vm::ControlOther{0},8,0);add(vm::ControlOther{2},9,0xff);
         for(unsigned request=0;request<256;++request){

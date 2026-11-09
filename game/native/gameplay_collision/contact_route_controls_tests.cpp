@@ -47,8 +47,8 @@ struct Services final : d::RouteServices {
                 if (auto* zero = std::get_if<sc::ControlTypeZero>(&record->body))
                     zero->destination = sc::ControlRouteDestination{t.room, t.edge};
                 else
-                    std::get<sc::ControlTypeTwo>(record->body).destination =
-                        sc::ControlRouteDestination{t.room, t.edge};
+                    std::get<sc::ControlTypeTwo>(record->body).model_reference =
+                        sc::ControlModelReference{t.room, t.edge};
                 check(controls->replace(ids[i], *record) == sc::ControlStatus::completed,
                       "canonical destination updated during actual effect");
             }
@@ -113,7 +113,7 @@ int main() {
                 record.body = body;
             } else {
                 sc::ControlTypeTwo body;
-                body.destination = sc::ControlRouteDestination{t.room, t.edge};
+                body.model_reference = sc::ControlModelReference{t.room, t.edge};
                 record.body = body;
             }
             const auto id = services.controls->append(record);
