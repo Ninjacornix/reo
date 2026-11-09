@@ -12,15 +12,17 @@ struct OwnerEffects final:vm::SceneOwners{
         if(owner.family==vm::SceneOwnerFamily::extended)events.emplace_back(0,owner.index,0);
         return entity;
     }
-    void detach(vm::SceneResources& resources,const reo::native::gameplay_actors::EntityId& id,std::uint8_t index)noexcept override{
+    vm::SceneStatus detach(vm::SceneResources& resources,const reo::native::gameplay_actors::EntityId& id,std::uint8_t index)noexcept override{
         if(id!=entity)std::terminate();
         events.emplace_back(2,selected,index);
         if(mutate_instance_indices){auto d=*resources.get(resource);d.instance_index=23;resources.replace(resource,d);}
+        return vm::SceneStatus::completed;
     }
-    void refresh(vm::SceneResources& resources,const reo::native::gameplay_actors::EntityId& id)noexcept override{
+    vm::SceneStatus refresh(vm::SceneResources& resources,const reo::native::gameplay_actors::EntityId& id)noexcept override{
         if(id!=entity)std::terminate();
         events.emplace_back(3,selected,0);
         if(mutate_instance_indices){auto d=*resources.get(resource);d.instance_index=29;resources.replace(resource,d);}
+        return vm::SceneStatus::completed;
     }
 };
 unsigned original_owner(std::uint32_t address){return address>=0x600000?(address-0x600000)/0x100+4:(address-0x4a5c30)/0x10e0;}

@@ -61,8 +61,8 @@ class SceneOwners {
 public:
     virtual ~SceneOwners()=default;
     virtual std::optional<gameplay_actors::EntityId> resolve(SceneOwnerReference)noexcept=0;
-    virtual void detach(SceneResources&,const gameplay_actors::EntityId&,std::uint8_t instance_index)noexcept=0;
-    virtual void refresh(SceneResources&,const gameplay_actors::EntityId&)noexcept=0;
+    virtual SceneStatus detach(SceneResources&,const gameplay_actors::EntityId&,std::uint8_t instance_index)noexcept=0;
+    virtual SceneStatus refresh(SceneResources&,const gameplay_actors::EntityId&)noexcept=0;
 };
 // Externally serialized native descriptor owner. Loading a slot retires its old
 // identity; authored lookup preserves the original first-of-256 ordering.

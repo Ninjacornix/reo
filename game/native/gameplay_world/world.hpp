@@ -5,6 +5,7 @@
 #include "../gameplay_collision/actors.hpp"
 #include "../gameplay_collision/contact_component.hpp"
 #include "../gameplay_scenario/model_reference.hpp"
+#include "inventory_state.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -43,6 +44,8 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t appearance_variant{}; // original BBC; separate from character B98 and model_variant BB4
     std::uint8_t motion_subtype{},motion_style{},previous_motion_class{};
     std::uint8_t selected_resource{},secondary_resource{},model_pose_class{};
+    std::uint8_t secondary_equipped_resource{}; // C7D; secondary_resource is a distinct audio/model selector
+    InventorySlots inventory;
     gameplay_scenario::ModelReference scene_model{128}; // resolved ABB model identity, not an authored remap index
     float motion_rate{1};
     std::uint16_t resource_action{};

@@ -32,8 +32,8 @@ struct SceneFixture final:vm::SceneEffects,vm::SceneOwners{
         if(owner.family==vm::SceneOwnerFamily::extended)effects.emplace_back(4,owner.index);
         return entity;
     }
-    void detach(vm::SceneResources&,const reo::native::gameplay_actors::EntityId& actor,std::uint8_t index)noexcept override{if(actor!=entity)std::terminate();effects.emplace_back(5,index);}
-    void refresh(vm::SceneResources&,const reo::native::gameplay_actors::EntityId& actor)noexcept override{if(actor!=entity)std::terminate();effects.emplace_back(6,0);}
+    vm::SceneStatus detach(vm::SceneResources&,const reo::native::gameplay_actors::EntityId& actor,std::uint8_t index)noexcept override{if(actor!=entity)std::terminate();effects.emplace_back(5,index);return vm::SceneStatus::completed;}
+    vm::SceneStatus refresh(vm::SceneResources&,const reo::native::gameplay_actors::EntityId& actor)noexcept override{if(actor!=entity)std::terminate();effects.emplace_back(6,0);return vm::SceneStatus::completed;}
 };
 } // namespace
 void o2_00591620_0x591620(std::uint8_t* r,R5900Context* c,PS2Runtime*){scene_effects.emplace_back(0,r[GPR_U32(c,4)+2]);done(c);}

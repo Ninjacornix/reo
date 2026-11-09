@@ -18,6 +18,7 @@ public:
     void release(std::uint8_t,bool clear_owner_flag=false);
 private:
     friend class ResourceFactory;
+    friend class WorldInventory;
     World& world_;
     gameplay_scenario::SceneResources& resources_;
     ResourceModels& models_;

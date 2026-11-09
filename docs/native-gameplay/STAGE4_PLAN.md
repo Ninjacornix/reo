@@ -28,6 +28,12 @@ the actual native construction/release/deactivation owners to SceneEffects and
 propagates unavailable effects to the interpreter. Current unpinned scenario
 regressions pass on both compilers. Actor inventory/extended ownership, special
 companions and the actual game installer remain separate gates.
+The [canonical inventory follow-up](INVENTORY_PRIMARY_OWNER.md) now owns carried/
+storage handles on the real native Actor and supplies find/removal/insertion/
+compaction plus primary SceneOwners detach/refresh through actual resource
+release. Both compiler comparisons and current scenario regressions pass.
+Equipment/use/recipe/transfer, extended actors and actual installation remain
+open; the stage is still incomplete.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners

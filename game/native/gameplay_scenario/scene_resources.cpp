@@ -105,8 +105,8 @@ SceneStatus SceneResources::detach(const AttachedSceneResource& attached,SceneEf
     const auto entity=owners->resolve(attached.owner);
     if(!entity||!bool(*entity))return SceneStatus::provider_unavailable;
     current=get(attached.id);if(!current)return SceneStatus::invalid_identity;
-    owners->detach(*this,*entity,current->instance_index);
-    owners->refresh(*this,*entity);
+    const auto detached=owners->detach(*this,*entity,current->instance_index);if(detached!=SceneStatus::completed)return detached;
+    const auto refreshed=owners->refresh(*this,*entity);if(refreshed!=SceneStatus::completed)return refreshed;
     current=get(attached.id);if(!current)return SceneStatus::invalid_identity;
     return effects->apply(*this,attached.id,SceneEffect::retire_instance,current->instance_index);
 }
