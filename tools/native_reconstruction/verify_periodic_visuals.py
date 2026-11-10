@@ -26,6 +26,7 @@ def main():
     p.add_argument('--resource-delayed', action='store_true')
     p.add_argument('--resource-actions', action='store_true')
     p.add_argument('--resource-inventory', action='store_true')
+    p.add_argument('--resource-content', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -38,6 +39,7 @@ def main():
     assert not args.resource_delayed or args.resource_placement
     assert not args.resource_actions or args.resource_delayed
     assert not args.resource_inventory or args.resource_actions
+    assert not args.resource_content or args.resource_inventory
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -91,12 +93,16 @@ def main():
         for at in [0x591620,0x591860,0x5b4380,0x5927f0,0x5c62f0,0x5c1120,0x5c11b0,0x5c12a0]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_delayed:
-        at=0x591400;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+        for at in [0x591400,0x5919f0]:
+            entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_actions:
         for at in [0x592900,0x592960,0x592a10,0x592b00,0x592b90,0x5b1850,0x591be0]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_inventory:
         for at in [0x5f2120,0x5f2180,0x5f22c0,0x5f2330,0x5f27b0,0x5b43f0,0x5b1a90,0x592ca0,0x5b4a50]:
+            entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_content:
+        for at in [0x591510,0x5b4c90,0x5b4bf0,0x5b4e60,0x5b3c70]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
@@ -135,6 +141,7 @@ def main():
         units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_world/resource_factory.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','gameplay_scenario/resource_collisions.cpp','animation/weapon_program.cpp']]
     units=list(dict.fromkeys(units))
     if args.resource_inventory: units+=['game/native/gameplay_world/inventory.cpp']
+    if args.resource_content: units+=['game/native/gameplay_world/resource_use.cpp','game/native/gameplay_world/resource_contents.cpp']
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
@@ -172,6 +179,8 @@ def main():
         name='tools/native_reconstruction/resource_actions_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_inventory:
         name='tools/native_reconstruction/resource_inventory_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_content:
+        name='tools/native_reconstruction/resource_content_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -305,6 +314,7 @@ def main():
         if args.resource_delayed: command.insert(1,'-DREO_RESOURCE_DELAYED=1')
         if args.resource_actions: command.insert(1,'-DREO_RESOURCE_ACTIONS=1')
         if args.resource_inventory: command.insert(1,'-DREO_RESOURCE_INVENTORY=1')
+        if args.resource_content: command.insert(1,'-DREO_RESOURCE_CONTENT=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')

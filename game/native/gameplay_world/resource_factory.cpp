@@ -70,6 +70,22 @@ ResourceModelCreated ResourceFactory::create_delayed(std::uint16_t content,std::
     }catch(const std::bad_alloc&){(void)models_.retire(result.id);return{ResourceModelStatus::no_memory,{},{}};}
     catch(const std::exception&){(void)models_.retire(result.id);return{ResourceModelStatus::unavailable,{},{}};}
 }
+void ResourceFactory::rebind(const ResourceModelId& id,std::uint16_t content){
+    const auto held=models_.retain(id);if(!held)throw std::runtime_error("Native resource rebind identity foreign or retired");
+    auto& model=*held;frames_.admit(id,model);model.content_id=content;
+    const auto descriptor=frames_.descriptor(model.resource_slot);
+    const auto selector=descriptor.active&&descriptor.template_index!=255?unsigned(descriptor.template_index):128u;
+    if(selector>=templates_.state().templates.size())throw std::runtime_error("Native resource rebind template unavailable");
+    const auto callback_class=std::bit_cast<std::int8_t>(std::to_integer<std::uint8_t>(templates_.state().templates[selector].encoded[20]));
+    if(callback_class<0||callback_class>3)throw std::runtime_error("Native resource rebind callback consumer unavailable");
+    if(callback_class==1)model.work=std::make_shared<WeaponModelWork>(frames_);
+    else if(callback_class==2)model.work=std::make_shared<DelayedResourceWork>(*this);
+    else model.work=std::make_shared<CommonModelWork>(frames_);
+    model.asset_index=assets_->find(std::bit_cast<std::int16_t>(content));
+    if(model.asset_index<0){model.visible=false;model.base_parts.reset();return;}
+    model.visible=true;model.base_parts=assets_->parts(model.asset_index);
+    for(unsigned part=0;part<model.base_parts->count;++part){model.part_enabled[part]=1;model.parts[part]=model.base_parts->poses[part];}
+}
 void ResourceFactory::delayed_frame(ResourceModels& models,const ResourceModelId& id,ResourceModel& model){
     using namespace gameplay_scenario;
     if(&models!=&models_)throw std::runtime_error("Native delayed resource model owner foreign");

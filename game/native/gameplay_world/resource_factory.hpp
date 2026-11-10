@@ -15,8 +15,7 @@ private:
     std::weak_ptr<ResourceFactoryToken> owner_;
 };
 //591230 primary construction for the concrete common/weapon work families.
-// The six special5DF450 companion routes are unavailable
-// until their actual consumers are supplied; no successful provider substitutes.
+// The six special5DF450 companion routes require bound actual visual consumers.
 class ResourceFactory final:public gameplay_scenario::SceneEffects {
 public:
     ResourceFactory(ResourceModels&,ResourceFrames&,
@@ -27,6 +26,9 @@ public:
     ResourceFactory& operator=(const ResourceFactory&)=delete;
     ResourceModelCreated create(std::uint16_t content,std::int8_t companion_argument=0);
     ResourceModelCreated create_delayed(std::uint16_t content,std::int16_t ticks);
+    // Complete591510. Reuses this instance, retaining untouched state and
+    // trailing part masks/poses. Rebinding does not construct companions.
+    void rebind(const ResourceModelId&,std::uint16_t content);
     bool bind_companions(gameplay_effects::PeriodicVisuals&)noexcept;
     // Retains the actual immutable floor grid for this room and validates the
     // canonical shared scene owner. A later room change invalidates admission.
@@ -38,6 +40,7 @@ public:
 private:
     friend class DelayedResourceWork;
     friend class gameplay_weapon_resources::Equipment;
+    friend class ResourceContents;
     ResourceModels& models_;
     ResourceFrames& frames_;
     const gameplay_scenario::ResourceTemplates& templates_;

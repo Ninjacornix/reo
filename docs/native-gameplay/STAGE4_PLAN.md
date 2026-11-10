@@ -20,6 +20,8 @@ The current resource and inventory implementation includes:
 - [Canonical inventory primitives](INVENTORY_PRIMARY_OWNER.md), including actual
   primary SceneOwners detach/refresh, plus [resource use and content lookup](RESOURCE_USE.md)
   through the same descriptor, actor and model owners.
+- [Content replacement and model rebinding](RESOURCE_CONTENT.md), preserving
+  untouched instance state and selecting work through its actual descriptor.
 
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler

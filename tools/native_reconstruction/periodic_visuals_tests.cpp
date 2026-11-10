@@ -169,6 +169,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_INVENTORY
 #include "tools/native_reconstruction/resource_inventory_tests.inc"
 #endif
+#ifdef REO_RESOURCE_CONTENT
+#include "tools/native_reconstruction/resource_content_tests.inc"
+#endif
 #ifdef REO_WEAPON_RESOURCES
 #include "tools/native_reconstruction/weapon_resources_tests.inc"
 #endif
@@ -289,6 +292,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_INVENTORY
     compare_resource_inventory(argv[2],argv[3],ram);
 #endif
+#ifdef REO_RESOURCE_CONTENT
+    compare_resource_content(argv[2],argv[3],ram);
+#endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
@@ -333,6 +339,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_INVENTORY
     <<",\"inventory_lookups\":"<<inventory_lookups<<",\"inventory_removals\":"<<inventory_removals<<",\"inventory_compactions\":"<<inventory_compactions<<",\"inventory_insertions\":"<<inventory_insertions<<",\"inventory_detachments\":"<<inventory_detachments<<",\"inventory_refusals\":"<<inventory_refusals
+#endif
+#ifdef REO_RESOURCE_CONTENT
+    <<",\"content_cases\":"<<content_cases<<",\"content_rebinds\":"<<content_rebinds<<",\"content_refusals\":"<<content_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads
