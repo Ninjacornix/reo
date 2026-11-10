@@ -25,11 +25,11 @@ The current resource and inventory implementation includes:
 - [Compatibility and quantity transfer](RESOURCE_PAIRS.md), including the
   character-specific table and actual model/collision retirement on depletion.
 - [Recipe primitive execution](RESOURCE_RECIPES.md), including actual content,
-  model and inventory consumers. The main owned dispatcher still requires its
-  actual cooperative event consumer.
+  model and inventory consumers, and the [main owned dispatcher](OWNED_RESOURCE_RECIPES.md)
+  with its actual cooperative event consumer.
 - [Cooperative event evidence](COOPERATIVE_EVENTS.md), with a bounded native
-  pool bound to the actual update clock and room. Recipe/event producers and
-  statistics/save consumers remain separate integration work.
+  pool bound to the actual update clock and room. The owned-recipe producer is
+  bound; other event producers and statistics/save consumers remain open.
 
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler

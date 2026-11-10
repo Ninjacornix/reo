@@ -39,7 +39,8 @@ cached production objects. Missing-header/link cohorts and the initial parent
 fixture constructor error are retained. Production warning checks remain enabled.
 Evidence is sealed in `native_cooperative_events_qualification_v1.json`.
 
-The owned recipe consumer is the next binding. Remaining event producers,
+The [owned recipe consumer](OWNED_RESOURCE_RECIPES.md) now binds this actual
+update-owned pool, with complete original comparisons. Remaining event producers,
 statistics/export/save consumers and actual game caller installation remain
 open. No game, audio output device or foreground test was used. Installed V39
 is unchanged and Stage4, including coherent gameplay acceptance, is incomplete.

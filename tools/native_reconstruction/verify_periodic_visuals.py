@@ -9,6 +9,7 @@ import subprocess
 import struct
 from effect_work_sources import SURFACE_WORLD_UNITS
 from comparison_objects import compile_objects
+from gameplay_update_sources import UPDATE_UNITS
 from audit_retail_effect_descriptors import compare_source, elf_reader
 ROOT = Path(__file__).resolve().parents[2]
 sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
@@ -29,6 +30,7 @@ def main():
     p.add_argument('--resource-content', action='store_true')
     p.add_argument('--resource-pairs', action='store_true')
     p.add_argument('--resource-recipes', action='store_true')
+    p.add_argument('--owned-recipes', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -44,6 +46,7 @@ def main():
     assert not args.resource_content or args.resource_inventory
     assert not args.resource_pairs or args.resource_content
     assert not args.resource_recipes or args.resource_pairs
+    assert not args.owned_recipes or args.resource_recipes
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -114,6 +117,9 @@ def main():
     if args.resource_recipes:
         for at in [0x5b2d00,0x5b2dc0,0x5b2e70,0x5b2ec0,0x5b2f00,0x5b3080,0x5b30f0,0x5b31b0,0x5b3200,0x5b3380,0x5b3400,0x5b3490,0x5b3590,0x5b3640,0x5b1b50]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.owned_recipes:
+        for at in [0x5b28f0,0x5b6740,0x1b0340,0x1b02d0,0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]:
+            bank='sub'if at<0x370000 else'o0'if at<0x570000 else'o2';folder=ROOT/('recomp/config/output'if bank=='sub'else'recomp/config/output_ovl/'+bank);entries[at]=next(folder.glob(f'{bank}_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -137,6 +143,8 @@ def main():
         begin, end = [int(v, 16) for v in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)', (ROOT / name).read_text()).groups()]
         reader = main_read if at < 0x370000 else (lambda a, n: overlay['o0'][a - 0x370000:a - 0x370000 + n]) if at < 0x570000 else lambda a, n: overlay['o2'][a - 0x570000:a - 0x570000 + n]
         proof.append(compare_source('complete periodic visual factory, pools, update, resource sampling or camera helper', name, begin, end, reader))
+    if args.owned_recipes:
+        getter='recomp/config/output/sub_001B0300_0x1b0300.cpp';proof.append(compare_source('exact three-word raw-mode getter; bounded fixture port',getter,0x1b0300,0x1b030c,main_read))
     units = ['game/native/gameplay_effects/' + n + '.cpp' for n in ['periodic_visuals', 'geometry', 'tracks']]
     units += ['game/native/animation/' + n + '.cpp' for n in ['model', 'model_math', 'curves']]
     units += ['game/native/transform_math/transform_math.cpp', 'game/native/gameplay_actors/entity.cpp']
@@ -154,6 +162,7 @@ def main():
     if args.resource_content: units+=['game/native/gameplay_world/resource_use.cpp','game/native/gameplay_world/resource_contents.cpp']
     if args.resource_pairs: units+=['game/native/gameplay_world/resource_pairs.cpp']
     if args.resource_recipes: units+=['game/native/gameplay_world/resource_recipes.cpp']
+    if args.owned_recipes: units+=UPDATE_UNITS+['game/native/gameplay_world/owned_resource_recipes.cpp']
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
@@ -175,7 +184,7 @@ def main():
                 files.append(relative)
     fixture = 'tools/native_reconstruction/periodic_visuals_tests.cpp'
     helper = 'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
-    for name in originals + [fixture, helper, Path(__file__).relative_to(ROOT).as_posix(),'tools/native_reconstruction/comparison_objects.py']:
+    for name in originals + [fixture, helper, Path(__file__).relative_to(ROOT).as_posix(),'tools/native_reconstruction/comparison_objects.py','tools/native_reconstruction/gameplay_update_sources.py']:
         frozen[name] = (ROOT / name).read_bytes()
     if args.resource_pulses:
         name='tools/native_reconstruction/resource_pulses_tests.inc';frozen[name]=(ROOT/name).read_bytes()
@@ -197,6 +206,8 @@ def main():
         name='tools/native_reconstruction/resource_pairs_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_recipes:
         name='tools/native_reconstruction/resource_recipes_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.owned_recipes:
+        for name in ['tools/native_reconstruction/owned_resource_recipes_tests.inc',getter]:frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -280,6 +291,10 @@ def main():
             native_pairs=re.findall(r'\{(\d+),(\d+)\}',frozen['game/native/gameplay_world/resource_special_recipe_profile.inc'].decode())
             assert struct.pack('<22h',*(int(v)for pair in native_pairs for v in pair))==raw_pairs
             record['special_recipe_table']={'address':'0x709ef0','bytes':raw_pairs.hex()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in raw_pairs)+'};std::memcpy(memory+0x709ef0,data,sizeof data);}'
+        if args.owned_recipes:
+            for at,size in [(0x73e4f0,24*4),(0x73e590,8*4),(0x389d30,39)]:
+                raw=overlay['o2'][at-0x570000:at-0x570000+size]if at>=0x570000 else overlay['o0'][at-0x370000:at-0x370000+size];record.setdefault('owned_recipe_constants',{})[hex(at)]=raw.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in raw)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+            record['declared_ports'].append('1B0300 exact three-word raw-mode getter3243F2; actual1B0340/1B02D0 bodies execute')
         if args.resource_placement:
             for at,size in [(0x723340,800),(0x723660,224)]:
                 raw=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('placement_constants',{})[hex(at)]=raw.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in raw)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
@@ -338,6 +353,7 @@ def main():
         if args.resource_content: command.insert(1,'-DREO_RESOURCE_CONTENT=1')
         if args.resource_pairs: command.insert(1,'-DREO_RESOURCE_PAIRS=1')
         if args.resource_recipes: command.insert(1,'-DREO_RESOURCE_RECIPES=1')
+        if args.owned_recipes: command.insert(1,'-DREO_OWNED_RECIPES=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')

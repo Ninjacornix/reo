@@ -44,6 +44,9 @@ struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{
 #endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_OWNED_RECIPES
+    if(context->pc==0x1b0300){SET_GPR_U32(context,2,memory[0x3243f2]);done();return;}
+#endif
 #ifdef REO_RESOURCE_COMPANIONS
     if(companion_live_capture){
         if(context->pc==0x6b2680){++companion_light_requests;done();return;}
@@ -178,6 +181,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_RECIPES
 #include "tools/native_reconstruction/resource_recipes_tests.inc"
 #endif
+#ifdef REO_OWNED_RECIPES
+#include "tools/native_reconstruction/owned_resource_recipes_tests.inc"
+#endif
 #ifdef REO_WEAPON_RESOURCES
 #include "tools/native_reconstruction/weapon_resources_tests.inc"
 #endif
@@ -307,6 +313,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_RECIPES
     compare_resource_recipes(argv[2],argv[3],ram);
 #endif
+#ifdef REO_OWNED_RECIPES
+    compare_owned_resource_recipes(argv[2],argv[3],ram);
+#endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
@@ -360,6 +369,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_RECIPES
     <<",\"recipe_primitive_cases\":"<<recipe_primitive_cases<<",\"recipe_active_cases\":"<<recipe_active_cases<<",\"recipe_owner_cases\":"<<recipe_owner_cases<<",\"recipe_refusals\":"<<recipe_refusals
+#endif
+#ifdef REO_OWNED_RECIPES
+    <<",\"owned_recipe_cases\":"<<owned_recipe_cases<<",\"owned_recipe_event_cases\":"<<owned_recipe_event_cases<<",\"owned_recipe_event_mask\":"<<owned_recipe_event_mask<<",\"owned_recipe_refusals\":"<<owned_recipe_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads

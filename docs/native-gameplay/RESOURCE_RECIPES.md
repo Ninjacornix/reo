@@ -48,8 +48,8 @@ owner199 path explicitly refuses. Missing required actors, invalid metadata and
 foreign/closed owner compositions also refuse. Existing admitted-model limits
 and ResourcePairs' explicit special-owner admission limits still apply.
 
-The main owned-pair dispatcher5B28F0 additionally publishes5B6740 cooperative
-events. Its actual event consumer is the next dependency; it is not a no-op in
-this checkpoint. Higher inventory/gameplay/UI callers, remaining native state,
+The [owned-pair follow-up](OWNED_RESOURCE_RECIPES.md) now supplies5B28F0 and its
+actual5B6740 cooperative event consumer, with separate complete-chain comparisons.
+Higher inventory/gameplay/UI callers, remaining native state,
 durable saves and actual game installation/acceptance remain open. No game or
 audio device was launched; installed V39 is unchanged and Stage4 is incomplete.
