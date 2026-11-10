@@ -103,6 +103,7 @@ struct Session : actors::HitSession {
     gameplay_session::Options options;
     std::uint8_t previous_primary{},previous_secondary{};
     std::uint8_t inventory_owner{}; // source4BADEE: zero inactive,1..4 primary owner tags
+    std::array<std::array<std::uint8_t,8>,4> auxiliary_resources{}; // first four session recovery lists4BAC52; independent of entity lifetime
     std::uint8_t control_notice{};
     std::optional<std::uint16_t> scenario;
     std::optional<std::uint16_t> last_scenario_audio; // original316550, written even when a bank request is rejected

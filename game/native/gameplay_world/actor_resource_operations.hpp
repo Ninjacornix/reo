@@ -12,6 +12,7 @@ public:
         std::uint32_t resource); //5F5C50
     std::int8_t remap_content(const actors::EntityId&,std::uint32_t mode,
         std::uint32_t resource); //5F6A80
+    std::int8_t transfer_inventory(const actors::EntityId&,std::uint32_t mode); //5F6800
 private:
     ResourceRecipes& resources_;World& world_;
     std::shared_ptr<Actor> actor(const actors::EntityId&)const;

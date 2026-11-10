@@ -1,4 +1,5 @@
 #include "actor_resource_operations.hpp"
+#include "resource_auxiliary_lists.hpp"
 #include <stdexcept>
 namespace reo::native::gameplay_world {
 ActorResourceOperations::ActorResourceOperations(ResourceRecipes& resources):resources_(resources),world_(resources.pairs_.world_){
@@ -35,5 +36,19 @@ std::int8_t ActorResourceOperations::remap_content(const actors::EntityId& id,st
     const auto result=resources_.contents_.remap(resource);
     if(result&&value->selected_resource==std::uint8_t(resource)){resources_.pairs_.frames_.release(std::uint8_t(resource),true);value->selected_resource=0;value->resource_action=0;}
     if(mode!=1){notice(*value,0x8000,std::uint8_t(resource));}return std::int8_t(result);
+}
+std::int8_t ActorResourceOperations::transfer_inventory(const actors::EntityId& id,std::uint32_t full_mode){
+    const auto value=actor(id);const auto mode=std::uint8_t(full_mode);
+    if(value->category!=0||(mode==0&&value->slot!=world_.selected_actor)||(mode==1&&value->slot==world_.selected_actor))return -1;
+    if(value->selected_resource){resources_.pairs_.frames_.release(value->selected_resource,true);value->selected_resource=0;value->resource_action=0;}
+    if(value->auxiliary_status&0x02000000u)return -1;
+    value->auxiliary_status|=0x02000000u;
+    if(!value->inventory.carried[0]&&!value->inventory.storage[0])return -1;
+    ResourceAuxiliaryLists lists(resources_.inventory_);
+    auto count=lists.append(value->slot,value->inventory.carried,4);
+    if(value->character==6)count=std::int8_t(count+lists.append(value->slot,value->inventory.storage,32));
+    value->inventory.carried.fill(0);value->inventory.storage.fill(0);
+    if(mode!=1)value->pending_notice|=0x2000u;
+    return count;
 }
 }

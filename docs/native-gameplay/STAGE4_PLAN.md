@@ -89,6 +89,11 @@ The current resource and inventory implementation includes:
   World/frame/behavior and resets the canonical D28 control counter directly.
   Other hit effects, periodic progression, initialization/import and installation
   remain open.
+- [Auxiliary resource lists and inventory transfer](RESOURCE_AUXILIARY_LISTS.md)
+  now supply5B5F10/5B6180/5B6300 and the actual5F6800 actor caller through the
+  canonical Session, descriptors, templates and real model retirement. Terminal
+  and periodic-gauge callers, other list producers/consumers, semantic save/load
+  and game installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

@@ -13,7 +13,7 @@
 
 struct alignas(16) Register {union{__m128i vector;std::uint64_t lane[2];};Register():vector(_mm_setzero_si128()){};};
 struct R5900Context {
-    Register r[32];float f[32]{};std::uint64_t hi{},lo{};std::uint32_t pc{},branch_pc{},fcr31{};bool in_delay_slot{};
+    Register r[32];float f[32]{};std::uint32_t pc{},branch_pc{},fcr31{};bool in_delay_slot{};
     __m128 vu0_vf[32],vu0_acc;float vu0_q{};std::uint16_t vi[16]{};
     R5900Context():vu0_acc(_mm_setzero_ps()){
         for(auto& v:vu0_vf){v=_mm_setzero_ps();}
