@@ -14,6 +14,8 @@ struct ExecutionState {
     std::optional<std::uint8_t> weight_profile;
     std::array<std::uint8_t,8> base_weights{},reactive_weights{},status_weights{},combined_weights{};
     std::uint8_t inhibited{},reaction{},pending_reaction{},observation_flags{};
+    std::uint16_t steering_value{};
+    std::uint8_t steering_button_10{}, steering_button_20{};
     std::uint16_t periodic_counter{},room_memo{},reaction_countdown{};
     std::uint32_t action_counter{};
     std::int32_t forced_priority{};

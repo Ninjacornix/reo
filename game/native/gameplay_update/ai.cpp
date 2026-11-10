@@ -1,4 +1,5 @@
 #include "update.hpp"
+#include "../gameplay_ai/steering.hpp"
 namespace reo::native::gameplay_update {
 gameplay_ai::ObservationAdmitted Owner::admit_ai_reference_reaction(const world::actors::EntityId& id,std::uint32_t mode){
     if(!open())return {};
@@ -28,6 +29,15 @@ gameplay_ai::GoalDispatched Owner::dispatch_ai_goal(const world::actors::EntityI
     const auto companion = world_.primary(actor->slot == 1 ? 2 : 1);
     return gameplay_ai::dispatch_goal(*actor, reference.get(), companion.get(), world_.navigation(),
                                      resources, world_.session().random);
+}
+gameplay_ai::Status Owner::dispatch_active_ai_action(const world::actors::EntityId& id, bool paused) {
+    if (!open())
+        return gameplay_ai::Status::unavailable;
+    const auto actor = world_.resolve(id);
+    if (!actor || world_.identity(actor->slot) != id)
+        return gameplay_ai::Status::unavailable;
+    const auto reference = world_.primary(0);
+    return gameplay_ai::dispatch_active_room_action(*actor, reference.get(), paused);
 }
 gameplay_ai::InitializationResult Owner::initialize_ai(const world::actors::EntityId& id){
     if(!open())return {};

@@ -4,6 +4,8 @@
 #include "priority_goals.hpp"
 #include "reactions.hpp"
 #include "observation_gates.hpp"
+#include "steering.hpp"
+#include "../transform_math/heading.hpp"
 #include "../gameplay_session/session.hpp"
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
@@ -85,6 +87,7 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
 #include "reaction_tests.inc"
 #include "observation_gate_tests.inc"
 #include "goal_dispatch_tests.inc"
+#include "steering_tests.inc"
 }
 #ifdef REO_AI_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
@@ -96,6 +99,10 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     if(context->pc==0x1aec80){check(GPR_U32(context,4)==1);++reference_random_draws;}
     if(context->pc==0x107ab0){check(GPR_U32(context,4)==0x110b0&&GPR_U32(context,6)==8);++copies;}
     switch(context->pc){
+    case 0x370140:
+    case 0x376e70:
+        compare_heading_port(memory, context);
+        return;
     case 0x107c68:{const auto at=GPR_U32(context,4);check((at==0x110b8||at==0x110c0)&&GPR_U32(context,5)==0&&GPR_U32(context,6)==8);std::memset(memory+at,0,8);++clears;SET_GPR_U32(context,2,at);context->pc=GPR_U32(context,31);return;}
 #include "dispatch.inc"
     default:throw std::runtime_error("Undeclared AI original dependency "+std::to_string(context->pc));
@@ -128,6 +135,7 @@ int main(int argc,char** argv){
         reaction_contracts();
         observation_gate_contracts();
         goal_dispatch_contracts();
+        steering_contracts();
         std::cout<<'{';bool first=true;
         const auto emit=[&](const char* key,std::uint64_t value){if(!first)std::cout<<',';first=false;std::cout<<'"'<<key<<"\":"<<value;};
         emit("checks",checks);emit("goal_cases",goal_cases);emit("action_cases",action_cases);emit("phase_cases",phase_cases);emit("finish_cases",finish_cases);
@@ -142,6 +150,8 @@ int main(int argc,char** argv){
         emit("observation_blocked_cases",observation_blocked_cases);emit("observation_gate_cases",observation_gate_cases);emit("observation_gate_random_draws",observation_gate_random_draws);emit("observation_gate_admitted",observation_gate_admitted);emit("observation_gate_refusals",observation_gate_refusals);
         emit("goal_dispatch_cases",goal_dispatch_cases);
         emit("goal_dispatch_refusals",goal_dispatch_refusals);
+        emit("steering_cases",steering_cases);
+        emit("active_room_action_cases",active_room_action_cases);
         std::cout<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

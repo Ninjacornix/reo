@@ -206,6 +206,7 @@ public:
     gameplay_ai::InitializationResult initialize_ai(const world::actors::EntityId&);
     gameplay_ai::GoalReevaluated reevaluate_ai_goal(const world::actors::EntityId&,const scenario::SceneResources&);
     gameplay_ai::GoalDispatched dispatch_ai_goal(const world::actors::EntityId&,const scenario::SceneResources&);
+    gameplay_ai::Status dispatch_active_ai_action(const world::actors::EntityId&,bool paused);
     gameplay_ai::ReactionScheduled schedule_ai_reaction(const world::actors::EntityId&,std::uint32_t event);
     gameplay_ai::ObservationAdmitted admit_ai_reference_reaction(const world::actors::EntityId&,std::uint32_t mode);
     gameplay_ai::ObservationUpdated update_ai_observations(const world::actors::EntityId&,

@@ -54,13 +54,20 @@ float quadrant_angle(float y,float x){
     if(quadrant==2)return pi-(angle-low);
     return (angle-low)-pi;
 }
-std::uint16_t direction_turn(float x,float z){
-    finite(x);finite(z);if(x==0.f)x=value(0x38d1b717u);
+namespace {
+std::uint16_t heading_turn(float x,float z){
     const auto angle=quadrant_angle(x,z);
     float degrees=(180.f*angle)/value(0x40490fdbu);
     if(degrees<0.f)degrees+=360.f;
     const float turn=value(0x43360b61u)*degrees;
     if(!(turn>=0.f&&turn<65537.f))throw std::domain_error("Native heading turn conversion unavailable");
     return std::uint16_t(std::uint32_t(turn));
+}
+}
+std::uint16_t direction_turn(float x,float z){
+    return heading_turn(x == 0.f ? value(0x38d1b717u) : x, z);
+}
+std::uint16_t position_direction_turn(float x, float z) {
+    return heading_turn(x, z == 0.f ? value(0x38d1b717u) : z);
 }
 }

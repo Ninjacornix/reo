@@ -39,8 +39,12 @@ def main():
     assert struct.unpack_from('<6I',raw,0x82b860-0x810000)==(0x8231c0,)*6
     goal_table = struct.unpack_from("<16I", raw, 0x8294c0 - 0x810000)
     assert (goal_table[0], goal_table[6], goal_table[14]) == (0x813de0, 0x814b30, 0x815820)
+    assert struct.unpack_from("<2I", raw, 0x8296e0 - 0x810000) == (0x81a770, 0x81a780)
+    assert struct.unpack_from("<6I", raw, 0x82b770 - 0x810000) == (
+        0x81bdec, 0x81bbb8, 0x81bc8c, 0x81bcc4, 0x81bd14, 0x81bd40,
+    )
     entries={};proof=[]
-    for address in [0x8120c0,0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30,0x8133d0,0x825cc0,0x823190,0x817140,0x8130d0,0x1aec80,0x812ef0,0x813bd0,0x813330,0x813de0,0x815820]:
+    for address in [0x8120c0,0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30,0x8133d0,0x825cc0,0x823190,0x817140,0x8130d0,0x1aec80,0x812ef0,0x813bd0,0x813330,0x813de0,0x815820,0x81a720,0x81a770,0x81a780,0x81bb80]:
         folder=ROOT/('recomp/config/output' if address<0x200000 else 'recomp/config/output_ovl/'+('o8' if address==0x810f30 else 'o2' if address<0x810000 else 'o9'))
         path=next(folder.glob(f'*_{address:08X}_0x{address:x}.cpp'))
         end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',path.read_text())[1],16)
@@ -60,6 +64,11 @@ def main():
     reaction_units=['game/native/gameplay_ai/reactions.cpp','game/native/gameplay_session/session.cpp']
     files+=reaction_units+['game/native/gameplay_ai/reaction_tests.inc','game/native/gameplay_ai/reaction_policies.inc','tools/native_reconstruction/generate_ai_reaction_policies.py']
     observation_units=['game/native/gameplay_ai/observation_gates.cpp']
+    steering_units = [
+        "game/native/gameplay_ai/steering.cpp", "game/native/transform_math/heading.cpp",
+        "game/native/transform_math/transform_math.cpp",
+    ]
+    files += steering_units
     conversion='third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h'
     files+=observation_units+[conversion,'game/native/gameplay_ai/observation_gate_tests.inc','game/native/gameplay_ai/observation_policies.inc','tools/native_reconstruction/generate_ai_observation_policies.py']
     # Freeze native quoted-include dependencies. Original runtime headers are
@@ -93,12 +102,15 @@ def main():
     exe=out/'checks.exe';command=[str(compiler),'-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-msse4.1','-DREO_AI_ORIGINAL=1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-I'+str(out),'-I'+str(out/'source'),str(out/'source'/unit),str(out/'source'/fixture),str(out/'original.cpp'),'-o',str(exe)]
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_ai/control_requests.cpp'))
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_session/activity.cpp'))
-    for name in ['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp',*goal_units,*reaction_units,*observation_units]:
+    for name in ['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp',*goal_units,*reaction_units,*observation_units,*steering_units]:
         command.insert(command.index(str(out/'original.cpp')),str(out/'source'/name))
     receipt=dict(schema=1,status='failed',game_launched=False,installed_in_game=False,stage4_complete=False,
         compiler_sha256=sha(compiler),source_sha256={name:hashlib.sha256(data).hexdigest() for name,data in frozen.items()},
         owned_image_sha256={image.relative_to(ROOT).as_posix():sha(image),main_image.relative_to(ROOT).as_posix():sha(main_image),o2_image.relative_to(ROOT).as_posix():sha(o2_image),o8_image.relative_to(ROOT).as_posix():sha(o8_image)},
-        original_word_audits=proof,commands=[],declared_ports=['107C68 exact two eight-byte zero fills in original-only profile selection surroundings'],
+        original_word_audits=proof,commands=[],declared_ports=[
+            '107C68 exact two eight-byte zero fills in original-only profile selection surroundings',
+            '370140 and 376E70 checked position arguments through the qualified native heading math',
+        ],
         immutable_evidence={'o2_71b034_f32_bits':0x41c80000,'o9_82b860_targets':[0x8231c0]*6,
             'o9_8294c0_goal_targets':goal_table},
         limitations=['Negative profile indices remain unavailable: original signed comparison lacks a lower bound and would address adjacent content. Indices>=20 preserve the source no-op.',

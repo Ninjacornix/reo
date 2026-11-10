@@ -1,6 +1,5 @@
 #include "destination.hpp"
 #include "../transform_math/heading.hpp"
-#include <bit>
 #include <cmath>
 #include <exception>
 namespace reo::native::gameplay_navigation {
@@ -10,16 +9,10 @@ std::optional<std::uint16_t> route_heading(Position from,Position to)noexcept{
     // Complete370140 biases a zero Z delta. The previously qualified contact
     // heading helper biases X instead; using it unchanged here is incorrect.
     if(!finite(from)||!finite(to))return {};
-    const float x=to.x-from.x;float z=to.z-from.z;
+    const float x=to.x-from.x,z=to.z-from.z;
     if(!std::isfinite(x)||!std::isfinite(z))return {};
-    if(z==0.f)z=std::bit_cast<float>(0x38d1b717u);
     try{
-        const auto angle=transform_math::quadrant_angle(x,z);
-        float degrees=(180.f*angle)/std::bit_cast<float>(0x40490fdbu);
-        if(degrees<0.f)degrees+=360.f;
-        const float turn=std::bit_cast<float>(0x43360b61u)*degrees;
-        if(!(turn>=0.f&&turn<65537.f))return {};
-        return std::uint16_t(std::uint32_t(turn));
+        return transform_math::position_direction_turn(x,z);
     }catch(const std::exception&){return {};}
 }
 std::optional<float> distance(Position from,Position to)noexcept{

@@ -155,6 +155,11 @@ The current resource and inventory implementation includes:
   thirteen parent tests. The other callbacks, immediate redispatch, and the
   live outer AI caller remain open.
 
+- [AI steering and turning](AI_STEERING.md) now generate input through the
+  existing actor input frame. Both compilers pass 393,220 steering and 65,542
+  active-room action comparisons. The navigation heading regression and
+  thirteen parent tests pass. Other action families and live callers remain open.
+
 - [Target-cache scratch audit](TARGET_CACHE_SCRATCH_AUDIT.md) identifies controlled
   source inverse-sort dependence on unwritten scratch. Both compilers agree on
   48 profiles,192 strict runs and192 separate initialization-policy runs. This

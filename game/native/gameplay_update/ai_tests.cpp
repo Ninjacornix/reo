@@ -86,10 +86,25 @@ void reevaluation_owner(){
     reset();
     dispatched = owner.dispatch_ai_goal(self_id, resources);
     check(dispatched.status == ai::Status::unavailable && dispatched.selected == 3 && state.goal == 3);
+    state.action = 1;
+    state.action_phases[0] = 1;
+    state.steering_value = 0x2000;
+    state.steering_button_20 = 1;
+    self->orientation[1] = 0;
+    self->input.released = 0xff;
+    check(owner.dispatch_active_ai_action(self_id, true) == ai::Status::completed &&
+          self->input.released == 0xff);
+    check(owner.dispatch_active_ai_action(self_id, false) == ai::Status::completed &&
+          self->input.held == 0x24 && self->input.pressed == 0x20 &&
+          self->input.released == 0 && state.action == 1);
+    self->orientation[1] = 0x2000;
+    check(owner.dispatch_active_ai_action(self_id, false) == ai::Status::completed &&
+          state.action == 0 && state.previous_action == 1);
     reset();check(world.retire_primary(2)==u::world::actors::EntityStatus::completed);check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable&&state.observation_flags==0);
     state.goal_refresh=0;check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::completed);
     check(world.retire_primary(1)==u::world::actors::EntityStatus::completed&&owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable);
     check(!owner.dispatch_ai_goal(self_id, resources).selected);
+    check(owner.dispatch_active_ai_action(self_id, false) == ai::Status::unavailable);
     check(world.close()==u::world::Status::completed&&owner.reevaluate_ai_goal(reference_id,resources).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
 }
 void reaction_owner(){

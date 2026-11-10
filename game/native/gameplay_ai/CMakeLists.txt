@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_ai STATIC execution.cpp control_requests.cpp initialization.cpp priority_goals.cpp reactions.cpp observation_gates.cpp)
+add_library(reo_native_gameplay_ai STATIC execution.cpp control_requests.cpp initialization.cpp priority_goals.cpp reactions.cpp observation_gates.cpp steering.cpp)
 target_link_libraries(reo_native_gameplay_ai PUBLIC reo_native_gameplay_navigation reo_native_gameplay_scenario reo_native_gameplay_session)
 target_compile_features(reo_native_gameplay_ai PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_ai PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
