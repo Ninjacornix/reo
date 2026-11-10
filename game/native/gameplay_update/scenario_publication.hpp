@@ -31,7 +31,7 @@ struct ActorActionMessage {
     std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
     static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
 };
-enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,contact_snapshot=5,alignment=6,action=7,room_object=9,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,contact_snapshot=5,alignment=6,action=7,peer=8,room_object=9,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
 struct ActorSnapshotMessage {
     MessageRoute route{};std::uint32_t channel{};
     std::array<std::uint8_t,4> action{};gameplay_world::Position position;
@@ -77,6 +77,16 @@ struct ActorRoomObjectMessage {
     std::array<std::int8_t,2> coordinates{};
     static constexpr unsigned type=9,length=8,options=0,dispatch_mode=4;
 };
+struct ActorPeerMessage {
+    MessageRoute route{};std::uint32_t channel{};std::uint16_t state{};
+    gameplay_world::actors::ActorReference peer;std::array<std::int16_t,2> parameters{};
+    static constexpr unsigned type=8,length=12,options=0,dispatch_mode=4;
+};
+inline bool peer_reference_admitted(const gameplay_world::actors::ActorReference& reference)noexcept{
+    using Reference=gameplay_world::actors::ActorReference;
+    return reference.kind==Reference::Kind::primary?reference.identifier<gameplay_world::World::primary_capacity:
+        reference.kind==Reference::Kind::auxiliary&&reference.identifier<=0x7fff;
+}
 struct ActorInventoryMessage {
     enum class Kind:std::uint8_t {carried=12,extra=15};
     MessageRoute route{};std::uint32_t channel{};Kind kind{};std::array<std::uint8_t,4> resources{};
@@ -98,6 +108,7 @@ public:
     virtual bool send(const ActorContactSnapshotMessage&)noexcept{return false;}
     virtual bool send(const ActorAlignmentMessage&)noexcept{return false;}
     virtual bool send(const ActorRoomObjectMessage&)noexcept{return false;}
+    virtual bool send(const ActorPeerMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
 enum class PublicationStatus {completed,unavailable,message_unavailable};
@@ -179,6 +190,17 @@ public:
             return dispatch_actor(*actor,message);
         }
         case ActorMessageSelector::interaction:{ActorInteractionMessage message;message.values={actor->interaction_kind,actor->interaction_mode,actor->interaction_slot,actor->interaction_detail};return dispatch_actor(*actor,message);}
+        case ActorMessageSelector::peer:{
+            if(!actor->peer_request||!peer_reference_admitted(actor->peer_request->peer))return PublicationStatus::unavailable;
+            ActorPeerMessage message;message.state=std::uint16_t(actor->transient_contact|(unsigned(actor->peer_request->state_high)<<8));message.peer=actor->peer_request->peer;message.parameters=actor->peer_request->parameters;
+            if(world_.mode==0){
+                const auto peer=world_.referenced_actor(message.peer);
+                if(!peer)return message.peer.kind==gameplay_world::actors::ActorReference::Kind::auxiliary?PublicationStatus::completed:PublicationStatus::unavailable;
+                peer->transient_contact=std::uint8_t(message.state);
+                peer->peer_request=gameplay_world::PeerRequest{std::uint8_t(message.state>>8),{gameplay_world::actors::ActorReference::Kind::primary,actor->slot},message.parameters};
+            }
+            return dispatch_actor(*actor,message);
+        }
         case ActorMessageSelector::room_object:{
             if(!objects_)return PublicationStatus::unavailable;
             const auto coordinates=objects_->source_coordinates(actor->grid);if(!coordinates)return PublicationStatus::unavailable;

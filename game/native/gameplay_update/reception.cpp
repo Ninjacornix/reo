@@ -53,4 +53,17 @@ ReceptionResult ActorReception::receive(const ActorRoomObjectMessage& message,bo
     if(!objects_||!objects_->apply_source_coordinates(message.grid,message.coordinates))return{ReceptionStatus::unavailable,{}};
     return finish(actor);
 }
+ReceptionResult ActorReception::receive(const ActorPeerMessage& message,bool local_echo)noexcept{
+    const auto admitted=begin(message.channel,local_echo);if(!admitted.actor)return{admitted.status,{}};
+    auto& actor=*admitted.actor;actor.transient_contact=std::uint8_t(message.state);
+    actor.peer_request=gameplay_world::PeerRequest{std::uint8_t(message.state>>8),message.peer,message.parameters};
+    if(!peer_reference_admitted(message.peer))return{ReceptionStatus::unavailable,{}};
+    const auto peer=world_.referenced_actor(message.peer);
+    // Original missing auxiliary lookup exits before shared pose/equipment work,
+    // after the base request has been stored. Keep that distinct prefix.
+    if(!peer)return{message.peer.kind==gameplay_world::actors::ActorReference::Kind::auxiliary?ReceptionStatus::completed:ReceptionStatus::unavailable,{}};
+    peer->transient_contact=std::uint8_t(message.state);
+    peer->peer_request=gameplay_world::PeerRequest{std::uint8_t(message.state>>8),{gameplay_world::actors::ActorReference::Kind::primary,actor.slot},message.parameters};
+    return finish(actor);
+}
 }

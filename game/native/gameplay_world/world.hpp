@@ -1,5 +1,6 @@
 #pragma once
 #include "../gameplay_actors/entity.hpp"
+#include "../gameplay_actors/reference.hpp"
 #include "../gameplay_actors/hit.hpp"
 #include "../gameplay_actors/input.hpp"
 #include "../gameplay_collision/actors.hpp"
@@ -17,6 +18,7 @@ namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
 struct Position {float x{},y{},z{};};
 struct AlignmentTarget {Position position;std::int16_t yaw{};};
+struct PeerRequest {std::uint8_t state_high{};actors::ActorReference peer;std::array<std::int16_t,2> parameters{};};
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
 struct ControlRequest {std::uint8_t pending{},kind{};std::uint16_t parameter{};};
 struct ProjectileContact {gameplay_collision::Vec3 point,normal;};
@@ -69,6 +71,9 @@ struct Actor : actors::Entity,actors::HitActor {
     // Primary alignment contract C34/C38/C3C and C4C. Other source-state
     // overlays do not establish this target; actual producers/import must.
     std::optional<AlignmentTarget> alignment_target;
+    // C65/C66/C68/C6A. C64's low byte is the inherited transient_contact,
+    // including when pending-hit cleanup clears only that byte.
+    std::optional<PeerRequest> peer_request;
     std::array<std::uint8_t,2> explicit_resource_pair{}; // authored action pair CAA/CAB
     std::uint16_t linked_model_variant{};
     std::uint16_t gauge_modifier_one{},gauge_modifier_two{}; // BB6/BB8; third BBA view is linked_model_variant
@@ -171,6 +176,7 @@ public:
     AuxiliaryActorPool& auxiliary_actors();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
     std::shared_ptr<Actor> resolve(const actors::EntityId&)const noexcept;
+    std::shared_ptr<Actor> referenced_actor(const actors::ActorReference&)const noexcept;
     actors::EntityId identity_of(const Actor&)const noexcept;
     actors::EntityId identity(std::size_t)const noexcept;
     std::optional<std::size_t> executing_primary()const noexcept{return executing_;}

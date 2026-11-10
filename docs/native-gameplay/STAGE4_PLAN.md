@@ -154,6 +154,12 @@ The current resource and inventory implementation includes:
   lookup in the canonical World. Both compiler comparisons cover reuse/order,
   retirement and coexistence with the fifty-model pool. Actual auxiliary actor
   construction, callbacks/AI/movement, peer binding and installation remain open.
+- [Paired actor requests](ACTOR_PEER_MESSAGES.md) now bind selector8 and its
+  receiver to that same primary/auxiliary ownership, using portable logical
+  references and the existing hit-state byte. Both compiler comparisons include
+  actual hit cleanup, missing-target prefixes and queue delivery across Worlds.
+  Higher producers, senders3/11, remaining consumers/transport and installation
+  remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

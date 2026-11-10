@@ -64,6 +64,14 @@ std::shared_ptr<Actor> World::resolve(const actors::EntityId& id)const noexcept{
     if(closed_)return{};
     return std::dynamic_pointer_cast<Actor>(entities_.acquire(id));
 }
+std::shared_ptr<Actor> World::referenced_actor(const actors::ActorReference& reference)const noexcept{
+    if(closed_)return{};
+    switch(reference.kind){
+    case actors::ActorReference::Kind::primary:return primary(reference.identifier);
+    case actors::ActorReference::Kind::auxiliary:return auxiliary_actors_?resolve(auxiliary_actors_->find(reference.identifier)):nullptr;
+    default:return{};
+    }
+}
 actors::EntityId World::identity_of(const Actor& actor)const noexcept{
     return closed_?actors::EntityId{}:entities_.identity_of(actor);
 }

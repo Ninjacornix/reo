@@ -1,4 +1,7 @@
 unsigned hit_gauge_cases{},hit_gauge_events{},hit_gauge_failures{};
+#ifdef REO_ACTOR_PEER_MESSAGE
+unsigned actor_peer_hit_aliases{};
+#endif
 namespace hit_gauge_fixture {
 namespace u=reo::native::gameplay_update;namespace g=reo::native::gameplay_world;namespace a=g::actors;
 using Snapshot=std::array<unsigned,9>;using Call=std::pair<unsigned,Snapshot>;
@@ -21,9 +24,20 @@ bool hit_gauge_port(std::uint8_t* memory,R5900Context* context){
 void compare_actor_hit_gauge(std::uint8_t* memory){
     using namespace hit_gauge_fixture;actor_status_fixture::nested=0;actor_state_fixture::nested_payload=false;hit_gauge_capture=true;
     for(unsigned n=0;n<8192;++n){
-        g::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<g::Session>());auto value=std::make_unique<g::Actor>();value->active=true;value->primary=1;value->current=value->maximum=100;value->character=std::uint8_t(n%8);value->gauge_value=g::actor_gauge_limits[n%8]*n/8192;value->status=0x880000u;value->pending_hit=1;value->damage_kind=0x80;value->source_kind=1;value->progression_amount=std::uint16_t(n*65521u);value->control_elapsed=n+123;value->transient_contact=17;value->transient_action=18;value->transient_equipment=19;value->room=std::uint16_t(n*17);const auto id=world.spawn_primary(0,std::move(value)).id;check(bool(id));const auto actor=world.primary(0);world.mode=std::uint8_t(n%2);world.room=actor->room;world.session().message_phase=1;actor_state_fixture::Sink sink(world);actor_action_fixture::Notifications notifications;u::Owner update(world,notifications,e::RuleBook::file1(),&sink);check(update.clock().restore({0,0,0,1},n*65521u)==u::tasks::Status::completed);world.session().feedback_suppressed=0;
-        std::fill_n(memory+0x4a5c30,0x10e0,0);memory[0x4a5c30+8]=1;memory[0x4a5c30+0xb98]=actor->character;put(memory,0x4a5c30+0xbac,*actor->gauge_value);put(memory,0x4a5c30+0xba0,actor->status);memory[0x4a5c30+0x13f]=1;memory[0x4a5c30+0x13d]=0x80;memory[0x4a5c30+0x148]=1;put(memory,0x4a5c30+0x14e,actor->progression_amount);put(memory,0x4a5c30+0x544,actor->current);put(memory,0x4a5c30+0x546,actor->maximum);put(memory,0x4a5c30+0x1e2,actor->room);put(memory,0x4a5c30+0xd28,actor->control_elapsed+1u);memory[0x4a5c30+0xc64]=17;memory[0x4a5c30+0xab8]=18;memory[0x4a5c30+0xad4]=19;memory[0x4baded]=0;memory[0x4badf8]=0;memory[0x4bae8d]=0;memory[0x3243f2]=world.mode;memory[0x3243fb]=1;memory[0x3b84f4]=0;put(memory,0x3243dc,world.room);put(memory,0x4bade8,n*65521u);call(memory,0x37c170);source_calls.clear();call(memory,0x660af0,{0x4a5c30});const auto source=snapshot(memory);
+        g::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<g::Session>());auto value=std::make_unique<g::Actor>();value->active=true;value->primary=1;value->current=value->maximum=100;value->character=std::uint8_t(n%8);value->gauge_value=g::actor_gauge_limits[n%8]*n/8192;value->status=0x880000u;value->pending_hit=1;value->damage_kind=0x80;value->source_kind=1;value->progression_amount=std::uint16_t(n*65521u);value->control_elapsed=n+123;value->transient_contact=17;value->transient_action=18;value->transient_equipment=19;value->room=std::uint16_t(n*17);const auto id=world.spawn_primary(0,std::move(value)).id;check(bool(id));const auto actor=world.primary(0);
+#ifdef REO_ACTOR_PEER_MESSAGE
+        actor->peer_request=g::PeerRequest{std::uint8_t(n),{a::ActorReference::Kind::primary,0},{std::int16_t(n),std::bit_cast<std::int16_t>(std::uint16_t(n*17))}};
+#endif
+        world.mode=std::uint8_t(n%2);world.room=actor->room;world.session().message_phase=1;actor_state_fixture::Sink sink(world);actor_action_fixture::Notifications notifications;u::Owner update(world,notifications,e::RuleBook::file1(),&sink);check(update.clock().restore({0,0,0,1},n*65521u)==u::tasks::Status::completed);world.session().feedback_suppressed=0;
+        std::fill_n(memory+0x4a5c30,0x10e0,0);memory[0x4a5c30+8]=1;memory[0x4a5c30+0xb98]=actor->character;put(memory,0x4a5c30+0xbac,*actor->gauge_value);put(memory,0x4a5c30+0xba0,actor->status);memory[0x4a5c30+0x13f]=1;memory[0x4a5c30+0x13d]=0x80;memory[0x4a5c30+0x148]=1;put(memory,0x4a5c30+0x14e,actor->progression_amount);put(memory,0x4a5c30+0x544,actor->current);put(memory,0x4a5c30+0x546,actor->maximum);put(memory,0x4a5c30+0x1e2,actor->room);put(memory,0x4a5c30+0xd28,actor->control_elapsed+1u);memory[0x4a5c30+0xc64]=17;memory[0x4a5c30+0xab8]=18;memory[0x4a5c30+0xad4]=19;memory[0x4baded]=0;memory[0x4badf8]=0;memory[0x4bae8d]=0;memory[0x3243f2]=world.mode;memory[0x3243fb]=1;memory[0x3b84f4]=0;put(memory,0x3243dc,world.room);put(memory,0x4bade8,n*65521u);call(memory,0x37c170);source_calls.clear();
+#ifdef REO_ACTOR_PEER_MESSAGE
+        put(memory,0x4a5c30+0xc64,std::uint16_t(17u|((n&255u)<<8)));put(memory,0x4a5c30+0xc66,std::uint16_t(0));put(memory,0x4a5c30+0xc68,std::int16_t(n));put(memory,0x4a5c30+0xc6a,std::bit_cast<std::int16_t>(std::uint16_t(n*17)));
+#endif
+        call(memory,0x660af0,{0x4a5c30});const auto source=snapshot(memory);
         Behavior behavior(world,*actor);actor_activity_fixture::Frame frame;g::BehaviorFrameServices bound(frame,behavior,{},&update,&update);const auto result=world.update_primary(bound);check(result.status==g::Status::completed&&result.updated==1&&behavior.after_hit==source&&behavior.calls==source_calls&&actor->control_elapsed==0&&actor->pending_hit==0);check(world.session().contact_recorded==memory[0x3b84f4]&&sink.states.empty());compare(update.cooperative_events(),memory);hit_gauge_events+=unsigned(update.cooperative_events().snapshot().size());++hit_gauge_cases;
+#ifdef REO_ACTOR_PEER_MESSAGE
+        check(actor->transient_contact==0&&actor->peer_request&&actor->peer_request->state_high==memory[0x4a5c30+0xc65]&&actor->peer_request->peer==a::ActorReference{a::ActorReference::Kind::primary,0}&&get<std::uint16_t>(memory,0x4a5c30+0xc66)==0&&actor->peer_request->parameters[0]==get<std::int16_t>(memory,0x4a5c30+0xc68)&&actor->peer_request->parameters[1]==get<std::int16_t>(memory,0x4a5c30+0xc6a));++actor_peer_hit_aliases;
+#endif
     }
     hit_gauge_capture=false;
     // An unavailable gauge stops after consume/cleanup and before statistics,

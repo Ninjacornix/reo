@@ -19,6 +19,7 @@ public:
     ReceptionResult receive(const ActorInventoryMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorResourcePairMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorRoomObjectMessage&,bool local_echo=false)noexcept;
+    ReceptionResult receive(const ActorPeerMessage&,bool local_echo=false)noexcept;
 private:
     struct Admission {ReceptionStatus status{ReceptionStatus::completed};std::shared_ptr<gameplay_world::Actor> actor;};
     gameplay_world::World& world_;

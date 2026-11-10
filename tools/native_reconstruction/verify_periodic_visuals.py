@@ -197,7 +197,7 @@ def main():
         for at in [0x65fcb0,0x65fab0,0x5d4cf0,0x5d4bf0,0x5d50e0,0x5d50f0,0x5d4570,0x5d5950,0x5d4810,0x5d4470,0x5d46c0,0x663350,0x58c7b0,0x664d00,0x667f90,0x668c80]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.actor_reception:
-        at=0x67ed50;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+        for at in [0x67ed50,0x682c60,0x682d10,0x682e30,0x666640]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.actor_zero_health:
         for at in [0x65fba0,0x6607d0]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
@@ -465,7 +465,7 @@ def main():
             record['declared_ports'].append('Recovery UI6E1430 and final room/message sinks remain declared; actual WorldAnimation selects with confirmed absent banks for the current online profile, then actual Playback activation. Real clip-bearing recovery acceptance remains open.')
         if args.actor_reception:
             at,size=0x740750,64;value=overlay['o2'][at-0x570000:at-0x570000+size];record['actor_reception_switch_sha256']=hashlib.sha256(value).hexdigest();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
-            record['actor_reception_admission']='Complete67ED50 selectors4/6/9/10/12/14/15 and shared admission/pose/equipment tail through canonical World/RoomObject/Equipment owners; remaining selectors and actual transport remain open'
+            record['actor_reception_admission']='Complete67ED50 selectors4/6/8/9/10/12/14/15 and shared admission/pose/equipment tail through canonical World/RoomObject/Equipment owners; remaining selectors and actual transport remain open'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:

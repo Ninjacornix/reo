@@ -8,6 +8,7 @@ bool ActorMessageQueue::send(const ActorInteractionMessage& value)noexcept{retur
 bool ActorMessageQueue::send(const ActorInventoryMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorResourcePairMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorRoomObjectMessage& value)noexcept{return enqueue(value);}
+bool ActorMessageQueue::send(const ActorPeerMessage& value)noexcept{return enqueue(value);}
 ActorQueueStatus ActorMessageQueue::close()noexcept{
     if(draining_)return ActorQueueStatus::busy;
     closed_=true;for(auto& slot:slots_)slot.reset();head_=count_=0;return ActorQueueStatus::completed;

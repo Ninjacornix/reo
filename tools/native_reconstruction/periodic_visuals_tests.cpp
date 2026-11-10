@@ -315,7 +315,7 @@ int main(int argc,char** argv)try{
     );const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
 #ifdef REO_RECEPTION_ONLY
     owned_constants(memory);compare_actor_reception(argv[4],argv[2],ram);compare_actor_message_queue();
-    std::cout<<"{\"checks\":"<<checks<<",\"reception_cases\":"<<reception_cases<<",\"reception_equipment\":"<<reception_equipment<<",\"reception_refusals\":"<<reception_refusals<<",\"reception_queue_cases\":"<<reception_queue_cases<<",\"game_run\":false}\n";return 0;
+    std::cout<<"{\"checks\":"<<checks<<",\"reception_cases\":"<<reception_cases<<",\"reception_equipment\":"<<reception_equipment<<",\"reception_refusals\":"<<reception_refusals<<",\"reception_queue_cases\":"<<reception_queue_cases<<",\"reception_auxiliary_cases\":"<<reception_auxiliary_cases<<",\"game_run\":false}\n";return 0;
 #endif
 #ifdef REO_RESOURCE_COMPANIONS_FOCUSED
     compare_resource_companions(corpus,ram);
@@ -390,7 +390,8 @@ int main(int argc,char** argv)try{
 #ifdef REO_ZERO_HEALTH_ONLY
     owned_constants(memory);
     compare_actor_zero_health(argv[2],argv[3],ram);
-    std::cout<<"{\"checks\":"<<checks<<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases
+    <<",\"game_run\":false}\n";
     return 0;
 #endif
     for(unsigned asset=0;asset<corpus.size();asset+=2){
@@ -619,6 +620,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_COMPANIONS
     <<",\"companion_live_cases\":"<<companion_live_cases<<",\"companion_live_frames\":"<<companion_live_frames<<",\"companion_live_pieces\":"<<companion_live_pieces<<",\"companion_live_missing\":"<<companion_live_missing<<",\"companion_live_unavailable\":"<<companion_live_unavailable<<",\"companion_live_lights\":"<<companion_live_lights<<",\"companion_live_audio\":"<<companion_live_audio<<",\"companion_factory_cases\":"<<companion_factory_cases<<",\"companion_factory_refusals\":"<<companion_factory_refusals<<",\"companion_capacity_cases\":"<<companion_capacity_cases<<",\"companion_action_audio_frames\":"<<companion_action_audio_frames<<",\"companion_action_audio_signal\":"<<companion_action_audio_signal<<",\"companion_action_audio_requests\":"<<companion_action_audio_requests
+#endif
+#ifdef REO_ACTOR_RECEPTION
+    <<",\"reception_cases\":"<<reception_cases<<",\"reception_equipment\":"<<reception_equipment<<",\"reception_refusals\":"<<reception_refusals<<",\"reception_queue_cases\":"<<reception_queue_cases<<",\"reception_auxiliary_cases\":"<<reception_auxiliary_cases
 #endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;
