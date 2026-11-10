@@ -107,6 +107,11 @@ gameplay_ai::ControlApplied Owner::receive_ai_controls(std::span<const std::uint
     if(!open())return {};
     return world_.session().ai_control_requests.receive(packet,ai_activity_mode());
 }
+gameplay_ai::ControlPayloadFlushed Owner::flush_ai_control_payloads(gameplay_ai::ControlPayloadSink& sink) {
+    if (!open())
+        return {};
+    return world_.session().ai_control_requests.flush_payloads(world_.selected_actor, sink);
+}
 std::optional<gameplay_ai::RegistrationStatus> Owner::register_ai_control(const world::actors::EntityId& id){
     if(!open())return {};
     const auto actor=world_.resolve(id);if(!actor)return {};

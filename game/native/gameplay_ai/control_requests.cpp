@@ -1,4 +1,5 @@
 #include "control_requests.hpp"
+#include <algorithm>
 #include <bit>
 namespace reo::native::gameplay_ai {
 namespace {
@@ -36,6 +37,32 @@ RequestResult ControlRequests::request(std::int32_t kind,std::int32_t target,std
 }
 RequestResult publish_actor_control(ControlRequests& controls,std::uint8_t actor_slot,std::uint32_t value)noexcept{
     return controls.request(0,actor_slot,{std::uint8_t(value),0,0,0});
+}
+bool ControlRequests::reset_pending_payloads() noexcept {
+    if (flushing_)
+        return false;
+    count_ = 0;
+    return true;
+}
+
+ControlPayloadFlushed ControlRequests::flush_payloads(std::uint8_t local_actor,
+                                                       ControlPayloadSink& sink) noexcept {
+    if (flushing_)
+        return {ControlPayloadStatus::busy};
+    flushing_ = true;
+    std::size_t sent = 0;
+    for (; sent < count_; ++sent) {
+        const auto& request = requests_[sent];
+        ControlPayloadPacket packet{0, 9, std::uint8_t(local_actor | 0x80), 0, request.registration};
+        std::copy(request.payload.begin(), request.payload.end(), packet.begin() + 5);
+        if (!sink.send_control_payload(packet))
+            break;
+    }
+    if (sent)
+        std::move(requests_.begin() + sent, requests_.begin() + count_, requests_.begin());
+    count_ -= sent;
+    flushing_ = false;
+    return {count_ ? ControlPayloadStatus::send_failed : ControlPayloadStatus::completed, sent};
 }
 ControlApplied ControlRequests::apply(std::uint8_t encoded_index,std::span<const std::uint8_t> payload,std::uint8_t mode,std::optional<std::int32_t> activity_mode)noexcept{
     auto& target=registrations_[encoded_index&63];

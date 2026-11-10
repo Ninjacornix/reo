@@ -103,6 +103,11 @@ The current resource and inventory implementation includes:
   parent tests. Service/acknowledgement/reset, full initialization and native
   gameplay acceptance remain open; queued does not claim delivered.
 
+- [AI control payloads](AI_CONTROL_PAYLOADS.md) now supply the canonical
+  frame reset and outbound payload drain. Both compilers match 8,576 original
+  packets, and the worker and phase regressions pass. Authority changes,
+  real transport, and gameplay acceptance remain open.
+
 - [Control value/ownership reception](AI_CONTROL_RECEIVE.md) now supplies both
   complete bounded receive helpers through the same Session registrations.
   Both compilers pass75024841 comparisons/checks and twelve parent tests. The

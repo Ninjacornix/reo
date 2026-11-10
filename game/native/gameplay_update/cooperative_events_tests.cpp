@@ -14,7 +14,18 @@ struct Notifications:s::FlagNotifications {
 };
 struct Remaining:u::Services {
     std::vector<u::Worker> calls;
-    void run(u::Worker stage,u::Owner&)override{calls.push_back(stage);}
+    void run(u::Worker stage,u::Owner& owner)override{
+        if(stage==u::Worker::reset_entity_queues)
+            check(owner.world().session().ai_control_requests.pending().empty());
+        calls.push_back(stage);
+    }
+};
+struct ControlPayloadCapture final : reo::native::gameplay_ai::ControlPayloadSink {
+    std::optional<reo::native::gameplay_ai::ControlPayloadPacket> packet;
+    bool send_control_payload(const reo::native::gameplay_ai::ControlPayloadPacket& value) noexcept override {
+        packet = value;
+        return true;
+    }
 };
 struct EmptyActors:u::world::Services {
     void begin_offline_frame(u::world::World&)override{std::terminate();}
@@ -47,10 +58,21 @@ void check_automatic_worker(){
     e::RuleGroup group;group.automatic={{3,2,42,0,5,2}};u::Owner owner(world,notifications,e::RuleBook::create({group},{0}));
     world.mode=1;world.paused=1;Remaining remaining;EmptyActors actors;
     check(bool(world.spawn_primary(0,std::make_unique<u::world::Actor>()).id));
+    namespace ai = reo::native::gameplay_ai;
+    const auto actor_id = world.identity(0);
+    check(owner.register_ai_control(actor_id) == ai::RegistrationStatus::created);
+    check(owner.publish_ai_control(actor_id, 19)->status == ai::RequestStatus::queued);
+    ControlPayloadCapture control_capture;
+    const auto flushed = owner.flush_ai_control_payloads(control_capture);
+    check(flushed.status == ai::ControlPayloadStatus::completed && flushed.sent == 1);
+    check(control_capture.packet == ai::ControlPayloadPacket{0, 9, 0x80, 0, 0, 19, 0, 0, 0});
+    check(owner.publish_ai_control(actor_id, 23)->status == ai::RequestStatus::queued);
     const auto program=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{{std::byte{1},std::byte{},std::byte{},std::byte{},std::byte{0xa},std::byte{},std::byte{},std::byte{}}});
     for(unsigned i=0;i<2;++i)check(owner.scripts().install(i,program)==s::Status::completed);
     check(owner.clock().restore({},123)==u::tasks::Status::completed);
     auto result=owner.run_workers(remaining,actors);check(result.status==u::Status::statistics_failure&&result.completion_checked&&!result.clock_committed);
+    check(world.session().ai_control_requests.pending().empty() &&
+          world.session().ai_control_requests.registered(0, 0));
     world.session().scenario=0;check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
     result=owner.run_workers(remaining,actors);check(result.status==u::Status::completed&&result.completion_checked&&result.completion.matched==0);
     remaining.calls.clear();check(owner.flags().scenario(42,1,s::NotifyOwner::selected_actor_plus_one,1));check(owner.flags().scenario_owner(42)==1&&notifications.scenario_changes==1);

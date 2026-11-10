@@ -83,6 +83,7 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
     if(pc==0x813380)++goal_cases;else if(pc==0x81a6e0)++action_cases;else if(pc==0x81a6f0)++phase_cases;else if(pc==0x814b30)++finish_cases;else ++profile_cases;
 }
 #include "control_request_tests.inc"
+#include "control_payload_tests.inc"
 #include "activity_tests.inc"
 #include "initialization_tests.inc"
 #include "priority_goal_tests.inc"
@@ -101,8 +102,19 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     if(context->pc==0x1afe70)++activity_queries;
     if(context->pc==0x813380)++reference_goal_sets;
     if(context->pc==0x1aec80){check(GPR_U32(context,4)==1);++reference_random_draws;}
-    if(context->pc==0x107ab0){check(GPR_U32(context,4)==0x110b0&&GPR_U32(context,6)==8);++copies;}
+    if (context->pc == 0x107ab0) {
+        if (GPR_U32(context, 6) == 5) {
+            check(reference_payloads_active && GPR_U32(context, 5) >= 0x7449b8 &&
+                  GPR_U32(context, 5) + 5 <= 0x744af8);
+        } else {
+            check(GPR_U32(context, 4) == 0x110b0 && GPR_U32(context, 6) == 8);
+            ++copies;
+        }
+    }
     switch(context->pc){
+    case 0x1afdd0:
+        record_original_control_payload(memory, context);
+        return;
     case 0x370140:
     case 0x376e70:
         compare_heading_port(memory, context);
@@ -133,6 +145,7 @@ int main(int argc,char** argv){
         ai::set_goal(halfword,65536);check(halfword.goal==0&&halfword.goal_refresh==1&&halfword.previous_goal==256);
         control_contracts();
         control_receive_contracts();
+        control_payload_contracts();
         activity_contracts();
         initialization_contracts();
         priority_goal_contracts();
@@ -149,6 +162,9 @@ int main(int argc,char** argv){
         emit("control_membership_cases",control_membership_cases);emit("control_register_cases",control_register_cases);emit("control_unregister_cases",control_unregister_cases);
         emit("control_lookup_cases",control_lookup_cases);emit("control_request_cases",control_request_cases);emit("control_publish_cases",control_publish_cases);
         emit("control_apply_cases",control_apply_cases);emit("control_receive_cases",control_receive_cases);emit("control_receive_refusals",control_receive_refusals);
+        emit("control_flush_cases",control_flush_cases);
+        emit("control_flush_packets",control_flush_packets);
+        emit("control_payload_reset_cases",control_payload_reset_cases);
         emit("activity_queries",activity_queries);emit("activity_mode_cases",activity_mode_cases);emit("activity_mode_refusals",activity_mode_refusals);
         emit("initialization_cases",initialization_cases);emit("initialization_disabled",initialization_disabled);emit("initialization_limited",initialization_limited);emit("initialization_refusals",initialization_refusals);
         emit("goal_resource_cases",goal_resource_cases);emit("target_busy_cases",target_busy_cases);emit("goal_reevaluation_cases",goal_reevaluation_cases);emit("goal_reevaluation_writes",goal_reevaluation_writes);emit("goal_reevaluation_refusals",goal_reevaluation_refusals);emit("goal_alias_cases",goal_alias_cases);

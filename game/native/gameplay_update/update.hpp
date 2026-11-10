@@ -216,6 +216,7 @@ public:
     std::optional<gameplay_ai::RequestResult> publish_ai_control(const world::actors::EntityId&,std::uint32_t);
     std::optional<std::int32_t> ai_activity_mode()const noexcept;
     gameplay_ai::ControlApplied receive_ai_controls(std::span<const std::uint8_t>);
+    gameplay_ai::ControlPayloadFlushed flush_ai_control_payloads(gameplay_ai::ControlPayloadSink&);
     gameplay_ai::InitializationResult initialize_ai(const world::actors::EntityId&);
     gameplay_ai::GoalReevaluated reevaluate_ai_goal(const world::actors::EntityId&,const scenario::SceneResources&);
     gameplay_ai::GoalDispatched dispatch_ai_goal(const world::actors::EntityId&,const scenario::SceneResources&);

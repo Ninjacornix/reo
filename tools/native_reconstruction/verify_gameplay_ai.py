@@ -57,6 +57,7 @@ def main():
         0x823190, 0x817140, 0x8130d0, 0x1aec80, 0x812ef0, 0x813bd0, 0x813330,
         0x813de0, 0x815820, 0x81a720, 0x81a770, 0x81a780, 0x81bb80, 0x81beb0,
         0x81c1a0, 0x81bf00, 0x81c260, 0x81c2c0, 0x81c320, 0x81bf10, 0x81a470, 0x191d10,
+        0x6814e0, 0x6816f0,
     ]
     for address in addresses:
         folder=ROOT/('recomp/config/output' if address<0x200000 else 'recomp/config/output_ovl/'+('o8' if address==0x810f30 else 'o2' if address<0x810000 else 'o9'))
@@ -125,6 +126,7 @@ def main():
         original_word_audits=proof,commands=[],declared_ports=[
             '107C68 exact two eight-byte zero fills in original-only profile selection surroundings',
             '370140 and 376E70 checked position arguments through the qualified native heading math',
+            '1AFDD0 captures channel 10 type-zero packets in the control payload fixture',
         ],
         immutable_evidence={'o2_71b034_f32_bits':0x41c80000,'o9_82b860_targets':[0x8231c0]*6,
             'o9_8294c0_goal_targets':goal_table},

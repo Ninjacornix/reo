@@ -70,6 +70,10 @@ Result Owner::workers(Services& services,world::Services& actors,scenario::Provi
     Result result;
     const auto work=[&](Worker stage){services.run(stage,*this);++result.worker_calls;};
     const auto completion=[&](){result.completion_checked=true;result.completion=check_scenario_events();if(result.completion.status!=gameplay_events::StatisticsStatus::completed)result.status=Status::statistics_failure;};
+    if (open() && !world_.session().ai_control_requests.reset_pending_payloads()) {
+        result.status = Status::busy;
+        return result;
+    }
     work(Worker::reset_entity_queues);work(Worker::armed_request);
     result.status=script_service(services,providers,script_budget,result);if(result.status!=Status::completed)return result;
     if(world_.paused){completion();return result;}
