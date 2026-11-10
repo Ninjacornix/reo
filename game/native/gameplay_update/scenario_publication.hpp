@@ -31,7 +31,7 @@ struct ActorActionMessage {
     std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
     static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
 };
-enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,contact_snapshot=5,alignment=6,action=7,peer=8,room_object=9,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,contact_snapshot=5,alignment=6,action=7,peer=8,room_object=9,resource_pair=10,speech=11,carried=12,reserved=13,status=14,extra=15};
 struct ActorSnapshotMessage {
     MessageRoute route{};std::uint32_t channel{};
     std::array<std::uint8_t,4> action{};gameplay_world::Position position;
@@ -82,6 +82,12 @@ struct ActorPeerMessage {
     gameplay_world::actors::ActorReference peer;std::array<std::int16_t,2> parameters{};
     static constexpr unsigned type=8,length=12,options=0,dispatch_mode=4;
 };
+struct ActorSpeechMessage {
+    MessageRoute route{};std::uint32_t channel{},sequence{};
+    std::int16_t target_identifier{},target_context{};
+    std::int32_t response_state{};std::int8_t pending{},gauge_notice{},variant{};
+    static constexpr unsigned type=11,length=20,options=0,dispatch_mode=4;
+};
 inline bool peer_reference_admitted(const gameplay_world::actors::ActorReference& reference)noexcept{
     using Reference=gameplay_world::actors::ActorReference;
     return reference.kind==Reference::Kind::primary?reference.identifier<gameplay_world::World::primary_capacity:
@@ -109,6 +115,7 @@ public:
     virtual bool send(const ActorAlignmentMessage&)noexcept{return false;}
     virtual bool send(const ActorRoomObjectMessage&)noexcept{return false;}
     virtual bool send(const ActorPeerMessage&)noexcept{return false;}
+    virtual bool send(const ActorSpeechMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
 enum class PublicationStatus {completed,unavailable,message_unavailable};
@@ -208,6 +215,16 @@ public:
             return dispatch_actor(*actor,message);
         }
         case ActorMessageSelector::resource_pair:{ActorResourcePairMessage message;message.pair=actor->explicit_resource_pair;message.carried=actor->inventory.carried;return dispatch_actor(*actor,message);}
+        case ActorMessageSelector::speech:{
+            if(!actor->speech.selection||!actor->speech.variant)return PublicationStatus::unavailable;
+            const auto selection=*actor->speech.selection;
+            ActorSpeechMessage message;message.sequence=selection.sequence;message.target_identifier=selection.target_identifier;
+            message.target_context=selection.target_context;message.response_state=selection.response_state;
+            message.pending=selection.pending;message.variant=*actor->speech.variant;
+            const auto gauge=gameplay_world::selected_gauge_percentage(world_);if(!gauge)return PublicationStatus::unavailable;
+            message.gauge_notice=std::int8_t(!(*gauge<90.f));actor->speech.gauge_notice=message.gauge_notice;
+            return dispatch_actor(*actor,message);
+        }
         case ActorMessageSelector::carried:case ActorMessageSelector::extra:{
             ActorInventoryMessage message;message.kind=selector==ActorMessageSelector::carried?ActorInventoryMessage::Kind::carried:ActorInventoryMessage::Kind::extra;
             if(selector==ActorMessageSelector::carried)message.resources=actor->inventory.carried;

@@ -1,8 +1,9 @@
 #include "reception.hpp"
 #include <stdexcept>
 namespace reo::native::gameplay_update {
-ActorReception::ActorReception(gameplay_world::World& world,gameplay_collision::room_objects::Owner* objects,gameplay_weapon_resources::Equipment* equipment):world_(world),objects_(objects),equipment_(equipment){
+ActorReception::ActorReception(gameplay_world::World& world,gameplay_collision::room_objects::Owner* objects,gameplay_weapon_resources::Equipment* equipment,gameplay_world::InventoryPresence* presence):world_(world),objects_(objects),equipment_(equipment),presence_(presence){
     if(equipment_&&!equipment_->bound_to(world_))throw std::invalid_argument("Native actor reception equipment belongs to another or closed World");
+    if(presence_&&!presence_->bound_to(world_))throw std::invalid_argument("Native actor reception inventory presence belongs to another or closed World");
 }
 ActorReception::Admission ActorReception::begin(std::uint32_t channel,bool local_echo)noexcept{
     if(world_.closed())return{ReceptionStatus::unavailable,{}};
@@ -64,6 +65,20 @@ ReceptionResult ActorReception::receive(const ActorPeerMessage& message,bool loc
     if(!peer)return{message.peer.kind==gameplay_world::actors::ActorReference::Kind::auxiliary?ReceptionStatus::completed:ReceptionStatus::unavailable,{}};
     peer->transient_contact=std::uint8_t(message.state);
     peer->peer_request=gameplay_world::PeerRequest{std::uint8_t(message.state>>8),{gameplay_world::actors::ActorReference::Kind::primary,actor.slot},message.parameters};
+    return finish(actor);
+}
+ReceptionResult ActorReception::receive(const ActorSpeechMessage& message,bool local_echo)noexcept{
+    const auto admitted=begin(message.channel,local_echo);if(!admitted.actor)return{admitted.status,{}};
+    auto& actor=*admitted.actor;
+    // Missing view ownership is unknown, rather than an assumed closed UI.
+    if(!presence_||presence_->refresh(message.channel-1u)!=gameplay_world::PresenceStatus::completed)return{ReceptionStatus::unavailable,{}};
+    actor.speech.variant=message.variant;
+    if(message.variant||actor.room==world_.room){
+        actor.speech.selection=gameplay_world::SpeechSelection{message.sequence,message.target_identifier,
+            std::bit_cast<std::int8_t>(std::uint8_t(message.target_context)),
+            std::bit_cast<std::int8_t>(std::uint8_t(message.response_state)),message.pending};
+        actor.speech.gauge_notice=message.gauge_notice;
+    }
     return finish(actor);
 }
 }

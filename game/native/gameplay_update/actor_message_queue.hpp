@@ -21,12 +21,13 @@ public:
     bool send(const ActorResourcePairMessage&)noexcept override;
     bool send(const ActorRoomObjectMessage&)noexcept override;
     bool send(const ActorPeerMessage&)noexcept override;
+    bool send(const ActorSpeechMessage&)noexcept override;
     ActorQueueDrain drain(std::size_t budget,bool local_echo=false)noexcept;
     ActorQueueStatus close()noexcept;
     std::size_t pending()const noexcept{return count_;}
     std::size_t capacity()const noexcept{return slots_.size();}
 private:
-    using Message=std::variant<ActorStatusMessage,ActorAlignmentMessage,ActorInteractionMessage,ActorInventoryMessage,ActorResourcePairMessage,ActorRoomObjectMessage,ActorPeerMessage>;
+    using Message=std::variant<ActorStatusMessage,ActorAlignmentMessage,ActorInteractionMessage,ActorInventoryMessage,ActorResourcePairMessage,ActorRoomObjectMessage,ActorPeerMessage,ActorSpeechMessage>;
     ActorReception& receiver_;
     std::vector<std::optional<Message>> slots_;
     std::size_t head_{},count_{};

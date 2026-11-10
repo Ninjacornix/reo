@@ -1,4 +1,5 @@
 #pragma once
+#include "speech_state.hpp"
 #include "../gameplay_actors/entity.hpp"
 #include "../gameplay_actors/reference.hpp"
 #include "../gameplay_actors/hit.hpp"
@@ -74,6 +75,7 @@ struct Actor : actors::Entity,actors::HitActor {
     // C65/C66/C68/C6A. C64's low byte is the inherited transient_contact,
     // including when pending-hit cleanup clears only that byte.
     std::optional<PeerRequest> peer_request;
+    SpeechState speech;
     std::array<std::uint8_t,2> explicit_resource_pair{}; // authored action pair CAA/CAB
     std::uint16_t linked_model_variant{};
     std::uint16_t gauge_modifier_one{},gauge_modifier_two{}; // BB6/BB8; third BBA view is linked_model_variant

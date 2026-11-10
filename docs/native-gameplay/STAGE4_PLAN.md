@@ -160,6 +160,11 @@ The current resource and inventory implementation includes:
   actual hit cleanup, missing-target prefixes and queue delivery across Worlds.
   Higher producers, senders3/11, remaining consumers/transport and installation
   remain open.
+- [Speech-state messages and peer-map presence](ACTOR_SPEECH_MESSAGES.md) now
+  bind selector11 and its receiver to canonical SPK state, actual selected gauge
+  and a World-bound inventory-map cache. Partial off-room receipts preserve
+  unknown state. Higher speech/text/UI consumers, sender3, other incoming
+  branches, external transport and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

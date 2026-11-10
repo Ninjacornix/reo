@@ -1,6 +1,7 @@
 #pragma once
 #include "scenario_publication.hpp"
 #include "../gameplay_weapon_resources/equipment.hpp"
+#include "../gameplay_world/inventory_presence.hpp"
 namespace reo::native::gameplay_update {
 enum class ReceptionStatus {completed,unavailable};
 struct ReceptionResult {
@@ -12,7 +13,7 @@ struct ReceptionResult {
 // the native state. The channel names a checked primary slot plus one.
 class ActorReception final {
 public:
-    ActorReception(gameplay_world::World&,gameplay_collision::room_objects::Owner* = nullptr,gameplay_weapon_resources::Equipment* = nullptr);
+    ActorReception(gameplay_world::World&,gameplay_collision::room_objects::Owner* = nullptr,gameplay_weapon_resources::Equipment* = nullptr,gameplay_world::InventoryPresence* = nullptr);
     ReceptionResult receive(const ActorStatusMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorAlignmentMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorInteractionMessage&,bool local_echo=false)noexcept;
@@ -20,11 +21,13 @@ public:
     ReceptionResult receive(const ActorResourcePairMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorRoomObjectMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorPeerMessage&,bool local_echo=false)noexcept;
+    ReceptionResult receive(const ActorSpeechMessage&,bool local_echo=false)noexcept;
 private:
     struct Admission {ReceptionStatus status{ReceptionStatus::completed};std::shared_ptr<gameplay_world::Actor> actor;};
     gameplay_world::World& world_;
     gameplay_collision::room_objects::Owner* objects_;
     gameplay_weapon_resources::Equipment* equipment_;
+    gameplay_world::InventoryPresence* presence_;
     Admission begin(std::uint32_t channel,bool local_echo)noexcept;
     ReceptionResult finish(gameplay_world::Actor&)noexcept;
 };

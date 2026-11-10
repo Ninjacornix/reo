@@ -71,6 +71,7 @@ void compare_peer_auxiliary_reception(std::vector<std::uint8_t>& ram){
     }
 }
 #include "tools/native_reconstruction/actor_reception_equipment_tests.inc"
+#include "tools/native_reconstruction/actor_speech_reception_tests.inc"
 void compare_actor_reception(const char* iso_path,const char* static_path,std::vector<std::uint8_t>& ram){
     using namespace actor_reception_fixture;auto* memory=ram.data();actor_reception_capture=true;
     g::World world({{{1,2,4}},1,{32,UINT64_MAX}},std::make_shared<g::Session>());for(unsigned i=0;i<8;++i){auto actor=std::make_unique<g::Actor>();actor->slot=std::uint8_t(i);check(bool(world.spawn_primary(i,std::move(actor)).id));memory[base+i*0x10e0+2]=0;memory[base+i*0x10e0+3]=std::uint8_t(i);}
@@ -84,6 +85,7 @@ void compare_actor_reception(const char* iso_path,const char* static_path,std::v
     for(unsigned kind=0;kind<8;++kind)for(unsigned n=0;n<8192;++n)run(kind,n,n);
     compare_peer_auxiliary_reception(ram);
     compare_reception_equipment(iso_path,static_path,ram);
+    compare_actor_speech_reception(ram);
     world.session().message_phase=1;world.selected_actor=1;world.primary(1)->status=0;auto live=world.primary(0);live->selected_resource=3;live->pending_notice=77;live->root_motion_delta={1,2,3};const u::ActorStatusMessage status{u::MessageRoute::mode_zero,1,8,9};
     check(receiver.receive(status,true).status==u::ReceptionStatus::unavailable&&live->status==8&&live->current==9&&!live->pending_notice&&live->root_motion_delta.x==0);++reception_refusals;live->selected_resource=0;
     u::ActorReception absent(world);const u::ActorRoomObjectMessage location{u::MessageRoute::mode_one,1,3,{4,5}};live->root_motion_delta={1,2,3};check(absent.receive(location,true).status==u::ReceptionStatus::unavailable&&live->grid==3&&live->root_motion_delta.x==1);++reception_refusals;
