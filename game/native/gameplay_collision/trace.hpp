@@ -21,5 +21,7 @@ Result any(const response::Grid&,Vec3,Vec3,const response::Filter&,
            std::span<const response::Triangle> dynamic={});
 // Floor nearest is list-local: the first successful sampled list wins.
 Result floor(const response::Grid&,Vec3,Vec3);
+struct FloorAny {bool hit{};SamplingStatus status{SamplingStatus::complete};};
+FloorAny floor_any_checked(const response::Grid&,Vec3,Vec3,std::uint8_t required=255,std::uint8_t excluded=255);
 bool floor_any(const response::Grid&,Vec3,Vec3,std::uint8_t required=255,std::uint8_t excluded=255);
 }

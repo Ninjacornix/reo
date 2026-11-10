@@ -1,6 +1,7 @@
 #include "world.hpp"
 #include "linked_models.hpp"
 #include "auxiliary_actors.hpp"
+#include "target_metrics.hpp"
 #include "../gameplay_navigation/bank.hpp"
 #include <bit>
 #include <exception>
@@ -31,6 +32,11 @@ gameplay_navigation::Bank& World::navigation(){
     if(closed_)throw std::runtime_error("Native navigation owner is closed");
     if(!navigation_)navigation_.reset(new gameplay_navigation::Bank(session_->room_variants));
     return *navigation_;
+}
+TargetMetricCache& World::target_metrics(){
+    if(closed_)throw std::runtime_error("Native target metric owner is closed");
+    if(!target_metrics_)target_metrics_.reset(new TargetMetricCache(*this));
+    return *target_metrics_;
 }
 actors::EntityCreated World::spawn_primary(std::size_t index,std::unique_ptr<Actor> actor)noexcept{
     if(closed_)return{actors::EntityStatus::closed,{}};
@@ -93,6 +99,7 @@ Status World::close()noexcept{
     if(linked_models_)(void)linked_models_->close();
     if(auxiliary_actors_)(void)auxiliary_actors_->close();
     if(navigation_)navigation_->close();
+    if(target_metrics_)target_metrics_->close();
     entities_.shutdown();return Status::completed;
 }
 Result World::update_primary(Services& services){

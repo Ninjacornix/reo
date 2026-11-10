@@ -26,6 +26,7 @@ class LinkedModelPool final {
     actors::EntityId head() const noexcept;
     actors::EntityId tail() const noexcept;
     std::optional<std::uint8_t> physical_slot(const actors::EntityId&) const noexcept;
+    actors::EntityId identity_at(std::size_t slot)const noexcept{return slot<slots_.size()?slots_[slot].id:actors::EntityId{};}
     actors::EntityId previous(const actors::EntityId&) const;
     std::shared_ptr<Actor> resolve(const actors::EntityId&) const;
 

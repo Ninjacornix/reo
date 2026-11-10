@@ -23,6 +23,7 @@ public:
     actors::EntityId next(const actors::EntityId&)const noexcept;
     actors::EntityId previous(const actors::EntityId&)const noexcept;
     std::optional<std::uint8_t> physical_slot(const actors::EntityId&)const noexcept;
+    actors::EntityId identity_at(std::size_t slot)const noexcept{return slot<slots_.size()?slots_[slot].id:actors::EntityId{};}
     actors::EntityId find(std::uint32_t identifier,bool active_only=false)const noexcept;
     AuxiliaryAttachment claim_attachment()noexcept;
     std::array<bool,4> attachment_flags()const noexcept{return attachments_;}

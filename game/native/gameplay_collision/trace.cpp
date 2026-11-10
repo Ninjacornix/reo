@@ -60,5 +60,15 @@ Result any(const response::Grid& grid,Vec3 start,Vec3 end,const response::Filter
     for(const auto index:sampled.cells){result.hit=first(grid.triangles(),cell(grid,index),start,end,filter);if(result.hit)return result;}result.hit=first(dynamic,indices(dynamic.size()),start,end,filter);return result;
 }
 Result floor(const response::Grid& grid,Vec3 start,Vec3 end){const auto sampled=sample(grid,start,end,true);Result result;result.status=sampled.status;if(sampled.status==SamplingStatus::capacity||sampled.status==SamplingStatus::nonprogress)return result;for(const auto index:sampled.cells){result.hit=list(grid.triangles(),cell(grid,index),start,end,{},true).nearest;if(result.hit)break;}return result;}
-bool floor_any(const response::Grid& grid,Vec3 start,Vec3 end,std::uint8_t required,std::uint8_t excluded){const auto sampled=sample(grid,start,end,true);if(sampled.status==SamplingStatus::capacity||sampled.status==SamplingStatus::nonprogress)return false;for(const auto index:sampled.cells)for(const auto id:cell(grid,index)){const auto& t=grid.triangles()[id];const auto type=std::uint8_t(t.flags);if(type==excluded||(required!=255&&type!=required))continue;if(triangle(t,start,end,1).hit)return true;}return false;}
+FloorAny floor_any_checked(const response::Grid& grid,Vec3 start,Vec3 end,std::uint8_t required,std::uint8_t excluded){
+    const auto sampled=sample(grid,start,end,true);
+    if(sampled.status==SamplingStatus::capacity||sampled.status==SamplingStatus::nonprogress)return {false,sampled.status};
+    for(const auto index:sampled.cells)for(const auto id:cell(grid,index)){
+        const auto& t=grid.triangles()[id];const auto type=std::uint8_t(t.flags);
+        if(type==excluded||(required!=255&&type!=required))continue;
+        if(triangle(t,start,end,1).hit)return {true,sampled.status};
+    }
+    return {false,sampled.status};
+}
+bool floor_any(const response::Grid& grid,Vec3 start,Vec3 end,std::uint8_t required,std::uint8_t excluded){return floor_any_checked(grid,start,end,required,excluded).hit;}
 }

@@ -148,6 +148,12 @@ The current resource and inventory implementation includes:
   guides explicit native work initialization; it is not an installed fix or a
   confirmed cause of the player's stutter.
 
+- [Native World target metrics](TARGET_METRICS.md) now supply complete admitted
+  cache rebuild with an explicit initialized work policy and once-per-row sorts.
+  Both compilers pass192 profiles and thirteen parent tests, with75 strict
+  original comparisons and192 initialized comparisons. Actual frame adoption,
+  complete observation/action execution and game acceptance remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

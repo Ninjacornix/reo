@@ -34,6 +34,9 @@ struct ColorFade {std::uint32_t rgba{},step{},updates_left{};};
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
 struct ControlRequest {std::uint8_t kind{};std::uint16_t parameter{};};
 struct ProjectileContact {gameplay_collision::Vec3 point,normal;};
+// Linked-family C94 belongs to targeting, not the primary inventory bytes at
+// the same original layout offsets. Presence requires its actual producer.
+struct TargetingState {std::uint32_t flags{};bool selected_model_point{};};
 struct ActorCollision {
     gameplay_collision::Vec3 local_center,previous_center_offset,displacement;
     gameplay_collision::Vec3 previous_local_center,interpolation_step;
@@ -57,6 +60,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t ai_control{},normalized_marker{};
     std::optional<gameplay_navigation::ActorRouteState> navigation_route;
     std::optional<gameplay_ai::ExecutionState> ai_execution;
+    std::optional<TargetingState> targeting;
     std::uint8_t character{};
     std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
     std::uint16_t terminal_countdown{}; // original C62, distinct from status/hit recovery timers
@@ -173,6 +177,7 @@ enum class Stage {
 class World;
 class LinkedModelPool;
 class AuxiliaryActorPool;
+class TargetMetricCache;
 class Services {
 public:
     virtual ~Services()=default;
@@ -203,6 +208,7 @@ public:
     LinkedModelPool& linked_models();
     AuxiliaryActorPool& auxiliary_actors();
     gameplay_navigation::Bank& navigation();
+    TargetMetricCache& target_metrics();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
     std::shared_ptr<Actor> resolve(const actors::EntityId&)const noexcept;
     std::shared_ptr<Actor> referenced_actor(const actors::ActorReference&)const noexcept;
@@ -238,6 +244,7 @@ private:
     std::unique_ptr<LinkedModelPool> linked_models_;
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
     std::unique_ptr<gameplay_navigation::Bank> navigation_;
+    std::unique_ptr<TargetMetricCache> target_metrics_;
     std::vector<input::Remap> layouts_;
     std::vector<input::ControllerFrame> controllers_;
     bool updating_{},closed_{};
