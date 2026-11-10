@@ -6,7 +6,7 @@ from verify_gameplay_collision import COMPILERS
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');a=p.parse_args();a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');a=p.parse_args();a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  image=ROOT/'build-function-index/owned-overlays/o0.bin';assert sha(image)=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2';raw=image.read_bytes();entries={};proof=[]
  addresses=[0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]+([0x37b990,0x37bbc0,0x37c470,0x1b02d0]if a.statistics else[])
  if a.automatic:
@@ -27,6 +27,7 @@ def main():
   if a.publication:files += ['tools/native_reconstruction/scenario_publication_tests.inc']
   if a.actor_status:files += ['tools/native_reconstruction/actor_status_message_tests.inc']
   if a.actor_actions:files += ['tools/native_reconstruction/actor_action_message_tests.inc']
+  if a.actor_inventory:files += ['tools/native_reconstruction/actor_inventory_message_tests.inc']
   files=list(dict.fromkeys(files))
   for name in files:
    for inc in re.findall(r'^\s*#include "([^"]+)"',(ROOT/name).read_text(),re.M):
@@ -57,9 +58,10 @@ def main():
   (out/'condition_switch.bin').write_bytes(raw[0x38cce0-0x370000:0x38cce0-0x370000+64]);r['condition_switch_sha256']=sha(out/'condition_switch.bin');r['automatic_worker_installed_in_native_owner']=True
   flags=cmd[1:cmd.index(str(out/'source'/unit))];flags += ['-DREO_AUTOMATIC_COMPLETION=1','-pthread','-fno-fast-math','-ffp-contract=off']
   if a.publication:flags += ['-DREO_SCENARIO_PUBLICATION=1']
+  if a.actor_inventory:flags += ['-DREO_ACTOR_INVENTORY_MESSAGE=1'];r['actor_inventory_admission']='67E230 selectors0/13 intentional no-message paths and4/10/12/15 typed interaction/pair/inventory payloads;18DBB0 is a bounded four-byte source-to-stack copy port'
   if a.actor_actions:flags += ['-DREO_ACTOR_ACTION_MESSAGE=1'];r['actor_action_admission']='Complete67E230 selector7, actual offline peer request mutations and typed captured payload; final mapped-room/message sinks remain declared ports'
   if a.actor_status:
-   flags += ['-DREO_ACTOR_STATUS_MESSAGE=1'];(out/'actor_status_switch.bin').write_bytes(o2[0x740710-0x570000:0x740710-0x570000+64]+o2[0x740340-0x570000:0x740340-0x570000+40]);r['actor_status_switch_sha256']=sha(out/'actor_status_switch.bin');r['actor_message_admission']=('67E230 selectors7/14 and early gates, actual offline peer requests, all6605B0 low-byte clear selectors; remaining message selectors stay open'if a.actor_actions else'67E230 selector14 and its early gates, all6605B0 low-byte clear selectors; other message selectors remain open')
+   flags += ['-DREO_ACTOR_STATUS_MESSAGE=1'];(out/'actor_status_switch.bin').write_bytes(o2[0x740710-0x570000:0x740710-0x570000+64]+o2[0x740340-0x570000:0x740340-0x570000+40]);r['actor_status_switch_sha256']=sha(out/'actor_status_switch.bin');r['actor_message_admission']=('67E230 selectors0/4/7/10/12/13/14/15, typed known payloads and offline peer requests; remaining selectors stay open'if a.actor_inventory else'67E230 selectors7/14 and early gates, actual offline peer requests, all6605B0 low-byte clear selectors; remaining message selectors stay open'if a.actor_actions else'67E230 selector14 and its early gates, all6605B0 low-byte clear selectors; other message selectors remain open')
    with (out/'reference.hpp').open('a')as reference:reference.write('\ninline std::int32_t actor_message_unadmitted_conversion(float){throw std::runtime_error("Unadmitted actor message float conversion");}\n#define FPU_CVT_W_S(x) actor_message_unadmitted_conversion(x)\n')
    r['declared_ports'].append('Unentered67E230 selector1 float-conversion paths throw if reached; selector14 executes no conversion')
   objects,receipts=compile_objects(ROOT,out,cc,flags,UPDATE_UNITS,frozen,env);r['production_objects']=receipts

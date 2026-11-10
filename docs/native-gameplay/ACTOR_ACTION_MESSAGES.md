@@ -72,3 +72,7 @@ match the first passed cohorts exactly. Earlier seals are unchanged.
 
 Identities are sealed in `native_actor_action_message_qualification_v1.json`,
 SHA2563e8246cd6d911d4baf8b6ef5282d658b2bdc755c35e0d9d7dba8f177bc478176.
+
+The subsequent [interaction/inventory publication](ACTOR_INVENTORY_MESSAGES.md)
+adds four payload families and two no-message branches. Their shared actor
+gate/channel dispatcher retains this complete action/peer-request comparison.

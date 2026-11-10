@@ -5,8 +5,8 @@ canonical entity capabilities. Status clearing reuses one extracted native field
 operation; the earlier general status-service path calls that same operation.
 No actor or session is copied into a message-specific state model.
 
-The publisher supplies the admitted67E230 selector14 path, not the other15
-selectors. It preserves the separate1B0310 phase gate, pause, category/authority
+This historical checkpoint supplied the admitted67E230 selector14 path.
+It preserves the separate1B0310 phase gate, pause, category/authority
 admission, status4 suppression and the shared744638 selector-suppression word.
 Primary messages require actor slot equal to selected actor. Category1 requires
 status10000000 and uses the actual room-owner capability. Other categories return
@@ -57,3 +57,7 @@ qualifies selector7 and its offline peer requests. That work joins the native
 frame and selector-suppression views of744638 into one session value. Current
 cooperative regressions include this selector14/clear coverage unchanged; the
 earlier qualification remains a historical snapshot.
+
+[Interaction and inventory publication](ACTOR_INVENTORY_MESSAGES.md) now adds
+selectors4/10/12/15 and the real0/13 no-message paths. Current status and action
+comparisons remain unchanged under the shared gate/dispatch implementation.

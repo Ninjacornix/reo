@@ -57,7 +57,8 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t equipment_notice_detail{};
     // C78/C79. The request's C7A resource is inherited interaction_slot;
     // C7F is the inherited equipment_slot, not a second requested-item field.
-    std::uint8_t interaction_kind{},interaction_mode{};
+    std::uint8_t interaction_kind{},interaction_mode{},interaction_detail{};
+    std::array<std::uint8_t,2> explicit_resource_pair{}; // authored action pair CAA/CAB
     std::uint16_t linked_model_variant{};
     std::uint16_t contact_flags{};
     std::uint16_t action_flags{};

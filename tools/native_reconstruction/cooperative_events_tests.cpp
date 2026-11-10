@@ -22,12 +22,20 @@ bool actor_action_capture{};
 void actor_action_message_port(std::uint8_t*,R5900Context*);
 void actor_action_room_owner_port(std::uint8_t*,R5900Context*);
 #endif
+#ifdef REO_ACTOR_INVENTORY_MESSAGE
+bool actor_inventory_capture{};
+void actor_inventory_message_port(std::uint8_t*,R5900Context*);
+void actor_inventory_room_owner_port(std::uint8_t*,R5900Context*);
+#endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};switch(context->pc){
 #ifdef REO_COMPLETION_STATISTICS
 case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
 #endif
 #ifdef REO_SCENARIO_PUBLICATION
 case 0x811190:case 0x810870:
+#ifdef REO_ACTOR_INVENTORY_MESSAGE
+if(actor_inventory_capture){actor_inventory_message_port(memory,context);done();return;}
+#endif
 #ifdef REO_ACTOR_ACTION_MESSAGE
 if(memory[GPR_U32(context,5)]==7){actor_action_message_port(memory,context);done();return;}
 #endif
@@ -38,10 +46,16 @@ publication_message_port(memory,context);done();return;
 #endif
 #ifdef REO_ACTOR_STATUS_MESSAGE
 case 0x811d40:case 0x8115f0:
+#ifdef REO_ACTOR_INVENTORY_MESSAGE
+if(actor_inventory_capture){actor_inventory_room_owner_port(memory,context);done();return;}
+#endif
 #ifdef REO_ACTOR_ACTION_MESSAGE
 if(actor_action_capture){actor_action_room_owner_port(memory,context);done();return;}
 #endif
 actor_room_owner_port(memory,context);done();return;
+#endif
+#ifdef REO_ACTOR_INVENTORY_MESSAGE
+case 0x18dbb0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);check(size==4&&dst>=0x1e00000&&dst<=0x2000000-4&&(src==0x4a5c30+0xc84||src==0x4a5c30+0xc89));std::memcpy(memory+dst,memory+src,4);SET_GPR_U32(context,2,dst);done();return;}
 #endif
 case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at&&GPR_U32(context,5)==0);std::memset(memory+at,0,n);SET_GPR_U32(context,2,at);done();return;}
 #include "dispatch.inc"
@@ -67,6 +81,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #endif
 #ifdef REO_ACTOR_ACTION_MESSAGE
 #include "tools/native_reconstruction/actor_action_message_tests.inc"
+#endif
+#ifdef REO_ACTOR_INVENTORY_MESSAGE
+#include "tools/native_reconstruction/actor_inventory_message_tests.inc"
 #endif
 int main(int argc,char** argv)try{
     check(argc==
@@ -111,6 +128,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_ACTION_MESSAGE
     compare_actor_action_messages(memory);
 #endif
+#ifdef REO_ACTOR_INVENTORY_MESSAGE
+    compare_actor_inventory_messages(memory);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -126,6 +146,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_ACTION_MESSAGE
     <<",\"actor_action_cases\":"<<actor_action_cases<<",\"actor_action_messages\":"<<actor_action_messages<<",\"actor_action_lookups\":"<<actor_action_lookups<<",\"actor_action_requests\":"<<actor_action_requests<<",\"actor_action_refusals\":"<<actor_action_refusals<<",\"actor_action_world_publications\":"<<actor_action_world_publications
+#endif
+#ifdef REO_ACTOR_INVENTORY_MESSAGE
+    <<",\"actor_inventory_cases\":"<<actor_inventory_cases<<",\"actor_inventory_messages\":"<<actor_inventory_messages<<",\"actor_inventory_lookups\":"<<actor_inventory_lookups<<",\"actor_inventory_refusals\":"<<actor_inventory_refusals
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

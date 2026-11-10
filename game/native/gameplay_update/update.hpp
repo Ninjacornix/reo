@@ -99,6 +99,10 @@ public:
         if(!open())return PublicationStatus::unavailable;
         return publication_.actor_action(actor);
     }
+    PublicationStatus record_actor_message(const world::actors::EntityId& actor,ActorMessageSelector selector)noexcept{
+        if(!open())return PublicationStatus::unavailable;
+        return publication_.actor_message(actor,selector);
+    }
     PublicationStatus clear_actor_status(const world::actors::EntityId& id,std::uint32_t selector)noexcept{
         if(!open())return PublicationStatus::unavailable;
         const auto actor=world_.resolve(id);if(!actor)return PublicationStatus::unavailable;
