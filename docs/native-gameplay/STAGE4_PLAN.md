@@ -35,7 +35,9 @@ behavior comparisons cover all256 values; the actual inventory UI remains open.
 The [resource companion audit](RESOURCE_COMPANION_AUDIT.md) now includes a
 qualified654720 state policy. Actual shared visual/child consumers, resource
 audio and timed lighting remain open, so the six factory routes still refuse.
-The same lighting pool also blocks ordinary room-lighting script commands.
+Ordinary room-lighting script commands and all166 LIG inputs already have a
+native owner. [Temporary-light access](LIGHTING_CAPABILITIES.md) now reuses that
+same owner; timed tasks, actor bindings and rendering consumers remain open.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners

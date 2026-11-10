@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 namespace reo::native::gameplay_scenario {
+struct LightDomain {};
 namespace {
 void extent(std::span<const std::byte> bytes,std::size_t offset,std::size_t size){
     if(offset>bytes.size()||size>bytes.size()-offset)throw std::invalid_argument("Bounded LIG extent");
@@ -19,7 +20,8 @@ LightDescriptor descriptor(std::span<const std::byte> bytes,std::size_t at){
     d.attenuation=std::bit_cast<float>(word(bytes,at+44));d.parameter=std::bit_cast<float>(word(bytes,at+48));return d;
 }
 }
-Lighting::Lighting(){bindings_.fill(0xff);}
+LightDescriptor decode_light_descriptor(std::span<const std::byte> bytes){if(bytes.size()!=52)throw std::invalid_argument("Native light definition requires52 authored bytes");return descriptor(bytes,0);}
+Lighting::Lighting():domain_(std::make_shared<const LightDomain>()){bindings_.fill(0xff);}
 LightingImport Lighting::import_lig(std::span<const std::byte> bytes){
     const auto version=word(bytes,0);const auto count=std::bit_cast<std::int32_t>(word(bytes,4));
     if(version!=4){banks_={};return LightingImport::unsupported_version;}
@@ -37,14 +39,16 @@ LightingImport Lighting::import_lig(std::span<const std::byte> bytes){
     banks_=banks;reset_work();return LightingImport::completed;
 }
 void Lighting::reset_work()noexcept{
-    selected_=-1;primary_={};auxiliary_={};primary_count_=0;bindings_.fill(0xff);++reset_epoch_;
+    selected_=-1;primary_={};auxiliary_={};primary_count_=0;bindings_.fill(0xff);
+    if(reset_epoch_==UINT64_MAX)exhausted_=true;else ++reset_epoch_;
     // Existing bank masks are deliberately not cleared by 6B1DC0.
 }
 void Lighting::select(std::uint8_t bank)noexcept{if(bank<banks_.size()&&banks_[bank].kind)selected_=std::int8_t(bank);}
 std::optional<std::uint8_t> Lighting::allocate(const LightDescriptor* source,std::uint8_t tag,std::uint8_t mode)noexcept{
-    if(primary_count_>=primary_.size())return{};
+    if(exhausted_||primary_count_>=primary_.size())return{};
     for(std::size_t i=0;i<primary_.size();++i)if(!primary_[i].active){
-        auto& light=primary_[i];light.active=1;++primary_count_;
+        if(generations_[i]==UINT64_MAX)return{};
+        auto& light=primary_[i];light.active=1;++primary_count_;++generations_[i];
         if(source)light.descriptor=*source;
         light.tag=tag;light.mode=mode;return std::uint8_t(i);
     }
@@ -54,6 +58,17 @@ bool Lighting::release(std::uint8_t slot)noexcept{
     if(!primary_count_||slot>=primary_.size()||!primary_[slot].active)return false;
     primary_[slot]={};--primary_count_;return true;
 }
+std::optional<LightHandle> Lighting::handle(std::uint8_t index)const noexcept{
+    if(exhausted_||index>=primary_.size()||!primary_[index].active)return{};
+    LightHandle id;id.domain_=domain_;id.epoch_=reset_epoch_;id.generation_=generations_[index];id.slot_=index;return id;
+}
+std::optional<std::uint8_t> Lighting::slot(const LightHandle& id)const noexcept{
+    if(exhausted_||id.domain_!=domain_||id.epoch_!=reset_epoch_||!id.generation_||id.slot_>=primary_.size()||generations_[id.slot_]!=id.generation_||!primary_[id.slot_].active)return{};
+    return id.slot_;
+}
+std::optional<NativeLight> Lighting::light(const LightHandle& id)const noexcept{const auto index=slot(id);return index?std::optional(primary_[*index]):std::nullopt;}
+bool Lighting::release(const LightHandle& id)noexcept{const auto index=slot(id);return index&&release(*index);}
+bool Lighting::replace(const LightHandle& id,const LightDescriptor& value)noexcept{const auto index=slot(id);if(!index)return false;primary_[*index].descriptor=value;return true;}
 bool Lighting::remove(std::uint8_t index)noexcept{
     if(index>=bindings_.size()||selected_<0||std::size_t(selected_)>=banks_.size())return false;
     if(bindings_[index]!=0xff)release(bindings_[index]);

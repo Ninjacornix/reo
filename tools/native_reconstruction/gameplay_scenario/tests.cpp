@@ -3,6 +3,7 @@
 #include "game/native/gameplay_scenario/session_counters.hpp"
 #include "game/native/gameplay_scenario/sequence_control.hpp"
 #include "game/native/gameplay_scenario/lighting.hpp"
+#include "game/native/gameplay_lighting/lights.hpp"
 #include "game/native/gameplay_scenario/scene_channels.hpp"
 #include "game/native/gameplay_scenario/scene_controls.hpp"
 #include "game/native/gameplay_scenario/stream_channels.hpp"

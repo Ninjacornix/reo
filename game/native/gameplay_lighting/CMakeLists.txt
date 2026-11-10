@@ -1,0 +1,7 @@
+add_library(reo_native_gameplay_lighting STATIC lights.cpp)
+target_compile_features(reo_native_gameplay_lighting PUBLIC cxx_std_20)
+target_include_directories(reo_native_gameplay_lighting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+target_link_libraries(reo_native_gameplay_lighting PUBLIC reo_native_gameplay_scenario)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_gameplay_lighting PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

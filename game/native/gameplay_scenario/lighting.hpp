@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <memory>
 #include <span>
 
 namespace reo::native::gameplay_scenario {
@@ -24,6 +25,19 @@ struct NativeLight {
     std::uint8_t active{},tag{},mode{},reserved{};
     LightDescriptor descriptor;
 };
+LightDescriptor decode_light_descriptor(std::span<const std::byte>);
+struct LightDomain;
+class LightHandle final {
+public:
+    LightHandle()=default;
+    explicit operator bool()const noexcept{return bool(domain_)&&generation_!=0;}
+    friend bool operator==(const LightHandle&,const LightHandle&)=default;
+private:
+    std::shared_ptr<const LightDomain> domain_;
+    std::uint64_t epoch_{},generation_{};
+    std::uint8_t slot_{};
+    friend class Lighting;
+};
 enum class LightingImport { completed,unsupported_version };
 // Canonical game-side state; rendering consumes its typed snapshots later.
 // Internal bank bindings name physical native pool slots deliberately: original
@@ -31,6 +45,8 @@ enum class LightingImport { completed,unsupported_version };
 class Lighting final {
 public:
     Lighting();
+    Lighting(const Lighting&)=delete;
+    Lighting& operator=(const Lighting&)=delete;
     LightingImport import_lig(std::span<const std::byte>);
     void reset_work()noexcept;
     void select(std::uint8_t bank)noexcept;
@@ -39,6 +55,13 @@ public:
     bool create_all()noexcept;
     std::optional<std::uint8_t> allocate(const LightDescriptor*,std::uint8_t tag,std::uint8_t mode)noexcept;
     bool release(std::uint8_t slot)noexcept;
+    // Timed consumers retain generations; room bindings keep their separately
+    // qualified physical-slot reuse semantics.
+    std::optional<LightHandle> handle(std::uint8_t slot)const noexcept;
+    std::optional<std::uint8_t> slot(const LightHandle&)const noexcept;
+    std::optional<NativeLight> light(const LightHandle&)const noexcept;
+    bool release(const LightHandle&)noexcept;
+    bool replace(const LightHandle&,const LightDescriptor&)noexcept;
     const std::array<LightingBank,4>& banks()const noexcept{return banks_;}
     const std::array<NativeLight,64>& primary()const noexcept{return primary_;}
     const std::array<NativeLight,64>& auxiliary()const noexcept{return auxiliary_;}
@@ -53,5 +76,8 @@ private:
     std::uint8_t primary_count_{};
     std::int8_t selected_{-1};
     std::uint64_t reset_epoch_{};
+    std::shared_ptr<const LightDomain> domain_;
+    std::array<std::uint64_t,64> generations_{};
+    bool exhausted_{};
 };
 } // namespace reo::native::gameplay_scenario
