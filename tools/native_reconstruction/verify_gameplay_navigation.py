@@ -44,6 +44,7 @@ def main():
     elf = elf_reader((ROOT/'game_data/SLUS_207.65').read_bytes())
     sources, entries, audits = [], {}, []
     selected = {0x815e30, 0x815e70, 0x817170, 0x8171d0, 0x8171e0, 0x816890, 0x816ef0, 0x817100, 0x8171c0, 0x815bc0, 0x813bd0, 0x81a340, 0x8173d0, 0x817470, 0x817820, 0x8179f0, 0x817db0, 0x818010, 0x818390, 0x8185c0, 0x818940, 0x818b70, 0x818e30, 0x819010, 0x819220, 0x819360, 0x819370, 0x8193a0, 0x819410, 0x8194d0, 0x8194f0, 0x8196e0, 0x81a0e0}
+    selected.update({0x819bc0,0x819da0})
     for path in sorted((ROOT/'recomp/config/output_ovl/o9').glob('o9_*.cpp')):
         address = int(path.stem.split('_')[-1], 16)
         if 0x816000 <= address < 0x816460 or address in selected:
@@ -73,7 +74,7 @@ def main():
     audits.append(compare_source('Complete370140 route heading; zero Z bias differs from contact heading', name, 0x370140, 0x370198, lambda a,n: raw_o0[a-0x370000:a-0x370000+n]))
     entries[0x370140] = name
     sources.append(name)
-    for bank, addresses in [('sub',[0x191cc0,0x191d80,0x191df0,0x191ed0,0x192100,0x1226d8,0x1204e0,0x120e98]),('o0',[0x3705e0,0x370fe0]),('o2',[0x579980,0x579730,0x579a50,0x579300,0x617430,0x6175c0,0x616cc0,0x6161e0,0x619a50])]:
+    for bank, addresses in [('sub',[0x191cc0,0x191d80,0x191df0,0x191ed0,0x192100,0x1226d8,0x1204e0,0x120e98,0x192190,0x1921a0,0x18f340,0x18f470]),('o0',[0x3705e0,0x370fe0,0x3700c0,0x370100,0x370490,0x370760,0x3707a0,0x370960,0x370dd0,0x371200]),('o2',[0x579980,0x579730,0x579a50,0x579300,0x617430,0x6175c0,0x616cc0,0x6161e0,0x619a50])]:
         raw = None if bank == 'sub' else (ROOT/f'build-function-index/owned-overlays/{bank}.bin').read_bytes()
         read = elf if bank == 'sub' else lambda a,n,raw=raw,base=(0x370000 if bank=='o0' else 0x570000): raw[a-base:a-base+n]
         folder = ROOT/('recomp/config/output' if bank=='sub' else 'recomp/config/output_ovl/'+bank)
@@ -92,23 +93,26 @@ def main():
     fixture = 'game/native/gameplay_navigation/navigation_tests.cpp'
     helper = 'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
     files = [unit, fixture, 'game/native/gameplay_navigation/navigation.hpp', 'game/native/gameplay_navigation/bank.cpp', 'game/native/gameplay_navigation/bank.hpp', 'game/native/gameplay_navigation/conditions.cpp', 'game/native/gameplay_navigation/conditions.hpp', 'game/native/gameplay_navigation/edges.cpp', 'game/native/gameplay_navigation/edges.hpp', 'game/native/gameplay_navigation/routes.cpp', 'game/native/gameplay_navigation/routes.hpp', 'game/native/gameplay_navigation/ranked_route_tests.inc', 'game/native/gameplay_navigation/cost_routes.cpp', 'game/native/gameplay_navigation/cost_routes.hpp', 'game/native/gameplay_navigation/cost_route_tests.inc', 'game/native/gameplay_navigation/cost_graph.cpp', 'game/native/gameplay_navigation/cost_graph.hpp', 'game/native/gameplay_navigation/cost_graph_tests.inc', 'game/native/gameplay_navigation/local_routes.cpp', 'game/native/gameplay_navigation/local_routes.hpp', 'game/native/gameplay_navigation/local_route_tests.inc', 'game/native/gameplay_navigation/link_collection.cpp', 'game/native/gameplay_navigation/link_collection.hpp', 'game/native/gameplay_navigation/link_collection_tests.inc', 'game/native/gameplay_navigation/cross_room.cpp', 'game/native/gameplay_navigation/cross_room.hpp', 'game/native/gameplay_navigation/cross_room_tests.inc', 'game/native/gameplay_navigation/actor_routes.cpp', 'game/native/gameplay_navigation/actor_routes.hpp', 'game/native/gameplay_navigation/actor_route_tests.inc', 'game/native/gameplay_navigation/destination.cpp', 'game/native/gameplay_navigation/destination.hpp', 'game/native/gameplay_navigation/destination_tests.inc', 'game/native/gameplay_navigation/visibility.cpp', 'game/native/gameplay_navigation/visibility.hpp', 'game/native/gameplay_navigation/visibility_tests.inc', 'game/native/gameplay_collision/collision.cpp', 'game/native/gameplay_collision/collision.hpp', 'game/native/gameplay_collision/response.cpp', 'game/native/gameplay_collision/response.hpp', 'game/native/gameplay_collision/trace.cpp', 'game/native/gameplay_collision/trace.hpp', 'game/native/transform_math/heading.cpp', 'game/native/transform_math/heading.hpp', 'game/native/transform_math/heading_profile.inc', 'game/native/transform_math/transform_math.cpp', 'game/native/transform_math/transform_math.hpp', 'game/native/gameplay_session/room_variants.hpp', 'game/native/gameplay_navigation/CMakeLists.txt', 'game/native/CMakeLists.txt', helper, Path(__file__).relative_to(ROOT).as_posix(), *sources]
+    files += ['game/native/gameplay_navigation/scene_candidates.cpp','game/native/gameplay_navigation/scene_candidates.hpp','game/native/gameplay_navigation/scene_candidate_tests.inc','game/native/gameplay_scene/records.hpp','game/native/gameplay_scene/record_pool.hpp','game/native/gameplay_scenario/scene_control_types.hpp','game/native/gameplay_scenario/model_reference.hpp','game/native/gameplay_actors/entity.hpp']
     frozen = {name: (ROOT/name).read_bytes() for name in files}
     out.mkdir(parents=True)
     for name, data in frozen.items():
         path = out/'source'/name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
-    reference = frozen[helper].replace(b'Register r[32];', b'Register r[32];std::uint64_t hi{},lo{};')+b'\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define SRA32(a,b) (std::int32_t(a) >> (std::uint32_t(b)&31))\n'
+    reference = frozen[helper].replace(b'Register r[32];', b'Register r[32];std::uint64_t hi{},lo{},hi1{},lo1{};')+b'\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define SRA32(a,b) (std::int32_t(a) >> (std::uint32_t(b)&31))\n'
     assert reference.count(b'std::memcpy(p+at,&value,sizeof value);') == 1
     reference = reference.replace(b'#include <stdexcept>', b'#include <stdexcept>\n#include <cstddef>\nvoid navigation_reference_write(std::uint32_t,std::size_t);')
     reference = reference.replace(b'std::memcpy(p+at,&value,sizeof value);', b'navigation_reference_write(at,sizeof(T));std::memcpy(p+at,&value,sizeof value);')
-    reference += b'\n#define FPU_C_EQ_S(a,b) ((a)==(b))\ninline std::int32_t navigation_heading_word(float value,std::uint32_t pc){const bool heading=pc==0x191f50u||pc==0x191f68u,sample=pc==0x57986cu||pc==0x579888u;if((!heading&&!sample)||!std::isfinite(value)||value<0.f||!(value<2147483648.f)||(heading&&value>65536.f))throw std::runtime_error("Unadmitted navigation finite conversion");return std::int32_t(value); }\n#define FPU_CVT_W_S(x) navigation_heading_word(x,ctx->pc)\n'
+    reference += b'\n#define FPU_C_EQ_S(a,b) ((a)==(b))\ninline std::int32_t navigation_heading_word(float value,std::uint32_t pc){const bool heading=pc==0x191f50u||pc==0x191f68u,sample=pc==0x57986cu||pc==0x579888u,scene=pc==0x819de8u||pc==0x819dfcu||pc==0x819e90u||pc==0x819ea4u;if((!heading&&!sample&&!scene)||!std::isfinite(value)||(scene?!(double(value)>=-2147483648.0&&double(value)<2147483648.0):!(value>=0.f&&value<2147483648.f))||(heading&&value>65536.f))throw std::runtime_error("Unadmitted navigation finite conversion");return std::int32_t(value); }\n#define FPU_CVT_W_S(x) navigation_heading_word(x,ctx->pc)\n'
     reference += b'\nvoid navigation_reference_cost_entry();\n'
     (out/'reference.hpp').write_bytes(reference)
     body = '\n'.join(frozen[name].decode() for name in entries.values())
     assert body.count('label_818e30:') == 1
     body = body.replace('label_818e30:', 'label_818e30:\n    navigation_reference_cost_entry();')
-    (out/'original.cpp').write_text(body)
+    # Generated tail-jump helpers declare unused entry-PC locals. Limit this
+    # warning exception to the original-only translation unit, not native code.
+    (out/'original.cpp').write_text('#pragma GCC diagnostic ignored "-Wunused-variable"\n'+body)
     actual = {Path(name).stem for name in entries.values()}
     calls = set(re.findall(r'\b((?:sub|o[0-9]+)_[0-9A-Fa-f]+_0x[0-9a-f]+)\(rdram', body))
     (out/'functions.h').write_text('#pragma once\n'+''.join(f'void {name}(std::uint8_t*,R5900Context*,PS2Runtime*);\n' for name in sorted(actual))+''.join(f'inline void {name}(std::uint8_t* m,R5900Context* c,PS2Runtime* r){{original_transform_port(m,c,r);}}\n' for name in sorted(calls-actual)))
@@ -139,6 +143,8 @@ def main():
     assert struct.pack('<19I', *words) == elf(0x2392b8,76)
     constants = [(0x2392b8,elf(0x2392b8,76)),(0x22fe20,elf(0x22fe20,32)),(0x241c78,elf(0x241c78,40)),(0x38b288,raw_o0[0x38b288-0x370000:0x38b288-0x370000+4])]
     assert struct.unpack('<I', constants[-1][1])[0] == 0x38d1b717
+    constants.append((0x38b290,raw_o0[0x38b290-0x370000:0x38b294-0x370000]))
+    assert struct.unpack('<I',constants[-1][1])[0]==0x38c90fdb
     main_image = (ROOT/'game_data/SLUS_207.65').read_bytes()
     assert main_image[:6] == b'\x7fELF\x01\x01'
     phoff = struct.unpack_from('<I', main_image,28)[0]
@@ -159,9 +165,11 @@ def main():
     env['PATH'] = str(compiler.parent)+os.pathsep+env.get('PATH', '')
     exe = out/'navigation.exe'
     command = [str(compiler), '-std=c++20', '-O2', '-msse4.1', '-DREO_NAVIGATION_ORIGINAL=1', '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Wno-unused-label', '-Wno-unused-parameter', '-fno-fast-math', '-ffp-contract=off', '-I'+str(out), '-I'+str(out/'source'), str(out/'source'/unit), str(out/'source/game/native/gameplay_navigation/bank.cpp'), str(out/'source/game/native/gameplay_navigation/conditions.cpp'), str(out/'source/game/native/gameplay_navigation/edges.cpp'), str(out/'source/game/native/gameplay_navigation/routes.cpp'), str(out/'source/game/native/gameplay_navigation/cost_routes.cpp'), str(out/'source/game/native/gameplay_navigation/cost_graph.cpp'), str(out/'source/game/native/gameplay_navigation/local_routes.cpp'), str(out/'source/game/native/gameplay_navigation/link_collection.cpp'), str(out/'source/game/native/gameplay_navigation/cross_room.cpp'), str(out/'source/game/native/gameplay_navigation/actor_routes.cpp'), str(out/'source/game/native/gameplay_navigation/destination.cpp'), str(out/'source/game/native/gameplay_navigation/visibility.cpp'), str(out/'source/game/native/gameplay_collision/collision.cpp'), str(out/'source/game/native/gameplay_collision/response.cpp'), str(out/'source/game/native/gameplay_collision/trace.cpp'), str(out/'source/game/native/transform_math/heading.cpp'), str(out/'source/game/native/transform_math/transform_math.cpp'), str(out/'source'/fixture), str(out/'original.cpp'), '-o', str(exe)]
+    command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_navigation/scene_candidates.cpp'))
     receipt = dict(schema=1,status='failed',game_launched=False,installed_in_game=False,stage4_complete=False,compiler_sha256=sha(compiler),source_sha256={name: hashlib.sha256(data).hexdigest() for name, data in frozen.items()},original_word_audits=audits,pinned_inputs=PINS,assets=asset_evidence,commands=[],declared_ports=['107C68 bounded zero-fill in original-only test surroundings; real runtime allocator not installed'],limitations=['Native immutable input/query owner only; canonical mutable room-variant, occupancy, visits, dynamic conditions and actual AI/scene consumers remain open.', 'Nearest comparison covers flags0 with finite distance; flags1 segment collision is not admitted. Empty or overflowed distances return unavailable.', 'Malformed reachable neighbor/condition references return unavailable; no adjacent-section emulation or silent asset repair.', 'Original route ordering is preserved; no measured performance fix or game installation is claimed.'])
     receipt['original_cost_observation_limit'] = dict(recursive_entries_per_extended_query=16384,total_extended_recursive_entries=2000000,limited_rows=['function_kind_0_cost_1_local_2_candidate','room','current_variant','source','destination','actor_status','room_flags','actor_slot','attempted_recursive_entries','limit_reason_0_query_1_total'],original_body_instructions_unchanged=True,guard_only_in_test_dispatcher=False,guard_at_test_recursive_label=True,guard_self_test_required=True)
     receipt['limitations'] = [
+        'Complete819BC0 reachable0/1 actor probe and819DA0 scene collection use canonical shared scene records and native geometry. The source1B4 field is local collision center Z, not radius1B8. Finite checked profiles preserve newest traversal, raw enabled/busy gates, kind85 actor-point substitution and the last-element-excluding priority sort. The full original polygon/overlap and sine/cosine chain executes; real scene loading and the rest of812540 remain open.',
         'Native immutable input/query and mutable Bank component; World/session/VM composition is qualified separately by the current full VM runner.',
         'Controlled explicit variants reproduce mode2 room selection/clearing. Actor facts and flag values exercise complete dynamic condition and admitted link selection; actual UpdateOwner composition is qualified separately. Mode0/1 callbacks, live SGL loader and route/AI/scene execution remain open.',
         'Same asset rebinding preserves mutable visits, clears occupancy and rereads variants. A different asset starts from its authored visit bytes; unknown required variants refuse binding before effects.',

@@ -1,4 +1,5 @@
 #include "update.hpp"
+#include <bit>
 namespace reo::native::gameplay_update {
 namespace nav=gameplay_navigation;
 nav::ConditionResult Owner::applicable_navigation_condition(const world::actors::EntityId& id,std::uint32_t room,std::int32_t index){
@@ -64,6 +65,11 @@ nav::CrossRoomResult Owner::begin_actor_navigation(const world::actors::EntityId
     nav::RoomFlags flags;for(std::uint32_t room=0;room<flags.size();++room)flags[room]=flags_.strided_half(room,0);
     const nav::RouteActorFacts facts{{actor->character,actor->slot,actor->ai_control},actor->status,actor->auxiliary_status,actor->room,{actor->position.x,actor->position.y,actor->position.z},actor->motion_class,actor->transient_marker};
     return nav::begin_actor_route(world_.navigation(),facts,world_.session().room,flags,*actor->navigation_route,destination,destination_room,profile);
+}
+nav::SceneCandidates Owner::collect_actor_scene_candidates(const world::actors::EntityId& id,const gameplay_scene::Records& records){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor)return {};
+    return nav::collect_actor_scene_candidates(records,{actor->position.x,actor->position.y,actor->position.z},actor->motion_class,std::bit_cast<std::uint16_t>(actor->orientation[1]),actor->collision.local_center.z);
 }
 nav::NodeResult Owner::refresh_current_navigation_node(const world::actors::EntityId& id,const nav::VisibilityRoom& room){
     if(!open())return {};

@@ -1,4 +1,5 @@
 #include "update.hpp"
+#include "../gameplay_scenario/scene_controls.hpp"
 #include <iostream>
 #include <source_location>
 #include <stdexcept>
@@ -61,10 +62,32 @@ void graph_owner_contracts(){
     check(fallback.status==n::QueryStatus::completed&&!fallback.used_graph_solver&&fallback.graph_admission_checks>0&&fallback.considered_edges<=4096&&fallback.selected==1&&output.second==2&&output.cost==7);
     check(owner.close()==u::Status::completed&&world.close()==u::world::Status::completed);
 }
+void scene_owner_contracts(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
+    Notifications notifications;u::Owner owner(world,notifications);
+    const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));
+    auto actor=world.resolve(id);actor->collision.local_center.z=54;actor->collision.radius=999;
+    auto records=std::make_shared<reo::native::gameplay_scene::Records>();u::scenario::SceneControls controls(records);
+    const auto scene_id=controls.append({42,1,u::scenario::ControlTypeOne{},7});check(bool(scene_id));
+    auto record=records->acquire(*scene_id);record->value.collision.emplace();auto& shape=*record->value.collision;
+    shape.bounds={{{-10,90},{10,90},{10,110},{-10,110}}};shape.lower=-1;shape.upper=1;records->touch();
+    auto result=owner.collect_actor_scene_candidates(id,*records);
+    check(result.status==n::QueryStatus::completed&&result.count==1&&result.records[0]==*scene_id&&result.sampled_position.z==100);
+    actor->collision.radius=0;check(owner.collect_actor_scene_candidates(id,*records).count==1);
+    actor->collision.local_center.z=-46;check(owner.collect_actor_scene_candidates(id,*records).count==0);
+    actor->collision.local_center.z=54;actor->motion_class=0x1a;check(owner.collect_actor_scene_candidates(id,*records).count==0);actor->motion_class=0;
+    check(controls.apply(u::scenario::ControlCommand::disable_one,{42},nullptr).matched==1&&owner.collect_actor_scene_candidates(id,*records).count==0);
+    check(controls.apply(u::scenario::ControlCommand::enable_one,{42},nullptr).matched==1&&owner.collect_actor_scene_candidates(id,*records).records[0]==*scene_id);
+    check(controls.erase(*scene_id)==u::scenario::ControlStatus::completed&&!records->acquire(result.records[0]));
+    check(owner.collect_actor_scene_candidates(id,*records).count==0);
+    check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.collect_actor_scene_candidates(id,*records).status==n::QueryStatus::unavailable);
+    check(owner.close()==u::Status::completed&&world.close()==u::world::Status::completed);
+}
 }
 int main(){
     try{
         graph_owner_contracts();
+        scene_owner_contracts();
         u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
         Notifications notifications;u::Owner owner(world,notifications);const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));
         check(owner.admit_navigation_condition(id,7,0).status==n::QueryStatus::unavailable);

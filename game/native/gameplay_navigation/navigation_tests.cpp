@@ -11,6 +11,7 @@
 #include "actor_routes.hpp"
 #include "destination.hpp"
 #include "visibility.hpp"
+#include "scene_candidates.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -304,6 +305,7 @@ void edge_contracts(){
 #include "actor_route_tests.inc"
 #include "destination_tests.inc"
 #include "visibility_tests.inc"
+#include "scene_candidate_tests.inc"
 void owned(const char* path){
     const auto bytes=read(path);const auto asset=imported(bytes);asset_rooms+=asset.descriptors().size();asset_links+=asset.links().size();
     reo::native::gameplay_session::RoomVariants native_variants;n::Bank bank(native_variants);const auto shared=std::make_shared<const n::Asset>(asset);
@@ -500,7 +502,7 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==8);const auto constants=read(argv[2]);for(std::size_t at=0;at<constants.size();){const auto address=word(constants,at),count=word(constants,at+4);at+=8;check(at+count<=constants.size()&&address<=memory.size()&&count<=memory.size()-address);std::copy_n(constants.begin()+at,count,memory.begin()+address);at+=count;}const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();graph_cost_contracts();local_contracts();collection_contracts();cross_room_contracts();actor_route_contracts();destination_contracts();visibility_contracts();
+        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();graph_cost_contracts();local_contracts();collection_contracts();cross_room_contracts();actor_route_contracts();destination_contracts();visibility_contracts();scene_candidate_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=3;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
@@ -511,6 +513,6 @@ int main(int argc,char** argv){
         for(std::size_t i=0;i<graph_original_limit_rows.size();++i){if(i)std::cout<<',';std::cout<<'[';for(unsigned j=0;j<10;++j){if(j)std::cout<<',';std::cout<<graph_original_limit_rows[i][j];}std::cout<<']';}
         std::cout<<"],\"api_graph_cases\":"<<api_graph_cases<<",\"local_api_graph_cases\":"<<local_api_graph_cases<<",\"api_graph_work_maximum\":"<<api_graph_work_maximum<<",\"api_graph_vertex_maximum\":"<<api_graph_vertex_maximum<<",\"original_extended_by_kind\":[";
         for(unsigned i=0;i<3;++i){if(i)std::cout<<',';std::cout<<original_extended_by_kind[i];}std::cout<<"],\"original_limited_by_kind\":[";
-        for(unsigned i=0;i<3;++i){if(i)std::cout<<',';std::cout<<original_limited_by_kind[i];}std::cout<<"]}\n";
+        for(unsigned i=0;i<3;++i){if(i)std::cout<<',';std::cout<<original_limited_by_kind[i];}std::cout<<"],\"scene_candidate_cases\":"<<scene_candidate_cases<<",\"scene_actor_cases\":"<<scene_actor_cases<<",\"scene_candidate_refusals\":"<<scene_candidate_refusals<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

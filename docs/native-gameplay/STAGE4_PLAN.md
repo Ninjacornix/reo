@@ -76,6 +76,13 @@ The current resource and inventory implementation includes:
   source contexts remain limited and separately identified. Full AI/movement,
   actual loading, semantic saves and native game acceptance remain open.
 
+- [AI scene candidates](NAVIGATION_SCENE_CANDIDATES.md) now supply complete
+  reachable actor probing and shared-record collection through the actual Owner.
+  Both compilers pass67621991 checks, including7172 collector and131329 actor
+  probe comparisons, plus ten parent tests. The source1B4 probe input is canonical
+  collision center Z, not radius1B8. Full812540, condition-based lookup, actual
+  provider/loading and native gameplay acceptance remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128
