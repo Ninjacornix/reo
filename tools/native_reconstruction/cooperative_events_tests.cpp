@@ -32,6 +32,11 @@ bool actor_state_capture{};
 void actor_state_message_port(std::uint8_t*,R5900Context*);
 void actor_state_room_owner_port(std::uint8_t*,R5900Context*);
 #endif
+#ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
+bool actor_room_object_capture{};
+void actor_room_object_message_port(std::uint8_t*,R5900Context*);
+void actor_room_object_room_port(std::uint8_t*,R5900Context*);
+#endif
 #ifdef REO_ACTOR_CONTACT_SNAPSHOT
 bool actor_contact_snapshot_capture{};
 void actor_contact_snapshot_message_port(std::uint8_t*,R5900Context*);
@@ -61,6 +66,9 @@ case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
 #endif
 #ifdef REO_SCENARIO_PUBLICATION
 case 0x811190:case 0x810870:
+#ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
+if(actor_room_object_capture){actor_room_object_message_port(memory,context);done();return;}
+#endif
 #ifdef REO_ACTOR_CONTACT_SNAPSHOT
 if(actor_contact_snapshot_capture){actor_contact_snapshot_message_port(memory,context);done();return;}
 #endif
@@ -86,6 +94,9 @@ publication_message_port(memory,context);done();return;
 #endif
 #ifdef REO_ACTOR_STATUS_MESSAGE
 case 0x811d40:case 0x8115f0:
+#ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
+if(actor_room_object_capture){actor_room_object_room_port(memory,context);done();return;}
+#endif
 #ifdef REO_ACTOR_CONTACT_SNAPSHOT
 if(actor_contact_snapshot_capture){actor_contact_snapshot_room_port(memory,context);done();return;}
 #endif
@@ -161,6 +172,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_ACTOR_CONTACT_SNAPSHOT
 #include "tools/native_reconstruction/actor_contact_snapshot_tests.inc"
 #endif
+#ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
+#include "tools/native_reconstruction/actor_room_object_message_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_COMPLETION_STATISTICS
@@ -234,6 +248,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_CONTACT_SNAPSHOT
     compare_actor_contact_snapshot(memory);
 #endif
+#ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
+    compare_actor_room_object_messages(memory);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -276,6 +293,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_CONTACT_SNAPSHOT
     <<",\"contact_snapshot_cases\":"<<contact_snapshot_cases<<",\"contact_snapshot_messages\":"<<contact_snapshot_messages<<",\"contact_snapshot_lookups\":"<<contact_snapshot_lookups<<",\"contact_snapshot_refusals\":"<<contact_snapshot_refusals<<",\"contact_snapshot_recursions\":"<<contact_snapshot_recursions
+#endif
+#ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
+    <<",\"room_object_message_cases\":"<<room_object_message_cases<<",\"room_object_messages\":"<<room_object_messages<<",\"room_object_message_lookups\":"<<room_object_message_lookups<<",\"room_object_message_refusals\":"<<room_object_message_refusals
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

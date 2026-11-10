@@ -2,6 +2,7 @@
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_world/actor_state.hpp"
 #include "../gameplay_scenario/flags.hpp"
+#include "../gameplay_collision/room_objects.hpp"
 #include <bit>
 #include <cmath>
 namespace reo::native::gameplay_update {
@@ -30,7 +31,7 @@ struct ActorActionMessage {
     std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
     static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
 };
-enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,contact_snapshot=5,alignment=6,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,contact_snapshot=5,alignment=6,action=7,room_object=9,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
 struct ActorSnapshotMessage {
     MessageRoute route{};std::uint32_t channel{};
     std::array<std::uint8_t,4> action{};gameplay_world::Position position;
@@ -71,6 +72,11 @@ struct ActorResourcePairMessage {
     MessageRoute route{};std::uint32_t channel{};std::array<std::uint8_t,2> pair{};std::array<std::uint8_t,4> carried{};
     static constexpr unsigned type=10,length=16,options=0,dispatch_mode=4;
 };
+struct ActorRoomObjectMessage {
+    MessageRoute route{};std::uint32_t channel{};std::uint8_t grid{};
+    std::array<std::int8_t,2> coordinates{};
+    static constexpr unsigned type=9,length=8,options=0,dispatch_mode=4;
+};
 struct ActorInventoryMessage {
     enum class Kind:std::uint8_t {carried=12,extra=15};
     MessageRoute route{};std::uint32_t channel{};Kind kind{};std::array<std::uint8_t,4> resources{};
@@ -91,6 +97,7 @@ public:
     virtual bool send(const ActorSnapshotMessage&)noexcept{return false;}
     virtual bool send(const ActorContactSnapshotMessage&)noexcept{return false;}
     virtual bool send(const ActorAlignmentMessage&)noexcept{return false;}
+    virtual bool send(const ActorRoomObjectMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
 enum class PublicationStatus {completed,unavailable,message_unavailable};
@@ -98,7 +105,7 @@ enum class PublicationStatus {completed,unavailable,message_unavailable};
 // live networking requires an explicit actual message consumer, with no no-op.
 class StatePublication final {
 public:
-    StatePublication(gameplay_world::World& world,gameplay_scenario::FlagState& flags,GameplayMessageSink* messages=nullptr):world_(world),flags_(flags),messages_(messages){}
+    StatePublication(gameplay_world::World& world,gameplay_scenario::FlagState& flags,GameplayMessageSink* messages=nullptr,const gameplay_collision::room_objects::Owner* objects=nullptr):world_(world),flags_(flags),messages_(messages),objects_(objects){}
     PublicationStatus resource_position(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation,std::optional<gameplay_world::Position> position)noexcept{
         if(world_.closed())return PublicationStatus::unavailable;
         const auto phase=world_.session().message_phase;if(phase!=1&&phase!=2)return PublicationStatus::completed;
@@ -172,6 +179,12 @@ public:
             return dispatch_actor(*actor,message);
         }
         case ActorMessageSelector::interaction:{ActorInteractionMessage message;message.values={actor->interaction_kind,actor->interaction_mode,actor->interaction_slot,actor->interaction_detail};return dispatch_actor(*actor,message);}
+        case ActorMessageSelector::room_object:{
+            if(!objects_)return PublicationStatus::unavailable;
+            const auto coordinates=objects_->source_coordinates(actor->grid);if(!coordinates)return PublicationStatus::unavailable;
+            ActorRoomObjectMessage message;message.grid=actor->grid;message.coordinates=*coordinates;
+            return dispatch_actor(*actor,message);
+        }
         case ActorMessageSelector::resource_pair:{ActorResourcePairMessage message;message.pair=actor->explicit_resource_pair;message.carried=actor->inventory.carried;return dispatch_actor(*actor,message);}
         case ActorMessageSelector::carried:case ActorMessageSelector::extra:{
             ActorInventoryMessage message;message.kind=selector==ActorMessageSelector::carried?ActorInventoryMessage::Kind::carried:ActorInventoryMessage::Kind::extra;
@@ -249,5 +262,6 @@ private:
         return messages_->send(message)?PublicationStatus::completed:PublicationStatus::message_unavailable;
     }
     gameplay_world::World& world_;gameplay_scenario::FlagState& flags_;GameplayMessageSink* messages_;
+    const gameplay_collision::room_objects::Owner* objects_;
 };
 }

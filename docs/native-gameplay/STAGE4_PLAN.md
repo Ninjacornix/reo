@@ -138,6 +138,11 @@ The current resource and inventory implementation includes:
   suppression. Native entity identities replace the embedded guest pointer.
   Both compiler comparisons cover mapped callback mutation and recursive sends;
   messages3/8/9/11, actual consumers/transport and installation remain open.
+- [Room-object messages](ACTOR_ROOM_OBJECT_MESSAGES.md) now supply selector9
+  through the canonical imported32-record owner shared with geometry and
+  scenario commands. Both compiler comparisons cover signed coordinates,
+  initialized inactive records and owner replacement during lookup. Incoming
+  application, messages3/8/11, transport and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

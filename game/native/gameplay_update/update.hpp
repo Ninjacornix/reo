@@ -69,7 +69,7 @@ struct Result {
 class Owner final:public world::actors::StatusTiming,public world::ActivityPublication,public world::GaugeApplication,private scenario::FlagNotifications {
 public:
     // Borrowed native world and notification target must outlive this owner.
-    Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1(),GameplayMessageSink* = nullptr);
+    Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1(),GameplayMessageSink* = nullptr,const gameplay_collision::room_objects::Owner* = nullptr);
     ~Owner();
     Owner(const Owner&)=delete;
     Owner& operator=(const Owner&)=delete;

@@ -17,7 +17,7 @@ struct FlagExpiry final:tasks::FlagSink {
 };
 bool script_ok(scenario::Status s){return s==scenario::Status::completed || s==scenario::Status::yielded || s==scenario::Status::disabled;}
 }
-Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std::shared_ptr<const gameplay_events::RuleBook> rules,GameplayMessageSink* messages):world_(world),statistics_(std::move(rules)),notifications_(notifications),flags_(this),publication_(world_,flags_,messages){
+Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std::shared_ptr<const gameplay_events::RuleBook> rules,GameplayMessageSink* messages,const gameplay_collision::room_objects::Owner* objects):world_(world),statistics_(std::move(rules)),notifications_(notifications),flags_(this),publication_(world_,flags_,messages,objects){
     if(world_.session().timing)throw std::invalid_argument("Native world already has a timing owner");
     world_.session().timing=this;
 }

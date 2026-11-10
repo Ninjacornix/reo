@@ -60,6 +60,9 @@ public:
     bool install_grid(std::uint16_t room,std::span<const std::byte>);
     const Grid* grid()const noexcept{return grid_?&*grid_:nullptr;}
     bool initialized()const noexcept{return initialized_;}
+    // Published source ordinals address the canonical32-record table, including
+    // initialized inactive records. This is not an external object capability.
+    std::optional<std::array<std::int8_t,2>> source_coordinates(std::uint8_t ordinal)const noexcept;
     Cell cell_at(Vec3)const noexcept;
     Rectangle footprint(const Object&)const;
     Vec3 center(const Object&)const;
