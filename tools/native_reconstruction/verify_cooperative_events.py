@@ -6,7 +6,7 @@ from verify_gameplay_collision import COMPILERS
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');a=p.parse_args();a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');a=p.parse_args();a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  image=ROOT/'build-function-index/owned-overlays/o0.bin';assert sha(image)=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2';raw=image.read_bytes();entries={};proof=[]
  addresses=[0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]+([0x37b990,0x37bbc0,0x37c470,0x1b02d0]if a.statistics else[])
  if a.automatic:
@@ -20,8 +20,12 @@ def main():
   elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read=elf_reader(elf.read_bytes())
  for at in addresses:
   bank='sub'if at<0x370000 else'o0'if at<0x570000 else'o2';folder=ROOT/('recomp/config/output'if bank=='sub'else'recomp/config/output_ovl/'+bank);source=next(folder.glob(f'{bank}_{at:08X}_*'));name=source.relative_to(ROOT).as_posix();end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',source.read_text())[1],16);proof.append(compare_source('complete cooperative event pool/admission/pruning or completion body',name,at,end,read if bank=='sub'else (lambda x,n:o2[x-0x570000:x-0x570000+n])if bank=='o2'else lambda x,n:raw[x-0x370000:x-0x370000+n]));entries[at]=name
+ field_sources=[]
+ if a.actor_snapshot:
+  for entry,first,last in [(0x5f2b70,0x5f2b9c,0x5f2bbc),(0x586aa0,0x586b88,0x586bc8),(0x65ed70,0x65efd4,0x65f004),(0x5d76d0,0x5d7734,0x5d7758)]:
+   name=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{entry:08X}_*')).relative_to(ROOT).as_posix();field_sources.append(name);proof.append(compare_source('primary actor item ID, pitch adjustment/base and target index provenance',name,first,last,lambda x,n:o2[x-0x570000:x-0x570000+n]))
  fixture='tools/native_reconstruction/cooperative_events_tests.cpp';helper='tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp';unit='game/native/gameplay_events/events.cpp';profile='game/native/gameplay_events/event_priority_profile.inc'
- files=[unit,'game/native/gameplay_events/events.hpp',profile,'game/native/gameplay_events/CMakeLists.txt','game/native/CMakeLists.txt',fixture,helper,Path(__file__).relative_to(ROOT).as_posix(),*entries.values()]
+ files=[unit,'game/native/gameplay_events/events.hpp',profile,'game/native/gameplay_events/CMakeLists.txt','game/native/CMakeLists.txt',fixture,helper,Path(__file__).relative_to(ROOT).as_posix(),*entries.values(),*field_sources]
  if a.statistics:
   getter='recomp/config/output/sub_001B0300_0x1b0300.cpp';proof.append(compare_source('exact three-word raw-mode getter, ignored by completion caller',getter,0x1b0300,0x1b030c,read));files += [getter,'game/native/gameplay_events/statistics.hpp','game/native/gameplay_events/statistics.cpp','game/native/gameplay_events/scenario_event_rules.inc','tools/native_reconstruction/completion_statistics_tests.inc']
  if a.automatic:
@@ -35,6 +39,7 @@ def main():
   if a.actor_activity:files += ['tools/native_reconstruction/actor_activity_binding_tests.inc']
   if a.actor_gauge:files += ['tools/native_reconstruction/actor_gauge_effects_tests.inc','game/native/gameplay_update/CMakeLists.txt']
   if a.actor_hit_gauge:files += ['tools/native_reconstruction/actor_hit_gauge_tests.inc']
+  if a.actor_snapshot:files += ['tools/native_reconstruction/actor_snapshot_message_tests.inc']
   files=list(dict.fromkeys(files))
   for name in files:
    for inc in re.findall(r'^\s*#include "([^"]+)"',(ROOT/name).read_text(),re.M):
@@ -65,6 +70,7 @@ def main():
   (out/'condition_switch.bin').write_bytes(raw[0x38cce0-0x370000:0x38cce0-0x370000+64]);r['condition_switch_sha256']=sha(out/'condition_switch.bin');r['automatic_worker_installed_in_native_owner']=True
   flags=cmd[1:cmd.index(str(out/'source'/unit))];flags += ['-DREO_AUTOMATIC_COMPLETION=1','-pthread','-fno-fast-math','-ffp-contract=off']
   if a.publication:flags += ['-DREO_SCENARIO_PUBLICATION=1']
+  if a.actor_snapshot:flags += ['-DREO_ACTOR_SNAPSHOT_MESSAGE=1'];r['actor_snapshot_admission']='Complete67E230 selector1 with raw float XYZ, canonical action/aim/resource fields, actual gauge helpers and shared suppression word; unknown stack padding is not a native wire format'
   if a.actor_hit_gauge:flags += ['-DREO_ACTOR_HIT_GAUGE=1'];r['actor_hit_gauge_admission']='Actual native World/behavior/pending-hit/gauge/cooperative pool; complete660AF0 with actual660060/666620/666D90 for the controlled numeric80/800000 retained-action branch; UI/statistics/final contact effects are declared ports'
   if a.actor_gauge:flags += ['-DREO_ACTOR_GAUGE_EFFECTS=1'];r['actor_gauge_admission']='Complete660060/667E90/668050/1B0340 through actual Events and bound clock; complete pure668110 runs only at source caller argument100 and its discarded return is not projected'
   if a.actor_activity:flags += ['-DREO_ACTOR_ACTIVITY_BINDING=1'];r['actor_activity_admission']='Native World/BehaviorFrameServices/update_behavior/Owner/StatePublication composition at the actual66B500 activity stage; other frame/action effects are declared providers'
@@ -74,7 +80,7 @@ def main():
   if a.actor_status:
    flags += ['-DREO_ACTOR_STATUS_MESSAGE=1'];(out/'actor_status_switch.bin').write_bytes(o2[0x740710-0x570000:0x740710-0x570000+64]+o2[0x740340-0x570000:0x740340-0x570000+40]);r['actor_status_switch_sha256']=sha(out/'actor_status_switch.bin');r['actor_message_admission']=('67E230 selectors0/4/7/10/12/13/14/15, typed known payloads and offline peer requests; remaining selectors stay open'if a.actor_inventory else'67E230 selectors7/14 and early gates, actual offline peer requests, all6605B0 low-byte clear selectors; remaining message selectors stay open'if a.actor_actions else'67E230 selector14 and its early gates, all6605B0 low-byte clear selectors; other message selectors remain open')
    with (out/'reference.hpp').open('a')as reference:reference.write('\ninline std::int32_t actor_message_unadmitted_conversion(float){throw std::runtime_error("Unadmitted actor message float conversion");}\n#define FPU_CVT_W_S(x) actor_message_unadmitted_conversion(x)\n')
-   r['declared_ports'].append('Unentered67E230 selector1 float-conversion paths throw if reached; selector14 executes no conversion')
+   r['declared_ports'].append('Unentered67E230 selector5 float-conversion paths throw if reached; selectors1/2/14 execute no conversion')
   if a.actor_state:
    import struct
    limits=o2[0x71adb0-0x570000:0x71adb0-0x570000+32];assert struct.unpack('<8I',limits)==(151200,273600,100800,345600,345600,201600,345600,100800)

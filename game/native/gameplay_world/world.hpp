@@ -60,6 +60,11 @@ struct Actor : actors::Entity,actors::HitActor {
     // C78/C79. The request's C7A resource is inherited interaction_slot;
     // C7F is the inherited equipment_slot, not a second requested-item field.
     std::uint8_t interaction_kind{},interaction_mode{},interaction_detail{};
+    // Primary actor action/aim state. Unknown until a real producer/import
+    // supplies it; these are separate from the selected/equipped item slots.
+    std::optional<std::uint8_t> interaction_resource; // C80, descriptor item ID from5F2B70
+    std::optional<std::int16_t> aim_pitch_adjustment,aim_target_pitch; // BC8/CD4
+    std::optional<std::uint8_t> aim_target_index; // CDC, FF means no selected target
     std::array<std::uint8_t,2> explicit_resource_pair{}; // authored action pair CAA/CAB
     std::uint16_t linked_model_variant{};
     std::uint16_t gauge_modifier_one{},gauge_modifier_two{}; // BB6/BB8; third BBA view is linked_model_variant

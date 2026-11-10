@@ -28,7 +28,18 @@ struct ActorActionMessage {
     std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
     static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
 };
-enum class ActorMessageSelector:std::uint8_t {none=0,state=2,interaction=4,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+struct ActorSnapshotMessage {
+    MessageRoute route{};std::uint32_t channel{};
+    std::array<std::uint8_t,4> action{};gameplay_world::Position position;
+    std::int16_t yaw{},health{};std::uint32_t status{};
+    std::uint8_t selected_resource{},equipment{},interaction_resource{},grid{};
+    std::int16_t aim_pitch_adjustment{},aim_target_pitch{};
+    std::uint8_t room{},aim_target_index{},gauge_band{};
+    std::optional<std::uint8_t> model_variant; // initialized only for category1
+    std::array<std::uint8_t,2> resource_pair{};bool auxiliary_flag{};
+    static constexpr unsigned type=1,length=44,options=0,dispatch_mode=4;
+};
 struct ActorStateMessage {
     MessageRoute route{};std::uint32_t channel{};gameplay_world::Position position;
     std::uint32_t status{};std::int16_t yaw{};std::uint8_t gauge_band{};
@@ -59,6 +70,7 @@ public:
     virtual bool send(const ActorResourcePairMessage&)noexcept{return false;}
     virtual bool send(const ActorInventoryMessage&)noexcept{return false;}
     virtual bool send(const ActorStateMessage&)noexcept{return false;}
+    virtual bool send(const ActorSnapshotMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
 enum class PublicationStatus {completed,unavailable,message_unavailable};
@@ -89,6 +101,25 @@ public:
         const auto& actor=gate.actor;
         switch(selector){
         case ActorMessageSelector::none:case ActorMessageSelector::reserved:return PublicationStatus::completed;
+        case ActorMessageSelector::snapshot:{
+            if(gameplay_world::state_message_classified(*actor))actor->status|=0x08000000u;
+            else actor->status&=~0x08000000u;
+            ActorSnapshotMessage message;message.action={actor->primary,actor->secondary,actor->phase,actor->subphase};
+            message.room=std::uint8_t(actor->room);message.position=actor->position;
+            message.yaw=actor->orientation[1];message.health=actor->current;message.status=actor->status;
+            message.selected_resource=actor->selected_resource;message.equipment=actor->equipment_slot;
+            if(!actor->interaction_resource||!actor->aim_pitch_adjustment||!actor->aim_target_pitch||!actor->aim_target_index)return PublicationStatus::unavailable;
+            message.interaction_resource=*actor->interaction_resource;message.grid=actor->grid;
+            message.aim_pitch_adjustment=*actor->aim_pitch_adjustment;message.aim_target_pitch=*actor->aim_target_pitch;message.aim_target_index=*actor->aim_target_index;
+            const auto band=gameplay_world::selected_gauge_band(world_);if(!band)return PublicationStatus::unavailable;
+            message.gauge_band=*band;message.resource_pair=actor->explicit_resource_pair;
+            message.auxiliary_flag=bool(actor->auxiliary_status&0x20000000u);
+            if(actor->category==1)message.model_variant=std::uint8_t(actor->model_variant);
+            // This is the same744638 word reset by the World frame. Capture is
+            // complete before suppression commits, and before any room lookup.
+            world_.session().actor_message_suppression=1;
+            return dispatch_actor(*actor,message);
+        }
         case ActorMessageSelector::state:{
             if(gameplay_world::state_message_classified(*actor))actor->status|=0x08000000u;
             else actor->status&=~0x08000000u;

@@ -105,6 +105,11 @@ The current resource and inventory implementation includes:
   modifiers, callback mutation, actual models and retained failure prefixes.
   UI/recovery/off-room effects remain required consumers; their migration,
   other actions, semantic save/load and installation remain open.
+- [Full actor snapshot publication](ACTOR_SNAPSHOT_MESSAGES.md) now supplies
+  selector1 through canonical action/aim/resource state and the shared frame
+  suppression word. Both compiler comparisons cover callback mutation and
+  recursive suppression. Real field producers, remaining selectors, actual
+  queue/receiver/transport and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;
