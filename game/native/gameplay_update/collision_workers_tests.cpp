@@ -1,6 +1,10 @@
 #include "collision_workers.hpp"
 #include "../gameplay_world/motion_transforms.hpp"
 #include "../gameplay_world/surface_orientation.hpp"
+#include "../gameplay_world/linked_models.hpp"
+#include "../animation/model.hpp"
+#include <cmath>
+#include <cstring>
 #include <iostream>
 #include <source_location>
 namespace u=reo::native::gameplay_update;
@@ -12,6 +16,16 @@ void check(bool value,std::source_location location=std::source_location::curren
     ++checks;if(!value)throw std::runtime_error("Collision worker check "+std::to_string(checks)+" at line "+std::to_string(location.line()));
 }
 g::Profile profile(){return{{{0x100,0x10,0x20}},1,{16,2}};}
+template<class T>void put(std::span<std::byte> bytes,unsigned at,T value){std::memcpy(bytes.data()+at,&value,sizeof(T));}
+std::shared_ptr<const reo::native::animation::Skeleton> cache_skeleton(){
+    std::array<std::byte,28+12*84> raw{};put(raw,4,13u);put(raw,8,std::uint32_t(raw.size()));put(raw,16,1u);put(raw,20,16u);
+    for(unsigned i=0;i<12;++i){const unsigned at=28+84*i,node=at+12;put(raw,at,1u);put(raw,at+4,1u);put(raw,at+8,84u);put(raw,node,i);put(raw,node+8,i==0?1u:0xffffffffu);put(raw,node+12,i>0&&i<11?i+1:0xffffffffu);for(unsigned lane=0;lane<3;++lane)put(raw,node+0x10+4*lane,1.f);}
+    return reo::native::animation::Skeleton::import_raw(raw);
+}
+c::response::Grid cache_grid(){
+    std::array<std::byte,48> raw{};put(raw,8,1000u);put(raw,12,1000u);put(raw,16,1u);put(raw,20,1u);put(raw,32,32u);put(raw,36,40u);put(raw,40,36u);put(raw,44,0xffffffffu);
+    return c::response::Grid::import(raw);
+}
 struct Notifications:s::FlagNotifications {
     bool changed(const s::ScenarioFlagChange&)noexcept override{return true;}
     bool changed(const s::StridedFlagChange&)noexcept override{return true;}
@@ -26,8 +40,8 @@ struct Scene:u::CollisionParticipants {
     g::World& world;g::WorldBodies& queue;g::actors::EntityStore entities{{8,2}};
     g::actors::EntityId auxiliary_id,secondary_id;
     c::response::Grid walls,floors;c::regions::World regions;c::room_objects::Owner objects;
-    unsigned body_acquires{},height_acquires{};bool fail_body_acquire{},missing_secondary_lease{};
-    Scene(g::World& w,g::WorldBodies& b):world(w),queue(b){
+    unsigned body_acquires{},height_acquires{},room_acquires{};bool fail_body_acquire{},missing_secondary_lease{},fail_room_acquire{};
+    Scene(g::World& w,g::WorldBodies& b):world(w),queue(b),walls(cache_grid()),floors(cache_grid()){
         auto actor=std::make_unique<g::Actor>();actor->active=true;actor->room=1;actor->category=2;
         actor->position={100,0,0};actor->previous_position=actor->position;actor->collision.pose_ready=true;
         actor->collision.body_definition=c::actors::ShapeDefinition{c::actors::ShapeKind::sphere,1,{},{}};
@@ -51,7 +65,7 @@ struct Scene:u::CollisionParticipants {
         result.secondary.push_back({secondary_id,view,actor->displacement,actor->controls,actor->subtype,actor->states});
         return result;
     }
-    g::CollisionRoom room(u::Owner&)override{return{walls,floors,regions,objects,{},{},false,false};}
+    g::CollisionRoom room(u::Owner&)override{++room_acquires;if(fail_room_acquire)throw std::runtime_error("Declared room acquisition failure");return{walls,floors,regions,objects,{},{},false,false};}
 };
 struct Poses:g::BodyPoses {
     std::shared_ptr<const g::JointPose> retain(const g::actors::EntityId&,const g::Actor&)override{
@@ -62,7 +76,7 @@ struct Remaining:u::PhaseServices {
     Scene& scene;g::WorldBodies& bodies;std::vector<u::Worker> calls;unsigned buttons{},effects{},transitions{};
     Remaining(Scene& s,g::WorldBodies& b):scene(s),bodies(b){}
     void run(u::Worker stage,u::Owner&)override{
-        check(stage!=u::Worker::actor_collision_shapes && stage!=u::Worker::collision_heights);calls.push_back(stage);
+        check(stage!=u::Worker::actor_collision_shapes && stage!=u::Worker::collision_heights && stage!=u::Worker::target_caches);calls.push_back(stage);
         if(stage==u::Worker::auxiliary_actors)check(bodies.add({scene.auxiliary_id,3,2}));
     }
     bool button(u::Button,u::Owner&)override{++buttons;return false;}
@@ -100,25 +114,38 @@ void install(u::Owner& owner){
 }
 int main()try{
     g::World world(profile(),std::make_shared<g::Session>());world.mode=1;world.room=1;world.selected_actor=0;
+    const auto skeleton=cache_skeleton();
     for(unsigned i=0;i<2;++i){auto actor=std::make_unique<g::Actor>();actor->active=true;actor->room=1;actor->slot=std::uint8_t(i);
         actor->position={float(i),0,0};actor->previous_position=actor->position;actor->root_motion_delta={.25f,0,0};
         actor->collision.body_definition=c::actors::ShapeDefinition{c::actors::ShapeKind::sphere,2,{},{}};
+        actor->model=std::make_shared<reo::native::animation::Instance>(skeleton);auto basis=reo::native::transform_math::identity();basis[3][0]=float(i);actor->model->rebuild(basis);
         check(world.spawn_primary(i,std::move(actor)).status==g::actors::EntityStatus::completed);}
+    const auto target_id=world.linked_models().allocate(false).id;auto target=world.resolve(target_id);check(bool(target));
+    target->active=true;target->room=1;target->position={50,0,10};target->targeting=g::TargetingState{};
+    const auto target_slot=world.linked_models().physical_slot(target_id).value();
     Notifications notifications;u::Owner owner(world,notifications);install(owner);g::WorldBodies bodies(world);Scene scene(world,bodies);
     Remaining remaining(scene,bodies);Poses poses;SecondaryWalls secondary_walls(scene);
     u::CollisionWorkers workers(world,remaining,bodies,poses,scene,secondary_walls);
     Frame frame;g::GridSurfaceOrientation surface(scene.floors);g::MotionFrameServices motion(frame,bodies);
     g::MotionTransformFrameServices actor_services(motion,surface);
     check(workers.body_progress()==u::CollisionProgress::never_run && !workers.last_bodies());
+    check(workers.target_progress()==u::CollisionProgress::never_run&&!workers.last_targets()&&!world.target_metrics().state());
     auto result=owner.run_workers(workers,actor_services);
     check(result.status==u::Status::completed && result.actors.updated==2 && frame.required_behavior==2);
     check(workers.body_progress()==u::CollisionProgress::completed && workers.height_progress()==u::CollisionProgress::completed);
     check(workers.last_bodies()->solve.visited==3 && workers.last_bodies()->solve.contacts>0 && bodies.pending()==0);
     check(workers.last_heights()->primary.eligible==2 && workers.last_heights()->auxiliary_visited==1 && workers.last_heights()->secondary.visited==1);
     check(scene.body_acquires==1 && scene.height_acquires==1 && secondary_walls.calls==1 && scene.secondary()->position.x==2);
+    check(workers.target_progress()==u::CollisionProgress::completed&&workers.last_targets()->pairs==2&&workers.last_targets()->wall_queries==2&&workers.last_targets()->floor_queries==2&&scene.room_acquires==2);
+    const auto* metrics=world.target_metrics().state();check(metrics&&metrics->linked_identity[target_slot]==target_id&&metrics->primary_linked[0][target_slot]->pair.distance==std::sqrt(2600.f));
     check(world.primary(0)->collision.pose_ready && world.primary(1)->collision.pose_ready && owner.clock().update_counter()==0);
     check(!workers.button(u::Button::primary,owner) && !workers.transition_request(owner));workers.effect(u::PhaseEffect::finish_audio,owner,0);
     check(remaining.buttons==1 && remaining.transitions==1 && remaining.effects==1);
+    world.paused=1;result=owner.run_workers(workers,actor_services);check(result.status==u::Status::completed&&scene.room_acquires==2&&workers.target_progress()==u::CollisionProgress::completed);world.paused=0;
+    scene.fail_room_acquire=true;bool room_failed=false;
+    try{owner.run_workers(workers,actor_services);}catch(const std::runtime_error& error){if(std::string(error.what())!="Declared room acquisition failure")throw;room_failed=true;}
+    check(room_failed&&workers.target_progress()==u::CollisionProgress::failed&&!workers.last_targets()&&!world.target_metrics().state()&&scene.body_acquires==1);
+    scene.fail_room_acquire=false;
     scene.fail_body_acquire=true;bool failed{};
     try{owner.run_workers(workers,actor_services);}catch(const std::runtime_error& error){
         if(std::string(error.what())!="Declared scene acquisition failure")throw;

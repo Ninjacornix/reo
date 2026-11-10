@@ -12,7 +12,17 @@ void CollisionWorkers::verify(Owner& owner)const{
 }
 void CollisionWorkers::run(Worker stage,Owner& owner){
     verify(owner);
-    if(stage==Worker::actor_collision_shapes){
+    if(stage==Worker::target_caches){
+        body_result_.reset();body_progress_=CollisionProgress::never_run;
+        height_result_.reset();height_progress_=CollisionProgress::never_run;
+        target_result_.reset();target_progress_=CollisionProgress::acquiring;Attempt attempt{target_progress_};
+        auto& cache=world_.target_metrics();cache.invalidate();
+        const auto room=participants_.room(owner);
+        target_result_=cache.rebuild({room.walls,room.floors,room.filter,room.dynamic});
+        if(target_result_->status!=world::TargetMetricStatus::completed)
+            throw std::runtime_error("Native target metric worker incomplete; preceding effects retained");
+        target_progress_=CollisionProgress::completed;
+    }else if(stage==Worker::actor_collision_shapes){
         height_result_.reset();height_progress_=CollisionProgress::never_run;
         body_result_.reset();body_progress_=CollisionProgress::acquiring;Attempt attempt{body_progress_};
         const auto frame=participants_.bodies(owner);

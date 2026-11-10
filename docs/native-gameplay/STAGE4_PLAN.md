@@ -151,8 +151,9 @@ The current resource and inventory implementation includes:
 - [Native World target metrics](TARGET_METRICS.md) now supply complete admitted
   cache rebuild with an explicit initialized work policy and once-per-row sorts.
   Both compilers pass192 profiles and thirteen parent tests, with75 strict
-  original comparisons and192 initialized comparisons. Actual frame adoption,
-  complete observation/action execution and game acceptance remain open.
+  original comparisons and192 initialized comparisons. The actual native frame
+  worker now rebuilds it before actor updates, with pause and failure checks.
+  Complete observation/action execution and game acceptance remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

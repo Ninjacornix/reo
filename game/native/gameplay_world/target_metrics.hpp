@@ -48,6 +48,9 @@ public:
     TargetMetricCache& operator=(const TargetMetricCache&)=delete;
     TargetMetricReport rebuild(const TargetMetricRoom&)noexcept;
     const TargetMetricState* state()const noexcept;
+    // Room acquisition can fail before a rebuild. Keep historical cells for
+    // the next admitted call without publishing them as a new frame.
+    void invalidate()noexcept{ready_=false;}
 private:
     friend class World;
     explicit TargetMetricCache(World& world)noexcept:world_(world){}

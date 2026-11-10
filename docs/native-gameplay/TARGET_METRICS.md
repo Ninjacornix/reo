@@ -3,7 +3,7 @@
 2026-11-10: complete admitted6D6240 cache rebuild now has a native World owner.
 It borrows the actual eight primary, ten auxiliary and fifty linked physical
 slots, canonical model poses, room walls and floors. The installed game remains
-V39; frame-worker adoption and full Stage4 acceptance remain open.
+V39; full Stage4 acceptance remains open.
 
 Primary pairs preserve full XYZ distance and bearing, including the raw mode0
 gate. Linked distance uses actor positions; bearing and wall/floor probes use
@@ -37,6 +37,13 @@ original cache/sort/mode/distance code executes. Heading and actual native Grid
 wall/floor children are declared ports. The current trace regression also passes
 482,015 checks and366 owned grids per compiler; all thirteen parent tests pass.
 Evidence: `native_target_metrics_qualification_v1.json`.
+
+The native frame worker now adopts the cache in its existing pre-actor stage,
+after the pause gate. It borrows the same room provider as collision height
+work. Its real frame tests verify two primary-to-linked metrics, ordering before
+actor motion, pause behaviour, and that room acquisition failure invalidates
+the published view before later workers run. Thirteen parent tests pass per
+compiler; `native_target_metrics_worker_qualification_v1.json` seals adoption.
 
 No game was launched. This cache does not by itself complete observation,
 goal/action execution or the remaining native gameplay integration.
