@@ -18,7 +18,8 @@ The current resource and inventory implementation includes:
 - [Scenario commands](RESOURCE_SCENARIO_ACTIONS.md) bound to actual construction,
   release and deactivation owners, with failure status propagated to the VM.
 - [Canonical inventory primitives](INVENTORY_PRIMARY_OWNER.md), including actual
-  primary SceneOwners detach/refresh.
+  primary SceneOwners detach/refresh, plus [resource use and content lookup](RESOURCE_USE.md)
+  through the same descriptor, actor and model owners.
 
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler

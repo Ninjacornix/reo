@@ -99,6 +99,7 @@ struct Session : actors::HitSession {
     std::optional<std::uint16_t> last_scenario_audio; // original316550, written even when a bank request is rejected
     std::uint8_t resource_hide_selected{},resource_hide_others{}; // original4B9D10/11
     std::uint8_t sound_loading_mode{}; // original324405; only mode2 rejects queued direct bank loads
+    std::uint8_t gameplay_flags{}; // original4BAE96; use override bit0, contact-mode bit1
     // Authored primary population count, source4BAEA0. Unknown is not zero;
     // storage/registration and the active byte remain independent concepts.
     std::optional<std::uint32_t> primary_population;

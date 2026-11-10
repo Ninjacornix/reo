@@ -9,6 +9,7 @@ public:
     WorldInventory(World&,gameplay_scenario::SceneResources&,
         const gameplay_scenario::ResourceTemplates&,ResourceFrames&);
     std::uint8_t find(const actors::EntityId&,std::uint8_t resource)const;
+    std::uint8_t find_by_content(const actors::EntityId&,std::uint32_t content)const;
     bool remove(const actors::EntityId&,std::uint8_t resource);
     bool detach_item(const actors::EntityId&,std::uint8_t resource);
     void compact(const actors::EntityId&);

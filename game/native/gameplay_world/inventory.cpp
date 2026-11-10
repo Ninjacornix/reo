@@ -24,6 +24,12 @@ bool WorldInventory::remove(const actors::EntityId& id,std::uint8_t resource){
     const auto slot=find(id,resource);if(slot==255)return false;const auto value=actor(id);
     if(slot&0x80)value->inventory.storage[slot&0x7f]=0;else value->inventory.carried[slot]=0;return true;
 }
+std::uint8_t WorldInventory::find_by_content(const actors::EntityId& id,std::uint32_t full_content)const{
+    const auto value=actor(id);const auto content=std::uint16_t(full_content);
+    for(auto item:value->inventory.carried)if(item&&descriptor(item).attachment_id==content)return item;
+    for(auto item:value->inventory.storage)if(item&&descriptor(item).attachment_id==content)return item;
+    return 0;
+}
 bool WorldInventory::detach_item(const actors::EntityId& id,std::uint8_t resource){
     if(!remove(id,resource))return false;
     const auto value=actor(id);

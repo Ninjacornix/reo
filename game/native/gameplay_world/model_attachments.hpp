@@ -56,6 +56,9 @@ class ResourceModel final : public gameplay_scenario::SceneFlagAttachment {
     std::int16_t pulse_timer{},pulse_packed{};
     float pulse_distance{};
     animation::Vector axis_scale{}; // source22C, independent of the position at200
+    animation::Vector use_vector{}; // source20C; copied use payload, distinct from position200
+    std::array<std::int16_t,4> use_parameters{}; // source224; distinct from orientation21C
+    std::int16_t use_delay{}; // sourceC; cleared by use configuration
     std::shared_ptr<const ResourcePartPoses> base_parts;
     std::shared_ptr<ResourceModelWork> work;
   private:

@@ -17,7 +17,7 @@ add_executable(gameplay_collision_phase_tests collision_phase_tests.cpp)
 target_link_libraries(gameplay_collision_phase_tests PRIVATE reo_native_gameplay_world)
 add_test(NAME native_gameplay_collision_phase COMMAND gameplay_collision_phase_tests)
 
-add_library(reo_native_model_attachments STATIC model_attachments.cpp resource_programs.cpp resource_models.cpp resource_frames.cpp resource_static_assets.cpp resource_factory.cpp inventory.cpp)
+add_library(reo_native_model_attachments STATIC model_attachments.cpp resource_programs.cpp resource_models.cpp resource_frames.cpp resource_static_assets.cpp resource_factory.cpp inventory.cpp resource_use.cpp)
 add_library(reo_native_animation_event_consumers STATIC animation_primitives.cpp)
 add_library(reo_native_animation_audio STATIC animation_audio.cpp footwear.cpp)
 target_compile_features(reo_native_animation_audio PUBLIC cxx_std_20)
