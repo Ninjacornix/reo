@@ -49,11 +49,13 @@ struct Actor : actors::Entity,actors::HitActor {
     gameplay_scenario::ModelReference scene_model{128}; // resolved ABB model identity, not an authored remap index
     float motion_rate{1};
     std::uint16_t resource_action{};
-    // Original65E710 equipment-selection notification, D92/DA2.
-    std::uint16_t equipment_notice_flags{};
+    // Shared original D92/DA2..DA4 action notice. DA2 also carries a slot in
+    // equipment-selection65E710 and a resource ID in inventory operations.
+    std::uint16_t pending_notice{};
     std::uint8_t equipment_notice_slot{};
+    std::uint8_t equipment_notice_peer{},equipment_notice_parameter{};
     std::uint16_t linked_model_variant{};
-    std::uint16_t contact_flags{},pending_notice{};
+    std::uint16_t contact_flags{};
     std::uint16_t action_flags{};
     float surface_blend_weight{},surface_blend_rate{};
     std::int8_t model_correction_skip{};

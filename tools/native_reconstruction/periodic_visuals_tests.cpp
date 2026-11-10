@@ -256,6 +256,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_OWNERSHIP
 #include "tools/native_reconstruction/resource_ownership_tests.inc"
 #endif
+#ifdef REO_ACTOR_RESOURCE_OPERATIONS
+#include "tools/native_reconstruction/actor_resource_operations_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -412,6 +415,11 @@ int main(int argc,char** argv)try{
     compare_resource_ownership(argv[2],argv[3],ram);
     std::cerr<<"end resource ownership\n";
 #endif
+#ifdef REO_ACTOR_RESOURCE_OPERATIONS
+    std::cerr<<"begin actor resource operations\n";
+    compare_actor_resource_operations(argv[2],argv[3],ram);
+    std::cerr<<"end actor resource operations\n";
+#endif
 #ifdef REO_EQUIPMENT_RESOURCES
     compare_equipment_resources(argv[4],argv[2],ram);
 #endif
@@ -492,6 +500,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_OWNERSHIP
     <<",\"ownership_claims\":"<<ownership_claims<<",\"ownership_admissions\":"<<ownership_admissions<<",\"ownership_assignments\":"<<ownership_assignments<<",\"ownership_swaps\":"<<ownership_swaps<<",\"ownership_exchanges\":"<<ownership_exchanges<<",\"ownership_capacity\":"<<ownership_capacity<<",\"ownership_refusals\":"<<ownership_refusals
+#endif
+#ifdef REO_ACTOR_RESOURCE_OPERATIONS
+    <<",\"actor_operation_cases\":"<<actor_operation_cases<<",\"actor_operation_live\":"<<actor_operation_live<<",\"actor_operation_gates\":"<<actor_operation_gates<<",\"actor_operation_refusals\":"<<actor_operation_refusals<<",\"actor_operation_transfer_mask\":"<<actor_operation_transfer_mask<<",\"actor_operation_publications\":"<<actor_operation_publications
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads<<",\"weapon_missing_file_reads\":"<<weapon_missing_file_reads

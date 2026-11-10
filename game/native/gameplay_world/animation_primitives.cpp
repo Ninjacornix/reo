@@ -20,13 +20,6 @@ bool NativeConsumer::crosses(Actor& actor, const Event& event, float step, unsig
         actor.animation->channel(animation::ModelBank::primary, channel).timing, float(event.frame),
         step, world_.session().clock_mode);
 }
-void notify_equipment_selection(Actor& actor, std::uint8_t selected) noexcept {
-    if (actor.category != 0 || actor.slot != selected)
-        return;
-    actor.equipment_slot = actor.selected_resource;
-    actor.equipment_notice_flags |= 0x20;
-    actor.equipment_notice_slot = actor.slot;
-}
 void NativeConsumer::attach(Actor& actor, std::uint8_t key) {
     if (!packets_ || !catalog_)
         unavailable("Native animation contact packet/catalog unavailable");

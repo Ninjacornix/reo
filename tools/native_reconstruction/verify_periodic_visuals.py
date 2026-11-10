@@ -42,6 +42,7 @@ def main():
     p.add_argument('--stock-wmd-absence', action='store_true')
     p.add_argument('--resource-use', action='store_true')
     p.add_argument('--resource-ownership', action='store_true')
+    p.add_argument('--actor-resource-operations', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -68,6 +69,7 @@ def main():
     assert not args.stock_wmd_absence or args.resource_depletion
     assert not args.resource_use or args.stock_wmd_absence
     assert not args.resource_ownership or args.resource_use
+    assert not args.actor_resource_operations or args.resource_ownership
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -164,6 +166,8 @@ def main():
         at=0x5b1f30;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_ownership:
         for at in [0x593060,0x5f2210,0x5b15d0,0x5b1610,0x5b1670,0x5b16d0,0x5b1710,0x5b1760,0x5b1bf0,0x5b1de0]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.actor_resource_operations:
+        for at in [0x5f4fe0,0x5f5c50,0x5f6a80]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -213,6 +217,7 @@ def main():
     if args.resource_effects: units+=['game/native/gameplay_world/resource_effects.cpp']
     if args.resource_depletion: units+=['game/native/gameplay_world/resource_depletion.cpp']
     if args.resource_ownership: units+=['game/native/gameplay_world/resource_ownership.cpp']
+    if args.actor_resource_operations: units+=['game/native/gameplay_world/actor_resource_operations.cpp','game/native/gameplay_world/equipment_notice.cpp']
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
@@ -275,6 +280,8 @@ def main():
         name='tools/native_reconstruction/resource_depletion_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_ownership:
         name='tools/native_reconstruction/resource_ownership_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.actor_resource_operations:
+        name='tools/native_reconstruction/actor_resource_operations_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -482,6 +489,7 @@ def main():
         if args.stock_wmd_absence: command.insert(1,'-DREO_STOCK_WMD_ABSENCE=1')
         if args.resource_use: command.insert(1,'-DREO_RESOURCE_USE=1')
         if args.resource_ownership: command.insert(1,'-DREO_RESOURCE_OWNERSHIP=1')
+        if args.actor_resource_operations: command.insert(1,'-DREO_ACTOR_RESOURCE_OPERATIONS=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')

@@ -48,6 +48,14 @@ The [independent review](WORLD_OWNER_REVIEW.md) identified teardown and grid
 ordering tests. The original loads its grid accumulator after the callback.
 The older isolated frame core now makes that ordering explicit too, with four
 detected fault variants in its [updated comparison](../../tools/native_reconstruction/native_gameplay_actor_frame_qualification_v2.json).
+
+The later [actor resource/notice composition](ACTOR_RESOURCE_OPERATIONS.md)
+removes a duplicated equipment notice flag: producers and this frame now share
+the one `pending_notice` halfword for originalD92. Current complete frame/input
+comparisons pass4,096 cases,291,127 ordered calls and78 native lifetime checks
+per compiler. Sixteen native composition cases exercise actual equipment/item
+producers and the publication/observer-failure prefix. Other frame services and
+final network delivery remain explicit boundaries; the earlier seal is unchanged.
 These are source/fixture findings, not a live slowdown diagnosis.
 
 Actual actor/scenario callers, full behavior/animation/resource providers,

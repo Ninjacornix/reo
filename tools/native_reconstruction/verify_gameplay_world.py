@@ -15,6 +15,25 @@ def main():
   proof.append(compare_source('native owned actor frame and direct input',src,begin,end,read))
  files=sources+['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_world/tests.cpp','game/native/gameplay_actors/entity.hpp','game/native/gameplay_actors/entity.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/health.cpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_session/session.hpp','tools/native_reconstruction/gameplay_actor_oracle/runtime.hpp','tools/native_reconstruction/gameplay_world_oracle/tests.cpp','tools/native_reconstruction/verify_gameplay_world.py']
  files += ['game/native/gameplay_collision/'+n for n in ['actors.hpp','response.hpp','collision.hpp']]
+ native_units=['game/native/'+group+'/'+name+'.cpp'for group,names in [
+  ('gameplay_world',['world','linked_models','model_poses','model_constraints','bodies']),
+  ('gameplay_actors',['entity','input','health']),
+  ('gameplay_collision',['collision','response','actors','actor_views']),
+  ('animation',['model','model_math','curves','constraints','constraint_math']),
+  ('transform_math',['transform_math']),('gameplay_session',['session'])
+ ]for name in names]
+ files+=native_units
+ # Freeze the current transitive native headers, including added canonical
+ # resource/notice state. No private checkout header may satisfy a missing copy.
+ files=list(dict.fromkeys(files))
+ for name in files:
+  if not name.startswith('game/native/'):continue
+  for include in re.findall(r'^\s*#include "([^"\n]+)"',(ROOT/name).read_text(),re.M):
+   target=((ROOT/name).parent/include).resolve()
+   if not target.is_file():target=(ROOT/include).resolve()
+   assert target.is_relative_to(ROOT/'game/native')and target.is_file(),(name,include)
+   relative=target.relative_to(ROOT).as_posix()
+   if relative not in files:files.append(relative)
  before={n:sha(ROOT/n) for n in files};out.mkdir(parents=True)
  record=dict(schema=1,status='failed',compiler_sha256=sha(a.compiler),source_sha256=before,original_owned_body=proof,original_body_executed=True,declared_callee_ports=True,actual_game_run=False,stage4_complete=False)
  try:
@@ -34,7 +53,7 @@ def main():
   import struct
   remaps=struct.unpack('<18I',read_main(0x2343c0,72));(out/'owned_remaps.hpp').write_text('inline constexpr std::array<g::input::Remap,6> owned_remaps{{'+','.join('{'+','.join(str(v)+'u' for v in remaps[i:i+3])+'}' for i in range(0,18,3))+'}};\n',encoding='utf8',newline='\n')
   env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','')
-  binary=out/'native-world.exe';command=[str(a.compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source'),str(core/'world.cpp'),str(out/'source/game/native/gameplay_actors/entity.cpp'),str(out/'source/game/native/gameplay_actors/input.cpp'),str(out/'source/game/native/gameplay_actors/health.cpp'),str(out/'tests.cpp'),'-o',str(binary)]
+  binary=out/'native-world.exe';command=[str(a.compiler),'-std=c++20','-O2','-msse4.1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source'),*[str(out/'source'/name)for name in native_units],str(out/'tests.cpp'),'-o',str(binary)]
   record['command']=command
   result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=120);(out/'compile.txt').write_text(result.stdout+result.stderr,encoding='utf8',newline='\n');assert result.returncode==0,'compile failed; see sealed compile.txt'
   result=subprocess.run([str(binary)],env=env,capture_output=True,text=True,timeout=60);(out/'run.txt').write_text(result.stdout+result.stderr,encoding='utf8',newline='\n');assert result.returncode==0,'differential check failed; see run.txt'

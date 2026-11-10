@@ -180,7 +180,7 @@ int main(int argc, char** argv) try {
             actor->resource_action = 0;
             actor->status = 0x100;
             actor->notice_flags = std::uint8_t(variant);
-            actor->equipment_notice_flags = std::uint16_t(variant * 17);
+            actor->pending_notice = std::uint16_t(variant * 17);
             actor->equipment_notice_slot = 55;
             actor->equipment_slot = 77;
             actor->auxiliary_status = (variant & 4) ? 0x100003 : 3;
@@ -212,7 +212,7 @@ int main(int argc, char** argv) try {
             ram[actor_at + 0xc7f] = actor->equipment_slot;
             ram[actor_at + 0xda2] = actor->equipment_notice_slot;
             ram[actor_at + 0x115] = actor->notice_flags;
-            transform_write(ram.data(), actor_at + 0xd92, actor->equipment_notice_flags);
+            transform_write(ram.data(), actor_at + 0xd92, actor->pending_notice);
             transform_write(ram.data(), actor_at + 0xba0, actor->status);
             transform_write(ram.data(), actor_at + 0xba4, actor->auxiliary_status);
             transform_write(ram.data(), actor_at + 0xca8, actor->resource_action);
@@ -257,7 +257,7 @@ int main(int argc, char** argv) try {
                   "exact native notice/status effects");
             check(actor->equipment_slot == ram[actor_at + 0xc7f] &&
                       actor->equipment_notice_slot == ram[actor_at + 0xda2] &&
-                      actor->equipment_notice_flags ==
+                      actor->pending_notice ==
                           transform_read<std::uint16_t>(ram.data(), actor_at + 0xd92),
                   "full native equipment notification parity");
             check(packets.size() == allocation_count, "actual stock packet allocation count");
@@ -284,7 +284,7 @@ int main(int argc, char** argv) try {
             actor->slot = std::uint8_t(slot);
             actor->selected_resource = 91;
             actor->equipment_slot = 17;
-            actor->equipment_notice_flags = 0xa53f;
+            actor->pending_notice = 0xa53f;
             actor->equipment_notice_slot = 255;
             ram[actor_at + 2] = actor->category;
             ram[actor_at + 3] = actor->slot;
@@ -297,7 +297,7 @@ int main(int argc, char** argv) try {
             e::notify_equipment_selection(*actor, 3);
             check(actor->equipment_slot == ram[actor_at + 0xc7f] &&
                       actor->equipment_notice_slot == ram[actor_at + 0xda2] &&
-                      actor->equipment_notice_flags ==
+                      actor->pending_notice ==
                           transform_read<std::uint16_t>(ram.data(), actor_at + 0xd92),
                   "full65E710 all category/slot patterns");
             ++equipment_cases;

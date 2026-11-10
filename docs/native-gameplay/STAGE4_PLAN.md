@@ -62,6 +62,11 @@ The current resource and inventory implementation includes:
   owners. Owner assignment and world/owned swaps have complete original
   comparisons; pickup/peer/journal/statistics/transport callers, saved-placement
   producers, extended actors and installation remain open.
+- [Actor resource operations](ACTOR_RESOURCE_OPERATIONS.md) are qualified
+  through actual quantity/inventory cleanup, release and remap consumers. The
+  same work corrects a duplicate native D92 notice field so equipment and item
+  producers reach the canonical World publication stage. Higher-level pickup,
+  peer/statistics/final delivery consumers and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;
