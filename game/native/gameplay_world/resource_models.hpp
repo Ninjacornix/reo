@@ -34,6 +34,7 @@ public:
     std::optional<std::uint8_t> physical_slot(const ResourceModelId&)const noexcept;
     ResourceModelId identity_of(const ResourceModel&)const noexcept;
     std::size_t available()const noexcept{return free_count_;}
+    bool open()const noexcept{return !closed_;}
     ResourceModelId head()const noexcept;
     ResourceModelId tail()const noexcept;
     ResourceModelId previous(const ResourceModelId&)const noexcept;

@@ -8,6 +8,7 @@ struct Sink:u::GameplayMessageSink {
     std::vector<Observation> events;bool available{true};
     bool send(const u::ScenarioOwnerMessage&)noexcept override{return false;}
     bool send(const u::ResourceOperationMessage&)noexcept override{return false;}
+    bool send(const u::ResourcePositionMessage&)noexcept override{return false;}
     bool send(const u::ActorStatusMessage& value)noexcept override{
         events.push_back({value.route==u::MessageRoute::mode_zero?0x811190u:0x810870u,value.channel,14,12,value.status,std::uint16_t(value.health),0,0});return available;
     }

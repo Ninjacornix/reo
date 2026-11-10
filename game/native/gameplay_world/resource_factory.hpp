@@ -42,6 +42,7 @@ private:
     friend class gameplay_weapon_resources::Equipment;
     friend class ResourceContents;
     friend class ResourceRecipes;
+    friend class ResourceDeployment;
     ResourceModels& models_;
     ResourceFrames& frames_;
     const gameplay_scenario::ResourceTemplates& templates_;

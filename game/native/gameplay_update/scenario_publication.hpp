@@ -13,6 +13,11 @@ struct ResourceOperationMessage {
     MessageRoute route{};std::uint16_t resource{};std::uint8_t actor{},operation{};
     static constexpr unsigned channel=5,type=9,length=8,options=0,dispatch_mode=4;
 };
+struct ResourcePositionMessage {
+    MessageRoute route{};std::uint16_t resource{};std::uint8_t actor{},operation{};
+    gameplay_world::Position position;
+    static constexpr unsigned channel=5,type=9,length=20,options=0,dispatch_mode=4;
+};
 struct ActorStatusMessage {
     MessageRoute route{};std::uint32_t channel{},status{};std::int16_t health{};
     static constexpr unsigned type=14,length=12,options=0,dispatch_mode=4;
@@ -22,6 +27,7 @@ public:
     virtual ~GameplayMessageSink()=default;
     virtual bool send(const ScenarioOwnerMessage&)noexcept=0;
     virtual bool send(const ResourceOperationMessage&)noexcept=0;
+    virtual bool send(const ResourcePositionMessage&)noexcept=0;
     virtual bool send(const ActorStatusMessage&)noexcept=0;
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
@@ -31,6 +37,14 @@ enum class PublicationStatus {completed,unavailable,message_unavailable};
 class StatePublication final {
 public:
     StatePublication(gameplay_world::World& world,gameplay_scenario::FlagState& flags,GameplayMessageSink* messages=nullptr):world_(world),flags_(flags),messages_(messages){}
+    PublicationStatus resource_position(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation,std::optional<gameplay_world::Position> position)noexcept{
+        if(world_.closed())return PublicationStatus::unavailable;
+        const auto phase=world_.session().message_phase;if(phase!=1&&phase!=2)return PublicationStatus::completed;
+        if(!position)return PublicationStatus::unavailable;
+        if(world_.mode!=0&&world_.mode!=1)return PublicationStatus::completed;
+        if(!messages_||!messages_->send(ResourcePositionMessage{world_.mode==0?MessageRoute::mode_zero:MessageRoute::mode_one,std::uint16_t(resource),std::uint8_t(actor),std::uint8_t(operation),*position}))return PublicationStatus::message_unavailable;
+        return PublicationStatus::completed;
+    }
     PublicationStatus actor_status(const gameplay_world::actors::EntityId& id)noexcept{
         if(world_.closed())return PublicationStatus::unavailable;
         const auto phase=world_.session().message_phase;

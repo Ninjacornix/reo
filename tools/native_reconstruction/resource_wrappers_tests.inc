@@ -11,6 +11,7 @@ std::vector<Capture> source_messages;unsigned actor_slot{};bool mutate_self{};
 struct Sink:u::GameplayMessageSink {
     Consuming* owner{};std::vector<Capture> messages;bool available{true};
     bool send(const u::ScenarioOwnerMessage&)noexcept override{return false;}
+    bool send(const u::ResourcePositionMessage&)noexcept override{return false;}
     bool send(const u::ActorStatusMessage&)noexcept override{return false;}
     bool send(const u::ResourceOperationMessage& message)noexcept override{
         auto& f=*owner;Capture value{message.route,message.resource,message.actor,message.operation,{},{},f.update.completion_statistics().state().points,unsigned(f.update.cooperative_events().available())};

@@ -1,6 +1,7 @@
 #include "owned_resource_recipes.hpp"
 #include "resource_consumption.hpp"
 #include "resource_health_effects.hpp"
+#include "resource_deployment.hpp"
 #include "../gameplay_update/update.hpp"
 #include <cstring>
 #include <iostream>
@@ -17,6 +18,8 @@ struct Notifications:s::FlagNotifications {bool changed(const s::ScenarioFlagCha
 struct Messages:u::GameplayMessageSink {
     std::function<bool(const u::ResourceOperationMessage&)> callback;
     bool send(const u::ScenarioOwnerMessage&)noexcept override{return false;}
+    std::function<bool(const u::ResourcePositionMessage&)> position_callback;
+    bool send(const u::ResourcePositionMessage& value)noexcept override{return position_callback&&position_callback(value);}
     bool send(const u::ActorStatusMessage&)noexcept override{return false;}
     bool send(const u::ResourceOperationMessage& value)noexcept override{return callback&&callback(value);}
 };
@@ -50,6 +53,14 @@ int main()try{
     session->message_phase=0;put(encoded,32+10,std::uint16_t(0x13));check(templates.load(encoded));item=*resources.get(*resources.slot(3));item.attachment_id=300;item.template_index=0;check(resources.replace(*resources.slot(3),item)==s::SceneStatus::completed);const auto live=world.resolve(id);live->current=5;live->maximum=100;live->status=1;live->auxiliary_status=0;g::ResourceHealthEffects healing(primitives,update);
     const auto healed=healing.apply(3,id);check(healed.status==g::ResourceHealthStatus::completed&&healed.value==1&&live->current==100&&live->status==0&&live->auxiliary_status==0x20);const auto health_events=update.cooperative_events().snapshot();check(health_events.size()==2&&health_events.back().value.id==3&&health_events.back().value.first==300&&health_events.back().value.timestamp==123&&health_events.back().value.room==7);
     item=*resources.get(*resources.slot(3));item.attachment_id=312;check(resources.replace(*resources.slot(3),item)==s::SceneStatus::completed);session->inventory_owner=3;const auto unavailable=healing.apply(3,id);check(unavailable.status==g::ResourceHealthStatus::ui_unavailable&&(live->auxiliary_status&0x1000u)&&session->inventory_owner==0&&update.cooperative_events().snapshot().size()==2);
+    // Deployment uses these same descriptor/model/update owners. An off-room
+    // conversion needs no visual consumer; a reached missing consumer refuses
+    // after the descriptor prefix. Actual full capacity is a completed effect.
+    g::ResourceDeployment deployment(primitives,update);item=*resources.get(*resources.slot(4));item.active=1;item.instance_index=4;item.attachment_id=0x3201;item.template_index=1;item.primary.reset();item.secondary.reset();item.ownership_tag=1;item.parameter=17;item.flags=0x800;check(resources.replace(*resources.slot(4),item)==s::SceneStatus::completed);live->room=8;live->position={12,-3,37};
+    check(deployment.place(id,4,live->position).status==g::ResourceModelStatus::completed);auto placed=*resources.get(*resources.slot(4));check(placed.attachment_id==0x3200&&placed.room==8&&placed.ownership_tag==0&&placed.position.x==12&&placed.position.y==-1&&placed.flags==0x200000&&!placed.primary);
+    live->room=7;check(resources.replace(*resources.slot(4),item)==s::SceneStatus::completed);session->message_phase=1;messages.position_callback=[&](const u::ResourcePositionMessage& value){check(value.resource==4&&value.actor==0&&value.operation==3&&value.position.y==-3);return true;};
+    check(deployment.effect(4,id).status==g::ResourceModelStatus::unavailable);placed=*resources.get(*resources.slot(4));check(placed.attachment_id==0x3200&&placed.room==7&&placed.ownership_tag==0&&!placed.primary&&models.available()==64);
+    session->message_phase=0;for(unsigned i=0;i<64;++i)check(models.create().status==g::ResourceModelStatus::completed);check(resources.replace(*resources.slot(4),item)==s::SceneStatus::completed);const auto full_deployment=deployment.effect(4,id);check(full_deployment.status==g::ResourceModelStatus::completed&&full_deployment.value==4&&models.available()==0&&!resources.get(*resources.slot(4))->primary&&resources.get(*resources.slot(4))->parameter==17);while(auto current=models.head())check(models.retire(current)==g::ResourceModelStatus::completed);
     g::World other({{g::input::Remap{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<g::Session>());u::Owner other_update(other,notifications);bool refused{};try{g::OwnedResourceRecipes wrong(primitives,other_update);}catch(const std::invalid_argument&){refused=true;}check(refused);
     check(world.retire_primary(0)==g::actors::EntityStatus::completed);refused=false;try{recipes.publish(0xf,0x136,42,id);}catch(const std::runtime_error&){refused=true;}check(refused);check(update.close()==u::Status::completed);refused=false;try{recipes.apply(3,4);}catch(const std::runtime_error&){refused=true;}check(refused);check(world.close()==g::Status::completed);
     std::cout<<checks<<" owned recipe model/event/update composition checks passed.\n";

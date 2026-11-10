@@ -12,6 +12,7 @@ struct Sink:u::GameplayMessageSink {
     explicit Sink(g::World& w):world(w){}
     bool send(const u::ScenarioOwnerMessage&)noexcept override{return false;}
     bool send(const u::ResourceOperationMessage&)noexcept override{return false;}
+    bool send(const u::ResourcePositionMessage&)noexcept override{return false;}
     bool send(const u::ActorStatusMessage& value)noexcept override{messages.push_back(value);return available;}
     std::optional<unsigned> room_owner(u::MessageRoute route,std::uint16_t room)noexcept override{
         lookups.push_back({route,room});if(nested){world.mode=std::uint8_t(nested-1);world.primary(0)->current=-123;world.primary(0)->status=0x12345678;}

@@ -87,6 +87,10 @@ public:
         if(!open())return PublicationStatus::unavailable;
         return publication_.resource_operation(resource,actor,operation);
     }
+    PublicationStatus record_resource_position(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation,std::optional<world::Position> position)noexcept{
+        if(!open())return PublicationStatus::unavailable;
+        return publication_.resource_position(resource,actor,operation,position);
+    }
     PublicationStatus record_actor_status(const world::actors::EntityId& actor)noexcept{
         if(!open())return PublicationStatus::unavailable;
         return publication_.actor_status(actor);

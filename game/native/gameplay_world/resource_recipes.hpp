@@ -21,6 +21,7 @@ private:
     friend class OwnedResourceRecipes;
     friend class ResourceConsumption;
     friend class ResourceHealthEffects;
+    friend class ResourceDeployment;
     ResourcePairs& pairs_;ResourceContents& contents_;WorldInventory& inventory_;
     std::int8_t merge(std::uint8_t,std::uint8_t,bool require_positive,bool reject_full,bool general);
     std::int8_t redistribute(std::uint8_t,std::uint8_t,std::uint32_t);

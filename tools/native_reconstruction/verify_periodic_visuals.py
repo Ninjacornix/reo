@@ -34,6 +34,7 @@ def main():
     p.add_argument('--resource-consumption', action='store_true')
     p.add_argument('--resource-wrappers', action='store_true')
     p.add_argument('--resource-health', action='store_true')
+    p.add_argument('--resource-deployment', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -53,6 +54,7 @@ def main():
     assert not args.resource_consumption or args.owned_recipes
     assert not args.resource_wrappers or args.resource_consumption
     assert not args.resource_health or args.resource_wrappers
+    assert not args.resource_deployment or (args.resource_health and args.resource_companions)
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -135,6 +137,8 @@ def main():
     if args.resource_health:
         for at in [0x5b2230,0x5b6610,0x6605b0,0x67e230,0x1b0240,0x5f4fd0]:
             bank='sub'if at<0x370000 else'o2';folder=ROOT/('recomp/config/output'if bank=='sub'else'recomp/config/output_ovl/o2');entries[at]=next(folder.glob(f'{bank}_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_deployment:
+        for at in [0x5b5940,0x5b5af0,0x5b5cb0,0x5b26d0,0x5b2770,0x5b2870,0x5b2880,0x5b2890,0x5b28e0]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -180,6 +184,7 @@ def main():
     if args.owned_recipes: units+=UPDATE_UNITS+['game/native/gameplay_world/owned_resource_recipes.cpp']
     if args.resource_consumption: units+=['game/native/gameplay_world/resource_consumption.cpp']
     if args.resource_health: units+=['game/native/gameplay_world/resource_health_effects.cpp']
+    if args.resource_deployment: units+=['game/native/gameplay_world/resource_deployment.cpp']
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
@@ -231,6 +236,8 @@ def main():
         name='tools/native_reconstruction/resource_wrappers_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_health:
         name='tools/native_reconstruction/resource_health_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_deployment:
+        name='tools/native_reconstruction/resource_deployment_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -392,6 +399,7 @@ def main():
         if args.resource_consumption: command.insert(1,'-DREO_RESOURCE_CONSUMPTION=1')
         if args.resource_wrappers: command.insert(1,'-DREO_RESOURCE_WRAPPERS=1')
         if args.resource_health: command.insert(1,'-DREO_RESOURCE_HEALTH=1')
+        if args.resource_deployment: command.insert(1,'-DREO_RESOURCE_DEPLOYMENT=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')
@@ -407,7 +415,8 @@ def main():
             result = subprocess.run(cmd, env=env, capture_output=True, timeout=240 if args.weapon_resources else 180)
             (out / (label + '.stdout.txt')).write_bytes(result.stdout)
             (out / (label + '.stderr.txt')).write_bytes(result.stderr)
-            assert result.returncode == 0, label + ' failed; see retained logs'
+            record.setdefault('returncodes', {})[label] = result.returncode
+            assert result.returncode == 0, label + ' failed with code ' + str(result.returncode) + '; see retained logs'
             if label == 'run':
                 record['observed'] = json.loads(result.stdout)
         record['source_unchanged'] = all((ROOT / n).read_bytes() == b for n, b in frozen.items())

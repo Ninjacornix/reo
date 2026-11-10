@@ -18,6 +18,7 @@ public:
     bool remap(std::uint32_t resource);
 private:
     friend class ResourceRecipes;
+    friend class ResourceDeployment;
     World& world_;gameplay_scenario::SceneResources& resources_;
     const gameplay_scenario::ResourceTemplates& templates_;
     ResourceFactory& factory_;ResourceUse use_;

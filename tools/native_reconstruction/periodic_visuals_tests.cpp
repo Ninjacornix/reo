@@ -49,6 +49,9 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
 #endif
 #ifdef REO_RESOURCE_WRAPPERS
     if(context->pc==0x811190||context->pc==0x810870){
+#ifdef REO_RESOURCE_DEPLOYMENT
+        if(memory[GPR_U32(context,5)]==9&&memory[GPR_U32(context,5)+1]==20){extern void deployment_message_port(std::uint8_t*,R5900Context*);deployment_message_port(memory,context);done();return;}
+#endif
 #ifdef REO_RESOURCE_HEALTH
         if(memory[GPR_U32(context,5)]==14){extern void health_message_port(std::uint8_t*,R5900Context*);health_message_port(memory,context);done();return;}
 #endif
@@ -218,6 +221,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_COMPANIONS
 #include "tools/native_reconstruction/resource_companions_tests.inc"
 #endif
+#ifdef REO_RESOURCE_DEPLOYMENT
+#include "tools/native_reconstruction/resource_deployment_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -342,7 +348,13 @@ int main(int argc,char** argv)try{
     compare_resource_wrappers(argv[2],argv[3],ram);
 #endif
 #ifdef REO_RESOURCE_HEALTH
+    std::cerr<<"begin resource health\n";
     compare_resource_health(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_DEPLOYMENT
+    std::cerr<<"begin resource deployment\n";
+    compare_resource_deployment(corpus,argv[2],argv[3],ram);
+    std::cerr<<"end resource deployment\n";
 #endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
@@ -409,6 +421,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_HEALTH
     <<",\"health_cases\":"<<health_cases<<",\"health_event_cases\":"<<health_event_cases<<",\"health_ui_cases\":"<<health_ui_cases<<",\"health_refusals\":"<<health_refusals
+#endif
+#ifdef REO_RESOURCE_DEPLOYMENT
+    <<",\"deployment_counts\":"<<deployment_counts<<",\"deployment_admissions\":"<<deployment_admissions<<",\"deployment_cases\":"<<deployment_cases<<",\"deployment_effects\":"<<deployment_effects<<",\"deployment_messages\":"<<deployment_messages<<",\"deployment_frontends\":"<<deployment_frontends<<",\"deployment_lifecycle\":"<<deployment_lifecycle<<",\"deployment_capacity\":"<<deployment_capacity<<",\"deployment_refusals\":"<<deployment_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads

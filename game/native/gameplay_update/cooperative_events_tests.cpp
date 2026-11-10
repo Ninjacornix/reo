@@ -28,6 +28,7 @@ struct ActorMessages:u::GameplayMessageSink {
     std::optional<u::ActorStatusMessage> last;unsigned sends{},lookups{};bool available{true};
     bool send(const u::ScenarioOwnerMessage&)noexcept override{return false;}
     bool send(const u::ResourceOperationMessage&)noexcept override{return false;}
+    bool send(const u::ResourcePositionMessage&)noexcept override{return false;}
     bool send(const u::ActorStatusMessage& value)noexcept override{++sends;last=value;return available;}
     std::optional<unsigned> room_owner(u::MessageRoute route,std::uint16_t room)noexcept override{if(route!=u::MessageRoute::mode_one||room!=0x1234)std::terminate();++lookups;return 3;}
 };
