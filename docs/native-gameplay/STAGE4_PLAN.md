@@ -44,7 +44,11 @@ The current resource and inventory implementation includes:
   open.
 - [Item healing/status core](RESOURCE_HEALTH_EFFECTS.md), including actual actor
   mutations, native status messages and cooperative event publication. The outer
-  effect dispatcher and required UI/device/text consumers remain open.
+  required UI/device/text consumers and real game callers remain open.
+- [Outer item effects](RESOURCE_EFFECTS.md) through those actual healing and
+  deployment consumers, including quantity/statistics ordering and real model
+  retirement on depletion. Weapon depletion/cost and actual UI/transport
+  consumers remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;
