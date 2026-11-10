@@ -56,6 +56,12 @@ comparisons pass4,096 cases,291,127 ordered calls and78 native lifetime checks
 per compiler. Sixteen native composition cases exercise actual equipment/item
 producers and the publication/observer-failure prefix. Other frame services and
 final network delivery remain explicit boundaries; the earlier seal is unchanged.
+
+[Action-notice publication](ACTOR_ACTION_MESSAGES.md) also joins the frame's
+744638 view to the one session selector-suppression field. The frame reset and
+message gate now share storage, including writes made during callbacks. Current
+native lifetime checks include that alias and pass81 assertions per compiler;
+the complete4,096-case frame/input comparisons remain unchanged.
 These are source/fixture findings, not a live slowdown diagnosis.
 
 Actual actor/scenario callers, full behavior/animation/resource providers,

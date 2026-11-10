@@ -51,3 +51,9 @@ Other actor message selectors and suppression writers, actual room authority and
 network queue/transport, remaining health/item callers and game installation
 remain open. No game/audio device was launched. Installed V39 remains unchanged;
 whole Stage4 and coherent native gameplay acceptance are incomplete.
+
+The later [action-notice publication](ACTOR_ACTION_MESSAGES.md) additionally
+qualifies selector7 and its offline peer requests. That work joins the native
+frame and selector-suppression views of744638 into one session value. Current
+cooperative regressions include this selector14/clear coverage unchanged; the
+earlier qualification remains a historical snapshot.

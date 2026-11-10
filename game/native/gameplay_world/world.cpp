@@ -14,7 +14,7 @@ std::shared_ptr<Session> admitted(std::shared_ptr<Session> session){
 }
 World::World(Profile profile,std::shared_ptr<Session> session):session_(admitted(std::move(session))),
     mode(session_->mode),selected_actor(session_->selected_actor),paused(session_->paused),
-    filter_nonselected_input(session_->authority_filter),room(session_->room),scenario(session_->scenario),entities_(profile.entities),
+    filter_nonselected_input(session_->authority_filter),room(session_->room),scenario(session_->scenario),frame_shared_counter(session_->actor_message_suppression),entities_(profile.entities),
     layouts_(std::move(profile.layouts)),controllers_(profile.controller_count){
     if(layouts_.empty() || layouts_.size()>256 || controllers_.empty() || controllers_.size()>128)
         throw std::invalid_argument("Native primary world requires an admitted session/input profile");

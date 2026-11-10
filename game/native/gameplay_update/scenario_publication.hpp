@@ -22,6 +22,11 @@ struct ActorStatusMessage {
     MessageRoute route{};std::uint32_t channel{},status{};std::int16_t health{};
     static constexpr unsigned type=14,length=12,options=0,dispatch_mode=4;
 };
+struct ActorActionMessage {
+    MessageRoute route{};std::uint32_t channel{};std::uint16_t flags{};
+    std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
+    static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
+};
 class GameplayMessageSink {
 public:
     virtual ~GameplayMessageSink()=default;
@@ -29,6 +34,7 @@ public:
     virtual bool send(const ResourceOperationMessage&)noexcept=0;
     virtual bool send(const ResourcePositionMessage&)noexcept=0;
     virtual bool send(const ActorStatusMessage&)noexcept=0;
+    virtual bool send(const ActorActionMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
 enum class PublicationStatus {completed,unavailable,message_unavailable};
@@ -64,6 +70,42 @@ public:
             message.channel=*owner+1u;
         }
         // Room ownership lookup is synchronous;1AFDD0 rereads raw mode afterward.
+        if(world_.mode!=0&&world_.mode!=1)return PublicationStatus::completed;
+        message.route=world_.mode==0?MessageRoute::mode_zero:MessageRoute::mode_one;
+        return messages_->send(message)?PublicationStatus::completed:PublicationStatus::message_unavailable;
+    }
+    PublicationStatus actor_action(const gameplay_world::actors::EntityId& id)noexcept{
+        if(world_.closed())return PublicationStatus::unavailable;
+        const auto phase=world_.session().message_phase;
+        if((phase!=1&&phase!=2)||world_.paused)return PublicationStatus::completed;
+        const auto actor=world_.resolve(id);if(!actor)return PublicationStatus::unavailable;
+        if(actor->category==0){if(actor->slot!=world_.selected_actor)return PublicationStatus::completed;}
+        else if(actor->category==1){if(!(actor->status&0x10000000u))return PublicationStatus::completed;}
+        else return PublicationStatus::completed;
+        if((actor->status&4u)||world_.session().actor_message_suppression==7)return PublicationStatus::completed;
+        ActorActionMessage message;message.flags=actor->pending_notice;
+        message.values={actor->equipment_notice_slot,actor->equipment_notice_peer,actor->equipment_notice_parameter,actor->equipment_notice_detail};message.equipment=actor->equipment_slot;
+        // Complete1B02D0 is raw-mode==0, not an online-mode classifier.
+        // Payload capture precedes these synchronous peer-request mutations.
+        if(world_.mode==0){
+            const auto request=[&](std::uint8_t owner,std::uint8_t mode,bool copy_resource){
+                const auto peer=world_.primary(unsigned(owner)-1u);if(!peer)return false;
+                peer->interaction_kind=2;peer->interaction_mode=mode;
+                if(copy_resource)peer->interaction_slot=actor->interaction_slot;
+                return true;
+            };
+            if((actor->pending_notice&1u)&&actor->equipment_notice_peer&&!request(actor->equipment_notice_peer,0,true))return PublicationStatus::unavailable;
+            if((actor->pending_notice&4u)&&actor->equipment_notice_parameter&&!request(actor->equipment_notice_parameter,1,false))return PublicationStatus::unavailable;
+            if((actor->pending_notice&0x100u)&&actor->equipment_notice_parameter&&!request(actor->equipment_notice_parameter,0,true))return PublicationStatus::unavailable;
+        }
+        if(world_.mode!=0&&world_.mode!=1)return PublicationStatus::completed;
+        if(!messages_)return PublicationStatus::message_unavailable;
+        if(actor->category==0)message.channel=std::uint32_t(actor->slot)+1u;
+        else{
+            const auto owner=messages_->room_owner(world_.mode==0?MessageRoute::mode_zero:MessageRoute::mode_one,world_.room);
+            if(!owner)return PublicationStatus::unavailable;
+            message.channel=*owner+1u;
+        }
         if(world_.mode!=0&&world_.mode!=1)return PublicationStatus::completed;
         message.route=world_.mode==0?MessageRoute::mode_zero:MessageRoute::mode_one;
         return messages_->send(message)?PublicationStatus::completed:PublicationStatus::message_unavailable;

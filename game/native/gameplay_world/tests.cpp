@@ -56,6 +56,9 @@ int main()try{
         w.room=3;require(session->room==3);w.room=0;
         require(!w.scenario);w.scenario=0;require(session->scenario && *session->scenario==0);
         session->scenario=0x0102;require(*w.scenario==0x0102);
+        require(&w.frame_shared_counter==&session->actor_message_suppression);
+        session->actor_message_suppression=14;require(w.frame_shared_counter==14);
+        w.frame_shared_counter=7;require(session->actor_message_suppression==7);
         auto made=w.spawn_primary(0,actor(0));require(made.status==g::actors::EntityStatus::completed);auto a=w.resolve(made.id);require(bool(a));
         require(w.spawn_primary(0,actor(0)).status==g::actors::EntityStatus::invalid);
         w.controllers()[0].held=0x110;w.controllers()[0].analog[0]=-127;Ports p;p.reenter=true;p.grid=true;

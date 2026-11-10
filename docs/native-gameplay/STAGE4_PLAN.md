@@ -67,6 +67,10 @@ The current resource and inventory implementation includes:
   same work corrects a duplicate native D92 notice field so equipment and item
   producers reach the canonical World publication stage. Higher-level pickup,
   peer/statistics/final delivery consumers and installation remain open.
+- [Actor action messages](ACTOR_ACTION_MESSAGES.md) are qualified through
+  the update Owner and canonical World notice state, including actual offline
+  peer requests. The work also joins the frame and message-suppression views of
+  744638. Actual queue/receiver/transport and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

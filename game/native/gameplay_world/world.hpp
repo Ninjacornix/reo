@@ -49,11 +49,15 @@ struct Actor : actors::Entity,actors::HitActor {
     gameplay_scenario::ModelReference scene_model{128}; // resolved ABB model identity, not an authored remap index
     float motion_rate{1};
     std::uint16_t resource_action{};
-    // Shared original D92/DA2..DA4 action notice. DA2 also carries a slot in
+    // Shared original D92/DA2..DA5 action notice. DA2 also carries a slot in
     // equipment-selection65E710 and a resource ID in inventory operations.
     std::uint16_t pending_notice{};
     std::uint8_t equipment_notice_slot{};
     std::uint8_t equipment_notice_peer{},equipment_notice_parameter{};
+    std::uint8_t equipment_notice_detail{};
+    // C78/C79. The request's C7A resource is inherited interaction_slot;
+    // C7F is the inherited equipment_slot, not a second requested-item field.
+    std::uint8_t interaction_kind{},interaction_mode{};
     std::uint16_t linked_model_variant{};
     std::uint16_t contact_flags{};
     std::uint16_t action_flags{};
@@ -174,7 +178,7 @@ public:
     std::uint16_t& room;
     std::optional<std::uint16_t>& scenario;
     std::uint8_t selected_frame_marker{};
-    std::uint16_t frame_shared_counter{};
+    std::uint16_t& frame_shared_counter;
 private:
     actors::EntityStore entities_;
     std::array<actors::EntityId,8> primary_;
