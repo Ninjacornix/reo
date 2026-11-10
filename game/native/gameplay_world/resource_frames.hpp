@@ -21,6 +21,7 @@ private:
     friend class ResourceFactory;
     friend class WorldInventory;
     friend class ResourceUse;
+    friend class ResourcePairs;
     friend class gameplay_weapon_resources::Equipment;
     World& world_;
     gameplay_scenario::SceneResources& resources_;

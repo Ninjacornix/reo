@@ -27,6 +27,7 @@ def main():
     p.add_argument('--resource-actions', action='store_true')
     p.add_argument('--resource-inventory', action='store_true')
     p.add_argument('--resource-content', action='store_true')
+    p.add_argument('--resource-pairs', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -40,6 +41,7 @@ def main():
     assert not args.resource_actions or args.resource_delayed
     assert not args.resource_inventory or args.resource_actions
     assert not args.resource_content or args.resource_inventory
+    assert not args.resource_pairs or args.resource_content
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -104,6 +106,9 @@ def main():
     if args.resource_content:
         for at in [0x591510,0x5b4c90,0x5b4bf0,0x5b4e60,0x5b3c70]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_pairs:
+        for at in [0x5b3690,0x5b3820,0x5b3920,0x5b39a0,0x5b3dd0,0x5b3e40,0x5b4020,0x5b4320,0x5b1af0]:
+            entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -142,6 +147,7 @@ def main():
     units=list(dict.fromkeys(units))
     if args.resource_inventory: units+=['game/native/gameplay_world/inventory.cpp']
     if args.resource_content: units+=['game/native/gameplay_world/resource_use.cpp','game/native/gameplay_world/resource_contents.cpp']
+    if args.resource_pairs: units+=['game/native/gameplay_world/resource_pairs.cpp']
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
@@ -181,6 +187,8 @@ def main():
         name='tools/native_reconstruction/resource_inventory_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_content:
         name='tools/native_reconstruction/resource_content_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_pairs:
+        name='tools/native_reconstruction/resource_pairs_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -259,6 +267,11 @@ def main():
         if args.resource_factory:
             raw_callbacks=overlay['o2'][0x709580-0x570000:0x709580-0x570000+16];assert struct.unpack('<4I',raw_callbacks)==(0x5932f0,0x6b45c0,0x593550,0x5932f0)
             record['resource_callback_table']=raw_callbacks.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in raw_callbacks)+'};std::memcpy(memory+0x709580,data,sizeof data);}'
+        if args.resource_pairs:
+            raw_pairs=overlay['o2'][0x709ef0-0x570000:0x709ef0-0x570000+44]
+            native_pairs=re.findall(r'\{(\d+),(\d+)\}',frozen['game/native/gameplay_world/resource_special_recipe_profile.inc'].decode())
+            assert struct.pack('<22h',*(int(v)for pair in native_pairs for v in pair))==raw_pairs
+            record['special_recipe_table']={'address':'0x709ef0','bytes':raw_pairs.hex()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in raw_pairs)+'};std::memcpy(memory+0x709ef0,data,sizeof data);}'
         if args.resource_placement:
             for at,size in [(0x723340,800),(0x723660,224)]:
                 raw=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('placement_constants',{})[hex(at)]=raw.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in raw)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
@@ -315,6 +328,7 @@ def main():
         if args.resource_actions: command.insert(1,'-DREO_RESOURCE_ACTIONS=1')
         if args.resource_inventory: command.insert(1,'-DREO_RESOURCE_INVENTORY=1')
         if args.resource_content: command.insert(1,'-DREO_RESOURCE_CONTENT=1')
+        if args.resource_pairs: command.insert(1,'-DREO_RESOURCE_PAIRS=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')

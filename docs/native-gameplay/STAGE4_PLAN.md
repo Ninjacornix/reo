@@ -22,6 +22,8 @@ The current resource and inventory implementation includes:
   through the same descriptor, actor and model owners.
 - [Content replacement and model rebinding](RESOURCE_CONTENT.md), preserving
   untouched instance state and selecting work through its actual descriptor.
+- [Compatibility and quantity transfer](RESOURCE_PAIRS.md), including the
+  character-specific table and actual model/collision retirement on depletion.
 
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler
