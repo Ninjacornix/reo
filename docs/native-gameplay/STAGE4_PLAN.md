@@ -49,6 +49,10 @@ The current resource and inventory implementation includes:
   deployment consumers, including quantity/statistics ordering and real model
   retirement on depletion. Weapon depletion/cost and actual UI/transport
   consumers remain open.
+- [Weapon depletion and use cost](RESOURCE_DEPLETION.md) through actual content,
+  debris, equipped-resource cue and weapon refresh consumers. The current WMD
+  admission excludes eighteen real stock absence cases; the
+  [explicit absence/sound-queue correction](WEAPON_WMD_ABSENCE.md) is next.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

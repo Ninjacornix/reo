@@ -4,6 +4,7 @@
 #include "../gameplay_scenario/resource_templates.hpp"
 #include "../gameplay_scenario/scene_models.hpp"
 namespace reo::native::gameplay_contact_world {class RoomResources;}
+namespace reo::native::gameplay_world {class ResourceDepletion;}
 namespace reo::native::gameplay_world::animation_events {
 // Concrete actor/resource/surface frontends over the existing native bank
 // owner and canonical room region owner. All borrowed owners outlive this
@@ -33,6 +34,7 @@ class BasicAudio final : public Audio {
     std::span<const gameplay_audio::Result> last_surface_results()const noexcept{return {surface_results_.data(),surface_count_};}
 
   private:
+    friend class ::reo::native::gameplay_world::ResourceDepletion;
     World& world_;
     gameplay_audio::Owner& owner_;
     const gameplay_audio::SpatialContext& spatial_;

@@ -88,6 +88,9 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     }
 #endif
     switch(context->pc){
+#ifdef REO_RESOURCE_DEPLETION
+    case 0x1b93d0:{extern void depletion_audio_port(std::uint8_t*,R5900Context*);depletion_audio_port(memory,context);done();return;}
+#endif
 #ifdef REO_RESOURCE_DEBRIS
     case 0x57d560:{extern void debris_floor_port(std::uint8_t*,R5900Context*);debris_floor_port(memory,context);done();return;}
 #endif
@@ -243,6 +246,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_DEBRIS
 #include "tools/native_reconstruction/resource_debris_tests.inc"
 #endif
+#ifdef REO_RESOURCE_DEPLETION
+#include "tools/native_reconstruction/resource_depletion_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -386,6 +392,11 @@ int main(int argc,char** argv)try{
     compare_resource_debris_capacity(corpus,argv[2],argv[3],ram);
     std::cerr<<"end resource debris\n";
 #endif
+#ifdef REO_RESOURCE_DEPLETION
+    std::cerr<<"begin resource depletion\n";
+    compare_resource_depletion(corpus,argv[2],argv[3],argv[4],std::filesystem::path(argv[1]).parent_path()/"owned_depletion_cue.bin",ram);
+    std::cerr<<"end resource depletion\n";
+#endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
@@ -461,6 +472,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_DEBRIS
     <<",\"debris_cases\":"<<debris_cases<<",\"debris_frames\":"<<debris_frames<<",\"debris_missing\":"<<debris_missing<<",\"debris_floor_queries\":"<<debris_floor_queries<<",\"debris_refusals\":"<<debris_refusals<<",\"debris_capacity\":"<<debris_capacity<<",\"debris_child_full\":"<<debris_child_full
 #endif
+#ifdef REO_RESOURCE_DEPLETION
+    <<",\"depletion_cases\":"<<depletion_cases<<",\"depletion_live\":"<<depletion_live<<",\"depletion_refusals\":"<<depletion_refusals<<",\"depletion_audio_commands\":"<<depletion_audio_commands<<",\"depletion_signal\":"<<depletion_signal
+#endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads
 #endif
@@ -496,5 +510,8 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_COMPANION_POLICY
     <<" companion cases="<<companion_policy_cases<<" seed="<<companion_policy_seed<<" phase="<<companion_policy_phase
+#endif
+#ifdef REO_RESOURCE_DEPLETION
+    <<" depletion cases="<<depletion_cases<<" live="<<depletion_live
 #endif
     <<'\n';return 1;}

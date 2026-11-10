@@ -38,6 +38,7 @@ def main():
     p.add_argument('--resource-deployment', action='store_true')
     p.add_argument('--resource-effects', action='store_true')
     p.add_argument('--resource-debris', action='store_true')
+    p.add_argument('--resource-depletion', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -60,6 +61,7 @@ def main():
     assert not args.resource_deployment or (args.resource_health and args.resource_companions)
     assert not args.resource_effects or args.resource_deployment
     assert not args.resource_debris or args.resource_effects
+    assert not args.resource_depletion or args.resource_debris
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -149,6 +151,9 @@ def main():
         for at in [0x5b2080,0x5b2760]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_debris:
         for at in [0x5df2a0,0x5df340,0x58fbc0,0x58fd10,0x58fe50]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_depletion:
+        for at in [0x5b4ad0,0x5b2590]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+        for at in [0x1b8c70,0x1b8b20]:entries[at]=next((ROOT/'recomp/config/output').glob(f'sub_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -196,6 +201,7 @@ def main():
     if args.resource_health: units+=['game/native/gameplay_world/resource_health_effects.cpp']
     if args.resource_deployment: units+=['game/native/gameplay_world/resource_deployment.cpp']
     if args.resource_effects: units+=['game/native/gameplay_world/resource_effects.cpp']
+    if args.resource_depletion: units+=['game/native/gameplay_world/resource_depletion.cpp']
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
@@ -254,6 +260,8 @@ def main():
     if args.resource_debris:
         name='tools/native_reconstruction/resource_debris_tests.inc';frozen[name]=(ROOT/name).read_bytes()
         name='tools/native_reconstruction/resource_debris_capacity_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_depletion:
+        name='tools/native_reconstruction/resource_depletion_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -404,6 +412,13 @@ def main():
             (out/'owned_weapons.hpp').write_text('struct OwnedWeapon {int selector;std::vector<std::uint8_t> bytes;};\ninline const std::array<OwnedWeapon,16> owned_weapons{{'+','.join(values)+'}};\n')
             digest='69ae2c48e6f01e2605659feabb54eb9b82c63a809bdc8a78ad2d160b3c59a4a1'
             (out/'owned_iso.hpp').write_text('constexpr std::uint64_t owned_iso_bytes=4698767360ull;\nconstexpr reo::native::resources::win32::Digest owned_iso_sha{'+','.join(str(v)for v in bytes.fromhex(digest))+'};\n')
+        if args.resource_depletion:
+            cue=next(m for m in json.loads(inventory.read_bytes()) if 'weapon33.snd' in [n.lower()for n in m.get('names',[])])
+            with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb')as iso:
+                iso.seek(cue['iso_offset']);data=iso.read(cue['bytes']);assert hashlib.sha256(data).hexdigest()==cue['sha256']
+            descriptor=struct.unpack_from('<I',data,32)[0]+16+5*16;assert data[descriptor]==0 and data[descriptor+9]==255
+            (out/'owned_depletion_cue.bin').write_bytes(data);record['depletion_cue_asset']=cue
+            record['declared_ports'].append('1B93D0 final positioned bank request uses an independently qualified native audio owner/mixer; complete1B8C70 frontend executes; weapon33 cue bank is a controlled identity-bank assignment')
         env = dict(os.environ)
         env['PATH'] = str(args.compiler.resolve().parent) + os.pathsep + env.get('PATH', '')
         binary = out / 'checks.exe'
@@ -426,6 +441,7 @@ def main():
         if args.resource_deployment: command.insert(1,'-DREO_RESOURCE_DEPLOYMENT=1')
         if args.resource_effects: command.insert(1,'-DREO_RESOURCE_EFFECTS=1')
         if args.resource_debris: command.insert(1,'-DREO_RESOURCE_DEBRIS=1')
+        if args.resource_depletion: command.insert(1,'-DREO_RESOURCE_DEPLETION=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')

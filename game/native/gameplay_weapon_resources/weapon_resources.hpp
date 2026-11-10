@@ -4,6 +4,7 @@
 #include "../gameplay_scenario/scene_resources.hpp"
 #include "../gameplay_scenario/resource_templates.hpp"
 #include "../gameplay_bank_loading/loader.hpp"
+namespace reo::native::gameplay_world {class ResourceDepletion;}
 namespace reo::native::gameplay_weapon_resources {
 // Prepared before gameplay from the actual File1 ROM archive. Its sixteen
 // immutable banks are shared by native actors; changing equipment does no I/O.
@@ -34,6 +35,7 @@ public:
         const gameplay_scenario::ResourceTemplates&)const noexcept;
     Refreshed refresh(const gameplay_actors::EntityId&)noexcept;
 private:
+    friend class gameplay_world::ResourceDepletion;
     gameplay_world::World& world_;
     gameplay_scenario::SceneResources& resources_;
     const gameplay_scenario::ResourceTemplates& templates_;

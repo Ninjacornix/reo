@@ -45,6 +45,7 @@ private:
     friend class ResourceContents;
     friend class ResourceRecipes;
     friend class ResourceDeployment;
+    friend class ResourceDepletion;
     friend class gameplay_effects::PeriodicVisuals;
     ResourceModels& models_;
     ResourceFrames& frames_;
