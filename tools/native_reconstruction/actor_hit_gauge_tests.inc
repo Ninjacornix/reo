@@ -1,3 +1,7 @@
+#ifdef REO_ACTOR_ROOM_CONTROL
+#include "game/native/gameplay_scenario/actor_requests.hpp"
+unsigned room_control_hit_aliases{};
+#endif
 unsigned hit_gauge_cases{},hit_gauge_events{},hit_gauge_failures{};
 #ifdef REO_ACTOR_PEER_MESSAGE
 unsigned actor_peer_hit_aliases{};
@@ -42,11 +46,18 @@ void compare_actor_hit_gauge(std::uint8_t* memory){
 #ifdef REO_ACTOR_REQUEST_MESSAGE
         memory[0x4a5c30+0xab9]=std::uint8_t(n);memory[0x4a5c30+0xaba]=std::uint8_t(n>>8);memory[0x4a5c30+0xabb]=std::uint8_t(n%128);put(memory,0x4a5c30+0xabc,g::Position{1,2,3});put(memory,0x4a5c30+0xac8,n*65521u);put(memory,0x4a5c30+0xacc,4.f);memory[0x4a5c30+0xad0]=std::uint8_t(n*17);
 #endif
+#ifdef REO_ACTOR_ROOM_CONTROL
+        check(reo::native::gameplay_scenario::queue_actor_request(world,5,n)==reo::native::gameplay_scenario::ActorRequestStatus::completed&&actor->transient_equipment==1);memory[0x4a5c30+0xad4]=1;memory[0x4a5c30+0xad5]=5;put(memory,0x4a5c30+0xad6,std::uint16_t(n));
+#endif
         call(memory,0x660af0,{0x4a5c30});const auto source=snapshot(memory);
         Behavior behavior(world,*actor);actor_activity_fixture::Frame frame;g::BehaviorFrameServices bound(frame,behavior,{},&update,&update);const auto result=world.update_primary(bound);check(result.status==g::Status::completed&&result.updated==1&&behavior.after_hit==source&&behavior.calls==source_calls&&actor->control_elapsed==0&&actor->pending_hit==0);check(world.session().contact_recorded==memory[0x3b84f4]&&sink.states.empty());compare(update.cooperative_events(),memory);hit_gauge_events+=unsigned(update.cooperative_events().snapshot().size());++hit_gauge_cases;
 #ifdef REO_ACTOR_PEER_MESSAGE
         check(actor->transient_contact==0&&actor->peer_request&&actor->peer_request->state_high==memory[0x4a5c30+0xc65]&&actor->peer_request->peer==a::ActorReference{a::ActorReference::Kind::primary,0}&&get<std::uint16_t>(memory,0x4a5c30+0xc66)==0&&actor->peer_request->parameters[0]==get<std::int16_t>(memory,0x4a5c30+0xc68)&&actor->peer_request->parameters[1]==get<std::int16_t>(memory,0x4a5c30+0xc6a));++actor_peer_hit_aliases;
 #endif
+#ifdef REO_ACTOR_ROOM_CONTROL
+        check(!actor->transient_equipment&&!memory[0x4a5c30+0xad4]&&actor->control_request.kind==memory[0x4a5c30+0xad5]&&actor->control_request.parameter==get<std::uint16_t>(memory,0x4a5c30+0xad6)&&reo::native::gameplay_scenario::consume_actor_request(*actor,world.session())==reo::native::gameplay_scenario::ActorRequestStatus::idle);++room_control_hit_aliases;
+#endif
+
 #ifdef REO_ACTOR_REQUEST_MESSAGE
         check(actor->transient_action==0&&actor->scene_model.encoded()==n%128&&actor->interaction_request&&actor->interaction_request->kind==std::uint8_t(n)&&actor->interaction_request->parameter==std::uint8_t(n>>8)&&actor->interaction_request->anchor.x==1&&actor->interaction_request->orientation==n*65521u&&actor->interaction_request->travel_distance==4&&actor->interaction_request->endpoint==std::uint8_t(n*17));check(actor->scene_model.encoded()==memory[0x4a5c30+0xabb]&&actor->interaction_request->kind==memory[0x4a5c30+0xab9]&&actor->interaction_request->parameter==memory[0x4a5c30+0xaba]&&std::memcmp(&actor->interaction_request->anchor,memory+0x4a5c30+0xabc,12)==0&&actor->interaction_request->orientation==get<unsigned>(memory,0x4a5c30+0xac8)&&std::bit_cast<unsigned>(actor->interaction_request->travel_distance)==get<unsigned>(memory,0x4a5c30+0xacc)&&actor->interaction_request->endpoint==memory[0x4a5c30+0xad0]);++actor_request_hit_aliases;
 #endif

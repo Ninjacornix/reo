@@ -176,6 +176,12 @@ The current resource and inventory implementation includes:
   UpdateOwner, including queued delivery across Worlds. Pending consumption on
   rejection is preserved. The room/network-dependent branch, actual primary
   frame callers and remaining Stage4 consumers/installation remain open.
+- [Room control and shared state](ACTOR_ROOM_CONTROL.md) now join actor hold,
+  typed room-release publication and the actual outer exit-request consumer.
+  Script/control pending bytes reuse the hit owner's sameBD0/AD4 fields,
+  correcting earlier duplicate storage. Both compiler VM/hit/scheduler
+  compositions qualify these boundaries. Offline off-room reconstruction,
+  membership application/transport and remaining Stage4 installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

@@ -71,11 +71,18 @@ void actor_snapshot_room_owner_port(std::uint8_t*,R5900Context*);
 bool hit_gauge_capture{};
 bool hit_gauge_port(std::uint8_t*,R5900Context*);
 #endif
+#ifdef REO_ACTOR_ROOM_CONTROL
+bool room_control_capture{};
+void actor_room_control_port(std::uint8_t*,R5900Context*);
+#endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
 #ifdef REO_ACTOR_HIT_GAUGE
 if(hit_gauge_capture&&hit_gauge_port(memory,context)){done();return;}
 #endif
 switch(context->pc){
+#ifdef REO_ACTOR_ROOM_CONTROL
+case 0x810960:case 0x8129c0:if(room_control_capture){actor_room_control_port(memory,context);done();return;}throw std::runtime_error("Unadmitted room-control send");
+#endif
 #ifdef REO_COMPLETION_STATISTICS
 case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
 #endif
@@ -223,6 +230,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_INTERACTION_TRANSITIONS
 #include "tools/native_reconstruction/actor_interaction_transition_tests.inc"
 #endif
+#ifdef REO_ACTOR_ROOM_CONTROL
+#include "tools/native_reconstruction/actor_room_control_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_INTERACTION_TRANSITIONS
@@ -317,6 +327,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_INTERACTION_TRANSITIONS
     compare_actor_interaction_transitions(memory,argv[argc-1]);
 #endif
+#ifdef REO_ACTOR_ROOM_CONTROL
+    compare_actor_room_control(memory);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -377,6 +390,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_INTERACTION_TRANSITIONS
     <<",\"interaction_transition_cases\":"<<interaction_transition_cases<<",\"interaction_transition_refusals\":"<<interaction_transition_refusals<<",\"interaction_transition_owner_cases\":"<<interaction_transition_owner_cases
+#endif
+#ifdef REO_ACTOR_ROOM_CONTROL
+    <<",\"room_release_cases\":"<<room_release_cases<<",\"room_release_messages\":"<<room_release_messages<<",\"room_hold_cases\":"<<room_hold_cases<<",\"room_transition_cases\":"<<room_transition_cases<<",\"room_control_refusals\":"<<room_control_refusals<<",\"room_control_hit_aliases\":"<<room_control_hit_aliases<<",\"room_response_aliases\":"<<room_response_aliases
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

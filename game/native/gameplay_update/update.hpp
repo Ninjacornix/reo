@@ -50,7 +50,7 @@ struct State {
     bool limit_override{};
     bool scripts_enabled{true};
     std::int16_t session_work_gate{};
-    std::uint8_t control_armed{},control_state{},exit_requested{},short_exit_adjustment{};
+    std::uint8_t control_armed{},control_state{},short_exit_adjustment{};
     std::uint8_t notification_pending{},transition_gate{},pause_latched{};
     std::uint32_t request_flags{},control_flags{};
     // Supplied by the actual native audio/SDK tick owner. Simulation updates
@@ -87,7 +87,7 @@ public:
     gameplay_events::Events& cooperative_events()noexcept{return cooperative_;}
     gameplay_events::Statistics& completion_statistics()noexcept{return statistics_;}
     world::InteractionTransition consume_actor_interaction_request(const world::actors::EntityId& id,std::uint32_t selector)noexcept{
-        return open()?world::consume_interaction_request(world_,id,selector):world::InteractionTransition{};
+        return open()?publication_.consume_interaction_request(id,selector):world::InteractionTransition{};
     }
     scenario::ActionChoices& action_choices()noexcept{return choices_;}
     PublicationStatus record_resource_operation(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation)noexcept{

@@ -1,12 +1,13 @@
 #pragma once
+#include "room_publication.hpp"
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_world/actor_state.hpp"
+#include "../gameplay_world/interaction_transitions.hpp"
 #include "../gameplay_scenario/flags.hpp"
 #include "../gameplay_collision/room_objects.hpp"
 #include <bit>
 #include <cmath>
 namespace reo::native::gameplay_update {
-enum class MessageRoute {mode_zero,mode_one};
 // Typed initialized fields only. Original stack padding is not a native wire
 // format. The actual transport must supply its sender/framing/queue admission.
 struct ScenarioOwnerMessage {
@@ -103,7 +104,7 @@ struct ActorInventoryMessage {
     MessageRoute route{};std::uint32_t channel{};Kind kind{};std::array<std::uint8_t,4> resources{};
     static constexpr unsigned length=8,options=0,dispatch_mode=4;
 };
-class GameplayMessageSink {
+class GameplayMessageSink : public RoomClaimSink {
 public:
     virtual ~GameplayMessageSink()=default;
     virtual bool send(const ScenarioOwnerMessage&)noexcept=0;
@@ -122,14 +123,16 @@ public:
     virtual bool send(const ActorRoomObjectMessage&)noexcept{return false;}
     virtual bool send(const ActorPeerMessage&)noexcept{return false;}
     virtual bool send(const ActorSpeechMessage&)noexcept{return false;}
+    bool send(const RoomClaimReleaseMessage&)noexcept override{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
-enum class PublicationStatus {completed,unavailable,message_unavailable};
 // Complete admitted67DBD0 control/ownership path. Borrow canonical state once;
 // live networking requires an explicit actual message consumer, with no no-op.
 class StatePublication final {
 public:
     StatePublication(gameplay_world::World& world,gameplay_scenario::FlagState& flags,GameplayMessageSink* messages=nullptr,const gameplay_collision::room_objects::Owner* objects=nullptr):world_(world),flags_(flags),messages_(messages),objects_(objects){}
+    gameplay_world::InteractionTransition consume_interaction_request(const gameplay_world::actors::EntityId& id,std::uint32_t selector)noexcept{return gameplay_world::consume_interaction_request(world_,id,selector,messages_);}
+    PublicationStatus release_actor_room(std::uint32_t slot)noexcept{return publish_actor_room_release(world_,slot,messages_);}
     PublicationStatus resource_position(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation,std::optional<gameplay_world::Position> position)noexcept{
         if(world_.closed())return PublicationStatus::unavailable;
         const auto phase=world_.session().message_phase;if(phase!=1&&phase!=2)return PublicationStatus::completed;

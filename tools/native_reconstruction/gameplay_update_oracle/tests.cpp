@@ -72,7 +72,7 @@ template<class T>void put(std::uint8_t* r,std::uint32_t at,T value){oracle_write
 void read(std::uint8_t* r,u::Owner& o){
     o.world().mode=r[0x3243f2];o.world().paused=std::bit_cast<std::int8_t>(r[0x4badf8]);o.world().selected_actor=r[0x4baded];
     o.state.limit_override=r[0x4bae77]!=0;o.state.session_work_gate=get<std::int16_t>(r,0x3241f8);
-    auto& state=o.state;state.control_armed=r[0x4bae94];state.control_state=r[0x4bae97];state.exit_requested=r[0x3243d8];state.short_exit_adjustment=r[0x324477];
+    auto& state=o.state;state.control_armed=r[0x4bae94];state.control_state=r[0x4bae97];o.world().session().exit_requested=r[0x3243d8];state.short_exit_adjustment=r[0x324477];
     state.notification_pending=r[0x4badfb];state.transition_gate=r[0x4bae76];state.pause_latched=r[0x4badf9];state.request_flags=get<std::uint32_t>(r,0x324330);state.control_flags=get<std::uint32_t>(r,0x324300);
     o.world().session().session_state=get<std::int16_t>(r,0x324200);o.world().session().clock_mode=r[0x3243cc];
     if(o.clock().restore({r[0x4bae00],r[0x4bae01],r[0x4bae02],r[0x4bae03]},get<std::uint32_t>(r,0x4bade8))!=t::Status::completed)std::terminate();
@@ -80,7 +80,7 @@ void read(std::uint8_t* r,u::Owner& o){
 void write(std::uint8_t* r,u::Owner& o){
     r[0x3243f2]=o.world().mode;r[0x4badf8]=std::bit_cast<std::uint8_t>(o.world().paused);r[0x4baded]=o.world().selected_actor;
     r[0x4bae77]=o.state.limit_override?1:0;put(r,0x3241f8,o.state.session_work_gate);put(r,0x4bade8,o.clock().update_counter());
-    const auto& state=o.state;r[0x4bae94]=state.control_armed;r[0x4bae97]=state.control_state;r[0x3243d8]=state.exit_requested;r[0x324477]=state.short_exit_adjustment;
+    const auto& state=o.state;r[0x4bae94]=state.control_armed;r[0x4bae97]=state.control_state;r[0x3243d8]=o.world().session().exit_requested;r[0x324477]=state.short_exit_adjustment;
     r[0x4badfb]=state.notification_pending;r[0x4bae76]=state.transition_gate;r[0x4badf9]=state.pause_latched;put(r,0x324330,state.request_flags);put(r,0x324300,state.control_flags);
     put(r,0x324200,o.world().session().session_state);r[0x3243cc]=o.world().session().clock_mode;
     const auto time=o.clock().play_time();r[0x4bae00]=time.hours;r[0x4bae01]=time.minutes;r[0x4bae02]=time.seconds;r[0x4bae03]=time.sixtieths;
@@ -215,7 +215,7 @@ unsigned check_audio_ticks(){
     return cases;
 }
 int main()try{
-    std::vector<std::uint8_t> ram(0x2000000,0xa5),expected(ram);std::uint64_t cases{},words{},paused{},limited{},phase_cases{},phase_words{},committed{};
+    std::vector<std::uint8_t> ram(0x2000000,0xa5),expected(ram);std::uint64_t cases{},words{},paused{},limited{},phase_cases{},phase_words{},committed{},hold_phase_cases{};
     w::Profile profile;profile.layouts.resize(1);w::World native_world(profile,std::make_shared<w::Session>()),reference_world(profile,std::make_shared<w::Session>());
     Notifications native_notify,reference_notify;u::Owner native(native_world,native_notify,ordering_rules()),reference(reference_world,reference_notify,ordering_rules());original_owner=&reference;
     canonical_inactive_primaries(native);canonical_inactive_primaries(reference);
@@ -253,9 +253,14 @@ int main()try{
         native_world.mode=std::uint8_t(seed%3);native_world.paused=std::bit_cast<std::int8_t>(std::uint8_t(seed/3));native_world.selected_actor=std::uint8_t(seed%4);
         native_world.session().clock_mode=std::uint8_t((seed/7)%3);native_world.session().session_state=std::int16_t((seed/13)%3);
         native.state={};auto& state=native.state;state.control_armed=std::uint8_t(seed%3);state.control_state=std::uint8_t((seed/7)%3);
-        state.exit_requested=std::uint8_t((seed/11)%2);state.short_exit_adjustment=std::uint8_t(seed%2);state.transition_gate=std::uint8_t((seed/17)%2);
+        native_world.session().exit_requested=std::uint8_t((seed/11)%2);state.short_exit_adjustment=std::uint8_t(seed%2);state.transition_gate=std::uint8_t((seed/17)%2);
         state.pause_latched=std::uint8_t((seed/23)%2);state.request_flags=seed%3?0:0x100;state.control_flags=seed%5?0:0x4000;state.session_work_gate=std::int16_t(seed%2);
         native.clock().restore({std::uint8_t(seed%100),59,59,std::uint8_t(seed%3?59:0)},seed%2?UINT32_MAX:seed);
+        if(seed%17==0){
+            const auto actor=native_world.primary(0);actor->category=0;actor->slot=0;actor->response_lock=1;const auto before_exit=native_world.session().exit_requested;
+            if(!w::begin_interaction_hold(native_world,native_world.identity(0))||actor->response_lock||native_world.session().exit_requested!=(native_world.locally_controlled(*actor)?1:before_exit))throw std::runtime_error("Actor hold producer/scheduler binding");
+            ++hold_phase_cases;
+        }
         write(ram.data(),native);read(ram.data(),reference);reference.state=state;
         const auto dispatch=native_world.mode==0?s::DispatchProfile::offline_actor:s::DispatchProfile::ordinary;install(native,dispatch);install(reference,dispatch);
         native.flags().restore({});reference.flags().restore({});native.events().clear();reference.events().clear();native.linked().clear();reference.linked().clear();
@@ -312,6 +317,6 @@ int main()try{
     }
     check(destructor_reentry);
     const auto audio_tick_cases=check_audio_ticks();
-    std::cout<<"{\"status\":\"passed\",\"cases\":"<<cases<<",\"trace_words\":"<<words<<",\"paused_after\":"<<paused<<",\"limit_paths\":"<<limited<<",\"native_owner_checks\":"<<checks<<",\"phase_cases\":"<<phase_cases<<",\"phase_trace_words\":"<<phase_words<<",\"committed_updates\":"<<committed<<",\"audio_tick_cases\":"<<audio_tick_cases<<"}\n";
+    std::cout<<"{\"status\":\"passed\",\"cases\":"<<cases<<",\"trace_words\":"<<words<<",\"paused_after\":"<<paused<<",\"limit_paths\":"<<limited<<",\"native_owner_checks\":"<<checks<<",\"phase_cases\":"<<phase_cases<<",\"phase_trace_words\":"<<phase_words<<",\"committed_updates\":"<<committed<<",\"audio_tick_cases\":"<<audio_tick_cases<<",\"hold_phase_cases\":"<<hold_phase_cases<<"}\n";
     return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

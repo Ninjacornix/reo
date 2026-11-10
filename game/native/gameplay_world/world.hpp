@@ -25,7 +25,7 @@ struct InteractionRequest {
     std::uint32_t orientation{};float travel_distance{};std::uint8_t endpoint{};
 };
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
-struct ControlRequest {std::uint8_t pending{},kind{};std::uint16_t parameter{};};
+struct ControlRequest {std::uint8_t kind{};std::uint16_t parameter{};};
 struct ProjectileContact {gameplay_collision::Vec3 point,normal;};
 struct ActorCollision {
     gameplay_collision::Vec3 local_center,previous_center_offset,displacement;
@@ -121,7 +121,9 @@ struct Actor : actors::Entity,actors::HitActor {
     std::shared_ptr<animation::Playback> animation;
     std::shared_ptr<const animation::WeaponProgramBank> weapon_programs;
     ControlRequest control_request;
-    std::uint8_t control_pending{};
+    // BD0 is inherited response_lock, also used by script/control cleanup.
+    // AD4 pending is inherited transient_equipment; ControlRequest owns only
+    // the AD5 kind and AD6 parameter.
     input::Frame input;
 };
 struct Session : actors::HitSession {
@@ -131,6 +133,7 @@ struct Session : actors::HitSession {
     std::uint8_t inventory_owner{}; // source4BADEE: zero inactive,1..4 primary owner tags
     std::array<std::array<std::uint8_t,8>,4> auxiliary_resources{}; // first four session recovery lists4BAC52; independent of entity lifetime
     std::uint8_t control_notice{};
+    std::uint8_t exit_requested{}; //3243D8; shared actor hold producer and outer update consumer
     std::optional<std::uint16_t> scenario;
     std::optional<std::uint16_t> last_scenario_audio; // original316550, written even when a bank request is rejected
     std::uint8_t resource_hide_selected{},resource_hide_others{}; // original4B9D10/11

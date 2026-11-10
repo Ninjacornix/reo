@@ -125,7 +125,7 @@ Result Owner::advance(PhaseServices& services,world::Services& actors,scenario::
         }
         if(clock_.commit_update(world_.session().clock_mode?tasks::ClockStep::two:tasks::ClockStep::one)!=tasks::Status::completed){result.status=Status::task_failure;return result;}
         result.clock_committed=true;
-        if(state.exit_requested){
+        if(world_.session().exit_requested){
             effect(PhaseEffect::close_ui);effect(PhaseEffect::publish_statistics);state.notification_pending=1;
             effect(PhaseEffect::enter_phase,3);
             if(world_.mode!=0)clock_.adjust_update_counter(state.short_exit_adjustment?150:360);

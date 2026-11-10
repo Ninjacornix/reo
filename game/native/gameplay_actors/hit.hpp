@@ -8,7 +8,8 @@ struct HitActor : StatusActor {
     std::int32_t damage_word{};
     std::uint16_t progression_amount{};
     std::uint8_t pending_hit{},damage_kind{},response_flags{},notice_flags{};
-    std::uint8_t source_kind{},source_slot{},special_kind{},response_lock{};
+    std::uint8_t source_kind{},source_slot{},special_kind{},response_lock{}; // BD0 also script/control pending
+    // AD4 transient_equipment is also the scenario ControlRequest pending byte.
     std::uint8_t transient_contact{},transient_action{},transient_equipment{};
     std::uint8_t interaction_slot{},equipment_slot{};
 };

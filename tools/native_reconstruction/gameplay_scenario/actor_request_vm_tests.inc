@@ -5,12 +5,12 @@ namespace request_world=reo::native::gameplay_world;
 void request_export(std::uint8_t* ram,std::uint32_t at,const request_world::Actor& a){
     ram[at+8]=a.primary;ram[at+9]=a.secondary;ram[at+10]=a.phase;ram[at+11]=a.subphase;
     fixture_write(ram,at+0x38,a.position);fixture_write(ram,at+0x92,a.orientation[1]);fixture_write(ram,at+0xd94,a.saved_action_position);fixture_write(ram,at+0xda0,a.saved_action_yaw);
-    fixture_write(ram,at+0xba0,a.status);ram[at+0xad4]=a.control_request.pending;ram[at+0xad5]=a.control_request.kind;fixture_write(ram,at+0xad6,a.control_request.parameter);ram[at+0xbd0]=a.control_pending;
+    fixture_write(ram,at+0xba0,a.status);ram[at+0xad4]=a.transient_equipment;ram[at+0xad5]=a.control_request.kind;fixture_write(ram,at+0xad6,a.control_request.parameter);ram[at+0xbd0]=a.response_lock;
     fixture_write(ram,at+0xf78,a.input.pressed);fixture_write(ram,at+0xf7c,a.input.released);fixture_write(ram,at+0xf80,a.input.held);std::memcpy(ram+at+0xf84,a.input.history.data(),12);fixture_write(ram,at+0xf90,a.input.repeat);
 }
 request_world::Actor request_actor(unsigned seed,unsigned kind,unsigned pending,bool excluded){
     request_world::Actor a;a.primary=std::uint8_t(seed*17);a.secondary=std::uint8_t(seed*7);a.phase=std::uint8_t(seed*19);a.subphase=std::uint8_t(seed*11);a.position={float(seed)/4,-float(seed),float(seed)*3};a.orientation[1]=std::bit_cast<std::int16_t>(std::uint16_t(seed*999));a.saved_action_position={-1,2,-3};a.saved_action_yaw=-12345;
-    a.status=seed*0x1234567u;a.status=excluded?a.status|0x80:a.status&~0x80u;a.control_request={std::uint8_t(pending),std::uint8_t(kind),std::uint16_t(seed*555)};a.control_pending=std::uint8_t(seed*13);
+    a.status=seed*0x1234567u;a.status=excluded?a.status|0x80:a.status&~0x80u;a.transient_equipment=std::uint8_t(pending);a.control_request={std::uint8_t(kind),std::uint16_t(seed*555)};a.response_lock=std::uint8_t(seed*13);
     a.input.pressed=seed*76543u;a.input.released=~(seed*54321u);a.input.held=seed*876543u;a.input.history={seed*777u,seed*888u,seed*999u};a.input.repeat=seed*321u;a.input.repeat_timer=-123;for(unsigned i=0;i<8;++i)a.input.analog[i]=std::int16_t(seed+i*123);return a;
 }
 void request_compare(const std::vector<std::uint8_t>& ram,std::uint32_t at,const std::array<std::uint8_t,0x10e0>& before,const request_world::Actor& a){auto expected=before;request_export(expected.data(),0,a);check(std::memcmp(ram.data()+at,expected.data(),expected.size())==0);}
