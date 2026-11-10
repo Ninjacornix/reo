@@ -25,6 +25,7 @@ Owner::~Owner(){if(running_)std::terminate();(void)close();}
 Status Owner::close()noexcept{
     if(running_ || !events_.idle() || !linked_.idle())return Status::busy;
     closed_=true;(void)events_.seal();(void)linked_.seal();
+    cooperative_.close();
     (void)events_.clear();(void)linked_.clear();
     if(world_.session().timing==this)world_.session().timing=nullptr;
     return Status::completed;

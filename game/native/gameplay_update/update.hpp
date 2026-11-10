@@ -2,6 +2,7 @@
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_scenario/offline.hpp"
 #include "../gameplay_tasks/events.hpp"
+#include "../gameplay_events/events.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -74,6 +75,18 @@ public:
     tasks::EventTasks& events()noexcept{return events_;}
     tasks::FlagTimers& timers()noexcept{return timers_;}
     tasks::SimulationClock& clock()noexcept{return clock_;}
+    gameplay_events::Events& cooperative_events()noexcept{return cooperative_;}
+    bool open()const noexcept{return !closed_&&!world_.closed();}
+    // Actual cooperative event producers borrow this owner's committed update
+    // counter and canonical room, never display frames or a second clock.
+    gameplay_events::Created record_event(std::uint32_t id,std::uint32_t first,std::uint32_t second){
+        if(!open())return{gameplay_events::Status::closed,{}};
+        return cooperative_.typed(id,first,second,clock_.update_counter(),world_.room);
+    }
+    gameplay_events::Created record_simple_event(std::uint32_t id){
+        if(!open())return{gameplay_events::Status::closed,{}};
+        return cooperative_.simple(id,clock_.update_counter());
+    }
     std::uint8_t seconds()const noexcept override{return clock_.play_time().seconds;}
     std::uint8_t subseconds()const noexcept override{return clock_.play_time().sixtieths;}
     scenario::Interpreter& scripts()noexcept{return scripts_;}
@@ -86,6 +99,7 @@ private:
     tasks::EventTasks events_;
     tasks::FlagTimers timers_;
     tasks::SimulationClock clock_;
+    gameplay_events::Events cooperative_;
     scenario::FlagState flags_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;

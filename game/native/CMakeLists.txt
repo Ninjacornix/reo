@@ -4,6 +4,7 @@ project(reo_native_subsystems LANGUAGES CXX)
 # Standalone contract checks: no parent game/runtime/dependency configuration.
 enable_testing()
 add_subdirectory(gameplay_session)
+add_subdirectory(gameplay_events)
 add_subdirectory(gameplay_save)
 add_subdirectory(gameplay_actors)
 add_subdirectory(gameplay_lighting)

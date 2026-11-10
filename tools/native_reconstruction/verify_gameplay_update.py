@@ -6,6 +6,8 @@ qualified separately. This is not transitive original execution coverage.
 import argparse,hashlib,json,os,re,subprocess
 from pathlib import Path
 from audit_retail_effect_descriptors import compare_source,elf_reader
+from effect_work_sources import SURFACE_WORLD_UNITS
+from comparison_objects import compile_objects
 ROOT=Path(__file__).resolve().parents[2]
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
@@ -21,12 +23,27 @@ def main():
  groups=dict(gameplay_world=['world.hpp','world.cpp','behavior.hpp','behavior.cpp','surfaces.hpp','surfaces.cpp','motion.hpp','motion.cpp'],
   gameplay_actors=['entity.hpp','entity.cpp','health.hpp','health.cpp','status.hpp','status.cpp','hit.hpp','hit.cpp','input.hpp','input.cpp'],
   gameplay_session=['session.hpp','session.cpp'],gameplay_tasks=['tasks.hpp','tasks.cpp','events.hpp','events.cpp'],
+  gameplay_events=['events.hpp','events.cpp','event_priority_profile.inc'],
   gameplay_scenario=['interpreter.hpp','interpreter.cpp','flags.hpp','flags.cpp','offline.hpp','offline.cpp','scene_resources.hpp','scene_resources.cpp','scene_controls.hpp','scene_controls.cpp','content.hpp','content.cpp','sequence_control.hpp','sequence_control.cpp','lighting.hpp','lighting.cpp','scene_channels.hpp','opcode_bindings.inc','offline_bindings.inc','session_counters.hpp','stream_channels.hpp','stream_channels.cpp','stream_gain_curve.inc','saved_controls.hpp','action_choices.hpp'],gameplay_update=['update.hpp','update.cpp'])
  native=['game/native/'+d+'/'+n for d,names in groups.items() for n in names]
  fixture=['tools/native_reconstruction/gameplay_update_oracle/tests.cpp','tools/native_reconstruction/gameplay_actor_oracle/status_runtime.hpp','tools/native_reconstruction/verify_gameplay_update.py']
  native += ['game/native/gameplay_collision/'+n for n in ['collision.cpp','collision.hpp','response.cpp','response.hpp','actors.hpp','contact_component.hpp','hit_regions.hpp','spatial.hpp']]
+ # Current concrete VM/World closure, matching the independently compared
+ # scenario consumer. The historical hand-maintained header list was incomplete.
+ native += SURFACE_WORLD_UNITS
+ native += ['game/native/'+group+'/'+n+'.cpp'for group,names in [
+  ('gameplay_scenario',['room_rules','scene_models','room_scene_input','room_scene_owner','scene_model_bindings','scene_matrix_programs','scene_matrix_playback','scene_matrix_tables','actor_requests','room_object_commands','periodic_effects','resource_templates','fog']),
+  ('gameplay_collision',['sweep','ownership','room_objects','footprint','trace','room_geometry','object_interactions','object_lifetime']),
+  ('gameplay_lighting',['lights']),('gameplay_effects',['periodic_visuals','geometry','tracks','resource_companion']),
+  ('gameplay_world',['resource_models','model_attachments']),('animation',['model','model_math','curves']),('transform_math',['transform_math'])]for n in names]
+ native=list(dict.fromkeys(native))
  scenario_revision=subprocess.check_output(['git','rev-parse',a.scenario_ref+'^{commit}'],cwd=ROOT,text=True).strip() if a.scenario_ref else None
  def read_source(n):return subprocess.check_output(['git','show',scenario_revision+':'+n],cwd=ROOT) if scenario_revision and n.startswith('game/native/gameplay_scenario/') else (ROOT/n).read_bytes()
+ for name in native:
+  for inc in re.findall(r'^\s*#include "([^"]+)"',read_source(name).decode(),re.M):
+   local=((ROOT/name).parent/inc).resolve();target=local if local.is_file()else(ROOT/inc).resolve();assert target.is_file()and target.is_relative_to(ROOT),(name,inc);dep=target.relative_to(ROOT).as_posix()
+   if dep not in native:native.append(dep)
+ fixture+=['tools/native_reconstruction/effect_work_sources.py','tools/native_reconstruction/comparison_objects.py']
  files=sources+native+fixture;source_bytes={n:read_source(n) for n in files};before={n:hashlib.sha256(body).hexdigest() for n,body in source_bytes.items()};out.mkdir(parents=True)
  record=dict(schema=1,status='failed',compiler=str(a.compiler),compiler_sha256=sha(a.compiler),source_sha256=before,scenario_source_commit=scenario_revision,original_owned_bodies=proof,full_original_worker_and_script_order_bodies=True,declared_child_native_ports=['669F30 canonical world','68C660 Interpreter/OfflineCoordinator','68C7B0 native timers/FlagState','5B91B0 native EventTasks','573840 native Scheduler'],remaining_effect_providers=True,game_launched=False,installed_in_game=False,stage4_complete=False)
  try:
@@ -42,9 +59,9 @@ def main():
   (out/'functions.h').write_text('#pragma once\n'+declarations)
   for name in ['o2_functions.h','ps2_recompiled_functions.h']:(out/name).write_text('#pragma once\n#include "functions.h"\n')
   env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','');binary=out/'native-update.exe'
-  units=['gameplay_world/world.cpp','gameplay_world/behavior.cpp','gameplay_world/surfaces.cpp','gameplay_world/motion.cpp','gameplay_collision/response.cpp','gameplay_collision/collision.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_actors/status.cpp','gameplay_actors/hit.cpp','gameplay_session/session.cpp','gameplay_tasks/tasks.cpp','gameplay_tasks/events.cpp','gameplay_update/update.cpp']
-  units += ['gameplay_scenario/'+n+'.cpp' for n in ['interpreter','flags','offline','scene_resources','scene_controls','content','sequence_control','lighting','stream_channels']]
-  command=[str(a.compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source')]+[str(out/'source/game/native'/n) for n in units]+[str(out/'tests.cpp'),'-o',str(binary)];record['command']=command
+  flags=['-std=c++20','-O2','-msse4.1','-pthread','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source')]
+  units=[n for n in native if n.endswith('.cpp')];objects,receipts=compile_objects(ROOT,out,a.compiler,flags,units,source_bytes,env);record['production_objects']=receipts
+  command=[str(a.compiler),*flags,*objects,str(out/'tests.cpp'),'-o',str(binary)];record['command']=command
   result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=180);(out/'compile.txt').write_text(result.stdout+result.stderr,encoding='utf8');assert result.returncode==0,'compile failed; see compile.txt'
   result=subprocess.run([str(binary)],env=env,capture_output=True,text=True,timeout=90);(out/'run.txt').write_text(result.stdout+result.stderr,encoding='utf8');assert result.returncode==0,'comparison failed; see run.txt'
   record['result']=json.loads(result.stdout);assert record['result']['cases']==2048
