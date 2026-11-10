@@ -19,6 +19,7 @@ public:
     gameplay_scenario::SceneStatus refresh(gameplay_scenario::SceneResources&,const actors::EntityId&)noexcept override;
 private:
     friend class ResourceRecipes;
+    friend class ResourceOwnership;
     World& world_;
     gameplay_scenario::SceneResources& resources_;
     const gameplay_scenario::ResourceTemplates& templates_;

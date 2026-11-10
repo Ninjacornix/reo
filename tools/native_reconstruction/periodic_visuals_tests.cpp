@@ -98,6 +98,10 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at);std::memset(memory+at,std::uint8_t(GPR_U32(context,5)),n);SET_GPR_U32(context,2,at);done();return;}
 #ifdef REO_RESOURCE_FACTORY
     case 0x107ab0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);
+#ifdef REO_RESOURCE_OWNERSHIP
+        const auto descriptor_range=[](unsigned at,unsigned bytes){return at>=0x3c5630&&at<=0x3c9230-bytes;};const auto stack_range=[](unsigned at,unsigned bytes){return at>=0x1e00000&&at<=0x2000000-bytes;};
+        if((size==60&&(descriptor_range(dst,size)||stack_range(dst,size))&&(descriptor_range(src,size)||stack_range(src,size)))||(size==4&&descriptor_range(dst,size)&&descriptor_range(src,size))){std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
 #ifdef REO_WEAPON_RESOURCES
         if(size==16&&dst>=0x2b3864&&dst<=0x2b38d4){check(src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
 #endif
@@ -248,6 +252,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #endif
 #ifdef REO_RESOURCE_DEPLETION
 #include "tools/native_reconstruction/resource_depletion_tests.inc"
+#endif
+#ifdef REO_RESOURCE_OWNERSHIP
+#include "tools/native_reconstruction/resource_ownership_tests.inc"
 #endif
 int main(int argc,char** argv)try{
     check(argc==
@@ -400,6 +407,11 @@ int main(int argc,char** argv)try{
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
+#ifdef REO_RESOURCE_OWNERSHIP
+    std::cerr<<"begin resource ownership\n";
+    compare_resource_ownership(argv[2],argv[3],ram);
+    std::cerr<<"end resource ownership\n";
+#endif
 #ifdef REO_EQUIPMENT_RESOURCES
     compare_equipment_resources(argv[4],argv[2],ram);
 #endif
@@ -477,6 +489,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_USE
     <<",\"owned_use_cases\":"<<owned_use_cases<<",\"owned_use_live\":"<<owned_use_live<<",\"owned_use_retirements\":"<<owned_use_retirements<<",\"owned_use_refusals\":"<<owned_use_refusals
+#endif
+#ifdef REO_RESOURCE_OWNERSHIP
+    <<",\"ownership_claims\":"<<ownership_claims<<",\"ownership_admissions\":"<<ownership_admissions<<",\"ownership_assignments\":"<<ownership_assignments<<",\"ownership_swaps\":"<<ownership_swaps<<",\"ownership_exchanges\":"<<ownership_exchanges<<",\"ownership_capacity\":"<<ownership_capacity<<",\"ownership_refusals\":"<<ownership_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads<<",\"weapon_missing_file_reads\":"<<weapon_missing_file_reads

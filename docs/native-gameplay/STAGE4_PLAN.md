@@ -57,6 +57,11 @@ The current resource and inventory implementation includes:
   cost/depletion and primary/shared-secondary retirement owners. Saved flags,
   quantity rereads and retained actor/inventory references compare; actual actor
   callers and installation remain open.
+- [Resource claims and ownership primitives](RESOURCE_OWNERSHIP.md) use those
+  same canonical inventory, descriptor, primary/shared-secondary and factory
+  owners. Owner assignment and world/owned swaps have complete original
+  comparisons; pickup/peer/journal/statistics/transport callers, saved-placement
+  producers, extended actors and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

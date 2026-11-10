@@ -41,6 +41,9 @@ struct SceneDescriptor {
     transform_math::Vector position;
     std::uint16_t tilt{},yaw{};
     std::int8_t shape_profile{},orientation_variant{};
+    std::uint8_t claim_tag{}; // original2A; independent of the owner halfword
+    std::uint16_t saved_yaw{};
+    transform_math::Vector saved_position; // placement preserved while kind is nonzero
 };
 enum class SceneEffect { construct_primary,construct_alternate,release,retire_instance };
 enum class SceneStatus;
