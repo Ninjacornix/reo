@@ -4,6 +4,7 @@
 
 namespace reo::native::gameplay_actors {
 struct HitActor : StatusActor {
+    std::uint32_t control_elapsed{}; // original D28; reset by pending-hit cleanup666D90
     std::int32_t damage_word{};
     std::uint16_t progression_amount{};
     std::uint8_t pending_hit{},damage_kind{},response_flags{},notice_flags{};
@@ -24,13 +25,17 @@ public:
     virtual void detach_scene(HitActor&,HitSession&,std::uint8_t kind,std::uint8_t slot)=0;
     virtual void release_equipment(HitActor&,HitSession&,std::uint8_t slot)=0;
     virtual void cancel_action(HitActor&,HitSession&)=0;
-    virtual void clear_owner_interaction(HitActor&,HitSession&)=0;
     virtual void apply_progression(HitActor&,HitSession&,std::uint16_t amount)=0;
     virtual void refresh_statistics(HitActor&,HitSession&)=0;
     virtual void finish_contact_state(HitActor&,HitSession&)=0;
     virtual void clear_hit_relations(HitActor&,HitSession&)=0;
 };
+class HitProgression {
+public:
+    virtual ~HitProgression()=default;
+    virtual bool apply(HitActor&,HitSession&,std::uint16_t)=0;
+};
 // Response timer amounts are an admitted native content span. Invalid original
 // indices are explicitly refused after the preceding consume/notice effects.
-void consume_pending_hit(HitActor&,HitSession&,HitServices&,std::span<const std::int16_t> timer_amounts);
+void consume_pending_hit(HitActor&,HitSession&,HitServices&,std::span<const std::int16_t> timer_amounts,HitProgression* = nullptr);
 } // namespace reo::native::gameplay_actors

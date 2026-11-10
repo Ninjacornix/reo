@@ -65,7 +65,7 @@ struct Result {
     bool completion_checked{};
     gameplay_events::Recorded completion;
 };
-class Owner final:public world::actors::StatusTiming,public world::ActivityPublication,private scenario::FlagNotifications {
+class Owner final:public world::actors::StatusTiming,public world::ActivityPublication,public world::GaugeApplication,private scenario::FlagNotifications {
 public:
     // Borrowed native world and notification target must outlive this owner.
     Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1(),GameplayMessageSink* = nullptr);
@@ -116,6 +116,11 @@ public:
     }
     GaugeStatus record_gauge_crossing(const world::actors::EntityId&,std::uint32_t before,std::uint32_t after);
     GaugeResult adjust_actor_gauge(const world::actors::EntityId&,std::uint32_t amount,std::uint32_t mode);
+    bool apply_hit_gauge(world::World& source,world::Actor& actor,std::uint16_t amount)override{
+        if(&source!=&world_)return false;
+        const auto id=world_.identity_of(actor);if(!id)return false;
+        return adjust_actor_gauge(id,amount,0).status==GaugeStatus::completed;
+    }
     PublicationStatus clear_actor_status(const world::actors::EntityId& id,std::uint32_t selector)noexcept{
         if(!open())return PublicationStatus::unavailable;
         const auto actor=world_.resolve(id);if(!actor)return PublicationStatus::unavailable;

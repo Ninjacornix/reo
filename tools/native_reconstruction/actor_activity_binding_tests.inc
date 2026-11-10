@@ -26,7 +26,6 @@ struct Behavior:g::BehaviorServices {
     void detach_scene(a::HitActor&,a::HitSession&,std::uint8_t,std::uint8_t)override{unentered();}
     void release_equipment(a::HitActor&,a::HitSession&,std::uint8_t)override{unentered();}
     void cancel_action(a::HitActor&,a::HitSession&)override{unentered();}
-    void clear_owner_interaction(a::HitActor&,a::HitSession&)override{unentered();}
     void apply_progression(a::HitActor&,a::HitSession&,std::uint16_t)override{unentered();}
     void refresh_statistics(a::HitActor&,a::HitSession&)override{unentered();}
     void finish_contact_state(a::HitActor&,a::HitSession&)override{unentered();}

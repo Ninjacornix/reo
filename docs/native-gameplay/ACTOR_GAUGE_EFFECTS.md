@@ -47,3 +47,8 @@ Pending-hit and other real gauge callers, periodic667420 progression, gauge
 initialization/import and the remaining gameplay owners still require migration.
 Final transport, semantic native World save/load, coherent installation and
 representative game acceptance remain open. This is not a measured slowdown fix.
+
+Follow-up: [pending-hit gauge application](ACTOR_HIT_GAUGE.md) binds this actual
+mutation owner into native World/behavior and removes the old D28 cleanup
+provider. The earlier gauge qualification remains immutable; periodic progression,
+other hit effects/import and installation remain open.

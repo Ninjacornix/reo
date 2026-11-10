@@ -4,15 +4,26 @@
 #include <stdexcept>
 
 namespace reo::native::gameplay_world {
+namespace {
+class BoundHitGauge final:public actors::HitProgression {
+public:
+    BoundHitGauge(World& world,Actor& actor,GaugeApplication& gauge):world_(world),actor_(actor),gauge_(gauge){}
+    bool apply(actors::HitActor& actor,actors::HitSession& session,std::uint16_t amount)override{
+        if(&actor!=static_cast<actors::HitActor*>(&actor_)||&session!=static_cast<actors::HitSession*>(&world_.session()))return false;
+        return gauge_.apply_hit_gauge(world_,actor_,amount);
+    }
+private:World& world_;Actor& actor_;GaugeApplication& gauge_;
+};
+}
 BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
-    std::span<const std::int16_t> amounts,ActivityPublication* publication):frame_(frame),behavior_(behavior),
-    hit_timer_amounts_(amounts.begin(),amounts.end()),publication_(publication){}
+    std::span<const std::int16_t> amounts,ActivityPublication* publication,GaugeApplication* gauge):frame_(frame),behavior_(behavior),
+    hit_timer_amounts_(amounts.begin(),amounts.end()),publication_(publication),gauge_(gauge){}
 BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
-    const gameplay_collision::response::Grid& floors,std::span<const std::int16_t> amounts,ActivityPublication* publication):
-    BehaviorFrameServices(frame,behavior,amounts,publication){floors_=&floors;}
+    const gameplay_collision::response::Grid& floors,std::span<const std::int16_t> amounts,ActivityPublication* publication,GaugeApplication* gauge):
+    BehaviorFrameServices(frame,behavior,amounts,publication,gauge){floors_=&floors;}
 void BehaviorFrameServices::begin_offline_frame(World& w){frame_.begin_offline_frame(w);}
 void BehaviorFrameServices::run(Stage stage,World& w,Actor& a){
-    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_,publication_);
+    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_,publication_,gauge_);
     else frame_.run(stage,w,a);
 }
 bool BehaviorFrameServices::remote_motion(World& w,Actor& a){return frame_.remote_motion(w,a);}
@@ -21,7 +32,7 @@ void BehaviorFrameServices::switch_grid(World& w,std::int32_t next,std::int32_t 
 float BehaviorFrameServices::grid_response(World& w,std::uint8_t grid){return frame_.grid_response(w,grid);}
 void update_behavior(World& w,Actor& a,BehaviorServices& services,
                      std::span<const std::int16_t> hit_timer_amounts,
-                     const gameplay_collision::response::Grid* floors,ActivityPublication* publication){
+                     const gameplay_collision::response::Grid* floors,ActivityPublication* publication,GaugeApplication* gauge){
     auto& s=w.session();
     if(floors){sample_surface(a,*floors);resolve_surface(a,*floors);}
     else{
@@ -36,7 +47,8 @@ void update_behavior(World& w,Actor& a,BehaviorServices& services,
         services.run(BehaviorStage::prepare_inventory,w,a);
         actors::tick_status(a,s,services,s.random);
         actors::select_zero_health_action(a,s,services);
-        actors::consume_pending_hit(a,s,services,hit_timer_amounts);
+        if(gauge){BoundHitGauge bound(w,a,*gauge);actors::consume_pending_hit(a,s,services,hit_timer_amounts,&bound);}
+        else actors::consume_pending_hit(a,s,services,hit_timer_amounts);
         services.run(BehaviorStage::progression,w,a);
         services.run(BehaviorStage::interaction,w,a);
         services.run(BehaviorStage::terminal_timer,w,a);

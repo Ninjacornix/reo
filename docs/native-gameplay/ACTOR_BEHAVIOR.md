@@ -82,3 +82,7 @@ It invokes the real periodic/state publisher through the canonical actor and
 clock, preserving partial failure before secondary action dispatch. The same
 current behavior still compares against the complete original on both compilers.
 Other behavior providers and game installation remain open.
+
+The [pending-hit gauge consumer](ACTOR_HIT_GAUGE.md) subsequently binds actual
+gauge mutation through the UpdateOwner and moves D28 cleanup onto the same actor
+counter used here. Other hit effects and periodic progression remain explicit.

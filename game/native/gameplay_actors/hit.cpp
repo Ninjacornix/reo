@@ -9,7 +9,7 @@ void action(HitActor& a,HitSession& s,HitServices& services,std::uint8_t primary
     services.snapshot(a,s);
 }
 }
-void consume_pending_hit(HitActor& a,HitSession& s,HitServices& services,std::span<const std::int16_t> amounts){
+void consume_pending_hit(HitActor& a,HitSession& s,HitServices& services,std::span<const std::int16_t> amounts,HitProgression* progression){
     if(s.paused || s.suppress_hits){a.pending_hit=0;return;}
     if(!a.pending_hit)return;
     a.pending_hit=0;a.notice_flags|=1;
@@ -47,8 +47,11 @@ void consume_pending_hit(HitActor& a,HitSession& s,HitServices& services,std::sp
     }
     if(a.category==0 && a.primary==2 && a.secondary==0x0b){a.status|=0x80000000;services.cancel_action(a,s);}
     a.status&=~std::uint32_t(0x80000);
-    if(a.category==0)services.clear_owner_interaction(a,s);
-    if(a.progression_amount)services.apply_progression(a,s,a.progression_amount);
+    if(a.category==0)a.control_elapsed=0;
+    if(a.progression_amount){
+        if(progression){if(!progression->apply(a,s,a.progression_amount))throw std::runtime_error("Native hit gauge progression unavailable");}
+        else services.apply_progression(a,s,a.progression_amount);
+    }
     if(services.locally_controlled(a,s))services.refresh_statistics(a,s);
     services.finish_contact_state(a,s);
     if(services.locally_controlled(a,s) && !(a.response_flags&1))s.contact_recorded=1;

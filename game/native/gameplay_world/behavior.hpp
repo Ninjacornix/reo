@@ -26,12 +26,17 @@ public:
     virtual ~ActivityPublication()=default;
     virtual bool publish_activity(World&,Actor&)noexcept=0;
 };
+class GaugeApplication {
+public:
+    virtual ~GaugeApplication()=default;
+    virtual bool apply_hit_gauge(World&,Actor&,std::uint16_t)=0;
+};
 // Operates directly on the canonical World actor/session. Timers, status and
 // pending hits use their qualified native cores; other providers remain explicit.
 // Throws leave a partial invocation, exactly as World service failures do.
 void update_behavior(World&,Actor&,BehaviorServices&,std::span<const std::int16_t> hit_timer_amounts,
                      const gameplay_collision::response::Grid* native_floors=nullptr,
-                     ActivityPublication* publication=nullptr);
+                     ActivityPublication* publication=nullptr,GaugeApplication* gauge=nullptr);
 // Actual primary-frame consumer of update_behavior. The remaining frame ports
 // and behavior effects are borrowed synchronous owners and must outlive this
 // adapter; a supplied native floor owner must also outlive it. Timer content is
@@ -43,11 +48,11 @@ class BehaviorFrameServices final : public Services {
 public:
     BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
                           std::span<const std::int16_t> hit_timer_amounts,
-                          ActivityPublication* publication=nullptr);
+                          ActivityPublication* publication=nullptr,GaugeApplication* gauge=nullptr);
     BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
                           const gameplay_collision::response::Grid& floors,
                           std::span<const std::int16_t> hit_timer_amounts,
-                          ActivityPublication* publication=nullptr);
+                          ActivityPublication* publication=nullptr,GaugeApplication* gauge=nullptr);
     void begin_offline_frame(World&)override;
     void run(Stage,World&,Actor&)override;
     bool remote_motion(World&,Actor&)override;
@@ -60,5 +65,6 @@ private:
     std::vector<std::int16_t> hit_timer_amounts_;
     const gameplay_collision::response::Grid* floors_{};
     ActivityPublication* publication_{};
+    GaugeApplication* gauge_{};
 };
 } // namespace reo::native::gameplay_world

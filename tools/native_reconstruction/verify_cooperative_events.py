@@ -6,7 +6,7 @@ from verify_gameplay_collision import COMPILERS
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');a=p.parse_args();a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');a=p.parse_args();a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  image=ROOT/'build-function-index/owned-overlays/o0.bin';assert sha(image)=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2';raw=image.read_bytes();entries={};proof=[]
  addresses=[0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]+([0x37b990,0x37bbc0,0x37c470,0x1b02d0]if a.statistics else[])
  if a.automatic:
@@ -15,6 +15,7 @@ def main():
  if a.actor_status:addresses += [0x67e230,0x6605b0,0x1b0240]
  if a.actor_state:addresses += [0x664d00,0x664f60,0x667f90,0x668c80]
  if a.actor_gauge:addresses += [0x660060,0x667e90,0x668050,0x668110,0x1b0340]
+ if a.actor_hit_gauge:addresses += [0x660af0,0x666620,0x666d90]
  if a.statistics:
   elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read=elf_reader(elf.read_bytes())
  for at in addresses:
@@ -33,6 +34,7 @@ def main():
   if a.actor_state:files += ['tools/native_reconstruction/actor_state_message_tests.inc']
   if a.actor_activity:files += ['tools/native_reconstruction/actor_activity_binding_tests.inc']
   if a.actor_gauge:files += ['tools/native_reconstruction/actor_gauge_effects_tests.inc','game/native/gameplay_update/CMakeLists.txt']
+  if a.actor_hit_gauge:files += ['tools/native_reconstruction/actor_hit_gauge_tests.inc']
   files=list(dict.fromkeys(files))
   for name in files:
    for inc in re.findall(r'^\s*#include "([^"]+)"',(ROOT/name).read_text(),re.M):
@@ -63,6 +65,7 @@ def main():
   (out/'condition_switch.bin').write_bytes(raw[0x38cce0-0x370000:0x38cce0-0x370000+64]);r['condition_switch_sha256']=sha(out/'condition_switch.bin');r['automatic_worker_installed_in_native_owner']=True
   flags=cmd[1:cmd.index(str(out/'source'/unit))];flags += ['-DREO_AUTOMATIC_COMPLETION=1','-pthread','-fno-fast-math','-ffp-contract=off']
   if a.publication:flags += ['-DREO_SCENARIO_PUBLICATION=1']
+  if a.actor_hit_gauge:flags += ['-DREO_ACTOR_HIT_GAUGE=1'];r['actor_hit_gauge_admission']='Actual native World/behavior/pending-hit/gauge/cooperative pool; complete660AF0 with actual660060/666620/666D90 for the controlled numeric80/800000 retained-action branch; UI/statistics/final contact effects are declared ports'
   if a.actor_gauge:flags += ['-DREO_ACTOR_GAUGE_EFFECTS=1'];r['actor_gauge_admission']='Complete660060/667E90/668050/1B0340 through actual Events and bound clock; complete pure668110 runs only at source caller argument100 and its discarded return is not projected'
   if a.actor_activity:flags += ['-DREO_ACTOR_ACTIVITY_BINDING=1'];r['actor_activity_admission']='Native World/BehaviorFrameServices/update_behavior/Owner/StatePublication composition at the actual66B500 activity stage; other frame/action effects are declared providers'
   if a.actor_state:flags += ['-DREO_ACTOR_STATE_MESSAGE=1'];r['actor_state_admission']='Complete664D00/664F60/667F90/668C80 and67E230 selector2; typed position/status/yaw and selected gauge band; actual bound update clock'

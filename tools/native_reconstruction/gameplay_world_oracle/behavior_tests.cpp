@@ -74,7 +74,6 @@ struct BehaviorPorts final:gw::BehaviorServices {
     void detach_scene(g::HitActor& arg0,g::HitSession& arg1,std::uint8_t arg2,std::uint8_t arg3)override{core.detach_scene(arg0,arg1,arg2,arg3);}
     void release_equipment(g::HitActor& arg0,g::HitSession& arg1,std::uint8_t arg2)override{core.release_equipment(arg0,arg1,arg2);}
     void cancel_action(g::HitActor& arg0,g::HitSession& arg1)override{core.cancel_action(arg0,arg1);}
-    void clear_owner_interaction(g::HitActor& arg0,g::HitSession& arg1)override{core.clear_owner_interaction(arg0,arg1);}
     void apply_progression(g::HitActor& arg0,g::HitSession& arg1,std::uint16_t arg2)override{core.apply_progression(arg0,arg1,arg2);}
     void refresh_statistics(g::HitActor& arg0,g::HitSession& arg1)override{core.refresh_statistics(arg0,arg1);}
     void finish_contact_state(g::HitActor& arg0,g::HitSession& arg1)override{core.finish_contact_state(arg0,arg1);}

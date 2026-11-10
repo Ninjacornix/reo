@@ -79,7 +79,7 @@ struct Actor : actors::Entity,actors::HitActor {
     float motion_multiplier{1};
     Position previous_position{};
     std::array<std::int16_t,4> orientation{},previous_orientation{};
-    std::uint32_t action_elapsed{},control_elapsed{};
+    std::uint32_t action_elapsed{};
     Position saved_action_position{};
     std::int16_t saved_action_yaw{};
     float sampled_surface_height{};

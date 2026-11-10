@@ -12,7 +12,7 @@ template<class T>T get(const std::uint8_t* r,std::uint32_t at){return oracle_rea
 template<class T>void put(std::uint8_t* r,std::uint32_t at,T v){oracle_write(r,at,v);}
 g::HitActor read(const std::uint8_t* r){
     g::HitActor a;a.current=get<std::int16_t>(r,base+0x544);a.maximum=get<std::int16_t>(r,base+0x546);
-    a.status=get<std::uint32_t>(r,base+0xba0);a.auxiliary_status=get<std::uint32_t>(r,base+0xba4);
+    a.control_elapsed=get<std::uint32_t>(r,base+0xd28);a.status=get<std::uint32_t>(r,base+0xba0);a.auxiliary_status=get<std::uint32_t>(r,base+0xba4);
     a.room=get<std::uint16_t>(r,base+0x1e2);a.category=r[base+2];a.slot=r[base+3];a.class_marker=r[base+0xb9b];
     a.primary=r[base+8];a.secondary=r[base+9];a.phase=r[base+10];a.subphase=r[base+11];
     a.motion_class=r[base+0x54f];a.response_class=r[base+0x140];
@@ -25,7 +25,7 @@ g::HitActor read(const std::uint8_t* r){
     a.interaction_slot=r[base+0xc7a];a.equipment_slot=r[base+0xc7f];return a;
 }
 void write(std::uint8_t* r,const g::HitActor& a){
-    put(r,base+0x544,a.current);put(r,base+0x546,a.maximum);put(r,base+0xba0,a.status);put(r,base+0xba4,a.auxiliary_status);
+    put(r,base+0xd28,a.control_elapsed);put(r,base+0x544,a.current);put(r,base+0x546,a.maximum);put(r,base+0xba0,a.status);put(r,base+0xba4,a.auxiliary_status);
     put(r,base+0x1e2,a.room);r[base+2]=a.category;r[base+3]=a.slot;r[base+0xb9b]=a.class_marker;
     r[base+8]=a.primary;r[base+9]=a.secondary;r[base+10]=a.phase;r[base+11]=a.subphase;
     r[base+0x54f]=a.motion_class;r[base+0x140]=a.response_class;
@@ -51,7 +51,6 @@ struct Ports final:g::HitServices {
     std::array<std::uint32_t,8> partner_status{};
     std::array<std::uint8_t,8> characters{};
     std::array<std::uint16_t,16> owners{};
-    std::uint32_t owner_interaction{0x6789abcd};
     std::array<std::uint8_t,24> relations{};
     void log(std::uint32_t call,const g::StatusActor& a,std::uint32_t arg=0,std::uint32_t other=0){
         trace.insert(trace.end(),{call,arg,other,a.status,std::uint32_t(a.current),a.primary,a.secondary,a.phase,a.subphase});
@@ -82,7 +81,6 @@ struct Ports final:g::HitServices {
     void detach_scene(g::HitActor& a,g::HitSession&,std::uint8_t kind,std::uint8_t slot)override{log(0x67ff80,a,kind,slot);if(seed&16)a.equipment_slot=std::uint8_t((a.equipment_slot+1)%16);}
     void release_equipment(g::HitActor& a,g::HitSession&,std::uint8_t slot)override{log(0x5f5c50,a,0,slot);if(seed&32)a.progression_amount=7;}
     void cancel_action(g::HitActor& a,g::HitSession&)override{log(0x65e710,a);if(seed&64)a.motion_class=0x28;}
-    void clear_owner_interaction(g::HitActor&,g::HitSession&)override{owner_interaction=0;}
     void apply_progression(g::HitActor& a,g::HitSession&,std::uint16_t amount)override{log(0x660060,a,amount);if(seed&128)a.status|=0x800000;}
     void refresh_statistics(g::HitActor& a,g::HitSession&)override{log(0x6df160,a);}
     void finish_contact_state(g::HitActor& a,g::HitSession&)override{log(0x6689e0,a);if(seed&256)a.response_flags^=1;}

@@ -84,8 +84,10 @@ The current resource and inventory implementation includes:
   installation remain open.
 - [Gauge adjustment and threshold events](ACTOR_GAUGE_EFFECTS.md) now supply
   complete660060/667E90/668050 through the actual canonical actor and cooperative
-  event pool. The BBA modifier reuses the existing model-variant view. Real hit
-  and periodic progression callers, initialization/import and installation
+  event pool. The BBA modifier reuses the existing model-variant view. The
+  [pending-hit consumer](ACTOR_HIT_GAUGE.md) now binds that owner through actual
+  World/frame/behavior and resets the canonical D28 control counter directly.
+  Other hit effects, periodic progression, initialization/import and installation
   remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and

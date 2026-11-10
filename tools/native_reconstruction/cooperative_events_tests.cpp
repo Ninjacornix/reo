@@ -32,7 +32,15 @@ bool actor_state_capture{};
 void actor_state_message_port(std::uint8_t*,R5900Context*);
 void actor_state_room_owner_port(std::uint8_t*,R5900Context*);
 #endif
-void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};switch(context->pc){
+#ifdef REO_ACTOR_HIT_GAUGE
+bool hit_gauge_capture{};
+bool hit_gauge_port(std::uint8_t*,R5900Context*);
+#endif
+void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_ACTOR_HIT_GAUGE
+if(hit_gauge_capture&&hit_gauge_port(memory,context)){done();return;}
+#endif
+switch(context->pc){
 #ifdef REO_COMPLETION_STATISTICS
 case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
 #endif
@@ -105,6 +113,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_ACTOR_GAUGE_EFFECTS
 #include "tools/native_reconstruction/actor_gauge_effects_tests.inc"
 #endif
+#ifdef REO_ACTOR_HIT_GAUGE
+#include "tools/native_reconstruction/actor_hit_gauge_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_COMPLETION_STATISTICS
@@ -160,6 +171,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_GAUGE_EFFECTS
     compare_actor_gauge_effects(memory,argv[4]);
 #endif
+#ifdef REO_ACTOR_HIT_GAUGE
+    compare_actor_hit_gauge(memory);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -187,6 +201,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_GAUGE_EFFECTS
     <<",\"gauge_adjustment_cases\":"<<gauge_adjustment_cases<<",\"gauge_crossing_cases\":"<<gauge_crossing_cases<<",\"gauge_effect_events\":"<<gauge_effect_events<<",\"gauge_effect_refusals\":"<<gauge_effect_refusals<<",\"gauge_capacity_cases\":"<<gauge_capacity_cases
+#endif
+#ifdef REO_ACTOR_HIT_GAUGE
+    <<",\"hit_gauge_cases\":"<<hit_gauge_cases<<",\"hit_gauge_events\":"<<hit_gauge_events<<",\"hit_gauge_failures\":"<<hit_gauge_failures
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
