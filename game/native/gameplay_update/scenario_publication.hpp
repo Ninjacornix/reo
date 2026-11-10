@@ -2,6 +2,8 @@
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_world/actor_state.hpp"
 #include "../gameplay_scenario/flags.hpp"
+#include <bit>
+#include <cmath>
 namespace reo::native::gameplay_update {
 enum class MessageRoute {mode_zero,mode_one};
 // Typed initialized fields only. Original stack padding is not a native wire
@@ -28,7 +30,7 @@ struct ActorActionMessage {
     std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
     static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
 };
-enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,alignment=6,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,contact_snapshot=5,alignment=6,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
 struct ActorSnapshotMessage {
     MessageRoute route{};std::uint32_t channel{};
     std::array<std::uint8_t,4> action{};gameplay_world::Position position;
@@ -44,6 +46,18 @@ struct ActorStateMessage {
     MessageRoute route{};std::uint32_t channel{};gameplay_world::Position position;
     std::uint32_t status{};std::int16_t yaw{};std::uint8_t gauge_band{};
     static constexpr unsigned type=2,length=24,options=0,dispatch_mode=2;
+};
+struct ActorContactSnapshotMessage {
+    MessageRoute route{};std::uint32_t channel{};
+    std::array<std::uint8_t,4> action{};std::array<std::int16_t,3> position{};
+    std::int16_t yaw{},health{};std::uint8_t room{};std::uint32_t status{};
+    std::uint8_t source_kind{},source_slot{};
+    gameplay_collision::delivery::Identity source_related;
+    std::uint8_t response_class{},region{},auxiliary_a{},response_code{},response_flags{},gauge_band{};
+    gameplay_collision::Vec3 direction;
+    gameplay_world::actors::EntityId recorded_source;
+    std::optional<std::uint8_t> model_variant;
+    static constexpr unsigned type=5,length=52,options=0,dispatch_mode=4;
 };
 struct ActorInteractionMessage {
     MessageRoute route{};std::uint32_t channel{};std::array<std::uint8_t,4> values{};
@@ -75,6 +89,7 @@ public:
     virtual bool send(const ActorInventoryMessage&)noexcept{return false;}
     virtual bool send(const ActorStateMessage&)noexcept{return false;}
     virtual bool send(const ActorSnapshotMessage&)noexcept{return false;}
+    virtual bool send(const ActorContactSnapshotMessage&)noexcept{return false;}
     virtual bool send(const ActorAlignmentMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
@@ -131,6 +146,24 @@ public:
             ActorStateMessage message;message.position=actor->position;message.status=actor->status;message.yaw=actor->orientation[1];
             const auto band=gameplay_world::selected_gauge_band(world_);if(!band)return PublicationStatus::unavailable;
             message.gauge_band=*band;return dispatch_actor(*actor,message);
+        }
+        case ActorMessageSelector::contact_snapshot:{
+            ActorContactSnapshotMessage message;message.action={actor->primary,actor->secondary,actor->phase,actor->subphase};
+            const std::array<float,3> position{actor->position.x,actor->position.y,actor->position.z};
+            for(unsigned i=0;i<3;++i){
+                const float value=position[i];
+                if(!std::isfinite(value)||value< -2147483648.f||!(value<2147483648.f))return PublicationStatus::unavailable;
+                message.position[i]=std::bit_cast<std::int16_t>(std::uint16_t(std::int32_t(value)));
+            }
+            message.yaw=actor->orientation[1];message.health=actor->current;message.room=std::uint8_t(actor->room);message.status=actor->status;
+            message.source_kind=actor->source_kind;message.source_slot=actor->source_slot;message.source_related=actor->contact.source_related;
+            message.response_class=actor->response_class;message.region=actor->contact.region;message.auxiliary_a=actor->contact.auxiliary_a;
+            message.response_code=actor->contact.response_code;message.response_flags=actor->response_flags;
+            const auto band=gameplay_world::selected_gauge_band(world_);if(!band)return PublicationStatus::unavailable;
+            message.gauge_band=*band;message.direction=actor->contact.direction;message.recorded_source=actor->contact.recorded_source;
+            if(actor->category==1)message.model_variant=std::uint8_t(actor->model_variant);
+            world_.session().actor_message_suppression=5;
+            return dispatch_actor(*actor,message);
         }
         case ActorMessageSelector::status:{ActorStatusMessage message;message.status=actor->status;message.health=actor->current;return dispatch_actor(*actor,message);}
         case ActorMessageSelector::alignment:{

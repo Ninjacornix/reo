@@ -133,6 +133,11 @@ The current resource and inventory implementation includes:
   quadrant/turn and separate sine/cosine chain on both compilers. The actual
   UpdateOwner prepares and publishes the result. Other target producers,
   alignment motion, remaining messages, transport and installation remain open.
+- [Contact snapshots](ACTOR_CONTACT_SNAPSHOTS.md) now supply selector5 through
+  the canonical hit/collision state, finite position conversion and shared
+  suppression. Native entity identities replace the embedded guest pointer.
+  Both compiler comparisons cover mapped callback mutation and recursive sends;
+  messages3/8/9/11, actual consumers/transport and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;
