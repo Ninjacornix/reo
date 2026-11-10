@@ -60,8 +60,10 @@ The shared lighting owner already supports ordinary scenario020 and the related
 all166 owned LIG sections were qualified in the earlier lighting checkpoint;
 the160-bank020 frontier was a superseded probe, not the current state. Temporary
 lights must reuse that canonical owner. [Generation-safe access](LIGHTING_CAPABILITIES.md)
-now does so without changing room bindings' physical-slot reuse. The timed task,
-actual actor bindings and rendering consumers remain required for1D admission.
+now does so without changing room bindings' physical-slot reuse. The
+[timed task](TIMED_LIGHTS.md) also compares through actual native owners.
+Actual actor constructor tags, companion callers and rendering consumers remain
+required for1D admission.
 
 The comparison corrected the new policy's unknown-subtype path: it hides the
 visual and enters retirement. The first fixture used unrelated synthetic RNG

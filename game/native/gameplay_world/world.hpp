@@ -42,6 +42,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint8_t ai_control{},normalized_marker{};
     std::uint8_t character{};
     std::uint8_t appearance_variant{}; // original BBC; separate from character B98 and model_variant BB4
+    std::optional<std::uint8_t> lighting_tag; // original175; constructor binding required, unknown is not zero
     std::uint8_t motion_subtype{},motion_style{},previous_motion_class{};
     std::uint8_t selected_resource{},secondary_resource{},model_pose_class{};
     std::uint8_t secondary_equipped_resource{}; // C7D; secondary_resource is a distinct audio/model selector

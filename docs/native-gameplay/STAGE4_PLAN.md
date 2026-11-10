@@ -37,7 +37,9 @@ qualified654720 state policy. Actual shared visual/child consumers, resource
 audio and timed lighting remain open, so the six factory routes still refuse.
 Ordinary room-lighting script commands and all166 LIG inputs already have a
 native owner. [Temporary-light access](LIGHTING_CAPABILITIES.md) now reuses that
-same owner; timed tasks, actor bindings and rendering consumers remain open.
+same owner. The [timed resource light](TIMED_LIGHTS.md) now uses that owner and
+the actual scheduler; actor constructor tags, companion callers and rendering
+consumers remain open.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners
