@@ -4,6 +4,7 @@
 #include "../gameplay_tasks/events.hpp"
 #include "../gameplay_events/events.hpp"
 #include "../gameplay_events/statistics.hpp"
+#include "completion_conditions.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -21,7 +22,7 @@ enum class Worker {
     scene_pose_tasks,render_work_banks,large_callbacks,gameplay_ui,
     room_sound_callbacks,sequences,room_occupancy,contact_candidates,
     contact_packets,room_entity_ownership,actor_action_publication,
-    transition_control,scenario_events
+    transition_control
 };
 class Owner;
 class Services {
@@ -51,18 +52,20 @@ struct State {
     // and presentation counts are not substitutes; an absent tick stays absent.
     std::optional<std::uint32_t> audio_tick;
 };
-enum class Status {completed,busy,closed,actor_failure,script_failure,task_failure,flag_failure};
+enum class Status {completed,busy,closed,actor_failure,script_failure,task_failure,flag_failure,statistics_failure};
 struct Result {
     Status status{Status::completed};
     std::size_t worker_calls{},script_operations{};
     world::Result actors;
     tasks::PassResult linked,events;
     bool clock_committed{};
+    bool completion_checked{};
+    gameplay_events::Recorded completion;
 };
 class Owner final:public world::actors::StatusTiming {
 public:
     // Borrowed native world and notification target must outlive this owner.
-    Owner(world::World&,scenario::FlagNotifications&);
+    Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1());
     ~Owner();
     Owner(const Owner&)=delete;
     Owner& operator=(const Owner&)=delete;
@@ -78,6 +81,11 @@ public:
     tasks::SimulationClock& clock()noexcept{return clock_;}
     gameplay_events::Events& cooperative_events()noexcept{return cooperative_;}
     gameplay_events::Statistics& completion_statistics()noexcept{return statistics_;}
+    scenario::ActionChoices& action_choices()noexcept{return choices_;}
+    gameplay_events::Recorded check_scenario_events(){
+        if(!open()||!world_.session().scenario)return{gameplay_events::StatisticsStatus::unavailable};
+        return statistics_.automatic(*world_.session().scenario,CompletionConditions(world_,flags_,choices_),cooperative_,clock_.update_counter());
+    }
     gameplay_events::StatisticsStatus initialize_completion_statistics(){
         if(!open()||!world_.session().scenario)return gameplay_events::StatisticsStatus::unavailable;
         return statistics_.initialize(*world_.session().scenario,cooperative_);
@@ -112,6 +120,7 @@ private:
     gameplay_events::Events cooperative_;
     gameplay_events::Statistics statistics_;
     scenario::FlagState flags_;
+    scenario::ActionChoices choices_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;
     bool running_{},closed_{};

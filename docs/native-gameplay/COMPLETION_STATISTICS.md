@@ -45,7 +45,10 @@ checks its completion score and generic event and verifies duplicate suppression
 Both parent builds, eight integration tests and current worker/phase comparisons
 pass. Exact identities are sealed in `native_completion_statistics_qualification_v1.json`.
 
-Automatic condition evaluation and its worker binding, other original statistics
-counters/writers, item-consumption callers and durable save/export remain open.
+The subsequent [automatic completion implementation](AUTOMATIC_COMPLETION.md)
+supplies condition evaluation and the actual worker binding. Other original
+statistics counters/writers, ownership-tag publication and durable save/export
+remain open. [Direct consumption](RESOURCE_CONSUMPTION.md) now uses explicit
+events; message wrappers and health/status effects remain open.
 No game or audio device was launched. Installed V39 is unchanged; coherent native
 gameplay installation/acceptance and the rest of Stage4 remain incomplete.

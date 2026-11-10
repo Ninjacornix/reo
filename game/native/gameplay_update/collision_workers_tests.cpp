@@ -93,6 +93,7 @@ struct SecondaryWalls:g::SecondaryCollisionWalls {
     }
 };
 void install(u::Owner& owner){
+    owner.world().session().scenario=0;check(owner.initialize_completion_statistics()==reo::native::gameplay_events::StatisticsStatus::completed);
     const auto program=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{
         {std::byte{1},std::byte{},std::byte{},std::byte{},std::byte{0xa},std::byte{},std::byte{},std::byte{}}});
     for(std::size_t i=0;i<6;++i)check(owner.scripts().install(i,program)==s::Status::completed);

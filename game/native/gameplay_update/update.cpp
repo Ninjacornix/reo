@@ -17,7 +17,7 @@ struct FlagExpiry final:tasks::FlagSink {
 };
 bool script_ok(scenario::Status s){return s==scenario::Status::completed || s==scenario::Status::yielded || s==scenario::Status::disabled;}
 }
-Owner::Owner(world::World& world,scenario::FlagNotifications& notifications):world_(world),flags_(&notifications){
+Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std::shared_ptr<const gameplay_events::RuleBook> rules):world_(world),statistics_(std::move(rules)),flags_(&notifications){
     if(world_.session().timing)throw std::invalid_argument("Native world already has a timing owner");
     world_.session().timing=this;
 }
@@ -32,6 +32,8 @@ Status Owner::close()noexcept{
 }
 Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::size_t budget,Result& result)noexcept{
     providers.flags=&flags_;providers.canonical_flags=&flags_;providers.timers=&timers_;
+    if(providers.action_choices&&providers.action_choices!=&choices_)return Status::script_failure;
+    providers.action_choices=&choices_;
     if(world_.mode==0){
         std::array<scenario::OfflinePartyActor,3> party;
         for(std::size_t i=0;i<party.size();++i){const auto actor=world_.primary(i);if(actor)party[i]={actor->active,actor->slot,actor->room};}
@@ -67,9 +69,10 @@ Result Owner::workers(Services& services,world::Services& actors,scenario::Provi
                        std::size_t script_budget,std::size_t task_budget){
     Result result;
     const auto work=[&](Worker stage){services.run(stage,*this);++result.worker_calls;};
+    const auto completion=[&](){result.completion_checked=true;result.completion=check_scenario_events();if(result.completion.status!=gameplay_events::StatisticsStatus::completed)result.status=Status::statistics_failure;};
     work(Worker::reset_entity_queues);work(Worker::armed_request);
     result.status=script_service(services,providers,script_budget,result);if(result.status!=Status::completed)return result;
-    if(world_.paused){work(Worker::scenario_events);return result;}
+    if(world_.paused){completion();return result;}
     work(Worker::target_caches);
     result.actors=world_.update_primary(actors);
     if(result.actors.status!=world::Status::completed){result.status=Status::actor_failure;return result;}
@@ -88,7 +91,7 @@ Result Owner::workers(Services& services,world::Services& actors,scenario::Provi
     if(state.session_work_gate==0){
         for(const auto stage:{Worker::room_occupancy,Worker::contact_candidates,Worker::contact_packets,
                              Worker::room_entity_ownership,Worker::actor_action_publication,Worker::transition_control})work(stage);
-        work(Worker::scenario_events);
+        completion();
     }
     return result;
 }

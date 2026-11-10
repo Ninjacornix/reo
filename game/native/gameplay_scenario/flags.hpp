@@ -11,6 +11,9 @@ struct FlagStateSnapshot {
     std::array<FlagWords,3> primary{},auxiliary{};
     std::array<std::uint8_t,16> bounded_bytes{};
     std::uint16_t bounded_halfword{};
+    // Native admission profile for the scenario ownership-tag consumers at
+    // original4BAA50. This is not a claim of bounds in the original code.
+    std::array<std::uint8_t,512> scenario_owners{};
     // Explicit native room/index admission profile, not an original bounds claim.
     std::array<std::array<std::uint16_t,6>,256> strided{};
 };

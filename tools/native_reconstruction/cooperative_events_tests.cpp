@@ -27,10 +27,16 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_COMPLETION_STATISTICS
 #include "tools/native_reconstruction/completion_statistics_tests.inc"
 #endif
+#ifdef REO_AUTOMATIC_COMPLETION
+#include "tools/native_reconstruction/automatic_completion_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_COMPLETION_STATISTICS
     3
+#ifdef REO_AUTOMATIC_COMPLETION
+    +1
+#endif
 #else
     2
 #endif
@@ -52,9 +58,15 @@ int main(int argc,char** argv)try{
 #ifdef REO_COMPLETION_STATISTICS
     compare_completion_statistics(memory,argv[2]);
 #endif
+#ifdef REO_AUTOMATIC_COMPLETION
+    compare_automatic_completion(memory,argv[2],argv[3]);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
+#endif
+#ifdef REO_AUTOMATIC_COMPLETION
+    <<",\"condition_cases\":"<<condition_cases<<",\"automatic_cases\":"<<automatic_cases<<",\"automatic_refusals\":"<<automatic_refusals
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

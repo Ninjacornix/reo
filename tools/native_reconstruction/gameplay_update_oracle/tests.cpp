@@ -18,7 +18,16 @@ struct Notifications final:s::FlagNotifications {
 constexpr std::uint32_t addresses[]{0x6816f0,0x371a90,0x6671d0,0x5d7ed0,0x581ee0,0x6d6240,0x682fd0,0x6bbba0,
     0x6ef150,0x5da680,0x3769f0,0x376ae0,0x376b80,0x66a3a0,0x6832f0,0x5dc430,0x5dc4b0,0x5dc500,
     0x5be9a0,0x5d8160,0x590ea0,0x5821f0,0x651ed0,0x573d30,0x6deea0,0x1b98e0,0x6b7e40,0x6ae9f0,
-    0x633780,0x5da720,0x6814e0,0x681a40,0x6041b0,0x37baf0};
+    0x633780,0x5da720,0x6814e0,0x681a40,0x6041b0};
+// The automatic completion algorithm has its own complete-original comparison.
+// This ordering fixture uses an explicit always-true metadata profile so it can test
+// task mutation to selectors outside the primary actor admission profile.
+auto ordering_rules(){reo::native::gameplay_events::RuleGroup group;group.automatic={{0,0,0,0,0,1}};return reo::native::gameplay_events::RuleBook::create({group},{0});}
+void compare_completion(u::Owner& native,u::Owner& reference,const u::Result& result){
+    const auto actual=native.cooperative_events().snapshot(),expected=reference.cooperative_events().snapshot();
+    if(actual.size()!=expected.size()||result.completion_checked!=!expected.empty()||native.completion_statistics().state().points!=reference.completion_statistics().state().points)throw std::runtime_error("Automatic completion source ordering/gate");
+    for(unsigned i=0;i<actual.size();++i)if(actual[i].value!=expected[i].value)throw std::runtime_error("Automatic completion actual clock/event order");
+}
 struct Workers final:u::Services {
     std::uint32_t seed{};
     std::function<void(u::Owner&)> on_reset;
@@ -134,6 +143,7 @@ void original_port(std::uint8_t* r,R5900Context* ctx,PS2Runtime* runtime){
         original_workers->run(u::Worker(i),o);found=true;break;
     }
     if(!found)switch(ctx->pc){
+    case 0x37baf0:if(o.check_scenario_events().status!=reo::native::gameplay_events::StatisticsStatus::completed)throw std::runtime_error("Qualified automatic completion port");break;
     case 0x68c7b0:{Expiry sink(o);if(o.timers().tick(sink)!=t::Status::completed)throw std::runtime_error("Timer port");break;}
     case 0x68c660:{
         const auto channel=GPR_U32(ctx,4);s::Providers p;p.flags=&o.flags();p.canonical_flags=&o.flags();p.timers=&o.timers();
@@ -153,6 +163,7 @@ void original_port(std::uint8_t* r,R5900Context* ctx,PS2Runtime* runtime){
 #include "original_update.cpp"
 #pragma GCC diagnostic pop
 void install(u::Owner& o,s::DispatchProfile profile){
+    o.world().session().scenario=0;if(o.initialize_completion_statistics()!=reo::native::gameplay_events::StatisticsStatus::completed)throw std::runtime_error("Fixture completion initialization");
     const auto program=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{{std::byte{0xa},std::byte{},std::byte{},std::byte{}}},profile);
     for(std::size_t i=0;i<6;++i){s::Channel channel{program,{0,0},{0,0},0,0,0};if(o.scripts().restore_channel(i,channel)!=s::Status::completed)throw std::runtime_error("Fixture script admission");}
 }
@@ -176,7 +187,7 @@ unsigned check_audio_ticks(){
     for(const bool offline:{false,true})for(const bool actor_channel:{false,true})
         for(const auto tick:{0u,17u,0xffffffffu}){
             w::Profile profile;profile.layouts.resize(1);w::World world(profile,std::make_shared<w::Session>());
-            world.mode=offline?0:1;world.paused=1;Notifications notify;u::Owner owner(world,notify);
+            world.mode=offline?0:1;world.paused=1;Notifications notify;u::Owner owner(world,notify,ordering_rules());world.session().scenario=0;if(owner.initialize_completion_statistics()!=reo::native::gameplay_events::StatisticsStatus::completed)throw std::runtime_error("Audio fixture completion initialization");
             const auto dispatch=offline?s::DispatchProfile::offline_actor:s::DispatchProfile::ordinary;install(owner,dispatch);
             if(offline && actor_channel){auto actor=std::make_unique<w::Actor>();actor->active=true;
                 if(world.spawn_primary(0,std::move(actor)).status!=w::actors::EntityStatus::completed)throw std::runtime_error("Audio caller actor admission");}
@@ -203,7 +214,7 @@ unsigned check_audio_ticks(){
 int main()try{
     std::vector<std::uint8_t> ram(0x2000000,0xa5),expected(ram);std::uint64_t cases{},words{},paused{},limited{},phase_cases{},phase_words{},committed{};
     w::Profile profile;profile.layouts.resize(1);w::World native_world(profile,std::make_shared<w::Session>()),reference_world(profile,std::make_shared<w::Session>());
-    Notifications native_notify,reference_notify;u::Owner native(native_world,native_notify),reference(reference_world,reference_notify);original_owner=&reference;
+    Notifications native_notify,reference_notify;u::Owner native(native_world,native_notify,ordering_rules()),reference(reference_world,reference_notify,ordering_rules());original_owner=&reference;
     for(std::uint32_t seed=0;seed<2048;++seed){
         native_world.mode=std::uint8_t(seed%3);native_world.paused=std::bit_cast<std::int8_t>(std::uint8_t(seed));native_world.selected_actor=std::uint8_t(seed%4);
         native.state.limit_override=seed%5==0;native.state.session_work_gate=std::int16_t(seed%2);
@@ -220,6 +231,7 @@ int main()try{
         trace=&reference_trace;R5900Context ctx;ctx.pc=0x5fed00;SET_GPR_U32(&ctx,29,0x1ff0000);SET_GPR_U32(&ctx,31,0x123456);PS2Runtime runtime;runtime.port=original_port;
         o2_005FED00_0x5fed00(ram.data(),&ctx,&runtime);
         trace=&native_trace;const auto result=native.run_workers(n,actors);write(expected.data(),native);
+        compare_completion(native,reference,result);
         if(ctx.pc!=0x123456||result.status!=u::Status::completed||native_trace!=reference_trace){
             std::cerr<<"native status "<<unsigned(result.status)<<" sizes "<<native_trace.size()<<" "<<reference_trace.size()<<" pc "<<std::hex<<ctx.pc<<std::dec<<"\n";
             for(std::size_t i=0;i<std::max(native_trace.size(),reference_trace.size());++i)if(i>=native_trace.size()||i>=reference_trace.size()||native_trace[i]!=reference_trace[i]){
@@ -248,6 +260,7 @@ int main()try{
         trace=&reference_trace;R5900Context ctx;ctx.pc=0x5fea30;SET_GPR_U32(&ctx,29,0x1ff0000);SET_GPR_U32(&ctx,31,0x123456);PS2Runtime runtime;runtime.port=original_port;
         o2_005FEA30_0x5fea30(ram.data(),&ctx,&runtime);
         trace=&native_trace;const auto result=native.advance(n,actors);write(expected.data(),native);
+        compare_completion(native,reference,result);
         if(ctx.pc!=0x123456 || result.status!=u::Status::completed || native_trace!=reference_trace){
             std::cerr<<"Phase mismatch seed "<<seed<<" sizes "<<native_trace.size()<<" "<<reference_trace.size()<<" status "<<unsigned(result.status)<<"\n";
             for(std::size_t i=0;i<std::min(native_trace.size(),reference_trace.size());++i)if(native_trace[i]!=reference_trace[i]){std::cerr<<"first "<<i<<" native "<<native_trace[i]<<" original "<<reference_trace[i]<<"\n";break;}
@@ -260,7 +273,7 @@ int main()try{
     original_phase=nullptr;
     std::vector<std::uint32_t> lifecycle_trace;trace=&lifecycle_trace;Workers work;work.seed=23;
     w::World lifecycle_world(profile,std::make_shared<w::Session>());lifecycle_world.mode=1;Notifications notifications;
-    u::Owner lifecycle(lifecycle_world,notifications);std::uint32_t checks{};
+    u::Owner lifecycle(lifecycle_world,notifications,ordering_rules());std::uint32_t checks{};
     const auto check=[&](bool okay){++checks;if(!okay)throw std::runtime_error("Native update owner lifetime/admission check "+std::to_string(checks));};
     check(lifecycle.clock().restore({0,0,8,0},0)==t::Status::completed);
     check(lifecycle_world.session().timer_seconds()==8 && lifecycle_world.session().timer_subseconds()==0);
