@@ -106,8 +106,11 @@ inline void install(PS2Runtime& runtime) {
                                         escapeTimerService, escapeTimers);
         std::fprintf(stderr, "[CHEATS-ESCAPE-1] active countdown frozen\n");
     }
-    if (selectedGame == Game::File2)
+    if constexpr (selectedGame == Game::File2) {
         std::fprintf(stderr, "[CHEATS-FILE2-1] health infection ammo data\n");
+        if (builtinFlags & UnlockFile3Characters)
+            std::fprintf(stderr, "[CHEATS-FILE3-NPCS-1] hidden characters\n");
+    }
     std::fprintf(stderr,
                  "[CHEATS] loaded %zu data writes, builtins=%u; original frame service retained\n",
                  active.size(), builtinFlags);
