@@ -41,6 +41,9 @@ int main(){
         check(owner.applicable_navigation_condition(id,7,1).index==-1&&!owner.admit_navigation_condition(id,7,1).allowed);
         actor->ai_control=255;check(owner.applicable_navigation_condition(id,7,1).index==1&&owner.admit_navigation_condition(id,7,1).allowed);
         actor->active=false;actor->status=0xffffffff;check(owner.applicable_navigation_condition(id,7,1).index==1); // no invented active/status gate
+        n::RouteOutput route_output;route_output.cost=1234;
+        check(owner.ranked_navigation_route(id,7,0,0,n::RankedPolicy::four_candidates,route_output).selected==0&&route_output.first==0&&route_output.second==0&&route_output.cost==1234);
+        check(owner.ranked_navigation_route(id,8,0,0,n::RankedPolicy::first_candidate,route_output).status==n::QueryStatus::unavailable);
         check(owner.admit_navigation_condition(id,7,2).status==n::QueryStatus::unavailable&&owner.admit_navigation_condition(id,8,0).status==n::QueryStatus::unavailable);
         check(owner.admitted_navigation_link(id,7,0,1).status==n::QueryStatus::completed&&!owner.admitted_navigation_link(id,7,0,1).index);
         u::world::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());const auto other=foreign.spawn_primary(0,std::make_unique<u::world::Actor>()).id;

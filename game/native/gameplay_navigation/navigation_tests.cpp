@@ -2,6 +2,7 @@
 #include "bank.hpp"
 #include "conditions.hpp"
 #include "edges.hpp"
+#include "routes.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -11,6 +12,7 @@
 #include <source_location>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #ifdef REO_NAVIGATION_ORIGINAL
 #include "reference.hpp"
 #include "functions.h"
@@ -53,6 +55,7 @@ void source_graph(const n::RoomGraph& graph,unsigned room_index=0){
     const auto room=std::size_t(0x83e550+164*room_index),data=std::size_t(0x1000000);
     std::copy(graph.encoding().begin(),graph.encoding().end(),memory.begin()+data);
     put(memory,room+8,std::uint32_t(graph.nodes().size()));put(memory,room+12,std::uint32_t(data+12));
+    put(memory,room+16,std::uint32_t(data+12+64*graph.nodes().size()));
     put(memory,room+0x9c,std::uint32_t(data+word(graph.encoding(),0)+8));
     put(memory,room+0xa0,std::uint32_t(data+word(graph.encoding(),0)));
 }
@@ -278,6 +281,7 @@ void edge_contracts(){
     call(0x815e70,{2});for(unsigned i=0;i<4;++i){check((*shared_bank.edge_flags(8))[i]==memory[second+i]);}++edge_flag_bindings;
 #endif
 }
+#include "ranked_route_tests.inc"
 void owned(const char* path){
     const auto bytes=read(path);const auto asset=imported(bytes);asset_rooms+=asset.descriptors().size();asset_links+=asset.links().size();
     reo::native::gameplay_session::RoomVariants native_variants;n::Bank bank(native_variants);const auto shared=std::make_shared<const n::Asset>(asset);
@@ -322,6 +326,14 @@ void owned(const char* path){
                 if(n::admit_edge(bank,room,std::int32_t(i),graph->nodes()[i].neighbors[slot],{std::uint8_t(profile*2),std::uint8_t(profile),std::uint8_t(profile&1?255:0)},profile&2?0x88u:0u,std::uint16_t(profile&2?0xffff:0)).status!=n::QueryStatus::completed){
                     check(std::string(path).ends_with("r041.sgl")&&room==70&&graph->source_offset()==138140&&i==0&&graph->nodes()[i].condition==19&&graph->conditions().size()==14);
                     ++retail_edge_refusals;
+                }
+            }
+            for(unsigned source=0;source<graph->nodes().size();++source)for(const auto destination:{source,unsigned((source+1)%graph->nodes().size()),unsigned(graph->nodes().size()-1)})for(unsigned profile=0;profile<2;++profile){
+                for(unsigned node=0;node<128;++node){check(bank.occupancy(room,node,std::uint8_t(profile&&(node+source)%7==0?255:0)));}
+                for(const auto policy:{n::RankedPolicy::four_candidates,n::RankedPolicy::first_candidate}){
+                    n::RouteOutput output{-22,-23,{1,2,3},{4,5,6},std::bit_cast<float>(0x7fc01234u)};
+                    const auto result=compare_ranked(bank,{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::int32_t(source),std::int32_t(destination),std::uint16_t(profile?0xffff:0),policy,output,room);
+                    if(result.status!=n::QueryStatus::completed)++ranked_retail_refusals;
                 }
             }
         }
@@ -376,13 +388,13 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==7);const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();
+        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=2;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
 #else
         for(int i=1;i<argc;++i)owned(argv[i]);
 #endif
-        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<"}\n";
+        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

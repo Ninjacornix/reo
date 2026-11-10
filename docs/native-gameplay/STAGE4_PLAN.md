@@ -25,6 +25,10 @@ The current resource and inventory implementation includes:
   Both compilers pass338009 edge comparisons and ten parent tests. Twelve
   controlled contexts reaching the authored r041 ordinal19/count14 reference
   remain an explicit admission gate. Route policies and scene/AI execution stay open.
+- [Ranked navigation routes](NAVIGATION_RANKED_ROUTES.md) now preserve both ranked
+  root policies and their recursive companions, with41326 original comparisons
+  per compiler through the same graph/occupancy/condition owners. The separate
+  bounded-cost policy, outer/cross-room dispatch and actor/AI execution remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
