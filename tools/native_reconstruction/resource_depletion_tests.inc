@@ -1,5 +1,6 @@
 #include "game/native/gameplay_world/resource_depletion.hpp"
 unsigned depletion_cases{},depletion_live{},depletion_refusals{},depletion_audio_commands{},depletion_signal{};
+unsigned owned_use_cases{},owned_use_live{},owned_use_retirements{},owned_use_refusals{};
 namespace depletion_fixture {
 using namespace consumption_fixture;
 namespace w=reo::native::gameplay_weapon_resources;namespace a=reo::native::gameplay_audio;namespace b=reo::native::audio_banks::v2;namespace l=reo::native::gameplay_bank_loading;namespace r=reo::native::resources;namespace af=reo::native::afs_source_range;
@@ -14,8 +15,13 @@ void depletion_audio_port(std::uint8_t* memory,R5900Context* context){
 }
 void compare_resource_depletion(const std::vector<std::vector<std::byte>>& corpus,const char* static_path,const char* template_path,const char* iso_path,const std::filesystem::path& cue_path,std::vector<std::uint8_t>& ram){
     using namespace depletion_fixture;const auto assets=factory_load(static_path,16);auto banks=factory_load(template_path,5);
+#ifdef REO_RESOURCE_USE
+    constexpr unsigned method_count=3;
+#else
+    constexpr unsigned method_count=2;
+#endif
     std::vector<std::byte> controlled(32+128*24);const auto write=[&]<class T>(unsigned at,T value){std::memcpy(controlled.data()+at,&value,sizeof value);};write(0,3u);write(4,128u);write(16,32u);
-    for(unsigned n=0;n<128;++n){write(32+24*n,std::uint32_t((n&1?1u:0u)|(n&2?0x80000u:0u)|(n&4?0x2000000u:0u)|(n&8?0x1000000u:0u)|(n&16?0x700000u:0u)));write(32+24*n+8,std::array<std::int16_t,4>{20,INT16_MIN,1,0}[n/32]);write(32+24*n+10,std::array<std::int16_t,4>{42,0x3717,-1,INT16_MIN}[n/32]);write(32+24*n+18,std::uint16_t(100+n));}banks.push_back(controlled);
+    for(unsigned n=0;n<128;++n){write(32+24*n,std::uint32_t((n&1?1u:0u)|(n&2?0x80000u:0u)|(n&4?0x2000000u:0u)|(n&8?0x1000000u:0u)|(n&16?0x700000u:0u)|((method_count==3&&(n&32))?0x40000u:0u)));write(32+24*n+8,std::array<std::int16_t,4>{20,INT16_MIN,1,0}[n/32]);write(32+24*n+10,std::array<std::int16_t,4>{42,0x3717,-1,INT16_MIN}[n/32]);write(32+24*n+18,std::uint16_t(100+n));}banks.push_back(controlled);
     const auto pinned=r::win32::PinnedFile::open_verified(std::filesystem::path(iso_path),owned_iso_bytes,owned_iso_sha);check(pinned.status==r::win32::PinnedStatus::ok);
     const auto archive=[&](std::uint64_t offset,std::uint64_t bytes){reo::assets::VirtualFile file;file.size=bytes;file.segments.push_back({0,bytes,offset,std::make_shared<reo::assets::Source>(pinned.file->identity().final_path,pinned.file),{}});const auto view=r::VirtualFileView::create(file);check(view.status==r::Status::ok);auto counted=std::make_shared<weapon_fixture::Counted>(view.view);const auto opened=af::Archive::open(counted,0,bytes);check(opened.status==af::Status::completed);return std::pair{opened.archive,counted};};
     const auto [rom,rom_reads]=archive(17065984,477052928);const auto [snd,snd_reads]=archive(924106752,1062582272);(void)snd_reads;const auto catalogue=w::Catalogue::prepare_file1_rom(rom);const auto prepared_reads=rom_reads->reads;std::ifstream cue_file(cue_path,std::ios::binary);const std::vector<std::uint8_t> cue{std::istreambuf_iterator<char>(cue_file),{}};check(!cue.empty());
@@ -26,11 +32,11 @@ void compare_resource_depletion(const std::vector<std::vector<std::byte>>& corpu
         auto reference_engine=std::make_shared<b::Session>();reo::native::gameplay_session::Random reference_random;a::Owner reference(reference_engine,reference_random);AudioPort port{reference,reference_random,spatial,{},0};current_audio=&port;
         check(audio->install(audio->begin_bank(8),cue).status==a::Status::completed&&reference.install(reference.begin_bank(8),cue).status==a::Status::completed);
         for(unsigned i=0;i<4;++i){const auto actor=f.q.world.primary(i);actor->selected_resource=255;actor->weapon_programs=catalogue->find(51);inventory_fixture::export_actor(f.q.memory,*actor,i);}
-        for(unsigned method=0;method<2;++method)for(unsigned n=0;n<65536;++n){
+        for(unsigned method=0;method<method_count;++method)for(unsigned n=0;n<65536;++n){
             f.mode(n>>8,0);f.q.session->gameplay_flags=std::uint8_t(n*17u);f.q.memory[0x4bae96]=f.q.session->gameplay_flags;f.q.session->clock_mode=std::uint8_t(n/128);f.q.memory[0x3243cc]=f.q.session->clock_mode;const auto slot=n%4;f.actor(slot,std::uint8_t(n%3),std::uint8_t(n>>8));const auto actor=f.q.world.primary(slot);actor->selected_resource=255;inventory_fixture::export_actor(f.q.memory,*actor,slot);
             s::SceneDescriptor item;item.active=std::uint8_t(n);item.instance_index=std::uint8_t(n%11?3:6);item.ownership_tag=std::uint16_t(n*17u);item.parameter=std::bit_cast<std::int16_t>(std::uint16_t(n*65521u));item.attachment_id=std::uint16_t(100+n%128);item.template_index=std::uint8_t(n%13?n%f.q.templates.state().count:255);sync(f.q,3,item);auto other=item;other.instance_index=6;other.ownership_tag=1;other.parameter=std::bit_cast<std::int16_t>(std::uint16_t(n*257u));sync(f.q,6,other);seed(f,n);port.result.reset();port.calls=0;
-            const auto expected=call(f.q.memory,method?0x5b2590:0x5b4ad0,{method?address(3):0xabcd0003,0x4a5c30+0x10e0*slot});const auto native=method?depletion.use_cost(0xabcd0003,f.q.world.identity(slot)):depletion.replace_depleted(0xabcd0003,f.q.world.identity(slot));
-            if(native.status!=g::ResourceDepletionStatus::completed||native.value!=std::int8_t(GPR_U32(&expected,2))){throw std::runtime_error("Resource depletion bank="+std::to_string(bank_index)+" method="+std::to_string(method)+" n="+std::to_string(n));}compare_all(f.q,3);compare_all(f.q,6);check(!depletion.last_cue()&&!port.calls&&actor->weapon_programs==catalogue->find(51)&&!visuals.size());compare_random(f);++depletion_cases;
+            const auto expected=call(f.q.memory,method==2?0x5b1f30:method?0x5b2590:0x5b4ad0,{method==1?address(3):0xabcd0003,0x4a5c30+0x10e0*slot});const auto native=method==2?depletion.use_owned(0xabcd0003,f.q.world.identity(slot)):method?depletion.use_cost(0xabcd0003,f.q.world.identity(slot)):depletion.replace_depleted(0xabcd0003,f.q.world.identity(slot));
+            if(native.status!=g::ResourceDepletionStatus::completed||native.value!=std::int8_t(GPR_U32(&expected,2))){throw std::runtime_error("Resource depletion bank="+std::to_string(bank_index)+" method="+std::to_string(method)+" n="+std::to_string(n));}compare_all(f.q,3);compare_all(f.q,6);check(!depletion.last_cue()&&!port.calls&&actor->weapon_programs==catalogue->find(51)&&!visuals.size());compare_random(f);++depletion_cases;if(method==2)++owned_use_cases;
         }
         if(!bank_index){
             std::array<std::byte,80> data{};const auto put_data=[&]<class T>(unsigned at,T value){std::memcpy(data.data()+at,&value,sizeof value);};put_data(0,3u);put_data(4,2u);put_data(16,32u);put_data(32,std::uint32_t(0x2080001));put_data(32+10,std::int16_t(42));put_data(32+18,std::uint16_t(0x6e));put_data(56+8,std::int16_t(20));put_data(56+18,std::uint16_t(42));
@@ -39,12 +45,12 @@ void compare_resource_depletion(const std::vector<std::vector<std::byte>>& corpu
 #ifdef REO_STOCK_WMD_ABSENCE
             for(const auto& weapon:owned_weapons)if(weapon.bytes.empty())live_selectors.push_back(weapon.selector);
 #endif
-            for(unsigned method=0;method<2;++method)for(unsigned content:{0x6eu,0x6au,0x6fu,0x74u})for(bool visible:{false,true})for(unsigned selected:{0u,3u,255u})for(unsigned category:{0u,1u})for(int selector:live_selectors)for(bool redirected:{false,true}){
+            for(unsigned method=0;method<method_count;++method)for(unsigned content:{0x6eu,0x6au,0x6fu,0x74u})for(bool visible:{false,true})for(unsigned selected:{0u,3u,255u})for(unsigned category:{0u,1u})for(int selector:live_selectors)for(bool redirected:{false,true}){
                 const auto n=serial++;call(f.q.memory,0x651850);e::PeriodicVisuals live_visuals(effect_bank,f.q.session->random);check(live_visuals.bind_resource_debris(f.q.world,f.q.models,f.q.factory));g::ResourceDepletion live(f.recipes,live_visuals,frontend,weapons);put_data(32+14,std::uint8_t(n%3?1:255));put_data(56+14,std::uint8_t(selector));check(f.q.templates.load(data));std::memcpy(f.q.memory+0x100000,data.data(),data.size());call(f.q.memory,0x5921d0,{0x100000});f.mode(0,0);f.q.session->gameplay_flags=0;f.q.memory[0x4bae96]=0;f.q.session->sound_loading_mode=std::uint8_t(n%3);f.q.memory[0x324405]=f.q.session->sound_loading_mode;
                 auto [model,raw_model]=f.q.create(std::uint16_t(content),7);model.model->resource_slot=3;model.model->visible=visible;model.model->pose=m::identity();model.model->pose[3][0]=model.model->pose[3][2]=200;model.model->pose[3][1]=5;f.q.memory[raw_model+0x240]=3;f.q.memory[raw_model+1]=std::uint8_t(visible);put(f.q.memory,raw_model+0x1c0,model.model->pose);
                 s::SceneDescriptor item;item.active=1;item.instance_index=redirected?6:3;item.ownership_tag=1;item.parameter=method?2:0;item.attachment_id=std::uint16_t(content);item.template_index=0;item.primary=model.model;f.q.sync(item);put(f.q.memory,address(3)+0x24,item.parameter);auto other=item;other.instance_index=6;other.primary.reset();other.parameter=(method&&redirected&&n%4==3)?0:item.parameter;sync(f.q,6,other);other.instance_index=0;sync(f.q,0,other);
                 f.actor(0,std::uint8_t(category),0);const auto actor=f.q.world.primary(0);actor->category=std::uint8_t(category);actor->slot=0;actor->selected_resource=std::uint8_t(selected);actor->character=0;actor->position={};actor->weapon_programs=catalogue->find(51);inventory_fixture::export_actor(f.q.memory,*actor);put(f.q.memory,0x4a5c30+0x38,actor->position);seed(f,n);port.result.reset();port.calls=0;std::fill_n(f.q.memory+0x2b3840,0x100,0);std::fill_n(f.q.memory+0x749180,2048,0);std::copy(owned_weapons.back().bytes.begin(),owned_weapons.back().bytes.end(),f.q.memory+0x749180);
-                const b::Command stop=b::StopAll{false};check(engine->apply({&stop,1}).status==b::Status::ok&&reference_engine->apply({&stop,1}).status==b::Status::ok);const auto source=call(f.q.memory,method?0x5b2590:0x5b4ad0,{method?address(3):0xabcd0003,0x4a5c30});const auto native=method?live.use_cost(0xabcd0003,f.q.world.identity(0)):live.replace_depleted(0xabcd0003,f.q.world.identity(0));
+                const b::Command stop=b::StopAll{false};check(engine->apply({&stop,1}).status==b::Status::ok&&reference_engine->apply({&stop,1}).status==b::Status::ok);const auto source=call(f.q.memory,method==2?0x5b1f30:method?0x5b2590:0x5b4ad0,{method==1?address(3):0xabcd0003,0x4a5c30});const auto native=method==2?live.use_owned(0xabcd0003,f.q.world.identity(0)):method?live.use_cost(0xabcd0003,f.q.world.identity(0)):live.replace_depleted(0xabcd0003,f.q.world.identity(0));
                 if(native.status!=g::ResourceDepletionStatus::completed||native.value!=std::int8_t(GPR_U32(&source,2))){throw std::runtime_error("Live resource depletion n="+std::to_string(n));}compare_all(f.q,3);compare_all(f.q,6);f.q.compare_world();check(live_visuals.size()==168u-get<std::uint16_t>(f.q.memory,0x3b5828)&&live_visuals.piece_count()==0&&bool(live.last_cue())==bool(port.result));if(port.result){check(live.last_cue()->status==port.result->status&&live.last_cue()->commands==port.result->commands);depletion_audio_commands+=live.last_cue()->commands;}compare_random(f);
                 if(live.last_refresh()&&live.last_refresh()->audio){check(live.last_refresh()->audio->status==l::LoadStatus::accepted&&loader.cancel(live.last_refresh()->audio->ticket));}
                 std::array<float,512> output{},expected_output{};check(engine->mix_add(output.data(),256,gains)==b::Status::ok&&reference_engine->mix_add(expected_output.data(),256,gains)==b::Status::ok&&output==expected_output);for(const auto value:output){if(value!=0)++depletion_signal;}
@@ -52,7 +58,7 @@ void compare_resource_depletion(const std::vector<std::vector<std::byte>>& corpu
                 if(cleared)matching_program=actor->weapon_programs==catalogue->cleared();
                 for(const auto& weapon:owned_weapons){std::array<std::uint8_t,2048> bytes{};std::copy(weapon.bytes.begin(),weapon.bytes.end(),bytes.begin());if(!std::memcmp(programs,bytes.data(),bytes.size())&&actor->weapon_programs==catalogue->find(std::int8_t(weapon.selector)))matching_program=true;}
                 check(matching_program&&bool(get<std::uint8_t>(f.q.memory,0x2b3841))==bool(live.last_refresh()&&live.last_refresh()->audio));
-                live_visuals.close();call(f.q.memory,0x590d80,{raw_model});check(f.q.models.retire(model.id)==g::ResourceModelStatus::completed);++depletion_live;
+                live_visuals.close();call(f.q.memory,0x590d80,{raw_model});check(f.q.models.retire(model.id)==g::ResourceModelStatus::completed);++depletion_live;if(method==2)++owned_use_live;
             }
             // A naturally full visual domain and named-bank queue do not undo
             // the committed content/quantity/program changes or suppress cue5.
@@ -71,6 +77,26 @@ void compare_resource_depletion(const std::vector<std::vector<std::byte>>& corpu
                 for(const auto& ticket:queued){check(loader.cancel(ticket));}
                 full_visuals.close();call(f.q.memory,0x590d80,{raw_model});check(f.q.models.retire(model.id)==g::ResourceModelStatus::completed);++depletion_live;
             }
+#ifdef REO_RESOURCE_USE
+            // The outer caller retires actual primary/secondary owners only
+            // on the saved40000 flag. It leaves equipped/inventory references.
+            for(unsigned mask=0;mask<4;++mask)for(int quantity:{1,2})for(bool destroy:{false,true}){
+                put_data(32,std::uint32_t(0x1000001u|(destroy?0x40000u:0u)));check(f.q.templates.load(data));std::memcpy(f.q.memory+0x100000,data.data(),data.size());call(f.q.memory,0x5921d0,{0x100000});
+                s::SceneDescriptor pending;pending.active=1;pending.instance_index=3;pending.ownership_tag=1;pending.parameter=std::int16_t(quantity);pending.attachment_id=42;pending.template_index=0;pending.flags=0x20040;pending.position={100,-7,200};pending.shape_profile=2;
+                std::shared_ptr<g::ResourceModel> held;
+                if(mask&1){auto [made,raw]=f.q.create(42,7);held=made.model;held->resource_slot=3;f.q.memory[raw+0x240]=3;pending.primary=held;}
+                f.q.sync(pending);put(f.q.memory,address(3)+0x24,pending.parameter);
+                if(mask&2){call(f.q.memory,0x591860,{address(3)});check(f.q.collisions.replace(*f.q.resources.slot(3)).status==s::ResourceCollisionStatus::completed);}
+                const auto actor=f.q.world.primary(0);actor->inventory={};actor->inventory.carried={3,3,0,0};actor->selected_resource=actor->secondary_equipped_resource=3;actor->resource_action=123;f.actor(0,0,0);f.mode(0,0);f.q.session->gameplay_flags=0;f.q.memory[0x4bae96]=0;put(f.q.memory,0x743128,unsigned(f.q.resources.active_count()));
+                const auto source=call(f.q.memory,0x5b1f30,{0xabcd0003,0x4a5c30});const auto actual=depletion.use_owned(0xabcd0003,f.q.world.identity(0));
+                if(actual.status!=g::ResourceDepletionStatus::completed||actual.value!=std::int8_t(GPR_U32(&source,2))||actual.value!=((quantity==1&&destroy)?2:1))throw std::runtime_error("Use lifetime mask="+std::to_string(mask)+" quantity="+std::to_string(quantity)+" destroy="+std::to_string(destroy)+" native="+std::to_string(actual.value)+" source="+std::to_string(std::int8_t(GPR_U32(&source,2)))+" status="+std::to_string(int(actual.status)));
+                compare_all(f.q,3);inventory_fixture::compare_actor(f.q.memory,*actor);f.q.compare_world();
+                check(f.q.resources.active_count()==get<unsigned>(f.q.memory,0x743128));check(!depletion.last_debris()&&!depletion.last_cue()&&!depletion.last_refresh());
+                const bool retired=quantity==1&&destroy;check(f.q.resources.get(*f.q.resources.slot(3))->active==unsigned(!retired));if(held)check(held->current()==!retired);if(retired)++owned_use_retirements;
+                call(f.q.memory,0x5b1850,{3});f.q.frames.release(3);f.q.compare_world();++owned_use_live;
+            }
+#endif
+            put_data(32,std::uint32_t(0x2080001));put_data(32+14,std::uint8_t(1));put_data(56+14,std::uint8_t(1));check(f.q.templates.load(data));std::memcpy(f.q.memory+0x100000,data.data(),data.size());call(f.q.memory,0x5921d0,{0x100000});
             check(depletion_audio_commands>0&&depletion_signal>0);
             // Native-only unavailable capabilities retain the known prefix.
             {
@@ -79,6 +105,9 @@ void compare_resource_depletion(const std::vector<std::vector<std::byte>>& corpu
                 const auto model=f.q.factory.create_delayed(0x6e,7);check(model.status==g::ResourceModelStatus::completed);model.model->visible=true;model.model->pose=m::identity();model.model->resource_slot=3;pending.primary=model.model;check(f.q.resources.replace(*f.q.resources.slot(3),pending)==s::SceneStatus::completed);const auto missing_visible=depletion.replace_depleted(3,{});check(missing_visible.status==g::ResourceDepletionStatus::unavailable&&depletion.last_debris()->created==1&&visuals.size()==1&&f.q.resources.get(*f.q.resources.slot(3))->attachment_id==0x6e&&!depletion.last_cue()&&!depletion.last_refresh());check(visuals.retire(depletion.last_debris()->identities[0])&&f.q.models.retire(model.id)==g::ResourceModelStatus::completed);++depletion_refusals;
                 pending.primary.reset();pending.parameter=7;sync(f.q,3,pending);f.q.session->gameplay_flags=1;f.q.memory[0x4bae96]=1;const auto source_bypass=call(f.q.memory,0x5b2590,{address(3),0});const auto bypass=depletion.use_cost(3,{});check(bypass.status==g::ResourceDepletionStatus::completed&&bypass.value==2&&GPR_U32(&source_bypass,2)==2&&f.q.resources.get(*f.q.resources.slot(3))->parameter==7&&!depletion.last_debris()&&!depletion.last_cue()&&!depletion.last_refresh());++depletion_cases;
                 f.q.session->gameplay_flags=0;pending.parameter=0;check(f.q.resources.replace(*f.q.resources.slot(3),pending)==s::SceneStatus::completed);put_data(56+14,std::uint8_t(3));check(f.q.templates.load(data));const auto actor=f.q.world.primary(0);actor->selected_resource=3;actor->weapon_programs=catalogue->find(51);const auto unknown=depletion.replace_depleted(3,f.q.world.identity(0));check(unknown.status==g::ResourceDepletionStatus::weapon_unavailable&&f.q.resources.get(*f.q.resources.slot(3))->attachment_id==42&&f.q.resources.get(*f.q.resources.slot(3))->parameter==20&&depletion.last_refresh()->programs_changed&&actor->weapon_programs==catalogue->cleared());++depletion_refusals;
+#ifdef REO_RESOURCE_USE
+                pending.parameter=5;pending.flags=0x40;pending.template_index=200;check(f.q.resources.replace(*f.q.resources.slot(3),pending)==s::SceneStatus::completed);const auto unavailable=depletion.use_owned(3,f.q.world.identity(0));check(unavailable.status==g::ResourceDepletionStatus::unavailable&&f.q.resources.get(*f.q.resources.slot(3))->flags==0&&f.q.resources.get(*f.q.resources.slot(3))->parameter==5);++owned_use_refusals;
+#endif
             }
 
         }

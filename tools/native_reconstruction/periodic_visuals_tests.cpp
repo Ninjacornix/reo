@@ -475,6 +475,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_DEPLETION
     <<",\"depletion_cases\":"<<depletion_cases<<",\"depletion_live\":"<<depletion_live<<",\"depletion_refusals\":"<<depletion_refusals<<",\"depletion_audio_commands\":"<<depletion_audio_commands<<",\"depletion_signal\":"<<depletion_signal
 #endif
+#ifdef REO_RESOURCE_USE
+    <<",\"owned_use_cases\":"<<owned_use_cases<<",\"owned_use_live\":"<<owned_use_live<<",\"owned_use_retirements\":"<<owned_use_retirements<<",\"owned_use_refusals\":"<<owned_use_refusals
+#endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads<<",\"weapon_missing_file_reads\":"<<weapon_missing_file_reads
 #endif

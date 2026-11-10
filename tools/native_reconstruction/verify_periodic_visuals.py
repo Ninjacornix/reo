@@ -40,6 +40,7 @@ def main():
     p.add_argument('--resource-debris', action='store_true')
     p.add_argument('--resource-depletion', action='store_true')
     p.add_argument('--stock-wmd-absence', action='store_true')
+    p.add_argument('--resource-use', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -64,6 +65,7 @@ def main():
     assert not args.resource_debris or args.resource_effects
     assert not args.resource_depletion or args.resource_debris
     assert not args.stock_wmd_absence or args.resource_depletion
+    assert not args.resource_use or args.stock_wmd_absence
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -156,6 +158,8 @@ def main():
     if args.resource_depletion:
         for at in [0x5b4ad0,0x5b2590]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
         for at in [0x1b8c70,0x1b8b20]:entries[at]=next((ROOT/'recomp/config/output').glob(f'sub_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_use:
+        at=0x5b1f30;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -469,6 +473,7 @@ def main():
         if args.resource_debris: command.insert(1,'-DREO_RESOURCE_DEBRIS=1')
         if args.resource_depletion: command.insert(1,'-DREO_RESOURCE_DEPLETION=1')
         if args.stock_wmd_absence: command.insert(1,'-DREO_STOCK_WMD_ABSENCE=1')
+        if args.resource_use: command.insert(1,'-DREO_RESOURCE_USE=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')

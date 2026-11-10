@@ -11,6 +11,7 @@ public:
     ResourceDepletion(ResourceRecipes&,gameplay_effects::PeriodicVisuals&,animation_events::BasicAudio&,gameplay_weapon_resources::Owner&);
     ResourceDepletionResult replace_depleted(std::uint32_t resource,const actors::EntityId&); //5B4AD0
     ResourceDepletionResult use_cost(std::uint32_t resource,const actors::EntityId&); //5B2590
+    ResourceDepletionResult use_owned(std::uint32_t resource,const actors::EntityId&); //5B1F30
     const std::optional<gameplay_effects::PeriodicVisuals::CompanionsCreated>& last_debris()const noexcept{return debris_;}
     const std::optional<gameplay_audio::Result>& last_cue()const noexcept{return cue_;}
     const std::optional<gameplay_weapon_resources::Refreshed>& last_refresh()const noexcept{return refresh_;}

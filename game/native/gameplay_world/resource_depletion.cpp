@@ -52,4 +52,32 @@ ResourceDepletionResult ResourceDepletion::use_cost(std::uint32_t full_resource,
         return{ResourceDepletionStatus::completed,std::int8_t((flags&0x1700000u)?1:2)};
     }catch(const std::exception&){return{ResourceDepletionStatus::unavailable};}
 }
+ResourceDepletionResult ResourceDepletion::use_owned(std::uint32_t full_resource,const actors::EntityId& id){
+    reset();auto& pairs=lifecycle_.pairs_;if(pairs.world_.closed())return{ResourceDepletionStatus::closed};
+    try{
+        const auto resource=std::uint8_t(full_resource);auto item=pairs.descriptor(resource);
+        // This publication precedes activity, quantity and owner admission.
+        const auto publish=[&](const gameplay_scenario::SceneDescriptor& value){
+            const auto key=pairs.resources_.slot(resource);
+            if(!key||pairs.resources_.replace(*key,value)!=gameplay_scenario::SceneStatus::completed)throw std::runtime_error("Native use descriptor unavailable");
+        };
+        item.flags&=~0x40u;publish(item);
+        if(!item.active||item.parameter<=0){item.flags|=0x40u;publish(item);return{};}
+        if(!item.ownership_tag)return{};
+        const auto flags=read<std::uint32_t>(pairs.metadata(resource),0);
+        ResourceDepletionResult policy{};
+        if(flags&1u){policy=use_cost(resource,id);if(policy.status!=ResourceDepletionStatus::completed)return policy;}
+        std::int8_t result{};
+        if(pairs.descriptor(resource).parameter>0&&policy.value){
+            if(policy.value==1)pairs.quantity(resource,std::int32_t(pairs.descriptor(resource).parameter)-1);
+            result=1;
+            if(pairs.descriptor(resource).parameter<=0&&(flags&0x40000u)){
+                pairs.destroy_owned(std::uint8_t(full_resource));
+                result=2;
+            }
+        }
+        if(policy.value==3)result=3;
+        return{ResourceDepletionStatus::completed,result};
+    }catch(const std::exception&){return{ResourceDepletionStatus::unavailable};}
+}
 }
