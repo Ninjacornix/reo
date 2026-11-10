@@ -120,7 +120,9 @@ The current resource and inventory implementation includes:
   goal/action/profile consumers. Both compilers pass80542165 checks and twelve
   parent tests; registration/queue limits preserve subsequent source resets.
   Actual actor construction, control service, full observations/dispatch and
-  coherent native gameplay acceptance remain open.
+  coherent native gameplay acceptance remain open. Refreshed full current-source
+  VM suites pass19719138 checks/30245 original dispatcher calls per compiler;
+  their dependency-list correction and failed standalone links are recorded.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

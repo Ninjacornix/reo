@@ -43,6 +43,16 @@ Evidence: `gameplay-ai-initialize-{llvm,gcc}-v2/receipt.json`, corresponding
 parent/test v1 logs and `native_gameplay_ai_initialize_qualification_v1.json`
 (SHA256 `356e14ea0a9e291840ed37cf97883e59ae0d954d0382d24ad0e3a0ce4fd5aa86`).
 
+The refreshed full VM composition also passes19719138 identical checks per
+compiler and30245 original dispatcher calls with no historical source pins.
+It includes current navigation, AI, room ordinal and shared World/scene sources.
+The first standalone link lacked heading.cpp in the maintained dependency list;
+v2 adds it and passes without production algorithm changes. Evidence is sealed
+by `native_ai_initialize_vm_qualification_v1.json` (SHA256
+`7be1092e08276150c8905d5f4b26d15537931be0db6dbdc358981ec8c61073e2`).
+Ordinary328/432 and offline300/432 bindings include no-ops and are not overall
+Stage4 percentages or transitive execution coverage for all compiled functions.
+
 Actual actor/component construction, mode producers, outgoing control service/
 frame reset, full observations/goal/action dispatch, remaining stock VM/input/
 network/save ownership and coherent native gameplay acceptance remain open.

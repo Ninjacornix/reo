@@ -9,5 +9,6 @@ SURFACE_WORLD_UNITS=[
         ('gameplay_navigation',['navigation','bank','conditions','edges','routes','cost_routes','cost_graph','local_routes','link_collection','cross_room','actor_routes','destination','visibility','scene_candidates','scene_lookup']),
         ('gameplay_collision',['collision','response','actors','actor_views','trace']),
         ('animation',['constraints','constraint_math']),
+        ('transform_math',['heading']),
     ] for name in names
 ]
