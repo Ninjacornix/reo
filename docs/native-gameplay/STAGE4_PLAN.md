@@ -135,6 +135,11 @@ The current resource and inventory implementation includes:
   895957 complete reaction comparisons/1014101 identical random draws and twelve
   parent tests. Full observation/timer consumption and game acceptance remain open.
 
+- [AI observation admission](AI_OBSERVATION_GATES.md) now supplies complete
+  812EF0/813BD0 through canonical execution state and Session RNG. Both compilers
+  pass2887680 admission comparisons,278784 predicate comparisons and twelve
+  parent tests. Full observation/cache production and game acceptance remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

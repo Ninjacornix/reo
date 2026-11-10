@@ -1,5 +1,11 @@
 #include "update.hpp"
 namespace reo::native::gameplay_update {
+gameplay_ai::ObservationAdmitted Owner::admit_ai_reference_reaction(const world::actors::EntityId& id,std::uint32_t mode){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor)return {};
+    const auto reference=world_.primary(0);
+    return gameplay_ai::admit_reference_reaction(*actor,reference.get(),mode,world_.session().random);
+}
 gameplay_ai::ReactionScheduled Owner::schedule_ai_reaction(const world::actors::EntityId& id,std::uint32_t event){
     if(!open())return {};
     const auto actor=world_.resolve(id);if(!actor||!actor->ai_execution)return {};

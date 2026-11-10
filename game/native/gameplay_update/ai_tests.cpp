@@ -86,12 +86,35 @@ void reaction_owner(){
     check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.schedule_ai_reaction(id,12).status==ai::Status::unavailable&&random.state()==before);
     check(world.close()==u::world::Status::completed&&owner.schedule_ai_reaction(id,12).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
 }
+void observation_gate_owner(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);
+    const auto self_id=world.spawn_primary(3,std::make_unique<u::world::Actor>()).id;auto self=world.resolve(self_id);check(bool(self));
+    auto& random=world.session().random;random.restore({0,3333,99});
+    check(owner.admit_ai_reference_reaction(self_id,0).status==ai::Status::unavailable&&random.state().primary==0);
+    self->ai_execution.emplace();self->room=17;auto& state=*self->ai_execution;state.room_memo=65535;
+    check(owner.admit_ai_reference_reaction(self_id,0).status==ai::Status::unavailable&&random.state().primary==0);
+    auto result=owner.admit_ai_reference_reaction(self_id,1);check(result.status==ai::Status::completed&&result.admitted&&result.random_draws==0&&state.room_memo==65535&&random.state().primary==0);
+    const auto reference_id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;auto reference=world.resolve(reference_id);reference->ai_execution.emplace();
+    result=owner.admit_ai_reference_reaction(self_id,0);check(result.status==ai::Status::completed&&result.admitted&&result.random_draws==1&&random.state().primary==176);
+    reference->ai_execution->weight_mode=255;result=owner.admit_ai_reference_reaction(self_id,0);check(result.admitted&&result.random_draws==0&&random.state().primary==176);
+    self->character=2;random.restore({0,3333,99});result=owner.admit_ai_reference_reaction(self_id,1);check(!result.admitted&&result.random_draws==1&&state.room_memo==17&&random.state().primary==176);
+    result=owner.admit_ai_reference_reaction(self_id,1);check(!result.admitted&&result.random_draws==0&&random.state().primary==176);
+    state.room_memo=65535;random.restore({65363,3333,99});result=owner.admit_ai_reference_reaction(self_id,1);check(!result.admitted&&result.random_draws==1&&state.room_memo==17&&random.state().primary==0);
+    self->character=255;state.room_reaction_gate=255;state.room_memo=65535;result=owner.admit_ai_reference_reaction(self_id,1);check(result.status==ai::Status::completed&&!result.admitted&&result.random_draws==0&&state.room_memo==65535);
+    state.room_reaction_gate=0;const auto old=state;const auto before=random.state();
+    check(owner.admit_ai_reference_reaction(self_id,0).status==ai::Status::unavailable&&state==old&&random.state()==before);
+    check(world.retire_primary(0)==u::world::actors::EntityStatus::completed);self->character=0;
+    check(owner.admit_ai_reference_reaction(self_id,0).status==ai::Status::unavailable&&random.state()==before);
+    check(world.retire_primary(3)==u::world::actors::EntityStatus::completed&&owner.admit_ai_reference_reaction(self_id,0).status==ai::Status::unavailable);
+    check(world.close()==u::world::Status::completed&&owner.admit_ai_reference_reaction(self_id,1).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
+}
 }
 int main(){
     try{
         initialization_owner();
         reevaluation_owner();
         reaction_owner();
+        observation_gate_owner();
         u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
         Notifications notifications;u::Owner owner(world,notifications);
         const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));

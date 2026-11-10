@@ -24,6 +24,7 @@
 #include "../gameplay_ai/initialization.hpp"
 #include "../gameplay_ai/priority_goals.hpp"
 #include "../gameplay_ai/reactions.hpp"
+#include "../gameplay_ai/observation_gates.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -204,6 +205,7 @@ public:
     gameplay_ai::InitializationResult initialize_ai(const world::actors::EntityId&);
     gameplay_ai::GoalReevaluated reevaluate_ai_goal(const world::actors::EntityId&,const scenario::SceneResources&);
     gameplay_ai::ReactionScheduled schedule_ai_reaction(const world::actors::EntityId&,std::uint32_t event);
+    gameplay_ai::ObservationAdmitted admit_ai_reference_reaction(const world::actors::EntityId&,std::uint32_t mode);
 private:
     world::World& world_;
     tasks::Scheduler linked_;

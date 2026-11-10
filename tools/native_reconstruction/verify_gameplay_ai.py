@@ -11,6 +11,7 @@ from pathlib import Path
 from audit_retail_effect_descriptors import compare_source,elf_reader
 from generate_ai_weight_profiles import generated
 from generate_ai_reaction_policies import generated as generated_reactions
+from generate_ai_observation_policies import generated as generated_observations
 from verify_gameplay_collision import COMPILERS
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -33,10 +34,11 @@ def main():
     assert sha(main_image)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     assert (ROOT/'game/native/gameplay_ai/weight_profiles.inc').read_text()==generated()
     assert (ROOT/'game/native/gameplay_ai/reaction_policies.inc').read_text()==generated_reactions()
+    assert (ROOT/'game/native/gameplay_ai/observation_policies.inc').read_text()==generated_observations()
     assert struct.unpack_from('<I',o2_raw,0x71b034-0x570000)[0]==0x41c80000
     assert struct.unpack_from('<6I',raw,0x82b860-0x810000)==(0x8231c0,)*6
     entries={};proof=[]
-    for address in [0x8120c0,0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30,0x8133d0,0x825cc0,0x823190,0x817140,0x8130d0,0x1aec80]:
+    for address in [0x8120c0,0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30,0x8133d0,0x825cc0,0x823190,0x817140,0x8130d0,0x1aec80,0x812ef0,0x813bd0]:
         folder=ROOT/('recomp/config/output' if address<0x200000 else 'recomp/config/output_ovl/'+('o8' if address==0x810f30 else 'o2' if address<0x810000 else 'o9'))
         path=next(folder.glob(f'*_{address:08X}_0x{address:x}.cpp'))
         end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',path.read_text())[1],16)
@@ -55,6 +57,9 @@ def main():
     files+=goal_units+['game/native/gameplay_ai/priority_goal_tests.inc']
     reaction_units=['game/native/gameplay_ai/reactions.cpp','game/native/gameplay_session/session.cpp']
     files+=reaction_units+['game/native/gameplay_ai/reaction_tests.inc','game/native/gameplay_ai/reaction_policies.inc','tools/native_reconstruction/generate_ai_reaction_policies.py']
+    observation_units=['game/native/gameplay_ai/observation_gates.cpp']
+    conversion='third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h'
+    files+=observation_units+[conversion,'game/native/gameplay_ai/observation_gate_tests.inc','game/native/gameplay_ai/observation_policies.inc','tools/native_reconstruction/generate_ai_observation_policies.py']
     # Freeze native quoted-include dependencies. Original runtime headers are
     # intentionally supplied by the separately generated test-only surroundings.
     closure=set(files);pending=[ROOT/name for name in files if name not in entries.values()]
@@ -71,7 +76,8 @@ def main():
         path=out/'source'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
     reference=frozen[helper].replace(b'struct R5900Context {',b'struct R5900Context { std::uint64_t hi{},lo{};')
     assert reference!=frozen[helper]
-    (out/'reference.hpp').write_bytes(reference+b'\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define FPU_DIV_S(a,b) ((a)/(b))\n')
+    (out/'word_conversion.hpp').write_bytes(frozen[conversion])
+    (out/'reference.hpp').write_bytes(reference+b'\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define FPU_DIV_S(a,b) ((a)/(b))\n#include "word_conversion.hpp"\n#define FPU_CVT_W_S(a) Ps2FpuConvertWord(a)\n')
     body='\n'.join(frozen[name].decode() for name in entries.values());(out/'original.cpp').write_text(body)
     actual={Path(name).stem for name in entries.values()};calls=set(re.findall(r'\b((?:sub|o[0-9]+)_[0-9A-Fa-f]+_0x[0-9a-f]+)\(rdram',body))
     (out/'functions.h').write_text('#pragma once\n'+''.join(f'void {name}(std::uint8_t*,R5900Context*,PS2Runtime*);\n' for name in sorted(actual))+''.join(f'inline void {name}(std::uint8_t* m,R5900Context* c,PS2Runtime* r){{original_transform_port(m,c,r);}}\n' for name in sorted(calls-actual)))
@@ -85,7 +91,7 @@ def main():
     exe=out/'checks.exe';command=[str(compiler),'-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-msse4.1','-DREO_AI_ORIGINAL=1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-I'+str(out),'-I'+str(out/'source'),str(out/'source'/unit),str(out/'source'/fixture),str(out/'original.cpp'),'-o',str(exe)]
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_ai/control_requests.cpp'))
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_session/activity.cpp'))
-    for name in ['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp',*goal_units,*reaction_units]:
+    for name in ['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp',*goal_units,*reaction_units,*observation_units]:
         command.insert(command.index(str(out/'original.cpp')),str(out/'source'/name))
     receipt=dict(schema=1,status='failed',game_launched=False,installed_in_game=False,stage4_complete=False,
         compiler_sha256=sha(compiler),source_sha256={name:hashlib.sha256(data).hexdigest() for name,data in frozen.items()},

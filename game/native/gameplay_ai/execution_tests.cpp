@@ -3,6 +3,7 @@
 #include "initialization.hpp"
 #include "priority_goals.hpp"
 #include "reactions.hpp"
+#include "observation_gates.hpp"
 #include "../gameplay_session/session.hpp"
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
@@ -36,6 +37,7 @@ ai::ExecutionState state(unsigned seed){
     result.inhibited=std::uint8_t(seed+13);result.reaction=std::uint8_t(seed+17);result.pending_reaction=std::uint8_t(seed+19);result.observation_flags=std::uint8_t(seed+23);
     result.periodic_counter=std::uint16_t(seed*17);result.room_memo=std::uint16_t(seed*19);result.reaction_countdown=std::uint16_t(seed*23);result.action_counter=seed*67u;result.forced_priority=std::bit_cast<std::int32_t>(seed*97u);
     result.peer_priority=std::uint8_t(seed+29);result.reference_request=std::uint8_t(seed+31);result.owned_request=std::uint16_t(seed*29);result.goal_resource=0xdead0000u+seed;
+    result.weight_mode=std::uint8_t(seed+37);result.room_reaction_gate=std::uint8_t(seed+41);
     return result;
 }
 #ifdef REO_AI_ORIGINAL
@@ -50,6 +52,7 @@ void project(std::vector<std::uint8_t>& target,const ai::ExecutionState& s,unsig
     target[a+0xff1]=s.inhibited;target[a+0x1098]=s.reaction;target[a+0x1099]=s.pending_reaction;target[a+0x1083]=s.observation_flags;
     put(target,a+0x1072,s.periodic_counter);put(target,a+0x107c,s.room_memo);put(target,a+0x109a,s.reaction_countdown);put(target,a+0x1034,s.action_counter);put(target,a+0x109c,s.forced_priority);
     target[a+0x1080]=s.reference_request;target[a+0x1081]=s.peer_priority;put(target,a+0x108a,s.owned_request);put(target,a+0x1090,s.goal_resource);
+    target[a+0x1077]=s.weight_mode;target[a+0x107e]=s.room_reaction_gate;
 }
 #endif
 void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
@@ -80,6 +83,7 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
 #include "initialization_tests.inc"
 #include "priority_goal_tests.inc"
 #include "reaction_tests.inc"
+#include "observation_gate_tests.inc"
 }
 #ifdef REO_AI_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
@@ -118,6 +122,7 @@ int main(int argc,char** argv){
         initialization_contracts();
         priority_goal_contracts();
         reaction_contracts();
+        observation_gate_contracts();
         std::cout<<'{';bool first=true;
         const auto emit=[&](const char* key,std::uint64_t value){if(!first)std::cout<<',';first=false;std::cout<<'"'<<key<<"\":"<<value;};
         emit("checks",checks);emit("goal_cases",goal_cases);emit("action_cases",action_cases);emit("phase_cases",phase_cases);emit("finish_cases",finish_cases);
@@ -129,6 +134,7 @@ int main(int argc,char** argv){
         emit("initialization_cases",initialization_cases);emit("initialization_disabled",initialization_disabled);emit("initialization_limited",initialization_limited);emit("initialization_refusals",initialization_refusals);
         emit("goal_resource_cases",goal_resource_cases);emit("target_busy_cases",target_busy_cases);emit("goal_reevaluation_cases",goal_reevaluation_cases);emit("goal_reevaluation_writes",goal_reevaluation_writes);emit("goal_reevaluation_refusals",goal_reevaluation_refusals);emit("goal_alias_cases",goal_alias_cases);
         emit("reaction_cases",reaction_cases);emit("reaction_random_draws",reaction_random_draws);emit("reaction_writes",reaction_writes);emit("reaction_refusals",reaction_refusals);
+        emit("observation_blocked_cases",observation_blocked_cases);emit("observation_gate_cases",observation_gate_cases);emit("observation_gate_random_draws",observation_gate_random_draws);emit("observation_gate_admitted",observation_gate_admitted);emit("observation_gate_refusals",observation_gate_refusals);
         std::cout<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }
