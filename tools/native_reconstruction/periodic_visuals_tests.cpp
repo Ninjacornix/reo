@@ -184,6 +184,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_OWNED_RECIPES
 #include "tools/native_reconstruction/owned_resource_recipes_tests.inc"
 #endif
+#ifdef REO_RESOURCE_CONSUMPTION
+#include "tools/native_reconstruction/resource_consumption_tests.inc"
+#endif
 #ifdef REO_WEAPON_RESOURCES
 #include "tools/native_reconstruction/weapon_resources_tests.inc"
 #endif
@@ -316,6 +319,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_OWNED_RECIPES
     compare_owned_resource_recipes(argv[2],argv[3],ram);
 #endif
+#ifdef REO_RESOURCE_CONSUMPTION
+    compare_resource_consumption(argv[2],argv[3],ram);
+#endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
@@ -372,6 +378,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_OWNED_RECIPES
     <<",\"owned_recipe_cases\":"<<owned_recipe_cases<<",\"owned_recipe_event_cases\":"<<owned_recipe_event_cases<<",\"owned_recipe_event_mask\":"<<owned_recipe_event_mask<<",\"owned_recipe_refusals\":"<<owned_recipe_refusals
+#endif
+#ifdef REO_RESOURCE_CONSUMPTION
+    <<",\"consumption_cases\":"<<consumption_cases<<",\"consumption_owner_cases\":"<<consumption_owner_cases<<",\"consumption_refusals\":"<<consumption_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads

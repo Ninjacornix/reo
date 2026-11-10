@@ -33,6 +33,9 @@ The current resource and inventory implementation includes:
 - [Completion statistics and explicit item events](COMPLETION_STATISTICS.md),
   using all five owned rule groups and the same actual event pool. Automatic
   conditions, other counters and item caller installation remain open.
+- [Direct item consumption and visibility](RESOURCE_CONSUMPTION.md), using the
+  actual inventory/model lifecycle and completion-event consumers. Message
+  wrappers, health/status effects and game caller installation remain open.
 
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler

@@ -54,6 +54,7 @@ int main(int argc,char** argv)try{
         const auto result=resources.get(*resources.slot(resource));check(result&&result->parameter==get<std::int16_t>(memory,raw+0x24)&&result->flags==get<unsigned>(memory,raw+0x18)&&result->active==d.active&&result->primary==d.primary);
         check(model.flags==get<unsigned>(memory,model_at+0x23c)&&model.use_delay==get<std::int16_t>(memory,model_at+0xc));check(std::memcmp(&model.use_vector,memory+model_at+0x20c,12)==0&&std::memcmp(model.use_parameters.data(),memory+model_at+0x224,8)==0);check(model.program.elapsed==127&&model.pulse_timer==511);++uses;
         if(n%16==0){const auto before=result->parameter;call(memory,0x5b3b80,{full,0,0});owner.configure(full);const auto after=resources.get(*resources.slot(resource));check(after&&after->parameter==before&&after->flags==get<unsigned>(memory,raw+0x18));check(std::memcmp(&model.use_vector,memory+model_at+0x20c,12)==0&&std::memcmp(model.use_parameters.data(),memory+model_at+0x224,8)==0&&model.use_delay==get<std::int16_t>(memory,model_at+0xc));++configurations;}
+        call(memory,0x5b5850,{full,0xabcd0000u|(n>>8)});owner.visibility(full,0xabcd0000u|(n>>8));check(model.flags==get<unsigned>(memory,model_at+0x23c)&&resources.get(*resources.slot(resource))->parameter==get<std::int16_t>(memory,raw+0x24));
     }
     const auto owned_templates=templates(argv[1]);
     for(bool reset:{true,false})for(const auto& bytes:owned_templates){

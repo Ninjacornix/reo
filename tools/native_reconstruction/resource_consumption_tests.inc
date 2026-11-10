@@ -1,0 +1,47 @@
+#include "game/native/gameplay_world/resource_consumption.hpp"
+unsigned consumption_cases{},consumption_owner_cases{},consumption_refusals{};
+namespace consumption_fixture {
+using namespace owned_recipe_fixture;
+struct Consuming:Owned {
+    g::ResourceConsumption consumer;
+    Consuming(std::vector<std::uint8_t>& ram,const std::vector<std::byte>& asset,const std::vector<std::byte>& table):Owned(ram,asset,table),consumer(recipes,update){q.session->scenario=0;reset_statistics(0);}
+    void reset_statistics(unsigned counter){put(q.memory,0x3243da,std::uint16_t(0));call(q.memory,0x37b990);check(update.initialize_completion_statistics()==reo::native::gameplay_events::StatisticsStatus::completed);check(update.clock().restore({},counter)==reo::native::gameplay_tasks::Status::completed);put(q.memory,0x4bade8,counter);}
+    void compare_statistics(){const auto& state=update.completion_statistics().state();check(state.completed[0]==get<unsigned>(q.memory,0x3b84f8)&&state.completed[1]==get<unsigned>(q.memory,0x3b84fc)&&state.points==get<unsigned>(q.memory,0x3b8500)&&state.unique_available==q.memory[0x3b8504]);check(std::memcmp(state.automatic_seen.data(),q.memory+0x56bbd0,64)==0&&std::memcmp(state.explicit_seen.data(),q.memory+0x56bb90,64)==0);compare_events();}
+};
+constexpr std::array<unsigned,4> consumption_entries{0x5b4550,0x5b46a0,0x5b4900,0x5b4990};
+void invoke(Consuming& f,unsigned operation,const g::actors::EntityId& actor,unsigned resource){switch(operation){case 0:f.consumer.decrement(actor,resource);break;case 1:(void)f.consumer.consume_or_transform(actor,resource);break;case 2:f.consumer.destroy(actor,resource);break;case 3:(void)f.consumer.transform(actor,resource);break;default:throw std::runtime_error("Unknown consumption fixture method");}}
+}
+void compare_resource_consumption(const char* static_path,const char* template_path,std::vector<std::uint8_t>& ram){
+    using namespace consumption_fixture;const auto assets=factory_load(static_path,16);auto banks=factory_load(template_path,5);std::vector<std::byte> controlled(32+8*24);const auto write=[&]<class T>(unsigned at,T value){std::memcpy(controlled.data()+at,&value,sizeof value);};write(0,3u);write(4,8u);write(16,32u);
+    for(unsigned i=0;i<8;++i){write(32+24*i,std::array<unsigned,8>{0,0x40000,0x80000,0xc0000,0x80000,0x80000,0x40000,0x80000}[i]|(i&1?0x20000u:0u));write(32+24*i+8,std::int16_t(20));write(32+24*i+10,std::array<std::int16_t,8>{42,42,0x3717,0x3717,-1,0x1c5,INT16_MIN,0x3717}[i]);write(32+24*i+18,std::uint16_t(i==7?0x3717:42+i));}banks.push_back(controlled);
+    for(const auto& encoded:banks){Consuming f(ram,assets[0],encoded);
+        for(unsigned operation=0;operation<4;++operation)for(unsigned n=0;n<65536;++n){
+            s::SceneDescriptor a,b,c;a.active=std::uint8_t(n%5?1+n%255:0);a.instance_index=std::uint8_t(n%7?3:6);a.ownership_tag=std::uint16_t(n%6?1:0);a.template_index=n%13?std::uint8_t((n/17)%f.q.templates.state().count):255;a.attachment_id=std::uint16_t(n%3?10100:10102);a.parameter=std::bit_cast<std::int16_t>(std::uint16_t(n*65521));a.flags=n*1664525u;b.active=c.active=1;b.instance_index=4;c.instance_index=6;b.ownership_tag=c.ownership_tag=1;b.template_index=c.template_index=0;b.attachment_id=c.attachment_id=42;b.parameter=c.parameter=17;sync(f.q,3,a);sync(f.q,4,b);sync(f.q,6,c);
+            const auto slot=n%4;for(unsigned i=0;i<4;++i){const auto actor=f.q.world.primary(i);actor->inventory={};actor->inventory.carried={std::uint8_t(n%7?3:4),4,std::uint8_t(n&1?3:6),0};actor->inventory.storage[0]=4;actor->inventory.storage[n%32]=std::uint8_t(n%7?3:6);actor->selected_resource=std::uint8_t(n&2?3:0);actor->secondary_equipped_resource=std::uint8_t(n&4?3:0);actor->resource_action=123;f.actor(i,std::uint8_t(n%17?0:127),std::uint8_t(n%8));}
+            f.mode(n/256,(n/4096)%4);f.q.session->clock_mode=std::uint8_t(n>>8);f.q.memory[0x3243cc]=f.q.session->clock_mode;f.reset_statistics(n*65521u);put(f.q.memory,0x743128,unsigned(f.q.resources.active_count()));const bool null_actor=n%11==0;const auto id=null_actor?g::actors::EntityId{}:f.q.world.identity(slot);const auto expected=call(f.q.memory,consumption_entries[operation],{null_actor?0u:0x4a5c30+0x10e0*slot,0xabcd0003});
+            if(operation==1)check(f.consumer.consume_or_transform(id,0xabcd0003)==std::uint8_t(GPR_U32(&expected,2)));else if(operation==3)check(f.consumer.transform(id,0xabcd0003)==std::uint8_t(GPR_U32(&expected,2)));else invoke(f,operation,id,0xabcd0003);
+            for(unsigned at:{3u,4u,6u})compare_all(f.q,at);
+            for(unsigned i=0;i<4;++i)inventory_fixture::compare_actor(f.q.memory,*f.q.world.primary(i),i);
+            check(f.q.resources.active_count()==get<unsigned>(f.q.memory,0x743128));f.compare_statistics();++consumption_cases;
+        }
+    }
+    {
+        Consuming f(ram,assets[0],controlled);f.mode(0,0);f.actor(1,0,0);
+        //5B4900 only addresses low16 for a local event. Every low16 value is
+        // admitted on this nonlocal cleanup path, whose actual ID is low8.
+        for(unsigned bits=0;bits<65536;++bits){s::SceneDescriptor d;d.active=1;d.instance_index=3;d.ownership_tag=1;d.template_index=0;d.parameter=7;sync(f.q,3,d);const auto actor=f.q.world.primary(1);actor->inventory={};actor->inventory.carried[0]=3;actor->selected_resource=3;actor->secondary_equipped_resource=0;actor->resource_action=123;f.actor(1,0,0);put(f.q.memory,0x743128,unsigned(f.q.resources.active_count()));call(f.q.memory,0x5b4900,{0x4a5c30+0x10e0,0xabcd0000u|bits});f.consumer.destroy(f.q.world.identity(1),0xabcd0000u|bits);compare_all(f.q,3);inventory_fixture::compare_actor(f.q.memory,*actor,1);check(f.q.resources.active_count()==get<unsigned>(f.q.memory,0x743128));++consumption_cases;}
+        for(unsigned operation=0;operation<4;++operation){const auto expected=call(f.q.memory,consumption_entries[operation],{0,0xabcdffff});(void)expected;invoke(f,operation,{},0xabcdffff);++consumption_cases;}
+        for(unsigned operation=0;operation<4;++operation){bool refused{};try{invoke(f,operation,f.q.world.identity(0),0xabcd0100);}catch(const std::runtime_error&){refused=true;}check(refused);++consumption_refusals;}
+        f.q.session->scenario.reset();s::SceneDescriptor d;d.active=1;d.instance_index=3;d.template_index=1;d.parameter=4;d.attachment_id=10100;sync(f.q,3,d);bool refused{};try{(void)f.consumer.consume_or_transform(f.q.world.identity(0),3);}catch(const std::runtime_error&){refused=true;}check(refused&&f.q.resources.get(*f.q.resources.slot(3))->parameter==4&&f.consumer.last_record()->status==reo::native::gameplay_events::StatisticsStatus::unavailable);++consumption_refusals;
+        // The plain decrement does not acquire completion metadata.
+        f.consumer.decrement(f.q.world.identity(0),3);check(f.q.resources.get(*f.q.resources.slot(3))->parameter==3);
+        const auto stale=f.q.world.identity(0);check(f.q.world.retire_primary(0)==g::actors::EntityStatus::completed);refused=false;try{f.consumer.transform(stale,3);}catch(const std::runtime_error&){refused=true;}check(refused);++consumption_refusals;
+        Notifications notifications;g::World other({{g::input::Remap{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<g::Session>());u::Owner other_update(other,notifications);refused=false;try{g::ResourceConsumption wrong(f.recipes,other_update);}catch(const std::invalid_argument&){refused=true;}check(refused);++consumption_refusals;check(f.update.close()==u::Status::completed);refused=false;try{f.consumer.destroy({},3);}catch(const std::runtime_error&){refused=true;}check(refused);++consumption_refusals;
+    }
+    // Actual attached primary/secondary release, retained models, content
+    // rebinding and completion-event prefix all execute in the same call.
+    for(unsigned operation=0;operation<4;++operation)for(unsigned mask=0;mask<4;++mask)for(unsigned row=0;row<8;++row){Consuming f(ram,assets[0],controlled);s::SceneDescriptor d;d.active=1;d.instance_index=3;d.ownership_tag=1;d.template_index=std::uint8_t(row);d.attachment_id=10100;d.parameter=1;d.flags=0x20000;d.position={100,-7,200};d.shape_profile=2;std::shared_ptr<g::ResourceModel> retained;
+        if(mask&1){auto [made,raw]=f.q.create(42,7);retained=made.model;d.primary=retained;retained->resource_slot=3;f.q.memory[raw+0x240]=3;}f.q.sync(d);put(f.q.memory,descriptor+0x24,d.parameter);if(mask&2){call(f.q.memory,0x591860,{descriptor});check(f.q.collisions.replace(*f.q.resources.slot(3)).status==s::ResourceCollisionStatus::completed);}const auto actor=f.q.world.primary(0);actor->inventory.carried[0]=3;actor->selected_resource=actor->secondary_equipped_resource=3;actor->resource_action=123;f.actor(0,0,0);f.mode(0,0);f.reset_statistics(123);put(f.q.memory,0x743128,unsigned(f.q.resources.active_count()));const auto expected=call(f.q.memory,consumption_entries[operation],{0x4a5c30,0xabcd0003});if(operation==1)check(f.consumer.consume_or_transform(f.q.world.identity(0),0xabcd0003)==std::uint8_t(GPR_U32(&expected,2)));else if(operation==3)check(f.consumer.transform(f.q.world.identity(0),0xabcd0003)==std::uint8_t(GPR_U32(&expected,2)));else invoke(f,operation,f.q.world.identity(0),0xabcd0003);compare_all(f.q,3);inventory_fixture::compare_actor(f.q.memory,*actor);f.q.compare_world();f.compare_statistics();check(f.q.resources.active_count()==get<unsigned>(f.q.memory,0x743128));++consumption_owner_cases;
+    }
+    placement_floors=nullptr;
+}

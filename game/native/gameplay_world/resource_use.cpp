@@ -37,4 +37,10 @@ std::int16_t ResourceUse::initial_quantity(std::uint32_t full_resource)const{
     const auto& bytes=templates_.state().templates[value.template_index].encoded;
     return std::bit_cast<std::int16_t>(std::uint16_t(std::to_integer<std::uint8_t>(bytes[8])|(std::uint16_t(std::to_integer<std::uint8_t>(bytes[9]))<<8)));
 }
+void ResourceUse::visibility(std::uint32_t resource,std::uint32_t switch_value){
+    const auto value=descriptor(std::uint8_t(resource));if(!value.active||!value.primary)return;
+    const auto model=std::dynamic_pointer_cast<ResourceModel>(value.primary);const auto owned=model?models_.identity_of(*model):ResourceModelId{};
+    if(!owned||!model->current())throw std::runtime_error("Native resource visibility instance foreign or retired");
+    if(std::uint8_t(switch_value)==0)model->flags|=0x80000000u;else model->flags&=~0x80000000u;
+}
 }

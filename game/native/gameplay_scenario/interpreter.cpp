@@ -293,7 +293,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(offline&&!providers.saved_controls->apply(context.selected_actor,enable,value(0),value(4),value(8)))return result(Status::provider_unavailable);
             break;}
         case 0x135:{const auto actor=providers.world->primary(providers.world->selected_actor);if(!actor)return result(Status::provider_unavailable);
-            const bool permitted=actor->category==0&&actor->slot==(providers.world->mode==0?0:providers.world->selected_actor);
+            const bool permitted=providers.world->locally_controlled(*actor);
             const auto applied=providers.scene_controls->choose_five(value(0),{value(4),value(8),value(12),value(16)},*providers.action_choices,actor->character,permitted,providers.world->session().random);
             if(applied.status!=ControlStatus::completed)return result(applied.status==ControlStatus::budget_exhausted?Status::budget_exhausted:Status::provider_unavailable);
             break;}

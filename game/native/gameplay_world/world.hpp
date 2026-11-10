@@ -154,6 +154,9 @@ public:
     Session& session()noexcept{return *session_;}
     const Session& session()const noexcept{return *session_;}
     bool closed()const noexcept{return closed_;}
+    // Complete1B0340 predicate over this canonical session and actor state.
+    // Callers holding capabilities resolve them in this World before querying.
+    bool locally_controlled(const Actor& actor)const noexcept{return actor.category==0&&actor.slot==(mode==0?0:selected_actor);}
     std::span<input::ControllerFrame> controllers()noexcept{return controllers_;}
     std::span<const input::ControllerFrame> controllers()const noexcept{return controllers_;}
     std::span<const input::Remap> layouts()const noexcept{return layouts_;}

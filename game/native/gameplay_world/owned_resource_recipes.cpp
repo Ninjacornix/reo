@@ -9,7 +9,7 @@ OwnedResourceRecipes::OwnedResourceRecipes(ResourceRecipes& recipes,gameplay_upd
 void OwnedResourceRecipes::admit()const{if(!update_.open()||!update_.cooperative_events().open())throw std::runtime_error("Native owned recipe update/event owner closed");}
 bool OwnedResourceRecipes::publish(std::uint32_t recipe,std::uint32_t full_extra,std::uint32_t old_content,const actors::EntityId& id){
     admit();last_event_.reset();const auto actor=update_.world().resolve(id);if(!actor)throw std::runtime_error("Native recipe event actor foreign or retired");
-    const auto& world=update_.world();if(actor->category||actor->slot!=(world.mode==0?0:world.selected_actor))return false;
+    const auto& world=update_.world();if(!world.locally_controlled(*actor))return false;
     const auto extra=std::bit_cast<std::int16_t>(std::uint16_t(full_extra));std::optional<std::uint16_t> event;std::uint16_t first{};
     if(actor->character==3&&(recipe==0xf||recipe==0x10)){
         switch(extra){case 0x136:event=0x13;break;case 0x137:event=0x15;break;case 0x13a:event=0x14;break;case 0x13b:event=0x16;break;case 0x13c:event=0x17;break;case 0x13d:event=0x18;break;default:break;}

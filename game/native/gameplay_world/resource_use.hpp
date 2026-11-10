@@ -16,6 +16,9 @@ public:
     std::uint8_t use(std::uint32_t resource,const ResourceUsePayload& = {});
     void configure(std::uint32_t resource,const ResourceUsePayload& = {});
     std::int16_t initial_quantity(std::uint32_t resource)const;
+    // Complete5B5850: signed low-byte switch0 sets instance flag80000000;
+    // nonzero clears it. Visibility changes during the actual common frame.
+    void visibility(std::uint32_t resource,std::uint32_t switch_value);
 private:
     World& world_;gameplay_scenario::SceneResources& resources_;
     const gameplay_scenario::ResourceTemplates& templates_;ResourceModels& models_;
