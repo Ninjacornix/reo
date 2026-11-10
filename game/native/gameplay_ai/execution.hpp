@@ -20,6 +20,10 @@ struct ExecutionState {
     std::uint8_t peer_priority{},reference_request{};
     std::uint16_t owned_request{};
     std::uint8_t weight_mode{},room_reaction_gate{}; //1077/107E; shared observation inputs
+    std::uint8_t previous_room_reaction_gate{},reference_event{},reference_signal{};
+    std::uint8_t threat_band{},previous_threat_band{},threat_slot{}; //106C..106E
+    std::uint16_t reactive_hold{},reference_cooldown{},companion_hold{},observation_cooldown{},forced_content{};
+    std::uint32_t forward_wall_ticks{},observation_timeout{};
     //1090 is a full word;825CC0 replaces only its low byte while goal B writes
     // a zero-extended equipment-slot byte. Do not split these mutable aliases.
     std::uint32_t goal_resource{};

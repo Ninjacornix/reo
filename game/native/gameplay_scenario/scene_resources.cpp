@@ -1,10 +1,17 @@
 #include "scene_resources.hpp"
 #include "resource_templates.hpp"
+#include "../gameplay_world/inventory_state.hpp"
 #include <utility>
 
 namespace reo::native::gameplay_scenario {
 struct SceneResourceDomain {};
 SceneResources::SceneResources():domain_(std::make_shared<SceneResourceDomain>()) {generations_.fill(1);}
+std::uint8_t SceneResources::find_inventory_content(const gameplay_world::InventorySlots& slots,std::uint32_t content)const noexcept{
+    const auto narrowed=std::uint16_t(content);
+    for(auto id:slots.carried)if(id&&descriptors_[id].attachment_id==narrowed)return id;
+    for(auto id:slots.storage)if(id&&descriptors_[id].attachment_id==narrowed)return id;
+    return 0;
+}
 bool SceneResources::valid(const SceneResourceId& id)const noexcept{
     return id.domain_==domain_&&id.slot_<capacity&&id.generation_==generations_[id.slot_];
 }

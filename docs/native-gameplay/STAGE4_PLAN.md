@@ -144,6 +144,12 @@ The current resource and inventory implementation includes:
   30245 original dispatcher calls per compiler. Full observation/cache production
   and game acceptance remain open.
 
+- [AI observation frame](AI_OBSERVATION_FRAME.md) now executes the admitted
+  `0x812540` routine through the native Update Owner. Both compilers pass 4,096
+  original profiles, 131,859 checks, and thirteen parent tests. The outer AI
+  caller, goal/action dispatch, live content binding, and game acceptance
+  remain open.
+
 - [Target-cache scratch audit](TARGET_CACHE_SCRATCH_AUDIT.md) identifies controlled
   source inverse-sort dependence on unwritten scratch. Both compilers agree on
   48 profiles,192 strict runs and192 separate initialization-policy runs. This

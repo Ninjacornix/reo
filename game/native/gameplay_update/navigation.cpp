@@ -83,8 +83,7 @@ nav::NodeResult Owner::refresh_current_navigation_node(const world::actors::Enti
     const auto actor=world_.resolve(id);if(!actor||!actor->navigation_route)return {};
     const nav::RouteActorFacts facts{{actor->character,actor->slot,actor->ai_control},actor->status,actor->auxiliary_status,actor->room,{actor->position.x,actor->position.y,actor->position.z},actor->motion_class,actor->transient_marker};
     const auto result=nav::choose_actor_node(world_.navigation(),facts,0,room,*actor->navigation_route);
-    // Actual812540 entry prefix publishes the selector return immediately.
-    // The remainder of that AI caller is still a required native consumer.
+    // The observation frame publishes the selector return before room gates.
     if(result.status==nav::QueryStatus::completed)actor->navigation_route->current_node=result.node;
     return result;
 }

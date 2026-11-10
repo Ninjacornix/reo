@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 #include "../transform_math/transform_math.hpp"
+namespace reo::native::gameplay_world {struct InventorySlots;}
 
 namespace reo::native::gameplay_scenario {
 struct SceneResourceDomain;
@@ -84,6 +85,8 @@ public:
     std::optional<SceneResourceId> lookup(std::int16_t authored_id)const noexcept;
     std::optional<AttachedSceneResource> lookup_attached(std::int16_t attachment_id)const noexcept;
     std::optional<SceneDescriptor> get(const SceneResourceId&)const noexcept;
+    // Complete5F2210 read of the canonical inventory and descriptor+6 content.
+    std::uint8_t find_inventory_content(const gameplay_world::InventorySlots&,std::uint32_t)const noexcept;
     SceneStatus replace(const SceneResourceId&,SceneDescriptor)noexcept;
     // Complete591BE0. Count is a derived view of this same canonical table.
     SceneStatus deactivate(const SceneResourceId&)noexcept;

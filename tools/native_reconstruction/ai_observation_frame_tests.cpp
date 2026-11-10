@@ -1,0 +1,432 @@
+#include "game/native/gameplay_update/update.hpp"
+#include "game/native/gameplay_scenario/scene_resources.hpp"
+#include "game/native/gameplay_world/linked_models.hpp"
+#include "game/native/gameplay_world/target_metrics.hpp"
+#include "game/native/animation/model.hpp"
+#include "reference.hpp"
+#include "functions.h"
+#include <fstream>
+#include <iostream>
+#include <source_location>
+#include <vector>
+
+namespace g = reo::native::gameplay_world;
+namespace u = reo::native::gameplay_update;
+namespace c = reo::native::gameplay_collision;
+namespace n = reo::native::gameplay_navigation;
+namespace a = reo::native::gameplay_ai;
+namespace m = reo::native::transform_math;
+namespace s = reo::native::gameplay_scenario;
+
+namespace {
+constexpr unsigned primary_base = 0x4a5c30, primary_stride = 0x10e0;
+constexpr unsigned linked_base = 0x42eb00, linked_stride = 0xd90;
+constexpr unsigned stack = 0x1f00000;
+unsigned case_number{}, checks{}, draw_calls{}, scene_calls{}, wall_calls{}, event_calls{};
+unsigned wall_hits{}, wall_resets{};
+unsigned refused_frames{};
+std::array<unsigned, 4> threat_bands{};
+std::optional<unsigned> original_event;
+bool original_wall_hit{};
+const n::VisibilityRoom* active_room{};
+std::vector<std::uint8_t> memory(0x2000000);
+
+void check(bool condition, std::source_location location = std::source_location::current()) {
+    ++checks;
+    if (!condition)
+        throw std::runtime_error("Observation case " + std::to_string(case_number) + " line " +
+                                 std::to_string(location.line()));
+}
+template <class Buffer, class Value> void put(Buffer& bytes, unsigned offset, Value value) {
+    std::memcpy(bytes.data() + offset, &value, sizeof(value));
+}
+
+std::shared_ptr<const reo::native::animation::Skeleton> model_skeleton() {
+    std::array<std::byte, 28 + 12 * 84> raw{};
+    put(raw, 4, 13u);
+    put(raw, 8, std::uint32_t(raw.size()));
+    put(raw, 16, 1u);
+    put(raw, 20, 16u);
+    for (unsigned i = 0; i < 12; ++i) {
+        const unsigned record = 28 + 84 * i, node = record + 12;
+        put(raw, record, 1u);
+        put(raw, record + 4, 1u);
+        put(raw, record + 8, 84u);
+        put(raw, node, i);
+        put(raw, node + 8, i == 0 ? 1u : UINT32_MAX);
+        put(raw, node + 12, i > 0 && i < 11 ? i + 1 : UINT32_MAX);
+        for (unsigned lane = 0; lane < 3; ++lane)
+            put(raw, node + 0x10 + 4 * lane, 1.f);
+    }
+    return reo::native::animation::Skeleton::import_raw(raw);
+}
+
+c::response::Grid clear_grid() {
+    std::array<std::byte, 48> raw{};
+    put(raw, 8, 4000u);
+    put(raw, 12, 4000u);
+    put(raw, 16, 1u);
+    put(raw, 20, 1u);
+    put(raw, 32, 32u);
+    put(raw, 36, 40u);
+    put(raw, 40, 36u);
+    put(raw, 44, UINT32_MAX);
+    return c::response::Grid::import(raw);
+}
+
+void bind_navigation(g::World& world) {
+    std::array<std::uint8_t, 184> raw{};
+    put(raw, 0, 0x20030724u);
+    put(raw, 4, 12u);
+    put(raw, 8, 16u);
+    put(raw, 16, 1u);
+    raw[20] = 7;
+    put(raw, 24, 32u);
+    put(raw, 32, 80u);
+    put(raw, 36, 88u);
+    put(raw, 40, 1u);
+    raw[44] = 1;
+    put(raw, 60, UINT32_MAX);
+    put(raw, 64, UINT32_MAX);
+    put(raw, 108, UINT32_MAX);
+    n::ImportFailure failure;
+    auto asset = n::Asset::read(raw, failure);
+    check(bool(asset));
+    check(world.session().room_variants.store(7, 0));
+    check(world.navigation().bind(std::make_shared<const n::Asset>(std::move(*asset))));
+}
+
+struct Notifications final : s::FlagNotifications {
+    bool changed(const s::ScenarioFlagChange&) noexcept override {
+        std::terminate();
+    }
+    bool changed(const s::StridedFlagChange&) noexcept override {
+        std::terminate();
+    }
+};
+
+void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
+    const auto& state = *actor.ai_execution;
+    bytes[3] = actor.slot;
+    bytes[0x0a] = actor.phase;
+    put(bytes, 0x38, actor.position);
+    put(bytes, 0x92, actor.orientation[1]);
+    put(bytes, 0x1e2, actor.room);
+    bytes[0x54f] = actor.motion_class;
+    bytes[0xb98] = actor.character;
+    put(bytes, 0xba0, actor.status);
+    put(bytes, 0xba4, actor.auxiliary_status);
+    put(bytes, 0xc84, actor.inventory.carried);
+    put(bytes, 0xc88, actor.inventory.storage);
+    put(bytes, 0xff4, state.goal);
+    put(bytes, 0xff6, state.previous_goal);
+    put(bytes, 0xff8, state.action);
+    put(bytes, 0xffa, state.previous_action);
+    put(bytes, 0xffc, state.goal_phases);
+    put(bytes, 0x1000, state.goal_parameters);
+    put(bytes, 0x1008, state.action_phases);
+    bytes[0x100c] = std::uint8_t(actor.navigation_route->current_node);
+    bytes[0x103a] = state.action_marker;
+    put(bytes, 0x1060, state.observation_timeout);
+    bytes[0x106c] = state.threat_band;
+    bytes[0x106d] = state.previous_threat_band;
+    bytes[0x106e] = state.threat_slot;
+    put(bytes, 0x1070, state.observation_cooldown);
+    put(bytes, 0x1072, state.periodic_counter);
+    bytes[0x1074] = state.goal_refresh;
+    bytes[0x1075] = state.reference_event;
+    bytes[0x1077] = state.weight_mode;
+    put(bytes, 0x107c, state.room_memo);
+    bytes[0x107e] = state.room_reaction_gate;
+    bytes[0x107f] = state.previous_room_reaction_gate;
+    bytes[0x1080] = state.reference_request;
+    bytes[0x1081] = state.peer_priority;
+    bytes[0x1082] = state.reference_signal;
+    bytes[0x1083] = state.observation_flags;
+    put(bytes, 0x1084, state.reactive_hold);
+    put(bytes, 0x1086, state.reference_cooldown);
+    put(bytes, 0x1088, state.companion_hold);
+    put(bytes, 0x108a, state.owned_request);
+    bytes[0x1098] = state.reaction;
+    bytes[0x1099] = state.pending_reaction;
+    put(bytes, 0x109a, state.reaction_countdown);
+    put(bytes, 0x109c, state.forced_priority);
+    put(bytes, 0x10a0, state.forced_content);
+    put(bytes, 0x10a4, state.forward_wall_ticks);
+    put(bytes, 0x10ac, state.weight_profile ? 0x828a60u + 56u * *state.weight_profile : 0u);
+    put(bytes, 0x10b0, state.base_weights);
+    put(bytes, 0x10b8, state.reactive_weights);
+    put(bytes, 0x10c0, state.status_weights);
+    put(bytes, 0x10c8, state.combined_weights);
+}
+
+void compare(unsigned seed, const c::response::Grid& grid,
+             const std::shared_ptr<const reo::native::animation::Skeleton>& skeleton) {
+    g::World world({{{1, 2, 4}}, 1, {68, UINT64_MAX}}, std::make_shared<g::Session>());
+    Notifications notifications;
+    u::Owner owner(world, notifications);
+    s::SceneResources resources;
+    reo::native::gameplay_scene::Records records;
+    const std::array walls{c::response::Triangle{
+        0x10000,
+        {c::Vec3{100, -100, 450}, c::Vec3{300, -100, 450}, c::Vec3{200, 200, 450}},
+        {0, 0, -1},
+        450,
+    }};
+    const bool wall_profile = seed % 5 == 1;
+    const n::VisibilityRoom room{grid,
+                                 {},
+                                 wall_profile ? std::span<const c::response::Triangle>(walls)
+                                              : std::span<const c::response::Triangle>{}};
+    world.room = seed % 11 ? 7 : 8;
+    bind_navigation(world);
+    const unsigned self_slot = 1 + seed % 2, peer_slot = 3 - self_slot;
+    for (unsigned slot = 0; slot < 8; ++slot) {
+        auto actor = std::make_unique<g::Actor>();
+        actor->slot = std::uint8_t(slot);
+        actor->room = 7;
+        actor->position = {100.f + 50.f * float(slot), 20.f, 400.f};
+        actor->ai_execution.emplace();
+        actor->navigation_route.emplace();
+        check(bool(world.spawn_primary(slot, std::move(actor)).id));
+    }
+    auto self = world.primary(self_slot), reference = world.primary(0),
+         peer = world.primary(peer_slot);
+    self->active = true;
+    self->position.x = 200.f;
+    peer->position.x = (seed / 2 % 3 == 0) ? 180.f : 240.f;
+    if (seed / 8 % 7 == 0)
+        reference->position.x = 1200.f;
+    self->model = std::make_shared<reo::native::animation::Instance>(skeleton);
+    auto basis = m::identity();
+    basis[3] = {self->position.x, self->position.y, self->position.z, 1.f};
+    self->model->rebuild(basis);
+    self->motion_class = std::array<std::uint8_t, 6>{0, 8, 5, 0x1a, 0x3b, 0x21}[seed / 8 % 6];
+    self->orientation[1] = wall_profile ? 0 : std::int16_t(seed * 131u);
+    self->character = std::uint8_t(seed / 13 % 8);
+    self->status = seed / 71 % 2 ? 8 : 0;
+    self->auxiliary_status = (seed / 29 % 4) << 21;
+    reference->status = seed / 37 % 2 ? 8 : 0;
+    reference->motion_class = seed / 17 % 2 ? 0x15 : 0;
+    reference->phase = seed / 19 % 2 ? 10 : 0;
+    reference->ai_execution->reference_event = std::uint8_t(seed / 2 % 13);
+    reference->ai_execution->reference_signal = seed / 101 % 5 ? 1 : 0;
+    reference->ai_execution->weight_mode = std::uint8_t(seed / 41 % 2);
+    peer->ai_execution->companion_hold = seed / 7 % 5 == 0 ? 2 : 0;
+    peer->ai_execution->goal = seed / 23 % 2 ? 11 : 3;
+
+    auto& state = *self->ai_execution;
+    a::select_weight_profile(state, seed % 20);
+    state.goal = 15;
+    state.action = 8;
+    state.goal_phases.fill(19);
+    state.action_phases.fill(9);
+    state.goal_parameters.fill(333);
+    state.action_marker = 11;
+    state.weight_mode = std::uint8_t(seed / 59 % 2);
+    state.room_memo = seed / 3 % 2 ? 7 : 9;
+    state.room_reaction_gate = std::uint8_t(seed / 79 % 2);
+    state.reference_request = std::uint8_t(seed / 53 % 3);
+    state.periodic_counter = seed / 5 % 9 == 0 ? 0 : 60;
+    state.reference_cooldown = seed / 43 % 5 == 0 ? 1 : 0;
+    state.reactive_hold = std::uint16_t(seed / 31 % 3);
+    state.reactive_weights.fill(231);
+    state.combined_weights.fill(121);
+    state.observation_flags = 7;
+    state.threat_band = 2;
+    state.threat_slot = 9;
+    state.pending_reaction = 4;
+    state.reaction_countdown = std::uint16_t(seed / 11 % 3);
+    state.forward_wall_ticks = 148 + seed % 4;
+    state.owned_request = std::uint16_t(seed % 3);
+    state.observation_cooldown = 1;
+    state.observation_timeout = 2;
+    state.forced_priority = seed / 67 % 3 == 0 ? -1 : std::int32_t(seed % 8);
+    state.forced_content = 0x131;
+    self->inventory.storage[17] = 4;
+    s::SceneDescriptor descriptor;
+    descriptor.attachment_id = seed / 89 % 2 ? 0x131 : 0x132;
+    descriptor.authored_id = 0x131;
+    check(bool(resources.load(4, descriptor)));
+    put(memory, 0x3c5630 + 4 * 60 + 6, descriptor.attachment_id);
+
+    const unsigned target_count = seed == 4096 ? 50 : seed % 127 == 0 ? 49 : seed % 17 == 0 ? 0 : 4;
+    const float gap = float(seed % 601);
+    for (unsigned i = 0; i < target_count; ++i) {
+        auto id = world.linked_models().allocate(false).id;
+        auto target = world.resolve(id);
+        check(bool(target));
+        const auto slot = world.linked_models().physical_slot(id).value();
+        target->active = true;
+        target->room = 7;
+        target->slot = std::uint8_t((i * 7 + seed) % 64);
+        target->position = {self->position.x + float(i * 17) + gap, 20.f, 400.f};
+        target->targeting = g::TargetingState{seed / (i + 5) % 3 == 0 ? 0x200u : 0u, false};
+        const auto offset = linked_base + slot * linked_stride;
+        memory[offset + 3] = target->slot;
+        memory[offset + 6] = slot;
+        put(memory, offset + 0xc94, target->targeting->flags);
+    }
+    check(world.target_metrics().rebuild({grid, grid, {}, {}}).status ==
+          g::TargetMetricStatus::completed);
+    const auto& cache = *world.target_metrics().state();
+    for (unsigned i = 0; i < 8; ++i) {
+        for (unsigned j = 0; j < 8; ++j)
+            put(memory, 0x3b4e40 + 64 * i + 8 * j, cache.primary_pairs[i][j]->distance);
+        put(memory, 0x3b2e10 + 50 * i, cache.primary_linked_order[i]);
+        for (unsigned j = 0; j < 50; ++j)
+            if (const auto& value = cache.primary_linked[i][j]) {
+                const unsigned offset = 0x3b41c0 + 400 * i + 8 * j;
+                put(memory, offset, value->pair.distance);
+                memory[offset + 6] = value->wall;
+                memory[offset + 7] = value->floor;
+            }
+        auto bytes = std::span(memory).subspan(primary_base + primary_stride * i, primary_stride);
+        std::fill(bytes.begin(), bytes.end(), 0xa5);
+        project_actor(bytes, *world.primary(i));
+    }
+    const auto source_before = std::vector<std::uint8_t>(
+        memory.begin() + primary_base, memory.begin() + primary_base + 8 * primary_stride);
+    const auto initial_random = std::uint16_t(seed * 67u);
+    world.session().random.restore({initial_random, 4321, 89});
+    put(memory, 0x3244b0, initial_random);
+    put(memory, 0x3244b8, std::uint16_t(4321));
+    put(memory, 0x3243dc, world.room);
+    put(memory, 0x83e530, 23u);
+    if (seed == 4097)
+        world.target_metrics().invalidate();
+    const auto result =
+        owner.update_ai_observations(world.identity(self_slot), room, records, resources);
+    if (seed >= 4096) {
+        check(result.status == a::Status::unavailable);
+        check(state.observation_timeout == 2 && result.targets_examined == 0);
+        ++refused_frames;
+        return;
+    }
+    check(result.status == a::Status::completed);
+    check(result.targets_examined == target_count);
+    ++threat_bands.at(state.threat_band);
+    auto expected = source_before;
+    for (unsigned i = 0; i < 8; ++i)
+        project_actor(std::span(expected).subspan(i * primary_stride, primary_stride),
+                      *world.primary(i));
+    R5900Context context;
+    PS2Runtime runtime;
+    context.pc = 0x812540;
+    SET_GPR_U32(&context, 4, primary_base + self_slot * primary_stride);
+    SET_GPR_U32(&context, 29, stack);
+    SET_GPR_U32(&context, 31, 0x100);
+    original_event.reset();
+    original_wall_hit = false;
+    active_room = &room;
+    const auto previous_walls = wall_calls;
+    original_transform_port(memory.data(), &context, &runtime);
+    active_room = nullptr;
+    check(context.pc == 0x100 && GPR_U32(&context, 29) == stack);
+    check(result.scheduled_event == original_event);
+    check(result.wall_probe == (previous_walls != wall_calls));
+    check(result.wall_hit == original_wall_hit);
+    if (result.wall_hit) {
+        ++wall_hits;
+        if (result.goal_and_action_reset)
+            ++wall_resets;
+    }
+    check(result.scene_candidates.count == transform_read<std::uint32_t>(memory.data(), 0x83e530));
+    check(world.session().random.state().primary ==
+          transform_read<std::uint16_t>(memory.data(), 0x3244b0));
+    check(world.session().random.state().secondary ==
+          transform_read<std::uint16_t>(memory.data(), 0x3244b8));
+    const auto mismatch =
+        std::mismatch(expected.begin(), expected.end(), memory.begin() + primary_base);
+    if (mismatch.first != expected.end()) {
+        const auto offset = std::distance(expected.begin(), mismatch.first);
+        std::cerr << "Actor slot " << offset / primary_stride << " offset " << std::hex
+                  << offset % primary_stride << std::dec << " native " << unsigned(*mismatch.first)
+                  << " original " << unsigned(*mismatch.second) << '\n';
+        check(false);
+    }
+}
+} // namespace
+
+void original_transform_port(std::uint8_t* memory, R5900Context* context, PS2Runtime* runtime) {
+    const unsigned arg = GPR_U32(context, 4), other = GPR_U32(context, 5);
+    if (context->pc == 0x1aec80)
+        ++draw_calls;
+    if (context->pc == 0x8130d0) {
+        original_event = other;
+        ++event_calls;
+    }
+    switch (context->pc) {
+#include "dispatch.inc"
+        case 0x815bc0:
+            check(other == arg + 0x38 && GPR_U32(context, 6) == 0);
+            SET_GPR_U32(context, 2, 0); // Single admitted graph node.
+            break;
+        case 0x819bc0:
+            check(other == 0x83e330);
+            SET_GPR_U32(context, 2, 0); // The fixture has no scene records.
+            ++scene_calls;
+            break;
+        case 0x191f80:
+            context->f[0] = m::radians(std::uint16_t(arg));
+            break;
+        case 0x191bc0: {
+            const auto trig = m::sin_cos(context->f[12]);
+            check(transform_read<float>(memory, arg) == 0.f &&
+                  transform_read<float>(memory, arg + 8) == 100.f);
+            transform_write(memory, arg, 100.f * trig.sine);
+            transform_write(memory, arg + 8, 100.f * trig.cosine);
+            break;
+        }
+        case 0x579980: {
+            check(active_room && GPR_U32(context, 6) == 0x1ffff && GPR_U32(context, 7) == 0);
+            auto filter = active_room->filter;
+            filter.include = 0x1ffff;
+            filter.exclude = 0;
+            filter.dynamic_kind_gate = false;
+            const auto hit =
+                c::trace::any(active_room->walls, transform_read<c::Vec3>(memory, arg),
+                              transform_read<c::Vec3>(memory, other), filter, active_room->dynamic);
+            check(hit.status == c::trace::SamplingStatus::complete);
+            original_wall_hit = bool(hit.hit);
+            SET_GPR_U32(context, 2, original_wall_hit);
+            ++wall_calls;
+            break;
+        }
+        case 0x107c68:
+            check(other == 0 && GPR_U32(context, 6) == 8 && arg + 8 < 0x2000000);
+            std::memset(memory + arg, 0, 8);
+            SET_GPR_U32(context, 2, arg);
+            break;
+        default:
+            throw std::runtime_error("Undeclared original observation dependency " +
+                                     std::to_string(context->pc));
+    }
+    context->pc = GPR_U32(context, 31);
+}
+
+int main(int argc, char** argv) try {
+    check(argc == 2);
+    std::ifstream image(argv[1], std::ios::binary);
+    check(bool(image));
+    image.read(reinterpret_cast<char*>(memory.data() + 0x810000), 113152);
+    check(image.gcount() == 113152);
+    const auto grid = clear_grid();
+    const auto skeleton = model_skeleton();
+    for (; case_number < 4096; ++case_number)
+        compare(case_number, grid, skeleton);
+    compare(4096, grid, skeleton);
+    compare(4097, grid, skeleton);
+    check(wall_hits > wall_resets && wall_resets > 0);
+    check(std::ranges::all_of(threat_bands, [](unsigned count) { return count > 0; }));
+    std::cout << "{\"cases\":" << case_number << ",\"checks\":" << checks
+              << ",\"draw_calls\":" << draw_calls << ",\"scene_calls\":" << scene_calls
+              << ",\"wall_calls\":" << wall_calls << ",\"wall_hits\":" << wall_hits
+              << ",\"wall_resets\":" << wall_resets << ",\"event_calls\":" << event_calls
+              << ",\"refused_frames\":" << refused_frames << ",\"threat_bands\":["
+              << threat_bands[0] << ',' << threat_bands[1] << ',' << threat_bands[2] << ','
+              << threat_bands[3] << "]}\n";
+} catch (const std::exception& error) {
+    std::cerr << error.what() << '\n';
+    return 1;
+}
