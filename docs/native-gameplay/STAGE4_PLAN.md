@@ -76,6 +76,10 @@ The current resource and inventory implementation includes:
   intentional no-message selectors0/13. All eight admitted actor branches share
   one qualified gate/dispatch; remaining selectors, actual producers, transport
   and installation remain open.
+- [Actor state and periodic publication](ACTOR_STATE_MESSAGES.md) supplies
+  selector2, its actual primary/substate and selected-gauge helpers, and664F60's
+  clock/slot gate. The Owner facade uses its bound simulation clock. BAC writers
+  and import, outer behavior binding, transport and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

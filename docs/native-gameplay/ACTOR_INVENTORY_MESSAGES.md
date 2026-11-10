@@ -57,3 +57,7 @@ state and their real helper consumers are not replaced with opaque native byte
 arrays. Actual inventory/action callers, receiver/queue/transport consumers,
 remaining gameplay families, semantic World save/load and coherent game
 installation remain open.
+
+Follow-up: [actor state and periodic publication](ACTOR_STATE_MESSAGES.md) adds
+selector2 and its actual classification/selected-gauge helpers. The immutable
+inventory qualification above remains the earlier eight-branch checkpoint.

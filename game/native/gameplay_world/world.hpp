@@ -41,6 +41,7 @@ struct Actor : actors::Entity,actors::HitActor {
     bool active{},visible{};
     std::uint8_t ai_control{},normalized_marker{};
     std::uint8_t character{};
+    std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
     std::uint8_t appearance_variant{}; // original BBC; separate from character B98 and model_variant BB4
     std::uint8_t motion_subtype{},motion_style{},previous_motion_class{};
     std::uint8_t selected_resource{},secondary_resource{},model_pose_class{};

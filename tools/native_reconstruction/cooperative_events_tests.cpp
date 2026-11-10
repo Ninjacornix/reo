@@ -27,12 +27,20 @@ bool actor_inventory_capture{};
 void actor_inventory_message_port(std::uint8_t*,R5900Context*);
 void actor_inventory_room_owner_port(std::uint8_t*,R5900Context*);
 #endif
+#ifdef REO_ACTOR_STATE_MESSAGE
+bool actor_state_capture{};
+void actor_state_message_port(std::uint8_t*,R5900Context*);
+void actor_state_room_owner_port(std::uint8_t*,R5900Context*);
+#endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};switch(context->pc){
 #ifdef REO_COMPLETION_STATISTICS
 case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
 #endif
 #ifdef REO_SCENARIO_PUBLICATION
 case 0x811190:case 0x810870:
+#ifdef REO_ACTOR_STATE_MESSAGE
+if(actor_state_capture){actor_state_message_port(memory,context);done();return;}
+#endif
 #ifdef REO_ACTOR_INVENTORY_MESSAGE
 if(actor_inventory_capture){actor_inventory_message_port(memory,context);done();return;}
 #endif
@@ -46,6 +54,9 @@ publication_message_port(memory,context);done();return;
 #endif
 #ifdef REO_ACTOR_STATUS_MESSAGE
 case 0x811d40:case 0x8115f0:
+#ifdef REO_ACTOR_STATE_MESSAGE
+if(actor_state_capture){actor_state_room_owner_port(memory,context);done();return;}
+#endif
 #ifdef REO_ACTOR_INVENTORY_MESSAGE
 if(actor_inventory_capture){actor_inventory_room_owner_port(memory,context);done();return;}
 #endif
@@ -84,6 +95,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #endif
 #ifdef REO_ACTOR_INVENTORY_MESSAGE
 #include "tools/native_reconstruction/actor_inventory_message_tests.inc"
+#endif
+#ifdef REO_ACTOR_STATE_MESSAGE
+#include "tools/native_reconstruction/actor_state_message_tests.inc"
 #endif
 int main(int argc,char** argv)try{
     check(argc==
@@ -131,6 +145,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_INVENTORY_MESSAGE
     compare_actor_inventory_messages(memory);
 #endif
+#ifdef REO_ACTOR_STATE_MESSAGE
+    compare_actor_state_messages(memory,argv[4]);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -149,6 +166,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_INVENTORY_MESSAGE
     <<",\"actor_inventory_cases\":"<<actor_inventory_cases<<",\"actor_inventory_messages\":"<<actor_inventory_messages<<",\"actor_inventory_lookups\":"<<actor_inventory_lookups<<",\"actor_inventory_refusals\":"<<actor_inventory_refusals
+#endif
+#ifdef REO_ACTOR_STATE_MESSAGE
+    <<",\"actor_state_cases\":"<<actor_state_cases<<",\"actor_state_messages\":"<<actor_state_messages<<",\"actor_state_lookups\":"<<actor_state_lookups<<",\"actor_state_refusals\":"<<actor_state_refusals<<",\"actor_gauge_cases\":"<<actor_gauge_cases<<",\"actor_state_class_cases\":"<<actor_state_class_cases<<",\"actor_periodic_cases\":"<<actor_periodic_cases<<",\"actor_clock_cases\":"<<actor_clock_cases
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

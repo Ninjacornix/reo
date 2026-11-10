@@ -1,5 +1,6 @@
 #pragma once
 #include "../gameplay_world/world.hpp"
+#include "../gameplay_world/actor_state.hpp"
 #include "../gameplay_scenario/flags.hpp"
 namespace reo::native::gameplay_update {
 enum class MessageRoute {mode_zero,mode_one};
@@ -27,7 +28,12 @@ struct ActorActionMessage {
     std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
     static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
 };
-enum class ActorMessageSelector:std::uint8_t {none=0,interaction=4,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+enum class ActorMessageSelector:std::uint8_t {none=0,state=2,interaction=4,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+struct ActorStateMessage {
+    MessageRoute route{};std::uint32_t channel{};gameplay_world::Position position;
+    std::uint32_t status{};std::int16_t yaw{};std::uint8_t gauge_band{};
+    static constexpr unsigned type=2,length=24,options=0,dispatch_mode=2;
+};
 struct ActorInteractionMessage {
     MessageRoute route{};std::uint32_t channel{};std::array<std::uint8_t,4> values{};
     static constexpr unsigned type=4,length=8,options=0,dispatch_mode=4;
@@ -52,6 +58,7 @@ public:
     virtual bool send(const ActorInteractionMessage&)noexcept{return false;}
     virtual bool send(const ActorResourcePairMessage&)noexcept{return false;}
     virtual bool send(const ActorInventoryMessage&)noexcept{return false;}
+    virtual bool send(const ActorStateMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
 enum class PublicationStatus {completed,unavailable,message_unavailable};
@@ -70,11 +77,25 @@ public:
     }
     PublicationStatus actor_status(const gameplay_world::actors::EntityId& id)noexcept{return actor_message(id,ActorMessageSelector::status);}
     PublicationStatus actor_action(const gameplay_world::actors::EntityId& id)noexcept{return actor_message(id,ActorMessageSelector::action);}
+    PublicationStatus periodic_actor_state(const gameplay_world::actors::EntityId& id)noexcept{
+        if(world_.closed())return PublicationStatus::unavailable;
+        if(world_.paused||world_.session().timer_subseconds()%30)return PublicationStatus::completed;
+        const auto actor=world_.resolve(id);if(!actor)return PublicationStatus::unavailable;
+        if(actor->slot!=world_.selected_actor||!gameplay_world::periodic_state_message_classified(*actor))return PublicationStatus::completed;
+        return actor_message(id,ActorMessageSelector::state);
+    }
     PublicationStatus actor_message(const gameplay_world::actors::EntityId& id,ActorMessageSelector selector)noexcept{
         const auto gate=message_actor(id,std::uint8_t(selector));if(!gate.actor)return gate.status;
         const auto& actor=gate.actor;
         switch(selector){
         case ActorMessageSelector::none:case ActorMessageSelector::reserved:return PublicationStatus::completed;
+        case ActorMessageSelector::state:{
+            if(gameplay_world::state_message_classified(*actor))actor->status|=0x08000000u;
+            else actor->status&=~0x08000000u;
+            ActorStateMessage message;message.position=actor->position;message.status=actor->status;message.yaw=actor->orientation[1];
+            const auto band=gameplay_world::selected_gauge_band(world_);if(!band)return PublicationStatus::unavailable;
+            message.gauge_band=*band;return dispatch_actor(*actor,message);
+        }
         case ActorMessageSelector::status:{ActorStatusMessage message;message.status=actor->status;message.health=actor->current;return dispatch_actor(*actor,message);}
         case ActorMessageSelector::interaction:{ActorInteractionMessage message;message.values={actor->interaction_kind,actor->interaction_mode,actor->interaction_slot,actor->interaction_detail};return dispatch_actor(*actor,message);}
         case ActorMessageSelector::resource_pair:{ActorResourcePairMessage message;message.pair=actor->explicit_resource_pair;message.carried=actor->inventory.carried;return dispatch_actor(*actor,message);}
