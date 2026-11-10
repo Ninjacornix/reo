@@ -90,6 +90,13 @@ The current resource and inventory implementation includes:
   production across166 owned rooms; the existing three strict model-reference
   refusals remain. Full AI goals/actions and native gameplay acceptance stay open.
 
+- [AI execution state](AI_EXECUTION_STATE.md) now supplies complete goal/action
+  resets and authored weight-profile selection through actual Actor/Owner state.
+  Both compilers pass6629721 original-comparison checks and twelve parent tests.
+  The goal-zero gate uses the low halfword, correcting the older low-byte mapping
+  wording. Full initialization, observations, goal/action dispatch and actual
+  gameplay installation remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

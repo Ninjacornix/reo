@@ -1,6 +1,6 @@
-add_library(reo_native_gameplay_update STATIC update.cpp collision_workers.cpp actor_gauge.cpp navigation.cpp)
+add_library(reo_native_gameplay_update STATIC update.cpp collision_workers.cpp actor_gauge.cpp navigation.cpp ai.cpp)
 target_compile_features(reo_native_gameplay_update PUBLIC cxx_std_20)
-target_link_libraries(reo_native_gameplay_update PUBLIC reo_native_gameplay_world reo_native_gameplay_tasks reo_native_gameplay_scenario reo_native_gameplay_events reo_native_navigation_visibility)
+target_link_libraries(reo_native_gameplay_update PUBLIC reo_native_gameplay_world reo_native_gameplay_tasks reo_native_gameplay_scenario reo_native_gameplay_events reo_native_navigation_visibility reo_native_gameplay_ai)
 target_include_directories(reo_native_gameplay_update PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(reo_native_gameplay_update PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
@@ -14,6 +14,9 @@ add_test(NAME native_gameplay_cooperative_events COMMAND gameplay_cooperative_ev
 add_executable(gameplay_navigation_owner_tests navigation_tests.cpp)
 target_link_libraries(gameplay_navigation_owner_tests PRIVATE reo_native_gameplay_update)
 add_test(NAME native_gameplay_navigation_owner COMMAND gameplay_navigation_owner_tests)
+add_executable(gameplay_ai_owner_tests ai_tests.cpp)
+target_link_libraries(gameplay_ai_owner_tests PRIVATE reo_native_gameplay_update)
+add_test(NAME native_gameplay_ai_owner COMMAND gameplay_ai_owner_tests)
 
 add_library(reo_native_gameplay_reception STATIC reception.cpp actor_message_queue.cpp)
 target_compile_features(reo_native_gameplay_reception PUBLIC cxx_std_20)

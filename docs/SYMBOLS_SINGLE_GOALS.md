@@ -8,6 +8,12 @@ Owned table **0x8294C0** contains exactly the following sixteen goal callbacks, 
 
 The update at 0x812460 gates state collection, goal dispatch, then either active-room or off-room action execution. The observation collector 0x812540 rebuilds local targets, incorporates reference-actor changes, updates eight priority weights and advances counters. The dispatcher **0x813330 immediately reevaluates and calls again when a callback returns nonzero, without a local iteration budget**. This makes callback identity, iteration count and return path useful future instrumentation boundaries. Static control flow alone does not establish that the loop has stalled or caused any recorded slowdown.
 
+2026-11-10 erratum:813380 tests the full low halfword (ANDI FFFF at8133A8),
+not the low byte described in its older table row. Input256 is nonzero and
+preserves previous goal;65536 resets and records the old goal. The complete
+[native execution comparisons](native-gameplay/AI_EXECUTION_STATE.md) verify
+every halfword with both zero and FFFF high halves on both compilers.
+
 | Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
 | --- | --- | --- | --- |
 | [o9 0x8120C0](../recomp/config/output_ovl/o9/o9_008120C0_0x8120c0.cpp) | `reset_single_actor_ai_session_state_candidate` | Probable role; mechanics verified | Clears byte at inline resource base 0x843780. When actor +FF0 is enabled, calls 6812B0(0, actor id), room-state setup 815DF0(mode 0), goal/action/profile resets; initializes off-room byte +105B=FF, periodic counter +1072=60, room memo +107C=FFFF, forced priority +109C=-1, and clears reaction, refresh and flag fields. The inline resource base is not a loaded pointer. |

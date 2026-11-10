@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "status": "qualified native AI goal/action state and weight-profile selector",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_ai/execution.cpp": "7fcbbd7e464c86ed235701065f9845261b409992c6b0d84590741dab1b7a9b83",
+    "game/native/gameplay_ai/execution_tests.cpp": "e1b7a19270c178e7ba3de4c6d1453701fb22f65ddc3f0cf14384b8a97bfb2e46",
+    "game/native/gameplay_ai/execution.hpp": "873cd86d04e277b3fe3cf96ab351e21e46c46d5bdc206f50f0881e4bca77e6fa",
+    "game/native/gameplay_ai/weight_profiles.inc": "b6158eee9573adaa82548e76608a794bf92eccacabc541ee113868718364782e",
+    "game/native/gameplay_ai/CMakeLists.txt": "3d3616ef64e31f2bd71d8ee01b25d7c6024d0adac6576c5927e6aa30fddf7424",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/verify_gameplay_ai.py": "39a57a9e94464af1f4e756527e30c7cfc297ce122f91a43dc91a5d7d5a8e776c",
+    "tools/native_reconstruction/generate_ai_weight_profiles.py": "46e5b86cd93ca0d1561a055e07084288a0ae62229714ff10424eb3003e4fe80e",
+    "recomp/config/output_ovl/o9/o9_008123E0_0x8123e0.cpp": "d81aaf5f7dbc114a3985e23d69dc0e06fc3008750f2c7043368b332dce29c135",
+    "recomp/config/output_ovl/o9/o9_00813380_0x813380.cpp": "4507f274a78e8f59879844a8ab8a7536e44636286c240a66adb8743023794f4b",
+    "recomp/config/output_ovl/o9/o9_0081A6E0_0x81a6e0.cpp": "8393d28752aac2e131843a77d47c4a1c05edc294958476d2bcd3ec4253ed3eb2",
+    "recomp/config/output_ovl/o9/o9_0081A6F0_0x81a6f0.cpp": "4fed2445c053912fa77ba147e5829bfed867ccbaa3769878e561213ed595a5c1",
+    "recomp/config/output_ovl/o9/o9_00814B30_0x814b30.cpp": "90e5162903fb67c9e648de30eecacc85d1c3b7d62205774433f85e3b639a6cb0",
+    "recomp/config/output/sub_00107AB0_0x107ab0.cpp": "aec9b514abcb0c7125dc0dc54990acf0d1216b77af65d3d98c9c8c25891f973a",
+    "game/native/CMakeLists.txt": "25e2b90f1e515db01e882c1a7f11ca2ba2927eae1061b9ac064bd34b82ba074a",
+    "game/native/gameplay_world/world.hpp": "4ec1f83d43050e8ea3bf19a0df827f0c5c1b5e7ba745ab9b149b81f15e2a81ca",
+    "game/native/gameplay_update/ai.cpp": "cb12cfeb6b8c4396ab62a159fae8c8b6f197af599d730052259ad1231cdb467e",
+    "game/native/gameplay_update/ai_tests.cpp": "5c402bcd895157c72ab26cf6c540941a4c1f885de4d971c963e44cb709afe492",
+    "game/native/gameplay_update/update.hpp": "082e3f9b7dc12657e8227a50c730a5bc0f866915882f2a1d420abd5285a892c3",
+    "game/native/gameplay_update/CMakeLists.txt": "bbb5d1b8f9ee5591e90a04d4c4f9aecd3b580210a17c44a836f50f42a625f752",
+    "tools/native_reconstruction/gameplay_update_sources.py": "b196dced09b3cec0200f649d01ffb044eac0266f16197815d66b56916ca70efc",
+    "tools/native_reconstruction/effect_work_sources.py": "289ce85f569445054406239275e3abc9f4400b12c6aa3488a6d727a0ff68d42e",
+    "tools/native_reconstruction/qualify_gameplay_ai_execution_v1.py": "ae136b0e4af2e381d87d573c278aec507d68973a2d90b1e0e5b72dd4bd425b4f"
+  },
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-ai-llvm-v1/receipt.json",
+      "sha256": "8a0bb256f163f7d8d93fbf0a24c004d23cdddc43226438ae7ea3e30d6badb3d0",
+      "observed": {
+        "checks": 6629721,
+        "goal_cases": 131072,
+        "action_cases": 131072,
+        "phase_cases": 256,
+        "finish_cases": 65536,
+        "profile_cases": 256,
+        "profile_refusals": 4,
+        "copies": 20,
+        "clears": 40
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-ai-gcc-v1/receipt.json",
+      "sha256": "e73121aeaa06c9d9b9678ce9deac70d65c79a67faab3f5548671dac63ad7eaaa",
+      "observed": {
+        "checks": 6629721,
+        "goal_cases": 131072,
+        "action_cases": 131072,
+        "phase_cases": 256,
+        "finish_cases": 65536,
+        "profile_cases": 256,
+        "profile_refusals": 4,
+        "copies": 20,
+        "clears": 40
+      }
+    }
+  },
+  "parent_checks": {
+    "build-native-sjuni/gameplay-ai-parent-llvm-v1.log": "422f90c068edaa0d98dec07b204594f5713bcf81d826f7c14090266ad2a608a7",
+    "build-native-sjuni/gameplay-ai-tests-llvm-v1.log": "fb38aeb6c8c1da004a2e484b603a29a0502ee45db00ce7951024fa579eb5f991",
+    "build-native-sjuni/gameplay-ai-parent-gcc-v1.log": "8a1abe67b10da4a840ab32e8f6bb39c1a6b459e7cf95c74a4de19e7d21295ad6",
+    "build-native-sjuni/gameplay-ai-tests-gcc-v1.log": "2a503148154954b5988d62587c32bc45f6a9b0a111413e8ead7feac30f294299"
+  },
+  "qualified_binaries": {
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/gameplay_ai_owner_tests.exe": "36f2d2b453c44da48bbba8d55bd1c267200362e09f7ddfa3cc67c4f6cf16d2be",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/libreo_native_gameplay_update.a": "33e65a0f66b1c1144299e4b1533db60ddbce8740586498ce77eb44b4c047d3b2",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/CMakeFiles/reo_native_gameplay_update.dir/ai.cpp.obj": "e978699bc53c9dca93eae9fa7d7f455f7a2e1c512db671a947cfaba7bb6bb95d",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_ai/gameplay_ai_tests.exe": "143ce9f833b6bfc9eab2f5a29410203534b4cc5cd71362135771d62a99418f4f",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_ai/libreo_native_gameplay_ai.a": "922d5bb3eb0933a6560dbdab92a2c833879e29512734d2c751bd1cc4b51e87d2",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/gameplay_ai_owner_tests.exe": "6516cfdf99da33428c77dd02dd23288db05185215cfc7c88fb9bd23d70b37d7e",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/libreo_native_gameplay_update.a": "ba4e32c26b78b1d988cd5475b1aaccdf21e17471a0f504ae7f314e25e8eeaad4",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/CMakeFiles/reo_native_gameplay_update.dir/ai.cpp.obj": "f7d2465806614ceab099b2c264d77720f47405eaed8b2360682b282da5ba9563",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_ai/gameplay_ai_tests.exe": "4f106edbe7da845f6b8a57b9ede14f31828faf6660f1323940a7fa64b3b19057",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_ai/libreo_native_gameplay_ai.a": "bd67bb39f124942f92fc6c8f1e2e521909de5bf512b7a3092f700f7da09a059f"
+  },
+  "limitations": [
+    "Both compilers pass6629721 identical source-comparison checks. Complete813380 goal reset and81A6E0 action selection each compare131072 calls covering all65536 halfwords with zero/FFFF high halfwords. Complete81A6F0 phase reset compares256 cases; complete814B30 goal-six reset compares65536 calls. Complete8123E0 selector compares256 nonnegative profiles; four negative profiles refuse without changes.",
+    "The goal-zero gate tests the full low halfword, not the low byte. Nonzero goals preserve previous_goal; zero records the old goal. Action selection always records the previous action and clears its phases. These execution action fields are distinct from route edge actions. Whole original actor projections compare all known fields and untouched bytes across every completed call.",
+    "The twenty immutable56-byte authored weight profiles are regenerated exactly from hash-pinned o9. Native state stores a logical profile index, not an original pointer. Selection copies eight base weights and clears only reactive/status banks, preserving combined weights. >=20 preserves original no-op. Negative source indexing lacks a lower bound and is explicitly unavailable, not clamped or guessed.",
+    "Complete107AB0 original copy executes; the two exact eight-byte zero fills remain a declared original-only surroundings port. No source register context or guest RAM appears in production. Both parent builds and twelve integration tests pass, including actual Owner identity, missing component, retirement/closure and canonical Actor composition.",
+    "The optional Actor execution component requires an actual producer/import; setters do not invent prior state. Full8120C0 initialization, observations, goal reevaluation/remaining callbacks, action execution, real input/network/save ownership and coherent native gameplay installation remain open. The separately callable goal-six primitive is not claimed as an installed goal dispatcher. Installed V39 is unchanged; no game launch or performance result is claimed."
+  ]
+}

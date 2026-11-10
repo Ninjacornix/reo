@@ -10,6 +10,7 @@
 #include "inventory_state.hpp"
 #include "../gameplay_session/room_variants.hpp"
 #include "../gameplay_navigation/actor_routes.hpp"
+#include "../gameplay_ai/execution.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -53,6 +54,7 @@ struct Actor : actors::Entity,actors::HitActor {
     bool active{},visible{};
     std::uint8_t ai_control{},normalized_marker{};
     std::optional<gameplay_navigation::ActorRouteState> navigation_route;
+    std::optional<gameplay_ai::ExecutionState> ai_execution;
     std::uint8_t character{};
     std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
     std::uint16_t terminal_countdown{}; // original C62, distinct from status/hit recovery timers

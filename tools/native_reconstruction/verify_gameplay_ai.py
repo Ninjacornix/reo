@@ -1,0 +1,73 @@
+"""Compare native AI goal/action state against complete owned source bodies."""
+import argparse
+import hashlib
+import json
+import os
+import re
+import subprocess
+from pathlib import Path
+
+from audit_retail_effect_descriptors import compare_source,elf_reader
+from generate_ai_weight_profiles import generated
+from verify_gameplay_collision import COMPILERS
+
+ROOT=Path(__file__).resolve().parents[2]
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main():
+    parser=argparse.ArgumentParser();parser.add_argument('--compiler',choices=COMPILERS,required=True);parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
+    out=args.output.resolve();assert not out.exists() and out.is_relative_to(ROOT/'build-native-sjuni')
+    image=ROOT/'build-function-index/owned-overlays/o9.bin';raw=image.read_bytes()
+    assert sha(image)=='604126d6edca1b1333948d79d1d2c8d2f2e22f4a233efbdfb769c106dafe7343'
+    main_image=ROOT/'game_data/SLUS_207.65'
+    assert sha(main_image)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
+    assert (ROOT/'game/native/gameplay_ai/weight_profiles.inc').read_text()==generated()
+    entries={};proof=[]
+    for address in [0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0]:
+        folder=ROOT/('recomp/config/output' if address==0x107ab0 else 'recomp/config/output_ovl/o9')
+        path=next(folder.glob(f'*_{address:08X}_0x{address:x}.cpp'))
+        end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',path.read_text())[1],16)
+        read=elf_reader(main_image.read_bytes()) if address==0x107ab0 else lambda a,n:raw[a-0x810000:a-0x810000+n]
+        name=path.relative_to(ROOT).as_posix();proof.append(compare_source('Complete AI execution/profile body',name,address,end,read));entries[address]=name
+    helper='tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
+    unit='game/native/gameplay_ai/execution.cpp';fixture='game/native/gameplay_ai/execution_tests.cpp'
+    files=[unit,fixture,'game/native/gameplay_ai/execution.hpp','game/native/gameplay_ai/weight_profiles.inc',
+        'game/native/gameplay_ai/CMakeLists.txt',helper,Path(__file__).relative_to(ROOT).as_posix(),
+        'tools/native_reconstruction/generate_ai_weight_profiles.py',*entries.values()]
+    frozen={name:(ROOT/name).read_bytes() for name in files};out.mkdir(parents=True)
+    for name,data in frozen.items():
+        path=out/'source'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
+    (out/'reference.hpp').write_bytes(frozen[helper]+b'\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n')
+    body='\n'.join(frozen[name].decode() for name in entries.values());(out/'original.cpp').write_text(body)
+    actual={Path(name).stem for name in entries.values()};calls=set(re.findall(r'\b((?:sub|o[0-9]+)_[0-9A-Fa-f]+_0x[0-9a-f]+)\(rdram',body))
+    (out/'functions.h').write_text('#pragma once\n'+''.join(f'void {name}(std::uint8_t*,R5900Context*,PS2Runtime*);\n' for name in sorted(actual))+''.join(f'inline void {name}(std::uint8_t* m,R5900Context* c,PS2Runtime* r){{original_transform_port(m,c,r);}}\n' for name in sorted(calls-actual)))
+    for name in ['ps2_runtime.h','ps2_runtime_macros.h']:(out/name).write_text('#pragma once\n#include "reference.hpp"\n')
+    for name in ['o9_functions.h','ps2_recompiled_functions.h']:(out/name).write_text('#pragma once\n#include "functions.h"\n')
+    for name in ['ps2_recompiled_stubs.h','ps2_stubs.h','ps2_syscalls.h']:(out/name).write_text('#pragma once\n')
+    (out/'dispatch.inc').write_text(''.join(f'case {address}:{Path(name).stem}(memory,context,runtime);return;\n' for address,name in entries.items()))
+    (out/'o9.bin').write_bytes(raw)
+    compiler=COMPILERS[args.compiler];env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
+    exe=out/'checks.exe';command=[str(compiler),'-std=c++20','-O2','-msse4.1','-DREO_AI_ORIGINAL=1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-I'+str(out),'-I'+str(out/'source'),str(out/'source'/unit),str(out/'source'/fixture),str(out/'original.cpp'),'-o',str(exe)]
+    receipt=dict(schema=1,status='failed',game_launched=False,installed_in_game=False,stage4_complete=False,
+        compiler_sha256=sha(compiler),source_sha256={name:hashlib.sha256(data).hexdigest() for name,data in frozen.items()},
+        owned_image_sha256={image.relative_to(ROOT).as_posix():sha(image),main_image.relative_to(ROOT).as_posix():sha(main_image)},
+        original_word_audits=proof,commands=[],declared_ports=['107C68 exact two eight-byte zero fills in original-only profile selection surroundings'],
+        limitations=['Negative profile indices remain unavailable: original signed comparison lacks a lower bound and would address adjacent content. Indices>=20 preserve the source no-op.',
+            'Qualified native state primitives and actual Owner integration are separate checks. Full AI initialization, observations, reevaluation, remaining goal/action callbacks and game installation remain open.'])
+    try:
+        for label,cmd in [('compile',command),('test',[str(exe),str(out/'o9.bin')])]:
+            result=subprocess.run(cmd,capture_output=True,env=env,timeout=180);(out/f'{label}.stdout.txt').write_bytes(result.stdout);(out/f'{label}.stderr.txt').write_bytes(result.stderr);receipt['commands'].append(dict(label=label,exit_code=result.returncode,command=cmd))
+            assert result.returncode==0,label+': '+result.stderr.decode(errors='replace')[-2000:]
+            if label=='test':receipt['observed']=json.loads(result.stdout)
+        receipt['source_unchanged']=all((ROOT/name).read_bytes()==data for name,data in frozen.items());assert receipt['source_unchanged'];receipt['status']='passed'
+    finally:
+        receipt['output_sha256']={p.name:sha(p) for p in out.iterdir() if p.is_file()};(out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+    print(json.dumps(receipt['observed']))
+
+
+if __name__=='__main__':
+    main()

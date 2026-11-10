@@ -191,6 +191,9 @@ public:
     gameplay_navigation::SceneLookupResult find_scene_navigation_condition(const world::actors::EntityId&,std::int32_t condition,const gameplay_scene::Records&,const gameplay_navigation::SceneCandidates* candidates=nullptr);
     gameplay_navigation::CollectionResult collect_navigation_links(const world::actors::EntityId&,std::uint32_t room,std::int32_t node,gameplay_navigation::CollectionProfile={});
     State state;
+    gameplay_ai::Status set_ai_goal(const world::actors::EntityId&,std::uint32_t);
+    gameplay_ai::Status set_ai_action(const world::actors::EntityId&,std::uint32_t);
+    gameplay_ai::Status select_ai_weight_profile(const world::actors::EntityId&,std::int32_t);
 private:
     world::World& world_;
     tasks::Scheduler linked_;
