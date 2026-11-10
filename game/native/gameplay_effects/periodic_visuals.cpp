@@ -1,6 +1,8 @@
 #include "periodic_visuals.hpp"
 #include "../gameplay_contact_world/contacts.hpp"
 #include "../gameplay_world/resource_models.hpp"
+#include "../gameplay_world/resource_factory.hpp"
+#include "../gameplay_collision/trace.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -100,12 +102,17 @@ struct PeriodicVisuals::Node final:gameplay_scenario::PeriodicVisual {
     std::optional<gameplay_scenario::FogPulse> pulse;
     std::optional<SurfaceState> surface;
     std::optional<ResourceCompanionState> resource_companion;
+    std::optional<ResourceDebrisState> resource_debris;
     std::shared_ptr<gameplay_world::ResourceModel> resource_model;
     std::optional<std::uint8_t> category;
     gameplay_actors::EntityId surface_actor;
 };
 struct PeriodicVisuals::CompanionRuntime {
     gameplay_world::World& world;gameplay_scenario::SceneResources& resources;gameplay_world::ResourceModels& models;const gameplay_scenario::ResourceTemplates& templates;ResourceCompanionActions& actions;
+};
+struct PeriodicVisuals::DebrisRuntime {
+    gameplay_world::World& world;gameplay_world::ResourceModels& models;
+    std::weak_ptr<gameplay_world::ResourceFactoryToken> factory;
 };
 struct PeriodicVisuals::SurfaceRuntime {
     std::shared_ptr<gameplay_world::World> world;
@@ -166,7 +173,7 @@ bool PeriodicVisuals::bound_to(const gameplay_world::World& world)const noexcept
     return true;
 }
 bool PeriodicVisuals::bind_surfaces(std::shared_ptr<gameplay_world::World> world,gameplay_contact_world::RoomResources& rooms,Modulation& modulation,SurfaceProfile profile)noexcept{
-    if(!world||surfaces_||busy_||!admitted()||!bound_to(world->session().random))return false;
+    if(!world||surfaces_||busy_||!admitted()||!bound_to(world->session().random)||(debris_&&&debris_->world!=world.get()))return false;
     try{surfaces_=std::make_unique<SurfaceRuntime>(SurfaceRuntime{std::move(world),&rooms,&modulation,std::move(profile)});return true;}
     catch(const std::bad_alloc&){return false;}
 }
@@ -200,7 +207,7 @@ bool PeriodicVisuals::companions_bound_to(const gameplay_world::World& world,con
     return admitted()&&companions_ && &companions_->world==&world && &companions_->resources==&resources && &companions_->models==&models&&bound_to(world.session().random)&&&companions_->templates==&templates&&companions_->actions.bound_to(world,resources,models,templates);
 }
 bool PeriodicVisuals::bind_resource_companions(gameplay_world::World& world,gameplay_scenario::SceneResources& resources,gameplay_world::ResourceModels& models,const gameplay_scenario::ResourceTemplates& templates,ResourceCompanionActions& actions)noexcept{
-    if(busy_||companions_||!bound_to(world.session().random)||!actions.bound_to(world,resources,models,templates))return false;
+    if(busy_||companions_||!bound_to(world.session().random)||!actions.bound_to(world,resources,models,templates)||(debris_&&(&debris_->world!=&world||&debris_->models!=&models)))return false;
     try{companions_=std::make_unique<CompanionRuntime>(CompanionRuntime{world,resources,models,templates,actions});return true;}
     catch(const std::bad_alloc&){return false;}
 }
@@ -239,6 +246,47 @@ PeriodicVisuals::CompanionsCreated PeriodicVisuals::create_resource_companions(c
         if(i+1==count)node->category=0x1c;
         result.identities[i]=made.edit->identity();++result.created;
     }
+    return result;
+}
+bool PeriodicVisuals::bind_resource_debris(gameplay_world::World& world,gameplay_world::ResourceModels& models,gameplay_world::ResourceFactory& factory)noexcept{
+    if(!admitted()||busy_||debris_||world.closed()||!models.open()||!bound_to(world.session().random)||!factory.bound_to(world,models))return false;
+    if((companions_&&(&companions_->world!=&world||&companions_->models!=&models))||(surfaces_&&surfaces_->world.get()!=&world))return false;
+    try{debris_=std::make_unique<DebrisRuntime>(DebrisRuntime{world,models,factory.token_});return true;}catch(...){return false;}
+}
+bool PeriodicVisuals::debris_bound_to(const gameplay_world::World& world,const gameplay_world::ResourceModels& models,const gameplay_world::ResourceFactory& factory)const noexcept{
+    if(!admitted()||!debris_||world.closed()||!models.open()||&debris_->world!=&world||&debris_->models!=&models||!bound_to(world.session().random))return false;
+    const auto token=debris_->factory.lock();return token&&token->owner==&factory&&factory.bound_to(world,models);
+}
+std::optional<ResourceDebrisState> PeriodicVisuals::resource_debris_state(const gameplay_actors::EntityId& id)const noexcept{
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));return node?node->resource_debris:std::nullopt;
+}
+PeriodicVisuals::DebrisPiece PeriodicVisuals::create_resource_debris_piece(const gameplay_actors::EntityId& model_id,std::uint32_t part,std::uint32_t full_effect)noexcept{
+    if(!admitted()||busy_||!debris_||debris_->world.closed()||!bound_to(debris_->world.session().random))return{};
+    const auto effect=std::uint16_t(full_effect);
+    if(!bank_->geometry().resolve(std::bit_cast<std::int16_t>(effect)))return{WorkStatus::resource_missing,{}};
+    if(entities_.size()==168)return{WorkStatus::pool_full,{}};
+    if(effect>=512)return{};
+    const auto token=debris_->factory.lock();if(!token||!token->owner||!debris_bound_to(debris_->world,debris_->models,*token->owner))return{};
+    const auto model=debris_->models.retain(model_id);if(!model||!model->current()||part>=4)return{};
+    gameplay_actors::EntityId id;
+    try{
+        auto node=std::make_unique<Node>();node->periodic=false;node->bank=bank_;node->descriptor=effect;node->category=0x1b;node->flags=0x8193;node->resource_debris.emplace();auto& state=*node->resource_debris;
+        state.part=std::uint8_t(part);state.effect=effect;
+        for(unsigned c=0;c<3;++c)for(unsigned r=0;r<3;++r){const auto v=model->pose[c][r];if(!std::isfinite(v))throw std::domain_error("Native resource debris finite model basis required");state.basis[c][r]=v;}
+        static constexpr std::array<transform_math::Vector,4> offsets{{{-60,0,0},{-40,0,0},{0,0,0},{0,0,0}}};
+        const auto offset=transform_math::direction(model->pose,offsets[part]);state.initial_position={model->pose[3][0]+offset.x,model->pose[3][1]+offset.y,model->pose[3][2]+offset.z};
+        if(!finite(state.initial_position))throw std::domain_error("Native resource debris finite model position required");
+        const auto created=entities_.create(std::move(node));if(created.status!=gameplay_actors::EntityStatus::completed)return{created.status==gameplay_actors::EntityStatus::full?WorkStatus::pool_full:WorkStatus::unavailable,{}};
+        id=created.id;order_.push_front(id);return{WorkStatus::completed,id};
+    }catch(const std::bad_alloc&){if(id)retire_node(id);failure_=VisualStatus::no_memory;return{};}catch(...){if(id)retire_node(id);return{};}
+}
+PeriodicVisuals::CompanionsCreated PeriodicVisuals::create_resource_debris(const gameplay_actors::EntityId& model_id)noexcept{
+    CompanionsCreated result;if(!admitted()||busy_||!debris_)return result;
+    const auto model=debris_->models.retain(model_id);if(!model||!model->current())return result;
+    struct Request{unsigned part,effect;};std::array<Request,2> requests{};unsigned count=1;
+    switch(model->content_id){case 0x6e:requests[0]={0,0xbf};break;case 0x6a:case 0x6f:requests[0]={1,0xc0};break;case 0x74:requests[0]={2,0x5a};requests[1]={3,0x5b};count=2;break;default:result.status=WorkStatus::completed;return result;}
+    result.status=WorkStatus::completed;
+    for(unsigned i=0;i<count;++i){++result.attempted;const auto made=create_resource_debris_piece(model_id,requests[i].part,requests[i].effect);if(made.status!=WorkStatus::completed){result.status=made.status;if(made.status==WorkStatus::unavailable)return result;continue;}result.identities[i]=made.id;++result.created;}
     return result;
 }
 WorkCreated PeriodicVisuals::create(const WorkRequest& request)noexcept{
@@ -387,6 +435,19 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
             const auto id=*cursor++;const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));
             if(!node)throw std::logic_error("Native periodic visual identity unexpectedly stale");
             ++report.visited;
+            if(node->resource_debris){
+                if(!debris_||debris_->world.closed()||!bound_to(debris_->world.session().random))throw std::logic_error("Native resource debris owners unavailable");
+                auto& state=*node->resource_debris;const auto step=advance_resource_debris(state,*random_);node->visible=state.visible;
+                if(step.retire){retire_node(id);++report.retired;continue;}
+                if(step.query_floor){
+                    const auto token=debris_->factory.lock();if(!token||!token->owner)throw std::domain_error("Native resource debris room owner retired");
+                    const auto floor=token->owner->room_floor(debris_->world.room);if(!floor)throw std::domain_error("Native resource debris current room floor unavailable");
+                    const auto result=gameplay_collision::trace::floor(*floor,{state.previous_position.x,state.previous_position.y,state.previous_position.z},{state.position.x,state.position.y,state.position.z});
+                    if(result.status==gameplay_collision::trace::SamplingStatus::capacity||result.status==gameplay_collision::trace::SamplingStatus::nonprogress)throw std::domain_error("Native resource debris floor query unavailable");
+                    complete_resource_debris_floor(state,bool(result.hit));node->visible=state.visible;
+                }
+                continue;
+            }
             if(node->resource_companion){
                 if(!companions_||!companions_bound_to(companions_->world,companions_->resources,companions_->models,companions_->templates)||!node->resource_model)throw std::logic_error("Native resource companion owners unavailable");
                 const auto& model=*node->resource_model;
@@ -473,7 +534,7 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
         }
         if(revision_==UINT64_MAX)throw std::overflow_error("Native effect frame revision exhausted");
         auto frame=std::make_shared<EffectFrame>();frame->revision=revision_+1;frame->visuals.reserve(order_.size());
-        for(const auto& id:order_){const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));VisualOutput output;output.id=id;output.bank=node->bank;output.visible=node->visible;output.category=node->category;output.pieces.reserve(node->pieces.size());for(const auto slot:node->pieces)output.pieces.push_back(pieces_[slot].output);frame->visuals.push_back(std::move(output));}
+        for(const auto& id:order_){const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));VisualOutput output;output.id=id;output.bank=node->bank;output.visible=node->visible;output.category=node->category;output.debris=node->resource_debris;output.pieces.reserve(node->pieces.size());for(const auto slot:node->pieces)output.pieces.push_back(pieces_[slot].output);frame->visuals.push_back(std::move(output));}
         revision_=frame->revision;publish(std::move(frame));return report;
     }catch(const std::bad_alloc&){failure_=VisualStatus::no_memory;}
     catch(const std::exception&){failure_=VisualStatus::invalid_profile;}
@@ -486,5 +547,6 @@ void PeriodicVisuals::close()noexcept{
     editing_->owner=nullptr;
     surfaces_.reset();
     companions_.reset();
+    debris_.reset();
 }
 }

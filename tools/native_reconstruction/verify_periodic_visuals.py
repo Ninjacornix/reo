@@ -9,6 +9,7 @@ import subprocess
 import struct
 from effect_work_sources import SURFACE_WORLD_UNITS
 from comparison_objects import compile_objects
+from comparison_oracle import compile_oracle
 from gameplay_update_sources import UPDATE_UNITS
 from audit_retail_effect_descriptors import compare_source, elf_reader
 ROOT = Path(__file__).resolve().parents[2]
@@ -36,6 +37,7 @@ def main():
     p.add_argument('--resource-health', action='store_true')
     p.add_argument('--resource-deployment', action='store_true')
     p.add_argument('--resource-effects', action='store_true')
+    p.add_argument('--resource-debris', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -57,6 +59,7 @@ def main():
     assert not args.resource_health or args.resource_wrappers
     assert not args.resource_deployment or (args.resource_health and args.resource_companions)
     assert not args.resource_effects or args.resource_deployment
+    assert not args.resource_debris or args.resource_effects
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -82,6 +85,7 @@ def main():
     if args.resource_factory: pending += [0x18fdf0,0x191530]
     if args.resource_placement: pending += [0x370320,0x191a40,0x1aec80]
     if args.resource_delayed: pending += [0x1904a0,0x190020]
+    if args.resource_debris: pending += [0x1900e0]
     ports = [0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
     if args.resource_companions:
         pending += [0x654180,0x652880,0x654720,0x5df450]
@@ -143,6 +147,8 @@ def main():
         for at in [0x5b5940,0x5b5af0,0x5b5cb0,0x5b26d0,0x5b2770,0x5b2870,0x5b2880,0x5b2890,0x5b28e0]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_effects:
         for at in [0x5b2080,0x5b2760]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_debris:
+        for at in [0x5df2a0,0x5df340,0x58fbc0,0x58fd10,0x58fe50]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -211,7 +217,7 @@ def main():
                 files.append(relative)
     fixture = 'tools/native_reconstruction/periodic_visuals_tests.cpp'
     helper = 'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
-    for name in originals + [fixture, helper, Path(__file__).relative_to(ROOT).as_posix(),'tools/native_reconstruction/comparison_objects.py','tools/native_reconstruction/gameplay_update_sources.py']:
+    for name in originals + [fixture, helper, Path(__file__).relative_to(ROOT).as_posix(),'tools/native_reconstruction/comparison_objects.py','tools/native_reconstruction/comparison_oracle.py','tools/native_reconstruction/effect_work_sources.py','tools/native_reconstruction/gameplay_update_sources.py']:
         frozen[name] = (ROOT / name).read_bytes()
     if args.resource_pulses:
         name='tools/native_reconstruction/resource_pulses_tests.inc';frozen[name]=(ROOT/name).read_bytes()
@@ -245,6 +251,9 @@ def main():
         name='tools/native_reconstruction/resource_deployment_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_effects:
         name='tools/native_reconstruction/resource_effects_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_debris:
+        name='tools/native_reconstruction/resource_debris_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+        name='tools/native_reconstruction/resource_debris_capacity_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -344,6 +353,14 @@ def main():
             for at,size in [(0x709c68+600,38),(0x740340,40),(0x740710,64)]:
                 raw=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('health_constants',{})[hex(at)]=raw.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in raw)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
             record['declared_ports'].append('UI close6E1430, controller feedback665CA0, text resolve1C1CE0 and notice1B4820; actual UI/device consumers remain open')
+        if args.resource_debris:
+            for at,size in [(0x709538,12),(0x70b860,48),(0x73e0b0,12)]:
+                raw=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('debris_constants',{})[hex(at)]=raw.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in raw)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+            assert struct.unpack('<3I',overlay['o2'][0x709538-0x570000:0x709544-0x570000])==(0x58fbe0,0x58fd10,0x58fe50)
+            assert struct.unpack('<12f',overlay['o2'][0x70b860-0x570000:0x70b890-0x570000])==(-60.,0.,0.,-40.,0.,0.,0.,0.,0.,0.,0.,0.)
+            assert overlay['o2'][0x73e0b0-0x570000:0x73e0b4-0x570000]==struct.pack('<I',0xbf7ae148)
+            assert overlay['o2'][0x73e0b8-0x570000:0x73e0bc-0x570000]==struct.pack('<I',0x3d4ccccd)
+            record['declared_ports'].append('57D560 delegates to actual canonical Grid/trace.floor; independent trace internals are not requalified by debris lifecycle comparisons')
         if args.resource_placement:
             for at,size in [(0x723340,800),(0x723660,224)]:
                 raw=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('placement_constants',{})[hex(at)]=raw.hex();init+='{const std::uint8_t data[]{'+','.join(str(v) for v in raw)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
@@ -408,6 +425,7 @@ def main():
         if args.resource_health: command.insert(1,'-DREO_RESOURCE_HEALTH=1')
         if args.resource_deployment: command.insert(1,'-DREO_RESOURCE_DEPLOYMENT=1')
         if args.resource_effects: command.insert(1,'-DREO_RESOURCE_EFFECTS=1')
+        if args.resource_debris: command.insert(1,'-DREO_RESOURCE_DEBRIS=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')
@@ -416,7 +434,9 @@ def main():
         if args.focus_companions: command.insert(1,'-DREO_RESOURCE_COMPANIONS_FOCUSED=1')
         objects,object_receipts=compile_objects(ROOT,out,args.compiler,command[1:],units,frozen,env)
         record['production_objects']=object_receipts
-        command += objects+[str(out/'tests.cpp'),'-o',str(binary)]
+        original_object,original_receipt=compile_oracle(ROOT,out,args.compiler,command[1:],env)
+        record['original_object']=original_receipt
+        command += objects+[original_object,str(out/'tests.cpp'),'-o',str(binary)]
         if args.weapon_resources:command+=['-lbcrypt']
         record['command'] = command
         for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else [])+([str(ROOT/'iso/Resident Evil - Outbreak (v2.00).iso')] if args.weapon_resources else []))]:

@@ -30,6 +30,8 @@ public:
     // trailing part masks/poses. Rebinding does not construct companions.
     void rebind(const ResourceModelId&,std::uint16_t content);
     bool bind_companions(gameplay_effects::PeriodicVisuals&)noexcept;
+    bool bound_to(const World& world,const ResourceModels& models)const noexcept{return frames_.open()&&&frames_.world_==&world&&&models_==&models;}
+    std::shared_ptr<const gameplay_collision::response::Grid> room_floor(std::uint16_t room)const noexcept{return frames_.open()&&frames_.world_.room==room&&scene_room_==room?floors_:nullptr;}
     // Retains the actual immutable floor grid for this room and validates the
     // canonical shared scene owner. A later room change invalidates admission.
     bool bind_scene(gameplay_scenario::ResourceCollisions&,
@@ -43,6 +45,7 @@ private:
     friend class ResourceContents;
     friend class ResourceRecipes;
     friend class ResourceDeployment;
+    friend class gameplay_effects::PeriodicVisuals;
     ResourceModels& models_;
     ResourceFrames& frames_;
     const gameplay_scenario::ResourceTemplates& templates_;

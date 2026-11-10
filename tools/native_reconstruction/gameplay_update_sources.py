@@ -10,7 +10,7 @@ UPDATE_UNITS=[
         ('gameplay_scenario',['interpreter', 'flags', 'offline', 'scene_resources', 'scene_controls', 'content', 'sequence_control', 'lighting', 'stream_channels', 'room_rules', 'scene_models', 'room_scene_input', 'room_scene_owner', 'scene_model_bindings', 'scene_matrix_programs', 'scene_matrix_playback', 'scene_matrix_tables', 'actor_requests', 'room_object_commands', 'periodic_effects', 'resource_templates', 'fog']),
         ('gameplay_update',['update']),
         ('gameplay_collision',['collision', 'response', 'actors', 'actor_views', 'sweep', 'ownership', 'room_objects', 'footprint', 'trace', 'room_geometry', 'object_interactions', 'object_lifetime']),
-        ('gameplay_effects',['surface_work', 'periodic_visuals', 'geometry', 'tracks', 'resource_companion']),
+        ('gameplay_effects',['surface_work', 'periodic_visuals', 'geometry', 'tracks', 'resource_companion','resource_debris']),
         ('animation',['constraints', 'constraint_math', 'model', 'model_math', 'curves']),
         ('gameplay_lighting',['lights']),
         ('transform_math',['transform_math']),

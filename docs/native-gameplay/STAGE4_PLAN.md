@@ -71,6 +71,10 @@ installation and game acceptance remain open; the stage is still incomplete.
 The [inventory owner correction](INVENTORY_OWNER_TAG.md) preserves the modal
 owner byte rather than collapsing player identities to a boolean. Current
 behavior comparisons cover all256 values; the actual inventory UI remains open.
+The [resource debris lifetime](RESOURCE_DEBRIS.md) now uses the same168-work
+owner, copied native model poses and the actual current resource-factory floor
+lease. Paired checks cover physics, fade, retirement, full pools and invalidated
+owners. Weapon depletion/cost composition and game installation remain open.
 The [resource companions](RESOURCE_COMPANIONS.md) now implement all six bound
 factory routes through the actual shared visual/child, model, audio and timed
 lighting owners. Both compiler comparisons include full construction, material

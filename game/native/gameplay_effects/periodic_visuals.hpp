@@ -3,6 +3,8 @@
 #include "work.hpp"
 #include "surface_work.hpp"
 #include "resource_companion.hpp"
+#include "resource_debris.hpp"
+namespace reo::native::gameplay_world {class ResourceFactory;}
 #include "../gameplay_scenario/surface_effects.hpp"
 #include "../gameplay_scenario/periodic_effects.hpp"
 #include "../gameplay_scenario/fog.hpp"
@@ -47,6 +49,7 @@ struct VisualOutput {
     bool visible{};
     std::optional<std::uint8_t> category;
     std::vector<PieceOutput> pieces;
+    std::optional<ResourceDebrisState> debris;
 };
 struct EffectFrame {std::uint64_t revision{};std::vector<VisualOutput> visuals;};
 enum class VisualStatus {completed,closed,busy,invalid_camera,invalid_profile,no_memory};
@@ -77,6 +80,14 @@ public:
     struct CompanionsCreated {WorkStatus status{WorkStatus::unavailable};std::size_t attempted{},created{};std::array<gameplay_actors::EntityId,2> identities;};
     CompanionsCreated create_resource_companions(const gameplay_actors::EntityId& model,std::int8_t argument)noexcept;
     std::optional<ResourceCompanionState> resource_companion_state(const gameplay_actors::EntityId&)const noexcept;
+    // Reuse the actual resource factory's current room floor lease. There is
+    // no positive placeholder room/collision provider behind this binding.
+    bool bind_resource_debris(gameplay_world::World&,gameplay_world::ResourceModels&,gameplay_world::ResourceFactory&)noexcept;
+    bool debris_bound_to(const gameplay_world::World&,const gameplay_world::ResourceModels&,const gameplay_world::ResourceFactory&)const noexcept;
+    struct DebrisPiece {WorkStatus status{WorkStatus::unavailable};gameplay_actors::EntityId id;};
+    DebrisPiece create_resource_debris_piece(const gameplay_actors::EntityId&,std::uint32_t part,std::uint32_t effect)noexcept;
+    CompanionsCreated create_resource_debris(const gameplay_actors::EntityId&)noexcept;
+    std::optional<ResourceDebrisState> resource_debris_state(const gameplay_actors::EntityId&)const noexcept;
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
     WorkCreated create(const WorkRequest&)noexcept override;
     WorkStatus emit_surface(const SurfaceEmission&)noexcept override;
@@ -95,6 +106,7 @@ private:
     class Edit;
     struct SurfaceRuntime;
     struct CompanionRuntime;
+    struct DebrisRuntime;
     class SurfaceSink;
     struct Piece {bool active{};PieceOutput output;};
     gameplay_actors::EntityStore entities_{{168}};
@@ -105,6 +117,7 @@ private:
     gameplay_scenario::Fog* fog_{};
     std::unique_ptr<SurfaceRuntime> surfaces_;
     std::unique_ptr<CompanionRuntime> companions_;
+    std::unique_ptr<DebrisRuntime> debris_;
     std::shared_ptr<Editing> editing_;
     mutable std::mutex publication_;
     std::shared_ptr<const EffectFrame> published_;

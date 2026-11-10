@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_effects STATIC tracks.cpp geometry.cpp resource_companion.cpp)
+add_library(reo_native_gameplay_effects STATIC tracks.cpp geometry.cpp resource_companion.cpp resource_debris.cpp)
 target_compile_features(reo_native_gameplay_effects PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_effects PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(reo_native_gameplay_effects PUBLIC reo_native_transform_math reo_native_animation reo_native_gameplay_session)

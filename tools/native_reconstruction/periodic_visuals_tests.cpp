@@ -1,4 +1,7 @@
 #include "game/native/gameplay_effects/periodic_visuals.hpp"
+#ifdef REO_RESOURCE_DEBRIS
+#include "game/native/gameplay_collision/trace.hpp"
+#endif
 #include "reference.hpp"
 #include "functions.h"
 #include "owned_constants.hpp"
@@ -85,6 +88,9 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     }
 #endif
     switch(context->pc){
+#ifdef REO_RESOURCE_DEBRIS
+    case 0x57d560:{extern void debris_floor_port(std::uint8_t*,R5900Context*);debris_floor_port(memory,context);done();return;}
+#endif
     case 0x573740:check(GPR_U32(context,4)==0x10000);task_retired=true;done();return;
     case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at);std::memset(memory+at,std::uint8_t(GPR_U32(context,5)),n);SET_GPR_U32(context,2,at);done();return;}
 #ifdef REO_RESOURCE_FACTORY
@@ -115,14 +121,17 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     default:throw std::runtime_error("Unadmitted periodic visual source call "+std::to_string(context->pc));
     }
 }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#include "original_visuals.cpp"
-#pragma GCC diagnostic pop
+// Complete original bodies are separately compiled with the exact same
+// generated reference/runtime headers and linked into this fresh fixture.
 R5900Context call(std::uint8_t* memory,std::uint32_t function,std::array<std::uint32_t,7> args={},float f12=0){
     R5900Context context;context.pc=function;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0x100);
     for(unsigned i=0;i<args.size();++i){SET_GPR_U32(&context,4+i,args[i]);}context.f[12]=f12;PS2Runtime runtime;
     original_transform_port(memory,&context,&runtime);
+#ifdef REO_RESOURCE_DEBRIS
+    // This owned dispatcher tail-jumps to separate complete phase functions.
+    // Drain only those admitted targets, preserving the original return ABI.
+    if(function==0x58fbc0&&(context.pc==0x58fd10||context.pc==0x58fe50))original_transform_port(memory,&context,&runtime);
+#endif
     if(context.pc!=0x100||GPR_U32(&context,29)!=0x1f00000)throw std::runtime_error("Original visual return function="+std::to_string(function)+" pc="+std::to_string(context.pc)+" sp="+std::to_string(GPR_U32(&context,29)));
     check(context.pc==0x100&&GPR_U32(&context,29)==0x1f00000);return context;
 }
@@ -230,6 +239,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #endif
 #ifdef REO_RESOURCE_EFFECTS
 #include "tools/native_reconstruction/resource_effects_tests.inc"
+#endif
+#ifdef REO_RESOURCE_DEBRIS
+#include "tools/native_reconstruction/resource_debris_tests.inc"
 #endif
 int main(int argc,char** argv)try{
     check(argc==
@@ -368,6 +380,12 @@ int main(int argc,char** argv)try{
     compare_resource_effects(corpus,argv[2],argv[3],ram);
     std::cerr<<"end resource effects\n";
 #endif
+#ifdef REO_RESOURCE_DEBRIS
+    std::cerr<<"begin resource debris\n";
+    compare_resource_debris(corpus,argv[2],argv[3],ram);
+    compare_resource_debris_capacity(corpus,argv[2],argv[3],ram);
+    std::cerr<<"end resource debris\n";
+#endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
@@ -439,6 +457,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_EFFECTS
     <<",\"effect_cases\":"<<effect_cases<<",\"effect_depletions\":"<<effect_depletions<<",\"effect_deployments\":"<<effect_deployments<<",\"effect_mutations\":"<<effect_mutations<<",\"effect_refusals\":"<<effect_refusals
+#endif
+#ifdef REO_RESOURCE_DEBRIS
+    <<",\"debris_cases\":"<<debris_cases<<",\"debris_frames\":"<<debris_frames<<",\"debris_missing\":"<<debris_missing<<",\"debris_floor_queries\":"<<debris_floor_queries<<",\"debris_refusals\":"<<debris_refusals<<",\"debris_capacity\":"<<debris_capacity<<",\"debris_child_full\":"<<debris_child_full
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads

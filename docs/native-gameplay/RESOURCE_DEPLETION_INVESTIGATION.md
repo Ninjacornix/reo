@@ -14,10 +14,12 @@ visual consumer must also be implemented.
 
 5DF2A0 selects content6E -> part0/effectBF,6A or6F -> part1/effectC0,
 and74 -> part2/effect5A followed by part3/effect5B. Other contents request
-nothing.5DF340 creates work category1B, initializes children with652E20,
+nothing.5DF340 creates work category1B, selects its effect/group with652E20,
 copies resource-model orientation, and combines its model translation with a
-transformed part-specific offset. Flags are8193. Work allocation and children
-must use the existing shared168/256 domains, including natural capacity failure.
+transformed part-specific offset. Flags are8193. The constructor does not
+allocate child records:652E20 selects metadata, while652880 is the child
+construction/sample helper and is absent from this lifecycle. Work allocation
+must use the existing shared168 domain, including natural capacity failure.
 
 A signed immediate matters here: the stored update address is **58FBC0**,
 not59FBC0. Likewise its offset table is **70B860**, not71B860. The sequence
@@ -52,5 +54,8 @@ Next implementation work: add a typed ballistic lifetime to the canonical visual
 owner with actual room access and exact RNG/state order; compare complete
 5DF340/58FBC0/58FD10/58FE50 plus their constructors on owned effects and floor
 geometry; then compose5B4AD0 and5B2590 with actual audio and weapon refresh.
-The original draw callback371EF0 and all imported constants must be audited
-before deciding their native output contract.
+Further draw audit:651A30 sets the work family byte2 to6;371EF0 dispatches
+through the14-word table at38CA30, whose family6 target3721D0 skips to the
+epilogue. No child draw was found on this particular callback route. This does
+not establish how every game rendering path consumes work. Preserve the native
+ballistic state in output rather than inventing sampled children for this route.
