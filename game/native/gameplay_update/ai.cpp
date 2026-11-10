@@ -1,4 +1,5 @@
 #include "update.hpp"
+#include "../gameplay_ai/off_room_actions.hpp"
 #include "../gameplay_ai/steering.hpp"
 namespace reo::native::gameplay_update {
 gameplay_ai::ObservationAdmitted Owner::admit_ai_reference_reaction(const world::actors::EntityId& id,std::uint32_t mode){
@@ -75,7 +76,10 @@ AiFrameResult Owner::run_ai_frame(const world::actors::EntityId& id, bool update
         result.status = AiFrameStatus::goal_unavailable;
         return result;
     }
-    if (actor->transient_marker || dispatch_active_ai_action(id, false) != gameplay_ai::Status::completed) {
+    const auto action_status = actor->transient_marker
+        ? gameplay_ai::dispatch_off_room_action(*actor)
+        : dispatch_active_ai_action(id, false);
+    if (action_status != gameplay_ai::Status::completed) {
         result.status = AiFrameStatus::action_unavailable;
         return result;
     }

@@ -27,10 +27,11 @@ unsigned case_number{}, checks{}, draw_calls{}, scene_calls{}, wall_calls{}, eve
 unsigned wall_hits{}, wall_resets{};
 unsigned refused_frames{};
 unsigned ai_frames{}, gated_frames{}, refused_actions{};
+unsigned off_room_frames{};
 std::array<unsigned, 4> threat_bands{};
 std::optional<unsigned> original_event;
 bool original_wall_hit{};
-bool original_dispatched_goal{}, original_dispatched_action{};
+bool original_dispatched_goal{}, original_dispatched_action{}, original_off_room_action{};
 const n::VisibilityRoom* active_room{};
 std::vector<std::uint8_t> memory(0x2000000);
 
@@ -142,6 +143,7 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     bytes[0x100c] = std::uint8_t(actor.navigation_route->current_node);
     put(bytes, 0x1038, state.steering_value);
     bytes[0x103a] = state.action_marker;
+    put(bytes, 0x1054, actor.navigation_route->action);
     bytes[0x105b] = actor.transient_marker;
     put(bytes, 0x1060, state.observation_timeout);
     bytes[0x106c] = state.threat_band;
@@ -264,7 +266,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
     const bool session_gate = (gate_bits & 1) != 0;
     if (full_ai_frame) {
         self->motion_class = seed % 4 == 0 ? 0x3b : 0;
-        self->transient_marker = seed == 1024 ? 1 : 0;
+        self->transient_marker = seed == 1024 || seed % 7 == 0 ? 1 : 0;
         self->status = gate_bits & 16 ? 0x20 : 0;
         self->response_lock = gate_bits & 4 ? 2 : 0;
         world.session().suppress_hits = (gate_bits & 8) != 0;
@@ -275,7 +277,8 @@ void compare(unsigned seed, const c::response::Grid& grid,
         state.steering_button_20 = 2;
         state.reaction = 199;
         state.goal = std::array<std::uint16_t, 3>{0, 6, 14}[seed % 3];
-        state.action = std::uint16_t(seed / 7 % 2);
+        state.action = seed == 1024 ? 2 : std::uint16_t(seed / 7 % 2);
+        self->navigation_route->action = 13;
         state.goal_refresh = self->motion_class == 0x3b && seed % 17 == 0 ? 1 : 0;
         state.goal_phases[0] = 1;
         state.goal_parameters[0] = std::uint16_t(seed % 3);
@@ -341,10 +344,10 @@ void compare(unsigned seed, const c::response::Grid& grid,
     if (full_ai_frame) {
         const auto frame =
             owner.run_ai_frame(world.identity(self_slot), session_gate, room, records, resources);
-        if (self->transient_marker) {
+        if (seed == 1024) {
             check(frame.status == u::AiFrameStatus::action_unavailable &&
                   frame.observation.status == a::Status::completed &&
-                  frame.goal.status == a::Status::completed);
+                  frame.goal.status == a::Status::completed && self->motion_class == 0x31);
             ++refused_actions;
             return;
         }
@@ -353,6 +356,8 @@ void compare(unsigned seed, const c::response::Grid& grid,
         ++ai_frames;
         if (gate_bits)
             ++gated_frames;
+        else if (self->transient_marker)
+            ++off_room_frames;
     } else {
         result = owner.update_ai_observations(world.identity(self_slot), room, records, resources);
     }
@@ -382,6 +387,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
     original_wall_hit = false;
     original_dispatched_goal = false;
     original_dispatched_action = false;
+    original_off_room_action = false;
     active_room = &room;
     const auto previous_walls = wall_calls;
     original_transform_port(memory.data(), &context, &runtime);
@@ -399,6 +405,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
           transform_read<std::uint32_t>(memory.data(), 0x83e530));
     check(original_dispatched_goal == (full_ai_frame && !gate_bits));
     check(original_dispatched_action == (full_ai_frame && !gate_bits));
+    check(original_off_room_action == (full_ai_frame && !gate_bits && self->transient_marker));
     check(world.session().random.state().primary ==
           transform_read<std::uint16_t>(memory.data(), 0x3244b0));
     check(world.session().random.state().secondary ==
@@ -421,8 +428,10 @@ void original_transform_port(std::uint8_t* memory, R5900Context* context, PS2Run
         ++draw_calls;
     if (context->pc == 0x813330)
         original_dispatched_goal = true;
-    if (context->pc == 0x81a720)
+    if (context->pc == 0x81a720 || context->pc == 0x81beb0)
         original_dispatched_action = true;
+    if (context->pc == 0x81beb0)
+        original_off_room_action = true;
     if (context->pc == 0x8130d0) {
         if (!original_dispatched_goal)
             original_event = other;
@@ -507,7 +516,7 @@ int main(int argc, char** argv) try {
               << ",\"threat_bands\":[" << threat_bands[0] << ',' << threat_bands[1] << ','
               << threat_bands[2] << ',' << threat_bands[3] << "],\"ai_frames\":" << ai_frames
               << ",\"gated_frames\":" << gated_frames << ",\"refused_actions\":" << refused_actions
-              << "}\n";
+              << ",\"off_room_frames\":" << off_room_frames << "}\n";
 } catch (const std::exception& error) {
     std::cerr << error.what() << '\n';
     return 1;

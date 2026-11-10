@@ -165,6 +165,11 @@ The current resource and inventory implementation includes:
   compilers pass 1,024 full-frame comparisons and all thirteen parent tests.
   Remaining action families, live scheduling, and game acceptance remain open.
 
+- [Off-room AI actions](AI_OFF_ROOM_ACTIONS.md) add motion synthesis, reset
+  actions, and request completion phases to the same frame. Both compilers
+  pass 196,608 motion and 2,557 dispatch comparisons, plus 100 off-room frames
+  in the composed comparison. Waypoint movement and request producers remain open.
+
 - [Target-cache scratch audit](TARGET_CACHE_SCRATCH_AUDIT.md) identifies controlled
   source inverse-sort dependence on unwritten scratch. Both compilers agree on
   48 profiles,192 strict runs and192 separate initialization-policy runs. This
