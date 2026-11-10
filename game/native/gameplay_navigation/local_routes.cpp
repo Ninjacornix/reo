@@ -20,15 +20,15 @@ CostRouteResult local_route(const Bank& bank,std::uint32_t room,std::int32_t sou
         if(policy==0||policy==1){
             const auto ranked=ranked_route(bank,room,source,destination,actor,actor_status,room_flags,
                 policy==0?RankedPolicy::four_candidates:RankedPolicy::first_candidate,output);
-            result={ranked.status,ranked.selected,false,0};
+            result={ranked.status,ranked.selected,false,0,ranked.cost_written};
         }else result=bounded_cost_route(bank,room,source,destination,actor,actor_status,room_flags,output,maximum_edges);
         if(result.status!=QueryStatus::completed)return result;
     }
     destination_link=-1;
     if(result.selected!=-1){
-        const auto variant=bank.current_variant(room);if(!variant)return {QueryStatus::unavailable,-1,false,result.considered_edges};
+        const auto variant=bank.current_variant(room);if(!variant)return {QueryStatus::unavailable,-1,false,result.considered_edges,result.cost_written};
         const auto link=find_admitted_link(bank,actor,std::int32_t(room),*variant,destination,room_flags);
-        if(link.status!=QueryStatus::completed)return {QueryStatus::unavailable,-1,false,result.considered_edges};
+        if(link.status!=QueryStatus::completed)return {QueryStatus::unavailable,-1,false,result.considered_edges,result.cost_written};
         if(link.index)destination_link=std::int16_t(*link.index);
     }
     return result;

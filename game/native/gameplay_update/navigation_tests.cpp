@@ -51,6 +51,9 @@ int main(){
         check(world.session().room_variants.store(7,1));route_link=314;
         check(owner.local_navigation_route(id,7,0,0,0,route_output,route_link).selected==0&&route_link==-1&&world.navigation().room(7));
         check(world.session().room_variants.store(7,0));
+        actor->slot=0;const auto unknown_collection=owner.collect_navigation_links(id,7,0);check(unknown_collection.status==n::QueryStatus::unavailable&&unknown_collection.failure==n::CollectionFailure::unknown_cost);
+        const auto known_collection=owner.collect_navigation_links(id,7,0,{false,false,0.f,16});check(known_collection.status==n::QueryStatus::completed&&known_collection.count==1&&known_collection.candidates[0].link==0&&known_collection.candidates[0].cost==0);
+        check(world.navigation().visit(0,0,1));check(owner.collect_navigation_links(id,7,0).count==0);check(world.navigation().visit(0,0,0));actor->slot=5;
         check(owner.admit_navigation_condition(id,7,2).status==n::QueryStatus::unavailable&&owner.admit_navigation_condition(id,8,0).status==n::QueryStatus::unavailable);
         check(owner.admitted_navigation_link(id,7,0,1).status==n::QueryStatus::completed&&!owner.admitted_navigation_link(id,7,0,1).index);
         u::world::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());const auto other=foreign.spawn_primary(0,std::make_unique<u::world::Actor>()).id;

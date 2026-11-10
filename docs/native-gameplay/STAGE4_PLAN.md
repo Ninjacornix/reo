@@ -39,6 +39,11 @@ The current resource and inventory implementation includes:
   admission through the actual UpdateOwner. Both compilers pass56616 dispatcher
   comparisons and ten parent tests;3412 retail work-budget cells remain open.
   Cross-room traversal and actor destination/AI execution are next.
+- [Known-cost link collection](NAVIGATION_LINK_COLLECTION.md) now preserves
+  complete8179F0 through canonical actor/flag/visit consumers, with26401 original
+  comparisons per compiler and ten parent tests.288 sampled retail contexts need
+  an unspecified incoming cost and stay unavailable. Recursive cross-room search,
+  initialization policy/evidence and actor destination/AI execution remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

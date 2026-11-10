@@ -38,4 +38,10 @@ nav::CostRouteResult Owner::local_navigation_route(const world::actors::EntityId
     const auto actor=world_.resolve(id);if(!actor)return {};
     return nav::local_route(world_.navigation(),room,source,destination,{actor->character,actor->slot,actor->ai_control},actor->status,flags_.strided_half(room,0),policy,output,link,maximum_edges);
 }
+nav::CollectionResult Owner::collect_navigation_links(const world::actors::EntityId& id,std::uint32_t room,std::int32_t node,nav::CollectionProfile profile){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor)return {};
+    auto& bank=world_.navigation();const auto variant=bank.current_variant(room);if(!variant)return {};
+    return nav::collect_links(bank,room,*variant,node,{actor->character,actor->slot,actor->ai_control},actor->status,flags_.strided_half(room,0),bank.visits(actor->slot),profile);
+}
 }

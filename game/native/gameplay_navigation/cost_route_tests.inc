@@ -16,7 +16,8 @@ n::CostRouteResult compare_cost(const n::Bank& bank,n::ActorFacts facts,unsigned
     R5900Context context;PS2Runtime runtime;context.pc=0x818b70;
     const std::array<unsigned,8> args{actor,room,std::uint32_t(source),std::uint32_t(destination),out,out+1,out+4,out+16};
     for(unsigned i=0;i<args.size();++i)SET_GPR_U32(&context,4+i,args[i]);
-    SET_GPR_U32(&context,29,stack);SET_GPR_U32(&context,31,0x100);original_transform_port(memory.data(),&context,&runtime);
+    SET_GPR_U32(&context,29,stack);SET_GPR_U32(&context,31,0x100);reference_cost_address=out+28;reference_cost_written=false;original_transform_port(memory.data(),&context,&runtime);
+    check(result.cost_written==reference_cost_written);reference_cost_address=0;
     check(context.pc==0x100&&GPR_U32(&context,29)==stack);
     check(std::int32_t(result.selected)==std::bit_cast<std::int32_t>(GPR_U32(&context,2)));
     check(output.first==std::bit_cast<std::int8_t>(memory[out])&&output.second==std::bit_cast<std::int8_t>(memory[out+1]));

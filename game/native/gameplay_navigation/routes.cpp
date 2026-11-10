@@ -35,6 +35,7 @@ RouteResult ranked_route(const Bank& bank,std::uint32_t room,std::int32_t source
     if(policy!=RankedPolicy::four_candidates&&policy!=RankedPolicy::first_candidate)return {};
     const auto graph=bank.room(room);
     if(!graph||source<0||destination<0||std::size_t(source)>=graph->nodes().size()||std::size_t(destination)>=graph->nodes().size())return {};
+    bool cost_written=false;const auto unavailable=[&]{return RouteResult{QueryStatus::unavailable,-1,cost_written};};
     std::int32_t selected=-1,secondary=-1;
     if(source==destination)selected=source;
     else{
@@ -42,20 +43,20 @@ RouteResult ranked_route(const Bank& bank,std::uint32_t room,std::int32_t source
         const auto& candidates=graph->routes()[std::size_t(destination)*graph->nodes().size()+std::size_t(source)];
         const std::size_t limit=policy==RankedPolicy::four_candidates?4:1;
         for(std::size_t rank=0;rank<limit;++rank){
-            const auto slot=candidates[rank];if(slot==255)continue;if(slot>=4)return {};
-            const auto next=node.neighbors[slot];if(next<0)continue;if(std::size_t(next)>=graph->nodes().size())return {};
-            const auto occupied=bank.occupancy(room,std::uint32_t(next));if(!occupied)return {};
+            const auto slot=candidates[rank];if(slot==255)continue;if(slot>=4)return unavailable();
+            const auto next=node.neighbors[slot];if(next<0)continue;if(std::size_t(next)>=graph->nodes().size())return unavailable();
+            const auto occupied=bank.occupancy(room,std::uint32_t(next));if(!occupied)return unavailable();
             if(*occupied&mask)continue;
             const auto admitted=admit_edge(bank,room,source,next,actor,actor_status,room_flags);
-            if(admitted.status!=QueryStatus::completed)return {};
+            if(admitted.status!=QueryStatus::completed)return unavailable();
             if(!admitted.allowed)continue;
-            output.cost=float(node.costs[rank]);
+            output.cost=float(node.costs[rank]);cost_written=true;
             if(next==destination){selected=next;break;}
             Search search{bank,*graph,room,destination,actor,actor_status,room_flags};
-            for(std::size_t i=0;i<search.scratch.size();++i){const auto occupancy=bank.occupancy(room,std::uint32_t(i));if(!occupancy)return {};search.scratch[i]=*occupancy&mask?1:-1;}
+            for(std::size_t i=0;i<search.scratch.size();++i){const auto occupancy=bank.occupancy(room,std::uint32_t(i));if(!occupancy)return unavailable();search.scratch[i]=*occupancy&mask?1:-1;}
             search.scratch[std::size_t(source)]=1;
             const auto followed=search.follow(next,output.cost,0);
-            if(followed.status!=QueryStatus::completed)return {};
+            if(followed.status!=QueryStatus::completed)return unavailable();
             if(followed.found){selected=next;secondary=followed.immediate;break;}
         }
     }
@@ -63,6 +64,6 @@ RouteResult ranked_route(const Bank& bank,std::uint32_t room,std::int32_t source
     output.second=std::int8_t(selected==-1?source:secondary==-1?destination:secondary);
     output.first_position=graph->nodes()[std::size_t(output.first)].position;
     output.second_position=graph->nodes()[std::size_t(output.second)].position;
-    return {QueryStatus::completed,std::int8_t(selected)};
+    return {QueryStatus::completed,std::int8_t(selected),cost_written};
 }
 }

@@ -7,7 +7,7 @@ struct RouteOutput {
     Position first_position,second_position;
     float cost{};
 };
-struct RouteResult {QueryStatus status{QueryStatus::unavailable};std::int8_t selected{-1};};
+struct RouteResult {QueryStatus status{QueryStatus::unavailable};std::int8_t selected{-1};bool cost_written{};};
 // Complete818010/8185C0 with their distinct root candidate counts, and complete
 // single-candidate recursive companions818390/818940. Output cost may retain a
 // failed attempt's accumulated prefix, or remain untouched when none starts.

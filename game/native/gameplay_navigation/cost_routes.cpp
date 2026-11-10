@@ -63,6 +63,6 @@ CostRouteResult bounded_cost_route(const Bank& bank,std::uint32_t room,std::int3
     output.first_position=graph->nodes()[std::size_t(output.first)].position;
     output.second_position=graph->nodes()[std::size_t(output.second)].position;
     if(selected!=-1)output.cost=best;
-    return {QueryStatus::completed,std::int8_t(selected),false,search.considered};
+    return {QueryStatus::completed,std::int8_t(selected),false,search.considered,selected!=-1};
 }
 }

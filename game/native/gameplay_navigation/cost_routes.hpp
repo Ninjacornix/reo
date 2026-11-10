@@ -4,6 +4,7 @@ namespace reo::native::gameplay_navigation {
 struct CostRouteResult {
     QueryStatus status{QueryStatus::unavailable};std::int8_t selected{-1};
     bool budget_exhausted{};std::size_t considered_edges{};
+    bool cost_written{};
 };
 // Complete818B70/818E30 within a bounded work admission profile. Exhaustion
 // returns unavailable without committing an approximate route. This policy
