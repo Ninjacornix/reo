@@ -6,6 +6,7 @@
 #include "../gameplay_events/statistics.hpp"
 #include "completion_conditions.hpp"
 #include "scenario_publication.hpp"
+#include "actor_gauge.hpp"
 #include "../gameplay_world/behavior.hpp"
 
 namespace reo::native::gameplay_update {
@@ -113,6 +114,8 @@ public:
         const auto id=world_.identity_of(actor);if(!id)return false;
         return record_periodic_actor_state(id)==PublicationStatus::completed;
     }
+    GaugeStatus record_gauge_crossing(const world::actors::EntityId&,std::uint32_t before,std::uint32_t after);
+    GaugeResult adjust_actor_gauge(const world::actors::EntityId&,std::uint32_t amount,std::uint32_t mode);
     PublicationStatus clear_actor_status(const world::actors::EntityId& id,std::uint32_t selector)noexcept{
         if(!open())return PublicationStatus::unavailable;
         const auto actor=world_.resolve(id);if(!actor)return PublicationStatus::unavailable;

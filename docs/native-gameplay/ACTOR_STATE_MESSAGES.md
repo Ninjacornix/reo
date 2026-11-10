@@ -54,3 +54,7 @@ Follow-up: [behavior activity publication](ACTOR_ACTIVITY_PUBLICATION.md) now
 binds that outer activity stage through the native World/frame/behavior and
 UpdateOwner. The earlier qualification above remains unchanged; the game itself
 is still onV39 and has not installed this composition.
+
+[Gauge adjustment and threshold events](ACTOR_GAUGE_EFFECTS.md) subsequently add
+the actual mutation and cooperative-event owner. Periodic progression and the
+real hit/import callers remain open; this does not make absent gauge data known.

@@ -102,6 +102,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_ACTOR_ACTIVITY_BINDING
 #include "tools/native_reconstruction/actor_activity_binding_tests.inc"
 #endif
+#ifdef REO_ACTOR_GAUGE_EFFECTS
+#include "tools/native_reconstruction/actor_gauge_effects_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_COMPLETION_STATISTICS
@@ -154,6 +157,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_ACTIVITY_BINDING
     compare_actor_activity_binding();
 #endif
+#ifdef REO_ACTOR_GAUGE_EFFECTS
+    compare_actor_gauge_effects(memory,argv[4]);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -178,6 +184,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_ACTIVITY_BINDING
     <<",\"actor_activity_cases\":"<<actor_activity_cases<<",\"actor_activity_deliveries\":"<<actor_activity_deliveries<<",\"actor_activity_failures\":"<<actor_activity_failures
+#endif
+#ifdef REO_ACTOR_GAUGE_EFFECTS
+    <<",\"gauge_adjustment_cases\":"<<gauge_adjustment_cases<<",\"gauge_crossing_cases\":"<<gauge_crossing_cases<<",\"gauge_effect_events\":"<<gauge_effect_events<<",\"gauge_effect_refusals\":"<<gauge_effect_refusals<<",\"gauge_capacity_cases\":"<<gauge_capacity_cases
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

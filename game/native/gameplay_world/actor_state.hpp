@@ -26,12 +26,17 @@ inline float gauge_unsigned_float(std::uint32_t value)noexcept{
 }
 // Complete667F90: the selected primary owns the gauge, independently of the
 // actor whose message is being published. BAC's writers/import remain required.
-inline std::optional<float> selected_gauge_percentage(const World& world)noexcept{
+inline std::optional<float> selected_gauge_percentage(const World& world,std::uint32_t value)noexcept{
     if(world.closed())return{};
     const auto actor=world.primary(world.selected_actor);
-    if(!actor||!actor->gauge_value||actor->character>=actor_gauge_limits.size())return{};
-    const auto ratio=gauge_unsigned_float(*actor->gauge_value)/gauge_unsigned_float(actor_gauge_limits[actor->character]);
+    if(!actor||actor->character>=actor_gauge_limits.size())return{};
+    const auto ratio=gauge_unsigned_float(value)/gauge_unsigned_float(actor_gauge_limits[actor->character]);
     return 100.f*ratio;
+}
+inline std::optional<float> selected_gauge_percentage(const World& world)noexcept{
+    const auto actor=world.primary(world.selected_actor);
+    if(!actor||!actor->gauge_value)return{};
+    return selected_gauge_percentage(world,*actor->gauge_value);
 }
 inline std::optional<std::uint8_t> selected_gauge_band(const World& world)noexcept{
     const auto value=selected_gauge_percentage(world);if(!value)return{};

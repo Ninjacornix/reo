@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_update STATIC update.cpp collision_workers.cpp)
+add_library(reo_native_gameplay_update STATIC update.cpp collision_workers.cpp actor_gauge.cpp)
 target_compile_features(reo_native_gameplay_update PUBLIC cxx_std_20)
 target_link_libraries(reo_native_gameplay_update PUBLIC reo_native_gameplay_world reo_native_gameplay_tasks reo_native_gameplay_scenario reo_native_gameplay_events)
 target_include_directories(reo_native_gameplay_update PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)

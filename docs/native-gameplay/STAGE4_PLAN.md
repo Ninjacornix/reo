@@ -82,6 +82,11 @@ The current resource and inventory implementation includes:
   now binds World/frame/behavior through the UpdateOwner's same actor identity
   and clock. BAC writers/import, other behavior frontiers, transport and
   installation remain open.
+- [Gauge adjustment and threshold events](ACTOR_GAUGE_EFFECTS.md) now supply
+  complete660060/667E90/668050 through the actual canonical actor and cooperative
+  event pool. The BBA modifier reuses the existing model-variant view. Real hit
+  and periodic progression callers, initialization/import and installation
+  remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;
