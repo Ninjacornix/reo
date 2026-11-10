@@ -25,7 +25,7 @@ internal static class BuildPathLinksTests {
         string root = Path.Combine(Path.GetTempPath(), "reo-link-check-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         string data = Path.Combine(root, "data-point");
-        string junction = Path.Combine(root, "junction");
+        string junction = Path.Combine(root, "toolchains");
         string outside = Path.Combine(root, "outside");
         Directory.CreateDirectory(outside);
         File.WriteAllText(Path.Combine(outside, "keep.txt"), "untouched");
@@ -34,6 +34,8 @@ internal static class BuildPathLinksTests {
             check(LocalGameBuild.Inside(root, "ordinary/new/file.bin") ==
                   Path.Combine(root, "ordinary", "new", "file.bin"),
                   "Ordinary missing paths remain valid");
+            check(PortableCompilerSetup.CacheRoot(root) == junction,
+                  "A regular compiler setup uses the original cache location");
             // Real non-Microsoft data reparse point; no cloud service or filter driver
             // is required to inspect its metadata. It must not be opened as file data.
             Directory.CreateDirectory(data);
@@ -78,11 +80,14 @@ internal static class BuildPathLinksTests {
             command.WaitForExit();
             check(command.ExitCode == 0, "Real junction fixture created");
             bool rejected = false;
-            try { LocalGameBuild.Inside(root, "junction/keep.txt"); }
+            try { LocalGameBuild.Inside(root, "toolchains/keep.txt"); }
             catch (IOException error) {
                 rejected = error.Message.Contains(junction) && error.Message.Contains("Game files");
             }
             check(rejected, "RC1 still rejects real junction traversal and identifies the path and recovery");
+            check(PortableCompilerSetup.CacheRoot(root) == Path.Combine(root, "compiler"),
+                  "A linked compiler cache uses a separate path inside launcher storage");
+            check(!File.Exists(Path.Combine(outside, "setup.lock")), "Compiler selection leaves the link target alone");
             Directory.Delete(junction);
             check(File.ReadAllText(Path.Combine(outside, "keep.txt")) == "untouched",
                   "Rejected traversal leaves target data unchanged");
