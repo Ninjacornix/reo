@@ -34,6 +34,11 @@ The current resource and inventory implementation includes:
   Both compilers pass81928 cost comparisons and ten parent tests;3626 sampled
   retail queries exceed the lower4096-edge verification profile and remain open.
   Outer/cross-room dispatch, wider work admission and actor/AI execution are next.
+- [Local navigation dispatch](NAVIGATION_LOCAL_DISPATCH.md) now composes817DB0's
+  pre-target gate, distinct policy routing, current-variant reads and post-link
+  admission through the actual UpdateOwner. Both compilers pass56616 dispatcher
+  comparisons and ten parent tests;3412 retail work-budget cells remain open.
+  Cross-room traversal and actor destination/AI execution are next.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

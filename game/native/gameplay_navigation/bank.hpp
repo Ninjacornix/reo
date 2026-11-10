@@ -17,6 +17,8 @@ public:
     void close()noexcept;
     bool bound()const noexcept{return bound_&&!closed_;}
     const Asset* asset()const noexcept{return bound()?asset_.get():nullptr;}
+    // Current canonical session byte, not the variant selected at last bind.
+    std::optional<std::uint8_t> current_variant(std::uint32_t room)const noexcept{return bound()?variants_.get(room):std::nullopt;}
     const RoomGraph* room(std::uint32_t)const noexcept;
     std::optional<std::uint8_t> occupancy(std::uint32_t room,std::uint32_t node)const noexcept;
     bool occupancy(std::uint32_t room,std::uint32_t node,std::uint8_t)noexcept;

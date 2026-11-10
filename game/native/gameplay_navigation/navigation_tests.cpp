@@ -4,6 +4,7 @@
 #include "edges.hpp"
 #include "routes.hpp"
 #include "cost_routes.hpp"
+#include "local_routes.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -14,6 +15,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <tuple>
 #ifdef REO_NAVIGATION_ORIGINAL
 #include "reference.hpp"
 #include "functions.h"
@@ -285,6 +287,7 @@ void edge_contracts(){
 }
 #include "ranked_route_tests.inc"
 #include "cost_route_tests.inc"
+#include "local_route_tests.inc"
 void owned(const char* path){
     const auto bytes=read(path);const auto asset=imported(bytes);asset_rooms+=asset.descriptors().size();asset_links+=asset.links().size();
     reo::native::gameplay_session::RoomVariants native_variants;n::Bank bank(native_variants);const auto shared=std::make_shared<const n::Asset>(asset);
@@ -341,6 +344,11 @@ void owned(const char* path){
                 n::RouteOutput cost_output{-22,-23,{1,2,3},{4,5,6},std::bit_cast<float>(0x7fc01234u)};
                 const auto cost_result=compare_cost(bank,{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::int32_t(source),std::int32_t(destination),std::uint16_t(profile?0xffff:0),cost_output,4096,room);
                 if(cost_result.status!=n::QueryStatus::completed){++cost_retail_refusals;if(cost_result.budget_exhausted)++cost_retail_budgets;}
+                for(unsigned policy:{0u,1u,2u}){
+                    n::RouteOutput local_output{-22,-23,{1,2,3},{4,5,6},std::bit_cast<float>(0x7fc01234u)};std::int16_t destination_link=314;
+                    const auto local_result=compare_local(bank,bytes,{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::int32_t(source),std::int32_t(destination),std::uint16_t(profile?0xffff:0),policy,local_output,destination_link,4096,room);
+                    if(local_result.status!=n::QueryStatus::completed){++local_retail_refusals;if(local_result.budget_exhausted)++local_retail_budgets;}
+                }
             }
         }
         check(word(memory,0x83e540)==links&&word(memory,0x83e548)==call(0x816080)&&word(memory,0x83e54c)==call(0x8160c0));
@@ -398,13 +406,13 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==7);const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();
+        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();local_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=2;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
 #else
         for(int i=1;i<argc;++i)owned(argv[i]);
 #endif
-        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<"}\n";
+        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<",\"local_cases\":"<<local_cases<<",\"local_refusals\":"<<local_refusals<<",\"local_budgets\":"<<local_budgets<<",\"local_retail_refusals\":"<<local_retail_refusals<<",\"local_retail_budgets\":"<<local_retail_budgets<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

@@ -33,4 +33,9 @@ nav::CostRouteResult Owner::bounded_navigation_route(const world::actors::Entity
     const auto actor=world_.resolve(id);if(!actor)return {};
     return nav::bounded_cost_route(world_.navigation(),room,source,destination,{actor->character,actor->slot,actor->ai_control},actor->status,flags_.strided_half(room,0),output,maximum_edges);
 }
+nav::CostRouteResult Owner::local_navigation_route(const world::actors::EntityId& id,std::uint32_t room,std::int32_t source,std::int32_t destination,std::uint32_t policy,nav::RouteOutput& output,std::int16_t& link,std::size_t maximum_edges){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor)return {};
+    return nav::local_route(world_.navigation(),room,source,destination,{actor->character,actor->slot,actor->ai_control},actor->status,flags_.strided_half(room,0),policy,output,link,maximum_edges);
+}
 }

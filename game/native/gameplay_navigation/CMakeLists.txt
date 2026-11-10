@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_navigation STATIC navigation.cpp bank.cpp conditions.cpp edges.cpp routes.cpp cost_routes.cpp)
+add_library(reo_native_gameplay_navigation STATIC navigation.cpp bank.cpp conditions.cpp edges.cpp routes.cpp cost_routes.cpp local_routes.cpp)
 target_compile_features(reo_native_gameplay_navigation PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_navigation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
