@@ -11,18 +11,18 @@ void project_goal_actor(std::vector<std::uint8_t>& target,unsigned at,const gw::
 }
 void project_goal_descriptor(const gs::SceneResources& resources,unsigned slot){
     const auto id=resources.slot(slot);check(bool(id));const auto descriptor=resources.get(*id);check(bool(descriptor));
-    const auto at=0x3c5630+60*slot;memory[at]=descriptor->active;put(memory,at+6,descriptor->authored_id);
+    const auto at=0x3c5630+60*slot;memory[at]=descriptor->active;put(memory,at+4,descriptor->authored_id);put(memory,at+6,descriptor->attachment_id);
 }
 void project_goal_resources(const gs::SceneResources& resources){for(unsigned i=0;i<256;++i)project_goal_descriptor(resources,i);}
 void project_goal_bank(const gn::Bank& bank){for(unsigned i=0;i<128;++i){const auto graph=bank.room(i);put(memory,0x83e558+164*i,std::uint32_t(graph?graph->nodes().size():0));}}
 #endif
-void load_goal_descriptor(gs::SceneResources& resources,unsigned slot,unsigned active,unsigned content){
-    gs::SceneDescriptor descriptor;descriptor.active=std::uint8_t(active);descriptor.authored_id=std::uint16_t(content);check(bool(resources.load(slot,descriptor)));
+void load_goal_descriptor(gs::SceneResources& resources,unsigned slot,unsigned active,unsigned content,unsigned authored=0x7770){
+    gs::SceneDescriptor descriptor;descriptor.active=std::uint8_t(active);descriptor.authored_id=std::uint16_t(authored);descriptor.attachment_id=std::uint16_t(content);check(bool(resources.load(slot,descriptor)));
 #ifdef REO_AI_ORIGINAL
     project_goal_descriptor(resources,slot);
 #endif
 }
-void compare_goal_resource(const gw::Actor& actor,const gw::Actor& other,const gs::SceneResources& resources){
+ai::GoalResourceSelection compare_goal_resource(const gw::Actor& actor,const gw::Actor& other,const gs::SceneResources& resources){
     const auto result=ai::select_character_seven_resource(actor,other,resources);check(result.status==ai::Status::completed);
 #ifdef REO_AI_ORIGINAL
     constexpr unsigned self=0x10000,reference=0x4a5c30,out=0x1e00000;
@@ -33,7 +33,7 @@ void compare_goal_resource(const gw::Actor& actor,const gw::Actor& other,const g
     check(context.pc==0x100&&GPR_U32(&context,29)==0x1f00000&&bool(result.selected)==(GPR_U32(&context,2)!=0)&&memory[out]==result.selected.value_or(197));
     check(std::memcmp(before.data(),memory.data()+self,0x1100)==0&&std::memcmp(before_other.data(),memory.data()+reference,0x1100)==0);
 #endif
-    ++goal_resource_cases;
+    ++goal_resource_cases;return result;
 }
 void compare_target_busy(const gw::Actor& actor){
     [[maybe_unused]] const auto result=ai::actor_target_busy(actor);
@@ -95,6 +95,12 @@ void priority_goal_contracts(){
         load_goal_descriptor(resources,id,0,0);
     }
     load_goal_descriptor(resources,1,128,0x131);load_goal_descriptor(resources,2,1,0x12d);load_goal_descriptor(resources,3,255,0x12d);
+    // Cross the two IDs: an authored-ID match cannot admit either selector.
+    load_goal_descriptor(resources,4,1,0x131,0x12d);load_goal_descriptor(resources,5,1,0x12d,0x131);
+    self.inventory.storage.fill(0);self.inventory.storage[28]=5;self.inventory.storage[10]=4;self.inventory.storage[11]=5;other.status=0;
+    check(!compare_goal_resource(self,other,resources).selected);
+    other.status=1;check(compare_goal_resource(self,other,resources).selected==5);
+    self.inventory.storage[28]=4;check(compare_goal_resource(self,other,resources).selected==4);
     for(unsigned motion=0;motion<256;++motion)for(unsigned aux:{0u,0x10000u,0x20000u,0x30000u})for(unsigned status:{0u,0x200u}){self.motion_class=std::uint8_t(motion);self.auxiliary_status=aux;self.status=status;compare_target_busy(self);}
     reo::native::gameplay_session::RoomVariants variants;check(variants.store(7,0));gn::Bank bank(variants);check(bank.bind(reevaluation_asset()));
 #ifdef REO_AI_ORIGINAL

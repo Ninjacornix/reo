@@ -58,8 +58,10 @@ void reevaluation_owner(){
     reset();reference->status=8;state.peer_priority=1;goal(3);
     reset();state.reference_request=1;state.goal_resource=0xdeadbeef;reference->equipment_slot=201;goal(11);check(state.goal_resource==201);
     reset();state.owned_request=256;goal(12);check(state.owned_request==0);
-    u::scenario::SceneDescriptor descriptor;descriptor.active=128;descriptor.authored_id=0x131;check(bool(resources.load(73,descriptor)));
-    reset();self->character=7;self->inventory.storage[28]=73;reference->class_marker=2;reference->current=1;reference->maximum=1000;state.goal_resource=0xdeadbeef;goal(15);check(state.goal_resource==0xdeadbe49);
+    u::scenario::SceneDescriptor descriptor;descriptor.active=128;descriptor.authored_id=0x131;descriptor.attachment_id=0x123;const auto resource=resources.load(73,descriptor);check(bool(resource));
+    reset();self->character=7;self->inventory.storage[28]=73;reference->class_marker=2;reference->current=1;reference->maximum=1000;state.goal_resource=0xdeadbeef;goal(3);check(state.goal_resource==0xdeadbeef);
+    descriptor.authored_id=0x777;descriptor.attachment_id=0x131;check(resources.replace(*resource,descriptor)==u::scenario::SceneStatus::completed);
+    reset();self->character=7;state.goal_resource=0xdeadbeef;goal(15);check(state.goal_resource==0xdeadbe49);
     reset();state.combined_weights.fill(0);state.combined_weights[3]=255;goal(5);
     reset();state.combined_weights.fill(0);state.combined_weights[3]=255;self->status=0x200;goal(2);
     for(unsigned winner:{5u,6u,7u,8u}){reset();state.combined_weights.fill(0);if(winner<8)state.combined_weights[winner]=255;const auto result=owner.reevaluate_ai_goal(self_id,resources);check(result.status==ai::Status::completed&&!result.goal_written&&state.goal==17&&state.observation_flags==0);}

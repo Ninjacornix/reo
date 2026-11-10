@@ -19,23 +19,29 @@ the broader813BD0 observation gate.
 
 Character7 selection reads the existing canonical inventory: special storage28
 and extended storage10..18, preserving first-match order. Descriptors must be
-active with exact authored IDs131/12D. Signed current/max health and the original
+active with exact attachment/content IDs131/12D. Signed current/max health and the original
 FP32 multiply/divide order are retained. Owned constant71B034 is25.0; the signed
 B034 displacement from720000 must not be read as72B034. Goal-resource1090 is one
 word: this selector replaces its low byte, while the reference request overwrites
 the word with the zero-extended equipment-slot byte.
 
-Both compilers pass94,095,293 identical checks, including62,722 full original
-reevaluations,4,027 setter calls,512 actor alias cases,470,016 resource selections
+Both compilers pass400,438,140 current AI checks, including62,722 full original
+reevaluations,4,027 setter calls,512 actor alias cases,470,019 resource selections
 and2,048 target-busy comparisons. Five native capability refusals are separate
 from the original comparisons. Whole actor ranges and unrelated state compare.
 The exact immutable table/constant inputs and complete source instructions are
 audited against owned binaries; only the prior profile zero-fill port remains.
 Actual Owner checks additionally cover canonical resource mutation, companion
-selection, missing/retired actors and closure. Twelve parent checks pass per
-compiler. Evidence is sealed by
-`tools/native_reconstruction/qualify_gameplay_ai_priority_v1.py` into
-`native_gameplay_ai_priority_qualification_v1.json`.
+selection, missing/retired actors and closure. Thirteen parent checks pass per
+compiler. `native_gameplay_ai_descriptor_alias_qualification_v1.json` seals the
+current comparisons and preserves the earlier qualification as history.
+
+The first implementation and fixture confused descriptor+4 (authored lookup ID)
+with descriptor+6 (attachment/content ID). Both original selector paths read+6.
+The corrected fixture projects both fields independently, including crossed IDs.
+The real Owner rejects a matching authored ID with the wrong content, and admits
+matching content with an unrelated authored ID. This supersedes the earlier
+resource-field mapping; no installed game change is claimed.
 
 Full observations, reactions/action callbacks, actor construction and native
 game acceptance remain open. There was no game launch or performance measurement.

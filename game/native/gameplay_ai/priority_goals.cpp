@@ -10,7 +10,9 @@ GoalResourceSelection select_character_seven_resource(const gameplay_world::Acto
     const auto matches=[&](std::uint8_t slot,std::uint16_t content)->std::optional<bool>{
         const auto id=resources.slot(slot);if(!id)return {};
         const auto descriptor=resources.get(*id);if(!descriptor)return {};
-        return descriptor->active!=0&&descriptor->authored_id==content;
+        // Original descriptor +6 is attachment/content ID. +4 is the separate
+        // authored descriptor lookup ID and can hold an unrelated value.
+        return descriptor->active!=0&&descriptor->attachment_id==content;
     };
     if(!(other.status&8)&&other.class_marker==2&&other.current>0&&float(other.current)<threshold){
         const auto slot=self.inventory.storage[28];

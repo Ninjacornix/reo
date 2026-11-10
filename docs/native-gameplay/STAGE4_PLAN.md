@@ -127,8 +127,10 @@ The current resource and inventory implementation includes:
 - [AI goal reevaluation](AI_GOAL_REEVALUATION.md) now supplies complete8133D0,
   character7 item selection825CC0 and target-busy823190 through canonical Actor,
   navigation and resource owners. Both compilers pass94095293 checks including
-  62722 complete reevaluations and512 alias cases; twelve parent tests pass.
-  Full observations, reactions/actions, construction and game acceptance remain open.
+  62722 complete reevaluations and512 alias cases. The later descriptor audit
+  corrects the content field to canonical attachment ID and refreshes all AI
+  comparisons plus thirteen parent tests. Full observations, reactions/actions,
+  construction and game acceptance remain open.
 
 - [AI reaction scheduling](AI_REACTIONS.md) now supplies complete8130D0 through
   canonical execution state and the actual Session RNG. Both compilers pass
