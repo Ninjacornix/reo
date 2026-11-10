@@ -43,7 +43,8 @@ Exact source, executable and receipt identities are sealed in
 on misleading fixture indentation; its frozen evidence is retained, and the
 corrected fixture passes both compilers without relaxing warnings.
 
-The message wrappers5B4460/5B45E0/5B47F0, health/status item effects, ownership
-transfer, inventory UI and game caller installation remain open. No game or audio
+The subsequent [inventory callers](RESOURCE_INVENTORY_CALLERS.md) now supply
+5B4460/5B45E0/5B47F0 and the typed message frontend. Health/status item effects,
+ownership transfer, inventory UI and game caller installation remain open. No game or audio
 device was launched for this qualification. Installed V39 is unchanged; Stage4
 remains incomplete.

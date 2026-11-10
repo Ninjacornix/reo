@@ -66,7 +66,7 @@ struct Result {
 class Owner final:public world::actors::StatusTiming,private scenario::FlagNotifications {
 public:
     // Borrowed native world and notification target must outlive this owner.
-    Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1(),ScenarioMessageSink* = nullptr);
+    Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1(),GameplayMessageSink* = nullptr);
     ~Owner();
     Owner(const Owner&)=delete;
     Owner& operator=(const Owner&)=delete;
@@ -83,6 +83,10 @@ public:
     gameplay_events::Events& cooperative_events()noexcept{return cooperative_;}
     gameplay_events::Statistics& completion_statistics()noexcept{return statistics_;}
     scenario::ActionChoices& action_choices()noexcept{return choices_;}
+    PublicationStatus record_resource_operation(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation)noexcept{
+        if(!open())return PublicationStatus::unavailable;
+        return publication_.resource_operation(resource,actor,operation);
+    }
     gameplay_events::Recorded check_scenario_events(){
         if(!open()||!world_.session().scenario)return{gameplay_events::StatisticsStatus::unavailable};
         return statistics_.automatic(*world_.session().scenario,CompletionConditions(world_,flags_,choices_),cooperative_,clock_.update_counter());
@@ -122,7 +126,7 @@ private:
     gameplay_events::Statistics statistics_;
     scenario::FlagNotifications& notifications_;
     scenario::FlagState flags_;
-    ScenarioPublication publication_;
+    StatePublication publication_;
     scenario::ActionChoices choices_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;

@@ -3,9 +3,10 @@ namespace publication_fixture {
 namespace u=reo::native::gameplay_update;
 std::vector<u::ScenarioOwnerMessage> messages;
 unsigned reentrant{},index{};
-struct Sink:u::ScenarioMessageSink {
+struct Sink:u::GameplayMessageSink {
     reo::native::gameplay_scenario::FlagState& flags;std::vector<u::ScenarioOwnerMessage> values;bool available{true};
     explicit Sink(reo::native::gameplay_scenario::FlagState& f):flags(f){}
+    bool send(const u::ResourceOperationMessage&)noexcept override{return false;}
     bool send(const u::ScenarioOwnerMessage& value)noexcept override{
         values.push_back(value);if(reentrant)check(flags.scenario_owner(index,reentrant==1?255:0));return available;
     }
@@ -17,7 +18,7 @@ void publication_message_port(std::uint8_t* memory,R5900Context* context){
     if(reentrant)memory[0x4baa50+index]=reentrant==1?255:0;
 }
 void compare_scenario_publication(std::uint8_t* memory){
-    using namespace publication_fixture;automatic_fixture::Native native;Sink sink(native.flags);u::ScenarioPublication publication(native.world,native.flags,&sink);
+    using namespace publication_fixture;automatic_fixture::Native native;Sink sink(native.flags);u::StatePublication publication(native.world,native.flags,&sink);
     const auto run=[&](unsigned mode,unsigned phase,unsigned selected,unsigned status,unsigned id,unsigned value,unsigned replacement,unsigned previous,unsigned nested){
         native.world.mode=std::uint8_t(mode);native.world.selected_actor=std::uint8_t(selected);native.world.session().message_phase=std::bit_cast<std::int8_t>(std::uint8_t(phase));native.world.primary(selected)->status=status;
         memory[0x3243f2]=std::uint8_t(mode);memory[0x3243fb]=std::uint8_t(phase);memory[0x4baded]=std::uint8_t(selected);put(memory,0x4a5c30+4320*selected+0xba0,status);index=id;reentrant=nested;
@@ -29,7 +30,7 @@ void compare_scenario_publication(std::uint8_t* memory){
     for(unsigned n=0;n<65536;++n)run(n>>8,n,n%4,n%3?0:n*65521u,n%512,n*1664525u,n*1013904223u,n,n%3);
     for(unsigned mode=0;mode<4;++mode)for(unsigned phase:{1u,2u})for(unsigned previous=0;previous<256;++previous)for(unsigned nested=0;nested<3;++nested)run(mode,phase,previous%4,0,(previous*37)%512,previous*65521u,previous*1013904223u,previous,nested);
     reentrant=0;native.world.selected_actor=0;native.world.primary(0)->status=0;native.world.mode=0;native.world.session().message_phase=1;
-    u::ScenarioPublication missing(native.world,native.flags);check(missing.publish(0,1,2)==u::PublicationStatus::message_unavailable);++publication_refusals;
+    u::StatePublication missing(native.world,native.flags);check(missing.publish(0,1,2)==u::PublicationStatus::message_unavailable);++publication_refusals;
     sink.available=false;check(publication.publish(0,1,2)==u::PublicationStatus::message_unavailable);++publication_refusals;sink.available=true;
     native.world.primary(0)->status=0x400;check(missing.publish(UINT32_MAX,1,2)==u::PublicationStatus::completed);++publication_refusals;
     native.world.primary(0)->status=0;native.world.session().message_phase=0;check(publication.publish(512,1,2)==u::PublicationStatus::unavailable);++publication_refusals;

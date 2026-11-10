@@ -47,6 +47,9 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
 #ifdef REO_OWNED_RECIPES
     if(context->pc==0x1b0300){SET_GPR_U32(context,2,memory[0x3243f2]);done();return;}
 #endif
+#ifdef REO_RESOURCE_WRAPPERS
+    if(context->pc==0x811190||context->pc==0x810870){extern void wrapper_message_port(std::uint8_t*,R5900Context*);wrapper_message_port(memory,context);done();return;}
+#endif
 #ifdef REO_RESOURCE_COMPANIONS
     if(companion_live_capture){
         if(context->pc==0x6b2680){++companion_light_requests;done();return;}
@@ -187,6 +190,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_CONSUMPTION
 #include "tools/native_reconstruction/resource_consumption_tests.inc"
 #endif
+#ifdef REO_RESOURCE_WRAPPERS
+#include "tools/native_reconstruction/resource_wrappers_tests.inc"
+#endif
 #ifdef REO_WEAPON_RESOURCES
 #include "tools/native_reconstruction/weapon_resources_tests.inc"
 #endif
@@ -322,6 +328,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_CONSUMPTION
     compare_resource_consumption(argv[2],argv[3],ram);
 #endif
+#ifdef REO_RESOURCE_WRAPPERS
+    compare_resource_wrappers(argv[2],argv[3],ram);
+#endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
@@ -381,6 +390,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_CONSUMPTION
     <<",\"consumption_cases\":"<<consumption_cases<<",\"consumption_owner_cases\":"<<consumption_owner_cases<<",\"consumption_refusals\":"<<consumption_refusals
+#endif
+#ifdef REO_RESOURCE_WRAPPERS
+    <<",\"wrapper_cases\":"<<wrapper_cases<<",\"wrapper_messages\":"<<wrapper_messages<<",\"wrapper_frontends\":"<<wrapper_frontends<<",\"wrapper_refusals\":"<<wrapper_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads

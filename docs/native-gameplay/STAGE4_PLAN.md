@@ -39,8 +39,10 @@ The current resource and inventory implementation includes:
   actual flag writes and timer callbacks. The admitted local writer is native;
   other writers and actual message queue/transport consumers remain open.
 - [Direct item consumption and visibility](RESOURCE_CONSUMPTION.md), using the
-  actual inventory/model lifecycle and completion-event consumers. Message
-  wrappers, health/status effects and game caller installation remain open.
+  actual inventory/model lifecycle and completion-event consumers, and
+  [inventory callers/message frontend](RESOURCE_INVENTORY_CALLERS.md) over the
+  same owners. Health/status effects, actual transport and game installation
+  remain open.
 
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler

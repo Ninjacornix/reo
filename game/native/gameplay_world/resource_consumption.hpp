@@ -12,6 +12,9 @@ public:
     std::uint8_t consume_or_transform(const actors::EntityId&,std::uint32_t resource); //5B46A0
     void destroy(const actors::EntityId&,std::uint32_t resource); //5B4900
     std::uint8_t transform(const actors::EntityId&,std::uint32_t resource); //5B4990
+    void use_carried_content(const actors::EntityId&,std::uint32_t content); //5B4460
+    void consume_carried_content(const actors::EntityId&,std::uint32_t content); //5B45E0
+    void destroy_content(const actors::EntityId&,std::uint32_t content); //5B47F0
     const std::optional<gameplay_events::Recorded>& last_record()const noexcept{return last_record_;}
 private:
     ResourceRecipes& lifecycle_;gameplay_update::Owner& update_;ResourceUse use_;
@@ -20,5 +23,7 @@ private:
     std::uint8_t addressed(std::uint32_t)const;
     void record(const Actor&,std::uint16_t content);
     void cleanup(const actors::EntityId&,std::uint8_t);
+    void decrement_core(const actors::EntityId&,std::uint32_t);
+    void notify(std::uint8_t resource,std::uint8_t actor,std::uint8_t operation);
 };
 }

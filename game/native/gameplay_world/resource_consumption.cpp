@@ -29,7 +29,11 @@ void ResourceConsumption::cleanup(const actors::EntityId& id,std::uint8_t resour
     (void)lifecycle_.inventory_.detach_item(id,resource);lifecycle_.inventory_.compact(id);lifecycle_.pairs_.destroy_owned(resource);
 }
 void ResourceConsumption::decrement(const actors::EntityId& id,std::uint32_t full_resource){
-    last_record_.reset();if(!actor(id))return;auto& pairs=lifecycle_.pairs_;const auto resource=addressed(full_resource);const auto value=pairs.descriptor(resource);if(!value.active)return;
+    last_record_.reset();decrement_core(id,full_resource);
+}
+void ResourceConsumption::decrement_core(const actors::EntityId& id,std::uint32_t full_resource){
+    if(!actor(id))return;
+    auto& pairs=lifecycle_.pairs_;const auto resource=addressed(full_resource);const auto value=pairs.descriptor(resource);if(!value.active)return;
     pairs.quantity(resource,std::int32_t(value.parameter)-1);if(pairs.descriptor(resource).parameter<=0)cleanup(id,std::uint8_t(full_resource));
 }
 std::uint8_t ResourceConsumption::consume_or_transform(const actors::EntityId& id,std::uint32_t full_resource){
@@ -52,5 +56,39 @@ std::uint8_t ResourceConsumption::transform(const actors::EntityId& id,std::uint
     last_record_.reset();const auto selected=actor(id);if(!selected)return 0;auto& pairs=lifecycle_.pairs_;const auto resource=addressed(full_resource);const auto value=pairs.descriptor(resource);if(!value.active)return 0;
     record(*selected,value.attachment_id);if(!(read<std::uint32_t>(pairs.metadata(resource),0)&0x80000u))return 0;
     lifecycle_.contents_.replace_direct(resource,std::uint16_t(read<std::int16_t>(pairs.metadata(resource),10)));return 1;
+}
+void ResourceConsumption::notify(std::uint8_t resource,std::uint8_t actor,std::uint8_t operation){
+    if(update_.record_resource_operation(resource,actor,operation)!=gameplay_update::PublicationStatus::completed)throw std::runtime_error("Native item operation message consumer unavailable");
+}
+void ResourceConsumption::use_carried_content(const actors::EntityId& id,std::uint32_t full_content){
+    last_record_.reset();const auto selected=actor(id);if(!selected)return;auto& pairs=lifecycle_.pairs_;
+    for(unsigned i=0;i<selected->inventory.carried.size();++i){
+        const auto resource=selected->inventory.carried[i];if(!resource)continue;
+        auto item=pairs.descriptor(resource);if(item.attachment_id!=std::uint16_t(full_content)||!(read<std::uint32_t>(pairs.metadata(resource),0)&0x200u))continue;
+        record(*selected,item.attachment_id);
+        if(read<std::uint32_t>(pairs.metadata(resource),0)&0x40000u){
+            item=pairs.descriptor(resource);notify(item.instance_index,selected->slot,0);
+            decrement_core(id,pairs.descriptor(resource).instance_index);
+        }
+        return;
+    }
+}
+void ResourceConsumption::consume_carried_content(const actors::EntityId& id,std::uint32_t full_content){
+    last_record_.reset();const auto selected=actor(id);if(!selected)return;
+    for(unsigned i=0;i<selected->inventory.carried.size();++i){
+        const auto resource=selected->inventory.carried[i];if(!resource||lifecycle_.pairs_.descriptor(resource).attachment_id!=std::uint16_t(full_content))continue;
+        if(!consume_or_transform(id,resource))continue;
+        notify(resource,selected->slot,1);return;
+    }
+}
+void ResourceConsumption::destroy_content(const actors::EntityId& id,std::uint32_t full_content){
+    last_record_.reset();const auto selected=actor(id);if(!selected)return;
+    const auto inspect=[&](std::uint8_t resource){
+        if(!resource)return false;
+        const auto item=lifecycle_.pairs_.descriptor(resource);if(item.attachment_id!=std::uint16_t(full_content))return false;
+        notify(item.instance_index,selected->slot,2);destroy(id,lifecycle_.pairs_.descriptor(resource).instance_index);return true;
+    };
+    for(unsigned i=0;i<selected->inventory.carried.size();++i)if(inspect(selected->inventory.carried[i]))return;
+    if(selected->character==6)for(unsigned i=1;i<selected->inventory.storage.size();++i)if(inspect(selected->inventory.storage[i]))return;
 }
 }

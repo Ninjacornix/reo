@@ -4,7 +4,7 @@ namespace consumption_fixture {
 using namespace owned_recipe_fixture;
 struct Consuming:Owned {
     g::ResourceConsumption consumer;
-    Consuming(std::vector<std::uint8_t>& ram,const std::vector<std::byte>& asset,const std::vector<std::byte>& table):Owned(ram,asset,table),consumer(recipes,update){q.session->scenario=0;reset_statistics(0);}
+    Consuming(std::vector<std::uint8_t>& ram,const std::vector<std::byte>& asset,const std::vector<std::byte>& table,u::GameplayMessageSink* messages=nullptr):Owned(ram,asset,table,messages),consumer(recipes,update){q.session->scenario=0;reset_statistics(0);}
     void reset_statistics(unsigned counter){put(q.memory,0x3243da,std::uint16_t(0));call(q.memory,0x37b990);check(update.initialize_completion_statistics()==reo::native::gameplay_events::StatisticsStatus::completed);check(update.clock().restore({},counter)==reo::native::gameplay_tasks::Status::completed);put(q.memory,0x4bade8,counter);}
     void compare_statistics(){const auto& state=update.completion_statistics().state();check(state.completed[0]==get<unsigned>(q.memory,0x3b84f8)&&state.completed[1]==get<unsigned>(q.memory,0x3b84fc)&&state.points==get<unsigned>(q.memory,0x3b8500)&&state.unique_available==q.memory[0x3b8504]);check(std::memcmp(state.automatic_seen.data(),q.memory+0x56bbd0,64)==0&&std::memcmp(state.explicit_seen.data(),q.memory+0x56bb90,64)==0);compare_events();}
 };
