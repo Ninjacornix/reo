@@ -260,11 +260,11 @@ public partial class MainWindow : Window {
                 Status.Text = "Game running";
             graphicsPreparing = false;
         }
-        if (game.NetworkStatus != null && !graphicsPreparing)
-            Status.Text = game.NetworkStatus;
+        if (running && !graphicsPreparing && game.NetworkStatus is { } network)
+            Status.Text = network;
     }
-    async Task ShowGameExitStatus(Process process, string previousStatus) {
-        string message = await game.ExitStatus(process.ExitCode);
+    async Task ShowGameExitStatus(Process process, string? previousStatus) {
+        string message = await game.ExitStatusAsync(process.ExitCode);
         if (ReferenceEquals(game.Process, process) && !launching && Status.Text == previousStatus)
             Status.Text = message;
     }

@@ -551,17 +551,17 @@ public sealed class GameSession {
         return diagnostic;
     }
 
-    internal async Task<string> ExitStatus(int exitCode) {
+    internal async Task<string> ExitStatusAsync(int exitCode) {
+        string? diagnostic = null;
         try {
             // The process can exit before the final line of stderr reaches the launcher.
-            if (await graphicsExitDiagnostic.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false) is { } diagnostic)
-                return diagnostic;
+            diagnostic = await graphicsExitDiagnostic.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
         } catch (Exception error) when (error is IOException or TimeoutException) {
             // A pipe or log failure must not hide the process exit itself.
         }
-        return exitCode == 0
+        return randomizerStopReason ?? diagnostic ?? (exitCode == 0
             ? "The game has closed. Your session logs have been saved."
-            : $"The game closed unexpectedly (exit code {exitCode}). Open Log for details.";
+            : $"The game closed unexpectedly (exit code {exitCode}). Open Log for details.");
     }
 
     internal static string? GraphicsExitDiagnostic(string line) {
