@@ -63,6 +63,7 @@ int main(){
         navigation.destination_room=7;navigation.final_position={9,8,7};navigation.previous_action=654;
         check(owner.refresh_actor_navigation(id,true).selected==0&&navigation.output.route.first_position.x==9&&navigation.output.route.second_position.y==8&&navigation.last_current_node==0&&navigation.action==0&&navigation.previous_action==654);
         check((*world.navigation().occupancy(7,0)&32)!=0);
+        actor->slot=0;check(owner.begin_actor_navigation(id,{12,13,14},7).selected==0&&navigation.final_position.y==13&&navigation.output.route.second_position.z==14&&navigation.output.route.first==navigation.destination_node&&navigation.output.route.second==navigation.destination_node);
         check(owner.admit_navigation_condition(id,7,2).status==n::QueryStatus::unavailable&&owner.admit_navigation_condition(id,8,0).status==n::QueryStatus::unavailable);
         check(owner.admitted_navigation_link(id,7,0,1).status==n::QueryStatus::completed&&!owner.admitted_navigation_link(id,7,0,1).index);
         u::world::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());const auto other=foreign.spawn_primary(0,std::make_unique<u::world::Actor>()).id;

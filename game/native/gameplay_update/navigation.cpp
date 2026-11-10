@@ -58,4 +58,11 @@ nav::CrossRoomResult Owner::refresh_actor_navigation(const world::actors::Entity
     if(update_action)return nav::update_actor_route_action(world_.navigation(),facts,actor->status,actor->room,flags,*actor->navigation_route,profile);
     return nav::refresh_actor_route(world_.navigation(),facts,actor->status,actor->room,flags,*actor->navigation_route,profile);
 }
+nav::CrossRoomResult Owner::begin_actor_navigation(const world::actors::EntityId& id,nav::Position destination,std::uint16_t destination_room,nav::CrossRoomProfile profile){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor||!actor->navigation_route)return {};
+    nav::RoomFlags flags;for(std::uint32_t room=0;room<flags.size();++room)flags[room]=flags_.strided_half(room,0);
+    const nav::RouteActorFacts facts{{actor->character,actor->slot,actor->ai_control},actor->status,actor->auxiliary_status,actor->room,{actor->position.x,actor->position.y,actor->position.z},actor->motion_class,actor->transient_marker};
+    return nav::begin_actor_route(world_.navigation(),facts,world_.session().room,flags,*actor->navigation_route,destination,destination_room,profile);
+}
 }

@@ -56,6 +56,11 @@ The current resource and inventory implementation includes:
   component and one controlled unknown-cost case refuse explicitly. Initial/
   current-node producers, destination setup, movement/AI, saves and installation
   remain open.
+- [Actor destination setup](NAVIGATION_DESTINATION.md) now supplies complete
+  816890 through the same actual actor, canonical visit/occupancy/route owners
+  and full audited heading/distance chain. Both compilers pass15884 destination
+  comparisons and ten parent tests. Initial/current-node production, filtered
+  collision queries, remaining AI/movement, saves and installation remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

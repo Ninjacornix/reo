@@ -1,12 +1,14 @@
 std::uint64_t actor_route_cases{},actor_action_cases{},actor_route_refusals{},actor_route_corrected_cases{},actor_route_retail_cases{};
+std::uint64_t destination_cases{},destination_refusals{},destination_corrected_cases{},destination_retail_cases{};
+struct BeginCase {n::RouteActorFacts actor;std::uint16_t session_room{};n::Position target;std::uint16_t target_room{};};
 n::CrossRoomResult compare_actor_route(n::Bank& bank,[[maybe_unused]] std::span<const std::uint8_t> bytes,n::ActorFacts facts,unsigned status,const n::RoomFlags& flags,
-    std::uint16_t room,n::ActorRouteState& state,bool action,n::CrossRoomProfile profile){
+    std::uint16_t room,n::ActorRouteState& state,bool action,n::CrossRoomProfile profile,const BeginCase* begin=nullptr){
     [[maybe_unused]] const auto before=state;
 #ifdef REO_NAVIGATION_ORIGINAL
     cross_reference_setup(bank,bytes,facts,status,flags);
 #endif
-    const auto result=action?n::update_actor_route_action(bank,facts,status,room,flags,state,profile):n::refresh_actor_route(bank,facts,status,room,flags,state,profile);
-    if(result.status!=n::QueryStatus::completed){++actor_route_refusals;return result;}
+    const auto result=begin?n::begin_actor_route(bank,begin->actor,begin->session_room,flags,state,begin->target,begin->target_room,profile):action?n::update_actor_route_action(bank,facts,status,room,flags,state,profile):n::refresh_actor_route(bank,facts,status,room,flags,state,profile);
+    if(result.status!=n::QueryStatus::completed){if(begin)++destination_refusals;else ++actor_route_refusals;return result;}
 #ifdef REO_NAVIGATION_ORIGINAL
     constexpr unsigned actor=0xf00000;std::fill(memory.begin()+actor+0x100c,memory.begin()+actor+0x10ac,0xcc);
     const auto write_byte=[&](unsigned offset,std::int8_t value){memory[actor+offset]=std::bit_cast<std::uint8_t>(value);};
@@ -16,8 +18,13 @@ n::CrossRoomResult compare_actor_route(n::Bank& bank,[[maybe_unused]] std::span<
     write_position(0x101c,before.output.route.first_position);write_position(0x1028,before.output.route.second_position);
     put(memory,actor+0x1054,before.previous_action);put(memory,actor+0x1056,before.action);put(memory,actor+0x1058,before.destination_room);put(memory,actor+0x10aa,before.output.link);
     memory[actor+0x105a]=before.completed;memory[actor+0x1064]=before.refresh;put(memory,actor+0x1e2,room);
+    if(begin){
+        const auto& input=begin->actor;check(input.identity.slot==facts.slot&&input.status==status&&input.room==room);
+        put(memory,actor+0xba4,input.auxiliary_status);write_position(0x38,input.position);memory[actor+0x54f]=input.motion_class;memory[actor+0x10a9]=input.transient_marker;
+        put(memory,0x3243dc,begin->session_room);std::memcpy(memory.data()+0x1e00000,&begin->target,12);
+    }
     reference_initialize_collection=profile.initialize_collection_cost;
-    const auto expected=std::bit_cast<std::int32_t>(call(action?0x816ef0:0x8173d0,{actor,123,before.destination_room,0}));reference_initialize_collection=false;
+    const auto expected=std::bit_cast<std::int32_t>(call(begin?0x816890:action?0x816ef0:0x8173d0,{actor,begin?0x1e00000u:123u,begin?begin->target_room:before.destination_room,0}));reference_initialize_collection=false;
     check(result.selected==expected&&reference_collection_calls==result.calls);
     const auto check_byte=[&](unsigned offset,std::int8_t value){check(std::bit_cast<std::uint8_t>(value)==memory[actor+offset]);};
     const auto check_half=[&](unsigned offset,std::uint16_t value){check(std::uint16_t(std::uint16_t(memory[actor+offset])|std::uint16_t(memory[actor+offset+1])<<8)==value);};
@@ -29,7 +36,8 @@ n::CrossRoomResult compare_actor_route(n::Bank& bank,[[maybe_unused]] std::span<
     check(memory[actor+0x105a]==state.completed&&memory[actor+0x1064]==state.refresh);
     const auto mask=word(memory,0x83e54c);for(unsigned actor_slot=0;actor_slot<4;++actor_slot){const auto visits=bank.visits(actor_slot);check(std::equal(visits.begin(),visits.end(),memory.begin()+mask+actor_slot*visits.size()));}
     for(unsigned node=0;node<128;++node){check(bank.occupancy(room,node)==memory[0x83e550+164*room+0x14+node]);}
-    if(action)++actor_action_cases;else ++actor_route_cases;if(profile.initialize_collection_cost)++actor_route_corrected_cases;
+    if(begin){++destination_cases;if(profile.initialize_collection_cost)++destination_corrected_cases;}
+    else{if(action)++actor_action_cases;else ++actor_route_cases;if(profile.initialize_collection_cost)++actor_route_corrected_cases;}
 #endif
     return result;
 }
