@@ -285,6 +285,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_ACTOR_RECOVERY
 #include "tools/native_reconstruction/actor_recovery_tests.inc"
 #endif
+#ifdef REO_ACTOR_ZERO_HEALTH
+#include "tools/native_reconstruction/actor_zero_health_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -310,6 +313,12 @@ int main(int argc,char** argv)try{
     owned_constants(memory);
     compare_actor_recovery(argv[2],argv[3],ram);
     std::cout<<"{\"checks\":"<<checks<<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_ZERO_HEALTH_ONLY
+    owned_constants(memory);
+    compare_actor_zero_health(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
     return 0;
 #endif
     for(unsigned asset=0;asset<corpus.size();asset+=2){
@@ -361,6 +370,12 @@ int main(int argc,char** argv)try{
     owned_constants(memory);
     compare_actor_recovery(argv[2],argv[3],ram);
     std::cout<<"{\"checks\":"<<checks<<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_ZERO_HEALTH_ONLY
+    owned_constants(memory);
+    compare_actor_zero_health(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
     return 0;
 #endif
     for(unsigned asset=0;asset<corpus.size();asset+=2){
@@ -470,6 +485,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_RECOVERY
     compare_actor_recovery(argv[2],argv[3],ram);
 #endif
+#ifdef REO_ACTOR_ZERO_HEALTH
+    compare_actor_zero_health(argv[2],argv[3],ram);
+#endif
 #ifdef REO_EQUIPMENT_RESOURCES
     compare_equipment_resources(argv[4],argv[2],ram);
 #endif
@@ -565,6 +583,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_RECOVERY
     <<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions
+#endif
+#ifdef REO_ACTOR_ZERO_HEALTH
+    <<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads<<",\"weapon_missing_file_reads\":"<<weapon_missing_file_reads

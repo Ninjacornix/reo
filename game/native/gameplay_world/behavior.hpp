@@ -41,13 +41,19 @@ public:
     virtual ~ProgressionTiming()=default;
     virtual bool apply_progression_timer(World&,Actor&)=0;
 };
+class ZeroHealthApplication {
+public:
+    virtual ~ZeroHealthApplication()=default;
+    virtual bool apply_zero_health(World&,Actor&,actors::StatusServices&)=0;
+};
 // Operates directly on the canonical World actor/session. Timers, status and
 // pending hits use their qualified native cores; other providers remain explicit.
 // Throws leave a partial invocation, exactly as World service failures do.
 void update_behavior(World&,Actor&,BehaviorServices&,std::span<const std::int16_t> hit_timer_amounts,
                      const gameplay_collision::response::Grid* native_floors=nullptr,
                      ActivityPublication* publication=nullptr,GaugeApplication* gauge=nullptr,
-                     TerminalTiming* terminal=nullptr,ProgressionTiming* progression=nullptr);
+                     TerminalTiming* terminal=nullptr,ProgressionTiming* progression=nullptr,
+                     ZeroHealthApplication* zero_health=nullptr);
 // Actual primary-frame consumer of update_behavior. The remaining frame ports
 // and behavior effects are borrowed synchronous owners and must outlive this
 // adapter; a supplied native floor owner must also outlive it. Timer content is
@@ -60,12 +66,14 @@ public:
     BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
                           std::span<const std::int16_t> hit_timer_amounts,
                           ActivityPublication* publication=nullptr,GaugeApplication* gauge=nullptr,
-                          TerminalTiming* terminal=nullptr,ProgressionTiming* progression=nullptr);
+                          TerminalTiming* terminal=nullptr,ProgressionTiming* progression=nullptr,
+                          ZeroHealthApplication* zero_health=nullptr);
     BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
                           const gameplay_collision::response::Grid& floors,
                           std::span<const std::int16_t> hit_timer_amounts,
                           ActivityPublication* publication=nullptr,GaugeApplication* gauge=nullptr,
-                          TerminalTiming* terminal=nullptr,ProgressionTiming* progression=nullptr);
+                          TerminalTiming* terminal=nullptr,ProgressionTiming* progression=nullptr,
+                          ZeroHealthApplication* zero_health=nullptr);
     void begin_offline_frame(World&)override;
     void run(Stage,World&,Actor&)override;
     bool remote_motion(World&,Actor&)override;
@@ -81,5 +89,6 @@ private:
     GaugeApplication* gauge_{};
     TerminalTiming* terminal_{};
     ProgressionTiming* progression_{};
+    ZeroHealthApplication* zero_health_{};
 };
 } // namespace reo::native::gameplay_world

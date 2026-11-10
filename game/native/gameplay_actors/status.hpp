@@ -33,9 +33,16 @@ public:
     virtual void snapshot(StatusActor&,StatusSession&)=0;
 };
 bool periodic_damage_admitted(const StatusActor&) noexcept;
+class ZeroHealthEffects {
+public:
+    virtual ~ZeroHealthEffects()=default;
+    virtual void cleanup(StatusActor&,StatusSession&)=0;
+    virtual void recover(StatusActor&,StatusSession&)=0;
+    virtual void snapshot(StatusActor&,StatusSession&)=0;
+};
 void clear_status_fields(StatusActor&,std::uint32_t selector)noexcept;
 void clear_status(StatusActor&,StatusSession&,StatusServices&,std::uint8_t selector);
 void tick_status(StatusActor&,StatusSession&,StatusServices&,gameplay_session::Random&);
-void select_zero_health_action(StatusActor&,StatusSession&,StatusServices&);
+void select_zero_health_action(StatusActor&,StatusSession&,StatusServices&,ZeroHealthEffects* = nullptr);
 bool override_hit_response(StatusActor&,StatusSession&,StatusServices&);
 } // namespace reo::native::gameplay_actors

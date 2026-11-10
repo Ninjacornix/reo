@@ -55,26 +55,27 @@ void tick_status(StatusActor& a,StatusSession& s,StatusServices& services,gamepl
     }
 }
 namespace {
-void select(StatusActor& a,StatusSession& s,StatusServices& services,std::uint8_t primary,std::uint8_t secondary){
+void select(StatusActor& a,StatusSession& s,StatusServices& services,std::uint8_t primary,std::uint8_t secondary,ZeroHealthEffects* effects=nullptr){
     a.primary=primary;a.secondary=secondary;a.phase=0;a.subphase=0;
-    services.snapshot(a,s);
+    if(effects)effects->snapshot(a,s);else services.snapshot(a,s);
 }
-void terminal(StatusActor& a,StatusSession& s,StatusServices& services,std::uint8_t secondary){
-    services.cleanup(a,s);a.motion_class=0xa0;select(a,s,services,4,secondary);
+void terminal(StatusActor& a,StatusSession& s,StatusServices& services,std::uint8_t secondary,ZeroHealthEffects* effects){
+    if(effects)effects->cleanup(a,s);else services.cleanup(a,s);
+    a.motion_class=0xa0;select(a,s,services,4,secondary,effects);
 }
 }
-void select_zero_health_action(StatusActor& a,StatusSession& s,StatusServices& services){
+void select_zero_health_action(StatusActor& a,StatusSession& s,StatusServices& services,ZeroHealthEffects* effects){
     if(s.paused || s.session_state==1 || a.current!=0 || (a.primary!=1 && a.primary!=2))return;
     if(!(a.status&0x1f0)){
-        if(a.category==1)terminal(a,s,services,0);
-        else if(a.auxiliary_status&0x100)services.recover(a,s);
+        if(a.category==1)terminal(a,s,services,0,effects);
+        else if(a.auxiliary_status&0x100){if(effects)effects->recover(a,s);else services.recover(a,s);}
         return;
     }
     if(a.status&0x80){
         if(a.recovery_timer)--a.recovery_timer;
         if(a.recovery_timer || !(a.auxiliary_status&0x100))return;
     }else if(a.status&0x10)return;
-    a.status|=0x120;terminal(a,s,services,3);
+    a.status|=0x120;terminal(a,s,services,3,effects);
 }
 bool override_hit_response(StatusActor& a,StatusSession& s,StatusServices& services){
     switch(a.motion_class){

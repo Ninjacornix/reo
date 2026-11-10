@@ -48,6 +48,8 @@ def main():
     p.add_argument('--actor-progression', action='store_true')
     p.add_argument('--actor-recovery', action='store_true')
     p.add_argument('--focus-recovery', action='store_true')
+    p.add_argument('--actor-zero-health', action='store_true')
+    p.add_argument('--focus-zero-health', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -80,6 +82,8 @@ def main():
     assert not args.actor_progression or args.actor_terminal
     assert not args.actor_recovery or args.actor_progression
     assert not args.focus_recovery or args.actor_recovery
+    assert not args.actor_zero_health or args.actor_recovery
+    assert not args.focus_zero_health or (args.actor_zero_health and not args.focus_recovery)
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -188,6 +192,8 @@ def main():
     if args.actor_recovery:
         for at in [0x65fcb0,0x65fab0,0x5d4cf0,0x5d4bf0,0x5d50e0,0x5d50f0,0x5d4570,0x5d5950,0x5d4810,0x5d4470,0x5d46c0,0x663350,0x58c7b0,0x664d00,0x667f90,0x668c80]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.actor_zero_health:
+        for at in [0x65fba0,0x6607d0]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -313,6 +319,8 @@ def main():
         name='tools/native_reconstruction/actor_gauge_progression_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.actor_recovery:
         name='tools/native_reconstruction/actor_recovery_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.actor_zero_health:
+        name='tools/native_reconstruction/actor_zero_health_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -538,6 +546,8 @@ def main():
         if args.actor_progression: command.insert(1,'-DREO_ACTOR_GAUGE_PROGRESSION=1')
         if args.actor_recovery: command.insert(1,'-DREO_ACTOR_RECOVERY=1')
         if args.focus_recovery: command.insert(1,'-DREO_RECOVERY_ONLY=1')
+        if args.actor_zero_health: command.insert(1,'-DREO_ACTOR_ZERO_HEALTH=1')
+        if args.focus_zero_health: command.insert(1,'-DREO_ZERO_HEALTH_ONLY=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')
@@ -546,6 +556,7 @@ def main():
         if args.focus_companions: command.insert(1,'-DREO_RESOURCE_COMPANIONS_FOCUSED=1')
         objects,object_receipts=compile_objects(ROOT,out,args.compiler,command[1:],units,frozen,env)
         record['focused_recovery_run']=args.focus_recovery
+        record['focused_zero_health_run']=args.focus_zero_health
         record['production_objects']=object_receipts
         original_object,original_receipt=compile_oracle(ROOT,out,args.compiler,command[1:],env)
         record['original_object']=original_receipt

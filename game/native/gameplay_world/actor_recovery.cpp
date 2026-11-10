@@ -4,12 +4,44 @@
 #include "../gameplay_actors/health_class.hpp"
 #include "../gameplay_update/update.hpp"
 #include <stdexcept>
+#include <utility>
 namespace reo::native::gameplay_world {
+namespace {
+class BoundZeroHealth final:public actors::ZeroHealthEffects {
+public:
+    BoundZeroHealth(ActorRecovery& owner,World& world,ActorResourceOperations& operations,Actor& actor,actors::EntityId id):
+        owner_(owner),world_(world),operations_(operations),actor_(actor),id_(std::move(id)){}
+    void cleanup(actors::StatusActor& actor,actors::StatusSession& session)override{verify(actor,session);(void)operations_.transfer_inventory(id_,0);}
+    void recover(actors::StatusActor& actor,actors::StatusSession& session)override{verify(actor,session);owner_.enter_zero_health(id_,0);}
+    void snapshot(actors::StatusActor& actor,actors::StatusSession& session)override{verify(actor,session);save_action_pose(actor_);}
+private:
+    void verify(actors::StatusActor& actor,actors::StatusSession& session){
+        if(&actor!=static_cast<actors::StatusActor*>(&actor_)||&session!=static_cast<actors::StatusSession*>(&world_.session())||world_.resolve(id_).get()!=&actor_)throw std::runtime_error("Native zero-health actor/session binding unavailable");
+    }
+    ActorRecovery& owner_;World& world_;ActorResourceOperations& operations_;Actor& actor_;actors::EntityId id_;
+};
+}
 ActorRecovery::ActorRecovery(gameplay_update::Owner& update,ActorResourceOperations& operations,WorldAnimation* animation,RecoveryUi* ui):
     update_(update),operations_(operations),world_(update.world()),animation_(animation),ui_(ui){
     if(!bound_to(world_)||(animation_&&!animation_->bound_to(world_))||(ui_&&!ui_->bound_to(world_)))throw std::invalid_argument("Native actor recovery owners closed or foreign");
 }
 bool ActorRecovery::bound_to(const World& world)const noexcept{return &world==&world_&&update_.open()&&operations_.bound_to(world_);}
+bool ActorRecovery::apply_zero_health(World& world,Actor& actor,actors::StatusServices& services){
+    if(!bound_to(world))return false;
+    const auto id=world_.identity_of(actor);if(!id)return false;
+    BoundZeroHealth effects(*this,world_,operations_,actor,id);
+    actors::select_zero_health_action(actor,world_.session(),services,&effects);return true;
+}
+void ActorRecovery::enter_zero_health(const actors::EntityId& id,std::uint32_t full_phase){
+    if(!bound_to(world_))throw std::runtime_error("Native zero-health owner closed");
+    const auto actor=world_.resolve(id);if(!actor)throw std::runtime_error("Native zero-health actor retired or foreign");
+    const bool terminal=(actor->status&0x800u)||(actor->response_flags&8u);
+    if(terminal){actor->status|=0x40000800u;(void)operations_.transfer_inventory(id,0);actor->motion_class=0xa0;actor->primary=4;actor->secondary=0;}
+    else{actor->status=(actor->status&~0xa8u)|0x18u;actor->primary=1;actor->secondary=0x60;}
+    actor->phase=std::uint8_t(full_phase);actor->subphase=0;save_action_pose(*actor);
+    if(update_.record_actor_message(id,gameplay_update::ActorMessageSelector::snapshot)!=gameplay_update::PublicationStatus::completed)throw std::runtime_error("Native zero-health snapshot unavailable");
+    if(terminal)(void)operations_.transfer_inventory(id,0);
+}
 void ActorRecovery::apply(const actors::EntityId& id,std::uint32_t full_mode){
     if(!bound_to(world_))throw std::runtime_error("Native actor recovery owner closed");
     const auto actor=world_.resolve(id);if(!actor)throw std::runtime_error("Native recovery actor retired or foreign");
