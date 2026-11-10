@@ -26,14 +26,16 @@ def main():
     main_image=ROOT/'game_data/SLUS_207.65'
     o2_image=ROOT/'build-function-index/owned-overlays/o2.bin';o2_raw=o2_image.read_bytes()
     assert sha(o2_image)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226'
+    o8_image=ROOT/'build-function-index/owned-overlays/o8.bin';o8_raw=o8_image.read_bytes()
+    assert sha(o8_image)=='f42da66b07a00fb221c5954b0e02b06a46b5694afd5596e866d35feec1fc92ab'
     assert sha(main_image)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     assert (ROOT/'game/native/gameplay_ai/weight_profiles.inc').read_text()==generated()
     entries={};proof=[]
-    for address in [0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0]:
-        folder=ROOT/('recomp/config/output' if address==0x107ab0 else 'recomp/config/output_ovl/'+('o2' if address<0x810000 else 'o9'))
+    for address in [0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30]:
+        folder=ROOT/('recomp/config/output' if address<0x200000 else 'recomp/config/output_ovl/'+('o8' if address==0x810f30 else 'o2' if address<0x810000 else 'o9'))
         path=next(folder.glob(f'*_{address:08X}_0x{address:x}.cpp'))
         end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',path.read_text())[1],16)
-        read=elf_reader(main_image.read_bytes()) if address==0x107ab0 else (lambda a,n:o2_raw[a-0x570000:a-0x570000+n]) if address<0x810000 else (lambda a,n:raw[a-0x810000:a-0x810000+n])
+        read=elf_reader(main_image.read_bytes()) if address<0x200000 else (lambda a,n:o8_raw[a-0x810000:a-0x810000+n]) if address==0x810f30 else (lambda a,n:o2_raw[a-0x570000:a-0x570000+n]) if address<0x810000 else (lambda a,n:raw[a-0x810000:a-0x810000+n])
         name=path.relative_to(ROOT).as_posix();proof.append(compare_source('Complete AI execution/profile body',name,address,end,read));entries[address]=name
     helper='tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
     unit='game/native/gameplay_ai/execution.cpp';fixture='game/native/gameplay_ai/execution_tests.cpp'
@@ -41,6 +43,7 @@ def main():
         'game/native/gameplay_ai/CMakeLists.txt',helper,Path(__file__).relative_to(ROOT).as_posix(),
         'tools/native_reconstruction/generate_ai_weight_profiles.py',*entries.values()]
     files+=['game/native/gameplay_ai/control_requests.cpp','game/native/gameplay_ai/control_requests.hpp','game/native/gameplay_ai/control_request_tests.inc']
+    files+=['game/native/gameplay_session/activity.cpp','game/native/gameplay_session/activity.hpp','game/native/gameplay_session/CMakeLists.txt','game/native/gameplay_ai/activity_tests.inc']
     frozen={name:(ROOT/name).read_bytes() for name in files};out.mkdir(parents=True)
     for name,data in frozen.items():
         path=out/'source'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
@@ -49,21 +52,21 @@ def main():
     actual={Path(name).stem for name in entries.values()};calls=set(re.findall(r'\b((?:sub|o[0-9]+)_[0-9A-Fa-f]+_0x[0-9a-f]+)\(rdram',body))
     (out/'functions.h').write_text('#pragma once\n'+''.join(f'void {name}(std::uint8_t*,R5900Context*,PS2Runtime*);\n' for name in sorted(actual))+''.join(f'inline void {name}(std::uint8_t* m,R5900Context* c,PS2Runtime* r){{original_transform_port(m,c,r);}}\n' for name in sorted(calls-actual)))
     for name in ['ps2_runtime.h','ps2_runtime_macros.h']:(out/name).write_text('#pragma once\n#include "reference.hpp"\n')
-    for name in ['o2_functions.h','o9_functions.h','ps2_recompiled_functions.h']:(out/name).write_text('#pragma once\n#include "functions.h"\n')
+    for name in ['o2_functions.h','o8_functions.h','o9_functions.h','ps2_recompiled_functions.h']:(out/name).write_text('#pragma once\n#include "functions.h"\n')
     for name in ['ps2_recompiled_stubs.h','ps2_stubs.h','ps2_syscalls.h']:(out/name).write_text('#pragma once\n')
     (out/'dispatch.inc').write_text(''.join(f'case {address}:{Path(name).stem}(memory,context,runtime);return;\n' for address,name in entries.items()))
     (out/'o9.bin').write_bytes(raw)
     compiler=COMPILERS[args.compiler];env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
     exe=out/'checks.exe';command=[str(compiler),'-std=c++20','-O2','-msse4.1','-DREO_AI_ORIGINAL=1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-I'+str(out),'-I'+str(out/'source'),str(out/'source'/unit),str(out/'source'/fixture),str(out/'original.cpp'),'-o',str(exe)]
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_ai/control_requests.cpp'))
+    command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_session/activity.cpp'))
     receipt=dict(schema=1,status='failed',game_launched=False,installed_in_game=False,stage4_complete=False,
         compiler_sha256=sha(compiler),source_sha256={name:hashlib.sha256(data).hexdigest() for name,data in frozen.items()},
-        owned_image_sha256={image.relative_to(ROOT).as_posix():sha(image),main_image.relative_to(ROOT).as_posix():sha(main_image),o2_image.relative_to(ROOT).as_posix():sha(o2_image)},
+        owned_image_sha256={image.relative_to(ROOT).as_posix():sha(image),main_image.relative_to(ROOT).as_posix():sha(main_image),o2_image.relative_to(ROOT).as_posix():sha(o2_image),o8_image.relative_to(ROOT).as_posix():sha(o8_image)},
         original_word_audits=proof,commands=[],declared_ports=['107C68 exact two eight-byte zero fills in original-only profile selection surroundings'],
         limitations=['Negative profile indices remain unavailable: original signed comparison lacks a lower bound and would address adjacent content. Indices>=20 preserve the source no-op.',
             'Qualified native state primitives and actual Owner integration are separate checks. Full AI initialization, observations, reevaluation, remaining goal/action callbacks and game installation remain open.'])
     try:
-        receipt['declared_ports'].append('1AFE70 controlled read-only external activity-mode result for681820; full activity-mode provider/producer is not claimed migrated')
         for label,cmd in [('compile',command),('test',[str(exe),str(out/'o9.bin')])]:
             result=subprocess.run(cmd,capture_output=True,env=env,timeout=180);(out/f'{label}.stdout.txt').write_bytes(result.stdout);(out/f'{label}.stderr.txt').write_bytes(result.stderr);receipt['commands'].append(dict(label=label,exit_code=result.returncode,command=cmd))
             assert result.returncode==0,label+': '+result.stderr.decode(errors='replace')[-2000:]

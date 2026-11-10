@@ -1,5 +1,6 @@
 #include "execution.hpp"
 #include "control_requests.hpp"
+#include "../gameplay_session/activity.hpp"
 #include <bit>
 #include <cstring>
 #include <fstream>
@@ -62,12 +63,13 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
     if(pc==0x813380)++goal_cases;else if(pc==0x81a6e0)++action_cases;else if(pc==0x81a6f0)++phase_cases;else if(pc==0x814b30)++finish_cases;else ++profile_cases;
 }
 #include "control_request_tests.inc"
+#include "activity_tests.inc"
 }
 #ifdef REO_AI_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
+    if(context->pc==0x1afe70)++activity_queries;
     if(context->pc==0x107ab0){check(GPR_U32(context,4)==0x110b0&&GPR_U32(context,6)==8);++copies;}
     switch(context->pc){
-    case 0x1afe70:SET_GPR_U32(context,2,std::uint32_t(reference_activity_mode));context->pc=GPR_U32(context,31);++activity_queries;return;
     case 0x107c68:{const auto at=GPR_U32(context,4);check((at==0x110b8||at==0x110c0)&&GPR_U32(context,5)==0&&GPR_U32(context,6)==8);std::memset(memory+at,0,8);++clears;SET_GPR_U32(context,2,at);context->pc=GPR_U32(context,31);return;}
 #include "dispatch.inc"
     default:throw std::runtime_error("Undeclared AI original dependency "+std::to_string(context->pc));
@@ -93,6 +95,7 @@ int main(int argc,char** argv){
         ai::set_goal(halfword,65536);check(halfword.goal==0&&halfword.goal_refresh==1&&halfword.previous_goal==256);
         control_contracts();
         control_receive_contracts();
-        std::cout<<"{\"checks\":"<<checks<<",\"goal_cases\":"<<goal_cases<<",\"action_cases\":"<<action_cases<<",\"phase_cases\":"<<phase_cases<<",\"finish_cases\":"<<finish_cases<<",\"profile_cases\":"<<profile_cases<<",\"profile_refusals\":"<<profile_refusals<<",\"copies\":"<<copies<<",\"clears\":"<<clears<<",\"control_membership_cases\":"<<control_membership_cases<<",\"control_register_cases\":"<<control_register_cases<<",\"control_unregister_cases\":"<<control_unregister_cases<<",\"control_lookup_cases\":"<<control_lookup_cases<<",\"control_request_cases\":"<<control_request_cases<<",\"control_publish_cases\":"<<control_publish_cases<<",\"control_apply_cases\":"<<control_apply_cases<<",\"control_receive_cases\":"<<control_receive_cases<<",\"control_receive_refusals\":"<<control_receive_refusals<<",\"activity_queries\":"<<activity_queries<<"}\n";
+        activity_contracts();
+        std::cout<<"{\"checks\":"<<checks<<",\"goal_cases\":"<<goal_cases<<",\"action_cases\":"<<action_cases<<",\"phase_cases\":"<<phase_cases<<",\"finish_cases\":"<<finish_cases<<",\"profile_cases\":"<<profile_cases<<",\"profile_refusals\":"<<profile_refusals<<",\"copies\":"<<copies<<",\"clears\":"<<clears<<",\"control_membership_cases\":"<<control_membership_cases<<",\"control_register_cases\":"<<control_register_cases<<",\"control_unregister_cases\":"<<control_unregister_cases<<",\"control_lookup_cases\":"<<control_lookup_cases<<",\"control_request_cases\":"<<control_request_cases<<",\"control_publish_cases\":"<<control_publish_cases<<",\"control_apply_cases\":"<<control_apply_cases<<",\"control_receive_cases\":"<<control_receive_cases<<",\"control_receive_refusals\":"<<control_receive_refusals<<",\"activity_queries\":"<<activity_queries<<",\"activity_mode_cases\":"<<activity_mode_cases<<",\"activity_mode_refusals\":"<<activity_mode_refusals<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

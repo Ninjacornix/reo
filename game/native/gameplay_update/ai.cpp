@@ -1,8 +1,12 @@
 #include "update.hpp"
 namespace reo::native::gameplay_update {
-gameplay_ai::ControlApplied Owner::receive_ai_controls(std::span<const std::uint8_t> packet,std::optional<std::int32_t> activity_mode){
+std::optional<std::int32_t> Owner::ai_activity_mode()const noexcept{
     if(!open())return {};
-    return world_.session().ai_control_requests.receive(packet,activity_mode);
+    return gameplay_session::activity_mode(world_.mode,world_.session().activity);
+}
+gameplay_ai::ControlApplied Owner::receive_ai_controls(std::span<const std::uint8_t> packet){
+    if(!open())return {};
+    return world_.session().ai_control_requests.receive(packet,ai_activity_mode());
 }
 std::optional<gameplay_ai::RegistrationStatus> Owner::register_ai_control(const world::actors::EntityId& id){
     if(!open())return {};

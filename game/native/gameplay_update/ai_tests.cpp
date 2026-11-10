@@ -38,11 +38,12 @@ int main(){
         check(owner.publish_ai_control(id,0x12345678)->status==ai::RequestStatus::queued&&controls.pending().size()==1);
         check(controls.pending()[0].registration==0&&controls.pending()[0].payload==std::array<std::uint8_t,4>{0x78,0,0,0});
         const std::array<std::uint8_t,9> value_packet{0,9,0,0,0,0x22,0x33,0x44,0x55};
-        check(owner.receive_ai_controls(value_packet,{}).status==ai::ControlApplyStatus::completed&&controls.registrations()[0].payload==std::array<std::uint8_t,4>{0x22,0x33,0x44,0x55});
+        check(!owner.ai_activity_mode()&&owner.receive_ai_controls(value_packet).status==ai::ControlApplyStatus::completed&&controls.registrations()[0].payload==std::array<std::uint8_t,4>{0x22,0x33,0x44,0x55});
         const std::array<std::uint8_t,6> owner_packet{1,6,0,0,0,77};
-        check(owner.receive_ai_controls(owner_packet,{}).status==ai::ControlApplyStatus::unavailable&&controls.registrations()[0].owner_tag==255);
-        check(owner.receive_ai_controls(owner_packet,1).status==ai::ControlApplyStatus::completed&&controls.registrations()[0].owner_tag==255);
-        check(owner.receive_ai_controls(owner_packet,0).status==ai::ControlApplyStatus::completed&&controls.registrations()[0].owner_tag==77);
+        check(owner.receive_ai_controls(owner_packet).status==ai::ControlApplyStatus::unavailable&&controls.registrations()[0].owner_tag==255);
+        world.session().activity.single=1;check(owner.ai_activity_mode()==1&&owner.receive_ai_controls(owner_packet).status==ai::ControlApplyStatus::completed&&controls.registrations()[0].owner_tag==255);
+        world.session().activity.single=0;check(owner.ai_activity_mode()==0&&owner.receive_ai_controls(owner_packet).status==ai::ControlApplyStatus::completed&&controls.registrations()[0].owner_tag==77);
+        world.mode=1;check(!owner.ai_activity_mode());world.session().activity.online=-1;check(owner.ai_activity_mode()==-1);world.mode=2;check(owner.ai_activity_mode()==1);world.mode=0;
         check(owner.publish_ai_control(id,0)->status==ai::RequestStatus::missing_registration&&controls.pending().size()==1);
         u::world::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());const auto other=foreign.spawn_primary(0,std::make_unique<u::world::Actor>()).id;
         check(owner.set_ai_goal(other,0)==ai::Status::unavailable&&owner.set_ai_action(other,0)==ai::Status::unavailable&&owner.select_ai_weight_profile(other,0)==ai::Status::unavailable);
@@ -50,7 +51,7 @@ int main(){
         check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.set_ai_goal(id,0)==ai::Status::unavailable);
         check(!owner.register_ai_control(id)&&!owner.publish_ai_control(id,0)&&controls.pending().size()==1);
         check(world.close()==u::world::Status::completed&&owner.set_ai_action(id,0)==ai::Status::unavailable&&owner.select_ai_weight_profile(id,0)==ai::Status::unavailable);
-        check(owner.receive_ai_controls(value_packet,0).status==ai::ControlApplyStatus::unavailable);
+        check(!owner.ai_activity_mode()&&owner.receive_ai_controls(value_packet).status==ai::ControlApplyStatus::unavailable);
         check(owner.close()==u::Status::completed);std::cout<<"{\"checks\":"<<checks<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

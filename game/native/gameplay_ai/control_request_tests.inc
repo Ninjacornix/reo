@@ -1,6 +1,5 @@
 std::uint64_t control_membership_cases{},control_register_cases{},control_unregister_cases{},control_lookup_cases{},control_request_cases{},control_publish_cases{};
 std::uint64_t control_apply_cases{},control_receive_cases{},control_receive_refusals{},activity_queries{};
-[[maybe_unused]] std::int32_t reference_activity_mode{};
 #ifdef REO_AI_ORIGINAL
 void project_controls(std::vector<std::uint8_t>& target,unsigned base,const ai::ControlRequests& controls){
     put(target,base,std::uint32_t(controls.pending().size()));
@@ -72,7 +71,7 @@ void compare_control_receive(ai::ControlRequests& controls,std::span<const std::
     const auto result=direct?controls.apply(index,packet,mode,activity):controls.receive(packet,activity);
     if(result.status!=ai::ControlApplyStatus::completed){++control_receive_refusals;return;}
 #ifdef REO_AI_ORIGINAL
-    project_controls(expected,0,controls);std::memcpy(memory.data()+input,packet.data(),packet.size());reference_activity_mode=activity;
+    project_controls(expected,0,controls);std::memcpy(memory.data()+input,packet.data(),packet.size());memory[0x3243f2]=0;memory[0x83e2d5]=std::uint8_t(activity);
     R5900Context context;PS2Runtime runtime;context.pc=direct?0x681820:0x6818d0;
     SET_GPR_U32(&context,4,direct?index:0);SET_GPR_U32(&context,5,input);SET_GPR_U32(&context,6,0xa5);SET_GPR_U32(&context,7,mode);
     SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0x100);original_transform_port(memory.data(),&context,&runtime);

@@ -35,6 +35,11 @@ subsequent outgoing-request admission and World closure. Evidence is sealed by
 `native_gameplay_ai_receive_qualification_v1.json` (SHA256
 `7b3e6e3b8e756fd2319fb989547af743e0d6c46a58a7ee7c8cc5b4cdb42c2696`).
 
+The later [Session activity query](SESSION_ACTIVITY_MODE.md) supersedes the
+external result substitute above: the full original query chain now executes,
+and actual Owner reception derives its mode from the canonical Session. Its
+initialization/network producers remain open; historical evidence is retained.
+
 Complete activity-mode production, outgoing service/transport, frame reset,
 initialization/observations/goal/action dispatch, input/network/save ownership
 and coherent native game installation/acceptance remain open. No game was

@@ -9,6 +9,7 @@
 #include "../gameplay_scenario/model_reference.hpp"
 #include "inventory_state.hpp"
 #include "../gameplay_session/room_variants.hpp"
+#include "../gameplay_session/activity.hpp"
 #include "../gameplay_navigation/actor_routes.hpp"
 #include "../gameplay_ai/execution.hpp"
 #include "../gameplay_ai/control_requests.hpp"
@@ -157,6 +158,7 @@ struct Session : actors::HitSession {
     // storage/registration and the active byte remain independent concepts.
     std::optional<std::uint32_t> primary_population;
     gameplay_ai::ControlRequests ai_control_requests;
+    gameplay_session::ActivityState activity;
 };
 struct Profile {
     std::vector<input::Remap> layouts;

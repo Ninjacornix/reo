@@ -109,6 +109,12 @@ The current resource and inventory implementation includes:
   external activity-mode fact is explicit; its complete provider/producer,
   outgoing service/transport and coherent game acceptance remain open.
 
+- [Session activity mode](SESSION_ACTIVITY_MODE.md) now supplies the complete
+  main/overlay query through canonical Session fields and the actual receiver.
+  Both compilers pass75155916 checks and twelve parent tests; the old1AFE70
+  result substitute is removed. Actual mode producers, control service and
+  coherent native gameplay acceptance remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

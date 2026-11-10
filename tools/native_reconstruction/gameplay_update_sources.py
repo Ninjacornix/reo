@@ -4,7 +4,7 @@ UPDATE_UNITS=[
     for group,names in [
         ('gameplay_world',['world', 'behavior', 'surfaces', 'motion', 'linked_models','auxiliary_actors','inventory_presence','interaction_transitions','color_fade', 'bodies', 'model_poses', 'model_constraints', 'resource_models', 'model_attachments','alignment']),
         ('gameplay_actors',['entity', 'health', 'status', 'hit', 'input']),
-        ('gameplay_session',['session']),
+        ('gameplay_session',['session','activity']),
         ('gameplay_ai',['execution','control_requests']),
         ('gameplay_navigation',['navigation','bank','conditions','edges','routes','cost_routes','cost_graph','local_routes','link_collection','cross_room','actor_routes','destination','visibility','scene_candidates','scene_lookup']),
         ('gameplay_tasks',['tasks', 'events']),
