@@ -1,6 +1,7 @@
 #include "navigation.hpp"
 #include "bank.hpp"
 #include "conditions.hpp"
+#include "edges.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -18,6 +19,8 @@ namespace n=reo::native::gameplay_navigation;
 namespace {
 std::uint64_t checks{},nearest_cases{},action_cases{},asset_nodes{},asset_conditions{},asset_rooms{},asset_links{},refusals{},bindings{},clears{},nearest_refusals{},action_refusals{},bank_cells{},bank_visit_cells{},bank_clears{};
 std::uint64_t condition_cases{},link_cases{},link_refusals{};
+std::uint64_t edge_cases{},edge_refusals{};
+std::uint64_t retail_edge_refusals{},edge_flag_bindings{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error("Navigation check "+std::to_string(checks)+" line "+std::to_string(at.line()));
 }
@@ -46,11 +49,12 @@ std::uint32_t call(unsigned pc,std::array<unsigned,4> args={}){
     for(unsigned i=0;i<args.size();++i)SET_GPR_U32(&context,4+i,args[i]);
     original_transform_port(memory.data(),&context,&runtime);check(context.pc==0x100&&GPR_U32(&context,29)==0x1f00000);return GPR_U32(&context,2);
 }
-void source_graph(const n::RoomGraph& graph){
-    const auto room=std::size_t(0x83e550),data=std::size_t(0x1000000);
+void source_graph(const n::RoomGraph& graph,unsigned room_index=0){
+    const auto room=std::size_t(0x83e550+164*room_index),data=std::size_t(0x1000000);
     std::copy(graph.encoding().begin(),graph.encoding().end(),memory.begin()+data);
     put(memory,room+8,std::uint32_t(graph.nodes().size()));put(memory,room+12,std::uint32_t(data+12));
     put(memory,room+0x9c,std::uint32_t(data+word(graph.encoding(),0)+8));
+    put(memory,room+0xa0,std::uint32_t(data+word(graph.encoding(),0)));
 }
 void compare_action(const n::RoomGraph& graph,std::int32_t index){
     const auto native=n::reverse_edge_action(graph,index);
@@ -72,11 +76,20 @@ void compare_condition(const n::RoomGraph& graph,std::int32_t index,n::ActorFact
     check(native.index==std::bit_cast<std::int32_t>(call(0x81a0e0,{actor,std::uint32_t(index),0})));
     check(admitted.allowed==(call(0x819220,{actor,std::uint32_t(index),0})==1));++condition_cases;
 }
+void compare_edge(const n::Bank& bank,n::ActorFacts facts,unsigned status,std::int32_t source,std::int32_t destination,std::uint16_t flags,unsigned room=7){
+    const auto native=n::admit_edge(bank,room,source,destination,facts,status,flags);
+    if(native.status!=n::QueryStatus::completed){++edge_refusals;return;}
+    const auto graph=bank.room(room);check(bool(graph));source_graph(*graph,room);
+    const auto edge_flags=bank.edge_flags(room);check(bool(edge_flags));std::copy(edge_flags->begin(),edge_flags->end(),memory.begin()+0x1000000+word(graph->encoding(),0));
+    constexpr unsigned actor=0xf00000;memory[actor+3]=facts.slot;memory[actor+0xb98]=facts.character;memory[actor+0xff0]=facts.ai_control;put(memory,actor+0xba0,status);put(memory,0x4b9e20+12*room,flags);
+    check(native.allowed==(call(0x819010,{actor,std::uint32_t(source),std::uint32_t(destination),room})==1));++edge_cases;
+}
 #else
-void source_graph(const n::RoomGraph&){}
+void source_graph(const n::RoomGraph&,unsigned=0){}
 void compare_action(const n::RoomGraph&,std::int32_t){}
 void compare_nearest(const n::RoomGraph&,n::Position,std::int8_t){}
 void compare_condition(const n::RoomGraph&,std::int32_t,n::ActorFacts,std::uint16_t){}
+void compare_edge(const n::Bank&,n::ActorFacts,unsigned,std::int32_t,std::int32_t,std::uint16_t,unsigned=7){}
 #endif
 void contracts(){
     auto bytes=synthetic();auto asset=imported(bytes);const auto* graph=asset.find_room(7,0);check(graph&&graph->nodes().size()==4&&graph->conditions().size()==2);
@@ -210,6 +223,61 @@ void link_contracts(){
     bytes[19]=255;test({},n::QueryStatus::unavailable); // signed invalid condition cannot be bypassed
     check(n::find_admitted_link(bank,{},7,1,0,{}).status==n::QueryStatus::completed&&!n::find_admitted_link(bank,{},7,1,0,{}).index);
 }
+void edge_contracts(){
+    auto bytes=synthetic();bytes[synthetic_nodes+20]=1;put(bytes,synthetic_nodes+16,std::int32_t(0));bytes[synthetic_tail+8]=1;bytes[synthetic_tail+9]=3;
+    reo::native::gameplay_session::RoomVariants variants;check(variants.store(7,0));n::Bank bank(variants);
+    const auto bind=[&]{check(bank.bind(std::make_shared<const n::Asset>(imported(bytes))));};
+    for(unsigned word=0;word<65536;++word){
+        put(bytes,synthetic_nodes+24,std::uint16_t(word));put(bytes,synthetic_nodes+44,std::uint32_t(1));bind();
+        for(unsigned status:{0u,8u,0x80u,0x10000u})compare_edge(bank,{7,3,255},status,0,1,0);
+    }
+    for(unsigned action:{0u,4u,10u})for(unsigned lane=0;lane<4;++lane)for(unsigned code=0;code<256;++code){
+        put(bytes,synthetic_nodes+24,std::uint16_t(action));put(bytes,synthetic_nodes+44,std::uint32_t(code<<(8*lane)));bind();
+        for(unsigned present:{0u,1u,255u})for(unsigned status:{0u,8u}){
+            std::array<std::uint8_t,4> flags{};flags[lane]=std::uint8_t(present);check(bank.edge_flags(7,flags));compare_edge(bank,{7,3,0},status,0,1,0);
+        }
+    }
+    for(unsigned packed=0;packed<256;++packed){
+        unsigned encoded{};for(unsigned lane=0;lane<4;++lane)encoded|=((packed>>(2*lane))&3)<<(8*lane);
+        put(bytes,synthetic_nodes+44,encoded);put(bytes,synthetic_nodes+24,std::uint16_t(4));bind();
+        for(unsigned mask=0;mask<16;++mask){std::array<std::uint8_t,4> flags{};for(unsigned lane=0;lane<4;++lane)flags[lane]=mask&(1u<<lane)?255:0;check(bank.edge_flags(7,flags));compare_edge(bank,{7,3,0},0,0,1,0);}
+    }
+    // First of four signed slots wins even when neighbor_count is0. The target
+    // record itself is not dereferenced by this admission helper.
+    bytes=synthetic();bytes[synthetic_nodes+20]=1;bytes[synthetic_nodes+21]=1;bytes[synthetic_nodes+22]=3;bytes[synthetic_nodes+23]=254;
+    put(bytes,synthetic_nodes+24,std::uint16_t(0));put(bytes,synthetic_nodes+26,std::uint16_t(4));bind();
+    check(n::admit_edge(bank,7,0,1,{},8,0).allowed);compare_edge(bank,{},8,0,1,0);compare_edge(bank,{},0,0,-2,0);
+    check(!n::admit_edge(bank,7,0,2,{},0,0).allowed);compare_edge(bank,{},0,0,2,0);
+    // Destination-1 selects only the node condition, independent of action,
+    // packed edge flags or actor status. Missing ordinal is unavailable.
+    put(bytes,synthetic_nodes+16,std::int32_t(0));bytes[synthetic_tail+8]=1;bytes[synthetic_tail+9]=1;bytes[synthetic_tail+14]=4;bind();
+    for(unsigned ai:{0u,255u}){compare_edge(bank,{7,3,std::uint8_t(ai)},0xffffffff,0,-1,0);check(n::admit_edge(bank,7,0,-1,{7,3,std::uint8_t(ai)},0xffffffff,0).allowed==(ai!=0));}
+    put(bytes,synthetic_nodes+16,std::int32_t(2));bind();compare_edge(bank,{},0,0,-1,0);check(n::admit_edge(bank,7,0,-1,{},0,0).status==n::QueryStatus::unavailable);
+    check(n::admit_edge(bank,7,-2,1,{},0,0).status==n::QueryStatus::unavailable&&n::admit_edge(bank,8,0,1,{},0,0).status==n::QueryStatus::unavailable);
+    const auto held=bank.asset();check(held&&bank.edge_flags(7,std::array<std::uint8_t,4>{1,2,3,4}));
+    auto same=std::make_shared<const n::Asset>(imported(bytes));check(bank.bind(same)&&bank.edge_flags(7,std::array<std::uint8_t,4>{1,2,3,4})&&bank.bind(same)&&bank.edge_flags(7)==std::array<std::uint8_t,4>{1,2,3,4});
+#ifdef REO_NAVIGATION_ORIGINAL
+    std::copy(bytes.begin(),bytes.end(),memory.begin()+0x843780);std::fill_n(memory.begin()+0x4b9d20,128,0);
+    const auto source_tail=0x843780+synthetic_tail;for(unsigned i=0;i<4;++i)memory[source_tail+i]=std::uint8_t(i+1);call(0x815e70,{2});
+    const auto pointer=word(memory,0x83e550+164*7+0xa0);check(pointer==source_tail);for(unsigned i=0;i<4;++i)check((*bank.edge_flags(7))[i]==memory[pointer+i]);++edge_flag_bindings;
+#endif
+    bank.clear_rooms();check(!bank.edge_flags(7)&&bank.bind(same)&&bank.edge_flags(7)==std::array<std::uint8_t,4>{1,2,3,4});
+    bank.close();check(!bank.edge_flags(7)&&!bank.edge_flags(7,std::array<std::uint8_t,4>{}));
+    // Original returns immediately for equal node codes, before any graph read.
+    check(n::admit_edge(bank,0xffffffff,-1,-1,{},0,{}).allowed);
+    // Different rooms can select the same authored graph. Its mutable flags
+    // have one identity across both room selections, just like source pointers.
+    bytes=synthetic();bytes.insert(bytes.begin()+32,12,0);put(bytes,16,std::uint32_t(2));put(bytes,24,std::uint32_t(44));
+    put(bytes,32,std::uint16_t(8));put(bytes,34,std::uint16_t(0));put(bytes,36,std::uint32_t(44));
+    n::Bank shared_bank(variants);check(variants.store(8,0)&&shared_bank.bind(std::make_shared<const n::Asset>(imported(bytes))));
+    check(shared_bank.edge_flags(7,std::array<std::uint8_t,4>{7,8,9,10})&&shared_bank.edge_flags(8)==std::array<std::uint8_t,4>{7,8,9,10});
+#ifdef REO_NAVIGATION_ORIGINAL
+    std::copy(bytes.begin(),bytes.end(),memory.begin()+0x843780);call(0x815e70,{2});
+    const auto first=word(memory,0x83e550+164*7+0xa0),second=word(memory,0x83e550+164*8+0xa0);check(first==second);
+    for(unsigned i=0;i<4;++i){memory[first+i]=std::uint8_t(i+7);}
+    call(0x815e70,{2});for(unsigned i=0;i<4;++i){check((*shared_bank.edge_flags(8))[i]==memory[second+i]);}++edge_flag_bindings;
+#endif
+}
 void owned(const char* path){
     const auto bytes=read(path);const auto asset=imported(bytes);asset_rooms+=asset.descriptors().size();asset_links+=asset.links().size();
     reo::native::gameplay_session::RoomVariants native_variants;n::Bank bank(native_variants);const auto shared=std::make_shared<const n::Asset>(asset);
@@ -245,6 +313,16 @@ void owned(const char* path){
                 check(link.room>=0);put(memory,0x4b9e20+12*unsigned(link.room),flags);
                 const auto original=call(0x819410,{actor,std::uint32_t(std::int32_t(link.room)),std::uint32_t(std::int32_t(link.variant)),std::uint32_t(std::int32_t(link.node))});
                 check(original==(selected.index?link_base+12*(*selected.index):0));++link_cases;
+            }
+        }
+        for(unsigned room=0;room<128;++room)if(const auto graph=bank.room(room)){
+            for(unsigned i=0;i<graph->nodes().size();++i)for(unsigned slot=0;slot<4;++slot)for(unsigned profile=0;profile<4;++profile){
+                check(bank.edge_flags(room,profile&1?std::array<std::uint8_t,4>{1,0,255,1}:graph->initial_edge_flags()));
+                compare_edge(bank,{std::uint8_t(profile*2),std::uint8_t(profile),std::uint8_t(profile&1?255:0)},profile&2?0x88u:0u,std::int32_t(i),graph->nodes()[i].neighbors[slot],std::uint16_t(profile&2?0xffff:0),room);
+                if(n::admit_edge(bank,room,std::int32_t(i),graph->nodes()[i].neighbors[slot],{std::uint8_t(profile*2),std::uint8_t(profile),std::uint8_t(profile&1?255:0)},profile&2?0x88u:0u,std::uint16_t(profile&2?0xffff:0)).status!=n::QueryStatus::completed){
+                    check(std::string(path).ends_with("r041.sgl")&&room==70&&graph->source_offset()==138140&&i==0&&graph->nodes()[i].condition==19&&graph->conditions().size()==14);
+                    ++retail_edge_refusals;
+                }
             }
         }
         check(word(memory,0x83e540)==links&&word(memory,0x83e548)==call(0x816080)&&word(memory,0x83e54c)==call(0x8160c0));
@@ -298,13 +376,13 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==7);const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();
+        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=2;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
 #else
         for(int i=1;i<argc;++i)owned(argv[i]);
 #endif
-        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<"}\n";
+        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

@@ -16,6 +16,8 @@ struct Node {
     std::int32_t condition{-1};
     std::array<std::int8_t,4> neighbors{};
     std::array<std::uint16_t,4> actions{};
+    std::array<std::uint16_t,4> costs{};
+    std::array<std::uint32_t,4> packed_conditions{};
 };
 // These are authored encodings, not mutable emulated runtime records.
 using Condition = std::array<std::uint8_t,16>;
@@ -31,6 +33,7 @@ public:
     std::span<const Node> nodes()const noexcept{return nodes_;}
     std::span<const Condition> conditions()const noexcept{return conditions_;}
     std::span<const RouteCandidates> routes()const noexcept{return routes_;}
+    const std::array<std::uint8_t,4>& initial_edge_flags()const noexcept{return initial_edge_flags_;}
     // Relative offset retained as file identity; bytes are never relocated.
     std::uint32_t source_offset()const noexcept{return source_offset_;}
     std::span<const std::uint8_t> encoding()const noexcept{return encoding_;}
@@ -44,6 +47,7 @@ private:
     std::vector<Condition> conditions_;
     std::vector<RouteCandidates> routes_;
     std::array<std::size_t,16> directory_entries_{};
+    std::array<std::uint8_t,4> initial_edge_flags_{};
     std::vector<std::uint8_t> encoding_;
 };
 struct RoomDescriptor {

@@ -13,10 +13,12 @@ bool Bank::bind(std::shared_ptr<const Asset> asset){
     // Prepare before mutating current state; a host allocation failure leaves
     // the previous binding intact and propagates to the caller's load boundary.
     auto visits=asset==asset_?visits_:std::vector<std::uint8_t>(asset->initial_visit_masks().begin(),asset->initial_visit_masks().end());
-    asset_=std::move(asset);visits_=std::move(visits);selected_=selection;occupancy_={};bound_=true;return true;
+    auto edge_flags=asset==asset_?graph_edge_flags_:std::vector<std::array<std::uint8_t,4>>{};
+    if(asset!=asset_)for(const auto& graph:asset->graphs())edge_flags.push_back(graph.initial_edge_flags());
+    asset_=std::move(asset);visits_=std::move(visits);graph_edge_flags_=std::move(edge_flags);selected_=selection;occupancy_={};bound_=true;return true;
 }
 void Bank::clear_rooms()noexcept{selected_={};occupancy_={};bound_=false;}
-void Bank::close()noexcept{closed_=true;clear_rooms();visits_.clear();asset_.reset();}
+void Bank::close()noexcept{closed_=true;clear_rooms();visits_.clear();graph_edge_flags_.clear();asset_.reset();}
 const RoomGraph* Bank::room(std::uint32_t index)const noexcept{
     if(!bound()||index>=selected_.size()||!selected_[index])return nullptr;
     return &asset_->graphs()[*selected_[index]];
@@ -43,5 +45,13 @@ bool Bank::clear_actor_visits(std::uint32_t actor)noexcept{
     const auto mask=std::uint8_t(~(1u<<actor));
     for(auto& room:occupancy_)for(auto& node:room)node&=mask;
     return true;
+}
+std::optional<std::array<std::uint8_t,4>> Bank::edge_flags(std::uint32_t room)const noexcept{
+    if(!bound()||room>=selected_.size()||!selected_[room])return {};
+    return graph_edge_flags_[*selected_[room]];
+}
+bool Bank::edge_flags(std::uint32_t room,std::array<std::uint8_t,4> value)noexcept{
+    if(!bound()||room>=selected_.size()||!selected_[room])return false;
+    graph_edge_flags_[*selected_[room]]=value;return true;
 }
 }

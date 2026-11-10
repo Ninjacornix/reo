@@ -20,6 +20,11 @@ The current resource and inventory implementation includes:
   actor AI-control field and canonical strided flag bank through the actual
   UpdateOwner. Complete bounded source comparisons and ten parent checks pass
   per compiler. Node edges, route policies and scene/AI execution remain open.
+- [Navigation edge admission](NAVIGATION_EDGES.md) now preserves complete819010
+  through the actual UpdateOwner, with shared per-graph mutable flag identity.
+  Both compilers pass338009 edge comparisons and ten parent tests. Twelve
+  controlled contexts reaching the authored r041 ordinal19/count14 reference
+  remain an explicit admission gate. Route policies and scene/AI execution stay open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

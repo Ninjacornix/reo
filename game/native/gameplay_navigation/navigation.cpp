@@ -73,11 +73,12 @@ std::optional<Asset> Asset::read(std::span<const std::uint8_t> bytes,ImportFailu
                 node.group=room.u16(at+2);node.position={room.real(at+4),room.real(at+8),room.real(at+12)};
                 if(!finite(node.position))throw Invalid{ImportError::coordinates,start+at+4};
                 node.condition=room.i32(at+16);
-                for(std::size_t edge=0;edge<4;++edge){node.neighbors[edge]=std::bit_cast<std::int8_t>(room.data[at+20+edge]);node.actions[edge]=room.u16(at+24+2*edge);}
+                for(std::size_t edge=0;edge<4;++edge){node.neighbors[edge]=std::bit_cast<std::int8_t>(room.data[at+20+edge]);node.actions[edge]=room.u16(at+24+2*edge);node.costs[edge]=room.u16(at+36+2*edge);node.packed_conditions[edge]=room.u32(at+44+4*edge);}
                 graph.nodes_.push_back(node);
             }
             for(std::size_t i=0;i<nodes*nodes;++i){RouteCandidates candidates;std::copy_n(room.data.begin()+12+64*nodes+4*i,4,candidates.begin());graph.routes_.push_back(candidates);}
             for(std::size_t i=0;i<conditions;++i){Condition condition;std::copy_n(room.data.begin()+tail+8+16*i,16,condition.begin());graph.conditions_.push_back(condition);}
+            std::copy_n(room.data.begin()+tail,4,graph.initial_edge_flags_.begin());
             for(std::size_t i=0;i<16;++i){
                 const auto relative=std::size_t(room.u32(directory+4*i));
                 if(relative){if(relative<64)throw Invalid{ImportError::layout,start+directory+4*i};room.check(directory,relative);room.check(directory+relative,1);graph.directory_entries_[i]=directory+relative;}

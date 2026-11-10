@@ -37,10 +37,16 @@ productive one. Only then can a condition type/subtype provide the fallback.
 Invalid references return unavailable instead of reading adjacent sections.
 
 The r041 resource at descriptor29/node0 contains condition ordinal19 with
-condition count19. Its original reverse-action query resolves a reverse edge
+condition count14. Its original reverse-action query resolves a reverse edge
 before reaching that fallback; all3334 retail nodes compare successfully in this
 cohort. The invalid ordinal is preserved, not repaired or generalized as safe for
 other consumers. Synthetic tests verify refusal when such a fallback is reached.
+
+Correction: the initial qualification's narrative said the ordinal equalled
+the count. The actual count is14, as independently rechecked at r041 descriptor29,
+room70/variant1, resource offset138140. The historical sealed JSON is retained;
+the newer edge qualification supersedes that narrative. The parser and comparisons
+always used the actual count and are unchanged by this documentation correction.
 
 Both LLVM and GCC pass2,683,729 checks each, including26,930 nearest comparisons,
 265,608 action comparisons and1,920 room-binding cells. Coverage includes every

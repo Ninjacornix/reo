@@ -18,4 +18,9 @@ nav::LinkResult Owner::admitted_navigation_link(const world::actors::EntityId& i
     const auto actor=world_.resolve(id);if(!actor)return {};
     return nav::find_admitted_link(world_.navigation(),{actor->character,actor->slot,actor->ai_control},room,variant,node,flags_.strided_half(std::uint32_t(room),0));
 }
+nav::AdmissionResult Owner::admit_navigation_edge(const world::actors::EntityId& id,std::uint32_t room,std::int32_t source,std::int32_t destination){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor)return {};
+    return nav::admit_edge(world_.navigation(),room,source,destination,{actor->character,actor->slot,actor->ai_control},actor->status,flags_.strided_half(room,0));
+}
 }

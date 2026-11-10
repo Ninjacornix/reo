@@ -34,8 +34,10 @@ int main(){
         check(owner.applicable_navigation_condition(id,7,0).index==0&&owner.admit_navigation_condition(id,7,0).allowed);
         check(owner.flags().strided(7,3,4,true,false)&&owner.admit_navigation_condition(id,7,0).allowed);
         check(owner.flags().strided(7,3,0,true,false)&&!owner.admit_navigation_condition(id,7,0).allowed);
+        check(!owner.admit_navigation_edge(id,7,0,-1).allowed&&owner.admit_navigation_edge(id,8,123,123).allowed);
         auto link=owner.admitted_navigation_link(id,7,0,0);check(link.status==n::QueryStatus::completed&&!link.index);
         check(owner.flags().strided(7,3,0,false,false));link=owner.admitted_navigation_link(id,7,0,0);check(link.status==n::QueryStatus::completed&&link.index==0);
+        check(owner.admit_navigation_edge(id,7,0,-1).allowed&&owner.admit_navigation_edge(id,7,1,0).status==n::QueryStatus::unavailable);
         check(owner.applicable_navigation_condition(id,7,1).index==-1&&!owner.admit_navigation_condition(id,7,1).allowed);
         actor->ai_control=255;check(owner.applicable_navigation_condition(id,7,1).index==1&&owner.admit_navigation_condition(id,7,1).allowed);
         actor->active=false;actor->status=0xffffffff;check(owner.applicable_navigation_condition(id,7,1).index==1); // no invented active/status gate
