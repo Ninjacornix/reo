@@ -182,6 +182,11 @@ The current resource and inventory implementation includes:
   correcting earlier duplicate storage. Both compiler VM/hit/scheduler
   compositions qualify these boundaries. Offline off-room reconstruction,
   membership application/transport and remaining Stage4 installation remain open.
+- [Actor fades and offline resume](ACTOR_COLOR_FADES.md) now own the actual
+  primary color state and World finish-stage consumer, including integer-step
+  fades, expiry/wrap behavior and status-rejected offline resume. Successful
+  offline scene/navigation reconstruction, remaining higher consumers,
+  renderer submission and game installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

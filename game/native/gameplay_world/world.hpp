@@ -24,6 +24,7 @@ struct InteractionRequest {
     std::uint8_t kind{},parameter{};Position anchor;
     std::uint32_t orientation{};float travel_distance{};std::uint8_t endpoint{};
 };
+struct ColorFade {std::uint32_t rgba{},step{},updates_left{};};
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
 struct ControlRequest {std::uint8_t kind{};std::uint16_t parameter{};};
 struct ProjectileContact {gameplay_collision::Vec3 point,normal;};
@@ -84,6 +85,9 @@ struct Actor : actors::Entity,actors::HitActor {
     // scene_model. The three unused bytes after endpoint are not native state.
     std::optional<InteractionRequest> interaction_request;
     std::optional<std::int8_t> related_target_state; // D32, shared phase-dependent cached target/state
+    // Primary actor CE8/CEC/CF0 color fade. Other source actor families reuse
+    // these offsets for unrelated roles; they do not grant this capability.
+    std::optional<ColorFade> color_fade;
     std::array<std::uint8_t,2> explicit_resource_pair{}; // authored action pair CAA/CAB
     std::uint16_t linked_model_variant{};
     std::uint16_t gauge_modifier_one{},gauge_modifier_two{}; // BB6/BB8; third BBA view is linked_model_variant

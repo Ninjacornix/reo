@@ -6,7 +6,7 @@ from verify_gameplay_collision import COMPILERS
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');p.add_argument('--actor-contact-alignment',action='store_true');p.add_argument('--actor-contact-snapshot',action='store_true');p.add_argument('--actor-room-object',action='store_true');p.add_argument('--actor-auxiliary-pool',action='store_true');p.add_argument('--actor-peer',action='store_true');p.add_argument('--actor-speech',action='store_true');p.add_argument('--actor-requests',action='store_true');p.add_argument('--interaction-transitions',action='store_true');p.add_argument('--actor-room-control',action='store_true');a=p.parse_args();a.interaction_transitions|=a.actor_room_control;a.actor_requests|=a.interaction_transitions;a.actor_speech|=a.actor_requests;a.actor_peer|=a.actor_speech;a.actor_auxiliary_pool|=a.actor_peer;a.actor_room_object|=a.actor_auxiliary_pool;a.actor_contact_snapshot|=a.actor_room_object;a.actor_alignment|=a.actor_contact_alignment or a.actor_contact_snapshot;a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');p.add_argument('--actor-contact-alignment',action='store_true');p.add_argument('--actor-contact-snapshot',action='store_true');p.add_argument('--actor-room-object',action='store_true');p.add_argument('--actor-auxiliary-pool',action='store_true');p.add_argument('--actor-peer',action='store_true');p.add_argument('--actor-speech',action='store_true');p.add_argument('--actor-requests',action='store_true');p.add_argument('--interaction-transitions',action='store_true');p.add_argument('--actor-room-control',action='store_true');p.add_argument('--actor-color-fade',action='store_true');a=p.parse_args();a.actor_room_control|=a.actor_color_fade;a.interaction_transitions|=a.actor_room_control;a.actor_requests|=a.interaction_transitions;a.actor_speech|=a.actor_requests;a.actor_peer|=a.actor_speech;a.actor_auxiliary_pool|=a.actor_peer;a.actor_room_object|=a.actor_auxiliary_pool;a.actor_contact_snapshot|=a.actor_room_object;a.actor_alignment|=a.actor_contact_alignment or a.actor_contact_snapshot;a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  image=ROOT/'build-function-index/owned-overlays/o0.bin';assert sha(image)=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2';raw=image.read_bytes();entries={};proof=[]
  addresses=[0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]+([0x37b990,0x37bbc0,0x37c470,0x1b02d0]if a.statistics else[])
  if a.automatic:
@@ -17,9 +17,10 @@ def main():
  if a.actor_gauge:addresses += [0x660060,0x667e90,0x668050,0x668110,0x1b0340]
  if a.actor_hit_gauge:addresses += [0x660af0,0x666620,0x666d90]
  if a.actor_auxiliary_pool:addresses += [0x682c60,0x682d10,0x682e30,0x666640,0x682f80,0x683b10]
- if a.interaction_transitions:addresses += [0x64ef10,0x667370]
+ if a.interaction_transitions:addresses += [0x64ef10,0x667370,0x668f20,0x819880]
+ if a.actor_color_fade:addresses += [0x6655f0,0x665640,0x665690,0x6656e0,0x665730]
  network_overlays={}
- if a.actor_room_control:
+ if a.interaction_transitions:
   addresses += [0x6696c0,0x1b0010,0x811300,0x811b30]
   for bank,digest in [('o8','f42da66b07a00fb221c5954b0e02b06a46b5694afd5596e866d35feec1fc92ab'),('o9','604126d6edca1b1333948d79d1d2c8d2f2e22f4a233efbdfb769c106dafe7343')]:
    path=ROOT/f'build-function-index/owned-overlays/{bank}.bin';assert sha(path)==digest;network_overlays[bank]=path.read_bytes()
@@ -28,7 +29,7 @@ def main():
  if a.statistics:
   elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read=elf_reader(elf.read_bytes())
  for at in addresses:
-  bank='o8'if at==0x811300 else'o9'if at==0x811b30 else'sub'if at<0x370000 else'o0'if at<0x570000 else'o2';folder=ROOT/('recomp/config/output'if bank=='sub'else'recomp/config/output_ovl/'+bank);source=next(folder.glob(f'{bank}_{at:08X}_*'));name=source.relative_to(ROOT).as_posix();end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',source.read_text())[1],16);proof.append(compare_source('complete cooperative event pool/admission/pruning or completion body',name,at,end,(lambda x,n:network_overlays[bank][x-0x810000:x-0x810000+n])if bank in network_overlays else read if bank=='sub'else (lambda x,n:o2[x-0x570000:x-0x570000+n])if bank=='o2'else lambda x,n:raw[x-0x370000:x-0x370000+n]));entries[at]=name
+  bank='o8'if at==0x811300 else'o9'if at in [0x811b30,0x819880] else'sub'if at<0x370000 else'o0'if at<0x570000 else'o2';folder=ROOT/('recomp/config/output'if bank=='sub'else'recomp/config/output_ovl/'+bank);source=next(folder.glob(f'{bank}_{at:08X}_*'));name=source.relative_to(ROOT).as_posix();end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',source.read_text())[1],16);proof.append(compare_source('complete cooperative event pool/admission/pruning or completion body',name,at,end,(lambda x,n:network_overlays[bank][x-0x810000:x-0x810000+n])if bank in network_overlays else read if bank=='sub'else (lambda x,n:o2[x-0x570000:x-0x570000+n])if bank=='o2'else lambda x,n:raw[x-0x370000:x-0x370000+n]));entries[at]=name
  field_sources=[]
  if a.actor_requests:
   for entry,first,last in [(0x580380,0x5809b4,0x5809f0),(0x5c27d0,0x5c292c,0x5c2958),(0x5c2d40,0x5c2e40,0x5c2e5c),(0x670c00,0x670cf0,0x670d04),(0x671a80,0x671b88,0x671b98)]:
@@ -61,6 +62,7 @@ def main():
   if a.actor_requests:files += ['tools/native_reconstruction/actor_interaction_request_tests.inc']
   if a.interaction_transitions:files += ['tools/native_reconstruction/actor_interaction_transition_tests.inc']
   if a.actor_room_control:files += ['tools/native_reconstruction/actor_room_control_tests.inc']
+  if a.actor_color_fade:files += ['tools/native_reconstruction/actor_color_fade_tests.inc']
   if a.actor_auxiliary_pool:files += ['tools/native_reconstruction/auxiliary_actor_pool_tests.inc','game/native/gameplay_world/CMakeLists.txt']
   if a.actor_room_object:files += ['tools/native_reconstruction/actor_room_object_message_tests.inc']
   if a.actor_contact_snapshot:files += ['tools/native_reconstruction/actor_contact_snapshot_tests.inc']
@@ -160,6 +162,9 @@ def main():
    flags += ['-DREO_ACTOR_ROOM_CONTROL=1']
    r['room_control_overlays']={bank:hashlib.sha256(data).hexdigest()for bank,data in network_overlays.items()}
    r['room_control_admission']='Complete6696C0,1B0010 and811B30/811300 a2==0 room-release request branches with typed channel7 capture;64EF10 local/ordinary-mode control branch through actual native authority notice. Offline nonlocal668F20 scene reconstruction and helper a2!=0 membership application remain open'
+  if a.actor_color_fade:
+   flags += ['-DREO_ACTOR_COLOR_FADE=1']
+   r['actor_color_fade_admission']='Complete665640/665690/6656E0/665730 via canonical primary ColorFade, source unsigned wrap and expiry. Start with nonzero duration; zero-divisor source profile refuses before effects.668F20 guard/status-rejected819880 resume path and actual request consumption; successful off-room scene reconstruction remains open'
   objects,receipts=compile_objects(ROOT,out,cc,flags,UPDATE_UNITS,frozen,env);r['production_objects']=receipts
   cmd[:]=[str(cc),*flags,*objects,str(out/'source'/fixture),'-o',str(exe)]
  try:

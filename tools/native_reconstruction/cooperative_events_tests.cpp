@@ -233,6 +233,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_ACTOR_ROOM_CONTROL
 #include "tools/native_reconstruction/actor_room_control_tests.inc"
 #endif
+#ifdef REO_ACTOR_COLOR_FADE
+#include "tools/native_reconstruction/actor_color_fade_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_INTERACTION_TRANSITIONS
@@ -330,6 +333,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_ROOM_CONTROL
     compare_actor_room_control(memory);
 #endif
+#ifdef REO_ACTOR_COLOR_FADE
+    compare_actor_color_fades(memory);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -393,6 +399,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_ROOM_CONTROL
     <<",\"room_release_cases\":"<<room_release_cases<<",\"room_release_messages\":"<<room_release_messages<<",\"room_hold_cases\":"<<room_hold_cases<<",\"room_transition_cases\":"<<room_transition_cases<<",\"room_control_refusals\":"<<room_control_refusals<<",\"room_control_hit_aliases\":"<<room_control_hit_aliases<<",\"room_response_aliases\":"<<room_response_aliases
+#endif
+#ifdef REO_ACTOR_COLOR_FADE
+    <<",\"color_fade_cases\":"<<color_fade_cases<<",\"color_fade_refusals\":"<<color_fade_refusals<<",\"offline_resume_cases\":"<<offline_resume_cases<<",\"offline_resume_refusals\":"<<offline_resume_refusals<<",\"color_fade_finish_cases\":"<<color_fade_finish_cases<<",\"color_fade_frame_cases\":"<<color_fade_frame_cases
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

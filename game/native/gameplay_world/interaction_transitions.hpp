@@ -12,4 +12,5 @@ struct InteractionTransition {
 // two-column table profile refuse after the pending-byte consumption prefix.
 InteractionTransition consume_interaction_request(World&,const actors::EntityId&,std::uint32_t selector,gameplay_update::RoomClaimSink* = nullptr)noexcept;
 bool begin_interaction_hold(World&,const actors::EntityId&)noexcept; //6696C0
+bool resume_offline_interaction(World&,const actors::EntityId&)noexcept; //668F20; actual scene selection remains required when not rejected by source status
 }

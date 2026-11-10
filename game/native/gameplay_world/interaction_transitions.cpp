@@ -10,6 +10,22 @@ bool begin_interaction_hold(World& world,const actors::EntityId& id)noexcept{
     if(world.locally_controlled(*actor))world.session().exit_requested=1;
     return true;
 }
+bool resume_offline_interaction(World& world,const actors::EntityId& id)noexcept{
+    if(world.closed())return false;
+    const auto actor=world.resolve(id);if(!actor)return false;
+    if(world.mode!=0||actor->category!=0||actor->slot==0)return true;
+    if(!actor->interaction_request)return false;
+    if(!actor->interaction_request->parameter)return true;
+    actor->response_lock=0;
+    // Complete819880 returns-1 without scene work for either status bit.
+    // Other profiles still need the actual route/room reconstruction owner.
+    if(!(actor->status&0x88u))return false;
+    if(actor->room!=world.room){
+        actor->visible=false;actor->auxiliary_status&=~0xc000u;actor->color_fade=ColorFade{0xffffffffu,0,0};
+    }
+    actor->status&=~0x10000u;actor->primary=1;actor->secondary=actor->phase=actor->subphase=0;save_action_pose(*actor);
+    return true;
+}
 InteractionTransition consume_interaction_request(World& world,const actors::EntityId& id,std::uint32_t full_selector,gameplay_update::RoomClaimSink* messages)noexcept{
     if(world.closed())return{};
     const auto actor=world.resolve(id);if(!actor)return{};
@@ -27,7 +43,10 @@ InteractionTransition consume_interaction_request(World& world,const actors::Ent
         if(world.locally_controlled(*actor)){
             if(!begin_interaction_hold(world,id))return{};
         }else{
-            if(world.mode==0)return{}; //668F20 requires the actual off-room scene owner.
+            if(world.mode==0){
+                if(!resume_offline_interaction(world,id))return{};
+                actor->response_lock=0;
+            }
         }
         if(gameplay_update::publish_actor_room_release(world,actor->slot,messages)!=gameplay_update::PublicationStatus::completed)return{};
         return{InteractionTransitionStatus::completed,true};
