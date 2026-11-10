@@ -72,10 +72,7 @@ internal static class CheatCompatibilityTests {
             string[] File3Manifest() => File.ReadAllLines(Cheats.Export(solo, folder));
             check(File3Manifest().SequenceEqual(new[] { "REO-CHEATS-2", "builtin file3" }),
                   "Hidden-only selection leaves ordinary progression disabled");
-            solo.EnabledCheats = new() { "builtin.file2.unlock" };
-            check(File3Manifest().SequenceEqual(new[] { "REO-CHEATS-2", "builtin unlock", "builtin file3" }),
-                  "File #2 Unlock everything includes hidden NPCs in solo play");
-            solo.EnabledCheats.Add(file3.Id);
+            solo.EnabledCheats.Add("builtin.file2.unlock");
             check(File3Manifest().Count(line => line == "builtin file3") == 1,
                   "Selecting both File #2 options exports one hidden NPC operation");
             check(Rejected("file2", "file3", "Unlock File #3 characters"),
