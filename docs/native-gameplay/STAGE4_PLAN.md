@@ -30,6 +30,9 @@ The current resource and inventory implementation includes:
 - [Cooperative event evidence](COOPERATIVE_EVENTS.md), with a bounded native
   pool bound to the actual update clock and room. The owned-recipe producer is
   bound; other event producers and statistics/save consumers remain open.
+- [Completion statistics and explicit item events](COMPLETION_STATISTICS.md),
+  using all five owned rule groups and the same actual event pool. Automatic
+  conditions, other counters and item caller installation remain open.
 
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler

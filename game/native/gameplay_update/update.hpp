@@ -3,6 +3,7 @@
 #include "../gameplay_scenario/offline.hpp"
 #include "../gameplay_tasks/events.hpp"
 #include "../gameplay_events/events.hpp"
+#include "../gameplay_events/statistics.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -76,6 +77,15 @@ public:
     tasks::FlagTimers& timers()noexcept{return timers_;}
     tasks::SimulationClock& clock()noexcept{return clock_;}
     gameplay_events::Events& cooperative_events()noexcept{return cooperative_;}
+    gameplay_events::Statistics& completion_statistics()noexcept{return statistics_;}
+    gameplay_events::StatisticsStatus initialize_completion_statistics(){
+        if(!open()||!world_.session().scenario)return gameplay_events::StatisticsStatus::unavailable;
+        return statistics_.initialize(*world_.session().scenario,cooperative_);
+    }
+    gameplay_events::Recorded record_scenario_event(std::uint32_t content){
+        if(!open()||!world_.session().scenario)return{gameplay_events::StatisticsStatus::unavailable};
+        return statistics_.explicit_id(*world_.session().scenario,content,cooperative_,clock_.update_counter());
+    }
     bool open()const noexcept{return !closed_&&!world_.closed();}
     // Actual cooperative event producers borrow this owner's committed update
     // counter and canonical room, never display frames or a second clock.
@@ -100,6 +110,7 @@ private:
     tasks::FlagTimers timers_;
     tasks::SimulationClock clock_;
     gameplay_events::Events cooperative_;
+    gameplay_events::Statistics statistics_;
     scenario::FlagState flags_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;

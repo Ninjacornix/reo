@@ -11,6 +11,9 @@ void check(bool value,std::source_location at=std::source_location::current()){+
 template<class T>T get(const std::uint8_t* m,unsigned at){return transform_read<T>(m,at);}
 template<class T>void put(std::uint8_t* m,unsigned at,T v){transform_write(m,at,v);}
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};switch(context->pc){
+#ifdef REO_COMPLETION_STATISTICS
+case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
+#endif
 case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at&&GPR_U32(context,5)==0);std::memset(memory+at,0,n);SET_GPR_U32(context,2,at);done();return;}
 #include "dispatch.inc"
 default:throw std::runtime_error("Unadmitted cooperative event source helper "+std::to_string(context->pc));}}
@@ -21,8 +24,17 @@ default:throw std::runtime_error("Unadmitted cooperative event source helper "+s
 unsigned call(std::uint8_t* memory,unsigned pc,std::array<unsigned,3> args={}){R5900Context context;context.pc=pc;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0x100);for(unsigned i=0;i<3;++i){SET_GPR_U32(&context,4+i,args[i]);}PS2Runtime runtime;original_transform_port(memory,&context,&runtime);check(context.pc==0x100&&GPR_U32(&context,29)==0x1f00000);return GPR_U32(&context,2);}
 constexpr unsigned base=0x56bc10;
 void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.available()==get<std::uint16_t>(memory,0x56c810)&&owner.threshold()==std::bit_cast<std::int8_t>(memory[0x56bb88]));const auto live=owner.snapshot();unsigned raw=get<unsigned>(memory,0x56c820),previous{};for(const auto& record:live){check(raw&&owner.physical_slot(record.id)&&raw==base+24**owner.physical_slot(record.id));const auto& v=record.value;check(v.timestamp==get<unsigned>(memory,raw+8)&&v.id==get<std::uint16_t>(memory,raw+0xc)&&v.type==memory[raw+0xe]&&v.priority==memory[raw+0xf]&&v.room==get<std::uint16_t>(memory,raw+0x10)&&v.first==get<std::uint16_t>(memory,raw+0x12)&&v.second==get<std::uint16_t>(memory,raw+0x14));check(previous==get<unsigned>(memory,raw+4)&&get<std::uint16_t>(memory,raw+0x16)==0);check(owner.get(record.id)==v);previous=raw;raw=get<unsigned>(memory,raw);}check(!raw&&previous==get<unsigned>(memory,0x56c818)&&live.size()==128-owner.available());}
+#ifdef REO_COMPLETION_STATISTICS
+#include "tools/native_reconstruction/completion_statistics_tests.inc"
+#endif
 int main(int argc,char** argv)try{
-    check(argc==2);std::ifstream input(argv[1],std::ios::binary);std::array<std::uint8_t,39> priorities;input.read(reinterpret_cast<char*>(priorities.data()),priorities.size());check(bool(input));std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();std::memcpy(memory+0x389d30,priorities.data(),priorities.size());e::Events owner;
+    check(argc==
+#ifdef REO_COMPLETION_STATISTICS
+    3
+#else
+    2
+#endif
+    );std::ifstream input(argv[1],std::ios::binary);std::array<std::uint8_t,39> priorities;input.read(reinterpret_cast<char*>(priorities.data()),priorities.size());check(bool(input));std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();std::memcpy(memory+0x389d30,priorities.data(),priorities.size());e::Events owner;
     const auto reset=[&](){call(memory,0x37c170);check(owner.reset()==e::Status::completed);compare(owner,memory);++resets;};
     const auto append=[&](bool simple,unsigned id,unsigned first,unsigned second,unsigned time,std::uint16_t room){put(memory,0x4bade8,time);put(memory,0x3243dc,room);const auto available=owner.available();call(memory,simple?0x37bfb0:0x37c060,{id,first,second});const auto result=simple?owner.simple(id,time):owner.typed(id,first,second,time,room);compare(owner,memory);check(bool(result.id)==(result.status==e::Status::completed));if(result.id)check(owner.get(result.id).has_value());else check(owner.available()>=available||result.status==e::Status::full);++appends;return result;};
     reset();
@@ -37,5 +49,12 @@ int main(int argc,char** argv)try{
     for(unsigned id=39;id<65536;++id){check(owner.typed(0xabcd0000u|id,0,0,0,0).status==e::Status::unavailable);}++refusals;
     e::Events limited(1);const auto first=limited.simple(1,0);check(first.status==e::Status::completed&&limited.simple(2,0).status==e::Status::serial_exhausted&&limited.available()==127);check(limited.retire(first.id)&&limited.reset()==e::Status::completed&&limited.simple(3,0).status==e::Status::serial_exhausted);++refusals;
     owner.close();check(owner.simple(1,0).status==e::Status::closed&&owner.typed(1,0,0,0,0).status==e::Status::closed&&owner.reset()==e::Status::closed&&!owner.get(replacement)&&!owner.retire(replacement)&&!owner.prune()&&owner.snapshot().empty());++refusals;
-    std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
+#ifdef REO_COMPLETION_STATISTICS
+    compare_completion_statistics(memory,argv[2]);
+#endif
+    std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
+#ifdef REO_COMPLETION_STATISTICS
+    <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
+#endif
+    <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

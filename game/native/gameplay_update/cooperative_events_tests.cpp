@@ -19,6 +19,10 @@ int main()try{
     const auto next=owner.record_event(0x14,1,2);const auto after=owner.cooperative_events().get(next.id);check(after&&after->timestamp==0&&after->room==7);
     const auto generic=owner.record_simple_event(0xabcdffff);const auto simple=owner.cooperative_events().get(generic.id);check(simple&&simple->id==65535&&simple->type==1&&simple->priority==9&&simple->room==0);
     check(owner.record_event(0xffff,0,0).status==e::Status::unavailable);const auto snapshot=owner.cooperative_events().snapshot();check(snapshot.size()==3);
+    check(owner.record_scenario_event(10100).status==e::StatisticsStatus::unavailable);
+    world.session().scenario=0;check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed&&!owner.cooperative_events().get(first.id));check(owner.completion_statistics().state().unique_available==31);
+    const auto recorded=owner.record_scenario_event(0xabcd0000u|10100);check(recorded.status==e::StatisticsStatus::completed&&recorded.matched==1&&recorded.recorded==1&&recorded.dropped==0);const auto completion=owner.completion_statistics().state();check(completion.points==20&&completion.completed[0]==2&&completion.explicit_seen[0]==1);
+    const auto completion_events=owner.cooperative_events().snapshot();check(completion_events.size()==1&&completion_events[0].value.id==1&&completion_events[0].value.type==1&&completion_events[0].value.priority==9&&completion_events[0].value.timestamp==0);check(owner.record_scenario_event(10100).matched==0);
     check(owner.close()==u::Status::completed&&!owner.open()&&!owner.cooperative_events().get(first.id));check(owner.record_event(1,0,0).status==e::Status::closed&&owner.record_simple_event(1).status==e::Status::closed&&snapshot.size()==3);
     check(world.close()==u::world::Status::completed);std::cout<<"Cooperative events use the actual update clock/room and joined closure.\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
