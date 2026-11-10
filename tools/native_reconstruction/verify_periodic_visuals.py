@@ -28,6 +28,7 @@ def main():
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
+    p.add_argument('--resource-companion-policy', action='store_true')
     args = p.parse_args()
     assert not args.resource_factory or args.resource_static
     assert not args.resource_placement or args.resource_factory
@@ -37,6 +38,7 @@ def main():
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
+    assert not args.resource_companion_policy or args.resource_placement
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
     corpus = args.corpus.resolve()
@@ -98,6 +100,11 @@ def main():
     if args.equipment_selection:
         for at in [0x666de0,0x5f1f70,0x5b4d50]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_companion_policy:
+        for at in [0x654720,0x1919d0,0x370500]:
+            bank='sub' if at<0x370000 else 'o0' if at<0x570000 else 'o2'
+            folder=ROOT/('recomp/config/output' if bank=='sub' else 'recomp/config/output_ovl/'+bank)
+            entries[at]=next(folder.glob(f'{bank}_{at:08X}_*')).relative_to(ROOT).as_posix()
     originals = list(entries.values())
     proof = []
     for at, name in entries.items():
@@ -121,6 +128,7 @@ def main():
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
     if args.equipment_resources: units+=['game/native/gameplay_weapon_resources/equipment.cpp']
+    if args.resource_companion_policy: units+=['game/native/gameplay_effects/resource_companion.cpp']
     files = list(units)
     frozen = {}
     for name in files:
@@ -157,6 +165,8 @@ def main():
         name='tools/native_reconstruction/equipment_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_selection:
         name='tools/native_reconstruction/equipment_selection_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_companion_policy:
+        name='tools/native_reconstruction/resource_companion_policy_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
                   selected_visual_family='variant0 logical36/37/38, flags1A193, null parent, complete6535C0 callback',
@@ -185,6 +195,8 @@ def main():
         record['declared_ports'].append('18DBB0 bounded29-byte source stack-to-character7 inventory copy; no source arena alias emulation')
     if args.weapon_resources:
         record['declared_ports']+=['10A830 bounded formatting of two exact owned weapon format strings','1CC8F0 copies owned WMD bytes into the bounded original cleared buffer; unused return not compared','107AB0 bounded16-byte source queue name copy','Native bank loader and PCM mixer internals are independently qualified; this checks their concrete composition']
+    if args.resource_companion_policy:
+        record['declared_ports']+=['654720 state-policy cohort captures652880 child rendering,652D60/651D00 retirement,654180 child fade,6B2680 gameplay spawn and1B8C70 resource audio as intents only; their actual integration is not qualified by these policy cases']
     try:
         for name, body in frozen.items():
             target = out / 'source' / name
@@ -194,6 +206,7 @@ def main():
         reference = frozen[helper].decode().replace('pc{},branch_pc{},fcr31{}', 'pc{},branch_pc{},fcr31{},vu0_vpu_stat{}')
         reference = reference.replace('Register r[32];', 'Register r[32];std::uint64_t lo{},hi{};')
         if args.resource_pulses or args.resource_static: reference += '\n#define FPU_C_EQ_S(a,b) ((a)==(b))\n'
+        if args.resource_companion_policy: reference += '\n#define FPU_C_LT_S(a,b) ((a)<(b))\n'
         reference += '\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define SRA32(a,b) (static_cast<std::int32_t>(a) >> (static_cast<std::uint32_t>(b)&31))\n#define FPU_CVT_W_S(a) static_cast<std::int32_t>(a)\n#define PS2_VOPMUL(a,b) _mm_mul_ps(_mm_shuffle_ps((a),(a),_MM_SHUFFLE(3,0,2,1)),_mm_shuffle_ps((b),(b),_MM_SHUFFLE(3,1,0,2)))\n'
         (out / 'reference.hpp').write_text(reference)
         body = '\n'.join(frozen[n].decode() for n in originals)
@@ -228,6 +241,9 @@ def main():
             for at,value in [(0x256648,main_read(0x256648,11)),(0x740c90,overlay['o2'][0x740c90-0x570000:0x740c90-0x570000+34])]:
                 assert value in [b'weapon%02d\0',b'data/rom/motion/weapon/wp%02d.wmd\0']
                 record.setdefault('weapon_constants',{})[hex(at)]=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+        if args.resource_companion_policy:
+            for at,size in [(0x7401b0,28),(0x7401d0,28)]:
+                value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('resource_companion_switches',{})[hex(at)]=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:
@@ -275,6 +291,7 @@ def main():
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1');command.insert(-2,'-lbcrypt')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')
+        if args.resource_companion_policy: command.insert(1,'-DREO_RESOURCE_COMPANION_POLICY=1')
         record['command'] = command
         for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else [])+([str(ROOT/'iso/Resident Evil - Outbreak (v2.00).iso')] if args.weapon_resources else []))]:
             result = subprocess.run(cmd, env=env, capture_output=True, timeout=240 if args.weapon_resources else 180)

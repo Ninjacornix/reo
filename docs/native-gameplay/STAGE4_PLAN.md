@@ -32,6 +32,10 @@ installation and game acceptance remain open; the stage is still incomplete.
 The [inventory owner correction](INVENTORY_OWNER_TAG.md) preserves the modal
 owner byte rather than collapsing player identities to a boolean. Current
 behavior comparisons cover all256 values; the actual inventory UI remains open.
+The [resource companion audit](RESOURCE_COMPANION_AUDIT.md) now includes a
+qualified654720 state policy. Actual shared visual/child consumers, resource
+audio and timed lighting remain open, so the six factory routes still refuse.
+The same lighting pool also blocks ordinary room-lighting script commands.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners

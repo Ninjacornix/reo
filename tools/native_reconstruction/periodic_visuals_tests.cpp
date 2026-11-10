@@ -32,8 +32,26 @@ template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transfo
 constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
 bool allocated{};
 bool task_retired{};
+#ifdef REO_RESOURCE_COMPANION_POLICY
+bool companion_policy_capture{};
+struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{},cues{};std::int16_t sample_time{};std::uint16_t child_attributes{},cue{};float fade_delta{};bool faded{};} companion_policy_observed;
+#endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_RESOURCE_COMPANION_POLICY
+    if(companion_policy_capture){
+        constexpr unsigned work=0x120000;
+        switch(context->pc){
+        case 0x652880:check(GPR_U32(context,4)==work&&GPR_U32(context,5)==0xa00000&&GPR_U32(context,6)==1);++companion_policy_observed.children;companion_policy_observed.sample_time=get<std::int16_t>(memory,work+0x10);companion_policy_observed.child_attributes=std::uint16_t(GPR_U32(context,7));SET_GPR_U32(context,2,1);done();return;
+        case 0x652d60:check(GPR_U32(context,4)==work);++companion_policy_observed.released;done();return;
+        case 0x651d00:check(GPR_U32(context,4)==work);++companion_policy_observed.retired;done();return;
+        case 0x654180:check(GPR_U32(context,4)==work);companion_policy_observed.faded=true;companion_policy_observed.fade_delta=context->f[12];done();return;
+        case 0x6b2680:check(GPR_U32(context,5)==work+0x44);++companion_policy_observed.spawned;done();return;
+        case 0x1b8c70:++companion_policy_observed.cues;companion_policy_observed.cue=std::uint16_t(GPR_U32(context,5));done();return;
+        default:break;
+        }
+    }
+#endif
     switch(context->pc){
     case 0x573740:check(GPR_U32(context,4)==0x10000);task_retired=true;done();return;
     case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at);std::memset(memory+at,std::uint8_t(GPR_U32(context,5)),n);SET_GPR_U32(context,2,at);done();return;}
@@ -148,6 +166,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_EQUIPMENT_SELECTION
 #include "tools/native_reconstruction/equipment_selection_tests.inc"
 #endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+#include "tools/native_reconstruction/resource_companion_policy_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -255,6 +276,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_EQUIPMENT_SELECTION
     compare_equipment_selection(argv[4],argv[2],ram);
 #endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+    compare_resource_companion_policy(ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
@@ -292,6 +316,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_EQUIPMENT_SELECTION
     <<",\"equipment_selections\":"<<equipment_selections<<",\"equipment_selection_full\":"<<equipment_selection_full<<",\"equipment_selection_refusals\":"<<equipment_selection_refusals
 #endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+    <<",\"companion_policy_cases\":"<<companion_policy_cases<<",\"companion_policy_renders\":"<<companion_policy_renders<<",\"companion_policy_fades\":"<<companion_policy_fades<<",\"companion_policy_retirements\":"<<companion_policy_retirements<<",\"companion_policy_spawn_intents\":"<<companion_policy_spawn_intents<<",\"companion_policy_audio_intents\":"<<companion_policy_audio_intents
+#endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;
 }catch(const std::exception& error){std::cerr<<error.what()
@@ -309,5 +336,8 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_INVENTORY
     <<" inventory compact="<<inventory_compactions<<" remove="<<inventory_removals<<" detach="<<inventory_detachments
+#endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+    <<" companion cases="<<companion_policy_cases<<" seed="<<companion_policy_seed<<" phase="<<companion_policy_phase
 #endif
     <<'\n';return 1;}
