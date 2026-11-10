@@ -16,6 +16,7 @@
 #include "../gameplay_navigation/cost_routes.hpp"
 #include "../gameplay_navigation/local_routes.hpp"
 #include "../gameplay_navigation/link_collection.hpp"
+#include "../gameplay_navigation/cross_room.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -178,6 +179,7 @@ public:
     gameplay_navigation::RouteResult ranked_navigation_route(const world::actors::EntityId&,std::uint32_t room,std::int32_t source,std::int32_t destination,gameplay_navigation::RankedPolicy,gameplay_navigation::RouteOutput&);
     gameplay_navigation::CostRouteResult bounded_navigation_route(const world::actors::EntityId&,std::uint32_t room,std::int32_t source,std::int32_t destination,gameplay_navigation::RouteOutput&,std::size_t maximum_edges=65536);
     gameplay_navigation::CostRouteResult local_navigation_route(const world::actors::EntityId&,std::uint32_t room,std::int32_t source,std::int32_t destination,std::uint32_t policy,gameplay_navigation::RouteOutput&,std::int16_t& destination_link,std::size_t maximum_edges=65536);
+    gameplay_navigation::CrossRoomResult cross_room_navigation_route(const world::actors::EntityId&,std::uint32_t source_room,std::uint32_t destination_room,std::int32_t source_node,std::int32_t destination_node,gameplay_navigation::CrossRoomOutput&,gameplay_navigation::CrossRoomProfile={});
     gameplay_navigation::CollectionResult collect_navigation_links(const world::actors::EntityId&,std::uint32_t room,std::int32_t node,gameplay_navigation::CollectionProfile={});
     State state;
 private:

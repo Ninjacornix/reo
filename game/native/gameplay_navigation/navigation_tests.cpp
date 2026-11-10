@@ -6,6 +6,7 @@
 #include "cost_routes.hpp"
 #include "local_routes.hpp"
 #include "link_collection.hpp"
+#include "cross_room.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -291,6 +292,7 @@ void edge_contracts(){
 #include "cost_route_tests.inc"
 #include "local_route_tests.inc"
 #include "link_collection_tests.inc"
+#include "cross_room_tests.inc"
 void owned(const char* path){
     const auto bytes=read(path);const auto asset=imported(bytes);asset_rooms+=asset.descriptors().size();asset_links+=asset.links().size();
     reo::native::gameplay_session::RoomVariants native_variants;n::Bank bank(native_variants);const auto shared=std::make_shared<const n::Asset>(asset);
@@ -326,6 +328,19 @@ void owned(const char* path){
                 check(link.room>=0);put(memory,0x4b9e20+12*unsigned(link.room),flags);
                 const auto original=call(0x819410,{actor,std::uint32_t(std::int32_t(link.room)),std::uint32_t(std::int32_t(link.variant)),std::uint32_t(std::int32_t(link.node))});
                 check(original==(selected.index?link_base+12*(*selected.index):0));++link_cases;
+            }
+        }
+        for(unsigned i=0;i<asset.links().size();++i){
+            const auto& from=asset.links()[i];if(from.variant!=std::int32_t(variant)||from.room<0)continue;
+            for(const auto target:{i,unsigned((i+1)%asset.links().size()),unsigned((i+asset.links().size()/2)%asset.links().size())})for(unsigned profile=0;profile<3;++profile){
+                const auto& to=asset.links()[target];if(to.room<0)continue;
+                n::RoomFlags flags;flags.fill(std::uint16_t(profile==1?0xffff:0));
+                const n::ActorFacts facts{std::uint8_t(profile*3),std::uint8_t(profile),std::uint8_t(profile&1)};
+                check(bank.clear_actor_visits(profile));
+                for(unsigned index=0;index<asset.links().size();++index)if(profile==1&&index%5==0)check(bank.visit(profile,index,7));
+                n::CrossRoomOutput output{{-22,-23,{1,2,3},{4,5,6}},314};
+                const auto result=compare_cross_route(bank,bytes,facts,profile==2?8u:0u,flags,unsigned(from.room),unsigned(to.room),from.node,to.node,output,{profile!=1,4096,128});
+                if(result.status==n::QueryStatus::completed)++cross_retail_cases;
             }
         }
         for(unsigned room=0;room<128;++room)if(const auto graph=bank.room(room)){
@@ -402,6 +417,17 @@ void navigation_reference_write(std::uint32_t at,std::size_t size){
     if(reference_cost_address&&at<=reference_cost_address&&std::size_t(reference_cost_address-at)<size)reference_cost_written=true;
 }
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
+    if(context->pc==0x8179f0){
+        ++reference_collection_calls;
+        // Declared correction oracle only; complete source instructions follow.
+        if(reference_initialize_collection)std::fill_n(memory+GPR_U32(context,29)-8,4,0);
+    }
+    if(context->pc==0x107ab0){
+        const auto destination=GPR_U32(context,4),source=GPR_U32(context,5),count=GPR_U32(context,6);
+        check(destination==0x1f00000-0x4c0+0xe0&&count<=256&&count==word(::memory,0x83e540));
+        check(source>=word(::memory,0x83e54c)&&source+count<=word(::memory,0x83e54c)+4*count);
+        ++reference_visit_copies;
+    }
     switch(context->pc){
     case 0x107c68:{
         const auto start=GPR_U32(context,4),count=GPR_U32(context,6),value=GPR_U32(context,5);
@@ -418,13 +444,13 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==7);const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();local_contracts();collection_contracts();
+        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();local_contracts();collection_contracts();cross_room_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=2;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
 #else
         for(int i=1;i<argc;++i)owned(argv[i]);
 #endif
-        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<",\"local_cases\":"<<local_cases<<",\"local_refusals\":"<<local_refusals<<",\"local_budgets\":"<<local_budgets<<",\"local_retail_refusals\":"<<local_retail_refusals<<",\"local_retail_budgets\":"<<local_retail_budgets<<",\"collection_cases\":"<<collection_cases<<",\"collection_entries\":"<<collection_entries<<",\"collection_refusals\":"<<collection_refusals<<",\"collection_unknown_costs\":"<<collection_unknown_costs<<",\"collection_retail_refusals\":"<<collection_retail_refusals<<",\"collection_retail_unknown_costs\":"<<collection_retail_unknown_costs<<"}\n";
+        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<",\"local_cases\":"<<local_cases<<",\"local_refusals\":"<<local_refusals<<",\"local_budgets\":"<<local_budgets<<",\"local_retail_refusals\":"<<local_retail_refusals<<",\"local_retail_budgets\":"<<local_retail_budgets<<",\"collection_cases\":"<<collection_cases<<",\"collection_entries\":"<<collection_entries<<",\"collection_refusals\":"<<collection_refusals<<",\"collection_unknown_costs\":"<<collection_unknown_costs<<",\"collection_retail_refusals\":"<<collection_retail_refusals<<",\"collection_retail_unknown_costs\":"<<collection_retail_unknown_costs<<",\"cross_search_cases\":"<<cross_search_cases<<",\"cross_route_cases\":"<<cross_route_cases<<",\"cross_refusals\":"<<cross_refusals<<",\"cross_corrected_cases\":"<<cross_corrected_cases<<",\"cross_retail_cases\":"<<cross_retail_cases<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

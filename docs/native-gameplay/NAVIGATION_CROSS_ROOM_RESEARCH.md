@@ -43,5 +43,7 @@ another mutable navigation state copy.
 The bounded collector now supplies explicit cost provenance, original ordering
 comparisons and actual canonical flag/visit consumers. The raw maximum link group
 sizes in the five owned inputs are6,13,9,6,6, below its sixteen-result profile.
-Recursive cross-room search and actor route-state mutation remain next. No game
+The [bounded cross-room implementation](NAVIGATION_CROSS_ROOM.md) now preserves
+recursive/outer traversal with strict and explicitly initialized profiles kept
+distinct. Actor route-state mutation remains next. No game
 capture, slowdown diagnosis or performance measurement is claimed here.

@@ -17,7 +17,7 @@ std::shared_ptr<const n::Asset> asset(){
     std::vector<std::uint8_t> bytes(236);
     const auto put=[&](unsigned at,unsigned value){for(unsigned i=0;i<4;++i)bytes[at+i]=std::uint8_t(value>>(i*8));};
     put(0,0x20030724);put(4,12);put(8,36);put(12,1);bytes[16]=7;
-    put(36,1);put(40,7);put(44,52);put(52,80);put(56,120);put(60,1);bytes[64]=1;
+    put(36,1);put(40,7);put(44,52);put(52,80);put(56,120);put(60,1);bytes[64]=1;bytes[20]=7;
     put(136,2);bytes[140]=1;bytes[141]=0;bytes[142]=3;
     bytes[156]=1;bytes[157]=1;bytes[162]=4;
     n::ImportFailure failure;auto parsed=n::Asset::read(bytes,failure);check(bool(parsed));
@@ -53,7 +53,11 @@ int main(){
         check(world.session().room_variants.store(7,0));
         actor->slot=0;const auto unknown_collection=owner.collect_navigation_links(id,7,0);check(unknown_collection.status==n::QueryStatus::unavailable&&unknown_collection.failure==n::CollectionFailure::unknown_cost);
         const auto known_collection=owner.collect_navigation_links(id,7,0,{false,false,0.f,16});check(known_collection.status==n::QueryStatus::completed&&known_collection.count==1&&known_collection.candidates[0].link==0&&known_collection.candidates[0].cost==0);
-        check(world.navigation().visit(0,0,1));check(owner.collect_navigation_links(id,7,0).count==0);check(world.navigation().visit(0,0,0));actor->slot=5;
+        check(world.navigation().visit(0,0,1));check(owner.collect_navigation_links(id,7,0).count==0);check(world.navigation().visit(0,0,0));
+        n::CrossRoomOutput cross_output{{-22,-23,{1,2,3},{4,5,6}},314};actor->status=0;
+        const auto unknown_cross=owner.cross_room_navigation_route(id,7,7,0,0,cross_output);check(unknown_cross.collection_failure==n::CollectionFailure::unknown_cost&&cross_output.link==314);
+        const auto corrected_cross=owner.cross_room_navigation_route(id,7,7,0,0,cross_output,{true,4096,128});check(corrected_cross.status==n::QueryStatus::completed&&corrected_cross.selected==0&&cross_output.link==0&&world.navigation().visits(0)[0]==1);
+        actor->slot=5;actor->status=0x80;check(owner.cross_room_navigation_route(id,200,201,-1,-1,cross_output).selected==-1);actor->status=0;
         check(owner.admit_navigation_condition(id,7,2).status==n::QueryStatus::unavailable&&owner.admit_navigation_condition(id,8,0).status==n::QueryStatus::unavailable);
         check(owner.admitted_navigation_link(id,7,0,1).status==n::QueryStatus::completed&&!owner.admitted_navigation_link(id,7,0,1).index);
         u::world::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());const auto other=foreign.spawn_primary(0,std::make_unique<u::world::Actor>()).id;

@@ -44,4 +44,10 @@ nav::CollectionResult Owner::collect_navigation_links(const world::actors::Entit
     auto& bank=world_.navigation();const auto variant=bank.current_variant(room);if(!variant)return {};
     return nav::collect_links(bank,room,*variant,node,{actor->character,actor->slot,actor->ai_control},actor->status,flags_.strided_half(room,0),bank.visits(actor->slot),profile);
 }
+nav::CrossRoomResult Owner::cross_room_navigation_route(const world::actors::EntityId& id,std::uint32_t source_room,std::uint32_t destination_room,std::int32_t source_node,std::int32_t destination_node,nav::CrossRoomOutput& output,nav::CrossRoomProfile profile){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor)return {};
+    nav::RoomFlags flags;for(std::uint32_t room=0;room<flags.size();++room)flags[room]=flags_.strided_half(room,0);
+    return nav::cross_room_route(world_.navigation(),{actor->character,actor->slot,actor->ai_control},actor->status,flags,source_room,destination_room,source_node,destination_node,output,profile);
+}
 }

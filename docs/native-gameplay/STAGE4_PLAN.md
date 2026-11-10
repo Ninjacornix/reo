@@ -44,6 +44,12 @@ The current resource and inventory implementation includes:
   comparisons per compiler and ten parent tests.288 sampled retail contexts need
   an unspecified incoming cost and stay unavailable. Recursive cross-room search,
   initialization policy/evidence and actor destination/AI execution remain open.
+- [Cross-room navigation](NAVIGATION_CROSS_ROOM.md) now supplies817470/817820
+  through actual canonical actor/flag/visit state, with4732 completed cross-room
+  comparisons and ten parent tests per compiler.1115 use the strict profile;
+  the separate3617 explicit cost-initialization profiles are documented source
+  corrections.189 sampled contexts stay unavailable. Actor route-state/AI,
+  broader admission, loading, saves and actual installation remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
